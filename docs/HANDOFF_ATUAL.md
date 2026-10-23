@@ -1,3 +1,19 @@
+## Coordenacao principal e solicitacao de canal remoto suportado (2026-10-23)
+
+Decisao expressa do proprietario: ESTA MESMA conversa Nuvem ERP-Zuccaro-codeX permanece principal, com historico acessivel de qualquer computador. Codespace e ambiente de codigo/testes; GitHub e fonte oficial. Nao substituir por conversas locais independentes nem exigir encaminhamento manual recorrente. Orientacoes anteriores que recomendavam trocar o chat principal ficam superadas.
+
+Limite comprovado nesta sessao: ferramentas expostas nao incluem Browser, ponte para a sessao Codex no VS Code ou endpoint autenticado do Codespace. O executor /workspace nao e /workspaces/ERP-Zuccaro-codeX. CLI com opcoes remotas nao comprova vinculo entre sessoes. A prova remota trazida pelo proprietario confirma o agente no Codespace, nao controle por este chat. Nao repetir OAuth/403, instalacoes ou reinicios sem mudanca comprovada de capacidade.
+
+Publicacao pendente: proprietario encaminhou relato do lote Conversoes Produto com seis arquivos preservados e 2186 PASS/0 FAIL/0 SKIP, audit/lint/types/build/diff-check aprovados mediante concessao suportada naquele executor. Isso e relato recebido, nao execucao deste sandbox. Remoto conferido antes deste lote documental: 4456137ffe2404baf9e10f6aceaa423972cf13a0 com CI success; ainda sem commit do lote funcional. Nao reconstruir alteracoes ausentes nem iniciar outro escritor. Falta acesso autenticado ao checkout com trabalho aberto para concluir sua publicacao.
+
+### Solicitacao objetiva ao suporte da plataforma (preparada, nao enviada)
+
+Precisamos manter esta mesma conversa cloud, com historico e acesso entre computadores, como ponto unico de instrucoes, e vincular sua execucao ao Codespace EXISTENTE potential-xylophone-5gj7r9v9qqg637vxp, repo viniciuszuccaro-creator/ERP-Zuccaro-codeX, checkout /workspaces/ERP-Zuccaro-codeX. VS Code e Codex remoto ja executaram prova sintetica nesse recurso; esta sessao cloud nao expoe Browser nem ponte autenticada para aquele agente.
+
+Informem se existe mecanismo OFICIAL para anexar este chat ao executor existente ou encaminhar tarefas/resultados de modo autenticado, preservando identidade/historico da conversa. Solicitamos procedimento e capacidades necessarias, incluindo autenticacao segura, escopo, revogacao, retomada entre computadores e limites de custo. Nao queremos novo chat/Codespace, terminal publico, API paga, transferencia de chaves pessoais ou instalacoes por tentativa. Se nao suportado, confirmem explicitamente essa limitacao do produto. Validacao exigida: solicitacao neste chat -> marcador sintetico criado/lido/removido fora do checkout no Codespace -> resultado retornado automaticamente a esta mesma conversa.
+
+A solicitacao nao foi enviada: ferramenta de suporte ausente nesta sessao. Nenhum segredo deve acompanhar o chamado. Nenhum desenvolvimento concorrente, transferencia de legado, merge/deploy/migration ou alteracao de cobranca foi iniciado. Agendamento legado continua pausado conforme decisao vigente; estado do scheduler nao consultado.
+
 ## Recibo de execucao via terminal web do Codespace (2026-10-22)
 
 Executor: ChatGPT Work, navegador autenticado do proprietario, terminal integrado web; nao e conexao direta Codex/Cursor.
