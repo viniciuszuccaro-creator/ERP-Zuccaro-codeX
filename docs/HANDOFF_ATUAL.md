@@ -1,3 +1,120 @@
+## #344 - piloto isolado de clientes executado; demais entidades em quarentena (2026-10-23)
+
+Estado atual: autorizacao expressa posterior permite SOMENTE o piloto isolado.
+PREPARED_NOT_AUTHORIZED nos cabecalhos antigos e historico para esse ensaio;
+importacao operacional, emissao fiscal e movimentacao financeira continuam NAO
+autorizadas. A centralizacao/retomada comprovada em 3bfa4de4 foi reutilizada,
+sem nova transferencia, inventario integral ou leitura do backup original.
+
+### Execucao e contagens
+
+Base de codigo: 3bfa4de4ddc3b99266c17b2cf92fe7000f9f2f81, branch
+codex/consolidacao-infra-20261017, no Codespace unico existente. O auxiliar
+scripts/legado/pilot-isolated.mjs NAO e outro importador: prepara o ensaio e
+reutiliza os mapeadores, persistirClienteGrupoLegado, ClienteService,
+PostgresClienteRepository, RbacGuard, TenantGuard e auditoria existentes.
+O corpo do importador e os servicos de negocio nao foram substituidos.
+
+Coorte preparada verificada, nao total do backup historico:
+
+| Entidade | Origem staging | Elegiveis neste ensaio | Importados | Quarentena | Reconciliados |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Clientes | 18458 | 17471 | 25 | 987 | 25 |
+| Fornecedores | 790 | 0 (gate) | 0 | 790 | 0 |
+| Produtos | 1208 | 0 (gate) | 0 | 1208 | 0 |
+
+Clientes: zero duplicados identificados na coorte; 17446 elegiveis adiados pelo
+limite deliberado de 25. Os 987 registros nao ativos ficaram em quarentena para
+evitar reativacao implicita. Fornecedores/produtos foram retidos por gates, nao
+declarados invalidos individualmente; ausencia de duplicidade nessas entidades
+NAO foi comprovada. Persistencia canonica de fornecedor falta; produtos exigem
+mapas aprovados de classe/unidade e identidades de UnidadeMedida verificadas.
+Nao se inventou endpoint, correspondencia, classe, unidade ou empresa fiscal.
+
+25 clientes gravados por servico/repositorio/auditoria reais em PostgreSQL 16.
+Validacao canonica de campos obrigatorios e documentos, deduplicacao por origem
+e documento, preservacao literal do codigo interno preparado SEPARADA do codigo
+legado, legacy_id, source_system e lote. Nenhum cliente_empresa criado.
+Reconciliacao dos 25 snapshots canonicos PASS; nao e comprovacao de migracao de
+todos os enderecos, relacionamentos auxiliares ou historico comercial/financeiro.
+Esses campos e suas fontes permanecem privados/preservados para lotes futuros.
+
+Reexecucao: 25 reutilizados, zero novos, estado das linhas identico. Auditoria
+preservada: 25 create, 25 possible_duplicate do caminho de reuso e 25 soft_delete.
+Reversao: 25 inativados pelo metodo canonico, ativo=false/status=Inativo;
+zero exclusoes fisicas, zero ativos restantes, IDs/codigos/procedencia e demais
+campos conservados. Duas negativas de RBAC/contexto PASS, sem ampliar permissoes.
+
+### Isolamento, protecao e limites da prova
+
+Cluster Docker PostgreSQL 16 dedicado, imagem local por digest/pull=never,
+network=none, sem portas publicadas, rootfs somente leitura e sem privilegio;
+somente dois binds na pasta privada do lote. Antes de aplicar schema/gravar:
+identidade database/role/system_identifier, socket sem endereco de rede e zero
+tabelas publicas comprovados. Somente migrations publicadas foram aplicadas NO
+CLUSTER ISOLADO; nenhuma migration privada 045/046/047/048/049 ou operacional.
+
+Grupo e ator sao namespaces SINTETICOS de teste, nao correspondencia comprovada
+de grupo/empresa operacional. Grupo fonte foi preservado no input privado;
+documentos fiscais, saldos e titulos nao receberam empresa por inferencia.
+Papel de dados NOSUPERUSER/NOBYPASSRLS, sem wildcard, com permissoes minimas.
+O schema publicado nao fornece as policies de dados necessarias a esse papel:
+policies exclusivas do teste limitam Grupo/ator sinteticos e contexto de Grupo.
+Nao sao migrations publicadas, grants operacionais nem homologacao do menor
+privilegio dos destinos reais. Esse gate operacional permanece aberto.
+
+Container parado depois do ensaio e banco privado preservado. Reabertura do
+MESMO cluster/banco comprovou 25 linhas inativas e auditoria conservada; voltou
+a ser parado. Nenhum container do piloto ficou em execucao. Isso e recuperacao
+do banco de teste, nao restore do banco/backup operacional ou do SQL legado.
+
+Dados/SQL privados, selecao, quarentena, snapshots, relatorios detalhados,
+credenciais EFEMERAS do cluster e hashes vinculaveis a registros permanecem
+somente na area privada fora do checkout/build/CI. Recibo de retomada local:
+current-pilot.json; dentro do lote: result-private.json, result-sanitized.json,
+database-recovery-private.json e receipt-hashes-private.json. Nao publicar esses
+arquivos. HD, captura, worktrees e banco operacional permaneceram intactos;
+agendamento Legado pausado, sem novo ambiente pago ou ampliacao de acesso.
+
+### Ocorrencias corrigidas no executor do ensaio
+
+Tentativas anteriores e seus recibos foram preservados privadamente. Corrigidos:
+prontidao prematura do servidor temporario do entrypoint PostgreSQL; suposicao
+incorreta de igualdade entre codigo interno preparado e codigo legado; setup
+de policies restritas exclusivo do cluster de teste; expectativa da reversao
+ajustada ao contrato existente ativo/status. Nenhuma protecao de produto foi
+retirada para obter PASS. A primeira conferencia de reabertura esperava somente
+50 auditorias e falhou: o total real e 75, incluindo as 25 do reuso, comprovadas
+por acao na segunda conferencia somente leitura, sem nova carga.
+
+### Retomada e proximo lote
+
+Comandos executados no Codespace: node --check scripts/legado/pilot-isolated.mjs;
+node scripts/legado/pilot-isolated.mjs --prepare; tsx do server executando o mesmo
+auxiliar com a raiz privada indicada em current-pilot.json. O auxiliar recusa
+checkout/HEAD divergente e destino fora da raiz privada, cria lock e verifica
+SHA-256 das tres fontes contra o manifesto autenticado. Nao repetir a carga
+automaticamente no novo HEAD: revisar a base aprovada e preservar o recibo antes.
+
+Proximo lote: completar/reutilizar persistencia canonica de fornecedor; revisar
+e aprovar mapas classe/unidade e correspondencias de unidades para produtos;
+resolver crosswalk Grupo/Empresa antes de qualquer destino operacional. Depois,
+pilotos isolados separados por dependencia, mesma reconciliacao/reexecucao/
+reversao. #344 permanece PARCIAL: clientes comprovados, nao tres entidades
+homologadas. Publicar este codigo nao autoriza importacao operacional ou deploy.
+
+### Validacao do lote
+
+Codespace Linux/Node 24.21.0: focados 14 PASS/0 FAIL/0 SKIP; suite completa
+npm test -- --test-reporter=tap tests/**/*.test.js: 2242 PASS/0 FAIL/0 SKIP.
+npm run audit:baseline, npm run lint, npm run typecheck e npm run build: exit0.
+Typecheck sem diagnosticos. URLs/variaveis de banco operacional removidas do
+ambiente dos checks. Testes da suite usam dados sinteticos; a prova PostgreSQL
+real com staging privado e um recibo separado, nao fixture apresentada como carga.
+Sem novas dependencias, alteracao de baseline, supressoes ou remocao de testes.
+SHA-256 do auxiliar: d25cd58930a48c1a9d1850545eed8f1c0615b01031b471d9bf75294821e9c6f9.
+SHA-256 do teste: 788b5b757e59939e4db70568aa0a957ef2d55639d92cc8228181893d2ca46116.
+
 ## #344 - centralizacao privada concluida; staging utilizavel no Codespace (2026-10-23)
 
 Este recibo substitui o estado de envio em andamento e o bloqueio de upload

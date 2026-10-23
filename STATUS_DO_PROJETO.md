@@ -1,3 +1,48 @@
+## #344 - piloto isolado real de clientes verificado (2026-10-23)
+
+Estado atual: PARCIAL por entidade. Autorizacao posterior liberou o ensaio
+isolado, nao carga operacional. Coorte staging: 18458 clientes, 790 fornecedores
+e 1208 produtos. Clientes: 17471 elegiveis, 25 importados/reconciliados, zero
+duplicados identificados, 987 nao ativos em quarentena e 17446 adiados pelo
+limite do piloto. Reexecucao: 25 reutilizados/zero novos/linhas identicas.
+Reversao canonica: 25 inativados, zero ativos/exclusoes fisicas, IDs/codigos e
+procedencia conservados. Auditoria: 25 create +25 possible_duplicate no reuso
+e 25 soft_delete. Duas negativas de autorizacao/contexto PASS.
+
+PostgreSQL 16 REAL em cluster Docker novo comprovadamente isolado, sem rede/
+portas, dados fora do checkout, papel de dados NOSUPERUSER/NOBYPASSRLS. Grupo e
+ator sinteticos, sem inventar empresa juridica. Policies limitadas EXCLUSIVAS
+DO TESTE foram necessarias; menor privilegio dos destinos operacionais continua
+pendente. Somente migrations publicadas aplicadas NO TESTE, nenhuma privada
+045..049 ou operacional. Reabertura do mesmo banco/cluster comprovou as 25
+linhas inativas e 75 auditorias; container parado e arquivos privados preservados.
+
+Fornecedores: 790 em quarentena por falta de persistencia canonica; produtos:
+1208 em quarentena por mapas classe/unidade nao aprovados. Nao se afirma
+deduplicacao nem persistencia homologada dessas entidades. Proximo lote:
+resolver esses contratos e crosswalk Grupo/Empresa, repetir ensaios isolados
+por dependencia. Enderecos auxiliares e historico comercial/financeiro ainda
+nao sao declarados migrados. HD, captura, worktrees e operacional intocados;
+agendamento pausado. Sem custos/recursos pagos novos.
+
+Codigo auxiliar reutiliza importador/servicos existentes, sem alterar seus
+corpos: scripts/legado/pilot-isolated.mjs e tests/legado-piloto-isolado.test.js.
+Detalhes sanitizados, limitacoes e ocorrencias do executor no topo de
+docs/HANDOFF_ATUAL.md; recibos/dados reais/hashes de registros ficam privados.
+Cabecalhos anteriores permanecem HISTORICOS quando divergirem deste recibo.
+
+### Validacao do lote
+
+Codespace Linux/Node 24.21.0: focados 14 PASS/0 FAIL/0 SKIP; suite completa
+npm test -- --test-reporter=tap tests/**/*.test.js: 2242 PASS/0 FAIL/0 SKIP.
+npm run audit:baseline, npm run lint, npm run typecheck e npm run build: exit0.
+Typecheck sem diagnosticos. URLs/variaveis de banco operacional removidas do
+ambiente dos checks. Testes da suite usam dados sinteticos; a prova PostgreSQL
+real com staging privado e um recibo separado, nao fixture apresentada como carga.
+Sem novas dependencias, alteracao de baseline, supressoes ou remocao de testes.
+SHA-256 do auxiliar: d25cd58930a48c1a9d1850545eed8f1c0615b01031b471d9bf75294821e9c6f9.
+SHA-256 do teste: 788b5b757e59939e4db70568aa0a957ef2d55639d92cc8228181893d2ca46116.
+
 ## #344 - centralizacao e recuperacao privadas concluidas (2026-10-23)
 
 Estado atual substitui os recibos historicos de envio pendente abaixo.
