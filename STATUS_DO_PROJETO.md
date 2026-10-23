@@ -1,3 +1,42 @@
+## #344 - completude e correcao inativa preparadas, sem nova carga real (2026-10-23)
+
+Base 1789c1a9 / CI4472/4473 SUCCESS; mesma branch/Codespace, escritor unico.
+1208 produtos ligados por identidade nativa e classificados pelo enum existente,
+sem inferencia por nome/default. Classe original preservada na projecao
+grupo_legado; FK de grupo nao inventado. Restam 7 regras de unidade, agrupadas
+em uma familia de decisao privada, com 4 definicoes historicas de referencia.
+ZERO produtos liberados/gravados: nao houve piloto real de produtos neste lote.
+
+Correcao de nome inativo preparada no servico canonico e fixture sintetica:
+editar+importar, Grupo, CAS integral, auditoria/rollback, replay e reversao pelo
+recibo original. ID/codigo/status/procedencia preservados; nenhum grant/rota
+operacional novo. Fonte da unica linha real relida/conferida; plano privado
+PREPARED_NOT_AUTHORIZED_REAL_CORRECTION, nenhuma aplicacao ou reativacao real.
+
+19553 enderecos/apontamentos em 26 grupos; zero completos com evidencia atual.
+231 conflitos de formato (229 CEP/2 UF). Plano de vinculo por ID para 18555;
+998 de mestres nao carregados preservados. Nao sao contagens de pessoas.
+Sem gravar enderecos ou presumir numero/pais/rotulo/finalidade. 987 clientes
+nao ativos continuam preservados fora da carga.
+
+Leitura canonica REAL de duas paginas de clientes (total17471), duas amostras
+de fornecedor e 404 esperado no get de cliente inativo. Demo JSON/HTML privada,
+sem porta publica; banco de ensaio parado novamente. Recibos anteriores de
+carga/reuso/reversao preservados, nao repetidos.
+
+Candidato operacional privado preparado, ainda sem identidade/backup restaurado
+do destino, journals/schema, menor privilegio, crosswalk, reconciliacao de
+duplicidades no destino ou autorizacao de carga. Recuperacao do workspace/banco
+isolado nao e restauracao operacional. Proximos: confirmar as regras de unidade
+no relatorio privado e autorizar especificamente a correcao ou mante-la retida.
+Detalhes e referencias vigentes: docs/HANDOFF_ATUAL.md, secao #344 atual.
+Validacao focada: npm test direcionado 11 PASS/0 FAIL/0 SKIP; server 13
+PASS/0 FAIL/0 SKIP (7 correcao sintetica +6 regressao de identidade). Variante
+PostgreSQL real de mutacao nao acionada sem DATABASE_URL: nao conta como PASS.
+Leitura canonica do ensaio foi comprovada separadamente em PostgreSQL real.
+Checks de audit/lint/typecheck/build raiz/server e diff-check registrados no
+recibo final; 1 warning anterior no lint. Suites inalteradas reutilizadas.
+
 ## #344 - fornecedores e clientes em ensaio ampliado; produtos pendentes (2026-10-23)
 
 Atual: 18458 clientes processados, 17471 gravados/reutilizados na reexecucao,

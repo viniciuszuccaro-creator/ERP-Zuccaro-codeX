@@ -2,6 +2,7 @@ import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';
 import { restoreClienteBulkSnapshot } from './clienteBulkLifecycle.js';
+import { correctInactiveLegacyName } from './clienteLegacyNameCorrection.js';
 import { exportClientes } from './clienteExport.js';
 import type { AppliedBulkItem } from './cadastroBulkPolicy.js';
 import { AppError } from '../api/errors.js';
@@ -84,6 +85,10 @@ export class ClienteService {
 
   export(ctx: RequestContext, input: unknown) {
     return exportClientes({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard, tenant: this.tenantGuard }, ctx, input);
+  }
+
+  correctInactiveLegacyName(ctx: RequestContext, input: unknown) {
+    return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
   }
 
   async get(ctx: RequestContext, id: string) {

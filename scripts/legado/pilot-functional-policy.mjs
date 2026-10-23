@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mapLegadoRowToCanonicalStub, catalogarProdutoClasseUnidadeLegado } from './mapear-registro-sintetico.mjs';
+import { resolveProdutoTipoImportacao } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 
 export const rowHash = value => createHash('sha256').update(JSON.stringify(value) ?? 'undefined').digest('hex');
 export function projectionDifferences(payload, record) {
@@ -110,4 +111,116 @@ export function planProductEvidence(rows, unitRows, options = {}) {
   }
   return { processed: rows.length, deterministicallyReleased: released.length, released,
     pending: decisions.length, verifiedUnitRows: verifiedUnits.length, catalog, decisions };
+}
+
+/** Private rule review: native identities resolve provenance, never semantic approval by name. */
+export function resolveNativeProductRules(rows, materials, unitRows, { groupId, classificationRules = [], units = [] } = {}) {
+  const byCode = new Map(), details = [], released = [], decisions = new Map();
+  const truth = value => value === true || value === 'true';
+  const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+  const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
+  for (const material of materials) {
+    const key = String(material.CODIGOMATERIAL ?? '');
+    const entries = byCode.get(key) || []; entries.push(material); byCode.set(key, entries);
+  }
+  for (const [index, row] of rows.entries()) {
+    const identities = [...new Set([row.codigo_legado, row.codigo_origem, row.id_antigo].filter(Boolean).map(String))];
+    const source = identities.length === 1 ? byCode.get(identities[0]) || [] : [];
+    const triples = [...new Set(source.map(r => JSON.stringify([r.CODIGOCLASSE, r.UNIDADE, r.TIPOMATERIAL])))];
+    const native = triples.length === 1 ? JSON.parse(triples[0]).map(v => String(v ?? '')) : null;
+    const reasons = [];
+    let classification, unit;
+    if (identities.length !== 1 || !native || native.some(v => !v)) reasons.push('NATIVE_IDENTITY_OR_DEFINITION_CONFLICT');
+    else {
+      const matches = classificationRules.filter(rule => rule.group_id === groupId
+        && rule.sourceClassIds?.includes(native[0]) && rule.sourceTypeId === native[2]
+        && truth(rule.semantic_verified) && digest(rule.contract_sha256));
+      const types = [...new Set(matches.map(rule => {
+        const resolved = resolveProdutoTipoImportacao(rule.tipo_item);
+        return resolved && !resolved.requiresReview && !resolved.usedDefault ? resolved.value : null;
+      }).filter(Boolean))];
+      const nativeType = resolveProdutoTipoImportacao(native[2]);
+      const nativeTypeProven = !nativeType.requiresReview && !nativeType.usedDefault;
+      if (nativeTypeProven && types.every(type => type === nativeType.value)) classification = nativeType.value;
+      else if (!nativeTypeProven && types.length === 1 && matches.every(rule => {
+        const resolved = resolveProdutoTipoImportacao(rule.tipo_item);
+        return resolved && !resolved.requiresReview && !resolved.usedDefault;
+      })) classification = types[0];
+      else reasons.push('NATIVE_TYPE_TO_CANONICAL_CLASSIFICATION_REQUIRES_CONTRACT');
+      const approved = unitRows.filter(r => String(r.source_unit_code).trim() === native[1].trim() && uuid(r.approved_target_unit_id)
+        && truth(r.scope_verified) && truth(r.semantic_equivalence_verified));
+      const targets = [...new Set(approved.map(r => r.approved_target_unit_id))];
+      const candidates = targets.length === 1 ? units.filter(u => u.id === targets[0]) : [];
+      const target = candidates.length === 1 && candidates[0].group_id === groupId && candidates[0].ativo === true ? candidates[0] : null;
+      if (target) unit = target.id;
+      else reasons.push('UNIT_NATIVE_ID_SEMANTICS_AND_TARGET_SCOPE_REQUIRE_EVIDENCE');
+    }
+    const item = { index, sourceCode: row.codigo_legado, sourceClass: native?.[0], sourceUnit: native?.[1].trim(), sourceUnitRaw: native?.[1],
+      sourceType: native?.[2], canonicalClassification: classification ?? null,
+      classificationProven: Boolean(classification), nativeIdentityProven: Boolean(native && native.every(Boolean) && identities.length === 1), reasons };
+    details.push(item);
+    if (!reasons.length) released.push({ ...item, tipo_item: classification, unidade_medida_id: unit,
+      grupo_legado: native[0], grupo_produto_id: null });
+    for (const reason of reasons) {
+      const group = decisions.get(reason) || { reason, sourceClasses: new Set(), sourceTypes: new Set(), sourceUnits: new Set(), indices: [] };
+      if (native) { group.sourceClasses.add(native[0]); group.sourceUnits.add(native[1].trim()); group.sourceTypes.add(native[2]); }
+      group.indices.push(index); decisions.set(reason, group);
+    }
+  }
+  return { processed: rows.length, nativeIdentitiesProven: details.filter(x => x.nativeIdentityProven).length,
+    classificationsProven: details.filter(x => x.classificationProven).length,
+    released, pending: rows.length - released.length, details,
+    decisions: [...decisions.values()].map(d => ({ ...d, sourceClasses: [...d.sourceClasses], sourceTypes: [...d.sourceTypes], sourceUnits: [...d.sourceUnits] })),
+    conversionFactorsInvented: 0, approvalsByName: 0 };
+}
+
+/** Availability is not completeness. No address-number/country inference or postal lookup. */
+export function classifyLegacyAddresses(input, { validateAddress } = {}) {
+  const entries = [];
+  const required = ['nome', 'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'pais', 'finalidades'];
+  const add = (entity, index, kind, fields, conflict = []) => {
+    const available = required.filter(k => k === 'finalidades' ? Array.isArray(fields[k]) && fields[k].length > 0
+      : typeof fields[k] === 'string' && fields[k].trim());
+    if (!available.length && !conflict.length) return;
+    const missing = required.filter(k => !available.includes(k));
+    if (fields.cep && String(fields.cep).replace(/\D/g, '').length !== 8) conflict.push('CEP_FORMAT');
+    if (fields.uf && !/^[A-Za-z]{2}$/.test(String(fields.uf))) conflict.push('STATE_FORMAT');
+    const checked = !missing.length && !conflict.length && typeof validateAddress === 'function'
+      ? validateAddress(fields) : null;
+    entries.push({ entity, index, kind, available, missing, conflicts: [...new Set(conflict)],
+      canonicalReady: Boolean(checked?.success), sourcePreserved: true, fieldsInvented: [] });
+  };
+  for (const [index, row] of input.rows.cliente.entries()) {
+    for (const [kind, prefix] of [['principal', 'endereco_'], ['cobranca', 'cobranca_']]) {
+      const fields = Object.fromEntries(required.map(k => [k, row[prefix + k]]));
+      const legacyState = row[prefix + 'estado'];
+      const conflict = legacyState && fields.uf && String(legacyState).toUpperCase() !== String(fields.uf).toUpperCase()
+        ? ['STATE_FIELDS_CONFLICT'] : [];
+      fields.uf = fields.uf ?? legacyState;
+      add('cliente', index, kind, fields, conflict);
+    }
+  }
+  for (const [index, row] of input.rows.fornecedor.entries()) {
+    add('fornecedor', index, 'principal', { logradouro: row.endereco, cep: row.cep,
+      bairro: row.bairro, cidade: row.cidade, uf: row.estado });
+    if (row.endereco_cobranca) {
+      try {
+        const value = JSON.parse(row.endereco_cobranca);
+        if (!value || typeof value !== 'object' || Array.isArray(value)) add('fornecedor', index, 'cobranca', {}, ['BILLING_STRUCTURE']);
+        else add('fornecedor', index, 'cobranca', { ...value, logradouro: value.logradouro ?? value.endereco,
+          uf: value.uf ?? value.estado }, value.uf && value.estado && String(value.uf).toUpperCase() !== String(value.estado).toUpperCase()
+          ? ['STATE_FIELDS_CONFLICT'] : []);
+      } catch { add('fornecedor', index, 'cobranca', {}, ['BILLING_JSON_INVALID']); }
+    }
+  }
+  const groups = new Map();
+  for (const entry of entries) {
+    const key = JSON.stringify([entry.entity, entry.kind, entry.available, entry.missing, entry.conflicts]);
+    const group = groups.get(key) || { entity: entry.entity, kind: entry.kind, available: entry.available,
+      missing: entry.missing, conflicts: entry.conflicts, count: 0, indices: [] };
+    group.count++; group.indices.push(entry.index); groups.set(key, group);
+  }
+  return { addresses: entries.length, ready: entries.filter(e => e.canonicalReady).length,
+    missingRequired: entries.filter(e => e.missing.length).length, conflicting: entries.filter(e => e.conflicts.length).length,
+    entries, groups: [...groups.values()], fieldsInvented: 0 };
 }

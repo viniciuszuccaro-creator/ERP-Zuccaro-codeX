@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { preparePrivateInput, assertIsolationDescriptor } from './pilot-isolated.mjs';
 import { rowHash, selectFunctionalRows, planProductEvidence, projectionDifferences } from './pilot-functional-policy.mjs';
+import { reviewFunctionalCompleteness as runCompletenessReview } from './pilot-functional-review.mjs';
 
 const base = '/home/codespace/erp-legado-privado-20261023', repo = '/workspaces/ERP-Zuccaro-codeX';
 const baseline = '505a76ed06bf956a076f0e9577f8018ade1fa4b8';
@@ -261,4 +262,10 @@ export async function runFunctionalPilot() {
     fs.unlinkSync(lock);
   }
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await runFunctionalPilot();
+export async function reviewFunctionalCompleteness() {
+  return runCompletenessReview({ base, repo, json, run, mod, pause });
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv[2] === '--review') await reviewFunctionalCompleteness();
+  else await runFunctionalPilot();
+}

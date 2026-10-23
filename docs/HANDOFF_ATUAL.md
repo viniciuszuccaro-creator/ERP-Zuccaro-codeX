@@ -1,3 +1,124 @@
+## #344 - regras de produto, correcao preparada e completude privada (2026-10-23)
+
+ESTADO ATUAL: pacote independente concluido; carga de produtos e correcao real
+continuam retidas pelos gates abaixo. Base 1789c1a9ff82264c91b47da4cbe8ba1780eb0b7e,
+CI4472/4473 SUCCESS confirmado pelo proprietario. Mesmo Codespace e branch
+codex/consolidacao-infra-20261017, escritor unico. Provas anteriores, originais,
+captura/worktrees e staging preservados. Nenhuma transferencia ou carga anterior
+foi repetida. As secoes seguintes sao historicas onde divergem deste estado.
+
+### Produtos: resolvido versus indispensavel
+
+1208 identidades nativas e respectivas classes/unidades foram comprovadas por
+join exato aos materiais preservados. A natureza `TIPOMATERIAL` desses 1208
+resolve pelo enum/aliases existentes de `produtoTipoPolicy`, sem default nem
+comparacao de nomes. Isso NAO transforma a classe nativa em um GrupoProduto por
+palpite: o projetor preserva o codigo em `grupo_legado`; o FK `grupo_produto_id`
+nao comprovado fica separado como pendencia de completude.
+
+Restou UMA familia indispensavel para liberar produtos: equivalencia semantica,
+identidade e escopo de 7 codigos nativos de unidade utilizados nesta coorte.
+O catalogo historico de referencia, recuperado pelo hash ja registrado no
+manifesto, contem 4 definicoes com IDs/grandezas. Ele nao prova o estado atual
+de um destino operacional. Sigla identica e apenas candidato. O Grupo sintetico
+do ensaio ainda nao possui unidades mestres comprovadas. Nao foram criados
+fatores, unidades ou vinculos por conveniencia.
+
+Decisao privada agrupada por unidade, com quantidades afetadas e catalogo de
+referencia: `DECISOES_344_PRIVADAS.html`. Nao solicitar produto por produto.
+Resultado: 1208 classificacoes comprovadas, ZERO produtos liberados/gravados.
+Por isso nao houve carga, reexecucao ou reversao REAL de produtos neste lote;
+nao apresentar o teste sintetico do projetor como piloto PostgreSQL. Apos as
+unidades serem comprovadas, reutilizar o cadastro generico de UnidadeMedida,
+ProdutoService e importador existentes, nao criar persistencia paralela.
+
+### Uma correcao de nome inativo, ainda nao aplicada
+
+Preparada no ClienteService por auxiliar `clienteLegacyNameCorrection`:
+Grupo explicito, ator autenticado, permissoes existentes editar E importar,
+sem wildcard, sem empresa e sem reativacao. Somente nome de Pessoa Fisica
+importada inativa; ID/codigo/status/procedencia e demais campos preservados.
+Snapshot SQL integral bloqueado, CAS por fingerprint, operacao idempotente,
+auditoria na mesma transacao e rechecagem de permissao. Reversao utiliza o
+recibo persistido da operacao original, nao um nome anterior fornecido pelo
+chamador; edicao externa bloqueia em vez de ser sobrescrita.
+
+Fixture sintetica testa autorizacao/escopo, entrada adulterada, CAS, rollback
+da auditoria, replay, reversao e preservacao integral. O plano REAL privado
+foi preparado apos reler a linha no CSV com hash conferido e parser corrigido.
+Hashes na API documentam evidencia, nao autenticam uma fonte por si mesmos:
+o executor deve revalidar o plano/fonte antes de qualquer aplicacao autorizada.
+Nenhuma rota nova, grant ou permissao operacional foi criada. O update/get
+padrao de cliente inativo continua bloqueado. A linha REAL permanece em
+quarentena, `PREPARED_NOT_AUTHORIZED_REAL_CORRECTION`, aguardando autorizacao
+especifica para aplicar e conservar o mesmo ID/codigo/status.
+
+### Enderecos e leitura canonica
+
+19553 apontamentos de endereco classificados por disponibilidade, ausencias e
+conflitos: 18762 de clientes e 791 de fornecedores, em 26 grupos. Todos ainda
+carecem de campos obrigatorios comprovados (numero, pais, rotulo/finalidade);
+231 apontamentos possuem conflitos de formato: 229 CEP e 2 UF. Sao contagens
+de enderecos/apontamentos, NAO de pessoas distintas, e diferem da metrica antiga
+de auxiliares mistos de contato/endereco. Nada foi preenchido por suposicao.
+
+18555 apontamentos possuem plano de vinculo ao ID mestre do lote anterior,
+conferido por identidade legada; 998 pertencem a mestres nao carregados e
+permanecem preservados. ZERO novos enderecos/vinculos foram gravados. Os 987
+clientes nao ativos continuam fora da carga, sem reativacao implicita.
+Cadastro principal reconciliado NAO significa cadastro completo.
+
+Leitura PostgreSQL REAL pelo caminho canonico: ClienteService.list com filtro
+explicito de inativos, duas paginas distintas e total 17471; FornecedorService.get
+em duas amostras. Get padrao de cliente inativo retorna 404 como contratado.
+Demonstracao JSON/HTML privada preparada, sem servidor/porta/link publico.
+Sessao administrativa somente leitura; leituras canonicas existentes adquirem
+locks e usam transacoes que os permitem, mas nenhum metodo de mutacao foi
+invocado. Nao chamar todo o banco de read-only. Container novamente parado.
+
+### Candidato operacional: preparado, NAO autorizado
+
+Pacote privado identifica campos cobertos, entidades/coorte, rejeicoes,
+dependencias, escopo de mestre de Grupo, reconciliacao e plano de vinculos.
+Continuam nao comprovados: identidade do destino operacional; backup desse
+destino e ensaio de restauracao; schema/journals e colisoes de migrations;
+RBAC de menor privilegio; crosswalk Grupo/Empresa; duplicidades no destino;
+unidades/completude; autorizacao especifica de correcao e de carga.
+Adaptador PostgreSQL de mapa/ledger de enderecos na mesma transacao e prova de
+primeira corrida concorrente continuam gates proprios; nao sao substituidos
+pela fixture de nome ou pelos journals de arquivo do ensaio.
+
+Recuperar workspace ou o banco isolado NAO comprova restauracao do banco
+operacional. Reversao operacional deve limitar-se a registros criados pelo
+proprio lote, preservar preexistentes reutilizados e exigir CAS/auditoria;
+o harness de ensaio nao e um executor operacional. Nenhum saldo/estoque/titulo,
+emissao fiscal, merge, deploy ou migration operacional foi executado.
+
+### Validacao e retomada
+
+`npm test -- --test-reporter=tap tests/legado-completude.test.js` cobre as novas
+regras e o modo auxiliar sem mutacoes. Testes do server incluem a fixture nova
+de nome inativo e a regressao existente de identidade legada. PGlite/memoria
+nao sao prova de mutacao em servidor PostgreSQL. DATABASE_URL foi removida do
+ambiente dos testes: a variante PostgreSQL real desse teste de regressao nao
+foi acionada, nao deve ser contabilizada como aprovada. Resultados finais e
+checks obrigatorios constam no status do lote; suites inalteradas reutilizam a
+CI4472/4473, sem alegar nova execucao integral local.
+Fechamento focado: 11 PASS/0 FAIL/0 SKIP pelo npm test direcionado e 13
+PASS/0 FAIL/0 SKIP no server (7 da correcao e 6 de identidade/regressao).
+Audit, lint, typecheck e builds da raiz/server, mais diff-check, executados no
+lote. Lint conserva 1 warning anterior de diretiva desnecessaria, sem supressao
+nova. A primeira falha da fixture foi corrigida alinhando o cliente sintetico
+ao mestre de Grupo, sem conceder acesso adicional a dados de Empresa.
+
+O modo `--review` foi extraido em auxiliar do MESMO `pilot-functional.mjs` para
+manter o executor pequeno; nenhum segundo importador/ambiente foi criado.
+Retomada privada: `current-completeness.json` no staging homologado aponta o
+job; `receipt-index-private.json` identifica os recibos vigentes, demonstracao,
+decisoes agrupadas e candidato. Abrir o HTML apenas como arquivo privado;
+nao servir em porta publica, anexar ao GitHub/CI ou copiar dados para build.
+O agendamento Legado permanece pausado e os gates/custos anteriores preservados.
+
 ## #344 - ensaio funcional ampliado, com gates de produto e auxiliares abertos (2026-10-23)
 
 Estado atual: PARCIAL por entidade, exclusivamente em PostgreSQL 16 isolado.
