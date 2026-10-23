@@ -1,3 +1,112 @@
+## #344 - ensaio funcional ampliado, com gates de produto e auxiliares abertos (2026-10-23)
+
+Estado atual: PARCIAL por entidade, exclusivamente em PostgreSQL 16 isolado.
+Esta secao substitui as contagens atuais do piloto de 25 abaixo; os recibos
+anteriores continuam historicos validos e nao foram repetidos ou alterados.
+Base de codigo: 505a76ed06bf956a076f0e9577f8018ade1fa4b8, mesma branch
+codex/consolidacao-infra-20261017 e mesmo Codespace. Sem merge ou operacao.
+
+| Entidade | Origem/processados | Gravados | Reuso na carga/reexecucao | Rejeitados/bloqueados | Reconciliados | Pendentes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Clientes | 18458 | 17471 | 0 / 17471 | 987 nao ativos preservados | 17470 | 1 divergencia de nome; auxiliares separados |
+| Fornecedores | 790 | 790 | 0 / 790 | 0 | 790 | 1 auxiliar de cobranca |
+| Produtos | 1208 | 0 | 0 / nao executada | 0 rejeicoes de carga; carga nao liberada | 0 | 1208 por mapeamento de destino |
+
+Reexecucao dos lotes carregados: zero novos registros. Reversao logica de 17471
+clientes e 790 fornecedores, por 74 lotes/checkpoints, sem exclusao fisica,
+sem novos vinculos empresariais e sem movimentacao financeira/fiscal/estoque.
+IDs, codigos literais e procedencia mantidos. O grupo/ator sao sinteticos de
+ensaio: isso NAO comprova o crosswalk operacional de Grupo/Empresa nem a
+ausencia de duplicidade em qualquer banco operacional.
+
+O limite anterior de 25 era uma escolha explicita do executor (`slice(0,25)`),
+nao um limite formal do contrato. A ampliacao autorizada utilizou lotes de 250,
+journal privado retomavel e verificacao real de espaco no filesystem privado.
+Os 987 clientes nao ativos nao foram reativados ou carregados. O namespace do
+piloto original de 25 foi conferido por hash, preservado integralmente.
+
+### Implementacao e causa corrigida
+
+Nao existia persistencia SQL de Fornecedor para o importador. Foram reutilizados
+os campos do cadastro existente, validadores de documento, reserva canonica de
+codigo, DbClient, RBAC e auditoria. `FornecedorService` e repositorio PostgreSQL
+implementam mestre de Grupo, importacao estrita, locks deterministas,
+idempotencia com comparacao integral, auditoria transacional inclusive no reuso,
+rollback e reversao com lote/revisao/fingerprint. Nenhum consumidor ou dono do
+salvamento da UI foi substituido; nenhuma rota foi montada. Dados bancarios e
+campos fiscais nao pertencentes ao contrato sao rejeitados, nao inferidos.
+
+SQL permanece em `server/schema-candidates/fornecedor_master.sql`, FORA de
+`server/migrations`, sem numero, grants ou policies operacionais. Foi executado
+somente no destino de teste comprovado. Historico/journals dos destinos,
+identificacao/dependencias e menor privilegio operacional continuam gates;
+nenhuma migration aplicada foi alterada/renumerada.
+
+O Sniffer de CSV sobre apenas o cabecalho desativava `doublequote`, deslocando
+JSON com aspas escapadas. Corrigido parser com escape explicito e rejeicao de
+largura divergente; contraprova sintetica preserva cobertura. Entrada, fontes,
+pins e resultados anteriores foram preservados privadamente antes da retomada.
+Um nome de cliente ja carregado/revertido difere da projecao corrigida. Esta
+linha foi registrada como NAO reconciliada, sem sobrescrita ou reativacao:
+o servico atual nao edita cliente inativo. Decisao necessaria: fluxo autorizado
+de correcao auditada de cadastro inativo importado, preservando o mesmo ID,
+ou manter essa linha em quarentena. Nao houve relaxamento desse contrato.
+
+### Produtos, enderecos e continuidade privada
+
+Os 1208 produtos foram ligados por identidade nativa exata a uma extracao
+verificada de materiais, recuperando classe/unidade sem similaridade de nome.
+Lista privada objetiva: 73 grupos de decisao, 37 propostas de classe e 17
+propostas de unidade. Nenhuma equivalencia de destino possui comprovacao
+suficiente de escopo/semantica: zero aprovacoes automaticas, zero fatores de
+conversao inventados. Confirmar destinos, dimensoes e semantica por grupo antes
+da carga; nao confundir classificacao legada com regra fiscal.
+
+Clientes possuem 17480 apontamentos auxiliares (nao clientes distintos), com
+enderecos/contatos a revisar. Numero e pais do endereco canonico nao foram
+comprovados; nao foram preenchidos por palpite. Fornecedores preservam endereco
+plano do contrato existente e tem 1 auxiliar de cobranca pendente. Portanto
+cadastro completo, enderecos e dependencias auxiliares NAO estao homologados.
+
+Dados, identidades, caminhos de fontes, manifestos detalhados e relatorios
+continuam privados fora do checkout/Git/build/CI. Retomada localiza o job pelo
+ponteiro privado `current-functional.json` no staging ja autorizado; preservar
+input, journal, state, pins e recibos antes de qualquer alteracao. Alteracao de
+fonte/codigo exige comparacao e transicao explicita de hashes, nao nova carga
+cega. O banco isolado fica parado com os arquivos preservados. Nao repetir o
+piloto original, transferir o backup novamente ou acessar banco operacional.
+
+### Validacao desta composicao
+
+Recuperacao REAL apos parar/reiniciar o mesmo cluster: identidade do PostgreSQL
+conferida, snapshots canonicos integrais de 17471 clientes e 790 fornecedores
+iguais aos recibos de reversao, piloto anterior intacto. Auditoria persistente:
+17471 create + 17471 possible_duplicate + 17471 soft_delete de Cliente;
+790 create + 790 possible_duplicate + 790 soft_delete de Fornecedor.
+Container novamente parado, banco e relatorios privados preservados. A primeira
+checagem auxiliar de leitura usou formato de timestamp diferente do DTO;
+corrigida para usar os repositorios canonicos, sem mudar dados ou produto.
+
+Testes focados: 18 PASS / 0 FAIL / 0 SKIP de politica/parser/isolamento; 7 PASS /
+0 FAIL / 0 SKIP no fixture sintetico PGlite de Fornecedor. PGlite nao e prova
+de persistencia em servidor PostgreSQL; os lotes reais acima sao prova separada.
+Reutilizados os 2242 PASS e CI4470/4471 SUCCESS de 505a76ed para superficie
+inalterada; isso NAO e uma nova execucao integral local da composicao atual.
+Comandos focados: `node --test tests/legado-piloto-funcional.test.js
+tests/legado-piloto-isolado.test.js` e `node --import
+./server/node_modules/tsx/dist/loader.mjs --test server/tests/fornecedor-import.test.ts`.
+Recibos privados distinguem falhas iniciais do harness, correcoes e resultados
+finais; nenhuma permissao de empresa foi ampliada para corrigir o fixture.
+Fechamento: `npm run audit:baseline`, `npm run lint`, `npm run typecheck`,
+`npm run build`, `npm --prefix server run typecheck`, `npm --prefix server run build`
+e `git diff --check`: PASS, exit 0. Lint mantem 1 aviso anterior de diretiva
+eslint-disable desnecessaria; sem nova supressao ou mudanca de baseline.
+Avisos de tamanho de chunks do build nao foram tratados como falhas.
+
+Regra-Mae, Comercial 360, originais/captura/worktrees, rotas inativas,
+agendamento Legado pausado e bloqueio de custos permanecem. Publicar codigo nao
+autoriza merge, deploy, carga operacional ou acesso ao HD por outros ambientes.
+
 ## #344 - piloto isolado de clientes executado; demais entidades em quarentena (2026-10-23)
 
 Estado atual: autorizacao expressa posterior permite SOMENTE o piloto isolado.

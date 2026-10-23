@@ -31,7 +31,7 @@ let pool = null;
 let complete = false;
 const report = { operationalImport: false, authorization: '#344 ISOLATED_PILOT_ONLY', entities: {} };
 
-function preparePrivateInput() {
+export function preparePrivateInput(targetRoot) {
   const s = fs.lstatSync(privateBase);
   if (s.isSymbolicLink() || s.uid !== process.getuid() || (s.mode & 0o777) !== 0o700) throw new Error('PRIVATE_BASE_INVALID');
   const b = fs.readFileSync(path.join(privateBase, 'inbound/staging-vps.manifest.gcm'));
@@ -40,11 +40,20 @@ function preparePrivateInput() {
   const d = crypto.createDecipheriv('aes-256-gcm', key, b.subarray(7, 19));
   d.setAAD(Buffer.from('ERPLEG1')); d.setAuthTag(b.subarray(-16));
   const manifest = JSON.parse(Buffer.concat([d.update(b.subarray(19, -16)), d.final()]));
-  root = path.join(privateBase, 'pilot-344-' + crypto.randomBytes(8).toString('hex'));
-  fs.mkdirSync(root, { mode: 0o700 });
+  if (targetRoot) {
+    const stat = fs.lstatSync(targetRoot);
+    if (path.dirname(targetRoot) !== privateBase || !/^functional-344-[a-f0-9]{16}$/.test(path.basename(targetRoot))
+      || !stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== process.getuid()
+      || (stat.mode & 0o777) !== 0o700 || fs.existsSync(path.join(targetRoot, 'input.json'))) throw new Error('FUNCTIONAL_ROOT_INVALID');
+    root = targetRoot;
+  } else {
+    root = path.join(privateBase, 'pilot-344-' + crypto.randomBytes(8).toString('hex'));
+    fs.mkdirSync(root, { mode: 0o700 });
+  }
   // These verified manifest entries were matched by headers during precheck.
   const sourceFiles = [[2, 'cliente'], [3, 'fornecedor'], [4, 'produto']]
     .map(([index, entity]) => ({ ...manifest.files[index], entity }));
+  if (targetRoot) sourceFiles.push({ ...manifest.files[372], entity: 'unitMap' });
   save('source-descriptors.json', { sourceFiles });
   const python = `import csv,json,pathlib,sys,os,hashlib
 os.umask(0o077)
@@ -52,15 +61,17 @@ root=pathlib.Path(sys.argv[1]); base=root.parent/'recovered'
 descriptors=json.loads((root/'source-descriptors.json').read_text())
 rows={}
 required={'cliente':{'codigo_legado','tipo','cpf','cnpj','razao_social'},'fornecedor':{'codigo_legado','tipo_pessoa','cpf_cnpj'},'produto':{'codigo_legado','tipo_item','unidade_principal'}}
+required['unitMap']={'approved_target_unit_id','scope_verified','semantic_equivalence_verified'}
 for f in descriptors['sourceFiles']:
  p=base/f['relativePath']
  assert p.resolve().is_relative_to(base.resolve()) and not p.is_symlink()
  assert hashlib.sha256(p.read_bytes()).hexdigest()==f['sha256']
  with p.open(encoding='utf-8-sig',newline='') as h:
   first=h.readline(); dialect=csv.Sniffer().sniff(first,delimiters=',;\\t|'); h.seek(0)
-  reader=csv.DictReader(h,dialect=dialect)
+  reader=csv.DictReader(h,delimiter=dialect.delimiter,quotechar='"',doublequote=True,strict=True)
   assert required[f['entity']].issubset(set(reader.fieldnames))
   rows[f['entity']]=list(reader)
+  assert all(None not in row and all(value is not None for value in row.values()) for row in rows[f['entity']])
 data={'authorization':'#344 ISOLATED_PILOT_ONLY','sourceFiles':descriptors['sourceFiles'],'rows':rows}
 (root/'input.json').write_text(json.dumps(data,ensure_ascii=True))
 print(json.dumps({k:len(v) for k,v in rows.items()}))
@@ -70,8 +81,9 @@ print(json.dumps({k:len(v) for k,v in rows.items()}))
     fs.writeFileSync(path.join(root, 'preparation-failure-private.txt'), result.stderr, { mode: 0o600 });
     throw new Error('PRIVATE_INPUT_PREPARATION_FAILED');
   }
-  fs.writeFileSync(path.join(privateBase, 'current-pilot.json'), JSON.stringify({ root }), { mode: 0o600 });
+  if (!targetRoot) fs.writeFileSync(path.join(privateBase, 'current-pilot.json'), JSON.stringify({ root }), { mode: 0o600 });
   console.log(JSON.stringify({ prepared: true, sourceRows: JSON.parse(result.stdout) }));
+  return root;
 }
 
 // Execution-only harness: existing mappers, services, repositories and audit own

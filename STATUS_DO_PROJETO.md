@@ -1,3 +1,39 @@
+## #344 - fornecedores e clientes em ensaio ampliado; produtos pendentes (2026-10-23)
+
+Atual: 18458 clientes processados, 17471 gravados/reutilizados na reexecucao,
+987 nao ativos preservados fora da carga, zero duplicacoes na reexecucao.
+17470 reconciliados; 1 nome divergente apos correcao do parser permanece em
+quarentena, ja revertido, sem reativacao ou sobrescrita. 790 fornecedores
+processados/gravados/reutilizados/reconciliados, zero rejeicoes. Reversao logica
+de todos os registros carregados, 74 lotes retomaveis, zero ativos restantes,
+zero exclusoes fisicas ou vinculos empresariais novos. Piloto anterior de 25
+preservado por hash, nao repetido. Nao extrapolar duplicidade ao operacional.
+
+Persistencia canonica de Fornecedor preparada com RBAC, contexto de Grupo,
+codigo backend, auditoria/rollback, replay estrito e reversao CAS integral.
+SQL candidato fora de migrations automaticas, aplicado SOMENTE no teste.
+Parser CSV corrigido por causa comprovada (doublequote/header Sniffer), com
+teste sintetico de JSON escapado e largura invalida. Fontes/provas anteriores
+preservadas antes de transicao explicita de hashes.
+
+Produtos: 1208 ligados por identidade nativa a classe/unidade; 73 grupos de
+decisao privada, 37 propostas de classe e 17 de unidade. Zero carga/aprovacao
+automatica: escopo/semantica do destino ainda nao comprovados. Clientes tem
+17480 apontamentos auxiliares; fornecedores 1 de cobranca. Numero/pais de
+endereco nao inventados, cadastro completo nao homologado.
+
+Focados: 18 PASS politica/parser/isolamento + 7 PASS PGlite sintetico,
+0 FAIL/0 SKIP. Lotes PostgreSQL reais sao prova separada. CI4470/4471 e 2242
+PASS anteriores reutilizados somente para codigo inalterado, nao nova suite
+integral. Detalhes, comandos, gates e retomada: docs/HANDOFF_ATUAL.md, secao #344
+atual. Proximos: decidir mapas de destino, corrigir nome inativo por fluxo
+auditado aprovado ou manter quarentena; comprovar enderecos/dependencias antes
+de novo lote. Sem merge/deploy/carga operacional, originais intactos.
+Recuperacao apos reinicio conferiu integralmente os 18261 snapshots revertidos,
+mesmo cluster e piloto anterior intactos; auditorias create/reuso/reversao
+persistentes por entidade. Banco parado novamente. Audit/lint/typecheck/build,
+typecheck/build do server e diff-check PASS/exit0; 1 warning anterior no lint.
+
 ## #344 - piloto isolado real de clientes verificado (2026-10-23)
 
 Estado atual: PARCIAL por entidade. Autorizacao posterior liberou o ensaio
