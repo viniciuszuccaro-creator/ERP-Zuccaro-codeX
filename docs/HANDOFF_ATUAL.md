@@ -1,3 +1,115 @@
+## #344 - centralizacao privada EM EXECUCAO, staging recuperado (2026-10-23)
+
+Esta execucao NAO foi somente diagnostico. O coordenador ERP ZUCCARO -
+CODEX/CURSOR usa SSH/SFTP ja configurados na estacao com HD; nenhum segredo
+exposto, chave SSH copiada, login repetido ou permissao de conta ampliada.
+Codigo do ERP continua no Codespace unico; nenhuma frente de implementacao
+paralela foi aberta. Original, worktrees e captura de codigo intocados.
+
+### Conjunto e resultados efetivamente comprovados
+
+Conjunto selecionado: copia original, bases SQL de trabalho, extracoes/staging,
+mapeamentos/manifests/checkpoints, relatorios privados, quarentena preservada
+sem executar binarios e snapshot do importador com proveniencia. Alvo2836arquivos,
+48359509373bytes de origem. Instaladores5arquivos/1475316551bytes ficaram fora
+do conjunto de migracao, preservados no HD. A validacao historica do original
+registrava1857arquivos/21102245906bytes; contagem/tamanho atuais coincidem.
+Isso nao substitui a nova verificacao SHA256 da copia remota.
+
+CONCLUIDO e recuperado na VPS: staging913arquivos/287977635bytes, incluindo
+extracoes, relatorios e mapeamentos existentes; snapshot de codigo5arquivos/
+64739bytes. Total918arquivos/288042374bytes verificados por tamanho e SHA256.
+Onze arquivos foram reutilizados das copias privadas preexistentes, sem
+duplicacao. Fonte/copia SQL antiga, staging parcial e backup operacional do ERP
+novo permanecem categorias distintas; nao se inferiu equivalencia por nome.
+
+Verificacao remota leu os arquivos recuperados do arquivo cifrado e comparou
+TODOS os hashes do lote, conferiu referencias reutilizadas e materializou uma
+amostra privada de recuperacao. Nao abriu registros em chat/log nem executou
+importador, SQL, binario legado ou operacao de negocio. Proveniencia do
+importador: baseef4b14f2c8aa94ceed07a867905b50ef378c7e38, fontes pendentes
+preservadas com diff e hashes; referencia publicada antes deste lotef38202d5.
+Nao e clone independente de uma worktree nem nova versao do ERP.
+
+Original1857arquivos/21102245906bytes: hashes de origem computados; envio ainda
+EM EXECUCAO. Checkpoint13:49 BRT:10blocos cifrados/671088990bytes ja conferidos
+no destino,290referencias reutilizaveis identificadas. Esses bytes sao de
+blocos comprimidos/cifrados, NAO equivalem a backup original concluido.
+Bases SQL21arquivos/26964656868bytes e quarentena40arquivos/4564225bytes seguem
+na fila sequencial. Conclusao somente com manifest final e recuperacao integral
+de cada lote, nunca pelo inicio do processo. Consultar checkpoints PRIVADOS
+para progresso posterior; esta secao e recibo datado, nao monitor ao vivo.
+
+### Destino, protecao e retomada
+
+Destino: /root/erp-private/centralizacao-legado-20261023, fora aplicacao,
+repositorio, build e diretorios publicos; root:root700. Chaves DE DADOS por lote
+em diretorio separado root700/arquivos600, nao chaves SSH pessoais. AES256GCM
+com nonce por objeto e autenticacao; transporte SSH com hostkey estrita.
+Chave e cifrado estao no mesmo host sob controle root: nao se afirma HSM,
+criptografia de disco ou protecao contra administrador/provedor desse host.
+Recuperacao com essas chaves foi comprovada no staging. Sem cobranca nova.
+
+Capacidade inicial83992358912bytes livres; alvo bruto48.36GB, compressao e reuso
+diminuem ocupacao. Manter folga durante a fila; nunca apagar backups existentes
+para abrir espaco. Nenhuma copia integral foi duplicada por conveniencia.
+
+Processo Windows em segundo plano, oculto, com checkpoints atomicos e lock de
+um worker, sem agendamento novo. Blocos64MiB; SFTP put inicial e reput apenas
+quando parcial existe, seguido de tamanho/SHA256 antes da promocao do objeto.
+Teste sintetico de retomada32KiB->128KiB e SHA256 PASS; AESGCM roundtrip,
+rejeicao de adulteracao e replay deterministico PASS. Primeira tentativa reput
+sem arquivo remoto falhou, corrigida sem descartar fonte/checkpoint. Reuso
+tambem referencia lotes anteriores verificados, evitando reenviar bytes iguais.
+
+Checkpoint detalhado local e espelho CIFRADO na VPS registram objetos/ordem/
+referencias. Retomar SOMENTE o helper privado existente transfer-private.mjs
+--all na estacao habilitada; lock recusa worker simultaneo. Nao matar processos
+de terceiros nem iniciar outro pipeline. Sem HD a recuperacao dos lotes ja
+verificados ocorre no host privado; a copia integral pendente ainda depende da
+continuidade desse job. Agendamento Continuar legado ERP Zuccaro continua PAUSED.
+
+Ferramentas auxiliares PRIVADAS, nao outro importador, preservadas na estacao e
+no destino; inventarios/mapeamentos/fontes canonicas reutilizados:
+- transfer-private.mjs SHA256c9e58be6d894615bdb423b8873d092e0f9f02810c868fde95e6257e92974b806
+- remote-recovery.py SHA256065b87dae6e17699c4bd3cc4fdc608f47caee261a72e5af40b048f1e05a3c3df
+- checkpoint-mirror.mjs SHA256718b8ec2a56bf3c97ca0bc49e57ef84eab730f1cd5f46bdaf1d5ba88962da12f
+- codespace-recovery.mjs SHA2560409face2669dc1220b52e36f349bfe6adcf8a03963812ac043cb2041d554968
+Manifestos detalhados, hashes vinculaveis a dados, nomes reais e chaves ficam
+PRIVADOS. Os hashes acima sao somente dos scripts auxiliares, nao dos dados.
+
+### Acesso do proximo executor: bloqueio concreto, nao presumido
+
+A recuperacao na VPS foi executada e comprovada por este coordenador usando o
+canal SSH existente. Isso NAO comprova acesso do Codespace aos dados.
+Codespace possui pasta privada fora checkout/build, ownerUID1000/modo700 e
+16807477248bytes livres no preparo. Lote cifrado foi obtido DE VOLTA da VPS,
+com hash conferido, para provar a origem da futura copia de trabalho.
+
+Upload pelo Explorer web, dentro da pasta privada inbound, falhou ANTES de
+enviar arquivos: extensao Chrome exige Allow access to file URLs. Nenhuma
+permissao ampliada ou contorno executado; inbound permaneceu vazio.
+Intervencao: titular pode fazer upload manual dos artefatos indicados no recibo
+privado para a pasta inbound, ou habilitar conscientemente essa opcao em
+chrome://extensions > ChatGPT > Detalhes. Chave exclusiva de DADOS do lote,
+nao chave SSH pessoal; nunca colar seu valor no chat. Depois executar o helper
+de recuperacao no terminal, conferir913arquivos/tamanho/SHA e manter600/700.
+Ate essa prova, Codespace/Cursor NAO declarados habilitados para dados reais.
+
+VPS transferindo normalmente: nao houve motivo para duplicar o conjunto no
+Drive. Buscas anteriores metadata-only sem pasta pertinente nao comprovam
+capacidade/ACL de destino Drive. Sem links publicos ou upload para GitHub/CI.
+
+Proxima etapa: concluir/verificar original e bases de trabalho; resolver o
+upload controlado e comprovar recuperacao no executor seguinte. Depois validar
+origem/IDs/vinculos e reconciliacao do lote piloto isolado pelo importador
+canonico, sem deduzir empresa por palpite. Piloto PREPARED_NOT_AUTHORIZED,
+sem banco operacional, migrations, merge, deploy ou mudanca fiscal.
+Lote Git somente documental: diff-check/allowlist/sanitizacao, sem repetir
+suites de aplicacao cujo runtime nao mudou. CI deste SHA registrada na344.
+
+### Historico preservado: precheck e entregas anteriores
+
 ## Coordenacao local retomada e precheck privado #344 (2026-10-23)
 
 Por decisao posterior do proprietario, o chat existente ERP ZUCCARO -

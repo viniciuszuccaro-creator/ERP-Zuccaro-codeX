@@ -1,3 +1,29 @@
+## #344 - transferencia privada executada, conclusao integral pendente (2026-10-23)
+
+VPS recebeu e recuperou staging913arquivos/287977635bytes e snapshot do
+importador5arquivos/64739bytes:918arquivos/288042374bytes verificados por
+tamanho e SHA256, onze reusos de copias anteriores. Originais intocados.
+
+Alvo total2836arquivos/48359509373bytes; instaladores preservados fora do lote.
+Backup original EM TRANSFERENCIA: checkpoint13:49 BRT,10blocos cifrados/
+671088990bytes verificados, NAO backup concluido. Bases SQL/quarentena na fila.
+Job retomavel em segundo plano e checkpoints locais/remotos privados cifrados;
+nenhum agendamento novo, Legado PAUSED. Recuperacao do staging comprovada.
+
+Destino root700, objetos/chaves de dados600, AES256GCM/SSH existente; chaves
+separadas no mesmo host, sem alegar HSM/protecao contra root/provedor.
+Codespace: pasta fora checkout700 preparada, mas ZERO dados recebidos.
+Upload web bloqueado por Allow access to file URLs na extensao Chrome;
+nao ampliado/contornado. Acesso real Codespace/Cursor continua NAO COMPROVADO.
+Procedimento, scripts/SHAs, recuperacao e limites no topo HANDOFF_ATUAL.md.
+
+Somente continuidade sanitizada no Git; sem manifestos reais/chaves/backups.
+Checks documentais, sem runtime alterado ou suite inalterada repetida.
+Ainda nao e centralizacao integral concluida nem importacao operacional.
+Piloto PREPARED_NOT_AUTHORIZED, custo/gates/originais preservados.
+
+### Historico preservado: precheck344
+
 ## #344 - coordenacao retomada e copias privadas identificadas (2026-10-23)
 
 Coordenador volta ao chat ERP ZUCCARO - CODEX/CURSOR por decisao expressa.
