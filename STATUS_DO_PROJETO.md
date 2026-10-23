@@ -1,3 +1,31 @@
+## #348 — relatórios recuperados com contrato autorizado (2026-10-23)
+
+Basefa720fea, mesmo Codespace/branch PR342 sobre334, único escritor. Três leitores
+existentes agora compartilham autorização backend/Grupo/Empresa/projeção; bulk
+pré-autorizado, contagem sem cap fingindo total, sem fallback global. Reintegradas
+abas Representantes/Personalizado nos componentes existentes, com paginação,
+completude explícita, CSV integral limitado, proteção contra fórmulas, reautorização
+e auditoria bloqueante. Comissão é estimativa autorizada; gráficos Personalizado
+identificam página. Cache invalida ator/sessão/escopo/grants e descarta resposta tardia.
+
+Arquivos: entityListSorted/countEntities/getEntityRecord; nova extração interna
+entityReadPolicy/csv; tipos da policy MFA; Relatorios, DashboardRepresentantes,
+RelatorioPersonalizado, useSecureReport, exportUtils; fixtures/testes comportamentais
+e contrato de fronteiras. Justificativa de extrações/causa/limites no topo do HANDOFF.
+Sem alterar Produto, persistência Comercial, registros ou IDs.
+
+Foco56 PASS/0 FAIL/0 SKIP; suíte geral2225 PASS/0 FAIL/0 SKIP; todos checks obrigatórios
+exit0 e policy backend tipada adicionalmente. Hash histórico original preservado,
+com exclusão EXATA do delta autorizado e testes contra alterações indevidas.
+Primeira geral falhou1/hash; repetição passou. Lint intermediário143, final0;
+um warning preexistente. Último delta de filtro/ordenação coberto no foco56.
+
+Contrato funcional comprovado por componentes/handlers reais com transporte fixture
+sintético. HTTP/local permanecem bloqueados sem adaptador seguro; nenhum deploy ou
+registro recuperado deduzido. Commit desta seção/push mesma branch; confirmação
+SHA/CI na348. Próximo347 autorizado, gate visual mantido;344 continua dependente do
+vínculo privado documentado, sem repetir tentativa. Agendamento PAUSED.
+
 ## #346 — ações de Orçamento vinculadas à sessão (2026-10-23)
 
 Nova ordem346→348→347 recebida/ACEITO na issue346 pelo Codespace único

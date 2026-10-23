@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import ts from 'typescript';
-import {primitiveUiEdits,primitiveUiBoundaryRemainder} from './helpers/primitiveUiBoundaryRemainder.js';
+import {primitiveUiEdits,primitiveUiBoundaryRemainder,reportRecoveryEdits} from './helpers/primitiveUiBoundaryRemainder.js';
 import {assertSeparacaoChecklist} from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
 
 const hashes = [
@@ -103,4 +103,14 @@ test('exact boundary helper cannot hide missing, duplicate, reordered formulas o
   assert.equal(hashes.length,18);assert.equal(Object.keys(primitiveUiEdits).length,18);
   for(const [file,edits]of Object.entries(primitiveUiEdits)){const source=read(file),[after]=edits[0];assert.throws(()=>primitiveUiBoundaryRemainder(file,source.replace(after,'SYNTHETIC_MISSING')));assert.throws(()=>primitiveUiBoundaryRemainder(file,source+'\n'+after));}
   const [file,beforeHash]=hashes[0];assert.notEqual(hash(primitiveUiBoundaryRemainder(file,read(file))+'\nthrow new Error("synthetic unrelated edit");'),beforeHash);
+});
+
+test('#348 recovery exclusions reject missing/duplicated hunks and preserve the original full-page remainder hash',()=>{
+  const file='src/pages/Relatorios.jsx',source=read(file),beforeHash=hashes.find(([name])=>name===file)[1];
+  assert.equal(hash(primitiveUiBoundaryRemainder(file,source)),beforeHash);
+  for(const [after] of reportRecoveryEdits) {
+    assert.throws(()=>primitiveUiBoundaryRemainder(file,source.replace(after,'')));
+    assert.throws(()=>primitiveUiBoundaryRemainder(file,source+'\n'+after));
+  }
+  assert.notEqual(hash(primitiveUiBoundaryRemainder(file,source+'\nthrow new Error("synthetic unauthorized edit");')),beforeHash);
 });

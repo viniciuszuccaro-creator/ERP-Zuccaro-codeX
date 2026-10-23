@@ -26,10 +26,12 @@ const RentabilidadeCliente = React.lazy(() => import("@/components/relatorios/Re
 const RentabilidadeProduto = React.lazy(() => import("@/components/relatorios/RentabilidadeProduto"));
 const DashboardInadimplencia = React.lazy(() => import("@/components/relatorios/DashboardInadimplencia"));
 const RelatorioVendasPorRegiao = React.lazy(() => import("@/components/relatorios/RelatorioVendasPorRegiao"));
+const RelatorioPersonalizado = React.lazy(() => import("@/components/relatorios/RelatorioPersonalizado"));
 const DashboardRepresentantes = React.lazy(() => import("@/components/relatorios/DashboardRepresentantes"));
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
+import { hasReportGrant } from "@/components/relatorios/useSecureReport";
 import usePermissions from "@/components/lib/usePermissions";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
@@ -44,14 +46,15 @@ const RelatorioEstoque = React.lazy(() => import("@/components/relatorios/Relato
 const RelatorioProducao = React.lazy(() => import("@/components/relatorios/RelatorioProducao"));
 const RelatorioDRE = React.lazy(() => import("@/components/relatorios/RelatorioDRE"));
 
+let reportSequence = 0;
+
 export default function Relatorios() {
-  const [activeTab, setActiveTab] = useState("vendas");
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    let initial = params.get('tab');
-    if (!initial) { try { initial = localStorage.getItem('Relatorios_tab'); } catch (error) { console.warn('[Relatorios] Falha ao restaurar aba', error); } }
-    if (initial) setActiveTab(initial);
-  }, []);
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = new URLSearchParams(window.location.search).get('tab');
+    if (tab) return tab;
+    try { return localStorage.getItem('Relatorios_tab') || 'vendas'; }
+    catch { return 'vendas'; }
+  });
   const handleTabChange = (value) => {
     setActiveTab(value);
     const url = new URL(window.location.href);
@@ -81,7 +84,9 @@ export default function Relatorios() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
+  const { hasPermission,user,perfilAcesso,isLoading:permissionsLoading } = usePermissions();
+  const reportSession = useMemo(() => ++reportSequence,[user,perfilAcesso]);
+  const secureTab = ["representantes","personalizado"].includes(activeTab);
   const hasContextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);
   const canViewRelatorios = hasPermission('Relatórios', null, 'visualizar') || hasPermission('Relatorios', null, 'visualizar') || hasPermission('Relatórios', null, 'ver');
   const canExportRelatorios = hasPermission('Relatórios', null, 'exportar') || hasPermission('Relatorios', null, 'exportar');
@@ -108,33 +113,33 @@ export default function Relatorios() {
   };
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryKey: ['clientes', user?.id,reportSession,empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
-    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios && !permissionsLoading && !secureTab && hasPermission('Cadastros','Pessoas','visualizar'))
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryKey: ['pedidos', user?.id,reportSession,empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
-    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios && !permissionsLoading && !secureTab && hasPermission('Comercial','pedido','visualizar'))
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryKey: ['produtos', user?.id,reportSession,empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
-    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios && !permissionsLoading && !secureTab && hasPermission('Estoque','Produtos','visualizar'))
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryKey: ['contasReceber', user?.id,reportSession,empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
-    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios && !permissionsLoading && !secureTab && hasPermission('Financeiro','ContaReceber','visualizar'))
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryKey: ['contasPagar', user?.id,reportSession,empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999),
-    enabled: Boolean(hasContextoAtivo && canViewRelatorios)
+    enabled: Boolean(hasContextoAtivo && canViewRelatorios && !permissionsLoading && !secureTab && hasPermission('Financeiro','ContaPagar','visualizar'))
   });
 
   const filtrarPorPeriodo = (data, campo = 'created_date') => {
@@ -423,6 +428,8 @@ export default function Relatorios() {
             <Calendar className="w-4 h-4 mr-2" />
             Agendamento
           </TabsTrigger>
+          {hasReportGrant(perfilAcesso,'Comercial','Representantes','visualizar') && <TabsTrigger value="representantes">Representantes</TabsTrigger>}
+          {hasReportGrant(perfilAcesso,'Relatorios','Personalizado','visualizar') && <TabsTrigger value="personalizado">Personalizado</TabsTrigger>}
           <TabsTrigger value="vendas" data-permission="Comercial.visualizar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />Vendas
           </TabsTrigger>
@@ -538,6 +545,12 @@ export default function Relatorios() {
           <Suspense fallback={<div>Carregando...</div>}><AgendamentoRelatorios empresaId={empresaAtual?.id} /></Suspense>
         </TabsContent>
 
+        <TabsContent value="representantes">
+          {activeTab === 'representantes' && !permissionsLoading && hasReportGrant(perfilAcesso,'Comercial','Representantes','visualizar') && <Suspense fallback={<div>Carregando...</div>}><DashboardRepresentantes /></Suspense>}
+        </TabsContent>
+        <TabsContent value="personalizado">
+          {activeTab === 'personalizado' && !permissionsLoading && hasReportGrant(perfilAcesso,'Relatorios','Personalizado','visualizar') && <Suspense fallback={<div>Carregando...</div>}><RelatorioPersonalizado /></Suspense>}
+        </TabsContent>
         <TabsContent value="vendas">
           <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioVendas /></Suspense>
         </TabsContent>

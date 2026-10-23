@@ -1,3 +1,13 @@
+## #348 — recuperação publicada no lote desta seção (2026-10-23)
+
+Contrato compartilhado de leitura corrigido nos três handlers existentes;
+Representantes/Personalizado reintegrados com RBAC próprio, escopo, projeção,
+paginação/completude e exportação auditada. Foco56 e geral2225 PASS, checks exit0.
+Detalhes/limites no topo do HANDOFF e STATUS: HTTP/local continuam indisponíveis
+sem adaptador seguro, sem deploy ou recuperação de registros presumidos.
+Próximo347 já autorizado: prévia privada/gate visual; legado344 segue separado,
+sem canal privado e sem repetição de inventário/tentativa. PAUSED preservado.
+
 ## Recuperacao e evolucao com referencia externa — investigacao integrada (2026-10-23)
 
 ## Fila346→348→347 — execução atual (2026-10-23)
@@ -70,7 +80,7 @@ Evidencia do achado de Relatorios: referencia src/pages/Relatorios.jsx linhas108
 | Producao | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
 | ProducaoMobile | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
 | RH | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
-| Relatorios | 11 | 9 | Entradas representantes/personalizado ausentes; componentes atuais preservados (issue348) |
+| Relatorios | 11 | 11 | Entradas recuperadas348; contrato remoto testado, sem deploy; HTTP/local bloqueados |
 
 Abas dinamicas/configuradas por dados nao entram nessa contagem; zero nao significa pagina vazia. Para todos os modulos acima, o detalhamento deve registrar rotas/imports/consumidores, abas/campos/acoes, perm/contexto/config, teste e disponibilidade na interface antes de classificar como funcionando ou inferior. ERP implantado nao e deduzido de codigo/CI.
 

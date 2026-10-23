@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -11,9 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Download, Filter, BarChart3, FileText, Table as TableIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import useContextoVisual from "@/components/lib/useContextoVisual";
-import usePermissions from "@/components/lib/usePermissions";
-import { useUser } from "@/components/lib/UserContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   BarChart,
@@ -31,13 +26,10 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-const sanitizeText = (value) => String(value ?? "").replace(/[<>]/g, "").replace(/javascript:/gi, "").replace(/\r?\n/g, " ").trim();
-const sanitizeCsvCell = (value) => {
-  const sanitized = sanitizeText(typeof value === "object" ? JSON.stringify(value) : value);
-  return sanitized.includes(",") || sanitized.includes('"') ? `"${sanitized.replace(/"/g, '""')}"` : sanitized;
-};
+import useSecureReport from "./useSecureReport";
+import { toast } from "sonner";
 
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 export default function RelatorioPersonalizado() {
   const [config, setConfig] = useState({
     entidade: 'Pedido',
@@ -51,20 +43,14 @@ export default function RelatorioPersonalizado() {
   });
 
   const [showConfig, setShowConfig] = useState(true);
-  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
-  const { hasPermission } = usePermissions();
-  const { user } = useUser();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || "sem-contexto";
-  const contextoValido = contextKey !== "sem-contexto";
-  const canViewRelatorio = hasPermission("Relatorios", "Personalizado", "visualizar") ||
-    hasPermission("Relat�rios", "Personalizado", "visualizar") ||
-    hasPermission("Relatorios", null, "visualizar");
-  const canExportRelatorio = hasPermission("Relatorios", "Personalizado", "exportar") ||
-    hasPermission("Relat�rios", "Personalizado", "exportar") ||
-    hasPermission("Relatorios", null, "exportar");
-
+  const [page,setPage] = useState(0);
+  const dateFilter = config.data_inicio || config.data_fim ? { created_date:{
+    ...(config.data_inicio ? { $gte:config.data_inicio } : {}),
+    ...(config.data_fim ? { $lte:`${config.data_fim}T23:59:59.999Z` } : {}) } } : {};
+  const secure = useSecureReport({ kind:'personalizado',entityName:config.entidade,
+    report:{ fields:config.campos.length && config.tipo_visualizacao !== 'tabela' && config.agrupamento ? [...new Set([...config.campos,config.agrupamento])] : config.campos },filter:{ ...config.filtros,...dateFilter },page,enabled:!showConfig });
+  const dados = secure.data?.data || [];
+  const isLoading = secure.isLoading;
   const entidadesDisponiveis = [
     { value: 'Pedido', label: 'Pedidos', campos: ['numero_pedido', 'cliente_nome', 'vendedor', 'valor_total', 'status', 'data_pedido'] },
     { value: 'Cliente', label: 'Clientes', campos: ['nome', 'tipo', 'cidade', 'estado', 'status', 'limite_credito'] },
@@ -77,41 +63,6 @@ export default function RelatorioPersonalizado() {
 
   const entidadeAtual = entidadesDisponiveis.find(e => e.value === config.entidade);
 
-  const { data: dados = [], isLoading } = useQuery({
-    queryKey: ['relatorio', config, contextKey],
-    queryFn: async () => {
-      let query = {};
-      
-      // Aplicar filtros de data
-      if (config.data_inicio) {
-        query.created_date = { $gte: config.data_inicio };
-      }
-      if (config.data_fim) {
-        if (query.created_date) {
-          query.created_date.$lte = config.data_fim;
-        } else {
-          query.created_date = { $lte: config.data_fim };
-        }
-      }
-
-      // Aplicar outros filtros
-      Object.keys(config.filtros).forEach(campo => {
-        if (config.filtros[campo]) {
-          query[campo] = config.filtros[campo];
-        }
-      });
-
-      const data = await filterInContext(config.entidade,
-        query,
-        config.ordenacao,
-        1000
-      );
-
-      return data;
-    },
-    enabled: !showConfig && contextoValido && canViewRelatorio,
-  });
-
   const handleToggleCampo = (campo) => {
     setConfig(prev => ({
       ...prev,
@@ -122,71 +73,18 @@ export default function RelatorioPersonalizado() {
   };
 
 
-  const auditarExportacao = async ({ formato, sucesso = true, motivo = null }) => {
-    try {
-      await base44.entities.AuditLog.create({
-        acao: sucesso ? "Exportacao" : "Bloqueio",
-        modulo: "Relatorios",
-        entidade: "RelatorioPersonalizado",
-        descricao: sucesso ? `Exportacao ${formato} do relatorio personalizado` : (motivo || `Bloqueio de exportacao ${formato} do relatorio personalizado`),
-        usuario_id: user?.id || null,
-        usuario: user?.full_name || user?.email || "Usuario local",
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
-        tipo_auditoria: sucesso ? "operacional" : "seguranca",
-        dados_novos: { entidade: config.entidade, campos: config.campos, filtros: config.filtros, quantidade: dados.length, contextKey },
-        sucesso,
-        data_hora: new Date().toISOString()
-      });
-    } catch (error) {
-      console.warn("Falha ao auditar exportacao personalizada:", error);
-    }
+  const handleExportarCSV = async () => {
+    try { await secure.exportCsv(); }
+    catch { toast.error('Exportacao nao concluida. Verifique autorizacao, filtros e disponibilidade.'); }
   };
-  const handleExportarCSV = async (formato = "CSV") => {
-    if (!contextoValido || !canExportRelatorio) {
-      await auditarExportacao({ formato, sucesso: false, motivo: "Tentativa de exportar relatorio personalizado sem contexto grupo/empresa ou permissao RBAC." });
-      return false;
-    }
-    if (!dados.length) {
-      await auditarExportacao({ formato, sucesso: false, motivo: "Tentativa de exportar relatorio personalizado sem dados." });
-      return false;
-    }
-    const confirmado = window.confirm(`Exportar ${dados.length} registros do relatorio personalizado para ${formato}?`);
-    if (!confirmado) {
-      await auditarExportacao({ formato, sucesso: false, motivo: "Exportacao do relatorio personalizado cancelada pelo usuario." });
-      return false;
-    }
-
-    const camposExport = config.campos.length > 0 ? config.campos : entidadeAtual.campos;
-    const csvHeader = [...camposExport, "group_id", "grupo_id", "empresa_id"].join(',');
-    const csvRows = dados.map(item =>
-      [...camposExport.map(campo => sanitizeCsvCell(item[campo])), groupId || '', groupId || '', empresaId || ''].join(',')
-    );
-
-    const csv = [csvHeader, ...csvRows].join('\n');
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `relatorio_${sanitizeText(config.entidade)}_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-    await auditarExportacao({ formato, sucesso: true });
-    return true;
-  };
-
-  const handleExportarExcel = async () => {
-    const exportado = await handleExportarCSV("Excel");
-    if (exportado) alert('Para exportar para Excel real, integre com biblioteca xlsx');
-  };
+  const handleExportarExcel = handleExportarCSV;
 
   const processarDadosGrafico = () => {
     if (!config.agrupamento || !dados.length) return [];
 
-    const agrupado = {};
+    const agrupado = Object.create(null);
     dados.forEach(item => {
-      const chave = item[config.agrupamento] || 'Sem Informação';
+      const chave = String(item[config.agrupamento] ?? 'Sem Informação');
       if (!agrupado[chave]) {
         agrupado[chave] = { nome: chave, valor: 0, quantidade: 0 };
       }
@@ -209,7 +107,10 @@ export default function RelatorioPersonalizado() {
       return <div className="text-center py-12 text-slate-500">Nenhum dado encontrado</div>;
     }
 
-    const camposExibir = config.campos.length > 0 ? config.campos : entidadeAtual.campos;
+    const camposExibir = secure.data?.fields || [];
+    if (config.tipo_visualizacao !== 'tabela' && (!config.agrupamento || !camposExibir.includes(config.agrupamento))) {
+      return <p>Selecione um campo autorizado para agrupar os registros desta página.</p>;
+    }
 
     switch (config.tipo_visualizacao) {
       case 'tabela':
@@ -227,7 +128,7 @@ export default function RelatorioPersonalizado() {
               </TableHeader>
               <TableBody>
                 {dados.map((item, idx) => (
-                  <TableRow key={item.id || idx}>
+                  <TableRow key={String(item.id ?? idx)}>
                     {camposExibir.map(campo => (
                       <TableCell key={campo}>
                         {typeof item[campo] === 'number' && campo.includes('valor') 
@@ -305,11 +206,7 @@ export default function RelatorioPersonalizado() {
     <div className="space-y-6 w-full h-full" data-permission="Relatorios.Personalizado.visualizar" data-context-required="group-or-company">
       <Card>
         <CardHeader>
-          {(!contextoValido || !canViewRelatorio) && (
-            <Alert className="mb-4 border-amber-300 bg-amber-50">
-              <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar relatorios personalizados.</AlertDescription>
-            </Alert>
-          )}
+          {secure.status && <Alert className="mb-4 border-amber-300 bg-amber-50"><AlertDescription>{secure.status}</AlertDescription></Alert>}
           <div className="flex items-center justify-between">
             <CardTitle>Relatório Personalizado</CardTitle>
             <div className="flex gap-2">
@@ -317,15 +214,15 @@ export default function RelatorioPersonalizado() {
                 <Filter className="w-4 h-4 mr-2" />
                 {showConfig ? 'Ocultar' : 'Mostrar'} Configurações
               </Button>
-              {!showConfig && (
+              {!showConfig && secure.allowed && (
                 <>
-                  <Button variant="outline" size="sm" onClick={() => handleExportarCSV("CSV")} disabled={!contextoValido || !canExportRelatorio || !dados.length} data-action="RelatorioPersonalizado.exportarCSV" data-permission="Relatorios.Personalizado.exportar" data-context-required="group-or-company" data-sensitive="true">
+                  <Button variant="outline" size="sm" onClick={handleExportarCSV} disabled={!secure.canExport || !secure.data || !dados.length} data-action="RelatorioPersonalizado.exportarCSV" data-permission="Relatorios.Personalizado.exportar" data-context-required="group-or-company" data-sensitive="true">
                     <Download className="w-4 h-4 mr-2" />
                     CSV
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportarExcel} disabled={!contextoValido || !canExportRelatorio || !dados.length} data-action="RelatorioPersonalizado.exportarExcel" data-permission="Relatorios.Personalizado.exportar" data-context-required="group-or-company" data-sensitive="true">
+                  <Button variant="outline" size="sm" onClick={handleExportarExcel} disabled={!secure.canExport || !secure.data || !dados.length} data-action="RelatorioPersonalizado.exportarExcel" data-permission="Relatorios.Personalizado.exportar" data-context-required="group-or-company" data-sensitive="true">
                     <FileText className="w-4 h-4 mr-2" />
-                    Excel
+                    Excel (CSV)
                   </Button>
                 </>
               )}
@@ -333,7 +230,7 @@ export default function RelatorioPersonalizado() {
           </div>
         </CardHeader>
 
-        {showConfig && (
+        {showConfig && secure.allowed && (
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
@@ -442,22 +339,29 @@ export default function RelatorioPersonalizado() {
             )}
 
             <div className="flex justify-end pt-4">
-              <Button onClick={() => setShowConfig(false)} disabled={!contextoValido || !canViewRelatorio} data-action="RelatorioPersonalizado.gerar" data-permission="Relatorios.Personalizado.visualizar" data-context-required="group-or-company">
+              <Button onClick={() => { setPage(0); setShowConfig(false); }} disabled={!secure.allowed} data-action="RelatorioPersonalizado.gerar" data-permission="Relatorios.Personalizado.visualizar" data-context-required="group-or-company">
                 Gerar Relatório
               </Button>
             </div>
           </CardContent>
         )}
 
-        {!showConfig && (
+        {!showConfig && secure.allowed && (
           <CardContent>
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <Badge variant="outline" className="mr-2">{entidadeAtual?.label}</Badge>
-                <Badge variant="outline">{dados.length} registro(s)</Badge>
+                <Badge variant="outline">{secure.data ? `${dados.length} registro(s) nesta página` : 'Consulta não concluída'}</Badge>
               </div>
             </div>
-            {renderVisualizacao()}
+            {config.tipo_visualizacao !== 'tabela' && <p>Agrupamento desta página; não representa o total do relatório.</p>}
+            {secure.data && renderVisualizacao()}
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              <Button variant="outline" disabled={!page || secure.isFetching} onClick={() => setPage(value => value-1)}>Anterior</Button>
+              <span>Página {page+1}</span>
+              <Button variant="outline" disabled={!secure.data?.meta.hasMore || secure.isFetching} onClick={() => setPage(value => value+1)}>Próxima</Button>
+              {secure.isError && <Button onClick={() => secure.refetch()}>Tentar novamente</Button>}
+            </div>
           </CardContent>
         )}
       </Card>

@@ -1,3 +1,56 @@
+## #348 — contrato de leitura e recuperação dos relatórios (2026-10-23)
+
+Codespace único potential-xylophone-5gj7r9v9qqg637vxp, base fa720fea,
+branch codex/consolidacao-infra-20261017 / PR342 sobre334. Alterações anteriores
+preservadas; Produto e Orçamento346 não modificados. ACEITO348 registrado.
+
+Causa: catálogo simples/bulk/by-ID/contagem aceitavam leitura privilegiada sem
+RBAC e pertença comprovados. Contraprova no handler fa720fea: filtro vazio sem
+permissão e empresa de terceiro responderam200, uma consulta cada. Agora os
+três handlers reutilizam entityGuardPolicy e evaluateMfaScopeAccess, com perfil
+e vínculos autenticados, predicado obrigatório AND, pré-autorização do lote,
+projeção recursiva, rejeição de filtros sensíveis e ordenação autorizada. Não há
+fallback global/legado sem dono. Catálogos compartilhados exigem vínculo explícito.
+
+Extração necessária: não havia autorizador backend comum aos três leitores.
+entityReadPolicy concentra essa política; csv.js compartilha o serializador
+seguro já consumido por exportUtils. useSecureReport concentra contrato/schema,
+cache por ator/sessão/escopo/permissões, revogação e descarte de respostas tardias;
+não cria endpoint, entidade ou relatório paralelo. Duas anotações de tipos na
+policy MFA existente preservam integralmente seu runtime.
+
+Relatorios.jsx reintegra DashboardRepresentantes e RelatorioPersonalizado,
+sem remover abas. Restauração inicial evita consultas legadas na nova aba.
+Representantes entrega agregado completo limitado: >=500 registros em qualquer
+fonte bloqueia409, nunca total parcial; comissão é estimativa pelos fatores
+existentes e exige grant próprio. Personalizado pagina50, informa cobertura de
+página/total desconhecido, agrupa apenas a página e exporta TODO o filtro até5000;
+excesso bloqueia sem arquivo parcial. Excel permanece CSV compatível, identificado.
+Exportação reautoriza ator/fontes/campos, neutraliza fórmulas, audita somente
+metadados e bloqueia download se a auditoria falhar. Lock local evita duplo clique;
+não é transação/snapshot temporal nem idempotência persistente do provedor.
+
+Validação: foco final56 PASS/0 FAIL/0 SKIP (29 casos348 +27 contratos de fronteira).
+Suíte geral2225 PASS/0 FAIL/0 SKIP, exit0; endurecimento final de inferência por
+filtro/ordenação também comprovado no foco56. Primeira geral2223 PASS/1 FAIL:
+hash histórico congelava toda Relatorios. Hash ORIGINAL mantido; somente hunks
+exatos348 são invertidos para comparar restante, com negativas contra hunk
+faltante/duplicado e alteração externa. Nenhum baseline/hash/config relaxado.
+Audit:baseline, lint, typecheck, build e diff-check exit0; lint conserva warning
+anterior EntregasListagem170. Typecheck semântico adicional da policy backend exit0.
+Uma execução intermediária de lint terminou143; repetição final exit0. Erros de
+tipagem detectados nas projeções primitivas foram corrigidos antes do fechamento.
+
+Limite operacional explícito: contrato testado nos handlers e componentes REAIS
+com SDK fixture sintética, sem rede/dados reais. Requer runtime remoto com esses
+handlers; HTTP/local não possuem adaptador equivalente e exibem indisponibilidade,
+sem fallback. Sem deploy/migration, recuperação de registros ou homologação visual
+inferida. Outros relatórios legados não foram rehomologados por este lote.
+Publicação corresponde ao commit desta seção; SHA remoto/CI serão registrados
+na issue348. Próximo autorizado347: proposta privada nos componentes existentes,
+com gate de aprovação visual antes de alteração ampla. Legado344 sem canal privado
+já documentado; nenhum novo inventário, transferência ou importação. PAUSED mantido.
+
 ## #346 — ações de Orçamento vinculadas à sessão (2026-10-23)
 
 Nova ordem346→348→347 recebida/ACEITO na issue346 pelo Codespace único

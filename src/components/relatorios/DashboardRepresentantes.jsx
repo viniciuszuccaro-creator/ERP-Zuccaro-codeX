@@ -1,6 +1,4 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +14,9 @@ import {
   Download
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import useContextoVisual from "@/components/lib/useContextoVisual";
-import usePermissions from "@/components/lib/usePermissions";
-import { useUser } from "@/components/lib/UserContext";
-import { exportarCSV } from "@/components/relatorios/exportUtils";
+
+import useSecureReport from "./useSecureReport";
+import { toast } from "sonner";
 
 const tiposRepresentante = [
   { value: 'todos', label: 'Todos os Tipos' },
@@ -35,146 +32,31 @@ const tiposRepresentante = [
 export default function DashboardRepresentantes() {
   const [periodoFiltro, setPeriodoFiltro] = React.useState("mes");
   const [tipoFiltro, setTipoFiltro] = React.useState("todos");
-  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
-  const { hasPermission } = usePermissions();
-  const { user } = useUser();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || "sem-contexto";
-  const contextoValido = contextKey !== "sem-contexto";
-  const canViewDashboard = hasPermission("Comercial", "Representantes", "visualizar") ||
-    hasPermission("Comercial", "Relatorios", "visualizar") ||
-    hasPermission("Comercial", null, "visualizar");
-  const canExportDashboard = hasPermission("Comercial", "Representantes", "exportar") ||
-    hasPermission("Comercial", "Relatorios", "exportar") ||
-    hasPermission("Comercial", null, "exportar");
-
-  const { data: representantes = [] } = useQuery({
-    queryKey: ['representantes-dashboard', contextKey],
-    queryFn: () => filterInContext('Representante', { status: 'Ativo' }, 'nome', 1000),
-    enabled: contextoValido && canViewDashboard
-  });
-
-  const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes-dashboard-representantes', contextKey],
-    queryFn: () => filterInContext('Cliente', {}, 'nome', 5000),
-    enabled: contextoValido && canViewDashboard
-  });
-
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-dashboard-representantes', contextKey],
-    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 5000),
-    enabled: contextoValido && canViewDashboard
-  });
-
-  const calcularMetricasGerais = () => {
-    const clientesComIndicador = clientes.filter(c => c.indicador_id);
-    const pedidosComIndicador = pedidos.filter(p => p.indicador_id);
-    const totalVendas = pedidosComIndicador.reduce((sum, p) => sum + (p.valor_total || 0), 0);
-    
-    const totalComissoes = pedidosComIndicador.reduce((sum, p) => {
-      const rep = representantes.find(r => r.id === p.indicador_id);
-      if (!rep) return sum;
-      const valor = p.valor_total || 0;
-      const percentual = rep.percentual_comissao || 0;
-      const fixo = rep.valor_fixo_comissao || 0;
-      return sum + (valor * percentual / 100) + fixo;
-    }, 0);
-
-    return {
-      totalRepresentantes: representantes.length,
-      clientesIndicados: clientesComIndicador.length,
-      totalVendas,
-      totalComissoes,
-      ticketMedio: clientesComIndicador.length > 0 ? totalVendas / clientesComIndicador.length : 0
-    };
-  };
-
-  const metricas = calcularMetricasGerais();
-
-  const dadosRankingRepresentantes = representantes
-    .map(rep => {
-      const clientesIndicados = clientes.filter(c => c.indicador_id === rep.id);
-      const pedidosIndicados = pedidos.filter(p => p.indicador_id === rep.id);
-      const totalVendas = pedidosIndicados.reduce((sum, p) => sum + (p.valor_total || 0), 0);
-      const totalComissao = pedidosIndicados.reduce((sum, p) => {
-        const valor = p.valor_total || 0;
-        const percentual = rep.percentual_comissao || 0;
-        const fixo = rep.valor_fixo_comissao || 0;
-        return sum + (valor * percentual / 100) + fixo;
-      }, 0);
-
-      return {
-        nome: rep.nome,
-        tipo: rep.tipo_representante,
-        clientes: clientesIndicados.length,
-        pedidos: pedidosIndicados.length,
-        vendas: totalVendas,
-        comissao: totalComissao
-      };
-    })
-    .filter(r => tipoFiltro === 'todos' || r.tipo === tipoFiltro)
-    .sort((a, b) => b.vendas - a.vendas)
-    .slice(0, 10);
-
-
-  const auditarExportacao = async (sucesso = true, motivo = null) => {
-    try {
-      await base44.entities.AuditLog.create({
-        acao: sucesso ? "Exportacao" : "Bloqueio",
-        modulo: "Comercial",
-        entidade: "DashboardRepresentantes",
-        descricao: sucesso ? "Exportacao CSV do dashboard de representantes" : (motivo || "Bloqueio de exportacao do dashboard de representantes"),
-        usuario_id: user?.id || null,
-        usuario: user?.full_name || user?.email || "Usuario local",
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
-        tipo_auditoria: sucesso ? "operacional" : "seguranca",
-        dados_novos: { periodoFiltro, tipoFiltro, quantidade: dadosRankingRepresentantes.length, contextKey },
-        sucesso,
-        data_hora: new Date().toISOString()
-      });
-    } catch (error) {
-      console.warn("Falha ao auditar exportacao de representantes:", error);
-    }
-  };
-
+  const secure = useSecureReport({ kind:'representantes',entityName:'Representante',
+    report:{ periodo:periodoFiltro === 'tudo' ? 'todos' : periodoFiltro,tipo:tipoFiltro } });
+  const representantes = secure.data?.data || [];
+  const canSeeCommission = secure.data?.capabilities?.comissao === true;
+  const totalVendas = representantes.reduce((sum,rep) => sum + Number(rep.vendas),0);
+  const clientesIndicados = representantes.reduce((sum,rep) => sum + Number(rep.clientes),0);
+  const metricas = { totalRepresentantes:representantes.length,clientesIndicados,totalVendas,
+    totalComissoes:representantes.reduce((sum,rep) => sum + Number(rep.comissao || 0),0),
+    ticketMedio:clientesIndicados ? totalVendas/clientesIndicados : 0 };
+  const dadosRankingRepresentantes = [...representantes].sort((a,b) => Number(b.vendas)-Number(a.vendas)).slice(0,10);
   const exportarRepresentantes = async () => {
-    if (!contextoValido || !canExportDashboard) {
-      await auditarExportacao(false, "Tentativa de exportar dashboard de representantes sem contexto grupo/empresa ou permissao RBAC.");
-      return;
-    }
-    const confirmado = window.confirm(`Exportar ${dadosRankingRepresentantes.length} representantes para CSV?`);
-    if (!confirmado) {
-      await auditarExportacao(false, "Exportacao CSV do dashboard de representantes cancelada pelo usuario.");
-      return;
-    }
-    const dadosComContexto = dadosRankingRepresentantes.map((item) => ({
-      ...item,
-      periodo: periodoFiltro,
-      group_id: groupId,
-      grupo_id: groupId,
-      empresa_id: empresaId,
-    }));
-    exportarCSV(dadosComContexto, "dashboard_representantes");
-    await auditarExportacao(true);
+    try { await secure.exportCsv(); }
+    catch { toast.error('Exportação não concluída. Verifique a autorização e tente novamente.'); }
   };
   const dadosPorTipo = [
-    { name: 'Representante', value: representantes.filter(r => r.tipo_representante === 'Representante Comercial').length, color: '#8b5cf6' },
-    { name: 'Construtor', value: representantes.filter(r => r.tipo_representante === 'Construtor').length, color: '#3b82f6' },
-    { name: 'Arquiteto', value: representantes.filter(r => r.tipo_representante === 'Arquiteto').length, color: '#10b981' },
-    { name: 'Engenheiro', value: representantes.filter(r => r.tipo_representante === 'Engenheiro').length, color: '#f59e0b' },
-    { name: 'Outros', value: representantes.filter(r => !['Representante Comercial', 'Construtor', 'Arquiteto', 'Engenheiro'].includes(r.tipo_representante)).length, color: '#6b7280' }
+    { name: 'Representante', value: representantes.filter(r => r.tipo === 'Representante Comercial').length, color: '#8b5cf6' },
+    { name: 'Construtor', value: representantes.filter(r => r.tipo === 'Construtor').length, color: '#3b82f6' },
+    { name: 'Arquiteto', value: representantes.filter(r => r.tipo === 'Arquiteto').length, color: '#10b981' },
+    { name: 'Engenheiro', value: representantes.filter(r => r.tipo === 'Engenheiro').length, color: '#f59e0b' },
+    { name: 'Outros', value: representantes.filter(r => !['Representante Comercial', 'Construtor', 'Arquiteto', 'Engenheiro'].includes(String(r.tipo))).length, color: '#6b7280' }
   ].filter(d => d.value > 0);
 
   return (
-    <div className="space-y-6 w-full h-full" data-permission="Comercial.Relatorios.visualizar" data-context-required="group-or-company">
-      {(!contextoValido || !canViewDashboard) && (
-        <Alert className="border-amber-300 bg-amber-50">
-          <AlertDescription>Selecione grupo ou empresa e confirme permissao para visualizar o dashboard de representantes.</AlertDescription>
-        </Alert>
-      )}
+    <div className="space-y-6 w-full h-full" data-permission="Comercial.Representantes.visualizar" data-context-required="group-or-company">
+      {secure.status && <Alert className="border-amber-300 bg-amber-50"><AlertDescription>{secure.status}</AlertDescription></Alert>}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -209,19 +91,20 @@ export default function DashboardRepresentantes() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" onClick={exportarRepresentantes} disabled={!contextoValido || !canExportDashboard} data-action="DashboardRepresentantes.exportarCSV" data-permission="Comercial.Relatorios.exportar" data-context-required="group-or-company" data-sensitive="true">
+          <Button variant="outline" onClick={exportarRepresentantes} disabled={!secure.canExport || !secure.data} data-action="DashboardRepresentantes.exportarCSV" data-permission="Comercial.Representantes.exportar" data-context-required="group-or-company" data-sensitive="true">
             <Download className="w-4 h-4 mr-2" />
             Exportar
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
+      {secure.data && <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <Users className="w-4 h-4 text-purple-600" />
-              Representantes Ativos
+              Representantes no filtro
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -259,12 +142,12 @@ export default function DashboardRepresentantes() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-orange-600" />
-              Comissões Geradas
+              Comissões estimadas
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-orange-600">
-              R$ {metricas.totalComissoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {canSeeCommission ? `R$ ${metricas.totalComissoes.toLocaleString('pt-BR', { minimumFractionDigits:2 })}` : 'Sem permissão'}
             </p>
           </CardContent>
         </Card>
@@ -360,7 +243,7 @@ export default function DashboardRepresentantes() {
                       R$ {rep.vendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="p-3 text-right font-bold text-purple-600">
-                      R$ {rep.comissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {canSeeCommission ? `R$ ${Number(rep.comissao).toLocaleString('pt-BR', { minimumFractionDigits:2 })}` : 'Sem permissão'}
                     </td>
                   </tr>
                 ))}
@@ -369,6 +252,7 @@ export default function DashboardRepresentantes() {
           </div>
         </CardContent>
       </Card>
+      </>}
     </div>
   );
 }
