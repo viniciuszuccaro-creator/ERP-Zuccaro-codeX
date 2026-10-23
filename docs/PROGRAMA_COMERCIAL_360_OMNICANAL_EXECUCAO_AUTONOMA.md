@@ -1,3 +1,14 @@
+## #347 — proposta navegável entregue para revisão (2026-10-23)
+
+Área Comercial existente, opt-in DEV proposta=comercial360, objetos sintéticos em
+memória e gravação bloqueada. Reuso do editor/pickers/cálculo/rascunho, com nova
+composição azul-clara; corrigido bloqueio de clique do diálogo em janela multitarefa.
+Prévia5173 PRIVATE, hostname exato e SHA servido via /__erp_preview. Roteiro,
+capturas sanitizadas, testes e limites no topo do HANDOFF/STATUS. Aprovação visual
+PENDENTE antes de adoção ampla; nenhum registro recuperado ou dado operacional.
+#3480409d3f7 tem ambas CIs SUCCESS; legado344/staging seguem sem vínculo privado
+já documentado, sem repetição de tentativa. PAUSED e gates mantidos.
+
 ## #348 — recuperação publicada no lote desta seção (2026-10-23)
 
 Contrato compartilhado de leitura corrigido nos três handlers existentes;

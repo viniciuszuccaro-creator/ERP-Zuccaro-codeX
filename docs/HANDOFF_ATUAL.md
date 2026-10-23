@@ -1,3 +1,72 @@
+## #347 — proposta Comercial navegável e defeito de diálogo corrigido (2026-10-23)
+
+Executor único potential-xylophone-5gj7r9v9qqg637vxp, mesma branch PR342 sobre334,
+base0409d3f721634218950876cf7389c79be0478647 local/remoto e checkout limpo no aceite347.
+Esse SHA348 tem ambas CIs SUCCESS:39969540650/39969548181; resultado registrado na348.
+Produto/SEO/conversões/IDs e persistência Comercial preservados.
+
+Proposta DEV opt-in implementada no Comercial/OrcamentosTab EXISTENTES:
+`/Comercial?proposta=comercial360` → Orçamentos → Novo orçamento. Editar cliente,
+produto/quantidade/preço, condição/tabela e observação; alternar Cliente e histórico,
+Produtos e disponibilidade, Resumo e pagamento e retornar. O estado é o MESMO
+rascunho do editor. Azul-claro, painéis lado a lado no desktop/empilhados e roláveis
+no tablet, rodapé acessível. Não é reprodução fiel comprovada de screenshot histórico:
+é proposta para APROVAÇÃO VISUAL, sem alterar amplamente o layout padrão.
+
+Reuso: seletores/pickers, cálculo decimal, campos e callbacks atuais; nenhum
+ComercialV2 ou persistência paralela. OrcamentoProposalAside é extração somente
+apresentacional para a nova composição, sem equivalente composto existente;
+comercialProposalFixture fornece objetos claramente SINTÉTICOS em memória, fora
+do store/cache operacional. Sem reserva de IDs/códigos, autenticação alternativa,
+consulta de negócio, gravação, conversão, estoque ou cobrança da proposta. Guards
+negam save/cancel/convert também pelo callback. Fluxo normal continua usando
+servidor/snapshots/permissões anteriores; modo só é exposto pelo Comercial em DEV.
+Histórico/disponibilidade/preços da proposta são ilustrativos, não registros recuperados.
+
+Defeito funcional comprovado no navegador: WindowModal(~100 milhões) interceptava
+clique no DialogContent(z50), tornando o editor inacessível. Dialog existente recebe
+overlayStyle OPCIONAL; Orçamento em windowMode aplica camada ao diálogo/overlay
+acima da janela e abaixo dos Selects, sem mudar defaults dos demais consumidores.
+Depois, cliques reais em seletores/painéis funcionaram, sem force-click.
+
+Prévia PRIVATE confirmada pelo CLI Codespaces, porta5173; Vite rejeitava Host
+encaminhado(403), agora allowlist EXATA do hostname derivado de CODESPACE_NAME,
+sem wildcard/liberação pública. `/__erp_preview` DEV informa somente SHA, branch e
+dirty boolean com no-store; erro Git sanitizado503. Nenhum nome de arquivo/segredo.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial?proposta=comercial360
+Requer autenticação GitHub do Codespace. Processo DEV iniciado por este executor
+permanece para revisão; nenhum processo de terceiro interrompido. Custo adicional
+zero, sem outro ambiente. Tooling de navegador/bibliotecas somente em /tmp, sem
+alterar dependências do projeto, pacotes/permissões do SO ou conectores.
+
+Browser real, contexto NOVO e conexões externas bloqueadas:1440×1000/1024×900;
+cliente/produto/condição/tabela, quantidade2×10=20, observação e troca/retorno de
+painéis preservados, save desabilitado,0 requisições de escrita,0 conexões externas,
+0 erros JS, diálogo dentro do viewport. Script reproduzível existente no lote:
+`node scripts/comercial360-preview-smoke.mjs /caminho/playwright/index.mjs /tmp/evidencias`.
+Capturas e evidência sanitizada em docs/evidence/comercial360-proposta-*-20261023.
+Não leu sessão, storage ou registros de navegador existente; não é homologação operacional.
+
+Foco26 PASS/0 FAIL/0 SKIP, exit0. Suíte geral FINAL2232 PASS/0 FAIL/0 SKIP,
+exit0 comprovado também por arquivo de saída e processo isolado. Audit:baseline,
+lint, typecheck, build e diff-check exit0; um warning de lint anterior.
+SHA/CI desta publicação registrados na347, proveniência viva no endpoint DEV. Primeiro processo geral contou2232 PASS,
+mas retornou143; não foi aceito como check verde. Repetição isolada final exit0.
+Asserção estática de dependências exige agora também proposalMode, sem retirar
+Grupo/Empresa/ator/sessão; troca de modo invalida callbacks e cache. Sem baseline
+ou regra de validação relaxada. Status/limites anteriores348 seguem no histórico.
+
+Pendente humano: aprovação visual expressa antes de adoção ampla. Recuperação de
+registros ERP NOVO e legado ERP ANTIGO344 continuam SEPARADAS e NÃO EXECUTADAS.
+Vínculo seguro faltante já identificado, sem repetir tentativa: canal SSH/SFTP deste
+runtime com identidade previamente autorizada e destinos/fontes privados documentados
+(Runtime Secrets ERP_DEV_VPS_SSH_PRIVATE_KEY/ERP_DEV_VPS_SSH_USER ou agente existente).
+Não gerar chave, pedir segredo no chat, abrir dump/banco/backups ou inventar dados.
+Sem fonte/identidade/procedência não há reconciliação real em staging, transferência
+ou importação. Demais capacidades amplas do ERP não foram declaradas recuperadas.
+PAUSED e gates de implantação/carga mantidos. Retomar itens concretos independentes
+quando houver escopo/acesso liberado; nenhum escritor concorrente criado.
+
 ## #348 — contrato de leitura e recuperação dos relatórios (2026-10-23)
 
 Codespace único potential-xylophone-5gj7r9v9qqg637vxp, base fa720fea,

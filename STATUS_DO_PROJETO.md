@@ -1,3 +1,29 @@
+## #347 — proposta privada implementada; gate visual pendente (2026-10-23)
+
+Base0409d3f7/PR342 sobre334, mesmo Codespace único. #348 publicada com CI SUCCESS
+39969540650/39969548181. Comercial/OrcamentosTab existentes recebem proposta DEV
+opt-in, com cliente/histórico ilustrativo, produtos/preços/disponibilidade ilustrativa,
+itens/totais/condição/tabela e painéis que preservam o mesmo rascunho. Objetos
+SINTÉTICOS somente em memória; gravação/conversão/cobrança bloqueadas. Sem cadastros,
+IDs ou registros recuperados e sem mudar persistência/autenticação operacional.
+
+Corrigido defeito real de clique: Dialog Orçamento ficava atrás da janela multitarefa.
+Overlay opcional no componente existente, aplicado somente pelo consumidor Orçamento.
+Vite aceita hostname EXATO da porta privada e oferece proveniência DEV sanitizada
+em /__erp_preview; não há endpoint novo de negócio nem deploy.
+
+Foco26 PASS, browser real desktop/tablet PASS: rascunho/quantidade preservados,
+zero escrita/rede externa/erros JS e diálogo dentro do viewport. Evidências PNG/JSON
+sintéticas em docs/evidence; roteiro/URL e limites no topo do HANDOFF. Check geral
+com2232 PASS retornou143; repetição isolada FINAL2232 PASS/0 FAIL/0 SKIP, exit0.
+Audit/lint/typecheck/build/diff-check exit0; warning anterior preservado. SHA/CI na347.
+
+URL privada: https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial?proposta=comercial360
+Abrir Orçamentos → Novo orçamento; alternar os três painéis sem perder o rascunho.
+Aguardando APROVAÇÃO VISUAL para alteração ampla. Staging/legado344 bloqueados pelo
+vínculo privado já descrito no HANDOFF, sem repetir tentativa ou afirmar transferência.
+Fonte ERP novo e ERP antigo não confundidas. PAUSED/gates/custo zero preservados.
+
 ## #348 — relatórios recuperados com contrato autorizado (2026-10-23)
 
 Basefa720fea, mesmo Codespace/branch PR342 sobre334, único escritor. Três leitores
