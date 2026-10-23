@@ -1,3 +1,15 @@
+## Entregas consolidadas e proximo pacote Onda1 (2026-10-23)
+
+Conversoes Produto: publicado990e6c9a57aad0833fa1866a458488e5d4ab241c com seis arquivos; CI4442/run39941451623 e4443/run39941460941 completed/success conferidas pela coordenacao. HEAD documental posterior5dc5d6d9d3332120bf42cc0b7f49ba9fecb94e34: CI4444/run39941573717 e4445/run39941581179 completed/success. PR342 permanece aberta DRAFT, branch codex/consolidacao-infra-20261017 sobre codex/comercial-composicao-20261017, nao main. Publicacao nao e deploy VPS.
+
+Codespace: recibos do executor em issue343#issuecomment-6363225662 e#issuecomment-6363243901 confirmam incorporacao FF documental, HEAD local/remoto5dc5d6d9 e checkout limpo naquele instante; reserva dos seis arquivos encerrada. Historico inclui preservacao em patch/stash relatada pelo executor, sem descarte; nao autoriza repetir stash silencioso. Nao houve nova inspecao direta do filesystem remoto pela coordenacao. Tests2186/0/0 sao evidencia daquele executor; nenhuma suite inalterada repetida aqui.
+
+Fluxo GitHub: leitura/ACEITO/retorno do executor comprovados na343, encerrada apos evidencias finais. O commit funcional antecedeu a leitura da issue, portanto ciclo completo instrucao->nova implementacao->publicacao ainda nao demonstrado. Nao existe acionamento automatico comprovado; issue/Markdown/push nao e comando ao agente. Ferramentas desta conversa sem Browser/ponte autenticada. Proxima execucao depende do aceite visivel do mesmo agente na fila ativa.
+
+Proximo pacote coeso: issue345 https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/345 — previa de conversoes coerente com rascunho de Produto. Evidencia estatica: ProdutoFormCompleto passa dadosIniciais a aba, enquanto ProdutoForm conserva rascunho proprio. Gate obrigatorio: reproduzir o risco de previa obsoleta com handlers/componentes reais antes de corrigir; se nao reproduzir, nao implementar por suposicao. Reusar calculadora/estado e unico proprietario da persistencia, preservar SEO/gerais/layout/IDs/tenant/RBAC/auditoria. Escopo, reserva proposta, teste pre/pós-fix e aceite constam na issue. Estado AGUARDANDO ACEITE; nenhum escritor novo iniciado no sandbox ou Cursor. Codex no Codespace unico e executor proposto, reserva efetiva somente apos aceite/status.
+
+Legado344: recebido/BLOQUEADO pelo executor: bindings SSH/SSH_AUTH_SOCK/config/identidades convencionais ausentes no Codespace. Inventario privado NOT RUN; existencia/abrangencia/integridade de copias VPS continuam desconhecidas, nao ausentes por inferencia. Nenhuma transferencia, copia publica, importacao operacional ou migrations045-049. PAUSED mantido; custo adicional zero, sem mudanca billing.
+
 ## Fluxo unico decidido pelo proprietario e fila GitHub (2026-10-23)
 
 Nuvem ERP-Zuccaro-codeX centraliza instrucoes e decisoes nesta mesma conversa; GitHub e fonte oficial; Codespace potential-xylophone-5gj7r9v9qqg637vxp concentra codigo/testes; VPS Hostinger permanece separada para operacao e staging privado. Sem novo Codespace/clone independente/custo adicional, sem mudanca de cobranca.
