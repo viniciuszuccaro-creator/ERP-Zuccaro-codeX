@@ -1,4 +1,32 @@
-## #344 - transferencia privada executada, conclusao integral pendente (2026-10-23)
+## #344 - centralizacao e recuperacao privadas concluidas (2026-10-23)
+
+Estado atual substitui os recibos historicos de envio pendente abaixo.
+Cinco lotes: 2836 arquivos / 48359509373 bytes logicos, tamanho/SHA-256 PASS.
+Recuperacao INTEGRAL na VPS, reabertura e SHA-256 dos 2836 arquivos PASS;
+zero violacoes de permissoes; 32543379456 bytes livres no recibo final.
+334 referencias reutilizadas e 50 objetos cifrados / 3072559784 bytes fisicos.
+Original, extracoes, bases SQL de trabalho, relatorios, quarentena e proveniencia
+do importador preservados; nao confundidos com backup operacional do ERP novo.
+Metadados finais de origem: zero mudancas. Envio/checkpoint encerrados.
+
+Codespace existente recebeu copia privada de staging oriunda da VPS:
+913 arquivos / 287977635 bytes recuperados, SHA-256 e modos600/700 PASS,
+ownerUID1000; Git limpo no SHA650bc463 antes desta atualizacao documental.
+Isso comprova acesso ao STAGING, nao SSH direto nem copia bruta48.36GB no
+Codespace. Arquivos privados fora checkout/build/CI, sem chave SSH pessoal.
+Recuperacao em filesystem NAO comprova restore/validade de banco SQL.
+
+Arquivos recuperados na VPS sao privados em claro (root600/700); objetos de
+arquivo cifrados AES-256-GCM, chaves separadas no mesmo host. Nao alegar HSM,
+criptografia de disco ou protecao contra root/provedor. Recibos/manifestos
+detalhados e chaves permanecem privados. Procedimento e limites no HANDOFF.
+
+Sem carga operacional, migrations, deploy, merge ou nova cobranca. Legado PAUSED.
+Proximo: reconciliar identidade, empresa/grupo, procedencia e vinculos do piloto
+isolado pelo importador existente. Piloto PREPARED_NOT_AUTHORIZED inalterado.
+Mudanca Git exclusivamente documental; runtime/suites anteriores nao repetidos.
+
+## HISTORICO #344 - transferencia privada executada, conclusao integral pendente (2026-10-23)
 
 VPS recebeu e recuperou staging913arquivos/287977635bytes e snapshot do
 importador5arquivos/64739bytes:918arquivos/288042374bytes verificados por

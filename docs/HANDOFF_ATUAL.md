@@ -1,4 +1,85 @@
-## #344 - centralizacao privada EM EXECUCAO, staging recuperado (2026-10-23)
+## #344 - centralizacao privada concluida; staging utilizavel no Codespace (2026-10-23)
+
+Este recibo substitui o estado de envio em andamento e o bloqueio de upload
+registrados abaixo. Os cabecalhos anteriores sao historicos, nao o estado atual.
+
+### Transferencia, integridade e recuperacao integral
+
+Cinco lotes concluidos: 2836 arquivos / 48359509373 bytes logicos de origem.
+Contagens por lote: staging 913/287977635; codigo/proveniencia 5/64739;
+original 1857/21102245906; bases SQL de trabalho 21/26964656868;
+quarentena 40/4564225. Instaladores continuam preservados somente na origem,
+fora deste conjunto de migracao. Backup operacional do ERP novo nao foi
+confundido com backup legado nem importado.
+
+Todos os arquivos passaram por tamanho/SHA-256 na transferencia e na
+recuperacao. Cinquenta objetos comprimidos/cifrados totalizam 3072559784 bytes;
+334 referencias de arquivos reutilizam conteudo comprovadamente igual.
+Esses bytes fisicos NAO sao o tamanho logico nem uma medida de migracao de dados.
+Foi materializado o conjunto INTEGRAL em pasta privada de recuperacao na VPS,
+com nova abertura e SHA-256 de todos os 2836 arquivos, nao apenas uma amostra.
+Recibo agregado final: 2026-10-23T17:29:38Z; zero violacoes de protecao e
+32543379456 bytes livres apos a recuperacao. Metadados finais das fontes:
+zero alteracoes de tamanho, mtime e identidade; HD original apenas lido.
+
+Destino permanece /root/erp-private/centralizacao-legado-20261023, fora
+aplicacao/repositorio/build/publicacao. Objects, receipts e recovered separados;
+pastas root700, arquivos root600. Os arquivos recuperados sao uma copia de
+trabalho PRIVADA em claro sob essas permissoes; nao se afirma criptografia de
+disco. Objetos arquivados usam AES-256-GCM, com chaves de dados em pasta separada
+no MESMO host. Administrador/provedor desse host nao esta excluido da ameaca.
+Nenhuma chave SSH pessoal foi copiada. Manifestos detalhados e chaves ficam
+privados; nenhuma linha de dados reais ou hash vinculavel a registro foi publicada.
+
+O worker de envio e o espelho de checkpoint encerraram apos concluir os cinco
+lotes. Nao existe envio pendente nem necessidade de manter o HD conectado para
+recuperar esses lotes na VPS. Preservar mesmo assim HD, captura e worktrees.
+Helper de recuperacao integral privado restore-private.py reutiliza o leitor
+e os manifests existentes; nao e outro importador. SHA-256 do SCRIPT:
+4f03c7863c556982c58fcda837b6159ab4b844dba74ffac55a357cca238a3260.
+Provas sinteticas: rejeicao de caminhos invalidos, escrita/abertura idempotente
+e bloqueio de conteudo divergente PASS. Nenhum motor de banco foi iniciado.
+
+### Acesso comprovado do executor Codespace: escopo exato
+
+O proprietario habilitou o upload permitido da extensao Chrome. Seis artefatos
+privados foram enviados pelo Explorer ao Codespace EXISTENTE, fora do checkout;
+nao houve novo ambiente, token, permissao VPS ou copia de chave SSH pessoal.
+O helper codespace-recovery.mjs recuperou a copia oriunda da VPS e verificou
+913 arquivos / 287977635 bytes por tamanho e SHA-256 no proprio Codespace.
+Owner UID1000, diretorios700/arquivos600; zero violacoes de protecao observadas.
+Checkout permaneceu limpo no SHA650bc463ab039e2e2639a1e500b51f94113be826,
+branch codex/consolidacao-infra-20261017, antes desta atualizacao documental.
+
+Copia de trabalho: /home/codespace/erp-legado-privado-20261023/recovered.
+Recibo privado: /home/codespace/erp-legado-privado-20261023/recovery-receipt.json.
+Executar somente rotinas de leitura/reconciliacao autorizadas, sem incluir essa
+pasta no Git, build, CI, preview ou contexto amplo de agentes. O staging do
+Codespace e copia de trabalho; VPS e HD preservado continuam fontes de recuperacao.
+Nao se afirma que os 48.36GB brutos foram copiados ao Codespace nem que ele
+possui acesso SSH direto a VPS. Recuperacao de arquivos nao e restore/teste de
+banco SQL, nem valida identidades, regras fiscais ou persistencia do ERP.
+
+Primeira tentativa de leitura durante upload incompleto foi bloqueada por
+integridade (PRIMARY_CIPHER_INVALID), sem extracao; apos concluir o upload,
+verificacao integral PASS. Nao se contornou a protecao. Dados/chaves nao foram
+colados no terminal, registrados em relatorios publicos ou enviados ao Git.
+
+### Continuidade e gates
+
+Sem importacao operacional, migrations, deploy, merge ou novas cobrancas.
+Agendamento Continuar legado ERP Zuccaro continua PAUSED.
+Proximo pacote: reconciliar procedencia, identidade canonica, empresa/grupo,
+IDs e vinculos do piloto no staging isolado usando o importador existente.
+Piloto permanece PREPARED_NOT_AUTHORIZED: transferir e recuperar arquivos NAO
+autoriza executar carga. Pendencias de homologacao de banco continuam separadas.
+
+Publicacao exclusivamente documental e sanitizada; runtime do ERP inalterado.
+Nao repetir suites de aplicacao inalteradas nem tratar CI de docs como prova de
+importacao. Recibos detalhados, manifests, checkpoints e comandos de recuperacao
+continuam privados no destino e na estacao autorizada.
+
+## HISTORICO #344 - centralizacao privada EM EXECUCAO, staging recuperado (2026-10-23)
 
 Esta execucao NAO foi somente diagnostico. O coordenador ERP ZUCCARO -
 CODEX/CURSOR usa SSH/SFTP ja configurados na estacao com HD; nenhum segredo
