@@ -34,7 +34,7 @@ const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const sanitizeArray = (values, max = 20) => Array.isArray(values) ? values.map((value) => sanitizeText(value, 40)).filter(Boolean).slice(0, max) : [];
 
-export default function ProdutoForm({ produto, item, data, initialData, defaultValues, onSubmit, isSubmitting }) {
+export default function ProdutoForm({ produto, item, data, initialData, defaultValues, onSubmit, isSubmitting, onConversionDraft }) {
   const dadosIniciais = item || data || initialData || defaultValues || produto;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -104,6 +104,14 @@ export default function ProdutoForm({ produto, item, data, initialData, defaultV
     dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,
     grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto,
   ]));
+
+  useEffect(() => {
+    onConversionDraft?.({
+      fatores_conversao: formData.fatores_conversao,
+      unidades_secundarias: formData.unidades_secundarias,
+      peso_teorico_kg_m: formData.peso_teorico_kg_m,
+    });
+  }, [onConversionDraft, formData.fatores_conversao, formData.unidades_secundarias, formData.peso_teorico_kg_m]);
 
   const [iaSugestao, setIaSugestao] = useState(null);
   const [processandoIA, setProcessandoIA] = useState(false);

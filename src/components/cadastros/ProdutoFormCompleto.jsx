@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, Suspense } from "react";
+﻿import React, { useState, useRef, useCallback, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -56,6 +56,13 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
   const pendingSave = useRef(false);
   const [ecommercePatch, setEcommercePatch] = useCadastroRecordState({}, recordScope);
   const ecommerceData = { ...dadosIniciais, ...ecommercePatch };
+  // Read-only projection of the general form draft; saving still belongs to onSubmit.
+  const [conversionDraft, setConversionDraft] = useCadastroRecordState(null, recordScope);
+  const onConversionDraft = useCallback((draft) => {
+    if (currentScope.current !== recordScope || !currentAccess.current || pendingSave.current) return;
+    setConversionDraft(draft);
+  }, [recordScope, setConversionDraft]);
+
   const changeEcommerce = (next) => {
     if (!currentAccess.current || pendingSave.current) return;
     setEcommercePatch(previous => {
@@ -223,6 +230,7 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
             key={recordScope}
             produto={dadosIniciais}
             onSubmit={handleSubmit}
+            onConversionDraft={onConversionDraft}
             isSubmitting={isSubmitting}
           />
         </TabsContent>
@@ -232,8 +240,7 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
             <div className="p-6">
               <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
                 <AbaConversoesProduto
-                  formData={dadosIniciais || {}}
-                  setFormData={() => {}}
+                  formData={{ ...dadosIniciais, ...conversionDraft }}
                 />
               </Suspense>
             </div>

@@ -1,5 +1,16 @@
 ## Recuperacao e evolucao com referencia externa — investigacao integrada (2026-10-23)
 
+## Continuidade345/348 (2026-10-23)
+
+348 bloqueada ANTES de reexpor Relatórios: handler genérico real aceita leitura
+com service role sem autorização específica/empresa comprovada em duas fixtures
+sintéticas; sem dados reais. Componentes preservados; não declarar recuperação.
+345 segue autorizada no Codespace único: preview do rascunho usa callback/state
+existentes, fatores/unidades atualizados antes de salvar; nenhum writer adicional,
+SEO/slug/conversor/payload mantidos. Testes e limites no topo do HANDOFF/STATUS.
+346/347 continuam sequenciais, aprovação visual exigida para redesign amplo.
+
+
 Solicitacao expressa do proprietario, vinculada a issue347 existente; nao cria plano/manual paralelo. Fonte de investigacao: https://github.com/viniciuszuccaro-creator/erp-integra-novo/tree/37c6f7d39e60736cbb862d122de9be23c06db8f6 (main conferida nesse SHA). Candidata comparada: c9f1c71c31526dd1d9795627f2fbc5cd985793ff, PR342 sobre334. A referencia NAO substitui candidata/main, Auth ou persistencia. Todas as frentes do programa permanecem.
 
 ### Cobertura e limites da comparacao

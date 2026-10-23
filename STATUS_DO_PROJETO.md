@@ -1,3 +1,42 @@
+## #345 — prévia de conversões acompanha rascunho (2026-10-23)
+
+Executor único Codespace potential-xylophone-5gj7r9v9qqg637vxp, branch PR342,
+base35f1892b; ACEITO345 após gate348 bloqueado, sem writer paralelo. Causa
+reproduzida em seis testes comportamentais: ProdutoForm mantém rascunho, mas
+ProdutoFormCompleto enviava dadosIniciais à aba Conversões. Antes:11 PASS/6 FAIL;
+após correção foco17 PASS/0 FAIL/0 SKIP, incluindo handlers reais do formulário,
+calculadora/prévia, unidades e troca de aba (sem rede/IA/timers operacionais).
+
+Reuso: callback opcional onConversionDraft informa somente fatores/unidades/
+peso teórico ao wrapper, em useCadastroRecordState já existente e escopado por
+registro/versão/Grupo/Empresa/ator. Callback antigo, revogação e envio pendente
+não atualizam a projeção. Não há merge dessa projeção no payload; o formulário
+continua dono do rascunho geral e V24 dono do salvamento/auditoria. SEO/slug
+mantêm patch próprio e um único envio. Cancelar não grava; salvar/reabrir mantém
+fatores, IDs e vínculos. Conversor990e6c9a intacto, sem fator inventado.
+
+ProdutoForm grande recebeu só callback/efeito de projeção; inicializador,
+handlers, validação, permissões e payload preservados. Extração ampla seria
+ruidosa e fora desta dependência; nenhum novo componente/hook/entidade criado.
+Testes reaproveitam harness comportamental de SEO, agora também executando o
+formulário geral e a aba reais. Não são homologação visual nem banco operacional.
+Rollback: revert revisado do lote. Dados reais, auth/backend, deploy/migrations,
+recuperação de registros e agendamento PAUSED inalterados.
+
+Validação final345: suíte completa2192 PASS/0 FAIL/0 SKIP, exit0 (383443ms),
+incluindo os seis casos novos; foco17 PASS/0 FAIL/0 SKIP e quatro arquivos
+Produto/SEO/conversões/PIM/tipo aprovados. Audit/lint/typecheck/build exit0;
+lint mantém um warning preexistente em EntregasListagem.jsx:170; build com
+avisos usuais de chunks. Diff-check/sanitização PASS. Concessão Codex suportada
+nos subprocessos já diagnosticados, sem alterar SO/testes/baseline para obter verde.
+Mudança de código justifica nova suíte completa; checks anteriores não foram
+apresentados como validação deste delta. Código/teste da prévia renderizada
+foi executado nesta suíte final (seis casos encontrados no log completo).
+SHA é o commit que introduz esta seção; push/CI exata conferidos na issue345
+antes da entrega. Nenhum resultado CI da base foi atribuído ao novo commit.
+Próximo gate: fechar345;348 permanece BLOCKED pelo contrato backend de relatórios.
+346/347 preservados na fila, sem reserva de escrita ou redesign amplo.
+
 ## #348 — gate de Relatórios bloqueado; sequência #345 liberada (2026-10-23)
 
 Executor único Codespace potential-xylophone-5gj7r9v9qqg637vxp, base3f972e4c,
