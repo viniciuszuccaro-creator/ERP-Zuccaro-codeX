@@ -1,3 +1,62 @@
+## Comercial360 — conversões de Produto no Codespace (2026-10-22)
+
+Executor único comprovado: `potential-xylophone-5gj7r9v9qqg637vxp`, checkout
+`/workspaces/ERP-Zuccaro-codeX`, Node `v24.21.0`. Base local/remota
+`4456137ffe2404baf9e10f6aceaa423972cf13a0`, árvore limpa antes da edição;
+fetch da branch `codex/consolidacao-infra-20261017` sem avanço. PR342 draft
+sobre a branch do PR334, ambos abertos. CI da base: runs39819591739 e39819600422,
+frontend/backend/composição SUCCESS. SEO/slug publicado em5ab608e6 preservado;
+seus testes executados novamente, sem reimplementação.
+
+Próxima falha concreta reproduzida no componente existente `AbaConversoesProduto`:
+TON→PÇ devolvia zero, fatores decimais em texto causavam TypeError e fatores
+ausentes impediam abrir a aba. Reutilizado `CalculadoraUnidades.converterUnidade`,
+já consumidor das vendas, removendo a fórmula local incompleta. Normalização
+somente para exibição; equivalência sem fator válido mostra “Não disponível”.
+Nenhum novo serviço/cadastro/escritor; fatores continuam no Produto persistido,
+pelo salvamento/auditoria existentes. Sem mudança de tenant/RBAC/backend/HTTP.
+Teste auxiliar novo necessário porque não havia teste comportamental desta aba:
+`tests/produto-conversoes-preview.test.js`, fixtures sintéticas, reabertura e
+imutabilidade. Três regressões FAIL antes / PASS depois; SEO/slug/PIM PASS.
+Não é E2E visual ou homologação operacional. Rollback: revert revisado do lote.
+
+Validação no mesmo runtime: audit:baseline exit0 já observado e reutilizado;
+typecheck exit0; build exit0 (avisos de chunks); lint final exit0, 0 erros e
+1 warning preexistente em EntregasListagem.jsx:170. Primeiro lint restrito foi
+terminado143, sem alteração de regra. Suíte completa final:2186 PASS/0 FAIL/0 SKIP, exit0 (434044ms).
+Prova Node spawnSync→git: no sandbox erro EPERM apesar de status0 e SHA correto;
+fora dele, pela concessão oficial Codex require_escalated, exit0/sem erro.
+Sandbox anuncia NoNewPrivs1/Seccomp2; syscall exata não exposta pela ferramenta,
+não se atribui causa a uma syscall específica. Sem alteração de testes, SO ou
+validações. Primeira suíte restrita:185 arquivos PASS/21 FAIL por restrições;
+não equivale a contagem de casos. Uma repetição completa com concessão suportada.
+Revisão final: TON→PÇ, KG↔MT, KG↔PÇ, TON→KG, decimais legados,
+fatores ausentes/inválidos, reabertura e imutabilidade cobertos; sem novo fator,
+nenhuma alteração da persistência ou do pacote SEO/slug. git diff --check exit0
+e sanitização das adições PASS. Somente os seis arquivos deste lote publicados
+pela mesma branch; SHA é o commit que introduz esta seção. CI nova pendente de
+consulta após push; resultado será conferido no GitHub antes da entrega.
+
+Fechamento em23/10: recebida ordem para concluir este lote antes das tarefas
+GitHub. Remoto avançou apenas HANDOFF em a42cd686; ancestralidade confirmada,
+FF documental seguro após preservar seis arquivos em stash e patch SHA256
+42f911025b9b949e9bd69be7a0c04f2a30d332b3a4535f0344d3b0839cac1ced.
+Reaplicação --index recusou somente o topo sobreposto, sem modificar a árvore;
+cinco arquivos restaurados do patch e HANDOFF reconciliado por prefixos, ambas
+as seções/histórico preservados. Stash mantido. Código/testes idênticos aos
+validados; suites não repetidas por alteração exclusivamente documental.
+
+VPS: runtime sem bindings `ERP_DEV_VPS_SSH_PRIVATE_KEY`/`ERP_DEV_VPS_SSH_USER`,
+sem SSH_AUTH_SOCK, config SSH ou identidade convencional. Falta vincular ao MESMO
+runtime o canal/identidade já autorizados por mecanismo seguro de secrets ou
+agente encaminhado e destino/host confiável documentado; não reenviar chave no
+chat, gerar identidade ou substituir authorized_keys. Inventário privado NOT RUN;
+nenhuma conclusão sobre existência/ausência da cópia legada na VPS. Não houve
+transferência, abertura de backup/banco/PII, instalação, merge, deploy, migration
+operacional, cobrança ou novo Codespace. Agendamento permanece PAUSED.
+Próximo gate: concluir este lote e validar CI do SHA publicado; não iniciar outro pacote;
+legado depende do canal recuperado e dos seis gates privados antes de transferência.
+
 ## Recibo de execucao via terminal web do Codespace (2026-10-22)
 
 Executor: ChatGPT Work, navegador autenticado do proprietario, terminal integrado web; nao e conexao direta Codex/Cursor.

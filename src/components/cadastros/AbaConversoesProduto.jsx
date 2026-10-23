@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Calculator, ArrowRightLeft, CheckCircle2 } from "lucide-react";
+import { converterUnidade } from "@/components/lib/CalculadoraUnidades";
 
 /**
  * V21.1.2-R2 - Aba de Conversões Avançadas
@@ -12,34 +13,20 @@ import { Calculator, ArrowRightLeft, CheckCircle2 } from "lucide-react";
  * ✅ Preview de equivalências
  * ✅ Validação de fatores
  */
-export default function AbaConversoesProduto({ formData, setFormData }) {
-  const { fatores_conversao } = formData;
-
-  const calcularConversao = (de, para, valor) => {
-    if (valor <= 0) return 0;
-
-    // KG → MT
-    if (de === 'KG' && para === 'MT') {
-      return fatores_conversao.kg_por_metro > 0 ? valor / fatores_conversao.kg_por_metro : 0;
-    }
-    // KG → PÇ
-    if (de === 'KG' && para === 'PÇ') {
-      return fatores_conversao.kg_por_peca > 0 ? valor / fatores_conversao.kg_por_peca : 0;
-    }
-    // MT → KG
-    if (de === 'MT' && para === 'KG') {
-      return valor * fatores_conversao.kg_por_metro;
-    }
-    // PÇ → KG
-    if (de === 'PÇ' && para === 'KG') {
-      return valor * fatores_conversao.kg_por_peca;
-    }
-    // TON → KG
-    if (de === 'TON' && para === 'KG') {
-      return valor * 1000;
-    }
-    
-    return 0;
+export default function AbaConversoesProduto({ formData = {} }) {
+  // Normalize persisted legacy decimals for display without changing the record.
+  const positiveFactor = value => {
+    if (typeof value !== "number" && typeof value !== "string") return 0;
+    const number = Number(value);
+    return Number.isFinite(number) && number > 0 ? number : 0;
+  };
+  const fatores_conversao = Object.fromEntries(
+    Object.entries(formData.fatores_conversao || {}).map(([key, value]) => [key, positiveFactor(value)])
+  );
+  const produtoConversao = {
+    ...formData,
+    fatores_conversao,
+    peso_teorico_kg_m: positiveFactor(formData.peso_teorico_kg_m),
   };
 
   return (
@@ -119,14 +106,16 @@ export default function AbaConversoesProduto({ formData, setFormData }) {
               { de: 'TON', para: 'KG', valor: 1 },
               { de: 'TON', para: 'PÇ', valor: 1 }
             ].map((sim, idx) => {
-              const resultado = calcularConversao(sim.de, sim.para, sim.valor);
+              const resultado = converterUnidade(sim.valor, sim.de, sim.para, produtoConversao);
               return (
                 <div key={idx} className="p-3 bg-white rounded border">
                   <p className="text-xs text-slate-600 mb-1">
                     {sim.valor} {sim.de} = 
                   </p>
                   <p className="font-bold text-green-700">
-                    {resultado.toFixed(3)} {sim.para}
+                    {Number.isFinite(resultado) && resultado > 0
+                      ? `${resultado.toFixed(3)} ${sim.para}`
+                      : "Não disponível"}
                   </p>
                 </div>
               );

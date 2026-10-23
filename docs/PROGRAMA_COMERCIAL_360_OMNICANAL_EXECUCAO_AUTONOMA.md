@@ -1,5 +1,16 @@
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
 
+## Continuidade — conversões existentes de Produto (2026-10-22)
+
+No Codespace único comprovado, base4456137f/PR342 sobre334, lote localizado na
+aba Conversões: reutiliza o conversor de Vendas, corrige TON→PÇ e abertura com
+fatores ausentes/decimais legados. Fonte persistida e escritor/auditoria atuais
+preservados; SEO/slug5ab608e6 não reimplementado. Sem ativação HTTP/canal/IA.
+Provas, checks, publicação e limites no topo de HANDOFF_ATUAL.md e STATUS.
+Canal SSH/SFTP não configurado neste runtime: inventário privado não executado;
+nenhum dado real transferido ou aberto. PAUSED e gates operacionais preservados.
+
+
 ## Referencia atual de coordenacao e precedencia (2026-10-22)
 
 Este e o programa existente; nao reiniciar ondas nem criar manual paralelo.
