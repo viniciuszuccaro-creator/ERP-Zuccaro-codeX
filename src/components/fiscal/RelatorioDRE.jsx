@@ -37,7 +37,7 @@ export default function RelatorioDRE({ empresaId, tipoRelatorio = "Individual" }
     mutationFn: async () => {
       // Calcular DRE a partir dos lançamentos
       const dataInicio = `${periodo}-01`;
-      const dataFim = new Date(periodo.split('-')[0], periodo.split('-')[1], 0).toISOString().split('T')[0];
+      const dataFim = new Date(Number(periodo.split('-')[0]), Number(periodo.split('-')[1]), 0).toISOString().split('T')[0];
 
       const lancamentos = await base44.entities.LancamentoContabil.filter({
         empresa_id: empresaId,

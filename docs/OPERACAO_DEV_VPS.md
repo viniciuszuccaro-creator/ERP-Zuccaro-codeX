@@ -64,6 +64,15 @@ Hostinger; o GitHub guarda só o contrato e os nomes.
 - **Proibido** commitar a chave privada, colar no chat, PR, HANDOFF ou evidence.
 - Trocar de computador: os secrets do Environment continuam; não é preciso reenviar no chat se o Environment for o mesmo.
 
+### Recuperacao do canal existente (precedencia em22/10/2026)
+
+Reutilizar primeiro o executor/alias/Runtime Secrets ja autorizado. A ausencia
+no sandbox atual nao autoriza reprovisionar a VPS, gerar outra identidade ou
+substituir authorized_keys. O bloco de provisionamento inicial abaixo e historico:
+NUNCA executar seu `cat > authorized_keys` como rotina de recuperacao, pois pode
+sobrescrever acessos existentes. Conferir recibo/metadados e canal original antes
+de qualquer mudanca; chave privada somente pelo mecanismo de segredos, nunca chat.
+
 ### Chave pública autorizada na VPS (pode ir no Git)
 
 Comentário: `erp-zuccaro-vps` · tipo ED25519  

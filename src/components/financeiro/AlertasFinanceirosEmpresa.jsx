@@ -43,7 +43,7 @@ export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMo
   const hoje = new Date();
   const pagarVencendo = contasPagar.filter(c => {
     const venc = new Date(c.data_vencimento);
-    const diffDias = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));
+    const diffDias = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     return c.status === 'Pendente' && diffDias >= 0 && diffDias <= 3;
   });
 
@@ -53,7 +53,7 @@ export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMo
 
   const receberVencendo = contasReceber.filter(c => {
     const venc = new Date(c.data_vencimento);
-    const diffDias = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));
+    const diffDias = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     return c.status === 'Pendente' && diffDias >= 0 && diffDias <= 3;
   });
 

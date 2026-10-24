@@ -19,10 +19,10 @@ export default function KPIsComercial({ totalClientes, clientesAtivos, totalPedi
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
           <CardTitle className="text-xs font-medium">Pedidos</CardTitle>
-          <ShoppingCart className="w-4 h-4 text-purple-600" />
+          <ShoppingCart className="w-4 h-4 text-sky-600" />
         </CardHeader>
         <CardContent className="px-3 pb-2">
-          <div className="text-2xl font-bold text-purple-600">{totalPedidos}</div>
+          <div className="text-2xl font-bold text-sky-600">{totalPedidos}</div>
         </CardContent>
       </Card>
 

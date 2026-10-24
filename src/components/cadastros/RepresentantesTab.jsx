@@ -146,7 +146,7 @@ export default function RepresentantesTab() {
           </Select>
         </div>
 
-        <Button onClick={handleNovo} className="bg-purple-600 hover:bg-purple-700">
+        <Button onClick={handleNovo} className="bg-sky-600 hover:bg-sky-700">
           <Plus className="w-4 h-4 mr-2" />
           Novo Representante
         </Button>
@@ -197,7 +197,7 @@ export default function RepresentantesTab() {
                       <div className="grid grid-cols-4 gap-4 mt-3 pt-3 border-t">
                         <div>
                           <p className="text-xs text-slate-500">Comissão</p>
-                          <p className="font-bold text-purple-600">
+                          <p className="font-bold text-sky-600">
                             {rep.percentual_comissao > 0 && `${rep.percentual_comissao}%`}
                             {rep.valor_fixo_comissao > 0 && ` +R$ ${rep.valor_fixo_comissao}`}
                           </p>
@@ -212,7 +212,7 @@ export default function RepresentantesTab() {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Comissão Gerada</p>
-                          <p className="font-bold text-purple-600">R$ {metricas.totalComissao.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
+                          <p className="font-bold text-sky-600">R$ {metricas.totalComissao.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</p>
                         </div>
                       </div>
 

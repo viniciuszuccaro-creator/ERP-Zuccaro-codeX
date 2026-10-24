@@ -13,6 +13,7 @@ const statusColor = (s) => {
   }
 };
 
+/** @param {{center?: import('leaflet').LatLngTuple | null}} props */
 function FlyTo({ center }) {
   const map = useMap();
   React.useEffect(() => {
@@ -38,7 +39,7 @@ export default function MapView({ entregas = [], selected, onSelect, contextoVal
     }))
     .filter((p) => typeof p.lat === 'number' && typeof p.lng === 'number');
 
-  const center = React.useMemo(() => {
+  const center = React.useMemo(/** @returns {import('leaflet').LatLngTuple} */ () => {
     if (selected && selected.endereco_entrega_completo?.latitude && selected.endereco_entrega_completo?.longitude) {
       return [selected.endereco_entrega_completo.latitude, selected.endereco_entrega_completo.longitude];
     }

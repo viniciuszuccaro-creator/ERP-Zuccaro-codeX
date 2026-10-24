@@ -61,7 +61,7 @@ function Agenda() {
     if (v) setVisualizacao(v);
     if (d) {
       const parsed = new Date(d);
-      if (!isNaN(parsed)) setDataAtual(parsed);
+      if (!Number.isNaN(parsed.getTime())) setDataAtual(parsed);
     }
     if (u) setFiltroUsuario(u);
   }, []);
@@ -182,7 +182,7 @@ function Agenda() {
   }, [eventos, user, toast]); // Dependências para re-executar o efeito
 
   const createEventoMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {typeof eventoForm} */ data) => {
       const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
       const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
 
@@ -235,7 +235,7 @@ function Agenda() {
   });
 
   const updateEventoMutation = useMutation({
-    mutationFn: ({ id, data }) => {
+    mutationFn: (/** @type {{id: string, data: typeof eventoForm}} */ { id, data }) => {
       const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
       const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
 
@@ -266,7 +266,7 @@ function Agenda() {
   });
 
   const deleteEventoMutation = useMutation({
-    mutationFn: (id) => base44.entities.Evento.delete(id),
+    mutationFn: (/** @type {string} */ id) => base44.entities.Evento.delete(id),
     onSuccess: async (_res, id) => {
       await base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuário',
@@ -287,7 +287,7 @@ function Agenda() {
   });
 
   const concluirEventoMutation = useMutation({
-    mutationFn: (evento) => updateInContext('Evento', evento.id, {
+    mutationFn: (/** @type {{id: string} & Record<string, unknown>} */ evento) => updateInContext('Evento', evento.id, {
       ...evento,
       status: 'Concluído'
     }),
@@ -916,10 +916,10 @@ function Agenda() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Total</CardTitle>
-            <Users className="w-5 h-5 text-purple-600" />
+            <Users className="w-5 h-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">{eventos.length}</div>
+            <div className="text-3xl font-bold text-blue-600">{eventos.length}</div>
             <p className="text-xs text-slate-500 mt-1">eventos cadastrados</p>
           </CardContent>
         </Card>
@@ -1122,7 +1122,7 @@ function Agenda() {
                           <Checkbox
                             id="dia_inteiro"
                             checked={eventoForm.dia_inteiro}
-                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, dia_inteiro: checked })}
+                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, dia_inteiro: checked === true })}
                           />
                           <Label htmlFor="dia_inteiro" className="font-normal cursor-pointer">
                             Dia inteiro
@@ -1230,7 +1230,7 @@ function Agenda() {
                           <Checkbox
                             id="lembrete"
                             checked={eventoForm.lembrete}
-                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, lembrete: checked })}
+                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, lembrete: checked === true })}
                           />
                           <Label htmlFor="lembrete" className="font-normal cursor-pointer">
                             Ativar lembrete automático
@@ -1254,7 +1254,7 @@ function Agenda() {
                           <Checkbox
                             id="notificar_email"
                             checked={eventoForm.notificar_email}
-                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, notificar_email: checked })}
+                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, notificar_email: checked === true })}
                           />
                           <Label htmlFor="notificar_email" className="font-normal cursor-pointer flex items-center gap-2">
                             <Mail className="w-4 h-4" />
@@ -1266,7 +1266,7 @@ function Agenda() {
                           <Checkbox
                             id="notificar_whatsapp"
                             checked={eventoForm.notificar_whatsapp}
-                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, notificar_whatsapp: checked })}
+                            onCheckedChange={(checked) => setEventoForm({ ...eventoForm, notificar_whatsapp: checked === true })}
                           />
                           <Label htmlFor="notificar_whatsapp" className="font-normal cursor-pointer flex items-center gap-2">
                             <MessageSquare className="w-4 h-4" />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
   const podeCriar = canCreate("Cadastros", "Representante") || canCreate("Comercial", "Representante") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Representante") || canEdit("Comercial", "Representante") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome: '',
     cpf_cnpj: '',
     email: '',
@@ -35,7 +35,16 @@ export default function RepresentanteForm({ representante, item, data, initialDa
     tipo_contrato: 'Autonomo',
     data_contratacao: '',
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
+  const prevIdRef = useRef(dadosIniciais?.id || null);
+  useEffect(() => {
+    const nextId = dadosIniciais?.id || null;
+    if (nextId !== prevIdRef.current) {
+      prevIdRef.current = nextId;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

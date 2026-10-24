@@ -1,5 +1,5 @@
 ﻿import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeErpIa } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,18 +8,31 @@ import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { assertIaUiContext, sanitizeIaPrompt } from "@/components/lib/iaTransversalPolicy";
+import { validarPrevisaoEntregaIA } from "@/components/lib/iaResponsePolicy.js";
 
 /**
  * IA de previsao de entrega — sugere data/risco; nao altera pedido sozinha.
  */
 export default function IAPrevisaoEntrega({ pedido, historico = [], windowMode = false }) {
-  const [previsao, setPrevisao] = useState(null);
+  const [previsaoResult, setPrevisao] = useState(null);
   const [carregando, setCarregando] = useState(false);
   const { empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
-  const { hasPermission, isAdmin } = usePermissions();
+  const { hasPermission, isAdmin, user } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || pedido?.group_id || pedido?.grupo_id || null;
   const empresaId = empresaAtual?.id || pedido?.empresa_id || null;
   const scopeType = estaNoGrupo ? "grupo" : "empresa";
+  const iaIdentityKey = JSON.stringify([user?.id, pedido?.id, groupId, empresaId, scopeType]);
+  const iaRequestScope = React.useRef({ key: iaIdentityKey, pending: false, active: true });
+  const iaResultScope = React.useRef(null);
+  if (iaRequestScope.current.key !== iaIdentityKey) iaRequestScope.current = { key: iaIdentityKey, pending: false, active: true };
+  const previsao = iaResultScope.current === iaRequestScope.current ? previsaoResult : null;
+  React.useEffect(() => {
+    const scope = iaRequestScope.current;
+    scope.active = true;
+    setPrevisao(null);
+    setCarregando(false);
+    return () => { scope.active = false; };
+  }, [iaIdentityKey]);
   const canExecutar = isAdmin?.()
     || hasPermission("Expedição", null, "visualizar")
     || hasPermission("Expedição", null, "ver")
@@ -29,11 +42,15 @@ export default function IAPrevisaoEntrega({ pedido, historico = [], windowMode =
   const containerClass = windowMode ? "w-full h-full flex flex-col" : "";
 
   const calcularPrevisaoIA = async () => {
+    const activeScope = iaRequestScope.current;
+    if (activeScope.pending || activeScope.active === false) return;
+    activeScope.pending = true;
+    const isCurrent = () => iaRequestScope.current === activeScope && activeScope.active !== false;
     setCarregando(true);
     try {
       assertIaUiContext({ groupId, empresaId, scopeType });
       if (!canExecutar) throw new Error("Sem permissao para calcular previsao de entrega.");
-      if (!pedido) throw new Error("Pedido obrigatorio para previsao.");
+      if (!pedido || pedido.id == null || pedido.id === '') throw new Error("Pedido com identidade obrigatorio para previsao.");
 
       const prompt = sanitizeIaPrompt(`Voce e um sistema de IA especializado em previsao de entregas logisticas.
 Analise o pedido e historico e sugira data/horario, riscos e recomendacoes.
@@ -45,7 +62,7 @@ Data prevista original: ${pedido.data_prevista_entrega || "N/A"}
 Historico (ate 10): ${JSON.stringify(historico.slice(0, 10))}
 Retorne apenas sugestao; nao execute alteracao no pedido.`);
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = await invokeErpIa('entrega_previsao', {
         prompt,
         group_id: groupId,
         empresa_id: empresaId,
@@ -63,12 +80,17 @@ Retorne apenas sugestao; nao execute alteracao no pedido.`);
         }
       });
 
-      setPrevisao(resultado);
+      if (!isCurrent()) return;
+      const validada = validarPrevisaoEntregaIA(resultado);
+      iaResultScope.current = activeScope;
+      setPrevisao(validada);
       toast.success("Previsao sugerida pela IA (pedido nao alterado).");
     } catch (error) {
+      if (!isCurrent()) return;
       toast.error("Erro ao calcular previsao: " + (error?.message || error));
     } finally {
-      setCarregando(false);
+      activeScope.pending = false;
+      if (isCurrent()) setCarregando(false);
     }
   };
 
@@ -132,12 +154,12 @@ Retorne apenas sugestao; nao execute alteracao no pedido.`);
                     </div>
                     <div>
                       <p className="text-sm text-purple-700">Horario</p>
-                      <p className="text-xl font-bold text-purple-900">{previsao.horario_previsto}</p>
+                      <p className="text-xl font-bold text-purple-900">{previsao.horario_previsto || 'Nao informado'}</p>
                     </div>
                   </div>
                 </div>
                 <p className="text-xs text-slate-600 mt-4">
-                  Confianca: {previsao.confianca_percentual}% · Prazo: {previsao.prazo_dias} dia(s) · pedido nao alterado automaticamente
+                  Confianca: {previsao.confianca_percentual}% · Prazo: {previsao.prazo_dias ?? 'Nao informado'} dia(s) · pedido nao alterado automaticamente
                 </p>
               </CardContent>
             </Card>

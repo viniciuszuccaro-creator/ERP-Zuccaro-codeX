@@ -179,7 +179,7 @@ export default function DashboardAtendente() {
             </div>
             <p className="text-2xl font-bold text-purple-600">{metricas.tempoMedioResposta}min</p>
             <Progress 
-              value={Math.min((metaSLA / parseFloat(metricas.tempoMedioResposta || 1)) * 100, 100)} 
+              value={Math.min((metaSLA / parseFloat(String(metricas.tempoMedioResposta || 1))) * 100, 100)}
               className="h-1 mt-1" 
             />
           </CardContent>

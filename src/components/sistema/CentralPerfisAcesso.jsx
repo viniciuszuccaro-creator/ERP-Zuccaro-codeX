@@ -128,7 +128,7 @@ export default function CentralPerfisAcesso() {
   });
 
   const salvarPerfilMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {import('./central-perfis-acesso/rbacScopeUtils').PerfilFormInput} */ data) => {
       const perfilId = perfilAberto?.id;
       const criando = !perfilId || perfilAberto?.novo;
       const bloqueio = buildPerfilSaveBlock({

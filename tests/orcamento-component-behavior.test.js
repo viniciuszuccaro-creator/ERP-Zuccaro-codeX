@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as policy from '../src/components/comercial/orcamentoUiPolicy.js';
 import * as picker from '../src/components/comercial/comercialMasterPicker.js';
+import * as proposalFixture from '../src/components/comercial/comercialProposalFixture.js';
 import * as navigation from '../src/components/comercial/centralCliente360Navigation.js';
 
 const deferred = () => { let resolve; let reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
@@ -33,12 +34,13 @@ async function mount() {
       prev?.cleanup?.(); scheduled.push(() => { effects[i] = { deps, cleanup: fn() }; }); },
   };
   let active = cpa; let permission = true; let current = row(); let props = { ...cpa };
+  const queries = []; const plans=[];
   const calls = []; const invalidations = []; const messages = []; const pending = {};
   const request = (method, scope, args) => { calls.push({ method, scope, args }); return pending[method]?.promise || Promise.resolve(current); };
   const modules = {
     react: { __esModule: true, default: react, ...react },
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: (key) => invalidations.push(key) }),
-      useQuery: ({ queryKey }) => queryKey[0] === 'orcamentos-http'
+      useQuery: ({ queryKey,...options }) => (plans.push({queryKey,...options}),queries.push(queryKey), queryKey[0] === 'orcamentos-http')
         ? { data: { data: [current], meta: { total: 1 } } }
         : { data: { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] } } },
     '@/api/erpHttpSession': { readErpHttpSession: () => active },
@@ -46,6 +48,7 @@ async function mount() {
       orcamentos: Object.fromEntries(['update', 'create', 'get', 'cancel'].map((method) => [method, (...args) => request(method, getScope(), args)])),
       pedidos: { convertOrcamento: (...args) => request('convert', getScope(), args) },
     }) },
+    './comercialProposalFixture':proposalFixture,'./OrcamentoProposalAside':{__esModule:true,default:'OrcamentoProposalAside'},
     './orcamentoUiPolicy': policy, './comercialMasterPicker': picker,
     './centralCliente360Navigation': navigation,
     sonner: { toast: Object.fromEntries(['error', 'success'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },
@@ -64,7 +67,7 @@ async function mount() {
   const text = (node) => typeof node === 'string' ? node : (node?.children || []).map(text).join('');
   const find = (predicate) => { const found = nodes().find(predicate); assert.ok(found, 'controle esperado no componente real'); return found; };
   render(); render();
-  return { calls, invalidations, messages, pending, render,
+  return { calls, invalidations, messages, pending, render, queries, plans,
     title: (title) => find((n) => n.props?.title === title),
     button: (label) => find((n) => n.type === 'Button' && text(n) === label),
     find, nodes, setSession: (scope) => { active = scope; }, setProps: (scope) => { props = scope; },
@@ -164,4 +167,59 @@ test('Orcamento real: GET inicial atrasado não sobrescreve seleção posterior'
   h.render();
   const detailTitle = h.nodes().find((node) => node.type === 'DialogTitle' && node.children.some((child) => String(child).includes('Orçamento')));
   assert.equal(detailTitle?.children.join(''), 'Orçamento 99');
+});
+
+
+for (const method of ['update', 'cancel', 'convert']) {
+  test(`346 session rotation blocks captured ${method} before transport`, async () => {
+    const h = await mount();
+    h.setSession({ ...cpa, token: 'synthetic-old' }); h.setProps({ ...cpa, sessionToken: 'synthetic-old' });
+    h.render(); h.render(); let click;
+    if (method === 'update') { h.title('Editar').props.onClick(); h.render(); click = h.button('Salvar orçamento').props.onClick; }
+    if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find(n => typeof n.props.onConfirm === 'function').props.onConfirm; }
+    if (method === 'convert') {
+      await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render();
+      h.nodes().filter(n => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
+      h.render(); click = h.button('Criar pedido').props.onClick;
+    }
+    const previous = h.calls.length;
+    h.setSession({ ...cpa, token: 'synthetic-new' });
+    await click();
+    assert.equal(h.calls.length, previous, 'no request from a previous session');
+  });
+}
+
+test('346 response after session revocation cannot close draft or report successful save', async () => {
+  const h = await mount(); h.setSession({ ...cpa, token: 'synthetic-old' });
+  h.setProps({ ...cpa, sessionToken: 'synthetic-old' }); h.render(); h.render();
+  h.title('Editar').props.onClick(); h.render(); h.pending.update = deferred();
+  const result = h.button('Salvar orçamento').props.onClick(); h.setSession(null);
+  h.pending.update.resolve(row()); await result;
+  assert.equal(h.invalidations.length, 0); assert.equal(h.messages.length, 0);
+});
+
+test('346 quote query keys separate actor and session without embedding credentials', async () => {
+  const h = await mount(); h.setSession({ ...cpa, token: 'synthetic-secret' });
+  h.setProps({ ...cpa, sessionToken: 'synthetic-secret' }); h.render();
+  const keys = h.queries.slice(-2);
+  assert.ok(keys.every(key => key.includes(cpa.actorId)));
+  assert.ok(keys.every(key => !JSON.stringify(key).includes('synthetic-secret')));
+});
+
+test('347 proposta no editor real usa somente memória e bloqueia gravação mesmo pelo callback', async () => {
+  const h=await mount();h.setProps({...cpa,proposalMode:true});h.render();h.render();
+  assert.ok(h.queries.every(key=>!JSON.stringify(key).includes('synthetic-session')));
+  h.button('Novo orçamento').props.onClick();h.render();
+  h.find(n=>n.type==='Select'&&n.props['data-action']==='orcamento-cliente').props.onValueChange('preview-vinculo');h.render();
+  h.find(n=>n.type==='Select'&&n.props['data-action']==='orcamento-produto').props.onValueChange('preview-produto');h.render();
+  const aside=h.find(n=>n.type==='OrcamentoProposalAside');
+  assert.ok(aside.props.cliente.includes('SINTÉTICO'));assert.equal(aside.props.itens[0].descricao,'Produto SINTÉTICO da proposta');
+  assert.equal(aside.props.itens[0].preco_unitario,'10.00');assert.equal(aside.props.totals.total,'10.000000');
+  assert.ok(h.plans.slice(-2).every(plan=>plan.enabled===false));
+  assert.equal(h.button('Salvar orçamento').props.disabled,true);await h.button('Salvar orçamento').props.onClick();assert.equal(h.calls.length,0);
+});
+test('347 entrar ou sair da proposta invalida callbacks antigos sem alterar o orçamento operacional',async()=>{
+  const h=await mount();h.title('Editar').props.onClick();h.render();const captured=h.button('Salvar orçamento').props.onClick;
+  h.setProps({...cpa,proposalMode:true});h.render();await captured();assert.equal(h.calls.length,0);
+  h.setProps({...cpa,proposalMode:false});h.render();h.render();h.title('Editar').props.onClick();h.render();await h.button('Salvar orçamento').props.onClick();assert.equal(h.calls.length,1);
 });

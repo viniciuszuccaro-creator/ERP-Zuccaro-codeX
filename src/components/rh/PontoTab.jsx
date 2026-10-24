@@ -34,18 +34,18 @@ export default function PontoTab({ pontos, colaboradores }) {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: (/** @type {typeof formData} */ data) => {
       // Calcular horas trabalhadas
       const calcularHoras = () => {
-        if (!data.entrada_manha || !data.saida_tarde) return 0;
+        if (!data.entrada_manha || !data.saida_tarde) return { horas_trabalhadas: undefined, horas_extras: undefined };
         
         const entrada = new Date(`2000-01-01T${data.entrada_manha}`);
         const saida = new Date(`2000-01-01T${data.saida_tarde}`);
         const almoco = data.saida_almoco && data.retorno_almoco 
-          ? (new Date(`2000-01-01T${data.retorno_almoco}`) - new Date(`2000-01-01T${data.saida_almoco}`)) / (1000 * 60 * 60)
+          ? (new Date(`2000-01-01T${data.retorno_almoco}`).getTime() - new Date(`2000-01-01T${data.saida_almoco}`).getTime()) / (1000 * 60 * 60)
           : 0;
         
-        const horasTotais = (saida - entrada) / (1000 * 60 * 60) - almoco;
+        const horasTotais = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60) - almoco;
         const horasExtras = Math.max(0, horasTotais - 8);
         
         return {
@@ -70,7 +70,7 @@ export default function PontoTab({ pontos, colaboradores }) {
   });
 
   const aprovarMutation = useMutation({
-    mutationFn: ({ id }) => base44.entities.Ponto.update(id, {
+    mutationFn: (/** @type {{id: string}} */ { id }) => base44.entities.Ponto.update(id, {
       status: 'Aprovado',
       aprovado_por: 'Sistema'
     }),
@@ -80,7 +80,7 @@ export default function PontoTab({ pontos, colaboradores }) {
   });
 
   const rejeitarMutation = useMutation({
-    mutationFn: ({ id }) => base44.entities.Ponto.update(id, {
+    mutationFn: (/** @type {{id: string}} */ { id }) => base44.entities.Ponto.update(id, {
       status: 'Rejeitado'
     }),
     onSuccess: () => {

@@ -169,7 +169,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
       ? ((valorAtual - valorAnterior) / valorAnterior * 100).toFixed(1)
       : 0;
 
-    return { valorAtual, valorAnterior, crescimento: parseFloat(crescimento) };
+    return { valorAtual, valorAnterior, crescimento: Number(crescimento) };
   };
 
   const queryClient = useQueryClient();

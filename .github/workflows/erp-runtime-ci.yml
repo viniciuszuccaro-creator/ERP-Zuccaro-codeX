@@ -10,12 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: npm }
       - run: npm ci
+      - name: Install backend dependencies used by root contract tests
+        run: npm ci --prefix server
       - run: npm run audit:baseline
       - run: npm test
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm run build
 
   backend:
@@ -36,6 +41,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
+      - name: Install root dependencies used by backend HTTP contract tests
+        run: npm ci
+        working-directory: .
       - run: npm install
       - run: npm run typecheck
       - run: npm test

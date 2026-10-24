@@ -23,6 +23,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 function DashboardRHRealtime({ empresaId, windowMode = false }) {
   const { filterInContext } = useContextoVisual();
+  /** @type {[{colaboradoresAtivos: number, presentesHoje: number, ausentesHoje: number, taxaPresenca: number | string, horasExtrasHoje: number, riscoTurnoverAlto: number, produtividadeMedia: number | string}, React.Dispatch<React.SetStateAction<{colaboradoresAtivos: number, presentesHoje: number, ausentesHoje: number, taxaPresenca: number | string, horasExtrasHoje: number, riscoTurnoverAlto: number, produtividadeMedia: number | string}>>]} */
   const [metricas, setMetricas] = useState({
     colaboradoresAtivos: 0,
     presentesHoje: 0,
@@ -146,7 +147,7 @@ function DashboardRHRealtime({ empresaId, windowMode = false }) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className={`w-5 h-5 ${metricas.taxaPresenca >= 95 ? 'text-green-600' : 'text-yellow-600'}`} />
+              <TrendingUp className={`w-5 h-5 ${Number(metricas.taxaPresenca) >= 95 ? 'text-green-600' : 'text-yellow-600'}`} />
               <span className="text-2xl font-bold">{metricas.taxaPresenca}%</span>
             </div>
           </CardContent>
@@ -183,7 +184,7 @@ function DashboardRHRealtime({ empresaId, windowMode = false }) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Award className={`w-5 h-5 ${metricas.produtividadeMedia >= 100 ? 'text-green-600' : 'text-yellow-600'}`} />
+              <Award className={`w-5 h-5 ${Number(metricas.produtividadeMedia) >= 100 ? 'text-green-600' : 'text-yellow-600'}`} />
               <span className="text-2xl font-bold">{metricas.produtividadeMedia}%</span>
             </div>
           </CardContent>
@@ -259,14 +260,14 @@ function DashboardRHRealtime({ empresaId, windowMode = false }) {
               </div>
             )}
 
-            {metricas.taxaPresenca < 95 && (
+            {Number(metricas.taxaPresenca) < 95 && (
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                 <Badge className="bg-yellow-600">Atenção</Badge>
                 <span className="ml-2 font-medium">Taxa de presença abaixo do esperado</span>
               </div>
             )}
 
-            {metricas.riscoTurnoverAlto === 0 && metricas.taxaPresenca >= 95 && (
+            {metricas.riscoTurnoverAlto === 0 && Number(metricas.taxaPresenca) >= 95 && (
               <div className="p-3 bg-green-50 border border-green-200 rounded text-center">
                 <Award className="w-5 h-5 inline text-green-600 mr-2" />
                 <span className="font-medium text-green-800">Time engajado e produtivo!</span>

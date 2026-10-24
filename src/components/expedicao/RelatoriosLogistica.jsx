@@ -108,7 +108,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const entregasComTempo = entregasFiltradas.filter(e => e.data_entrega && e.data_saida);
   const tempoMedio = entregasComTempo.length > 0
     ? entregasComTempo.reduce((sum, e) => {
-        const horas = (new Date(e.data_entrega) - new Date(e.data_saida)) / (1000 * 60 * 60);
+        const horas = (new Date(e.data_entrega).getTime() - new Date(e.data_saida).getTime()) / (1000 * 60 * 60);
         return sum + horas;
       }, 0) / entregasComTempo.length
     : 0;
@@ -301,7 +301,7 @@ export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
                         <TableCell className="text-center text-green-700">{m.realizadas}</TableCell>
                         <TableCell className="text-center text-red-700">{m.frustradas}</TableCell>
                         <TableCell className="text-center">
-                          <Badge className={parseFloat(taxa) >= 90 ? 'bg-green-600' : 'bg-yellow-600'}>
+                          <Badge className={Number(taxa) >= 90 ? 'bg-green-600' : 'bg-yellow-600'}>
                             {taxa}%
                           </Badge>
                         </TableCell>

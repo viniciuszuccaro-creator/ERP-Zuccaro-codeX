@@ -1,4 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef } from 'react';
+import useCadastroRecordState from './useCadastroRecordState';
+import useCadastroFormScopeGuard from './hooks/useCadastroFormScopeGuard';
+import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { assertCadastroRecordInTenant, hasCadastroEntityPermission } from './cadastroEditLoadPolicy';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +15,15 @@ import { FileText } from 'lucide-react';
 
 export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit, windowMode = false }) {
   const dadosIniciais = modeloDocumento || modelo;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const permissions = usePermissions();
+  const { grupoAtual, empresaAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const scope = useCadastroFormScopeGuard(groupId, empresaAtual?.id || null);
+  const podeSalvar = !permissions.isLoading && hasCadastroEntityPermission('ModeloDocumento', dadosIniciais?.id ? 'editar' : 'criar', permissions);
+  const identity = JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, groupId, empresaAtual?.id ?? null, contexto]);
+  const current = useRef(null);
+  current.current = { identity, podeSalvar };
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome_modelo: '',
     tipo_documento: 'Romaneio',
     descricao: '',
@@ -18,10 +32,20 @@ export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit,
     incluir_logo_empresa: true,
     incluir_qrcode: true,
     ativo: true
-  });
+  }, identity);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!current.current.podeSalvar || current.current.identity !== identity || !scope.isCurrent()) {
+      toast.error('Contexto ou permissao indisponiveis. Reabra o modelo antes de salvar.');
+      return;
+    }
+    try {
+      assertCadastroRecordInTenant('ModeloDocumento', dadosIniciais, { groupId, empresaId: empresaAtual?.id || null, scopeType: empresaAtual?.id ? 'empresa' : 'grupo' });
+    } catch {
+      toast.error('Modelo fora do contexto ativo.');
+      return;
+    }
     onSubmit({ ...formData, nome: formData.nome_modelo || formData.nome || '' });
   };
 

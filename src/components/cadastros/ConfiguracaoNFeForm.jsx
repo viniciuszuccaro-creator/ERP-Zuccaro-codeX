@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -12,12 +13,13 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { requireAutomacaoHumanConfirm } from "@/components/lib/automacaoAvancadaPolicy";
 
-export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
+export default function ConfiguracaoNFeForm({ config: configProp = undefined, item = undefined, data = undefined, initialData = undefined, defaultValues = undefined, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
+  const config = configProp || item || data || initialData || defaultValues || null;
   const { toast } = useToast();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
   const [localSubmitting, setLocalSubmitting] = useState(false);
-  const [formData, setFormData] = useState(config || {
+  const [formData, setFormData] = useCadastroRecordState(config || {
     provedor: "eNotas",
     api_url: "",
     api_key: "",
@@ -31,7 +33,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
     ativo: true,
     autoriza_emissao_producao: false,
     observacoes: ""
-  });
+  }, JSON.stringify([config?.id ?? null, config?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, groupId, empresaId]));
   const grupoIdAtual = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaIdAtual = empresaId || empresaAtual?.id || null;
   const scope = scopeProp || (empresaIdAtual ? { empresa_id: empresaIdAtual, group_id: grupoIdAtual } : null);

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,7 +32,7 @@ export default function LocalEstoqueForm({
   const podeCriar = hasPermission?.("Cadastros.LocalEstoque.criar") || hasPermission?.("Estoque.LocalEstoque.criar");
   const podeEditar = hasPermission?.("Cadastros.LocalEstoque.editar") || hasPermission?.("Estoque.LocalEstoque.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useCadastroRecordState({
     nome: "",
     codigo: "",
     tipo: "Almoxarifado",
@@ -46,7 +47,7 @@ export default function LocalEstoqueForm({
     },
     controla_temperatura: false,
     ...dadosIniciais
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmitForm = (e) => {
     e.preventDefault();

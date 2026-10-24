@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -17,13 +18,13 @@ const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Numbe
 export default function ConfiguracaoIntegracaoForm({ config, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || config;
   const { canCreate, canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id && groupId);
   const podeCriar = canCreate("Cadastros", "ConfiguracaoIntegracao") || canCreate("Sistema", "Integracoes") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ConfiguracaoIntegracao") || canEdit("Sistema", "Integracoes") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     marketplace: "",
     nome_integracao: "",
     tipo_integracao: "API REST",
@@ -35,7 +36,7 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
     max_tentativas_retry: 3,
     ativo: true,
     observacoes: ""
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

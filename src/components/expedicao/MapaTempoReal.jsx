@@ -2,6 +2,7 @@ import React from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
+/** @param {{center?: import('leaflet').LatLngTuple, zoom?: number, height?: number | string, className?: string, tileUrl?: string, attribution?: string}} props */
 export default function MapaTempoReal({
   center = [-23.55052, -46.633308], // São Paulo (default)
   zoom = 12,

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,11 +22,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * Com IA de Compliance Fiscal integrada
  */
 export default function TabelaFiscalForm({ 
-  tabela, 
+  tabela: tabelaProp = undefined,
+  item = undefined, data = undefined, initialData = undefined, defaultValues = undefined,
   windowMode = false,
   onSubmit,
   onCancel 
 }) {
+  const tabela = tabelaProp || item || data || initialData || defaultValues || null;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || tabela?.group_id || null;
@@ -35,7 +38,7 @@ export default function TabelaFiscalForm({
   const podeUsarIA = hasPermission?.("Cadastros.TabelaFiscal.ia") || hasPermission?.("Financeiro.TabelaFiscal.ia") || podeEditar || podeCriar;
   const podeSalvar = tabela?.id ? podeEditar : podeCriar;
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useCadastroRecordState({
     nome_regra: "",
     empresa_id: "",
     regime_tributario: "Simples Nacional",
@@ -61,7 +64,7 @@ export default function TabelaFiscalForm({
     regra_ativa: true,
     prioridade: 100,
     ...tabela
-  });
+  }, JSON.stringify([tabela?.id ?? null, tabela?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const [abaAtiva, setAbaAtiva] = useState("configuracao");
   const [validandoIA, setValidandoIA] = useState(false);
@@ -198,7 +201,7 @@ Seja preciso e cite a legislação aplicável.`,
                       </ul>
                     )}
                     {sugestaoIA.legislacao && (
-                      <p className="text-xs mt-2 text-purple-700">
+                      <p className="text-xs mt-2 text-sky-700">
                         <strong>Base Legal:</strong> {sugestaoIA.legislacao}
                       </p>
                     )}
@@ -210,7 +213,7 @@ Seja preciso e cite a legislação aplicável.`,
                     disabled={!podeSalvar}
                     data-permission="Cadastros.TabelaFiscal.ia"
                     data-sensitive="true"
-                    className="ml-4 bg-purple-600 hover:bg-purple-700"
+                    className="ml-4 bg-sky-600 hover:bg-sky-700"
                   >
                     Aplicar Sugestões
                   </Button>
@@ -412,7 +415,7 @@ Seja preciso e cite a legislação aplicável.`,
                   </CardContent>
                 </Card>
 
-                <Card className="bg-purple-50">
+                <Card className="bg-sky-50">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm">COFINS</CardTitle>
                   </CardHeader>

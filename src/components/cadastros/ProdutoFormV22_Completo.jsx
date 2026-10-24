@@ -1,4 +1,6 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import { validarClassificacaoProdutoIA } from '@/components/lib/iaResponsePolicy';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -81,7 +83,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     loadUser();
   }, []);
 
-  const [formData, setFormData] = useState(() => {
+  const initialFormData = useMemo(() => {
     if (produto) {
       return {
         ...produto,
@@ -211,7 +213,11 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
       localizacao: '',
       almoxarifado_id: ''
     };
-  });
+  }, [produto]);
+  const [formData, setFormData] = useCadastroRecordState(initialFormData, JSON.stringify([
+    produto?.id ?? null, produtoHttp ? null : produto?.updated_date ?? null,
+    groupId, empresaAtual?.id ?? null, produtoHttp,
+  ]));
 
   const { readyId: produtoHttpReadyId, loadError: produtoHttpLoadError, retry: retryProdutoHttpLoad } = useProdutoHttpEditLoad({
     enabled: produtoHttp,
@@ -237,7 +243,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     queryKey: ['setores-atividade', contextKey],
     queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 200),
     staleTime: 300000,
-    keepPreviousData: true,
+    placeholderData: undefined,
     refetchOnWindowFocus: false,
     enabled: abaAtiva === 'dados-gerais' && contextoValido,
   });
@@ -246,7 +252,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     queryKey: ['grupos-produto', contextKey],
     queryFn: () => filterInContext('GrupoProduto', {}, 'nome', 200),
     staleTime: 300000,
-    keepPreviousData: true,
+    placeholderData: undefined,
     refetchOnWindowFocus: false,
     enabled: abaAtiva === 'dados-gerais' && contextoValido,
   });
@@ -255,7 +261,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     queryKey: ['marcas', contextKey],
     queryFn: () => filterInContext('Marca', {}, 'nome', 200),
     staleTime: 300000,
-    keepPreviousData: true,
+    placeholderData: undefined,
     refetchOnWindowFocus: false,
     enabled: abaAtiva === 'dados-gerais' && contextoValido,
   });
@@ -264,7 +270,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     queryKey: ['locais-estoque', contextKey],
     queryFn: () => filterInContext('LocalEstoque', {}, 'nome', 200),
     staleTime: 300000,
-    keepPreviousData: true,
+    placeholderData: undefined,
     refetchOnWindowFocus: false,
     enabled: abaAtiva === 'estoque-avancado' && contextoValido,
   });
@@ -273,7 +279,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     queryKey: ['plano-contas', contextKey],
     queryFn: () => filterInContext('PlanoDeContas', {}, 'codigo', 500),
     staleTime: 300000,
-    keepPreviousData: true,
+    placeholderData: undefined,
     refetchOnWindowFocus: false,
     enabled: abaAtiva === 'fiscal-contabil' && contextoValido,
   });
@@ -320,7 +326,7 @@ function ProdutoFormV22_Completo({ produto: produtoProp, item, data, onSubmit, o
     setProcessandoIA(true);
     
     try {
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = validarClassificacaoProdutoIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Analise esta descrição de produto: "${descricao}".
 
 Se for uma bitola de aço (ex: "Barra 8mm 12m CA-50", "Vergalhão 10mm"), retorne:
@@ -367,7 +373,7 @@ Caso contrário, sugira:
             explicacao: { type: "string" }
           }
         }
-      });
+      }));
 
       setIaSugestao(resultado);
       setSugestoesIA(prev => ({
@@ -776,19 +782,19 @@ Caso contrário, sugira:
               </div>
 
               {iaSugestao && !modoManual && (
-                <Alert className="border-purple-300 bg-purple-100">
+                <Alert className="border-sky-300 bg-sky-100">
                   <AlertDescription>
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="font-semibold text-sm text-purple-900 mb-1">🤖 IA Classificou:</p>
-                        <p className="text-xs text-purple-800">{iaSugestao.explicacao}</p>
+                        <p className="font-semibold text-sm text-sky-900 mb-1">🤖 IA Classificou:</p>
+                        <p className="text-xs text-sky-800">{iaSugestao.explicacao}</p>
                         {iaSugestao.confianca && (
-                          <Badge className="mt-2 bg-purple-600 text-white">
+                          <Badge className="mt-2 bg-sky-600 text-white">
                             Confiança: {iaSugestao.confianca}%
                           </Badge>
                         )}
                       </div>
-                      <Button size="sm" onClick={aplicarSugestaoIA} className="bg-purple-600" data-permission="Cadastros.Produto.ia" data-action="aplicar-sugestao-produto-ia" data-sensitive>
+                      <Button size="sm" onClick={aplicarSugestaoIA} className="bg-sky-600" data-permission="Cadastros.Produto.ia" data-action="aplicar-sugestao-produto-ia" data-sensitive>
                         Aplicar Tudo
                       </Button>
                     </div>
@@ -797,7 +803,7 @@ Caso contrário, sugira:
               )}
 
               {/* V21.2 FASE 2: TRIPLA CLASSIFICAÇÃO OBRIGATÓRIA */}
-              <Alert className="border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
+              <Alert className="border-blue-300 bg-gradient-to-r from-blue-50 to-sky-50">
                 <Sparkles className="w-4 h-4 text-blue-600" />
                 <AlertDescription className="text-sm">
                   <strong className="text-blue-900">FASE 2:</strong> Classificação tripla obrigatória para rastreabilidade total
@@ -807,7 +813,7 @@ Caso contrário, sugira:
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label className="flex items-center gap-2">
-                    <span className="text-indigo-600">🏭</span>
+                    <span className="text-sky-600">🏭</span>
                     Setor de Atividade *
                   </Label>
                   <Select 
@@ -1000,7 +1006,7 @@ Caso contrário, sugira:
                         size="sm"
                         onClick={gerarImagemIA}
                         disabled={isHttpBackendMode || gerandoImagem || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)}
-                        className="bg-purple-600 hover:bg-purple-700"
+                        className="bg-sky-600 hover:bg-sky-700"
                         data-permission="Cadastros.Produto.ia"
                         data-action="gerar-imagem-produto-ia"
                         data-sensitive
@@ -1146,12 +1152,12 @@ Caso contrário, sugira:
 
         {/* ABA 2: CONVERSÕES */}
         <TabsContent value="conversoes" className="space-y-6">
-          <Card className="border-indigo-300 bg-white/60 backdrop-blur-md shadow-lg">
+          <Card className="border-sky-300 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-4 space-y-4">
-              <h3 className="font-bold text-indigo-900">V22.0: Unidades e Conversões</h3>
+              <h3 className="font-bold text-sky-900">V22.0: Unidades e Conversões</h3>
 
-              <Alert className="border-indigo-400 bg-indigo-100">
-                <AlertDescription className="text-sm text-indigo-900">
+              <Alert className="border-sky-400 bg-sky-100">
+                <AlertDescription className="text-sm text-sky-900">
                   🎯 <strong>REGRA MESTRE:</strong> As unidades selecionadas aqui estarão disponíveis em Vendas, Compras e Movimentações
                 </AlertDescription>
               </Alert>
@@ -1180,7 +1186,7 @@ Caso contrário, sugira:
                       key={unidade}
                       className={`cursor-pointer transition-all ${
                         (formData.unidades_secundarias || []).includes(unidade)
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-sky-600 text-white'
                           : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                       }`}
                     onClick={() => toggleUnidadeSecundaria(unidade)}
@@ -1238,9 +1244,9 @@ Caso contrário, sugira:
           )}
 
 
-          <Card className="border-purple-200 bg-white/60 backdrop-blur-md shadow-lg">
+          <Card className="border-sky-200 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-6 space-y-4">
-              <h3 className="font-bold text-purple-900">🛒 Canais de Venda</h3>
+              <h3 className="font-bold text-sky-900">🛒 Canais de Venda</h3>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-4 bg-white rounded-lg border">

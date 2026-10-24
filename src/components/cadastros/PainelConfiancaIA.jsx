@@ -27,12 +27,12 @@ export default function PainelConfiancaIA({ sugestoesIA }) {
   const mediaConfianca = scores.reduce((sum, s) => sum + s.valor, 0) / scores.length;
 
   return (
-    <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-blue-50">
+    <Card className="border-2 border-sky-300 bg-gradient-to-br from-sky-50 to-blue-50">
       <CardContent className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
-            <h3 className="font-bold text-purple-900">Confiança da IA</h3>
+            <Sparkles className="w-5 h-5 text-sky-600" />
+            <h3 className="font-bold text-sky-900">Confiança da IA</h3>
           </div>
           <Badge className={`${
             mediaConfianca >= 90 ? 'bg-green-600' :

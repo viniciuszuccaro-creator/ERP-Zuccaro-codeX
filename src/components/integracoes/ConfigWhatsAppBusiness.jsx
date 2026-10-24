@@ -101,7 +101,7 @@ export default function ConfigWhatsAppBusiness({ empresaId: empresaIdProp }) {
   }, [chaveConfig, configSalva]);
 
   const salvarMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {typeof configInicial} */ dados) => {
       if (!contextoValido) {
         await auditarWhatsApp('Bloqueio sem contexto', 'Tentativa de salvar WhatsApp Business sem grupo.', { configuracao_informada: Boolean(dados) });
         throw new Error('Selecione grupo ou empresa antes de salvar.');

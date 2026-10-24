@@ -31,7 +31,7 @@ export default function SegurancaDashboard() {
       (Array.isArray(usuario.empresas_vinculadas) && usuario.empresas_vinculadas.some((v) => (v?.empresa_id || v?.id || v) === empresaAtual.id));
   }, [contexto, empresasDoGrupo, empresaAtual?.id, grupoAtual?.id]);
 
-  const { data = {} } = useQuery({
+  const { data } = useQuery({
     queryKey: ["seguranca-dashboard-real", scopeKey],
     enabled: canView && contextoValido,
     queryFn: async () => {
@@ -92,10 +92,10 @@ export default function SegurancaDashboard() {
   return (
     <div className="w-full h-full" data-permission="Sistema.Seguranca.visualizar">
       <DashboardSeguranca
-        estatisticas={data.estatisticas || { cobertura: 0, totalUsuarios: 0, conflitosTotal: 0 }}
-        perfis={data.perfis || []}
-        usuarios={data.usuarios || []}
-        auditoriaAcessos={data.auditoriaAcessos || []}
+        estatisticas={data?.estatisticas || { cobertura: 0, totalUsuarios: 0, conflitosTotal: 0 }}
+        perfis={data?.perfis || []}
+        usuarios={data?.usuarios || []}
+        auditoriaAcessos={data?.auditoriaAcessos || []}
       />
     </div>
   );

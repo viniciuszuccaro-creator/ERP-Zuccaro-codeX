@@ -63,6 +63,8 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
     canEdit("Financeiro", "Contas a Receber") ||
     hasPermission("Financeiro", null, "baixar");
 
+  /** @param {{acao: string, entidade?: string, registroId?: string | null, descricao: string,
+   * dadosAnteriores?: unknown, dadosNovos?: unknown, sucesso?: boolean}} options */
   const auditarCNAB = async ({ acao, entidade = 'ArquivoRemessaRetorno', registroId, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -83,7 +85,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
         data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.warn('Falha ao auditar CNAB:', error);
+      console.warn('Falha ao auditar CNAB.');
     }
   };
 
@@ -129,7 +131,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
 
   // Mutation: Gerar Remessa
   const gerarRemessaMutation = useMutation({
-    mutationFn: async ({ bancoId, titulosIds }) => {
+    mutationFn: async (/** @type {{bancoId: string, titulosIds: string[]}} */ { bancoId, titulosIds }) => {
       if (!contextoValido || !podeGerarRemessa) throw new Error("Sem contexto ou permissÃ£o para gerar remessa.");
       const banco = bancos.find(b => b.id === bancoId);
       const titulos = contasReceber.filter(c => titulosIds.includes(c.id));
@@ -215,7 +217,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
 
   // Mutation: Processar Retorno
   const processarRetornoMutation = useMutation({
-    mutationFn: async (file) => {
+    mutationFn: async (/** @type {File} */ file) => {
       if (!contextoValido || !podeProcessarRetorno) throw new Error("Sem contexto ou permissÃ£o para processar retorno.");
       if (!file || file.size <= 0 || file.size > 5 * 1024 * 1024) throw new Error("Arquivo de retorno invalido ou acima de 5MB.");
       const conteudo = await file.text();

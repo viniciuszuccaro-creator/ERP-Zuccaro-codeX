@@ -12,9 +12,11 @@ export const INITIAL_CENTRAL360_BLOCK_LIMITS = {
 
 /**
  * Aumenta o limit de um bloco mantendo offset 0 (carregar mais desde o início).
- * @param {Record<string, number>} limits
+ * @template {Record<string, number>} T
+ * @param {T} limits
  * @param {string} blockKey
  * @param {number} [pageSize]
+ * @returns {{[K in keyof T]: number} & Record<string, number>}
  */
 export function growCentral360BlockLimit(limits, blockKey, pageSize = CENTRAL360_BLOCK_PAGE_SIZE) {
   const current = Number(limits?.[blockKey]) || pageSize;

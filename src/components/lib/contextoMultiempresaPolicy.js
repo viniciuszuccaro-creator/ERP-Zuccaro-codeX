@@ -126,6 +126,7 @@ export const buildCadastroScopeSwitchReset = (prev = {}) => ({
 /**
  * Chave canônica grupo:empresa para queryKey / uniqueKey (Cadastros ↔ Financeiro).
  * Sem grupo e sem empresa → `sem-contexto` (fail-closed).
+ * @param {{groupId?: string|number|null, empresaId?: string|number|null}} [options]
  */
 export const buildMultiempresaQueryScopeKey = ({ groupId, empresaId } = {}) => {
   const g = normalizeIdentifier(groupId) || '';
@@ -213,6 +214,17 @@ export const resolveEmpresaIdOnWrite = (record = {}, contextEmpresaId = null) =>
   contextEmpresaId,
 );
 
+/**
+ * @param {{
+ *   groupId?: string|number|null,
+ *   empresaId?: string|number|null,
+ *   ctxField?: string|null,
+ *   shared?: boolean,
+ *   rest?: {$or?: unknown, $and?: unknown, [field: string]: unknown},
+ *   empresaIdsDoGrupo?: Array<string|number>,
+ *   extraGroupOr?: Array<Record<string, unknown>>
+ * }} [options]
+ */
 export const buildMultiempresaReadFilter = ({
   groupId,
   empresaId,

@@ -1,3 +1,1815 @@
+## Continuidade atual #344 - revisao assistida e preparacao (2026-10-24)
+
+Validacao local: suite completa 2278 PASS / 0 FAIL / 0 SKIP; audit/lint/typecheck/build/diff-check exit 0. Depois, o reforco de integridade do journal e um teste estatico adicional do roteiro SQL passaram no foco final: 11 PASS / 0 FAIL / 0 SKIP (inclui wrapper de seis testes Python sinteticos). A suite completa local citada e anterior a esse pequeno delta final; CI do SHA final executa a composicao final, sem alegar contagem local inexistente.
+Smoke Chromium sintetico: 5 PASS / 0 FAIL / 0 SKIP: quatro situacoes, original preservado na sugestao de formato, rascunho sem aplicacao com operationId estavel no replay, filtros por situacao/motivo e viewport 390 sem overflow da pagina. Capturas sinteticas e recibos privados. Comando: `node scripts/legado/pilot-functional-review-smoke.mjs /caminho/playwright/index.mjs /tmp/review-smoke`. Playwright 1.56.1 e bibliotecas gratuitas foram preparados temporariamente fora das dependencias/lockfiles do projeto; nenhum servico pago, credencial ou permissao operacional criado.
+O navegador headless acessou somente a previa sintetica loopback; encaminhamento web nao foi usado como prova. Nenhum dado privado foi servido. Aviso preexistente de chunks grandes no build permanece. Backend/PG do lote anterior inalterados: nao repetidos localmente.
+
+Este checkpoint prevalece sobre os cabecalhos historicos abaixo. Mesma branch/clone/Codespace; um escritor. Base deste lote: `0b8bafa7` (CI4482/4483 SUCCESS). Nenhum piloto aprovado, transferencia, carga ou ensaio PostgreSQL foi repetido neste pacote.
+
+O fluxo existente `scripts/legado/pilot-functional-review.mjs` agora exporta `prepareAssistedReviewPackage` e `writeSyntheticAssistedReview`. Os auxiliares separam modelo, apresentacao e plano para nao ampliar o executor existente; reutilizam `projectAssistedLegacyReview`, fingerprints e a allowlist canonica de segredos. Nao ha novo modulo ERP, endpoint, rota operacional ou importador paralelo.
+
+- Revisao privada: 40009 apontamentos; 20456 historicos e 19553 revisoes de endereco; 0 promovidos a uso operacional, 0 acessos ao banco, 0 cargas. Recibos/fontes anteriores intactos. Campos originais e procedencia ficam somente no pacote privado, com hashes e permissoes restritas; valores sensiveis nao entram no HTML quando a permissao nao foi comprovada. Falha individual vai para quarentena, sem interromper os independentes.
+- Situacoes textuais, motivos por campo, operacoes bloqueadas, filtros e paginacao da projecao completa. CEP e UF oferecem somente sugestao deterministica de apresentacao. Numero, pais, finalidade, unidade, identidade e vinculo nao sao inferidos. Normalizacao nao equivale a validacao canonica.
+- A previa publicavel e gerada exclusivamente com quatro fixtures sinteticas; fonte privada e recusada nesse modo. Rascunho baixado e nao confiavel, sem gravacao mestre ou liberacao. A preparacao autorizada de proposta exige contexto exato, importar+editar, rechecagem, fingerprint, justificativa e evidencia para mudanca de significado. Captura dos inputs antes de await e replay com integridade do journal de propostas; isso nao comprova persistencia/auditoria PostgreSQL nem substitui o servico canonico.
+- O retrato real e somente leitura: nenhuma sessao/permissao de revisor foi fabricada. Aplicacao manual e liberacao posterior continuam dependentes do servico canonico, revalidacao, RBAC atual e auditoria transacional. Nao confundir a interface privada com fluxo operacional homologado.
+
+### Preparacao operacional: cinco gates restantes
+
+1. Identidade e esquema do destino: banco/role/schema, volume PostgreSQL, versao/contratos e journals. `scripts/legado/target-metadata-readonly.sql` e roteiro preparado, NAO executado no operacional. O executor usa nome completo e ordenacao lexicografica; journal por nome nao comprova bytes do SQL aplicado. Inventario privado 045-049 e seus artefatos aplicados ainda exigem reconciliacao; nao renumerados nem copiados para execucao automatica.
+2. Escopo e duplicidades: crosswalk Grupo/Empresa autorizado e reconciliacao no destino da coorte exata; zero duplicados isolados nao comprova ausencia no operacional.
+3. Menor privilegio e atomicidade: role sem BYPASSRLS, RBAC real, servico+auditoria+mapa na mesma transacao e concorrencia da primeira inclusao no destino/copia representativa autorizada. Provas isoladas anteriores permanecem validas somente para seu escopo.
+4. Backup/restauracao e reversao: backup do DESTINO e restauracao comprovada desse artefato, mais reversao por lote protegendo edicoes externas. Recuperar workspace ou staging do legado nao substitui restaurar o banco de destino.
+5. Liberacao operacional especifica: aprovacao da coorte, campos, identidade do destino e janela. Nenhuma autorizacao geral ou ensaio isolado libera carga real.
+
+Primeira carga PROPOSTA: ate 100 clientes ativos, identidades canonicas validadas, mestre de Grupo com visibilidade explicitamente autorizada; sem reativacao, sobrescrita, fusao automatica, estoque/saldo ou documento fiscal. A coorte efetiva operacional ainda tem zero liberados: lotes revertidos nao sao promovidos. Produtos dependem tambem de unidades/classes/referencias comprovadas, sem conversoes ou unificacao PC/UN; enderecos incompletos bloqueiam somente operacoes dependentes quando seguro. O plano permanece `PREPARED_NOT_AUTHORIZED_OPERATIONAL_LOAD`.
+
+Precheck autorizado executado somente no filesystem privado do staging VPS: host esperado, diretorio 0700 fora da aplicacao, 32533684224 bytes livres no momento da leitura; zero conteudo lido/alterado, banco ou servico acessado. Nao e prova de espaco no volume PostgreSQL. Recibo detalhado privado; sem transferencia ou novo inventario integral.
+
+### Cursor PR350 por SHA
+
+Revisao atualizada em `8ba3b5bfbfcd2c626c58c86c81db7d27bd7c58b5`: a correcao substitui o acesso aos campos ilustrativos de `masters` por `proposalMasters`, mantendo a origem sintetica DEV; os dois TS2339 do SHA anterior `2ec96439` estao resolvidos. Seis checks SUCCESS nos runs 40106256497/40106260627. A branch incorporou a base `0b8bafa7`, preservando #344. Comentario de revisao atualizado na PR. Nao houve edicao da branch Cursor, merge ou transporte dos arquivos comerciais; aprovacao visual e integracao continuam separadas.
+
+Validacao deste lote e SHA final: conferir o recibo de fechamento e CI do commit publicado. Backend/ledger sem alteracao reutilizam provas anteriores (529 PASS/24 SKIP no backend e PG sintetico 6 PASS/0 SKIP); skips nao sao persistencia comprovada. Logs/diffs/hashes de publicacao ficam privados. Dados reais, HTML privado, manifests detalhados, .env, certificados, chaves e backups nao integram o Git.
+
+Retomada privada: `current-assisted-review.json` aponta para o pacote preservado fora do checkout; verificar `integrity-private.json` antes de usar. O gerador cria outro diretorio privado, nunca sobrescreve recibos anteriores. Para previa sintetica, chamar `writeSyntheticAssistedReview` com arquivo novo fora do repositorio. Nao executar o modo antigo `--review` ou um piloto para apenas abrir esta revisao.
+
+Proxima entrega: aplicar revisoes autorizadas pelo caminho canonico somente apos RBAC/revalidacao/auditoria demonstrados; reunir as provas dos cinco gates e apresentar coorte operacional concreta para aprovacao. Carga operacional, merge, deploy e migrations continuam nao autorizados.
+
+## Continuidade atual #344 - produtos e ledger (2026-10-24)
+
+Estado atual prevalece sobre os checkpoints historicos abaixo. Mesmo Codespace, clone e branch de consolidacao; nenhum acesso operacional, merge ou deploy.
+
+Validacao local composta: raiz 2267 PASS / 0 FAIL / 0 SKIP; backend 553 total, 529 PASS / 0 FAIL / 24 SKIP. Os skips nao comprovam PostgreSQL; prova focada real separada do ledger: 6 PASS / 0 FAIL / 0 SKIP. Auditoria baseline, lint, typecheck raiz/backend, build raiz/backend e diff-check exit 0; aviso de chunks grandes no build permanece. Comandos: `npm run audit:baseline`, `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`, `npm --prefix server test`, `npm --prefix server run typecheck`, `npm --prefix server run build`, `git diff --check`.
+A ultima guarda adicional conserva ambas as grafias de quarentena de produto (`quarantine_reason`/`quarantine_reasons`); teste focado novo deve ser somado somente no resultado efetivamente executado. A composicao final sera novamente conferida pela CI do SHA publicado, sem promover skips a aprovacao.
+Demonstracao privada: 18458 apontamentos de clientes, 790 fornecedores e 1208 produtos classificados como historico devido a inatividade de origem ou reversao comprovada; 19553 apontamentos auxiliares de endereco aguardam revisao. Situacoes validado/pendencia nao critica tem zero exemplos reais ativos neste retrato, sem fabricar liberacoes. Os quatro estados foram exercitados com fixtures sinteticas. A projecao nao e uma interface operacional homologada.
+
+- Produtos: executor existente ampliado por auxiliar `pilot-functional-products.mjs` e comando `pilot-functional.mjs --products`. Reutiliza importador, servicos, repositorios, RBAC, auditoria e reserva canonica de codigo; nao cria importador paralelo.
+- Ensaio PostgreSQL isolado: origem 1208, identidade nativa comprovada 1208, liberados/gravados/reconciliados 1184, reutilizados na reexecucao 1184, novos na reexecucao 0, rejeitados 0, reversoes logicas 1184, ativos restantes 0. Os 24 inativos foram preservados fora da carga.
+- Sete unidades canonicas no escopo isolado, sem conversoes: KG/Kg quilograma, PC peca, CX caixa, m2 metro quadrado (grafia original preservada no mapa privado), UN unidade, LTS litro, MT metro linear. PC/UN distintos; unidade de teste excluida; nenhum fator ou conteudo de caixa inferido. Nenhum estoque/saldo criado.
+- Primeira tentativa parou na reserva de codigo por falta de EXECUTE no papel efemero. Corrigido somente no executor isolado, com a assinatura exata ja usada pela fixture canonica. Recibo anterior preservado privadamente; segunda execucao exit 0, papel desabilitado e container parado ao final.
+- Enderecos: `criarTransacaoEnderecoPilotoPostgres` reutiliza `persistirEnderecoClienteGrupoLegado` e `ClienteLocalService`; uma conexao/transacao para endereco, auditoria e ledger. Lock do cliente mestre antes da primeira consulta ao mapa; RBAC sem wildcard e rechecagem antes do commit; executor expira fora da transacao.
+- PostgreSQL real com fixture sintetica: 6 PASS / 0 FAIL / 0 SKIP, cobrindo atomicidade, replay, falha de auditoria/mapa, negacao tardia, contexto indevido, campos ausentes/conflitantes, concorrencia entre duas conexoes, reversao e protecao contra edicao externa. A primeira fixture colidia por repetir o mesmo endereco; corrigida com numeros sinteticos distintos sem relaxar deduplicacao.
+- Dados reais de endereco permanecem pendentes por campos sem fonte e conflitos; testar o ledger nao comprova completude cadastral nem autoriza preencher numero/pais por suposicao. Nenhuma carga real de enderecos executada.
+- Correcao individual: proprietario confirmou o ID completo documentado privadamente, condicionado a procedencia. Conferidos ID do apontamento original, indice/fonte/hash/parser, snapshot integral, codigo canonico, codigo legado, origem e lote; distincao dos codigos e divergencia da mascara inicial explicadas no recibo privado antes de aplicar. Somente residuo do nome removido no banco isolado; 3 mutacoes auditadas, replay reutilizado, reversao comprovada e reaplicacao final. ID/codigos/status inativo/vinculos/procedencia/outros clientes preservados. Tentativas tecnicas anteriores preservadas, sem carga operacional.
+- Evidencias detalhadas, manifestos, mapas, autorizacoes e logs do ensaio permanecem fora do checkout. Originais/HD/captura/worktrees preservados; agendamento Legado continua pausado e rotas operacionais inativas.
+- Revisao assistida: projecao no `pilot-functional-policy.mjs`, sem modulo/rota paralelo. Quatro situacoes textuais, filtros na demonstracao privada, motivos por campo e operacoes afetadas bloqueadas; 5 testes sinteticos PASS. Indicadores nao concedem permissao, reativacao ou liberacao operacional. Historico revertido e clientes nao ativos permanecem somente consulta/conciliacao. Incerto nao gera cobranca, baixa, saldo ou emissao.
+- Publicacao deste lote nao libera carga operacional, migrations operacionais, VPS ou emissao fiscal. Proximo: revisao assistida das evidencias faltantes, sem preenchimento ficticio; manter gates de destino, backup, reconciliacao e reversao antes de qualquer carga real.
+
+
+## #344 - invariantes historicas e evolucao autorizada reconciliadas (2026-10-24)
+
+A CI4476/4477 aprovou backend e composicao de c90d629e, mas a raiz revelou
+uma segunda dependencia: publication-baseline-contracts exigia os bytes do
+teste bulk anterior. Falha reproduzida antes da alteracao. O hash historico e
+o manifesto NAO foram atualizados ou relaxados. A normalizacao agora subtrai
+SOMENTE o bloco literal autorizado, exige ocorrencia unica e conserva o hash
+anterior de todo o restante. Contraprovas rejeitam delegacao alterada, repetida
+e mudanca na verificacao integral dos membros anteriores. Focados: 22 PASS.
+
+Backend completo local da correcao anterior: 552 total, 529 PASS, 0 FAIL,
+23 SKIP; tambem aprovado na CI4477. Suites inalteradas nao foram repetidas
+localmente neste ajuste somente de teste. Raiz completa foi repetida porque
+a falha comprovada exigiu validar a composicao. Resultado do fechamento:
+tests 2262; pass 2262; fail 0; skipped 0
+
+Runtime/permissoes/rotas/migrations permanecem inalterados neste lote.
+Unidades confirmadas pelo proprietario, sem conversoes, PC/UN distintos e
+unidade de teste excluida; mapa/piloto privados seguem em lote funcional.
+Correcao individual de cliente continua sem autorizacao especifica.
+Agendamento pausado, originais preservados, sem carga operacional/deploy/merge.
+As entradas anteriores sao historicas onde divergirem deste fechamento.
+
+## #344 - correcao da invariancia da CI4474/4475 (2026-10-24)
+
+A falha do backend em 36e123c8 foi reproduzida no Codespace: o teste de
+consolidacao enumerava apenas export/restoreBulkSnapshot e rejeitava a adicao
+autorizada de correctInactiveLegacyName. Nao foi falha ambiental. O teste
+preserva a igualdade integral de TODOS os membros anteriores e exige a lista
+exata dos tres adicionais, o import canonico e o corpo exato da nova delegacao.
+Os testes comportamentais de escopo, permissao, CAS, auditoria, replay e reversao
+do novo metodo permanecem obrigatorios. Nenhum handler antigo foi modificado,
+nenhuma assertion retirada, nenhuma permissao/rota/migration ativada.
+
+Reproducao anterior: 1 FAIL. Fechamento e recibos completos em ci-fix-results.json
+no mesmo job privado apontado por current-completeness.json. CI do novo SHA deve
+ser conferida antes de declarar verde. Frontend/composicao de 36e123c8 passaram;
+essas provas inalteradas foram reutilizadas localmente, sem repetir suas suites.
+
+O proprietario confirmou posteriormente os significados das sete unidades,
+SEM fatores de conversao. PC/UN permanecem distintos; caixa nao implica conteudo,
+peso ou quantidade; unidade de teste excluida. Aplicacao ao mapa privado e piloto
+de produtos seguem depois desta correcao. Isso nao autoriza a correcao individual
+do cliente divergente: essa linha continua em quarentena ate decisao especifica.
+Dados, definicoes detalhadas e recibos reais permanecem privados, fora do Git.
+
+Historico anterior abaixo; nao interpretar CI pendente/verde antiga como prova
+do novo commit. Agendamento Legado pausado, originais preservados.
+
+## #344 - regras de produto, correcao preparada e completude privada (2026-10-23)
+
+ESTADO ATUAL: pacote independente concluido; carga de produtos e correcao real
+continuam retidas pelos gates abaixo. Base 1789c1a9ff82264c91b47da4cbe8ba1780eb0b7e,
+CI4472/4473 SUCCESS confirmado pelo proprietario. Mesmo Codespace e branch
+codex/consolidacao-infra-20261017, escritor unico. Provas anteriores, originais,
+captura/worktrees e staging preservados. Nenhuma transferencia ou carga anterior
+foi repetida. As secoes seguintes sao historicas onde divergem deste estado.
+
+### Produtos: resolvido versus indispensavel
+
+1208 identidades nativas e respectivas classes/unidades foram comprovadas por
+join exato aos materiais preservados. A natureza `TIPOMATERIAL` desses 1208
+resolve pelo enum/aliases existentes de `produtoTipoPolicy`, sem default nem
+comparacao de nomes. Isso NAO transforma a classe nativa em um GrupoProduto por
+palpite: o projetor preserva o codigo em `grupo_legado`; o FK `grupo_produto_id`
+nao comprovado fica separado como pendencia de completude.
+
+Restou UMA familia indispensavel para liberar produtos: equivalencia semantica,
+identidade e escopo de 7 codigos nativos de unidade utilizados nesta coorte.
+O catalogo historico de referencia, recuperado pelo hash ja registrado no
+manifesto, contem 4 definicoes com IDs/grandezas. Ele nao prova o estado atual
+de um destino operacional. Sigla identica e apenas candidato. O Grupo sintetico
+do ensaio ainda nao possui unidades mestres comprovadas. Nao foram criados
+fatores, unidades ou vinculos por conveniencia.
+
+Decisao privada agrupada por unidade, com quantidades afetadas e catalogo de
+referencia: `DECISOES_344_PRIVADAS.html`. Nao solicitar produto por produto.
+Resultado: 1208 classificacoes comprovadas, ZERO produtos liberados/gravados.
+Por isso nao houve carga, reexecucao ou reversao REAL de produtos neste lote;
+nao apresentar o teste sintetico do projetor como piloto PostgreSQL. Apos as
+unidades serem comprovadas, reutilizar o cadastro generico de UnidadeMedida,
+ProdutoService e importador existentes, nao criar persistencia paralela.
+
+### Uma correcao de nome inativo, ainda nao aplicada
+
+Preparada no ClienteService por auxiliar `clienteLegacyNameCorrection`:
+Grupo explicito, ator autenticado, permissoes existentes editar E importar,
+sem wildcard, sem empresa e sem reativacao. Somente nome de Pessoa Fisica
+importada inativa; ID/codigo/status/procedencia e demais campos preservados.
+Snapshot SQL integral bloqueado, CAS por fingerprint, operacao idempotente,
+auditoria na mesma transacao e rechecagem de permissao. Reversao utiliza o
+recibo persistido da operacao original, nao um nome anterior fornecido pelo
+chamador; edicao externa bloqueia em vez de ser sobrescrita.
+
+Fixture sintetica testa autorizacao/escopo, entrada adulterada, CAS, rollback
+da auditoria, replay, reversao e preservacao integral. O plano REAL privado
+foi preparado apos reler a linha no CSV com hash conferido e parser corrigido.
+Hashes na API documentam evidencia, nao autenticam uma fonte por si mesmos:
+o executor deve revalidar o plano/fonte antes de qualquer aplicacao autorizada.
+Nenhuma rota nova, grant ou permissao operacional foi criada. O update/get
+padrao de cliente inativo continua bloqueado. A linha REAL permanece em
+quarentena, `PREPARED_NOT_AUTHORIZED_REAL_CORRECTION`, aguardando autorizacao
+especifica para aplicar e conservar o mesmo ID/codigo/status.
+
+### Enderecos e leitura canonica
+
+19553 apontamentos de endereco classificados por disponibilidade, ausencias e
+conflitos: 18762 de clientes e 791 de fornecedores, em 26 grupos. Todos ainda
+carecem de campos obrigatorios comprovados (numero, pais, rotulo/finalidade);
+231 apontamentos possuem conflitos de formato: 229 CEP e 2 UF. Sao contagens
+de enderecos/apontamentos, NAO de pessoas distintas, e diferem da metrica antiga
+de auxiliares mistos de contato/endereco. Nada foi preenchido por suposicao.
+
+18555 apontamentos possuem plano de vinculo ao ID mestre do lote anterior,
+conferido por identidade legada; 998 pertencem a mestres nao carregados e
+permanecem preservados. ZERO novos enderecos/vinculos foram gravados. Os 987
+clientes nao ativos continuam fora da carga, sem reativacao implicita.
+Cadastro principal reconciliado NAO significa cadastro completo.
+
+Leitura PostgreSQL REAL pelo caminho canonico: ClienteService.list com filtro
+explicito de inativos, duas paginas distintas e total 17471; FornecedorService.get
+em duas amostras. Get padrao de cliente inativo retorna 404 como contratado.
+Demonstracao JSON/HTML privada preparada, sem servidor/porta/link publico.
+Sessao administrativa somente leitura; leituras canonicas existentes adquirem
+locks e usam transacoes que os permitem, mas nenhum metodo de mutacao foi
+invocado. Nao chamar todo o banco de read-only. Container novamente parado.
+
+### Candidato operacional: preparado, NAO autorizado
+
+Pacote privado identifica campos cobertos, entidades/coorte, rejeicoes,
+dependencias, escopo de mestre de Grupo, reconciliacao e plano de vinculos.
+Continuam nao comprovados: identidade do destino operacional; backup desse
+destino e ensaio de restauracao; schema/journals e colisoes de migrations;
+RBAC de menor privilegio; crosswalk Grupo/Empresa; duplicidades no destino;
+unidades/completude; autorizacao especifica de correcao e de carga.
+Adaptador PostgreSQL de mapa/ledger de enderecos na mesma transacao e prova de
+primeira corrida concorrente continuam gates proprios; nao sao substituidos
+pela fixture de nome ou pelos journals de arquivo do ensaio.
+
+Recuperar workspace ou o banco isolado NAO comprova restauracao do banco
+operacional. Reversao operacional deve limitar-se a registros criados pelo
+proprio lote, preservar preexistentes reutilizados e exigir CAS/auditoria;
+o harness de ensaio nao e um executor operacional. Nenhum saldo/estoque/titulo,
+emissao fiscal, merge, deploy ou migration operacional foi executado.
+
+### Validacao e retomada
+
+`npm test -- --test-reporter=tap tests/legado-completude.test.js` cobre as novas
+regras e o modo auxiliar sem mutacoes. Testes do server incluem a fixture nova
+de nome inativo e a regressao existente de identidade legada. PGlite/memoria
+nao sao prova de mutacao em servidor PostgreSQL. DATABASE_URL foi removida do
+ambiente dos testes: a variante PostgreSQL real desse teste de regressao nao
+foi acionada, nao deve ser contabilizada como aprovada. Resultados finais e
+checks obrigatorios constam no status do lote; suites inalteradas reutilizam a
+CI4472/4473, sem alegar nova execucao integral local.
+Fechamento focado: 11 PASS/0 FAIL/0 SKIP pelo npm test direcionado e 13
+PASS/0 FAIL/0 SKIP no server (7 da correcao e 6 de identidade/regressao).
+Audit, lint, typecheck e builds da raiz/server, mais diff-check, executados no
+lote. Lint conserva 1 warning anterior de diretiva desnecessaria, sem supressao
+nova. A primeira falha da fixture foi corrigida alinhando o cliente sintetico
+ao mestre de Grupo, sem conceder acesso adicional a dados de Empresa.
+
+O modo `--review` foi extraido em auxiliar do MESMO `pilot-functional.mjs` para
+manter o executor pequeno; nenhum segundo importador/ambiente foi criado.
+Retomada privada: `current-completeness.json` no staging homologado aponta o
+job; `receipt-index-private.json` identifica os recibos vigentes, demonstracao,
+decisoes agrupadas e candidato. Abrir o HTML apenas como arquivo privado;
+nao servir em porta publica, anexar ao GitHub/CI ou copiar dados para build.
+O agendamento Legado permanece pausado e os gates/custos anteriores preservados.
+
+## #344 - ensaio funcional ampliado, com gates de produto e auxiliares abertos (2026-10-23)
+
+Estado atual: PARCIAL por entidade, exclusivamente em PostgreSQL 16 isolado.
+Esta secao substitui as contagens atuais do piloto de 25 abaixo; os recibos
+anteriores continuam historicos validos e nao foram repetidos ou alterados.
+Base de codigo: 505a76ed06bf956a076f0e9577f8018ade1fa4b8, mesma branch
+codex/consolidacao-infra-20261017 e mesmo Codespace. Sem merge ou operacao.
+
+| Entidade | Origem/processados | Gravados | Reuso na carga/reexecucao | Rejeitados/bloqueados | Reconciliados | Pendentes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Clientes | 18458 | 17471 | 0 / 17471 | 987 nao ativos preservados | 17470 | 1 divergencia de nome; auxiliares separados |
+| Fornecedores | 790 | 790 | 0 / 790 | 0 | 790 | 1 auxiliar de cobranca |
+| Produtos | 1208 | 0 | 0 / nao executada | 0 rejeicoes de carga; carga nao liberada | 0 | 1208 por mapeamento de destino |
+
+Reexecucao dos lotes carregados: zero novos registros. Reversao logica de 17471
+clientes e 790 fornecedores, por 74 lotes/checkpoints, sem exclusao fisica,
+sem novos vinculos empresariais e sem movimentacao financeira/fiscal/estoque.
+IDs, codigos literais e procedencia mantidos. O grupo/ator sao sinteticos de
+ensaio: isso NAO comprova o crosswalk operacional de Grupo/Empresa nem a
+ausencia de duplicidade em qualquer banco operacional.
+
+O limite anterior de 25 era uma escolha explicita do executor (`slice(0,25)`),
+nao um limite formal do contrato. A ampliacao autorizada utilizou lotes de 250,
+journal privado retomavel e verificacao real de espaco no filesystem privado.
+Os 987 clientes nao ativos nao foram reativados ou carregados. O namespace do
+piloto original de 25 foi conferido por hash, preservado integralmente.
+
+### Implementacao e causa corrigida
+
+Nao existia persistencia SQL de Fornecedor para o importador. Foram reutilizados
+os campos do cadastro existente, validadores de documento, reserva canonica de
+codigo, DbClient, RBAC e auditoria. `FornecedorService` e repositorio PostgreSQL
+implementam mestre de Grupo, importacao estrita, locks deterministas,
+idempotencia com comparacao integral, auditoria transacional inclusive no reuso,
+rollback e reversao com lote/revisao/fingerprint. Nenhum consumidor ou dono do
+salvamento da UI foi substituido; nenhuma rota foi montada. Dados bancarios e
+campos fiscais nao pertencentes ao contrato sao rejeitados, nao inferidos.
+
+SQL permanece em `server/schema-candidates/fornecedor_master.sql`, FORA de
+`server/migrations`, sem numero, grants ou policies operacionais. Foi executado
+somente no destino de teste comprovado. Historico/journals dos destinos,
+identificacao/dependencias e menor privilegio operacional continuam gates;
+nenhuma migration aplicada foi alterada/renumerada.
+
+O Sniffer de CSV sobre apenas o cabecalho desativava `doublequote`, deslocando
+JSON com aspas escapadas. Corrigido parser com escape explicito e rejeicao de
+largura divergente; contraprova sintetica preserva cobertura. Entrada, fontes,
+pins e resultados anteriores foram preservados privadamente antes da retomada.
+Um nome de cliente ja carregado/revertido difere da projecao corrigida. Esta
+linha foi registrada como NAO reconciliada, sem sobrescrita ou reativacao:
+o servico atual nao edita cliente inativo. Decisao necessaria: fluxo autorizado
+de correcao auditada de cadastro inativo importado, preservando o mesmo ID,
+ou manter essa linha em quarentena. Nao houve relaxamento desse contrato.
+
+### Produtos, enderecos e continuidade privada
+
+Os 1208 produtos foram ligados por identidade nativa exata a uma extracao
+verificada de materiais, recuperando classe/unidade sem similaridade de nome.
+Lista privada objetiva: 73 grupos de decisao, 37 propostas de classe e 17
+propostas de unidade. Nenhuma equivalencia de destino possui comprovacao
+suficiente de escopo/semantica: zero aprovacoes automaticas, zero fatores de
+conversao inventados. Confirmar destinos, dimensoes e semantica por grupo antes
+da carga; nao confundir classificacao legada com regra fiscal.
+
+Clientes possuem 17480 apontamentos auxiliares (nao clientes distintos), com
+enderecos/contatos a revisar. Numero e pais do endereco canonico nao foram
+comprovados; nao foram preenchidos por palpite. Fornecedores preservam endereco
+plano do contrato existente e tem 1 auxiliar de cobranca pendente. Portanto
+cadastro completo, enderecos e dependencias auxiliares NAO estao homologados.
+
+Dados, identidades, caminhos de fontes, manifestos detalhados e relatorios
+continuam privados fora do checkout/Git/build/CI. Retomada localiza o job pelo
+ponteiro privado `current-functional.json` no staging ja autorizado; preservar
+input, journal, state, pins e recibos antes de qualquer alteracao. Alteracao de
+fonte/codigo exige comparacao e transicao explicita de hashes, nao nova carga
+cega. O banco isolado fica parado com os arquivos preservados. Nao repetir o
+piloto original, transferir o backup novamente ou acessar banco operacional.
+
+### Validacao desta composicao
+
+Recuperacao REAL apos parar/reiniciar o mesmo cluster: identidade do PostgreSQL
+conferida, snapshots canonicos integrais de 17471 clientes e 790 fornecedores
+iguais aos recibos de reversao, piloto anterior intacto. Auditoria persistente:
+17471 create + 17471 possible_duplicate + 17471 soft_delete de Cliente;
+790 create + 790 possible_duplicate + 790 soft_delete de Fornecedor.
+Container novamente parado, banco e relatorios privados preservados. A primeira
+checagem auxiliar de leitura usou formato de timestamp diferente do DTO;
+corrigida para usar os repositorios canonicos, sem mudar dados ou produto.
+
+Testes focados: 18 PASS / 0 FAIL / 0 SKIP de politica/parser/isolamento; 7 PASS /
+0 FAIL / 0 SKIP no fixture sintetico PGlite de Fornecedor. PGlite nao e prova
+de persistencia em servidor PostgreSQL; os lotes reais acima sao prova separada.
+Reutilizados os 2242 PASS e CI4470/4471 SUCCESS de 505a76ed para superficie
+inalterada; isso NAO e uma nova execucao integral local da composicao atual.
+Comandos focados: `node --test tests/legado-piloto-funcional.test.js
+tests/legado-piloto-isolado.test.js` e `node --import
+./server/node_modules/tsx/dist/loader.mjs --test server/tests/fornecedor-import.test.ts`.
+Recibos privados distinguem falhas iniciais do harness, correcoes e resultados
+finais; nenhuma permissao de empresa foi ampliada para corrigir o fixture.
+Fechamento: `npm run audit:baseline`, `npm run lint`, `npm run typecheck`,
+`npm run build`, `npm --prefix server run typecheck`, `npm --prefix server run build`
+e `git diff --check`: PASS, exit 0. Lint mantem 1 aviso anterior de diretiva
+eslint-disable desnecessaria; sem nova supressao ou mudanca de baseline.
+Avisos de tamanho de chunks do build nao foram tratados como falhas.
+
+Regra-Mae, Comercial 360, originais/captura/worktrees, rotas inativas,
+agendamento Legado pausado e bloqueio de custos permanecem. Publicar codigo nao
+autoriza merge, deploy, carga operacional ou acesso ao HD por outros ambientes.
+
+## #344 - piloto isolado de clientes executado; demais entidades em quarentena (2026-10-23)
+
+Estado atual: autorizacao expressa posterior permite SOMENTE o piloto isolado.
+PREPARED_NOT_AUTHORIZED nos cabecalhos antigos e historico para esse ensaio;
+importacao operacional, emissao fiscal e movimentacao financeira continuam NAO
+autorizadas. A centralizacao/retomada comprovada em 3bfa4de4 foi reutilizada,
+sem nova transferencia, inventario integral ou leitura do backup original.
+
+### Execucao e contagens
+
+Base de codigo: 3bfa4de4ddc3b99266c17b2cf92fe7000f9f2f81, branch
+codex/consolidacao-infra-20261017, no Codespace unico existente. O auxiliar
+scripts/legado/pilot-isolated.mjs NAO e outro importador: prepara o ensaio e
+reutiliza os mapeadores, persistirClienteGrupoLegado, ClienteService,
+PostgresClienteRepository, RbacGuard, TenantGuard e auditoria existentes.
+O corpo do importador e os servicos de negocio nao foram substituidos.
+
+Coorte preparada verificada, nao total do backup historico:
+
+| Entidade | Origem staging | Elegiveis neste ensaio | Importados | Quarentena | Reconciliados |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Clientes | 18458 | 17471 | 25 | 987 | 25 |
+| Fornecedores | 790 | 0 (gate) | 0 | 790 | 0 |
+| Produtos | 1208 | 0 (gate) | 0 | 1208 | 0 |
+
+Clientes: zero duplicados identificados na coorte; 17446 elegiveis adiados pelo
+limite deliberado de 25. Os 987 registros nao ativos ficaram em quarentena para
+evitar reativacao implicita. Fornecedores/produtos foram retidos por gates, nao
+declarados invalidos individualmente; ausencia de duplicidade nessas entidades
+NAO foi comprovada. Persistencia canonica de fornecedor falta; produtos exigem
+mapas aprovados de classe/unidade e identidades de UnidadeMedida verificadas.
+Nao se inventou endpoint, correspondencia, classe, unidade ou empresa fiscal.
+
+25 clientes gravados por servico/repositorio/auditoria reais em PostgreSQL 16.
+Validacao canonica de campos obrigatorios e documentos, deduplicacao por origem
+e documento, preservacao literal do codigo interno preparado SEPARADA do codigo
+legado, legacy_id, source_system e lote. Nenhum cliente_empresa criado.
+Reconciliacao dos 25 snapshots canonicos PASS; nao e comprovacao de migracao de
+todos os enderecos, relacionamentos auxiliares ou historico comercial/financeiro.
+Esses campos e suas fontes permanecem privados/preservados para lotes futuros.
+
+Reexecucao: 25 reutilizados, zero novos, estado das linhas identico. Auditoria
+preservada: 25 create, 25 possible_duplicate do caminho de reuso e 25 soft_delete.
+Reversao: 25 inativados pelo metodo canonico, ativo=false/status=Inativo;
+zero exclusoes fisicas, zero ativos restantes, IDs/codigos/procedencia e demais
+campos conservados. Duas negativas de RBAC/contexto PASS, sem ampliar permissoes.
+
+### Isolamento, protecao e limites da prova
+
+Cluster Docker PostgreSQL 16 dedicado, imagem local por digest/pull=never,
+network=none, sem portas publicadas, rootfs somente leitura e sem privilegio;
+somente dois binds na pasta privada do lote. Antes de aplicar schema/gravar:
+identidade database/role/system_identifier, socket sem endereco de rede e zero
+tabelas publicas comprovados. Somente migrations publicadas foram aplicadas NO
+CLUSTER ISOLADO; nenhuma migration privada 045/046/047/048/049 ou operacional.
+
+Grupo e ator sao namespaces SINTETICOS de teste, nao correspondencia comprovada
+de grupo/empresa operacional. Grupo fonte foi preservado no input privado;
+documentos fiscais, saldos e titulos nao receberam empresa por inferencia.
+Papel de dados NOSUPERUSER/NOBYPASSRLS, sem wildcard, com permissoes minimas.
+O schema publicado nao fornece as policies de dados necessarias a esse papel:
+policies exclusivas do teste limitam Grupo/ator sinteticos e contexto de Grupo.
+Nao sao migrations publicadas, grants operacionais nem homologacao do menor
+privilegio dos destinos reais. Esse gate operacional permanece aberto.
+
+Container parado depois do ensaio e banco privado preservado. Reabertura do
+MESMO cluster/banco comprovou 25 linhas inativas e auditoria conservada; voltou
+a ser parado. Nenhum container do piloto ficou em execucao. Isso e recuperacao
+do banco de teste, nao restore do banco/backup operacional ou do SQL legado.
+
+Dados/SQL privados, selecao, quarentena, snapshots, relatorios detalhados,
+credenciais EFEMERAS do cluster e hashes vinculaveis a registros permanecem
+somente na area privada fora do checkout/build/CI. Recibo de retomada local:
+current-pilot.json; dentro do lote: result-private.json, result-sanitized.json,
+database-recovery-private.json e receipt-hashes-private.json. Nao publicar esses
+arquivos. HD, captura, worktrees e banco operacional permaneceram intactos;
+agendamento Legado pausado, sem novo ambiente pago ou ampliacao de acesso.
+
+### Ocorrencias corrigidas no executor do ensaio
+
+Tentativas anteriores e seus recibos foram preservados privadamente. Corrigidos:
+prontidao prematura do servidor temporario do entrypoint PostgreSQL; suposicao
+incorreta de igualdade entre codigo interno preparado e codigo legado; setup
+de policies restritas exclusivo do cluster de teste; expectativa da reversao
+ajustada ao contrato existente ativo/status. Nenhuma protecao de produto foi
+retirada para obter PASS. A primeira conferencia de reabertura esperava somente
+50 auditorias e falhou: o total real e 75, incluindo as 25 do reuso, comprovadas
+por acao na segunda conferencia somente leitura, sem nova carga.
+
+### Retomada e proximo lote
+
+Comandos executados no Codespace: node --check scripts/legado/pilot-isolated.mjs;
+node scripts/legado/pilot-isolated.mjs --prepare; tsx do server executando o mesmo
+auxiliar com a raiz privada indicada em current-pilot.json. O auxiliar recusa
+checkout/HEAD divergente e destino fora da raiz privada, cria lock e verifica
+SHA-256 das tres fontes contra o manifesto autenticado. Nao repetir a carga
+automaticamente no novo HEAD: revisar a base aprovada e preservar o recibo antes.
+
+Proximo lote: completar/reutilizar persistencia canonica de fornecedor; revisar
+e aprovar mapas classe/unidade e correspondencias de unidades para produtos;
+resolver crosswalk Grupo/Empresa antes de qualquer destino operacional. Depois,
+pilotos isolados separados por dependencia, mesma reconciliacao/reexecucao/
+reversao. #344 permanece PARCIAL: clientes comprovados, nao tres entidades
+homologadas. Publicar este codigo nao autoriza importacao operacional ou deploy.
+
+### Validacao do lote
+
+Codespace Linux/Node 24.21.0: focados 14 PASS/0 FAIL/0 SKIP; suite completa
+npm test -- --test-reporter=tap tests/**/*.test.js: 2242 PASS/0 FAIL/0 SKIP.
+npm run audit:baseline, npm run lint, npm run typecheck e npm run build: exit0.
+Typecheck sem diagnosticos. URLs/variaveis de banco operacional removidas do
+ambiente dos checks. Testes da suite usam dados sinteticos; a prova PostgreSQL
+real com staging privado e um recibo separado, nao fixture apresentada como carga.
+Sem novas dependencias, alteracao de baseline, supressoes ou remocao de testes.
+SHA-256 do auxiliar: d25cd58930a48c1a9d1850545eed8f1c0615b01031b471d9bf75294821e9c6f9.
+SHA-256 do teste: 788b5b757e59939e4db70568aa0a957ef2d55639d92cc8228181893d2ca46116.
+
+## #344 - centralizacao privada concluida; staging utilizavel no Codespace (2026-10-23)
+
+Este recibo substitui o estado de envio em andamento e o bloqueio de upload
+registrados abaixo. Os cabecalhos anteriores sao historicos, nao o estado atual.
+
+### Transferencia, integridade e recuperacao integral
+
+Cinco lotes concluidos: 2836 arquivos / 48359509373 bytes logicos de origem.
+Contagens por lote: staging 913/287977635; codigo/proveniencia 5/64739;
+original 1857/21102245906; bases SQL de trabalho 21/26964656868;
+quarentena 40/4564225. Instaladores continuam preservados somente na origem,
+fora deste conjunto de migracao. Backup operacional do ERP novo nao foi
+confundido com backup legado nem importado.
+
+Todos os arquivos passaram por tamanho/SHA-256 na transferencia e na
+recuperacao. Cinquenta objetos comprimidos/cifrados totalizam 3072559784 bytes;
+334 referencias de arquivos reutilizam conteudo comprovadamente igual.
+Esses bytes fisicos NAO sao o tamanho logico nem uma medida de migracao de dados.
+Foi materializado o conjunto INTEGRAL em pasta privada de recuperacao na VPS,
+com nova abertura e SHA-256 de todos os 2836 arquivos, nao apenas uma amostra.
+Recibo agregado final: 2026-10-23T17:29:38Z; zero violacoes de protecao e
+32543379456 bytes livres apos a recuperacao. Metadados finais das fontes:
+zero alteracoes de tamanho, mtime e identidade; HD original apenas lido.
+
+Destino permanece /root/erp-private/centralizacao-legado-20261023, fora
+aplicacao/repositorio/build/publicacao. Objects, receipts e recovered separados;
+pastas root700, arquivos root600. Os arquivos recuperados sao uma copia de
+trabalho PRIVADA em claro sob essas permissoes; nao se afirma criptografia de
+disco. Objetos arquivados usam AES-256-GCM, com chaves de dados em pasta separada
+no MESMO host. Administrador/provedor desse host nao esta excluido da ameaca.
+Nenhuma chave SSH pessoal foi copiada. Manifestos detalhados e chaves ficam
+privados; nenhuma linha de dados reais ou hash vinculavel a registro foi publicada.
+
+O worker de envio e o espelho de checkpoint encerraram apos concluir os cinco
+lotes. Nao existe envio pendente nem necessidade de manter o HD conectado para
+recuperar esses lotes na VPS. Preservar mesmo assim HD, captura e worktrees.
+Helper de recuperacao integral privado restore-private.py reutiliza o leitor
+e os manifests existentes; nao e outro importador. SHA-256 do SCRIPT:
+4f03c7863c556982c58fcda837b6159ab4b844dba74ffac55a357cca238a3260.
+Provas sinteticas: rejeicao de caminhos invalidos, escrita/abertura idempotente
+e bloqueio de conteudo divergente PASS. Nenhum motor de banco foi iniciado.
+
+### Acesso comprovado do executor Codespace: escopo exato
+
+O proprietario habilitou o upload permitido da extensao Chrome. Seis artefatos
+privados foram enviados pelo Explorer ao Codespace EXISTENTE, fora do checkout;
+nao houve novo ambiente, token, permissao VPS ou copia de chave SSH pessoal.
+O helper codespace-recovery.mjs recuperou a copia oriunda da VPS e verificou
+913 arquivos / 287977635 bytes por tamanho e SHA-256 no proprio Codespace.
+Owner UID1000, diretorios700/arquivos600; zero violacoes de protecao observadas.
+Checkout permaneceu limpo no SHA650bc463ab039e2e2639a1e500b51f94113be826,
+branch codex/consolidacao-infra-20261017, antes desta atualizacao documental.
+
+Copia de trabalho: /home/codespace/erp-legado-privado-20261023/recovered.
+Recibo privado: /home/codespace/erp-legado-privado-20261023/recovery-receipt.json.
+Executar somente rotinas de leitura/reconciliacao autorizadas, sem incluir essa
+pasta no Git, build, CI, preview ou contexto amplo de agentes. O staging do
+Codespace e copia de trabalho; VPS e HD preservado continuam fontes de recuperacao.
+Nao se afirma que os 48.36GB brutos foram copiados ao Codespace nem que ele
+possui acesso SSH direto a VPS. Recuperacao de arquivos nao e restore/teste de
+banco SQL, nem valida identidades, regras fiscais ou persistencia do ERP.
+
+Primeira tentativa de leitura durante upload incompleto foi bloqueada por
+integridade (PRIMARY_CIPHER_INVALID), sem extracao; apos concluir o upload,
+verificacao integral PASS. Nao se contornou a protecao. Dados/chaves nao foram
+colados no terminal, registrados em relatorios publicos ou enviados ao Git.
+
+### Continuidade e gates
+
+Sem importacao operacional, migrations, deploy, merge ou novas cobrancas.
+Agendamento Continuar legado ERP Zuccaro continua PAUSED.
+Proximo pacote: reconciliar procedencia, identidade canonica, empresa/grupo,
+IDs e vinculos do piloto no staging isolado usando o importador existente.
+Piloto permanece PREPARED_NOT_AUTHORIZED: transferir e recuperar arquivos NAO
+autoriza executar carga. Pendencias de homologacao de banco continuam separadas.
+
+Publicacao exclusivamente documental e sanitizada; runtime do ERP inalterado.
+Nao repetir suites de aplicacao inalteradas nem tratar CI de docs como prova de
+importacao. Recibos detalhados, manifests, checkpoints e comandos de recuperacao
+continuam privados no destino e na estacao autorizada.
+
+## HISTORICO #344 - centralizacao privada EM EXECUCAO, staging recuperado (2026-10-23)
+
+Esta execucao NAO foi somente diagnostico. O coordenador ERP ZUCCARO -
+CODEX/CURSOR usa SSH/SFTP ja configurados na estacao com HD; nenhum segredo
+exposto, chave SSH copiada, login repetido ou permissao de conta ampliada.
+Codigo do ERP continua no Codespace unico; nenhuma frente de implementacao
+paralela foi aberta. Original, worktrees e captura de codigo intocados.
+
+### Conjunto e resultados efetivamente comprovados
+
+Conjunto selecionado: copia original, bases SQL de trabalho, extracoes/staging,
+mapeamentos/manifests/checkpoints, relatorios privados, quarentena preservada
+sem executar binarios e snapshot do importador com proveniencia. Alvo2836arquivos,
+48359509373bytes de origem. Instaladores5arquivos/1475316551bytes ficaram fora
+do conjunto de migracao, preservados no HD. A validacao historica do original
+registrava1857arquivos/21102245906bytes; contagem/tamanho atuais coincidem.
+Isso nao substitui a nova verificacao SHA256 da copia remota.
+
+CONCLUIDO e recuperado na VPS: staging913arquivos/287977635bytes, incluindo
+extracoes, relatorios e mapeamentos existentes; snapshot de codigo5arquivos/
+64739bytes. Total918arquivos/288042374bytes verificados por tamanho e SHA256.
+Onze arquivos foram reutilizados das copias privadas preexistentes, sem
+duplicacao. Fonte/copia SQL antiga, staging parcial e backup operacional do ERP
+novo permanecem categorias distintas; nao se inferiu equivalencia por nome.
+
+Verificacao remota leu os arquivos recuperados do arquivo cifrado e comparou
+TODOS os hashes do lote, conferiu referencias reutilizadas e materializou uma
+amostra privada de recuperacao. Nao abriu registros em chat/log nem executou
+importador, SQL, binario legado ou operacao de negocio. Proveniencia do
+importador: baseef4b14f2c8aa94ceed07a867905b50ef378c7e38, fontes pendentes
+preservadas com diff e hashes; referencia publicada antes deste lotef38202d5.
+Nao e clone independente de uma worktree nem nova versao do ERP.
+
+Original1857arquivos/21102245906bytes: hashes de origem computados; envio ainda
+EM EXECUCAO. Checkpoint13:49 BRT:10blocos cifrados/671088990bytes ja conferidos
+no destino,290referencias reutilizaveis identificadas. Esses bytes sao de
+blocos comprimidos/cifrados, NAO equivalem a backup original concluido.
+Bases SQL21arquivos/26964656868bytes e quarentena40arquivos/4564225bytes seguem
+na fila sequencial. Conclusao somente com manifest final e recuperacao integral
+de cada lote, nunca pelo inicio do processo. Consultar checkpoints PRIVADOS
+para progresso posterior; esta secao e recibo datado, nao monitor ao vivo.
+
+### Destino, protecao e retomada
+
+Destino: /root/erp-private/centralizacao-legado-20261023, fora aplicacao,
+repositorio, build e diretorios publicos; root:root700. Chaves DE DADOS por lote
+em diretorio separado root700/arquivos600, nao chaves SSH pessoais. AES256GCM
+com nonce por objeto e autenticacao; transporte SSH com hostkey estrita.
+Chave e cifrado estao no mesmo host sob controle root: nao se afirma HSM,
+criptografia de disco ou protecao contra administrador/provedor desse host.
+Recuperacao com essas chaves foi comprovada no staging. Sem cobranca nova.
+
+Capacidade inicial83992358912bytes livres; alvo bruto48.36GB, compressao e reuso
+diminuem ocupacao. Manter folga durante a fila; nunca apagar backups existentes
+para abrir espaco. Nenhuma copia integral foi duplicada por conveniencia.
+
+Processo Windows em segundo plano, oculto, com checkpoints atomicos e lock de
+um worker, sem agendamento novo. Blocos64MiB; SFTP put inicial e reput apenas
+quando parcial existe, seguido de tamanho/SHA256 antes da promocao do objeto.
+Teste sintetico de retomada32KiB->128KiB e SHA256 PASS; AESGCM roundtrip,
+rejeicao de adulteracao e replay deterministico PASS. Primeira tentativa reput
+sem arquivo remoto falhou, corrigida sem descartar fonte/checkpoint. Reuso
+tambem referencia lotes anteriores verificados, evitando reenviar bytes iguais.
+
+Checkpoint detalhado local e espelho CIFRADO na VPS registram objetos/ordem/
+referencias. Retomar SOMENTE o helper privado existente transfer-private.mjs
+--all na estacao habilitada; lock recusa worker simultaneo. Nao matar processos
+de terceiros nem iniciar outro pipeline. Sem HD a recuperacao dos lotes ja
+verificados ocorre no host privado; a copia integral pendente ainda depende da
+continuidade desse job. Agendamento Continuar legado ERP Zuccaro continua PAUSED.
+
+Ferramentas auxiliares PRIVADAS, nao outro importador, preservadas na estacao e
+no destino; inventarios/mapeamentos/fontes canonicas reutilizados:
+- transfer-private.mjs SHA256c9e58be6d894615bdb423b8873d092e0f9f02810c868fde95e6257e92974b806
+- remote-recovery.py SHA256065b87dae6e17699c4bd3cc4fdc608f47caee261a72e5af40b048f1e05a3c3df
+- checkpoint-mirror.mjs SHA256718b8ec2a56bf3c97ca0bc49e57ef84eab730f1cd5f46bdaf1d5ba88962da12f
+- codespace-recovery.mjs SHA2560409face2669dc1220b52e36f349bfe6adcf8a03963812ac043cb2041d554968
+Manifestos detalhados, hashes vinculaveis a dados, nomes reais e chaves ficam
+PRIVADOS. Os hashes acima sao somente dos scripts auxiliares, nao dos dados.
+
+### Acesso do proximo executor: bloqueio concreto, nao presumido
+
+A recuperacao na VPS foi executada e comprovada por este coordenador usando o
+canal SSH existente. Isso NAO comprova acesso do Codespace aos dados.
+Codespace possui pasta privada fora checkout/build, ownerUID1000/modo700 e
+16807477248bytes livres no preparo. Lote cifrado foi obtido DE VOLTA da VPS,
+com hash conferido, para provar a origem da futura copia de trabalho.
+
+Upload pelo Explorer web, dentro da pasta privada inbound, falhou ANTES de
+enviar arquivos: extensao Chrome exige Allow access to file URLs. Nenhuma
+permissao ampliada ou contorno executado; inbound permaneceu vazio.
+Intervencao: titular pode fazer upload manual dos artefatos indicados no recibo
+privado para a pasta inbound, ou habilitar conscientemente essa opcao em
+chrome://extensions > ChatGPT > Detalhes. Chave exclusiva de DADOS do lote,
+nao chave SSH pessoal; nunca colar seu valor no chat. Depois executar o helper
+de recuperacao no terminal, conferir913arquivos/tamanho/SHA e manter600/700.
+Ate essa prova, Codespace/Cursor NAO declarados habilitados para dados reais.
+
+VPS transferindo normalmente: nao houve motivo para duplicar o conjunto no
+Drive. Buscas anteriores metadata-only sem pasta pertinente nao comprovam
+capacidade/ACL de destino Drive. Sem links publicos ou upload para GitHub/CI.
+
+Proxima etapa: concluir/verificar original e bases de trabalho; resolver o
+upload controlado e comprovar recuperacao no executor seguinte. Depois validar
+origem/IDs/vinculos e reconciliacao do lote piloto isolado pelo importador
+canonico, sem deduzir empresa por palpite. Piloto PREPARED_NOT_AUTHORIZED,
+sem banco operacional, migrations, merge, deploy ou mudanca fiscal.
+Lote Git somente documental: diff-check/allowlist/sanitizacao, sem repetir
+suites de aplicacao cujo runtime nao mudou. CI deste SHA registrada na344.
+
+### Historico preservado: precheck e entregas anteriores
+
+## Coordenacao local retomada e precheck privado #344 (2026-10-23)
+
+Por decisao posterior do proprietario, o chat existente ERP ZUCCARO -
+CODEX/CURSOR volta a coordenar. Isso substitui a atribuicao anterior ao chat
+Nuvem; nao altera o Codespace unico nem cria escritor concorrente. Codigo e
+testes continuam em /workspaces/ERP-Zuccaro-codeX, no Codespace
+potential-xylophone-5gj7r9v9qqg637vxp, branch codex/consolidacao-infra-20261017.
+Base local/remota conferida7615691a3e78e5536d24f17d5f0c9b41bab8c94e, PR342
+sobre334, checkout limpo antes do lote. Terminal WEB autenticado e operante.
+A UI da extensao Codex informa que nao iniciou; isso nao bloqueia esse terminal.
+Publicar uma issue nao encaminha automaticamente instrucao ao agente.
+
+### Escritor, preservacao e escopo
+
+Ultimo recibo347 fecha o pacote e libera reserva. Frente Nuvem estava idle.
+Precheck local ao Codespace nao encontrou index.lock, processo codex exec ou
+descritor de escrita aberto no checkout; apenas app-server fora dele.
+Sao observacoes pontuais, nao exclusao tecnica de acesso futuro. Nao encerrar
+esse servidor nem processos de terceiros. Reserva desta execucao registrada na
+issue344: SOMENTE HANDOFF e STATUS, um escritor por vez, parar se HEAD/status
+mudarem inesperadamente. Base dos dois documentos, diff e hashes preservados
+fora do checkout antes da edicao. Nenhum dirty anterior para descartar.
+
+### Copias privadas: metadados primeiro, sem transferencia
+
+A estacao voltou a comprovar SSH com autenticacao e hostkey existentes; nenhuma
+chave ou segredo lido, copiado ou trocado. O original no HD esta presente e recebeu
+apenas leitura de metadados: oito diretorios imediatos. Captura privada de
+preservacao existente e seu manifesto tambem localizados. Essa captura preserva
+codigo/Git/worktrees: NAO equivale a backup integral dos dados do ERP antigo.
+Nao foi reexecutada varredura/hash do original nem aberto seu conteudo.
+
+Na VPS, df do filesystem mostrou83992498176bytes disponiveis naquele instante,
+compartilhados com servicos existentes, nao reserva de capacidade. Area privada
+existente root:root700 ocupa3098460160bytes. Quatro candidatos historicos
+inspecionados por metadados:142635008/23195648/8192/589824bytes alocados;
+6/12/1/4arquivos ate profundidade2, respectivamente. Ha um candidato de
+manifesto no segundo e um formato de backup no quarto. Tamanho/nome/extensao
+nao provam origem, completude ou equivalencia. Backups operacionais separados
+ocupam69455872bytes e nao devem ser confundidos com copia do ERP antigo.
+Caminhos reais e eventuais nomes vinculaveis permanecem privados.
+
+Destinos propostos de staging ainda ausentes. Nenhuma pasta criada, permissao
+alterada, transferencia, duplicacao, extracao ou importacao. Reutilizar primeiro
+os inventarios/manifestos existentes; falta vincular manifesto de origem e de
+cada candidato com cobertura/versao e igualdade verificadas, sem presumir que
+todos sao dados reais ou todos sao fixtures. Criptografia, recuperacao, retencao,
+ACL e folga de capacidade continuam gates antes de transferir. Original intocado.
+
+Conector Drive respondeu com sucesso a buscas de PASTAS por BACKUP ERP ANTIGO,
+ERP Zuccaro e legado, metadata-only, sem resultados pertinentes. Isso comprova
+a disponibilidade da busca, NAO acesso a uma pasta de backup, capacidade livre,
+privacidade/ACL, ausencia de outros arquivos ou integridade. Nenhum download,
+upload, link publico, compartilhamento ou pasta Git no Drive. Sem identificador
+de pasta pertinente, nao ampliar a busca a documentos pessoais sem necessidade.
+
+### Continuidade e validacao
+
+345 Produto,346 sessao de Orcamento,348 leitura/relatorios seguros e347 proposta
+navegavel permanecem publicados; nao refazer nem atribuir novos testes a eles.
+Aprovacao visual de347 ainda necessaria antes de adocao ampla. Layout azul-claro,
+codigos sequenciais backend/IDs/importados, RBAC/multiempresa/auditoria e
+proveniencia comercial-financeira separada de regras fiscais preservados.
+344/349 recuperacao real seguem separadas, nao comprovadas por esta inspecao.
+Proximo passo344: reconciliar evidencias privadas existentes de origem/candidatos
+antes de calcular faltantes; nao copiar um backup inteiro por conveniencia.
+
+Lote somente documental: diff-check, allowlist dos dois arquivos e revisao de
+sanitizacao; nenhuma suite runtime inalterada repetida. Resultado de commit/CI
+sera registrado na issue344, sem inferir CI nova dos recibos anteriores. Nenhum
+codigo funcional alterado. Custos bloqueados, agendamento Legado PAUSED,
+Codespace unico, sem merge/deploy/migration operacional/carga real.
+
+### Historico preservado: proposta347 e pacotes anteriores
+
+## #347 — proposta Comercial navegável e defeito de diálogo corrigido (2026-10-23)
+
+Executor único potential-xylophone-5gj7r9v9qqg637vxp, mesma branch PR342 sobre334,
+base0409d3f721634218950876cf7389c79be0478647 local/remoto e checkout limpo no aceite347.
+Esse SHA348 tem ambas CIs SUCCESS:39969540650/39969548181; resultado registrado na348.
+Produto/SEO/conversões/IDs e persistência Comercial preservados.
+
+Proposta DEV opt-in implementada no Comercial/OrcamentosTab EXISTENTES:
+`/Comercial?proposta=comercial360` → Orçamentos → Novo orçamento. Editar cliente,
+produto/quantidade/preço, condição/tabela e observação; alternar Cliente e histórico,
+Produtos e disponibilidade, Resumo e pagamento e retornar. O estado é o MESMO
+rascunho do editor. Azul-claro, painéis lado a lado no desktop/empilhados e roláveis
+no tablet, rodapé acessível. Não é reprodução fiel comprovada de screenshot histórico:
+é proposta para APROVAÇÃO VISUAL, sem alterar amplamente o layout padrão.
+
+Reuso: seletores/pickers, cálculo decimal, campos e callbacks atuais; nenhum
+ComercialV2 ou persistência paralela. OrcamentoProposalAside é extração somente
+apresentacional para a nova composição, sem equivalente composto existente;
+comercialProposalFixture fornece objetos claramente SINTÉTICOS em memória, fora
+do store/cache operacional. Sem reserva de IDs/códigos, autenticação alternativa,
+consulta de negócio, gravação, conversão, estoque ou cobrança da proposta. Guards
+negam save/cancel/convert também pelo callback. Fluxo normal continua usando
+servidor/snapshots/permissões anteriores; modo só é exposto pelo Comercial em DEV.
+Histórico/disponibilidade/preços da proposta são ilustrativos, não registros recuperados.
+
+Defeito funcional comprovado no navegador: WindowModal(~100 milhões) interceptava
+clique no DialogContent(z50), tornando o editor inacessível. Dialog existente recebe
+overlayStyle OPCIONAL; Orçamento em windowMode aplica camada ao diálogo/overlay
+acima da janela e abaixo dos Selects, sem mudar defaults dos demais consumidores.
+Depois, cliques reais em seletores/painéis funcionaram, sem force-click.
+
+Prévia PRIVATE confirmada pelo CLI Codespaces, porta5173; Vite rejeitava Host
+encaminhado(403), agora allowlist EXATA do hostname derivado de CODESPACE_NAME,
+sem wildcard/liberação pública. `/__erp_preview` DEV informa somente SHA, branch e
+dirty boolean com no-store; erro Git sanitizado503. Nenhum nome de arquivo/segredo.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial?proposta=comercial360
+Requer autenticação GitHub do Codespace. Processo DEV iniciado por este executor
+permanece para revisão; nenhum processo de terceiro interrompido. Custo adicional
+zero, sem outro ambiente. Tooling de navegador/bibliotecas somente em /tmp, sem
+alterar dependências do projeto, pacotes/permissões do SO ou conectores.
+
+Browser real, contexto NOVO e conexões externas bloqueadas:1440×1000/1024×900;
+cliente/produto/condição/tabela, quantidade2×10=20, observação e troca/retorno de
+painéis preservados, save desabilitado,0 requisições de escrita,0 conexões externas,
+0 erros JS, diálogo dentro do viewport. Script reproduzível existente no lote:
+`node scripts/comercial360-preview-smoke.mjs /caminho/playwright/index.mjs /tmp/evidencias`.
+Capturas e evidência sanitizada em docs/evidence/comercial360-proposta-*-20261023.
+Não leu sessão, storage ou registros de navegador existente; não é homologação operacional.
+
+Foco26 PASS/0 FAIL/0 SKIP, exit0. Suíte geral FINAL2232 PASS/0 FAIL/0 SKIP,
+exit0 comprovado também por arquivo de saída e processo isolado. Audit:baseline,
+lint, typecheck, build e diff-check exit0; um warning de lint anterior.
+SHA/CI desta publicação registrados na347, proveniência viva no endpoint DEV. Primeiro processo geral contou2232 PASS,
+mas retornou143; não foi aceito como check verde. Repetição isolada final exit0.
+Asserção estática de dependências exige agora também proposalMode, sem retirar
+Grupo/Empresa/ator/sessão; troca de modo invalida callbacks e cache. Sem baseline
+ou regra de validação relaxada. Status/limites anteriores348 seguem no histórico.
+
+Pendente humano: aprovação visual expressa antes de adoção ampla. Recuperação de
+registros ERP NOVO e legado ERP ANTIGO344 continuam SEPARADAS e NÃO EXECUTADAS.
+Vínculo seguro faltante já identificado, sem repetir tentativa: canal SSH/SFTP deste
+runtime com identidade previamente autorizada e destinos/fontes privados documentados
+(Runtime Secrets ERP_DEV_VPS_SSH_PRIVATE_KEY/ERP_DEV_VPS_SSH_USER ou agente existente).
+Não gerar chave, pedir segredo no chat, abrir dump/banco/backups ou inventar dados.
+Sem fonte/identidade/procedência não há reconciliação real em staging, transferência
+ou importação. Demais capacidades amplas do ERP não foram declaradas recuperadas.
+PAUSED e gates de implantação/carga mantidos. Retomar itens concretos independentes
+quando houver escopo/acesso liberado; nenhum escritor concorrente criado.
+
+## #348 — contrato de leitura e recuperação dos relatórios (2026-10-23)
+
+Codespace único potential-xylophone-5gj7r9v9qqg637vxp, base fa720fea,
+branch codex/consolidacao-infra-20261017 / PR342 sobre334. Alterações anteriores
+preservadas; Produto e Orçamento346 não modificados. ACEITO348 registrado.
+
+Causa: catálogo simples/bulk/by-ID/contagem aceitavam leitura privilegiada sem
+RBAC e pertença comprovados. Contraprova no handler fa720fea: filtro vazio sem
+permissão e empresa de terceiro responderam200, uma consulta cada. Agora os
+três handlers reutilizam entityGuardPolicy e evaluateMfaScopeAccess, com perfil
+e vínculos autenticados, predicado obrigatório AND, pré-autorização do lote,
+projeção recursiva, rejeição de filtros sensíveis e ordenação autorizada. Não há
+fallback global/legado sem dono. Catálogos compartilhados exigem vínculo explícito.
+
+Extração necessária: não havia autorizador backend comum aos três leitores.
+entityReadPolicy concentra essa política; csv.js compartilha o serializador
+seguro já consumido por exportUtils. useSecureReport concentra contrato/schema,
+cache por ator/sessão/escopo/permissões, revogação e descarte de respostas tardias;
+não cria endpoint, entidade ou relatório paralelo. Duas anotações de tipos na
+policy MFA existente preservam integralmente seu runtime.
+
+Relatorios.jsx reintegra DashboardRepresentantes e RelatorioPersonalizado,
+sem remover abas. Restauração inicial evita consultas legadas na nova aba.
+Representantes entrega agregado completo limitado: >=500 registros em qualquer
+fonte bloqueia409, nunca total parcial; comissão é estimativa pelos fatores
+existentes e exige grant próprio. Personalizado pagina50, informa cobertura de
+página/total desconhecido, agrupa apenas a página e exporta TODO o filtro até5000;
+excesso bloqueia sem arquivo parcial. Excel permanece CSV compatível, identificado.
+Exportação reautoriza ator/fontes/campos, neutraliza fórmulas, audita somente
+metadados e bloqueia download se a auditoria falhar. Lock local evita duplo clique;
+não é transação/snapshot temporal nem idempotência persistente do provedor.
+
+Validação: foco final56 PASS/0 FAIL/0 SKIP (29 casos348 +27 contratos de fronteira).
+Suíte geral2225 PASS/0 FAIL/0 SKIP, exit0; endurecimento final de inferência por
+filtro/ordenação também comprovado no foco56. Primeira geral2223 PASS/1 FAIL:
+hash histórico congelava toda Relatorios. Hash ORIGINAL mantido; somente hunks
+exatos348 são invertidos para comparar restante, com negativas contra hunk
+faltante/duplicado e alteração externa. Nenhum baseline/hash/config relaxado.
+Audit:baseline, lint, typecheck, build e diff-check exit0; lint conserva warning
+anterior EntregasListagem170. Typecheck semântico adicional da policy backend exit0.
+Uma execução intermediária de lint terminou143; repetição final exit0. Erros de
+tipagem detectados nas projeções primitivas foram corrigidos antes do fechamento.
+
+Limite operacional explícito: contrato testado nos handlers e componentes REAIS
+com SDK fixture sintética, sem rede/dados reais. Requer runtime remoto com esses
+handlers; HTTP/local não possuem adaptador equivalente e exibem indisponibilidade,
+sem fallback. Sem deploy/migration, recuperação de registros ou homologação visual
+inferida. Outros relatórios legados não foram rehomologados por este lote.
+Publicação corresponde ao commit desta seção; SHA remoto/CI serão registrados
+na issue348. Próximo autorizado347: proposta privada nos componentes existentes,
+com gate de aprovação visual antes de alteração ampla. Legado344 sem canal privado
+já documentado; nenhum novo inventário, transferência ou importação. PAUSED mantido.
+
+## #346 — ações de Orçamento vinculadas à sessão (2026-10-23)
+
+Nova ordem346→348→347 recebida/ACEITO na issue346 pelo Codespace único
+potential-xylophone-5gj7r9v9qqg637vxp, branch PR342, base312295c1 após FF
+exclusivamente documental com checkout limpo. Produto04f644a1 não alterado.
+Reserva: OrcamentosTab.jsx e teste comportamental existente + continuidade.
+
+Defeito reproduzido: ações abertas não capturavam token, e consultas não incluíam
+ator/sessão. Cinco cenários adicionados: antes8 PASS/4 FAIL (revogação total já
+bloqueava); depois12 PASS/0 FAIL/0 SKIP. Editar/cancelar/converter capturados em
+sessão anterior não chamam transporte; resposta tardia não fecha nem anuncia
+sucesso. renderedScope passa a capturar sessão; geração opaca em memória separa
+cache por sessão/remount, sem credenciais em queryKey; ator incluído nos mestres
+e listagem. Troca de sessão invalida ações/formulários como troca de tenant.
+
+Reutilizados gate de Orçamento e cliente HTTP existentes; serviços mantêm preço
+servidor/snapshot, vínculo ClienteEmpresa, conversão idempotente, persistência,
+auditoria e reabertura. Testes reais dos dois serviços Orçamento/Pedido (fixtures
+sintéticas) aprovados:2 arquivos PASS, exit0; não confundir essa contagem com
+casos internos. Layout, IDs e fluxos downstream preservados, sem novos serviços,
+fatores, estoque/pagamento/fiscal simulados ou mudança backend neste pacote.
+Interface implementada/testada no harness real; não é deploy/homologação visual.
+
+Audit/lint/typecheck/build exit0; lint conserva um warning preexistente de
+EntregasListagem170. Suíte completa final2197 PASS/0 FAIL/0 SKIP, exit0, pelo mecanismo suportado de
+concessão Codex (EPERM conhecido), sem mudança de baseline/testes/SO para verde.
+Primeira execução2196 PASS/1 FAIL: asserção estática exigia dependências antigas.
+Expectativa fortalecida para incluir sessão, preservando cobertura tenant/ator;
+policy9 PASS e repetição completa final aprovada, sem relaxar baseline/config.
+Diff-check/sanitização PASS; SHA é o commit desta seção.
+CI do SHA e retorno346 antes de passar à implementação348; nenhum writer extra.
+Rollback por revert revisado. Dados reais privados, gates operacionais e PAUSED
+mantidos. Próximo:348 agora autorizada a corrigir contrato (não repetir diagnóstico),
+depois347 com preview privado e gate visual para redesign amplo.
+
+## Ordem atual: ciclo comercial, contrato seguro e proposta privada (2026-10-23)
+
+Base confirmada PR342:04f644a11ae360dcf9010697b87d0ec424f76698, branch codex/consolidacao-infra-20261017 sobre codex/comercial-composicao-20261017 (#334), aberta DRAFT. CI4454/run39955762072 e4455/run39955769075 completed/success. Recibo issue345#issuecomment-6365293796 confirma mesmo Codespace, HEAD local/remoto04f644a1 e checkout limpo naquele instante;2192 PASS/0 FAIL/0 SKIP, demais checks exit0. Produto345 CONCLUIDO, reserva liberada, nao refazer. Nao e inspecao direta atual do Codespace pela coordenacao nem prova de deploy/previa.
+
+Proprietario autorizou sequencia de pacotes coesos346 ->348 ->347, ou itens independentes se dependencia tecnica concreta bloquear um deles. Corpos das TRES issues existentes atualizados com ordem completa/aceite/reservas, sem novo plano ou escritor. Execucao continua reservada ao MESMO agente no Codespace unico, um escritor; Cursor remoto nao comprovado. Antes de editar: novo ACEITO com host/SHA/status e paths exatos, preservar dirty/new/diff, reconciliar sem reset/force/stash silencioso. Dados reais/credenciais fora Git/checkout/build/log/CI, custo adicional zero.
+
+346: cliente->preco->Orcamento->Pedido->reabertura, reproduzir lacunas e corrigir componentes/servicos canonicos. Fixtures de persistencia/snapshots/conversoes/duplo envio/falha de gravacao/permissoes/troca Grupo-Empresa/revogacao; nenhuma operacao financeira/fiscal real. Preservar IDs/auditoria/dono da persistencia e layout.
+
+348: diagnostico35f1892b ja feito, nao repetir como unica entrega. Implementacao coesa do contrato canonico compartilhado de leitura AGORA explicitamente autorizada: tornar persistentes os dois cenarios (ator sem permissao com filtro vazio, empresa de terceiro), testar negacao com zero consultas privilegiadas/exports e positivos autorizados. Validar ator, acao e pertença Grupo/Empresa SERVER-SIDE antes asServiceRole; filtro/frontend nao autoriza. Mapear consumers single/bulk/catalogos, reutilizar guards/policies e nao criar caminho paralelo. Projecao de campos sensiveis, paginacao/completude/exportacao e auditoria fail-closed; limite500 nao e total. CSV/Excel contra formulas; cache por ator/sessao/escopo. Somente depois do contrato seguro comprovado, remontar relatorios atuais com testes comportamentais. Gate pendente nao permite expor abas inseguras; registrar dependencia especifica e seguir pacote independente.
+
+347: continuar comparacao/prioridades ja mapeadas (sem repetir inventario), preparar previa privada autenticada no Codespace e entregar URL/SHA servido/roteiro navegavel Comercial integrado com rascunho preservado. Reusar processo seguro sem interromper terceiros, nao inventar backend seguro/preview. Redesign amplo depende aprovacao visual expressa do proprietario; outras frentes independentes continuam. Cadastros ERP novo e legado344 SEPARADOS, fontes e canais privados reais, nenhuma carga/recuperacao sem procedencia/reconciliacao. Legado sem canal atual/inventario privado, transferencias e gates operacionais nao executados; agendamentoPAUSED.
+
+Recebimento: aceites345/348 anteriores comprovam tarefas anteriores, nao esta nova ordem. Nenhum novo aceite346/348/347 foi presumido. Esta conversa permanece sem Browser/ponte autenticada; tarefas prontas no GitHub NAO acionam automaticamente o agente. Necessaria retomada do executor existente para ler a ordem atual e publicar novo ACEITO/resultado. Coordenacao nao editou codigo no sandbox, nao iniciou testes runtime/servicos, nao instalou ferramentas ou repetiu login403.
+
+Fechamento por pacote: testes proporcionais + checks Regra-Mae, evidencias anteriores so quando codigo correspondente nao mudou; commit coeso/push mesma branch, SHA remoto e CI exata, HANDOFF/STATUS/programa existentes e retorno na issue. Nao esperar proximo entre etapas autorizadas, nao confundir aprovado/publicado/testado no Codespace/implantado. Este registro e somente documental, diff-check/sanitizacao requeridos; CI desse commit documental e distinta da base04f644a1.
+
+## #345 — prévia de conversões acompanha rascunho (2026-10-23)
+
+Executor único Codespace potential-xylophone-5gj7r9v9qqg637vxp, branch PR342,
+base35f1892b; ACEITO345 após gate348 bloqueado, sem writer paralelo. Causa
+reproduzida em seis testes comportamentais: ProdutoForm mantém rascunho, mas
+ProdutoFormCompleto enviava dadosIniciais à aba Conversões. Antes:11 PASS/6 FAIL;
+após correção foco17 PASS/0 FAIL/0 SKIP, incluindo handlers reais do formulário,
+calculadora/prévia, unidades e troca de aba (sem rede/IA/timers operacionais).
+
+Reuso: callback opcional onConversionDraft informa somente fatores/unidades/
+peso teórico ao wrapper, em useCadastroRecordState já existente e escopado por
+registro/versão/Grupo/Empresa/ator. Callback antigo, revogação e envio pendente
+não atualizam a projeção. Não há merge dessa projeção no payload; o formulário
+continua dono do rascunho geral e V24 dono do salvamento/auditoria. SEO/slug
+mantêm patch próprio e um único envio. Cancelar não grava; salvar/reabrir mantém
+fatores, IDs e vínculos. Conversor990e6c9a intacto, sem fator inventado.
+
+ProdutoForm grande recebeu só callback/efeito de projeção; inicializador,
+handlers, validação, permissões e payload preservados. Extração ampla seria
+ruidosa e fora desta dependência; nenhum novo componente/hook/entidade criado.
+Testes reaproveitam harness comportamental de SEO, agora também executando o
+formulário geral e a aba reais. Não são homologação visual nem banco operacional.
+Rollback: revert revisado do lote. Dados reais, auth/backend, deploy/migrations,
+recuperação de registros e agendamento PAUSED inalterados.
+
+Validação final345: suíte completa2192 PASS/0 FAIL/0 SKIP, exit0 (383443ms),
+incluindo os seis casos novos; foco17 PASS/0 FAIL/0 SKIP e quatro arquivos
+Produto/SEO/conversões/PIM/tipo aprovados. Audit/lint/typecheck/build exit0;
+lint mantém um warning preexistente em EntregasListagem.jsx:170; build com
+avisos usuais de chunks. Diff-check/sanitização PASS. Concessão Codex suportada
+nos subprocessos já diagnosticados, sem alterar SO/testes/baseline para obter verde.
+Mudança de código justifica nova suíte completa; checks anteriores não foram
+apresentados como validação deste delta. Código/teste da prévia renderizada
+foi executado nesta suíte final (seis casos encontrados no log completo).
+SHA é o commit que introduz esta seção; push/CI exata conferidos na issue345
+antes da entrega. Nenhum resultado CI da base foi atribuído ao novo commit.
+Próximo gate: fechar345;348 permanece BLOCKED pelo contrato backend de relatórios.
+346/347 preservados na fila, sem reserva de escrita ou redesign amplo.
+
+## #348 — gate de Relatórios bloqueado; sequência #345 liberada (2026-10-23)
+
+Executor único Codespace potential-xylophone-5gj7r9v9qqg637vxp, base3f972e4c,
+branch PR342. AGENTS/Regra-Mãe/HANDOFF/fila lidos; FF de três commits somente
+MD com checkout limpo. Nenhum pacote anterior aberto. ACEITO registrado na348.
+Busca de consumidores confirmou DashboardRepresentantes apenas importado sem
+montagem e RelatorioPersonalizado sem consumidor; sem caminho equivalente.
+
+Gate ANTES de expor falhou em prova comportamental sintética do handler REAL
+base44/functions/entityListSorted/entry.ts, transpilado sem rede com SDK fixture:
+ator sem permissões de relatório, com filtro vazio ou empresa de terceiro,
+recebe HTTP200 e consulta asServiceRole. Dois cenários confirmados, comando
+Node exit0 (diagnóstico de ausência de negação, NÃO teste de segurança aprovado).
+listOne não autoriza o ator por empresa/ação; Representante é SIMPLE_CATALOG.
+Não executar contra serviço remoto nem dados reais. Backend HTTP não oferece
+contrato específico de relatório com projeção/agregação/exportação autorizadas.
+Os componentes também usam fallback de permissão geral, cache sem ator/sessão,
+leitura limitada (backend máximo500) como total, custo/crédito/comissão e CSV sem
+neutralização de fórmulas; captura de auditoria não bloqueia exportação na falha.
+
+BLOCKED348 pelo contrato real de autorização/consulta/exportação segura, conforme
+item4 da issue: não basta remontar abas nem copiar a referência insegura.
+Nenhuma aba exposta, recurso removido ou registro recuperado. Próxima dependência:
+evoluir camada canônica de leitura/exportação com autorização de ator, Grupo/
+Empresa, projeção por campo e completude comprovável antes de ativar capacidades.
+Esse gate envolve contrato compartilhado e não é contornado por filtros frontend.
+Sem alteração runtime neste diagnóstico; diff-check/sanitização são os checks do
+lote documental, suites2186 já aprovadas não repetidas. Código348 não concluído.
+Liberada reserva dos componentes Relatórios; prosseguir345 no mesmo checkout,
+sem escritor paralelo, dados reais, deploy, migration ou ativação operacional.
+
+## Comparacao ERP inteiro com referencia indicada pelo proprietario (2026-10-23)
+
+Referencia erp-integra-novo main37c6f7d39e60736cbb862d122de9be23c06db8f6 conferida; candidata c9f1c71c31526dd1d9795627f2fbc5cd985793ff, CI4448/4449 SUCCESS. Comparacao completa dos inventarios de codigo:953 versus1426 arquivos;99 blobs iguais,456 paths alterados,398 exclusivos referencia,871 exclusivos candidata; paginas25 versus46. Leitura60 arquivos, incluindo todas as25 entradas referencia e22 homonimas candidata. Nao equivale a auditoria de cada botao/fluxo nem a prova de funcionamento. Matriz de25 entradas e classes/prioridades integradas ao programa existente, issue347 ampliada, sem novo plano.
+
+Achado concreto: abas Representantes/Personalizado montadas na referencia, ausentes na pagina Relatorios atual apesar de componentes canonicos preservados. Issue348 publicada para recuperar com testes negativos/positivos RBAC/tenant/query/export/auditoria e reuso, sem nova entidade. Codigo nao editado no sandbox; AGUARDANDO ACEITE do mesmo agente Codespace, sem recebido automatico. Os3 paths exclusivos de paginas (Documentacao/EmpresaOnboarding/OAuthConsent) exigem equivalente/historico antes de alegar perda/restaurar.
+
+Preservar melhorias atuais/Auth/RBAC/auditoria/tenant/persistencia/IDs/reservas backend; nao copiar admin local/fallback da referencia. Verificacao numeracao de TODOS cadastros permanece tarefa de cobertura, nao declarada aprovada por mapa frontend. Referencia local-imports tem3 arquivos17185563bytes por metadados; conteudo NAO ABERTO, origem/exposicao/completude nao classificadas. Fontes Base44/snapshot/localStorage/export sao candidatas, nao registros comprovados. Nenhuma recuperacao de dado real; ERP novo e legado344 separados. Dados reais/manifestos privados fora Git/log/CI; gates operacionais intactos.
+
+Layout ERP inteiro e proposta azul-clara na347 exigem historico e aprovacao visual antes de mudanca ampla. Recebimento dos pacotes so por aceite explicito; sem Browser/ponte desta conversa. Nenhum teste runtime repetido por lote documental. Trabalho privado local preservado antes de publicar somente textos sanitizados.
+
+## Tres frentes coordenadas e entrega por pacotes coesos (2026-10-23)
+
+Ordem expressa do proprietario: esta conversa centraliza instrucoes; GitHub fonte oficial; mesmo Codespace codigo/testes; VPS separada para ERP/staging. Regra-Mae e programa existentes reutilizados, sem novo manual/ambiente. Base consolidada a08bf4c931ea89003d62eb6e0ef64d98bd2d6c69, PR342 aberta draft sobre334; CI4446/4447 completed/success conferidas. Conversoes990e6c9a permanece com CI4442/4443 success e2186/0/0 no recibo Codespace. Sem implantacao VPS alegada.
+
+Estado remoto real do Codespace: ultimo recibo disponivel na343 confirma5dc5d6d9 e checkout limpo; ausencia de nova prova impede afirmar a08bf4c9 sincronizado ou nenhuma alteracao posterior. Antes de sincronizar, executor deve preservar dirty/new/diff e conferir remoto. Nao reset/force/stash silencioso. Previa privada ainda NAO COMPROVADA: sem URL/visibilidade privada/teste de acesso nem processo atual inspecionado; aba Ports ou editor aberto nao comprova aplicacao servida. Nao iniciar servidor no sandbox como substituto.
+
+Frente1 (issue344 existente): operador proposto e estacao original com HD/SSH ja comprovados; falta aceite/acesso atual, sem tarefa disparada daqui. Reutilizar inventarios, mapeamentos e extracoes, verificar primeiro copias privadas na VPS e compara-las por abrangencia/manifestos privados; nao transferir backup completo redundante. Clientes/fornecedores/produtos primeiro; depois historicos/estoque/financeiro por dependencias. Compartilhar Grupo somente conforme modelo, nunca atribuir fiscal/saldo/titulo sem origem. Piloto isolado solicitado, condicionado a protecoes/integridade/recuperacao/acesso e isolamento comprovados; carga operacional continua sob gates proprios de backup destino/idempotencia/reversao/reconciliacao. Sem fonte/destino/canal, nenhuma execucao real. PAUSED mantido.
+
+Frente2 (issue346): pacote funcional integrado cliente->preco efetivo->Orcamento->Pedido/reabertura, incluindo rastreabilidade de disponibilidade/reserva e referencias a producao/entrega/financeiro conforme contratos existentes. Executor proposto: mesmo Codex no Codespace, AGUARDANDO ACEITE. Propor reserva exata de Comercial/Central/navegacao/formularios existentes antes de editar; nao tocar Produto reservado345. Confrontar implementado/testado/visivel/implantado por consumidor do ciclo, corrigir lacuna reproduzida, sem reimplementar fluxo existente. Issue345 de rascunho/conversoes continua primeira tarefa localizada ja publicada, sem aceite novo no momento desta consulta. Nenhum pacote de codigo EM EXECUCAO comprovado.
+
+Frente3 (issue347): proposta navegavel reutilizando Comercial.jsx/CentralCliente360Panel/ModuleLayout/ModuleTabs/ResizablePanel e forms existentes; cliente/historico/produtos/precos/disponibilidade/itens/totais/pagamento/acoes proximos, detalhes em abas/paineis com rascunho preservado. Pesquisar historico azul-claro antes de substituir; referencia visual ausente vira lacuna, nao desenho inventado. Recuperacao de registros auxiliares exige fonte confiavel/IDs, nao dados ficticios. Executor proposto: mesmo Codex, AGUARDANDO ACEITE; paths compartilhados com346 executam sequencialmente, nunca dois escritores no checkout. Cursor remoto nao comprovado: revisao por SHA somente, sem reserva de escrita.
+
+Primeira acao do executor ao retomar fila: conferir host/SHA/status, comentar aceite/reservas, inspecionar processos/portas sem interromper terceiros e disponibilizar preview por encaminhamento PRIVATE autenticado do Codespace. Reusar servidor seguro existente; sem credenciais/dados operacionais/porta publica, sem parar processo alheio. Registrar SHA servido, acesso privado confirmado e limites de backend. Sem canal autenticado desta conversa ao executor, a coordenacao nao pode executar essa acao nem comprovar recebimento por simples issue. Nao repetir instalacoes/login403 por tentativa.
+
+Proposta visual depende APROVACAO EXPRESSA do proprietario antes de alteracao ampla; enquanto isso avancam pacotes independentes autorizados sem conflito. Cada pacote: testes proporcionais/checks Regra-Mae, reaproveitar evidencias inalteradas, commit revisavel/push mesma branch, confirmar SHA/CI e retorno na issue. Instrucao publicada nao e acionamento automatico. Fila343 teve leitura/retorno comprovados, nao prova completa de implementacao iniciada pela issue. Issues345/346/347 aguardam recibo. Nenhuma transferencia/importacao/deploy, recurso pago ou mudanca de cobranca realizada nesta coordenacao.
+
+## Entregas consolidadas e proximo pacote Onda1 (2026-10-23)
+
+Conversoes Produto: publicado990e6c9a57aad0833fa1866a458488e5d4ab241c com seis arquivos; CI4442/run39941451623 e4443/run39941460941 completed/success conferidas pela coordenacao. HEAD documental posterior5dc5d6d9d3332120bf42cc0b7f49ba9fecb94e34: CI4444/run39941573717 e4445/run39941581179 completed/success. PR342 permanece aberta DRAFT, branch codex/consolidacao-infra-20261017 sobre codex/comercial-composicao-20261017, nao main. Publicacao nao e deploy VPS.
+
+Codespace: recibos do executor em issue343#issuecomment-6363225662 e#issuecomment-6363243901 confirmam incorporacao FF documental, HEAD local/remoto5dc5d6d9 e checkout limpo naquele instante; reserva dos seis arquivos encerrada. Historico inclui preservacao em patch/stash relatada pelo executor, sem descarte; nao autoriza repetir stash silencioso. Nao houve nova inspecao direta do filesystem remoto pela coordenacao. Tests2186/0/0 sao evidencia daquele executor; nenhuma suite inalterada repetida aqui.
+
+Fluxo GitHub: leitura/ACEITO/retorno do executor comprovados na343, encerrada apos evidencias finais. O commit funcional antecedeu a leitura da issue, portanto ciclo completo instrucao->nova implementacao->publicacao ainda nao demonstrado. Nao existe acionamento automatico comprovado; issue/Markdown/push nao e comando ao agente. Ferramentas desta conversa sem Browser/ponte autenticada. Proxima execucao depende do aceite visivel do mesmo agente na fila ativa.
+
+Proximo pacote coeso: issue345 https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/345 — previa de conversoes coerente com rascunho de Produto. Evidencia estatica: ProdutoFormCompleto passa dadosIniciais a aba, enquanto ProdutoForm conserva rascunho proprio. Gate obrigatorio: reproduzir o risco de previa obsoleta com handlers/componentes reais antes de corrigir; se nao reproduzir, nao implementar por suposicao. Reusar calculadora/estado e unico proprietario da persistencia, preservar SEO/gerais/layout/IDs/tenant/RBAC/auditoria. Escopo, reserva proposta, teste pre/pós-fix e aceite constam na issue. Estado AGUARDANDO ACEITE; nenhum escritor novo iniciado no sandbox ou Cursor. Codex no Codespace unico e executor proposto, reserva efetiva somente apos aceite/status.
+
+Legado344: recebido/BLOQUEADO pelo executor: bindings SSH/SSH_AUTH_SOCK/config/identidades convencionais ausentes no Codespace. Inventario privado NOT RUN; existencia/abrangencia/integridade de copias VPS continuam desconhecidas, nao ausentes por inferencia. Nenhuma transferencia, copia publica, importacao operacional ou migrations045-049. PAUSED mantido; custo adicional zero, sem mudanca billing.
+
+## Fluxo unico decidido pelo proprietario e fila GitHub (2026-10-23)
+
+Nuvem ERP-Zuccaro-codeX centraliza instrucoes e decisoes nesta mesma conversa; GitHub e fonte oficial; Codespace potential-xylophone-5gj7r9v9qqg637vxp concentra codigo/testes; VPS Hostinger permanece separada para operacao e staging privado. Sem novo Codespace/clone independente/custo adicional, sem mudanca de cobranca.
+
+Publicado agora: lote Conversoes Produto 990e6c9a57aad0833fa1866a458488e5d4ab241c, seis arquivos, descendente de a42cd686. Testado no Codespace segundo recibo do executor incorporado nesse commit: 2186 PASS/0 FAIL/0 SKIP, demais checks aprovados; nao execucao do sandbox coordenador, nao E2E visual nem implantacao VPS. CIs4442/4443 estavam in_progress na consulta, resultado final ainda necessario.
+
+Responsabilidades/reservas: agente Codex ja conectado ao Codespace e unico escritor funcional. Reserva dos seis arquivos de Conversoes conforme issue343 ate aceite/fechamento explicito. Coordenacao apenas fila/continuidade sanitizada, sem editar codigo no sandbox. Antes de sincronizar, preservar dirty/new/diff e reconciliar secoes documentais; nunca sobrescrever trabalho. Cursor remoto nao comprovado, sem pacote de escrita atribuido; revisao cruzada somente por SHA ate comprovacao e reserva explicita.
+
+Fila publicada: issue343 https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/343 para fechar o lote e comprovar recebimento/retorno; issue344 https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344 para inventariar copias privadas existentes ANTES de transferir. Escopo, dependencias, aceite e gates constam nas issues, sem novo manual. Proximo pacote funcional: executor confirma lacuna real da Onda1/programa apos fechamento, reserva arquivos e publica escopo antes de editar; nao reconstruir SEO/conversoes concluidos nem inventar defeito sem reproducao.
+
+Acionamento/retorno: workflow erp-runtime-ci.yml reage a push/pull_request para validar; nao possui consumidor de issues que inicie agente no Codespace. Ferramentas desta conversa continuam sem Browser/ponte autenticada. Issue/Markdown nao inicia execucao. Falta UMA instrucao inicial ao agente existente para ler/aceitar343 e consultar a fila entre lotes enquanto sua sessao estiver ativa. Nao equivale a agendamento/daemon nem garante retomada apos encerramento. Prova ponta a ponta ainda PARCIAL: instrucao GitHub publicada; aceite do executor e retorno na issue ausentes no momento do registro. A publicacao990e antecedeu a issue, logo nao prova causalidade.
+
+Legado: issue344 bloqueada por canal atual ao filesystem privado/inventario HD, nao por falta de autorizacao. Reutilizar copias integras ou transferir somente faltantes apos gates; originais preservados, nenhum dado real/manifesto privado/chave em GitHub/CI/logs/checkout/builds. Nenhuma nova transferencia, deploy, migration045-049 ou importacao operacional realizada nesta coordenacao. Scheduler nao acessivel; decisao PAUSED mantida, sem reativacao.
+
+## Comercial360 — conversões de Produto no Codespace (2026-10-22)
+
+Executor único comprovado: `potential-xylophone-5gj7r9v9qqg637vxp`, checkout
+`/workspaces/ERP-Zuccaro-codeX`, Node `v24.21.0`. Base local/remota
+`4456137ffe2404baf9e10f6aceaa423972cf13a0`, árvore limpa antes da edição;
+fetch da branch `codex/consolidacao-infra-20261017` sem avanço. PR342 draft
+sobre a branch do PR334, ambos abertos. CI da base: runs39819591739 e39819600422,
+frontend/backend/composição SUCCESS. SEO/slug publicado em5ab608e6 preservado;
+seus testes executados novamente, sem reimplementação.
+
+Próxima falha concreta reproduzida no componente existente `AbaConversoesProduto`:
+TON→PÇ devolvia zero, fatores decimais em texto causavam TypeError e fatores
+ausentes impediam abrir a aba. Reutilizado `CalculadoraUnidades.converterUnidade`,
+já consumidor das vendas, removendo a fórmula local incompleta. Normalização
+somente para exibição; equivalência sem fator válido mostra “Não disponível”.
+Nenhum novo serviço/cadastro/escritor; fatores continuam no Produto persistido,
+pelo salvamento/auditoria existentes. Sem mudança de tenant/RBAC/backend/HTTP.
+Teste auxiliar novo necessário porque não havia teste comportamental desta aba:
+`tests/produto-conversoes-preview.test.js`, fixtures sintéticas, reabertura e
+imutabilidade. Três regressões FAIL antes / PASS depois; SEO/slug/PIM PASS.
+Não é E2E visual ou homologação operacional. Rollback: revert revisado do lote.
+
+Validação no mesmo runtime: audit:baseline exit0 já observado e reutilizado;
+typecheck exit0; build exit0 (avisos de chunks); lint final exit0, 0 erros e
+1 warning preexistente em EntregasListagem.jsx:170. Primeiro lint restrito foi
+terminado143, sem alteração de regra. Suíte completa final:2186 PASS/0 FAIL/0 SKIP, exit0 (434044ms).
+Prova Node spawnSync→git: no sandbox erro EPERM apesar de status0 e SHA correto;
+fora dele, pela concessão oficial Codex require_escalated, exit0/sem erro.
+Sandbox anuncia NoNewPrivs1/Seccomp2; syscall exata não exposta pela ferramenta,
+não se atribui causa a uma syscall específica. Sem alteração de testes, SO ou
+validações. Primeira suíte restrita:185 arquivos PASS/21 FAIL por restrições;
+não equivale a contagem de casos. Uma repetição completa com concessão suportada.
+Revisão final: TON→PÇ, KG↔MT, KG↔PÇ, TON→KG, decimais legados,
+fatores ausentes/inválidos, reabertura e imutabilidade cobertos; sem novo fator,
+nenhuma alteração da persistência ou do pacote SEO/slug. git diff --check exit0
+e sanitização das adições PASS. Somente os seis arquivos deste lote publicados
+pela mesma branch; SHA é o commit que introduz esta seção. CI nova pendente de
+consulta após push; resultado será conferido no GitHub antes da entrega.
+
+Fechamento em23/10: recebida ordem para concluir este lote antes das tarefas
+GitHub. Remoto avançou apenas HANDOFF em a42cd686; ancestralidade confirmada,
+FF documental seguro após preservar seis arquivos em stash e patch SHA256
+42f911025b9b949e9bd69be7a0c04f2a30d332b3a4535f0344d3b0839cac1ced.
+Reaplicação --index recusou somente o topo sobreposto, sem modificar a árvore;
+cinco arquivos restaurados do patch e HANDOFF reconciliado por prefixos, ambas
+as seções/histórico preservados. Stash mantido. Código/testes idênticos aos
+validados; suites não repetidas por alteração exclusivamente documental.
+
+VPS: runtime sem bindings `ERP_DEV_VPS_SSH_PRIVATE_KEY`/`ERP_DEV_VPS_SSH_USER`,
+sem SSH_AUTH_SOCK, config SSH ou identidade convencional. Falta vincular ao MESMO
+runtime o canal/identidade já autorizados por mecanismo seguro de secrets ou
+agente encaminhado e destino/host confiável documentado; não reenviar chave no
+chat, gerar identidade ou substituir authorized_keys. Inventário privado NOT RUN;
+nenhuma conclusão sobre existência/ausência da cópia legada na VPS. Não houve
+transferência, abertura de backup/banco/PII, instalação, merge, deploy, migration
+operacional, cobrança ou novo Codespace. Agendamento permanece PAUSED.
+Próximo gate: concluir este lote e validar CI do SHA publicado; não iniciar outro pacote;
+legado depende do canal recuperado e dos seis gates privados antes de transferência.
+
+## Coordenacao principal e solicitacao de canal remoto suportado (2026-10-23)
+
+Decisao expressa do proprietario: ESTA MESMA conversa Nuvem ERP-Zuccaro-codeX permanece principal, com historico acessivel de qualquer computador. Codespace e ambiente de codigo/testes; GitHub e fonte oficial. Nao substituir por conversas locais independentes nem exigir encaminhamento manual recorrente. Orientacoes anteriores que recomendavam trocar o chat principal ficam superadas.
+
+Limite comprovado nesta sessao: ferramentas expostas nao incluem Browser, ponte para a sessao Codex no VS Code ou endpoint autenticado do Codespace. O executor /workspace nao e /workspaces/ERP-Zuccaro-codeX. CLI com opcoes remotas nao comprova vinculo entre sessoes. A prova remota trazida pelo proprietario confirma o agente no Codespace, nao controle por este chat. Nao repetir OAuth/403, instalacoes ou reinicios sem mudanca comprovada de capacidade.
+
+Publicacao pendente: proprietario encaminhou relato do lote Conversoes Produto com seis arquivos preservados e 2186 PASS/0 FAIL/0 SKIP, audit/lint/types/build/diff-check aprovados mediante concessao suportada naquele executor. Isso e relato recebido, nao execucao deste sandbox. Remoto conferido antes deste lote documental: 4456137ffe2404baf9e10f6aceaa423972cf13a0 com CI success; ainda sem commit do lote funcional. Nao reconstruir alteracoes ausentes nem iniciar outro escritor. Falta acesso autenticado ao checkout com trabalho aberto para concluir sua publicacao.
+
+### Solicitacao objetiva ao suporte da plataforma (preparada, nao enviada)
+
+Precisamos manter esta mesma conversa cloud, com historico e acesso entre computadores, como ponto unico de instrucoes, e vincular sua execucao ao Codespace EXISTENTE potential-xylophone-5gj7r9v9qqg637vxp, repo viniciuszuccaro-creator/ERP-Zuccaro-codeX, checkout /workspaces/ERP-Zuccaro-codeX. VS Code e Codex remoto ja executaram prova sintetica nesse recurso; esta sessao cloud nao expoe Browser nem ponte autenticada para aquele agente.
+
+Informem se existe mecanismo OFICIAL para anexar este chat ao executor existente ou encaminhar tarefas/resultados de modo autenticado, preservando identidade/historico da conversa. Solicitamos procedimento e capacidades necessarias, incluindo autenticacao segura, escopo, revogacao, retomada entre computadores e limites de custo. Nao queremos novo chat/Codespace, terminal publico, API paga, transferencia de chaves pessoais ou instalacoes por tentativa. Se nao suportado, confirmem explicitamente essa limitacao do produto. Validacao exigida: solicitacao neste chat -> marcador sintetico criado/lido/removido fora do checkout no Codespace -> resultado retornado automaticamente a esta mesma conversa.
+
+A solicitacao nao foi enviada: ferramenta de suporte ausente nesta sessao. Nenhum segredo deve acompanhar o chamado. Nenhum desenvolvimento concorrente, transferencia de legado, merge/deploy/migration ou alteracao de cobranca foi iniciado. Agendamento legado continua pausado conforme decisao vigente; estado do scheduler nao consultado.
+
+## Recibo de execucao via terminal web do Codespace (2026-10-22)
+
+Executor: ChatGPT Work, navegador autenticado do proprietario, terminal integrado web; nao e conexao direta Codex/Cursor.
+Host: potential-xylophone-5gj7r9v9qqg637vxp; checkout /workspaces/ERP-Zuccaro-codeX; branch codex/consolidacao-infra-20261017.
+Checkout inicialmente limpo em d425138ff9121d47c0a7ca8db49e6701630b5d29. Origin sanitizado github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX. Fetch e fast-forward para 9a53f66341cac865f55b5c7ad2a7c0aa0e5b8dbd concluidos sem reset/force; status limpo apos sincronizacao.
+Marcador sintetico fora do checkout criado, lido e removido com verificacao de ausencia: PASS.
+Testes nesta versao: node --test tests/produto-completo-ecommerce.test.js tests/produto-pim-ui.test.js tests/produto-http-policy.test.js; exit0, sem falhas/skips. Node observado v24.9.0, distinto do Node22 da homologacao anterior; nao atribuir esta execucao ao Node22. Log sintetico fora do checkout em /workspaces/erp-produto-web-20261022.log. Git diff --check PASS. Nenhum codigo funcional alterado.
+Estacao Windows/HD e alias SSH nao disponiveis no terminal deste executor. Nenhuma transferencia real, precheck de fonte ou acesso VPS alegado. Gate impeditivo do legado: executor com acesso a origem privada e canal SSH/SFTP, seguido de validacao das protecoes existentes.
+Acesso pelo terminal web comprovado; conexao direta do chat Nuvem/Codex/Cursor permanece separada. Autorizacao nao transfere cookies, chaves ou ferramentas entre chats. Agendamento mantido pausado. Sem merge/deploy/migration/carga.
+
+## Pos-login: autenticacao concluida e limite Codespaces (2026-10-22)
+
+Base52b5f7f7cb43aeb3e7c6e50c9809a14f1d57efe5, PR342 draft sobre334; API
+confirmou CIs4434/run39807525230 e4435/run39807532238 completed/success no SHA.
+Sandbox continua /workspace/ERP-Zuccaro-codeX, nao Codespace. O erro bwrap do
+turno anterior nao ocorreu com a concessao atual somente de rede; nao repetir a
+concessao por arquivo config.toml que causou o erro interno, nem desligar sandbox.
+
+Proprietario concluiu login OFICIAL GitHub CLI pelo navegador. CLI confirmou
+viniciuszuccaro-creator e exit0; sessao isolada fora checkout, diretorio0700 e
+arquivo0600. CLI informou armazenamento em arquivo texto, nao keychain; nenhum
+valor foi lido/exibido/copied para Git, logs ou chats. Nao usar o rascunho de
+publicacao do ambiente para presumir backup/retencao dessas credenciais temporarias.
+Autenticacao do Git/proxy original preservada; GH_TOKEN nao selecionado no
+subprocesso dedicado, sem alterar proxy/TLS/NO_PROXY ou Git config do repositorio.
+
+Diagnostico novo: GET /user funciona como User viniciuszuccaro-creator; GET do
+repositorio publico funciona. GET /user/codespaces/NOME e GET /repos/OWNER/REPO/
+codespaces retornam HTTP403 Resource not accessible by integration. gh auth status
+reporta escopos none, sem codespace confirmado, apesar da solicitacao do fluxo.
+Requisicao urllib padrao a /user SEM credencial fornecida tambem retorna200 e a
+conta proprietaria: autenticacao automatica do caminho/proxy comprovada. Isso nao
+prova onde ocorre substituicao do OAuth; nao afirmar que consentimento novo
+removeu a restricao nem repetir login/refresh sem mudanca de capacidade. O dominio
+api.github.com AGORA e alcancavel: a restricao atual e de autorizacao efetiva,
+nao o antigo Forbidden de rede. Nenhum header ou token foi extraido para contorno.
+
+Canal deste executor para Codespace BLOQUEADO antes de shell. Nao houve SSH,
+marcador remoto, sync/testes remotos, preview, canal VPS ou transferencia real.
+Nao habilitar chave/tunnel/API paga nem fabricar prova a partir de API/URL/editor.
+A alternativa concreta e o canal autorizado no executor original/local ou IDE
+remoto, fora desta rota cloud restrita, sem criar outro Codespace/clone/frente.
+
+Recuperacao VPS existente: OPERACAO_DEV_VPS documenta secrets Runtime Cursor
+ERP_DEV_VPS_SSH_PRIVATE_KEY/ERP_DEV_VPS_SSH_USER e SSH/Web Console. Historico no
+programa/HANDOFF comprova somente leituras anteriores por WebConsole. Instrucao
+do proprietario registra alias erp-zuccaro-vps na estacao original com HD; nao e
+configuracao herdada. Neste executor bindings ausentes, sem SSH config/agente e
+sem ferramentas VPS. Nenhuma consulta/mensagem ao chat ERP ZUCCARO - CODEX/CURSOR
+e exposta; metadados locais sessions/index/daemon tambem ausentes. Nao alegar
+leitura do chat, HD, inventario privado ou chave; nao repetir provisionamento.
+
+Solicitacao UNICA preparada para a frente existente, sem envio automatico:
+
+> No executor original que ja tinha acesso, recupere o canal autorizado VPS/SFTP
+> erp-zuccaro-vps ou Web Console e o acesso ao MESMO Codespace
+> potential-xylophone-5gj7r9v9qqg637vxp. Esta frente atual nao editara codigo em
+> paralelo. Primeiro devolva somente recibo sanitizado do executor/host/ferramenta,
+> acesso VPS somente leitura e prova pelo agente no Codespace (pwd/origin
+> sanitizado/branch/SHA/status e marcador sintetico fora checkout criado/lido/
+> removido). Indique o mecanismo seguro ja existente de reutilizacao do canal e
+> a referencia do inventario/precheck privado do HD, sem valores de credenciais,
+> dados reais ou reinicio de setup. Nao substituir authorized_keys, criar clone/
+> recurso/chave, nem transferir antes de comprovar os seis gates privados.
+
+Depois do recibo: um escritor, preservar dirty antes de sync do SHA publicado,
+CodeSpace testar exatamente essa versao; reusar inventarios/mapeadores existentes
+na estacao com HD RO e provar capacidade/destino/ACL/criptografia-recuperacao/
+integridade-retomada/retencao antes do primeiro byte real. Sem carga operacional.
+Cursor/preview privados dependem da conexao comprovada; nenhum link nao testado
+foi anunciado. Agendamento nao reativado, nenhuma nova tarefa/frente foi criada.
+
+Validacao deste registro: somente docs, diff-check/sanitizacao/continuidade; suites
+runtime inalteradas nao repetidas. OAuth e comandos de consulta encerrados, sem
+servico de teste iniciado. Marcadores anteriores preservados. CI nova deste push
+so e resultado quando retornar; nao atribuir4435 ao SHA documental seguinte.
+
+## Conexao Codespace/VPS - fechamento de capacidade (2026-10-22)
+
+Base conferida67c002a4a3717658a4e6e75ee1589e138d663da3; branch consolidada/PR342
+draft sobre334. CIs4432/run39800779724 e4433/run39800790073 AGORA SUCCESS, lidas
+nesta retomada; supera o status geral In progress anotado no fechamento anterior.
+Runtime5ab608e6 e raiz2183/0/0 permanecem provas anteriores, nao suites repetidas.
+
+Unico escritor desta inspecao: sandbox /workspace/ERP-Zuccaro-codeX, NAO Codespace.
+Handoff dirty271724bytes/hash preservado integralmente em arquivo privado antes
+sem descarte; sufixo de registros unicos mantido byte a byte e fora do indice.
+Novas conclusoes sanitizadas reconciliadas aqui e no roteiro EXISTENTE
+[ABRIR_NO_OUTRO_COMPUTADOR.md](../ABRIR_NO_OUTRO_COMPUTADOR.md#conexao-do-agente-resultado-da-inspecao-e-acao-interativa-2026-10-22).
+Nao foi substituido o handoff inteiro por outro host/branch nem lido chat externo.
+
+Diagnostico terminal desta sessao: gh/ssh presentes, API Codespaces Forbidden em
+api.github.com foraallowlist ativa; nenhuma prova de shell remoto. Nao ha chaves
+publicas/config SSH/agente herdados e home/MCP config em filesystem ro. Help gh
+informa geracao automatica de chave ausente; nao executar esse efeito como teste
+cego. Codex --remote ws/wss/unix exige app-server existente e nao converte esta
+tarefa cloud em Codespace; nao iniciado daemon/pareamento/tunnel. Binarios GUI
+VS Code/Cursor e ferramentas de scheduler/VPS ausentes. Autorizacao ja existe;
+nao ha pedido generico de permissao nem alegacao de acesso por URL/titulo.
+
+Caminho principal suportado: no computador do proprietario VS Code desktop ->
+Remote Explorer -> GitHub Codespaces -> Sign in to GitHub -> plug do MESMO recurso
+potential-xylophone-5gj7r9v9qqg637vxp; Codex no IDE remoto -> Sign in with ChatGPT.
+Acao interativa no cliente e indispensavel; este executor nao clica/login nele.
+Roteiro publicado contem probe guardado de identidade/repositorio/branch/SHA e
+write/read/delete sintetico FORA checkout. Sintaxe validada e guard negativo
+comprovado aqui antes de qualquer escrita; positivo remoto NOT RUN. Sync e teste
+focado do SHA final somente apos essa prova/preservacao de dirty, sem main/reset.
+
+Cursor: suporte Codex IDE documentado no README OpenAI nao equivale a conexao
+Codespaces. Cliente Cursor nao disponivel; Remote-SSH/gh --config e candidato a
+validar no cliente com a mesma prova e um escritor. Nao declarar compatibilidade
+real/instalacao de extensao Microsoft verificada. Alternativa VS Code concreta.
+
+Rascunho do ambiente SALVO oficialmente: unico customdomain api.github.com,
+presets mantidos, membership do checkout existente/SHA exato e start_skill seguro
+sem autoDocker/migrations/seeds/servidores. install_script/segredos/cobranca nao
+alterados. Antes constava main historica/start automatico; reconciliado somente
+no rascunho. requires_publish=true: NAO aplicado/publicado/reconectado/restaurado.
+Revisar/salvar/publicar ocorre na plataforma; publicacao cria snapshot/reconecta,
+nao foi acionada por este lote. Preservacao local nao prova backup externo. Nao
+usar reset/restore para destravar rede. IDE nao depende dessa publicacao antiga.
+
+Hostinger: skills consultadas, mas nenhuma ferramenta VPS_* efetiva. Registro
+MCP aqui bloqueado pelo filesystem ro; nao alterar privilegios nem improvisar
+API/credencial. Cliente host precisa expor conector e seu OAuth Allow. Alternativa
+precheck pelo console/SSH JA configurado na estacao autorizada. Nenhuma consulta
+nova de capacidade, criacao de diretorio/ACL, criptografia ou transferencia VPS
+foi executada. HD/SSH da estacao nao sao automaticamente acessiveis aqui.
+
+Agendamento recebido como PAUSED. Nao existe ferramenta/diretorio de automacao
+nesta sessao para ler/editar o prompt REAL: nao se declara scheduler atualizado.
+Prompt substituto e precheck de retomada publicados NO documento legado existente;
+nao criada nova automacao. Retomar so apos executor real e reserva unica, gates
+privados e budget zero comprovados. Manualmente avancaram os itens acessiveis:
+Git/CI, preservacao, diagnostico, rascunho e procedimentos/teste negativo do probe.
+
+Validacao doc-only: diff-check, sanitizacao, links/rastreabilidade e diff somente
+MD; codigo/dependencias/runtime inalterados, nenhuma suite antiga repetida.
+Nenhum novo servico/teste remoto/recurso pago, dados reais, banco operacional,
+merge/deploy ou045-049 executados. Resultado do novo push/CI somente apos retorno.
+
+## Preparacao privada legado e fechamento deste lote (2026-10-22)
+
+Runtime publicado por este lote: `5ab608e6dadb8ddc054747f45ede24f7ecafcca9` (commit anterior deste mesmo push).
+Raiz2183/0/0 e checks locais PASS, conforme secao seguinte; este commit altera
+somente documentacao e preserva a arvore src/server/locks. CI do HEAD final ainda
+PENDENTE ate retorno real. Branch/PR342 sobre334 continuam, sem merge/deploy.
+
+Atualizados os documentos EXISTENTES de descoberta e mapa legado com precedencia
+da autorizacao posterior e seis gates: origem/capacidade, destino isolado, menor
+privilegio, criptografia/recuperacao, integridade/retomada e retencao. Nenhum manual
+paralelo, novo importador ou correspondencia por palpite. Precheck recebido nao
+foi apresentado como consulta atual ou reserva de espaco. Origem/SSH da estacao
+nao acessiveis aqui; transferencia BLOQUEADA ate evidencia atual dos seis gates
+por executor autorizado com acesso existente. Nenhum arquivo real acessado.
+
+Validacao doc-only: diff-check, sanitizacao, rastreabilidade e diff somenteMD;
+suites runtime inalteradas nao repetidas. Agendamento PAUSED e piloto
+PREPARED_NOT_AUTHORIZED,045-049 intactas. Conexao de agente ao Codespace segue
+pendente: nao ha shell remoto comprovado para testar o SHA final nesse host.
+Codigo e CI publicados nao equivalem a aceite operacional ou teste no Codespace.
+
+## Continuidade Comercial360 - Produto SEO/slug (2026-10-22)
+
+Execucao declarada: sandbox existente `/workspace/ERP-Zuccaro-codeX`, NAO
+Codespace; base66b88c2b/PR342 draft sobre334, unico escritor deste lote. Remoto
+HEAD66b88c2b e CI4431/run39795353934 SUCCESS conferidos nesta retomada. Handoff
+publicado lido; dirty integral/diff/manifesto preservados fora do checkout antes
+sem descarte. Evidencias locais brutas continuam privadas e nao entram no indice.
+
+Duas causas: callback vazio da aba E-Commerce e classificacao incorreta de
+ProdutoFormCompleto/ProdutoForm como self-managed no V24, que lhes passava apenas
+fechar janela em vez de persistir. Corrigidos no fluxo existente. Produto V22
+continua self-managed. O V24 permanece unico escritor/auditor dos formularios
+callback; nenhuma gravacao foi adicionada a aba ou ao ProdutoFormCompleto.
+
+Reutiliza useCadastroRecordState para patch transitório; apenas campos alterados
+sao unidos ao payload dos Dados Gerais. Dados Gerais ficam montados/ocultos ao
+trocar abas. Registro/versao/Grupo/Empresa/ator invalidam rascunho e callbacks
+antigos; acesso revogado bloqueia envio capturado, envio pendente bloqueia duplo
+clique. Falha comunica erro e conserva rascunho; cancelar nao grava. IDs/codigos/
+vinculos/campos legados e layout preservados. Sem chamadas IA, publicacao externa,
+ativacao Produto HTTP, migrations ou alteracao backend. Slug do master HTTP nao
+foi inventado: este pacote e do formulario callback legado explicitamente citado.
+
+V24 recebeu somente correcao cirurgica de ownership (dois nomes); nao se expandiu
+refatoracao de arquivo grande, preservando todos os handlers/gates existentes.
+Teste historico integral continua intacto e seu hash nao mudou: helper de resto
+reverte UMA hunk exata/contada desta correcao para comparar os demais contratos.
+Novos testes executam os handlers reais de input, wrapper e escritor/auditoria
+V24 com portas sinteticas; nao sao E2E visual, banco operacional ou Codespace.
+
+Validacao final neste sandbox: raiz2183PASS/0FAIL/0SKIP; foco37PASS/0FAIL/
+0SKIP (11 casos novos de Produto e26 de preservacao), audit/lint/typecheck/build/
+diff-check PASS. Primeira rodada intermediaria2180/2179PASS/1FAIL/0SKIP apontou
+contrato historico de hash; teste original e hash foram preservados, helper de
+resto exato/contado reconciliado e final completo repetido apos estabilizar codigo.
+Sem alterar baseline/config/supressoes nem remover assercoes. Avisos preexistentes
+de build (browsers/chunks) mantidos. CI nova ainda PENDENTE deste push. Receita Node22:
+`npm run audit:baseline`; `npm test`; `npm run lint`; `npm run typecheck`;
+`npm run build`; `git diff --check`, sequenciais, com dependencias existentes.
+Backend/PG inalterados nao repetidos localmente; CI do SHA publicado e prova
+separada. Concessao oficial de rede por turno obtida; nao alterou proxy/TLS ou
+allowlist salva. Execucao no Codespace continua NAO comprovada por este executor.
+
+Fluxo seguinte: confirmar SHA remoto/CI; no MESMO Codespace preservar dirty,
+comparar refs e fazer FF somente seguro, validar EXATAMENTE esse SHA e parar
+apos uso. Nao criar outro ambiente ou executar escritor concorrente. Rollback
+por revert revisado deste lote; sem reset/force ou mexer em dados reais.
+
+Legado: preparacao continua nos scripts/mapa existentes, sem transferencia.
+HD/alias SSH da estacao nao acessiveis/comprovados neste executor; destino/ACL/
+criptografia-recuperacao/retencao e tamanho+folga atuais continuam gates externos.
+Agendamento PAUSED; piloto PREPARED_NOT_AUTHORIZED;045-049 foraexecucaoautomatica.
+
+## Estado atual: coordenacao, decisoes preservadas e proximo lote (2026-10-22)
+
+Coordenacao definitiva: chat existente **Nuvem ERP-Zuccaro-codeX**, por decisao
+expressa do proprietario recebida neste chat. A troca do centro de conversa nao
+exige converter o executor cloud em Codespace. Desenvolvimento/testes pertencem
+ao UNICO Codespace existente; um escritor por checkout, sem frente local/Cursor
+concorrente. Nao criar outro chat, ERP, Codespace ou recurso. Registros datados
+abaixo sao historicos quando divergirem destas decisoes atuais.
+
+Referencia documental deste lote: branch `codex/consolidacao-infra-20261017`,
+base `d425138ff9121d47c0a7ca8db49e6701630b5d29`, PR342 draft sobre
+`codex/comercial-composicao-20261017` (#334), nunca main antiga. Nao reiniciar o
+programa nem iniciar Gate2 por sugestao superada. Prioridade: ambiente unico ->
+Comercial360 integrado -> migracao legada coordenada. Fonte de execucao:
+[programa existente](PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md),
+[consolidacao](CONSOLIDACAO_INFRA_ETAPA1.md), [AGENTS](../AGENTS.md) e
+[acesso](../ABRIR_NO_OUTRO_COMPUTADOR.md).
+
+### Decisoes do proprietario que devem sobreviver aos lotes
+
+| Decisao/requisito | Preservacao e limite de evidencia |
+| --- | --- |
+| Layout azul-claro APROVADO | Aprovacao informada pelo proprietario; preservar funcionalidades, recuperacao de registros e submodulos ausentes. Referencias historicas: `docs/vps/evidence/ref-visual-azul-aprovado-proprietario-20261009.txt` e `ref-visual-azul-financeiro-20261009.txt`. Essas referencias nao comprovam inventario visual completo do estado atual. Desenho aprovado e inventario de telas/submodulos ainda devem ser vinculados antes de mudancas amplas; nao inventar substituto. |
+| Codigos NUMERICOS SEQUENCIAIS em TODOS os cadastros | Requisito transversal, nao afirmacao de cobertura ja concluida. Reserva concorrente no backend, nunca count+1 na UI. Conservar codigo importado, ID, vinculos e historico; colisao preserva origem e mapeamento, sem renumeracao silenciosa. AGENTS/Regra-Mae permanecem aplicaveis. |
+| Comercial360 como experiencia unica | Integrar modulos donos dos dados, sem central/cadastro/importador paralelo. DESENHO APROVADO antes de mudancas amplas; layout aprovado, contexto multiempresa, RBAC e auditoria preservados. |
+| Programa completo | Site, app, marketplaces, chatbots, telefonia, logistica, corte/dobra, CAD, fabricacao e montagem continuam previstos nas ondas existentes; este checkpoint nao elimina essas frentes nem as declara concluidas. |
+| Historico legado comercial/financeiro | Preservar procedencia, IDs e vinculos; fatos historicos separados das regras fiscais atuais. Extrato e evidencia para conciliacao, nao origem automatica de titulos/baixas. Sugestoes IA, inclusive NCM/RNTRC, nao sao fonte oficial nem validacao fiscal/registro oficial; revisao manual obrigatoria. |
+| Custos, autorizacoes e agentes | Codex/Cursor compartilham referencia e reservas; somente um escritor autorizado. Sem novas tarefas Cursor por este registro. Franquia/budget Codespaces e Actions sao controles separados; sem compra, API paga, recarga ou elevacao de gasto. Codigo/CI nao autorizam merge, deploy, migration operacional ou importacao real. |
+
+### Autorizacao posterior de legado: substitui restricoes historicas mais estreitas
+
+O proprietario autorizou **copia/transferencia privada controlada** para destino
+VPS existente protegido, staging isolado e acesso a lotes minimos por
+Codespace/Cursor sob protecoes comprovadas, sempre FORA do checkout e do Git.
+O original permanece intocado/somente leitura. Esta e uma decisao relatada pelo
+proprietario, nao prova de transferencia executada ou destino pronto.
+
+Antes de qualquer transferencia: medir fonte e folga; confirmar destino privado
+fora de publico/build/operacao; ACL de menor privilegio; criptografia e recuperacao;
+integridade origem/destino; retomada autenticada e retencao. HD, SSH, relatorios
+privados e precheck de outra estacao nao ficam acessiveis automaticamente aqui.
+Nenhuma correspondencia de identidade por palpite. Reutilizar
+`scripts/legado/consumir-lote-staging.mjs`, `persistencia-endereco-legado.mjs` e
+[mapa canonico](LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md). Dados reais, mapas de
+IDs/PII, backups, certificados, chaves, segredos e .env permanecem fora de
+GitHub/CI/logs/chats. Piloto PREPARED_NOT_AUTHORIZED; agendamento Legado PAUSED.
+As migrations privadas045bulk/046stage/047A1/048contas/049financeiro seguem fora
+execucao automatica ate resolver identidade, dependencias e journals dos destinos.
+
+### Pacote planejado no checkpoint66b88c2b (historico)
+
+Primeiro lote de codigo: salvamento e reabertura de `descricao_seo` e `slug_site`
+preenchidos MANUALMENTE na aba E-Commerce existente de ProdutoFormCompleto.
+Gap lido na base documental: setter vazio no wrapper; o consumidor ja usa esse
+setter. Reutilizar estado/onSubmit e o proprietario atual da persistencia; uma
+unica gravacao. Preservar IDs, campos legados, cancelamento, layout, contexto,
+RBAC e auditoria. Nao gerar IA paga, publicar canal ou ativar Produto HTTP.
+Conversoes e leitura/calculo; nao inventar editor por haver prop sem uso.
+Representante/TabelaPreco mantem salvamento legado e reabertura consolidada sem
+dupla gravacao. Entregas resolvem cliente_empresas -> clientes; identidade avulsa
+nao comprovada bloqueia e referencias historicas permanecem. Baixa em lote exige
+permissao propria; estas regras nao sao escopo de alteracao deste lote documental.
+
+Codespace unico: `potential-xylophone-5gj7r9v9qqg637vxp`, checkout
+`/workspaces/ERP-Zuccaro-codeX`. VSCode desktop -> extensao GitHub Codespaces ->
+Remote Explorer -> GitHub Codespaces -> login existente -> conectar ao MESMO
+recurso (icone de conexao, nao Create). Codex oficial no IDE remoto com a conta;
+nao presumir suporte da extensao no Cursor. Antes de afirmar execucao la, o agente
+confere pwd/origin sanitizado/branch/SHA/status e escreve/le/remove um marcador
+sintetico temporario proprio. Nao remover marcadores anteriores de preservacao.
+
+O executor deste lote documental continua em `/workspace/ERP-Zuccaro-codeX`,
+NAO no Codespace. Seu dirty/evidencias brutas foram preservados privadamente
+antes do sync e nao entram neste commit. A API de metadados nao e shell; acesso
+remoto por este executor ainda nao comprovado. Sem canal remoto, o fluxo e
+sequencial: designar UM executor/checkout existente autorizado -> conferir SHA e
+preservar dirty -> sincronizar sem descarte -> implementar/testar -> publicar na
+mesma branch/PR -> confirmar remoto -> Codespace preservar/comparar/FF seguro ->
+testar o SHA EXATO publicado e parar apos uso. Nao editar simultaneamente sandbox
+e Codespace; coordenacao neste chat continua mesmo com esse bloqueio de canal.
+
+### Fontes, lacunas e validacao deste registro
+
+Fontes: instrucoes explicitas do proprietario recebidas neste chat, documentos
+da base acima, leitura Git do remoto e codigo dos consumidores citados. Nao se
+alega leitura de chats, relatorios privados ou arquivos de outros computadores
+inacessiveis. Decisao recebida nao equivale a implementacao ou aceite operacional.
+As provas Codespace no SHA6f0f0298 e CI4429 sao historicas conforme registro
+anterior; nao foram executadas novamente aqui. A1 ownership do sandbox antigo
+nao e regressao de codigo no Codespace. Auth real, menor privilegio, trust/CRL,
+schema/UsageGuard, reconciliacao e rollback continuam gates independentes.
+
+Lote SOMENTE DOCUMENTAL: diff-check, comparacao de caminhos, rastreabilidade e
+revisao de sanitizacao; nenhuma suite runtime inalterada repetida localmente.
+CI do push autorizado usa o workflow existente/runners padrao/budget zero; seu
+resultado deve ser confirmado para o SHA publicado, sem reutilizar CI anterior.
+
+## Historico: orientacao anterior de coordenacao e Codespace (2026-10-22)
+
+Esta orientacao substitui a proposta anterior de iniciar Gate2. Coordenador
+permanece o MESMO chat `ERP ZUCCARO - CODEX/CURSOR`; nenhum chat novo criado,
+nenhum desenvolvimento delegado ao chat antigo da nuvem. Uma unica frente.
+
+### Identidade e candidata
+
+O ambiente chamado `Nuvem ERP-Zuccaro-codeX` e uma tarefa Linux gerenciada
+Codex/OpenAI, nao GitHub Codespaces. Seu handoff dirty foi preservado/reconciliado
+antes do FF documental para1ab49e9e; permanece inalterado nesta nova execucao.
+Nao transferir ou sobrescrever seus registros para provar continuidade.
+
+Codespace criado com autorizacao condicional, depois de verificar conta,
+franquia e controle especifico de gasto: `potential-xylophone-5gj7r9v9qqg637vxp`.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Repositorio viniciuszuccaro-creator/ERP-Zuccaro-codeX; branch
+codex/consolidacao-infra-20261017; checkout /workspaces/ERP-Zuccaro-codeX.
+SHA inicial/testado6f0f0298f8180c45a195987e7f5efef65a298f25, CI4427 SUCCESS.
+Nenhum Codespace existia antes: criado somente um,2cores, imagem padrao/US East.
+Checkout inicialmente limpo; preservacao/manifesto e marcador sintetico fora
+do checkout precederam instalacao/testes. Node22.23.4, UID1000; / e /tmp UID0.
+O gate de ownership A1 passou SEM alterar o carregador nem elevar permissoes.
+
+### Evidencias novas neste Codespace
+
+| Check | Resultado |
+| --- | --- |
+| npm ci raiz e server | exit0 em ambos; lockfiles preservados |
+| A1 focado | 7 PASS / 0 FAIL / 0 SKIP |
+| Audit/lint/typecheck/build raiz | PASS; avisos anteriores conservados |
+| Raiz completa | 2172 PASS / 0 FAIL / 0 SKIP; exit0 |
+| Backend typecheck/build | PASS |
+| Backend completo sem banco | 538 testes:515 PASS / 0 FAIL / 23 SKIP; exit0 |
+| PostgreSQL sintetico | 85 PASS / 0 FAIL / 0 SKIP em17suites; composicao de provas abaixo |
+| Stop/start e outro acesso ao mesmo Codespace | PASS;36artefatos, marcador183bytes e arquivo nao commitado conferidos por hash |
+| A1 apos restart | 7 PASS / 0 FAIL / 0 SKIP; execucao comprovada na nova conexao |
+
+Primeira prova PG85:67PASS/18FAIL/0SKIP, por bootstrap incompleto deste ensaio
+(schema_migrations e tabelas de seed ausentes). Mantidos log e resultados.
+Corrigido SOMENTE o preparo efemero, reproduzindo npm run migrate +
+scripts/seed-dev-synthetic.sql existentes do CI no novo container erp_test,
+loopback127.0.0.1:55432. Nao e migration de ambiente operacional nem promocao de
+SQL privado045-049. Dez suites aprovadas reaproveitadas; sete arquivos falhos
+repetidos apos bootstrap: R11_STOCK/R08B/R07BPRICE/R08C/R09/R10C/R10. Resultado
+reconciliado85/0/0, NAO uma nova execucao integral das17suites. Containers
+sinteticos encerrados/removidos, sem volumes de dados reais ou grants externos.
+
+Retomada real: parada confirmada pelo painel GitHub, conexao original fechada,
+mesmo Codespace iniciado pela NOVA conexao web. SHA/branch e status do arquivo
+nao commitado iguais;36entradas de SHA256SUMS conferidas, incluindo logs,
+manifestos e copia do probe. Marcador183bytes conservado sem regravar; probe no
+checkout removido somente apos comparar hash e preservar copia fora dele.
+Checkout limpo apos a prova; Node22.23.4 e ownership confiavel conservados.
+Instalacao, execucao e persistencia do AMBIENTE DE DESENVOLVIMENTO homologadas.
+O erro transitorio de leitura CDP durante o startup nao alterou arquivos; o mesmo
+cliente de retomada ficou disponivel sem reset/rebuild/recriacao.
+
+Os resultados acima pertencem ao SHA inicial, nao ao main antigo nem ao runtime
+OpenAI anterior. Skips nao sao aprovacao. PostgreSQL usa somente container
+descartavel/loopback e fixtures; nenhum banco operacional ou backup real.
+Detalhes privados em HOMOLOGACAO_CODESPACES_20261022.json fora do checkout;
+logs/manifestos sinteticos privados no volume persistente do Codespace.
+
+### Custos e acesso de outros computadores
+
+Leitura autenticada confirmou GitHub Free, nenhum Codespace anterior/nenhum uso
+reportado no mes antes da criacao e orcamento Codespaces US$0/Usage blocked.
+Isso foi verificado no PRODUTO Codespaces, nao inferido de Actions. Nenhum budget,
+pagamento ou recurso pago foi habilitado; sem prebuilds. Relatorio de uso pode
+ter atraso. Franquia Free documentada:120core-horas/15GB-mes; em2cores ate60h
+de execucao, menos outros consumos. Nao prometer disponibilidade ilimitada.
+Fonte: https://docs.github.com/en/billing/concepts/product-billing/github-codespaces
+
+Abrir o mesmo URL/mesma conta, nao criar outro Codespace. Procedimento simples
+em ABRIR_NO_OUTRO_COMPUTADOR.md. Parar ao encerrar; storage permanece enquanto
+existe. Nao apagar/recriar para retomar. Preservar dirty/novos fora do checkout
+antes de sincronizar; conferir branch/SHA e so aceitar FF previamente comparado.
+O teste de outra conexao web nao comprova acesso fisico do computador de casa,
+nem restaura banco/backup operacional. A prova de retomada exigida para esse
+workspace foi obtida; desenvolvimento passa para esse Codespace unico. O clone
+independente local fica preservado/standby, sem outra frente de codigo. Este
+chat continua como coordenador; abrir VS Code nao muda automaticamente o host
+de execucao local deste chat nem ativa outro agente/Copilot. Nenhuma chamada de
+IA paga foi configurada para os testes ou para a continuidade.
+
+### Canal privado do legado e proxima frente
+
+O Codespace NAO ganha acesso ao HD. Extracao futura ocorre na estacao autorizada
+com a fonte original preservada/somente leitura, nunca por tunel ou mount aberto.
+Reutilizar scripts/legado/consumir-lote-staging.mjs, persistencia-endereco-legado.mjs
+e docs/LEGADO_MAPEAMENTO_CANONICO_RASCUNHO.md, sem importador ou cadastro paralelo.
+
+Canal preparado por separacao de artefatos: origem privada -> staging isolado
+privado na estacao -> revisao de reconciliacao -> somente codigo, contratos de
+mapeamento e relatorio agregado/sintetico sanitizado no GitHub -> Codespace.
+Lotes reais, mapa antigo->novo com IDs/PII, hashes da fonte, backups e rejeicoes
+nominais ficam em armazenamento privado controlado pelo proprietario, fora do
+Git e fora do Codespace. Nao existe upload/tunel/credencial persistente novo.
+Este preparo NAO executa extracao, leitura do backup, carga ou importacao.
+
+Antes de eventual envio de lote real a outro destino, exigir destino privado
+existente autorizado, ACL/retencao, verificacao de integridade e autorizacao
+explicita. Importacao posterior exige staging, identidade Grupo/Empresa,
+reconciliacao, journals/dependencias, RBAC/auditoria/rollback e gate proprio;
+piloto permanece PREPARED_NOT_AUTHORIZED. Dados nao migram com o codigo.
+
+Continuar Comercial360 no Codespace homologado pelo programa existente,
+preservando contratos/proprietarios da persistencia e contexto multiempresa.
+Nao iniciar Gate2 por apontamento historico. Originais/captura/cinco worktrees
+intactos; agendamento Legado PAUSED; rotas operacionais inativas. Publicacao nao
+autoriza merge, VPS, migrations operacionais, integracao bancaria ou carga real.
+
+## Historico: intervencao de plataforma e proposta Gate2 superada (2026-10-22)
+
+Base deste lote: 1ab49e9e05dde4005b6eadb3b992fdd20e502d3e, conferida
+no clone independente e no remoto. Runtime inalterado; nao repetir suas suites.
+O gate ambiental nao autoriza alterar o carregador A1 nem o criterio dos testes.
+
+Preservacao administrativa da nuvem CONCLUIDA antes da sincronizacao: copia
+integral/base/diff/manifesto/SHA256SUMS fora do checkout, com integridade conferida.
+Handoff inicial226493bytes, SHA256:
+04abafefe3ec5d1637cfcd9529a59d6fde83795e3dc1eb15b074dfa7876a584a.
+Quatro secoes locais foram conservadas byte a byte junto ao documento publicado.
+HEAD avancou por fast-forward de d6d6e98b para1ab49e9e (somente tres documentos).
+Estado final: somente docs/HANDOFF_ATUAL.md dirty, indice limpo, diff-checkPASS;
+marcador453bytes/hash anterior confirmado. Localizacao da copia no relatorio
+privado. Essa copia ainda esta NA VM, nao comprova backup externo/restauracao.
+Nenhum teste foi repetido nesse SHA documental; provas de runtime continuam
+atribuidas ao d6d6e98b, nao transferidas ao novo SHA por presuncao.
+
+### Solicitacao preparada ao suporte (nao enviada)
+
+Assunto: runtime gerenciado Codex rejeitado por carregador seguro de chave local.
+
+Solicitamos configuracao SUPORTADA de ownership/namespace no ambiente existente,
+sem elevar privilegios ou enfraquecer a aplicacao. Prova exclusivamente sintetica:
+Linux, processo UID/GID1000:1000; ancestral / UID/GID65534:65534 modo0755;
+/tmp UID/GID65534:65534 modo1777. O carregador percorre todos os ancestrais
+por descritores sem seguir symlinks e aceita apenas UID0 ou UID do processo.
+Escrita de grupo/outros so e aceita em ancestral sticky pertencente a UID0.
+Diretorio final privado e chave sintetica de32bytes/0400 nao corrigem a raiz
+incompativel. Dois testes positivos de leitura/rotacao falham; negativos continuam
+protegendo o contrato. Nao enviamos chave, certificado, senha, .env ou logs brutos.
+
+Perguntas objetivas: qual configuracao suportada atende esse contrato em TODA a
+cadeia, sem chown/chmod da raiz pelo usuario? Como preservar e recuperar o MESMO
+workspace dirty em sessao independente, sem reset/cache/recriacao? Qual versao do
+ambiente sera usada e como verificar o ajuste sem perder o estado atual?
+IDs privados do ambiente/tarefa somente no chamado privado, se solicitados.
+
+Encaminhar ao atendimento privado em https://help.openai.com pelo widget de
+suporte, pedindo encaminhamento ao runtime gerenciado Codex. Como canal de
+diagnostico documentado no app, abrir o menu / no compositor e usar o fluxo de
+feedback para a equipe; revisar o material antes de consentir compartilhar a
+sessao. Nao anexar
+automaticamente a sessao inteira nem logs nao sanitizados. O relato acima esta
+preparado, NAO foi submetido em nome do proprietario.
+Fonte: https://learn.chatgpt.com/docs/reference/troubleshooting#feedback-and-logs
+
+### Recuperacao suportada versus prova ainda pendente
+
+A documentacao orienta reabrir a MESMA tarefa para continuar entre dispositivos;
+uma NOVA tarefa parte do setup publicado e nao herda necessariamente seu dirty.
+O estado salvo da VM e recuperavel, por padrao, por ate sete dias desde iniciar
+um turno ou retomar a tarefa. Isso nao e backup permanente nem prova de restore.
+Fonte: https://learn.chatgpt.com/docs/environments/cloud-environments#run-and-return-to-a-task
+
+Procedimento: preservar handoff/diff/arquivos novos e manifesto com hashes fora
+do checkout antes de qualquer sincronizacao; manter tambem copia privada fora
+da VM antes de testar sua recuperacao. Encerrar o turno, abrir a mesma tarefa
+existente por outra sessao web/mobile autorizada, conferir identidade do ambiente,
+branch/SHA/status e hashes preservados sem regravar o marcador. Uma nova tarefa,
+fork ou ambiente com mesmo nome nao comprova recuperacao do original. Se a UI
+nao oferecer a retomada, solicitar o procedimento ao suporte; nao usar Reset
+cache ou recriar o ambiente. Sem acesso a sessao independente neste executor,
+a prova continua pendente, mesmo com conservacao ja demonstrada entre turnos.
+
+### Controle de cobranca a confirmar pelo proprietario
+
+Na conta que fornece este ambiente, abrir https://chatgpt.com/codex/settings/usage
+e conferir se COMPRA/RECARGA AUTOMATICA de creditos esta DESATIVADA e se qualquer
+limite de gasto extra/excedente aplicavel e um bloqueio efetivo de valor ZERO.
+Em workspace administrado, pedir ao administrador a politica de Billing aplicavel
+ao ambiente. Saldo zero, franquia restante e alerta de gasto nao provam esse
+bloqueio; No limit nao significa zero. Registrar apenas resultado/data/escopo,
+sem dados financeiros pessoais. Se o controle nao aparecer, o suporte deve
+confirmar se existe cobranca automatica alem do plano e qual politica a impede.
+Nao ativar recarga, comprar creditos, vincular API paga ou contratar recursos.
+Budget zero de Actions continua sendo prova APENAS de Actions.
+
+### Trabalho independente: Gate0 de rastreabilidade
+
+O resumo inicial do PLANO_GO_LIVE.md tinha todos os P0/P1/P2 marcados como
+concluidos, sem distinguir implementacao historica de homologacao operacional.
+Foi acrescentada precedencia explicita das evidencias atuais: esses marcadores
+nao autorizam operacao. Nenhuma funcionalidade foi retirada ou reclassificada
+como defeituosa sem prova. Proximo trabalho de codigo independente segue o Gate2
+ja registrado no PLANO_MELHORIA_ERP_ZUCCARO.md: revisar criacao/edicao de perfis
+e vinculos existentes, por consumidor/backend, sem promover rotas privadas.
+Esta correcao documental nao afirma que essa revisao ja foi executada.
+
+## Historico: homologacao parcial do executor cloud (2026-10-22)
+
+Este registro sanitizado prevalece sobre os relatos anteriores de nuvem ainda em
+main/work. Reutiliza as execucoes ja registradas; nenhuma suite foi repetida para
+esta atualizacao exclusivamente documental. A PR342 permanece draft sobre334.
+Nao declarar transicao exclusiva concluida.
+
+### Candidata efetivamente executada
+
+Repositorio: viniciuszuccaro-creator/ERP-Zuccaro-codeX.
+Chat existente: Nuvem ERP-Zuccaro-codeX, ambiente gerenciado Codex/OpenAI,
+Linux x86_64/Debian13, checkout /workspace/ERP-Zuccaro-codeX.
+Branch: codex/consolidacao-infra-20261017.
+SHA executado: d6d6e98b4bb92f0f5098eb53b0e7b9ff8b4ea264.
+Antes da sincronizacao: work/baba91a6b0d5d626edd607b8cd3522927e1904ab, limpo.
+Depois: candidata exata; apenas docs/HANDOFF_ATUAL.md modificado na nuvem.
+Esse trabalho remoto nao commitado permanece preservado; nao foi sobrescrito.
+Um eventual novo SHA desta publicacao documental NAO foi executado na nuvem.
+
+Provas obtidas no SHA acima, com Node22.23.3 e dados exclusivamente sinteticos:
+
+| Verificacao | Resultado e escopo |
+| --- | --- |
+| Raiz completa | 2172 PASS / 0 FAIL / 0 SKIP |
+| Audit, lint, typecheck global, build | PASS; aviso de lint anterior mantido |
+| Backend typecheck/build | PASS |
+| Backend completo final, com concessao de rede | 538 testes: 513 PASS / 2 FAIL / 23 SKIP; exit1 |
+| HTTP focados apos concessao por turno | 7 PASS / 0 FAIL / 0 SKIP |
+| A1 focado | 5 PASS / 2 FAIL; positivos de leitura e rotacao de chave |
+| PostgreSQL sintetico local | 85 PASS / 0 FAIL / 0 SKIP em17suites |
+| Composicao PGlite / PostgreSQL dedicada | 1 PASS em cada, sem skips |
+| Diff-check do handoff remoto | PASS |
+
+Nao somar suites sobrepostas nem contar skips como aprovacao. PG85 e raiz2172
+sao da primeira execucao; nao foram repetidos nas retomadas sem mudanca.
+Primeiro backend512/3/23 incluiu falta de refs historicas: composicao passou
+apos fetch dos SHAs fixados pelo CI. Uma retomada sem concessao de loopback
+reportou52arquivos PASS/43FAIL/0SKIP (95arquivos, NAO538assercoes), com listenEPERM.
+Isso nao e a contagem final. Probe e HTTP passaram com a concessao autorizada;
+o backend final513/2/23 deixou apenas as duas falhas A1. Nenhum teste removido,
+hash esperado alterado, permissao ampliada ou validacao de seguranca relaxada.
+CI4423 no GitHub foi verde neste SHA; nao equivale a aprovar este runtime da nuvem.
+
+### Persistencia: o que foi realmente demonstrado
+
+Arquivo temporario sintetico fora do checkout:
+/workspace/erp-cloud-persistence-probe-20261022.json
+453bytes, criado2026-10-22T09:37:16.977466Z, SHA256:
+17e4a13ce53cbbc4a6446821b546c5967bbd82c78a9cd85e8981f4ee37741c5a.
+Conteudo nao publicado. O agente encerrou um turno e retomou no mesmo chat e
+ambiente; tamanho/hash/data foram conservados sem regravar o marcador, inclusive
+nas retomadas seguintes. Um identificador distinto de sessao do executor nao foi
+exposto. Portanto: conservacao entre turnos retomados COMPROVADA; encerramento
+e restauracao de uma sessao/workspace independente NAO comprovados. Nenhum reset,
+invalidacao de cache ou reprovisionamento foi executado para simular essa prova.
+
+### Definicao precisa do gate A1
+
+Gate de seguranca do filesystem em server/src/services/a1FileProtectionKeys.ts,
+nao falta de certificado real, senha ou autenticacao do usuario. O servico abre
+cada ancestral por descritor, rejeita symlinks e exige ownership UID0 ou UID do
+processo; rejeita escrita de grupo/outros exceto sticky confiavel de UID0.
+Diretorio final pertence ao processo, sem acesso de grupo/outros; chave exige
+arquivo regular de32bytes, UID do processo, modo0400 e um unico hardlink, com
+metadados estaveis durante leitura. Somente fixtures sinteticas foram usadas.
+
+Observado no sandbox: processo1000:1000; raiz/65534:65534,0755;
+/tmp65534:65534,1777. A raiz ja e rejeitada antes de acessar a chave. Por isso
+falham os positivos de leitura valida e rotacao, com bloqueio seguro. Criar so
+um subdiretorio privado nao resolve o ancestral/ rejeitado.
+
+Impacto: nao impede toda edicao, compilacao ou teste dos demais modulos. Impede
+executar/validar o carregador seguro A1 neste runtime e obter suite totalmente
+verde, logo bloqueia a homologacao COMPLETA/exclusiva exigida para a nuvem.
+Nao comprova defeito criptografico nem autoriza enfraquecer a politica.
+
+Acao concreta: solicitar ao administrador/suporte da plataforma um runtime
+SUPORTADO no ambiente existente em que toda a cadeia de ancestrais seja confiavel
+segundo a regra acima (raiz UID0 ou UID executor e modos compativeis). Nao fazer
+chown/chmod da raiz, aceitar UID65534 genericamente, elevar privilegios ou criar
+outro servico pago como contorno. Nao ha seletor de imagem/usuario/mapeamento UID
+exposto pelas ferramentas atuais. Apos ajuste suportado, registrar os metadados
+e repetir apenas tests/a1-file-protection-keys.test.ts; depois o backend completo
+se os positivos passarem. Cofre operacional, trust/CRL, Auth/RBAC/UsageGuard real
+e migrations privadas045-049 continuam gates SEPARADOS, nao resolvidos por isso.
+
+### Workspace de desenvolvimento NAO e banco operacional
+
+Restaurar workspace significa recuperar checkout/branch/SHA, alteracoes locais,
+handoff, ferramentas/dependencias e o marcador sintetico entre sessoes. Git
+recupera codigo commitado; nao garante arquivos novos, dirty, cache ou banco.
+Install/start ainda sao rascunho revisao1 associado a main: nao presumir que
+sejam uma configuracao publicada da candidata nem executar setup antigo cegamente.
+
+Restaurar PostgreSQL sintetico para testes e outro procedimento descartavel:
+PG85 nao comprova backup/restore do ERP real. Restauracao de banco/backup
+operacional envolve dados, identidades, journals, chaves, auditoria e rollback;
+exige autorizacao/plano/provas proprias. Nada disso foi executado aqui. Nao copiar
+backup privado ou certificados para provar persistencia de workspace.
+
+### Procedimento e intervencoes necessarias
+
+1. Rede: solicitar request_permissions da plataforma com scope turn antes dos
+   comandos que necessitam GitHub/loopback; e ferramenta da plataforma, NAO um
+   comando shell. github.com HTTPS443 ja era permitido. Git fetch de leitura pode
+   precisar GET e POST/git-upload-pack. Conservar proxy/TLS/credenciais/allowlist;
+   nao liberar internet irrestrita. Se o mecanismo nao aparecer, pedir habilitacao
+   da concessao minima ao administrador; nao contornar restricoes. O probe
+   127.0.0.1:0 abriu/fechou socket e passou quando a concessao estava ativa.
+2. Conferir a candidata e o marcador, sem mudar arquivos:
+
+```sh
+cd /workspace/ERP-Zuccaro-codeX
+git branch --show-current
+git rev-parse HEAD
+git status --short
+sha256sum /workspace/erp-cloud-persistence-probe-20261022.json
+wc -c /workspace/erp-cloud-persistence-probe-20261022.json
+stat -c '%u:%g %a %n' / /tmp
+```
+
+3. Somente apos ajuste ambiental A1, em processo de testes sem DATABASE_URL,
+   credenciais operacionais ou integracoes externas, reutilizar Node22 existente:
+
+```sh
+export PATH=/workspace/.erp-tools:/workspace/.erp-tools/node_modules/node/bin:$PATH
+cd /workspace/ERP-Zuccaro-codeX/server
+node --import tsx --test tests/a1-file-protection-keys.test.ts
+# Backend completo somente depois do gate focado passar:
+npm test
+```
+
+4. Persistencia: preservar primeiro o handoff dirty fora de qualquer operacao que
+   possa substituir o checkout. Pedir ao administrador a identificacao da versao
+   publicada do ambiente e uma retomada NAO destrutiva de outra sessao do MESMO
+   ambiente. Nao clicar Reset cache, nao recriar ambiente ou descartar dirty.
+   Registrar sessao/versao antes/depois quando expostas, repetir apenas os comandos
+   de identidade/hash acima e comparar SHA,453bytes/hash do marcador e handoff.
+   Ferramentas de publicacao/restauracao nao estao expostas aqui; na ausencia dessa
+   capacidade, registrar gate aberto em vez de alegar restauracao comprovada.
+5. Custos: conferir na mesma conta https://chatgpt.com/codex/settings/usage,
+   creditos/recarga e controles de gasto efetivamente exibidos. Nomes e estado do
+   controle de recarga nao foram observados: nao inventar submenus. Em workspace
+   com cobranca administrada, o proprietario deve conferir Billing e o limite de
+   excedente aplicavel. Alertas nao equivalem a bloqueio. As ferramentas leem
+   franquia/saldo, mas nao recarga/budget do ambiente; a UI falhou antes de abrir.
+   Login atual ChatGPT comprovado, sem criar APIkey. Isso nao prova ausencia de
+   toda configuracao paga na conta. Nao comprar, ativar recarga ou vincular API.
+   Bloqueio de gastos de Actions NAO comprova custos Codex/cloud.
+
+### Alternativa sem nova infraestrutura ou desenvolvimento concorrente
+
+Enquanto esses gates estiverem abertos, manter UMA frente de desenvolvimento no
+clone independente ERP-Integracao-Privada/comparacao-20261017 ja existente na
+maquina do proprietario, branch codex/consolidacao-infra-20261017. Nao usar a raiz
+antiga do HD, mover originais ou copiar uma worktree como repositorio independente.
+Reutilizar o hardware atual e o CI ubuntu-latest ja existente; novas execucoes
+somente quando necessarias, dentro da franquia Actions confirmada com budget zero.
+Se a franquia acabar, aguardar: nao comprar capacidade. Nao contratar Codespace,
+VPS, API ou novo ambiente. A nuvem fica sem edicao concorrente; preservar seu
+handoff dirty e o marcador, sincronizando somente codigo aprovado quando liberada.
+
+Essa alternativa nao exige nova contratacao, mas NAO e prova de homologacao da
+nuvem nem garante gratuidade ilimitada da assinatura/CI. A publicacao da PR342
+preserva o codigo para retomada; documentacao posterior nao altera silenciosamente
+o SHA testado na nuvem. Agendamento Legado PAUSED, originais/backups intactos.
+Nenhum merge, deploy, importacao operacional ou permissao de faturamento emitida.
+
+### Historico preservado - consolidacao etapa86 (2026-10-21)
+
+Codigo publicado em0b68332d6781f726ec5bb4e5354deef899c0731b, PR draft342 sobre334.
+CI4419 SUCCESS em frontend/backend/composicao. Frontend2172PASS; backend515PASS/
+23SKIP separados de85testesPG PASS sem skips. Typechecks0/audit/lint/buildPASS.
+Nenhum merge/main, carga, VPS ou ativacao de rotas. Continuar pela mesma branch.
+Nuvem ERP-Zuccaro-codeX inspecionada somente leitura: Linux real, checkout antigo
+work/baba91a6, consolidacao ausente; proxy bloqueia GitHub e Docker sem permissao.
+Restauracao/testes no SHA atual/custos nao comprovados; nao transicionar ainda.
+CI do fechamento documental a81b14f8/4421 SUCCESS. Detalhes e
+limites em CONSOLIDACAO_INFRA_ETAPA1.md. Originais intactos/agendamentoPAUSED.
+
+Mesma branch, commit85 d312fbcd no remoto e PR draft342 empilhada na334.
+CI4417 comprovou composicao, mas falhou testes frontend/backend. Correcoes de
+dependencias cruzadas e canonicalizacao LF/CRLF das provas: root2172PASS/0FAIL/
+0SKIP, typecheck0 e audit/lint/build/diffPASS. Novo CI confirmado acima.
+Consultar CONSOLIDACAO_INFRA_ETAPA1.md etapa86; nao tratar CI anterior como verde.
+Originais preservados, agendamentoPAUSED, nenhum merge ou acesso operacional.
+
+## CODEX - Consolidacao etapa85 (2026-10-21)
+
+Retomada: branch codex/consolidacao-infra-20261017 no clone independente existente.
+Fonte de continuidade: CONSOLIDACAO_INFRA_ETAPA1.md, topo etapa85.
+Root2170PASS/0FAIL/0SKIP; typecheck0; backend503PASS/35SKIP nao operacionais.
+Preparacao de publicacao sanitizada sobre334; verificar SHA remoto e CI novos.
+Sem merge/main, migrations privadas, carga ou implantacao. Captura/worktrees
+originais intactas, agendamentoPAUSED. Historico de exports requer acao separada.
+Registros anteriores abaixo nao representam estado atual de publicacao.
+
+## CODEX - Consolidacao infraestrutura etapa 1 (2026-10-17)
+
+Trabalho local na branch codex/consolidacao-infra-20261017 sobre334 e36231b3.
+Consultar CONSOLIDACAO_INFRA_ETAPA1.md para proveniencia, validacao e limites.
+Nao integrado em main, sem publicacao ou liberacao operacional. Journal de destino
+nao comprovado:045 e demais migrations privadas nao renumeradas nem executadas.
+Preservar residual Cursor, SQL/runner e protecoes remotas; agendamento pausado.
+
 ## CODEX COMERCIAL 360 — idempotência persistente do Pedido direto (2026-10-13)
 
 - Branch `codex/comercial-pedido-idempotencia-20261013` empilhada na #327 `14be3f96`, reserva `server/src/services/pedidoService.ts`, repositórios/tipos de Pedido, migration nova após 043, testes de serviço/HTTP/PostgreSQL, payload UI existente de Pedido, STATUS/HANDOFF. Reutilizar contrato da Oportunidade (chave/fingerprint/lock) somente para criação direta; não editar Expedição, branch Cursor ou Legado. Testar mesmo key/payload, key adulterada, tenant/ator/RBAC, concorrência PostgreSQL e retry depois de resposta perdida antes de declarar proteção. Migration em código/CI isolada; sem banco operacional/VPS.
@@ -847,7 +2659,7 @@ PR: [#211](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/211
 **HUMAN_NEXT (Legado — PC com HD):** somente verifier host-local — sem re-export/CADESP/transferência; sem tratar teste sintético como importação:
 ```bash
 bash scripts/legado/executar-verifier-host-local.sh
-# ou: --reports-dir "D:/BACKUP ERP ANTIGO - CODEX/04_REPORTS"
+# ou: --reports-dir "[caminho-privado] ERP ANTIGO - CODEX/04_REPORTS"
 ```
 Colar só `PASTE_TO_GIT_HOST_*` + JSON do verifier.
 
@@ -945,7 +2757,7 @@ Agente: [Legado evidência ERP novo](bc-4427c136-a373-5bb6-83b8-ffa135fdb2d9)
 | Estado | **BLOCKED** — execução real não avançou |
 | Checksum | **UNVERIFIED** (`FOUND_EXPORT=NONE`) |
 | Tentativa Cloud | `executar-verifier-host-local.sh` exit 4 `LEGACY_HOST_REPORTS_DIR_NOT_FOUND` |
-| Host com backup | PC proprietário `D:\BACKUP ERP ANTIGO - CODEX\04_REPORTS` (não este Cloud) |
+| Host com backup | PC proprietário `[caminho privado preservado fora do Git]` (não este Cloud) |
 | Workers | 0 · sem `usePrivateWorker` |
 | Contagens reais | **0** processadas |
 | Sintético (≠ efetivo) | staging 8→4/1/1/2 · vínculos 3/4 |

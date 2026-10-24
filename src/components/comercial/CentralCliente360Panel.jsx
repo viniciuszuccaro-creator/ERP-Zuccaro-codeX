@@ -8,6 +8,8 @@ import {
   canLoadCentralCliente360,
   central360SessionKey,
   createHttpApiClient,
+  isHttpApiError,
+  readHttpErrorBodyCode,
 } from '@/api/httpApiClient';
 import { isHttpCliente360Enabled } from '@/api/base44Client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,7 +25,8 @@ import {
   shouldUseCrmLegadoAdapter,
 } from '@/components/comercial/centralCliente360CrmLegado';
 import { formatCentral360Money as money } from '@/components/comercial/centralCliente360Money';
-import { centralOpenErrorMessage, createCentralOpenGate, openCentralOrcamentoWindow, openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
+import { centralOpenErrorMessage, createCentralOpenGate, openCentralClienteWindow, openCentralOrcamentoWindow, openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
+import { hasCadastroEntityPermission } from '@/components/cadastros/cadastroEditLoadPolicy';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useWindow } from '@/components/lib/useWindow';
@@ -211,14 +214,15 @@ export default function CentralCliente360Panel({
 }) {
   const queryClient=useQueryClient();
   const {openWindow,closeWindow}=useWindow();
-  const {hasPermission,isLoading:permissionsLoading}=usePermissions();
-  const {grupoAtual,empresaAtual,filterInContext}=useContextoVisual();
+  const {hasPermission,canEdit,isLoading:permissionsLoading}=usePermissions();
+  const {grupoAtual,empresaAtual,contextoCanonico,filterInContext}=useContextoVisual();
   const renderedScope=useRef(null);
-  renderedScope.current={groupId:grupoAtual?.id||empresaAtual?.group_id||empresaAtual?.grupo_id,empresaId:empresaAtual?.id||null};
+  renderedScope.current={groupId:grupoAtual?.id||empresaAtual?.group_id||empresaAtual?.grupo_id,empresaId:empresaAtual?.id||null,scopeType:contextoCanonico?.scopeType};
   const [conversionError,setConversionError]=useState('');
   const [pedidoOpenError,setPedidoOpenError]=useState('');
   const [orcamentoOpenError,setOrcamentoOpenError]=useState('');
-  const [openingRecord,setOpeningRecord]=useState(/** @type {{pedido?: string|boolean|null, orcamento?: string|boolean|null}} */ ({}));
+  const [cadastroOpenError,setCadastroOpenError]=useState('');
+  const [openingRecord,setOpeningRecord]=useState(/** @type {{pedido?: string|boolean|null, orcamento?: string|boolean|null, cliente?: boolean|null}} */ ({}));
   const openGate=useRef(createCentralOpenGate());
   const sessionToken = typeof token === 'string' ? token.trim() : '';
   const enabled = canLoadCentralCliente360({
@@ -229,10 +233,15 @@ export default function CentralCliente360Panel({
     actorId,
     token: sessionToken,
   }) && isCrmConversionScopeCurrent({groupId,empresaId,actorId,token:sessionToken},renderedScope.current,readErpHttpSession());
+  const cadastroAllowed = enabled && !permissionsLoading
+    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit })
+    && hasCadastroEntityPermission('Cliente', 'editar', { hasPermission, canEdit });
+  const cadastroAllowedRef = useRef(false);
+  cadastroAllowedRef.current = cadastroAllowed;
   const sessionKey = central360SessionKey(sessionToken);
   const viewKey=JSON.stringify([clienteId,groupId,empresaId,actorId,sessionKey]);
   const viewRef=useRef(null);viewRef.current=viewKey;
-  React.useEffect(()=>{viewRef.current=viewKey;openGate.current.reset();setOpeningRecord({});setConversionError('');setPedidoOpenError('');setOrcamentoOpenError('');return()=>{viewRef.current=null;openGate.current.reset();};},[viewKey]);
+  React.useEffect(()=>{viewRef.current=viewKey;openGate.current.reset();setOpeningRecord({});setConversionError('');setPedidoOpenError('');setOrcamentoOpenError('');setCadastroOpenError('');return()=>{viewRef.current=null;openGate.current.reset();};},[viewKey]);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
 
   // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
@@ -344,8 +353,8 @@ export default function CentralCliente360Panel({
   }
 
   if (query.isError) {
-    const status = query.error?.status;
-    const code = query.error?.code || query.error?.body?.error?.code;
+    const status = isHttpApiError(query.error) ? query.error.status : undefined;
+    const code = isHttpApiError(query.error) ? query.error.code || readHttpErrorBodyCode(query.error.body) : undefined;
     return (
       <div className="mb-4 space-y-2" data-central360-error={status || 'error'}>
         <Alert className="border-red-200 bg-red-50">
@@ -372,6 +381,27 @@ export default function CentralCliente360Panel({
   const blocks = payload?.blocks || {};
   const meta = payload?.meta || {};
   const loadingMore = query.isFetching && !query.isLoading;
+  const openCadastro = async () => {
+    const ticket = openGate.current.begin('cliente', viewKey);
+    if (!ticket) return;
+    const openedKey = viewKey;
+    const scope = { groupId, empresaId, actorId, token: sessionToken };
+    const assertCurrent = () => {
+      if (!cadastroAllowedRef.current || viewRef.current !== openedKey || !openGate.current.isCurrent(ticket)
+        || !isCrmConversionScopeCurrent(scope, renderedScope.current, readErpHttpSession())) throw new Error(centralOpenErrorMessage());
+    };
+    setCadastroOpenError('');
+    setOpeningRecord(current => ({ ...current, cliente: true }));
+    try {
+      const opened = await openCentralClienteWindow({ clienteId, identity, allowed: cadastroAllowed, assertCurrent, scope, renderedScope: renderedScope.current,
+        loadPanel: async () => (await import('@/components/comercial/ClientesTab')).default, openWindow });
+      if (!opened && openGate.current.isCurrent(ticket) && viewRef.current === openedKey) setCadastroOpenError(centralOpenErrorMessage());
+    } catch {
+      if (openGate.current.isCurrent(ticket) && viewRef.current === openedKey) setCadastroOpenError(centralOpenErrorMessage());
+    } finally {
+      if (openGate.current.end(ticket)) setOpeningRecord(current => ({ ...current, cliente: null }));
+    }
+  };
   const openRecord=async(row,kind)=>{
     const ticket=openGate.current.begin(kind,viewKey);
     if(!ticket)return;
@@ -405,6 +435,11 @@ export default function CentralCliente360Panel({
             {meta.requestId ? ` · req ${String(meta.requestId).slice(0, 8)}` : ''}
           </p>
         </div>
+        <Button type="button" size="sm" variant="outline" onClick={openCadastro}
+          disabled={!cadastroAllowed || Boolean(openingRecord.cliente)}
+          title="Editar cadastro do cliente" data-permission="Cadastros.Cliente.editar" data-action="central360-abrir-cadastro-cliente">
+          <Building2 className="mr-2 h-4 w-4" /> Cadastro
+        </Button>
         <Button
           type="button"
           size="sm"
@@ -418,6 +453,7 @@ export default function CentralCliente360Panel({
         </Button>
       </div>
 
+      {cadastroOpenError && <div role="alert" className="text-sm text-red-700">{cadastroOpenError}</div>}
       {identity && (
         <div className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2">
           <div><span className="text-slate-500">Código</span><p className="font-mono" data-action="codigo-registro-central360">{identity.codigo ?? '—'}</p></div>

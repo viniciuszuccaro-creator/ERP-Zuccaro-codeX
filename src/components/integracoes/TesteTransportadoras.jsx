@@ -173,7 +173,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 value={cepOrigem}
                 onChange={(e) => setCepOrigem(e.target.value)}
                 placeholder="00000-000"
-                maxLength="9"
+                maxLength={9}
                 disabled={!contextoValido || !podeTestar}
                 data-action="Integracoes.TesteTransportadoras.cepOrigem"
                 data-permission="Sistema.Integracoes.executar"
@@ -187,7 +187,7 @@ export default function TesteTransportadoras({ configuracao, windowMode = false 
                 value={cepDestino}
                 onChange={(e) => setCepDestino(e.target.value)}
                 placeholder="00000-000"
-                maxLength="9"
+                maxLength={9}
                 disabled={!contextoValido || !podeTestar}
                 data-action="Integracoes.TesteTransportadoras.cepDestino"
                 data-permission="Sistema.Integracoes.executar"

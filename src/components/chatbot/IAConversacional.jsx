@@ -1,5 +1,5 @@
 import React from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeErpIa } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
 import { motion } from 'framer-motion';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { validarAnaliseAtendimentoIA } from '@/components/lib/atendimentoIaResponsePolicy';
 
 const sanitizePromptText = (value, max = 1200) => String(value ?? '')
   .replace(/[<>]/g, '')
@@ -42,7 +43,7 @@ const sanitizePromptText = (value, max = 1200) => String(value ?? '')
  */
 export default function IAConversacional({ conversa, mensagens = [], clienteId }) {
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, user } = usePermissions();
   const empresaId = conversa?.empresa_id || empresaAtual?.id;
   const groupId = conversa?.group_id || conversa?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
   const contextKey = empresaId || groupId || 'sem-contexto';
@@ -52,7 +53,7 @@ export default function IAConversacional({ conversa, mensagens = [], clienteId }
 
   // Buscar análise da IA
   const { data: analise, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['ia-analise-conversa', conversa?.id, contextKey],
+    queryKey: ['ia-analise-conversa', user?.id, groupId, empresaId, conversa?.id, contextKey],
     queryFn: async () => {
       if (!conversa || mensagens.length < 2 || !contextoValido || !canUseIA) return null;
 
@@ -63,7 +64,7 @@ export default function IAConversacional({ conversa, mensagens = [], clienteId }
       }));
 
       try {
-        const resultado = await base44.integrations.Core.InvokeLLM({
+        const resultado = await invokeErpIa('atendimento_analise', {
           prompt: `Você é um analista de atendimento ao cliente de um ERP industrial.
           
 Analise esta conversa e forneça insights acionáveis:
@@ -133,6 +134,7 @@ Forneça:
           empresa_id: empresaId,
         });
 
+        const analiseValidada = validarAnaliseAtendimentoIA(resultado);
         await createInContext('AuditLog', {
           ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
           ...(empresaId ? { empresa_id: empresaId } : {}),
@@ -149,35 +151,18 @@ Forneça:
             canal: sanitizePromptText(conversa.canal, 80)
           },
           data_hora: new Date().toISOString()
-        }).catch(() => null);
+        });
 
-        return resultado;
+        return analiseValidada;
       } catch (err) {
-        console.warn('Erro na análise IA:', err);
-        // Retornar análise fallback baseada em regras simples
-        return {
-          resumo: 'Análise automática baseada em regras (IA indisponível)',
-          sentimento: {
-            tipo: conversa.sentimento_geral || 'Neutro',
-            intensidade: 0.5,
-            motivo: 'Análise baseada em palavras-chave'
-          },
-          necessidade_principal: conversa.intent_principal || 'Atendimento geral',
-          acoes_recomendadas: [
-            'Verificar histórico do cliente',
-            'Oferecer ajuda personalizada',
-            'Encaminhar para especialista se necessário'
-          ],
-          produtos_sugeridos: [],
-          risco_insatisfacao: 'médio',
-          oportunidade_venda: { existe: false, valor_estimado: 0, tipo: '' },
-          palavras_chave: conversa.tags || []
-        };
+        console.warn('Analise IA indisponivel; nenhuma analise foi fabricada.');
+        throw err;
       }
     },
     enabled: !!conversa && mensagens.length >= 2 && contextoValido && canUseIA,
-    staleTime: 60000, // 1 minuto
-    retry: 1 // Tentar apenas 1 vez em caso de erro
+    staleTime: 0,
+    gcTime: 0,
+    retry: false
   });
 
   if (!conversa) return null;

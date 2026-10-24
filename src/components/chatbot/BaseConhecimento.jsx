@@ -48,7 +48,7 @@ export default function BaseConhecimento() {
   });
 
   const salvarMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {typeof form} */ dados) => {
       if (!contextoValido || !canEditBase) {
         throw new Error('Contexto ou permissao insuficiente para salvar conhecimento');
       }

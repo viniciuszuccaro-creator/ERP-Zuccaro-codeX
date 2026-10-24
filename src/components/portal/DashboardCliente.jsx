@@ -13,6 +13,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { Link } from "react-router-dom";
 import {
   resolvePortalSessionState,
+  resolvePortalClienteVinculado,
   sanitizePortalClienteId,
   calcularSaldoPortal,
 } from "@/components/lib/portalClientePolicy";
@@ -42,14 +43,15 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
   const vinculoQuery = useQuery({
     queryKey: ['meu-cliente', user?.id, requestedClienteId, adminMode],
     queryFn: async () => {
+      if (!user?.id || authLoading || authError) throw new Error('Sessao do portal indisponivel.');
       if (requestedClienteId) {
         const res = await base44.entities.Cliente.filter({ id: requestedClienteId });
-        return res[0] || null;
+        return resolvePortalClienteVinculado(res, user, {requestedClienteId, adminMode});
       }
       const res = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
-      return res[0] || null;
+      return resolvePortalClienteVinculado(res, user);
     },
-    enabled: !!user && !authLoading,
+    enabled: !!user?.id && !authLoading && !authError,
   });
 
   const session = resolvePortalSessionState({

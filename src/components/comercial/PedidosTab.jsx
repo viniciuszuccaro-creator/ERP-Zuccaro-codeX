@@ -45,6 +45,7 @@ import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import PedidoCanonicoPanel from "./PedidoCanonicoPanel";
+import { isPedidoLegacyProducaoSobMedida, matchesPedidoLegacyStatusFilter, pedidoLegacyStatusLabel } from './pedidoUiPolicy';
 
 export default function PedidosTab(props) {
   if (props.canonicalHttp) return <PedidoCanonicoPanel {...props} />;
@@ -70,7 +71,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
   const canMarcarProntoFaturar = hasPermission('Comercial', 'Pedido', 'marcarProntoFaturar') || canEditPedido;
   const canFecharPedido = hasPermission('Comercial', 'Pedido', 'fechar') || hasPermission('Comercial', 'Pedidos', 'fechar') || canEditPedido;
   const canGerarNFe = hasPermission('Comercial', 'Pedido', 'gerarNFe') || hasPermission('Fiscal', 'NotaFiscal', 'emitir') || hasPermission('Fiscal', 'Notas Fiscais', 'emitir') || hasPermission('Fiscal', 'NotaFiscal', 'enviar');
-  const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('ExpediÃ§Ã£o', 'Entrega', 'criar') || hasPermission('ExpediÃ§Ã£o', null, 'criar');
+  const canCriarEntrega = hasPermission('Comercial', 'Pedido', 'criarEntrega') || hasPermission('Expedição', 'Entrega', 'criar') || hasPermission('Expedição', null, 'criar');
   const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP') || hasPermission('Producao', 'OrdemProducao', 'criar') || hasPermission('Produção', 'OrdemProducao', 'criar') || hasPermission('Producao', 'Ordens Producao', 'criar') || hasPermission('Produção', 'Ordens Produção', 'criar');
   const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
@@ -84,6 +85,8 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
   const [statusFilter, setStatusFilter] = useState("todos");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  /** @param {{acao: string, pedido?: Record<string, unknown> | null, descricao: string,
+   * sucesso?: boolean, detalhes?: Record<string, unknown>}} options */
   const auditPedido = async ({ acao, pedido = null, descricao, sucesso = true, detalhes = {} }) => {
     try {
       await createInContext("AuditLog", {
@@ -134,7 +137,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
   };
 
   const deleteMutation = useMutation({
-    mutationFn: async (pedido) => {
+    mutationFn: async (/** @type {{id: string} & Record<string, unknown>} */ pedido) => {
       if (!contextoValido || !canDeletePedido) {
         await auditPedido({
           acao: 'Exclusao bloqueada',
@@ -337,7 +340,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
   };
 
   const filteredPedidos = pedidosList.filter(p => {
-    const matchStatus = statusFilter === "todos" || p.status === statusFilter;
+    const matchStatus = matchesPedidoLegacyStatusFilter(p.status, statusFilter);
     const searchLower = searchTerm.toLowerCase();
     const matchSearch = 
       p.numero_pedido?.toLowerCase().includes(searchLower) ||
@@ -345,7 +348,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
       p.vendedor?.toLowerCase().includes(searchLower) ||
       p.tipo_pedido?.toLowerCase().includes(searchLower) ||
       p.origem_pedido?.toLowerCase().includes(searchLower) ||
-      p.status?.toLowerCase().includes(searchLower) ||
+      pedidoLegacyStatusLabel(p.status).toLowerCase().includes(searchLower) ||
       p.observacoes_publicas?.toLowerCase().includes(searchLower) ||
       p.observacoes_internas?.toLowerCase().includes(searchLower) ||
       p.indicador_nome?.toLowerCase().includes(searchLower) ||
@@ -420,16 +423,16 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     { key: 'status', label: 'Status', render: (r) => (
       <Badge className={
         r.status === 'Entregue' ? 'bg-green-600 text-white' :
-        r.status === 'Em TrÃ¢nsito' ? 'bg-purple-600 text-white' :
-        r.status === 'Em ExpediÃ§Ã£o' ? 'bg-orange-600 text-white' :
+        pedidoLegacyStatusLabel(r.status) === 'Em Trânsito' ? 'bg-purple-600 text-white' :
+        pedidoLegacyStatusLabel(r.status) === 'Em Expedição' ? 'bg-orange-600 text-white' :
         r.status === 'Faturado' ? 'bg-blue-600 text-white' :
         r.status === 'Pronto para Faturar' ? 'bg-indigo-600 text-white' :
         r.status === 'Aprovado' ? 'bg-green-500 text-white' :
-        r.status === 'Aguardando AprovaÃ§Ã£o' ? 'bg-yellow-500 text-white' :
+        pedidoLegacyStatusLabel(r.status) === 'Aguardando Aprovação' ? 'bg-yellow-500 text-white' :
         r.status === 'Cancelado' ? 'bg-red-600 text-white' :
         'bg-slate-500 text-white'
       }>
-        {r.status}
+        {pedidoLegacyStatusLabel(r.status)}
       </Badge>
     ) },
     { key: 'aprovacao', label: 'AprovaÃ§Ã£o', render: (r) => (
@@ -506,7 +509,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
           </Button>
         )}
 
-        {(pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado' && (
+        {(isPedidoLegacyProducaoSobMedida(pedido.tipo_pedido) || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado' && (
           <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.gerarOP" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' })} disabled={!contextoValido || !canGerarOP} title="Gerar Ordem de Produção" className="h-8 px-2 text-purple-600">
             <Factory className="w-3 h-3 mr-1" />
             <span className="text-xs">OP</span>
@@ -552,7 +555,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
     if (contextoValido && canCriarEntrega && pedido.status === 'Faturado') {
       items.push({ key: 'entrega', label: 'Criar Entrega', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canCriarEntrega, acao: 'Criacao Entrega', descricao: 'Acionada criacao de entrega', toastTitle: 'Criando entrega...' }) });
     }
-    if (contextoValido && canGerarOP && (pedido.tipo_pedido === 'ProduÃ§Ã£o Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
+    if (contextoValido && canGerarOP && (isPedidoLegacyProducaoSobMedida(pedido.tipo_pedido) || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
       items.push({ key: 'op', label: 'Gerar OP', action: async () => executarAcaoSensivelPedido({ pedido, permitido: canGerarOP, acao: 'Gerar OP', descricao: 'Acionada geracao de OP', toastTitle: 'Criando OP...' }) });
     }
     if (contextoValido && canDeletePedido) {
@@ -676,11 +679,11 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
                   <SelectContent className="z-[99999]">
                     <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="Rascunho">Rascunho</SelectItem>
-                    <SelectItem value="Aguardando AprovaÃ§Ã£o">Aguardando AprovaÃ§Ã£o</SelectItem>
+                    <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
                     <SelectItem value="Aprovado">Aprovado</SelectItem>
                     <SelectItem value="Pronto para Faturar">Pronto para Faturar</SelectItem>
                     <SelectItem value="Faturado">Faturado</SelectItem>
-                    <SelectItem value="Em ExpediÃ§Ã£o">Em ExpediÃ§Ã£o</SelectItem>
+                    <SelectItem value="Em Expedição">Em Expedição</SelectItem>
                     <SelectItem value="Entregue">Entregue</SelectItem>
                     <SelectItem value="Cancelado">Cancelado</SelectItem>
                   </SelectContent>

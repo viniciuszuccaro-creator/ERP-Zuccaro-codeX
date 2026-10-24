@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ export default function ParametroRoteirizacaoForm({ parametro, onSubmit, windowM
   const podeCriar = canCreate("Cadastros", "ParametroRoteirizacao") || canCreate("Logistica", "Roteirizacao") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ParametroRoteirizacao") || canEdit("Logistica", "Roteirizacao") || canEdit("Cadastros", null);
   const podeSalvar = parametro?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(parametro || {
+  const [formData, setFormData] = useCadastroRecordState(parametro || {
     usar_ia_otimizacao: true,
     considerar_janela_horario: true,
     priorizar_urgencia: true,
@@ -24,7 +25,7 @@ export default function ParametroRoteirizacaoForm({ parametro, onSubmit, windowM
     distancia_maxima_km: 100,
     tempo_medio_entrega_minutos: 30,
     ativo: true
-  });
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

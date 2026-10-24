@@ -10,9 +10,7 @@ const resolveBootUser = async () => {
     const { refreshErpHttpSessionFromServer, buildHttpSessionUser, ensureHttpTenantLocalMirror } = await import('@/api/erpHttpSession');
     const session = await refreshErpHttpSessionFromServer({});
     if (!session?.token) {
-      const err = new Error('Authentication required');
-      err.status = 401;
-      err.authType = 'auth_required';
+      const err = Object.assign(new Error('Authentication required'), { status: 401, authType: 'auth_required' });
       throw err;
     }
     try {
@@ -33,9 +31,7 @@ const resolveBootUser = async () => {
     }
     const sessionUser = buildHttpSessionUser(session);
     if (!sessionUser) {
-      const err = new Error('Authentication required');
-      err.status = 401;
-      err.authType = 'auth_required';
+      const err = Object.assign(new Error('Authentication required'), { status: 401, authType: 'auth_required' });
       throw err;
     }
     return sessionUser;

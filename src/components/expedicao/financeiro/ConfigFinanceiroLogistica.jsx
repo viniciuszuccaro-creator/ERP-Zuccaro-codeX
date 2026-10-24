@@ -95,7 +95,7 @@ export default function ConfigFinanceiroLogistica({ empresaId, groupId: groupIdP
   }, [cfg]);
 
   const saveMutation = useMutation({
-    mutationFn: async (values) => {
+    mutationFn: async (/** @type {typeof form} */ values) => {
       if (!contextoValido || !canEditConfig) {
         await auditConfig({ acao: "FinanceiroLogistica.config.salvar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
         throw new Error("Contexto e permissao sao obrigatorios para salvar a configuracao logistica.");

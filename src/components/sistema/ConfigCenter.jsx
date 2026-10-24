@@ -13,6 +13,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * ConfigCenter — usa ConfiguracaoSistema (via upsertConfig) para toggles,
  * evitando o erro 422 de empresa_id obrigatório no GovernancaEmpresa.
  */
+/** @param {{empresaId?: string}} props */
 export default function ConfigCenter({ empresaId: empresaIdProp }) {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();

@@ -282,9 +282,9 @@ Responda com:
           </DialogTitle>
         </DialogHeader>
 
-        <Alert className="border-purple-200 bg-purple-50">
-          <Sparkles className="w-4 h-4 text-purple-600" />
-          <AlertDescription className="text-sm text-purple-900">
+        <Alert className="border-sky-200 bg-sky-50">
+          <Sparkles className="w-4 h-4 text-sky-600" />
+          <AlertDescription className="text-sm text-sky-900">
             <strong>Novo V21.1.2:</strong> Selecione múltiplas tabelas e aplique a mesma regra de recálculo em todas simultaneamente.
           </AlertDescription>
         </Alert>
@@ -408,7 +408,7 @@ Responda com:
                 type="button"
                 onClick={handleAplicarIAGlobal}
                 disabled={aplicando || tabelasSelecionadas.length === 0 || !contextoValido || !podeUsarIA}
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                className="flex-1 bg-sky-600 hover:bg-sky-700"
                 data-action="MultiTabelasEditor.sugerirIA"
                 data-permission="Sistema.IA.executar"
                 data-sensitive="true"

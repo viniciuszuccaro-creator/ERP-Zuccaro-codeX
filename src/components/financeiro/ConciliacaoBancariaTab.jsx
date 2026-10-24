@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import ExtratoBancarioImportDialog from './ExtratoBancarioImportDialog';
 import {
   buildFinanceiroQueryScopeKey,
   cancelFinanceiroQueriesOnScopeSwitch,
@@ -18,7 +19,7 @@ import {
 
 export default function ConciliacaoBancariaTab() {
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const [periodo, setPeriodo] = useState({
@@ -26,8 +27,20 @@ export default function ConciliacaoBancariaTab() {
     fim: new Date().toISOString().split('T')[0]
   });
   const [contaSelecionadaId, setContaSelecionadaId] = useState("");
+  const [sourceOpen,setSourceOpen]=useState(false);
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
+  const sourceScope=typeof groupId==='string'&&typeof empresaId==='string'&&typeof user?.id==='string'
+    ?{groupId,empresaId,actorId:user.id}:null;
+  const podeLerFonte=hasPermission('Financeiro','ContaBancariaEmpresa','visualizar')
+    &&hasPermission('Financeiro','ContaBancariaEmpresa','dados-sensiveis.visualizar')
+    &&hasPermission('Financeiro','conciliacao','visualizar')
+    &&hasPermission('Financeiro','conciliacao','dados-sensiveis.visualizar');
+  const podeImportarFonte=hasPermission('Financeiro','conciliacao','importar');
+  const podeLerMovimentos=podeLerFonte&&hasPermission('Financeiro','Caixa','visualizar')
+    &&hasPermission('Financeiro','Caixa','dados-sensiveis.visualizar');
+  const podeVincularFonte=podeLerMovimentos&&hasPermission('Financeiro','conciliacao','conciliar');
+  const podeDesfazerVinculo=podeLerMovimentos&&hasPermission('Financeiro','conciliacao','estornar');
   const contextKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
   const contextoValido = contextKey !== "sem-contexto";
   const previousScopeRef = useRef(contextKey);
@@ -37,6 +50,7 @@ export default function ConciliacaoBancariaTab() {
     previousScopeRef.current = contextKey;
     cancelFinanceiroQueriesOnScopeSwitch(queryClient, previousScopeKey);
     setContaSelecionadaId("");
+    setSourceOpen(false);
   }, [contextKey, queryClient]);
   const podeConciliar = hasPermission('Financeiro', 'ConciliacaoBancaria', 'conciliar')
     || hasPermission('Financeiro', 'Conciliação Bancária', 'conciliar')
@@ -44,27 +58,7 @@ export default function ConciliacaoBancariaTab() {
     || hasPermission('Financeiro', 'ContaReceber', 'conciliar');
   const controlesBloqueados = !contextoValido || !podeConciliar;
 
-  const auditarConciliacao = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
-    try {
-      await base44.entities.AuditLog.create({
-        acao,
-        modulo: 'Financeiro',
-        entidade: 'ConciliacaoBancaria',
-        descricao,
-        usuario_id: user?.id || null,
-        usuario: user?.full_name || user?.email || 'Usuario local',
-        empresa_id: empresaId,
-        group_id: groupId,
-        grupo_id: groupId,
-        tipo_auditoria: sucesso ? 'operacional' : 'seguranca',
-        dados_novos: dadosNovos,
-        sucesso,
-        data_hora: new Date().toISOString()
-      });
-    } catch (error) {
-      console.warn('Falha ao auditar conciliacao bancaria:', error);
-    }
-  };
+
 
   const { data: conciliacoes = [], isLoading } = useQuery({
     queryKey: ["conciliacao-bancaria", contextKey],
@@ -78,82 +72,8 @@ export default function ConciliacaoBancariaTab() {
     enabled: contextoValido,
   });
 
-  const gerarConciliacaoIAMutation = useMutation({
-    mutationFn: async ({ contaId }) => {
-      if (!contextoValido || !podeConciliar) {
-        throw new Error("Sem contexto ou permissÃ£o para gerar conciliaÃ§Ã£o.");
-      }
-      toast.info("🤖 IA analisando extratos e movimentações...");
-      
-      // Simula análise IA
-      const lancamentosExtrato = [
-        {
-          data: new Date().toISOString().split('T')[0],
-          historico: "TED Recebida Cliente XYZ",
-          documento: "123456",
-          valor: 5000,
-          tipo: "Crédito",
-          conciliado: false
-        },
-        {
-          data: new Date().toISOString().split('T')[0],
-          historico: "Cartão Cielo",
-          documento: "NSU789",
-          valor: 2300,
-          tipo: "Crédito",
-          conciliado: false
-        }
-      ];
-
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise estes lançamentos bancários e sugira conciliação com contas a receber/pagar:
-        
-Lançamentos: ${JSON.stringify(lancamentosExtrato)}
-
-Retorne sugestões de conciliação baseadas em valor, data, histórico e similaridade.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            sugestoes: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  lancamento_id: { type: "string" },
-                  movimento_sugerido_tipo: { type: "string" },
-                  confianca: { type: "number" },
-                  motivo: { type: "string" }
-                }
-              }
-            }
-          }
-        }
-      });
-
-      return createInContext('ConciliacaoBancaria', {
-        group_id: groupId,
-        grupo_id: groupId,
-        empresa_id: empresaId,
-        conta_bancaria_id: contaId,
-        periodo_inicio: periodo.inicio,
-        periodo_fim: periodo.fim,
-        data_conciliacao: new Date().toISOString(),
-        lancamentos_extrato: lancamentosExtrato,
-        sugestoes_conciliacao_ia: result.sugestoes || [],
-        status: "Em Processamento"
-      });
-    },
-    onSuccess: async (conciliacao) => {
-      await auditarConciliacao({
-        acao: 'Criacao',
-        descricao: 'Conciliacao bancaria gerada com IA.',
-        dadosNovos: { conciliacao_id: conciliacao?.id, conta_bancaria_id: conciliacao?.conta_bancaria_id, periodo }
-      });
-      queryClient.invalidateQueries(["conciliacao-bancaria"]);
-      toast.success("✅ Conciliação gerada com IA!");
-    },
-  });
-  const controlesDesabilitados = controlesBloqueados || gerarConciliacaoIAMutation.isPending;
+  const podeAnalisarFonte = podeLerMovimentos && hasPermission('IA','financeiro_conciliacao','visualizar');
+  const controlesDesabilitados = controlesBloqueados;
 
   if (isLoading) return <div className="p-6">Carregando conciliações...</div>;
 
@@ -205,21 +125,10 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
 
           <div className="flex gap-3">
             <Button 
-              onClick={() => {
-                const contaId = contaSelecionadaId || contas[0]?.id;
-                if (contaId) {
-                  if (!window.confirm("Gerar conciliacao bancaria com IA para o periodo selecionado?")) {
-                    auditarConciliacao({ acao: 'Cancelamento', descricao: 'Usuario cancelou geracao de conciliacao bancaria com IA.', dadosNovos: { contaId, periodo }, sucesso: false });
-                    return;
-                  }
-                  gerarConciliacaoIAMutation.mutate({ contaId });
-                } else {
-                  toast.error("Nenhuma conta bancária cadastrada");
-                }
-              }}
-              disabled={controlesDesabilitados}
+              onClick={() => setSourceOpen(true)}
+              disabled={!sourceScope || !podeAnalisarFonte}
               data-action="ConciliacaoBancaria.gerar_ia"
-              data-permission="Financeiro.ConciliacaoBancaria.criar"
+              data-permission="IA.financeiro_conciliacao.visualizar"
               data-context-required="true"
               data-sensitive
             >
@@ -227,13 +136,18 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
               Gerar Conciliação com IA
             </Button>
 
-            <Button variant="outline" disabled={controlesDesabilitados} data-action="ConciliacaoBancaria.importar_ofx" data-permission="Financeiro.ConciliacaoBancaria.criar" data-context-required="true" data-sensitive>
+            <Button variant="outline" onClick={()=>setSourceOpen(true)} disabled={!sourceScope||!podeLerFonte} data-action="ConciliacaoBancaria.importar_ofx" data-permission="Financeiro.conciliacao.importar" data-context-required="true" data-sensitive>
               <Upload className="w-4 h-4 mr-2" />
               Importar Extrato OFX
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {sourceOpen&&sourceScope&&podeLerFonte&&<ExtratoBancarioImportDialog
+        key={`${sourceScope.actorId}:${sourceScope.groupId}:${sourceScope.empresaId}`}
+        scope={sourceScope} canImport={podeImportarFonte} canReadMovements={podeLerMovimentos}
+        canReconcile={podeVincularFonte} canReverseLink={podeDesfazerVinculo} canAnalyze={podeAnalisarFonte} onClose={()=>setSourceOpen(false)}/>}
 
       <div className="grid grid-cols-3 gap-4">
         <Card>
@@ -299,7 +213,7 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
               <tbody>
                 {conciliacoes.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center p-6 text-slate-500">
+                    <td colSpan={8} className="text-center p-6 text-slate-500">
                       Nenhuma conciliação encontrada
                     </td>
                   </tr>

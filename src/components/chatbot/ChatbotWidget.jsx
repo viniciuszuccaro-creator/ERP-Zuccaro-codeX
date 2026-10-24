@@ -29,11 +29,7 @@ import { assertCanalAtivo, buildEscalarParaHub, resolveSessaoEstavel } from '@/c
  * ✅ Métricas e analytics
  * ✅ Integração bidirecional com canais externos (requer Backend Functions)
  * 
- * @param {string} clienteId - ID do cliente autenticado
- * @param {string} canal - Canal de comunicação (Portal, WhatsApp, etc)
- * @param {string} conversaId - ID da conversa existente (opcional)
- * @param {boolean} exibirBotaoFlutuante - Se deve exibir botão flutuante
- * @param {object} configuracoes - Configurações adicionais
+ * @param {{clienteId?: string, canal?: string, conversaId?: string, exibirBotaoFlutuante?: boolean, configuracoes?: Record<string, unknown>}} props
  */
 export default function ChatbotWidget({ 
   clienteId, 
@@ -176,7 +172,7 @@ export default function ChatbotWidget({
   }, [mensagensHistorico]);
 
   const enviarMensagemMutation = useMutation({
-    mutationFn: async ({ mensagem, arquivo }) => {
+    mutationFn: async (/** @type {{mensagem: string, arquivo?: File | null}} */ { mensagem, arquivo }) => {
       const conversaId = conversaAtiva?.id || conversaExistente?.id;
       
       if (!contextoValido || !canUseChatbot) {

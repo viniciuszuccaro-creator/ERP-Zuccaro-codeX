@@ -100,7 +100,7 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /openEdit/);
   assert.match(tab, /Cancelar orçamento\?/);
   assert.match(tab, /beforeunload/);
-  assert.match(tab, /\[groupId, empresaId, actorId\]/);
+  assert.match(tab, /\[groupId, empresaId, actorId, sessionIdentity, proposalMode\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
   assert.match(tab, /comercialMasterPicker/);
   assert.match(tab, /orcamento-busca-cliente/);

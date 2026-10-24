@@ -157,7 +157,7 @@ export default function DuplicarMesAnterior({ empresaId }) {
             <Checkbox
               id="incluir-recorrentes"
               checked={incluirRecorrentes}
-              onCheckedChange={setIncluirRecorrentes}
+              onCheckedChange={(checked) => setIncluirRecorrentes(checked === true)}
             />
             <label htmlFor="incluir-recorrentes" className="text-sm">
               Incluir despesas recorrentes (já geradas automaticamente)

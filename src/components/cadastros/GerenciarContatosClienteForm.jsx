@@ -80,7 +80,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange }
       case 'WhatsApp': return <MessageCircle className="w-4 h-4 text-green-600" />;
       case 'E-mail': return <Mail className="w-4 h-4 text-blue-600" />;
       case 'Telefone': return <Phone className="w-4 h-4 text-slate-600" />;
-      case 'Celular': return <Phone className="w-4 h-4 text-purple-600" />;
+      case 'Celular': return <Phone className="w-4 h-4 text-sky-600" />;
       default: return <Phone className="w-4 h-4 text-slate-600" />;
     }
   };

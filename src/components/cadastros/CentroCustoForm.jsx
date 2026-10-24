@@ -247,7 +247,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-sky-600 hover:bg-sky-700"
           data-permission="Cadastros.CentroCusto.salvar"
           data-action="salvar-centro-custo"
           data-sensitive

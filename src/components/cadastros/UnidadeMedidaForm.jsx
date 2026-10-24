@@ -179,7 +179,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
       <Button
         type="submit"
-        className="w-full bg-indigo-600 hover:bg-indigo-700"
+        className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission={dadosIniciais?.id ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
         data-action="salvar-unidade-medida"
@@ -193,8 +193,8 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
-          <Ruler className="w-6 h-6 text-indigo-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Ruler className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
             {dadosIniciais ? 'Editar Unidade' : 'Nova Unidade de Medida'}
           </h2>

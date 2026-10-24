@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
   const podeCriar = canCreate("Cadastros", "ParametroRecebimentoNFe") || canCreate("Fiscal", "NF-e") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ParametroRecebimentoNFe") || canEdit("Fiscal", "NF-e") || canEdit("Cadastros", null);
   const podeSalvar = parametro?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(parametro || {
+  const [formData, setFormData] = useCadastroRecordState(parametro || {
     sugerir_cadastro_automatico_produto: true,
     usar_ia_para_classificacao: true,
     vincular_produtos_fornecedor: true,
@@ -28,7 +29,7 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
     atualizar_custo_medio_automatico: true,
     exigir_foto_comprovante: false,
     ativo: true
-  });
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

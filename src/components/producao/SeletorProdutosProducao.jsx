@@ -24,6 +24,7 @@ import { isProdutoMateriaPrima } from "@/components/cadastros/produto/produtoTip
  * Alerta de estoque insuficiente
  * Busca inteligente por descricao, codigo, bitola
  * Filtros por tipo de aco, diametro
+ * @param {{onSelecionarProduto: (produto: Record<string, unknown>) => void, quantidadeNecessaria?: number}} props
  */
 export default function SeletorProdutosProducao({ onSelecionarProduto, quantidadeNecessaria }) {
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();

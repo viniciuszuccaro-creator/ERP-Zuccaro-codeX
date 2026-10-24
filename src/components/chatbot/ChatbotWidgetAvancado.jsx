@@ -31,13 +31,7 @@ import { resolveSessaoEstavel } from '@/components/lib/atendimentoConversaPolicy
  * ✅ Temas personalizáveis (light/dark)
  * ✅ Responsivo e acessível (WCAG)
  * 
- * @param {string} clienteId - ID do cliente autenticado
- * @param {string} canal - Canal de comunicação (Portal, WhatsApp, etc)
- * @param {string} conversaId - ID da conversa existente (opcional)
- * @param {boolean} exibirBotaoFlutuante - Se deve exibir botão flutuante
- * @param {object} configuracoes - Configurações adicionais
- * @param {string} tema - 'light' | 'dark' | 'auto'
- * @param {boolean} habilitarAvaliacao - Se deve solicitar avaliação ao finalizar
+ * @param {{clienteId?: string, canal?: string, conversaId?: string, exibirBotaoFlutuante?: boolean, configuracoes?: Record<string, unknown>, tema?: string, habilitarAvaliacao?: boolean}} props
  */
 export default function ChatbotWidgetAvancado({ 
   clienteId, 
@@ -201,7 +195,7 @@ export default function ChatbotWidgetAvancado({
   }, [mensagensHistorico]);
 
   const enviarMensagemMutation = useMutation({
-    mutationFn: async ({ mensagem, arquivo }) => {
+    mutationFn: async (/** @type {{mensagem: string, arquivo?: File | null}} */ { mensagem, arquivo }) => {
       const conversaId = conversaAtiva?.id || conversaExistente?.id;
       
       if (!contextoValido || !canUseChatbot) {

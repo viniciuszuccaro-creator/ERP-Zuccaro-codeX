@@ -62,7 +62,7 @@ export default function ProducaoMobile() {
   });
 
   const apontarMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {typeof apontamento} */ dados) => {
       const novoApontamento = {
         data_hora: new Date().toISOString(),
         operador: user?.full_name || "Operador",
@@ -128,7 +128,7 @@ export default function ProducaoMobile() {
   });
 
   const finalizarEEnviarMutation = useMutation({
-    mutationFn: async (opId) => {
+    mutationFn: async (/** @type {string} */ opId) => {
       const op = ops.find(o => o.id === opId);
 
       // Criar entrega

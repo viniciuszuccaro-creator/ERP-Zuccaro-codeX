@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMo
   const podeCriar = canCreate("Cadastros", "ParametroCaixaDiario") || canCreate("Financeiro", "Caixa") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ParametroCaixaDiario") || canEdit("Financeiro", "Caixa") || canEdit("Cadastros", null);
   const podeSalvar = parametro?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(parametro || {
+  const [formData, setFormData] = useCadastroRecordState(parametro || {
     exigir_abertura_caixa: true,
     exigir_fechamento_caixa: true,
     permitir_sangria: true,
@@ -26,7 +27,7 @@ export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMo
     tolerancia_divergencia: 5,
     gerar_movimento_automatico: true,
     ativo: true
-  });
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();
