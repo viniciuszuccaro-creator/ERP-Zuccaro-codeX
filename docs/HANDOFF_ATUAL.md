@@ -1,3 +1,12 @@
+## CURSOR — #351 PlanoContas + CI verde (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI | **`01bd2e35`** MERGEABLE CLEAN |
+| lote | PlanoContasForm `prevUpdatedRef` |
+| fila | forms `prevIdRef` restantes esgotados fora coorte ID-only/Marca |
+| próxima | recovery erp-integra (#349 fonte / Contratos equivalência) sem auth permissiva |
+
 ## CURSOR — fila contínua (2026-10-24)
 
 | Item | Valor |

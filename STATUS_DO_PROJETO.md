@@ -1,3 +1,12 @@
+## CURSOR — #351 PlanoContas reopen + CI `01bd2e35` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`01bd2e35`** · 6/6 · MERGEABLE CLEAN |
+| lote | PlanoContasForm · `prevUpdatedRef` + anti-duplo |
+| limitação | Operador/Moeda na coorte ID-only · MarcaForm/#344 intocados |
+| #350 | `2d1f289f` MERGEABLE CLEAN |
+
 ## CURSOR — CI fix identidade: CentroCusto only (2026-10-24)
 
 | Item | Valor |

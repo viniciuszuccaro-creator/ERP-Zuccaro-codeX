@@ -109,6 +109,16 @@ test('CentroCusto reabre por updated_date com código/ID', async () => {
   assert.match(text, /isSubmitting/);
 });
 
+test('PlanoContas reabre por updated_date sem inventar código de registro', async () => {
+  const text = await source('src/components/cadastros/PlanoContasForm.jsx');
+  assert.match(text, /prevIdRef/);
+  assert.match(text, /prevUpdatedRef/);
+  assert.match(text, /idChanged \|\| updatedChanged/);
+  assert.match(text, /dadosIniciais\?\.updated_date/);
+  assert.match(text, /isSubmitting/);
+  assert.doesNotMatch(text, /CadastroCodigoRegistroField/);
+});
+
 test('MoedaIndice e OperadorCaixa permanecem na coorte ID-only (sem prevUpdatedRef manual)', async () => {
   for (const rel of [
     'src/components/cadastros/MoedaIndiceForm.jsx',
