@@ -21,7 +21,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
   const podeCriar = canCreate("Cadastros", "Turno") || canCreate("Sistema", "Turno") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Turno") || canEdit("Sistema", "Turno") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_turno: '',
     horario_inicio: '08:00',
     horario_fim: '17:00',
@@ -29,15 +29,31 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
     intervalo_fim: '13:00',
     dias_semana: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'],
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
+  const prevIdRef = useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = useRef(dadosIniciais?.updated_date);
   useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
+    const nextId = dadosIniciais?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosIniciais?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const diasDisponiveis = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -52,6 +68,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome_turno || !formData.horario_inicio || !formData.horario_fim) {
       alert('Preencha os campos obrigatórios');
       return;

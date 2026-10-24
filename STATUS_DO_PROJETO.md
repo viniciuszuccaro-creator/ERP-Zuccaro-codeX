@@ -1,3 +1,12 @@
+## CURSOR — #351 Turno/Veículo/Motorista/TipoDespesa (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`76fba28b`** · CI 6/6 · MERGEABLE CLEAN |
+| lote | TurnoForm · VeiculoForm · MotoristaForm · TipoDespesaForm |
+| mudança | `prevUpdatedRef` + anti-duplo · código/ID preservado |
+| fora | MarcaForm · #344 · sem merge/deploy |
+
 ## CURSOR — #351 Banco/Cargo/Departamento + merge `4ab7a61b` (2026-10-24)
 
 | Item | Valor |

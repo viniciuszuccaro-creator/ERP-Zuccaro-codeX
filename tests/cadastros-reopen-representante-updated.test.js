@@ -79,3 +79,21 @@ test('Banco, Cargo e Departamento reabrem por updated_date com código/ID', asyn
     assert.match(text, /isSubmitting/);
   }
 });
+
+test('Turno, Veiculo, Motorista e TipoDespesa reabrem por updated_date com código/ID', async () => {
+  for (const [rel, action] of [
+    ['src/components/cadastros/TurnoForm.jsx', 'codigo-registro-turno'],
+    ['src/components/cadastros/VeiculoForm.jsx', 'codigo-registro-veiculo'],
+    ['src/components/cadastros/MotoristaForm.jsx', 'codigo-registro-motorista'],
+    ['src/components/cadastros/TipoDespesaForm.jsx', 'codigo-registro-tipo-despesa'],
+  ]) {
+    const text = await source(rel);
+    assert.match(text, /prevIdRef/);
+    assert.match(text, /prevUpdatedRef/);
+    assert.match(text, /idChanged \|\| updatedChanged/);
+    assert.match(text, /dadosIniciais\?\.updated_date/);
+    assert.match(text, /CadastroCodigoRegistroField/);
+    assert.match(text, new RegExp(action));
+    assert.match(text, /isSubmitting/);
+  }
+});
