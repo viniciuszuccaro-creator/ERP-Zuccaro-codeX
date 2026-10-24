@@ -3,6 +3,7 @@
 | Item | Valor |
 |---|---|
 | tip CI verde | **`42bde90d`** · 6/6 SUCCESS (harness Região + hashes FormaPagamento) |
+| tip publicado | **`af79c8d3`** · mestres produto · aguarda CI |
 | lote | UnidadeMedidaForm · GrupoProdutoForm · SetorAtividadeForm |
 | mudança | `prevUpdatedRef` + `idChanged\|\|updatedChanged` · submit bloqueia `isSubmitting` |
 | código/ID | `CadastroCodigoRegistroField` já presente (preservado) |
