@@ -1,3 +1,29 @@
+## #344 - correcao da invariancia da CI4474/4475 (2026-10-24)
+
+A falha do backend em 36e123c8 foi reproduzida no Codespace: o teste de
+consolidacao enumerava apenas export/restoreBulkSnapshot e rejeitava a adicao
+autorizada de correctInactiveLegacyName. Nao foi falha ambiental. O teste
+preserva a igualdade integral de TODOS os membros anteriores e exige a lista
+exata dos tres adicionais, o import canonico e o corpo exato da nova delegacao.
+Os testes comportamentais de escopo, permissao, CAS, auditoria, replay e reversao
+do novo metodo permanecem obrigatorios. Nenhum handler antigo foi modificado,
+nenhuma assertion retirada, nenhuma permissao/rota/migration ativada.
+
+Reproducao anterior: 1 FAIL. Fechamento e recibos completos em ci-fix-results.json
+no mesmo job privado apontado por current-completeness.json. CI do novo SHA deve
+ser conferida antes de declarar verde. Frontend/composicao de 36e123c8 passaram;
+essas provas inalteradas foram reutilizadas localmente, sem repetir suas suites.
+
+O proprietario confirmou posteriormente os significados das sete unidades,
+SEM fatores de conversao. PC/UN permanecem distintos; caixa nao implica conteudo,
+peso ou quantidade; unidade de teste excluida. Aplicacao ao mapa privado e piloto
+de produtos seguem depois desta correcao. Isso nao autoriza a correcao individual
+do cliente divergente: essa linha continua em quarentena ate decisao especifica.
+Dados, definicoes detalhadas e recibos reais permanecem privados, fora do Git.
+
+Historico anterior abaixo; nao interpretar CI pendente/verde antiga como prova
+do novo commit. Agendamento Legado pausado, originais preservados.
+
 ## #344 - regras de produto, correcao preparada e completude privada (2026-10-23)
 
 ESTADO ATUAL: pacote independente concluido; carga de produtos e correcao real

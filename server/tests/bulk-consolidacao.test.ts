@@ -197,5 +197,15 @@ test('bulk consolidation: existing canonical Cliente methods and identity protec
   };
   const oldMembers = members(before), newMembers = members(after);
   for (const [name, text] of oldMembers) assert.equal(newMembers.get(name), text, name);
-  assert.deepEqual([...newMembers.keys()].filter(name => !oldMembers.has(name)), ['export', 'restoreBulkSnapshot']);
+  assert.deepEqual([...newMembers.keys()].filter(name => !oldMembers.has(name)),
+    ['export', 'correctInactiveLegacyName', 'restoreBulkSnapshot']);
+  // Keep the old-method invariant; the authorized lifecycle addition must remain a pure delegation.
+  const expected = members(parse(`class Expected {
+  correctInactiveLegacyName(ctx: RequestContext, input: unknown) {
+    return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
+  }
+}`));
+  assert.equal(newMembers.get('correctInactiveLegacyName'), expected.get('correctInactiveLegacyName'));
+  assert(after.statements.some(statement => ts.isImportDeclaration(statement)
+    && statement.moduleSpecifier.getText(after) === "'./clienteLegacyNameCorrection.js'"));
 });

@@ -1,3 +1,15 @@
+## #344 - invariancia CI corrigida, sem alterar metodos anteriores (2026-10-24)
+
+- Causa reproduzida: teste AST antigo recusava a nova delegacao autorizada.
+- Mantida igualdade integral de todos os metodos anteriores; exigidos lista,
+  import e corpo exatos de correctInactiveLegacyName. Runtime inalterado.
+- Testes de autorizacao, auditoria/CAS e reversao preservados. Resultados reais
+  do fechamento estao no HANDOFF e recibo privado ci-fix-results.json.
+- Significados de unidades confirmados pelo proprietario sem conversoes;
+  PC/UN distintos e unidade de teste excluida. Piloto aguarda aplicacao segura
+  desses significados apos publicacao desta correcao. Cliente divergente sem
+  autorizacao especifica de alteracao. Sem merge/deploy/carga operacional.
+
 ## #344 - completude e correcao inativa preparadas, sem nova carga real (2026-10-23)
 
 Base 1789c1a9 / CI4472/4473 SUCCESS; mesma branch/Codespace, escritor unico.
