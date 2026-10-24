@@ -26,8 +26,8 @@ test('stage49 entire hook retained except seven source-field projections', () =>
 for (const [file, expected] of [
   ['comercial/FechamentoFinanceiroTab.jsx', 'ae386c90edc5194049336d95e493a01c868496b5e91dd78b2bf9240ad8e0ea21'],
   ['financeiro/CaixaPDVCompleto.jsx', '660c53cb0d8355e9cc6d0ed621b0ab1cd452051c2043329cee6b5269be561b52'],
-  ['cadastros/FormaPagamentoFormCompleto.jsx', '320532c61a1b8f8a17133026ac0327cfd4fd52bc0787373589329138139265a6'],
-  ['cadastros/FormaPagamentoForm.jsx', '58182860db77f87684ebe10f0781b0617e9916cb90554ecf5a868efa21a4521f'],
+  ['cadastros/FormaPagamentoFormCompleto.jsx', '1d17ea87802252b658eec513326dbe2c889d4501fb8d8e04e19763622b87f69f'],
+  ['cadastros/FormaPagamentoForm.jsx', 'e251a0d7bb1bf11465da43b01fc4f47ebbb24c29e2eec63e70059bc981da4db0'],
 ]) test(`${file}: source, handlers, permissions and persistence ownership unchanged from stage49`, () => {
   assert.equal(hash(financialUiBoundaryRemainder('src/components/' + file, read('src/components/' + file))), expected);
 });

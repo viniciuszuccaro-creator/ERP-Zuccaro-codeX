@@ -16,8 +16,9 @@ function harness(props = {}) {
   const values = { open: true, windowMode: false, dadosIniciaisProps: undefined, regiaoId: 'synthetic-a', ...props };
   let current = true, formData, loading, failed, queries = 0, errors = 0, pending;
   const prevIdRef = { current: values.dadosIniciaisProps?.id || null };
+  const prevUpdatedRef = { current: values.dadosIniciaisProps?.updated_date };
   const bindings = {
-    prevIdRef, isFormScopeCurrent: () => current,
+    prevIdRef, prevUpdatedRef, isFormScopeCurrent: () => current,
     setFormData: data => { formData = data; }, setLoading: value => { loading = value; },
     setLoadFailed: value => { failed = value; }, toast: { error: () => { errors++; } },
     getInContext: (entity, id) => {
@@ -33,7 +34,7 @@ function harness(props = {}) {
     },
     resolve: data => pending.resolve(data), reject: () => pending.reject(Error('synthetic query failure')),
     changeScope: () => { current = false; },
-    state: () => ({ formData, loading, failed, queries, errors, id: prevIdRef.current }),
+    state: () => ({ formData, loading, failed, queries, errors, id: prevIdRef.current, updated: prevUpdatedRef.current }),
   };
 }
 test('actual region effect loads first ID-only mount and keeps dirty data on same ID', async () => {
