@@ -312,8 +312,8 @@ const convertToPedido = async () => {
             totals={totals}
             condicao={form.condicao_pagamento_id ? condicaoLabel(form.condicao_pagamento_id) : ''}
             tabela={masters.tabelas.find((item) => item.id === form.tabela_preco_id)?.nome}
-            historicoIlustrativo={masters.historicoIlustrativo || []}
-            formasPagamentoIlustrativas={masters.formasPagamentoIlustrativas || []}
+            historicoIlustrativo={proposalMasters.historicoIlustrativo || []}
+            formasPagamentoIlustrativas={proposalMasters.formasPagamentoIlustrativas || []}
           />
         );
       })()}

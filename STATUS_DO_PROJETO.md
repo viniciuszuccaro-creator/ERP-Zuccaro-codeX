@@ -1,14 +1,22 @@
-## CURSOR — #347 evolução prévia (2026-10-24)
+## CURSOR — #347 typecheck + merge `0b8bafa7` (2026-10-24)
 
 | Item | Valor |
 |---|---|
-| base consolidação | #342 tip `c657d0a0` |
-| branch Cursor | `cursor/comercial360-proposta-347-evolucao-392b` |
-| Codespace | **não acessível** neste runner |
-| entregue | painéis/ações sintética · código≠ID · anti-duplo Novo orçamento |
-| testes focados | PASS |
-| visual owner | pendente |
-| #344 Codex | não tocado |
+| base | consolidação tip `0b8bafa7` |
+| PR | #350 draft |
+| fix | `proposalMasters` para campos ilustrativos (TS2339) |
+| conflitos docs | resolvidos preservando Cursor+#344 |
+| visual | pendente owner |
+| Codespace prévia | não comprovada neste runner |
+
+## #344 - produtos isolados e ledger transacional (2026-10-24)
+
+Validacao composta local: raiz 2267 PASS/0 FAIL/0 SKIP; backend 529 PASS/0 FAIL/24 SKIP (553 total); ledger PostgreSQL real sintetico 6 PASS/0 FAIL/0 SKIP. Audit/lint/typecheck/build raiz/backend/diff-check aprovados; warning de chunks grandes preservado. Guarda final para as duas grafias de quarentena de produto e teste adicional validados separadamente; conferir CI final pelo SHA publicado, sem alegar execucao local posterior inexistente.
+
+Executor de produtos integrado ao piloto existente: 1184 gravados/reconciliados, 1184 replays sem novas inclusoes, 1184 reversoes logicas, 24 inativos preservados. Sete unidades sem conversao, PC/UN distintos, nenhuma unidade de teste, estoque ou saldo gerado. Destino isolado verificado; papel efemero desabilitado e container parado.
+Ledger de enderecos usa servico canonico, auditoria e mapa na mesma transacao, serializa primeira insercao por lock do pai e revalida RBAC. PostgreSQL sintetico: 6 PASS / 0 FAIL / 0 SKIP. Dados reais incompletos continuam bloqueados, sem campos inventados.
+Correcao individual aplicada somente no isolamento apos autorizacao do ID completo e prova de procedencia; divergencia de identificacao registrada privadamente, codigos inalterados. Auditoria, replay e reversao comprovados. Revisao assistida projetada na politica existente com quatro situacoes, motivo por campo e bloqueios, sem concessao de acesso; 5 testes sinteticos PASS. Dados/provas detalhados fora do Git. Referencia e proximo passo em `docs/HANDOFF_ATUAL.md`.
+
 
 ## #344 - invariantes historicas e evolucao autorizada reconciliadas (2026-10-24)
 

@@ -1,16 +1,45 @@
+## CURSOR — #347 CI typecheck + rebase consolidação (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
+| base merge | `codex/consolidacao-infra-20261017` tip **`0b8bafa7`** (confirmado) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
+| causa CI4480/4481 | TS2339: `historicoIlustrativo`/`formasPagamentoIlustrativas` lidos de `masters` tipado só operacional |
+| correção | props da prévia leem `proposalMasters` (fixture DEV); sem supressão/@ts-ignore |
+| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — ambos os lados preservados |
+| fora de escopo | branch Codex intocada · #344 · VPS · redesign amplo |
+| prévia | DEV `?proposta=comercial360` · sintético · ações operacionais bloqueadas · aprovação visual pendente |
+| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
+
 ## CURSOR — #347 evolução prévia Comercial (2026-10-24)
 
 | Item | Valor |
 |---|---|
-| ambiente | Cursor Cloud `/workspace` · **sem** Codespace montado (`/workspaces/...` ausente; API codespaces 403) |
-| base | `codex/consolidacao-infra-20261017` tip **`c657d0a0`** (ref inicial `36e123c8` é ancestral) |
-| branch | `cursor/comercial360-proposta-347-evolucao-392b` |
 | pacote | Evolução da proposta #347 em `OrcamentosTab`/`OrcamentoProposalAside` existentes |
 | mudança | Painéis cliente/produtos/resumo/ações · código+ID técnico · anti clique-duplo · fixture ilustrativa |
-| fora de escopo | #344 Legado · CentralCliente360Panel mutação · pedidoService/orcamentoService TX · VPS |
-| testes | `comercial-proposal-aside` + `orcamento-component-behavior` #347 · PASS |
-| prévia | DEV `?proposta=comercial360` · dados sintéticos · gravação bloqueada · aprovação visual pendente |
-| próxima | Aprovação visual owner · pacotes cadastros independentes · não escrever no Codespace sem janela |
+| testes | `comercial-proposal-aside` + `orcamento-component-behavior` #347 |
+
+## Continuidade atual #344 - produtos e ledger (2026-10-24)
+
+Estado atual prevalece sobre os checkpoints historicos abaixo. Mesmo Codespace, clone e branch de consolidacao; nenhum acesso operacional, merge ou deploy.
+
+Validacao local composta: raiz 2267 PASS / 0 FAIL / 0 SKIP; backend 553 total, 529 PASS / 0 FAIL / 24 SKIP. Os skips nao comprovam PostgreSQL; prova focada real separada do ledger: 6 PASS / 0 FAIL / 0 SKIP. Auditoria baseline, lint, typecheck raiz/backend, build raiz/backend e diff-check exit 0; aviso de chunks grandes no build permanece. Comandos: `npm run audit:baseline`, `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`, `npm --prefix server test`, `npm --prefix server run typecheck`, `npm --prefix server run build`, `git diff --check`.
+A ultima guarda adicional conserva ambas as grafias de quarentena de produto (`quarantine_reason`/`quarantine_reasons`); teste focado novo deve ser somado somente no resultado efetivamente executado. A composicao final sera novamente conferida pela CI do SHA publicado, sem promover skips a aprovacao.
+Demonstracao privada: 18458 apontamentos de clientes, 790 fornecedores e 1208 produtos classificados como historico devido a inatividade de origem ou reversao comprovada; 19553 apontamentos auxiliares de endereco aguardam revisao. Situacoes validado/pendencia nao critica tem zero exemplos reais ativos neste retrato, sem fabricar liberacoes. Os quatro estados foram exercitados com fixtures sinteticas. A projecao nao e uma interface operacional homologada.
+
+- Produtos: executor existente ampliado por auxiliar `pilot-functional-products.mjs` e comando `pilot-functional.mjs --products`. Reutiliza importador, servicos, repositorios, RBAC, auditoria e reserva canonica de codigo; nao cria importador paralelo.
+- Ensaio PostgreSQL isolado: origem 1208, identidade nativa comprovada 1208, liberados/gravados/reconciliados 1184, reutilizados na reexecucao 1184, novos na reexecucao 0, rejeitados 0, reversoes logicas 1184, ativos restantes 0. Os 24 inativos foram preservados fora da carga.
+- Sete unidades canonicas no escopo isolado, sem conversoes: KG/Kg quilograma, PC peca, CX caixa, m2 metro quadrado (grafia original preservada no mapa privado), UN unidade, LTS litro, MT metro linear. PC/UN distintos; unidade de teste excluida; nenhum fator ou conteudo de caixa inferido. Nenhum estoque/saldo criado.
+- Primeira tentativa parou na reserva de codigo por falta de EXECUTE no papel efemero. Corrigido somente no executor isolado, com a assinatura exata ja usada pela fixture canonica. Recibo anterior preservado privadamente; segunda execucao exit 0, papel desabilitado e container parado ao final.
+- Enderecos: `criarTransacaoEnderecoPilotoPostgres` reutiliza `persistirEnderecoClienteGrupoLegado` e `ClienteLocalService`; uma conexao/transacao para endereco, auditoria e ledger. Lock do cliente mestre antes da primeira consulta ao mapa; RBAC sem wildcard e rechecagem antes do commit; executor expira fora da transacao.
+- PostgreSQL real com fixture sintetica: 6 PASS / 0 FAIL / 0 SKIP, cobrindo atomicidade, replay, falha de auditoria/mapa, negacao tardia, contexto indevido, campos ausentes/conflitantes, concorrencia entre duas conexoes, reversao e protecao contra edicao externa. A primeira fixture colidia por repetir o mesmo endereco; corrigida com numeros sinteticos distintos sem relaxar deduplicacao.
+- Dados reais de endereco permanecem pendentes por campos sem fonte e conflitos; testar o ledger nao comprova completude cadastral nem autoriza preencher numero/pais por suposicao. Nenhuma carga real de enderecos executada.
+- Correcao individual: proprietario confirmou o ID completo documentado privadamente, condicionado a procedencia. Conferidos ID do apontamento original, indice/fonte/hash/parser, snapshot integral, codigo canonico, codigo legado, origem e lote; distincao dos codigos e divergencia da mascara inicial explicadas no recibo privado antes de aplicar. Somente residuo do nome removido no banco isolado; 3 mutacoes auditadas, replay reutilizado, reversao comprovada e reaplicacao final. ID/codigos/status inativo/vinculos/procedencia/outros clientes preservados. Tentativas tecnicas anteriores preservadas, sem carga operacional.
+- Evidencias detalhadas, manifestos, mapas, autorizacoes e logs do ensaio permanecem fora do checkout. Originais/HD/captura/worktrees preservados; agendamento Legado continua pausado e rotas operacionais inativas.
+- Revisao assistida: projecao no `pilot-functional-policy.mjs`, sem modulo/rota paralelo. Quatro situacoes textuais, filtros na demonstracao privada, motivos por campo e operacoes afetadas bloqueadas; 5 testes sinteticos PASS. Indicadores nao concedem permissao, reativacao ou liberacao operacional. Historico revertido e clientes nao ativos permanecem somente consulta/conciliacao. Incerto nao gera cobranca, baixa, saldo ou emissao.
+- Publicacao deste lote nao libera carga operacional, migrations operacionais, VPS ou emissao fiscal. Proximo: revisao assistida das evidencias faltantes, sem preenchimento ficticio; manter gates de destino, backup, reconciliacao e reversao antes de qualquer carga real.
+
 
 ## #344 - invariantes historicas e evolucao autorizada reconciliadas (2026-10-24)
 
