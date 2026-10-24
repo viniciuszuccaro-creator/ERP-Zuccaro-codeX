@@ -12,13 +12,18 @@ const fields = { id: z.string().uuid(), operationId: z.string().uuid(), expected
   sourceSystem: z.string().min(1).max(80), legacyCode: z.string().min(1).max(80), batch: z.string().uuid() };
 const proof = z.object({ fileSha256: hashSchema, rowSha256: hashSchema,
   parser: z.literal('csv-rfc4180-doublequote-v1') }).strict();
+const reviewProofSchema = z.object({ recordKey: z.string().min(1).max(160), sourceFingerprint: hashSchema,
+  proposalHash: hashSchema, bindingHash: hashSchema, recordHash: hashSchema, authorizationRef: z.string().uuid(),
+  reason: z.string().trim().min(1).max(500),
+  evidenceRefs: z.array(z.object({ ref: z.string().regex(/^[a-zA-Z0-9:_-]{1,120}$/), sha256: hashSchema }).strict()).min(1).max(20),
+}).strict();
 const commandSchema = z.discriminatedUnion('mode', [
-  z.object({ ...fields, mode: z.literal('apply'), correctedName: z.string().trim().min(1).max(180), sourceProof: proof }).strict(),
+  z.object({ ...fields, mode: z.literal('apply'), correctedName: z.string().trim().min(1).max(180), sourceProof: proof, reviewProof: reviewProofSchema.optional() }).strict(),
   z.object({ ...fields, mode: z.literal('reverse'), originalOperationId: z.string().uuid() }).strict(),
 ]);
 const receiptSchema = z.object({ kind: z.literal('legacy_inactive_name_correction'),
   operationId: z.string().uuid(), commandHash: hashSchema, mode: z.enum(['apply', 'reverse']),
-  nome: z.string().nullable(), fingerprint: hashSchema, sourceProof: proof }).strict();
+  nome: z.string().nullable(), fingerprint: hashSchema, sourceProof: proof, reviewProof: reviewProofSchema.optional() }).strict();
 export const legacyNameFingerprint = (value: unknown) => {
   const bytes = JSON.stringify(value);
   if (bytes === undefined) throw new Error('LEGACY_SNAPSHOT_REQUIRED');
@@ -29,6 +34,9 @@ const conflict = () => new AppError(409, 'LEGACY_NAME_CORRECTION_CONFLICT', 'Ina
 /** Specialized canonical lifecycle: no restore, generic edit, HTTP route or permission grant. */
 export async function correctInactiveLegacyName(deps: { repo: ClienteRepository; audit: AuditRepository; rbac: RbacGuard },
   ctx: RequestContext, input: unknown) {
+  // Capture caller-owned inputs before asynchronous authorization.
+  ctx = { ...ctx };
+  const parsed = commandSchema.safeParse(input);
   if (!z.string().uuid().safeParse(ctx.groupId).success || !z.string().uuid().safeParse(ctx.actorId).success
     || ctx.empresaId || ctx.scopeType === 'empresa') {
     throw new AppError(403, 'LEGACY_GROUP_SCOPE_REQUIRED', 'Explicit Group actor required');
@@ -40,7 +48,6 @@ export async function correctInactiveLegacyName(deps: { repo: ClienteRepository;
     }
   };
   await authorize();
-  const parsed = commandSchema.safeParse(input);
   if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid inactive name correction command');
   const command = parsed.data, digest = legacyNameFingerprint({ group: ctx.groupId, actor: ctx.actorId, command });
   return deps.repo.withTransaction(async q => {
@@ -67,7 +74,8 @@ export async function correctInactiveLegacyName(deps: { repo: ClienteRepository;
     if (legacyNameFingerprint(before) !== command.expectedFingerprint) throw conflict();
     let target: string | null;
     let sourceProof: z.infer<typeof proof>;
-    if (command.mode === 'apply') { target = command.correctedName; sourceProof = command.sourceProof; }
+    let reviewProof: z.infer<typeof reviewProofSchema> | undefined;
+    if (command.mode === 'apply') { target = command.correctedName; sourceProof = command.sourceProof; reviewProof = command.reviewProof; }
     else {
       const originals = history.filter(e => {
         const r = receiptSchema.safeParse(e.afterData);
@@ -79,6 +87,7 @@ export async function correctInactiveLegacyName(deps: { repo: ClienteRepository;
       if (!originalBefore.success || original.fingerprint !== command.expectedFingerprint) throw conflict();
       target = originalBefore.data.nome;
       sourceProof = original.sourceProof;
+      reviewProof = original.reviewProof;
     }
     if (target === before.nome) throw conflict();
     await deps.repo.update({ groupId: ctx.groupId, empresaId: null }, command.id, { nome: target }, q);
@@ -86,7 +95,8 @@ export async function correctInactiveLegacyName(deps: { repo: ClienteRepository;
     if (!after || !isDeepStrictEqual(after, { ...before, nome: target, updated_at: after.updated_at })) {
       throw new AppError(409, 'LEGACY_NAME_CORRECTION_MISMATCH', 'Unexpected canonical name correction change');
     }
-    const common = { kind: 'legacy_inactive_name_correction', operationId: command.operationId, commandHash: digest, mode: command.mode, sourceProof };
+    const common = { kind: 'legacy_inactive_name_correction', operationId: command.operationId, commandHash: digest, mode: command.mode, sourceProof,
+      ...(reviewProof ? { reviewProof } : {}) };
     await deps.audit.append({ ...ctx, empresaId: null, entity: 'Cliente', entityId: command.id, action: 'update',
       beforeData: { ...common, nome: before.nome, fingerprint: command.expectedFingerprint },
       afterData: { ...common, nome: target, fingerprint: legacyNameFingerprint(after) } }, q);

@@ -1,3 +1,213 @@
+## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03) |
+| tip anterior | `2d1f289f` · CI SUCCESS · mergeable=CONFLICTING / DIRTY vs tip atual |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+| parecer CONT-02/03 | comentário independente na PR#342 por SHA (`4e02bc73` / `3eccd369`) |
+
+## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
+
+Continuidade do heartbeat nativo 2026-10-24T18:57:07.971Z. CONT-02 concluída
+em 4e02bc73715ca535762f6ceae258ec5b3ca32ab6, CI4522/4523 SUCCESS, checkout
+limpo e reservas/trava liberadas: recibos344/6388410555 e342/6388418096.
+O pacote manual bf1854fb não foi contado como prova automática. A mesma
+automação foi habilitada a cada15min após essa prova, condicionada à
+disponibilidade do desktop/navegador/Codespace, sem autonomia permanente.
+
+CONT-03/tarefa6388273674, reserva6388452431, base local=remota4e02bc73.
+Mesmo Codespace/branch Codex; origem sanitizada, status/processos conferidos,
+app-server1601 fora do checkout, trava exclusiva própria. Nenhuma branch
+ou reserva Cursor350/Comercial360347 editada.
+
+A mesma suíte cliente-legacy-name agora executa PGlite e realCrmFixture,
+com createPoolDbClient e contexto de tenant por transação. A adaptação
+anterior baseada apenas em sessão falhou no PostgreSQL sob RLS
+(snapshot nulo; PGlite11 PASS, PostgreSQL1 FAIL). O contexto canônico
+resolve a fixture sem ampliar políticas da aplicação nem alterar serviço.
+LOGIN efêmero restrito, NOSUPERUSER/NOBYPASSRLS; sem contexto enxerga0clientes.
+A prova identifica UPDATE do cliente e INSERT de auditoria na mesma
+conexão/transação; replay sem escrita, releitura, reversão e reviewProof
+persistido. Os dez subtestes anteriores foram preservados. Negativos
+adicionais exercitam REVOKE SELECT/UPDATE/INSERT e trigger SQL de auditoria,
+com rollback integral. O runner PostgreSQL existente exige esta variante
+com DATABASE_URL isolada e rejeita qualquer skip; fora dele a variante real
+sem URL é explicitamente skip, nunca prova de persistência.
+
+Fixture local: imagem postgres16 já presente, container efêmero próprio
+com porta somente127.0.0.1, banco sintético e senha não publicada. Nenhum
+VPS/destino operacional/dado real acessado; cinco gates de carga continuam.
+Checks/SHA/CI e liberação final devem ser conferidos no recibo GitHub
+por SHA; solicitação de revisão e CI não constituem aprovação ou merge.
+Sem carga/piloto real/transferência/deploy/migration operacional/flags/canais.
+A automação separada do Legado permanece PAUSED.
+
+Validação local desta candidata: audit-baseline, raiz2280 PASS/0FAIL/0SKIP,
+lint/typecheck/build e server:typecheck/build exit0. Foco23 PASS/0FAIL/0SKIP
+(11PGlite+12PostgreSQL), inclusive ambas escritas observadas na mesma
+transação. Runner existente:18suítes/108testes/0FAIL/0SKIP após o MESMO
+bootstrap migrate+seed sintético da CI. Primeira tentativa sem esse preparo
+falhou em R11 por audit_logs ausente; log preservado, não baseline relaxada.
+Backend padrão completo não repetido localmente; CI da candidata pendente
+no momento deste commit, sem alegar verde antes da confirmação por SHA.
+Nenhum próximo item independente novo consta nos deltas344; após CI e
+liberação, deixar revisão cruzada por SHA pronta e pausar recorrência se
+a fila continuar sem item executável. Não fabricar pacote ou só monitorar.
+
+## #344 CONT-02 - ensaio automatico executando tarefa real (2026-10-24)
+
+Origem REAL: heartbeat nativo revis-o-e-acesso-erp-45-e-46 recebido em
+2026-10-24T18:57:07.971Z, apos o turno manual ser liberado. Nao contar o pacote
+manual bf1854fb como prova automatica. HANDOFF/deltas e tarefa6387973425 foram
+lidos; aceite/reserva automatica6388240061. Mesmo Codespace/branch/checkout,
+base local=remota bf1854fb, status inicialmente limpo, origin sanitizado e
+AGENTS inalterado por hash. App-server1601 fora do checkout sem execWriter;
+trava exclusiva /tmp/erp-codex-344-writer.lock criada com token proprio.
+
+Defeito reproduzido por teste ANTES do fix: Missing expected exception para
+entrada applied=true com commandHash recalculado e outra operacao valida.
+collectAssistedReviewProposal agora exige applied=false,
+operationalAuthorized=false e status PENDING_CANONICAL_REVALIDATION tambem
+em CADA entrada anterior do journal. Todos hashes anteriores, duplicidade de
+operationId e conflito de comando continuam verificados sem relaxamento.
+Nenhuma escrita mestre, permissao, grant, rota, migration ou carga adicionada.
+
+Foco journal11 PASS/0 FAIL/0 SKIP cobre estados adulterados/ausentes com hash
+integro, hash quebrado, operacao duplicada/conflitante, replay identico e
+clonagem sem mutar o journal do chamador. Geral raiz2280 PASS/0 FAIL/0 SKIP.
+Backend focado canonico11 PASS/0 FAIL/0 SKIP; audit baseline/lint/typechecks/
+builds raiz e server/diff-check exit0. Comandos de fechamento AGENTS executados;
+backend completo inalterado nao repetido localmente: evidencia anterior533PASS/
+24SKIP da base e distinta, nao foi declarada nova execucao. Nova CI executa a
+composicao final e precisa ser conferida pelo SHA publicado. PGlite/local nao
+substituem prova PostgreSQL especifica nem gates operacionais.
+
+Publicacao/CI/liberacao final da trava propria e reservas serao registradas
+na344/342 por SHA. Prova automatica completa exige tambem push confirmado,
+CI verde, checkout limpo e propria trava removida. Periodicidade15min SOMENTE
+pode ser habilitada depois disso; configuracao/Markdown nao bastam. Continuar
+condicionado a desktop/navegador/Codespace disponiveis, sem prometer autonomia
+permanente ou criar scheduler/daemon/recurso pago/clone/chave alternativo.
+
+Proximo pacote independente ja ASSUMIDO: CONT-03, comentario6388273674.
+Pendencia comprovada: cliente-legacy-name.test.ts usa apenas localCrmFixture;
+runner PostgreSQL obrigatorio nao inclui essa suite. Reutilizar a MESMA suite
+e realCrmFixture existente para provar revisao sintetica no PostgreSQL real
+isolado, LOGIN restrito/RLS, auditoria/releitura/replay/reversao e negativos,
+com runner exigindo essa variante sem skips. Paths previstos: suite existente,
+server/scripts/runPostgresTests.mjs e hunks HANDOFF/STATUS; helper compartilhado
+somente com dependencia demonstrada e reserva adicional. Ainda sem edicao
+nesses paths: CONT-02 conserva exclusividade ate o fechamento. Nao confundir
+PG geral verde com essa prova especifica ou com destino operacional liberado.
+
+Codex=legado344/revisao assistida/preparacao da carga. Cursor=PR350/recuperacao
+ERP/Comercial360347. Revisao cruzada por SHA diretamente no GitHub, sem o
+proprietario copiar contexto, nenhum agente editando branch do outro. Dados
+privados/originais/IDs/codigos/vinculos e cinco gates preservados. Sem novo
+piloto real, transferencia, VPS, carga operacional, merge, deploy, migration
+operacional ou ativacao de flags/providers/canais. Legado separadoPAUSED.
+
+## #344 - revisao sintetica ligada ao servico canonico (2026-10-24)
+
+Responsavel Codex, pacote GitHub6387904051/6387938627; base dc14ed98 na mesma
+branch/checkout/Codespace. O Codespace parou durante a retomada e foi retomado
+no MESMO ID; HEAD/status reconferidos, sem escritor concorrente. Codex app-server
+identificado fora do checkout, sem execWriter/lock Git. Nenhum novo clone,
+Codespace, plano, chave ou recurso pago; nenhum dado real lido/aplicado.
+
+applySyntheticInactiveNameReview no modelo existente recebe o envelope de
+rascunho exportado, nunca um alvo ou autorizacao fornecido por ele. Exige
+cliente/fonte SYNTHETIC e binding ISOLATED_SYNTHETIC, campo nome, identidade,
+origem/prova/fingerprint exatos e RBAC importar+editar. O autorizador externo
+ao rascunho deve confirmar hashes da proposta, binding e registro, ator/Grupo
+e referencia UUID explicita. Inputs sao capturados antes dos awaits. Nao ha
+autorizador operacional instalado nem aprovacao humana real fabricada.
+
+O caminho chama ClienteService.correctInactiveLegacyName existente: schema,
+CAS, RBAC/rechecagem, update e auditoria na mesma transacao. ReviewProof estrito
+opcional acrescenta hashes/referencia/justificativa/evidencias ao recibo; recibos
+anteriores continuam aceitos. Reversao recupera essa prova do recibo persistido,
+sem aceita-la novamente do comando de reversao. Reexport no executor de revisao
+existente; sem modulo/endpoint/importador/migration/permissao paralelos.
+
+Fixture PGlite sintetica cobre rascunho->autorizacao->persistencia->releitura
+SQL->replay->reversao com prova auditada preservada. Nega envelope adulterado,
+alvo nao confiavel, origem nao sintetica, empresa/grupo incorretos, fonte/prova
+alterada, evidencia ausente, autorizacao divergente/ausente, nome fora do schema;
+falha de auditoria reverte e replay com outra autorizacao conflita. Mantem
+ID/codigos/inatividade/vinculos/outros campos. UI privada permanece bloqueada:
+nao e liberacao de revisoes reais ou prova operacional PostgreSQL.
+
+Checks locais: foco11 PASS/0 FAIL/0 SKIP; raiz2279 PASS/0 FAIL/0 SKIP;
+backend557 total,533 PASS/0 FAIL/24 SKIP. Audit baseline/lint/typecheck/build
+raiz e server/diff-check exit0. Comandos padrao AGENTS executados, recibo de
+fechamento no GitHub por SHA; CI nova deve ser conferida, nunca substituida por
+CI anterior. Skips locais nao comprovam PostgreSQL real. Nenhuma carga,
+transferencia, piloto real, VPS, merge, deploy ou migration operacional.
+
+Fila continua: Codex assume CONT-02, comentario6387973425 da344. Defeito
+reproduzido sem escrita mestre: journal aceita entrada applied=true com hash
+recalculado ao adicionar outra operacao valida. Proximo delta exclusivo:
+collectAssistedReviewProposal e tests/legado-review-workflow.test.js, preservando
+todos hashes/replay/duplicidades. Reserva deste pacote liberada apos push;
+proxima reserva exige HEAD/status/processos novamente, sem editar Cursor.
+Cursor permanece responsavel PR350/ERP/Comercial360347 e revisao cruzada por SHA.
+
+Retomada automatica: heartbeat local existente e configuracao de disparo unico
+COUNT=1 suportados pelo app, ainda PAUSED enquanto este escritor fecha o lote.
+O ciclo automatico receber tarefa->implementar->testar->publicar AINDA NAO foi
+comprovado. Somente ensaio unico de CONT-02 pode ser armado apos liberar escritor;
+recorrencia periodica nao deve ser habilitada antes dessa prova. O canal depende
+do desktop/navegador/Codespace disponiveis; nao declarar autonomia permanente por
+Markdown ou por CI de execucao manual. Sem acionamento funcional, manter proxima
+tarefa pronta no GitHub e informar a limitacao. Cinco gates operacionais e
+agendamento separado LegadoPAUSED preservados; historico abaixo onde divergente.
+
+## #344 - captura estavel da correcao canonica (2026-10-24)
+
+Retomada no MESMO Codespace/checkout e branch da PR342; base
+4ab7a61b8ea63d55dfd18431740723a6bae1456f, inicialmente limpo e sem escritor
+Node/Codex/Cursor concorrente encontrado. Origin canonico conferido. Nenhum
+clone de desenvolvimento neste PC, Codespace novo ou acesso VPS alegado.
+
+Defeito reproduzido em fixture SQL sintetica: o comando era lido depois do
+primeiro await de autorizacao; uma referencia compartilhada podia trocar nome
+e evidencia antes da persistencia. O servico existente agora captura os campos
+primitivos do contexto e o resultado do schema estrito ANTES desse await.
+Erro de validacao continua retornado depois do RBAC inicial; rechecagens dentro
+da transacao, CAS, auditoria, replay e reversao existentes foram preservados.
+Sem endpoint, permissao, migration, reativacao ou importador adicional.
+
+Contraprova anterior FAIL (valor nao revisado persistido); apos correcao, foco
+10 PASS/0 FAIL/0 SKIP. Tres casos adicionais provam comando/prova capturados,
+tenant/ator estaveis apesar de mutacao externa, e revogacao antes do commit
+com rollback de cadastro E auditoria. Releitura SQL, replay e reversao tambem
+exercitados; ID/codigo/inatividade/procedencia/outros campos preservados.
+Trata-se de PGlite sintetico, NAO de prova operacional PostgreSQL.
+
+Fechamento local: raiz2279 PASS/0 FAIL/0 SKIP; backend556 total,
+532 PASS/0 FAIL/24 SKIP. Audit baseline, lint, typecheck/build raiz e server,
+e diff-check exit0. Comandos: npm run audit:baseline; npm test; npm run lint;
+npm run typecheck; npm run build; npm --prefix server test;
+npm --prefix server run typecheck; npm --prefix server run build;
+git diff --check. Skips locais por DATABASE_URL ausente nao homologam banco.
+CI do novo SHA deve ser conferida separadamente na PR342.
+
+Cursor350 atual2d1f289f incorporou a base4ab7a61b, sem delta comercial extra
+sobre8ba3b5bf; CI4505/run40111304731 SUCCESS. Branch/arquivos Cursor intactos;
+aprovacao visual e integracao nao concedidas. Previa5173 nao foi iniciada
+nesta retomada. GitHub e terminal web do Codespace comprovados; VPS nao testada.
+
+Backup/pilotos/revisao privada anteriores da344 NAO repetidos. Proxima entrega:
+ligar propostas autorizadas ao caminho canonico, primeiro isolado, sem inferir
+campos nem promover recibos revertidos. Os cinco gates abaixo continuam abertos.
+Este lote corrige o defeito do servico; nao declara essa ligacao completa,
+carga operacional, merge, deploy, migration ou homologacao. Reservas deste
+lote sao liberadas apos commit/push; revisao independente permanece pendente.
+
 ## CURSOR — #350 merge consolidação `4ab7a61b` (2026-10-24)
 
 | Item | Valor |
