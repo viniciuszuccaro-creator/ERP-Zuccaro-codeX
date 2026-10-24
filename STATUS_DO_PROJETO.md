@@ -1,3 +1,15 @@
+## CURSOR — #347 evolução prévia (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base consolidação | #342 tip `c657d0a0` |
+| branch Cursor | `cursor/comercial360-proposta-347-evolucao-392b` |
+| Codespace | **não acessível** neste runner |
+| entregue | painéis/ações sintética · código≠ID · anti-duplo Novo orçamento |
+| testes focados | PASS |
+| visual owner | pendente |
+| #344 Codex | não tocado |
+
 ## #344 - invariantes historicas e evolucao autorizada reconciliadas (2026-10-24)
 
 A CI4476/4477 aprovou backend e composicao de c90d629e, mas a raiz revelou

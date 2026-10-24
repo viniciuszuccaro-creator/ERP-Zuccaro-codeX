@@ -1,3 +1,17 @@
+## CURSOR — #347 evolução prévia Comercial (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · **sem** Codespace montado (`/workspaces/...` ausente; API codespaces 403) |
+| base | `codex/consolidacao-infra-20261017` tip **`c657d0a0`** (ref inicial `36e123c8` é ancestral) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` |
+| pacote | Evolução da proposta #347 em `OrcamentosTab`/`OrcamentoProposalAside` existentes |
+| mudança | Painéis cliente/produtos/resumo/ações · código+ID técnico · anti clique-duplo · fixture ilustrativa |
+| fora de escopo | #344 Legado · CentralCliente360Panel mutação · pedidoService/orcamentoService TX · VPS |
+| testes | `comercial-proposal-aside` + `orcamento-component-behavior` #347 · PASS |
+| prévia | DEV `?proposta=comercial360` · dados sintéticos · gravação bloqueada · aprovação visual pendente |
+| próxima | Aprovação visual owner · pacotes cadastros independentes · não escrever no Codespace sem janela |
+
 ## #344 - invariantes historicas e evolucao autorizada reconciliadas (2026-10-24)
 
 A CI4476/4477 aprovou backend e composicao de c90d629e, mas a raiz revelou
