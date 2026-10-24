@@ -145,3 +145,60 @@ function reconcile(actual, payload) {
     }
   }
 }
+
+/** Binds canonical service, audit and map to one transaction; serializes the first map insertion on its parent. */
+export function criarTransacaoEnderecoPilotoPostgres({ db, ctx, criarServico, rbacGuard } = {}) {
+  const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(value);
+  if (!db?.withTenantContext || !db.withTransaction || typeof criarServico !== 'function'
+      || !rbacGuard?.assertAllowed || !uuid(ctx?.groupId) || !uuid(ctx?.actorId)
+      || ctx.empresaId != null || ctx.scopeType === 'empresa') failure('LEGACY_ADDRESS_TRANSACTION_CONTRACT_REQUIRED');
+  const context = Object.freeze({ ...ctx, empresaId: null });
+  return async (source, work) => {
+    if (source?.groupId !== context.groupId || !uuid(source.clienteId)
+        || typeof source.key !== 'string' || !source.key || source.key.length > 512) failure('LEGACY_ADDRESS_SCOPE_INVALID');
+    const requiredFields = ['nome', 'cep', 'logradouro', 'numero', 'bairro', 'cidade', 'uf', 'pais'];
+    if (requiredFields.some(k => typeof source.payload?.[k] !== 'string' || !source.payload[k].trim())
+        || !Array.isArray(source.payload.finalidades) || source.payload.finalidades.length === 0
+        || !/^(?:[0-9]{8}|[0-9]{5}-[0-9]{3})$/.test(source.payload.cep)
+        || !/^[A-Za-z]{2}$/.test(source.payload.uf)
+        || (Array.isArray(source.conflicts) && source.conflicts.length > 0)) failure('LEGACY_ADDRESS_FIELDS_UNPROVEN');
+    return db.withTenantContext(context, () => db.withTransaction(async executor => {
+      let active = true, failed = false;
+      const alive = () => {
+        if (!active) failure('LEGACY_ADDRESS_EXECUTOR_EXPIRED');
+        if (failed) failure('LEGACY_ADDRESS_ROLLBACK_REQUIRED');
+      };
+      const query = async (sql, values) => {
+        alive();
+        try { return await executor.query(sql, values); }
+        catch (error) { failed = true; throw error; }
+      };
+      const q = Object.freeze({ query });
+      const bound = Object.freeze({ pool: null, query,
+        withTransaction: async fn => { alive(); try { return await fn(q); } catch (error) { failed = true; throw error; } },
+        checkConnection: async () => (await query('SELECT 1 AS ok')).rows[0]?.ok === 1,
+        end: async () => failure('LEGACY_ADDRESS_TRANSACTION_OWNS_CONNECTION') });
+      const required = new Map();
+      const rbac = Object.freeze({ assertAllowed: async (scope, module, entity, action, options = {}) => {
+        alive();
+        if (scope.groupId !== context.groupId || scope.actorId !== context.actorId || scope.empresaId != null) failure('LEGACY_ADDRESS_SCOPE_INVALID');
+        try {
+          await rbacGuard.assertAllowed(scope, module, entity, action, { ...options, allowGlobalWildcard: false, executor: q });
+          required.set(JSON.stringify([module, entity, action]), { module, entity, action });
+        } catch (error) { failed = true; throw error; }
+      } });
+      try {
+        await rbac.assertAllowed(context, 'Cadastros', 'cliente', 'importar');
+        const parent = await query('SELECT id FROM clientes WHERE group_id=$1 AND empresa_id IS NULL AND id=$2 AND ativo=true FOR UPDATE',
+          [context.groupId, source.clienteId]);
+        if (parent.rowCount !== 1) failure('LEGACY_ADDRESS_MAP_SCOPE_DENIED');
+        const result = await work({ ctx: context, rbacGuard: rbac,
+          service: criarServico(bound, rbac), registry: criarRegistroEnderecoPilotoPostgres(q,
+            { groupId: context.groupId, clienteId: source.clienteId }) });
+        alive();
+        for (const rule of required.values()) await rbac.assertAllowed(context, rule.module, rule.entity, rule.action);
+        return result;
+      } finally { active = false; }
+    }));
+  };
+}

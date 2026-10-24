@@ -1,3 +1,4 @@
+import { runProductPilot } from './pilot-functional-products.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -267,5 +268,6 @@ export async function reviewFunctionalCompleteness() {
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv[2] === '--review') await reviewFunctionalCompleteness();
+  else if (process.argv[2] === '--products') await runProductPilot({ base, repo, json, run, mod, pause });
   else await runFunctionalPilot();
 }

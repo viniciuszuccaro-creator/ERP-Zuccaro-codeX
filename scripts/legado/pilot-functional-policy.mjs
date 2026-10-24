@@ -224,3 +224,41 @@ export function classifyLegacyAddresses(input, { validateAddress } = {}) {
     missingRequired: entries.filter(e => e.missing.length).length, conflicting: entries.filter(e => e.conflicts.length).length,
     entries, groups: [...groups.values()], fieldsInvented: 0 };
 }
+
+export function isReleasedProductPilotRow(raw) {
+  return raw?.status === 'Ativo' && ['quarantine_reason', 'quarantine_reasons']
+    .every(field => raw[field] == null || raw[field] === '' || raw[field] === '[]');
+}
+
+/** Review projection only: never grants permissions or authorizes an operational load. */
+export function projectAssistedLegacyReview(evidence) {
+  const operations = ['cadastro.utilizar', 'endereco.entrega', 'financeiro.cobrar', 'financeiro.baixar',
+    'estoque.disponibilizar', 'fiscal.emitir'];
+  const labels = {
+    VALIDATED_ELIGIBLE: 'Validado e elegivel para uso',
+    IMPORTED_PENDING: 'Importado com pendencia nao critica',
+    REVIEW_REQUIRED: 'Disponivel para revisao, com operacao afetada bloqueada',
+    HISTORY_ONLY: 'Historico somente para consulta/conciliacao',
+  };
+  if (!evidence || !Array.isArray(evidence.issues)) throw new Error('ASSISTED_REVIEW_EVIDENCE_REQUIRED');
+  const reasons = evidence.issues.map(issue => {
+    if (!issue || typeof issue.field !== 'string' || !issue.field || typeof issue.reason !== 'string'
+        || !issue.reason || typeof issue.critical !== 'boolean' || !Array.isArray(issue.blocks)
+        || issue.blocks.some(op => !operations.includes(op))) throw new Error('ASSISTED_REVIEW_FIELD_CONTRACT_REQUIRED');
+    return { field: issue.field, reason: issue.reason, critical: issue.critical, blocks: [...new Set(issue.blocks)] };
+  });
+  const gates = ['identityVerified', 'scopeVerified', 'canonicalValidated', 'reconciled'];
+  const unproven = gates.filter(gate => evidence[gate] !== true);
+  for (const field of unproven) reasons.push({ field, reason: 'EVIDENCE_NOT_PROVEN', critical: true, blocks: operations });
+  if (evidence.imported !== true) reasons.push({ field: 'persistence', reason: 'NOT_IMPORTED', critical: true, blocks: operations });
+  if (evidence.ambiguousIdentity === true || evidence.destinationConflict === true)
+    reasons.push({ field: 'identity', reason: 'IDENTITY_OR_DESTINATION_CONFLICT', critical: true, blocks: operations });
+  const history = evidence.historyOnly === true || evidence.sourceInactive === true || evidence.batchReverted === true;
+  const critical = reasons.some(reason => reason.critical);
+  const status = history ? 'HISTORY_ONLY' : critical || evidence.imported !== true ? 'REVIEW_REQUIRED'
+    : reasons.length ? 'IMPORTED_PENDING' : 'VALIDATED_ELIGIBLE';
+  const blocked = new Set(history ? operations : reasons.flatMap(reason => reason.blocks));
+  if (status !== 'VALIDATED_ELIGIBLE') for (const op of operations.filter(op => /^(financeiro|estoque|fiscal)\./.test(op))) blocked.add(op);
+  return { status, label: labels[status], reasons, blockedOperations: [...blocked].sort(),
+    originalPreserved: true, autoMerge: false, grantsPermissions: false, operationalLoadAuthorized: false };
+}
