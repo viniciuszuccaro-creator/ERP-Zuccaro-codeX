@@ -1,3 +1,14 @@
+## CURSOR — #351 Banco/Cargo/Departamento + merge `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | tip **`4ab7a61b`** |
+| merge | `cb5e20aa` · conflitos STATUS/HANDOFF preservados |
+| lote | BancoForm · CargoForm · DepartamentoForm · `prevUpdatedRef` + anti-duplo |
+| fora | MarcaForm · #344 · sem merge/deploy |
+| #350 | tip **`2d1f289f`** MERGEABLE CLEAN · CI 6/6 |
+| testes | `cadastros-reopen-representante-updated` 6 PASS |
+
 ## CURSOR — #351 merge consolidação `4ab7a61b` (2026-10-24)
 
 | Item | Valor |

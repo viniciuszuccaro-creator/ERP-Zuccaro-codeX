@@ -62,3 +62,20 @@ test('UnidadeMedida, GrupoProduto e SetorAtividade reabrem por updated_date com 
     assert.match(text, /isSubmitting/);
   }
 });
+
+test('Banco, Cargo e Departamento reabrem por updated_date com código/ID', async () => {
+  for (const [rel, action] of [
+    ['src/components/cadastros/BancoForm.jsx', 'codigo-registro-banco'],
+    ['src/components/cadastros/CargoForm.jsx', 'codigo-registro-cargo'],
+    ['src/components/cadastros/DepartamentoForm.jsx', 'codigo-registro-departamento'],
+  ]) {
+    const text = await source(rel);
+    assert.match(text, /prevIdRef/);
+    assert.match(text, /prevUpdatedRef/);
+    assert.match(text, /idChanged \|\| updatedChanged/);
+    assert.match(text, /dadosIniciais\?\.updated_date/);
+    assert.match(text, /CadastroCodigoRegistroField/);
+    assert.match(text, new RegExp(action));
+    assert.match(text, /isSubmitting/);
+  }
+});
