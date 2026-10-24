@@ -18,7 +18,7 @@ function once(source, current, previous) {
 const forms = [
   ['CadastroClienteCompleto', 'cliente', 'Cliente', 'c1318e93e891d62d85036bb169a75eacfe100d61cbbd80385ae35383ff09173a'],
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'a760dbf88f5d61f1a070db1e09f03790d10e042485d73300c2b0101e9f9ca966'],
-  ['RepresentanteFormCompleto', 'representante', 'Representante', 'fcb4246140ad478bc9d245c2dc4b6def00142d988dda3794ec1f944a96dbfc50'],
+  ['RepresentanteFormCompleto', 'representante', 'Representante', 'fab5df9eea0efaf66c500a82b844a8b0b14f91e5454a3126ec020fa954be4206'],
 ];
 for (const [name, recordKey, entity, previousHash] of forms) {
   const path = `src/components/cadastros/${name}.jsx`;
