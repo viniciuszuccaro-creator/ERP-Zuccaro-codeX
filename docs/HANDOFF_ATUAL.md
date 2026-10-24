@@ -1,3 +1,12 @@
+## CURSOR — #351 CI verde + FormaPagamento/Região (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`4e90d897`** · CI 6/6 SUCCESS · mergeable clean |
+| lote | FormaPagamentoForm(+Completo) + RegiaoAtendimentoForm · `prevUpdatedRef` |
+| fora | MarcaForm (reserva) · #344 Legado |
+| testes | `cadastros-reopen-representante-updated` ampliado |
+
 ## CURSOR — Representante reabrir+código (2026-10-24)
 
 | Item | Valor |

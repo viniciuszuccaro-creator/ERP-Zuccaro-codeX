@@ -42,6 +42,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   const [loadFailed, setLoadFailed] = useState(false);
   const [loading, setLoading] = useState(Boolean(regiaoId && !dadosIniciaisProps));
   const prevIdRef = useRef(dadosIniciaisProps?.id || null);
+  const prevUpdatedRef = useRef(dadosIniciaisProps?.updated_date);
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciaisProps?.empresa_id || dadosIniciaisProps?.group_id);
   const podeCriar = canCreate("Cadastros", "RegiaoAtendimento") || canCreate("Logistica", "RegiaoAtendimento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "RegiaoAtendimento") || canEdit("Logistica", "RegiaoAtendimento") || canEdit("Cadastros", null);
@@ -97,8 +98,14 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     if (!(open || windowMode) || !isFormScopeCurrent()) return;
     let cancelled = false;
     const nextId = dadosIniciaisProps?.id || regiaoId || null;
-    if (dadosIniciaisProps && nextId && nextId !== prevIdRef.current) {
+    const propsUpdatedChanged = Boolean(
+      dadosIniciaisProps?.id
+        && dadosIniciaisProps?.updated_date
+        && dadosIniciaisProps.updated_date !== prevUpdatedRef.current,
+    );
+    if (dadosIniciaisProps && nextId && (nextId !== prevIdRef.current || propsUpdatedChanged)) {
       prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciaisProps.updated_date;
       setLoadFailed(false);
       setLoading(false);
       setFormData(dadosIniciaisProps);
@@ -109,6 +116,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
         if (cancelled || !isFormScopeCurrent()) return;
         if (regiao?.id === regiaoId && regiao.nome_regiao) {
           prevIdRef.current = regiaoId;
+          prevUpdatedRef.current = regiao.updated_date;
           setFormData(regiao);
         } else {
           setLoadFailed(true);
@@ -123,6 +131,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
       });
     } else if (!regiaoId && !dadosIniciaisProps && prevIdRef.current !== null) {
       prevIdRef.current = null;
+      prevUpdatedRef.current = undefined;
       setLoadFailed(false);
       setLoading(false);
       setFormData({
@@ -156,7 +165,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
       });
     }
     return () => { cancelled = true; };
-  }, [regiaoId, dadosIniciaisProps?.id, open, windowMode, groupId, empresaAtual?.id]);
+  }, [regiaoId, dadosIniciaisProps?.id, dadosIniciaisProps?.updated_date, open, windowMode, groupId, empresaAtual?.id]);
 
   const buildPayload = () => ({
     ...formData,
