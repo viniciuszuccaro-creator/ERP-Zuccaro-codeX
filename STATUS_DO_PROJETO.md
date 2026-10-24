@@ -1,3 +1,12 @@
+## CURSOR — #347 PR350 CI verde `1784dbf6` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip | `1784dbf6` |
+| CI | 6/6 SUCCESS · mergeable clean |
+| base | consolidação `0b8bafa7` |
+| próxima | recuperação cadastros/submódulos (fora #344) |
+
 ## CURSOR — #347 typecheck + merge `0b8bafa7` (2026-10-24)
 
 | Item | Valor |

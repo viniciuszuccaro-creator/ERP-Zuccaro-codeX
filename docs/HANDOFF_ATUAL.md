@@ -1,3 +1,14 @@
+## CURSOR — #347 PR350 CI verde (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip | **`1784dbf6`** |
+| CI | 6/6 SUCCESS (frontend + backend + composição) |
+| mergeable | **clean** vs consolidação `0b8bafa7` |
+| PR | #350 draft — typecheck corrigido · conflitos docs resolvidos |
+| Codespace prévia | ainda **não** comprovada neste runner |
+| próxima | pacote cadastros/submódulos fora da reserva #344 · reutilizar matriz erp-integra-novo |
+
 ## CURSOR — #347 CI typecheck + rebase consolidação (2026-10-24)
 
 | Item | Valor |
