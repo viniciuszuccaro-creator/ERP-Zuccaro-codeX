@@ -1,3 +1,49 @@
+## CURSOR — #350 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
+| base merge | `codex/consolidacao-infra-20261017` tip **`4ab7a61b`** (confirmado) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
+| tip anterior | `8ba3b5bf` · CI4488/4489 SUCCESS · mergeState DIRTY vs consolidação |
+| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — Cursor+#344 preservados |
+| fora de escopo | branch Codex intocada · scripts/legado só via merge · sem merge/deploy |
+| prévia | DEV `?proposta=comercial360` · sintético · aprovação visual pendente |
+| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
+
+## CURSOR — #347 PR350 CI verde (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip | **`1784dbf6`** |
+| CI | 6/6 SUCCESS (frontend + backend + composição) |
+| mergeable | **clean** vs consolidação `0b8bafa7` |
+| PR | #350 draft — typecheck corrigido · conflitos docs resolvidos |
+| Codespace prévia | ainda **não** comprovada neste runner |
+| próxima | pacote cadastros/submódulos fora da reserva #344 · reutilizar matriz erp-integra-novo |
+
+## CURSOR — #347 CI typecheck + rebase consolidação (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
+| base merge | `codex/consolidacao-infra-20261017` tip **`0b8bafa7`** (confirmado) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
+| causa CI4480/4481 | TS2339: `historicoIlustrativo`/`formasPagamentoIlustrativas` lidos de `masters` tipado só operacional |
+| correção | props da prévia leem `proposalMasters` (fixture DEV); sem supressão/@ts-ignore |
+| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — ambos os lados preservados |
+| fora de escopo | branch Codex intocada · #344 · VPS · redesign amplo |
+| prévia | DEV `?proposta=comercial360` · sintético · ações operacionais bloqueadas · aprovação visual pendente |
+| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
+
+## CURSOR — #347 evolução prévia Comercial (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| pacote | Evolução da proposta #347 em `OrcamentosTab`/`OrcamentoProposalAside` existentes |
+| mudança | Painéis cliente/produtos/resumo/ações · código+ID técnico · anti clique-duplo · fixture ilustrativa |
+| testes | `comercial-proposal-aside` + `orcamento-component-behavior` #347 |
+
 ## Continuidade atual #344 - revisao assistida e preparacao (2026-10-24)
 
 Validacao local: suite completa 2278 PASS / 0 FAIL / 0 SKIP; audit/lint/typecheck/build/diff-check exit 0. Depois, o reforco de integridade do journal e um teste estatico adicional do roteiro SQL passaram no foco final: 11 PASS / 0 FAIL / 0 SKIP (inclui wrapper de seis testes Python sinteticos). A suite completa local citada e anterior a esse pequeno delta final; CI do SHA final executa a composicao final, sem alegar contagem local inexistente.

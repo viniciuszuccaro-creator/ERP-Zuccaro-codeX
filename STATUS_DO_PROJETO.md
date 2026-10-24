@@ -1,3 +1,33 @@
+## CURSOR — #350 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`4ab7a61b`** |
+| tip anterior | `8ba3b5bf` CI SUCCESS · conflito docs vs consolidação |
+| conflitos | STATUS/HANDOFF — ambos lados preservados |
+| fora | branch Codex intocada · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+
+## CURSOR — #347 PR350 CI verde `1784dbf6` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip | `1784dbf6` |
+| CI | 6/6 SUCCESS · mergeable clean vs `0b8bafa7` |
+| base | consolidação `0b8bafa7` |
+| próxima | recuperação cadastros/submódulos (fora #344) |
+
+## CURSOR — #347 typecheck + merge `0b8bafa7` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | consolidação tip `0b8bafa7` |
+| PR | #350 draft |
+| fix | `proposalMasters` para campos ilustrativos (TS2339) |
+| conflitos docs | resolvidos preservando Cursor+#344 |
+| visual | pendente owner |
+| Codespace prévia | não comprovada neste runner |
+
 ## #344 - revisao assistida e candidato operacional (2026-10-24)
 
 Checks locais: completa 2278 PASS/0 FAIL/0 SKIP; audit/lint/typecheck/build/diff PASS. Delta final focado 11 PASS/0 FAIL/0 SKIP; Chromium sintetico 5 PASS/0 FAIL/0 SKIP. CI final pelo SHA publicado valida a composicao final; nao confundir contagem local anterior ao ultimo teste com CI. Sem novo ensaio de banco ou carga.
