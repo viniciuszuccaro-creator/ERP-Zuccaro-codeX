@@ -1,0 +1,31 @@
+Roteiro avaliação visual — PR #350 / issue #347
+==============================================
+SHA tip: 35c7448927d9d4bca35b549e15c31af5c59c8541
+Base consolidação: 0b8bafa7cfa3c0067edf312e2289f2b1bd26e7c6
+Ambiente deste registro: Cursor Cloud (Codespace NÃO comprovado aqui)
+
+Pré-condições
+- DEV local ou Codespace com vite; query ?proposta=comercial360
+- Dados sintéticos somente (fixture preview-*)
+- Sem esperar gravação/reserva/WhatsApp reais
+
+Passos
+1. Abrir /Comercial?proposta=comercial360
+2. Ir a Orçamentos → Novo orçamento (uma vez)
+3. Desktop (≥1280): editor + aside lado a lado (xl)
+4. Tablet (~768–1024): aside empilha; painéis clicáveis
+5. Selecionar cliente sintético e produto; ajustar quantidade
+6. Alternar painéis Cliente / Produtos / Resumo / Ações — rascunho permanece
+7. Conferir Código numérico 000001 ≠ ID técnico preview-cliente / preview-produto
+8. Segundo clique em Novo orçamento — NÃO zerar seleção/itens
+9. Botão Salvar desabilitado; ações do aside disabled com título de bloqueio
+10. Fechar sem persistência operacional
+
+Critérios de aceite visual (owner)
+- Azul-claro + painéis úteis (não só cor)
+- Sem alegar dados recuperados
+- Aprovação ampla ainda pendente antes de redesign default
+
+Não declarar
+- Prévia integrada ao Codespace até smoke URL/SHA no Codespace
+- Merge/deploy/VPS
