@@ -45,3 +45,20 @@ test('RegiaoAtendimentoForm reidrata props por updated_date sem apagar carga ass
   assert.match(text, /dadosIniciaisProps\?\.updated_date/);
   assert.match(text, /CadastroCodigoRegistroField/);
 });
+
+test('UnidadeMedida, GrupoProduto e SetorAtividade reabrem por updated_date com código/ID', async () => {
+  for (const [rel, action] of [
+    ['src/components/cadastros/UnidadeMedidaForm.jsx', 'codigo-registro-unidade-medida'],
+    ['src/components/cadastros/GrupoProdutoForm.jsx', 'codigo-registro-grupo-produto'],
+    ['src/components/cadastros/SetorAtividadeForm.jsx', 'codigo-registro-setor-atividade'],
+  ]) {
+    const text = await source(rel);
+    assert.match(text, /prevIdRef/);
+    assert.match(text, /prevUpdatedRef/);
+    assert.match(text, /idChanged \|\| updatedChanged/);
+    assert.match(text, /dadosIniciais\?\.updated_date/);
+    assert.match(text, /CadastroCodigoRegistroField/);
+    assert.match(text, new RegExp(action));
+    assert.match(text, /isSubmitting/);
+  }
+});

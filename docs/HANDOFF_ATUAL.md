@@ -1,3 +1,15 @@
+## CURSOR — #351 mestres produto reabrir (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`42bde90d`** · 6/6 SUCCESS (harness Região + hashes FormaPagamento) |
+| lote | UnidadeMedidaForm · GrupoProdutoForm · SetorAtividadeForm |
+| mudança | `prevUpdatedRef` + `idChanged\|\|updatedChanged` · submit bloqueia `isSubmitting` |
+| código/ID | `CadastroCodigoRegistroField` já presente (preservado) |
+| fora | MarcaForm (reserva #344) · sem auth permissiva · sem tela duplicada |
+| #350/#347 | CI SUCCESS `8ba3b5bf` · mergeable · sem alegar prévia Codespace |
+| próxima | demais forms só `prevIdRef` (Banco/Cargo/…) ou comparação erp-integra-novo |
+
 ## CURSOR — #351 CI verde + FormaPagamento/Região (2026-10-24)
 
 | Item | Valor |

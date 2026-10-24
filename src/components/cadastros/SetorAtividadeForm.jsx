@@ -23,25 +23,42 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
   const podeEditar = hasPermission?.("Cadastros.SetorAtividade.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.SetorAtividade.excluir") || hasPermission?.("Cadastros.Produto.excluir");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome: '',
     descricao: '',
     tipo_operacao: 'Revenda',
     icone: '',
     cor: '#3B82F6',
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
+  const prevIdRef = useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = useRef(dadosIniciais?.updated_date);
   useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
+    const nextId = dadosIniciais?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosIniciais?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!contextoValido) {
       alert('Selecione um grupo ou empresa antes de salvar.');
       return;

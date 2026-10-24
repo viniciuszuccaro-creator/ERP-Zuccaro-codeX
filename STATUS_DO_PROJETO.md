@@ -1,3 +1,13 @@
+## CURSOR — #351 tip CI + mestres produto (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`42bde90d`** · harness Região + hashes stage49 FormaPagamento · 6/6 SUCCESS |
+| lote seguinte | UnidadeMedidaForm · GrupoProdutoForm · SetorAtividadeForm · `prevUpdatedRef` + anti-duplo |
+| fora | MarcaForm (reserva) · #344 Legado · sem merge/deploy |
+| #350 | tip `8ba3b5bf` CI SUCCESS · mergeable · prévia Codespace ainda não comprovada |
+| testes | `cadastros-reopen-representante-updated` (mestres produto) |
+
 ## CURSOR — #351 CI verde + FormaPagamento/Região (2026-10-24)
 
 | Item | Valor |
