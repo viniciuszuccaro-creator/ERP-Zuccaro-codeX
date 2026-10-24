@@ -98,19 +98,26 @@ test('Turno, Veiculo, Motorista e TipoDespesa reabrem por updated_date com códi
   }
 });
 
-test('MoedaIndice, OperadorCaixa e CentroCusto reabrem por updated_date', async () => {
-  for (const [rel, action, updatedNeedle] of [
-    ['src/components/cadastros/MoedaIndiceForm.jsx', 'id-tecnico-moeda-indice', 'dadosIniciais?.updated_date'],
-    ['src/components/cadastros/OperadorCaixaForm.jsx', 'id-tecnico-operador-caixa', 'dadosIniciais?.updated_date'],
-    ['src/components/cadastros/CentroCustoForm.jsx', 'codigo-registro-centro-custo', 'dadosCentroCusto?.updated_date'],
+test('CentroCusto reabre por updated_date com código/ID', async () => {
+  const text = await source('src/components/cadastros/CentroCustoForm.jsx');
+  assert.match(text, /prevIdRef/);
+  assert.match(text, /prevUpdatedRef/);
+  assert.match(text, /idChanged \|\| updatedChanged/);
+  assert.match(text, /dadosCentroCusto\?\.updated_date/);
+  assert.match(text, /CadastroCodigoRegistroField/);
+  assert.match(text, /codigo-registro-centro-custo/);
+  assert.match(text, /isSubmitting/);
+});
+
+test('MoedaIndice e OperadorCaixa permanecem na coorte ID-only (sem prevUpdatedRef manual)', async () => {
+  for (const rel of [
+    'src/components/cadastros/MoedaIndiceForm.jsx',
+    'src/components/cadastros/OperadorCaixaForm.jsx',
   ]) {
     const text = await source(rel);
-    assert.match(text, /prevIdRef/);
-    assert.match(text, /prevUpdatedRef/);
-    assert.match(text, /idChanged \|\| updatedChanged/);
-    assert.match(text, new RegExp(updatedNeedle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.match(text, /CadastroCodigoRegistroField/);
-    assert.match(text, new RegExp(action));
-    assert.match(text, /isSubmitting/);
+    assert.match(text, /prevIdRef/);
+    assert.doesNotMatch(text, /prevUpdatedRef/);
+    assert.doesNotMatch(text, /useCadastroRecordState/);
   }
 });

@@ -1,3 +1,11 @@
+## CURSOR — CI fix identidade: CentroCusto only (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| causa | `cursor-identidade-consolidacao` exige coorte ID-only em OperadorCaixa/MoedaIndice |
+| fix | restaurados Operador/Moeda ao tip `6e71e8b2`; CentroCusto mantém `prevUpdatedRef` |
+| fora | MarcaForm · #344 · sem relaxar o contrato identidade |
+
 ## CURSOR — fila contínua + Moeda/Operador/CentroCusto (2026-10-24)
 
 | Item | Valor |

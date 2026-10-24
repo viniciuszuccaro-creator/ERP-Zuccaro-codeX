@@ -14,7 +14,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, isSubmitting, windowMode = false }) {
+export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, windowMode = false }) {
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -24,7 +24,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     ? (canEdit("Cadastros", "OperadorCaixa") || canEdit("Financeiro", "Caixa") || canEdit("Cadastros", null))
     : (canCreate("Cadastros", "OperadorCaixa") || canCreate("Financeiro", "Caixa") || canCreate("Cadastros", null));
   const dadosIniciais = item || data || initialData || defaultValues || operador;
-  const emptyFormData = {
+  const [formData, setFormData] = useState(dadosIniciais || {
     usuario_id: "",
     usuario_nome: "",
     colaborador_id: "",
@@ -42,32 +42,15 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     ativo: true,
     empresa_id: empresaAtual?.id || "",
     group_id: groupId || ""
-  };
-  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
-  const [saving, setSaving] = useState(false);
+  });
 
-  const prevIdRef = React.useRef(dadosIniciais?.id || null);
-  const prevUpdatedRef = React.useRef(dadosIniciais?.updated_date);
+  const prevIdRef = React.useRef(dadosIniciais?.id);
   useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData(emptyFormData);
-      }
-      return;
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
     }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = dadosIniciais.updated_date;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
+  }, [dadosIniciais?.id]);
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', contextKey],
@@ -87,11 +70,10 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     enabled: contextoValido,
   });
 
-  const submitLocked = Boolean(isSubmitting || saving);
+  // prevIdRef já cobre a sincronização acima
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitLocked) return;
     // Injeta 'nome' para compatibilidade com o Visualizador Universal
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de salvar.");
@@ -107,7 +89,6 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
       ...(empresaAtual?.id && !formData.empresa_id ? { empresa_id: empresaAtual.id } : {}),
       ...(groupId && !formData.group_id ? { group_id: groupId } : {})
     };
-    setSaving(true);
     try {
       if (operador?.id) {
         await updateInContext('OperadorCaixa', operador.id, payload);
@@ -119,8 +100,6 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
       onSubmit?.();
     } catch (error) {
       toast.error("Erro: " + error.message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -349,7 +328,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
             <X className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
-          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={submitLocked || !contextoValido || !podeSalvar}>
+          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={!contextoValido || !podeSalvar}>
             <Save className="w-4 h-4 mr-2" />
             Salvar Operador
           </Button>

@@ -9,7 +9,7 @@ import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
+export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || moedaIndice || moeda;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -18,41 +18,24 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
   const podeCriar = canCreate("Cadastros", "MoedaIndice") || canCreate("Financeiro", "MoedaIndice") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "MoedaIndice") || canEdit("Financeiro", "MoedaIndice") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+  const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '',
     nome: '',
     tipo: 'Moeda',
     cotacao_atual: 1,
     ativo: true
-  };
-  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
+  });
 
-  const prevIdRef = React.useRef(dadosIniciais?.id || null);
-  const prevUpdatedRef = React.useRef(dadosIniciais?.updated_date);
+  const prevIdRef = React.useRef(dadosIniciais?.id);
   useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData(emptyFormData);
-      }
-      return;
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
     }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = dadosIniciais.updated_date;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
     if (dadosIniciais?.id && !podeEditar) {
       alert("Sem permissao para editar moedas e indices.");
       return;
@@ -157,7 +140,7 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
       <Button
         type="submit"
         className="w-full bg-emerald-600 hover:bg-emerald-700"
-        disabled={isSubmitting || !contextoValido || !podeSalvar}
+        disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.MoedaIndice.salvar"
         data-action="salvar-moeda-indice"
         data-sensitive
