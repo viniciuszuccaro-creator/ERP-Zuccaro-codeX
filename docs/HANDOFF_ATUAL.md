@@ -1,3 +1,40 @@
+## Continuidade atual #344 - revisao assistida e preparacao (2026-10-24)
+
+Validacao local: suite completa 2278 PASS / 0 FAIL / 0 SKIP; audit/lint/typecheck/build/diff-check exit 0. Depois, o reforco de integridade do journal e um teste estatico adicional do roteiro SQL passaram no foco final: 11 PASS / 0 FAIL / 0 SKIP (inclui wrapper de seis testes Python sinteticos). A suite completa local citada e anterior a esse pequeno delta final; CI do SHA final executa a composicao final, sem alegar contagem local inexistente.
+Smoke Chromium sintetico: 5 PASS / 0 FAIL / 0 SKIP: quatro situacoes, original preservado na sugestao de formato, rascunho sem aplicacao com operationId estavel no replay, filtros por situacao/motivo e viewport 390 sem overflow da pagina. Capturas sinteticas e recibos privados. Comando: `node scripts/legado/pilot-functional-review-smoke.mjs /caminho/playwright/index.mjs /tmp/review-smoke`. Playwright 1.56.1 e bibliotecas gratuitas foram preparados temporariamente fora das dependencias/lockfiles do projeto; nenhum servico pago, credencial ou permissao operacional criado.
+O navegador headless acessou somente a previa sintetica loopback; encaminhamento web nao foi usado como prova. Nenhum dado privado foi servido. Aviso preexistente de chunks grandes no build permanece. Backend/PG do lote anterior inalterados: nao repetidos localmente.
+
+Este checkpoint prevalece sobre os cabecalhos historicos abaixo. Mesma branch/clone/Codespace; um escritor. Base deste lote: `0b8bafa7` (CI4482/4483 SUCCESS). Nenhum piloto aprovado, transferencia, carga ou ensaio PostgreSQL foi repetido neste pacote.
+
+O fluxo existente `scripts/legado/pilot-functional-review.mjs` agora exporta `prepareAssistedReviewPackage` e `writeSyntheticAssistedReview`. Os auxiliares separam modelo, apresentacao e plano para nao ampliar o executor existente; reutilizam `projectAssistedLegacyReview`, fingerprints e a allowlist canonica de segredos. Nao ha novo modulo ERP, endpoint, rota operacional ou importador paralelo.
+
+- Revisao privada: 40009 apontamentos; 20456 historicos e 19553 revisoes de endereco; 0 promovidos a uso operacional, 0 acessos ao banco, 0 cargas. Recibos/fontes anteriores intactos. Campos originais e procedencia ficam somente no pacote privado, com hashes e permissoes restritas; valores sensiveis nao entram no HTML quando a permissao nao foi comprovada. Falha individual vai para quarentena, sem interromper os independentes.
+- Situacoes textuais, motivos por campo, operacoes bloqueadas, filtros e paginacao da projecao completa. CEP e UF oferecem somente sugestao deterministica de apresentacao. Numero, pais, finalidade, unidade, identidade e vinculo nao sao inferidos. Normalizacao nao equivale a validacao canonica.
+- A previa publicavel e gerada exclusivamente com quatro fixtures sinteticas; fonte privada e recusada nesse modo. Rascunho baixado e nao confiavel, sem gravacao mestre ou liberacao. A preparacao autorizada de proposta exige contexto exato, importar+editar, rechecagem, fingerprint, justificativa e evidencia para mudanca de significado. Captura dos inputs antes de await e replay com integridade do journal de propostas; isso nao comprova persistencia/auditoria PostgreSQL nem substitui o servico canonico.
+- O retrato real e somente leitura: nenhuma sessao/permissao de revisor foi fabricada. Aplicacao manual e liberacao posterior continuam dependentes do servico canonico, revalidacao, RBAC atual e auditoria transacional. Nao confundir a interface privada com fluxo operacional homologado.
+
+### Preparacao operacional: cinco gates restantes
+
+1. Identidade e esquema do destino: banco/role/schema, volume PostgreSQL, versao/contratos e journals. `scripts/legado/target-metadata-readonly.sql` e roteiro preparado, NAO executado no operacional. O executor usa nome completo e ordenacao lexicografica; journal por nome nao comprova bytes do SQL aplicado. Inventario privado 045-049 e seus artefatos aplicados ainda exigem reconciliacao; nao renumerados nem copiados para execucao automatica.
+2. Escopo e duplicidades: crosswalk Grupo/Empresa autorizado e reconciliacao no destino da coorte exata; zero duplicados isolados nao comprova ausencia no operacional.
+3. Menor privilegio e atomicidade: role sem BYPASSRLS, RBAC real, servico+auditoria+mapa na mesma transacao e concorrencia da primeira inclusao no destino/copia representativa autorizada. Provas isoladas anteriores permanecem validas somente para seu escopo.
+4. Backup/restauracao e reversao: backup do DESTINO e restauracao comprovada desse artefato, mais reversao por lote protegendo edicoes externas. Recuperar workspace ou staging do legado nao substitui restaurar o banco de destino.
+5. Liberacao operacional especifica: aprovacao da coorte, campos, identidade do destino e janela. Nenhuma autorizacao geral ou ensaio isolado libera carga real.
+
+Primeira carga PROPOSTA: ate 100 clientes ativos, identidades canonicas validadas, mestre de Grupo com visibilidade explicitamente autorizada; sem reativacao, sobrescrita, fusao automatica, estoque/saldo ou documento fiscal. A coorte efetiva operacional ainda tem zero liberados: lotes revertidos nao sao promovidos. Produtos dependem tambem de unidades/classes/referencias comprovadas, sem conversoes ou unificacao PC/UN; enderecos incompletos bloqueiam somente operacoes dependentes quando seguro. O plano permanece `PREPARED_NOT_AUTHORIZED_OPERATIONAL_LOAD`.
+
+Precheck autorizado executado somente no filesystem privado do staging VPS: host esperado, diretorio 0700 fora da aplicacao, 32533684224 bytes livres no momento da leitura; zero conteudo lido/alterado, banco ou servico acessado. Nao e prova de espaco no volume PostgreSQL. Recibo detalhado privado; sem transferencia ou novo inventario integral.
+
+### Cursor PR350 por SHA
+
+Revisao atualizada em `8ba3b5bfbfcd2c626c58c86c81db7d27bd7c58b5`: a correcao substitui o acesso aos campos ilustrativos de `masters` por `proposalMasters`, mantendo a origem sintetica DEV; os dois TS2339 do SHA anterior `2ec96439` estao resolvidos. Seis checks SUCCESS nos runs 40106256497/40106260627. A branch incorporou a base `0b8bafa7`, preservando #344. Comentario de revisao atualizado na PR. Nao houve edicao da branch Cursor, merge ou transporte dos arquivos comerciais; aprovacao visual e integracao continuam separadas.
+
+Validacao deste lote e SHA final: conferir o recibo de fechamento e CI do commit publicado. Backend/ledger sem alteracao reutilizam provas anteriores (529 PASS/24 SKIP no backend e PG sintetico 6 PASS/0 SKIP); skips nao sao persistencia comprovada. Logs/diffs/hashes de publicacao ficam privados. Dados reais, HTML privado, manifests detalhados, .env, certificados, chaves e backups nao integram o Git.
+
+Retomada privada: `current-assisted-review.json` aponta para o pacote preservado fora do checkout; verificar `integrity-private.json` antes de usar. O gerador cria outro diretorio privado, nunca sobrescreve recibos anteriores. Para previa sintetica, chamar `writeSyntheticAssistedReview` com arquivo novo fora do repositorio. Nao executar o modo antigo `--review` ou um piloto para apenas abrir esta revisao.
+
+Proxima entrega: aplicar revisoes autorizadas pelo caminho canonico somente apos RBAC/revalidacao/auditoria demonstrados; reunir as provas dos cinco gates e apresentar coorte operacional concreta para aprovacao. Carga operacional, merge, deploy e migrations continuam nao autorizados.
+
 ## Continuidade atual #344 - produtos e ledger (2026-10-24)
 
 Estado atual prevalece sobre os checkpoints historicos abaixo. Mesmo Codespace, clone e branch de consolidacao; nenhum acesso operacional, merge ou deploy.

@@ -7,6 +7,8 @@ import { createRequire } from 'node:module';
 import { assertIsolationDescriptor } from './pilot-isolated.mjs';
 import { rowHash, resolveNativeProductRules, classifyLegacyAddresses } from './pilot-functional-policy.mjs';
 
+export { prepareAssistedReviewPackage, writeSyntheticAssistedReview } from './pilot-functional-review-package.mjs';
+
 /** New review mode reads the preserved pilot; never invokes a load or real correction. */
 export async function reviewFunctionalCompleteness({ base, repo, json, run, mod, pause }) {
   process.umask(0o077);
