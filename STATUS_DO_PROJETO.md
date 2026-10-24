@@ -1,3 +1,51 @@
+## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
+
+Continuidade do heartbeat nativo 2026-10-24T18:57:07.971Z. CONT-02 concluída
+em 4e02bc73715ca535762f6ceae258ec5b3ca32ab6, CI4522/4523 SUCCESS, checkout
+limpo e reservas/trava liberadas: recibos344/6388410555 e342/6388418096.
+O pacote manual bf1854fb não foi contado como prova automática. A mesma
+automação foi habilitada a cada15min após essa prova, condicionada à
+disponibilidade do desktop/navegador/Codespace, sem autonomia permanente.
+
+CONT-03/tarefa6388273674, reserva6388452431, base local=remota4e02bc73.
+Mesmo Codespace/branch Codex; origem sanitizada, status/processos conferidos,
+app-server1601 fora do checkout, trava exclusiva própria. Nenhuma branch
+ou reserva Cursor350/Comercial360347 editada.
+
+A mesma suíte cliente-legacy-name agora executa PGlite e realCrmFixture,
+com createPoolDbClient e contexto de tenant por transação. A adaptação
+anterior baseada apenas em sessão falhou no PostgreSQL sob RLS
+(snapshot nulo; PGlite11 PASS, PostgreSQL1 FAIL). O contexto canônico
+resolve a fixture sem ampliar políticas da aplicação nem alterar serviço.
+LOGIN efêmero restrito, NOSUPERUSER/NOBYPASSRLS; sem contexto enxerga0clientes.
+A prova identifica UPDATE do cliente e INSERT de auditoria na mesma
+conexão/transação; replay sem escrita, releitura, reversão e reviewProof
+persistido. Os dez subtestes anteriores foram preservados. Negativos
+adicionais exercitam REVOKE SELECT/UPDATE/INSERT e trigger SQL de auditoria,
+com rollback integral. O runner PostgreSQL existente exige esta variante
+com DATABASE_URL isolada e rejeita qualquer skip; fora dele a variante real
+sem URL é explicitamente skip, nunca prova de persistência.
+
+Fixture local: imagem postgres16 já presente, container efêmero próprio
+com porta somente127.0.0.1, banco sintético e senha não publicada. Nenhum
+VPS/destino operacional/dado real acessado; cinco gates de carga continuam.
+Checks/SHA/CI e liberação final devem ser conferidos no recibo GitHub
+por SHA; solicitação de revisão e CI não constituem aprovação ou merge.
+Sem carga/piloto real/transferência/deploy/migration operacional/flags/canais.
+A automação separada do Legado permanece PAUSED.
+
+Validação local desta candidata: audit-baseline, raiz2280 PASS/0FAIL/0SKIP,
+lint/typecheck/build e server:typecheck/build exit0. Foco23 PASS/0FAIL/0SKIP
+(11PGlite+12PostgreSQL), inclusive ambas escritas observadas na mesma
+transação. Runner existente:18suítes/108testes/0FAIL/0SKIP após o MESMO
+bootstrap migrate+seed sintético da CI. Primeira tentativa sem esse preparo
+falhou em R11 por audit_logs ausente; log preservado, não baseline relaxada.
+Backend padrão completo não repetido localmente; CI da candidata pendente
+no momento deste commit, sem alegar verde antes da confirmação por SHA.
+Nenhum próximo item independente novo consta nos deltas344; após CI e
+liberação, deixar revisão cruzada por SHA pronta e pausar recorrência se
+a fila continuar sem item executável. Não fabricar pacote ou só monitorar.
+
 ## #344 CONT-02 - ensaio automatico executando tarefa real (2026-10-24)
 
 Origem REAL: heartbeat nativo revis-o-e-acesso-erp-45-e-46 recebido em
