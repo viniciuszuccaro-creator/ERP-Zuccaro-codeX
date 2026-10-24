@@ -1,3 +1,14 @@
+## CURSOR — Contatos/Endereços Cliente RBAC fail-closed (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra-novo `37c6f7d3`: mutações de contatos sem RBAC; endereços sem gate |
+| branch | `cursor/cadastros-contatos-rbac-392b` (base consolidação `3eccd369`) |
+| mudança | `GerenciarContatosClienteForm` + `GerenciarEnderecosClienteForm` — `usePermissions`/`canEdit` fail-closed, toast, `data-permission` |
+| fora | MarcaForm/#344 · scripts/legado · sem RBACButton novo (reusa hook existente) |
+| testes | `cadastros-contatos-enderecos-rbac.test.js` 4 PASS |
+| PR350 | tip `694f01b6` MERGEABLE · CI SUCCESS (paralelo) |
+
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
 Continuidade do heartbeat nativo 2026-10-24T18:57:07.971Z. CONT-02 concluída

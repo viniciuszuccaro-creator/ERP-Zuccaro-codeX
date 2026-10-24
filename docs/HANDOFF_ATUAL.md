@@ -1,3 +1,15 @@
+## CURSOR — Contatos/Endereços Cliente RBAC (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` |
+| base | consolidação `3eccd369` |
+| branch | `cursor/cadastros-contatos-rbac-392b` |
+| reprodução | erp-integra Contatos usa RBACButton; candidata tinha Button livre + `alert` |
+| correção | reutilizar `usePermissions` (padrão Cliente); sem criar `RBACButton` paralelo |
+| escopo | Contatos + Endereços no CadastroCliente existente |
+| próximo autorizado | integrar PR#351 (cadastros reopen) com tip consolidação `3eccd369` |
+
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
 Continuidade do heartbeat nativo 2026-10-24T18:57:07.971Z. CONT-02 concluída
