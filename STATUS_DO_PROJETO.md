@@ -1,3 +1,45 @@
+## #344 - captura estavel da correcao canonica (2026-10-24)
+
+Retomada no MESMO Codespace/checkout e branch da PR342; base
+4ab7a61b8ea63d55dfd18431740723a6bae1456f, inicialmente limpo e sem escritor
+Node/Codex/Cursor concorrente encontrado. Origin canonico conferido. Nenhum
+clone de desenvolvimento neste PC, Codespace novo ou acesso VPS alegado.
+
+Defeito reproduzido em fixture SQL sintetica: o comando era lido depois do
+primeiro await de autorizacao; uma referencia compartilhada podia trocar nome
+e evidencia antes da persistencia. O servico existente agora captura os campos
+primitivos do contexto e o resultado do schema estrito ANTES desse await.
+Erro de validacao continua retornado depois do RBAC inicial; rechecagens dentro
+da transacao, CAS, auditoria, replay e reversao existentes foram preservados.
+Sem endpoint, permissao, migration, reativacao ou importador adicional.
+
+Contraprova anterior FAIL (valor nao revisado persistido); apos correcao, foco
+10 PASS/0 FAIL/0 SKIP. Tres casos adicionais provam comando/prova capturados,
+tenant/ator estaveis apesar de mutacao externa, e revogacao antes do commit
+com rollback de cadastro E auditoria. Releitura SQL, replay e reversao tambem
+exercitados; ID/codigo/inatividade/procedencia/outros campos preservados.
+Trata-se de PGlite sintetico, NAO de prova operacional PostgreSQL.
+
+Fechamento local: raiz2279 PASS/0 FAIL/0 SKIP; backend556 total,
+532 PASS/0 FAIL/24 SKIP. Audit baseline, lint, typecheck/build raiz e server,
+e diff-check exit0. Comandos: npm run audit:baseline; npm test; npm run lint;
+npm run typecheck; npm run build; npm --prefix server test;
+npm --prefix server run typecheck; npm --prefix server run build;
+git diff --check. Skips locais por DATABASE_URL ausente nao homologam banco.
+CI do novo SHA deve ser conferida separadamente na PR342.
+
+Cursor350 atual2d1f289f incorporou a base4ab7a61b, sem delta comercial extra
+sobre8ba3b5bf; CI4505/run40111304731 SUCCESS. Branch/arquivos Cursor intactos;
+aprovacao visual e integracao nao concedidas. Previa5173 nao foi iniciada
+nesta retomada. GitHub e terminal web do Codespace comprovados; VPS nao testada.
+
+Backup/pilotos/revisao privada anteriores da344 NAO repetidos. Proxima entrega:
+ligar propostas autorizadas ao caminho canonico, primeiro isolado, sem inferir
+campos nem promover recibos revertidos. Os cinco gates abaixo continuam abertos.
+Este lote corrige o defeito do servico; nao declara essa ligacao completa,
+carga operacional, merge, deploy, migration ou homologacao. Reservas deste
+lote sao liberadas apos commit/push; revisao independente permanece pendente.
+
 ## #344 - revisao assistida e candidato operacional (2026-10-24)
 
 Checks locais: completa 2278 PASS/0 FAIL/0 SKIP; audit/lint/typecheck/build/diff PASS. Delta final focado 11 PASS/0 FAIL/0 SKIP; Chromium sintetico 5 PASS/0 FAIL/0 SKIP. CI final pelo SHA publicado valida a composicao final; nao confundir contagem local anterior ao ultimo teste com CI. Sem novo ensaio de banco ou carga.

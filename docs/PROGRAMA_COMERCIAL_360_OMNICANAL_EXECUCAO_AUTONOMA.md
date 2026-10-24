@@ -1,3 +1,18 @@
+## Continuidade atual #342/#344/#350 (2026-10-24)
+
+Retomada no Codespace unico e branch de consolidacao, base4ab7a61b. Defeito de
+captura assincrona na correcao canonica do nome inativo reproduzido e corrigido:
+comando/prova/contexto capturados antes do await, sem mudar RBAC/CAS/auditoria
+transacional/replay/reversao. Foco10 e raiz2279 PASS; backend532 PASS/24SKIP;
+checks locais exit0. CI do novo SHA/revisao independente sao gates separados.
+Provas, comandos e limites no topo de HANDOFF/STATUS. Cursor3502d1f289f/CI4505
+verde, sem editar/integrar branch ou conceder aprovacao visual. Previa nao
+iniciada nesta retomada. Backup e pilotos344 ja concluidos NAO devem ser
+repetidos por instrucoes historicas de canal ausente abaixo. Dados reais privados,
+revisao40009 com zero liberados operacionalmente; cinco gates e agendamento
+LegadoPAUSED preservados. Proximo passo segue ligacao canonica de revisoes
+explicitamente autorizadas, primeiro isolada; este ajuste nao a declara pronta.
+
 ## #347 — proposta navegável entregue para revisão (2026-10-23)
 
 Área Comercial existente, opt-in DEV proposta=comercial360, objetos sintéticos em

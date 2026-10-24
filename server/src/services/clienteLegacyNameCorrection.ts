@@ -29,6 +29,9 @@ const conflict = () => new AppError(409, 'LEGACY_NAME_CORRECTION_CONFLICT', 'Ina
 /** Specialized canonical lifecycle: no restore, generic edit, HTTP route or permission grant. */
 export async function correctInactiveLegacyName(deps: { repo: ClienteRepository; audit: AuditRepository; rbac: RbacGuard },
   ctx: RequestContext, input: unknown) {
+  // Capture caller-owned inputs before asynchronous authorization.
+  ctx = { ...ctx };
+  const parsed = commandSchema.safeParse(input);
   if (!z.string().uuid().safeParse(ctx.groupId).success || !z.string().uuid().safeParse(ctx.actorId).success
     || ctx.empresaId || ctx.scopeType === 'empresa') {
     throw new AppError(403, 'LEGACY_GROUP_SCOPE_REQUIRED', 'Explicit Group actor required');
@@ -40,7 +43,6 @@ export async function correctInactiveLegacyName(deps: { repo: ClienteRepository;
     }
   };
   await authorize();
-  const parsed = commandSchema.safeParse(input);
   if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid inactive name correction command');
   const command = parsed.data, digest = legacyNameFingerprint({ group: ctx.groupId, actor: ctx.actorId, command });
   return deps.repo.withTransaction(async q => {

@@ -89,5 +89,74 @@ test('inactive imported name correction: synthetic SQL fixture only, no real aut
       const changed = await snapshot(); assert.ok(changed);
       assert.equal(changed.observacoes, 'SYNTHETIC OUTSIDE EDIT'); assert.equal(changed.ativo, false);
     });
+    await t.test('reviewed command is captured before asynchronous permission lookup', async () => {
+      const current = await snapshot(); assert.ok(current);
+      const reviewed = { ...command, operationId: randomUUID(), expectedFingerprint: legacyNameFingerprint(current),
+        correctedName: 'SYNTHETIC REVIEWED VALUE', sourceProof: { ...command.sourceProof } };
+      const approved = structuredClone(reviewed);
+      let changed = false;
+      class MutatingRbac extends PostgresRbacGuard {
+        override async assertAllowed(...args: Parameters<PostgresRbacGuard['assertAllowed']>) {
+          await super.assertAllowed(...args);
+          if (!changed) {
+            changed = true;
+            reviewed.correctedName = 'SYNTHETIC UNREVIEWED VALUE';
+            reviewed.sourceProof.rowSha256 = 'c'.repeat(64);
+          }
+        }
+      }
+      const captured = new ClienteService(repo, audit, new PostgresTenantGuard(f.data), new MutatingRbac(f.data));
+      const result = await captured.correctInactiveLegacyName(ctx, reviewed);
+      const actual = await snapshot(); assert.ok(actual);
+      assert.deepEqual(actual, { ...current, nome: approved.correctedName, updated_at: actual.updated_at });
+      assert.equal((await service.correctInactiveLegacyName(ctx, approved)).reused, true);
+      const records = await audit.listByEntity('Cliente', approved.id);
+      const receipt = records.find(e => (e.afterData as { operationId?: string })?.operationId === approved.operationId);
+      assert.ok(receipt);
+      assert.deepEqual((receipt.afterData as { sourceProof: unknown }).sourceProof, approved.sourceProof);
+      await service.correctInactiveLegacyName(ctx, { ...reverse, operationId: randomUUID(),
+        originalOperationId: approved.operationId, expectedFingerprint: result.fingerprint });
+      const restored = await snapshot(); assert.ok(restored);
+      assert.deepEqual(restored, { ...current, updated_at: restored.updated_at });
+    });
+    await t.test('caller context mutation cannot change tenant or audit actor after authorization', async () => {
+      const current = await snapshot(); assert.ok(current);
+      const request = { ...ctx };
+      const approved = { ...command, operationId: randomUUID(), expectedFingerprint: legacyNameFingerprint(current),
+        correctedName: 'SYNTHETIC CONTEXT CAPTURED' };
+      let changed = false;
+      class ContextMutation extends PostgresRbacGuard {
+        override async assertAllowed(...args: Parameters<PostgresRbacGuard['assertAllowed']>) {
+          await super.assertAllowed(...args);
+          if (!changed) { changed = true; request.groupId = ID.groupB; request.actorId = randomUUID(); }
+        }
+      }
+      const captured = new ClienteService(repo, audit, new PostgresTenantGuard(f.data), new ContextMutation(f.data));
+      const applied = await captured.correctInactiveLegacyName(request, approved);
+      const actual = await snapshot(); assert.ok(actual);
+      assert.deepEqual(actual, { ...current, nome: approved.correctedName, updated_at: actual.updated_at });
+      const receipt = (await audit.listByEntity('Cliente', approved.id))
+        .find(e => (e.afterData as { operationId?: string })?.operationId === approved.operationId);
+      assert.ok(receipt); assert.equal(receipt.actorId, ctx.actorId); assert.equal(receipt.groupId, ctx.groupId);
+      await service.correctInactiveLegacyName(ctx, { ...reverse, operationId: randomUUID(),
+        originalOperationId: approved.operationId, expectedFingerprint: applied.fingerprint });
+    });
+    await t.test('permission revocation before commit still rolls back captured command', async () => {
+      const current = await snapshot(); assert.ok(current);
+      let calls = 0;
+      class LateDenial extends PostgresRbacGuard {
+        override async assertAllowed(...args: Parameters<PostgresRbacGuard['assertAllowed']>) {
+          await super.assertAllowed(...args);
+          if (++calls === 6) throw new Error('SYNTHETIC_REVOKED_BEFORE_COMMIT');
+        }
+      }
+      const denied = new ClienteService(repo, audit, new PostgresTenantGuard(f.data), new LateDenial(f.data));
+      const op = randomUUID();
+      await assert.rejects(denied.correctInactiveLegacyName(ctx, { ...command, operationId: op,
+        expectedFingerprint: legacyNameFingerprint(current), correctedName: 'SYNTHETIC DENIED' }), /REVOKED_BEFORE_COMMIT/);
+      assert.deepEqual(await snapshot(), current);
+      assert.equal((await audit.listByEntity('Cliente', command.id))
+        .some(e => (e.afterData as { operationId?: string })?.operationId === op), false);
+    });
   } finally { await f.close(); }
 });
