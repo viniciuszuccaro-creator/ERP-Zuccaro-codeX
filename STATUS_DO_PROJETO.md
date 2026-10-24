@@ -1,3 +1,56 @@
+## #344 CONT-02 - ensaio automatico executando tarefa real (2026-10-24)
+
+Origem REAL: heartbeat nativo revis-o-e-acesso-erp-45-e-46 recebido em
+2026-10-24T18:57:07.971Z, apos o turno manual ser liberado. Nao contar o pacote
+manual bf1854fb como prova automatica. HANDOFF/deltas e tarefa6387973425 foram
+lidos; aceite/reserva automatica6388240061. Mesmo Codespace/branch/checkout,
+base local=remota bf1854fb, status inicialmente limpo, origin sanitizado e
+AGENTS inalterado por hash. App-server1601 fora do checkout sem execWriter;
+trava exclusiva /tmp/erp-codex-344-writer.lock criada com token proprio.
+
+Defeito reproduzido por teste ANTES do fix: Missing expected exception para
+entrada applied=true com commandHash recalculado e outra operacao valida.
+collectAssistedReviewProposal agora exige applied=false,
+operationalAuthorized=false e status PENDING_CANONICAL_REVALIDATION tambem
+em CADA entrada anterior do journal. Todos hashes anteriores, duplicidade de
+operationId e conflito de comando continuam verificados sem relaxamento.
+Nenhuma escrita mestre, permissao, grant, rota, migration ou carga adicionada.
+
+Foco journal11 PASS/0 FAIL/0 SKIP cobre estados adulterados/ausentes com hash
+integro, hash quebrado, operacao duplicada/conflitante, replay identico e
+clonagem sem mutar o journal do chamador. Geral raiz2280 PASS/0 FAIL/0 SKIP.
+Backend focado canonico11 PASS/0 FAIL/0 SKIP; audit baseline/lint/typechecks/
+builds raiz e server/diff-check exit0. Comandos de fechamento AGENTS executados;
+backend completo inalterado nao repetido localmente: evidencia anterior533PASS/
+24SKIP da base e distinta, nao foi declarada nova execucao. Nova CI executa a
+composicao final e precisa ser conferida pelo SHA publicado. PGlite/local nao
+substituem prova PostgreSQL especifica nem gates operacionais.
+
+Publicacao/CI/liberacao final da trava propria e reservas serao registradas
+na344/342 por SHA. Prova automatica completa exige tambem push confirmado,
+CI verde, checkout limpo e propria trava removida. Periodicidade15min SOMENTE
+pode ser habilitada depois disso; configuracao/Markdown nao bastam. Continuar
+condicionado a desktop/navegador/Codespace disponiveis, sem prometer autonomia
+permanente ou criar scheduler/daemon/recurso pago/clone/chave alternativo.
+
+Proximo pacote independente ja ASSUMIDO: CONT-03, comentario6388273674.
+Pendencia comprovada: cliente-legacy-name.test.ts usa apenas localCrmFixture;
+runner PostgreSQL obrigatorio nao inclui essa suite. Reutilizar a MESMA suite
+e realCrmFixture existente para provar revisao sintetica no PostgreSQL real
+isolado, LOGIN restrito/RLS, auditoria/releitura/replay/reversao e negativos,
+com runner exigindo essa variante sem skips. Paths previstos: suite existente,
+server/scripts/runPostgresTests.mjs e hunks HANDOFF/STATUS; helper compartilhado
+somente com dependencia demonstrada e reserva adicional. Ainda sem edicao
+nesses paths: CONT-02 conserva exclusividade ate o fechamento. Nao confundir
+PG geral verde com essa prova especifica ou com destino operacional liberado.
+
+Codex=legado344/revisao assistida/preparacao da carga. Cursor=PR350/recuperacao
+ERP/Comercial360347. Revisao cruzada por SHA diretamente no GitHub, sem o
+proprietario copiar contexto, nenhum agente editando branch do outro. Dados
+privados/originais/IDs/codigos/vinculos e cinco gates preservados. Sem novo
+piloto real, transferencia, VPS, carga operacional, merge, deploy, migration
+operacional ou ativacao de flags/providers/canais. Legado separadoPAUSED.
+
 ## #344 - revisao sintetica ligada ao servico canonico (2026-10-24)
 
 Responsavel Codex, pacote GitHub6387904051/6387938627; base dc14ed98 na mesma

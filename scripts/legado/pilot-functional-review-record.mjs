@@ -104,7 +104,9 @@ export function collectAssistedReviewProposal(journal, proposal) {
   const operations = new Set();
   for (const entry of journal) {
     const { commandHash: previousHash, ...previous } = entry;
-    if (!hash(previousHash) || rowHash(previous) !== previousHash || operations.has(entry.operationId))
+    if (entry.applied !== false || entry.operationalAuthorized !== false
+        || entry.status !== 'PENDING_CANONICAL_REVALIDATION'
+        || !hash(previousHash) || rowHash(previous) !== previousHash || operations.has(entry.operationId))
       fail('REVIEW_JOURNAL_TAMPERED');
     operations.add(entry.operationId);
   }

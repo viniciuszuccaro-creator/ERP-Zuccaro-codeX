@@ -145,3 +145,31 @@ test('recibos existentes geram revisao privada sem reexecutar piloto; linha inco
     assert.throws(() => writeSyntheticAssistedReview(preview), /EEXIST/);
   } finally { fs.rmSync(base, { recursive: true, force: true }); }
 });
+
+test('journal refuses non-pending states even when their hashes are valid, preserving replay and isolation', async () => {
+  const record = createSyntheticAssistedReviewRecords()[0];
+  const first = await prepareAssistedReviewProposal(record, command(record), { context: context(record), rbacGuard: guard });
+  const next = await prepareAssistedReviewProposal(record, { ...command(record), operationId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' },
+    { context: context(record), rbacGuard: guard });
+  const rehash = changes => {
+    const { commandHash, ...payload } = { ...first, ...changes };
+    return { ...payload, commandHash: crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex') };
+  };
+  for (const changes of [{ applied: true }, { applied: undefined }, { operationalAuthorized: true },
+    { operationalAuthorized: undefined }, { status: 'APPROVED' }, { status: undefined }]) {
+    const invalid = rehash(changes), journal = [invalid], before = structuredClone(journal);
+    assert.throws(() => collectAssistedReviewProposal(journal, next), /REVIEW_JOURNAL_TAMPERED/);
+    assert.deepEqual(journal, before);
+  }
+  assert.throws(() => collectAssistedReviewProposal([{ ...first, reason: 'CHANGED_WITHOUT_HASH' }], next), /JOURNAL_TAMPERED/);
+  assert.throws(() => collectAssistedReviewProposal([first, first], next), /JOURNAL_TAMPERED/);
+  assert.throws(() => collectAssistedReviewProposal([rehash({ reason: 'OTHER_COMMAND' })], first), /OPERATION_CONFLICT/);
+  const journal = [first], before = structuredClone(journal);
+  const accepted = collectAssistedReviewProposal(journal, next);
+  assert.equal(accepted.masterWrites, 0); assert.equal(accepted.reused, false); assert.equal(accepted.journal.length, 2);
+  assert.deepEqual(journal, before);
+  accepted.journal[0].evidenceRefs.push({ ref: 'synthetic:mutation', sha256: h });
+  assert.deepEqual(journal, before);
+  const replay = collectAssistedReviewProposal(journal, first);
+  assert.equal(replay.reused, true); assert.equal(replay.masterWrites, 0); assert.equal(replay.journal.length, 1);
+});
