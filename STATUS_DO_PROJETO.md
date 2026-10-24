@@ -1,3 +1,13 @@
+## CURSOR — Representante reabrir+código (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | `0b8bafa7` |
+| branch | `cursor/cadastros-reabrir-updated-392b` |
+| #350 | CI verde tip `1784dbf6` (PR separada) |
+| escopo | Representante reopen + código≠ID |
+| #344 | não tocado |
+
 ## #344 - produtos isolados e ledger transacional (2026-10-24)
 
 Validacao composta local: raiz 2267 PASS/0 FAIL/0 SKIP; backend 529 PASS/0 FAIL/24 SKIP (553 total); ledger PostgreSQL real sintetico 6 PASS/0 FAIL/0 SKIP. Audit/lint/typecheck/build raiz/backend/diff-check aprovados; warning de chunks grandes preservado. Guarda final para as duas grafias de quarentena de produto e teste adicional validados separadamente; conferir CI final pelo SHA publicado, sem alegar execucao local posterior inexistente.

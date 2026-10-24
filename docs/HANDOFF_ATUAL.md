@@ -1,3 +1,16 @@
+## CURSOR — Representante reabrir+código (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | consolidação tip **`0b8bafa7`** |
+| branch | `cursor/cadastros-reabrir-updated-392b` |
+| pacote | RepresentanteForm + RepresentanteFormCompleto (ERP novo; fora #344) |
+| causa | só `prevIdRef` — save/reabrir com mesmo id não reidratava `updated_date` |
+| mudança | `prevUpdatedRef` + `idChanged\|updatedChanged` · código/ID via `CadastroCodigoRegistroField` no form simples |
+| #347/#350 | CI verde `1784dbf6`/`8ba3b5bf` em PR separada · não misturada neste PR |
+| testes | `cadastros-reopen-representante-updated` |
+| próxima | outros forms só com prevIdRef (FormaPagamentoForm, etc.) |
+
 ## Continuidade atual #344 - produtos e ledger (2026-10-24)
 
 Estado atual prevalece sobre os checkpoints historicos abaixo. Mesmo Codespace, clone e branch de consolidacao; nenhum acesso operacional, merge ou deploy.
