@@ -1,3 +1,26 @@
+## #344 - invariantes historicas e evolucao autorizada reconciliadas (2026-10-24)
+
+A CI4476/4477 aprovou backend e composicao de c90d629e, mas a raiz revelou
+uma segunda dependencia: publication-baseline-contracts exigia os bytes do
+teste bulk anterior. Falha reproduzida antes da alteracao. O hash historico e
+o manifesto NAO foram atualizados ou relaxados. A normalizacao agora subtrai
+SOMENTE o bloco literal autorizado, exige ocorrencia unica e conserva o hash
+anterior de todo o restante. Contraprovas rejeitam delegacao alterada, repetida
+e mudanca na verificacao integral dos membros anteriores. Focados: 22 PASS.
+
+Backend completo local da correcao anterior: 552 total, 529 PASS, 0 FAIL,
+23 SKIP; tambem aprovado na CI4477. Suites inalteradas nao foram repetidas
+localmente neste ajuste somente de teste. Raiz completa foi repetida porque
+a falha comprovada exigiu validar a composicao. Resultado do fechamento:
+tests 2262; pass 2262; fail 0; skipped 0
+
+Runtime/permissoes/rotas/migrations permanecem inalterados neste lote.
+Unidades confirmadas pelo proprietario, sem conversoes, PC/UN distintos e
+unidade de teste excluida; mapa/piloto privados seguem em lote funcional.
+Correcao individual de cliente continua sem autorizacao especifica.
+Agendamento pausado, originais preservados, sem carga operacional/deploy/merge.
+As entradas anteriores sao historicas onde divergirem deste fechamento.
+
 ## #344 - correcao da invariancia da CI4474/4475 (2026-10-24)
 
 A falha do backend em 36e123c8 foi reproduzida no Codespace: o teste de

@@ -12,12 +12,39 @@ test('publication baseline is the verified composition commit and is available i
  execFileSync('git',['merge-base','--is-ancestor',base,'HEAD']);
  assert.equal(manifest.cases.length,18);
 });
+const previousBulkEnumeration = "  assert.deepEqual([...newMembers.keys()].filter(name => !oldMembers.has(name)), ['export', 'restoreBulkSnapshot']);";
+const approvedBulkDelta = `  assert.deepEqual([...newMembers.keys()].filter(name => !oldMembers.has(name)),
+    ['export', 'correctInactiveLegacyName', 'restoreBulkSnapshot']);
+  // Keep the old-method invariant; the authorized lifecycle addition must remain a pure delegation.
+  const expected = members(parse(\`class Expected {
+  correctInactiveLegacyName(ctx: RequestContext, input: unknown) {
+    return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
+  }
+}\`));
+  assert.equal(newMembers.get('correctInactiveLegacyName'), expected.get('correctInactiveLegacyName'));
+  assert(after.statements.some(statement => ts.isImportDeclaration(statement)
+    && statement.moduleSpecifier.getText(after) === "'./clienteLegacyNameCorrection.js'"));`;
+function restoreApprovedBulkDelta(source) {
+ assert.equal(source.split(approvedBulkDelta).length,2,'Only the exact authorized lifecycle delta may be normalized');
+ return source.replace(approvedBulkDelta,previousBulkEnumeration);
+}
+test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
+ const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedBulkDelta(source);
+ assert.equal(restored.includes(approvedBulkDelta),false);
+ assert.throws(()=>restoreApprovedBulkDelta(source.replace('rbac: this.rbacGuard','rbac: this.otherGuard')));
+ assert.throws(()=>restoreApprovedBulkDelta(source+approvedBulkDelta));
+ assert.notEqual(crypto.createHash('sha256').update(restoreApprovedBulkDelta(source.replace('for (const [name, text] of oldMembers)','for (const [name, text] of newMembers)'))).digest('hex'),
+   crypto.createHash('sha256').update(restored).digest('hex'));
+});
 for(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{
  const source=fs.readFileSync(entry.path,'utf8').replace(/\r\n/g,'\n');
  assert.equal(source.includes('HEAD:'),false);
  assert.equal(source.includes("'HEAD'"),false);
  assert.equal((source.match(new RegExp(base,'g'))||[]).length,entry.references);
- const restored=source.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
+ // The prior proof remains byte-identical after subtracting only the explicitly tested lifecycle addition.
+ const prior=entry.path==='server/tests/bulk-consolidacao.test.ts'?restoreApprovedBulkDelta(source):source;
+ const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);
 });
 test('CI retains historical source for proofs and checks frontend types before build',()=>{
