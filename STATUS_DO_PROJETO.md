@@ -1,9 +1,19 @@
+## CURSOR — #350 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`4ab7a61b`** |
+| tip anterior | `8ba3b5bf` CI SUCCESS · conflito docs vs consolidação |
+| conflitos | STATUS/HANDOFF — ambos lados preservados |
+| fora | branch Codex intocada · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+
 ## CURSOR — #347 PR350 CI verde `1784dbf6` (2026-10-24)
 
 | Item | Valor |
 |---|---|
 | tip | `1784dbf6` |
-| CI | 6/6 SUCCESS · mergeable clean |
+| CI | 6/6 SUCCESS · mergeable clean vs `0b8bafa7` |
 | base | consolidação `0b8bafa7` |
 | próxima | recuperação cadastros/submódulos (fora #344) |
 
@@ -17,6 +27,18 @@
 | conflitos docs | resolvidos preservando Cursor+#344 |
 | visual | pendente owner |
 | Codespace prévia | não comprovada neste runner |
+
+## #344 - revisao assistida e candidato operacional (2026-10-24)
+
+Checks locais: completa 2278 PASS/0 FAIL/0 SKIP; audit/lint/typecheck/build/diff PASS. Delta final focado 11 PASS/0 FAIL/0 SKIP; Chromium sintetico 5 PASS/0 FAIL/0 SKIP. CI final pelo SHA publicado valida a composicao final; nao confundir contagem local anterior ao ultimo teste com CI. Sem novo ensaio de banco ou carga.
+
+Estado atual; entradas seguintes preservadas como historico. Base `0b8bafa7`, mesma branch e Codespace. Fluxo de revisao existente ampliado por auxiliares coesos: situacoes textuais, motivos/campo, original/procedencia privados, filtros/paginacao e proposta pendente sem aplicacao. Normalizacao de CEP/UF separada de significado; evidencias e rechecagem importar+editar obrigatorias, sem novas permissoes. Previa exclusivamente sintetica.
+
+Revisao dos recibos: 40009 apontamentos, 20456 historicos, 19553 revisoes de endereco, zero liberados operacionalmente e zero acesso ao banco/carga. Sem repetir pilotos/transferencia. Precheck VPS somente metadata do filesystem privado 0700, sem conteudo ou banco. Plano concreto permanece nao autorizado: destino/schema/journals; escopo/duplicidades; privilegios/atomicidade; backup/restauracao/reversao; liberacao especifica. Proposta inicial ate 100 clientes ativos validados, condicionada a gates; nao e coorte ja liberada.
+
+PR350 revisada por SHA `8ba3b5bf`: TS2339 anteriores corrigidos sem supressao, seis checks SUCCESS; comentario atualizado, sem editar/integrar branch Cursor ou aprovar visual. Provas, comandos, limites e proxima entrega em `docs/HANDOFF_ATUAL.md`.
+
+Resultados finais e commit: ver fechamento publicado e CI pelo SHA. Nenhuma carga/migration operacional, deploy ou merge autorizado; fontes e dados reais privados.
 
 ## #344 - produtos isolados e ledger transacional (2026-10-24)
 
