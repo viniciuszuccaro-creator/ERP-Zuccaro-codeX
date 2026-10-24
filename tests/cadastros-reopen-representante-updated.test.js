@@ -97,3 +97,20 @@ test('Turno, Veiculo, Motorista e TipoDespesa reabrem por updated_date com códi
     assert.match(text, /isSubmitting/);
   }
 });
+
+test('MoedaIndice, OperadorCaixa e CentroCusto reabrem por updated_date', async () => {
+  for (const [rel, action, updatedNeedle] of [
+    ['src/components/cadastros/MoedaIndiceForm.jsx', 'id-tecnico-moeda-indice', 'dadosIniciais?.updated_date'],
+    ['src/components/cadastros/OperadorCaixaForm.jsx', 'id-tecnico-operador-caixa', 'dadosIniciais?.updated_date'],
+    ['src/components/cadastros/CentroCustoForm.jsx', 'codigo-registro-centro-custo', 'dadosCentroCusto?.updated_date'],
+  ]) {
+    const text = await source(rel);
+    assert.match(text, /prevIdRef/);
+    assert.match(text, /prevUpdatedRef/);
+    assert.match(text, /idChanged \|\| updatedChanged/);
+    assert.match(text, new RegExp(updatedNeedle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    assert.match(text, /CadastroCodigoRegistroField/);
+    assert.match(text, new RegExp(action));
+    assert.match(text, /isSubmitting/);
+  }
+});

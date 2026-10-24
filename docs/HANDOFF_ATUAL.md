@@ -1,3 +1,15 @@
+## CURSOR — fila contínua (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| executor | Cursor Cloud `/workspace` · **sem** Codespace montado |
+| consolidação | tip **`4ab7a61b`** (branch Codex; não editar) |
+| #350/#347 | tip **`2d1f289f`** · MERGEABLE CLEAN · CI 6/6 · candidata integrável · visual owner pendente |
+| #351 cadastros | tip **`6e71e8b2`** CI verde + lote Moeda/Operador/CentroCusto em curso |
+| reserva alheia | #344 Legado · MarcaForm · `scripts/legado` · branch `codex/consolidacao-infra-20261017` |
+| retomada | CI subscriptions ativas nas branches Cursor; **sem** timer de polling de PR; autonomia permanente **não** declarada |
+| próxima | restantes forms `prevIdRef` · #349 só com fonte privada comprovada · sem alegar URL Codespace |
+
 ## CURSOR — #351 merge consolidação `4ab7a61b` (2026-10-24)
 
 | Item | Valor |
