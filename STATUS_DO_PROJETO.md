@@ -1,3 +1,15 @@
+## CURSOR — fila contínua + Moeda/Operador/CentroCusto (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| executor | Cursor Cloud · sem Codespace |
+| #350 | **`2d1f289f`** MERGEABLE CLEAN · CI 6/6 · candidata |
+| #351 tip anterior | **`6e71e8b2`** CI 6/6 · MERGEABLE CLEAN |
+| lote | MoedaIndiceForm · OperadorCaixaForm · CentroCustoForm · `prevUpdatedRef` |
+| reserva | #344 / MarcaForm / branch Codex |
+| retomada | subscriptions CI nas branches Cursor; sem timer de polling PR |
+| testes | `cadastros-reopen-representante-updated` 8 PASS |
+
 ## CURSOR — #351 Turno/Veículo/Motorista/TipoDespesa (2026-10-24)
 
 | Item | Valor |
