@@ -1,3 +1,59 @@
+## #344 - revisao sintetica ligada ao servico canonico (2026-10-24)
+
+Responsavel Codex, pacote GitHub6387904051/6387938627; base dc14ed98 na mesma
+branch/checkout/Codespace. O Codespace parou durante a retomada e foi retomado
+no MESMO ID; HEAD/status reconferidos, sem escritor concorrente. Codex app-server
+identificado fora do checkout, sem execWriter/lock Git. Nenhum novo clone,
+Codespace, plano, chave ou recurso pago; nenhum dado real lido/aplicado.
+
+applySyntheticInactiveNameReview no modelo existente recebe o envelope de
+rascunho exportado, nunca um alvo ou autorizacao fornecido por ele. Exige
+cliente/fonte SYNTHETIC e binding ISOLATED_SYNTHETIC, campo nome, identidade,
+origem/prova/fingerprint exatos e RBAC importar+editar. O autorizador externo
+ao rascunho deve confirmar hashes da proposta, binding e registro, ator/Grupo
+e referencia UUID explicita. Inputs sao capturados antes dos awaits. Nao ha
+autorizador operacional instalado nem aprovacao humana real fabricada.
+
+O caminho chama ClienteService.correctInactiveLegacyName existente: schema,
+CAS, RBAC/rechecagem, update e auditoria na mesma transacao. ReviewProof estrito
+opcional acrescenta hashes/referencia/justificativa/evidencias ao recibo; recibos
+anteriores continuam aceitos. Reversao recupera essa prova do recibo persistido,
+sem aceita-la novamente do comando de reversao. Reexport no executor de revisao
+existente; sem modulo/endpoint/importador/migration/permissao paralelos.
+
+Fixture PGlite sintetica cobre rascunho->autorizacao->persistencia->releitura
+SQL->replay->reversao com prova auditada preservada. Nega envelope adulterado,
+alvo nao confiavel, origem nao sintetica, empresa/grupo incorretos, fonte/prova
+alterada, evidencia ausente, autorizacao divergente/ausente, nome fora do schema;
+falha de auditoria reverte e replay com outra autorizacao conflita. Mantem
+ID/codigos/inatividade/vinculos/outros campos. UI privada permanece bloqueada:
+nao e liberacao de revisoes reais ou prova operacional PostgreSQL.
+
+Checks locais: foco11 PASS/0 FAIL/0 SKIP; raiz2279 PASS/0 FAIL/0 SKIP;
+backend557 total,533 PASS/0 FAIL/24 SKIP. Audit baseline/lint/typecheck/build
+raiz e server/diff-check exit0. Comandos padrao AGENTS executados, recibo de
+fechamento no GitHub por SHA; CI nova deve ser conferida, nunca substituida por
+CI anterior. Skips locais nao comprovam PostgreSQL real. Nenhuma carga,
+transferencia, piloto real, VPS, merge, deploy ou migration operacional.
+
+Fila continua: Codex assume CONT-02, comentario6387973425 da344. Defeito
+reproduzido sem escrita mestre: journal aceita entrada applied=true com hash
+recalculado ao adicionar outra operacao valida. Proximo delta exclusivo:
+collectAssistedReviewProposal e tests/legado-review-workflow.test.js, preservando
+todos hashes/replay/duplicidades. Reserva deste pacote liberada apos push;
+proxima reserva exige HEAD/status/processos novamente, sem editar Cursor.
+Cursor permanece responsavel PR350/ERP/Comercial360347 e revisao cruzada por SHA.
+
+Retomada automatica: heartbeat local existente e configuracao de disparo unico
+COUNT=1 suportados pelo app, ainda PAUSED enquanto este escritor fecha o lote.
+O ciclo automatico receber tarefa->implementar->testar->publicar AINDA NAO foi
+comprovado. Somente ensaio unico de CONT-02 pode ser armado apos liberar escritor;
+recorrencia periodica nao deve ser habilitada antes dessa prova. O canal depende
+do desktop/navegador/Codespace disponiveis; nao declarar autonomia permanente por
+Markdown ou por CI de execucao manual. Sem acionamento funcional, manter proxima
+tarefa pronta no GitHub e informar a limitacao. Cinco gates operacionais e
+agendamento separado LegadoPAUSED preservados; historico abaixo onde divergente.
+
 ## #344 - captura estavel da correcao canonica (2026-10-24)
 
 Retomada no MESMO Codespace/checkout e branch da PR342; base

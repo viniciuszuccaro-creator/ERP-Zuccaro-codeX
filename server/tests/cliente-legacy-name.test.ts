@@ -8,6 +8,7 @@ import { PostgresAuditRepository } from '../src/audit/auditRepository.ts';
 import { PostgresRbacGuard } from '../src/db/rbacGuard.ts';
 import { PostgresTenantGuard } from '../src/db/tenantGuard.ts';
 import { ClienteService } from '../src/services/clienteService.ts';
+import { buildAssistedReviewRecord, applySyntheticInactiveNameReview } from '../../scripts/legado/pilot-functional-review-record.mjs';
 import { legacyNameFingerprint } from '../src/services/clienteLegacyNameCorrection.ts';
 
 test('inactive imported name correction: synthetic SQL fixture only, no real authorization', async t => {
@@ -157,6 +158,74 @@ test('inactive imported name correction: synthetic SQL fixture only, no real aut
       assert.deepEqual(await snapshot(), current);
       assert.equal((await audit.listByEntity('Cliente', command.id))
         .some(e => (e.afterData as { operationId?: string })?.operationId === op), false);
+    });
+    await t.test('downloaded synthetic review reaches canonical persistence, audit, replay and reversal', async () => {
+      const current = await snapshot(); assert.ok(current);
+      const original = { codigo_legado: command.legacyCode, nome: current.nome };
+      const record = buildAssistedReviewRecord({ entity: 'cliente', sourceIndex: 0, original, context: ctx, synthetic: true,
+        provenance: { sourceSystem: 'SYNTHETIC', file: 'synthetic.csv', fileSha256: command.sourceProof.fileSha256,
+          rowSha256: command.sourceProof.rowSha256, batch }, evidence: { historyOnly: true, issues: [] } });
+      const draft = { kind: 'UNTRUSTED_REVIEW_DRAFT', synthetic: true, recordKey: record.key, applied: false,
+        operationalAuthorized: false, command: { operationId: randomUUID(), expectedSourceFingerprint: record.sourceFingerprint,
+          field: 'nome', proposedValue: 'SYNTHETIC REVIEW ACCEPTED', reason: 'Synthetic verified correction',
+          evidenceRefs: [{ ref: 'synthetic:source', sha256: command.sourceProof.fileSha256 }] } };
+      const binding = { environment: 'ISOLATED_SYNTHETIC', recordKey: record.key, sourceFingerprint: record.sourceFingerprint,
+        id: command.id, expectedFingerprint: legacyNameFingerprint(current), sourceSystem: 'SYNTHETIC',
+        legacyCode: command.legacyCode, batch, sourceProof: { ...command.sourceProof } };
+      const authorizationRef = randomUUID();
+      const authorizeReview = async (request: Record<string, unknown>) => ({ ...request, approved: true, authorizationRef });
+      const options = { context: ctx, rbacGuard: rbac, clienteService: service, authorizeReview };
+      const unchanged = async () => assert.deepEqual(await snapshot(), current);
+      for (const changed of [{ ...draft, operationalAuthorized: true }, { ...draft, synthetic: false },
+        { ...draft, kind: 'AUTHORIZED' }, { ...draft, targetId: randomUUID() }]) {
+        await assert.rejects(applySyntheticInactiveNameReview(record, changed, binding, options)); await unchanged();
+      }
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, binding, { ...options,
+        authorizeReview: async (request: Record<string, unknown>) => ({ ...request, approved: true,
+          bindingHash: 'c'.repeat(64), authorizationRef }) }), /EXPLICIT_AUTHORIZATION/);
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, { ...binding, sourceSystem: 'REAL' }, options));
+      await assert.rejects(applySyntheticInactiveNameReview(record, { ...draft, command: { ...draft.command,
+        expectedSourceFingerprint: 'c'.repeat(64) } }, binding, options), /SOURCE_CHANGED/);
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, binding, { ...options,
+        context: { ...ctx, groupId: ID.groupB } }));
+      class ReviewAuditFailure extends PostgresAuditRepository { override async append() { throw new Error('REVIEW_AUDIT_FAILURE'); } }
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, binding, { ...options,
+        clienteService: new ClienteService(repo, new ReviewAuditFailure(f.data), new PostgresTenantGuard(f.data), rbac) }), /REVIEW_AUDIT_FAILURE/);
+      await unchanged();
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, binding, { ...options,
+        authorizeReview: undefined }), /SYNTHETIC_ACCEPTANCE/);
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, { ...binding,
+        sourceProof: { ...binding.sourceProof, rowSha256: 'c'.repeat(64) } }, options), /CANONICAL_BINDING/);
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, binding, { ...options,
+        authorizeReview: async (request: Record<string, unknown>) => ({ ...request, approved: false, authorizationRef }) }), /EXPLICIT_AUTHORIZATION/);
+      await assert.rejects(applySyntheticInactiveNameReview(record, { ...draft, command: { ...draft.command,
+        evidenceRefs: [] } }, binding, options), /EVIDENCE_REQUIRED/);
+      await assert.rejects(applySyntheticInactiveNameReview(record, { ...draft, command: { ...draft.command,
+        proposedValue: 'x'.repeat(181) } }, binding, options), { code: 'VALIDATION_ERROR' });
+      await unchanged();
+      const receipt = await applySyntheticInactiveNameReview(record, draft, binding, options);
+      const reopened = await snapshot(); assert.ok(reopened);
+      assert.deepEqual(reopened, { ...current, nome: draft.command.proposedValue, updated_at: reopened.updated_at });
+      assert.equal(receipt.active, false); assert.equal(receipt.operationalAuthorized, false);
+      assert.equal((await applySyntheticInactiveNameReview(record, draft, binding, options)).reused, true);
+      const log = (await audit.listByEntity('Cliente', binding.id))
+        .find(e => (e.afterData as { operationId?: string })?.operationId === draft.command.operationId);
+      assert.ok(log);
+      const proof = (log.afterData as { reviewProof: { authorizationRef: string; proposalHash: string; reason: string } }).reviewProof;
+      assert.equal(proof.authorizationRef, authorizationRef); assert.equal(proof.proposalHash, receipt.proposalHash);
+      assert.equal(proof.reason, draft.command.reason);
+      await assert.rejects(applySyntheticInactiveNameReview(record, draft, binding, { ...options,
+        authorizeReview: async (request: Record<string, unknown>) => ({ ...request, approved: true, authorizationRef: randomUUID() }) }),
+      { code: 'LEGACY_NAME_CORRECTION_CONFLICT' });
+      assert.deepEqual(await snapshot(), reopened);
+      const reversal = { ...reverse, operationId: randomUUID(), originalOperationId: draft.command.operationId,
+        expectedFingerprint: receipt.fingerprint };
+      await service.correctInactiveLegacyName(ctx, reversal);
+      const restored = await snapshot(); assert.ok(restored);
+      assert.deepEqual(restored, { ...current, updated_at: restored.updated_at });
+      const reverseLog = (await audit.listByEntity('Cliente', binding.id))
+        .find(e => (e.afterData as { operationId?: string })?.operationId === reversal.operationId);
+      assert.deepEqual((reverseLog?.afterData as { reviewProof: unknown }).reviewProof, proof);
     });
   } finally { await f.close(); }
 });
