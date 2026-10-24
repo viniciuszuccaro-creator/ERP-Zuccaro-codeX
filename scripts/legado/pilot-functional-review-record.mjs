@@ -104,7 +104,9 @@ export function collectAssistedReviewProposal(journal, proposal) {
   const operations = new Set();
   for (const entry of journal) {
     const { commandHash: previousHash, ...previous } = entry;
-    if (!hash(previousHash) || rowHash(previous) !== previousHash || operations.has(entry.operationId))
+    if (entry.applied !== false || entry.operationalAuthorized !== false
+        || entry.status !== 'PENDING_CANONICAL_REVALIDATION'
+        || !hash(previousHash) || rowHash(previous) !== previousHash || operations.has(entry.operationId))
       fail('REVIEW_JOURNAL_TAMPERED');
     operations.add(entry.operationId);
   }
@@ -124,4 +126,44 @@ export function createSyntheticAssistedReviewRecords() {
     context, evidence, original: { codigo: `00000${index + 1}`, nome: `Pessoa SINTETICA ${index + 1}`, cep: '12.345-678', uf: ' sp ' },
     provenance: { sourceSystem: 'SYNTHETIC', file: 'clientes-sinteticos.csv', fileSha256: 'a'.repeat(64), rowSha256: 'b'.repeat(64), batch: 'preview-review' },
     permissionSnapshot: { ...context, loaded: true, canImport: true, canEdit: true, canViewSensitive: true } }));
+}
+
+/** Isolated synthetic acceptance path only. The draft cannot supply its own authorization or target. */
+export async function applySyntheticInactiveNameReview(record, draft, binding,
+  { context, rbacGuard, clienteService, authorizeReview } = {}) {
+  record = structuredClone(record); draft = structuredClone(draft); binding = structuredClone(binding);
+  context = Object.freeze({ ...context });
+  const exactKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
+    && Object.keys(value).length === keys.length && Object.keys(value).every(key => keys.includes(key));
+  if (!exactKeys(draft, ['kind', 'synthetic', 'recordKey', 'command', 'applied', 'operationalAuthorized'])
+      || draft.kind !== 'UNTRUSTED_REVIEW_DRAFT' || draft.synthetic !== true
+      || draft.applied !== false || draft.operationalAuthorized !== false || draft.recordKey !== record?.key
+      || record?.entity !== 'cliente' || record.synthetic !== true || record.provenance?.sourceSystem !== 'SYNTHETIC'
+      || draft.command?.field !== 'nome' || context.empresaId != null || context.scopeType === 'empresa'
+      || typeof authorizeReview !== 'function' || typeof clienteService?.correctInactiveLegacyName !== 'function')
+    fail('REVIEW_SYNTHETIC_ACCEPTANCE_REQUIRED');
+  if (!exactKeys(binding, ['environment', 'recordKey', 'sourceFingerprint', 'id', 'expectedFingerprint',
+    'sourceSystem', 'legacyCode', 'batch', 'sourceProof']) || binding.environment !== 'ISOLATED_SYNTHETIC'
+      || binding.recordKey !== record.key || binding.sourceFingerprint !== record.sourceFingerprint
+      || binding.sourceSystem !== 'SYNTHETIC' || !uuid(binding.id) || !uuid(binding.batch)
+      || !hash(binding.expectedFingerprint) || typeof binding.legacyCode !== 'string' || !binding.legacyCode
+      || record.fields.find(field => field.name === 'codigo_legado')?.original !== binding.legacyCode
+      || !exactKeys(binding.sourceProof, ['fileSha256', 'rowSha256', 'parser'])
+      || binding.sourceProof.fileSha256 !== record.provenance.fileSha256
+      || binding.sourceProof.rowSha256 !== record.provenance.rowSha256
+      || binding.sourceProof.parser !== 'csv-rfc4180-doublequote-v1') fail('REVIEW_CANONICAL_BINDING_REQUIRED');
+  const proposal = await prepareAssistedReviewProposal(record, draft.command, { context, rbacGuard });
+  const request = { proposalHash: proposal.commandHash, bindingHash: rowHash(binding), recordHash: rowHash(record),
+    actorId: context.actorId, groupId: context.groupId };
+  const decision = structuredClone(await authorizeReview(structuredClone(request), context));
+  if (!decision || decision.approved !== true || !uuid(decision.authorizationRef)
+      || Object.entries(request).some(([key, value]) => decision[key] !== value)) fail('REVIEW_EXPLICIT_AUTHORIZATION_REQUIRED');
+  const result = await clienteService.correctInactiveLegacyName(context, { mode: 'apply', id: binding.id,
+    operationId: proposal.operationId, expectedFingerprint: binding.expectedFingerprint,
+    sourceSystem: binding.sourceSystem, legacyCode: binding.legacyCode, batch: binding.batch,
+    correctedName: proposal.proposedValue, sourceProof: binding.sourceProof,
+    reviewProof: { recordKey: record.key, sourceFingerprint: record.sourceFingerprint,
+      proposalHash: proposal.commandHash, bindingHash: request.bindingHash, recordHash: request.recordHash, authorizationRef: decision.authorizationRef,
+      reason: proposal.reason, evidenceRefs: proposal.evidenceRefs } });
+  return { ...result, proposalHash: proposal.commandHash, status: 'APPLIED_INACTIVE_SYNTHETIC', operationalAuthorized: false };
 }
