@@ -26,7 +26,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   const podeCriar = hasPermission?.("Cadastros.Motorista.criar") || hasPermission?.("Logistica.Motorista.criar");
   const podeEditar = hasPermission?.("Cadastros.Motorista.editar") || hasPermission?.("Logistica.Motorista.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_completo: '',
     cpf: '',
     cnh_numero: '',
@@ -38,15 +38,31 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
     status: 'Ativo',
     possui_moopp: false,
     rastreador_instalado: false
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
+  const prevIdRef = useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = useRef(dadosIniciais?.updated_date);
   useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
+    const nextId = dadosIniciais?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosIniciais?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', groupId, empresaAtual?.id],
@@ -65,6 +81,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   });
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de salvar.");
       return;

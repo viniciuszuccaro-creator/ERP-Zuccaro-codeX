@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Briefcase } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDoc = (value) => String(value ?? "").replace(/[^0-9A-Za-z./-]/g, "").slice(0, 32).trim();
@@ -38,13 +39,27 @@ export default function RepresentanteForm({ representante, item, data, initialDa
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
   const prevIdRef = useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = useRef(dadosIniciais?.updated_date);
   useEffect(() => {
     const nextId = dadosIniciais?.id || null;
-    if (nextId !== prevIdRef.current) {
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
+    }
+    if (idChanged || updatedChanged) {
       prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
       setFormData(dadosIniciais || emptyFormData);
     }
-  }, [dadosIniciais?.id]);
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -78,6 +93,12 @@ export default function RepresentanteForm({ representante, item, data, initialDa
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={formData.codigo ?? dadosIniciais?.codigo}
+        action="codigo-registro-representante"
+      />
       <div>
         <Label>Nome *</Label>
         <Input

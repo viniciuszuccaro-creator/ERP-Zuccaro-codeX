@@ -1,3 +1,49 @@
+## CURSOR — #351 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | tip **`4ab7a61b`** |
+| tip anterior | `19404da3` · CI SUCCESS · conflito docs |
+| conflitos | STATUS/HANDOFF — ambos lados |
+| #350 | `2d1f289f` MERGEABLE CLEAN · CI 6/6 · runner Cursor (não Codespace) |
+| fora | MarcaForm · branch Codex intocada |
+| próxima | Banco/Cargo/Departamento `prevUpdatedRef` |
+
+## CURSOR — #351 mestres produto reabrir (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`42bde90d`** · 6/6 SUCCESS (harness Região + hashes FormaPagamento) |
+| tip publicado | **`af79c8d3`** · mestres produto · HEAD docs `19404da3` |
+| lote | UnidadeMedidaForm · GrupoProdutoForm · SetorAtividadeForm |
+| mudança | `prevUpdatedRef` + `idChanged\|updatedChanged` · submit bloqueia `isSubmitting` |
+| código/ID | `CadastroCodigoRegistroField` já presente (preservado) |
+| fora | MarcaForm (reserva #344) · sem auth permissiva · sem tela duplicada |
+| #350/#347 | CI SUCCESS → tip merge `2d1f289f` · sem alegar prévia Codespace |
+| próxima | demais forms só `prevIdRef` (Banco/Cargo/…) |
+
+## CURSOR — #351 CI verde + FormaPagamento/Região (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`4e90d897`** · CI 6/6 SUCCESS · mergeable clean |
+| lote | FormaPagamentoForm(+Completo) + RegiaoAtendimentoForm · `prevUpdatedRef` |
+| fora | MarcaForm (reserva) · #344 Legado |
+| testes | `cadastros-reopen-representante-updated` ampliado |
+
+## CURSOR — Representante reabrir+código (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | consolidação tip **`0b8bafa7`** |
+| branch | `cursor/cadastros-reabrir-updated-392b` |
+| pacote | RepresentanteForm + RepresentanteFormCompleto (ERP novo; fora #344) |
+| causa | só `prevIdRef` — save/reabrir com mesmo id não reidratava `updated_date` |
+| mudança | `prevUpdatedRef` + `idChanged\|updatedChanged` · código/ID via `CadastroCodigoRegistroField` no form simples |
+| #347/#350 | CI verde `1784dbf6`/`8ba3b5bf` em PR separada · não misturada neste PR |
+| testes | `cadastros-reopen-representante-updated` |
+| próxima | outros forms só com prevIdRef (FormaPagamentoForm, etc.) |
+
 ## Continuidade atual #344 - revisao assistida e preparacao (2026-10-24)
 
 Validacao local: suite completa 2278 PASS / 0 FAIL / 0 SKIP; audit/lint/typecheck/build/diff-check exit 0. Depois, o reforco de integridade do journal e um teste estatico adicional do roteiro SQL passaram no foco final: 11 PASS / 0 FAIL / 0 SKIP (inclui wrapper de seis testes Python sinteticos). A suite completa local citada e anterior a esse pequeno delta final; CI do SHA final executa a composicao final, sem alegar contagem local inexistente.
@@ -27,7 +73,7 @@ Precheck autorizado executado somente no filesystem privado do staging VPS: host
 
 ### Cursor PR350 por SHA
 
-Revisao atualizada em `8ba3b5bfbfcd2c626c58c86c81db7d27bd7c58b5`: a correcao substitui o acesso aos campos ilustrativos de `masters` por `proposalMasters`, mantendo a origem sintetica DEV; os dois TS2339 do SHA anterior `2ec96439` estao resolvidos. Seis checks SUCCESS nos runs 40106256497/40106260627. A branch incorporou a base `0b8bafa7`, preservando #344. Comentario de revisao atualizado na PR. Nao houve edicao da branch Cursor, merge ou transporte dos arquivos comerciais; aprovacao visual e integracao continuam separadas.
+Revisao atualizada em `8ba3b5bfbfcd2c626c58c86c81db7d27bd7c58b5` e tip merge Cursor `2d1f289f` sobre consolidacao `4ab7a61b`: a correcao substitui o acesso aos campos ilustrativos de `masters` por `proposalMasters`, mantendo a origem sintetica DEV; TS2339 resolvidos. Seis checks SUCCESS no tip merge. Aprovacao visual e merge continuam separados. Runner Cursor ≠ Codespace.
 
 Validacao deste lote e SHA final: conferir o recibo de fechamento e CI do commit publicado. Backend/ledger sem alteracao reutilizam provas anteriores (529 PASS/24 SKIP no backend e PG sintetico 6 PASS/0 SKIP); skips nao sao persistencia comprovada. Logs/diffs/hashes de publicacao ficam privados. Dados reais, HTML privado, manifests detalhados, .env, certificados, chaves e backups nao integram o Git.
 

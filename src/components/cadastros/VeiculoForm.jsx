@@ -24,7 +24,7 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
   const podeCriar = hasPermission?.("Cadastros.Veiculo.criar") || hasPermission?.("Logistica.Veiculo.criar");
   const podeEditar = hasPermission?.("Cadastros.Veiculo.editar") || hasPermission?.("Logistica.Veiculo.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = React.useState(dadosIniciais || {
+  const emptyFormData = {
     placa: '',
     modelo: '',
     tipo_veiculo: 'Caminhão Toco',
@@ -38,15 +38,31 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
     rastreador_instalado: false,
     status: 'Disponível',
     proprio: true
-  });
+  };
+  const [formData, setFormData] = React.useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
+  const prevIdRef = React.useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = React.useRef(dadosIniciais?.updated_date);
   React.useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
+    const nextId = dadosIniciais?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosIniciais?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const schema = z.object({
     placa: z.string().min(3, 'Placa é obrigatória'),
@@ -54,6 +70,7 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
   });
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de salvar.");
       return;

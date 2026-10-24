@@ -170,18 +170,32 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: !!representante?.id && contextoValido
   });
 
-  const prevIdRef = useRef(representante?.id);
+  const prevIdRef = useRef(representante?.id || null);
+  const prevUpdatedRef = useRef(representante?.updated_date);
   useEffect(() => {
-    if (representante?.id && representante.id !== prevIdRef.current) {
-      prevIdRef.current = representante.id;
+    const nextId = representante?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && representante?.updated_date && representante.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+      }
+      return;
+    }
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = representante.updated_date;
       setFormData({
         ...representante,
         endereco: representante.endereco || {},
         dados_bancarios: representante.dados_bancarios || {},
-        regioes_atendimento: representante.regioes_atendimento || []
+        regioes_atendimento: representante.regioes_atendimento || [],
       });
     }
-  }, [representante?.id]);
+  }, [representante?.id, representante?.updated_date]);
 
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */

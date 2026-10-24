@@ -1,3 +1,63 @@
+## CURSOR — #351 Turno/Veículo/Motorista/TipoDespesa (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`76fba28b`** · CI 6/6 · MERGEABLE CLEAN |
+| lote | TurnoForm · VeiculoForm · MotoristaForm · TipoDespesaForm |
+| mudança | `prevUpdatedRef` + anti-duplo · código/ID preservado |
+| fora | MarcaForm · #344 · sem merge/deploy |
+
+## CURSOR — #351 Banco/Cargo/Departamento + merge `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | tip **`4ab7a61b`** |
+| merge | `cb5e20aa` · conflitos STATUS/HANDOFF preservados |
+| lote | BancoForm · CargoForm · DepartamentoForm · `prevUpdatedRef` + anti-duplo |
+| fora | MarcaForm · #344 · sem merge/deploy |
+| #350 | tip **`2d1f289f`** MERGEABLE CLEAN · CI 6/6 |
+| testes | `cadastros-reopen-representante-updated` 6 PASS |
+
+## CURSOR — #351 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | tip **`4ab7a61b`** |
+| tip anterior | `19404da3` · CI SUCCESS · DIRTY vs consolidação |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | MarcaForm · branch Codex · scripts/legado só via merge |
+| #350 | tip `2d1f289f` MERGEABLE CLEAN · CI 6/6 |
+
+## CURSOR — #351 tip CI + mestres produto (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`42bde90d`** · harness Região + hashes stage49 FormaPagamento · 6/6 SUCCESS |
+| tip publicado | **`af79c8d3`** / HEAD docs **`19404da3`** · UnidadeMedida/GrupoProduto/SetorAtividade |
+| lote | UnidadeMedidaForm · GrupoProdutoForm · SetorAtividadeForm · `prevUpdatedRef` + anti-duplo |
+| fora | MarcaForm (reserva) · #344 Legado · sem merge/deploy |
+| #350 | tip `8ba3b5bf`→`2d1f289f` CI SUCCESS |
+| testes | `cadastros-reopen-representante-updated` (mestres produto) |
+
+## CURSOR — #351 CI verde + FormaPagamento/Região (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`4e90d897`** · CI 6/6 SUCCESS · mergeable clean |
+| lote | FormaPagamentoForm(+Completo) + RegiaoAtendimentoForm · `prevUpdatedRef` |
+| fora | MarcaForm (reserva) · #344 Legado |
+| testes | `cadastros-reopen-representante-updated` ampliado |
+
+## CURSOR — Representante reabrir+código (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | `0b8bafa7` |
+| branch | `cursor/cadastros-reabrir-updated-392b` |
+| #350 | CI verde tip `1784dbf6` (PR separada) |
+| escopo | Representante reopen + código≠ID |
+| #344 | não tocado |
+
 ## #344 - revisao assistida e candidato operacional (2026-10-24)
 
 Checks locais: completa 2278 PASS/0 FAIL/0 SKIP; audit/lint/typecheck/build/diff PASS. Delta final focado 11 PASS/0 FAIL/0 SKIP; Chromium sintetico 5 PASS/0 FAIL/0 SKIP. CI final pelo SHA publicado valida a composicao final; nao confundir contagem local anterior ao ultimo teste com CI. Sem novo ensaio de banco ou carga.
