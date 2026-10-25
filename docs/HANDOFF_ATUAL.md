@@ -1,3 +1,11 @@
+## CURSOR — P1 boundId na coorte Banco/Cargo/+ (candidata #353) (2026-10-25)
+
+Coorte reopen que descartava `boundId` no save (Banco, Cargo, Departamento,
+FormaPagamento, UnidadeMedida, GrupoProduto, Setor, CentroCusto, PlanoContas,
+Turno, Veiculo, Motorista, TipoDespesa, Cliente/Fornecedor Completo) agora
+captura e vincula salvamento/código ao `boundId`. Contraprova estática coorte
+PASS. Sem merge/deploy. Publication hunk permanece com Codex.
+
 ## CURSOR — Consolidação: pausa micro-PRs useConfirm; libera publication (2026-10-25)
 
 Prioridade do proprietário: fechar integração antes de ampliar microalterações.
@@ -81,6 +89,57 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+## #344 — fechamento prioritário CANAL / homologação (2026-10-25)
+
+Executor retomado no mesmo Codespace; local/remoto0a67aa4b e checkout limpo.
+CI4710/run40235048133: backend e composição SUCCESS; frontend2280PASS,
+5FAIL,0SKIP. Logs atuais confirmam somente os cinco contratos publication
+já identificados. Não há CI global verde nem CANAL05 concluído.
+Coordenação direta350/6403876914 e6403907743: Codex proposto como único
+responsável pelo hunk publication6403101757 na342; liberação explícita
+Cursor ainda pendente. Não editar branches Cursor ou suas reservas.
+
+Fila executável (sem repetir pilotos, login, IDs ou transferências):
+- CANAL05 / Codex: após handoff, validar hash do alvo contra checkpoint,
+  aplicar proposta existente, manter18golden hashes/references/manifesto
+  byte-idênticos; checks sobre source bruto permanecem antes da reversão.
+  Contraprovas devem recusar mutação dentro/fora dos hunks reconhecidos.
+  Conclusão: testes focados + fechamento obrigatório + SHA remoto + CIverde
+  por esse SHA + revisão independente solicitada (solicitação não aprova).
+- Homologação isolada / Codex: depende da CIverde acima. Usar a candidata342
+  existente, registrar git rev-parse HEAD, hash do build e versão efetivamente
+  servida. Sessão Supabase exclusivamente de teste, perfil/Grupo sintéticos
+  existentes no isolamento; nenhum token transportado para worker. Reutilizar
+  server/tests/cliente-conferencia-http.test.ts e tests/http-api-client.test.js
+  como pré-prova de transporte sintético; eles NÃO provam login real no HML.
+  Na UI isolada abrir /comercial?conferencia_legado=1 antes de qualquer hook
+  amplo; conferir 1 e100 identidades, 101→422/zero consultas; até200 lookups
+  exatos; documento inválido/chave extra→422; token ausente/expirado→401;
+  perfil/Grupo alheio e falta de visualizar/importar explícitos→403 antes
+  da leitura; revogação/troca de sessão/contexto e resposta tardia cancelam
+  exibição; saída só indice/id/codigo/ativo; nenhum audit/escrita de negócio.
+  Registrar versão, resultados e zero escritas; falha bloqueia homologação.
+- Disponibilização real / gate separado, ainda NÃO autorizada: parecer por
+  SHA fechado; comparar esse SHA ao código/build API+web do destino efetivo;
+  comprovar schema/journals043–049 e SELECT/repositórios/RBAC compatíveis sem
+  grants/migrations; backup recuperável atual do destino e restauração em
+  isolamento; imagens anteriores API+web fixadas por digest e reversão testada.
+  Reutilizar scripts/vps/create-pre-gate-e-backup.sh,
+  verify-pre-gate-e-backup-meta.sh, validate-isolated-restore.sh e
+  scripts/deploy/comercial360-canary-from-checkout.sh/comercial360-rollback.sh
+  SOMENTE após conferir contrato/escopo e autorização específica; listar um
+  script não prova execução nem adequação automática ao destino. Este delta
+  exige API+web do mesmo SHA; não só frontend nem proxy privilegiado. Nenhuma
+  alteração de schema/grants/flags é parte implícita do canal.
+  Autorização deverá fixar destino, SHA/digests, janela, responsável e plano
+  de reversão; conferência real só depois desse gate e sessão canônica válida.
+- Primeira conferência / Codex+proprietário: leitura privada da coorte aprovada
+  de até100 no GrupoCPA, sem consulta ampla, importação ou promoção de inativos.
+  Depende da disponibilização autorizada e homologada; resultados fora do Git.
+
+Automação mesma revis-o-e-acesso-erp-45-e-46; estado nativo conferido no recibo
+GitHub do pacote, não inferido deste Markdown. Trava exclusiva/checkpoint
+privado e um escritor por checkout; sem disparo duplicado ou polling vazio.
 
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
