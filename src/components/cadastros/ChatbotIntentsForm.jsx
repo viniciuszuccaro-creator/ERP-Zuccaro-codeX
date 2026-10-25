@@ -1,6 +1,7 @@
 import React from "react";
 import ChatbotIntentForm from "./ChatbotIntentForm";
 import { base44 } from "@/api/base44Client";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
@@ -95,6 +96,7 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
   };
 
   const initial = toNew(intent);
+  const { confirm, ConfirmDialog: ConfirmDesativarDialog } = useConfirm();
 
   const handleSubmit = async (data) => {
     if (!contextoValido) {
@@ -110,7 +112,11 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
 
     const payload = normalizar(data);
     if (initial?.ativo !== false && payload.ativo === false) {
-      const confirmado = window.confirm("Desativar esta intent do chatbot? A alteração será auditada e pode afetar atendimentos automáticos.");
+      const confirmado = await confirm({
+        title: 'Confirmar Desativação',
+        description: 'Desativar esta intent do chatbot? A alteração será auditada e pode afetar atendimentos automáticos.',
+        confirmText: 'Desativar',
+      });
       if (!confirmado) {
         await auditIntent({ acao: "ChatbotIntent.desativacao_cancelada", sucesso: false, motivo: "Confirmacao cancelada pelo usuario.", dados: { nome_intent: payload.nome_intent } });
         return;
@@ -165,5 +171,10 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
     if (typeof onSubmit === "function") onSubmit(toLegacy(registro || payload));
   };
 
-  return <ChatbotIntentForm chatbotIntent={initial} onSubmit={handleSubmit} isSubmitting={isSubmitting} windowMode={false} />;
+  return (
+    <>
+      <ChatbotIntentForm chatbotIntent={initial} onSubmit={handleSubmit} isSubmitting={isSubmitting} windowMode={false} />
+      <ConfirmDesativarDialog />
+    </>
+  );
 }
