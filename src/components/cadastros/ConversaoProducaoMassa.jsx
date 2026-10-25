@@ -14,6 +14,7 @@ import { validarSelecaoProducaoIA } from '@/components/lib/iaResponsePolicy';
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { PRODUTO_TIPOS_CANONICOS, isProdutoMateriaPrima } from "./produto/produtoTipoPolicy";
 
 /**
@@ -35,6 +36,7 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
   const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
   const contextoValido = Boolean(groupId || empresaId);
   const podeEditarProduto = canEdit('Cadastros', 'Produto') || canEdit('Estoque', 'Produto') || canEdit('Producao', 'Produto') || canEdit('Cadastros', null) || canEdit('Estoque', null);
+  const { confirm, ConfirmDialog: ConfirmConversaoDialog } = useConfirm();
 
   /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditConversao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
@@ -165,7 +167,11 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
       return;
     }
 
-    const confirmado = window.confirm('Converter ' + produtosSelecionados.length + ' produto(s) para Materia-Prima Producao no contexto selecionado? Esta acao sera auditada.');
+    const confirmado = await confirm({
+      title: 'Confirmar conversão em massa',
+      description: 'Converter ' + produtosSelecionados.length + ' produto(s) para Materia-Prima Producao no contexto selecionado? Esta acao sera auditada.',
+      confirmText: 'Converter',
+    });
     if (!confirmado) {
       await auditConversao({ acao: 'Produto.conversao_producao_cancelada', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { total_produtos: produtosSelecionados.length } });
       return;
@@ -213,6 +219,7 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
   };
 
   return (
+    <>
     <div className="w-full h-full space-y-6">
       <Alert className="border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50">
         <Factory className="w-5 h-5 text-orange-600" />
@@ -407,5 +414,7 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
         </Alert>
       )}
     </div>
+    <ConfirmConversaoDialog />
+    </>
   );
 }
