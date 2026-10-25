@@ -1,3 +1,10 @@
+## #352 — HTTP PATCH prova deny real (Cursor, 2026-10-25)
+
+Tip sobre consolidação `90f0a315`. Serviço + **HTTP** PATCH `/api/v1/clientes/:id`:
+viewer → 403 PERMISSION_DENIED e GET inalterado; editor muta; `contatos` no body → 400.
+UI: botões gated + algoritmo principal único. Sem alegar só botão oculto.
+Incorporar na candidata #353. Sem merge/deploy. #344 Codex intocada.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
@@ -114,6 +121,15 @@ carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
 
+## CURSOR — #352 merge consolidação `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -185,6 +201,17 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
+
+## CURSOR — Contatos/Endereços Cliente RBAC fail-closed (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra-novo `37c6f7d3`: mutações de contatos sem RBAC; endereços sem gate |
+| branch | `cursor/cadastros-contatos-rbac-392b` (base consolidação `3eccd369`) |
+| mudança | `GerenciarContatosClienteForm` + `GerenciarEnderecosClienteForm` — `usePermissions`/`canEdit` fail-closed, toast, `data-permission` |
+| fora | MarcaForm/#344 · scripts/legado · sem RBACButton novo (reusa hook existente) |
+| testes | `cadastros-contatos-enderecos-rbac.test.js` 4 PASS |
+| PR350 | tip `694f01b6` MERGEABLE · CI SUCCESS (paralelo) |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
