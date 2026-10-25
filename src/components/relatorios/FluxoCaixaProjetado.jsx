@@ -13,11 +13,13 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUser } from "@/components/lib/UserContext";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function FluxoCaixaProjetado({ windowMode = false }) {
   const [mesesProjecao, setMesesProjecao] = useState(6);
   const { filterInContext, empresaAtual, grupoAtual, estaNoGrupo, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmFluxoCaixaDialog } = useConfirm();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -147,7 +149,11 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
       });
       return false;
     }
-    const confirmado = window.confirm(`Exportar fluxo de caixa projetado em ${formato} com ${quantidade} mes(es)?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar fluxo de caixa projetado em ${formato} com ${quantidade} mes(es)?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditarRelatorio({
         acao: "Cancelamento",
@@ -171,6 +177,7 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
+    <>
     <div className={containerClass}>
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {(!contextoValido || !canViewRelatorio) && (
@@ -399,5 +406,7 @@ export default function FluxoCaixaProjetado({ windowMode = false }) {
       </Card>
       </div>
     </div>
+    <ConfirmFluxoCaixaDialog />
+    </>
   );
 }
