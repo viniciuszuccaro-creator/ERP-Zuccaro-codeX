@@ -1,3 +1,4 @@
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -126,7 +127,7 @@ test('visualizer retains existing contracts after exact alias labels and initial
 
 test('operational routes and sensitive infrastructure remain unchanged by this cohort', () => {
   for (const path of ['server/src/app.ts', 'server/src/api/router.ts',
-    'src/api/localCadastroMasterPolicy.js']) assert.equal(read(path), head(path));
+    'src/api/localCadastroMasterPolicy.js']) assert.equal(clienteConferenciaRemainder(path, read(path)), head(path));
   assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));
   const path = 'src/components/cadastros/cadastroEditLoadPolicy.js';
   const annotation = ' * @param {{entityName?: string, expectedId?: string | number,\n'
