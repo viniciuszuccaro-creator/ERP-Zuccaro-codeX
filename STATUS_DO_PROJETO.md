@@ -1,3 +1,9 @@
+## #351 — lint: remove eslint-disable inválido no hook reopen (Cursor, 2026-10-25)
+
+CI frontend falhou em tips anteriores: `no-undef` (imports — já corrigido) e
+regra `react-hooks/exhaustive-deps — identidade canônica` inválida no
+disable-line. Removido o disable malformado. Sem merge/deploy.
+
 ## #351 — imports do hook reopen na coorte simples (Cursor, 2026-10-25)
 
 14 forms da coorte chamavam `useCadastroReopenOnIdentity` sem import
