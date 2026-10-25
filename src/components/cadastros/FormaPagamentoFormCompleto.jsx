@@ -104,27 +104,12 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     setFormData({...formData, configuracao_parcelas_cartao: novaConfig});
   };
 
-  const prevIdRef = useRef(formaPagamentoNorm?.id || null);
-  const prevUpdatedRef = useRef(formaPagamentoNorm?.updated_date);
-  useEffect(() => {
-    const nextId = formaPagamentoNorm?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && formaPagamentoNorm?.updated_date && formaPagamentoNorm.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = formaPagamentoNorm.updated_date;
-      setFormData({ ...formaPagamentoNorm });
-    }
-  }, [formaPagamentoNorm?.id, formaPagamentoNorm?.updated_date]);
+  useCadastroReopenOnIdentity(formaPagamentoNorm, {
+    formData,
+    setFormData,
+    clearOnNull: false,
+    mapToForm: (record) => ({ ...record }),
+  });
 
   const handleSubmit = async () => {
     if (!formData.descricao) {

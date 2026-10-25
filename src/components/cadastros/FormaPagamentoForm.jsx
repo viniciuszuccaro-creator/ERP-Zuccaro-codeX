@@ -44,28 +44,12 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     intervalo_parcelas_dias: 30
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
-  const prevIdRef = useRef(dadosIniciais?.id || null);
-  const prevUpdatedRef = useRef(dadosIniciais?.updated_date);
-  useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData(emptyFormData);
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = dadosIniciais.updated_date;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
+  useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const schema = z.object({
     descricao: z.string().min(1, "Descricao e obrigatoria"),

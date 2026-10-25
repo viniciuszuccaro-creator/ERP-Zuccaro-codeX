@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,6 +31,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
@@ -170,32 +171,17 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: !!representante?.id && contextoValido
   });
 
-  const prevIdRef = useRef(representante?.id || null);
-  const prevUpdatedRef = useRef(representante?.updated_date);
-  useEffect(() => {
-    const nextId = representante?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && representante?.updated_date && representante.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = representante.updated_date;
-      setFormData({
-        ...representante,
-        endereco: representante.endereco || {},
-        dados_bancarios: representante.dados_bancarios || {},
-        regioes_atendimento: representante.regioes_atendimento || [],
-      });
-    }
-  }, [representante?.id, representante?.updated_date]);
+  useCadastroReopenOnIdentity(representante, {
+    formData,
+    setFormData,
+    clearOnNull: false,
+    mapToForm: (record) => ({
+      ...record,
+      endereco: record.endereco || {},
+      dados_bancarios: record.dados_bancarios || {},
+      regioes_atendimento: record.regioes_atendimento || [],
+    }),
+  });
 
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */

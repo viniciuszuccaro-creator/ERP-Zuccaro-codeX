@@ -6,81 +6,89 @@ async function source(rel) {
   return readFile(new URL(`../${rel}`, import.meta.url), 'utf8');
 }
 
-test('RepresentanteForm reabre por id ou updated_date e não limpa edição suja do mesmo registro', async () => {
+const coorteHook = [
+  'src/components/cadastros/RepresentanteForm.jsx',
+  'src/components/cadastros/RepresentanteFormCompleto.jsx',
+  'src/components/cadastros/FormaPagamentoForm.jsx',
+  'src/components/cadastros/FormaPagamentoFormCompleto.jsx',
+  'src/components/cadastros/UnidadeMedidaForm.jsx',
+  'src/components/cadastros/GrupoProdutoForm.jsx',
+  'src/components/cadastros/SetorAtividadeForm.jsx',
+  'src/components/cadastros/BancoForm.jsx',
+  'src/components/cadastros/CargoForm.jsx',
+  'src/components/cadastros/DepartamentoForm.jsx',
+  'src/components/cadastros/TurnoForm.jsx',
+  'src/components/cadastros/VeiculoForm.jsx',
+  'src/components/cadastros/MotoristaForm.jsx',
+  'src/components/cadastros/TipoDespesaForm.jsx',
+  'src/components/cadastros/CentroCustoForm.jsx',
+  'src/components/cadastros/PlanoContasForm.jsx',
+  'src/components/cadastros/CadastroClienteCompleto.jsx',
+  'src/components/cadastros/CadastroFornecedorCompleto.jsx',
+];
+
+test('coorte #351 usa useCadastroReopenOnIdentity (política canônica anti-wipe)', async () => {
+  for (const rel of coorteHook) {
+    const text = await source(rel);
+    assert.match(text, /useCadastroReopenOnIdentity/, rel);
+    assert.doesNotMatch(text, /idChanged \|\| updatedChanged/, rel);
+  }
+});
+
+test('RepresentanteForm preserva código/ID e hook de reopen', async () => {
   const text = await source('src/components/cadastros/RepresentanteForm.jsx');
-  assert.match(text, /prevIdRef/);
-  assert.match(text, /prevUpdatedRef/);
-  assert.match(text, /idChanged \|\| updatedChanged/);
-  assert.match(text, /dadosIniciais\?\.updated_date/);
+  assert.match(text, /useCadastroReopenOnIdentity/);
   assert.match(text, /CadastroCodigoRegistroField/);
   assert.match(text, /codigo-registro-representante/);
 });
 
-test('RepresentanteFormCompleto reabre por id ou updated_date preservando abas/relações', async () => {
+test('RepresentanteFormCompleto preserva abas/relações e hook de reopen', async () => {
   const text = await source('src/components/cadastros/RepresentanteFormCompleto.jsx');
-  assert.match(text, /prevIdRef/);
-  assert.match(text, /prevUpdatedRef/);
-  assert.match(text, /idChanged \|\| updatedChanged/);
-  assert.match(text, /representante\?\.updated_date/);
+  assert.match(text, /useCadastroReopenOnIdentity/);
   assert.match(text, /CadastroCodigoRegistroField/);
   assert.match(text, /codigo-registro-representante-completo/);
+  assert.match(text, /clearOnNull:\s*false/);
 });
 
-test('FormaPagamentoForm e Completo reidratam por updated_date', async () => {
-  for (const rel of [
-    'src/components/cadastros/FormaPagamentoForm.jsx',
-    'src/components/cadastros/FormaPagamentoFormCompleto.jsx',
-  ]) {
-    const text = await source(rel);
-    assert.match(text, /prevUpdatedRef/);
-    assert.match(text, /updatedChanged/);
-    assert.match(text, /updated_date/);
-  }
-});
-
-test('RegiaoAtendimentoForm reidrata props por updated_date sem apagar carga assíncrona', async () => {
+test('RegiaoAtendimentoForm reidrata props por updated_date com confirmação de rascunho sujo', async () => {
   const text = await source('src/components/cadastros/RegiaoAtendimentoForm.jsx');
   assert.match(text, /prevUpdatedRef/);
   assert.match(text, /propsUpdatedChanged/);
+  assert.match(text, /decideCadastroReopen/);
+  assert.match(text, /CADASTRO_DIRTY_REOPEN_CONFIRM/);
   assert.match(text, /dadosIniciaisProps\?\.updated_date/);
   assert.match(text, /CadastroCodigoRegistroField/);
 });
 
-test('UnidadeMedida, GrupoProduto e SetorAtividade reabrem por updated_date com código/ID', async () => {
+test('UnidadeMedida, GrupoProduto e SetorAtividade mantêm código/ID + isSubmitting', async () => {
   for (const [rel, action] of [
     ['src/components/cadastros/UnidadeMedidaForm.jsx', 'codigo-registro-unidade-medida'],
     ['src/components/cadastros/GrupoProdutoForm.jsx', 'codigo-registro-grupo-produto'],
     ['src/components/cadastros/SetorAtividadeForm.jsx', 'codigo-registro-setor-atividade'],
   ]) {
     const text = await source(rel);
-    assert.match(text, /prevIdRef/);
-    assert.match(text, /prevUpdatedRef/);
-    assert.match(text, /idChanged \|\| updatedChanged/);
-    assert.match(text, /dadosIniciais\?\.updated_date/);
+    assert.match(text, /useCadastroReopenOnIdentity/);
     assert.match(text, /CadastroCodigoRegistroField/);
     assert.match(text, new RegExp(action));
     assert.match(text, /isSubmitting/);
   }
 });
 
-test('Banco, Cargo e Departamento reabrem por updated_date com código/ID', async () => {
+test('Banco, Cargo e Departamento mantêm código/ID + isSubmitting', async () => {
   for (const [rel, action] of [
     ['src/components/cadastros/BancoForm.jsx', 'codigo-registro-banco'],
     ['src/components/cadastros/CargoForm.jsx', 'codigo-registro-cargo'],
     ['src/components/cadastros/DepartamentoForm.jsx', 'codigo-registro-departamento'],
   ]) {
     const text = await source(rel);
-    assert.match(text, /prevIdRef/);
-    assert.match(text, /prevUpdatedRef/);
-    assert.match(text, /idChanged \|\| updatedChanged/);
-    assert.match(text, /dadosIniciais\?\.updated_date/);
+    assert.match(text, /useCadastroReopenOnIdentity/);
     assert.match(text, /CadastroCodigoRegistroField/);
     assert.match(text, new RegExp(action));
     assert.match(text, /isSubmitting/);
   }
 });
 
-test('Turno, Veiculo, Motorista e TipoDespesa reabrem por updated_date com código/ID', async () => {
+test('Turno, Veiculo, Motorista e TipoDespesa mantêm código/ID + isSubmitting', async () => {
   for (const [rel, action] of [
     ['src/components/cadastros/TurnoForm.jsx', 'codigo-registro-turno'],
     ['src/components/cadastros/VeiculoForm.jsx', 'codigo-registro-veiculo'],
@@ -88,35 +96,22 @@ test('Turno, Veiculo, Motorista e TipoDespesa reabrem por updated_date com códi
     ['src/components/cadastros/TipoDespesaForm.jsx', 'codigo-registro-tipo-despesa'],
   ]) {
     const text = await source(rel);
-    assert.match(text, /prevIdRef/);
-    assert.match(text, /prevUpdatedRef/);
-    assert.match(text, /idChanged \|\| updatedChanged/);
-    assert.match(text, /dadosIniciais\?\.updated_date/);
+    assert.match(text, /useCadastroReopenOnIdentity/);
     assert.match(text, /CadastroCodigoRegistroField/);
     assert.match(text, new RegExp(action));
     assert.match(text, /isSubmitting/);
   }
 });
 
-test('CentroCusto reabre por updated_date com código/ID', async () => {
-  const text = await source('src/components/cadastros/CentroCustoForm.jsx');
-  assert.match(text, /prevIdRef/);
-  assert.match(text, /prevUpdatedRef/);
-  assert.match(text, /idChanged \|\| updatedChanged/);
-  assert.match(text, /dadosCentroCusto\?\.updated_date/);
-  assert.match(text, /CadastroCodigoRegistroField/);
-  assert.match(text, /codigo-registro-centro-custo/);
-  assert.match(text, /isSubmitting/);
-});
-
-test('PlanoContas reabre por updated_date sem inventar código de registro', async () => {
-  const text = await source('src/components/cadastros/PlanoContasForm.jsx');
-  assert.match(text, /prevIdRef/);
-  assert.match(text, /prevUpdatedRef/);
-  assert.match(text, /idChanged \|\| updatedChanged/);
-  assert.match(text, /dadosIniciais\?\.updated_date/);
-  assert.match(text, /isSubmitting/);
-  assert.doesNotMatch(text, /CadastroCodigoRegistroField/);
+test('CentroCusto e PlanoContas na política canônica', async () => {
+  const centro = await source('src/components/cadastros/CentroCustoForm.jsx');
+  assert.match(centro, /useCadastroReopenOnIdentity/);
+  assert.match(centro, /codigo-registro-centro-custo/);
+  assert.match(centro, /isSubmitting/);
+  const plano = await source('src/components/cadastros/PlanoContasForm.jsx');
+  assert.match(plano, /useCadastroReopenOnIdentity/);
+  assert.match(plano, /isSubmitting/);
+  assert.doesNotMatch(plano, /CadastroCodigoRegistroField/);
 });
 
 test('MoedaIndice e OperadorCaixa permanecem na coorte ID-only (sem prevUpdatedRef manual)', async () => {
