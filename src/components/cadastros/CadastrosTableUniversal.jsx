@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronUp, ChevronDown, Search, Edit, Trash2, Eye } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const STATUS_COLORS = {
   Ativo: "bg-green-100 text-green-700 border-green-300",
@@ -34,9 +35,23 @@ export default function CadastrosTableUniversal({
   const queryClient = useQueryClient();
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { canEdit, canDelete, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
   const podeVisualizar = hasPermission("Cadastros", entityName, "visualizar") || hasPermission("Cadastros", null, "visualizar");
   const podeEditar = canEdit("Cadastros", entityName) || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", entityName) || canDelete("Cadastros", null);
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async (item) => {
+    if (!podeExcluir || !contextoValido || !onDelete) return;
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Regra-Mae: confirma excluir este registro de ${entityName}? Esta acao sera auditada.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
+    onDelete(item);
+  };
   const permissaoVisualizar = `Cadastros.${entityName}.visualizar`;
   const permissaoEditar = `Cadastros.${entityName}.editar`;
   const permissaoExcluir = `Cadastros.${entityName}.excluir`;
@@ -217,12 +232,8 @@ export default function CadastrosTableUniversal({
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => {
-                                if (window.confirm(`Regra-Mae: confirma excluir este registro de ${entityName}? Esta acao sera auditada.`)) {
-                                  onDelete(item);
-                                }
-                              }}
-                              disabled={!podeExcluir}
+                              onClick={() => handleExcluir(item)}
+                              disabled={!podeExcluir || !contextoValido}
                               className="h-8 w-8 p-0 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-sm"
                               title="Deletar"
                               data-permission={permissaoExcluir}
@@ -271,6 +282,7 @@ export default function CadastrosTableUniversal({
           </div>
         </div>
       )}
+      <ConfirmExcluirDialog />
     </div>
   );
 }
