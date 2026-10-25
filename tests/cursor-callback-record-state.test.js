@@ -105,6 +105,12 @@ test('Colaborador retains legacy-code permission and all save/status/delete hand
   assert.equal(state(after).initializer.expression.getText(after), 'useCadastroRecordState');
 });
 
+/** Transportadora: erp-integra recovery swaps window.confirm → useConfirm; normalize only that gate. */
+const normalizeTransportadoraConfirmGate = (text) => text
+  .replace(/\basync\s+/g, '')
+  .replace(/const ok = await confirm\(\{[\s\S]*?\}\);\s*if \(!ok\) return;/, '/* CONFIRM_GATE */')
+  .replace(/if \(!window\.confirm\(`[^`]*`\)\) \{\s*return;\s*\}/, '/* CONFIRM_GATE */');
+
 for (const file of ['cadastros/EmpresaForm.jsx', 'cadastros/EmpresaFormCompleto.jsx',
   'cadastros/TransportadoraForm.jsx', 'cadastros/ProdutoForm.jsx',
   'comercial/ClienteFormCompleto.jsx', 'cadastros/TabelaPrecoFormCompleto.jsx']) {
@@ -115,7 +121,18 @@ for (const file of ['cadastros/EmpresaForm.jsx', 'cadastros/EmpresaFormCompleto.
     const contract = tree => find(tree, node => ts.isVariableDeclaration(node)
       && /^(handle|buildPayload|pode|contextoValido|groupId|saveBlocked|permissao|schema)/.test(node.name.getText(tree)))
       .map(node => node.getText(tree));
-    assert.deepEqual(contract(after), contract(before));
+    const afterContracts = contract(after);
+    const beforeContracts = contract(before);
+    if (file === 'cadastros/TransportadoraForm.jsx') {
+      assert.deepEqual(
+        afterContracts.map(normalizeTransportadoraConfirmGate),
+        beforeContracts.map(normalizeTransportadoraConfirmGate),
+      );
+      assert.match(fs.readFileSync(path, 'utf8'), /useConfirm/);
+      assert.doesNotMatch(fs.readFileSync(path, 'utf8'), /window\.confirm/);
+    } else {
+      assert.deepEqual(afterContracts, beforeContracts);
+    }
     const declarations = (tree, name) => find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === name)[0];
     const oldInitial = declarations(before, '[formData, setFormData]').initializer.arguments[0];
     const newState = declarations(after, '[formData, setFormData]');
