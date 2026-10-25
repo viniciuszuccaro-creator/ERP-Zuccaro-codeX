@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, CreditCard, Trash2, Power, PowerOff } from "lucide-react";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -94,14 +95,23 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     onSubmit(payload);
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir) {
       alert("Sem permissao para excluir formas de pagamento.");
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir a forma de pagamento "${sanitizeText(formData.descricao, 180)}"? Esta acao nao pode ser desfeita.`)) {
+    if (!contextoValido) {
+      alert("Selecione um grupo ou empresa antes de excluir.");
       return;
     }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir a forma de pagamento "${sanitizeText(formData.descricao, 180)}"? Esta acao nao pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (onSubmit) {
       onSubmit(buildPayload({ _action: "delete" }));
     }
@@ -199,17 +209,24 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
                 <><Power className="w-4 h-4 mr-2" />Ativar</>
               )}
             </Button>
-            <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!podeExcluir} data-permission="Cadastros.FormaPagamento.excluir" data-sensitive>
+            <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!contextoValido || !podeExcluir} data-permission="Cadastros.FormaPagamento.excluir" data-action="excluir-forma-pagamento" data-sensitive>
               <Trash2 className="w-4 h-4 mr-2" />Excluir
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting || !podeSalvar} data-permission="Cadastros.FormaPagamento.salvar" data-sensitive>
+        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.FormaPagamento.salvar" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? "Atualizar" : "Criar Forma de Pagamento"}
         </Button>
       </div>
     </FormWrapper>
+  );
+
+  const withDialog = (
+    <>
+      {formContent}
+      <ConfirmExcluirDialog />
+    </>
   );
 
   if (windowMode) {
@@ -221,10 +238,10 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
             {dadosIniciais ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}
           </h2>
         </div>
-        {formContent}
+        {withDialog}
       </div>
     );
   }
 
-  return formContent;
+  return withDialog;
 }
