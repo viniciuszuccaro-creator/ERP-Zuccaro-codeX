@@ -45,3 +45,11 @@ test('HTTP requires verified Supabase/profile/Group; synthetic transport calls e
 test('conferencia maximum 100 identities means exactly 200 point reads; 101 rejected',async()=>{
  const f=fixture();const result=await(f.service as any).conferirLegado(f.ctx,{identidades:Array.from({length:100},()=>input.identidades[0])});assert.equal(result.length,100);assert.equal(f.reads(),200);
 });
+
+test('HTTP legacy actor headers cannot authorize cohort without Supabase middleware',async()=>{
+ const config=loadConfig({NODE_ENV:'test',ERP_ENV:'dev',REQUIRE_DATABASE:'false'});
+ const runtime=createApp({config,db:{query:async()=>{throw new Error('UNEXPECTED_SQL');}} as any,useMemory:true});let calls=0;
+ (runtime.clienteService as any).conferirLegado=async()=>{calls++;throw new Error('MUST_NOT_READ');};
+ const server=runtime.app.listen(0,'127.0.0.1');await new Promise<void>(r=>server.once('listening',r));const address=server.address();assert.ok(address&&typeof address!=='string');
+ try{const response=await fetch('http://127.0.0.1:'+address.port+'/api/v1/clientes/conferencia-legado',{method:'POST',headers:{'Content-Type':'application/json','X-Group-Id':G,'X-Actor-Id':A},body:JSON.stringify(input)});assert.equal(response.status,401);assert.equal(calls,0);}finally{await new Promise<void>((r,j)=>server.close(e=>e?j(e):r()));}
+});

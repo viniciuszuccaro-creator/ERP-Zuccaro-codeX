@@ -695,7 +695,9 @@ SeparacaoConferencia: {
       const before = Object.freeze({ ...(getScope() || {}) });
       const matches = current => current.groupId === before.groupId && current.actorId === before.actorId
         && (current.empresaId || null) === null && current.token === before.token;
-      if (!before.token || !before.groupId || !before.actorId || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');
+      if (typeof before.token !== 'string' || !before.token.trim()
+        || typeof before.groupId !== 'string' || !before.groupId.trim()
+        || typeof before.actorId !== 'string' || !before.actorId.trim() || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');
       if (!input || Object.keys(input).some(k => k !== 'identidades') || !Array.isArray(input.identidades)
         || input.identidades.length < 1 || input.identidades.length > 100) throw fail(422, 'VALIDATION_ERROR');
       const body = JSON.parse(JSON.stringify(input));
