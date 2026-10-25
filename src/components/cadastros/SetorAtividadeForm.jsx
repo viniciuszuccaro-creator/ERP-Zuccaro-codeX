@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Factory, Trash2, Power, PowerOff } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -58,17 +59,22 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
     if (typeof closeSelf === 'function') closeSelf();
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir) {
       alert('Sem permissão para excluir setor de atividade.');
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir o setor "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir o setor "${formData.nome}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
-    if (typeof closeSelf === 'function') closeSelf();
+      if (typeof closeSelf === 'function') closeSelf();
     }
   };
 
@@ -179,7 +185,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
               type="button"
               variant="destructive"
               onClick={handleExcluir}
-              disabled={!podeExcluir}
+              disabled={!podeExcluir || !contextoValido}
               data-permission="Cadastros.SetorAtividade.excluir"
               data-action="excluir-setor-atividade"
               data-sensitive="true"
@@ -202,6 +208,13 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
     </form>
   );
 
+  const withDialog = (
+    <>
+      {formContent}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
@@ -211,10 +224,10 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
             {setor ? 'Editar Setor de Atividade' : 'Novo Setor de Atividade'}
           </h2>
         </div>
-        {formContent}
+        {withDialog}
       </div>
     );
   }
 
-  return formContent;
+  return withDialog;
 }

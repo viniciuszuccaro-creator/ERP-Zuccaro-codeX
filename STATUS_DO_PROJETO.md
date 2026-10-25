@@ -1,3 +1,10 @@
+## CURSOR — SetorAtividade useConfirm (erp-integra) (2026-10-25)
+
+`SetorAtividadeForm` exclusão: `window.confirm` → `useConfirm` + dialog
+existente; Excluir fail-closed sem contexto. Contraprova 3/3 PASS.
+Branch `cursor/cadastros-setoratividade-confirm-392b` sobre `15c49276`.
+Sem UI paralela. Sem merge/deploy.
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
