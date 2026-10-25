@@ -16,6 +16,7 @@ import {
  * @param {(next: object) => void} opts.setFormData
  * @param {(record: object) => object} opts.mapToForm mapeia record → shape do form
  * @param {object} [opts.emptyForm] usado ao limpar (record ausente)
+ * @param {boolean} [opts.clearOnNull=true] limpa form quando record fica ausente
  * @param {() => boolean} [opts.confirmDiscard]
  * @param {() => boolean} [opts.confirmSwitch]
  * @param {(boundId: string|null) => void} [opts.onRejectSwitch] pai deve realinhar seleção ao rascunho
