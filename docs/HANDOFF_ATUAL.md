@@ -1,3 +1,13 @@
+## CURSOR — TransferenciaEntreEmpresasForm useConfirm (erp-integra) (2026-10-25)
+
+`TransferenciaEntreEmpresasForm` confirmação: `window.confirm` → `useConfirm`; fail-closed.
+Contraprova 3/3. Branch `cursor/estoque-transferenciaempresas-confirm-392b` sobre
+`0a67aa4b`. Sem merge/deploy. Publication-baseline BLOCKED herdado (Codex/#344).
+
+Cadastros useConfirm coorte tipada (#361–#382); estoque InventarioForm #383,
+InventarioContagem #384, TransferenciaEntreEmpresas em tip. Aguardando tip Codex
+publication; remarge tips verdes na candidata #353. Sem merge/deploy/#344.
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
