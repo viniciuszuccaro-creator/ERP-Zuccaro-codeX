@@ -8,6 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   assertReconciliacaoMigracao,
   buildReconciliacaoMigracao,
@@ -32,6 +33,7 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
   const empresaId = contexto === 'empresa' ? empresaAtual?.id : (empresaAtual?.id || null);
   const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const podeCriarProduto = canCreate('Cadastros', 'Produto') || canCreate('Estoque', 'Produto') || canCreate('Cadastros', null);
+  const { confirm, ConfirmDialog: ConfirmImportacaoNFeDialog } = useConfirm();
 
   const auditImportacaoProdutoNFe = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
@@ -215,7 +217,11 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
       return;
     }
 
-    const confirmado = window.confirm('Importar ' + produtosNovos.length + ' produto(s) novo(s) da NF-e no contexto selecionado? Esta a\u00e7\u00e3o ser\u00e1 auditada e reconciliada.');
+    const confirmado = await confirm({
+      title: 'Confirmar importação NF-e',
+      description: 'Importar ' + produtosNovos.length + ' produto(s) novo(s) da NF-e no contexto selecionado? Esta a\u00e7\u00e3o ser\u00e1 auditada e reconciliada.',
+      confirmText: 'Importar',
+    });
     if (!confirmado) {
       await auditImportacaoProdutoNFe({ acao: 'Produto.importacao_produto_nfe_cancelada', sucesso: false, motivo: 'Confirma\u00e7\u00e3o cancelada pelo usu\u00e1rio.', dados: { total_produtos: produtosNovos.length } });
       return;
@@ -312,6 +318,7 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
   };
 
   return (
+    <>
     <Card className="border-2 border-sky-200 w-full h-full" data-context-required="group-and-company" data-permission="Cadastros.Produto.importar">
       <CardHeader className="bg-sky-50">
         <CardTitle className="flex items-center gap-2">
@@ -453,5 +460,7 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
         )}
       </CardContent>
     </Card>
+    <ConfirmImportacaoNFeDialog />
+    </>
   );
 }
