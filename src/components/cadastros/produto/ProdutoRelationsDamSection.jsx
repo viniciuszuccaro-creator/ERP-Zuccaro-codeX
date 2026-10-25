@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { getProdutoMediaScanLabel, getProdutoWorkflowActions, prepareProdutoMediaFile } from './produtoHttpPolicy';
 
 function uploadSigned(url, file, requiredHeaders, onProgress, setCancel) {
@@ -34,6 +35,7 @@ export default function ProdutoRelationsDamSection({
   workflowStatus, onWorkflowChanged,
 }) {
   const api = getHttpProdutoApi();
+  const { confirm, ConfirmDialog: ConfirmProdutoPublishDialog } = useConfirm();
   const workflowActions = getProdutoWorkflowActions(workflowStatus, { canEdit, canApprove, canPublish, canDeactivate });
   const [variants, setVariants] = useState([]);
   const [equivalents, setEquivalents] = useState([]);
@@ -136,7 +138,14 @@ export default function ProdutoRelationsDamSection({
   }, 'Variante salva');
   const changeWorkflow = async (target) => {
     if (busy || !workflowActions.some((action) => action.target === target)) return;
-    if (target === 'PUBLICADO' && !window.confirm('Publicar este produto nos canais autorizados?')) return;
+    if (target === 'PUBLICADO') {
+      const confirmado = await confirm({
+        title: 'Confirmar publicação',
+        description: 'Publicar este produto nos canais autorizados?',
+        confirmText: 'Publicar',
+      });
+      if (!confirmado) return;
+    }
     setBusy(true); setError(''); setNotice('');
     try {
       const updated = await api.workflow(produtoId, target);
@@ -190,7 +199,8 @@ export default function ProdutoRelationsDamSection({
   };
 
   if (!canView || !produtoId || !empresaId) return null;
-  return <div className="w-full space-y-5 border-t pt-5" data-permission="Cadastros.Produto.visualizar">
+  return <>
+  <div className="w-full space-y-5 border-t pt-5" data-permission="Cadastros.Produto.visualizar">
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     {notice && <p role="status" className="text-sm text-green-700">{notice}</p>}
     <section className="space-y-2" data-permission="Cadastros.Produto.visualizar">
@@ -294,5 +304,7 @@ export default function ProdutoRelationsDamSection({
         {progress != null && <div className="flex items-center gap-2 text-sm"><Upload className="h-4 w-4" />{progress}%
           <Button type="button" variant="ghost" size="icon" title="Cancelar envio" onClick={() => cancelUpload.current?.()}><X className="h-4 w-4" /></Button></div>}</>}
     </section>
-  </div>;
+  </div>
+  <ConfirmProdutoPublishDialog />
+  </>;
 }
