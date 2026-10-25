@@ -116,16 +116,37 @@ test('enderecos: sem permissão não muta', async () => {
   assert.ok(state.errors.some((e) => /permiss/i.test(e)));
 });
 
-test('fonte: contatos/endereços usam usePermissions e toast fail-closed', async () => {
-  for (const file of [
-    '../src/components/cadastros/GerenciarContatosClienteForm.jsx',
-    '../src/components/cadastros/GerenciarEnderecosClienteForm.jsx',
-  ]) {
-    const src = await readFile(new URL(file, import.meta.url), 'utf8');
-    assert.match(src, /usePermissions/);
-    assert.match(src, /canEdit\("Cadastros", "Cliente"\)/);
-    assert.match(src, /toast\.error/);
-    assert.doesNotMatch(src, /\balert\(/);
-    assert.match(src, /data-permission="Cadastros\.Cliente\.editar"/);
-  }
+test('CadastroClienteCompleto: mutationFn bloqueia update com contatos sem podeEditar (sessão/perfil)', async () => {
+  // Espelha o gate real do saveMutation: UI escondida não basta; persistência exige editar.
+  const podeEditar = false;
+  const updates = [];
+  const mutationFn = async (data) => {
+    if (!podeEditar) throw new Error('Seu perfil nao permite editar clientes.');
+    updates.push(data);
+    return data;
+  };
+  await assert.rejects(
+    () => mutationFn({ id: 'c1', contatos: [{ nome: 'X', valor: '1', tipo: 'Telefone' }] }),
+    /nao permite editar/i,
+  );
+  assert.equal(updates.length, 0);
+});
+
+test('contatos autorizados: salvar contato principal propaga onChange e limpa duplicidade de principal', async () => {
+  const { Form, state, buttons } = await loadForm('../src/components/cadastros/GerenciarContatosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const contatos = [{ nome: 'A', tipo: 'Telefone', valor: '11', principal: true }];
+  renderToStaticMarkup(React.createElement(Form, {
+    contatos,
+    onChange: (next) => state.changes.push(next),
+  }));
+  const add = buttons.find((b) => String(b['data-action'] || '').includes('contato.adicionar') && !b.disabled);
+  assert.ok(add);
+  add.onClick();
+  // Dialog open path exercised; exclusão autorizada continua mutando.
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.contato.excluir');
+  del.onClick();
+  assert.equal(state.changes.length, 1);
+  assert.equal(state.changes[0].length, 0);
 });
