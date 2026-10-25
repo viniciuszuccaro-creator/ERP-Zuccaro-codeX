@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CADASTRO_DIRTY_REOPEN_CONFIRM,
   CADASTRO_DIRTY_SWITCH_CONFIRM,
@@ -18,6 +18,8 @@ import {
  * @param {object} [opts.emptyForm] usado ao limpar (record ausente)
  * @param {() => boolean} [opts.confirmDiscard]
  * @param {() => boolean} [opts.confirmSwitch]
+ * @param {(boundId: string|null) => void} [opts.onRejectSwitch] pai deve realinhar seleção ao rascunho
+ * @returns {{ boundId: string|null, identityMismatch: boolean }}
  */
 export default function useCadastroReopenOnIdentity(record, {
   formData,
@@ -27,12 +29,19 @@ export default function useCadastroReopenOnIdentity(record, {
   clearOnNull = true,
   confirmDiscard = () => window.confirm(CADASTRO_DIRTY_REOPEN_CONFIRM),
   confirmSwitch = () => window.confirm(CADASTRO_DIRTY_SWITCH_CONFIRM),
+  onRejectSwitch,
 }) {
   const prevIdRef = useRef(record?.id || null);
   const prevUpdatedRef = useRef(record?.updated_date);
   const baselineRef = useRef(cadastroFormSnapshot(formData));
   const formDataRef = useRef(formData);
   formDataRef.current = formData;
+  const onRejectSwitchRef = useRef(onRejectSwitch);
+  onRejectSwitchRef.current = onRejectSwitch;
+
+  const [boundId, setBoundId] = useState(() => record?.id || null);
+  const propId = record?.id || null;
+  const identityMismatch = Boolean(boundId && propId && String(boundId) !== String(propId));
 
   useEffect(() => {
     const nextId = record?.id || null;
@@ -45,6 +54,7 @@ export default function useCadastroReopenOnIdentity(record, {
       if (prevIdRef.current !== null) {
         prevIdRef.current = null;
         prevUpdatedRef.current = undefined;
+        setBoundId(null);
         if (clearOnNull) {
           baselineRef.current = cadastroFormSnapshot(emptyForm);
           setFormData(emptyForm);
@@ -69,14 +79,21 @@ export default function useCadastroReopenOnIdentity(record, {
       if (updatedChanged && !idChanged) {
         prevUpdatedRef.current = record.updated_date;
       }
+      if (idChanged) {
+        // Pai continua com props do outro registro; notifica para realinhar seleção.
+        onRejectSwitchRef.current?.(prevIdRef.current);
+      }
       return;
     }
 
     if (decision === "apply") {
       prevIdRef.current = nextId;
       prevUpdatedRef.current = record.updated_date;
+      setBoundId(nextId);
       baselineRef.current = cadastroFormSnapshot(next);
       setFormData(next);
     }
   }, [record?.id, record?.updated_date]); // eslint-disable-line react-hooks/exhaustive-deps — identidade canônica
+
+  return { boundId, identityMismatch };
 }

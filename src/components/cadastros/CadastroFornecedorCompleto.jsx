@@ -175,9 +175,11 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
 
       const payload = buildPayload(data);
 
-      if (fornecedor?.id) {
+      // Identidade do rascunho (formData.id), não props — evita salvar A em B após reject switch.
+      const targetId = formData?.id || null;
+      if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar fornecedores.");
-        return updateInContext('Fornecedor', fornecedor.id, payload, 'empresa_dona_id');
+        return updateInContext('Fornecedor', targetId, payload, 'empresa_dona_id');
       }
 
       if (!podeCriar) throw new Error("Seu perfil nao permite criar fornecedores.");
@@ -186,7 +188,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     onSuccess: () => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
-      toast({ title: `✅ Fornecedor ${fornecedor?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Fornecedor ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -230,7 +232,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     if (!window.confirm(`Tem certeza que deseja excluir o fornecedor "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
-    deleteMutation.mutate(fornecedor.id);
+    if (!formData?.id) return;
+    deleteMutation.mutate(formData.id);
   };
 
   const handleAlternarStatus = () => {

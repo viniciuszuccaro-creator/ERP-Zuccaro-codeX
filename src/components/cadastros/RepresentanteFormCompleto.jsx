@@ -159,19 +159,7 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: contextoValido,
   });
 
-  const { data: clientesIndicados = [] } = useQuery({
-    queryKey: ['clientes-indicados', representante?.id, contextKey],
-    queryFn: () => filterInContext('Cliente', { indicador_id: representante.id }, 'nome', 200),
-    enabled: !!representante?.id && contextoValido
-  });
-
-  const { data: pedidosIndicados = [] } = useQuery({
-    queryKey: ['pedidos-indicados', representante?.id, contextKey],
-    queryFn: () => filterInContext('Pedido', { indicador_id: representante.id }, '-created_date', 200),
-    enabled: !!representante?.id && contextoValido
-  });
-
-  useCadastroReopenOnIdentity(representante, {
+  const { boundId: representanteBoundId } = useCadastroReopenOnIdentity(representante, {
     formData,
     setFormData,
     clearOnNull: false,
@@ -183,6 +171,18 @@ export default function RepresentanteFormCompleto({ representante: representante
     }),
   });
 
+  const { data: clientesIndicados = [] } = useQuery({
+    queryKey: ['clientes-indicados', representanteBoundId, contextKey],
+    queryFn: () => filterInContext('Cliente', { indicador_id: representanteBoundId }, 'nome', 200),
+    enabled: !!representanteBoundId && contextoValido
+  });
+
+  const { data: pedidosIndicados = [] } = useQuery({
+    queryKey: ['pedidos-indicados', representanteBoundId, contextKey],
+    queryFn: () => filterInContext('Pedido', { indicador_id: representanteBoundId }, '-created_date', 200),
+    enabled: !!representanteBoundId && contextoValido
+  });
+
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */
     mutationFn: async (data) => {
@@ -192,9 +192,9 @@ export default function RepresentanteFormCompleto({ representante: representante
       }
       const payload = buildPayload(data);
 
-      if (representante?.id) {
+      if (representanteBoundId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar representantes.");
-        return updateInContext('Representante', representante.id, payload);
+        return updateInContext('Representante', representanteBoundId, payload);
       }
       if (!podeCriar) throw new Error("Seu perfil nao permite criar representantes.");
       return createInContext('Representante', payload);
@@ -202,7 +202,7 @@ export default function RepresentanteFormCompleto({ representante: representante
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
-      toast({ title: `✅ Representante ${representante?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Representante ${representanteBoundId ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -237,8 +237,9 @@ export default function RepresentanteFormCompleto({ representante: representante
   const handleExcluir = () => {
     try { assertFormScopeCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
+    if (!representanteBoundId) return;
     if (window.confirm(`Excluir "${formData.nome}"?`)) {
-      deleteMutation.mutate(representante.id);
+      deleteMutation.mutate(representanteBoundId);
     }
   };
   const handleAlternarStatus = () => {

@@ -26,8 +26,6 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
   const contextoValido = Boolean(empresaAtual?.id || groupId || formaPagamentoNorm?.empresa_id || formaPagamentoNorm?.group_id);
   const podeCriar = hasPermission?.("Cadastros.FormaPagamento.criar") || hasPermission?.("Financeiro.FormaPagamento.criar");
   const podeEditar = hasPermission?.("Cadastros.FormaPagamento.editar") || hasPermission?.("Financeiro.FormaPagamento.editar");
-  const podeSalvar = formaPagamentoNorm?.id ? podeEditar : podeCriar;
-  
   const { data: bancos = [] } = useQuery({
     queryKey: ['bancos', groupId, empresaAtual?.id],
     queryFn: () => filterInContext('Banco', {}, 'nome_banco', 200),
@@ -104,12 +102,13 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     setFormData({...formData, configuracao_parcelas_cartao: novaConfig});
   };
 
-  useCadastroReopenOnIdentity(formaPagamentoNorm, {
+  const { boundId: formaBoundId } = useCadastroReopenOnIdentity(formaPagamentoNorm, {
     formData,
     setFormData,
     clearOnNull: false,
     mapToForm: (record) => ({ ...record }),
   });
+  const podeSalvar = formaBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = async () => {
     if (!formData.descricao) {
@@ -127,11 +126,12 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     const codigoReservado = String(formData.codigo ?? '').trim();
     const payload = {
       ...formData,
+      ...(formaBoundId ? { id: formaBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
       ...(codigoReservado ? { codigo: codigoReservado } : {}),
     };
-    if (!formaPagamentoNorm?.id) delete payload.codigo;
+    if (!formaBoundId) delete payload.codigo;
     if (onSubmit) onSubmit(payload);
     if (onSave) onSave();
     if (onClose) onClose();
@@ -185,8 +185,8 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
         <TabsContent value="geral" className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <CadastroCodigoRegistroField
-              hasId={Boolean(formaPagamentoNorm?.id)}
-              entityId={formaPagamentoNorm?.id}
+              hasId={Boolean(formaBoundId)}
+              entityId={formaBoundId}
               value={formData.codigo}
               action="codigo-registro-forma-pagamento-completo"
             />

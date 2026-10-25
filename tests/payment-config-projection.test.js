@@ -27,7 +27,7 @@ for (const [file, expected] of [
   ['comercial/FechamentoFinanceiroTab.jsx', 'ae386c90edc5194049336d95e493a01c868496b5e91dd78b2bf9240ad8e0ea21'],
   ['financeiro/CaixaPDVCompleto.jsx', '660c53cb0d8355e9cc6d0ed621b0ab1cd452051c2043329cee6b5269be561b52'],
   // P1 #351: FormaPagamento* adotam useCadastroReopenOnIdentity (hash atualizado de propósito).
-  ['cadastros/FormaPagamentoFormCompleto.jsx', '499d1b282cac742e2de5adbd22ac087459e2d4bed83033dd00a43253159f2e4c'],
+  ['cadastros/FormaPagamentoFormCompleto.jsx', 'e6086173b4bd25b3f3486f1a2f549df2deb847baacb47a7369ab6fc1c0d3c390'],
   ['cadastros/FormaPagamentoForm.jsx', '386346d8b9f33f92bf9cd7f7be3ce92a65f30503687e4d3e84d2e1b3d6e796ff'],
 ]) test(`${file}: source, handlers, permissions and persistence ownership unchanged from stage49`, () => {
   const path = 'src/components/' + file;
