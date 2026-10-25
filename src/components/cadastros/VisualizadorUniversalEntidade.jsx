@@ -22,6 +22,7 @@ import {
   ChevronUp, ChevronDown, ChevronsUpDown,
   Search, Edit, Trash2, Plus, RefreshCw
 } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 // ─── STATUS COLORS ────────────────────────────────────────────────────────────
 const STATUS_COLORS = {
@@ -94,6 +95,7 @@ export default function VisualizadorUniversalEntidade({
   const queryClient                                    = useQueryClient();
   const { filterInContext, empresaAtual, grupoAtual, deleteInContext } = useContextoVisual();
   const { hasPermission, canCreate, canEdit, canDelete } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmVizDialog } = useConfirm();
   const canViewCadastro = hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
   const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
   const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
@@ -225,18 +227,27 @@ export default function VisualizadorUniversalEntidade({
 
   // ── Delete ──
   const handleDelete = useCallback(async (item) => {
+    if (!hasContext) {
+      alert("Selecione um grupo ou empresa antes de excluir.");
+      return;
+    }
     if (!canDeleteCadastro) {
       alert("Sem permissao para excluir.");
       return;
     }
-    if (!window.confirm(`Confirma exclusão de "${item.nome || item.descricao || item.id}"?`)) return;
+    const confirmado = await confirm({
+      title: 'Confirmar exclusão',
+      description: `Confirma exclusão de "${item.nome || item.descricao || item.id}"?`,
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
     try {
       await deleteInContext(ENTITY, item.id);
       queryClient.invalidateQueries({ queryKey: [ENTITY, "vis-list"] });
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
     }
-  }, [ENTITY, deleteInContext, queryClient, canDeleteCadastro]);
+  }, [ENTITY, deleteInContext, queryClient, canDeleteCadastro, hasContext, confirm]);
 
   const handleSave = useCallback(() => {
     setShowForm(false);
@@ -381,8 +392,9 @@ export default function VisualizadorUniversalEntidade({
                       <button
                         onClick={() => handleDelete(item)}
                         title="Excluir"
-                        disabled={!canDeleteCadastro}
+                        disabled={!canDeleteCadastro || !hasContext}
                         data-permission={`Cadastros.${ENTITY}.excluir`}
+                        data-context-required="group-or-company"
                         data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                       >
@@ -458,6 +470,7 @@ export default function VisualizadorUniversalEntidade({
   // ── Window mode wrapper ──
   if (windowMode) {
     return (
+      <>
       <div className="w-full h-full flex flex-col p-4 bg-white overflow-hidden">
         {IconeProp && (
           <div className="flex items-center gap-2 mb-3 shrink-0">
@@ -469,8 +482,15 @@ export default function VisualizadorUniversalEntidade({
           {content}
         </div>
       </div>
+      <ConfirmVizDialog />
+      </>
     );
   }
 
-  return content;
+  return (
+    <>
+    {content}
+    <ConfirmVizDialog />
+    </>
+  );
 }
