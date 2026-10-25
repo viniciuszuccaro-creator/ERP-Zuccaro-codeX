@@ -14,6 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
@@ -24,6 +25,7 @@ export default function RelatorioEstoque() {
   });
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmRelatorioEstoqueDialog } = useConfirm();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -113,7 +115,11 @@ export default function RelatorioEstoque() {
       await auditarExportacao(nomeArquivo, quantidade, false, "Tentativa de exportar relatorio de estoque sem contexto grupo/empresa ou permissao RBAC.");
       return;
     }
-    const confirmado = window.confirm(`Exportar ${quantidade} registros de ${nomeArquivo} para CSV?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar ${quantidade} registros de ${nomeArquivo} para CSV?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditarExportacao(nomeArquivo, quantidade, false, "Exportacao CSV do relatorio de estoque cancelada pelo usuario.");
       return;
@@ -129,6 +135,7 @@ export default function RelatorioEstoque() {
   };
 
   return (
+    <>
     <div className="space-y-6 w-full h-full" data-permission="Estoque.Relatorios.visualizar" data-context-required="group-or-company">
       {(!contextoValido || !canViewRelatorio) && (
         <Alert className="border-amber-300 bg-amber-50">
@@ -224,5 +231,7 @@ export default function RelatorioEstoque() {
         </Card>
       </div>
     </div>
+    <ConfirmRelatorioEstoqueDialog />
+    </>
   );
 }
