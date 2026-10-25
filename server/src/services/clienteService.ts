@@ -1,3 +1,4 @@
+import { conferirClientesLegado } from './clienteConferencia.js';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';
@@ -51,6 +52,10 @@ export class ClienteService {
       tabelaPrecoRepo,
       condicaoPagamentoRepo,
     );
+  }
+
+  conferirLegado(ctx: RequestContext, input: unknown) {
+    return conferirClientesLegado(this.repo, this.rbacGuard, ctx, input);
   }
 
   async list(ctx: RequestContext, options: ClienteListOptions = {}) {

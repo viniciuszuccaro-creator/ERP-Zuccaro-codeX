@@ -571,6 +571,14 @@ function mountClienteRoutes(
     }
   });
 
+  router.post('/api/v1/clientes/conferencia-legado', requireTenantScope, async (req, res, next) => {
+    try {
+      if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified Supabase session required');
+      res.set('cache-control', 'no-store');
+      res.json({ data: await service.conferirLegado(ctxFromReq(req), req.body) });
+    } catch (error) { next(error); }
+  });
+
   router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {
     try {
       const data = await service.sugerirVinculo(ctxFromReq(req), { documento: req.query.documento });

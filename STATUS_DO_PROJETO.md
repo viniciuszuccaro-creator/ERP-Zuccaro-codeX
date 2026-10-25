@@ -1,3 +1,8 @@
+## CURSOR — remarge consolidação `15c49276` em #351 (2026-10-25)
+
+Incorpora tip Codex CANAL02–04 (`conferencia-legado`) preservando P1 reopen
+Cursor. Conflitos só STATUS/HANDOFF — ambos lados mantidos. Sem merge/deploy.
+
 ## #351 — typecheck: clearOnNull JSDoc + deleteMutation tipado (Cursor, 2026-10-25)
 
 CI frontend falhou no tip `899be582`: TS2353 `clearOnNull` ausente no JSDoc do
@@ -64,6 +69,47 @@ Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
 
+## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
+
+Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
+Mesmo Codespace/branch Codex; trava exclusiva própria, sem editar branch Cursor.
+POST específico /api/v1/clientes/conferencia-legado evolui o serviço/rotas de
+clientes existentes: sessão Supabase verificada no middleware, perfil/Grupo e
+visualizar+importar explícitos antes/depois de cada leitura. Body estrito,
+1–100 identidades, até200 lookups exatos por documento/identidade legada;
+rejeita vazios/inválidos/chaves extras/Empresa/contexto alterado. Sem listagem
+ampla, proxy privilegiado, token para worker, grant, importação ou audit de negócio.
+Resposta mínima índice/ID/código/ativo; inativo não é restaurado/promovido.
+Helper clienteConferencia separa a política do ClienteService já extenso,
+reutilizando validadores/repositórios/RBAC, sem módulo paralelo.
+
+Adapter preserva documento/codigo e rejeita filtro inválido antes de fetch;
+conferência captura sessão/Grupo/perfil e descarta retorno tardio/troca/revogação.
+Consumidor embutido no fluxo ClientesTab, auxiliar somente formulário/estado.
+Entrada /comercial?conferencia_legado=1 desvia ANTES dos hooks da página geral,
+sem montar consultas amplas/efeitos de Comercial ou Visualizador. Não grava
+coorte em storage; limpa resultados ao trocar contexto; sem fallback amplo.
+
+Contraprovas falharam antes; transporte sintético adapter→HTTP→serviço e
+consumidor/wrapper reais:38PASS0FAIL0SKIP frontend,5PASS0FAIL0SKIP backend.
+Cobertos filtros descartados, limite100/200, permissão, cross-tenant, sessão
+inválida, revogação, resposta tardia/abortada, projeção mínima e ausência de
+escrita via ports de leitura/audit que falha se chamado. Typechecks frontend
++backend, audit:baseline, lint e build PASS; configs e hashes anteriores preservados.
+Contratos antigos desfazem somente os hunks CANAL registrados e ainda exigem
+hash integral anterior;11PASS incluem negativas dentro/fora dos hunks.
+Suítes completas locais tentadas: timeouts180s e600s, não declaradas verdes.
+Invocação controlada inicial fora de server não resolveu tsx; cwd corrigido,
+sem esconder falha. Fechamento completo exige CI por SHA no recibo344/342.
+
+Fila: CANAL02 coordenado; CANAL03/04 implementados; CANAL05 CI/revisão por SHA.
+Implantação/uso de dados reais permanecem gate SEPARADO: compatibilidade de
+schema/journals043–049, menor privilégio, backup/restore/reversão e autorização
+específica.0clientes operacionais lidos/selecionados,0escritas operacionais.
+P1 da3513fda5f31 revisado isoladamente8PASS; parecer351/6402496862.
+Candidata35368c1b429 incorpora esse fix por ancestralidade; sem integração paralela.
+Automação mesma fila, exclusividade/checkpoint; estado final e liberação de
+reservas serão registrados no recibo de fechamento. Sem merge/deploy/migration.
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
