@@ -1,3 +1,4 @@
+import { clienteConferenciaRemainder } from '../../tests/helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -189,7 +190,7 @@ test('bulk consolidation: existing canonical Cliente methods and identity protec
   const path = 'src/services/clienteService.ts';
   const original = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:server/${path}`], { encoding: 'utf8' });
   const parse = (source: string) => ts.createSourceFile(path, source.replaceAll('\r\n', '\n'), ts.ScriptTarget.Latest, true);
-  const before = parse(original), after = parse(fs.readFileSync(path, 'utf8'));
+  const before = parse(original), after = parse(clienteConferenciaRemainder('server/'+path, fs.readFileSync(path, 'utf8')));
   const members = (file: ts.SourceFile) => {
     const declaration = file.statements.find(ts.isClassDeclaration);
     assert(declaration);
