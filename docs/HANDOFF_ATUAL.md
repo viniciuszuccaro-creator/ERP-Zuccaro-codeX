@@ -1,3 +1,13 @@
+## CURSOR — Fornecedor: confirm-dialog (erp-integra) (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra: exclusão usava `window.confirm` |
+| tip | `cursor/cadastros-fornecedor-confirm-392b` · base `a31d83fd` |
+| correção | `useConfirm` + stage48 `once()` + fail-closed |
+| testes | behavioral 2 PASS · stage48 Fornecedor PASS |
+| irmão CLEAN | #358 Representante `6cc78853` |
+
 ## #344 — fila A/B/C: canal recuperado, gates reais e revisão cruzada (2026-10-25)
 
 Base8e68484b; pacote funcional D publicado0c18d995 na342, checkout limpo.
