@@ -1,15 +1,12 @@
-<<<<<<< HEAD
-## CURSOR — #351 merge consolidação `3eccd369` (2026-10-24)
+## CURSOR — #351 merge consolidação `8e68484b` (2026-10-25)
 
 | Item | Valor |
 |---|---|
-| ambiente | Cursor Cloud `/workspace` |
-| base merge | consolidação tip **`3eccd369`** |
-| branch | `cursor/cadastros-reabrir-updated-392b` · PR #351 |
-| tip anterior | `4c1d6ce6` · API CONFLICTING/DIRTY |
-| conflitos | STATUS/HANDOFF — ambos lados preservados |
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
 | fora | branch Codex intocada · sem force-push · sem merge/deploy |
-=======
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -81,7 +78,17 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
->>>>>>> origin/codex/consolidacao-infra-20261017
+
+## CURSOR — #351 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` |
+| base merge | consolidação tip **`3eccd369`** |
+| branch | `cursor/cadastros-reabrir-updated-392b` · PR #351 |
+| tip anterior | `4c1d6ce6` · API CONFLICTING/DIRTY |
+| conflitos | STATUS/HANDOFF — ambos lados preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 

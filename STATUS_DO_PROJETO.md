@@ -1,14 +1,12 @@
-<<<<<<< HEAD
-## CURSOR — #351 merge consolidação `3eccd369` (2026-10-24)
+## CURSOR — #351 merge consolidação `8e68484b` (2026-10-25)
 
 | Item | Valor |
 |---|---|
-| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** |
-| tip anterior | `4c1d6ce6` · CONFLICTING/DIRTY vs tip atual |
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
 | conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
-| escopo | reopen `updated_date` cadastros (PlanoContas etc.) |
-| fora | branch Codex intocada · MarcaForm · sem force-push |
-=======
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -80,7 +78,16 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
->>>>>>> origin/codex/consolidacao-infra-20261017
+
+## CURSOR — #351 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** |
+| tip anterior | `4c1d6ce6` · CONFLICTING/DIRTY vs tip atual |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| escopo | reopen `updated_date` cadastros (PlanoContas etc.) |
+| fora | branch Codex intocada · MarcaForm · sem force-push |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
