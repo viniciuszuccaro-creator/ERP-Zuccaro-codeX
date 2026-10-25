@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Building2, Trash2, Power, PowerOff } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -58,14 +59,19 @@ export default function DepartamentoForm({ departamento, item, data, initialData
     });
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir) {
       alert('Sem permissao para excluir departamentos.');
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir o departamento "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir o departamento "${formData.nome}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
     }
@@ -156,6 +162,13 @@ export default function DepartamentoForm({ departamento, item, data, initialData
     </form>
   );
 
+  const withDialog = (
+    <>
+      {formContent}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
@@ -165,10 +178,10 @@ export default function DepartamentoForm({ departamento, item, data, initialData
             {dadosIniciais ? 'Editar Departamento' : 'Novo Departamento'}
           </h2>
         </div>
-        {formContent}
+        {withDialog}
       </div>
     );
   }
 
-  return formContent;
+  return withDialog;
 }
