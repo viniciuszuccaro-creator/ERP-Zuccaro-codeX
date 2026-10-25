@@ -14,6 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function RelatorioFinanceiro() {
   const [filtros, setFiltros] = useState({
@@ -22,6 +23,7 @@ export default function RelatorioFinanceiro() {
   });
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmRelatorioFinanceiroDialog } = useConfirm();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -110,7 +112,12 @@ export default function RelatorioFinanceiro() {
       await auditarExportacao(nomeArquivo, linhas.length, false);
       return;
     }
-    if (!window.confirm(`Exportar ${linhas.length} registro(s) do relatorio financeiro (${nomeArquivo})?`)) {
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar ${linhas.length} registro(s) do relatorio financeiro (${nomeArquivo})?`,
+      confirmText: 'Exportar',
+    });
+    if (!confirmado) {
       await auditarExportacao(`${nomeArquivo}: cancelado pelo usuario`, linhas.length, false);
       return;
     }
@@ -125,6 +132,7 @@ export default function RelatorioFinanceiro() {
   };
 
   return (
+    <>
     <div className="space-y-6 w-full h-full" data-permission="Financeiro.Relatorios.visualizar" data-context-required="group-or-company">
       {(!contextoValido || !canViewRelatorio) && (
         <Alert className="border-amber-300 bg-amber-50">
@@ -223,5 +231,7 @@ export default function RelatorioFinanceiro() {
         </Card>
       </div>
     </div>
+    <ConfirmRelatorioFinanceiroDialog />
+    </>
   );
 }
