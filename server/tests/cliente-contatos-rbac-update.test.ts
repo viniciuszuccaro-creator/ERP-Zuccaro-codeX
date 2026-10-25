@@ -9,8 +9,13 @@ import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 /**
  * Contatos/endereços do Cliente na UI local passam por updateInContext + podeEditar.
  * O schema HTTP de Cliente é .strict() e NÃO aceita `contatos`/`locais_entrega`.
- * Este teste prova o gate de sessão/RBAC do PATCH canônico (editar) e rejeição
- * de payload com contatos no HTTP — esconder botão não basta.
+ *
+ * Camadas cobertas neste arquivo:
+ * - serviço: PERMISSION_DENIED no update sem editar
+ * - HTTP PATCH /api/v1/clientes/:id: 403 real + sem mutação persistida (GET)
+ * - HTTP: payload com `contatos` → VALIDATION_ERROR (não bypassa RBAC)
+ *
+ * Esconder botão na UI não basta; este arquivo prova bloqueio de mutação.
  */
 
 const GROUP = '11111111-1111-4111-8111-111111111111';
@@ -71,6 +76,32 @@ function ctx(actorId: string, requestId: string) {
   };
 }
 
+function headers(actorId: string) {
+  return {
+    'content-type': 'application/json',
+    'x-group-id': GROUP,
+    'x-empresa-id': EMPRESA,
+    'x-actor-id': actorId,
+  };
+}
+
+async function http(
+  app: ReturnType<typeof createApp>['app'],
+  path: string,
+  init: RequestInit = {},
+) {
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== 'string');
+  try {
+    const response = await fetch(`http://127.0.0.1:${address.port}${path}`, init);
+    return { status: response.status, body: await response.json() as any };
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  }
+}
+
 test('serviço: viewer sem editar recebe PERMISSION_DENIED no update (sessão/RBAC)', async () => {
   const runtime = fixture();
   const created = await runtime.clienteService.create(ctx(ACTOR_EDIT, 'c1'), {
@@ -85,6 +116,8 @@ test('serviço: viewer sem editar recebe PERMISSION_DENIED no update (sessão/RB
     () => runtime.clienteService.update(ctx(ACTOR_VIEW, 'u1'), created.id, { observacoes: 'tentativa sem editar' }),
     (err: any) => err?.statusCode === 403 && err?.code === 'PERMISSION_DENIED',
   );
+  const reloaded = await runtime.clienteService.get(ctx(ACTOR_EDIT, 'g1'), created.id);
+  assert.notEqual(reloaded?.observacoes, 'tentativa sem editar');
 });
 
 test('serviço: payload com contatos é rejeitado pelo schema strict (não bypassa RBAC)', async () => {
@@ -103,4 +136,81 @@ test('serviço: payload com contatos é rejeitado pelo schema strict (não bypas
     }),
     (err: any) => err?.statusCode === 400 && err?.code === 'VALIDATION_ERROR',
   );
+});
+
+test('HTTP PATCH: viewer recebe 403 e não persiste mutação (GET inalterado)', async () => {
+  const runtime = fixture();
+  const created = await http(runtime.app, '/api/v1/clientes', {
+    method: 'POST',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({
+      tipo: 'Pessoa Jurídica',
+      documento: '60.746.948/0001-12',
+      razao_social: 'Cliente HTTP RBAC',
+      email: 'http.rbac@exemplo.dev',
+      telefone: '11987654323',
+      observacoes: 'original-safe',
+    }),
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.data.id;
+  assert.ok(id);
+
+  const denied = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: headers(ACTOR_VIEW),
+    body: JSON.stringify({ observacoes: 'mutacao-proibida' }),
+  });
+  assert.equal(denied.status, 403);
+  assert.equal(denied.body?.error?.code, 'PERMISSION_DENIED');
+
+  const got = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'GET',
+    headers: headers(ACTOR_EDIT),
+  });
+  assert.equal(got.status, 200);
+  assert.equal(got.body.data.observacoes, 'original-safe');
+});
+
+test('HTTP PATCH: editor autorizado muta; payload com contatos continua 400', async () => {
+  const runtime = fixture();
+  const created = await http(runtime.app, '/api/v1/clientes', {
+    method: 'POST',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({
+      tipo: 'Pessoa Jurídica',
+      documento: '04.252.011/0001-10',
+      razao_social: 'Cliente HTTP OK',
+      email: 'http.ok@exemplo.dev',
+      telefone: '11987654324',
+      observacoes: 'antes',
+    }),
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.data.id;
+
+  const ok = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ observacoes: 'depois-autorizado' }),
+  });
+  assert.equal(ok.status, 200, JSON.stringify(ok.body));
+  assert.equal(ok.body.data.observacoes, 'depois-autorizado');
+
+  const withContatos = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({
+      observacoes: 'com-contatos',
+      contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
+    }),
+  });
+  assert.equal(withContatos.status, 400);
+  assert.equal(withContatos.body?.error?.code, 'VALIDATION_ERROR');
+
+  const got = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'GET',
+    headers: headers(ACTOR_EDIT),
+  });
+  assert.equal(got.body.data.observacoes, 'depois-autorizado');
 });
