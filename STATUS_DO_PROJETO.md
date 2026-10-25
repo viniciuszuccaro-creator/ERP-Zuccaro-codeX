@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## CURSOR — Contatos/Endereços Cliente RBAC fail-closed (2026-10-24)
 
 | Item | Valor |
@@ -8,6 +9,79 @@
 | fora | MarcaForm/#344 · scripts/legado · sem RBACButton novo (reusa hook existente) |
 | testes | `cadastros-contatos-enderecos-rbac.test.js` 4 PASS |
 | PR350 | tip `694f01b6` MERGEABLE · CI SUCCESS (paralelo) |
+=======
+## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
+
+Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
+Codespace retomado após inatividade; HEAD local=remoto, checkout limpo,
+AGENTS inalterado por hash, sem escritor concorrente. Processos internos
+VSCode classificados; app-server1093 fora checkout. Trava exclusiva própria
+e checkpoint privado; nenhuma branch/reserva Cursor350/347 editada.
+A MESMA automação ERP — fila Codex #344 foi reativada a cada15min com
+F1–F5 finitos, checkpoint e recusa de sobreposição; não foi criada outra.
+
+### Resultados executados e limites
+
+F1: canal SSH existente da estação validou hostkey estrita, mas o servidor
+recusou ambas identidades existentes (ED25519/RSA, exit255). Nenhuma chave
+lida em saída/criada/copida, nenhuma permissão alterada. Codespace sem
+config/agente/Runtime Secrets; sem canal autenticado provado. Host/API/DB
+documentados são candidatos, não identidade efetiva atual comprovada.
+Nenhuma query operacional executada; não inferir banco vazio/inexistente.
+
+F2: metadados/permissões dos artefatos privados existentes conferidos e
+agregados de planos preservados reutilizados. Sem nova seleção, leitura de
+registros de destino ou repetição de piloto: acesso e escopo ainda faltam.
+Plano limitado a100 clientes e200 consultas pontuais, com normalizador,
+findByDocumento/findByLegacyIdentity e RBAC/tenant canônicos. Atenção concreta:
+ClienteService.sugerirVinculo grava auditoria possible_duplicate no match,
+então não é chamado na conferência estritamente READ ONLY. Repositório de
+leitura não dispensa validação de ator/permissão/Grupo/Empresa nem RLS.
+
+F3: pacote privado first-load-gates-20261024 fora checkout/Git/build/CI,
+owner700/files600, manifesto de integridade e pins dos scripts existentes.
+Artefatos: captura readonly limitada/sem overwrite, SQL canônico copiado sem
+alteração, plano privado da coorte, comandos backup/restore e contrato de
+reversão por snapshot/lote/serviço/auditoria. Backup/restore têm exit77
+incondicional: preparados, NÃO executados/autorizados. Não executar CLI de
+piloto para reverter operacional; ele também carrega dados/cria grants.
+Guardas exigem identidade/dump/hash/bytes/role explícitos, sem defaults
+históricos; restore isolado possui alterações internas de schema/permissão
+e filtragem do stream, a revisar/autorização própria antes de qualquer uso.
+
+| Gate | Prova disponível | Falta verificável / próxima ação | Autorização/capacidade |
+|---|---|---|---|
+| Destino/schema | SQL metadata/pins e tentativas de canal registradas | Captura da conexão efetiva da API, volume/versão/role/schema/journals; reconciliar nomes completos/bytes045–049 | Leitura já autorizada; falta executor/canal existente autenticado |
+| Escopo/duplicidade | Planos privados preservados e consultas canônicas identificadas | Crosswalk exato + coorte<=100 vinculada ao destino + reconciliação privada da mesma coorte | Acesso e escopo de leitura comprovados antes de selecionar/consultar |
+| Privilégio/atomicidade | CI isolada e parecer independente CONT02/03 | RBAC/policies reais e teste equivalente autorizado em cópia representativa | Leitura metadata atual; escrita/concorrência somente em alvo isolado autorizado |
+| Backup/restore/reversão | Scripts existentes pinados e contrato de reversão preparado | Backup do destino exato, restore DESSE artefato e reversão protegida por lote | Janela/capacidade/retenção/role/alvo isolado e autorização específica ainda faltam |
+| Liberação | Ordem atual autoriza leitura/preparação | Aprovação específica de identidade/coorte/hash/campos/ator/janela após quatro gates | Carga operacional continua NÃO autorizada |
+
+Validação proporcional: bash-n3/3 e guards3/3 PASS (captura sem destino
+exit64; backup/restore exit77), integridade/permissões/pins conferidos;
+0 consultas operacionais,0 escritas operacionais,0 novas linhas selecionadas.
+Nenhum ensaio aprovado ou suíte runtime inalterada repetido manualmente.
+Mudança publicável somente nestes hunks HANDOFF/STATUS; CI do novo SHA
+registrada no fechamento GitHub, sem presumir resultado antes da execução.
+
+F4: parecer independente Cursor342/6390672952 recebido: CONT02 aprovado
+com reprodução11PASS; CONT03 aprovado com ressalva de ambiente (PG apoiado
+na CI, não reexecutado no Cloud VM). Nenhum achado reproduzível solicitado;
+pacotes preservados. Pedido direto350/6390672003 e recibo342/6390698159,
+sem proprietário retransmitir. Aprovação do código não libera carga/merge.
+
+F5 — decisão mínima concreta: disponibilizar um executor/canal JÁ autorizado
+que autentique no host documentado e capture a identidade efetiva da API
+com principal de leitura existente; recibo detalhado permanece privado.
+Nenhuma chave/senha no chat, novo grant/role/schema ou autorização de carga
+necessária para decidir esse vínculo de leitura. Questão apresentada ao
+proprietário após preparar os artefatos; F1 bloqueada por autenticação, F2
+por essa dependência/escopo, F3/F4 concluídos no alcance autorizado. Após
+publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
+ausente, registrando o motivo, não por fila vazia nem aprovação visual.
+Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
+flags/providers/canais. Automação separada Legado permanece PAUSED.
+>>>>>>> origin/codex/consolidacao-infra-20261017
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
