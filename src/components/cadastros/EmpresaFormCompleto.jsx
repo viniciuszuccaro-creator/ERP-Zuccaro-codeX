@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, FileText, MapPin, Webhook, Sparkles, Upload, Calendar, Trash2, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import BuscaCEP from "../comercial/BuscaCEP";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -185,7 +186,9 @@ export default function EmpresaFormCompleto({
     onSubmit(payload);
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir) {
       toast.error('Seu perfil nao permite excluir empresas.');
       return;
@@ -194,7 +197,12 @@ export default function EmpresaFormCompleto({
       toast.error('Selecione um grupo ou empresa antes de excluir a empresa.');
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir a empresa "${formData.razao_social}"? Esta acao nao pode ser desfeita.`)) return;
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir a empresa "${formData.razao_social}"? Esta acao nao pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (onSubmit) onSubmit({ ...buildPayload(), _action: 'delete' });
   };
 
@@ -207,6 +215,7 @@ export default function EmpresaFormCompleto({
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-4 w-full">
@@ -380,6 +389,7 @@ export default function EmpresaFormCompleto({
               onClick={handleExcluir}
               disabled={!podeExcluir || !contextoValido}
               data-permission="Cadastros.Empresa.excluir"
+              data-action="excluir-empresa"
               data-sensitive
             ><Trash2 className="w-4 h-4 mr-2" />Excluir</Button>
           </>
@@ -395,5 +405,7 @@ export default function EmpresaFormCompleto({
         </Button>
       </div>
     </form>
+    <ConfirmExcluirDialog />
+    </>
   );
 }
