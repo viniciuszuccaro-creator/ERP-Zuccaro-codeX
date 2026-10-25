@@ -1,3 +1,38 @@
+## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
+
+Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
+local=remoto e limpo, sem escritor concorrente; trava e checkpoint próprios.
+O proprietário informou Grupo CPA e empresas CPA Ferro e Aço/3Z LTDA.
+IDs atuais localizados e preservados SOMENTE nos artefatos privados.
+
+Consulta de identidade limitada por referência existente do provisionador,
+nome exato de Grupo e das duas empresas, em READ ONLY/REPEATABLE READ e
+ROLLBACK. Encontrados Auth único confirmado, perfil ativo vinculado ao Auth
+e ao Grupo com empresa_id nulo, Grupo único ativo e ambas empresas ativas.
+TenantGuard implantado confirmou os vínculos; RbacGuard implantado confirmou
+visualizar clientes e importar explicitamente, com wildcard global desabilitado.
+A implementação implantada foi conferida: consulta perfil ativo/escopo e árvore
+de permissões, sem autorização inferida de nome/admin/BYPASSRLS. Nenhum grant,
+identidade ou vínculo foi criado/alterado; esses checks são diagnóstico de
+metadados e NÃO uma identidade autenticada de requisição.
+
+Na origem ERP existente do Chrome, o restore terminou em Entrar no ERP.
+Falta sessão/principal de usuário reutilizável e revalidável pelo Supabase
+e middleware canônico antes de qualquer consulta de clientes. O cadastro
+Auth/perfil/permissões comprovado não substitui Bearer verificado. Solicitado
+apenas login nessa aba com a conta existente, sem senha/token/UUID no chat.
+Não executar POST de login/reset/bootstrap ou extrair refresh tokens como
+atalho; nenhuma consulta ampla de clientes para depois filtrar.
+
+Coorte segue retida:0clientes lidos,0novas linhas selecionadas,0escritas
+operacionais/audit de negócio. Pronto para prosseguir, após sessão válida,
+com guards atuais, Grupo compartilhado e consultas pontuais canônicas<=100/200.
+sugerirVinculo permanece excluído por escrever audit no match. Recibo privado
+de autorização SHA4d0a03ad163964352fcc5a36ba4d446b60aae9db550a794be32b22d89598b991.
+Deltas independentes conferidos:3516d80c0ce/3528fd16622/353e20deaa9 sem
+novo fix funcional/liberação na fila; não repetir contraprovas nem editar Cursor.
+Gates de carga/schema/backup/restore/deploy permanecem íntegros.
+
 ## #344 — fila A/B/C: canal recuperado, gates reais e revisão cruzada (2026-10-25)
 
 Base8e68484b; pacote funcional D publicado0c18d995 na342, checkout limpo.
