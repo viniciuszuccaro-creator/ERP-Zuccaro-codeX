@@ -1,3 +1,60 @@
+## #344 — fila A/B/C: canal recuperado, gates reais e revisão cruzada (2026-10-25)
+
+Base8e68484b; pacote funcional D publicado0c18d995 na342, checkout limpo.
+Mesmo Codespace e uma trava própria; reserva344/6399054875. Sem repetir
+CONT02/03/pilotos aprovados. Mesma automação nativa reativada somente após
+provar executor disponível/exclusividade; checkpoint fora do checkout.
+
+A: metadados SSH conferidos sem ler chaves ou repetir tentativas recusadas.
+Web Console Hostinger já autenticada abriu o host esperado; pg Pool dentro
+da API usou a conexão efetiva, READ ONLY/REPEATABLE READ, limites e ROLLBACK.
+Alias/container de banco correspondem; versão, schema, role, imagem/pacote,
+journals, volumes/capacidade e artefatos de migration capturados privados.
+SQL canônico pinado SHA77665a45c6b9a91e3905870ddf825f5613646ed288522c459aceab0eb031ef3e
+coincide com o checkout. Recibo de catálogos SHA0ab848008065a77744610ed7486d7ed57655ee736e6fdd8d9ab4e9be47c14395.
+26 entradas no journal não comprovam compatibilidade da primeira carga.
+Coleta repetida após erro local de serialização do recibo; ambas somente
+leitura/rollback. Nenhum dado de cliente selecionado, grant/key/schema ou
+configuração operacional alterados. SHA de origem da imagem não informado
+pelo label; não atribuir o HEAD GitHub ao código implantado.
+
+| Gate | Prova executada/preparada | Falta / ação concreta autorizável |
+|---|---|---|
+| Destino/schema | Conexão efetiva e catálogos privados executados | Reconciliar nomes/bytes/artefatos aplicados043–049; não inferir migrations ausentes como aplicadas |
+| Escopo/duplicidade | Reutilizado plano<=100/200;0clientes lidos/selecionados | Referência privada de ator/perfil, principal existente e crosswalk Grupo/Empresa antes das consultas canônicas |
+| Privilégio/atomicidade | Divergência real de privilégios/policies registrada privada; CONT02/03 preservados | Provar menor privilégio/RBAC e ensaio equivalente em cópia representativa explicitamente autorizada; sem mudar grants |
+| Backup/restore/reversão | Comandos e pins anteriores preservados, guardas bloqueantes | Aprovar destino/role/janela/retenção/alvo isolado; depois produzir dump e restaurar ESSE artefato; nenhum executado agora |
+| Liberação | Só leitura e preparo autorizados | Após gates, aprovação de destino/coorte/hash/campos/ator/janela; carga segue NÃO autorizada |
+
+B: gates privados atualizados por evidência existente/faltante/ação/autorização,
+sem sobrescrever pacote anterior. sugerirVinculo segue excluído pois escreve
+audit no match. Decisão mínima de principal/ator/Grupo/Empresa solicitada
+privadamente ao proprietário; sem pedir credenciais ou autorização genérica.
+
+C: Cursor atualizou350706c9e5a/3512847be1f/352b5e5d995 para base8e68484b.
+Candidata existente353987ba207 reconhecida, sem composição paralela:
+32blobs não documentais idênticos; documentos da base sem exclusões.
+350é ancestral; testes dos tips351/352 estão com blobs iguais, mas os tips
+não são ancestrais da candidata (incorporação por outros commits); não
+afirmar ancestralidade integral. CI4548/4549 SUCCESS desse SHA não é aprovação.
+
+P1 da351 reproduzido no componente real/harness: mesmo ID, draft sujo e
+updated_date novo sobrescrevem edição sem confirmação (1FAIL0SKIP).
+Publicado351/6399259991 e353/6399260175; somente Cursor corrige sua branch.
+350:2PASS focados;352:5PASS focados com limites apontados352/6399282846
+(teste salvar/principal não salva e teste de mutationFn usa cópia; serviço
+não é HTTP). Candidata retida para corrigir/revisar novo SHA. Recibos de
+blobs/ancestralidade353/6399323997 e6399332328; novos gates não liberados.
+
+Próximas ações concretas: tratar delta/achado por SHA; incorporar Pedido D
+na candidata sob revisão; conferência privada somente com escopo provado.
+UI/cadastros/proposta permanecem reservados Cursor; próximo checkpoint
+Onda5 origem/canal/externalID depende da migration aditiva/gates/reserva
+canônicos. Não inventar módulo ou liberar schema para manter recorrência.
+Sem carga, backup/restore operacional, merge/deploy, flags/providers/canais.
+Automação separada Legado permanece PAUSED; estado final da mesma fila
+Codex será registrado no recibo de fechamento conforme houver item executável.
+
 ## #344 / Comercial360 — Pedido exige motivo de cancelamento (2026-10-25)
 
 Pacote D autorizado pelo proprietário, reserva344/6399158275, base8e68484b.
