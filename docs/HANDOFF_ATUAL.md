@@ -1,18 +1,12 @@
-<<<<<<< HEAD
-## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+## CURSOR — #350 merge consolidação `8e68484b` (2026-10-25)
 
 | Item | Valor |
 |---|---|
-| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
-| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03 FECHADA CI4524/4525) |
-| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
-| tip anterior | `2d1f289f` · CI SUCCESS · API `mergeable=CONFLICTING` / `mergeStateStatus=DIRTY` |
-| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — Cursor+#344 preservados |
-| fora de escopo | branch Codex intocada · sem force-push · scripts/legado só via merge · sem merge/deploy |
-| prévia | DEV `?proposta=comercial360` · sintético · aprovação visual pendente |
-| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
-| parecer CONT-02/03 | publicado na PR#342 (só leitura; sem editar branch Codex) |
-=======
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -84,7 +78,20 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
->>>>>>> origin/codex/consolidacao-infra-20261017
+
+## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03 FECHADA CI4524/4525) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
+| tip anterior | `2d1f289f` · CI SUCCESS · API `mergeable=CONFLICTING` / `mergeStateStatus=DIRTY` |
+| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — Cursor+#344 preservados |
+| fora de escopo | branch Codex intocada · sem force-push · scripts/legado só via merge · sem merge/deploy |
+| prévia | DEV `?proposta=comercial360` · sintético · aprovação visual pendente |
+| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
+| parecer CONT-02/03 | publicado na PR#342 (só leitura; sem editar branch Codex) |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 

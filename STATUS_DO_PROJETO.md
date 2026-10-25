@@ -1,15 +1,12 @@
-<<<<<<< HEAD
-## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+## CURSOR — #350 merge consolidação `8e68484b` (2026-10-25)
 
 | Item | Valor |
 |---|---|
-| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03) |
-| tip anterior | `2d1f289f` · CI SUCCESS · mergeable=CONFLICTING / DIRTY vs tip atual |
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
 | conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
-| fora | branch Codex intocada · sem force-push · sem merge/deploy · sem editar scripts/legado |
-| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
-| parecer CONT-02/03 | comentário independente na PR#342 por SHA (`4e02bc73` / `3eccd369`) |
-=======
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -81,7 +78,17 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
->>>>>>> origin/codex/consolidacao-infra-20261017
+
+## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03) |
+| tip anterior | `2d1f289f` · CI SUCCESS · mergeable=CONFLICTING / DIRTY vs tip atual |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+| parecer CONT-02/03 | comentário independente na PR#342 por SHA (`4e02bc73` / `3eccd369`) |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
