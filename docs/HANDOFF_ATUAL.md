@@ -1,16 +1,12 @@
-<<<<<<< HEAD
-## CURSOR — Contatos/Endereços Cliente RBAC (2026-10-24)
+## CURSOR — #352 merge consolidação `8e68484b` (2026-10-25)
 
 | Item | Valor |
 |---|---|
-| ambiente | Cursor Cloud `/workspace` |
-| base | consolidação `3eccd369` |
-| branch | `cursor/cadastros-contatos-rbac-392b` |
-| reprodução | erp-integra Contatos usa RBACButton; candidata tinha Button livre + `alert` |
-| correção | reutilizar `usePermissions` (padrão Cliente); sem criar `RBACButton` paralelo |
-| escopo | Contatos + Endereços no CadastroCliente existente |
-| próximo autorizado | integrar PR#351 (cadastros reopen) com tip consolidação `3eccd369` |
-=======
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -82,7 +78,18 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
->>>>>>> origin/codex/consolidacao-infra-20261017
+
+## CURSOR — Contatos/Endereços Cliente RBAC (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` |
+| base | consolidação `3eccd369` |
+| branch | `cursor/cadastros-contatos-rbac-392b` |
+| reprodução | erp-integra Contatos usa RBACButton; candidata tinha Button livre + `alert` |
+| correção | reutilizar `usePermissions` (padrão Cliente); sem criar `RBACButton` paralelo |
+| escopo | Contatos + Endereços no CadastroCliente existente |
+| próximo autorizado | integrar PR#351 (cadastros reopen) com tip consolidação `3eccd369` |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
