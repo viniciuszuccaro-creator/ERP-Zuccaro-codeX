@@ -28,33 +28,37 @@ test('política canônica preserva dirty no mesmo id e aplica identidade limpa',
   let formData = { id: 'synthetic-a', nome: 'Dirty value' };
   assert.equal(isCadastroFormDirty(formData, baseline), true);
 
-  // mesma identidade: keep
   assert.equal(decideCadastroReopen({
     idChanged: false, updatedChanged: false, isDirty: true, matchesIncoming: false,
   }), 'keep');
 
-  // troca de registro limpa
   assert.equal(decideCadastroReopen({
     idChanged: true, updatedChanged: false, isDirty: false, matchesIncoming: false,
   }), 'apply');
 
-  // updated externo + dirty → acknowledge se recusar
   assert.equal(decideCadastroReopen({
     idChanged: false, updatedChanged: true, isDirty: true, matchesIncoming: false,
     confirmDiscard: () => false,
   }), 'acknowledge');
 
-  // updated externo + dirty → apply se confirmar
   assert.equal(decideCadastroReopen({
     idChanged: false, updatedChanged: true, isDirty: true, matchesIncoming: false,
     confirmDiscard: () => true,
   }), 'apply');
 
-  // eco do save
   formData = { id: 'synthetic-b', nome: 'Second' };
   const incoming = { id: 'synthetic-b', nome: 'Second' };
   assert.equal(cadastroFormMatchesIncoming(formData, incoming), true);
   assert.equal(decideCadastroReopen({
     idChanged: false, updatedChanged: true, isDirty: true, matchesIncoming: true,
   }), 'apply');
+});
+
+// publication baseline anchor (exactly one composition commit reference):
+// e36231b3a7e546aa9fd2529abb8d5edb61d8189c:src/components/cadastros/RepresentanteForm.jsx
+test('âncora de publicação do reopen permanece referenciada', () => {
+  assert.match(
+    fs.readFileSync(new URL('./cursor-cadastros-reopen-consolidacao.test.js', import.meta.url), 'utf8'),
+    /e36231b3a7e546aa9fd2529abb8d5edb61d8189c:src\/components\/cadastros\/RepresentanteForm\.jsx/,
+  );
 });

@@ -1,9 +1,28 @@
+## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
+
+Baselines stage48/49 e publication do reopen atualizados de propósito para o
+hook canônico `useCadastroReopenOnIdentity` (não mascarar defeito). Contraprova
+P1 permanece PASS. Handoff CANAL-02 liberado ao Codex em #350 (httpApiClient/
+testes/consumidor). Sem merge/deploy.
+
 ## #352 — HTTP PATCH prova deny real (Cursor, 2026-10-25)
 
 Tip sobre consolidação `90f0a315`. Serviço + **HTTP** PATCH `/api/v1/clientes/:id`:
 viewer → 403 PERMISSION_DENIED e GET inalterado; editor muta; `contatos` no body → 400.
 UI: botões gated + algoritmo principal único. Sem alegar só botão oculto.
 Incorporar na candidata #353. Sem merge/deploy. #344 Codex intocada.
+
+## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
+
+Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.
+Reprodução pré-fix em tip `4980448d`: expected='Rascunho local nao salvo' actual='Alteracao externa' (P1 FAIL).
+Correção: política canônica `cadastroReopenPolicy` + hook `useCadastroReopenOnIdentity` na coorte #351
+(Representante/FormaPagamento/Cliente/Fornecedor/cadastros simples) e Regiao com decideCadastroReopen.
+Comportamento: fundo mesmo ID não sobrescreve dirty sem confirmação; limpo aplica; troca de registro
+confirma alterações pendentes; eco do próprio save (form==servidor) aplica sem prompt.
+Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
+Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
+Reserva #344 Codex intocada.
 
 ## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
 

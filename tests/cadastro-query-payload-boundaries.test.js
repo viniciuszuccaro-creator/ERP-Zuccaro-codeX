@@ -15,16 +15,18 @@ function once(source, current, previous) {
   assert.equal(source.split(current).length - 1, 1, 'exact integration hunk');
   return source.replace(current, previous);
 }
+// previousHash: stage48 + P1 reopen canônico (useCadastroReopenOnIdentity) autorizado em #351.
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'c1318e93e891d62d85036bb169a75eacfe100d61cbbd80385ae35383ff09173a'],
-  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'a760dbf88f5d61f1a070db1e09f03790d10e042485d73300c2b0101e9f9ca966'],
-  ['RepresentanteFormCompleto', 'representante', 'Representante', 'fab5df9eea0efaf66c500a82b844a8b0b14f91e5454a3126ec020fa954be4206'],
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'd575a023b1396508f1d09aa820c4d6a9c2e313ef8f212312baef00588f750f22'],
+  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', '21daf6cc6afdacac161fd518170c6a586a7c102b3733ed4e26fb11a1b0e23de0'],
+  ['RepresentanteFormCompleto', 'representante', 'Representante', '1fcfc2ae400154fab05687bd10e1c550dc2402beb1fcd78ec00ca6dfa28932b3'],
 ];
 for (const [name, recordKey, entity, previousHash] of forms) {
   const path = `src/components/cadastros/${name}.jsx`;
   test(`${name}: stage48 complete source retained except payload annotation and proven default export`, () => {
     let source = once(read(path), '    /** @param {Record<string, unknown>} data */\n    mutationFn: async (data) => {', '    mutationFn: async (data) => {');
     if (name === 'CadastroClienteCompleto') source = once(source, 'default: m.default }', 'default: m.default || m.TimelineCliente }');
+    assert.match(source, /useCadastroReopenOnIdentity/);
     assert.equal(createHash('sha256').update(source).digest('hex'), previousHash);
   });
   const tree = parse(path);
