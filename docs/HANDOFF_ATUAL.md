@@ -1,3 +1,14 @@
+## CURSOR — PerfilAcesso: confirm-dialog (erp-integra) (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra-novo: exclusão usava `window.confirm` |
+| tip | branch `cursor/cadastros-perfilacesso-confirm-392b` · base `8e68484b` |
+| correção | `useConfirm` preservando scope/tenant/SoD superiores |
+| testes | `cadastros-perfilacesso-confirm-behavioral.test.js` 3 PASS local |
+| irmãos CLEAN | #354 #355 #356 |
+| nota | consolidação tip avançou para `0c18d995` — remarge se conflito |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo

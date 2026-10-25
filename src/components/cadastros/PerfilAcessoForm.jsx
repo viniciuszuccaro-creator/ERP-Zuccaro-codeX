@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Shield, AlertTriangle, XCircle, Trash2, Power, PowerOff } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 
 /**
@@ -137,7 +138,9 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
     onSubmit({ ...formData, nome_perfil: formData.nome_perfil || formData.nome || '' });
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!scope.isCurrent() || current.current.identity !== identity || !current.current.podeExcluir) {
       toast.error('Seu perfil nao permite excluir perfis de acesso.');
       return;
@@ -148,9 +151,13 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
       toast.error('Perfil fora do contexto ativo.');
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir o perfil "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Excluir Perfil de Acesso',
+      description: `Tem certeza que deseja excluir o perfil "${formData.nome}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+      variant: 'danger',
+    });
+    if (!ok) return;
     if (!scope.isCurrent() || current.current.identity !== identity || !current.current.podeExcluir) return;
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
@@ -307,6 +314,13 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
     </form>
   );
 
+  const withDialog = (
+    <>
+      {formContent}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
@@ -316,10 +330,10 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
             {perfil ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}
           </h2>
         </div>
-        {formContent}
+        {withDialog}
       </div>
     );
   }
 
-  return formContent;
+  return withDialog;
 }
