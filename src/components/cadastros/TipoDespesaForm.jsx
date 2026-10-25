@@ -11,7 +11,7 @@ import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
-export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || tipoDespesa || tipo;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
@@ -21,22 +21,38 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   const podeCriar = canCreate("Cadastros", "TipoDespesa") || canCreate("Financeiro", "TipoDespesa") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "TipoDespesa") || canEdit("Financeiro", "TipoDespesa") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     codigo: '', nome: '', categoria: 'Operacional',
     conta_contabil_padrao_id: '', conta_contabil_padrao_nome: '',
     centro_resultado_padrao_id: '', centro_resultado_padrao_nome: '',
     exige_aprovacao: false, limite_aprovacao_automatica: 0,
     pode_ser_recorrente: false, ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
   // Garante sincronização quando o mesmo componente é reutilizado (ex: abrir outro registro sem desmontar)
-  const prevIdRef = React.useRef(dadosIniciais?.id);
+  const prevIdRef = React.useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = React.useRef(dadosIniciais?.updated_date);
   useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
+    const nextId = dadosIniciais?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosIniciais?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const { data: contasContabeis = [] } = useQuery({
     queryKey: ['tipo-despesa-plano-contas', contextKey],
@@ -54,6 +70,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (dadosIniciais?.id && !podeEditar) {
       alert("Sem permissao para editar tipos de despesa.");
       return;
@@ -164,7 +181,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
       <Button
         type="submit"
         className="w-full bg-sky-600 hover:bg-sky-700"
-        disabled={!contextoValido || !podeSalvar}
+        disabled={isSubmitting || !contextoValido || !podeSalvar}
         data-permission="Cadastros.TipoDespesa.salvar"
         data-action="salvar-tipo-despesa"
         data-sensitive

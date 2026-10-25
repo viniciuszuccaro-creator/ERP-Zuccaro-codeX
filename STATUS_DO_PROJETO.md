@@ -1,3 +1,13 @@
+## CURSOR — integração sequencial 350→351→352 sobre `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base | consolidação **`8e68484b`** |
+| ordem | PR350 (Comercial prévia) → PR351 (cadastros reopen) → PR352 (contatos/endereços RBAC) |
+| conflitos docs | resolvidos preservando Cursor+#344 |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| CI | tip desta candidata — confirmar por SHA antes de CLEAN |
+
 ## CURSOR — #350 merge consolidação `8e68484b` (2026-10-25)
 
 | Item | Valor |

@@ -22,7 +22,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   const podeEditar = canEdit("Cadastros", "CentroCusto") || canEdit("Financeiro", "CentroCusto") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "CentroCusto") || canDelete("Financeiro", "CentroCusto") || canDelete("Cadastros", null);
   const podeSalvar = dadosCentroCusto?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosCentroCusto || {
+  const emptyFormData = {
     codigo: "",
     descricao: "",
     tipo: "Despesa",
@@ -31,18 +31,35 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     orcamento_mensal: "",
     status: "Ativo",
     observacoes: ""
-  });
+  };
+  const [formData, setFormData] = useState(dadosCentroCusto || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosCentroCusto?.id);
+  const prevIdRef = React.useRef(dadosCentroCusto?.id || null);
+  const prevUpdatedRef = React.useRef(dadosCentroCusto?.updated_date);
   useEffect(() => {
-    if (dadosCentroCusto?.id && dadosCentroCusto.id !== prevIdRef.current) {
-      prevIdRef.current = dadosCentroCusto.id;
-      setFormData({ ...dadosCentroCusto });
+    const nextId = dadosCentroCusto?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosCentroCusto?.updated_date && dadosCentroCusto.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosCentroCusto?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosCentroCusto.updated_date;
+      setFormData(dadosCentroCusto || emptyFormData);
+    }
+  }, [dadosCentroCusto?.id, dadosCentroCusto?.updated_date]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (dadosCentroCusto?.id && !podeEditar) {
       alert("Sem permissao para editar centros de custo.");
       return;

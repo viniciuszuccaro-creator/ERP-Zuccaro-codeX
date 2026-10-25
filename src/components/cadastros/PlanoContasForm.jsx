@@ -9,7 +9,7 @@ import { FileText } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
-export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || conta;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -18,7 +18,7 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
   const podeCriar = canCreate("Cadastros", "PlanoDeContas") || canCreate("Financeiro", "PlanoDeContas") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "PlanoDeContas") || canEdit("Financeiro", "PlanoDeContas") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     codigo_conta: '',
     nome_conta: '',
     tipo_conta: 'Despesa',
@@ -30,18 +30,35 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
     usa_em_sped: false,
     usa_apenas_gerencial: false,
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
+  const prevIdRef = React.useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = React.useRef(dadosIniciais?.updated_date);
   useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
+    const nextId = dadosIniciais?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosIniciais?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (dadosIniciais?.id && !podeEditar) {
       alert("Sem permissao para editar plano de contas.");
       return;
@@ -172,7 +189,7 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
       <Button
         type="submit"
         className="w-full bg-green-600 hover:bg-green-700"
-        disabled={!contextoValido || !podeSalvar}
+        disabled={isSubmitting || !contextoValido || !podeSalvar}
         data-permission="Cadastros.PlanoDeContas.salvar"
         data-action="salvar-plano-contas"
         data-sensitive

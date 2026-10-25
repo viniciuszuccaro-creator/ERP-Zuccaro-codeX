@@ -23,25 +23,42 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
   const podeEditar = canEdit("Cadastros", "Cargo") || canEdit("Sistema", "Cargo") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Cargo") || canDelete("Sistema", "Cargo") || canDelete("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_cargo: '',
     descricao: '',
     codigo_cbo: '',
     nivel_hierarquico: 'Operacional',
     salario_base: 0,
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
+  const prevIdRef = useRef(dadosIniciais?.id || null);
+  const prevUpdatedRef = useRef(dadosIniciais?.updated_date);
   useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
+    const nextId = dadosIniciais?.id || null;
+    const idChanged = nextId !== prevIdRef.current;
+    const updatedChanged = Boolean(
+      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
+    );
+    if (!nextId) {
+      if (prevIdRef.current !== null) {
+        prevIdRef.current = null;
+        prevUpdatedRef.current = undefined;
+        setFormData(emptyFormData);
+      }
+      return;
     }
-  }, [dadosIniciais?.id]);
+    if (idChanged || updatedChanged) {
+      prevIdRef.current = nextId;
+      prevUpdatedRef.current = dadosIniciais.updated_date;
+      setFormData(dadosIniciais || emptyFormData);
+    }
+  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome_cargo) {
       alert('Preencha o nome do cargo');
       return;
