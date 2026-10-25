@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { PRODUTO_TIPOS_CANONICOS, isProdutoMateriaPrima } from "./produto/produtoTipoPolicy";
@@ -122,6 +123,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
   const riscoRuptura = diasParaRuptura < 7 ? 'alto' : diasParaRuptura < 15 ? 'medio' : 'baixo';
 
   const ehProducao = isProdutoMateriaPrima(produto?.tipo_item);
+  const { confirm, ConfirmDialog: ConfirmProducaoDialog } = useConfirm();
 
   // V21.6: Converter para produção
   const enviarParaProducao = async () => {
@@ -136,7 +138,11 @@ export default function HistoricoProduto({ produtoId, produto }) {
       return;
     }
 
-    const confirmado = window.confirm("Enviar este produto para uso em produção? A alteração será auditada e pode afetar ordens de produção.");
+    const confirmado = await confirm({
+      title: 'Confirmar conversão',
+      description: 'Enviar este produto para uso em produção? A alteração será auditada e pode afetar ordens de produção.',
+      confirmText: 'Converter',
+    });
     if (!confirmado) {
       await auditHistoricoProduto({ acao: "Produto.converter_producao_cancelado", sucesso: false, motivo: "Confirmação cancelada pelo usuário.", dados: { produto_id: produtoId } });
       return;
@@ -178,6 +184,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
   };
 
   return (
+    <>
     <div className="space-y-6 w-full">
       {/* V21.6: NOVO - Alerta de Conversão */}
       {!ehProducao && (
@@ -430,5 +437,7 @@ export default function HistoricoProduto({ produtoId, produto }) {
         </Card>
       )}
     </div>
+    <ConfirmProducaoDialog />
+    </>
   );
 }
