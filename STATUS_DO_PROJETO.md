@@ -1,3 +1,10 @@
+## CURSOR — TabelaPreco useConfirm (erp-integra) (2026-10-25)
+
+`TabelaPrecoFormCompleto` exclusão: `window.confirm` → `useConfirm`;
+fail-closed RBAC/contexto antes do dialog. Contraprova 3/3. Branch
+`cursor/cadastros-tabelapreco-confirm-392b` sobre `0a67aa4b`. Sem
+merge/deploy. Publication-baseline BLOCKED herdado (Codex/#344).
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.

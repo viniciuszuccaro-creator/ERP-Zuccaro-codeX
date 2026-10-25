@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Save, Factory, Award, Boxes, TrendingUp, CheckCircle2, Trash2, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
@@ -343,14 +344,23 @@ RETORNE:
     toast.success('Item removido');
   };
 
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
   const handleExcluir = async () => {
-    if (!window.confirm(`Tem certeza que deseja excluir a tabela "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
     if (!podeExcluir) {
       toast.error('Seu perfil nao permite excluir tabelas de preco');
       return;
     }
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de excluir a tabela de preco');
+      return;
+    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir a tabela "${formData.nome}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (tabela?.id) {
       await deleteInContext('TabelaPreco', tabela.id);
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
@@ -1136,9 +1146,16 @@ RETORNE:
     </div>
   );
 
+  const withDialog = (
+    <>
+      {content}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
-    return <div className="w-full h-full bg-white overflow-auto">{content}</div>;
+    return <div className="w-full h-full bg-white overflow-auto">{withDialog}</div>;
   }
 
-  return content;
+  return withDialog;
 }
