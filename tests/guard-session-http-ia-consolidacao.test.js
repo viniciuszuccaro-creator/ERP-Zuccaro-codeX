@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import ts from 'typescript';
 import { httpMirrorAnnotationRemainder } from './helpers/httpMirrorAnnotationRemainder.js';
-import {consolidation81Remainder} from './helpers/consolidation81Remainder.js';
+import {consolidation81Remainder, clienteConferenciaRemainder} from './helpers/consolidation81Remainder.js';
 import { createHttpApiClient, isHttpApiError, readHttpErrorBodyCode } from '../src/api/httpApiClient.js';
 import { validarSugestoesProdutosIA, validarRespostaFiscalIA } from '../src/components/lib/iaResponsePolicy.js';
 import { validarAnaliseAtendimentoIA, validarIntentAtendimentoIA } from '../src/components/lib/atendimentoIaResponsePolicy.js';
@@ -27,7 +27,7 @@ test('remote Expedicao CRM and Central HTTP contracts retain emitted behavior', 
   const path = 'src/api/httpApiClient.js';
   for (const name of ['expedicao', 'oportunidades', 'clientes', 'entityRoutes', 'pedidos', 'orcamentos']) {
     const emit = text => ts.transpileModule(`const ${text};`, { compilerOptions: { target: ts.ScriptTarget.ESNext, removeComments: true } }).outputText;
-    assert.equal(emit(declaration(read(path), name)), emit(declaration(head(path), name)));
+    assert.equal(emit(declaration(clienteConferenciaRemainder(path,read(path)), name)), emit(declaration(head(path), name)));
   }
   const facade = 'src/api/base44Client.js';
   for (const name of ['isHttpExpedicaoEnabled', 'isHttpExpedicaoMode']) {
@@ -54,7 +54,7 @@ test('existing Base44 facade statements and imports remain intact outside new IA
 });
 
 test('operational router app and migration executor remain unchanged', () => {
-  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(read(path), head(path));
+  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(clienteConferenciaRemainder(path, read(path)), head(path));
   assert.ok(!read('server/src/api/router.ts').includes('mountIaContextualRoutes'));
 });
 

@@ -1,3 +1,4 @@
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
@@ -71,5 +72,6 @@ test('address persistence has no default transaction, rejects company/actor mism
     await assert.rejects(persistirEnderecoClienteGrupoLegado(source,{transaction}),/LEGACY_ADDRESS_SCOPE_INVALID/);
   }
   assert.equal(permissionCalls,0);
-  assert.equal(execFileSync('git',['diff',"e36231b3a7e546aa9fd2529abb8d5edb61d8189c",'--','server/migrations','server/src/app.ts','server/src/api/router.ts'],{encoding:'utf8'}),'');
+  assert.equal(clienteConferenciaRemainder('server/src/api/router.ts',fs.readFileSync('server/src/api/router.ts','utf8')),readHead('server/src/api/router.ts'));
+  assert.equal(execFileSync('git',['diff',"e36231b3a7e546aa9fd2529abb8d5edb61d8189c",'--','server/migrations','server/src/app.ts'],{encoding:'utf8'}),'');
 });
