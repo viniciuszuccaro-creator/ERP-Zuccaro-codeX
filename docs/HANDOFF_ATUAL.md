@@ -12,6 +12,8 @@ Resposta mínima índice/ID/código/ativo; inativo não é restaurado/promovido.
 Helper clienteConferencia separa a política do ClienteService já extenso,
 reutilizando validadores/repositórios/RBAC, sem módulo paralelo.
 
+Sessão malformada é negada antes do fetch e de headers legados; contraprova
+com primitivas/objeto sintéticos falhou antes do hardening e passa após.
 Adapter preserva documento/codigo e rejeita filtro inválido antes de fetch;
 conferência captura sessão/Grupo/perfil e descarta retorno tardio/troca/revogação.
 Consumidor embutido no fluxo ClientesTab, auxiliar somente formulário/estado.
@@ -20,16 +22,21 @@ sem montar consultas amplas/efeitos de Comercial ou Visualizador. Não grava
 coorte em storage; limpa resultados ao trocar contexto; sem fallback amplo.
 
 Contraprovas falharam antes; transporte sintético adapter→HTTP→serviço e
-consumidor/wrapper reais:38PASS0FAIL0SKIP frontend,5PASS0FAIL0SKIP backend.
+consumidor/wrapper reais:39PASS0FAIL0SKIP frontend,6PASS0FAIL0SKIP backend.
 Cobertos filtros descartados, limite100/200, permissão, cross-tenant, sessão
 inválida, revogação, resposta tardia/abortada, projeção mínima e ausência de
 escrita via ports de leitura/audit que falha se chamado. Typechecks frontend
 +backend, audit:baseline, lint e build PASS; configs e hashes anteriores preservados.
 Contratos antigos desfazem somente os hunks CANAL registrados e ainda exigem
-hash integral anterior;11PASS incluem negativas dentro/fora dos hunks.
+hash integral anterior;12PASS incluem negativas dentro/fora dos hunks.
 Suítes completas locais tentadas: timeouts180s e600s, não declaradas verdes.
 Invocação controlada inicial fora de server não resolveu tsx; cwd corrigido,
 sem esconder falha. Fechamento completo exige CI por SHA no recibo344/342.
+
+CI4654/4655 do15c49276: falhas em contratos estáticos, não aprovação.
+Enumeração backend corrigida preservando integralmente métodos antigos;
+normalização do teste publication aguarda hunk coordenado, sem alterar
+manifesto/18hashes. Nenhum erro de CI foi tratado como verde.
 
 Fila: CANAL02 coordenado; CANAL03/04 implementados; CANAL05 CI/revisão por SHA.
 Implantação/uso de dados reais permanecem gate SEPARADO: compatibilidade de

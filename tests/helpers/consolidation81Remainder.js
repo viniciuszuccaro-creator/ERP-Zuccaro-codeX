@@ -77,12 +77,107 @@ export const clienteConferenciaHunks={
         "          if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;\n          else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;\n        }\n        return request(basePath, {\n          query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n        });\n    }\n"
       ],
       [
-        "  };\n\n  const clientes = {\n    /** Read exact cohort inside the application; never exports the session.\n     * @param {{identidades: Array<Record<string,string>>}} input\n     * @param {{signal?: AbortSignal}} [options]\n     */\n    async conferirLegado(input, { signal } = {}) {\n      const fail = (status, code) => createHttpError(status, { error: { code, message: code } }, undefined);\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.groupId === before.groupId && current.actorId === before.actorId\n        && (current.empresaId || null) === null && current.token === before.token;\n      if (!before.token || !before.groupId || !before.actorId || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');\n      if (!input || Object.keys(input).some(k => k !== 'identidades') || !Array.isArray(input.identidades)\n        || input.identidades.length < 1 || input.identidades.length > 100) throw fail(422, 'VALIDATION_ERROR');\n      const body = JSON.parse(JSON.stringify(input));\n      for (const item of body.identidades) {\n        if (!item || typeof item !== 'object' || Array.isArray(item)\n          || Object.keys(item).some(k => !['documento','sourceSystem','codigoLegado'].includes(k))\n          || (!item.documento && !(item.sourceSystem && item.codigoLegado))\n          || Boolean(item.sourceSystem) !== Boolean(item.codigoLegado)\n          || Object.values(item).some(v => typeof v !== 'string' || !v || v !== v.trim() || v.length > 80)\n          || (item.documento && (!/^[0-9.\\/\\- ]{1,32}$/.test(item.documento)\n            || ![11,14].includes(item.documento.replace(/\\D/g,'').length)))) throw fail(422,'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw fail(409, 'CONTEXT_CHANGED');\n      let result, failure;\n      try { result = await request('/api/v1/clientes/conferencia-legado', { method:'POST', body, signal }, before); }\n      catch (error) { failure = error; }\n      if (signal?.aborted || !matches(getScope() || {})) throw fail(409, 'CONTEXT_CHANGED');\n      if (failure) throw failure;\n      if (!Array.isArray(result) || result.length !== body.identidades.length) throw fail(502,'INVALID_RESPONSE');\n      return result.map((row, indice) => {\n        if (row?.indice !== indice || Object.keys(row).some(k=>!['indice','documento','legado'].includes(k))) throw fail(502,'INVALID_RESPONSE');\n        const match = value => {\n          if (value === null) return null;\n          if (!value || Object.keys(value).some(k=>!['id','codigo','ativo'].includes(k))\n            || typeof value.id !== 'string' || typeof value.codigo !== 'string' || typeof value.ativo !== 'boolean') throw fail(502,'INVALID_RESPONSE');\n          return { id:value.id, codigo:value.codigo, ativo:value.ativo };\n        };\n        return { indice, documento:match(row.documento), legado:match(row.legado) };\n      });\n    },\n    /**\n     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).\n     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).\n",
+        "  };\n\n  const clientes = {\n    /** Read exact cohort inside the application; never exports the session.\n     * @param {{identidades: Array<Record<string,string>>}} input\n     * @param {{signal?: AbortSignal}} [options]\n     */\n    async conferirLegado(input, { signal } = {}) {\n      const fail = (status, code) => createHttpError(status, { error: { code, message: code } }, undefined);\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.groupId === before.groupId && current.actorId === before.actorId\n        && (current.empresaId || null) === null && current.token === before.token;\n      if (typeof before.token !== 'string' || !before.token.trim()\n        || typeof before.groupId !== 'string' || !before.groupId.trim()\n        || typeof before.actorId !== 'string' || !before.actorId.trim() || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');\n      if (!input || Object.keys(input).some(k => k !== 'identidades') || !Array.isArray(input.identidades)\n        || input.identidades.length < 1 || input.identidades.length > 100) throw fail(422, 'VALIDATION_ERROR');\n      const body = JSON.parse(JSON.stringify(input));\n      for (const item of body.identidades) {\n        if (!item || typeof item !== 'object' || Array.isArray(item)\n          || Object.keys(item).some(k => !['documento','sourceSystem','codigoLegado'].includes(k))\n          || (!item.documento && !(item.sourceSystem && item.codigoLegado))\n          || Boolean(item.sourceSystem) !== Boolean(item.codigoLegado)\n          || Object.values(item).some(v => typeof v !== 'string' || !v || v !== v.trim() || v.length > 80)\n          || (item.documento && (!/^[0-9.\\/\\- ]{1,32}$/.test(item.documento)\n            || ![11,14].includes(item.documento.replace(/\\D/g,'').length)))) throw fail(422,'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw fail(409, 'CONTEXT_CHANGED');\n      let result, failure;\n      try { result = await request('/api/v1/clientes/conferencia-legado', { method:'POST', body, signal }, before); }\n      catch (error) { failure = error; }\n      if (signal?.aborted || !matches(getScope() || {})) throw fail(409, 'CONTEXT_CHANGED');\n      if (failure) throw failure;\n      if (!Array.isArray(result) || result.length !== body.identidades.length) throw fail(502,'INVALID_RESPONSE');\n      return result.map((row, indice) => {\n        if (row?.indice !== indice || Object.keys(row).some(k=>!['indice','documento','legado'].includes(k))) throw fail(502,'INVALID_RESPONSE');\n        const match = value => {\n          if (value === null) return null;\n          if (!value || Object.keys(value).some(k=>!['id','codigo','ativo'].includes(k))\n            || typeof value.id !== 'string' || typeof value.codigo !== 'string' || typeof value.ativo !== 'boolean') throw fail(502,'INVALID_RESPONSE');\n          return { id:value.id, codigo:value.codigo, ativo:value.ativo };\n        };\n        return { indice, documento:match(row.documento), legado:match(row.legado) };\n      });\n    },\n    /**\n     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).\n     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).\n",
         "  };\n\n  const clientes = {\n    /**\n     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).\n     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).\n"
       ],
       [
         "export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;\nexport const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;\nexport const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\n\nexport const clienteConferenciaApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).clientes;\n",
         "export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;\nexport const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;\nexport const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\n"
+      ]
+    ]
+  },
+  "server/src/services/clienteService.ts": {
+    "hash": "87be7feaf5b33181ca9c3f4aa0dcfc3f2261a52280d399f7e951b56a6c9ce00d",
+    "hunks": [
+      [
+        "import { conferirClientesLegado } from './clienteConferencia.js';\nimport type { DbQueryExecutor } from '../db/client.js';\nimport type { AuditRepository, RequestContext } from '../audit/types.js';\nimport { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';\n",
+        "import type { DbQueryExecutor } from '../db/client.js';\nimport type { AuditRepository, RequestContext } from '../audit/types.js';\nimport { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';\n"
+      ],
+      [
+        "      tabelaPrecoRepo,\n      condicaoPagamentoRepo,\n    );\n  }\n\n  conferirLegado(ctx: RequestContext, input: unknown) {\n    return conferirClientesLegado(this.repo, this.rbacGuard, ctx, input);\n  }\n\n  async list(ctx: RequestContext, options: ClienteListOptions = {}) {\n",
+        "      tabelaPrecoRepo,\n      condicaoPagamentoRepo,\n    );\n  }\n\n  async list(ctx: RequestContext, options: ClienteListOptions = {}) {\n"
+      ]
+    ]
+  },
+  "tests/cursor-identidade-consolidacao.test.js": {
+    "hash": "53ed9f426d401e667420af481766664c1eed030fcaa592b351f875833368bd40",
+    "hunks": [
+      [
+        "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\n",
+        "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\n"
+      ],
+      [
+        "\ntest('operational routes and sensitive infrastructure remain unchanged by this cohort', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts',\n    'src/api/localCadastroMasterPolicy.js']) assert.equal(clienteConferenciaRemainder(path, read(path)), head(path));\n  assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));\n  const path = 'src/components/cadastros/cadastroEditLoadPolicy.js';\n  const annotation = ' * @param {{entityName?: string, expectedId?: string | number,\\n'\n",
+        "\ntest('operational routes and sensitive infrastructure remain unchanged by this cohort', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts',\n    'src/api/localCadastroMasterPolicy.js']) assert.equal(read(path), head(path));\n  assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));\n  const path = 'src/components/cadastros/cadastroEditLoadPolicy.js';\n  const annotation = ' * @param {{entityName?: string, expectedId?: string | number,\\n'\n"
+      ]
+    ]
+  },
+  "tests/financial-movement-http-client.test.js": {
+    "hash": "4fb977deb5c015f6cf295e723f04a66e82ed9baed8d06218ece00ba264fbab1c",
+    "hunks": [
+      [
+        "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\nimport fs from 'node:fs';\n",
+        "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport fs from 'node:fs';\n"
+      ],
+      [
+        " [\"  return execute;\\n}\\n\\n/** @param {{getScope:()=>BankScope,request:(path:string,options:BankRequestOptions,scope:Readonly<BankScope>)=>Promise<unknown>}} deps */\\nexport function createBankStatementApi(deps) {\\n  const { request } = deps;\\n  const execute = createBankRequestExecutor(deps);\\n\",'']];\n for(const [after,before] of changes){assert.equal(bank.split(after).length,2);bank=bank.replace(after,before);}\n assert.equal(hash(bank),'145bf54405c26705b0e6f93bd93a391051cba7dbc4c97d13f6de59ba4b0c5131');\n let http=clienteConferenciaRemainder('src/api/httpApiClient.js',read('src/api/httpApiClient.js'));\n for(const addition of [\"import { createFinancialMovementApi } from './financialMovementHttp.js';\\n\",'    financialMovements: createFinancialMovementApi({ getScope, request }),\\n',\"export const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\\n\"]){assert.equal(http.split(addition).length,2);http=http.replace(addition,'');}\n assert.equal(hash(http),'6552582391e26c892325ac16955df5d76426e9321565cad61d12361cb9398449');\n});\n",
+        " [\"  return execute;\\n}\\n\\n/** @param {{getScope:()=>BankScope,request:(path:string,options:BankRequestOptions,scope:Readonly<BankScope>)=>Promise<unknown>}} deps */\\nexport function createBankStatementApi(deps) {\\n  const { request } = deps;\\n  const execute = createBankRequestExecutor(deps);\\n\",'']];\n for(const [after,before] of changes){assert.equal(bank.split(after).length,2);bank=bank.replace(after,before);}\n assert.equal(hash(bank),'145bf54405c26705b0e6f93bd93a391051cba7dbc4c97d13f6de59ba4b0c5131');\n let http=read('src/api/httpApiClient.js');\n for(const addition of [\"import { createFinancialMovementApi } from './financialMovementHttp.js';\\n\",'    financialMovements: createFinancialMovementApi({ getScope, request }),\\n',\"export const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\\n\"]){assert.equal(http.split(addition).length,2);http=http.replace(addition,'');}\n assert.equal(hash(http),'6552582391e26c892325ac16955df5d76426e9321565cad61d12361cb9398449');\n});\n"
+      ]
+    ]
+  },
+  "tests/guard-ofx-a1-consolidacao.test.js": {
+    "hash": "3674813403e8f2b9c83acd86bd96a0a7b293d47bfea5dff047b1154da3bf6219",
+    "hunks": [
+      [
+        "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\n",
+        "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\n"
+      ],
+      [
+        "});\n\ntest('operational app router and Cursor recovery remain unchanged', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(clienteConferenciaRemainder(path, read(path)), head(path));\n  assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));\n});\n\n",
+        "});\n\ntest('operational app router and Cursor recovery remain unchanged', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(read(path), head(path));\n  assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));\n});\n\n"
+      ]
+    ]
+  },
+  "tests/guard-session-http-ia-consolidacao.test.js": {
+    "hash": "7cbeee84073a38653fd28786438bbcb87450af172da5ec3436e4dba87e98e938",
+    "hunks": [
+      [
+        "import { execFileSync } from 'node:child_process';\nimport ts from 'typescript';\nimport { httpMirrorAnnotationRemainder } from './helpers/httpMirrorAnnotationRemainder.js';\nimport {consolidation81Remainder, clienteConferenciaRemainder} from './helpers/consolidation81Remainder.js';\nimport { createHttpApiClient, isHttpApiError, readHttpErrorBodyCode } from '../src/api/httpApiClient.js';\nimport { validarSugestoesProdutosIA, validarRespostaFiscalIA } from '../src/components/lib/iaResponsePolicy.js';\nimport { validarAnaliseAtendimentoIA, validarIntentAtendimentoIA } from '../src/components/lib/atendimentoIaResponsePolicy.js';\n",
+        "import { execFileSync } from 'node:child_process';\nimport ts from 'typescript';\nimport { httpMirrorAnnotationRemainder } from './helpers/httpMirrorAnnotationRemainder.js';\nimport {consolidation81Remainder} from './helpers/consolidation81Remainder.js';\nimport { createHttpApiClient, isHttpApiError, readHttpErrorBodyCode } from '../src/api/httpApiClient.js';\nimport { validarSugestoesProdutosIA, validarRespostaFiscalIA } from '../src/components/lib/iaResponsePolicy.js';\nimport { validarAnaliseAtendimentoIA, validarIntentAtendimentoIA } from '../src/components/lib/atendimentoIaResponsePolicy.js';\n"
+      ],
+      [
+        "  const path = 'src/api/httpApiClient.js';\n  for (const name of ['expedicao', 'oportunidades', 'clientes', 'entityRoutes', 'pedidos', 'orcamentos']) {\n    const emit = text => ts.transpileModule(`const ${text};`, { compilerOptions: { target: ts.ScriptTarget.ESNext, removeComments: true } }).outputText;\n    assert.equal(emit(declaration(clienteConferenciaRemainder(path,read(path)), name)), emit(declaration(head(path), name)));\n  }\n  const facade = 'src/api/base44Client.js';\n  for (const name of ['isHttpExpedicaoEnabled', 'isHttpExpedicaoMode']) {\n",
+        "  const path = 'src/api/httpApiClient.js';\n  for (const name of ['expedicao', 'oportunidades', 'clientes', 'entityRoutes', 'pedidos', 'orcamentos']) {\n    const emit = text => ts.transpileModule(`const ${text};`, { compilerOptions: { target: ts.ScriptTarget.ESNext, removeComments: true } }).outputText;\n    assert.equal(emit(declaration(read(path), name)), emit(declaration(head(path), name)));\n  }\n  const facade = 'src/api/base44Client.js';\n  for (const name of ['isHttpExpedicaoEnabled', 'isHttpExpedicaoMode']) {\n"
+      ],
+      [
+        "});\n\ntest('operational router app and migration executor remain unchanged', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(clienteConferenciaRemainder(path, read(path)), head(path));\n  assert.ok(!read('server/src/api/router.ts').includes('mountIaContextualRoutes'));\n});\n\n",
+        "});\n\ntest('operational router app and migration executor remain unchanged', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts']) assert.equal(read(path), head(path));\n  assert.ok(!read('server/src/api/router.ts').includes('mountIaContextualRoutes'));\n});\n\n"
+      ]
+    ]
+  },
+  "tests/legado-importador-consolidacao.test.js": {
+    "hash": "a43fbcd76f833dbf498bd96e4d26060d18b50fea9cd553af0b9a19524c996a3f",
+    "hunks": [
+      [
+        "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport assert from 'node:assert/strict';\nimport test from 'node:test';\nimport fs from 'node:fs';\n",
+        "import assert from 'node:assert/strict';\nimport test from 'node:test';\nimport fs from 'node:fs';\n"
+      ],
+      [
+        "    await assert.rejects(persistirEnderecoClienteGrupoLegado(source,{transaction}),/LEGACY_ADDRESS_SCOPE_INVALID/);\n  }\n  assert.equal(permissionCalls,0);\n  assert.equal(clienteConferenciaRemainder('server/src/api/router.ts',fs.readFileSync('server/src/api/router.ts','utf8')),readHead('server/src/api/router.ts'));\n  assert.equal(execFileSync('git',['diff',\"e36231b3a7e546aa9fd2529abb8d5edb61d8189c\",'--','server/migrations','server/src/app.ts'],{encoding:'utf8'}),'');\n});\n",
+        "    await assert.rejects(persistirEnderecoClienteGrupoLegado(source,{transaction}),/LEGACY_ADDRESS_SCOPE_INVALID/);\n  }\n  assert.equal(permissionCalls,0);\n  assert.equal(execFileSync('git',['diff',\"e36231b3a7e546aa9fd2529abb8d5edb61d8189c\",'--','server/migrations','server/src/app.ts','server/src/api/router.ts'],{encoding:'utf8'}),'');\n});\n"
+      ]
+    ]
+  },
+  "server/tests/bulk-consolidacao.test.ts": {
+    "hash": "910dd442f00405b6c40b36c76093abeb79869bc15f32a5e3df72b95cdc4b4885",
+    "hunks": [
+      [
+        "import { clienteConferenciaRemainder } from '../../tests/helpers/consolidation81Remainder.js';\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { createHash } from 'node:crypto';\n",
+        "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { createHash } from 'node:crypto';\n"
+      ],
+      [
+        "  const path = 'src/services/clienteService.ts';\n  const original = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:server/${path}`], { encoding: 'utf8' });\n  const parse = (source: string) => ts.createSourceFile(path, source.replaceAll('\\r\\n', '\\n'), ts.ScriptTarget.Latest, true);\n  const before = parse(original), after = parse(clienteConferenciaRemainder('server/'+path, fs.readFileSync(path, 'utf8')));\n  const members = (file: ts.SourceFile) => {\n    const declaration = file.statements.find(ts.isClassDeclaration);\n    assert(declaration);\n",
+        "  const path = 'src/services/clienteService.ts';\n  const original = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:server/${path}`], { encoding: 'utf8' });\n  const parse = (source: string) => ts.createSourceFile(path, source.replaceAll('\\r\\n', '\\n'), ts.ScriptTarget.Latest, true);\n  const before = parse(original), after = parse(fs.readFileSync(path, 'utf8'));\n  const members = (file: ts.SourceFile) => {\n    const declaration = file.statements.find(ts.isClassDeclaration);\n    assert(declaration);\n"
       ]
     ]
   }
