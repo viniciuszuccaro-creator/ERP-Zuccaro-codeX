@@ -15,6 +15,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function RelatorioDRE() {
   const [filtros, setFiltros] = useState({
@@ -23,6 +24,7 @@ export default function RelatorioDRE() {
   });
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmRelatorioDREDialog } = useConfirm();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -133,7 +135,12 @@ export default function RelatorioDRE() {
       await auditarExportacao(nomeArquivo, linhas.length, false);
       return;
     }
-    if (!window.confirm(`Exportar ${linhas.length} linha(s) do DRE (${nomeArquivo})?`)) {
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar ${linhas.length} linha(s) do DRE (${nomeArquivo})?`,
+      confirmText: 'Exportar',
+    });
+    if (!confirmado) {
       await auditarExportacao(`${nomeArquivo}: cancelado pelo usuario`, linhas.length, false);
       return;
     }
@@ -148,6 +155,7 @@ export default function RelatorioDRE() {
   };
 
   return (
+    <>
     <div className="space-y-6 w-full h-full" data-permission="Financeiro.DRE.visualizar" data-context-required="group-or-company">
       {(!contextoValido || !canViewDRE) && (
         <Alert className="border-amber-300 bg-amber-50">
@@ -279,5 +287,7 @@ export default function RelatorioDRE() {
         </Card>
       </div>
     </div>
+    <ConfirmRelatorioDREDialog />
+    </>
   );
 }
