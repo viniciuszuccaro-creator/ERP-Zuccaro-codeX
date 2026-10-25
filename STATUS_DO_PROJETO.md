@@ -1,3 +1,9 @@
+## #351 — imports do hook reopen na coorte simples (Cursor, 2026-10-25)
+
+14 forms da coorte chamavam `useCadastroReopenOnIdentity` sem import
+(ReferenceError em runtime). Imports adicionados; baselines FormaPagamento
+atualizados. Sem mudança de comportamento além de tornar o hook resolvível.
+
 ## #351 — P1 switch-reject: identidade de mutação alinhada (Cursor, 2026-10-25)
 
 Achado Codex em `useCadastroReopenOnIdentity`: ao recusar troca A→B o rascunho
