@@ -2,7 +2,7 @@
 
 | Item | Valor |
 |---|---|
-| tip integração | a confirmar no commit |
+| tip integração | `7a9d2bea` |
 | Comercial | proposal+orcamento 25 PASS (painéis/rascunho/duplo clique/proposta) |
 | Cadastros reopen | runtime behavioral Representante 3 PASS (id/updated_date/dirty) |
 | Contatos/endereços | UI fail-closed + mutationFn + serviço Cliente 2 PASS (403 editar; schema rejeita contatos) |
