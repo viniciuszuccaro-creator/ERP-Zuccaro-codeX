@@ -1,3 +1,27 @@
+## #344 / Comercial360 — Pedido exige motivo de cancelamento (2026-10-25)
+
+Pacote D autorizado pelo proprietário, reserva344/6399158275, base8e68484b.
+Contrato Onda5 já exige motivo; UI canônica já o coleta, mas PedidoService.cancel
+aceitava undefined. Contraprova no teste existente falhou no código anterior
+(Missing expected rejection); correção remove apenas a exceção para ausência.
+Mantidos o mesmo serviço/repositório/transação, estado, RBAC/tenant, auditoria
+e histórico; nenhuma UI, migration, permissão ou branch Cursor alterada.
+
+Negativos de motivo ausente/null/vazio/espaços/curto/tipo inválido/>500
+preservam Pedido, histórico e audit; positivo preserva ID/número/itens;
+HTTP cobre422,403,404, cancelamento válido e repetição409. Foco15PASS0FAIL.
+Checks locais: audit:baseline, root2280PASS, lint, typecheck, build,
+server535PASS0FAIL25SKIP, server:typecheck, server:build e diff-check exit0.
+Os25SKIP são reportados pelo runner local (fixtures PostgreSQL/psql sem
+configuração); não contar como prova PostgreSQL executada. CI por SHA será
+registrada no recibo GitHub após push. Resultado atual de typecheck não
+reescreve o baseline histórico nem é correção atribuída a este pacote.
+
+Mesmo Codespace/branch Codex e trava exclusiva própria; sem dados reais,
+carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
+seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
+porque este commit terminou.
+
 ## CURSOR — PerfilAcesso: confirm-dialog (erp-integra) (2026-10-25)
 
 | Item | Valor |
