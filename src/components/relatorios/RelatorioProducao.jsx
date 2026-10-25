@@ -13,6 +13,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { base44 } from "@/api/base44Client";
 import FiltrosPeriodoEmpresa from "@/components/relatorios/FiltrosPeriodoEmpresa";
 import { exportarCSV } from "@/components/relatorios/exportUtils";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 
@@ -23,6 +24,7 @@ export default function RelatorioProducao() {
   });
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmRelatorioProducaoDialog } = useConfirm();
   const { user } = useUser();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
@@ -120,7 +122,11 @@ export default function RelatorioProducao() {
       await auditarExportacao({ nomeArquivo, linhas, sucesso: false, motivo: "Tentativa de exportar relatorio de producao sem contexto grupo/empresa ou permissao RBAC." });
       return;
     }
-    const confirmado = window.confirm(`Exportar ${linhas} registros de ${nomeArquivo} para CSV?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar ${linhas} registros de ${nomeArquivo} para CSV?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditarExportacao({ nomeArquivo, linhas, sucesso: false, motivo: "Exportacao CSV do relatorio de producao cancelada pelo usuario." });
       return;
@@ -148,6 +154,7 @@ export default function RelatorioProducao() {
   }
 
   return (
+    <>
     <div className="space-y-6 w-full h-full" data-permission="Producao.Relatorios.visualizar" data-context-required="true">
       <FiltrosPeriodoEmpresa filtros={filtros} setFiltros={setFiltros} />
 
@@ -237,5 +244,7 @@ export default function RelatorioProducao() {
         </Card>
       </div>
     </div>
+    <ConfirmRelatorioProducaoDialog />
+    </>
   );
 }
