@@ -1,3 +1,10 @@
+## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
+
+Baselines stage48/49 e publication do reopen atualizados de propósito para o
+hook canônico `useCadastroReopenOnIdentity` (não mascarar defeito). Contraprova
+P1 permanece PASS. Handoff CANAL-02 liberado ao Codex em #350 (httpApiClient/
+testes/consumidor). Sem merge/deploy.
+
 ## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
 
 Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.

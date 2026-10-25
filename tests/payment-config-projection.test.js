@@ -26,10 +26,14 @@ test('stage49 entire hook retained except seven source-field projections', () =>
 for (const [file, expected] of [
   ['comercial/FechamentoFinanceiroTab.jsx', 'ae386c90edc5194049336d95e493a01c868496b5e91dd78b2bf9240ad8e0ea21'],
   ['financeiro/CaixaPDVCompleto.jsx', '660c53cb0d8355e9cc6d0ed621b0ab1cd452051c2043329cee6b5269be561b52'],
-  ['cadastros/FormaPagamentoFormCompleto.jsx', '1d17ea87802252b658eec513326dbe2c889d4501fb8d8e04e19763622b87f69f'],
-  ['cadastros/FormaPagamentoForm.jsx', 'e251a0d7bb1bf11465da43b01fc4f47ebbb24c29e2eec63e70059bc981da4db0'],
+  // P1 #351: FormaPagamento* adotam useCadastroReopenOnIdentity (hash atualizado de propósito).
+  ['cadastros/FormaPagamentoFormCompleto.jsx', '499d1b282cac742e2de5adbd22ac087459e2d4bed83033dd00a43253159f2e4c'],
+  ['cadastros/FormaPagamentoForm.jsx', '386346d8b9f33f92bf9cd7f7be3ce92a65f30503687e4d3e84d2e1b3d6e796ff'],
 ]) test(`${file}: source, handlers, permissions and persistence ownership unchanged from stage49`, () => {
-  assert.equal(hash(financialUiBoundaryRemainder('src/components/' + file, read('src/components/' + file))), expected);
+  const path = 'src/components/' + file;
+  const text = read(path);
+  if (file.startsWith('cadastros/FormaPagamento')) assert.match(text, /useCadastroReopenOnIdentity/);
+  assert.equal(hash(financialUiBoundaryRemainder(path, text)), expected);
 });
 
 function bind(text, { formas = [], bancos = [], gateways = [], filtros = {}, loading = {} } = {}) {
