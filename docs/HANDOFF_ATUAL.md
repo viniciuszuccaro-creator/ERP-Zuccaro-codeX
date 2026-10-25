@@ -1,3 +1,9 @@
+## CURSOR — InventarioContagem useConfirm (erp-integra) (2026-10-25)
+
+`InventarioContagem` remoção de item: `window.confirm` → `useConfirm`; fail-closed disabled.
+Contraprova 3/3. Branch `cursor/estoque-inventariocontagem-confirm-392b` sobre
+`0a67aa4b`. Sem merge/deploy. Publication-baseline BLOCKED herdado (Codex/#344).
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.

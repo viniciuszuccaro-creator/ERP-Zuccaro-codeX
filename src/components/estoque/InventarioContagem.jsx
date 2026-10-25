@@ -2,6 +2,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus } from 'lucide-react';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 const toNumber = (value) => {
   const parsed = Number(value ?? 0);
@@ -13,6 +14,8 @@ const sanitizeText = (value) => String(value ?? '').replace(/[<>]/g, '').slice(0
 const calcularAjuste = (item) => toNumber(item.contagem) - toNumber(item.saldo_sistema);
 
 export default function InventarioContagem({ itens = [], onChange, disabled = false }) {
+  const { confirm, ConfirmDialog: ConfirmContagemDialog } = useConfirm();
+
   const emitirAlteracao = (proximosItens) => {
     if (!disabled) onChange?.(proximosItens);
   };
@@ -34,16 +37,21 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
     ]);
   };
 
-  const remover = (idx) => {
+  const remover = async (idx) => {
     if (disabled) return;
     const item = itens[idx];
     const descricao = item?.produto_descricao || 'item ' + (idx + 1);
-    const confirmado = window.confirm('Remover ' + descricao + ' da contagem do inventário? A alteração só será persistida ao salvar o inventário.');
+    const confirmado = await confirm({
+      title: 'Remover item da contagem',
+      description: 'Remover ' + descricao + ' da contagem do inventário? A alteração só será persistida ao salvar o inventário.',
+      confirmText: 'Remover',
+    });
     if (!confirmado) return;
     emitirAlteracao(itens.filter((_, i) => i !== idx));
   };
 
   return (
+    <>
     <div
       className="w-full h-full space-y-3"
       data-permission="Estoque.Inventario.Contagem"
@@ -147,6 +155,7 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
                     disabled={disabled}
                     onClick={() => remover(idx)}
                     aria-label="Remover item da contagem"
+                    title="Remover item da contagem"
                     data-action="Estoque.Inventario.Contagem.remover"
                     data-permission="Estoque.Inventario.editar"
                     data-context-required="group-or-company"
@@ -161,5 +170,7 @@ export default function InventarioContagem({ itens = [], onChange, disabled = fa
         </div>
       </div>
     </div>
+    <ConfirmContagemDialog />
+    </>
   );
 }
