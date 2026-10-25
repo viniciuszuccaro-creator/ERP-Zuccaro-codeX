@@ -6,10 +6,12 @@ import { base44 } from "@/api/base44Client";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function SelectedOperationalReport({ selectedReport, filtros, onExport, onClose, renderChart }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmSelectedOperationalDialog } = useConfirm();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
@@ -44,7 +46,11 @@ export default function SelectedOperationalReport({ selectedReport, filtros, onE
       await auditarExportacao(false, { motivo: "Tentativa de exportar relatorio operacional sem contexto, permissao ou dados validos.", quantidade: Array.isArray(dados) ? dados.length : 0 });
       return;
     }
-    const confirmado = window.confirm(`Exportar ${dados.length} registros de ${selectedReport.titulo}?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar ${dados.length} registros de ${selectedReport.titulo}?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditarExportacao(false, { motivo: "Exportacao operacional cancelada pelo usuario.", quantidade: dados.length });
       return;
@@ -62,6 +68,7 @@ export default function SelectedOperationalReport({ selectedReport, filtros, onE
   if (!selectedReport || selectedReport.component) return null;
 
   return (
+    <>
     <Card className="border-0 shadow-md mt-4" data-permission="Relatorios.visualizar" data-context-required="group-or-company">
       <CardHeader className="border-b bg-slate-50">
         <div className="flex justify-between items-center">
@@ -99,5 +106,7 @@ export default function SelectedOperationalReport({ selectedReport, filtros, onE
         {renderChart ? renderChart(selectedReport) : null}
       </CardContent>
     </Card>
+    <ConfirmSelectedOperationalDialog />
+    </>
   );
 }
