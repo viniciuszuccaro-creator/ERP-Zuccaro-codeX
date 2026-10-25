@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DollarSign, Calculator, Loader2, Package, Sparkles, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 
@@ -37,6 +38,7 @@ export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
   const podeEditarTabelaPreco = canEdit('Cadastros', 'TabelaPreco') || hasPermission('Comercial', 'TabelaPreco', 'editar');
   const podeUsarIA = hasPermission('Cadastros', 'TabelaPreco', 'editar') || hasPermission('Sistema', 'IA', 'executar');
   const acaoBloqueada = !contextoValido || !podeEditarTabelaPreco;
+  const { confirm, ConfirmDialog: ConfirmRecalculoDialog } = useConfirm();
 
   const auditMultiTabela = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
@@ -91,7 +93,11 @@ export default function MultiTabelasEditor({ isOpen, onClose, tabelas }) {
       return;
     }
 
-    const confirmado = window.confirm(`Regra-Mãe: recalcular itens de ${tabelasSelecionadas.length} tabela(s) de preço no contexto selecionado? Esta ação será auditada.`);
+    const confirmado = await confirm({
+      title: 'Confirmar recálculo',
+      description: `Regra-Mãe: recalcular itens de ${tabelasSelecionadas.length} tabela(s) de preço no contexto selecionado? Esta ação será auditada.`,
+      confirmText: 'Recalcular',
+    });
     if (!confirmado) {
       await auditMultiTabela({ acao: 'TabelaPrecoItem.recalculo_multi_cancelado', sucesso: false, motivo: 'Confirmação cancelada pelo usuário.', dados: { tabelasSelecionadas } });
       return;
@@ -273,6 +279,7 @@ Responda com:
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full max-w-4xl max-h-[90vh] overflow-y-auto" data-permission="Cadastros.TabelaPreco.editar" data-context-required="true">
         <DialogHeader>
@@ -457,5 +464,7 @@ Responda com:
         )}
       </DialogContent>
     </Dialog>
+    <ConfirmRecalculoDialog />
+    </>
   );
 }
