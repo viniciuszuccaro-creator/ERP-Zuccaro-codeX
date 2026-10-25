@@ -11,6 +11,7 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -80,14 +81,19 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     if (onCloseNorm) onCloseNorm();
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir) {
       toast({ title: "Seu perfil nao permite excluir transportadoras.", variant: "destructive" });
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir a transportadora "${formData.razao_social}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Confirmar Exclusão",
+      description: `Tem certeza que deseja excluir a transportadora "${formData.razao_social}"? Esta ação não pode ser desfeita.`,
+      confirmText: "Excluir",
+    });
+    if (!ok) return;
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
     }
@@ -395,9 +401,16 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     </FormWrapper>
   );
 
+  const withDialog = (
+    <>
+      {content}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return <div className="w-full h-full bg-white">{withDialog}</div>;
   }
 
-  return content;
+  return withDialog;
 }

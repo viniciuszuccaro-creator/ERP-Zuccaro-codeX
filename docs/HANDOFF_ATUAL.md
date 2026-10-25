@@ -1,3 +1,12 @@
+## CURSOR — Transportadora: confirm-dialog no lugar de window.confirm (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra-novo: exclusão usava `window.confirm` |
+| correção | reutiliza `useConfirm` existente em `confirm-dialog.jsx` |
+| testes | `cadastros-transportadora-confirm-behavioral.test.js` |
+| base | consolidação `8e68484b` · fora reserva #344 |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
