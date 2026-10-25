@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
 import { base44 } from "@/api/base44Client";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 /**
  * Dashboard de Canais de Origem de Pedidos V21.6
@@ -39,6 +40,7 @@ import { base44 } from "@/api/base44Client";
 export default function DashboardCanaisOrigem({ empresaId, windowMode = false }) {
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmDashboardCanaisDialog } = useConfirm();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
   const contextKey = empresaSelecionadaId || groupId || 'sem-contexto';
@@ -177,7 +179,11 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
       return false;
     }
 
-    const confirmado = window.confirm(`Confirma exportar ${dadosExportacao.length} canais de origem em ${String(formato).toUpperCase()}?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Confirma exportar ${dadosExportacao.length} canais de origem em ${String(formato).toUpperCase()}?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditDashboardCanais({
         acao: 'DashboardCanaisOrigem.exportar_cancelado',
@@ -225,6 +231,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
   }
 
   return (
+    <>
     <div
       className={containerClass}
       data-permission="Comercial.Relatorios.visualizar"
@@ -591,5 +598,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
 
       </div>
     </div>
+    <ConfirmDashboardCanaisDialog />
+    </>
   );
 }
