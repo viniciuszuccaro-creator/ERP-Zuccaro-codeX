@@ -28,7 +28,8 @@ for (const [file, expected] of [
   ['financeiro/CaixaPDVCompleto.jsx', '660c53cb0d8355e9cc6d0ed621b0ab1cd452051c2043329cee6b5269be561b52'],
   // P1 #351: FormaPagamento* adotam useCadastroReopenOnIdentity (hash atualizado de propósito).
   ['cadastros/FormaPagamentoFormCompleto.jsx', 'f37728123bf4998449da69c12206e1ea3aadd8f794560cb330310b497366a2cf'],
-  ['cadastros/FormaPagamentoForm.jsx', '99a706e50ef02682f35f9d0bbb96abc4464f885f70372d08bbd423f2e3fab392'],
+  // P1 #353: FormaPagamentoForm captura boundId no save (hash atualizado de propósito).
+  ['cadastros/FormaPagamentoForm.jsx', 'b60c6dd5f7c8f6bd0df178d5bb5d0cebc49bca0b09883a96849d7edee2e333e7'],
 ]) test(`${file}: source, handlers, permissions and persistence ownership unchanged from stage49`, () => {
   const path = 'src/components/' + file;
   const text = read(path);

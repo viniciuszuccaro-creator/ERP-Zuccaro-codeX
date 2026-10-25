@@ -15,10 +15,10 @@ function once(source, current, previous) {
   assert.equal(source.split(current).length - 1, 1, 'exact integration hunk');
   return source.replace(current, previous);
 }
-// previousHash: stage48 + P1 reopen + boundId em mutação (switch-reject) autorizado em #351.
+// previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'a08c31b95dbcb3fbef1a97ef26e4ab3e68dbe27dec1eb20b5d283897b7410aef'],
-  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'e20ee8bae7b8e6ae9aebf6eb1d431a6afa414dbd6b95eb19f9b45ca125bcfc23'],
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', '65aad99e4b57c9bbadbcd9c21c0288627056833d022d7510ab9e1b41635a7aca'],
+  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];
 for (const [name, recordKey, entity, previousHash] of forms) {
@@ -47,6 +47,7 @@ for (const [name, recordKey, entity, previousHash] of forms) {
         formData: editing ? { id: 'synthetic-a' } : {},
         representanteBoundId: recordKey === 'representante' ? boundId : undefined,
         clienteBoundId: recordKey === 'cliente' ? boundId : undefined,
+        fornecedorBoundId: recordKey === 'fornecedor' ? boundId : undefined,
         buildPayload(value) { assert.equal(value, input); return canonical; },
         updateInContext: (...args) => { calls.push(['update', ...args]); return Promise.resolve({ id: 'synthetic-a' }); },
         createInContext: (...args) => { calls.push(['create', ...args]); return Promise.resolve({ id: 'synthetic-a' }); },
@@ -66,6 +67,7 @@ for (const [name, recordKey, entity, previousHash] of forms) {
         formData: blocked === 'update' ? { id: 'synthetic-a' } : {},
         representanteBoundId: recordKey === 'representante' ? boundId : undefined,
         clienteBoundId: recordKey === 'cliente' ? boundId : undefined,
+        fornecedorBoundId: recordKey === 'fornecedor' ? boundId : undefined,
         buildPayload: value => value,
         createInContext() { writes++; }, updateInContext() { writes++; },
       });
@@ -79,7 +81,7 @@ for (const [name, recordKey, entity, previousHash] of forms) {
         isFormScopeCurrent: () => current,
         queryClient: { invalidateQueries: value => events.push(['invalidate', value]) },
         toast: value => events.push(['toast', value]), [recordKey]: null,
-        representanteBoundId: null, clienteBoundId: null,
+        representanteBoundId: null, clienteBoundId: null, fornecedorBoundId: null,
         onSuccess: () => events.push(['success']), onSubmit: value => events.push(['submit', value]),
         onCloseNorm: () => events.push(['close']), buildPayload: () => fallback, formData: {},
       });

@@ -119,7 +119,8 @@ test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico',
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');
   assert.match(fornecedor, /codigo-registro-fornecedor-completo/);
-  assert.match(fornecedor, /entityId=\{fornecedor\?\.id\}/);
+  // P1 switch-reject: Fornecedor vincula código/ID ao boundId do rascunho.
+  assert.match(fornecedor, /entityId=\{fornecedorBoundId\}/);
   assert.match(representante, /codigo-registro-representante-completo/);
   assert.match(representante, /entityId=\{representante\?\.id\}/);
 });

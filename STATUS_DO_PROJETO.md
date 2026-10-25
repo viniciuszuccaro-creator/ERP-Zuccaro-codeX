@@ -1,3 +1,10 @@
+## CURSOR — baselines stage48/49 alinhados ao boundId coorte (2026-10-25)
+
+CI `ad145690` falhou além de publication: stage48 Cliente/Fornecedor, stage49
+FormaPagamentoForm, cobertura entityId Fornecedor e eval `fornecedorBoundId`.
+Hashes e bindings atualizados de propósito (P1 switch-reject). Sem tocar
+publication. Sem merge/deploy.
+
 ## CURSOR — P1 boundId na coorte Banco/Cargo/+ (candidata #353) (2026-10-25)
 
 Coorte reopen que descartava `boundId` no save (Banco, Cargo, Departamento,
