@@ -1243,3 +1243,12 @@ Branch `codex/comercial-composicao-20261017`, base #331 `b3a683bba1bdd8dc3870ce4
 Percurso sintético persistido Cliente → Orçamento editado → conversão concorrente única → Pedido editado/status → separação → romaneio/despacho → parcial → devolução, mais Pedido direto/replay/cancelamento. Testa preço servidor, snapshot, tenant/RBAC, revogação dentro da transação, falha de auditoria/rollback e saldo sintético. Corrigidos data serializada, executor da autorização, quantidades entregues por item e catálogo explícito Expedição. Backend geral: 410 pass/23 skips por ausência local de PostgreSQL externo; suites PostgreSQL obrigatórias e sem skip na CI. Foco backend 25/25, rechecagem 16/16, frontend Expedição 59/59, compatibilidade histórica migrations 1/1 PGlite. CI do novo SHA e parecer Cursor ainda necessários.
 
 Limites abertos: typecheck global frontend (base #331 1660 diagnósticos; primeira composição 1741, exige reconciliação, não declarar verde); suíte root Windows sem Bash teve 53 falhas/1014 e nova execução com Git Bash ficou presa no precheck VPS, interrompida sem alterar testes. Exigir CI Linux. Nenhum banco operacional, VPS, provider, importação real ou backup foi modificado. Retomada: fechar diagnósticos do delta, CI PostgreSQL/Linux e parecer Cursor do SHA final; manter portas operacionais reservadas até gates canônicos.
+
+## Checkpoint executado — Pedido: motivo obrigatório (2026-10-25)
+
+Reserva344/6399158275: lacuna entre contrato Onda5/UI existente e backend
+resolvida no PedidoService canônico. Motivo ausente agora retorna422 antes
+da transação; histórico/auditoria/tenant/RBAC e snapshots preservados.
+Contraprova anterior reproduzida; serviço+HTTP15PASS e checks do pacote
+registrados em HANDOFF/STATUS e recibo344/342. Nenhuma integração downstream
+ou gate operacional é considerado concluído por esta mudança.
