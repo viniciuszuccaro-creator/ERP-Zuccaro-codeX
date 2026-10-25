@@ -10,6 +10,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -44,14 +45,12 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     intervalo_parcelas_dias: 30
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
-  const prevIdRef = useRef(dadosIniciais?.id || null);
-  useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    if (nextId !== prevIdRef.current) {
-      prevIdRef.current = nextId;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id]);
+  useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const schema = z.object({
     descricao: z.string().min(1, "Descricao e obrigatoria"),

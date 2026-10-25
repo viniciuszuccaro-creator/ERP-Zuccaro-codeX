@@ -9,6 +9,7 @@ import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -23,25 +24,26 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   const podeEditar = hasPermission?.("Cadastros.GrupoProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.GrupoProduto.excluir") || hasPermission?.("Cadastros.Produto.excluir");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_grupo: '',
     codigo: '',
     natureza: 'Revenda',
     ncm_padrao: '',
     margem_sugerida: 0,
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome_grupo || !formData.natureza) {
       alert('Preencha os campos obrigatórios');
       return;

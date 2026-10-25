@@ -12,6 +12,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 import { toast } from "sonner";
 
 /**
@@ -26,7 +27,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   const podeCriar = hasPermission?.("Cadastros.Motorista.criar") || hasPermission?.("Logistica.Motorista.criar");
   const podeEditar = hasPermission?.("Cadastros.Motorista.editar") || hasPermission?.("Logistica.Motorista.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_completo: '',
     cpf: '',
     cnh_numero: '',
@@ -38,15 +39,15 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
     status: 'Ativo',
     possui_moopp: false,
     rastreador_instalado: false
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', groupId, empresaAtual?.id],
@@ -65,6 +66,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   });
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de salvar.");
       return;

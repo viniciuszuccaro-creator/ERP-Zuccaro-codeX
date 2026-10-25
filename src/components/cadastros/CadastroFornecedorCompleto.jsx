@@ -20,6 +20,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 import { normalizeFornecedorCadastro } from "@/api/localCadastroMasterPolicy";
 import { FornecedorContatoEnderecoSection, FornecedorDadosGeraisSection, FornecedorFiscalFinanceiroSection } from "@/components/cadastros/fornecedor/FornecedorFormSections";
 
@@ -174,9 +175,11 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
 
       const payload = buildPayload(data);
 
-      if (fornecedor?.id) {
+      // Identidade do rascunho (formData.id), não props — evita salvar A em B após reject switch.
+      const targetId = formData?.id || null;
+      if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar fornecedores.");
-        return updateInContext('Fornecedor', fornecedor.id, payload, 'empresa_dona_id');
+        return updateInContext('Fornecedor', targetId, payload, 'empresa_dona_id');
       }
 
       if (!podeCriar) throw new Error("Seu perfil nao permite criar fornecedores.");
@@ -185,7 +188,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     onSuccess: () => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
-      toast({ title: `✅ Fornecedor ${fornecedor?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Fornecedor ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -229,7 +232,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     if (!window.confirm(`Tem certeza que deseja excluir o fornecedor "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
-    deleteMutation.mutate(fornecedor.id);
+    if (!formData?.id) return;
+    deleteMutation.mutate(formData.id);
   };
 
   const handleAlternarStatus = () => {
@@ -305,65 +309,49 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     }
   };
 
-  const prevIdRef = useRef(fornecedor?.id || null);
-  const prevUpdatedRef = useRef(fornecedor?.updated_date);
-  useEffect(() => {
-    const nextId = fornecedor?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && fornecedor?.updated_date && fornecedor.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData({
-          nome: "",
-          razao_social: "",
-          nome_fantasia: "",
-          tipo_pessoa: "Pessoa Juridica",
-          cpf_cnpj: "",
-          cpf: "",
-          cnpj: "",
-          rg: "",
-          inscricao_estadual: "",
-          simples_nacional: false,
-          rntrc: "",
-          email: "",
-          telefone: "",
-          whatsapp: "",
-          contato_responsavel: "",
-          endereco: "",
-          bairro: "",
-          cidade: "",
-          estado: "",
-          cep: "",
-          website: "",
-          endereco_cobranca: { endereco: "", bairro: "", cidade: "", estado: "", cep: "" },
-          dados_bancarios: { banco: "", agencia: "", conta: "", tipo_conta: "Corrente" },
-          tipo_fornecedor: "Matéria-Prima",
-          categoria: "Matéria Prima",
-          prazo_entrega_padrao: 0,
-          status_fornecedor: "Em Análise",
-          status: "Ativo",
-          avaliacoes: [],
-          nota_media: 0,
-          empresa_id: empresaAtual?.id,
-          empresa_dona_id: empresaAtual?.id,
-          group_id: groupId,
-        });
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = fornecedor.updated_date;
-      setFormData({
-        ...fornecedor,
-        avaliacoes: fornecedor.avaliacoes || [],
-      });
-    }
-  }, [fornecedor?.id, fornecedor?.updated_date, empresaAtual?.id, groupId]);
+  useCadastroReopenOnIdentity(fornecedor, {
+    formData,
+    setFormData,
+    emptyForm: {
+      nome: "",
+      razao_social: "",
+      nome_fantasia: "",
+      tipo_pessoa: "Pessoa Juridica",
+      cpf_cnpj: "",
+      cpf: "",
+      cnpj: "",
+      rg: "",
+      inscricao_estadual: "",
+      simples_nacional: false,
+      rntrc: "",
+      email: "",
+      telefone: "",
+      whatsapp: "",
+      contato_responsavel: "",
+      endereco: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      cep: "",
+      website: "",
+      endereco_cobranca: { endereco: "", bairro: "", cidade: "", estado: "", cep: "" },
+      dados_bancarios: { banco: "", agencia: "", conta: "", tipo_conta: "Corrente" },
+      tipo_fornecedor: "Matéria-Prima",
+      categoria: "Matéria Prima",
+      prazo_entrega_padrao: 0,
+      status_fornecedor: "Em Análise",
+      status: "Ativo",
+      avaliacoes: [],
+      nota_media: 0,
+      empresa_id: empresaAtual?.id,
+      empresa_dona_id: empresaAtual?.id,
+      group_id: groupId,
+    },
+    mapToForm: (record) => ({
+      ...record,
+      avaliacoes: record.avaliacoes || [],
+    }),
+  });
 
   const content = (
     <>

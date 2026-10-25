@@ -1,3 +1,52 @@
+## CURSOR — remarge consolidação `15c49276` em #351 (2026-10-25)
+
+Incorpora tip Codex CANAL02–04 (`conferencia-legado`) preservando P1 reopen
+Cursor. Conflitos só STATUS/HANDOFF — ambos lados mantidos. Sem merge/deploy.
+
+## #351 — typecheck: clearOnNull JSDoc + deleteMutation tipado (Cursor, 2026-10-25)
+
+CI frontend falhou no tip `899be582`: TS2353 `clearOnNull` ausente no JSDoc do
+hook; TS2345 `mutate(string)` vs void em Representante deleteMutation.
+Corrigido + baseline stage48 Representante. Sem merge/deploy.
+
+## #351 — lint: remove eslint-disable inválido no hook reopen (Cursor, 2026-10-25)
+
+CI frontend falhou em tips anteriores: `no-undef` (imports — já corrigido) e
+regra `react-hooks/exhaustive-deps — identidade canônica` inválida no
+disable-line. Removido o disable malformado. Sem merge/deploy.
+
+## #351 — imports do hook reopen na coorte simples (Cursor, 2026-10-25)
+
+14 forms da coorte chamavam `useCadastroReopenOnIdentity` sem import
+(ReferenceError em runtime). Imports adicionados; baselines FormaPagamento
+atualizados. Sem mudança de comportamento além de tornar o hook resolvível.
+
+## #351 — P1 switch-reject: identidade de mutação alinhada (Cursor, 2026-10-25)
+
+Achado Codex: reject A→B preservava draft A mas mutava B via props. Hook agora
+expõe `boundId`/`identityMismatch`; mutações usam identidade do rascunho.
+Teste comportamental PASS. Baselines stage48/49 atualizados. Sem merge/deploy.
+CANAL-02 liberado (#350); CANAL-03/04 pendentes de SHA na consolidação 342.
+
+## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
+
+Baselines stage48/49 e publication do reopen atualizados de propósito para o
+hook canônico `useCadastroReopenOnIdentity` (não mascarar defeito). Contraprova
+P1 permanece PASS. Handoff CANAL-02 liberado ao Codex em #350 (httpApiClient/
+testes/consumidor). Sem merge/deploy.
+
+## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
+
+Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.
+Reprodução pré-fix em tip `4980448d`: expected='Rascunho local nao salvo' actual='Alteracao externa' (P1 FAIL).
+Correção: política canônica `cadastroReopenPolicy` + hook `useCadastroReopenOnIdentity` na coorte #351
+(Representante/FormaPagamento/Cliente/Fornecedor/cadastros simples) e Regiao com decideCadastroReopen.
+Comportamento: fundo mesmo ID não sobrescreve dirty sem confirmação; limpo aplica; troca de registro
+confirma alterações pendentes; eco do próprio save (form==servidor) aplica sem prompt.
+Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
+Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
+Reserva #344 Codex intocada.
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
@@ -46,7 +95,6 @@ P1 da3513fda5f31 revisado isoladamente8PASS; parecer351/6402496862.
 Candidata35368c1b429 incorpora esse fix por ancestralidade; sem integração paralela.
 Automação mesma fila, exclusividade/checkpoint; estado final e liberação de
 reservas serão registrados no recibo de fechamento. Sem merge/deploy/migration.
-
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
@@ -163,6 +211,15 @@ carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
 
+## CURSOR — #351 merge consolidação `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -234,6 +291,17 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
+
+## CURSOR — #351 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` |
+| base merge | consolidação tip **`3eccd369`** |
+| branch | `cursor/cadastros-reabrir-updated-392b` · PR #351 |
+| tip anterior | `4c1d6ce6` · API CONFLICTING/DIRTY |
+| conflitos | STATUS/HANDOFF — ambos lados preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
@@ -434,6 +502,73 @@ Este lote corrige o defeito do servico; nao declara essa ligacao completa,
 carga operacional, merge, deploy, migration ou homologacao. Reservas deste
 lote sao liberadas apos commit/push; revisao independente permanece pendente.
 
+## CURSOR — #351 PlanoContas + CI verde (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI | **`01bd2e35`** MERGEABLE CLEAN |
+| lote | PlanoContasForm `prevUpdatedRef` |
+| fila | forms `prevIdRef` restantes esgotados fora coorte ID-only/Marca |
+| próxima | recovery erp-integra (#349 fonte / Contratos equivalência) sem auth permissiva |
+
+## CURSOR — fila contínua (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| executor | Cursor Cloud `/workspace` · **sem** Codespace montado |
+| consolidação | tip **`4ab7a61b`** (branch Codex; não editar) |
+| #350/#347 | tip **`2d1f289f`** · MERGEABLE CLEAN · CI 6/6 · candidata integrável · visual owner pendente |
+| #351 cadastros | tip **`6e71e8b2`** CI verde + lote Moeda/Operador/CentroCusto em curso |
+| reserva alheia | #344 Legado · MarcaForm · `scripts/legado` · branch `codex/consolidacao-infra-20261017` |
+| retomada | CI subscriptions ativas nas branches Cursor; **sem** timer de polling de PR; autonomia permanente **não** declarada |
+| próxima | restantes forms `prevIdRef` · #349 só com fonte privada comprovada · sem alegar URL Codespace |
+
+## CURSOR — #351 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | tip **`4ab7a61b`** |
+| tip anterior | `19404da3` · CI SUCCESS · conflito docs |
+| conflitos | STATUS/HANDOFF — ambos lados |
+| #350 | `2d1f289f` MERGEABLE CLEAN · CI 6/6 · runner Cursor (não Codespace) |
+| fora | MarcaForm · branch Codex intocada |
+| próxima | Banco/Cargo/Departamento `prevUpdatedRef` |
+
+## CURSOR — #351 mestres produto reabrir (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`42bde90d`** · 6/6 SUCCESS (harness Região + hashes FormaPagamento) |
+| tip publicado | **`af79c8d3`** · mestres produto · HEAD docs `19404da3` |
+| lote | UnidadeMedidaForm · GrupoProdutoForm · SetorAtividadeForm |
+| mudança | `prevUpdatedRef` + `idChanged\|updatedChanged` · submit bloqueia `isSubmitting` |
+| código/ID | `CadastroCodigoRegistroField` já presente (preservado) |
+| fora | MarcaForm (reserva #344) · sem auth permissiva · sem tela duplicada |
+| #350/#347 | CI SUCCESS → tip merge `2d1f289f` · sem alegar prévia Codespace |
+| próxima | demais forms só `prevIdRef` (Banco/Cargo/…) |
+
+## CURSOR — #351 CI verde + FormaPagamento/Região (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`4e90d897`** · CI 6/6 SUCCESS · mergeable clean |
+| lote | FormaPagamentoForm(+Completo) + RegiaoAtendimentoForm · `prevUpdatedRef` |
+| fora | MarcaForm (reserva) · #344 Legado |
+| testes | `cadastros-reopen-representante-updated` ampliado |
+
+## CURSOR — Representante reabrir+código (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | consolidação tip **`0b8bafa7`** |
+| branch | `cursor/cadastros-reabrir-updated-392b` |
+| pacote | RepresentanteForm + RepresentanteFormCompleto (ERP novo; fora #344) |
+| causa | só `prevIdRef` — save/reabrir com mesmo id não reidratava `updated_date` |
+| mudança | `prevUpdatedRef` + `idChanged\|updatedChanged` · código/ID via `CadastroCodigoRegistroField` no form simples |
+| #347/#350 | CI verde `1784dbf6`/`8ba3b5bf` em PR separada · não misturada neste PR |
+| testes | `cadastros-reopen-representante-updated` |
+| próxima | outros forms só com prevIdRef (FormaPagamentoForm, etc.) |
+
 ## Continuidade atual #344 - revisao assistida e preparacao (2026-10-24)
 
 Validacao local: suite completa 2278 PASS / 0 FAIL / 0 SKIP; audit/lint/typecheck/build/diff-check exit 0. Depois, o reforco de integridade do journal e um teste estatico adicional do roteiro SQL passaram no foco final: 11 PASS / 0 FAIL / 0 SKIP (inclui wrapper de seis testes Python sinteticos). A suite completa local citada e anterior a esse pequeno delta final; CI do SHA final executa a composicao final, sem alegar contagem local inexistente.
@@ -463,7 +598,7 @@ Precheck autorizado executado somente no filesystem privado do staging VPS: host
 
 ### Cursor PR350 por SHA
 
-Revisao atualizada em `8ba3b5bfbfcd2c626c58c86c81db7d27bd7c58b5`: a correcao substitui o acesso aos campos ilustrativos de `masters` por `proposalMasters`, mantendo a origem sintetica DEV; os dois TS2339 do SHA anterior `2ec96439` estao resolvidos. Seis checks SUCCESS nos runs 40106256497/40106260627. A branch incorporou a base `0b8bafa7`, preservando #344. Comentario de revisao atualizado na PR. Nao houve edicao da branch Cursor, merge ou transporte dos arquivos comerciais; aprovacao visual e integracao continuam separadas.
+Revisao atualizada em `8ba3b5bfbfcd2c626c58c86c81db7d27bd7c58b5` e tip merge Cursor `2d1f289f` sobre consolidacao `4ab7a61b`: a correcao substitui o acesso aos campos ilustrativos de `masters` por `proposalMasters`, mantendo a origem sintetica DEV; TS2339 resolvidos. Seis checks SUCCESS no tip merge. Aprovacao visual e merge continuam separados. Runner Cursor ≠ Codespace.
 
 Validacao deste lote e SHA final: conferir o recibo de fechamento e CI do commit publicado. Backend/ledger sem alteracao reutilizam provas anteriores (529 PASS/24 SKIP no backend e PG sintetico 6 PASS/0 SKIP); skips nao sao persistencia comprovada. Logs/diffs/hashes de publicacao ficam privados. Dados reais, HTML privado, manifests detalhados, .env, certificados, chaves e backups nao integram o Git.
 

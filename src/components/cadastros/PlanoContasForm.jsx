@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
-export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || conta;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -18,7 +19,7 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
   const podeCriar = canCreate("Cadastros", "PlanoDeContas") || canCreate("Financeiro", "PlanoDeContas") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "PlanoDeContas") || canEdit("Financeiro", "PlanoDeContas") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     codigo_conta: '',
     nome_conta: '',
     tipo_conta: 'Despesa',
@@ -30,18 +31,19 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
     usa_em_sped: false,
     usa_apenas_gerencial: false,
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (dadosIniciais?.id && !podeEditar) {
       alert("Sem permissao para editar plano de contas.");
       return;
@@ -172,7 +174,7 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
       <Button
         type="submit"
         className="w-full bg-green-600 hover:bg-green-700"
-        disabled={!contextoValido || !podeSalvar}
+        disabled={isSubmitting || !contextoValido || !podeSalvar}
         data-permission="Cadastros.PlanoDeContas.salvar"
         data-action="salvar-plano-contas"
         data-sensitive

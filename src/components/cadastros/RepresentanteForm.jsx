@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Briefcase } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDoc = (value) => String(value ?? "").replace(/[^0-9A-Za-z./-]/g, "").slice(0, 32).trim();
@@ -24,7 +26,6 @@ export default function RepresentanteForm({ representante, item, data, initialDa
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "Representante") || canCreate("Comercial", "Representante") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Representante") || canEdit("Comercial", "Representante") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const emptyFormData = {
     nome: '',
     cpf_cnpj: '',
@@ -37,19 +38,18 @@ export default function RepresentanteForm({ representante, item, data, initialDa
     ativo: true
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
-  const prevIdRef = useRef(dadosIniciais?.id || null);
-  useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    if (nextId !== prevIdRef.current) {
-      prevIdRef.current = nextId;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: representanteBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvarBound = representanteBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!podeSalvar) {
-      alert(dadosIniciais?.id ? 'Sem permissao para editar representantes.' : 'Sem permissao para criar representantes.');
+    if (!podeSalvarBound) {
+      alert(representanteBoundId ? 'Sem permissao para editar representantes.' : 'Sem permissao para criar representantes.');
       return;
     }
     if (!contextoValido) {
@@ -58,6 +58,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
     }
     const payload = {
       ...formData,
+      ...(representanteBoundId ? { id: representanteBoundId } : {}),
       nome: sanitizeText(formData.nome, 180),
       cpf_cnpj: sanitizeDoc(formData.cpf_cnpj),
       email: sanitizeText(formData.email, 180).toLowerCase(),
@@ -78,13 +79,19 @@ export default function RepresentanteForm({ representante, item, data, initialDa
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(representanteBoundId)}
+        entityId={representanteBoundId}
+        value={formData.codigo ?? dadosIniciais?.codigo}
+        action="codigo-registro-representante"
+      />
       <div>
         <Label>Nome *</Label>
         <Input
           value={formData.nome}
           onChange={(e) => setFormData({...formData, nome: e.target.value})}
           placeholder="Nome do representante"
-          disabled={!podeSalvar}
+          disabled={!podeSalvarBound}
           data-permission="Cadastros.Representante.editar"
           data-action="editar-nome-representante"
           data-sensitive
@@ -97,7 +104,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
           <Input
             value={formData.cpf_cnpj}
             onChange={(e) => setFormData({...formData, cpf_cnpj: e.target.value})}
-            disabled={!podeSalvar}
+            disabled={!podeSalvarBound}
             data-permission="Cadastros.Representante.editar"
             data-action="editar-documento-representante"
             data-sensitive
@@ -105,7 +112,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
         </div>
         <div>
           <Label>Tipo de Contrato</Label>
-          <Select value={formData.tipo_contrato} onValueChange={(v) => setFormData({...formData, tipo_contrato: v})} disabled={!podeSalvar}>
+          <Select value={formData.tipo_contrato} onValueChange={(v) => setFormData({...formData, tipo_contrato: v})} disabled={!podeSalvarBound}>
             <SelectTrigger data-permission="Cadastros.Representante.editar" data-action="editar-contrato-representante" data-sensitive>
               <SelectValue />
             </SelectTrigger>
@@ -125,7 +132,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({...formData, email: e.target.value})}
-            disabled={!podeSalvar}
+            disabled={!podeSalvarBound}
             data-permission="Cadastros.Representante.editar"
             data-action="editar-email-representante"
             data-sensitive
@@ -136,7 +143,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
           <Input
             value={formData.whatsapp}
             onChange={(e) => setFormData({...formData, whatsapp: e.target.value})}
-            disabled={!podeSalvar}
+            disabled={!podeSalvarBound}
             data-permission="Cadastros.Representante.editar"
             data-action="editar-whatsapp-representante"
             data-sensitive
@@ -151,7 +158,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
           step="0.01"
           value={formData.comissao_percentual}
           onChange={(e) => setFormData({...formData, comissao_percentual: parseFloat(e.target.value)})}
-          disabled={!podeSalvar}
+          disabled={!podeSalvarBound}
           data-permission="Cadastros.Representante.editar"
           data-action="editar-comissao-representante"
           data-sensitive
@@ -163,7 +170,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
-          disabled={!podeSalvar}
+          disabled={!podeSalvarBound}
           data-permission="Cadastros.Representante.editar"
           data-action="alternar-representante-ativo"
           data-sensitive
@@ -171,7 +178,7 @@ export default function RepresentanteForm({ representante, item, data, initialDa
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.Representante.salvar" data-action="salvar-representante" data-sensitive>
+        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvarBound} data-permission="Cadastros.Representante.salvar" data-action="salvar-representante" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Criar Representante'}
         </Button>

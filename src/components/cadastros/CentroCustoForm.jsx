@@ -8,6 +8,7 @@ import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -22,7 +23,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   const podeEditar = canEdit("Cadastros", "CentroCusto") || canEdit("Financeiro", "CentroCusto") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "CentroCusto") || canDelete("Financeiro", "CentroCusto") || canDelete("Cadastros", null);
   const podeSalvar = dadosCentroCusto?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosCentroCusto || {
+  const emptyFormData = {
     codigo: "",
     descricao: "",
     tipo: "Despesa",
@@ -31,18 +32,19 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     orcamento_mensal: "",
     status: "Ativo",
     observacoes: ""
-  });
+  };
+  const [formData, setFormData] = useState(dadosCentroCusto || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosCentroCusto?.id);
-  useEffect(() => {
-    if (dadosCentroCusto?.id && dadosCentroCusto.id !== prevIdRef.current) {
-      prevIdRef.current = dadosCentroCusto.id;
-      setFormData({ ...dadosCentroCusto });
-    }
-  }, [dadosCentroCusto?.id]);
+  useCadastroReopenOnIdentity(dadosCentroCusto, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (dadosCentroCusto?.id && !podeEditar) {
       alert("Sem permissao para editar centros de custo.");
       return;

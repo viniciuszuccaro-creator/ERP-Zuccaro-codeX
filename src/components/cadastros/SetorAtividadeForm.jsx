@@ -9,6 +9,7 @@ import { Loader2, Factory, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -23,25 +24,26 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
   const podeEditar = hasPermission?.("Cadastros.SetorAtividade.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.SetorAtividade.excluir") || hasPermission?.("Cadastros.Produto.excluir");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome: '',
     descricao: '',
     tipo_operacao: 'Revenda',
     icone: '',
     cor: '#3B82F6',
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!contextoValido) {
       alert('Selecione um grupo ou empresa antes de salvar.');
       return;

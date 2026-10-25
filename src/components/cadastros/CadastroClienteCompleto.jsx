@@ -35,6 +35,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import {
@@ -348,9 +349,11 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
       const payload = buildPayload(data);
 
-      if (cliente?.id) {
+      // Identidade do rascunho (formData.id), não props — evita salvar A em B após reject switch.
+      const targetId = formData?.id || null;
+      if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
-        return updateInContext('Cliente', cliente.id, payload);
+        return updateInContext('Cliente', targetId, payload);
       }
 
       if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
@@ -359,7 +362,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      toast({ title: `✅ Cliente ${cliente?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Cliente ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -404,7 +407,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
-    deleteMutation.mutate(cliente.id);
+    if (!formData?.id) return;
+    deleteMutation.mutate(formData.id);
   };
 
   const handleAlternarStatus = () => {
@@ -514,99 +518,83 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
-  const prevIdRef = useRef(cliente?.id || null);
-  const prevUpdatedRef = useRef(cliente?.updated_date);
-  useEffect(() => {
-    const nextId = cliente?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && cliente?.updated_date && cliente.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData({
-          tipo: "Pessoa Física",
-          status: "Prospect",
-          nome: "",
-          razao_social: "",
-          nome_fantasia: "",
-          cpf: "",
-          cnpj: "",
-          rg: "",
-          inscricao_estadual: "",
-          inscricao_municipal: "",
-          regiao_atendimento: "Sudeste",
-          endereco_principal: {
-            cep: "",
-            logradouro: "",
-            numero: "",
-            complemento: "",
-            bairro: "",
-            cidade: "",
-            estado: "",
-            latitude: null,
-            longitude: null,
-            mapa_url: "",
-          },
-          contatos: [],
-          locais_entrega: [],
-          condicao_comercial: {
-            tabela_preco_id: "",
-            forma_pagamento_padrao_id: "",
-            percentual_desconto: 0,
-            condicao_pagamento: "À Vista",
-            limite_credito: 0,
-            limite_credito_utilizado: 0,
-            situacao_credito: "OK",
-          },
-          configuracao_fiscal: {
-            regime_tributario: "Simples Nacional",
-            cfop_padrao_venda: "5102",
-            contribuinte_icms: true,
-            tipo_contribuinte: "1 - Contribuinte",
-            isento_ipi: false,
-            isento_icms: false,
-          },
-          documentos: [],
-          vendedor_responsavel: "",
-          vendedor_responsavel_id: "",
-          observacoes: "",
-          empresa_id: empresaAtual?.id,
-          group_id: groupId,
-        });
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = cliente.updated_date;
-      setFormData({
-        ...cliente,
-        contatos: cliente.contatos || [],
-        locais_entrega: cliente.locais_entrega || [],
-        condicao_comercial: cliente.condicao_comercial || {
-          tabela_preco_id: "",
-          forma_pagamento_padrao_id: "",
-          percentual_desconto: 0,
-          condicao_pagamento: "À Vista",
-          limite_credito: 0,
-          limite_credito_utilizado: 0,
-          situacao_credito: "OK"
-        },
-        configuracao_fiscal: cliente.configuracao_fiscal || {
-          regime_tributario: "Simples Nacional",
-          cfop_padrao_venda: "5102",
-          contribuinte_icms: true,
-          tipo_contribuinte: "1 - Contribuinte",
-          isento_ipi: false,
-          isento_icms: false
-        },
-        documentos: cliente.documentos || []
-      });
-    }
-  }, [cliente?.id]);
+  const { boundId: clienteBoundId } = useCadastroReopenOnIdentity(cliente, {
+    formData,
+    setFormData,
+    emptyForm: {
+      tipo: "Pessoa Física",
+      status: "Prospect",
+      nome: "",
+      razao_social: "",
+      nome_fantasia: "",
+      cpf: "",
+      cnpj: "",
+      rg: "",
+      inscricao_estadual: "",
+      inscricao_municipal: "",
+      regiao_atendimento: "Sudeste",
+      endereco_principal: {
+        cep: "",
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        latitude: null,
+        longitude: null,
+        mapa_url: "",
+      },
+      contatos: [],
+      locais_entrega: [],
+      condicao_comercial: {
+        tabela_preco_id: "",
+        forma_pagamento_padrao_id: "",
+        percentual_desconto: 0,
+        condicao_pagamento: "À Vista",
+        limite_credito: 0,
+        limite_credito_utilizado: 0,
+        situacao_credito: "OK",
+      },
+      configuracao_fiscal: {
+        regime_tributario: "Simples Nacional",
+        cfop_padrao_venda: "5102",
+        contribuinte_icms: true,
+        tipo_contribuinte: "1 - Contribuinte",
+        isento_ipi: false,
+        isento_icms: false,
+      },
+      documentos: [],
+      vendedor_responsavel: "",
+      vendedor_responsavel_id: "",
+      observacoes: "",
+      empresa_id: empresaAtual?.id,
+      group_id: groupId,
+    },
+    mapToForm: (record) => ({
+      ...record,
+      contatos: record.contatos || [],
+      locais_entrega: record.locais_entrega || [],
+      condicao_comercial: record.condicao_comercial || {
+        tabela_preco_id: "",
+        forma_pagamento_padrao_id: "",
+        percentual_desconto: 0,
+        condicao_pagamento: "À Vista",
+        limite_credito: 0,
+        limite_credito_utilizado: 0,
+        situacao_credito: "OK",
+      },
+      configuracao_fiscal: record.configuracao_fiscal || {
+        regime_tributario: "Simples Nacional",
+        cfop_padrao_venda: "5102",
+        contribuinte_icms: true,
+        tipo_contribuinte: "1 - Contribuinte",
+        isento_ipi: false,
+        isento_icms: false,
+      },
+      documentos: record.documentos || [],
+    }),
+  });
 
   const gerarMapaUrl = (endereco) => {
     if (endereco.latitude && endereco.longitude) {
@@ -1539,13 +1527,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               {cliente?.id ? (
                 <div className="space-y-6">
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
-                    <ResumoHistorico clienteId={cliente.id} />
+                    <ResumoHistorico clienteId={clienteBoundId || cliente?.id} />
                   </Suspense>
                   <Suspense fallback={<div className="h-16 animate-pulse bg-slate-100 rounded" />}>
-                    <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
+                    <HistoricoOrigemCliente clienteId={clienteBoundId || cliente?.id} compact={false} />
                   </Suspense>
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
-                    <TimelineCliente clienteId={cliente.id} showFilters={true} />
+                    <TimelineCliente clienteId={clienteBoundId || cliente?.id} showFilters={true} />
                   </Suspense>
                 </div>
               ) : (

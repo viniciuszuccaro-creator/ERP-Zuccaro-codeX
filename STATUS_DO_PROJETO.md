@@ -1,3 +1,55 @@
+## CURSOR — remarge consolidação `15c49276` em #351 (2026-10-25)
+
+Incorpora tip Codex CANAL02–04 (`conferencia-legado`) preservando P1 reopen
+Cursor. Conflitos só STATUS/HANDOFF — ambos lados mantidos. Sem merge/deploy.
+
+## #351 — typecheck: clearOnNull JSDoc + deleteMutation tipado (Cursor, 2026-10-25)
+
+CI frontend falhou no tip `899be582`: TS2353 `clearOnNull` ausente no JSDoc do
+hook; TS2345 `mutate(string)` vs void em Representante deleteMutation.
+Corrigido + baseline stage48 Representante. Sem merge/deploy.
+
+## #351 — lint: remove eslint-disable inválido no hook reopen (Cursor, 2026-10-25)
+
+CI frontend falhou em tips anteriores: `no-undef` (imports — já corrigido) e
+regra `react-hooks/exhaustive-deps — identidade canônica` inválida no
+disable-line. Removido o disable malformado. Sem merge/deploy.
+
+## #351 — imports do hook reopen na coorte simples (Cursor, 2026-10-25)
+
+14 forms da coorte chamavam `useCadastroReopenOnIdentity` sem import
+(ReferenceError em runtime). Imports adicionados; baselines FormaPagamento
+atualizados. Sem mudança de comportamento além de tornar o hook resolvível.
+
+## #351 — P1 switch-reject: identidade de mutação alinhada (Cursor, 2026-10-25)
+
+Achado Codex em `useCadastroReopenOnIdentity`: ao recusar troca A→B o rascunho
+de A era preservado, mas save/delete ainda usavam props de B. Correção: hook
+expõe `boundId`/`identityMismatch` + `onRejectSwitch`; Completo/Cliente/
+Fornecedor/FormaPagamento/Representante mutam pela identidade do rascunho.
+Contraprova: submit após reject → `id=r1` (não r2). Baselines stage48/49
+atualizados de propósito. Incorporar na candidata #353. Sem merge/deploy.
+CANAL-02 liberado; CANAL-03/04 aguardam SHA publicado na consolidação.
+
+## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
+
+Baselines stage48/49 e publication do reopen atualizados de propósito para o
+hook canônico `useCadastroReopenOnIdentity` (não mascarar defeito). Contraprova
+P1 permanece PASS. Handoff CANAL-02 liberado ao Codex em #350 (httpApiClient/
+testes/consumidor). Sem merge/deploy.
+
+## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
+
+Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.
+Reprodução pré-fix em tip `4980448d`: expected='Rascunho local nao salvo' actual='Alteracao externa' (P1 FAIL).
+Correção: política canônica `cadastroReopenPolicy` + hook `useCadastroReopenOnIdentity` na coorte #351
+(Representante/FormaPagamento/Cliente/Fornecedor/cadastros simples) e Regiao com decideCadastroReopen.
+Comportamento: fundo mesmo ID não sobrescreve dirty sem confirmação; limpo aplica; troca de registro
+confirma alterações pendentes; eco do próprio save (form==servidor) aplica sem prompt.
+Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
+Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
+Reserva #344 Codex intocada.
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
@@ -46,7 +98,6 @@ P1 da3513fda5f31 revisado isoladamente8PASS; parecer351/6402496862.
 Candidata35368c1b429 incorpora esse fix por ancestralidade; sem integração paralela.
 Automação mesma fila, exclusividade/checkpoint; estado final e liberação de
 reservas serão registrados no recibo de fechamento. Sem merge/deploy/migration.
-
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
@@ -163,6 +214,15 @@ carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
 
+## CURSOR — #351 merge consolidação `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -234,6 +294,16 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
+
+## CURSOR — #351 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** |
+| tip anterior | `4c1d6ce6` · CONFLICTING/DIRTY vs tip atual |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| escopo | reopen `updated_date` cadastros (PlanoContas etc.) |
+| fora | branch Codex intocada · MarcaForm · sem force-push |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
@@ -433,6 +503,95 @@ campos nem promover recibos revertidos. Os cinco gates abaixo continuam abertos.
 Este lote corrige o defeito do servico; nao declara essa ligacao completa,
 carga operacional, merge, deploy, migration ou homologacao. Reservas deste
 lote sao liberadas apos commit/push; revisao independente permanece pendente.
+
+## CURSOR — #351 PlanoContas reopen + CI `01bd2e35` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`01bd2e35`** · 6/6 · MERGEABLE CLEAN |
+| lote | PlanoContasForm · `prevUpdatedRef` + anti-duplo |
+| limitação | Operador/Moeda na coorte ID-only · MarcaForm/#344 intocados |
+| #350 | `2d1f289f` MERGEABLE CLEAN |
+
+## CURSOR — CI fix identidade: CentroCusto only (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| causa | `cursor-identidade-consolidacao` exige coorte ID-only em OperadorCaixa/MoedaIndice |
+| fix | restaurados Operador/Moeda ao tip `6e71e8b2`; CentroCusto mantém `prevUpdatedRef` |
+| fora | MarcaForm · #344 · sem relaxar o contrato identidade |
+
+## CURSOR — fila contínua + Moeda/Operador/CentroCusto (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| executor | Cursor Cloud · sem Codespace |
+| #350 | **`2d1f289f`** MERGEABLE CLEAN · CI 6/6 · candidata |
+| #351 tip anterior | **`6e71e8b2`** CI 6/6 · MERGEABLE CLEAN |
+| lote | MoedaIndiceForm · OperadorCaixaForm · CentroCustoForm · `prevUpdatedRef` |
+| reserva | #344 / MarcaForm / branch Codex |
+| retomada | subscriptions CI nas branches Cursor; sem timer de polling PR |
+| testes | `cadastros-reopen-representante-updated` 8 PASS |
+
+## CURSOR — #351 Turno/Veículo/Motorista/TipoDespesa (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`76fba28b`** · CI 6/6 · MERGEABLE CLEAN |
+| lote | TurnoForm · VeiculoForm · MotoristaForm · TipoDespesaForm |
+| mudança | `prevUpdatedRef` + anti-duplo · código/ID preservado |
+| fora | MarcaForm · #344 · sem merge/deploy |
+
+## CURSOR — #351 Banco/Cargo/Departamento + merge `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | tip **`4ab7a61b`** |
+| merge | `cb5e20aa` · conflitos STATUS/HANDOFF preservados |
+| lote | BancoForm · CargoForm · DepartamentoForm · `prevUpdatedRef` + anti-duplo |
+| fora | MarcaForm · #344 · sem merge/deploy |
+| #350 | tip **`2d1f289f`** MERGEABLE CLEAN · CI 6/6 |
+| testes | `cadastros-reopen-representante-updated` 6 PASS |
+
+## CURSOR — #351 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | tip **`4ab7a61b`** |
+| tip anterior | `19404da3` · CI SUCCESS · DIRTY vs consolidação |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | MarcaForm · branch Codex · scripts/legado só via merge |
+| #350 | tip `2d1f289f` MERGEABLE CLEAN · CI 6/6 |
+
+## CURSOR — #351 tip CI + mestres produto (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip CI verde | **`42bde90d`** · harness Região + hashes stage49 FormaPagamento · 6/6 SUCCESS |
+| tip publicado | **`af79c8d3`** / HEAD docs **`19404da3`** · UnidadeMedida/GrupoProduto/SetorAtividade |
+| lote | UnidadeMedidaForm · GrupoProdutoForm · SetorAtividadeForm · `prevUpdatedRef` + anti-duplo |
+| fora | MarcaForm (reserva) · #344 Legado · sem merge/deploy |
+| #350 | tip `8ba3b5bf`→`2d1f289f` CI SUCCESS |
+| testes | `cadastros-reopen-representante-updated` (mestres produto) |
+
+## CURSOR — #351 CI verde + FormaPagamento/Região (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip anterior | **`4e90d897`** · CI 6/6 SUCCESS · mergeable clean |
+| lote | FormaPagamentoForm(+Completo) + RegiaoAtendimentoForm · `prevUpdatedRef` |
+| fora | MarcaForm (reserva) · #344 Legado |
+| testes | `cadastros-reopen-representante-updated` ampliado |
+
+## CURSOR — Representante reabrir+código (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | `0b8bafa7` |
+| branch | `cursor/cadastros-reabrir-updated-392b` |
+| #350 | CI verde tip `1784dbf6` (PR separada) |
+| escopo | Representante reopen + código≠ID |
+| #344 | não tocado |
 
 ## #344 - revisao assistida e candidato operacional (2026-10-24)
 
