@@ -10,6 +10,7 @@ import { Loader2, Network, CheckCircle2, Trash2, Power, PowerOff } from "lucide-
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -99,14 +100,23 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     onSubmit(payload);
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir) {
       alert("Sem permissao para excluir grupo empresarial.");
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir o grupo "${sanitizeText(formData.nome, 180)}"? Esta acao nao pode ser desfeita.`)) {
+    if (!contextoValido) {
+      alert("Selecione um grupo antes de excluir.");
       return;
     }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir o grupo "${sanitizeText(formData.nome, 180)}"? Esta acao nao pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (onSubmit) {
       onSubmit(buildPayload({ _action: "delete" }));
     }
@@ -212,7 +222,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
                 <><Power className="w-4 h-4 mr-2" />Ativar</>
               )}
             </Button>
-            <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!podeExcluir} data-permission="Cadastros.GrupoEmpresarial.excluir" data-sensitive>
+            <Button type="button" variant="destructive" onClick={handleExcluir} disabled={!contextoValido || !podeExcluir} data-permission="Cadastros.GrupoEmpresarial.excluir" data-action="excluir-grupo-empresarial" data-sensitive>
               <Trash2 className="w-4 h-4 mr-2" />Excluir
             </Button>
           </>
@@ -225,6 +235,13 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     </form>
   );
 
+  const withDialog = (
+    <>
+      {formContent}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
@@ -234,10 +251,10 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
             {dadosIniciais ? "Editar Grupo Empresarial" : "Novo Grupo Empresarial"}
           </h2>
         </div>
-        {formContent}
+        {withDialog}
       </div>
     );
   }
 
-  return formContent;
+  return withDialog;
 }
