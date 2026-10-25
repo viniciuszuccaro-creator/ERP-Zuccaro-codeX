@@ -93,7 +93,7 @@ export default function useCadastroReopenOnIdentity(record, {
       baselineRef.current = cadastroFormSnapshot(next);
       setFormData(next);
     }
-  }, [record?.id, record?.updated_date]); // eslint-disable-line react-hooks/exhaustive-deps — identidade canônica
+  }, [record?.id, record?.updated_date]);
 
   return { boundId, identityMismatch };
 }
