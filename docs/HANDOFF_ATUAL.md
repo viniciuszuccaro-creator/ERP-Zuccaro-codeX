@@ -1,3 +1,8 @@
+## CURSOR — Marca useConfirm (erp-integra) (2026-10-25)
+
+Pacote independente fora #344/#351: `MarcaForm` usa `useConfirm` (paridade
+coorte Transportadora/GrupoProduto). Teste comportamental 3/3. Sem merge/deploy.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

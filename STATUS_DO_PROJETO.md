@@ -1,3 +1,11 @@
+## CURSOR — Marca useConfirm (erp-integra) (2026-10-25)
+
+`MarcaForm` exclusão: `window.confirm` → `useConfirm` + dialog existente;
+Excluir fail-closed sem contexto. Contraprova comportamental 3/3 PASS.
+Branch `cursor/cadastros-marca-confirm-392b` sobre consolidação `90f0a315`.
+Preserva formulário/registros/RBAC; sem UI paralela. Sem merge/deploy.
+Próximo cadastro confirm na coorte: SetorAtividade / UnidadeMedida.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
