@@ -34,28 +34,12 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   };
   const [formData, setFormData] = useState(dadosCentroCusto || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosCentroCusto?.id || null);
-  const prevUpdatedRef = React.useRef(dadosCentroCusto?.updated_date);
-  useEffect(() => {
-    const nextId = dadosCentroCusto?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && dadosCentroCusto?.updated_date && dadosCentroCusto.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData(emptyFormData);
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = dadosCentroCusto.updated_date;
-      setFormData(dadosCentroCusto || emptyFormData);
-    }
-  }, [dadosCentroCusto?.id, dadosCentroCusto?.updated_date]);
+  useCadastroReopenOnIdentity(dadosCentroCusto, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();

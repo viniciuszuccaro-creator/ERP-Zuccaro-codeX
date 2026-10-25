@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import ts from 'typescript';
+import {
+  CADASTRO_DIRTY_REOPEN_CONFIRM,
+  CADASTRO_DIRTY_SWITCH_CONFIRM,
+  cadastroFormMatchesIncoming,
+  cadastroFormSnapshot,
+  decideCadastroReopen,
+  isCadastroFormDirty,
+} from '../src/components/cadastros/cadastroReopenPolicy.js';
 
 const source = fs.readFileSync(new URL('../src/components/cadastros/RegiaoAtendimentoForm.jsx', import.meta.url), 'utf8');
 const ast = ts.createSourceFile('region.jsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
@@ -17,10 +25,18 @@ function harness(props = {}) {
   let current = true, formData, loading, failed, queries = 0, errors = 0, pending;
   const prevIdRef = { current: values.dadosIniciaisProps?.id || null };
   const prevUpdatedRef = { current: values.dadosIniciaisProps?.updated_date };
+  const baselineRef = { current: cadastroFormSnapshot(values.dadosIniciaisProps || {}) };
+  const formDataRef = { current: null };
   const bindings = {
-    prevIdRef, prevUpdatedRef, isFormScopeCurrent: () => current,
-    setFormData: data => { formData = data; }, setLoading: value => { loading = value; },
-    setLoadFailed: value => { failed = value; }, toast: { error: () => { errors++; } },
+    prevIdRef, prevUpdatedRef, baselineRef, formDataRef,
+    isFormScopeCurrent: () => current,
+    setFormData: data => { formData = data; formDataRef.current = data; },
+    setLoading: value => { loading = value; },
+    setLoadFailed: value => { failed = value; },
+    toast: { error: () => { errors++; } },
+    window: { confirm: () => true },
+    decideCadastroReopen, isCadastroFormDirty, cadastroFormMatchesIncoming, cadastroFormSnapshot,
+    CADASTRO_DIRTY_REOPEN_CONFIRM, CADASTRO_DIRTY_SWITCH_CONFIRM,
     getInContext: (entity, id) => {
       assert.equal(entity, 'RegiaoAtendimento'); assert.equal(id, values.regiaoId); queries++;
       return new Promise((resolve, reject) => { pending = { resolve, reject }; });
@@ -29,6 +45,7 @@ function harness(props = {}) {
   return {
     run(next) {
       Object.assign(values, next);
+      formDataRef.current = formData;
       const env = { ...bindings, ...values };
       return new Function(...Object.keys(env), `return (${callback})();`)(...Object.values(env));
     },
@@ -73,5 +90,6 @@ test('actual region effect fails closed on query failure, missing or wrong ident
   }
   assert.match(source, /loadReady = !loading && !loadFailed && prevIdRef.current === requestedId/);
   assert.match(source, /if \(!podeSalvar \|\| !isFormScopeCurrent\(\)\)/);
+  assert.match(source, /decideCadastroReopen/);
   assert.doesNotMatch(source, /RegiaoAtendimento\.list\(/);
 });

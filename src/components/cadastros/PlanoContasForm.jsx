@@ -33,28 +33,12 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosIniciais?.id || null);
-  const prevUpdatedRef = React.useRef(dadosIniciais?.updated_date);
-  useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && dadosIniciais?.updated_date && dadosIniciais.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData(emptyFormData);
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = dadosIniciais.updated_date;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id, dadosIniciais?.updated_date]);
+  useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
