@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { base44, getHttpProdutoApi, isHttpBackendMode, isHttpProdutoEnabled } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import useCadastroFormScopeGuard from "@/components/cadastros/hooks/useCadastroFormScopeGuard";
@@ -646,15 +647,24 @@ Caso contrário, sugira:
 
   const unifiedSubmit = submitProduto;
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     try { assertFormScopeCurrent(); } catch (error) { toast.error(error.message); return; }
-    if (!window.confirm(`Tem certeza que deseja excluir o produto "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
     if (!podeExcluir) {
       toast.error('Seu perfil nao permite excluir produtos');
       return;
     }
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de excluir o produto');
+      return;
+    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir o produto "${formData.descricao}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (produto?.id) {
       (produtoHttp ? getHttpProdutoApi().delete(produto.id) : deleteInContext('Produto', produto.id))
         .then(() => {
@@ -1434,11 +1444,18 @@ Caso contrário, sugira:
     </FormWrapper>
   );
 
+  const withDialog = (
+    <>
+      {content}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return <div className="w-full h-full bg-white">{withDialog}</div>;
   }
 
-  return content;
+  return withDialog;
 }
 
 export default React.memo(ProdutoFormV22_Completo);
