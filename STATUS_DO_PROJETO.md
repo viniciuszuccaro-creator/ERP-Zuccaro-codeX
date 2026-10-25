@@ -1,3 +1,12 @@
+## CURSOR — Representante: confirm-dialog (erp-integra) (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra: exclusão usava `window.confirm` |
+| tip | `cursor/cadastros-representante-confirm-392b` · base consolidação tip atual |
+| correção | `useConfirm` + fail-closed permissão/contexto/scope |
+| testes | `cadastros-representante-confirm-behavioral.test.js` 2 PASS |
+
 ## #344 — fila A/B/C: canal recuperado, gates reais e revisão cruzada (2026-10-25)
 
 Base8e68484b; pacote funcional D publicado0c18d995 na342, checkout limpo.
