@@ -259,8 +259,20 @@ export function createHttpApiClient(options = {}) {
           if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;
           else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;
         }
+        const exact = {};
+        if (basePath === '/api/v1/clientes') {
+          for (const key of ['documento','codigo']) {
+            if (!Object.prototype.hasOwnProperty.call(query,key)) continue;
+            const value = query[key];
+            if (typeof value !== 'string' || !value || value !== value.trim() || value.length > (key === 'documento' ? 32 : 80)
+              || (key === 'documento' && (!/^[0-9.\/\- ]+$/.test(value) || ![11,14].includes(value.replace(/\D/g,'').length)))) {
+              throw createHttpError(422,{error:{code:'VALIDATION_ERROR',message:'Explicit exact selector required'}}, undefined);
+            }
+            exact[key] = value;
+          }
+        }
         return request(basePath, {
-          query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },
+          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },
           unwrap,
         });
     }
@@ -674,6 +686,46 @@ SeparacaoConferencia: {
   };
 
   const clientes = {
+    /** Read exact cohort inside the application; never exports the session.
+     * @param {{identidades: Array<Record<string,string>>}} input
+     * @param {{signal?: AbortSignal}} [options]
+     */
+    async conferirLegado(input, { signal } = {}) {
+      const fail = (status, code) => createHttpError(status, { error: { code, message: code } }, undefined);
+      const before = Object.freeze({ ...(getScope() || {}) });
+      const matches = current => current.groupId === before.groupId && current.actorId === before.actorId
+        && (current.empresaId || null) === null && current.token === before.token;
+      if (!before.token || !before.groupId || !before.actorId || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');
+      if (!input || Object.keys(input).some(k => k !== 'identidades') || !Array.isArray(input.identidades)
+        || input.identidades.length < 1 || input.identidades.length > 100) throw fail(422, 'VALIDATION_ERROR');
+      const body = JSON.parse(JSON.stringify(input));
+      for (const item of body.identidades) {
+        if (!item || typeof item !== 'object' || Array.isArray(item)
+          || Object.keys(item).some(k => !['documento','sourceSystem','codigoLegado'].includes(k))
+          || (!item.documento && !(item.sourceSystem && item.codigoLegado))
+          || Boolean(item.sourceSystem) !== Boolean(item.codigoLegado)
+          || Object.values(item).some(v => typeof v !== 'string' || !v || v !== v.trim() || v.length > 80)
+          || (item.documento && (!/^[0-9.\/\- ]{1,32}$/.test(item.documento)
+            || ![11,14].includes(item.documento.replace(/\D/g,'').length)))) throw fail(422,'VALIDATION_ERROR');
+      }
+      if (signal?.aborted) throw fail(409, 'CONTEXT_CHANGED');
+      let result, failure;
+      try { result = await request('/api/v1/clientes/conferencia-legado', { method:'POST', body, signal }, before); }
+      catch (error) { failure = error; }
+      if (signal?.aborted || !matches(getScope() || {})) throw fail(409, 'CONTEXT_CHANGED');
+      if (failure) throw failure;
+      if (!Array.isArray(result) || result.length !== body.identidades.length) throw fail(502,'INVALID_RESPONSE');
+      return result.map((row, indice) => {
+        if (row?.indice !== indice || Object.keys(row).some(k=>!['indice','documento','legado'].includes(k))) throw fail(502,'INVALID_RESPONSE');
+        const match = value => {
+          if (value === null) return null;
+          if (!value || Object.keys(value).some(k=>!['id','codigo','ativo'].includes(k))
+            || typeof value.id !== 'string' || typeof value.codigo !== 'string' || typeof value.ativo !== 'boolean') throw fail(502,'INVALID_RESPONSE');
+          return { id:value.id, codigo:value.codigo, ativo:value.ativo };
+        };
+        return { indice, documento:match(row.documento), legado:match(row.legado) };
+      });
+    },
     /**
      * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).
      * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).
@@ -886,3 +938,5 @@ export const httpApiClient = createHttpApiClient();
 export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;
 export const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;
 export const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;
+
+export const clienteConferenciaApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).clientes;

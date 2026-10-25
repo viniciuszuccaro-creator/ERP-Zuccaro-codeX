@@ -570,3 +570,39 @@ test('ProdutoEmpresa facade preparada: GET/PUT usam tenant/Bearer/CAS/AbortSigna
   assert.equal(seen[1].init.method,'PUT');assert.deepEqual(JSON.parse(seen[1].init.body),payload);
   for(const call of seen){assert.equal(call.init.headers.Authorization,'Bearer synthetic-token');assert.equal(call.init.headers['X-Empresa-Id'],'synthetic-company');assert.equal(call.init.signal,controller.signal);assert.equal(call.url.includes('synthetic-token'),false);}
 });
+
+test('CANAL exact Cliente filters cannot silently broaden and malformed selectors do not fetch',async()=>{
+ const calls=[];const client=createHttpApiClient({baseUrl:'https://erp.synthetic.test',fetchImpl:async(url)=>{calls.push(new URL(url));return new Response(JSON.stringify({data:[]}),{status:200});}});
+ await client.entities.Cliente.filter({documento:'11.222.333/0001-81',codigo:'001'},undefined,1);
+ assert.equal(calls[0].searchParams.get('documento'),'11.222.333/0001-81');assert.equal(calls[0].searchParams.get('codigo'),'001');
+ for(const query of [{documento:''},{documento:'garbage'},{documento:[]},{codigo:' '},{codigo:{}}]){const before=calls.length;await assert.rejects(client.entities.Cliente.filter(query));assert.equal(calls.length,before);}
+});
+test('CANAL captures scope, rejects late/revoked/aborted responses and never falls back',async()=>{
+ const input={identidades:[{documento:'11222333000181'}]};
+ for(const change of [s=>{s.groupId='other';},s=>{s.token='new';},s=>{s.actorId='other';},s=>{s.empresaId='company';}]){
+  let finish;const scope={groupId:'synthetic-group',actorId:'synthetic-profile',token:'synthetic-token'};let calls=0;
+  const client=createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,fetchImpl:async(url,init)=>{calls++;assert.equal(new URL(url).pathname,'/api/v1/clientes/conferencia-legado');assert.equal(init.method,'POST');assert.equal(init.headers['X-Actor-Id'],undefined);return new Promise(r=>{finish=r;});}});
+  const promise=client.clientes.conferirLegado(input);change(scope);finish(new Response(JSON.stringify({data:[{indice:0,documento:null,legado:null}]}),{status:200}));await assert.rejects(promise,e=>e.code==='CONTEXT_CHANGED');assert.equal(calls,1);
+ }
+ const scope={groupId:'synthetic-group',actorId:'synthetic-profile',token:'synthetic-token'};
+ let calls=0;const ok=createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,fetchImpl:async()=>{calls++;return new Response(JSON.stringify({data:[{indice:0,documento:null,legado:null}]}),{status:200});}});
+ assert.deepEqual(await ok.clientes.conferirLegado(input),[{indice:0,documento:null,legado:null}]);
+ for(const body of [{identidades:[]},{identidades:[{}]},{identidades:Array(101).fill({documento:'11222333000181'})}])await assert.rejects(ok.clientes.conferirLegado(body));assert.equal(calls,1);
+ const aborted=new AbortController();aborted.abort();await assert.rejects(ok.clientes.conferirLegado(input,{signal:aborted.signal}));assert.equal(calls,1);
+ const denied=createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,fetchImpl:async()=>new Response(JSON.stringify({error:{code:'PERMISSION_DENIED'}}),{status:403})});await assert.rejects(denied.clientes.conferirLegado(input),e=>e.status===403);
+});
+
+test('CANAL actual consumer does not auto-read and clears late results on session change',async()=>{
+ const {readFile}=await import('node:fs/promises');const {default:ts}=await import('typescript');const vm=await import('node:vm');
+ const source=await readFile(new URL('../src/components/comercial/ClienteConferenciaLegado.jsx',import.meta.url),'utf8');
+ const slots=[];let cursor=0,effects=[],listener,finish,calls=0;
+ const react={createElement:(type,props,...children)=>({type,props:{...props,children:children.flat()}}),useState:init=>{const i=cursor++;if(!(i in slots))slots[i]=init;return[slots[i],v=>{slots[i]=v;}];},useRef:init=>{const i=cursor++;if(!(i in slots))slots[i]={current:init};return slots[i];},useEffect:(fn,deps)=>{const i=cursor++;if(!slots[i]||deps.some((v,n)=>v!==slots[i][n])){slots[i]=deps;effects.push(fn);}}};
+ const session={groupId:'synthetic-group',actorId:'synthetic-profile',token:'synthetic-token'};
+ const modules={react:{__esModule:true,default:react,...react},'@/api/httpApiClient':{clienteConferenciaApi:{conferirLegado:()=>{calls++;return new Promise(r=>{finish=r;});}}},'@/api/erpHttpSession':{readErpHttpSession:()=>session,HTTP_CONTEXT_CHANGED:'context'},'@/components/lib/usePermissions':{__esModule:true,default:()=>({hasPermission:()=>true,isLoading:false})}};
+ const exports={};vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports,require:id=>{assert.ok(modules[id],id);return modules[id];},window:{addEventListener:(_name,fn)=>{listener=fn;},removeEventListener:()=>{}},AbortController});
+ let tree;const render=()=>{cursor=0;tree=exports.default();effects.splice(0).forEach(fn=>fn());};const walk=node=>!node||typeof node!=='object'?[]:[node,...(node.props?.children||[]).flatMap(walk)];
+ render();assert.equal(calls,0);walk(tree).find(n=>n.type==='textarea').props.onChange({target:{value:JSON.stringify({identidades:[{documento:'11222333000181'}]})}});render();const run=walk(tree).find(n=>n.type==='button').props.onClick();assert.equal(calls,1);session.token='new';listener();finish([{indice:0,documento:null,legado:null}]);await run;render();assert.equal(walk(tree).some(n=>n.type==='table'),false);assert.equal(calls,1);
+ const tab=await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8');assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');
+});
+
+test('CANAL integrity rejects unregistered changes inside and outside approved hunks',async()=>{const {clienteConferenciaRemainder}=await import('./helpers/consolidation81Remainder.js');const {readFile}=await import('node:fs/promises');for(const path of ['server/src/api/router.ts','src/api/httpApiClient.js']){const source=await readFile(path,'utf8');assert.ok(clienteConferenciaRemainder(path,source));assert.throws(()=>clienteConferenciaRemainder(path,source+'\n// unregistered mutation\n'));assert.throws(()=>clienteConferenciaRemainder(path,source.replace('conferencia-legado','unreviewed-endpoint')));}});
