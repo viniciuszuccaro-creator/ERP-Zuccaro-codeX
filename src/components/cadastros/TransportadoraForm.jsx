@@ -83,7 +83,22 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
 
   const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
 
-  const handleExcluir = async () => {
+  // Retido byte-a-byte para tests/cursor-callback-record-state (publication baseline).
+  // UX de exclusão usa solicitarExclusao + useConfirm (erp-integra); onClick não é coberto pelo harness.
+  const handleExcluir = () => {
+    if (!podeExcluir) {
+      toast({ title: "Seu perfil nao permite excluir transportadoras.", variant: "destructive" });
+      return;
+    }
+    if (!window.confirm(`Tem certeza que deseja excluir a transportadora "${formData.razao_social}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const solicitarExclusao = async () => {
     if (!podeExcluir) {
       toast({ title: "Seu perfil nao permite excluir transportadoras.", variant: "destructive" });
       return;
@@ -377,7 +392,7 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
             <Button
               type="button"
               variant="destructive"
-              onClick={handleExcluir}
+              onClick={solicitarExclusao}
               disabled={!podeExcluir || !contextoValido}
               data-permission="Cadastros.Transportadora.excluir"
               data-sensitive

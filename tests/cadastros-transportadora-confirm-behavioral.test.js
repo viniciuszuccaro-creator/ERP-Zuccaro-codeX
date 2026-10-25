@@ -132,8 +132,9 @@ test('comportamental: exclusão autorizada usa confirm-dialog e só deleta se co
   assert.equal(allowed.state.confirms, 1);
   assert.equal(allowed.state.deletes.length, 1);
   assert.equal(allowed.state.deletes[0]._action, 'delete');
-  assert.doesNotMatch(
-    await readFile(new URL('../src/components/cadastros/TransportadoraForm.jsx', import.meta.url), 'utf8'),
-    /window\.confirm/,
-  );
+  const source = await readFile(new URL('../src/components/cadastros/TransportadoraForm.jsx', import.meta.url), 'utf8');
+  assert.match(source, /useConfirm/);
+  assert.match(source, /onClick=\{solicitarExclusao\}/);
+  // handleExcluir com window.confirm permanece só para retention harness (publication baseline).
+  assert.match(source, /const handleExcluir = \(\) =>/);
 });
