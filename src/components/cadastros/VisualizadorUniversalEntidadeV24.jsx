@@ -38,6 +38,7 @@ import {
   Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X, Eye
 } from "lucide-react";
 import { useWindow } from "@/components/lib/useWindow";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
 import useClienteCadastroNavigation from './hooks/useClienteCadastroNavigation';
 import DetalhesCliente from "@/components/comercial/DetalhesCliente";
@@ -282,6 +283,7 @@ export default function VisualizadorUniversalEntidadeV24({
     getInContext,
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmVizV24Dialog } = useConfirm();
   const empresaId = (empresaAtual && empresaAtual.id) || null;
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
   // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
@@ -810,7 +812,12 @@ export default function VisualizadorUniversalEntidadeV24({
   // ── exclusão unitária ────────────────────────────────────────────────────────
   const handleDelete = useCallback(async function(item) {
     const label = item.nome || item.razao_social || item.nome_completo || item.descricao || item.id;
-    if (!window.confirm('Regra-Mae: confirma excluir "' + label + '" de ' + TITULO + '? Esta acao sensivel sera auditada.')) return;
+    const confirmado = await confirm({
+      title: 'Confirmar exclusão',
+      description: 'Regra-Mae: confirma excluir "' + label + '" de ' + TITULO + '? Esta acao sensivel sera auditada.',
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
     if (!contextoValido) {
       await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro sem contexto grupo/empresa", { registro_id: item.id, motivo: "sem_contexto", sucesso: false, acao_sensivel: true });
       alert("Selecione um grupo ou empresa antes de excluir.");
@@ -835,7 +842,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setSelectedIds(function(prev) { const n = new Set(prev); n.delete(item.id); return n; });
     if (items.length <= 1 && page > 1) setPage(function(p) { return Math.max(1, p - 1); });
     invalidateAll(queryClient, ENTITY);
-  }, [ENTITY, TITULO, queryClient, items.length, page, canDeleteCadastro, contextoValido, deleteInContext, auditCadastroEvent]);
+  }, [ENTITY, TITULO, queryClient, items.length, page, canDeleteCadastro, contextoValido, deleteInContext, auditCadastroEvent, confirm]);
 
   // ── exclusão em massa ────────────────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async function() {
@@ -857,7 +864,12 @@ export default function VisualizadorUniversalEntidadeV24({
     const msg = (crossPageAll && effCount > items.length)
       ? "Regra-Mae: isso ira excluir " + effCount + " registro(s) de " + TITULO + " permanentemente em todas as paginas. Esta acao sera auditada.\nDeseja continuar?"
       : "Regra-Mae: confirmar exclusao de " + effCount + " registro(s) de " + TITULO + "? Esta acao sera auditada.";
-    if (!window.confirm(msg)) return;
+    const confirmado = await confirm({
+      title: 'Confirmar exclusão em lote',
+      description: msg,
+      confirmText: 'Excluir',
+    });
+    if (!confirmado) return;
 
     try {
       let idsToDelete = [];
@@ -911,7 +923,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setCrossPageAll(false);
     setPage(1);
     invalidateAll(queryClient, ENTITY);
-  }, [ENTITY, TITULO, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length, deleteInContext, canDeleteCadastro, contextoValido, auditCadastroEvent]);
+  }, [ENTITY, TITULO, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length, deleteInContext, canDeleteCadastro, contextoValido, auditCadastroEvent, confirm]);
 
   // ── seleção ──────────────────────────────────────────────────────────────────
   const isItemSelected = useCallback(function(id) {
@@ -1126,7 +1138,7 @@ export default function VisualizadorUniversalEntidadeV24({
                     )}
                     <button
                       type="button"
-                      onClick={function() { handleDelete(item); }}
+                      onClick={function() { return handleDelete(item); }}
                       title="Excluir"
                       disabled={!contextoValido || !canDeleteCadastro}
                       data-permission={cadastroPerm("excluir")}
@@ -1403,6 +1415,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   if (windowMode) {
     return (
+      <>
       <div className="w-full h-full flex flex-col p-4 bg-white overflow-hidden">
         {IconeProp && (
           <div className="flex items-center gap-2 mb-3 shrink-0">
@@ -1412,7 +1425,14 @@ export default function VisualizadorUniversalEntidadeV24({
         )}
         <div className="flex-1 min-h-0">{content}</div>
       </div>
+      <ConfirmVizV24Dialog />
+      </>
     );
   }
-  return <div className="flex flex-col flex-1 min-h-0 h-full w-full">{content}</div>;
+  return (
+    <>
+    <div className="flex flex-col flex-1 min-h-0 h-full w-full">{content}</div>
+    <ConfirmVizV24Dialog />
+    </>
+  );
 }
