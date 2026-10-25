@@ -13,6 +13,7 @@ import DashboardCanaisOrigem from "@/components/cadastros/DashboardCanaisOrigem"
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Table,
   TableBody,
@@ -43,6 +44,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
   const [origemFiltro, setOrigemFiltro] = useState('todos');
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmPedidosPorOrigemDialog } = useConfirm();
   const { user } = useUser();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -142,7 +144,11 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
       return;
     }
 
-    const confirmado = window.confirm(`Exportar ${origens.length} origens e ${pedidosFiltrados.length} pedidos para CSV?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar ${origens.length} origens e ${pedidosFiltrados.length} pedidos para CSV?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditarExportacao(false, 'Exportacao CSV do relatorio de pedidos por origem cancelada pelo usuario.');
       return;
@@ -179,6 +185,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
     : "w-full h-full";
 
   return (
+    <>
     <div
       className={containerClass}
       data-permission="Comercial.Relatorios.visualizar"
@@ -393,5 +400,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
       </Tabs>
 
     </div>
+    <ConfirmPedidosPorOrigemDialog />
+    </>
   );
 }
