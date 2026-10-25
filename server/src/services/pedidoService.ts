@@ -281,7 +281,7 @@ export class PedidoService {
   async cancel(ctx: RequestContext, id: string, motivo?: unknown) {
     ctx=Object.freeze({...ctx});
     const scope = await this.prepare(ctx, 'cancelar'); this.assertId(id, 'pedidoId');
-    if (motivo !== undefined && (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500)) this.validation({ motivo: 'invalid' });
+    if (typeof motivo !== 'string' || motivo.trim().length < 3 || motivo.length > 500) this.validation({ motivo: 'invalid' });
     return this.repo.withTransaction(async (executor) => {
       if(executor)await executor.query("SELECT set_config('app.group_id',$1,true),set_config('app.empresa_id',$2,true)",[scope.groupId,scope.empresaId]);
       await this.prepare(ctx,'cancelar',executor);
