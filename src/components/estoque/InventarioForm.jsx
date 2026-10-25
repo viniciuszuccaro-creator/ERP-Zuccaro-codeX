@@ -12,6 +12,7 @@ import FormWrapper from '@/components/common/FormWrapper';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { base44 } from '@/api/base44Client';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 /**
  * @typedef {Record<string, unknown> & {
@@ -40,6 +41,7 @@ import { base44 } from '@/api/base44Client';
 export default function InventarioForm({ windowMode = true }) { // w-full/h-full garantidos no container pai
   const { carimbarContexto, empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit, canApprove } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmInventarioDialog } = useConfirm();
   const [inv, setInv] = useState(/** @type {InventarioRecord} */ ({ descricao: '', data_referencia: new Date().toISOString().slice(0,10), status: 'Aberto', itens: [] }));
   const [salvando, setSalvando] = useState(false);
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id);
@@ -87,26 +89,33 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
    * @param {InventarioSaveOptions} options
    */
   const salvar = async (status = 'Aberto', options = {}) => {
-    if (salvando) return;
+    if (salvando) return false;
 
     const statusSensivel = ['Aprovado', 'Concluido', 'Concluído', 'Cancelado'].includes(status);
     if (!contextoValido) {
       await auditInventario({ acao: 'Inventario.salvar_bloqueado', sucesso: false, motivo: 'Contexto de grupo ou empresa obrigatorio.', dados: { status } });
-      return toast.error('Selecione um grupo ou empresa antes de salvar inventario.');
+      toast.error('Selecione um grupo ou empresa antes de salvar inventario.');
+      return false;
     }
     if (!podeSalvar) {
       await auditInventario({ acao: 'Inventario.salvar_negado', sucesso: false, motivo: 'Permissao negada para salvar inventario.', dados: { status } });
-      return toast.error('Sem permissao para salvar inventario.');
+      toast.error('Sem permissao para salvar inventario.');
+      return false;
     }
     if (status === 'Aprovado' && !podeAprovar) {
       await auditInventario({ acao: 'Inventario.salvar_negado', sucesso: false, motivo: 'Permissao de aprovar obrigatoria.', dados: { status } });
-      return toast.error('Sem permissao para aprovar inventario.');
+      toast.error('Sem permissao para aprovar inventario.');
+      return false;
     }
     if (statusSensivel && options.confirmar !== false) {
-      const confirmado = window.confirm(`Confirma alterar o inventario para "${status}"? Esta acao sera auditada.`);
+      const confirmado = await confirm({
+        title: 'Confirmar alteração de inventário',
+        description: `Confirma alterar o inventario para "${status}"? Esta acao sera auditada.`,
+        confirmText: 'Confirmar',
+      });
       if (!confirmado) {
         await auditInventario({ acao: 'Inventario.salvar_cancelado', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { status } });
-        return;
+        return false;
       }
     }
 
@@ -134,9 +143,11 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
 
       setInv(res);
       toast.success('Inventario salvo');
+      return true;
     } catch (e) {
       await auditInventario({ acao: 'Inventario.erro_salvar', sucesso: false, motivo: e?.message || 'Erro ao salvar inventario.', dados: { status } });
       toast.error(e?.message || 'Erro ao salvar inventario.');
+      return false;
     } finally { setSalvando(false); }
   };
 
@@ -153,7 +164,8 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
       await auditInventario({ acao: 'Inventario.aprovar_bloqueado', sucesso: false, motivo: 'Inventario precisa ser salvo antes da aprovacao.', dados: { status: 'Aprovado' } });
       return toast.error('Salve o inventario antes de aprovar');
     }
-    await salvar('Aprovado');
+    const salvo = await salvar('Aprovado');
+    if (!salvo) return;
     try {
       const res = await base44.functions.invoke('applyInventoryAdjustments', {
         inventario_id: inv.id,
@@ -179,6 +191,7 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
   };
 
   return (
+    <>
     <Card className="w-full h-full flex flex-col" data-permission="Estoque.Inventario" data-context-required="group-or-company" data-context-mode={contexto}>
       <CardHeader className="border-b bg-slate-50">
         <CardTitle>Inventário</CardTitle>
@@ -275,5 +288,7 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
       </CardContent>
       </FormWrapper>
     </Card>
+    <ConfirmInventarioDialog />
+    </>
   );
 }
