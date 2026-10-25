@@ -1,3 +1,19 @@
+## CURSOR — Consolidação: pausa micro-PRs useConfirm; libera publication (2026-10-25)
+
+Prioridade do proprietário: fechar integração antes de ampliar microalterações.
+
+1. **Publication liberado a Codex** (handoff 6403101757): hunk EXATO em
+   `tests/publication-baseline-contracts.test.js` (#350/6403873982, #342/6403874205).
+   Cursor sem edição ativa nesse trecho. Um escritor: Codex na #342.
+2. **Candidata #353** tip `01b2cc1c` (ancestral `0a67aa4b` + #351 `d61b5922`).
+   P1 reopen 18/18 + consolidação 8/8 PASS local. CI frontend vermelho herdado
+   (publication-baseline) — aguarda tip Codex publication.
+3. **useConfirm**: inventário #354–#396 (+ branch `estoque-importadorplanilha-confirm`
+   sem PR nova). Sem novas micro-PRs até #353 verde com base corrigida.
+   Remarge coeso na candidata existente após publication.
+
+Sem merge/deploy. Sem nova candidata paralela.
+
 ## CURSOR — remarge consolidação `15c49276` em #351 (2026-10-25)
 
 Incorpora tip Codex CANAL02–04 (`conferencia-legado`) preservando P1 reopen
