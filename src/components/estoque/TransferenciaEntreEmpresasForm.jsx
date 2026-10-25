@@ -11,6 +11,7 @@ import {
 } from '@/components/lib/estoqueMovimentoPolicy';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 /** @typedef {import('@/components/lib/estoqueMovimentoPolicy').TransferFormState} TransferFormState */
 /** @typedef {import('@/components/lib/estoqueMovimentoPolicy').TransferCompanyRecord} TransferCompanyRecord */
@@ -28,6 +29,7 @@ export default function TransferenciaEntreEmpresasForm({
 }) {
   const queryClient = useQueryClient();
   const { canCreate } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmTransferenciaDialog } = useConfirm();
   const { empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
   const groupId = String(grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || '').trim();
   const authorizedCompanies = empresasDoGrupo.filter((empresa) => (
@@ -219,9 +221,11 @@ export default function TransferenciaEntreEmpresasForm({
       toast.error(message);
       return;
     }
-    const confirmed = window.confirm(
-      `Confirma transferir ${resolved.form.quantidade} ${resolved.form.unidade} de ${String(resolved.product.descricao || 'produto')} de ${String(resolved.origin.nome_fantasia || resolved.origin.razao_social || 'origem')} para ${String(resolved.destination.nome_fantasia || resolved.destination.razao_social || 'destino')}?`,
-    );
+    const confirmed = await confirm({
+      title: 'Confirmar transferência',
+      description: `Confirma transferir ${resolved.form.quantidade} ${resolved.form.unidade} de ${String(resolved.product.descricao || 'produto')} de ${String(resolved.origin.nome_fantasia || resolved.origin.razao_social || 'origem')} para ${String(resolved.destination.nome_fantasia || resolved.destination.razao_social || 'destino')}?`,
+      confirmText: 'Transferir',
+    });
     if (!confirmed) {
       await auditTransferencia({ acao: 'TransferenciaEntreEmpresas.cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: resolved.form });
       return;
@@ -251,7 +255,18 @@ export default function TransferenciaEntreEmpresasForm({
     </div>
   );
 
-  return windowMode
-    ? <div className="w-full h-full bg-white" data-permission="Estoque.Transferencias.criar" data-context-required="group-and-companies">{content}</div>
-    : content;
+  if (windowMode) {
+    return (
+      <>
+      <div className="w-full h-full bg-white" data-permission="Estoque.Transferencias.criar" data-context-required="group-and-companies">{content}</div>
+      <ConfirmTransferenciaDialog />
+      </>
+    );
+  }
+  return (
+    <>
+    {content}
+    <ConfirmTransferenciaDialog />
+    </>
+  );
 }
