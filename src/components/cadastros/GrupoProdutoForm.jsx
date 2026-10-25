@@ -23,8 +23,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   const podeCriar = hasPermission?.("Cadastros.GrupoProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.GrupoProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.GrupoProduto.excluir") || hasPermission?.("Cadastros.Produto.excluir");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     nome_grupo: '',
     codigo: '',
     natureza: 'Revenda',
@@ -34,12 +33,13 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: grupoProdutoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = grupoProdutoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -58,6 +58,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
     }
     onSubmit({
       ...formData,
+      ...(grupoProdutoBoundId ? { id: grupoProdutoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_grupo
@@ -87,8 +88,8 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(grupoProdutoBoundId)}
+        entityId={grupoProdutoBoundId}
         value={formData.codigo}
         action="codigo-registro-grupo-produto"
       />
@@ -186,7 +187,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission={dadosIniciais?.id ? "Cadastros.GrupoProduto.editar" : "Cadastros.GrupoProduto.criar"}
+          data-permission={grupoProdutoBoundId ? "Cadastros.GrupoProduto.editar" : "Cadastros.GrupoProduto.criar"}
           data-action="salvar-grupo-produto"
           data-sensitive="true"
         >

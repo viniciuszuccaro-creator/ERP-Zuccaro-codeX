@@ -21,8 +21,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "Turno") || canCreate("Sistema", "Turno") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Turno") || canEdit("Sistema", "Turno") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     nome_turno: '',
     horario_inicio: '08:00',
     horario_fim: '17:00',
@@ -33,12 +32,13 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: turnoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = turnoBoundId ? podeEditar : podeCriar;
 
   const diasDisponiveis = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -68,6 +68,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
     }
     onSubmit({
       ...formData,
+      ...(turnoBoundId ? { id: turnoBoundId } : {}),
       nome: formData.nome_turno,
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
@@ -77,8 +78,8 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(turnoBoundId)}
+        entityId={turnoBoundId}
         value={formData.codigo}
         action="codigo-registro-turno"
       />

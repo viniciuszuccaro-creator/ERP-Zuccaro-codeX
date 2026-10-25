@@ -22,8 +22,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   const podeCriar = canCreate("Cadastros", "CentroCusto") || canCreate("Financeiro", "CentroCusto") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroCusto") || canEdit("Financeiro", "CentroCusto") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "CentroCusto") || canDelete("Financeiro", "CentroCusto") || canDelete("Cadastros", null);
-  const podeSalvar = dadosCentroCusto?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     codigo: "",
     descricao: "",
     tipo: "Despesa",
@@ -35,21 +34,22 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   };
   const [formData, setFormData] = useState(dadosCentroCusto || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosCentroCusto, {
+  const { boundId: centroBoundId } = useCadastroReopenOnIdentity(dadosCentroCusto, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = centroBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (dadosCentroCusto?.id && !podeEditar) {
+    if (centroBoundId && !podeEditar) {
       alert("Sem permissao para editar centros de custo.");
       return;
     }
-    if (!dadosCentroCusto?.id && !podeCriar) {
+    if (!centroBoundId && !podeCriar) {
       alert("Sem permissao para criar centros de custo.");
       return;
     }
@@ -59,6 +59,7 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     }
     const dataToSubmit = {
       ...formData,
+      ...(centroBoundId ? { id: centroBoundId } : {}),
       orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null,
       // Injeta 'nome' para o Visualizador Universal (CentroCusto usa 'descricao' como nome)
       nome: formData.nome || formData.descricao || '',
@@ -94,8 +95,8 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosCentroCusto?.id)}
-        entityId={dadosCentroCusto?.id}
+        hasId={Boolean(centroBoundId)}
+        entityId={centroBoundId}
         value={formData.codigo}
         action="codigo-registro-centro-custo"
       />

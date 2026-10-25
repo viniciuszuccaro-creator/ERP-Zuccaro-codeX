@@ -26,8 +26,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.Motorista.criar") || hasPermission?.("Logistica.Motorista.criar");
   const podeEditar = hasPermission?.("Cadastros.Motorista.editar") || hasPermission?.("Logistica.Motorista.editar");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     nome_completo: '',
     cpf: '',
     cnh_numero: '',
@@ -42,12 +41,13 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: motoristaBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = motoristaBoundId ? podeEditar : podeCriar;
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', groupId, empresaAtual?.id],
@@ -77,6 +77,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
     }
     onSubmit({
       ...formData,
+      ...(motoristaBoundId ? { id: motoristaBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_completo || formData.nome || ''
@@ -86,8 +87,8 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   const formContent = (
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(motoristaBoundId)}
+        entityId={motoristaBoundId}
         value={formData.codigo}
         action="codigo-registro-motorista"
       />

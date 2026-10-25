@@ -21,8 +21,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   const contextKey = empresaAtual?.id ? `empresa-${empresaAtual.id}` : groupId ? `grupo-${groupId}` : "sem-contexto";
   const podeCriar = canCreate("Cadastros", "TipoDespesa") || canCreate("Financeiro", "TipoDespesa") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "TipoDespesa") || canEdit("Financeiro", "TipoDespesa") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     codigo: '', nome: '', categoria: 'Operacional',
     conta_contabil_padrao_id: '', conta_contabil_padrao_nome: '',
     centro_resultado_padrao_id: '', centro_resultado_padrao_nome: '',
@@ -32,12 +31,13 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
   // Garante sincronização quando o mesmo componente é reutilizado (ex: abrir outro registro sem desmontar)
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: tipoDespesaBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = tipoDespesaBoundId ? podeEditar : podeCriar;
 
   const { data: contasContabeis = [] } = useQuery({
     queryKey: ['tipo-despesa-plano-contas', contextKey],
@@ -70,6 +70,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
     }
     const payload = {
       ...formData,
+      ...(tipoDespesaBoundId ? { id: tipoDespesaBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
     };
@@ -85,8 +86,8 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
     <form onSubmit={handleSubmit} className={windowMode ? "space-y-4 p-4 h-full overflow-auto" : "space-y-4 p-4"}>
       <div className="grid grid-cols-2 gap-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(tipoDespesaBoundId)}
+        entityId={tipoDespesaBoundId}
         value={formData.codigo}
         action="codigo-registro-tipo-despesa"
       />

@@ -18,8 +18,7 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "PlanoDeContas") || canCreate("Financeiro", "PlanoDeContas") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "PlanoDeContas") || canEdit("Financeiro", "PlanoDeContas") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     codigo_conta: '',
     nome_conta: '',
     tipo_conta: 'Despesa',
@@ -34,12 +33,13 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: planoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = planoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -59,6 +59,7 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
     // Injeta 'nome'/'codigo'/'descricao' para o Visualizador Universal
     const payload = {
       ...formData,
+      ...(planoBoundId ? { id: planoBoundId } : {}),
       nome: formData.nome_conta || formData.nome || '',
       codigo: formData.codigo_conta || formData.codigo || '',
       descricao: formData.descricao || formData.nome_conta || '',

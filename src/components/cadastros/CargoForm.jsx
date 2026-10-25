@@ -23,7 +23,6 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
   const podeCriar = canCreate("Cadastros", "Cargo") || canCreate("Sistema", "Cargo") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Cargo") || canEdit("Sistema", "Cargo") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Cargo") || canDelete("Sistema", "Cargo") || canDelete("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const emptyFormData = {
     nome_cargo: '',
     descricao: '',
@@ -34,12 +33,13 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: cargoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = cargoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -58,6 +58,7 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
     }
     onSubmit({
       ...formData,
+      ...(cargoBoundId ? { id: cargoBoundId } : {}),
       nome: formData.nome_cargo,
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
@@ -85,9 +86,9 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
-        value={formData.codigo}
+        hasId={Boolean(cargoBoundId)}
+        entityId={cargoBoundId}
+        value={formData.codigo ?? dadosIniciais?.codigo}
         action="codigo-registro-cargo"
       />
 

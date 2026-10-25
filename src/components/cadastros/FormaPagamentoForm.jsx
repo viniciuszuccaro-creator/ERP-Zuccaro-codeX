@@ -28,8 +28,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
   const podeCriar = canCreate("Cadastros", "FormaPagamento") || canCreate("Financeiro", "FormaPagamento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "FormaPagamento") || canEdit("Financeiro", "FormaPagamento") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "FormaPagamento") || canDelete("Financeiro", "FormaPagamento") || canDelete("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     codigo: "",
     descricao: "",
     tipo: "Dinheiro",
@@ -45,12 +44,13 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     intervalo_parcelas_dias: 30
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: formaBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = formaBoundId ? podeEditar : podeCriar;
 
   const schema = z.object({
     descricao: z.string().min(1, "Descricao e obrigatoria"),
@@ -61,6 +61,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     const codigoReservado = sanitizeText(formData.codigo, 80);
     return {
       ...formData,
+      ...(formaBoundId ? { id: formaBoundId } : {}),
       ...extra,
       descricao: sanitizeText(formData.descricao, 180),
       nome: sanitizeText(formData.descricao, 180),
@@ -78,7 +79,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
 
   const handleSubmit = async () => {
     if (!podeSalvar) {
-      alert(dadosIniciais?.id ? "Sem permissao para editar formas de pagamento." : "Sem permissao para criar formas de pagamento.");
+      alert(formaBoundId ? "Sem permissao para editar formas de pagamento." : "Sem permissao para criar formas de pagamento.");
       return;
     }
     if (!contextoValido) {
@@ -124,8 +125,8 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
         </div>
 
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(formaBoundId)}
+        entityId={formaBoundId}
         value={formData.codigo}
         action="codigo-registro-forma-pagamento"
       />

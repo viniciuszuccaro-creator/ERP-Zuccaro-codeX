@@ -23,8 +23,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
   const podeCriar = hasPermission?.("Cadastros.SetorAtividade.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.SetorAtividade.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.SetorAtividade.excluir") || hasPermission?.("Cadastros.Produto.excluir");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     nome: '',
     descricao: '',
     tipo_operacao: 'Revenda',
@@ -34,12 +33,13 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: setorBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = setorBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -54,6 +54,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
     }
     onSubmit({
       ...formData,
+      ...(setorBoundId ? { id: setorBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     });
@@ -82,8 +83,8 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(setorBoundId)}
+        entityId={setorBoundId}
         value={formData.codigo}
         action="codigo-registro-setor-atividade"
       />
@@ -193,7 +194,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission={dadosIniciais?.id ? "Cadastros.SetorAtividade.editar" : "Cadastros.SetorAtividade.criar"}
+          data-permission={setorBoundId ? "Cadastros.SetorAtividade.editar" : "Cadastros.SetorAtividade.criar"}
           data-action="salvar-setor-atividade"
           data-sensitive="true"
         >

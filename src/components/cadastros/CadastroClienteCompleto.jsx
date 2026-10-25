@@ -339,6 +339,85 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     enabled: !!cliente?.id && contextoValido,
   });
 
+
+  const { boundId: clienteBoundId } = useCadastroReopenOnIdentity(cliente, {
+    formData,
+    setFormData,
+    emptyForm: {
+      tipo: "Pessoa Física",
+      status: "Prospect",
+      nome: "",
+      razao_social: "",
+      nome_fantasia: "",
+      cpf: "",
+      cnpj: "",
+      rg: "",
+      inscricao_estadual: "",
+      inscricao_municipal: "",
+      regiao_atendimento: "Sudeste",
+      endereco_principal: {
+        cep: "",
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        latitude: null,
+        longitude: null,
+        mapa_url: "",
+      },
+      contatos: [],
+      locais_entrega: [],
+      condicao_comercial: {
+        tabela_preco_id: "",
+        forma_pagamento_padrao_id: "",
+        percentual_desconto: 0,
+        condicao_pagamento: "À Vista",
+        limite_credito: 0,
+        limite_credito_utilizado: 0,
+        situacao_credito: "OK",
+      },
+      configuracao_fiscal: {
+        regime_tributario: "Simples Nacional",
+        cfop_padrao_venda: "5102",
+        contribuinte_icms: true,
+        tipo_contribuinte: "1 - Contribuinte",
+        isento_ipi: false,
+        isento_icms: false,
+      },
+      documentos: [],
+      vendedor_responsavel: "",
+      vendedor_responsavel_id: "",
+      observacoes: "",
+      empresa_id: empresaAtual?.id,
+      group_id: groupId,
+    },
+    mapToForm: (record) => ({
+      ...record,
+      contatos: record.contatos || [],
+      locais_entrega: record.locais_entrega || [],
+      condicao_comercial: record.condicao_comercial || {
+        tabela_preco_id: "",
+        forma_pagamento_padrao_id: "",
+        percentual_desconto: 0,
+        condicao_pagamento: "À Vista",
+        limite_credito: 0,
+        limite_credito_utilizado: 0,
+        situacao_credito: "OK",
+      },
+      configuracao_fiscal: record.configuracao_fiscal || {
+        regime_tributario: "Simples Nacional",
+        cfop_padrao_venda: "5102",
+        contribuinte_icms: true,
+        tipo_contribuinte: "1 - Contribuinte",
+        isento_ipi: false,
+        isento_icms: false,
+      },
+      documentos: record.documentos || [],
+    }),
+  });
+
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */
     mutationFn: async (data) => {
@@ -349,8 +428,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
       const payload = buildPayload(data);
 
-      // Identidade do rascunho (formData.id), não props — evita salvar A em B após reject switch.
-      const targetId = formData?.id || null;
+      // Identidade do rascunho (boundId), não props — evita salvar A em B após reject switch.
+      const targetId = clienteBoundId || formData?.id || null;
       if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
         return updateInContext('Cliente', targetId, payload);
@@ -518,84 +597,6 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
-  const { boundId: clienteBoundId } = useCadastroReopenOnIdentity(cliente, {
-    formData,
-    setFormData,
-    emptyForm: {
-      tipo: "Pessoa Física",
-      status: "Prospect",
-      nome: "",
-      razao_social: "",
-      nome_fantasia: "",
-      cpf: "",
-      cnpj: "",
-      rg: "",
-      inscricao_estadual: "",
-      inscricao_municipal: "",
-      regiao_atendimento: "Sudeste",
-      endereco_principal: {
-        cep: "",
-        logradouro: "",
-        numero: "",
-        complemento: "",
-        bairro: "",
-        cidade: "",
-        estado: "",
-        latitude: null,
-        longitude: null,
-        mapa_url: "",
-      },
-      contatos: [],
-      locais_entrega: [],
-      condicao_comercial: {
-        tabela_preco_id: "",
-        forma_pagamento_padrao_id: "",
-        percentual_desconto: 0,
-        condicao_pagamento: "À Vista",
-        limite_credito: 0,
-        limite_credito_utilizado: 0,
-        situacao_credito: "OK",
-      },
-      configuracao_fiscal: {
-        regime_tributario: "Simples Nacional",
-        cfop_padrao_venda: "5102",
-        contribuinte_icms: true,
-        tipo_contribuinte: "1 - Contribuinte",
-        isento_ipi: false,
-        isento_icms: false,
-      },
-      documentos: [],
-      vendedor_responsavel: "",
-      vendedor_responsavel_id: "",
-      observacoes: "",
-      empresa_id: empresaAtual?.id,
-      group_id: groupId,
-    },
-    mapToForm: (record) => ({
-      ...record,
-      contatos: record.contatos || [],
-      locais_entrega: record.locais_entrega || [],
-      condicao_comercial: record.condicao_comercial || {
-        tabela_preco_id: "",
-        forma_pagamento_padrao_id: "",
-        percentual_desconto: 0,
-        condicao_pagamento: "À Vista",
-        limite_credito: 0,
-        limite_credito_utilizado: 0,
-        situacao_credito: "OK",
-      },
-      configuracao_fiscal: record.configuracao_fiscal || {
-        regime_tributario: "Simples Nacional",
-        cfop_padrao_venda: "5102",
-        contribuinte_icms: true,
-        tipo_contribuinte: "1 - Contribuinte",
-        isento_ipi: false,
-        isento_icms: false,
-      },
-      documentos: record.documentos || [],
-    }),
-  });
-
   const gerarMapaUrl = (endereco) => {
     if (endereco.latitude && endereco.longitude) {
       return `https://www.google.com/maps?q=${endereco.latitude},${endereco.longitude}`;
@@ -677,7 +678,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 data-permission={cliente?.id ? "Cadastros.Cliente.editar" : "Cadastros.Cliente.criar"}
                 data-action="Cadastros.Cliente.salvar"
                 data-sensitive
-                disabled={isSaving || saveMutation.isPending || !contextoValido || (cliente?.id ? !podeEditar : !podeCriar)}
+                disabled={isSaving || saveMutation.isPending || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Save className="w-4 h-4 mr-2" />

@@ -35,6 +35,32 @@ test('coorte #351 usa useCadastroReopenOnIdentity (política canônica anti-wipe
   }
 });
 
+
+test('coorte reopen captura boundId e usa no vínculo de salvamento/código', async () => {
+  const precisaBound = [
+    'src/components/cadastros/BancoForm.jsx',
+    'src/components/cadastros/CargoForm.jsx',
+    'src/components/cadastros/DepartamentoForm.jsx',
+    'src/components/cadastros/FormaPagamentoForm.jsx',
+    'src/components/cadastros/UnidadeMedidaForm.jsx',
+    'src/components/cadastros/GrupoProdutoForm.jsx',
+    'src/components/cadastros/SetorAtividadeForm.jsx',
+    'src/components/cadastros/CentroCustoForm.jsx',
+    'src/components/cadastros/PlanoContasForm.jsx',
+    'src/components/cadastros/TurnoForm.jsx',
+    'src/components/cadastros/VeiculoForm.jsx',
+    'src/components/cadastros/MotoristaForm.jsx',
+    'src/components/cadastros/TipoDespesaForm.jsx',
+    'src/components/cadastros/RepresentanteForm.jsx',
+    'src/components/cadastros/FormaPagamentoFormCompleto.jsx',
+  ];
+  for (const rel of precisaBound) {
+    const text = await source(rel);
+    assert.match(text, /boundId:\s*\w+BoundId/, `${rel} deve capturar boundId`);
+    assert.match(text, /\w+BoundId \? \{ id: \w+BoundId \}|updateInContext\([^,]+,\s*\w+BoundId|entityId=\{\w+BoundId\}/, `${rel} deve vincular salvamento/código ao boundId`);
+  }
+});
+
 test('RepresentanteForm preserva código/ID e hook de reopen', async () => {
   const text = await source('src/components/cadastros/RepresentanteForm.jsx');
   assert.match(text, /useCadastroReopenOnIdentity/);

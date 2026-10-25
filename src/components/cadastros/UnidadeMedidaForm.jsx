@@ -19,8 +19,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.UnidadeMedida.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.UnidadeMedida.editar") || hasPermission?.("Cadastros.Produto.editar");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     sigla: '',
     nome_completo: '',
     tipo_grandeza: 'Unidade',
@@ -33,12 +32,13 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: unidadeBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = unidadeBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,6 +53,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
     }
     onSubmit({
       ...formData,
+      ...(unidadeBoundId ? { id: unidadeBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     });
@@ -61,8 +62,8 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(unidadeBoundId)}
+        entityId={unidadeBoundId}
         value={formData.codigo}
         action="codigo-registro-unidade-medida"
       />
@@ -183,7 +184,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
         type="submit"
         className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={isSubmitting || !contextoValido || !podeSalvar}
-        data-permission={dadosIniciais?.id ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
+        data-permission={unidadeBoundId ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
         data-action="salvar-unidade-medida"
         data-sensitive="true"
       >

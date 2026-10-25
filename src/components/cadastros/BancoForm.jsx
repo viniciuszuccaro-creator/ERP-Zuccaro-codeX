@@ -21,7 +21,6 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "Banco") || canCreate("Financeiro", "Banco") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Banco") || canEdit("Financeiro", "Banco") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const emptyFormData = {
     nome_banco: '',
     codigo_banco: '',
@@ -42,21 +41,22 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  useCadastroReopenOnIdentity(dadosIniciais, {
+  const { boundId: bancoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
     setFormData,
     emptyForm: emptyFormData,
     mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = bancoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (dadosIniciais?.id && !podeEditar) {
+    if (bancoBoundId && !podeEditar) {
       alert("Sem permissao para editar bancos.");
       return;
     }
-    if (!dadosIniciais?.id && !podeCriar) {
+    if (!bancoBoundId && !podeCriar) {
       alert("Sem permissao para criar bancos.");
       return;
     }
@@ -71,6 +71,7 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
     // Injeta 'nome' para compatibilidade com o Visualizador Universal
     const payload = {
       ...formData,
+      ...(bancoBoundId ? { id: bancoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_banco
@@ -86,9 +87,9 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
-        value={formData.codigo}
+        hasId={Boolean(bancoBoundId)}
+        entityId={bancoBoundId}
+        value={formData.codigo ?? dadosIniciais?.codigo}
         action="codigo-registro-banco"
       />
 
