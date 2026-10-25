@@ -15,10 +15,12 @@ import ProtectedField from "@/components/security/ProtectedField";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import ExportButton from "@/components/ExportButton";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   const { empresaAtual, grupoAtual, contexto, createInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmRelatorioEstoqueDialog } = useConfirm();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === 'grupo' ? null : (empresaAtual?.id || null);
   const contextoValido = contexto === 'grupo'
@@ -166,7 +168,11 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
       return false;
     }
 
-    const confirmado = window.confirm(`Confirma exportar ${rows.length} linhas do relatorio de estoque (${tipo}) em ${String(formato).toUpperCase()}?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Confirma exportar ${rows.length} linhas do relatorio de estoque (${tipo}) em ${String(formato).toUpperCase()}?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditRelatorioEstoque({
         acao: 'RelatoriosEstoque.exportar_cancelado',
@@ -197,6 +203,7 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   ];
 
   return (
+    <>
     <div
       className="space-y-6 w-full h-full"
       data-permission="Estoque.Relatorios.visualizar"
@@ -478,5 +485,7 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
         </TabsContent>
       </Tabs>
     </div>
+    <ConfirmRelatorioEstoqueDialog />
+    </>
   );
 }
