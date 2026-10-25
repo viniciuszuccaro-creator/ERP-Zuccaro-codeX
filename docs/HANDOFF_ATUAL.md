@@ -1,3 +1,10 @@
+## #351 — P1 switch-reject: identidade de mutação alinhada (Cursor, 2026-10-25)
+
+Achado Codex: reject A→B preservava draft A mas mutava B via props. Hook agora
+expõe `boundId`/`identityMismatch`; mutações usam identidade do rascunho.
+Teste comportamental PASS. Baselines stage48/49 atualizados. Sem merge/deploy.
+CANAL-02 liberado (#350); CANAL-03/04 pendentes de SHA na consolidação 342.
+
 ## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
 
 Baselines stage48/49 e publication do reopen atualizados de propósito para o
