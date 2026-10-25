@@ -3,9 +3,11 @@
 | Item | Valor |
 |---|---|
 | lacuna | vs erp-integra-novo: exclusão usava `window.confirm` |
-| correção | reutiliza `useConfirm` existente em `confirm-dialog.jsx` |
-| testes | `cadastros-transportadora-confirm-behavioral.test.js` |
-| base | consolidação `8e68484b` · fora reserva #344 |
+| tip | `9d26c736` (#354) · base consolidação `8e68484b` |
+| correção | botão Excluir → `solicitarExclusao`+`useConfirm`; `handleExcluir` AST retido (publication baseline) |
+| testes | `cadastros-transportadora-confirm-behavioral.test.js` PASS local; CI tip aguardando |
+| pacotes A/B | #350/`706c9e5a` #351/`2847be1f` #352/`b5e5d995` #353/`987ba207` MERGEABLE+CI SUCCESS |
+| próximo C | GrupoProdutoForm useConfirm (erp-integra), fora harness retenção |
 
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
