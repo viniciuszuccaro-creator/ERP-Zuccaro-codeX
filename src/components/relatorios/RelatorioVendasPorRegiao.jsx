@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { MapPin, TrendingUp, DollarSign, Users, Package, Award, FileDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -20,6 +21,7 @@ export default function RelatorioVendasPorRegiao() {
   const [vendedorSelecionado, setVendedorSelecionado] = useState('todos');
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmVendasPorRegiaoDialog } = useConfirm();
   const { user } = useUser();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -159,7 +161,11 @@ export default function RelatorioVendasPorRegiao() {
       return;
     }
 
-    const confirmado = window.confirm(`Exportar ${dadosPorRegiao.length} regioes para CSV?`);
+    const confirmado = await confirm({
+      title: 'Confirmar exportação',
+      description: `Exportar ${dadosPorRegiao.length} regioes para CSV?`,
+      confirmText: 'Exportar',
+    });
     if (!confirmado) {
       await auditarExportacao(false, 'Exportacao CSV do relatorio de vendas por regiao cancelada pelo usuario.');
       return;
@@ -190,6 +196,7 @@ export default function RelatorioVendasPorRegiao() {
   };
 
   return (
+    <>
     <div
       className="space-y-6 w-full h-full"
       data-permission="Comercial.Relatorios.visualizar"
@@ -491,5 +498,7 @@ export default function RelatorioVendasPorRegiao() {
         </CardContent>
       </Card>
     </div>
+    <ConfirmVendasPorRegiaoDialog />
+    </>
   );
 }
