@@ -1,3 +1,15 @@
+## CURSOR — remarge consolidação `15c49276` em #361 Marca (2026-10-25)
+
+Preserva useConfirm Marca + tip CANAL Codex. Conflitos só docs. Sem merge/deploy.
+
+## CURSOR — Marca useConfirm (erp-integra) (2026-10-25)
+
+`MarcaForm` exclusão: `window.confirm` → `useConfirm` + dialog existente;
+Excluir fail-closed sem contexto. Contraprova comportamental 3/3 PASS.
+Branch `cursor/cadastros-marca-confirm-392b` sobre consolidação `90f0a315`.
+Preserva formulário/registros/RBAC; sem UI paralela. Sem merge/deploy.
+Próximo cadastro confirm na coorte: SetorAtividade / UnidadeMedida.
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
@@ -46,7 +58,6 @@ P1 da3513fda5f31 revisado isoladamente8PASS; parecer351/6402496862.
 Candidata35368c1b429 incorpora esse fix por ancestralidade; sem integração paralela.
 Automação mesma fila, exclusividade/checkpoint; estado final e liberação de
 reservas serão registrados no recibo de fechamento. Sem merge/deploy/migration.
-
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

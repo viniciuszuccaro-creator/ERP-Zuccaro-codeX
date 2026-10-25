@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Award, Trash2, Power, PowerOff } from "lucide-react";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -63,14 +64,19 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
     });
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir) {
       alert('Sem permissão para excluir marca.');
       return;
     }
-    if (!window.confirm(`Tem certeza que deseja excluir a marca "${formData.nome_marca}"? Esta ação não pode ser desfeita.`)) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir a marca "${formData.nome_marca}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
     }
@@ -191,7 +197,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
               type="button"
               variant="destructive"
               onClick={handleExcluir}
-              disabled={!podeExcluir}
+              disabled={!podeExcluir || !contextoValido}
               data-permission="Cadastros.Marca.excluir"
               data-action="excluir-marca"
               data-sensitive="true"
@@ -214,6 +220,13 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
     </form>
   );
 
+  const withDialog = (
+    <>
+      {formContent}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
@@ -223,10 +236,10 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
             {dadosIniciais ? 'Editar Marca' : 'Nova Marca'}
           </h2>
         </div>
-        {formContent}
+        {withDialog}
       </div>
     );
   }
 
-  return formContent;
+  return withDialog;
 }
