@@ -87,3 +87,20 @@ test('Pedido captura tenant e ator antes da espera sem seguir alteracao do chama
  const order=await f.service.create(caller,direct);assert.equal(order.group_id,ctx.groupId);assert.equal(order.vendedor_id,ctx.actorId);
  assert.equal((await f.audit.listByEntity('Pedido',order.id))[0].actorId,ctx.actorId);
 });
+
+test('Pedido exige motivo explicito de cancelamento sem efeitos em tentativas invalidas', async()=>{
+  const f=fixture(), order=await f.service.create(ctx,direct);
+  const scope={groupId,empresaId};
+  const snapshot=async()=>({row:await f.service.get(ctx,order.id),history:await f.repo.history(scope,order.id),audit:await f.audit.listByEntity('Pedido',order.id)});
+  const before=await snapshot();
+  for(const motivo of [undefined,null,'','  ','ab',' x ',123,{},'a'.repeat(501)]){
+    await assert.rejects(f.service.cancel(ctx,order.id,motivo),(error:any)=>error.statusCode===422&&error.code==='VALIDATION_ERROR');
+    assert.deepEqual(await snapshot(),before);
+  }
+  const cancelled=await f.service.cancel(ctx,order.id,'Cancelamento solicitado em teste');
+  assert.equal(cancelled.status,'CANCELADO');
+  assert.deepEqual(cancelled.itens,order.itens);
+  assert.equal(cancelled.numero,order.numero);
+  assert.deepEqual((await f.audit.listByEntity('Pedido',order.id)).map(row=>row.action),['create','change_status']);
+  await assert.rejects(f.service.cancel(ctx,order.id,'Cancelamento repetido'),(error:any)=>error.statusCode===409);
+});
