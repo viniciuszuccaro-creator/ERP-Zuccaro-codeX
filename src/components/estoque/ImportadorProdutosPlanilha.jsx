@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -180,6 +181,7 @@ const mapTipoItem = (value) => resolveProdutoTipoImportacao(value).value;
 export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmImportadorPlanilhaDialog } = useConfirm();
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [preview, setPreview] = useState([]);
@@ -1062,17 +1064,21 @@ const [suggesting, setSuggesting] = useState(false);
     const qtdAtualizar = duplicidades.filter((d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'atualizar').length;
     const qtdSubstituir = duplicidades.filter((d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'substituir').length;
     const qtdPular = duplicidades.filter((d) => !['atualizar', 'substituir'].includes(escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)])).length;
-    const confirmado = window.confirm([
-      'Staging de migracao pronto. Confirma gravacao reconciliada?',
-      'Arquivo: ' + (arquivo?.name || '-'),
-      'Grupo: ' + contextoGrupoId,
-      'Linhas staging: ' + previewReconciliacao.quantidade_origem,
-      'Produtos alvo: ' + produtosAlvoConfirmacao.length,
-      'Duplicados para atualizar: ' + qtdAtualizar,
-      'Duplicados para substituir/excluir e recriar: ' + qtdSubstituir,
-      'Duplicados para pular: ' + qtdPular,
-      'Esta acao sera auditada com grupo e empresa.'
-    ].join('\n'));
+    const confirmado = await confirm({
+      title: 'Confirmar importação',
+      description: [
+        'Staging de migracao pronto. Confirma gravacao reconciliada?',
+        'Arquivo: ' + (arquivo?.name || '-'),
+        'Grupo: ' + contextoGrupoId,
+        'Linhas staging: ' + previewReconciliacao.quantidade_origem,
+        'Produtos alvo: ' + produtosAlvoConfirmacao.length,
+        'Duplicados para atualizar: ' + qtdAtualizar,
+        'Duplicados para substituir/excluir e recriar: ' + qtdSubstituir,
+        'Duplicados para pular: ' + qtdPular,
+        'Esta acao sera auditada com grupo e empresa.'
+      ].join('\n'),
+      confirmText: 'Importar',
+    });
     if (!confirmado) {
       await auditImportadorProdutos({
         acao: 'estoque.produtos.importacao_planilha.cancelada',
@@ -1524,6 +1530,7 @@ const [suggesting, setSuggesting] = useState(false);
   };
 
   return (
+    <>
     <Card className="border-indigo-200 w-full h-full" data-permission="Estoque.Produtos.importar" data-context-required="group-or-company" data-context-mode={contexto}>
       <CardHeader className="bg-slate-50 border-b">
         <CardTitle className="text-base">Importar Planilha de Produtos</CardTitle>
@@ -1841,5 +1848,7 @@ const [suggesting, setSuggesting] = useState(false);
         </div>
       </CardContent>
     </Card>
+    <ConfirmImportadorPlanilhaDialog />
+    </>
   );
 }
