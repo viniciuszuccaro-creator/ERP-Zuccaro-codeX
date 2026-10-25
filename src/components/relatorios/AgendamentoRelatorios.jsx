@@ -13,6 +13,7 @@ import { Calendar, Mail, Clock } from 'lucide-react';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useUser } from '@/components/lib/UserContext';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 
 const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').replace(/javascript:/gi, '').trim();
 const sanitizeEmails = (value) => sanitizeText(value).split(',').map((email) => email.trim()).filter(Boolean).join(', ');
@@ -26,6 +27,7 @@ export default function AgendamentoRelatorios({ empresaId }) {
   const queryClient = useQueryClient();
   const { filterInContext, createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const { confirm, ConfirmDialog: ConfirmAgendamentoRelatoriosDialog } = useConfirm();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaSelecionadaId = empresaId || empresaAtual?.id || null;
@@ -73,7 +75,11 @@ export default function AgendamentoRelatorios({ empresaId }) {
       if (data.ativo && !destinatariosSanitizados) {
         throw new Error('Informe ao menos um destinatario valido para ativar o agendamento.');
       }
-      const confirmado = window.confirm(`Salvar agendamento de ${data.relatorio} (${data.frequencia}) para ${destinatariosSanitizados || 'sem destinatarios'}?`);
+      const confirmado = await confirm({
+        title: 'Confirmar agendamento',
+        description: `Salvar agendamento de ${data.relatorio} (${data.frequencia}) para ${destinatariosSanitizados || 'sem destinatarios'}?`,
+        confirmText: 'Salvar',
+      });
       if (!confirmado) {
         await base44.entities.AuditLog.create({
           acao: 'Cancelamento',
@@ -139,6 +145,7 @@ export default function AgendamentoRelatorios({ empresaId }) {
   });
 
   return (
+    <>
     <Card
       className="w-full h-full"
       data-permission="Sistema.Relatorios.editar"
@@ -269,5 +276,7 @@ export default function AgendamentoRelatorios({ empresaId }) {
         </Button>
       </CardContent>
     </Card>
+    <ConfirmAgendamentoRelatoriosDialog />
+    </>
   );
 }
