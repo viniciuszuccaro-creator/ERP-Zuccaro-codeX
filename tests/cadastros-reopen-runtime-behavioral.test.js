@@ -231,6 +231,32 @@ test('troca de registro com rascunho sujo exige confirmação explícita', async
   assert.match(h.confirms[0], /outro registro/i);
 });
 
+test('P1 switch-reject: submit preserva id do rascunho A, não o id B das props', async () => {
+  const submitted = [];
+  const h = await mountRepresentante({
+    id: 'r1', codigo: '000001', nome: 'Alpha', updated_date: '2026-01-01T00:00:00Z', ativo: true,
+  });
+  h.findInput('Nome do representante').props.onChange({ target: { value: 'Rascunho A' } });
+  h.setConfirm(false);
+  h.render({
+    item: {
+      id: 'r2', codigo: '000002', nome: 'Beta', updated_date: '2026-01-02T00:00:00Z', ativo: true,
+    },
+    onSubmit: (payload) => submitted.push(payload),
+  });
+  h.render();
+  assert.equal(h.getNome(), 'Rascunho A');
+  const tree = h.render();
+  const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
+  const form = walk(tree).find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
+  assert.ok(form?.props?.onSubmit, 'form onSubmit presente');
+  form.props.onSubmit({ preventDefault() {} });
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].id, 'r1');
+  assert.equal(submitted[0].nome, 'Rascunho A');
+  assert.notEqual(submitted[0].id, 'r2');
+});
+
 test('eco do próprio save (form == servidor) aplica updated_date sem prompt', async () => {
   const h = await mountRepresentante({
     id: 'r1', codigo: '000001', nome: 'Alpha', updated_date: '2026-01-01T00:00:00Z', ativo: true,

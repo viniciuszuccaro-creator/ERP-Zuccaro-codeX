@@ -15,11 +15,11 @@ function once(source, current, previous) {
   assert.equal(source.split(current).length - 1, 1, 'exact integration hunk');
   return source.replace(current, previous);
 }
-// previousHash: stage48 + P1 reopen canônico (useCadastroReopenOnIdentity) autorizado em #351.
+// previousHash: stage48 + P1 reopen + boundId em mutação (switch-reject) autorizado em #351.
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'd575a023b1396508f1d09aa820c4d6a9c2e313ef8f212312baef00588f750f22'],
-  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', '21daf6cc6afdacac161fd518170c6a586a7c102b3733ed4e26fb11a1b0e23de0'],
-  ['RepresentanteFormCompleto', 'representante', 'Representante', '1fcfc2ae400154fab05687bd10e1c550dc2402beb1fcd78ec00ca6dfa28932b3'],
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'a08c31b95dbcb3fbef1a97ef26e4ab3e68dbe27dec1eb20b5d283897b7410aef'],
+  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'e20ee8bae7b8e6ae9aebf6eb1d431a6afa414dbd6b95eb19f9b45ca125bcfc23'],
+  ['RepresentanteFormCompleto', 'representante', 'Representante', '1bee991bef429e7bc6bd8573f633631e1e803b3aba279deb5610050c141137d2'],
 ];
 for (const [name, recordKey, entity, previousHash] of forms) {
   const path = `src/components/cadastros/${name}.jsx`;
@@ -39,9 +39,14 @@ for (const [name, recordKey, entity, previousHash] of forms) {
     for (const editing of [false, true]) {
       const calls = [];
       const canonical = { ...input, normalized: true };
+      const boundId = editing ? 'synthetic-a' : null;
       const fn = make(callback('mutationFn'), {
         assertFormScopeCurrent() {}, contextoValido: true,
         podeEditar: true, podeCriar: true, [recordKey]: editing ? { id: 'synthetic-a' } : null,
+        // P1 switch-reject: mutação usa identidade do rascunho (formData.id / *BoundId), não só props.
+        formData: editing ? { id: 'synthetic-a' } : {},
+        representanteBoundId: recordKey === 'representante' ? boundId : undefined,
+        clienteBoundId: recordKey === 'cliente' ? boundId : undefined,
         buildPayload(value) { assert.equal(value, input); return canonical; },
         updateInContext: (...args) => { calls.push(['update', ...args]); return Promise.resolve({ id: 'synthetic-a' }); },
         createInContext: (...args) => { calls.push(['create', ...args]); return Promise.resolve({ id: 'synthetic-a' }); },
@@ -53,10 +58,14 @@ for (const [name, recordKey, entity, previousHash] of forms) {
     }
     for (const blocked of ['context', 'scope', 'create', 'update']) {
       let writes = 0;
+      const boundId = blocked === 'update' ? 'synthetic-a' : null;
       const fn = make(callback('mutationFn'), {
         assertFormScopeCurrent() { if (blocked === 'scope') throw Error('Synthetic scope changed'); },
         contextoValido: blocked !== 'context', podeEditar: false, podeCriar: false,
         [recordKey]: blocked === 'update' ? { id: 'synthetic-a' } : null,
+        formData: blocked === 'update' ? { id: 'synthetic-a' } : {},
+        representanteBoundId: recordKey === 'representante' ? boundId : undefined,
+        clienteBoundId: recordKey === 'cliente' ? boundId : undefined,
         buildPayload: value => value,
         createInContext() { writes++; }, updateInContext() { writes++; },
       });
@@ -70,6 +79,7 @@ for (const [name, recordKey, entity, previousHash] of forms) {
         isFormScopeCurrent: () => current,
         queryClient: { invalidateQueries: value => events.push(['invalidate', value]) },
         toast: value => events.push(['toast', value]), [recordKey]: null,
+        representanteBoundId: null, clienteBoundId: null,
         onSuccess: () => events.push(['success']), onSubmit: value => events.push(['submit', value]),
         onCloseNorm: () => events.push(['close']), buildPayload: () => fallback, formData: {},
       });

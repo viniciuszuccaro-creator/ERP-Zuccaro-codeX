@@ -1,3 +1,13 @@
+## #351 — P1 switch-reject: identidade de mutação alinhada (Cursor, 2026-10-25)
+
+Achado Codex em `useCadastroReopenOnIdentity`: ao recusar troca A→B o rascunho
+de A era preservado, mas save/delete ainda usavam props de B. Correção: hook
+expõe `boundId`/`identityMismatch` + `onRejectSwitch`; Completo/Cliente/
+Fornecedor/FormaPagamento/Representante mutam pela identidade do rascunho.
+Contraprova: submit após reject → `id=r1` (não r2). Baselines stage48/49
+atualizados de propósito. Incorporar na candidata #353. Sem merge/deploy.
+CANAL-02 liberado; CANAL-03/04 aguardam SHA publicado na consolidação.
+
 ## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
 
 Baselines stage48/49 e publication do reopen atualizados de propósito para o

@@ -349,9 +349,11 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
       const payload = buildPayload(data);
 
-      if (cliente?.id) {
+      // Identidade do rascunho (formData.id), não props — evita salvar A em B após reject switch.
+      const targetId = formData?.id || null;
+      if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
-        return updateInContext('Cliente', cliente.id, payload);
+        return updateInContext('Cliente', targetId, payload);
       }
 
       if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
@@ -360,7 +362,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      toast({ title: `✅ Cliente ${cliente?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Cliente ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -405,7 +407,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
-    deleteMutation.mutate(cliente.id);
+    if (!formData?.id) return;
+    deleteMutation.mutate(formData.id);
   };
 
   const handleAlternarStatus = () => {
@@ -515,7 +518,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
-  useCadastroReopenOnIdentity(cliente, {
+  const { boundId: clienteBoundId } = useCadastroReopenOnIdentity(cliente, {
     formData,
     setFormData,
     emptyForm: {
@@ -1524,13 +1527,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               {cliente?.id ? (
                 <div className="space-y-6">
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
-                    <ResumoHistorico clienteId={cliente.id} />
+                    <ResumoHistorico clienteId={clienteBoundId || cliente?.id} />
                   </Suspense>
                   <Suspense fallback={<div className="h-16 animate-pulse bg-slate-100 rounded" />}>
-                    <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
+                    <HistoricoOrigemCliente clienteId={clienteBoundId || cliente?.id} compact={false} />
                   </Suspense>
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
-                    <TimelineCliente clienteId={cliente.id} showFilters={true} />
+                    <TimelineCliente clienteId={clienteBoundId || cliente?.id} showFilters={true} />
                   </Suspense>
                 </div>
               ) : (
