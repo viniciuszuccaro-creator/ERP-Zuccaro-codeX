@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FileText, Upload, Loader2, CheckCircle2, Package, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import {
@@ -34,6 +35,7 @@ export default function ImportarProdutosNFe({ onProdutosCriados, onClose }) {
   const empresaId = contexto === 'empresa' ? empresaAtual?.id : (empresaAtual?.id || null);
   const contextoValido = Boolean(groupId && (contexto === 'grupo' || empresaId));
   const podeCriarProduto = canCreate('Cadastros', 'Produto') || canCreate('Estoque', 'Produto') || canCreate('Cadastros', null);
+  const { confirm, ConfirmDialog: ConfirmImportNFeDialog } = useConfirm();
 
   const auditImportacaoNFe = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
@@ -189,7 +191,11 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
       return;
     }
 
-    const confirmado = window.confirm('Criar ' + itensCriar.length + ' produto(s) a partir da NF-e no contexto selecionado? Esta acao sera auditada e reconciliada.');
+    const confirmado = await confirm({
+      title: 'Confirmar importação NF-e',
+      description: 'Criar ' + itensCriar.length + ' produto(s) a partir da NF-e no contexto selecionado? Esta acao sera auditada e reconciliada.',
+      confirmText: 'Criar produtos',
+    });
     if (!confirmado) {
       await auditImportacaoNFe({ acao: 'Produto.importacao_nfe_cancelada', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { total_itens: itensCriar.length } });
       return;
@@ -282,6 +288,7 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
   };
 
   return (
+    <>
     <div className="space-y-4 w-full h-full" data-context-required="group-and-company" data-permission="Cadastros.Produto.importar">
       <Alert className="border-blue-200 bg-blue-50">
         <FileText className="w-4 h-4 text-blue-600" />
@@ -431,5 +438,7 @@ IMPORTANTE: Extraia TODOS os itens, não apenas um exemplo.`,
         </>
       )}
     </div>
+    <ConfirmImportNFeDialog />
+    </>
   );
 }
