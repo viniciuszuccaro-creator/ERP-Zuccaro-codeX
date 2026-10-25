@@ -5,6 +5,10 @@ sem contexto. Contraprova 3/3. Branch
 `cursor/cadastros-grupoempresarial-confirm-392b` sobre `0a67aa4b`. Sem
 merge/deploy.
 
+BLOCKED herdado (Codex/#344): tip consolidação `0a67aa4b` ainda falha
+publication-baseline (5 arquivos: bulk, identidade, guard-ofx, guard-session,
+legado-importador). Remarge Cursor não altera manifesto; aguarda tip Codex.
+
 ## #344 — CANAL02–05: conferência canônica dentro da aplicação (2026-10-25)
 
 Base90f0a315, reserva6402384454/6402435480; handoff Cursor350/6402408181.
