@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, Loader2, FileSpreadsheet, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { assertReconciliacaoMigracao, buildReconciliacaoMigracao, stampMigracaoRecord } from '@/components/lib/migracaoErpPolicy';
@@ -30,6 +31,7 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
   const empresaId = contexto === 'empresa' ? empresaAtual?.id : null;
   const contextoValido = Boolean(groupId);
   const podeCriarProduto = canCreate('Cadastros', 'Produto') || canCreate('Estoque', 'Produto') || canCreate('Cadastros', null);
+  const { confirm, ConfirmDialog: ConfirmImportDialog } = useConfirm();
 
   const auditImportacaoProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
@@ -192,10 +194,12 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
       reusos: [],
       campoValor: 'preco_venda',
     });
-    const confirmado = window.confirm(
-      'Staging com ' + previewReconciliacao.quantidade_origem
-      + ' linha(s). Confirmar gravacao reconciliada no grupo selecionado? Codigo legado sera preservado e a acao sera auditada.',
-    );
+    const confirmado = await confirm({
+      title: 'Confirmar importação',
+      description: 'Staging com ' + previewReconciliacao.quantidade_origem
+        + ' linha(s). Confirmar gravacao reconciliada no grupo selecionado? Codigo legado sera preservado e a acao sera auditada.',
+      confirmText: 'Importar',
+    });
     if (!confirmado) {
       await auditImportacaoProdutos({ acao: 'Produto.importacao_lote_cancelada', sucesso: false, motivo: 'Confirmacao cancelada pelo usuario.', dados: { total_linhas: dadosParsed.linhas.length, reconciliacao: previewReconciliacao } });
       return;
@@ -243,6 +247,7 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
   };
 
   return (
+    <>
     <div className="space-y-4">
       <Alert className="border-sky-200 bg-sky-50">
         <FileSpreadsheet className="w-4 h-4 text-sky-600" />
@@ -449,5 +454,7 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
         </>
       )}
     </div>
+    <ConfirmImportDialog />
+    </>
   );
 }
