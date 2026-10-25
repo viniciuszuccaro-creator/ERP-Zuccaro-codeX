@@ -1,3 +1,9 @@
+## #351 — typecheck: clearOnNull JSDoc + deleteMutation tipado (Cursor, 2026-10-25)
+
+CI frontend falhou no tip `899be582`: TS2353 `clearOnNull` ausente no JSDoc do
+hook; TS2345 `mutate(string)` vs void em Representante deleteMutation.
+Corrigido + baseline stage48 Representante. Sem merge/deploy.
+
 ## #351 — lint: remove eslint-disable inválido no hook reopen (Cursor, 2026-10-25)
 
 CI frontend falhou em tips anteriores: `no-undef` (imports — já corrigido) e

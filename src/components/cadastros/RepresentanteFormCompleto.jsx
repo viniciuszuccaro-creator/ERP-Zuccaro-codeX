@@ -214,6 +214,7 @@ export default function RepresentanteFormCompleto({ representante: representante
   });
 
   const deleteMutation = useMutation({
+    /** @param {string} id */
     mutationFn: (id) => {
       assertFormScopeCurrent();
       if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir representantes.");
