@@ -1,22 +1,22 @@
-## PACOTE EM EXECUÇÃO — Homologação integrada + recuperação (Cursor, 2026-10-26)
+## PACOTE Cursor — tip `093c8e08` CI SUCCESS (2026-10-26 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
-| Candidata | #353 `cursor/integracao-350-351-352-392b` |
-| Base | #342 tip `7ae5bcd9` (remarge commit `586d4e9d`) |
-| Tip pacote | `e07661cf` (docs A/B; código ≥`d379bc2c` PlanoContas/TabelaPreco) |
-| CI remarge | `586d4e9d` push+PR **SUCCESS** (tip docs/CI em curso) |
-| Arquivos reservados Cursor | #353 SPA/cadastros/comercial UI/tests/docs evidence |
-| Reservados Codex | #342/#344, Pedido 044 schema-candidates, legado/staging/VPS DDL |
-| Aceite | contatos fechados; ciclo por camada documentado; modalidade Codespace=runner; classe A TabelaPreco; sem merge/deploy |
-| Bloqueios reais | Codespace API 403; Pedido INSERT 044+par (Codex); staging privado ausente; sem merge/deploy/carga |
+| Candidata | #353 `cursor/integracao-350-351-352-392b` tip **`093c8e08`** |
+| Base | #342 tip `7ae5bcd9` (remarge `586d4e9d`) |
+| CI tip | push **40352148189** + PR **40352156499** 6/6 **SUCCESS** |
+| CI remarge | `586d4e9d` SUCCESS |
+| Modalidade | **runner Cursor** (Codespace xylophone API 403) |
+| Aceite pacote | contatos fechados por parecer; ciclo por camada; classe A codigo/ID; proposta visual; CI tip verde |
+| Bloqueios reais | SHA Codespace não medido; Pedido INSERT 044+par (Codex); staging/classe B; sem merge/deploy/carga |
 
-Contatos ENCERRADOS — SHA fix ao Codex: **`e9d7ef15`** (adapter); form **`e30cffcc`**; pareceres 6418918562/6419136043 (6PASS Codespace). Tip remarge preserva o fix. CI/bot ≠ fechamento.
-Pedido: candidato `pedido_idempotency_pair.sql` + explain UI; **não** = Pedido persistido.
-Codespace `potential-xylophone-5gj7r9v9qqg637vxp`: 403 neste token → **modalidade runner Cursor**; medição SHA = Codex.
-Cadastros classe A: TabelaPrecoForm(+Completo) passam a expor codigo+ID técnico (antes só legado). Classe B registros = staging privado.
-Camadas: `docs/evidence/homologacao-camadas-remarge-586d4e9d-20261026.txt`.
+Contatos: fix **`e9d7ef15`** / form **`e30cffcc`** (6418918562/6419136043). CI/bot ≠ fechamento.
+Classe A: TabelaPreco · PlanoContas idOnly · RotaPadrao (+ remainders pin e36231b3).
+Pedido: explain UI + candidato fora migrador ≠ persistido.
+Camadas: `docs/evidence/homologacao-camadas-remarge-586d4e9d-20261026.txt`
+Proposta visual: `docs/evidence/proposta-visual-aprovacao-integra-353-20261026.txt`
+A/B códigos: `docs/evidence/cadastros-codigos-AB-pacote-353-20261026.txt`
 
 ### Lista unica vigente (atualizada neste remarge)
 

@@ -1,10 +1,9 @@
-## PACOTE Cursor — homologação + remarge 7ae5bcd9 (2026-10-26)
+## PACOTE Cursor — tip `093c8e08` CI SUCCESS (2026-10-26)
 
-Modalidade: **runner Cursor** `/workspace` (Codespace API 403 neste token).
-Contatos ENCERRADOS — fix `e9d7ef15` / form `e30cffcc` (6418918562/6419136043).
-Remarge `586d4e9d` + TabelaPreco codigo/ID (classe A). Pedido 044 = Codex.
-Comentário #353: 6419824361. Lista vigente: topo STATUS.
-Sem editar branch Codex. Sem merge/deploy/carga.
+Modalidade: **runner Cursor** (Codespace xylophone 403). Contatos ENCERRADOS
+(`e9d7ef15`/`e30cffcc`). Remarge `586d4e9d` + classe A TabelaPreco/PlanoContas/
+RotaPadrao. CI tip 40352148189/40352156499 SUCCESS. Pedido 044 = Codex.
+Lista: topo STATUS. Sem merge/deploy/carga.
 
 Base de runtime/build preservada d86f06b6/CI4785-4786;82557565 repriorizou documentos.
 Revisao353:9756f457/fix e9d7ef15, confirmada no delta e30cffcc, encerrou os DOIS
