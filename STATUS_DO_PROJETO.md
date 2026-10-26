@@ -1,22 +1,20 @@
-## PACOTE Cursor — tip `093c8e08` CI SUCCESS (2026-10-26 America/Sao_Paulo)
+## PACOTE EM EXECUÇÃO — Candidata navegável + cadastros completos (Cursor, 2026-10-26)
 
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
-| Candidata | #353 `cursor/integracao-350-351-352-392b` tip **`093c8e08`** |
-| Base | #342 tip `7ae5bcd9` (remarge `586d4e9d`) |
-| CI tip | push **40352148189** + PR **40352156499** 6/6 **SUCCESS** |
-| CI remarge | `586d4e9d` SUCCESS |
-| Modalidade | **runner Cursor** (Codespace xylophone API 403) |
-| Aceite pacote | contatos fechados por parecer; ciclo por camada; classe A codigo/ID; proposta visual; CI tip verde |
-| Bloqueios reais | SHA Codespace não medido; Pedido INSERT 044+par (Codex); staging/classe B; sem merge/deploy/carga |
+| Candidata | #353 tip pré-pacote `661ae01d` (CI SUCCESS) |
+| Base | #342 `7ae5bcd9` |
+| Reservados Cursor | #353 SPA/cadastros/comercial UI/tests/docs evidence |
+| Reservados Codex | #342/#344, Pedido 044 DDL, Codespace xylophone medição, legado/staging |
+| Aceite | matriz início de uso (codigo/ID/reopen/tela única); ciclo por camada; modalidade Codespace declarada; diffs integra sem redesign; A≠B registros |
+| Bloqueios reais | Codespace API 403; Pedido INSERT 044; staging classe B; sem merge/deploy/carga |
 
-Contatos: fix **`e9d7ef15`** / form **`e30cffcc`** (6418918562/6419136043). CI/bot ≠ fechamento.
-Classe A: TabelaPreco · PlanoContas idOnly · RotaPadrao (+ remainders pin e36231b3).
-Pedido: explain UI + candidato fora migrador ≠ persistido.
-Camadas: `docs/evidence/homologacao-camadas-remarge-586d4e9d-20261026.txt`
-Proposta visual: `docs/evidence/proposta-visual-aprovacao-integra-353-20261026.txt`
-A/B códigos: `docs/evidence/cadastros-codigos-AB-pacote-353-20261026.txt`
+Contatos: **não reabrir** (já parecer Codex). MarcaForm → reopen canônico + boundId neste pacote.
+Matriz: `docs/evidence/cadastros-inicio-uso-matriz-353-20261026.txt`
+Ciclo: `docs/evidence/homologacao-ciclo-comercial-pacote2-353-20261026.txt`
+Codespace handoff: `docs/vps/evidence/codespace-handoff-candidata353-20261026.txt`
+Tip código anterior CI verde: `093c8e08` / docs `661ae01d`.
 
 ### Lista unica vigente (atualizada neste remarge)
 

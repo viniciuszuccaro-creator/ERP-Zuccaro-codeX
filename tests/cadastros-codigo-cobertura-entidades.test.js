@@ -116,6 +116,16 @@ test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', 
   assert.match(produto, /readOnly=\{Boolean\(produto\?\.id\)\}/);
 });
 
+test('MarcaForm vincula código/ID ao boundId do reopen canônico', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/MarcaForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /useCadastroReopenOnIdentity/);
+  assert.match(src, /CadastroCodigoRegistroField/);
+  assert.match(src, /codigo-registro-marca/);
+  assert.match(src, /entityId=\{marcaBoundId\}/);
+  assert.match(src, /isSubmitting/);
+  assert.doesNotMatch(src, /prevIdRef/);
+});
+
 test('PlanoContasForm expõe ID técnico sem substituir código hierárquico', async () => {
   const src = await readFile(new URL('../src/components/cadastros/PlanoContasForm.jsx', import.meta.url), 'utf8');
   assert.match(src, /CadastroCodigoRegistroField/);
