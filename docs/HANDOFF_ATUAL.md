@@ -1,11 +1,83 @@
-## CURSOR — tip `ea820521` CI SUCCESS (2026-10-26)
+## Handoff vigente - candidata composta, ainda nao operacional (2026-10-26)
 
+Fechamento final: raiz 2396 PASS/0 FAIL/0 SKIP, audit/lint/type/build/diff exit0; backend composto 551 PASS/0 FAIL/26 SKIP e type/build exit0 reutilizados, principals PG 1 PASS/0 FAIL/0 SKIP com contraprova real. Guarda integral mantem os hashes anteriores e limita o delta de contatos a duas substituicoes unicas, com negativas dentro/fora do escopo. Harness de navegador e container proprios encerrados (exit0/cleanup verificado); nao ha trabalho de teste anunciado como ativo. Publicacao/CI por SHA no recibo existente da #344. A prova de navegador foi sobre a arvore composta ainda dirty (HEAD-base 6ba10732), nao uma nova imagem operacional ou homologacao completa.
+
+A continuidade atual e a composicao #342 sobre `6ba10732` com a #353 `1d3540ff40e8c3e44d2c20e8249ab9d7b8e190e6`, mesma branch/Codespace, sem merge em main/PR. Captura/originais e branch Cursor intactos. Blocos anteriores abaixo sao historicos quando conflitarem com este recibo.
+
+Provas novas: P1 CodigoField fechado no SHA `ea820521` por ataque real (parecer #353/6423524303); Marca reabre versao HTTP com rascunho protegido; formulario Cliente preserva ausencia de contatos sem contornar o guard; Orcamento envia a identidade autenticada ja usada nas guardas. Testes antes/depois e navegador sintetico reproduziram as causas. Login/contexto -> ler/editar Cliente -> reabrir valor, ID e codigo passou contra API e PG isolados. Porta 5173 PRIVATE; sem dados reais ou credenciais operacionais.
+
+Proximo item executavel: mestres comerciais no consumidor OrcamentosTab. A listagem HTTP passou apos corrigir sessao, mas ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco ainda chegam pelo facade legado; seletores ficam vazios na fixture PostgreSQL. Nao semear storage local para mascarar, nao ampliar piloto global indiscriminadamente, nao transformar MASTER Cliente em ClienteEmpresa por palpite. Reutilizar rotas/servicos/repositorios existentes, consultas limitadas e contexto atual; completar navegador criar/editar/reabrir Orcamento -> converter Pedido -> editar/reabrir. Prova PG `6ba10732` e 044 intactas devem ser reutilizadas.
+
+Coorte privada de origem preparada: 100/17471 clientes elegiveis entre 18458, 987 nao ativos preservados; todos os 100 com apontamentos auxiliares explicitos. Nao houve leitura/escrita no destino para essa selecao nem carga operacional. Recibo e fingerprints fora do checkout. A selecao nao substitui gates de destino, duplicidades, coorte, reconciliacao e autorizacao. Envelope minimo schema/principals, backup/restauracao e reversao continuam nos blocos existentes; nenhuma role, grant, migration ou servico operacional foi alterado. Automacao nativa nao reativada; estado nao inferido deste Markdown.
+
+## Continuidade vigente - entrada em uso (decisao do proprietario, 2026-10-26)
+
+Composicao por squash em validacao: Cursor1d3540ff + envelope/coorte Codex preservados.
+Nao e mergePR/main nem nova versao servida homologada. Estado atual no bloco Codex abaixo.
+
+### Historico recebido Cursor1d3540ff
+Declaracoes recebidas, preservadas como historico; nao substituem a revisao atual.
 HEAD **`ea820521`** · CI 40371869659/40371873739 SUCCESS. P1 revisão
 **`84f3d401`** (fix `681c8ea4`); **CI ≠ aceite P1**. Contatos/P1 antigo
 ENCERRADOS. Marca+Histórico ok; Condicao permanece ID-only pin (CANAL).
 Base Codex **`6ba10732`** ancestor. Sem merge/deploy/carga.
 
 ### Historico Codex — Prova integrada de persistencia (`6ba10732`)
+### Estado atual - preparacao Codex e revisao dirigida
+### Delta atual - compatibilidade UI e envelope de homologacao (2026-10-26)
+
+Base6ba10732/CI4846 SUCCESS reutilizada. Checkout existente preservado; nenhum
+merge/composicao antecipada da353, reset, nova copia do ERP ou alteracao operacional.
+Revisao01dffeac foi historica; helper mudou emea820521. Contraprova original nos3
+formularios:ANTES aceita3/3,DEPOIS rejeita3/3; bytes limpos iguais, extras/omissao/
+repeticao rejeitados e mudanca externa visivel; manifesto de goldens inalterado.
+NovoP1 encerrado NESSE SHA, nao aceite global/merge. Parecer dirigido6422905733
+continua: hook REAL ignora updated_at de
+Marca HTTP (controle updated_date atualiza); HistoricoProdutosCliente usa Pedido
+via entityListSorted/fallback local em HTTP. Reposicionamento da aba preserva
+props/key/contexto, mas nao prova leitura PostgreSQL. Nao reabre contatos/P1 antigo.
+Hook exclusivo da353 ausente na base6ba: nao foi copiado nem duplicado aqui.
+Cursor conserva esses reparos; pedidos publicados nao comprovam recebimento.
+
+Envelope isolado ampliado: Auth/Data com LOGIN separado, NOSUPERUSER/NOBYPASSRLS/
+NOCREATEDB/NOCREATEROLE/NOREPLICATION/NOINHERIT, sem memberships. Negativas reais
+de CREATE TABLE/SET ROLE e privilegios de perfil, codigo, CNPJ e delete fisico de
+Fornecedor; fluxo canonico continua PASS. Contraprova INHERIT em copia temporaria
+e rejeitada pelas assertions reais.1PASS/0FAIL/0SKIP positivo; contraprova negativa
+esperada confirmada. Nao e aplicacao de roles/grants na VPS nem patch aprovado.
+Typecheck/build backend e diff-check exit0. Suites6ba10732/CI4846 e checks raiz
+inalterados reutilizados; a nova negativa foi executada em PG17, nao contada como skip.
+
+Envelope minimo, sem migrador geral:
+- Leitura: Auth042 exata+destinatarios dedicados e Data somente leitura conforme
+  V3 privado ja revisto; isso nao autoriza cadastro/pedido/importacao.
+- Gravacao inicial: Cliente/ClienteEmpresa, Orcamento/itens, Pedido/itens/historico,
+  auditoria e reserva sequencial; preco/unidade/pagamento permanecem referencias
+  canonicas. Para produto compartilhado,041 e indice composto de Empresa de040;
+  nao exige objetos CRM restantes.044 e compensador existentes, sem alterar SQL antigo.
+- Importacao: autorizacao importar distinta, indice legado Cliente dependente de
+  reconciliacao e candidato Fornecedor; nao aplicar toda043 nem montar rotas por inferencia.
+-036/037 e restantes objetos040 nao foram necessarios na fixture desse percurso;
+  isso nao e liberacao para remover capacidades.045-049 continuam fora do automatico.
+- Alvo observado ainda tem lacunas e BYPASSRLS. Escrita exige patch/policies/ACL,
+  bindings e inversa revistos na copia representativa; fixture nao substitui esse aceite.
+- Par API/web integrado so sera fixado apos correcao353/composicao e ciclo de navegador.
+  Imagens d86 anteriores sao prova reutilizavel de build, nao nova versao servida.
+- Backup/restore anteriores preservados; frescor/capacidade na janela e retorno
+  continuam gates. Coorte privada de ORIGEM100 agora preparada pelo seletor e
+  buildOperationalLoadCandidate existentes:18458 clientes de origem,17471 elegiveis,
+  987 nao ativos preservados; duplicados0 somente na origem.100 selecionados, todos
+  com pendencias auxiliares, sem inventar numero/pais ou criar vinculos empresariais.
+  Fornecedor790/790 elegiveis na origem, sem nova importacao. Valores originais,
+  payloads, procedencia, motivos e hashes ficam no recibo privado600 fora do Git.
+  Leitura destino0/escritas0; identidade/escopo operacionais ainda nao vinculados,
+  duplicidades do destino nao verificadas. Reexecucao/reversao de pilotos anteriores
+  reutilizadas como mecanismo, nao como prova da carga desta coorte. Carga nao autorizada.
+Sem carga operacional, nova transferencia, conversao inventada ou dado real no Git.
+Proximo: compor candidata existente em janela exclusiva e testar navegador/backend
+isolado; envelope operacional ainda precisa de aceite. Lista unica de gates no STATUS.
+
+### Prova integrada de persistencia - lote6ba10732 reutilizado (2026-10-26)
 
 No Codespace existente, sobre7ae5bcd9, o teste PostgreSQL canonico de entrada
 passou com Data/Auth LOGIN separados, sem superuser/BYPASSRLS, IdP sintetico,

@@ -249,7 +249,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     motivo_inatividade: sanitizeText(data.motivo_inatividade, 500),
     observacoes: sanitizeText(data.observacoes, 2000),
     endereco_principal: sanitizeEndereco(data.endereco_principal),
-    contatos: sanitizeContatos(data.contatos),
+    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),
     locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],
     condicao_comercial: {
       ...(data.condicao_comercial || {}),
@@ -395,7 +395,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     },
     mapToForm: (record) => ({
       ...record,
-      contatos: record.contatos || [],
+      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),
       locais_entrega: record.locais_entrega || [],
       condicao_comercial: record.condicao_comercial || {
         tabela_preco_id: "",

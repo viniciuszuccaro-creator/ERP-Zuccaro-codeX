@@ -9,7 +9,7 @@ import {
 } from "./cadastroReopenPolicy";
 
 /**
- * Reidrata formData quando id/updated_date mudam, protegendo rascunho sujo.
+ * Reidrata por ID e versao HTTP updated_at ou alias legado updated_date, protegendo rascunho.
  * @param {object|null|undefined} record registro atual (props)
  * @param {object} opts
  * @param {object} opts.formData estado local
@@ -32,8 +32,10 @@ export default function useCadastroReopenOnIdentity(record, {
   confirmSwitch = () => window.confirm(CADASTRO_DIRTY_SWITCH_CONFIRM),
   onRejectSwitch,
 }) {
+  // HTTP owns updated_at; retain the legacy alias without changing draft/identity decisions.
+  const recordVersion = record?.updated_at ?? record?.updated_date;
   const prevIdRef = useRef(record?.id || null);
-  const prevUpdatedRef = useRef(record?.updated_date);
+  const prevUpdatedRef = useRef(recordVersion);
   const baselineRef = useRef(cadastroFormSnapshot(formData));
   const formDataRef = useRef(formData);
   formDataRef.current = formData;
@@ -48,7 +50,7 @@ export default function useCadastroReopenOnIdentity(record, {
     const nextId = record?.id || null;
     const idChanged = nextId !== prevIdRef.current;
     const updatedChanged = Boolean(
-      nextId && record?.updated_date && record.updated_date !== prevUpdatedRef.current,
+      nextId && recordVersion && recordVersion !== prevUpdatedRef.current,
     );
 
     if (!nextId) {
@@ -78,7 +80,7 @@ export default function useCadastroReopenOnIdentity(record, {
       // Sinalização já ocorreu via confirm; reconhece versão sem wipe do rascunho.
       // Em troca de id recusada, não avança prevId — mantém âncora do rascunho.
       if (updatedChanged && !idChanged) {
-        prevUpdatedRef.current = record.updated_date;
+        prevUpdatedRef.current = recordVersion;
       }
       if (idChanged) {
         // Pai continua com props do outro registro; notifica para realinhar seleção.
@@ -89,12 +91,12 @@ export default function useCadastroReopenOnIdentity(record, {
 
     if (decision === "apply") {
       prevIdRef.current = nextId;
-      prevUpdatedRef.current = record.updated_date;
+      prevUpdatedRef.current = recordVersion;
       setBoundId(nextId);
       baselineRef.current = cadastroFormSnapshot(next);
       setFormData(next);
     }
-  }, [record?.id, record?.updated_date]);
+  }, [record?.id, recordVersion]);
 
   return { boundId, identityMismatch };
 }

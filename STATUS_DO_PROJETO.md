@@ -1,5 +1,26 @@
-## CURSOR — tip `ea820521` CI SUCCESS (P1 + remarge 6ba10732) (2026-10-26)
+## Estado vigente - composicao e navegador isolado (2026-10-26)
 
+- Fechamento local final: raiz **2396 PASS / 0 FAIL / 0 SKIP**; audit:baseline, lint, typecheck, build e diff-check exit0. Backend composto **577 total / 551 PASS / 0 FAIL / 26 SKIP**, type/build exit0 (reutilizados sem novo delta backend). Prova PG de principals **1 PASS / 0 FAIL / 0 SKIP**, contraprova INHERIT rejeitada. A falha intermediaria da guarda stage48 foi resolvida aceitando somente os dois hunks exatos comprovados, mantendo o golden original e acrescentando contraprovas de omissao/repeticao/efeito colateral/alteracao externa. Nenhum teste removido ou pulado. Recibo de publicacao/CI por SHA permanece na #344.
+
+- Mesma branch `codex/consolidacao-infra-20261017`, Codespace existente. Composicao squash da #353 `1d3540ff40e8c3e44d2c20e8249ab9d7b8e190e6` sobre `6ba10732`, sem merge de PR/main ou edicao da branch Cursor. Diff anterior e stash restrito preservados privadamente.
+- Novo P1 CodigoField fechado por contraprova no helper real `ea820521`: ataque antigo aceito 3/3, novo rejeitado 3/3; bytes autorizados 3/3 e golden hashes preservados. Parecer #353/6423524303; sem reabrir contatos/guardas encerrados.
+- Correcao Marca: reabertura usa `updated_at` HTTP com fallback `updated_date`, sem mudar identidade/confirmacao/rascunho. Dois testes falham antes; arquivo completo 14 PASS/0 FAIL/0 SKIP depois.
+- Navegador real em porta PRIVATE 5173, API canonica e PostgreSQL 17 `network=none` via socket privado, Auth sintetico e roles sem BYPASSRLS: login, contexto, leitura de Cliente, edicao, sucesso HTTP e reabertura do valor/ID/codigo comprovados. Nao e login operacional nem implantacao.
+- Corrigida ausencia de `contatos`: formulario nao fabrica array vazio para resposta HTTP escalar. Lista explicitamente divergente, preferencia e metadata continuam bloqueadas pelo guard existente. Contraprova no mapper/payload reais; 22 PASS/0 FAIL/0 SKIP.
+- Corrigido Orçamento: transporte usa a mesma `sessionIdentity` das guardas quando consumidor omite a prop token. Contraprova falha antes e passa depois; sem nova permissao ou alteracao do proprietario da persistencia.
+- BLOQUEADOR de interface comprovado: seletores de Orçamento ainda consultam `filterInContext` legado para ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco; listagem HTTP funciona, mas os mestres da fixture PG nao chegam aos seletores. Nao fabricar copias locais ou considerar proposta sintetica como venda. Ciclo navegador Orçamento -> Pedido ainda NAO homologado. Proximo lote: reconciliar esses leitores canonicos e testar negativas/erros antes de completar o ciclo.
+- Cobertura composta anterior aos ultimos ajustes: raiz 2391 PASS/0 FAIL/0 SKIP; backend 577 total/551 PASS/0 FAIL/26 SKIP; audit/lint/type/build e checks backend exit0. Apos ajustes, 118 testes dirigidos PASS/0 FAIL/0 SKIP; fechamento raiz sera registrado no recibo de publicacao. Skips nao sao prova PostgreSQL. Envelope de principals PG/counterproof positivos registrados no bloco abaixo; nao repetir prova 044 inalterada.
+- Coorte privada de origem: 18458 clientes, 17471 elegiveis, 987 nao ativos preservados, 100 selecionados com pendencias auxiliares explicitas. Destino lido 0, escrita operacional 0; duplicidades do destino e reconciliacao da coorte ainda gates. Fornecedores: 790 elegiveis na fonte, sem nova carga. Nenhum dado real no Git.
+- Impedem entrada em uso: concluir leitores/ciclo UI comercial, fechar patch minimo do destino e menor privilegio com revisao independente, fixar par API/web para janela, atualizar frescor do backup, homologacao e autorizacao especifica da primeira carga. 045-049 seguem privadas fora do migrador; sem DDL/grants/deploy/carga operacional.
+
+## Entrada em uso - prioridade vigente e lista unica (proprietario, 2026-10-26)
+
+Composicao em validacao na candidata existente: Cursor1d3540ff + lote Codex
+preservado de envelope/coorte. Sem mergePR/main, publicacao ou homologacao deste
+estado ainda. Os blocos recebidos a seguir sao historicos quando assim rotulados.
+
+### Historico recebido Cursor1d3540ff (antes da revisao/composicao atual)
+Alegacoes recebidas e preservadas, nao aceite operacional nem estado vigente.
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
@@ -18,17 +39,35 @@ em `ea820521`. Reopen canônico Condicao exige delta autorizado no pin.
 
 ### Historico Codex — tip `6ba10732` (preservado no remarge)
 
-Delta: prova integrada PostgreSQL real de Auth/perfil/Grupo/Empresa/Cliente/
+A prova completa6ba10732 continua preservada abaixo.
+### Estado atual Codex - envelope e coorte preparados
+Delta atual para HML: envelope de principais isolados reforcado e contraprova
+INHERIT rejeitada;1PASS/0FAIL/0SKIP positivo, sem roles/grants operacionais.
+NovoP1 remainder353 encerrado por contraprova emea820521, sem reabrir os antigos.
+Bloqueadores: Marca HTTP updated_at nao observado; Historico cai em fonte local HTTP;
+composicao+par API/web/ciclo browser ainda nao homologados. Parecer353/6422905733.
+Schema/ACL de escrita e inversa precisam de revisao/bindings no destino isolado;
+V3 somente leitura nao homologa venda. Coorte ORIGEM100 preparada entre17471
+elegiveis/18458 clientes;987 nao ativos preservados,100 pendencias auxiliares.
+Fornecedor790 elegiveis de origem. Destino0leituras/0escritas; reconciliacao contra
+o destino e carga especifica pendentes. Backup/staging/pilotos preservados.
+Nenhuma duplicacao do hook exclusivo353 nem edicao da branch Cursor.
+Detalhes do envelope e provas no HANDOFF existente; nenhuma lista/plano paralelo.
+
+### Prova integrada6ba10732 reutilizada
+
+Prova integrada PostgreSQL real de Auth/perfil/Grupo/Empresa/Cliente/
 Orcamento/Pedido e Fornecedor:1PASS/0FAIL/0SKIP. Inclui edicao/releitura, fechamento,
 concorrencia de numeros, conversao repetida bloqueada, import/replay/reversao,
 cross-tenant/revogacao e rollback de falha de auditoria. Teste e fixture existentes
 ampliados, nenhum servico/importador paralelo ou dado real. Detalhes no HANDOFF.
 Fechamento:backend545PASS/0FAIL/26SKIP; PG17 final1PASS/0FAIL/0SKIP. Audit/lint/
 typecheck/build/diff exit0; raiz2295PASS reutilizada por ausencia de delta.
-Ainda nao e ERP servido homologado: envelope minimo de escrita/schema/privilegios e HML.
+Ainda nao e ERP servido homologado: falta concluir a composicao353 com fix revisado,
+envelope minimo de escrita/schema/privilegios e HML com ciclo de navegador.
 Migrations candidatas fora do automatico; nenhuma permissao operacional ampliada.
 Coorte real ate100 continua proposta condicionada aos gates e autorizacao especifica.
-Helper CodigoField P1: corrigido no tip Cursor `681c8ea4`/`84f3d401` (aguardando parecer).
+Helper CodigoField P1: encerrado por contraprova Codex no SHA ea820521; nao e aceite global.
 
 Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
 

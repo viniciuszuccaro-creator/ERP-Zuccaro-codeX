@@ -80,7 +80,7 @@ export async function setupEntryFixture(exec: (sql: string) => Promise<unknown>,
     UPDATE produtos SET empresa_id=NULL WHERE id='${ID.produtoA}';
     INSERT INTO produto_empresas(group_id,empresa_id,produto_id,ativo,habilitado_operacao,created_by,updated_by)
     VALUES('${ID.groupA}','${ID.empresaA}','${ID.produtoA}',true,true,'${ID.runtimeActorA}','${ID.runtimeActorA}');
-    CREATE ROLE ${role} NOSUPERUSER NOBYPASSRLS NOLOGIN;`);
+    CREATE ROLE ${role} NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT NOLOGIN;`);
   const groupTables = ['produtos', 'unidades_medida', 'tabelas_preco', 'tabela_preco_itens',
     'condicoes_pagamento', 'condicao_pagamento_parcelas', 'cliente_locais', 'cliente_local_finalidades', 'obras', 'obra_locais', 'entity_code_sequences', 'fornecedores'];
   const companyTables = ['cliente_empresas', 'orcamentos', 'orcamento_itens', 'pedidos', 'pedido_itens',

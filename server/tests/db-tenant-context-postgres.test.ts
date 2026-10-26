@@ -205,7 +205,7 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
     await admin.query(`CREATE SCHEMA ${schema}; SET search_path=${schema},pg_catalog`); schemaCreated = true;
     await setupEntryFixture(async sql => { await admin.query(sql); if (sql.includes('CREATE ROLE ' + dataRole + ' ')) dataCreated = true; }, dataRole);
     const password = randomUUID(); // Ephemeral isolated fixture only; never logged or persisted.
-    await admin.query(`CREATE ROLE ${authRole} LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD '${password}';
+    await admin.query(`CREATE ROLE ${authRole} LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOREPLICATION NOINHERIT PASSWORD '${password}';
       ALTER ROLE ${dataRole} LOGIN PASSWORD '${password}'; GRANT USAGE ON SCHEMA ${schema} TO ${authRole},${dataRole}`);
     authCreated = true;
     for (const table of ['profiles', 'empresas', 'groups']) await admin.query(`ALTER POLICY ${table}_auth_bootstrap_select ON ${table} TO ${authRole}`);
@@ -217,9 +217,28 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
       DATABASE_URL: url(dataRole), AUTH_DATABASE_URL: url(authRole), ENABLE_TENANT_CONTEXT: 'true', ENABLE_PRODUTO_EMPRESA: 'true' });
     clients = await createRuntimeDbClients(config);
     for (const db of [clients.db, clients.authDb]) {
-      const flags = (await db.query<{ rolsuper: boolean; rolbypassrls: boolean }>('SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=session_user')).rows[0];
-      assert.deepEqual(flags, { rolsuper: false, rolbypassrls: false });
+      const flags = (await db.query<{ rolsuper: boolean; rolbypassrls: boolean; rolcreatedb: boolean;
+        rolcreaterole: boolean; rolreplication: boolean; rolinherit: boolean; rolcanlogin: boolean }>(
+        'SELECT rolsuper,rolbypassrls,rolcreatedb,rolcreaterole,rolreplication,rolinherit,rolcanlogin FROM pg_roles WHERE rolname=session_user')).rows[0];
+      assert.deepEqual(flags, { rolsuper: false, rolbypassrls: false, rolcreatedb: false,
+        rolcreaterole: false, rolreplication: false, rolinherit: false, rolcanlogin: true });
     }
+    const capabilities = (await clients.db.query<{ schema_create: boolean; database_create: boolean;
+      profile_insert: boolean; codigo_update: boolean; supplier_delete: boolean; company_document_update: boolean }>(`SELECT
+      has_schema_privilege(current_user,current_schema(),'CREATE') AS schema_create,
+      has_database_privilege(current_user,current_database(),'CREATE') AS database_create,
+      has_table_privilege(current_user,'profiles','INSERT') AS profile_insert,
+      has_column_privilege(current_user,'clientes','codigo','UPDATE') AS codigo_update,
+      has_table_privilege(current_user,'fornecedores','DELETE') AS supplier_delete,
+      has_column_privilege(current_user,'empresas','cnpj','UPDATE') AS company_document_update`)).rows[0];
+    assert.deepEqual(capabilities, { schema_create: false, database_create: false, profile_insert: false,
+      codigo_update: false, supplier_delete: false, company_document_update: false });
+    const membership = (await admin.query<{ n: number }>(`SELECT count(*)::int AS n FROM pg_auth_members
+      WHERE roleid IN (SELECT oid FROM pg_roles WHERE rolname IN ($1,$2))
+         OR member IN (SELECT oid FROM pg_roles WHERE rolname IN ($1,$2))`, [dataRole, authRole])).rows[0];
+    assert.equal(membership.n, 0);
+    await assert.rejects(clients.db.query('CREATE TABLE entry_forbidden_ddl(id uuid)'), /permission denied/i);
+    await assert.rejects(clients.db.query(`SET ROLE ${authRole}`), /permission denied/i);
     const mounted = createApp({ config, db: clients.db, authDb: clients.authDb, tenantContextEnabled: true });
     api = mounted.app.listen(0); await new Promise<void>(resolve => api!.once('listening', resolve));
     const address = api.address(); assert(address && typeof address !== 'string');
