@@ -375,3 +375,111 @@ test('SetorAtividadeForm: load + switch-reject boundId (prova própria, não gen
   assert.equal(submitted[0].id, 's1');
   assert.notEqual(submitted[0].id, 's2');
 });
+
+const marcaInitial = {
+  id: 'm1',
+  codigo: '000042',
+  nome_marca: 'Gerdau Alpha',
+  descricao: 'Aço longo',
+  cnpj: '11.111.111/0001-11',
+  pais_origem: 'Brasil',
+  site: 'https://exemplo.local',
+  categoria: 'Aço',
+  ativo: true,
+  updated_date: '2026-01-01T00:00:00Z',
+  group_id: 'g1',
+  empresa_id: 'e1',
+};
+
+/** Fluxo real sintético: abrir → editar → salvar → fechar → reabrir (campos + boundId). */
+test('MarcaForm: abrir→editar→salvar→fechar→reabrir preserva campos e boundId', async () => {
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/MarcaForm.jsx', {
+    initial: marcaInitial,
+    namePlaceholder: 'Ex: Gerdau, ArcelorMittal',
+    getValue: (input) => input?.props?.value,
+  });
+  // Abrir — type do createElement é a função mock; localizar pelo action pinado.
+  assert.equal(h.getName(), 'Gerdau Alpha');
+  const findCodigo = (walk) => walk().find((n) => n.props?.action === 'codigo-registro-marca');
+  const codigoField = findCodigo(h.walk);
+  assert.equal(codigoField?.props?.entityId, 'm1');
+  assert.equal(codigoField?.props?.value, '000042');
+  assert.equal(codigoField?.props?.hasId, true);
+
+  // Editar (rascunho sujo) + wire save — re-render entre campos (handlers fecham formData).
+  h.render({ onSubmit: (payload) => submitted.push(payload) });
+  h.render();
+  h.findInput('Ex: Gerdau, ArcelorMittal').props.onChange({ target: { value: 'Gerdau Editada' } });
+  h.render();
+  assert.equal(h.getName(), 'Gerdau Editada');
+  const desc = h.walk().find((n) => n.type === 'Textarea' && n.props?.['data-action'] === 'editar-descricao-marca');
+  assert.ok(desc);
+  desc.props.onChange({ target: { value: 'Desc persistida' } });
+  h.render();
+  assert.equal(h.getName(), 'Gerdau Editada');
+  assert.equal(
+    h.walk().find((n) => n.props?.['data-action'] === 'editar-descricao-marca')?.props?.value,
+    'Desc persistida',
+  );
+
+  // Salvar com boundId
+  const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
+  assert.ok(form, 'form submit Marca');
+  form.props.onSubmit({ preventDefault() {} });
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].id, 'm1');
+  assert.equal(submitted[0].nome_marca, 'Gerdau Editada');
+  assert.equal(submitted[0].descricao, 'Desc persistida');
+  assert.equal(submitted[0].codigo, '000042');
+  assert.equal(submitted[0].group_id, 'g1');
+  assert.equal(submitted[0].empresa_id, 'e1');
+
+  // Fechar → reabrir mesmo registro (props limpas pós-save simuladas)
+  const saved = {
+    ...marcaInitial,
+    nome_marca: submitted[0].nome_marca,
+    descricao: submitted[0].descricao,
+    updated_date: '2026-01-01T01:00:00Z',
+  };
+  const h2 = await mountForm('src/components/cadastros/MarcaForm.jsx', {
+    initial: saved,
+    namePlaceholder: 'Ex: Gerdau, ArcelorMittal',
+    getValue: (input) => input?.props?.value,
+  });
+  assert.equal(h2.getName(), 'Gerdau Editada');
+  const desc2 = h2.walk().find((n) => n.type === 'Textarea' && n.props?.['data-action'] === 'editar-descricao-marca');
+  assert.equal(desc2?.props?.value, 'Desc persistida');
+  const codigo2 = h2.walk().find((n) => n.props?.action === 'codigo-registro-marca');
+  assert.equal(codigo2?.props?.entityId, 'm1');
+  assert.equal(codigo2?.props?.value, '000042');
+});
+
+test('MarcaForm: switch-reject — submit usa boundId A (não id B das props)', async () => {
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/MarcaForm.jsx', {
+    initial: marcaInitial,
+    namePlaceholder: 'Ex: Gerdau, ArcelorMittal',
+    getValue: (input) => input?.props?.value,
+  });
+  h.findInput('Ex: Gerdau, ArcelorMittal').props.onChange({ target: { value: 'Rascunho Marca A' } });
+  h.setConfirm(false);
+  h.render({
+    item: {
+      ...marcaInitial,
+      id: 'm2',
+      codigo: '000099',
+      nome_marca: 'Marca Beta',
+      updated_date: '2026-01-02T00:00:00Z',
+    },
+    onSubmit: (payload) => submitted.push(payload),
+  });
+  h.render();
+  assert.equal(h.getName(), 'Rascunho Marca A');
+  const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
+  form.props.onSubmit({ preventDefault() {} });
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].id, 'm1');
+  assert.equal(submitted[0].nome_marca, 'Rascunho Marca A');
+  assert.notEqual(submitted[0].id, 'm2');
+});

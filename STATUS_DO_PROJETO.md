@@ -1,19 +1,17 @@
-## CURSOR — P1 NOVO CodigoField remainder AST estrito (2026-10-26)
+## CURSOR — P1 CodigoField + Marca/Histórico prova (2026-10-26)
 
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
-| Candidata | #353 — tip **após** este commit (parent docs `01dffeac`) |
-| Achado | comentário **6420465114** (P1 NOVO; não reabre P1 antigo guardas) |
-| Causa | `cadastroCodigoRegistroRemainder.js` strip cego: `{...Object.assign(formData,…)}` normalizava bytes iguais ao pin |
-| Correção | AST estrito por path: attrs pinados; rejeita spread/children/extras/`Object.assign` **antes** de remover |
-| Contraprova | `tests/cadastro-codigo-registro-remainder-p1.test.js` — Object.assign / mutação externa / omissão / repetição / children / attr extra |
-| Local | 8/8 PASS + callback/publication suites verdes; golden hashes inalterados |
-| Aceite | **CI verde ≠ fechamento** — aguarda revisão Codex no SHA tip exato |
-| Preservado | Contatos ENCERRADOS; P1 antigo guardas ENCERRADO; sem merge/deploy/carga |
+| P1 tip revisão | **`84f3d401`** (fix `681c8ea4`) — pedido `@codex review` 6422758981 |
+| Achado | **6420465114** (P1 NOVO; não reabre P1 antigo guardas) |
+| Correção | AST estrito CodigoField remainder; contraprova Object.assign/externa/omissão/repetição |
+| Independente | Marca abrir→editar→salvar→fechar→reabrir + Histórico consulta fail-closed |
+| Aceite P1 | **CI ≠ fechamento** — aguarda parecer Codex no SHA tip |
+| Preservado | Contatos ENCERRADOS; P1 antigo ENCERRADO; sem merge/deploy/carga |
 
-Arquivos: `tests/helpers/cadastroCodigoRegistroRemainder.js`, `tests/cadastro-codigo-registro-remainder-p1.test.js`.
-Allowlist inalterada: TabelaPrecoForm / Completo / RotaPadraoForm.
+Provas: `tests/cadastro-codigo-registro-remainder-p1.test.js`, reopen Marca em
+`cadastros-reopen-banco-cargo-behavioral`, `painel-dinamico-cliente-historico-tab`.
 
 ## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (navegável + cadastros, 2026-10-26)
 

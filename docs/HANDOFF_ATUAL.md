@@ -1,11 +1,9 @@
-## CURSOR — P1 NOVO CodigoField remainder (6420465114) (2026-10-26)
+## CURSOR — P1 CodigoField `84f3d401` + Marca/Histórico (2026-10-26)
 
-Helper real `tests/helpers/cadastroCodigoRegistroRemainder.js` agora pin AST
-(import + JSX attrs por path); rejeita spread/children/extras/`Object.assign`
-antes do strip. Contraprova: `tests/cadastro-codigo-registro-remainder-p1.test.js`.
-Parent tip docs `01dffeac`. **CI ≠ aceite** — pedir `@codex review` no SHA tip.
-Contatos e P1 antigo guardas continuam ENCERRADOS. Sem merge/deploy/carga.
-Sem editar branch Codex. Allowlist: TabelaPreco + RotaPadrao apenas.
+P1 6420465114: tip revisão **`84f3d401`** (fix `681c8ea4`); pedido Codex
+6422758981. **CI ≠ aceite**. Contatos/P1 antigo ENCERRADOS.
+Independente: Marca ciclo reopen + HistóricoProdutosCliente fail-closed
+(aba ≠ carga). Sem merge/deploy/carga. Sem editar branch Codex.
 
 ## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (2026-10-26)
 

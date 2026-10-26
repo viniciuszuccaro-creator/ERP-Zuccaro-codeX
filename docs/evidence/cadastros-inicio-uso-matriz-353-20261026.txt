@@ -26,6 +26,12 @@ Classe A corrigida neste pacote
 -------------------------------
 - MarcaForm: prevIdRef fraco → useCadastroReopenOnIdentity + marcaBoundId no
   código/ID/salvar; chrome sky no header windowMode.
+- Marca fluxo sintético abrir→editar→salvar→fechar→reabrir + switch-reject:
+  tests/cadastros-reopen-banco-cargo-behavioral.test.js (PASS).
+- Histórico Produtos (cliente): TabsContent + consulta fail-closed sem
+  permissão/contexto; com permissão queryKey grupo/empresa + Pedido:
+  tests/painel-dinamico-cliente-historico-tab.test.js (PASS).
+  Aba montada ≠ histórico carregado.
 
 Já OK (não reabrir)
 -------------------
