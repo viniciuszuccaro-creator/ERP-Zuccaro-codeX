@@ -86,7 +86,7 @@ export default function Relatorios() {
   const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();
   const { hasPermission,user,perfilAcesso,isLoading:permissionsLoading } = usePermissions();
   const reportSession = useMemo(() => ++reportSequence,[user,perfilAcesso]);
-  const secureTab = ["representantes","personalizado","matriz"].includes(activeTab);
+  const secureTab = ["representantes","personalizado","matriz","exportacao"].includes(activeTab);
   const hasContextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);
   const canViewRelatorios = hasPermission('Relatórios', null, 'visualizar') || hasPermission('Relatorios', null, 'visualizar') || hasPermission('Relatórios', null, 'ver');
   const canExportRelatorios = hasPermission('Relatórios', null, 'exportar') || hasPermission('Relatorios', null, 'exportar');
@@ -456,10 +456,17 @@ export default function Relatorios() {
               Matriz
             </TabsTrigger>
           )}
-          <TabsTrigger value="exportacao" data-permission="Relatorios.exportar">
-            <Download className="w-4 h-4 mr-2" />
-            Exportações
-          </TabsTrigger>
+          {canExportRelatorios && !permissionsLoading && (
+            <TabsTrigger
+              value="exportacao"
+              data-permission="Relatorios.exportar"
+              data-action="Relatorios.abrir_exportacao"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportações
+            </TabsTrigger>
+          )}
           
 
 
@@ -584,9 +591,11 @@ export default function Relatorios() {
           )}
         </TabsContent>
 
-        {/* NEW: Tab Exportação */}
+        {/* Tab Exportação — conteúdo fail-closed (data-permission no trigger não autoriza backend/UI) */}
         <TabsContent value="exportacao">
-          <Suspense fallback={<div>Carregando...</div>}><GeradorRelatorios empresaId={empresaAtual?.id} /></Suspense>
+          {activeTab === 'exportacao' && canExportRelatorios && !permissionsLoading && (
+            <Suspense fallback={<div>Carregando...</div>}><GeradorRelatorios empresaId={empresaAtual?.id} /></Suspense>
+          )}
         </TabsContent>
         </Tabs>
       </ErrorBoundary>

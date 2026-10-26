@@ -1,3 +1,32 @@
+## CURSOR — contatos HTTP escalares + Fornecedor camadas + exportacao RBAC (2026-10-26 08:57 UTC-03:00)
+
+Tip anterior P1: `a37b736f` (CI4777/4778 SUCCESS). Pedido `@codex review` no P1
+publicado; CI verde ≠ fechamento P1.
+
+### Contatos HTTP (contrato MASTER existente)
+- `clienteHttpPayload`: projeta `contatos[]` → `email`/`telefone`/`celular`;
+  hidrata na leitura; BFF `.strict` continua rejeitando `contatos` cru.
+- `httpApiClient` Cliente get/list/filter/create/update hidratam quando há escalares.
+- CANAL: hunks autorizados em `consolidation81Remainder` (hash baseline preservado).
+- Testes: `cliente-contatos-http-adapter`, RBAC UI, server add/edit/remove/reopen +
+  tenant/ator ausente; `cliente-contatos-rbac-update` 6 PASS.
+
+### Fornecedor schema
+- Evidência: `docs/evidence/fornecedor-schema-camadas-353-20261026.txt`
+- Base44 UI + types/service/repo EXISTEM; migration ops AUSENTE; candidate SQL
+  fora de `server/migrations`. Sem entidade paralela / sem publicar migration.
+
+### Codespace
+- Handoff atualizado: capturas = runner Cursor até medir SHA servido.
+- Sem troca de branch / sem sobrescrever checkout Codex.
+
+### erp-integra (sem recomeçar matriz)
+- Relatorios **exportacao**: trigger+conteúdo fail-closed via `canExportRelatorios`
+  (data-permission sozinho insuficiente). secureTab inclui exportacao.
+- Teste grant/deny em `secure-report-behavior.test.js`.
+
+Sem merge/deploy/carga/micro-PR useConfirm. Reserva documento/#344 = Codex.
+
 ## CURSOR — P1 publication reopen guards (pedido Codex) (2026-10-26)
 
 HEAD candidata incorpora correção do P1 reproduzido por Codex: guards de

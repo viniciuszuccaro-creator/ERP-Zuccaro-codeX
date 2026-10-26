@@ -41,3 +41,20 @@ Critério de aceite Codespace
 Bloqueios
 - Não declarar URL Codespace “atualizada” sem o SHA medido no comentário.
 - Não tocar publication/legado344/documento LIMIT 1.
+
+---
+Atualização Cursor 2026-10-26 (America/Sao_Paulo) — janela coordenada
+---------------------------------------------------------------------
+Estado factual até medir SHA/build no Codespace:
+- Capturas / provas visuais deste agente: realizadas no **runner Cursor**
+  (`/workspace`), NÃO declaradas como SHA servido no Codespace.
+- Tip remoto candidata a validar: ver `git rev-parse origin/cursor/integracao-350-351-352-392b`
+  após o push deste lote (contatos HTTP + exportacao RBAC).
+- Checkout Codex (#344 / consolidacao): NÃO trocar branch; NÃO sobrescrever WIP.
+- Pedido: Codex confirma janela; mede HEAD vs tip remoto; só então rotula
+  “prévia Codespace = <sha>”. Sem medição = manter rótulo runner Cursor.
+
+Pacotes neste tip (além P1 reopen):
+- Contatos → escalares email/telefone/celular (adapter + testes)
+- Relatorios exportacao fail-closed (canExportRelatorios)
+- Evidência Fornecedor Base44/HTTP/PG (candidate ≠ migration)

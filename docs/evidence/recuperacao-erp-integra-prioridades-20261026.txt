@@ -45,6 +45,14 @@ Atualização #353 (mesmo dia) — recuperação entregue no canônico
 - NÃO restaurado: Documentacao (removido de propósito 893ef5e0),
   EmpresaOnboarding/OAuthConsent (auth permissiva Base44 — não copiar).
 
+Atualização #353 (contatos/exportacao — tip pós-a37b736f)
+- Contatos Cliente HTTP: adapter projeta para email/telefone/celular (MASTER);
+  evidência `contatos-http-escalares-353-20261026.txt`. Sem entidade paralela.
+- Relatorios **exportacao**: `canExportRelatorios` no trigger+conteúdo + secureTab;
+  teste grant/deny. Não recomeça matriz.
+- Fornecedor: camadas Base44/HTTP/candidate documentadas; migration ops NÃO
+  publicada neste lote (`fornecedor-schema-camadas-353-20261026.txt`).
+
 Fora de escopo deste lote
 - Carga operacional legado #344
 - Cópia de Auth/RBAC permissivo da referência

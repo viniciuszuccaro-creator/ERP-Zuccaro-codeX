@@ -1,5 +1,5 @@
 import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
-import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';
+import { toClienteMasterHttpPayload, withHydratedContatos } from './clienteHttpPayload.js';
 import { readErpHttpSession } from './erpHttpSession.js';
 import { parseA1CertificateMetadata } from './a1CertificateContract.js';
 import { createBankStatementApi } from './bankStatementHttp.js';
@@ -466,11 +466,22 @@ SeparacaoConferencia: {
       });
       return {
         ...base,
+        async get(id) {
+          return withHydratedContatos(await base.get(id));
+        },
+        async list(orderBy, limit = 100) {
+          const rows = await base.list(orderBy, limit);
+          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;
+        },
+        async filter(query = {}, orderBy, limit = 100, skip = 0) {
+          const rows = await base.filter(query, orderBy, limit, skip);
+          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;
+        },
         async create(data) {
-          return base.create(toClienteMasterHttpPayload(data));
+          return withHydratedContatos(await base.create(toClienteMasterHttpPayload(data)));
         },
         async update(id, data) {
-          return base.update(id, toClienteMasterHttpPayload(data));
+          return withHydratedContatos(await base.update(id, toClienteMasterHttpPayload(data)));
         },
       };
     })(),

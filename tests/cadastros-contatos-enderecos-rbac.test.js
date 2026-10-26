@@ -245,16 +245,18 @@ test('UI contatos: salvar com contexto capturado — resposta tardia não muta a
   assert.ok(capturedScopes.includes('stale'), 'assertScope captura contexto no momento do salvar');
 });
 
-test('lacuna backend: schema HTTP Cliente rejeita contatos — UI local ≠ autorização de persistência', async () => {
+test('contrato HTTP: BFF .strict rejeita contatos crus; adapter projeta para email/telefone/celular', async () => {
   const types = await readFile(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url), 'utf8');
   const service = await readFile(new URL('../server/src/services/clienteService.ts', import.meta.url), 'utf8');
   const ui = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  const adapter = await readFile(new URL('../src/api/clienteHttpPayload.js', import.meta.url), 'utf8');
   // Frontend inclui contatos no payload local.
   assert.match(ui, /contatos: sanitizeContatos\(data\.contatos\)/);
-  // Backend: update schema strict e sem campo contatos — proteção UI não grava via HTTP.
+  // Backend: update schema strict e sem campo contatos — proteção UI não é autorização.
   assert.match(types, /clienteUpdateSchema/);
   assert.doesNotMatch(types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 1200), /\bcontatos\b/);
   assert.match(service, /clienteUpdateSchema\.safeParse/);
-  // Lacuna concreta registrada: mutação de contatos na UI só persiste se o transporte local/legado
-  // aceitar o campo; no contrato HTTP atual o PATCH falha com VALIDATION_ERROR (ver server/tests/cliente-contatos-rbac-update.test.ts).
+  // Adapter no contrato MASTER existente: projeta contatos[] → escalares; nunca envia contatos no wire.
+  assert.match(adapter, /applyContatosProjection/);
+  assert.match(adapter, /hydrateContatosFromScalars/);
 });

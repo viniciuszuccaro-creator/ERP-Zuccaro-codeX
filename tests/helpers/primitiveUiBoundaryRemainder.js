@@ -45,7 +45,7 @@ export const reportRecoveryEdits = [
     "const RelatorioDRE = React.lazy(() => import(\"@/components/relatorios/RelatorioDRE\"));\n\nexport default function Relatorios() {\n  const [activeTab, setActiveTab] = useState(\"vendas\");\n  useEffect(() => {\n    const params = new URLSearchParams(window.location.search);\n    let initial = params.get('tab');\n    if (!initial) { try { initial = localStorage.getItem('Relatorios_tab'); } catch (error) { console.warn('[Relatorios] Falha ao restaurar aba', error); } }\n    if (initial) setActiveTab(initial);\n  }, []);\n  const handleTabChange = (value) => {\n    setActiveTab(value);\n"
   ],
   [
-    "  const queryClient = useQueryClient();\n  const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();\n  const { hasPermission,user,perfilAcesso,isLoading:permissionsLoading } = usePermissions();\n  const reportSession = useMemo(() => ++reportSequence,[user,perfilAcesso]);\n  const secureTab = [\"representantes\",\"personalizado\",\"matriz\"].includes(activeTab);\n  const hasContextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);\n  const canViewRelatorios = hasPermission('Relatórios', null, 'visualizar') || hasPermission('Relatorios', null, 'visualizar') || hasPermission('Relatórios', null, 'ver');\n",
+    "  const queryClient = useQueryClient();\n  const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();\n  const { hasPermission,user,perfilAcesso,isLoading:permissionsLoading } = usePermissions();\n  const reportSession = useMemo(() => ++reportSequence,[user,perfilAcesso]);\n  const secureTab = [\"representantes\",\"personalizado\",\"matriz\",\"exportacao\"].includes(activeTab);\n  const hasContextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);\n  const canViewRelatorios = hasPermission('Relatórios', null, 'visualizar') || hasPermission('Relatorios', null, 'visualizar') || hasPermission('Relatórios', null, 'ver');\n",
     "  const queryClient = useQueryClient();\n  const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();\n  const { hasPermission } = usePermissions();\n  const hasContextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);\n  const canViewRelatorios = hasPermission('Relatórios', null, 'visualizar') || hasPermission('Relatorios', null, 'visualizar') || hasPermission('Relatórios', null, 'ver');\n"
   ],
   [
@@ -62,12 +62,17 @@ export const reportRecoveryEdits = [
   ],
   // #353: MatrizAdequacaoFase3 já existia órfã (TabsContent sem trigger). Wiring RBAC no existente.
   [
-    "          {canViewRelatorios && !permissionsLoading && (\n            <TabsTrigger\n              value=\"matriz\"\n              data-permission=\"Relatorios.visualizar\"\n              data-action=\"Relatorios.abrir_matriz\"\n              className=\"data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n            >\n              <FileText className=\"w-4 h-4 mr-2\" />\n              Matriz\n            </TabsTrigger>\n          )}\n          <TabsTrigger value=\"exportacao\" data-permission=\"Relatorios.exportar\">\n",
-    "          <TabsTrigger value=\"exportacao\" data-permission=\"Relatorios.exportar\">\n"
+    "          {canViewRelatorios && !permissionsLoading && (\n            <TabsTrigger\n              value=\"matriz\"\n              data-permission=\"Relatorios.visualizar\"\n              data-action=\"Relatorios.abrir_matriz\"\n              className=\"data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n            >\n              <FileText className=\"w-4 h-4 mr-2\" />\n              Matriz\n            </TabsTrigger>\n          )}\n          {canExportRelatorios && !permissionsLoading && (\n            <TabsTrigger\n              value=\"exportacao\"\n              data-permission=\"Relatorios.exportar\"\n              data-action=\"Relatorios.abrir_exportacao\"\n              className=\"data-[state=active]:bg-blue-600 data-[state=active]:text-white\"\n            >\n              <Download className=\"w-4 h-4 mr-2\" />\n              Exportações\n            </TabsTrigger>\n          )}\n",
+    "          <TabsTrigger value=\"exportacao\" data-permission=\"Relatorios.exportar\">\n            <Download className=\"w-4 h-4 mr-2\" />\n            Exportações\n          </TabsTrigger>\n"
   ],
   [
     "        <TabsContent value=\"matriz\">\n          {activeTab === 'matriz' && canViewRelatorios && !permissionsLoading && (\n            <Suspense fallback={<div>Carregando...</div>}><MatrizAdequacaoFase3 /></Suspense>\n          )}\n        </TabsContent>\n",
     "        <TabsContent value=\"matriz\">\n          <Suspense fallback={<div>Carregando...</div>}><MatrizAdequacaoFase3 /></Suspense>\n        </TabsContent>\n"
+  ],
+  // #353: Exportações — trigger existia; conteúdo sem gate. Fail-closed no existente.
+  [
+    "        <TabsContent value=\"exportacao\">\n          {activeTab === 'exportacao' && canExportRelatorios && !permissionsLoading && (\n            <Suspense fallback={<div>Carregando...</div>}><GeradorRelatorios empresaId={empresaAtual?.id} /></Suspense>\n          )}\n        </TabsContent>\n",
+    "        <TabsContent value=\"exportacao\">\n          <Suspense fallback={<div>Carregando...</div>}><GeradorRelatorios empresaId={empresaAtual?.id} /></Suspense>\n        </TabsContent>\n"
   ]
 ];
 

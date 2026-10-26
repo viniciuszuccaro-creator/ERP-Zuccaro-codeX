@@ -214,3 +214,111 @@ test('HTTP PATCH: editor autorizado muta; payload com contatos continua 400', as
   });
   assert.equal(got.body.data.observacoes, 'depois-autorizado');
 });
+
+test('HTTP: adicionar/editar/remover contatos via escalares + reabertura (contrato MASTER)', async () => {
+  const runtime = fixture();
+  const created = await http(runtime.app, '/api/v1/clientes', {
+    method: 'POST',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({
+      tipo: 'Pessoa Jurídica',
+      documento: '72.608.782/9807-47',
+      razao_social: 'Cliente Contatos Escalares',
+    }),
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.data.id;
+
+  // Adicionar
+  const added = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({
+      email: 'add@sintetico.dev',
+      telefone: '1133334444',
+      celular: '11999998888',
+    }),
+  });
+  assert.equal(added.status, 200, JSON.stringify(added.body));
+  assert.equal(added.body.data.email, 'add@sintetico.dev');
+  assert.equal(added.body.data.telefone, '1133334444');
+  assert.equal(added.body.data.celular, '11999998888');
+
+  // Editar
+  const edited = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ email: 'edit@sintetico.dev', telefone: '1144445555' }),
+  });
+  assert.equal(edited.status, 200);
+  assert.equal(edited.body.data.email, 'edit@sintetico.dev');
+  assert.equal(edited.body.data.telefone, '1144445555');
+  assert.equal(edited.body.data.celular, '11999998888');
+
+  // Remover telefone/celular; reabrir
+  const removed = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ telefone: null, celular: null }),
+  });
+  assert.equal(removed.status, 200);
+  assert.equal(removed.body.data.telefone, null);
+  assert.equal(removed.body.data.celular, null);
+
+  const reopened = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'GET',
+    headers: headers(ACTOR_EDIT),
+  });
+  assert.equal(reopened.status, 200);
+  assert.equal(reopened.body.data.email, 'edit@sintetico.dev');
+  assert.equal(reopened.body.data.telefone, null);
+  assert.equal(reopened.body.data.celular, null);
+});
+
+test('HTTP: tenant indevido / ator ausente não mutam contatos escalares', async () => {
+  const runtime = fixture();
+  const created = await http(runtime.app, '/api/v1/clientes', {
+    method: 'POST',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({
+      tipo: 'Pessoa Jurídica',
+      documento: '12.896.665/0027-43',
+      razao_social: 'Cliente Tenant Contatos',
+      email: 'tenant@sintetico.dev',
+      telefone: '1155556666',
+    }),
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.data.id;
+
+  const wrongTenant = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': '22222222-2222-4222-8222-222222222222',
+      'x-empresa-id': EMPRESA,
+      'x-actor-id': ACTOR_EDIT,
+    },
+    body: JSON.stringify({ email: 'evil@sintetico.dev' }),
+  });
+  assert.ok(wrongTenant.status === 403 || wrongTenant.status === 404 || wrongTenant.status === 400,
+    `tenant indevido deve falhar, got ${wrongTenant.status}`);
+
+  const noActor = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'content-type': 'application/json',
+      'x-group-id': GROUP,
+      'x-empresa-id': EMPRESA,
+    },
+    body: JSON.stringify({ email: 'revoked@sintetico.dev' }),
+  });
+  assert.ok(noActor.status >= 400, `sessão/ator ausente deve falhar, got ${noActor.status}`);
+
+  const got = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'GET',
+    headers: headers(ACTOR_EDIT),
+  });
+  assert.equal(got.body.data.email, 'tenant@sintetico.dev');
+  assert.equal(got.body.data.telefone, '1155556666');
+});

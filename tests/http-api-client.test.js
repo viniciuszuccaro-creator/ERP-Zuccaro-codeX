@@ -529,6 +529,8 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
   assert.equal(body.endereco_principal, undefined);
   assert.equal(body.group_id, undefined);
   assert.equal(body.id, undefined);
+  assert.equal(body.contatos, undefined);
+  assert.equal(body.email, 'a@b.c');
 });
 
 test('Cliente filter: status Ativo não vira ativo=false; retorna sempre array', async () => {

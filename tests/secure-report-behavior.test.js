@@ -136,7 +136,17 @@ test('353 Relatorios matriz: trigger RBAC recupera TabsContent órfão sem tela 
   assert.match(source,/value=\"matriz\"[\s\S]*?data-permission=\"Relatorios\.visualizar\"/);
   assert.match(source,/data-action=\"Relatorios\.abrir_matriz\"/);
   assert.match(source,/activeTab === 'matriz' && canViewRelatorios && !permissionsLoading/);
-  assert.match(source,/secureTab = \["representantes","personalizado","matriz"\]/);
+  assert.match(source,/secureTab = \["representantes","personalizado","matriz","exportacao"\]/);
   assert.match(source,/MatrizAdequacaoFase3/);
   assert.ok(!source.includes('EmpresaOnboarding'),'não restaurar onboarding permissivo');
+});
+test('353 Relatorios exportacao: grant/deny no trigger e conteúdo (não só data-permission)',()=>{
+  const source=fs.readFileSync('src/pages/Relatorios.jsx','utf8');
+  assert.match(source,/canExportRelatorios && !permissionsLoading/);
+  assert.match(source,/data-action=\"Relatorios\.abrir_exportacao\"/);
+  assert.match(source,/activeTab === 'exportacao' && canExportRelatorios && !permissionsLoading/);
+  assert.match(source,/GeradorRelatorios/);
+  // Representantes/Personalizado já falham fechados via hasReportGrant (grant+conteúdo).
+  assert.match(source,/hasReportGrant\(perfilAcesso,'Comercial','Representantes','visualizar'\)/);
+  assert.match(source,/hasReportGrant\(perfilAcesso,'Relatorios','Personalizado','visualizar'\)/);
 });
