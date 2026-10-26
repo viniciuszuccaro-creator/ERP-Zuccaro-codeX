@@ -1,7 +1,9 @@
 Recuperação vs erp-integra-novo — prioridades (2026-10-26)
 ==========================================================
+Atualização: decisão ENTRADA EM USO (2026-10-26) — VPS=operação; Codespace=C360.
+Lista única: docs/evidence/entrada-em-uso-lista-353-20261026.txt
 Referência: github.com/viniciuszuccaro-creator/erp-integra-novo @ main
-Candidata tip: 836a6d2d (+ testes Banco/Cargo)
+Candidata tip: b6c8fd7f / base d86f06b6 (#353)
 Comparação: inventário de paths (não auditoria de botão/fluxo)
 
 Contagens (componentes comercial|financeiro|estoque|compras|crm|relatorios|cadastros)

@@ -1,7 +1,11 @@
 Comercial360 — entrega única para avaliação do proprietário
 ============================================================
+Decisão ENTRADA EM USO: C360 avançado permanece no **Codespace** e sobe à VPS
+somente após teste/aprovação. A VPS recebe a versão operacional (cadastros +
+fluxo comercial inicial), não a onda omnicanal completa.
+
 Candidata: #353 · branch cursor/integracao-350-351-352-392b
-SHA a medir: tip após push deste lote (ver comentário PR / git rev-parse)
+SHA a medir: tip código `b6c8fd7f` (CI4787/4788) — revalidar no Codespace
 Executor visual até medição Codespace: **runner Cursor** (não declarar Codespace).
 
 Roteiro navegável (SPA existente — não redesenhar)
