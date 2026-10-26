@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -234,12 +235,26 @@ export default function RepresentanteFormCompleto({ representante: representante
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     saveMutation.mutate(buildPayload(formData));
   };
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     try { assertFormScopeCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
-    if (window.confirm(`Excluir "${formData.nome}"?`)) {
-      deleteMutation.mutate(representante.id);
+    if (!podeExcluir) {
+      toast({ title: "Seu perfil nao permite excluir representantes.", variant: "destructive" });
+      return;
     }
+    if (!contextoValido) {
+      toast({ title: "Selecione grupo ou empresa antes de excluir.", variant: "destructive" });
+      return;
+    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Excluir "${formData.nome}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
+    deleteMutation.mutate(representante.id);
   };
   const handleAlternarStatus = () => {
     if (!podeEditar) {
@@ -824,14 +839,21 @@ export default function RepresentanteFormCompleto({ representante: representante
     </FormWrapper>
   );
 
+  const withDialog = (
+    <>
+      {content}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
-    return <div className="w-full h-full flex flex-col bg-white">{content}</div>;
+    return <div className="w-full h-full flex flex-col bg-white">{withDialog}</div>;
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseNorm}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] flex flex-col p-0 overflow-hidden">
-        {content}
+        {withDialog}
       </DialogContent>
     </Dialog>
   );
