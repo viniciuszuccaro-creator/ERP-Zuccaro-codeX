@@ -1,96 +1,57 @@
-## CURSOR — CI tip `30922100` SUCCESS (2026-10-26 12:10 UTC-03:00)
+## PACOTE EM EXECUÇÃO — Homologação integrada + recuperação (Cursor, 2026-10-26)
 
-SHA `30922100` · CI **4809** (push) / **4810** (PR) 6/6 SUCCESS · MERGEABLE/CLEAN.
-Fecha pacote demonstrável (contraprova pedida; camadas; codespace; registros).
-Contatos: ainda aguarda contraprova Codex independente — bot/CI ≠ fechamento.
-Prévia: runner Cursor até SHA Codespace. Sem merge/deploy/carga.
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Candidata | #353 `cursor/integracao-350-351-352-392b` |
+| Base | #342 `codex/consolidacao-infra-20261017` tip `7ae5bcd9` (remarge) |
+| Tip pré-pacote | `2defe96c` CI4811–4813 SUCCESS |
+| Arquivos reservados Cursor | candidata #353 (SPA/cadastros/comercial UI/tests/docs evidence) |
+| Reservados Codex | #342/#344, migrations/schema-candidates Pedido 044, legado/staging/VPS DDL |
+| Aceite | contatos fechados por parecer; ciclo comercial por camada; SHA Codespace ou modalidade declarada; diffs integra prioritários; códigos A/B; STATUS único |
+| Bloqueios reais | Codespace API 403 neste token (modalidade=runner Cursor); Pedido INSERT depende 044+compensador (Codex, fora migrador); staging privado não montado aqui; sem merge/deploy/carga |
 
-## CURSOR — fechamento candidata demonstrável (#353 / d0e38a16) (2026-10-26 ~12:00 UTC-03:00)
+Contatos: ENCERRADOS por Codex 6418918562/6419136043 (6PASS/0FAIL no Codespace; fix e9d7ef15/e30cffcc). CI/bot ≠ foram o fechamento — a contraprova humana sim.
+Pedido: `server/schema-candidates/pedido_idempotency_pair.sql` candidato Codex — Cursor não aplica DDL; UI `explainPedidoPersistenceError` permanece.
+Codespace `potential-xylophone-5gj7r9v9qqg637vxp`: sem acesso gh codespace (403); coordenar medição SHA com Codex. Capturas deste agente = **runner Cursor**.
 
-Checkpoint `d0e38a16` CI **4807/4808** SUCCESS · base `82557565` · MERGEABLE/CLEAN.
-Pedido contraprova Codex independente contatos: comentário 6419300451
-(evidência `docs/evidence/contatos-contraprova-pedido-codex-353-20261026.txt`).
-Bot/CI **não** encerram B1b contatos.
+### Lista unica vigente (atualizada neste remarge)
 
-### Lista unica vigente (substitui papel operativo da lista histórica)
+**Pronto para homologação (código/CI — ≠ VPS operacional)**
+- Contatos overflow fail-closed + rascunho (parecer Codex 6PASS).
+- Cadastros reopen/boundId + Relatorios RBAC + Orçamento componente.
+- Compensador 044 candidato documentado (Codex) + explain UI (Cursor).
+- Builds/CI tip candidata + base consolidação (ver recibo #344 para VPS).
 
-**Funciona ponta a ponta (sintético/CI nesta candidata — ≠ VPS)**
-- Overflow contatos: bloqueio pré-fetch, draft intacto, mensagem sem “salvo”
-  (PASS_SINT + tip e9d7ef15; aguarda contraprova Codex humana).
-- Cadastros reopen/boundId coorte + Cliente/Forma (PASS_SINT/CI).
-- Relatorios matriz/exportacao/agendamento fail-closed (PASS_SINT/CI).
-- Orçamento: save/retry/escopo/permissão no componente real (PASS_SINT).
-- UI Pedido: explain 044 quando schema ausente (PASS_SINT) — honestidade, não persistência.
+**Bloqueador entrada em uso**
+- Versão efetivamente servida (Codespace/VPS) ainda não medida neste runner.
+- CRUD Cliente/Pedido no destino: leitura #344 ≠ gravação homologada; 044+par incompleto = gate Codex.
+- Fornecedor ops schema; staging/registros privados; menor privilégio/janela.
+- Merge/disponibilização/carga: autorizações específicas.
 
-**Apenas implementado / testado parcialmente**
-- Login IdP real + Grupo/Empresa em navegador Codespace (não medido).
-- CRUD Cliente no PG do destino observado (só leitura/conferência Codex #344).
-- Azul-claro sky nos forms de cadastro do roteiro (visual parcial; PedidosTab no pin).
-- Recuperação funcional relatorios/contatos-overflow (não = “integra restaurado”).
+**Pendência de dados / melhoria posterior**
+- Coorte ≤100, auxiliares, históricos: staging privado + gates (inalterado).
+- C360 omnicanal: Codespace evolução (inalterado).
 
-**Bloqueios técnicos**
-- Contatos: pendente contraprova Codex independente dos 2 casos (6416585754).
-- Pedido INSERT: migration 044 / colunas idempotência no destino — Codex; sem DDL Cursor.
-- Fornecedor ops schema ausente — gate migration.
-- Staging/registros privados: BLOQ_ACESSO neste runner (`registros-proximo-passo-executor-353-20261026.txt`).
-- SHA/build Codespace não medido → rótulo **runner Cursor**.
+Diretriz: PLANO_GO_LIVE. Evidência histórica: docs/evidence/entrada-em-uso-lista-353-*.txt
 
-**Decisões indispensáveis do proprietário**
-- Autorizar janela Codespace (URL+SHA) e/ou HML isolada.
-- Aceitar operar entrada com escalares+overflow até gate jsonb contatos.
-- Autorizar piloto registros auxiliares via executor privado (não inventar no Git).
-- Merge/deploy/carga: gates separados (#344); este tip não autoriza.
 
-**Candidata exata para homologação**
-- Branch `cursor/integracao-350-351-352-392b` tip `d0e38a16` (ou FF docs posterior).
-- Base `codex/consolidacao-infra-20261017` @ `82557565`.
-- Roteiro: `docs/evidence/roteiro-homologacao-integrada-353-20261026.txt`
-- Camadas: `docs/evidence/homologacao-camadas-execucao-353-20261026.txt`
-- Codespace: `docs/vps/evidence/codespace-handoff-candidata353-20261026.txt`
+## Historico Codex — tip 7ae5bcd9 (preservado no remarge)
 
-Evidência histórica (não plano vigente): `docs/evidence/entrada-em-uso-lista-353-20261026.txt`
-Diretriz ordem: PLANO_GO_LIVE “Prioridade vigente: entrada em uso”.
-Sem merge/deploy/carga neste fechamento.
+- Fechar a composicao integrada por SHA. Os DOIS achados de contatos estao
+  encerrados no fix e9d7ef15/9756f457, delta e30cffcc conferido:6PASS/0FAIL/0SKIP,
+  contraprova antes/depois e rascunho preservado (6418918562/6419136043).
+  P1 antigo guardas continua encerrado. Isto nao aprova toda a353 ou merge.
 
-## CURSOR — CI tip `e30cffcc` SUCCESS (2026-10-26 11:43 UTC-03:00)
+## Historico Cursor — tips #353 pré-remarge 7ae5bcd9
 
-SHA `e30cffcc` · CI **4805** (push) / **4806** (PR) 6/6 SUCCESS · #353 MERGEABLE/CLEAN vs `82557565`.
-
-Fecha baselines do lote azul-claro/044: PedidosTab fora do sky (pin proof suites);
-Cliente/Forma/Contatos sky; explain 044 + remainder. Contatos `e9d7ef15` intacto.
-Não demonstrado Codespace; não operacional VPS. Sem merge/deploy/carga.
-
-## CURSOR — CI baseline + PedidosTab fora do sky (2026-10-26 ~11:40 UTC-03:00)
-
-`b6ee38f3` falhou só no freeze `runtime-proof-source` (suite audit PedidosTab
-pin d312fbcd). PedidosTab voltou ao token blue para não alterar SHA congelado
-das seis proof suites. Azul-claro permanece em Cliente/Forma/Contatos do roteiro;
-explain 044 + remainder stage52 intactos. Sem merge/deploy.
-
-## Entrada em uso - prioridade vigente e lista unica (proprietario, 2026-10-26)
-
-Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
-As cinco entregas sao HML integrada -> coorte real ate100 (apos autorizacao) ->
-escala de cadastros -> operacao inicial -> historicos/saldos. Nao exigem concluir
-todas as ondas omnicanal. Nao alteram a Regra-Mae nem os gates operacionais.
-
-### Lista unica vigente
-
-**Pronto para uso**
-- Nenhuma nova liberacao na VPS e concedida por este registro. A prontidao do par
-  atualmente servido nao foi reclassificada por CI ou documento.
-- Disponivel PARA HOMOLOGACAO, nao para carga/uso operacional: codigo d86f06b6,
-  CI4785/4786 SUCCESS, builds API+web do mesmo SHA e prova sintetica V3/inversa
-  2PASS/0FAIL/0SKIP. Os IDs de imagem locais nao sao digests de registry.
-  Recibo atual: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
-
-**Bloqueador da entrada em uso**
 - Fechar/revisar a composicao integrada existente por SHA. P1 antigo publication
   (guardas reopen) ENCERRADO por contraprova Codex real — NAO permanece aberto
   por bb341ae3/CI. Contatos: tip Cursor corrige principal entre canais + metadata
   sem valor (overflow fail-closed antes do fetch; parecer 6416585754); AINDA
   BLOQUEIA ate revisao Codex do novo SHA. CI verde ≠ homologacao VPS/operacional.
   Sem editar branch Codex nem aprovar toda a #353 por este tip.
+
 - Provar login/perfil/Grupo/Empresa/RBAC e versao efetivamente servida; capturas
   de runner e testes com IdP sintetico nao homologam a sessao real.
 - Conferir schema/journals/contratos exigidos pelo escopo operacional inicial.
@@ -144,9 +105,18 @@ Validar em copia/fixture autorizada antes de propor disponibilizacao especifica.
   Coordenacao direta353/6417549708 e6417638674, sem editar branch/reservas Cursor.
 - Codex: legado/compatibilidade/privilégio/preparacao/cargas por gate. Cursor:
   candidata/recuperacao funcional-visual/Cadastros. Um escritor por checkout.
-- Lote somente documental: diff-check e verificacao de escopo/links/segredos;
-  suites runtime inalteradas reutilizadas, nao reexecutadas localmente. O commit
-  desta prioridade nao altera os builds/versao servidos nem autoriza deploy.
+- 82557565 foi somente documental. Delta atual: compensador044 candidato fora do
+  migrador, original044 preservada, dois testes adicionais sem afrouxar antigos.
+  Raiz2295PASS/0FAIL/0SKIP;backend545PASS/0FAIL/26SKIP; engine focado5PASS e
+  PostgreSQL17 real1PASS/0FAIL/0SKIP. audit/lint/typecheck/build/diff-check PASS;
+  type/build backend PASS. Node24.21.0; dados sinteticos; containers encerrados.
+  Nenhum runtime/rota/SQL/grant operacional alterado. Builds d86 anteriores
+  continuam com seu proprio pin, nao sao builds novos deste lote.
+- Compensador rejeita fingerprint NULL e preserva registros validos, rollback
+  integral na presenca de par incompleto, unicidade por tenant. Nao e migration
+  aplicada nem homologacao integrada de escrita. Sem renumerar045-049 privadas.
+- Automacao nao reativada: view nao expoe config/executor. Item nativo observado
+  Avisar ERP na nuvem em pausa nao comprova a identidade da tarefa Legado.
 
 ### Compatibilidade minima ja conferida para o escopo inicial
 Leitura de contratos d86f06b6, sem chamada/escrita no banco. Catalogo anterior do
@@ -164,10 +134,10 @@ plano ou autorizacao de mudanca. Dependencias de pedido (cliente_empresa,
 produto/unidade, pagamento e demais vinculos) nao podem ser inferidas por nome.
 
 ### Proxima acao concreta
-Contatos: tip Cursor implementou overflow principal/metadata (parecer 6416585754);
-aguardando revisao Codex no novo SHA — ainda bloqueia ate parecer. Em paralelo:
-matriz minima dos contratos de gravacao do escopo inicial (Pedido/044) e provas
-faltantes de alvo/versao/Auth/privilegio/retorno. Decisao isolada HML/100 somente
+Contatos encerrados tecnicamente (pareceres 6418918562/6419136043; fix e9d7ef15/e30cffcc).
+Pacote Cursor em curso: ciclo comercial por camada, cadastros A/B, diffs integra,
+modalidade Codespace (403 neste token → runner). Pedido/044 compensador = Codex
+(candidato fora do migrador). Decisao isolada HML/100 somente
 leitura continua registrada no recibo344; ela nao substitui HML integrada ou
 autorizacao de primeira carga real.
 

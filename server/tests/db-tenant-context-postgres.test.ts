@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
@@ -136,4 +137,40 @@ if (process.env.DATABASE_URL) test('Tenant runtime PostgreSQL: NOBYPASS isolatio
     await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE; DROP ROLE IF EXISTS ${role}`);
     await admin.end();
   }
+});
+
+if (process.env.DATABASE_URL) test('044 compensador PostgreSQL: NULL, rollback, dados e unicidade preservados', async () => {
+  assertCrmIsolatedUrl(process.env.DATABASE_URL);
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const fixture = await pool.connect();
+  const exec = async (sql: string) => { await fixture.query(sql); };
+  const rows = async (sql: string) => (await fixture.query(sql)).rows;
+  try {
+    assert.equal((await rows('SELECT current_database() AS name'))[0].name, new URL(process.env.DATABASE_URL!).pathname.slice(1));
+    const original = await readFile(new URL('../migrations/044_pedidos_idempotencia_direta.sql', import.meta.url), 'utf8');
+    const candidate = await readFile(new URL('../schema-candidates/pedido_idempotency_pair.sql', import.meta.url), 'utf8');
+    await exec('CREATE TEMP TABLE pedidos(group_id uuid NOT NULL, empresa_id uuid NOT NULL, marker text NOT NULL)');
+    await exec(original);
+    const group = '11111111-1111-4111-8111-111111111111';
+    const company = '22222222-2222-4222-8222-222222222222';
+    const key = '33333333-3333-4333-8333-333333333333';
+    await exec(`INSERT INTO pedidos VALUES ('${group}','${company}','incomplete','${key}',NULL)`);
+    // Counterproof: original CHECK admits UNKNOWN. Candidate must refuse without repairing data.
+    await assert.rejects(exec(candidate), /pedidos_idempotency_pair_complete_check/);
+    await exec('ROLLBACK');
+    assert.equal((await rows("SELECT marker FROM pedidos WHERE marker='incomplete'")).length, 1);
+    assert.equal((await rows("SELECT 1 FROM pg_constraint WHERE conrelid='pedidos'::regclass AND conname='pedidos_idempotency_pair_complete_check'")).length, 0);
+    await exec("DELETE FROM pedidos WHERE marker='incomplete'"); // Disposable synthetic row only.
+    await exec(`INSERT INTO pedidos VALUES ('${group}','${company}','legacy',NULL,NULL),
+      ('${group}','${company}','valid','${key}','${'a'.repeat(64)}')`);
+    const before = await rows('SELECT * FROM pedidos ORDER BY marker');
+    await exec(candidate);
+    assert.deepEqual(await rows('SELECT * FROM pedidos ORDER BY marker'), before);
+    for (const [k, fingerprint] of [[`'${key}'`, 'NULL'], ['NULL', `'${'a'.repeat(64)}'`], [`'${key}'`, "'bad'"]]) {
+      await assert.rejects(exec(`INSERT INTO pedidos VALUES ('${group}','${company}','invalid',${k},${fingerprint})`), /pedidos_idempotency_pair/);
+    }
+    await assert.rejects(exec(`INSERT INTO pedidos VALUES ('${group}','${company}','duplicate','${key}','${'a'.repeat(64)}')`), /uq_pedidos_idempotency_scope/);
+    await exec(`INSERT INTO pedidos VALUES ('44444444-4444-4444-8444-444444444444','${company}','other-group','${key}','${'a'.repeat(64)}')`);
+    assert.equal((await rows('SELECT * FROM pedidos')).length, 3);
+    } finally { fixture.release(true); await pool.end(); }
 });

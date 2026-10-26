@@ -1,29 +1,18 @@
-## CURSOR — fechamento demonstrável d0e38a16 (2026-10-26)
+## PACOTE Cursor — homologação + remarge 7ae5bcd9 (2026-10-26)
 
-Tip `d0e38a16` CI4807/4808. Contatos: pedido contraprova Codex independente
-(não encerrar por bot). Camadas/roteiro/registros/codespace atualizados em
-docs/evidence e docs/vps/evidence. Lista vigente = topo STATUS.
-Rótulo prévia: **runner Cursor** até SHA Codespace medido. Sem merge/deploy.
+Modalidade: **runner Cursor** `/workspace` (Codespace API 403 neste token).
+Contatos ENCERRADOS (pareceres 6418918562/6419136043). Pedido 044 compensador = Codex.
+Lista vigente: topo STATUS. Sem editar branch Codex. Sem merge/deploy/carga.
 
-## CURSOR — azul-claro + Pedido/044 UI (2026-10-26)
+Base de runtime/build preservada d86f06b6/CI4785-4786;82557565 repriorizou documentos.
+Revisao353:9756f457/fix e9d7ef15, confirmada no delta e30cffcc, encerrou os DOIS
+achados de contatos com contraprova real antes/depois:6PASS/0FAIL/0SKIP.
+Pareceres6418918562/6419136043. Formulario integral igual a7901f622 apos normalizar
+somente sky- para blue-. Nao e aprovacao global353, visual, merge ou deploy.
+P1 antigo guardas continua encerrado. V2SQL retirada; V3/inversa read-only
+2PASS/0FAIL/0SKIP anteriores reutilizadas, sem aplicar na VPS.
 
-#353 tip após e9d7ef15/9756f457. Sky nos forms do roteiro; explain 044 na UI.
-Camadas: docs/evidence/homologacao-fluxo-camadas-353-20261026.txt
-Contatos: bot limpo; solicitar contraprova humana dos 2 casos se ainda aberta.
-Sem editar branch Codex. Sem merge/deploy/carga.
-
-## Continuidade vigente - entrada em uso (decisao do proprietario, 2026-10-26)
-
-Coordenacao principal permanece neste chat ERP ZUCCARO - CODEX/CURSOR.
-Prioridade e ordem canonicas: PLANO_GO_LIVE.md, "Prioridade vigente: entrada em uso".
-Lista UNICA de prontidao/bloqueadores/dados/melhorias: topo de STATUS_DO_PROJETO.md.
-As listas de evidencia anteriores da353 ficam como procedencia, nao outro plano
-ou aceite operacional. Cinco etapas nao obrigam concluir ondas omnicanal primeiro.
-
-Ambientes: VPS somente versao operacional aprovada; Codespace existente para
-codigo/testes/proxima versao; GitHub para codigo/historico; backups/dados privados.
-Nenhum novo ambiente, credencial, servico pago ou liberacao operacional neste lote.
-O alvo observado ainda e DEV; nao o renomear como producao homologada.
+## Historico Cursor — tips #353 pré-remarge
 
 Base consolidacao incorporada na #353: `82557565` (docs entrada em uso) sobre
 runtime/build d86f06b6/CI4785-4786. Tip Cursor corrige achados contatos
@@ -32,6 +21,7 @@ P1 antigo guardas ENCERRADO por contraprova; contatos AINDA bloqueiam ate parece
 Distinguir: implementado / testado CI / demonstrado Codespace / operacional VPS.
 V2SQL retirada; V3/inversa ensaiadas em PG17 sintetico (2PASS/0FAIL/0SKIP),
 sem aplicar na VPS. Sem merge/deploy/carga neste lote.
+
 Recibo vigente completo (inclui hashes/builds/janela/retorno/decisao):
 https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
 
@@ -340,6 +330,31 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+
+### Delta de compatibilidade044 - codigo e provas (2026-10-26)
+
+server/schema-candidates/pedido_idempotency_pair.sql e compensador CANDIDATO,
+fora de server/migrations e sem numero novo.044 original intacta. Adiciona CHECK
+com fingerprint explicitamente nao nulo e valida em transacao; par incompleto
+preexistente bloqueia/reverte tudo, sem preencher fingerprint ou alterar linha.
+Provas:5PASS focados engine local;1PASS PostgreSQL17 real/0FAIL/0SKIP, com NULL,
+rollback, preservacao e unicidade scoped. Banco sintetico descartado, networknone,
+sem portas/volumes ERP. Primeira tentativa do wrapper falhou no bind do diretorio
+de dependencias; corrigida na copia sintetica, tentativa preservada, nao no produto.
+Raiz2295PASS/0FAIL/0SKIP;backend545PASS/0FAIL/26SKIP; audit/lint/typecheck/build e
+diff-check PASS, type/build backend PASS. Skips nao sao prova de PostgreSQL.
+Node24.21.0 no Codespace; CI por SHA deve ser conferida apos publicar.
+Nenhum runtime/rota/role/grant/SQL de operacao alterado; builds anteriores nao
+foram recriados nem apresentados como build deste commit.
+
+Reservas342/6418940082 serao liberadas no recibo de fechamento. Cursor nao editado.
+Automacao: consulta view apenas renderizou cartao sem config/executor/estado.
+Item nativo observado Avisar ERP na nuvem esta em pausa; nao prova identidade da
+automacao Legado nem acesso exclusivo ao Codespace. NAO reativada/duplicada.
+Proximo item executavel: fixture representativa do percurso Auth/Grupo/Empresa/
+Cliente/Orcamento/Pedido, separando baseline conhecido dos deltas indispensaveis,
+e prova real da persistencia Fornecedor candidata; depois fixar par API/web e
+decisao especifica de HML. Este teste044 NAO fecha esse percurso.
 
 ## #344 - pacote de decisao do canal, schema e menor privilegio (2026-10-26)
 
