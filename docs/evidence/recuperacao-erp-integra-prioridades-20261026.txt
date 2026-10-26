@@ -53,6 +53,14 @@ Atualização #353 (contatos/exportacao — tip pós-a37b736f)
 - Fornecedor: camadas Base44/HTTP/candidate documentadas; migration ops NÃO
   publicada neste lote (`fornecedor-schema-camadas-353-20261026.txt`).
 
+Atualização #353 (fidelidade + agendamento — pós-remarge d86f06b6)
+- Contatos: CONTATOS_SCALAR_OVERFLOW se perda; sem hidratar lista falsa
+  (`contatos-fidelidade-353-20261026.txt`). Evolução jsonb/filha = gate.
+- Relatorios **agendamento**: `canScheduleRelatorios` trigger+conteúdo (recurso
+  existia oculto só por data-permission). Classificação: oculto por permissão,
+  não ausente.
+- Provas FormaPagamento + SetorAtividade reopen (próprias, não generalizar).
+
 Fora de escopo deste lote
 - Carga operacional legado #344
 - Cópia de Auth/RBAC permissivo da referência

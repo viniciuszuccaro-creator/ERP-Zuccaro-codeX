@@ -1,3 +1,25 @@
+## CURSOR — fidelidade contatos + remarge d86f06b6 + agendamento (2026-10-26 09:47 UTC-03:00)
+
+Remarge base `d86f06b6` (legado LIMIT2/RLS) na #353; conflitos só docs.
+P1 `a37b736f`: pedido `@codex review` reiterado; CI ≠ fechamento.
+
+### Contatos fidelidade
+- Overflow `CONTATOS_SCALAR_OVERFLOW` se múltiplos/nome/obs/id/ordem/divergência.
+- `contatos_escalares` incomplete; não fabrica `contatos[]` na GET HTTP.
+- Evidência + evolução mínima jsonb/filha (gate separado).
+
+### Cadastros
+- Provas próprias FormaPagamentoForm + SetorAtividadeForm (boundId/dirty).
+
+### erp-integra
+- Agendamento fail-closed (`canScheduleRelatorios`) no existente.
+
+### Comercial360
+- Entrega avaliação: `docs/vps/evidence/comercial360-entrega-avaliacao-353-20261026.txt`
+- Capturas = runner Cursor até medir SHA Codespace.
+
+Sem merge/deploy/carga. Reserva #344 Codex intocada.
+
 ## CURSOR — remarge Codex `d86f06b6` (identidade legada/RLS) na #353 (2026-10-26 09:41 UTC-03:00)
 
 Base consolidação avançou `776d81ae` → `d86f06b6` (LIMIT2 legado + teste RLS restrito).

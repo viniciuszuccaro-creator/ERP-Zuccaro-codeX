@@ -86,7 +86,7 @@ export default function Relatorios() {
   const { empresaAtual, grupoAtual, estaNoGrupo, filterInContext } = useContextoVisual();
   const { hasPermission,user,perfilAcesso,isLoading:permissionsLoading } = usePermissions();
   const reportSession = useMemo(() => ++reportSequence,[user,perfilAcesso]);
-  const secureTab = ["representantes","personalizado","matriz","exportacao"].includes(activeTab);
+  const secureTab = ["representantes","personalizado","matriz","exportacao","agendamento"].includes(activeTab);
   const hasContextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id || estaNoGrupo);
   const canViewRelatorios = hasPermission('Relatórios', null, 'visualizar') || hasPermission('Relatorios', null, 'visualizar') || hasPermission('Relatórios', null, 'ver');
   const canExportRelatorios = hasPermission('Relatórios', null, 'exportar') || hasPermission('Relatorios', null, 'exportar');
@@ -420,14 +420,17 @@ export default function Relatorios() {
             <Activity className="w-4 h-4 mr-2" />
             Relatórios Operacionais
           </TabsTrigger>
-          <TabsTrigger
-                value="agendamento"
-                data-permission="Relatorios.editar"
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                
-            <Calendar className="w-4 h-4 mr-2" />
-            Agendamento
-          </TabsTrigger>
+          {canScheduleRelatorios && !permissionsLoading && (
+            <TabsTrigger
+              value="agendamento"
+              data-permission="Relatorios.editar"
+              data-action="Relatorios.abrir_agendamento"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Agendamento
+            </TabsTrigger>
+          )}
           {hasReportGrant(perfilAcesso,'Comercial','Representantes','visualizar') && <TabsTrigger value="representantes">Representantes</TabsTrigger>}
           {hasReportGrant(perfilAcesso,'Relatorios','Personalizado','visualizar') && <TabsTrigger value="personalizado">Personalizado</TabsTrigger>}
           <TabsTrigger value="vendas" data-permission="Comercial.visualizar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
@@ -560,7 +563,9 @@ export default function Relatorios() {
         </TabsContent>
 
         <TabsContent value="agendamento">
-          <Suspense fallback={<div>Carregando...</div>}><AgendamentoRelatorios empresaId={empresaAtual?.id} /></Suspense>
+          {activeTab === 'agendamento' && canScheduleRelatorios && !permissionsLoading && (
+            <Suspense fallback={<div>Carregando...</div>}><AgendamentoRelatorios empresaId={empresaAtual?.id} /></Suspense>
+          )}
         </TabsContent>
 
         <TabsContent value="representantes">

@@ -1,27 +1,29 @@
 /**
- * Contatos Cliente via contrato HTTP MASTER existente (email/telefone/celular).
- * BFF .strict continua rejeitando `contatos[]` cru — projeção no adapter.
- * Dados sintéticos / isolados.
+ * Fidelidade contatos[] ↔ escalares MASTER (email/telefone/celular).
+ * Sem descarte silencioso; hidratação não finge lista completa.
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  CONTATOS_SCALAR_OVERFLOW,
+  assessContatosScalarFidelity,
   applyContatosProjection,
-  hydrateContatosFromScalars,
+  createContatosScalarOverflowError,
+  scalarContactSummary,
   toClienteMasterHttpPayload,
   withHydratedContatos,
 } from '../src/api/clienteHttpPayload.js';
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 
-test('projeção: adicionar E-mail/Telefone/WhatsApp → escalares; contatos ausente no wire', () => {
+test('fidelidade ok: um contato por canal sem nome/obs → projeta', () => {
   const payload = toClienteMasterHttpPayload({
     tipo: 'Pessoa Jurídica',
     documento: '11.222.333/0001-81',
     razao_social: 'Sintético Contatos LTDA',
     contatos: [
-      { nome: 'Fiscal', tipo: 'E-mail', valor: 'fiscal@sintetico.dev', principal: true },
-      { nome: 'Compras', tipo: 'Telefone', valor: '1133334444', principal: false },
-      { nome: 'Logística', tipo: 'WhatsApp', valor: '11999998888', principal: false },
+      { tipo: 'E-mail', valor: 'fiscal@sintetico.dev', principal: true },
+      { tipo: 'Telefone', valor: '1133334444', principal: false },
+      { tipo: 'WhatsApp', valor: '11999998888', principal: false },
     ],
   });
   assert.equal(payload.email, 'fiscal@sintetico.dev');
@@ -30,64 +32,141 @@ test('projeção: adicionar E-mail/Telefone/WhatsApp → escalares; contatos aus
   assert.equal(payload.contatos, undefined);
 });
 
-test('projeção: editar principal do canal (dois e-mails) usa o marcado principal', () => {
-  const out = {};
-  applyContatosProjection({
-    contatos: [
-      { tipo: 'E-mail', valor: 'old@sintetico.dev', principal: false },
-      { tipo: 'E-mail', valor: 'novo@sintetico.dev', principal: true },
-    ],
-  }, out);
-  assert.equal(out.email, 'novo@sintetico.dev');
+test('fidelidade: múltiplos e-mails → CONTATOS_SCALAR_OVERFLOW (não descarta)', () => {
+  const assessment = assessContatosScalarFidelity([
+    { tipo: 'E-mail', valor: 'a@sintetico.dev', principal: false },
+    { tipo: 'E-mail', valor: 'b@sintetico.dev', principal: true },
+  ]);
+  assert.equal(assessment.ok, false);
+  assert.ok(assessment.losses.includes('multiplo_email'));
+  assert.throws(
+    () => toClienteMasterHttpPayload({
+      tipo: 'Pessoa Física',
+      documento: '529.982.247-25',
+      nome: 'PF',
+      contatos: [
+        { tipo: 'E-mail', valor: 'a@sintetico.dev' },
+        { tipo: 'E-mail', valor: 'b@sintetico.dev', principal: true },
+      ],
+    }),
+    (err) => err?.code === CONTATOS_SCALAR_OVERFLOW && err?.status === 422,
+  );
 });
 
-test('projeção: remover canal (array sem telefone) limpa telefone=null', () => {
+test('fidelidade: nome/observação/id/ordem → overflow (campos perdidos no escalar)', () => {
+  for (const extra of [
+    { nome: 'Fiscal' },
+    { observacao: 'ramal 10' },
+    { id: 'c-1' },
+    { ordem: 2 },
+  ]) {
+    const assessment = assessContatosScalarFidelity([
+      { tipo: 'Telefone', valor: '1133334444', principal: true, ...extra },
+    ]);
+    assert.equal(assessment.ok, false, JSON.stringify(extra));
+  }
+});
+
+test('fidelidade: tipo não mapeável com valor → overflow', () => {
+  const assessment = assessContatosScalarFidelity([
+    { tipo: 'LinkedIn', valor: 'https://linkedin.com/in/x', principal: false },
+  ]);
+  assert.equal(assessment.ok, false);
+  assert.ok(assessment.losses.some((l) => l.startsWith('tipo_nao_mapeavel')));
+});
+
+test('fidelidade: divergência array vs escalar explícito → overflow', () => {
+  const out = { email: 'keep@sintetico.dev' };
+  assert.throws(
+    () => applyContatosProjection({
+      contatos: [{ tipo: 'E-mail', valor: 'other@sintetico.dev', principal: true }],
+    }, out),
+    (err) => err?.code === CONTATOS_SCALAR_OVERFLOW
+      && err.losses.includes('divergencia_email'),
+  );
+});
+
+test('fidelidade: esvaziar canal (array sem telefone) limpa telefone=null quando ok', () => {
   const payload = toClienteMasterHttpPayload({
     tipo: 'Pessoa Física',
     documento: '529.982.247-25',
     nome: 'PF Contatos',
-    telefone: '1133334444',
-    contatos: [
-      { tipo: 'E-mail', valor: 'pf@sintetico.dev', principal: true },
-    ],
+    contatos: [{ tipo: 'E-mail', valor: 'pf@sintetico.dev', principal: true }],
   });
-  // telefone explícito no src tem precedência — limpar via só contatos:
-  const cleared = toClienteMasterHttpPayload({
-    tipo: 'Pessoa Física',
-    documento: '529.982.247-25',
-    nome: 'PF Contatos',
-    contatos: [
-      { tipo: 'E-mail', valor: 'pf@sintetico.dev', principal: true },
-    ],
-  });
-  assert.equal(cleared.telefone, null);
-  assert.equal(cleared.email, 'pf@sintetico.dev');
-  assert.equal(payload.telefone, '1133334444', 'escalar explícito vence projeção');
+  assert.equal(payload.email, 'pf@sintetico.dev');
+  assert.equal(payload.telefone, null);
+  assert.equal(payload.celular, null);
 });
 
-test('hidratação: escalares → contatos[] para reabertura UI', () => {
-  const contatos = hydrateContatosFromScalars({
+test('ausência de chave contatos ≠ null array: não altera escalares', () => {
+  const payload = toClienteMasterHttpPayload({
+    tipo: 'Pessoa Física',
+    documento: '529.982.247-25',
+    nome: 'PF',
+    email: 'keep@sintetico.dev',
+    telefone: '1155556666',
+  });
+  assert.equal(payload.email, 'keep@sintetico.dev');
+  assert.equal(payload.telefone, '1155556666');
+  assert.equal(payload.celular, undefined);
+});
+
+test('resumo escalar: complete=false; NÃO vira contatos[] na hidratação', () => {
+  const summary = scalarContactSummary({
     email: 'reabrir@sintetico.dev',
     telefone: '1144445555',
     celular: '11988887777',
   });
-  assert.equal(contatos.length, 3);
-  assert.equal(contatos[0].tipo, 'E-mail');
-  assert.equal(contatos[0].valor, 'reabrir@sintetico.dev');
-  assert.equal(contatos[0].principal, true);
-  assert.equal(contatos[1].tipo, 'Telefone');
-  assert.equal(contatos[2].tipo, 'WhatsApp');
+  assert.equal(summary.source, 'scalars');
+  assert.equal(summary.complete, false);
+  assert.equal(summary.items.length, 3);
+
+  const row = withHydratedContatos({
+    id: 'cli-1',
+    email: 'reabrir@sintetico.dev',
+    telefone: '1144445555',
+  });
+  assert.equal(row.contatos, undefined, 'não fabricar contatos[] como lista completa');
+  assert.equal(row.contatos_escalares.complete, false);
+  assert.equal(row.contatos_escalares.items[0].valor, 'reabrir@sintetico.dev');
 });
 
-test('withHydratedContatos: não sobrescreve array já presente', () => {
+test('withHydratedContatos: preserva contatos[] já presentes (transporte Base44)', () => {
   const row = withHydratedContatos({
     email: 'a@b.c',
-    contatos: [{ tipo: 'E-mail', valor: 'kept@sintetico.dev', principal: true }],
+    contatos: [{ tipo: 'E-mail', valor: 'kept@sintetico.dev', nome: 'A', principal: true }],
   });
   assert.equal(row.contatos[0].valor, 'kept@sintetico.dev');
+  assert.equal(row.contatos[0].nome, 'A');
+  assert.equal(row.contatos_escalares.complete, false);
 });
 
-test('HttpApiClient Cliente.update: projeta contatos e hidrata resposta', async () => {
+test('HttpApiClient Cliente.update: overflow não chama fetch', async () => {
+  let fetches = 0;
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async () => {
+      fetches += 1;
+      return new Response(JSON.stringify({ data: { id: 'x' } }), { status: 200 });
+    },
+  });
+  await assert.rejects(
+    () => client.entities.Cliente.update('cli-1', {
+      tipo: 'Pessoa Jurídica',
+      documento: '11.222.333/0001-81',
+      razao_social: 'X',
+      contatos: [
+        { tipo: 'E-mail', valor: 'a@sintetico.dev' },
+        { tipo: 'E-mail', valor: 'b@sintetico.dev' },
+      ],
+    }),
+    (err) => err?.code === CONTATOS_SCALAR_OVERFLOW,
+  );
+  assert.equal(fetches, 0);
+});
+
+test('HttpApiClient Cliente.update: projeção segura envia escalares; resposta não finge contatos[]', async () => {
   /** @type {Record<string, unknown>|null} */
   let body = null;
   const client = createHttpApiClient({
@@ -118,11 +197,12 @@ test('HttpApiClient Cliente.update: projeta contatos e hidrata resposta', async 
   assert.equal(body.contatos, undefined);
   assert.equal(body.email, 'a@b.c');
   assert.equal(body.telefone, '1133334444');
-  assert.ok(Array.isArray(updated.contatos));
-  assert.equal(updated.contatos[0].valor, 'a@b.c');
+  assert.equal(updated.contatos, undefined);
+  assert.equal(updated.contatos_escalares.complete, false);
+  assert.equal(updated.contatos_escalares.items[0].valor, 'a@b.c');
 });
 
-test('HttpApiClient Cliente.get: hidrata contatos a partir de escalares do BFF', async () => {
+test('HttpApiClient Cliente.get: contatos_escalares incompleto; sem contatos[] fabricado', async () => {
   const client = createHttpApiClient({
     baseUrl: 'http://localhost:3080',
     getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
@@ -136,39 +216,13 @@ test('HttpApiClient Cliente.get: hidrata contatos a partir de escalares do BFF',
     }), { status: 200, headers: { 'content-type': 'application/json' } }),
   });
   const row = await client.entities.Cliente.get('cli-get');
-  assert.equal(row.contatos.length, 2);
-  assert.equal(row.contatos[0].tipo, 'E-mail');
-  assert.equal(row.contatos[1].valor, '1155556666');
+  assert.equal(row.contatos, undefined);
+  assert.equal(row.contatos_escalares.complete, false);
+  assert.equal(row.contatos_escalares.items.length, 2);
 });
 
-test('HttpApiClient: resposta tardia após troca de sessão não é responsabilidade do adapter de payload', async () => {
-  // Scope capturado no request; adapter só projeta body — sessão/revogação é fail-closed no BFF.
-  let scopes = [];
-  let scope = { groupId: 'g-a', empresaId: 'e-a', token: 'tok-a' };
-  const client = createHttpApiClient({
-    baseUrl: 'http://localhost:3080',
-    getScope: () => {
-      scopes.push({ ...scope });
-      return scope;
-    },
-    fetchImpl: async (_url, init) => {
-      // Simula latência: sessão já rotacionou quando a resposta chega; body ainda reflete request.
-      scope = { groupId: 'g-b', empresaId: 'e-b', token: 'tok-b' };
-      const body = JSON.parse(init.body);
-      return new Response(JSON.stringify({
-        data: { id: 'cli-late', email: body.email, telefone: body.telefone, celular: body.celular },
-      }), { status: 200, headers: { 'content-type': 'application/json' } });
-    },
-  });
-  const result = await client.entities.Cliente.update('cli-late', {
-    tipo: 'Pessoa Física',
-    documento: '529.982.247-25',
-    nome: 'Late',
-    contatos: [{ tipo: 'E-mail', valor: 'late@sintetico.dev', principal: true }],
-  });
-  assert.equal(scopes[0].token, 'tok-a');
-  assert.equal(scope.token, 'tok-b');
-  assert.equal(result.email, 'late@sintetico.dev');
-  // UI deve usar assertScopeCurrent (já coberto em cadastros-contatos-enderecos-rbac);
-  // aqui provamos que o wire usou o scope do momento do envio.
+test('createContatosScalarOverflowError expõe losses para UI/auditoria', () => {
+  const err = createContatosScalarOverflowError(['multiplo_email', 'nome_perdido:0']);
+  assert.equal(err.code, CONTATOS_SCALAR_OVERFLOW);
+  assert.deepEqual(err.losses, ['multiplo_email', 'nome_perdido:0']);
 });

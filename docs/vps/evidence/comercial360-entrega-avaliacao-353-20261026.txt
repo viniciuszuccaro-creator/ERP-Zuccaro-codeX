@@ -1,0 +1,31 @@
+Comercial360 — entrega única para avaliação do proprietário
+============================================================
+Candidata: #353 · branch cursor/integracao-350-351-352-392b
+SHA a medir: tip após push deste lote (ver comentário PR / git rev-parse)
+Executor visual até medição Codespace: **runner Cursor** (não declarar Codespace).
+
+Roteiro navegável (SPA existente — não redesenhar)
+1. Abrir /Comercial (área azul-clara existente).
+2. Selecionar Grupo/Empresa sintéticos.
+3. Central / proposta: painéis com rascunho preservado entre abas.
+4. Cliente → histórico → itens → totais → pagamento (fluxos já no Comercial).
+5. Sem operações reais (NF/estoque/financeiro) na proposta de avaliação.
+
+Perguntas objetivas (sim/não + nota curta)
+- A hierarquia visual azul-clara permanece reconhecível?
+- Informações críticas ficam próximas (sem scroll excessivo entre painéis)?
+- Rascunho entre painéis/abas sobrevive à navegação da proposta?
+- Algo parece “tela inventada” vs. Comercial existente?
+- Aprovar adoção visual ampla? (sim / não / com ressalvas: ___)
+
+Limitações honestas
+- Contatos HTTP: só escalares seguros; overflow CONTATOS_SCALAR_OVERFLOW se
+  a UI tiver múltiplos/nome/obs (ver contatos-fidelidade evidence).
+- Codespace: validar o MESMO SHA; sem trocar branch Codex / sobrescrever WIP.
+- Dados: sintéticos identificados; sem carga operacional.
+
+Procedimento Codespace (coordenado)
+1. Codex confirma working tree / reservas.
+2. fetch tip candidata; medir HEAD == tip remoto.
+3. Servir build desse HEAD; percorrer roteiro; responder perguntas no PR.
+4. Sem medição → manter rótulo “capturas runner Cursor”.

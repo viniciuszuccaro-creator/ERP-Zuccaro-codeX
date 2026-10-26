@@ -102,9 +102,19 @@ async function mountForm(relPath, { initial, namePlaceholder, getValue }) {
       __esModule: true,
       default: (p) => ({ type: 'CadastroCodigoRegistroField', props: p, children: [] }),
     },
+    '@/components/common/FormWrapper': {
+      __esModule: true,
+      default: (p) => ({ type: 'FormWrapper', props: p, children: p?.children || [] }),
+    },
     '@/components/cadastros/useCadastroReopenOnIdentity': {
       __esModule: true,
       default: typeof hookFn === 'function' ? hookFn : hookFn.default,
+    },
+    zod: {
+      z: {
+        object: () => ({ safeParse: () => ({ success: true, data: {} }) }),
+        string: () => ({ min: () => ({}) }),
+      },
     },
     'lucide-react': new Proxy({}, { get: () => 'Icon' }),
   };
@@ -294,4 +304,74 @@ test('UnidadeMedidaForm: render + switch-reject boundId', async () => {
   form.props.onSubmit({ preventDefault() {} });
   assert.equal(submitted[0].id, 'u1');
   assert.notEqual(submitted[0].id, 'u2');
+});
+
+const formaInitial = {
+  id: 'fp1', codigo: '000001', descricao: 'PIX Vista', tipo: 'PIX',
+  updated_date: '2026-01-01T00:00:00Z', ativa: true,
+  percentual_desconto_padrao: 0, percentual_acrescimo_padrao: 0,
+  prazo_compensacao_dias: 0, maximo_parcelas: 1, intervalo_parcelas_dias: 30,
+};
+const setorInitial = {
+  id: 's1', codigo: '000001', nome: 'Revenda Alpha', descricao: 'Setor teste',
+  tipo_operacao: 'Revenda', updated_date: '2026-01-01T00:00:00Z', ativo: true,
+};
+
+test('FormaPagamentoForm: load + dirty refresh + switch-reject boundId (prova própria)', async () => {
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/FormaPagamentoForm.jsx', {
+    initial: formaInitial,
+    namePlaceholder: 'Ex: PIX, Boleto 30 dias',
+    getValue: (input) => input?.props?.value,
+  });
+  assert.equal(h.getName(), 'PIX Vista');
+  h.findInput('Ex: PIX, Boleto 30 dias').props.onChange({ target: { value: 'Rascunho PIX' } });
+  h.setConfirm(false);
+  h.render({
+    item: {
+      ...formaInitial, id: 'fp2', codigo: '000002', descricao: 'Boleto Beta',
+      updated_date: '2026-01-02T00:00:00Z',
+    },
+    onSubmit: (payload) => submitted.push(payload),
+  });
+  h.render();
+  assert.equal(h.getName(), 'Rascunho PIX');
+  assert.equal(h.confirms.length, 1);
+  // createElement não invoca o componente: type é a função FormWrapper importada.
+  const wrapper = h.walk().find((n) => n.props?.schema && typeof n.props?.onSubmit === 'function');
+  assert.ok(wrapper, 'FormWrapper.onSubmit (schema+onSubmit)');
+  await wrapper.props.onSubmit({ preventDefault() {} });
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].id, 'fp1');
+  assert.equal(submitted[0].descricao, 'Rascunho PIX');
+  assert.notEqual(submitted[0].id, 'fp2');
+});
+
+test('SetorAtividadeForm: load + switch-reject boundId (prova própria, não generalizar coorte)', async () => {
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/SetorAtividadeForm.jsx', {
+    initial: setorInitial,
+    namePlaceholder: 'Ex: Revenda, Almoxarifado, Fábrica',
+    getValue: (input) => input?.props?.value,
+  });
+  assert.equal(h.getName(), 'Revenda Alpha');
+  h.findInput('Ex: Revenda, Almoxarifado, Fábrica').props.onChange({ target: { value: 'Rascunho Setor' } });
+  h.setConfirm(false);
+  h.render({
+    item: {
+      id: 's2', codigo: '000002', nome: 'Fábrica Beta', updated_date: '2026-01-02T00:00:00Z', ativo: true,
+      tipo_operacao: 'Indústria',
+    },
+    onSubmit: (payload) => submitted.push(payload),
+  });
+  h.render();
+  assert.equal(h.getName(), 'Rascunho Setor');
+  const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function')
+    || h.walk().find((n) => n.type === 'Button' && /Salvar|salvar/i.test(String(n.children || [])));
+  assert.ok(form, 'submit path');
+  if (form.props?.onSubmit) form.props.onSubmit({ preventDefault() {} });
+  else await form.props.onClick();
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].id, 's1');
+  assert.notEqual(submitted[0].id, 's2');
 });
