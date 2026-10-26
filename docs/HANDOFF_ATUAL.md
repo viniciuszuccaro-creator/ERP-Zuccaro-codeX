@@ -1,3 +1,14 @@
+## CURSOR — CI tip `6d76d0b5` SUCCESS (2026-10-26 09:11 UTC-03:00)
+
+SHA `6d76d0b5fa44f75199fd4e4e157bb05af22c96cb` · CI **4781** (push) / **4782** (PR)
+6/6 SUCCESS (frontend×2 · backend×2 · compose×2).
+
+Correção typecheck `withHydratedContatos` sobre lote contatos/exportacao.
+P1 reopen (`a37b736f` / CI4777·4778) **continua** aguardando parecer Codex —
+CI deste tip não fecha o P1.
+
+Codespace: capturas = runner Cursor até medir SHA servido.
+
 ## CURSOR — contatos HTTP escalares + Fornecedor camadas + exportacao RBAC (2026-10-26 08:57 UTC-03:00)
 
 Tip anterior P1: `a37b736f` (CI4777/4778 SUCCESS). Pedido `@codex review` no P1
