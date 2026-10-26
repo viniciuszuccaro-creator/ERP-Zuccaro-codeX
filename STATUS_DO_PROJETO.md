@@ -1,3 +1,11 @@
+## CURSOR — CI tip `e30cffcc` SUCCESS (2026-10-26 11:43 UTC-03:00)
+
+SHA `e30cffcc` · CI **4805** (push) / **4806** (PR) 6/6 SUCCESS · #353 MERGEABLE/CLEAN vs `82557565`.
+
+Fecha baselines do lote azul-claro/044: PedidosTab fora do sky (pin proof suites);
+Cliente/Forma/Contatos sky; explain 044 + remainder. Contatos `e9d7ef15` intacto.
+Não demonstrado Codespace; não operacional VPS. Sem merge/deploy/carga.
+
 ## CURSOR — CI baseline + PedidosTab fora do sky (2026-10-26 ~11:40 UTC-03:00)
 
 `b6ee38f3` falhou só no freeze `runtime-proof-source` (suite audit PedidosTab
