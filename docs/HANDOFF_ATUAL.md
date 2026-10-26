@@ -1,3 +1,11 @@
+## CURSOR — parecer e916d467 + RegiaoAtendimento (2026-10-26)
+
+Remarge #353 ← Codex `e916d467` em `8d0580e1` (branch Codex intacta). Parecer 4/4 APROVADO no código real (Marca updated_at, contatos absence, sessionIdentity, stage48 dois hunks). WIP leitores Orçamento Codespace **não sincronizado/não alterado**.
+
+Pacote indep.: `RegiaoAtendimentoForm` — reopen HTTP `updated_at`, `mapRegiaoToForm` anti-wipe aninhados, boundId no submit. Testes `cursor-regiao-reopen` 8 PASS. Sem deploy/carga/merge main.
+
+(2026-10-26 18:14 America/Sao_Paulo)
+
 ## Handoff vigente - candidata composta, ainda nao operacional (2026-10-26)
 
 Fechamento final: raiz 2396 PASS/0 FAIL/0 SKIP, audit/lint/type/build/diff exit0; backend composto 551 PASS/0 FAIL/26 SKIP e type/build exit0 reutilizados, principals PG 1 PASS/0 FAIL/0 SKIP com contraprova real. Guarda integral mantem os hashes anteriores e limita o delta de contatos a duas substituicoes unicas, com negativas dentro/fora do escopo. Harness de navegador e container proprios encerrados (exit0/cleanup verificado); nao ha trabalho de teste anunciado como ativo. Publicacao/CI por SHA no recibo existente da #344. A prova de navegador foi sobre a arvore composta ainda dirty (HEAD-base 6ba10732), nao uma nova imagem operacional ou homologacao completa.

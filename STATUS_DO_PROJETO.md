@@ -1,3 +1,33 @@
+## CURSOR — parecer e916d467 + pacote RegiaoAtendimento (2026-10-26)
+
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Remarge tip | **`8d0580e1`** (parents `1d3540ff` + Codex **`e916d467`**) |
+| Branch Codex | **não editada** |
+| WIP Codespace | leitores Orçamento (ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco) **reservados** — não tocados |
+| Pacote indep. | `RegiaoAtendimentoForm` reopen HTTP `updated_at` + preservação aninhados |
+| Provas | `tests/cursor-regiao-reopen.test.js` **8 PASS / 0 FAIL** |
+| Preservado | P1 CodigoField/contatos/guardas ENCERRADOS; Condicao ID-only pin; sem merge/deploy/carga |
+
+### Parecer por SHA — composição Codex `e916d467` (CI4864/4865)
+
+1. **Marca `updated_at` reopen** — **APROVADO** em `e916d467` (`useCadastroReopenOnIdentity`: `recordVersion = updated_at ?? updated_date`). Contraprova no tip composto: reopen Marca HTTP 2 testes + suite behavioral PASS. Sem defeito reproduzível no código publicado.
+2. **Ausência de `contatos` HTTP** — **APROVADO** em `e916d467` (`CadastroClienteCompleto`: omit quando `undefined`; não fabrica `[]`). Guarda stage48 limita a dois hunks exatos. Adapter/boundary PASS.
+3. **`sessionIdentity` Orçamento** — **APROVADO** em `e916d467` (`OrcamentosTab` transporte usa `sessionIdentity` das guardas). Contraprova `orcamento-component-behavior` PASS. **Reservado:** leitores canônicos dos seletores ainda WIP Codespace — não revisados/alterados aqui.
+4. **Guarda stage48 (dois hunks)** — **APROVADO** em `e916d467` (`clienteContactPresenceRemainder` + contraprovas omissão/repetição/Object.assign/alteração externa; golden hash preservado). Suite `cadastro-query-payload-boundaries` PASS no remarge.
+
+Remarge candidata #353: `8d0580e1` (sem editar branch Codex). Suites dirigidas pós-remarge: 66 PASS (boundaries+contatos+orcamento+reopen behavioral).
+
+### Pacote independente — RegiaoAtendimento (fora reservas)
+
+Defeito reproduzível pré-fix: reopen só observava `updated_date`; HTTP com `updated_at` não reidratava; payload parcial omitindo `logistica`/`comercial` podia wipe aninhados.
+Correção no existente: `mapRegiaoToForm` + versão `updated_at ?? updated_date` + submit ancora `prevIdRef` (boundId). Sem módulo paralelo; sem tocar Orçamento/Condicao/leitores.
+
+Próximo independente (sem esperar leitores): continua matriz — HistóricoProdutos ainda `filterInContext("Pedido")` em HTTP; OperadorCaixa/CondicaoComercialForm sem reopen canônico. Coordenar leitores com Codex quando publicar.
+
+(Atualizado 2026-10-26 18:14 America/Sao_Paulo)
+
 ## Estado vigente - composicao e navegador isolado (2026-10-26)
 
 - Fechamento local final: raiz **2396 PASS / 0 FAIL / 0 SKIP**; audit:baseline, lint, typecheck, build e diff-check exit0. Backend composto **577 total / 551 PASS / 0 FAIL / 26 SKIP**, type/build exit0 (reutilizados sem novo delta backend). Prova PG de principals **1 PASS / 0 FAIL / 0 SKIP**, contraprova INHERIT rejeitada. A falha intermediaria da guarda stage48 foi resolvida aceitando somente os dois hunks exatos comprovados, mantendo o golden original e acrescentando contraprovas de omissao/repeticao/efeito colateral/alteracao externa. Nenhum teste removido ou pulado. Recibo de publicacao/CI por SHA permanece na #344.
