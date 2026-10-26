@@ -1,3 +1,16 @@
+## CURSOR — tip `66ff41b1` CI SUCCESS (Regiao + remarge e916d467) (2026-10-26)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`66ff41b1`** |
+| Remarge | `8d0580e1` ← Codex `e916d467` |
+| CI | 6/6 **SUCCESS** (sem falhas) |
+| Parecer | 4/4 APROVADO em `e916d467` |
+| Pacote | RegiaoAtendimento reopen HTTP; leitores Orçamento intactos |
+| Aceite | CI ≠ merge/deploy/carga; WIP Codespace permanece reservado |
+
+(2026-10-26 18:21 America/Sao_Paulo)
+
 ## CURSOR — parecer e916d467 + pacote RegiaoAtendimento (2026-10-26)
 
 | Campo | Valor |
