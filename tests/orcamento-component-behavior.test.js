@@ -215,8 +215,28 @@ test('347 proposta no editor real usa somente memória e bloqueia gravação mes
   const aside=h.find(n=>n.type==='OrcamentoProposalAside');
   assert.ok(aside.props.cliente.includes('SINTÉTICO'));assert.equal(aside.props.itens[0].descricao,'Produto SINTÉTICO da proposta');
   assert.equal(aside.props.itens[0].preco_unitario,'10.00');assert.equal(aside.props.totals.total,'10.000000');
+  assert.equal(aside.props.clienteCodigo,'000001');
+  assert.equal(aside.props.clienteIdTecnico,'preview-cliente');
+  assert.equal(aside.props.itens[0].produto_codigo,'000001');
+  assert.equal(aside.props.historicoIlustrativo.length,2);
+  assert.equal(aside.props.formasPagamentoIlustrativas.length,2);
   assert.ok(h.plans.slice(-2).every(plan=>plan.enabled===false));
   assert.equal(h.button('Salvar orçamento').props.disabled,true);await h.button('Salvar orçamento').props.onClick();assert.equal(h.calls.length,0);
+});
+test('347 clique duplo em Novo orçamento não zera rascunho já aberto', async () => {
+  const h = await mount();
+  h.setProps({ ...cpa, proposalMode: true });
+  h.render();
+  h.render();
+  h.button('Novo orçamento').props.onClick();
+  h.render();
+  h.find((n) => n.type === 'Select' && n.props['data-action'] === 'orcamento-cliente').props.onValueChange('preview-vinculo');
+  h.render();
+  h.button('Novo orçamento').props.onClick();
+  h.render();
+  const aside = h.find((n) => n.type === 'OrcamentoProposalAside');
+  assert.ok(aside.props.cliente.includes('SINTÉTICO'));
+  assert.equal(aside.props.clienteCodigo, '000001');
 });
 test('347 entrar ou sair da proposta invalida callbacks antigos sem alterar o orçamento operacional',async()=>{
   const h=await mount();h.title('Editar').props.onClick();h.render();const captured=h.button('Salvar orçamento').props.onClick;

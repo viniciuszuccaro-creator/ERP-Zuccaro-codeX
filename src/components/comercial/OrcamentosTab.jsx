@@ -147,7 +147,15 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
     setFormOpen(false); setDirty(false); setEditing(null);
   };
-  const openCreate = () => { formScope.current = renderedScope.current; setEditing(null); setForm(emptyForm()); setDirty(false); setFormOpen(true); };
+  const openCreate = () => {
+    // Clique duplo / segundo "Novo" não abre outro fluxo nem zera rascunho já em criação.
+    if (formOpen && !editing) return;
+    formScope.current = renderedScope.current;
+    setEditing(null);
+    setForm(emptyForm());
+    setDirty(false);
+    setFormOpen(true);
+  };
   const openEdit = (row) => {
     if (!canEdit(row)) return;
     formScope.current = renderedScope.current;
@@ -171,7 +179,12 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     const produto = masters.produtos.find((item) => item.id === produtoId);
     const unidade = masters.unidades.find((item) => item.id === produto?.unidade_medida_id);
     setForm((current) => ({ ...current, itens: current.itens.map((item, i) => i === index ? {
-      ...item, ...(proposalMode ? { preco_unitario:produto?.preco_venda || '0' } : {}), produto_id: produtoId, unidade_id: produto?.unidade_medida_id || '', descricao: produto?.descricao || produto?.nome || '', unidade_sigla: unidade?.sigla || '',
+      ...item,
+      ...(proposalMode ? { preco_unitario: produto?.preco_venda || '0', produto_codigo: produto?.codigo || '' } : {}),
+      produto_id: produtoId,
+      unidade_id: produto?.unidade_medida_id || '',
+      descricao: produto?.descricao || produto?.nome || '',
+      unidade_sigla: unidade?.sigla || '',
     } : item) }));
     setDirty(true);
   };
@@ -287,9 +300,23 @@ const convertToPedido = async () => {
       <div className="space-y-2"><div className="flex flex-wrap items-end justify-between gap-2"><h3 className="font-semibold">Itens</h3><div className="flex flex-wrap gap-2 items-end"><div><Label htmlFor="orc-produto-busca" className="sr-only">Buscar produto</Label><Input id="orc-produto-busca" value={produtoQuery} maxLength={80} placeholder="Filtrar produto por código" onChange={(e) => setProdutoQuery(e.target.value)} data-action="orcamento-busca-produto" className="w-56" /></div><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className={proposalMode ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 border rounded-md p-3" : "grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"}><div className={proposalMode ? "sm:col-span-2" : "md:col-span-3"}><Label>Produto</Label><Select data-action="orcamento-produto" value={item.produto_id} onValueChange={(v) => selectProduct(index, v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{produtoOptions.map((p) => <SelectItem key={p.id} value={p.id}>{produtoPickerLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className={proposalMode ? "sm:col-span-2" : "md:col-span-3"}><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly title={ORCAMENTO_PERSISTENCE_GAPS.unidade_alternativa} /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} title="Preview local; servidor aplica tabela autorizada" /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
       </div>
-      {proposalMode && <OrcamentoProposalAside cliente={form.cliente_empresa_id ? clienteLabel(form.cliente_empresa_id) : ''} itens={form.itens} totals={totals}
-        condicao={form.condicao_pagamento_id ? condicaoLabel(form.condicao_pagamento_id) : ''}
-        tabela={masters.tabelas.find(item=>item.id === form.tabela_preco_id)?.nome} />}
+      {proposalMode && (() => {
+        const link = masters.clientesEmpresa.find((item) => item.id === form.cliente_empresa_id);
+        const clienteRow = link ? clientesById.get(link.cliente_id) : null;
+        return (
+          <OrcamentoProposalAside
+            cliente={form.cliente_empresa_id ? clienteLabel(form.cliente_empresa_id) : ''}
+            clienteCodigo={clienteRow?.codigo || link?.codigo || ''}
+            clienteIdTecnico={clienteRow?.id || ''}
+            itens={form.itens}
+            totals={totals}
+            condicao={form.condicao_pagamento_id ? condicaoLabel(form.condicao_pagamento_id) : ''}
+            tabela={masters.tabelas.find((item) => item.id === form.tabela_preco_id)?.nome}
+            historicoIlustrativo={proposalMasters.historicoIlustrativo || []}
+            formasPagamentoIlustrativas={proposalMasters.formasPagamentoIlustrativas || []}
+          />
+        );
+      })()}
       </div>
       <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={proposalMode || submitting || mastersQuery.isLoading}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>

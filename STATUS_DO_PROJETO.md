@@ -199,7 +199,7 @@ Codex será registrado no recibo de fechamento conforme houver item executável.
 
 ## #344 / Comercial360 — Pedido exige motivo de cancelamento (2026-10-25)
 
-Pacote D autorizado pelo proprietário, reserva344/6399158275, base8e68484b.
+Pacote D autorizado pelo proprietário, reserva344/6399158275, base0c18d995.
 Contrato Onda5 já exige motivo; UI canônica já o coleta, mas PedidoService.cancel
 aceitava undefined. Contraprova no teste existente falhou no código anterior
 (Missing expected rejection); correção remove apenas a exceção para ausência.
@@ -220,6 +220,15 @@ Mesmo Codespace/branch Codex e trava exclusiva própria; sem dados reais,
 carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
+
+## CURSOR — #350 merge consolidação `0c18d995` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`0c18d995`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
 
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
@@ -292,6 +301,17 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
+
+## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03) |
+| tip anterior | `2d1f289f` · CI SUCCESS · mergeable=CONFLICTING / DIRTY vs tip atual |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+| parecer CONT-02/03 | comentário independente na PR#342 por SHA (`4e02bc73` / `3eccd369`) |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
@@ -491,6 +511,36 @@ campos nem promover recibos revertidos. Os cinco gates abaixo continuam abertos.
 Este lote corrige o defeito do servico; nao declara essa ligacao completa,
 carga operacional, merge, deploy, migration ou homologacao. Reservas deste
 lote sao liberadas apos commit/push; revisao independente permanece pendente.
+
+## CURSOR — #350 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`4ab7a61b`** |
+| tip anterior | `8ba3b5bf` CI SUCCESS · conflito docs vs consolidação |
+| conflitos | STATUS/HANDOFF — ambos lados preservados |
+| fora | branch Codex intocada · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+
+## CURSOR — #347 PR350 CI verde `1784dbf6` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip | `1784dbf6` |
+| CI | 6/6 SUCCESS · mergeable clean vs `0b8bafa7` |
+| base | consolidação `0b8bafa7` |
+| próxima | recuperação cadastros/submódulos (fora #344) |
+
+## CURSOR — #347 typecheck + merge `0b8bafa7` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | consolidação tip `0b8bafa7` |
+| PR | #350 draft |
+| fix | `proposalMasters` para campos ilustrativos (TS2339) |
+| conflitos docs | resolvidos preservando Cursor+#344 |
+| visual | pendente owner |
+| Codespace prévia | não comprovada neste runner |
 
 ## #344 - revisao assistida e candidato operacional (2026-10-24)
 

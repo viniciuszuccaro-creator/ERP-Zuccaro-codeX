@@ -201,7 +201,7 @@ Codex será registrado no recibo de fechamento conforme houver item executável.
 
 ## #344 / Comercial360 — Pedido exige motivo de cancelamento (2026-10-25)
 
-Pacote D autorizado pelo proprietário, reserva344/6399158275, base8e68484b.
+Pacote D autorizado pelo proprietário, reserva344/6399158275, base0c18d995.
 Contrato Onda5 já exige motivo; UI canônica já o coleta, mas PedidoService.cancel
 aceitava undefined. Contraprova no teste existente falhou no código anterior
 (Missing expected rejection); correção remove apenas a exceção para ausência.
@@ -222,6 +222,15 @@ Mesmo Codespace/branch Codex e trava exclusiva própria; sem dados reais,
 carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
+
+## CURSOR — #350 merge consolidação `0c18d995` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`0c18d995`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
 
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
@@ -294,6 +303,20 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
+
+## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03 FECHADA CI4524/4525) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
+| tip anterior | `2d1f289f` · CI SUCCESS · API `mergeable=CONFLICTING` / `mergeStateStatus=DIRTY` |
+| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — Cursor+#344 preservados |
+| fora de escopo | branch Codex intocada · sem force-push · scripts/legado só via merge · sem merge/deploy |
+| prévia | DEV `?proposta=comercial360` · sintético · aprovação visual pendente |
+| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
+| parecer CONT-02/03 | publicado na PR#342 (só leitura; sem editar branch Codex) |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
@@ -493,6 +516,52 @@ campos nem promover recibos revertidos. Os cinco gates abaixo continuam abertos.
 Este lote corrige o defeito do servico; nao declara essa ligacao completa,
 carga operacional, merge, deploy, migration ou homologacao. Reservas deste
 lote sao liberadas apos commit/push; revisao independente permanece pendente.
+
+## CURSOR — #350 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
+| base merge | `codex/consolidacao-infra-20261017` tip **`4ab7a61b`** (confirmado) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
+| tip anterior | `8ba3b5bf` · CI4488/4489 SUCCESS · mergeState DIRTY vs consolidação |
+| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — Cursor+#344 preservados |
+| fora de escopo | branch Codex intocada · scripts/legado só via merge · sem merge/deploy |
+| prévia | DEV `?proposta=comercial360` · sintético · aprovação visual pendente |
+| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
+
+## CURSOR — #347 PR350 CI verde (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip | **`1784dbf6`** |
+| CI | 6/6 SUCCESS (frontend + backend + composição) |
+| mergeable | **clean** vs consolidação `0b8bafa7` |
+| PR | #350 draft — typecheck corrigido · conflitos docs resolvidos |
+| Codespace prévia | ainda **não** comprovada neste runner |
+| próxima | pacote cadastros/submódulos fora da reserva #344 · reutilizar matriz erp-integra-novo |
+
+## CURSOR — #347 CI typecheck + rebase consolidação (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| ambiente | Cursor Cloud `/workspace` · Codespace não montado neste runner |
+| base merge | `codex/consolidacao-infra-20261017` tip **`0b8bafa7`** (confirmado) |
+| branch | `cursor/comercial360-proposta-347-evolucao-392b` · PR #350 |
+| causa CI4480/4481 | TS2339: `historicoIlustrativo`/`formasPagamentoIlustrativas` lidos de `masters` tipado só operacional |
+| correção | props da prévia leem `proposalMasters` (fixture DEV); sem supressão/@ts-ignore |
+| conflitos | `docs/HANDOFF_ATUAL.md` + `STATUS_DO_PROJETO.md` — ambos os lados preservados |
+| fora de escopo | branch Codex intocada · #344 · VPS · redesign amplo |
+| prévia | DEV `?proposta=comercial360` · sintético · ações operacionais bloqueadas · aprovação visual pendente |
+| Codespace | **não** declarar prévia integrada até execução comprovada no Codespace |
+
+## CURSOR — #347 evolução prévia Comercial (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| pacote | Evolução da proposta #347 em `OrcamentosTab`/`OrcamentoProposalAside` existentes |
+| mudança | Painéis cliente/produtos/resumo/ações · código+ID técnico · anti clique-duplo · fixture ilustrativa |
+| testes | `comercial-proposal-aside` + `orcamento-component-behavior` #347 |
 
 ## Continuidade atual #344 - revisao assistida e preparacao (2026-10-24)
 
