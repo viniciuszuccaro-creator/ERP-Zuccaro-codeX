@@ -143,11 +143,13 @@ export function hydrateContatosFromScalars(row) {
  */
 export function withHydratedContatos(row) {
   if (!row || typeof row !== 'object' || Array.isArray(row)) return row;
-  if (Array.isArray(row.contatos)) return row;
-  const contatos = hydrateContatosFromScalars(row);
+  /** @type {Record<string, unknown>} */
+  const record = /** @type {Record<string, unknown>} */ (row);
+  if (Array.isArray(record.contatos)) return record;
+  const contatos = hydrateContatosFromScalars(record);
   // Sem escalares: não injeta contatos:[] (listagens/count preservam shape do BFF).
-  if (contatos.length === 0) return row;
-  return { ...row, contatos };
+  if (contatos.length === 0) return record;
+  return { ...record, contatos };
 }
 
 /**
