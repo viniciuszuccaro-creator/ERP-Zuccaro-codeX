@@ -1,8 +1,9 @@
 Roteiro avaliação visual — candidata #353 / issue #347
 ======================================================
-SHA tip candidata: 836a6d2d462f75b22003268c37c6c48cfbba272d (+ tip seguinte com testes Banco/Cargo)
-Base consolidação tip: 79d002a3a6b0d0e5a2e6ea4f2372930737ca4656
-Ambiente deste registro: Cursor Cloud Agent
+SHA tip candidata: 9b23d72dddbdcb53cc8abe616e2b9ac82b12a737 (+ tip contatos scope / coorte)
+Base consolidação tip: 118e8438f6ba5c5ae97a31482e6a083fb98fb81d
+Ambiente deste registro: Cursor Cloud Agent runner (não Codespace)
+Procedimento mínimo Codespace: checkout tip candidata; npm run dev; abrir /Comercial?proposta=comercial360; comparar SHA `git rev-parse HEAD` com tip remoto; rodar scripts/comercial360-preview-smoke.mjs se vite:5173.
 Codespace: NÃO comprovado neste turno (sem URL/SHA servido medido aqui)
 
 Pré-condições

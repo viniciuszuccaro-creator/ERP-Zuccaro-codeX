@@ -1177,6 +1177,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               <GerenciarContatosClienteForm
                 contatos={formData.contatos || []}
                 onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}
+                assertScopeCurrent={assertFormScopeCurrent}
               />
             </TabsContent>
 
@@ -1184,6 +1185,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               <GerenciarEnderecosClienteForm
                 enderecos={formData.locais_entrega || []}
                 onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}
+                assertScopeCurrent={assertFormScopeCurrent}
               />
             </TabsContent>
 

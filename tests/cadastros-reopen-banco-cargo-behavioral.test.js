@@ -242,3 +242,56 @@ test('CargoForm: switch-reject — submit usa boundId A', async () => {
   assert.equal(submitted[0].nome_cargo, 'Rascunho A');
   assert.notEqual(submitted[0].id, 'c2');
 });
+
+
+const deptInitial = {
+  id: 'd1', codigo: '000001', nome: 'Dept Alpha', updated_date: '2026-01-01T00:00:00Z', ativo: true,
+};
+const unidadeInitial = {
+  id: 'u1', codigo: '000001', sigla: 'KG', nome_completo: 'Quilograma', updated_date: '2026-01-01T00:00:00Z', ativo: true,
+};
+
+test('DepartamentoForm: switch-reject — submit usa boundId A', async () => {
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/DepartamentoForm.jsx', {
+    initial: deptInitial,
+    namePlaceholder: 'Comercial, TI, RH...',
+    getValue: (input) => input?.props?.value,
+  });
+  // Departamento may use nome field - find first text input with value
+  const nomeInput = h.findInput('Comercial, TI, RH...');
+  assert.ok(nomeInput, 'campo nome departamento');
+  nomeInput.props.onChange({ target: { value: 'Rascunho A' } });
+  h.setConfirm(false);
+  h.render({
+    item: { id: 'd2', codigo: '000002', nome: 'Dept Beta', updated_date: '2026-01-02T00:00:00Z', ativo: true },
+    onSubmit: (payload) => submitted.push(payload),
+  });
+  h.render();
+  const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
+  form.props.onSubmit({ preventDefault() {} });
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].id, 'd1');
+  assert.notEqual(submitted[0].id, 'd2');
+});
+
+test('UnidadeMedidaForm: render + switch-reject boundId', async () => {
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/UnidadeMedidaForm.jsx', {
+    initial: unidadeInitial,
+    namePlaceholder: 'Quilograma, Metro, Unidade...',
+    getValue: (input) => input?.props?.value,
+  });
+  assert.equal(h.getName(), 'Quilograma');
+  h.findInput('Quilograma, Metro, Unidade...').props.onChange({ target: { value: 'Rascunho A' } });
+  h.setConfirm(false);
+  h.render({
+    item: { id: 'u2', codigo: '000002', sigla: 'MT', nome_completo: 'Metro', updated_date: '2026-01-02T00:00:00Z', ativo: true },
+    onSubmit: (payload) => submitted.push(payload),
+  });
+  h.render();
+  const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
+  form.props.onSubmit({ preventDefault() {} });
+  assert.equal(submitted[0].id, 'u1');
+  assert.notEqual(submitted[0].id, 'u2');
+});

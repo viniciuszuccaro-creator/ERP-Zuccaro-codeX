@@ -14,9 +14,13 @@ import usePermissions from "@/components/lib/usePermissions";
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
  * Lacuna vs erp-integra-novo: botões de mutação sem RBAC fail-closed.
  */
-export default function GerenciarContatosClienteForm({ contatos = [], onChange }) {
+export default function GerenciarContatosClienteForm({ contatos = [], onChange, assertScopeCurrent }) {
   const { canEdit } = usePermissions();
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const assertScope = () => {
+    if (typeof assertScopeCurrent !== "function") return;
+    assertScopeCurrent();
+  };
   const [dialogAberto, setDialogAberto] = useState(false);
   const [contatoEditando, setContatoEditando] = useState(null);
 
@@ -46,6 +50,10 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange }
       toast.error("Sem permissão para editar contatos do cliente.");
       return;
     }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
     resetForm();
     setDialogAberto(true);
   };
@@ -53,6 +61,10 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange }
   const handleSalvarContato = () => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar contatos do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
     }
     if (!novoContato.valor) {
@@ -86,6 +98,10 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange }
       toast.error("Sem permissão para editar contatos do cliente.");
       return;
     }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
     setContatoEditando(index);
     setNovoContato({ ...contatos[index] });
     setDialogAberto(true);
@@ -94,6 +110,10 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange }
   const handleExcluirContato = (index) => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar contatos do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
     }
     const contatosAtualizados = contatos.filter((_, i) => i !== index);

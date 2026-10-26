@@ -127,26 +127,57 @@ test('UI enderecos: sem permissão não muta', async () => {
   assert.ok(state.errors.some((e) => /permiss/i.test(e)));
 });
 
-test('CadastroClienteCompleto: mutationFn real exige podeEditar antes de updateInContext', async () => {
+test('CadastroClienteCompleto: saveMutation exige podeEditar e passa assertScope aos gerenciadores', async () => {
   const text = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const start = text.indexOf('mutationFn: async (data) => {');
   assert.ok(start > 0, 'saveMutation.mutationFn deve existir');
   const slice = text.slice(start, start + 900);
   assert.match(slice, /if \(!podeEditar\) throw new Error\("Seu perfil nao permite editar clientes\."\);/);
   assert.match(slice, /return updateInContext\('Cliente'/);
+  assert.match(text, /assertScopeCurrent=\{assertFormScopeCurrent\}/);
+});
 
-  const updates = [];
-  const mutationFnDenied = async (data) => {
-    const podeEditar = false;
-    const updateInContext = async (_e, _id, payload) => { updates.push(payload); return payload; };
-    if (!podeEditar) throw new Error('Seu perfil nao permite editar clientes.');
-    return updateInContext('Cliente', data.id, data);
-  };
-  await assert.rejects(
-    () => mutationFnDenied({ id: 'c1', contatos: [{ nome: 'X', valor: '1', tipo: 'Telefone' }] }),
-    /nao permite editar/i,
-  );
-  assert.equal(updates.length, 0, 'updateInContext não pode rodar sem podeEditar');
+test('UI contatos: mudança de Grupo/sessão bloqueia excluir no componente real', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarContatosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const contatos = [{ nome: 'A', tipo: 'Telefone', valor: '11', principal: true }];
+  let scopeAlive = true;
+  render({
+    contatos,
+    onChange: (next) => state.changes.push(next),
+    assertScopeCurrent: () => {
+      if (!scopeAlive) throw new Error('Contexto alterado durante a edição. Reabra o cadastro antes de salvar.');
+    },
+  });
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.contato.excluir');
+  assert.equal(del?.disabled, false);
+  // Resposta tardia / troca de sessão após render: handler real não muta.
+  scopeAlive = false;
+  del.onClick();
+  assert.equal(state.changes.length, 0);
+  assert.ok(state.errors.some((e) => /contexto alterado|reabra/i.test(e)));
+});
+
+test('UI enderecos: mudança de Grupo/sessão bloqueia excluir no componente real', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const enderecos = [{ apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' }];
+  let scopeAlive = true;
+  render({
+    enderecos,
+    onChange: (next) => state.changes.push(next),
+    assertScopeCurrent: () => {
+      if (!scopeAlive) throw new Error('Contexto alterado durante a edição. Reabra o cadastro antes de salvar.');
+    },
+  });
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.endereco.excluir');
+  assert.equal(del?.disabled, false);
+  scopeAlive = false;
+  del.onClick();
+  assert.equal(state.changes.length, 0);
+  assert.ok(state.errors.some((e) => /contexto alterado|reabra/i.test(e)));
 });
 
 test('salvar contato principal: botão gated + algoritmo real limpa duplicidade', async () => {

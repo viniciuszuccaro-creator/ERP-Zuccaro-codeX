@@ -17,9 +17,13 @@ import usePermissions from "@/components/lib/usePermissions";
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
  * Lacuna vs erp-integra-novo / Regra-Mãe: mutações sem RBAC fail-closed.
  */
-export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange }) {
+export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange, assertScopeCurrent }) {
   const { canEdit } = usePermissions();
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const assertScope = () => {
+    if (typeof assertScopeCurrent !== "function") return;
+    assertScopeCurrent();
+  };
   const [dialogAberto, setDialogAberto] = useState(false);
   const [enderecoEditando, setEnderecoEditando] = useState(null);
 
@@ -73,6 +77,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
     resetForm();
     setDialogAberto(true);
   };
@@ -80,6 +88,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
   const handleSalvarEndereco = () => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
     }
     if (!novoEndereco.logradouro || !novoEndereco.numero) {
@@ -126,6 +138,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
+      return;
+    }
     setEnderecoEditando(index);
     setNovoEndereco({ ...enderecos[index] });
     setDialogAberto(true);
@@ -134,6 +150,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
   const handleExcluirEndereco = (index) => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    try { assertScope(); } catch (error) {
+      toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
     }
     const enderecosAtualizados = enderecos.filter((_, i) => i !== index);

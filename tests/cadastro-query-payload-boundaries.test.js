@@ -17,7 +17,7 @@ function once(source, current, previous) {
 }
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', '65aad99e4b57c9bbadbcd9c21c0288627056833d022d7510ab9e1b41635a7aca'],
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'd8dc123e87b3f76b4ecd67dbff6794969b9c3ff91cb0a1711310d6903dc56388'],
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];
