@@ -1,0 +1,43 @@
+Handoff Codespace — validar EXATAMENTE a candidata #353
+=======================================================
+Objetivo: medir o SHA servido no Codespace do Codex sem trocar branch
+nem sobrescrever o checkout ativo dele.
+
+Reserva
+- Checkout ativo do Codex: NÃO resetar / NÃO checkout paralelo destrutivo.
+- Ambiguidade documento (findByDocumento LIMIT 1) e legado #344: só Codex.
+- Sem merge/deploy/carga neste handoff.
+
+Pré-flight (Cursor runner — já medido)
+- Branch candidata: cursor/integracao-350-351-352-392b
+- Tip docs/evidence anterior: 0bd89333 (CI frontend+backend SUCCESS)
+- Este lote acrescenta commits revisáveis na MESMA #353 (ver PR comments).
+
+Janela com Codex (GitHub)
+1. Comentar na #353 pedindo janela de 15–20 min no Codespace existente.
+2. Codex confirma: `git status -sb` limpo OU lista arquivos reservados dele.
+3. Sem `git reset --hard` / sem `git checkout` para outra branch.
+4. Somente: fetch + fast-forward da candidata se o tip remoto for ancestral
+   direto e o working tree continuar limpo; senão, validar por worktree/SHA
+   separado acordado — NÃO sobrescrever WIP Codex.
+
+Comandos de medição (obrigatórios antes de declarar “prévia atualizada”)
+```bash
+git fetch origin cursor/integracao-350-351-352-392b
+git rev-parse HEAD
+git rev-parse origin/cursor/integracao-350-351-352-392b
+# Servidor Vite / preview:
+# abrir app e conferir banner/build id OU:
+curl -s http://127.0.0.1:5173/ | head -c 200
+# Registrar SHA medido no comentário da #353 (não no chat apenas).
+```
+
+Critério de aceite Codespace
+- HEAD local == tip remoto da #353 no momento da medição
+- `npm run dev` (ou processo já ativo) serve esse HEAD
+- Abrir /Comercial?proposta=comercial360 e responder as 5 perguntas do
+  arquivo comercial360-proposta-353-avaliacao-visual-perguntas-20261026.txt
+
+Bloqueios
+- Não declarar URL Codespace “atualizada” sem o SHA medido no comentário.
+- Não tocar publication/legado344/documento LIMIT 1.

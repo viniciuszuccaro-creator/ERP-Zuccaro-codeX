@@ -1,3 +1,18 @@
+## CURSOR — #353 pacotes 1–4 (cadastros/visual/matriz/registros) (2026-10-26)
+
+Base verde: `0bd89333`. Mesma candidata #353 / branch
+`cursor/integracao-350-351-352-392b`. Sem parallel / sem micro-PR useConfirm.
+
+| pacote | entrega |
+|---|---|
+| 1 cadastros | behavioral Cliente/Fornecedor Completo + contatos late-save + lacuna HTTP contatos |
+| 2 visual | perguntas + handoff Codespace (SHA obrigatório antes de declarar atualizado) |
+| 3 recuperação | Relatorios `matriz` trigger+RBAC no MatrizAdequacaoFase3 existente |
+| 4 registros | investigação: schema Fornecedor ausente; staging privado fora deste runner |
+
+Coordenaçao Codespace: comentar #353; Codex confirma working tree antes de FF.
+Documento LIMIT 1 + #344: **não** tocados (Codex).
+
 ## CURSOR — #353 CI verde e670c1a2 + evidência Comercial360 runner (2026-10-26)
 
 Candidata MERGEABLE/CLEAN; frontend+backend+compose SUCCESS.

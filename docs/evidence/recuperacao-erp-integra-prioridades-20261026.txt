@@ -36,6 +36,15 @@ Próximas recuperações de CÓDIGO (operacional), sem merge/deploy
 3. EmpresaOnboarding: mapear para fluxo Empresas/onboarding existente
 4. Nunca restaurar OAuthConsent sem parecer de auth
 
+Atualização #353 (mesmo dia) — recuperação entregue no canônico
+- Relatorios.jsx: TabsContent `matriz` existia órfã (sem TabsTrigger).
+  Restaurado trigger + gate `canViewRelatorios && !permissionsLoading`,
+  `data-permission="Relatorios.visualizar"`, `secureTab` inclui `matriz`.
+  Componente existente: MatrizAdequacaoFase3 (lazy). Sem tela paralela.
+  Boundary #348: hunks autorizados em primitiveUiBoundaryRemainder.
+- NÃO restaurado: Documentacao (removido de propósito 893ef5e0),
+  EmpresaOnboarding/OAuthConsent (auth permissiva Base44 — não copiar).
+
 Fora de escopo deste lote
 - Carga operacional legado #344
 - Cópia de Auth/RBAC permissivo da referência

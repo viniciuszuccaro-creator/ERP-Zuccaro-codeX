@@ -1,3 +1,26 @@
+## CURSOR — #353 pacotes 1–4 pós-verde 0bd89333 (2026-10-26)
+
+Checkpoint verde: `0bd89333` CI4770/4771 SUCCESS. Continuidade na mesma #353.
+
+1. **PACOTE1 cadastros**: provas comportamentais reais
+   `tests/cadastros-reopen-cliente-fornecedor-completo-behavioral.test.js`
+   (Cliente/Fornecedor Completo: load/edit/updated_date/switch-reject/accept/save boundId).
+   Contatos: salvar com contexto capturado + resposta tardia; lacuna HTTP
+   `contatos` rejeitado pelo schema strict (UI ≠ autorização backend) registrada no teste.
+2. **PACOTE2 visual**: perguntas
+   `docs/vps/evidence/comercial360-proposta-353-avaliacao-visual-perguntas-20261026.txt`
+   + handoff Codespace
+   `docs/vps/evidence/codespace-handoff-candidata353-20261026.txt`
+   (não declarar prévia remota sem SHA medido).
+3. **PACOTE3 recuperação**: wiring `matriz` em `Relatorios.jsx` (trigger+RBAC+secureTab)
+   no componente canônico `MatrizAdequacaoFase3`; boundary #348 com hunks autorizados.
+4. **PACOTE4 registros**: investigação sem inventar dados —
+   `docs/evidence/registros-auxiliares-investigacao-353-20261026.txt`
+   (Fornecedor schema ausente; staging privado não montado neste runner).
+
+Reservas intactas: documento LIMIT 1 + legado #344 = Codex. Sem micro-PRs useConfirm.
+Sem merge/deploy.
+
 ## CURSOR — #353 CI verde e670c1a2 + evidência Comercial360 runner (2026-10-26)
 
 Candidata MERGEABLE/CLEAN; frontend+backend+compose SUCCESS.

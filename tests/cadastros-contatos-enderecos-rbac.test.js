@@ -217,3 +217,44 @@ test('salvar contato principal: botão gated + algoritmo real limpa duplicidade'
   assert.ok(salvar, 'ação Cadastros.Cliente.contato.salvar deve existir no formulário');
   assert.equal(salvar.disabled, false);
 });
+
+test('UI contatos: salvar com contexto capturado — resposta tardia não muta após troca de sessão', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarContatosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const contatos = [{ nome: 'A', tipo: 'Telefone', valor: '11', principal: true }];
+  let scopeAlive = true;
+  const capturedScopes = [];
+  render({
+    contatos,
+    onChange: (next) => state.changes.push(next),
+    assertScopeCurrent: () => {
+      capturedScopes.push(scopeAlive ? 'alive' : 'stale');
+      if (!scopeAlive) throw new Error('Contexto alterado durante a edição. Reabra o cadastro antes de salvar.');
+    },
+  });
+  // Dialog mock sempre monta filhos: handler real de salvar é exercitável.
+  const salvar = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.contato.salvar');
+  assert.ok(salvar, 'Cadastros.Cliente.contato.salvar deve existir');
+  assert.equal(salvar.disabled, false);
+  // Resposta tardia: sessão/grupo mudou depois do mount, antes do clique.
+  scopeAlive = false;
+  salvar.onClick();
+  assert.equal(state.changes.length, 0, 'resposta tardia não deve propagar onChange');
+  assert.ok(state.errors.some((e) => /contexto alterado|reabra/i.test(e)));
+  assert.ok(capturedScopes.includes('stale'), 'assertScope captura contexto no momento do salvar');
+});
+
+test('lacuna backend: schema HTTP Cliente rejeita contatos — UI local ≠ autorização de persistência', async () => {
+  const types = await readFile(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url), 'utf8');
+  const service = await readFile(new URL('../server/src/services/clienteService.ts', import.meta.url), 'utf8');
+  const ui = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  // Frontend inclui contatos no payload local.
+  assert.match(ui, /contatos: sanitizeContatos\(data\.contatos\)/);
+  // Backend: update schema strict e sem campo contatos — proteção UI não grava via HTTP.
+  assert.match(types, /clienteUpdateSchema/);
+  assert.doesNotMatch(types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 1200), /\bcontatos\b/);
+  assert.match(service, /clienteUpdateSchema\.safeParse/);
+  // Lacuna concreta registrada: mutação de contatos na UI só persiste se o transporte local/legado
+  // aceitar o campo; no contrato HTTP atual o PATCH falha com VALIDATION_ERROR (ver server/tests/cliente-contatos-rbac-update.test.ts).
+});
