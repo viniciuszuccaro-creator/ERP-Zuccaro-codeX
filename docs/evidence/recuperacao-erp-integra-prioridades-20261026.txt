@@ -91,3 +91,9 @@ Atualização #353 (remarge 7ae5bcd9 + classe A TabelaPreco)
   registro existente, não seed. Classe B continua staging privado.
 - Contatos: SHA fix `e9d7ef15` / form `e30cffcc` (pareceres Codex).
 - Modalidade prévia: runner Cursor (Codespace 403 neste token).
+
+Atualização #353 pacote 2 (navegável)
+- MarcaForm: reopen canônico (capacidade anti-wipe + boundId) + sky header.
+- Matriz início de uso: docs/evidence/cadastros-inicio-uso-matriz-353-*.txt
+- Sem redesign amplo; proposta visual anterior permanece para aprovação.
+- RegiaoAtendimento: reopen custom preservado (não duplicar hook).

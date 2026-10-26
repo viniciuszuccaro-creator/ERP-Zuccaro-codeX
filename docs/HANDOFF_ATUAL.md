@@ -1,8 +1,8 @@
-## PACOTE Cursor — tip `093c8e08` CI SUCCESS (2026-10-26)
+## PACOTE Cursor — navegável + cadastros (2026-10-26)
 
-Modalidade: **runner Cursor** (Codespace xylophone 403). Contatos ENCERRADOS
-(`e9d7ef15`/`e30cffcc`). Remarge `586d4e9d` + classe A TabelaPreco/PlanoContas/
-RotaPadrao. CI tip 40352148189/40352156499 SUCCESS. Pedido 044 = Codex.
+Modalidade: **runner Cursor** (Codespace xylophone 403 — pedido janela Codex
+#353/6421481401). Contatos NÃO reabrir. MarcaForm → reopen canônico.
+Matriz início de uso + ciclo por camada documentados. Pedido 044 = Codex.
 Lista: topo STATUS. Sem merge/deploy/carga.
 
 Base de runtime/build preservada d86f06b6/CI4785-4786;82557565 repriorizou documentos.
