@@ -1,3 +1,39 @@
+## DECISÃO PROPRIETÁRIO — ENTRADA EM USO (repriorização) (2026-10-26 10:11 UTC-03:00)
+
+Incorporada aos planos/HANDOFF existentes — **não** é plano paralelo nem
+substitui Regra-Mãe / AGENTS / gates de VPS·permissões·migrations·merge·deploy·carga.
+
+### Objetivo
+Versão estável na **VPS** para começar a trabalhar (cadastros + fluxo comercial
+inicial). Comercial360/omnicanal avançam no **Codespace** e só sobem após
+teste/aprovação. Não é necessário concluir todas as ondas omnicanal antes.
+
+### Cinco etapas (ordem)
+1. Homologação integrada (candidata #353 + login/grupo/RBAC/cadastros/fluxo)
+2. Primeira carga real controlada (≤100 clientes, gates + autorização)
+3. Cadastros em escala (lotes idempotentes; pendências com motivo)
+4. Operação inicial (atendimento→orçamento→pedido + deps explícitas)
+5. Históricos/saldos (consulta/conciliação ≠ efeito fiscal/financeiro automático)
+
+### Separação
+VPS=operação aprovada · Codespace=evolução · GitHub=código · dados=privado.
+
+### Papéis
+Codex=legado/compatibilidade/menor privilégio/disponibilização/carga.
+Cursor=candidata integrada/recuperação funcional-visual/Cadastros Gerais.
+
+### Lista única
+`docs/evidence/entrada-em-uso-lista-353-20261026.txt`
+(pronto / bloqueador / pendência dados / melhoria posterior).
+
+### Correção factual (histórico desatualizado)
+Cabeçalhos abaixo que ainda dizem “documento LIMIT 1” estão **superados** pelo
+tip Codex `776d81ae`/`d86f06b6` (LIMIT 2 + 409) já na candidata. Não reescrever
+o histórico inteiro; usar esta nota.
+
+Tip código `b6c8fd7f` CI4787/4788 · #353 MERGEABLE/CLEAN. P1 reopen aguarda Codex.
+Sem merge/deploy/carga neste lote documental.
+
 ## CURSOR — CI tip `b6c8fd7f` SUCCESS (2026-10-26 09:53 UTC-03:00)
 
 SHA `b6c8fd7f4281d1b5979e7968ef1ba3f0336a3c28` · CI **4787** (push) / **4788** (PR)
@@ -123,15 +159,14 @@ permanece Codex. Sem micro-PRs useConfirm. Sem merge/deploy.
 
 Candidata MERGEABLE/CLEAN; frontend+backend+compose SUCCESS.
 Capturas runner tip `e670c1a2` em `docs/evidence/comercial360-e670c1a2/`.
-Codespace **não** medido. Ambiguidade documento ainda LIMIT 1 (Codex).
+Codespace **não** medido. Ambiguidade documento: histórico LIMIT 1 — **superado** por tip `776d81ae`/`d86f06b6` (LIMIT 2 + 409) na candidata.
 Sem merge/deploy. Sem micro-PRs useConfirm.
 
 ## CURSOR — remarge 118e8438 + contatos scope + coorte Dept/Unidade (2026-10-26)
 
 1. Publication tip `118e8438` CI frontend **SUCCESS** (run push) incorporado na #353.
    CANAL: tip não reescreve manifesto; único delta autorizado = reopen consolidacao P1.
-2. Ambiguidade documento: `findByDocumento` ainda `LIMIT 1` em postgresClienteRepository
-   — **dependência Codex**, não duplicada.
+2. Ambiguidade documento: `findByDocumento` histórico LIMIT 1 — **superado** (`LIMIT 2` + 409 em `d86f06b6`); não duplicar.
 3. Contatos/Endereços: `assertScopeCurrent` no componente real + pai ClienteCompleto;
    testes UI com troca de sessão (não cópia mutationFn).
 4. Coorte: Departamento + UnidadeMedida switch-reject boundId PASS.
