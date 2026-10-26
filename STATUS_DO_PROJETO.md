@@ -1,3 +1,10 @@
+## CURSOR — CI tip `30922100` SUCCESS (2026-10-26 12:10 UTC-03:00)
+
+SHA `30922100` · CI **4809** (push) / **4810** (PR) 6/6 SUCCESS · MERGEABLE/CLEAN.
+Fecha pacote demonstrável (contraprova pedida; camadas; codespace; registros).
+Contatos: ainda aguarda contraprova Codex independente — bot/CI ≠ fechamento.
+Prévia: runner Cursor até SHA Codespace. Sem merge/deploy/carga.
+
 ## CURSOR — fechamento candidata demonstrável (#353 / d0e38a16) (2026-10-26 ~12:00 UTC-03:00)
 
 Checkpoint `d0e38a16` CI **4807/4808** SUCCESS · base `82557565` · MERGEABLE/CLEAN.
