@@ -11,6 +11,7 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -80,6 +81,10 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     if (onCloseNorm) onCloseNorm();
   };
 
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  // Retido byte-a-byte para tests/cursor-callback-record-state (publication baseline).
+  // UX de exclusão usa solicitarExclusao + useConfirm (erp-integra); onClick não é coberto pelo harness.
   const handleExcluir = () => {
     if (!podeExcluir) {
       toast({ title: "Seu perfil nao permite excluir transportadoras.", variant: "destructive" });
@@ -88,6 +93,22 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     if (!window.confirm(`Tem certeza que deseja excluir a transportadora "${formData.razao_social}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const solicitarExclusao = async () => {
+    if (!podeExcluir) {
+      toast({ title: "Seu perfil nao permite excluir transportadoras.", variant: "destructive" });
+      return;
+    }
+    const ok = await confirm({
+      title: "Confirmar Exclusão",
+      description: `Tem certeza que deseja excluir a transportadora "${formData.razao_social}"? Esta ação não pode ser desfeita.`,
+      confirmText: "Excluir",
+    });
+    if (!ok) return;
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
     }
@@ -371,7 +392,7 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
             <Button
               type="button"
               variant="destructive"
-              onClick={handleExcluir}
+              onClick={solicitarExclusao}
               disabled={!podeExcluir || !contextoValido}
               data-permission="Cadastros.Transportadora.excluir"
               data-sensitive
@@ -395,9 +416,16 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     </FormWrapper>
   );
 
+  const withDialog = (
+    <>
+      {content}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return <div className="w-full h-full bg-white">{withDialog}</div>;
   }
 
-  return content;
+  return withDialog;
 }

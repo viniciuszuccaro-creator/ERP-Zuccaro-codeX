@@ -223,6 +223,17 @@ carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
 
+## CURSOR — Transportadora: confirm-dialog no lugar de window.confirm (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra-novo: exclusão usava `window.confirm` |
+| tip | `9d26c736` (#354) · base consolidação `8e68484b` |
+| correção | botão Excluir → `solicitarExclusao`+`useConfirm`; `handleExcluir` AST retido (publication baseline) |
+| testes | `cadastros-transportadora-confirm-behavioral.test.js` PASS local; CI tip aguardando |
+| pacotes A/B | #350/`706c9e5a` #351/`2847be1f` #352/`b5e5d995` #353/`987ba207` MERGEABLE+CI SUCCESS |
+| próximo C | GrupoProdutoForm useConfirm (erp-integra), fora harness retenção |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
