@@ -9,6 +9,7 @@ const suites = [
   ['LEGACY_CLIENT', 'tests/runtime04.test.ts'],
   ['LEGACY_IDENTITY', 'tests/legacy-identity.test.ts'],
   ['LEGACY_NAME_REVIEW', 'tests/cliente-legacy-name.test.ts'],
+  ['CLIENTE_CONFERENCIA', 'tests/cliente-conferencia-duplicates.test.ts'],
   ['LEGACY_PRODUCT', 'tests/legacy-product.test.ts'],
   ['R08B', 'tests/runtime08-postgres-e2e.test.ts'],
   ['R07BPRICE', 'tests/runtime07b-preco-postgres-e2e.test.ts'],
@@ -23,7 +24,7 @@ const suites = [
 ];
 let allPassed = true;
 for (const [label, suite] of suites) {
-  const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', suite], { cwd: process.cwd(), env: { ...process.env, ...(label === 'LEGACY_NAME_REVIEW' ? { LEGACY_NAME_PG_TEST_URL: process.env.DATABASE_URL } : {}) }, encoding: 'utf8' });
+  const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', suite], { cwd: process.cwd(), env: { ...process.env, ...(label === 'LEGACY_NAME_REVIEW' ? { LEGACY_NAME_PG_TEST_URL: process.env.DATABASE_URL } : {}), ...(label === 'CLIENTE_CONFERENCIA' ? { CLIENTE_CONFERENCIA_PG_TEST_URL: process.env.DATABASE_URL } : {}) }, encoding: 'utf8' });
   const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
   process.stdout.write(output);
   const total = Number(output.match(/tests\s+(\d+)/)?.[1] ?? 0);
