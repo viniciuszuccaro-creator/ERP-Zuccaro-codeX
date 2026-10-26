@@ -1,3 +1,20 @@
+## CURSOR — P1 NOVO CodigoField remainder AST estrito (2026-10-26)
+
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Candidata | #353 — tip **após** este commit (parent docs `01dffeac`) |
+| Achado | comentário **6420465114** (P1 NOVO; não reabre P1 antigo guardas) |
+| Causa | `cadastroCodigoRegistroRemainder.js` strip cego: `{...Object.assign(formData,…)}` normalizava bytes iguais ao pin |
+| Correção | AST estrito por path: attrs pinados; rejeita spread/children/extras/`Object.assign` **antes** de remover |
+| Contraprova | `tests/cadastro-codigo-registro-remainder-p1.test.js` — Object.assign / mutação externa / omissão / repetição / children / attr extra |
+| Local | 8/8 PASS + callback/publication suites verdes; golden hashes inalterados |
+| Aceite | **CI verde ≠ fechamento** — aguarda revisão Codex no SHA tip exato |
+| Preservado | Contatos ENCERRADOS; P1 antigo guardas ENCERRADO; sem merge/deploy/carga |
+
+Arquivos: `tests/helpers/cadastroCodigoRegistroRemainder.js`, `tests/cadastro-codigo-registro-remainder-p1.test.js`.
+Allowlist inalterada: TabelaPrecoForm / Completo / RotaPadraoForm.
+
 ## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (navegável + cadastros, 2026-10-26)
 
 | Campo | Valor |

@@ -1,3 +1,12 @@
+## CURSOR — P1 NOVO CodigoField remainder (6420465114) (2026-10-26)
+
+Helper real `tests/helpers/cadastroCodigoRegistroRemainder.js` agora pin AST
+(import + JSX attrs por path); rejeita spread/children/extras/`Object.assign`
+antes do strip. Contraprova: `tests/cadastro-codigo-registro-remainder-p1.test.js`.
+Parent tip docs `01dffeac`. **CI ≠ aceite** — pedir `@codex review` no SHA tip.
+Contatos e P1 antigo guardas continuam ENCERRADOS. Sem merge/deploy/carga.
+Sem editar branch Codex. Allowlist: TabelaPreco + RotaPadrao apenas.
+
 ## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (2026-10-26)
 
 Modalidade: **runner Cursor** (xylophone 403; medição Codex 6421481401).
