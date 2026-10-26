@@ -1,3 +1,4 @@
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -43,7 +44,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
  assert.equal(source.includes("'HEAD'"),false);
  assert.equal((source.match(new RegExp(base,'g'))||[]).length,entry.references);
  // The prior proof remains byte-identical after subtracting only the explicitly tested lifecycle addition.
- const prior=entry.path==='server/tests/bulk-consolidacao.test.ts'?restoreApprovedBulkDelta(source):source;
+ const reviewed=clienteConferenciaRemainder(entry.path,source);
+ const prior=entry.path==='server/tests/bulk-consolidacao.test.ts'?restoreApprovedBulkDelta(reviewed):reviewed;
  const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);
 });
@@ -58,4 +60,30 @@ test('future private exports and certificate/key files are ignored without readi
  for(const file of ['local-imports/synthetic-future.json','backups/synthetic-future.dump','synthetic-future.pfx','synthetic-future.p12','synthetic-future.pem','synthetic-future.key','.env.synthetic-future']){
   execFileSync('git',['check-ignore','--no-index','-q','--',file]);
  }
+});
+
+test('CANAL publication tip does not rewrite manifest; P1 reopen delta remains the only authorized divergence',()=>{
+  // Tip Codex 118e8438: normalização do canal NÃO altera o manifesto vs pai 79d002a3.
+  const tipPub=execFileSync('git',['show','118e8438f6ba5c5ae97a31482e6a083fb98fb81d:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'});
+  const parentPub=execFileSync('git',['show','79d002a3a6b0d0e5a2e6ea4f2372930737ca4656:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'});
+  assert.equal(tipPub,parentPub);
+  const historical=JSON.parse(execFileSync('git',['show','90f0a315eb3d2b59e0c2bfcab7077abc27bc3613:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'}));
+  const current=JSON.parse(fs.readFileSync('tests/helpers/publicationBaselineManifest.json','utf8'));
+  assert.equal(current.cases.length,18);
+  assert.equal(historical.cases.length,18);
+  assert.equal(current.base,historical.base);
+  const authorized='tests/cursor-cadastros-reopen-consolidacao.test.js';
+  for(const entry of historical.cases){
+    const now=current.cases.find((c)=>c.path===entry.path);
+    assert.ok(now,entry.path);
+    if(entry.path===authorized){
+      // P1 reopen (#351/#353): beforeSha256/references atualizados de propósito com contraprova reopen.
+      assert.notEqual(JSON.stringify(now),JSON.stringify(entry));
+      continue;
+    }
+    assert.deepEqual(now,entry);
+  }
+  // Contraprova: adulterar outro case deve divergir do histórico.
+  const forged={...current,cases:current.cases.map((c)=>c.path===authorized?c:{...c,references:(c.references||0)+99})};
+  assert.notEqual(JSON.stringify(forged.cases.find((c)=>c.path!==authorized)),JSON.stringify(historical.cases.find((c)=>c.path!==authorized)));
 });

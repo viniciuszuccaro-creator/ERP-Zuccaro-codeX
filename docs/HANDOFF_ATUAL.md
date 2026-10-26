@@ -1,3 +1,11 @@
+## CURSOR — remarge publication `118e8438` na #353 (2026-10-26)
+
+Revisão: hunk `clienteConferenciaRemainder` + counterproof channel + manifesto
+18 cases byte-idêntico a `90f0a315`. CI do tip `118e8438` ainda em andamento no
+checkpoint do merge — **não** atribuir verde de tip anterior (`79d002a3` FAIL).
+Ambiguidade por documento: **não** duplicada; dependência Codex se ainda não
+publicada. Conflitos STATUS/HANDOFF: ambos lados preservados. Sem force.
+
 ## CURSOR — pacote cadastros Banco/Cargo + triagem CI + recuperação (2026-10-26)
 
 1. **CI HEAD `836a6d2d`**: logs confirmam **somente** 5 FAILs publication
@@ -112,6 +120,14 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+## #344 — publication coordenado aplicado (2026-10-26)
+
+Estado atual supera a espera historica por handoff abaixo: Cursor liberou explicitamente 6403873982/6403968826/6404656037; Codex e o unico escritor deste hunk na342. Executor: mesmo Codespace/clone/branch, base79d002a3, checkout inicialmente limpo; processo da extensao app-server sem filhos, trava privada exclusiva adquirida. Nenhuma branch Cursor editada.
+Patch1442bytes ja preparado foi aplicado somente em tests/publication-baseline-contracts.test.js: checks HEAD/referencias continuam no source bruto; clienteConferenciaRemainder desfaz somente hunks CANAL registrados antes da comparacao integral anterior. Manifesto18golden hashes/references/beforeSha256 byte-identico a90f0a315; teste compara cada byte. Foco original23PASS/0FAIL/0SKIP. Contraprovas adicionais exercitam todos os hunks registrados, rejeitando repeticao, mutacao interna e bytes fora do escopo; nao se alterou baseline para aceitar divergencia.
+Fechamento completo e contagens finais sao registrados no recibo GitHub do SHA publicado, sem repetir pilotos/transferencias. Backend/runtime inalterados neste primeiro lote; CI valida a composicao. Aviso preexistente de chunks permanece. Proximo pacote independente: reproduzir e bloquear duplicidade de documento no repositorio canonico, preservando100/200, escopo, autorizacao, resposta minima e ausencia de escrita de negocio; depois homologar composicao isolada adapter/HTTP/servico/consumidor.
+Disponibilizacao API+web do mesmo SHA, uso de dados reais, schema/journals, menor privilegio e backup/restore/reversao continuam gates separados. Nenhum merge/deploy/carga/migration/grant operacional. Documentacao historica abaixo nao equivale a reserva vigente.
+
+
 ## #344 — fechamento prioritário CANAL / homologação (2026-10-25)
 
 Executor retomado no mesmo Codespace; local/remoto0a67aa4b e checkout limpo.

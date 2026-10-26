@@ -1,3 +1,11 @@
+## CURSOR — remarge publication `118e8438` na #353 (2026-10-26)
+
+Revisão: hunk `clienteConferenciaRemainder` + counterproof channel + manifesto
+18 cases byte-idêntico a `90f0a315`. CI do tip `118e8438` ainda em andamento no
+checkpoint do merge — **não** atribuir verde de tip anterior (`79d002a3` FAIL).
+Ambiguidade por documento: **não** duplicada; dependência Codex se ainda não
+publicada. Conflitos STATUS/HANDOFF: ambos lados preservados. Sem force.
+
 ## CURSOR — pacote cadastros Banco/Cargo + triagem CI + recuperação (2026-10-26)
 
 1. **CI HEAD `836a6d2d`**: logs confirmam **somente** 5 FAILs publication
@@ -115,6 +123,12 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+## #344 — reparo publication autorizado (2026-10-26)
+
+Base79d002a3, mesmo Codespace/branch. Handoff exclusivo Cursor confirmado; hunk6403101757 aplicado agora, sem aguardar nova liberacao. Preservados18golden hashes e manifesto byte-identico; verificacao bruta de HEAD/referencias e comparacao integral anterior. Foco23PASS; contraprovas adicionais rejeitam mutacoes dentro/fora e hunks repetidos. Resultados finais/CI pelo SHA no recibo GitHub; nao presumir CI verde antes do resultado.
+Nenhuma alteracao de runtime/banco/branches Cursor neste lote. Seguem ambiguidade documental, homologacao isolada e gates operacionais separados; fila detalhada em HANDOFF. Historico de espera abaixo foi superado pela liberacao explicita.
+
+
 ## #344 — fechamento prioritário CANAL / homologação (2026-10-25)
 
 Executor retomado no mesmo Codespace; local/remoto0a67aa4b e checkout limpo.
