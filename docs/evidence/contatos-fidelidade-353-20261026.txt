@@ -15,7 +15,16 @@ Correção (isolada, sem migration)
   { source:'scalars', complete:false, items[] }.
 - Preserva contatos[] se o transporte já trouxer (Base44).
 
+Achados Codex 6416585754 (tip pós-7901f622) — corrigidos no mesmo adapter
+- P1: E-mail(principal=false)+Telefone(principal=true) → `principal_nao_representavel`
+  quando ≥2 valores e algum principal:true; não redefinir preferência; bloqueio
+  antes do fetch; mensagem explícita; rascunho UI preservado.
+- P2: valor vazio com nome/observacao/id/ordem → `metadata_sem_valor` ANTES do
+  early-return; rascunho vazio sem metadata permanece ok.
+- P1 antigo das guardas reopen: ENCERRADO (contraprova); não confundir com estes.
+
 Provas: tests/cliente-contatos-http-adapter.test.js
+(implementado ≠ revisado Codex ≠ demonstrado Codespace ≠ operacional VPS)
 
 Evolução mínima proposta (GATE SEPARADO — não neste lote)
 - Opção A: coluna jsonb `contatos` em `clientes` (candidate → migration + RLS +

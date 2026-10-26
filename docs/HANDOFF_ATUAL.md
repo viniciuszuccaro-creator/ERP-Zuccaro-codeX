@@ -1,3 +1,46 @@
+## Continuidade vigente - entrada em uso (decisao do proprietario, 2026-10-26)
+
+Coordenacao principal permanece neste chat ERP ZUCCARO - CODEX/CURSOR.
+Prioridade e ordem canonicas: PLANO_GO_LIVE.md, "Prioridade vigente: entrada em uso".
+Lista UNICA de prontidao/bloqueadores/dados/melhorias: topo de STATUS_DO_PROJETO.md.
+As listas de evidencia anteriores da353 ficam como procedencia, nao outro plano
+ou aceite operacional. Cinco etapas nao obrigam concluir ondas omnicanal primeiro.
+
+Ambientes: VPS somente versao operacional aprovada; Codespace existente para
+codigo/testes/proxima versao; GitHub para codigo/historico; backups/dados privados.
+Nenhum novo ambiente, credencial, servico pago ou liberacao operacional neste lote.
+O alvo observado ainda e DEV; nao o renomear como producao homologada.
+
+Base consolidacao incorporada na #353: `82557565` (docs entrada em uso) sobre
+runtime/build d86f06b6/CI4785-4786. Tip Cursor corrige achados contatos
+(principal + metadata vazia) e solicita revisao Codex no novo SHA.
+P1 antigo guardas ENCERRADO por contraprova; contatos AINDA bloqueiam ate parecer.
+Distinguir: implementado / testado CI / demonstrado Codespace / operacional VPS.
+V2SQL retirada; V3/inversa ensaiadas em PG17 sintetico (2PASS/0FAIL/0SKIP),
+sem aplicar na VPS. Sem merge/deploy/carga neste lote.
+Recibo vigente completo (inclui hashes/builds/janela/retorno/decisao):
+https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
+
+Nao confundir essa conferencia <=100 somente leitura com homologacao integrada
+de gravacao/comercial ou autorizacao da primeira carga real. Reutilizar pilotos,
+staging/mapas/backup e provas inalteradas; cada acao operacional exige seu gate.
+
+Codex: legado, compatibilidade, menor privilegio, preparacao e reconciliacao/carga.
+Cursor: candidata integrada, recuperacao funcional/azul-claro e Cadastros Gerais.
+Reservas e revisao por SHA no GitHub; nao editar branch do outro. Atualizacao
+documental coordenada353/6417549708/6417638674; plano de evolucao preservado.
+
+## Historico anterior - nao tomar cabecalhos datados como prioridade atual
+
+## CURSOR — tip contatos + remarge 82557565 (2026-10-26)
+
+Candidata #353 mesma branch. Overflow principal/metadata; rascunho preservado.
+Roteiro HML: docs/evidence/roteiro-homologacao-integrada-353-20261026.txt
+Pedido INSERT: dependencia migration 044 (idempotency_key) — Codex; nao declarar
+vendas prontas so porque a SPA abre. Sem editar branch/reservas Codex.
+
+## Historico Cursor — tip #353 (antes do remarge 82557565)
+
 ## DECISÃO PROPRIETÁRIO — ENTRADA EM USO (repriorização) (2026-10-26 10:11 UTC-03:00)
 
 Incorporada aos planos/HANDOFF existentes — **não** é plano paralelo nem

@@ -1,5 +1,9 @@
-ENTRADA EM USO — lista única (candidata #353)
-=============================================
+ENTRADA EM USO — EVIDÊNCIA HISTÓRICA (candidata #353)
+=====================================================
+AVISO (2026-10-26): este arquivo NÃO é mais a lista vigente de prontidão.
+Lista UNICA vigente = topo de STATUS_DO_PROJETO.md (diretriz PLANO_GO_LIVE
+“Prioridade vigente: entrada em uso”). Manter aqui só como procedência.
+
 Decisão do proprietário 2026-10-26: reorganiza prioridades dos planos
 existentes; NÃO cria plano paralelo; NÃO substitui Regra-Mãe nem gates
 de VPS/permissões/migrations/merge/deploy/carga.
@@ -7,79 +11,57 @@ de VPS/permissões/migrations/merge/deploy/carga.
 Separação: VPS = operação aprovada · Codespace = evolução (C360/omnicanal)
 · GitHub = código · dados reais = privado.
 
-Tip código validado: b6c8fd7f (CI4787/4788) · tip docs: eff2497c
-Base consolidação: d86f06b6 · PR #353 MERGEABLE/CLEAN
+Snapshot desta evidência (histórico tip 7901f622 / remarge 82557565):
+- P1 publication guardas: ENCERRADO (contraprova Codex; não por CI).
+- Contatos principal/metadata: correção no tip Cursor; bloqueia até revisão
+  Codex do novo SHA. CI ≠ operacional VPS.
+- Pedido INSERT: dependencia 044 ausente no destino observado (Codex).
+
 Papéis: Cursor=candidata/recuperação/cadastros · Codex=legado/privilégio/carga
 
 ────────────────────────────────────────────
-PRONTO PARA USO (demonstrável na candidata / CI)
+PRONTO PARA HOMOLOGAÇÃO (código/CI — NÃO = VPS liberada)
 ────────────────────────────────────────────
-[P] Login + escopo Grupo/Empresa (arquitetura fail-closed existente)
-[P] RBAC granular cadastros/comercial/relatorios (frontend+backend ensaiados)
-[P] Cadastros reopen/boundId (coorte + FormaPagamento/Setor/Cliente/Fornecedor Completo)
-[P] Cliente HTTP MASTER (documento/código; contatos só escalares honestos)
-[P] Relatorios: matriz / exportacao / agendamento / representantes / personalizado
-    com gates (recurso oculto por permissão ≠ ausente)
-[P] Candidata #353 integrada sobre consolidação; CI 6/6 SUCCESS
+[P] Login + escopo Grupo/Empresa (arquitetura fail-closed existente) — HML
+[P] RBAC granular cadastros/comercial/relatorios (ensaios) — HML ≠ sessão real
+[P] Cadastros reopen/boundId (coorte + Forma/Setor/Cliente/Fornecedor)
+[P] Cliente HTTP MASTER escalares; contatos overflow honesto (principal/meta)
+[P] Relatorios: matriz/exportacao/agendamento/representantes/personalizado
+[P] Candidata #353 integrada sobre consolidação (aguardar CI do tip atual)
 
 ────────────────────────────────────────────
 BLOQUEADOR DA ENTRADA EM USO
 ────────────────────────────────────────────
-[B1] Parecer Codex no P1 publication reopen (a37b736f) — CI verde ≠ fechamento
-[B2] Aprovação específica de disponibilização HML/VPS (papéis menor privilégio,
-     policies, digests, frescor backup) — reserva Codex #344; sem substituição
-     prematura do par operacional atual
-[B3] Medir SHA/build efetivamente servido (VPS e/ou Codespace) antes de declarar
-     “versão em uso”; capturas atuais = runner Cursor
-[B4] Fornecedor: UI+serviço existem; migration ops ainda candidate — bloqueia
-     escala de fornecedores em PG canônico até gate migration
-[B5] Contatos multi/nome/obs: contrato escalar limitado (OVERFLOW honesto);
-     evolução jsonb/filha = gate separado se operação exigir lista completa
-[B6] Merge/deploy da candidata para tronco operacional — gate humano explícito
-     (esta decisão NÃO autoriza merge sozinha)
+[B1] P1 publication guardas — ENCERRADO (contraprova; não reabrir por CI)
+[B1b] Contatos: tip corrige achados 6416585754; AINDA bloqueia até parecer
+      Codex no novo SHA (implementado ≠ revisado ≠ operacional VPS)
+[B2] Aprovação disponibilização HML/VPS (privilégio/policies/digests) — #344
+[B3] Medir SHA/build efetivamente servido (VPS/Codespace)
+[B4] Fornecedor PG ops: migration candidate — gate
+[B5] Contatos[] canônico (jsonb/filha) — evolução gate separado
+[B6] Merge/deploy candidata — gate humano
+[B7] Pedido INSERT: colunas 044 (idempotency_key/payload_fingerprint) ausentes
+     no destino observado — não declarar vendas prontas pela SPA
 
 ────────────────────────────────────────────
 PENDÊNCIA DE DADOS
 ────────────────────────────────────────────
-[D1] Staging privado + import_authorized para coorte ≤100 clientes (Codex/gates)
-[D2] Reconciliação identidade (group/source/codigo_legado); sem sobrescrever
-     preexistentes / sem reativar históricos indevidos
-[D3] Registros auxiliares “sumidos”: classificar contexto/RBAC/versão antes de ETL;
-     fontes Base44/exports privados — não GitHub por default
-[D4] Fornecedores/produtos em escala + pendências com situação/motivo visíveis
-[D5] Históricos/saldos legado: consulta/conciliação ≠ cobrança/baixa/NF automática
+[D1] Staging + import_authorized coorte ≤100 (Codex/gates)
+[D2] Reconciliação identidade; sem sobrescrever preexistentes
+[D3] Auxiliares “sumidos”: classificar contexto/RBAC antes de ETL
+[D4] Fornecedores/produtos em escala + pendências com motivo
+[D5] Históricos/saldos: consulta ≠ cobrança/baixa/NF automática
 
 ────────────────────────────────────────────
-MELHORIA POSTERIOR (Codespace — não misturar na VPS operacional)
+MELHORIA POSTERIOR (Codespace)
 ────────────────────────────────────────────
-[M1] Comercial360 omnicanal / ondas avançadas (avaliação visual separada)
-[M2] Contatos jsonb ou cliente_contatos (evolução mínima já proposta)
-[M3] Documentacao/EmpresaOnboarding/OAuthConsent da referência integra —
-     NÃO restaurar auth permissiva; mapear só equivalentes seguros
-[M4] Demais recuperações erp-integra (código útil) sem substituir ERP inteiro
+[M1] Comercial360 omnicanal avançado
+[M2] Contatos jsonb / cliente_contatos
+[M3] Documentacao/EmpresaOnboarding/OAuthConsent — sem auth permissiva
+[M4] Demais recuperações erp-integra sem substituir ERP
 
 ────────────────────────────────────────────
-PRÓXIMO MARCO
+ESCOPO OPERACIONAL INICIAL (rascunho HML)
 ────────────────────────────────────────────
-Versão integrada demonstrável (#353) + escopo operacional inicial explícito
-+ pacote concreto para aprovar homologação/primeira carga (B2+D1).
-C360 avançado permanece Codespace até testado/aprovado.
-
-────────────────────────────────────────────
-ESCOPO OPERACIONAL INICIAL (rascunho para homologação)
-────────────────────────────────────────────
-Homologado na candidata (demonstrável; não = VPS liberada):
-- Autenticação + seletor Grupo/Empresa
-- Cadastros Gerais essenciais: Cliente (HTTP), forms reopen/boundId;
-  Fornecedor UI (PG ops ainda gate)
-- Comercial: orçamento/pedido caminhos existentes na SPA (sem C360 omnicanal)
-- Relatorios com RBAC
-
-Indisponível / não apresentar como pronto:
-- Carga legado real sem autorização (D1–D5)
-- Fornecedor PG canônico sem migration publicada (B4)
-- Contatos[] completos via HTTP (B5)
-- C360 omnicanal / proposta avançada na VPS (M1)
-- Históricos gerando cobrança/baixa/NF automática (D5)
-- OAuthConsent/onboarding permissivo da referência integra
-
+Roteiro: docs/evidence/roteiro-homologacao-integrada-353-20261026.txt
+login → Grupo/Empresa → cadastro salvar/reabrir → orçamento → pedido (044).

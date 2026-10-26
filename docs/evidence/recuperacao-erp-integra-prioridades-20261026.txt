@@ -1,10 +1,13 @@
 Recuperação vs erp-integra-novo — prioridades (2026-10-26)
 ==========================================================
 Atualização: decisão ENTRADA EM USO (2026-10-26) — VPS=operação; Codespace=C360.
-Lista única: docs/evidence/entrada-em-uso-lista-353-20261026.txt
+Lista UNICA vigente: topo de STATUS_DO_PROJETO.md (PLANO_GO_LIVE).
+Evidência histórica: docs/evidence/entrada-em-uso-lista-353-20261026.txt
+Roteiro HML: docs/evidence/roteiro-homologacao-integrada-353-20261026.txt
 Referência: github.com/viniciuszuccaro-creator/erp-integra-novo @ main
-Candidata tip: b6c8fd7f / base d86f06b6 (#353)
+Candidata: remarge base 82557565 + tip contatos (#353)
 Comparação: inventário de paths (não auditoria de botão/fluxo)
+Pedido INSERT: dependencia 044 — coordenar Codex; não reimplementar backend.
 
 Contagens (componentes comercial|financeiro|estoque|compras|crm|relatorios|cadastros)
 - integra: 435 blobs
@@ -63,7 +66,15 @@ Atualização #353 (fidelidade + agendamento — pós-remarge d86f06b6)
   não ausente.
 - Provas FormaPagamento + SetorAtividade reopen (próprias, não generalizar).
 
+Atualização #353 (contatos P1/P2 Codex + remarge 82557565)
+- Preferência principal entre canais + metadata sem valor: overflow fail-closed.
+- Roteiro HML integrado com dep Pedido/044 explícita (não reimplementar Pedido).
+- Prioridade recuperação para operação inicial: auxiliares do roteiro
+  (cliente/condição/produto/unidade) — classificar oculto vs ausente antes de
+  restaurar; azul-claro preservado nos forms existentes; sem substituir ERP.
+
 Fora de escopo deste lote
 - Carga operacional legado #344
 - Cópia de Auth/RBAC permissivo da referência
 - Redesign visual amplo sem aprovação owner
+- Migration 044 / backend Pedido (reserva Codex)

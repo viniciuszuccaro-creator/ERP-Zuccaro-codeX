@@ -80,7 +80,8 @@ function normalizeContatoTipo(tipo) {
 /**
  * Avalia se contatos[] cabe sem perda no contrato escalar (1 valor/canal).
  * Perdas: múltiplos no mesmo canal; nome/observação/id/ordem; tipo não mapeável;
- * divergência com escalares explícitos no mesmo payload.
+ * preferência `principal` entre canais (contrato UI GerenciarContatos*);
+ * metadata com valor vazio; divergência com escalares explícitos no mesmo payload.
  *
  * @param {unknown} contatos
  * @param {Record<string, unknown>} [scalars]
@@ -100,6 +101,9 @@ export function assessContatosScalarFidelity(contatos, scalars = {}) {
 
   /** @type {Record<string, string[]>} */
   const byChannel = { email: [], telefone: [], celular: [] };
+  let valuedCount = 0;
+  let principalTrueCount = 0;
+
   contatos.forEach((raw, index) => {
     if (!raw || typeof raw !== 'object') {
       losses.push(`item_invalido:${index}`);
@@ -108,17 +112,41 @@ export function assessContatosScalarFidelity(contatos, scalars = {}) {
     const c = /** @type {Record<string, unknown>} */ (raw);
     const channel = normalizeContatoTipo(c.tipo);
     const valor = String(c.valor ?? '').trim();
-    if (!channel) {
-      if (valor) losses.push(`tipo_nao_mapeavel:${index}`);
+    const nome = String(c.nome ?? '').trim();
+    const observacao = String(c.observacao ?? c.obs ?? '').trim();
+    const hasId = c.id != null && String(c.id).trim() !== '';
+    const hasOrdem = c.ordem != null && String(c.ordem).trim() !== '';
+    const hasMeta = Boolean(nome || observacao || hasId || hasOrdem);
+    const isPrincipal = c.principal === true;
+
+    if (isPrincipal) principalTrueCount += 1;
+
+    // Metadata / principal com valor vazio: validar ANTES do early-return (Codex P2).
+    // Rascunho vazio sem metadata e sem principal: tratamento vigente (ignorar).
+    if (!valor) {
+      if (hasMeta) losses.push(`metadata_sem_valor:${index}`);
+      if (isPrincipal) losses.push(`principal_sem_valor:${index}`);
       return;
     }
-    if (!valor) return;
+
+    if (!channel) {
+      losses.push(`tipo_nao_mapeavel:${index}`);
+      return;
+    }
+
+    valuedCount += 1;
     byChannel[channel].push(valor);
-    if (String(c.nome ?? '').trim()) losses.push(`nome_perdido:${index}`);
-    if (String(c.observacao ?? c.obs ?? '').trim()) losses.push(`observacao_perdida:${index}`);
-    if (c.id != null && String(c.id).trim() !== '') losses.push(`id_perdido:${index}`);
-    if (c.ordem != null && String(c.ordem).trim() !== '') losses.push(`ordem_perdida:${index}`);
+    if (nome) losses.push(`nome_perdido:${index}`);
+    if (observacao) losses.push(`observacao_perdida:${index}`);
+    if (hasId) losses.push(`id_perdido:${index}`);
+    if (hasOrdem) losses.push(`ordem_perdida:${index}`);
   });
+
+  // Preferência principal entre ≥2 valores: escalares não têm campo principal (Codex P1).
+  // Ex.: E-mail(principal=false)+Telefone(principal=true) — não redefinir por conveniência.
+  if (valuedCount > 1 && principalTrueCount > 0) {
+    losses.push('principal_nao_representavel');
+  }
 
   for (const key of /** @type {const} */ (['email', 'telefone', 'celular'])) {
     const values = byChannel[key];
@@ -148,13 +176,28 @@ export function assessContatosScalarFidelity(contatos, scalars = {}) {
  * @returns {Error & { code: string, losses: string[], status: number }}
  */
 export function createContatosScalarOverflowError(losses) {
+  const list = Array.isArray(losses) ? losses.slice() : [];
+  const hints = [];
+  if (list.includes('principal_nao_representavel')) {
+    hints.push('preferência de contato principal entre canais');
+  }
+  if (list.some((l) => String(l).startsWith('metadata_sem_valor'))) {
+    hints.push('nome/observação/id/ordem sem valor');
+  }
+  if (list.some((l) => String(l).startsWith('multiplo_'))) {
+    hints.push('mais de um valor no mesmo canal');
+  }
+  const detail = hints.length ? ` (${hints.join('; ')})` : '';
   const error = /** @type {Error & { code: string, losses: string[], status: number }} */ (
-    new Error('Contatos da UI não cabem no contrato HTTP escalar sem perda de informação.')
+    new Error(
+      `Contatos da UI não cabem no contrato HTTP escalar sem perda de informação${detail}. `
+      + 'Ajuste a lista ou aguarde o contrato canônico (jsonb/tabela filha); o rascunho não foi enviado.',
+    )
   );
   error.name = 'ContatosScalarOverflowError';
   error.code = CONTATOS_SCALAR_OVERFLOW;
   error.status = 422;
-  error.losses = Array.isArray(losses) ? losses.slice() : [];
+  error.losses = list;
   return error;
 }
 

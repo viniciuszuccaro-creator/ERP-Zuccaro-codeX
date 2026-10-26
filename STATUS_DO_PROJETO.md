@@ -1,3 +1,141 @@
+## Entrada em uso - prioridade vigente e lista unica (proprietario, 2026-10-26)
+
+Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
+As cinco entregas sao HML integrada -> coorte real ate100 (apos autorizacao) ->
+escala de cadastros -> operacao inicial -> historicos/saldos. Nao exigem concluir
+todas as ondas omnicanal. Nao alteram a Regra-Mae nem os gates operacionais.
+
+### Lista unica vigente
+
+**Pronto para uso**
+- Nenhuma nova liberacao na VPS e concedida por este registro. A prontidao do par
+  atualmente servido nao foi reclassificada por CI ou documento.
+- Disponivel PARA HOMOLOGACAO, nao para carga/uso operacional: codigo d86f06b6,
+  CI4785/4786 SUCCESS, builds API+web do mesmo SHA e prova sintetica V3/inversa
+  2PASS/0FAIL/0SKIP. Os IDs de imagem locais nao sao digests de registry.
+  Recibo atual: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
+
+**Bloqueador da entrada em uso**
+- Fechar/revisar a composicao integrada existente por SHA. P1 antigo publication
+  (guardas reopen) ENCERRADO por contraprova Codex real — NAO permanece aberto
+  por bb341ae3/CI. Contatos: tip Cursor corrige principal entre canais + metadata
+  sem valor (overflow fail-closed antes do fetch; parecer 6416585754); AINDA
+  BLOQUEIA ate revisao Codex do novo SHA. CI verde ≠ homologacao VPS/operacional.
+  Sem editar branch Codex nem aprovar toda a #353 por este tip.
+- Provar login/perfil/Grupo/Empresa/RBAC e versao efetivamente servida; capturas
+  de runner e testes com IdP sintetico nao homologam a sessao real.
+- Conferir schema/journals/contratos exigidos pelo escopo operacional inicial.
+  A compatibilidade da conferencia SOMENTE LEITURA nao prova CRUD Cliente,
+  Fornecedor PG, orcamento/pedido ou seus downstreams. Nao aplicar036-044 em lote;
+ 045-049 privadas continuam fora do migrador, com identificacao/aplicacao gates.
+- Menor privilegio, frescor do backup do destino, retorno e janela aprovados.
+  V2 foi retirada; V3/inversa testadas apenas em PG sintetico. A proposta atual
+  e HML em copia restaurada isolada, nao policies/grants/roles no banco original.
+- Recuperar/modularizar o que efetivamente sumiu e validar azul-claro/funcional
+  sem perder melhorias atuais. Classificar versao/config/tenant/permissao/leitura
+  ANTES de concluir ausencia de codigo. Fluxos essenciais e cadastro completo
+  precisam persistir/reabrir no caminho canonico; simulacao nao e operacao.
+- Merge/disponibilizacao/carga real seguem autorizacoes especificas separadas.
+
+**Pendencia de dados**
+- Coorte inicial ate100 e reconciliacao privada: identidade/escopo/documento/
+  codigo, preexistentes, campos/vinculos/pendencias e reversao por lote. Preparada
+  nao significa import_authorized nem carga executada.
+- Clientes/fornecedores/produtos e auxiliares: reaproveitar staging, mapas,
+  pilotos e recibos ja comprovados; nao retransferir ou repetir ensaios intactos.
+  Preservar codigos/IDs/procedencia/inativos; nao adivinhar endereco, unidade,
+  conversao, empresa, saldo ou vinculo fiscal.
+- Registros do ERP novo: fonte Base44/snapshot/export/contexto confiavel e privado;
+  existencia da entidade ou exemplo no Git nao comprova recuperacao de registros.
+- Historicos de compras/vendas/documentos/itens/receber/pagar/cartoes/saldos:
+  preservar origem/vinculos; consulta e conciliacao nao geram efeitos operacionais.
+
+**Melhoria posterior**
+- Ondas avancadas de Comercial360/omnicanal e evolucoes do programa continuam no
+  Codespace, publicadas por versao/teste/aprovacao/retorno, sem contaminar a VPS.
+- Contatos completos jsonb/filha e outros aprimoramentos so podem ser posteriores
+  se nao forem dependencia do uso inicial; isso NAO adia a correcao de perda
+  silenciosa nem autoriza remover capacidades para reduzir o escopo.
+
+### Escopo inicial proposto para homologar, nao liberado
+Atendimento -> orcamento -> pedido; Cadastros Gerais e relatorios necessarios.
+Estoque/producao/entrega/financeiro/fiscal entram conforme a dependencia REAL do
+percurso escolhido, com criterio por operacao. Emissao, baixa, saldo disponivel,
+carga real e C360 avancado nao sao declarados homologados por estes testes.
+Validar em copia/fixture autorizada antes de propor disponibilizacao especifica.
+
+### Fontes, responsabilidade e prova deste lote
+- PLANO_GO_LIVE e PLANO_MELHORIA existentes foram repriorizados, sem novo manual.
+- Comparacao Cursor ja existente: docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt
+  na353; inventario de paths NAO e homologacao funcional/visual. Referencia
+  erp-integra-novo HEAD consultado37c6f7d39e60736cbb862d122de9be23c06db8f6;
+  nao foi refeita a comparacao inteira nem alegada leitura de dados/chats ausentes.
+- A lista de evidencia docs/evidence/entrada-em-uso-lista-353-20261026.txt e fonte
+  historica desta consolidacao; esta secao e a unica lista de estado vigente.
+  Coordenacao direta353/6417549708 e6417638674, sem editar branch/reservas Cursor.
+- Codex: legado/compatibilidade/privilégio/preparacao/cargas por gate. Cursor:
+  candidata/recuperacao funcional-visual/Cadastros. Um escritor por checkout.
+- Lote somente documental: diff-check e verificacao de escopo/links/segredos;
+  suites runtime inalteradas reutilizadas, nao reexecutadas localmente. O commit
+  desta prioridade nao altera os builds/versao servidos nem autoriza deploy.
+
+### Compatibilidade minima ja conferida para o escopo inicial
+Leitura de contratos d86f06b6, sem chamada/escrita no banco. Catalogo anterior do
+recibo344 reutilizado; sua atualidade deve ser conferida na janela autorizada.
+
+| caminho canonico | evidencia/limite atual | gate antes de declarar operacao |
+|---|---|---|
+| Conferencia de Cliente | SELECT pontual LIMIT2, Auth/Data e V3/inversa ensaiados | login/contexto real e HML autorizada; nao e carga nem CRUD |
+| Criar/editar Cliente | postgresClienteRepository cria/atualiza clientes e vinculos cliente_empresas | escrita/RBAC/auditoria/codigo sequencial/constraints e reabertura no alvo; V3 nao concede DML |
+| Criar Pedido | postgresPedidoRepository.ts:77 SEMPRE referencia idempotency_key/payload_fingerprint; ausentes na captura anterior | incompatibilidade concreta desse contrato com aquele snapshot; avaliar delta044 e relacoes/escopo, NAO executar todas as migrations |
+| Importar Fornecedor | fornecedorService/postgresFornecedorRepository EXISTEM no codigo | schema/rotas/journals/privilegios do alvo ainda precisam de comprovacao; nao criar importador paralelo |
+
+Essa matriz qualifica os bloqueadores da lista unica acima; nao e um segundo
+plano ou autorizacao de mudanca. Dependencias de pedido (cliente_empresa,
+produto/unidade, pagamento e demais vinculos) nao podem ser inferidas por nome.
+
+### Proxima acao concreta
+Contatos: tip Cursor implementou overflow principal/metadata (parecer 6416585754);
+aguardando revisao Codex no novo SHA — ainda bloqueia ate parecer. Em paralelo:
+matriz minima dos contratos de gravacao do escopo inicial (Pedido/044) e provas
+faltantes de alvo/versao/Auth/privilegio/retorno. Decisao isolada HML/100 somente
+leitura continua registrada no recibo344; ela nao substitui HML integrada ou
+autorizacao de primeira carga real.
+
+## Historico anterior - provas mantidas, nao estado vigente de aprovacao
+
+
+## CURSOR — contatos P1/P2 + remarge base 82557565 (2026-10-26 ~11:20 UTC-03:00)
+
+Mesma #353. Base Codex `82557565` (entrada em uso / lista unica) incorporada;
+conflitos STATUS/HANDOFF resolvidos preservando ambos. Branch Codex intocada.
+
+### Contatos (parecer 6416585754) — implementado, aguarda revisao
+- `assessContatosScalarFidelity`: `principal_nao_representavel` quando ≥2 valores
+  e algum `principal:true` (ex. E-mail false + Telefone true) — sem escolher
+  principal por conveniencia; bloqueio antes do fetch.
+- Metadata com valor vazio (`nome`/`observacao`/`id`/`ordem`) → `metadata_sem_valor`
+  antes do early-return; rascunho vazio sem metadata permanece ok.
+- Mensagem explicita + rascunho preservado (toast onError; form nao limpa).
+- Testes: `tests/cliente-contatos-http-adapter.test.js` (casos Codex + HttpApiClient).
+- Evolucao jsonb/filha: gate separado; sem migration neste lote.
+
+### Estado (distincao obrigatoria)
+- Implementado no codigo da candidata: sim (este tip).
+- Testado em CI: apos push (nao declarar SUCCESS antecipado).
+- Demonstrado no Codespace: nao neste lote.
+- Operacional na VPS: NAO — sem merge/deploy/carga.
+
+### Lista
+Lista UNICA vigente = secao do topo (Codex). Evidencia historica:
+`docs/evidence/entrada-em-uso-lista-353-20261026.txt` (nao plano vigente).
+Roteiro HML: `docs/evidence/roteiro-homologacao-integrada-353-20261026.txt`.
+
+P1 guardas: ENCERRADO. Contatos: bloqueia ate parecer no novo SHA.
+Sem merge/deploy/carga. Reserva #344 Codex intocada.
+
+## Historico Cursor — tip #353 (antes do remarge 82557565)
+
 ## DECISÃO PROPRIETÁRIO — ENTRADA EM USO (repriorização) (2026-10-26 10:11 UTC-03:00)
 
 Incorporada aos planos/HANDOFF existentes — **não** é plano paralelo nem

@@ -15,13 +15,13 @@ import {
 } from '../src/api/clienteHttpPayload.js';
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 
-test('fidelidade ok: um contato por canal sem nome/obs → projeta', () => {
+test('fidelidade ok: um contato por canal sem nome/obs e sem principal → projeta', () => {
   const payload = toClienteMasterHttpPayload({
     tipo: 'Pessoa Jurídica',
     documento: '11.222.333/0001-81',
     razao_social: 'Sintético Contatos LTDA',
     contatos: [
-      { tipo: 'E-mail', valor: 'fiscal@sintetico.dev', principal: true },
+      { tipo: 'E-mail', valor: 'fiscal@sintetico.dev', principal: false },
       { tipo: 'Telefone', valor: '1133334444', principal: false },
       { tipo: 'WhatsApp', valor: '11999998888', principal: false },
     ],
@@ -30,6 +30,51 @@ test('fidelidade ok: um contato por canal sem nome/obs → projeta', () => {
   assert.equal(payload.telefone, '1133334444');
   assert.equal(payload.celular, '11999998888');
   assert.equal(payload.contatos, undefined);
+});
+
+test('fidelidade: E-mail(principal=false)+Telefone(principal=true) → overflow (preferência entre canais)', () => {
+  const assessment = assessContatosScalarFidelity([
+    { tipo: 'E-mail', valor: 'fiscal@sintetico.dev', principal: false },
+    { tipo: 'Telefone', valor: '1133334444', principal: true },
+  ]);
+  assert.equal(assessment.ok, false);
+  assert.ok(assessment.losses.includes('principal_nao_representavel'));
+  assert.throws(
+    () => toClienteMasterHttpPayload({
+      tipo: 'Pessoa Jurídica',
+      documento: '11.222.333/0001-81',
+      razao_social: 'X',
+      contatos: [
+        { tipo: 'E-mail', valor: 'fiscal@sintetico.dev', principal: false },
+        { tipo: 'Telefone', valor: '1133334444', principal: true },
+      ],
+    }),
+    (err) => err?.code === CONTATOS_SCALAR_OVERFLOW
+      && err.losses.includes('principal_nao_representavel'),
+  );
+});
+
+test('fidelidade: valor vazio com nome/obs/id/ordem → overflow (não descartar antes)', () => {
+  for (const extra of [
+    { nome: 'Fiscal' },
+    { observacao: 'ramal 10' },
+    { id: 'c-meta' },
+    { ordem: 3 },
+  ]) {
+    const assessment = assessContatosScalarFidelity([
+      { tipo: 'Telefone', valor: '   ', principal: false, ...extra },
+    ]);
+    assert.equal(assessment.ok, false, JSON.stringify(extra));
+    assert.ok(
+      assessment.losses.includes('metadata_sem_valor:0'),
+      JSON.stringify(assessment.losses),
+    );
+  }
+  // rascunho vazio sem metadata: tratamento vigente (ok)
+  const emptyDraft = assessContatosScalarFidelity([
+    { tipo: 'E-mail', valor: '', principal: false },
+  ]);
+  assert.equal(emptyDraft.ok, true);
 });
 
 test('fidelidade: múltiplos e-mails → CONTATOS_SCALAR_OVERFLOW (não descarta)', () => {
@@ -190,7 +235,7 @@ test('HttpApiClient Cliente.update: projeção segura envia escalares; resposta 
     documento: '11.222.333/0001-81',
     razao_social: 'CLIENTE DEV SINTETICO PJ A LTDA',
     contatos: [
-      { tipo: 'E-mail', valor: 'a@b.c', principal: true },
+      { tipo: 'E-mail', valor: 'a@b.c', principal: false },
       { tipo: 'Telefone', valor: '1133334444', principal: false },
     ],
   });
@@ -200,6 +245,57 @@ test('HttpApiClient Cliente.update: projeção segura envia escalares; resposta 
   assert.equal(updated.contatos, undefined);
   assert.equal(updated.contatos_escalares.complete, false);
   assert.equal(updated.contatos_escalares.items[0].valor, 'a@b.c');
+});
+
+test('HttpApiClient Cliente.update: principal entre canais NÃO chama fetch', async () => {
+  let fetches = 0;
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async () => {
+      fetches += 1;
+      return new Response(JSON.stringify({ data: { id: 'x' } }), { status: 200 });
+    },
+  });
+  await assert.rejects(
+    () => client.entities.Cliente.update('cli-1', {
+      tipo: 'Pessoa Jurídica',
+      documento: '11.222.333/0001-81',
+      razao_social: 'X',
+      contatos: [
+        { tipo: 'E-mail', valor: 'a@sintetico.dev', principal: false },
+        { tipo: 'Telefone', valor: '1133334444', principal: true },
+      ],
+    }),
+    (err) => err?.code === CONTATOS_SCALAR_OVERFLOW
+      && err.losses.includes('principal_nao_representavel'),
+  );
+  assert.equal(fetches, 0);
+});
+
+test('HttpApiClient Cliente.update: metadata sem valor NÃO chama fetch', async () => {
+  let fetches = 0;
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async () => {
+      fetches += 1;
+      return new Response(JSON.stringify({ data: { id: 'x' } }), { status: 200 });
+    },
+  });
+  await assert.rejects(
+    () => client.entities.Cliente.update('cli-1', {
+      tipo: 'Pessoa Física',
+      documento: '529.982.247-25',
+      nome: 'PF',
+      contatos: [
+        { tipo: 'Telefone', valor: '', nome: 'Compras', principal: false },
+      ],
+    }),
+    (err) => err?.code === CONTATOS_SCALAR_OVERFLOW
+      && err.losses.includes('metadata_sem_valor:0'),
+  );
+  assert.equal(fetches, 0);
 });
 
 test('HttpApiClient Cliente.get: contatos_escalares incompleto; sem contatos[] fabricado', async () => {
