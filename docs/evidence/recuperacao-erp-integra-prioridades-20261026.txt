@@ -98,4 +98,10 @@ Atualização #353 pacote 2 (navegável)
 - Sem redesign amplo; proposta visual anterior permanece para aprovação.
 - RegiaoAtendimento: reopen custom preservado (não duplicar hook).
 - PainelDinamicoCliente: aba Histórico Produtos — TabsContent restaurado
+
+Atualização #353 (P1 CodigoField + remarge 6ba10732)
+- Helper remainder AST estrito (6420465114); tip fix `84f3d401` / HEAD remarge
+  `066af04a` inclui base Codex PG entrada/fornecedor sem reimplementar.
+- Marca ciclo reopen + HistóricoProdutosCliente fail-closed (prova sintética).
+- Sem restaurar Documentacao/OAuthConsent/EmpresaOnboarding; sem seed fictício.
   (trigger existia; conteúdo estava fora do Tabs → coluna vazia).

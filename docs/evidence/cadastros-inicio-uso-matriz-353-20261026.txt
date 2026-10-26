@@ -32,11 +32,13 @@ Classe A corrigida neste pacote
   permissão/contexto; com permissão queryKey grupo/empresa + Pedido:
   tests/painel-dinamico-cliente-historico-tab.test.js (PASS).
   Aba montada ≠ histórico carregado.
+- CondicaoComercialForm: reopen canônico + boundId no ID técnico (idOnly
+  preservado) + grupo/empresa no save + isSubmitting; sky header windowMode.
 
 Já OK (não reabrir)
 -------------------
 TabelaPreco, PlanoContas idOnly, RotaPadrao, Cliente/Fornecedor/Representante,
-FormaPagamento, Setor/UM/GrupoProduto, auxiliares na coorte #351.
+FormaPagamento, Setor/UM/GrupoProduto, CondicaoComercial, auxiliares na coorte #351.
 
 RegiaoAtendimento: reopen custom com updated_date + dirty confirm — equivalente
 funcional; não forçar troca de hook neste lote (form grande).

@@ -7,14 +7,34 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { DollarSign } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
-export default function CondicaoComercialForm({ condicao, condicaoComercial, onSubmit, windowMode = false }) {
-  const dadosIniciais = condicaoComercial || condicao;
+/**
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe em troca de
+ * registro/updated_date; ID técnico vinculado ao boundId. idOnly preservado
+ * (condição comercial não renumerar código hierárquico/legado neste form).
+ */
+export default function CondicaoComercialForm({
+  condicao,
+  condicaoComercial,
+  item,
+  data,
+  initialData,
+  defaultValues,
+  onSubmit,
+  isSubmitting = false,
+  windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || condicaoComercial || condicao;
   const { canCreate, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "CondicaoComercial") || canCreate("Financeiro", "CondicaoComercial") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CondicaoComercial") || canEdit("Financeiro", "CondicaoComercial") || canEdit("Cadastros", null);
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_condicao: '',
     tipo_condicao: 'Pagamento',
     forma_pagamento: 'À Vista',
@@ -22,28 +42,48 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
     intervalo_parcelas_dias: 30,
     desconto_percentual: 0,
     tipo_frete: 'CIF',
-    ativo: true
+    ativo: true,
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
+
+  const { boundId: condicaoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
   });
+  const podeSalvar = condicaoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (dadosIniciais?.id && !podeEditar) {
+    if (isSubmitting) return;
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (condicaoBoundId && !podeEditar) {
       alert("Sem permissao para editar condicoes comerciais.");
       return;
     }
-    if (!dadosIniciais?.id && !podeCriar) {
+    if (!condicaoBoundId && !podeCriar) {
       alert("Sem permissao para criar condicoes comerciais.");
       return;
     }
-    onSubmit({ ...formData, nome: formData.nome_condicao || formData.nome || '' });
+    onSubmit({
+      ...formData,
+      ...(condicaoBoundId ? { id: condicaoBoundId } : {}),
+      nome: formData.nome_condicao || formData.nome || '',
+      group_id: groupId || formData.group_id,
+      empresa_id: contexto === 'empresa' ? empresaAtual?.id : formData.empresa_id,
+    });
   };
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(condicaoBoundId)}
+        entityId={condicaoBoundId}
         action="id-tecnico-condicao-comercial"
       />
       <div>
@@ -51,6 +91,8 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
         <Input
           value={formData.nome_condicao}
           onChange={(e) => setFormData({ ...formData, nome_condicao: e.target.value })}
+          placeholder="Ex: À vista, 30/60 dias"
+          data-action="editar-nome-condicao-comercial"
           required
         />
       </div>
@@ -143,6 +185,7 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
           value={formData.descricao || ''}
           onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={2}
+          data-action="editar-descricao-condicao-comercial"
         />
       </div>
 
@@ -156,12 +199,12 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
 
       <Button
         type="submit"
-        className="w-full bg-green-600 hover:bg-green-700"
-        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        className="w-full bg-sky-600 hover:bg-sky-700"
+        disabled={isSubmitting || !podeSalvar}
         data-permission="Cadastros.CondicaoComercial.salvar"
         data-sensitive
       >
-        {dadosIniciais ? 'Atualizar Condição' : 'Criar Condição Comercial'}
+        {isSubmitting ? 'Salvando…' : (condicaoBoundId ? 'Atualizar Condição' : 'Criar Condição Comercial')}
       </Button>
     </form>
   );
@@ -169,10 +212,10 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
-          <DollarSign className="w-6 h-6 text-green-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <DollarSign className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Condição' : 'Nova Condição Comercial'}
+            {condicaoBoundId ? 'Editar Condição' : 'Nova Condição Comercial'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

@@ -455,6 +455,74 @@ test('MarcaForm: abrir→editar→salvar→fechar→reabrir preserva campos e bo
   assert.equal(codigo2?.props?.value, '000042');
 });
 
+const condicaoInitial = {
+  id: 'cc1',
+  nome_condicao: 'À Vista Alpha',
+  tipo_condicao: 'Pagamento',
+  forma_pagamento: 'À Vista',
+  numero_parcelas: 1,
+  intervalo_parcelas_dias: 30,
+  desconto_percentual: 0,
+  tipo_frete: 'CIF',
+  ativo: true,
+  updated_date: '2026-01-01T00:00:00Z',
+  group_id: 'g1',
+  empresa_id: 'e1',
+};
+
+test('CondicaoComercialForm: abrir→editar→salvar→reabrir + switch-reject boundId', async () => {
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
+    initial: condicaoInitial,
+    namePlaceholder: 'Ex: À vista, 30/60 dias',
+    getValue: (input) => input?.props?.value,
+  });
+  assert.equal(h.getName(), 'À Vista Alpha');
+  const idField = h.walk().find((n) => n.props?.action === 'id-tecnico-condicao-comercial');
+  assert.equal(idField?.props?.entityId, 'cc1');
+  assert.equal(idField?.props?.idOnly, true);
+
+  h.render({ onSubmit: (payload) => submitted.push(payload) });
+  h.render();
+  h.findInput('Ex: À vista, 30/60 dias').props.onChange({ target: { value: '30/60 Editada' } });
+  h.render();
+  assert.equal(h.getName(), '30/60 Editada');
+  const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
+  form.props.onSubmit({ preventDefault() {} });
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].id, 'cc1');
+  assert.equal(submitted[0].nome_condicao, '30/60 Editada');
+  assert.equal(submitted[0].group_id, 'g1');
+  assert.equal(submitted[0].empresa_id, 'e1');
+
+  const h2 = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
+    initial: { ...condicaoInitial, nome_condicao: submitted[0].nome_condicao, updated_date: '2026-01-01T01:00:00Z' },
+    namePlaceholder: 'Ex: À vista, 30/60 dias',
+    getValue: (input) => input?.props?.value,
+  });
+  assert.equal(h2.getName(), '30/60 Editada');
+  assert.equal(h2.walk().find((n) => n.props?.action === 'id-tecnico-condicao-comercial')?.props?.entityId, 'cc1');
+
+  const submittedReject = [];
+  const h3 = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
+    initial: condicaoInitial,
+    namePlaceholder: 'Ex: À vista, 30/60 dias',
+    getValue: (input) => input?.props?.value,
+  });
+  h3.findInput('Ex: À vista, 30/60 dias').props.onChange({ target: { value: 'Rascunho CC A' } });
+  h3.setConfirm(false);
+  h3.render({
+    item: { ...condicaoInitial, id: 'cc2', nome_condicao: 'Beta', updated_date: '2026-01-02T00:00:00Z' },
+    onSubmit: (payload) => submittedReject.push(payload),
+  });
+  h3.render();
+  assert.equal(h3.getName(), 'Rascunho CC A');
+  const form3 = h3.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
+  form3.props.onSubmit({ preventDefault() {} });
+  assert.equal(submittedReject[0].id, 'cc1');
+  assert.notEqual(submittedReject[0].id, 'cc2');
+});
+
 test('MarcaForm: switch-reject — submit usa boundId A (não id B das props)', async () => {
   const submitted = [];
   const h = await mountForm('src/components/cadastros/MarcaForm.jsx', {
