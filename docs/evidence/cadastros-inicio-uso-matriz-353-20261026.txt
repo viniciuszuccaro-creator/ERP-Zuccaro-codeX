@@ -32,13 +32,13 @@ Classe A corrigida neste pacote
   permissão/contexto; com permissão queryKey grupo/empresa + Pedido:
   tests/painel-dinamico-cliente-historico-tab.test.js (PASS).
   Aba montada ≠ histórico carregado.
-- CondicaoComercialForm: coorte ID-only — CadastroCodigoRegistroField +
-  useCadastroRecordState (id/updated_date); pin consolidacao e36231b3 preservado.
-
 Já OK (não reabrir)
 -------------------
 TabelaPreco, PlanoContas idOnly, RotaPadrao, Cliente/Fornecedor/Representante,
-FormaPagamento, Setor/UM/GrupoProduto, CondicaoComercial, auxiliares na coorte #351.
+FormaPagamento, Setor/UM/GrupoProduto, CondicaoComercial (ID-only pin),
+auxiliares na coorte #351.
+Pendência: CondicaoComercial reopen canônico exige autorizar delta no pin
+consolidacao/CANAL — não forçar fora do envelope.
 
 RegiaoAtendimento: reopen custom com updated_date + dirty confirm — equivalente
 funcional; não forçar troca de hook neste lote (form grande).

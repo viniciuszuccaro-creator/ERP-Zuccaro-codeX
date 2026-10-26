@@ -470,68 +470,6 @@ test('MarcaForm: abrir→editar→salvar→fechar→reabrir preserva campos e bo
   assert.equal(codigo2?.props?.value, '000042');
 });
 
-const condicaoInitial = {
-  id: 'cc1',
-  nome_condicao: 'À Vista Alpha',
-  tipo_condicao: 'Pagamento',
-  forma_pagamento: 'À Vista',
-  numero_parcelas: 1,
-  intervalo_parcelas_dias: 30,
-  desconto_percentual: 0,
-  tipo_frete: 'CIF',
-  ativo: true,
-  updated_date: '2026-01-01T00:00:00Z',
-  group_id: 'g1',
-  empresa_id: 'e1',
-};
-
-test('CondicaoComercialForm: abrir→editar→salvar→reabrir (RecordState id/updated_date)', async () => {
-  const submitted = [];
-  const h = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
-    initial: condicaoInitial,
-    initialProp: 'condicao',
-    namePlaceholder: undefined,
-    getValue: (input) => input?.props?.value,
-  });
-  const nomeInput = () => h.walk().find((n) => n.type === 'Input' && n.props?.required);
-  assert.equal(nomeInput()?.props?.value, 'À Vista Alpha');
-  const idField = h.walk().find((n) => n.props?.action === 'id-tecnico-condicao-comercial');
-  assert.equal(idField?.props?.entityId, 'cc1');
-  assert.equal(idField?.props?.idOnly, true);
-
-  h.render({ onSubmit: (payload) => submitted.push(payload) });
-  h.render();
-  nomeInput().props.onChange({ target: { value: '30/60 Editada' } });
-  h.render();
-  assert.equal(nomeInput()?.props?.value, '30/60 Editada');
-  // Mesma identidade (id+updated_date): rascunho preservado.
-  h.render({ condicao: { ...condicaoInitial } });
-  h.render();
-  assert.equal(nomeInput()?.props?.value, '30/60 Editada');
-  const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
-  form.props.onSubmit({ preventDefault() {} });
-  assert.equal(submitted.length, 1);
-  assert.equal(submitted[0].nome_condicao, '30/60 Editada');
-
-  // Fechar → reabrir com updated_date novo carrega registro persistido.
-  const h2 = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
-    initial: { ...condicaoInitial, nome_condicao: '30/60 Editada', updated_date: '2026-01-01T01:00:00Z' },
-    initialProp: 'condicao',
-    namePlaceholder: undefined,
-    getValue: (input) => input?.props?.value,
-  });
-  const nome2 = () => h2.walk().find((n) => n.type === 'Input' && n.props?.required);
-  assert.equal(nome2()?.props?.value, '30/60 Editada');
-  assert.equal(h2.walk().find((n) => n.props?.action === 'id-tecnico-condicao-comercial')?.props?.entityId, 'cc1');
-
-  // Troca de ID: RecordState troca identidade e carrega B (coorte ID-only; sem boundId).
-  h.render({
-    condicao: { ...condicaoInitial, id: 'cc2', nome_condicao: 'Beta', updated_date: '2026-01-02T00:00:00Z' },
-  });
-  h.render();
-  assert.equal(nomeInput()?.props?.value, 'Beta');
-});
-
 test('MarcaForm: switch-reject — submit usa boundId A (não id B das props)', async () => {
   const submitted = [];
   const h = await mountForm('src/components/cadastros/MarcaForm.jsx', {

@@ -1,4 +1,3 @@
-import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,7 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
   const { canCreate, canEdit } = usePermissions();
   const podeCriar = canCreate("Cadastros", "CondicaoComercial") || canCreate("Financeiro", "CondicaoComercial") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CondicaoComercial") || canEdit("Financeiro", "CondicaoComercial") || canEdit("Cadastros", null);
-  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_condicao: '',
     tipo_condicao: 'Pagamento',
     forma_pagamento: 'À Vista',
@@ -24,7 +23,7 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
     desconto_percentual: 0,
     tipo_frete: 'CIF',
     ativo: true
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null]));
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
