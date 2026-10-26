@@ -1,3 +1,9 @@
+## #344 — reparo publication autorizado (2026-10-26)
+
+Base79d002a3, mesmo Codespace/branch. Handoff exclusivo Cursor confirmado; hunk6403101757 aplicado agora, sem aguardar nova liberacao. Preservados18golden hashes e manifesto byte-identico; verificacao bruta de HEAD/referencias e comparacao integral anterior. Foco23PASS; contraprovas adicionais rejeitam mutacoes dentro/fora e hunks repetidos. Resultados finais/CI pelo SHA no recibo GitHub; nao presumir CI verde antes do resultado.
+Nenhuma alteracao de runtime/banco/branches Cursor neste lote. Seguem ambiguidade documental, homologacao isolada e gates operacionais separados; fila detalhada em HANDOFF. Historico de espera abaixo foi superado pela liberacao explicita.
+
+
 ## #344 — fechamento prioritário CANAL / homologação (2026-10-25)
 
 Executor retomado no mesmo Codespace; local/remoto0a67aa4b e checkout limpo.

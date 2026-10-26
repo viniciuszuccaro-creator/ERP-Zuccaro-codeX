@@ -1,3 +1,4 @@
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -43,7 +44,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
  assert.equal(source.includes("'HEAD'"),false);
  assert.equal((source.match(new RegExp(base,'g'))||[]).length,entry.references);
  // The prior proof remains byte-identical after subtracting only the explicitly tested lifecycle addition.
- const prior=entry.path==='server/tests/bulk-consolidacao.test.ts'?restoreApprovedBulkDelta(source):source;
+ const reviewed=clienteConferenciaRemainder(entry.path,source);
+ const prior=entry.path==='server/tests/bulk-consolidacao.test.ts'?restoreApprovedBulkDelta(reviewed):reviewed;
  const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);
 });
@@ -59,3 +61,5 @@ test('future private exports and certificate/key files are ignored without readi
   execFileSync('git',['check-ignore','--no-index','-q','--',file]);
  }
 });
+
+test('CANAL preserves every historical publication manifest byte',()=>{assert.equal(fs.readFileSync('tests/helpers/publicationBaselineManifest.json','utf8'),execFileSync('git',['show','90f0a315eb3d2b59e0c2bfcab7077abc27bc3613:tests/helpers/publicationBaselineManifest.json'],{encoding:'utf8'}));});
