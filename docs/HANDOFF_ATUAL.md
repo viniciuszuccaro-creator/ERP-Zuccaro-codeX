@@ -1,9 +1,9 @@
-## PACOTE Cursor — navegável + cadastros (2026-10-26)
+## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (2026-10-26)
 
-Modalidade: **runner Cursor** (Codespace xylophone 403 — pedido janela Codex
-#353/6421481401). Contatos NÃO reabrir. MarcaForm → reopen canônico.
-Matriz início de uso + ciclo por camada documentados. Pedido 044 = Codex.
-Lista: topo STATUS. Sem merge/deploy/carga.
+Modalidade: **runner Cursor** (xylophone 403; medição Codex 6421481401).
+Contatos NÃO reabrir. Marca reopen + Histórico Produtos tab. CI
+40360798384/40360809795 SUCCESS. Pedido 044 = Codex. Lista: topo STATUS.
+Sem merge/deploy/carga.
 
 Base de runtime/build preservada d86f06b6/CI4785-4786;82557565 repriorizou documentos.
 Revisao353:9756f457/fix e9d7ef15, confirmada no delta e30cffcc, encerrou os DOIS

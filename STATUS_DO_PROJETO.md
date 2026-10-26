@@ -1,19 +1,18 @@
-## PACOTE EM EXECUÇÃO — Candidata navegável + cadastros completos (Cursor, 2026-10-26)
+## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (navegável + cadastros, 2026-10-26)
 
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
-| Candidata | #353 tip ≥`7793d3a8` (Marca reopen + Histórico Produtos tab) |
+| Candidata | #353 tip **`f47fcfe3`** (código ≥`7793d3a8`) |
 | Base | #342 `7ae5bcd9` |
-| Reservados Cursor | #353 SPA/cadastros/comercial UI/tests/docs evidence |
-| Reservados Codex | #342/#344, Pedido 044 DDL, Codespace xylophone medição, legado/staging |
-| Aceite | matriz início de uso; ciclo por camada; Codespace modalidade; aba histórica montada; A≠B |
-| Bloqueios reais | Codespace API 403; Pedido INSERT 044; staging classe B; sem merge/deploy/carga |
+| CI tip | push **40360798384** + PR **40360809795** 6/6 **SUCCESS** |
+| Modalidade | **runner Cursor** (Codespace xylophone 403) |
+| Aceite | matriz início de uso; Marca reopen; aba Histórico Produtos; ciclo por camada; A≠B docs |
+| Bloqueios reais | SHA Codespace; Pedido INSERT 044; staging classe B; sem merge/deploy/carga |
 
-Contatos: **não reabrir**. MarcaForm reopen canônico. PainelCliente `historico_produtos` TabsContent restaurado (classe A UI).
-Matriz: `docs/evidence/cadastros-inicio-uso-matriz-353-20261026.txt`
-Ciclo: `docs/evidence/homologacao-ciclo-comercial-pacote2-353-20261026.txt`
-Codespace: handoff + comentário 6421481401 (medição = Codex).
+Contatos: não reabrir. MarcaForm reopen + PainelCliente `historico_produtos` TabsContent.
+Matriz / ciclo / A/B: `docs/evidence/cadastros-inicio-uso-matriz-353-*`, `homologacao-ciclo-comercial-pacote2-*`, `registros-classe-AB-pacote2-*`.
+Codespace: comentário 6421481401.
 
 ### Lista unica vigente (atualizada neste remarge)
 
