@@ -240,9 +240,13 @@ export class InMemoryClienteRepository implements ClienteRepository {
   }
 
   async findByDocumento(groupId: string, documentoNormalizado: string,_executor?:DbQueryExecutor): Promise<Cliente | null> {
-    return [...this.rows.values()].find(
-      (r) => r.group_id === groupId && r.documento_normalizado === documentoNormalizado,
-    ) ?? null;
+    let match: Cliente | null = null;
+    for (const row of this.rows.values()) {
+      if (row.group_id !== groupId || row.documento_normalizado !== documentoNormalizado) continue;
+      if (match) throw new AppError(409, 'LEGACY_RECONCILIATION_REQUIRED', 'Ambiguous customer document');
+      match = row;
+    }
+    return match;
   }
 
   async create(

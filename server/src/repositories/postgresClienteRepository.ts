@@ -216,9 +216,12 @@ export class PostgresClienteRepository implements ClienteRepository {
 
   async findByDocumento(groupId: string, documentoNormalizado: string,executor?:DbQueryExecutor): Promise<Cliente | null> {
     const result = await (executor??this.db).query(
-      'SELECT * FROM clientes WHERE group_id = $1 AND documento_normalizado = $2 LIMIT 1',
+      'SELECT * FROM clientes WHERE group_id = $1 AND documento_normalizado = $2 LIMIT 2',
       [groupId, documentoNormalizado],
     );
+    if (result.rows.length > 1) {
+      throw new AppError(409, 'LEGACY_RECONCILIATION_REQUIRED', 'Ambiguous customer document');
+    }
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? mapCliente(row) : null;
   }

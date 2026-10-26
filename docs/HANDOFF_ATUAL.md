@@ -1,3 +1,9 @@
+## CURSOR — remarge Codex `776d81ae` (documento) na #353 (2026-10-26)
+
+`bb341ae3` CI SUCCESS. Base → `776d81ae` (findByDocumento LIMIT 2 + 409) mergeada
+sem reimplementar. Conflitos só STATUS/HANDOFF. #344 carga/menor privilégio: Codex.
+Sem merge/deploy. Sem micro-PR useConfirm.
+
 ## CURSOR — #353 pacotes 1–4 (cadastros/visual/matriz/registros) (2026-10-26)
 
 Base verde: `0bd89333`. Mesma candidata #353 / branch
@@ -11,7 +17,7 @@ Base verde: `0bd89333`. Mesma candidata #353 / branch
 | 4 registros | investigação: schema Fornecedor ausente; staging privado fora deste runner |
 
 Coordenaçao Codespace: comentar #353; Codex confirma working tree antes de FF.
-Documento LIMIT 1 + #344: **não** tocados (Codex).
+Documento ambíguo: tip `776d81ae` incorporado. #344 restante: Codex.
 
 ## CURSOR — #353 CI verde e670c1a2 + evidência Comercial360 runner (2026-10-26)
 
@@ -155,6 +161,28 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+## #344 - documento ambiguo, canal sintetico e recuperacao do destino (2026-10-26)
+
+Estado atual: mesmo Codespace/clone/branch codex/consolidacao-infra-20261017, base118e8438; um escritor e trava privada exclusiva. O reparo publication118e8438 esta publicado: CI4764/4765 (40303686424/40303694085), seis jobs SUCCESS; frontend2295PASS/0FAIL/0SKIP. Manifesto18golden inalterado. Cabecalhos anteriores sao historicos, nao uma nova espera por liberacao.
+
+Documento: findByDocumento canonico agora consulta no maximo2 candidatos exatos no Grupo e recusa ambiguidades com409/LEGACY_RECONCILIATION_REQUIRED antes de escolher uma linha ou tentar fallback legado. Memoria e PostgreSQL preservam o mesmo contrato; nenhum merge, restauracao de inativo, permissao ampliada ou escrita de negocio. Os consumidores existentes continuam usando o repositorio. Contraprova dos dois testes novos:2FAIL antes (Missing expected rejection),2PASS depois; novos+HTTP anteriores8PASS/0FAIL/0SKIP.
+
+Prova executavel: server/tests/cliente-conferencia-duplicates.test.ts usa fixture SQL descartavel, middleware Supabase e RBAC PostgreSQL reais com IdP sintetico, adapter HTTP real e schema canonicamente migrado somente no teste. A fixture comprova a unique original, depois simula drift removendo SOMENTE seu indice descartavel; nenhum indice/migration operacional foi tocado. Cobertos ambiguidade sem fallback, ausencia/unicidade/outro Grupo, limites100/200,422 antes da leitura,401/403, revogacao entre leituras e resposta minima, sem audit/escrita de negocio. PGlite local NAO equivale a servidor PostgreSQL; o mesmo teste foi registrado no executor test:postgres existente, com URL local isolada e sem skips permitidos.
+
+scripts/legado/cliente-conferencia-browser-smoke.mjs e auxiliar de teste do consumidor comercial existente, nao outro modulo: Vite e HTTP somente loopback, Chromium, sessao/IdP e permissoes de frontend SINTETICOS, backend/autorizacao reais.5PASS/0FAIL/0SKIP: nenhuma consulta antecipada/ampla, adapter->HTTP->servico->consumidor,100 identidades,101 bloqueadas e resposta HTTP tardia descartada apos encerramento da sessao. Hashes de source/devmodule servido e screenshot sintetico permanecem no recibo privado. Isso prova a composicao de teste, NAO login real HML nem build operacional servido. Dependencias do navegador instaladas apenas em /tmp fora dos lockfiles. Comando reproduzivel: cd server; CLIENTE_CONFERENCIA_BROWSER_MODULE=<caminho absoluto do playwright/index.mjs de teste> node --import tsx --test tests/cliente-conferencia-duplicates.test.ts. Saida explicita diferencia PGlite de PostgreSQL real.
+
+Fechamento do lote: raiz npm run audit:baseline / npm test / npm run lint / npm run typecheck / npm run build / git diff --check: exit0;2295PASS/0FAIL/0SKIP. Backend npm run typecheck / npm run build / npm test: exit0;568TOTAL/543PASS/0FAIL/25SKIP (dependencias de ambiente, nao aprovados). Prova nova do PostgreSQL servidor depende do resultado CI do novo SHA, nao e inferida de PGlite ou destes skips. CI final fica registrado por SHA no recibo342/344. Aviso preexistente de chunks permanece; nenhuma supressao ou teste removido.
+
+Destino: precheck autorizado somente leitura resolveu API->endpoint->peer PostgreSQL17->filesystem PG efetivo, com imagens fixadas privadamente;176 colunas,34 tabelas com flags RLS inventariadas,26 entradas de journal. Das33 migrations SQL automaticas da candidata,26 nomes completos coincidem com journals,7 nao constam:036/037/040/041/042/043/044 (nomes completos no inventario privado). Journal so tem id/applied_at, nao hashes do SQL aplicado: igualdade de nome NAO prova equivalencia de conteudo.045-049 privadas continuam fora da execucao automatica; nao renumeradas/aplicadas. Role efetiva nao superuser, mas BYPASSRLS=true: menor privilegio segue BLOQUEADO; nenhum grant foi criado.
+
+Backup/restauracao especificamente autorizados pelo proprietario neste turno: procedimento create-pre-gate-e-backup.sh existente, SHA2568576c577b0762f2155dae080ddb100f166d2cd3f026ad10a21c5b63632e490a7, apontado ao destino efetivo comprovado, sem novos grants. Backup privado1164962bytes, SHA256 recalculado e permissoes700/600; capacidade do filesystem verificada antes. Restore integral SEM filtrar o dump em container temporario PostgreSQL da mesma imagem17, rede none,0portas,0volumes ERP, rootfs RO e dados em tmpfs.26journals e34tabelas recuperados; journal do original e imagem API inalterados; container removido. Primeiro restore falhou por preload pg_net; segundo habilitou SOMENTE esse preload no container de teste e reutilizou o backup original, passando sem relaxar assertions/SQL. Falha inicial preservada. Isso prova recuperacao do backup desse destino, nao reconcilia contagens de negocio contra banco vivo nem autoriza importacao. Executor privado do restore SHA256ef6d1a6f0fa926e271670f401634934b7e41ab4b9b286cb70d22d273f6c2a0ff. Dump/manifests/logs detalhados em destino privado autorizado, nunca Git/build/CI.
+
+Pacote API+web preparado para fechamento por SHA: publicar codigo nao instala a candidata. Antes da disponibilizacao: fixar SHA final e digests de AMBOS builds, comparar schema/journals/conteudo aplicado, resolver role BYPASSRLS/menor privilegio sem atalhos, registrar imagem anterior e reversao de API+web, janela/responsavel e autorizacao especifica. Login/perfil/Grupo canonicamente revalidaveis continuam exigidos; metadados Auth/permissoes ja localizados nao substituem Bearer valido. Nao pedir novamente IDs ou transferir token para worker. Apenas depois desse canal no destino autorizado usar a selecao privada existente de ate100 clientes, por identidades explicitas e resposta minima, para fechar duplicidades/escopo e propor carga. Nenhuma linha de negocio real foi consultada neste precheck; nenhum piloto/transferencia foi repetido. Reversao por lote e autorizacao operacional especifica continuam gates separados da recuperacao de backup.
+
+Revisao Cursor353: contraprova executou os DOIS guards reais do SHAe670c1a2 e ambos aceitaram remocao nao autorizada de assertion do caso reabertura apos recalcular apenas seu beforeSha. O novo guard usa notEqual+continue em vez de fixar o delta permitido: P1 comentado na353. Tip0bd89333 altera so docs/evidencia visual e conserva o defeito; CI verde nao elimina essa contraprova nem equivale a aprovacao visual/merge. Nao editamos branch Cursor nem integramos353.
+
+Automacao existente revis-o-e-acesso-erp-45-e-46: ferramenta nativa abriu o card, mas nao devolveu status/configuracao estruturados; nenhum estado foi inferido do Markdown ou sobrescrito. Nao reativada nem criada duplicata; execucao atual protegida por trava exclusiva/checkpoint. Falta leitura verificavel da configuracao nativa para continuidade automatica sem sobreposicao. Sem merge/main, deploy, grants, migration/importacao operacional ou novo custo. Originais/captura/staging preservados.
+
 ## #344 — publication coordenado aplicado (2026-10-26)
 
 Estado atual supera a espera historica por handoff abaixo: Cursor liberou explicitamente 6403873982/6403968826/6404656037; Codex e o unico escritor deste hunk na342. Executor: mesmo Codespace/clone/branch, base79d002a3, checkout inicialmente limpo; processo da extensao app-server sem filhos, trava privada exclusiva adquirida. Nenhuma branch Cursor editada.

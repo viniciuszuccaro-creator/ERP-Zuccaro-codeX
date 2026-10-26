@@ -1,3 +1,10 @@
+## CURSOR — remarge Codex `776d81ae` (documento) na #353 (2026-10-26)
+
+Tip Cursor `bb341ae3` CI frontend+backend+compose **SUCCESS**. Base consolidação
+avançou para `776d81ae` (documento ambíguo LIMIT 2 + 409) — **incorporado por
+merge**, sem reimplementar. Conflitos só STATUS/HANDOFF (ambos lados).
+Legado #344 restante (carga/menor privilégio) permanece Codex. Sem merge/deploy.
+
 ## CURSOR — #353 pacotes 1–4 pós-verde 0bd89333 (2026-10-26)
 
 Checkpoint verde: `0bd89333` CI4770/4771 SUCCESS. Continuidade na mesma #353.
@@ -18,8 +25,8 @@ Checkpoint verde: `0bd89333` CI4770/4771 SUCCESS. Continuidade na mesma #353.
    `docs/evidence/registros-auxiliares-investigacao-353-20261026.txt`
    (Fornecedor schema ausente; staging privado não montado neste runner).
 
-Reservas intactas: documento LIMIT 1 + legado #344 = Codex. Sem micro-PRs useConfirm.
-Sem merge/deploy.
+Documento ambíguo: tip Codex `776d81ae` incorporado (não duplicado). #344 carga
+permanece Codex. Sem micro-PRs useConfirm. Sem merge/deploy.
 
 ## CURSOR — #353 CI verde e670c1a2 + evidência Comercial360 runner (2026-10-26)
 
@@ -166,6 +173,13 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+## #344 - ambiguidade documental e canal isolado (2026-10-26)
+
+Mesmo Codespace/branch, base118e8438, sem editar Cursor. Publication118 publicado e CI4764/4765 seis jobs SUCCESS/frontend2295PASS. Novo repositorio canonico limita2 resultados por documento/Grupo e bloqueia duplicidade409 sem escolher/fundir/fallback; memoria equivalente. Contraprova2FAIL antes/2PASS depois; novos+HTTP8PASS. Consumidor existente->adapter->HTTP->servico testados em navegador sintetico:5PASS, inclusive100/101, nenhum eager/list-query e sessao encerrada descarta resposta tardia. Sem dados/credenciais reais, novas permissoes ou escrita de negocio.
+Fechamento: raiz2295PASS/0FAIL/0SKIP, audit/lint/typecheck/build/diff exit0; backend568TOTAL/543PASS/0FAIL/25SKIP, typecheck/build exit0. Skips nao sao aprovacao; servidor PostgreSQL do teste novo e CI final pelo novo SHA no recibo342/344, sem inferir prova a partir de PGlite.
+Precheck RO do destino efetivo:26journals,176colunas,34tabelas;26/33nomes SQL coincidem,7ausentes e journal sem hash de conteudo. Role efetiva BYPASSRLS: gate menor privilegio aberto. Backup/restauracao autorizados concluido: dump privado1164962bytes, hash/permissoes verificados,26journals/34tabelas recuperados integralmente em PostgreSQL17 temporario sem rede/portas/volumesERP; container removido e dump intacto. Primeiro teste de restore exigiu preload pg_net; corrigido somente no isolamento, falha preservada, sem repetir backup. Nao e reconciliacao de registros vivos nem liberacao operacional.
+Cursor353 tip0bd89333 conserva P1 de e670c1a2: dois guards aceitam assertion removida/re-hash no caso autorizado; parecer publicado sem editar a branch. Proxima entrega concreta: fechar CI do novo SHA, disponibilizacao coordenada API+web e resolver menor privilegio/schema/appliedSQL antes da conferencia privada<=100 e proposta de carga. Nenhuma carga/deploy/merge/grant/migration operacional. Automacao nativa sem retorno legivel de estado; nao reativada/duplicada, trava atual exclusiva. Detalhes/comandos/gates no HANDOFF existente.
+
 ## #344 — reparo publication autorizado (2026-10-26)
 
 Base79d002a3, mesmo Codespace/branch. Handoff exclusivo Cursor confirmado; hunk6403101757 aplicado agora, sem aguardar nova liberacao. Preservados18golden hashes e manifesto byte-identico; verificacao bruta de HEAD/referencias e comparacao integral anterior. Foco23PASS; contraprovas adicionais rejeitam mutacoes dentro/fora e hunks repetidos. Resultados finais/CI pelo SHA no recibo GitHub; nao presumir CI verde antes do resultado.
