@@ -24,6 +24,7 @@ import {
   PEDIDO_CANCEL_MOTIVO_MAX,
   PEDIDO_CANCEL_MOTIVO_MIN,
   resolvePedidoHistoryUiState,
+  explainPedidoPersistenceError,
 } from '../src/components/comercial/pedidoUiPolicy.js';
 
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
@@ -327,4 +328,33 @@ test('painel Pedido: imprimir e compartilhar no detalhe', async ()=>{
   assert.match(source,/pedido-print-pdf/);
   assert.match(source,/pedido-share-whatsapp/);
   assert.match(source,/gerarPDFPedido/);
+});
+
+
+test('explainPedidoPersistenceError: coluna idempotency_key ausente → mensagem 044 explícita', () => {
+  const msg = explainPedidoPersistenceError({
+    message: 'column "idempotency_key" of relation "pedidos" does not exist',
+    code: '42703',
+  });
+  assert.ok(msg);
+  assert.match(msg, /044/);
+  assert.match(msg, /não foi confirmado como salvo/i);
+  assert.equal(explainPedidoPersistenceError({ message: 'timeout de rede' }), null);
+  assert.equal(explainPedidoPersistenceError(null), null);
+});
+
+test('explainPedidoPersistenceError: body API com payload_fingerprint', () => {
+  const msg = explainPedidoPersistenceError({
+    status: 500,
+    body: { error: { message: 'column payload_fingerprint does not exist' } },
+  });
+  assert.ok(msg);
+  assert.match(msg, /idempotência/i);
+});
+
+test('PedidoCanonicoPanel e OrcamentosTab usam explainPedidoPersistenceError (não mascaram 044)', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /explainPedidoPersistenceError/);
+  assert.match(orc, /explainPedidoPersistenceError/);
 });

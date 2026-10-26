@@ -33,8 +33,8 @@ PRONTO PARA HOMOLOGAÇÃO (código/CI — NÃO = VPS liberada)
 BLOQUEADOR DA ENTRADA EM USO
 ────────────────────────────────────────────
 [B1] P1 publication guardas — ENCERRADO (contraprova; não reabrir por CI)
-[B1b] Contatos: tip corrige achados 6416585754; AINDA bloqueia até parecer
-      Codex no novo SHA (implementado ≠ revisado ≠ operacional VPS)
+[B1b] Contatos: tip e9d7ef15 + CI4797/4798; bot review sem major issues;
+      preferível contraprova humana dos 2 casos. Implementado+CI ≠ VPS
 [B2] Aprovação disponibilização HML/VPS (privilégio/policies/digests) — #344
 [B3] Medir SHA/build efetivamente servido (VPS/Codespace)
 [B4] Fornecedor PG ops: migration candidate — gate

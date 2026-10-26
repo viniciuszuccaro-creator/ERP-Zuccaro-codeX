@@ -105,6 +105,22 @@ autorizacao de primeira carga real.
 ## Historico anterior - provas mantidas, nao estado vigente de aprovacao
 
 
+## CURSOR — azul-claro roteiro + Pedido/044 explícito (2026-10-26 ~11:40 UTC-03:00)
+
+Mesma #353. Contatos tip `e9d7ef15` CI4797/4798 + bot review sem major issues;
+tip docs `9756f457` CI4799/4800. P1 guardas ENCERRADO. Contatos: ainda preferível
+contraprova humana Codex dos 2 casos (bot ≠ synthetic). Sem merge/deploy/carga.
+
+### Independente (operação inicial)
+- Azul-claro (`sky-*`) em CadastroClienteCompleto, FormaPagamentoForm,
+  GerenciarContatosClienteForm, PedidosTab — padrão já usado em cadastros.
+- `explainPedidoPersistenceError` (pedidoUiPolicy): destino sem 044 → toast
+  explícito em PedidoCanonicoPanel + conversão OrcamentosTab; rascunho não
+  declarado salvo. DDL 044 permanece Codex.
+- Evidência camadas: `docs/evidence/homologacao-fluxo-camadas-353-20261026.txt`
+
+Distinção: sintético/CI ≠ Codespace ≠ VPS. Lista vigente = topo deste STATUS.
+
 ## CURSOR — CI tip `e9d7ef15` SUCCESS (2026-10-26 11:30 UTC-03:00)
 
 SHA `e9d7ef15` · CI **4797** (push) / **4798** (PR) 6/6 SUCCESS · #353 MERGEABLE/CLEAN vs base `82557565`.

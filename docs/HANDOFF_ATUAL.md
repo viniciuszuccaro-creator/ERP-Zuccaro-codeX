@@ -1,3 +1,10 @@
+## CURSOR — azul-claro + Pedido/044 UI (2026-10-26)
+
+#353 tip após e9d7ef15/9756f457. Sky nos forms do roteiro; explain 044 na UI.
+Camadas: docs/evidence/homologacao-fluxo-camadas-353-20261026.txt
+Contatos: bot limpo; solicitar contraprova humana dos 2 casos se ainda aberta.
+Sem editar branch Codex. Sem merge/deploy/carga.
+
 ## Continuidade vigente - entrada em uso (decisao do proprietario, 2026-10-26)
 
 Coordenacao principal permanece neste chat ERP ZUCCARO - CODEX/CURSOR.

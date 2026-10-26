@@ -425,7 +425,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
         r.status === 'Entregue' ? 'bg-green-600 text-white' :
         pedidoLegacyStatusLabel(r.status) === 'Em Trânsito' ? 'bg-purple-600 text-white' :
         pedidoLegacyStatusLabel(r.status) === 'Em Expedição' ? 'bg-orange-600 text-white' :
-        r.status === 'Faturado' ? 'bg-blue-600 text-white' :
+        r.status === 'Faturado' ? 'bg-sky-600 text-white' :
         r.status === 'Pronto para Faturar' ? 'bg-indigo-600 text-white' :
         r.status === 'Aprovado' ? 'bg-green-500 text-white' :
         pedidoLegacyStatusLabel(r.status) === 'Aguardando Aprovação' ? 'bg-yellow-500 text-white' :
@@ -455,7 +455,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
             data-sensitive
             onClick={() => abrirAutomacaoFechamentoSeguro(pedido)}
             disabled={!contextoValido || !canFecharPedido}
-            className="h-8 px-2 bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg"
+            className="h-8 px-2 bg-gradient-to-r from-green-600 to-sky-600 text-white hover:from-green-700 hover:to-sky-700 font-semibold shadow-lg"
           >
             <CheckCircle2 className="w-3 h-3 mr-1" />
             <span className="text-xs">ðŸš€ Fechar Pedido</span>
@@ -483,7 +483,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
                data-permission="Comercial.Pedido.marcarProntoFaturar"
                onClick={() => marcarProntoParaFaturarSeguro(pedido)}
               disabled={!contextoValido || !canMarcarProntoFaturar}
-              className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
+              className="h-8 px-2 bg-sky-50 text-sky-700 hover:bg-sky-100 font-semibold border border-sky-200"
             >
               <Truck className="w-4 h-4 mr-1" />
               <span className="text-xs">ðŸšš Fechar p/ Entrega</span>
@@ -503,7 +503,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
         )}
 
         {pedido.status === 'Faturado' && (
-          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.criarEntrega" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canCriarEntrega, acao: 'Criacao Entrega', descricao: 'Acionada criacao de entrega', toastTitle: 'Criando entrega...' })} disabled={!contextoValido || !canCriarEntrega} title="Criar Entrega" className="h-8 px-2 text-blue-600">
+          <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.criarEntrega" data-sensitive onClick={() => executarAcaoSensivelPedido({ pedido, permitido: canCriarEntrega, acao: 'Criacao Entrega', descricao: 'Acionada criacao de entrega', toastTitle: 'Criando entrega...' })} disabled={!contextoValido || !canCriarEntrega} title="Criar Entrega" className="h-8 px-2 text-sky-600">
             <Truck className="w-3 h-3 mr-1" />
             <span className="text-xs">Entrega</span>
           </Button>
@@ -655,7 +655,7 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Pedidos</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={criarPedidoSeguro} data-permission="Comercial.Pedido.criar" data-sensitive disabled={!contextoValido || !canCreatePedido}>
+        <Button className="bg-sky-600 hover:bg-sky-700" onClick={criarPedidoSeguro} data-permission="Comercial.Pedido.criar" data-sensitive disabled={!contextoValido || !canCreatePedido}>
           <Plus className="w-4 h-4 mr-2" />
           Novo Pedido
         </Button>
@@ -700,9 +700,9 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
         </CardHeader>
         <CardContent className="p-0">
           {selectedPedidos.length > 0 && (
-            <Alert className="m-4 border-blue-300 bg-blue-50">
+            <Alert className="m-4 border-sky-300 bg-sky-50">
               <AlertDescription className="flex items-center justify-between">
-                <div className="text-blue-900 font-semibold">{selectedPedidos.length} pedido(s) selecionado(s)</div>
+                <div className="text-sky-900 font-semibold">{selectedPedidos.length} pedido(s) selecionado(s)</div>
                 <div className="flex gap-2">
                   <ProtectedAction module="Comercial" section="Pedido" action="exportar" mode="disable">
                   <Button variant="outline" data-permission="Comercial.Pedido.exportar" onClick={() => exportarPedidosSeguro(filteredPedidos.filter(p => selectedPedidos.includes(p.id)))} disabled={!contextoValido || !canExportPedido}>

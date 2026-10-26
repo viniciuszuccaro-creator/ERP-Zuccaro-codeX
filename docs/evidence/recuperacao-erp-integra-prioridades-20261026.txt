@@ -78,3 +78,8 @@ Fora de escopo deste lote
 - Cópia de Auth/RBAC permissivo da referência
 - Redesign visual amplo sem aprovação owner
 - Migration 044 / backend Pedido (reserva Codex)
+
+Atualização #353 (azul-claro + Pedido/044 UI)
+- sky-* em Cliente completo / FormaPagamento / Contatos / PedidosTab (roteiro).
+- Sem restaurar Documentacao/OAuthConsent/EmpresaOnboarding.
+- Pedido: mensagem explícita se schema 044 ausente (não mascarar SPA aberta).

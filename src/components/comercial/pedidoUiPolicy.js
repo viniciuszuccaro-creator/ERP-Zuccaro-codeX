@@ -365,3 +365,43 @@ export function calculatePedidoTotals(items) {
   const total = calculateTotals(items);
   return { subtotal: microsToDecimal(total.subtotal), desconto: microsToDecimal(total.desconto), total: microsToDecimal(total.total) };
 }
+
+/**
+ * Traduz falhas de persistência de Pedido (ex.: destino sem migration 044)
+ * para mensagem explícita. Não mascara ausência de schema como “salvo”.
+ * Coordenação Codex — Cursor não aplica DDL neste lote.
+ *
+ * @param {unknown} error
+ * @returns {string|null}
+ */
+export function explainPedidoPersistenceError(error) {
+  if (!error || typeof error !== 'object') return null;
+  const err = /** @type {Record<string, unknown>} */ (error);
+  const body = err.body && typeof err.body === 'object'
+    ? /** @type {Record<string, unknown>} */ (err.body)
+    : null;
+  const nested = body?.error && typeof body.error === 'object'
+    ? /** @type {Record<string, unknown>} */ (body.error)
+    : null;
+  const chunks = [
+    err.message,
+    err.code,
+    nested?.message,
+    nested?.code,
+    body?.message,
+    body?.code,
+  ].filter((v) => v != null && String(v).trim() !== '').map((v) => String(v));
+  const raw = chunks.join(' ').toLowerCase();
+  if (!raw) return null;
+
+  const mentionsIdempotency = raw.includes('idempotency_key') || raw.includes('payload_fingerprint');
+  const missingColumn = (
+    (raw.includes('column') && (raw.includes('does not exist') || raw.includes('undefined_column')))
+    || raw.includes('42703')
+  );
+  if (mentionsIdempotency || (missingColumn && (raw.includes('pedido') || mentionsIdempotency))) {
+    return 'Persistência de Pedido indisponível neste destino: faltam colunas de idempotência (migration 044). '
+      + 'Não declare vendas prontas. Coordene aplicação autorizada com Codex; o rascunho não foi confirmado como salvo.';
+  }
+  return null;
+}

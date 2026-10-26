@@ -171,7 +171,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
       </div>
 
       {formData.permite_parcelamento && (
-        <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded border">
+        <div className="grid grid-cols-2 gap-4 p-4 bg-sky-50 rounded border">
           <div>
             <Label>Maximo de Parcelas</Label>
             <Input type="number" value={formData.maximo_parcelas} onChange={(e) => setFormData({ ...formData, maximo_parcelas: parseInt(e.target.value, 10) || 1 })} placeholder="12" disabled={!podeSalvar} data-permission="Cadastros.FormaPagamento.editar" data-action="editar-maximo-parcelas" data-sensitive />
@@ -217,7 +217,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-blue-600" />
+            <CreditCard className="w-5 h-5 text-sky-600" />
             {dadosIniciais ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}
           </h2>
         </div>

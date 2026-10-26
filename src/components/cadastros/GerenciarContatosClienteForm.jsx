@@ -123,7 +123,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
   const getIcone = (tipo) => {
     switch(tipo) {
       case 'WhatsApp': return <MessageCircle className="w-4 h-4 text-green-600" />;
-      case 'E-mail': return <Mail className="w-4 h-4 text-blue-600" />;
+      case 'E-mail': return <Mail className="w-4 h-4 text-sky-600" />;
       case 'Telefone': return <Phone className="w-4 h-4 text-slate-600" />;
       case 'Celular': return <Phone className="w-4 h-4 text-sky-600" />;
       default: return <Phone className="w-4 h-4 text-slate-600" />;
@@ -151,7 +151,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
           {contatos.map((contato, idx) => (
             <div 
               key={idx} 
-              className="p-3 border rounded-lg hover:border-blue-500 transition-all bg-white"
+              className="p-3 border rounded-lg hover:border-sky-500 transition-all bg-white"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
@@ -180,7 +180,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
                     data-permission="Cadastros.Cliente.editar"
                     data-action="Cadastros.Cliente.contato.editar"
                   >
-                    <Edit className="w-4 h-4 text-blue-600" />
+                    <Edit className="w-4 h-4 text-sky-600" />
                   </Button>
                   <Button
                     variant="ghost"

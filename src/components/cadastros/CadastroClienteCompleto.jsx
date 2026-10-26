@@ -615,14 +615,14 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <User className="w-6 h-6 text-blue-600" />
+                <User className="w-6 h-6 text-sky-600" />
                 {cliente?.id ? 'Editar Cliente' : 'Novo Cliente'}
               </h2>
               {cliente?.id && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge className={
                     formData.status === 'Ativo' ? 'bg-green-100 text-green-700' :
-                    formData.status === 'Prospect' ? 'bg-blue-100 text-blue-700' :
+                    formData.status === 'Prospect' ? 'bg-sky-100 text-sky-700' :
                     formData.status === 'Bloqueado' ? 'bg-red-100 text-red-700' :
                     'bg-gray-100 text-gray-700'
                   }>
@@ -679,7 +679,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 data-action="Cadastros.Cliente.salvar"
                 data-sensitive
                 disabled={isSaving || saveMutation.isPending || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-sky-600 hover:bg-sky-700"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saveMutation.isPending ? 'Salvando..' : 'Salvar Cliente'}
@@ -1369,7 +1369,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                         </div>
                         <div>
                           <p className="text-sm text-slate-600">Score de Pagamento</p>
-                          <p className="text-2xl font-bold text-blue-600">
+                          <p className="text-2xl font-bold text-sky-600">
                             {formData.score_pagamento || 100}
                           </p>
                         </div>
@@ -1388,16 +1388,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
             <TabsContent value="fiscal" className="space-y-6 m-0 mt-4">
               {ultimaNF && ultimaNF.length > 0 && (
-                <Card className="bg-blue-50 border-blue-200">
+                <Card className="bg-sky-50 border-sky-200">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-blue-900">Última Nota Fiscal Emitida</p>
-                        <p className="text-xs text-blue-700">
+                        <p className="text-sm font-medium text-sky-900">Última Nota Fiscal Emitida</p>
+                        <p className="text-xs text-sky-700">
                           NF-e {ultimaNF[0].numero}/{ultimaNF[0].serie} - {new Date(ultimaNF[0].data_emissao).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
-                      <Badge variant="outline" className="text-blue-700">
+                      <Badge variant="outline" className="text-sky-700">
                         R$ {(ultimaNF[0].valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </Badge>
                     </div>
@@ -1566,7 +1566,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-blue-600" />
+                            <FileText className="w-5 h-5 text-sky-600" />
                             <div>
                               <p className="font-medium">{doc.nome_arquivo}</p>
                               <div className="flex items-center gap-2 mt-1">

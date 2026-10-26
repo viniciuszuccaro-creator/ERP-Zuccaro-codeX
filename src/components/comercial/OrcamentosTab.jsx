@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, createOrcamentoActionGate, microsToDecimal, sameOrcamentoScope } from './orcamentoUiPolicy';
+import { explainPedidoPersistenceError } from './pedidoUiPolicy';
 import {
   clienteEmpresaPickerLabel,
   filterClienteEmpresaOptions,
@@ -33,6 +34,9 @@ const emptyForm = () => ({ cliente_empresa_id: '', condicao_pagamento_id: '', ta
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
 const errorMessage = (error) => {
+  // Conversão orçamento→pedido pode falhar por schema 044 no destino — não mascarar.
+  const pedidoSchema = explainPedidoPersistenceError(error);
+  if (pedidoSchema) return pedidoSchema;
   if (error?.status === 403) return 'Seu perfil não possui permissão para esta ação.';
   if (error?.status === 404) return 'Orçamento não encontrado neste contexto.';
   if (error?.status === 409) return 'O orçamento foi alterado e não está mais em aberto.';
