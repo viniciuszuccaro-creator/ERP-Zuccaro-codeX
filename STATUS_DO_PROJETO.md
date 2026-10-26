@@ -1,3 +1,11 @@
+## CURSOR — remarge Codex `d86f06b6` (identidade legada/RLS) na #353 (2026-10-26 09:41 UTC-03:00)
+
+Base consolidação avançou `776d81ae` → `d86f06b6` (LIMIT2 legado + teste RLS restrito).
+Incorporado por merge na mesma #353; conflitos só STATUS/HANDOFF (ambos lados).
+P1 reopen `a37b736f` hunks preservados; CI verde ≠ fechamento P1.
+#344 carga/menor privilégio/proposta HML: reserva Codex intocada.
+Sem editar branch Codex. Sem merge/deploy.
+
 ## CURSOR — CI tip `6d76d0b5` SUCCESS (2026-10-26 09:11 UTC-03:00)
 
 SHA `6d76d0b5fa44f75199fd4e4e157bb05af22c96cb` · CI **4781** (push) / **4782** (PR)
@@ -225,6 +233,14 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+
+## #344 - candidata de decisao: schema, RLS e builds (2026-10-26)
+
+Mesmo Codespace/branch, base776d81ae/CI4772-4773, sem Cursor concorrente. Novo delta real: lookup canonico por origem/codigo agora LIMIT2, mantendo409 em ambiguidade sem depender do indice043. Teste PG17 restrito2PASS/0FAIL/0SKIP, IdP HTTP sintetico e runtime Auth/Dados existentes;55colunas do canal coincidem por hash com o destino. Negados cross-tenant/Empresa/revogacao/escritas e identidade GUC forjada por terceira role.042 integra+5policies aditivas testadas em fixture, nenhum grant/role/journal/SQL operacional alterado.
+Backend570TOTAL/544PASS/0FAIL/26SKIP; ultimo reforco da fixture validado focadamente2PASS. Contrato importador4PASS; audit/lint/typecheck/diff e build backend exit0. Frontend2295PASS/browser5 anteriores reutilizados; CI final e IDs efetivamente construidos por SHA no recibo342/344. Aviso preexistente de lint EntregasListagem170, nao tocado.
+Sete pendencias investigadas:036/037/040/041/044 nao sao dependencias da leitura;042 exige bootstrap restrito;043 nao necessaria para ler clientes com campos009/ambiguidade limitada, mas afeta futuras escritas. Efeitos ausentes comprovados;26journals sem hash NAO provam conteudo aplicado.045-049 privadas preservadas fora do automatico. Nao usar migrador pending-all para o canal.
+Backup/restore recuperavel REUTILIZADO e hash/permissoes rechecados; frescor para futura janela nao presume ausencia de escritas alheias. Proposta privada hash2d604847... exige aprovacao especifica de2principais dedicados, SELECT/042/5policies, configuracao/digests e HML somente leitura sem substituir o ERP atual. Nao reutilizar identidades Supabase. Detalhe/papeis/rollback/coorte<=100 no HANDOFF existente; sem deploy/carga/merge ou novo custo.
+Cursor353 bb341ae3 conserva P1 demonstrado por contraprova atualizada6413521678. Automacao nativa so abriu card sem estado verificavel; nao ativada/duplicada. Originais/captura/staging intactos.
 ## #344 - ambiguidade documental e canal isolado (2026-10-26)
 
 Mesmo Codespace/branch, base118e8438, sem editar Cursor. Publication118 publicado e CI4764/4765 seis jobs SUCCESS/frontend2295PASS. Novo repositorio canonico limita2 resultados por documento/Grupo e bloqueia duplicidade409 sem escolher/fundir/fallback; memoria equivalente. Contraprova2FAIL antes/2PASS depois; novos+HTTP8PASS. Consumidor existente->adapter->HTTP->servico testados em navegador sintetico:5PASS, inclusive100/101, nenhum eager/list-query e sessao encerrada descarta resposta tardia. Sem dados/credenciais reais, novas permissoes ou escrita de negocio.

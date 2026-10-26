@@ -1,3 +1,11 @@
+## CURSOR — remarge Codex `d86f06b6` (identidade legada/RLS) na #353 (2026-10-26 09:41 UTC-03:00)
+
+Base consolidação avançou `776d81ae` → `d86f06b6` (LIMIT2 legado + teste RLS restrito).
+Incorporado por merge na mesma #353; conflitos só STATUS/HANDOFF (ambos lados).
+P1 reopen `a37b736f` hunks preservados; CI verde ≠ fechamento P1.
+#344 carga/menor privilégio/proposta HML: reserva Codex intocada.
+Sem editar branch Codex. Sem merge/deploy.
+
 ## CURSOR — CI tip `6d76d0b5` SUCCESS (2026-10-26 09:11 UTC-03:00)
 
 SHA `6d76d0b5fa44f75199fd4e4e157bb05af22c96cb` · CI **4781** (push) / **4782** (PR)
@@ -209,6 +217,51 @@ confirma alterações pendentes; eco do próprio save (form==servidor) aplica se
 Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
 Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
 Reserva #344 Codex intocada.
+
+## #344 - pacote de decisao do canal, schema e menor privilegio (2026-10-26)
+
+Base776d81ae/CI4772-4773 SUCCESS, mesmo Codespace/clone/branch, checkout inicialmente limpo. Trava exclusiva adquirida; PID antigo encerrou e o processo restante foi identificado como app-server ocioso, sem filhos, nao outro escritor. Reservas coordenadas353/6414760582. Nenhuma branch Cursor, captura, worktree original ou backup legado alterado. Publication18golden, conferencia por documento e pilotos anteriores nao foram refeitos.
+
+### Compatibilidade comprovada, nao igualdade de migrations
+Precheck novo somente de CATALOGOS no destino pin05454603bf9d:0linhas de negocio/0escritas. Projecao de55colunas (nome/tipo/nullability) de clientes/profiles/groups/empresas coincide com a fixture de contratos001-009: SHA25624479a48be3ef8f772eab46d41fec69706ce704f2b986b95485b3d6e325dfd3e. Isso prova o contrato estrutural de leitura, NAO todo schema/FKs/defaults/SQL historico.26journals continuam sem hash aplicado; conteudo integral executado permanece desconhecido.
+
+| migration pendente no journal | efeito ausente comprovado | dependencia real da conferencia |
+|---|---|---|
+|036|6tabelas Entrega/Romaneio/Separacao ausentes|nenhuma leitura do canal|
+|037|3tabelas ledger/estoque/eventos ausentes|nenhuma; nao criar saldo|
+|040|oportunidades ausente|nenhuma; CRM geral nao homologado por isto|
+|041|produto_empresas ausente|nenhuma; operacao Produto permanece gate separado|
+|042|0policies nas4tabelas do canal, RLS ENABLE+FORCE|bootstrap nao privilegiado precisa das suas3predicates; grants sozinhos devolvem403|
+|043|2indices legados e5colunas de Produto ausentes|nao e necessaria a leitura de Cliente; campos ja existem desde009 e ambiguidade deve bloquear; escrita/importacao continuam gates proprios|
+|044|2colunas e indice de idempotencia Pedido ausentes|nenhuma; POST Pedido nao faz parte deste escopo|
+
+Essas ausencias provam incompatibilidade com as respectivas funcionalidades COMPLETAS, nao autorizam aplicar as sete por conveniencia. O migrador lista /^\d+_.*\.sql$/i, ordena nomes completos e aplica TODOS os ausentes, em transacao por arquivo; nao compara conteudo e nao oferece allowlist. NAO usar npm run migrate para liberar so o canal.045-049 privadas continuam fora do diretorio automatico, sem renumerar/marcar/aplicar SQL.
+
+### Delta minimo implementado e ensaio representativo
+PostgresClienteRepository.findByLegacyIdentity ja negava duplicidade, mas sem limite no resultado. Agora LIMIT2 conserva a assinatura e a comparacao de cardinalidade, sem assumir043 nem escolher linha arbitraria. Nova contraprova falhou antes (HTTP500 ao violar o limite exigido), passa depois, incluindo duplicidade legada409 na fixture SEM indice043. Nenhum cadastro/importador/endpoint paralelo, sem alterar a correcao documental anterior.
+
+server/tests/cliente-conferencia-restricted.test.ts reutiliza createRuntimeDbClients, createApp, Auth/RBAC/repositorios/validadores e authBootstrapFixture. PostgreSQL17 descartavel, schema001-009 sintetico representativo, logins Auth/Dados efemeros NOSUPERUSER/NOBYPASSRLS/NOCREATEDB/NOCREATEROLE/NOINHERIT. Com zero policies replica a negativa do destino. Testa permissao explicita, restauracao REAL de sessao por HTTP contra IdP local sintetico, Grupo/Empresa/cross-tenant, revogacao no meio da consulta e no IdP,101negado antes de leitura, queries exatas com LIMIT2, ausencia de contexto residual e INSERT/UPDATE/DELETE negados. Cliente inativo permanece inativo;0escritas/audit de negocio no canal. Projecao de55colunas conferida por hash; nao usa backup/dados reais nem declara equivalencia byte-a-byte do SQL aplicado.
+
+O destino tem grants de tabela preexistentes para anon/authenticated/service_role. Para nao ampliar acesso nem editar042, a proposta final executada SOMENTE NA FIXTURE usa042 integral,3guardas RESTRICTIVE adicionais e2policies de leitura no Data. Contraprova com terceira role e app.auth_user_id forjado:042 sozinha permite1perfil/1grupo/2empresas na fixture com grants equivalentes; com as guardas retorna0/0/0. Auth/Dados legitimos continuam funcionando. Nao e afirmacao de exploracao via HTTP no destino.
+Grants propostos separados: Auth SELECT de8colunas profiles/2groups/6empresas; Dados SELECT de5profiles e28clientes exigidas pelo repositorio atual, sem grant automatico de futuras colunas, sem escrita/sequence/audit. As5policies aditivas sao3restritivas (profiles so Auth/Dados; groups/empresas so Auth) e2permissivas TO Dados por Grupo/mestre. Nenhuma policy permissiva aberta nova para PUBLIC alem da042 historica, protegida pelas restritivas.
+Nao ha papel ERP dedicado apto nos catalogos inspecionados; logins de infraestrutura Supabase/PgBouncer NAO serao reaproveitados. Nomes/segredos dos dois principais dependem de provisionamento especifico aprovado e canal seguro; nao criar identidade ou copiar credencial por inferencia. Configuracao candidata: ERP_AUTH_MODE=supabase_user, ENABLE_TENANT_CONTEXT=true, AUTH_DATABASE_URL e DATABASE_URL de papeis distintos, mesmo destino/schema, APP_VERSION=SHA integral, REQUIRE_DATABASE=true. O preflight existente rejeita ambos os logins inseguros.
+
+Proposta PRIVADA preparada, NAO executada, protegida por quit77: channel-access-v2.sql.proposed SHA2562d604847b8548a5e5018739f3d778f972e2421927a488e0f58a05cb5209ad362. Contem grants SELECT,042 exata e5policies aditivas numa transacao. So permite registrar042 apos sua execucao integral comprovada; as5policies precisam de change-record proprio por hash, nao de numero inventado. Nao altera migration aplicada/arquivo042 e nao marca nenhum journal nesta preparacao. A versao privada anterior de5policies com042 modificada NAO e a candidata final.
+
+### Evidencias e builds por SHA
+Foco final restrito2PASS/0FAIL/0SKIP em PG17; contrato frontend diretamente consumidor do lookup4PASS/0FAIL/0SKIP, sem executar importacao. Backend completo570TOTAL/544PASS/0FAIL/26SKIP; o novo skip local exige PG real e e explicitamente registrado no executor estrito test:postgres (na CI nao aceita skips). Probe final das guardas foi repetido focadamente apos o ensaio completo, sem repetir o restante inalterado. Typecheck/build backend e audit/lint/typecheck/diff raiz exit0. Aviso de lint preexistente em EntregasListagem.jsx170 (unused eslint-disable), arquivo nao tocado. Nenhuma supressao/config relaxada/teste removido.
+Frontend completo2295PASS e navegador5PASS de776d81ae reutilizados por nao haver delta no consumidor/HTTP/frontend; CI do novo SHA valida composicao final. Builds Docker pelos Dockerfiles EXISTENTES, somente apos commit limpo, ambos com label org.opencontainers.image.revision do MESMO SHA. Web: http/same-origin, base vazia, flag Cliente360=false preservada. API APP_VERSION exige configuracao explicita no runtime. IDs/digests e resultados REAIS dos builds/CI ficam no recibo342/344 deste SHA; nao inventar valores a partir deste plano. Digest local de configuracao Docker NAO e manifest digest de registry; nao houve push de imagem/servico pago. Checagens de artefatos sem rede nao equivalem a sessao API+web implantada.
+
+### Backup, destino e decisao de disponibilizacao
+Backup privado1164962bytes continua com hash/permissoes verificados; recibo de restore PG17 recuperavel26journals/34tabelas REUTILIZADO, sem novo dump/restore. Imagens/identidade/journals do destino permaneceram pinados. Nao ha prova de ausencia de escritas de terceiros desde o dump; frescor para uma futura janela precisa ser revalidado, nao inferido de metadata ou idade.
+Imagens anteriores (IDs locais reais, nao tags presumidas): API sha256:63d0d8f7375a1980dc37a5c7923f74b33145ef8d9630e154671495b52438bd23; web sha256:af24610fa82d0931a9858c287e7b0117efb2fa9219e7b796615dcaecfbf204d0.
+Escopo proposto para decisao: HML SOMENTE LEITURA do canal no DEV ja identificado, janela de30min A COMBINAR apos aprovacao, sem substituir API/web atuais, sem merge/carga/NF/estoque/financeiro. Um papel SELECT-only nao pode substituir silenciosamente o runtime de CRUD do ERP inteiro. Sem novo Codespace/clone/frente ou recurso pago. Disponibilizacao precisa aprovar destino/papeis/DDL/configuracao/ambos os digests e bindings loopback livres conferidos no momento.
+Reversao: retirar somente a candidata HML; conservar par anterior e configuracao privada. Se futuramente houver troca do par, restaurar AMBAS imagens/config por ID e verificar versao/health/SPA, nao usar roteiro antigo API-only como rollback web. Nao apagar dados, roles, policies ou journals automaticamente; qualquer reversao de ACL/DDL exige snapshot/parecer proprio.
+Primeira conferencia: selecao privada existente deATE100, Grupo/perfil/sessao canonicos comprovados; POST bounded por documento/origem+codigo, ate200lookups exatos/requisicao e resposta apenas indice/id/codigo/ativo. Ambiguidade409 fica em quarentena, sem escolher/fundir/promover inativo; nenhum dado real em Git/CI. Isso e preparacao de leitura, nao autorizacao de carga.
+
+### Revisao cruzada e continuidade
+353 tipbb341ae38c54d3f5a267030adcabb5decf0ad2f9: guards/manifesto/caso sao byte-identicos; contraprova repetida nos DOIS callbacks reais continua aceitando assertion removida/re-hash. P1 atualizado no comentario6413521678. Sem editar/integrar Cursor nem medir sua previa no Codespace; CI verde nao substitui preservacao.
+Automacao existente revis-o-e-acesso-erp-45-e-46 consultada nativamente neste turno: so retornou card, sem configuracao/status/executor verificaveis. Nao declarada ativa, reativada ou duplicada. Trabalho atual protegido por trava/checkpoint, resultados e recibo final por SHA. Cabecalhos abaixo historicos; proximo passo e a decisao especifica sobre papeis/patch/HML readonly e frescor do backup, nao aplicar sete migrations nem iniciar carga.
 ## #344 - documento ambiguo, canal sintetico e recuperacao do destino (2026-10-26)
 
 Estado atual: mesmo Codespace/clone/branch codex/consolidacao-infra-20261017, base118e8438; um escritor e trava privada exclusiva. O reparo publication118e8438 esta publicado: CI4764/4765 (40303686424/40303694085), seis jobs SUCCESS; frontend2295PASS/0FAIL/0SKIP. Manifesto18golden inalterado. Cabecalhos anteriores sao historicos, nao uma nova espera por liberacao.
