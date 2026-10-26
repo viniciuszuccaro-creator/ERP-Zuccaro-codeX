@@ -1,3 +1,12 @@
+## CURSOR — CI tip `b6c8fd7f` SUCCESS (2026-10-26 09:53 UTC-03:00)
+
+SHA `b6c8fd7f4281d1b5979e7968ef1ba3f0336a3c28` · CI **4787** (push) / **4788** (PR)
+6/6 SUCCESS · PR MERGEABLE/CLEAN vs base `d86f06b6`.
+
+Lote: fidelidade contatos + remarge + agendamento RBAC + provas Forma/Setor.
+P1 reopen `a37b736f` **continua** aguardando Codex — este verde não fecha o P1.
+Codespace: capturas = runner Cursor até medir SHA.
+
 ## CURSOR — fidelidade contatos + remarge d86f06b6 + agendamento (2026-10-26 09:47 UTC-03:00)
 
 Remarge base `d86f06b6` (legado LIMIT2/RLS) na #353; conflitos só docs.
