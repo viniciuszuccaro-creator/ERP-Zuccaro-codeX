@@ -56,7 +56,7 @@ test('ten ID-only additions retain every existing handler context permission and
   for (const name of forms) {
     assert.equal(Object.hasOwn(MASTER_CODE_SPECS, name), false, `Master code contract must not be hidden: ${name}`);
     const path = `src/components/cadastros/${name}Form.jsx`, source = read(path), ast = tree(path, source);
-    const reopened = ['CadastroFiscal', 'CentroOperacao', 'ContatoB2B', 'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'].includes(name);
+    const reopened = ['CadastroFiscal', 'CentroOperacao', 'ContatoB2B', 'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook', 'CondicaoComercial'].includes(name);
     const found = { imports: 0, fields: 0, reopenImports: 0, reopenCalls: 0 };
     const transform = context => {
       const visit = node => {

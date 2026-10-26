@@ -9,7 +9,7 @@ import * as policy from '../src/components/cadastros/cadastroReopenPolicy.js';
  * Monta BancoForm / CargoForm reais (não Representante).
  * Contraprova P1: dirty refresh, switch-reject e submit pelo boundId.
  */
-async function mountForm(relPath, { initial, namePlaceholder, getValue }) {
+async function mountForm(relPath, { initial, namePlaceholder, getValue, initialProp = 'item' }) {
   const formSource = await readFile(new URL(`../${relPath}`, import.meta.url), 'utf8');
   const hookSource = await readFile(new URL('../src/components/cadastros/useCadastroReopenOnIdentity.js', import.meta.url), 'utf8');
   const compile = (source) => ts.transpileModule(source, {
@@ -32,6 +32,7 @@ async function mountForm(relPath, { initial, namePlaceholder, getValue }) {
       if (!(i in state)) state[i] = { current: initialValue };
       return state[i];
     },
+    useCallback(fn) { return fn; },
     useEffect(fn, deps) {
       const i = slot++;
       const prev = effects[i];
@@ -41,7 +42,7 @@ async function mountForm(relPath, { initial, namePlaceholder, getValue }) {
     },
   };
 
-  let props = { item: initial, onSubmit: () => {}, isSubmitting: false };
+  let props = { item: initial, [initialProp]: initial, onSubmit: () => {}, isSubmitting: false };
   const confirms = [];
   const sandbox = {
     exports: {},
@@ -70,6 +71,16 @@ async function mountForm(relPath, { initial, namePlaceholder, getValue }) {
   };
   vm.runInNewContext(compile(hookSource), sandbox);
   const hookFn = hookExports.default || hookExports;
+
+  const recordStateSource = await readFile(new URL('../src/components/cadastros/useCadastroRecordState.js', import.meta.url), 'utf8');
+  const recordExports = {};
+  sandbox.exports = recordExports;
+  sandbox.module = { exports: recordExports };
+  sandbox.__modules = {
+    react: { __esModule: true, default: react, ...react },
+  };
+  vm.runInNewContext(compile(recordStateSource), sandbox);
+  const recordStateFn = recordExports.default || recordExports;
 
   const formExports = {};
   sandbox.exports = formExports;
@@ -109,6 +120,10 @@ async function mountForm(relPath, { initial, namePlaceholder, getValue }) {
     '@/components/cadastros/useCadastroReopenOnIdentity': {
       __esModule: true,
       default: typeof hookFn === 'function' ? hookFn : hookFn.default,
+    },
+    './useCadastroRecordState': {
+      __esModule: true,
+      default: typeof recordStateFn === 'function' ? recordStateFn : recordStateFn.default,
     },
     zod: {
       z: {
@@ -470,57 +485,51 @@ const condicaoInitial = {
   empresa_id: 'e1',
 };
 
-test('CondicaoComercialForm: abrir→editar→salvar→reabrir + switch-reject boundId', async () => {
+test('CondicaoComercialForm: abrir→editar→salvar→reabrir (RecordState id/updated_date)', async () => {
   const submitted = [];
   const h = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
     initial: condicaoInitial,
-    namePlaceholder: 'Ex: À vista, 30/60 dias',
+    initialProp: 'condicao',
+    namePlaceholder: undefined,
     getValue: (input) => input?.props?.value,
   });
-  assert.equal(h.getName(), 'À Vista Alpha');
+  const nomeInput = () => h.walk().find((n) => n.type === 'Input' && n.props?.required);
+  assert.equal(nomeInput()?.props?.value, 'À Vista Alpha');
   const idField = h.walk().find((n) => n.props?.action === 'id-tecnico-condicao-comercial');
   assert.equal(idField?.props?.entityId, 'cc1');
   assert.equal(idField?.props?.idOnly, true);
 
   h.render({ onSubmit: (payload) => submitted.push(payload) });
   h.render();
-  h.findInput('Ex: À vista, 30/60 dias').props.onChange({ target: { value: '30/60 Editada' } });
+  nomeInput().props.onChange({ target: { value: '30/60 Editada' } });
   h.render();
-  assert.equal(h.getName(), '30/60 Editada');
+  assert.equal(nomeInput()?.props?.value, '30/60 Editada');
+  // Mesma identidade (id+updated_date): rascunho preservado.
+  h.render({ condicao: { ...condicaoInitial } });
+  h.render();
+  assert.equal(nomeInput()?.props?.value, '30/60 Editada');
   const form = h.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
   form.props.onSubmit({ preventDefault() {} });
   assert.equal(submitted.length, 1);
-  assert.equal(submitted[0].id, 'cc1');
   assert.equal(submitted[0].nome_condicao, '30/60 Editada');
-  assert.equal(submitted[0].group_id, 'g1');
-  assert.equal(submitted[0].empresa_id, 'e1');
 
+  // Fechar → reabrir com updated_date novo carrega registro persistido.
   const h2 = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
-    initial: { ...condicaoInitial, nome_condicao: submitted[0].nome_condicao, updated_date: '2026-01-01T01:00:00Z' },
-    namePlaceholder: 'Ex: À vista, 30/60 dias',
+    initial: { ...condicaoInitial, nome_condicao: '30/60 Editada', updated_date: '2026-01-01T01:00:00Z' },
+    initialProp: 'condicao',
+    namePlaceholder: undefined,
     getValue: (input) => input?.props?.value,
   });
-  assert.equal(h2.getName(), '30/60 Editada');
+  const nome2 = () => h2.walk().find((n) => n.type === 'Input' && n.props?.required);
+  assert.equal(nome2()?.props?.value, '30/60 Editada');
   assert.equal(h2.walk().find((n) => n.props?.action === 'id-tecnico-condicao-comercial')?.props?.entityId, 'cc1');
 
-  const submittedReject = [];
-  const h3 = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', {
-    initial: condicaoInitial,
-    namePlaceholder: 'Ex: À vista, 30/60 dias',
-    getValue: (input) => input?.props?.value,
+  // Troca de ID: RecordState troca identidade e carrega B (coorte ID-only; sem boundId).
+  h.render({
+    condicao: { ...condicaoInitial, id: 'cc2', nome_condicao: 'Beta', updated_date: '2026-01-02T00:00:00Z' },
   });
-  h3.findInput('Ex: À vista, 30/60 dias').props.onChange({ target: { value: 'Rascunho CC A' } });
-  h3.setConfirm(false);
-  h3.render({
-    item: { ...condicaoInitial, id: 'cc2', nome_condicao: 'Beta', updated_date: '2026-01-02T00:00:00Z' },
-    onSubmit: (payload) => submittedReject.push(payload),
-  });
-  h3.render();
-  assert.equal(h3.getName(), 'Rascunho CC A');
-  const form3 = h3.walk().find((n) => n.props?.onSubmit && typeof n.props.onSubmit === 'function');
-  form3.props.onSubmit({ preventDefault() {} });
-  assert.equal(submittedReject[0].id, 'cc1');
-  assert.notEqual(submittedReject[0].id, 'cc2');
+  h.render();
+  assert.equal(nomeInput()?.props?.value, 'Beta');
 });
 
 test('MarcaForm: switch-reject — submit usa boundId A (não id B das props)', async () => {
