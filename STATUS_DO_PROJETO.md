@@ -105,6 +105,14 @@ autorizacao de primeira carga real.
 ## Historico anterior - provas mantidas, nao estado vigente de aprovacao
 
 
+## CURSOR — CI tip `e9d7ef15` SUCCESS (2026-10-26 11:30 UTC-03:00)
+
+SHA `e9d7ef15` · CI **4797** (push) / **4798** (PR) 6/6 SUCCESS · #353 MERGEABLE/CLEAN vs base `82557565`.
+
+Contatos principal/metadata: implementado + testado CI; aguarda parecer Codex no SHA.
+Não demonstrado Codespace; não operacional VPS. Pedido/044 = Codex.
+P1 guardas: ENCERRADO. Sem merge/deploy/carga.
+
 ## CURSOR — contatos P1/P2 + remarge base 82557565 (2026-10-26 ~11:20 UTC-03:00)
 
 Mesma #353. Base Codex `82557565` (entrada em uso / lista unica) incorporada;
