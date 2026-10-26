@@ -33,3 +33,7 @@ Avaliação do proprietário ainda necessária para
 Conclusão
 - Funcional: gates/relatorios/contatos-overflow/reopen = recuperados no existente
 - Visual: azul-claro nos forms do roteiro cadastro; não equivale a “integra restaurado”
+
+Proposta navegável p/ aprovação (sem redesign amplo):
+docs/evidence/proposta-visual-aprovacao-integra-353-20261026.txt
+TabelaPreco: codigo+ID (classe A). PlanoContas: ID técnico (conta hierárquica preservada).

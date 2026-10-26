@@ -115,6 +115,15 @@ test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', 
   assert.match(produto, /readOnly=\{Boolean\(produto\?\.id\)\}/);
 });
 
+test('PlanoContasForm expõe ID técnico sem substituir código hierárquico', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PlanoContasForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /CadastroCodigoRegistroField/);
+  assert.match(src, /idOnly/);
+  assert.match(src, /id-tecnico-plano-contas/);
+  assert.match(src, /entityId=\{planoBoundId\}/);
+  assert.match(src, /editar-codigo-plano-contas/);
+});
+
 test('TabelaPreco forms expõem código de registro e ID técnico (≠ só legado)', async () => {
   const completo = await readFile(new URL('../src/components/cadastros/TabelaPrecoFormCompleto.jsx', import.meta.url), 'utf8');
   const simples = await readFile(new URL('../src/components/cadastros/TabelaPrecoForm.jsx', import.meta.url), 'utf8');

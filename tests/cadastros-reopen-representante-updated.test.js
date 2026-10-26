@@ -137,7 +137,12 @@ test('CentroCusto e PlanoContas na política canônica', async () => {
   const plano = await source('src/components/cadastros/PlanoContasForm.jsx');
   assert.match(plano, /useCadastroReopenOnIdentity/);
   assert.match(plano, /isSubmitting/);
-  assert.doesNotMatch(plano, /CadastroCodigoRegistroField/);
+  // Conta hierárquica permanece editável; CodigoField só em idOnly (≠ MASTER_CODE numérico).
+  assert.match(plano, /CadastroCodigoRegistroField/);
+  assert.match(plano, /idOnly/);
+  assert.match(plano, /id-tecnico-plano-contas/);
+  assert.match(plano, /editar-codigo-plano-contas/);
+  assert.doesNotMatch(plano, /codigo-registro-plano/);
 });
 
 test('MoedaIndice e OperadorCaixa permanecem na coorte ID-only (sem prevUpdatedRef manual)', async () => {

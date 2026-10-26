@@ -9,6 +9,7 @@ import { FileText } from 'lucide-react';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || conta;
@@ -76,6 +77,13 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      {/* Conta hierárquica (1.1.1.01) ≠ MASTER_CODE numérico — só ID técnico aqui. */}
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(planoBoundId)}
+        entityId={planoBoundId}
+        action="id-tecnico-plano-contas"
+      />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Código da Conta *</Label>
