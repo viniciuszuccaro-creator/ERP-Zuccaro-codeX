@@ -41,6 +41,14 @@ function restoreApprovedBulkDelta(source) {
  assert.equal(source.split(approvedBulkDelta).length,2,'Only the exact authorized lifecycle delta may be normalized');
  return source.replace(approvedBulkDelta,previousBulkEnumeration);
 }
+const previousCallbackAfter = "  const after = parse(file, fs.readFileSync(file, 'utf8'));\n";
+const approvedCallbackImport = "import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroRemainder.js';\n";
+const approvedCallbackAfter = "  // #353: CodigoField autorizado em RotaPadrao/TabelaPreco — remainder restaura pin e36231b3.\n  const after = parse(file, cadastroCodigoRegistroRemainder(file, fs.readFileSync(file, 'utf8')));\n";
+function restoreApprovedCodigoFieldCallbackDelta(source) {
+ assert.equal(source.split(approvedCallbackImport).length,2,'Only the exact CodigoField import delta may be normalized');
+ assert.equal(source.split(approvedCallbackAfter).length,2,'Only the exact CodigoField after-parse delta may be normalized');
+ return source.replace(approvedCallbackImport,'').replace(approvedCallbackAfter,previousCallbackAfter);
+}
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
@@ -61,7 +69,9 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
   ? restoreAuthorizedReopenConsolidacao(reviewed)
   : entry.path==='server/tests/bulk-consolidacao.test.ts'
     ? restoreApprovedBulkDelta(reviewed)
-    : reviewed;
+    : entry.path==='tests/cursor-callback-record-state.test.js'
+      ? restoreApprovedCodigoFieldCallbackDelta(reviewed)
+      : reviewed;
  const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);
 });
