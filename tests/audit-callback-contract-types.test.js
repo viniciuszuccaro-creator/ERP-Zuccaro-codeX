@@ -12,7 +12,7 @@ import {primitiveUiBoundaryRemainder} from './helpers/primitiveUiBoundaryRemaind
 const cases=[
   {file:'src/components/cadastros/ConversaoProducaoMassa.jsx',name:'auditConversao',hash:'6ff51c054f22eb22722cd81740fc94058224d4ebc10ea2e0809c05c20a86f641',good:"{acao:'Synthetic'}",throws:false},
   {file:'src/components/cadastros/HistoricoProduto.jsx',name:'auditHistoricoProduto',hash:'bfdd237c2e172268d275a6727778f72ad229b34f77057860525a87c5aa054c2c',good:"{acao:'Synthetic'}",throws:false},
-  {file:'src/components/comercial/PedidosTab.jsx',name:'auditPedido',hash:'6bbfe066d5375f765f59aef04f30072185d1fba870635d5013d95b3b24b7471c',good:"{acao:'Synthetic',descricao:'Synthetic audit'}",throws:true}, // #353 azul-claro sky
+  {file:'src/components/comercial/PedidosTab.jsx',name:'auditPedido',hash:'5fb476ef0fb7a467625be75eb2ef75a41221d4b1c6ef7efdfd95cfda4dfaf5ce',good:"{acao:'Synthetic',descricao:'Synthetic audit'}",throws:true},
   {file:'src/components/comercial/PedidosEntregaTab.jsx',name:'auditEntrega',hash:'158c6dc5c5eafdb3b6b06500aea3a00c6952049c84a654602264cfdfad5f0dd2',good:"{acao:'Synthetic'}",throws:false},
   {file:'src/components/comercial/ValidarPedidosExternos.jsx',name:'auditPedidoExterno',hash:'edb2245a08c115b5713264c104575bdd573c66a65d1047a36d9549b871693fb3',good:"{acao:'Synthetic',descricao:'Synthetic audit'}",throws:true},
   {file:'src/components/sistema/RelatorioPermissoes.jsx',name:'auditarRelatorio',hash:'59d6de3ddc78d83d8b54a457a8d82e69718da9f78d7db7e91d6b5ed29e0972e6',good:"{formato:'synthetic',resumo:{total:1}}",throws:false},

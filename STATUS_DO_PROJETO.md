@@ -1,3 +1,10 @@
+## CURSOR — CI baseline + PedidosTab fora do sky (2026-10-26 ~11:40 UTC-03:00)
+
+`b6ee38f3` falhou só no freeze `runtime-proof-source` (suite audit PedidosTab
+pin d312fbcd). PedidosTab voltou ao token blue para não alterar SHA congelado
+das seis proof suites. Azul-claro permanece em Cliente/Forma/Contatos do roteiro;
+explain 044 + remainder stage52 intactos. Sem merge/deploy.
+
 ## Entrada em uso - prioridade vigente e lista unica (proprietario, 2026-10-26)
 
 Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
