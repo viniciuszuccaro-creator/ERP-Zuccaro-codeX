@@ -1,7 +1,9 @@
 Handoff Codespace — validar EXATAMENTE a candidata #353
 =======================================================
-Atualizado 2026-10-26 (America/Sao_Paulo) · tip remoto alvo: d0e38a16
-CI tip: 4807/4808 SUCCESS · tip código ops: e30cffcc · contatos: e9d7ef15
+Atualizado 2026-10-26 (America/Sao_Paulo) · tip remoto alvo: 586d4e9d+
+(remarge base 7ae5bcd9). Contatos fix: e9d7ef15 · form e30cffcc (pareceres
+6418918562/6419136043). Modalidade Cursor: Codespace API 403 — capturas =
+**runner Cursor** até Codex medir xylophone.
 
 Objetivo: medir o SHA servido no Codespace sem trocar branch Codex nem
 sobrescrever WIP. Sem medição = manter rótulo **runner Cursor**.
@@ -13,7 +15,7 @@ Reserva
 
 Pré-flight (Cursor runner — já medido)
 - Branch: cursor/integracao-350-351-352-392b
-- Tip remoto a validar: d0e38a16 (ou tip FF posterior da mesma #353)
+- Tip remoto a validar: tip atual #353 (pós-remarge 7ae5bcd9; ≥586d4e9d)
 - Capturas deste agente: **runner Cursor** `/workspace` — NÃO Codespace.
 
 Janela com Codex (GitHub #353)

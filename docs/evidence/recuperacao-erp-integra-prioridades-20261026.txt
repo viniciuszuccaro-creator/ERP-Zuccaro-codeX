@@ -80,6 +80,14 @@ Fora de escopo deste lote
 - Migration 044 / backend Pedido (reserva Codex)
 
 Atualização #353 (azul-claro + Pedido/044 UI)
-- sky-* em Cliente completo / FormaPagamento / Contatos / PedidosTab (roteiro).
+- sky-* em Cliente completo / FormaPagamento / Contatos; PedidosTab permanece blue (pin).
 - Sem restaurar Documentacao/OAuthConsent/EmpresaOnboarding.
 - Pedido: mensagem explícita se schema 044 ausente (não mascarar SPA aberta).
+
+Atualização #353 (remarge 7ae5bcd9 + classe A TabelaPreco)
+- Remarge tip `586d4e9d`: candidato Pedido 044 par (Codex) + STATUS pacote.
+- TabelaPrecoForm(+Completo): CadastroCodigoRegistroField — código numérico +
+  ID técnico (antes só `codigo_tabela_legado`). Capacidade de leitura do
+  registro existente, não seed. Classe B continua staging privado.
+- Contatos: SHA fix `e9d7ef15` / form `e30cffcc` (pareceres Codex).
+- Modalidade prévia: runner Cursor (Codespace 403 neste token).

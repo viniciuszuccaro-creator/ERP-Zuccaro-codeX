@@ -115,6 +115,18 @@ test('ClienteCompleto e Produto V22 expõem código e ID técnico na edição', 
   assert.match(produto, /readOnly=\{Boolean\(produto\?\.id\)\}/);
 });
 
+test('TabelaPreco forms expõem código de registro e ID técnico (≠ só legado)', async () => {
+  const completo = await readFile(new URL('../src/components/cadastros/TabelaPrecoFormCompleto.jsx', import.meta.url), 'utf8');
+  const simples = await readFile(new URL('../src/components/cadastros/TabelaPrecoForm.jsx', import.meta.url), 'utf8');
+  for (const [label, src] of [['Completo', completo], ['Form', simples]]) {
+    assert.match(src, /CadastroCodigoRegistroField/, `${label} deve usar campo canônico`);
+    assert.match(src, /codigo-registro-tabela-preco/, `${label} action codigo`);
+    assert.match(src, /entityId=\{/, `${label} deve expor ID técnico`);
+    // Legado permanece; não substitui o código numérico reservado no backend.
+    assert.match(src, /codigo_tabela_legado/, `${label} preserva código legado`);
+  }
+});
+
 test('FornecedorCompleto e RepresentanteCompleto expõem código e ID técnico', async () => {
   const fornecedor = await readFile(new URL('../src/components/cadastros/CadastroFornecedorCompleto.jsx', import.meta.url), 'utf8');
   const representante = await readFile(new URL('../src/components/cadastros/RepresentanteFormCompleto.jsx', import.meta.url), 'utf8');

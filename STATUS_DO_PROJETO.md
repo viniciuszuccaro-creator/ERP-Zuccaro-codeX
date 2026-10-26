@@ -4,16 +4,18 @@
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
 | Candidata | #353 `cursor/integracao-350-351-352-392b` |
-| Base | #342 `codex/consolidacao-infra-20261017` tip `7ae5bcd9` (remarge) |
-| Tip pré-pacote | `2defe96c` CI4811–4813 SUCCESS |
-| Arquivos reservados Cursor | candidata #353 (SPA/cadastros/comercial UI/tests/docs evidence) |
-| Reservados Codex | #342/#344, migrations/schema-candidates Pedido 044, legado/staging/VPS DDL |
-| Aceite | contatos fechados por parecer; ciclo comercial por camada; SHA Codespace ou modalidade declarada; diffs integra prioritários; códigos A/B; STATUS único |
-| Bloqueios reais | Codespace API 403 neste token (modalidade=runner Cursor); Pedido INSERT depende 044+compensador (Codex, fora migrador); staging privado não montado aqui; sem merge/deploy/carga |
+| Base | #342 tip `7ae5bcd9` (remarge commit `586d4e9d`) |
+| Tip pacote | remarge + TabelaPreco codigo/ID (ver tip após push) |
+| Arquivos reservados Cursor | #353 SPA/cadastros/comercial UI/tests/docs evidence |
+| Reservados Codex | #342/#344, Pedido 044 schema-candidates, legado/staging/VPS DDL |
+| Aceite | contatos fechados; ciclo por camada documentado; modalidade Codespace=runner; classe A TabelaPreco; sem merge/deploy |
+| Bloqueios reais | Codespace API 403; Pedido INSERT 044+par (Codex); staging privado ausente; sem merge/deploy/carga |
 
-Contatos: ENCERRADOS por Codex 6418918562/6419136043 (6PASS/0FAIL no Codespace; fix e9d7ef15/e30cffcc). CI/bot ≠ foram o fechamento — a contraprova humana sim.
-Pedido: `server/schema-candidates/pedido_idempotency_pair.sql` candidato Codex — Cursor não aplica DDL; UI `explainPedidoPersistenceError` permanece.
-Codespace `potential-xylophone-5gj7r9v9qqg637vxp`: sem acesso gh codespace (403); coordenar medição SHA com Codex. Capturas deste agente = **runner Cursor**.
+Contatos ENCERRADOS — SHA fix ao Codex: **`e9d7ef15`** (adapter); form **`e30cffcc`**; pareceres 6418918562/6419136043 (6PASS Codespace). Tip remarge preserva o fix. CI/bot ≠ fechamento.
+Pedido: candidato `pedido_idempotency_pair.sql` + explain UI; **não** = Pedido persistido.
+Codespace `potential-xylophone-5gj7r9v9qqg637vxp`: 403 neste token → **modalidade runner Cursor**; medição SHA = Codex.
+Cadastros classe A: TabelaPrecoForm(+Completo) passam a expor codigo+ID técnico (antes só legado). Classe B registros = staging privado.
+Camadas: `docs/evidence/homologacao-camadas-remarge-586d4e9d-20261026.txt`.
 
 ### Lista unica vigente (atualizada neste remarge)
 
