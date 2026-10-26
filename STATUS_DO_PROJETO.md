@@ -3,18 +3,17 @@
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
-| Candidata | #353 tip pré-pacote `661ae01d` (CI SUCCESS) |
+| Candidata | #353 tip ≥`7793d3a8` (Marca reopen + Histórico Produtos tab) |
 | Base | #342 `7ae5bcd9` |
 | Reservados Cursor | #353 SPA/cadastros/comercial UI/tests/docs evidence |
 | Reservados Codex | #342/#344, Pedido 044 DDL, Codespace xylophone medição, legado/staging |
-| Aceite | matriz início de uso (codigo/ID/reopen/tela única); ciclo por camada; modalidade Codespace declarada; diffs integra sem redesign; A≠B registros |
+| Aceite | matriz início de uso; ciclo por camada; Codespace modalidade; aba histórica montada; A≠B |
 | Bloqueios reais | Codespace API 403; Pedido INSERT 044; staging classe B; sem merge/deploy/carga |
 
-Contatos: **não reabrir** (já parecer Codex). MarcaForm → reopen canônico + boundId neste pacote.
+Contatos: **não reabrir**. MarcaForm reopen canônico. PainelCliente `historico_produtos` TabsContent restaurado (classe A UI).
 Matriz: `docs/evidence/cadastros-inicio-uso-matriz-353-20261026.txt`
 Ciclo: `docs/evidence/homologacao-ciclo-comercial-pacote2-353-20261026.txt`
-Codespace handoff: `docs/vps/evidence/codespace-handoff-candidata353-20261026.txt`
-Tip código anterior CI verde: `093c8e08` / docs `661ae01d`.
+Codespace: handoff + comentário 6421481401 (medição = Codex).
 
 ### Lista unica vigente (atualizada neste remarge)
 
