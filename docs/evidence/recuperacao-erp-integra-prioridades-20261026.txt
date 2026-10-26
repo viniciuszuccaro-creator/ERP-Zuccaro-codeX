@@ -97,3 +97,5 @@ Atualização #353 pacote 2 (navegável)
 - Matriz início de uso: docs/evidence/cadastros-inicio-uso-matriz-353-*.txt
 - Sem redesign amplo; proposta visual anterior permanece para aprovação.
 - RegiaoAtendimento: reopen custom preservado (não duplicar hook).
+- PainelDinamicoCliente: aba Histórico Produtos — TabsContent restaurado
+  (trigger existia; conteúdo estava fora do Tabs → coluna vazia).
