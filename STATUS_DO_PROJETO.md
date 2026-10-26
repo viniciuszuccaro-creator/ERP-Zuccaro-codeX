@@ -1,3 +1,19 @@
+## CURSOR — pacote cadastros Banco/Cargo + triagem CI + recuperação (2026-10-26)
+
+1. **CI HEAD `836a6d2d`**: logs confirmam **somente** 5 FAILs publication
+   (1851/1856/1861/1862/1863). Falhas próprias neste HEAD = 0.
+2. **Contraprovas Banco/Cargo** (não generalizar Representante): render,
+   dirty refresh, switch-reject+boundId — `tests/cadastros-reopen-banco-cargo-behavioral.test.js` PASS.
+3. **Publication #342**: tip ainda `79d002a3`; hunk antigo. Sem remarge até SHA Codex.
+4. **Comercial360**: roteiro `docs/vps/evidence/comercial360-proposta-353-roteiro-visual-20261026.txt`
+   por SHA tip; Codespace **não** comprovado neste turno.
+5. **Recuperação erp-integra**: matriz prioridades
+   `docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt` — Relatórios
+   tabs já no código; páginas Documentacao/Onboarding/OAuth exigem histórico;
+   não inventar registros.
+
+Sem novas micro-PRs useConfirm. Sem merge/deploy. Sem candidata paralela.
+
 ## CURSOR — baselines stage48/49 alinhados ao boundId coorte (2026-10-25)
 
 CI `ad145690` falhou além de publication: stage48 Cliente/Fornecedor, stage49

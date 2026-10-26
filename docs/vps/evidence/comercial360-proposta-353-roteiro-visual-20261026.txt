@@ -1,0 +1,40 @@
+Roteiro avaliação visual — candidata #353 / issue #347
+======================================================
+SHA tip candidata: 836a6d2d462f75b22003268c37c6c48cfbba272d (+ tip seguinte com testes Banco/Cargo)
+Base consolidação tip: 79d002a3a6b0d0e5a2e6ea4f2372930737ca4656
+Ambiente deste registro: Cursor Cloud Agent
+Codespace: NÃO comprovado neste turno (sem URL/SHA servido medido aqui)
+
+Pré-condições
+- DEV local ou Codespace com vite; query ?proposta=comercial360
+- Dados sintéticos somente (Cliente/Produto SINTÉTICO; fixture preview-*)
+- Sem esperar gravação/reserva/WhatsApp/NF reais
+- Operações reais bloqueadas (Salvar desabilitado na proposta)
+
+Passos
+1. Abrir /Comercial?proposta=comercial360
+2. Conferir hub azul-claro (tiles blue uniformes)
+3. Ir a Orçamentos → Novo orçamento (uma vez)
+4. Desktop (≥1280): editor + aside lado a lado (xl)
+5. Tablet (~768–1024): aside empilha; painéis clicáveis
+6. Selecionar cliente sintético e produto; ajustar quantidade
+7. Alternar painéis Cliente / Produtos / Resumo / Ações — rascunho permanece
+8. Conferir Código numérico ≠ ID técnico preview-*
+9. Segundo clique em Novo orçamento — NÃO zerar seleção/itens
+10. Botão Salvar desabilitado; ações do aside disabled com título de bloqueio
+11. Fechar sem persistência operacional
+
+Critérios de aceite visual (owner)
+- Azul-claro + painéis úteis (não só cor)
+- Funcionalidades e informações próximas (cliente/histórico/produtos/preços/itens/totais/pagamento)
+- Sem alegar dados recuperados do legado
+- Aprovação ampla ainda pendente antes de redesign default
+
+Smoke automatizado (quando vite:5173 disponível)
+- scripts/comercial360-preview-smoke.mjs
+- Prova: rascunho retido, quantidade retida, saveDisabled, sem writes, sem overflow
+
+Não declarar
+- Prévia integrada ao Codespace até smoke URL/SHA no Codespace
+- Merge/deploy/VPS
+- Integração #353 concluída enquanto publication #342 vermelha

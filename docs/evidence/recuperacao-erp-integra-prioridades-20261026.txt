@@ -1,0 +1,42 @@
+Recuperação vs erp-integra-novo — prioridades (2026-10-26)
+==========================================================
+Referência: github.com/viniciuszuccaro-creator/erp-integra-novo @ main
+Candidata tip: 836a6d2d (+ testes Banco/Cargo)
+Comparação: inventário de paths (não auditoria de botão/fluxo)
+
+Contagens (componentes comercial|financeiro|estoque|compras|crm|relatorios|cadastros)
+- integra: 435 blobs
+- candidata: 468 blobs
+- só referência: 179 paths
+- só candidata: 212 paths
+
+Páginas só na referência (exigem equivalente/histórico antes de restaurar)
+- src/pages/Documentacao.jsx
+- src/pages/EmpresaOnboarding.jsx
+- src/pages/OAuthConsent.jsx
+→ NÃO copiar autenticação permissiva; OAuthConsent em especial exige revisão de segurança.
+
+Achados já tratados no ERP novo (não recriar)
+- Relatórios Representantes/Personalizado: código presente em Relatorios.jsx +
+  DashboardRepresentantes / RelatorioPersonalizado + hasReportGrant fail-closed.
+  Se “desaparecem” na UI: classificar RBAC/contexto/perfil — não inventar registros.
+- Extratos tipo TabelaPrecoCalculoTab / VisualizadorBody / fornecedor tabs:
+  equivalentes nos monolitos locais (*FormCompleto, VisualizadorUniversalEntidadeV24).
+  Regra-Mãe: não duplicar extração paralela sem necessidade de refatoração.
+
+Cadastros / dados
+- Fornecedor schema/dados: matriz registros-recuperacao — tabela/ops vs legado
+  privado. Recuperação de REGISTROS = staging privado + reconciliação (#211),
+  NÃO seed fictício como “recuperado”.
+- Códigos/IDs sintéticos (SYNTH/GATE-D) ≠ legado real.
+
+Próximas recuperações de CÓDIGO (operacional), sem merge/deploy
+1. Confirmar wiring RBAC das abas Relatórios (teste comportamental grant/deny)
+2. Avaliar Documentacao.jsx só se houver equivalente histórico no Git novo
+3. EmpresaOnboarding: mapear para fluxo Empresas/onboarding existente
+4. Nunca restaurar OAuthConsent sem parecer de auth
+
+Fora de escopo deste lote
+- Carga operacional legado #344
+- Cópia de Auth/RBAC permissivo da referência
+- Redesign visual amplo sem aprovação owner
