@@ -16,6 +16,7 @@ Classe A corrigida neste pacote (registro existe; UI não apresentava)
 |----------|-------|--------|
 | TabelaPreco | só codigo_tabela_legado | + codigo numérico + ID técnico |
 | PlanoContas | sem ID técnico | idOnly + conta hierárquica intacta |
+| RotaPadrao | MASTER_CODE sem UI codigo/ID | CadastroCodigoRegistroField + entityId |
 
 Classe A já coberta (não reabrir)
 ---------------------------------

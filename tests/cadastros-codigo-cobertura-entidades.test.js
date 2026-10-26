@@ -97,6 +97,7 @@ test('forms auxiliares MASTER_CODE expoem codigo-registro readonly', async () =>
     ['VeiculoForm.jsx', 'codigo-registro-veiculo'],
     ['MotoristaForm.jsx', 'codigo-registro-motorista'],
     ['FormaPagamentoForm.jsx', 'codigo-registro-forma-pagamento'],
+    ['RotaPadraoForm.jsx', 'codigo-registro-rota-padrao'],
   ]) {
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, new RegExp(action));

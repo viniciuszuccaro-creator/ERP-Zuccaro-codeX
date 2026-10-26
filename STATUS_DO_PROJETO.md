@@ -5,8 +5,8 @@
 | Responsável | Cursor Cloud `/workspace` (runner) |
 | Candidata | #353 `cursor/integracao-350-351-352-392b` |
 | Base | #342 tip `7ae5bcd9` (remarge commit `586d4e9d`) |
-| Tip pacote | `d379bc2c` (TabelaPreco codigo/ID + PlanoContas idOnly + proposta visual) |
-| CI remarge | `586d4e9d` push+PR **SUCCESS** |
+| Tip pacote | `e07661cf` (docs A/B; código ≥`d379bc2c` PlanoContas/TabelaPreco) |
+| CI remarge | `586d4e9d` push+PR **SUCCESS** (tip docs/CI em curso) |
 | Arquivos reservados Cursor | #353 SPA/cadastros/comercial UI/tests/docs evidence |
 | Reservados Codex | #342/#344, Pedido 044 schema-candidates, legado/staging/VPS DDL |
 | Aceite | contatos fechados; ciclo por camada documentado; modalidade Codespace=runner; classe A TabelaPreco; sem merge/deploy |
