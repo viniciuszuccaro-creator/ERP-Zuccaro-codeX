@@ -498,3 +498,39 @@ test('MarcaForm: switch-reject — submit usa boundId A (não id B das props)', 
   assert.equal(submitted[0].nome_marca, 'Rascunho Marca A');
   assert.notEqual(submitted[0].id, 'm2');
 });
+
+test('MarcaForm HTTP: updated_at canonico reabre mesmo ID sem depender do alias legado', async () => {
+  const initial = { id: 'http-m1', codigo: '000321', nome_marca: 'SYNTHETIC BEFORE',
+    descricao: 'preserved', ativo: true, updated_at: '2026-01-01T00:00:00Z',
+    updated_date: 'legacy-version-unchanged' };
+  const h = await mountForm('src/components/cadastros/MarcaForm.jsx', {
+    initial, namePlaceholder: 'Ex: Gerdau, ArcelorMittal', getValue: n => n.props.value,
+  });
+  h.render({ item: { ...initial, nome_marca: 'SYNTHETIC AFTER', updated_at: '2026-01-02T00:00:00Z' } });
+  h.render();
+  assert.equal(h.getName(), 'SYNTHETIC AFTER');
+  const code = h.walk().find(n => n.props?.action === 'codigo-registro-marca');
+  assert.equal(code.props.entityId, initial.id);
+  assert.equal(code.props.value, initial.codigo);
+});
+
+test('MarcaForm HTTP: updated_at exige confirmacao sem apagar rascunho e preserva identidade', async () => {
+  const initial = { id: 'http-m2', codigo: '000322', nome_marca: 'SYNTHETIC ORIGINAL',
+    descricao: 'preserved', ativo: true, updated_at: '2026-01-01T00:00:00Z' };
+  const h = await mountForm('src/components/cadastros/MarcaForm.jsx', {
+    initial, namePlaceholder: 'Ex: Gerdau, ArcelorMittal', getValue: n => n.props.value,
+  });
+  h.findInput('Ex: Gerdau, ArcelorMittal').props.onChange({ target: { value: 'SYNTHETIC DIRTY' } });
+  h.render(); h.setConfirm(false);
+  h.render({ item: { ...initial, nome_marca: 'SERVER VERSION 2', updated_at: '2026-01-02T00:00:00Z' } });
+  h.render();
+  assert.equal(h.getName(), 'SYNTHETIC DIRTY');
+  assert.equal(h.confirms.length, 1);
+  h.setConfirm(true);
+  h.render({ item: { ...initial, nome_marca: 'SERVER VERSION 3', updated_at: '2026-01-03T00:00:00Z' } });
+  h.render();
+  assert.equal(h.getName(), 'SERVER VERSION 3');
+  const code = h.walk().find(n => n.props?.action === 'codigo-registro-marca');
+  assert.equal(code.props.entityId, initial.id);
+  assert.equal(code.props.value, initial.codigo);
+});

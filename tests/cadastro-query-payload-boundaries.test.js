@@ -1,3 +1,27 @@
+test('Cliente contatos: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
+  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const payload = '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),';
+  const mapper = '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),';
+  for (const hunk of [payload, mapper]) {
+    assert.equal(source.split(hunk).length - 1, 1);
+    assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, '')));
+    assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, hunk + '\n' + hunk)));
+    const variable = hunk === payload ? 'data' : 'record';
+    const forged = hunk.replace(variable + '.contatos ===', `Object.assign(${variable},{nome:'FORGED'}).contatos ===`);
+    assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, forged)));
+  }
+});
+
+test('Cliente contatos: remainder mantem alteracao externa visivel ao hash integral', () => {
+  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const original = clienteContactPresenceRemainder(source);
+  const target = '    nome_fantasia: sanitizeText(data.nome_fantasia, 180),';
+  assert.equal(source.split(target).length - 1, 1);
+  const forged = source.replace(target, "    nome_fantasia: 'FORGED',");
+  assert.notEqual(createHash('sha256').update(clienteContactPresenceRemainder(forged)).digest('hex'),
+    createHash('sha256').update(original).digest('hex'));
+});
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,6 +39,15 @@ function once(source, current, previous) {
   assert.equal(source.split(current).length - 1, 1, 'exact integration hunk');
   return source.replace(current, previous);
 }
+// Browser-proven absence is not an explicit empty list. Preserve the old golden;
+// accept only these two exact hunks, never arbitrary spread expressions.
+function clienteContactPresenceRemainder(source) {
+  source = once(source, '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),',
+    '    contatos: sanitizeContatos(data.contatos),');
+  return once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
+    '      contatos: record.contatos || [],');
+}
+
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
   ['CadastroClienteCompleto', 'cliente', 'Cliente', '4edac36448aeb24c521716a90ac4ef4bcf0b7fd73bf48e7866a50284ec2a1df9'], // #353 azul-claro sky no roteiro
@@ -26,6 +59,7 @@ for (const [name, recordKey, entity, previousHash] of forms) {
   test(`${name}: stage48 complete source retained except payload annotation and proven default export`, () => {
     let source = once(read(path), '    /** @param {Record<string, unknown>} data */\n    mutationFn: async (data) => {', '    mutationFn: async (data) => {');
     if (name === 'CadastroClienteCompleto') source = once(source, 'default: m.default }', 'default: m.default || m.TimelineCliente }');
+    if (name === 'CadastroClienteCompleto') source = clienteContactPresenceRemainder(source);
     assert.match(source, /useCadastroReopenOnIdentity/);
     assert.equal(createHash('sha256').update(source).digest('hex'), previousHash);
   });

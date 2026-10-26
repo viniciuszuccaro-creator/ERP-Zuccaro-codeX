@@ -1,3 +1,15 @@
+## Handoff vigente - candidata composta, ainda nao operacional (2026-10-26)
+
+Fechamento final: raiz 2396 PASS/0 FAIL/0 SKIP, audit/lint/type/build/diff exit0; backend composto 551 PASS/0 FAIL/26 SKIP e type/build exit0 reutilizados, principals PG 1 PASS/0 FAIL/0 SKIP com contraprova real. Guarda integral mantem os hashes anteriores e limita o delta de contatos a duas substituicoes unicas, com negativas dentro/fora do escopo. Harness de navegador e container proprios encerrados (exit0/cleanup verificado); nao ha trabalho de teste anunciado como ativo. Publicacao/CI por SHA no recibo existente da #344. A prova de navegador foi sobre a arvore composta ainda dirty (HEAD-base 6ba10732), nao uma nova imagem operacional ou homologacao completa.
+
+A continuidade atual e a composicao #342 sobre `6ba10732` com a #353 `1d3540ff40e8c3e44d2c20e8249ab9d7b8e190e6`, mesma branch/Codespace, sem merge em main/PR. Captura/originais e branch Cursor intactos. Blocos anteriores abaixo sao historicos quando conflitarem com este recibo.
+
+Provas novas: P1 CodigoField fechado no SHA `ea820521` por ataque real (parecer #353/6423524303); Marca reabre versao HTTP com rascunho protegido; formulario Cliente preserva ausencia de contatos sem contornar o guard; Orcamento envia a identidade autenticada ja usada nas guardas. Testes antes/depois e navegador sintetico reproduziram as causas. Login/contexto -> ler/editar Cliente -> reabrir valor, ID e codigo passou contra API e PG isolados. Porta 5173 PRIVATE; sem dados reais ou credenciais operacionais.
+
+Proximo item executavel: mestres comerciais no consumidor OrcamentosTab. A listagem HTTP passou apos corrigir sessao, mas ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco ainda chegam pelo facade legado; seletores ficam vazios na fixture PostgreSQL. Nao semear storage local para mascarar, nao ampliar piloto global indiscriminadamente, nao transformar MASTER Cliente em ClienteEmpresa por palpite. Reutilizar rotas/servicos/repositorios existentes, consultas limitadas e contexto atual; completar navegador criar/editar/reabrir Orcamento -> converter Pedido -> editar/reabrir. Prova PG `6ba10732` e 044 intactas devem ser reutilizadas.
+
+Coorte privada de origem preparada: 100/17471 clientes elegiveis entre 18458, 987 nao ativos preservados; todos os 100 com apontamentos auxiliares explicitos. Nao houve leitura/escrita no destino para essa selecao nem carga operacional. Recibo e fingerprints fora do checkout. A selecao nao substitui gates de destino, duplicidades, coorte, reconciliacao e autorizacao. Envelope minimo schema/principals, backup/restauracao e reversao continuam nos blocos existentes; nenhuma role, grant, migration ou servico operacional foi alterado. Automacao nativa nao reativada; estado nao inferido deste Markdown.
+
 ## Continuidade vigente - entrada em uso (decisao do proprietario, 2026-10-26)
 
 Composicao por squash em validacao: Cursor1d3540ff + envelope/coorte Codex preservados.

@@ -1,3 +1,8 @@
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+
+// Execute the real form's mapper/payload, not a test-only substitute.
 /**
  * Fidelidade contatos[] ↔ escalares MASTER (email/telefone/celular).
  * Sem descarte silencioso; hidratação não finge lista completa.
@@ -13,6 +18,47 @@ import {
   toClienteMasterHttpPayload,
   withHydratedContatos,
 } from '../src/api/clienteHttpPayload.js';
+function actualClienteFormPayload() {
+  const source = readFileSync(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  const tree = ts.createSourceFile('form.jsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
+  let payload, mapper;
+  const visit = node => {
+    if (ts.isVariableDeclaration(node) && node.name.getText(tree) === 'buildPayload') payload = node.initializer.getText(tree);
+    if (ts.isCallExpression(node) && node.expression.getText(tree) === 'useCadastroReopenOnIdentity') {
+      mapper = node.arguments[1].properties.find(p => p.name?.getText(tree) === 'mapToForm')?.initializer?.getText(tree);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  assert.ok(payload && mapper, 'real payload and reopen mapper must exist');
+  const helpers = source.slice(source.indexOf('const sanitizeText ='), source.indexOf('export default function'));
+  return vm.runInNewContext(`${helpers}; ({ buildPayload: ${payload}, mapToForm: ${mapper} })`, {
+    empresaAtual: { id: 'synthetic-company' }, groupId: 'synthetic-group', calcularSituacaoCredito: () => 'OK',
+  });
+}
+
+test('form real: ausencia de contatos HTTP nao vira intencao de apagar escalares', () => {
+  const { buildPayload, mapToForm } = actualClienteFormPayload();
+  const record = { id: 'synthetic-client', tipo: 'Pessoa Jurídica', razao_social: 'SYNTHETIC', email: 'kept@example.test', telefone: '1133334444' };
+  const draft = mapToForm(record);
+  assert.equal(Object.hasOwn(draft, 'contatos'), false);
+  const uiPayload = buildPayload({ ...draft, nome_fantasia: 'SYNTHETIC EDIT' });
+  assert.equal(Object.hasOwn(uiPayload, 'contatos'), false);
+  const wire = toClienteMasterHttpPayload(uiPayload);
+  assert.equal(wire.email, record.email);
+  assert.equal(wire.telefone, record.telefone);
+  assert.equal(wire.nome_fantasia, 'SYNTHETIC EDIT');
+  assert.equal(Object.hasOwn(record, 'contatos'), false);
+});
+
+test('form real: lista explicita divergente e metadata continuam bloqueadas', () => {
+  const { buildPayload, mapToForm } = actualClienteFormPayload();
+  for (const contatos of [[], [{ tipo: 'Telefone', valor: '', observacao: 'preservar' }]]) {
+    const draft = mapToForm({ id: 'synthetic-client', email: 'kept@example.test', contatos });
+    assert.equal(Object.hasOwn(draft, 'contatos'), true);
+    assert.throws(() => toClienteMasterHttpPayload(buildPayload(draft)), error => error.code === CONTATOS_SCALAR_OVERFLOW);
+  }
+});
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 
 test('fidelidade ok: um contato por canal sem nome/obs e sem principal → projeta', () => {

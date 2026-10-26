@@ -91,8 +91,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
   const contextReady = Boolean(groupId && empresaId && actorId);
   const http = useMemo(() => createHttpApiClient({
-    getScope: () => ({ groupId, empresaId, actorId, actorEmail, token: sessionToken }),
-  }), [groupId, empresaId, actorId, actorEmail, sessionToken]);
+    getScope: () => ({ groupId, empresaId, actorId, actorEmail, token: sessionIdentity }),
+  }), [groupId, empresaId, actorId, actorEmail, sessionIdentity]);
   const api = http.orcamentos;
   const pedidosApi = http.pedidos;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');

@@ -1,3 +1,15 @@
+test('Orcamento real: consumidor sem prop token usa a mesma sessao das guardas', async () => {
+  const h = await mount();
+  h.setSession({ ...cpa, token: 'synthetic-browser-session' }); h.render(); h.render();
+  h.title('Editar').props.onClick(); h.render();
+  await h.button('Salvar orçamento').props.onClick();
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.calls[0].scope.token, 'synthetic-browser-session');
+  assert.equal(h.calls[0].scope.groupId, cpa.groupId);
+  assert.equal(h.calls[0].scope.empresaId, cpa.empresaId);
+  assert.equal(h.calls[0].scope.actorId, cpa.actorId);
+});
+
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
