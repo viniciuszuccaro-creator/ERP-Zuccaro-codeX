@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import ts from 'typescript';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
+import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroRemainder.js';
 
 const names = ['ApiExterna', 'CatalogoWeb', 'CentroResultado', 'ChatbotCanal', 'ChatbotIntent',
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'Filial', 'GatewayPagamento',
@@ -58,7 +59,8 @@ test('actual shared hook switches identity before effects, resets new records, p
 
 for (const name of names) test(`${name}: unchanged save, permission, fields and defaults; scoped reopen identity`, () => {
   const file = `src/components/cadastros/${name}Form.jsx`;
-  const after = parse(file, fs.readFileSync(file, 'utf8'));
+  // #353: CodigoField autorizado em RotaPadrao/TabelaPreco — remainder restaura pin e36231b3.
+  const after = parse(file, cadastroCodigoRegistroRemainder(file, fs.readFileSync(file, 'utf8')));
   const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));
   const declarations = tree => find(tree, node => ts.isVariableDeclaration(node)
     && /^(handle|buildPayload|pode|contextoValido|groupId|dadosIniciais)/.test(node.name.getText(tree))).map(node => node.getText(tree));

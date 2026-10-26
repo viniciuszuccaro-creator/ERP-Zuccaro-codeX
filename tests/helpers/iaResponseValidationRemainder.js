@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import ts from 'typescript';
 import {partialInputRemainder} from './partialInputRemainder.js';
+import {cadastroCodigoRegistroRemainder} from './cadastroCodigoRegistroRemainder.js';
 
 const entries = {
   'src/components/comercial/CorteDobraIATab.jsx': ['validarPosicoesCorteDobraIA'],
@@ -55,5 +56,6 @@ export function iaResponseValidationRemainder(file, source) {
     assert.equal(source.split(literal).length, 2);
     source = source.replace(literal, '.map((id) => entregasSelecionadas.find((e) => String(e.id) === String(id)))');
   }
-  return source;
+  // #353 classe A: CodigoField em TabelaPreco — pin IA permanece após strip autorizado.
+  return cadastroCodigoRegistroRemainder(file, source);
 }

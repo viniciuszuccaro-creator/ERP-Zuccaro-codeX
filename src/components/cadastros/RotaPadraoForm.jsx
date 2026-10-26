@@ -61,10 +61,6 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
           value={formData.nome_rota}
           onChange={(e) => setFormData({ ...formData, nome_rota: e.target.value })}
           required
-          disabled={!podeSalvar}
-          data-permission="Cadastros.RotaPadrao.editar"
-          data-action="editar-nome-rota-padrao"
-          data-sensitive
         />
       </div>
 
