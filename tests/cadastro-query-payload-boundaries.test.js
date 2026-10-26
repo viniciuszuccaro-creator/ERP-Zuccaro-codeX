@@ -15,16 +15,18 @@ function once(source, current, previous) {
   assert.equal(source.split(current).length - 1, 1, 'exact integration hunk');
   return source.replace(current, previous);
 }
+// previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'c1318e93e891d62d85036bb169a75eacfe100d61cbbd80385ae35383ff09173a'],
-  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'a760dbf88f5d61f1a070db1e09f03790d10e042485d73300c2b0101e9f9ca966'],
-  ['RepresentanteFormCompleto', 'representante', 'Representante', 'fcb4246140ad478bc9d245c2dc4b6def00142d988dda3794ec1f944a96dbfc50'],
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', '4edac36448aeb24c521716a90ac4ef4bcf0b7fd73bf48e7866a50284ec2a1df9'], // #353 azul-claro sky no roteiro
+  ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
+  ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];
 for (const [name, recordKey, entity, previousHash] of forms) {
   const path = `src/components/cadastros/${name}.jsx`;
   test(`${name}: stage48 complete source retained except payload annotation and proven default export`, () => {
     let source = once(read(path), '    /** @param {Record<string, unknown>} data */\n    mutationFn: async (data) => {', '    mutationFn: async (data) => {');
     if (name === 'CadastroClienteCompleto') source = once(source, 'default: m.default }', 'default: m.default || m.TimelineCliente }');
+    assert.match(source, /useCadastroReopenOnIdentity/);
     assert.equal(createHash('sha256').update(source).digest('hex'), previousHash);
   });
   const tree = parse(path);
@@ -37,9 +39,15 @@ for (const [name, recordKey, entity, previousHash] of forms) {
     for (const editing of [false, true]) {
       const calls = [];
       const canonical = { ...input, normalized: true };
+      const boundId = editing ? 'synthetic-a' : null;
       const fn = make(callback('mutationFn'), {
         assertFormScopeCurrent() {}, contextoValido: true,
         podeEditar: true, podeCriar: true, [recordKey]: editing ? { id: 'synthetic-a' } : null,
+        // P1 switch-reject: mutação usa identidade do rascunho (formData.id / *BoundId), não só props.
+        formData: editing ? { id: 'synthetic-a' } : {},
+        representanteBoundId: recordKey === 'representante' ? boundId : undefined,
+        clienteBoundId: recordKey === 'cliente' ? boundId : undefined,
+        fornecedorBoundId: recordKey === 'fornecedor' ? boundId : undefined,
         buildPayload(value) { assert.equal(value, input); return canonical; },
         updateInContext: (...args) => { calls.push(['update', ...args]); return Promise.resolve({ id: 'synthetic-a' }); },
         createInContext: (...args) => { calls.push(['create', ...args]); return Promise.resolve({ id: 'synthetic-a' }); },
@@ -51,10 +59,15 @@ for (const [name, recordKey, entity, previousHash] of forms) {
     }
     for (const blocked of ['context', 'scope', 'create', 'update']) {
       let writes = 0;
+      const boundId = blocked === 'update' ? 'synthetic-a' : null;
       const fn = make(callback('mutationFn'), {
         assertFormScopeCurrent() { if (blocked === 'scope') throw Error('Synthetic scope changed'); },
         contextoValido: blocked !== 'context', podeEditar: false, podeCriar: false,
         [recordKey]: blocked === 'update' ? { id: 'synthetic-a' } : null,
+        formData: blocked === 'update' ? { id: 'synthetic-a' } : {},
+        representanteBoundId: recordKey === 'representante' ? boundId : undefined,
+        clienteBoundId: recordKey === 'cliente' ? boundId : undefined,
+        fornecedorBoundId: recordKey === 'fornecedor' ? boundId : undefined,
         buildPayload: value => value,
         createInContext() { writes++; }, updateInContext() { writes++; },
       });
@@ -68,6 +81,7 @@ for (const [name, recordKey, entity, previousHash] of forms) {
         isFormScopeCurrent: () => current,
         queryClient: { invalidateQueries: value => events.push(['invalidate', value]) },
         toast: value => events.push(['toast', value]), [recordKey]: null,
+        representanteBoundId: null, clienteBoundId: null, fornecedorBoundId: null,
         onSuccess: () => events.push(['success']), onSubmit: value => events.push(['submit', value]),
         onCloseNorm: () => events.push(['close']), buildPayload: () => fallback, formData: {},
       });

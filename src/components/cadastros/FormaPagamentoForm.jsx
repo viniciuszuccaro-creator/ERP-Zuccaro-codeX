@@ -10,6 +10,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -27,8 +28,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
   const podeCriar = canCreate("Cadastros", "FormaPagamento") || canCreate("Financeiro", "FormaPagamento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "FormaPagamento") || canEdit("Financeiro", "FormaPagamento") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "FormaPagamento") || canDelete("Financeiro", "FormaPagamento") || canDelete("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const emptyFormData = {
+    const emptyFormData = {
     codigo: "",
     descricao: "",
     tipo: "Dinheiro",
@@ -44,14 +44,13 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     intervalo_parcelas_dias: 30
   };
   const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
-  const prevIdRef = useRef(dadosIniciais?.id || null);
-  useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    if (nextId !== prevIdRef.current) {
-      prevIdRef.current = nextId;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: formaBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = formaBoundId ? podeEditar : podeCriar;
 
   const schema = z.object({
     descricao: z.string().min(1, "Descricao e obrigatoria"),
@@ -62,6 +61,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     const codigoReservado = sanitizeText(formData.codigo, 80);
     return {
       ...formData,
+      ...(formaBoundId ? { id: formaBoundId } : {}),
       ...extra,
       descricao: sanitizeText(formData.descricao, 180),
       nome: sanitizeText(formData.descricao, 180),
@@ -79,7 +79,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
 
   const handleSubmit = async () => {
     if (!podeSalvar) {
-      alert(dadosIniciais?.id ? "Sem permissao para editar formas de pagamento." : "Sem permissao para criar formas de pagamento.");
+      alert(formaBoundId ? "Sem permissao para editar formas de pagamento." : "Sem permissao para criar formas de pagamento.");
       return;
     }
     if (!contextoValido) {
@@ -125,8 +125,8 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
         </div>
 
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(formaBoundId)}
+        entityId={formaBoundId}
         value={formData.codigo}
         action="codigo-registro-forma-pagamento"
       />
@@ -171,7 +171,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
       </div>
 
       {formData.permite_parcelamento && (
-        <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded border">
+        <div className="grid grid-cols-2 gap-4 p-4 bg-sky-50 rounded border">
           <div>
             <Label>Maximo de Parcelas</Label>
             <Input type="number" value={formData.maximo_parcelas} onChange={(e) => setFormData({ ...formData, maximo_parcelas: parseInt(e.target.value, 10) || 1 })} placeholder="12" disabled={!podeSalvar} data-permission="Cadastros.FormaPagamento.editar" data-action="editar-maximo-parcelas" data-sensitive />
@@ -217,7 +217,7 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-blue-600" />
+            <CreditCard className="w-5 h-5 text-sky-600" />
             {dadosIniciais ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}
           </h2>
         </div>

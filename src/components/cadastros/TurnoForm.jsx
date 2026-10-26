@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -20,8 +21,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "Turno") || canCreate("Sistema", "Turno") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Turno") || canEdit("Sistema", "Turno") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+    const emptyFormData = {
     nome_turno: '',
     horario_inicio: '08:00',
     horario_fim: '17:00',
@@ -29,15 +29,16 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
     intervalo_fim: '13:00',
     dias_semana: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'],
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: turnoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = turnoBoundId ? podeEditar : podeCriar;
 
   const diasDisponiveis = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -52,6 +53,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome_turno || !formData.horario_inicio || !formData.horario_fim) {
       alert('Preencha os campos obrigatórios');
       return;
@@ -66,6 +68,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
     }
     onSubmit({
       ...formData,
+      ...(turnoBoundId ? { id: turnoBoundId } : {}),
       nome: formData.nome_turno,
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
@@ -75,8 +78,8 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(turnoBoundId)}
+        entityId={turnoBoundId}
         value={formData.codigo}
         action="codigo-registro-turno"
       />

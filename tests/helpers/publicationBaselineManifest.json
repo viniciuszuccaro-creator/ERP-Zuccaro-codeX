@@ -24,7 +24,7 @@
     {
       "path": "tests/cursor-cadastros-reopen-consolidacao.test.js",
       "beforeSha256": "a8edd3fafe08e3afd60dcb9ea26c8e812abf27fe1384a9f63d07c3e65f6bae6f",
-      "references": 1
+      "references": 2
     },
     {
       "path": "tests/cursor-callback-record-state.test.js",

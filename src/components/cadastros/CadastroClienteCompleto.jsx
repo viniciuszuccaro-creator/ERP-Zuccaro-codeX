@@ -35,6 +35,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import {
@@ -338,6 +339,85 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     enabled: !!cliente?.id && contextoValido,
   });
 
+
+  const { boundId: clienteBoundId } = useCadastroReopenOnIdentity(cliente, {
+    formData,
+    setFormData,
+    emptyForm: {
+      tipo: "Pessoa Física",
+      status: "Prospect",
+      nome: "",
+      razao_social: "",
+      nome_fantasia: "",
+      cpf: "",
+      cnpj: "",
+      rg: "",
+      inscricao_estadual: "",
+      inscricao_municipal: "",
+      regiao_atendimento: "Sudeste",
+      endereco_principal: {
+        cep: "",
+        logradouro: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        latitude: null,
+        longitude: null,
+        mapa_url: "",
+      },
+      contatos: [],
+      locais_entrega: [],
+      condicao_comercial: {
+        tabela_preco_id: "",
+        forma_pagamento_padrao_id: "",
+        percentual_desconto: 0,
+        condicao_pagamento: "À Vista",
+        limite_credito: 0,
+        limite_credito_utilizado: 0,
+        situacao_credito: "OK",
+      },
+      configuracao_fiscal: {
+        regime_tributario: "Simples Nacional",
+        cfop_padrao_venda: "5102",
+        contribuinte_icms: true,
+        tipo_contribuinte: "1 - Contribuinte",
+        isento_ipi: false,
+        isento_icms: false,
+      },
+      documentos: [],
+      vendedor_responsavel: "",
+      vendedor_responsavel_id: "",
+      observacoes: "",
+      empresa_id: empresaAtual?.id,
+      group_id: groupId,
+    },
+    mapToForm: (record) => ({
+      ...record,
+      contatos: record.contatos || [],
+      locais_entrega: record.locais_entrega || [],
+      condicao_comercial: record.condicao_comercial || {
+        tabela_preco_id: "",
+        forma_pagamento_padrao_id: "",
+        percentual_desconto: 0,
+        condicao_pagamento: "À Vista",
+        limite_credito: 0,
+        limite_credito_utilizado: 0,
+        situacao_credito: "OK",
+      },
+      configuracao_fiscal: record.configuracao_fiscal || {
+        regime_tributario: "Simples Nacional",
+        cfop_padrao_venda: "5102",
+        contribuinte_icms: true,
+        tipo_contribuinte: "1 - Contribuinte",
+        isento_ipi: false,
+        isento_icms: false,
+      },
+      documentos: record.documentos || [],
+    }),
+  });
+
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */
     mutationFn: async (data) => {
@@ -348,9 +428,11 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
       const payload = buildPayload(data);
 
-      if (cliente?.id) {
+      // Identidade do rascunho (boundId), não props — evita salvar A em B após reject switch.
+      const targetId = clienteBoundId || formData?.id || null;
+      if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
-        return updateInContext('Cliente', cliente.id, payload);
+        return updateInContext('Cliente', targetId, payload);
       }
 
       if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
@@ -359,7 +441,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      toast({ title: `✅ Cliente ${cliente?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Cliente ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -404,7 +486,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
-    deleteMutation.mutate(cliente.id);
+    if (!formData?.id) return;
+    deleteMutation.mutate(formData.id);
   };
 
   const handleAlternarStatus = () => {
@@ -514,100 +597,6 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
-  const prevIdRef = useRef(cliente?.id || null);
-  const prevUpdatedRef = useRef(cliente?.updated_date);
-  useEffect(() => {
-    const nextId = cliente?.id || null;
-    const idChanged = nextId !== prevIdRef.current;
-    const updatedChanged = Boolean(
-      nextId && cliente?.updated_date && cliente.updated_date !== prevUpdatedRef.current,
-    );
-    if (!nextId) {
-      if (prevIdRef.current !== null) {
-        prevIdRef.current = null;
-        prevUpdatedRef.current = undefined;
-        setFormData({
-          tipo: "Pessoa Física",
-          status: "Prospect",
-          nome: "",
-          razao_social: "",
-          nome_fantasia: "",
-          cpf: "",
-          cnpj: "",
-          rg: "",
-          inscricao_estadual: "",
-          inscricao_municipal: "",
-          regiao_atendimento: "Sudeste",
-          endereco_principal: {
-            cep: "",
-            logradouro: "",
-            numero: "",
-            complemento: "",
-            bairro: "",
-            cidade: "",
-            estado: "",
-            latitude: null,
-            longitude: null,
-            mapa_url: "",
-          },
-          contatos: [],
-          locais_entrega: [],
-          condicao_comercial: {
-            tabela_preco_id: "",
-            forma_pagamento_padrao_id: "",
-            percentual_desconto: 0,
-            condicao_pagamento: "À Vista",
-            limite_credito: 0,
-            limite_credito_utilizado: 0,
-            situacao_credito: "OK",
-          },
-          configuracao_fiscal: {
-            regime_tributario: "Simples Nacional",
-            cfop_padrao_venda: "5102",
-            contribuinte_icms: true,
-            tipo_contribuinte: "1 - Contribuinte",
-            isento_ipi: false,
-            isento_icms: false,
-          },
-          documentos: [],
-          vendedor_responsavel: "",
-          vendedor_responsavel_id: "",
-          observacoes: "",
-          empresa_id: empresaAtual?.id,
-          group_id: groupId,
-        });
-      }
-      return;
-    }
-    if (idChanged || updatedChanged) {
-      prevIdRef.current = nextId;
-      prevUpdatedRef.current = cliente.updated_date;
-      setFormData({
-        ...cliente,
-        contatos: cliente.contatos || [],
-        locais_entrega: cliente.locais_entrega || [],
-        condicao_comercial: cliente.condicao_comercial || {
-          tabela_preco_id: "",
-          forma_pagamento_padrao_id: "",
-          percentual_desconto: 0,
-          condicao_pagamento: "À Vista",
-          limite_credito: 0,
-          limite_credito_utilizado: 0,
-          situacao_credito: "OK"
-        },
-        configuracao_fiscal: cliente.configuracao_fiscal || {
-          regime_tributario: "Simples Nacional",
-          cfop_padrao_venda: "5102",
-          contribuinte_icms: true,
-          tipo_contribuinte: "1 - Contribuinte",
-          isento_ipi: false,
-          isento_icms: false
-        },
-        documentos: cliente.documentos || []
-      });
-    }
-  }, [cliente?.id]);
-
   const gerarMapaUrl = (endereco) => {
     if (endereco.latitude && endereco.longitude) {
       return `https://www.google.com/maps?q=${endereco.latitude},${endereco.longitude}`;
@@ -626,14 +615,14 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <User className="w-6 h-6 text-blue-600" />
+                <User className="w-6 h-6 text-sky-600" />
                 {cliente?.id ? 'Editar Cliente' : 'Novo Cliente'}
               </h2>
               {cliente?.id && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge className={
                     formData.status === 'Ativo' ? 'bg-green-100 text-green-700' :
-                    formData.status === 'Prospect' ? 'bg-blue-100 text-blue-700' :
+                    formData.status === 'Prospect' ? 'bg-sky-100 text-sky-700' :
                     formData.status === 'Bloqueado' ? 'bg-red-100 text-red-700' :
                     'bg-gray-100 text-gray-700'
                   }>
@@ -689,8 +678,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 data-permission={cliente?.id ? "Cadastros.Cliente.editar" : "Cadastros.Cliente.criar"}
                 data-action="Cadastros.Cliente.salvar"
                 data-sensitive
-                disabled={isSaving || saveMutation.isPending || !contextoValido || (cliente?.id ? !podeEditar : !podeCriar)}
-                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isSaving || saveMutation.isPending || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}
+                className="bg-sky-600 hover:bg-sky-700"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saveMutation.isPending ? 'Salvando..' : 'Salvar Cliente'}
@@ -1188,6 +1177,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               <GerenciarContatosClienteForm
                 contatos={formData.contatos || []}
                 onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}
+                assertScopeCurrent={assertFormScopeCurrent}
               />
             </TabsContent>
 
@@ -1195,6 +1185,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               <GerenciarEnderecosClienteForm
                 enderecos={formData.locais_entrega || []}
                 onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}
+                assertScopeCurrent={assertFormScopeCurrent}
               />
             </TabsContent>
 
@@ -1378,7 +1369,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                         </div>
                         <div>
                           <p className="text-sm text-slate-600">Score de Pagamento</p>
-                          <p className="text-2xl font-bold text-blue-600">
+                          <p className="text-2xl font-bold text-sky-600">
                             {formData.score_pagamento || 100}
                           </p>
                         </div>
@@ -1397,16 +1388,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
             <TabsContent value="fiscal" className="space-y-6 m-0 mt-4">
               {ultimaNF && ultimaNF.length > 0 && (
-                <Card className="bg-blue-50 border-blue-200">
+                <Card className="bg-sky-50 border-sky-200">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-blue-900">Última Nota Fiscal Emitida</p>
-                        <p className="text-xs text-blue-700">
+                        <p className="text-sm font-medium text-sky-900">Última Nota Fiscal Emitida</p>
+                        <p className="text-xs text-sky-700">
                           NF-e {ultimaNF[0].numero}/{ultimaNF[0].serie} - {new Date(ultimaNF[0].data_emissao).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
-                      <Badge variant="outline" className="text-blue-700">
+                      <Badge variant="outline" className="text-sky-700">
                         R$ {(ultimaNF[0].valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </Badge>
                     </div>
@@ -1539,13 +1530,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               {cliente?.id ? (
                 <div className="space-y-6">
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
-                    <ResumoHistorico clienteId={cliente.id} />
+                    <ResumoHistorico clienteId={clienteBoundId || cliente?.id} />
                   </Suspense>
                   <Suspense fallback={<div className="h-16 animate-pulse bg-slate-100 rounded" />}>
-                    <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
+                    <HistoricoOrigemCliente clienteId={clienteBoundId || cliente?.id} compact={false} />
                   </Suspense>
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
-                    <TimelineCliente clienteId={cliente.id} showFilters={true} />
+                    <TimelineCliente clienteId={clienteBoundId || cliente?.id} showFilters={true} />
                   </Suspense>
                 </div>
               ) : (
@@ -1575,7 +1566,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-blue-600" />
+                            <FileText className="w-5 h-5 text-sky-600" />
                             <div>
                               <p className="font-medium">{doc.nome_arquivo}</p>
                               <div className="flex items-center gap-2 mt-1">

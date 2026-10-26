@@ -26,10 +26,16 @@ test('stage49 entire hook retained except seven source-field projections', () =>
 for (const [file, expected] of [
   ['comercial/FechamentoFinanceiroTab.jsx', 'ae386c90edc5194049336d95e493a01c868496b5e91dd78b2bf9240ad8e0ea21'],
   ['financeiro/CaixaPDVCompleto.jsx', '660c53cb0d8355e9cc6d0ed621b0ab1cd452051c2043329cee6b5269be561b52'],
-  ['cadastros/FormaPagamentoFormCompleto.jsx', '320532c61a1b8f8a17133026ac0327cfd4fd52bc0787373589329138139265a6'],
-  ['cadastros/FormaPagamentoForm.jsx', '58182860db77f87684ebe10f0781b0617e9916cb90554ecf5a868efa21a4521f'],
+  // P1 #351: FormaPagamento* adotam useCadastroReopenOnIdentity (hash atualizado de propósito).
+  ['cadastros/FormaPagamentoFormCompleto.jsx', 'f37728123bf4998449da69c12206e1ea3aadd8f794560cb330310b497366a2cf'],
+  // P1 #353: FormaPagamentoForm captura boundId no save (hash atualizado de propósito).
+  // #353 entrada-em-uso: azul-claro sky no form do roteiro (hash atualizado de propósito).
+  ['cadastros/FormaPagamentoForm.jsx', '5f20546b5b5d91509737e91714150635e95bd65e2926982492e4827cde22df2b'],
 ]) test(`${file}: source, handlers, permissions and persistence ownership unchanged from stage49`, () => {
-  assert.equal(hash(financialUiBoundaryRemainder('src/components/' + file, read('src/components/' + file))), expected);
+  const path = 'src/components/' + file;
+  const text = read(path);
+  if (file.startsWith('cadastros/FormaPagamento')) assert.match(text, /useCadastroReopenOnIdentity/);
+  assert.equal(hash(financialUiBoundaryRemainder(path, text)), expected);
 });
 
 function bind(text, { formas = [], bancos = [], gateways = [], filtros = {}, loading = {} } = {}) {

@@ -21,10 +21,14 @@ export const componentContractHunks = {
       `<Select value={${value}} onValueChange={${setter}} id="${id}-select">\n                  <SelectTrigger>`, 1,
     ]),
   ],
-  'src/components/comercial/pedidoUiPolicy.js': [[
-    'subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },',
-    'subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },', 1,
-  ]],
+  'src/components/comercial/pedidoUiPolicy.js': [
+    [
+      'subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },',
+      'subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },', 1,
+    ],
+    // #353 entrada-em-uso: explainPedidoPersistenceError (044) — delta autorizado; remainder histórico preservado.
+    ["\n/**\n * Traduz falhas de persistência de Pedido (ex.: destino sem migration 044)\n * para mensagem explícita. Não mascara ausência de schema como “salvo”.\n * Coordenação Codex — Cursor não aplica DDL neste lote.\n *\n * @param {unknown} error\n * @returns {string|null}\n */\nexport function explainPedidoPersistenceError(error) {\n  if (!error || typeof error !== 'object') return null;\n  const err = /** @type {Record<string, unknown>} */ (error);\n  const body = err.body && typeof err.body === 'object'\n    ? /** @type {Record<string, unknown>} */ (err.body)\n    : null;\n  const nested = body?.error && typeof body.error === 'object'\n    ? /** @type {Record<string, unknown>} */ (body.error)\n    : null;\n  const chunks = [\n    err.message,\n    err.code,\n    nested?.message,\n    nested?.code,\n    body?.message,\n    body?.code,\n  ].filter((v) => v != null && String(v).trim() !== '').map((v) => String(v));\n  const raw = chunks.join(' ').toLowerCase();\n  if (!raw) return null;\n\n  const mentionsIdempotency = raw.includes('idempotency_key') || raw.includes('payload_fingerprint');\n  const missingColumn = (\n    (raw.includes('column') && (raw.includes('does not exist') || raw.includes('undefined_column')))\n    || raw.includes('42703')\n  );\n  if (mentionsIdempotency || (missingColumn && (raw.includes('pedido') || mentionsIdempotency))) {\n    return 'Persistência de Pedido indisponível neste destino: faltam colunas de idempotência (migration 044). '\n      + 'Não declare vendas prontas. Coordene aplicação autorizada com Codex; o rascunho não foi confirmado como salvo.';\n  }\n  return null;\n}\n", '', 1],
+  ],
 };
 export function componentContractRemainder(file, text) {
   const hunks = componentContractHunks[file];

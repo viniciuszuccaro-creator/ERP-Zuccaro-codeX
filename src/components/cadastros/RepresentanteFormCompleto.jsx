@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,6 +31,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value, max = 80) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s@()+]/g, "").slice(0, max).trim();
@@ -158,30 +159,29 @@ export default function RepresentanteFormCompleto({ representante: representante
     enabled: contextoValido,
   });
 
+  const { boundId: representanteBoundId } = useCadastroReopenOnIdentity(representante, {
+    formData,
+    setFormData,
+    clearOnNull: false,
+    mapToForm: (record) => ({
+      ...record,
+      endereco: record.endereco || {},
+      dados_bancarios: record.dados_bancarios || {},
+      regioes_atendimento: record.regioes_atendimento || [],
+    }),
+  });
+
   const { data: clientesIndicados = [] } = useQuery({
-    queryKey: ['clientes-indicados', representante?.id, contextKey],
-    queryFn: () => filterInContext('Cliente', { indicador_id: representante.id }, 'nome', 200),
-    enabled: !!representante?.id && contextoValido
+    queryKey: ['clientes-indicados', representanteBoundId, contextKey],
+    queryFn: () => filterInContext('Cliente', { indicador_id: representanteBoundId }, 'nome', 200),
+    enabled: !!representanteBoundId && contextoValido
   });
 
   const { data: pedidosIndicados = [] } = useQuery({
-    queryKey: ['pedidos-indicados', representante?.id, contextKey],
-    queryFn: () => filterInContext('Pedido', { indicador_id: representante.id }, '-created_date', 200),
-    enabled: !!representante?.id && contextoValido
+    queryKey: ['pedidos-indicados', representanteBoundId, contextKey],
+    queryFn: () => filterInContext('Pedido', { indicador_id: representanteBoundId }, '-created_date', 200),
+    enabled: !!representanteBoundId && contextoValido
   });
-
-  const prevIdRef = useRef(representante?.id);
-  useEffect(() => {
-    if (representante?.id && representante.id !== prevIdRef.current) {
-      prevIdRef.current = representante.id;
-      setFormData({
-        ...representante,
-        endereco: representante.endereco || {},
-        dados_bancarios: representante.dados_bancarios || {},
-        regioes_atendimento: representante.regioes_atendimento || []
-      });
-    }
-  }, [representante?.id]);
 
   const saveMutation = useMutation({
     /** @param {Record<string, unknown>} data */
@@ -192,9 +192,9 @@ export default function RepresentanteFormCompleto({ representante: representante
       }
       const payload = buildPayload(data);
 
-      if (representante?.id) {
+      if (representanteBoundId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar representantes.");
-        return updateInContext('Representante', representante.id, payload);
+        return updateInContext('Representante', representanteBoundId, payload);
       }
       if (!podeCriar) throw new Error("Seu perfil nao permite criar representantes.");
       return createInContext('Representante', payload);
@@ -202,7 +202,7 @@ export default function RepresentanteFormCompleto({ representante: representante
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
-      toast({ title: `✅ Representante ${representante?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      toast({ title: `✅ Representante ${representanteBoundId ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -214,6 +214,7 @@ export default function RepresentanteFormCompleto({ representante: representante
   });
 
   const deleteMutation = useMutation({
+    /** @param {string} id */
     mutationFn: (id) => {
       assertFormScopeCurrent();
       if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de excluir representantes.");
@@ -237,8 +238,9 @@ export default function RepresentanteFormCompleto({ representante: representante
   const handleExcluir = () => {
     try { assertFormScopeCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
+    if (!representanteBoundId) return;
     if (window.confirm(`Excluir "${formData.nome}"?`)) {
-      deleteMutation.mutate(representante.id);
+      deleteMutation.mutate(representanteBoundId);
     }
   };
   const handleAlternarStatus = () => {

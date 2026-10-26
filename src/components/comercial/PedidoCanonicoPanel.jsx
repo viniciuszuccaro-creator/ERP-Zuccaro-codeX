@@ -38,6 +38,7 @@ import {
   PEDIDO_CANCEL_MOTIVO_MAX,
   PEDIDO_STATUS_LABELS,
   resolvePedidoHistoryUiState,
+  explainPedidoPersistenceError,
 } from './pedidoUiPolicy';
 import {
   clienteEmpresaPickerLabel,
@@ -51,7 +52,8 @@ const emptyItem = () => ({ produto_id:'', unidade_id:'', descricao:'', unidade_s
 const emptyForm = () => ({ cliente_empresa_id:'', cliente_local_id:'', obra_id:'', tabela_preco_id:'', condicao_pagamento_id:'', tipo_operacao:'ENTREGA', data_entrega_solicitada:'', observacoes:'', itens:[emptyItem()] });
 const money = (value) => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value||0));
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
-const message = (error) => error?.status===403?'Seu perfil não possui permissão para esta ação.':error?.status===404?'Pedido não encontrado neste contexto.':error?.status===409?'O estado atual não permite esta ação.':error?.body?.error?.message||'Não foi possível concluir a operação.';
+const message = (error) => explainPedidoPersistenceError(error)
+  || (error?.status===403?'Seu perfil não possui permissão para esta ação.':error?.status===404?'Pedido não encontrado neste contexto.':error?.status===409?'O estado atual não permite esta ação.':error?.body?.error?.message||error?.message||'Não foi possível concluir a operação.');
 
 export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null }) {
   const queryClient=useQueryClient();

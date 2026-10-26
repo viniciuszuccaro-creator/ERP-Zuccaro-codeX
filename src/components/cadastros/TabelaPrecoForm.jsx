@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDate = (value) => sanitizeText(value, 20);
@@ -64,6 +65,12 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={dadosIniciais?.codigo ?? formData.codigo}
+        action="codigo-registro-tabela-preco"
+      />
       <div>
         <Label>Nome da Tabela *</Label>
         <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Ex: Atacado SP, Varejo Nacional" disabled={!podeSalvar} data-permission="Cadastros.TabelaPreco.editar" data-action="editar-nome-tabela-preco" data-sensitive />

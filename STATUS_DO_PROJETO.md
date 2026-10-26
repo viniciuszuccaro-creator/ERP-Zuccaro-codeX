@@ -1,40 +1,120 @@
 ## Entrada em uso - prioridade vigente e lista unica (proprietario, 2026-10-26)
 
-Delta atual: prova integrada PostgreSQL real de Auth/perfil/Grupo/Empresa/Cliente/
+Composicao em validacao na candidata existente: Cursor1d3540ff + lote Codex
+preservado de envelope/coorte. Sem mergePR/main, publicacao ou homologacao deste
+estado ainda. Os blocos recebidos a seguir sao historicos quando assim rotulados.
+
+### Historico recebido Cursor1d3540ff (antes da revisao/composicao atual)
+Alegacoes recebidas e preservadas, nao aceite operacional nem estado vigente.
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Tip HEAD | **`ea820521`** |
+| CI tip | push **40371869659** + PR **40371873739** 6/6 **SUCCESS** |
+| Base Codex | **`6ba10732`** ancestor (PG entrada/fornecedor; branch Codex não editada) |
+| P1 tip revisão | **`84f3d401`** (fix `681c8ea4`) — pedido `@codex review` 6422758981 |
+| Achado | **6420465114** (P1 NOVO; não reabre P1 antigo guardas) |
+| Correção | AST estrito CodigoField remainder; contraprova Object.assign/externa/omissão/repetição |
+| Independente | Marca ciclo reopen + Histórico fail-closed; Condicao ID-only pin preservado |
+| Aceite P1 | **CI ≠ fechamento** — aguarda parecer Codex no SHA tip/`84f3d401` |
+| Preservado | Contatos ENCERRADOS; P1 antigo ENCERRADO; sem merge/deploy/carga |
+
+Nota CI: tentativa RecordState Condicao quebrou hash CANAL consolidacao — revertida
+em `ea820521`. Reopen canônico Condicao exige delta autorizado no pin.
+
+### Historico Codex — tip `6ba10732` (preservado no remarge)
+
+A prova completa6ba10732 continua preservada abaixo.
+### Estado atual Codex - envelope e coorte preparados
+Delta atual para HML: envelope de principais isolados reforcado e contraprova
+INHERIT rejeitada;1PASS/0FAIL/0SKIP positivo, sem roles/grants operacionais.
+NovoP1 remainder353 encerrado por contraprova emea820521, sem reabrir os antigos.
+Bloqueadores: Marca HTTP updated_at nao observado; Historico cai em fonte local HTTP;
+composicao+par API/web/ciclo browser ainda nao homologados. Parecer353/6422905733.
+Schema/ACL de escrita e inversa precisam de revisao/bindings no destino isolado;
+V3 somente leitura nao homologa venda. Coorte ORIGEM100 preparada entre17471
+elegiveis/18458 clientes;987 nao ativos preservados,100 pendencias auxiliares.
+Fornecedor790 elegiveis de origem. Destino0leituras/0escritas; reconciliacao contra
+o destino e carga especifica pendentes. Backup/staging/pilotos preservados.
+Nenhuma duplicacao do hook exclusivo353 nem edicao da branch Cursor.
+Detalhes do envelope e provas no HANDOFF existente; nenhuma lista/plano paralelo.
+
+### Prova integrada6ba10732 reutilizada
+
+Prova integrada PostgreSQL real de Auth/perfil/Grupo/Empresa/Cliente/
 Orcamento/Pedido e Fornecedor:1PASS/0FAIL/0SKIP. Inclui edicao/releitura, fechamento,
 concorrencia de numeros, conversao repetida bloqueada, import/replay/reversao,
 cross-tenant/revogacao e rollback de falha de auditoria. Teste e fixture existentes
 ampliados, nenhum servico/importador paralelo ou dado real. Detalhes no HANDOFF.
 Fechamento:backend545PASS/0FAIL/26SKIP; PG17 final1PASS/0FAIL/0SKIP. Audit/lint/
 typecheck/build/diff exit0; raiz2295PASS reutilizada por ausencia de delta.
-Ainda nao e ERP servido homologado: falta composicao aceita353 (novo helper de
-codigo vulneravel em7793d3a8), envelope minimo de escrita/schema/privilegios e HML.
+Ainda nao e ERP servido homologado: falta concluir a composicao353 com fix revisado,
+envelope minimo de escrita/schema/privilegios e HML com ciclo de navegador.
 Migrations candidatas fora do automatico; nenhuma permissao operacional ampliada.
 Coorte real ate100 continua proposta condicionada aos gates e autorizacao especifica.
+Helper CodigoField P1: encerrado por contraprova Codex no SHA ea820521; nao e aceite global.
 
 Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
-As cinco entregas sao HML integrada -> coorte real ate100 (apos autorizacao) ->
-escala de cadastros -> operacao inicial -> historicos/saldos. Nao exigem concluir
-todas as ondas omnicanal. Nao alteram a Regra-Mae nem os gates operacionais.
 
-### Lista unica vigente
+Provas: `tests/cadastro-codigo-registro-remainder-p1.test.js`, reopen Marca em
+`cadastros-reopen-banco-cargo-behavioral`, `painel-dinamico-cliente-historico-tab`.
 
-**Pronto para uso**
-- Nenhuma nova liberacao na VPS e concedida por este registro. A prontidao do par
-  atualmente servido nao foi reclassificada por CI ou documento.
-- Disponivel PARA HOMOLOGACAO, nao para carga/uso operacional: codigo d86f06b6,
-  CI4785/4786 SUCCESS, builds API+web do mesmo SHA e prova sintetica V3/inversa
-  2PASS/0FAIL/0SKIP. Os IDs de imagem locais nao sao digests de registry.
-  Recibo atual: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
+## PACOTE Cursor — tip `f47fcfe3` CI SUCCESS (navegável + cadastros, 2026-10-26)
 
-**Bloqueador da entrada em uso**
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Candidata | #353 tip **`f47fcfe3`** (código ≥`7793d3a8`) |
+| Base | #342 `7ae5bcd9` |
+| CI tip | push **40360798384** + PR **40360809795** 6/6 **SUCCESS** |
+| Modalidade | **runner Cursor** (Codespace xylophone 403) |
+| Aceite | matriz início de uso; Marca reopen; aba Histórico Produtos; ciclo por camada; A≠B docs |
+| Bloqueios reais | SHA Codespace; Pedido INSERT 044; staging classe B; sem merge/deploy/carga |
+
+Contatos: não reabrir. MarcaForm reopen + PainelCliente `historico_produtos` TabsContent.
+Matriz / ciclo / A/B: `docs/evidence/cadastros-inicio-uso-matriz-353-*`, `homologacao-ciclo-comercial-pacote2-*`, `registros-classe-AB-pacote2-*`.
+Codespace: comentário 6421481401.
+
+### Lista unica vigente (atualizada neste remarge)
+
+**Pronto para homologação (código/CI — ≠ VPS operacional)**
+- Contatos overflow fail-closed + rascunho (parecer Codex 6PASS).
+- Cadastros reopen/boundId + Relatorios RBAC + Orçamento componente.
+- Compensador 044 candidato documentado (Codex) + explain UI (Cursor).
+- Builds/CI tip candidata + base consolidação (ver recibo #344 para VPS).
+
+**Bloqueador entrada em uso**
+- Versão efetivamente servida (Codespace/VPS) ainda não medida neste runner.
+- CRUD Cliente/Pedido no destino: leitura #344 ≠ gravação homologada; 044+par incompleto = gate Codex.
+- Fornecedor ops schema; staging/registros privados; menor privilégio/janela.
+- Merge/disponibilização/carga: autorizações específicas.
+
+**Pendência de dados / melhoria posterior**
+- Coorte ≤100, auxiliares, históricos: staging privado + gates (inalterado).
+- C360 omnicanal: Codespace evolução (inalterado).
+
+Diretriz: PLANO_GO_LIVE. Evidência histórica: docs/evidence/entrada-em-uso-lista-353-*.txt
+
+
+## Historico Codex — tip 7ae5bcd9 (preservado no remarge)
+
 - Fechar a composicao integrada por SHA. Os DOIS achados de contatos estao
   encerrados no fix e9d7ef15/9756f457, delta e30cffcc conferido:6PASS/0FAIL/0SKIP,
   contraprova antes/depois e rascunho preservado (6418918562/6419136043).
   P1 antigo guardas continua encerrado. Isto nao aprova toda a353 ou merge.
 - Novo P1 na353/093c8e08: helper CodigoField apaga JSX com spread/expressao que
-  muda o rascunho sem mudar bytes do freeze. Contraprova6420465114; exigir fix
-  no helper real e teste antes/depois. Nao e a espera antiga de contatos.
+  muda o rascunho sem mudar bytes do freeze. Contraprova6420465114; fix Cursor
+  tip `681c8ea4`/`84f3d401` aguarda parecer — nao e a espera antiga de contatos.
+
+## Historico Cursor — tips #353 pré-remarge 7ae5bcd9
+
+- Fechar/revisar a composicao integrada existente por SHA. P1 antigo publication
+  (guardas reopen) ENCERRADO por contraprova Codex real — NAO permanece aberto
+  por bb341ae3/CI. Contatos: tip Cursor corrige principal entre canais + metadata
+  sem valor (overflow fail-closed antes do fetch; parecer 6416585754); encerrado
+  nos pareceres posteriores. CI verde ≠ homologacao VPS/operacional.
+  Sem editar branch Codex nem aprovar toda a #353 por este tip.
+
 - Provar login/perfil/Grupo/Empresa/RBAC e versao efetivamente servida; capturas
   de runner e testes com IdP sintetico nao homologam a sessao real.
 - Conferir schema/journals/contratos exigidos pelo escopo operacional inicial.
@@ -117,19 +197,375 @@ plano ou autorizacao de mudanca. Dependencias de pedido (cliente_empresa,
 produto/unidade, pagamento e demais vinculos) nao podem ser inferidas por nome.
 
 ### Proxima acao concreta
-Fixture representativa PG17 passou Auth/Grupo/Empresa/Cliente/Orcamento/Pedido
-e Fornecedor canonico (1PASS/0FAIL/0SKIP). Backend fresco545PASS/0FAIL/26SKIP,
-type/build/diff PASS; raiz2295 e checks de7ae reutilizados por runtime/root tests
-byte-inalterados. Detalhes e limites no HANDOFF existente, nao ERP pronto.
-Para produto compartilhado,041 requer indice de040, nao CRM inteiro;044compensador
-e Fornecedor candidatos ficam fora do migrador. Grants de escrita testados sao
-fixture, nao proposta operacional aprovada nem extensao automatica de V3.
-Proximo: fix/contraprova do NOVO helper353, composicao autorizada e envelope de
-HML escrita/versao/privilegio/retorno revisado. Decisao isolada HML/100 somente
+Contatos encerrados tecnicamente (pareceres 6418918562/6419136043; fix e9d7ef15/e30cffcc).
+Fixture representativa PG17 (`6ba10732`) passou Auth/Grupo/Empresa/Cliente/Orcamento/Pedido
+e Fornecedor canonico (1PASS/0FAIL/0SKIP) — reutilizar, nao reimplementar.
+Helper CodigoField P1: fix tip `681c8ea4`/`84f3d401` aguarda parecer Codex.
+Pacote Cursor: ciclo comercial por camada, cadastros A/B, modalidade Codespace
+(403 neste token → runner). Pedido/044 compensador = Codex (fora do migrador).
+Envelope HML escrita/versao/privilegio/retorno. Decisao isolada HML/100 somente
 leitura continua registrada no recibo344; ela nao substitui HML integrada ou
 autorizacao de primeira carga real.
 
 ## Historico anterior - provas mantidas, nao estado vigente de aprovacao
+
+
+## CURSOR — azul-claro roteiro + Pedido/044 explícito (2026-10-26 ~11:40 UTC-03:00)
+
+Mesma #353. Contatos tip `e9d7ef15` CI4797/4798 + bot review sem major issues;
+tip docs `9756f457` CI4799/4800. P1 guardas ENCERRADO. Contatos: ainda preferível
+contraprova humana Codex dos 2 casos (bot ≠ synthetic). Sem merge/deploy/carga.
+
+### Independente (operação inicial)
+- Azul-claro (`sky-*`) em CadastroClienteCompleto, FormaPagamentoForm,
+  GerenciarContatosClienteForm, PedidosTab — padrão já usado em cadastros.
+- `explainPedidoPersistenceError` (pedidoUiPolicy): destino sem 044 → toast
+  explícito em PedidoCanonicoPanel + conversão OrcamentosTab; rascunho não
+  declarado salvo. DDL 044 permanece Codex.
+- Evidência camadas: `docs/evidence/homologacao-fluxo-camadas-353-20261026.txt`
+
+Distinção: sintético/CI ≠ Codespace ≠ VPS. Lista vigente = topo deste STATUS.
+
+## CURSOR — CI tip `e9d7ef15` SUCCESS (2026-10-26 11:30 UTC-03:00)
+
+SHA `e9d7ef15` · CI **4797** (push) / **4798** (PR) 6/6 SUCCESS · #353 MERGEABLE/CLEAN vs base `82557565`.
+
+Contatos principal/metadata: implementado + testado CI; aguarda parecer Codex no SHA.
+Não demonstrado Codespace; não operacional VPS. Pedido/044 = Codex.
+P1 guardas: ENCERRADO. Sem merge/deploy/carga.
+
+## CURSOR — contatos P1/P2 + remarge base 82557565 (2026-10-26 ~11:20 UTC-03:00)
+
+Mesma #353. Base Codex `82557565` (entrada em uso / lista unica) incorporada;
+conflitos STATUS/HANDOFF resolvidos preservando ambos. Branch Codex intocada.
+
+### Contatos (parecer 6416585754) — implementado, aguarda revisao
+- `assessContatosScalarFidelity`: `principal_nao_representavel` quando ≥2 valores
+  e algum `principal:true` (ex. E-mail false + Telefone true) — sem escolher
+  principal por conveniencia; bloqueio antes do fetch.
+- Metadata com valor vazio (`nome`/`observacao`/`id`/`ordem`) → `metadata_sem_valor`
+  antes do early-return; rascunho vazio sem metadata permanece ok.
+- Mensagem explicita + rascunho preservado (toast onError; form nao limpa).
+- Testes: `tests/cliente-contatos-http-adapter.test.js` (casos Codex + HttpApiClient).
+- Evolucao jsonb/filha: gate separado; sem migration neste lote.
+
+### Estado (distincao obrigatoria)
+- Implementado no codigo da candidata: sim (este tip).
+- Testado em CI: apos push (nao declarar SUCCESS antecipado).
+- Demonstrado no Codespace: nao neste lote.
+- Operacional na VPS: NAO — sem merge/deploy/carga.
+
+### Lista
+Lista UNICA vigente = secao do topo (Codex). Evidencia historica:
+`docs/evidence/entrada-em-uso-lista-353-20261026.txt` (nao plano vigente).
+Roteiro HML: `docs/evidence/roteiro-homologacao-integrada-353-20261026.txt`.
+
+P1 guardas: ENCERRADO. Contatos: bloqueia ate parecer no novo SHA.
+Sem merge/deploy/carga. Reserva #344 Codex intocada.
+
+## Historico Cursor — tip #353 (antes do remarge 82557565)
+
+## DECISÃO PROPRIETÁRIO — ENTRADA EM USO (repriorização) (2026-10-26 10:11 UTC-03:00)
+
+Incorporada aos planos/HANDOFF existentes — **não** é plano paralelo nem
+substitui Regra-Mãe / AGENTS / gates de VPS·permissões·migrations·merge·deploy·carga.
+
+### Objetivo
+Versão estável na **VPS** para começar a trabalhar (cadastros + fluxo comercial
+inicial). Comercial360/omnicanal avançam no **Codespace** e só sobem após
+teste/aprovação. Não é necessário concluir todas as ondas omnicanal antes.
+
+### Cinco etapas (ordem)
+1. Homologação integrada (candidata #353 + login/grupo/RBAC/cadastros/fluxo)
+2. Primeira carga real controlada (≤100 clientes, gates + autorização)
+3. Cadastros em escala (lotes idempotentes; pendências com motivo)
+4. Operação inicial (atendimento→orçamento→pedido + deps explícitas)
+5. Históricos/saldos (consulta/conciliação ≠ efeito fiscal/financeiro automático)
+
+### Separação
+VPS=operação aprovada · Codespace=evolução · GitHub=código · dados=privado.
+
+### Papéis
+Codex=legado/compatibilidade/menor privilégio/disponibilização/carga.
+Cursor=candidata integrada/recuperação funcional-visual/Cadastros Gerais.
+
+### Lista única
+`docs/evidence/entrada-em-uso-lista-353-20261026.txt`
+(pronto / bloqueador / pendência dados / melhoria posterior).
+
+### Correção factual (histórico desatualizado)
+Cabeçalhos abaixo que ainda dizem “documento LIMIT 1” estão **superados** pelo
+tip Codex `776d81ae`/`d86f06b6` (LIMIT 2 + 409) já na candidata. Não reescrever
+o histórico inteiro; usar esta nota.
+
+Tip código `b6c8fd7f` CI4787/4788 · #353 MERGEABLE/CLEAN. P1 reopen aguarda Codex.
+Sem merge/deploy/carga neste lote documental.
+
+## CURSOR — CI tip `b6c8fd7f` SUCCESS (2026-10-26 09:53 UTC-03:00)
+
+SHA `b6c8fd7f4281d1b5979e7968ef1ba3f0336a3c28` · CI **4787** (push) / **4788** (PR)
+6/6 SUCCESS · PR MERGEABLE/CLEAN vs base `d86f06b6`.
+
+Lote: fidelidade contatos + remarge + agendamento RBAC + provas Forma/Setor.
+P1 reopen `a37b736f` **continua** aguardando Codex — este verde não fecha o P1.
+Codespace: capturas = runner Cursor até medir SHA.
+
+## CURSOR — fidelidade contatos + remarge d86f06b6 + agendamento (2026-10-26 09:47 UTC-03:00)
+
+Remarge base `d86f06b6` (legado LIMIT2/RLS) na #353; conflitos só docs.
+P1 `a37b736f`: pedido `@codex review` reiterado; CI ≠ fechamento.
+
+### Contatos fidelidade
+- Overflow `CONTATOS_SCALAR_OVERFLOW` se múltiplos/nome/obs/id/ordem/divergência.
+- `contatos_escalares` incomplete; não fabrica `contatos[]` na GET HTTP.
+- Evidência + evolução mínima jsonb/filha (gate separado).
+
+### Cadastros
+- Provas próprias FormaPagamentoForm + SetorAtividadeForm (boundId/dirty).
+
+### erp-integra
+- Agendamento fail-closed (`canScheduleRelatorios`) no existente.
+
+### Comercial360
+- Entrega avaliação: `docs/vps/evidence/comercial360-entrega-avaliacao-353-20261026.txt`
+- Capturas = runner Cursor até medir SHA Codespace.
+
+Sem merge/deploy/carga. Reserva #344 Codex intocada.
+
+## CURSOR — remarge Codex `d86f06b6` (identidade legada/RLS) na #353 (2026-10-26 09:41 UTC-03:00)
+
+Base consolidação avançou `776d81ae` → `d86f06b6` (LIMIT2 legado + teste RLS restrito).
+Incorporado por merge na mesma #353; conflitos só STATUS/HANDOFF (ambos lados).
+P1 reopen `a37b736f` hunks preservados; CI verde ≠ fechamento P1.
+#344 carga/menor privilégio/proposta HML: reserva Codex intocada.
+Sem editar branch Codex. Sem merge/deploy.
+
+## CURSOR — CI tip `6d76d0b5` SUCCESS (2026-10-26 09:11 UTC-03:00)
+
+SHA `6d76d0b5fa44f75199fd4e4e157bb05af22c96cb` · CI **4781** (push) / **4782** (PR)
+6/6 SUCCESS (frontend×2 · backend×2 · compose×2).
+
+Correção typecheck `withHydratedContatos` sobre lote contatos/exportacao.
+P1 reopen (`a37b736f` / CI4777·4778) **continua** aguardando parecer Codex —
+CI deste tip não fecha o P1.
+
+Codespace: capturas = runner Cursor até medir SHA servido.
+
+## CURSOR — contatos HTTP escalares + Fornecedor camadas + exportacao RBAC (2026-10-26 08:57 UTC-03:00)
+
+Tip anterior P1: `a37b736f` (CI4777/4778 SUCCESS). Pedido `@codex review` no P1
+publicado; CI verde ≠ fechamento P1.
+
+### Contatos HTTP (contrato MASTER existente)
+- `clienteHttpPayload`: projeta `contatos[]` → `email`/`telefone`/`celular`;
+  hidrata na leitura; BFF `.strict` continua rejeitando `contatos` cru.
+- `httpApiClient` Cliente get/list/filter/create/update hidratam quando há escalares.
+- CANAL: hunks autorizados em `consolidation81Remainder` (hash baseline preservado).
+- Testes: `cliente-contatos-http-adapter`, RBAC UI, server add/edit/remove/reopen +
+  tenant/ator ausente; `cliente-contatos-rbac-update` 6 PASS.
+
+### Fornecedor schema
+- Evidência: `docs/evidence/fornecedor-schema-camadas-353-20261026.txt`
+- Base44 UI + types/service/repo EXISTEM; migration ops AUSENTE; candidate SQL
+  fora de `server/migrations`. Sem entidade paralela / sem publicar migration.
+
+### Codespace
+- Handoff atualizado: capturas = runner Cursor até medir SHA servido.
+- Sem troca de branch / sem sobrescrever checkout Codex.
+
+### erp-integra (sem recomeçar matriz)
+- Relatorios **exportacao**: trigger+conteúdo fail-closed via `canExportRelatorios`
+  (data-permission sozinho insuficiente). secureTab inclui exportacao.
+- Teste grant/deny em `secure-report-behavior.test.js`.
+
+Sem merge/deploy/carga/micro-PR useConfirm. Reserva documento/#344 = Codex.
+
+## CURSOR — P1 publication reopen guards (Codex contraprova) (2026-10-26)
+
+Parecer Codex: tip `e670c1a2`/`0bd89333` — dois guards aceitavam remoção de
+assertion do caso reopen após recalcular `beforeSha`. Causa: `notEqual+continue`
+sem delta fixo.
+
+Correção: `tests/helpers/publicationReopenAuthorizedDelta.js` + guards em
+`publication-baseline-contracts.test.js` — beforeSha histórico preservado,
+conteúdo atual pinado, restore exige delta exato. Contraprovas executam as
+guardas reais (remoção+rehash, mutação interna, omissão, repetição, baseline).
+CI verde **não** encerra este P1 — aguarda revisão Codex no tip. Sem merge/deploy.
+
+## CURSOR — remarge Codex `776d81ae` (documento) na #353 (2026-10-26)
+
+Tip Cursor `bb341ae3` CI frontend+backend+compose **SUCCESS**. Base consolidação
+avançou para `776d81ae` (documento ambíguo LIMIT 2 + 409) — **incorporado por
+merge**, sem reimplementar. Conflitos só STATUS/HANDOFF (ambos lados).
+Legado #344 restante (carga/menor privilégio) permanece Codex. Sem merge/deploy.
+
+## CURSOR — #353 pacotes 1–4 pós-verde 0bd89333 (2026-10-26)
+
+Checkpoint verde: `0bd89333` CI4770/4771 SUCCESS. Continuidade na mesma #353.
+
+1. **PACOTE1 cadastros**: provas comportamentais reais
+   `tests/cadastros-reopen-cliente-fornecedor-completo-behavioral.test.js`
+   (Cliente/Fornecedor Completo: load/edit/updated_date/switch-reject/accept/save boundId).
+   Contatos: salvar com contexto capturado + resposta tardia; lacuna HTTP
+   `contatos` rejeitado pelo schema strict (UI ≠ autorização backend) registrada no teste.
+2. **PACOTE2 visual**: perguntas
+   `docs/vps/evidence/comercial360-proposta-353-avaliacao-visual-perguntas-20261026.txt`
+   + handoff Codespace
+   `docs/vps/evidence/codespace-handoff-candidata353-20261026.txt`
+   (não declarar prévia remota sem SHA medido).
+3. **PACOTE3 recuperação**: wiring `matriz` em `Relatorios.jsx` (trigger+RBAC+secureTab)
+   no componente canônico `MatrizAdequacaoFase3`; boundary #348 com hunks autorizados.
+4. **PACOTE4 registros**: investigação sem inventar dados —
+   `docs/evidence/registros-auxiliares-investigacao-353-20261026.txt`
+   (Fornecedor schema ausente; staging privado não montado neste runner).
+
+Documento ambíguo: tip Codex `776d81ae` incorporado (não duplicado). #344 carga
+permanece Codex. Sem micro-PRs useConfirm. Sem merge/deploy.
+
+## CURSOR — #353 CI verde e670c1a2 + evidência Comercial360 runner (2026-10-26)
+
+Candidata MERGEABLE/CLEAN; frontend+backend+compose SUCCESS.
+Capturas runner tip `e670c1a2` em `docs/evidence/comercial360-e670c1a2/`.
+Codespace **não** medido. Ambiguidade documento: histórico LIMIT 1 — **superado** por tip `776d81ae`/`d86f06b6` (LIMIT 2 + 409) na candidata.
+Sem merge/deploy. Sem micro-PRs useConfirm.
+
+## CURSOR — remarge 118e8438 + contatos scope + coorte Dept/Unidade (2026-10-26)
+
+1. Publication tip `118e8438` CI frontend **SUCCESS** (run push) incorporado na #353.
+   CANAL: tip não reescreve manifesto; único delta autorizado = reopen consolidacao P1.
+2. Ambiguidade documento: `findByDocumento` histórico LIMIT 1 — **superado** (`LIMIT 2` + 409 em `d86f06b6`); não duplicar.
+3. Contatos/Endereços: `assertScopeCurrent` no componente real + pai ClienteCompleto;
+   testes UI com troca de sessão (não cópia mutationFn).
+4. Coorte: Departamento + UnidadeMedida switch-reject boundId PASS.
+5. Comercial360: roteiro atualizado ao tip; Codespace não medido neste runner.
+
+Sem micro-PRs useConfirm. Sem merge/deploy.
+
+## CURSOR — remarge publication `118e8438` na #353 (2026-10-26)
+
+Revisão: hunk `clienteConferenciaRemainder` + counterproof channel + manifesto
+18 cases byte-idêntico a `90f0a315`. CI do tip `118e8438` ainda em andamento no
+checkpoint do merge — **não** atribuir verde de tip anterior (`79d002a3` FAIL).
+Ambiguidade por documento: **não** duplicada; dependência Codex se ainda não
+publicada. Conflitos STATUS/HANDOFF: ambos lados preservados. Sem force.
+
+## CURSOR — pacote cadastros Banco/Cargo + triagem CI + recuperação (2026-10-26)
+
+1. **CI HEAD `836a6d2d`**: logs confirmam **somente** 5 FAILs publication
+   (1851/1856/1861/1862/1863). Falhas próprias neste HEAD = 0.
+2. **Contraprovas Banco/Cargo** (não generalizar Representante): render,
+   dirty refresh, switch-reject+boundId — `tests/cadastros-reopen-banco-cargo-behavioral.test.js` PASS.
+3. **Publication #342**: tip ainda `79d002a3`; hunk antigo. Sem remarge até SHA Codex.
+4. **Comercial360**: roteiro `docs/vps/evidence/comercial360-proposta-353-roteiro-visual-20261026.txt`
+   por SHA tip; Codespace **não** comprovado neste turno.
+5. **Recuperação erp-integra**: matriz prioridades
+   `docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt` — Relatórios
+   tabs já no código; páginas Documentacao/Onboarding/OAuth exigem histórico;
+   não inventar registros.
+
+Sem novas micro-PRs useConfirm. Sem merge/deploy. Sem candidata paralela.
+
+## CURSOR — baselines stage48/49 alinhados ao boundId coorte (2026-10-25)
+
+CI `ad145690` falhou além de publication: stage48 Cliente/Fornecedor, stage49
+FormaPagamentoForm, cobertura entityId Fornecedor e eval `fornecedorBoundId`.
+Hashes e bindings atualizados de propósito (P1 switch-reject). Sem tocar
+publication. Sem merge/deploy.
+
+## CURSOR — P1 boundId na coorte Banco/Cargo/+ (candidata #353) (2026-10-25)
+
+Coorte reopen que descartava `boundId` no save (Banco, Cargo, Departamento,
+FormaPagamento, UnidadeMedida, GrupoProduto, Setor, CentroCusto, PlanoContas,
+Turno, Veiculo, Motorista, TipoDespesa, Cliente/Fornecedor Completo) agora
+captura e vincula salvamento/código ao `boundId`. Contraprova estática coorte
+PASS. Sem merge/deploy. Publication hunk permanece com Codex.
+
+## CURSOR — Consolidação: pausa micro-PRs useConfirm; libera publication (2026-10-25)
+
+Prioridade do proprietário: fechar integração antes de ampliar microalterações.
+
+1. **Publication liberado a Codex** (handoff 6403101757): hunk EXATO em
+   `tests/publication-baseline-contracts.test.js` (#350/6403873982, #342/6403874205).
+   Cursor sem edição ativa nesse trecho. Um escritor: Codex na #342.
+2. **Candidata #353** tip `01b2cc1c` (ancestral `0a67aa4b` + #351 `d61b5922`).
+   P1 reopen 18/18 + consolidação 8/8 PASS local. CI frontend vermelho herdado
+   (publication-baseline) — aguarda tip Codex publication.
+3. **useConfirm**: inventário #354–#396 (+ branch `estoque-importadorplanilha-confirm`
+   sem PR nova). Sem novas micro-PRs até #353 verde com base corrigida.
+   Remarge coeso na candidata existente após publication.
+
+Sem merge/deploy. Sem nova candidata paralela.
+
+## CURSOR — remarge consolidação `15c49276` em #351 (2026-10-25)
+
+Incorpora tip Codex CANAL02–04 (`conferencia-legado`) preservando P1 reopen
+Cursor. Conflitos só STATUS/HANDOFF — ambos lados mantidos. Sem merge/deploy.
+
+## #351 — typecheck: clearOnNull JSDoc + deleteMutation tipado (Cursor, 2026-10-25)
+
+CI frontend falhou no tip `899be582`: TS2353 `clearOnNull` ausente no JSDoc do
+hook; TS2345 `mutate(string)` vs void em Representante deleteMutation.
+Corrigido + baseline stage48 Representante. Sem merge/deploy.
+
+## #351 — lint: remove eslint-disable inválido no hook reopen (Cursor, 2026-10-25)
+
+CI frontend falhou em tips anteriores: `no-undef` (imports — já corrigido) e
+regra `react-hooks/exhaustive-deps — identidade canônica` inválida no
+disable-line. Removido o disable malformado. Sem merge/deploy.
+
+## #351 — imports do hook reopen na coorte simples (Cursor, 2026-10-25)
+
+14 forms da coorte chamavam `useCadastroReopenOnIdentity` sem import
+(ReferenceError em runtime). Imports adicionados; baselines FormaPagamento
+atualizados. Sem mudança de comportamento além de tornar o hook resolvível.
+
+## #351 — P1 switch-reject: identidade de mutação alinhada (Cursor, 2026-10-25)
+
+Achado Codex em `useCadastroReopenOnIdentity`: ao recusar troca A→B o rascunho
+de A era preservado, mas save/delete ainda usavam props de B. Correção: hook
+expõe `boundId`/`identityMismatch` + `onRejectSwitch`; Completo/Cliente/
+Fornecedor/FormaPagamento/Representante mutam pela identidade do rascunho.
+Contraprova: submit após reject → `id=r1` (não r2). Baselines stage48/49
+atualizados de propósito. Incorporar na candidata #353. Sem merge/deploy.
+CANAL-02 liberado; CANAL-03/04 aguardam SHA publicado na consolidação.
+
+## #351 — CI stage48/49 + publication alinhados ao P1 (Cursor, 2026-10-25)
+
+Baselines stage48/49 e publication do reopen atualizados de propósito para o
+hook canônico `useCadastroReopenOnIdentity` (não mascarar defeito). Contraprova
+P1 permanece PASS. Handoff CANAL-02 liberado ao Codex em #350 (httpApiClient/
+testes/consumidor). Sem merge/deploy.
+
+## #352 — HTTP PATCH prova deny real (Cursor, 2026-10-25)
+
+Tip sobre consolidação `90f0a315`. Serviço + **HTTP** PATCH `/api/v1/clientes/:id`:
+viewer → 403 PERMISSION_DENIED e GET inalterado; editor muta; `contatos` no body → 400.
+UI: botões gated + algoritmo principal único. Sem alegar só botão oculto.
+Incorporar na candidata #353. Sem merge/deploy. #344 Codex intocada.
+
+## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
+
+Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.
+Reprodução pré-fix em tip `4980448d`: expected='Rascunho local nao salvo' actual='Alteracao externa' (P1 FAIL).
+Correção: política canônica `cadastroReopenPolicy` + hook `useCadastroReopenOnIdentity` na coorte #351
+(Representante/FormaPagamento/Cliente/Fornecedor/cadastros simples) e Regiao com decideCadastroReopen.
+Comportamento: fundo mesmo ID não sobrescreve dirty sem confirmação; limpo aplica; troca de registro
+confirma alterações pendentes; eco do próprio save (form==servidor) aplica sem prompt.
+Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
+Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
+Reserva #344 Codex intocada.
+
+## #351 — P1 rascunho sujo vs updated_date CORRIGIDO (Cursor, 2026-10-25)
+
+Executor: Cursor Cloud Agent runner (não Codespace). Base consolidação `90f0a315`.
+Reprodução pré-fix em tip `4980448d`: expected='Rascunho local nao salvo' actual='Alteracao externa' (P1 FAIL).
+Correção: política canônica `cadastroReopenPolicy` + hook `useCadastroReopenOnIdentity` na coorte #351
+(Representante/FormaPagamento/Cliente/Fornecedor/cadastros simples) e Regiao com decideCadastroReopen.
+Comportamento: fundo mesmo ID não sobrescreve dirty sem confirmação; limpo aplica; troca de registro
+confirma alterações pendentes; eco do próprio save (form==servidor) aplica sem prompt.
+Contraprova: `tests/cadastros-reopen-runtime-behavioral.test.js` P1 PASS (28/28 no lote reopen).
+Candidata #353 deve incorporar este tip — sem integração paralela. Sem merge/deploy.
+Reserva #344 Codex intocada.
 
 ## #344 - candidata de decisao: schema, RLS e builds (2026-10-26)
 
@@ -138,7 +574,6 @@ Backend570TOTAL/544PASS/0FAIL/26SKIP; ultimo reforco da fixture validado focadam
 Sete pendencias investigadas:036/037/040/041/044 nao sao dependencias da leitura;042 exige bootstrap restrito;043 nao necessaria para ler clientes com campos009/ambiguidade limitada, mas afeta futuras escritas. Efeitos ausentes comprovados;26journals sem hash NAO provam conteudo aplicado.045-049 privadas preservadas fora do automatico. Nao usar migrador pending-all para o canal.
 Backup/restore recuperavel REUTILIZADO e hash/permissoes rechecados; frescor para futura janela nao presume ausencia de escritas alheias. Proposta privada hash2d604847... exige aprovacao especifica de2principais dedicados, SELECT/042/5policies, configuracao/digests e HML somente leitura sem substituir o ERP atual. Nao reutilizar identidades Supabase. Detalhe/papeis/rollback/coorte<=100 no HANDOFF existente; sem deploy/carga/merge ou novo custo.
 Cursor353 bb341ae3 conserva P1 demonstrado por contraprova atualizada6413521678. Automacao nativa so abriu card sem estado verificavel; nao ativada/duplicada. Originais/captura/staging intactos.
-
 ## #344 - ambiguidade documental e canal isolado (2026-10-26)
 
 Mesmo Codespace/branch, base118e8438, sem editar Cursor. Publication118 publicado e CI4764/4765 seis jobs SUCCESS/frontend2295PASS. Novo repositorio canonico limita2 resultados por documento/Grupo e bloqueia duplicidade409 sem escolher/fundir/fallback; memoria equivalente. Contraprova2FAIL antes/2PASS depois; novos+HTTP8PASS. Consumidor existente->adapter->HTTP->servico testados em navegador sintetico:5PASS, inclusive100/101, nenhum eager/list-query e sessao encerrada descarta resposta tardia. Sem dados/credenciais reais, novas permissoes ou escrita de negocio.
@@ -252,7 +687,6 @@ P1 da3513fda5f31 revisado isoladamente8PASS; parecer351/6402496862.
 Candidata35368c1b429 incorpora esse fix por ancestralidade; sem integração paralela.
 Automação mesma fila, exclusividade/checkpoint; estado final e liberação de
 reservas serão registrados no recibo de fechamento. Sem merge/deploy/migration.
-
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
@@ -369,6 +803,35 @@ carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
 
+## CURSOR — Pacote B validação comportamental na integração 350→351→352 (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| tip integração | `7a9d2bea` |
+| Comercial | proposal+orcamento 25 PASS (painéis/rascunho/duplo clique/proposta) |
+| Cadastros reopen | runtime behavioral Representante 3 PASS (id/updated_date/dirty) |
+| Contatos/endereços | UI fail-closed + mutationFn + serviço Cliente 2 PASS (403 editar; schema rejeita contatos) |
+| fora | branch Codex intocada · aprovação visual ampla pendente |
+
+## CURSOR — integração sequencial 350→351→352 sobre `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base | consolidação **`8e68484b`** |
+| ordem | PR350 (Comercial prévia) → PR351 (cadastros reopen) → PR352 (contatos/endereços RBAC) |
+| conflitos docs | resolvidos preservando Cursor+#344 |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| CI | tip desta candidata — confirmar por SHA antes de CLEAN |
+
+## CURSOR — #350 merge consolidação `8e68484b` (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`8e68484b`** |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy |
+| nota | descrições CLEAN anteriores ficaram desatualizadas após avanço da base |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
@@ -440,6 +903,17 @@ publicação/CI/liberação, pausar mesma recorrência se a capacidade continuar
 ausente, registrando o motivo, não por fila vazia nem aprovação visual.
 Sem backup/restore/carga operacional, migration, merge, deploy, ativação de
 flags/providers/canais. Automação separada Legado permanece PAUSED.
+
+## CURSOR — #350 merge consolidação `3eccd369` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`3eccd369`** (CONT-03) |
+| tip anterior | `2d1f289f` · CI SUCCESS · mergeable=CONFLICTING / DIRTY vs tip atual |
+| conflitos | STATUS/HANDOFF — Cursor+#344 preservados |
+| fora | branch Codex intocada · sem force-push · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+| parecer CONT-02/03 | comentário independente na PR#342 por SHA (`4e02bc73` / `3eccd369`) |
 
 ## #344 CONT-03 — revisão sintética na suíte PostgreSQL real (2026-10-24)
 
@@ -639,6 +1113,36 @@ campos nem promover recibos revertidos. Os cinco gates abaixo continuam abertos.
 Este lote corrige o defeito do servico; nao declara essa ligacao completa,
 carga operacional, merge, deploy, migration ou homologacao. Reservas deste
 lote sao liberadas apos commit/push; revisao independente permanece pendente.
+
+## CURSOR — #350 merge consolidação `4ab7a61b` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base merge | `codex/consolidacao-infra-20261017` tip **`4ab7a61b`** |
+| tip anterior | `8ba3b5bf` CI SUCCESS · conflito docs vs consolidação |
+| conflitos | STATUS/HANDOFF — ambos lados preservados |
+| fora | branch Codex intocada · sem merge/deploy · sem editar scripts/legado |
+| visual | aprovação owner pendente · Codespace prévia não comprovada neste runner |
+
+## CURSOR — #347 PR350 CI verde `1784dbf6` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| tip | `1784dbf6` |
+| CI | 6/6 SUCCESS · mergeable clean vs `0b8bafa7` |
+| base | consolidação `0b8bafa7` |
+| próxima | recuperação cadastros/submódulos (fora #344) |
+
+## CURSOR — #347 typecheck + merge `0b8bafa7` (2026-10-24)
+
+| Item | Valor |
+|---|---|
+| base | consolidação tip `0b8bafa7` |
+| PR | #350 draft |
+| fix | `proposalMasters` para campos ilustrativos (TS2339) |
+| conflitos docs | resolvidos preservando Cursor+#344 |
+| visual | pendente owner |
+| Codespace prévia | não comprovada neste runner |
 
 ## #344 - revisao assistida e candidato operacional (2026-10-24)
 

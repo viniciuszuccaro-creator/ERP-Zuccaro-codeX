@@ -8,6 +8,7 @@ import { Loader2, Building2, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -21,24 +22,25 @@ export default function DepartamentoForm({ departamento, item, data, initialData
   const podeCriar = canCreate("Cadastros", "Departamento") || canCreate("Sistema", "Departamento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Departamento") || canEdit("Sistema", "Departamento") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Departamento") || canDelete("Sistema", "Departamento") || canDelete("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+    const emptyFormData = {
     nome: '',
     codigo: '',
     descricao: '',
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: departamentoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = departamentoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome) {
       alert('Preencha o nome do departamento');
       return;
@@ -53,6 +55,7 @@ export default function DepartamentoForm({ departamento, item, data, initialData
     }
     onSubmit({
       ...formData,
+      ...(departamentoBoundId ? { id: departamentoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
     });
@@ -92,8 +95,8 @@ export default function DepartamentoForm({ departamento, item, data, initialData
           />
         </div>
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(departamentoBoundId)}
+        entityId={departamentoBoundId}
         value={formData.codigo}
         action="codigo-registro-departamento"
       />

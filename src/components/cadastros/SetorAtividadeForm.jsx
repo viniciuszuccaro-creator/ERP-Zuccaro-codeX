@@ -9,6 +9,7 @@ import { Loader2, Factory, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -22,26 +23,27 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
   const podeCriar = hasPermission?.("Cadastros.SetorAtividade.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.SetorAtividade.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.SetorAtividade.excluir") || hasPermission?.("Cadastros.Produto.excluir");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+    const emptyFormData = {
     nome: '',
     descricao: '',
     tipo_operacao: 'Revenda',
     icone: '',
     cor: '#3B82F6',
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: setorBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = setorBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!contextoValido) {
       alert('Selecione um grupo ou empresa antes de salvar.');
       return;
@@ -52,6 +54,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
     }
     onSubmit({
       ...formData,
+      ...(setorBoundId ? { id: setorBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     });
@@ -80,8 +83,8 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-6">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(setorBoundId)}
+        entityId={setorBoundId}
         value={formData.codigo}
         action="codigo-registro-setor-atividade"
       />
@@ -191,7 +194,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
         <Button
           type="submit"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
-          data-permission={dadosIniciais?.id ? "Cadastros.SetorAtividade.editar" : "Cadastros.SetorAtividade.criar"}
+          data-permission={setorBoundId ? "Cadastros.SetorAtividade.editar" : "Cadastros.SetorAtividade.criar"}
           data-action="salvar-setor-atividade"
           data-sensitive="true"
         >
