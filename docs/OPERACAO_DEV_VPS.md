@@ -1,5 +1,15 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Prioridade e separacao vigentes (2026-10-26)
+
+A entrada em uso segue PLANO_GO_LIVE.md; lista unica no topo de
+STATUS_DO_PROJETO.md. VPS recebe somente versao especificamente aprovada;
+Codespace existente concentra evolucao/testes, GitHub o codigo/historico e
+armazenamento privado os dados/backups. Os dados da VPS DEV descritos abaixo
+nao comprovam producao homologada. Preparar nao autoriza executar o fluxo de
+promocao, alterar permissoes/schema, importar ou substituir o par atual.
+
+
 ## Fontes de verdade
 
 - GitHub `viniciuszuccaro-creator/ERP-Zuccaro-codeX`: código e histórico Git.

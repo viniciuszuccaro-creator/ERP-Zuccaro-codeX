@@ -1,3 +1,34 @@
+## Continuidade vigente - entrada em uso (decisao do proprietario, 2026-10-26)
+
+Coordenacao principal permanece neste chat ERP ZUCCARO - CODEX/CURSOR.
+Prioridade e ordem canonicas: PLANO_GO_LIVE.md, "Prioridade vigente: entrada em uso".
+Lista UNICA de prontidao/bloqueadores/dados/melhorias: topo de STATUS_DO_PROJETO.md.
+As listas de evidencia anteriores da353 ficam como procedencia, nao outro plano
+ou aceite operacional. Cinco etapas nao obrigam concluir ondas omnicanal primeiro.
+
+Ambientes: VPS somente versao operacional aprovada; Codespace existente para
+codigo/testes/proxima versao; GitHub para codigo/historico; backups/dados privados.
+Nenhum novo ambiente, credencial, servico pago ou liberacao operacional neste lote.
+O alvo observado ainda e DEV; nao o renomear como producao homologada.
+
+Base de runtime/build preservada d86f06b6/CI4785-4786. Este lote e DOCUMENTAL.
+353 HEAD lido7901f622: P1 antigo guardas encerrado por contraprova, nao pela CI;
+achados novos de contatos permanecem com Cursor. V2SQL retirada; V3/inversa
+ensaiadas em PG17 sintetico (2PASS/0FAIL/0SKIP), sem aplicar na VPS.
+Recibo vigente completo (inclui hashes/builds/janela/retorno/decisao):
+https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
+
+Nao confundir essa conferencia <=100 somente leitura com homologacao integrada
+de gravacao/comercial ou autorizacao da primeira carga real. Reutilizar pilotos,
+staging/mapas/backup e provas inalteradas; cada acao operacional exige seu gate.
+
+Codex: legado, compatibilidade, menor privilegio, preparacao e reconciliacao/carga.
+Cursor: candidata integrada, recuperacao funcional/azul-claro e Cadastros Gerais.
+Reservas e revisao por SHA no GitHub; nao editar branch do outro. Atualizacao
+documental coordenada353/6417549708/6417638674; plano de evolucao preservado.
+
+## Historico anterior - nao tomar cabecalhos datados como prioridade atual
+
 ## #344 - pacote de decisao do canal, schema e menor privilegio (2026-10-26)
 
 Base776d81ae/CI4772-4773 SUCCESS, mesmo Codespace/clone/branch, checkout inicialmente limpo. Trava exclusiva adquirida; PID antigo encerrou e o processo restante foi identificado como app-server ocioso, sem filhos, nao outro escritor. Reservas coordenadas353/6414760582. Nenhuma branch Cursor, captura, worktree original ou backup legado alterado. Publication18golden, conferencia por documento e pilotos anteriores nao foram refeitos.
