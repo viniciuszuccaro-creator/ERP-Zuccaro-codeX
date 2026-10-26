@@ -11,7 +11,7 @@ de VPS/permissões/migrations/merge/deploy/carga.
 Separação: VPS = operação aprovada · Codespace = evolução (C360/omnicanal)
 · GitHub = código · dados reais = privado.
 
-Snapshot desta evidência (histórico tip 7901f622 / remarge 82557565):
+Snapshot desta evidência (histórico; tip atual d0e38a16 / remarge 82557565):
 - P1 publication guardas: ENCERRADO (contraprova Codex; não por CI).
 - Contatos principal/metadata: correção no tip Cursor; bloqueia até revisão
   Codex do novo SHA. CI ≠ operacional VPS.

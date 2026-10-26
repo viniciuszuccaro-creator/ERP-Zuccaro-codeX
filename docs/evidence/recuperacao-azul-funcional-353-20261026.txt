@@ -1,0 +1,35 @@
+RECUPERAÇÃO VISUAL + FUNCIONAL vs erp-integra-novo (#353)
+========================================================
+Referência: github.com/viniciuszuccaro-creator/erp-integra-novo
+Inventário prévio: docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt
+Checkpoint: d0e38a16
+
+Princípio: troca de cor ≠ recuperação concluída.
+
+Preservado / recuperado no canônico (capacidade + UI)
+-----------------------------------------------------
+| Item | Capacidade | Visual | Notas |
+|------|------------|--------|-------|
+| Relatorios matriz | trigger+conteúdo+RBAC | — | era órfã; recuperado funcional |
+| Relatorios exportacao | canExportRelatorios fail-closed | — | oculto≠ausente |
+| Relatorios agendamento | canScheduleRelatorios | — | idem |
+| Contatos Cliente HTTP | overflow honesto + escalares | Contatos form sky | sem lista falsa |
+| Cliente completo | reopen/boundId/RBAC | sky no chrome do form | superior: multiempresa/RBAC |
+| FormaPagamento | boundId save + reopen | sky | pin PedidosTab não alterado |
+| Pedido UI | explain schema 044 | PedidosTab mantém blue (pin) | honestidade > cosmética |
+| OrcamentosTab | save/escopo/conversão gates | sky parcial existente | sem C360 omnicanal na VPS |
+
+Não restaurado (proposital)
+---------------------------
+- Documentacao.jsx / EmpresaOnboarding / OAuthConsent (auth permissiva)
+- Redesign amplo PedidosTab (freeze proof suites d312fbcd)
+- Substituição da árvore ERP pela referência
+
+Avaliação do proprietário ainda necessária para
+- Aceitar sky nos cadastros do roteiro como padrão visual de entrada em uso
+- Priorizar jsonb contatos vs operar só com escalares+overflow
+- Disponibilizar Codespace medido (URL+SHA) antes de chamar “prévia”
+
+Conclusão
+- Funcional: gates/relatorios/contatos-overflow/reopen = recuperados no existente
+- Visual: azul-claro nos forms do roteiro cadastro; não equivale a “integra restaurado”

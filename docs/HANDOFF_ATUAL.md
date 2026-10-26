@@ -1,3 +1,10 @@
+## CURSOR — fechamento demonstrável d0e38a16 (2026-10-26)
+
+Tip `d0e38a16` CI4807/4808. Contatos: pedido contraprova Codex independente
+(não encerrar por bot). Camadas/roteiro/registros/codespace atualizados em
+docs/evidence e docs/vps/evidence. Lista vigente = topo STATUS.
+Rótulo prévia: **runner Cursor** até SHA Codespace medido. Sem merge/deploy.
+
 ## CURSOR — azul-claro + Pedido/044 UI (2026-10-26)
 
 #353 tip após e9d7ef15/9756f457. Sky nos forms do roteiro; explain 044 na UI.

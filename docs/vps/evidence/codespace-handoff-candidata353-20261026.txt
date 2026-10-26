@@ -1,60 +1,41 @@
 Handoff Codespace — validar EXATAMENTE a candidata #353
 =======================================================
-Objetivo: medir o SHA servido no Codespace do Codex sem trocar branch
-nem sobrescrever o checkout ativo dele.
+Atualizado 2026-10-26 (America/Sao_Paulo) · tip remoto alvo: d0e38a16
+CI tip: 4807/4808 SUCCESS · tip código ops: e30cffcc · contatos: e9d7ef15
+
+Objetivo: medir o SHA servido no Codespace sem trocar branch Codex nem
+sobrescrever WIP. Sem medição = manter rótulo **runner Cursor**.
 
 Reserva
-- Checkout ativo do Codex: NÃO resetar / NÃO checkout paralelo destrutivo.
-- Ambiguidade documento (findByDocumento LIMIT 1) e legado #344: só Codex.
+- Checkout Codex (#344 / consolidacao): NÃO reset / NÃO checkout destrutivo.
+- Um escritor por checkout; janela 15–20 min sem escritor concorrente.
 - Sem merge/deploy/carga neste handoff.
 
 Pré-flight (Cursor runner — já medido)
-- Branch candidata: cursor/integracao-350-351-352-392b
-- Tip docs/evidence anterior: 0bd89333 (CI frontend+backend SUCCESS)
-- Este lote acrescenta commits revisáveis na MESMA #353 (ver PR comments).
+- Branch: cursor/integracao-350-351-352-392b
+- Tip remoto a validar: d0e38a16 (ou tip FF posterior da mesma #353)
+- Capturas deste agente: **runner Cursor** `/workspace` — NÃO Codespace.
 
-Janela com Codex (GitHub)
-1. Comentar na #353 pedindo janela de 15–20 min no Codespace existente.
-2. Codex confirma: `git status -sb` limpo OU lista arquivos reservados dele.
-3. Sem `git reset --hard` / sem `git checkout` para outra branch.
-4. Somente: fetch + fast-forward da candidata se o tip remoto for ancestral
-   direto e o working tree continuar limpo; senão, validar por worktree/SHA
-   separado acordado — NÃO sobrescrever WIP Codex.
-
-Comandos de medição (obrigatórios antes de declarar “prévia atualizada”)
+Janela com Codex (GitHub #353)
+1. Codex confirma `git status -sb` limpo OU lista arquivos reservados.
+2. Somente fetch + fast-forward se tip remoto for ancestral direto e tree limpo;
+   senão worktree/SHA acordado — NÃO sobrescrever WIP.
+3. Medir e comentar na #353:
 ```bash
 git fetch origin cursor/integracao-350-351-352-392b
-git rev-parse HEAD
-git rev-parse origin/cursor/integracao-350-351-352-392b
-# Servidor Vite / preview:
-# abrir app e conferir banner/build id OU:
-curl -s http://127.0.0.1:5173/ | head -c 200
-# Registrar SHA medido no comentário da #353 (não no chat apenas).
+echo HEAD=$(git rev-parse --short HEAD)
+echo TIP=$(git rev-parse --short origin/cursor/integracao-350-351-352-392b)
+# conferir processo que serve a SPA; registrar URL privada + SHA
 ```
+4. Critério: HEAD == tip remoto no momento da medição; SPA serve esse HEAD.
+5. Roteiro curto: login → Grupo/Empresa → Cliente editar/salvar/reabrir
+   (sem forçar principal multi-canal) → Orçamento → Pedido (esperar BLOQ 044
+   se schema ausente — não marcar vendas ok).
 
-Critério de aceite Codespace
-- HEAD local == tip remoto da #353 no momento da medição
-- `npm run dev` (ou processo já ativo) serve esse HEAD
-- Abrir /Comercial?proposta=comercial360 e responder as 5 perguntas do
-  arquivo comercial360-proposta-353-avaliacao-visual-perguntas-20261026.txt
+URL privada
+- Só publicar no comentário #353 depois do passo 3 comprovado.
+- Sem prova: “prévia = runner Cursor”.
 
 Bloqueios
-- Não declarar URL Codespace “atualizada” sem o SHA medido no comentário.
-- Não tocar publication/legado344/documento LIMIT 1.
-
----
-Atualização Cursor 2026-10-26 (America/Sao_Paulo) — janela coordenada
----------------------------------------------------------------------
-Estado factual até medir SHA/build no Codespace:
-- Capturas / provas visuais deste agente: realizadas no **runner Cursor**
-  (`/workspace`), NÃO declaradas como SHA servido no Codespace.
-- Tip remoto candidata a validar: ver `git rev-parse origin/cursor/integracao-350-351-352-392b`
-  após o push deste lote (contatos HTTP + exportacao RBAC).
-- Checkout Codex (#344 / consolidacao): NÃO trocar branch; NÃO sobrescrever WIP.
-- Pedido: Codex confirma janela; mede HEAD vs tip remoto; só então rotula
-  “prévia Codespace = <sha>”. Sem medição = manter rótulo runner Cursor.
-
-Pacotes neste tip (além P1 reopen):
-- Contatos → escalares email/telefone/celular (adapter + testes)
-- Relatorios exportacao fail-closed (canExportRelatorios)
-- Evidência Fornecedor Base44/HTTP/PG (candidate ≠ migration)
+- Não declarar Codespace atualizado sem SHA no comentário.
+- Não tocar VPS / migrations / carga.

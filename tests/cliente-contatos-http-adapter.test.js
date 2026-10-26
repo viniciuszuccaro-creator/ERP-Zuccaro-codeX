@@ -322,3 +322,62 @@ test('createContatosScalarOverflowError expõe losses para UI/auditoria', () => 
   assert.equal(err.code, CONTATOS_SCALAR_OVERFLOW);
   assert.deepEqual(err.losses, ['multiplo_email', 'nome_perdido:0']);
 });
+
+test('overflow: mensagem NÃO anuncia salvamento; rascunho do caller permanece intacto', async () => {
+  const draft = {
+    tipo: 'Pessoa Jurídica',
+    documento: '11.222.333/0001-81',
+    razao_social: 'Rascunho Contatos LTDA',
+    contatos: [
+      { tipo: 'E-mail', valor: 'a@sintetico.dev', principal: false },
+      { tipo: 'Telefone', valor: '1133334444', principal: true, nome: 'Compras' },
+    ],
+  };
+  const snapshot = JSON.stringify(draft);
+  let fetches = 0;
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async () => {
+      fetches += 1;
+      return new Response(JSON.stringify({ data: { id: 'x' } }), { status: 200 });
+    },
+  });
+  let caught;
+  try {
+    await client.entities.Cliente.update('cli-draft', draft);
+  } catch (error) {
+    caught = error;
+  }
+  assert.ok(caught);
+  assert.equal(caught.code, CONTATOS_SCALAR_OVERFLOW);
+  assert.equal(fetches, 0, 'bloqueio antes do fetch');
+  assert.match(String(caught.message), /rascunho não foi enviado/i);
+  assert.doesNotMatch(String(caught.message), /salvo|sucesso|completo/i);
+  assert.ok(caught.losses.includes('principal_nao_representavel'));
+  assert.ok(caught.losses.some((l) => String(l).startsWith('nome_perdido')));
+  assert.equal(JSON.stringify(draft), snapshot, 'caller conserva contatos[] integralmente');
+});
+
+test('GET escalares: complete=false — não declarar lista de contatos salva/reaberta', async () => {
+  const client = createHttpApiClient({
+    baseUrl: 'http://localhost:3080',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async () => new Response(JSON.stringify({
+      data: { id: 'cli-reopen', email: 'a@b.c', telefone: '1133334444', celular: null },
+    }), { status: 200, headers: { 'content-type': 'application/json' } }),
+  });
+  const row = await client.entities.Cliente.get('cli-reopen');
+  assert.equal(row.contatos, undefined);
+  assert.equal(row.contatos_escalares?.complete, false);
+  assert.notEqual(row.contatos_escalares?.complete, true);
+});
+
+test('CadastroClienteCompleto: onError de overflow mostra mensagem e não limpa fluxo de sucesso', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
+  assert.match(source, /onError:\s*\(error\)\s*=>\s*\{/);
+  assert.match(source, /error\?\.message/);
+  assert.doesNotMatch(source, /onError:[\s\S]{0,400}setFormData\(\s*\{/);
+  assert.doesNotMatch(source, /onError:[\s\S]{0,400}contatos:\s*\[\]/);
+});

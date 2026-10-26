@@ -1,3 +1,50 @@
+## CURSOR — fechamento candidata demonstrável (#353 / d0e38a16) (2026-10-26 ~12:00 UTC-03:00)
+
+Checkpoint `d0e38a16` CI **4807/4808** SUCCESS · base `82557565` · MERGEABLE/CLEAN.
+Pedido contraprova Codex independente contatos: comentário 6419300451
+(evidência `docs/evidence/contatos-contraprova-pedido-codex-353-20261026.txt`).
+Bot/CI **não** encerram B1b contatos.
+
+### Lista unica vigente (substitui papel operativo da lista histórica)
+
+**Funciona ponta a ponta (sintético/CI nesta candidata — ≠ VPS)**
+- Overflow contatos: bloqueio pré-fetch, draft intacto, mensagem sem “salvo”
+  (PASS_SINT + tip e9d7ef15; aguarda contraprova Codex humana).
+- Cadastros reopen/boundId coorte + Cliente/Forma (PASS_SINT/CI).
+- Relatorios matriz/exportacao/agendamento fail-closed (PASS_SINT/CI).
+- Orçamento: save/retry/escopo/permissão no componente real (PASS_SINT).
+- UI Pedido: explain 044 quando schema ausente (PASS_SINT) — honestidade, não persistência.
+
+**Apenas implementado / testado parcialmente**
+- Login IdP real + Grupo/Empresa em navegador Codespace (não medido).
+- CRUD Cliente no PG do destino observado (só leitura/conferência Codex #344).
+- Azul-claro sky nos forms de cadastro do roteiro (visual parcial; PedidosTab no pin).
+- Recuperação funcional relatorios/contatos-overflow (não = “integra restaurado”).
+
+**Bloqueios técnicos**
+- Contatos: pendente contraprova Codex independente dos 2 casos (6416585754).
+- Pedido INSERT: migration 044 / colunas idempotência no destino — Codex; sem DDL Cursor.
+- Fornecedor ops schema ausente — gate migration.
+- Staging/registros privados: BLOQ_ACESSO neste runner (`registros-proximo-passo-executor-353-20261026.txt`).
+- SHA/build Codespace não medido → rótulo **runner Cursor**.
+
+**Decisões indispensáveis do proprietário**
+- Autorizar janela Codespace (URL+SHA) e/ou HML isolada.
+- Aceitar operar entrada com escalares+overflow até gate jsonb contatos.
+- Autorizar piloto registros auxiliares via executor privado (não inventar no Git).
+- Merge/deploy/carga: gates separados (#344); este tip não autoriza.
+
+**Candidata exata para homologação**
+- Branch `cursor/integracao-350-351-352-392b` tip `d0e38a16` (ou FF docs posterior).
+- Base `codex/consolidacao-infra-20261017` @ `82557565`.
+- Roteiro: `docs/evidence/roteiro-homologacao-integrada-353-20261026.txt`
+- Camadas: `docs/evidence/homologacao-camadas-execucao-353-20261026.txt`
+- Codespace: `docs/vps/evidence/codespace-handoff-candidata353-20261026.txt`
+
+Evidência histórica (não plano vigente): `docs/evidence/entrada-em-uso-lista-353-20261026.txt`
+Diretriz ordem: PLANO_GO_LIVE “Prioridade vigente: entrada em uso”.
+Sem merge/deploy/carga neste fechamento.
+
 ## CURSOR — CI tip `e30cffcc` SUCCESS (2026-10-26 11:43 UTC-03:00)
 
 SHA `e30cffcc` · CI **4805** (push) / **4806** (PR) 6/6 SUCCESS · #353 MERGEABLE/CLEAN vs `82557565`.
