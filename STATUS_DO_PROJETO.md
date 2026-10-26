@@ -1,14 +1,31 @@
-## CURSOR — P1 CodigoField + Marca/Histórico prova (2026-10-26)
+## CURSOR — remarge Codex `6ba10732` + P1 CodigoField (2026-10-26)
 
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
+| Base Codex | **`6ba10732`** (PG entrada/fornecedor; branch Codex não editada) |
 | P1 tip revisão | **`84f3d401`** (fix `681c8ea4`) — pedido `@codex review` 6422758981 |
 | Achado | **6420465114** (P1 NOVO; não reabre P1 antigo guardas) |
 | Correção | AST estrito CodigoField remainder; contraprova Object.assign/externa/omissão/repetição |
 | Independente | Marca abrir→editar→salvar→fechar→reabrir + Histórico consulta fail-closed |
 | Aceite P1 | **CI ≠ fechamento** — aguarda parecer Codex no SHA tip |
 | Preservado | Contatos ENCERRADOS; P1 antigo ENCERRADO; sem merge/deploy/carga |
+
+### Historico Codex — tip `6ba10732` (preservado no remarge)
+
+Delta: prova integrada PostgreSQL real de Auth/perfil/Grupo/Empresa/Cliente/
+Orcamento/Pedido e Fornecedor:1PASS/0FAIL/0SKIP. Inclui edicao/releitura, fechamento,
+concorrencia de numeros, conversao repetida bloqueada, import/replay/reversao,
+cross-tenant/revogacao e rollback de falha de auditoria. Teste e fixture existentes
+ampliados, nenhum servico/importador paralelo ou dado real. Detalhes no HANDOFF.
+Fechamento:backend545PASS/0FAIL/26SKIP; PG17 final1PASS/0FAIL/0SKIP. Audit/lint/
+typecheck/build/diff exit0; raiz2295PASS reutilizada por ausencia de delta.
+Ainda nao e ERP servido homologado: envelope minimo de escrita/schema/privilegios e HML.
+Migrations candidatas fora do automatico; nenhuma permissao operacional ampliada.
+Coorte real ate100 continua proposta condicionada aos gates e autorizacao especifica.
+Helper CodigoField P1: corrigido no tip Cursor `681c8ea4`/`84f3d401` (aguardando parecer).
+
+Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
 
 Provas: `tests/cadastro-codigo-registro-remainder-p1.test.js`, reopen Marca em
 `cadastros-reopen-banco-cargo-behavioral`, `painel-dinamico-cliente-historico-tab`.
@@ -56,14 +73,17 @@ Diretriz: PLANO_GO_LIVE. Evidência histórica: docs/evidence/entrada-em-uso-lis
   encerrados no fix e9d7ef15/9756f457, delta e30cffcc conferido:6PASS/0FAIL/0SKIP,
   contraprova antes/depois e rascunho preservado (6418918562/6419136043).
   P1 antigo guardas continua encerrado. Isto nao aprova toda a353 ou merge.
+- Novo P1 na353/093c8e08: helper CodigoField apaga JSX com spread/expressao que
+  muda o rascunho sem mudar bytes do freeze. Contraprova6420465114; fix Cursor
+  tip `681c8ea4`/`84f3d401` aguarda parecer — nao e a espera antiga de contatos.
 
 ## Historico Cursor — tips #353 pré-remarge 7ae5bcd9
 
 - Fechar/revisar a composicao integrada existente por SHA. P1 antigo publication
   (guardas reopen) ENCERRADO por contraprova Codex real — NAO permanece aberto
   por bb341ae3/CI. Contatos: tip Cursor corrige principal entre canais + metadata
-  sem valor (overflow fail-closed antes do fetch; parecer 6416585754); AINDA
-  BLOQUEIA ate revisao Codex do novo SHA. CI verde ≠ homologacao VPS/operacional.
+  sem valor (overflow fail-closed antes do fetch; parecer 6416585754); encerrado
+  nos pareceres posteriores. CI verde ≠ homologacao VPS/operacional.
   Sem editar branch Codex nem aprovar toda a #353 por este tip.
 
 - Provar login/perfil/Grupo/Empresa/RBAC e versao efetivamente servida; capturas
@@ -141,7 +161,7 @@ recibo344 reutilizado; sua atualidade deve ser conferida na janela autorizada.
 | Conferencia de Cliente | SELECT pontual LIMIT2, Auth/Data e V3/inversa ensaiados | login/contexto real e HML autorizada; nao e carga nem CRUD |
 | Criar/editar Cliente | postgresClienteRepository cria/atualiza clientes e vinculos cliente_empresas | escrita/RBAC/auditoria/codigo sequencial/constraints e reabertura no alvo; V3 nao concede DML |
 | Criar Pedido | postgresPedidoRepository.ts:77 SEMPRE referencia idempotency_key/payload_fingerprint; ausentes na captura anterior | incompatibilidade concreta desse contrato com aquele snapshot; avaliar delta044 e relacoes/escopo, NAO executar todas as migrations |
-| Importar Fornecedor | fornecedorService/postgresFornecedorRepository EXISTEM no codigo | schema/rotas/journals/privilegios do alvo ainda precisam de comprovacao; nao criar importador paralelo |
+| Importar Fornecedor | servico/repo existentes, PG17 real passou import/replay/concorrencia/reversao/RBAC/auditoria | precheck readonly confirma relacao ausente no alvo; DDL/grants/rotas sao gates; nao e CRUD manual homologado |
 
 Essa matriz qualifica os bloqueadores da lista unica acima; nao e um segundo
 plano ou autorizacao de mudanca. Dependencias de pedido (cliente_empresa,
@@ -149,9 +169,12 @@ produto/unidade, pagamento e demais vinculos) nao podem ser inferidas por nome.
 
 ### Proxima acao concreta
 Contatos encerrados tecnicamente (pareceres 6418918562/6419136043; fix e9d7ef15/e30cffcc).
-Pacote Cursor em curso: ciclo comercial por camada, cadastros A/B, diffs integra,
-modalidade Codespace (403 neste token → runner). Pedido/044 compensador = Codex
-(candidato fora do migrador). Decisao isolada HML/100 somente
+Fixture representativa PG17 (`6ba10732`) passou Auth/Grupo/Empresa/Cliente/Orcamento/Pedido
+e Fornecedor canonico (1PASS/0FAIL/0SKIP) — reutilizar, nao reimplementar.
+Helper CodigoField P1: fix tip `681c8ea4`/`84f3d401` aguarda parecer Codex.
+Pacote Cursor: ciclo comercial por camada, cadastros A/B, modalidade Codespace
+(403 neste token → runner). Pedido/044 compensador = Codex (fora do migrador).
+Envelope HML escrita/versao/privilegio/retorno. Decisao isolada HML/100 somente
 leitura continua registrada no recibo344; ela nao substitui HML integrada ou
 autorizacao de primeira carga real.
 
