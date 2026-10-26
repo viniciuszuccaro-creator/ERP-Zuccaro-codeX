@@ -1,16 +1,20 @@
-## CURSOR — tip `a90702f1` (P1 + remarge 6ba10732 + Condicao) (2026-10-26)
+## CURSOR — tip `ea820521` CI SUCCESS (P1 + remarge 6ba10732) (2026-10-26)
 
 | Campo | Valor |
 |-------|-------|
 | Responsável | Cursor Cloud `/workspace` (runner) |
-| Tip HEAD | **`a90702f1`** |
+| Tip HEAD | **`ea820521`** |
+| CI tip | push **40371869659** + PR **40371873739** 6/6 **SUCCESS** |
 | Base Codex | **`6ba10732`** ancestor (PG entrada/fornecedor; branch Codex não editada) |
 | P1 tip revisão | **`84f3d401`** (fix `681c8ea4`) — pedido `@codex review` 6422758981 |
 | Achado | **6420465114** (P1 NOVO; não reabre P1 antigo guardas) |
 | Correção | AST estrito CodigoField remainder; contraprova Object.assign/externa/omissão/repetição |
-| Independente | Marca + CondicaoComercial reopen; Histórico consulta fail-closed |
-| Aceite P1 | **CI ≠ fechamento** — aguarda parecer Codex no SHA tip |
+| Independente | Marca ciclo reopen + Histórico fail-closed; Condicao ID-only pin preservado |
+| Aceite P1 | **CI ≠ fechamento** — aguarda parecer Codex no SHA tip/`84f3d401` |
 | Preservado | Contatos ENCERRADOS; P1 antigo ENCERRADO; sem merge/deploy/carga |
+
+Nota CI: tentativa RecordState Condicao quebrou hash CANAL consolidacao — revertida
+em `ea820521`. Reopen canônico Condicao exige delta autorizado no pin.
 
 ### Historico Codex — tip `6ba10732` (preservado no remarge)
 

@@ -1,8 +1,8 @@
-## CURSOR — tip `a90702f1` (P1 + 6ba10732 + Condicao) (2026-10-26)
+## CURSOR — tip `ea820521` CI SUCCESS (2026-10-26)
 
-HEAD **`a90702f1`**. P1 revisão **`84f3d401`** (fix `681c8ea4`); pedido Codex
-6422758981. **CI ≠ aceite**. Contatos/P1 antigo ENCERRADOS.
-Independente: Marca + CondicaoComercial reopen; Histórico fail-closed.
+HEAD **`ea820521`** · CI 40371869659/40371873739 SUCCESS. P1 revisão
+**`84f3d401`** (fix `681c8ea4`); **CI ≠ aceite P1**. Contatos/P1 antigo
+ENCERRADOS. Marca+Histórico ok; Condicao permanece ID-only pin (CANAL).
 Base Codex **`6ba10732`** ancestor. Sem merge/deploy/carga.
 
 ### Historico Codex — Prova integrada de persistencia (`6ba10732`)
