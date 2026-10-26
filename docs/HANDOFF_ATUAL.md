@@ -223,6 +223,16 @@ carga, merge ou deploy. SHA final/testes/CI no recibo344/342; após publicar
 seguir fila A/B/C, inclusive achado cruzado351/6399259991, sem encerrar só
 porque este commit terminou.
 
+## CURSOR — GrupoProduto: confirm-dialog (erp-integra) (2026-10-25)
+
+| Item | Valor |
+|---|---|
+| lacuna | vs erp-integra-novo: exclusão usava `window.confirm` |
+| tip | branch `cursor/cadastros-grupoproduto-confirm-392b` · base `8e68484b` |
+| correção | `useConfirm` + fail-closed `podeExcluir`/`contextoValido` |
+| testes | `cadastros-grupoproduto-confirm-behavioral.test.js` 3 PASS local |
+| reserva | fora #344 / Codex; harness retenção não cobre este form |
+
 ## #344 — fila finita: gates preparados, acesso operacional bloqueado (2026-10-24)
 
 Ordem do proprietário assumida em344/6390698000, base3eccd369, mesmo
