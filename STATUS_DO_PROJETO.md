@@ -1,3 +1,15 @@
+## CURSOR — P1 publication reopen guards (Codex contraprova) (2026-10-26)
+
+Parecer Codex: tip `e670c1a2`/`0bd89333` — dois guards aceitavam remoção de
+assertion do caso reopen após recalcular `beforeSha`. Causa: `notEqual+continue`
+sem delta fixo.
+
+Correção: `tests/helpers/publicationReopenAuthorizedDelta.js` + guards em
+`publication-baseline-contracts.test.js` — beforeSha histórico preservado,
+conteúdo atual pinado, restore exige delta exato. Contraprovas executam as
+guardas reais (remoção+rehash, mutação interna, omissão, repetição, baseline).
+CI verde **não** encerra este P1 — aguarda revisão Codex no tip. Sem merge/deploy.
+
 ## CURSOR — remarge Codex `776d81ae` (documento) na #353 (2026-10-26)
 
 Tip Cursor `bb341ae3` CI frontend+backend+compose **SUCCESS**. Base consolidação

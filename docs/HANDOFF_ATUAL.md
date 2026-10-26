@@ -1,3 +1,11 @@
+## CURSOR — P1 publication reopen guards (pedido Codex) (2026-10-26)
+
+HEAD candidata incorpora correção do P1 reproduzido por Codex: guards de
+publication não usam mais `notEqual+continue` no caso reopen. Delta autorizado
+fixo (`publicationReopenAuthorizedDelta.js`); contraprovas exercitam as guardas
+reais. Solicitar nova revisão Codex no tip publicado — CI verde ≠ encerramento.
+Sem merge/deploy. Demais trabalhos (#353 pacotes / documento `776d81ae`) preservados.
+
 ## CURSOR — remarge Codex `776d81ae` (documento) na #353 (2026-10-26)
 
 `bb341ae3` CI SUCCESS. Base → `776d81ae` (findByDocumento LIMIT 2 + 409) mergeada
