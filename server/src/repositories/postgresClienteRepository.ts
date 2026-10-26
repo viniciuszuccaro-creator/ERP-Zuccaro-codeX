@@ -227,7 +227,7 @@ export class PostgresClienteRepository implements ClienteRepository {
   }
 
   async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null> {
-    const result = await this.db.query('SELECT * FROM clientes WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3',
+    const result = await this.db.query('SELECT * FROM clientes WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3 LIMIT 2',
       [groupId,sourceSystem,codigoLegado]);
     if (result.rows.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
     return result.rows[0] ? mapCliente(result.rows[0] as Record<string,unknown>) : null;
