@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { MapPin, Truck, DollarSign, TrendingUp, X, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 import usePermissions from "@/components/lib/usePermissions";
@@ -217,15 +218,21 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     }
   };
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     if (!podeExcluir || !loadReady || !isFormScopeCurrent()) {
       toast.error("Sem permissao para excluir regiao.");
       return;
     }
-    if (window.confirm("Tem certeza que deseja excluir esta regiao?")) {
-      onSubmit({ ...buildPayload(), _delete: true });
-      onOpenChange(false);
-    }
+    const ok = await confirm({
+      title: "Confirmar Exclusão",
+      description: "Tem certeza que deseja excluir esta região? Esta ação não pode ser desfeita.",
+      confirmText: "Excluir",
+    });
+    if (!ok) return;
+    onSubmit({ ...buildPayload(), _delete: true });
+    if (onOpenChange) onOpenChange(false);
   };
 
   const handleAlternarStatus = () => {
@@ -694,6 +701,13 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
     </form>
   );
 
+  const withDialog = (
+    <>
+      {FormContent}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
     return (
       <div className="w-full h-full bg-white rounded-lg border border-slate-200 flex flex-col overflow-hidden">
@@ -703,7 +717,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
           </h2>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
-          {FormContent}
+          {withDialog}
         </div>
       </div>
     );
@@ -715,7 +729,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
         <DialogHeader>
           <DialogTitle>{regiaoId ? "Editar" : "Nova"} Região de Atendimento</DialogTitle>
         </DialogHeader>
-        {FormContent}
+        {withDialog}
       </DialogContent>
     </Dialog>
   );
