@@ -11,10 +11,13 @@ codigo/testes/proxima versao; GitHub para codigo/historico; backups/dados privad
 Nenhum novo ambiente, credencial, servico pago ou liberacao operacional neste lote.
 O alvo observado ainda e DEV; nao o renomear como producao homologada.
 
-Base de runtime/build preservada d86f06b6/CI4785-4786. Este lote e DOCUMENTAL.
-353 HEAD lido7901f622: P1 antigo guardas encerrado por contraprova, nao pela CI;
-achados novos de contatos permanecem com Cursor. V2SQL retirada; V3/inversa
-ensaiadas em PG17 sintetico (2PASS/0FAIL/0SKIP), sem aplicar na VPS.
+Base de runtime/build preservada d86f06b6/CI4785-4786;82557565 repriorizou documentos.
+Revisao353:9756f457/fix e9d7ef15, confirmada no delta e30cffcc, encerrou os DOIS
+achados de contatos com contraprova real antes/depois:6PASS/0FAIL/0SKIP.
+Pareceres6418918562/6419136043. Formulario integral igual a7901f622 apos normalizar
+somente sky- para blue-. Nao e aprovacao global353, visual, merge ou deploy.
+P1 antigo guardas continua encerrado. V2SQL retirada; V3/inversa read-only
+2PASS/0FAIL/0SKIP anteriores reutilizadas, sem aplicar na VPS.
 Recibo vigente completo (inclui hashes/builds/janela/retorno/decisao):
 https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
 
@@ -28,6 +31,32 @@ Reservas e revisao por SHA no GitHub; nao editar branch do outro. Atualizacao
 documental coordenada353/6417549708/6417638674; plano de evolucao preservado.
 
 ## Historico anterior - nao tomar cabecalhos datados como prioridade atual
+
+
+### Delta de compatibilidade044 - codigo e provas (2026-10-26)
+
+server/schema-candidates/pedido_idempotency_pair.sql e compensador CANDIDATO,
+fora de server/migrations e sem numero novo.044 original intacta. Adiciona CHECK
+com fingerprint explicitamente nao nulo e valida em transacao; par incompleto
+preexistente bloqueia/reverte tudo, sem preencher fingerprint ou alterar linha.
+Provas:5PASS focados engine local;1PASS PostgreSQL17 real/0FAIL/0SKIP, com NULL,
+rollback, preservacao e unicidade scoped. Banco sintetico descartado, networknone,
+sem portas/volumes ERP. Primeira tentativa do wrapper falhou no bind do diretorio
+de dependencias; corrigida na copia sintetica, tentativa preservada, nao no produto.
+Raiz2295PASS/0FAIL/0SKIP;backend545PASS/0FAIL/26SKIP; audit/lint/typecheck/build e
+diff-check PASS, type/build backend PASS. Skips nao sao prova de PostgreSQL.
+Node24.21.0 no Codespace; CI por SHA deve ser conferida apos publicar.
+Nenhum runtime/rota/role/grant/SQL de operacao alterado; builds anteriores nao
+foram recriados nem apresentados como build deste commit.
+
+Reservas342/6418940082 serao liberadas no recibo de fechamento. Cursor nao editado.
+Automacao: consulta view apenas renderizou cartao sem config/executor/estado.
+Item nativo observado Avisar ERP na nuvem esta em pausa; nao prova identidade da
+automacao Legado nem acesso exclusivo ao Codespace. NAO reativada/duplicada.
+Proximo item executavel: fixture representativa do percurso Auth/Grupo/Empresa/
+Cliente/Orcamento/Pedido, separando baseline conhecido dos deltas indispensaveis,
+e prova real da persistencia Fornecedor candidata; depois fixar par API/web e
+decisao especifica de HML. Este teste044 NAO fecha esse percurso.
 
 ## #344 - pacote de decisao do canal, schema e menor privilegio (2026-10-26)
 

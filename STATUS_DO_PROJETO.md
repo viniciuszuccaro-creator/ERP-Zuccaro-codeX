@@ -16,10 +16,10 @@ todas as ondas omnicanal. Nao alteram a Regra-Mae nem os gates operacionais.
   Recibo atual: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/issues/344#issuecomment-6416301612
 
 **Bloqueador da entrada em uso**
-- Fechar/revisar a composicao integrada existente por SHA. Na353/7901f622 o P1
-  antigo publication passou contraprovas reais; NAO permanece aberto por bb341ae3.
-  Persistem perda de principal e metadata de contato vazio no adapter (parecer
-  6416585754/6417072648), sem editar branch Cursor ou aprovar toda a353.
+- Fechar a composicao integrada por SHA. Os DOIS achados de contatos estao
+  encerrados no fix e9d7ef15/9756f457, delta e30cffcc conferido:6PASS/0FAIL/0SKIP,
+  contraprova antes/depois e rascunho preservado (6418918562/6419136043).
+  P1 antigo guardas continua encerrado. Isto nao aprova toda a353 ou merge.
 - Provar login/perfil/Grupo/Empresa/RBAC e versao efetivamente servida; capturas
   de runner e testes com IdP sintetico nao homologam a sessao real.
 - Conferir schema/journals/contratos exigidos pelo escopo operacional inicial.
@@ -73,9 +73,18 @@ Validar em copia/fixture autorizada antes de propor disponibilizacao especifica.
   Coordenacao direta353/6417549708 e6417638674, sem editar branch/reservas Cursor.
 - Codex: legado/compatibilidade/privilégio/preparacao/cargas por gate. Cursor:
   candidata/recuperacao funcional-visual/Cadastros. Um escritor por checkout.
-- Lote somente documental: diff-check e verificacao de escopo/links/segredos;
-  suites runtime inalteradas reutilizadas, nao reexecutadas localmente. O commit
-  desta prioridade nao altera os builds/versao servidos nem autoriza deploy.
+- 82557565 foi somente documental. Delta atual: compensador044 candidato fora do
+  migrador, original044 preservada, dois testes adicionais sem afrouxar antigos.
+  Raiz2295PASS/0FAIL/0SKIP;backend545PASS/0FAIL/26SKIP; engine focado5PASS e
+  PostgreSQL17 real1PASS/0FAIL/0SKIP. audit/lint/typecheck/build/diff-check PASS;
+  type/build backend PASS. Node24.21.0; dados sinteticos; containers encerrados.
+  Nenhum runtime/rota/SQL/grant operacional alterado. Builds d86 anteriores
+  continuam com seu proprio pin, nao sao builds novos deste lote.
+- Compensador rejeita fingerprint NULL e preserva registros validos, rollback
+  integral na presenca de par incompleto, unicidade por tenant. Nao e migration
+  aplicada nem homologacao integrada de escrita. Sem renumerar045-049 privadas.
+- Automacao nao reativada: view nao expoe config/executor. Item nativo observado
+  Avisar ERP na nuvem em pausa nao comprova a identidade da tarefa Legado.
 
 ### Compatibilidade minima ja conferida para o escopo inicial
 Leitura de contratos d86f06b6, sem chamada/escrita no banco. Catalogo anterior do
@@ -93,9 +102,10 @@ plano ou autorizacao de mudanca. Dependencias de pedido (cliente_empresa,
 produto/unidade, pagamento e demais vinculos) nao podem ser inferidas por nome.
 
 ### Proxima acao concreta
-Fechar os achados de contatos com Cursor e a composicao por SHA; na mesma frente,
-preparar a matriz minima dos contratos de gravacao do escopo inicial e as provas
-faltantes de alvo/versao/Auth/privilegio/retorno. Decisao isolada HML/100 somente
+Contatos encerrados tecnicamente; conferir o restante da composicao por SHA.
+Executar fixture representativa Auth/Grupo/Empresa/Cliente/Orcamento/Pedido e
+persistencia Fornecedor candidata, sem aplicar todas as migrations; fechar as
+provas faltantes de alvo/versao/Auth/privilegio/retorno. Decisao isolada HML/100 somente
 leitura continua registrada no recibo344; ela nao substitui HML integrada ou
 autorizacao de primeira carga real.
 
