@@ -1,0 +1,37 @@
+CADASTROS — códigos/IDs e classificação A vs B (#353 pacote homologação)
+=======================================================================
+Tip: d379bc2c · runner Cursor · sem staging privado montado
+
+Contrato verificado (sintético/CI)
+----------------------------------
+- Reserva backend: reserve_entity_codigo / entity_code_sequences (ex.: Condicao,
+  TabelaPreco, Marca) — não count+1 no frontend (Bloco2 length+1 = KPI tiles).
+- CadastroCodigoRegistroField: código readonly + ID técnico separado.
+- Suites: cadastros-abrir-unico-codigo, cadastros-codigo-cobertura-entidades,
+  cadastros-reopen-representante-updated — PASS neste tip.
+
+Classe A corrigida neste pacote (registro existe; UI não apresentava)
+--------------------------------------------------------------------
+| Entidade | Antes | Depois |
+|----------|-------|--------|
+| TabelaPreco | só codigo_tabela_legado | + codigo numérico + ID técnico |
+| PlanoContas | sem ID técnico | idOnly + conta hierárquica intacta |
+
+Classe A já coberta (não reabrir)
+---------------------------------
+Cliente/Fornecedor/Representante/Produto V22/auxiliares MASTER_CODE forms
+com CodigoField + entityId (suite cobertura).
+
+Classe B (ausente da base consultada) — BLOQ neste runner
+--------------------------------------------------------
+Fonte privada (Base44 export / snapshot / staging Codespace / VPS backup)
+não montada aqui. Recibos existentes apontam inventários 20261009/10 e
+executor `registros-proximo-passo-executor-353-20261026.txt`.
+Não recriar exemplos fictícios como “recuperados”.
+Próximo: executor privado + import_authorized Codex — Cursor só garante
+telas/contratos para dados reconciliados.
+
+Legado
+------
+Backup VPS + staging Codespace = reserva Codex Legado. Cursor: telas
+apresentam/editam códigos e IDs sem apagar vínculos. Dados reais fora do Git.
