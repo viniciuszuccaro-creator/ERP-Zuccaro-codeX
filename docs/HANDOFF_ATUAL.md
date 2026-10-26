@@ -1,10 +1,9 @@
-## CURSOR — remarge Codex `6ba10732` + P1 CodigoField (2026-10-26)
+## CURSOR — tip `a90702f1` (P1 + 6ba10732 + Condicao) (2026-10-26)
 
-P1 6420465114: tip revisão **`84f3d401`** (fix `681c8ea4`); pedido Codex
+HEAD **`a90702f1`**. P1 revisão **`84f3d401`** (fix `681c8ea4`); pedido Codex
 6422758981. **CI ≠ aceite**. Contatos/P1 antigo ENCERRADOS.
-Independente: Marca ciclo reopen + HistóricoProdutosCliente fail-closed
-(aba ≠ carga). Base Codex **`6ba10732`** incorporada (PG entrada/fornecedor);
-branch Codex não editada. Sem merge/deploy/carga.
+Independente: Marca + CondicaoComercial reopen; Histórico fail-closed.
+Base Codex **`6ba10732`** ancestor. Sem merge/deploy/carga.
 
 ### Historico Codex — Prova integrada de persistencia (`6ba10732`)
 
