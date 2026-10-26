@@ -29,7 +29,8 @@ for (const [file, expected] of [
   // P1 #351: FormaPagamento* adotam useCadastroReopenOnIdentity (hash atualizado de propósito).
   ['cadastros/FormaPagamentoFormCompleto.jsx', 'f37728123bf4998449da69c12206e1ea3aadd8f794560cb330310b497366a2cf'],
   // P1 #353: FormaPagamentoForm captura boundId no save (hash atualizado de propósito).
-  ['cadastros/FormaPagamentoForm.jsx', 'b60c6dd5f7c8f6bd0df178d5bb5d0cebc49bca0b09883a96849d7edee2e333e7'],
+  // #353 entrada-em-uso: azul-claro sky no form do roteiro (hash atualizado de propósito).
+  ['cadastros/FormaPagamentoForm.jsx', '5f20546b5b5d91509737e91714150635e95bd65e2926982492e4827cde22df2b'],
 ]) test(`${file}: source, handlers, permissions and persistence ownership unchanged from stage49`, () => {
   const path = 'src/components/' + file;
   const text = read(path);
