@@ -25,6 +25,78 @@ for (const [name, recordKey, entity, previousHash] of forms) {
   test(`${name}: stage48 complete source retained except payload annotation and proven default export`, () => {
     let source = once(read(path), '    /** @param {Record<string, unknown>} data */\n    mutationFn: async (data) => {', '    mutationFn: async (data) => {');
     if (name === 'CadastroClienteCompleto') source = once(source, 'default: m.default }', 'default: m.default || m.TimelineCliente }');
+    // Authorized erp-integra recovery: window.confirm → useConfirm (Cliente only on this branch).
+    if (name === 'CadastroClienteCompleto') {
+      source = once(
+        source,
+        'import { useToast } from "@/components/ui/use-toast";\nimport { useConfirm } from "@/components/ui/confirm-dialog";\n',
+        'import { useToast } from "@/components/ui/use-toast";\n',
+      );
+      source = once(
+        source,
+        `  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
+    if (!podeExcluir) {
+      toast({ title: "Seu perfil nao permite excluir clientes.", variant: "destructive" });
+      return;
+    }
+    if (!contextoValido) {
+      toast({ title: "Selecione grupo ou empresa antes de excluir.", variant: "destructive" });
+      return;
+    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: \`Tem certeza que deseja excluir o cliente "\${formData.nome}"? Esta ação não pode ser desfeita.\`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
+    deleteMutation.mutate(cliente.id);
+  };`,
+        `  const handleExcluir = () => {
+    try { assertFormScopeCurrent(); }
+    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
+    if (!window.confirm(\`Tem certeza que deseja excluir o cliente "\${formData.nome}"? Esta ação não pode ser desfeita.\`)) {
+      return;
+    }
+    deleteMutation.mutate(cliente.id);
+  };`,
+      );
+      source = once(
+        source,
+        `  const withDialog = (
+    <>
+      {content}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-white">{withDialog}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onCloseNorm}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full flex flex-col p-0 overflow-hidden">
+        {withDialog}
+      </DialogContent>
+    </Dialog>
+  );`,
+        `  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onCloseNorm}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full flex flex-col p-0 overflow-hidden">
+        {content}
+      </DialogContent>
+    </Dialog>
+  );`,
+      );
+    }
     assert.equal(createHash('sha256').update(source).digest('hex'), previousHash);
   });
   const tree = parse(path);

@@ -31,6 +31,7 @@ import {
   PowerOff
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useCadastroFormScopeGuard from "./hooks/useCadastroFormScopeGuard";
@@ -398,12 +399,25 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     }
   });
 
-  const handleExcluir = () => {
+  const { confirm, ConfirmDialog: ConfirmExcluirDialog } = useConfirm();
+
+  const handleExcluir = async () => {
     try { assertFormScopeCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
-    if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
+    if (!podeExcluir) {
+      toast({ title: "Seu perfil nao permite excluir clientes.", variant: "destructive" });
       return;
     }
+    if (!contextoValido) {
+      toast({ title: "Selecione grupo ou empresa antes de excluir.", variant: "destructive" });
+      return;
+    }
+    const ok = await confirm({
+      title: 'Confirmar Exclusão',
+      description: `Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`,
+      confirmText: 'Excluir',
+    });
+    if (!ok) return;
     deleteMutation.mutate(cliente.id);
   };
 
@@ -1617,14 +1631,21 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     </>
   );
 
+  const withDialog = (
+    <>
+      {content}
+      <ConfirmExcluirDialog />
+    </>
+  );
+
   if (windowMode) {
-    return <div className="w-full h-full flex flex-col bg-white">{content}</div>;
+    return <div className="w-full h-full flex flex-col bg-white">{withDialog}</div>;
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseNorm}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full flex flex-col p-0 overflow-hidden">
-        {content}
+        {withDialog}
       </DialogContent>
     </Dialog>
   );
