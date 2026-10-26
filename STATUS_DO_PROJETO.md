@@ -1,5 +1,17 @@
 ## Entrada em uso - prioridade vigente e lista unica (proprietario, 2026-10-26)
 
+Delta atual: prova integrada PostgreSQL real de Auth/perfil/Grupo/Empresa/Cliente/
+Orcamento/Pedido e Fornecedor:1PASS/0FAIL/0SKIP. Inclui edicao/releitura, fechamento,
+concorrencia de numeros, conversao repetida bloqueada, import/replay/reversao,
+cross-tenant/revogacao e rollback de falha de auditoria. Teste e fixture existentes
+ampliados, nenhum servico/importador paralelo ou dado real. Detalhes no HANDOFF.
+Fechamento:backend545PASS/0FAIL/26SKIP; PG17 final1PASS/0FAIL/0SKIP. Audit/lint/
+typecheck/build/diff exit0; raiz2295PASS reutilizada por ausencia de delta.
+Ainda nao e ERP servido homologado: falta composicao aceita353 (novo helper de
+codigo vulneravel em7793d3a8), envelope minimo de escrita/schema/privilegios e HML.
+Migrations candidatas fora do automatico; nenhuma permissao operacional ampliada.
+Coorte real ate100 continua proposta condicionada aos gates e autorizacao especifica.
+
 Diretriz canonica: PLANO_GO_LIVE.md, secao "Prioridade vigente: entrada em uso".
 As cinco entregas sao HML integrada -> coorte real ate100 (apos autorizacao) ->
 escala de cadastros -> operacao inicial -> historicos/saldos. Nao exigem concluir
@@ -20,6 +32,9 @@ todas as ondas omnicanal. Nao alteram a Regra-Mae nem os gates operacionais.
   encerrados no fix e9d7ef15/9756f457, delta e30cffcc conferido:6PASS/0FAIL/0SKIP,
   contraprova antes/depois e rascunho preservado (6418918562/6419136043).
   P1 antigo guardas continua encerrado. Isto nao aprova toda a353 ou merge.
+- Novo P1 na353/093c8e08: helper CodigoField apaga JSX com spread/expressao que
+  muda o rascunho sem mudar bytes do freeze. Contraprova6420465114; exigir fix
+  no helper real e teste antes/depois. Nao e a espera antiga de contatos.
 - Provar login/perfil/Grupo/Empresa/RBAC e versao efetivamente servida; capturas
   de runner e testes com IdP sintetico nao homologam a sessao real.
 - Conferir schema/journals/contratos exigidos pelo escopo operacional inicial.
@@ -95,17 +110,22 @@ recibo344 reutilizado; sua atualidade deve ser conferida na janela autorizada.
 | Conferencia de Cliente | SELECT pontual LIMIT2, Auth/Data e V3/inversa ensaiados | login/contexto real e HML autorizada; nao e carga nem CRUD |
 | Criar/editar Cliente | postgresClienteRepository cria/atualiza clientes e vinculos cliente_empresas | escrita/RBAC/auditoria/codigo sequencial/constraints e reabertura no alvo; V3 nao concede DML |
 | Criar Pedido | postgresPedidoRepository.ts:77 SEMPRE referencia idempotency_key/payload_fingerprint; ausentes na captura anterior | incompatibilidade concreta desse contrato com aquele snapshot; avaliar delta044 e relacoes/escopo, NAO executar todas as migrations |
-| Importar Fornecedor | fornecedorService/postgresFornecedorRepository EXISTEM no codigo | schema/rotas/journals/privilegios do alvo ainda precisam de comprovacao; nao criar importador paralelo |
+| Importar Fornecedor | servico/repo existentes, PG17 real passou import/replay/concorrencia/reversao/RBAC/auditoria | precheck readonly confirma relacao ausente no alvo; DDL/grants/rotas sao gates; nao e CRUD manual homologado |
 
 Essa matriz qualifica os bloqueadores da lista unica acima; nao e um segundo
 plano ou autorizacao de mudanca. Dependencias de pedido (cliente_empresa,
 produto/unidade, pagamento e demais vinculos) nao podem ser inferidas por nome.
 
 ### Proxima acao concreta
-Contatos encerrados tecnicamente; conferir o restante da composicao por SHA.
-Executar fixture representativa Auth/Grupo/Empresa/Cliente/Orcamento/Pedido e
-persistencia Fornecedor candidata, sem aplicar todas as migrations; fechar as
-provas faltantes de alvo/versao/Auth/privilegio/retorno. Decisao isolada HML/100 somente
+Fixture representativa PG17 passou Auth/Grupo/Empresa/Cliente/Orcamento/Pedido
+e Fornecedor canonico (1PASS/0FAIL/0SKIP). Backend fresco545PASS/0FAIL/26SKIP,
+type/build/diff PASS; raiz2295 e checks de7ae reutilizados por runtime/root tests
+byte-inalterados. Detalhes e limites no HANDOFF existente, nao ERP pronto.
+Para produto compartilhado,041 requer indice de040, nao CRM inteiro;044compensador
+e Fornecedor candidatos ficam fora do migrador. Grants de escrita testados sao
+fixture, nao proposta operacional aprovada nem extensao automatica de V3.
+Proximo: fix/contraprova do NOVO helper353, composicao autorizada e envelope de
+HML escrita/versao/privilegio/retorno revisado. Decisao isolada HML/100 somente
 leitura continua registrada no recibo344; ela nao substitui HML integrada ou
 autorizacao de primeira carga real.
 

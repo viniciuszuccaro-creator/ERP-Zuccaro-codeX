@@ -1,5 +1,36 @@
 ## Continuidade vigente - entrada em uso (decisao do proprietario, 2026-10-26)
 
+### Prova integrada de persistencia - delta atual (2026-10-26)
+
+No Codespace existente, sobre7ae5bcd9, o teste PostgreSQL canonico de entrada
+passou com Data/Auth LOGIN separados, sem superuser/BYPASSRLS, IdP sintetico,
+HTTP real e banco efemero isolado sem portas/rede/volumes operacionais.
+Comprova login/restore/perfil, Grupo/Empresa, Cliente mestre+vinculo, preco/unidade/
+pagamento reais da fixture, Orcamento e Pedido: gravar, editar, reler, finalizar
+Pedido e cancelar Orcamento; edicao posterior bloqueada. Reabrir aqui e reler
+a persistencia, nao inventar transicao de FINALIZADO para EM_ABERTO.
+Duas criacoes simultaneas de Orcamento recebem numeros sequenciais distintos.
+Conversao repetida retorna409 conforme contrato e conserva um unico Pedido.
+Fornecedor canonico comprova importacao concorrente, replay, revision/fingerprint,
+reversao logica sem reativacao, negativas e auditoria. Falha intermediaria de
+auditoria reverte a criacao; permissoes/contextos/revogacao permanecem fail-closed.
+Resultado dirigido:1PASS/0FAIL/0SKIP. Grants de escrita sao exclusivos da fixture;
+nao constituem proposta aprovada para o alvo nem ativacao de rotas de Fornecedor.
+Fechamento backend:571total/545PASS/0FAIL/26SKIP, typecheck/build exit0.
+Audit:baseline/lint/typecheck/build raiz e diff-check frescos exit0. Suite raiz
+2295PASS anterior reutilizada: src/tests raiz/deps/lockfiles byte-inalterados.
+Skips nao comprovam persistencia. PG17 dirigido final inclui rollback de itens,
+auditoria e sequencias, alem do mestre. Comando em server com DATABASE_URL
+efemera/allowlist: node --import tsx --test --test-name-pattern '^Entrada PostgreSQL'
+tests/db-tenant-context-postgres.test.ts. Nenhuma credencial real necessaria.
+
+PR353 revisada por delta ate7793d3a8: novo helper de codigo ainda inalterado desde
+093c8e08; contraprova6420465114 permanece aberta. Contatos/P1 antigo seguem fechados.
+Nao houve composicao/merge, mudanca de runtime servido, DDL/grants ou carga real.
+Proximo: corrigir/revisar envelope do helper353 e compor candidata aceita; preparar
+envelope minimo de schema/escrita/menor privilegio e HML antes da decisao ate100.
+A lista unica de gates continua no STATUS; provas de backup/pilotos sao reutilizadas.
+
 Coordenacao principal permanece neste chat ERP ZUCCARO - CODEX/CURSOR.
 Prioridade e ordem canonicas: PLANO_GO_LIVE.md, "Prioridade vigente: entrada em uso".
 Lista UNICA de prontidao/bloqueadores/dados/melhorias: topo de STATUS_DO_PROJETO.md.
@@ -33,7 +64,56 @@ documental coordenada353/6417549708/6417638674; plano de evolucao preservado.
 ## Historico anterior - nao tomar cabecalhos datados como prioridade atual
 
 
-### Delta de compatibilidade044 - codigo e provas (2026-10-26)
+### Prova integrada sintetica de entrada em uso (2026-10-26)
+
+Base7ae5bcd9, CI4815 SUCCESS (backend/frontend/composicao). Nova fixture reutiliza
+seed, contratos, middleware, repositorios, servicos e auditoria existentes.
+PostgreSQL17 real:1PASS/0FAIL/0SKIP, Auth/Data LOGIN NOBYPASSRLS/NOSUPERUSER
+separados, IdP somente sintetico loopback. Login -> Grupo -> criar/reabrir Cliente
+MASTER -> vincular Empresa -> criar/reabrir Orcamento -> converter/reabrir Pedido.
+Negativas: Empresa/Grupo alheios, permissao revogada, token revogado, ausencia de
+contexto, Auth readonly e nenhuma alteracao/exclusao de auditoria. Falha SQL na
+auditoria de Orcamento reverte a criacao. Auditoria conferida por entidade.
+Fornecedor: servico/repo canonicos em PG real, importacao negada sem permissao
+especifica, depois autorizada SOMENTE no perfil sintetico; codigo/origem,
+reexecucao sem duplicar, CAS/lote errado, inativacao reversivel do lote e replay
+sem reativar. Rotas/CRUD manual Fornecedor NAO foram montados/homologados.
+Corrida de duas importacoes comprova um INSERT/um replay; reexecucao sequencial
+e CAS revision/fingerprint tambem testados. Testemunha de outro Grupo preservada.
+
+Baseline sintetico: fontes001-024/038/039; deltas041/042/044 + compensador044 e
+fornecedor_master candidatos fora do migrador.041 requer SOMENTE o indice
+uq_empresas_id_group_scope extraido literalmente de040; nao aplicar040 inteira.
+Precheck complementar atual, identidade/pin API conferidos:11 tabelas/213colunas/
+26journals;0leituras de negocio/0escritas. Faltam fornecedores/produto_empresas
+(nenhuma relacao de outro tipo), par044, indice composto Empresa e unico legado
+Cliente. Role BYPASSRLS sem superuser. Journal sem hash nao prova SQL aplicado.
+Grants da fixture sao prova, NAO patch operacional aprovado: next_value+updated_at
+na sequencia; SELECT de colunas do contrato AuditRepository.listByEntity usado
+pela segregacao de Pedido, INSERT mas sem UPDATE/DELETE em auditoria; escrita
+minima do percurso e politicas de contexto. Revisar impacto/inversa antes de
+propor esses direitos em HML. V3 read-only nao concede esses direitos.
+Tentativas anteriores registraram faltas reais de prerequisito/colunas de grants
+na fixture, payload sintetico incompleto e sintaxe da fixture de falha; corrigidas
+sem mudar regras/assertions do produto. Recibos detalhados continuam privados.
+
+Backend fresco545PASS/0FAIL/26SKIP, typecheck/build PASS e diff-check PASS.
+Raiz2295PASS/0FAIL/0SKIP e audit/lint/typecheck/build reutilizados de7ae: runtime,
+testes raiz, deps, lockfiles e migrations byte-inalterados (diff exit0). CI nova
+deve ser conferida pelo SHA publicado; skips nao homologam persistencia.
+Nenhuma chamada ao banco operacional, piloto/copia/restore repetido ou dado real.
+Containers/temporarios da fixture encerrados; captura/worktrees/Cursor intactos.
+
+Revisao353 atualizada por SHA093c8e08: contatos/P1 antigo seguem encerrados.
+NOVO P1 no helper cadastroCodigoRegistroRemainder: expressao/spread com mutacao
+do rascunho e apagada do freeze, produzindo bytes iguais. Contraprova real no
+Codespace e pedido de fix6420465114; sem editar353 ou aceitar somente sua CI.
+Nao e defeito malicioso no tip: e brecha nova da guarda de preservacao.
+Candidata integrada ainda depende desse fix/contraprova, composicao autorizada,
+par API/web fixado e envelope HML de escrita revisado. Builds d86 continuam
+apenas o par anterior identificado, nao representam capacidades ainda so na353.
+
+### Historico do lote7ae5bcd9 - compatibilidade044 (2026-10-26)
 
 server/schema-candidates/pedido_idempotency_pair.sql e compensador CANDIDATO,
 fora de server/migrations e sem numero novo.044 original intacta. Adiciona CHECK
