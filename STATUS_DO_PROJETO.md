@@ -1,3 +1,10 @@
+## CURSOR — #353 CI verde e670c1a2 + evidência Comercial360 runner (2026-10-26)
+
+Candidata MERGEABLE/CLEAN; frontend+backend+compose SUCCESS.
+Capturas runner tip `e670c1a2` em `docs/evidence/comercial360-e670c1a2/`.
+Codespace **não** medido. Ambiguidade documento ainda LIMIT 1 (Codex).
+Sem merge/deploy. Sem micro-PRs useConfirm.
+
 ## CURSOR — remarge 118e8438 + contatos scope + coorte Dept/Unidade (2026-10-26)
 
 1. Publication tip `118e8438` CI frontend **SUCCESS** (run push) incorporado na #353.
