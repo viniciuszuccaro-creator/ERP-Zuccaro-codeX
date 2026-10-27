@@ -613,3 +613,51 @@ test('CANAL malformed session primitives fail before fetch or legacy actor heade
  const input={identidades:[{documento:'11222333000181'}]};
  for(const token of [{},123,true,'','   ']){let calls=0;const api=createHttpApiClient({getScope:()=>({groupId:'synthetic-group',actorId:'synthetic-profile',token}),fetchImpl:async()=>{calls++;return new Response(JSON.stringify({data:[{indice:0,documento:null,legado:null}]}),{status:200});}});await assert.rejects(api.clientes.conferirLegado(input));assert.equal(calls,0);}
 });
+
+
+test('commercial masters HTTP: five bounded canonical GETs use one company/session snapshot', async () => {
+  const calls = [], scope = { token: 'synthetic-picker-token', actorId: 'synthetic-actor', groupId: 'synthetic-group', empresaId: 'synthetic-company' };
+  const api = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', getScope: () => scope,
+    fetchImpl: async (url, init) => { calls.push({ url: new URL(url), init }); return new Response(JSON.stringify({ data: [], meta: {total:0,limit:50,offset:0,hasMore:false} }), {status:200}); },
+  });
+  const pages = await api.comercialMasters.list({ clienteSearch: '001', produtoSearch: 'SYNTHETIC' });
+  assert.equal(calls.length, 5); assert.deepEqual(Object.keys(pages).sort(), ['clientes','condicoes','produtos','tabelas','unidades']);
+  for (const { url, init } of calls) {
+    assert.equal(init.method, 'GET'); assert.equal(init.body, undefined);
+    assert.equal(init.headers.Authorization, 'Bearer synthetic-picker-token');
+    assert.equal(init.headers['X-Group-Id'], scope.groupId); assert.equal(init.headers['X-Empresa-Id'], scope.empresaId);
+    assert.ok(Number(url.searchParams.get('limit')) <= 200);
+  }
+  assert.deepEqual(calls.map(c => c.url.pathname).sort(), ['/api/v1/clientes','/api/v1/condicoes-pagamento','/api/v1/produtos','/api/v1/tabelas-preco','/api/v1/unidades-medida'].sort());
+  for (const path of ['/api/v1/clientes','/api/v1/produtos']) assert.equal(calls.find(c => c.url.pathname===path).url.searchParams.get('operacao'), 'true');
+});
+test('commercial masters HTTP: missing company, late context, failure and abort never fall back locally', async () => {
+  let scope = { token: 'synthetic-picker-token', actorId: 'synthetic-actor', groupId: 'synthetic-group', empresaId: '' }, calls = 0;
+  const controller = new AbortController();
+  const api = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', getScope: () => scope,
+    fetchImpl: async () => { calls++; if(calls===5)scope={...scope,empresaId:'other-company'};return new Response(JSON.stringify({data:[]}),{status:200}); },
+  });
+  await assert.rejects(api.comercialMasters.list(), e => e.status===401); assert.equal(calls,0);
+  scope={...scope,empresaId:'synthetic-company'};
+  await assert.rejects(api.comercialMasters.list(), e => e.code==='CONTEXT_CHANGED'); assert.equal(calls,5);
+  controller.abort(); await assert.rejects(api.comercialMasters.list({signal:controller.signal}), e=>e.code==='CONTEXT_CHANGED'); assert.equal(calls,5);
+  await assert.rejects(api.comercialMasters.list({clienteSearch:'x'.repeat(201)}), e=>e.status===422); assert.equal(calls,5);
+  const denied = createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,
+    fetchImpl:async()=>new Response(JSON.stringify({error:{code:'PERMISSION_DENIED'}}),{status:403})});
+  await assert.rejects(denied.comercialMasters.list(), e=>e.status===403);
+});
+
+test('canonical masters: exact source guards reject missing, repeated and modified approved hunks', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { clienteConferenciaHunks, clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');
+  for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {
+    const source = readFileSync(path, 'utf8');
+    assert.doesNotThrow(() => clienteConferenciaRemainder(path, source));
+    for (const [after, before] of clienteConferenciaHunks[path].hunks) {
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, before)));
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + after)));
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + '\nvoid "SYNTHETIC_OUT_OF_SCOPE";\n')));
+    }
+    assert.throws(() => clienteConferenciaRemainder(path, source + '\nvoid "SYNTHETIC_OUTSIDE";\n'));
+  }
+});

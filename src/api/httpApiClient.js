@@ -628,6 +628,35 @@ SeparacaoConferencia: {
     })(),
   };
 
+  const comercialMasters = {
+    /** @param {{clienteSearch?:string,produtoSearch?:string,signal?:AbortSignal}} [options] */
+    async list({ clienteSearch = '', produtoSearch = '', signal } = {}) {
+      const before = Object.freeze({ ...(getScope() || {}) });
+      const matches = current => current.token === before.token && current.groupId === before.groupId
+        && current.empresaId === before.empresaId && current.actorId === before.actorId;
+      const failure = (status, code) => createHttpError(status, { error: { code } }, undefined);
+      if (!before.token || !before.groupId || !before.empresaId || !before.actorId) throw failure(401, 'AUTH_COMPANY_REQUIRED');
+      if ([clienteSearch, produtoSearch].some(value => typeof value !== 'string' || value.length > 200 || value !== value.trim())) {
+        throw failure(422, 'VALIDATION_ERROR');
+      }
+      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');
+      let pages, caught;
+      try {
+        pages = await Promise.all([
+          request('/api/v1/clientes', { query: { operacao: true, ativo: true, search: clienteSearch, limit: 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),
+          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),
+          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),
+          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),
+          request('/api/v1/tabelas-preco', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),
+        ]);
+      } catch (error) { caught = error; }
+      if (signal?.aborted || !matches(getScope() || {})) throw failure(409, 'CONTEXT_CHANGED');
+      if (caught) throw caught;
+      if (!pages) throw failure(502, 'COMERCIAL_MASTERS_INVALID');
+      return { clientes: pages[0], produtos: pages[1], condicoes: pages[2], unidades: pages[3], tabelas: pages[4] };
+    },
+  };
+
   const orcamentos = {
     /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, validadeDe?: string, validadeAte?: string, signal?: AbortSignal }} [options] */
     list({ limit = 50, offset = 0, search, status, clienteEmpresaId, validadeDe, validadeAte, signal } = {}) {
@@ -894,6 +923,7 @@ SeparacaoConferencia: {
         unwrap: false,
       });
     },
+    comercialMasters,
     orcamentos,
     pedidos,
     expedicao,

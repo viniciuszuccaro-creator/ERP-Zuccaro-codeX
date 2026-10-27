@@ -64,6 +64,14 @@ export const clienteConferenciaHunks={
     "hash": "073952b5b23b414dd4e6686000f8158c036cc1feb39bbdf311a46bce2e9b21a5",
     "hunks": [
       [
+        "router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {\n    try {\n      const operacao = parseProdutoOperation(req.query.operacao);\n      if (operacao) {\n        if (!operationalClienteQuery.safeParse(req.query).success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');\n        res.setHeader('Cache-Control', 'no-store');\n      }\n      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;\n      const orderBy = orderByRaw === 'nome' || orderByRaw === 'codigo' ? orderByRaw : undefined;\n      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;\n      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        operacao,\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n        documento: req.query.documento ? String(req.query.documento) : undefined,\n        orderBy,\n        orderDir,\n        limit: req.query.limit ? Number(req.query.limit) : undefined,\n        offset: req.query.offset ? Number(req.query.offset) : undefined,\n      });\n      res.json(page);\n    } catch (error) {\n      next(error);\n    }\n  });\n\n",
+        "router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {\n    try {\n      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;\n      const orderBy = orderByRaw === 'nome' || orderByRaw === 'codigo' ? orderByRaw : undefined;\n      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;\n      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n        documento: req.query.documento ? String(req.query.documento) : undefined,\n        orderBy,\n        orderDir,\n        limit: req.query.limit ? Number(req.query.limit) : undefined,\n        offset: req.query.offset ? Number(req.query.offset) : undefined,\n      });\n      res.json(page);\n    } catch (error) {\n      next(error);\n    }\n  });\n\n"
+      ],
+      [
+        "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';\n  const operationalClienteQuery = z.object({\n    operacao: z.literal('true'), ativo: z.literal('true').optional(),\n    search: z.string().trim().max(200).optional(),\n    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),\n    limit: z.string().regex(/^[1-9]\\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),\n    offset: z.string().regex(/^(0|[1-9]\\d*)$/).transform(Number).refine(Number.isSafeInteger).optional(),\n  }).strict();",
+        "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';"
+      ],
+      [
         "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.post('/api/v1/clientes/conferencia-legado', requireTenantScope, async (req, res, next) => {\n    try {\n      if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified Supabase session required');\n      res.set('cache-control', 'no-store');\n      res.json({ data: await service.conferirLegado(ctxFromReq(req), req.body) });\n    } catch (error) { next(error); }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n",
         "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n"
       ]
@@ -72,6 +80,14 @@ export const clienteConferenciaHunks={
   "src/api/httpApiClient.js": {
     "hash": "c0350d35d527c4af546efc459f7b8566377537a5c2870b1a274480be0c56b4c1",
     "hunks": [
+      [
+        "  const comercialMasters = {\n    /** @param {{clienteSearch?:string,produtoSearch?:string,signal?:AbortSignal}} [options] */\n    async list({ clienteSearch = '', produtoSearch = '', signal } = {}) {\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.token === before.token && current.groupId === before.groupId\n        && current.empresaId === before.empresaId && current.actorId === before.actorId;\n      const failure = (status, code) => createHttpError(status, { error: { code } }, undefined);\n      if (!before.token || !before.groupId || !before.empresaId || !before.actorId) throw failure(401, 'AUTH_COMPANY_REQUIRED');\n      if ([clienteSearch, produtoSearch].some(value => typeof value !== 'string' || value.length > 200 || value !== value.trim())) {\n        throw failure(422, 'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');\n      let pages, caught;\n      try {\n        pages = await Promise.all([\n          request('/api/v1/clientes', { query: { operacao: true, ativo: true, search: clienteSearch, limit: 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),\n          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),\n          request('/api/v1/tabelas-preco', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n        ]);\n      } catch (error) { caught = error; }\n      if (signal?.aborted || !matches(getScope() || {})) throw failure(409, 'CONTEXT_CHANGED');\n      if (caught) throw caught;\n      if (!pages) throw failure(502, 'COMERCIAL_MASTERS_INVALID');\n      return { clientes: pages[0], produtos: pages[1], condicoes: pages[2], unidades: pages[3], tabelas: pages[4] };\n    },\n  };\n\n  const orcamentos = {\n",
+        "  const orcamentos = {\n"
+      ],
+      [
+        "    comercialMasters,\n    orcamentos,\n    pedidos,\n    expedicao,",
+        "    orcamentos,\n    pedidos,\n    expedicao,"
+      ],
       [
         "import { toClienteMasterHttpPayload, withHydratedContatos } from './clienteHttpPayload.js';\n",
         "import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';\n"
@@ -97,6 +113,22 @@ export const clienteConferenciaHunks={
   "server/src/services/clienteService.ts": {
     "hash": "87be7feaf5b33181ca9c3f4aa0dcfc3f2261a52280d399f7e951b56a6c9ce00d",
     "hunks": [
+      [
+        "export type ClienteListOptions = {\n  operacao?: boolean;\n  ativo?: boolean;",
+        "export type ClienteListOptions = {\n  ativo?: boolean;"
+      ],
+      [
+        "    if (options.operacao) {\n      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))\n        || (options.offset !== undefined && (!Number.isSafeInteger(options.offset) || options.offset < 0))\n        || (options.search !== undefined && (options.search.length > 200 || options.search !== options.search.trim()))) {\n        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');\n      }\n      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);\n    }\n    const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);\n    const offset = Math.max(options.offset ?? 0, 0);",
+        "    const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);\n    const offset = Math.max(options.offset ?? 0, 0);"
+      ],
+      [
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      operacao: options.operacao,\n      ativo,\n      search: options.search,",
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      ativo,\n      search: options.search,"
+      ],
+      [
+        "    if (options.operacao) await this.assertPermission(ctx, 'visualizar');\n    return {\n      data: page.rows,\n      meta: {",
+        "    return {\n      data: page.rows,\n      meta: {"
+      ],
       [
         "import { conferirClientesLegado } from './clienteConferencia.js';\nimport type { DbQueryExecutor } from '../db/client.js';\nimport type { AuditRepository, RequestContext } from '../audit/types.js';\nimport { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';\n",
         "import type { DbQueryExecutor } from '../db/client.js';\nimport type { AuditRepository, RequestContext } from '../audit/types.js';\nimport { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';\n"

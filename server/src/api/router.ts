@@ -420,6 +420,13 @@ function mountClienteRoutes(
   central360: ClienteCentral360Service,
 ) {
   const relationshipPath = '/api/v1/clientes/:clienteId/empresas';
+  const operationalClienteQuery = z.object({
+    operacao: z.literal('true'), ativo: z.literal('true').optional(),
+    search: z.string().trim().max(200).optional(),
+    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),
+    limit: z.string().regex(/^[1-9]\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),
+    offset: z.string().regex(/^(0|[1-9]\d*)$/).transform(Number).refine(Number.isSafeInteger).optional(),
+  }).strict();
 
   router.get('/api/v1/clientes/:id/central-360', requireTenantScope, async (req, res, next) => {
     try {
@@ -551,11 +558,17 @@ function mountClienteRoutes(
 
   router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {
     try {
+      const operacao = parseProdutoOperation(req.query.operacao);
+      if (operacao) {
+        if (!operationalClienteQuery.safeParse(req.query).success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');
+        res.setHeader('Cache-Control', 'no-store');
+      }
       const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;
       const orderBy = orderByRaw === 'nome' || orderByRaw === 'codigo' ? orderByRaw : undefined;
       const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;
       const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;
       const page = await service.list(ctxFromReq(req), {
+        operacao,
         ativo: parseAtivoQuery(req.query.ativo),
         search: req.query.search ? String(req.query.search) : undefined,
         codigo: req.query.codigo ? String(req.query.codigo) : undefined,

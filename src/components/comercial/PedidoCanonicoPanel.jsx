@@ -63,6 +63,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const renderedScope=useRef(null);
   renderedScope.current={groupId,empresaId,actorId};
   const activeScope=()=>readErpHttpSession();
+  const sessionIdentity=sessionToken||readErpHttpSession()?.token||null;
   const [page,setPage]=useState(1);
   const [pageSize,setPageSize]=useState(20);
   const [selected,setSelected]=useState(null);
@@ -93,8 +94,8 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const canPrint=canUsePedidoAction(hasPermission,'imprimir') || canUsePedidoAction(hasPermission,'visualizar');
   const canShare=canUsePedidoAction(hasPermission,'compartilhar') || canUsePedidoAction(hasPermission,'visualizar');
   const ready=Boolean(groupId&&empresaId&&actorId);
-  const api=useMemo(()=>createHttpApiClient({getScope:()=>({groupId,empresaId,actorId,actorEmail,token:sessionToken})}).pedidos,[groupId,empresaId,actorId,actorEmail,sessionToken]);
-  const list=useQuery({queryKey:['pedidos-http',groupId,empresaId,actorId,page,pageSize,applied],queryFn:({signal})=>api.list({limit:pageSize,offset:(page-1)*pageSize,search:applied.search||undefined,status:applied.status==='TODOS'?undefined:applied.status,clienteEmpresaId:applied.clienteEmpresaId==='TODOS'?undefined:applied.clienteEmpresaId,tipoOperacao:applied.tipoOperacao==='TODOS'?undefined:applied.tipoOperacao,signal}),enabled:ready&&canView,retry:1});
+  const api=useMemo(()=>createHttpApiClient({getScope:()=>({groupId,empresaId,actorId,actorEmail,token:sessionIdentity})}).pedidos,[groupId,empresaId,actorId,actorEmail,sessionIdentity]);
+  const list=useQuery({queryKey:['pedidos-http',groupId,empresaId,actorId,sessionIdentity,page,pageSize,applied],queryFn:({signal})=>api.list({limit:pageSize,offset:(page-1)*pageSize,search:applied.search||undefined,status:applied.status==='TODOS'?undefined:applied.status,clienteEmpresaId:applied.clienteEmpresaId==='TODOS'?undefined:applied.clienteEmpresaId,tipoOperacao:applied.tipoOperacao==='TODOS'?undefined:applied.tipoOperacao,signal}),enabled:ready&&canView,retry:1});
   const master=useQuery({queryKey:['pedido-masters',groupId,empresaId],queryFn:async()=>{const [clientesEmpresa,clientes,condicoes,produtos,unidades,locais,obras,tabelas]=await Promise.all([filterInContext('ClienteEmpresa',{ativo:true,habilitado_operacao:true},'codigo',500),filterInContext('Cliente',{ativo:true},'razao_social',500),filterInContext('CondicaoPagamento',{ativo:true},'nome',500),filterInContext('Produto',{ativo:true},'descricao',500),filterInContext('UnidadeMedida',{ativo:true},'sigla',500),filterInContext('ClienteLocal',{ativo:true},'nome',500),filterInContext('Obra',{ativo:true},'nome',500),filterInContext('TabelaPreco',{ativo:true},'nome',500)]);return{clientesEmpresa,clientes,condicoes,produtos,unidades,locais,obras,tabelas};},enabled:ready&&canView,staleTime:30000});
   const masters=master.data||{clientesEmpresa:[],clientes:[],condicoes:[],produtos:[],unidades:[],locais:[],obras:[],tabelas:[]};
   const clients=useMemo(()=>new Map(masters.clientes.map(x=>[x.id,x])),[masters.clientes]);

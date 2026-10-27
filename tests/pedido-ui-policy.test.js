@@ -79,7 +79,7 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.ok(saveLine.indexOf('clearPedidoCreateIntentKey(ticket.scope') < saveLine.indexOf('if(!detailGate.current.isCurrent(ticket'), 'sucesso tardio deve retirar a chave antes de descartar a resposta da UI');
   assert.match(saveLine,/error\?\.code==='PEDIDO_IDEMPOTENCY_CONFLICT'/);
   assert.match(saveLine,/recoverPedidoCreateIntentAfterConflict\(ticket\.scope,intentStorage\(\),createKey/);
-  assert.match(source,/queryKey:\['pedidos-http',groupId,empresaId,actorId,page,pageSize,applied\]/);
+  assert.match(source,/queryKey:\['pedidos-http',groupId,empresaId,actorId,sessionIdentity,page,pageSize,applied\]/);
   assert.match(source,/const refreshConflictScope=async\(ticket,scope\)=>\{if\(!canView\|\|!detailGate\.current\.isCurrent/);
   assert.match(source,/await api\.list\(\{limit:1,offset:0\}\)/);
   assert.match(source,/invalidateQueries\(\{queryKey:\['pedidos-http',scope\.groupId,scope\.empresaId,scope\.actorId\],refetchType:'all'\},\{throwOnError:true\}\)/);

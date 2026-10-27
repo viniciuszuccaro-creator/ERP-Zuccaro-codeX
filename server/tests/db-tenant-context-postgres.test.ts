@@ -266,6 +266,33 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
       'SYNTHETIC ENTRY CUSTOMER EDITED');
     const link = await request('POST', '/api/v1/clientes/' + customer.id + '/empresas/' + ID.empresaA, 201, {});
     assert.equal(link.cliente_id, customer.id);
+    const pickerPath = '/api/v1/clientes?operacao=true&ativo=true&limit=1&offset=0&search=' + encodeURIComponent('SYNTHETIC ENTRY CUSTOMER EDITED');
+    const readPicker = async (path = pickerPath) => {
+      const response = await fetch(base + path, { headers: companyHeaders });
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+      return await response.json() as { data: Array<{ id: string; codigo: string; empresa_operacao: {
+        id: string; group_id: string; cliente_id: string; empresa_id: string; elegivel_operacao: boolean } }>;
+        meta: { total: number; hasMore: boolean } };
+    };
+    const rowsBefore = (await admin.query('SELECT (SELECT count(*) FROM clientes)::int AS clients, (SELECT count(*) FROM cliente_empresas)::int AS links')).rows;
+    const picked = await readPicker();
+    assert.equal(picked.meta.total, 1); assert.equal(picked.data.length, 1);
+    assert.equal(picked.data[0].id, customer.id); assert.equal(picked.data[0].codigo, customer.codigo);
+    assert.equal(picked.data[0].empresa_operacao.id, link.id);
+    assert.notEqual(link.id, customer.id);
+    assert.equal(picked.data[0].empresa_operacao.cliente_id, customer.id);
+    assert.equal(picked.data[0].empresa_operacao.group_id, ID.groupA);
+    assert.equal(picked.data[0].empresa_operacao.empresa_id, ID.empresaA);
+    assert.equal(picked.data[0].empresa_operacao.elegivel_operacao, true);
+    const nextPage = await readPicker(pickerPath.replace('offset=0', 'offset=1'));
+    assert.equal(nextPage.meta.total, 1); assert.deepEqual(nextPage.data, []);
+    await request('GET', pickerPath, 422, undefined, groupHeaders);
+    for (const query of ['operacao=true&limit=201','operacao=true&limit=1.5','operacao=true&offset=-1',
+      'operacao=true&ativo=false','operacao=true&unknown=1','operacao=true&limit=1&limit=2']) {
+      await request('GET', '/api/v1/clientes?' + query, 422);
+    }
+    assert.deepEqual((await admin.query('SELECT (SELECT count(*) FROM clientes)::int AS clients, (SELECT count(*) FROM cliente_empresas)::int AS links')).rows, rowsBefore);
     const unit = (await admin.query<{ sigla: string }>('SELECT sigla FROM unidades_medida WHERE id=$1', [ID.unidadeA])).rows[0];
     assert(unit);
     const price = (await admin.query<{ preco: string }>('SELECT preco FROM tabela_preco_itens WHERE id=$1', [ID.tabelaPrecoItemAKg])).rows[0];

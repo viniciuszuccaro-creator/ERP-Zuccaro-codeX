@@ -1,3 +1,5 @@
+import { isCanonicalComercialId } from './centralCliente360Navigation.js';
+
 /**
  * Helpers de seleção de mestres no fluxo canônico Cliente → Orçamento → Pedido.
  * Extraído para evitar duplicar filtro/label por código nas abas HTTP.
@@ -53,6 +55,40 @@ export function filterProdutoOptions(produtos, query) {
     if (produto?.ativo === false) return false;
     return masterMatchesQuery(produto, query, ['codigo', 'descricao', 'nome', 'sku']);
   });
+}
+
+/** Resolve only scoped canonical pages; never joins a local master to a guessed link. */
+export function resolveComercialMasterPages(pages, scope) {
+  const invalid = () => { throw new Error('COMERCIAL_MASTERS_INVALID'); };
+  const rows = (page, paginated = true) => {
+    if (!page || !Array.isArray(page.data) || page.data.length > 200) return invalid();
+    if (paginated && (!Number.isSafeInteger(page.meta?.total) || page.meta.total < 0
+      || !Number.isSafeInteger(page.meta?.limit) || page.meta.limit < 1 || page.meta.limit > 200
+      || page.meta?.offset !== 0 || typeof page.meta?.hasMore !== 'boolean')) return invalid();
+    for (const row of page.data) {
+      if (!row || !isCanonicalComercialId(row.id) || row.ativo === false
+        || (row.group_id && row.group_id !== scope.groupId)) return invalid();
+    }
+    return page.data;
+  };
+  const clientes = rows(pages?.clientes), produtos = rows(pages?.produtos);
+  const condicoes = rows(pages?.condicoes), unidades = rows(pages?.unidades, false), tabelas = rows(pages?.tabelas);
+  const clientesEmpresa = clientes.map(cliente => {
+    const link = cliente.empresa_operacao;
+    if (!link || !isCanonicalComercialId(link.id) || link.cliente_id !== cliente.id
+      || link.group_id !== scope.groupId || link.empresa_id !== scope.empresaId
+      || link.ativo !== true || link.situacao_comercial !== 'ATIVO' || link.habilitado_operacao !== true
+      || link.bloqueado !== false || link.elegivel_operacao !== true) return invalid();
+    return link;
+  });
+  if (new Set(clientesEmpresa.map(link => link.id)).size !== clientesEmpresa.length
+    || new Set(clientes.map(cliente => cliente.id)).size !== clientes.length) return invalid();
+  // These controls have no reference-catalog pagination: do not silently imply completeness.
+  if (pages.condicoes.meta.hasMore || pages.tabelas.meta.hasMore || unidades.length === 200) {
+    throw new Error('COMERCIAL_REFERENCE_PAGINATION_REQUIRED');
+  }
+  return { clientesEmpresa, clientes, condicoes, produtos, unidades, tabelas,
+    clientesHasMore: pages.clientes.meta.hasMore, produtosHasMore: pages.produtos.meta.hasMore };
 }
 
 /** Lacunas remanescentes do contrato Orçamento (após 039 tabela_preco_id). */

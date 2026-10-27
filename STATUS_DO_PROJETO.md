@@ -1,3 +1,26 @@
+## Estado vigente - #344 leitores canonicos e ciclo sintetico (2026-10-27)
+
+Mesmo Codespace/branch, base e916d467, 16 arquivos/diff anteriores conferidos antes da retomada. GET Cliente opt-in, transporte/resolver de mestres e Orcamento concluidos no lote preservado. Navegador descobriu token ausente no Pedido em janela: captura canonica e cache por sessao corrigidos, contraprova FAIL antes/PASS depois, sem nova permissao. Originais e Cursor intactos.
+
+Novo fechamento: raiz 2402 PASS/0 FAIL/0 SKIP, dirigidos 60/0/0; audit:baseline/lint/typecheck/build exit0. Backend sem delta: prova conferida 554 PASS/0 FAIL/26 SKIP (580 total), type/build e PG leitores 1/0/0 reutilizados. SIGTERM anterior externo comprovado, supervisor desconhecido; nao foi provado OOM. Detalhes e evidencias no HANDOFF vigente, recibos privados.
+
+Demonstrado com API/PG/IdP sinteticos isolados: login/contexto, seletores canonicos, Orcamento salvar/reabrir, converter e Pedido reabrir; repeticao deixou 1/1; negativas HTTP 401/403 e contexto cruzado 403, rascunho visivel sem gravacao do marcador. Nao homologa operacao real nem edicao completa/mestres auxiliares do Pedido. #353 b2eeee52: lacuna P2 de teste de Regiao reproduzida e publicada em 6440982068; demais novos deltas nao aprovados. Sem merge/deploy/DDL/grants/carga, automacao nao reativada.
+
+Proximo P0: concluir revisao/composicao Cursor por SHA e envelope minimo de homologacao; reconciliar coorte privada 100 no destino/copia comprovados antes da decisao de primeira carga. Selecao previa nao e reconciliacao nova. Publicacao/CI deste lote por SHA na #342, sem prometer previa permanente.
+### Historico preservado - WIP de 2026-10-26 (superado)
+
+Base remota/checkout e916d467, mesma branch codex/consolidacao-infra-20261017 e Codespace existente. Runtime do lote aplicado, sem commit/push. Opt-in no leitor Cliente existente e transporte/consumidor de mestres do Orcamento, sem endpoint paralelo, migration, grant ou carga. Os blocos anteriores abaixo preservam provas historicas; nao representam aprovacao deste WIP.
+
+Provas novas: 54 PASS/0 FAIL/0 SKIP dirigidos frontend/HTTP/guardas; 3/0/0 dominio; 9/0/0 politica atualizada para exigir o caminho canonico; PostgreSQL real isolado 1/0/0 com snapshot verificado do backend dirty. IDs master/vinculo distintos, escopo, total/pagina e queries invalidas comprovados. Hashes anteriores preservados; contraprovas contra omissao/repeticao/alteracao dentro/fora dos hunks passaram. Teste de negativa do vinculo continua exigindo 403, sem ampliar permissao do produto.
+
+Fechamento nao aprovado: raiz 2401 testes, 2399 PASS/2 FAIL/0 SKIP; uma assertion obsoleta de nome do facade foi corrigida e passou dirigida, a outra registra SIGTERM em financial-consolidacao. Backend completo reportou 520 testes, 477 PASS/18 FAIL/25 SKIP, com arquivos encerrados; nao equivale a cobertura integral anterior. Reexecucao pontual financeira repetiu SIGTERM. Typecheck inicial passou, mas as tentativas finais terminaram 143/SIGTERM, inclusive sequencial; nao declarar typecheck final verde. Nova tentativa backend sequencial foi interrompida deliberadamente apos o bloqueio; seu resumo parcial nao vale como suite concluida. Causa do sinal ainda nao comprovada: memory.events sem OOM, acesso ao kernel log negado. Nao relaxar testes/baselines para liberar.
+
+Previa sintetica ficou PRIVATE e chegou a READY, mas perdeu o processo antes da demonstracao; ciclo UI Orcamento/Pedido ainda nao comprovado. Container proprio encerrado apos verificacao de nome/label/imagem/rede/mount, sem containers deste ensaio restantes. Nao ha teste proprio anunciado como ativo. WIP de 14 arquivos fonte/teste, diff e hashes verificados em copia privada fora do checkout; originais/Cursor intactos. Sem acesso operacional. Automacao nao reativada nem estado inferido do Markdown.
+
+Proximo passo preciso: identificar o emissor/condicao do SIGTERM sem ampliar permissoes; concluir checks sequenciais e retomar harness sintetico com o mesmo snapshot para criar/editar/reabrir Orcamento e converter/editar/reabrir Pedido. Somente apos gates verdes atualizar recibo, commitar e publicar a candidata. Nao repetir pilotos/transferencias nem provas PG anteriores sem delta.
+
+### Historico anterior preservado
+
 ## Estado vigente - composicao e navegador isolado (2026-10-26)
 
 - Fechamento local final: raiz **2396 PASS / 0 FAIL / 0 SKIP**; audit:baseline, lint, typecheck, build e diff-check exit0. Backend composto **577 total / 551 PASS / 0 FAIL / 26 SKIP**, type/build exit0 (reutilizados sem novo delta backend). Prova PG de principals **1 PASS / 0 FAIL / 0 SKIP**, contraprova INHERIT rejeitada. A falha intermediaria da guarda stage48 foi resolvida aceitando somente os dois hunks exatos comprovados, mantendo o golden original e acrescentando contraprovas de omissao/repeticao/efeito colateral/alteracao externa. Nenhum teste removido ou pulado. Recibo de publicacao/CI por SHA permanece na #344.
