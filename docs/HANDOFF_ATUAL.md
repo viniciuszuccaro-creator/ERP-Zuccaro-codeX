@@ -1,3 +1,9 @@
+## CURSOR — vigente: ChatbotCanal reopen (2026-10-27)
+
+Empilhado sobre #399 ParametroRoteirizacao. Tip a publicar. Codespace 403. #397/#398/#399 aguardam parecer Codex (CI tip SUCCESS ≠ aprovação).
+
+(2026-10-27 12:10 America/Sao_Paulo)
+
 ## CURSOR — vigente: ParametroRoteirizacao reopen (2026-10-27)
 
 Tip **`b91d6fb49`** CI **SUCCESS** (≠ aprovação). Empilhado sobre #398. Próximo: ChatbotCanal. Codespace 403. #397/#398 aguardam parecer Codex.

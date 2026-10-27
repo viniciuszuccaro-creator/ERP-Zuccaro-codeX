@@ -1,3 +1,18 @@
+## CURSOR — ChatbotCanal reopen canônico (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Branch | `cursor/cadastros-chatbotcanal-reopen-392b` |
+| Base | `cursor/cadastros-parametro-roteirizacao-reopen-392b` (#399) |
+| Mudança | `ChatbotCanalForm` → `useCadastroReopenOnIdentity` + `canalBoundId` |
+| Pin | saiu de names; publication reverse ChatbotCanal |
+| Testes | behavioral 6; callback+publication PASS |
+| Pedido | **@codex review** tip HEAD |
+| Modalidade | runner `/workspace` |
+| Fora | merge/deploy/carga; Codespace 403 |
+
+(2026-10-27 12:10 America/Sao_Paulo)
+
 ## CURSOR — ParametroRoteirizacao reopen canônico (2026-10-27)
 
 | Campo | Valor |
