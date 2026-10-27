@@ -1,4 +1,3 @@
-import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,29 +5,76 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Globe } from 'lucide-react';
-import usePermissions from "@/components/lib/usePermissions";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
-import { syncFlagsCatalogoProduto } from "@/components/lib/siteOrigemPolicy";
+import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import CadastroCodigoRegistroField from '@/components/cadastros/CadastroCodigoRegistroField';
+import useCadastroReopenOnIdentity from '@/components/cadastros/useCadastroReopenOnIdentity';
+import { syncFlagsCatalogoProduto } from '@/components/lib/siteOrigemPolicy';
 
-export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windowMode = false }) {
-  const dadosIniciais = catalogoWeb || catalogo;
+const EMPTY_CATALOGO = {
+  nome_catalogo: '',
+  codigo: '',
+  descricao: '',
+  produto_id: '',
+  exibir_site: true,
+  exibir_marketplace: false,
+  ordem_exibicao: 1,
+  ativo: true,
+  empresa_id: '',
+  group_id: '',
+};
+
+const mapCatalogoWebToForm = (record, defaults = {}) => {
+  if (!record) {
+    return {
+      ...EMPTY_CATALOGO,
+      empresa_id: defaults.empresa_id || '',
+      group_id: defaults.group_id || '',
+    };
+  }
+  const flagged = syncFlagsCatalogoProduto(record);
+  return {
+    ...EMPTY_CATALOGO,
+    ...flagged,
+    nome_catalogo: record.nome_catalogo || record.nome || '',
+    codigo: record.codigo == null ? '' : String(record.codigo),
+    descricao: record.descricao == null ? '' : String(record.descricao),
+    produto_id: record.produto_id == null ? '' : String(record.produto_id),
+    ordem_exibicao: Number.isFinite(Number(record.ordem_exibicao)) ? Number(record.ordem_exibicao) : 1,
+    ativo: record.ativo !== false,
+    exibir_site: Boolean(flagged.exibir_site),
+    exibir_marketplace: Boolean(flagged.exibir_marketplace),
+  };
+};
+
+/**
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — updated_at|updated_date,
+ * preservação flags site/marketplace via syncFlagsCatalogoProduto; boundId.
+ */
+export default function CatalogoWebForm({
+  catalogo, catalogoWeb, item, data, initialData, defaultValues, onSubmit, windowMode = false,
+}) {
+  const dadosIniciais = item || data || initialData || defaultValues || catalogoWeb || catalogo;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
-  const podeCriar = hasPermission?.("Cadastros.CatalogoWeb.criar") || hasPermission?.("Cadastros.Produto.criar");
-  const podeEditar = hasPermission?.("Cadastros.CatalogoWeb.editar") || hasPermission?.("Cadastros.Produto.editar");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
-    nome_catalogo: '',
-    descricao: '',
-    produto_id: '',
-    exibir_site: true,
-    exibir_marketplace: false,
-    ordem_exibicao: 1,
-    ativo: true
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  const emptyForm = mapCatalogoWebToForm(null, {
+    empresa_id: empresaAtual?.id || '',
+    group_id: groupId || '',
+  });
+  const [formData, setFormData] = useState(() => mapCatalogoWebToForm(dadosIniciais, emptyForm));
+
+  const { boundId: catalogoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm,
+    mapToForm: (record) => mapCatalogoWebToForm(record, emptyForm),
+  });
+
+  const podeCriar = hasPermission?.('Cadastros.CatalogoWeb.criar') || hasPermission?.('Cadastros.Produto.criar');
+  const podeEditar = hasPermission?.('Cadastros.CatalogoWeb.editar') || hasPermission?.('Cadastros.Produto.editar');
+  const podeSalvar = catalogoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -47,17 +93,18 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
     }
     onSubmit({
       ...syncFlagsCatalogoProduto(formData),
+      ...(catalogoBoundId ? { id: catalogoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: empresaId,
-      nome: formData.nome_catalogo || formData.nome || ''
+      nome: formData.nome_catalogo || formData.nome || '',
     });
   };
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(catalogoBoundId)}
+        entityId={catalogoBoundId}
         value={formData.codigo}
         action="codigo-registro-catalogo-web"
       />
@@ -68,6 +115,8 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           value={formData.nome_catalogo}
           onChange={(e) => setFormData({ ...formData, nome_catalogo: e.target.value })}
           required
+          disabled={!podeSalvar}
+          data-permission="Cadastros.CatalogoWeb.editar"
           data-action="editar-nome-catalogo-web"
         />
       </div>
@@ -78,6 +127,8 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           value={formData.descricao}
           onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={3}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.CatalogoWeb.editar"
           data-action="editar-descricao-catalogo-web"
         />
       </div>
@@ -88,12 +139,14 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           value={formData.produto_id}
           onChange={(e) => setFormData({ ...formData, produto_id: e.target.value })}
           placeholder="ID do produto associado"
+          disabled={!podeSalvar}
+          data-permission="Cadastros.CatalogoWeb.editar"
           data-action="editar-produto-catalogo-web"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center justify-between p-3 border rounded">
+        <div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50/50">
           <Label>Exibir no Site</Label>
           <Switch
             checked={formData.exibir_site}
@@ -104,7 +157,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
             onCheckedChange={(v) => setFormData(syncFlagsCatalogoProduto({ ...formData, exibir_site: v, exibir_no_site: v }))}
           />
         </div>
-        <div className="flex items-center justify-between p-3 border rounded">
+        <div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50/50">
           <Label>Exibir no Marketplace</Label>
           <Switch
             checked={formData.exibir_marketplace}
@@ -122,12 +175,14 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
         <Input
           type="number"
           value={formData.ordem_exibicao}
-          onChange={(e) => setFormData({ ...formData, ordem_exibicao: parseInt(e.target.value) })}
+          onChange={(e) => setFormData({ ...formData, ordem_exibicao: parseInt(e.target.value, 10) || 0 })}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.CatalogoWeb.editar"
           data-action="editar-ordem-catalogo-web"
         />
       </div>
 
-      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+      <div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50/50">
         <Label className="font-semibold">Catálogo Ativo</Label>
         <Switch
           checked={formData.ativo}
@@ -141,13 +196,13 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
 
       <Button
         type="submit"
-        className="w-full bg-blue-600 hover:bg-blue-700"
+        className="w-full bg-sky-600 hover:bg-sky-700"
         disabled={!contextoValido || !podeSalvar}
         data-permission="Cadastros.CatalogoWeb.salvar"
         data-action="salvar-catalogo-web"
         data-sensitive="true"
       >
-        {dadosIniciais ? 'Atualizar' : 'Criar Catálogo Web'}
+        {catalogoBoundId ? 'Atualizar' : 'Criar Catálogo Web'}
       </Button>
     </form>
   );
@@ -155,10 +210,10 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-          <Globe className="w-6 h-6 text-blue-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Globe className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Catálogo' : 'Novo Catálogo Web'}
+            {catalogoBoundId ? 'Editar Catálogo' : 'Novo Catálogo Web'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

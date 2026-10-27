@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroRemainder.js';
 
-const names = ['ApiExterna', 'CatalogoWeb', 'ChatbotCanal', 'ChatbotIntent',
+const names = ['ApiExterna', 'ChatbotCanal', 'ChatbotIntent',
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',
   'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
   'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao',
@@ -20,6 +20,7 @@ const names = ['ApiExterna', 'CatalogoWeb', 'ChatbotCanal', 'ChatbotIntent',
 // CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -176,6 +177,17 @@ test('RotaPadrao graduou do pin RecordState para useCadastroReopenOnIdentity com
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /rotaBoundId/);
   assert.match(source, /CadastroCodigoRegistroField/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('CatalogoWeb graduou do pin RecordState para useCadastroReopenOnIdentity com catalogoBoundId', () => {
+  const file = 'src/components/cadastros/CatalogoWebForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('CatalogoWeb'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /catalogoBoundId/);
+  assert.match(source, /syncFlagsCatalogoProduto/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });
