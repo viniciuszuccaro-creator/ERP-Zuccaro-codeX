@@ -241,3 +241,64 @@ test('mapRegiaoToForm preserva logistica/comercial quando HTTP omite aninhados',
 test('payload de submit ancora id no boundId (prevIdRef), nao nas props divergentes', () => {
   assert.match(source, /prevIdRef\.current \? \{ id: prevIdRef\.current \}/);
 });
+
+
+test('troca de registro dirty: recusa mantem rascunho A e boundId A', async () => {
+  const a = {
+    id: 'http-ra',
+    nome_regiao: 'REGIAO A',
+    codigo_regiao: 'A001',
+    logistica: { custo_frete_base: 10 },
+    comercial: { meta_vendas_mensal: 500 },
+    updated_at: '2026-01-01T00:00:00Z',
+  };
+  const refused = harness({ regiaoId: undefined, dadosIniciaisProps: a });
+  refused.run();
+  refused.dirty({ nome_regiao: 'DRAFT A' });
+  let confirms = 0;
+  const prevIdRef = { current: 'http-ra' };
+  const prevUpdatedRef = { current: '2026-01-01T00:00:00Z' };
+  const baselineRef = { current: cadastroFormSnapshot(mapRegiaoToForm(a)) };
+  const formDataRef = { current: refused.state().formData };
+  let formData = refused.state().formData;
+  const env = {
+    open: true, windowMode: false, regiaoId: undefined,
+    dadosIniciaisProps: {
+      id: 'http-rb',
+      nome_regiao: 'REGIAO B',
+      codigo_regiao: 'B001',
+      logistica: { custo_frete_base: 1 },
+      comercial: { meta_vendas_mensal: 1 },
+      updated_at: '2026-02-01T00:00:00Z',
+    },
+    prevIdRef, prevUpdatedRef, baselineRef, formDataRef, mapRegiaoToForm,
+    isFormScopeCurrent: () => true,
+    setFormData: (data) => { formData = data; formDataRef.current = data; },
+    setLoading: () => {}, setLoadFailed: () => {},
+    toast: { error: () => {} },
+    window: { confirm: () => { confirms++; return false; } },
+    decideCadastroReopen, isCadastroFormDirty, cadastroFormMatchesIncoming, cadastroFormSnapshot,
+    CADASTRO_DIRTY_REOPEN_CONFIRM, CADASTRO_DIRTY_SWITCH_CONFIRM,
+    getInContext: async () => null,
+  };
+  new Function(...Object.keys(env), `return (${callback})();`)(...Object.values(env));
+  assert.equal(confirms, 1);
+  assert.equal(formData.nome_regiao, 'DRAFT A');
+  assert.equal(formData.logistica.custo_frete_base, 10);
+  assert.equal(prevIdRef.current, 'http-ra');
+});
+
+test('resposta tardia ID-only apos cleanup nao pinta formulario', async () => {
+  const h = harness();
+  const cleanup = h.run();
+  cleanup();
+  h.resolve({
+    id: 'synthetic-a',
+    nome_regiao: 'LATE',
+    logistica: { custo_frete_base: 9 },
+    updated_at: '2026-03-01T00:00:00Z',
+  });
+  await flush();
+  assert.equal(h.state().formData, undefined);
+  assert.equal(h.state().id, null);
+});

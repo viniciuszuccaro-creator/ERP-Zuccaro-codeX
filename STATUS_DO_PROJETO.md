@@ -1,3 +1,25 @@
+## CURSOR — Regiao fechada + Operador/Condicao + Historico HTTP (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Responsável | Cursor Cloud `/workspace` (runner) |
+| Base tip | **`64d48dea`** (CI SUCCESS prévio `66ff41b1`) |
+| WIP Codespace | leitores Orçamento **intactos** (não editados) |
+| Regiao | provas updated_at/aninhados/boundId/switch/late — 10 PASS; **@codex review** por SHA |
+| Cadastros | `OperadorCaixaForm` + `CondicaoComercialForm` → `useCadastroReopenOnIdentity` |
+| Historico | HTTP canônico via Central360→`pedidos.list(clienteEmpresaId)`; sem facade silenciosa |
+| Dependência Codex | filtro opcional `cliente_id` mestre em GET /pedidos (itens) — documentada |
+| Provas | regiao 10 + operador/condicao + historico + coorte = **35 PASS** |
+| Visual | azul-claro sky nos forms tocados (sem redesign amplo) |
+| Fora | CondicaoPagamento leitores; merge/deploy/carga |
+
+Classificação recuperação:
+- Regiao/Operador/Condicao: **funcionalidade existente com reopen deficiente** (corrigida).
+- Historico HTTP: **escondida/quebrada por fonte** (filterInContext→local); não era ausência de tela.
+- Registros reais: **não** declarados recuperados.
+
+(2026-10-27 08:06 America/Sao_Paulo)
+
 ## CURSOR — tip `66ff41b1` CI SUCCESS (Regiao + remarge e916d467) (2026-10-26)
 
 | Campo | Valor |

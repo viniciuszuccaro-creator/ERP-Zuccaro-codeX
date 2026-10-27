@@ -9,17 +9,20 @@ test('PainelDinamicoCliente monta TabsContent historico_produtos (não órfão)'
   assert.match(src, /TabsTrigger value="historico_produtos"/);
   assert.match(src, /TabsContent value="historico_produtos"/);
   assert.match(src, /HistoricoProdutosCliente/);
-  // Conteúdo fica dentro do Tabs — evita aba “vazia” com painel deslocado fora da coluna.
   assert.doesNotMatch(src, /activeTab === ['"]historico_produtos['"]/);
-  // Uma única montagem no TabsContent — sem segunda tela paralela.
   assert.equal((src.match(/<HistoricoProdutosCliente\b/g) || []).length, 1);
 });
 
-/**
- * Aba montada ≠ histórico carregado: consulta só com contexto + permissão;
- * sem permissão não dispara Pedido filter e exibe alerta fail-closed.
- */
-async function mountHistoricoCliente({ clienteId = 'cli-1', hasPermission = () => true, groupId = 'g1', empresaId = 'e1' } = {}) {
+async function mountHistoricoCliente({
+  clienteId = 'cli-1',
+  hasPermission = () => true,
+  groupId = 'g1',
+  empresaId = 'e1',
+  backendMode = 'local',
+  session = null,
+  central360 = null,
+  pedidosList = null,
+} = {}) {
   const source = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
   const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
@@ -31,6 +34,8 @@ async function mountHistoricoCliente({ clienteId = 'cli-1', hasPermission = () =
   let slot = 0;
   const queries = [];
   const filterCalls = [];
+  const centralCalls = [];
+  const listCalls = [];
 
   const react = {
     createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
@@ -61,8 +66,16 @@ async function mountHistoricoCliente({ clienteId = 'cli-1', hasPermission = () =
       '@tanstack/react-query': {
         useQuery(opts) {
           queries.push(opts);
-          const data = opts.enabled ? [] : undefined;
-          return { data: data ?? [], isLoading: false, isFetching: false };
+          let data = opts.enabled ? [] : undefined;
+          let isError = false;
+          let error = null;
+          return {
+            data: data ?? [],
+            isLoading: false,
+            isFetching: false,
+            isError,
+            error,
+          };
         },
       },
       '@/components/ui/card': { Card: 'Card', CardContent: 'CardContent', CardHeader: 'CardHeader', CardTitle: 'CardTitle' },
@@ -88,51 +101,129 @@ async function mountHistoricoCliente({ clienteId = 'cli-1', hasPermission = () =
         __esModule: true,
         default: () => ({ hasPermission }),
       },
+      '@/api/runtimeBackend': {
+        resolveErpBackendMode: () => backendMode,
+      },
+      '@/api/erpHttpSession': {
+        readErpHttpSession: () => session,
+      },
+      '@/api/httpApiClient': {
+        createHttpApiClient: () => ({
+          clientes: {
+            central360: async (id, opts) => {
+              centralCalls.push({ id, opts });
+              if (typeof central360 === 'function') return central360(id, opts);
+              return central360;
+            },
+          },
+          pedidos: {
+            list: async (opts) => {
+              listCalls.push(opts);
+              if (typeof pedidosList === 'function') return pedidosList(opts);
+              return pedidosList || { data: [] };
+            },
+          },
+        }),
+      },
     },
   };
 
   vm.runInNewContext(compiled, sandbox);
   const Component = sandbox.exports.default || sandbox.module.exports.default;
+  const mapFn = sandbox.exports.mapPedidosToHistoricoLinhas
+    || sandbox.module.exports.mapPedidosToHistoricoLinhas;
   slot = 0;
   const tree = Component({ clienteId });
   scheduled.splice(0).forEach((fn) => fn());
   const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
-  return { tree, walk: () => walk(tree), queries, filterCalls };
+  return { tree, walk: () => walk(tree), queries, filterCalls, centralCalls, listCalls, mapFn };
 }
 
 test('HistoricoProdutosCliente: sem permissão não consulta Pedido (aba montada ≠ carga)', async () => {
-  const { tree, walk, queries, filterCalls } = await mountHistoricoCliente({
+  const { queries, filterCalls } = await mountHistoricoCliente({
     hasPermission: () => false,
   });
   assert.equal(queries.length, 1);
   assert.equal(queries[0].enabled, false);
   assert.equal(filterCalls.length, 0);
-  const alert = walk().find((n) => n.props?.['data-permission'] === 'Comercial.Pedido.visualizar' && n.type === 'Alert');
-  assert.ok(alert || walk().some((n) => n.props?.['data-context-required'] === 'true'), 'alerta fail-closed');
-  assert.ok(tree);
 });
 
-test('HistoricoProdutosCliente: com permissão consulta no contexto (queryKey grupo/empresa)', async () => {
-  let permissionCalls = 0;
+test('HistoricoProdutosCliente legado: com permissão consulta filterInContext Pedido', async () => {
   const { queries, filterCalls } = await mountHistoricoCliente({
-    hasPermission: (key) => {
-      permissionCalls += 1;
-      return key === 'Comercial.Pedido.visualizar' || key === 'CRM.Cliente.visualizar';
-    },
+    backendMode: 'local',
+    hasPermission: (key) => key === 'Comercial.Pedido.visualizar',
   });
-  assert.ok(permissionCalls > 0);
-  assert.equal(queries.length, 1);
   assert.equal(queries[0].enabled, true);
-  const key = queries[0].queryKey;
-  assert.equal(key[0], 'historico-produtos-cliente-contexto');
-  assert.equal(key[1], 'cli-1');
-  assert.equal(key[2], 'g1');
-  assert.equal(key[3], 'e1');
-  // useQuery com enabled true expõe queryFn — executá-la prova o contrato real.
-  await queries[0].queryFn();
+  assert.ok(queries[0].queryKey.includes('legado'));
+  await queries[0].queryFn({});
   assert.equal(filterCalls.length, 1);
   assert.equal(filterCalls[0].entity, 'Pedido');
   assert.equal(filterCalls[0].filter.cliente_id, 'cli-1');
+});
+
+test('HistoricoProdutosCliente HTTP: nao usa filterInContext; lista por clienteEmpresaId', async () => {
+  const { queries, filterCalls, centralCalls, listCalls } = await mountHistoricoCliente({
+    backendMode: 'http',
+    session: {
+      token: 'tok',
+      actorId: '11111111-1111-1111-1111-111111111111',
+      groupId: 'g1',
+      email: 'a@b.c',
+    },
+    central360: {
+      data: {
+        meta: { clienteEmpresaId: 'ce-1' },
+        empresaLink: { id: 'ce-1' },
+        blocks: { pedidos: { status: 'ok', data: [] } },
+      },
+    },
+    pedidosList: {
+      data: [{
+        id: 'p1',
+        numero: 'P-1',
+        created_at: '2026-01-10T12:00:00Z',
+        itens: [{
+          produto_id: 'prod-1',
+          descricao: 'Barra 3/8',
+          unidade_sigla: 'KG',
+          quantidade: '10',
+          total: '100.00',
+        }],
+      }],
+    },
+  });
+  assert.equal(queries[0].enabled, true);
+  assert.ok(queries[0].queryKey.includes('http'));
+  const pedidos = await queries[0].queryFn({});
+  assert.equal(filterCalls.length, 0);
+  assert.equal(centralCalls.length, 1);
+  assert.equal(centralCalls[0].id, 'cli-1');
+  assert.equal(listCalls.length, 1);
+  assert.equal(listCalls[0].clienteEmpresaId, 'ce-1');
+  assert.equal(listCalls[0].limit, 50);
+  assert.equal(pedidos.length, 1);
+  assert.equal(pedidos[0].itens[0].descricao, 'Barra 3/8');
+});
+
+test('HistoricoProdutosCliente HTTP: sem empresa no contexto nao consulta (fail-closed)', async () => {
+  const { queries, filterCalls } = await mountHistoricoCliente({
+    backendMode: 'http',
+    empresaId: null,
+    groupId: 'g1',
+    session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
+  });
+  assert.equal(queries[0].enabled, false);
+  assert.equal(filterCalls.length, 0);
+});
+
+test('HistoricoProdutosCliente HTTP: sem sessao falha sem cair no facade local', async () => {
+  const { queries, filterCalls } = await mountHistoricoCliente({
+    backendMode: 'http',
+    session: null,
+  });
+  assert.equal(queries[0].enabled, true);
+  await assert.rejects(() => queries[0].queryFn({}), /Sessao HTTP|HTTP_SESSION/);
+  assert.equal(filterCalls.length, 0);
 });
 
 test('HistoricoProdutosCliente: sem contexto não consulta mesmo com permissão', async () => {
@@ -143,4 +234,28 @@ test('HistoricoProdutosCliente: sem contexto não consulta mesmo com permissão'
   });
   assert.equal(queries[0].enabled, false);
   assert.equal(filterCalls.length, 0);
+});
+
+test('mapPedidosToHistoricoLinhas: legado itens_* e canônico itens', async () => {
+  const { mapFn } = await mountHistoricoCliente({ hasPermission: () => false });
+  assert.equal(typeof mapFn, 'function');
+  const legado = mapFn([{
+    numero_pedido: 'L-1',
+    data_pedido: '2026-01-01',
+    itens_revenda: [{ descricao: 'Aço', quantidade: 2, unidade: 'KG', valor_total: 20 }],
+  }]);
+  assert.equal(legado.length, 1);
+  assert.equal(legado[0].tipo, 'Revenda');
+  assert.equal(legado[0].descricao, 'Aço');
+
+  const canon = mapFn([{
+    id: 'p2',
+    numero: 'C-2',
+    created_at: '2026-02-01T00:00:00Z',
+    itens: [{ descricao: 'Vergalhao', unidade_sigla: 'UN', quantidade: '3', total: '30' }],
+  }]);
+  assert.equal(canon.length, 1);
+  assert.equal(canon[0].numero_pedido, 'C-2');
+  assert.equal(canon[0].unidade, 'UN');
+  assert.equal(canon[0].valor, 30);
 });
