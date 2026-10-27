@@ -1,16 +1,14 @@
-## CURSOR — VIGENTE #397 tip `202801e22` (2026-10-27)
+## CURSOR — VIGENTE #397 Operador tenantKey + bloqueios (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`202801e22`** (código `a6c1f7a97` / `78c214f89`) |
-| CI | **SUCCESS** runs `40544409825` / `40544399614` — **≠ aprovação** |
 | Modalidade | runner `/workspace` — Chrome Codespace **não** conecta este executor |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
-| Reprova 16:57 BRT | Operador+guarda+Histórico **22** + pedido-ui **26** + server 044 **2** = **48+2 PASS** |
-| Evidência | `docs/evidence/apontamentos-353-prova-tip-202801e22-20261027.txt` |
-| Pedido | **@codex review** tip **`202801e22`** (SHA final) |
-| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 **não tip** — não duplicar |
-| #400 | `03a45899f` / código `0d1e5ce29` (tenant stack) |
+| Delta código | `tenantKey` no hook + OperadorCaixaForm (rascunho A↛B) |
+| Bloqueios | self-managed + Histórico `clienteId`/paginação + guarda + 044 |
+| Testes | persist-unica+tenant+guarda+reopen **17 PASS**; historico+pins **90 PASS** |
+| Pedido | **@codex review** tip HEAD (inclui tenant Operador) |
+| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 **não tip** |
 | Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor |
 
 **Bloqueios no HEAD — fechados (reprova):**
