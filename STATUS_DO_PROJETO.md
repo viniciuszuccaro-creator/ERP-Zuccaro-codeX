@@ -1,3 +1,20 @@
+## CURSOR — CatalogoWeb reopen tip (CI pendente) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | HEAD após este commit (CatalogoWeb) |
+| CI | pendente — não creditar verde de `151ae5590` |
+| Pacote indep. | **CatalogoWeb** — RecordState só `updated_date`; flags site/marketplace |
+| Correção | `useCadastroReopenOnIdentity` + `catalogoBoundId` + `syncFlagsCatalogoProduto`; sky |
+| Pin | graduação callback + publication reverse (…→Rota→CatalogoWeb) |
+| Provas | catalogo-web 6 PASS; callback+publication 76 PASS |
+| Pedido Rota | **@codex review** tip `151ae5590` |
+| Próximo indep. | ApiExterna / ParametroRoteirizacao / ChatbotCanal |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+
+(2026-10-27 11:00 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip final 151ae5590 (2026-10-27)
 
 | Campo | Valor |
@@ -7,7 +24,7 @@
 | Pacote | reopen …/RotaPadrao + CodigoField (`5b98cefb2`) + docs |
 | Pedido | **@codex review** tip `151ae5590` — todos os deltas (não tip ancestral) |
 | Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
-| Próximo indep. | CatalogoWeb / ApiExterna / ParametroRoteirizacao |
+| Próximo indep. | CatalogoWeb |
 | Modalidade | runner `/workspace` |
 | Fora | Orçamento leitores Codespace; merge/deploy/carga |
 
