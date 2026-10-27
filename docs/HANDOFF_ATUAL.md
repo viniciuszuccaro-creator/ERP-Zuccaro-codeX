@@ -1,3 +1,9 @@
+## CURSOR — CANAL remainder graduação Operador/Condicao (2026-10-27)
+
+Tip `981ebf8b` falhou CI (CANAL/publication: consolidacao ≠ golden `53ed9f42`). Três hunks reverse prepended em `consolidation81Remainder` restauram previous byte-exact; golden preservado. Suites CANAL + reopen/historico PASS. Orçamento leitores intactos. Pedido `@codex review` do SHA tip. Sem deploy/carga.
+
+(2026-10-27 08:27 America/Sao_Paulo)
+
 ## CURSOR — CI fix consolidacao ID-only → boundId (2026-10-27)
 
 Tip anterior `f33633d6` falhou em `cursor-identidade-consolidacao` (esperava `dadosIniciais?.id` em OperadorCaixa). Graduação documentada: OperadorCaixa/CondicaoComercial saem da coorte ID-only golden e passam a assert de boundId + reopen canônico. Sem esconder delta. Orçamento leitores intactos.

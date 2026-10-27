@@ -1,3 +1,17 @@
+## CURSOR — CANAL remainder graduação Operador/Condicao (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Pai tip | `981ebf8b` (CI FAIL: CANAL/publication hash consolidacao) |
+| Causa | Graduação ID-only→boundId em `cursor-identidade-consolidacao` sem hunks reverse no canal |
+| Correção | 3 hunks prepended em `clienteConferenciaHunks` → restaura previous byte-exact → golden `53ed9f42…` |
+| Provas | consolidacao + publication-baseline + channel-counterproof + CANAL integrity + regiao/operador/historico = PASS |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga; sem micro-PR |
+
+Pedido: **@codex review** do delta deste tip (somente remainder + docs).
+
+(2026-10-27 08:27 America/Sao_Paulo)
+
 ## CURSOR — CI fix consolidacao ID-only → boundId (2026-10-27)
 
 Tip anterior `f33633d6` falhou em `cursor-identidade-consolidacao` (esperava `dadosIniciais?.id` em OperadorCaixa). Graduação documentada: OperadorCaixa/CondicaoComercial saem da coorte ID-only golden e passam a assert de boundId + reopen canônico. Sem esconder delta. Orçamento leitores intactos.
