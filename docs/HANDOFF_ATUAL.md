@@ -1,3 +1,21 @@
+## CURSOR — KitProduto reopen tip (CI pendente) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | HEAD após este commit (KitProduto) |
+| CI | pendente neste SHA — não creditar verde de `c319b20e3`/`b47a91001` |
+| Pacote indep. | **KitProduto** — RecordState só `updated_date`; nested `itens_kit` |
+| Correção | `useCadastroReopenOnIdentity` + `kitBoundId` + map anti-wipe; sky |
+| Pin | graduação callback + publication reverse (cadeia Contato→…→Kit) |
+| Provas | kit-produto 5 PASS; callback 41; residual 9; publication 30 |
+| Próximo indep. | CodigoField / próximo pin RecordState residual (fora Orçamento) |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD após CI verde deste SHA (inclui KitProduto + deltas anteriores).
+
+(2026-10-27 10:05 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip c319b20e3 SegmentoCliente (2026-10-27)
 
 | Campo | Valor |

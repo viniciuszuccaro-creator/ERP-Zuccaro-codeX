@@ -76,6 +76,15 @@ function restoreApprovedSegmentoClienteCallbackDelta(source) {
  assert.equal(source.split(approvedSegmentoClienteGraduationTest).length,2,'Only the exact SegmentoCliente graduation test delta may be normalized');
  return source.replace(approvedSegmentoClienteGraduationTest,'\n').replace(approvedSegmentoClienteNames,previousSegmentoClienteNames);
 }
+/** #353 KitProduto: saiu do pin (JobAgendado line) após SegmentoCliente; reverse restaura KitProduto + omite teste. */
+const previousKitProdutoNames = "  'JobAgendado', 'KitProduto', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedKitProdutoNames = "  'JobAgendado', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedKitProdutoGraduationTest = "\ntest('KitProduto graduou do pin RecordState para useCadastroReopenOnIdentity com kitBoundId', () => {\n  const file = 'src/components/cadastros/KitProdutoForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('KitProduto'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n  assert.match(source, /kitBoundId/);\n  assert.match(source, /itens_kit/);\n  assert.doesNotMatch(source, /useCadastroRecordState/);\n  assert.doesNotMatch(source, /prevUpdatedRef/);\n});\n\n";
+function restoreApprovedKitProdutoCallbackDelta(source) {
+ assert.equal(source.split(approvedKitProdutoNames).length,2,'Only the exact KitProduto names graduation delta may be normalized');
+ assert.equal(source.split(approvedKitProdutoGraduationTest).length,2,'Only the exact KitProduto graduation test delta may be normalized');
+ return source.replace(approvedKitProdutoGraduationTest,'\n').replace(approvedKitProdutoNames,previousKitProdutoNames);
+}
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
@@ -87,13 +96,17 @@ test('bulk lifecycle evolution retains the original hash and rejects changed or 
 });
 test('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(source);
+ const afterKit=restoreApprovedKitProdutoCallbackDelta(source);
+ const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(afterKit);
  const mid=restoreApprovedServicoTipoFreteCallbackDelta(afterSeg);
  const restored=restoreApprovedContatoB2BCallbackDelta(mid);
  assert.equal(restored.includes(approvedContatoB2BGraduationTest),false);
  assert.match(restored,/CadastroFiscal', 'ContatoB2B'/);
- assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(source.replace(approvedSegmentoClienteGraduationTest,'\n')));
- assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(source+approvedSegmentoClienteGraduationTest));
+ assert.match(restored,/JobAgendado', 'KitProduto'/);
+ assert.throws(()=>restoreApprovedKitProdutoCallbackDelta(source.replace(approvedKitProdutoGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedKitProdutoCallbackDelta(source+approvedKitProdutoGraduationTest));
+ assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(afterKit.replace(approvedSegmentoClienteGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(afterKit+approvedSegmentoClienteGraduationTest));
  assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(afterSeg.replace(approvedServicoTipoFreteGraduationTests,'\n')));
  assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(afterSeg+approvedServicoTipoFreteGraduationTests));
  assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(mid.replace(approvedContatoB2BGraduationTest,'\n')));
@@ -102,7 +115,8 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
 });
 test('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(source);
+ const afterKit=restoreApprovedKitProdutoCallbackDelta(source);
+ const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(afterKit);
  const restored=restoreApprovedServicoTipoFreteCallbackDelta(afterSeg);
  assert.equal(restored.includes(approvedServicoTipoFreteGraduationTests),false);
  assert.match(restored,/SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete'/);
@@ -110,10 +124,18 @@ test('Servico/TipoFrete callback graduation rejects omission, repetition or out-
 });
 test('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const restored=restoreApprovedSegmentoClienteCallbackDelta(source);
+ const afterKit=restoreApprovedKitProdutoCallbackDelta(source);
+ const restored=restoreApprovedSegmentoClienteCallbackDelta(afterKit);
  assert.equal(restored.includes(approvedSegmentoClienteGraduationTest),false);
  assert.match(restored,/SegmentoCliente', 'TabelaPreco'/);
- assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(source.replace("TabelaPreco',","TabelaPreco', 'Webhook',")));
+ assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(afterKit.replace("TabelaPreco',","TabelaPreco', 'Webhook',")));
+});
+test('KitProduto callback graduation rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedKitProdutoCallbackDelta(source);
+ assert.equal(restored.includes(approvedKitProdutoGraduationTest),false);
+ assert.match(restored,/JobAgendado', 'KitProduto'/);
+ assert.throws(()=>restoreApprovedKitProdutoCallbackDelta(source.replace("JobAgendado',","JobAgendado', 'Webhook',")));
 });
 /** #353 LocalEstoque: saiu do pin residual RecordState → reopen canônico. */
 const previousResidualNames = "const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n";
@@ -148,7 +170,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
       ? restoreApprovedCodigoFieldCallbackDelta(
           restoreApprovedContatoB2BCallbackDelta(
             restoreApprovedServicoTipoFreteCallbackDelta(
-              restoreApprovedSegmentoClienteCallbackDelta(reviewed))))
+              restoreApprovedSegmentoClienteCallbackDelta(
+                restoreApprovedKitProdutoCallbackDelta(reviewed)))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
         : reviewed;
