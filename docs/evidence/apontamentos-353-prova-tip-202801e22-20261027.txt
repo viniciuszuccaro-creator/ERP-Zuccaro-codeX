@@ -1,0 +1,28 @@
+PROVA BLOQUEIOS — tip #397 202801e22 (America/Sao_Paulo 2026-10-27 16:57)
+==========================================================================
+Modalidade: runner /workspace ≠ Codespace.
+Chrome (owner): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Browser MCP: ausente · gh codespaces 403 · sem 2º escritor.
+Stash: stash@{0} wip-after-350 preservado.
+#342 tip publicado: 47a5d0e10 — WIP “fora dos 50” NÃO tip; não duplicado.
+
+SHA
+---
+Tip HEAD: 202801e227c98d9a747f81f8a569437b3a90f9fc
+Código efetivo: a6c1f7a97 / 78c214f89 (+ docs)
+
+Reprova dirigida (node --test)
+------------------------------
+Operador+guarda+Histórico: 22 PASS
+  - self-managed create/edit = 1 escrita; erro preserva rascunho
+  - if(false) rejeitado; 0 writes sem permissão
+  - pedidos.list?clienteId=; paginação >50; sem Central360/cliente_empresa
+pedido-ui-policy: 26 PASS (044 incluso)
+server PEDIDO_SCHEMA_IDEMPOTENCY: 2 PASS
+Total: 48 frontend + 2 server
+
+CI tip 202801e22: SUCCESS runs 40544409825 / 40544399614 ≠ aprovação
+Pedido: @codex review tip 202801e22 (código a6c1f7a97)
+
+Roteiro Chrome: docs/evidence/roteiro-demo-operador-historico-397-20261027.txt
+Janela exclusiva com Codex; medir SHA+HTTP (5173 ≠ prova).
