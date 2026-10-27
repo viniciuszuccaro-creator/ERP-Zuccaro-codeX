@@ -66,12 +66,20 @@ export const clienteConferenciaHunks={
       [
         "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.post('/api/v1/clientes/conferencia-legado', requireTenantScope, async (req, res, next) => {\n    try {\n      if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified Supabase session required');\n      res.set('cache-control', 'no-store');\n      res.json({ data: await service.conferirLegado(ctxFromReq(req), req.body) });\n    } catch (error) { next(error); }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n",
         "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n"
+      ],
+      [
+        "        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        clienteId: typeof req.query.clienteId === 'string'\n          ? req.query.clienteId\n          : (typeof req.query.cliente_id === 'string' ? req.query.cliente_id : undefined),\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n",
+        "        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n"
       ]
     ]
   },
   "src/api/httpApiClient.js": {
     "hash": "c0350d35d527c4af546efc459f7b8566377537a5c2870b1a274480be0c56b4c1",
     "hunks": [
+      [
+        "    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, clienteId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */\n    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, clienteId, tipoOperacao, signal } = {}) {\n      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, clienteId, tipoOperacao }, signal, unwrap: false });\n    },\n",
+        "    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */\n    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, signal } = {}) {\n      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao }, signal, unwrap: false });\n    },\n"
+      ],
       [
         "import { toClienteMasterHttpPayload, withHydratedContatos } from './clienteHttpPayload.js';\n",
         "import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';\n"
