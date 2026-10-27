@@ -174,3 +174,13 @@ test('CondicaoComercial graduou para reopen canônico (boundId; sem prevUpdatedR
   assert.doesNotMatch(text, /prevUpdatedRef/);
   assert.doesNotMatch(text, /useCadastroRecordState/);
 });
+
+test('ContatoB2B graduou para reopen canônico (boundId; preserva preferencias)', async () => {
+  const text = await source('src/components/cadastros/ContatoB2BForm.jsx');
+  assert.match(text, /CadastroCodigoRegistroField/);
+  assert.match(text, /useCadastroReopenOnIdentity/);
+  assert.match(text, /contatoBoundId/);
+  assert.match(text, /preferencias_comunicacao/);
+  assert.doesNotMatch(text, /prevUpdatedRef/);
+  assert.doesNotMatch(text, /useCadastroRecordState/);
+});

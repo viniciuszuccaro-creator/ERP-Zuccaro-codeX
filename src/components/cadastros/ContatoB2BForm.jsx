@@ -1,4 +1,3 @@
-import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,13 +9,68 @@ import { useQuery } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeEmail = (value) => sanitizeText(value, 180).toLowerCase();
 const sanitizePhone = (value) => String(value ?? "").replace(/[^0-9+()\-\s]/g, "").slice(0, 30).trim();
 
+const EMPTY_PREFS = {
+  receber_transacionais: true,
+  receber_marketing: false,
+  canal_preferencial: "Email",
+};
+
+const EMPTY_CONTATO = {
+  cliente_id: "",
+  nome_contato: "",
+  cargo: "",
+  departamento: "Compras",
+  email: "",
+  telefone: "",
+  whatsapp: "",
+  preferencias_comunicacao: { ...EMPTY_PREFS },
+  principal: false,
+  ativo: true,
+  empresa_id: "",
+  group_id: "",
+};
+
+const mapContatoB2BToForm = (record, defaults = {}) => {
+  if (!record) {
+    return {
+      ...EMPTY_CONTATO,
+      empresa_id: defaults.empresa_id || "",
+      group_id: defaults.group_id || "",
+      preferencias_comunicacao: { ...EMPTY_PREFS },
+    };
+  }
+  const prefs = record.preferencias_comunicacao && typeof record.preferencias_comunicacao === "object"
+    ? record.preferencias_comunicacao
+    : null;
+  return {
+    ...EMPTY_CONTATO,
+    ...record,
+    preferencias_comunicacao: {
+      ...EMPTY_PREFS,
+      ...(prefs || {}),
+      receber_transacionais: prefs
+        ? Boolean(prefs.receber_transacionais)
+        : EMPTY_PREFS.receber_transacionais,
+      receber_marketing: prefs
+        ? Boolean(prefs.receber_marketing)
+        : EMPTY_PREFS.receber_marketing,
+      canal_preferencial: sanitizeText(prefs?.canal_preferencial || EMPTY_PREFS.canal_preferencial, 40)
+        || EMPTY_PREFS.canal_preferencial,
+    },
+    principal: Boolean(record.principal),
+    ativo: record.ativo !== false,
+  };
+};
+
 /**
- * V21.1.2 - WINDOW MODE READY
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — updated_at|updated_date,
+ * preservação de preferencias_comunicacao, código/ID no boundId.
  */
 export default function ContatoB2BForm({ contato, contatoB2B, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || contatoB2B || contato;
@@ -24,25 +78,22 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const emptyForm = mapContatoB2BToForm(null, {
+    empresa_id: empresaAtual?.id || "",
+    group_id: groupId || "",
+  });
+  const [formData, setFormData] = useState(() => mapContatoB2BToForm(dadosIniciais, emptyForm));
+
+  const { boundId: contatoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm,
+    mapToForm: (record) => mapContatoB2BToForm(record, emptyForm),
+  });
+
   const podeCriar = canCreate("Cadastros", "ContatoB2B") || canCreate("Comercial", "ContatoB2B") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ContatoB2B") || canEdit("Comercial", "ContatoB2B") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
-    cliente_id: "",
-    nome_contato: "",
-    cargo: "",
-    departamento: "Compras",
-    email: "",
-    telefone: "",
-    whatsapp: "",
-    preferencias_comunicacao: {
-      receber_transacionais: true,
-      receber_marketing: false,
-      canal_preferencial: "Email"
-    },
-    principal: false,
-    ativo: true
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  const podeSalvar = contatoBoundId ? podeEditar : podeCriar;
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-contato-b2b", empresaAtual?.id || groupId || "sem-contexto"],
@@ -52,6 +103,7 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
 
   const buildPayload = () => ({
     ...formData,
+    ...(contatoBoundId ? { id: contatoBoundId } : {}),
     cliente_id: sanitizeText(formData.cliente_id, 120),
     nome_contato: sanitizeText(formData.nome_contato, 180),
     nome: sanitizeText(formData.nome_contato, 180),
@@ -72,7 +124,7 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!podeSalvar) {
-      alert(dadosIniciais?.id ? "Sem permissao para editar contato B2B." : "Sem permissao para criar contato B2B.");
+      alert(contatoBoundId ? "Sem permissao para editar contato B2B." : "Sem permissao para criar contato B2B.");
       return;
     }
     if (!contextoValido) {
@@ -98,8 +150,8 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         idOnly
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(contatoBoundId)}
+        entityId={contatoBoundId}
         action="id-tecnico-contato-b2b"
       />
       <div>
@@ -166,9 +218,9 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ContatoB2B.salvar" data-action="Cadastros.ContatoB2B.salvar" data-sensitive>
+        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.ContatoB2B.salvar" data-action="Cadastros.ContatoB2B.salvar" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {dadosIniciais ? "Atualizar" : "Criar Contato"}
+          {contatoBoundId ? "Atualizar" : "Criar Contato"}
         </Button>
       </div>
     </form>
@@ -177,10 +229,10 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
+        <div className="mb-4 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-blue-600" />
-            {dadosIniciais ? "Editar Contato B2B" : "Novo Contato B2B"}
+            <MessageCircle className="w-5 h-5 text-sky-600" />
+            {contatoBoundId ? "Editar Contato B2B" : "Novo Contato B2B"}
           </h2>
         </div>
         {formContent}

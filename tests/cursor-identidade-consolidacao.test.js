@@ -11,14 +11,15 @@ import { MASTER_CODE_SPECS } from '../src/api/localCadastroMasterPolicy.js';
 import { clienteNavigationRemainder } from './helpers/clienteNavigationRemainder.js';
 import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';
 
-// Coorte ID-only restante (golden e36231b3). OperadorCaixa, CondicaoComercial e
-// MoedaIndice graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.
-const forms = ['CadastroFiscal', 'ContatoB2B', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario',
+// Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B
+// graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.
+const forms = ['CadastroFiscal', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario',
   'ConfiguracaoBoletos', 'Webhook'];
 const graduatedReopen = {
   OperadorCaixa: 'operadorBoundId',
   CondicaoComercial: 'condicaoBoundId',
   MoedaIndice: 'moedaBoundId',
+  ContatoB2B: 'contatoBoundId',
 };
 const read = path => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 const head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
@@ -63,7 +64,7 @@ test('remaining ID-only additions retain every existing handler context permissi
   for (const name of forms) {
     assert.equal(Object.hasOwn(MASTER_CODE_SPECS, name), false, `Master code contract must not be hidden: ${name}`);
     const path = `src/components/cadastros/${name}Form.jsx`, source = read(path), ast = tree(path, source);
-    const reopened = ['CadastroFiscal', 'CentroOperacao', 'ContatoB2B', 'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'].includes(name);
+    const reopened = ['CadastroFiscal', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'].includes(name);
     const found = { imports: 0, fields: 0, reopenImports: 0, reopenCalls: 0 };
     const transform = context => {
       const visit = node => {
@@ -104,7 +105,7 @@ test('remaining ID-only additions retain every existing handler context permissi
   }
 });
 
-test('OperadorCaixa CondicaoComercial e MoedaIndice graduaram ID-only → reopen canônico com boundId', () => {
+test('OperadorCaixa CondicaoComercial MoedaIndice e ContatoB2B graduaram ID-only → reopen canônico com boundId', () => {
   for (const [name, boundId] of Object.entries(graduatedReopen)) {
     assert.equal(Object.hasOwn(MASTER_CODE_SPECS, name), false, `Master code contract must not be hidden: ${name}`);
     const path = `src/components/cadastros/${name}Form.jsx`;

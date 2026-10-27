@@ -1,3 +1,18 @@
+## CURSOR — CI SUCCESS d1e1c44b + ContatoB2B reopen (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| CI verde | tip **`d1e1c44b`** — frontend/backend/expedicao SUCCESS |
+| Pacote fechado | Regiao/Operador/Condicao/MoedaIndice + Historico HTTP |
+| Próximo indep. | **ContatoB2B** — RecordState só `updated_date` ignorava HTTP `updated_at`; nested prefs |
+| Correção ContatoB2B | `useCadastroReopenOnIdentity` + `contatoBoundId` + map prefs; sky; CANAL chain rebuild |
+| Provas | contato-b2b + consolidacao/publication/counterproof = PASS |
+| Fora | Orçamento leitores; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD (CI verde `d1e1c44b` + ContatoB2B).
+
+(2026-10-27 09:00 America/Sao_Paulo)
+
 ## CURSOR — CI typecheck HistoricoProdutos Error.code (2026-10-27)
 
 | Campo | Valor |
