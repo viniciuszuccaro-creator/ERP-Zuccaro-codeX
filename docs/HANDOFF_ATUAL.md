@@ -1,15 +1,16 @@
-## CURSOR — vigente: ParametroRoteirizacao reopen (2026-10-27)
+## CURSOR — VIGENTE (2026-10-27 12:40 America/Sao_Paulo)
 
-Tip **`b91d6fb49`** CI **SUCCESS** (≠ aprovação). Empilhado sobre #398. Próximo: ChatbotCanal. Codespace 403. #397/#398 aguardam parecer Codex.
+**Executor:** runner `/workspace`. Codespace xylophone **403** — sem 2º escritor. Stash `stash@{0}` preservado.
 
-(2026-10-27 12:00 America/Sao_Paulo)
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#399** ParametroRoteirizacao | tip HEAD (P1 tenant) | **P1 fechado**: `tenantKey` restaura invalidação RecordState; 7 PASS |
+| #398 ApiExterna | `bd0b21dc7` | CI SUCCESS; reviews 0 |
+| #397 Operador+Histórico | `a6c1f7a97` | prova 48+2 PASS; @codex pedido |
+| #400 ChatbotCanal | `e4a3621a7` | CI SUCCESS; **P2 gate credenciais** aberto |
+| #342 Pedido mestres | `47a5d0e109` | **APROVADO** (Codex branch intocada) |
 
-## CURSOR — vigente: ApiExterna reopen (2026-10-27)
-
-Tip HEAD **`bc3149b6d`** (código `8918b326e`). CI **SUCCESS** push/PR — **≠ aprovação**. Gradua ApiExterna. Aguarda parecer Codex. Próximo: ParametroRoteirizacao. Codespace 403.
-Pacote #397 Operador/Histórico permanece em paralelo (tip `d4c882e03` / CI tip `d1802de69` SUCCESS ≠ aprovação).
-
-(2026-10-27 11:50 America/Sao_Paulo)
+**Próximo:** P2 #400 → recuperação matriz → demo Codespace com Codex. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

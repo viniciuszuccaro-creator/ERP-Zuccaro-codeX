@@ -1,19 +1,20 @@
-## CURSOR — ParametroRoteirizacao reopen canônico (2026-10-27)
+## CURSOR — VIGENTE #399 P1 tenant + ParametroRoteirizacao (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Branch / tip | `cursor/cadastros-parametro-roteirizacao-reopen-392b` **`b91d6fb49`** |
-| Base | `cursor/cadastros-apiexterna-reopen-392b` (#398) |
-| Mudança | `ParametroRoteirizacaoForm` → `useCadastroReopenOnIdentity` + `roteirizacaoBoundId` |
-| Pin | saiu de names; publication reverse ParametroRoteirizacao |
-| Testes | behavioral 6; callback+publication PASS |
-| CI tip `b91d6fb49` | **SUCCESS** push `40525678738` / PR `40525699019` — **≠ aprovação** |
-| Pedido | **@codex review** tip `b91d6fb49` |
-| Próximo | ChatbotCanal reopen; parecer Codex #397/#398/#399 |
-| Modalidade | runner `/workspace` |
-| Fora | merge/deploy/carga; Codespace 403 |
+| Modalidade | runner `/workspace` ≠ Codespace (403) |
+| Branch | `cursor/cadastros-parametro-roteirizacao-reopen-392b` (#399 → #398) |
+| Código reopen | `b91d6fb49` |
+| Fix P1 tip | (este commit) — `tenantKey` opt-in no hook + form |
+| Achado Codex | P1: rascunho A sobrevivia troca empresa → submit com `empresa_id` B |
+| Correção | `useCadastroReopenOnIdentity({ tenantKey })` invalida rascunho; form passa `JSON.stringify([groupId, empresaId, contexto])` (mesmo identity do RecordState) |
+| Testes | behavioral **7 PASS** (incl. troca emp-A→B não retargeta 777); ApiExterna 6 PASS; callback+publication PASS |
+| Pedido | **@codex review** tip HEAD — reavaliar P1 tenant |
+| Paralelo | #397 tip `a6c1f7a97` prova 48+2 PASS; aguarda parecer |
+| Próximo | #400 ChatbotCanal P2 credenciais; recuperação matriz (não forms cosméticos) |
+| Fora | merge/deploy/carga; ampliar tenantKey a todos os forms sem contrato |
 
-(2026-10-27 12:05 America/Sao_Paulo)
+(2026-10-27 12:40 America/Sao_Paulo)
 
 ## CURSOR — ApiExterna reopen canônico (2026-10-27)
 
