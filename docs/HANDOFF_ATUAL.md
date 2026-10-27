@@ -1,3 +1,9 @@
+## CURSOR — CI4886/4887: pin MoedaIndice graduado (2026-10-27)
+
+HEAD `fad1f469` FAIL: teste ainda pinava MoedaIndice como ID-only. Graduação documentada (boundId/reopen) no pin representante-updated; CondicaoComercial alinhada. CANAL/hashes intocados. Orçamento leitores intactos. Aguardando CI do tip; `@codex review` no SHA verde.
+
+(2026-10-27 08:42 America/Sao_Paulo)
+
 ## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
 
 Tip **`c27b827d`** (código `d91d49a8`). Defeito MoedaIndice (só `id`, ignora `updated_at`) reproduzido e corrigido com `useCadastroReopenOnIdentity`/`moedaBoundId`. CANAL: chain rebuild current→golden `53ed9f42`. Orçamento leitores intactos. Pedido `@codex review` tip. Sem deploy/carga.

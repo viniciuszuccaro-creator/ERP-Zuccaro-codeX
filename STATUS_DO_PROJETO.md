@@ -1,3 +1,17 @@
+## CURSOR — CI4886/4887: graduação pin MoedaIndice (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| HEAD reprovado | `fad1f469` (CI FAIL frontend 1/2418) |
+| Causa | Guarda `cadastros-reopen-representante-updated`: pin ID-only ainda exigia `prevIdRef` e proibia reopen |
+| Correção | Graduação explícita MoedaIndice (+ CondicaoComercial) no mesmo padrão de OperadorCaixa; sem afrouxar asserts |
+| Provas | representante-updated + moeda/operador/regiao/consolidacao/CANAL = 83 PASS |
+| Fora | Orçamento leitores; merge/deploy/carga; CANAL hashes intactos |
+
+Pedido: **@codex review** do tip verde após CI.
+
+(2026-10-27 08:42 America/Sao_Paulo)
+
 ## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
 
 | Campo | Valor |
