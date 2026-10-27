@@ -1,17 +1,26 @@
-## CURSOR — CatalogoWeb reopen tip (CI pendente) (2026-10-27)
+## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (CatalogoWeb) |
-| CI | pendente — não creditar verde de `151ae5590` |
-| Pacote indep. | **CatalogoWeb** — RecordState só `updated_date`; flags site/marketplace |
-| Correção | `useCadastroReopenOnIdentity` + `catalogoBoundId` + `syncFlagsCatalogoProduto`; sky |
-| Pin | graduação callback + publication reverse (…→Rota→CatalogoWeb) |
-| Provas | catalogo-web 6 PASS; callback+publication 76 PASS |
-| Pedido Rota | **@codex review** tip `151ae5590` |
+| Tip | **`cc7ccb6c7`** (reopen `fb45e367b` + typecheck) |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/RotaPadrao/**CatalogoWeb** + Historico HTTP |
+| Correção | `catalogoBoundId` + `syncFlagsCatalogoProduto`; typecheck flags/nome |
+| Pedido | **@codex review** tip `cc7ccb6c7` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
 | Próximo indep. | ApiExterna / ParametroRoteirizacao / ChatbotCanal |
 | Modalidade | runner `/workspace` |
-| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 11:12 America/Sao_Paulo)
+
+## CURSOR — CatalogoWeb reopen tip (histórico CI FAIL → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip reopen | **`fb45e367b`** frontend FAIL typecheck |
+| Tip fix | **`cc7ccb6c7`** SUCCESS |
+| Modalidade | runner `/workspace` |
 
 (2026-10-27 11:00 America/Sao_Paulo)
 

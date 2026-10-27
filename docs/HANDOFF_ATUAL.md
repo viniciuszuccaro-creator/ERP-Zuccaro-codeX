@@ -1,19 +1,17 @@
-## CURSOR — CatalogoWeb reopen tip (CI pendente) (2026-10-27)
+## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (CatalogoWeb) |
-| CI | pendente — não creditar verde de `151ae5590` |
-| Pacote indep. | **CatalogoWeb** — RecordState só `updated_date`; flags site/marketplace |
-| Correção | `useCadastroReopenOnIdentity` + `catalogoBoundId` + `syncFlagsCatalogoProduto`; sky |
-| Pin | graduação callback + publication reverse (…→Rota→CatalogoWeb) |
-| Provas | catalogo-web 6; callback+publication 76 PASS |
-| Pedido Rota | **@codex review** tip `151ae5590` |
+| Tip | **`cc7ccb6c7`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/RotaPadrao/**CatalogoWeb** |
+| Pedido | **@codex review** tip `cc7ccb6c7` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
 | Próximo indep. | ApiExterna / ParametroRoteirizacao / ChatbotCanal |
 | Modalidade | runner `/workspace` |
-| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
 
-(2026-10-27 11:00 America/Sao_Paulo)
+(2026-10-27 11:12 America/Sao_Paulo)
 
 ## CURSOR — CI SUCCESS tip final 151ae5590 (2026-10-27)
 
