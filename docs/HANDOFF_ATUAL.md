@@ -1,6 +1,6 @@
 ## CURSOR — vigente: ParametroRoteirizacao reopen (2026-10-27)
 
-Empilhado sobre #398 ApiExterna. Tip a publicar. Codespace 403. #397 aguarda parecer Codex (CI tip SUCCESS ≠ aprovação).
+Tip **`b91d6fb49`** CI **SUCCESS** (≠ aprovação). Empilhado sobre #398. Próximo: ChatbotCanal. Codespace 403. #397/#398 aguardam parecer Codex.
 
 (2026-10-27 12:00 America/Sao_Paulo)
 
