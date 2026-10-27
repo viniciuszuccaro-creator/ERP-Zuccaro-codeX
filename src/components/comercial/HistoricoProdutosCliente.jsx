@@ -88,14 +88,14 @@ export function mapPedidosToHistoricoLinhas(pedidos = []) {
 async function loadPedidosHistoricoHttp({ clienteId, groupId, empresaId, signal }) {
   const session = readErpHttpSession();
   if (!session?.token || !session?.actorId || !session?.groupId) {
-    const err = new Error("Sessao HTTP ausente para historico de produtos.");
-    err.code = "HTTP_SESSION_REQUIRED";
-    throw err;
+    throw Object.assign(new Error("Sessao HTTP ausente para historico de produtos."), {
+      code: "HTTP_SESSION_REQUIRED",
+    });
   }
   if (!empresaId) {
-    const err = new Error("Historico HTTP exige empresa no contexto.");
-    err.code = "EMPRESA_CONTEXT_REQUIRED";
-    throw err;
+    throw Object.assign(new Error("Historico HTTP exige empresa no contexto."), {
+      code: "EMPRESA_CONTEXT_REQUIRED",
+    });
   }
   const http = createHttpApiClient({
     getScope: () => ({
@@ -119,9 +119,9 @@ async function loadPedidosHistoricoHttp({ clienteId, groupId, empresaId, signal 
   const body = central?.data || central;
   const clienteEmpresaId = body?.meta?.clienteEmpresaId || body?.empresaLink?.id || null;
   if (!clienteEmpresaId) {
-    const err = new Error("Cliente sem vinculo ClienteEmpresa na empresa atual.");
-    err.code = "CLIENTE_EMPRESA_LINK_MISSING";
-    throw err;
+    throw Object.assign(new Error("Cliente sem vinculo ClienteEmpresa na empresa atual."), {
+      code: "CLIENTE_EMPRESA_LINK_MISSING",
+    });
   }
   const page = await http.pedidos.list({
     limit: PEDIDOS_PAGE_LIMIT,
@@ -192,7 +192,12 @@ export default function HistoricoProdutosCliente({ clienteId }) {
 
   if (isError) {
     return (
-      <Alert className="w-full h-full border-red-200 bg-red-50" data-historico-produtos-error={error?.code || "error"}>
+      <Alert
+        className="w-full h-full border-red-200 bg-red-50"
+        data-historico-produtos-error={
+          (error && typeof error === "object" && "code" in error && error.code) || "error"
+        }
+      >
         <ShieldAlert className="h-4 w-4 text-red-600" />
         <AlertDescription className="text-red-800">
           {error?.message || "Falha ao carregar histórico de produtos. Sem fallback local."}

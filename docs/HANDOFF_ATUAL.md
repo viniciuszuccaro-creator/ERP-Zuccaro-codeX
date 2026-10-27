@@ -1,3 +1,17 @@
+## CURSOR — CI typecheck HistoricoProdutos Error.code (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| HEAD reprovado | `4e0c58eb` / `b21e509d` (frontend typecheck) |
+| Causa | `err.code = ...` em `Error` sem tipagem — TS2339 |
+| Correção | `Object.assign(new Error(...), { code })` + leitura segura no Alert |
+| Provas | `npm run typecheck` PASS; historico 11 PASS |
+| Fora | Orçamento leitores; CANAL; merge/deploy |
+
+Pedido: **@codex review** tip HEAD após CI verde.
+
+(2026-10-27 08:52 America/Sao_Paulo)
+
 ## CURSOR — CI4886/4887 + fechamento provas reopen/historico (2026-10-27)
 
 Tip **`b21e509d`**. HEAD `fad1f469` FAIL (pin MoedaIndice ID-only). Graduação pin + provas updated_date e Historico HTTP (link/vazio/ordem/repetido/empresa). CANAL intocado. Orçamento leitores intactos. `@codex review` tip HEAD após CI verde.
