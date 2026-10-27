@@ -1,3 +1,10 @@
+## CURSOR — vigente: ApiExterna reopen (2026-10-27)
+
+Tip HEAD **`bc3149b6d`** (código `8918b326e`). CI **SUCCESS** push/PR — **≠ aprovação**. Gradua ApiExterna. Aguarda parecer Codex. Próximo: ParametroRoteirizacao. Codespace 403.
+Pacote #397 Operador/Histórico permanece em paralelo (tip `d4c882e03` / CI tip `d1802de69` SUCCESS ≠ aprovação).
+
+(2026-10-27 11:50 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |

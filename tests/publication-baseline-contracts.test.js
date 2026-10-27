@@ -130,6 +130,15 @@ function restoreApprovedCatalogoWebCallbackDelta(source) {
  assert.equal(source.split(approvedCatalogoWebGraduationTest).length,2,'Only the exact CatalogoWeb graduation test delta may be normalized');
  return source.replace(approvedCatalogoWebGraduationTest,'\n').replace(approvedCatalogoWebNames,previousCatalogoWebNames);
 }
+/** #353 ApiExterna: saiu do pin após CatalogoWeb; reverse restaura ApiExterna + omite teste. */
+const previousApiExternaNames = "const names = ['ApiExterna', 'ChatbotCanal', 'ChatbotIntent',\n  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',\n  'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedApiExternaNames = "const names = ['ChatbotCanal', 'ChatbotIntent',\n  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',\n  'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// ApiExterna graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedApiExternaGraduationTest = "\ntest('ApiExterna graduou do pin RecordState para useCadastroReopenOnIdentity com apiExternaBoundId', () => {\n  const file = 'src/components/cadastros/ApiExternaForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('ApiExterna'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n  assert.match(source, /apiExternaBoundId/);\n  assert.match(source, /headers_autenticacao/);\n  assert.doesNotMatch(source, /useCadastroRecordState/);\n  assert.doesNotMatch(source, /prevUpdatedRef/);\n});\n\n";
+function restoreApprovedApiExternaCallbackDelta(source) {
+ assert.equal(source.split(approvedApiExternaNames).length,2,'Only the exact ApiExterna names graduation delta may be normalized');
+ assert.equal(source.split(approvedApiExternaGraduationTest).length,2,'Only the exact ApiExterna graduation test delta may be normalized');
+ return source.replace(approvedApiExternaGraduationTest,'\n').replace(approvedApiExternaNames,previousApiExternaNames);
+}
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
@@ -141,7 +150,8 @@ test('bulk lifecycle evolution retains the original hash and rejects changed or 
 });
 test('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
  const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
@@ -158,8 +168,10 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
  assert.match(restored,/GatewayPagamento',\n  'JobAgendado'/);
  assert.match(restored,/ParametroRoteirizacao', 'RotaPadrao'/);
  assert.match(restored,/ApiExterna', 'CatalogoWeb'/);
- assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(source.replace(approvedCatalogoWebGraduationTest,'\n')));
- assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(source+approvedCatalogoWebGraduationTest));
+ assert.throws(()=>restoreApprovedApiExternaCallbackDelta(source.replace(approvedApiExternaGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedApiExternaCallbackDelta(source+approvedApiExternaGraduationTest));
+ assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(afterApi.replace(approvedCatalogoWebGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(afterApi+approvedCatalogoWebGraduationTest));
  assert.throws(()=>restoreApprovedRotaPadraoCallbackDelta(afterCat.replace(approvedRotaPadraoGraduationTest,'\n')));
  assert.throws(()=>restoreApprovedRotaPadraoCallbackDelta(afterCat+approvedRotaPadraoGraduationTest));
  assert.throws(()=>restoreApprovedJobAgendadoCallbackDelta(afterRota.replace(approvedJobAgendadoGraduationTest,'\n')));
@@ -180,7 +192,8 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
 });
 test('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
  const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
@@ -194,7 +207,8 @@ test('Servico/TipoFrete callback graduation rejects omission, repetition or out-
 });
 test('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
  const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
@@ -207,7 +221,8 @@ test('SegmentoCliente callback graduation rejects omission, repetition or out-of
 });
 test('KitProduto callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
  const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
@@ -219,7 +234,8 @@ test('KitProduto callback graduation rejects omission, repetition or out-of-scop
 });
 test('Filial callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
  const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
@@ -230,7 +246,8 @@ test('Filial callback graduation rejects omission, repetition or out-of-scope ed
 });
 test('CentroResultado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const afterJob=restoreApprovedJobAgendadoCallbackDelta(afterRota);
  const restored=restoreApprovedCentroResultadoCallbackDelta(afterJob);
@@ -240,7 +257,8 @@ test('CentroResultado callback graduation rejects omission, repetition or out-of
 });
 test('JobAgendado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  const restored=restoreApprovedJobAgendadoCallbackDelta(afterRota);
  assert.equal(restored.includes(approvedJobAgendadoGraduationTest),false);
@@ -249,7 +267,8 @@ test('JobAgendado callback graduation rejects omission, repetition or out-of-sco
 });
 test('RotaPadrao callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCat=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const restored=restoreApprovedRotaPadraoCallbackDelta(afterCat);
  assert.equal(restored.includes(approvedRotaPadraoGraduationTest),false);
  assert.match(restored,/ParametroRoteirizacao', 'RotaPadrao'/);
@@ -257,10 +276,20 @@ test('RotaPadrao callback graduation rejects omission, repetition or out-of-scop
 });
 test('CatalogoWeb callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const restored=restoreApprovedCatalogoWebCallbackDelta(source);
+ const afterApi=restoreApprovedApiExternaCallbackDelta(source);
+ const restored=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  assert.equal(restored.includes(approvedCatalogoWebGraduationTest),false);
  assert.match(restored,/ApiExterna', 'CatalogoWeb'/);
- assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(source.replace("ApiExterna',","ApiExterna', 'Webhook',")));
+ assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(afterApi.replace("ApiExterna',","ApiExterna', 'Webhook',")));
+});
+test('ApiExterna callback graduation rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedApiExternaCallbackDelta(source);
+ assert.equal(restored.includes(approvedApiExternaGraduationTest),false);
+ assert.match(restored,/ApiExterna', 'ChatbotCanal'/);
+ assert.throws(()=>restoreApprovedApiExternaCallbackDelta(source.replace(approvedApiExternaGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedApiExternaCallbackDelta(source+approvedApiExternaGraduationTest));
+ assert.throws(()=>restoreApprovedApiExternaCallbackDelta(source.replace("ChatbotCanal',","ChatbotCanal', 'Webhook',")));
 });
 /** #353 LocalEstoque: saiu do pin residual RecordState → reopen canônico. */
 const previousResidualNames = "const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n";
@@ -301,7 +330,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
                     restoreApprovedCentroResultadoCallbackDelta(
                       restoreApprovedJobAgendadoCallbackDelta(
                         restoreApprovedRotaPadraoCallbackDelta(
-                          restoreApprovedCatalogoWebCallbackDelta(reviewed))))))))))
+                          restoreApprovedCatalogoWebCallbackDelta(
+                            restoreApprovedApiExternaCallbackDelta(reviewed)))))))))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
         : reviewed;
