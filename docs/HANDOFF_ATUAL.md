@@ -1,18 +1,17 @@
-## CURSOR — SegmentoCliente reopen + HEAD review a7395bd21 (2026-10-27)
+## CURSOR — CI SUCCESS tip c319b20e3 SegmentoCliente (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| HEAD anterior | **`a7395bd21`** CI SUCCESS; `@codex review` 6442148086 |
-| Pacote | **SegmentoCliente** reopen canônico (matriz início de uso) |
-| Correção | `useCadastroReopenOnIdentity` + `segmentoBoundId`; sky; pin callback |
-| Publication | reverse Segmento → Servico/TipoFrete → Contato → CodigoField (`62a49942…`) |
-| Provas | behavioral + callback + publication = PASS |
-| Fora | Orçamento leitores; Codex; merge/deploy/carga |
+| Tip | **`c319b20e3`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen ContatoB2B/Regiao/Operador/Condicao/Moeda/LocalEstoque/Servico/TipoFrete/**SegmentoCliente** + Historico HTTP |
+| Pedido | **@codex review** tip `c319b20e3` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | KitProduto (RecordState só `updated_date`; pin callback) |
 | Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
 
-Pedido: **@codex review** tip HEAD após CI verde deste SHA (todos os deltas).
-
-(2026-10-27 09:50 America/Sao_Paulo)
+(2026-10-27 09:52 America/Sao_Paulo)
 
 ## CURSOR — CI SUCCESS tip 7d9eade5 Servico/TipoFrete (2026-10-27)
 
