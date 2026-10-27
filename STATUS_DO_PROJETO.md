@@ -9,9 +9,10 @@
 | Histórico | `pedidos.list?clienteId=` (Pedido.visualizar; sem Central360/`cliente_empresa`); paginação + total/carregados; legado 200 |
 | Testes | operador persist 6 PASS; historico painel 14 PASS; reopen operador 8 PASS; pedido service clienteId 10 PASS |
 | CI tip | pendente neste SHA — não atribuir sucesso ancestral |
-| Próximo | guarda preservação P1; Pedido 044; parecer #342; candidata Codespace após CI |
+| Guarda P1 #6441849832 | `tests/cursor-identidade-graduated-submit-guard.test.js` — hunk único `!podeSalvar`; ataque `if(false)` rejeitado; handler sem permissão 0 writes; CANAL remainder +clienteId |
+| Próximo | Pedido 044; parecer #342; candidata Codespace após CI tip |
 | Modalidade | runner `/workspace` (≠ Codespace) |
-| Fora | merge/deploy/carga; dados reais |
+| Fora | merge/deploy/carga; dados reais; contatos/CodigoField/Região P2 não reabertos |
 
 (2026-10-27 11:30 America/Sao_Paulo)
 

@@ -6,7 +6,9 @@ Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovaçã
 - OperadorCaixa: um único responsável pela persistência (`isSelfManagedCadastro`); Visualizador só conclui; criação/edição 1 escrita; erro mantém rascunho.
 - Histórico de Produtos: `GET /pedidos?clienteId=` autorizado por `Comercial.Pedido.visualizar` (resolve vínculo no serviço, sem Central360 / sem exigir `Cadastros.cliente_empresa.visualizar`); paginação utilizável (total vs carregados; carregar mais); legado restaura limite 200.
 
-**Ainda aberto:** Pedido 044 contrato público; guarda preservação P1 Codex; revisão independente #342; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` após CI deste tip.
+**Guarda P1 #6441849832:** contraprova em `cursor-identidade-graduated-submit-guard` (sem tocar pin CANAL identidade); remoção `if (!podeSalvar)`→`if (false)` falha; handler real sem permissão não persiste.
+
+**Ainda aberto:** Pedido 044 contrato público; revisão independente #342; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` após CI tip.
 
 Modalidade evidência: runner `/workspace`. Sem merge/deploy/carga.
 
