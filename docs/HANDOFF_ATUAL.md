@@ -1,6 +1,6 @@
 ## CURSOR — vigente: ApiExterna reopen (2026-10-27)
 
-Tip **`8918b326e`**. Gradua ApiExterna do pin RecordState. Aguarda CI tip + @codex review.
+Tip HEAD **`bc3149b6d`** (código `8918b326e`). CI **SUCCESS** push/PR — **≠ aprovação**. Gradua ApiExterna. Aguarda parecer Codex. Próximo: ParametroRoteirizacao. Codespace 403.
 Pacote #397 Operador/Histórico permanece em paralelo (tip `d4c882e03` / CI tip `d1802de69` SUCCESS ≠ aprovação).
 
 (2026-10-27 11:50 America/Sao_Paulo)

@@ -7,8 +7,10 @@
 | Mudança | `ApiExternaForm` → `useCadastroReopenOnIdentity` + `apiExternaBoundId`; preserva `headers_autenticacao` |
 | Pin | saiu de `cursor-callback-record-state` names; publication reverse ApiExterna |
 | Testes | reopen behavioral 6 PASS; callback 41 PASS; publication 36 PASS |
-| CI tip | pendente — SUCCESS ≠ aprovação |
-| Pedido | **@codex review** tip `8918b326e` |
+| CI tip `bc3149b6d` | **SUCCESS** push `40524266231` / PR `40524274386` — **≠ aprovação** |
+| Tip HEAD | **`bc3149b6d`** |
+| Pedido | **@codex review** tip `bc3149b6d` (código `8918b326e`) |
+| Próximo | ParametroRoteirizacao / ChatbotCanal; parecer Codex; demo Codespace 403 |
 | Modalidade | runner `/workspace` |
 | Fora | merge/deploy/carga; Codespace |
 
