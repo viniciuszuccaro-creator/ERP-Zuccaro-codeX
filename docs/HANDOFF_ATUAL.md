@@ -1,3 +1,10 @@
+## CURSOR — vigente: ApiExterna reopen (2026-10-27)
+
+Tip **`8918b326e`**. Gradua ApiExterna do pin RecordState. Aguarda CI tip + @codex review.
+Pacote #397 Operador/Histórico permanece em paralelo (tip `d4c882e03` / CI tip `d1802de69` SUCCESS ≠ aprovação).
+
+(2026-10-27 11:50 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |

@@ -1,3 +1,19 @@
+## CURSOR — ApiExterna reopen canônico (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Branch / tip | `cursor/cadastros-apiexterna-reopen-392b` **`8918b326e`** |
+| Base | `cursor/integracao-350-351-352-392b` (`eaad0b84`) |
+| Mudança | `ApiExternaForm` → `useCadastroReopenOnIdentity` + `apiExternaBoundId`; preserva `headers_autenticacao` |
+| Pin | saiu de `cursor-callback-record-state` names; publication reverse ApiExterna |
+| Testes | reopen behavioral 6 PASS; callback 41 PASS; publication 36 PASS |
+| CI tip | pendente — SUCCESS ≠ aprovação |
+| Pedido | **@codex review** tip `8918b326e` |
+| Modalidade | runner `/workspace` |
+| Fora | merge/deploy/carga; Codespace |
+
+(2026-10-27 11:50 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |
