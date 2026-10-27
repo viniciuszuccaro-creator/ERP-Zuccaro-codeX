@@ -2,6 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
+| Tip | **`393e75d6`** |
 | HEAD reprovado | `4e0c58eb` / `b21e509d` (frontend typecheck) |
 | Causa | `err.code = ...` em `Error` sem tipagem — TS2339 |
 | Correção | `Object.assign(new Error(...), { code })` + leitura segura no Alert |
