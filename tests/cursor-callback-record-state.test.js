@@ -9,7 +9,7 @@ import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroR
 const names = ['ApiExterna', 'CatalogoWeb', 'ChatbotCanal', 'ChatbotIntent',
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',
   'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
-  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',
+  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao',
   'TabelaPreco', 'CadastroFiscal',
   'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];
 // ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
@@ -19,6 +19,7 @@ const names = ['ApiExterna', 'CatalogoWeb', 'ChatbotCanal', 'ChatbotIntent',
 // Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -164,6 +165,17 @@ test('JobAgendado graduou do pin RecordState para useCadastroReopenOnIdentity co
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /jobBoundId/);
   assert.match(source, /parametros_execucao/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('RotaPadrao graduou do pin RecordState para useCadastroReopenOnIdentity com rotaBoundId', () => {
+  const file = 'src/components/cadastros/RotaPadraoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('RotaPadrao'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /rotaBoundId/);
+  assert.match(source, /CadastroCodigoRegistroField/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });

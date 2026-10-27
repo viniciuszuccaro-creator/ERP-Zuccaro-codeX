@@ -1,20 +1,36 @@
-## CURSOR — JobAgendado reopen tip (CI pendente) (2026-10-27)
+## CURSOR — RotaPadrao reopen tip (CI pendente) (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (JobAgendado) |
-| CI | pendente neste SHA — não creditar verde de `5081a79c2` |
-| Pacote indep. | **JobAgendado** — RecordState só `updated_date`; nested `parametros_execucao` |
-| Correção | `useCadastroReopenOnIdentity` + `jobBoundId` + map anti-wipe; sky |
-| Pin | graduação callback + publication reverse (…→Centro→JobAgendado) |
-| Provas | job-agendado 6 PASS; callback 41; publication 33 |
-| Verde anterior | **`5081a79c2`** Centro · **`0988697f3`** Filial · **`d0ba56007`** Kit |
-| Pedido Centro | **@codex review** tip `5081a79c2` |
-| Próximo indep. | RotaPadrao / CatalogoWeb / ApiExterna |
+| Tip | HEAD após este commit (RotaPadrao) |
+| CI | pendente neste SHA — não creditar verde de `40f9cb515`/`d92659241` |
+| Pacote indep. | **RotaPadrao** — RecordState só `updated_date`; origem/destino/distância; CodigoField |
+| Correção | `useCadastroReopenOnIdentity` + `rotaBoundId` + map anti-wipe; sky |
+| Pin | graduação callback + publication reverse (…→Job→RotaPadrao) |
+| Provas | rota-padrao 6 PASS; callback 41; publication 34 |
+| Verde anterior | **`40f9cb515`** / **`d92659241`** JobAgendado SUCCESS |
+| Pedido Job | **@codex review** tip `40f9cb515` |
+| Próximo indep. | CatalogoWeb / ApiExterna / ParametroRoteirizacao |
 | Modalidade | runner `/workspace` |
 | Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
 
-(2026-10-27 10:28 America/Sao_Paulo)
+(2026-10-27 10:35 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip 40f9cb515 / d92659241 JobAgendado (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip código | **`d92659241`** |
+| Tip docs | **`40f9cb515`** |
+| CI | frontend / backend / expedicao **SUCCESS** em ambos |
+| Pacote | reopen …/CentroResultado/**JobAgendado** + Historico HTTP |
+| Pedido | **@codex review** tip `40f9cb515` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | RotaPadrao |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:33 America/Sao_Paulo)
 
 ## CURSOR — CI SUCCESS tip 5081a79c2 CentroResultado (2026-10-27)
 
