@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Tip | **`8a7cf98f`** (código `d91d49a8`) |
+| Tip | **`2cf6f729`** (código `d91d49a8`) |
 | Pai | `b2eeee52` (CANAL Operador/Condicao) |
 | Defeito | MoedaIndice só reagia a troca de `id` — `updated_at` ignorado (reproduzido) |
 | Correção | `useCadastroReopenOnIdentity` + `moedaBoundId` + sky; graduação consolidacao |
