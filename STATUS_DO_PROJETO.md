@@ -20,19 +20,24 @@
 | Campo | Valor |
 |-------|-------|
 | Base tip consultado | **`eaad0b84`** — CI SUCCESS (≠ aprovação) |
-| Branch | `cursor/operador-historico-persist-392b` (sobre candidata #353) |
-| #353 abertos triados | OperadorCaixa P1 `4387934927`; Histórico paginação P2 `4387934931`; Histórico `cliente_empresa` P2 `4389052000`; Pedido 044 P2 `4378431315` (ainda pendente); contatos/boundId não reabertos |
+| PR / branch | **#397** `cursor/operador-historico-persist-392b` → `#353` integracao |
+| Tip código | **`78c214f89`** |
+| Tip docs | **`08f8b4ca3`** |
+| #353 abertos triados | Operador P1 `4387934927`; Histórico paginação `4387934931`; Histórico `cliente_empresa` `4389052000`; Pedido 044 `4378431315` — **corrigidos neste tip**; contatos/boundId **não** reabertos |
 | OperadorCaixa | `isSelfManagedCadastro=true`; form = único writer; `onSubmit(true)` = conclusão V24; erro preserva rascunho |
 | Histórico | `pedidos.list?clienteId=` (Pedido.visualizar; sem Central360/`cliente_empresa`); paginação + total/carregados; legado 200 |
-| Testes | operador persist 6 PASS; historico painel 14 PASS; reopen operador 8 PASS; pedido service clienteId 10 PASS |
-| CI tip | pendente neste SHA — não atribuir sucesso ancestral |
-| Guarda P1 #6441849832 | `tests/cursor-identidade-graduated-submit-guard.test.js` — hunk único `!podeSalvar`; ataque `if(false)` rejeitado; handler sem permissão 0 writes; CANAL remainder +clienteId |
-| Pedido 044 | `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` + explain UI; INTERNAL_ERROR genérico null |
-| Próximo | parecer #342; candidata Codespace após CI tip |
+| Testes tip | operador+guarda 8 PASS; historico 14 PASS; pedido-ui-policy 26 PASS; schema 044 server 2 PASS |
+| Guarda P1 #6441849832 | `cursor-identidade-graduated-submit-guard` — ataque `if(false)` rejeitado; 0 writes sem permissão |
+| Pedido 044 | `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` + UI; INTERNAL_ERROR genérico ≠ 044 |
+| Parecer #342 | **APROVADO** `47a5d0e109` (somente leitura) |
+| Pedido revisão | **@codex review** tip `08f8b4ca3` |
+| CI tip | jobs do SHA `08f8b4ca3` — SUCCESS ≠ aprovação |
+| Demo | Codespace `potential-xylophone` **403** neste runner; roteiro `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt` |
+| Próximo | CI tip → parecer Codex → demo no Codespace (um escritor) → matriz recuperação |
 | Modalidade | runner `/workspace` (≠ Codespace) |
-| Fora | merge/deploy/carga; dados reais; contatos/CodigoField/Região P2 não reabertos |
+| Fora | merge/deploy/carga; dados reais; contatos/CodigoField/Região P2 |
 
-(2026-10-27 11:30 America/Sao_Paulo)
+(2026-10-27 11:35 America/Sao_Paulo)
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

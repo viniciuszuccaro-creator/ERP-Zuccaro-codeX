@@ -8,23 +8,31 @@ Veredicto: **APROVADO**.
 
 (2026-10-27 11:45 America/Sao_Paulo)
 
-## CURSOR — vigente: OperadorCaixa + Histórico (#353) (2026-10-27)
+## CURSOR — vigente: #397 OperadorCaixa + Histórico (#353) (2026-10-27)
 
 Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovação**.
 
-**Fechado neste pacote (branch `cursor/operador-historico-persist-392b`):**
-- OperadorCaixa: um único responsável pela persistência (`isSelfManagedCadastro`); Visualizador só conclui; criação/edição 1 escrita; erro mantém rascunho.
-- Histórico de Produtos: `GET /pedidos?clienteId=` autorizado por `Comercial.Pedido.visualizar` (resolve vínculo no serviço, sem Central360 / sem exigir `Cadastros.cliente_empresa.visualizar`); paginação utilizável (total vs carregados; carregar mais); legado restaura limite 200.
+| Campo | Valor |
+|-------|-------|
+| PR | **#397** → base `cursor/integracao-350-351-352-392b` |
+| Tip código | **`78c214f89`** |
+| Tip docs | **`08f8b4ca3`** (parecer #342 + este handoff) |
+| Pedido revisão | **@codex review** no tip `08f8b4ca3` (todos os deltas) |
+| Parecer #342 | **APROVADO** `47a5d0e109` — branch Codex **intocada** |
+| CI tip | conferir jobs do SHA `08f8b4ca3` — SUCCESS ≠ aprovação |
+| Modalidade | runner `/workspace` (≠ Codespace) |
 
-**Guarda P1 #6441849832:** contraprova em `cursor-identidade-graduated-submit-guard` (sem tocar pin CANAL identidade); remoção `if (!podeSalvar)`→`if (false)` falha; handler real sem permissão não persiste.
+**Fechado no pacote:**
+- OperadorCaixa: único writer (`isSelfManagedCadastro`); Visualizador só conclui; 1 escrita create/edit; erro preserva rascunho.
+- Histórico: `pedidos.list?clienteId=` + `Pedido.visualizar` (sem Central360/`cliente_empresa`); paginação total/carregados; legado 200.
+- Guarda P1: contraprova submit negativa executável.
+- Pedido 044: `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` público; `INTERNAL_ERROR` genérico ≠ 044.
 
-**Pedido 044:** código público `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` + UI; INTERNAL_ERROR genérico ≠ 044.
+**Ainda aberto:** CI terminal do tip → parecer Codex no mesmo SHA; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` (**gh codespace 403** neste runner — coordenar escritor no checkout existente, sem reset/force). Sem merge/deploy/carga.
 
-**Ainda aberto:** revisão independente #342; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` após CI tip.
+Roteiro demo: `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`.
 
-Modalidade evidência: runner `/workspace`. Sem merge/deploy/carga.
-
-(2026-10-27 11:30 America/Sao_Paulo)
+(2026-10-27 11:35 America/Sao_Paulo)
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
