@@ -1,20 +1,44 @@
-## CURSOR — Filial reopen tip (CI pendente) (2026-10-27)
+## CURSOR — CentroResultado reopen tip (CI pendente) (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (Filial) |
-| CI | pendente neste SHA — não creditar verde de `d0ba56007` |
-| Pacote indep. | **Filial** — RecordState só `updated_date`; CNPJ/IE/matriz_id |
-| Correção | `useCadastroReopenOnIdentity` + `filialBoundId` + map anti-wipe; sky |
-| Pin | graduação callback + publication reverse (cadeia Contato→…→Kit→Filial) |
-| Provas | filial 6 PASS; callback 41; publication 31 |
-| Verde anterior | **`d0ba56007`** KitProduto frontend/backend/expedicao SUCCESS |
-| Pedido Kit | **@codex review** tip `d0ba56007` — todos os deltas até Kit |
-| Próximo indep. | CentroResultado / JobAgendado / RotaPadrao (pin residual) |
+| Tip | HEAD após este commit (CentroResultado) |
+| CI | pendente neste SHA — não creditar verde de `0988697f3` |
+| Pacote indep. | **CentroResultado** — RecordState só `updated_date` + useEffect wipe por id |
+| Correção | `useCadastroReopenOnIdentity` + `centroBoundId` + remove wipe; sky; CodigoField |
+| Pin | graduação callback + publication reverse (…→Filial→CentroResultado) |
+| Provas | centro-resultado 6 PASS; callback 41; publication 32 |
+| Verde anterior | **`0988697f3`** Filial SUCCESS · **`d0ba56007`** KitProduto SUCCESS |
+| Pedido Filial | **@codex review** tip `0988697f3` — todos os deltas até Filial |
+| Próximo indep. | JobAgendado / RotaPadrao / CatalogoWeb (pin residual) |
 | Modalidade | runner `/workspace` |
 | Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
 
-Pedido Filial: **@codex review** tip HEAD após CI verde deste SHA.
+(2026-10-27 10:20 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip 0988697f3 Filial (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`0988697f3`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/KitProduto/**Filial** + Historico HTTP |
+| Pedido | **@codex review** tip `0988697f3` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | CentroResultado |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:18 America/Sao_Paulo)
+
+## CURSOR — Filial reopen tip (histórico CI pendente → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`0988697f3`** |
+| CI | **SUCCESS** — ver entrada acima |
+| Pacote indep. | **Filial** — RecordState só `updated_date`; CNPJ/IE/matriz_id |
+| Modalidade | runner `/workspace` |
 
 (2026-10-27 10:12 America/Sao_Paulo)
 

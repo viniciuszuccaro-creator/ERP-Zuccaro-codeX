@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroRemainder.js';
 
-const names = ['ApiExterna', 'CatalogoWeb', 'CentroResultado', 'ChatbotCanal', 'ChatbotIntent',
+const names = ['ApiExterna', 'CatalogoWeb', 'ChatbotCanal', 'ChatbotIntent',
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',
   'JobAgendado', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
   'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',
@@ -17,6 +17,7 @@ const names = ['ApiExterna', 'CatalogoWeb', 'CentroResultado', 'ChatbotCanal', '
 // SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -140,6 +141,17 @@ test('Filial graduou do pin RecordState para useCadastroReopenOnIdentity com fil
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /filialBoundId/);
   assert.match(source, /matriz_id/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('CentroResultado graduou do pin RecordState para useCadastroReopenOnIdentity com centroBoundId', () => {
+  const file = 'src/components/cadastros/CentroResultadoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('CentroResultado'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /centroBoundId/);
+  assert.match(source, /CadastroCodigoRegistroField/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });
