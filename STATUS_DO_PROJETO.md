@@ -1,3 +1,18 @@
+## CURSOR — CI SUCCESS tip final 151ae5590 (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`151ae5590`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/RotaPadrao + CodigoField (`5b98cefb2`) + docs |
+| Pedido | **@codex review** tip `151ae5590` — todos os deltas (não tip ancestral) |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | CatalogoWeb / ApiExterna / ParametroRoteirizacao |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:55 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip ccb7bfe3c RotaPadrao+CodigoField (2026-10-27)
 
 | Campo | Valor |
@@ -5,11 +20,8 @@
 | Tip | **`ccb7bfe3c`** (código fix `5b98cefb2`; Rota `9460d682a`) |
 | CI | frontend / backend / expedicao **SUCCESS** em `5b98cefb2` e `ccb7bfe3c` |
 | Pacote | reopen …/JobAgendado/**RotaPadrao** + CodigoField attrs `rotaBoundId` |
-| Pedido | **@codex review** tip `ccb7bfe3c` — todos os deltas |
-| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
-| Próximo indep. | CatalogoWeb / ApiExterna / ParametroRoteirizacao |
+| Pedido | supersedido pelo tip `151ae5590` |
 | Modalidade | runner `/workspace` |
-| Fora | Orçamento leitores Codespace; merge/deploy/carga |
 
 (2026-10-27 10:48 America/Sao_Paulo)
 
