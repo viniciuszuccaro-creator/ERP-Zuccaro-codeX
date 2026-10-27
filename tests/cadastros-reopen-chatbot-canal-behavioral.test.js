@@ -146,6 +146,23 @@ test('defeito reproduzivel ChatbotCanal: RecordState so via updated_date ignorav
   assert.doesNotMatch(src, /bg-purple-600/);
 });
 
+test('ChatbotCanal P2: credenciais WhatsApp usam permissão grantable editar (não ação órfã)', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/ChatbotCanalForm.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /Cadastros\.ChatbotCanal\.credenciais/);
+  assert.match(src, /data-permission="Cadastros\.ChatbotCanal\.editar"/);
+  assert.match(src, /data-action="editar-numero-whatsapp-canal"/);
+  assert.match(src, /data-action="editar-token-whatsapp-canal"/);
+  assert.match(src, /data-sensitive/);
+
+  const acoes = await readFile(new URL('../src/components/sistema/central-perfis-acesso/rbacPerfilConfig.jsx', import.meta.url), 'utf8');
+  assert.match(acoes, /id:\s*"editar"/);
+  assert.doesNotMatch(acoes, /id:\s*"credenciais"/);
+
+  const granular = await readFile(new URL('../base44/functions/_lib/security/entityGuardPolicy/entry.ts', import.meta.url), 'utf8');
+  assert.match(granular, /'editar'/);
+  assert.doesNotMatch(granular, /'credenciais'/);
+});
+
 test('ChatbotCanal: updated_at reabre e preserva mensagem_boas_vindas; submit ancora boundId', async () => {
   const initial = {
     id: 'canal-1',

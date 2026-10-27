@@ -148,7 +148,7 @@ export default function ChatbotCanalForm({
                   onChange={(e) => setFormData({ ...formData, whatsapp_numero: e.target.value })}
                   placeholder="+55 11 99999-9999"
                   disabled={!podeSalvar}
-                  data-permission="Cadastros.ChatbotCanal.credenciais"
+                  data-permission="Cadastros.ChatbotCanal.editar"
                   data-action="editar-numero-whatsapp-canal"
                   data-sensitive
                 />
@@ -160,7 +160,7 @@ export default function ChatbotCanalForm({
                   value={formData.whatsapp_token}
                   onChange={(e) => setFormData({ ...formData, whatsapp_token: e.target.value })}
                   disabled={!podeSalvar}
-                  data-permission="Cadastros.ChatbotCanal.credenciais"
+                  data-permission="Cadastros.ChatbotCanal.editar"
                   data-action="editar-token-whatsapp-canal"
                   data-sensitive
                 />
