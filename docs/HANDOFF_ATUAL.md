@@ -1,3 +1,18 @@
+## CURSOR — ContatoB2B pin + Regiao mapper REAL (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| HEAD anterior | `5a44609b` — CI FAIL (ContatoB2B ainda no pin RecordState) |
+| Correção pin | ContatoB2B sai de `cursor-callback-record-state` names; graduação + publication reverse (`beforeSha256` `62a49942…` intacto) |
+| Regiao lacuna | harness carrega `mapRegiaoToForm` REAL (AST); contraprova remove merge logistica → perde custo/prazo/expressa |
+| Provas | callback + publication + regiao + contato-b2b + identidade = PASS |
+| CI | tip deste commit — não creditado verde ancestral `d1e1c44b` |
+| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD após CI verde deste SHA (deltas ContatoB2B+Regiao+reopen).
+
+(2026-10-27 09:15 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS d1e1c44b + ContatoB2B reopen (2026-10-27)
 
 | Campo | Valor |

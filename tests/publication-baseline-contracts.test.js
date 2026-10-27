@@ -49,6 +49,15 @@ function restoreApprovedCodigoFieldCallbackDelta(source) {
  assert.equal(source.split(approvedCallbackAfter).length,2,'Only the exact CodigoField after-parse delta may be normalized');
  return source.replace(approvedCallbackImport,'').replace(approvedCallbackAfter,previousCallbackAfter);
 }
+/** #353 ContatoB2B: saiu do pin RecordState → reopen canônico; reverse restaura names+omissão do teste de graduação. */
+const previousCallbackNames = "  'SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete', 'CadastroFiscal', 'ContatoB2B',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n";
+const approvedCallbackNames = "  'SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n";
+const approvedContatoB2BGraduationTest = "\ntest('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com contatoBoundId', () => {\n  const file = 'src/components/cadastros/ContatoB2BForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('ContatoB2B'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n  assert.match(source, /contatoBoundId/);\n  assert.match(source, /preferencias_comunicacao/);\n  assert.doesNotMatch(source, /useCadastroRecordState/);\n  assert.doesNotMatch(source, /prevUpdatedRef/);\n});\n\n";
+function restoreApprovedContatoB2BCallbackDelta(source) {
+ assert.equal(source.split(approvedCallbackNames).length,2,'Only the exact ContatoB2B names graduation delta may be normalized');
+ assert.equal(source.split(approvedContatoB2BGraduationTest).length,2,'Only the exact ContatoB2B graduation test delta may be normalized');
+ return source.replace(approvedContatoB2BGraduationTest,'\n').replace(approvedCallbackNames,previousCallbackNames);
+}
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
@@ -57,6 +66,15 @@ test('bulk lifecycle evolution retains the original hash and rejects changed or 
  assert.throws(()=>restoreApprovedBulkDelta(source+approvedBulkDelta));
  assert.notEqual(crypto.createHash('sha256').update(restoreApprovedBulkDelta(source.replace('for (const [name, text] of oldMembers)','for (const [name, text] of newMembers)'))).digest('hex'),
    crypto.createHash('sha256').update(restored).digest('hex'));
+});
+test('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedContatoB2BCallbackDelta(source);
+ assert.equal(restored.includes(approvedContatoB2BGraduationTest),false);
+ assert.match(restored,/CadastroFiscal', 'ContatoB2B'/);
+ assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(source.replace(approvedContatoB2BGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(source+approvedContatoB2BGraduationTest));
+ assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(source.replace("CadastroFiscal',\n","CadastroFiscal', 'Webhook',\n")));
 });
 for(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{
  const source=fs.readFileSync(entry.path,'utf8').replace(/\r\n/g,'\n');
@@ -70,7 +88,7 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
   : entry.path==='server/tests/bulk-consolidacao.test.ts'
     ? restoreApprovedBulkDelta(reviewed)
     : entry.path==='tests/cursor-callback-record-state.test.js'
-      ? restoreApprovedCodigoFieldCallbackDelta(reviewed)
+      ? restoreApprovedCodigoFieldCallbackDelta(restoreApprovedContatoB2BCallbackDelta(reviewed))
       : reviewed;
  const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);

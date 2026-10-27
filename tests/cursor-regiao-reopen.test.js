@@ -11,8 +11,34 @@ import {
   isCadastroFormDirty,
 } from '../src/components/cadastros/cadastroReopenPolicy.js';
 
-const source = fs.readFileSync(new URL('../src/components/cadastros/RegiaoAtendimentoForm.jsx', import.meta.url), 'utf8');
+const sourcePath = new URL('../src/components/cadastros/RegiaoAtendimentoForm.jsx', import.meta.url);
+const source = fs.readFileSync(sourcePath, 'utf8');
 const ast = ts.createSourceFile('region.jsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
+
+/** Extrai EMPTY_REGIAO + mapRegiaoToForm (+ version helper) da implementação REAL — sem cópia local. */
+function loadRegiaoMapperFromSource(sourceText) {
+  const tree = ts.createSourceFile('region.jsx', sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
+  const pieces = [];
+  for (const stmt of tree.statements) {
+    if (!ts.isVariableStatement(stmt)) continue;
+    const names = stmt.declarationList.declarations.map((d) => d.name.getText(tree));
+    if (names.some((n) => n === 'EMPTY_REGIAO' || n === 'mapRegiaoToForm' || n === 'regiaoRecordVersion')) {
+      pieces.push(stmt.getText(tree));
+    }
+  }
+  assert.ok(pieces.length >= 2, 'mapper REAL (EMPTY_REGIAO + mapRegiaoToForm) deve existir no source');
+  const emitted = ts.transpileModule(pieces.join('\n'), {
+    compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
+  }).outputText;
+  // Strip ESM leftovers; evaluate as plain function body.
+  const body = emitted
+    .replace(/^export\s+/gm, '')
+    .replace(/export\s*\{[^}]*\};?/g, '');
+  return new Function(`${body}; return { EMPTY_REGIAO, mapRegiaoToForm, regiaoRecordVersion };`)();
+}
+
+const { EMPTY_REGIAO, mapRegiaoToForm } = loadRegiaoMapperFromSource(source);
+
 let callback;
 function visit(node) {
   if (ts.isCallExpression(node) && node.expression.getText(ast) === 'useEffect') callback = node.arguments[0].getText(ast);
@@ -22,37 +48,8 @@ visit(ast);
 assert.match(source, /updated_at \?\? .*updated_date/);
 assert.match(source, /mapRegiaoToForm/);
 assert.match(callback, /updated_at \?\? .*updated_date/);
-
-const EMPTY_REGIAO = {
-  nome_regiao: '', codigo_regiao: '', descricao: '', tipo_regiao: 'Personalizada',
-  estados_abrangidos: [], cidades_abrangidas: [], cor_identificacao: '#3B82F6',
-  vendedores_ids: [], transportadoras_preferenciais_ids: [],
-  logistica: {
-    prazo_entrega_padrao_dias: 0, custo_frete_base: 0, permite_entrega_expressa: false,
-    prazo_entrega_expressa_dias: 0, acrescimo_frete_expresso_percentual: 0,
-    distancia_centro_distribuicao_km: 0, dificuldade_acesso: 'Fácil',
-  },
-  comercial: {
-    meta_vendas_mensal: 0, comissao_extra_percentual: 0,
-    desconto_maximo_permitido_percentual: 0, exige_aprovacao_acima_valor: 0,
-    prioridade_atendimento: 'Normal',
-  },
-  ativo: true, observacoes: '',
-};
-function mapRegiaoToForm(record) {
-  if (!record) return { ...EMPTY_REGIAO, logistica: { ...EMPTY_REGIAO.logistica }, comercial: { ...EMPTY_REGIAO.comercial } };
-  return {
-    ...EMPTY_REGIAO,
-    ...record,
-    estados_abrangidos: Array.isArray(record.estados_abrangidos) ? record.estados_abrangidos : [],
-    cidades_abrangidas: Array.isArray(record.cidades_abrangidas) ? record.cidades_abrangidas : [],
-    vendedores_ids: Array.isArray(record.vendedores_ids) ? record.vendedores_ids : [],
-    transportadoras_preferenciais_ids: Array.isArray(record.transportadoras_preferenciais_ids)
-      ? record.transportadoras_preferenciais_ids : [],
-    logistica: { ...EMPTY_REGIAO.logistica, ...(record.logistica || {}) },
-    comercial: { ...EMPTY_REGIAO.comercial, ...(record.comercial || {}) },
-  };
-}
+assert.match(source, /\.\.\.\(record\.logistica \|\| \{\}\)/);
+assert.match(source, /\.\.\.\(record\.comercial \|\| \{\}\)/);
 
 const flush = async () => { await new Promise(resolve => setImmediate(resolve)); };
 function harness(props = {}) {
@@ -223,7 +220,7 @@ test('HTTP updated_at dirty exige confirmacao e nao apaga aninhados do rascunho'
   assert.equal(prevUpdatedRef.current, '2026-01-02T00:00:00Z');
 });
 
-test('mapRegiaoToForm preserva logistica/comercial quando HTTP omite aninhados', () => {
+test('mapRegiaoToForm REAL preserva logistica/comercial quando HTTP omite aninhados', () => {
   const mapped = mapRegiaoToForm({
     id: 'http-r3',
     nome_regiao: 'Partial',
@@ -236,6 +233,60 @@ test('mapRegiaoToForm preserva logistica/comercial quando HTTP omite aninhados',
   assert.equal(mapped.comercial.prioridade_atendimento, 'Normal');
   assert.deepEqual(mapped.cidades_abrangidas, []);
   assert.deepEqual(mapped.vendedores_ids, []);
+});
+
+test('mapRegiaoToForm REAL conserva prazo/custo/expressa do record.logistica', () => {
+  const mapped = mapRegiaoToForm({
+    id: 'http-r4',
+    nome_regiao: 'Full',
+    logistica: {
+      prazo_entrega_padrao_dias: 5,
+      custo_frete_base: 88.5,
+      permite_entrega_expressa: true,
+      prazo_entrega_expressa_dias: 1,
+    },
+    comercial: { meta_vendas_mensal: 2500, prioridade_atendimento: 'Alta' },
+  });
+  assert.equal(mapped.logistica.prazo_entrega_padrao_dias, 5);
+  assert.equal(mapped.logistica.custo_frete_base, 88.5);
+  assert.equal(mapped.logistica.permite_entrega_expressa, true);
+  assert.equal(mapped.logistica.prazo_entrega_expressa_dias, 1);
+  assert.equal(mapped.comercial.meta_vendas_mensal, 2500);
+  assert.equal(mapped.comercial.prioridade_atendimento, 'Alta');
+});
+
+test('contraprova cobertura: remover merge de logistica no mapper REAL perde custo/prazo/expressa', () => {
+  const mergeLogistica = 'logistica: { ...EMPTY_REGIAO.logistica, ...(record.logistica || {}) },';
+  assert.equal(source.split(mergeLogistica).length, 2, 'hunk de merge logistica deve existir exatamente uma vez');
+  const brokenSource = source.replace(
+    mergeLogistica,
+    'logistica: { ...EMPTY_REGIAO.logistica },',
+  );
+  const { mapRegiaoToForm: brokenMap } = loadRegiaoMapperFromSource(brokenSource);
+  const incoming = {
+    id: 'mut',
+    nome_regiao: 'Mutated',
+    logistica: {
+      prazo_entrega_padrao_dias: 9,
+      custo_frete_base: 123,
+      permite_entrega_expressa: true,
+      prazo_entrega_expressa_dias: 2,
+    },
+  };
+  const real = mapRegiaoToForm(incoming);
+  const broken = brokenMap(incoming);
+  assert.equal(real.logistica.custo_frete_base, 123);
+  assert.equal(real.logistica.prazo_entrega_padrao_dias, 9);
+  assert.equal(real.logistica.permite_entrega_expressa, true);
+  // Mutação no source REAL: merge ausente → defaults; cobertura passa a falhar se só copiar o mapper.
+  assert.equal(broken.logistica.custo_frete_base, 0);
+  assert.equal(broken.logistica.prazo_entrega_padrao_dias, 0);
+  assert.equal(broken.logistica.permite_entrega_expressa, false);
+  assert.throws(() => {
+    assert.equal(broken.logistica.custo_frete_base, 123);
+    assert.equal(broken.logistica.prazo_entrega_padrao_dias, 9);
+    assert.equal(broken.logistica.permite_entrega_expressa, true);
+  });
 });
 
 test('payload de submit ancora id no boundId (prevIdRef), nao nas props divergentes', () => {

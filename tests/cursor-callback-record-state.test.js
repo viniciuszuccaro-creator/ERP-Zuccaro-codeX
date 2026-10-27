@@ -10,8 +10,9 @@ const names = ['ApiExterna', 'CatalogoWeb', 'CentroResultado', 'ChatbotCanal', '
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'Filial', 'GatewayPagamento',
   'JobAgendado', 'KitProduto', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
   'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',
-  'SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete', 'CadastroFiscal', 'ContatoB2B',
+  'SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete', 'CadastroFiscal',
   'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];
+// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -74,6 +75,17 @@ for (const name of names) test(`${name}: unchanged save, permission, fields and 
   const fields = tree => find(tree, node => ts.isJsxAttribute(node) && ['value', 'onChange', 'onValueChange', 'onCheckedChange', 'disabled', 'data-permission', 'data-action'].includes(node.name.getText(tree)))
     .map(node => node.getText(tree));
   assert.deepEqual(fields(after), fields(before));
+});
+
+test('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com contatoBoundId', () => {
+  const file = 'src/components/cadastros/ContatoB2BForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('ContatoB2B'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /contatoBoundId/);
+  assert.match(source, /preferencias_comunicacao/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
 });
 
 test('Produto keeps the complete initializer and HTTP GET contract; props version cannot overwrite a loaded HTTP draft', () => {
