@@ -236,6 +236,74 @@ test('HistoricoProdutosCliente: sem contexto não consulta mesmo com permissão'
   assert.equal(filterCalls.length, 0);
 });
 
+test('HistoricoProdutosCliente HTTP: sem vinculo ClienteEmpresa falha sem facade', async () => {
+  const { queries, filterCalls, listCalls } = await mountHistoricoCliente({
+    backendMode: 'http',
+    session: {
+      token: 'tok',
+      actorId: '11111111-1111-1111-1111-111111111111',
+      groupId: 'g1',
+    },
+    central360: { data: { meta: {}, empresaLink: null, blocks: {} } },
+  });
+  await assert.rejects(() => queries[0].queryFn({}), /ClienteEmpresa|CLIENTE_EMPRESA/);
+  assert.equal(filterCalls.length, 0);
+  assert.equal(listCalls.length, 0);
+});
+
+test('HistoricoProdutosCliente HTTP: lista vazia nao inventa linhas; queryKey isola empresa', async () => {
+  const a = await mountHistoricoCliente({
+    backendMode: 'http',
+    empresaId: 'emp-a',
+    session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
+    central360: { data: { meta: { clienteEmpresaId: 'ce-a' } } },
+    pedidosList: { data: [] },
+  });
+  assert.ok(a.queries[0].queryKey.includes('emp-a'));
+  assert.ok(a.queries[0].queryKey.includes('http'));
+  const empty = await a.queries[0].queryFn({});
+  assert.deepEqual(empty, []);
+  const linhas = a.mapFn(empty);
+  assert.equal(linhas.length, 0);
+
+  const b = await mountHistoricoCliente({
+    backendMode: 'http',
+    empresaId: 'emp-b',
+    session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
+    central360: { data: { meta: { clienteEmpresaId: 'ce-b' } } },
+    pedidosList: { data: [] },
+  });
+  assert.ok(b.queries[0].queryKey.includes('emp-b'));
+  assert.notEqual(a.queries[0].queryKey.join('|'), b.queries[0].queryKey.join('|'));
+});
+
+test('mapPedidosToHistoricoLinhas: ordena por data e preserva produto repetido em pedidos distintos', async () => {
+  const { mapFn } = await mountHistoricoCliente({ hasPermission: () => false });
+  const rows = mapFn([
+    {
+      id: 'p-old',
+      numero: 'P-OLD',
+      created_at: '2026-01-01T00:00:00Z',
+      itens: [{ produto_id: 'prod-x', descricao: 'Mesmo', quantidade: 1, total: 10 }],
+    },
+    {
+      id: 'p-new',
+      numero: 'P-NEW',
+      created_at: '2026-02-01T00:00:00Z',
+      itens: [
+        { produto_id: 'prod-x', descricao: 'Mesmo', quantidade: 2, total: 20 },
+        { produto_id: 'prod-y', descricao: 'Outro', quantidade: 1, total: 5 },
+      ],
+    },
+  ]);
+  assert.equal(rows.length, 3);
+  assert.equal(rows[0].numero_pedido, 'P-NEW');
+  assert.equal(rows[0].descricao, 'Mesmo');
+  assert.equal(rows[1].numero_pedido, 'P-NEW');
+  assert.equal(rows[2].numero_pedido, 'P-OLD');
+  assert.equal(rows.filter((r) => r.produto_id === 'prod-x').length, 2);
+});
+
 test('mapPedidosToHistoricoLinhas: legado itens_* e canônico itens', async () => {
   const { mapFn } = await mountHistoricoCliente({ hasPermission: () => false });
   assert.equal(typeof mapFn, 'function');

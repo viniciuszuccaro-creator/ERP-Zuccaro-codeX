@@ -1,8 +1,8 @@
-## CURSOR — CI4886/4887: pin MoedaIndice graduado (2026-10-27)
+## CURSOR — CI4886/4887 + fechamento provas reopen/historico (2026-10-27)
 
-HEAD `fad1f469` FAIL: teste ainda pinava MoedaIndice como ID-only. Graduação documentada (boundId/reopen) no pin representante-updated; CondicaoComercial alinhada. CANAL/hashes intocados. Orçamento leitores intactos. Aguardando CI do tip; `@codex review` no SHA verde.
+HEAD `fad1f469` FAIL (pin MoedaIndice ID-only). Graduação pin + provas updated_date e Historico HTTP (link/vazio/ordem/repetido/empresa). CANAL intocado. Orçamento leitores intactos. `@codex review` tip HEAD após CI verde.
 
-(2026-10-27 08:42 America/Sao_Paulo)
+(2026-10-27 08:45 America/Sao_Paulo)
 
 ## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
 

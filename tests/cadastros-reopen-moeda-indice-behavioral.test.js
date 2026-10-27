@@ -203,6 +203,29 @@ test('MoedaIndice: dirty + updated_at recusa preserva rascunho; submit usa bound
   assert.equal(submitted[0].nome, 'Rascunho Euro');
 });
 
+test('MoedaIndice: updated_date legado reabre quando updated_at ausente', async () => {
+  const initial = {
+    id: 'm-leg',
+    codigo: 'IPCA',
+    nome: 'Indice',
+    tipo: 'Índice',
+    cotacao_atual: 0.4,
+    ativo: true,
+    updated_date: '2026-01-01T00:00:00Z',
+  };
+  const h = await mountForm('src/components/cadastros/MoedaIndiceForm.jsx', { initial });
+  h.render({
+    item: {
+      ...initial,
+      nome: 'IPCA Atualizado',
+      cotacao_atual: 0.45,
+      updated_date: '2026-01-04T00:00:00Z',
+    },
+  });
+  assert.equal(h.getForm().nome, 'IPCA Atualizado');
+  assert.equal(h.getForm().cotacao_atual, 0.45);
+});
+
 test('MoedaIndice: troca de registro dirty recusada nao aplica B', async () => {
   const a = {
     id: 'm-a',

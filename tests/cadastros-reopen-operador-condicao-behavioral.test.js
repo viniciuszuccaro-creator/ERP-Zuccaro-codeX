@@ -277,6 +277,50 @@ test('CondicaoComercialForm: updated_at reabre parcelas/desconto; submit ancora 
   assert.equal(submitted[0].numero_parcelas, 3);
 });
 
+test('OperadorCaixa: updated_date legado reabre permissoes sem updated_at', async () => {
+  const initial = {
+    id: 'op-leg',
+    codigo_operador: 'OPL',
+    nome_caixa: 'Legado',
+    permissoes_especiais: ['Sangria'],
+    updated_date: '2026-01-01T00:00:00Z',
+  };
+  const h = await mountForm('src/components/cadastros/OperadorCaixaForm.jsx', { initial });
+  h.render({
+    item: {
+      ...initial,
+      nome_caixa: 'Legado Novo',
+      permissoes_especiais: ['Sangria', 'Abrir Gaveta'],
+      updated_date: '2026-01-02T00:00:00Z',
+    },
+  });
+  assert.equal(h.getForm().nome_caixa, 'Legado Novo');
+  assert.deepEqual(h.getForm().permissoes_especiais, ['Sangria', 'Abrir Gaveta']);
+});
+
+test('CondicaoComercialForm: updated_date legado reabre parcelas sem updated_at', async () => {
+  const initial = {
+    id: 'cc-leg',
+    nome_condicao: 'Legado',
+    forma_pagamento: 'Parcelado',
+    numero_parcelas: 2,
+    desconto_percentual: 1,
+    tipo_frete: 'CIF',
+    updated_date: '2026-01-01T00:00:00Z',
+  };
+  const h = await mountForm('src/components/cadastros/CondicaoComercialForm.jsx', { initial });
+  h.render({
+    item: {
+      ...initial,
+      nome_condicao: 'Legado Novo',
+      numero_parcelas: 4,
+      updated_date: '2026-01-03T00:00:00Z',
+    },
+  });
+  assert.equal(h.getForm().nome_condicao, 'Legado Novo');
+  assert.equal(h.getForm().numero_parcelas, 4);
+});
+
 test('CondicaoComercialForm: dirty recusa updated_at e submit mantem id aberto', async () => {
   const initial = {
     id: 'cc-a',
