@@ -1,16 +1,27 @@
-## CURSOR — RotaPadrao CodigoField pin fix (CI pendente) (2026-10-27)
+## CURSOR — CI SUCCESS tip ccb7bfe3c RotaPadrao+CodigoField (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (fix CodigoField) |
-| CI | pendente — **não** creditar verde de `40f9cb515`; tip `9460d682a` frontend FAIL |
-| Causa | remainder CodigoField pinava `dadosIniciais?.id`; form usa `rotaBoundId` |
-| Correção | AUTHORIZED attrs RotaPadrao → `rotaBoundId` / `formData.codigo` |
-| Provas | codigo-registro-remainder 8; rota 6; callback 41; publication 34; cobertura 11 PASS |
+| Tip | **`ccb7bfe3c`** (código fix `5b98cefb2`; Rota `9460d682a`) |
+| CI | frontend / backend / expedicao **SUCCESS** em `5b98cefb2` e `ccb7bfe3c` |
+| Pacote | reopen …/JobAgendado/**RotaPadrao** + CodigoField attrs `rotaBoundId` |
+| Pedido | **@codex review** tip `ccb7bfe3c` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | CatalogoWeb / ApiExterna / ParametroRoteirizacao |
 | Modalidade | runner `/workspace` |
-| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
 
-Pedido: **@codex review** tip HEAD após CI verde deste SHA (RotaPadrao + fix).
+(2026-10-27 10:48 America/Sao_Paulo)
+
+## CURSOR — RotaPadrao CodigoField pin fix (histórico CI pendente → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`5b98cefb2`** / docs **`ccb7bfe3c`** |
+| CI | **SUCCESS** — ver entrada acima |
+| Causa | remainder CodigoField pinava `dadosIniciais?.id`; form usa `rotaBoundId` |
+| Correção | AUTHORIZED attrs → `rotaBoundId` / `formData.codigo` |
+| Modalidade | runner `/workspace` |
 
 (2026-10-27 10:42 America/Sao_Paulo)
 
