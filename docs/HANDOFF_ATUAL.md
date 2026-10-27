@@ -1,28 +1,15 @@
-## CURSOR — VIGENTE (2026-10-27 12:35 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-27 13:45 America/Sao_Paulo)
 
-**Executor:** runner `/workspace`. Codespace xylophone **403**. Stash `stash@{0}` preservado.
+**Executor:** runner `/workspace`. Chrome Codespace owner: xylophone github.dev — Browser MCP ausente; sem 2º escritor. Stash `stash@{0}` preservado.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#400** ChatbotCanal | **`fb9c16c21`** | P2 fechado; CI **SUCCESS** `40531383691` ≠ aprovação |
-| #399 Parametro+ApiExterna | `fff9abb4d` | P1 + tenant ApiExterna; aguarda CI/parecer |
-| #397 Operador+Histórico | `a6c1f7a97` | prova 48+2 PASS; @codex pedido |
-| #342 Pedido mestres | `47a5d0e109` | **APROVADO** |
+| **#400** ChatbotCanal (+ merge #399) | tip HEAD | P2 + tenantKey stack; @codex |
+| #399 Parametro+ApiExterna | `fff9abb4d` | P1+tenant CI SUCCESS |
+| #397 Operador+Histórico | `8eee16827` / `a6c1f7a97` | reprova 48+2; @codex |
+| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 não tip |
 
-**Próximo:** parecer Codex #400/#399/#397 → demo Codespace. Sem merge/deploy/carga.
-
-## CURSOR — vigente: ParametroRoteirizacao reopen (histórico) (2026-10-27)
-
-Tip **`b91d6fb49`** CI **SUCCESS** (≠ aprovação). Empilhado sobre #398. Próximo: ChatbotCanal. Codespace 403. #397/#398 aguardam parecer Codex.
-
-(2026-10-27 12:00 America/Sao_Paulo)
-
-## CURSOR — vigente: ApiExterna reopen (2026-10-27)
-
-Tip HEAD **`bc3149b6d`** (código `8918b326e`). CI **SUCCESS** push/PR — **≠ aprovação**. Gradua ApiExterna. Aguarda parecer Codex. Próximo: ParametroRoteirizacao. Codespace 403.
-Pacote #397 Operador/Histórico permanece em paralelo (tip `d4c882e03` / CI tip `d1802de69` SUCCESS ≠ aprovação).
-
-(2026-10-27 11:50 America/Sao_Paulo)
+**Próximo:** parecer Codex → demo Chrome exclusiva (medir SHA+HTTP). Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

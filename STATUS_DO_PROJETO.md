@@ -1,35 +1,17 @@
-## CURSOR — VIGENTE #400 tip `fb9c16c21` CI SUCCESS (2026-10-27)
+## CURSOR — VIGENTE #400 merge #399 + ChatbotCanal (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`fb9c16c21`** (P2 `f1a39ea51` + docs) |
-| CI | **SUCCESS** run `40531383691` — frontend/backend/expedicao — **≠ aprovação** |
-| Fix P2 | WhatsApp → `Cadastros.ChatbotCanal.editar` grantable; removido `.credenciais` órfão |
-| Testes | behavioral **7 PASS** |
-| Pedido | **@codex review** tip `fb9c16c21` — reavaliar P2 |
-| Paralelo | #399 tip `fff9abb4d` (tenant Parametro+ApiExterna); #397 `a6c1f7a97` |
-| Demo | Codespace xylophone **403** |
-| Modalidade | runner `/workspace` |
-| Fora | merge/deploy/carga |
+| Modalidade | runner `/workspace` — Chrome Codespace owner-only (sem 2º escritor) |
+| Merge | tip #399 `75caf0666`/`fff9abb4d` → branch #400 |
+| P2 ChatbotCanal | `.editar` grantable (código `f1a39ea51`) |
+| Tenant | hook `tenantKey` + Parametro/ApiExterna; ChatbotCanal wired neste tip |
+| Pedido | **@codex review** tip HEAD (merge + tenant ChatbotCanal) |
+| Paralelo | #397 tip `8eee16827` / código `a6c1f7a97` reprova 48+2 |
+| Demo | https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ |
+| Fora | merge/deploy/carga; WIP #342 fora dos 50 |
 
-(2026-10-27 12:35 America/Sao_Paulo)
-
-## CURSOR — ParametroRoteirizacao reopen canônico (2026-10-27)
-
-| Campo | Valor |
-|-------|-------|
-| Branch / tip | `cursor/cadastros-parametro-roteirizacao-reopen-392b` **`b91d6fb49`** |
-| Base | `cursor/cadastros-apiexterna-reopen-392b` (#398) |
-| Mudança | `ParametroRoteirizacaoForm` → `useCadastroReopenOnIdentity` + `roteirizacaoBoundId` |
-| Pin | saiu de names; publication reverse ParametroRoteirizacao |
-| Testes | behavioral 6; callback+publication PASS |
-| CI tip `b91d6fb49` | **SUCCESS** push `40525678738` / PR `40525699019` — **≠ aprovação** |
-| Pedido | **@codex review** tip `b91d6fb49` |
-| Próximo | ChatbotCanal reopen; parecer Codex #397/#398/#399 |
-| Modalidade | runner `/workspace` |
-| Fora | merge/deploy/carga; Codespace 403 |
-
-(2026-10-27 12:05 America/Sao_Paulo)
+(2026-10-27 13:45 America/Sao_Paulo)
 
 ## CURSOR — ApiExterna reopen canônico (2026-10-27)
 

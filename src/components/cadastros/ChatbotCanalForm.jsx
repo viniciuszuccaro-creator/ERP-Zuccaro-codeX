@@ -60,6 +60,8 @@ export default function ChatbotCanalForm({
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(groupId || empresaAtual?.id || dadosIniciais?.empresa_id);
+  // Mesma identidade de tenant do RecordState anterior (grupo+empresa+escopo).
+  const tenantKey = JSON.stringify([groupId ?? null, empresaAtual?.id ?? null, contexto ?? null]);
   const emptyForm = mapChatbotCanalToForm(null, {
     empresa_id: empresaAtual?.id || "",
     group_id: groupId || "",
@@ -70,6 +72,7 @@ export default function ChatbotCanalForm({
     formData,
     setFormData,
     emptyForm,
+    tenantKey,
     mapToForm: (record) => mapChatbotCanalToForm(record, emptyForm),
   });
 
