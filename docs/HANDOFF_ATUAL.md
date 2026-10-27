@@ -1,6 +1,6 @@
 ## CURSOR — CI4886/4887 + fechamento provas reopen/historico (2026-10-27)
 
-HEAD `fad1f469` FAIL (pin MoedaIndice ID-only). Graduação pin + provas updated_date e Historico HTTP (link/vazio/ordem/repetido/empresa). CANAL intocado. Orçamento leitores intactos. `@codex review` tip HEAD após CI verde.
+Tip **`b21e509d`**. HEAD `fad1f469` FAIL (pin MoedaIndice ID-only). Graduação pin + provas updated_date e Historico HTTP (link/vazio/ordem/repetido/empresa). CANAL intocado. Orçamento leitores intactos. `@codex review` tip HEAD após CI verde.
 
 (2026-10-27 08:45 America/Sao_Paulo)
 

@@ -2,6 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
+| Tip | **`b21e509d`** (pin `4452aed9` + provas) |
 | HEAD reprovado | `fad1f469` (CI FAIL frontend 1/2418) |
 | Causa | Guarda pin ID-only MoedaIndice (`prevIdRef` + proibia reopen) |
 | Correção | Graduação pin MoedaIndice/CondicaoComercial; CANAL intocado |
