@@ -1,3 +1,20 @@
+## CURSOR — OperadorCaixa persistência única + Histórico paginado/autorizado (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Base tip consultado | **`eaad0b84`** — CI SUCCESS (≠ aprovação) |
+| Branch | `cursor/operador-historico-persist-392b` (sobre candidata #353) |
+| #353 abertos triados | OperadorCaixa P1 `4387934927`; Histórico paginação P2 `4387934931`; Histórico `cliente_empresa` P2 `4389052000`; Pedido 044 P2 `4378431315` (ainda pendente); contatos/boundId não reabertos |
+| OperadorCaixa | `isSelfManagedCadastro=true`; form = único writer; `onSubmit(true)` = conclusão V24; erro preserva rascunho |
+| Histórico | `pedidos.list?clienteId=` (Pedido.visualizar; sem Central360/`cliente_empresa`); paginação + total/carregados; legado 200 |
+| Testes | operador persist 6 PASS; historico painel 14 PASS; reopen operador 8 PASS; pedido service clienteId 10 PASS |
+| CI tip | pendente neste SHA — não atribuir sucesso ancestral |
+| Próximo | guarda preservação P1; Pedido 044; parecer #342; candidata Codespace após CI |
+| Modalidade | runner `/workspace` (≠ Codespace) |
+| Fora | merge/deploy/carga; dados reais |
+
+(2026-10-27 11:30 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |

@@ -44,7 +44,14 @@ function fixture() {
   const runtime = createApp({ config, db: createDbClient(config), useMemory: true, tenantGuard: tenant, rbacGuard: rbac });
   const pedidoRefs = runtime.pedidoService as unknown as Record<string, unknown>;
   const orcamentoRefs = runtime.orcamentoService as unknown as Record<string, unknown>;
-  const clientes = { getEmpresaLinkById: async () => ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }) };
+  const clientes = {
+    getEmpresaLinkById: async () => ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }),
+    getEmpresaLink: async (_scope: unknown, requestedClienteId: string) => (
+      requestedClienteId === clienteId
+        ? { id: clienteEmpresaId, cliente_id: clienteId, ativo: true, bloqueado: false, habilitado_operacao: true }
+        : null
+    ),
+  };
   const produtos = { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId }) };
   const unidades = { getById: async () => ({ id: unidadeId, ativo: true }) };
   const condicoes = { get: async () => ({ id: condicaoId, ativo: true }) };

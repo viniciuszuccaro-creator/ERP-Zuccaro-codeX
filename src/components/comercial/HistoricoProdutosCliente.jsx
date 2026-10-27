@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Package, ShieldAlert } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -11,7 +12,10 @@ import { createHttpApiClient } from "@/api/httpApiClient";
 import { readErpHttpSession } from "@/api/erpHttpSession";
 import { resolveErpBackendMode } from "@/api/runtimeBackend";
 
+/** Página HTTP canônica (Pedido.list). */
 const PEDIDOS_PAGE_LIMIT = 50;
+/** Legado: cobertura anterior ao corte silencioso de 200→50. */
+const LEGADO_PEDIDOS_LIMIT = 200;
 const LINHAS_UI_LIMIT = 100;
 
 /** Extrai linhas de produto de Pedido legado (itens_*) ou canônico HTTP (`itens`). */
@@ -79,13 +83,21 @@ export function mapPedidosToHistoricoLinhas(pedidos = []) {
 }
 
 /**
- * Fonte HTTP canônica: resolve ClienteEmpresa via Central 360 e lista Pedidos
- * com itens. Sem fallback silencioso para entityListSorted/local em modo HTTP.
+ * Fonte HTTP canônica: lista Pedidos por `clienteId` (mestre) com itens.
+ * Autorizado por Comercial.Pedido.visualizar — resolve ClienteEmpresa no
+ * backend via repositório tenant-scoped, sem exigir Cadastros.cliente_empresa
+ * nem round-trip Central360.
  *
- * Dependência Codex (se evoluir): filtro `cliente_id` (mestre) em GET /pedidos
- * com itens, para evitar round-trip Central 360 só para obter clienteEmpresaId.
+ * Sem fallback silencioso para entityListSorted/local em modo HTTP.
  */
-async function loadPedidosHistoricoHttp({ clienteId, groupId, empresaId, signal }) {
+export async function loadPedidosHistoricoHttp({
+  clienteId,
+  groupId,
+  empresaId,
+  signal,
+  limit = PEDIDOS_PAGE_LIMIT,
+  offset = 0,
+}) {
   const session = readErpHttpSession();
   if (!session?.token || !session?.actorId || !session?.groupId) {
     throw Object.assign(new Error("Sessao HTTP ausente para historico de produtos."), {
@@ -97,6 +109,11 @@ async function loadPedidosHistoricoHttp({ clienteId, groupId, empresaId, signal 
       code: "EMPRESA_CONTEXT_REQUIRED",
     });
   }
+  if (!clienteId) {
+    throw Object.assign(new Error("Historico HTTP exige clienteId."), {
+      code: "CLIENTE_ID_REQUIRED",
+    });
+  }
   const http = createHttpApiClient({
     getScope: () => ({
       token: session.token,
@@ -106,31 +123,27 @@ async function loadPedidosHistoricoHttp({ clienteId, groupId, empresaId, signal 
       actorEmail: session.email || null,
     }),
   });
-  const central = await http.clientes.central360(clienteId, {
-    signal,
-    pedidosLimit: 1,
-    pedidosOffset: 0,
-    orcamentosLimit: 1,
-    empresasLimit: 1,
-    locaisLimit: 1,
-    obrasLimit: 1,
-    crmLimit: 1,
-  });
-  const body = central?.data || central;
-  const clienteEmpresaId = body?.meta?.clienteEmpresaId || body?.empresaLink?.id || null;
-  if (!clienteEmpresaId) {
-    throw Object.assign(new Error("Cliente sem vinculo ClienteEmpresa na empresa atual."), {
-      code: "CLIENTE_EMPRESA_LINK_MISSING",
-    });
-  }
   const page = await http.pedidos.list({
-    limit: PEDIDOS_PAGE_LIMIT,
-    offset: 0,
-    clienteEmpresaId,
+    limit,
+    offset,
+    clienteId,
     signal,
   });
   const rows = Array.isArray(page?.data) ? page.data : (Array.isArray(page) ? page : []);
-  return rows;
+  const meta = page?.meta && typeof page.meta === "object"
+    ? {
+        limit: Number(page.meta.limit) || limit,
+        offset: Number(page.meta.offset) || offset,
+        total: Number.isFinite(Number(page.meta.total)) ? Number(page.meta.total) : rows.length,
+        hasMore: Boolean(page.meta.hasMore),
+      }
+    : {
+        limit,
+        offset,
+        total: rows.length,
+        hasMore: false,
+      };
+  return { data: rows, meta };
 }
 
 export default function HistoricoProdutosCliente({ clienteId }) {
@@ -149,33 +162,107 @@ export default function HistoricoProdutosCliente({ clienteId }) {
     clienteId && contextoValido && podeVisualizarHistorico && (!httpMode || empresaId),
   );
 
+  const sessionEpochRef = useRef(0);
+  const [extraPages, setExtraPages] = useState([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(null);
+
+  const queryKey = [
+    "historico-produtos-cliente-contexto",
+    clienteId,
+    groupId,
+    empresaId,
+    contexto,
+    httpMode ? "http" : "legado",
+  ];
+
+  useEffect(() => {
+    sessionEpochRef.current += 1;
+    setExtraPages([]);
+    setLoadMoreError(null);
+  }, [clienteId, groupId, empresaId, contexto, httpMode]);
+
   const {
-    data: pedidos = [],
+    data: firstPage,
     isError,
     error,
     isFetching,
   } = useQuery({
-    queryKey: [
-      "historico-produtos-cliente-contexto",
-      clienteId,
-      groupId,
-      empresaId,
-      contexto,
-      httpMode ? "http" : "legado",
-    ],
+    queryKey,
     queryFn: async ({ signal }) => {
       if (httpMode) {
-        return loadPedidosHistoricoHttp({ clienteId, groupId, empresaId, signal });
+        return loadPedidosHistoricoHttp({
+          clienteId,
+          groupId,
+          empresaId,
+          signal,
+          limit: PEDIDOS_PAGE_LIMIT,
+          offset: 0,
+        });
       }
       // Legado/local: filterInContext. Em HTTP nunca cai aqui (sem facade silenciosa).
-      return filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", PEDIDOS_PAGE_LIMIT);
+      const rows = await filterInContext(
+        "Pedido",
+        { cliente_id: clienteId },
+        "-data_pedido",
+        LEGADO_PEDIDOS_LIMIT,
+      );
+      const data = Array.isArray(rows) ? rows : [];
+      return {
+        data,
+        meta: {
+          limit: LEGADO_PEDIDOS_LIMIT,
+          offset: 0,
+          total: data.length,
+          hasMore: false,
+        },
+      };
     },
     enabled: consultaHabilitada,
     staleTime: 60_000,
     retry: false,
   });
 
+  const pedidos = useMemo(() => {
+    const base = Array.isArray(firstPage?.data) ? firstPage.data : [];
+    const extras = extraPages.flatMap((page) => (Array.isArray(page?.data) ? page.data : []));
+    return [...base, ...extras];
+  }, [firstPage, extraPages]);
+
+  const meta = useMemo(() => {
+    if (extraPages.length) return extraPages[extraPages.length - 1]?.meta || firstPage?.meta;
+    return firstPage?.meta || null;
+  }, [firstPage, extraPages]);
+
+  const totalPedidos = Number.isFinite(Number(meta?.total)) ? Number(meta.total) : pedidos.length;
+  const hasMore = Boolean(meta?.hasMore);
   const linhas = useMemo(() => mapPedidosToHistoricoLinhas(pedidos), [pedidos]);
+
+  const handleLoadMore = async () => {
+    if (!httpMode || !hasMore || loadingMore || !consultaHabilitada) return;
+    const epoch = sessionEpochRef.current;
+    const offset = pedidos.length;
+    setLoadingMore(true);
+    setLoadMoreError(null);
+    const controller = new AbortController();
+    try {
+      const page = await loadPedidosHistoricoHttp({
+        clienteId,
+        groupId,
+        empresaId,
+        signal: controller.signal,
+        limit: PEDIDOS_PAGE_LIMIT,
+        offset,
+      });
+      if (epoch !== sessionEpochRef.current) return; // contexto/sessão trocou — descarta
+      setExtraPages((prev) => [...prev, page]);
+    } catch (err) {
+      if (epoch !== sessionEpochRef.current) return;
+      setLoadMoreError(err);
+    } finally {
+      if (epoch === sessionEpochRef.current) setLoadingMore(false);
+    }
+  };
 
   if (clienteId && (!contextoValido || !podeVisualizarHistorico || (httpMode && !empresaId))) {
     return (
@@ -207,11 +294,22 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   }
 
   return (
-    <Card className="w-full h-full border-0 shadow-sm" data-context-required="true" data-permission="Comercial.Pedido.visualizar" data-historico-fonte={httpMode ? "http" : "legado"}>
+    <Card
+      className="w-full h-full border-0 shadow-sm"
+      data-context-required="true"
+      data-permission="Comercial.Pedido.visualizar"
+      data-historico-fonte={httpMode ? "http" : "legado"}
+      data-historico-pedidos-carregados={pedidos.length}
+      data-historico-pedidos-total={totalPedidos}
+    >
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
           <Package className="w-4 h-4 text-sky-600" />
-          Histórico de Produtos ({linhas.length}){isFetching ? "…" : ""}
+          Histórico de Produtos ({linhas.length}
+          {httpMode && totalPedidos > pedidos.length
+            ? ` linhas · ${pedidos.length}/${totalPedidos} pedidos`
+            : ""}
+          ){isFetching || loadingMore ? "…" : ""}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -262,6 +360,32 @@ export default function HistoricoProdutosCliente({ clienteId }) {
             </TableBody>
           </Table>
         </div>
+        {httpMode && hasMore ? (
+          <div className="pt-3 flex items-center justify-between gap-2">
+            <p className="text-xs text-slate-500" data-historico-paginacao="has-more">
+              Exibindo {pedidos.length} de {totalPedidos} pedidos. Produtos de páginas seguintes exigem carregar mais.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              data-action="historico-produtos-carregar-mais"
+              disabled={loadingMore}
+              onClick={handleLoadMore}
+            >
+              {loadingMore ? "Carregando…" : "Carregar mais"}
+            </Button>
+          </div>
+        ) : null}
+        {loadMoreError ? (
+          <Alert className="mt-3 border-red-200 bg-red-50" data-historico-produtos-error="load-more">
+            <ShieldAlert className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              {loadMoreError?.message || "Falha ao carregar próxima página. Sem fallback local."}
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </CardContent>
     </Card>
   );

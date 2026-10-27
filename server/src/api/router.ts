@@ -1172,6 +1172,9 @@ function mountPedidoRoutes(router: Router, service: PedidoService) {
         search: typeof req.query.search === 'string' ? req.query.search : undefined,
         status: typeof req.query.status === 'string' ? req.query.status : undefined,
         clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,
+        clienteId: typeof req.query.clienteId === 'string'
+          ? req.query.clienteId
+          : (typeof req.query.cliente_id === 'string' ? req.query.cliente_id : undefined),
         tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,
       }));
     } catch (error) { next(error); }

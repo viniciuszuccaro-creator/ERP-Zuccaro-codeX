@@ -62,7 +62,12 @@ const mapOperadorToForm = (record, defaults = {}) => {
  * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe em troca de
  * registro/updated_at|updated_date; código/ID vinculados ao boundId.
  */
-export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, windowMode = false }) {
+/**
+ * Persistência canônica no formulário (create/updateInContext).
+ * Marcado self-managed para o VisualizadorUniversalEntidadeV24 passar
+ * handleCloseForm (conclusão) e NÃO handlePersistSubmit (evita 2ª gravação).
+ */
+export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, onSuccess, windowMode = false }) {
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -74,6 +79,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     group_id: groupId || "",
   });
   const [formData, setFormData] = useState(() => mapOperadorToForm(dadosIniciais, emptyForm));
+  const closeForm = onClose || onSave || onCancel || onSuccess;
 
   const { boundId: operadorBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
@@ -103,6 +109,14 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     enabled: contextoValido,
   });
 
+  const notifyCompletion = (savedPayload) => {
+    // Self-managed: onSubmit do visualizador = handleCloseForm(wasSaved).
+    // Não repassar payload a um writer — só sinalizar conclusão.
+    if (typeof onSubmit === "function") onSubmit(true);
+    if (typeof onSuccess === "function") onSuccess(savedPayload);
+    if (typeof closeForm === "function" && closeForm !== onSubmit) closeForm(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Injeta 'nome' para compatibilidade com o Visualizador Universal
@@ -130,9 +144,10 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
         await createInContext('OperadorCaixa', payload);
         toast.success("Operador criado!");
       }
-      onSubmit?.(payload);
+      notifyCompletion(payload);
     } catch (error) {
       toast.error("Erro: " + error.message);
+      // Erro preserva rascunho: não fecha nem notifica conclusão.
     }
   };
 
@@ -357,7 +372,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={() => closeForm?.()}>
             <X className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
@@ -370,3 +385,6 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     </div>
   );
 }
+
+OperadorCaixaForm.isSelfManagedCadastro = true;
+OperadorCaixaForm.displayName = "OperadorCaixaForm";

@@ -1,3 +1,17 @@
+## CURSOR — vigente: OperadorCaixa + Histórico (#353) (2026-10-27)
+
+Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovação**.
+
+**Fechado neste pacote (branch `cursor/operador-historico-persist-392b`):**
+- OperadorCaixa: um único responsável pela persistência (`isSelfManagedCadastro`); Visualizador só conclui; criação/edição 1 escrita; erro mantém rascunho.
+- Histórico de Produtos: `GET /pedidos?clienteId=` autorizado por `Comercial.Pedido.visualizar` (resolve vínculo no serviço, sem Central360 / sem exigir `Cadastros.cliente_empresa.visualizar`); paginação utilizável (total vs carregados; carregar mais); legado restaura limite 200.
+
+**Ainda aberto:** Pedido 044 contrato público; guarda preservação P1 Codex; revisão independente #342; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` após CI deste tip.
+
+Modalidade evidência: runner `/workspace`. Sem merge/deploy/carga.
+
+(2026-10-27 11:30 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |

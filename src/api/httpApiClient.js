@@ -651,9 +651,9 @@ SeparacaoConferencia: {
     },
   };
   const pedidos = {
-    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */
-    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, signal } = {}) {
-      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao }, signal, unwrap: false });
+    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, clienteId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */
+    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, clienteId, tipoOperacao, signal } = {}) {
+      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, clienteId, tipoOperacao }, signal, unwrap: false });
     },
     /** @param {string} id @param {{ signal?: AbortSignal }} [options] */
     get(id, { signal } = {}) { return request(`/api/v1/pedidos/${encodeURIComponent(id)}`, { signal }); },
