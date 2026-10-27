@@ -96,3 +96,33 @@ export const ORCAMENTO_PERSISTENCE_GAPS = Object.freeze({
   preco_unitario_ui: 'UI pode divergir do gravado — servidor sobrescreve snapshot',
   unidade_alternativa: 'somente unidade principal do produto; sem conversão',
 });
+
+/** Scoped Local/Obra options from the existing Central 360; partial blocks are not empty catalogs. */
+export function resolveComercialAuxiliaryView(view, scope, clienteId, clienteEmpresaId) {
+  const invalid = () => { throw new Error('COMERCIAL_AUXILIARY_INVALID'); };
+  const body = view?.data ?? view;
+  if (!isCanonicalComercialId(clienteId) || !isCanonicalComercialId(clienteEmpresaId)
+    || body?.identity?.id !== clienteId || body.meta?.groupId !== scope.groupId
+    || body.meta?.empresaId !== scope.empresaId || body.meta?.clienteId !== clienteId
+    || body.meta?.clienteEmpresaId !== clienteEmpresaId
+    || body.empresaLink?.id !== clienteEmpresaId || body.empresaLink?.cliente_id !== clienteId
+    || body.empresaLink?.empresa_id !== scope.empresaId || body.empresaLink?.ativo !== true
+    || body.empresaLink?.elegivel_operacao !== true) return invalid();
+  const rows = name => {
+    const block = body.blocks?.[name];
+    if (block?.status !== 'ok') throw new Error('COMERCIAL_AUXILIARY_UNAVAILABLE');
+    const meta = block.meta;
+    if (!Array.isArray(block.data) || block.data.length > 200
+      || !Number.isSafeInteger(meta?.total) || meta.total < block.data.length
+      || !Number.isSafeInteger(meta?.limit) || meta.limit < 1 || meta.limit > 200
+      || meta.offset !== 0 || typeof meta.hasMore !== 'boolean') return invalid();
+    if (meta.hasMore) throw new Error('COMERCIAL_REFERENCE_PAGINATION_REQUIRED');
+    if (meta.total !== block.data.length) return invalid();
+    for (const row of block.data) {
+      if (!row || !isCanonicalComercialId(row.id) || row.cliente_id !== clienteId || row.ativo !== true) return invalid();
+    }
+    if (new Set(block.data.map(row => row.id)).size !== block.data.length) return invalid();
+    return block.data;
+  };
+  return { locais: rows('locais'), obras: rows('obras') };
+}

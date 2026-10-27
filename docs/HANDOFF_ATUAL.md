@@ -1,4 +1,18 @@
-## Estado vigente - mestres canonicos e ciclo sintetico no navegador (2026-10-27)
+## Estado vigente - Pedido canonico e preparacao do Grupo real (2026-10-27)
+
+Mesma branch/Codespace, base b4e659af. PedidoCanonicoPanel reutiliza comercialMasters.list e o resolver existente para ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco. Locais/obras usam Central360 do cliente e vinculo exatos; respostas sem escopo, indisponiveis ou paginacao incompleta bloqueiam o salvamento. Nao ha fallback local, endpoint paralelo, nova permissao ou alteracao backend.
+
+Navegador/API/PG isolados: editar Pedido real da fixture, selecionar local/obra canonicos, salvar/reabrir quantidade 3, unidade KG, preco 12.345678, desconto 0 e total 37.037034 (UI R$37,04). Cliente, condicao, tabela e referencias reabriram. Revogacao sintetica deixou erro de autenticacao e rascunho visivel; SQL confirmou marcador salvo anterior e ausencia do marcador negado. Prova de Orcamento/conversao unica e negativas 401/403/contexto anteriores reutilizadas sem repetir o piloto. Nao e login real nem operacao homologada.
+
+Checks novos: dirigidos 71 PASS/0 FAIL/0 SKIP; raiz 2408 PASS/0 FAIL/0 SKIP; audit:baseline, lint, typecheck, build e diff-check exit0. Backend inalterado: prova anterior 554 PASS/0 FAIL/26 SKIP reutilizada, nao nova execucao nem aprovacao dos skips. Avisos de build existentes permanecem. Recibos, diff e hashes privados fora do checkout; fixture propria encerrada, sem anuncio de previa permanente.
+
+Revisao dirigida #353/0988697f32bf0f82356382f7dec1ac47f99cb52c: Regiao agora extrai mapper REAL e a mutacao de logistica e rejeitada; P2 anterior encerrado nesse SHA. P1 NOVO de graduacao da guarda permanece: trocar if (!podeSalvar) por if (false) no Operador real ainda passa a guarda de identidade e os testes Operador/Condicao. Branch Cursor intocada; demais deltas novos nao recebem aprovacao geral por essa prova. Composicao retida ate correcao/revisao e CI do SHA exato.
+
+Legado: leitura limitada identificou 2 Grupos/3 empresas no destino fixado; os dois IDs de Grupo sao exatamente os seeds sinteticos canonicos. Nenhum Grupo real foi vinculado a coorte. Decisao do proprietario: PREPARAR Grupo real no destino atual, sem criar/cargar. Envelope privado existente atualizado; formulario Grupo exige contexto previo e o facade local nao comprova bootstrap/persistencia HTTP. Preparar caminho canonico, identidade real privada, principal autorizado, auditoria/replay/reversao e aprovacao exata antes de criar. Mestre compartilhado nao exige empresa fiscal por palpite. Coorte 100 permanece nao vinculada; novos/preexistentes/duplicados/divergentes ainda desconhecidos, elegiveis operacionais 0.
+
+Bloqueadores de uso: P1 de preservacao Cursor e revisao dos novos deltas; bootstrap/binding do Grupo real; envelope schema/menor privilegio, par API/web e janela/backup atuais; autorizacao especifica da carga. Sem DDL/grants, criacao de Grupo, carga real, merge ou deploy. Automacao nao reativada; estado nativo nao deduzido do texto. Publicacao/CI e liberacao de reserva pelo recibo existente da #342. Proximo item: corrigir guarda com preservacao integral e negativa real; concluir bootstrap canonicamente antes de reconciliar a coorte.
+
+### Historico preservado - mestres e ciclo anterior (2026-10-27)
 
 Mesma branch codex/consolidacao-infra-20261017 e mesmo Codespace, base e916d467. Os 16 arquivos anteriores e o diff SHA-256 7d52f2c0f3bf0c70638d52807dcffc877a6c2f0d13b080044fcae250bb078a4c7 foram conferidos antes de editar; copia privada intacta. Nao houve novo clone, rebuild, transferencia ou acesso operacional.
 

@@ -23,3 +23,14 @@ test('janela Pedido captura sessao canonica sem inventar token e separa cache po
   assert.match(panel,/queryKey:\['pedidos-http',groupId,empresaId,actorId,sessionIdentity,/);
   assert.doesNotMatch(panel,/token:sessionToken/);
 });
+
+test('Pedido canonical nao usa facade local nos mestres e bloqueia save sem referencias verificadas',()=>{
+  assert.match(panel,/http\.comercialMasters\.list/);
+  assert.match(panel,/resolveComercialMasterPages/);
+  assert.match(panel,/http\.clientes\.central360/);
+  assert.match(panel,/resolveComercialAuxiliaryView/);
+  assert.doesNotMatch(panel,/filterInContext\(/);
+  assert.match(panel,/if\(!mastersReady\)/);
+  assert.match(panel,/queryKey:\['pedido-masters',groupId,empresaId,actorId,sessionCacheKey,/);
+  assert.match(panel,/queryKey:\['pedido-auxiliary',groupId,empresaId,actorId,sessionCacheKey,/);
+});

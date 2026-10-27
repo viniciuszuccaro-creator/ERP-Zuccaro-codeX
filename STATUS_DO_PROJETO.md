@@ -1,4 +1,16 @@
-## Estado vigente - #344 leitores canonicos e ciclo sintetico (2026-10-27)
+## Estado vigente - #344 Pedido canonico e Grupo real preparado (2026-10-27)
+
+Entregavel: Pedido existente usa leitores HTTP canonicos e Central360 para locais/obras; contexto/cliente/vinculo e paginacao estritos, sem fallback local. Browser isolado salvou/reabriu referencias, quantidade3, KG/preco12.345678/desconto0/total37.037034; rascunho negado por sessao revogada permaneceu e nao foi persistido. Provas anteriores de conversao e negativas reutilizadas, sem novo piloto. Originais, captura e Cursor preservados.
+
+Validacao nova: 71/0/0 dirigidos; raiz2408 PASS/0 FAIL/0 SKIP; audit/lint/typecheck/build/diff exit0. Backend inalterado554 PASS/0 FAIL/26 SKIP reutilizado. Fixture propria encerrada; evidencias/diff/hashes privados. Sem homologacao operacional ou acesso de negocio ao destino.
+
+Cursor0988697f: P2 Regiao encerrado por mapper real/mutacao rejeitada; P1 novo da graduacao da guarda continua aceitando remocao da negativa de submit. Parecer por SHA na353; nao editar branch Cursor nem compor antes da correcao/CI/revisao.
+
+Destino/coorte:2 Grupos/3 empresas lidos estritamente; IDs dos Grupos iguais aos seeds sinteticos. Proprietario autorizou PREPARAR Grupo real no destino atual, nao cria-lo. Envelope privado atualizado; bootstrap HTTP/persistencia/autorizacao ainda nao comprovados. Nao vincular coorte a seed nem presumir empresa fiscal para mestre Grupo. Coorte100 sem binding; classificacoes contra clientes do destino continuam desconhecidas.
+
+Lista unica: pronto tecnico = leitores/Pedido sintetico; bloqueadores de entrada = guarda Cursor/composicao, Grupo real/binding, schema/menor privilegio/API+web/backup-janela/aceite; pendencia de dados = reconciliacao privada100 e auxiliares; melhorias posteriores = Comercial360 avancado conforme programa. Sem criacao/carga/DDL/grants/deploy/merge. Automacao nao reativada, estado nativo nao inferido. Proximo: guarda integral e bootstrap canonico, depois reconciliacao privada por escopo comprovado. Detalhes no HANDOFF existente.
+
+### Historico preservado - leitores e ciclo anterior (2026-10-27)
 
 Mesmo Codespace/branch, base e916d467, 16 arquivos/diff anteriores conferidos antes da retomada. GET Cliente opt-in, transporte/resolver de mestres e Orcamento concluidos no lote preservado. Navegador descobriu token ausente no Pedido em janela: captura canonica e cache por sessao corrigidos, contraprova FAIL antes/PASS depois, sem nova permissao. Originais e Cursor intactos.
 

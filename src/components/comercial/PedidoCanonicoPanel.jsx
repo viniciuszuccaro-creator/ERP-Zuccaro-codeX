@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, ShoppingCart, Trash2, XCircle } from 'lucide-react';
 import { gerarPDFPedido } from '@/components/lib/exportacaoPDF';
-import { createHttpApiClient } from '@/api/httpApiClient';
+import { createHttpApiClient, central360SessionKey } from '@/api/httpApiClient';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +44,8 @@ import {
   clienteEmpresaPickerLabel,
   filterClienteEmpresaOptions,
   filterProdutoOptions,
+  resolveComercialMasterPages,
+  resolveComercialAuxiliaryView,
   produtoPickerLabel,
 } from './comercialMasterPicker';
 import { isCanonicalPedidoId } from './centralCliente360Navigation';
@@ -64,6 +66,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   renderedScope.current={groupId,empresaId,actorId};
   const activeScope=()=>readErpHttpSession();
   const sessionIdentity=sessionToken||readErpHttpSession()?.token||null;
+  const sessionCacheKey=central360SessionKey(sessionIdentity);
   const [page,setPage]=useState(1);
   const [pageSize,setPageSize]=useState(20);
   const [selected,setSelected]=useState(null);
@@ -94,10 +97,31 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const canPrint=canUsePedidoAction(hasPermission,'imprimir') || canUsePedidoAction(hasPermission,'visualizar');
   const canShare=canUsePedidoAction(hasPermission,'compartilhar') || canUsePedidoAction(hasPermission,'visualizar');
   const ready=Boolean(groupId&&empresaId&&actorId);
-  const api=useMemo(()=>createHttpApiClient({getScope:()=>({groupId,empresaId,actorId,actorEmail,token:sessionIdentity})}).pedidos,[groupId,empresaId,actorId,actorEmail,sessionIdentity]);
+  const http=useMemo(()=>createHttpApiClient({getScope:()=>({groupId,empresaId,actorId,actorEmail,token:sessionIdentity})}),[groupId,empresaId,actorId,actorEmail,sessionIdentity]);
+  const api=http.pedidos;
   const list=useQuery({queryKey:['pedidos-http',groupId,empresaId,actorId,sessionIdentity,page,pageSize,applied],queryFn:({signal})=>api.list({limit:pageSize,offset:(page-1)*pageSize,search:applied.search||undefined,status:applied.status==='TODOS'?undefined:applied.status,clienteEmpresaId:applied.clienteEmpresaId==='TODOS'?undefined:applied.clienteEmpresaId,tipoOperacao:applied.tipoOperacao==='TODOS'?undefined:applied.tipoOperacao,signal}),enabled:ready&&canView,retry:1});
-  const master=useQuery({queryKey:['pedido-masters',groupId,empresaId],queryFn:async()=>{const [clientesEmpresa,clientes,condicoes,produtos,unidades,locais,obras,tabelas]=await Promise.all([filterInContext('ClienteEmpresa',{ativo:true,habilitado_operacao:true},'codigo',500),filterInContext('Cliente',{ativo:true},'razao_social',500),filterInContext('CondicaoPagamento',{ativo:true},'nome',500),filterInContext('Produto',{ativo:true},'descricao',500),filterInContext('UnidadeMedida',{ativo:true},'sigla',500),filterInContext('ClienteLocal',{ativo:true},'nome',500),filterInContext('Obra',{ativo:true},'nome',500),filterInContext('TabelaPreco',{ativo:true},'nome',500)]);return{clientesEmpresa,clientes,condicoes,produtos,unidades,locais,obras,tabelas};},enabled:ready&&canView,staleTime:30000});
-  const masters=master.data||{clientesEmpresa:[],clientes:[],condicoes:[],produtos:[],unidades:[],locais:[],obras:[],tabelas:[]};
+  const master=useQuery({
+    queryKey:['pedido-masters',groupId,empresaId,actorId,sessionCacheKey,clienteQuery,produtoQuery],
+    queryFn:async({signal})=>resolveComercialMasterPages(await http.comercialMasters.list({
+      clienteSearch:clienteQuery.trim(),produtoSearch:produtoQuery.trim(),signal,
+    }),{groupId,empresaId}),
+    enabled:ready&&canView,staleTime:30000,retry:false,
+  });
+  const coreMasters=master.data||{clientesEmpresa:[],clientes:[],condicoes:[],produtos:[],unidades:[],tabelas:[]};
+  const selectedClienteId=coreMasters.clientesEmpresa.find(link=>link.id===form.cliente_empresa_id)?.cliente_id;
+  const auxiliary=useQuery({
+    queryKey:['pedido-auxiliary',groupId,empresaId,actorId,sessionCacheKey,selectedClienteId,form.cliente_empresa_id],
+    queryFn:async({signal})=>{
+      if(!selectedClienteId)throw new Error('COMERCIAL_CLIENTE_EMPRESA_REQUIRED');
+      return resolveComercialAuxiliaryView(await http.clientes.central360(selectedClienteId,{
+        empresasLimit:1,locaisLimit:200,obrasLimit:200,pedidosLimit:1,orcamentosLimit:1,crmLimit:1,signal,
+      }),{groupId,empresaId},selectedClienteId,form.cliente_empresa_id);
+    },
+    enabled:ready&&canView&&Boolean(selectedClienteId),staleTime:30000,retry:false,
+  });
+  const masters={...coreMasters,locais:auxiliary.data?.locais||[],obras:auxiliary.data?.obras||[]};
+  const mastersReady=Boolean(master.data&&!master.isError&&!master.isFetching&&selectedClienteId
+    &&auxiliary.data&&!auxiliary.isError&&!auxiliary.isFetching);
   const clients=useMemo(()=>new Map(masters.clientes.map(x=>[x.id,x])),[masters.clientes]);
   const clientLabel=(id)=>{const link=masters.clientesEmpresa.find(x=>x.id===id);return clienteEmpresaPickerLabel(link, clients.get(link?.cliente_id))||id;};
   const clienteOptions=useMemo(()=>filterClienteEmpresaOptions(masters.clientesEmpresa, clients, clienteQuery),[masters.clientesEmpresa, clients, clienteQuery]);
@@ -112,7 +136,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const openCreate=()=>{if(mutationGate.current.isPending(renderedScope.current)){toast.error('Aguarde a confirmação do Pedido pendente neste contexto.');return;}const key=getOrCreatePedidoIntentKey(renderedScope.current,intentStorage(),()=>window.crypto.randomUUID());if(!key){toast.error('Sessão indisponível para criar Pedido com retry seguro.');return;}setCreateKey(key);setEditing(null);setForm(emptyForm());setDirty(false);setFormOpen(true);};
   const openEdit=(row)=>{if(!canEdit(row))return;setEditing(row);setForm(mapPedidoRowToForm(row));setDirty(false);setDetailOpen(false);setFormOpen(true);};
   const refreshConflictScope=async(ticket,scope)=>{if(!canView||!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))throw new Error('PEDIDO_CONTEXT_CHANGED');await api.list({limit:1,offset:0});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))throw new Error('PEDIDO_CONTEXT_CHANGED');await queryClient.invalidateQueries({queryKey:['pedidos-http',scope.groupId,scope.empresaId,scope.actorId],refetchType:'all'},{throwOnError:true});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))throw new Error('PEDIDO_CONTEXT_CHANGED');};
-  const save=async()=>{if(busy)return;if(!editing&&!createKey){toast.error('Chave da intenção indisponível. Reabra o formulário antes de criar.');return;}const mutation=mutationGate.current.begin(renderedScope.current);if(!mutation)return;const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket){mutationGate.current.end(mutation);return;}setBusy(true);try{const payload=buildPedidoPayload(form,editing?undefined:createKey);const saved=editing?await api.update(editing.id,payload):await api.create(payload);if(!editing)clearPedidoCreateIntentKey(ticket.scope,intentStorage(),createKey);await queryClient.invalidateQueries({queryKey:['pedidos-http',groupId,empresaId,actorId]});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){toast.error('Contexto alterado. O Pedido foi salvo no contexto original; consulte o registro antes de repetir.');return;}if(!editing)setCreateKey(null);toast.success(editing?'Pedido atualizado.':'Pedido criado.');setSelected(saved);setDirty(false);setFormOpen(false);setEditing(null);}catch(error){if(!editing&&error?.code==='PEDIDO_IDEMPOTENCY_CONFLICT'){let next;try{next=await recoverPedidoCreateIntentAfterConflict(ticket.scope,intentStorage(),createKey,()=>window.crypto.randomUUID(),scope=>refreshConflictScope(ticket,scope));}catch{toast.error('Não foi possível consultar os Pedidos no contexto original. Retorne a ele antes de tentar novamente.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){setCreateKey(next);toast.error('Esta chave já pertence a outro Pedido. Consulte a listagem antes de confirmar um novo; o formulário foi preservado.');}else toast.error('Contexto alterado. Consulte o Pedido original antes de repetir.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));else toast.error('Contexto alterado. Consulte o Pedido antes de repetir.');}finally{mutationGate.current.end(mutation);setBusy(mutationGate.current.isPending(renderedScope.current));}};
+  const save=async()=>{if(busy)return;if(!mastersReady){toast.error(master.error?.message||auxiliary.error?.message||'Aguarde os cadastros canonicos do cliente antes de salvar.');return;}if(!editing&&!createKey){toast.error('Chave da intenção indisponível. Reabra o formulário antes de criar.');return;}const mutation=mutationGate.current.begin(renderedScope.current);if(!mutation)return;const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket){mutationGate.current.end(mutation);return;}setBusy(true);try{const payload=buildPedidoPayload(form,editing?undefined:createKey);const saved=editing?await api.update(editing.id,payload):await api.create(payload);if(!editing)clearPedidoCreateIntentKey(ticket.scope,intentStorage(),createKey);await queryClient.invalidateQueries({queryKey:['pedidos-http',groupId,empresaId,actorId]});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){toast.error('Contexto alterado. O Pedido foi salvo no contexto original; consulte o registro antes de repetir.');return;}if(!editing)setCreateKey(null);toast.success(editing?'Pedido atualizado.':'Pedido criado.');setSelected(saved);setDirty(false);setFormOpen(false);setEditing(null);}catch(error){if(!editing&&error?.code==='PEDIDO_IDEMPOTENCY_CONFLICT'){let next;try{next=await recoverPedidoCreateIntentAfterConflict(ticket.scope,intentStorage(),createKey,()=>window.crypto.randomUUID(),scope=>refreshConflictScope(ticket,scope));}catch{toast.error('Não foi possível consultar os Pedidos no contexto original. Retorne a ele antes de tentar novamente.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){setCreateKey(next);toast.error('Esta chave já pertence a outro Pedido. Consulte a listagem antes de confirmar um novo; o formulário foi preservado.');}else toast.error('Contexto alterado. Consulte o Pedido original antes de repetir.');return;}if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));else toast.error('Contexto alterado. Consulte o Pedido antes de repetir.');}finally{mutationGate.current.end(mutation);setBusy(mutationGate.current.isPending(renderedScope.current));}};
   const loadHistory=async(pedidoId,openedTicket)=>{const ticket=openedTicket||detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket)return;setHistoryLoading(true);setHistoryError(null);try{const events=await api.history(pedidoId);if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setHistory(Array.isArray(events)?events:[]);setHistoryError(null);}catch(error){if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setHistory([]);setHistoryError(error);toast.error(message(error)||'Falha ao carregar histórico.');}finally{if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))setHistoryLoading(false);}};
   const show=async(row)=>{const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket||!canView)return;try{setHistoryLoading(true);setHistoryError(null);setHistory([]);const detail=await api.get(row.id);if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setSelected(detail);setDetailOpen(true);await loadHistory(row.id,ticket);}catch(error){if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setHistoryLoading(false);toast.error(message(error));}};
   const initialToken=activeScope()?.token;
