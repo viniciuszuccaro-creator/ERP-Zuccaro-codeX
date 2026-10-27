@@ -67,6 +67,15 @@ function restoreApprovedServicoTipoFreteCallbackDelta(source) {
  assert.equal(source.split(approvedServicoTipoFreteGraduationTests).length,2,'Only the exact Servico/TipoFrete graduation tests delta may be normalized');
  return source.replace(approvedServicoTipoFreteGraduationTests,'\n').replace(approvedServicoTipoFreteNames,previousServicoTipoFreteNames);
 }
+/** #353 SegmentoCliente: saiu do pin após Servico/TipoFrete; reverse restaura names intermediários + teste. */
+const previousSegmentoClienteNames = approvedServicoTipoFreteNames;
+const approvedSegmentoClienteNames = "  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedSegmentoClienteGraduationTest = "\ntest('SegmentoCliente graduou do pin RecordState para useCadastroReopenOnIdentity com segmentoBoundId', () => {\n  const file = 'src/components/cadastros/SegmentoClienteForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('SegmentoCliente'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n  assert.match(source, /segmentoBoundId/);\n  assert.doesNotMatch(source, /useCadastroRecordState/);\n  assert.doesNotMatch(source, /prevUpdatedRef/);\n});\n\n";
+function restoreApprovedSegmentoClienteCallbackDelta(source) {
+ assert.equal(source.split(approvedSegmentoClienteNames).length,2,'Only the exact SegmentoCliente names graduation delta may be normalized');
+ assert.equal(source.split(approvedSegmentoClienteGraduationTest).length,2,'Only the exact SegmentoCliente graduation test delta may be normalized');
+ return source.replace(approvedSegmentoClienteGraduationTest,'\n').replace(approvedSegmentoClienteNames,previousSegmentoClienteNames);
+}
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
@@ -78,22 +87,33 @@ test('bulk lifecycle evolution retains the original hash and rejects changed or 
 });
 test('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const mid=restoreApprovedServicoTipoFreteCallbackDelta(source);
+ const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(source);
+ const mid=restoreApprovedServicoTipoFreteCallbackDelta(afterSeg);
  const restored=restoreApprovedContatoB2BCallbackDelta(mid);
  assert.equal(restored.includes(approvedContatoB2BGraduationTest),false);
  assert.match(restored,/CadastroFiscal', 'ContatoB2B'/);
- assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(source.replace(approvedServicoTipoFreteGraduationTests,'\n')));
- assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(source+approvedServicoTipoFreteGraduationTests));
+ assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(source.replace(approvedSegmentoClienteGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(source+approvedSegmentoClienteGraduationTest));
+ assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(afterSeg.replace(approvedServicoTipoFreteGraduationTests,'\n')));
+ assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(afterSeg+approvedServicoTipoFreteGraduationTests));
  assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(mid.replace(approvedContatoB2BGraduationTest,'\n')));
  assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(mid+approvedContatoB2BGraduationTest));
  assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(mid.replace("CadastroFiscal',\n","CadastroFiscal', 'Webhook',\n")));
 });
 test('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const restored=restoreApprovedServicoTipoFreteCallbackDelta(source);
+ const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(source);
+ const restored=restoreApprovedServicoTipoFreteCallbackDelta(afterSeg);
  assert.equal(restored.includes(approvedServicoTipoFreteGraduationTests),false);
  assert.match(restored,/SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete'/);
- assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(source.replace("TabelaPreco',","TabelaPreco', 'Webhook',")));
+ assert.throws(()=>restoreApprovedServicoTipoFreteCallbackDelta(afterSeg.replace("TabelaPreco',","TabelaPreco', 'Webhook',")));
+});
+test('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedSegmentoClienteCallbackDelta(source);
+ assert.equal(restored.includes(approvedSegmentoClienteGraduationTest),false);
+ assert.match(restored,/SegmentoCliente', 'TabelaPreco'/);
+ assert.throws(()=>restoreApprovedSegmentoClienteCallbackDelta(source.replace("TabelaPreco',","TabelaPreco', 'Webhook',")));
 });
 /** #353 LocalEstoque: saiu do pin residual RecordState → reopen canônico. */
 const previousResidualNames = "const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n";
@@ -127,7 +147,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
     : entry.path==='tests/cursor-callback-record-state.test.js'
       ? restoreApprovedCodigoFieldCallbackDelta(
           restoreApprovedContatoB2BCallbackDelta(
-            restoreApprovedServicoTipoFreteCallbackDelta(reviewed)))
+            restoreApprovedServicoTipoFreteCallbackDelta(
+              restoreApprovedSegmentoClienteCallbackDelta(reviewed))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
         : reviewed;

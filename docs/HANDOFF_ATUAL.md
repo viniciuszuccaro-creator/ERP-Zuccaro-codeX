@@ -1,3 +1,19 @@
+## CURSOR — SegmentoCliente reopen + HEAD review a7395bd21 (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| HEAD anterior | **`a7395bd21`** CI SUCCESS; `@codex review` 6442148086 |
+| Pacote | **SegmentoCliente** reopen canônico (matriz início de uso) |
+| Correção | `useCadastroReopenOnIdentity` + `segmentoBoundId`; sky; pin callback |
+| Publication | reverse Segmento → Servico/TipoFrete → Contato → CodigoField (`62a49942…`) |
+| Provas | behavioral + callback + publication = PASS |
+| Fora | Orçamento leitores; Codex; merge/deploy/carga |
+| Modalidade | runner `/workspace` |
+
+Pedido: **@codex review** tip HEAD após CI verde deste SHA (todos os deltas).
+
+(2026-10-27 09:50 America/Sao_Paulo)
+
 ## CURSOR — CI SUCCESS tip 7d9eade5 Servico/TipoFrete (2026-10-27)
 
 | Campo | Valor |

@@ -10,10 +10,11 @@ const names = ['ApiExterna', 'CatalogoWeb', 'CentroResultado', 'ChatbotCanal', '
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'Filial', 'GatewayPagamento',
   'JobAgendado', 'KitProduto', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
   'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',
-  'SegmentoCliente', 'TabelaPreco', 'CadastroFiscal',
+  'TabelaPreco', 'CadastroFiscal',
   'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];
 // ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
 // Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.
+// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -105,6 +106,16 @@ test('TipoFrete graduou do pin RecordState para useCadastroReopenOnIdentity com 
   assert.equal(names.includes('TipoFrete'), false);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /tipoFreteBoundId/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('SegmentoCliente graduou do pin RecordState para useCadastroReopenOnIdentity com segmentoBoundId', () => {
+  const file = 'src/components/cadastros/SegmentoClienteForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('SegmentoCliente'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /segmentoBoundId/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });
