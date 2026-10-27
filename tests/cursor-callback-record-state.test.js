@@ -9,7 +9,7 @@ import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroR
 const names = ['ChatbotCanal', 'ChatbotIntent',
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',
   'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
-  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao',
+  'ParametroPortalCliente', 'ParametroRecebimentoNFe',
   'TabelaPreco', 'CadastroFiscal',
   'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];
 // ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
@@ -22,6 +22,7 @@ const names = ['ChatbotCanal', 'ChatbotIntent',
 // RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // ApiExterna graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// ParametroRoteirizacao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -200,6 +201,17 @@ test('ApiExterna graduou do pin RecordState para useCadastroReopenOnIdentity com
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /apiExternaBoundId/);
   assert.match(source, /headers_autenticacao/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('ParametroRoteirizacao graduou do pin RecordState para useCadastroReopenOnIdentity com roteirizacaoBoundId', () => {
+  const file = 'src/components/cadastros/ParametroRoteirizacaoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('ParametroRoteirizacao'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /roteirizacaoBoundId/);
+  assert.match(source, /distancia_maxima_km/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });

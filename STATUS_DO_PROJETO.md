@@ -1,3 +1,18 @@
+## CURSOR — ParametroRoteirizacao reopen canônico (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Branch | `cursor/cadastros-parametro-roteirizacao-reopen-392b` |
+| Base | `cursor/cadastros-apiexterna-reopen-392b` (#398) |
+| Mudança | `ParametroRoteirizacaoForm` → `useCadastroReopenOnIdentity` + `roteirizacaoBoundId` |
+| Pin | saiu de names; publication reverse ParametroRoteirizacao |
+| Testes | behavioral 6; callback+publication PASS |
+| Pedido | **@codex review** tip HEAD |
+| Modalidade | runner `/workspace` |
+| Fora | merge/deploy/carga; Codespace 403 |
+
+(2026-10-27 12:00 America/Sao_Paulo)
+
 ## CURSOR — ApiExterna reopen canônico (2026-10-27)
 
 | Campo | Valor |

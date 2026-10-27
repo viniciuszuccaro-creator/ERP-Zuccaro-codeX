@@ -1,3 +1,9 @@
+## CURSOR — vigente: ParametroRoteirizacao reopen (2026-10-27)
+
+Empilhado sobre #398 ApiExterna. Tip a publicar. Codespace 403. #397 aguarda parecer Codex (CI tip SUCCESS ≠ aprovação).
+
+(2026-10-27 12:00 America/Sao_Paulo)
+
 ## CURSOR — vigente: ApiExterna reopen (2026-10-27)
 
 Tip HEAD **`bc3149b6d`** (código `8918b326e`). CI **SUCCESS** push/PR — **≠ aprovação**. Gradua ApiExterna. Aguarda parecer Codex. Próximo: ParametroRoteirizacao. Codespace 403.
