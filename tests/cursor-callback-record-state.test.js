@@ -10,9 +10,10 @@ const names = ['ApiExterna', 'CatalogoWeb', 'CentroResultado', 'ChatbotCanal', '
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'Filial', 'GatewayPagamento',
   'JobAgendado', 'KitProduto', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
   'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',
-  'SegmentoCliente', 'Servico', 'TabelaPreco', 'TipoFrete', 'CadastroFiscal',
+  'SegmentoCliente', 'TabelaPreco', 'CadastroFiscal',
   'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];
 // ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
+// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -84,6 +85,26 @@ test('ContatoB2B graduou do pin RecordState para useCadastroReopenOnIdentity com
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /contatoBoundId/);
   assert.match(source, /preferencias_comunicacao/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('Servico graduou do pin RecordState para useCadastroReopenOnIdentity com servicoBoundId', () => {
+  const file = 'src/components/cadastros/ServicoForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('Servico'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /servicoBoundId/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('TipoFrete graduou do pin RecordState para useCadastroReopenOnIdentity com tipoFreteBoundId', () => {
+  const file = 'src/components/cadastros/TipoFreteForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('TipoFrete'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /tipoFreteBoundId/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });

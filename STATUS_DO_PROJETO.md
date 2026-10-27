@@ -1,3 +1,32 @@
+## CURSOR — Servico/TipoFrete reopen (pós CI dd79932a) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| CI verde anterior | **`dd79932a`** SUCCESS; `@codex review` 6441861597 |
+| Pacote | **Servico** + **TipoFrete** reopen canônico (matriz início de uso) |
+| Correção | `useCadastroReopenOnIdentity` + boundId; sky; pin callback graduação |
+| Publication | reverse Servico/TipoFrete → Contato → CodigoField (`62a49942…`) |
+| Provas | behavioral + callback + publication = PASS |
+| Fora | Orçamento leitores; Codex; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD após CI verde deste SHA.
+
+(2026-10-27 09:35 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip dd79932a LocalEstoque (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`dd79932a`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | ContatoB2B pin + Regiao REAL + reopen set + Historico + LocalEstoque |
+| Pedido | **@codex review** tip `dd79932a` (comment 6441861597) — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | Servico/TipoFrete/SegmentoCliente (RecordState só `updated_date`; pin callback) |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 09:30 America/Sao_Paulo)
+
 ## CURSOR — LocalEstoque reopen + tip CI SUCCESS 47553607 (2026-10-27)
 
 | Campo | Valor |

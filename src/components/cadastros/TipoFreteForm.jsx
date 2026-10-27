@@ -1,4 +1,3 @@
-import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,57 +8,97 @@ import { Loader2, Package } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
+
+const EMPTY_TIPO_FRETE = {
+  descricao: "",
+  codigo: "",
+  modalidade: "CIF",
+  cobra_frete: true,
+  calculo_automatico: false,
+  formula_calculo: "Por KM",
+  valor_base_km: 0,
+  responsavel_pagamento: "Empresa",
+  ativo: true,
+  empresa_id: "",
+  group_id: "",
+};
+
+const mapTipoFreteToForm = (record, defaults = {}) => {
+  if (!record) {
+    return {
+      ...EMPTY_TIPO_FRETE,
+      empresa_id: defaults.empresa_id || "",
+      group_id: defaults.group_id || "",
+    };
+  }
+  return {
+    ...EMPTY_TIPO_FRETE,
+    ...record,
+    cobra_frete: record.cobra_frete !== false,
+    calculo_automatico: Boolean(record.calculo_automatico),
+    valor_base_km: Number.isFinite(Number(record.valor_base_km)) ? Number(record.valor_base_km) : 0,
+    ativo: record.ativo !== false,
+  };
+};
 
 /**
- * V21.1.2 - WINDOW MODE READY
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — updated_at|updated_date,
+ * preservação de modalidade/fórmula/valor_km, código/ID no boundId.
  */
-export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = tipoFrete || tipo;
+export default function TipoFreteForm({
+  tipo, tipoFrete, item, data, onSubmit, isSubmitting, windowMode = false,
+}) {
+  const dadosIniciais = item || data || tipoFrete || tipo;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const emptyForm = mapTipoFreteToForm(null, {
+    empresa_id: empresaAtual?.id || "",
+    group_id: groupId || "",
+  });
+  const [formData, setFormData] = useState(() => mapTipoFreteToForm(dadosIniciais, emptyForm));
+
+  const { boundId: tipoFreteBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm,
+    mapToForm: (record) => mapTipoFreteToForm(record, emptyForm),
+  });
+
   const podeCriar = hasPermission?.("Cadastros.TipoFrete.criar") || hasPermission?.("Logistica.TipoFrete.criar");
   const podeEditar = hasPermission?.("Cadastros.TipoFrete.editar") || hasPermission?.("Logistica.TipoFrete.editar");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
-    descricao: '',
-    modalidade: 'CIF',
-    cobra_frete: true,
-    calculo_automatico: false,
-    formula_calculo: 'Por KM',
-    valor_base_km: 0,
-    responsavel_pagamento: 'Empresa',
-    ativo: true
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  const podeSalvar = tipoFreteBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.descricao || !formData.modalidade) {
-      alert('Preencha os campos obrigatórios');
+      alert("Preencha os campos obrigatórios");
       return;
     }
     if (!contextoValido) {
-      alert('Selecione um grupo ou empresa antes de salvar.');
+      alert("Selecione um grupo ou empresa antes de salvar.");
       return;
     }
     if (!podeSalvar) {
-      alert('Sem permissão para salvar tipo de frete.');
+      alert("Sem permissão para salvar tipo de frete.");
       return;
     }
     onSubmit({
       ...formData,
+      ...(tipoFreteBoundId ? { id: tipoFreteBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
-      nome: formData.descricao
+      nome: formData.descricao,
     });
   };
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(tipoFreteBoundId)}
+        entityId={tipoFreteBoundId}
         value={formData.codigo}
         action="codigo-registro-tipo-frete"
       />
@@ -68,15 +107,21 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
         <Label>Descrição *</Label>
         <Input
           value={formData.descricao}
-          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           placeholder="Ex: Frete Padrão SP, Entrega Expressa"
+          disabled={!podeSalvar}
+          data-permission="Cadastros.TipoFrete.editar"
         />
       </div>
 
       <div>
         <Label>Modalidade *</Label>
-        <Select value={formData.modalidade} onValueChange={(v) => setFormData({...formData, modalidade: v})}>
-          <SelectTrigger>
+        <Select
+          value={formData.modalidade}
+          onValueChange={(v) => setFormData({ ...formData, modalidade: v })}
+          disabled={!podeSalvar}
+        >
+          <SelectTrigger data-permission="Cadastros.TipoFrete.editar">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -90,14 +135,14 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
         </Select>
       </div>
 
-      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+      <div className="flex items-center justify-between p-3 rounded border border-sky-100 bg-sky-50/50">
         <div>
           <Label>Cobra Frete</Label>
           <p className="text-xs text-slate-500">Se adiciona valor ao pedido</p>
         </div>
         <Switch
           checked={formData.cobra_frete}
-          onCheckedChange={(v) => setFormData({...formData, cobra_frete: v})}
+          onCheckedChange={(v) => setFormData({ ...formData, cobra_frete: v })}
           disabled={!podeSalvar}
           data-permission="Cadastros.TipoFrete.editar"
           data-sensitive="true"
@@ -108,7 +153,11 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
         <>
           <div>
             <Label>Fórmula de Cálculo</Label>
-            <Select value={formData.formula_calculo} onValueChange={(v) => setFormData({...formData, formula_calculo: v})}>
+            <Select
+              value={formData.formula_calculo}
+              onValueChange={(v) => setFormData({ ...formData, formula_calculo: v })}
+              disabled={!podeSalvar}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -122,29 +171,31 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
             </Select>
           </div>
 
-          {formData.formula_calculo === 'Por KM' && (
+          {formData.formula_calculo === "Por KM" && (
             <div>
               <Label>Valor por KM (R$)</Label>
               <Input
                 type="number"
                 step="0.01"
                 value={formData.valor_base_km}
-                onChange={(e) => setFormData({...formData, valor_base_km: parseFloat(e.target.value)})}
+                onChange={(e) => setFormData({ ...formData, valor_base_km: parseFloat(e.target.value) || 0 })}
+                disabled={!podeSalvar}
               />
             </div>
           )}
         </>
       )}
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
+      <div className="flex justify-end gap-3 pt-4 border-t border-sky-100">
         <Button
           type="submit"
+          className="bg-sky-600 hover:bg-sky-700"
           disabled={isSubmitting || !contextoValido || !podeSalvar}
           data-permission="Cadastros.TipoFrete.salvar"
           data-sensitive="true"
         >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {tipo ? 'Atualizar' : 'Criar Tipo de Frete'}
+          {tipoFreteBoundId ? "Atualizar" : "Criar Tipo de Frete"}
         </Button>
       </div>
     </form>
@@ -152,11 +203,11 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Package className="w-5 h-5 text-blue-600" />
-            {dadosIniciais ? 'Editar Tipo de Frete' : 'Novo Tipo de Frete'}
+      <div className="w-full h-full overflow-auto bg-sky-50/40 p-6">
+        <div className="mb-4 pb-4 border-b border-sky-200">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-sky-950">
+            <Package className="w-5 h-5 text-sky-600" />
+            {tipoFreteBoundId ? "Editar Tipo de Frete" : "Novo Tipo de Frete"}
           </h2>
         </div>
         {formContent}
