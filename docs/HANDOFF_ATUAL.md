@@ -1,18 +1,20 @@
-## CURSOR — VIGENTE (2026-10-27 12:25 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-27 13:40 America/Sao_Paulo)
 
-**Executor:** runner `/workspace` (branch `cursor/operador-historico-persist-392b`). Codespace `potential-xylophone-5gj7r9v9qqg637vxp` **inacessível** (gh 403) — sem 2º escritor / sem clone paralelo. Stash `stash@{0}` wip-after-350 preservado.
+**Executor:** runner `/workspace` (`#397`). Abrir Codespace no Chrome **não** conecta este executor.
+**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — Codespace existente; sem 2º escritor; WIP Codex preservado.
+**Browser MCP:** ausente · gh codespaces **403**. Stash `stash@{0}` preservado.
 
-| Pacote | Tip HEAD | Estado |
-|--------|----------|--------|
-| **#397** Operador+Histórico+guarda+044 | **`00870edd0`** | CI SUCCESS ≠ aprovação; **prova 48+2 PASS**; aguarda @codex |
-| #398 ApiExterna | `bd0b21dc7` | CI SUCCESS; reviews 0 |
-| #399 ParametroRoteirizacao | `90ef7221f` | CI SUCCESS; **P1 bot: tenant inválido no reopen** |
-| #400 ChatbotCanal | `e4a3621a7` | CI SUCCESS; **P2 bot: gate credenciais** |
-| #342 Pedido mestres (Codex) | `47a5d0e109` | **APROVADO** Cursor (branch Codex intocada) |
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#397** Operador+Histórico+guarda+044 | **`a6c1f7a97`** | Reprova **48+2 PASS**; CI SUCCESS ≠ aprovação; **@codex review** |
+| #399 Parametro+ApiExterna tenant | `75caf0666` / código `fff9abb4d` | P1 fechado; CI SUCCESS; Codex breezy em `5b9c95ea9` |
+| #400 ChatbotCanal | `5fb79685b` / código `fb9c16c21` | P2 fechado; CI SUCCESS; Codex breezy em `fb9c16c21` |
+| #342 Codex | `47a5d0e10` | APROVADO Cursor; WIP “fora dos 50” **ainda não no tip** |
 
-**#397 fechado no tip:** persistência única OperadorCaixa; Histórico `clienteId`+paginação; guarda submit negativa; `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING`. Evidência: `docs/evidence/apontamentos-353-prova-tip-00870edd0-20261027.txt`. Roteiro demo: `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`.
+**Roteiro Chrome:** `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`  
+**Reprova:** `docs/evidence/apontamentos-353-reprova-chrome-prep-a6c1f7a97-20261027.txt`
 
-**Próximo:** P1 #399 tenant → recuperação matriz (não forms cosméticos) → janela exclusiva Codespace com Codex. Sem merge/deploy/carga.
+**Próximo:** parecer Codex tip `a6c1f7a97` → janela exclusiva Codespace (medir SHA+HTTP) → alinhar stack #400←#399. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
