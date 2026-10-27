@@ -1,6 +1,6 @@
 ## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
 
-Defeito MoedaIndice (só `id`, ignora `updated_at`) reproduzido e corrigido com `useCadastroReopenOnIdentity`/`moedaBoundId`. CANAL: chain rebuild current→golden `53ed9f42`. Orçamento leitores intactos. Pedido `@codex review` tip. Sem deploy/carga.
+Tip **`c27b827d`** (código `d91d49a8`). Defeito MoedaIndice (só `id`, ignora `updated_at`) reproduzido e corrigido com `useCadastroReopenOnIdentity`/`moedaBoundId`. CANAL: chain rebuild current→golden `53ed9f42`. Orçamento leitores intactos. Pedido `@codex review` tip. Sem deploy/carga.
 
 (2026-10-27 08:35 America/Sao_Paulo)
 
