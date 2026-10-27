@@ -1,15 +1,15 @@
-## CURSOR — VIGENTE (2026-10-27 13:45 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-27 13:50 America/Sao_Paulo)
 
-**Executor:** runner `/workspace`. Chrome Codespace owner: xylophone github.dev — Browser MCP ausente; sem 2º escritor. Stash `stash@{0}` preservado.
+**Executor:** runner `/workspace`. Chrome Codespace owner-only. Stash `stash@{0}` preservado.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#400** ChatbotCanal (+ merge #399) | tip HEAD | P2 + tenantKey stack; @codex |
+| **#400** ChatbotCanal+tenant | **`0d1e5ce29`** | CI **SUCCESS** `40543522236` ≠ aprovação; @codex |
+| #397 Operador+Histórico | `202801e22` / `a6c1f7a97` | CI SUCCESS; @codex |
 | #399 Parametro+ApiExterna | `fff9abb4d` | P1+tenant CI SUCCESS |
-| #397 Operador+Histórico | `8eee16827` / `a6c1f7a97` | reprova 48+2; @codex |
 | #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 não tip |
 
-**Próximo:** parecer Codex → demo Chrome exclusiva (medir SHA+HTTP). Sem merge/deploy/carga.
+**Próximo:** parecer Codex → demo Chrome exclusiva (SHA+HTTP). Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
