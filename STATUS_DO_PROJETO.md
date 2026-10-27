@@ -1,15 +1,15 @@
-## CURSOR — VIGENTE #397 Operador tenantKey + bloqueios (2026-10-27)
+## CURSOR — VIGENTE #397 tip `84feb5aba` CI SUCCESS (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Modalidade | runner `/workspace` — Chrome Codespace **não** conecta este executor |
-| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
-| Delta código | `tenantKey` no hook + OperadorCaixaForm (rascunho A↛B) |
-| Bloqueios | self-managed + Histórico `clienteId`/paginação + guarda + 044 |
-| Testes | persist-unica+tenant+guarda+reopen **17 PASS**; historico+pins **90 PASS** |
-| Pedido | **@codex review** tip HEAD (inclui tenant Operador) |
-| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 **não tip** |
-| Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor |
+| Tip HEAD | **`84feb5aba`** (código `88f9707fb` + docs) |
+| CI | **SUCCESS** runs `40574114617` / `40574105974` — **≠ aprovação** |
+| Delta | bloqueios + `tenantKey` Operador (A↛B) |
+| Testes | persist+tenant+guarda+reopen **17 PASS**; historico+pins **90 PASS** |
+| Pedido | **@codex review** tip **`84feb5aba`** / código **`88f9707fb`** |
+| Chrome | xylophone github.dev owner-only; runner `/workspace` |
+| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 não tip |
+| Fora | merge/deploy/carga; 2º escritor |
 
 **Bloqueios no HEAD — fechados (reprova):**
 1. OperadorCaixa self-managed — 1 create/update; V24 só conclui
