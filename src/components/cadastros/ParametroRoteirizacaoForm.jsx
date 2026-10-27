@@ -56,6 +56,8 @@ export default function ParametroRoteirizacaoForm({
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(groupId || empresaAtual?.id || dadosIniciais?.empresa_id);
+  // Mesma identidade de tenant que o RecordState anterior (grupo+empresa+escopo).
+  const tenantKey = JSON.stringify([groupId ?? null, empresaAtual?.id ?? null, contexto ?? null]);
   const emptyForm = mapParametroRoteirizacaoToForm(null, {
     empresa_id: empresaAtual?.id || "",
     group_id: groupId || "",
@@ -66,6 +68,7 @@ export default function ParametroRoteirizacaoForm({
     formData,
     setFormData,
     emptyForm,
+    tenantKey,
     mapToForm: (record) => mapParametroRoteirizacaoToForm(record, emptyForm),
   });
 

@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as policy from '../src/components/cadastros/cadastroReopenPolicy.js';
 
-async function mountForm(relPath, { initial }) {
+async function mountForm(relPath, { initial, contextoVisual } = {}) {
   const formSource = await readFile(new URL(`../${relPath}`, import.meta.url), 'utf8');
   const hookSource = await readFile(new URL('../src/components/cadastros/useCadastroReopenOnIdentity.js', import.meta.url), 'utf8');
   const compile = (source) => ts.transpileModule(source, {
@@ -41,6 +41,12 @@ async function mountForm(relPath, { initial }) {
 
   let props = { item: initial, onSubmit: () => {} };
   const confirms = [];
+  const visual = {
+    empresaAtual: { id: 'emp-1', group_id: 'grp-1' },
+    grupoAtual: { id: 'grp-1' },
+    contexto: 'empresa',
+    ...(contextoVisual || {}),
+  };
   const sandbox = {
     exports: {},
     module: { exports: {} },
@@ -85,11 +91,7 @@ async function mountForm(relPath, { initial }) {
       default: () => ({ canCreate: () => true, canEdit: () => true, hasPermission: () => true }),
     },
     '@/components/lib/useContextoVisual': {
-      useContextoVisual: () => ({
-        empresaAtual: { id: 'emp-1', group_id: 'grp-1' },
-        grupoAtual: { id: 'grp-1' },
-        contexto: 'empresa',
-      }),
+      useContextoVisual: () => visual,
     },
     '@/components/cadastros/useCadastroReopenOnIdentity': { __esModule: true, default: hookFn },
     'lucide-react': new Proxy({}, { get: () => 'Icon' }),
@@ -112,6 +114,7 @@ async function mountForm(relPath, { initial }) {
     render,
     confirms: () => confirms,
     setConfirm(v) { sandbox.__confirmResult = v; },
+    setContexto(patch) { Object.assign(visual, patch); },
     getForm() { return state[0]; },
     setForm(patch) {
       const cur = state[0];
@@ -237,4 +240,38 @@ test('ParametroRoteirizacao: troca A→B aplica B no boundId', async () => {
   assert.equal(h.getForm().distancia_maxima_km, 22);
   await h.submit();
   assert.equal(submitted[0].id, 'rot-b2');
+});
+
+test('ParametroRoteirizacao P1: troca empresa invalida rascunho — não retargeta 777 de A em B', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/ParametroRoteirizacaoForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /tenantKey/);
+  assert.match(src, /JSON\.stringify\(\[groupId/);
+
+  const submitted = [];
+  const h = await mountForm('src/components/cadastros/ParametroRoteirizacaoForm.jsx', {
+    initial: null,
+    contextoVisual: {
+      empresaAtual: { id: 'emp-A', group_id: 'grp-1' },
+      grupoAtual: { id: 'grp-1' },
+      contexto: 'empresa',
+    },
+  });
+  assert.equal(h.getForm().empresa_id, 'emp-A');
+  h.setForm({ distancia_maxima_km: 777 });
+  assert.equal(h.getForm().distancia_maxima_km, 777);
+
+  h.setContexto({
+    empresaAtual: { id: 'emp-B', group_id: 'grp-1' },
+    grupoAtual: { id: 'grp-1' },
+    contexto: 'empresa',
+  });
+  h.render({ item: null, onSubmit: (p) => submitted.push(p) });
+
+  assert.equal(h.getForm().empresa_id, 'emp-B');
+  assert.equal(h.getForm().distancia_maxima_km, 100, 'rascunho de A não sobrevive à troca de empresa');
+  await h.submit();
+  assert.equal(submitted.length, 1);
+  assert.equal(submitted[0].empresa_id, 'emp-B');
+  assert.equal(submitted[0].distancia_maxima_km, 100);
+  assert.equal(submitted[0].id, undefined);
 });
