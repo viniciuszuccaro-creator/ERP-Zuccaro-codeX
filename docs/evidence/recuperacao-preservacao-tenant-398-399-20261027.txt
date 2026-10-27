@@ -1,0 +1,37 @@
+RECUPERAÇÃO — preservação de tenant em forms graduados (2026-10-27)
+===================================================================
+Modalidade: runner /workspace. ≠ seed / ≠ restauração de registros.
+
+Classe do defeito
+-----------------
+Leitura incorreta de contexto após troca Grupo/Empresa (não ausência de código).
+Ao sair do RecordState (identity incluía group+empresa+contexto) para
+useCadastroReopenOnIdentity (só id/versão), rascunho de A sobrevivia e
+handleSubmit retargetava empresa_id para B.
+
+Correções no existente
+----------------------
+- Hook: tenantKey opt-in (#399 tip 945ab5414)
+- ParametroRoteirizacaoForm: tenantKey (#399)
+- ApiExternaForm: tenantKey (este tip #399)
+- ChatbotCanal P2: .editar grantable (#400 tip f1a39ea51)
+
+Provas
+------
+- ParametroRoteirizacao behavioral 7 PASS (777 A↛B)
+- ApiExterna behavioral 7 PASS (Rascunho-A ↛ B)
+
+Matriz início de uso — status sintético
+---------------------------------------
+- Relatorios tabs: 12 trigger = 12 content (sem órfãos)
+- PainelDinamicoCliente: historico_produtos montado + clienteId
+- Códigos CadastroCodigoRegistroField: OK na coorte início de uso auditada
+- openCadastroEntityWindow: uniqueKey por entidade (PASS_SINT prévio)
+- Classe B registros: BLOQ staging privado / Codex Legado (não inventar)
+
+Bloqueios restantes
+-------------------
+- Parecer Codex #397/#398/#399/#400
+- Demo Codespace xylophone (403 neste runner)
+- Migration 044 / carga / merge — gates
+- Ampliar tenantKey aos demais graduados: sob demanda (opt-in; sem generalizar)

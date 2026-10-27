@@ -1,16 +1,17 @@
-## CURSOR — VIGENTE (2026-10-27 12:40 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-27 13:00 America/Sao_Paulo)
 
-**Executor:** runner `/workspace`. Codespace xylophone **403** — sem 2º escritor. Stash `stash@{0}` preservado.
+**Executor:** runner `/workspace`. Codespace xylophone **403**. Stash `stash@{0}` preservado.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#399** ParametroRoteirizacao | tip HEAD (P1 tenant) | **P1 fechado**: `tenantKey` restaura invalidação RecordState; 7 PASS |
-| #398 ApiExterna | `bd0b21dc7` | CI SUCCESS; reviews 0 |
+| **#399** Parametro+ApiExterna tenant | tip HEAD | P1 + ApiExterna `tenantKey`; 7+7 PASS |
+| #400 ChatbotCanal | `fb9c16c21` | **P2 fechado** `.editar` grantable |
+| #398 ApiExterna reopen | `bd0b21dc7` | CI SUCCESS (tenant reforçado no tip #399) |
 | #397 Operador+Histórico | `a6c1f7a97` | prova 48+2 PASS; @codex pedido |
-| #400 ChatbotCanal | `e4a3621a7` | CI SUCCESS; **P2 gate credenciais** aberto |
-| #342 Pedido mestres | `47a5d0e109` | **APROVADO** (Codex branch intocada) |
+| #342 Pedido mestres | `47a5d0e109` | **APROVADO** |
 
-**Próximo:** P2 #400 → recuperação matriz → demo Codespace com Codex. Sem merge/deploy/carga.
+**Recuperação:** preservação tenant (não registros); Relatorios/Histórico/códigos coorte OK; classe B BLOQ legado.
+**Próximo:** demo Codespace exclusiva com Codex. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
