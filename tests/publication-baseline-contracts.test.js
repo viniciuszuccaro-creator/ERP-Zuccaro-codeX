@@ -148,6 +148,15 @@ function restoreApprovedParametroRoteirizacaoCallbackDelta(source) {
  assert.equal(source.split(approvedParametroRoteirizacaoGraduationTest).length,2,'Only the exact ParametroRoteirizacao graduation test delta may be normalized');
  return source.replace(approvedParametroRoteirizacaoGraduationTest,'\n').replace(approvedParametroRoteirizacaoNames,previousParametroRoteirizacaoNames);
 }
+/** #353 ChatbotCanal: saiu do pin após ParametroRoteirizacao; reverse restaura ChatbotCanal + omite teste. */
+const previousChatbotCanalNames = "const names = ['ChatbotCanal', 'ChatbotIntent',\n  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',\n  'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// ApiExterna graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// ParametroRoteirizacao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedChatbotCanalNames = "const names = ['ChatbotIntent',\n  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',\n  'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// ApiExterna graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// ParametroRoteirizacao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// ChatbotCanal graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedChatbotCanalGraduationTest = "\ntest('ChatbotCanal graduou do pin RecordState para useCadastroReopenOnIdentity com canalBoundId', () => {\n  const file = 'src/components/cadastros/ChatbotCanalForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('ChatbotCanal'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n  assert.match(source, /canalBoundId/);\n  assert.match(source, /mensagem_boas_vindas/);\n  assert.doesNotMatch(source, /useCadastroRecordState/);\n  assert.doesNotMatch(source, /prevUpdatedRef/);\n});\n\n";
+function restoreApprovedChatbotCanalCallbackDelta(source) {
+ assert.equal(source.split(approvedChatbotCanalNames).length,2,'Only the exact ChatbotCanal names graduation delta may be normalized');
+ assert.equal(source.split(approvedChatbotCanalGraduationTest).length,2,'Only the exact ChatbotCanal graduation test delta may be normalized');
+ return source.replace(approvedChatbotCanalGraduationTest,'\n').replace(approvedChatbotCanalNames,previousChatbotCanalNames);
+}
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
@@ -159,7 +168,8 @@ test('bulk lifecycle evolution retains the original hash and rejects changed or 
 });
 test('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -179,8 +189,11 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
  assert.match(restored,/ParametroRoteirizacao', 'RotaPadrao'/);
  assert.match(restored,/ApiExterna', 'CatalogoWeb'/);
  assert.match(restored,/ParametroRecebimentoNFe', 'ParametroRoteirizacao'/);
- assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(source.replace(approvedParametroRoteirizacaoGraduationTest,'\n')));
- assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(source+approvedParametroRoteirizacaoGraduationTest));
+ assert.match(restored,/ChatbotCanal', 'ChatbotIntent'/);
+ assert.throws(()=>restoreApprovedChatbotCanalCallbackDelta(source.replace(approvedChatbotCanalGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedChatbotCanalCallbackDelta(source+approvedChatbotCanalGraduationTest));
+ assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal.replace(approvedParametroRoteirizacaoGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal+approvedParametroRoteirizacaoGraduationTest));
  assert.throws(()=>restoreApprovedApiExternaCallbackDelta(afterRot.replace(approvedApiExternaGraduationTest,'\n')));
  assert.throws(()=>restoreApprovedApiExternaCallbackDelta(afterRot+approvedApiExternaGraduationTest));
  assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(afterApi.replace(approvedCatalogoWebGraduationTest,'\n')));
@@ -205,7 +218,8 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
 });
 test('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -221,7 +235,8 @@ test('Servico/TipoFrete callback graduation rejects omission, repetition or out-
 });
 test('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -236,7 +251,8 @@ test('SegmentoCliente callback graduation rejects omission, repetition or out-of
 });
 test('KitProduto callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -250,7 +266,8 @@ test('KitProduto callback graduation rejects omission, repetition or out-of-scop
 });
 test('Filial callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -263,7 +280,8 @@ test('Filial callback graduation rejects omission, repetition or out-of-scope ed
 });
 test('CentroResultado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -275,7 +293,8 @@ test('CentroResultado callback graduation rejects omission, repetition or out-of
 });
 test('JobAgendado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const afterRota=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -286,7 +305,8 @@ test('JobAgendado callback graduation rejects omission, repetition or out-of-sco
 });
 test('RotaPadrao callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const afterCat=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  const restored=restoreApprovedRotaPadraoCallbackDelta(afterCat);
@@ -296,7 +316,8 @@ test('RotaPadrao callback graduation rejects omission, repetition or out-of-scop
 });
 test('CatalogoWeb callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const afterApi=restoreApprovedApiExternaCallbackDelta(afterRot);
  const restored=restoreApprovedCatalogoWebCallbackDelta(afterApi);
  assert.equal(restored.includes(approvedCatalogoWebGraduationTest),false);
@@ -305,7 +326,8 @@ test('CatalogoWeb callback graduation rejects omission, repetition or out-of-sco
 });
 test('ApiExterna callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const afterRot=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  const restored=restoreApprovedApiExternaCallbackDelta(afterRot);
  assert.equal(restored.includes(approvedApiExternaGraduationTest),false);
  assert.match(restored,/ApiExterna', 'ChatbotCanal'/);
@@ -315,12 +337,22 @@ test('ApiExterna callback graduation rejects omission, repetition or out-of-scop
 });
 test('ParametroRoteirizacao callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const restored=restoreApprovedParametroRoteirizacaoCallbackDelta(source);
+ const afterCanal=restoreApprovedChatbotCanalCallbackDelta(source);
+ const restored=restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal);
  assert.equal(restored.includes(approvedParametroRoteirizacaoGraduationTest),false);
  assert.match(restored,/ParametroRecebimentoNFe', 'ParametroRoteirizacao'/);
- assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(source.replace(approvedParametroRoteirizacaoGraduationTest,'\n')));
- assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(source+approvedParametroRoteirizacaoGraduationTest));
- assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(source.replace("ParametroRecebimentoNFe',","ParametroRecebimentoNFe', 'Webhook',")));
+ assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal.replace(approvedParametroRoteirizacaoGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal+approvedParametroRoteirizacaoGraduationTest));
+ assert.throws(()=>restoreApprovedParametroRoteirizacaoCallbackDelta(afterCanal.replace("ParametroRecebimentoNFe',","ParametroRecebimentoNFe', 'Webhook',")));
+});
+test('ChatbotCanal callback graduation rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedChatbotCanalCallbackDelta(source);
+ assert.equal(restored.includes(approvedChatbotCanalGraduationTest),false);
+ assert.match(restored,/ChatbotCanal', 'ChatbotIntent'/);
+ assert.throws(()=>restoreApprovedChatbotCanalCallbackDelta(source.replace(approvedChatbotCanalGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedChatbotCanalCallbackDelta(source+approvedChatbotCanalGraduationTest));
+ assert.throws(()=>restoreApprovedChatbotCanalCallbackDelta(source.replace("ChatbotIntent',","ChatbotIntent', 'Webhook',")));
 });
 /** #353 LocalEstoque: saiu do pin residual RecordState → reopen canônico. */
 const previousResidualNames = "const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n";
@@ -363,7 +395,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
                         restoreApprovedRotaPadraoCallbackDelta(
                           restoreApprovedCatalogoWebCallbackDelta(
                             restoreApprovedApiExternaCallbackDelta(
-                              restoreApprovedParametroRoteirizacaoCallbackDelta(reviewed))))))))))))
+                              restoreApprovedParametroRoteirizacaoCallbackDelta(
+                                restoreApprovedChatbotCanalCallbackDelta(reviewed)))))))))))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
         : reviewed;

@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroRemainder.js';
 
-const names = ['ChatbotCanal', 'ChatbotIntent',
+const names = ['ChatbotIntent',
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',
   'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
   'ParametroPortalCliente', 'ParametroRecebimentoNFe',
@@ -23,6 +23,7 @@ const names = ['ChatbotCanal', 'ChatbotIntent',
 // CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // ApiExterna graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // ParametroRoteirizacao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// ChatbotCanal graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -212,6 +213,17 @@ test('ParametroRoteirizacao graduou do pin RecordState para useCadastroReopenOnI
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /roteirizacaoBoundId/);
   assert.match(source, /distancia_maxima_km/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('ChatbotCanal graduou do pin RecordState para useCadastroReopenOnIdentity com canalBoundId', () => {
+  const file = 'src/components/cadastros/ChatbotCanalForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('ChatbotCanal'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /canalBoundId/);
+  assert.match(source, /mensagem_boas_vindas/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });

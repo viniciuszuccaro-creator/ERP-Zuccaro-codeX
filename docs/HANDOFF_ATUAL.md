@@ -1,15 +1,15 @@
-## CURSOR — VIGENTE (2026-10-27 12:40 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-27 13:50 America/Sao_Paulo)
 
-**Executor:** runner `/workspace`. Codespace xylophone **403**. Stash `stash@{0}` preservado.
+**Executor:** runner `/workspace`. Chrome Codespace owner-only. Stash `stash@{0}` preservado.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#399** Parametro+ApiExterna | **`fff9abb4d`** | P1+tenant; CI **SUCCESS** ≠ aprovação |
-| #400 ChatbotCanal | `5fb79685b` / código `fb9c16c21` | P2 fechado; CI SUCCESS ≠ aprovação |
-| #397 Operador+Histórico | `a6c1f7a97` | prova 48+2 PASS; @codex pedido |
-| #342 Pedido mestres | `47a5d0e109` | **APROVADO** |
+| **#400** ChatbotCanal+tenant | **`0d1e5ce29`** | CI **SUCCESS** `40543522236` ≠ aprovação; @codex |
+| #397 Operador+Histórico | `202801e22` / `a6c1f7a97` | CI SUCCESS; @codex |
+| #399 Parametro+ApiExterna | `fff9abb4d` | P1+tenant CI SUCCESS |
+| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 não tip |
 
-**Próximo:** parecer Codex #399/#400/#397 → demo Codespace. Sem merge/deploy/carga.
+**Próximo:** parecer Codex → demo Chrome exclusiva (SHA+HTTP). Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
