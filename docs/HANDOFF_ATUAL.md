@@ -1,18 +1,26 @@
-## CURSOR — RotaPadrao reopen tip (CI pendente) (2026-10-27)
+## CURSOR — RotaPadrao CodigoField pin fix (CI pendente) (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (RotaPadrao) |
-| CI | pendente neste SHA — não creditar verde de `40f9cb515`/`d92659241` |
-| Pacote indep. | **RotaPadrao** — RecordState só `updated_date`; origem/destino/distância; CodigoField |
-| Correção | `useCadastroReopenOnIdentity` + `rotaBoundId` + map anti-wipe; sky |
-| Pin | graduação callback + publication reverse (…→Job→RotaPadrao) |
-| Provas | rota-padrao 6 PASS; callback 41; publication 34 |
-| Verde anterior | **`40f9cb515`** / **`d92659241`** JobAgendado SUCCESS |
-| Pedido Job | **@codex review** tip `40f9cb515` |
-| Próximo indep. | CatalogoWeb / ApiExterna / ParametroRoteirizacao |
+| Tip | HEAD após este commit (fix CodigoField) |
+| CI | pendente — tip `9460d682a` frontend FAIL (attr pin); não creditar verde ancestral |
+| Causa | remainder CodigoField pinava `dadosIniciais?.id`; form usa `rotaBoundId` |
+| Correção | AUTHORIZED attrs → `rotaBoundId` / `formData.codigo` |
+| Provas | remainder 8; rota 6; callback 41; publication 34 PASS |
+| Pedido | **@codex review** tip HEAD após CI verde |
 | Modalidade | runner `/workspace` |
 | Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+
+(2026-10-27 10:42 America/Sao_Paulo)
+
+## CURSOR — RotaPadrao reopen tip (CI FAIL frontend 9460d682a) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`9460d682a`** |
+| CI | frontend **FAIL**; backend/expedicao SUCCESS |
+| Pacote indep. | **RotaPadrao** reopen + pin callback |
+| Modalidade | runner `/workspace` |
 
 (2026-10-27 10:35 America/Sao_Paulo)
 
