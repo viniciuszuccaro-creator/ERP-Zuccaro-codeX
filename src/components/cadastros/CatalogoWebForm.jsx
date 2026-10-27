@@ -96,7 +96,17 @@ export default function CatalogoWebForm({
       ...(catalogoBoundId ? { id: catalogoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: empresaId,
-      nome: formData.nome_catalogo || formData.nome || '',
+      nome: formData.nome_catalogo || '',
+    });
+  };
+
+  const applyCatalogoFlags = (patch) => {
+    const flagged = syncFlagsCatalogoProduto({ ...formData, ...patch });
+    setFormData({
+      ...formData,
+      ...patch,
+      exibir_site: Boolean(flagged.exibir_site),
+      exibir_marketplace: Boolean(flagged.exibir_marketplace),
     });
   };
 
@@ -154,7 +164,7 @@ export default function CatalogoWebForm({
             data-permission="Cadastros.CatalogoWeb.editar"
             data-action="alternar-exibir-site-catalogo-web"
             data-sensitive="true"
-            onCheckedChange={(v) => setFormData(syncFlagsCatalogoProduto({ ...formData, exibir_site: v, exibir_no_site: v }))}
+            onCheckedChange={(v) => applyCatalogoFlags({ exibir_site: v, exibir_no_site: v })}
           />
         </div>
         <div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50/50">
@@ -165,7 +175,7 @@ export default function CatalogoWebForm({
             data-permission="Cadastros.CatalogoWeb.editar"
             data-action="alternar-exibir-marketplace-catalogo-web"
             data-sensitive="true"
-            onCheckedChange={(v) => setFormData(syncFlagsCatalogoProduto({ ...formData, exibir_marketplace: v, exibir_no_marketplace: v }))}
+            onCheckedChange={(v) => applyCatalogoFlags({ exibir_marketplace: v, exibir_no_marketplace: v })}
           />
         </div>
       </div>
