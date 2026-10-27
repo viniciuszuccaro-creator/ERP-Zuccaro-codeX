@@ -1,15 +1,17 @@
-## CURSOR — ChatbotCanal reopen canônico (2026-10-27)
+## CURSOR — VIGENTE #400 P2 credenciais + ChatbotCanal (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Branch / tip | `cursor/cadastros-chatbotcanal-reopen-392b` **`d3070b1e7`** |
-| Base | `cursor/cadastros-parametro-roteirizacao-reopen-392b` (#399) |
-| Mudança | `ChatbotCanalForm` → `useCadastroReopenOnIdentity` + `canalBoundId` |
-| Pin | saiu de names; publication reverse ChatbotCanal |
-| Testes | behavioral 6; callback+publication PASS |
-| CI tip `d3070b1e7` | **SUCCESS** — frontend/backend/expedicao — **≠ aprovação** |
-| Pedido | **@codex review** tip `d3070b1e7` |
-| Matriz indep. | #398 ApiExterna · #399 ParametroRoteirizacao · #400 ChatbotCanal — CI verde; aguarda parecer Codex |
+| Modalidade | runner `/workspace` ≠ Codespace (403) |
+| Branch | `cursor/cadastros-chatbotcanal-reopen-392b` (#400 → #399) |
+| Código reopen | `d3070b1e7` |
+| Fix P2 | WhatsApp número/token: `data-permission="Cadastros.ChatbotCanal.editar"` (grantable em ACOES + GRANULAR) |
+| Achado Codex | P2: gate `.credenciais` órfão bloqueava inputs mesmo com `podeSalvar` |
+| Testes | behavioral **7 PASS** (P2 + reopen); publication/callback intactos |
+| Pedido | **@codex review** tip HEAD — reavaliar P2 |
+| Paralelo | #399 P1 tenant `5b9c95ea9`; #397 prova `a6c1f7a97` |
+| Próximo | recuperação matriz (não forms cosméticos); demo Codespace com Codex |
+| Fora | merge/deploy/carga; inventar ação `credenciais` sem fluxo de grant |
 | Demo | Codespace xylophone **403** |
 | Modalidade | runner `/workspace` |
 | Fora | merge/deploy/carga |

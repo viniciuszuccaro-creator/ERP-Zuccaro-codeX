@@ -1,10 +1,18 @@
-## CURSOR — vigente: ChatbotCanal reopen (2026-10-27)
+## CURSOR — VIGENTE (2026-10-27 12:50 America/Sao_Paulo)
 
-Tip **`d3070b1e7`** CI **SUCCESS** (≠ aprovação). Matriz ApiExterna/#398 · Parametro/#399 · ChatbotCanal/#400 fechada em CI; aguarda parecer Codex. Codespace 403. #397 Operador/Histórico idem.
+**Executor:** runner `/workspace`. Codespace xylophone **403**. Stash `stash@{0}` preservado.
 
-(2026-10-27 12:10 America/Sao_Paulo)
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#400** ChatbotCanal | tip HEAD (P2) | **P2 fechado**: WhatsApp usa `.editar` grantable; 7 PASS |
+| #399 ParametroRoteirizacao | `5b9c95ea9` | **P1 tenant fechado**; 7 PASS |
+| #398 ApiExterna | `bd0b21dc7` | CI SUCCESS |
+| #397 Operador+Histórico | `a6c1f7a97` | prova 48+2 PASS; @codex pedido |
+| #342 Pedido mestres | `47a5d0e109` | **APROVADO** |
 
-## CURSOR — vigente: ParametroRoteirizacao reopen (2026-10-27)
+**Próximo:** recuperação matriz funcional (não forms cosméticos) → demo Codespace com Codex. Sem merge/deploy/carga.
+
+## CURSOR — vigente: ParametroRoteirizacao reopen (histórico) (2026-10-27)
 
 Tip **`b91d6fb49`** CI **SUCCESS** (≠ aprovação). Empilhado sobre #398. Próximo: ChatbotCanal. Codespace 403. #397/#398 aguardam parecer Codex.
 
