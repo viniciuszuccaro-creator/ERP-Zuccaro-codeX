@@ -1,18 +1,46 @@
+## CURSOR — Filial reopen tip (CI pendente) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | HEAD após este commit (Filial) |
+| CI | pendente neste SHA — não creditar verde de `d0ba56007` |
+| Pacote indep. | **Filial** — RecordState só `updated_date`; CNPJ/IE/matriz_id |
+| Correção | `useCadastroReopenOnIdentity` + `filialBoundId` + map anti-wipe; sky |
+| Pin | graduação callback + publication reverse (cadeia Contato→…→Kit→Filial) |
+| Provas | filial 6 PASS; callback 41; publication 31 |
+| Verde anterior | **`d0ba56007`** KitProduto frontend/backend/expedicao SUCCESS |
+| Pedido Kit | **@codex review** tip `d0ba56007` — todos os deltas até Kit |
+| Próximo indep. | CentroResultado / JobAgendado / RotaPadrao (pin residual) |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+
+Pedido Filial: **@codex review** tip HEAD após CI verde deste SHA.
+
+(2026-10-27 10:12 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip d0ba56007 KitProduto (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`d0ba56007`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/SegmentoCliente/**KitProduto** + Historico HTTP |
+| Pedido | **@codex review** tip `d0ba56007` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | Filial (RecordState só `updated_date`; pin callback) |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:10 America/Sao_Paulo)
+
 ## CURSOR — KitProduto reopen tip (CI pendente) (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (KitProduto) |
-| CI | pendente neste SHA — não creditar verde de `c319b20e3`/`b47a91001` |
+| Tip | **`d0ba56007`** (histórico: era pendente) |
+| CI | **SUCCESS** — ver entrada acima |
 | Pacote indep. | **KitProduto** — RecordState só `updated_date`; nested `itens_kit` |
-| Correção | `useCadastroReopenOnIdentity` + `kitBoundId` + map anti-wipe; sky |
-| Pin | graduação callback + publication reverse (`beforeSha256` cadeia Contato→…→Kit) |
-| Provas | kit-produto 5 PASS; callback 41; residual 9; publication 30 |
-| Próximo indep. | CodigoField / próximo pin RecordState residual (fora Orçamento) |
 | Modalidade | runner `/workspace` |
-| Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
-
-Pedido: **@codex review** tip HEAD após CI verde deste SHA (inclui KitProduto + deltas anteriores).
 
 (2026-10-27 10:05 America/Sao_Paulo)
 
