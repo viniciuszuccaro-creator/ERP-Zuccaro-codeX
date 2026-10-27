@@ -147,15 +147,30 @@ test('CentroCusto e PlanoContas na política canônica', async () => {
   assert.doesNotMatch(plano, /codigo-registro-plano/);
 });
 
-test('MoedaIndice e OperadorCaixa permanecem na coorte ID-only (sem prevUpdatedRef manual)', async () => {
-  for (const rel of [
-    'src/components/cadastros/MoedaIndiceForm.jsx',
-    'src/components/cadastros/OperadorCaixaForm.jsx',
-  ]) {
-    const text = await source(rel);
-    assert.match(text, /CadastroCodigoRegistroField/);
-    assert.match(text, /prevIdRef/);
-    assert.doesNotMatch(text, /prevUpdatedRef/);
-    assert.doesNotMatch(text, /useCadastroRecordState/);
-  }
+test('MoedaIndice graduou para reopen canônico (boundId; sem prevUpdatedRef manual)', async () => {
+  const text = await source('src/components/cadastros/MoedaIndiceForm.jsx');
+  assert.match(text, /CadastroCodigoRegistroField/);
+  assert.match(text, /useCadastroReopenOnIdentity/);
+  assert.match(text, /moedaBoundId/);
+  assert.doesNotMatch(text, /prevIdRef/);
+  assert.doesNotMatch(text, /prevUpdatedRef/);
+  assert.doesNotMatch(text, /useCadastroRecordState/);
+});
+
+test('OperadorCaixa graduou para reopen canônico (boundId; sem prevUpdatedRef manual)', async () => {
+  const text = await source('src/components/cadastros/OperadorCaixaForm.jsx');
+  assert.match(text, /CadastroCodigoRegistroField/);
+  assert.match(text, /useCadastroReopenOnIdentity/);
+  assert.match(text, /operadorBoundId/);
+  assert.doesNotMatch(text, /prevUpdatedRef/);
+  assert.doesNotMatch(text, /useCadastroRecordState/);
+});
+
+test('CondicaoComercial graduou para reopen canônico (boundId; sem prevUpdatedRef manual)', async () => {
+  const text = await source('src/components/cadastros/CondicaoComercialForm.jsx');
+  assert.match(text, /CadastroCodigoRegistroField/);
+  assert.match(text, /useCadastroReopenOnIdentity/);
+  assert.match(text, /condicaoBoundId/);
+  assert.doesNotMatch(text, /prevUpdatedRef/);
+  assert.doesNotMatch(text, /useCadastroRecordState/);
 });

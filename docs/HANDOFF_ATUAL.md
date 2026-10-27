@@ -1,3 +1,54 @@
+## CURSOR — CI4886/4887 + fechamento provas reopen/historico (2026-10-27)
+
+Tip **`b21e509d`**. HEAD `fad1f469` FAIL (pin MoedaIndice ID-only). Graduação pin + provas updated_date e Historico HTTP (link/vazio/ordem/repetido/empresa). CANAL intocado. Orçamento leitores intactos. `@codex review` tip HEAD após CI verde.
+
+(2026-10-27 08:45 America/Sao_Paulo)
+
+## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
+
+Tip **`c27b827d`** (código `d91d49a8`). Defeito MoedaIndice (só `id`, ignora `updated_at`) reproduzido e corrigido com `useCadastroReopenOnIdentity`/`moedaBoundId`. CANAL: chain rebuild current→golden `53ed9f42`. Orçamento leitores intactos. Pedido `@codex review` tip. Sem deploy/carga.
+
+(2026-10-27 08:35 America/Sao_Paulo)
+
+## CURSOR — CANAL remainder graduação Operador/Condicao (2026-10-27)
+
+Tip **`b2eeee52`**: `981ebf8b` falhou CI (CANAL/publication: consolidacao ≠ golden `53ed9f42`). Três hunks reverse prepended em `consolidation81Remainder` restauram previous byte-exact; golden preservado. Suites CANAL + reopen/historico PASS. Orçamento leitores intactos. Pedido `@codex review` do SHA tip. Sem deploy/carga.
+
+(2026-10-27 08:27 America/Sao_Paulo)
+
+## CURSOR — CI fix consolidacao ID-only → boundId (2026-10-27)
+
+Tip anterior `f33633d6` falhou em `cursor-identidade-consolidacao` (esperava `dadosIniciais?.id` em OperadorCaixa). Graduação documentada: OperadorCaixa/CondicaoComercial saem da coorte ID-only golden e passam a assert de boundId + reopen canônico. Sem esconder delta. Orçamento leitores intactos.
+
+(2026-10-27 08:13 America/Sao_Paulo)
+
+## CURSOR — Regiao + Operador/Condicao + Historico HTTP (2026-10-27)
+
+Fechou provas Regiao (switch/dirty/late/boundId). Pacote: OperadorCaixa e CondicaoComercialForm no hook canônico; HistoricoProdutos deixa de cair no facade local em modo HTTP (Central360 + pedidos.list). Orçamento leitores Codespace intactos. Dependência Codex: `cliente_id` em listagem de pedidos com itens (opcional). Pedido `@codex review` no SHA tip. Sem deploy/carga.
+
+(2026-10-27 08:06 America/Sao_Paulo)
+
+## CURSOR — tip `66ff41b1` CI SUCCESS (Regiao + remarge e916d467) (2026-10-26)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`66ff41b1`** |
+| Remarge | `8d0580e1` ← Codex `e916d467` |
+| CI | 6/6 **SUCCESS** (sem falhas) |
+| Parecer | 4/4 APROVADO em `e916d467` |
+| Pacote | RegiaoAtendimento reopen HTTP; leitores Orçamento intactos |
+| Aceite | CI ≠ merge/deploy/carga; WIP Codespace permanece reservado |
+
+(2026-10-26 18:21 America/Sao_Paulo)
+
+## CURSOR — parecer e916d467 + RegiaoAtendimento (2026-10-26)
+
+Remarge #353 ← Codex `e916d467` em `8d0580e1` (branch Codex intacta). Parecer 4/4 APROVADO no código real (Marca updated_at, contatos absence, sessionIdentity, stage48 dois hunks). WIP leitores Orçamento Codespace **não sincronizado/não alterado**.
+
+Pacote indep.: `RegiaoAtendimentoForm` — reopen HTTP `updated_at`, `mapRegiaoToForm` anti-wipe aninhados, boundId no submit. Testes `cursor-regiao-reopen` 8 PASS. Sem deploy/carga/merge main.
+
+(2026-10-26 18:14 America/Sao_Paulo)
+
 ## Handoff vigente - candidata composta, ainda nao operacional (2026-10-26)
 
 Fechamento final: raiz 2396 PASS/0 FAIL/0 SKIP, audit/lint/type/build/diff exit0; backend composto 551 PASS/0 FAIL/26 SKIP e type/build exit0 reutilizados, principals PG 1 PASS/0 FAIL/0 SKIP com contraprova real. Guarda integral mantem os hashes anteriores e limita o delta de contatos a duas substituicoes unicas, com negativas dentro/fora do escopo. Harness de navegador e container proprios encerrados (exit0/cleanup verificado); nao ha trabalho de teste anunciado como ativo. Publicacao/CI por SHA no recibo existente da #344. A prova de navegador foi sobre a arvore composta ainda dirty (HEAD-base 6ba10732), nao uma nova imagem operacional ou homologacao completa.

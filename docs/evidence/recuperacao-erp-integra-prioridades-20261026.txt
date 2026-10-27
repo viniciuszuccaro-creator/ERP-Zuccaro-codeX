@@ -105,3 +105,13 @@ Atualização #353 (P1 CodigoField + remarge 6ba10732)
 - Marca ciclo reopen + HistóricoProdutosCliente fail-closed (prova sintética).
 - Sem restaurar Documentacao/OAuthConsent/EmpresaOnboarding; sem seed fictício.
   (trigger existia; conteúdo estava fora do Tabs → coluna vazia).
+
+
+Atualização #353 (2026-10-27 08:06 America/Sao_Paulo) — pacote reopen/histórico
+- RegiaoAtendimento: updated_at + mapRegiaoToForm + boundId (provas 10 PASS).
+- OperadorCaixa + CondicaoComercialForm: useCadastroReopenOnIdentity canônico;
+  azul-claro sky; ≠ CondicaoPagamento (reserva Orçamento).
+- HistoricoProdutosCliente: em HTTP usa Central360→pedidos.list(clienteEmpresaId)
+  com itens canônicos; fail-closed sem sessão/empresa; legado mantém filterInContext.
+  Não declara registros recuperados.
+- Dependência Codex (opcional): GET /pedidos?cliente_id=<mestre> com itens.
