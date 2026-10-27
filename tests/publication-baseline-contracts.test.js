@@ -76,6 +76,24 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
  assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(source+approvedContatoB2BGraduationTest));
  assert.throws(()=>restoreApprovedContatoB2BCallbackDelta(source.replace("CadastroFiscal',\n","CadastroFiscal', 'Webhook',\n")));
 });
+/** #353 LocalEstoque: saiu do pin residual RecordState → reopen canônico. */
+const previousResidualNames = "const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n";
+const approvedResidualNames = "const names = ['CentroOperacao', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n// LocalEstoque graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n";
+const approvedLocalEstoqueGraduationTest = "\ntest('LocalEstoque graduou do pin RecordState para useCadastroReopenOnIdentity com localBoundId', () => {\n  const file = 'src/components/cadastros/LocalEstoqueForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('LocalEstoque'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n  assert.match(source, /localBoundId/);\n  assert.match(source, /estrutura_fisica/);\n  assert.doesNotMatch(source, /useCadastroRecordState/);\n  assert.doesNotMatch(source, /prevUpdatedRef/);\n});\n\n";
+function restoreApprovedLocalEstoqueResidualDelta(source) {
+ assert.equal(source.split(approvedResidualNames).length,2,'Only the exact LocalEstoque residual names graduation delta may be normalized');
+ assert.equal(source.split(approvedLocalEstoqueGraduationTest).length,2,'Only the exact LocalEstoque graduation test delta may be normalized');
+ return source.replace(approvedLocalEstoqueGraduationTest,'\n').replace(approvedResidualNames,previousResidualNames);
+}
+test('LocalEstoque residual graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-residual-independent.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedLocalEstoqueResidualDelta(source);
+ assert.equal(restored.includes(approvedLocalEstoqueGraduationTest),false);
+ assert.match(restored,/CentroOperacao', 'LocalEstoque'/);
+ assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source.replace(approvedLocalEstoqueGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source+approvedLocalEstoqueGraduationTest));
+ assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source.replace("CentroOperacao',","CentroOperacao', 'Webhook',")));
+});
 for(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{
  const source=fs.readFileSync(entry.path,'utf8').replace(/\r\n/g,'\n');
  assert.equal(source.includes('HEAD:'),false);
@@ -89,7 +107,9 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
     ? restoreApprovedBulkDelta(reviewed)
     : entry.path==='tests/cursor-callback-record-state.test.js'
       ? restoreApprovedCodigoFieldCallbackDelta(restoreApprovedContatoB2BCallbackDelta(reviewed))
-      : reviewed;
+      : entry.path==='tests/cursor-residual-independent.test.js'
+        ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
+        : reviewed;
  const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);
 });

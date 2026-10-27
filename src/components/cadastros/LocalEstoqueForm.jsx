@@ -1,53 +1,108 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import useCadastroRecordState from './useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Warehouse, MapPin } from "lucide-react";
+import { Warehouse } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 import { toast } from "sonner";
 
+const EMPTY_ESTRUTURA = {
+  tem_corredores: false,
+  tem_prateleiras: false,
+  tem_andares: false,
+  quantidade_corredores: 0,
+  quantidade_ruas: 0,
+};
+
+const EMPTY_LOCAL = {
+  nome: "",
+  codigo: "",
+  tipo: "Almoxarifado",
+  capacidade_m3: 0,
+  ativo: true,
+  estrutura_fisica: { ...EMPTY_ESTRUTURA },
+  controla_temperatura: false,
+  observacoes: "",
+  empresa_id: "",
+  group_id: "",
+};
+
+const mapLocalEstoqueToForm = (record, defaults = {}) => {
+  if (!record) {
+    return {
+      ...EMPTY_LOCAL,
+      empresa_id: defaults.empresa_id || "",
+      group_id: defaults.group_id || "",
+      estrutura_fisica: { ...EMPTY_ESTRUTURA },
+    };
+  }
+  const estrutura = record.estrutura_fisica && typeof record.estrutura_fisica === "object"
+    ? record.estrutura_fisica
+    : null;
+  return {
+    ...EMPTY_LOCAL,
+    ...record,
+    capacidade_m3: Number.isFinite(Number(record.capacidade_m3)) ? Number(record.capacidade_m3) : 0,
+    estrutura_fisica: {
+      ...EMPTY_ESTRUTURA,
+      ...(estrutura || {}),
+      tem_corredores: estrutura ? Boolean(estrutura.tem_corredores) : EMPTY_ESTRUTURA.tem_corredores,
+      tem_prateleiras: estrutura ? Boolean(estrutura.tem_prateleiras) : EMPTY_ESTRUTURA.tem_prateleiras,
+      tem_andares: estrutura ? Boolean(estrutura.tem_andares) : EMPTY_ESTRUTURA.tem_andares,
+      quantidade_corredores: Number.isFinite(Number(estrutura?.quantidade_corredores))
+        ? Number(estrutura.quantidade_corredores)
+        : EMPTY_ESTRUTURA.quantidade_corredores,
+      quantidade_ruas: Number.isFinite(Number(estrutura?.quantidade_ruas))
+        ? Number(estrutura.quantidade_ruas)
+        : EMPTY_ESTRUTURA.quantidade_ruas,
+    },
+    controla_temperatura: Boolean(record.controla_temperatura),
+    ativo: record.ativo !== false,
+    observacoes: record.observacoes == null ? "" : String(record.observacoes),
+  };
+};
+
 /**
- * FORMULÁRIO DE LOCAL DE ESTOQUE V21.2 - FASE 2
- * Padrão: w-full h-full em window mode
+ * Reopen canônico (#353): useCadastroReopenOnIdentity — updated_at|updated_date,
+ * preservação de estrutura_fisica aninhada, código/ID no boundId.
  */
-export default function LocalEstoqueForm({ 
+export default function LocalEstoqueForm({
   local,
-  localEstoque, 
+  localEstoque,
+  item,
+  data,
   windowMode = false,
   onSubmit,
-  onCancel 
+  onCancel,
 }) {
-  const dadosIniciais = localEstoque || local;
+  const dadosIniciais = item || data || localEstoque || local;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const emptyForm = mapLocalEstoqueToForm(null, {
+    empresa_id: empresaAtual?.id || "",
+    group_id: groupId || "",
+  });
+  const [formData, setFormData] = useState(() => mapLocalEstoqueToForm(dadosIniciais, emptyForm));
+
+  const { boundId: localBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm,
+    mapToForm: (record) => mapLocalEstoqueToForm(record, emptyForm),
+  });
+
   const podeCriar = hasPermission?.("Cadastros.LocalEstoque.criar") || hasPermission?.("Estoque.LocalEstoque.criar");
   const podeEditar = hasPermission?.("Cadastros.LocalEstoque.editar") || hasPermission?.("Estoque.LocalEstoque.editar");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useCadastroRecordState({
-    nome: "",
-    codigo: "",
-    tipo: "Almoxarifado",
-    capacidade_m3: 0,
-    ativo: true,
-    estrutura_fisica: {
-      tem_corredores: false,
-      tem_prateleiras: false,
-      tem_andares: false,
-      quantidade_corredores: 0,
-      quantidade_ruas: 0
-    },
-    controla_temperatura: false,
-    ...dadosIniciais
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  const podeSalvar = localBoundId ? podeEditar : podeCriar;
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
@@ -62,22 +117,38 @@ export default function LocalEstoqueForm({
     if (onSubmit) {
       onSubmit({
         ...formData,
+        ...(localBoundId ? { id: localBoundId } : {}),
         group_id: groupId || formData.group_id,
-        empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
+        empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
+        estrutura_fisica: {
+          tem_corredores: Boolean(formData.estrutura_fisica?.tem_corredores),
+          tem_prateleiras: Boolean(formData.estrutura_fisica?.tem_prateleiras),
+          tem_andares: Boolean(formData.estrutura_fisica?.tem_andares),
+          quantidade_corredores: Number(formData.estrutura_fisica?.quantidade_corredores) || 0,
+          quantidade_ruas: Number(formData.estrutura_fisica?.quantidade_ruas) || 0,
+        },
+        controla_temperatura: Boolean(formData.controla_temperatura),
       });
     }
   };
 
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden" 
+  const containerClass = windowMode
+    ? "w-full h-full flex flex-col overflow-hidden bg-sky-50/40"
     : "p-6";
 
-  const contentClass = windowMode 
-    ? "flex-1 overflow-y-auto p-6" 
+  const contentClass = windowMode
+    ? "flex-1 overflow-y-auto p-6"
     : "";
 
   return (
     <div className={containerClass}>
+      {windowMode && (
+        <div className="shrink-0 border-b border-sky-200 bg-sky-100/80 px-6 py-3">
+          <h2 className="text-base font-semibold text-sky-950">
+            {localBoundId ? "Editar Local de Estoque" : "Novo Local de Estoque"}
+          </h2>
+        </div>
+      )}
       <div className={contentClass}>
         <form onSubmit={handleSubmitForm} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -88,15 +159,17 @@ export default function LocalEstoqueForm({
                 onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 placeholder="Ex: Almoxarifado Central"
                 required
+                disabled={!podeSalvar}
+                data-permission="Cadastros.LocalEstoque.editar"
               />
             </div>
 
-      <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
-        value={formData.codigo}
-        action="codigo-registro-local-estoque"
-      />
+            <CadastroCodigoRegistroField
+              hasId={Boolean(localBoundId)}
+              entityId={localBoundId}
+              value={formData.codigo}
+              action="codigo-registro-local-estoque"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -105,8 +178,9 @@ export default function LocalEstoqueForm({
               <Select
                 value={formData.tipo}
                 onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+                disabled={!podeSalvar}
               >
-                <SelectTrigger>
+                <SelectTrigger data-permission="Cadastros.LocalEstoque.editar">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -128,13 +202,15 @@ export default function LocalEstoqueForm({
                 step="0.01"
                 value={formData.capacidade_m3}
                 onChange={(e) => setFormData({ ...formData, capacidade_m3: parseFloat(e.target.value) || 0 })}
+                disabled={!podeSalvar}
+                data-permission="Cadastros.LocalEstoque.editar"
               />
             </div>
           </div>
 
-          <Card className="bg-slate-50">
+          <Card className="border-sky-100 bg-sky-50/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Estrutura Física</CardTitle>
+              <CardTitle className="text-sm text-sky-950">Estrutura Física</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
@@ -146,7 +222,7 @@ export default function LocalEstoqueForm({
                   data-sensitive="true"
                   onCheckedChange={(checked) => setFormData({
                     ...formData,
-                    estrutura_fisica: { ...formData.estrutura_fisica, tem_corredores: checked }
+                    estrutura_fisica: { ...formData.estrutura_fisica, tem_corredores: checked },
                   })}
                 />
               </div>
@@ -157,12 +233,13 @@ export default function LocalEstoqueForm({
                   <Input
                     type="number"
                     value={formData.estrutura_fisica?.quantidade_corredores || 0}
+                    disabled={!podeSalvar}
                     onChange={(e) => setFormData({
                       ...formData,
                       estrutura_fisica: {
                         ...formData.estrutura_fisica,
-                        quantidade_corredores: parseInt(e.target.value) || 0
-                      }
+                        quantidade_corredores: parseInt(e.target.value, 10) || 0,
+                      },
                     })}
                   />
                 </div>
@@ -177,7 +254,7 @@ export default function LocalEstoqueForm({
                   data-sensitive="true"
                   onCheckedChange={(checked) => setFormData({
                     ...formData,
-                    estrutura_fisica: { ...formData.estrutura_fisica, tem_prateleiras: checked }
+                    estrutura_fisica: { ...formData.estrutura_fisica, tem_prateleiras: checked },
                   })}
                 />
               </div>
@@ -191,7 +268,7 @@ export default function LocalEstoqueForm({
                   data-sensitive="true"
                   onCheckedChange={(checked) => setFormData({
                     ...formData,
-                    controla_temperatura: checked
+                    controla_temperatura: checked,
                   })}
                 />
               </div>
@@ -204,10 +281,11 @@ export default function LocalEstoqueForm({
               value={formData.observacoes}
               onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
               rows={3}
+              disabled={!podeSalvar}
             />
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t">
+          <div className="flex items-center justify-between pt-4 border-t border-sky-100">
             <div className="flex items-center gap-2">
               <Switch
                 checked={formData.ativo}
@@ -227,13 +305,13 @@ export default function LocalEstoqueForm({
               )}
               <Button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-sky-600 hover:bg-sky-700"
                 disabled={!contextoValido || !podeSalvar}
                 data-permission="Cadastros.LocalEstoque.salvar"
                 data-sensitive="true"
               >
                 <Warehouse className="w-4 h-4 mr-2" />
-                {dadosIniciais ? 'Atualizar' : 'Criar'} Local
+                {localBoundId ? "Atualizar" : "Criar"} Local
               </Button>
             </div>
           </div>

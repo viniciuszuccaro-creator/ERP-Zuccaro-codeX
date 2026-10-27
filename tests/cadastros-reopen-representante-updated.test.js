@@ -184,3 +184,13 @@ test('ContatoB2B graduou para reopen canônico (boundId; preserva preferencias)'
   assert.doesNotMatch(text, /prevUpdatedRef/);
   assert.doesNotMatch(text, /useCadastroRecordState/);
 });
+
+test('LocalEstoque graduou para reopen canônico (boundId; preserva estrutura_fisica)', async () => {
+  const text = await source('src/components/cadastros/LocalEstoqueForm.jsx');
+  assert.match(text, /CadastroCodigoRegistroField/);
+  assert.match(text, /useCadastroReopenOnIdentity/);
+  assert.match(text, /localBoundId/);
+  assert.match(text, /estrutura_fisica/);
+  assert.doesNotMatch(text, /prevUpdatedRef/);
+  assert.doesNotMatch(text, /useCadastroRecordState/);
+});

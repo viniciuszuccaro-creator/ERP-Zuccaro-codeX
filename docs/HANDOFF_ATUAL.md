@@ -1,3 +1,19 @@
+## CURSOR — LocalEstoque reopen + tip CI SUCCESS 47553607 (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| CI verde anterior | **`47553607`** frontend/backend/expedicao SUCCESS |
+| Pedido revisão | `@codex review` tip `47553607` (comment 6441681864) |
+| Pacote indep. | **LocalEstoque** — RecordState só `updated_date`; nested `estrutura_fisica` |
+| Correção | `useCadastroReopenOnIdentity` + `localBoundId` + map anti-wipe; sky |
+| Pin residual | graduação + publication reverse (`beforeSha256` `f6265528…` intacto) |
+| Provas | local-estoque behavioral + residual + publication + representante = PASS |
+| Fora | Orçamento leitores Codespace; Codex; merge/deploy/carga |
+
+Pedido: **@codex review** tip HEAD após CI verde deste SHA (inclui LocalEstoque + deltas anteriores).
+
+(2026-10-27 09:25 America/Sao_Paulo)
+
 ## CURSOR — parecer Codex b4e659af (somente leitura) (2026-10-27)
 
 | Campo | Valor |
