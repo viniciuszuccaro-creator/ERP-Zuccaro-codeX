@@ -2,16 +2,19 @@
 
 | Campo | Valor |
 |-------|-------|
-| Branch | `cursor/cadastros-chatbotcanal-reopen-392b` |
+| Branch / tip | `cursor/cadastros-chatbotcanal-reopen-392b` **`d3070b1e7`** |
 | Base | `cursor/cadastros-parametro-roteirizacao-reopen-392b` (#399) |
 | Mudança | `ChatbotCanalForm` → `useCadastroReopenOnIdentity` + `canalBoundId` |
 | Pin | saiu de names; publication reverse ChatbotCanal |
 | Testes | behavioral 6; callback+publication PASS |
-| Pedido | **@codex review** tip HEAD |
+| CI tip `d3070b1e7` | **SUCCESS** — frontend/backend/expedicao — **≠ aprovação** |
+| Pedido | **@codex review** tip `d3070b1e7` |
+| Matriz indep. | #398 ApiExterna · #399 ParametroRoteirizacao · #400 ChatbotCanal — CI verde; aguarda parecer Codex |
+| Demo | Codespace xylophone **403** |
 | Modalidade | runner `/workspace` |
-| Fora | merge/deploy/carga; Codespace 403 |
+| Fora | merge/deploy/carga |
 
-(2026-10-27 12:10 America/Sao_Paulo)
+(2026-10-27 12:15 America/Sao_Paulo)
 
 ## CURSOR — ParametroRoteirizacao reopen canônico (2026-10-27)
 
