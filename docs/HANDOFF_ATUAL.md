@@ -1,3 +1,21 @@
+## CURSOR — parecer Codex b4e659af (somente leitura) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| SHA Codex | **`b4e659af`** (tip `codex/consolidacao-infra-20261017`; sucessor não há) |
+| Branch Codex | **não editada** |
+| Leitores mestres | `http.comercialMasters.list` + `resolveComercialMasterPages` — IDs canônicos, vínculo empresa_operacao, paginação incompleta → erro explícito |
+| Orçamento | mastersQuery HTTP; CONTEXT_CHANGED/abort; save bloqueado se masters error; sem fallback `filterInContext` |
+| Pedido sessão | `sessionIdentity = sessionToken \|\| readErpHttpSession()?.token`; queryKey inclui sessão; não inventa token |
+| Negativas | 401 sem empresa; CONTEXT_CHANGED pós-troca; abort; search >200; 403 permissão |
+| Rascunho | Dialog/form Orçamento preservado; masters refetch não fecha form; marker sem gravar (recibo Codex) |
+| Remainder | `PedidoCanonicoPanel` masters ainda `filterInContext` — lacuna Codex, não reimplementar aqui |
+| Veredicto | **APROVADO com remainder** mestres Pedido locais |
+
+Tip candidata em CI: **`ad843a74`**. Pedido `@codex review` após verde deste SHA.
+
+(2026-10-27 09:15 America/Sao_Paulo)
+
 ## CURSOR — ContatoB2B pin + Regiao mapper REAL (2026-10-27)
 
 | Campo | Valor |
