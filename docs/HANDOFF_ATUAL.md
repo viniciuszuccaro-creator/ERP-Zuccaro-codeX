@@ -1,3 +1,9 @@
+## CURSOR — CI fix consolidacao ID-only → boundId (2026-10-27)
+
+Tip anterior `f33633d6` falhou em `cursor-identidade-consolidacao` (esperava `dadosIniciais?.id` em OperadorCaixa). Graduação documentada: OperadorCaixa/CondicaoComercial saem da coorte ID-only golden e passam a assert de boundId + reopen canônico. Sem esconder delta. Orçamento leitores intactos.
+
+(2026-10-27 08:13 America/Sao_Paulo)
+
 ## CURSOR — Regiao + Operador/Condicao + Historico HTTP (2026-10-27)
 
 Fechou provas Regiao (switch/dirty/late/boundId). Pacote: OperadorCaixa e CondicaoComercialForm no hook canônico; HistoricoProdutos deixa de cair no facade local em modo HTTP (Central360 + pedidos.list). Orçamento leitores Codespace intactos. Dependência Codex: `cliente_id` em listagem de pedidos com itens (opcional). Pedido `@codex review` no SHA tip. Sem deploy/carga.

@@ -11,8 +11,14 @@ import { MASTER_CODE_SPECS } from '../src/api/localCadastroMasterPolicy.js';
 import { clienteNavigationRemainder } from './helpers/clienteNavigationRemainder.js';
 import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';
 
-const forms = ['CadastroFiscal', 'ContatoB2B', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario', 'OperadorCaixa',
-  'MoedaIndice', 'CondicaoComercial', 'ConfiguracaoBoletos', 'Webhook'];
+// Coorte ID-only restante (golden e36231b3). OperadorCaixa e CondicaoComercial
+// graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.
+const forms = ['CadastroFiscal', 'ContatoB2B', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario',
+  'MoedaIndice', 'ConfiguracaoBoletos', 'Webhook'];
+const graduatedReopen = {
+  OperadorCaixa: 'operadorBoundId',
+  CondicaoComercial: 'condicaoBoundId',
+};
 const read = path => readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 const head = path => execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
 const tree = (path, source) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
@@ -52,7 +58,7 @@ test('legacy MASTER_CODE readonly rendering remains equivalent by default', () =
   assert.doesNotMatch(read(fieldPath), /localStorage|sessionStorage|fetch\(|InvokeLLM|createInContext|updateInContext/);
 });
 
-test('ten ID-only additions retain every existing handler context permission and field', () => {
+test('remaining ID-only additions retain every existing handler context permission and field', () => {
   for (const name of forms) {
     assert.equal(Object.hasOwn(MASTER_CODE_SPECS, name), false, `Master code contract must not be hidden: ${name}`);
     const path = `src/components/cadastros/${name}Form.jsx`, source = read(path), ast = tree(path, source);
@@ -94,6 +100,32 @@ test('ten ID-only additions retain every existing handler context permission and
       }
       assert.equal(emit(ts.createPrinter().printFile(transformed.transformed[0])), emit(expected), name);
     } finally { transformed.dispose(); }
+  }
+});
+
+test('OperadorCaixa e CondicaoComercial graduaram ID-only → reopen canônico com boundId', () => {
+  for (const [name, boundId] of Object.entries(graduatedReopen)) {
+    assert.equal(Object.hasOwn(MASTER_CODE_SPECS, name), false, `Master code contract must not be hidden: ${name}`);
+    const path = `src/components/cadastros/${name}Form.jsx`;
+    const source = read(path);
+    const ast = tree(path, source);
+    assert.match(source, /useCadastroReopenOnIdentity/);
+    assert.match(source, new RegExp(boundId));
+    assert.doesNotMatch(source, /prevUpdatedRef/);
+    assert.doesNotMatch(source, /useCadastroRecordState/);
+    let fields = 0;
+    const visit = (node) => {
+      if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(ast) === 'CadastroCodigoRegistroField') {
+        const attrs = node.attributes.properties;
+        assert.ok(attrs.some(a => a.name?.getText(ast) === 'idOnly' && !a.initializer));
+        assert.equal(attrs.find(a => a.name?.getText(ast) === 'entityId').initializer.expression.getText(ast), boundId);
+        assert.equal(attrs.find(a => a.name?.getText(ast) === 'hasId').initializer.expression.getText(ast), `Boolean(${boundId})`);
+        fields++;
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(ast);
+    assert.equal(fields, 1, name);
   }
 });
 

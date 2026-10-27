@@ -1,3 +1,9 @@
+## CURSOR — CI fix consolidacao ID-only → boundId (2026-10-27)
+
+Tip anterior `f33633d6` falhou em `cursor-identidade-consolidacao` (esperava `dadosIniciais?.id` em OperadorCaixa). Graduação documentada: OperadorCaixa/CondicaoComercial saem da coorte ID-only golden e passam a assert de boundId + reopen canônico. Sem esconder delta. Orçamento leitores intactos.
+
+(2026-10-27 08:13 America/Sao_Paulo)
+
 ## CURSOR — Regiao fechada + Operador/Condicao + Historico HTTP (2026-10-27)
 
 | Campo | Valor |
