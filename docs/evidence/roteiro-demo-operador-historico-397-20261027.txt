@@ -1,9 +1,12 @@
 ROTEIRO DEMO — #397 OperadorCaixa + Histórico (candidata integrada)
 ====================================================================
 Data: 2026-10-27 America/Sao_Paulo
-Alvo: Codespace existente potential-xylophone-5gj7r9v9qqg637vxp
-Checkout: /workspaces/ERP-Zuccaro-codeX (um escritor; preservar WIP; sem reset/force)
-Runner Cursor /workspace ≠ prova deste Codespace.
+Alvo Chrome (proprietário): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Codespace: potential-xylophone-5gj7r9v9qqg637vxp (existente — NÃO criar outro)
+Checkout: /workspaces/ERP-Zuccaro-codeX (UM escritor; preservar WIP Codex; sem reset/force)
+Runner Cursor /workspace ≠ prova deste Codespace; Browser MCP ausente no executor.
+Abrir o Codespace no Chrome NÃO conecta o runner Cursor a esse checkout.
+Janela exclusiva: combinar com Codex antes de validar (sem dois escritores).
 
 Pré-condições
 -------------

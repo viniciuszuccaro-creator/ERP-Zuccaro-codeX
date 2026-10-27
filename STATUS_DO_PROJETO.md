@@ -1,33 +1,29 @@
-## CURSOR — VIGENTE #397 tip `00870edd0` (2026-10-27)
+## CURSOR — VIGENTE #397 tip `a6c1f7a97` + prep Chrome (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Modalidade | runner `/workspace` ≠ Codespace `potential-xylophone` (**gh 403**; sem 2º escritor) |
-| Base consultada | `#353` `eaad0b84` CI SUCCESS — **≠ aprovação** |
-| PR / branch | **#397** `cursor/operador-historico-persist-392b` → integracao |
-| Tip código | **`78c214f89`** |
-| Tip HEAD | **`00870edd0`** (+ prova tip nesta publicação) |
-| CI tip | **SUCCESS** (frontend/backend/expedicao) — **≠ aprovação** |
-| Prova dirigida | **48 PASS** frontend (Operador+guarda+Histórico+pedido-ui) + **2 PASS** server 044 — `docs/evidence/apontamentos-353-prova-tip-00870edd0-20261027.txt` |
-| Stash local | `stash@{0}` wip-after-350 **preservado** (não aplicado / não descartado) |
-| Pedido revisão | **@codex review** tip HEAD (todos os deltas) — `reviews[]` ainda vazio |
-| Parecer #342 | **APROVADO** `47a5d0e109` (somente leitura; branch Codex intocada) |
-| Demo | Codespace 403 neste runner; roteiro `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt` |
-| Independentes | #398 ApiExterna CI verde; #399 ParametroRoteirizacao **P1 tenant** aberto; #400 ChatbotCanal **P2 credenciais** |
-| Fora | merge/deploy/carga; contatos/CodigoField/Região P2; WIP Codex Codespace não acessado |
+| Modalidade | runner `/workspace` — **não** conectado ao Codespace |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` (existente; sem 2º Codespace/clone) |
+| Browser MCP | **ausente** neste executor; gh codespaces **403** |
+| Tip HEAD | **`a6c1f7a97`** (código `78c214f89` + provas) |
+| CI tip | **SUCCESS** — **≠ aprovação** |
+| Reprova 13:40 BRT | Operador 6 + guarda 2 + Histórico 14 + pedido-ui 26 = **48 PASS**; server 044 **2 PASS** |
+| Evidência | `docs/evidence/apontamentos-353-reprova-chrome-prep-a6c1f7a97-20261027.txt` |
+| Pedido | **@codex review** tip **`a6c1f7a97`** (SHA final; não ancestral) |
+| #342 | tip publicado `47a5d0e10` APROVADO; WIP “fora dos 50” **não publicado** — não duplicar |
+| #399/#400 | P1/P2 fechados; Codex breezy em tips intermediários; CI SUCCESS ≠ aprovação |
+| Stash | `stash@{0}` preservado |
+| Demo | janela exclusiva Codespace com Codex; roteiro atualizado (Chrome URL) |
+| Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor |
 
-**Apontamentos #353 no HEAD — fechados com prova:**
-1. OperadorCaixa persistência duplicada → `isSelfManagedCadastro`; form = único writer; V24 só conclui.
-2. Histórico 1ª página → paginação offset/total + carregar mais; legado 200.
-3. Histórico `cliente_empresa` → `pedidos.list?clienteId=` + `Pedido.visualizar`; sem Central360.
-4. Guarda submit negativa → `cursor-identidade-graduated-submit-guard` rejeita `if(false)`.
-5. Pedido 044 → `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` público; `INTERNAL_ERROR` ≠ 044.
+**Bloqueios no HEAD — fechados (reprova):**
+1. OperadorCaixa self-managed — 1 create/update; V24 só conclui
+2. Histórico paginação total/carregados + carregar mais (>50)
+3. `pedidos.list?clienteId=` + `Pedido.visualizar` (sem `cliente_empresa`/Central360)
+4. Guarda: remoção da negativa (`if(false)`) falha no teste
+5. 044: `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING`
 
-**Wiring canônico:** `PainelDinamicoCliente` → `<HistoricoProdutosCliente clienteId={cliente.id} />`.
-
-**Próximo (após publicar):** fechar P1 #399 (invalidação tenant no reopen) → recuperação matriz (não acumular forms cosméticos) → demo Codespace com Codex.
-
-(2026-10-27 12:25 America/Sao_Paulo)
+(2026-10-27 13:40 America/Sao_Paulo)
 
 ## CURSOR — parecer independente #342 tip 47a5d0e (histórico) (2026-10-27)
 
