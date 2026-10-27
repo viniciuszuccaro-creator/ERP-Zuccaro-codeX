@@ -1,14 +1,30 @@
+## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Pai | `b2eeee52` (CANAL Operador/Condicao) |
+| Defeito | MoedaIndice só reagia a troca de `id` — `updated_at` ignorado (reproduzido) |
+| Correção | `useCadastroReopenOnIdentity` + `moedaBoundId` + sky; graduação consolidacao |
+| CANAL | hunks rebuild current→66ff41b1→golden `53ed9f42…` (5 hunks; todo `after` no source atual) |
+| Provas | moeda 4 + consolidacao/publication/counterproof/CANAL = PASS |
+| Fora | Orçamento leitores; merge/deploy/carga |
+
+Pedido: **@codex review** tip deste push (MoedaIndice + remainder + docs).
+
+(2026-10-27 08:35 America/Sao_Paulo)
+
 ## CURSOR — CANAL remainder graduação Operador/Condicao (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
+| Tip | **`b2eeee52`** |
 | Pai tip | `981ebf8b` (CI FAIL: CANAL/publication hash consolidacao) |
 | Causa | Graduação ID-only→boundId em `cursor-identidade-consolidacao` sem hunks reverse no canal |
 | Correção | 3 hunks prepended em `clienteConferenciaHunks` → restaura previous byte-exact → golden `53ed9f42…` |
 | Provas | consolidacao + publication-baseline + channel-counterproof + CANAL integrity + regiao/operador/historico = PASS |
 | Fora | Orçamento leitores Codespace; merge/deploy/carga; sem micro-PR |
 
-Pedido: **@codex review** do delta deste tip (somente remainder + docs).
+Pedido: **@codex review** do delta `b2eeee52` (somente remainder + docs).
 
 (2026-10-27 08:27 America/Sao_Paulo)
 

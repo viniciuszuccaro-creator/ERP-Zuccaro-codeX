@@ -1,6 +1,12 @@
+## CURSOR — MoedaIndice reopen + CANAL chain (2026-10-27)
+
+Defeito MoedaIndice (só `id`, ignora `updated_at`) reproduzido e corrigido com `useCadastroReopenOnIdentity`/`moedaBoundId`. CANAL: chain rebuild current→golden `53ed9f42`. Orçamento leitores intactos. Pedido `@codex review` tip. Sem deploy/carga.
+
+(2026-10-27 08:35 America/Sao_Paulo)
+
 ## CURSOR — CANAL remainder graduação Operador/Condicao (2026-10-27)
 
-Tip `981ebf8b` falhou CI (CANAL/publication: consolidacao ≠ golden `53ed9f42`). Três hunks reverse prepended em `consolidation81Remainder` restauram previous byte-exact; golden preservado. Suites CANAL + reopen/historico PASS. Orçamento leitores intactos. Pedido `@codex review` do SHA tip. Sem deploy/carga.
+Tip **`b2eeee52`**: `981ebf8b` falhou CI (CANAL/publication: consolidacao ≠ golden `53ed9f42`). Três hunks reverse prepended em `consolidation81Remainder` restauram previous byte-exact; golden preservado. Suites CANAL + reopen/historico PASS. Orçamento leitores intactos. Pedido `@codex review` do SHA tip. Sem deploy/carga.
 
 (2026-10-27 08:27 America/Sao_Paulo)
 
