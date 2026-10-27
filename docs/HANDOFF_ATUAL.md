@@ -1,3 +1,13 @@
+## CURSOR — parecer #342 `47a5d0e` (somente leitura) (2026-10-27)
+
+SHA **`47a5d0e109`**. Branch Codex **intocada**. CI tip pass ≠ aprovação.
+
+Fecha remainder `b4e659af`: Pedido deixa `filterInContext` nos mestres; usa `comercialMasters` + Central360 para Local/Obra; `mastersReady` bloqueia save; auxiliares fail-closed (forbidden≠vazio). Limite: revisão remota sem checkout; queryKey listagem ainda com `sessionIdentity` (masters com fingerprint).
+
+Veredicto: **APROVADO**.
+
+(2026-10-27 11:45 America/Sao_Paulo)
+
 ## CURSOR — vigente: OperadorCaixa + Histórico (#353) (2026-10-27)
 
 Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovação**.

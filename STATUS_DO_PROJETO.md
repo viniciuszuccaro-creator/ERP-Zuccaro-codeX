@@ -1,3 +1,20 @@
+## CURSOR — parecer independente #342 tip 47a5d0e (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| SHA Codex | **`47a5d0e109`** (branch `codex/consolidacao-infra-20261017` **não editada**) |
+| CI #342 | frontend/backend/expedicao **pass** neste tip (≠ aprovação Cursor) |
+| Escopo lido | `PedidoCanonicoPanel`, `comercialMasterPicker`, testes master-picker/pedido-frontend; tip anterior `b4e659af` remainder |
+| Leitores HTTP | `http.comercialMasters.list` + `resolveComercialMasterPages` — IDs canônicos, vínculo `empresa_operacao`, paginação incompleta → erro |
+| Locais/Obras | `central360` + `resolveComercialAuxiliaryView` — escopo Grupo/Empresa/cliente/link; forbidden/unavailable ≠ vazio |
+| Vínculo | `cliente_id` do link = mestre; rejeita empresa cruzada / bloqueado / elegível falso |
+| Sessão/cache | `central360SessionKey` em masters/auxiliary; listagem Pedido ainda usa `sessionIdentity` |
+| Save | `mastersReady` fail-closed; rascunho preservado em conflito idempotência / dirty |
+| Limitações | revisão por `git show`/API (sem checkout Codex); bot “Unknown error” ignorado; busca de mestres pode ocultar link selecionado até limpar query |
+| Veredicto | **APROVADO** — fecha remainder mestres Pedido de `b4e659af` |
+
+(2026-10-27 11:45 America/Sao_Paulo)
+
 ## CURSOR — OperadorCaixa persistência única + Histórico paginado/autorizado (2026-10-27)
 
 | Campo | Valor |
