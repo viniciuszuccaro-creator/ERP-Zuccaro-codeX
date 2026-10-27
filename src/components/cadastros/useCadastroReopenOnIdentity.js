@@ -17,6 +17,8 @@ import {
  * @param {(record: object) => object} opts.mapToForm mapeia record → shape do form
  * @param {object} [opts.emptyForm] usado ao limpar (record ausente)
  * @param {boolean} [opts.clearOnNull=true] limpa form quando record fica ausente
+ * @param {string|null} [opts.tenantKey=null] identidade de Grupo/Empresa/escopo; quando muda,
+ *   invalida rascunho (equivalente ao identity do RecordState). Opt-in — omitir = sem efeito.
  * @param {() => boolean} [opts.confirmDiscard]
  * @param {() => boolean} [opts.confirmSwitch]
  * @param {(boundId: string|null) => void} [opts.onRejectSwitch] pai deve realinhar seleção ao rascunho
@@ -28,6 +30,7 @@ export default function useCadastroReopenOnIdentity(record, {
   mapToForm,
   emptyForm = {},
   clearOnNull = true,
+  tenantKey = null,
   confirmDiscard = () => window.confirm(CADASTRO_DIRTY_REOPEN_CONFIRM),
   confirmSwitch = () => window.confirm(CADASTRO_DIRTY_SWITCH_CONFIRM),
   onRejectSwitch,
@@ -36,15 +39,45 @@ export default function useCadastroReopenOnIdentity(record, {
   const recordVersion = record?.updated_at ?? record?.updated_date;
   const prevIdRef = useRef(record?.id || null);
   const prevUpdatedRef = useRef(recordVersion);
+  const prevTenantRef = useRef(tenantKey);
   const baselineRef = useRef(cadastroFormSnapshot(formData));
   const formDataRef = useRef(formData);
   formDataRef.current = formData;
+  const emptyFormRef = useRef(emptyForm);
+  emptyFormRef.current = emptyForm;
+  const mapToFormRef = useRef(mapToForm);
+  mapToFormRef.current = mapToForm;
   const onRejectSwitchRef = useRef(onRejectSwitch);
   onRejectSwitchRef.current = onRejectSwitch;
 
   const [boundId, setBoundId] = useState(() => record?.id || null);
   const propId = record?.id || null;
   const identityMismatch = Boolean(boundId && propId && String(boundId) !== String(propId));
+
+  // Preserva invalidação de tenant do RecordState: rascunho de A não migra para B.
+  useEffect(() => {
+    if (tenantKey == null) return;
+    if (prevTenantRef.current === tenantKey) return;
+    prevTenantRef.current = tenantKey;
+
+    const nextId = record?.id || null;
+    if (!nextId) {
+      prevIdRef.current = null;
+      prevUpdatedRef.current = undefined;
+      setBoundId(null);
+      const next = emptyFormRef.current;
+      baselineRef.current = cadastroFormSnapshot(next);
+      setFormData(next);
+      return;
+    }
+
+    const next = mapToFormRef.current(record);
+    prevIdRef.current = nextId;
+    prevUpdatedRef.current = record?.updated_at ?? record?.updated_date;
+    setBoundId(nextId);
+    baselineRef.current = cadastroFormSnapshot(next);
+    setFormData(next);
+  }, [tenantKey, record, setFormData]);
 
   useEffect(() => {
     const nextId = record?.id || null;

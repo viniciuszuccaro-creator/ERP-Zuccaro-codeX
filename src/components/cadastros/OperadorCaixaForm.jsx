@@ -68,11 +68,13 @@ const mapOperadorToForm = (record, defaults = {}) => {
  * handleCloseForm (conclusão) e NÃO handlePersistSubmit (evita 2ª gravação).
  */
 export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, onSuccess, windowMode = false }) {
-  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
+  // Mesma identidade de tenant do RecordState (grupo+empresa+escopo) — rascunho A↛B.
+  const tenantKey = JSON.stringify([groupId ?? null, empresaAtual?.id ?? null, contexto ?? null]);
   const dadosIniciais = item || data || initialData || defaultValues || operador;
   const emptyForm = mapOperadorToForm(null, {
     empresa_id: empresaAtual?.id || "",
@@ -85,6 +87,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     formData,
     setFormData,
     emptyForm,
+    tenantKey,
     mapToForm: (record) => mapOperadorToForm(record, emptyForm),
   });
   const podeSalvar = operadorBoundId

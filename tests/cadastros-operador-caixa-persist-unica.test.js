@@ -34,7 +34,7 @@ function extractViewerOwnerHelpers(source) {
   return { classify, handlePersistSrc };
 }
 
-async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initial = null }) {
+async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initial = null, contextoVisual } = {}) {
   const formSource = await readFile(new URL('../src/components/cadastros/OperadorCaixaForm.jsx', import.meta.url), 'utf8');
   const hookSource = await readFile(new URL('../src/components/cadastros/useCadastroReopenOnIdentity.js', import.meta.url), 'utf8');
 
@@ -46,6 +46,12 @@ async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initi
   const updates = [];
   const completions = [];
   const toasts = { success: [], error: [] };
+  const visual = {
+    empresaAtual: { id: 'emp-1', group_id: 'grp-1' },
+    grupoAtual: { id: 'grp-1' },
+    contexto: 'empresa',
+    ...(contextoVisual || {}),
+  };
 
   const react = {
     createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
@@ -119,9 +125,7 @@ async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initi
     },
     '@/components/lib/useContextoVisual': {
       useContextoVisual: () => ({
-        empresaAtual: { id: 'emp-1', group_id: 'grp-1' },
-        grupoAtual: { id: 'grp-1' },
-        contexto: 'empresa',
+        ...visual,
         filterInContext: async () => [],
         createInContext: async (entity, payload) => {
           creates.push({ entity, payload });
@@ -176,6 +180,8 @@ async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initi
     toasts,
     getForm: () => state[0],
     setForm(patch) { state[0] = { ...state[0], ...patch }; },
+    setContexto(patch) { Object.assign(visual, patch); },
+    render,
     async submit() {
       slot = 0;
       const tree = Component(props);
@@ -438,4 +444,39 @@ test('sem permissão: não persiste nem notifica', async () => {
   assert.equal(h.creates().length, 0);
   assert.equal(h.updates().length, 0);
   assert.equal(h.completions().length, 0);
+});
+
+test('OperadorCaixa tenant: troca empresa invalida rascunho — não retargeta nome de A em B', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/OperadorCaixaForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /tenantKey/);
+  assert.match(src, /JSON\.stringify\(\[groupId/);
+  const hook = await readFile(new URL('../src/components/cadastros/useCadastroReopenOnIdentity.js', import.meta.url), 'utf8');
+  assert.match(hook, /tenantKey\s*=\s*null/);
+
+  const h = await mountOperador({
+    initial: null,
+    contextoVisual: {
+      empresaAtual: { id: 'emp-A', group_id: 'grp-1' },
+      grupoAtual: { id: 'grp-1' },
+      contexto: 'empresa',
+    },
+  });
+  h.setForm({ nome_caixa: 'Operador-A', empresa_id: 'emp-A' });
+  assert.equal(h.getForm().nome_caixa, 'Operador-A');
+
+  h.setContexto({
+    empresaAtual: { id: 'emp-B', group_id: 'grp-1' },
+    grupoAtual: { id: 'grp-1' },
+    contexto: 'empresa',
+  });
+  h.render();
+
+  assert.equal(h.getForm().empresa_id, 'emp-B');
+  assert.notEqual(h.getForm().nome_caixa, 'Operador-A', 'rascunho de A não sobrevive à troca de empresa');
+  await h.submit();
+  // emptyForm após troca: nome vazio — create pode ocorrer com nome '' ou ser bloqueado por validação
+  // Critério: payload NÃO carrega nome_caixa Operador-A
+  if (h.creates().length) {
+    assert.notEqual(h.creates()[0].payload.nome_caixa, 'Operador-A');
+  }
 });
