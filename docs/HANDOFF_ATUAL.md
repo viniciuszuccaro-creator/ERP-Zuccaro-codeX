@@ -1,9 +1,15 @@
-## CURSOR — vigente: ApiExterna reopen (2026-10-27)
+## CURSOR — VIGENTE (2026-10-27 12:40 America/Sao_Paulo)
 
-Tip HEAD **`bc3149b6d`** (código `8918b326e`). CI **SUCCESS** push/PR — **≠ aprovação**. Gradua ApiExterna. Aguarda parecer Codex. Próximo: ParametroRoteirizacao. Codespace 403.
-Pacote #397 Operador/Histórico permanece em paralelo (tip `d4c882e03` / CI tip `d1802de69` SUCCESS ≠ aprovação).
+**Executor:** runner `/workspace`. Codespace xylophone **403**. Stash `stash@{0}` preservado.
 
-(2026-10-27 11:50 America/Sao_Paulo)
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#399** Parametro+ApiExterna | **`fff9abb4d`** | P1+tenant; CI **SUCCESS** ≠ aprovação |
+| #400 ChatbotCanal | `5fb79685b` / código `fb9c16c21` | P2 fechado; CI SUCCESS ≠ aprovação |
+| #397 Operador+Histórico | `a6c1f7a97` | prova 48+2 PASS; @codex pedido |
+| #342 Pedido mestres | `47a5d0e109` | **APROVADO** |
+
+**Próximo:** parecer Codex #399/#400/#397 → demo Codespace. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

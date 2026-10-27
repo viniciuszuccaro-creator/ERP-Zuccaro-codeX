@@ -1,3 +1,21 @@
+## CURSOR — VIGENTE #399 tip `fff9abb4d` CI SUCCESS (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip HEAD | **`fff9abb4d`** (P1 `945ab5414` + ApiExterna tenant) |
+| CI | **SUCCESS** runs `40531903418` / `40531887681` — **≠ aprovação** |
+| P1 Parametro | `tenantKey` — fechado |
+| Recuperação | ApiExternaForm `tenantKey` (mesma classe) |
+| Testes | Parametro **7 PASS**; ApiExterna **7 PASS** |
+| Evidência | `docs/evidence/recuperacao-preservacao-tenant-398-399-20261027.txt` |
+| Pedido | **@codex review** tip `fff9abb4d` |
+| Paralelo | #400 `5fb79685b` / código `fb9c16c21`; #397 `a6c1f7a97` |
+| Demo | Codespace xylophone **403** |
+| Modalidade | runner `/workspace` |
+| Fora | merge/deploy/carga; generalizar tenantKey |
+
+(2026-10-27 12:40 America/Sao_Paulo)
+
 ## CURSOR — ApiExterna reopen canônico (2026-10-27)
 
 | Campo | Valor |
