@@ -1,17 +1,19 @@
-## CURSOR — VIGENTE #400 merge #399 + ChatbotCanal (2026-10-27)
+## CURSOR — VIGENTE #400 tip `0d1e5ce29` CI SUCCESS (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Modalidade | runner `/workspace` — Chrome Codespace owner-only (sem 2º escritor) |
-| Merge | tip #399 `75caf0666`/`fff9abb4d` → branch #400 |
-| P2 ChatbotCanal | `.editar` grantable (código `f1a39ea51`) |
-| Tenant | hook `tenantKey` + Parametro/ApiExterna; ChatbotCanal wired neste tip |
-| Pedido | **@codex review** tip HEAD (merge + tenant ChatbotCanal) |
-| Paralelo | #397 tip `8eee16827` / código `a6c1f7a97` reprova 48+2 |
-| Demo | https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ |
-| Fora | merge/deploy/carga; WIP #342 fora dos 50 |
+| Tip HEAD | **`0d1e5ce29`** (merge #399 + ChatbotCanal `tenantKey`) |
+| CI | **SUCCESS** runs `40543522236` / `40543508472` — **≠ aprovação** |
+| P2 | WhatsApp `.editar` grantable |
+| Tenant | Parametro + ApiExterna + ChatbotCanal |
+| Testes | reopen Parametro/Api/Chatbot **21 PASS** |
+| Pedido | **@codex review** tip `0d1e5ce29` |
+| Paralelo | #397 `202801e22` / código `a6c1f7a97` |
+| Demo | Chrome xylophone owner-only |
+| Modalidade | runner `/workspace` |
+| Fora | merge/deploy/carga |
 
-(2026-10-27 13:45 America/Sao_Paulo)
+(2026-10-27 13:50 America/Sao_Paulo)
 
 ## CURSOR — ApiExterna reopen canônico (2026-10-27)
 
