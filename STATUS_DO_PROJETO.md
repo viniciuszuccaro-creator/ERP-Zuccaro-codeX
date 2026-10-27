@@ -1,3 +1,15 @@
+## CURSOR — CI SUCCESS tip HEAD d4c882e03 (#397) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip HEAD | **`d4c882e03`** |
+| CI | **SUCCESS** push `40523742194` / PR `40523754407` — **≠ aprovação** |
+| Pedido | **@codex review** tip HEAD |
+| Demo | Codespace xylophone **403**; roteiro Operador/Histórico publicado |
+| Próximo indep. | #398 ApiExterna CI verde; #399 ParametroRoteirizacao; parecer Codex |
+
+(2026-10-27 12:00 America/Sao_Paulo)
+
 ## CURSOR — parecer independente #342 tip 47a5d0e (2026-10-27)
 
 | Campo | Valor |

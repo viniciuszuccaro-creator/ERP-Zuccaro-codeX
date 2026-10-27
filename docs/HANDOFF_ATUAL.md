@@ -1,3 +1,9 @@
+## CURSOR — #397 tip HEAD CI SUCCESS (2026-10-27)
+
+Tip **`d4c882e03`** CI SUCCESS (≠ aprovação). Aguarda parecer Codex. Codespace 403. Independentes: #398 ApiExterna CI verde; #399 ParametroRoteirizacao.
+
+(2026-10-27 12:00 America/Sao_Paulo)
+
 ## CURSOR — parecer #342 `47a5d0e` (somente leitura) (2026-10-27)
 
 SHA **`47a5d0e109`**. Branch Codex **intocada**. CI tip pass ≠ aprovação.
