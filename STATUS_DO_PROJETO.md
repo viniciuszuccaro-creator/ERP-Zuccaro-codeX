@@ -30,10 +30,11 @@
 | Guarda P1 #6441849832 | `cursor-identidade-graduated-submit-guard` — ataque `if(false)` rejeitado; 0 writes sem permissão |
 | Pedido 044 | `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` + UI; INTERNAL_ERROR genérico ≠ 044 |
 | Parecer #342 | **APROVADO** `47a5d0e109` (somente leitura) |
-| Pedido revisão | **@codex review** tip `08f8b4ca3` |
-| CI tip | jobs do SHA `08f8b4ca3` — SUCCESS ≠ aprovação |
+| Pedido revisão | **@codex review** tip docs atual (deltas + código `78c214f89`) |
+| CI código `78c214f89` | **SUCCESS** — `40521656430` (push) / `40521662664` (PR) — frontend/backend/expedicao — **≠ aprovação** |
+| CI tip docs | jobs do HEAD #397 — SUCCESS ≠ aprovação |
 | Demo | Codespace `potential-xylophone` **403** neste runner; roteiro `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt` |
-| Próximo | CI tip → parecer Codex → demo no Codespace (um escritor) → matriz recuperação |
+| Próximo | CI tip docs → parecer Codex → demo Codespace (um escritor) → matriz recuperação (ApiExterna/…) |
 | Modalidade | runner `/workspace` (≠ Codespace) |
 | Fora | merge/deploy/carga; dados reais; contatos/CodigoField/Região P2 |
 

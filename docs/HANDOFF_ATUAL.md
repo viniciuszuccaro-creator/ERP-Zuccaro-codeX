@@ -16,10 +16,11 @@ Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovaçã
 |-------|-------|
 | PR | **#397** → base `cursor/integracao-350-351-352-392b` |
 | Tip código | **`78c214f89`** |
-| Tip docs | **`08f8b4ca3`** (parecer #342 + este handoff) |
-| Pedido revisão | **@codex review** no tip `08f8b4ca3` (todos os deltas) |
+| Tip docs | tip atual desta branch (STATUS/HANDOFF/roteiro) |
+| CI código | **SUCCESS** push+PR — runs `40521656430` / `40521662664` (frontend/backend/expedicao) — **≠ aprovação** |
+| Pedido revisão | **@codex review** no tip docs atual (todos os deltas; tip código `78c214f89`) |
 | Parecer #342 | **APROVADO** `47a5d0e109` — branch Codex **intocada** |
-| CI tip | conferir jobs do SHA `08f8b4ca3` — SUCCESS ≠ aprovação |
+| CI tip docs | conferir jobs do HEAD da #397 — SUCCESS ≠ aprovação |
 | Modalidade | runner `/workspace` (≠ Codespace) |
 
 **Fechado no pacote:**
