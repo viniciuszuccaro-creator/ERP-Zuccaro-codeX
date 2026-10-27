@@ -1,45 +1,18 @@
-## CURSOR — #397 tip HEAD CI SUCCESS (2026-10-27)
+## CURSOR — VIGENTE (2026-10-27 12:25 America/Sao_Paulo)
 
-Tip **`d4c882e03`** CI SUCCESS (≠ aprovação). Aguarda parecer Codex. Codespace 403. Independentes: #398 ApiExterna CI verde; #399 ParametroRoteirizacao.
+**Executor:** runner `/workspace` (branch `cursor/operador-historico-persist-392b`). Codespace `potential-xylophone-5gj7r9v9qqg637vxp` **inacessível** (gh 403) — sem 2º escritor / sem clone paralelo. Stash `stash@{0}` wip-after-350 preservado.
 
-(2026-10-27 12:00 America/Sao_Paulo)
+| Pacote | Tip HEAD | Estado |
+|--------|----------|--------|
+| **#397** Operador+Histórico+guarda+044 | **`00870edd0`** | CI SUCCESS ≠ aprovação; **prova 48+2 PASS**; aguarda @codex |
+| #398 ApiExterna | `bd0b21dc7` | CI SUCCESS; reviews 0 |
+| #399 ParametroRoteirizacao | `90ef7221f` | CI SUCCESS; **P1 bot: tenant inválido no reopen** |
+| #400 ChatbotCanal | `e4a3621a7` | CI SUCCESS; **P2 bot: gate credenciais** |
+| #342 Pedido mestres (Codex) | `47a5d0e109` | **APROVADO** Cursor (branch Codex intocada) |
 
-## CURSOR — parecer #342 `47a5d0e` (somente leitura) (2026-10-27)
+**#397 fechado no tip:** persistência única OperadorCaixa; Histórico `clienteId`+paginação; guarda submit negativa; `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING`. Evidência: `docs/evidence/apontamentos-353-prova-tip-00870edd0-20261027.txt`. Roteiro demo: `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`.
 
-SHA **`47a5d0e109`**. Branch Codex **intocada**. CI tip pass ≠ aprovação.
-
-Fecha remainder `b4e659af`: Pedido deixa `filterInContext` nos mestres; usa `comercialMasters` + Central360 para Local/Obra; `mastersReady` bloqueia save; auxiliares fail-closed (forbidden≠vazio). Limite: revisão remota sem checkout; queryKey listagem ainda com `sessionIdentity` (masters com fingerprint).
-
-Veredicto: **APROVADO**.
-
-(2026-10-27 11:45 America/Sao_Paulo)
-
-## CURSOR — vigente: #397 OperadorCaixa + Histórico (#353) (2026-10-27)
-
-Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovação**.
-
-| Campo | Valor |
-|-------|-------|
-| PR | **#397** → base `cursor/integracao-350-351-352-392b` |
-| Tip código | **`78c214f89`** |
-| Tip HEAD | **`d1802de69`** (docs CI + vigente) |
-| CI código `78c214f89` | **SUCCESS** `40521656430` / `40521662664` — **≠ aprovação** |
-| CI tip `d1802de69` | **SUCCESS** push `40522648563` + PR `40522658245` (frontend/backend/expedicao) — **≠ aprovação** |
-| Pedido revisão | **@codex review** tip `d1802de69` (todos os deltas) |
-| Parecer #342 | **APROVADO** `47a5d0e109` — branch Codex **intocada** |
-| Modalidade | runner `/workspace` (≠ Codespace) |
-
-**Fechado no pacote:**
-- OperadorCaixa: único writer (`isSelfManagedCadastro`); Visualizador só conclui; 1 escrita create/edit; erro preserva rascunho.
-- Histórico: `pedidos.list?clienteId=` + `Pedido.visualizar` (sem Central360/`cliente_empresa`); paginação total/carregados; legado 200.
-- Guarda P1: contraprova submit negativa executável.
-- Pedido 044: `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` público; `INTERNAL_ERROR` genérico ≠ 044.
-
-**Ainda aberto:** parecer Codex no tip `d1802de69`; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` (**gh codespace 403** neste runner — coordenar escritor no checkout existente, sem reset/force). Sem merge/deploy/carga.
-
-Roteiro demo: `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`.
-
-(2026-10-27 11:35 America/Sao_Paulo)
+**Próximo:** P1 #399 tenant → recuperação matriz (não forms cosméticos) → janela exclusiva Codespace com Codex. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
