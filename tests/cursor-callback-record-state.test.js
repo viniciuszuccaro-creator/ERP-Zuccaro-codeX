@@ -6,7 +6,7 @@ import ts from 'typescript';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 import {cadastroCodigoRegistroRemainder} from './helpers/cadastroCodigoRegistroRemainder.js';
 
-const names = ['ApiExterna', 'ChatbotCanal', 'ChatbotIntent',
+const names = ['ChatbotCanal', 'ChatbotIntent',
   'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',
   'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',
   'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao',
@@ -21,6 +21,7 @@ const names = ['ApiExterna', 'ChatbotCanal', 'ChatbotIntent',
 // JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // RotaPadrao graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 // CatalogoWeb graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
+// ApiExterna graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.
 const parse = (path, text) => ts.createSourceFile(path, text.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
 function find(tree, predicate) {
   const found = [];
@@ -188,6 +189,17 @@ test('CatalogoWeb graduou do pin RecordState para useCadastroReopenOnIdentity co
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /catalogoBoundId/);
   assert.match(source, /syncFlagsCatalogoProduto/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
+
+test('ApiExterna graduou do pin RecordState para useCadastroReopenOnIdentity com apiExternaBoundId', () => {
+  const file = 'src/components/cadastros/ApiExternaForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('ApiExterna'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /apiExternaBoundId/);
+  assert.match(source, /headers_autenticacao/);
   assert.doesNotMatch(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /prevUpdatedRef/);
 });
