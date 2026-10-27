@@ -103,6 +103,15 @@ function restoreApprovedCentroResultadoCallbackDelta(source) {
  assert.equal(source.split(approvedCentroResultadoGraduationTest).length,2,'Only the exact CentroResultado graduation test delta may be normalized');
  return source.replace(approvedCentroResultadoGraduationTest,'\n').replace(approvedCentroResultadoNames,previousCentroResultadoNames);
 }
+/** #353 JobAgendado: saiu do pin após CentroResultado; reverse restaura JobAgendado + omite teste. */
+const previousJobAgendadoNames = "  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',\n  'JobAgendado', 'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedJobAgendadoNames = "  'ConfiguracaoIntegracao', 'ConfiguracaoWhatsApp', 'EventoNotificacao', 'GatewayPagamento',\n  'ParametroCaixaDiario', 'ParametroConciliacaoBancaria',\n  'ParametroPortalCliente', 'ParametroRecebimentoNFe', 'ParametroRoteirizacao', 'RotaPadrao',\n  'TabelaPreco', 'CadastroFiscal',\n  'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'];\n// ContatoB2B graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n// Servico e TipoFrete graduaram para useCadastroReopenOnIdentity — cobertos nos testes seguintes.\n// SegmentoCliente graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// KitProduto graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// Filial graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// CentroResultado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n// JobAgendado graduou para useCadastroReopenOnIdentity — coberto no teste seguinte.\n";
+const approvedJobAgendadoGraduationTest = "\ntest('JobAgendado graduou do pin RecordState para useCadastroReopenOnIdentity com jobBoundId', () => {\n  const file = 'src/components/cadastros/JobAgendadoForm.jsx';\n  const source = fs.readFileSync(file, 'utf8');\n  assert.equal(names.includes('JobAgendado'), false);\n  assert.match(source, /useCadastroReopenOnIdentity/);\n  assert.match(source, /jobBoundId/);\n  assert.match(source, /parametros_execucao/);\n  assert.doesNotMatch(source, /useCadastroRecordState/);\n  assert.doesNotMatch(source, /prevUpdatedRef/);\n});\n\n";
+function restoreApprovedJobAgendadoCallbackDelta(source) {
+ assert.equal(source.split(approvedJobAgendadoNames).length,2,'Only the exact JobAgendado names graduation delta may be normalized');
+ assert.equal(source.split(approvedJobAgendadoGraduationTest).length,2,'Only the exact JobAgendado graduation test delta may be normalized');
+ return source.replace(approvedJobAgendadoGraduationTest,'\n').replace(approvedJobAgendadoNames,previousJobAgendadoNames);
+}
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
  const restored=restoreApprovedBulkDelta(source);
@@ -114,7 +123,8 @@ test('bulk lifecycle evolution retains the original hash and rejects changed or 
 });
 test('ContatoB2B callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCr=restoreApprovedCentroResultadoCallbackDelta(source);
+ const afterJob=restoreApprovedJobAgendadoCallbackDelta(source);
+ const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
  const afterFil=restoreApprovedFilialCallbackDelta(afterCr);
  const afterKit=restoreApprovedKitProdutoCallbackDelta(afterFil);
  const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(afterKit);
@@ -125,8 +135,11 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
  assert.match(restored,/JobAgendado', 'KitProduto'/);
  assert.match(restored,/EventoNotificacao', 'Filial'/);
  assert.match(restored,/CatalogoWeb', 'CentroResultado'/);
- assert.throws(()=>restoreApprovedCentroResultadoCallbackDelta(source.replace(approvedCentroResultadoGraduationTest,'\n')));
- assert.throws(()=>restoreApprovedCentroResultadoCallbackDelta(source+approvedCentroResultadoGraduationTest));
+ assert.match(restored,/GatewayPagamento',\n  'JobAgendado'/);
+ assert.throws(()=>restoreApprovedJobAgendadoCallbackDelta(source.replace(approvedJobAgendadoGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedJobAgendadoCallbackDelta(source+approvedJobAgendadoGraduationTest));
+ assert.throws(()=>restoreApprovedCentroResultadoCallbackDelta(afterJob.replace(approvedCentroResultadoGraduationTest,'\n')));
+ assert.throws(()=>restoreApprovedCentroResultadoCallbackDelta(afterJob+approvedCentroResultadoGraduationTest));
  assert.throws(()=>restoreApprovedFilialCallbackDelta(afterCr.replace(approvedFilialGraduationTest,'\n')));
  assert.throws(()=>restoreApprovedFilialCallbackDelta(afterCr+approvedFilialGraduationTest));
  assert.throws(()=>restoreApprovedKitProdutoCallbackDelta(afterFil.replace(approvedKitProdutoGraduationTest,'\n')));
@@ -141,7 +154,8 @@ test('ContatoB2B callback graduation retains beforeSha and rejects omission, rep
 });
 test('Servico/TipoFrete callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCr=restoreApprovedCentroResultadoCallbackDelta(source);
+ const afterJob=restoreApprovedJobAgendadoCallbackDelta(source);
+ const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
  const afterFil=restoreApprovedFilialCallbackDelta(afterCr);
  const afterKit=restoreApprovedKitProdutoCallbackDelta(afterFil);
  const afterSeg=restoreApprovedSegmentoClienteCallbackDelta(afterKit);
@@ -152,7 +166,8 @@ test('Servico/TipoFrete callback graduation rejects omission, repetition or out-
 });
 test('SegmentoCliente callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCr=restoreApprovedCentroResultadoCallbackDelta(source);
+ const afterJob=restoreApprovedJobAgendadoCallbackDelta(source);
+ const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
  const afterFil=restoreApprovedFilialCallbackDelta(afterCr);
  const afterKit=restoreApprovedKitProdutoCallbackDelta(afterFil);
  const restored=restoreApprovedSegmentoClienteCallbackDelta(afterKit);
@@ -162,7 +177,8 @@ test('SegmentoCliente callback graduation rejects omission, repetition or out-of
 });
 test('KitProduto callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCr=restoreApprovedCentroResultadoCallbackDelta(source);
+ const afterJob=restoreApprovedJobAgendadoCallbackDelta(source);
+ const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
  const afterFil=restoreApprovedFilialCallbackDelta(afterCr);
  const restored=restoreApprovedKitProdutoCallbackDelta(afterFil);
  assert.equal(restored.includes(approvedKitProdutoGraduationTest),false);
@@ -171,7 +187,8 @@ test('KitProduto callback graduation rejects omission, repetition or out-of-scop
 });
 test('Filial callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const afterCr=restoreApprovedCentroResultadoCallbackDelta(source);
+ const afterJob=restoreApprovedJobAgendadoCallbackDelta(source);
+ const afterCr=restoreApprovedCentroResultadoCallbackDelta(afterJob);
  const restored=restoreApprovedFilialCallbackDelta(afterCr);
  assert.equal(restored.includes(approvedFilialGraduationTest),false);
  assert.match(restored,/EventoNotificacao', 'Filial'/);
@@ -179,10 +196,18 @@ test('Filial callback graduation rejects omission, repetition or out-of-scope ed
 });
 test('CentroResultado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
  const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
- const restored=restoreApprovedCentroResultadoCallbackDelta(source);
+ const afterJob=restoreApprovedJobAgendadoCallbackDelta(source);
+ const restored=restoreApprovedCentroResultadoCallbackDelta(afterJob);
  assert.equal(restored.includes(approvedCentroResultadoGraduationTest),false);
  assert.match(restored,/CatalogoWeb', 'CentroResultado'/);
- assert.throws(()=>restoreApprovedCentroResultadoCallbackDelta(source.replace("CatalogoWeb',","CatalogoWeb', 'Webhook',")));
+ assert.throws(()=>restoreApprovedCentroResultadoCallbackDelta(afterJob.replace("CatalogoWeb',","CatalogoWeb', 'Webhook',")));
+});
+test('JobAgendado callback graduation rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedJobAgendadoCallbackDelta(source);
+ assert.equal(restored.includes(approvedJobAgendadoGraduationTest),false);
+ assert.match(restored,/GatewayPagamento',\n  'JobAgendado'/);
+ assert.throws(()=>restoreApprovedJobAgendadoCallbackDelta(source.replace("GatewayPagamento',","GatewayPagamento', 'Webhook',")));
 });
 /** #353 LocalEstoque: saiu do pin residual RecordState → reopen canônico. */
 const previousResidualNames = "const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n";
@@ -220,7 +245,8 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
               restoreApprovedSegmentoClienteCallbackDelta(
                 restoreApprovedKitProdutoCallbackDelta(
                   restoreApprovedFilialCallbackDelta(
-                    restoreApprovedCentroResultadoCallbackDelta(reviewed)))))))
+                    restoreApprovedCentroResultadoCallbackDelta(
+                      restoreApprovedJobAgendadoCallbackDelta(reviewed))))))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
         : reviewed;
