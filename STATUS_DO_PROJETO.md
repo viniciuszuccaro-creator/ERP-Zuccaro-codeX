@@ -1,20 +1,16 @@
-## CURSOR — VIGENTE #397 tip `a6c1f7a97` + prep Chrome (2026-10-27)
+## CURSOR — VIGENTE #397 tip `8eee16827` CI SUCCESS (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Modalidade | runner `/workspace` — **não** conectado ao Codespace |
-| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` (existente; sem 2º Codespace/clone) |
-| Browser MCP | **ausente** neste executor; gh codespaces **403** |
-| Tip HEAD | **`a6c1f7a97`** (código `78c214f89` + provas) |
-| CI tip | **SUCCESS** — **≠ aprovação** |
-| Reprova 13:40 BRT | Operador 6 + guarda 2 + Histórico 14 + pedido-ui 26 = **48 PASS**; server 044 **2 PASS** |
-| Evidência | `docs/evidence/apontamentos-353-reprova-chrome-prep-a6c1f7a97-20261027.txt` |
-| Pedido | **@codex review** tip **`a6c1f7a97`** (SHA final; não ancestral) |
-| #342 | tip publicado `47a5d0e10` APROVADO; WIP “fora dos 50” **não publicado** — não duplicar |
-| #399/#400 | P1/P2 fechados; Codex breezy em tips intermediários; CI SUCCESS ≠ aprovação |
-| Stash | `stash@{0}` preservado |
-| Demo | janela exclusiva Codespace com Codex; roteiro atualizado (Chrome URL) |
-| Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor |
+| Tip HEAD | **`8eee16827`** (código `a6c1f7a97` / `78c214f89` + Chrome prep) |
+| CI | **SUCCESS** runs `40543286403` / `40543277830` — **≠ aprovação** |
+| Modalidade | runner `/workspace` — não conectado ao Codespace |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
+| Reprova | **48+2 PASS** — `docs/evidence/apontamentos-353-reprova-chrome-prep-a6c1f7a97-20261027.txt` |
+| Pedido | **@codex review** tip código **`a6c1f7a97`** / docs **`8eee16827`** |
+| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 não tip |
+| #400 | tip `0d1e5ce29` (merge #399 + ChatbotCanal tenant) |
+| Fora | merge/deploy/carga; 2º escritor |
 
 **Bloqueios no HEAD — fechados (reprova):**
 1. OperadorCaixa self-managed — 1 create/update; V24 só conclui

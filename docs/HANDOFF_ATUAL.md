@@ -1,20 +1,15 @@
-## CURSOR — VIGENTE (2026-10-27 13:40 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-27 13:50 America/Sao_Paulo)
 
-**Executor:** runner `/workspace` (`#397`). Abrir Codespace no Chrome **não** conecta este executor.
-**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — Codespace existente; sem 2º escritor; WIP Codex preservado.
-**Browser MCP:** ausente · gh codespaces **403**. Stash `stash@{0}` preservado.
+**Executor:** runner `/workspace`. Chrome Codespace owner-only (Browser MCP ausente). Stash `stash@{0}` preservado.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** Operador+Histórico+guarda+044 | **`a6c1f7a97`** | Reprova **48+2 PASS**; CI SUCCESS ≠ aprovação; **@codex review** |
-| #399 Parametro+ApiExterna tenant | `75caf0666` / código `fff9abb4d` | P1 fechado; CI SUCCESS; Codex breezy em `5b9c95ea9` |
-| #400 ChatbotCanal | `5fb79685b` / código `fb9c16c21` | P2 fechado; CI SUCCESS; Codex breezy em `fb9c16c21` |
-| #342 Codex | `47a5d0e10` | APROVADO Cursor; WIP “fora dos 50” **ainda não no tip** |
+| **#397** Operador+Histórico | **`8eee16827`** | CI **SUCCESS** `40543286403` ≠ aprovação; @codex |
+| #400 ChatbotCanal+tenant | `0d1e5ce29` | merge #399; aguarda CI/parecer |
+| #399 Parametro+ApiExterna | `fff9abb4d` | P1 fechado; CI SUCCESS |
+| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 não tip |
 
-**Roteiro Chrome:** `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`  
-**Reprova:** `docs/evidence/apontamentos-353-reprova-chrome-prep-a6c1f7a97-20261027.txt`
-
-**Próximo:** parecer Codex tip `a6c1f7a97` → janela exclusiva Codespace (medir SHA+HTTP) → alinhar stack #400←#399. Sem merge/deploy/carga.
+**Próximo:** parecer Codex → demo Chrome exclusiva (SHA+HTTP). Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
