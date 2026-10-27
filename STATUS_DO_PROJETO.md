@@ -1,18 +1,44 @@
-## CURSOR — CentroResultado reopen tip (CI pendente) (2026-10-27)
+## CURSOR — JobAgendado reopen tip (CI pendente) (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Tip | HEAD após este commit (CentroResultado) |
-| CI | pendente neste SHA — não creditar verde de `0988697f3` |
-| Pacote indep. | **CentroResultado** — RecordState só `updated_date` + useEffect wipe por id |
-| Correção | `useCadastroReopenOnIdentity` + `centroBoundId` + remove wipe; sky; CodigoField |
-| Pin | graduação callback + publication reverse (…→Filial→CentroResultado) |
-| Provas | centro-resultado 6 PASS; callback 41; publication 32 |
-| Verde anterior | **`0988697f3`** Filial SUCCESS · **`d0ba56007`** KitProduto SUCCESS |
-| Pedido Filial | **@codex review** tip `0988697f3` — todos os deltas até Filial |
-| Próximo indep. | JobAgendado / RotaPadrao / CatalogoWeb (pin residual) |
+| Tip | HEAD após este commit (JobAgendado) |
+| CI | pendente neste SHA — não creditar verde de `5081a79c2` |
+| Pacote indep. | **JobAgendado** — RecordState só `updated_date`; nested `parametros_execucao` |
+| Correção | `useCadastroReopenOnIdentity` + `jobBoundId` + map anti-wipe; sky |
+| Pin | graduação callback + publication reverse (…→Centro→JobAgendado) |
+| Provas | job-agendado 6 PASS; callback 41; publication 33 |
+| Verde anterior | **`5081a79c2`** CentroResultado · **`0988697f3`** Filial · **`d0ba56007`** Kit |
+| Pedido Centro | **@codex review** tip `5081a79c2` — todos os deltas até CentroResultado |
+| Próximo indep. | RotaPadrao / CatalogoWeb / ApiExterna (pin residual) |
 | Modalidade | runner `/workspace` |
 | Fora | Orçamento leitores Codespace; branch Codex; merge/deploy/carga |
+
+(2026-10-27 10:28 America/Sao_Paulo)
+
+## CURSOR — CI SUCCESS tip 5081a79c2 CentroResultado (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`5081a79c2`** |
+| CI | frontend / backend / expedicao **SUCCESS** neste SHA |
+| Pacote | reopen …/Filial/**CentroResultado** + Historico HTTP |
+| Pedido | **@codex review** tip `5081a79c2` — todos os deltas |
+| Parecer Codex | `b4e659af` APROVADO + remainder mestres Pedido |
+| Próximo indep. | JobAgendado |
+| Modalidade | runner `/workspace` |
+| Fora | Orçamento leitores Codespace; merge/deploy/carga |
+
+(2026-10-27 10:26 America/Sao_Paulo)
+
+## CURSOR — CentroResultado reopen tip (histórico CI pendente → SUCCESS) (2026-10-27)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`5081a79c2`** |
+| CI | **SUCCESS** — ver entrada acima |
+| Pacote indep. | **CentroResultado** — RecordState só `updated_date` + useEffect wipe por id |
+| Modalidade | runner `/workspace` |
 
 (2026-10-27 10:20 America/Sao_Paulo)
 
