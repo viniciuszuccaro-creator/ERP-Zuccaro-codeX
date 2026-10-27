@@ -1,22 +1,18 @@
-## CURSOR — VIGENTE #400 P2 credenciais + ChatbotCanal (2026-10-27)
+## CURSOR — VIGENTE #400 tip `fb9c16c21` CI SUCCESS (2026-10-27)
 
 | Campo | Valor |
 |-------|-------|
-| Modalidade | runner `/workspace` ≠ Codespace (403) |
-| Branch | `cursor/cadastros-chatbotcanal-reopen-392b` (#400 → #399) |
-| Código reopen | `d3070b1e7` |
-| Fix P2 | WhatsApp número/token: `data-permission="Cadastros.ChatbotCanal.editar"` (grantable em ACOES + GRANULAR) |
-| Achado Codex | P2: gate `.credenciais` órfão bloqueava inputs mesmo com `podeSalvar` |
-| Testes | behavioral **7 PASS** (P2 + reopen); publication/callback intactos |
-| Pedido | **@codex review** tip HEAD — reavaliar P2 |
-| Paralelo | #399 P1 tenant `5b9c95ea9`; #397 prova `a6c1f7a97` |
-| Próximo | recuperação matriz (não forms cosméticos); demo Codespace com Codex |
-| Fora | merge/deploy/carga; inventar ação `credenciais` sem fluxo de grant |
+| Tip HEAD | **`fb9c16c21`** (P2 `f1a39ea51` + docs) |
+| CI | **SUCCESS** run `40531383691` — frontend/backend/expedicao — **≠ aprovação** |
+| Fix P2 | WhatsApp → `Cadastros.ChatbotCanal.editar` grantable; removido `.credenciais` órfão |
+| Testes | behavioral **7 PASS** |
+| Pedido | **@codex review** tip `fb9c16c21` — reavaliar P2 |
+| Paralelo | #399 tip `fff9abb4d` (tenant Parametro+ApiExterna); #397 `a6c1f7a97` |
 | Demo | Codespace xylophone **403** |
 | Modalidade | runner `/workspace` |
 | Fora | merge/deploy/carga |
 
-(2026-10-27 12:15 America/Sao_Paulo)
+(2026-10-27 12:35 America/Sao_Paulo)
 
 ## CURSOR — ParametroRoteirizacao reopen canônico (2026-10-27)
 

@@ -1,16 +1,15 @@
-## CURSOR — VIGENTE (2026-10-27 12:50 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-27 12:35 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Codespace xylophone **403**. Stash `stash@{0}` preservado.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#400** ChatbotCanal | tip HEAD (P2) | **P2 fechado**: WhatsApp usa `.editar` grantable; 7 PASS |
-| #399 ParametroRoteirizacao | `5b9c95ea9` | **P1 tenant fechado**; 7 PASS |
-| #398 ApiExterna | `bd0b21dc7` | CI SUCCESS |
+| **#400** ChatbotCanal | **`fb9c16c21`** | P2 fechado; CI **SUCCESS** `40531383691` ≠ aprovação |
+| #399 Parametro+ApiExterna | `fff9abb4d` | P1 + tenant ApiExterna; aguarda CI/parecer |
 | #397 Operador+Histórico | `a6c1f7a97` | prova 48+2 PASS; @codex pedido |
 | #342 Pedido mestres | `47a5d0e109` | **APROVADO** |
 
-**Próximo:** recuperação matriz funcional (não forms cosméticos) → demo Codespace com Codex. Sem merge/deploy/carga.
+**Próximo:** parecer Codex #400/#399/#397 → demo Codespace. Sem merge/deploy/carga.
 
 ## CURSOR — vigente: ParametroRoteirizacao reopen (histórico) (2026-10-27)
 
