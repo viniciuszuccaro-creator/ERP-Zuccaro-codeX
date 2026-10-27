@@ -29,7 +29,7 @@ Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovaçã
 - Guarda P1: contraprova submit negativa executável.
 - Pedido 044: `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` público; `INTERNAL_ERROR` genérico ≠ 044.
 
-**Ainda aberto:** CI terminal do tip → parecer Codex no mesmo SHA; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` (**gh codespace 403** neste runner — coordenar escritor no checkout existente, sem reset/force). Sem merge/deploy/carga.
+**Ainda aberto:** parecer Codex no tip `d1802de69`; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` (**gh codespace 403** neste runner — coordenar escritor no checkout existente, sem reset/force). Sem merge/deploy/carga.
 
 Roteiro demo: `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`.
 
