@@ -10,7 +10,8 @@
 | Testes | operador persist 6 PASS; historico painel 14 PASS; reopen operador 8 PASS; pedido service clienteId 10 PASS |
 | CI tip | pendente neste SHA — não atribuir sucesso ancestral |
 | Guarda P1 #6441849832 | `tests/cursor-identidade-graduated-submit-guard.test.js` — hunk único `!podeSalvar`; ataque `if(false)` rejeitado; handler sem permissão 0 writes; CANAL remainder +clienteId |
-| Próximo | Pedido 044; parecer #342; candidata Codespace após CI tip |
+| Pedido 044 | `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` + explain UI; INTERNAL_ERROR genérico null |
+| Próximo | parecer #342; candidata Codespace após CI tip |
 | Modalidade | runner `/workspace` (≠ Codespace) |
 | Fora | merge/deploy/carga; dados reais; contatos/CodigoField/Região P2 não reabertos |
 

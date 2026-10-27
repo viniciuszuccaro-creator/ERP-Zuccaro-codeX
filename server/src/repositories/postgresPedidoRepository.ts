@@ -1,8 +1,31 @@
+import { AppError } from '../api/errors.js';
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { calculatePedido, type Pedido, type PedidoCreate, type PedidoHistorico, type PedidoListFilters, type PedidoRepository, type PedidoScope, type PedidoStatus } from './pedidoTypes.js';
 
 type Row = Record<string, unknown>;
 const SELECT = `SELECT p.*,COALESCE((SELECT json_agg(i ORDER BY i.created_at,i.id) FROM pedido_itens i WHERE i.pedido_id=p.id AND i.group_id=p.group_id AND i.empresa_id=p.empresa_id),'[]') itens FROM pedidos p`;
+
+/** Código público estável (produção): não vaza SQL; UI reconhece sem 42703. */
+export const PEDIDO_SCHEMA_IDEMPOTENCY_MISSING = 'PEDIDO_SCHEMA_IDEMPOTENCY_MISSING';
+
+function rethrowPedidoSchemaError(error: unknown): never {
+  const code = error && typeof error === 'object' && 'code' in error
+    ? String((error as { code?: string }).code || '')
+    : '';
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  const missingColumn = code === '42703'
+    || (lower.includes('column') && (lower.includes('does not exist') || lower.includes('undefined_column')));
+  if (missingColumn && (lower.includes('idempotency_key') || lower.includes('payload_fingerprint'))) {
+    throw new AppError(
+      503,
+      PEDIDO_SCHEMA_IDEMPOTENCY_MISSING,
+      'Pedido persistence requires migration 044 (idempotency columns)',
+    );
+  }
+  throw error;
+}
+
 const map = (row: Row): Pedido => ({
   ...publicRow(row), id: String(row.id), group_id: String(row.group_id), empresa_id: String(row.empresa_id),
   numero: String(row.numero), cliente_empresa_id: String(row.cliente_empresa_id),
@@ -38,9 +61,13 @@ export class PostgresPedidoRepository implements PedidoRepository {
   }
 
   async getByIdempotencyKey(scope: PedidoScope, key: string, executor?: DbQueryExecutor) {
-    const query = executor ?? this.db;
-    const result = await query.query<Row>(`${SELECT} WHERE p.group_id=$1 AND p.empresa_id=$2 AND p.idempotency_key=$3`, [scope.groupId, scope.empresaId, key]);
-    return result.rows[0] ? { row: map(result.rows[0]), fingerprint: String(result.rows[0].payload_fingerprint) } : null;
+    try {
+      const query = executor ?? this.db;
+      const result = await query.query<Row>(`${SELECT} WHERE p.group_id=$1 AND p.empresa_id=$2 AND p.idempotency_key=$3`, [scope.groupId, scope.empresaId, key]);
+      return result.rows[0] ? { row: map(result.rows[0]), fingerprint: String(result.rows[0].payload_fingerprint) } : null;
+    } catch (error) {
+      rethrowPedidoSchemaError(error);
+    }
   }
 
   private async insertItems(query: DbQueryExecutor, scope: PedidoScope, pedidoId: string, data: PedidoCreate, actorId: string) {
@@ -67,21 +94,25 @@ export class PostgresPedidoRepository implements PedidoRepository {
   }
 
   async create(scope: PedidoScope, data: PedidoCreate, actorId: string, executor?: DbQueryExecutor, fingerprint?: string): Promise<Pedido> {
-    return this.run(executor, async (query) => {
-      await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`pedido:${scope.empresaId}`]);
-      const sequence = await query.query<{ next: string }>('SELECT COALESCE(MAX(numero::int),0)+1 next FROM pedidos WHERE empresa_id=$1', [scope.empresaId]);
-      const numero = String(sequence.rows[0]?.next ?? '').padStart(8, '0');
-      if (!/^\d{8}$/.test(numero)) throw new Error('PEDIDO_NUMERO_RESERVATION_FAILED');
-      const totals = calculatePedido(data.itens);
-      const inserted = await query.query<{ id: string }>(
-        'INSERT INTO pedidos(group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,subtotal,desconto,total,idempotency_key,payload_fingerprint,created_by,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$10,$10) RETURNING id',
-        [scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total, data.idempotency_key ?? null, fingerprint ?? null],
-      );
-      const id = String(inserted.rows[0]?.id);
-      await this.insertItems(query, scope, id, data, actorId);
-      await query.query('INSERT INTO pedido_historico(group_id,empresa_id,pedido_id,status_anterior,status_novo,actor_id) VALUES($1,$2,$3,NULL,$4,$5)', [scope.groupId, scope.empresaId, id, 'EM_ABERTO', actorId]);
-      return (await this.get(scope, id, query))!;
-    });
+    try {
+      return await this.run(executor, async (query) => {
+        await query.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`pedido:${scope.empresaId}`]);
+        const sequence = await query.query<{ next: string }>('SELECT COALESCE(MAX(numero::int),0)+1 next FROM pedidos WHERE empresa_id=$1', [scope.empresaId]);
+        const numero = String(sequence.rows[0]?.next ?? '').padStart(8, '0');
+        if (!/^\d{8}$/.test(numero)) throw new Error('PEDIDO_NUMERO_RESERVATION_FAILED');
+        const totals = calculatePedido(data.itens);
+        const inserted = await query.query<{ id: string }>(
+          'INSERT INTO pedidos(group_id,empresa_id,numero,cliente_empresa_id,cliente_local_id,obra_id,tabela_preco_id,condicao_pagamento_id,orcamento_id,vendedor_id,tipo_operacao,data_entrega_solicitada,observacoes,subtotal,desconto,total,idempotency_key,payload_fingerprint,created_by,updated_by) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$10,$10) RETURNING id',
+          [scope.groupId, scope.empresaId, numero, data.cliente_empresa_id, data.cliente_local_id ?? null, data.obra_id ?? null, data.tabela_preco_id ?? null, data.condicao_pagamento_id, data.orcamento_id ?? null, actorId, data.tipo_operacao, data.data_entrega_solicitada, data.observacoes ?? null, totals.subtotal, totals.desconto, totals.total, data.idempotency_key ?? null, fingerprint ?? null],
+        );
+        const id = String(inserted.rows[0]?.id);
+        await this.insertItems(query, scope, id, data, actorId);
+        await query.query('INSERT INTO pedido_historico(group_id,empresa_id,pedido_id,status_anterior,status_novo,actor_id) VALUES($1,$2,$3,NULL,$4,$5)', [scope.groupId, scope.empresaId, id, 'EM_ABERTO', actorId]);
+        return (await this.get(scope, id, query))!;
+      });
+    } catch (error) {
+      rethrowPedidoSchemaError(error);
+    }
   }
 
   async list(scope: PedidoScope, limit = 50, offset = 0, executor?: DbQueryExecutor, filters: PedidoListFilters = {}) {

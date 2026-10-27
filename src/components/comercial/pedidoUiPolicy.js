@@ -383,6 +383,12 @@ export function explainPedidoPersistenceError(error) {
   const nested = body?.error && typeof body.error === 'object'
     ? /** @type {Record<string, unknown>} */ (body.error)
     : null;
+  const publicCode = String(nested?.code || body?.code || err.code || '');
+  // Contrato público estável (produção): sem SQL/42703 no envelope.
+  if (publicCode === 'PEDIDO_SCHEMA_IDEMPOTENCY_MISSING') {
+    return 'Persistência de Pedido indisponível neste destino: faltam colunas de idempotência (migration 044). '
+      + 'Não declare vendas prontas. Coordene aplicação autorizada com Codex; o rascunho não foi confirmado como salvo.';
+  }
   const chunks = [
     err.message,
     err.code,
@@ -393,6 +399,11 @@ export function explainPedidoPersistenceError(error) {
   ].filter((v) => v != null && String(v).trim() !== '').map((v) => String(v));
   const raw = chunks.join(' ').toLowerCase();
   if (!raw) return null;
+
+  // INTERNAL_ERROR genérico de produção NÃO é 044 (Codex P2 #4378431315).
+  if (publicCode === 'INTERNAL_ERROR' && !raw.includes('idempotency_key') && !raw.includes('payload_fingerprint')) {
+    return null;
+  }
 
   const mentionsIdempotency = raw.includes('idempotency_key') || raw.includes('payload_fingerprint');
   const missingColumn = (

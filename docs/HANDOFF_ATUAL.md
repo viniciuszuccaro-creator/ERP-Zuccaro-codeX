@@ -8,7 +8,9 @@ Referência consultada `#353` tip `eaad0b84` CI SUCCESS — **não é aprovaçã
 
 **Guarda P1 #6441849832:** contraprova em `cursor-identidade-graduated-submit-guard` (sem tocar pin CANAL identidade); remoção `if (!podeSalvar)`→`if (false)` falha; handler real sem permissão não persiste.
 
-**Ainda aberto:** Pedido 044 contrato público; revisão independente #342; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` após CI tip.
+**Pedido 044:** código público `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` + UI; INTERNAL_ERROR genérico ≠ 044.
+
+**Ainda aberto:** revisão independente #342; demo Codespace `potential-xylophone-5gj7r9v9qqg637vxp` após CI tip.
 
 Modalidade evidência: runner `/workspace`. Sem merge/deploy/carga.
 

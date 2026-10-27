@@ -352,6 +352,38 @@ test('explainPedidoPersistenceError: body API com payload_fingerprint', () => {
   assert.match(msg, /idempotência/i);
 });
 
+test('explainPedidoPersistenceError: contrato público PEDIDO_SCHEMA_IDEMPOTENCY_MISSING (produção)', () => {
+  const msg = explainPedidoPersistenceError({
+    status: 503,
+    body: {
+      error: {
+        code: 'PEDIDO_SCHEMA_IDEMPOTENCY_MISSING',
+        message: 'Internal-facing stable code without SQL',
+      },
+    },
+  });
+  assert.ok(msg);
+  assert.match(msg, /044/);
+  assert.match(msg, /não foi confirmado como salvo/i);
+});
+
+test('explainPedidoPersistenceError: INTERNAL_ERROR genérico de produção NÃO é 044', () => {
+  assert.equal(
+    explainPedidoPersistenceError({
+      status: 500,
+      body: { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },
+    }),
+    null,
+  );
+  assert.equal(
+    explainPedidoPersistenceError({
+      code: 'INTERNAL_ERROR',
+      message: 'Internal server error',
+    }),
+    null,
+  );
+});
+
 test('PedidoCanonicoPanel e OrcamentosTab usam explainPedidoPersistenceError (não mascaram 044)', async () => {
   const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
   const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
