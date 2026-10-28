@@ -1,3 +1,47 @@
+import { resolveComercialSelectedCliente, mergeComercialSelectedCliente, resolveComercialMasterPages } from '../src/components/comercial/comercialMasterPicker.js';
+
+test('Pedido reabre cliente fora dos primeiros 50 e preserva selecao quando busca muda', () => {
+  const { scope, pages } = canonicalMasterPagesFixture();
+  const selectedPages = structuredClone(pages);
+  selectedPages.clientes.meta.limit = 1;
+  const selectedLink = selectedPages.clientes.data[0].empresa_operacao.id;
+  pages.clientes.data = Array.from({ length: 50 }, (_, n) => {
+    const id = '22222222-2222-4222-8222-' + String(n + 1).padStart(12, '0');
+    return { ...pages.clientes.data[0], id, codigo: String(n + 1), empresa_operacao: {
+      ...pages.clientes.data[0].empresa_operacao,
+      id: '33333333-3333-4333-8333-' + String(n + 1).padStart(12, '0'), cliente_id: id,
+    } };
+  });
+  pages.clientes.meta.total = 51; pages.clientes.meta.hasMore = true;
+  const before = JSON.stringify(pages);
+  const selection = resolveComercialSelectedCliente(selectedPages, scope, selectedLink);
+  const merged = mergeComercialSelectedCliente(resolveComercialMasterPages(pages, scope), selection);
+  assert.equal(merged.clientesEmpresa.length, 51);
+  assert.equal(merged.clientesEmpresa.find(link => link.id === selectedLink).cliente_id, selection.clientes[0].id);
+  const options = filterClienteEmpresaOptions(merged.clientesEmpresa, new Map(merged.clientes.map(row => [row.id,row])), 'outra busca', selectedLink);
+  assert.deepEqual(options.map(row => row.id), [selectedLink]);
+  assert.equal(JSON.stringify(pages), before);
+  assert.equal(mergeComercialSelectedCliente(merged, selection).clientesEmpresa.length, 51);
+});
+
+test('Referencia selecionada falha fechada se ausente ambigua inelegivel ou de outra empresa', () => {
+  for (const mutate of [
+    p => { p.clientes.data = []; p.clientes.meta.total = 0; },
+    p => { p.clientes.meta.total = 2; },
+    p => { p.clientes.meta.hasMore = true; },
+    p => { p.clientes.data[0].empresa_operacao.bloqueado = true; },
+    p => { p.clientes.data[0].empresa_operacao.empresa_id = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'; },
+  ]) {
+    const { pages, scope } = canonicalMasterPagesFixture();
+    const linkId = pages.clientes.data[0].empresa_operacao.id;
+    pages.clientes.meta.limit = 1; mutate(pages);
+    assert.throws(() => resolveComercialSelectedCliente(pages, scope, linkId));
+  }
+  const { pages, scope } = canonicalMasterPagesFixture();
+  pages.clientes.meta.limit = 1;
+  assert.throws(() => resolveComercialSelectedCliente(pages, scope, pages.clientes.data[0].id));
+});
+
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {

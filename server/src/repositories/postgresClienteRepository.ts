@@ -132,6 +132,9 @@ export class PostgresClienteRepository implements ClienteRepository {
   async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,
     exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }> {
     if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');
+    if (filter.clienteEmpresaId && !filter.operacao) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');
+    }
     const query = executor ?? this.db;
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
@@ -191,6 +194,10 @@ export class PostgresClienteRepository implements ClienteRepository {
       params.push(filter.empresaId);
       operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}
         AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;
+      if (filter.clienteEmpresaId) {
+        params.push(filter.clienteEmpresaId);
+        where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql} AND ce.id=$${params.length}::uuid)`);
+      }
       where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);
     }
     const whereSql = where.join(' AND ');

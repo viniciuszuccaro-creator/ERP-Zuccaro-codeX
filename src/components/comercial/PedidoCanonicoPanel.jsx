@@ -45,6 +45,8 @@ import {
   filterClienteEmpresaOptions,
   filterProdutoOptions,
   resolveComercialMasterPages,
+  resolveComercialSelectedCliente,
+  mergeComercialSelectedCliente,
   resolveComercialAuxiliaryView,
   produtoPickerLabel,
 } from './comercialMasterPicker';
@@ -108,7 +110,15 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     enabled:ready&&canView,staleTime:30000,retry:false,
   });
   const coreMasters=master.data||{clientesEmpresa:[],clientes:[],condicoes:[],produtos:[],unidades:[],tabelas:[]};
-  const selectedClienteId=coreMasters.clientesEmpresa.find(link=>link.id===form.cliente_empresa_id)?.cliente_id;
+  const selectedCliente=useQuery({
+    queryKey:['pedido-selected-cliente',groupId,empresaId,actorId,sessionCacheKey,form.cliente_empresa_id],
+    queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.list({
+      clienteEmpresaId:form.cliente_empresa_id,signal,
+    }),{groupId,empresaId},form.cliente_empresa_id),
+    enabled:ready&&canView&&formOpen&&isCanonicalPedidoId(form.cliente_empresa_id),
+    staleTime:30000,retry:false,
+  });
+  const selectedClienteId=selectedCliente.data?.clientesEmpresa[0]?.cliente_id;
   const auxiliary=useQuery({
     queryKey:['pedido-auxiliary',groupId,empresaId,actorId,sessionCacheKey,selectedClienteId,form.cliente_empresa_id],
     queryFn:async({signal})=>{
@@ -119,12 +129,13 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     },
     enabled:ready&&canView&&Boolean(selectedClienteId),staleTime:30000,retry:false,
   });
-  const masters={...coreMasters,locais:auxiliary.data?.locais||[],obras:auxiliary.data?.obras||[]};
+  const masters={...mergeComercialSelectedCliente(coreMasters,selectedCliente.data),locais:auxiliary.data?.locais||[],obras:auxiliary.data?.obras||[]};
   const mastersReady=Boolean(master.data&&!master.isError&&!master.isFetching&&selectedClienteId
+    &&selectedCliente.data&&!selectedCliente.isError&&!selectedCliente.isFetching
     &&auxiliary.data&&!auxiliary.isError&&!auxiliary.isFetching);
   const clients=useMemo(()=>new Map(masters.clientes.map(x=>[x.id,x])),[masters.clientes]);
   const clientLabel=(id)=>{const link=masters.clientesEmpresa.find(x=>x.id===id);return clienteEmpresaPickerLabel(link, clients.get(link?.cliente_id))||id;};
-  const clienteOptions=useMemo(()=>filterClienteEmpresaOptions(masters.clientesEmpresa, clients, clienteQuery),[masters.clientesEmpresa, clients, clienteQuery]);
+  const clienteOptions=useMemo(()=>filterClienteEmpresaOptions(masters.clientesEmpresa, clients, clienteQuery,form.cliente_empresa_id),[masters.clientesEmpresa, clients, clienteQuery,form.cliente_empresa_id]);
   const produtoOptions=useMemo(()=>filterProdutoOptions(masters.produtos, produtoQuery),[masters.produtos, produtoQuery]);
   useEffect(()=>{detailGate.current.invalidate();setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setCreateKey(null);setHistory([]);setHistoryLoading(false);setHistoryError(null);setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}));setPendingCancel(null);setCancelMotivo('');setPendingTransition(null);setStatusMotivo('');setFilters({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});setApplied({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});},[groupId,empresaId,actorId]);
   useEffect(()=>mutationGate.current.subscribe(()=>setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}))),[groupId,empresaId,actorId]);

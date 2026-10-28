@@ -629,8 +629,8 @@ SeparacaoConferencia: {
   };
 
   const comercialMasters = {
-    /** @param {{clienteSearch?:string,produtoSearch?:string,signal?:AbortSignal}} [options] */
-    async list({ clienteSearch = '', produtoSearch = '', signal } = {}) {
+    /** @param {{clienteSearch?:string,produtoSearch?:string,clienteEmpresaId?:string,signal?:AbortSignal}} [options] */
+    async list({ clienteSearch = '', produtoSearch = '', clienteEmpresaId, signal } = {}) {
       const before = Object.freeze({ ...(getScope() || {}) });
       const matches = current => current.token === before.token && current.groupId === before.groupId
         && current.empresaId === before.empresaId && current.actorId === before.actorId;
@@ -640,10 +640,14 @@ SeparacaoConferencia: {
         throw failure(422, 'VALIDATION_ERROR');
       }
       if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');
+      if (clienteEmpresaId !== undefined && (typeof clienteEmpresaId !== 'string'
+        || clienteEmpresaId.length !== 36 || clienteEmpresaId !== clienteEmpresaId.trim() || clienteSearch)) {
+        throw failure(422, 'VALIDATION_ERROR');
+      }
       let pages, caught;
       try {
         pages = await Promise.all([
-          request('/api/v1/clientes', { query: { operacao: true, ativo: true, search: clienteSearch, limit: 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),
+          request('/api/v1/clientes', { query: { operacao: true, ativo: true, cliente_empresa_id: clienteEmpresaId, search: clienteSearch, limit: clienteEmpresaId ? 1 : 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),
           request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),
           request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),
           request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),

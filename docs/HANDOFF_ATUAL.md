@@ -1,3 +1,11 @@
+## Handoff vigente — fechamento do WIP ClienteEmpresa (2026-10-28)
+
+Estado e prioridade únicos no topo de STATUS_DO_PROJETO.md. Mesmo Codespace/clone e branch codex/consolidacao-infra-20261017, base47a5d0e1, PR342 sobre334; .vscode e WIP preservados. Reserva342/6467842834. Consulta selecionada independente dos50 e da busca reutiliza contratos existentes; placeholder SQL corrigido por falha real em PostgreSQL isolado; guardas/hashes históricos intactos.
+
+Raiz2417/0/0, foco61/0/0, PG17isolado1/0/0 e audit/lint/type/build exit0; backend final 554PASS/0FAIL/26SKIP (580 total; skips não são aprovação). Node24 V8 fatal e build143 anteriores não são aprovação; build Node22 passou. Recibos privados resume-20261028; publicação/CI e prévia ainda pendentes deste checkpoint. Sem banco operacional, VPS, carga, DDL/grants, merge ou deploy.
+
+Cursor353 eaad0b84, sem edição/composição: graduação14/14 aceita mutação da negativa real; persistência única Operador e paginação/autorização Histórico continuam abertos, parecer353/6467957970. P2 Região e contatos/CodigoField encerrados não reabertos. Legado: reutilizar Grupo CPA existente, não criar outro; principal/sessão e reconciliação da coorte100 pendentes. Próximo: backend verde → push mesma branch/CI → harness sintético/5173Private com prova fora dos50 e mudança de busca. Blocos anteriores são históricos quando conflitantes.
+
 ## Estado vigente - Pedido canonico e preparacao do Grupo real (2026-10-27)
 
 Mesma branch/Codespace, base b4e659af. PedidoCanonicoPanel reutiliza comercialMasters.list e o resolver existente para ClienteEmpresa/Produto/CondicaoPagamento/TabelaPreco. Locais/obras usam Central360 do cliente e vinculo exatos; respostas sem escopo, indisponiveis ou paginacao incompleta bloqueiam o salvamento. Nao ha fallback local, endpoint paralelo, nova permissao ou alteracao backend.

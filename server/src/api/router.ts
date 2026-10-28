@@ -422,6 +422,7 @@ function mountClienteRoutes(
   const relationshipPath = '/api/v1/clientes/:clienteId/empresas';
   const operationalClienteQuery = z.object({
     operacao: z.literal('true'), ativo: z.literal('true').optional(),
+    cliente_empresa_id: z.string().uuid().optional(),
     search: z.string().trim().max(200).optional(),
     order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),
     limit: z.string().regex(/^[1-9]\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),
@@ -569,6 +570,7 @@ function mountClienteRoutes(
       const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;
       const page = await service.list(ctxFromReq(req), {
         operacao,
+        clienteEmpresaId: typeof req.query.cliente_empresa_id === 'string' ? req.query.cliente_empresa_id : undefined,
         ativo: parseAtivoQuery(req.query.ativo),
         search: req.query.search ? String(req.query.search) : undefined,
         codigo: req.query.codigo ? String(req.query.codigo) : undefined,

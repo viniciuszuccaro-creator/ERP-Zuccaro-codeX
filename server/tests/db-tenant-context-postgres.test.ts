@@ -285,6 +285,16 @@ if (process.env.DATABASE_URL) test('Entrada PostgreSQL: login Grupo Cliente Orca
     assert.equal(picked.data[0].empresa_operacao.group_id, ID.groupA);
     assert.equal(picked.data[0].empresa_operacao.empresa_id, ID.empresaA);
     assert.equal(picked.data[0].empresa_operacao.elegivel_operacao, true);
+    const exactPath = '/api/v1/clientes?operacao=true&ativo=true&limit=1&offset=0&cliente_empresa_id=' + link.id;
+    const exact = await readPicker(exactPath);
+    assert.equal(exact.meta.total, 1); assert.equal(exact.data[0].id, customer.id);
+    assert.equal(exact.data[0].empresa_operacao.id, link.id);
+    const missingExact = await readPicker(exactPath.replace(link.id, 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'));
+    assert.equal(missingExact.meta.total, 0); assert.deepEqual(missingExact.data, []);
+    await request('GET', exactPath, 422, undefined, groupHeaders);
+    await request('GET', exactPath + '&search=other', 422);
+    await request('GET', exactPath.replace('offset=0','offset=1'), 422);
+    await request('GET', exactPath.replace(link.id, 'invalid'), 422);
     const nextPage = await readPicker(pickerPath.replace('offset=0', 'offset=1'));
     assert.equal(nextPage.meta.total, 1); assert.deepEqual(nextPage.data, []);
     await request('GET', pickerPath, 422, undefined, groupHeaders);

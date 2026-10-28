@@ -50,11 +50,15 @@ export const consolidation81Hunks={
   }
 };
 export function consolidation81Remainder(file,text,verify=true){return exactSourceRemainder(file,text,consolidation81Hunks[file],verify); }
-export function clienteConferenciaRemainder(file,text,verify=true){return exactSourceRemainder(file,text,clienteConferenciaHunks[file],verify); }
+export function clienteConferenciaRemainder(file,text,verify=true){
+ return clienteConferenciaHistoricalRemainder(file,clienteSelectedReferenceRemainder(file,text,verify),verify);
+}
+export function clienteSelectedReferenceRemainder(file,text,verify=true){return exactSourceRemainder(file,text,clienteSelectedReferenceHunks[file],verify);}
+export function clienteConferenciaHistoricalRemainder(file,text,verify=true){return exactSourceRemainder(file,text,clienteConferenciaHunks[file],verify);}
 function exactSourceRemainder(file,text,entry,verify){
  if(!entry)return text;
  let source=text.replace(/\r\n/g,'\n');
- for(const [after,before] of entry.hunks){assert.equal(source.split(after).length,2,file+': exact identity/checksum hunk');source=source.replace(after,before);}
+ for(const [after,before] of entry.hunks){assert.equal(source.split(after).length,2,file+': exact identity/checksum hunk');source=source.replace(after,()=>before);}
  if(verify)assert.equal(crypto.createHash('sha256').update(source).digest('hex'),entry.hash,file+': entire previous source');
  return text.includes('\r\n')?source.replace(/\n/g,'\r\n'):source;
 }
@@ -218,6 +222,82 @@ export const clienteConferenciaHunks={
       [
         "  const path = 'src/services/clienteService.ts';\n  const original = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:server/${path}`], { encoding: 'utf8' });\n  const parse = (source: string) => ts.createSourceFile(path, source.replaceAll('\\r\\n', '\\n'), ts.ScriptTarget.Latest, true);\n  const before = parse(original), after = parse(clienteConferenciaRemainder('server/'+path, fs.readFileSync(path, 'utf8')));\n  const members = (file: ts.SourceFile) => {\n    const declaration = file.statements.find(ts.isClassDeclaration);\n    assert(declaration);\n",
         "  const path = 'src/services/clienteService.ts';\n  const original = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:server/${path}`], { encoding: 'utf8' });\n  const parse = (source: string) => ts.createSourceFile(path, source.replaceAll('\\r\\n', '\\n'), ts.ScriptTarget.Latest, true);\n  const before = parse(original), after = parse(fs.readFileSync(path, 'utf8'));\n  const members = (file: ts.SourceFile) => {\n    const declaration = file.statements.find(ts.isClassDeclaration);\n    assert(declaration);\n"
+      ]
+    ]
+  }
+};
+
+export const clienteSelectedReferenceHunks={
+  "server/src/api/router.ts": {
+    "hash": "d545bd5db69d111b744b275df14177c8f47ed99b0ba91111c59a1ba3bd6c6651",
+    "hunks": [
+      [
+        "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';\n  const operationalClienteQuery = z.object({\n    operacao: z.literal('true'), ativo: z.literal('true').optional(),\n    cliente_empresa_id: z.string().uuid().optional(),\n    search: z.string().trim().max(200).optional(),\n    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),\n    limit: z.string().regex(/^[1-9]\\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),\n",
+        "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';\n  const operationalClienteQuery = z.object({\n    operacao: z.literal('true'), ativo: z.literal('true').optional(),\n    search: z.string().trim().max(200).optional(),\n    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),\n    limit: z.string().regex(/^[1-9]\\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),\n"
+      ],
+      [
+        "      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        operacao,\n        clienteEmpresaId: typeof req.query.cliente_empresa_id === 'string' ? req.query.cliente_empresa_id : undefined,\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n",
+        "      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        operacao,\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n"
+      ]
+    ]
+  },
+  "server/src/services/clienteService.ts": {
+    "hash": "2c711fb1d47d5ba53e2c0e0099ec75d816a3746bcc583b77df6d0d0d0517578f",
+    "hunks": [
+      [
+        "import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';\nimport {\n  CLIENTE_FORBIDDEN_FIELDS,\n  clienteOperacaoLinkSchema,\n  clienteCreateSchema,\n  clienteUpdateSchema,\n  type Cliente,\n",
+        "import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';\nimport {\n  CLIENTE_FORBIDDEN_FIELDS,\n  clienteCreateSchema,\n  clienteUpdateSchema,\n  type Cliente,\n"
+      ],
+      [
+        "\nexport type ClienteListOptions = {\n  operacao?: boolean;\n  clienteEmpresaId?: string;\n  ativo?: boolean;\n  search?: string;\n  codigo?: string;\n",
+        "\nexport type ClienteListOptions = {\n  operacao?: boolean;\n  ativo?: boolean;\n  search?: string;\n  codigo?: string;\n"
+      ],
+      [
+        "  async list(ctx: RequestContext, options: ClienteListOptions = {}) {\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'visualizar');\n    if (options.clienteEmpresaId !== undefined && (!options.operacao\n      || !clienteOperacaoLinkSchema.shape.id.safeParse(options.clienteEmpresaId).success\n      || Boolean(options.search || options.codigo || options.documento)\n      || (options.offset ?? 0) !== 0)) {\n      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid exact operational customer selector');\n    }\n    if (options.operacao) {\n      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))\n",
+        "  async list(ctx: RequestContext, options: ClienteListOptions = {}) {\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'visualizar');\n    if (options.operacao) {\n      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))\n"
+      ],
+      [
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      operacao: options.operacao,\n      clienteEmpresaId: options.clienteEmpresaId,\n      ativo,\n      search: options.search,\n      codigo: options.codigo,\n",
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      operacao: options.operacao,\n      ativo,\n      search: options.search,\n      codigo: options.codigo,\n"
+      ]
+    ]
+  },
+  "server/src/repositories/inMemoryClienteRepository.ts": {
+    "hash": "cb2811d0bcb37f4f5f114955d4de9ff5766fdddfe3e3a92aca1a55bda9fc0db5",
+    "hunks": [
+      [
+        "\nexport type ClienteListFilter = Scope & ListOptions & {\n  operacao?: boolean;\n  clienteEmpresaId?: string;\n  offset?: number;\n  codigo?: string;\n  documento?: string;\n",
+        "\nexport type ClienteListFilter = Scope & ListOptions & {\n  operacao?: boolean;\n  offset?: number;\n  codigo?: string;\n  documento?: string;\n"
+      ],
+      [
+        "  }\n\n  async listPage(filter: ClienteListFilter): Promise<{ rows: ClienteListItem[]; total: number }> {\n    if (filter.clienteEmpresaId && !filter.operacao) {\n      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');\n    }\n    let all: ClienteListItem[] = [...this.rows.values()].filter((r) => this.matches(filter, r));\n    if (filter.operacao) {\n      if (!filter.empresaId || filter.ativo === false) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      all = all.flatMap(row => {\n        const links = [...this.empresaLinks.values()].filter(link => link.group_id === filter.groupId\n          && link.empresa_id === filter.empresaId && link.cliente_id === row.id && link.elegivel_operacao);\n        if (filter.clienteEmpresaId && !links.some(link => link.id === filter.clienteEmpresaId)) return [];\n        if (links.length > 1) throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');\n        return links.length === 1 ? [{ ...row, empresa_operacao: clienteOperacaoLinkSchema.parse(links[0]) }] : [];\n      });\n",
+        "  }\n\n  async listPage(filter: ClienteListFilter): Promise<{ rows: ClienteListItem[]; total: number }> {\n    let all: ClienteListItem[] = [...this.rows.values()].filter((r) => this.matches(filter, r));\n    if (filter.operacao) {\n      if (!filter.empresaId || filter.ativo === false) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      all = all.flatMap(row => {\n        const links = [...this.empresaLinks.values()].filter(link => link.group_id === filter.groupId\n          && link.empresa_id === filter.empresaId && link.cliente_id === row.id && link.elegivel_operacao);\n        if (links.length > 1) throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');\n        return links.length === 1 ? [{ ...row, empresa_operacao: clienteOperacaoLinkSchema.parse(links[0]) }] : [];\n      });\n"
+      ]
+    ]
+  },
+  "server/src/repositories/postgresClienteRepository.ts": {
+    "hash": "f0b68691a479dc10758c2680ff4e2c0a40b0142ffcdaa02af19a1a9e038ab348",
+    "hunks": [
+      [
+        "  async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,\n    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }> {\n    if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');\n    if (filter.clienteEmpresaId && !filter.operacao) {\n      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');\n    }\n    const query = executor ?? this.db;\n    const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);\n    const offset = Math.max(filter.offset ?? 0, 0);\n",
+        "  async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,\n    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }> {\n    if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');\n    const query = executor ?? this.db;\n    const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);\n    const offset = Math.max(filter.offset ?? 0, 0);\n"
+      ],
+      [
+        "      params.push(filter.empresaId);\n      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}\n        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;\n      if (filter.clienteEmpresaId) {\n        params.push(filter.clienteEmpresaId);\n        where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql} AND ce.id=$${params.length}::uuid)`);\n      }\n      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);\n    }\n    const whereSql = where.join(' AND ');\n",
+        "      params.push(filter.empresaId);\n      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}\n        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;\n      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);\n    }\n    const whereSql = where.join(' AND ');\n"
+      ]
+    ]
+  },
+  "src/api/httpApiClient.js": {
+    "hash": "80478c6565b8ae322bc2fd29b6eb8ce12132a6bc614b3040a0cfbbe53b9b2b90",
+    "hunks": [
+      [
+        "  };\n\n  const comercialMasters = {\n    /** @param {{clienteSearch?:string,produtoSearch?:string,clienteEmpresaId?:string,signal?:AbortSignal}} [options] */\n    async list({ clienteSearch = '', produtoSearch = '', clienteEmpresaId, signal } = {}) {\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.token === before.token && current.groupId === before.groupId\n        && current.empresaId === before.empresaId && current.actorId === before.actorId;\n",
+        "  };\n\n  const comercialMasters = {\n    /** @param {{clienteSearch?:string,produtoSearch?:string,signal?:AbortSignal}} [options] */\n    async list({ clienteSearch = '', produtoSearch = '', signal } = {}) {\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.token === before.token && current.groupId === before.groupId\n        && current.empresaId === before.empresaId && current.actorId === before.actorId;\n"
+      ],
+      [
+        "        throw failure(422, 'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');\n      if (clienteEmpresaId !== undefined && (typeof clienteEmpresaId !== 'string'\n        || clienteEmpresaId.length !== 36 || clienteEmpresaId !== clienteEmpresaId.trim() || clienteSearch)) {\n        throw failure(422, 'VALIDATION_ERROR');\n      }\n      let pages, caught;\n      try {\n        pages = await Promise.all([\n          request('/api/v1/clientes', { query: { operacao: true, ativo: true, cliente_empresa_id: clienteEmpresaId, search: clienteSearch, limit: clienteEmpresaId ? 1 : 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),\n          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),\n",
+        "        throw failure(422, 'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');\n      let pages, caught;\n      try {\n        pages = await Promise.all([\n          request('/api/v1/clientes', { query: { operacao: true, ativo: true, search: clienteSearch, limit: 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),\n          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),\n"
       ]
     ]
   }

@@ -1,3 +1,42 @@
+test('CANAL selected reference preserves previous hashes and rejects mutations inside outside omitted duplicated hunks', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { clienteConferenciaRemainder, clienteSelectedReferenceHunks } = await import('./helpers/consolidation81Remainder.js');
+  for (const [file,entry] of Object.entries(clienteSelectedReferenceHunks)) {
+    const source=readFileSync(file,'utf8');
+    assert.doesNotThrow(()=>clienteConferenciaRemainder(file,source));
+    assert.throws(()=>clienteConferenciaRemainder(file,source+'\n// outside approved hunk\n'));
+    for (const [after,before] of entry.hunks) {
+      assert.equal(source.split(after).length,2);
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,before)));
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,after+after)));
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,after+'// mutation\n')));
+    }
+  }
+});
+
+test('HTTP mestres resolve vinculo selecionado por identidade exata sem busca ou varrer paginas', async () => {
+  const { createHttpApiClient } = await import('../src/api/httpApiClient.js');
+  const linkId = '88888888-aaaa-4aaa-8aaa-888888888888', urls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ token:'synthetic-only',groupId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',empresaId:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',actorId:'11111111-aaaa-4aaa-8aaa-111111111111' }),
+    fetchImpl: async url => {
+      urls.push(new URL(String(url)));
+      return new Response(JSON.stringify({data:[],meta:{total:0,limit:1,offset:0,hasMore:false}}), {status:200});
+    },
+  });
+  await client.comercialMasters.list({clienteEmpresaId:linkId});
+  const selected = urls.filter(url => url.pathname === '/api/v1/clientes');
+  assert.equal(selected.length,1);
+  assert.equal(selected[0].searchParams.get('cliente_empresa_id'),linkId);
+  assert.equal(selected[0].searchParams.get('limit'),'1');
+  assert.equal(selected[0].searchParams.get('offset'),'0');
+  assert.equal(selected[0].searchParams.get('search') || '', '');
+  const count = urls.length;
+  await assert.rejects(client.comercialMasters.list({clienteEmpresaId:linkId,clienteSearch:'outro'}));
+  assert.equal(urls.length,count);
+});
+
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
@@ -607,7 +646,22 @@ test('CANAL actual consumer does not auto-read and clears late results on sessio
  const tab=await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8');assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');
 });
 
-test('CANAL integrity rejects unregistered changes inside and outside approved hunks',async()=>{const {clienteConferenciaRemainder,clienteConferenciaHunks}=await import('./helpers/consolidation81Remainder.js');const {readFile}=await import('node:fs/promises');for(const path of Object.keys(clienteConferenciaHunks)){const source=await readFile(path,'utf8');assert.ok(clienteConferenciaRemainder(path,source));assert.throws(()=>clienteConferenciaRemainder(path,source+'\n// unregistered mutation\n'));assert.throws(()=>clienteConferenciaRemainder(path,source.replace(clienteConferenciaHunks[path].hunks[0][0],'!'+clienteConferenciaHunks[path].hunks[0][0].slice(1))));}});
+test('CANAL integrity rejects unregistered changes inside and outside approved hunks',async()=>{
+ const {clienteConferenciaRemainder,clienteConferenciaHunks,clienteSelectedReferenceRemainder,clienteConferenciaHistoricalRemainder}=await import('./helpers/consolidation81Remainder.js');
+ const {readFile}=await import('node:fs/promises');
+ for(const path of Object.keys(clienteConferenciaHunks)){
+  const raw=await readFile(path,'utf8');
+  assert.ok(clienteConferenciaRemainder(path,raw));
+  const source=clienteSelectedReferenceRemainder(path,raw);
+  assert.ok(clienteConferenciaHistoricalRemainder(path,source));
+  assert.throws(()=>clienteConferenciaHistoricalRemainder(path,source+'\n// unregistered mutation\n'));
+  const after=clienteConferenciaHunks[path].hunks[0][0];
+  assert.equal(source.split(after).length,2);
+  const mutation=source.replace(after,()=>'!'+after.slice(1));
+  assert.notEqual(mutation,source);
+  assert.throws(()=>clienteConferenciaHistoricalRemainder(path,mutation));
+ }
+});
 
 test('CANAL malformed session primitives fail before fetch or legacy actor headers',async()=>{
  const input={identidades:[{documento:'11222333000181'}]};
@@ -649,11 +703,14 @@ test('commercial masters HTTP: missing company, late context, failure and abort 
 
 test('canonical masters: exact source guards reject missing, repeated and modified approved hunks', async () => {
   const { readFileSync } = await import('node:fs');
-  const { clienteConferenciaHunks, clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');
+  const { clienteConferenciaHunks, clienteConferenciaRemainder: composed, clienteSelectedReferenceRemainder, clienteConferenciaHistoricalRemainder: clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');
   for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {
-    const source = readFileSync(path, 'utf8');
+    const raw = readFileSync(path, 'utf8');
+    assert.doesNotThrow(() => composed(path, raw));
+    const source = clienteSelectedReferenceRemainder(path, raw);
     assert.doesNotThrow(() => clienteConferenciaRemainder(path, source));
     for (const [after, before] of clienteConferenciaHunks[path].hunks) {
+      assert.equal(source.split(after).length,2);
       assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, before)));
       assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + after)));
       assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + '\nvoid "SYNTHETIC_OUT_OF_SCOPE";\n')));

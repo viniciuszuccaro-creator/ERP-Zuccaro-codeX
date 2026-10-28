@@ -19,6 +19,7 @@ function nowIso() { return new Date().toISOString(); }
 
 export type ClienteListFilter = Scope & ListOptions & {
   operacao?: boolean;
+  clienteEmpresaId?: string;
   offset?: number;
   codigo?: string;
   documento?: string;
@@ -217,12 +218,16 @@ export class InMemoryClienteRepository implements ClienteRepository {
   }
 
   async listPage(filter: ClienteListFilter): Promise<{ rows: ClienteListItem[]; total: number }> {
+    if (filter.clienteEmpresaId && !filter.operacao) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');
+    }
     let all: ClienteListItem[] = [...this.rows.values()].filter((r) => this.matches(filter, r));
     if (filter.operacao) {
       if (!filter.empresaId || filter.ativo === false) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
       all = all.flatMap(row => {
         const links = [...this.empresaLinks.values()].filter(link => link.group_id === filter.groupId
           && link.empresa_id === filter.empresaId && link.cliente_id === row.id && link.elegivel_operacao);
+        if (filter.clienteEmpresaId && !links.some(link => link.id === filter.clienteEmpresaId)) return [];
         if (links.length > 1) throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');
         return links.length === 1 ? [{ ...row, empresa_operacao: clienteOperacaoLinkSchema.parse(links[0]) }] : [];
       });

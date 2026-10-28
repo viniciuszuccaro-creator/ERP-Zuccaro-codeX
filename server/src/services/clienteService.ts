@@ -13,6 +13,7 @@ import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import {
   CLIENTE_FORBIDDEN_FIELDS,
+  clienteOperacaoLinkSchema,
   clienteCreateSchema,
   clienteUpdateSchema,
   type Cliente,
@@ -24,6 +25,7 @@ import {
 
 export type ClienteListOptions = {
   operacao?: boolean;
+  clienteEmpresaId?: string;
   ativo?: boolean;
   search?: string;
   codigo?: string;
@@ -62,6 +64,12 @@ export class ClienteService {
   async list(ctx: RequestContext, options: ClienteListOptions = {}) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
+    if (options.clienteEmpresaId !== undefined && (!options.operacao
+      || !clienteOperacaoLinkSchema.shape.id.safeParse(options.clienteEmpresaId).success
+      || Boolean(options.search || options.codigo || options.documento)
+      || (options.offset ?? 0) !== 0)) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid exact operational customer selector');
+    }
     if (options.operacao) {
       if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
       if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))
@@ -79,6 +87,7 @@ export class ClienteService {
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
       operacao: options.operacao,
+      clienteEmpresaId: options.clienteEmpresaId,
       ativo,
       search: options.search,
       codigo: options.codigo,

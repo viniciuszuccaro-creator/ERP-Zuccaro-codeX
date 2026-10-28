@@ -36,11 +36,11 @@ export function produtoPickerLabel(produto) {
   return formatMasterCodigoLabel(produto?.codigo, produto?.descricao || produto?.nome) || produto?.id || '';
 }
 
-export function filterClienteEmpresaOptions(links, clientesById, query) {
+export function filterClienteEmpresaOptions(links, clientesById, query, selectedId) {
   const q = normalizeMasterQuery(query);
   return (links || []).filter((link) => {
     if (link?.ativo === false || link?.habilitado_operacao === false || link?.bloqueado === true) return false;
-    if (!q) return true;
+    if (!q || link.id === selectedId) return true;
     const cliente = clientesById?.get?.(link.cliente_id) || {};
     return masterMatchesQuery(
       { codigo: link.codigo, clienteCodigo: cliente.codigo, razao: cliente.razao_social, fantasia: cliente.nome_fantasia, nome: cliente.nome },
@@ -89,6 +89,27 @@ export function resolveComercialMasterPages(pages, scope) {
   }
   return { clientesEmpresa, clientes, condicoes, produtos, unidades, tabelas,
     clientesHasMore: pages.clientes.meta.hasMore, produtosHasMore: pages.produtos.meta.hasMore };
+}
+
+/** Resolve a selected relationship independently of the current search page. */
+export function resolveComercialSelectedCliente(pages, scope, clienteEmpresaId) {
+  const result = resolveComercialMasterPages(pages, scope);
+  if (!isCanonicalComercialId(clienteEmpresaId) || pages.clientes.meta.total !== 1
+    || pages.clientes.meta.limit !== 1 || pages.clientes.meta.hasMore
+    || result.clientes.length !== 1 || result.clientesEmpresa[0]?.id !== clienteEmpresaId) {
+    throw new Error('COMERCIAL_SELECTED_CLIENTE_UNAVAILABLE');
+  }
+  return result;
+}
+
+export function mergeComercialSelectedCliente(masters, selection) {
+  if (!selection) return masters;
+  const link = selection.clientesEmpresa[0], cliente = selection.clientes[0];
+  return {
+    ...masters,
+    clientes: [...masters.clientes.filter(row => row.id !== cliente.id), cliente],
+    clientesEmpresa: [...masters.clientesEmpresa.filter(row => row.id !== link.id), link],
+  };
 }
 
 /** Lacunas remanescentes do contrato Orçamento (após 039 tabela_preco_id). */
