@@ -9,3 +9,8 @@ SSH: nenhuma conexão; chave dedicada apenas local; hostkey não comprovada; pro
 Provas privadas: decision-20261026/identity-preview-20261028; access-codex-readonly-20261028.
 Verificações: node --check, negativa SHA antes de alocação, browser pré/pós-login, network=none, ssh -G local; documentação diff-check.
 Sem dados reais, chaves privadas, parâmetros OAuth ou relatórios detalhados neste recibo.
+
+Complemento pacote seguinte: CI5011/40693817796 e CI5012/40693829224 SUCCESS terminal, SHA bbd09904037e0b273f247e604865a9e267022569,3 jobs cada.
+Listener5173 e metadata synthetic/network-none novamente conferidos; snapshot ac563ece.
+Proposta dedicada inclui expiração/revogação, sh -n PASS; nenhuma conexão/alteração VPS.
+Cursor353 continua eaad0b84; sem novo delta. Recuperação ERP novo separada A/B/C/D; nenhuma recuperação de registros comprovada.
