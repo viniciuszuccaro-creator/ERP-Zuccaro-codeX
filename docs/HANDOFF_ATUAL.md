@@ -5,7 +5,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** bloqueios+sessão+matriz | **`944a5b73a`** / sessão `49f8c8a6c` | RecordState início de uso; **@codex review** tip final |
+| **#397** bloqueios+sessão+matriz | **`57862f44b`** / código `944a5b73a` / sessão `49f8c8a6c` | RecordState início de uso; **@codex review** tip final |
 | #400/#399/#398 | tips anteriores | CI SUCCESS — **não** editar daqui |
 | #342 Codex | `ac563ecea` | parecer Cursor OK c/ ressalva; branch intocada |
 
