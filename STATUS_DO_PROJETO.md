@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`31ff859e0`** (código efetivo **`2afe0cc83`**) |
+| Tip HEAD | **`95f80500c`** (código efetivo **`2afe0cc83`**; CI tip anterior **`31ff859e0`**) |
 | CI tip HEAD | **SUCCESS** run `40697205060` — **≠ aprovação** |
 | CI código | **SUCCESS** run `40697149482` (SHA `2afe0cc83`) — **≠ aprovação** |
 | #353 | histórica (`eaad0b84`) — **não** candidata concorrente destes bloqueios |

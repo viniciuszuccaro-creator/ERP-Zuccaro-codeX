@@ -6,7 +6,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** | HEAD **`31ff859e0`** / código **`2afe0cc83`** | CI SUCCESS `40697205060` / `40697149482` — **≠ aprovação** |
+| **#397** | HEAD **`95f80500c`** / código **`2afe0cc83`** | CI SUCCESS `40697205060` / `40697149482` — **≠ aprovação** |
 | #353 | `eaad0b84` | histórica — não concorrente |
 | #342 | `e922e047b` | docs APROVADO; branch intocada |
 | #400/#399/#398 | — | não editar daqui |
