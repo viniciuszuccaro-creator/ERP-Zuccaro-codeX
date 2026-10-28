@@ -11,7 +11,7 @@
 | #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** — não duplicar |
 
 **Bloqueios:** Operador 1 escrita; Histórico `clienteId`+paginação+linhas honestas; guarda `if(false)` falha; 044 público.
-**Recuperação:** Transportadora `updated_at??updated_date` (pin RecordState intacto).
+**Recuperação:** Transportadora / Produto / ConfigDespesaRecorrente `updated_at??updated_date` (pins RecordState intactos).
 **Prova:** `docs/evidence/apontamentos-353-prova-tip-head-20261028.txt`  
 **Roteiro:** `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`
 
