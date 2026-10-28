@@ -1,0 +1,26 @@
+PROVA #397 — P2 1º load-more owner/loading/erro (parecer 6474190419)
+====================================================================
+America/Sao_Paulo 2026-10-28. Modalidade: runner `/workspace`.
+Candidata: PR #397. Tip consultado: `6bc890805` CI5051 SUCCESS — ≠ aprovação.
+Os 3 achados anteriores: considerados corrigidos por inspeção Codex; provas mantidas.
+
+ANTES
+-----
+extraSession.ownerKey iniciava null. scopedLoadingMore/scopedLoadMoreError
+exigiam ownerMatches → no 1º load-more, loading/erro ficavam ocultos e
+scopedLoadingMore=false permitia 2º clique com o mesmo offset.
+
+DEPOIS
+------
+- loadMoreInFlightRef sincroniza intenção antes do await.
+- intentOwnerKey amarra extraSession.ownerKey ANTES da rede (preserva pages
+  do mesmo owner; não espera sucesso).
+- Falha fica visível; retry no mesmo offset; troca de contexto + resposta
+  tardia descartada (epoch/abort); filtro de 1º render A→B preservado.
+
+PROVAS
+------
+node --test tests/painel-dinamico-cliente-historico-tab.test.js → 20 PASS
+Inclui: double-click pendente → 1 offset; erro visível; retry; A→B late discard.
+
+3 achados anteriores: não reimplementados. Operador provas intactas no mesmo lote.

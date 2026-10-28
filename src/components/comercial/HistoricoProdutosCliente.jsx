@@ -242,6 +242,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
 
   const sessionEpochRef = useRef(0);
   const loadMoreAbortRef = useRef(null);
+  const loadMoreInFlightRef = useRef(false);
   const firstPageFingerprintSeenRef = useRef(null);
   // Páginas extras amarradas ao proprietário completo — filtradas no render (não só em useEffect).
   const [extraSession, setExtraSession] = useState({ ownerKey: null, pages: [] });
@@ -279,6 +280,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
 
   const resetPaginationSession = () => {
     sessionEpochRef.current += 1;
+    loadMoreInFlightRef.current = false;
     if (loadMoreAbortRef.current) {
       try { loadMoreAbortRef.current.abort(); } catch (_) { /* ignore */ }
       loadMoreAbortRef.current = null;
@@ -400,9 +402,19 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   const linhasTruncadas = linhas.length > LINHAS_UI_LIMIT;
 
   const handleLoadMore = async () => {
-    if (!httpMode || !hasMore || scopedLoadingMore || !consultaHabilitada) return;
+    if (!httpMode || !hasMore || !consultaHabilitada) return;
+    // Trava síncrona: scopedLoadingMore sozinho falha no 1º load (ownerKey ainda null).
+    if (loadMoreInFlightRef.current || scopedLoadingMore) return;
+    loadMoreInFlightRef.current = true;
     const epoch = sessionEpochRef.current;
     const offset = pedidos.length;
+    const intentOwnerKey = historicoOwnerKey;
+    // Associa proprietário ANTES da rede — loading/erro ficam visíveis; evita offset duplicado.
+    setExtraSession((prev) => (
+      prev.ownerKey === intentOwnerKey
+        ? prev
+        : { ownerKey: intentOwnerKey, pages: [] }
+    ));
     setLoadingMore(true);
     setLoadMoreError(null);
     const controller = new AbortController();
@@ -420,22 +432,21 @@ export default function HistoricoProdutosCliente({ clienteId }) {
       });
       if (epoch !== sessionEpochRef.current) return; // contexto/sessão trocou — descarta
       setExtraSession((prev) => {
-        if (prev.ownerKey !== historicoOwnerKey) {
-          return { ownerKey: historicoOwnerKey, pages: [page] };
-        }
-        return { ownerKey: historicoOwnerKey, pages: [...prev.pages, page] };
+        if (prev.ownerKey !== intentOwnerKey) return prev;
+        return { ownerKey: intentOwnerKey, pages: [...prev.pages, page] };
       });
     } catch (err) {
       if (epoch !== sessionEpochRef.current) return;
       if (err?.name === "AbortError") return;
       setLoadMoreError(err);
     } finally {
-      // Request obsoleta (epoch≠): não zerar aqui — nova load-more pode já estar ativa.
-      // Troca de contexto: resetPaginationSession aborta + setLoadingMore(false).
+      // Request obsoleta (epoch≠): não zerar loading de outra sessão ativa.
+      // Troca de contexto: resetPaginationSession aborta + limpa inFlight/loading.
       if (loadMoreAbortRef.current === controller) {
         loadMoreAbortRef.current = null;
         setLoadingMore(false);
       }
+      loadMoreInFlightRef.current = false;
     }
   };
 

@@ -508,6 +508,162 @@ test('P2 #397: mesma instância A→B — 1º render (sem flush) sem pedidos/met
   assert.equal(staleExtra.pages[0].data[0].id, 'p-a51');
 });
 
+test('P2 #397: 1º load-more pendente — double-click não repete offset; erro visível; retry', async () => {
+  const page0 = {
+    data: Array.from({ length: 50 }, (_, i) => ({
+      id: `p-${i + 1}`,
+      numero: String(i + 1),
+      created_at: '2026-01-01T12:00:00Z',
+      itens: [{ produto_id: 'prod', descricao: 'X', quantidade: 1, total: 1 }],
+    })),
+    meta: { limit: 50, offset: 0, total: 60, hasMore: true },
+  };
+  const page1 = {
+    data: [{
+      id: 'p-51',
+      numero: '51',
+      created_at: '2025-12-01T12:00:00Z',
+      itens: [{ produto_id: 'prod-extra', descricao: 'Extra', quantidade: 1, total: 1 }],
+    }],
+    meta: { limit: 50, offset: 50, total: 60, hasMore: false },
+  };
+
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  let failOnce = true;
+  const offsets = [];
+
+  const h = await mountHistoricoCliente({
+    backendMode: 'http',
+    session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
+    queryData: page0,
+    pedidosList: async (opts) => {
+      offsets.push(opts.offset);
+      if (opts.offset === 0) return page0;
+      await gate;
+      if (failOnce) {
+        failOnce = false;
+        throw Object.assign(new Error('rede load-more'), { name: 'NetworkError' });
+      }
+      return page1;
+    },
+  });
+
+  const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
+  let tree = h.remount({ flushEffects: true });
+  const findBtn = (n) => walk(n).find((x) => x.props && x.props['data-action'] === 'historico-produtos-carregar-mais');
+  const btn = findBtn(tree);
+  assert.ok(btn);
+
+  // Dois acionamentos imediatos com Promise pendente — uma chamada/offset.
+  const p1 = btn.props.onClick();
+  const p2 = btn.props.onClick();
+  assert.equal(offsets.filter((o) => o === 50).length, 1, 'só um offset 50 enquanto pendente');
+
+  // Owner já associado: loading scoped visível no re-render
+  tree = h.remount({ flushEffects: false });
+  const btnBusy = findBtn(tree);
+  assert.ok(btnBusy?.props?.disabled, 'loading scoped com owner ligado');
+  assert.ok(
+    h.state.some((s) => s && s.ownerKey && Array.isArray(s.pages)),
+    'extraSession.ownerKey definido antes do sucesso',
+  );
+
+  release();
+  await Promise.all([p1, p2]);
+  tree = h.remount({ flushEffects: true });
+  const errNode = walk(tree).find((n) => n.props && n.props['data-historico-produtos-error'] === 'load-more');
+  assert.ok(errNode, 'primeiro erro de load-more visível (não oculto por owner null)');
+  let card = walk(tree).find((n) => n.props && n.props['data-historico-fonte']);
+  assert.equal(card.props['data-historico-pedidos-carregados'], 50, 'falha preserva 1ª página; sem anexar');
+
+  // Retry mesmo offset após falha
+  const beforeRetry = offsets.filter((o) => o === 50).length;
+  await findBtn(tree).props.onClick();
+  assert.equal(offsets.filter((o) => o === 50).length, beforeRetry + 1);
+  tree = h.remount({ flushEffects: true });
+  card = walk(tree).find((n) => n.props && n.props['data-historico-fonte']);
+  assert.equal(card.props['data-historico-pedidos-carregados'], 51, 'retry anexa uma vez sem duplicar');
+  assert.equal(
+    walk(tree).some((n) => n.props && n.props['data-historico-produtos-error'] === 'load-more'),
+    false,
+  );
+});
+
+test('P2 #397: load-more pendente + troca de contexto — resposta tardia descartada; B sem loading/erro de A', async () => {
+  const pageA0 = {
+    data: [{ id: 'a1', numero: 'A1', created_at: '2026-01-01T12:00:00Z', itens: [{ descricao: 'A', quantidade: 1, total: 1 }] }],
+    meta: { limit: 50, offset: 0, total: 80, hasMore: true },
+  };
+  const pageA1 = {
+    data: [{ id: 'a51', numero: 'A51', created_at: '2025-12-01T12:00:00Z', itens: [{ descricao: 'A-extra', quantidade: 1, total: 1 }] }],
+    meta: { limit: 50, offset: 50, total: 80, hasMore: false },
+  };
+  const pageB0 = {
+    data: [{ id: 'b1', numero: 'B1', created_at: '2026-02-01T12:00:00Z', itens: [{ descricao: 'B', quantidade: 1, total: 1 }] }],
+    meta: { limit: 50, offset: 0, total: 1, hasMore: false },
+  };
+
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+
+  const h = await mountHistoricoCliente({
+    backendMode: 'http',
+    clienteId: 'cli-A',
+    empresaId: 'emp-A',
+    groupId: 'g1',
+    session: { token: 'tok-A', actorId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', groupId: 'g1' },
+    queryData: pageA0,
+    pedidosList: async (opts) => {
+      if (opts.offset === 0) return pageA0;
+      await gate;
+      return pageA1;
+    },
+  });
+
+  const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
+  let tree = h.remount({ flushEffects: true });
+  const pending = walk(tree).find((n) => n.props?.['data-action'] === 'historico-produtos-carregar-mais').props.onClick();
+
+  h.setContext({
+    clienteId: 'cli-B',
+    empresaId: 'emp-B',
+    session: { token: 'tok-B', actorId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', groupId: 'g1' },
+    queryData: pageB0,
+    pedidosList: pageB0,
+  });
+  // Effect de troca reseta sessão (epoch++) e aborta
+  tree = h.remount({ flushEffects: true });
+  release();
+  await pending;
+
+  tree = h.remount({ flushEffects: true });
+  const card = walk(tree).find((n) => n.props && n.props['data-historico-fonte']);
+  assert.equal(card.props['data-historico-pedidos-carregados'], 1);
+  assert.equal(card.props['data-historico-pedidos-total'], 1);
+  const blob = JSON.stringify(tree);
+  assert.equal(blob.includes('a51') || blob.includes('A-extra'), false);
+  assert.equal(
+    walk(tree).some((n) => n.props && n.props['data-historico-produtos-error'] === 'load-more'),
+    false,
+  );
+  const btnB = walk(tree).find((n) => n.props?.['data-action'] === 'historico-produtos-carregar-mais');
+  assert.equal(btnB, undefined, 'B sem hasMore — sem botão; loading de A não preso');
+});
+
+test('fonte #397: loadMoreInFlightRef e ownerKey antes da rede', async () => {
+  const src = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
+  assert.match(src, /loadMoreInFlightRef/);
+  assert.match(src, /intentOwnerKey/);
+  assert.match(src, /prev\.ownerKey === intentOwnerKey/);
+  const idxHandler = src.indexOf('const handleLoadMore = async');
+  const idxIntent = src.indexOf('const intentOwnerKey = historicoOwnerKey', idxHandler);
+  const idxAwait = src.indexOf('await loadPedidosHistoricoHttp', idxHandler);
+  assert.ok(idxHandler > 0 && idxIntent > idxHandler && idxAwait > idxIntent, 'owner ligado antes do await load-more');
+  const idxRef = src.indexOf('loadMoreInFlightRef.current = true', idxHandler);
+  assert.ok(idxRef > idxHandler && idxRef < idxAwait, 'ref síncrono antes do await');
+});
+
 test('mapPedidosToHistoricoLinhas: ordena por data e preserva produto repetido em pedidos distintos', async () => {
   const { mapFn } = await mountHistoricoCliente({ hasPermission: () => false });
   const rows = mapFn([
