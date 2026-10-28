@@ -3,9 +3,9 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`f9d3cfdc9`** (código **`db3a4b623`**) — Histórico vínculo inativo + DetalhesCliente HistóricoProdutos |
+| Tip HEAD | **`4255646a7`** (código **`db3a4b623`**) — Histórico vínculo inativo + DetalhesCliente HistóricoProdutos |
 | Pré-lote | **`c897d427e`** — CI SUCCESS run `40699501474` (CI5031) — **≠ aprovação** |
-| CI tip | em andamento (`40708386180`) — **≠ aprovação** |
+| CI tip | em andamento após push tip — **≠ aprovação** |
 | #353 | histórica (`eaad0b84`) — **não** candidata concorrente destes bloqueios |
 | Modalidade | runner `/workspace` — Codespace xylophone owner-only (gh 403; sem prova Chrome deste executor) |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` — janela exclusiva SHA+HTTP quando autorizada |

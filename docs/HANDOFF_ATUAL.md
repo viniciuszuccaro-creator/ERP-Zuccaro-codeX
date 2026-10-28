@@ -6,7 +6,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** | tip **`f9d3cfdc9`** / código **`db3a4b623`** (pré `c897d427e` CI `40699501474`); Histórico vínculo inativo + DetalhesCliente | CI tip `40708386180` — **≠ aprovação** |
+| **#397** | tip **`4255646a7`** / código **`db3a4b623`** (pré `c897d427e` CI `40699501474`); Histórico vínculo inativo + DetalhesCliente | CI tip após push — **≠ aprovação** |
 | #353 | `eaad0b84` | histórica — não concorrente |
 | #342 | `21b482241` | docs SSH — parecer Cursor; branch intocada |
 | #400/#399/#398 | — | não editar daqui |
