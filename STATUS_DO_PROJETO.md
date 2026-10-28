@@ -1,20 +1,22 @@
-## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:18 America/Sao_Paulo)
+## CURSOR — VIGENTE #397 (2026-10-28 10:30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`85d20d79f`** (código `944a5b73a` / sessão `49f8c8a6c`) |
-| CI tip | **SUCCESS** `40694331737` frontend/backend/expedicao — **≠ aprovação** |
-| Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
-| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
-| Codex | **@codex review** tip **`85d20d79f`** |
-| #342 | tip `ac563ecea` — parecer `docs/evidence/parecer-342-deltas-ac563ecea-20261028.txt` (branch intocada) |
-| Fora | merge/deploy/carga; Documentacao/OAuthConsent; #398–#400; 2º escritor; seed |
+| Tip HEAD | **`2afe0cc83`** — P1 JWT fingerprint Histórico + Cliente `updated_at` |
+| Base publicada | `61b1214f3` CI SUCCESS `40695351771` — **≠ aprovação** |
+| Modalidade | runner `/workspace` — Codespace xylophone owner-only (403) |
+| #353 consultado | `eaad0b84` — candidata destes bloqueios = **#397** |
+| #342 | tip `6f177a235` / ref `f2d59226` — docs only; parecer independente |
+| Codex bot | falhou ambiente (6470060126) — revisão Cursor neste tip; sem loop |
 
-**Bloqueios:** Operador 1 escrita · Histórico paginação+linhas+P2+sessão · guarda if(false) · 044
-**Recuperação:** sky 1–6 + identidade `updated_at` início de uso + A/B/C/D
-**Próximo:** parecer Codex tip → demo exclusiva SHA+HTTP.
+**Bloqueios A/B/C (reprova 73 PASS):** guarda if(false) · Operador 1 escrita · Histórico paginação+sessão+fingerprint JWT
+**Recuperação:** ClienteForm/Completo `updated_at` (fluxo diário) + sky Cadastros + matriz RecordState
+**Evidência:** `docs/evidence/apontamentos-353-prova-tip-bloqueios-20261028.txt`
+**Parecer #342:** `docs/evidence/parecer-342-tip-6f177a235-20261028.txt`
+**Registros:** A/B/C ≠ D staging; fixture ≠ legado. Porta 44919=OAuth ≠ ERP (5173).
+**Próximo:** CI tip → demo exclusiva SHA+HTTP no Codespace; continua indep. sem merge/deploy/carga.
 
-(2026-10-28 10:18 America/Sao_Paulo)
+(2026-10-28 10:30 America/Sao_Paulo)
 
 ## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:15 America/Sao_Paulo)
 
