@@ -1,22 +1,23 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 14:42 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 14:48 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
+| Tip HEAD | **`8d9ecc72f`** |
 | Tip load-more | **`9842e7fd8`** — P2 1º load-more owner+inFlight |
 | Tip Contatos | **`a2e26dec3`** — Painel Contatos + proposta C360 |
-| Tip HEAD | **`a2e26dec3`** (+ docs deste commit) |
+| CI tip HEAD | **SUCCESS** run `40738088045` — **≠ aprovação** |
+| CI Contatos `a2e26dec3` | **SUCCESS** run `40738039648` — **≠ aprovação** |
 | Tip 3 achados | **`609f48a46`** — inspecionados OK |
 | Ref. | **`6bc890805`** CI5051 SUCCESS — **≠ aprovação** |
 | Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6474190419 |
 | Modalidade | runner `/workspace` |
-| Revisão | **@codex** em **`9842e7fd8`** (load-more); tip Contatos não substitui |
+| Revisão | **@codex** em **`9842e7fd8`** (load-more); CI ≠ aprovação |
 
-**Provas:** `apontamentos-397-loadmore-owner-20261028.txt` · `apontamentos-397-painel-contatos-20261028.txt`
-**Proposta C360:** `proposta-comercial360-fluxo-diario-397-20261028.txt` (atalhos amplos = OK dono)
-**Próximo:** CI → parecer load-more → demo 5173. Sem merge/deploy/carga/SQL.
+**Provas:** load-more + painel-contatos evidence · proposta C360
+**Próximo:** parecer Codex load-more → demo Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 14:42 America/Sao_Paulo)
+(2026-10-28 14:48 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
