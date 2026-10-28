@@ -5,7 +5,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** bloqueios+P1 JWT+Cliente | **`2afe0cc83`** / base `61b1214f3` | reprova 73 PASS; revisão Cursor (bot Codex falhou ambiente) |
+| **#397** bloqueios+P1 JWT+Cliente | **`ed2b70625`** / código `2afe0cc83` / base `61b1214f3` | reprova 73 PASS; revisão Cursor (bot Codex falhou ambiente) |
 | #400/#399/#398 | tips anteriores | **não** editar daqui |
 | #342 Codex | `6f177a235` | docs tip APROVADO; runtime ac563ecea; branch intocada |
 

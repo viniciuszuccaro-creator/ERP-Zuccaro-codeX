@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`2afe0cc83`** — P1 JWT fingerprint Histórico + Cliente `updated_at` |
+| Tip HEAD | **`ed2b70625`** (código **`2afe0cc83`**) — P1 JWT + Cliente updated_at |
 | Base publicada | `61b1214f3` CI SUCCESS `40695351771` — **≠ aprovação** |
 | Modalidade | runner `/workspace` — Codespace xylophone owner-only (403) |
 | #353 consultado | `eaad0b84` — candidata destes bloqueios = **#397** |

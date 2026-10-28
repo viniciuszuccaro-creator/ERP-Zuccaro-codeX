@@ -59,6 +59,7 @@ Lote adicional identidade HTTP (pins RecordState preservados):
   GatewayPagamento, EventoNotificacao, ChatbotIntent, ModeloDocumento,
   CentroOperacao, TabelaFiscal, ParametroCaixaDiario/Portal/NFe/
   ConciliacaoBancaria/OrigemPedido, PerfilAcesso.
+Fluxo diário Comercial: ClienteForm + ClienteFormCompleto `updated_at ?? updated_date`.
 Fora deste lote (outras PRs): ApiExterna (#398), ParametroRoteirizacao (#399),
   ChatbotCanal (#400).
 Não renumerar; sem count+1.
