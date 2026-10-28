@@ -2,12 +2,12 @@
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **este push** (código bloqueios `88f9707fb` + delta Histórico/Transportadora) |
+| Tip HEAD | **`9f71cc14c`** (código bloqueios `88f9707fb` + delta Histórico/Transportadora) |
 | Modalidade | runner `/workspace` — Chrome **não** conecta este executor |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
 | Reprova 07:10 BRT | Operador+guarda+Histórico **23** + Transportadora **2** + pedido-ui **26** + server **2** |
 | Evidência | `docs/evidence/apontamentos-353-prova-tip-head-20261028.txt` |
-| Pedido | **@codex review** tip **HEAD final** (não ancestral) |
+| Pedido | **@codex review** tip **`9f71cc14c`** (não ancestral) |
 | #342 | `47a5d0e10` APROVADO; WIP fora dos 50 **não tip** — sem duplicar |
 | Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor; Codespace 403 |
 

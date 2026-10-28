@@ -5,7 +5,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** Operador+Histórico+Transportadora | **HEAD deste push** | reprova **23+2+26+2 PASS**; **@codex review** tip final |
+| **#397** Operador+Histórico+Transportadora | **`9f71cc14c`** | reprova **23+2+26+2 PASS**; **@codex review** tip final |
 | #400 ChatbotCanal+tenant | `03a45899f` / `0d1e5ce29` | CI SUCCESS |
 | #399 Parametro+ApiExterna | `fff9abb4d` | P1 fechado |
 | #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** — não duplicar |

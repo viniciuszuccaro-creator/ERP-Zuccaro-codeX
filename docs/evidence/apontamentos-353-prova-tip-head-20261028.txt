@@ -6,9 +6,9 @@ Browser MCP: ausente · gh codespaces 403 · sem 2º escritor.
 Stash: stash@{0} wip-after-350 preservado.
 #342 tip: 47a5d0e10 — WIP “fora dos 50” NÃO tip; não duplicado.
 
-SHA (pré-push deste lote)
--------------------------
-Base tip docs: 5e63e06a7
+SHA
+---
+Tip HEAD: 9f71cc14c43f27e31cb8ac29658e9139ba5305a7
 Código bloqueios: 88f9707fb (tenant Operador) / 78c214f89 (base)
 Delta deste lote: Historico linhas truncadas honestas + Transportadora updated_at
 
