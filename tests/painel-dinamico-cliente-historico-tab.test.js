@@ -25,6 +25,51 @@ test('PainelDinamicoCliente recupera aba Contatos (GerenciarContatosClienteForm 
   assert.doesNotMatch(src, /GerenciarContatosCliente[^F]/);
 });
 
+test('P1 #397 Painel Contatos: semente de escalares + preserve antes de gravar parcial', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  assert.match(src, /function seedContatosPainelDraft/);
+  assert.match(src, /contatos_escalares/);
+  assert.match(src, /function ensureContatosPreserveEscalars/);
+  assert.match(src, /ensureContatosPreserveEscalars\(incoming, cliente\)/);
+  assert.match(src, /Abra o cadastro completo antes de limpar canais/);
+  // Contraprova: não gravar só { contatos: lista } sem preservar canais conhecidos.
+  assert.match(src, /push\("E-mail", cliente\?\.email/);
+  assert.match(src, /push\("Telefone", cliente\?\.telefone/);
+  assert.match(src, /push\("WhatsApp", cliente\?\.celular/);
+});
+
+test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo não apaga e-mail', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  const start = src.indexOf('function seedContatosPainelDraft');
+  const end = src.indexOf('/**\n * V21.1.2 - WINDOW MODE READY', start);
+  assert.ok(start > 0 && end > start, 'helpers seed/ensure exportáveis no source');
+  const helpers = src.slice(start, end);
+  const { seedContatosPainelDraft, ensureContatosPreserveEscalars } = new Function(
+    `${helpers}; return { seedContatosPainelDraft, ensureContatosPreserveEscalars };`,
+  )();
+  const cliente = {
+    email: 'keep@sintetico.dev',
+    telefone: '1133334444',
+    celular: '11999998888',
+    contatos_escalares: {
+      complete: false,
+      items: [
+        { canal: 'email', tipo: 'E-mail', valor: 'keep@sintetico.dev' },
+        { canal: 'telefone', tipo: 'Telefone', valor: '1133334444' },
+        { canal: 'celular', tipo: 'WhatsApp', valor: '11999998888' },
+      ],
+    },
+  };
+  const seeded = seedContatosPainelDraft(cliente);
+  assert.equal(seeded.length, 3);
+  assert.equal(seeded[0].valor, 'keep@sintetico.dev');
+  const onlyPhone = [{ tipo: 'Telefone', valor: '1155556666', nome: '', principal: true }];
+  const merged = ensureContatosPreserveEscalars(onlyPhone, cliente);
+  assert.equal(merged.some((c) => String(c.valor).includes('keep@sintetico.dev')), true);
+  assert.equal(merged.some((c) => String(c.valor).includes('11999998888')), true);
+  assert.equal(merged.some((c) => String(c.valor).includes('1155556666')), true);
+});
+
 async function mountHistoricoCliente({
   clienteId = 'cli-1',
   hasPermission = () => true,
@@ -674,6 +719,22 @@ test('fonte #397: loadMoreInFlightRef e ownerKey antes da rede', async () => {
   assert.ok(idxHandler > 0 && idxIntent > idxHandler && idxAwait > idxIntent, 'owner ligado antes do await load-more');
   const idxRef = src.indexOf('loadMoreInFlightRef.current = true', idxHandler);
   assert.ok(idxRef > idxHandler && idxRef < idxAwait, 'ref síncrono antes do await');
+});
+
+test('P2 #397: finally só libera loadMoreInFlightRef sob ownership do controller', async () => {
+  const src = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
+  const idxFinally = src.indexOf('} finally {', src.indexOf('const handleLoadMore = async'));
+  const finallyBlock = src.slice(idxFinally, src.indexOf('};\n', idxFinally));
+  assert.match(finallyBlock, /if \(loadMoreAbortRef\.current === controller\)/);
+  assert.match(finallyBlock, /loadMoreInFlightRef\.current = false/);
+  // Contraprova: liberação fora da guarda (A tardio zera B) não pode voltar.
+  const idxClear = finallyBlock.indexOf('loadMoreInFlightRef.current = false');
+  const idxGuard = finallyBlock.indexOf('if (loadMoreAbortRef.current === controller)');
+  assert.ok(idxGuard >= 0 && idxClear > idxGuard, 'clear inFlight dentro da guarda do controller');
+  assert.doesNotMatch(
+    finallyBlock.replace(/if \(loadMoreAbortRef\.current === controller\) \{[\s\S]*?\}/, ''),
+    /loadMoreInFlightRef\.current = false/,
+  );
 });
 
 test('mapPedidosToHistoricoLinhas: ordena por data e preserva produto repetido em pedidos distintos', async () => {

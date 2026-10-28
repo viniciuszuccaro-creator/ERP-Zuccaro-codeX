@@ -39,13 +39,58 @@ import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContat
 import { toast } from "sonner";
 
 /**
+ * Rascunho do Painel: preferir contatos[] canônico; se HTTP só trouxe escalares
+ * (contatos_escalares incompleto), semear a UI a partir deles — nunca começar
+ * vazio e gravar parcial que nullifica e-mail/telefone/celular existentes.
+ */
+function seedContatosPainelDraft(cliente) {
+  if (Array.isArray(cliente?.contatos) && cliente.contatos.length > 0) {
+    return cliente.contatos;
+  }
+  const items = cliente?.contatos_escalares?.items;
+  if (Array.isArray(items) && items.length > 0) {
+    return items.map((item, index) => ({
+      nome: "",
+      tipo: item.tipo || item.canal || "Telefone",
+      valor: item.valor || "",
+      principal: index === 0,
+    }));
+  }
+  return Array.isArray(cliente?.contatos) ? cliente.contatos : [];
+}
+
+function contatoDraftTemCanal(lista, hints) {
+  return (Array.isArray(lista) ? lista : []).some((row) => {
+    const tipo = String(row?.tipo || row?.canal || "").toLowerCase();
+    return hints.some((hint) => tipo.includes(hint));
+  });
+}
+
+/** Garante que escalares já persistidos apareçam na lista antes da projeção HTTP. */
+function ensureContatosPreserveEscalars(lista, cliente) {
+  const next = Array.isArray(lista) ? [...lista] : [];
+  const push = (tipo, valor, hints) => {
+    if (valor == null || String(valor).trim() === "") return;
+    if (contatoDraftTemCanal(next, hints)) return;
+    next.push({
+      nome: "",
+      tipo,
+      valor: String(valor).trim(),
+      principal: next.length === 0,
+    });
+  };
+  push("E-mail", cliente?.email, ["email", "e-mail"]);
+  push("Telefone", cliente?.telefone, ["telefone", "fone", "fix"]);
+  push("WhatsApp", cliente?.celular, ["celular", "whatsapp", "whats"]);
+  return next;
+}
+
+/**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function PainelDinamicoCliente({ cliente, isOpen, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("enderecos");
-  const [contatosDraft, setContatosDraft] = useState(() => (
-    Array.isArray(cliente?.contatos) ? cliente.contatos : []
-  ));
+  const [contatosDraft, setContatosDraft] = useState(() => seedContatosPainelDraft(cliente));
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
@@ -55,15 +100,27 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
   const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, cliente?.id ?? null]);
 
   useEffect(() => {
-    setContatosDraft(Array.isArray(cliente?.contatos) ? cliente.contatos : []);
-  }, [cliente?.id, cliente?.contatos, painelScopeKey]);
+    setContatosDraft(seedContatosPainelDraft(cliente));
+  }, [cliente?.id, cliente?.contatos, cliente?.contatos_escalares, painelScopeKey]);
 
   const persistContatosPainel = async (next) => {
-    const lista = Array.isArray(next) ? next : [];
+    const incoming = Array.isArray(next) ? next : [];
+    const lista = ensureContatosPreserveEscalars(incoming, cliente);
     setContatosDraft(lista);
     if (!cliente?.id) return;
     if (!groupId && !empresaId) {
       toast.error("Selecione grupo ou empresa antes de salvar contatos.");
+      return;
+    }
+    const hasScalars = Boolean(
+      (typeof cliente?.email === "string" && cliente.email.trim())
+      || (typeof cliente?.telefone === "string" && cliente.telefone.trim())
+      || (typeof cliente?.celular === "string" && cliente.celular.trim())
+      || (Array.isArray(cliente?.contatos_escalares?.items) && cliente.contatos_escalares.items.length > 0),
+    );
+    // Sem canais na lista após preservar escalares: bloquear wipe.
+    if (hasScalars && lista.length === 0) {
+      toast.error("Contatos incompletos neste painel. Abra o cadastro completo antes de limpar canais.");
       return;
     }
     try {

@@ -440,13 +440,13 @@ export default function HistoricoProdutosCliente({ clienteId }) {
       if (err?.name === "AbortError") return;
       setLoadMoreError(err);
     } finally {
-      // Request obsoleta (epoch≠): não zerar loading de outra sessão ativa.
+      // Ownership também na liberação: A tardio não pode zerar inFlight de B.
       // Troca de contexto: resetPaginationSession aborta + limpa inFlight/loading.
       if (loadMoreAbortRef.current === controller) {
         loadMoreAbortRef.current = null;
         setLoadingMore(false);
+        loadMoreInFlightRef.current = false;
       }
-      loadMoreInFlightRef.current = false;
     }
   };
 

@@ -1,0 +1,28 @@
+PACOTE 1 — fechamento candidata #397 (provas + deltas tip)
+==========================================================
+America/Sao_Paulo 2026-10-28 ~17:05. Runner /workspace.
+
+Base tip anterior: bf150d217 (CI SUCCESS 40751947410 — ≠ aprovação).
+Parecer dirigido (issue comment 6478177392): P2 finally inFlight fora da guarda.
+Review thread 4404927785: P1 Contatos painel wipe escalares.
+
+Correções neste tip
+-------------------
+1. HistoricoProdutosCliente: loadMoreInFlightRef=false só dentro de
+   loadMoreAbortRef.current === controller (A tardio ≠ libera B).
+2. PainelDinamicoCliente: seedContatosPainelDraft (contatos[] |
+   contatos_escalares) + ensureContatosPreserveEscalars antes do save;
+   bloqueio limpar canais sem lista fiel.
+
+Provas comportamentais (PASS no tip)
+------------------------------------
+- Operador saveBlocked / persistInFlight / loadIncomplete
+  (cadastros-operador-caixa-persist-unica)
+- Histórico load-more owner+inFlight+finally ownership
+  (painel-dinamico-cliente-historico-tab)
+- Contatos seed/preserve (mesmo arquivo)
+- Central360 create path (central-cliente-360-pedido-navigation)
+- Sky Cadastros + pin read-boundary
+
+CI SUCCESS ≠ aprovação. Sem merge/deploy/carga/SQL.
+Demo Private 5173: Codespace owner (xylophone); runner gh 403.
