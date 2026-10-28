@@ -1,32 +1,24 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 11:55 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:01 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`964bb30e6`** (código **`854e80256`**) — Pedido aba Histórico + provas vínculo/montagem |
-| Tip docs pré-lote | **`4aaaeb676`** — CI SUCCESS `40709654019` — **≠ aprovação** |
+| Tip HEAD | **`3b00b504f`** (código **`854e80256`**) — Pedido aba Histórico + provas vínculo/montagem |
+| CI tip HEAD | **SUCCESS** run `40710752807` — **≠ aprovação** |
+| CI código `854e80256` | contido em tip `964bb30e6` SUCCESS `40710700776` — **≠ aprovação** |
 | Ref. consultada | **`c7001c5a2`** — CI SUCCESS `40708618428` (CI5037) — **≠ aprovação** |
 | Código bloqueios base | **`db3a4b623`** — CI SUCCESS `40708354481` — **≠ aprovação** |
-| CI tip | em andamento após push — **≠ aprovação** |
 | #353 | histórica (`eaad0b84`) — **não** candidata concorrente |
 | Modalidade | runner `/workspace` — Codespace xylophone = Codex desktop (owner); sem prova Chrome deste executor |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` — janela exclusiva SHA+HTTP 5173 |
 | #342 | tip `21b482241` docs — parecer Cursor; branch Codex intocada |
-| Revisão | **@codex review** agrupado no tip **`964bb30e6`** / código **`854e80256`** |
+| Revisão | **@codex review** pedido no código **`854e80256`** (agrupado); tip docs não reaciona |
 
-**Bloqueios + integração (reprova 54 PASS):**
-1. OperadorCaixa self-managed
-2. Histórico paginado + JWT fingerprint + sessão/cache + P2
-3. Vínculo inativo: list preserva; create/update bloqueiam; sem vínculo vazio; tenant fail-closed
-4. Guarda if(false); 044 middleware; Cliente reopen updated_at
-5. DetalhesCliente **monta** HistoricoProdutosCliente (árvore, não só texto)
-6. **Recuperação:** PedidoTabsContainer aba Histórico monta HistoricoProdutosCliente HTTP
-
+**Bloqueios + integração (reprova 54 PASS):** Operador · Histórico paginado/sessão · vínculo inativo · guarda · 044 · Cliente reopen · montagem DetalhesCliente · Pedido aba Histórico HTTP
 **Evidência:** `docs/evidence/apontamentos-397-prova-integrada-20261028.txt`
-**Registros:** A/B ok; C/D staging Codex — sem seed. Fixture ≠ legado.
-**Próximo:** parecer Codex tip → demo exclusiva Codespace. Sem merge/deploy/carga.
+**Próximo:** parecer Codex código `854e80256` → demo exclusiva Codespace 5173. Sem merge/deploy/carga.
 
-(2026-10-28 11:55 America/Sao_Paulo)
+(2026-10-28 12:01 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 

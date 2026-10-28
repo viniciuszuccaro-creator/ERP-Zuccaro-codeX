@@ -1,4 +1,4 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 11:55 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:01 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403** neste runner.
 **Chrome (owner / Codex desktop):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
@@ -6,7 +6,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** | tip **`964bb30e6`** / código **`854e80256`** (pré `4aaaeb676` / ref `c7001c5a2` CI5037) | CI tip em andamento — **≠ aprovação** |
+| **#397** | tip **`3b00b504f`** / código **`854e80256`** | CI tip SUCCESS `40710752807` — **≠ aprovação** |
 | #353 | `eaad0b84` | histórica |
 | #342 | `21b482241` | docs; branch intocada |
 
