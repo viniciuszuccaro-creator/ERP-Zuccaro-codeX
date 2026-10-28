@@ -14,3 +14,8 @@ Complemento pacote seguinte: CI5011/40693817796 e CI5012/40693829224 SUCCESS ter
 Listener5173 e metadata synthetic/network-none novamente conferidos; snapshot ac563ece.
 Proposta dedicada inclui expiração/revogação, sh -n PASS; nenhuma conexão/alteração VPS.
 Cursor353 continua eaad0b84; sem novo delta. Recuperação ERP novo separada A/B/C/D; nenhuma recuperação de registros comprovada.
+
+Aprovacao posterior: prazo chave20261227T235900Z/conta2026-12-28, revogacao antecipada obrigatoria.
+Mesma chave local; nenhum upload/conexao SSH. HOST confiavel/canal administrativo ainda ausentes.
+Procedimento administrativo unico em OPERACAO_DEV_VPS; scripts privados de provisionamento/revogacao sh -n PASS.
+Nenhuma alteracao de servidor/banco/grants/carga/deploy nesta preparacao.
