@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | (após push deste lote) — código: Pedido aba Histórico + provas vínculo/montagem |
+| Tip HEAD | **** — Pedido aba Histórico + provas vínculo/montagem |
 | Tip docs pré-lote | **`4aaaeb676`** — CI SUCCESS `40709654019` — **≠ aprovação** |
 | Ref. consultada | **`c7001c5a2`** — CI SUCCESS `40708618428` (CI5037) — **≠ aprovação** |
 | Código bloqueios | **`db3a4b623`** — CI SUCCESS `40708354481` — **≠ aprovação** |
