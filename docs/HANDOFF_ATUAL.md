@@ -1,3 +1,9 @@
+## Handoff vigente — retomada sem repetir b3e494ba (2026-10-28)
+
+Código local/remoto b3e494bae47af945522430ad97f63911be3ab295 confirmado na mesma branch; CI5003/5004 SUCCESS,3 jobs em cada. Somente .vscode não rastreada na retomada, preservada; nenhum escritor/runner concorrente observado. Provas anteriores reutilizadas, sem repetir testes/build/plugin. Prévia5173 anterior INATIVA: processo/harness/containers ausentes; evidências históricas preservadas.
+
+Próxima ação conferida: composição353 BLOCKED, SHA remoto ainda eaad0b84, mesmos3 achados do parecer353/6467957970; não editar branch Cursor nem repetir revisão sem delta. Principal/sessão e reconciliação privada da coorte100 BLOCKED por prova de destino/principal/canal autorizado ausente, sem escrita/carga autorizada. Reutilizar Grupo CPA existente; não criar outro. Consulta somente leitura existente preparada, condicionada ao gate de destino/principal e à autorização de VPS do AGENTS§3.5; sem operação VPS nesta retomada. Estado único detalhado no topo de STATUS_DO_PROJETO.md; recibo342/6468715546 reconciliado. Este fechamento é documental (diff-check), sem mudança runtime. Blocos anteriores são históricos quando conflitantes.
+
 ## Handoff vigente — fechamento do WIP ClienteEmpresa (2026-10-28)
 
 Estado e prioridade únicos no topo de STATUS_DO_PROJETO.md. Mesmo Codespace/clone e branch codex/consolidacao-infra-20261017, base47a5d0e1, PR342 sobre334; .vscode e WIP preservados. Reserva342/6467842834. Consulta selecionada independente dos50 e da busca reutiliza contratos existentes; placeholder SQL corrigido por falha real em PostgreSQL isolado; guardas/hashes históricos intactos.
