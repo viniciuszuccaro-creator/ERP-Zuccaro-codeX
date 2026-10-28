@@ -19,3 +19,9 @@ Aprovacao posterior: prazo chave20261227T235900Z/conta2026-12-28, revogacao ante
 Mesma chave local; nenhum upload/conexao SSH. HOST confiavel/canal administrativo ainda ausentes.
 Procedimento administrativo unico em OPERACAO_DEV_VPS; scripts privados de provisionamento/revogacao sh -n PASS.
 Nenhuma alteracao de servidor/banco/grants/carga/deploy nesta preparacao.
+
+Retomada6f177a23: CI5021/40696096149 e CI5022/40696104751 SUCCESS,3 jobs cada.
+Prazo original conferido no chat:27/12/2026 20:59 Brasilia; conta28/12. Sem nova interpretacao.
+Procedimento executavel existente:4 simulacoes isoladas PASS; host errado/conta existente sem mutacao; sucesso; falha posterior expira conta. Nao houve acesso remoto.
+5173 listener/HTTP/metadata/Private conferidos, snapshot ac563ece/PG17 sintetico network=none.
+Canal Hostinger CLI nao configurado/acessivel, trusted_host ausente; intervencao unica do console detalhada no documento existente.
