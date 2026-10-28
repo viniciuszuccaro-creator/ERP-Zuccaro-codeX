@@ -1,0 +1,19 @@
+RECUPERAÇÃO FUNCIONAL — Painel Contatos (#397)
+==============================================
+America/Sao_Paulo 2026-10-28. runner `/workspace`.
+
+Diagnóstico
+-----------
+PainelDinamicoCliente listava contatos só no resumo (slice 3) sem aba/ação.
+`GerenciarContatosClienteForm` já existia no CadastroClienteCompleto.
+Classificação: montagem/aba ausente — não versão/flag/permissão.
+
+Entrega
+-------
+Aba Contatos + Form existente + persistência `updateInContext('Cliente')`
+com assert de escopo. Sem módulo paralelo; sem seed de registros.
+
+Prova
+-----
+tests/painel-dinamico-cliente-historico-tab.test.js
+  “recupera aba Contatos” PASS

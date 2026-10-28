@@ -13,6 +13,18 @@ test('PainelDinamicoCliente monta TabsContent historico_produtos (não órfão)'
   assert.equal((src.match(/<HistoricoProdutosCliente\b/g) || []).length, 1);
 });
 
+test('PainelDinamicoCliente recupera aba Contatos (GerenciarContatosClienteForm existente)', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  assert.match(src, /TabsTrigger value="contatos"/);
+  assert.match(src, /TabsContent value="contatos"/);
+  assert.match(src, /GerenciarContatosClienteForm/);
+  assert.match(src, /updateInContext\("Cliente"/);
+  assert.match(src, /data-action="painel-cliente-contatos"/);
+  assert.equal((src.match(/<GerenciarContatosClienteForm\b/g) || []).length, 1);
+  // Sem módulo paralelo: reutiliza form do cadastro completo.
+  assert.doesNotMatch(src, /GerenciarContatosCliente[^F]/);
+});
+
 async function mountHistoricoCliente({
   clienteId = 'cli-1',
   hasPermission = () => true,

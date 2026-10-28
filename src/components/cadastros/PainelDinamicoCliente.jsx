@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -27,6 +27,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
 import Top10ProdutosCliente from "@/components/comercial/Top10ProdutosCliente";
 import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
@@ -34,15 +35,44 @@ import { Link } from "react-router-dom";
 import { useWindow } from "@/components/lib/useWindow";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
 import HistoricoProdutosCliente from "@/components/comercial/HistoricoProdutosCliente";
+import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContatosClienteForm";
+import { toast } from "sonner";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function PainelDinamicoCliente({ cliente, isOpen, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("enderecos");
+  const [contatosDraft, setContatosDraft] = useState(() => (
+    Array.isArray(cliente?.contatos) ? cliente.contatos : []
+  ));
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
+  const { updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, cliente?.id ?? null]);
+
+  useEffect(() => {
+    setContatosDraft(Array.isArray(cliente?.contatos) ? cliente.contatos : []);
+  }, [cliente?.id, cliente?.contatos, painelScopeKey]);
+
+  const persistContatosPainel = async (next) => {
+    const lista = Array.isArray(next) ? next : [];
+    setContatosDraft(lista);
+    if (!cliente?.id) return;
+    if (!groupId && !empresaId) {
+      toast.error("Selecione grupo ou empresa antes de salvar contatos.");
+      return;
+    }
+    try {
+      await updateInContext("Cliente", cliente.id, { contatos: lista });
+      toast.success("Contatos atualizados.");
+    } catch (error) {
+      toast.error(error?.message || "Falha ao salvar contatos.");
+    }
+  };
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos-cliente', cliente?.id],
@@ -307,10 +337,14 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
             {/* COLUNA 3: Endereços e Top Produtos */}
             <div className="space-y-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1">
                   <TabsTrigger value="enderecos" className="text-xs">
                     <MapPin className="w-3 h-3 mr-1" />
                     Endereços
+                  </TabsTrigger>
+                  <TabsTrigger value="contatos" className="text-xs" data-action="painel-cliente-tab-contatos">
+                    <Phone className="w-3 h-3 mr-1" />
+                    Contatos
                   </TabsTrigger>
                   <TabsTrigger value="produtos" className="text-xs">
                     <Package className="w-3 h-3 mr-1" />
@@ -420,6 +454,26 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
                       </CardContent>
                     </Card>
                   )}
+                </TabsContent>
+
+                <TabsContent value="contatos" className="mt-4" data-action="painel-cliente-contatos">
+                  {/* Capacidade recuperada: GerenciarContatosClienteForm já existia no cadastro completo;
+                      aba do Painel estava ausente — fluxo diário Cliente→contatos sem abrir form inteiro. */}
+                  <GerenciarContatosClienteForm
+                    contatos={contatosDraft}
+                    onChange={persistContatosPainel}
+                    assertScopeCurrent={() => {
+                      const live = JSON.stringify([
+                        grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+                        contexto === "empresa" ? empresaAtual?.id : null,
+                        contexto,
+                        cliente?.id ?? null,
+                      ]);
+                      if (live !== painelScopeKey) {
+                        throw new Error("Contexto alterado. Reabra o painel do cliente.");
+                      }
+                    }}
+                  />
                 </TabsContent>
 
                 <TabsContent value="produtos" className="mt-4">

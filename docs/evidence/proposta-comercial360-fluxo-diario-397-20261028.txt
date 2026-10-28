@@ -1,0 +1,32 @@
+PROPOSTA NAVEGÁVEL — Comercial360 fluxo diário (#397)
+=====================================================
+America/Sao_Paulo 2026-10-28. Sem ComercialV2. Mudanças amplas = proposta, não deploy silencioso.
+
+Objetivo
+--------
+Reduzir idas e vindas entre Cliente → contatos → produtos/preços → Orçamento →
+Pedido → Histórico, reusando telas/painéis existentes e RBAC/auditoria atuais.
+
+Já no tip (capacidade recuperada, não só cor)
+---------------------------------------------
+PainelDinamicoCliente: aba **Contatos** monta `GerenciarContatosClienteForm`
+(já usado no CadastroClienteCompleto) + `updateInContext` multiempresa.
+Fluxo: abrir cliente no Painel → Contatos sem abrir o form completo.
+
+Próximos passos (proposta — exigir OK do proprietário para lote amplo)
+---------------------------------------------------------------------
+1. CentralCliente360: ações “Novo Orçamento / Novo Pedido” abrindo
+   OrcamentosTab/PedidosTab existentes com `initialClienteId` (extensão de
+   `centralCliente360Navigation.js` — create path, não open-by-id).
+2. DetalhesCliente: atalhos espelhando a Central (mesmos openers).
+3. Consolidar `GerenciarContatosCliente.jsx` (comercial/base44) vs Form
+   (cadastros/RBAC): canônico = Form; inventariar consumidores antes de
+   reorganizar exposição. Não apagar sem prova de equivalência.
+4. Preservar PedidosTab blue (pin) e sky nos Cadastros de entrada em uso.
+
+Critérios de aceite
+-------------------
+[ ] Contatos editáveis no Painel com contexto/permissão
+[ ] Sem tela ComercialV2 / persistência paralela
+[ ] Ações/informações atuais preservadas
+[ ] Amplos atalhos Central360 só após OK explícito
