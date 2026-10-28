@@ -1,3 +1,25 @@
+## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:15 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Tip HEAD | **`TIPSHA`** — sessão `49f8c8a6c` + RecordState início de uso |
+| CI tip `f8d626c59` | SUCCESS `40692529560` — **≠ aprovação**; CI `49f8c8a6c` em andamento |
+| Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
+| Codex | sessão Histórico fechada; **@codex review** SHA tip final deste push |
+| #342 | tip `ac563ecea` — parecer `docs/evidence/parecer-342-deltas-ac563ecea-20261028.txt` (branch intocada) |
+| Fora | merge/deploy/carga; Documentacao/OAuthConsent; #398–#400; 2º escritor; seed |
+
+**Bloqueios:** Operador 1 escrita · Histórico paginação+linhas+P2 · guarda if(false) · 044 · **sessão/cache actorId+sessionCacheKey**
+**Recuperação neste tip:** identidade `updated_at ?? updated_date` em TabelaPreco/Fiscal/Grupo/Usuario/Webhook/Gateway/Evento/Intent/Modelo/CentroOperacao/TabelaFiscal/Parametro(Caixa·Portal·NFe·Conciliação·Origem)/PerfilAcesso — pins RecordState preservados; fora ApiExterna/ParametroRoteirizacao/ChatbotCanal
+**Provas:** Histórico 15 + Operador/guarda 9 + identity matriz + callback RecordState PASS
+**Evidências:** `apontamentos-353-prova-session-historico-20261028.txt` · `parecer-342-deltas-ac563ecea-20261028.txt` · sky/proposta existentes
+**Registros:** A/B/C (contrato/contexto/RBAC) ≠ D (staging privado Codex). Fixture ≠ legado.
+
+**Próximo:** CI tip + parecer Codex → demo exclusiva SHA+HTTP.
+
+(2026-10-28 10:15 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:05 America/Sao_Paulo)
 
 | Campo | Valor |

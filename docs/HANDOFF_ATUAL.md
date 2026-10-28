@@ -1,3 +1,20 @@
+## CURSOR — VIGENTE (2026-10-28 10:15 America/Sao_Paulo)
+
+**Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.
+**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#397** bloqueios+sessão+matriz | **`TIPSHA`** / sessão `49f8c8a6c` | RecordState início de uso; **@codex review** tip final |
+| #400/#399/#398 | tips anteriores | CI SUCCESS — **não** editar daqui |
+| #342 Codex | `ac563ecea` | parecer Cursor OK c/ ressalva; branch intocada |
+
+**Bloqueios:** Operador; Histórico paginação+sessão; guarda if(false); 044
+**Recuperação:** sky 1–6 + identidade HTTP `updated_at` (TabelaPreco/Fiscal/…/Parametro*/Perfil) — pins intactos
+**Parecer #342:** `docs/evidence/parecer-342-deltas-ac563ecea-20261028.txt`
+**Prova sessão:** `docs/evidence/apontamentos-353-prova-session-historico-20261028.txt`
+**Próximo:** CI + Codex tip → demo exclusiva. Sem merge/deploy/carga.
+
 ## CURSOR — VIGENTE (2026-10-28 10:05 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.

@@ -54,6 +54,13 @@ Tela restaurada ≠ registros recuperados.
 CadastroCodigoRegistroField + reserve backend: mantidos.
 openCadastroEntityWindow uniqueKey: mantido.
 Operador 1 save; Transportadora/Produto/Configs updated_at HTTP: neste PR.
+Lote adicional identidade HTTP (pins RecordState preservados):
+  TabelaPreco, CadastroFiscal, GrupoEmpresarial, Usuario, Webhook,
+  GatewayPagamento, EventoNotificacao, ChatbotIntent, ModeloDocumento,
+  CentroOperacao, TabelaFiscal, ParametroCaixaDiario/Portal/NFe/
+  ConciliacaoBancaria/OrigemPedido, PerfilAcesso.
+Fora deste lote (outras PRs): ApiExterna (#398), ParametroRoteirizacao (#399),
+  ChatbotCanal (#400).
 Não renumerar; sem count+1.
 
 6) ROTEIRO NAVEGÁVEL (quando Codespace SHA+HTTP medidos)

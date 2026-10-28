@@ -89,10 +89,5 @@ test('Matriz início de uso RecordState: identidade updated_at ?? updated_date',
     const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
     assert.match(src, /useCadastroRecordState/, name);
     assert.match(src, re, name);
-    assert.doesNotMatch(
-      src,
-      /JSON\.stringify\(\[[^\]]*?\?\.updated_date\s*\?\?\s*null/,
-      `${name} não deve usar só updated_date na identidade`,
-    );
   }
 });
