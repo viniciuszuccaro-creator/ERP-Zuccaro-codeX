@@ -1,21 +1,21 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 15:55 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:05 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip código | **`cbc21f14a`** — Central360 create path + sky Bloco1 |
-| Tip load-more | **`9842e7fd8`** — Codex: no major issues (comment 6444543795) |
-| Tip Contatos | **`a2e26dec3`** — Painel Contatos |
-| Tip 3 achados | **`609f48a46`** — inspecionados OK |
-| CI tip anterior HEAD | **SUCCESS** run `40739268559` em `557792320` — **≠ aprovação** |
-| CI tip `cbc21f14a` | em andamento — **≠ aprovação** |
+| Tip HEAD | **`2080f3e3b`** — sky financeiro/serviço/frete + pin FormaPagamento |
+| Tip código create | **`cbc21f14a`** — Central360 Novo orçamento/pedido |
+| Tip load-more | **`9842e7fd8`** — Codex: no major issues |
+| Tip Contatos | **`a2e26dec3`** |
+| Tip 3 achados | **`609f48a46`** |
+| CI | tip HEAD em andamento — **≠ aprovação** |
 | Modalidade | runner `/workspace` |
-| Revisão | **@codex** em **`cbc21f14a`** (create path + sky); CI ≠ aprovação |
+| Revisão | **@codex** tip HEAD **`2080f3e3b`** (deltas create+sky); CI ≠ aprovação |
 
-**Provas:** `docs/evidence/proposta-comercial360-create-central-397-20261028.txt` · navigation 14 PASS · sky forms 8 PASS · reopen Marca/Cargo 14 PASS
-**Próximo:** CI tip código → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
+**Provas:** create path navigation 14 · sky forms 13 · payment pin 21 · reopen Marca/Cargo 14
+**Próximo:** CI + parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 15:55 America/Sao_Paulo)
+(2026-10-28 16:05 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 

@@ -1,4 +1,4 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 15:55 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:05 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403** neste runner.
 **Chrome (owner / Codex desktop):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — SQL/reconciliação 100; não duplicar.
@@ -6,13 +6,12 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **Tip código** | **`cbc21f14a`** | Central360 create + sky Bloco1; @codex pedido |
+| **Tip HEAD** | **`2080f3e3b`** | sky CentroCusto/FormaPagamento/PlanoContas/Servico/TipoFrete |
+| **Create path** | **`cbc21f14a`** | Central360 Novo orçamento/pedido |
 | **Load-more** | **`9842e7fd8`** | Codex: no major issues |
-| **Painel Contatos** | **`a2e26dec3`** | CI SUCCESS — **≠ aprovação** |
-| **3 achados** | **`609f48a46`** | inspecionados OK |
-| CI tip anterior | `557792320` SUCCESS `40739268559` | **≠ aprovação** |
+| **Contatos** | **`a2e26dec3`** | CI SUCCESS — **≠ aprovação** |
 
-**Próximo:** CI + parecer Codex tip `cbc21f14a` → demo Private 5173. Sem merge/deploy/carga.
+**Próximo:** CI + @codex tip `2080f3e3b` → demo Private 5173. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
