@@ -4,7 +4,7 @@
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
 | Tip código | **`609f48a46`** — três achados Codex (P1 carga Operador · P2 submit · P2 Histórico 1º render) |
-| Tip HEAD | **`609f48a46`** (+ docs deste lote no tip seguinte se houver) |
+| Tip HEAD | **`4e3c5e3b8`** (docs STATUS/HANDOFF neste tip) |
 | Ref. consultada | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação**; não encerrava os 3 achados |
 | Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6473153593 |
 | #353 | histórica — **não** candidata concorrente |
