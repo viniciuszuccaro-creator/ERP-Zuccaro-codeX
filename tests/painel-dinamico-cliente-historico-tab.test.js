@@ -445,4 +445,10 @@ test('fonte HTTP nao referencia central360; contrato clienteId no pedidos.list',
   assert.match(src, /hasMore/);
   assert.match(src, /historico-produtos-carregar-mais/);
   assert.match(src, /LEGADO_PEDIDOS_LIMIT = 200/);
+  assert.match(src, /LINHAS_UI_LIMIT/);
+  assert.match(src, /data-historico-linhas-truncadas/);
+  assert.match(src, /data-historico-linhas-carregadas/);
+  assert.match(src, /data-historico-linhas-exibidas/);
+  // Teto de UI é honesto: não esconde linhas carregadas sem sinalizar.
+  assert.match(src, /linhasTruncadas/);
 });

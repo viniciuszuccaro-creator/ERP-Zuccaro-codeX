@@ -237,6 +237,8 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   const totalPedidos = Number.isFinite(Number(meta?.total)) ? Number(meta.total) : pedidos.length;
   const hasMore = Boolean(meta?.hasMore);
   const linhas = useMemo(() => mapPedidosToHistoricoLinhas(pedidos), [pedidos]);
+  const linhasExibidas = Math.min(linhas.length, LINHAS_UI_LIMIT);
+  const linhasTruncadas = linhas.length > LINHAS_UI_LIMIT;
 
   const handleLoadMore = async () => {
     if (!httpMode || !hasMore || loadingMore || !consultaHabilitada) return;
@@ -301,12 +303,14 @@ export default function HistoricoProdutosCliente({ clienteId }) {
       data-historico-fonte={httpMode ? "http" : "legado"}
       data-historico-pedidos-carregados={pedidos.length}
       data-historico-pedidos-total={totalPedidos}
+      data-historico-linhas-carregadas={linhas.length}
+      data-historico-linhas-exibidas={linhasExibidas}
     >
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
           <Package className="w-4 h-4 text-sky-600" />
-          Histórico de Produtos ({linhas.length}
-          {httpMode && totalPedidos > pedidos.length
+          Histórico de Produtos ({linhasExibidas}
+          {linhasTruncadas || (httpMode && totalPedidos > pedidos.length)
             ? ` linhas · ${pedidos.length}/${totalPedidos} pedidos`
             : ""}
           ){isFetching || loadingMore ? "…" : ""}
@@ -360,6 +364,15 @@ export default function HistoricoProdutosCliente({ clienteId }) {
             </TableBody>
           </Table>
         </div>
+        {linhasTruncadas ? (
+          <p
+            className="pt-3 text-xs text-slate-500"
+            data-historico-linhas-truncadas="true"
+          >
+            Exibindo {linhasExibidas} de {linhas.length} linhas dos pedidos já carregados
+            ({pedidos.length}/{totalPedidos} pedidos). Carregar mais pedidos não remove este teto de exibição.
+          </p>
+        ) : null}
         {httpMode && hasMore ? (
           <div className="pt-3 flex items-center justify-between gap-2">
             <p className="text-xs text-slate-500" data-historico-paginacao="has-more">

@@ -1,25 +1,40 @@
-## CURSOR — VIGENTE #397 tip `9f5a32315` (2026-10-28)
+## CURSOR — VIGENTE #397 (2026-10-28 07:10 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`9f5a32315`** (código `88f9707fb`) |
-| CI | **SUCCESS** runs `40575096090` / `40575085322` — **≠ aprovação** |
+| Tip HEAD | **este push** (código bloqueios `88f9707fb` + delta Histórico/Transportadora) |
 | Modalidade | runner `/workspace` — Chrome **não** conecta este executor |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
-| Reprova 07:04 BRT | Operador+guarda+Histórico **23** + pedido-ui **26** + server **2** |
-| Evidência | `docs/evidence/apontamentos-353-prova-tip-9f5a32315-20261028.txt` |
-| Pedido | **@codex review** tip **`9f5a32315`** / código **`88f9707fb`** |
-| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 **não tip** |
-| Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor |
+| Reprova 07:10 BRT | Operador+guarda+Histórico **23** + Transportadora **2** + pedido-ui **26** + server **2** |
+| Evidência | `docs/evidence/apontamentos-353-prova-tip-head-20261028.txt` |
+| Pedido | **@codex review** tip **HEAD final** (não ancestral) |
+| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 **não tip** — sem duplicar |
+| Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor; Codespace 403 |
 
 **Bloqueios no HEAD — fechados (reprova):**
-1. OperadorCaixa self-managed — 1 create/update; V24 só conclui
-2. Histórico paginação total/carregados + carregar mais (>50)
+1. OperadorCaixa self-managed — 1 create/update; V24 só conclui; tenantKey A↛B
+2. Histórico paginação total/carregados + carregar mais (>50); produto só pág. 2
 3. `pedidos.list?clienteId=` + `Pedido.visualizar` (sem `cliente_empresa`/Central360)
-4. Guarda: remoção da negativa (`if(false)`) falha no teste
+4. Guarda: remoção da negativa (`if(false)`) falha no módulo real
 5. 044: `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING`
+6. Linhas UI: `data-historico-linhas-*` — truncamento honesto (não silencioso)
 
-(2026-10-27 13:40 America/Sao_Paulo)
+**Recuperação indep. (matriz erp-integra, sem form novo):**
+- TransportadoraForm: identidade `updated_at ?? updated_date` (HTTP reopen; pin RecordState preservado)
+
+**Próximo:** parecer Codex no tip HEAD → demo exclusiva SHA+HTTP. Continua matriz cadastros (Config/RecordState só `updated_date`) sem reabrir pins encerrados.
+
+(2026-10-28 07:10 America/Sao_Paulo)
+
+## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
+
+| Campo | Valor |
+|-------|-------|
+| Tip | **`9f5a32315`** (código `88f9707fb`) |
+| CI | SUCCESS `40575096090` / `40575085322` — **≠ aprovação** |
+| Evidência | `docs/evidence/apontamentos-353-prova-tip-9f5a32315-20261028.txt` |
+
+(2026-10-28 07:04 America/Sao_Paulo)
 
 ## CURSOR — parecer independente #342 tip 47a5d0e (histórico) (2026-10-27)
 

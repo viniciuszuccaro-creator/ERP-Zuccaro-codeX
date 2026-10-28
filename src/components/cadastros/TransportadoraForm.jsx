@@ -30,6 +30,7 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
   const podeEditar = canEdit("Cadastros", "Transportadora") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Transportadora") || canDelete("Cadastros", null);
   
+  // Identidade: updated_at HTTP canônico (updated_date sozinho ignorava refresh).
   const [formData, setFormData] = useCadastroRecordState(transportadora || {
     razao_social: '',
     nome_fantasia: '',
@@ -48,7 +49,7 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     valor_frete_minimo: 0,
     status: 'Ativo',
     observacoes: ''
-  }, JSON.stringify([transportadora?.id ?? null, transportadora?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
+  }, JSON.stringify([transportadora?.id ?? null, transportadora?.updated_at ?? transportadora?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
 
   const schema = z.object({
     razao_social: z.string().min(1, 'Razão Social é obrigatória'),
