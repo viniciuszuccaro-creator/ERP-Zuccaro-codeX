@@ -1,37 +1,33 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 11:39 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 11:48 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`4255646a7`** (código **`db3a4b623`**) — Histórico vínculo inativo + DetalhesCliente HistóricoProdutos |
-| Pré-lote | **`c897d427e`** — CI SUCCESS run `40699501474` (CI5031) — **≠ aprovação** |
-| CI tip | em andamento após push tip — **≠ aprovação** |
+| Tip HEAD | **`c7001c5a2`** (código **`db3a4b623`**) — Histórico vínculo inativo + DetalhesCliente HistóricoProdutos |
+| CI tip HEAD | **SUCCESS** run `40708618428` — **≠ aprovação** |
+| CI código | **SUCCESS** `db3a4b623`→`40708354481` — **≠ aprovação** |
+| Pré-lote | **`c897d427e`** — CI SUCCESS `40699501474` (CI5031) — **≠ aprovação** |
 | #353 | histórica (`eaad0b84`) — **não** candidata concorrente destes bloqueios |
 | Modalidade | runner `/workspace` — Codespace xylophone owner-only (gh 403; sem prova Chrome deste executor) |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` — janela exclusiva SHA+HTTP quando autorizada |
 | #342 | tip **`21b482241`** docs SSH — parecer `docs/evidence/parecer-342-tip-21b482241-20261028.txt` (branch Codex intocada) |
-| Revisão | pedido independente **@codex review** no SHA tip final deste push (agrupado); bot env fail ≠ aprovação; sem loop |
+| Revisão | **@codex review** pedido no código **`db3a4b623`** (agrupado); tip docs não reaciona; bot fail ≠ aprovação |
 
-**Bloqueios (reprova dirigida tip `c897d427e` + deltas deste lote):**
-1. OperadorCaixa self-managed — 1 create/update; tenantKey A↛B; rascunho pós-erro
+**Bloqueios (reprova 60 PASS focados):**
+1. OperadorCaixa self-managed — 1 create/update; tenantKey A↛B
 2. Histórico `clienteId` + paginação >50 + fingerprint JWT + sessão/cache + P2 reset
-3. **Histórico vínculo inativo:** `Pedido.list(clienteId)` resolve link mesmo com `ativo=false` (create/update continuam exigindo ativo)
+3. Histórico vínculo inativo: `Pedido.list(clienteId)` resolve link `ativo=false` (create/update exigem ativo)
 4. Guarda: mutação `if(false)` falha no módulo real
-5. 044 middleware prod: `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING` (INTERNAL_ERROR ≠ 044)
+5. 044 middleware prod: `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING`
 6. ClienteForm/Completo reopen `updated_at ?? updated_date`
 
-**Recuperação funcional concreta (este lote):**
-- Comercial360 `DetalhesCliente`: monta `HistoricoProdutosCliente` (`data-action=cliente-360-historico-produtos`) — fluxo diário Cliente→…→Histórico sem tela paralela
-- Backend: leitura histórica preservada após soft-delete do vínculo ClienteEmpresa
-- Sky Cadastros 1–6 + matriz RecordState já no tip; Documentacao/OAuthConsent **não** restaurados
+**Recuperação:** DetalhesCliente → HistoricoProdutosCliente (`cliente-360-historico-produtos`); sky Cadastros 1–6
+**Evidências:** `apontamentos-397-prova-tip-recuperacao-20261028.txt` · `parecer-342-tip-21b482241-20261028.txt` · roteiro demo 397
+**Registros:** A/B ok; C/D staging Codex — sem seed. Fixture ≠ legado.
 
-**Provas:** Histórico+V24 **26** + Operador/Cliente reopen **17** + server pedido+044 **15** + guarda **2** → **60 PASS** focados
-**Evidências:** `docs/evidence/apontamentos-397-prova-tip-recuperacao-20261028.txt` · `recuperacao-funcional-visual-397-20261028.txt` · `roteiro-demo-397-cliente-orc-pedido-historico-20261028.txt` · `parecer-342-tip-21b482241-20261028.txt`
-**Registros:** A/B corrigidos (contrato/contexto); C/D = staging privado Codex — sem seed fictício. Fixture ≠ legado.
+**Próximo:** parecer Codex no código `db3a4b623` → demo exclusiva Codespace 5173. Sem merge/deploy/carga.
 
-**Próximo:** parecer Codex no tip final → demo exclusiva Codespace (SHA+HTTP 5173). Sem merge/deploy/carga.
-
-(2026-10-28 11:39 America/Sao_Paulo)
+(2026-10-28 11:48 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 

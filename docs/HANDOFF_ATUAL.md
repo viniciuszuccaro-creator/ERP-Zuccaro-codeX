@@ -1,4 +1,4 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 11:39 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 11:48 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403**.
 **Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
@@ -6,16 +6,16 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** | tip **`4255646a7`** / código **`db3a4b623`** (pré `c897d427e` CI `40699501474`); Histórico vínculo inativo + DetalhesCliente | CI tip após push — **≠ aprovação** |
+| **#397** | tip **`c7001c5a2`** / código **`db3a4b623`** | CI tip SUCCESS `40708618428` · código `40708354481` — **≠ aprovação** |
 | #353 | `eaad0b84` | histórica — não concorrente |
 | #342 | `21b482241` | docs SSH — parecer Cursor; branch intocada |
 | #400/#399/#398 | — | não editar daqui |
 
-**Bloqueios:** Operador 1 escrita; Histórico paginação+JWT fingerprint+vínculo inativo; guarda if(false); 044 middleware
-**Recuperação:** `DetalhesCliente` → `HistoricoProdutosCliente` (Comercial360); sky 1–6
-**Prova:** `docs/evidence/apontamentos-397-prova-tip-recuperacao-20261028.txt` (60 PASS focados)
+**Bloqueios:** Operador; Histórico paginação+JWT+vínculo inativo; guarda; 044
+**Recuperação:** DetalhesCliente HistóricoProdutos; sky 1–6
+**Prova:** `docs/evidence/apontamentos-397-prova-tip-recuperacao-20261028.txt` (60 PASS)
 **Parecer #342:** `docs/evidence/parecer-342-tip-21b482241-20261028.txt`
-**Próximo:** revisão independente tip final → demo exclusiva. Sem merge/deploy/carga.
+**Próximo:** parecer Codex código `db3a4b623` → demo exclusiva. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
