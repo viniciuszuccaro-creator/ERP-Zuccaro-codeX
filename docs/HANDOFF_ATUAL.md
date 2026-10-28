@@ -1,4 +1,4 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 17:15 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 17:20 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403** neste runner.
 **Chrome (owner / Codex desktop):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — SQL/reconciliação 100; não duplicar.
@@ -6,12 +6,12 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **Base** | **`bf150d217`** | CI5065 SUCCESS — **≠ aprovação** |
-| **Pacote1** | **`9474e7cb3`** | P2 finally · P1 Contatos |
-| **Sky** | **`80ddb82bd`+** | Local/Segmento/Kit/TabelaPreco |
-| **Load-more** | **`9842e7fd8`** | Codex limpo |
+| **Tip HEAD** | **`f464199fa`** | CI SUCCESS `40760871088` — **≠ aprovação** |
+| **Pacote1** | **`9474e7cb3`** | CI SUCCESS `40760609001` — P2/P1 |
+| **Sky** | **`7587652cb`** | Local/Segmento/Kit/TabelaPreco |
+| **Base** | **`bf150d217`** | CI5065 SUCCESS |
 
-**Próximo:** CI + @codex `9474e7cb3` → demo Private 5173. Sem merge/deploy/carga.
+**Próximo:** parecer Codex tip `9474e7cb3` → demo Private 5173. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

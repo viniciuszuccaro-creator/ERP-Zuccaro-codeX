@@ -1,19 +1,20 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 17:15 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 17:20 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`7587652cb`** · código Pacote1 **`9474e7cb3`** · sky **`80ddb82bd`** |
-| Tip base | **`bf150d217`** — CI SUCCESS `40751947410` (CI5065) — **≠ aprovação** |
-| Achados | P2 finally · P1 Contatos fechados; sky Local/Segmento/Kit/TabelaPreco |
-| Load-more | **`9842e7fd8`** Codex limpo |
+| Tip HEAD | **`f464199fa`** — CI SUCCESS `40760871088` — **≠ aprovação** |
+| Tip código Pacote1 | **`9474e7cb3`** — CI SUCCESS `40760609001` — P2/P1 |
+| Tip sky | **`7587652cb`** / **`80ddb82bd`** — CI SUCCESS |
+| Tip base | **`bf150d217`** — CI5065 SUCCESS `40751947410` |
+| Achados | P2 finally · P1 Contatos fechados |
 | Modalidade | runner `/workspace` |
-| Revisão | **@codex** tip **`9474e7cb3`** (+ sky); CI ≠ aprovação |
+| Revisão | **@codex** tip **`9474e7cb3`**; CI ≠ aprovação |
 
 **Provas:** P1 fechamento + sky 17 PASS
-**Próximo:** CI tip → parecer → demo Private 5173. Sem merge/deploy/carga/SQL.
+**Próximo:** parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 17:15 America/Sao_Paulo)
+(2026-10-28 17:20 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
