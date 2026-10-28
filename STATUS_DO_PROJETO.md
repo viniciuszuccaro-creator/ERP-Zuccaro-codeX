@@ -4,7 +4,7 @@
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
 | Tip código 3 achados | **`609f48a46`** — P1 carga Operador · P2 submit · P2 Histórico 1º render |
-| Tip HEAD | **`846ea6a7d`** (docs; código recovery/CI **`3cc9ea4fb`**; 3 achados **`609f48a46`**) |
+| Tip HEAD | **`9cbc5491e`** (docs; código recovery/CI **`3cc9ea4fb`**; 3 achados **`609f48a46`**) |
 | CI `609f48a46` | frontend FAIL (assert fonte `operadorBoundId`→`intentBoundId`) — corrigido neste tip |
 | Ref. consultada | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação** |
 | Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6473153593 |
