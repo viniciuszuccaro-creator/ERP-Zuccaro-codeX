@@ -1,21 +1,20 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:05 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:12 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`2080f3e3b`** — sky financeiro/serviço/frete + pin FormaPagamento |
-| Tip código create | **`cbc21f14a`** — Central360 Novo orçamento/pedido |
+| Tip HEAD | **`0ad95ae90`** — fix pin read-boundary Central360 (create path) |
+| Tip código create+sky | **`2080f3e3b`** / create **`cbc21f14a`** |
 | Tip load-more | **`9842e7fd8`** — Codex: no major issues |
-| Tip Contatos | **`a2e26dec3`** |
-| Tip 3 achados | **`609f48a46`** |
-| CI | tip HEAD em andamento — **≠ aprovação** |
+| CI FAIL causa | `1b89caede` frontend — hash stage51 Central360 desatualizado |
+| CI tip HEAD | em andamento — **≠ aprovação** |
 | Modalidade | runner `/workspace` |
-| Revisão | **@codex** tip HEAD **`2080f3e3b`** (deltas create+sky); CI ≠ aprovação |
+| Revisão | **@codex** tip **`0ad95ae90`**; CI ≠ aprovação |
 
-**Provas:** create path navigation 14 · sky forms 13 · payment pin 21 · reopen Marca/Cargo 14
-**Próximo:** CI + parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
+**Provas:** read-boundary + navigation + sky + payment PASS no runner
+**Próximo:** CI SUCCESS tip → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 16:05 America/Sao_Paulo)
+(2026-10-28 16:12 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 

@@ -1,4 +1,4 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:05 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:12 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403** neste runner.
 **Chrome (owner / Codex desktop):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — SQL/reconciliação 100; não duplicar.
@@ -6,12 +6,11 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **Tip HEAD** | **`2080f3e3b`** | sky CentroCusto/FormaPagamento/PlanoContas/Servico/TipoFrete |
-| **Create path** | **`cbc21f14a`** | Central360 Novo orçamento/pedido |
+| **Tip HEAD** | **`0ad95ae90`** | fix pin Central360 stage51 (CI FAIL `1b89caede`) |
+| **Create+sky** | **`2080f3e3b`** / **`cbc21f14a`** | create path + sky Cadastros |
 | **Load-more** | **`9842e7fd8`** | Codex: no major issues |
-| **Contatos** | **`a2e26dec3`** | CI SUCCESS — **≠ aprovação** |
 
-**Próximo:** CI + @codex tip `2080f3e3b` → demo Private 5173. Sem merge/deploy/carga.
+**Próximo:** CI tip `0ad95ae90` → @codex → demo Private 5173. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
