@@ -1,0 +1,32 @@
+ROTEIRO DEMO INTEGRADA — PR #397 (America/Sao_Paulo 2026-10-28)
+================================================================
+Candidata: #397 tip código 2afe0cc83 (+ provas 044/Cliente neste push).
+Modalidade runner: /workspace — este arquivo NÃO é prova Chrome.
+Codespace (owner): potential-xylophone-5gj7r9v9qqg637vxp — janela exclusiva com Codex.
+URL ERP documentada: porta 5173. Porta 44919 = OAuth Hostinger (não ERP).
+
+Pré-condições
+-------------
+1. SHA servido = tip #397 (git rev-parse HEAD no Codespace)
+2. Backend HTTP + banco isolado (origem dos dados declarada: sintético ≠ legado)
+3. Empresa selecionada; sessão autenticada; Pedido.visualizar
+4. Ambiente sintético identificado na UI/dados (não apresentar como importado)
+
+Percurso
+--------
+1. Cadastros → Financeiro → Operador de Caixa
+   tile → V24 → salvar → fechar → reabrir
+   Esperado: 1 escrita; sem duplicar sequência/auditoria; rascunho se erro
+2. Comercial → Clientes → abrir cliente → editar → salvar → reabrir
+   Esperado: reopen com updated_at HTTP; campos e ID preservados
+3. Cliente → Orçamento → criar/editar/salvar/reabrir
+4. Converter ou criar Pedido → editar/salvar/reabrir
+5. Painel Cliente → Histórico de Produtos
+   - total vs carregados (data-historico-pedidos-*)
+   - Carregar mais se >50; produto só na pág. seguinte aparece após load more
+   - Troca empresa/cliente limpa extras; sem sessão → fail-closed
+
+Fora da demo
+------------
+Merge, DDL 044, carga legado, 2º escritor no Codespace.
+Registros D (ausentes): staging Codex — não seed.
