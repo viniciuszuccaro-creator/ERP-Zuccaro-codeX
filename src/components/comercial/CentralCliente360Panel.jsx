@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ConverterOportunidade from '@/components/crm/ConverterOportunidade';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { isCanonicalQuoteOpportunity, openCrmQuoteOrderWindow, isCrmConversionScopeCurrent } from '@/components/crm/crmFormSubmission';
-import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target } from 'lucide-react';
+import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target, FilePlus2, Plus } from 'lucide-react';
 import {
   canLoadCentralCliente360,
   central360SessionKey,
@@ -25,7 +25,16 @@ import {
   shouldUseCrmLegadoAdapter,
 } from '@/components/comercial/centralCliente360CrmLegado';
 import { formatCentral360Money as money } from '@/components/comercial/centralCliente360Money';
-import { centralOpenErrorMessage, createCentralOpenGate, openCentralClienteWindow, openCentralOrcamentoWindow, openCentralPedidoWindow } from '@/components/comercial/centralCliente360Navigation';
+import {
+  centralOpenErrorMessage,
+  createCentralOpenGate,
+  openCentralClienteWindow,
+  openCentralOrcamentoCreateWindow,
+  openCentralOrcamentoWindow,
+  openCentralPedidoCreateWindow,
+  openCentralPedidoWindow,
+  resolveCentralClienteEmpresaId,
+} from '@/components/comercial/centralCliente360Navigation';
 import { hasCadastroEntityPermission } from '@/components/cadastros/cadastroEditLoadPolicy';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
@@ -222,7 +231,8 @@ export default function CentralCliente360Panel({
   const [pedidoOpenError,setPedidoOpenError]=useState('');
   const [orcamentoOpenError,setOrcamentoOpenError]=useState('');
   const [cadastroOpenError,setCadastroOpenError]=useState('');
-  const [openingRecord,setOpeningRecord]=useState(/** @type {{pedido?: string|boolean|null, orcamento?: string|boolean|null, cliente?: boolean|null}} */ ({}));
+  const [createOpenError,setCreateOpenError]=useState('');
+  const [openingRecord,setOpeningRecord]=useState(/** @type {{pedido?: string|boolean|null, orcamento?: string|boolean|null, cliente?: boolean|null, createPedido?: boolean|null, createOrcamento?: boolean|null}} */ ({}));
   const openGate=useRef(createCentralOpenGate());
   const sessionToken = typeof token === 'string' ? token.trim() : '';
   const enabled = canLoadCentralCliente360({
@@ -241,7 +251,7 @@ export default function CentralCliente360Panel({
   const sessionKey = central360SessionKey(sessionToken);
   const viewKey=JSON.stringify([clienteId,groupId,empresaId,actorId,sessionKey]);
   const viewRef=useRef(null);viewRef.current=viewKey;
-  React.useEffect(()=>{viewRef.current=viewKey;openGate.current.reset();setOpeningRecord({});setConversionError('');setPedidoOpenError('');setOrcamentoOpenError('');setCadastroOpenError('');return()=>{viewRef.current=null;openGate.current.reset();};},[viewKey]);
+  React.useEffect(()=>{viewRef.current=viewKey;openGate.current.reset();setOpeningRecord({});setConversionError('');setPedidoOpenError('');setOrcamentoOpenError('');setCadastroOpenError('');setCreateOpenError('');return()=>{viewRef.current=null;openGate.current.reset();};},[viewKey]);
   const [blockLimits, setBlockLimits] = useState(INITIAL_CENTRAL360_BLOCK_LIMITS);
 
   // Troca de cliente/grupo/empresa/ator/sessão: zera paginação e impede
@@ -425,6 +435,45 @@ export default function CentralCliente360Panel({
     finally{if(openGate.current.end(ticket))setOpeningRecord(current=>({...current,[kind]:null}));}
   };
 
+  const openCreate=async(kind)=>{
+    const createKind=kind==='pedido'?'createPedido':'createOrcamento';
+    const ticket=openGate.current.begin(createKind,viewKey);
+    if(!ticket)return;
+    setCreateOpenError('');
+    setOpeningRecord(current=>({...current,[createKind]:true}));
+    const openedKey=viewRef.current;
+    const openedScope={groupId,empresaId,actorId,token:sessionToken};
+    const assertCurrent=()=>{
+      if(!openGate.current.isCurrent(ticket)||viewRef.current!==openedKey||!isCrmConversionScopeCurrent(openedScope,renderedScope.current,readErpHttpSession()))
+        throw new Error(centralOpenErrorMessage());
+    };
+    const clienteEmpresaId=resolveCentralClienteEmpresaId(blocks.empresas,empresaId);
+    const allowed=!permissionsLoading&&hasPermission('Comercial',kind,'criar')&&hasPermission('Comercial',kind,'visualizar');
+    try{
+      const open=kind==='pedido'?openCentralPedidoCreateWindow:openCentralOrcamentoCreateWindow;
+      const opened=await open({
+        clienteEmpresaId,
+        allowed:Boolean(allowed&&clienteEmpresaId),
+        assertCurrent,
+        loadPanel:kind==='pedido'
+          ? async()=>(await import('@/components/comercial/PedidosTab')).default
+          : async()=>(await import('@/components/comercial/OrcamentosTab')).default,
+        openWindow,
+        props:{groupId,empresaId,actorId,actorEmail,sessionToken,hasPermission,filterInContext,empresaAtual},
+      });
+      if(!opened&&openGate.current.isCurrent(ticket)&&viewRef.current===openedKey){
+        setCreateOpenError(clienteEmpresaId?centralOpenErrorMessage():'Cliente sem vínculo ativo nesta empresa para criar orçamento/pedido.');
+      }
+    }catch{
+      if(openGate.current.isCurrent(ticket)&&viewRef.current===openedKey)setCreateOpenError(centralOpenErrorMessage());
+    }finally{
+      if(openGate.current.end(ticket))setOpeningRecord(current=>({...current,[createKind]:null}));
+    }
+  };
+
+  const canCreateOrcamento=!permissionsLoading&&hasPermission('Comercial','orcamento','criar')&&hasPermission('Comercial','orcamento','visualizar');
+  const canCreatePedido=!permissionsLoading&&hasPermission('Comercial','pedido','criar')&&hasPermission('Comercial','pedido','visualizar');
+
   return (
     <div className="mb-6 space-y-3" data-permission="Cadastros.cliente.visualizar" data-central360="true">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -435,25 +484,50 @@ export default function CentralCliente360Panel({
             {meta.requestId ? ` · req ${String(meta.requestId).slice(0, 8)}` : ''}
           </p>
         </div>
-        <Button type="button" size="sm" variant="outline" onClick={openCadastro}
-          disabled={!cadastroAllowed || Boolean(openingRecord.cliente)}
-          title="Editar cadastro do cliente" data-permission="Cadastros.Cliente.editar" data-action="central360-abrir-cadastro-cliente">
-          <Building2 className="mr-2 h-4 w-4" /> Cadastro
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            setBlockLimits(INITIAL_CENTRAL360_BLOCK_LIMITS);
-            query.refetch();
-          }}
-        >
-          Atualizar
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" size="sm" variant="outline" onClick={openCadastro}
+            disabled={!cadastroAllowed || Boolean(openingRecord.cliente)}
+            title="Editar cadastro do cliente" data-permission="Cadastros.Cliente.editar" data-action="central360-abrir-cadastro-cliente">
+            <Building2 className="mr-2 h-4 w-4" /> Cadastro
+          </Button>
+          {canCreateOrcamento ? (
+            <Button type="button" size="sm" variant="outline" className="border-sky-200 text-sky-800"
+              onClick={() => void openCreate('orcamento')}
+              disabled={Boolean(openingRecord.createOrcamento)}
+              data-permission="Comercial.orcamento.criar"
+              data-action="central360-novo-orcamento"
+              title="Abrir orçamento com este cliente">
+              <FilePlus2 className="mr-2 h-4 w-4" />
+              {openingRecord.createOrcamento ? 'Abrindo…' : 'Novo orçamento'}
+            </Button>
+          ) : null}
+          {canCreatePedido ? (
+            <Button type="button" size="sm" className="bg-sky-600 hover:bg-sky-700"
+              onClick={() => void openCreate('pedido')}
+              disabled={Boolean(openingRecord.createPedido)}
+              data-permission="Comercial.pedido.criar"
+              data-action="central360-novo-pedido"
+              title="Abrir pedido com este cliente">
+              <Plus className="mr-2 h-4 w-4" />
+              {openingRecord.createPedido ? 'Abrindo…' : 'Novo pedido'}
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setBlockLimits(INITIAL_CENTRAL360_BLOCK_LIMITS);
+              query.refetch();
+            }}
+          >
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {cadastroOpenError && <div role="alert" className="text-sm text-red-700">{cadastroOpenError}</div>}
+      {createOpenError && <div role="alert" className="text-sm text-red-700" data-testid="central360-create-open-error">{createOpenError}</div>}
       {identity && (
         <div className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2">
           <div><span className="text-slate-500">Código</span><p className="font-mono" data-action="codigo-registro-central360">{identity.codigo ?? '—'}</p></div>

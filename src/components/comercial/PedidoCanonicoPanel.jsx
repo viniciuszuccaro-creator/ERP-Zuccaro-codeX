@@ -55,10 +55,11 @@ const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date
 const message = (error) => explainPedidoPersistenceError(error)
   || (error?.status===403?'Seu perfil não possui permissão para esta ação.':error?.status===404?'Pedido não encontrado neste contexto.':error?.status===409?'O estado atual não permite esta ação.':error?.body?.error?.message||error?.message||'Não foi possível concluir a operação.');
 
-export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null }) {
+export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null }) {
   const queryClient=useQueryClient();
   const detailGate=useRef(createPedidoDetailGate());
   const initialOpened=useRef(null);
+  const initialCreateOpened=useRef(null);
   const mutationGate=useRef(sharedPedidoMutationGate);
   const renderedScope=useRef(null);
   renderedScope.current={groupId,empresaId,actorId};
@@ -116,6 +117,25 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const show=async(row)=>{const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket||!canView)return;try{setHistoryLoading(true);setHistoryError(null);setHistory([]);const detail=await api.get(row.id);if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setSelected(detail);setDetailOpen(true);await loadHistory(row.id,ticket);}catch(error){if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setHistoryLoading(false);toast.error(message(error));}};
   const initialToken=activeScope()?.token;
   useEffect(()=>{const active=activeScope();if(!ready||!canView||!isCanonicalPedidoId(initialSelectedId)||!active?.token||active.groupId!==groupId||active.empresaId!==empresaId||active.actorId!==actorId)return;const marker=JSON.stringify([groupId,empresaId,actorId,initialSelectedId,active.token,reopenRequestId]);if(initialOpened.current===marker)return;initialOpened.current=marker;void show({id:initialSelectedId});},[initialSelectedId,groupId,empresaId,actorId,initialToken,reopenRequestId,canView,ready]);
+  // Central 360 → Novo pedido: reusa openCreate + vínculo da empresa ativa.
+  useEffect(()=>{
+    if(!ready||!canCreate||!isCanonicalPedidoId(initialCreateClienteEmpresaId))return;
+    const active=activeScope();
+    if(!active?.token||active.groupId!==groupId||active.empresaId!==empresaId||active.actorId!==actorId)return;
+    const marker=JSON.stringify([groupId,empresaId,actorId,initialCreateClienteEmpresaId,active.token,createRequestId]);
+    if(initialCreateOpened.current===marker)return;
+    if(formOpen&&dirty)return;
+    if(mutationGate.current.isPending(renderedScope.current))return;
+    const key=getOrCreatePedidoIntentKey(renderedScope.current,intentStorage(),()=>window.crypto.randomUUID());
+    if(!key)return;
+    initialCreateOpened.current=marker;
+    setCreateKey(key);
+    setEditing(null);
+    setForm({...emptyForm(),cliente_empresa_id:initialCreateClienteEmpresaId});
+    setDirty(false);
+    setDetailOpen(false);
+    setFormOpen(true);
+  },[initialCreateClienteEmpresaId,createRequestId,groupId,empresaId,actorId,initialToken,canCreate,ready,formOpen,dirty]);
   const requestTransition=(row)=>{const gate=evaluatePedidoStatusTransitionUiGate({row,groupId,empresaId,canTransition});if(gate.blockTransition){toast.error(gate.hint||'Alteração de status bloqueada (fail-closed).');return;}if(busy)return;setStatusMotivo('');setPendingTransition({row,target:gate.target});};
   const transition=async(row,target,motivo)=>{if(!row||!target||busy)return;const motivoGate=evaluatePedidoStatusMotivoUiGate(motivo);if(motivoGate.blockConfirm){toast.error(motivoGate.hint||'Motivo inválido.');return;}const mutation=mutationGate.current.begin(renderedScope.current);if(!mutation)return;const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket){mutationGate.current.end(mutation);return;}setBusy(true);try{const updated=await api.transition(row.id,target,motivoGate.motivo||undefined);await queryClient.invalidateQueries({queryKey:['pedidos-http',groupId,empresaId]});if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope())){toast.error('Contexto alterado. O status pode ter mudado; consulte o Pedido antes de repetir.');return;}setSelected(updated);await loadHistory(row.id,ticket);if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.success(`Pedido movido para ${PEDIDO_STATUS_LABELS[target]}.`);}catch(error){if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));else toast.error('Contexto alterado. Consulte o Pedido antes de repetir.');}finally{mutationGate.current.end(mutation);setBusy(mutationGate.current.isPending(renderedScope.current));}};
   const requestCancel=(row)=>{if(!row||isPedidoCancelDisabled(hasPermission,row.status)){toast.error('Cancelamento bloqueado (fail-closed).');return;}setCancelMotivo('');setPendingCancel(row);};

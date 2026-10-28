@@ -13,20 +13,25 @@ PainelDinamicoCliente: aba **Contatos** monta `GerenciarContatosClienteForm`
 (já usado no CadastroClienteCompleto) + `updateInContext` multiempresa.
 Fluxo: abrir cliente no Painel → Contatos sem abrir o form completo.
 
-Próximos passos (proposta — exigir OK do proprietário para lote amplo)
----------------------------------------------------------------------
-1. CentralCliente360: ações “Novo Orçamento / Novo Pedido” abrindo
-   OrcamentosTab/PedidosTab existentes com `initialClienteId` (extensão de
-   `centralCliente360Navigation.js` — create path, não open-by-id).
-2. DetalhesCliente: atalhos espelhando a Central (mesmos openers).
-3. Consolidar `GerenciarContatosCliente.jsx` (comercial/base44) vs Form
+Entregue neste tip (create path — abas existentes)
+--------------------------------------------------
+1. CentralCliente360: “Novo orçamento / Novo pedido” via
+   openCentral*CreateWindow + initialCreateClienteEmpresaId nas abas
+   canônicas (OrcamentosTab / PedidoCanonicoPanel). Sem ComercialV2.
+2. Sky chrome forms Bloco1/org (Marca…Região) — código/reopen intactos.
+
+Próximos (ainda proposta / inventário)
+-------------------------------------
+1. DetalhesCliente: atalhos espelhando a Central (mesmos openers).
+2. Consolidar `GerenciarContatosCliente.jsx` (comercial/base44) vs Form
    (cadastros/RBAC): canônico = Form; inventariar consumidores antes de
    reorganizar exposição. Não apagar sem prova de equivalência.
-4. Preservar PedidosTab blue (pin) e sky nos Cadastros de entrada em uso.
+3. Preservar PedidosTab blue (pin) e sky nos Cadastros restantes.
 
 Critérios de aceite
 -------------------
-[ ] Contatos editáveis no Painel com contexto/permissão
-[ ] Sem tela ComercialV2 / persistência paralela
-[ ] Ações/informações atuais preservadas
-[ ] Amplos atalhos Central360 só após OK explícito
+[x] Contatos editáveis no Painel com contexto/permissão
+[x] Sem tela ComercialV2 / persistência paralela
+[x] Create path Central360 nas abas existentes
+[ ] Atalhos DetalhesCliente espelhados
+[ ] Aceite visual amplo do proprietário

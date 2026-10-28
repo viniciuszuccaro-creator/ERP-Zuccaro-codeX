@@ -48,7 +48,7 @@ const errorMessage = (error) => {
 // Cache generations never contain credentials and are unique across remounts.
 let orcamentoSessionSequence = 0;
 
-export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, sessionToken, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null, proposalMode = false }) {
+export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, sessionToken, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null, initialCreateClienteEmpresaId = null, createRequestId = null, proposalMode = false }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -61,6 +61,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [submitting, setSubmitting] = useState(false);
   const actionGate = useRef(createOrcamentoActionGate());
   const initialOpened = useRef(null);
+  const initialCreateOpened = useRef(null);
   const detailRequest = useRef(0);
   const formScope = useRef(null);
   const cancelScope = useRef(null);
@@ -222,6 +223,22 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   };
   const initialToken = activeScope()?.token;
   useEffect(() => { const active = activeScope(); if (!contextReady || !canView || !isCanonicalComercialId(initialSelectedId) || !active?.token || !sameOrcamentoScope({ ...renderedScope.current, token: active.token }, renderedScope.current, active)) return; const marker = JSON.stringify([groupId, empresaId, actorId, initialSelectedId, active.token, reopenRequestId]); if (initialOpened.current === marker) return; initialOpened.current = marker; void showDetail({ id: initialSelectedId }); }, [initialSelectedId, groupId, empresaId, actorId, initialToken, reopenRequestId, canView, contextReady]);
+  // Central 360 → Novo orçamento: abre formulário existente com vínculo pré-selecionado (sem segundo fluxo).
+  useEffect(() => {
+    if (proposalMode || !contextReady || !canCreate || !isCanonicalComercialId(initialCreateClienteEmpresaId)) return;
+    const active = activeScope();
+    if (!active?.token || !sameOrcamentoScope({ ...renderedScope.current, token: active.token }, renderedScope.current, active)) return;
+    const marker = JSON.stringify([groupId, empresaId, actorId, initialCreateClienteEmpresaId, active.token, createRequestId]);
+    if (initialCreateOpened.current === marker) return;
+    if (formOpen && dirty) return;
+    initialCreateOpened.current = marker;
+    formScope.current = renderedScope.current;
+    setEditing(null);
+    setForm({ ...emptyForm(), cliente_empresa_id: initialCreateClienteEmpresaId });
+    setDirty(false);
+    setDetailOpen(false);
+    setFormOpen(true);
+  }, [initialCreateClienteEmpresaId, createRequestId, groupId, empresaId, actorId, initialToken, canCreate, contextReady, proposalMode, formOpen, dirty]);
   const performCancel = async (row) => {
     if (proposalMode) return;
     if (!row) return;

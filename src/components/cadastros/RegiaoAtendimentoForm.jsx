@@ -748,8 +748,8 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   if (windowMode) {
     return (
       <div className="w-full h-full bg-white rounded-lg border border-slate-200 flex flex-col overflow-hidden">
-        <div className="p-4 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-900">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <h2 className="text-lg font-bold text-slate-900">
             {regiaoId ? "Editar" : "Nova"} Região de Atendimento
           </h2>
         </div>

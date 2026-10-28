@@ -51,6 +51,50 @@ async function openCanonicalWindow({ row, block, allowed, assertCurrent, loadPan
 export const openCentralPedidoWindow = (args) => openCanonicalWindow({ ...args, kind: 'pedido', label: 'Pedido' });
 export const openCentralOrcamentoWindow = (args) => openCanonicalWindow({ ...args, kind: 'orcamento', label: 'Orçamento' });
 
+/**
+ * Vínculo ClienteEmpresa da empresa ativa no bloco canônico (id do link, não empresa_id).
+ * Preferência: elegível/ativo na empresa atual; sem inventar vínculo.
+ */
+export function resolveCentralClienteEmpresaId(empresasBlock, empresaId) {
+  if (!empresaId || empresasBlock?.status !== 'ok' || !Array.isArray(empresasBlock.data)) return null;
+  const rows = empresasBlock.data.filter((row) => row?.empresa_id === empresaId && isCanonicalComercialId(row?.id));
+  const preferred = rows.find((row) => row.elegivel_operacao !== false && row.ativo !== false && row.bloqueado !== true)
+    || rows.find((row) => row.ativo !== false)
+    || rows[0];
+  return preferred?.id || null;
+}
+
+/** Abre aba canônica em modo criação com cliente pré-selecionado (sem open-by-id). */
+async function openCanonicalCreateWindow({
+  clienteEmpresaId, allowed, assertCurrent, loadPanel, openWindow, props, kind, label,
+}) {
+  if (!allowed || !isCanonicalComercialId(clienteEmpresaId)) return false;
+  assertCurrent();
+  const Panel = await loadPanel();
+  assertCurrent();
+  openWindow(Panel, {
+    ...props,
+    canonicalHttp: true,
+    initialCreateClienteEmpresaId: clienteEmpresaId,
+    createRequestId: ++reopenRequestId,
+    windowMode: true,
+  }, {
+    title: label,
+    width: 1400,
+    height: 850,
+    uniqueKey: `comercial-${kind}-create-${JSON.stringify([props.groupId, props.empresaId, props.actorId, clienteEmpresaId])}`,
+    refreshPropsOnReuse: true,
+  });
+  return true;
+}
+
+export const openCentralPedidoCreateWindow = (args) => openCanonicalCreateWindow({
+  ...args, kind: 'pedido', label: 'Novo pedido',
+});
+export const openCentralOrcamentoCreateWindow = (args) => openCanonicalCreateWindow({
+  ...args, kind: 'orcamento', label: 'Novo orçamento',
+});
+
 /** Ephemeral exact-session receipt. Token stays in this closure, never in window props/keys. */
 export function createCentralClienteNavigationReceipt({ groupId, empresaId, actorId, token, scopeType = undefined }) {
   if (!groupId || (!empresaId && scopeType !== 'grupo') || !actorId || typeof token !== 'string' || !token.trim()) return null;

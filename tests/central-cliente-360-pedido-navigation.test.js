@@ -1,10 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { centralOpenErrorMessage, createCentralOpenGate, isCanonicalPedidoId, openCentralOrcamentoWindow, openCentralPedidoWindow } from '../src/components/comercial/centralCliente360Navigation.js';
+import {
+  centralOpenErrorMessage,
+  createCentralOpenGate,
+  isCanonicalPedidoId,
+  openCentralOrcamentoCreateWindow,
+  openCentralOrcamentoWindow,
+  openCentralPedidoCreateWindow,
+  openCentralPedidoWindow,
+  resolveCentralClienteEmpresaId,
+} from '../src/components/comercial/centralCliente360Navigation.js';
 import { sameOrcamentoScope } from '../src/components/comercial/orcamentoUiPolicy.js';
 
 const id = '11111111-1111-4111-8111-111111111111';
+const linkId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const row = { id, numero: '00000042' };
 const block = { status: 'ok', data: [row] };
 const props = { groupId: 'g', empresaId: 'e', actorId: 'u', sessionToken: 'synthetic-token' };
@@ -149,4 +159,78 @@ test('Central e Pedido consomem a mesma seleção inicial sem cadastrar fonte pa
   assert.match(central, /if\(!opened&&openGate\.current\.isCurrent\(ticket\)&&viewRef\.current===openedKey\)setError\(centralOpenErrorMessage\(\)\)/);
   assert.match(central, /catch\{if\(openGate\.current\.isCurrent\(ticket\)&&viewRef\.current===openedKey\)setError\(centralOpenErrorMessage\(\)\);\}/);
   assert.match(central, /disabled=\{Boolean\(openingRecord\.pedido\)\}/);
+});
+
+test('resolveCentralClienteEmpresaId usa vínculo da empresa ativa sem inventar registro', () => {
+  const empresas = {
+    status: 'ok',
+    data: [
+      { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', empresa_id: 'other', ativo: true, elegivel_operacao: true },
+      { id: linkId, empresa_id: 'e', ativo: true, elegivel_operacao: true, bloqueado: false },
+      { id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', empresa_id: 'e', ativo: false, elegivel_operacao: false },
+    ],
+  };
+  assert.equal(resolveCentralClienteEmpresaId(empresas, 'e'), linkId);
+  assert.equal(resolveCentralClienteEmpresaId({ status: 'forbidden', data: empresas.data }, 'e'), null);
+  assert.equal(resolveCentralClienteEmpresaId(empresas, 'missing'), null);
+  assert.equal(resolveCentralClienteEmpresaId({ status: 'ok', data: [{ id: 'not-uuid', empresa_id: 'e' }] }, 'e'), null);
+});
+
+test('Central abre criação de Orçamento/Pedido com vínculo pré-selecionado nas abas existentes', async () => {
+  const calls = [];
+  assert.equal(await openCentralOrcamentoCreateWindow({
+    clienteEmpresaId: linkId, allowed: true, props,
+    assertCurrent: () => calls.push('scope'),
+    loadPanel: async () => { calls.push('load'); return () => null; },
+    openWindow: (_c, windowProps, options) => calls.push({ windowProps, options }),
+  }), true);
+  assert.deepEqual(calls.slice(0, 3), ['scope', 'load', 'scope']);
+  assert.equal(calls[3].windowProps.initialCreateClienteEmpresaId, linkId);
+  assert.equal(calls[3].windowProps.canonicalHttp, true);
+  assert.equal(calls[3].options.title, 'Novo orçamento');
+  assert.match(calls[3].options.uniqueKey, /comercial-orcamento-create-/);
+  assert.ok(calls[3].windowProps.createRequestId);
+
+  const pedidoCalls = [];
+  assert.equal(await openCentralPedidoCreateWindow({
+    clienteEmpresaId: linkId, allowed: true, props,
+    assertCurrent: () => {},
+    loadPanel: async () => () => null,
+    openWindow: (_c, windowProps, options) => pedidoCalls.push({ windowProps, options }),
+  }), true);
+  assert.equal(pedidoCalls[0].windowProps.initialCreateClienteEmpresaId, linkId);
+  assert.equal(pedidoCalls[0].options.title, 'Novo pedido');
+  assert.match(pedidoCalls[0].options.uniqueKey, /comercial-pedido-create-/);
+});
+
+test('Central bloqueia criação sem RBAC, sem vínculo UUID ou com ID adulterado', async () => {
+  let loads = 0;
+  for (const input of [
+    { clienteEmpresaId: linkId, allowed: false },
+    { clienteEmpresaId: 'not-an-id', allowed: true },
+    { clienteEmpresaId: null, allowed: true },
+  ]) {
+    assert.equal(await openCentralPedidoCreateWindow({
+      ...input, props, assertCurrent: () => {},
+      loadPanel: async () => { loads++; return () => null; },
+      openWindow: () => { throw new Error('opened'); },
+    }), false);
+  }
+  assert.equal(loads, 0);
+});
+
+test('Painel Central e abas reutilizam create path sem ComercialV2', async () => {
+  const central = await readFile(new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url), 'utf8');
+  const pedido = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const orcamento = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(central, /openCentralOrcamentoCreateWindow/);
+  assert.match(central, /openCentralPedidoCreateWindow/);
+  assert.match(central, /data-action="central360-novo-orcamento"/);
+  assert.match(central, /data-action="central360-novo-pedido"/);
+  assert.match(central, /resolveCentralClienteEmpresaId/);
+  assert.doesNotMatch(central, /ComercialV2/);
+  assert.match(orcamento, /initialCreateClienteEmpresaId/);
+  assert.match(orcamento, /cliente_empresa_id: initialCreateClienteEmpresaId/);
+  assert.match(pedido, /initialCreateClienteEmpresaId/);
+  assert.match(pedido, /cliente_empresa_id:initialCreateClienteEmpresaId/);
 });

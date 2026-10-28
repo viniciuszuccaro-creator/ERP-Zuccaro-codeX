@@ -1,0 +1,31 @@
+PROPOSTA IMPLEMENTADA — Central360 create path (#397)
+======================================================
+America/Sao_Paulo 2026-10-28. Sem ComercialV2. Sem VPS/SQL.
+
+O que entrou neste lote
+-----------------------
+1. centralCliente360Navigation:
+   - resolveCentralClienteEmpresaId(empresasBlock, empresaId)
+   - openCentralOrcamentoCreateWindow / openCentralPedidoCreateWindow
+   - props: initialCreateClienteEmpresaId + createRequestId (abas existentes)
+
+2. OrcamentosTab + PedidoCanonicoPanel (via PedidosTab canonicalHttp):
+   - efeito create: abre formulário existente com cliente_empresa_id pré-selecionado
+   - não abre segunda tela paralela; respeita dirty / intentKey do Pedido
+
+3. CentralCliente360Panel:
+   - botões “Novo orçamento” / “Novo pedido” (RBAC criar+visualizar)
+   - fail-closed sem vínculo ativo na empresa atual
+
+Cadastros (mesmo lote, independente visual)
+-------------------------------------------
+Sky chrome windowMode: Marca, Cargo, Departamento, SetorAtividade,
+GrupoProduto, Representante, Turno, RegiaoAtendimento.
+Código/ID/reopen já existentes preservados — sem count+1 no browser.
+
+Aceite
+------
+[x] Contatos no Painel (lote anterior a2e26dec3)
+[x] Create path Central → abas canônicas
+[ ] Demo Private 5173 após CI + @codex no tip de código
+[ ] Aceite visual amplo permanece do proprietário
