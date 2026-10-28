@@ -1,0 +1,26 @@
+REGISTROS CADASTROS — classificação A/B/C/D (#397)
+=================================================
+America/Sao_Paulo 2026-10-28 ~10:20. Runner /workspace. Sem carga/seed.
+
+A) Registros existentes que não carregam
+   Causa típica: filtro/escopo/empresa/grupo, lista vazia com contexto
+   errado, ou identidade reopen só updated_date (ignorava refreshed HTTP).
+   Correção neste tip: matriz updated_at ?? updated_date (início de uso).
+   Operador/Histórico: persistência/fonte HTTP canônica.
+
+B) Campos omitidos pelo contrato
+   Pins RecordState/callback preservados — sem ampliar schema silencioso.
+   Histórico: total vs carregados vs exibidos (data-historico-linhas-*).
+
+C) Contexto / permissão / filtro incorretos
+   Histórico: Pedido.visualizar (sem grant cliente_empresa extra).
+   Fail-closed sem empresa/sessão/actor. queryKey isola tenant+usuário.
+   Operador: permissão salvar + tenantKey A↛B.
+
+D) Registros realmente ausentes
+   Staging privado / reconciliação Codex (#211/#344). Fora deste runner.
+   Códigos SYNTH/GATE-D ≠ legado. Fixture ≠ importação real.
+   Não renomear exemplos para aparentar recuperação.
+
+Ambiente deste tip: sintético/DEV no runner. Porta 44919 Codespace =
+OAuth (não ERP) — confirmar processo com Codex antes de reutilizar.
