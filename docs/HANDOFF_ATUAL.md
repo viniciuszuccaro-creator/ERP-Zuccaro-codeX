@@ -1,4 +1,16 @@
-## Estado vigente - SSH comprovado; gate SQL delimitado (2026-10-28)
+## Estado vigente - validacao condicional bloqueou aplicacao SQL (2026-10-28)
+
+Complemento do catalogo: CREATE no schema public nao e concedido a PUBLIC; seis bancos aceitam conexao PUBLIC (nao foram consultados registros neles). Isso tambem impede presumir escopo exclusivo do LOGIN. Nao corrigir somente as nove funcoes e declarar gate completo.
+PR397 avancou para 6bc890805efcd3536dc336f2e23bf5b2fa966b2a: tres achados antigos corrigidos na inspecao estatica. Novo P2: primeira load-more nao associa owner antes de setLoadingMore/erro, permitindo repeticao de offset/erro oculto; parecer #397/6474190419. Sem edicao/integracao da branch Cursor, sem alegar red/green executado.
+
+Proprietario autorizou CONDICIONALMENTE leitor temporario ate 1h + cinco policies SELECT CPA/coorte100, apos validacao/revisao; nao autorizou alterar PUBLIC ou a role API. Aplicacao no DEV NAO ocorreu.
+Novo ensaio no PostgreSQL sintetico existente (network none, sem banco operacional): escopo das cinco policies e sete negativas PASS; rollback/limpeza PASS. Primeira tentativa falhou por session_user administrativo no harness; corrigida a identidade simulada SEM retirar a negativa de SET ROLE. SET SESSION AUTHORIZATION e prova de ACL, NAO prova de autenticacao LOGIN real.
+Contraprova adicional reproduziu escrita persistente de large object por PUBLIC lo_create/lo_put/lo_get, apenas com bytes sinteticos, revertida integralmente. No DEV foram consultadas SOMENTE ACLs: nove assinaturas lo_*/lowrite tinham PUBLIC EXECUTE. Nao executar essas funcoes no destino para demonstrar o risco.
+GATE FAIL: SELECT/RLS nao bastam para chamar o principal estritamente leitor. REVOKE apenas da nova role nao remove PUBLIC. Revisao independente confirmou que alteracao de ACL PUBLIC exige extensao explicita de escopo, snapshot/matriz das 31 roles, preservacao de capacidades, teste/reversao e inventario restante; nove funcoes nao esgotam outras vias. Nao aplicar por inferencia, nem trocar por administrador/global read_only.
+Recibos/SQL sintetico/hashes em staging privado (sql-reader-gate-20261028.private.json e sql-reader-probe-20261028.private.json), fora do Git/build. Zero role/policy/grant criado no DEV; zero leitura de clientes; reconciliacao100 continua DESCONHECIDA, nao vazia. Proximo: fechar extensao ACL e revisao/decisao correspondente, mantendo a autorizacao restrita anterior sem repeti-la.
+Publicacao documental anterior b2d6fcfd6b65ef1527b7731335530921e8f7056a confirmada; seis checks CI SUCCESS (40720985387/40720994080). Lote atual acrescenta esta contraprova nova; nao repete suites/pilotos intactos. Originais/.vscode/Cursor preservados.
+
+## Historico - SSH comprovado; gate SQL delimitado (2026-10-28)
 
 Base: 21b48224101843726491c56f4825f473529b9e48, mesma branch/Codespace/PR342 (base comercial, nao main). .vscode/ preservada; nenhum chat interno em andamento observado.
 SSH encerrado: exit0, mesma chave/restrict/0600, senha bloqueada, sem sudo/docker; conta ate 28/12/2026 e chave ate 27/12/2026 20h59 Brasilia. Correcoes especificas autorizadas, backup reversivel e hashes privados. Nao reprovisionar.

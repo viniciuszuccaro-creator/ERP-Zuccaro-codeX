@@ -1,5 +1,35 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+### Atualizacao de validacao condicional (2026-10-28)
+
+Assinaturas confirmadas no catalogo DEV com PUBLIC EXECUTE: lo_creat(integer),
+lo_create(oid), lo_from_bytea(oid,bytea), lo_open(oid,integer),
+lo_put(oid,bigint,bytea), lo_truncate(integer,integer),
+lo_truncate64(integer,bigint), lo_unlink(oid), lowrite(integer,bytea).
+Nao executar contraprova mutante no DEV; a reproducao foi apenas sintetica/rollback.
+Complemento: PUBLIC nao tem CREATE no schema public, mas CONNECT e efetivo em seis
+bancos. Uma role sem memberships continua recebendo PUBLIC; revogar somente da
+role nao basta. Nenhuma alteracao PUBLIC ou acesso a registros desses bancos foi feito.
+Extensao candidata, fora da autorizacao atual: snapshot ACL/matriz efetiva das31roles,
+substituir somente PUBLIC EXECUTE das nove assinaturas por concessoes equivalentes
+as roles existentes e excluir o novo leitor; restringir CONNECT fora do destino
+aprovado sem reduzir capacidades atuais. Exige avaliar futuras roles/memberships,
+grantors/opcoes e outras vias antes de definir o patch final e pedir sua aplicacao.
+Sem CASCADE, DROP OWNED, mudanca HBA/rede, senha administrativa ou grants por inferencia.
+Ensaio com SET SESSION AUTHORIZATION e ACL simulada nao substitui LOGIN autenticado.
+
+A autorizacao posterior cobre leitor temporario por ate 1h e as cinco policies,
+SOMENTE apos ensaio/revisao. O ensaio detectou PUBLIC EXECUTE capaz de criar/escrever
+large objects, reproduzido apenas no PG sintetico e revertido. Catalogo DEV confirmou
+nove assinaturas com PUBLIC EXECUTE; nenhuma funcao de mutacao executada no DEV.
+O patch abaixo esta BLOQUEADO: nao aplicar nem declarar o principal somente leitor.
+Extensao ACL separada exige snapshot original (inclusive NULL, grantors/grant options),
+matriz efetiva das 31 roles, preservacao/reversao e inventario de outras vias de escrita
+/bancos/EXECUTE. REVOKE individual nao nega PUBLIC. Alterar PUBLIC e conceder grants
+diretos para preservar roles existentes altera semantica futura e exige nova decisao.
+Nenhuma alteracao PUBLIC/role API/DB/negocio foi feita. Detalhes no STATUS/HANDOFF;
+recibos e comandos sinteticos privados preservados. Auth LOGIN real continua sem prova.
+
 ## Gate SQL de reconciliacao100 - proposta NAO APLICADA (2026-10-28)
 
 SSH dedicado ja comprovado; nao reprovisionar. Inspecao administrativa de catalogos
