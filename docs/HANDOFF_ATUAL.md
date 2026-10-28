@@ -6,7 +6,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397 três achados** | código **`609f48a46`** / tip **`4e3c5e3b8`** | CI a terminalizar — **≠ aprovação** |
+| **#397 três achados** | código **`609f48a46`** / tip **`5dfcdbdb6`** | CI a terminalizar — **≠ aprovação** |
 | Ref. | `9938f080d` CI5041 | SUCCESS ≠ fechava P1/P2×2 |
 | #353 | `eaad0b84` | histórica |
 
