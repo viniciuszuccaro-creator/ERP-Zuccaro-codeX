@@ -1,3 +1,32 @@
+## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Tip HEAD | **(este push)** — sessão/cache Histórico + tip anterior `f8d626c59` |
+| CI tip `f8d626c59` | SUCCESS `40692529560` frontend/backend/expedicao — **≠ aprovação** |
+| Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
+| Codex | gap sessão #353/6467957970 fechado neste tip; **@codex review** SHA final |
+| #342 | tip `ac563ecea` — deltas novos pós-`47a5d0e` (parecer separado; branch Codex intocada) |
+| Fora | merge/deploy/carga; Documentacao/OAuthConsent; 2º escritor; seed fictício |
+
+**Bloqueios fechados (reprova tip):**
+1. OperadorCaixa self-managed — 1 create/update; tenantKey A↛B
+2. Histórico `clienteId` + paginação >50 + linhas honestas + P2 reset/fingerprint
+3. Guarda: `if(false)` rejeitado no módulo real
+4. 044 `PEDIDO_SCHEMA_IDEMPOTENCY_MISSING`
+5. **Sessão/cache:** `actorId`+`sessionCacheKey` no queryKey; `assertHistoricoHttpScope` pré+pós; enabled fail-closed sem sessão; epoch descarta resposta tardia
+
+**Reprova dirigida (pré-push):** Histórico **15 PASS** + Operador/guarda **9 PASS**
+**Evidência sessão:** `docs/evidence/apontamentos-353-prova-session-historico-20261028.txt`
+**Recuperação:** sky Cadastros 1–6 + `docs/evidence/recuperacao-funcional-visual-397-20261028.txt`
+**Proposta visual:** `docs/evidence/proposta-visual-navegavel-entrada-397-20261028.txt`
+**Registros:** tela ≠ dados; A/B/C contrato/contexto; D = staging Codex
+
+**Próximo:** parecer Codex tip HEAD → demo exclusiva SHA+HTTP; continua recuperação funcional independente.
+
+(2026-10-28 10:05 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 09:50 America/Sao_Paulo)
 
 | Campo | Valor |

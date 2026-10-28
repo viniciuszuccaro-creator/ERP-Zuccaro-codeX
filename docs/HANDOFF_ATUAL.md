@@ -1,3 +1,20 @@
+## CURSOR — VIGENTE (2026-10-28 10:05 America/Sao_Paulo)
+
+**Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.
+**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#397** bloqueios+sessão+sky | **(este push)** / base `f8d626c59` | CI base SUCCESS `40692529560`; sessão Histórico neste tip; **@codex review** |
+| #400/#399 | tips anteriores | CI SUCCESS |
+| #342 Codex | `ac563ecea` | deltas pós-`47a5d0e` — parecer Cursor separado; branch intocada |
+
+**Bloqueios tip:** Operador 1 escrita; Histórico paginação+linhas+P2; guarda if(false); 044; **actorId/sessionCacheKey + assertHistoricoHttpScope**
+**Prova sessão:** `docs/evidence/apontamentos-353-prova-session-historico-20261028.txt`
+**Recuperação:** `docs/evidence/recuperacao-funcional-visual-397-20261028.txt`
+**Proposta visual:** `docs/evidence/proposta-visual-navegavel-entrada-397-20261028.txt`
+**Próximo:** parecer Codex tip HEAD → demo exclusiva SHA+HTTP. Continua recuperação funcional. Sem merge/deploy/carga.
+
 ## CURSOR — VIGENTE (2026-10-28 09:50 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.

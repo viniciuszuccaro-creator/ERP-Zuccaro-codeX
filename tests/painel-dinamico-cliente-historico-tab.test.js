@@ -223,6 +223,8 @@ test('HistoricoProdutosCliente HTTP: lista por clienteId sem Central360 nem clie
   });
   assert.equal(queries[0].enabled, true);
   assert.ok(queries[0].queryKey.includes('http'));
+  assert.ok(queries[0].queryKey.includes('11111111-1111-1111-1111-111111111111'));
+  assert.ok(queries[0].queryKey.some((k) => typeof k === 'string' && k.startsWith('11111111-1111-1111-1111-111111111111:')));
   const page = await queries[0].queryFn({});
   assert.equal(filterCalls.length, 0);
   assert.equal(centralCalls.length, 0);
@@ -247,13 +249,13 @@ test('HistoricoProdutosCliente HTTP: sem empresa no contexto nao consulta (fail-
   assert.equal(filterCalls.length, 0);
 });
 
-test('HistoricoProdutosCliente HTTP: sem sessao falha sem cair no facade local', async () => {
+test('HistoricoProdutosCliente HTTP: sem sessao nao habilita consulta (fail-closed, sem facade)', async () => {
   const { queries, filterCalls, centralCalls } = await mountHistoricoCliente({
     backendMode: 'http',
     session: null,
   });
-  assert.equal(queries[0].enabled, true);
-  await assert.rejects(() => queries[0].queryFn({}), /Sessao HTTP|HTTP_SESSION/);
+  // Sem actor/token a query fica disabled — não dispara facade local.
+  assert.equal(queries[0].enabled, false);
   assert.equal(filterCalls.length, 0);
   assert.equal(centralCalls.length, 0);
 });
@@ -452,4 +454,75 @@ test('fonte HTTP nao referencia central360; contrato clienteId no pedidos.list',
   assert.match(src, /data-historico-linhas-exibidas/);
   // Teto de UI é honesto: não esconde linhas carregadas sem sinalizar.
   assert.match(src, /linhasTruncadas/);
+  // Isolamento sessão/usuário + revalidação de contexto na execução.
+  assert.match(src, /historicoSessionCacheKey/);
+  assert.match(src, /assertHistoricoHttpScope/);
+  assert.match(src, /SESSION_ACTOR_CHANGED|expectedActorId/);
+  assert.match(src, /HISTORICO_CONTEXT_DENIED|CONTEXT_CHANGED/);
+});
+
+test('assertHistoricoHttpScope: troca de actor ou rotacao de sessao falha fechado', async () => {
+  const h = await mountHistoricoCliente({
+    backendMode: 'http',
+    session: { token: 'tok-aaaa', actorId: 'actor-a', groupId: 'g1' },
+  });
+  // Reusa o módulo montado: exporta helpers via source re-exec
+  const source = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
+  }).outputText;
+  let sessionLive = { token: 'tok-aaaa', actorId: 'actor-a', groupId: 'g1' };
+  const sandbox = {
+    exports: {},
+    module: { exports: {} },
+    require(id) {
+      if (id === 'react') {
+        return {
+          __esModule: true,
+          default: { createElement: () => null },
+          createElement: () => null,
+          useState: (v) => [v, () => {}],
+          useRef: (v) => ({ current: v }),
+          useMemo: (f) => f(),
+          useEffect: () => {},
+        };
+      }
+      if (id === '@tanstack/react-query') return { useQuery: () => ({}) };
+      if (id === '@/components/lib/useContextoVisual') return { useContextoVisual: () => ({}) };
+      if (id === '@/components/lib/usePermissions') return { __esModule: true, default: () => ({ hasPermission: () => true }) };
+      if (id === '@/api/runtimeBackend') return { resolveErpBackendMode: () => 'http' };
+      if (id === '@/api/erpHttpSession') return { readErpHttpSession: () => sessionLive };
+      if (id === '@/api/httpApiClient') return { createHttpApiClient: () => ({ pedidos: { list: async () => ({ data: [] }) } }) };
+      if (id.startsWith('@/components/ui/')) return new Proxy({}, { get: () => 'UI' });
+      if (id === 'lucide-react') return new Proxy({}, { get: () => 'Icon' });
+      throw new Error(`Import inesperado: ${id}`);
+    },
+  };
+  vm.runInNewContext(compiled, sandbox);
+  const assertHistoricoHttpScope = sandbox.exports.assertHistoricoHttpScope || sandbox.module.exports.assertHistoricoHttpScope;
+  const historicoSessionCacheKey = sandbox.exports.historicoSessionCacheKey || sandbox.module.exports.historicoSessionCacheKey;
+  assert.equal(typeof assertHistoricoHttpScope, 'function');
+  const keyA = historicoSessionCacheKey(sessionLive);
+  assert.equal(keyA, 'actor-a:tok-aaaa');
+  assert.throws(
+    () => assertHistoricoHttpScope({
+      session: { ...sessionLive, actorId: 'actor-b' },
+      groupId: 'g1',
+      empresaId: 'e1',
+      expectedActorId: 'actor-a',
+      expectedSessionKey: keyA,
+    }),
+    /usuario|SESSION_ACTOR/i,
+  );
+  assert.throws(
+    () => assertHistoricoHttpScope({
+      session: { ...sessionLive, token: 'tok-bbbb' },
+      groupId: 'g1',
+      empresaId: 'e1',
+      expectedActorId: 'actor-a',
+      expectedSessionKey: keyA,
+    }),
+    /rotacion|SESSION_ROTATED/i,
+  );
+  assert.ok(h.queries[0].queryKey.includes('actor-a'));
 });

@@ -90,18 +90,42 @@ export function mapPedidosToHistoricoLinhas(pedidos = []) {
  *
  * Sem fallback silencioso para entityListSorted/local em modo HTTP.
  */
-export async function loadPedidosHistoricoHttp({
-  clienteId,
+/** Snapshot mínimo da sessão para queryKey (sem logar o token completo). */
+export function historicoSessionCacheKey(session) {
+  if (!session?.token || !session?.actorId) return null;
+  return `${session.actorId}:${String(session.token).slice(0, 16)}`;
+}
+
+/**
+ * Revalida sessão/tenant antes e depois da listagem.
+ * Descarta resultado se usuário/empresa/grupo mudarem durante a request.
+ */
+export function assertHistoricoHttpScope({
+  session,
   groupId,
   empresaId,
-  signal,
-  limit = PEDIDOS_PAGE_LIMIT,
-  offset = 0,
+  expectedActorId = null,
+  expectedSessionKey = null,
 }) {
-  const session = readErpHttpSession();
   if (!session?.token || !session?.actorId || !session?.groupId) {
     throw Object.assign(new Error("Sessao HTTP ausente para historico de produtos."), {
       code: "HTTP_SESSION_REQUIRED",
+    });
+  }
+  if (expectedActorId && session.actorId !== expectedActorId) {
+    throw Object.assign(new Error("Sessao trocou de usuario durante o historico."), {
+      code: "SESSION_ACTOR_CHANGED",
+    });
+  }
+  if (expectedSessionKey && historicoSessionCacheKey(session) !== expectedSessionKey) {
+    throw Object.assign(new Error("Sessao HTTP rotacionou durante o historico."), {
+      code: "SESSION_ROTATED",
+    });
+  }
+  const effectiveGroup = groupId || session.groupId;
+  if (session.groupId !== effectiveGroup) {
+    throw Object.assign(new Error("Grupo da sessao diverge do contexto do historico."), {
+      code: "GROUP_CONTEXT_MISMATCH",
     });
   }
   if (!empresaId) {
@@ -109,25 +133,56 @@ export async function loadPedidosHistoricoHttp({
       code: "EMPRESA_CONTEXT_REQUIRED",
     });
   }
+}
+
+export async function loadPedidosHistoricoHttp({
+  clienteId,
+  groupId,
+  empresaId,
+  signal,
+  limit = PEDIDOS_PAGE_LIMIT,
+  offset = 0,
+  expectedActorId = null,
+  expectedSessionKey = null,
+}) {
+  const sessionBefore = readErpHttpSession();
+  assertHistoricoHttpScope({
+    session: sessionBefore,
+    groupId,
+    empresaId,
+    expectedActorId,
+    expectedSessionKey,
+  });
   if (!clienteId) {
     throw Object.assign(new Error("Historico HTTP exige clienteId."), {
       code: "CLIENTE_ID_REQUIRED",
     });
   }
   const http = createHttpApiClient({
-    getScope: () => ({
-      token: session.token,
-      groupId: groupId || session.groupId,
-      empresaId,
-      actorId: session.actorId,
-      actorEmail: session.email || null,
-    }),
+    getScope: () => {
+      const live = readErpHttpSession() || sessionBefore;
+      return {
+        token: live.token,
+        groupId: groupId || live.groupId,
+        empresaId,
+        actorId: live.actorId,
+        actorEmail: live.email || null,
+      };
+    },
   });
   const page = await http.pedidos.list({
     limit,
     offset,
     clienteId,
     signal,
+  });
+  // Revalida após a rede — resposta tardia com sessão/tenant trocado não entra no cache.
+  assertHistoricoHttpScope({
+    session: readErpHttpSession(),
+    groupId,
+    empresaId,
+    expectedActorId: expectedActorId || sessionBefore.actorId,
+    expectedSessionKey: expectedSessionKey || historicoSessionCacheKey(sessionBefore),
   });
   const rows = Array.isArray(page?.data) ? page.data : (Array.isArray(page) ? page : []);
   const meta = page?.meta && typeof page.meta === "object"
@@ -154,12 +209,18 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
   const contextoValido = Boolean(groupId || empresaId);
   const httpMode = resolveErpBackendMode() === "http";
+  const sessionSnapshot = readErpHttpSession();
+  const actorId = sessionSnapshot?.actorId || null;
+  const sessionCacheKey = historicoSessionCacheKey(sessionSnapshot);
   const podeVisualizarHistorico =
     hasPermission("Comercial.Pedido.visualizar") ||
     hasPermission("CRM.Cliente.visualizar") ||
     hasPermission("comercial", "visualizar_pedido");
   const consultaHabilitada = Boolean(
-    clienteId && contextoValido && podeVisualizarHistorico && (!httpMode || empresaId),
+    clienteId
+      && contextoValido
+      && podeVisualizarHistorico
+      && (!httpMode || (empresaId && actorId && sessionCacheKey)),
   );
 
   const sessionEpochRef = useRef(0);
@@ -169,12 +230,15 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(null);
 
+  // Isolamento de cache: grupo/empresa + usuário/sessão (padrão Orçamento/Pedido).
   const queryKey = [
     "historico-produtos-cliente-contexto",
     clienteId,
     groupId,
     empresaId,
     contexto,
+    actorId,
+    sessionCacheKey,
     httpMode ? "http" : "legado",
   ];
 
@@ -192,7 +256,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   useEffect(() => {
     firstPageFingerprintSeenRef.current = null;
     resetPaginationSession();
-  }, [clienteId, groupId, empresaId, contexto, httpMode]);
+  }, [clienteId, groupId, empresaId, contexto, actorId, sessionCacheKey, httpMode]);
 
   const {
     data: firstPage,
@@ -202,15 +266,35 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   } = useQuery({
     queryKey,
     queryFn: async ({ signal }) => {
+      const epoch = sessionEpochRef.current;
+      // Fail-closed: revalida permissão/contexto na execução (enabled sozinho não basta).
+      if (!clienteId || !contextoValido || !podeVisualizarHistorico) {
+        throw Object.assign(new Error("Historico bloqueado: contexto ou permissao ausente."), {
+          code: "HISTORICO_CONTEXT_DENIED",
+        });
+      }
       if (httpMode) {
-        return loadPedidosHistoricoHttp({
+        if (!empresaId) {
+          throw Object.assign(new Error("Historico HTTP exige empresa no contexto."), {
+            code: "EMPRESA_CONTEXT_REQUIRED",
+          });
+        }
+        const page = await loadPedidosHistoricoHttp({
           clienteId,
           groupId,
           empresaId,
           signal,
           limit: PEDIDOS_PAGE_LIMIT,
           offset: 0,
+          expectedActorId: actorId,
+          expectedSessionKey: sessionCacheKey,
         });
+        if (epoch !== sessionEpochRef.current) {
+          throw Object.assign(new Error("Contexto alterado durante consulta do historico."), {
+            code: "CONTEXT_CHANGED",
+          });
+        }
+        return page;
       }
       // Legado/local: filterInContext. Em HTTP nunca cai aqui (sem facade silenciosa).
       const rows = await filterInContext(
@@ -219,6 +303,11 @@ export default function HistoricoProdutosCliente({ clienteId }) {
         "-data_pedido",
         LEGADO_PEDIDOS_LIMIT,
       );
+      if (epoch !== sessionEpochRef.current) {
+        throw Object.assign(new Error("Contexto alterado durante consulta do historico."), {
+          code: "CONTEXT_CHANGED",
+        });
+      }
       const data = Array.isArray(rows) ? rows : [];
       return {
         data,
@@ -291,6 +380,8 @@ export default function HistoricoProdutosCliente({ clienteId }) {
         signal: controller.signal,
         limit: PEDIDOS_PAGE_LIMIT,
         offset,
+        expectedActorId: actorId,
+        expectedSessionKey: sessionCacheKey,
       });
       if (epoch !== sessionEpochRef.current) return; // contexto/sessão trocou — descarta
       setExtraPages((prev) => [...prev, page]);

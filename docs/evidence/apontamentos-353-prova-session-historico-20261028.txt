@@ -1,0 +1,30 @@
+PROVA — Histórico sessão/cache/contexto — tip #397 (America/Sao_Paulo 2026-10-28 ~10:05)
+========================================================================================
+Modalidade: runner /workspace ≠ Codespace xylophone (gh 403; sem Browser neste executor).
+Chrome (owner): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Base tip anterior: f8d626c59 (CI SUCCESS frontend/backend/expedicao — ≠ aprovação).
+Codex em f8d626c59: review running; este tip fecha gap sessão apontado em #353/6467957970.
+
+Delta deste tip
+---------------
+HistoricoProdutosCliente:
+  - historicoSessionCacheKey(actorId + token[:16])
+  - queryKey inclui actorId + sessionCacheKey (além de grupo/empresa/cliente)
+  - assertHistoricoHttpScope: SESSION_ACTOR_CHANGED / SESSION_ROTATED / GROUP_CONTEXT_MISMATCH
+  - revalidação pré+pós pedidos.list; resposta tardia descartada
+  - enabled fail-closed sem actor/sessão (sem facade local)
+  - queryFn revalida permissão/contexto (HISTORICO_CONTEXT_DENIED / CONTEXT_CHANGED)
+  - load more usa expectedActorId/expectedSessionKey; epoch descarta após troca
+
+Reprova dirigida (este tip, pré-push)
+-------------------------------------
+painel-dinamico-cliente-historico-tab: 15 PASS
+  - actor/session no queryKey
+  - sem sessão → enabled false (sem facade)
+  - assertHistoricoHttpScope troca actor / rotação token → throw
+cadastros-operador-caixa-persist-unica + guarda submit: 9 PASS
+  - 1 create/update; if(false) rejeitado; tenant A↛B
+
+Não reabrir: Contatos/CodigoField/Região P2; pins RecordState; PedidosTab blue.
+#342 tip ac563ecea — WIP fora dos 50 não tip; parecer deltas novos em lote separado.
+CI SUCCESS ≠ aprovação. Pedido: @codex review no SHA tip final após push.
