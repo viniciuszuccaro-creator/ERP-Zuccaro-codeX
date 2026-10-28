@@ -186,10 +186,10 @@ export default function SegmentoClienteForm({
 
   if (windowMode) {
     return (
-      <div className="w-full h-full flex flex-col bg-sky-50/40">
-        <div className="flex items-center gap-3 p-4 border-b border-sky-200 bg-sky-100/80">
+      <div className="w-full h-full flex flex-col bg-white">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
           <Users className="w-6 h-6 text-sky-600" />
-          <h2 className="text-lg font-bold text-sky-950">
+          <h2 className="text-lg font-bold text-slate-900">
             {segmentoBoundId ? 'Editar Segmento' : 'Novo Segmento de Cliente'}
           </h2>
         </div>

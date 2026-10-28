@@ -143,8 +143,8 @@ export default function LocalEstoqueForm({
   return (
     <div className={containerClass}>
       {windowMode && (
-        <div className="shrink-0 border-b border-sky-200 bg-sky-100/80 px-6 py-3">
-          <h2 className="text-base font-semibold text-sky-950">
+        <div className="shrink-0 flex items-center gap-3 border-b bg-gradient-to-r from-sky-50 to-sky-100 px-6 py-3">
+          <h2 className="text-lg font-bold text-slate-900">
             {localBoundId ? "Editar Local de Estoque" : "Novo Local de Estoque"}
           </h2>
         </div>
