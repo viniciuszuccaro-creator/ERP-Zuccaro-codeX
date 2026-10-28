@@ -397,7 +397,17 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div className="w-full h-full bg-white flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Truck className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {transportadora?.id ? 'Editar Transportadora' : 'Nova Transportadora'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto">{content}</div>
+      </div>
+    );
   }
 
   return content;

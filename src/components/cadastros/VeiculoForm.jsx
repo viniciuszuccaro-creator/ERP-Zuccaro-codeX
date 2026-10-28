@@ -218,9 +218,9 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Truck className="w-5 h-5 text-blue-600" />
+        <div className="mb-4 flex items-center gap-3 p-4 -mx-6 -mt-6 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Truck className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
             {dadosIniciais ? 'Editar Veículo' : 'Novo Veículo'}
           </h2>
         </div>

@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, QrCode, Link2, CheckCircle2, Copy, X, AlertTriangle } from "lucide-react";
+import { CreditCard, QrCode, Link2, CheckCircle2, Copy, X, AlertTriangle, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import GeradorLinkPagamento from "./GeradorLinkPagamento";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -34,6 +35,7 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
   const [tipoCobranca, setTipoCobranca] = useState("pix");
   const [gerando, setGerando] = useState(false);
   const [cobrancaGerada, setCobrancaGerada] = useState(null);
+  const [gatewayHintDismissed, setGatewayHintDismissed] = useState(false);
   const {
     empresaAtual,
     grupoAtual,
@@ -103,7 +105,22 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
     enabled: contextoValido,
   });
 
+  // Orientação de gateway (equivalente ao WizardGateway da referência integra-novo):
+  // sem módulo paralelo — consulta mestres já existentes no escopo multiempresa.
+  const { data: gatewaysAtivos = [] } = useQuery({
+    queryKey: ["gateways-pagamento-cobranca", contextKey, empresaId],
+    queryFn: async () => {
+      const rows = await filterInContext("GatewayPagamento", { ativo: true }, "-created_date", 10);
+      return Array.isArray(rows) ? rows : [];
+    },
+    enabled: contextoValido && Boolean(empresaId),
+  });
+
   const config = configsCobranca.find((c) => c.empresa_id === empresaId) || configsCobranca[0] || {};
+  const temGatewayCadastro = gatewaysAtivos.some((g) => !empresaId || g.empresa_id === empresaId || !g.empresa_id);
+  const temProvedorConfig = Boolean(config?.provedor_cobranca || config?.integracao_boletos?.api_key);
+  const gatewayPronto = temGatewayCadastro || temProvedorConfig;
+  const tipoGatewayLabel = tipoCobranca === "boleto" ? "Boleto" : (tipoCobranca === "pix" ? "PIX" : "cobrança");
 
   const gerarBoletoMutation = useMutation({
     mutationFn: async () => {
@@ -229,10 +246,10 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b sticky top-0 z-10">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-sky-100 border-b sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
+              <CreditCard className="w-5 h-5 text-sky-600" />
               Gerar Cobranca
             </CardTitle>
             <Button variant="ghost" size="icon" onClick={onClose} title="Fechar">
@@ -271,6 +288,69 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
                 {!contextoValido || !empresaId
                   ? "Selecione uma empresa do grupo antes de gerar cobranca."
                   : "Seu perfil nao tem permissao para gerar cobrancas."}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!bloqueado && gatewayPronto && (
+            <div
+              className="flex items-center gap-2 text-emerald-700 text-sm bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"
+              data-action="cobranca-gateway-ok"
+            >
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span>Gateway de pagamento configurado e pronto para {tipoGatewayLabel}.</span>
+            </div>
+          )}
+
+          {!bloqueado && !gatewayPronto && !gatewayHintDismissed && (
+            <Alert className="border-amber-300 bg-amber-50" data-action="cobranca-gateway-orientacao">
+              <CreditCard className="h-4 w-4 text-amber-600" />
+              <AlertDescription>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 space-y-2">
+                    <p className="font-semibold text-amber-800">Gateway de pagamento nao configurado</p>
+                    <p className="text-xs text-amber-700">
+                      Para gerar {tipoGatewayLabel} em producao, cadastre um gateway ativo (Cadastros → Gateways de Pagamento)
+                      ou complete a Configuracao de Cobranca da empresa. Sem isso a geracao fica so em simulacao.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { nome: "Asaas", desc: "Boleto, PIX, Cartao", popular: true },
+                        { nome: "Juno", desc: "Boleto, PIX, Link" },
+                        { nome: "PagSeguro", desc: "Cartao, Link" },
+                        { nome: "Stripe", desc: "Cartao internacional" },
+                      ].map((gw) => (
+                        <div
+                          key={gw.nome}
+                          className={`rounded-lg border px-3 py-2 text-xs ${gw.popular ? "border-amber-400 bg-white" : "border-amber-200 bg-amber-50/50"}`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold">{gw.nome}</span>
+                            {gw.popular ? <Badge className="text-[9px] bg-amber-500 text-white">Popular</Badge> : null}
+                          </div>
+                          <p className="text-amber-600">{gw.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-sky-600 hover:bg-sky-700 text-white"
+                      data-action="cobranca-abrir-cadastro-gateway"
+                      onClick={() => { window.location.href = "/Cadastros"; }}
+                    >
+                      <Settings className="w-3.5 h-3.5 mr-1.5" /> Abrir Cadastros (Gateways)
+                    </Button>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-amber-400 hover:text-amber-600 mt-0.5"
+                    aria-label="Dispensar orientacao de gateway"
+                    onClick={() => setGatewayHintDismissed(true)}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </AlertDescription>
             </Alert>
           )}

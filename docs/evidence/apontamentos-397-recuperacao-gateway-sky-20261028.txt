@@ -1,0 +1,35 @@
+RECUPERAÇÃO FUNCIONAL INDEPENDENTE #397 (fora dos 3 achados)
+============================================================
+America/Sao_Paulo 2026-10-28 ~12:55. Modalidade: runner `/workspace`.
+Referência: erp-integra-novo (sparse /tmp/erp-integra-novo-cmp).
+Não toca OperadorCaixaForm / HistoricoProdutosCliente (pacote @codex 609f48a46).
+
+Classificação vs referência
+---------------------------
+Páginas só na referência (NÃO restaurar): Documentacao, EmpresaOnboarding, OAuthConsent.
+Financeiro ContasPagar: candidata já tem baixa inline (609L) > dialog isolado da referência.
+PortalCliente: TabsTrigger vivem em PortalTabsNav — não órfãos.
+Ausência de WizardGatewayPagamento.jsx na candidata = capacidade perdida no
+GerarCobrancaModal (referência montava o wizard).
+
+Recuperação concreta (melhoria do existente)
+--------------------------------------------
+1) GerarCobrancaModal: painel de orientação de gateway (cadastro GatewayPagamento
+   + ConfiguracaoCobrancaEmpresa via filterInContext). Sem arquivo Wizard paralelo.
+   Chrome sky no header. CTA → /Cadastros (Gateways).
+2) BancoForm / MotoristaForm / VeiculoForm / TransportadoraForm: chrome sky
+   windowMode (entrada em uso azul-clara), sem redesign amplo.
+
+Provas
+------
+node --test tests/financeiro-gerar-cobranca-gateway-orientacao.test.js → 2 PASS
+
+Dados
+-----
+Tela ≠ registros. Sem seed fictício. SQL/reconciliação 100 = Codex desktop.
+Demo Codespace 5173 só após parecer dos 3 achados.
+
+Próximo pacote independente sugerido
+------------------------------------
+Forms Cadastros ainda sem sky (Cargo/Departamento/PlanoContas/…) OU
+wiring reopen residual (ApiExterna/ChatbotCanal = outras PRs). Sem reabrir #397 achados.

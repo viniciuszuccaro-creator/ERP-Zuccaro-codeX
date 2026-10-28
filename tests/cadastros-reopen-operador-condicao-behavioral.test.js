@@ -165,7 +165,9 @@ test('defeito reproduzivel OperadorCaixa: sem reopen canônico perdia updated_at
   const src = await readFile(new URL('../src/components/cadastros/OperadorCaixaForm.jsx', import.meta.url), 'utf8');
   assert.match(src, /useCadastroReopenOnIdentity/);
   assert.match(src, /operadorBoundId/);
-  assert.match(src, /updateInContext\('OperadorCaixa', operadorBoundId/);
+  // #397: update usa intentBoundId capturado de operadorBoundId antes do await (não props.id).
+  assert.match(src, /intentBoundId\s*=\s*operadorBoundId/);
+  assert.match(src, /updateInContext\('OperadorCaixa',\s*intentBoundId/);
   assert.doesNotMatch(src, /if \(operador\?\.id\)/);
 });
 
