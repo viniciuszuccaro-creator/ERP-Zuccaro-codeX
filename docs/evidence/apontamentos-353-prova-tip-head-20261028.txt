@@ -8,7 +8,8 @@ Stash: stash@{0} wip-after-350 preservado.
 
 SHA
 ---
-Tip HEAD: ed8ea2d14d5447c3e7562f0ed57b4e6d95406028
+Tip HEAD: 809ad54ca590404793768847579d47ace44061b3
+Código tip: ed8ea2d14d5447c3e7562f0ed57b4e6d95406028
 Código bloqueios: 88f9707fb (tenant Operador) / 78c214f89 (base)
 Delta: Historico linhas honestas + Transportadora/Produto/DespesaRecorrente updated_at
 
