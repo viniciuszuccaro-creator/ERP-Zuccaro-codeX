@@ -5,7 +5,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** bloqueios+P2+sky | **HEAD deste push** | CI `77312b9ad` SUCCESS; P2 Histórico fechados; **@codex review** |
+| **#397** bloqueios+P2+sky | **`a57cdc0fd`** | CI `77312b9ad` SUCCESS; P2+sky neste tip; **@codex review** |
 | #400/#399 | tips anteriores | CI SUCCESS |
 | #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** |
 

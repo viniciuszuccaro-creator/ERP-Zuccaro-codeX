@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **este push** (bloqueios + P2 Histórico + sky Cadastros) |
+| Tip HEAD | **`a57cdc0fd`** (bloqueios + P2 Histórico + sky Cadastros) |
 | CI tip `77312b9ad` | SUCCESS frontend/backend/expedicao — **≠ aprovação** |
 | Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
