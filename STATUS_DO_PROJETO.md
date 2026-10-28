@@ -1,23 +1,21 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 14:48 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 15:55 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`8d9ecc72f`** |
-| Tip load-more | **`9842e7fd8`** — P2 1º load-more owner+inFlight |
-| Tip Contatos | **`a2e26dec3`** — Painel Contatos + proposta C360 |
-| CI tip HEAD | **SUCCESS** run `40738088045` — **≠ aprovação** |
-| CI Contatos `a2e26dec3` | **SUCCESS** run `40738039648` — **≠ aprovação** |
+| Tip código | **`cbc21f14a`** — Central360 create path + sky Bloco1 |
+| Tip load-more | **`9842e7fd8`** — Codex: no major issues (comment 6444543795) |
+| Tip Contatos | **`a2e26dec3`** — Painel Contatos |
 | Tip 3 achados | **`609f48a46`** — inspecionados OK |
-| Ref. | **`6bc890805`** CI5051 SUCCESS — **≠ aprovação** |
-| Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6474190419 |
+| CI tip anterior HEAD | **SUCCESS** run `40739268559` em `557792320` — **≠ aprovação** |
+| CI tip `cbc21f14a` | em andamento — **≠ aprovação** |
 | Modalidade | runner `/workspace` |
-| Revisão | **@codex** em **`9842e7fd8`** (load-more); CI ≠ aprovação |
+| Revisão | **@codex** em **`cbc21f14a`** (create path + sky); CI ≠ aprovação |
 
-**Provas:** load-more + painel-contatos evidence · proposta C360
-**Próximo:** parecer Codex load-more → demo Private 5173. Sem merge/deploy/carga/SQL.
+**Provas:** `docs/evidence/proposta-comercial360-create-central-397-20261028.txt` · navigation 14 PASS · sky forms 8 PASS · reopen Marca/Cargo 14 PASS
+**Próximo:** CI tip código → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 14:48 America/Sao_Paulo)
+(2026-10-28 15:55 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
