@@ -1,21 +1,23 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:56 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 13:03 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip código 3 achados | **`609f48a46`** — P1 carga Operador · P2 submit · P2 Histórico 1º render |
-| Tip HEAD | **`9cbc5491e`** (docs; código recovery/CI **`3cc9ea4fb`**; 3 achados **`609f48a46`**) |
-| CI `609f48a46` | frontend FAIL (assert fonte `operadorBoundId`→`intentBoundId`) — corrigido neste tip |
-| Ref. consultada | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação** |
+| Tip HEAD | **`598c4c350`** |
+| Tip 3 achados | **`609f48a46`** — P1 carga · P2 submit · P2 Histórico 1º render |
+| Tip recovery+CI-fix | **`3cc9ea4fb`** — reopen `intentBoundId` + gateway cobrança + sky |
+| CI tip HEAD | **SUCCESS** run `40721113540` — **≠ aprovação** |
+| CI `3cc9ea4fb` | **SUCCESS** run `40721031536` — **≠ aprovação** |
+| CI `609f48a46` | FAIL assert fonte (corrigido em `3cc9ea4fb`) |
+| Ref. | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação** |
 | Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6473153593 |
 | Modalidade | runner `/workspace` — xylophone = Codex desktop (SQL/reconciliação 100) |
-| Revisão | **@codex review** no SHA código **`609f48a46`** (+ tip CI-fix se necessário) |
+| Revisão | **@codex** no **`609f48a46`** (achados); tip CI-fix em `3cc9ea4fb` |
 
-**3 achados:** `OperadorCaixaForm` + `HistoricoProdutosCliente` — provas `docs/evidence/apontamentos-397-tres-achados-20261028.txt`.
-**Recuperação indep.:** `GerarCobrancaModal` orientação gateway (sem Wizard paralelo) + sky Banco/Motorista/Veículo/Transportadora — `docs/evidence/apontamentos-397-recuperacao-gateway-sky-20261028.txt`.
-**Próximo:** CI terminal deste tip → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
+**Provas:** `docs/evidence/apontamentos-397-tres-achados-20261028.txt` · `docs/evidence/apontamentos-397-recuperacao-gateway-sky-20261028.txt`
+**Próximo:** parecer Codex → demo exclusiva Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 12:56 America/Sao_Paulo)
+(2026-10-28 13:03 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
