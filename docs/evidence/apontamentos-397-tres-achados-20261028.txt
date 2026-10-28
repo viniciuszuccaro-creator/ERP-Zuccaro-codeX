@@ -1,0 +1,48 @@
+PROVA #397 — três achados Codex (parecer issuecomment-6473153593)
+================================================================
+America/Sao_Paulo 2026-10-28. Modalidade: runner `/workspace`.
+Candidata única: PR #397 `cursor/operador-historico-persist-392b`.
+Ref. consultada tip docs: `9938f080d` (CI5041 SUCCESS) — ≠ aprovação.
+Parecer: inspeção estática; CI não encerra os achados.
+
+ANTES (defeitos no tip 9938f080d / código 854e80256)
+----------------------------------------------------
+P1 Operador self-managed: V24 passa isLoadingRecord/loadIncomplete, mas
+  form não honrava — defaults de projeção parcial podiam persistir.
+  Botão disabled ≠ proteção do handler.
+P2 Operador: sem trava de intenção pré-await (só estado visual).
+P2 Histórico: limpeza de extraPages só em useEffect → 1º render após
+  troca A→B ainda mostrava pedidos/meta de A.
+
+DEPOIS (este pacote)
+--------------------
+P1 OperadorCaixaForm: saveBlocked no handler + botão; props canônicas V24.
+P2 OperadorCaixaForm: persistInFlightRef antes do 1º await; boundId/tenant
+  live refs; finally libera retry; troca de identidade não conclui antigo.
+P2 HistoricoProdutosCliente: extraSession{ownerKey,pages}; historicoOwnerKey
+  (cliente+grupo+empresa+ator+sessão); filtro no render (ownerMatches).
+
+PROVAS (consumidor real / mesma instância)
+------------------------------------------
+node --test tests/cadastros-operador-caixa-persist-unica.test.js \
+           tests/painel-dinamico-cliente-historico-tab.test.js
+→ 30 PASS / 0 FAIL
+
+Inclui:
+- get atrasado → submit direto → 0 writes
+- loadIncomplete → 0 writes
+- leitura completa → 1 write
+- doubleSubmit + Promise pendente → 1 create; falha libera retry
+- sucesso único (double submit)
+- A load-more → B 1º render SEM flush → sem pedidos/meta de A
+- contraprova: sem filtro owner, A+B vazariam
+
+REPROVA bloqueios intactos (dirigida)
+-------------------------------------
+frontend 72 PASS (Operador+Histórico+mount+Cliente updated_at+guarda+044+v24)
+server runtime09-pedido-service 11 PASS (list inativo ok; create/update 422)
+
+Demo Codespace / Chrome: NÃO neste runner (xylophone = Codex desktop).
+Após parecer no SHA deste tip: janela exclusiva Private 5173.
+
+CI SUCCESS ≠ aprovação. @codex review no SHA remoto deste tip.

@@ -36,6 +36,17 @@ async function mountHistoricoCliente({
   const filterCalls = [];
   const centralCalls = [];
   const listCalls = [];
+  // Contexto mutável na MESMA instância (não remonta o componente).
+  const live = {
+    clienteId,
+    groupId,
+    empresaId,
+    session,
+    backendMode,
+    pedidosList,
+    queryData,
+    hasPermission,
+  };
 
   const react = {
     createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
@@ -70,13 +81,15 @@ async function mountHistoricoCliente({
       constructor() { this.signal = { aborted: false }; }
       abort() { this.signal.aborted = true; }
     },
+    JSON,
     __modules: {
       react: { __esModule: true, default: react, ...react },
       '@tanstack/react-query': {
         useQuery(opts) {
           queries.push(opts);
-          const enabledData = queryData !== undefined
-            ? queryData
+          const qd = live.queryData;
+          const enabledData = qd !== undefined
+            ? qd
             : (opts.enabled ? { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } } : undefined);
           return {
             data: enabledData,
@@ -102,20 +115,20 @@ async function mountHistoricoCliente({
             filterCalls.push({ entity, filter, rest });
             return [];
           },
-          empresaAtual: empresaId ? { id: empresaId, group_id: groupId } : null,
-          grupoAtual: groupId ? { id: groupId } : null,
-          contexto: empresaId ? 'empresa' : (groupId ? 'grupo' : null),
+          empresaAtual: live.empresaId ? { id: live.empresaId, group_id: live.groupId } : null,
+          grupoAtual: live.groupId ? { id: live.groupId } : null,
+          contexto: live.empresaId ? 'empresa' : (live.groupId ? 'grupo' : null),
         }),
       },
       '@/components/lib/usePermissions': {
         __esModule: true,
-        default: () => ({ hasPermission }),
+        default: () => ({ hasPermission: (...args) => live.hasPermission(...args) }),
       },
       '@/api/runtimeBackend': {
-        resolveErpBackendMode: () => backendMode,
+        resolveErpBackendMode: () => live.backendMode,
       },
       '@/api/erpHttpSession': {
-        readErpHttpSession: () => session,
+        readErpHttpSession: () => live.session,
       },
       '@/api/httpApiClient': {
         createHttpApiClient: () => ({
@@ -128,8 +141,8 @@ async function mountHistoricoCliente({
           pedidos: {
             list: async (opts) => {
               listCalls.push(opts);
-              if (typeof pedidosList === 'function') return pedidosList(opts);
-              return pedidosList || { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } };
+              if (typeof live.pedidosList === 'function') return live.pedidosList(opts);
+              return live.pedidosList || { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } };
             },
           },
         }),
@@ -143,10 +156,14 @@ async function mountHistoricoCliente({
     || sandbox.module.exports.mapPedidosToHistoricoLinhas;
   const loadFn = sandbox.exports.loadPedidosHistoricoHttp
     || sandbox.module.exports.loadPedidosHistoricoHttp;
-  slot = 0;
-  const tree = Component({ clienteId });
-  scheduled.splice(0).forEach((fn) => fn());
   const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
+  const render = ({ flushEffects = true } = {}) => {
+    slot = 0;
+    const next = Component({ clienteId: live.clienteId });
+    if (flushEffects) scheduled.splice(0).forEach((fn) => fn());
+    return next;
+  };
+  const tree = render({ flushEffects: true });
   return {
     tree,
     walk: () => walk(tree),
@@ -157,14 +174,20 @@ async function mountHistoricoCliente({
     mapFn,
     loadFn,
     state,
+    live,
     Component,
-    props: { clienteId },
+    props: { get clienteId() { return live.clienteId; } },
     flush: () => scheduled.splice(0).forEach((fn) => fn()),
-    remount() {
-      slot = 0;
-      const next = Component({ clienteId });
-      scheduled.splice(0).forEach((fn) => fn());
-      return next;
+    /** Render na mesma instância; flushEffects=false = 1º paint antes dos effects. */
+    render,
+    remount({ flushEffects = true } = {}) {
+      return render({ flushEffects });
+    },
+    setContext(patch) {
+      Object.assign(live, patch);
+    },
+    findCard(node) {
+      return walk(node).find((n) => n.props && n.props['data-historico-fonte']);
     },
   };
 }
@@ -387,7 +410,102 @@ test('HistoricoProdutosCliente HTTP: troca de contexto descarta página extra an
   assert.match(src, /firstPageFingerprint/);
   assert.match(src, /sessionEpochRef/);
   assert.match(src, /empresaId/);
+  assert.match(src, /historicoOwnerKey/);
+  assert.match(src, /extraSession/);
+  assert.match(src, /ownerMatches/);
   assert.ok(h.queries[0].queryKey.includes('emp-a'));
+});
+
+test('P2 #397: mesma instância A→B — 1º render (sem flush) sem pedidos/meta de A', async () => {
+  const pageA0 = {
+    data: [{
+      id: 'p-a1',
+      numero: 'A1',
+      created_at: '2026-01-01T12:00:00Z',
+      itens: [{ produto_id: 'prod-A', descricao: 'Produto A', quantidade: 1, total: 10 }],
+    }],
+    meta: { limit: 50, offset: 0, total: 90, hasMore: true },
+  };
+  const pageA1 = {
+    data: [{
+      id: 'p-a51',
+      numero: 'A51',
+      created_at: '2025-12-01T12:00:00Z',
+      itens: [{ produto_id: 'prod-A-extra', descricao: 'Extra A', quantidade: 2, total: 20 }],
+    }],
+    meta: { limit: 50, offset: 50, total: 90, hasMore: true },
+  };
+  const pageB0 = {
+    data: [{
+      id: 'p-b1',
+      numero: 'B1',
+      created_at: '2026-02-01T12:00:00Z',
+      itens: [{ produto_id: 'prod-B', descricao: 'Produto B', quantidade: 1, total: 5 }],
+    }],
+    meta: { limit: 50, offset: 0, total: 1, hasMore: false },
+  };
+
+  const h = await mountHistoricoCliente({
+    backendMode: 'http',
+    clienteId: 'cli-A',
+    empresaId: 'emp-A',
+    groupId: 'g1',
+    session: { token: 'tok-A', actorId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', groupId: 'g1' },
+    pedidosList: (opts) => (opts.offset === 0 ? pageA0 : pageA1),
+    queryData: pageA0,
+  });
+
+  const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
+  let tree = h.remount({ flushEffects: true });
+  let card = walk(tree).find((n) => n.props && n.props['data-historico-fonte']);
+  assert.equal(card.props['data-historico-pedidos-carregados'], 1);
+  assert.equal(card.props['data-historico-pedidos-total'], 90);
+
+  const btn = walk(tree).find((n) => n.props && n.props['data-action'] === 'historico-produtos-carregar-mais');
+  assert.ok(btn, 'load-more em A');
+  await btn.props.onClick();
+  tree = h.remount({ flushEffects: true });
+  card = walk(tree).find((n) => n.props && n.props['data-historico-fonte']);
+  assert.equal(card.props['data-historico-pedidos-carregados'], 2, 'A com extra page');
+  assert.ok(
+    h.state.some((s) => s && typeof s === 'object' && s.ownerKey && Array.isArray(s.pages) && s.pages.length === 1),
+    'extraSession de A permanece no state até effect',
+  );
+
+  // Contraprova do defeito antigo: sem filtro de owner no render, extras de A vazariam.
+  const staleExtra = h.state.find((s) => s && s.ownerKey && Array.isArray(s.pages));
+  assert.equal(staleExtra.pages[0].data[0].id, 'p-a51');
+  const leakedIfUnfiltered = [...pageB0.data, ...staleExtra.pages.flatMap((p) => p.data)];
+  assert.equal(leakedIfUnfiltered.length, 2, 'antes: 1º render misturaria A+B');
+
+  // Troca cliente/empresa/ator/sessão na MESMA instância — sem remontar artificialmente.
+  h.setContext({
+    clienteId: 'cli-B',
+    empresaId: 'emp-B',
+    session: { token: 'tok-B', actorId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', groupId: 'g1' },
+    queryData: pageB0,
+    pedidosList: pageB0,
+  });
+
+  // 1º render de B SEM executar effects (resetPaginationSession ainda não rodou).
+  tree = h.remount({ flushEffects: false });
+  card = walk(tree).find((n) => n.props && n.props['data-historico-fonte']);
+  assert.ok(card, 'card de B no 1º render');
+  assert.equal(card.props['data-historico-pedidos-carregados'], 1, 'só 1ª página de B');
+  assert.equal(card.props['data-historico-pedidos-total'], 1, 'meta de B, não total 90 de A');
+  assert.equal(card.props['data-historico-linhas-carregadas'], 1);
+  // Serializa árvore: nenhum vestígio de A no 1º paint de B
+  const blob = JSON.stringify(tree);
+  assert.equal(blob.includes('p-a51') || blob.includes('prod-A-extra') || blob.includes('Extra A'), false);
+  assert.equal(blob.includes('prod-A"') || blob.includes('Produto A'), false);
+  assert.ok(blob.includes('B1') || blob.includes('prod-B') || blob.includes('Produto B'));
+  assert.equal(
+    walk(tree).some((n) => n.props && n.props['data-historico-produtos-error'] === 'load-more'),
+    false,
+  );
+
+  // State bruto ainda pode ter owner A até o effect — mas UI já está limpa.
+  assert.equal(staleExtra.pages[0].data[0].id, 'p-a51');
 });
 
 test('mapPedidosToHistoricoLinhas: ordena por data e preserva produto repetido em pedidos distintos', async () => {
@@ -541,7 +659,7 @@ test('Histórico resetPaginationSession: zera loadingMore e limpa extras (P2 Cod
   const src = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
   assert.match(src, /const resetPaginationSession = \(\) => \{/);
   assert.match(src, /setLoadingMore\(false\)/);
-  assert.match(src, /setExtraPages\(\[\]\)/);
+  assert.match(src, /setExtraSession\(\{\s*ownerKey:\s*null,\s*pages:\s*\[\]\s*\}\)/);
   assert.match(src, /firstPageFingerprint/);
   assert.match(src, /historicoTokenFingerprint/);
   // finally da load-more só zera loading quando o controller ainda é o vigente

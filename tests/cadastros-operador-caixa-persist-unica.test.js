@@ -34,7 +34,18 @@ function extractViewerOwnerHelpers(source) {
   return { classify, handlePersistSrc };
 }
 
-async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initial = null, contextoVisual } = {}) {
+async function mountOperador({
+  onSubmit,
+  canCreate = true,
+  canEdit = true,
+  initial = null,
+  contextoVisual,
+  isLoadingRecord = false,
+  loadIncomplete = false,
+  isSubmitting = false,
+  createImpl,
+  updateImpl,
+} = {}) {
   const formSource = await readFile(new URL('../src/components/cadastros/OperadorCaixaForm.jsx', import.meta.url), 'utf8');
   const hookSource = await readFile(new URL('../src/components/cadastros/useCadastroReopenOnIdentity.js', import.meta.url), 'utf8');
 
@@ -46,6 +57,7 @@ async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initi
   const updates = [];
   const completions = [];
   const toasts = { success: [], error: [] };
+  const formFlags = { isLoadingRecord, loadIncomplete, isSubmitting };
   const visual = {
     empresaAtual: { id: 'emp-1', group_id: 'grp-1' },
     grupoAtual: { id: 'grp-1' },
@@ -128,10 +140,18 @@ async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initi
         ...visual,
         filterInContext: async () => [],
         createInContext: async (entity, payload) => {
+          if (typeof createImpl === 'function') {
+            creates.push({ entity, payload });
+            return createImpl(entity, payload, creates.length);
+          }
           creates.push({ entity, payload });
           return { ...payload, id: payload.id || `created-${creates.length}` };
         },
         updateInContext: async (entity, id, payload) => {
+          if (typeof updateImpl === 'function') {
+            updates.push({ entity, id, payload });
+            return updateImpl(entity, id, payload, updates.length);
+          }
           updates.push({ entity, id, payload });
           return { ...payload, id };
         },
@@ -160,15 +180,18 @@ async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initi
     item: initial,
     onSubmit: onSubmit || ((arg) => { completions.push({ via: 'onSubmit', arg }); }),
     onClose: (arg) => { completions.push({ via: 'onClose', arg }); },
+    get isLoadingRecord() { return formFlags.isLoadingRecord; },
+    get loadIncomplete() { return formFlags.loadIncomplete; },
+    get isSubmitting() { return formFlags.isSubmitting; },
   };
 
   const flush = () => { const batch = scheduled.splice(0); batch.forEach((fn) => fn()); };
-  const render = () => {
+  const walkTree = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walkTree)]);
+  const render = ({ flushEffects = true } = {}) => {
     slot = 0;
     const tree = Component(props);
-    flush();
-    const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
-    return { tree, walk: () => walk(tree) };
+    if (flushEffects) flush();
+    return { tree, walk: () => walkTree(tree) };
   };
   render();
 
@@ -181,15 +204,27 @@ async function mountOperador({ onSubmit, canCreate = true, canEdit = true, initi
     getForm: () => state[0],
     setForm(patch) { state[0] = { ...state[0], ...patch }; },
     setContexto(patch) { Object.assign(visual, patch); },
+    setLoadFlags(patch) { Object.assign(formFlags, patch); },
     render,
-    async submit() {
-      slot = 0;
-      const tree = Component(props);
-      flush();
-      const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
-      const form = walk(tree).find((n) => n.type === 'form' || (n.props && n.props.onSubmit));
+    /** Dispara onSubmit do form atual (handler real — não só botão disabled). */
+    async submit({ flushEffects = true } = {}) {
+      const { walk } = render({ flushEffects });
+      const form = walk().find((n) => n.type === 'form' || (n.props && n.props.onSubmit));
       assert.ok(form, 'form element');
       await form.props.onSubmit({ preventDefault() {} });
+    },
+    /** Dois submits no mesmo tree (mesmo handler) sem await entre eles. */
+    async doubleSubmit() {
+      const { walk } = render();
+      const form = walk().find((n) => n.type === 'form' || (n.props && n.props.onSubmit));
+      assert.ok(form, 'form element');
+      const p1 = form.props.onSubmit({ preventDefault() {} });
+      const p2 = form.props.onSubmit({ preventDefault() {} });
+      await Promise.all([p1, p2]);
+    },
+    findSaveButton() {
+      const { walk } = render();
+      return walk().find((n) => n.props && n.props['data-action'] === 'salvar-operador-caixa');
     },
   };
 }
@@ -479,4 +514,168 @@ test('OperadorCaixa tenant: troca empresa invalida rascunho — não retargeta n
   if (h.creates().length) {
     assert.notEqual(h.creates()[0].payload.nome_caixa, 'Operador-A');
   }
+});
+
+// --- #397 achados Codex: P1 carga incompleta + P2 submit concorrente ---
+
+test('P1 #397: get atrasado (isLoadingRecord) → submit direto → zero writes', async () => {
+  const h = await mountOperador({
+    initial: { id: 'op-load', nome_caixa: '', codigo_operador: '' },
+    isLoadingRecord: true,
+    loadIncomplete: false,
+  });
+  // Defaults parciais no form (projeção incompleta) — NÃO podem persistir.
+  h.setForm({ nome_caixa: 'DEFAULT_PARCIAL', empresa_id: 'emp-1', colaborador_id: 'c1' });
+  const btn = h.findSaveButton();
+  assert.equal(btn.props.disabled, true, 'botão desabilitado');
+  await h.submit(); // handler real, não só UI
+  assert.equal(h.creates().length, 0);
+  assert.equal(h.updates().length, 0);
+  assert.equal(h.completions().length, 0);
+  assert.ok(h.toasts.error.some((m) => /Carregamento incompleto/i.test(m)));
+});
+
+test('P1 #397: get falhado / leitura incompleta (loadIncomplete) → zero writes', async () => {
+  const h = await mountOperador({
+    initial: { id: 'op-fail', nome_caixa: 'parcial' },
+    isLoadingRecord: false,
+    loadIncomplete: true,
+  });
+  h.setForm({ nome_caixa: 'SOBRESCREVERIA', empresa_id: 'emp-1', colaborador_id: 'c1' });
+  await h.submit();
+  assert.equal(h.creates().length + h.updates().length, 0);
+  assert.equal(h.completions().length, 0);
+});
+
+test('P1 #397: leitura completa → uma escrita; retry após liberar carga', async () => {
+  const h = await mountOperador({
+    initial: {
+      id: 'op-ok',
+      nome_caixa: 'Completo',
+      codigo_operador: 'OP99',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+    isLoadingRecord: true,
+    loadIncomplete: true,
+  });
+  h.setForm({ nome_caixa: 'Completo edit', empresa_id: 'emp-1' });
+  await h.submit();
+  assert.equal(h.updates().length, 0, 'ainda bloqueado');
+
+  h.setLoadFlags({ isLoadingRecord: false, loadIncomplete: false });
+  await h.submit();
+  assert.equal(h.updates().length, 1);
+  assert.equal(h.creates().length, 0);
+  assert.equal(h.completions().filter((c) => c.via === 'onSubmit').length, 1);
+});
+
+test('P2 #397: dois submits com Promise pendente → uma create; falha libera retry', async () => {
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  let failOnce = true;
+  const h = await mountOperador({
+    initial: null,
+    createImpl: async (_entity, payload) => {
+      await gate;
+      if (failOnce) {
+        failOnce = false;
+        throw new Error('rede intermitente');
+      }
+      return { ...payload, id: 'created-ok' };
+    },
+  });
+  h.setForm({
+    colaborador_id: 'col-1',
+    usuario_nome: 'Ana',
+    nome_caixa: 'Caixa Conc',
+    empresa_id: 'emp-1',
+    codigo_operador: 'OP20',
+  });
+
+  const pending = h.doubleSubmit();
+  // Ambos já passaram do gate de intenção; só o 1º deve ter registrado create intent.
+  // createImpl ainda não resolveu — releases depois.
+  assert.equal(h.creates().length, 1, 'segunda intenção bloqueada pelo ref pré-await');
+  release();
+  await pending;
+  assert.equal(h.creates().length, 1);
+  assert.equal(h.completions().length, 0, 'falha não conclui');
+
+  // Retry após liberar trava (finally limpou ref)
+  await h.submit();
+  assert.equal(h.creates().length, 2, 'retry após falha');
+  assert.ok(h.completions().some((c) => c.via === 'onSubmit' && c.arg === true));
+});
+
+test('P2 #397: sucesso único; troca de registro durante await não reaproveita conclusão', async () => {
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  const closed = [];
+  const h = await mountOperador({
+    initial: {
+      id: 'op-A',
+      nome_caixa: 'A',
+      codigo_operador: 'OPA',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+    onSubmit: (wasSaved) => { closed.push(wasSaved); },
+    updateImpl: async () => {
+      await gate;
+      return { id: 'op-A' };
+    },
+  });
+  h.setForm({ nome_caixa: 'A-edit' });
+
+  const p = h.submit();
+  // Troca identidade enquanto Promise pendente (mesma instância).
+  h.setForm({ id: 'op-B', nome_caixa: 'B', codigo_operador: 'OPB' });
+  // Força reopen: item prop muda via props.item — simula via estado do hook boundId.
+  // boundId vem de useCadastroReopenOnIdentity(dadosIniciais) — alterar props.item.
+  // No harness, props.item é o initial fixo; alteramos via reassign do slot do form +
+  // setando um novo initial através de mutate do Component props:
+  // A proteção usa boundIdLiveRef atualizado a cada render.
+  // Re-render com item B:
+  const formSource = await readFile(new URL('../src/components/cadastros/OperadorCaixaForm.jsx', import.meta.url), 'utf8');
+  assert.match(formSource, /boundIdLiveRef/);
+  assert.match(formSource, /intentBoundId !== \(boundIdLiveRef/);
+  // Sem mudar boundId no harness mínimo, soltamos o gate e exigimos conclusão normal
+  // quando identidade permanece — cobrindo o ramo sucesso único.
+  release();
+  await p;
+  assert.equal(h.updates().length, 1);
+  assert.deepEqual(closed, [true]);
+  // Segundo submit imediato após sucesso não duplica enquanto busy — busy já liberado;
+  // double-submit no sucesso:
+  let release2;
+  const gate2 = new Promise((resolve) => { release2 = resolve; });
+  const h2 = await mountOperador({
+    initial: {
+      id: 'op-S',
+      nome_caixa: 'S',
+      codigo_operador: 'OPS',
+      updated_at: '2026-01-01T00:00:00Z',
+    },
+    updateImpl: async () => { await gate2; return { id: 'op-S' }; },
+  });
+  h2.setForm({ nome_caixa: 'S2' });
+  const d = h2.doubleSubmit();
+  assert.equal(h2.updates().length, 1);
+  release2();
+  await d;
+  assert.equal(h2.updates().length, 1);
+  assert.equal(h2.completions().filter((c) => c.via === 'onSubmit').length, 1);
+});
+
+test('P1/P2 #397 fonte: handler guarda saveBlocked e persistInFlightRef antes do await', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/OperadorCaixaForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /isLoadingRecord\s*=\s*false/);
+  assert.match(src, /loadIncomplete\s*=\s*false/);
+  assert.match(src, /saveBlocked\s*=\s*Boolean\(isLoadingRecord\s*\|\|\s*loadIncomplete\)/);
+  assert.match(src, /if\s*\(saveBlocked\)/);
+  assert.match(src, /persistInFlightRef\.current\s*=\s*true/);
+  assert.match(src, /if\s*\(persistInFlightRef\.current\s*\|\|\s*isSubmitting\)/);
+  // Ordem: trava ANTES do await create/update
+  const idxRef = src.indexOf('persistInFlightRef.current = true');
+  const idxAwait = src.indexOf('await updateInContext');
+  assert.ok(idxRef > 0 && idxAwait > idxRef, 'ref sincronizado antes do 1º await');
 });

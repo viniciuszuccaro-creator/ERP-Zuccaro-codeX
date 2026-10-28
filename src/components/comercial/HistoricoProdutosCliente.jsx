@@ -243,7 +243,8 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   const sessionEpochRef = useRef(0);
   const loadMoreAbortRef = useRef(null);
   const firstPageFingerprintSeenRef = useRef(null);
-  const [extraPages, setExtraPages] = useState([]);
+  // Páginas extras amarradas ao proprietário completo — filtradas no render (não só em useEffect).
+  const [extraSession, setExtraSession] = useState({ ownerKey: null, pages: [] });
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(null);
 
@@ -258,6 +259,23 @@ export default function HistoricoProdutosCliente({ clienteId }) {
     sessionCacheKey,
     httpMode ? "http" : "legado",
   ];
+  const historicoOwnerKey = useMemo(
+    () => JSON.stringify([
+      clienteId ?? null,
+      groupId ?? null,
+      empresaId ?? null,
+      contexto ?? null,
+      actorId ?? null,
+      sessionCacheKey ?? null,
+      httpMode ? "http" : "legado",
+    ]),
+    [clienteId, groupId, empresaId, contexto, actorId, sessionCacheKey, httpMode],
+  );
+  // P2 Codex: no 1º render após troca de contexto, excluir extras/meta do proprietário anterior.
+  const ownerMatches = extraSession.ownerKey === historicoOwnerKey;
+  const extraPages = ownerMatches ? extraSession.pages : [];
+  const scopedLoadingMore = ownerMatches && loadingMore;
+  const scopedLoadMoreError = ownerMatches ? loadMoreError : null;
 
   const resetPaginationSession = () => {
     sessionEpochRef.current += 1;
@@ -265,7 +283,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
       try { loadMoreAbortRef.current.abort(); } catch (_) { /* ignore */ }
       loadMoreAbortRef.current = null;
     }
-    setExtraPages([]);
+    setExtraSession({ ownerKey: null, pages: [] });
     setLoadMoreError(null);
     setLoadingMore(false);
   };
@@ -382,7 +400,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   const linhasTruncadas = linhas.length > LINHAS_UI_LIMIT;
 
   const handleLoadMore = async () => {
-    if (!httpMode || !hasMore || loadingMore || !consultaHabilitada) return;
+    if (!httpMode || !hasMore || scopedLoadingMore || !consultaHabilitada) return;
     const epoch = sessionEpochRef.current;
     const offset = pedidos.length;
     setLoadingMore(true);
@@ -401,7 +419,12 @@ export default function HistoricoProdutosCliente({ clienteId }) {
         expectedSessionKey: sessionCacheKey,
       });
       if (epoch !== sessionEpochRef.current) return; // contexto/sessão trocou — descarta
-      setExtraPages((prev) => [...prev, page]);
+      setExtraSession((prev) => {
+        if (prev.ownerKey !== historicoOwnerKey) {
+          return { ownerKey: historicoOwnerKey, pages: [page] };
+        }
+        return { ownerKey: historicoOwnerKey, pages: [...prev.pages, page] };
+      });
     } catch (err) {
       if (epoch !== sessionEpochRef.current) return;
       if (err?.name === "AbortError") return;
@@ -463,7 +486,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
           {linhasTruncadas || (httpMode && totalPedidos > pedidos.length)
             ? ` linhas · ${pedidos.length}/${totalPedidos} pedidos`
             : ""}
-          ){isFetching || loadingMore ? "…" : ""}
+          ){isFetching || scopedLoadingMore ? "…" : ""}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -534,18 +557,18 @@ export default function HistoricoProdutosCliente({ clienteId }) {
               variant="outline"
               className="h-7 text-xs"
               data-action="historico-produtos-carregar-mais"
-              disabled={loadingMore}
+              disabled={scopedLoadingMore}
               onClick={handleLoadMore}
             >
-              {loadingMore ? "Carregando…" : "Carregar mais"}
+              {scopedLoadingMore ? "Carregando…" : "Carregar mais"}
             </Button>
           </div>
         ) : null}
-        {loadMoreError ? (
+        {scopedLoadMoreError ? (
           <Alert className="mt-3 border-red-200 bg-red-50" data-historico-produtos-error="load-more">
             <ShieldAlert className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              {loadMoreError?.message || "Falha ao carregar próxima página. Sem fallback local."}
+              {scopedLoadMoreError?.message || "Falha ao carregar próxima página. Sem fallback local."}
             </AlertDescription>
           </Alert>
         ) : null}

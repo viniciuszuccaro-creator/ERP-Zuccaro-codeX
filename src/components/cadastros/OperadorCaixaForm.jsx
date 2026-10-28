@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,7 +67,23 @@ const mapOperadorToForm = (record, defaults = {}) => {
  * Marcado self-managed para o VisualizadorUniversalEntidadeV24 passar
  * handleCloseForm (conclusão) e NÃO handlePersistSubmit (evita 2ª gravação).
  */
-export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, onSuccess, windowMode = false }) {
+export default function OperadorCaixaForm({
+  operador,
+  item,
+  data,
+  initialData,
+  defaultValues,
+  onSubmit,
+  onSave,
+  onClose,
+  onCancel,
+  onSuccess,
+  windowMode = false,
+  // Props canônicas do Visualizador V24 (buildFormProps) — self-managed também deve honrar.
+  isLoadingRecord = false,
+  loadIncomplete = false,
+  isSubmitting = false,
+}) {
   const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -82,6 +98,9 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
   });
   const [formData, setFormData] = useState(() => mapOperadorToForm(dadosIniciais, emptyForm));
   const closeForm = onClose || onSave || onCancel || onSuccess;
+  // Trava de intenção antes do 1º await — estado visual sozinho não protege double-submit.
+  const persistInFlightRef = useRef(false);
+  const [persistBusy, setPersistBusy] = useState(false);
 
   const { boundId: operadorBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
     formData,
@@ -90,9 +109,16 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     tenantKey,
     mapToForm: (record) => mapOperadorToForm(record, emptyForm),
   });
+  // Refs lidas pós-await (closure do handler não vê re-render durante Promise).
+  const boundIdLiveRef = useRef(operadorBoundId);
+  const tenantKeyLiveRef = useRef(tenantKey);
+  boundIdLiveRef.current = operadorBoundId;
+  tenantKeyLiveRef.current = tenantKey;
   const podeSalvar = operadorBoundId
     ? (canEdit("Cadastros", "OperadorCaixa") || canEdit("Financeiro", "Caixa") || canEdit("Cadastros", null))
     : (canCreate("Cadastros", "OperadorCaixa") || canCreate("Financeiro", "Caixa") || canCreate("Cadastros", null));
+  // P1 Codex: self-managed não passa por V24 handlePersistSubmit — bloquear no handler real.
+  const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', contextKey],
@@ -131,26 +157,45 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
       toast.error("Seu perfil nao permite salvar operador de caixa.");
       return;
     }
+    // Botão desabilitado ≠ proteção: handler bloqueia mesmo se submit for disparado direto.
+    if (saveBlocked) {
+      toast.error("Carregamento incompleto do registro. Salvamento bloqueado.");
+      return;
+    }
+    if (persistInFlightRef.current || isSubmitting) {
+      return;
+    }
+    persistInFlightRef.current = true;
+    setPersistBusy(true);
+    const intentBoundId = operadorBoundId || null;
+    const intentTenantKey = tenantKey;
     const payload = {
       ...formData,
-      ...(operadorBoundId ? { id: operadorBoundId } : {}),
+      ...(intentBoundId ? { id: intentBoundId } : {}),
       nome: formData.nome_caixa || formData.usuario_nome || '',
       permissoes_especiais: Array.isArray(formData.permissoes_especiais) ? formData.permissoes_especiais : [],
       ...(empresaAtual?.id && !formData.empresa_id ? { empresa_id: empresaAtual.id } : {}),
       ...(groupId && !formData.group_id ? { group_id: groupId } : {})
     };
     try {
-      if (operadorBoundId) {
-        await updateInContext('OperadorCaixa', operadorBoundId, payload);
+      if (intentBoundId) {
+        await updateInContext('OperadorCaixa', intentBoundId, payload);
         toast.success("Operador atualizado!");
       } else {
         await createInContext('OperadorCaixa', payload);
         toast.success("Operador criado!");
       }
+      // Troca de registro/contexto durante o await: não conclui com resultado antigo.
+      if (intentBoundId !== (boundIdLiveRef.current || null) || intentTenantKey !== tenantKeyLiveRef.current) {
+        return;
+      }
       notifyCompletion(payload);
     } catch (error) {
       toast.error("Erro: " + error.message);
-      // Erro preserva rascunho: não fecha nem notifica conclusão.
+      // Erro preserva rascunho: não fecha nem notifica conclusão. Libera nova tentativa.
+    } finally {
+      persistInFlightRef.current = false;
+      setPersistBusy(false);
     }
   };
 
@@ -379,7 +424,12 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
             <X className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
-          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar}>
+          <Button
+            type="submit"
+            className="bg-sky-600 hover:bg-sky-700"
+            disabled={!contextoValido || !podeSalvar || saveBlocked || persistBusy || Boolean(isSubmitting)}
+            data-action="salvar-operador-caixa"
+          >
             <Save className="w-4 h-4 mr-2" />
             Salvar Operador
           </Button>
