@@ -25,3 +25,8 @@ Prazo original conferido no chat:27/12/2026 20:59 Brasilia; conta28/12. Sem nova
 Procedimento executavel existente:4 simulacoes isoladas PASS; host errado/conta existente sem mutacao; sucesso; falha posterior expira conta. Nao houve acesso remoto.
 5173 listener/HTTP/metadata/Private conferidos, snapshot ac563ece/PG17 sintetico network=none.
 Canal Hostinger CLI nao configurado/acessivel, trusted_host ausente; intervencao unica do console detalhada no documento existente.
+
+Intervencao atomica:9checks receptor PASS, sem rede. Porta22/2222, alias literal, fingerprint, permissoes e recusa de vinculo alterado comprovados localmente.
+Mesmo usuario/chave/prazo aprovados. Script inclui confirmacao de endpoint/porta/listener e recibo HOST publico para transferencia via editor privado.
+Sem FileZilla/sessao SFTP autenticada comprovados. Nenhum recibo real HOST recebido, SSH nao tentado, arquivos verified nao instalados.
+CI5026/5027 SUCCESS no SHA e922e047.
