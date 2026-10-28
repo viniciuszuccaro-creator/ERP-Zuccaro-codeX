@@ -1,24 +1,23 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:01 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:49 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`3b00b504f`** (código **`854e80256`**) — Pedido aba Histórico + provas vínculo/montagem |
-| CI tip HEAD | **SUCCESS** run `40710752807` — **≠ aprovação** |
-| CI código `854e80256` | contido em tip `964bb30e6` SUCCESS `40710700776` — **≠ aprovação** |
-| Ref. consultada | **`c7001c5a2`** — CI SUCCESS `40708618428` (CI5037) — **≠ aprovação** |
-| Código bloqueios base | **`db3a4b623`** — CI SUCCESS `40708354481` — **≠ aprovação** |
-| #353 | histórica (`eaad0b84`) — **não** candidata concorrente |
-| Modalidade | runner `/workspace` — Codespace xylophone = Codex desktop (owner); sem prova Chrome deste executor |
-| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` — janela exclusiva SHA+HTTP 5173 |
-| #342 | tip `21b482241` docs — parecer Cursor; branch Codex intocada |
-| Revisão | **@codex review** pedido no código **`854e80256`** (agrupado); tip docs não reaciona |
+| Tip código | **`609f48a46`** — três achados Codex (P1 carga Operador · P2 submit · P2 Histórico 1º render) |
+| Tip HEAD | **`609f48a46`** (+ docs deste lote no tip seguinte se houver) |
+| Ref. consultada | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação**; não encerrava os 3 achados |
+| Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6473153593 |
+| #353 | histórica — **não** candidata concorrente |
+| Modalidade | runner `/workspace` — Codespace xylophone = Codex desktop (SQL/reconciliação 100); sem Chrome neste executor |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` — demo 5173 **após** parecer neste SHA |
+| Revisão | **@codex review** no SHA **`609f48a46`** (exato) |
 
-**Bloqueios + integração (reprova 54 PASS):** Operador · Histórico paginado/sessão · vínculo inativo · guarda · 044 · Cliente reopen · montagem DetalhesCliente · Pedido aba Histórico HTTP
-**Evidência:** `docs/evidence/apontamentos-397-prova-integrada-20261028.txt`
-**Próximo:** parecer Codex código `854e80256` → demo exclusiva Codespace 5173. Sem merge/deploy/carga.
+**Correções:** `OperadorCaixaForm` (saveBlocked handler + `persistInFlightRef` pré-await) · `HistoricoProdutosCliente` (`extraSession`/`historicoOwnerKey` no render).
+**Provas:** `docs/evidence/apontamentos-397-tres-achados-20261028.txt` — 30 PASS novos + 72 frontend + 11 runtime09 vínculo.
+**Bloqueios intactos:** salvamento único · paginação >50 · auth/sessão · vínculo inativo · 044 · guarda · Cliente `updated_at`.
+**Próximo:** parecer Codex `609f48a46` → demo exclusiva Codespace Private 5173. Recuperação funcional independente fora destes arquivos (em paralelo). Sem merge/deploy/carga/SQL.
 
-(2026-10-28 12:01 America/Sao_Paulo)
+(2026-10-28 12:49 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 

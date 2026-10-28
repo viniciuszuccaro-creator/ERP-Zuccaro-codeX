@@ -1,17 +1,17 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:01 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:49 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403** neste runner.
-**Chrome (owner / Codex desktop):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+**Chrome (owner / Codex desktop):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — SQL/reconciliação 100; não duplicar.
 **Candidata:** **PR #397** (não #353).
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** | tip **`3b00b504f`** / código **`854e80256`** | CI tip SUCCESS `40710752807` — **≠ aprovação** |
+| **#397 três achados** | **`609f48a46`** | push remoto; CI a terminalizar — **≠ aprovação** |
+| Ref. | `9938f080d` CI5041 | SUCCESS ≠ fechava P1/P2×2 |
 | #353 | `eaad0b84` | histórica |
-| #342 | `21b482241` | docs; branch intocada |
 
-**Prova:** `docs/evidence/apontamentos-397-prova-integrada-20261028.txt` (54 PASS)
-**Próximo:** parecer Codex → demo exclusiva 5173. Sem merge/deploy/carga.
+**Prova:** `docs/evidence/apontamentos-397-tres-achados-20261028.txt`
+**Revisão:** @codex no SHA **`609f48a46`**. Demo 5173 só após parecer. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
