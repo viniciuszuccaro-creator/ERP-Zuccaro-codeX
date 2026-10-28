@@ -29,7 +29,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
   const podeSalvar = !permissions.isLoading && hasCadastroEntityPermission('ConfiguracaoDespesaRecorrente', config?.id ? 'editar' : 'criar', permissions);
   const podeConsultar = !permissions.isLoading && hasCadastroEntityPermission('ConfiguracaoDespesaRecorrente', 'visualizar', permissions);
   const lookupKey = [user?.id || null, groupId, empresaId, contexto];
-  const identity = JSON.stringify([config?.id ?? null, config?.updated_date ?? null, ...lookupKey]);
+  const identity = JSON.stringify([config?.id ?? null, config?.updated_at ?? config?.updated_date ?? null, ...lookupKey]);
   const current = useRef(null);
   current.current = { identity, podeConsultar, podeSalvar };
   const scopedLookup = async (entity, filters = {}) => {

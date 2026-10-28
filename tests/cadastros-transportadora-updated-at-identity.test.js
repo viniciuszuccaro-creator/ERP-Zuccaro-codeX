@@ -1,15 +1,17 @@
 /**
- * #353 recuperação — TransportadoraForm: identidade de reopen reconhece updated_at HTTP.
- * Mantém useCadastroRecordState (pin callback); só corrige a chave que ignorava refresh canônico.
+ * #353 recuperação — forms RecordState: identidade de reopen reconhece updated_at HTTP.
+ * Mantém useCadastroRecordState (pins callback); só corrige a chave que ignorava refresh canônico.
  */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const FORM = new URL('../src/components/cadastros/TransportadoraForm.jsx', import.meta.url);
+const TRANSPORTADORA = new URL('../src/components/cadastros/TransportadoraForm.jsx', import.meta.url);
+const PRODUTO = new URL('../src/components/cadastros/ProdutoForm.jsx', import.meta.url);
+const DESPESA = new URL('../src/components/cadastros/ConfiguracaoDespesaRecorrenteForm.jsx', import.meta.url);
 
 test('TransportadoraForm: identidade usa updated_at ?? updated_date (não só updated_date)', async () => {
-  const src = await readFile(FORM, 'utf8');
+  const src = await readFile(TRANSPORTADORA, 'utf8');
   assert.match(src, /useCadastroRecordState/);
   assert.match(
     src,
@@ -22,10 +24,28 @@ test('TransportadoraForm: identidade usa updated_at ?? updated_date (não só up
 });
 
 test('TransportadoraForm: preserva payload owner e CadastroCodigoRegistroField', async () => {
-  const src = await readFile(FORM, 'utf8');
+  const src = await readFile(TRANSPORTADORA, 'utf8');
   assert.match(src, /codigo-registro-transportadora/);
   assert.match(src, /CadastroCodigoRegistroField/);
   assert.match(src, /podeCriar/);
   assert.match(src, /podeEditar/);
   assert.match(src, /contextoValido/);
+});
+
+test('ProdutoForm: identidade usa updated_at ?? updated_date (não só updated_date)', async () => {
+  const src = await readFile(PRODUTO, 'utf8');
+  assert.match(src, /useCadastroRecordState/);
+  assert.match(
+    src,
+    /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/,
+  );
+});
+
+test('ConfiguracaoDespesaRecorrenteForm: identidade usa updated_at ?? updated_date', async () => {
+  const src = await readFile(DESPESA, 'utf8');
+  assert.match(src, /useCadastroRecordState/);
+  assert.match(
+    src,
+    /config\?\.updated_at\s*\?\?\s*config\?\.updated_date/,
+  );
 });

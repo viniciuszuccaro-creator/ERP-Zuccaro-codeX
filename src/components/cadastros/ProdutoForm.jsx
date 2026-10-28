@@ -100,8 +100,9 @@ export default function ProdutoForm({ produto, item, data, initialData, defaultV
       comprimento_cm: 0
     };
   }, [dadosIniciais]);
+  // HTTP canônico: updated_at; updated_date sozinho ignorava refresh do registro.
   const [formData, setFormData] = useCadastroRecordState(initialFormData, JSON.stringify([
-    dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,
+    dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null,
     grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto,
   ]));
 
