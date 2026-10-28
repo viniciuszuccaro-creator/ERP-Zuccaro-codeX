@@ -1,3 +1,21 @@
+## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:18 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Tip HEAD | **`85d20d79f`** (código `944a5b73a` / sessão `49f8c8a6c`) |
+| CI tip | **SUCCESS** `40694331737` frontend/backend/expedicao — **≠ aprovação** |
+| Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
+| Codex | **@codex review** tip **`85d20d79f`** |
+| #342 | tip `ac563ecea` — parecer `docs/evidence/parecer-342-deltas-ac563ecea-20261028.txt` (branch intocada) |
+| Fora | merge/deploy/carga; Documentacao/OAuthConsent; #398–#400; 2º escritor; seed |
+
+**Bloqueios:** Operador 1 escrita · Histórico paginação+linhas+P2+sessão · guarda if(false) · 044
+**Recuperação:** sky 1–6 + identidade `updated_at` início de uso + A/B/C/D
+**Próximo:** parecer Codex tip → demo exclusiva SHA+HTTP.
+
+(2026-10-28 10:18 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:15 America/Sao_Paulo)
 
 | Campo | Valor |
