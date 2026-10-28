@@ -59,6 +59,34 @@ de ambiente, cookies, dados de clientes, chave privada SSH nem IP público desne
 
 ## Acesso operacional Cursor / Codex (canônico)
 
+### Codespace Codex — etapa de leitura autorizada em28/10/2026
+
+Precedência sobre instruções históricas de root: não copiar chave pessoal/root nem substituir acessos existentes. Verificação atual não encontrou credencial dedicada acessível ou Codespaces Secrets visíveis. Preparada identidade local exclusiva foraGit em `/home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028`; chave privada0600, diretório0700. Fingerprint público cliente: `SHA256:D+z9tzBoEVkhLfmUwWOunGGUpC05vPLm2m3vYMPTELI`. Não confundir com hostkey.
+
+Proposta exata ainda NÃO aplicada: arquivo privado `server-provisioning.PROPOSED.sh`, validado com `sh -n`. Cria SOMENTE usuário novo `erp-codex-ro`, home própria, senha bloqueada, sem sudo/docker/grupos extras; instala chave pública dedicada com opção `restrict` em authorized_keys desse usuário. Se usuário existir, aborta para revisão. Não altera root, sshd, firewall, dados ou grants. Exige aprovação específica antes da execução. O shell não é sandbox de filesystem; o acesso de negócio depende de principal SQL existente com ACL/RLS estritamente leitoras, contexto explícito e READ ONLY+ROLLBACK. Se faltar esse principal, parar no gate de grants; não criar role nesta autorização.
+
+Cadastro privado pelo proprietário: [GitHub Settings → Codespaces → Secrets](https://github.com/settings/codespaces), acesso SOMENTE `viniciuszuccaro-creator/ERP-Zuccaro-codeX`:
+
+- `ERP_CODEX_VPS_READONLY_SSH_PRIVATE_KEY`: conteúdo do arquivo privado dedicado `id_ed25519`, nunca chat/Git/Actions Secrets.
+- `ERP_CODEX_VPS_READONLY_SSH_USER`: usuário dedicado efetivamente aprovado/provisionado.
+- `ERP_CODEX_VPS_KNOWN_HOSTS`: linha OpenSSH com alias `erp-dev-vps-canonical` e chave HOST obtida no console autenticado do provedor ou referência previamente confiável. Conferir fingerprint com `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` nesse console. Não usar ssh-keyscan como prova de confiança.
+
+Alternativa no terminal do proprietário, sem exibir chave: `gh secret set ERP_CODEX_VPS_READONLY_SSH_PRIVATE_KEY --user --app codespaces --repos viniciuszuccaro-creator/ERP-Zuccaro-codeX < /home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028/id_ed25519`. Não executado automaticamente. Secrets novos exigem parar/iniciar o MESMO Codespace para disponibilizar env; não rebuild. Isso interrompe a prévia: coordenar e usar retomada abaixo. Referência: [secrets pessoais Codespaces](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-your-account-specific-secrets-for-github-codespaces).
+
+Configuração local proposta `ssh_config.proposed`: StrictHostKeyChecking=yes, UpdateHostKeys=no, BatchMode=yes, IdentitiesOnly=yes, sem senha/agent forwarding/TTY/forwardings. `ssh -G` validou opções sem conectar. known_hosts.verified permanece ausente até prova confiável; divergência de host deve abortar, nunca aceitar automaticamente. HostName proposto erp-dev.cpaferroeaco.com.br ainda exige confirmação de destino via console confiável; não presumir IP por health HTTPS.
+
+### Prévia privada sintética — iniciar, verificar e retomar
+
+Reutilizar harness privado existente `decision-20261026/resume-20261028/browser-harness.mjs` sob `/home/codespace/erp-legado-privado-20261023`. Não é deploy nem banco operacional. Executar somente após conferir checkout/branch/HEAD/status/processos e inexistência de outro dono da5173. Em terminal próprio, cwd canônico, Node22:
+
+```bash
+ERP_PREVIEW_EXPECTED_SHA="$(git rev-parse HEAD)" PATH=/usr/local/share/nvm/versions/node/v22.23.4/bin:$PATH node /home/codespace/erp-legado-privado-20261023/decision-20261026/resume-20261028/browser-harness.mjs
+```
+
+Harness recusa Codespace/origin/branch/SHA divergentes e diff de runtime antes de criar recursos; diretório de recibos identity-preview-20261028 deve permanecer0700. Verificar listener real, encaminhamento5173 Private e HTTP local `/__erp_fixture` (sourceSha, synthetic, operationalDatabase=false), `/__erp_preview` (HEAD atual), aviso sintético antes/depois do login. Login exclusivamente fixture: entry.synthetic@example.test / synthetic-entry-only. URL HTTPS externa termina em `-5173.app.github.dev/Comercial`; usar localhost para teste local, preservando redirecionamento HTTPS de127.0.0.1. Não publicar logs completos ou credenciais reais.
+
+Parar com Ctrl-C SOMENTE no terminal do harness próprio; cleanup usa seu container/labels/socket. Não matar processos genéricos nem tocar recursos alheios. Retomada repete verificações de identidade/exclusividade e comando: cria novo banco efêmero sintético, não recupera dados operacionais. Duração máxima6h/Codespace ativo; sem promessa24h ou mudança de suspensão/custos. Promoção para DEV diário exige gate existente de versão/imagens, autenticação/roles, backup/rollback, aprovação/deploy; não está autorizada por esta prévia.
+
 Objetivo: qualquer agente ou PC novo consiga operar a VPS **sem** reenviar
 credenciais no chat. Segredos ficam no ambiente Cursor (Runtime Secrets) ou no
 Hostinger; o GitHub guarda só o contrato e os nomes.

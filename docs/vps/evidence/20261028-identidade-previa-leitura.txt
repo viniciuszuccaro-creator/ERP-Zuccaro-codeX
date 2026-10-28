@@ -1,0 +1,11 @@
+Recibo sanitizado — 2026-10-28
+Código de referência ac563ece (runtime b3e494ba, CI5003/5004 SUCCESS previamente comprovados).
+5173: listener real e Private; API canônica isolada, PostgreSQL17 network=none/tmpfs; operacional=false.
+Aviso sintético visível no navegador antes e depois do login; metadata /__erp_fixture conferida.
+44919: sem listener; log remoto local28/10 10:48 associa porta a callback OAuth Hostinger. Query omitida integralmente.
+HTTPS DEV /health: status ok/environment dev/database configured/version0.1.0-runtime-01; sem inferir SHA/principal/banco.
+Coorte:100 originais iguais ao staging com hash de manifesto conferido; leituras destino0/escritas0/importação0.
+SSH: nenhuma conexão; chave dedicada apenas local; hostkey não comprovada; proposta servidor não aplicada; grants0/deploy0.
+Provas privadas: decision-20261026/identity-preview-20261028; access-codex-readonly-20261028.
+Verificações: node --check, negativa SHA antes de alocação, browser pré/pós-login, network=none, ssh -G local; documentação diff-check.
+Sem dados reais, chaves privadas, parâmetros OAuth ou relatórios detalhados neste recibo.
