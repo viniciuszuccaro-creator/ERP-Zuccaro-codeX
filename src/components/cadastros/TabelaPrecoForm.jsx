@@ -125,6 +125,16 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
     </form>
   );
 
-  if (windowMode) return <div className="w-full h-full overflow-auto bg-white p-6">{content}</div>;
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col bg-white">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Tags className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Tabela de Preço' : 'Nova Tabela de Preço'}</h2>
+        </div>
+        <div className="flex-1 overflow-auto p-6">{content}</div>
+      </div>
+    );
+  }
   return content;
 }

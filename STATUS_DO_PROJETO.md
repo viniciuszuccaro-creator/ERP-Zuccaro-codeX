@@ -4,11 +4,12 @@
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
 | Tip base | **`bf150d217`** — CI SUCCESS `40751947410` (CI5065) — **≠ aprovação** |
-| Tip código deste lote | (push a seguir) — P2 finally inFlight + P1 Contatos preserve |
+| Tip código | **`9474e7cb3`** — P2 finally inFlight + P1 Contatos preserve |
 | Achados fechados | P2 `6478177392` finally ownership · P1 `4404927785` Contatos |
 | Load-more limpo | **`9842e7fd8`** Codex no major issues |
+| CI tip código | em andamento — **≠ aprovação** |
 | Modalidade | runner `/workspace` (Codespace xylophone 403 / owner-only) |
-| Revisão | **@codex** tip código deste push; CI ≠ aprovação |
+| Revisão | **@codex** tip **`9474e7cb3`**; CI ≠ aprovação |
 
 **Provas:** `docs/evidence/apontamentos-397-p1-fechamento-bf150d-20261028.txt` · 64+ PASS focados
 **Próximo:** CI tip → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.

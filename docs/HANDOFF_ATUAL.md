@@ -7,7 +7,7 @@
 | Pacote | Tip | Estado |
 |--------|-----|--------|
 | **Base** | **`bf150d217`** | CI SUCCESS `40751947410` (CI5065) — **≠ aprovação** |
-| **Deltas** | P2 finally inFlight ownership · P1 Contatos seed/preserve | tip código no push |
+| **Tip código** | **`9474e7cb3`** | P2 finally ownership · P1 Contatos preserve |
 | **Load-more** | **`9842e7fd8`** | Codex: no major issues |
 
 **Próximo:** CI + @codex tip código → demo Private 5173. Sem merge/deploy/carga.

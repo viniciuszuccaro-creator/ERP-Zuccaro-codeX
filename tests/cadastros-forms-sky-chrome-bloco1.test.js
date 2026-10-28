@@ -20,6 +20,10 @@ const FORMS = [
   'PlanoContasForm.jsx',
   'ServicoForm.jsx',
   'TipoFreteForm.jsx',
+  'LocalEstoqueForm.jsx',
+  'SegmentoClienteForm.jsx',
+  'KitProdutoForm.jsx',
+  'TabelaPrecoForm.jsx',
 ];
 
 for (const name of FORMS) {
