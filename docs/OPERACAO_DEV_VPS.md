@@ -1,5 +1,95 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Gate SQL de reconciliacao100 - proposta NAO APLICADA (2026-10-28)
+
+SSH dedicado ja comprovado; nao reprovisionar. Inspecao administrativa de catalogos
+confirmou API DEV com conexao interna ao mesmo PostgreSQL; nenhum cliente lido.
+31 roles/10 LOGIN, 6 LOGIN sem super/BYPASSRLS e todas sem SELECT em clientes.
+A role read_only global tem BYPASSRLS: recusada. RLS/FORCE das quatro tabelas
+necessarias estao ativos, mas sem policies. groups tambem tem RLS/FORCE.
+A consulta administrativa a pg_hba_file_rules foi negada: nao ampliar privilegios.
+O canal local para um NOVO principal ainda exige prova; nao alterar HBA/rede por tentativa.
+
+### Decisao unica proposta
+
+Autorizar SOMENTE a preparacao/revisao e, em janela especifica, criacao temporaria
+do leitor abaixo e de suas policies SELECT dedicadas, apos ensaio isolado e pins
+privados de destino, CPA, empresas e coorte. NAO e autorizacao vigente para executar.
+Nao mudar a role API, roles existentes, memberships, policies existentes ou PUBLIC.
+Sem migrations gerais, porta PG publica, sudo/docker delegado ou carga.
+
+Contrato exato do patch candidato (psql; variaveis SEM valores reais no Git):
+- reader_expiry: timestamp absoluto de janela maxima de 1h aprovada; nao herdar o prazo SSH.
+- cpa_group_id, company_ids e cohort_docs: valores do binding e manifesto privado
+  existentes, conferidos e hasheados; exatamente 100 documentos normalizados distintos.
+- Nenhum segredo em argv/historico/Git/log. Se autenticacao local existente exigir
+  segredo, credencial efemera exclusivamente em arquivo privado 0600 do executor
+  administrativo; nao copiar para a conta SSH. Nao gerar antes da aprovacao.
+
+
+a) Role e privilegios candidatos, dentro de uma transacao administrativa:
+
+
+definicao: CREATE ROLE erp_legado_reconcile_344_ro LOGIN NOSUPERUSER NOBYPASSRLS
+NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION CONNECTION LIMIT 1
+VALID UNTIL :'reader_expiry';
+GRANT CONNECT ON DATABASE postgres TO erp_legado_reconcile_344_ro;
+GRANT USAGE ON SCHEMA public TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,empresa_id,codigo,tipo,documento,documento_normalizado,
+nome,razao_social,nome_fantasia,nome_social,inscricao_estadual,inscricao_municipal,
+telefone_principal,email,telefone,celular,status,origem,codigo_legado,legacy_id,
+legacy_code,source_system,migration_batch,observacoes,ativo,created_at,updated_at)
+ON public.clientes TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,cliente_id,empresa_id,ativo,situacao_comercial,
+habilitado_operacao,bloqueado,motivo_bloqueio,origem,legacy_id,legacy_code,
+source_system,migration_batch,created_at,updated_at)
+ON public.cliente_empresas TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,cliente_id,nome,cep,logradouro,numero,complemento,
+bairro,cidade,uf,pais,endereco_incompleto,endereco_fingerprint,ativo,origem,
+legacy_id,legacy_code,source_system,migration_batch,created_at,updated_at)
+ON public.cliente_locais TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,razao_social,nome_fantasia,status)
+ON public.empresas TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,nome_do_grupo,razao_social_grupo,status)
+ON public.groups TO erp_legado_reconcile_344_ro;
+
+b) Policies candidatas: cinco policies FOR SELECT TO erp_legado_reconcile_344_ro,
+com nomes exclusivos reconcile344_ro_<tabela>. Predicados fixados no DDL, NAO em
+GUC que o leitor possa adulterar:
+- clientes: group_id = :'cpa_group_id'::uuid AND
+  documento_normalizado = ANY(:'cohort_docs'::text[]).
+- cliente_empresas: group_id = CPA AND empresa_id = ANY(company_ids::uuid[])
+  AND cliente_id IN (SELECT id FROM public.clientes).
+- cliente_locais: group_id = CPA AND cliente_id IN (SELECT id FROM public.clientes).
+- empresas: group_id = CPA AND id = ANY(company_ids::uuid[]).
+- groups: id = CPA.
+Nao filtrar ativo: preservar historicos e detectar referencias inativas; isto nao
+libera escrita ou operacao comercial. Nao conceder SELECT em profiles ou outras tabelas.
+As referencias CPA/company_ids acima representam literais privados validados,
+nao nomes comerciais inferidos. O gerador deve recusar placeholders/contagem divergente.
+
+c) Antes de COMMIT/liberacao, abortar se houver membership/SET ROLE alcancavel,
+SUPER/BYPASSRLS/ownership, CREATE de schema, DML/sequence ou EXECUTE mutante relevante
+herdado de PUBLIC. As quatro funcoes SECURITY DEFINER de schemas nao-sistema
+observadas nao tinham USAGE/EXECUTE PUBLIC; refazer apenas se ACL/DDL mudar.
+Nao tentar corrigir grant PUBLIC global por conveniencia: apresentar impacto separado.
+Ensaio isolado deve provar negativas cross-Grupo/empresa/coorte, DML/DDL/funcoes,
+revogacao, falha intermediaria e identidade current_user=session_user=leitor.
+
+d) Canal escolhido: console administrativo existente -> docker exec no DB existente
+-> psql -X -v ON_ERROR_STOP=1 -U erp_legado_reconcile_344_ro -d postgres,
+SEM SET ROLE de administrador. Falha de autenticacao local bloqueia, nao autoriza
+mudar HBA. Execucao restrita ao SQL revisado, saida detalhada privada 0600.
+Validar sessao da aplicacao e binding CPA pelo fluxo autorizado; nao impersonar usuario.
+Consulta de documentos limitada a coorte, REPEATABLE READ READ ONLY, timeout e ROLLBACK.
+So contagens/categorias sanitizadas no Git. Ausencia de leitura NAO significa destino vazio.
+
+e) Reversao exata: bloquear LOGIN, encerrar somente sessoes desse leitor, revogar
+seus SELECT/USAGE/CONNECT, remover somente as cinco policies reconcile344_ro_*
+e a role dedicada apos confirmar dependencias. Nao usar DROP OWNED ou remover
+policies/grants anteriores. Confirmar roles/policies preexistentes inalteradas.
+Nenhuma autorizacao de importacao operacional, deploy ou mudanca da API acompanha o gate.
+
 ## Prioridade e separacao vigentes (2026-10-26)
 
 A entrada em uso segue PLANO_GO_LIVE.md; lista unica no topo de
