@@ -1,0 +1,27 @@
+PROPOSTA NAVEGÁVEL — azul-claro entrada em uso (#397)
+=====================================================
+Atualiza docs/evidence/proposta-visual-aprovacao-integra-353-20261026.txt
+sem redesign amplo. Modalidade: runner /workspace; Codespace = janela owner.
+
+O que navegar (quando SHA servido for o tip desta branch)
+---------------------------------------------------------
+1. Cadastros Gerais — todos os 6 blocos com chrome sky
+   Pessoas · Produtos · Financeiro · Logística · Organizacional · Tecnologia
+   Tile Abrir = sky-600; ícone tile = sky.
+2. Abrir Cliente → Painel: Endereços / Produtos / Canais / Histórico Produtos
+3. Abrir Operador de Caixa (Bloco3) → salvar uma vez → reabrir
+4. Comercial → Orçamento → Pedido ( PedidosTab permanece blue — pin )
+5. Relatórios → matriz / exportação / agendamento (RBAC)
+
+Critério de aceite visual (proprietário)
+---------------------------------------
+[ ] Sky nos blocos Cadastros é o padrão de entrada em uso
+[ ] Capacidades (reopen, RBAC, Histórico paginado, overflow contatos) preservadas
+[ ] Cor sozinha ≠ recuperação — módulos/abas/ações conferidos no roteiro
+[ ] Redesign amplo de Comercial/PedidosTab só após OK explícito
+
+Não nesta aprovação
+-------------------
+Documentacao / EmpresaOnboarding / OAuthConsent
+Troca em massa PedidosTab → sky
+Substituição do ERP pela árvore erp-integra-novo

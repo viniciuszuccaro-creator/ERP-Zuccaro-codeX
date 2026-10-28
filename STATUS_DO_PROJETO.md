@@ -1,3 +1,24 @@
+## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 09:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Tip HEAD | **este push** (bloqueios + P2 Histórico + sky Cadastros) |
+| CI tip `77312b9ad` | SUCCESS frontend/backend/expedicao — **≠ aprovação** |
+| Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
+| Codex | P2 Histórico endereçados; **@codex review** SHA final |
+| #342 | `47a5d0e10` — WIP fora dos 50 **não tip** |
+| Fora | merge/deploy/carga; Documentacao/OAuthConsent; 2º escritor |
+
+**Bloqueios:** Operador 1 escrita · Histórico paginação+linhas · guarda if(false) · 044 · P2 loadingMore/fingerprint
+**Recuperação funcional/visual:** chrome sky Blocos 1–6; `docs/evidence/recuperacao-funcional-visual-397-20261028.txt`
+**Proposta visual:** `docs/evidence/proposta-visual-navegavel-entrada-397-20261028.txt`
+**Registros:** tela ≠ dados; staging privado/Codex — sem seed fictício
+
+**Próximo:** parecer Codex tip HEAD → demo exclusiva SHA+HTTP.
+
+(2026-10-28 09:50 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE #397 (2026-10-28 07:10 America/Sao_Paulo)
 
 | Campo | Valor |

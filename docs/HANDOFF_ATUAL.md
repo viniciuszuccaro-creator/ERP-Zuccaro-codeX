@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (2026-10-28 09:50 America/Sao_Paulo)
+
+**Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.
+**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#397** bloqueios+P2+sky | **HEAD deste push** | CI `77312b9ad` SUCCESS; P2 Histórico fechados; **@codex review** |
+| #400/#399 | tips anteriores | CI SUCCESS |
+| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** |
+
+**Prova:** `docs/evidence/apontamentos-353-prova-tip-head-20261028.txt` + P2 neste tip
+**Recuperação:** `docs/evidence/recuperacao-funcional-visual-397-20261028.txt`
+**Proposta visual:** `docs/evidence/proposta-visual-navegavel-entrada-397-20261028.txt`
+**Próximo:** parecer Codex → demo exclusiva. Sem merge/deploy/carga.
+
 ## CURSOR — VIGENTE (2026-10-28 07:10 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Abrir Chrome no Codespace **não** conecta este runner. Stash `stash@{0}` preservado.

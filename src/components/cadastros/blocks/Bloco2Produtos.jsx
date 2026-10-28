@@ -177,10 +177,10 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b rounded-t-sm">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-cyan-50 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
+              <Package className="w-5 h-5 text-sky-700"/> Produtos & Serviços
             </CardTitle>
           </div>
         </CardHeader>
@@ -232,7 +232,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }
                 {title}
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
               </CardTitle>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+              <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
                 disabled={!contextoValido || !canViewEntity(k)}
                 data-permission={`Cadastros.${k}.visualizar`}

@@ -163,6 +163,8 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   );
 
   const sessionEpochRef = useRef(0);
+  const loadMoreAbortRef = useRef(null);
+  const firstPageFingerprintSeenRef = useRef(null);
   const [extraPages, setExtraPages] = useState([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(null);
@@ -176,10 +178,20 @@ export default function HistoricoProdutosCliente({ clienteId }) {
     httpMode ? "http" : "legado",
   ];
 
-  useEffect(() => {
+  const resetPaginationSession = () => {
     sessionEpochRef.current += 1;
+    if (loadMoreAbortRef.current) {
+      try { loadMoreAbortRef.current.abort(); } catch (_) { /* ignore */ }
+      loadMoreAbortRef.current = null;
+    }
     setExtraPages([]);
     setLoadMoreError(null);
+    setLoadingMore(false);
+  };
+
+  useEffect(() => {
+    firstPageFingerprintSeenRef.current = null;
+    resetPaginationSession();
   }, [clienteId, groupId, empresaId, contexto, httpMode]);
 
   const {
@@ -223,6 +235,28 @@ export default function HistoricoProdutosCliente({ clienteId }) {
     retry: false,
   });
 
+  // P2 Codex: refetch/invalidação da 1ª página não pode misturar extras de snapshot antigo.
+  const firstPageFingerprint = useMemo(() => {
+    if (!firstPage) return null;
+    const ids = (Array.isArray(firstPage.data) ? firstPage.data : [])
+      .map((p) => p?.id || p?.numero_pedido || p?.numero || "")
+      .join(",");
+    const total = firstPage.meta?.total;
+    const hasMoreMeta = firstPage.meta?.hasMore;
+    return `${ids}|${total}|${hasMoreMeta}`;
+  }, [firstPage]);
+
+  useEffect(() => {
+    if (!firstPageFingerprint) return;
+    if (firstPageFingerprintSeenRef.current == null) {
+      firstPageFingerprintSeenRef.current = firstPageFingerprint;
+      return;
+    }
+    if (firstPageFingerprintSeenRef.current === firstPageFingerprint) return;
+    firstPageFingerprintSeenRef.current = firstPageFingerprint;
+    resetPaginationSession();
+  }, [firstPageFingerprint]);
+
   const pedidos = useMemo(() => {
     const base = Array.isArray(firstPage?.data) ? firstPage.data : [];
     const extras = extraPages.flatMap((page) => (Array.isArray(page?.data) ? page.data : []));
@@ -230,6 +264,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
   }, [firstPage, extraPages]);
 
   const meta = useMemo(() => {
+    // Com extras, hasMore/total vêm da última página; se 1ª página mudou, extras já foram limpos.
     if (extraPages.length) return extraPages[extraPages.length - 1]?.meta || firstPage?.meta;
     return firstPage?.meta || null;
   }, [firstPage, extraPages]);
@@ -247,6 +282,7 @@ export default function HistoricoProdutosCliente({ clienteId }) {
     setLoadingMore(true);
     setLoadMoreError(null);
     const controller = new AbortController();
+    loadMoreAbortRef.current = controller;
     try {
       const page = await loadPedidosHistoricoHttp({
         clienteId,
@@ -260,8 +296,10 @@ export default function HistoricoProdutosCliente({ clienteId }) {
       setExtraPages((prev) => [...prev, page]);
     } catch (err) {
       if (epoch !== sessionEpochRef.current) return;
+      if (err?.name === "AbortError") return;
       setLoadMoreError(err);
     } finally {
+      if (loadMoreAbortRef.current === controller) loadMoreAbortRef.current = null;
       if (epoch === sessionEpochRef.current) setLoadingMore(false);
     }
   };

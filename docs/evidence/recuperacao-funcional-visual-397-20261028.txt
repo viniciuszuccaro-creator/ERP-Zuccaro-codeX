@@ -1,0 +1,69 @@
+RECUPERAÇÃO FUNCIONAL/VISUAL — #397 (America/Sao_Paulo 2026-10-28)
+==================================================================
+Modalidade: runner /workspace ≠ Codespace xylophone (403; sem prova Chrome neste tip).
+Referência: erp-integra-novo (cópia local /tmp/erp-integra-novo-cmp) — sem recomeçar inventário.
+Candidata tip: ver STATUS (bloqueios + este lote).
+Regra-Mãe: melhorar existente; sem ComercialV2 / Documentacao / OAuthConsent.
+
+1) BLOQUEIOS (reprova dirigida — CI SUCCESS ≠ aprovação)
+--------------------------------------------------------
+OperadorCaixa self-managed + tenantKey ………… PASS (1 escrita)
+Histórico clienteId + paginação >50 …………… PASS
+Sem grant cliente_empresa …………………… PASS
+Guarda if(false) rejeitada …………………… PASS
+044 PEDIDO_SCHEMA_IDEMPOTENCY_MISSING ……… PASS
+P2 Codex Histórico:
+  - reset loadingMore + abort ao trocar contexto …… neste tip
+  - limpar extras quando 1ª página muda (fingerprint) … neste tip
+
+2) MÓDULOS / SUBMÓDULOS (classificação vs referência)
+----------------------------------------------------
+Páginas só na referência (NÃO restaurar sem parecer):
+  Documentacao.jsx · EmpresaOnboarding.jsx · OAuthConsent.jsx
+  → Documentacao: GuiaUsoSistema já existe na candidata (equivalente).
+  → Onboarding/OAuth: auth permissiva Base44 — bloqueados.
+
+Tiles Cadastros (Bloco1–6): conjuntos equivalentes à referência
+  (Cliente/Fornecedor/Transportadora/…/OperadorCaixa/…).
+  Causa “sumiu” tipicamente: contexto/RBAC/lista vazia ≠ ausência de tela.
+
+Comercial launchpad: Clientes, Orçamentos, Pedidos, Entrega, Retirada,
+  Comissões, NF, Aprovações, Tabelas de Preço, Canais — montados no existente.
+Relatórios: matriz/exportacao/agendamento/representantes/personalizado
+  já com trigger+RBAC (lote anterior).
+
+3) VISUAL AZUL-CLARO (entrada em uso — não redesign amplo)
+---------------------------------------------------------
+Blocos Cadastros 1–6: chrome sky (header from-sky-50, ícones/botões sky-600).
+Preserva pin PedidosTab blue. Proposta navegável atualizada neste tip.
+Aprovação visual ampla do proprietário ainda necessária para redesign além
+do chrome de entrada em uso.
+
+4) REGISTROS vs TELA (sem misturar)
+----------------------------------
+Tela restaurada ≠ registros recuperados.
+| Situação | Ação |
+|----------|------|
+| Lista vazia com contexto/RBAC | diagnosticar filtro/escopo primeiro |
+| Schema/ops Fornecedor ausente | gate Codex/DDL — não seed |
+| Códigos SYNTH/GATE-D | ≠ legado real |
+| Fonte privada | staging + reconciliação (#211/#344) — fora deste runner |
+
+5) CÓDIGOS / IDs / EDIÇÃO (matriz início de uso)
+-----------------------------------------------
+CadastroCodigoRegistroField + reserve backend: mantidos.
+openCadastroEntityWindow uniqueKey: mantido.
+Operador 1 save; Transportadora/Produto/Configs updated_at HTTP: neste PR.
+Não renumerar; sem count+1.
+
+6) ROTEIRO NAVEGÁVEL (quando Codespace SHA+HTTP medidos)
+-------------------------------------------------------
+Login → Grupo/Empresa → Cadastros (sky) Cliente/Produto/Forma/Operador
+→ Comercial Orçamento → Pedido (044 se schema) → Cliente Histórico Produtos
+→ Relatórios matriz/export/agenda.
+Roteiro Operador/Histórico: docs/evidence/roteiro-demo-operador-historico-397-*.txt
+
+7) FORA DESTE LOTE
+------------------
+Merge/deploy/carga; 2º escritor Codespace; duplicar WIP #342 fora dos 50;
+reabrir contatos/CodigoField/Região P2; inventário completo refeito.

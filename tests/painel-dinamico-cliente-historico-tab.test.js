@@ -377,11 +377,12 @@ test('HistoricoProdutosCliente HTTP: troca de contexto descarta página extra an
       meta: { limit: 50, offset: 0, total: 60, hasMore: true },
     },
   });
-  // extraPages state index: useState order = extraPages, loadingMore, loadMoreError
-  // After effects, inject a stale extra page then remount with same props keeps it until key change —
-  // source resets via useEffect on empresaId; simulate by checking effect deps include empresaId.
+  // P2 Codex: resetPaginationSession limpa extras + loadingMore e aborta request antiga.
   const src = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
-  assert.match(src, /setExtraPages\(\[\]\)/);
+  assert.match(src, /resetPaginationSession/);
+  assert.match(src, /setLoadingMore\(false\)/);
+  assert.match(src, /loadMoreAbortRef/);
+  assert.match(src, /firstPageFingerprint/);
   assert.match(src, /sessionEpochRef/);
   assert.match(src, /empresaId/);
   assert.ok(h.queries[0].queryKey.includes('emp-a'));
