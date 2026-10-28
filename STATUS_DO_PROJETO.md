@@ -20,7 +20,7 @@
 6. Linhas UI: `data-historico-linhas-*` — truncamento honesto (não silencioso)
 
 **Recuperação indep. (matriz erp-integra, sem form novo):**
-- TransportadoraForm / ProdutoForm / ConfiguracaoDespesaRecorrente: identidade `updated_at ?? updated_date` (HTTP reopen; pins RecordState preservados)
+- Transportadora / Produto / ConfigDespesaRecorrente / Config Boletos·WhatsApp·Integração·NFe: identidade `updated_at ?? updated_date` (pins RecordState)
 
 **Próximo:** parecer Codex no tip HEAD → demo exclusiva SHA+HTTP. Continua matriz RecordState só `updated_date` (Config*/Parametro* fora de #398–#400) sem reabrir pins encerrados.
 

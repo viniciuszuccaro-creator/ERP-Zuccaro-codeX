@@ -43,7 +43,7 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
     webhook_url: "",
     ativo: true,
     observacoes: ""
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

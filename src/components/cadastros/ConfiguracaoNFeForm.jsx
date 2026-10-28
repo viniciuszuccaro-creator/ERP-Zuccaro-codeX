@@ -33,7 +33,7 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
     ativo: true,
     autoriza_emissao_producao: false,
     observacoes: ""
-  }, JSON.stringify([config?.id ?? null, config?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, groupId, empresaId]));
+  }, JSON.stringify([config?.id ?? null, config?.updated_at ?? config?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, groupId, empresaId]));
   const grupoIdAtual = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaIdAtual = empresaId || empresaAtual?.id || null;
   const scope = scopeProp || (empresaIdAtual ? { empresa_id: empresaIdAtual, group_id: grupoIdAtual } : null);

@@ -49,3 +49,17 @@ test('ConfiguracaoDespesaRecorrenteForm: identidade usa updated_at ?? updated_da
     /config\?\.updated_at\s*\?\?\s*config\?\.updated_date/,
   );
 });
+
+test('Config forms Bloco integração: identidade usa updated_at ?? updated_date', async () => {
+  const files = [
+    ['ConfiguracaoBoletosForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['ConfiguracaoWhatsAppForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['ConfiguracaoIntegracaoForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['ConfiguracaoNFeForm.jsx', /config\?\.updated_at\s*\?\?\s*config\?\.updated_date/],
+  ];
+  for (const [name, re] of files) {
+    const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(src, /useCadastroRecordState/);
+    assert.match(src, re, name);
+  }
+});
