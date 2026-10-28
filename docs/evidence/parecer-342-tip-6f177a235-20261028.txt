@@ -1,0 +1,27 @@
+PARECER CURSOR — #342 tip 6f177a235 (ref consultada f2d59226)
+=============================================================
+America/Sao_Paulo 2026-10-28 ~10:30. Runner /workspace. Branch Codex INTTOCADA.
+
+HEAD confirmado: 6f177a235 (PR #342). Ref usuário: f2d59226 CI5018/5019.
+
+Classificação dos deltas f2d59226 → 6f177a235
+--------------------------------------------
+DOCUMENTAL (não runtime):
+  - STATUS_DO_PROJETO.md / docs/HANDOFF_ATUAL.md
+  - docs/OPERACAO_DEV_VPS.md (procedimento acesso/reversão)
+  - docs/vps/evidence/20261028-identidade-previa-leitura.txt
+Sem alteração em src/ ou server/ neste intervalo.
+
+Deltas runtime ainda pertinentes (anteriores, tip ac563ecea e antes)
+--------------------------------------------------------------------
+Já parecerados em docs/evidence/parecer-342-deltas-ac563ecea-20261028.txt:
+  - ClienteEmpresa fora dos 50 (cliente_empresa_id + selected-cliente query)
+  - filtro preserva selecionado; zIndex diálogos Pedido (windowMode)
+  - sessionCacheKey no selected-cliente
+Sem novo delta SQL/orcamento_id/publicação nestes 3 commits docs.
+
+Parecer
+-------
+APROVADO (docs tip 6f177a235 / f2d59226): sem regressão de runtime neste intervalo.
+Runtime pedido/cliente: parecer ac563ecea permanece; CI tip #342 não revalidado
+neste runner — proprietário confirma. Sem merge daqui.

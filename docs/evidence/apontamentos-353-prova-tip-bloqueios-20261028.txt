@@ -1,0 +1,42 @@
+PROVA BLOQUEIOS #353/#397 — tip runner (America/Sao_Paulo 2026-10-28 ~10:30)
+================================================================================
+Modalidade: runner `/workspace` ≠ Codespace xylophone (gh 403; sem Browser).
+Chrome (owner): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+#353 tip consultado: eaad0b84 (CI4921) — trabalho desta candidata continua em #397.
+Branch: cursor/operador-historico-persist-392b — working tree limpo antes deste tip; sem unpushed.
+
+Bloqueios A/B/C — reprova dirigida (73 PASS focados)
+----------------------------------------------------
+A) Guarda preservação submit
+   - graduados preservam negativa; mutação if(!podeSalvar)→if(false) rejeitada
+   - módulo real OperadorCaixa (não cópia no teste)
+
+B) OperadorCaixa persistência única
+   - self-managed: 1 create / 1 update; V24 só conclui
+   - contraprova onSubmit=handlePersistSubmit duplicaria
+   - erro preserva rascunho; sem permissão não persiste; tenantKey A↛B
+
+C) Histórico Produtos HTTP
+   - pedidos.list?clienteId=; paginação >50; produto só pág.2
+   - Pedido.visualizar (sem grant cliente_empresa)
+   - fail-closed sem empresa/sessão; sem facade local
+   - queryKey actorId + sessionCacheKey; assertHistoricoHttpScope pré+pós
+   - P1 Codex tip: JWT fingerprint (comprimento+FNV) — prefixo 16 chars NÃO colide
+   - P2: resetPaginationSession zera loadingMore+extras; fingerprint 1ª página
+
+Recuperação neste tip
+---------------------
+ClienteForm + ClienteFormCompleto: updated_at ?? updated_date (fluxo diário
+Cliente→Orçamento→Pedido→Histórico). Sky Cadastros 1–6 já no tip anterior.
+
+#342
+----
+Tip 6f177a235 (ref consultada f2d59226): deltas pós-ac563ecea = docs only
+(STATUS/HANDOFF/OPERACAO_DEV_VPS/evidence). Runtime pedido/cliente-fora-50
+já em b435fae7f/b3e494bae — parecer anterior mantido. Branch Codex intocada.
+
+Codex bot #397
+--------------
+Falha de ambiente ("create an environment for this repo") em 6470060126.
+Revisão independente Cursor neste tip — CI SUCCESS ≠ aprovação.
+Não repetir @codex em loop sem mudança de ambiente.

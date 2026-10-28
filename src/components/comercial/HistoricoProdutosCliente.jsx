@@ -90,10 +90,27 @@ export function mapPedidosToHistoricoLinhas(pedidos = []) {
  *
  * Sem fallback silencioso para entityListSorted/local em modo HTTP.
  */
-/** Snapshot mínimo da sessão para queryKey (sem logar o token completo). */
+/**
+ * Identidade de sessão para queryKey/revalidação (sem persistir o JWT completo).
+ * Prefixo curto colide entre renovações (mesmo header JWT) — usa comprimento +
+ * hash simples do token inteiro + actorId (padrão Orçamento: troca de token invalida cache).
+ */
+export function historicoTokenFingerprint(token) {
+  const raw = String(token || "");
+  if (!raw) return null;
+  let h = 2166136261;
+  for (let i = 0; i < raw.length; i += 1) {
+    h ^= raw.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return `${raw.length}:${(h >>> 0).toString(36)}`;
+}
+
 export function historicoSessionCacheKey(session) {
   if (!session?.token || !session?.actorId) return null;
-  return `${session.actorId}:${String(session.token).slice(0, 16)}`;
+  const fp = historicoTokenFingerprint(session.token);
+  if (!fp) return null;
+  return `${session.actorId}:${fp}`;
 }
 
 /**
@@ -390,8 +407,12 @@ export default function HistoricoProdutosCliente({ clienteId }) {
       if (err?.name === "AbortError") return;
       setLoadMoreError(err);
     } finally {
-      if (loadMoreAbortRef.current === controller) loadMoreAbortRef.current = null;
-      if (epoch === sessionEpochRef.current) setLoadingMore(false);
+      // Request obsoleta (epoch≠): não zerar aqui — nova load-more pode já estar ativa.
+      // Troca de contexto: resetPaginationSession aborta + setLoadingMore(false).
+      if (loadMoreAbortRef.current === controller) {
+        loadMoreAbortRef.current = null;
+        setLoadingMore(false);
+      }
     }
   };
 

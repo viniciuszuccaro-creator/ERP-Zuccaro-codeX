@@ -64,6 +64,17 @@ test('Config forms Bloco integração: identidade usa updated_at ?? updated_date
   }
 });
 
+test('Cliente comercial (fluxo diário): identidade updated_at ?? updated_date', async () => {
+  const files = [
+    ['ClienteForm.jsx', /cliente\?\.updated_at\s*\?\?\s*cliente\?\.updated_date/],
+    ['ClienteFormCompleto.jsx', /cliente\?\.updated_at\s*\?\?\s*cliente\?\.updated_date/],
+  ];
+  for (const [name, re] of files) {
+    const src = await readFile(new URL(`../src/components/comercial/${name}`, import.meta.url), 'utf8');
+    assert.match(src, re, name);
+  }
+});
+
 test('Matriz início de uso RecordState: identidade updated_at ?? updated_date', async () => {
   // Fora de #398–#400 (ApiExterna / ParametroRoteirizacao / ChatbotCanal).
   const files = [

@@ -61,7 +61,7 @@ const setFormData = (updater) => {
 
   const [cpfCnpjValido, setCpfCnpjValido] = useState(false);
   const [dadosReceita, setDadosReceita] = useState(null);
-  const recordIdentity = JSON.stringify([cliente?.id ?? null, cliente?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]);
+  const recordIdentity = JSON.stringify([cliente?.id ?? null, cliente?.updated_at ?? cliente?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]);
   const hydratedIdentity = useRef(recordIdentity);
   useEffect(() => {
     if (hydratedIdentity.current === recordIdentity) return;

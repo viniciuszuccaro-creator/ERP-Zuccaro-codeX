@@ -224,7 +224,7 @@ test('HistoricoProdutosCliente HTTP: lista por clienteId sem Central360 nem clie
   assert.equal(queries[0].enabled, true);
   assert.ok(queries[0].queryKey.includes('http'));
   assert.ok(queries[0].queryKey.includes('11111111-1111-1111-1111-111111111111'));
-  assert.ok(queries[0].queryKey.some((k) => typeof k === 'string' && k.startsWith('11111111-1111-1111-1111-111111111111:')));
+  assert.ok(queries[0].queryKey.some((k) => typeof k === 'string' && /^11111111-1111-1111-1111-111111111111:\d+:[0-9a-z]+$/.test(k)));
   const page = await queries[0].queryFn({});
   assert.equal(filterCalls.length, 0);
   assert.equal(centralCalls.length, 0);
@@ -502,8 +502,10 @@ test('assertHistoricoHttpScope: troca de actor ou rotacao de sessao falha fechad
   const assertHistoricoHttpScope = sandbox.exports.assertHistoricoHttpScope || sandbox.module.exports.assertHistoricoHttpScope;
   const historicoSessionCacheKey = sandbox.exports.historicoSessionCacheKey || sandbox.module.exports.historicoSessionCacheKey;
   assert.equal(typeof assertHistoricoHttpScope, 'function');
+  const historicoTokenFingerprint = sandbox.exports.historicoTokenFingerprint || sandbox.module.exports.historicoTokenFingerprint;
   const keyA = historicoSessionCacheKey(sessionLive);
-  assert.equal(keyA, 'actor-a:tok-aaaa');
+  assert.match(keyA, /^actor-a:\d+:[0-9a-z]+$/);
+  assert.equal(keyA, `actor-a:${historicoTokenFingerprint('tok-aaaa')}`);
   assert.throws(
     () => assertHistoricoHttpScope({
       session: { ...sessionLive, actorId: 'actor-b' },
@@ -524,5 +526,24 @@ test('assertHistoricoHttpScope: troca de actor ou rotacao de sessao falha fechad
     }),
     /rotacion|SESSION_ROTATED/i,
   );
+  // P1 Codex: JWTs distintos com mesmo prefixo de 16 chars NÃO compartilham cacheKey.
+  const samePrefixA = `${'eyJhbGciOiJIUzI1NiJ9'}.payload-one.sig-aaaa`;
+  const samePrefixB = `${'eyJhbGciOiJIUzI1NiJ9'}.payload-two.sig-bbbb`;
+  assert.equal(samePrefixA.slice(0, 16), samePrefixB.slice(0, 16));
+  assert.notEqual(
+    historicoSessionCacheKey({ token: samePrefixA, actorId: 'actor-a' }),
+    historicoSessionCacheKey({ token: samePrefixB, actorId: 'actor-a' }),
+  );
   assert.ok(h.queries[0].queryKey.includes('actor-a'));
+});
+
+test('Histórico resetPaginationSession: zera loadingMore e limpa extras (P2 Codex)', async () => {
+  const src = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
+  assert.match(src, /const resetPaginationSession = \(\) => \{/);
+  assert.match(src, /setLoadingMore\(false\)/);
+  assert.match(src, /setExtraPages\(\[\]\)/);
+  assert.match(src, /firstPageFingerprint/);
+  assert.match(src, /historicoTokenFingerprint/);
+  // finally da load-more só zera loading quando o controller ainda é o vigente
+  assert.match(src, /if \(loadMoreAbortRef\.current === controller\)/);
 });

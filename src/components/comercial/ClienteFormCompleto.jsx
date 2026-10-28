@@ -146,7 +146,7 @@ function ClienteFormCompleto({ cliente: clienteProp = undefined, item = undefine
     };
   }, [cliente]);
   const [formData, setFormData] = useCadastroRecordState(initialFormData, JSON.stringify([
-    cliente?.id ?? null, cliente?.updated_date ?? null,
+    cliente?.id ?? null, cliente?.updated_at ?? cliente?.updated_date ?? null,
     grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto,
   ]));
 
