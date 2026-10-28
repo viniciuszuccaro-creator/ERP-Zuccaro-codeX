@@ -28,7 +28,7 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
     usar_ia_aprendizado: true,
     conciliacao_automatica_ativa: false,
     ativo: true
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

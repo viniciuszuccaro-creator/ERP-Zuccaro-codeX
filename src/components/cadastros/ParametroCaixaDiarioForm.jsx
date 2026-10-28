@@ -27,7 +27,7 @@ export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMo
     tolerancia_divergencia: 5,
     gerar_movimento_automatico: true,
     ativo: true
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

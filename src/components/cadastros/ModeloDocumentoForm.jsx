@@ -20,7 +20,7 @@ export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit,
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const scope = useCadastroFormScopeGuard(groupId, empresaAtual?.id || null);
   const podeSalvar = !permissions.isLoading && hasCadastroEntityPermission('ModeloDocumento', dadosIniciais?.id ? 'editar' : 'criar', permissions);
-  const identity = JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, groupId, empresaAtual?.id ?? null, contexto]);
+  const identity = JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, groupId, empresaAtual?.id ?? null, contexto]);
   const current = useRef(null);
   current.current = { identity, podeSalvar };
   const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {

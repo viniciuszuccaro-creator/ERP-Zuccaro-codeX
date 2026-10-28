@@ -23,7 +23,7 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
   const { grupoAtual, empresaAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const scope = useCadastroFormScopeGuard(groupId, empresaAtual?.id || null);
-  const identity = JSON.stringify([perfil?.id ?? null, perfil?.updated_date ?? null, groupId, empresaAtual?.id ?? null, contexto]);
+  const identity = JSON.stringify([perfil?.id ?? null, perfil?.updated_at ?? perfil?.updated_date ?? null, groupId, empresaAtual?.id ?? null, contexto]);
   const current = useRef(null);
   const podeCriar = !isLoading && canCreate("Sistema", "Controle de Acesso");
   const podeEditar = !isLoading && canEdit("Sistema", "Controle de Acesso");

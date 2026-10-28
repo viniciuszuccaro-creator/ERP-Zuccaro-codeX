@@ -1,0 +1,41 @@
+PARECER CURSOR — #342 tip ac563ecea (deltas pós-47a5d0e10)
+===========================================================
+Data: 2026-10-28 ~10:10 America/Sao_Paulo
+Modalidade: runner /workspace — branch Codex #342 INTTOCADA (somente leitura).
+Base aprovada anterior: 47a5d0e10. Tip atual: ac563ecea.
+
+Commits novos
+-------------
+b435fae7f Preserva vínculo do cliente ao reabrir pedido
+b3e494bae Preserva origem e acesso ao editar pedido em janela
+ac563ecea Registra CI confirmada e bloqueios da retomada
+
+Delta runtime (resumo)
+----------------------
+1) Seleção operacional exata do cliente:
+   - API: query `cliente_empresa_id` em listagem operacional (limit 1, sem search/offset)
+   - Validação fail-closed se misturar search/codigo/offset
+   - httpApiClient.comercialMasters.list({ clienteEmpresaId })
+   - resolveComercialSelectedCliente + mergeComercialSelectedCliente
+   - PedidoCanonicoPanel: query dedicada pedido-selected-cliente (queryKey com sessionCacheKey)
+   → Corrige cliente “fora dos 50” da busca ao reabrir/editar — alinhado ao apontamento WIP.
+
+2) Janela/multitarefa:
+   - Dialog form/detail/cancel/status: zIndex overlay elevado quando windowMode
+   → Preserva acesso ao editar pedido em janela (origem/diálogos).
+
+3) filterClienteEmpresaOptions: selectedId permanece na lista mesmo fora do filtro de busca.
+
+4) Docs STATUS/HANDOFF + testes (comercial-master-picker, http-api-client, pedido-ui, publication).
+
+Parecer
+-------
+APROVADO COM RESSALVA DE ESCOPO (leitura; sem merge daqui):
+- Propósito coerente com “cliente fora dos 50” e edição em janela.
+- Fail-closed na API (VALIDATION_ERROR) e no picker (COMERCIAL_SELECTED_CLIENTE_UNAVAILABLE).
+- Isolamento sessionCacheKey no queryKey do selected-cliente — consistente com padrão Orçamento/Pedido.
+- Sem evidência neste runner de regressão Operador/Histórico/#397 (ramos distintos).
+- CI tip #342 não revalidado neste runner — proprietário/Codex confirmam no SHA.
+- Não editar/remargar #342 daqui. WIP residual fora destes 3 commits, se houver, permanece com Codex.
+
+Fora deste parecer: merge, deploy, carga legado, 2º escritor no Codespace.

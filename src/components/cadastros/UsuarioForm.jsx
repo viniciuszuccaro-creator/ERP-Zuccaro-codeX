@@ -37,7 +37,7 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
     perfil_acesso_id: '',
     empresas_vinculadas: [],
     ativo: true
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso', groupId, empresaAtual?.id],

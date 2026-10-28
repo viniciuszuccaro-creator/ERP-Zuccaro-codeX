@@ -28,7 +28,7 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
     prioridade: "Media",
     usuarios_destinatarios: [],
     ativo: true
-  }, JSON.stringify([evento?.id ?? null, evento?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([evento?.id ?? null, evento?.updated_at ?? evento?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

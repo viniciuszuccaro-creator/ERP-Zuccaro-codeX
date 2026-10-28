@@ -63,3 +63,36 @@ test('Config forms Bloco integração: identidade usa updated_at ?? updated_date
     assert.match(src, re, name);
   }
 });
+
+test('Matriz início de uso RecordState: identidade updated_at ?? updated_date', async () => {
+  // Fora de #398–#400 (ApiExterna / ParametroRoteirizacao / ChatbotCanal).
+  const files = [
+    ['TabelaPrecoForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['CadastroFiscalForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['GrupoEmpresarialForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['UsuarioForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['WebhookForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['GatewayPagamentoForm.jsx', /gateway\?\.updated_at\s*\?\?\s*gateway\?\.updated_date/],
+    ['EventoNotificacaoForm.jsx', /evento\?\.updated_at\s*\?\?\s*evento\?\.updated_date/],
+    ['ChatbotIntentForm.jsx', /chatbotIntent\?\.updated_at\s*\?\?\s*chatbotIntent\?\.updated_date/],
+    ['ModeloDocumentoForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['CentroOperacaoForm.jsx', /dadosIniciais\?\.updated_at\s*\?\?\s*dadosIniciais\?\.updated_date/],
+    ['TabelaFiscalForm.jsx', /tabela\?\.updated_at\s*\?\?\s*tabela\?\.updated_date/],
+    ['ParametroCaixaDiarioForm.jsx', /parametro\?\.updated_at\s*\?\?\s*parametro\?\.updated_date/],
+    ['ParametroPortalClienteForm.jsx', /parametro\?\.updated_at\s*\?\?\s*parametro\?\.updated_date/],
+    ['ParametroRecebimentoNFeForm.jsx', /parametro\?\.updated_at\s*\?\?\s*parametro\?\.updated_date/],
+    ['ParametroConciliacaoBancariaForm.jsx', /parametro\?\.updated_at\s*\?\?\s*parametro\?\.updated_date/],
+    ['ParametroOrigemPedidoForm.jsx', /parametro\?\.updated_at\s*\?\?\s*parametro\?\.updated_date/],
+    ['PerfilAcessoForm.jsx', /perfil\?\.updated_at\s*\?\?\s*perfil\?\.updated_date/],
+  ];
+  for (const [name, re] of files) {
+    const src = await readFile(new URL(`../src/components/cadastros/${name}`, import.meta.url), 'utf8');
+    assert.match(src, /useCadastroRecordState/, name);
+    assert.match(src, re, name);
+    assert.doesNotMatch(
+      src,
+      /JSON\.stringify\(\[[^\]]*?\?\.updated_date\s*\?\?\s*null/,
+      `${name} não deve usar só updated_date na identidade`,
+    );
+  }
+});

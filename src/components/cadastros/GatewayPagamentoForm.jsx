@@ -55,7 +55,7 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     tipos_pagamento_suportados: ["PIX", "Boleto", "Cartão Crédito"],
     ativo: true,
     prioridade: 1
-  }, JSON.stringify([gateway?.id ?? null, gateway?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([gateway?.id ?? null, gateway?.updated_at ?? gateway?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const [tiposSelecionados, setTiposSelecionados] = useState(
     formData.tipos_pagamento_suportados || ["PIX", "Boleto"]

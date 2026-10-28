@@ -64,7 +64,7 @@ export default function TabelaFiscalForm({
     regra_ativa: true,
     prioridade: 100,
     ...tabela
-  }, JSON.stringify([tabela?.id ?? null, tabela?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([tabela?.id ?? null, tabela?.updated_at ?? tabela?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const [abaAtiva, setAbaAtiva] = useState("configuracao");
   const [validandoIA, setValidandoIA] = useState(false);

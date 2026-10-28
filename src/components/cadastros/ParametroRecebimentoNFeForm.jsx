@@ -29,7 +29,7 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
     atualizar_custo_medio_automatico: true,
     exigir_foto_comprovante: false,
     ativo: true
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

@@ -41,7 +41,7 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     permite_estoque: true,
     ativo: true,
     ...dadosIniciais
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],

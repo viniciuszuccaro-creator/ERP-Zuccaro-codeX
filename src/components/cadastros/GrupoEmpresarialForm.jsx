@@ -50,7 +50,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     status: "Ativo",
     governanca_consolidada: false,
     score_integracao_erp: 0
-  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
 
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas", groupId || "sem-grupo"],

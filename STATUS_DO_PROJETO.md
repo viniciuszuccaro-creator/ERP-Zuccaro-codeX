@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **(este push)** — sessão/cache Histórico + tip anterior `f8d626c59` |
+| Tip HEAD | **`49f8c8a6c`** — sessão/cache Histórico + tip anterior `f8d626c59` |
 | CI tip `f8d626c59` | SUCCESS `40692529560` frontend/backend/expedicao — **≠ aprovação** |
 | Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |

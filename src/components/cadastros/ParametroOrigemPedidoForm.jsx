@@ -54,7 +54,7 @@ export default function ParametroOrigemPedidoForm({
     cor_badge: parametro?.cor_badge || 'blue',
     empresa_id: parametro?.empresa_id || empresaAtual?.id || '',
     group_id: parametro?.group_id || groupId || '',
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, groupId, empresaAtual?.id ?? null]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, groupId, empresaAtual?.id ?? null]));
 
   const mutation = useMutation({
     mutationFn: (data) => {

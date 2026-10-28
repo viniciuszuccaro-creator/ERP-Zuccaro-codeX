@@ -27,7 +27,7 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
     permitir_download_documentos: true,
     prazo_expiracao_link_dias: 30,
     observacoes: ""
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

@@ -5,7 +5,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** bloqueios+sessão+sky | **(este push)** / base `f8d626c59` | CI base SUCCESS `40692529560`; sessão Histórico neste tip; **@codex review** |
+| **#397** bloqueios+sessão+sky | **`49f8c8a6c`** / base `f8d626c59` | CI base SUCCESS `40692529560`; sessão Histórico neste tip; **@codex review** |
 | #400/#399 | tips anteriores | CI SUCCESS |
 | #342 Codex | `ac563ecea` | deltas pós-`47a5d0e` — parecer Cursor separado; branch intocada |
 

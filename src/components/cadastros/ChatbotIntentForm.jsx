@@ -28,7 +28,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
     resposta_template: "",
     ativo: true,
     observacoes: ""
-  }, JSON.stringify([chatbotIntent?.id ?? null, chatbotIntent?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([chatbotIntent?.id ?? null, chatbotIntent?.updated_at ?? chatbotIntent?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const [novaFrase, setNovaFrase] = useState("");
 
