@@ -1,20 +1,19 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:15 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 17:05 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`2fa7bd8fb`** — docs CI SUCCESS pin Central360 |
-| Tip código | **`0ad95ae90`** — fix pin + create/sky |
-| Tip create | **`cbc21f14a`** · sky **`2080f3e3b`** · load-more **`9842e7fd8`** |
-| CI tip HEAD | **SUCCESS** run `40750905345` — **≠ aprovação** |
-| CI código `0ad95ae90` | **SUCCESS** run `40750804838` — **≠ aprovação** |
+| Tip base | **`bf150d217`** — CI SUCCESS `40751947410` (CI5065) — **≠ aprovação** |
+| Tip código deste lote | (push a seguir) — P2 finally inFlight + P1 Contatos preserve |
+| Achados fechados | P2 `6478177392` finally ownership · P1 `4404927785` Contatos |
+| Load-more limpo | **`9842e7fd8`** Codex no major issues |
 | Modalidade | runner `/workspace` (Codespace xylophone 403 / owner-only) |
-| Revisão | **@codex** tip código **`0ad95ae90`**; CI ≠ aprovação |
+| Revisão | **@codex** tip código deste push; CI ≠ aprovação |
 
-**Provas:** create path + sky Cadastros + pin stage51
-**Próximo:** parecer Codex → demo Private 5173 (owner Codespace). Sem merge/deploy/carga/SQL.
+**Provas:** `docs/evidence/apontamentos-397-p1-fechamento-bf150d-20261028.txt` · 64+ PASS focados
+**Próximo:** CI tip → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 16:15 America/Sao_Paulo)
+(2026-10-28 17:05 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
