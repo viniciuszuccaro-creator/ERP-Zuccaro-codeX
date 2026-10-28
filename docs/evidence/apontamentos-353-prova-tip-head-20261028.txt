@@ -8,9 +8,9 @@ Stash: stash@{0} wip-after-350 preservado.
 
 SHA
 ---
-Tip HEAD: 9f71cc14c43f27e31cb8ac29658e9139ba5305a7
+Tip HEAD: ed8ea2d14d5447c3e7562f0ed57b4e6d95406028
 Código bloqueios: 88f9707fb (tenant Operador) / 78c214f89 (base)
-Delta deste lote: Historico linhas truncadas honestas + Transportadora updated_at
+Delta: Historico linhas honestas + Transportadora/Produto/DespesaRecorrente updated_at
 
 Reprova dirigida
 ----------------
@@ -20,9 +20,9 @@ Operador+guarda+Histórico: 23 PASS (7+2+14)
   - if(false) rejeitado no módulo real
   - pedidos.list?clienteId=; paginação >50; produto só página 2; sem Central360/cliente_empresa
   - data-historico-linhas-* distingue carregadas/exibidas; truncamento sinalizado
-Transportadora identity: 2 PASS (updated_at ?? updated_date; pin RecordState preservado)
+updated_at identity (Transportadora/Produto/DespesaRecorrente): 4 PASS (pins RecordState)
 pedido-ui-policy: 26 PASS
-callback-record-state (coorte pin incl. Transportadora): PASS
+callback-record-state (coorte pin incl. Transportadora/Produto): PASS
 server 044: 2 PASS (tsx)
 
 Roteiro Chrome: docs/evidence/roteiro-demo-operador-historico-397-20261027.txt
