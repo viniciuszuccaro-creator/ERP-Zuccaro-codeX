@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`TIPSHA`** — sessão `49f8c8a6c` + RecordState início de uso |
+| Tip HEAD | **`944a5b73a`** — sessão `49f8c8a6c` + RecordState início de uso |
 | CI tip `f8d626c59` | SUCCESS `40692529560` — **≠ aprovação**; CI `49f8c8a6c` em andamento |
 | Modalidade | runner `/workspace` — Chrome Codespace **não** conecta |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
