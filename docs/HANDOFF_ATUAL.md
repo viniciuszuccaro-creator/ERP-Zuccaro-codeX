@@ -1,15 +1,19 @@
-## CURSOR — VIGENTE (2026-10-27 17:10 America/Sao_Paulo)
+## CURSOR — VIGENTE (2026-10-28 07:04 America/Sao_Paulo)
 
-**Executor:** runner `/workspace`. Chrome Codespace owner-only. Stash `stash@{0}` preservado.
+**Executor:** runner `/workspace`. Abrir Chrome no Codespace **não** conecta este runner. Stash `stash@{0}` preservado.
+**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — um escritor; WIP Codex preservado. gh codespaces **403**.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** Operador+Histórico+tenant | **`84feb5aba`** | CI **SUCCESS** `40574114617` ≠ aprovação; **@codex** |
-| #400 ChatbotCanal+tenant | `03a45899f` / `0d1e5ce29` | CI SUCCESS; @codex tip merge |
+| **#397** Operador+Histórico+tenant | **`9f5a32315`** | CI SUCCESS; reprova **23+26+2 PASS**; **@codex review** |
+| #400 ChatbotCanal+tenant | `03a45899f` / `0d1e5ce29` | CI SUCCESS |
 | #399 Parametro+ApiExterna | `fff9abb4d` | P1 fechado |
-| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 não tip |
+| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** |
 
-**Próximo:** parecer Codex → demo Chrome exclusiva (SHA+HTTP). Sem merge/deploy/carga.
+**Prova:** `docs/evidence/apontamentos-353-prova-tip-9f5a32315-20261028.txt`  
+**Roteiro:** `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`
+
+**Próximo:** parecer Codex tip `9f5a32315` → demo exclusiva (SHA+HTTP). Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

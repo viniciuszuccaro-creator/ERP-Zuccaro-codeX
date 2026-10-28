@@ -1,15 +1,16 @@
-## CURSOR — VIGENTE #397 tip `84feb5aba` CI SUCCESS (2026-10-27)
+## CURSOR — VIGENTE #397 tip `9f5a32315` (2026-10-28)
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`84feb5aba`** (código `88f9707fb` + docs) |
-| CI | **SUCCESS** runs `40574114617` / `40574105974` — **≠ aprovação** |
-| Delta | bloqueios + `tenantKey` Operador (A↛B) |
-| Testes | persist+tenant+guarda+reopen **17 PASS**; historico+pins **90 PASS** |
-| Pedido | **@codex review** tip **`84feb5aba`** / código **`88f9707fb`** |
-| Chrome | xylophone github.dev owner-only; runner `/workspace` |
-| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 não tip |
-| Fora | merge/deploy/carga; 2º escritor |
+| Tip HEAD | **`9f5a32315`** (código `88f9707fb`) |
+| CI | **SUCCESS** runs `40575096090` / `40575085322` — **≠ aprovação** |
+| Modalidade | runner `/workspace` — Chrome **não** conecta este executor |
+| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` |
+| Reprova 07:04 BRT | Operador+guarda+Histórico **23** + pedido-ui **26** + server **2** |
+| Evidência | `docs/evidence/apontamentos-353-prova-tip-9f5a32315-20261028.txt` |
+| Pedido | **@codex review** tip **`9f5a32315`** / código **`88f9707fb`** |
+| #342 | `47a5d0e10` APROVADO; WIP fora dos 50 **não tip** |
+| Fora | merge/deploy/carga; contatos/CodigoField/Região P2; 2º escritor |
 
 **Bloqueios no HEAD — fechados (reprova):**
 1. OperadorCaixa self-managed — 1 create/update; V24 só conclui
