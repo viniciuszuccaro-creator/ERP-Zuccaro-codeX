@@ -3,15 +3,16 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **** — Pedido aba Histórico + provas vínculo/montagem |
+| Tip HEAD | **`964bb30e6`** (código **`854e80256`**) — Pedido aba Histórico + provas vínculo/montagem |
 | Tip docs pré-lote | **`4aaaeb676`** — CI SUCCESS `40709654019` — **≠ aprovação** |
 | Ref. consultada | **`c7001c5a2`** — CI SUCCESS `40708618428` (CI5037) — **≠ aprovação** |
-| Código bloqueios | **`db3a4b623`** — CI SUCCESS `40708354481` — **≠ aprovação** |
+| Código bloqueios base | **`db3a4b623`** — CI SUCCESS `40708354481` — **≠ aprovação** |
+| CI tip | em andamento após push — **≠ aprovação** |
 | #353 | histórica (`eaad0b84`) — **não** candidata concorrente |
 | Modalidade | runner `/workspace` — Codespace xylophone = Codex desktop (owner); sem prova Chrome deste executor |
 | Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` — janela exclusiva SHA+HTTP 5173 |
 | #342 | tip `21b482241` docs — parecer Cursor; branch Codex intocada |
-| Revisão | **@codex review** agrupado no tip código final (pedido neste push) |
+| Revisão | **@codex review** agrupado no tip **`964bb30e6`** / código **`854e80256`** |
 
 **Bloqueios + integração (reprova 54 PASS):**
 1. OperadorCaixa self-managed

@@ -6,7 +6,7 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** | tip docs `4aaaeb676` CI `40709654019`; ref `c7001c5a2` CI5037; lote Pedido Histórico+provas | **≠ aprovação** |
+| **#397** | tip **`964bb30e6`** / código **`854e80256`** (pré `4aaaeb676` / ref `c7001c5a2` CI5037) | CI tip em andamento — **≠ aprovação** |
 | #353 | `eaad0b84` | histórica |
 | #342 | `21b482241` | docs; branch intocada |
 
