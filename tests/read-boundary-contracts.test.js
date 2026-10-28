@@ -24,7 +24,8 @@ const hashes = {
   'src/components/chatbot/ChatbotFilaEspera.jsx': '7604bbea158ca7869022b1669f5b41bd4fe79d79edd989abec3d5575e9f7911f',
   'src/pages/OrcamentoSite.jsx': 'cd58f224d9fd5322b6a172dfa0ca4a0e9ce8172bdf3eaafdd37e94c46d9d3cf4',
   'src/components/lib/UserContext.jsx': '82b878e87f47c26ba13828c4ff91cc18156367c3eb8064220a8c302fdab6ffc2',
-  'src/components/comercial/CentralCliente360Panel.jsx': '4e447331631f3e97fde6be30f10ff0f9f2c471a9197228c79e64e7e10e6e1ef3',
+  // #397: create path Novo orçamento/pedido (hash atualizado de propósito; hunks read-boundary intactos).
+  'src/components/comercial/CentralCliente360Panel.jsx': '60938489876851fb8128f899ac2c8a3d6dab863473b9424f4062ed06b6891744',
   'src/components/comercial/centralCliente360Pagination.js': '7b145f34bb94590472286238105fa619912c24cf7653f9467d4a728f2829fcc7',
   'src/components/lib/useOrigemPedido.jsx': '70d8f7b0fb44893989359e3d1b7cc527cc33ea80731de52fb64a805587bdba0e',
 };
