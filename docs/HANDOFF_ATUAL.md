@@ -1,4 +1,4 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 13:03 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 14:37 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403** neste runner.
 **Chrome (owner / Codex desktop):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — SQL/reconciliação 100; não duplicar.
@@ -6,13 +6,12 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **Tip HEAD** | **`598c4c350`** | CI SUCCESS `40721113540` — **≠ aprovação** |
-| **3 achados** | **`609f48a46`** | @codex pedido |
-| **Recovery+CI fix** | **`3cc9ea4fb`** | CI SUCCESS `40721031536` — **≠ aprovação** |
-| Ref. | `9938f080d` CI5041 | SUCCESS ≠ fechava P1/P2×2 |
+| **Tip HEAD** | **`9842e7fd8`** | load-more owner; CI a terminalizar — **≠ aprovação** |
+| **3 achados** | **`609f48a46`** | inspecionados OK |
+| Ref. | `6bc890805` CI5051 | SUCCESS ≠ aprovação |
 
-**Provas:** `docs/evidence/apontamentos-397-tres-achados-20261028.txt` · `docs/evidence/apontamentos-397-recuperacao-gateway-sky-20261028.txt`
-**Próximo:** parecer Codex → demo Private 5173. Sem merge/deploy/carga.
+**Prova:** `docs/evidence/apontamentos-397-loadmore-owner-20261028.txt`
+**Revisão:** @codex no **`9842e7fd8`**. Demo 5173 só após parecer.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

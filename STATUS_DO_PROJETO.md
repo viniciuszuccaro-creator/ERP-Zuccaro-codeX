@@ -1,23 +1,20 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 13:03 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 14:37 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`598c4c350`** |
-| Tip 3 achados | **`609f48a46`** — P1 carga · P2 submit · P2 Histórico 1º render |
-| Tip recovery+CI-fix | **`3cc9ea4fb`** — reopen `intentBoundId` + gateway cobrança + sky |
-| CI tip HEAD | **SUCCESS** run `40721113540` — **≠ aprovação** |
-| CI `3cc9ea4fb` | **SUCCESS** run `40721031536` — **≠ aprovação** |
-| CI `609f48a46` | FAIL assert fonte (corrigido em `3cc9ea4fb`) |
-| Ref. | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação** |
-| Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6473153593 |
-| Modalidade | runner `/workspace` — xylophone = Codex desktop (SQL/reconciliação 100) |
-| Revisão | **@codex** no **`609f48a46`** (achados); tip CI-fix em `3cc9ea4fb` |
+| Tip HEAD / load-more | **`9842e7fd8`** — P2 1º load-more owner+inFlight (parecer 6474190419) |
+| Tip 3 achados | **`609f48a46`** — inspecionados OK; provas mantidas |
+| Tip recovery | **`3cc9ea4fb`** — gateway cobrança + sky |
+| Ref. consultada | **`6bc890805`** CI5051 SUCCESS — **≠ aprovação** |
+| Parecer novo | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6474190419 |
+| Modalidade | runner `/workspace` — xylophone = Codex desktop |
+| Revisão | **@codex** no HEAD **`9842e7fd8`** (não CI como aprovação) |
 
-**Provas:** `docs/evidence/apontamentos-397-tres-achados-20261028.txt` · `docs/evidence/apontamentos-397-recuperacao-gateway-sky-20261028.txt`
-**Próximo:** parecer Codex → demo exclusiva Private 5173. Sem merge/deploy/carga/SQL.
+**Prova load-more:** `docs/evidence/apontamentos-397-loadmore-owner-20261028.txt`
+**Próximo:** CI tip → parecer → demo Private 5173. Recuperação funcional útil em paralelo. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 13:03 America/Sao_Paulo)
+(2026-10-28 14:37 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
