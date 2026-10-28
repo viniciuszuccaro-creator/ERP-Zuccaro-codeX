@@ -1,0 +1,45 @@
+PROVA INTEGRADA #397 — vínculo inativo + montagem + Pedido Histórico
+====================================================================
+America/Sao_Paulo 2026-10-28 ~11:55. Modalidade: runner `/workspace`.
+Codespace xylophone: owner/Codex desktop — este runner NÃO prova Chrome.
+Candidata única: PR #397. #353 histórica.
+Pré tip docs: `4aaaeb676` CI SUCCESS `40709654019` — ≠ aprovação.
+Consultado owner: `c7001c5a` CI5037 SUCCESS (`40708618428`) — confirmado.
+Código bloqueios+Detalhes: `db3a4b623` CI `40708354481` SUCCESS.
+
+1) Vínculo ClienteEmpresa inativo (server runtime09)
+----------------------------------------------------
+- list(clienteId) com ativo=false → pedidos históricos retornam (PASS)
+- create com vínculo inativo → PEDIDO_CLIENTE_INVALIDO 422 (PASS)
+- update/edição com vínculo inativo → PEDIDO_CLIENTE_INVALIDO 422 (PASS)
+- ausência de vínculo → total 0 / data [] (PASS)
+- outra empresa (tenant) → fail-closed (PASS)
+Não amplia grant: continua Pedido.visualizar; sem cliente_empresa.
+
+2) Montagem real HistoricoProdutosCliente (não só texto)
+--------------------------------------------------------
+- DetalhesCliente árvore: data-action=cliente-360-historico-produtos +
+  HistoricoProdutosCliente(clienteId) (PASS)
+- PedidoTabsContainer aba historico: data-action=pedido-historico-produtos
+  quando há cliente_id; placeholder sem cliente (PASS)
+
+3) Recuperação funcional concreta (este tip)
+--------------------------------------------
+Pedido Form aba Histórico montava só HistoricoClienteTab (base44.filter≤50).
+Agora inclui HistoricoProdutosCliente HTTP paginado (mesma fonte Detalhes/Painel).
+Sem ComercialV2; HistoricoClienteTab expandido preservado abaixo.
+
+4) Bloqueios intactos (reprova dirigida)
+---------------------------------------
+Histórico+V24+mount+Operador+guarda+Cliente reopen … 39 PASS frontend
+Server pedido+044 … 15 PASS
+→ 54 PASS focados · 0 FAIL
+
+5) Demo Codespace
+-----------------
+Não medida neste runner. Roteiro:
+  docs/evidence/roteiro-demo-397-cliente-orc-pedido-historico-20261028.txt
+URL ERP: Private 5173 (44919 = OAuth Hostinger, não ERP).
+JWT bruto NÃO em evidência.
+
+CI SUCCESS ≠ aprovação. Parecer independente: @codex no tip código final.

@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
+import HistoricoProdutosCliente from '@/components/comercial/HistoricoProdutosCliente';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import useContextoVisual from '@/components/lib/useContextoVisual';
@@ -231,7 +232,18 @@ export default function PedidoTabsContainer({
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
+        <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0 space-y-4">
+          {/* Histórico paginado HTTP (clienteId) — mesma fonte do DetalhesCliente/Painel; não depende de base44.filter≤50. */}
+          {formData?.cliente_id ? (
+            <div data-action="pedido-historico-produtos" data-permission="Comercial.Pedido.visualizar">
+              <h3 className="text-sm font-semibold text-slate-900 mb-2">Histórico de Produtos</h3>
+              <HistoricoProdutosCliente clienteId={formData.cliente_id} />
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500" data-action="pedido-historico-produtos-sem-cliente">
+              Selecione o cliente na Identificação para consultar o histórico de produtos.
+            </p>
+          )}
           <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
             <HistoricoClienteTab
               formData={formData}

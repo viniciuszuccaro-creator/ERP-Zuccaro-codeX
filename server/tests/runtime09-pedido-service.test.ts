@@ -176,4 +176,17 @@ test('Pedido.list por clienteId preserva histórico quando vínculo ClienteEmpre
     service.create(ctx, { ...direct, itens: [{ ...direct.itens[0], quantidade: '1' }] }),
     (error: any) => error.statusCode === 422 && error.code === 'PEDIDO_CLIENTE_INVALIDO',
   );
+  // Update/edição indevida também bloqueia com vínculo inativo.
+  await assert.rejects(
+    service.update(ctx, created.id, { ...direct, itens: [{ ...direct.itens[0], quantidade: '3' }] }),
+    (error: any) => error.statusCode === 422 && error.code === 'PEDIDO_CLIENTE_INVALIDO',
+  );
+  // Ausência de vínculo → lista vazia (não amplia permissão).
+  const semVinculo = await service.list(ctx, { clienteId: '99999999-9999-4999-8999-999999999999' });
+  assert.equal(semVinculo.meta.total, 0);
+  assert.deepEqual(semVinculo.data, []);
+  // Outro tenant/empresa: fail-closed (sem acesso cruzado ao histórico).
+  await assert.rejects(
+    service.list({ ...ctx, empresaId: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee' }, { clienteId }),
+  );
 });

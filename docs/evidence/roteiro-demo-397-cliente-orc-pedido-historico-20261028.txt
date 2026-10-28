@@ -20,7 +20,8 @@ Percurso
 2. Comercial → Clientes → abrir cliente → editar → salvar → reabrir
    Esperado: reopen com updated_at HTTP; campos e ID preservados
 3. Cliente → Orçamento → criar/editar/salvar/reabrir
-4. Converter ou criar Pedido → editar/salvar/reabrir
+4. Converter ou criar Pedido → editar/salvar/reabrir → aba Histórico
+   (`data-action=pedido-historico-produtos` com cliente selecionado)
 5. Comercial → Clientes → Detalhes 360 (`cliente-detalhes-360`)
    → bloco Histórico de Produtos (`data-action=cliente-360-historico-produtos`)
    - mesmo componente do Painel Cadastros; paginação HTTP clienteId

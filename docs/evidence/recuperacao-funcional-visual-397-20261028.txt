@@ -96,3 +96,13 @@ Backend (finding Codex P2 ainda aberto em tip antigo):
   Teste runtime09 dedicado PASS.
 
 Provas deste tip: 60 PASS focados — `apontamentos-397-prova-tip-recuperacao-20261028.txt`.
+
+
+9) RECUPERAÇÃO Pedido aba Histórico (fluxo diário integrado)
+------------------------------------------------------------
+Diagnóstico: HistoricoClienteTab no Pedido usava base44.Pedido.filter≤50
+(HTTP incompleto / truncado). DetalhesCliente já montava HistoricoProdutosCliente.
+Correção no existente PedidoTabsContainer: monta HistoricoProdutosCliente
+(data-action=pedido-historico-produtos) quando há cliente_id; preserva
+HistoricoClienteTab expandido. Sem ComercialV2.
+Prova montagem: tests/comercial-detalhes-historico-mount.test.js
