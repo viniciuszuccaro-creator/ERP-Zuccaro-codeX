@@ -358,3 +358,17 @@ test('PedidoCanonicoPanel e OrcamentosTab usam explainPedidoPersistenceError (n�
   assert.match(panel, /explainPedidoPersistenceError/);
   assert.match(orc, /explainPedidoPersistenceError/);
 });
+
+
+test('Pedido convertido mantém vínculo de orçamento no payload de edição e pedido direto não o inventa',()=>{
+  for (const origin of ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null]) {
+    const row={cliente_empresa_id:'ce',condicao_pagamento_id:'cp',tipo_operacao:'RETIRADA',
+      orcamento_id:origin,data_entrega_solicitada:'2027-12-01T00:00:00.000Z',itens:[item]};
+    const form=mapPedidoRowToForm(row);
+    form.observacoes='Ajuste permitido sem perder origem';
+    const payload=buildPedidoPayload(form);
+    assert.equal(payload.orcamento_id ?? null,origin);
+    assert.equal(payload.cliente_empresa_id,row.cliente_empresa_id);
+    assert.equal(row.orcamento_id,origin);
+  }
+});
