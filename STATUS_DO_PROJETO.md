@@ -1,20 +1,20 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:12 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 16:15 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`0ad95ae90`** — fix pin read-boundary Central360 (create path) |
-| Tip código create+sky | **`2080f3e3b`** / create **`cbc21f14a`** |
-| Tip load-more | **`9842e7fd8`** — Codex: no major issues |
-| CI FAIL causa | `1b89caede` frontend — hash stage51 Central360 desatualizado |
-| CI tip HEAD | em andamento — **≠ aprovação** |
-| Modalidade | runner `/workspace` |
-| Revisão | **@codex** tip **`0ad95ae90`**; CI ≠ aprovação |
+| Tip HEAD | **`2fa7bd8fb`** — docs CI SUCCESS pin Central360 |
+| Tip código | **`0ad95ae90`** — fix pin + create/sky |
+| Tip create | **`cbc21f14a`** · sky **`2080f3e3b`** · load-more **`9842e7fd8`** |
+| CI tip HEAD | **SUCCESS** run `40750905345` — **≠ aprovação** |
+| CI código `0ad95ae90` | **SUCCESS** run `40750804838` — **≠ aprovação** |
+| Modalidade | runner `/workspace` (Codespace xylophone 403 / owner-only) |
+| Revisão | **@codex** tip código **`0ad95ae90`**; CI ≠ aprovação |
 
-**Provas:** read-boundary + navigation + sky + payment PASS no runner
-**Próximo:** CI SUCCESS tip → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
+**Provas:** create path + sky Cadastros + pin stage51
+**Próximo:** parecer Codex → demo Private 5173 (owner Codespace). Sem merge/deploy/carga/SQL.
 
-(2026-10-28 16:12 America/Sao_Paulo)
+(2026-10-28 16:15 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
