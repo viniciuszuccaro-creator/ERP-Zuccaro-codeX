@@ -1,23 +1,21 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:49 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 12:56 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip código | **`609f48a46`** — três achados Codex (P1 carga Operador · P2 submit · P2 Histórico 1º render) |
-| Tip HEAD | **`5dfcdbdb6`** (docs; revisão @codex no código `609f48a46`) |
-| Ref. consultada | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação**; não encerrava os 3 achados |
+| Tip código 3 achados | **`609f48a46`** — P1 carga Operador · P2 submit · P2 Histórico 1º render |
+| Tip HEAD | **`846ea6a7d`** (docs; código recovery/CI **`3cc9ea4fb`**; 3 achados **`609f48a46`**) |
+| CI `609f48a46` | frontend FAIL (assert fonte `operadorBoundId`→`intentBoundId`) — corrigido neste tip |
+| Ref. consultada | **`9938f080d`** CI5041 SUCCESS — **≠ aprovação** |
 | Parecer | https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/397#issuecomment-6473153593 |
-| #353 | histórica — **não** candidata concorrente |
-| Modalidade | runner `/workspace` — Codespace xylophone = Codex desktop (SQL/reconciliação 100); sem Chrome neste executor |
-| Chrome (owner) | `https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/` — demo 5173 **após** parecer neste SHA |
-| Revisão | **@codex review** no SHA **`609f48a46`** (exato) |
+| Modalidade | runner `/workspace` — xylophone = Codex desktop (SQL/reconciliação 100) |
+| Revisão | **@codex review** no SHA código **`609f48a46`** (+ tip CI-fix se necessário) |
 
-**Correções:** `OperadorCaixaForm` (saveBlocked handler + `persistInFlightRef` pré-await) · `HistoricoProdutosCliente` (`extraSession`/`historicoOwnerKey` no render).
-**Provas:** `docs/evidence/apontamentos-397-tres-achados-20261028.txt` — 30 PASS novos + 72 frontend + 11 runtime09 vínculo.
-**Bloqueios intactos:** salvamento único · paginação >50 · auth/sessão · vínculo inativo · 044 · guarda · Cliente `updated_at`.
-**Próximo:** parecer Codex `609f48a46` → demo exclusiva Codespace Private 5173. Recuperação funcional independente fora destes arquivos (em paralelo). Sem merge/deploy/carga/SQL.
+**3 achados:** `OperadorCaixaForm` + `HistoricoProdutosCliente` — provas `docs/evidence/apontamentos-397-tres-achados-20261028.txt`.
+**Recuperação indep.:** `GerarCobrancaModal` orientação gateway (sem Wizard paralelo) + sky Banco/Motorista/Veículo/Transportadora — `docs/evidence/apontamentos-397-recuperacao-gateway-sky-20261028.txt`.
+**Próximo:** CI terminal deste tip → parecer Codex → demo Private 5173. Sem merge/deploy/carga/SQL.
 
-(2026-10-28 12:49 America/Sao_Paulo)
+(2026-10-28 12:56 America/Sao_Paulo)
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)
 
