@@ -3,9 +3,9 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD | **`95f80500c`** (código efetivo **`2afe0cc83`**; CI tip anterior **`31ff859e0`**) |
-| CI tip HEAD | **SUCCESS** run `40697205060` — **≠ aprovação** |
-| CI código | **SUCCESS** run `40697149482` (SHA `2afe0cc83`) — **≠ aprovação** |
+| Tip HEAD | **`7acec5888`** (código **`2afe0cc83`** / provas **`95f80500c`**) |
+| CI tip HEAD | **SUCCESS** run `40698380133` — **≠ aprovação** |
+| CI código | **SUCCESS** `2afe0cc83`→`40697149482` · `95f80500c`→`40698241081` — **≠ aprovação** |
 | #353 | histórica (`eaad0b84`) — **não** candidata concorrente destes bloqueios |
 | Modalidade | runner `/workspace` — Codespace xylophone owner-only (403) |
 | #342 | tip `e922e047b` docs — parecer `parecer-342-tip-e922e047b-20261028.txt` |
