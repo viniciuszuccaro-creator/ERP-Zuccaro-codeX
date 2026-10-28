@@ -61,7 +61,7 @@ export class PedidoService {
     private readonly audit: AuditRepository,
     private readonly tenantGuard: TenantGuard,
     private readonly rbac: RbacGuard,
-    private readonly clientes: Pick<ClienteRepository, 'getEmpresaLinkById'>,
+    private readonly clientes: Pick<ClienteRepository, 'getEmpresaLinkById' | 'getEmpresaLink'>,
     private readonly produtos: Pick<ProdutoRepository, 'getById'> & Partial<Pick<ProdutoRepository,'getForOperation'>>,
     private readonly unidades: Pick<TenantEntityRepository<UnidadeMedida, never, never>, 'getById'>,
     private readonly condicoes: Pick<CondicaoPagamentoRepository, 'get'>,
@@ -188,7 +188,7 @@ export class PedidoService {
   async get(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); return this.requirePedido(scope, id); }
   async history(ctx: RequestContext, id: string) { const scope = await this.prepare(ctx, 'visualizar'); this.assertId(id, 'pedidoId'); await this.requirePedido(scope, id); return this.repo.history(scope, id); }
 
-  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; tipoOperacao?: string } = {}) {
+  async list(ctx: RequestContext, options: { limit?: number; offset?: number; search?: string; status?: string; clienteEmpresaId?: string; clienteId?: string; tipoOperacao?: string } = {}) {
     const scope = await this.prepare(ctx, 'visualizar');
     const limit = Math.min(200, Math.max(1, Number.isFinite(options.limit) ? Math.trunc(options.limit!) : 50));
     const offset = Math.max(0, Number.isFinite(options.offset) ? Math.trunc(options.offset!) : 0);
@@ -196,8 +196,20 @@ export class PedidoService {
     if (search && search.length > 80) this.validation({ search: 'max_length_80' });
     if (options.status && !PEDIDO_STATUS.includes(options.status as PedidoStatus)) this.validation({ status: 'invalid' });
     if (options.clienteEmpresaId) this.assertId(options.clienteEmpresaId, 'clienteEmpresaId');
+    if (options.clienteId) this.assertId(options.clienteId, 'clienteId');
+    if (options.clienteEmpresaId && options.clienteId) this.validation({ clienteId: 'conflito_clienteEmpresaId' });
     if (options.tipoOperacao && !['ENTREGA', 'RETIRADA'].includes(options.tipoOperacao)) this.validation({ tipoOperacao: 'invalid' });
-    const page = await this.repo.list(scope, limit, offset, undefined, { search: search || undefined, status: options.status as PedidoStatus | undefined, clienteEmpresaId: options.clienteEmpresaId, tipoOperacao: options.tipoOperacao as 'ENTREGA' | 'RETIRADA' | undefined });
+    // clienteId (mestre): resolve vínculo via repositório tenant-scoped — autorizado por
+    // Comercial.Pedido.visualizar. Não exige Cadastros.cliente_empresa.visualizar (Central360).
+    let clienteEmpresaId = options.clienteEmpresaId;
+    if (options.clienteId) {
+      const link = await this.clientes.getEmpresaLink(scope, options.clienteId, scope.empresaId);
+      if (!link || !link.ativo) {
+        return { data: [], meta: { limit, offset, total: 0, hasMore: false } };
+      }
+      clienteEmpresaId = link.id;
+    }
+    const page = await this.repo.list(scope, limit, offset, undefined, { search: search || undefined, status: options.status as PedidoStatus | undefined, clienteEmpresaId, tipoOperacao: options.tipoOperacao as 'ENTREGA' | 'RETIRADA' | undefined });
     return { data: page.rows, meta: { limit, offset, total: page.total, hasMore: offset + page.rows.length < page.total } };
   }
 

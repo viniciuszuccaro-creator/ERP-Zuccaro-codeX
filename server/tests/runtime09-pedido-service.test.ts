@@ -21,7 +21,14 @@ function fixture() {
   tenant.link(empresaId,groupId);
   rbac.link({actorId,groupId,permissions:{Comercial:{pedido: ['visualizar','criar', 'aprovar','editar','cancelar','converter-pedido','alterar-status']}}});
   const service=new PedidoService(repo,orcamentos,audit,tenant,rbac,
-    {getEmpresaLinkById:async()=>({id:clienteEmpresaId,cliente_id:clienteId,ativo:true,bloqueado:false,habilitado_operacao:true} as never)},
+    {
+      getEmpresaLinkById:async()=>({id:clienteEmpresaId,cliente_id:clienteId,ativo:true,bloqueado:false,habilitado_operacao:true} as never),
+      getEmpresaLink:async(_scope: unknown, requestedClienteId: string)=>(
+        requestedClienteId===clienteId
+          ? ({id:clienteEmpresaId,cliente_id:clienteId,ativo:true,bloqueado:false,habilitado_operacao:true} as never)
+          : null
+      ),
+    },
     {getById:async()=>({id:produtoId,ativo:true,unidade_medida_id:unidadeId} as never)},
     {getById:async()=>({id:unidadeId,ativo:true} as never)},
     {get:async()=>({id:condicaoId,ativo:true} as never)},
@@ -103,4 +110,26 @@ test('Pedido exige motivo explicito de cancelamento sem efeitos em tentativas in
   assert.equal(cancelled.numero,order.numero);
   assert.deepEqual((await f.audit.listByEntity('Pedido',order.id)).map(row=>row.action),['create','change_status']);
   await assert.rejects(f.service.cancel(ctx,order.id,'Cancelamento repetido'),(error:any)=>error.statusCode===409);
+});
+
+test('Pedido.list por clienteId resolve vínculo sem Cadastros.cliente_empresa e pagina', async () => {
+  const f = fixture();
+  await f.service.create(ctx, direct);
+  await f.service.create(ctx, { ...direct, itens: [{ ...direct.itens[0], quantidade: '1' }] });
+  const page = await f.service.list(ctx, { clienteId, limit: 1, offset: 0 });
+  assert.equal(page.meta.total, 2);
+  assert.equal(page.data.length, 1);
+  assert.equal(page.meta.hasMore, true);
+  const page2 = await f.service.list(ctx, { clienteId, limit: 1, offset: 1 });
+  assert.equal(page2.data.length, 1);
+  assert.equal(page2.meta.hasMore, false);
+  assert.notEqual(page.data[0].id, page2.data[0].id);
+  const empty = await f.service.list(ctx, { clienteId: '99999999-9999-4999-8999-999999999999' });
+  assert.equal(empty.meta.total, 0);
+  assert.deepEqual(empty.data, []);
+  // Fixture RBAC só tem Comercial.pedido — list por clienteId não exige cliente_empresa.
+  await assert.rejects(
+    f.service.list(ctx, { clienteId, clienteEmpresaId }),
+    (error: any) => error.statusCode === 422,
+  );
 });

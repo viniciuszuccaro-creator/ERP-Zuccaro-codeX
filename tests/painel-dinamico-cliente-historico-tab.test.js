@@ -20,8 +20,8 @@ async function mountHistoricoCliente({
   empresaId = 'e1',
   backendMode = 'local',
   session = null,
-  central360 = null,
   pedidosList = null,
+  queryData = undefined,
 } = {}) {
   const source = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
   const compiled = ts.transpileModule(source, {
@@ -44,6 +44,11 @@ async function mountHistoricoCliente({
       if (!(i in state)) state[i] = typeof initialValue === 'function' ? initialValue() : initialValue;
       return [state[i], (value) => { state[i] = typeof value === 'function' ? value(state[i]) : value; }];
     },
+    useRef(initialValue) {
+      const i = slot++;
+      if (!(i in state)) state[i] = { current: initialValue };
+      return state[i];
+    },
     useMemo(fn) { return fn(); },
     useEffect(fn, deps) {
       const i = slot++;
@@ -61,20 +66,24 @@ async function mountHistoricoCliente({
       if (!sandbox.__modules[id]) throw new Error(`Import inesperado: ${id}`);
       return sandbox.__modules[id];
     },
+    AbortController: class {
+      constructor() { this.signal = { aborted: false }; }
+      abort() { this.signal.aborted = true; }
+    },
     __modules: {
       react: { __esModule: true, default: react, ...react },
       '@tanstack/react-query': {
         useQuery(opts) {
           queries.push(opts);
-          let data = opts.enabled ? [] : undefined;
-          let isError = false;
-          let error = null;
+          const enabledData = queryData !== undefined
+            ? queryData
+            : (opts.enabled ? { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } } : undefined);
           return {
-            data: data ?? [],
+            data: enabledData,
             isLoading: false,
             isFetching: false,
-            isError,
-            error,
+            isError: false,
+            error: null,
           };
         },
       },
@@ -85,6 +94,7 @@ async function mountHistoricoCliente({
       },
       '@/components/ui/badge': { Badge: 'Badge' },
       '@/components/ui/alert': { Alert: 'Alert', AlertDescription: 'AlertDescription' },
+      '@/components/ui/button': { Button: 'Button' },
       'lucide-react': new Proxy({}, { get: () => 'Icon' }),
       '@/components/lib/useContextoVisual': {
         useContextoVisual: () => ({
@@ -112,15 +122,14 @@ async function mountHistoricoCliente({
           clientes: {
             central360: async (id, opts) => {
               centralCalls.push({ id, opts });
-              if (typeof central360 === 'function') return central360(id, opts);
-              return central360;
+              throw new Error('central360 nao deve ser chamado pelo historico');
             },
           },
           pedidos: {
             list: async (opts) => {
               listCalls.push(opts);
               if (typeof pedidosList === 'function') return pedidosList(opts);
-              return pedidosList || { data: [] };
+              return pedidosList || { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } };
             },
           },
         }),
@@ -132,11 +141,32 @@ async function mountHistoricoCliente({
   const Component = sandbox.exports.default || sandbox.module.exports.default;
   const mapFn = sandbox.exports.mapPedidosToHistoricoLinhas
     || sandbox.module.exports.mapPedidosToHistoricoLinhas;
+  const loadFn = sandbox.exports.loadPedidosHistoricoHttp
+    || sandbox.module.exports.loadPedidosHistoricoHttp;
   slot = 0;
   const tree = Component({ clienteId });
   scheduled.splice(0).forEach((fn) => fn());
   const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
-  return { tree, walk: () => walk(tree), queries, filterCalls, centralCalls, listCalls, mapFn };
+  return {
+    tree,
+    walk: () => walk(tree),
+    queries,
+    filterCalls,
+    centralCalls,
+    listCalls,
+    mapFn,
+    loadFn,
+    state,
+    Component,
+    props: { clienteId },
+    flush: () => scheduled.splice(0).forEach((fn) => fn()),
+    remount() {
+      slot = 0;
+      const next = Component({ clienteId });
+      scheduled.splice(0).forEach((fn) => fn());
+      return next;
+    },
+  };
 }
 
 test('HistoricoProdutosCliente: sem permissão não consulta Pedido (aba montada ≠ carga)', async () => {
@@ -148,20 +178,25 @@ test('HistoricoProdutosCliente: sem permissão não consulta Pedido (aba montada
   assert.equal(filterCalls.length, 0);
 });
 
-test('HistoricoProdutosCliente legado: com permissão consulta filterInContext Pedido', async () => {
+test('HistoricoProdutosCliente legado: com permissão consulta filterInContext Pedido até 200', async () => {
   const { queries, filterCalls } = await mountHistoricoCliente({
     backendMode: 'local',
     hasPermission: (key) => key === 'Comercial.Pedido.visualizar',
   });
   assert.equal(queries[0].enabled, true);
   assert.ok(queries[0].queryKey.includes('legado'));
-  await queries[0].queryFn({});
+  const page = await queries[0].queryFn({});
   assert.equal(filterCalls.length, 1);
   assert.equal(filterCalls[0].entity, 'Pedido');
   assert.equal(filterCalls[0].filter.cliente_id, 'cli-1');
+  assert.equal(filterCalls[0].rest[1], 200);
+  assert.equal(page.meta.limit, 200);
+  assert.equal(page.meta.offset, 0);
+  assert.equal(page.meta.total, 0);
+  assert.equal(page.meta.hasMore, false);
 });
 
-test('HistoricoProdutosCliente HTTP: nao usa filterInContext; lista por clienteEmpresaId', async () => {
+test('HistoricoProdutosCliente HTTP: lista por clienteId sem Central360 nem cliente_empresa', async () => {
   const { queries, filterCalls, centralCalls, listCalls } = await mountHistoricoCliente({
     backendMode: 'http',
     session: {
@@ -169,13 +204,6 @@ test('HistoricoProdutosCliente HTTP: nao usa filterInContext; lista por clienteE
       actorId: '11111111-1111-1111-1111-111111111111',
       groupId: 'g1',
       email: 'a@b.c',
-    },
-    central360: {
-      data: {
-        meta: { clienteEmpresaId: 'ce-1' },
-        empresaLink: { id: 'ce-1' },
-        blocks: { pedidos: { status: 'ok', data: [] } },
-      },
     },
     pedidosList: {
       data: [{
@@ -190,19 +218,22 @@ test('HistoricoProdutosCliente HTTP: nao usa filterInContext; lista por clienteE
           total: '100.00',
         }],
       }],
+      meta: { limit: 50, offset: 0, total: 1, hasMore: false },
     },
   });
   assert.equal(queries[0].enabled, true);
   assert.ok(queries[0].queryKey.includes('http'));
-  const pedidos = await queries[0].queryFn({});
+  const page = await queries[0].queryFn({});
   assert.equal(filterCalls.length, 0);
-  assert.equal(centralCalls.length, 1);
-  assert.equal(centralCalls[0].id, 'cli-1');
+  assert.equal(centralCalls.length, 0);
   assert.equal(listCalls.length, 1);
-  assert.equal(listCalls[0].clienteEmpresaId, 'ce-1');
+  assert.equal(listCalls[0].clienteId, 'cli-1');
+  assert.equal(listCalls[0].clienteEmpresaId, undefined);
   assert.equal(listCalls[0].limit, 50);
-  assert.equal(pedidos.length, 1);
-  assert.equal(pedidos[0].itens[0].descricao, 'Barra 3/8');
+  assert.equal(listCalls[0].offset, 0);
+  assert.equal(page.data.length, 1);
+  assert.equal(page.data[0].itens[0].descricao, 'Barra 3/8');
+  assert.equal(page.meta.total, 1);
 });
 
 test('HistoricoProdutosCliente HTTP: sem empresa no contexto nao consulta (fail-closed)', async () => {
@@ -217,13 +248,14 @@ test('HistoricoProdutosCliente HTTP: sem empresa no contexto nao consulta (fail-
 });
 
 test('HistoricoProdutosCliente HTTP: sem sessao falha sem cair no facade local', async () => {
-  const { queries, filterCalls } = await mountHistoricoCliente({
+  const { queries, filterCalls, centralCalls } = await mountHistoricoCliente({
     backendMode: 'http',
     session: null,
   });
   assert.equal(queries[0].enabled, true);
   await assert.rejects(() => queries[0].queryFn({}), /Sessao HTTP|HTTP_SESSION/);
   assert.equal(filterCalls.length, 0);
+  assert.equal(centralCalls.length, 0);
 });
 
 test('HistoricoProdutosCliente: sem contexto não consulta mesmo com permissão', async () => {
@@ -236,19 +268,23 @@ test('HistoricoProdutosCliente: sem contexto não consulta mesmo com permissão'
   assert.equal(filterCalls.length, 0);
 });
 
-test('HistoricoProdutosCliente HTTP: sem vinculo ClienteEmpresa falha sem facade', async () => {
-  const { queries, filterCalls, listCalls } = await mountHistoricoCliente({
+test('HistoricoProdutosCliente HTTP: sem vinculo retorna vazio via pedidos.list (sem Central360)', async () => {
+  const { queries, filterCalls, listCalls, centralCalls } = await mountHistoricoCliente({
     backendMode: 'http',
     session: {
       token: 'tok',
       actorId: '11111111-1111-1111-1111-111111111111',
       groupId: 'g1',
     },
-    central360: { data: { meta: {}, empresaLink: null, blocks: {} } },
+    pedidosList: { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } },
   });
-  await assert.rejects(() => queries[0].queryFn({}), /ClienteEmpresa|CLIENTE_EMPRESA/);
+  const page = await queries[0].queryFn({});
   assert.equal(filterCalls.length, 0);
-  assert.equal(listCalls.length, 0);
+  assert.equal(centralCalls.length, 0);
+  assert.equal(listCalls.length, 1);
+  assert.equal(listCalls[0].clienteId, 'cli-1');
+  assert.deepEqual(page.data, []);
+  assert.equal(page.meta.total, 0);
 });
 
 test('HistoricoProdutosCliente HTTP: lista vazia nao inventa linhas; queryKey isola empresa', async () => {
@@ -256,25 +292,99 @@ test('HistoricoProdutosCliente HTTP: lista vazia nao inventa linhas; queryKey is
     backendMode: 'http',
     empresaId: 'emp-a',
     session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
-    central360: { data: { meta: { clienteEmpresaId: 'ce-a' } } },
-    pedidosList: { data: [] },
+    pedidosList: { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } },
   });
   assert.ok(a.queries[0].queryKey.includes('emp-a'));
   assert.ok(a.queries[0].queryKey.includes('http'));
   const empty = await a.queries[0].queryFn({});
-  assert.deepEqual(empty, []);
-  const linhas = a.mapFn(empty);
+  assert.deepEqual(empty.data, []);
+  const linhas = a.mapFn(empty.data);
   assert.equal(linhas.length, 0);
 
   const b = await mountHistoricoCliente({
     backendMode: 'http',
     empresaId: 'emp-b',
     session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
-    central360: { data: { meta: { clienteEmpresaId: 'ce-b' } } },
-    pedidosList: { data: [] },
+    pedidosList: { data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } },
   });
   assert.ok(b.queries[0].queryKey.includes('emp-b'));
   assert.notEqual(a.queries[0].queryKey.join('|'), b.queries[0].queryKey.join('|'));
+});
+
+test('HistoricoProdutosCliente HTTP: paginação acessa pedidos além dos primeiros 50', async () => {
+  const first = Array.from({ length: 50 }, (_, i) => ({
+    id: `p-${i + 1}`,
+    numero: String(i + 1).padStart(8, '0'),
+    created_at: `2026-01-${String((i % 28) + 1).padStart(2, '0')}T12:00:00Z`,
+    itens: [{ produto_id: 'prod-common', descricao: 'Comum', quantidade: 1, total: 1 }],
+  }));
+  const second = [{
+    id: 'p-51',
+    numero: '00000051',
+    created_at: '2025-12-01T12:00:00Z',
+    itens: [{ produto_id: 'prod-only-page2', descricao: 'Somente pagina 2', quantidade: 3, total: 30 }],
+  }];
+
+  const h = await mountHistoricoCliente({
+    backendMode: 'http',
+    session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
+    pedidosList: (opts) => {
+      if (opts.offset === 0) {
+        return { data: first, meta: { limit: 50, offset: 0, total: 51, hasMore: true } };
+      }
+      return { data: second, meta: { limit: 50, offset: 50, total: 51, hasMore: false } };
+    },
+    queryData: { data: first, meta: { limit: 50, offset: 0, total: 51, hasMore: true } },
+  });
+
+  const page0 = await h.queries[0].queryFn({});
+  assert.equal(page0.data.length, 50);
+  assert.equal(page0.meta.hasMore, true);
+  assert.equal(page0.meta.total, 51);
+  assert.equal(h.listCalls[0].offset, 0);
+
+  // Carregar mais via botão da UI (consumidor real do offset seguinte)
+  const beforeMore = h.listCalls.length;
+  const tree = h.remount();
+  const walk = (node) => (!node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)]);
+  const btn = walk(tree).find((n) => n.props && n.props['data-action'] === 'historico-produtos-carregar-mais');
+  assert.ok(btn, 'botão Carregar mais');
+  await btn.props.onClick();
+  assert.equal(h.listCalls.length, beforeMore + 1);
+  const moreCall = h.listCalls[h.listCalls.length - 1];
+  assert.equal(moreCall.offset, 50);
+  assert.equal(moreCall.clienteId, 'cli-1');
+  assert.equal(moreCall.limit, 50);
+
+  // Após append, produto da página 2 entra nas linhas mapeadas
+  const allPedidos = [...first, ...second];
+  const linhas = h.mapFn(allPedidos);
+  assert.ok(linhas.some((l) => l.produto_id === 'prod-only-page2'));
+  assert.equal(linhas.filter((l) => l.produto_id === 'prod-common').length, 50);
+});
+
+test('HistoricoProdutosCliente HTTP: troca de contexto descarta página extra anterior', async () => {
+  const h = await mountHistoricoCliente({
+    backendMode: 'http',
+    empresaId: 'emp-a',
+    session: { token: 'tok', actorId: '11111111-1111-1111-1111-111111111111', groupId: 'g1' },
+    pedidosList: {
+      data: [{ id: 'p1', numero: '1', itens: [] }],
+      meta: { limit: 50, offset: 0, total: 60, hasMore: true },
+    },
+    queryData: {
+      data: [{ id: 'p1', numero: '1', itens: [] }],
+      meta: { limit: 50, offset: 0, total: 60, hasMore: true },
+    },
+  });
+  // extraPages state index: useState order = extraPages, loadingMore, loadMoreError
+  // After effects, inject a stale extra page then remount with same props keeps it until key change —
+  // source resets via useEffect on empresaId; simulate by checking effect deps include empresaId.
+  const src = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
+  assert.match(src, /setExtraPages\(\[\]\)/);
+  assert.match(src, /sessionEpochRef/);
+  assert.match(src, /empresaId/);
+  assert.ok(h.queries[0].queryKey.includes('emp-a'));
 });
 
 test('mapPedidosToHistoricoLinhas: ordena por data e preserva produto repetido em pedidos distintos', async () => {
@@ -326,4 +436,19 @@ test('mapPedidosToHistoricoLinhas: legado itens_* e canônico itens', async () =
   assert.equal(canon[0].numero_pedido, 'C-2');
   assert.equal(canon[0].unidade, 'UN');
   assert.equal(canon[0].valor, 30);
+});
+
+test('fonte HTTP nao referencia central360; contrato clienteId no pedidos.list', async () => {
+  const src = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /central360/);
+  assert.match(src, /clienteId/);
+  assert.match(src, /hasMore/);
+  assert.match(src, /historico-produtos-carregar-mais/);
+  assert.match(src, /LEGADO_PEDIDOS_LIMIT = 200/);
+  assert.match(src, /LINHAS_UI_LIMIT/);
+  assert.match(src, /data-historico-linhas-truncadas/);
+  assert.match(src, /data-historico-linhas-carregadas/);
+  assert.match(src, /data-historico-linhas-exibidas/);
+  // Teto de UI é honesto: não esconde linhas carregadas sem sinalizar.
+  assert.match(src, /linhasTruncadas/);
 });

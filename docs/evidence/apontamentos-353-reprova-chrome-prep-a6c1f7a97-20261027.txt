@@ -1,0 +1,38 @@
+REPROVA + PREP CHROME — tip #397 a6c1f7a97 (America/Sao_Paulo 2026-10-27 13:40)
+================================================================================
+Modalidade executor: runner /workspace
+Codespace alvo (proprietário / Chrome): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Canal Browser MCP neste executor: AUSENTE
+gh codespaces API: HTTP 403 — Abrir Chrome ≠ conectar este runner ao checkout.
+Um escritor no Codespace: preservar WIP Codex; sem 2º escritor / sem reset.
+
+Stash local: stash@{0} wip-after-350 preservado.
+#342 tip publicado: 47a5d0e10 — WIP “referência selecionada fora dos 50” NÃO
+publicado; não duplicar. Parecer Cursor anterior APROVADO nesse SHA.
+
+Reprova dirigida no tip a6c1f7a97
+---------------------------------
+OperadorCaixa persist-unica:           6 PASS
+Guarda submit negativa:                2 PASS
+Historico + PainelDinamicoCliente:    14 PASS
+pedido-ui-policy (044 incluso):       26 PASS  (total frontend pacote = 48)
+server PEDIDO_SCHEMA_IDEMPOTENCY:      2 PASS
+
+Contratos no HEAD
+-----------------
+- OperadorCaixaForm.isSelfManagedCadastro = true
+- V24: self-managed → onSubmit = handleCloseForm (não handlePersistSubmit)
+- Historico: http.pedidos.list({ clienteId, limit, offset }) + Pedido.visualizar
+- Paginação: total vs carregados; carregar mais; legado 200
+- Guarda: if(false) rejeitado; 0 writes sem permissão
+- 044: PEDIDO_SCHEMA_IDEMPOTENCY_MISSING público
+
+CI tip a6c1f7a97: SUCCESS (frontend/backend/expedicao) ≠ aprovação
+Pedido: @codex review tip a6c1f7a97 (SHA final; não ancestral)
+
+Roteiro Chrome (exclusivo com Codex)
+------------------------------------
+docs/evidence/roteiro-demo-operador-historico-397-20261027.txt
+Pré: medir SHA servido no Codespace + HTTP vivo (porta 5173 ≠ prova).
+Fluxo: Cliente → Orçamento → Pedido → editar/reabrir → Histórico Produtos.
+Sem banco operacional; sem capturas do runner como Codespace.

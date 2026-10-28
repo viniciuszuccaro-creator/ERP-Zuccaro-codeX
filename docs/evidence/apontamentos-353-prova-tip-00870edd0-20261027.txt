@@ -1,0 +1,47 @@
+PROVA NO HEAD #397 tip 00870edd0 (America/Sao_Paulo 2026-10-27)
+================================================================
+Referência consultada: #353 eaad0b84 CI SUCCESS ≠ aprovação.
+SHA prova: 00870edd04b873e371c3c1a83d348757fb78c40e
+Código efetivo: 78c214f89 (+ docs). Modalidade: runner /workspace ≠ Codespace.
+Codespace potential-xylophone: gh API 403 — sem canal VS Code autenticado neste executor.
+Stash preservado: stash@{0} wip-after-350 (não descartado).
+
+Apontamentos priorizados — estado no HEAD
+-----------------------------------------
+1) OperadorCaixa persistência duplicada (P1 4387934927) — CORRIGIDO
+   - isSelfManagedCadastro=true; V24 usa handleCloseForm
+   - Testes: cadastros-operador-caixa-persist-unica + submit-guard 8 PASS
+   - Thread #353 resolvido com evidência
+
+2) Histórico só 1ª página (P2 4387934931) — CORRIGIDO
+   - paginação offset/total + carregar mais; legado 200
+   - Teste: paginação além dos primeiros 50 — PASS
+
+3) Histórico exige cliente_empresa (P2 4389052000) — CORRIGIDO
+   - pedidos.list?clienteId= + Pedido.visualizar; sem Central360
+   - "central360" só em comentário de exclusão; teste fonte HTTP PASS
+
+4) Guarda submit negativa (P1 Codex) — CORRIGIDO
+   - cursor-identidade-graduated-submit-guard: if(false) rejeitado
+   - handler sem permissão 0 writes
+
+5) Pedido 044 contrato público (P2 4378431315) — CORRIGIDO
+   - PEDIDO_SCHEMA_IDEMPOTENCY_MISSING; INTERNAL_ERROR genérico ≠ 044
+   - server 2 PASS + pedido-ui-policy casos 044
+
+Suíte dirigida no tip (reprova 2026-10-27 12:20 America/Sao_Paulo):
+  node --test operador+guarda+historico+pedido-ui → 48 PASS / 0 FAIL
+  server node --import tsx --test pedido-schema-idempotency-public-error → 2 PASS
+CI tip HEAD SUCCESS (runs tip d4c882e03 / 00870edd0 docs) ≠ aprovação.
+Wiring: PainelDinamicoCliente → HistoricoProdutosCliente clienteId={cliente.id}
+@codex review pedido no tip — reviews[] ainda vazio no momento da prova.
+
+Não reabertos: contatos / CodigoField / Região P2.
+Parecer #342 47a5d0e: APROVADO (somente leitura; branch Codex intocada).
+WIP Codex no Codespace: não acessado; não duplicado.
+
+Bloqueios restantes
+-------------------
+- Parecer Codex nos tips #397/#398/#399/#400
+- Demo Codespace (403 neste runner) — roteiro docs/evidence/roteiro-demo-operador-historico-397-20261027.txt
+- Migration 044 no destino / carga / merge — gates

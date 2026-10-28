@@ -1,0 +1,49 @@
+ROTEIRO DEMO — #397 OperadorCaixa + Histórico (candidata integrada)
+====================================================================
+Data: 2026-10-27 America/Sao_Paulo
+Alvo Chrome (proprietário): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Codespace: potential-xylophone-5gj7r9v9qqg637vxp (existente — NÃO criar outro)
+Checkout: /workspaces/ERP-Zuccaro-codeX (UM escritor; preservar WIP Codex; sem reset/force)
+Runner Cursor /workspace ≠ prova deste Codespace; Browser MCP ausente no executor.
+Abrir o Codespace no Chrome NÃO conecta o runner Cursor a esse checkout.
+Janela exclusiva: combinar com Codex antes de validar (sem dois escritores).
+
+Pré-condições
+-------------
+[ ] Tip servido medido no Codespace (git rev-parse HEAD + build em execução).
+    Esperado após merge/FF coordenado: tip com código >= 78c214f89 e docs
+    >= 08f8b4ca3, ou tip da candidata #353 que já incorpore #397.
+[ ] Registrar SHA efetivo + modalidade backend/banco (API local? PG? seed?).
+[ ] Usuário com Comercial.Pedido.visualizar + Cadastros financeiro OperadorCaixa
+    conforme RBAC do ambiente; Grupo+Empresa selecionáveis.
+[ ] Dados sintéticos: cliente com >50 pedidos (produto só na página 2).
+
+Passos
+------
+1) Login → selecionar Grupo → Empresa.
+2) Cadastros/Financeiro → tile Operador de Caixa → VisualizadorUniversalEntidadeV24.
+   - Criar operador mínimo → salvar.
+   - Esperado: UMA gravação; um registro; fechar/reabrir mostra o mesmo.
+   - Editar → salvar → auditoria sem duplicar update.
+   - Negativo: sem permissão → não persiste; erro de rede → rascunho intacto.
+3) Comercial → Cliente (sintético com >50 pedidos) → aba Histórico de Produtos.
+   - Esperado: N/M pedidos; botão carregar mais; produto da página 2 aparece
+     após carregar; sem Central360 / sem exigir cliente_empresa.
+   - Negativos: sem Pedido.visualizar → bloqueio; troca empresa → descarta
+     página anterior; erro → sem fallback local.
+4) Orçamento → Pedido (fluxo existente).
+   - Se schema sem 044: UI deve mostrar PEDIDO_SCHEMA_IDEMPOTENCY_MISSING
+     (não INTERNAL_ERROR genérico como se fosse 044).
+5) Editar/salvar/reabrir Pedido quando o destino permitir INSERT.
+
+Critérios
+---------
+- SHA servido documentado (não assumir tip do runner).
+- Persistência Operador: 1 chamada create/update por ação.
+- Histórico: total ≠ só primeira página; RBAC Pedido.visualizar suficiente.
+- Sem merge/deploy/carga real neste roteiro.
+
+Bloqueio deste runner
+---------------------
+gh codespace / user API → HTTP 403 (integration). Demo deve ser executada no
+Codespace pelo escritor autorizado; este arquivo é o contrato de demonstração.

@@ -1,3 +1,22 @@
+## CURSOR — VIGENTE (2026-10-28 07:10 America/Sao_Paulo)
+
+**Executor:** runner `/workspace`. Abrir Chrome no Codespace **não** conecta este runner. Stash `stash@{0}` preservado.
+**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — um escritor; WIP Codex preservado. gh codespaces **403**. Browser MCP ausente — sem retry loop.
+
+| Pacote | Tip | Estado |
+|--------|-----|--------|
+| **#397** Operador+Histórico+Transportadora | **`9f71cc14c`** | reprova **23+2+26+2 PASS**; **@codex review** tip final |
+| #400 ChatbotCanal+tenant | `03a45899f` / `0d1e5ce29` | CI SUCCESS |
+| #399 Parametro+ApiExterna | `fff9abb4d` | P1 fechado |
+| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** — não duplicar |
+
+**Bloqueios:** Operador 1 escrita; Histórico `clienteId`+paginação+linhas honestas; guarda `if(false)` falha; 044 público.
+**Recuperação:** Transportadora `updated_at??updated_date` (pin RecordState intacto).
+**Prova:** `docs/evidence/apontamentos-353-prova-tip-head-20261028.txt`  
+**Roteiro:** `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`
+
+**Próximo:** parecer Codex tip HEAD → demo exclusiva (SHA+HTTP). Sem merge/deploy/carga. Continua matriz indep.
+
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 
 | Campo | Valor |

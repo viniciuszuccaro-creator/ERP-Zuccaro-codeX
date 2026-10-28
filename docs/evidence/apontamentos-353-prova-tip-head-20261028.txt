@@ -1,0 +1,30 @@
+PROVA BLOQUEIOS + RECUPERAÇÃO — tip #397 HEAD (America/Sao_Paulo 2026-10-28 07:10)
+====================================================================================
+Modalidade: runner /workspace ≠ Codespace.
+Chrome (owner): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Browser MCP: ausente · gh codespaces 403 · sem 2º escritor.
+Stash: stash@{0} wip-after-350 preservado.
+#342 tip: 47a5d0e10 — WIP “fora dos 50” NÃO tip; não duplicado.
+
+SHA
+---
+Tip HEAD: 9f71cc14c43f27e31cb8ac29658e9139ba5305a7
+Código bloqueios: 88f9707fb (tenant Operador) / 78c214f89 (base)
+Delta deste lote: Historico linhas truncadas honestas + Transportadora updated_at
+
+Reprova dirigida
+----------------
+Operador+guarda+Histórico: 23 PASS (7+2+14)
+  - self-managed 1 create/update; erro preserva rascunho
+  - tenantKey A↛B
+  - if(false) rejeitado no módulo real
+  - pedidos.list?clienteId=; paginação >50; produto só página 2; sem Central360/cliente_empresa
+  - data-historico-linhas-* distingue carregadas/exibidas; truncamento sinalizado
+Transportadora identity: 2 PASS (updated_at ?? updated_date; pin RecordState preservado)
+pedido-ui-policy: 26 PASS
+callback-record-state (coorte pin incl. Transportadora): PASS
+server 044: 2 PASS (tsx)
+
+Roteiro Chrome: docs/evidence/roteiro-demo-operador-historico-397-20261027.txt
+Janela exclusiva com Codex; medir SHA+HTTP (5173 ≠ prova).
+CI SUCCESS ≠ aprovação. Pedido: @codex review no tip HEAD final após push.
