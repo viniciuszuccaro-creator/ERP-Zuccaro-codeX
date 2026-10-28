@@ -1,18 +1,20 @@
-## CURSOR — VIGENTE (2026-10-28 10:30 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 10:40 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403**.
 **Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+**Candidata:** **PR #397** (não #353). Branch `cursor/operador-historico-persist-392b`.
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** bloqueios+P1 JWT+Cliente | **`ed2b70625`** / código `2afe0cc83` / base `61b1214f3` | reprova 73 PASS; revisão Cursor (bot Codex falhou ambiente) |
-| #400/#399/#398 | tips anteriores | **não** editar daqui |
-| #342 Codex | `6f177a235` | docs tip APROVADO; runtime ac563ecea; branch intocada |
+| **#397** | HEAD **`31ff859e0`** / código **`2afe0cc83`** | CI SUCCESS `40697205060` / `40697149482` — **≠ aprovação** |
+| #353 | `eaad0b84` | histórica — não concorrente |
+| #342 | `e922e047b` | docs APROVADO; branch intocada |
+| #400/#399/#398 | — | não editar daqui |
 
-**Bloqueios A/B/C:** guarda if(false); Operador 1 escrita; Histórico paginação+fingerprint JWT
+**Bloqueios:** Operador 1 escrita; Histórico JWT fingerprint; guarda if(false); 044 middleware prod
 **Prova:** `docs/evidence/apontamentos-353-prova-tip-bloqueios-20261028.txt`
-**Parecer #342:** `docs/evidence/parecer-342-tip-6f177a235-20261028.txt`
-**Próximo:** CI tip → demo exclusiva. Sem merge/deploy/carga.
+**Parecer #342:** `docs/evidence/parecer-342-tip-e922e047b-20261028.txt`
+**Próximo:** revisão independente #397 → demo exclusiva. Sem merge/deploy/carga.
 
 ## CURSOR — VIGENTE (2026-10-28 10:15 America/Sao_Paulo)
 

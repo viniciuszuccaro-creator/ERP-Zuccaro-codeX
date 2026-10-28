@@ -1,0 +1,11 @@
+CI #397 — SHA exatos (America/Sao_Paulo 2026-10-28 ~10:40)
+============================================================
+Candidata: PR #397 (não #353).
+
+| SHA | Papel | CI run | Resultado |
+|-----|-------|--------|-----------|
+| 2afe0cc83f438a63e4ef3fdc4b6382c926603e65 | código (JWT+Cliente) | 40697149482 | SUCCESS frontend/backend/expedicao |
+| 31ff859e0e1a4d652b59336d86840eb948a5aa9e | tip HEAD (docs alinhamento) | 40697205060 | SUCCESS frontend/backend/expedicao |
+
+Não atribuir verde de 61b1214f3 / 85d20d79f a estes SHAs.
+CI SUCCESS ≠ aprovação.

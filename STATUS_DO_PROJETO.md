@@ -1,22 +1,22 @@
-## CURSOR — VIGENTE #397 (2026-10-28 10:30 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 10:40 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| Tip HEAD | **`ed2b70625`** (código **`2afe0cc83`**) — P1 JWT + Cliente updated_at |
-| Base publicada | `61b1214f3` CI SUCCESS `40695351771` — **≠ aprovação** |
+| **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
+| Tip HEAD | **`31ff859e0`** (código efetivo **`2afe0cc83`**) |
+| CI tip HEAD | **SUCCESS** run `40697205060` — **≠ aprovação** |
+| CI código | **SUCCESS** run `40697149482` (SHA `2afe0cc83`) — **≠ aprovação** |
+| #353 | histórica (`eaad0b84`) — **não** candidata concorrente destes bloqueios |
 | Modalidade | runner `/workspace` — Codespace xylophone owner-only (403) |
-| #353 consultado | `eaad0b84` — candidata destes bloqueios = **#397** |
-| #342 | tip `6f177a235` / ref `f2d59226` — docs only; parecer independente |
-| Codex bot | falhou ambiente (6470060126) — revisão Cursor neste tip; sem loop |
+| #342 | tip `e922e047b` docs — parecer `parecer-342-tip-e922e047b-20261028.txt` |
+| Revisão | bot Codex falhou ambiente; pedido independente na #397 com SHA+CI |
 
-**Bloqueios A/B/C (reprova 73 PASS):** guarda if(false) · Operador 1 escrita · Histórico paginação+sessão+fingerprint JWT
-**Recuperação:** ClienteForm/Completo `updated_at` (fluxo diário) + sky Cadastros + matriz RecordState
-**Evidência:** `docs/evidence/apontamentos-353-prova-tip-bloqueios-20261028.txt`
-**Parecer #342:** `docs/evidence/parecer-342-tip-6f177a235-20261028.txt`
-**Registros:** A/B/C ≠ D staging; fixture ≠ legado. Porta 44919=OAuth ≠ ERP (5173).
-**Próximo:** CI tip → demo exclusiva SHA+HTTP no Codespace; continua indep. sem merge/deploy/carga.
+**Bloqueios A/B/C:** guarda if(false) · Operador 1 escrita · Histórico paginação+fingerprint JWT · 044 middleware prod
+**Recuperação:** ClienteForm/Completo reopen `updated_at` (comportamental) + sky + matriz RecordState
+**Provas:** `apontamentos-353-prova-tip-bloqueios-20261028.txt` + testes 044 middleware + `comercial-cliente-updated-at-reopen-behavioral`
+**Próximo:** revisão independente tip → demo exclusiva SHA+HTTP; sem merge/deploy/carga.
 
-(2026-10-28 10:30 America/Sao_Paulo)
+(2026-10-28 10:40 America/Sao_Paulo)
 
 ## CURSOR — VIGENTE #397 tip HEAD (2026-10-28 10:15 America/Sao_Paulo)
 

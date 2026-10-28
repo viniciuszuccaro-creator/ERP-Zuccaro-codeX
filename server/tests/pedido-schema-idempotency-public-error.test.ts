@@ -1,11 +1,38 @@
 /**
- * #353 P2 — contrato público PEDIDO_SCHEMA_IDEMPOTENCY_MISSING.
+ * #353/#397 — contrato público PEDIDO_SCHEMA_IDEMPOTENCY_MISSING.
  * Produção não deve depender de 42703/SQL no envelope para a UI explicar 044.
+ * Middleware: só AppError classificado recebe o código; INTERNAL_ERROR genérico ≠ 044.
  */
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import type { Request, Response } from 'express';
 import { AppError } from '../src/api/errors.js';
+import type { AppConfig } from '../src/config/env.js';
+import { createErrorHandler } from '../src/middleware/errorHandler.js';
 import { PEDIDO_SCHEMA_IDEMPOTENCY_MISSING, PostgresPedidoRepository } from '../src/repositories/postgresPedidoRepository.js';
+
+function captureHandler(isProduction: boolean) {
+  const handler = createErrorHandler({ isProduction } as AppConfig);
+  let status = 0;
+  let body: unknown;
+  const res = {
+    status(code: number) {
+      status = code;
+      return this;
+    },
+    json(payload: unknown) {
+      body = payload;
+      return this;
+    },
+  } as unknown as Response;
+  const req = { requestId: 'req-044-test' } as Request;
+  return {
+    run(error: unknown) {
+      handler(error, req, res, (() => {}) as never);
+      return { status, body };
+    },
+  };
+}
 
 test('PostgresPedidoRepository mapeia 42703 de idempotency_key para código público', async () => {
   const db = {
@@ -63,4 +90,32 @@ test('getByIdempotencyKey também publica o código estável', async () => {
     ),
     (error: unknown) => error instanceof AppError && error.code === PEDIDO_SCHEMA_IDEMPOTENCY_MISSING,
   );
+});
+
+test('middleware produção: AppError PEDIDO_SCHEMA_IDEMPOTENCY_MISSING publica código estável sem SQL', () => {
+  const { run } = captureHandler(true);
+  const out = run(new AppError(
+    503,
+    PEDIDO_SCHEMA_IDEMPOTENCY_MISSING,
+    'Pedido schema missing idempotency support',
+  ));
+  assert.equal(out.status, 503);
+  const err = (out.body as { error: { code: string; message: string } }).error;
+  assert.equal(err.code, PEDIDO_SCHEMA_IDEMPOTENCY_MISSING);
+  assert.doesNotMatch(err.message, /42703|does not exist|idempotency_key/i);
+  assert.equal(err.code !== 'INTERNAL_ERROR', true);
+});
+
+test('middleware produção: Error genérico/SQL NÃO vira PEDIDO_SCHEMA_IDEMPOTENCY_MISSING', () => {
+  const { run } = captureHandler(true);
+  const sql = Object.assign(new Error('column "idempotency_key" of relation "pedidos" does not exist'), {
+    code: '42703',
+  });
+  const out = run(sql);
+  assert.equal(out.status, 500);
+  const err = (out.body as { error: { code: string; message: string } }).error;
+  assert.equal(err.code, 'INTERNAL_ERROR');
+  assert.equal(err.message, 'Internal server error');
+  assert.notEqual(err.code, PEDIDO_SCHEMA_IDEMPOTENCY_MISSING);
+  assert.doesNotMatch(err.message, /42703|idempotency_key|does not exist/i);
 });

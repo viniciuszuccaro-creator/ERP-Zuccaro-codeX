@@ -1,0 +1,16 @@
+PARECER CURSOR — #342 tip e922e047b (pós-6f177a235 / ref f2d59226)
+===================================================================
+America/Sao_Paulo 2026-10-28 ~10:35. Runner /workspace. Branch Codex INTTOCADA.
+
+HEAD: e922e047b — "Valida intervenção de acesso e detalha execução no console"
+
+Delta 6f177a235..e922e047b
+--------------------------
+DOCUMENTAL apenas:
+  STATUS_DO_PROJETO.md, docs/HANDOFF_ATUAL.md, docs/OPERACAO_DEV_VPS.md,
+  docs/vps/evidence/20261028-identidade-previa-leitura.txt
+Sem src/ ou server/.
+
+Parecer: APROVADO (docs). Sem novo runtime a revisar neste intervalo.
+Runtime pedido/cliente-fora-50: parecer ac563ecea permanece.
+Candidata dos bloqueios Operador/Histórico/guarda = PR #397 (não #353).
