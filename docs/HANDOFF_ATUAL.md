@@ -1,4 +1,4 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-28 10:40 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-28 11:39 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403**.
 **Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
@@ -6,84 +6,16 @@
 
 | Pacote | Tip | Estado |
 |--------|-----|--------|
-| **#397** | HEAD **`7acec5888`** / código **`2afe0cc83`** | CI SUCCESS `40698380133` — **≠ aprovação** |
+| **#397** | pré-lote **`c897d427e`** CI `40699501474` SUCCESS; lote: Histórico vínculo inativo + DetalhesCliente HistóricoProdutos | **≠ aprovação** |
 | #353 | `eaad0b84` | histórica — não concorrente |
-| #342 | `e922e047b` | docs APROVADO; branch intocada |
+| #342 | `21b482241` | docs SSH — parecer Cursor; branch intocada |
 | #400/#399/#398 | — | não editar daqui |
 
-**Bloqueios:** Operador 1 escrita; Histórico JWT fingerprint; guarda if(false); 044 middleware prod
-**Prova:** `docs/evidence/apontamentos-353-prova-tip-bloqueios-20261028.txt`
-**Parecer #342:** `docs/evidence/parecer-342-tip-e922e047b-20261028.txt`
-**Próximo:** revisão independente #397 → demo exclusiva. Sem merge/deploy/carga.
-
-## CURSOR — VIGENTE (2026-10-28 10:15 America/Sao_Paulo)
-
-**Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.
-**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
-
-| Pacote | Tip | Estado |
-|--------|-----|--------|
-| **#397** bloqueios+sessão+matriz | **`ead77471a`** / código `944a5b73a` / sessão `49f8c8a6c` | RecordState + A/B/C/D; **@codex review** tip final |
-| #400/#399/#398 | tips anteriores | CI SUCCESS — **não** editar daqui |
-| #342 Codex | `ac563ecea` | parecer Cursor OK c/ ressalva; branch intocada |
-
-**Bloqueios:** Operador; Histórico paginação+sessão; guarda if(false); 044
-**Recuperação:** sky 1–6 + identidade HTTP `updated_at` (TabelaPreco/Fiscal/…/Parametro*/Perfil) — pins intactos
-**Parecer #342:** `docs/evidence/parecer-342-deltas-ac563ecea-20261028.txt`
-**Prova sessão:** `docs/evidence/apontamentos-353-prova-session-historico-20261028.txt`
-**Próximo:** CI + Codex tip → demo exclusiva. Sem merge/deploy/carga.
-
-## CURSOR — VIGENTE (2026-10-28 10:05 America/Sao_Paulo)
-
-**Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.
-**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
-
-| Pacote | Tip | Estado |
-|--------|-----|--------|
-| **#397** bloqueios+sessão+sky | **`49f8c8a6c`** / base `f8d626c59` | CI base SUCCESS `40692529560`; sessão Histórico neste tip; **@codex review** |
-| #400/#399 | tips anteriores | CI SUCCESS |
-| #342 Codex | `ac563ecea` | deltas pós-`47a5d0e` — parecer Cursor separado; branch intocada |
-
-**Bloqueios tip:** Operador 1 escrita; Histórico paginação+linhas+P2; guarda if(false); 044; **actorId/sessionCacheKey + assertHistoricoHttpScope**
-**Prova sessão:** `docs/evidence/apontamentos-353-prova-session-historico-20261028.txt`
-**Recuperação:** `docs/evidence/recuperacao-funcional-visual-397-20261028.txt`
-**Proposta visual:** `docs/evidence/proposta-visual-navegavel-entrada-397-20261028.txt`
-**Próximo:** parecer Codex tip HEAD → demo exclusiva SHA+HTTP. Continua recuperação funcional. Sem merge/deploy/carga.
-
-## CURSOR — VIGENTE (2026-10-28 09:50 America/Sao_Paulo)
-
-**Executor:** runner `/workspace`. Chrome Codespace **não** conecta este runner. Stash `stash@{0}` preservado. gh codespaces **403**.
-**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
-
-| Pacote | Tip | Estado |
-|--------|-----|--------|
-| **#397** bloqueios+P2+sky | **`a57cdc0fd`** | CI `77312b9ad` SUCCESS; P2+sky neste tip; **@codex review** |
-| #400/#399 | tips anteriores | CI SUCCESS |
-| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** |
-
-**Prova:** `docs/evidence/apontamentos-353-prova-tip-head-20261028.txt` + P2 neste tip
-**Recuperação:** `docs/evidence/recuperacao-funcional-visual-397-20261028.txt`
-**Proposta visual:** `docs/evidence/proposta-visual-navegavel-entrada-397-20261028.txt`
-**Próximo:** parecer Codex → demo exclusiva. Sem merge/deploy/carga.
-
-## CURSOR — VIGENTE (2026-10-28 07:10 America/Sao_Paulo)
-
-**Executor:** runner `/workspace`. Abrir Chrome no Codespace **não** conecta este runner. Stash `stash@{0}` preservado.
-**Chrome (owner):** https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/ — um escritor; WIP Codex preservado. gh codespaces **403**. Browser MCP ausente — sem retry loop.
-
-| Pacote | Tip | Estado |
-|--------|-----|--------|
-| **#397** Operador+Histórico+updated_at | **`809ad54ca`** | reprova **23+4+26+2 PASS**; **@codex review** tip final |
-| #400 ChatbotCanal+tenant | `03a45899f` / `0d1e5ce29` | CI SUCCESS |
-| #399 Parametro+ApiExterna | `fff9abb4d` | P1 fechado |
-| #342 Codex | `47a5d0e10` | APROVADO; WIP fora dos 50 **não tip** — não duplicar |
-
-**Bloqueios:** Operador 1 escrita; Histórico `clienteId`+paginação+linhas honestas; guarda `if(false)` falha; 044 público.
-**Recuperação:** Transportadora/Produto/DespesaRecorrente + Config Boletos·WhatsApp·Integração·NFe `updated_at??updated_date` (pins intactos).
-**Prova:** `docs/evidence/apontamentos-353-prova-tip-head-20261028.txt`  
-**Roteiro:** `docs/evidence/roteiro-demo-operador-historico-397-20261027.txt`
-
-**Próximo:** parecer Codex tip HEAD → demo exclusiva (SHA+HTTP). Sem merge/deploy/carga. Continua matriz indep.
+**Bloqueios:** Operador 1 escrita; Histórico paginação+JWT fingerprint+vínculo inativo; guarda if(false); 044 middleware
+**Recuperação:** `DetalhesCliente` → `HistoricoProdutosCliente` (Comercial360); sky 1–6
+**Prova:** `docs/evidence/apontamentos-397-prova-tip-recuperacao-20261028.txt` (60 PASS focados)
+**Parecer #342:** `docs/evidence/parecer-342-tip-21b482241-20261028.txt`
+**Próximo:** revisão independente tip final → demo exclusiva. Sem merge/deploy/carga.
 
 ## CURSOR — CI SUCCESS tip cc7ccb6c7 CatalogoWeb (2026-10-27)
 

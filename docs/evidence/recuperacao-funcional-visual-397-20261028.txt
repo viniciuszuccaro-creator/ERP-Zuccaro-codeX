@@ -1,5 +1,6 @@
 RECUPERAÇÃO FUNCIONAL/VISUAL — #397 (America/Sao_Paulo 2026-10-28)
 ==================================================================
+Atualização ~11:45 BRT: DetalhesCliente + vínculo inativo (ver §8). Pré-lote `c897d427e`.
 Modalidade: runner /workspace ≠ Codespace xylophone (403; sem prova Chrome neste tip).
 Referência: erp-integra-novo (cópia local /tmp/erp-integra-novo-cmp) — sem recomeçar inventário.
 Candidata tip: ver STATUS (bloqueios + este lote).
@@ -75,3 +76,23 @@ Roteiro Operador/Histórico: docs/evidence/roteiro-demo-operador-historico-397-*
 ------------------
 Merge/deploy/carga; 2º escritor Codespace; duplicar WIP #342 fora dos 50;
 reabrir contatos/CodigoField/Região P2; inventário completo refeito.
+
+8) RECUPERAÇÃO CONCRETA (pós-c897d427e — não só updated_at/cor)
+--------------------------------------------------------------
+Diagnóstico vs erp-integra: ModulosGridComercial ≈ idêntico; extratos
+analise-pedido/historico-cliente na referência = monolitos locais (não
+duplicar). Páginas só na ref (Documentacao/Onboarding/OAuth) bloqueadas.
+
+Gap real no fluxo Comercial360:
+- DetalhesCliente tinha Central360 + Últimos Pedidos (legado ≤50) mas NÃO
+  montava HistoricoProdutosCliente (paginado/autorizado) — só o Painel Cadastros.
+- Correção: import + bloco `data-action=cliente-360-historico-produtos` no
+  DetalhesCliente existente. Sem ComercialV2.
+
+Backend (finding Codex P2 ainda aberto em tip antigo):
+- Pedido.list(clienteId) retornava vazio se ClienteEmpresa.ativo=false,
+  apagando histórico após soft-delete do vínculo.
+- Correção: leitura resolve link inativo; create/update seguem exigindo ativo.
+  Teste runtime09 dedicado PASS.
+
+Provas deste tip: 60 PASS focados — `apontamentos-397-prova-tip-recuperacao-20261028.txt`.

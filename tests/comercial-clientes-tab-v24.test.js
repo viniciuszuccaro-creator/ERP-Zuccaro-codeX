@@ -131,3 +131,15 @@ test('integrado #251+#252: V24 expõe cliente-novo e cliente-detalhes-360; Detal
   assert.match(panel, /Carregar mais/);
   assert.match(panel, /_limit|_offset|blockLimits/);
 });
+
+/** Recuperação funcional #397: Histórico de Produtos no DetalhesCliente (Comercial360), sem tela paralela. */
+test('DetalhesCliente monta HistoricoProdutosCliente no fluxo Comercial360', async () => {
+  const detalhes = await readFile(
+    new URL('../src/components/comercial/DetalhesCliente.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(detalhes, /import HistoricoProdutosCliente from ["']\.\/HistoricoProdutosCliente["']/);
+  assert.match(detalhes, /data-action="cliente-360-historico-produtos"/);
+  assert.match(detalhes, /<HistoricoProdutosCliente\s+clienteId=\{cliente\.id\}\s*\/>/);
+  assert.equal((detalhes.match(/<HistoricoProdutosCliente\b/g) || []).length, 1);
+});

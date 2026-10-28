@@ -133,3 +133,47 @@ test('Pedido.list por clienteId resolve vínculo sem Cadastros.cliente_empresa e
     (error: any) => error.statusCode === 422,
   );
 });
+
+test('Pedido.list por clienteId preserva histórico quando vínculo ClienteEmpresa está inativo', async () => {
+  let linkAtivo = true;
+  const repo = new InMemoryPedidoRepository();
+  const orcamentos = new InMemoryOrcamentoRepository();
+  const audit = new InMemoryAuditRepository();
+  const tenant = new InMemoryTenantGuard();
+  const rbac = new InMemoryRbacGuard();
+  tenant.link(empresaId, groupId);
+  rbac.link({ actorId, groupId, permissions: { Comercial: { pedido: ['visualizar', 'criar', 'editar', 'cancelar', 'alterar-status'] } } });
+  const service = new PedidoService(
+    repo,
+    orcamentos,
+    audit,
+    tenant,
+    rbac,
+    {
+      getEmpresaLinkById: async () =>
+        ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: linkAtivo, bloqueado: false, habilitado_operacao: true } as never),
+      getEmpresaLink: async (_scope: unknown, requestedClienteId: string) =>
+        (requestedClienteId === clienteId
+          ? ({ id: clienteEmpresaId, cliente_id: clienteId, ativo: linkAtivo, bloqueado: false, habilitado_operacao: true } as never)
+          : null),
+    },
+    { getById: async () => ({ id: produtoId, ativo: true, unidade_medida_id: unidadeId } as never) },
+    { getById: async () => ({ id: unidadeId, ativo: true } as never) },
+    { get: async () => ({ id: condicaoId, ativo: true } as never) },
+    { get: async () => ({ id: 'local', ativo: true } as never) },
+    { get: async () => ({ id: 'obra', ativo: true } as never) },
+    { get: async () => ({ id: 'tabela', ativo: true } as never) },
+    { resolveSalePrice: async () => ({ preco: '10.000000', tabela_preco_id: 'tabela' }) },
+  );
+  const created = await service.create(ctx, direct);
+  assert.equal((await service.list(ctx, { clienteId })).meta.total, 1);
+  linkAtivo = false;
+  const afterSoft = await service.list(ctx, { clienteId });
+  assert.equal(afterSoft.meta.total, 1);
+  assert.equal(afterSoft.data[0].id, created.id);
+  // Create com vínculo inativo continua bloqueado.
+  await assert.rejects(
+    service.create(ctx, { ...direct, itens: [{ ...direct.itens[0], quantidade: '1' }] }),
+    (error: any) => error.statusCode === 422 && error.code === 'PEDIDO_CLIENTE_INVALIDO',
+  );
+});

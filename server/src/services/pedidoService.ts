@@ -201,10 +201,12 @@ export class PedidoService {
     if (options.tipoOperacao && !['ENTREGA', 'RETIRADA'].includes(options.tipoOperacao)) this.validation({ tipoOperacao: 'invalid' });
     // clienteId (mestre): resolve vínculo via repositório tenant-scoped — autorizado por
     // Comercial.Pedido.visualizar. Não exige Cadastros.cliente_empresa.visualizar (Central360).
+    // Leitura histórica: vínculo inativo ainda resolve o id (pedidos passados).
+    // Create/update continuam exigindo vínculo ativo em validateReferences.
     let clienteEmpresaId = options.clienteEmpresaId;
     if (options.clienteId) {
       const link = await this.clientes.getEmpresaLink(scope, options.clienteId, scope.empresaId);
-      if (!link || !link.ativo) {
+      if (!link) {
         return { data: [], meta: { limit, offset, total: 0, hasMore: false } };
       }
       clienteEmpresaId = link.id;

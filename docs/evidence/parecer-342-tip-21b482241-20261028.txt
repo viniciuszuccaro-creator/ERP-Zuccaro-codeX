@@ -1,0 +1,28 @@
+PARECER CURSOR — #342 tip 21b482241 (pós-e922e047b)
+====================================================
+America/Sao_Paulo 2026-10-28 ~11:45. Runner /workspace. Branch Codex INTTOCADA.
+
+HEAD: 21b482241 — "Concretiza recepção privada e validação atômica do acesso SSH"
+Base PR: codex/consolidacao-infra-20261017 ← codex/comercial-composicao-20261017
+CI tip: SUCCESS runs `40700792455` (PR) / `40700780694` (push) — ≠ aprovação funcional
+        (referência owner CI5032/5033 SUCCESS alinhada a este tip).
+
+Delta e922e047b..21b482241
+--------------------------
+DOCUMENTAL apenas (ahead_by:1):
+  STATUS_DO_PROJETO.md
+  docs/HANDOFF_ATUAL.md
+  docs/OPERACAO_DEV_VPS.md
+  docs/vps/evidence/20261028-identidade-previa-leitura.txt
+Sem src/ · server/ · testes de runtime.
+
+Classificação
+-------------
+Runtime: nenhum delta funcional neste intervalo — não repetir suíte por Markdown.
+Preparação documental: acesso SSH / recepção privada / procedimento VPS — escopo Codex.
+Parecer anterior e922e047b (docs) permanece válido para o intervalo anterior.
+Runtime pedido/cliente-fora-50: parecer ac563ecea permanece (não reaberto aqui).
+
+Parecer: APROVADO (docs). Sem novo runtime a revisar neste SHA.
+Candidata dos bloqueios Operador/Histórico/guarda/044 = PR #397 (não #353, não #342).
+Não editar branch Codex; não duplicar acesso/chave/importador.

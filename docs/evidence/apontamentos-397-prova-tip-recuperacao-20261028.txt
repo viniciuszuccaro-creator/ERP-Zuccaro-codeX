@@ -1,0 +1,48 @@
+PROVA #397 — tip recuperação + bloqueios (America/Sao_Paulo 2026-10-28 ~11:45)
+================================================================================
+Modalidade: runner `/workspace` ≠ Codespace xylophone (gh 403; sem Browser neste executor).
+Chrome (owner): https://potential-xylophone-5gj7r9v9qqg637vxp.github.dev/
+Candidata: PR #397 `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017`
+#353: histórica (`eaad0b84`) — não concorrente.
+Pré-lote HEAD: `c897d427e` — CI SUCCESS run `40699501474` (CI5031) — ≠ aprovação.
+WIP: working tree limpo antes deste lote; stash@{0} preservado (outra branch).
+
+Bloqueios — reprova dirigida (sem reimplementar)
+------------------------------------------------
+A) Guarda submit negativa …………………… 2 PASS
+   - graduados preservam hunk; mutação if(false) rejeitada no OperadorCaixa real
+B) OperadorCaixa persistência única ……… (cadastros-operador + reopen) PASS
+   - self-managed 1 create/update; tenantKey A↛B; rascunho pós-erro
+C) Histórico Produtos HTTP ………………… (painel-dinamico-cliente-historico) PASS
+   - pedidos.list?clienteId=; paginação >50; produto só pág.2
+   - Pedido.visualizar (sem grant cliente_empresa)
+   - fingerprint JWT (len+FNV); sessionCacheKey; assertHistoricoHttpScope
+   - P2 resetPaginationSession + fingerprint 1ª página
+D) 044 middleware prod ……………………… PASS (pedido-schema-idempotency-public-error)
+   - PEDIDO_SCHEMA_IDEMPOTENCY_MISSING; INTERNAL_ERROR ≠ 044
+E) Cliente reopen updated_at …………… PASS (comercial-cliente-updated-at-reopen-behavioral)
+
+Delta funcional deste tip
+-------------------------
+1) Pedido.list(clienteId): vínculo ClienteEmpresa inativo AINDA resolve id
+   (leitura histórica). Create/update continuam exigindo ativo.
+   Teste: runtime09 «preserva histórico quando vínculo … inativo» PASS
+2) DetalhesCliente (Comercial360): monta HistoricoProdutosCliente
+   data-action=cliente-360-historico-produtos — sem ComercialV2 / tela paralela.
+   Teste: comercial-clientes-tab-v24 «monta HistoricoProdutosCliente» PASS
+
+Totais focados
+--------------
+Histórico+V24 ………………………… 26 PASS
+Operador/Cliente reopen …………… 17 PASS
+Server pedido+044 ………………… 15 PASS
+Guarda …………………………………  2 PASS
+→ 60 PASS · 0 FAIL
+
+Não comprovado neste runner
+---------------------------
+- Demo Chrome Codespace exclusiva (403 / Browser ausente)
+- JWT bruto NÃO gravado em evidência
+- Registros C/D (staging privado) — fora deste lote
+
+CI SUCCESS tip ≠ aprovação. Parecer independente pedido no SHA tip final.

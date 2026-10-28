@@ -1,6 +1,6 @@
 ROTEIRO DEMO INTEGRADA — PR #397 (America/Sao_Paulo 2026-10-28)
 ================================================================
-Candidata: #397 tip código 2afe0cc83 (+ provas 044/Cliente neste push).
+Atualização: tip pós-c897d427e — DetalhesCliente HistóricoProdutos + vínculo inativo.
 Modalidade runner: /workspace — este arquivo NÃO é prova Chrome.
 Codespace (owner): potential-xylophone-5gj7r9v9qqg637vxp — janela exclusiva com Codex.
 URL ERP documentada: porta 5173. Porta 44919 = OAuth Hostinger (não ERP).
@@ -21,12 +21,18 @@ Percurso
    Esperado: reopen com updated_at HTTP; campos e ID preservados
 3. Cliente → Orçamento → criar/editar/salvar/reabrir
 4. Converter ou criar Pedido → editar/salvar/reabrir
-5. Painel Cliente → Histórico de Produtos
-   - total vs carregados (data-historico-pedidos-*)
-   - Carregar mais se >50; produto só na pág. seguinte aparece após load more
+5. Comercial → Clientes → Detalhes 360 (`cliente-detalhes-360`)
+   → bloco Histórico de Produtos (`data-action=cliente-360-historico-produtos`)
+   - mesmo componente do Painel Cadastros; paginação HTTP clienteId
+   - total vs carregados; Carregar mais se >50; produto só pág. seguinte
    - Troca empresa/cliente limpa extras; sem sessão → fail-closed
+   - Vínculo ClienteEmpresa inativo: histórico permanece (create ainda bloqueia)
+6. (Opcional) Painel Cadastros → Histórico de Produtos — mesma fonte; sem duplicar dados
+
+Registrar na demo exclusiva: branch/SHA, frontend/API, banco/origem, URL privada 5173.
 
 Fora da demo
 ------------
 Merge, DDL 044, carga legado, 2º escritor no Codespace.
 Registros D (ausentes): staging Codex — não seed.
+JWT bruto NÃO em evidência/URL/log.
