@@ -196,8 +196,8 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
-          <FileText className="w-6 h-6 text-green-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <FileText className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Conta Contábil' : 'Nova Conta Contábil'}</h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

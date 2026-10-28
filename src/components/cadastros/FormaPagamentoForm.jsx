@@ -214,14 +214,12 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-sky-600" />
-            {dadosIniciais ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}
-          </h2>
+      <div className="w-full h-full flex flex-col bg-white">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <CreditCard className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}</h2>
         </div>
-        {formContent}
+        <div className="flex-1 overflow-auto p-6">{formContent}</div>
       </div>
     );
   }

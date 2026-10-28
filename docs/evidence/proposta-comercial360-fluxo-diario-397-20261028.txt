@@ -22,16 +22,15 @@ Entregue neste tip (create path — abas existentes)
 
 Próximos (ainda proposta / inventário)
 -------------------------------------
-1. DetalhesCliente: atalhos espelhando a Central (mesmos openers).
-2. Consolidar `GerenciarContatosCliente.jsx` (comercial/base44) vs Form
+1. Consolidar `GerenciarContatosCliente.jsx` (comercial/base44) vs Form
    (cadastros/RBAC): canônico = Form; inventariar consumidores antes de
    reorganizar exposição. Não apagar sem prova de equivalência.
-3. Preservar PedidosTab blue (pin) e sky nos Cadastros restantes.
+2. Preservar PedidosTab blue (pin) e sky nos Cadastros restantes (config/tech).
 
 Critérios de aceite
 -------------------
 [x] Contatos editáveis no Painel com contexto/permissão
 [x] Sem tela ComercialV2 / persistência paralela
 [x] Create path Central360 nas abas existentes
-[ ] Atalhos DetalhesCliente espelhados
+[x] DetalhesCliente já embute Central (mesmos openers; sem botões duplicados)
 [ ] Aceite visual amplo do proprietário

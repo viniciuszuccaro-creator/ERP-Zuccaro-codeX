@@ -15,6 +15,11 @@ const FORMS = [
   'RepresentanteForm.jsx',
   'TurnoForm.jsx',
   'RegiaoAtendimentoForm.jsx',
+  'CentroCustoForm.jsx',
+  'FormaPagamentoForm.jsx',
+  'PlanoContasForm.jsx',
+  'ServicoForm.jsx',
+  'TipoFreteForm.jsx',
 ];
 
 for (const name of FORMS) {
