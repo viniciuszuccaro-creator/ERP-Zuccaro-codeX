@@ -1,3 +1,8 @@
+## CURSOR — #401 pin selected-reference + acentos (2026-10-29 10:48 America/Sao_Paulo)
+
+- CI frontend fail: pin `postgresClienteRepository` após #410.
+- Hunks reverse autorizam foldSearchText; hash histórico preservado.
+
 ## CURSOR — #401 composição + #410 59ad3a5dc (2026-10-29 10:39 America/Sao_Paulo)
 
 - Integra tip #410 **`59ad3a5dc`** (busca sem acentos CI SUCCESS) na composição #401.

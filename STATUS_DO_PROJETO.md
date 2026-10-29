@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#401 pin cliente + #410 acentos) (2026-10-29 10:48 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#401** — CI frontend falhou: pin `postgresClienteRepository` |
+| **Fix** | hunks selected-reference autorizam foldSearchText (hash histórico intacto) |
+| **#410** | tip `59ad3a5dc` CI SUCCESS |
+| Fora | merge/deploy/carga |
+
+**Próximo:** CI composição · @codex review. Sem merge/deploy.
+
+(2026-10-29 10:48 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 tip código + #410 59ad3a5dc) (2026-10-29 10:39 America/Sao_Paulo)
 
 | Campo | Valor |
