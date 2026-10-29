@@ -1,7 +1,7 @@
 ## CURSOR — #408 Funil×3 / Separacao keep-both (2026-10-29 10:05 America/Sao_Paulo)
 
 - Etapas CRM_ETAPAS nos 3 funis; hub Expedicao Separação IA + clássica.
-- #407  SUCCESS. Sem merge/deploy/carga.
+- Tip `8b09ae7e2`. #407 `a18a362ed` SUCCESS. Sem merge/deploy/carga.
 
 ## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
 

@@ -2,14 +2,15 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** |  ← #407 |
-| **Escopo** |  + hub Separação IA/clássica |
-| **#407** | tip  CI SUCCESS · docs  |
-| **#401** | tip código  CI SUCCESS |
+| **Branch** | `cursor/recuperacao-funil-separacao-392b` ← #407 |
+| **Escopo** | `listFunilColunasUi` + hub Separação IA/clássica |
+| **#407** | tip `a18a362ed` CI SUCCESS · docs `ba431a2af` |
+| **#401** | tip código `fbcca01b9` CI SUCCESS |
+| **Tip** | `8b09ae7e2` |
 | Testes | recuperacao-funil-separacao + crm-oportunidade-policy PASS |
 | Fora | merge/deploy/carga · 3º módulo · HTTP Funil Codex |
 
-**Evidência:** 
+**Evidência:** `docs/evidence/recuperacao-funil-separacao-20261029.txt`
 **Próximo:** CI deste tip. Sem merge/deploy.
 
 (2026-10-29 10:05 America/Sao_Paulo)
