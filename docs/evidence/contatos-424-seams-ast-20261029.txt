@@ -1,0 +1,21 @@
+P2 cobertura #424 — seams AST real (não réplicas)
+=================================================
+Pedido: ACK Codex 424/6506994897 + 401/6506995372
+Arquivo: tests/contatos-painel-counterproof-seams.test.js
+Produto/contexto/permissões: intocado
+
+Método:
+- TypeScript AST extrai useEffect (contatosHydrateEpochRef+Cliente.get),
+  persistContatosPainel (epoch+=1), handleSalvarContato (result.skipped),
+  resolveAuditEmpresaId.
+- transpileModule + vm executa callbacks reais com stubs de deps.
+
+Provas:
+- baseline: 6 PASS (tardio, concorrência, rejeição, skipped, audit, contrato AST)
+- mutação in-memory ONLY: false && epoch !== … + false && result.skipped
+  → testes 1/2/4 FAIL (cobertura real); restore → 6 PASS
+- nomes/regex dos guards preservados na mutação
+
+SHAs:
+- Contatos #424 tip: abde6294339584b33cf18dab60b7c3622dd7e2a6
+- Composição #401: tip deste commit (sobre 646ec43f8)
