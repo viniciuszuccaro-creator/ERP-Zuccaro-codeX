@@ -21,8 +21,22 @@ Autorizacao especifica posterior recebida: publicar SOMENTE patch/manifesto sani
 como artefatos PUBLICOS pre-validacao. Deposito na branch342 em
 docs/evidence/codex-wip-inbox/b78e612409ff31084a7ebf30f5dde7a216ca1f228fb45830a439b0bfc4829383/:
 wip.patch e MANIFEST.json,bytes exatos/pins acima. Inbox421 PUBLICA,sem editarbranchCursor.
-Nao e publicacao funcional do WIP13,nem apply/fold automatico; ACK remoto e fechamento
-integral ainda exigem conferencia do executor. Originais privados continuam intactos.
+Nao e publicacao funcional do WIP13,nem apply/fold automatico. Deposito publicado
+emeead306243ea1fe3e97dcc02877860458aa265db/CI5259SUCCESS; ACK421/6505240416
+confirma hashes,13/13blobs e arvore266b1ebf247fd419a500ac2da4e4acf0aa81d578.
+Primeira validacao LinuxNode22.23.4/npm10.9.7 usou deps emprestadas incompletas:
+raiz2418PASS/1FAIL/0SKIP;server531PASS/6FAIL/26SKIP;type/buildserverFAIL.
+Tracebacks identificam pacotes declarados ausentes; TS2742 deriva do symlink externo.
+Primeira rodada NAO aprovada; causa comprovada por traceback/lock/deps emprestadas.
+Fechamento FINAL421/6505560893: npmci exit0 so na area descartavel,locks intactos;
+baseline e snapshot sobMESMASdeps passaram9/9checks. Baseline:raiz2418PASS/0FAIL/0SKIP,
+server554PASS/0FAIL/26SKIP(580total). Snapshot:raiz2419PASS/0FAIL/0SKIP,
+server565PASS/0FAIL/26SKIP(591total). Audit/lint/typecheck/build/diff exit0 em ambos,
+inclusive typecheck/buildserver;TS2742 ausente com deps proprias. Nenhuma regressao.
+13/13blobs/arvore266b1ebf conferidos; os26SKIP PG NAO sao aprovacao PostgreSQL.
+Transporte/fechamento tecnico encerrados; codigo funcional permanece WIP,sem apply/fold
+em implementacao/candidata: esta autorizacao publicou SOMENTE artefatos sanitizados.
+Originais privados e candidata401 continuam intactos; nao chamar essa fase de carga.
 Nao usar CI documental, overlayPOSIX12/0/0 ou sanitizacao como fechamento do snapshot.
 
 Coordenacao direta Cursor entregue e visivel:prova browser isolada nao exige criar
@@ -185,7 +199,10 @@ Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
 - Publicacao backend (Codex): WIP preservado; receber patch+manifesto exatos em
   executor existente por canal suportado, fechar snapshot/checks e somente entao
   publicar funcionalmente. Sanitizacao integral pronta e transporte publico do artefato
-  especificamente autorizado; falta ACK com hashes/13blobs e fechamento integral.
+  especificamente autorizado; ACK hashes/13blobs/arvore recebido6505240416.
+  Fechamento integral de codigo com deps completas encerrado6505560893,9/9checks
+  PASS;PG26SKIP separados. Publicacao funcional/aplicacao separada desta autorizacao
+  de artefatos,sem fold automatico na401 nem marcacao de homologacao operacional.
   POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
 - Revisao/composicao (Cursor+Codex):4017460c3a2/codigo0195acc66 incorpora414849419a6;
   parecer6504381068 sem novo defeito nesse delta. Liberacao419/failure-only encerrados.

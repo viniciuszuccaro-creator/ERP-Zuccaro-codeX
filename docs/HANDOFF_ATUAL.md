@@ -41,7 +41,34 @@ Commit contem artefatos inertes/documentacao,NAO os13arquivos funcionais aplicad
 Sem apply/integracao automatica. Executor deve conferir base3cf0831563388131e2506b4aba9dad65947cdaff,
 patch/manifesto,13blobs e capacidade/dependencias antes da validacao descartavel.
 Sem editarcheckoutalheio,sem copiarsegredos/historicoGit,sem contornarpolitica.
-Fechamento completo do snapshot e ACK do destinatario ainda pendentes.
+Deposito publicado emeead306243ea1fe3e97dcc02877860458aa265db,remoto confirmado,
+CI5259/run40931130686SUCCESS; isso e CI de artefatos/documentacao,NAO do WIP aplicado.
+ACK421/6505240416 do destinatario confirma bytes/hashes,13/13blobs e arvoreintegral
+266b1ebf247fd419a500ac2da4e4acf0aa81d578 sobreeead+patch.4017460permanece limpa.
+Ubuntu24.04.4/Node22.23.4/npm10.9.7; primeiro fechamento com deps emprestadas:
+audit/lint/typecheckroot/buildroot/diff exit0;raiz2418PASS/1FAIL/0SKIP(2419total);
+server531PASS/6FAIL/26SKIP(563total),typecheckexit2/buildexit1. Falha raiz em
+financial-http-prepared/financial-consolidacao por ofx-js ausente; server sem
+busboy/@peculiar/asn1-schema/@peculiar/asn1-x509/asn1js/ofx-js/csv-parse declarados.
+TS2742 aponta symlink externo@types/qs. Nao e aprovacao nem defeito de produto
+por inferencia: orientacao421/6505224509 exige separar baseline/regressao.
+Executor confirmou npmci exit0 em deps PROPRIAS da area descartavel apos unlink
+somente dos symlinks; sem alterar /workspace,locks ou configuracoes de seguranca.
+Fechamento FINAL do destinatario421/6505560893:baseline e snapshot sobMESMASdeps
+passaram9/9checks exit0. Baselineeead/tree decf692e7e8d31e0955fbbe8ae62796113c0f9e2:
+raiz2418PASS/0FAIL/0SKIP;server554PASS/0FAIL/26SKIP(580total).
+Snapshoteead+patch/tree266b1ebf247fd419a500ac2da4e4acf0aa81d578:
+raiz2419PASS/0FAIL/0SKIP;server565PASS/0FAIL/26SKIP(591total).
+Audit/lint/typecheck/build/diff e typecheck/buildserver exit0 em ambos. TS2742
+sumiu com deps locais,sem anotacao/supressao no produto. Primeiros7fails comprovados
+por traceback como deps declaradas ausentes na arvore emprestada; nenhuma regressao
+sobdeps completas. Locks mantidos,13/13blobs conferidos;workspace/candidata intactos.
+Provas PGlite/in-memory/testesnpm NAO substituem os26PGSKIP ou browser comPG real.
+Codigo funcional NAO publicado/aplicado/folded:autorizacao posterior foi SOMENTE
+artefatos publicos sanitizados para validacao,sem integracao automatica. Snapshot
+validado fica pronto para etapa funcional separada,respeitando gates/cadeia401.
+Sem fontes alteradas,segredos novos,VPS,DDL,grants,carga ou deploy. Logs completos
+permanecem na area de validacao;recibo publico contem apenas resultados sanitizados.
 
 Coordenacao401/6504448201 e mensagem direta visivel no agenteCursor existente:
 nao provisionar AuthDEV/ERP_DEV_LOGIN_RESTRICTED_* para ensaio isolado; nao ignorar
