@@ -1,3 +1,13 @@
+## CURSOR — VIGENTE (#412 tip c0ccadeae CI SUCCESS) (2026-10-29 11:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#412** tip **`c0ccadeae`** — nome recebedor max(200) |
+| **Base** | #407 `ba431a2af` |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:43 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#412 comprovante nome max200) (2026-10-29 11:29 America/Sao_Paulo)
 
 | Campo | Valor |
