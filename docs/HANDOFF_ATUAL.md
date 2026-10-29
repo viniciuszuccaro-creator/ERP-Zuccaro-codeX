@@ -1,4 +1,46 @@
-## Estado vigente - aceite dirigido da composicao401 (2026-10-29)
+## Estado vigente - codigo funcional publicado (2026-10-29)
+
+Publicacao funcional concluida em `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`,
+branch `codex/consolidacao-infra-20261017`, PR342, remoto confirmado e checkout limpo.
+Os 13 blobs sao identicos ao manifesto C8A/patch B78 e a arvore `266b1ebf` validada.
+Delta dessa arvore para o commit publicado: SOMENTE STATUS/HANDOFF. Nao reaplicar
+o patch na implementacao ou confundir esse commit com o deposito anterior eead.
+
+CI5265/run40940232207 SUCCESS no SHA funcional. Frontend123681367223: 2419 PASS/
+0 FAIL/0 SKIP; backend123681367377: 565 PASS/0 FAIL/26 SKIP (591 testes).
+Audit/lint/typecheck/build/diff aprovados; nao repetir suites sem novo delta.
+Testes PG dirigidos: entrada/tenant6/0/0. Suite composicao3/0/0 inclui um percurso
+PostgreSQL real e dois PGlite (nova negativa de contexto e PGlite). Job separado
+expedicao-comercial-compose123681367493:1/0/0. Os 26 skips da suite unitaria nao
+viram aprovacao por existir outra prova PG. Nao e homologacao browser/operacional.
+Revisao automatizada por SHA:342/6506459572, sem achados maiores.
+
+Coordenacao da incorporacao com Cursor:401/6506537537, sem ACK/fold presumidos.
+Sobreposicao comprovada em6506547493: somente PedidoService e seu teste divergem
+entre4017460 e a base pre-funcional342fdfed nos13paths. Preservar getEmpresaLink,
+clienteId/historico inativo/paginacao do Cursor E captura imutavel/contraprova Codex.
+Demais11paths tem base igual. Conferir status/HEAD/reservas antes de qualquer fold
+na MESMA401 e validar o SHA composto; CI87db nao aprova essa composicao futura.
+Nenhuma branch Cursor editada, mergeMain, DDL, grant, carga ou deploy executados.
+
+#424d717 continua sem delta de runtime desde2ac0; provas anteriores reutilizadas
+por igualdade de blobs:3comportamentais6504583845+3guardas6505152705; CI5257SUCCESS.
+Nova confirmacao6506340336 delimita AST/callbacks reais, nao React montado/PG/browser.
+Prova navegador integrada depende do harness EXISTENTE identificado no OPERACAO412;
+nao criar paralelo nem afrouxar suas guardas para mudar de ambiente. A CI existente
+tem PostgreSQL isolado; capacidade Chrome/harness deve ser comprovada, nao inferida.
+Controle Chrome falhou ao reanexar aba existente (timeout CDP focus10s); reconexao
+suportada tambem falhou. GitHub autenticado permanece funcional, sem novo login,
+instalacao, restart ou alteracao de permissoes. Comentarios nao provam recebimento.
+
+Legado: busca SOMENTE de metadados Drive pelo nome exato do arquivo congelado100
+nao retornou resultado na conexao acessivel. Nao prova inexistencia global, nenhum
+conteudo lido/download/sharing. Recibos nao substituem bytes/pins finais, nao houve
+nova selecao, transferencia do HD ou consulta/carga real. Preparacao independente
+de consulta/classificacao/rejeicoes esta publicada no87db; executar so com fonte,
+destino, canal e escopo comprovados. Lista unica de gates/responsaveis no STATUS.
+
+## Historico - preparacao da publicacao funcional (2026-10-29)
 
 Instrucao corrente do dono autoriza PUBLICACAO FUNCIONAL do WIP13 apos gates.
 Base342fdfed98fbdc53f0f62eb3eaae55050b2d7a6577e/CI5261SUCCESS conferida,origin

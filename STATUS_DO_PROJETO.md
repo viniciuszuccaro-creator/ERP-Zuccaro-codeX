@@ -1,4 +1,37 @@
-## Estado vigente - composicao414 incorporada e aceite delimitado (2026-10-29)
+## Estado vigente - backend publicado e composicao separada (2026-10-29)
+
+Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma
+branch da #342, remoto confirmado e checkout limpo. CI5265/run40940232207 SUCCESS:
+frontend, backend e composicao. Raiz: 2419 PASS/0 FAIL/0 SKIP; backend: 565 PASS/
+0 FAIL/26 SKIP (591 testes). Audit, lint, typecheck, build e diff aprovados.
+Entrada/tenant PostgreSQL: 6 PASS/0 FAIL/0 SKIP. A suite de composicao tem 3 PASS,
+mas somente um percurso usa PostgreSQL real; os outros usam PGlite, inclusive a
+nova negativa de contexto. Job adicional de composicao: 1 PASS/0 FAIL/0 SKIP.
+Revisao automatizada #342/6506459572 sem achados maiores nesse SHA.
+
+Os 13 blobs publicados correspondem ao manifesto e a arvore validada `266b1ebf`;
+entre essa arvore e o commit funcional mudaram somente STATUS/HANDOFF. Publicacao
+funcional encerrada, nao apenas deposito de patch. Os 26 skips nao sao aprovacao
+PostgreSQL; CI nao homologa navegador ou operacao. Reserva desktop liberada.
+
+Incorporacao na mesma #401 solicitada em 6506537537, sem ACK/execucao presumidos.
+Mapa de sobreposicao em 6506547493: PedidoService e runtime09-pedido-service.test
+ja contem getEmpresaLink, filtro clienteId e historico inativo do Cursor; preservar
+esses hunks junto da captura de contexto/contraprova Codex, sem substituir arquivos.
+Os outros 11 paths tinham base igual. Sem merge/fold automatico ou nova composicao.
+
+#424 permanece `d7174611d2c3fd2b577a5068a4aa1c7a2a71c8fb`, CI5257 SUCCESS.
+Sem novo runtime: reutilizadas 3 provas comportamentais e 3 contraprovas das guardas,
+parecer 6506340336. Alcance: callbacks/helpers reais por AST, nao React/PG/browser.
+O harness privado existente e identificado no OPERACAO; a prova integrada continua
+pendente. Controle Chrome falhou na reconexao; GitHub segue canal de coordenacao.
+
+Coorte100: consulta de metadados no Drive somente pelo nome exato nao retornou
+resultados acessiveis. Nao prova ausencia global; nenhum conteudo/download/sharing.
+Fonte final segue pendente. Plano/classificador publicados e testados nao equivalem
+a reconciliacao real ou carga. Gates e responsaveis continuam na lista unica abaixo.
+
+## Historico - preparacao da publicacao funcional (2026-10-29)
 
 Publicacao FUNCIONAL do WIP13 neste lote,autorizada pelo proprietario apos fechar
 validacao421/6505560893. Base342fdfed98f/CI5261SUCCESS,branchcodex/consolidacao-infra-20261017;
@@ -205,22 +238,18 @@ documental diff-check; checks de codigo e limites anteriores preservados abaixo.
 Nao declarar o WIP implantado, integrado na401, homologado ou importado.
 
 Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
-- Publicacao backend (Codex): WIP preservado; receber patch+manifesto exatos em
-  executor existente por canal suportado, fechar snapshot/checks e somente entao
-  publicar funcionalmente. Sanitizacao integral pronta e transporte publico do artefato
-  especificamente autorizado; ACK hashes/13blobs/arvore recebido6505240416.
-  Fechamento integral de codigo com deps completas encerrado6505560893,9/9checks
-  PASS;PG26SKIP separados. Publicacao funcional autorizada na342 neste lote;
-  conferir SHA/CI e revisao antes de coordenar incorporacaoCursor naMESMA401.
-  Sem fold automatico nem marcacao de homologacao operacional.
-  POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
+- Publicacao backend (Codex): ENCERRADA em87db6618/CI5265SUCCESS,13blobs exatos.
+  Fechamento6505560893 e provas CI doSHA conferidos;26SKIP separados. Nao repetir
+  transporte/deps/POSIX/WSL. Nao e autorizacao de fold ou homologacao operacional.
 - Revisao/composicao (Cursor+Codex):4017460c3a2/codigo0195acc66 incorpora414849419a6;
   parecer6504381068 sem novo defeito nesse delta. Liberacao419/failure-only encerrados.
-  Falta navegador com gravacao; nao ampliar candidata com pacotes independentes.
+  Preparar incorporacao do87db apos ACK/reserva, preservando os2paths dePedido
+  sobrepostos; #424d717 revisada no alcance dirigido e separada ate coordenacao.
+  Falta navegador com gravacao; nao ampliar candidata com melhorias nao essenciais.
 - Cadeia (Cursor+Codex):401 agora tem basePR342, mas merge-base real e b5cb34e1;
-  f02a6b02 NAO e ancestral da401. Delta342 posterior so STATUS/HANDOFF/OPERACAO,
-  ainda a reconciliar; retarget nao incorpora commits. Respeitar bases/revisoes/CI,
-  sem merge direto em main. WIP nao entra antes da publicacao validada.
+  87db NAO e ancestral da401. Antes havia delta documental; agora tambem ha13paths
+  funcionais publicados a reconciliar. Retarget nao incorpora commits. Preservar
+  deltas de ambas as frentes,validar nova composicao porSHA,sem merge direto emmain.
 - Esquema/privilegios (Codex+aprovacao dono): envelope minimo e diferenca comprovada
   do destino;044/Fornecedor candidatos e045-049 privadas nao aplicados por inferencia.
 - Backup/retorno (Codex+aprovacao dono): verificar frescor/identidade dos recibos ja
