@@ -1,3 +1,15 @@
+## CURSOR — CadastroFiscal+admin sky (2026-10-29 12:52 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-fiscal-admin-sky-392b` ← #417 `8bf3cc5b4`.
+- Sky+ID: CadastroFiscal / Empresa / Grupo / Perfil / Usuario; ChatbotIntents→windowMode.
+- #417 CI SUCCESS + Codex limpo. #414 compose BLOCKED (WIP `/tmp/composicao-397-342`).
+- Demo writes=0 ≠ E2E; HTTP+PG convert Codex existe — falta UI isolada. Sem merge/VPS write.
+
+## CURSOR — #417 tip 8bf3cc5b4 CI SUCCESS (2026-10-29 12:48 America/Sao_Paulo)
+
+- Tip `8bf3cc5b4` CI SUCCESS + Codex limpo — ApiExterna+ChatbotCanal sky+ID.
+- Sem merge/deploy/VPS write.
+
 ## CURSOR — ApiExterna+ChatbotCanal sky (2026-10-29 12:42 America/Sao_Paulo)
 
 - Branch `cursor/cadastros-apiexterna-canal-sky-392b` ← #416.

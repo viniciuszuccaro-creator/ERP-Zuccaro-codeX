@@ -1,3 +1,34 @@
+## CURSOR — VIGENTE (CadastroFiscal+admin sky) (2026-10-29 12:52 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-fiscal-admin-sky-392b` ← #417 `8bf3cc5b4` |
+| **Escopo** | sky+ID CadastroFiscal / Empresa / GrupoEmpresarial / PerfilAcesso / Usuario; ChatbotIntents propaga windowMode |
+| **Pin** | CentroOperacao / ConfiguracaoBoletos ID-only — intocados |
+| **#417** | tip `8bf3cc5b4` CI SUCCESS + Codex limpo |
+| **#414** | tip `532ac595a` pronta; compose #401 **BLOCKED** (WIP composição) |
+| **Demo** | writes=0 ≠ E2E; Codex HTTP+PG convert existe — falta UI isolada |
+| Fora | merge/deploy/carga / VPS write / checkout composição |
+
+**Evidência:** `docs/evidence/cadastros-fiscal-admin-sky-20261029.txt`
+**Próximo:** CI deste tip. Sem merge/deploy.
+
+(2026-10-29 12:52 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#417 tip 8bf3cc5b4 CI SUCCESS) (2026-10-29 12:48 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#417** tip código `dfa945240` / docs **`8bf3cc5b4`** — CI SUCCESS 6/6 + Codex limpo |
+| **Escopo** | sky+ID ApiExterna + ChatbotCanal |
+| **#414** | pronta; compose BLOCKED WIP |
+| Fora | merge/deploy/carga / VPS write |
+
+**Evidência:** `docs/evidence/cadastros-apiexterna-canal-sky-20261029.txt`
+**Próximo:** residual Fiscal/admin sky. Sem merge/deploy.
+
+(2026-10-29 12:48 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (ApiExterna+ChatbotCanal sky) (2026-10-29 12:42 America/Sao_Paulo)
 
 | Campo | Valor |

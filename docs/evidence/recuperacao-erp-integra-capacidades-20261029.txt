@@ -48,8 +48,13 @@ Atualização (2026-10-29) — Intent/Job/Evento/Modelo + C360 smoke
 - Demo C360: smoke PASS rascunho entre painéis · dados sintéticos · save bloqueado
 - Evidência: cadastros-intent-job-sky-20261029.txt · c360-fluxo-evidencia-20261029b.txt
 
+Atualização (2026-10-29) — fila sky pós-#417
+- #413–#417: Gateway/TabelaFiscal/NFe · Param* · OrigemPedido · ApiExterna/ChatbotCanal
+- Residual Fiscal/admin: CadastroFiscal / Empresa / Grupo / Perfil / Usuario sky+ID
+  (+ ChatbotIntents propaga windowMode). Pin: CentroOperacao / Boletos ID-only.
+- Evidência: cadastros-fiscal-admin-sky-20261029.txt
+
 Próximo capacidade a capacitar no existente
-1. Param forms sky + reopen ID — #402 tip SUCCESS (fora deste tip)
-2. Demo fluxo C360 Private quando franquia
-3. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
-4. ChatbotIntent / JobAgendado / Parametro* residual fora branches reservadas
+1. Demo UI C360 contra backend isolado (HTTP+PG Codex já cobre convert; writes=0 ≠ E2E)
+2. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
+3. Forms ainda sem sky: CentroOperacao (pin) / Boletos (ID-only) / Produto legado / Endereços embed
