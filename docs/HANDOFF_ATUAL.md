@@ -1,3 +1,8 @@
+## CURSOR — ParamOrigem sky+ID (2026-10-29 12:25 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-param-origem-sky-392b` ← #415: ParametroOrigemPedido sky+ID.
+- #414/#415 CI SUCCESS; pareceres Codex pendentes. Sem merge/deploy/VPS write.
+
 ## CURSOR — #415 tip a3d37ad7b CI SUCCESS (2026-10-29 12:19 America/Sao_Paulo)
 
 - Tip `a3d37ad7b` CI SUCCESS 6/6 — Parametro* sky+ID; Boletos ID-only.
