@@ -112,6 +112,28 @@ export function mergeComercialSelectedCliente(masters, selection) {
   };
 }
 
+/**
+ * Une catálogos de cliente/vínculo sem descartar entradas já resolvidas
+ * (página de busca temporária ≠ catálogo de labels da listagem/PDF/share).
+ */
+export function unionComercialClienteCatalog(base = {}, patch = {}) {
+  const clientes = [...(base.clientes || [])];
+  const links = [...(base.clientesEmpresa || [])];
+  for (const cliente of patch.clientes || []) {
+    if (!cliente?.id) continue;
+    const idx = clientes.findIndex((row) => row.id === cliente.id);
+    if (idx >= 0) clientes[idx] = cliente;
+    else clientes.push(cliente);
+  }
+  for (const link of patch.clientesEmpresa || []) {
+    if (!link?.id) continue;
+    const idx = links.findIndex((row) => row.id === link.id);
+    if (idx >= 0) links[idx] = link;
+    else links.push(link);
+  }
+  return { ...base, clientes, clientesEmpresa: links };
+}
+
 /** Lacunas remanescentes do contrato Orçamento (após 039 tabela_preco_id). */
 export const ORCAMENTO_PERSISTENCE_GAPS = Object.freeze({
   preco_unitario_ui: 'UI pode divergir do gravado — servidor sobrescreve snapshot',

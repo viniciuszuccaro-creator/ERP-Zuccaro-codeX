@@ -1,4 +1,4 @@
-import { resolveComercialSelectedCliente, mergeComercialSelectedCliente, resolveComercialMasterPages } from '../src/components/comercial/comercialMasterPicker.js';
+import { resolveComercialSelectedCliente, mergeComercialSelectedCliente, resolveComercialMasterPages, unionComercialClienteCatalog } from '../src/components/comercial/comercialMasterPicker.js';
 
 test('Pedido reabre cliente fora dos primeiros 50 e preserva selecao quando busca muda', () => {
   const { scope, pages } = canonicalMasterPagesFixture();
@@ -184,4 +184,19 @@ test('Pedido rejeita auxiliares de outro cliente e IDs duplicados', () => {
   view.blocks.obras.data[0].cliente_id = auxIds.clienteId;
   view.blocks.obras.data.push({ ...view.blocks.obras.data[0] }); view.blocks.obras.meta.total = 2;
   assert.throws(() => resolveAux(view), /COMERCIAL_AUXILIARY_INVALID/);
+});
+
+test('unionComercialClienteCatalog: busca temporária não apaga vínculo já resolvido', () => {
+  const kept = {
+    clientes: [{ id: 'c-kept', codigo: '1', razao_social: 'Cliente Mantido' }],
+    clientesEmpresa: [{ id: 'link-kept', cliente_id: 'c-kept', codigo: '1' }],
+  };
+  const page = {
+    clientes: [{ id: 'c-page', codigo: '2', razao_social: 'Outro' }],
+    clientesEmpresa: [{ id: 'link-page', cliente_id: 'c-page', codigo: '2' }],
+  };
+  const union = unionComercialClienteCatalog(kept, page);
+  assert.equal(union.clientesEmpresa.some((l) => l.id === 'link-kept'), true);
+  assert.equal(union.clientesEmpresa.some((l) => l.id === 'link-page'), true);
+  assert.equal(union.clientes.find((c) => c.id === 'c-kept')?.razao_social, 'Cliente Mantido');
 });

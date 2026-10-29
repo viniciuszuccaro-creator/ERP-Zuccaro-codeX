@@ -1,7 +1,7 @@
 import OrcamentoProposalAside from './OrcamentoProposalAside';
 import { createComercialProposalFixture } from './comercialProposalFixture';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { readErpHttpSession } from '@/api/erpHttpSession';
@@ -23,9 +23,12 @@ import {
   clienteEmpresaPickerLabel,
   filterClienteEmpresaOptions,
   filterProdutoOptions,
+  mergeComercialSelectedCliente,
   ORCAMENTO_PERSISTENCE_GAPS,
   produtoPickerLabel,
   resolveComercialMasterPages,
+  resolveComercialSelectedCliente,
+  unionComercialClienteCatalog,
 } from './comercialMasterPicker';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 import { isCanonicalComercialId } from './centralCliente360Navigation';
@@ -125,7 +128,83 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     staleTime: 30000,
   });
   const proposalMasters = useMemo(createComercialProposalFixture,[]);
-  const masters = proposalMode ? proposalMasters : mastersQuery.data || { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] };
+  const listRows = proposalMode ? [] : listQuery.data?.data || [];
+  /** Catálogo acumulado: labels de listagem/PDF/share independentes da página temporária de busca (P2 #4413844021). */
+  const [clienteCatalog, setClienteCatalog] = useState({ clientes: [], clientesEmpresa: [] });
+  const selectedClienteQuery = useQuery({
+    queryKey: ['orcamento-selected-cliente', groupId, empresaId, actorId, sessionCacheGeneration, form.cliente_empresa_id],
+    queryFn: async ({ signal }) => resolveComercialSelectedCliente(
+      await http.comercialMasters.list({ clienteEmpresaId: form.cliente_empresa_id, signal }),
+      { groupId, empresaId },
+      form.cliente_empresa_id,
+    ),
+    enabled: contextReady && canView && !proposalMode && formOpen && isCanonicalComercialId(form.cliente_empresa_id),
+    staleTime: 30000,
+    retry: false,
+  });
+  const neededClienteEmpresaIds = useMemo(() => {
+    const ids = new Set();
+    for (const row of listRows) {
+      if (row?.cliente_empresa_id) ids.add(row.cliente_empresa_id);
+    }
+    if (selected?.cliente_empresa_id) ids.add(selected.cliente_empresa_id);
+    if (editing?.cliente_empresa_id) ids.add(editing.cliente_empresa_id);
+    if (form.cliente_empresa_id) ids.add(form.cliente_empresa_id);
+    return [...ids].filter((id) => isCanonicalComercialId(id));
+  }, [listRows, selected?.cliente_empresa_id, editing?.cliente_empresa_id, form.cliente_empresa_id]);
+  const missingClienteEmpresaIds = useMemo(() => {
+    const known = new Set((clienteCatalog.clientesEmpresa || []).map((link) => link.id));
+    if (selectedClienteQuery.data?.clientesEmpresa?.[0]?.id) {
+      known.add(selectedClienteQuery.data.clientesEmpresa[0].id);
+    }
+    for (const link of mastersQuery.data?.clientesEmpresa || []) known.add(link.id);
+    return neededClienteEmpresaIds.filter((id) => !known.has(id)).slice(0, 20);
+  }, [neededClienteEmpresaIds, clienteCatalog.clientesEmpresa, selectedClienteQuery.data, mastersQuery.data]);
+  const rowClienteQueries = useQueries({
+    queries: missingClienteEmpresaIds.map((clienteEmpresaId) => ({
+      queryKey: ['orcamento-row-cliente', groupId, empresaId, actorId, sessionCacheGeneration, clienteEmpresaId],
+      queryFn: async ({ signal }) => resolveComercialSelectedCliente(
+        await http.comercialMasters.list({ clienteEmpresaId, signal }),
+        { groupId, empresaId },
+        clienteEmpresaId,
+      ),
+      enabled: contextReady && canView && !proposalMode && isCanonicalComercialId(clienteEmpresaId),
+      staleTime: 60000,
+      retry: false,
+    })),
+  });
+  useEffect(() => {
+    setClienteCatalog({ clientes: [], clientesEmpresa: [] });
+  }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !mastersQuery.data) return undefined;
+    setClienteCatalog((prev) => unionComercialClienteCatalog(prev, mastersQuery.data));
+    return undefined;
+  }, [mastersQuery.data, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !selectedClienteQuery.data) return undefined;
+    setClienteCatalog((prev) => mergeComercialSelectedCliente(prev, selectedClienteQuery.data));
+    return undefined;
+  }, [selectedClienteQuery.data, proposalMode]);
+  // Hidratações da página atual entram no useMemo (sem effect — evita loop por referência de useQueries).
+  const masters = useMemo(() => {
+    if (proposalMode) return proposalMasters;
+    const core = mastersQuery.data || {
+      clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [],
+    };
+    let next = {
+      ...core,
+      clientes: clienteCatalog.clientes,
+      clientesEmpresa: clienteCatalog.clientesEmpresa,
+    };
+    next = mergeComercialSelectedCliente(next, selectedClienteQuery.data);
+    for (const query of rowClienteQueries) {
+      if (query.data) next = mergeComercialSelectedCliente(next, query.data);
+    }
+    // Página de busca atual permanece disponível no seletor mesmo antes do effect acumular.
+    next = unionComercialClienteCatalog(next, mastersQuery.data || {});
+    return next;
+  }, [proposalMode, proposalMasters, mastersQuery.data, clienteCatalog, selectedClienteQuery.data, rowClienteQueries]);
   const clientesById = useMemo(() => new Map(masters.clientes.map((item) => [item.id, item])), [masters.clientes]);
   const clienteLabel = (linkId) => {
     const link = masters.clientesEmpresa.find((item) => item.id === linkId);
@@ -137,8 +216,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     return row ? (row.codigo ? `${row.codigo} — ${row.nome || ''}` : (row.nome || id)) : id;
   };
   const clienteOptions = useMemo(
-    () => filterClienteEmpresaOptions(masters.clientesEmpresa, clientesById, clienteQuery),
-    [masters.clientesEmpresa, clientesById, clienteQuery],
+    () => filterClienteEmpresaOptions(masters.clientesEmpresa, clientesById, clienteQuery, form.cliente_empresa_id),
+    [masters.clientesEmpresa, clientesById, clienteQuery, form.cliente_empresa_id],
   );
   const produtoOptions = useMemo(
     () => filterProdutoOptions(masters.produtos, produtoQuery),

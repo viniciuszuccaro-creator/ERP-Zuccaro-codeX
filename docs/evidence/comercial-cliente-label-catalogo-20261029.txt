@@ -1,0 +1,5 @@
+P2 #4413844021 — cliente label fora da página (2026-10-29 12:05 America/Sao_Paulo)
+================================================================
+unionComercialClienteCatalog + hidratação por clienteEmpresaId
+em OrcamentosTab e PedidoCanonicoPanel (listagem/PDF/share/form).
+Base composição tip docs. Independente — sem disputa de checkout.

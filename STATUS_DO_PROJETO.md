@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#414 cliente label catálogo) (2026-10-29 12:05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-cliente-label-catalogo-392b` |
+| **Parecer** | P2 #4413844021 |
+| **#401** | candidata estável; este pacote independente |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 12:05 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 HEAD 41728cbe + demo escopo) (2026-10-29 12:03 America/Sao_Paulo)
 
 | Campo | Valor |

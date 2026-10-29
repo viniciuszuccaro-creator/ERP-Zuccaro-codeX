@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, ShoppingCart, Trash2, XCircle } from 'lucide-react';
 import { gerarPDFPedido } from '@/components/lib/exportacaoPDF';
 import { createHttpApiClient, central360SessionKey } from '@/api/httpApiClient';
@@ -47,6 +47,7 @@ import {
   resolveComercialMasterPages,
   resolveComercialSelectedCliente,
   mergeComercialSelectedCliente,
+  unionComercialClienteCatalog,
   resolveComercialAuxiliaryView,
   produtoPickerLabel,
 } from './comercialMasterPicker';
@@ -119,6 +120,34 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     enabled:ready&&canView&&formOpen&&isCanonicalPedidoId(form.cliente_empresa_id),
     staleTime:30000,retry:false,
   });
+  const listRows=list.data?.data||[];
+  const [clienteCatalog,setClienteCatalog]=useState({clientes:[],clientesEmpresa:[]});
+  const neededClienteEmpresaIds=useMemo(()=>{
+    const ids=new Set();
+    for(const row of listRows){if(row?.cliente_empresa_id)ids.add(row.cliente_empresa_id);}
+    if(selected?.cliente_empresa_id)ids.add(selected.cliente_empresa_id);
+    if(form.cliente_empresa_id)ids.add(form.cliente_empresa_id);
+    return [...ids].filter((id)=>isCanonicalPedidoId(id));
+  },[listRows,selected?.cliente_empresa_id,form.cliente_empresa_id]);
+  const missingClienteEmpresaIds=useMemo(()=>{
+    const known=new Set((clienteCatalog.clientesEmpresa||[]).map((link)=>link.id));
+    for(const link of coreMasters.clientesEmpresa||[])known.add(link.id);
+    if(selectedCliente.data?.clientesEmpresa?.[0]?.id)known.add(selectedCliente.data.clientesEmpresa[0].id);
+    return neededClienteEmpresaIds.filter((id)=>!known.has(id)).slice(0,20);
+  },[neededClienteEmpresaIds,clienteCatalog.clientesEmpresa,coreMasters.clientesEmpresa,selectedCliente.data]);
+  const rowClienteQueries=useQueries({
+    queries:missingClienteEmpresaIds.map((clienteEmpresaId)=>({
+      queryKey:['pedido-row-cliente',groupId,empresaId,actorId,sessionCacheKey,clienteEmpresaId],
+      queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.list({
+        clienteEmpresaId,signal,
+      }),{groupId,empresaId},clienteEmpresaId),
+      enabled:ready&&canView&&isCanonicalPedidoId(clienteEmpresaId),
+      staleTime:60000,retry:false,
+    })),
+  });
+  useEffect(()=>{setClienteCatalog({clientes:[],clientesEmpresa:[]});},[groupId,empresaId,actorId,sessionIdentity]);
+  useEffect(()=>{if(master.data)setClienteCatalog((prev)=>unionComercialClienteCatalog(prev,master.data));},[master.data]);
+  useEffect(()=>{if(selectedCliente.data)setClienteCatalog((prev)=>mergeComercialSelectedCliente(prev,selectedCliente.data));},[selectedCliente.data]);
   const selectedClienteId=selectedCliente.data?.clientesEmpresa[0]?.cliente_id;
   const auxiliary=useQuery({
     queryKey:['pedido-auxiliary',groupId,empresaId,actorId,sessionCacheKey,selectedClienteId,form.cliente_empresa_id],
@@ -130,7 +159,13 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     },
     enabled:ready&&canView&&Boolean(selectedClienteId),staleTime:30000,retry:false,
   });
-  const masters={...mergeComercialSelectedCliente(coreMasters,selectedCliente.data),locais:auxiliary.data?.locais||[],obras:auxiliary.data?.obras||[]};
+  const masters=useMemo(()=>{
+    let next={...coreMasters,clientes:clienteCatalog.clientes,clientesEmpresa:clienteCatalog.clientesEmpresa};
+    next=mergeComercialSelectedCliente(next,selectedCliente.data);
+    for(const query of rowClienteQueries){if(query.data)next=mergeComercialSelectedCliente(next,query.data);}
+    next=unionComercialClienteCatalog(next,coreMasters);
+    return {...next,locais:auxiliary.data?.locais||[],obras:auxiliary.data?.obras||[]};
+  },[coreMasters,clienteCatalog,selectedCliente.data,rowClienteQueries,auxiliary.data]);
   const mastersReady=Boolean(master.data&&!master.isError&&!master.isFetching&&selectedClienteId
     &&selectedCliente.data&&!selectedCliente.isError&&!selectedCliente.isFetching
     &&auxiliary.data&&!auxiliary.isError&&!auxiliary.isFetching);
