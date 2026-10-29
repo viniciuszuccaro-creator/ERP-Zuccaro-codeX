@@ -1,4 +1,19 @@
-## Estado vigente - desbloqueio POSIX e revisao atual (2026-10-29)
+## Estado vigente - candidata401, revisao414 e fonte bloqueada (2026-10-29)
+
+34222b1b841/CI5167SUCCESS; WIP13blobs iguais ao manifesto, codigo funcional nao
+publicado. POSIX12/0/0 encerrado. Bloqueio atual e transporte suportado/fechamento
+do snapshot completo, nao falta de WSL. file:// negado pela politica, sem contorno.
+4011a2cfc31/CI5181SUCCESS contem codigoAPI/web094cb4b7e;411/412/407 sao ancestrais
+comprovados. Residuos e TS2339 corrigidos, nao reabrir os estados antigos abaixo.
+Compare094->1a2 tambem muda script de smoke, nao apenas docs; assertions finais
+preservadas por inspecao, browser nao reexecutado. CI atual comprova PostgreSQL
+isolado+HTTP:composicao2PASS e entrada/tenant6PASS,0FAIL/0SKIP; nao e demo E2E.
+414af1a8604/CI5195SUCCESS separada:2P2 reproduzidos no parecer6501230404, referencia21
+nao agendada e100HTTP/20labels (80auxiliares repetidos). Sem editar branch Cursor.
+Legado: plano/contraprovas8PASS PGlite reutilizados com hash atual, coorte final
+indisponivel e classificacao real desconhecida. Provas/SHAs/limites no HANDOFF.
+
+## Historico - desbloqueio POSIX e revisoes anteriores (2026-10-29)
 
 Atualizacao final desta revisao:411dbb1a413/4127e61ab57 corrigem os3residuos;
 11assertions sinteticas dos helpers reais PASS, pareceres411/6499615633 e
@@ -111,23 +126,27 @@ documental diff-check; checks de codigo e limites anteriores preservados abaixo.
 Nao declarar o WIP implantado, integrado na401, homologado ou importado.
 
 Lista unica/ordem operacional vigente:
-- Pronto: revisao dirigida dos conflitos401 e provas acima; dados continuam privados.
-- Bloqueador da candidata: fechar residuos406/407 no SHA novo, atualizar401 somente
-  com codigo publicado/validado e revisar delta. Antigos achados gerais397 encerrados
-  no escopo comprovado. WIP342 exige fechamento snapshot; POSIX ja passou e nao
-  exige instalar WSL. Dependencia de executor coordenada401/6499358535.
-- Dependencias:334e36231b3 segue aberta sobre codex/comercial-central-abertura-segura;
-  342 tem base334,397 tem base342,401 e preview sobre397. Aprovar/revalidar a cadeia
-  existente em ordem; nao assumir merge direto em main ou retarget automatico.
-- Homologacao: SHA final unico API/web, envelope minimo schema/menorprivilegio,
-  backup atual/restore comprovado/retorno, janela e aceite browser. DDL/deploy so
-  com aprovacao especifica;045-049 privadas e candidata044/Fornecedor nao aplicadas.
-- Dados: coorte100 congelada inacessivel no canal ja comprovadamente bloqueado;
-  classificacao real DESCONHECIDA, nao vazia. Recuperar apenas artefato/pins, entao
-  consulta fixa autorizada ou copia atual comprovada, reconciliar e liberar carga
-  incremental por gate. Sem repetir HD/piloto, reativar historicos ou inventar empresa.
-- Recuperacao: separar legado, registros ERP novo desaparecidos e recurso oculto;
-  Cursor investiga fonte/permissao/versao, nao substituir dados por exemplos.
+- Publicacao backend (Codex): WIP preservado; receber patch+manifesto exatos em
+  executor existente por canal suportado, fechar snapshot/checks e somente entao
+  publicar. POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
+- Revisao/composicao (Cursor+Codex):4011a2cfc31/094cb4b7e tem411/412/407 comprovadas;
+  manter estavel.414 separada exige corrigir2P2 porSHA antes de eventual inclusao.
+- Cadeia (Cursor+Codex):334 sobre codex/comercial-central-abertura-segura;342 sobre334,
+  397 sobre342 e401 preview sobre397. Respeitar bases/revisoes/CI, sem merge direto
+  em main ou retarget automatico. WIP nao entra antes da publicacao validada.
+- Esquema/privilegios (Codex+aprovacao dono): envelope minimo e diferenca comprovada
+  do destino;044/Fornecedor candidatos e045-049 privadas nao aplicados por inferencia.
+- Backup/retorno (Codex+aprovacao dono): verificar frescor/identidade dos recibos ja
+  recuperaveis e procedimento reversivel; nao repetir restore intacto por conveniencia.
+- Reconciliacao/carga (Codex+dono): recuperar so coorte final/pins; destino desconhecido
+  nao e vazio. Consulta fixa autorizada/copia atual comprovada e saida privada;
+  autorizar coorte/carga separadamente. Preservar CPA/IDs/codigos/inativos/procedencia,
+  sem deduzir Empresa fiscal/saldos, sem repetir HD/pilotos ou reconstruir selecao.
+- Disponibilizacao (Codex+Cursor+dono): parAPI/web deSHA unico, builds e reversao;
+  deploy/janela somente apos aprovacao especifica, preservando operacao atual.
+- Aceite (dono+Cursor+Codex): navegador com API/PG isolados e gravacao real do ciclo,
+  negativas/rascunho; prova HTTP/PG existente nao substitui esse aceite. Recuperacao
+  de registrosERPnovo e UI segue Cursor com fonte/contexto, nunca exemplos fabricados.
 
 ## Historico imediatamente anterior - persistencia e revisao dirigida (2026-10-29)
 

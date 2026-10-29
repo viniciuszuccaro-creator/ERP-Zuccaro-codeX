@@ -1,4 +1,55 @@
-## Estado vigente - POSIX executado e revisoes por SHA (2026-10-29)
+## Estado vigente - candidata401 e revisao414 (2026-10-29)
+
+34222b1b84194d617feeebd15f922e4d0ed5e2bee4a:CI5167SUCCESS conferida. WIP13blobs
+preservado13iguais/0divergencias contra manifesto, patch B78 do historico intacto.
+POSIX12/0/0 com overlay continua encerrado; nao instalar WSL ou repetir o desbloqueio.
+Falta fechamento do snapshot completo: npm test raiz e server no mesmo snapshot,
+associando audit/lint/typecheck/build/diff aos hashes/condicoes exatos. Recibos
+anteriores inalterados nao viram CI do WIP. Canal de transporte automatico file://
+foi NEGADO pela politica (somenteHTTP/HTTPS); nao contornar por outro mecanismo.
+Pedido de entrega privada do patch+manifesto ao executor existente enviado ao dono;
+nao foram entregues/validados por inferencia. Nao repetir executor sem GitHub/npm.
+
+4011a2cfc31d005b7bda2cd6f07996d2d1622bfbd53:CI5181/run40897614661SUCCESS.
+Codigo da aplicacao094cb4b7e40be2d7460589badb662b772e826bfa preservado: compare
+094->1a2 altera documentos E scripts/comercial360-preview-smoke.mjs, nao API/web.
+Smoke atual4be99e441b4e54506fdd313062a734d9c7a3f908 muda seletores e espera, mantendo
+assertions finais de rascunho/quantidade/saveDisabled/writes0/overflow/erros.
+411c8c5f24c7ff540a5f4c7d5effc7b012dde616e89,412c0ccadeaeaed4e1ba67170f987c0f8c0fb01b24c
+e407ba431a2af78f6adf04a6671011821ffd470aab52 sao ancestrais comprovados da401.
+Os tres residuos e falhas TS2339 antigos nao permanecem abertos nesse codigo.
+
+Prova reutilizada SEM rerun do jobbackend123530906501 no HEAD401 atual: PostgreSQL
+real isolado+HTTP, composicao2PASS e suite tenant/entrada6PASS,0FAIL/0SKIP em ambas.
+Entrada login/Grupo/Cliente/Orcamento POST/PATCH/GET/Pedido/conversao repetida409,
+concorrencia sequencial, isolamento404/403, revogacao401, auditoria e rollback
+comprovados no teste023fc720e0db76a18fe698e8c7a467a46c8e4af0. IDP sintetico, nao
+credencial operacional; schema/roles/grants sao fixture isolada, nao aplicadosDEV.
+Parecer401/6501377613. Nao e prova navegador: demo401 permanece writes0/saveDisabled.
+Contexto imutavel do WIP tem prova PGlite anterior; nao atribui-la ao401 publicado.
+
+414af1a86048def01dcee5853a6b2857b4edfa85995, codigo238dd7f38 eCI5195SUCCESS,
+continua SEPARADA. Revisao6501230404 reproduziu callback real de hidratacao com
+21referencias:20resolvidas entram no mastersMemo, nao no catalogo acumulado;
+recalculo agenda os mesmos20 e nunca a21a. Factory comercialMasters exata doSHA
+(objeto AST igual ao executado):20resolucoes geram100HTTP(20cliente+80auxiliares),
+fetch sintetico/zero rede, nao SQLquerycount nem React/browser. Corrigir paginacao
+e N+1 com leitor canonico, sem misturar novas melhorias na candidata estavel.
+Revisao auxiliar independente nao comprovou vazamento cross-sessao/empresa;
+clienteHTTP sintetico rejeita troca de escopo com CONTEXT_CHANGED. Nao substitui
+teste React/browser. Lacuna PREEXISTENTE: Pedido libera PDF/share por visualizar
+mesmo com permissoes especificas negadas; Orcamento nao as exige nos handlers.
+Coordenada com Cursor, sem atribuir como regressao414 ou ampliar permissao.
+
+Legado: recibo PGlite8PASS/0FAIL/0SKIP reutilizado por modulo atual SHA256
+aa34f125e505dd2a9c7045a7ece029dc1d4badc092d3e8c3b938787fb9c671f7 e testes preservados.
+Plano fixo/rejeicoes/replay/ROLLBACK ja cobertos, nao repetir coorte/piloto. Arquivo
+final congelado continua indisponivel; nao declarar novos/compativeis/duplicados
+reais, nem reconstruir selecao ou confundir hash de staging/coorte/bytes finais.
+Nenhuma carga, DDL, grant, deploy ou acesso a dados reais neste pacote. Lista unica
+de gates/responsaveis atualizada no STATUS, sem outro plano.
+
+## Historico - POSIX e revisoes anteriores411/412 (2026-10-29)
 
 Fechamento desta revisao: Cursor publicou411dbb1a41310f50a0e1f1d82023934dcffd23611e7
 e4127e61ab57c17a54200369789fb5acb673c0bd5677. Contraprovas nos helpers reais via
