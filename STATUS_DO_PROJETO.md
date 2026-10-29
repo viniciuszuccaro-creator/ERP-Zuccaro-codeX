@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#401 prep capacidade PG/browser) (2026-10-29 17:20 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#401 tip** | `77c0eacd304d50da58b30b1e1bd83ca58229adbc` (+ este recibo) — CI SUCCESS run 40946256544 |
+| **#424 tip** | `abde6294339584b33cf18dab60b7c3622dd7e2a6` — P2 FECHADO Codex 6507247848 |
+| **P2** | baseline 6 PASS; mutação externa epoch/skipped → fail 1/2/4 |
+| **PG nativo** | `/usr/lib/postgresql/16/bin/{postgres,initdb,pg_ctl,psql}` 16.15 — main 5432 **down** intocado |
+| **Prep sintética** | efêmero 55432 → migrate+`seed-dev-synthetic.sql` → 45 tabelas/3 empresas → stop+rm |
+| **Browser** | Chrome 148 + Playwright 1.56.1 em `/tmp/pw-pr350/.../index.mjs` (fora lockfile) — capacity OK no-auth |
+| **OPDEV** | blob `c7176ef44…` — **aguardar** SHA 342/118f para portar só delta |
+| Fora | Auth/VPS/segredos · cluster operacional · outra composição · homologação browser |
+
+**Evidência:** `docs/evidence/capacidade-executor-pg-browser-20261029.txt`
+**Próximo:** portar prefixo OPDEV quando SHA documental chegar; prova browser = harness canônico (não writes=0).
+
 ## CURSOR — VIGENTE (#401 P2 seams AST + composição) (2026-10-29 17:10 America/Sao_Paulo)
 
 | Campo | Valor |
