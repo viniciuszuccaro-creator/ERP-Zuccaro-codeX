@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#412 comprovante nome max200) (2026-10-29 11:29 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-comprovante-nome-200-392b` ← #407 |
+| **Parecer** | 6498241434 |
+| **#411** | Contatos+unidade tip `dbb1a4131` CI pendente |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:29 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 
 | Campo | Valor |

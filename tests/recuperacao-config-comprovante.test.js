@@ -43,6 +43,41 @@ test('buildComprovanteRecebedorPayload: GPS/foto ausentes ≠ zero inventado', (
   assert.equal(payload.nome_recebedor, 'João');
 });
 
+
+test('parecer 6498241434: nome 190 chars preservado; >200 rejeita sem truncar', () => {
+  const nome190 = 'N' + 'a'.repeat(189);
+  assert.equal(nome190.length, 190);
+  const ok = buildComprovanteRecebedorPayload({
+    nome_recebedor: nome190,
+    now: '2026-10-29T12:00:00.000Z',
+  });
+  assert.equal(ok.nome_recebedor, nome190, '190 ≤ max(200) preservado integralmente');
+
+  const nome200 = 'X'.repeat(200);
+  const ok200 = buildComprovanteRecebedorPayload({
+    nome_recebedor: nome200,
+    now: '2026-10-29T12:00:00.000Z',
+  });
+  assert.equal(ok200.nome_recebedor.length, 200);
+
+  const nome201 = 'Y'.repeat(201);
+  assert.throws(
+    () => buildComprovanteRecebedorPayload({ nome_recebedor: nome201 }),
+    (err) => err?.code === 'VALIDATION_ERROR' && err?.field === 'nome_recebedor',
+  );
+});
+
+test('buildComprovanteRecebedorPayload: GPS zero numérico preservado (não vira null)', () => {
+  const payload = buildComprovanteRecebedorPayload({
+    nome_recebedor: 'Zero',
+    latitude_entrega: 0,
+    longitude_entrega: 0,
+    now: '2026-10-29T12:00:00.000Z',
+  });
+  assert.equal(payload.latitude_entrega, 0);
+  assert.equal(payload.longitude_entrega, 0);
+});
+
 test('resolveRegistroEntregaFinal consome payload canônico do comprovante', () => {
   const agora = '2026-10-29T12:00:00.000Z';
   const comprovante = buildComprovanteRecebedorPayload({

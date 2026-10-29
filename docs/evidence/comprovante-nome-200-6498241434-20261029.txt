@@ -1,0 +1,6 @@
+Parecer 6498241434 — nome recebedor max(200) — 2026-10-29 11:29 America/Sao_Paulo
+================================================================
+buildComprovanteRecebedorPayload: limite 180→200 (expedicaoTypes).
+190 chars preservados; >200 VALIDATION_ERROR (sem truncar).
+GPS zero preservado. Consumidores já catch/toast (rascunho UI).
+Base #407 ba431a2af.
