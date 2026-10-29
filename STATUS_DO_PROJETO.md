@@ -4,11 +4,11 @@
 |-------|-------|
 | **PR** | **#414** tip código **`532ac595a`** / docs **`05a09e667`** — CI SUCCESS 6/6 |
 | **Codex** | tip `05a09e667` sem major / sem findings (P1/P2 fechados) |
-| **#401** | incorporar este tip na composição (única candidata) |
+| **#401** | **BLOCKED** compose: worktree composição com WIP não commitado |
 | Fora | merge oficial main / deploy / carga / VPS write |
 
 **Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
-**Próximo:** compose #401 ← #414 · demo persistência isolada. Sem merge main.
+**Próximo:** Codex limpar/absorver WIP composição → fold #414 · demo persistência. Sem merge main.
 
 (2026-10-29 12:48 America/Sao_Paulo)
 
