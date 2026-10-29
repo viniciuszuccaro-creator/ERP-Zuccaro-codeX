@@ -33,6 +33,17 @@ Cadastros: blocos multi-cor aprovados (#257) — não forçar tudo azul.
 | merge #264→#261 | `861513cd` · main ainda `baba91a6` |
 Capacidades: form scope session freeze + actorId/token · assert delete · `useProdutoHttpEditLoad` · minify-safe `isSelfManagedCadastro` · cliente consolidado Grupo.
 
+## Atualização #397 (2026-10-29) — Pacote 5 capacidade
+| origem | destino canônico | decisão |
+|---|---|---|
+| WizardGatewayPagamento (integra) | GerarCobrancaModal orientação + simulação explícita | **keep** modal; sem Wizard paralelo |
+| Contatos aba Painel ausente | GerenciarContatosClienteForm existente | **recuperado** na aba Contatos |
+| Histórico produtos órfão | HistoricoProdutosCliente + TabsContent | **recuperado** |
+| ValidadorEstoque (aprovação) | mesmo componente no Converter Orçamento→Pedido | **reuso** líquido atual−reservado |
+| FunilVisual × FunilComercial × FunilAvancado | mesma fonte Oportunidade | **keep both curto** — sem 3º |
+| SeparacaoConferencia × IA | SeparacaoConferenciaIA alvo | keep both curto |
+Não apagar por nome parecido; sem terceiro módulo substituto.
+
 ## Inventário complementar (independente da integração)
 | módulo | canônico | duplicidade | status |
 |---|---|---|---|

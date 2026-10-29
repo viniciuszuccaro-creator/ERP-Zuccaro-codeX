@@ -568,10 +568,10 @@ export default function HistoricoProdutosCliente({ clienteId }) {
               variant="outline"
               className="h-7 text-xs"
               data-action="historico-produtos-carregar-mais"
-              disabled={scopedLoadingMore}
+              disabled={loadingMore || scopedLoadingMore}
               onClick={handleLoadMore}
             >
-              {scopedLoadingMore ? "Carregando…" : "Carregar mais"}
+              {loadingMore || scopedLoadingMore ? "Carregando…" : "Carregar mais"}
             </Button>
           </div>
         ) : null}

@@ -18,6 +18,16 @@ test('GerarCobrancaModal: orientação de gateway sem Wizard paralelo', async ()
   assert.match(src, /Abrir Cadastros \(Gateways\)/);
 });
 
+test('GerarCobrancaModal: gateway cadastrado ≠ cobrança operacional (simulacao explícita)', async () => {
+  const src = await readFile(new URL('../src/components/financeiro/GerarCobrancaModal.jsx', import.meta.url), 'utf8');
+  assert.match(src, /geracaoOperacionalValidada = false/);
+  assert.match(src, /data-action="cobranca-gateway-simulacao"/);
+  assert.match(src, /permanece em <strong>simulacao<\/strong>/);
+  assert.match(src, /status_cobranca: "gerada_simulada"/);
+  // Banner verde "pronto" só com integração validada — não com cadastro sozinho.
+  assert.match(src, /geracaoOperacionalValidada && \(/);
+});
+
 test('Cadastros logística/banco: chrome sky windowMode (entrada em uso)', async () => {
   for (const file of [
     'BancoForm.jsx',
@@ -28,5 +38,16 @@ test('Cadastros logística/banco: chrome sky windowMode (entrada em uso)', async
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, /from-sky-50/, `${file} sky header`);
     assert.match(src, /text-sky-600/, `${file} sky icon`);
+  }
+});
+
+test('Cadastros config: sky chrome Boletos/Evento/Modelo (Pacote3)', async () => {
+  for (const file of [
+    'ConfiguracaoBoletosForm.jsx',
+    'EventoNotificacaoForm.jsx',
+    'ModeloDocumentoForm.jsx',
+  ]) {
+    const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
+    assert.match(src, /from-sky-50/, `${file} sky header`);
   }
 });

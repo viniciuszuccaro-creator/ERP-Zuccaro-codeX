@@ -1,0 +1,50 @@
+PR #397 — Pacote 1 evidências por SHA (2026-10-29 America/Sao_Paulo)
+=====================================================================
+HEAD tip alvo deste lote: (após push) tip código Contatos/estoque + P2s abaixo.
+HEAD publicado citado pelo owner: d37c8dd5 CI5071 SUCCESS — tip ANTERIOR;
+tip efetivo ao iniciar: 4b74f058c (ainda sob CI). CI ≠ revisão/integração/implantação.
+
+Contatos (PainelDinamicoCliente + GerenciarContatosClienteForm)
+----------------------------------------------------------------
+SHA 9474e7cb3
+  - P1 #4404927785: seedContatosPainelDraft + ensureContatosPreserveEscalars
+    (e-mail/telefone/celular não nullificados em save parcial)
+SHA 4b74f058c
+  - P2 #4405581334: principal:false na semente escalar; strip multi-canal
+  - P2 #4405655243: createContatosPersistQueue FIFO + Form await onChange + persistBusy
+Provas: tests/painel-dinamico-cliente-historico-tab.test.js (helpers executados)
+
+Paginação Histórico (HistoricoProdutosCliente)
+----------------------------------------------
+SHA 9474e7cb3
+  - finally: loadMoreInFlightRef=false só se loadMoreAbortRef===controller
+  - ownerKey associado ANTES da rede; inFlight síncrono evita offset duplicado
+Este lote
+  - botão "Carregar mais" disabled={loadingMore || scopedLoadingMore}
+    (1ª página: loadingMore true mesmo antes do re-render de ownerMatches)
+Provas: harness double-click offset 50 único; resetPaginationSession limpa extras
+
+Sessão / Grupo / Empresa
+------------------------
+queryKey + historicoOwnerKey incluem groupId, empresaId, contexto, actorId, sessionCacheKey
+Troca → resetPaginationSession; extras de outro owner não renderizam (ownerMatches)
+
+Central create Orçamento/Pedido
+-------------------------------
+P2 #4404832148: resolveCentralClienteEmpresaId só retorna vínculo elegível
+  (ativo, não bloqueado, elegivel_operacao); senão null + mensagem na Central
+
+Financeiro GerarCobrancaModal
+-----------------------------
+P2 #4404832162: gateway cadastrado ≠ operacional; banner simulação explícita
+  enquanto geracaoOperacionalValidada=false (mutações ainda retornoMock)
+
+Comercial 360 estoque
+---------------------
+ValidadorEstoquePedido: líquido = atual − reservado; bloqueio UI no Converter
+Provas: tests/validador-estoque-disponibilidade.test.js (helpers executados)
+
+Fluxo criar→salvar→fechar→reabrir: coberto por reopen Cadastros/HTTP existentes
+e navegação Central→abas canônicas; demo Private 5173 = owner/franquia.
+
+Fora deste lote: merge, deploy, carga SQL, edição branch Codex.

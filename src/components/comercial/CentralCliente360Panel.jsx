@@ -462,7 +462,9 @@ export default function CentralCliente360Panel({
         props:{groupId,empresaId,actorId,actorEmail,sessionToken,hasPermission,filterInContext,empresaAtual},
       });
       if(!opened&&openGate.current.isCurrent(ticket)&&viewRef.current===openedKey){
-        setCreateOpenError(clienteEmpresaId?centralOpenErrorMessage():'Cliente sem vínculo ativo nesta empresa para criar orçamento/pedido.');
+        setCreateOpenError(clienteEmpresaId
+          ? centralOpenErrorMessage()
+          : 'Cliente sem vínculo elegível nesta empresa (ativo, não bloqueado e apto à operação).');
       }
     }catch{
       if(openGate.current.isCurrent(ticket)&&viewRef.current===openedKey)setCreateOpenError(centralOpenErrorMessage());

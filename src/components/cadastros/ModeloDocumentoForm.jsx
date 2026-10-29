@@ -138,8 +138,8 @@ export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit,
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-slate-50 to-slate-100">
-          <FileText className="w-6 h-6 text-slate-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <FileText className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
             {dadosIniciais ? 'Editar Modelo' : 'Novo Modelo de Documento'}
           </h2>

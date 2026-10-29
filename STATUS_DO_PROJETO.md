@@ -1,24 +1,20 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-29 06:33 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-29 06:50 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip HEAD prévio | **`d37c8dd5b`** — CI SUCCESS `40761941668` — **≠ aprovação** |
-| Tip código Pacote1 | **`9474e7cb3`** — CI SUCCESS `40760609001` |
-| Achados Codex tip | P2 `#4405581334` principal inventado · P2 `#4405655243` corrida contatos · P1 `#4404927785` (já fechado em `9474e7cb3`) |
-| Lote deste tip | Contatos: sem inventar `principal` + fila serializada + Form await; Comercial360: ValidadorEstoque líquido (atual−reservado) no converter Orçamento→Pedido |
-| Base Codex #342 | **`b5cb34e1`** draft, CI5052/5053 SUCCESS — **não editada** |
-| Modalidade | runner `/workspace` |
-| Revisão | **@codex review** no tip código deste lote (após push) |
-| Pacote B | SQL restrito permanece bloqueio; SSH comprovado; coorte/recibos privados; sem BYPASSRLS leitor; sem carga |
-| Pacote D | Candidata operacional = #397; cadastros sky + Contatos + Orçamento/Pedido; demo Private 5173 pendente owner |
-| Fora | merge/deploy/carga/SQL; não editar branch Codex |
+| Tip prévio owner | **`d37c8dd5b`** CI5071 SUCCESS `40761941668` — **≠ revisão** |
+| Tip código anterior | **`4b74f058c`** Contatos P2 + estoque líquido (CI em curso ao iniciar) |
+| Lote Pacotes 1–5 | P2 Histórico botão loading · vínculo elegível create · cobrança simulação explícita · sky Boletos/Evento/Modelo · evidências integra/matriz |
+| Base Codex #342 | **`b5cb34e1`** draft — **não editada** |
+| Composição | draft #401 preview 3 conflitos — sem merge oficial |
+| Modalidade | runner `/workspace` (Codespace só validação/franquia) |
+| Fora | merge/deploy/carga/SQL; branches ApiExterna/Roteirizacao/ChatbotCanal reservadas |
 
-**Provas focadas:** painel Contatos/histórico 26 PASS · estoque disponibilidade 4 PASS · central360 nav · sky Cadastros.
-**Composição:** branch isolada `cursor/composicao-397-342-prep-392b` (preview; sem merge oficial).
-**Próximo:** parecer Codex → composição preview → demo Private. Sem merge/deploy/carga/SQL.
+**Provas:** navigation elegível · cobrança simulação · Contatos/histórico/estoque focados.
+**Próximo:** CI tip → @codex no SHA entregue → demo Private se franquia. Sem merge/deploy.
 
-(2026-10-29 06:33 America/Sao_Paulo)
+(2026-10-29 06:50 America/Sao_Paulo)
 
 
 ## CURSOR — tip `9f5a32315` (histórico 07:04) (2026-10-28)

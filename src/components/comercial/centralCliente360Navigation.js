@@ -58,9 +58,12 @@ export const openCentralOrcamentoWindow = (args) => openCanonicalWindow({ ...arg
 export function resolveCentralClienteEmpresaId(empresasBlock, empresaId) {
   if (!empresaId || empresasBlock?.status !== 'ok' || !Array.isArray(empresasBlock.data)) return null;
   const rows = empresasBlock.data.filter((row) => row?.empresa_id === empresaId && isCanonicalComercialId(row?.id));
-  const preferred = rows.find((row) => row.elegivel_operacao !== false && row.ativo !== false && row.bloqueado !== true)
-    || rows.find((row) => row.ativo !== false)
-    || rows[0];
+  // Só vínculo elegível para operação — bloqueado/inativo/inelegível → null (Codex P2 #4404832148).
+  const preferred = rows.find((row) => (
+    row.elegivel_operacao !== false
+    && row.ativo !== false
+    && row.bloqueado !== true
+  ));
   return preferred?.id || null;
 }
 

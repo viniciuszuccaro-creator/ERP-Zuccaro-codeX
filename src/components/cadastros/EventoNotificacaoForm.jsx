@@ -162,7 +162,7 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 rounded-t-lg px-3 -mx-1">
             <Bell className="w-8 h-8 text-amber-600" />
             <h2 className="text-2xl font-bold text-slate-900">
               {evento ? 'Editar Evento/Notificação' : 'Novo Evento/Notificação'}

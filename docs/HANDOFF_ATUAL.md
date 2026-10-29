@@ -1,4 +1,15 @@
 
+
+## CURSOR checkpoint Pacotes 1–5 (2026-10-29 06:50 America/Sao_Paulo)
+
+- HEAD reconfirmado: tip publicado citado `d37c8dd5` ≠ tip trabalho `4b74f058c` (+lote atual). CI tip ≠ revisão.
+- Pacote1: evidência `docs/evidence/apontamentos-397-pacote1-provas-20261029.txt`; P2s #4402844008/#4404832148/#4404832162 tratados neste tip.
+- Pacote2: capacidades vs integra-novo em `recuperacao-erp-integra-capacidades-20261029.txt` (reusa inventário 26/10).
+- Pacote3: sky em ConfiguracaoBoletos/EventoNotificacao/ModeloDocumento; sem count+1 de código; registros reais = gate legado.
+- Pacote4: create C360 só vínculo elegível; estoque no converter (tip anterior); Contatos serializados.
+- Pacote5: matriz consolidação atualizada (Wizard→modal; sem 3º funil).
+- WIP `stash@{0}` preservado. Sem editar Codex. Sem deploy/carga.
+
 ## CURSOR checkpoint Pacotes A/C (2026-10-29 06:33 America/Sao_Paulo)
 
 - HEADs: PR397 `d37c8dd5b` CI SUCCESS `40761941668`; PR342 `b5cb34e1` draft CI5052/5053 — reconfirmados antes do lote.

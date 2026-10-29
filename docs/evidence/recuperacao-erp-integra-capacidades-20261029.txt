@@ -1,0 +1,41 @@
+Pacote 2 — Recuperação vs erp-integra-novo (capacidades) 2026-10-29
+===================================================================
+Referência: github.com/viniciuszuccaro-creator/erp-integra-novo @ main 37c6f7d39e60
+Inventário prévio reutilizado: recuperacao-erp-integra-prioridades-20261026.txt
+  + matriz-consolidacao-modulos-20261010.txt (não reiniciar contagem cega).
+
+Método: comparar capacidades (ações/campos/RBAC/persistência), não só nomes.
+Classificação de “ausente”:
+  A) oculto por permissão/flag/contexto/rota
+  B) equivalente em monolito/V24 existente
+  C) removido de propósito (não restaurar Auth permissivo)
+  D) realmente faltante → recuperar no existente, sem módulo paralelo
+
+Já classificados (mantidos)
+- Relatórios matriz/exportação/agendamento: A (RBAC) — triggers restaurados #353
+- Documentacao / EmpresaOnboarding / OAuthConsent: C — não copiar
+- Visualizadores V23→V24: B redirect feito
+- Financeiro AprovacaoDescontos → CentralAprovacoes: redirect
+- Contatos Cliente HTTP escalares: B no Painel + cadastro completo (#397)
+- WizardGatewayPagamento: B orientação no GerarCobrancaModal (#397) — simulação explícita
+
+Padrão visual azul-claro
+- Cadastros sky chrome: lote anterior 17 forms + TabelaPreco/Regiao
+- Este lote: ConfiguracaoBoletos, EventoNotificacao, ModeloDocumento → sky
+- 26 forms windowMode ainda sem sky (paramétricos/API/Chatbot*): fila; respeitar
+  branches reservadas ApiExterna/ParametroRoteirizacao/ChatbotCanal
+
+Configurações Cadastros Gerais
+- Sequência código: backend/CodigoField — sem count+1 no browser (auditoria grep OK
+  exceto totais de tile Bloco2 = UI count, não código)
+- Registros desaparecidos: staging legado privado / gates SQL — não seed fictício
+
+Não feito / bloqueado
+- Substituir ERP pelo integra-novo
+- Restaurar OAuthConsent / Auth Base44 permissivo
+- Carga operacional / deploy
+
+Próximo capacidade a capacitar no existente
+1. Param forms sky + reopen ID (sem tocar branches reservadas)
+2. Demo fluxo C360 Private quando franquia
+3. Matriz Pacote 5: Funil×3 / Separacao×IA / Comprovante× — keep both curto

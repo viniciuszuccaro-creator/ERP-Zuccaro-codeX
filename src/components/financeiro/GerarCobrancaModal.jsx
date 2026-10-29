@@ -119,7 +119,9 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
   const config = configsCobranca.find((c) => c.empresa_id === empresaId) || configsCobranca[0] || {};
   const temGatewayCadastro = gatewaysAtivos.some((g) => !empresaId || g.empresa_id === empresaId || !g.empresa_id);
   const temProvedorConfig = Boolean(config?.provedor_cobranca || config?.integracao_boletos?.api_key);
-  const gatewayPronto = temGatewayCadastro || temProvedorConfig;
+  const gatewayCadastrado = temGatewayCadastro || temProvedorConfig;
+  // Geração neste modal ainda é sempre simulada (retornoMock) — cadastro ≠ produção (Codex P2 #4404832162).
+  const geracaoOperacionalValidada = false;
   const tipoGatewayLabel = tipoCobranca === "boleto" ? "Boleto" : (tipoCobranca === "pix" ? "PIX" : "cobrança");
 
   const gerarBoletoMutation = useMutation({
@@ -292,17 +294,28 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
             </Alert>
           )}
 
-          {!bloqueado && gatewayPronto && (
+          {!bloqueado && gatewayCadastrado && !geracaoOperacionalValidada && (
+            <Alert className="border-amber-300 bg-amber-50" data-action="cobranca-gateway-simulacao">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-amber-900 text-sm">
+                Gateway/provedor cadastrado no escopo, mas a geracao de {tipoGatewayLabel} neste modal
+                permanece em <strong>simulacao</strong> ate a integracao validada. Nao trate boleto/PIX
+                gerado aqui como cobranca real.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!bloqueado && geracaoOperacionalValidada && (
             <div
               className="flex items-center gap-2 text-emerald-700 text-sm bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"
               data-action="cobranca-gateway-ok"
             >
               <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span>Gateway de pagamento configurado e pronto para {tipoGatewayLabel}.</span>
+              <span>Gateway de pagamento operacional validado para {tipoGatewayLabel}.</span>
             </div>
           )}
 
-          {!bloqueado && !gatewayPronto && !gatewayHintDismissed && (
+          {!bloqueado && !gatewayCadastrado && !gatewayHintDismissed && (
             <Alert className="border-amber-300 bg-amber-50" data-action="cobranca-gateway-orientacao">
               <CreditCard className="h-4 w-4 text-amber-600" />
               <AlertDescription>
@@ -310,8 +323,9 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
                   <div className="flex-1 space-y-2">
                     <p className="font-semibold text-amber-800">Gateway de pagamento nao configurado</p>
                     <p className="text-xs text-amber-700">
-                      Para gerar {tipoGatewayLabel} em producao, cadastre um gateway ativo (Cadastros → Gateways de Pagamento)
-                      ou complete a Configuracao de Cobranca da empresa. Sem isso a geracao fica so em simulacao.
+                      Para preparar {tipoGatewayLabel} em producao, cadastre um gateway ativo (Cadastros → Gateways de Pagamento)
+                      ou complete a Configuracao de Cobranca da empresa. Mesmo apos o cadastro, este modal gera apenas simulacao
+                      ate a integracao validada.
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       {[

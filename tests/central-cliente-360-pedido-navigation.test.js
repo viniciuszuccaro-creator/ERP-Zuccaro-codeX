@@ -174,6 +174,28 @@ test('resolveCentralClienteEmpresaId usa vínculo da empresa ativa sem inventar 
   assert.equal(resolveCentralClienteEmpresaId({ status: 'forbidden', data: empresas.data }, 'e'), null);
   assert.equal(resolveCentralClienteEmpresaId(empresas, 'missing'), null);
   assert.equal(resolveCentralClienteEmpresaId({ status: 'ok', data: [{ id: 'not-uuid', empresa_id: 'e' }] }, 'e'), null);
+  // Bloqueado/inelegível ativo: não cair no fallback (Codex P2 #4404832148).
+  const bloqueado = {
+    status: 'ok',
+    data: [
+      { id: linkId, empresa_id: 'e', ativo: true, elegivel_operacao: true, bloqueado: true },
+    ],
+  };
+  assert.equal(resolveCentralClienteEmpresaId(bloqueado, 'e'), null);
+  const inelegivel = {
+    status: 'ok',
+    data: [
+      { id: linkId, empresa_id: 'e', ativo: true, elegivel_operacao: false, bloqueado: false },
+    ],
+  };
+  assert.equal(resolveCentralClienteEmpresaId(inelegivel, 'e'), null);
+  const soInativo = {
+    status: 'ok',
+    data: [
+      { id: linkId, empresa_id: 'e', ativo: false, elegivel_operacao: true, bloqueado: false },
+    ],
+  };
+  assert.equal(resolveCentralClienteEmpresaId(soInativo, 'e'), null);
 });
 
 test('Central abre criação de Orçamento/Pedido com vínculo pré-selecionado nas abas existentes', async () => {
