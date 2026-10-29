@@ -30,3 +30,8 @@ Sem merge oficial / deploy / carga SQL.
 - Codex #342 permanece `b5cb34e1`; WIP `eb797672` fora.
 - Conflito STATUS resolvido (banner COMPOSIÇÃO + vigente #406).
 - Sem merge oficial / deploy / carga.
+
+## CI SUCCESS tip fbcca01b9 (2026-10-29 09:59 America/Sao_Paulo)
+- Runs: 40876866103 (pull_request) · 40876856490 (push) — frontend/backend/expedicao SUCCESS.
+- Tip integra #406 90990801e; Codex 342 permanece b5cb34e1; WIP eb797672 fora.
+- Sem merge oficial / deploy / carga.

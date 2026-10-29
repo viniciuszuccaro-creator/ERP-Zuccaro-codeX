@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#401 tip fbcca01b9 CI SUCCESS) (2026-10-29 09:59 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#401** tip **`fbcca01b9`** — CI SUCCESS `40876866103` / `40876856490` |
+| **Integra** | #406 `90990801e` (A/B/C + P2) sobre candidata `8026b2298` |
+| **Codex #342** | **`b5cb34e1`** (WIP `eb797672` fora) |
+| **#407** | recuperação indep. tip `a18a362ed` (CI pendente) |
+| Fora | merge oficial · deploy · carga |
+
+**Evidência:** `docs/evidence/composicao-397-342-resolvida-20261029.txt`
+**Próximo:** #407 CI · Funil×3/Separacao. Sem merge/deploy.
+
+(2026-10-29 09:59 America/Sao_Paulo)
+
 ## COMPOSIÇÃO ISOLADA #401 atualizada (preview — sem merge oficial) (2026-10-29 09:51 America/Sao_Paulo)
 
 | Campo | Valor |
