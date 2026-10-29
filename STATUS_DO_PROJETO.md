@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#410 busca mestres sem acentos) (2026-10-29 10:31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-masters-busca-acentos-392b` ← #406 `73046b406` |
+| **Parecer** | #401 Codex P2 tip `716dabdeb` — diacríticos |
+| **Fix** | `foldSearchText` + `sqlFoldAccentExpr` em cliente/produto listPage |
+| **#409** | tip `7e27ee9f3` CI SUCCESS |
+| **#406** | Codex limpo `73046b406` |
+| Fora | merge/deploy/carga · atualizar #401 após CI deste tip |
+
+**Evidência:** `docs/evidence/comercial-masters-busca-acentos-20261029.txt`
+**Próximo:** CI · composição #401. Sem merge/deploy.
+
+(2026-10-29 10:31 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
 
 | Campo | Valor |

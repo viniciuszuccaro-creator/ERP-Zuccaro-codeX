@@ -1,3 +1,8 @@
+## CURSOR — #410 busca mestres sem acentos (2026-10-29 10:31 America/Sao_Paulo)
+
+- Fecha P2 Codex #401: listPage cliente/produto dobra diacríticos (paridade picker).
+- Base #406 `73046b406`. Sem merge/deploy/carga.
+
 ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
 
 - Fecha A Contatos / B saldo DESCONHECIDO / C agregação produto+unidade + P2 mixed-doc.
