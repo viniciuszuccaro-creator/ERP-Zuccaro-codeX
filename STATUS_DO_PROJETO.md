@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (Pacote C probes registros — tip branch) (2026-10-29 18:05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-registros-probes-392b` ← #420 |
+| **Probes** | count filtro empresa≠grupo · scopeKey V24 · Contatos órfão · CodigoField ID |
+| **Testes** | `cadastros-registros-probes.test.js` + audit residual |
+| **Pacote A** | harness Codex ainda sem SHA256 — tip #401 `686ae322` estável |
+| **Pacote B** | #409 `c2b43c150` reverte alterarStatus (CI em curso) |
+| Fora | seed · apagar órfão Contatos · Auth VPS · merge #401 |
+
+**Evidência:** `docs/evidence/registros-desaparecidos-probes-20261029.txt`
+
 ## CURSOR — VIGENTE (Pacote D registros + audit residual #420) (2026-10-29 16:40 America/Sao_Paulo)
 
 | Campo | Valor |
