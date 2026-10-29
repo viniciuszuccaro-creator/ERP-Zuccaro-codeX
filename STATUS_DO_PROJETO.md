@@ -1,3 +1,19 @@
+## CURSOR — residual Cadastros sky+ID (indep.) (2026-10-29 08:20 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-residual-sky-id-392b` ← tip #403 |
+| **Escopo** | GatewayPagamento / TabelaFiscal / ConfiguracaoNFe — sky + ID técnico texto |
+| **Preservado** | pin RecordState residual / CentroOperacao intocado / sem CodigoField novo |
+| **Testes** | residual 15 PASS · identidade 6 PASS |
+| **#403** | tip código `8b08b55ccd` CI SUCCESS — `@codex review` pedido |
+| Fora | graduação reopen; merge/deploy/carga; branches param/API/Chatbot reservadas |
+
+**Evidência:** `docs/evidence/cadastros-residual-sky-id-20261029.txt`
+**Próximo:** CI desta branch · graduação reopen residual OU demo C360. Sem merge/deploy.
+
+(2026-10-29 08:20 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#403 CI SUCCESS Contatos+Estoque) (2026-10-29 08:10 America/Sao_Paulo)
 
 | Campo | Valor |
