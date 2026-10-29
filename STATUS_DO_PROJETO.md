@@ -1,4 +1,33 @@
-## Estado vigente - candidata401, revisao414 e fonte bloqueada (2026-10-29)
+## Estado vigente - composicao414 incorporada e aceite delimitado (2026-10-29)
+
+342f02a6b024107ff587075052bdf71327a91e43e05;4017460c3a2669181138065b05112ba209629784479,
+codigo0195acc66f7c52cea6b64e92a0129d0ea322ff4a;414849419a6ee88c3490cb32b0ff2958e1e9e4bd841.
+414 incorporada: diff src/tests/server entre414 e401 vazio. Liberacao419 e residual
+failure-only ENCERRADOS no alcance ja provado. Nao repetir desbloqueio ou instalarWSL.
+
+Parecer401/6504381068:7testes novos PASS/0FAIL/0SKIP em transporte/helpers/callbacks
+reais por AST: respostas tardias de Grupo/Empresa/ator/token, erro/aborto tardios,
+nome fora da pagina preservado nos callbacks PDF/share de Orcamento e lookup leve
+20invocacoes=20requests exatas,limit1/offset0,sem retry interno. Sem novo defeito
+reproduzivel nesse delta; nao e React montado, navegador, PostgreSQL ou aceite integral.
+CIcodigo5244/run40922889462 SUCCESS conferida:raiz2632PASS/0FAIL/0SKIP;
+backend589total/563PASS/0FAIL/26SKIP; PG composicao2/0/0 e entrada/tenant6/0/0.
+Checks de audit/lint/typecheck/build da candidata SUCCESS; nao sao checks do WIP13.
+
+WIP13:13blobs iguais/0divergencias; patchB78 preservado. Revisao integral independente
+dos694lines/hunks e manifesto:nenhum dado real/credencial/relatorio privado encontrado;
+13paths exatos,manifestoSHA256c8a422240d2adff7823f619ba6e694c0cb90fef85b94e64ba575b12270eef99d.
+NAO depositado nem validado integralmente no executor Linux. Inbox421 e PUBLICA;
+decisao especifica sobre publicar artefato sanitizado pre-validacao solicitada ao dono.
+Nao usar CI documental, overlayPOSIX12/0/0 ou sanitizacao como fechamento do snapshot.
+
+Coordenacao direta Cursor entregue e visivel:prova browser isolada nao exige criar
+usuario/segredo ERP_DEV_LOGIN_RESTRICTED_* na VPS; usar so harness/PG/IDP sinteticos
+ja autorizados ou informar capacidade faltante. Sem skip de protecoes ou provisionamento.
+Coorte final100/pins dos bytes continuam indisponiveis; classificacao real desconhecida.
+Gates finitos/responsaveis atualizados na lista unica abaixo. Nenhuma carga/DDL/grant/deploy.
+
+## Historico - revisao414 e liberacao419 anteriores (2026-10-29)
 
 Delta414: HEAD0e16923fc5b061b4924d73a9f4e3666f5be83227 corrige failure-only.
 Revisao independente4PASS/0FAIL/0SKIP dos helpers/callbacks reais por AST:
@@ -148,16 +177,18 @@ continua sem commit; dois checks POSIX ainda bloqueiam sua publicacao. Validacao
 documental diff-check; checks de codigo e limites anteriores preservados abaixo.
 Nao declarar o WIP implantado, integrado na401, homologado ou importado.
 
-Lista unica/ordem operacional vigente:
+Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
 - Publicacao backend (Codex): WIP preservado; receber patch+manifesto exatos em
   executor existente por canal suportado, fechar snapshot/checks e somente entao
-  publicar. POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
-- Revisao/composicao (Cursor+Codex):4011a2cfc31/094cb4b7e tem411/412/407 comprovadas;
-  worktree liberado com snapshot419 preservado.41439c1055f fecha2P2 antigos;
-  tratar residual de fila com20erros, incorporar naMESMA401 e conferir novoSHA/CI.
-- Cadeia (Cursor+Codex):334 sobre codex/comercial-central-abertura-segura;342 sobre334,
-  397 sobre342 e401 preview sobre397. Respeitar bases/revisoes/CI, sem merge direto
-  em main ou retarget automatico. WIP nao entra antes da publicacao validada.
+  publicar funcionalmente. Sanitizacao integral pronta; decisao de transporte publico
+  pre-validacao pendente. POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
+- Revisao/composicao (Cursor+Codex):4017460c3a2/codigo0195acc66 incorpora414849419a6;
+  parecer6504381068 sem novo defeito nesse delta. Liberacao419/failure-only encerrados.
+  Falta navegador com gravacao; nao ampliar candidata com pacotes independentes.
+- Cadeia (Cursor+Codex):401 agora tem basePR342, mas merge-base real e b5cb34e1;
+  f02a6b02 NAO e ancestral da401. Delta342 posterior so STATUS/HANDOFF/OPERACAO,
+  ainda a reconciliar; retarget nao incorpora commits. Respeitar bases/revisoes/CI,
+  sem merge direto em main. WIP nao entra antes da publicacao validada.
 - Esquema/privilegios (Codex+aprovacao dono): envelope minimo e diferenca comprovada
   do destino;044/Fornecedor candidatos e045-049 privadas nao aplicados por inferencia.
 - Backup/retorno (Codex+aprovacao dono): verificar frescor/identidade dos recibos ja

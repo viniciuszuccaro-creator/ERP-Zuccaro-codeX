@@ -1,4 +1,47 @@
-## Estado vigente - candidata401 e revisao414 (2026-10-29)
+## Estado vigente - aceite dirigido da composicao401 (2026-10-29)
+
+HEAD342f02a6b024107ff587075052bdf71327a91e43e05 e branchdesktop conferidos;
+13arquivos WIP preservados,nenhum processo de teste/escritor identificado no clone.
+4017460c3a2669181138065b05112ba209629784479/codigo0195acc66f7c52cea6b64e92a0129d0ea322ff4a
+incorpora414849419a6ee88c3490cb32b0ff2958e1e9e4bd841: diff src/tests/server VAZIO.
+Nao aguardar novamente liberacao419 nem reabrir failure-only sem delta/contraprova.
+
+Parecer401/6504381068:7PASS/0FAIL/0SKIP/exit0 novos em callbacks/helpers/transporte
+reais extraidos por AST do Git object401,sem editarCursor. Tardios rejeitados para
+troca de Grupo/Empresa/ator/token; erro tardio e aborto nao retornam payload;
+catalogo retém nome fora da pagina e mesmo nome chega a PDF/share de Orcamento;
+20lookups=20requests /clientes exatas,limit1/offset0,sem retry interno. Sao seams
+sinteticas/getScope controlado,NAO React/TanStack montados,clipboard/PDF reais ou browser.
+Recibo privado code-only:review401-current-proof.mjs. Contraprovas anteriores dos
+mesmos blobs reutilizadas; nenhum achado novo reproduzivel nesse delta.
+
+CIcodigo5244/run40922889462 SUCCESS no0195acc66,logs conferidos sem rerun:
+frontend123620573561:2632PASS/0FAIL/0SKIP,audit/lint/typecheck/build SUCCESS;
+backend123620574083:589total/563PASS/0FAIL/26SKIP,typecheck/build SUCCESS;
+PG composicao2PASS/0FAIL/0SKIP e tenant/entrada6PASS/0FAIL/0SKIP,IDP sintetico.
+Nao somar skips como aprovados nem atribuir essa CI ao WIP13 ou ao navegador.
+
+WIPpatchB78 e manifestoC8A preservados. Revisao integral independente:694lines,
+13paths exatos,sem dados reais/credenciais/pins privados/relatorios. ManifestoSHA256
+c8a422240d2adff7823f619ba6e694c0cb90fef85b94e64ba575b12270eef99d;13blobs atuais
+iguais/0divergentes. Sanitizacao nao autoriza apply/publicacao funcional. Inbox421
+PUBLICA,descricao corrigida por Cursor6504335440; nada depositado/ACK. Decisao
+especifica do dono solicitada para artefato publico sanitizado PRE-validacao;
+ate la permanece no canal privado. Fechamento completo do snapshot ainda pendente.
+
+Coordenacao401/6504448201 e mensagem direta visivel no agenteCursor existente:
+nao provisionar AuthDEV/ERP_DEV_LOGIN_RESTRICTED_* para ensaio isolado; nao ignorar
+protecoes,criarsecrets ou mudar rede. Reutilizar harness/PG descartavel/IDP sinteticos
+existentes se disponiveis; falta de capacidade deve ser declarada sem simular E2E.
+Mensagem entregue,nao presumir execucao da prova. Coorte100 final ainda indisponivel;
+nenhuma nova transferencia/consulta real/carga/DDL/grant/deploy. Plano e provas8PGlite
+inalterados reutilizados,nao classificam destino desconhecido como vazio.
+
+Cadeia efetiva:basePR401 agora342;merge-baseGit b5cb34e1,nao f02a6b02. Diferenca
+publicada posterior342 soSTATUS/HANDOFF/OPERACAO; reconciliar sem perder continuidade,
+nao confundir retarget com incorporacao. Lista unica/responsaveis no STATUS existente.
+
+## Historico - candidata401 e revisao414 anteriores (2026-10-29)
 
 Delta posterior414:0e16923fc5b061b4924d73a9f4e3666f5be83227 revisado.
 Contraprova failure-only original agoraPASS:4testesindependentes/0FAIL/0SKIP,
