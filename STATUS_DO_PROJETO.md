@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#418 pin-safe PerfilAcesso sky) (2026-10-29 13:02 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-fiscal-admin-sky-392b` ← #417 `8bf3cc5b4` |
+| **Escopo** | sky+ID **PerfilAcesso** + ChatbotIntents `windowMode` |
+| **CI FAIL** | tip `829d0aed2` — ID-only CadastroFiscal + Empresa date-hash; forms pinados revertidos |
+| **Pin** | Fiscal/Grupo/Usuario/CentroOperacao/Boletos ID-only · Empresa date-arith — intocados |
+| **#414** | compose #401 **BLOCKED** (WIP composição) |
+| Fora | merge/deploy/carga / VPS write / checkout composição |
+
+**Evidência:** `docs/evidence/cadastros-fiscal-admin-sky-20261029.txt`
+**Próximo:** CI do tip pin-safe. Sem merge/deploy.
+
+(2026-10-29 13:02 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (CadastroFiscal+admin sky) (2026-10-29 12:52 America/Sao_Paulo)
 
 | Campo | Valor |

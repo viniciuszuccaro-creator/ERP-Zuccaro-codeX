@@ -1,26 +1,28 @@
-CADASTROS residual sky+ID — Fiscal + admin (2026-10-29 America/Sao_Paulo)
-==========================================================================
+CADASTROS residual sky+ID — PerfilAcesso (+ ChatbotIntents) 2026-10-29 America/Sao_Paulo
+=======================================================================================
 Branch: cursor/cadastros-fiscal-admin-sky-392b
 Base: #417 tip 8bf3cc5b4 (ApiExterna+ChatbotCanal CI SUCCESS)
 
-Escopo (melhoria do existente)
-------------------------------
-- CadastroFiscalForm: windowMode + chrome sky + ID técnico (idOnly field preservado)
-- EmpresaForm / GrupoEmpresarialForm / PerfilAcessoForm / UsuarioForm:
-  chrome windowMode → sky + ID técnico (sem redesign amplo)
+Escopo entregue
+---------------
+- PerfilAcessoForm: chrome windowMode → sky + ID técnico
 - ChatbotIntentsForm: propaga windowMode ao ChatbotIntentForm (já sky)
 
-Pin / fora
-----------
-- CentroOperacaoForm: publication pin — não tocado
-- ConfiguracaoBoletosForm: ID-only CANAL — não tocado (sky adiado)
-- ProdutoForm legado / GerenciarEnderecosCliente (embed) — fora
-- Composição #401 / WIP /tmp/composicao-397-342 — não editado
-- Sem count+1; useCadastroRecordState preservado
+Pins preservados (não tocados neste lote após CI FAIL)
+------------------------------------------------------
+- CadastroFiscal / GrupoEmpresarial / Usuario / CentroOperacao / ConfiguracaoBoletos:
+  coorte ID-only golden e36231b3 (cursor-identidade-consolidacao)
+- EmpresaForm: date-arithmetic emittedBeforeSha256
+  (cbbf6c997fe897ed… — chrome estrutural quebraria o pin)
+
+CI FAIL tip 829d0aed2: frontend 2 FAIL (ID-only CadastroFiscal + Empresa hash).
+Correção: reverter forms pinados; manter só PerfilAcesso + ChatbotIntents.
 
 Prova
 -----
 node --test tests/cadastros-fiscal-admin-sky.test.js
+node --test tests/cursor-identidade-consolidacao.test.js
+node --test --test-name-pattern=EmpresaForm tests/date-arithmetic-contracts.test.js
 
 Dados
 -----

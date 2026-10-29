@@ -228,18 +228,11 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
   if (windowMode) {
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
-          <Network className="w-8 h-8 text-sky-600" />
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              {dadosIniciais?.id ? "Editar Grupo Empresarial" : "Novo Grupo Empresarial"}
-            </h2>
-            {dadosIniciais?.id ? (
-              <p className="text-xs text-slate-500">
-                ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
-              </p>
-            ) : null}
-          </div>
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Network className="w-5 h-5 text-blue-600" />
+            {dadosIniciais ? "Editar Grupo Empresarial" : "Novo Grupo Empresarial"}
+          </h2>
         </div>
         {formContent}
       </div>

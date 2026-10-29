@@ -1,3 +1,9 @@
+## CURSOR — #418 pin-safe PerfilAcesso sky (2026-10-29 13:02 America/Sao_Paulo)
+
+- CI FAIL `829d0aed2`: ID-only CadastroFiscal + Empresa date-hash.
+- Tip pin-safe: só PerfilAcesso sky+ID + ChatbotIntents windowMode; Fiscal/Empresa/Grupo/Usuario revertidos.
+- #414 compose BLOCKED (WIP composição). Sem merge/VPS write.
+
 ## CURSOR — CadastroFiscal+admin sky (2026-10-29 12:52 America/Sao_Paulo)
 
 - Branch `cursor/cadastros-fiscal-admin-sky-392b` ← #417 `8bf3cc5b4`.
