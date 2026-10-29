@@ -47,3 +47,20 @@ Próximo capacidade a capacitar no existente
 2. Demo fluxo C360 Private quando franquia
 3. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
 4. ChatbotIntent / JobAgendado / Parametro* residual fora branches reservadas
+
+Atualização Pacote B (2026-10-29 ~15:15 America/Sao_Paulo)
+----------------------------------------------------------
+Estado #401 tip 7460c3a26 / 0195acc66 CI SUCCESS — fold #414 feito; WIP #419 intacto.
+Inbox #421/#423: depósito público sanitizado (≠ privado).
+
+Classificação residual (sem substituir ERP; sem fictícios):
+- Contatos painel achados Codex → PR independente tip 2ac0da517 (Pacote D)
+- Forms windowMode sem sky ainda: ApiExterna/Chatbot*/Parametro* — respeitar
+  branches reservadas; não tocar neste tip
+- Persistência E2E C360: roteiro isolado pendente (≠ demo writes=0; ≠ VPS)
+- Cadastros: sequência backend/CodigoField; registros sumidos = staging privado
+
+Próximo implementação independente (arquivo não reservado):
+1. CI Contatos tip 2ac0da517 + Codex
+2. Prova persistência isolada (API/tenant sintético) quando franquia local
+3. Sky residual fora ApiExterna/ParametroRoteirizacao/ChatbotCanal reservados
