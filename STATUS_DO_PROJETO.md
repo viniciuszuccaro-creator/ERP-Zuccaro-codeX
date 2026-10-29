@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#406** tip **`90990801e`** — CI SUCCESS `40867597095` / `40867588389` |
+| **Código** | `44bc5dad9` (A/B/C) + `84c903c92` (P2 mixed-doc) |
+| **Pareceres** | `6493733950` · `6493809228` — fechados no tip |
+| **#401** | atualizar composição com estes SHAs (342 permanece `b5cb34e1` publicado na candidata) |
+| **#405** | reopen BLOCKED publication · tip revert `bbefcf3c7` CI SUCCESS |
+| Fora | merge/deploy/carga; WIP Codex #342 `eb797672` não tipado na composição |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** composição #401 · recuperação indep. Sem merge/deploy.
+
+(2026-10-29 09:50 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#406 CI SUCCESS + P2 mixed-doc) (2026-10-29 08:43 America/Sao_Paulo)
 
 | Campo | Valor |

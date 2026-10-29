@@ -1,3 +1,9 @@
+## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
+
+- Fecha A Contatos / B saldo DESCONHECIDO / C agregação produto+unidade + P2 mixed-doc.
+- CI SUCCESS runs 40867597095 / 40867588389. Thread P2 respondido.
+- Próximo: atualizar composição #401 com SHAs publicados. Sem merge/deploy/carga.
+
 ## CURSOR — #406 CI SUCCESS ec4045679 + P2 mixed-doc (2026-10-29 08:43 America/Sao_Paulo)
 
 - CI tip docs `ec4045679` SUCCESS (40866588056 / 40866546457). Codex P2: mixed-doc.
