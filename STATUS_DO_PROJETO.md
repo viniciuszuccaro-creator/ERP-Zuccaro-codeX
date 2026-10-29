@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (ApiExterna+ChatbotCanal sky) (2026-10-29 12:42 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-apiexterna-canal-sky-392b` ← #416 |
+| **Escopo** | sky+ID ApiExternaForm + ChatbotCanalForm |
+| **#414** | tip `532ac595a` P1/P2 — CI/parecer |
+| **#401** | estável · demo persistência pedida |
+| Fora | merge/deploy/carga / VPS write |
+
+**Evidência:** `docs/evidence/cadastros-apiexterna-canal-sky-20261029.txt`
+**Próximo:** CI deste tip. Sem merge/deploy.
+
+(2026-10-29 12:42 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#416 tip 2178967e6 CI SUCCESS) (2026-10-29 12:31 America/Sao_Paulo)
 
 | Campo | Valor |

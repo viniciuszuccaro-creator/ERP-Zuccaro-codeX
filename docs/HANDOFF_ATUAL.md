@@ -1,3 +1,8 @@
+## CURSOR — ApiExterna+ChatbotCanal sky (2026-10-29 12:42 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-apiexterna-canal-sky-392b` ← #416.
+- #414 P1/P2 tip `532ac595a` em CI/parecer. Sem merge/VPS write.
+
 ## CURSOR — #416 tip 2178967e6 CI SUCCESS (2026-10-29 12:31 America/Sao_Paulo)
 
 - Tip código `2178967e6` / docs `4157cca8f` CI SUCCESS 6/6 — ParametroOrigemPedido sky+ID.

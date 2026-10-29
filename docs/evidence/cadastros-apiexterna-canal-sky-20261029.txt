@@ -1,0 +1,3 @@
+Cadastros residual sky+ID — ApiExterna + ChatbotCanal — 2026-10-29 12:42 America/Sao_Paulo
+Base #416 tip 1dbf7e6eb. RecordState preservado. Sem count+1.
+Independente da composição #401 / #414.
