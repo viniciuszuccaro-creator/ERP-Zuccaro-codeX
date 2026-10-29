@@ -26,9 +26,11 @@ Fora deste lote
 - Sem count+1 de código no browser
 
 Testes
-- cadastros-transportadora-updated-at-identity + cursor-residual-independent: PASS
+- cadastros-transportadora-updated-at-identity + cursor-residual-independent + callback-record-state: PASS
+- cursor-identidade-consolidacao 6/6 PASS (pós-restore CentroOperacao)
+- CI tip `deed8bee4`: SUCCESS runs 40857332994 / 40857323487 (6/6)
 - Sem merge/deploy/carga
 
 Próximo
-- GatewayPagamento / TabelaFiscal sky+reopen no existente
+- GatewayPagamento / TabelaFiscal sky+reopen no existente (fora ID-only golden)
 - Demo C360 Private se franquia (rascunho anti-duplo já em OrcamentosTab)
