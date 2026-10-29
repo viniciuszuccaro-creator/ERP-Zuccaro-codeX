@@ -1,7 +1,7 @@
 import OrcamentoProposalAside from './OrcamentoProposalAside';
 import { createComercialProposalFixture } from './comercialProposalFixture';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { readErpHttpSession } from '@/api/erpHttpSession';
@@ -23,12 +23,19 @@ import {
   clienteEmpresaPickerLabel,
   filterClienteEmpresaOptions,
   filterProdutoOptions,
+  clienteHydrationSettlementKey,
+  collectSettledClienteHydration,
+  mergeComercialSelectedCliente,
+  nextClienteHydrationBatch,
   ORCAMENTO_PERSISTENCE_GAPS,
   produtoPickerLabel,
+  resolveComercialMasterPages,
+  resolveComercialSelectedCliente,
+  unionComercialClienteCatalog,
 } from './comercialMasterPicker';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 import { isCanonicalComercialId } from './centralCliente360Navigation';
-import ValidadorEstoquePedido from './ValidadorEstoquePedido';
+import ValidadorEstoquePedido, { conversionStockOkFromAvailability } from './ValidadorEstoquePedido';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
 const emptyForm = () => ({ cliente_empresa_id: '', condicao_pagamento_id: '', tabela_preco_id: '', validade_em: '', observacoes: '', itens: [emptyItem()] });
@@ -38,6 +45,8 @@ const errorMessage = (error) => {
   // Conversão orçamento→pedido pode falhar por schema 044 no destino — não mascarar.
   const pedidoSchema = explainPedidoPersistenceError(error);
   if (pedidoSchema) return pedidoSchema;
+  if (error?.message === 'COMERCIAL_REFERENCE_PAGINATION_REQUIRED') return 'Catalogo auxiliar incompleto para esta selecao.';
+  if (error?.message === 'COMERCIAL_MASTERS_INVALID') return 'Nao foi possivel validar os cadastros vinculados nesta empresa.';
   if (error?.status === 403) return 'Seu perfil não possui permissão para esta ação.';
   if (error?.status === 404) return 'Orçamento não encontrado neste contexto.';
   if (error?.status === 409) return 'O orçamento foi alterado e não está mais em aberto.';
@@ -106,24 +115,134 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     enabled: contextReady && canView && !proposalMode,
     retry: 1,
   });
+  // Keep the legacy prop compatible, but operational lookup must share the HTTP session/source.
+  void filterInContext;
   const mastersQuery = useQuery({
-    queryKey: ['orcamento-masters', groupId, empresaId, actorId, sessionCacheGeneration, proposalMode ? 'proposal':'operacional'],
-    queryFn: async () => {
-      const [clientesEmpresa, clientes, condicoes, produtos, unidades, tabelas] = await Promise.all([
-        filterInContext('ClienteEmpresa', { ativo: true, habilitado_operacao: true }, 'codigo', 500),
-        filterInContext('Cliente', { ativo: true }, 'razao_social', 500),
-        filterInContext('CondicaoPagamento', { ativo: true }, 'nome', 500),
-        filterInContext('Produto', { ativo: true }, 'descricao', 500),
-        filterInContext('UnidadeMedida', { ativo: true }, 'sigla', 500),
-        filterInContext('TabelaPreco', { ativo: true }, 'nome', 500),
-      ]);
-      return { clientesEmpresa, clientes, condicoes, produtos, unidades, tabelas };
+    queryKey: ['orcamento-masters', groupId, empresaId, actorId, sessionCacheGeneration,
+      proposalMode ? 'proposal':'operacional', clienteQuery, produtoQuery],
+    queryFn: async ({ signal }) => {
+      const opened = { ...renderedScope.current };
+      if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) throw new Error('CONTEXT_CHANGED');
+      const pages = await http.comercialMasters.list({ clienteSearch: clienteQuery.trim(), produtoSearch: produtoQuery.trim(), signal });
+      if (signal?.aborted || !sameOrcamentoScope(opened, renderedScope.current, activeScope())) throw new Error('CONTEXT_CHANGED');
+      return resolveComercialMasterPages(pages, opened);
     },
     enabled: contextReady && canView && !proposalMode,
     staleTime: 30000,
   });
   const proposalMasters = useMemo(createComercialProposalFixture,[]);
-  const masters = proposalMode ? proposalMasters : mastersQuery.data || { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] };
+  const listRows = proposalMode ? [] : listQuery.data?.data || [];
+  /** Catálogo acumulado: labels de listagem/PDF/share independentes da página temporária de busca (P2 #4413844021). */
+  const [clienteCatalog, setClienteCatalog] = useState({ clientes: [], clientesEmpresa: [] });
+  /** Tentativas terminadas (ok ou 404/erro) por identidade — evita starvation failure-only. */
+  const [clienteHydrationAttemptedIds, setClienteHydrationAttemptedIds] = useState(() => new Set());
+  const [clienteHydrationFailures, setClienteHydrationFailures] = useState(() => ({}));
+  const selectedClienteQuery = useQuery({
+    queryKey: ['orcamento-selected-cliente', groupId, empresaId, actorId, sessionCacheGeneration, form.cliente_empresa_id],
+    queryFn: async ({ signal }) => resolveComercialSelectedCliente(
+      await http.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId: form.cliente_empresa_id, signal }),
+      { groupId, empresaId },
+      form.cliente_empresa_id,
+    ),
+    enabled: contextReady && canView && !proposalMode && formOpen && isCanonicalComercialId(form.cliente_empresa_id),
+    staleTime: 30000,
+    retry: false,
+  });
+  const neededClienteEmpresaIds = useMemo(() => {
+    const ids = new Set();
+    for (const row of listRows) {
+      if (row?.cliente_empresa_id) ids.add(row.cliente_empresa_id);
+    }
+    if (selected?.cliente_empresa_id) ids.add(selected.cliente_empresa_id);
+    if (editing?.cliente_empresa_id) ids.add(editing.cliente_empresa_id);
+    if (form.cliente_empresa_id) ids.add(form.cliente_empresa_id);
+    return [...ids].filter((id) => isCanonicalComercialId(id));
+  }, [listRows, selected?.cliente_empresa_id, editing?.cliente_empresa_id, form.cliente_empresa_id]);
+  // Lote limitado; catálogo + tentativas (incl. 404) avançam a fila (P2 residual failure-only).
+  const missingClienteEmpresaIds = useMemo(() => {
+    const knownLinkIds = (clienteCatalog.clientesEmpresa || []).map((link) => link.id);
+    if (selectedClienteQuery.data?.clientesEmpresa?.[0]?.id) {
+      knownLinkIds.push(selectedClienteQuery.data.clientesEmpresa[0].id);
+    }
+    for (const link of mastersQuery.data?.clientesEmpresa || []) knownLinkIds.push(link.id);
+    return nextClienteHydrationBatch(neededClienteEmpresaIds, {
+      knownLinkIds,
+      attemptedIds: clienteHydrationAttemptedIds,
+      limit: 20,
+    });
+  }, [neededClienteEmpresaIds, clienteCatalog.clientesEmpresa, selectedClienteQuery.data, mastersQuery.data, clienteHydrationAttemptedIds]);
+  const rowClienteQueries = useQueries({
+    queries: missingClienteEmpresaIds.map((clienteEmpresaId) => ({
+      queryKey: ['orcamento-row-cliente', groupId, empresaId, actorId, sessionCacheGeneration, clienteEmpresaId],
+      queryFn: async ({ signal }) => resolveComercialSelectedCliente(
+        await http.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId, signal }),
+        { groupId, empresaId },
+        clienteEmpresaId,
+      ),
+      enabled: contextReady && canView && !proposalMode && isCanonicalComercialId(clienteEmpresaId),
+      staleTime: 60000,
+      retry: false,
+    })),
+  });
+  // IDs do lote atual por índice — useQueries não devolve queryKey no resultado.
+  const rowHydrationKey = clienteHydrationSettlementKey(rowClienteQueries, missingClienteEmpresaIds);
+  useEffect(() => {
+    setClienteCatalog({ clientes: [], clientesEmpresa: [] });
+    setClienteHydrationAttemptedIds(new Set());
+    setClienteHydrationFailures({});
+  }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !mastersQuery.data) return undefined;
+    setClienteCatalog((prev) => unionComercialClienteCatalog(prev, mastersQuery.data));
+    return undefined;
+  }, [mastersQuery.data, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !selectedClienteQuery.data) return undefined;
+    setClienteCatalog((prev) => mergeComercialSelectedCliente(prev, selectedClienteQuery.data));
+    return undefined;
+  }, [selectedClienteQuery.data, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !rowHydrationKey) return undefined;
+    const settled = collectSettledClienteHydration(rowClienteQueries, missingClienteEmpresaIds);
+    setClienteHydrationAttemptedIds((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      for (const id of settled.attemptedIds) {
+        if (!next.has(id)) { next.add(id); changed = true; }
+      }
+      return changed ? next : prev;
+    });
+    if (Object.keys(settled.failures).length) {
+      setClienteHydrationFailures((prev) => ({ ...prev, ...settled.failures }));
+    }
+    setClienteCatalog((prev) => {
+      let next = prev;
+      for (const payload of settled.successPayloads) {
+        next = mergeComercialSelectedCliente(next, payload);
+      }
+      return next;
+    });
+    return undefined;
+  }, [proposalMode, rowHydrationKey]);
+  // Hidratações da página atual entram no useMemo (sem effect — evita loop por referência de useQueries).
+  const masters = useMemo(() => {
+    if (proposalMode) return proposalMasters;
+    const core = mastersQuery.data || {
+      clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [],
+    };
+    let next = {
+      ...core,
+      clientes: clienteCatalog.clientes,
+      clientesEmpresa: clienteCatalog.clientesEmpresa,
+    };
+    next = mergeComercialSelectedCliente(next, selectedClienteQuery.data);
+    for (const query of rowClienteQueries) {
+      if (query.data) next = mergeComercialSelectedCliente(next, query.data);
+    }
+    // Página de busca atual permanece disponível no seletor mesmo antes do effect acumular.
+    next = unionComercialClienteCatalog(next, mastersQuery.data || {});
+    return next;
+  }, [proposalMode, proposalMasters, mastersQuery.data, clienteCatalog, selectedClienteQuery.data, rowClienteQueries]);
   const clientesById = useMemo(() => new Map(masters.clientes.map((item) => [item.id, item])), [masters.clientes]);
   const clienteLabel = (linkId) => {
     const link = masters.clientesEmpresa.find((item) => item.id === linkId);
@@ -135,8 +254,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     return row ? (row.codigo ? `${row.codigo} — ${row.nome || ''}` : (row.nome || id)) : id;
   };
   const clienteOptions = useMemo(
-    () => filterClienteEmpresaOptions(masters.clientesEmpresa, clientesById, clienteQuery),
-    [masters.clientesEmpresa, clientesById, clienteQuery],
+    () => filterClienteEmpresaOptions(masters.clientesEmpresa, clientesById, clienteQuery, form.cliente_empresa_id),
+    [masters.clientesEmpresa, clientesById, clienteQuery, form.cliente_empresa_id],
   );
   const produtoOptions = useMemo(
     () => filterProdutoOptions(masters.produtos, produtoQuery),
@@ -200,6 +319,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     catch { return { subtotal: '0', desconto: '0', total: '0' }; }
   }, [form.itens]);
   const save = async () => {
+    if (mastersQuery.isError) { toast.error(errorMessage(mastersQuery.error)); return; }
     if (proposalMode) { toast.error('Proposta visual: gravação desabilitada.'); return; }
     if (!canUseOrcamentoAction(hasPermission, editing ? 'editar' : 'criar', editing?.status)) {
       toast.error('Seu perfil não possui permissão para esta ação.'); return;
@@ -306,6 +426,15 @@ const convertToPedido = async () => {
     </div>
     {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos.</AlertDescription></Alert>}
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
+    {Object.keys(clienteHydrationFailures).length > 0 && (
+      <Alert className="mb-3" data-testid="orcamento-cliente-hydration-failures" role="status" aria-live="polite">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {Object.keys(clienteHydrationFailures).length} vínculo(s) de cliente sem label neste contexto
+          (consulta leve falhou; fila avançou). IDs permanecem visíveis até correção/retry de sessão.
+        </AlertDescription>
+      </Alert>
+    )}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
@@ -321,6 +450,7 @@ const convertToPedido = async () => {
 
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className={proposalMode ? 'w-[96vw] max-w-7xl max-h-[92vh] flex flex-col overflow-hidden border-sky-200 bg-sky-50' : 'w-[96vw] max-w-6xl max-h-[92vh] overflow-auto'}><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>{proposalMode ? 'Escolha cliente e produtos, ajuste quantidades e navegue pelo contexto sem perder o rascunho.' : <>Totais e preço unitário são conferidos pelo servidor ({ORCAMENTO_PERSISTENCE_GAPS.preco_unitario_ui}). Tabela de preço persiste no cabeçalho e alimenta o snapshot.</>}</DialogDescription></DialogHeader>
       {proposalMode && <p className="text-sm font-medium text-sky-900">PRÉVIA SINTÉTICA · aprovação visual pendente · sem gravação</p>}
+      {!proposalMode && mastersQuery.isError && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{errorMessage(mastersQuery.error)}</AlertDescription></Alert>}
       <div className={proposalMode ? 'grid xl:grid-cols-[minmax(0,1fr)_20rem] gap-4 overflow-auto min-h-0' : 'contents'}>
       <div className={proposalMode ? 'rounded-xl bg-white border p-4 space-y-4 min-w-0' : 'contents'}>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2 space-y-2"><Label htmlFor="orc-cliente-busca">Buscar cliente (código ou nome)</Label><Input id="orc-cliente-busca" value={clienteQuery} maxLength={80} placeholder="Digite código ou razão social" onChange={(e) => setClienteQuery(e.target.value)} data-action="orcamento-busca-cliente" /><Label htmlFor="orc-cliente">Cliente</Label><Select data-action="orcamento-cliente" value={form.cliente_empresa_id} onValueChange={(v) => changeForm('cliente_empresa_id', v)}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{clienteOptions.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)}><SelectTrigger id="orc-condicao"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.codigo ? `${item.codigo} — ` : ''}{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-tabela">Tabela de preço</Label><Select value={form.tabela_preco_id || 'NENHUMA'} onValueChange={(v) => changeForm('tabela_preco_id', v === 'NENHUMA' ? '' : v)}><SelectTrigger id="orc-tabela" data-action="orcamento-tabela-preco"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Não informada</SelectItem>{(masters.tabelas || []).filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.codigo ? `${item.codigo} — ` : ''}{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} /></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
@@ -345,11 +475,11 @@ const convertToPedido = async () => {
         );
       })()}
       </div>
-      <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={proposalMode || submitting || mastersQuery.isLoading}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 
     <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setConversionStockOk(true); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
-    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) { setPendingConversion(null); setConversionStockOk(true); } }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-lg max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div>{pendingConversion && <ValidadorEstoquePedido orcamento={pendingConversion} empresaId={empresaId} onAvailabilityChange={(state) => setConversionStockOk(Boolean(state?.todosDisponiveis || state?.vazio))} />}</div><DialogFooter><Button variant="outline" onClick={() => { setPendingConversion(null); setConversionStockOk(true); }} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting || !conversionStockOk} data-action="orcamento-converter-pedido">{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
+    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) { setPendingConversion(null); setConversionStockOk(true); } }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-lg max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div>{pendingConversion && <ValidadorEstoquePedido orcamento={pendingConversion} empresaId={empresaId} onAvailabilityChange={(state) => { setConversionStockOk(conversionStockOkFromAvailability(state)); }} />}</div><DialogFooter><Button variant="outline" onClick={() => { setPendingConversion(null); setConversionStockOk(true); }} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting || !conversionStockOk} data-action="orcamento-converter-pedido">{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
       open={Boolean(pendingCancel)}
       onOpenChange={(open) => { if (!open) setPendingCancel(null); }}
       onConfirm={() => { const row = pendingCancel; setPendingCancel(null); void performCancel(row); }}

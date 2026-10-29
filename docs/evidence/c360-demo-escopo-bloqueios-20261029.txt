@@ -1,0 +1,32 @@
+# Demo C360 candidata #401 — escopo e bloqueios (2026-10-29 12:03 America/Sao_Paulo)
+
+## HEAD reconciliado
+| Campo | Valor |
+|-------|-------|
+| Docs/HEAD PR | `41728cbe6` CI5179 SUCCESS |
+| Código composto | `094cb4b7e` |
+| Incorporados | #406 · #410 · #411 · #412 (+#407) |
+| Codex tip `094cb4b7e`/`46368fc2f` | receipt sem major; P2 novo #4413844021 (cliente label fora da página) |
+
+**Não reabrir** sem nova contraprova: Contatos A/B/C, saldo DESCONHECIDO, agregação unidade, mixed-doc, busca acentos, nome recebedor 190/200, principal escalar reject.
+
+## O que a demo DEV 5173 permite testar
+- Navegação Orçamentos → Novo orçamento (modo proposta sintética)
+- Preenchimento Cliente/Produto/Condição/Tabela ilustrativos
+- Troca de painéis com **rascunho retido** (obs + qty)
+- Salvar **desabilitado** · `writes=0` · tráfego externo abortado
+- Layout desktop/tablet sem overflow horizontal
+- Evidência: `docs/evidence/c360-fluxo-evidencia-20261029c.txt`
+
+## O que permanece bloqueado (não comprovado pela demo)
+- Persistência ponta a ponta: criar→salvar→fechar→reabrir→editar→salvar
+- Backend canônico HTTP/Postgres com sessão real
+- Erro de rede, sessão expirada, troca Grupo/Empresa com recarga autoritativa
+- RBAC fail-closed em mutações reais
+- Gravação em VPS operacional (**proibida** para esta prova)
+
+## Demonstração isolada (coordenação Codex)
+Ambiente: clone/workspace DEV com API local + tenant sintético (≠ VPS operacional).
+Roteiro: login → Grupo/Empresa → Orçamento criar→salvar→fechar→reabrir→editar→salvar;
+depois: simular 401/sessão, troca empresa (rascunho), erro 422.
+Critério: SHA tip + `writes` auditados no backend de teste + evidência sanitizada.

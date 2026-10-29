@@ -1,0 +1,23 @@
+Composição isolada PR397 + PR342 — preview 2026-10-29 (America/Sao_Paulo)
+========================================================================
+Base tip Cursor PR397 (worktree create): 4b74f058cbd9f46be74395e84ce313139c27ca31
+PR342 tip (origin/pr-342-head):          b5cb34e1fb09d4a7dedc4fc9d66d501bfe2e16f7
+
+git merge --no-commit --no-ff origin/pr-342-head  → CONFLICT; abortado.
+Conflitos de conteúdo (3):
+  - STATUS_DO_PROJETO.md
+  - docs/HANDOFF_ATUAL.md
+  - tests/helpers/consolidation81Remainder.js
+
+Auto-merge limpo (amostra): router.ts, httpApiClient.js, OrcamentosTab.jsx,
+PedidoCanonicoPanel.jsx, pedidoUiPolicy.js, componentContractRemainder.js,
+pedido-ui-policy.test.js.
+
+merge-tree: vários "changed in both" (docs + testes golden) — requer resolução
+dirigida, não squash cego.
+
+Política:
+- Branch cursor/composicao-397-342-prep-392b NÃO altera
+  cursor/operador-historico-persist-392b nem codex/consolidacao-infra-20261017.
+- Sem merge oficial das PRs #397/#342.
+- Sem deploy / carga / SQL / BYPASSRLS.

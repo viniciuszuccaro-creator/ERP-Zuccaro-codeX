@@ -13,7 +13,10 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
-import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import {
+  buildComprovanteRecebedorPayload,
+  resolveRegistroEntregaFinal,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
 
 const sanitizeText = (value) => String(value || "")
@@ -208,16 +211,16 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, 
       // Compensação multi-etapa: Entrega/Pedido primeiro; estoque depois (não TX atômica).
       // UI NÃO declara sucesso se qualquer etapa posterior falhar após persistência parcial.
       const agora = new Date().toISOString();
-      const comprovanteData = {
+      const comprovanteData = buildComprovanteRecebedorPayload({
         foto_comprovante: fotoComprovante,
         nome_recebedor: recebedorSanitizado,
-        documento_recebedor: sanitizeText(documentoRecebedor),
-        cargo_recebedor: sanitizeText(cargoRecebedor),
-        data_hora_recebimento: agora,
-        latitude_entrega: geolocalizacao?.latitude || null,
-        longitude_entrega: geolocalizacao?.longitude || null,
-        observacoes_recebimento: sanitizeText(observacoes),
-      };
+        documento_recebedor: documentoRecebedor,
+        cargo_recebedor: cargoRecebedor,
+        observacoes_recebimento: observacoes,
+        latitude_entrega: geolocalizacao?.latitude ?? null,
+        longitude_entrega: geolocalizacao?.longitude ?? null,
+        now: agora,
+      });
 
       let entregaPersistidaId = entrega?.id || null;
       if (entrega?.id) {

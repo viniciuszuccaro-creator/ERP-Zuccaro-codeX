@@ -4,6 +4,7 @@ import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import type {
   Cliente,
+  ClienteListItem,
   ClienteCreate,
   ClienteEmpresa,
   ClienteEmpresaCreate,
@@ -17,6 +18,8 @@ import type {
 } from './inMemoryClienteRepository.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 import { clienteBulkSnapshotSchema } from '../services/clienteBulkLifecycle.js';
+import { clienteOperacaoLinksSchema } from './clienteTypes.js';
+import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
@@ -128,8 +131,11 @@ export class PostgresClienteRepository implements ClienteRepository {
   }
 
   async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,
-    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: Cliente[]; total: number }> {
+    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }> {
     if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');
+    if (filter.clienteEmpresaId && !filter.operacao) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');
+    }
     const query = executor ?? this.db;
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
@@ -155,39 +161,84 @@ export class PostgresClienteRepository implements ClienteRepository {
       where.push(`documento_normalizado = $${params.length}`);
     }
     if (filter.search) {
-      const q = `%${filter.search.toLowerCase()}%`;
+      const q = `%${foldSearchText(filter.search)}%`;
       const docQ = normalizeDocumento(filter.search);
       params.push(q);
       const searchIdx = params.length;
+      const foldedMatch = (
+        `${sqlFoldAccentExpr("coalesce(nome,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(razao_social,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(nome_fantasia,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(email,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(telefone,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(celular,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr('codigo')} LIKE $${searchIdx}`
+      );
       if (docQ) {
         params.push(`%${docQ}%`);
         where.push(`(
-          lower(coalesce(nome,'')) LIKE $${searchIdx}
-          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}
-          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}
-          OR lower(coalesce(email,'')) LIKE $${searchIdx}
-          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}
-          OR lower(coalesce(celular,'')) LIKE $${searchIdx}
-          OR lower(codigo) LIKE $${searchIdx}
+          ${foldedMatch}
           OR documento_normalizado LIKE $${params.length}
         )`);
       } else {
         where.push(`(
-          lower(coalesce(nome,'')) LIKE $${searchIdx}
-          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}
-          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}
-          OR lower(coalesce(email,'')) LIKE $${searchIdx}
-          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}
-          OR lower(coalesce(celular,'')) LIKE $${searchIdx}
-          OR lower(codigo) LIKE $${searchIdx}
+          ${foldedMatch}
         )`);
       }
+    }
+    let operationalLinksSql: string | undefined;
+    if (filter.operacao) {
+      if (!filter.empresaId || filter.ativo === false || exportOptions) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
+      params.push(filter.empresaId);
+      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}
+        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;
+      if (filter.clienteEmpresaId) {
+        params.push(filter.clienteEmpresaId);
+        where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql} AND ce.id=$${params.length}::uuid)`);
+      }
+      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);
     }
     const whereSql = where.join(' AND ');
     const orderBy = filter.orderBy === 'nome'
       ? `lower(coalesce(nome, razao_social, '')) ${filter.orderDir === 'desc' ? 'DESC' : 'ASC'}`
       : `(NULLIF(regexp_replace(codigo, '\\D', '', 'g'), '')::BIGINT) ${filter.orderDir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST`;
 
+    if (operationalLinksSql) {
+      params.push(limit, offset);
+      // One statement fixes total, identities and the page to the same snapshot.
+      const result = await query.query<{ total: number; rows: Record<string, unknown>[] }>(
+        `WITH filtered AS MATERIALIZED (
+          SELECT clientes.*, (SELECT jsonb_agg(jsonb_build_object(
+            'id',ce.id,'group_id',ce.group_id,'cliente_id',ce.cliente_id,'empresa_id',ce.empresa_id,
+            'ativo',ce.ativo,'situacao_comercial',ce.situacao_comercial,'habilitado_operacao',ce.habilitado_operacao,
+            'bloqueado',ce.bloqueado,'elegivel_operacao',ce.ativo AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao AND NOT ce.bloqueado
+          )) FROM cliente_empresas ce WHERE ${operationalLinksSql}) AS operational_links
+          FROM clientes WHERE ${whereSql}
+        ), page AS (
+          SELECT *,row_number() OVER (ORDER BY ${orderBy},created_at DESC,id ASC) AS _ordinal
+          FROM filtered ORDER BY ${orderBy},created_at DESC,id ASC
+          LIMIT $${params.length - 1} OFFSET $${params.length}
+        )
+        SELECT (SELECT count(*)::int FROM filtered) AS total,
+          coalesce((SELECT jsonb_agg(to_jsonb(page) ORDER BY _ordinal) FROM page),'[]'::jsonb) AS rows`,
+        params,
+      );
+      const page = result.rows[0];
+      if (!page || !Number.isSafeInteger(page.total) || page.total < 0 || !Array.isArray(page.rows)) {
+        throw new AppError(503, 'CLIENTE_OPERATIONAL_PAGE_INVALID', 'Operational customer page unavailable');
+      }
+      return {
+        total: page.total,
+        rows: page.rows.map(row => {
+          const parsed = clienteOperacaoLinksSchema.safeParse(row.operational_links);
+          if (!parsed.success || parsed.data[0].cliente_id !== String(row.id)
+            || parsed.data[0].group_id !== filter.groupId || parsed.data[0].empresa_id !== filter.empresaId) {
+            throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');
+          }
+          return { ...mapCliente(row), empresa_operacao: parsed.data[0] };
+        }),
+      };
+    }
     const countResult = await query.query(
       `SELECT count(*)::int AS total FROM clientes WHERE ${whereSql}`,
       params,

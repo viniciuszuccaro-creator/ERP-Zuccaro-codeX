@@ -1,3 +1,70 @@
+test('CANAL selected reference preserves previous hashes and rejects mutations inside outside omitted duplicated hunks', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { clienteConferenciaRemainder, clienteSelectedReferenceHunks } = await import('./helpers/consolidation81Remainder.js');
+  for (const [file,entry] of Object.entries(clienteSelectedReferenceHunks)) {
+    const source=readFileSync(file,'utf8');
+    assert.doesNotThrow(()=>clienteConferenciaRemainder(file,source));
+    assert.throws(()=>clienteConferenciaRemainder(file,source+'\n// outside approved hunk\n'));
+    for (const [after,before] of entry.hunks) {
+      assert.equal(source.split(after).length,2);
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,before)));
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,after+after)));
+      assert.throws(()=>clienteConferenciaRemainder(file,source.replace(after,after+'// mutation\n')));
+    }
+  }
+});
+
+test('HTTP mestres resolve vinculo selecionado por identidade exata sem busca ou varrer paginas', async () => {
+  const { createHttpApiClient } = await import('../src/api/httpApiClient.js');
+  const linkId = '88888888-aaaa-4aaa-8aaa-888888888888', urls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ token:'synthetic-only',groupId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',empresaId:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',actorId:'11111111-aaaa-4aaa-8aaa-111111111111' }),
+    fetchImpl: async url => {
+      urls.push(new URL(String(url)));
+      return new Response(JSON.stringify({data:[],meta:{total:0,limit:1,offset:0,hasMore:false}}), {status:200});
+    },
+  });
+  await client.comercialMasters.list({clienteEmpresaId:linkId});
+  const selected = urls.filter(url => url.pathname === '/api/v1/clientes');
+  assert.equal(selected.length,1);
+  assert.equal(selected[0].searchParams.get('cliente_empresa_id'),linkId);
+  assert.equal(selected[0].searchParams.get('limit'),'1');
+  assert.equal(selected[0].searchParams.get('offset'),'0');
+  assert.equal(selected[0].searchParams.get('search') || '', '');
+  const count = urls.length;
+  await assert.rejects(client.comercialMasters.list({clienteEmpresaId:linkId,clienteSearch:'outro'}));
+  assert.equal(urls.length,count);
+});
+
+test('HTTP resolveClienteEmpresa: uma única chamada /clientes (sem fan-out de mestres)', async () => {
+  const { createHttpApiClient } = await import('../src/api/httpApiClient.js');
+  const linkId = '88888888-aaaa-4aaa-8aaa-888888888888';
+  const urls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({
+      token: 'synthetic-only',
+      groupId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      empresaId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      actorId: '11111111-aaaa-4aaa-8aaa-111111111111',
+    }),
+    fetchImpl: async (url) => {
+      urls.push(new URL(String(url)));
+      return new Response(JSON.stringify({
+        data: [], meta: { total: 0, limit: 1, offset: 0, hasMore: false },
+      }), { status: 200 });
+    },
+  });
+  await client.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId: linkId });
+  assert.equal(urls.length, 1);
+  assert.equal(urls[0].pathname, '/api/v1/clientes');
+  assert.equal(urls[0].searchParams.get('cliente_empresa_id'), linkId);
+  assert.equal(urls[0].searchParams.get('limit'), '1');
+  await assert.rejects(client.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId: 'x' }), (e) => e.status === 422);
+  assert.equal(urls.length, 1);
+});
+
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
@@ -607,9 +674,75 @@ test('CANAL actual consumer does not auto-read and clears late results on sessio
  const tab=await readFile(new URL('../src/components/comercial/ClientesTab.jsx',import.meta.url),'utf8');assert.ok(tab.indexOf('if (conferencia) return')<tab.indexOf('<VisualizadorUniversalEntidadeV24'));assert.match(tab,/conferencia_legado/);const commercial=await readFile(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const ast=ts.createSourceFile('Comercial.jsx',commercial,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);const wrapper=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==='Comercial');assert.ok(wrapper);const exported={};vm.runInNewContext(ts.transpileModule(wrapper.getText(ast),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,{exports:exported,window:{location:{search:'?conferencia_legado=1'}},URLSearchParams,React:react,Suspense:'Suspense',ClientesTab:'EXACT_ONLY',ComercialContent:'BROAD'});const route=exported.default();assert.equal(route.props.children[0].type,'EXACT_ONLY');assert.equal(route.type,'Suspense');
 });
 
-test('CANAL integrity rejects unregistered changes inside and outside approved hunks',async()=>{const {clienteConferenciaRemainder,clienteConferenciaHunks}=await import('./helpers/consolidation81Remainder.js');const {readFile}=await import('node:fs/promises');for(const path of Object.keys(clienteConferenciaHunks)){const source=await readFile(path,'utf8');assert.ok(clienteConferenciaRemainder(path,source));assert.throws(()=>clienteConferenciaRemainder(path,source+'\n// unregistered mutation\n'));assert.throws(()=>clienteConferenciaRemainder(path,source.replace(clienteConferenciaHunks[path].hunks[0][0],'!'+clienteConferenciaHunks[path].hunks[0][0].slice(1))));}});
+test('CANAL integrity rejects unregistered changes inside and outside approved hunks',async()=>{
+ const {clienteConferenciaRemainder,clienteConferenciaHunks,clienteSelectedReferenceRemainder,clienteConferenciaHistoricalRemainder}=await import('./helpers/consolidation81Remainder.js');
+ const {readFile}=await import('node:fs/promises');
+ for(const path of Object.keys(clienteConferenciaHunks)){
+  const raw=await readFile(path,'utf8');
+  assert.ok(clienteConferenciaRemainder(path,raw));
+  const source=clienteSelectedReferenceRemainder(path,raw);
+  assert.ok(clienteConferenciaHistoricalRemainder(path,source));
+  assert.throws(()=>clienteConferenciaHistoricalRemainder(path,source+'\n// unregistered mutation\n'));
+  const after=clienteConferenciaHunks[path].hunks[0][0];
+  assert.equal(source.split(after).length,2);
+  const mutation=source.replace(after,()=>'!'+after.slice(1));
+  assert.notEqual(mutation,source);
+  assert.throws(()=>clienteConferenciaHistoricalRemainder(path,mutation));
+ }
+});
 
 test('CANAL malformed session primitives fail before fetch or legacy actor headers',async()=>{
  const input={identidades:[{documento:'11222333000181'}]};
  for(const token of [{},123,true,'','   ']){let calls=0;const api=createHttpApiClient({getScope:()=>({groupId:'synthetic-group',actorId:'synthetic-profile',token}),fetchImpl:async()=>{calls++;return new Response(JSON.stringify({data:[{indice:0,documento:null,legado:null}]}),{status:200});}});await assert.rejects(api.clientes.conferirLegado(input));assert.equal(calls,0);}
+});
+
+
+test('commercial masters HTTP: five bounded canonical GETs use one company/session snapshot', async () => {
+  const calls = [], scope = { token: 'synthetic-picker-token', actorId: 'synthetic-actor', groupId: 'synthetic-group', empresaId: 'synthetic-company' };
+  const api = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', getScope: () => scope,
+    fetchImpl: async (url, init) => { calls.push({ url: new URL(url), init }); return new Response(JSON.stringify({ data: [], meta: {total:0,limit:50,offset:0,hasMore:false} }), {status:200}); },
+  });
+  const pages = await api.comercialMasters.list({ clienteSearch: '001', produtoSearch: 'SYNTHETIC' });
+  assert.equal(calls.length, 5); assert.deepEqual(Object.keys(pages).sort(), ['clientes','condicoes','produtos','tabelas','unidades']);
+  for (const { url, init } of calls) {
+    assert.equal(init.method, 'GET'); assert.equal(init.body, undefined);
+    assert.equal(init.headers.Authorization, 'Bearer synthetic-picker-token');
+    assert.equal(init.headers['X-Group-Id'], scope.groupId); assert.equal(init.headers['X-Empresa-Id'], scope.empresaId);
+    assert.ok(Number(url.searchParams.get('limit')) <= 200);
+  }
+  assert.deepEqual(calls.map(c => c.url.pathname).sort(), ['/api/v1/clientes','/api/v1/condicoes-pagamento','/api/v1/produtos','/api/v1/tabelas-preco','/api/v1/unidades-medida'].sort());
+  for (const path of ['/api/v1/clientes','/api/v1/produtos']) assert.equal(calls.find(c => c.url.pathname===path).url.searchParams.get('operacao'), 'true');
+});
+test('commercial masters HTTP: missing company, late context, failure and abort never fall back locally', async () => {
+  let scope = { token: 'synthetic-picker-token', actorId: 'synthetic-actor', groupId: 'synthetic-group', empresaId: '' }, calls = 0;
+  const controller = new AbortController();
+  const api = createHttpApiClient({ baseUrl: 'https://erp.synthetic.test', getScope: () => scope,
+    fetchImpl: async () => { calls++; if(calls===5)scope={...scope,empresaId:'other-company'};return new Response(JSON.stringify({data:[]}),{status:200}); },
+  });
+  await assert.rejects(api.comercialMasters.list(), e => e.status===401); assert.equal(calls,0);
+  scope={...scope,empresaId:'synthetic-company'};
+  await assert.rejects(api.comercialMasters.list(), e => e.code==='CONTEXT_CHANGED'); assert.equal(calls,5);
+  controller.abort(); await assert.rejects(api.comercialMasters.list({signal:controller.signal}), e=>e.code==='CONTEXT_CHANGED'); assert.equal(calls,5);
+  await assert.rejects(api.comercialMasters.list({clienteSearch:'x'.repeat(201)}), e=>e.status===422); assert.equal(calls,5);
+  const denied = createHttpApiClient({baseUrl:'https://erp.synthetic.test',getScope:()=>scope,
+    fetchImpl:async()=>new Response(JSON.stringify({error:{code:'PERMISSION_DENIED'}}),{status:403})});
+  await assert.rejects(denied.comercialMasters.list(), e=>e.status===403);
+});
+
+test('canonical masters: exact source guards reject missing, repeated and modified approved hunks', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { clienteConferenciaHunks, clienteConferenciaRemainder: composed, clienteSelectedReferenceRemainder, clienteConferenciaHistoricalRemainder: clienteConferenciaRemainder } = await import('./helpers/consolidation81Remainder.js');
+  for (const path of ['server/src/api/router.ts','server/src/services/clienteService.ts','src/api/httpApiClient.js']) {
+    const raw = readFileSync(path, 'utf8');
+    assert.doesNotThrow(() => composed(path, raw));
+    const source = clienteSelectedReferenceRemainder(path, raw);
+    assert.doesNotThrow(() => clienteConferenciaRemainder(path, source));
+    for (const [after, before] of clienteConferenciaHunks[path].hunks) {
+      assert.equal(source.split(after).length,2);
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, before)));
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + after)));
+      assert.throws(() => clienteConferenciaRemainder(path, source.replace(after, after + '\nvoid "SYNTHETIC_OUT_OF_SCOPE";\n')));
+    }
+    assert.throws(() => clienteConferenciaRemainder(path, source + '\nvoid "SYNTHETIC_OUTSIDE";\n'));
+  }
 });

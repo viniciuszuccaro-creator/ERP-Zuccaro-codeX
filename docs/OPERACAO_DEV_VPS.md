@@ -1,5 +1,125 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+### Atualizacao de validacao condicional (2026-10-28)
+
+Assinaturas confirmadas no catalogo DEV com PUBLIC EXECUTE: lo_creat(integer),
+lo_create(oid), lo_from_bytea(oid,bytea), lo_open(oid,integer),
+lo_put(oid,bigint,bytea), lo_truncate(integer,integer),
+lo_truncate64(integer,bigint), lo_unlink(oid), lowrite(integer,bytea).
+Nao executar contraprova mutante no DEV; a reproducao foi apenas sintetica/rollback.
+Complemento: PUBLIC nao tem CREATE no schema public, mas CONNECT e efetivo em seis
+bancos. Uma role sem memberships continua recebendo PUBLIC; revogar somente da
+role nao basta. Nenhuma alteracao PUBLIC ou acesso a registros desses bancos foi feito.
+Extensao candidata, fora da autorizacao atual: snapshot ACL/matriz efetiva das31roles,
+substituir somente PUBLIC EXECUTE das nove assinaturas por concessoes equivalentes
+as roles existentes e excluir o novo leitor; restringir CONNECT fora do destino
+aprovado sem reduzir capacidades atuais. Exige avaliar futuras roles/memberships,
+grantors/opcoes e outras vias antes de definir o patch final e pedir sua aplicacao.
+Sem CASCADE, DROP OWNED, mudanca HBA/rede, senha administrativa ou grants por inferencia.
+Ensaio com SET SESSION AUTHORIZATION e ACL simulada nao substitui LOGIN autenticado.
+
+A autorizacao posterior cobre leitor temporario por ate 1h e as cinco policies,
+SOMENTE apos ensaio/revisao. O ensaio detectou PUBLIC EXECUTE capaz de criar/escrever
+large objects, reproduzido apenas no PG sintetico e revertido. Catalogo DEV confirmou
+nove assinaturas com PUBLIC EXECUTE; nenhuma funcao de mutacao executada no DEV.
+O patch abaixo esta BLOQUEADO: nao aplicar nem declarar o principal somente leitor.
+Extensao ACL separada exige snapshot original (inclusive NULL, grantors/grant options),
+matriz efetiva das 31 roles, preservacao/reversao e inventario de outras vias de escrita
+/bancos/EXECUTE. REVOKE individual nao nega PUBLIC. Alterar PUBLIC e conceder grants
+diretos para preservar roles existentes altera semantica futura e exige nova decisao.
+Nenhuma alteracao PUBLIC/role API/DB/negocio foi feita. Detalhes no STATUS/HANDOFF;
+recibos e comandos sinteticos privados preservados. Auth LOGIN real continua sem prova.
+
+## Gate SQL de reconciliacao100 - proposta NAO APLICADA (2026-10-28)
+
+SSH dedicado ja comprovado; nao reprovisionar. Inspecao administrativa de catalogos
+confirmou API DEV com conexao interna ao mesmo PostgreSQL; nenhum cliente lido.
+31 roles/10 LOGIN, 6 LOGIN sem super/BYPASSRLS e todas sem SELECT em clientes.
+A role read_only global tem BYPASSRLS: recusada. RLS/FORCE das quatro tabelas
+necessarias estao ativos, mas sem policies. groups tambem tem RLS/FORCE.
+A consulta administrativa a pg_hba_file_rules foi negada: nao ampliar privilegios.
+O canal local para um NOVO principal ainda exige prova; nao alterar HBA/rede por tentativa.
+
+### Decisao unica proposta
+
+Autorizar SOMENTE a preparacao/revisao e, em janela especifica, criacao temporaria
+do leitor abaixo e de suas policies SELECT dedicadas, apos ensaio isolado e pins
+privados de destino, CPA, empresas e coorte. NAO e autorizacao vigente para executar.
+Nao mudar a role API, roles existentes, memberships, policies existentes ou PUBLIC.
+Sem migrations gerais, porta PG publica, sudo/docker delegado ou carga.
+
+Contrato exato do patch candidato (psql; variaveis SEM valores reais no Git):
+- reader_expiry: timestamp absoluto de janela maxima de 1h aprovada; nao herdar o prazo SSH.
+- cpa_group_id, company_ids e cohort_docs: valores do binding e manifesto privado
+  existentes, conferidos e hasheados; exatamente 100 documentos normalizados distintos.
+- Nenhum segredo em argv/historico/Git/log. Se autenticacao local existente exigir
+  segredo, credencial efemera exclusivamente em arquivo privado 0600 do executor
+  administrativo; nao copiar para a conta SSH. Nao gerar antes da aprovacao.
+
+
+a) Role e privilegios candidatos, dentro de uma transacao administrativa:
+
+
+definicao: CREATE ROLE erp_legado_reconcile_344_ro LOGIN NOSUPERUSER NOBYPASSRLS
+NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION CONNECTION LIMIT 1
+VALID UNTIL :'reader_expiry';
+GRANT CONNECT ON DATABASE postgres TO erp_legado_reconcile_344_ro;
+GRANT USAGE ON SCHEMA public TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,empresa_id,codigo,tipo,documento,documento_normalizado,
+nome,razao_social,nome_fantasia,nome_social,inscricao_estadual,inscricao_municipal,
+telefone_principal,email,telefone,celular,status,origem,codigo_legado,legacy_id,
+legacy_code,source_system,migration_batch,observacoes,ativo,created_at,updated_at)
+ON public.clientes TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,cliente_id,empresa_id,ativo,situacao_comercial,
+habilitado_operacao,bloqueado,motivo_bloqueio,origem,legacy_id,legacy_code,
+source_system,migration_batch,created_at,updated_at)
+ON public.cliente_empresas TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,cliente_id,nome,cep,logradouro,numero,complemento,
+bairro,cidade,uf,pais,endereco_incompleto,endereco_fingerprint,ativo,origem,
+legacy_id,legacy_code,source_system,migration_batch,created_at,updated_at)
+ON public.cliente_locais TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,group_id,razao_social,nome_fantasia,status)
+ON public.empresas TO erp_legado_reconcile_344_ro;
+GRANT SELECT (id,nome_do_grupo,razao_social_grupo,status)
+ON public.groups TO erp_legado_reconcile_344_ro;
+
+b) Policies candidatas: cinco policies FOR SELECT TO erp_legado_reconcile_344_ro,
+com nomes exclusivos reconcile344_ro_<tabela>. Predicados fixados no DDL, NAO em
+GUC que o leitor possa adulterar:
+- clientes: group_id = :'cpa_group_id'::uuid AND
+  documento_normalizado = ANY(:'cohort_docs'::text[]).
+- cliente_empresas: group_id = CPA AND empresa_id = ANY(company_ids::uuid[])
+  AND cliente_id IN (SELECT id FROM public.clientes).
+- cliente_locais: group_id = CPA AND cliente_id IN (SELECT id FROM public.clientes).
+- empresas: group_id = CPA AND id = ANY(company_ids::uuid[]).
+- groups: id = CPA.
+Nao filtrar ativo: preservar historicos e detectar referencias inativas; isto nao
+libera escrita ou operacao comercial. Nao conceder SELECT em profiles ou outras tabelas.
+As referencias CPA/company_ids acima representam literais privados validados,
+nao nomes comerciais inferidos. O gerador deve recusar placeholders/contagem divergente.
+
+c) Antes de COMMIT/liberacao, abortar se houver membership/SET ROLE alcancavel,
+SUPER/BYPASSRLS/ownership, CREATE de schema, DML/sequence ou EXECUTE mutante relevante
+herdado de PUBLIC. As quatro funcoes SECURITY DEFINER de schemas nao-sistema
+observadas nao tinham USAGE/EXECUTE PUBLIC; refazer apenas se ACL/DDL mudar.
+Nao tentar corrigir grant PUBLIC global por conveniencia: apresentar impacto separado.
+Ensaio isolado deve provar negativas cross-Grupo/empresa/coorte, DML/DDL/funcoes,
+revogacao, falha intermediaria e identidade current_user=session_user=leitor.
+
+d) Canal escolhido: console administrativo existente -> docker exec no DB existente
+-> psql -X -v ON_ERROR_STOP=1 -U erp_legado_reconcile_344_ro -d postgres,
+SEM SET ROLE de administrador. Falha de autenticacao local bloqueia, nao autoriza
+mudar HBA. Execucao restrita ao SQL revisado, saida detalhada privada 0600.
+Validar sessao da aplicacao e binding CPA pelo fluxo autorizado; nao impersonar usuario.
+Consulta de documentos limitada a coorte, REPEATABLE READ READ ONLY, timeout e ROLLBACK.
+So contagens/categorias sanitizadas no Git. Ausencia de leitura NAO significa destino vazio.
+
+e) Reversao exata: bloquear LOGIN, encerrar somente sessoes desse leitor, revogar
+seus SELECT/USAGE/CONNECT, remover somente as cinco policies reconcile344_ro_*
+e a role dedicada apos confirmar dependencias. Nao usar DROP OWNED ou remover
+policies/grants anteriores. Confirmar roles/policies preexistentes inalteradas.
+Nenhuma autorizacao de importacao operacional, deploy ou mudanca da API acompanha o gate.
+
 ## Prioridade e separacao vigentes (2026-10-26)
 
 A entrada em uso segue PLANO_GO_LIVE.md; lista unica no topo de
@@ -58,6 +178,45 @@ VPS autorizada; não deve ser presumida. Não documentar senhas, tokens, arquivo
 de ambiente, cookies, dados de clientes, chave privada SSH nem IP público desnecessário.
 
 ## Acesso operacional Cursor / Codex (canônico)
+
+### Codespace Codex — acesso dedicado aprovado, prazo vigente
+
+Aprovado pelo proprietário em28/10/2026: provisionar somente usuário novo `erp-codex-ro`, sem sudo/docker, senha bloqueada, chave dedicada com `restrict,expiry-time="20261227T235900Z"`. Chave válida até27/12/2026 às20:59 America/Sao_Paulo; conta expira28/12/2026; revogar antecipadamente ao concluir a frente. Isto substitui os prazos30/10 e31/10 dos blocos históricos. Não autoriza privilégios administrativos ao Codex, alteração de chaves atuais, sshd/firewall, carga, DDL, grants ou deploy. Conta existente exige inspeção de procedência/configuração, nunca sobrescrita.
+
+Chave local exclusiva já preparada, não gerar outra: diretório privado0700 `/home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028`; `id_ed25519`0600 permanece somente local. Fingerprint CLIENTE público: `SHA256:D+z9tzBoEVkhLfmUwWOunGGUpC05vPLm2m3vYMPTELI`. Não é identidade HOST. Nenhum envio de credenciais ao chat/GitHub; nesta etapa usar arquivo privado existente, sem exigir Runtime Secrets nem upload de secrets. Os nomes ERP_CODEX_VPS_* dos registros históricos não indicam valores efetivamente disponíveis.
+
+#### Procedimento administrativo humano único — bloco e recepção atômica
+
+Prazo conferido com autorização original: chave20261227T235900Z (27/12/2026 20:59 Brasília), conta28/12. Script original privado `server-provisioning.PROPOSED.sh`, diretório `/home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028`. A versão anterior está preservada em server-provisioning.before-public-receipt.sh; mesma chave/usuário/alcance aprovados. Extensão apenas para validar endpoint/porta e emitir recibo público. Conta existente continua condição de inspeção/aborto, sem sobrescrever; mostra id, status, expiração, ownership/permissões e fingerprints públicos quando acessíveis. Procedência que esses metadados não comprovem permanece pendente de revisão, não presumida.
+
+1. No editor do Codespace, Ctrl+P → colar `/home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028/web-console-approved.block.sh` → Enter. Ctrl+A/Ctrl+C copia o BLOCO completo. Este arquivo envolve o script aprovado num heredoc para colagem segura; não é outro provisionador. Não copiar id_ed25519. Não executar esse bloco no Codespace.
+2. [hPanel](https://hpanel.hostinger.com) → VPS → srv1982741 → Terminal do navegador, usando autenticação administrativa somente nesse console confiável. Conferir servidor/endereço no painel. Na barra lateral, Clipboard permite colar o bloco completo (inicia sh << e termina ERP_CODEX_APPROVED_CONSOLE). Informar no próprio console o endereço SSH DIRETO confirmado no painel (sem usuário/URL) e a porta efetiva. O script confirma listener sshd/systemd nessa porta, sem mudar sshd/firewall. Não presume domínio web como endpoint SSH nem porta22. Guia: [Hostinger](https://www.hostinger.com/br/support/7978544-como-usar-o-terminal-do-navegador/).
+3. Resultado esperado: id somente grupo dedicado, senha L, expiração28/12, fingerprint CLIENTE D+z9tzBoEVkhLfmUwWOunGGUpC05vPLm2m3vYMPTELI, fingerprint HOST separado e PROVISIONED. STOP significa parar e devolver somente motivo sanitizado, sem repetir criação. Script não lê dados de negócio, env, backups ou credenciais. Se falhar depois da criação, expira/bloqueia somente conta nova.
+4. O console imprime BEGIN_ERP_PUBLIC_HOST_RECEIPT, um JSON e END_ERP_PUBLIC_HOST_RECEIPT. Copiar SOMENTE o JSON, incluindo chaves, diretamente dessa sessão confiável. No Codespace Ctrl+N → colar → Salvar como `/home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028/host-console-receipt.incoming.json`. Isso transfere somente host público, porta, chave HOST pública e fingerprint; nada de chave privada/senha/token no chat. Canal efetivamente disponível: editor do Codespace e clipboard da Web Console. Cliente sftp existe mas nenhuma sessão SFTP autenticada foi comprovada; FileZilla não encontrado no executor e computador do proprietário inacessível. Não propor SFTP como primeira prova SSH circular nem presumir FileZilla.
+5. Avisar apenas “recibo salvo” ou motivo STOP. Codex executa o receptor privado existente neste lote: `python3 /home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028/accept-host-console.py --from-authenticated-console`. Flag registra a procedência humana, não cria confiança por si. Receptor recusa server/alias/endpoint/porta inválidos, chave CLIENTE tratada como HOST, fingerprint divergente, permissões inseguras e vínculo existente diferente. Diretório0700/arquivos0600, temporários no mesmo filesystem, fsync/rename atômico por arquivo e configuração publicada por último. Instala `known_hosts.verified` e `ssh_config.verified`; não substitui vínculos existentes divergentes nem altera ~/.ssh/config. Comprovação de origem depende da captura no console confiável, não do hash sozinho.
+6. Alias fixo `erp-dev-vps-canonical` nas duas pontas: campo known_hosts e HostKeyAlias. Com HostKeyAlias explícito OpenSSH usa esse alias LITERAL, mesmo em porta não padrão; Port seleciona a conexão separadamente. Não acrescentar automaticamente [alias]:porta. Implementação primária: [OpenSSH get_hostfile_hostname_ipaddr](https://github.com/openssh/openssh-portable/blob/master/sshconnect.c). Receptor verifica ssh -G com endpoint/porta/HostKeyAlias/UserKnownHostsFile efetivos. HostKeyAlgorithms=ssh-ed25519; StrictHostKeyChecking=yes; GlobalKnownHostsFile=/dev/null; sem KnownHostsCommand, DNS trust, proxy, multiplexação, senha ou agent forwarding. Comparar fingerprint calculado com o exibido no console confiável. Conectar somente com `ssh -F /home/codespace/erp-legado-privado-20261023/access-codex-readonly-20261028/ssh_config.verified erp-codex-ro-dev` depois dessas validações. Não usar ssh-keyscan/accept-new para estabelecer confiança.
+7. Codex assume autenticação dedicada, hostname/versão, grupos e restrições/expiração, política sudo e recibos sanitizados, sem dados de negócio até comprovar principal SQL EXISTENTE estritamente leitor, ACL/RLS/memberships, sessão e Grupo CPA em contexto explícito. READ ONLY+ROLLBACK são adicionais; shell/restrict não são sandbox. Se sudo -n -l exigir senha, isso sozinho não prova ausência de sudo: preservar inspeção administrativa/root do provisionamento ou marcar inconclusivo. Não adicionar sudo/docker, abrir env ou criar grants para contornar acesso.
+8. Reversão no console administrativo: executar `revoke-dedicated-access.sh` do mesmo diretório privado ao concluir ou antes do prazo. Expira/bloqueia só a conta dedicada, remove só sua chave e encerra processos do seu UID não0; preserva home/logs/evidências e demais contas/chaves. Prazo não encerra sozinho sessões abertas. Nenhuma delegação administrativa nova para automatizar reversão.
+
+Provas locais: script e bloco sh -n PASS; receptor9checks PASS (porta22/2222, alias, permissões, repetição, recusa de vínculo alterado, fingerprint/servidor/endpoint/porta inválidos e chave cliente como HOST). Recibo host-receiver-tests.private.json. Prova anterior do provisionador4simulações reutilizada para seus ramos inalterados, não cobre listener/entradaTTY novos nem prova execução remota. Nenhum arquivo verified instalado ou conexão SSH antes do recibo confiável. Helpers privados novos são necessários à recepção/validação atômica ausente no script anterior; reutilizam diretório, chave, provisionador e configuração existentes, sem importer/módulo paralelo.
+
+### Recuperação ERP novo — reconectar Base44 existente
+
+No MESMO cliente/conta proprietária e workspace: Plugins → Installed → Base44 → abrir detalhes/conexão e concluir a ação de reconectar/autenticar oferecida para a conexão expirada. Não instalar outro plugin, excluir a integração ou criar app. Plugins instalados são acessíveis pela linha Installed ([documentação oficial](https://learn.chatgpt.com/docs/plugins)); a localização/nome exato do botão OAuth depende do cliente. Se não houver ação de reconexão, registrar essa limitação da interface em vez de inventar comando ou solicitar senha/token. A ferramenta disponível não expõe ação de reautenticação programática.
+
+Após conclusão, avisar somente que a conexão foi renovada. Executor lista apps autorizados uma vez e valida nome/URL/ID, conta/tenant, procedência e data da fonte pré-perda antes de ler registros. Não escolher primeiro app/seed por semelhança. O app original ainda não está identificado de forma confiável; .env local sem referência Base44 não prova identidade. Consulta UNAUTHORIZED anterior não foi repetida. Recuperar registros exige comparação privada no mesmo escopo; não usar entidades Git/fixtures/coorte legado como substituto.
+
+### Prévia privada sintética — iniciar, verificar e retomar
+
+Reutilizar harness privado existente `decision-20261026/resume-20261028/browser-harness.mjs` sob `/home/codespace/erp-legado-privado-20261023`. Não é deploy nem banco operacional. Executar somente após conferir checkout/branch/HEAD/status/processos e inexistência de outro dono da5173. Em terminal próprio, cwd canônico, Node22:
+
+```bash
+ERP_PREVIEW_EXPECTED_SHA="$(git rev-parse HEAD)" PATH=/usr/local/share/nvm/versions/node/v22.23.4/bin:$PATH node /home/codespace/erp-legado-privado-20261023/decision-20261026/resume-20261028/browser-harness.mjs
+```
+
+Harness recusa Codespace/origin/branch/SHA divergentes e diff de runtime antes de criar recursos; diretório de recibos identity-preview-20261028 deve permanecer0700. Verificar listener real, encaminhamento5173 Private e HTTP local `/__erp_fixture` (sourceSha, synthetic, operationalDatabase=false), `/__erp_preview` (HEAD atual), aviso sintético antes/depois do login. Login exclusivamente fixture: entry.synthetic@example.test / synthetic-entry-only. URL HTTPS externa termina em `-5173.app.github.dev/Comercial`; usar localhost para teste local, preservando redirecionamento HTTPS de127.0.0.1. Não publicar logs completos ou credenciais reais.
+
+Parar com Ctrl-C SOMENTE no terminal do harness próprio; cleanup usa seu container/labels/socket. Não matar processos genéricos nem tocar recursos alheios. Retomada repete verificações de identidade/exclusividade e comando: cria novo banco efêmero sintético, não recupera dados operacionais. Duração máxima6h/Codespace ativo; sem promessa24h ou mudança de suspensão/custos. Promoção para DEV diário exige gate existente de versão/imagens, autenticação/roles, backup/rollback, aprovação/deploy; não está autorizada por esta prévia.
 
 Objetivo: qualquer agente ou PC novo consiga operar a VPS **sem** reenviar
 credenciais no chat. Segredos ficam no ambiente Cursor (Runtime Secrets) ou no

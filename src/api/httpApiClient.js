@@ -628,6 +628,70 @@ SeparacaoConferencia: {
     })(),
   };
 
+  const comercialMasters = {
+    /** @param {{clienteSearch?:string,produtoSearch?:string,clienteEmpresaId?:string,signal?:AbortSignal}} [options] */
+    async list({ clienteSearch = '', produtoSearch = '', clienteEmpresaId, signal } = {}) {
+      const before = Object.freeze({ ...(getScope() || {}) });
+      const matches = current => current.token === before.token && current.groupId === before.groupId
+        && current.empresaId === before.empresaId && current.actorId === before.actorId;
+      const failure = (status, code) => createHttpError(status, { error: { code } }, undefined);
+      if (!before.token || !before.groupId || !before.empresaId || !before.actorId) throw failure(401, 'AUTH_COMPANY_REQUIRED');
+      if ([clienteSearch, produtoSearch].some(value => typeof value !== 'string' || value.length > 200 || value !== value.trim())) {
+        throw failure(422, 'VALIDATION_ERROR');
+      }
+      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');
+      if (clienteEmpresaId !== undefined && (typeof clienteEmpresaId !== 'string'
+        || clienteEmpresaId.length !== 36 || clienteEmpresaId !== clienteEmpresaId.trim() || clienteSearch)) {
+        throw failure(422, 'VALIDATION_ERROR');
+      }
+      let pages, caught;
+      try {
+        pages = await Promise.all([
+          request('/api/v1/clientes', { query: { operacao: true, ativo: true, cliente_empresa_id: clienteEmpresaId, search: clienteSearch, limit: clienteEmpresaId ? 1 : 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),
+          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),
+          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),
+          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),
+          request('/api/v1/tabelas-preco', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),
+        ]);
+      } catch (error) { caught = error; }
+      if (signal?.aborted || !matches(getScope() || {})) throw failure(409, 'CONTEXT_CHANGED');
+      if (caught) throw caught;
+      if (!pages) throw failure(502, 'COMERCIAL_MASTERS_INVALID');
+      return { clientes: pages[0], produtos: pages[1], condicoes: pages[2], unidades: pages[3], tabelas: pages[4] };
+    },
+    /**
+     * Lookup leve de vínculo operacional (somente /clientes).
+     * Evita fan-out N×5 do list() completo na hidratação de labels por linha.
+     * @param {{clienteEmpresaId?:string,signal?:AbortSignal}} [options]
+     */
+    async resolveClienteEmpresa({ clienteEmpresaId, signal } = {}) {
+      const before = Object.freeze({ ...(getScope() || {}) });
+      const matches = current => current.token === before.token && current.groupId === before.groupId
+        && current.empresaId === before.empresaId && current.actorId === before.actorId;
+      const failure = (status, code) => createHttpError(status, { error: { code } }, undefined);
+      if (!before.token || !before.groupId || !before.empresaId || !before.actorId) throw failure(401, 'AUTH_COMPANY_REQUIRED');
+      if (typeof clienteEmpresaId !== 'string'
+        || clienteEmpresaId.length !== 36 || clienteEmpresaId !== clienteEmpresaId.trim()) {
+        throw failure(422, 'VALIDATION_ERROR');
+      }
+      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');
+      let page, caught;
+      try {
+        page = await request('/api/v1/clientes', {
+          query: {
+            operacao: true, ativo: true, cliente_empresa_id: clienteEmpresaId,
+            search: '', limit: 1, offset: 0, order_by: 'codigo',
+          },
+          signal, unwrap: false,
+        }, before);
+      } catch (error) { caught = error; }
+      if (signal?.aborted || !matches(getScope() || {})) throw failure(409, 'CONTEXT_CHANGED');
+      if (caught) throw caught;
+      if (!page) throw failure(502, 'COMERCIAL_MASTERS_INVALID');
+      return { clientes: page };
+    },
+  };
+
   const orcamentos = {
     /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, validadeDe?: string, validadeAte?: string, signal?: AbortSignal }} [options] */
     list({ limit = 50, offset = 0, search, status, clienteEmpresaId, validadeDe, validadeAte, signal } = {}) {
@@ -894,6 +958,7 @@ SeparacaoConferencia: {
         unwrap: false,
       });
     },
+    comercialMasters,
     orcamentos,
     pedidos,
     expedicao,

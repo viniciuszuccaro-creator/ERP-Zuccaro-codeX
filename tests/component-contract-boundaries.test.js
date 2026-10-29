@@ -41,9 +41,14 @@ const hashes = {
 for (const [file, expected] of Object.entries(hashes)) test(`${file}: full stage52 source outside exact component-contract hunks unchanged`, () => {
   const digest = source => createHash('sha256').update(source).digest('hex');
   assert.equal(digest(componentContractRemainder(file, read(file))), expected);
-  const [current, previous] = componentContractHunks[file][0];
-  assert.throws(() => componentContractRemainder(file, read(file).replace(current, previous)));
-  assert.throws(() => componentContractRemainder(file, read(file).replace(current, current + '\n' + current)));
+  for (const [current, previous] of componentContractHunks[file]) {
+    assert.throws(() => componentContractRemainder(file, read(file).replace(current, () => previous)));
+    assert.throws(() => componentContractRemainder(file, read(file).replace(current, () => current + '\n' + current)));
+    const midpoint = Math.floor(current.length / 2);
+    const mutated = read(file).replace(current, () => current.slice(0, midpoint) + '/* unintended */' + current.slice(midpoint));
+    assert.notEqual(mutated, read(file));
+    assert.throws(() => componentContractRemainder(file, mutated));
+  }
   assert.notEqual(digest(componentContractRemainder(file, '// unintended edit\n' + read(file))), expected);
 });
 

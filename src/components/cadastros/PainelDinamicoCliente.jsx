@@ -39,6 +39,23 @@ import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContat
 import { toast } from "sonner";
 
 /**
+ * Contrato escalar HTTP: contatos[] canônico ausente/vazio e só há
+ * contatos_escalares / campos e-mail|telefone|celular. Backends que
+ * persistem contatos[] completo NÃO entram neste modo (Codex P2 #4410814424).
+ */
+function usesContatosScalarHttpContract(cliente) {
+  if (Array.isArray(cliente?.contatos) && cliente.contatos.length > 0) return false;
+  if (Array.isArray(cliente?.contatos_escalares?.items) && cliente.contatos_escalares.items.length > 0) {
+    return true;
+  }
+  return Boolean(
+    (typeof cliente?.email === "string" && cliente.email.trim())
+    || (typeof cliente?.telefone === "string" && cliente.telefone.trim())
+    || (typeof cliente?.celular === "string" && cliente.celular.trim()),
+  );
+}
+
+/**
  * Rascunho do Painel: preferir contatos[] canônico; se HTTP só trouxe escalares
  * (contatos_escalares incompleto), semear a UI a partir deles — nunca começar
  * vazio e gravar parcial que nullifica e-mail/telefone/celular existentes.
@@ -46,7 +63,7 @@ import { toast } from "sonner";
  */
 function seedContatosPainelDraft(cliente) {
   if (Array.isArray(cliente?.contatos) && cliente.contatos.length > 0) {
-    return cliente.contatos;
+    return cliente.contatos.map((row) => ({ ...row }));
   }
   const items = cliente?.contatos_escalares?.items;
   if (Array.isArray(items) && items.length > 0) {
@@ -57,7 +74,17 @@ function seedContatosPainelDraft(cliente) {
       principal: false,
     }));
   }
-  return Array.isArray(cliente?.contatos) ? cliente.contatos : [];
+  // Hidratação inicial a partir de escalares soltos (sem inventar principal).
+  const seeded = [];
+  const push = (tipo, valor) => {
+    if (valor == null || String(valor).trim() === "") return;
+    seeded.push({ nome: "", tipo, valor: String(valor).trim(), principal: false });
+  };
+  push("E-mail", cliente?.email);
+  push("Telefone", cliente?.telefone);
+  push("WhatsApp", cliente?.celular);
+  if (seeded.length > 0) return seeded;
+  return Array.isArray(cliente?.contatos) ? cliente.contatos.map((row) => ({ ...row })) : [];
 }
 
 function contatoDraftTemCanal(lista, hints) {
@@ -67,17 +94,35 @@ function contatoDraftTemCanal(lista, hints) {
   });
 }
 
-/** Remove preferência principal quando há ≥2 canais com valor (fidelidade escalar). */
-function stripPrincipalQuandoMultiCanal(lista) {
+/**
+ * Preferência `principal` no contrato escalar HTTP com ≥2 canais valorados:
+ * - hydrate (`onConflict: 'strip'`): limpa principal inventado na UI
+ * - persist (`onConflict: 'reject'`): rejeita — sem sucesso com perda silenciosa
+ *   (parecer 6498240997). Backends com contatos[] canônico não entram aqui.
+ */
+function stripPrincipalQuandoMultiCanal(lista, { scalarContract = false, onConflict = "strip" } = {}) {
   const next = Array.isArray(lista) ? lista.map((row) => ({ ...row })) : [];
-  const valuedCount = next.filter((row) => String(row?.valor || "").trim() !== "").length;
-  if (valuedCount > 1) {
-    return next.map((row) => ({ ...row, principal: false }));
+  if (!scalarContract) return next;
+  const valued = next.filter((row) => String(row?.valor || "").trim() !== "");
+  if (valued.length <= 1) return next;
+  const hasPrincipal = valued.some((row) => row.principal === true);
+  if (!hasPrincipal) return next;
+  if (onConflict === "reject") {
+    throw Object.assign(
+      new Error(
+        "Preferência principal não representável no contrato escalar (e-mail/telefone/celular). Ajuste canais ou use o cadastro completo.",
+      ),
+      { code: "CONTATOS_SCALAR_OVERFLOW", reason: "principal_nao_representavel", status: 422 },
+    );
   }
-  return next;
+  return next.map((row) => ({ ...row, principal: false }));
 }
 
-/** Garante que escalares já persistidos apareçam na lista antes da projeção HTTP. */
+/**
+ * Hidratação inicial: preenche canais escalares ausentes no rascunho.
+ * NÃO usar no caminho de persistência após exclusão explícita
+ * (Codex P2 #4410814417) — exclusão do operador deve prevalecer.
+ */
 function ensureContatosPreserveEscalars(lista, cliente) {
   const next = Array.isArray(lista) ? [...lista] : [];
   const push = (tipo, valor, hints) => {
@@ -93,7 +138,9 @@ function ensureContatosPreserveEscalars(lista, cliente) {
   push("E-mail", cliente?.email, ["email", "e-mail"]);
   push("Telefone", cliente?.telefone, ["telefone", "fone", "phone"]);
   push("WhatsApp", cliente?.celular, ["celular", "whatsapp", "whats"]);
-  return stripPrincipalQuandoMultiCanal(next);
+  return stripPrincipalQuandoMultiCanal(next, {
+    scalarContract: usesContatosScalarHttpContract(cliente),
+  });
 }
 
 /**
@@ -112,9 +159,11 @@ function createContatosPersistQueue() {
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function PainelDinamicoCliente({ cliente, isOpen, onClose, windowMode = false }) {
+export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("enderecos");
-  const [contatosDraft, setContatosDraft] = useState(() => seedContatosPainelDraft(cliente));
+  /** Snapshot vivo: prop pode ser stale ao reabrir de janela pai (Codex P2 #4410939762). */
+  const [clienteLive, setClienteLive] = useState(clienteProp);
+  const [contatosDraft, setContatosDraft] = useState(() => seedContatosPainelDraft(clienteProp));
   const [contatosSaving, setContatosSaving] = useState(false);
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
@@ -122,43 +171,99 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
   const { updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
-  const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, cliente?.id ?? null]);
+  const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, clienteProp?.id ?? null]);
   const contatosPersistQueueRef = useRef(null);
+  /** Trava contrato escalar na abertura — não promover rascunho a contatos[] após save (Codex #4413059634). */
+  const scalarContractLockedRef = useRef(usesContatosScalarHttpContract(clienteProp));
   if (!contatosPersistQueueRef.current) {
     contatosPersistQueueRef.current = createContatosPersistQueue();
   }
 
   useEffect(() => {
-    setContatosDraft(seedContatosPainelDraft(cliente));
-  }, [cliente?.id, cliente?.contatos, cliente?.contatos_escalares, painelScopeKey]);
+    setClienteLive(clienteProp);
+    setContatosDraft(seedContatosPainelDraft(clienteProp));
+    scalarContractLockedRef.current = usesContatosScalarHttpContract(clienteProp);
+  }, [clienteProp?.id, clienteProp?.contatos, clienteProp?.contatos_escalares, clienteProp?.email, clienteProp?.telefone, clienteProp?.celular, painelScopeKey]);
+
+  // Reabertura: recarregar registro persistido (não reutilizar só o snapshot do pai).
+  useEffect(() => {
+    if (!isOpen || !clienteProp?.id) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const fresh = await base44.entities.Cliente.get(clienteProp.id);
+        if (cancelled || !fresh) return;
+        setClienteLive(fresh);
+        setContatosDraft(seedContatosPainelDraft(fresh));
+        scalarContractLockedRef.current = usesContatosScalarHttpContract(fresh);
+      } catch {
+        // Mantém snapshot atual; não inventar contatos.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, clienteProp?.id, painelScopeKey]);
 
   const persistContatosPainel = (next) => {
-    const incoming = Array.isArray(next) ? next : [];
-    const lista = ensureContatosPreserveEscalars(incoming, cliente);
-    setContatosDraft(lista);
+    const incoming = Array.isArray(next) ? next.map((row) => ({ ...row })) : [];
+    const previousDraft = contatosDraft;
+    const scalarContract = scalarContractLockedRef.current
+      || usesContatosScalarHttpContract(clienteLive || clienteProp);
+    // Persistência: lista do operador vence — não re-hidratar escalares apagados
+    // (Codex P2 #4410814417). Principal multi-canal escalar → rejeita (6498240997).
+    let lista;
+    try {
+      lista = stripPrincipalQuandoMultiCanal(incoming, {
+        scalarContract,
+        onConflict: "reject",
+      });
+    } catch (error) {
+      toast.error(error?.message || "Contatos não representáveis no contrato escalar.");
+      setContatosDraft(previousDraft);
+      return Promise.resolve({ skipped: true, lista: previousDraft, error });
+    }
     return contatosPersistQueueRef.current(async () => {
-      if (!cliente?.id) return { skipped: true, lista };
+      const live = clienteLive || clienteProp;
+      if (!live?.id) return { skipped: true, lista };
       if (!groupId && !empresaId) {
         toast.error("Selecione grupo ou empresa antes de salvar contatos.");
         return { skipped: true, lista };
       }
       const hasScalars = Boolean(
-        (typeof cliente?.email === "string" && cliente.email.trim())
-        || (typeof cliente?.telefone === "string" && cliente.telefone.trim())
-        || (typeof cliente?.celular === "string" && cliente.celular.trim())
-        || (Array.isArray(cliente?.contatos_escalares?.items) && cliente.contatos_escalares.items.length > 0),
+        (typeof live?.email === "string" && live.email.trim())
+        || (typeof live?.telefone === "string" && live.telefone.trim())
+        || (typeof live?.celular === "string" && live.celular.trim())
+        || (Array.isArray(live?.contatos_escalares?.items) && live.contatos_escalares.items.length > 0),
       );
-      // Sem canais na lista após preservar escalares: bloquear wipe.
-      if (hasScalars && lista.length === 0) {
+      // Wipe total sem lista: ainda exige cadastro completo (proteção parcial HTTP).
+      if (hasScalars && lista.length === 0 && scalarContract) {
         toast.error("Contatos incompletos neste painel. Abra o cadastro completo antes de limpar canais.");
         return { skipped: true, lista };
       }
       setContatosSaving(true);
       try {
-        await updateInContext("Cliente", cliente.id, { contatos: lista });
+        // P1 #4410761980: não carimbar empresa_id no mestre — só group_id de escopo.
+        const updated = await updateInContext("Cliente", live.id, { contatos: lista }, "group_id");
+        const nextDraft = Array.isArray(updated?.contatos) && updated.contatos.length > 0 && !scalarContract
+          ? updated.contatos.map((row) => ({ ...row }))
+          : lista;
+        setContatosDraft(nextDraft);
+        if (updated && typeof updated === "object") {
+          setClienteLive((prev) => {
+            const merged = { ...(prev || live), ...updated };
+            if (scalarContract) {
+              // Rascunho fica em contatosDraft — não alterar identidade do contrato HTTP.
+              delete merged.contatos;
+            } else {
+              merged.contatos = nextDraft;
+            }
+            return merged;
+          });
+        }
         toast.success("Contatos atualizados.");
-        return { skipped: false, lista };
+        return { skipped: false, lista: nextDraft };
       } catch (error) {
+        // P2 #4410875120: reverter rascunho / manter base confirmada.
+        setContatosDraft(previousDraft);
         toast.error(error?.message || "Falha ao salvar contatos.");
         throw error;
       } finally {
@@ -167,22 +272,24 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
     });
   };
 
+  const cliente = clienteLive || clienteProp;
+
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-cliente', cliente?.id],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: cliente.id }, '-data_pedido', 10),
-    enabled: !!cliente?.id && isOpen,
+    queryKey: ['pedidos-cliente', clienteProp?.id],
+    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteProp.id }, '-data_pedido', 10),
+    enabled: !!clienteProp?.id && isOpen,
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-cliente', cliente?.id],
-    queryFn: () => base44.entities.Entrega.filter({ cliente_id: cliente.id }, '-created_date', 5),
-    enabled: !!cliente?.id && isOpen,
+    queryKey: ['entregas-cliente', clienteProp?.id],
+    queryFn: () => base44.entities.Entrega.filter({ cliente_id: clienteProp.id }, '-created_date', 5),
+    enabled: !!clienteProp?.id && isOpen,
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-cliente', cliente?.id],
-    queryFn: () => base44.entities.ContaReceber.filter({ cliente_id: cliente.id }, '-data_vencimento', 5),
-    enabled: !!cliente?.id && isOpen,
+    queryKey: ['contas-receber-cliente', clienteProp?.id],
+    queryFn: () => base44.entities.ContaReceber.filter({ cliente_id: clienteProp.id }, '-data_vencimento', 5),
+    enabled: !!clienteProp?.id && isOpen,
   });
 
   if (!cliente) return null;

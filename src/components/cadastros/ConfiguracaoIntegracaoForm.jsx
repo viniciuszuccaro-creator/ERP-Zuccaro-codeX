@@ -80,11 +80,16 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-blue-600" />
+            <Link2 className="w-5 h-5 text-sky-600" />
             Configuracao de Integracao
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {dadosIniciais?.id ? (
+            <p className="text-xs text-slate-500">
+              ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+            </p>
+          ) : null}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Marketplace *</Label>
@@ -126,7 +131,7 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Integracoes.salvar" data-action="salvar-integracao" data-sensitive>
+        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Integracoes.salvar" data-action="salvar-integracao" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
           {isSubmitting ? "Salvando..." : dadosIniciais ? "Atualizar" : "Criar"}
         </Button>
@@ -138,7 +143,10 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b"><Link2 className="w-8 h-8 text-blue-600" /><h2 className="text-2xl font-bold text-slate-900">{dadosIniciais ? "Editar Integracao" : "Nova Integracao"}</h2></div>
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <Link2 className="w-8 h-8 text-sky-600" />
+            <h2 className="text-2xl font-bold text-slate-900">{dadosIniciais ? "Editar Integracao" : "Nova Integracao"}</h2>
+          </div>
           {form}
         </div>
       </div>
