@@ -41,19 +41,21 @@ resultados acessiveis. Nao prova ausencia global; nenhum conteudo/download/shari
 Fonte final segue pendente. Plano/classificador publicados e testados nao equivalem
 a reconciliacao real ou carga. Gates e responsaveis continuam na lista unica abaixo.
 
-## CURSOR — VIGENTE (#401 porta delta documental 1a03 + capacidade) (2026-10-29 17:30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 porta 1a03 + prova sintética parcial) (2026-10-29 17:40 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **#401 tip** | (este commit) — porta OPDEV prefixo 118f→1a03; STATUS/HANDOFF 2 lados |
-| **OPDEV** | blob = tip `1a03e6b2` OPDEV; corpo desde `### Atualizacao…` = `c7176ef44` (endsWith+ocorrência única) |
-| **Runtime** | src/server/scripts/.github/tests/package/locks **iguais** tip `77c0eacd3` (docs-only) |
-| **Capacidade** | PG16 nativo + Chrome/Playwright — recibo `capacidade-executor-pg-browser-20261029.txt` |
-| **Prova browser** | ciclo browser→API→PG sob harness canônico / lacuna reportada neste lote |
-| Fora | Auth operacional / ERP_DEV_LOGIN_* / VPS user / cluster 5432 |
+| **#401 tip** | (este commit) |
+| **OPDEV** | blob `1fc7e685b` = 342/`1a03e6b2`; corpo `### Atualizacao…` = `c717` (endsWith+1×) |
+| **Runtime** | = `77c0eacd3` (docs-only) |
+| **PG efêmero 55432** | R08C+R09 **5 PASS**; main 5432 down; teardown OK |
+| **HTTP API** | orçamento+pedido **12 PASS** (403/422/convert/histórico/idempotência) |
+| **IdP sintético** | auth-session HTTP/password **PASS** (sem ERP_DEV_LOGIN_*) |
+| **Browser ciclo** | **BLOCKED** — falta `…/erp-legado-privado-20261023/decision-20261026/resume-20261028/browser-harness.mjs` |
+| Fora | harness paralelo · Auth/VPS · writes=0 como substituto |
 
-**Evidência OPDEV:** comment 401/6507418952 · SHA documental 342 `1a03e6b2db7563309b2fa10e2b9b2164a41f266f`
-**Próximo:** resultados da prova sintética isolada; sem merge main.
+**Evidência:** `docs/evidence/prova-sintetica-ciclo-401-20261029.txt` · 6507418952
+**Próximo:** retomar ciclo browser só com harness privado canônico no Codespace; sem merge main.
 
 ## CURSOR — VIGENTE (#401 prep capacidade PG/browser) (2026-10-29 17:20 America/Sao_Paulo)
 

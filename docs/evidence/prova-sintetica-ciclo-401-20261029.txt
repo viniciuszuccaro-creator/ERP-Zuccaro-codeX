@@ -1,0 +1,77 @@
+Recibo — #401 porta documental 1a03 + prova sintética parcial (2026-10-29)
+==========================================================================
+Checkout exclusivo: cursor/composicao-397-342-prep-392b
+Instruções: 401/6507418952 · SHA documental 342 `1a03e6b2db7563309b2fa10e2b9b2164a41f266f`
+
+1) Porta OPDEV / STATUS / HANDOFF
+---------------------------------
+OPDEV blob publicado: `1fc7e685b49a9de3ad35f2071eefcbdb61aa14ac`
+  = tip 342 `1a03e6b2:docs/OPERACAO_DEV_VPS.md`
+  Prefixo vigente (118f→1a03): consulta fixa READONLY/ROLLBACK; PUBLIC suspensa;
+  gates POSIX/transporte/publicação 87 encerrados; instalação WSL HISTÓRICA.
+  Corpo desde `### Atualizacao de validacao condicional (2026-10-28)`:
+    endsWith + ocorrência única do corpo `c7176ef44` (normalização LF) — PRESERVADO.
+STATUS/HANDOFF: bloco «Estado vigente» da 342 prependido; histórico CURSOR 401
+  preservado (dois lados). Sem ours/theirs substitutivo do arquivo inteiro.
+Runtime check vs tip `77c0eacd3`: src/server/scripts/.github/tests/package/locks
+  UNCHANGED (docs-only).
+
+2) Capacidade (já recibo fe91d0253) — NÃO = ciclo browser demonstrado
+--------------------------------------------------------------------
+PG16.15 nativo `/usr/lib/postgresql/16/bin/{postgres,initdb,pg_ctl,psql}`
+Chrome 148 + Playwright 1.56.1 `/tmp/pw-pr350/node_modules/playwright/index.mjs`
+Cluster operacional `16 main 5432` permaneceu **down** o tempo todo.
+
+3) Harness browser canônico — AUSENTE neste executor
+----------------------------------------------------
+Arquivo exigido (OPDEV § Codespace):
+  `/home/codespace/erp-legado-privado-20261023/decision-20261026/resume-20261028/browser-harness.mjs`
+Canal: volume privado Codespace `erp-legado-privado-20261023` (não está no Git;
+  não está em /home/ubuntu, /tmp, /workspace deste Cloud Agent).
+Login fixture documentado (não ERP_DEV_LOGIN_*): entry.synthetic@example.test
+  / synthetic-entry-only — só via harness privado com guardas de SHA/origin.
+Sem o arquivo: **NÃO** afrouxar guardas, **NÃO** criar harness paralelo,
+  **NÃO** provisionar Auth/VPS/usuário. Capacidade READY ≠ ciclo demonstrado.
+Bloqueios antigos do painel (ERP_DEV_LOGIN_*) = Auth operacional — NÃO autorizam
+  provisionamento neste lote.
+
+4) Itens independentes executados (mesmo executor; destino efêmero 55432)
+------------------------------------------------------------------------
+A) PostgreSQL isolado (initdb→migrate→seed-dev-synthetic.sql→testes→stop+rm):
+   server/tests/runtime08c-orcamento-postgres-e2e.test.ts
+   server/tests/runtime09-pedido-postgres-e2e.test.ts
+   Resultado: **5 PASS / 0 FAIL / 0 SKIP**
+   Cobre: orçamento create/get/list/update/cancel + isolamento empresa;
+         auditoria força falha → rollback create/update/cancel/sequência;
+         Pedido migrations/constraints; sequência concorrente; chave intenção.
+
+B) API canônica HTTP (createApp + fixtures memória; sem segredo VPS):
+   server/tests/runtime08c-orcamento-http.test.ts
+   server/tests/runtime09-pedido-http.test.ts
+   Resultado: **12 PASS / 0 FAIL / 0 SKIP**
+   Cobre: orçamento create/list/get/update/cancel + auditoria;
+         RBAC fail-closed **403**; tenant no body / validação **422**;
+         Pedido ciclo + **/historico** + auditoria;
+         idempotência chave / conflito; cancel sem exclusão;
+         **converter orçamento→pedido uma única vez**;
+         isolamento empresas; motivo obrigatório 422 + 403 negado.
+
+C) IdP sintético (supabase_user + fetch stub; sem ERP_DEV_LOGIN_*):
+   server/tests/auth-session-http-exact.test.ts
+   server/tests/auth-session-password.test.ts
+   (contagens no log /tmp/erp-synth-auth-idp-401.log — ver tip)
+
+D) Teardown: pg_ctl stop + rm datadir; 5432 main ainda down; sem 55432 listen.
+
+5) Lacuna explícita (não mascarada)
+-----------------------------------
+Ciclo completo **navegador→UI Comercial→API→PG isolado**
+  (login/contexto→cliente→mestres→orçamento UI salvar/fechar/reabrir/editar→
+   pedido/histórico com cliques reais) **NÃO executado**: falta o harness
+  privado canônico acima. Não substituído por demo writes=0 nem por capacity.png.
+
+6) Fora de escopo respeitado
+----------------------------
+Sem nova implementação de negócio; sem Auth operacional; sem secrets
+ERP_DEV_LOGIN_*; sem criar usuário VPS; sem tocar cluster 5432; sem outra
+composição/branch.
