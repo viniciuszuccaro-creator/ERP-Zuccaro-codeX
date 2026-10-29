@@ -1,3 +1,8 @@
+## CURSOR — #408 tip 6d62b99cf CI SUCCESS (2026-10-29 10:21 America/Sao_Paulo)
+
+- Tip código `6d62b99cf` / docs `65ffa15e7` CI SUCCESS 6/6.
+- Separacao hub + helpers; Funil UI pin preservado. Sem merge/deploy/carga.
+
 ## CURSOR — #408 Funil×3 / Separacao keep-both (2026-10-29 10:05 America/Sao_Paulo)
 
 - Etapas CRM_ETAPAS nos 3 funis; hub Expedicao Separação IA + clássica.

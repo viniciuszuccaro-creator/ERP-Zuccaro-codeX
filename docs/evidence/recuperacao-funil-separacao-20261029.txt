@@ -21,3 +21,7 @@ SeparacaoConferencia × SeparacaoConferenciaIA
 
 Testes: recuperacao-funil-separacao.test.js + crm-oportunidade-policy
 Fora: merge/deploy/carga · schema HTTP Funil BLOCKED Codex
+
+## CI SUCCESS tip 6d62b99cf (2026-10-29 10:21 America/Sao_Paulo)
+- Runs 40880130429 / 40880118314 — 6/6 SUCCESS.
+- Funil*.jsx pins respeitados; hub Separacao entregue.
