@@ -423,14 +423,30 @@ export const resolveRomaneioDespacho = ({
  * }} input
  * @returns {ExpedicaoRecord}
  */
+/** Limite canônico alinhado a expedicaoTypes.nome_recebedor max(200). */
+export const COMPROVANTE_NOME_RECEBEDOR_MAX = 200;
+
 export const buildComprovanteRecebedorPayload = (input = {}) => {
-  const sanitize = (value, max = 500) => String(value ?? '')
-    .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '')
-    .replace(/javascript:\s*/gi, '')
-    .replace(/[<>]/g, '')
-    .slice(0, max)
-    .trim();
-  const nome = sanitize(input.nome_recebedor, 180);
+  const sanitize = (value, max = 500, { rejectOver = false, field = 'campo' } = {}) => {
+    const cleaned = String(value ?? '')
+      .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '')
+      .replace(/javascript:\s*/gi, '')
+      .replace(/[<>]/g, '')
+      .trim();
+    if (rejectOver && cleaned.length > max) {
+      throw Object.assign(new Error(`${field} excede ${max} caracteres`), {
+        code: 'VALIDATION_ERROR',
+        field,
+        status: 422,
+      });
+    }
+    return cleaned.slice(0, max);
+  };
+  // Parecer 6498241434: 190 chars válidos no contrato max(200) — não truncar a 180.
+  const nome = sanitize(input.nome_recebedor, COMPROVANTE_NOME_RECEBEDOR_MAX, {
+    rejectOver: true,
+    field: 'nome_recebedor',
+  });
   const latRaw = input.latitude_entrega;
   const lngRaw = input.longitude_entrega;
   const lat = latRaw == null || latRaw === '' ? null : Number(latRaw);

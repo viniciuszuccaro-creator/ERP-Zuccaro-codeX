@@ -1,3 +1,7 @@
+## CURSOR — #412 tip c0ccadeae CI SUCCESS (2026-10-29 11:43 America/Sao_Paulo)
+
+- Parecer 6498241434 fechado. Compose #401 com #411+#407.
+
 ## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
 
 - Tip `a18a362ed` CI SUCCESS runs 40877458648 / 40877419771 (6/6).
