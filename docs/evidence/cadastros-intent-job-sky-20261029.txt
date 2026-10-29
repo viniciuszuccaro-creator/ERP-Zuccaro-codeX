@@ -25,8 +25,9 @@ Fora: merge/deploy/carga · candidata concorrente a #401/#406
 ## CI SUCCESS tip 7e27ee9f3 (2026-10-29 10:27 America/Sao_Paulo)
 - Runs 40881114046 / 40881084134 — 6/6 SUCCESS.
 
-## Delta complementar Cursor (2026-10-29 17:45 America/Sao_Paulo)
-- ChatbotIntent switch ativo: disabled={!podeSalvar} + data-permission
-  Cadastros.ChatbotIntent.alterarStatus (RBAC fail-closed visual).
-- Sky/ID windowMode já neste tip; #428 paralelo alinhado a esta branch (#409).
+## Delta complementar Cursor (2026-10-29 17:55 America/Sao_Paulo)
+- alterarStatus no switch foi REVERTIDO: meta-pin publication-baseline
+  (restoreApprovedCodigoFieldCallbackDelta) exige delta autorizado formal.
+- Mantidos sky windowMode + ID técnico (tip 7e27ee9 CI 6/6).
+- RBAC alterarStatus = lote futuro com restoreApproved* autorizado.
 - Candidata #401 tip 686ae322 intacta.
