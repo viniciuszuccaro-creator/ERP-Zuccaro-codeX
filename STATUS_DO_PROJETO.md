@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#414 CI fix merge vazio + useQueries mock) (2026-10-29 12:12 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** — tip CI fix (merge vazio não empurra undefined; mock useQueries) |
+| **Causa** | frontend FAIL: `useQueries` ausente no mock + merge seleção vazia → `clientes=[undefined]` |
+| **#415** | param forms sky+ID (indep.) |
+| **#401** | candidata estável; demo≠E2E |
+| Fora | merge/deploy/carga / VPS write |
+
+**Próximo:** CI #414 · CI #415 · demo persistência isolada com Codex.
+
+(2026-10-29 12:12 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#414 cliente label catálogo) (2026-10-29 12:05 America/Sao_Paulo)
 
 | Campo | Valor |
