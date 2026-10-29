@@ -104,7 +104,10 @@ export function resolveComercialSelectedCliente(pages, scope, clienteEmpresaId) 
 
 export function mergeComercialSelectedCliente(masters, selection) {
   if (!selection) return masters;
-  const link = selection.clientesEmpresa[0], cliente = selection.clientes[0];
+  const link = selection.clientesEmpresa?.[0];
+  const cliente = selection.clientes?.[0];
+  // Página/seleção vazia ou parcial não pode empurrar undefined no catálogo de labels.
+  if (!link?.id || !cliente?.id) return masters;
   return {
     ...masters,
     clientes: [...masters.clientes.filter(row => row.id !== cliente.id), cliente],
