@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#401 tip 4dbfdc7cc CI SUCCESS) (2026-10-29 10:54 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#401** tip **`4dbfdc7cc`** — CI SUCCESS (pin + #410 acentos) |
+| **Integra** | #410 `59ad3a5dc` · #406 `90990801e` · 342=`b5cb34e1` |
+| **P2** | busca sem acentos fechada + pin selected-reference |
+| **#409/#408/#407** | CI SUCCESS |
+| Fora | merge oficial · deploy · carga |
+
+**Próximo:** @codex review tip `4dbfdc7cc`. Sem merge/deploy.
+
+(2026-10-29 10:54 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 pin cliente + #410 acentos) (2026-10-29 10:48 America/Sao_Paulo)
 
 | Campo | Valor |

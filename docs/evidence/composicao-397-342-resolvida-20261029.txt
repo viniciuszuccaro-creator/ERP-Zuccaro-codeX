@@ -35,3 +35,6 @@ Sem merge oficial / deploy / carga SQL.
 - Runs: 40876866103 (pull_request) · 40876856490 (push) — frontend/backend/expedicao SUCCESS.
 - Tip integra #406 90990801e; Codex 342 permanece b5cb34e1; WIP eb797672 fora.
 - Sem merge oficial / deploy / carga.
+
+## tip 4dbfdc7cc CI SUCCESS (2026-10-29 10:54 America/Sao_Paulo)
+- Integra #410 59ad3a5dc + pin foldSearchText. CI 6/6.
