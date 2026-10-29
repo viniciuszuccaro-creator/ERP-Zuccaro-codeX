@@ -1,5 +1,28 @@
 ## Estado vigente - candidata401, revisao414 e fonte bloqueada (2026-10-29)
 
+Delta414: HEAD0e16923fc5b061b4924d73a9f4e3666f5be83227 corrige failure-only.
+Revisao independente4PASS/0FAIL/0SKIP dos helpers/callbacks reais por AST:
+20erros liberam21a,pendentes preservados,repeticao limitada,reset de contexto.
+Residual6503292402 encerrado nesseSHA; nao e prova React/browser/PostgreSQL.
+401 ainda1a2 na ultima consulta; incorporacao eCI da nova composicao pendentes.
+
+Coordenacao nova: WIP30da composicao identificado por patch4196f6818d4455272df...
+e arvore inteira157eb6aca13da90a45558115819b55264bb518b0, identica ao commit716dabde.
+Nao era o WIPdesktop13 nem continha codigo tracked inedito. Autoria material nao
+comprovada, custodiaCursor; nenhuma reserva de escritor desta frente nessepath.
+Cursor confirmou liberacao419/6503608840 apos pins/escritores0:arvorec098fcba72dd03dd458fe0626c1766220ba81968,
+statuslimpo noMESMO4011a2,sem reset/stash/clean,sem commitar reversao ou tocarignorados.
+Incorporacao414 depende do proximoSHA/CI e do residual abaixo, nao de espera generica
+por suposto WIPCodex. Provas/manifesto/recibos noHANDOFF; desktop13hashesintactos.
+
+41439c1055f/codigo532ac595a:lookup leve e fila de SUCESSO corrigidos.7testesdirigidos
+PASS, incluindo2contraprovas do NOVO residual:20falhas404 impedem21a independente.
+Parecer414/6503292402, Cursor comunicado diretamente. Preservar limites/erro/retry,
+sem fabricar labels. Repositorio oficial PUBLICO confirmado; nao usar patch noGitHub
+como transporte PRIVADO nem aprovar WIPbackend por CIDocumental. POSIX12/0/0 mantido.
+
+## Historico - candidata401 e revisao414 anteriores (2026-10-29)
+
 34222b1b841/CI5167SUCCESS; WIP13blobs iguais ao manifesto, codigo funcional nao
 publicado. POSIX12/0/0 encerrado. Bloqueio atual e transporte suportado/fechamento
 do snapshot completo, nao falta de WSL. file:// negado pela politica, sem contorno.
@@ -130,7 +153,8 @@ Lista unica/ordem operacional vigente:
   executor existente por canal suportado, fechar snapshot/checks e somente entao
   publicar. POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
 - Revisao/composicao (Cursor+Codex):4011a2cfc31/094cb4b7e tem411/412/407 comprovadas;
-  manter estavel.414 separada exige corrigir2P2 porSHA antes de eventual inclusao.
+  worktree liberado com snapshot419 preservado.41439c1055f fecha2P2 antigos;
+  tratar residual de fila com20erros, incorporar naMESMA401 e conferir novoSHA/CI.
 - Cadeia (Cursor+Codex):334 sobre codex/comercial-central-abertura-segura;342 sobre334,
   397 sobre342 e401 preview sobre397. Respeitar bases/revisoes/CI, sem merge direto
   em main ou retarget automatico. WIP nao entra antes da publicacao validada.

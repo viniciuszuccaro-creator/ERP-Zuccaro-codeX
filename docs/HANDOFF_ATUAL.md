@@ -1,5 +1,54 @@
 ## Estado vigente - candidata401 e revisao414 (2026-10-29)
 
+Delta posterior414:0e16923fc5b061b4924d73a9f4e3666f5be83227 revisado.
+Contraprova failure-only original agoraPASS:4testesindependentes/0FAIL/0SKIP,
+exit0,helpers ecallbacks reais extraidos doGit por AST,sem editarbranchCursor.
+20falhas liberam21a; pendentes nao consumidos; sucesso preservado; repeticao
+limitada; reset de tentativas/falhas no contexto. Nao provaReact/browser/PG.
+Recibo local code-only:review414-settlement-proof.mjs fora do checkout.
+Residual6503292402 encerrado nesseSHA. Incorporacao401/CI ainda pendentes
+na ultima leitura; nao exigir novamente liberacao do WIP30 ja comprovada.
+
+Delta posterior de coordenacao:34282c10f65bbac36e6f2403775ab44860355fde7e4,
+4011a2cfc31 e41439c1055fe02e73afef9c299773f908a2ba347f57 conferidos. WIPdesktop
+13blobs segue13iguais/0divergencias. Nao confundir com WIP30paths da composicao.
+
+Bloqueio da composicao investigado concretamente:419c2de23f54 preserva diff
+6f6818d4455272dfd63322b2d9543e823abe9d38a328c60c265671c31c350e4f,30paths(20M/10D),
+untracked0. Reaplicacao SOMENTE em indice temporario de verificacao sobre1a2
+produziu arvore157eb6aca13da90a45558115819b55264bb518b0, EXATAMENTE o commit
+publicado716dabdebed8ae28c60c542771a0e56be937685d. Reverse reproduziu arvorebase
+c098fcba72dd03dd458fe0626c1766220ba81968. HEAD/indice/diffdesktop originais intactos.
+Nao ha conteudo tracked inedito nesse snapshot; a causa de processo/autoria material
+nao foi comprovada. Custodia da composicao e Cursor pelo programa; esta frente
+Codex nao tinha escritor/reserva nesse worktree. Nao atribuir autoria pelo nome.
+Manifesto privado dos30blobs registrado; nenhuma composicao/clone novo criado.
+
+Procedimento condicionado publicado419/6503494136 e entregue diretamente ao agente
+Cursor existente, enquanto ocioso, com texto visivel na transcricao. Cursor confirmou
+execucao419/6503608840:HEAD1a2,diff6f68,untracked0,escritores0; reverse--index--check
+e reverse--index PASS; arvorec098,statuslimpo,sem commitar reversao,ignorados intactos,
+snapshot419 preservado. Nao houve reset/stash/clean ou troca de ambiente. Liberacao
+do checkout comprovada pelo recibo do executor; incorporacao414 ainda exige novoSHA/CI.
+
+414 atual:7testes dirigidos nos callbacks/helpers reais (5positivos/negativas e
+2contraprovas de defeito). Lookup leve20calls/20referencias,zero auxiliares; fila
+de sucesso avanca para21a e replay nao duplica. Originais2P2 encerrados nesse alcance.
+NOVO residual em414/6503292402:20erros404 iniciais deixam rowHydrationKey vazio e
+catalogo sem sucessos, reagendando os mesmos20 e bloqueando21a independente em
+Orcamento ePedido. Corrigir estado de tentativas/erro por escopo e retry explicito,
+sem fabricar labels ou remover limites. Sao costuras/callbacks sinteticos, nao
+React/browser/PG. Nao reabrir contatos/estoque/unidades encerrados.
+
+TransporteWIP13: metadata oficial confirmou repositorioPUBLICO. O padrao419 de
+patch noGitHub nao serve como transporte PRIVADO do WIP nao liberado. Nao publicar
+artefatos privados nesse canal nem contornar file://; canal privado de recebimento
+no executor foi solicitado diretamente ao Cursor. Fonte real congelada100 segue
+indisponivel. ProvasPGlite8 eHTTP/PG401 anteriores preservadas sem rerun; nenhuma
+SQLreal/carga/DDL/grant/deploy, install noD ou limpeza destrutiva. Lista unica noSTATUS.
+
+## Historico - revisao e provas anteriores401/414 (2026-10-29)
+
 34222b1b84194d617feeebd15f922e4d0ed5e2bee4a:CI5167SUCCESS conferida. WIP13blobs
 preservado13iguais/0divergencias contra manifesto, patch B78 do historico intacto.
 POSIX12/0/0 com overlay continua encerrado; nao instalar WSL ou repetir o desbloqueio.
