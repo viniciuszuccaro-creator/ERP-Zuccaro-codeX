@@ -47,6 +47,20 @@ As autorizações especificas SSH anteriores permanecem, sem copiar chave pessoa
 
 ### Gate do executor desktop, sem mudar a VPS
 
+RETIFICACAO VIGENTE29/10: mapeamento Get-Partition -> Get-Disk comprovou C no disco0
+NVMe ADATA interno/de boot e D no disco1 JMicron USB externo. A orientacao anterior
+de instalar WSL em D foi RETIRADA; capacidade livre nao comprova disco interno.
+Nao instalar distribuicao/componentes em D nem usar o backup como destino. Os
+artefatos sinteticos ja existentes em ERP-Validacao-Temporaria foram somente
+conferidos por hash nesta retomada; nao mover/apagar nem alterar o backup.
+C tem ~854MB livres nesta leitura, insuficiente para iniciar preparacao segura.
+Executor continua sem elevacao e nenhum Linux instalado; nenhuma instalacao,
+limpeza, elevacao ou reinicio foi tentado.
+Com as capacidades efetivamente disponiveis, o caminho sem instalacao e retomar
+o MESMO Codespace quando a franquia permitir e conferir o bloqueio de gasto antes
+de iniciar. Para antecipar localmente, usar exclusivamente o procedimento humano
+condicionado abaixo. Nao usar VPS operacional, D externo ou outro ambiente ERP.
+
 Atualizacao posterior29/10 - pacote minimo pronto, NAO executado em Linux:
 - WIP preservado em patch privado,14 arquivos pendentes apos commit documental.
 - Checks exatos: tests/legado-filesystem-precheck.test.js, teste "private staging
@@ -69,18 +83,20 @@ Atualizacao posterior29/10 - pacote minimo pronto, NAO executado em Linux:
   Nao exige npm install/rede/banco; SQLs automaticos sao somente evidencia de
   leitura do teste, nao executar migrador. Nao e novo clone/ERP/implementacao.
 
-Intervencao minima se for usar WSL: proprietario abre PowerShell como administrador,
-confere capacidade do componente no C e preserva sessoes/aplicacoes antes de qualquer
-reinicio. Procedimento Microsoft, sem contratar recursos:
+Intervencao humana unica: TI/proprietario disponibilizar WSL no SSD INTERNO, primeiro
+garantindo capacidade suficiente em C por procedimento aprovado (sem apagar/mover
+backup ou limpeza destrutiva), depois abrir PowerShell como administrador e preservar
+sessoes/aplicacoes antes de reinicio. Comandos abaixo NAO devem ser executados com
+o espaco atual. Procedimento Microsoft, sem contratar recursos:
 
 ```powershell
 wsl --install --no-distribution
 # Reinicio somente em janela segura pelo proprietario, caso exigido.
-wsl --install --distribution Ubuntu --location D:\WSL\ERP-Checks --no-launch
+wsl --install --distribution Ubuntu --location C:\WSL\ERP-Checks --no-launch
 ```
 
 Se o bootstrap instalado nao aceitar --location, parar e consultar --help/versao;
-nao cair para instalacao automatica da distribuicao em C. Configuracao do usuario
+nao cair para instalacao automatica em outro volume. Configuracao do usuario
 Linux e eventual credencial ocorrem localmente, nunca no chat/Git. Nao foram
 executados instalacao, elevacao, reinicio, alteracao de configuracao ou cobranca.
 Alternativa continua o MESMO Codespace quando a franquia permitir, nao outro.
@@ -104,6 +120,16 @@ esse gate de aprovado antes da execucao. Depois fechar validacoes proporcionais 
 secao16 do AGENTS sobre snapshot completo do MESMO WIP; dois testes isolados nao
 dispensam fechamento nem autorizam carga/deploy. Um escritor no checkout canonico.
 
+Delta posterior no WIP do classificador: contadores inconsistentes agora rejeitados,
+sem mudar SQL/identidades/escopo. Bundle acima e imutavel e ANTERIOR ao delta; nao
+reescrever/reempacotar seu exemplar nem atribuir sua prova ao WIP posterior.
+Overlay privado identifica modulo antigo SHA65900aac8f750bf8970267859d918c2c047ef4476f3600d35fa9036c857b78e3
+e novo SHAaa34f125e505dd2a9c7045a7ece029dc1d4badc092d3e8c3b938787fb9c671f7;
+reconstrucao em memoria bateu exatamente com fonte atual, nenhuma execucaoLinux.
+Aplicacao so em extracao descartavel, preservando pins/delta e registrando etapa
+separada; novo teste SQL com as cinco negativas nao integra o bundle minimo e
+exige snapshot completo atual no fechamento. Nao encurtar a validacao por inferencia.
+
 Rastreio privado restrito encontrou gerador/recibo de preparacao26/10, nao arquivo
 final nem outputSha256 contemporaneo. stagingArtifactSha256 (input), cohortSha256
 (selecao) e outputSha256 (arquivo final) sao tres pins diferentes. Gerador contendo
@@ -120,7 +146,8 @@ Para antecipar os checks antes da renovacao da franquia, intervencao local minim
 administrador preparar WSL conforme https://learn.microsoft.com/windows/wsl/install,
 preservando sessoes/trabalho antes do reinicio exigido. A referencia oficial
 https://learn.microsoft.com/windows/wsl/basic-commands suporta --location para
-armazenar a distribuicao em diretorio separado em D, nunca dentro do ERP/backup.
+escolher diretorio somente apos provar volume interno/capacidade. A indicacao
+anterior de D foi retirada pelo mapeamento fisico posterior acima: D e USB externo.
 Nao foi executada instalacao/elevacao/reinicio. Apos disponibilizar Linux, conferir
 Node/Python e executar os dois testes reais em filesystem Linux com owner/mode/
 symlinks reais; montar NTFS ou simular getuid nao substitui essa prova. Usar snapshot

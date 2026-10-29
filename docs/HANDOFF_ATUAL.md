@@ -1,8 +1,23 @@
 ## Estado vigente - candidata401 revisada29/10
 
+Retificacao vigente: D e discoUSBexternoJMicron, nao volume interno; indicacao de
+WSLemD retirada. C e SSDNVMeinterno/deboot com~854MB livres. Nao houve instalacao,
+limpeza ou mudanca no backup. Disponibilizar WSL internamente requer capacidade
+e administrador/reinicioseguro pelo proprietario; comandos condicionados emOPERACAO.
+Bundle/WIP preservados por hash sem refazer; codigo ainda retido pelos checksPOSIX.
+
+Avanco independente: counterproof reproduziu classificacao de recibo privado
+inconsistente; duas guardas no classificador existente +cinco negativas/positivo
+multiplos enderecos, SQLPGlite8PASS/0FAIL/0SKIP, sem mudar consulta ou autorizacao.
+Audit/lint/syntax/diff PASS, warningpreexistente. Nao publicar codigo ate gateLinux
+e fechamento. Bundle imutavel0c617 e anterior a esse delta: overlay privado com
+hashantes/depois verificado soemmemoria, nao aplicado ao original; nao confundir
+prova do bundle antigo com WIP atual. Nada executado contra clientes reais.
+
 Atualizacao de desbloqueio: bundle minimo POSIX preparado em volumeD,48fontes
 com hashes verificados e11syntaxPASS; Linux nao executado, nao liberar codigo.
-OPERACAO tem os2checks exatos e procedimento minimo WSL/admin/reinicio seguro,
+OPERACAO tem os2checks exatos e procedimento minimo WSL/admin/reinicio seguro
+retificado apos comprovar Dexterno,
 sem instalar noC por inferencia. Recibos privados26/10 provam preparacao, nao
 exemplar final/outputSha256; coorte real continua inacessivel, nao vazia/recriada.
 CI30b1b619 confirmada6jobsSUCCESS, nao atribuida ao WIP.397/401 sem novo delta;

@@ -1,11 +1,35 @@
 ## Estado vigente - revisao da composicao401 (2026-10-29)
 
-Desbloqueio posterior29/10: WIP preservado por patch/hash,14arquivos pendentes
+Retificacao de seguranca29/10: C=disco0NVMeinterno, D=disco1JMicronUSBexterno,
+comprovados por particao->disco. RETIRADA orientacao WSLemD; nao usar HD do backup.
+Nenhuma instalacao realizada. C~854MB e executor semadmin: acao humana concreta
+e disponibilizar WSL no SSDinterno com capacidade e reinicio seguro, procedimento
+condicionado no OPERACAO existente. Bundle preservado por hash, sem nova preparacao;
+codigo WIP13arquivos antes desta correcao documental, nao16. Nenhuma limpeza ou
+alteracao de backup. CIeb797672 anterior conferida pelo estado reportado, nao
+atribuir aprovacoes anteriores a novo SHA ou ao codigo WIP.
+
+Entrega independente no WIP: classificador da consulta fixa rejeita contadores
+impossiveis (vinculos com zero/multiplos matches ou empresas acima da coorte de
+empresas). Causa comprovada por CASE do SQL e UNIQUE(cliente_id,empresa_id)009,
+sem nova regra de negocio. Contraprova0PASS/1FAIL antes; foco SQLPGlite8PASS/0FAIL/
+0SKIP,8416ms, cinco negativas novas e positivo de multiplos enderecos sem teto
+artificial. Auditoria/SQL/origem/identidades/flags de carga inalterados; sem leitura
+real ou liberacao operacional. Revisao independente sem novo achado no delta.
+Audit/lint/syntax/diff PASS; lint conserva warning EntregasListagem170. Nao e
+fechamento global: dois checksPOSIX continuam abertos. Codigo nao publicado.
+Bundle0c617 preservado intacto, nao recomposto; modulo antigo65900aac versus novo
+aa34f125: delta privado identificado/verificado em memoria, aplicar SOMENTE em
+extracao descartavel com pins antes/depois. Bundle antigo nao comprova novoWIP;
+teste SQL novo exige snapshot completo atual no fechamento. Nao simular POSIX.
+
+Historico do desbloqueio anterior29/10: WIP preservado por patch/hash,14arquivos pendentes
 apos publicacao documental. Preflight sem Linux/WSL/Store/Docker/Podman e sem
 administrador; C~3.6GB/D~239GB, hipervisor presente (nao presumir BIOS incorreto).
 Bundle minimo de testes POSIX preparado/recuperado por hashes:48fontes+manifesto,
 71487bytes, nenhuma dependencia npm/rede/banco/dado real.11modulos syntaxPASS,
-NAO testes POSIX. Dois testes exatos, procedimento administrativo WSL emD,
+NAO testes POSIX. Dois testes exatos, procedimento administrativo WSL (indicacaoD
+posteriormente retirada),
 reinicio seguro e execucao Linux nativa registrados no OPERACAO existente.
 Sem instalar/reiniciar/alterar VPS ou relaxar tests; codigo nao publicado por isso.
 Recibos privados26/10 localizados sustentam preparacao da coorte, nao exemplar
