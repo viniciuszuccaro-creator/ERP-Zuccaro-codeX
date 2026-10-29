@@ -175,6 +175,8 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const contatosPersistQueueRef = useRef(null);
   /** Trava contrato escalar na abertura — não promover rascunho a contatos[] após save (Codex #4413059634). */
   const scalarContractLockedRef = useRef(usesContatosScalarHttpContract(clienteProp));
+  /** Epoch de hidratação: GET atrasado após mutação não sobrescreve rascunho confirmado (Codex #4414641595). */
+  const contatosHydrateEpochRef = useRef(0);
   if (!contatosPersistQueueRef.current) {
     contatosPersistQueueRef.current = createContatosPersistQueue();
   }
@@ -188,11 +190,12 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   // Reabertura: recarregar registro persistido (não reutilizar só o snapshot do pai).
   useEffect(() => {
     if (!isOpen || !clienteProp?.id) return undefined;
+    const epoch = ++contatosHydrateEpochRef.current;
     let cancelled = false;
     (async () => {
       try {
         const fresh = await base44.entities.Cliente.get(clienteProp.id);
-        if (cancelled || !fresh) return;
+        if (cancelled || !fresh || epoch !== contatosHydrateEpochRef.current) return;
         setClienteLive(fresh);
         setContatosDraft(seedContatosPainelDraft(fresh));
         scalarContractLockedRef.current = usesContatosScalarHttpContract(fresh);
@@ -219,14 +222,20 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
     } catch (error) {
       toast.error(error?.message || "Contatos não representáveis no contrato escalar.");
       setContatosDraft(previousDraft);
-      return Promise.resolve({ skipped: true, lista: previousDraft, error });
+      // Rejeita para o formulário não fechar/limpar (Codex #4415656862).
+      return Promise.reject(error);
     }
     return contatosPersistQueueRef.current(async () => {
       const live = clienteLive || clienteProp;
-      if (!live?.id) return { skipped: true, lista };
+      if (!live?.id) {
+        const err = new Error("Cliente indisponível para salvar contatos.");
+        toast.error(err.message);
+        throw err;
+      }
       if (!groupId && !empresaId) {
-        toast.error("Selecione grupo ou empresa antes de salvar contatos.");
-        return { skipped: true, lista };
+        const err = new Error("Selecione grupo ou empresa antes de salvar contatos.");
+        toast.error(err.message);
+        throw err;
       }
       const hasScalars = Boolean(
         (typeof live?.email === "string" && live.email.trim())
@@ -236,13 +245,16 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
       );
       // Wipe total sem lista: ainda exige cadastro completo (proteção parcial HTTP).
       if (hasScalars && lista.length === 0 && scalarContract) {
-        toast.error("Contatos incompletos neste painel. Abra o cadastro completo antes de limpar canais.");
-        return { skipped: true, lista };
+        const err = new Error("Contatos incompletos neste painel. Abra o cadastro completo antes de limpar canais.");
+        toast.error(err.message);
+        throw err;
       }
       setContatosSaving(true);
       try {
         // P1 #4410761980: não carimbar empresa_id no mestre — só group_id de escopo.
         const updated = await updateInContext("Cliente", live.id, { contatos: lista }, "group_id");
+        // Invalida GET de abertura em voo — não reaplicar snapshot pré-save.
+        contatosHydrateEpochRef.current += 1;
         const nextDraft = Array.isArray(updated?.contatos) && updated.contatos.length > 0 && !scalarContract
           ? updated.contatos.map((row) => ({ ...row }))
           : lista;

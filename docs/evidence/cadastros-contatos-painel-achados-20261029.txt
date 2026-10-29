@@ -1,0 +1,14 @@
+Pacote D — Contatos painel achados Codex (fora candidata #401)
+==============================================================
+America/Sao_Paulo 2026-10-29 ~15:10
+
+Base: tip composição 7460c3a26 / código 0195acc66
+Branch: cursor/cadastros-contatos-painel-achados-392b
+
+Correções no existente:
+1. #4414641595 — contatosHydrateEpochRef: GET abertura descartado após mutação
+2. #4415656862 — Promise.reject em rejeição escalar/skip; form trata result.skipped
+3. #4415730696 — resolveAuditEmpresaId: AuditLog.empresa_id ≠ group_id carimbo
+
+Testes: painel-dinamico-cliente-historico-tab 31 PASS
+≠ fold #401 · ≠ VPS · WIP #419 intacto

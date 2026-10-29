@@ -304,6 +304,20 @@ export function useContextoVisual() {
     return out;
   };
 
+  /** empresa_id de auditoria ≠ campo de carimbo (group_id no mestre Cliente) — Codex #4415730696. */
+  const resolveAuditEmpresaId = (stamped, before, campo) => {
+    if (stamped?.empresa_id) return stamped.empresa_id;
+    if (before?.empresa_id) return before.empresa_id;
+    if (campo && campo !== 'group_id' && campo !== 'grupo_id') {
+      if (stamped?.[campo]) return stamped[campo];
+      if (before?.[campo]) return before[campo];
+    }
+    if (contextoCanonico.scopeType === 'empresa' && contextoCanonico.empresaId) {
+      return contextoCanonico.empresaId;
+    }
+    if (filtroEmpresa && filtroEmpresa !== 'todas') return filtroEmpresa;
+    return null;
+  };
   const createInContext = async (entityName, dados, campo = 'empresa_id') => {
     const stamped = carimbarContexto(sanitizeOnWrite(dados), campo);
     if (!stamped.group_id && !stamped[campo]) {
@@ -318,7 +332,7 @@ export function useContextoVisual() {
         usuario: (await base44.auth.me())?.email || 'Usuário',
         acao: 'Criação', modulo: MODULE_BY_ENTITY[entityName] || 'Sistema', tipo_auditoria: 'entidade', entidade: entityName,
         descricao: `Criado registro em ${entityName}`,
-        empresa_id: stamped[campo] || null, group_id: stamped.group_id || null,
+        empresa_id: resolveAuditEmpresaId(stamped, null, campo), group_id: stamped.group_id || null,
         dados_anteriores: null, dados_novos: created,
         data_hora: new Date().toISOString()
       });
@@ -344,7 +358,8 @@ export function useContextoVisual() {
         usuario: (await base44.auth.me())?.email || 'Usuário',
         acao: 'Criação', modulo: MODULE_BY_ENTITY[entityName] || 'Sistema', tipo_auditoria: 'entidade', entidade: entityName,
         descricao: `Criação em lote (${res?.length || stampedList.length})`,
-        empresa_id: stampedList[0]?.[campo] || null, group_id: stampedList[0]?.group_id || null,
+        empresa_id: resolveAuditEmpresaId(stampedList[0], null, campo),
+        group_id: stampedList[0]?.group_id || null,
         dados_anteriores: null, dados_novos: { count: res?.length || stampedList.length },
         data_hora: new Date().toISOString()
       });
@@ -365,7 +380,8 @@ export function useContextoVisual() {
         usuario: (await base44.auth.me())?.email || 'Usuário',
         acao: 'Edição', modulo: MODULE_BY_ENTITY[entityName] || 'Sistema', tipo_auditoria: 'entidade', entidade: entityName,
         descricao: `Atualizado registro ${id} em ${entityName}`,
-        empresa_id: stamped[campo] || before?.[campo] || null, group_id: stamped.group_id || before?.group_id || null,
+        empresa_id: resolveAuditEmpresaId(stamped, before, campo),
+        group_id: stamped.group_id || before?.group_id || null,
         dados_anteriores: before, dados_novos: updated,
         data_hora: new Date().toISOString()
       });
