@@ -45,7 +45,26 @@ nao e a opcao minima diante de PUBLIC e bancos adicionais. Sem alterar PUBLIC/AP
 HBA/rede, conceder sudo/docker ou executar carga para contornar indisponibilidade.
 As autorizações especificas SSH anteriores permanecem, sem copiar chave pessoal.
 
-### Gate do executor desktop, sem mudar a VPS
+### Gate vigente do executor: POSIX aprovado, snapshot completo pendente (2026-10-29)
+
+Os dois checks POSIX abaixo NAO estao mais bloqueados:12PASS/0FAIL/0SKIP/exit0 no
+Linux existente, tambem com overlay atual validado. Provas e hashes no HANDOFF.
+Nao instalar WSL para repeti-los; D permanece HD externo protegido. A orientacao
+de instalacao abaixo e HISTORICA, nao uma acao vigente nem autorizacao para instalar.
+O executor dessa prova nao pode acessar GitHub/npm por politica: nao repetir essa
+rota nem contornar a restricao. Coordenacao de validacao do snapshot completo em
+executor existente com dependencias/canal suportados publicada na401/6499358535;
+solicitacao nao comprova recebimento, disponibilidade ou execucao.
+
+Fechamento ainda necessario: identidade/base e13blobs do patch exato, testes
+raiz completos no snapshot, server:test e audit/lint/typecheck/build aplicaveis
+conforme AGENTS16; reutilizar resultados anteriores somente com vinculo de hashes
+e condicoes comprovado. Bundle/overlay nao contem todo o WIP. Skips de banco nao
+sao PASS. Nao executar migrador geral, usar dados reais ou escrever checkout alheio.
+Artefatos privados e dependencias ficam fora de Git/build; transferir somente o
+codigo sanitizado/manifesto exatos, nunca historico Git indiscriminado.
+
+### Historico do gate desktop antes da prova Linux, sem mudar a VPS
 
 RETIFICACAO VIGENTE29/10: mapeamento Get-Partition -> Get-Disk comprovou C no disco0
 NVMe ADATA interno/de boot e D no disco1 JMicron USB externo. A orientacao anterior
@@ -107,10 +126,10 @@ de extrair. Executar em filesystem Linux nativo, nao pasta montada NTFS:
 ```bash
 umask 077
 checkdir=$(mktemp -d "$HOME/erp-posix-30b1.XXXXXX")
-mkdir "$checkdir/tmp"
+mkdir "$checkdir/repo" "$checkdir/tmp"
 # BUNDLE aponta ao arquivo privado cuja soma acima foi conferida.
-tar -xzf "$BUNDLE" -C "$checkdir" --no-same-owner
-cd "$checkdir"
+tar -xzf "$BUNDLE" -C "$checkdir/repo" --no-same-owner
+cd "$checkdir/repo"
 TMPDIR="$checkdir/tmp" TEST_PYTHON_EXECUTABLE="$(command -v python3)" \
   node --test --test-concurrency=1 tests/legado-filesystem-precheck.test.js tests/legado-review-workflow.test.js
 ```

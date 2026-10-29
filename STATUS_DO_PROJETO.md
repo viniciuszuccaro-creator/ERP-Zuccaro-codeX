@@ -1,5 +1,21 @@
 ## Estado vigente - desbloqueio POSIX e revisao atual (2026-10-29)
 
+Atualizacao final desta revisao:411dbb1a413/4127e61ab57 corrigem os3residuos;
+11assertions sinteticas dos helpers reais PASS, pareceres411/6499615633 e
+412/6499616178. CI5157/5159 FAILURE em typecheckfrontend (3TS2339 porSHA ao
+enriquecer Error); test/audit/lint PASS, buildfrontend SKIP; backend/composicao
+SUCCESS. Correcoes de tipo solicitadas ao Cursor, sem tocar suas branches.
+Bloqueador vigente e CI/aceite da composicao, nao os achados funcionais ja provados.
+Upload de patch nao concluiu: snapshot completo do WIP NAO validado remotamente.
+
+Delta de continuidade:3423e8216b7;401450e830b (codigo4dbfdc7cc, entradaCodexb5cb34e1);
+410028793ac. WIP13blobs13iguais/0divergencias, patch preservado. Parecer incremental
+401/6499447355: busca helper3assertions+SQLPGlite2assertionsPASS; nao browser/PGexterno.
+Residuos406 de principal escalar e unidade presentes nesse tip;407 nao incorporada
+integralmente (helper compartilhado ausente). Cursor tem correcao WIP propria, nao
+aprovada/publicada por inferencia. Validacao snapshot solicitada401/6499358535,
+sem interferir no escritor Cursor. POSIX encerrado; nao repetir rota sem rede/WSL.
+
 Dois checks POSIX:12PASS/0FAIL/0SKIP/exit0 em Linux existente, repetidos com
 overlay atual verificado:12PASS/0FAIL/0SKIP. Sem instalacao/HDexterno/VPS. Provas,
 hashes e comandos no HANDOFF existente. Nao somar esses resultados como nova
@@ -96,8 +112,10 @@ Nao declarar o WIP implantado, integrado na401, homologado ou importado.
 
 Lista unica/ordem operacional vigente:
 - Pronto: revisao dirigida dos conflitos401 e provas acima; dados continuam privados.
-- Bloqueador da candidata: Cursor corrigir achados397, atualizar401 pelo SHA de
-  codigo aprovado, repetir somente provas afetadas; fechamento WIP342 exige Linux.
+- Bloqueador da candidata: fechar residuos406/407 no SHA novo, atualizar401 somente
+  com codigo publicado/validado e revisar delta. Antigos achados gerais397 encerrados
+  no escopo comprovado. WIP342 exige fechamento snapshot; POSIX ja passou e nao
+  exige instalar WSL. Dependencia de executor coordenada401/6499358535.
 - Dependencias:334e36231b3 segue aberta sobre codex/comercial-central-abertura-segura;
   342 tem base334,397 tem base342,401 e preview sobre397. Aprovar/revalidar a cadeia
   existente em ordem; nao assumir merge direto em main ou retarget automatico.

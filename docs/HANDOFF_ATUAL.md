@@ -1,5 +1,46 @@
 ## Estado vigente - POSIX executado e revisoes por SHA (2026-10-29)
 
+Fechamento desta revisao: Cursor publicou411dbb1a41310f50a0e1f1d82023934dcffd23611e7
+e4127e61ab57c17a54200369789fb5acb673c0bd5677. Contraprovas nos helpers reais via
+AST:11assertions de preservacao PASS (principal escalar rejeita sem mutar draft,
+canonico preserva;2CX versus10UN bloqueia, controleUN aceita; nomes190/200 integros,
+201 rejeitado, GPSzero preservado). Pareceres411/6499615633 e412/6499616178 encerram
+esses casos nos SHAs exatos, nao o aceite browser/composicao. Lock pos-save somente
+inspecionado, nao ensaiado em React. CI5157 e5159 FAILURE:frontend typecheck com
+3TS2339 porSHA, propriedades adicionadas a Error sem tipo; npm test/audit/lint
+PASS, frontendbuild SKIP; backend/composicao SUCCESS. Causas comunicadas em
+411/6499637547 e412/6499638096, sem editar branches. Corrigir tipo preservando
+contrato no modulo real, nunca suprimir diagnostico. Nao integrar antes de CI verde.
+O canal de upload do patch ao executor Cursor nao concluiu (filechooser timeout);
+nenhum snapshot entregue/executado por inferencia. Solicitacao de validacao exata
+continua publicada no GitHub, sem assumir recebimento. Nao repetir rota bloqueada.
+
+Delta posterior:3423e8216b700bdabee0ed57ca39c0f45a451eb471f confirmado;
+401450e830b68d4e68312a522feb2bf29b4a8df5c10 e410028793ac06ee3473474026e3c29127b82ef0a346.
+40673046b40 e407ba431a2a permanecem nos SHAs dos pareceres. Nao confundir tip
+documental401450e com nova composicao: seu codigo declarado e4dbfdc7cc, entrada
+Codex ainda b5cb34e1, sem WIP atual. Os13blobs do WIP conferidos contra manifesto
+privado:13iguais/0divergencias; patch B78 abaixo preservado, nenhuma fonte alterada.
+
+410: helper real3assertionsPASS e expressao SQL em PGlite sintetico2assertionsPASS;
+nao e teste de repositorio/Auth/PGexterno/browser. Parecer401/6499447355 registra
+escopo e que os residuos de principal escalar e unidade continuam no tip publicado.
+Policy401 nao contem buildComprovanteRecebedorPayload:407 nao esta incorporada
+integralmente; nao atribuir truncamento ao401 sem esse helper. Cursor tem WIP de
+correcao em branch propria; nao editado nem interrompido. Revisar novo SHA quando
+publicado, nao aprovar alteracao apenas observada no checkout alheio.
+
+Coordenacao401/6499358535 solicita executor existente com dependencias para o
+snapshot exato, sem outra composicao. Terminal Cursor existente conferido em
+/workspace, base73046b40, branch residual-p2 e4fontes/testes modificados. Painel
+tambem informa tarefas bloqueadas de autenticacao de homologacao. Nao criar
+credenciais, mexer em segredos ou tomar o checkout para validar. Solicitacao nao
+comprova aceite; Linux anterior sem GitHub/npm nao sera repetido. Fechamento
+faltante explicitado no OPERACAO, POSIX nao e pendencia e WSL nao e proxima acao.
+Autorizacao atual permite sequencia dos pacotes independentes desta tarefa; isso
+nao autoriza executor permanente, publicacao de codigo sem checks ou gates VPS.
+Lista unica de entrada em uso permanece no STATUS, sem outro plano.
+
 Os dois checks POSIX foram executados no executor Linux existente, sem instalar
 WSL, usar a VPS operacional ou escrever no HD externo. Bundle sanitizado SHA256
 0c6173abd166519b11f1a269f9b0edad4fdd8a4c8b2101d1fcfb407e919c125b:
