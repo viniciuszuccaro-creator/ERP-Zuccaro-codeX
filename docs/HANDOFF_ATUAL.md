@@ -1,3 +1,7 @@
+## CURSOR — #411 tip c8c5f24c7 CI SUCCESS (2026-10-29 11:43 America/Sao_Paulo)
+
+- Residual Contatos+unidade CI SUCCESS. Compose #401 com #412+#407 em seguida.
+
 ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
 
 - Fecha A Contatos / B saldo DESCONHECIDO / C agregação produto+unidade + P2 mixed-doc.

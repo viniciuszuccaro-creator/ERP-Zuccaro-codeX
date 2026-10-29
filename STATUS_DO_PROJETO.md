@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#411 tip c8c5f24c7 CI SUCCESS) (2026-10-29 11:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#411** tip **`c8c5f24c7`** — Contatos escalar + unidade vs saldo |
+| **#412** | tip `c0ccadeae` CI SUCCESS — nome recebedor max200 |
+| **Próximo** | compose #401 com #411+#412+#407 |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:43 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#411 residual Contatos+unidade) (2026-10-29 11:28 America/Sao_Paulo)
 
 | Campo | Valor |
