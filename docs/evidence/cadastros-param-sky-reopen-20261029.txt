@@ -6,13 +6,13 @@ ApiExterna / ParametroRoteirizacao / ChatbotCanal (reservadas).
 
 Recuperação vs integra (capacidade, não cópia)
 - Azul-claro funcional de entrada em uso (chrome windowMode + CTA sky),
-  não só pintura: ID técnico na reabertura, RBAC/contexto preservados,
-  switches NFe com permissão/disabled alinhados aos demais params.
+  não só pintura: ID técnico na reabertura, RBAC/contexto de save preservados.
+  Switches NFe mantêm attrs do pin RecordState e36231b3 (sem expandir pin).
 
 Forms tocados (existentes)
 1. ParametroCaixaDiarioForm — sky chrome + CadastroCodigoRegistroField idOnly
 2. ParametroPortalClienteForm — idem
-3. ParametroRecebimentoNFeForm — idem + data-permission nos switches
+3. ParametroRecebimentoNFeForm — idem (attrs switch preservados no pin)
 4. ParametroConciliacaoBancariaForm — idem
 5. ParametroOrigemPedidoForm — sky header windowMode + idOnly + CTA sky
 6. CentroOperacaoForm — sky chrome windowMode (já tinha idOnly)

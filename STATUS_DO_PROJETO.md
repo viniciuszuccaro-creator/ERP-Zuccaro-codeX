@@ -4,7 +4,7 @@
 |-------|-------|
 | Branch | `cursor/cadastros-param-sky-reopen-392b` ← tip #397 `754a05cfa` |
 | Escopo | ParametroCaixa/Portal/NFe/Conciliação/OrigemPedido + CentroOperacao |
-| Mudança | chrome sky windowMode + ID técnico idOnly; NFe switches com RBAC |
+| Mudança | chrome sky windowMode + ID técnico idOnly; pin RecordState NFe intacto |
 | Fora | ApiExterna/Roteirizacao/ChatbotCanal; merge/deploy/carga |
 | Evidência | `docs/evidence/cadastros-param-sky-reopen-20261029.txt` |
 | Próximo | Gateway/TabelaFiscal residual · demo C360 se franquia |
