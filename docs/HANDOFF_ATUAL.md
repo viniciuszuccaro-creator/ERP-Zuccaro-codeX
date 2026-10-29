@@ -1,4 +1,4 @@
-## Estado vigente - codigo funcional publicado (2026-10-29)
+## Estado vigente - codigo composto e testes revisados (2026-10-29)
 
 Publicacao funcional concluida em `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`,
 branch `codex/consolidacao-infra-20261017`, PR342, remoto confirmado e checkout limpo.
@@ -15,23 +15,46 @@ expedicao-comercial-compose123681367493:1/0/0. Os 26 skips da suite unitaria nao
 viram aprovacao por existir outra prova PG. Nao e homologacao browser/operacional.
 Revisao automatizada por SHA:342/6506459572, sem achados maiores.
 
-Coordenacao da incorporacao com Cursor:401/6506537537, sem ACK/fold presumidos.
-Sobreposicao comprovada em6506547493: somente PedidoService e seu teste divergem
-entre4017460 e a base pre-funcional342fdfed nos13paths. Preservar getEmpresaLink,
-clienteId/historico inativo/paginacao do Cursor E captura imutavel/contraprova Codex.
-Demais11paths tem base igual. Conferir status/HEAD/reservas antes de qualquer fold
-na MESMA401 e validar o SHA composto; CI87db nao aprova essa composicao futura.
-Nenhuma branch Cursor editada, mergeMain, DDL, grant, carga ou deploy executados.
+Coordenacao6506537537 e mapa6506547493 recebidos: Cursor confirmou reserva limpa e
+incorporacao na MESMA401 no recibo6506970793. Codigo composto646ec43f80b884abe1589bb4a888650cfdeac927;
+HEAD posterior de testes/docs77c0eacd304d50da58b30b1e1bd83ca58229adbc. Prova mecanica
+independente:11blobs backend exatos87db; PedidoService INTEIRO=baseCursor7460+freeze;
+runtime09 INTEIRO=baseCursor+2testesCodex exatos;8paths contatos/testes iguais0aca;
+25paths alterados na allowlist,0extras. Canonicalizacao LF somente para comparacao
+dos hunks. Recibo privado code-only review401-composition-preservation.mjs.
+Preservados getEmpresaLink,clienteId/historico inativo/paginacao E contexto/contraprovas.
+Codex somente revisou objetos Git, sem checkout/edit da branch Cursor ou nova composicao.
 
-#424d717 continua sem delta de runtime desde2ac0; provas anteriores reutilizadas
-por igualdade de blobs:3comportamentais6504583845+3guardas6505152705; CI5257SUCCESS.
-Nova confirmacao6506340336 delimita AST/callbacks reais, nao React montado/PG/browser.
-Prova navegador integrada depende do harness EXISTENTE identificado no OPERACAO412;
-nao criar paralelo nem afrouxar suas guardas para mudar de ambiente. A CI existente
-tem PostgreSQL isolado; capacidade Chrome/harness deve ser comprovada, nao inferida.
-Controle Chrome falhou ao reanexar aba existente (timeout CDP focus10s); reconexao
-suportada tambem falhou. GitHub autenticado permanece funcional, sem novo login,
-instalacao, restart ou alteracao de permissoes. Comentarios nao provam recebimento.
+CI do77c0/run40946256544 SUCCESS:frontend123702286702=2641PASS/0FAIL/0SKIP;
+backend123702286119=574PASS/0FAIL/26SKIP(600total);compose123702286651SUCCESS.
+O wrapper de workflows lista somente eventosPR e pode retornar vazio para push;
+diagnostico nativo porHEAD confirmou a CI, sem rerun ou herdar resultado do646/parents.
+Runtime src/server/scripts/.github identico646->77; evidencias PG/HTTP desse runtime
+na CI sao separadas do navegador e nao convertem os26skips unitarios em aprovacao.
+
+#424abde6294339584b33cf18dab60b7c3622dd7e2a6/run40946134492 SUCCESS. Novo arquivo0aca
+anunciava callbacks reais, mas4testes usavam replicas; mutacoes somente emmemoria
+desabilitaram guards reais de epoch/skipped e os6testes continuaram PASS. P2 de
+COBERTURA6506994897 (nao novo defeito do produto) corrigido por Cursor via TypeScript
+AST no MESMO arquivo e incorporado no77. Blobteste8a8f21cd igual em424abde e40177.
+Repeti a MESMA contraprova:baseline6PASS; mutacoes agora geram1/2/4FAIL por rascunho
+sobrescrito/dialogo fechado. P2 encerrado6507247848. AfterSaveBump modela conclusao
+do save, nao orquestra toda persistencia; efeito/handler/auditoria sao extraidos do
+produto. Alcance de seams/AST, nao React montado/TanStack/auditoria transacional PG.
+Provas reais anteriores de persistContatosPainel e guardas integrais reutilizadas,
+pois o runtime nao mudou. Nenhuma assertion/teste removido para obter verde.
+
+Pendencia documental precisa: OPDEV da401 ainda blobc7176ef4; falta prefixo da342118f
+que suspende propostaPUBLIC e prioriza consulta fixaREADONLY/ROLLBACK. Nesta342 o
+prefixo foi atualizado para os gates POSIX/transporte/publicacaojaencerrados;
+Cursor deve portar o delta preservando corpo historico, nao substituir manual inteiro.
+Reserva OPDEV/STATUS/HANDOFF342 registrada6507263463; nenhum SQL/autorizacao alterado.
+Controle Chrome recuperado no MESMO agente, recebimento do ajuste comprovado na
+transcricao; nao foi criado executor/ambiente. Precheck somente leitura de binarios
+nativos PG/Chrome/harness solicitado, sem instalar/provisionar Auth/VPS ou presumir
+que NO_DOCKER/5432down bastem. Harness EXISTENTE segue no caminho privado documentado
+no OPERACAO; nao criar paralelo ou afrouxar guardas para contornar falta do arquivo.
+Sem mergeMain,DDL,grant,carga ou deploy. Browser com gravacao ainda nao homologado.
 
 Legado: busca SOMENTE de metadados Drive pelo nome exato do arquivo congelado100
 nao retornou resultado na conexao acessivel. Nao prova inexistencia global, nenhum

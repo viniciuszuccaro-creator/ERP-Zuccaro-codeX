@@ -1,6 +1,6 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Orientacao vigente de continuidade e reconciliacao (2026-10-28)
+## Orientacao vigente de continuidade e reconciliacao (2026-10-29)
 
 Consulta fixa preparada no modulo scripts/legado/pilot-functional-load-plan.mjs,
 sem conectar ou executar automaticamente. Exige SHA dos bytes e da coorte,
@@ -16,7 +16,7 @@ B) confronto isolado somente com identidade e atualidade comprovadas; restore
 historico nao comprova destino atual. C) novo leitor com mudancas globais PUBLIC
 permanece suspenso; nao aplicar por inercia autorizacoes condicionais anteriores.
 
-Prova desta retomada: conexao SQL existente real, metadados em transacao somente
+Evidencia historica reutilizada (28/10): conexao SQL existente real, metadados em transacao somente
 leitura e rollback; Grupo aprovado1/empresas2, zero linhas de clientes consultadas.
 Protecao e capacidade do diretorio privado conferidas, sem novos arquivos na VPS.
 Artefato congelado100 nao localizado na busca limitada; recuperar apenas esse
@@ -36,7 +36,8 @@ delegacao SQL arbitraria ou novo LOGIN, somente CPA/empresas/coorte100 fixados e
 recibos privados, colunas allowlisted, sem LIMIT1 em documento ambiguo, transacao
 REPEATABLE READ READ ONLY, timeouts, ROLLBACK e saida0600/hash privada. Privilegio do
 executor nao e prova de isolamento; escopo do SQL e ausencia de escrita exigem
-ensaio/revisao. Leitura de negocio aguarda autorizacao especifica desta alternativa.
+ensaio/revisao. Leitura de negocio exige fonte, canal e escopo autorizado comprovados;
+nao presumir essas condicoes pela publicacao do codigo ou pelo recibo de preparacao.
 Nao herdar permissao de metadados como autorizacao de exportar clientes.
 
 Copia isolada e alternativa somente com identidade/schema/frescor comprovados e
@@ -45,24 +46,30 @@ nao e a opcao minima diante de PUBLIC e bancos adicionais. Sem alterar PUBLIC/AP
 HBA/rede, conceder sudo/docker ou executar carga para contornar indisponibilidade.
 As autorizações especificas SSH anteriores permanecem, sem copiar chave pessoal.
 
-### Gate vigente do executor: POSIX aprovado, snapshot completo pendente (2026-10-29)
+### Gate vigente do executor: publicacao funcional encerrada (2026-10-29)
 
-Os dois checks POSIX abaixo NAO estao mais bloqueados:12PASS/0FAIL/0SKIP/exit0 no
-Linux existente, tambem com overlay atual validado. Provas e hashes no HANDOFF.
-Nao instalar WSL para repeti-los; D permanece HD externo protegido. A orientacao
-de instalacao abaixo e HISTORICA, nao uma acao vigente nem autorizacao para instalar.
-O executor dessa prova nao pode acessar GitHub/npm por politica: nao repetir essa
-rota nem contornar a restricao. Coordenacao de validacao do snapshot completo em
-executor existente com dependencias/canal suportados publicada na401/6499358535;
-solicitacao nao comprova recebimento, disponibilidade ou execucao.
+Os dois checks POSIX estao encerrados:12PASS/0FAIL/0SKIP, inclusive overlay conferido.
+O transporte e o fechamento do snapshot WIP13 tambem terminaram: recibo421/6505560893,
+arvore266b1ebf,9/9checks sob dependencias do lock; raiz2419PASS e backend565PASS/0FAIL/
+26SKIP. Codigo funcional publicado na342 em87db6618cb3d6198ecdc185cc59d8ca48eeafa83,
+CI5265SUCCESS. Os26skips nao sao aprovacao PostgreSQL/browser ou liberacao operacional.
+Nao repetir WSL, transporte, preparacao do bundle ou diagnostico antigo de dependencias.
 
-Fechamento ainda necessario: identidade/base e13blobs do patch exato, testes
-raiz completos no snapshot, server:test e audit/lint/typecheck/build aplicaveis
-conforme AGENTS16; reutilizar resultados anteriores somente com vinculo de hashes
-e condicoes comprovado. Bundle/overlay nao contem todo o WIP. Skips de banco nao
-sao PASS. Nao executar migrador geral, usar dados reais ou escrever checkout alheio.
-Artefatos privados e dependencias ficam fora de Git/build; transferir somente o
-codigo sanitizado/manifesto exatos, nunca historico Git indiscriminado.
+A restricao GitHub/npm pertencia ao primeiro executor Linux; nao contorna-la nem
+apresenta-la como capacidade de outro executor. A validacao completa usou o executor
+permitido, com deps proprias descartaveis, sem alterar locks, fontes, seguranca ou VPS.
+Recibos/hashes e limites no STATUS/HANDOFF; nova composicao exige seu proprio SHA/CI.
+Nao executar migrador geral, usar dados reais ou escrever checkout alheio. Nao
+confundir demo writes0, callbacks/PGlite, HTTP/PostgreSQL e prova no navegador.
+
+Para o ensaio integrado, verificar capacidade nativa PostgreSQL/Chrome e harness
+existentes antes de concluir a partir de NO_DOCKER/porta fechada. Nao iniciar servico
+operacional, criar usuario Auth DEV, senha persistente, grants ou acesso VPS para testar.
+O harness privado documentado abaixo conserva guardas de ambiente/origin/SHA; nao
+afrouxa-las ou criar implementacao paralela para contornar arquivo indisponivel.
+Os procedimentos de instalacao abaixo sao HISTORICOS, nao a fila desta etapa.
+Artefatos/dados privados continuam fora de Git/build; somente codigo sanitizado foi
+publicado. Nao copiar historico Git, chaves ou credenciais indiscriminadamente.
 
 ### Historico do gate desktop antes da prova Linux, sem mudar a VPS
 

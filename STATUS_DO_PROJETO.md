@@ -1,4 +1,4 @@
-## Estado vigente - backend publicado e composicao separada (2026-10-29)
+## Estado vigente - composicao integrada em revisao (2026-10-29)
 
 Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma
 branch da #342, remoto confirmado e checkout limpo. CI5265/run40940232207 SUCCESS:
@@ -14,17 +14,27 @@ entre essa arvore e o commit funcional mudaram somente STATUS/HANDOFF. Publicaca
 funcional encerrada, nao apenas deposito de patch. Os 26 skips nao sao aprovacao
 PostgreSQL; CI nao homologa navegador ou operacao. Reserva desktop liberada.
 
-Incorporacao na mesma #401 solicitada em 6506537537, sem ACK/execucao presumidos.
-Mapa de sobreposicao em 6506547493: PedidoService e runtime09-pedido-service.test
-ja contem getEmpresaLink, filtro clienteId e historico inativo do Cursor; preservar
-esses hunks junto da captura de contexto/contraprova Codex, sem substituir arquivos.
-Os outros 11 paths tinham base igual. Sem merge/fold automatico ou nova composicao.
+Incorporacao na MESMA #401 executada pelo Cursor, reserva/recibo6506970793:
+codigo composto `646ec43f80b884abe1589bb4a888650cfdeac927`, depois HEAD de testes/docs
+`77c0eacd304d50da58b30b1e1bd83ca58229adbc`. CI propria77/run40946256544 SUCCESS:
+raiz2641PASS/0FAIL/0SKIP; backend574PASS/0FAIL/26SKIP(600total). Nao herdar CI dos
+parents. Codigo src/server/scripts/.github identico646->77; sem nova versao runtime.
+Revisao integral confirmou11blobs87db exatos, PedidoService completo=baseCursor+freeze,
+teste completo=baseCursor+2testesCodex,8paths contatos exatos0aca,25paths allowlisted,
+0extras. getEmpresaLink/clienteId/inativo/paginacao e contexto imutavel preservados.
+Codex nao editou branch Cursor nem criou composicao concorrente.
 
-#424 permanece `d7174611d2c3fd2b577a5068a4aa1c7a2a71c8fb`, CI5257 SUCCESS.
-Sem novo runtime: reutilizadas 3 provas comportamentais e 3 contraprovas das guardas,
-parecer 6506340336. Alcance: callbacks/helpers reais por AST, nao React/PG/browser.
-O harness privado existente e identificado no OPERACAO; a prova integrada continua
-pendente. Controle Chrome falhou na reconexao; GitHub segue canal de coordenacao.
+#424 atual `abde6294339584b33cf18dab60b7c3622dd7e2a6`, CI40946134492 SUCCESS.
+Novo P2 apenas de cobertura no0aca (replicas de teste) foi reproduzido6506994897
+e corrigido no mesmo arquivo por AST. Contraprova independente no77:baseline6PASS;
+guards reais epoch/skipped desativados em memoria agora fazem1/2/4FAIL, como exigido.
+P2 fechado6507247848, sem reabrir fix de produto/guardas antigas. AfterSaveBump ainda
+modela conclusao do save: testes nao montam React/TanStack nem provam auditoria PG.
+Controle Chrome recuperado e mensagem de correcao recebida pelo mesmo agente.
+Falta reconciliar OPDEV na candidata (prefixo vigente/suspensao ACL); delta atualizado
+na342 neste lote documental para Cursor portar sem perder o corpo historico.
+Prova browser integrada continua pendente do harness/capacidade isolada, nao de
+usuario Auth/segredo na VPS. Precheck nativo PG/Chrome solicitado, resultado nao presumido.
 
 Coorte100: consulta de metadados no Drive somente pelo nome exato nao retornou
 resultados acessiveis. Nao prova ausencia global; nenhum conteudo/download/sharing.
@@ -241,15 +251,14 @@ Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
 - Publicacao backend (Codex): ENCERRADA em87db6618/CI5265SUCCESS,13blobs exatos.
   Fechamento6505560893 e provas CI doSHA conferidos;26SKIP separados. Nao repetir
   transporte/deps/POSIX/WSL. Nao e autorizacao de fold ou homologacao operacional.
-- Revisao/composicao (Cursor+Codex):4017460c3a2/codigo0195acc66 incorpora414849419a6;
-  parecer6504381068 sem novo defeito nesse delta. Liberacao419/failure-only encerrados.
-  Preparar incorporacao do87db apos ACK/reserva, preservando os2paths dePedido
-  sobrepostos; #424d717 revisada no alcance dirigido e separada ate coordenacao.
-  Falta navegador com gravacao; nao ampliar candidata com melhorias nao essenciais.
-- Cadeia (Cursor+Codex):401 agora tem basePR342, mas merge-base real e b5cb34e1;
-  87db NAO e ancestral da401. Antes havia delta documental; agora tambem ha13paths
-  funcionais publicados a reconciliar. Retarget nao incorpora commits. Preservar
-  deltas de ambas as frentes,validar nova composicao porSHA,sem merge direto emmain.
+- Revisao/composicao (Cursor+Codex):codigo646ec43f,HEADtestes/docs77c0eacd incorpora
+  backend87db+contatos424abde; CI propria SUCCESS. Preservacao integral e contraprovas
+  de testes conferidas, antiga espera de ACK/WIP encerrada. Falta portar prefixo
+  operacional vigente/atualizado e fechar browser com gravacao; nao ampliar escopo.
+- Cadeia (Cursor+Codex):incorporacao foi por hunks/paths, nao merge de parents;
+  ausencia de ancestralidade nao significa falta de codigo. Blobs/keep-both foram
+  comprovados. Reconciliar continuidade sem perder historico, conferir SHA/CI apos
+  proximo delta documental; nao presumir merge direto emmain ou liberacaoVPS.
 - Esquema/privilegios (Codex+aprovacao dono): envelope minimo e diferenca comprovada
   do destino;044/Fornecedor candidatos e045-049 privadas nao aplicados por inferencia.
 - Backup/retorno (Codex+aprovacao dono): verificar frescor/identidade dos recibos ja
