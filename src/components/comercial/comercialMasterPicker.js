@@ -91,8 +91,38 @@ export function resolveComercialMasterPages(pages, scope) {
     clientesHasMore: pages.clientes.meta.hasMore, produtosHasMore: pages.produtos.meta.hasMore };
 }
 
+/**
+ * Resolve vínculo selecionado a partir só da página /clientes (lookup leve).
+ * Usado na hidratação de labels — não exige produtos/condições/unidades/tabelas.
+ */
+export function resolveComercialSelectedClienteLinks(clientesPage, scope, clienteEmpresaId) {
+  const unavailable = () => { throw new Error('COMERCIAL_SELECTED_CLIENTE_UNAVAILABLE'); };
+  if (!isCanonicalComercialId(clienteEmpresaId) || !clientesPage || !Array.isArray(clientesPage.data)
+    || clientesPage.meta?.total !== 1 || clientesPage.meta?.limit !== 1 || clientesPage.meta?.offset !== 0
+    || clientesPage.meta?.hasMore !== false || clientesPage.data.length !== 1) {
+    return unavailable();
+  }
+  const cliente = clientesPage.data[0];
+  if (!cliente || !isCanonicalComercialId(cliente.id) || cliente.ativo === false
+    || (cliente.group_id && cliente.group_id !== scope.groupId)) {
+    return unavailable();
+  }
+  const link = cliente.empresa_operacao;
+  if (!link || !isCanonicalComercialId(link.id) || link.id !== clienteEmpresaId
+    || link.cliente_id !== cliente.id || link.group_id !== scope.groupId || link.empresa_id !== scope.empresaId
+    || link.ativo !== true || link.situacao_comercial !== 'ATIVO' || link.habilitado_operacao !== true
+    || link.bloqueado !== false || link.elegivel_operacao !== true) {
+    return unavailable();
+  }
+  return { clientes: [cliente], clientesEmpresa: [link] };
+}
+
 /** Resolve a selected relationship independently of the current search page. */
 export function resolveComercialSelectedCliente(pages, scope, clienteEmpresaId) {
+  // Prefer lightweight path when only the clientes page is present (resolveClienteEmpresa).
+  if (pages && pages.clientes && pages.produtos === undefined) {
+    return resolveComercialSelectedClienteLinks(pages.clientes, scope, clienteEmpresaId);
+  }
   const result = resolveComercialMasterPages(pages, scope);
   if (!isCanonicalComercialId(clienteEmpresaId) || pages.clientes.meta.total !== 1
     || pages.clientes.meta.limit !== 1 || pages.clientes.meta.hasMore

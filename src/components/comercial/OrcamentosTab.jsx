@@ -134,7 +134,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const selectedClienteQuery = useQuery({
     queryKey: ['orcamento-selected-cliente', groupId, empresaId, actorId, sessionCacheGeneration, form.cliente_empresa_id],
     queryFn: async ({ signal }) => resolveComercialSelectedCliente(
-      await http.comercialMasters.list({ clienteEmpresaId: form.cliente_empresa_id, signal }),
+      await http.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId: form.cliente_empresa_id, signal }),
       { groupId, empresaId },
       form.cliente_empresa_id,
     ),
@@ -152,6 +152,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (form.cliente_empresa_id) ids.add(form.cliente_empresa_id);
     return [...ids].filter((id) => isCanonicalComercialId(id));
   }, [listRows, selected?.cliente_empresa_id, editing?.cliente_empresa_id, form.cliente_empresa_id]);
+  // Lote limitado (concorrência); resultados entram em clienteCatalog → fila avança (P2).
   const missingClienteEmpresaIds = useMemo(() => {
     const known = new Set((clienteCatalog.clientesEmpresa || []).map((link) => link.id));
     if (selectedClienteQuery.data?.clientesEmpresa?.[0]?.id) {
@@ -164,7 +165,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     queries: missingClienteEmpresaIds.map((clienteEmpresaId) => ({
       queryKey: ['orcamento-row-cliente', groupId, empresaId, actorId, sessionCacheGeneration, clienteEmpresaId],
       queryFn: async ({ signal }) => resolveComercialSelectedCliente(
-        await http.comercialMasters.list({ clienteEmpresaId, signal }),
+        await http.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId, signal }),
         { groupId, empresaId },
         clienteEmpresaId,
       ),
@@ -173,6 +174,11 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       retry: false,
     })),
   });
+  const rowHydrationKey = rowClienteQueries
+    .map((query) => query.data?.clientesEmpresa?.[0]?.id)
+    .filter(Boolean)
+    .sort()
+    .join(',');
   useEffect(() => {
     setClienteCatalog({ clientes: [], clientesEmpresa: [] });
   }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
@@ -186,6 +192,17 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setClienteCatalog((prev) => mergeComercialSelectedCliente(prev, selectedClienteQuery.data));
     return undefined;
   }, [selectedClienteQuery.data, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !rowHydrationKey) return undefined;
+    setClienteCatalog((prev) => {
+      let next = prev;
+      for (const query of rowClienteQueries) {
+        if (query.data) next = mergeComercialSelectedCliente(next, query.data);
+      }
+      return next;
+    });
+    return undefined;
+  }, [proposalMode, rowHydrationKey]);
   // Hidratações da página atual entram no useMemo (sem effect — evita loop por referência de useQueries).
   const masters = useMemo(() => {
     if (proposalMode) return proposalMasters;

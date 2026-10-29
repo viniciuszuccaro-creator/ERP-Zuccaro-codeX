@@ -114,7 +114,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const coreMasters=master.data||{clientesEmpresa:[],clientes:[],condicoes:[],produtos:[],unidades:[],tabelas:[]};
   const selectedCliente=useQuery({
     queryKey:['pedido-selected-cliente',groupId,empresaId,actorId,sessionCacheKey,form.cliente_empresa_id],
-    queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.list({
+    queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.resolveClienteEmpresa({
       clienteEmpresaId:form.cliente_empresa_id,signal,
     }),{groupId,empresaId},form.cliente_empresa_id),
     enabled:ready&&canView&&formOpen&&isCanonicalPedidoId(form.cliente_empresa_id),
@@ -129,6 +129,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     if(form.cliente_empresa_id)ids.add(form.cliente_empresa_id);
     return [...ids].filter((id)=>isCanonicalPedidoId(id));
   },[listRows,selected?.cliente_empresa_id,form.cliente_empresa_id]);
+  // Lote limitado; hidratação acumulada em clienteCatalog avança a fila (P2).
   const missingClienteEmpresaIds=useMemo(()=>{
     const known=new Set((clienteCatalog.clientesEmpresa||[]).map((link)=>link.id));
     for(const link of coreMasters.clientesEmpresa||[])known.add(link.id);
@@ -138,16 +139,26 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const rowClienteQueries=useQueries({
     queries:missingClienteEmpresaIds.map((clienteEmpresaId)=>({
       queryKey:['pedido-row-cliente',groupId,empresaId,actorId,sessionCacheKey,clienteEmpresaId],
-      queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.list({
+      queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.resolveClienteEmpresa({
         clienteEmpresaId,signal,
       }),{groupId,empresaId},clienteEmpresaId),
       enabled:ready&&canView&&isCanonicalPedidoId(clienteEmpresaId),
       staleTime:60000,retry:false,
     })),
   });
+  const rowHydrationKey=rowClienteQueries.map((q)=>q.data?.clientesEmpresa?.[0]?.id).filter(Boolean).sort().join(',');
   useEffect(()=>{setClienteCatalog({clientes:[],clientesEmpresa:[]});},[groupId,empresaId,actorId,sessionIdentity]);
   useEffect(()=>{if(master.data)setClienteCatalog((prev)=>unionComercialClienteCatalog(prev,master.data));},[master.data]);
   useEffect(()=>{if(selectedCliente.data)setClienteCatalog((prev)=>mergeComercialSelectedCliente(prev,selectedCliente.data));},[selectedCliente.data]);
+  useEffect(()=>{
+    if(!rowHydrationKey)return undefined;
+    setClienteCatalog((prev)=>{
+      let next=prev;
+      for(const query of rowClienteQueries){if(query.data)next=mergeComercialSelectedCliente(next,query.data);}
+      return next;
+    });
+    return undefined;
+  },[rowHydrationKey]);
   const selectedClienteId=selectedCliente.data?.clientesEmpresa[0]?.cliente_id;
   const auxiliary=useQuery({
     queryKey:['pedido-auxiliary',groupId,empresaId,actorId,sessionCacheKey,selectedClienteId,form.cliente_empresa_id],
