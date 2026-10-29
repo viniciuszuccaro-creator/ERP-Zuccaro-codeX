@@ -4,8 +4,9 @@
 424 mantida; runtime/testes/locks iguais ao77c0 revisado. Delta posterior somente
 nos cinco documentos/recibos. OPDEV agora blob1fc7e685b, igual ao342/1a03;
 corpo historico c717 preservado integralmente, STATUS/HANDOFF retiveram ambos os lados.
-CI do1a03: tres jobs SUCCESS/run40947996411. CI do686: compose SUCCESS;
-frontend/backend ainda em execucao na ultima consulta, sem herdar resultado do77.
+CI do1a03: tres jobs SUCCESS/run40947996411. Reconsulta por SHA confirmou os
+tres jobs SUCCESS tanto do686/CI5284 quanto do342/4beae9f0/CI5286.
+Nao existe mais gate de publicacao/incorporacao/POSIX/transporte neste pacote.
 
 Executor existente comprovou PostgreSQL16.15 nativo e Chrome148/Playwright1.56.1,
 sem instalar ambiente. Ensaio sintetico em cluster efemero55432: PG5/0/0;
@@ -16,7 +17,13 @@ Cluster5432 permaneceu down;55432/datadir de teste encerrados/removidos pelo exe
 Bloqueio concreto do navegador: browser-harness.mjs privado documentado no OPDEV
 existe no volume do Codespace, nao esta disponivel no executor Cursor. Busca
 limitada em inspection-code-only desktop tambem sem arquivo; nao prova ausencia
-global. Recuperar SOMENTE esse artefato e guardas por canal privado suportado,
+global. Nova busca nominal nos quatro diretorios privados documentados e no
+indice local de2911entradas: nenhum harness ou coorte final; apenas gerador da
+coorte. Drive por nome EXATO browser-harness.mjs retornou0metadados acessiveis,
+sem download ou alteracao de compartilhamento. Nao repetir busca da coorte no
+Drive ja registrada nem reconstituir selecao. O ultimo exemplar documentado
+permanece no volume privado do Codespace; nao foi comprovado acesso aos bytes.
+Recuperar SOMENTE esse artefato e guardas por canal privado suportado,
 conferir origem/versao antes de reutilizar. Nao provisionar Auth/VPS, afrouxar
 guardas nem substituir por demo writes0. Coorte100 final e pins continuam
 dependencia SEPARADA; sem nova selecao, transferencia integral ou carga real.
@@ -274,10 +281,10 @@ Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
 - Publicacao backend (Codex): ENCERRADA em87db6618/CI5265SUCCESS,13blobs exatos.
   Fechamento6505560893 e provas CI doSHA conferidos;26SKIP separados. Nao repetir
   transporte/deps/POSIX/WSL. Nao e autorizacao de fold ou homologacao operacional.
-- Revisao/composicao (Cursor+Codex):codigo646ec43f,HEADtestes/docs77c0eacd incorpora
-  backend87db+contatos424abde; CI propria SUCCESS. Preservacao integral e contraprovas
-  de testes conferidas, antiga espera de ACK/WIP encerrada. Falta portar prefixo
-  operacional vigente/atualizado e fechar browser com gravacao; nao ampliar escopo.
+- Revisao/composicao (Cursor+Codex):codigo646ec43f,HEAD686ae322 incorpora
+  backend87db+contatos424abde e prefixo operacional vigente; CI5284 SUCCESS.
+  Preservacao integral e contraprovas conferidas, antiga espera de ACK/WIP encerrada.
+  Falta browser com gravacao por harness privado indisponivel; nao ampliar escopo.
 - Cadeia (Cursor+Codex):incorporacao foi por hunks/paths, nao merge de parents;
   ausencia de ancestralidade nao significa falta de codigo. Blobs/keep-both foram
   comprovados. Reconciliar continuidade sem perder historico, conferir SHA/CI apos

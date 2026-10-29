@@ -4,7 +4,8 @@
 da342/1a03 e preservou integralmente o corpo c717 e ambos os historicos de
 STATUS/HANDOFF. Comparacao Git Codex: desde77c0 alterou somente esses tres
 documentos e dois recibos; nenhum runtime/teste/lock alterado. CI1a03 tres SUCCESS;
-CI686 compose SUCCESS, frontend/backend ainda em execucao na consulta do fechamento.
+CI686/5284 e CI342/4beae9f0/5286: todos os jobs SUCCESS conferidos por SHA.
+Publicacao, transporte, POSIX e incorporacao estao ENCERRADOS.
 
 Capacidade nativa PG16.15 + Chrome148 + Playwright1.56.1 comprovada no MESMO
 executor Cursor, sem Docker/instalacao/VPS. Provas adicionais isoladas:
@@ -15,7 +16,12 @@ main5432 down e intocado. Nao e prova de navegador com persistencia.
 
 Falta exata para esse ciclo: o browser-harness.mjs privado no caminho Codespace
 ja registrado em OPERACAO. Ausente no executor Cursor e na busca limitada
-inspection-code-only deste desktop; nao declarar ausencia global. Proxima acao:
+inspection-code-only deste desktop; nao declarar ausencia global. Busca adicional
+nominal nos quatro diretorios privados conhecidos e indice2911entradas nao encontrou
+harness/coorte final, somente gerador. Drive por nome exato do harness retornou
+0metadados acessiveis, sem download/sharing. Nao repetir busca Drive da coorte.
+Origem/versao/hash dos bytes do harness nao puderam ser conferidos; ultimo local
+documentado e o volume privado Codespace, nao um arquivo Git. Proxima acao:
 recuperar esse arquivo/guardas por canal privado autorizado, conferir procedencia
 e executar UI->APIcanonica->PGisolado. Nao criar usuario/segredo VPS ou afrouxar
 guardas. A coorte100 final continua faltante separadamente, sem reconstruir outra.
