@@ -1,6 +1,14 @@
 ## Estado vigente - composicao414 incorporada e aceite delimitado (2026-10-29)
 
-342f02a6b024107ff587075052bdf71327a91e43e05;4017460c3a2669181138065b05112ba209629784479,
+Publicacao FUNCIONAL do WIP13 neste lote,autorizada pelo proprietario apos fechar
+validacao421/6505560893. Base342fdfed98f/CI5261SUCCESS,branchcodex/consolidacao-infra-20261017;
+13/13blobs iguais ao manifestoC8A,patchB78 preservado e arvore266b1ebf reconstruida
+sobrebasevalidadaeead. Deltaeead->fdfed anterior somenteSTATUS/HANDOFF; nenhum runtime
+posterior. Checks9/9PASS reutilizados por identidade de bytes/condicoes,sem novoWSL
+ou transporte. CI do commit funcional deve ser conferida na342 pelo SHA publicado;
+nao atribuir CI5261 documental ao codigo. Sem reaplicar patch,sem foldautomatico401.
+
+4017460c3a2669181138065b05112ba209629784479,
 codigo0195acc66f7c52cea6b64e92a0129d0ea322ff4a;414849419a6ee88c3490cb32b0ff2958e1e9e4bd841.
 414 incorporada: diff src/tests/server entre414 e401 vazio. Liberacao419 e residual
 failure-only ENCERRADOS no alcance ja provado. Nao repetir desbloqueio ou instalarWSL.
@@ -34,8 +42,9 @@ server554PASS/0FAIL/26SKIP(580total). Snapshot:raiz2419PASS/0FAIL/0SKIP,
 server565PASS/0FAIL/26SKIP(591total). Audit/lint/typecheck/build/diff exit0 em ambos,
 inclusive typecheck/buildserver;TS2742 ausente com deps proprias. Nenhuma regressao.
 13/13blobs/arvore266b1ebf conferidos; os26SKIP PG NAO sao aprovacao PostgreSQL.
-Transporte/fechamento tecnico encerrados; codigo funcional permanece WIP,sem apply/fold
-em implementacao/candidata: esta autorizacao publicou SOMENTE artefatos sanitizados.
+Transporte/fechamento tecnico encerrados. Limite anterior SOMENTE artefatos foi
+superado pela instrucao corrente para PUBLICACAO FUNCIONAL dos13blobs validados;
+nao autoriza fold automatico na401,merge,deploy,DDL/grants ou carga operacional.
 Originais privados e candidata401 continuam intactos; nao chamar essa fase de carga.
 Nao usar CI documental, overlayPOSIX12/0/0 ou sanitizacao como fechamento do snapshot.
 
@@ -201,8 +210,9 @@ Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
   publicar funcionalmente. Sanitizacao integral pronta e transporte publico do artefato
   especificamente autorizado; ACK hashes/13blobs/arvore recebido6505240416.
   Fechamento integral de codigo com deps completas encerrado6505560893,9/9checks
-  PASS;PG26SKIP separados. Publicacao funcional/aplicacao separada desta autorizacao
-  de artefatos,sem fold automatico na401 nem marcacao de homologacao operacional.
+  PASS;PG26SKIP separados. Publicacao funcional autorizada na342 neste lote;
+  conferir SHA/CI e revisao antes de coordenar incorporacaoCursor naMESMA401.
+  Sem fold automatico nem marcacao de homologacao operacional.
   POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
 - Revisao/composicao (Cursor+Codex):4017460c3a2/codigo0195acc66 incorpora414849419a6;
   parecer6504381068 sem novo defeito nesse delta. Liberacao419/failure-only encerrados.

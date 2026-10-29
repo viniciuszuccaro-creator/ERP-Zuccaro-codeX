@@ -1,4 +1,15 @@
-## Continuidade atual #342/#344/#350 (2026-10-24)
+## Continuidade vigente - decisao desktop temporario (2026-10-28)
+
+Desenvolvimento no clone desktop independente existente; Codespace unico reservado
+para validacao integrada e navegacao quando houver franquia, sem habilitar gastos.
+GitHub segue canonico, VPS separada por gates. Lista unica e resultados vigentes no
+STATUS/HANDOFF. Codex: backend/contratos/persistencia/legado; Cursor: interface,
+formularios/navegacao/recuperacao. Um escritor por checkout e reservas na PR342.
+Nao presumir WIP/staging/chaves remotos locais nem reconstruir trabalho inacessivel.
+Preservados programa, visual azul-claro com funcionalidades, IDs/codigos/vinculos
+e contratos atuais; nenhuma nova aprovacao visual ou carga acompanha a retomada.
+
+## Historico #342/#344/#350 (2026-10-24)
 
 Retomada no Codespace unico e branch de consolidacao, base4ab7a61b. Defeito de
 captura assincrona na correcao canonica do nome inativo reproduzido e corrigido:

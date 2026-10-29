@@ -73,7 +73,7 @@ test('verified CSV parser preserves escaped billing JSON and rejects shifted col
         entity: 'fornecedor', relativePath: 'synthetic.csv', sha256: crypto.createHash('sha256').update(text).digest('hex'),
       }] }));
       // Match the JavaScript template literal escape processing used by the harness.
-      return spawnSync('python3', ['-c', python.replaceAll('\\\\', '\\'), job], { encoding: 'utf8' });
+      return spawnSync(process.env.TEST_PYTHON_EXECUTABLE || 'python3', ['-c', python.replaceAll('\\\\', '\\'), job], { encoding: 'utf8' });
     };
     const valid = prepare(csv);
     assert.equal(valid.status, 0, valid.stderr);

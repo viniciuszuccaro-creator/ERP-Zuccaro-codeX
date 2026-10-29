@@ -89,7 +89,7 @@ print(json.dumps({k:len(v) for k,v in rows.items()}))
 // Execution-only harness: existing mappers, services, repositories and audit own
 // business behavior. No operational URL or private migration is accepted.
 export function assertIsolationDescriptor(c, { name, batchId, image, privateRoot }) {
-  const allowed = new Set([path.join(privateRoot, 'pgdata'), path.join(privateRoot, 'socket')]);
+  const allowed = new Set([path.posix.join(privateRoot, 'pgdata'), path.posix.join(privateRoot, 'socket')]);
   if (c.Name !== '/' + name || c.Config.Labels['erp.legacy.pilot'] !== batchId
     || c.HostConfig.NetworkMode !== 'none' || c.HostConfig.Privileged
     || !c.HostConfig.ReadonlyRootfs || Object.keys(c.HostConfig.PortBindings || {}).length

@@ -1,6 +1,20 @@
 ## Estado vigente - aceite dirigido da composicao401 (2026-10-29)
 
-HEAD342f02a6b024107ff587075052bdf71327a91e43e05 e branchdesktop conferidos;
+Instrucao corrente do dono autoriza PUBLICACAO FUNCIONAL do WIP13 apos gates.
+Base342fdfed98fbdc53f0f62eb3eaae55050b2d7a6577e/CI5261SUCCESS conferida,origin
+canonico,branchcodex/consolidacao-infra-20261017 e escritorunico no clon desktop.
+Prova economica anterior ao stage:13blobs iguais ao manifestoC8A;indice temporario
+sobreeead306243ea1fe3e97dcc02877860458aa265db +13arquivos existentes produz EXATAMENTE
+arvorevalidada266b1ebf247fd419a500ac2da4e4acf0aa81d578. Indice/HEAD/WIP reais intactos,
+sem aplicar patch outra vez. Deltaeead->fdfed apenasSTATUS/HANDOFF,sem runtime novo.
+Reutilizados9/9checks do snapshot comdeps corretas,raiz2419PASS/0FAIL/0SKIP,
+server565PASS/0FAIL/26SKIP;26SKIP PG nao homologam PostgreSQL/browser.
+Este lote versiona os13arquivos funcionais +continuidade,nao apenas o deposito.
+CI da publicacao deve ser lida pelo SHA deste commit naPR342;resultado anterior
+CI5261 e documental. Revisao/incorporacao comCursor somente apos publicar/conferir,
+sem aplicar duas vezes,sem editarbranchCursor ou criarcomposicao concorrente.
+
+Estado anterior342f02a6b024107ff587075052bdf71327a91e43e05 preservado no historico;
 13arquivos WIP preservados,nenhum processo de teste/escritor identificado no clone.
 4017460c3a2669181138065b05112ba209629784479/codigo0195acc66f7c52cea6b64e92a0129d0ea322ff4a
 incorpora414849419a6ee88c3490cb32b0ff2958e1e9e4bd841: diff src/tests/server VAZIO.
@@ -64,9 +78,11 @@ sumiu com deps locais,sem anotacao/supressao no produto. Primeiros7fails comprov
 por traceback como deps declaradas ausentes na arvore emprestada; nenhuma regressao
 sobdeps completas. Locks mantidos,13/13blobs conferidos;workspace/candidata intactos.
 Provas PGlite/in-memory/testesnpm NAO substituem os26PGSKIP ou browser comPG real.
-Codigo funcional NAO publicado/aplicado/folded:autorizacao posterior foi SOMENTE
-artefatos publicos sanitizados para validacao,sem integracao automatica. Snapshot
-validado fica pronto para etapa funcional separada,respeitando gates/cadeia401.
+Na etapa anterior o codigo funcional NAO foi publicado:autorizacao era SOMENTE
+artefatos publicos sanitizados. A instrucao CORRENTE libera agora o commit/push
+funcional dos MESMOS13blobs,sem reaplicar patch nem integrarautomaticamente401.
+Validacao manteve arquivos originais,hashes e contrato; snapshot pronto/publicado
+neste lote deve ser revisado porSHA,respeitando gates/cadeia401 e PG26SKIP.
 Sem fontes alteradas,segredos novos,VPS,DDL,grants,carga ou deploy. Logs completos
 permanecem na area de validacao;recibo publico contem apenas resultados sanitizados.
 
