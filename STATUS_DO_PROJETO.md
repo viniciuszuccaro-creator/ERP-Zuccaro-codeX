@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#401 P2 seams AST + composição) (2026-10-29 17:10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#401 tip** | `d9f100672d1487cebd0c12e79013bbcc3b0b678a` (sobre `646ec43f8`) |
+| **#424 tip** | `abde6294339584b33cf18dab60b7c3622dd7e2a6` — seams AST real (não réplicas) |
+| **Entrada backend** | `87db6618cb3d6198ecdc185cc59d8ca48eeafa83` — 11 paths + Pedido keep-both |
+| **Seams** | `tests/contatos-painel-counterproof-seams.test.js` — callbacks via TypeScript AST |
+| **Provas seams** | baseline 6 PASS · mutação epoch/skipped in-memory → 1/2/4 FAIL · restore 6 PASS |
+| Fora | produto/contexto/permissoes intocados neste delta · Auth/VPS/segredos |
+
+**Evidência:** `docs/evidence/contatos-424-seams-ast-20261029.txt`
+**Próximo:** CI tips `abde62943`/`d9f100672` + `@codex review`. Demo browser = harness existente (não writes=0).
+
 ## CURSOR — VIGENTE (#401 composição 87db+424) (2026-10-29 17:00 America/Sao_Paulo)
 
 | Campo | Valor |
