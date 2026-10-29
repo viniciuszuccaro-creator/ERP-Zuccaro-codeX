@@ -172,11 +172,18 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
-            <Zap className="w-8 h-8 text-blue-600" />
-            <h2 className="text-2xl font-bold text-slate-900">
-              {apiExterna ? 'Editar API Externa' : 'Nova API Externa'}
-            </h2>
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <Zap className="w-8 h-8 text-sky-600" />
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {apiExterna ? 'Editar API Externa' : 'Nova API Externa'}
+              </h2>
+              {apiExterna?.id ? (
+                <p className="text-xs text-slate-500">
+                  ID técnico: <span className="font-mono">{String(apiExterna.id)}</span>
+                </p>
+              ) : null}
+            </div>
           </div>
           {form}
         </div>
