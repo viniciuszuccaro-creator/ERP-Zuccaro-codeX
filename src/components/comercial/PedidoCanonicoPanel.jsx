@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, ShoppingCart, Trash2, XCircle } from 'lucide-react';
 import { gerarPDFPedido } from '@/components/lib/exportacaoPDF';
 import { createHttpApiClient, central360SessionKey } from '@/api/httpApiClient';
@@ -42,11 +42,15 @@ import {
 } from './pedidoUiPolicy';
 import {
   clienteEmpresaPickerLabel,
+  clienteHydrationSettlementKey,
+  collectSettledClienteHydration,
   filterClienteEmpresaOptions,
   filterProdutoOptions,
   resolveComercialMasterPages,
   resolveComercialSelectedCliente,
   mergeComercialSelectedCliente,
+  nextClienteHydrationBatch,
+  unionComercialClienteCatalog,
   resolveComercialAuxiliaryView,
   produtoPickerLabel,
 } from './comercialMasterPicker';
@@ -113,12 +117,70 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const coreMasters=master.data||{clientesEmpresa:[],clientes:[],condicoes:[],produtos:[],unidades:[],tabelas:[]};
   const selectedCliente=useQuery({
     queryKey:['pedido-selected-cliente',groupId,empresaId,actorId,sessionCacheKey,form.cliente_empresa_id],
-    queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.list({
+    queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.resolveClienteEmpresa({
       clienteEmpresaId:form.cliente_empresa_id,signal,
     }),{groupId,empresaId},form.cliente_empresa_id),
     enabled:ready&&canView&&formOpen&&isCanonicalPedidoId(form.cliente_empresa_id),
     staleTime:30000,retry:false,
   });
+  const listRows=list.data?.data||[];
+  const [clienteCatalog,setClienteCatalog]=useState({clientes:[],clientesEmpresa:[]});
+  const [clienteHydrationAttemptedIds,setClienteHydrationAttemptedIds]=useState(()=>new Set());
+  const [clienteHydrationFailures,setClienteHydrationFailures]=useState(()=>({}));
+  const neededClienteEmpresaIds=useMemo(()=>{
+    const ids=new Set();
+    for(const row of listRows){if(row?.cliente_empresa_id)ids.add(row.cliente_empresa_id);}
+    if(selected?.cliente_empresa_id)ids.add(selected.cliente_empresa_id);
+    if(form.cliente_empresa_id)ids.add(form.cliente_empresa_id);
+    return [...ids].filter((id)=>isCanonicalPedidoId(id));
+  },[listRows,selected?.cliente_empresa_id,form.cliente_empresa_id]);
+  // Lote limitado; tentativas (ok/404) avançam a fila além do teto (P2 failure-only).
+  const missingClienteEmpresaIds=useMemo(()=>{
+    const knownLinkIds=(clienteCatalog.clientesEmpresa||[]).map((link)=>link.id);
+    for(const link of coreMasters.clientesEmpresa||[])knownLinkIds.push(link.id);
+    if(selectedCliente.data?.clientesEmpresa?.[0]?.id)knownLinkIds.push(selectedCliente.data.clientesEmpresa[0].id);
+    return nextClienteHydrationBatch(neededClienteEmpresaIds,{
+      knownLinkIds,attemptedIds:clienteHydrationAttemptedIds,limit:20,
+    });
+  },[neededClienteEmpresaIds,clienteCatalog.clientesEmpresa,coreMasters.clientesEmpresa,selectedCliente.data,clienteHydrationAttemptedIds]);
+  const rowClienteQueries=useQueries({
+    queries:missingClienteEmpresaIds.map((clienteEmpresaId)=>({
+      queryKey:['pedido-row-cliente',groupId,empresaId,actorId,sessionCacheKey,clienteEmpresaId],
+      queryFn:async({signal})=>resolveComercialSelectedCliente(await http.comercialMasters.resolveClienteEmpresa({
+        clienteEmpresaId,signal,
+      }),{groupId,empresaId},clienteEmpresaId),
+      enabled:ready&&canView&&isCanonicalPedidoId(clienteEmpresaId),
+      staleTime:60000,retry:false,
+    })),
+  });
+  // IDs do lote por índice — useQueries não devolve queryKey no resultado.
+  const rowHydrationKey=clienteHydrationSettlementKey(rowClienteQueries,missingClienteEmpresaIds);
+  useEffect(()=>{
+    setClienteCatalog({clientes:[],clientesEmpresa:[]});
+    setClienteHydrationAttemptedIds(new Set());
+    setClienteHydrationFailures({});
+  },[groupId,empresaId,actorId,sessionIdentity]);
+  useEffect(()=>{if(master.data)setClienteCatalog((prev)=>unionComercialClienteCatalog(prev,master.data));},[master.data]);
+  useEffect(()=>{if(selectedCliente.data)setClienteCatalog((prev)=>mergeComercialSelectedCliente(prev,selectedCliente.data));},[selectedCliente.data]);
+  useEffect(()=>{
+    if(!rowHydrationKey)return undefined;
+    const settled=collectSettledClienteHydration(rowClienteQueries,missingClienteEmpresaIds);
+    setClienteHydrationAttemptedIds((prev)=>{
+      const next=new Set(prev);
+      let changed=false;
+      for(const id of settled.attemptedIds){if(!next.has(id)){next.add(id);changed=true;}}
+      return changed?next:prev;
+    });
+    if(Object.keys(settled.failures).length){
+      setClienteHydrationFailures((prev)=>({...prev,...settled.failures}));
+    }
+    setClienteCatalog((prev)=>{
+      let next=prev;
+      for(const payload of settled.successPayloads){next=mergeComercialSelectedCliente(next,payload);}
+      return next;
+    });
+    return undefined;
+  },[rowHydrationKey]);
   const selectedClienteId=selectedCliente.data?.clientesEmpresa[0]?.cliente_id;
   const auxiliary=useQuery({
     queryKey:['pedido-auxiliary',groupId,empresaId,actorId,sessionCacheKey,selectedClienteId,form.cliente_empresa_id],
@@ -130,7 +192,13 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     },
     enabled:ready&&canView&&Boolean(selectedClienteId),staleTime:30000,retry:false,
   });
-  const masters={...mergeComercialSelectedCliente(coreMasters,selectedCliente.data),locais:auxiliary.data?.locais||[],obras:auxiliary.data?.obras||[]};
+  const masters=useMemo(()=>{
+    let next={...coreMasters,clientes:clienteCatalog.clientes,clientesEmpresa:clienteCatalog.clientesEmpresa};
+    next=mergeComercialSelectedCliente(next,selectedCliente.data);
+    for(const query of rowClienteQueries){if(query.data)next=mergeComercialSelectedCliente(next,query.data);}
+    next=unionComercialClienteCatalog(next,coreMasters);
+    return {...next,locais:auxiliary.data?.locais||[],obras:auxiliary.data?.obras||[]};
+  },[coreMasters,clienteCatalog,selectedCliente.data,rowClienteQueries,auxiliary.data]);
   const mastersReady=Boolean(master.data&&!master.isError&&!master.isFetching&&selectedClienteId
     &&selectedCliente.data&&!selectedCliente.isError&&!selectedCliente.isFetching
     &&auxiliary.data&&!auxiliary.isError&&!auxiliary.isFetching);
@@ -190,6 +258,15 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode?'p-3':'p-4'}`} data-permission="Comercial.pedido.visualizar">
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3"><div><h2 className="text-xl font-semibold">Pedidos</h2><p className="text-sm text-slate-500">Operação comercial da empresa ativa</p></div>{canCreate&&<Button onClick={openCreate} disabled={!ready||busy}><Plus className="w-4 h-4 mr-2"/>Novo pedido</Button>}</div>
     {!ready&&<Alert><AlertCircle className="h-4 w-4"/><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
+    {Object.keys(clienteHydrationFailures).length>0&&(
+      <Alert className="mb-3" data-testid="pedido-cliente-hydration-failures" role="status" aria-live="polite">
+        <AlertCircle className="h-4 w-4"/>
+        <AlertDescription>
+          {Object.keys(clienteHydrationFailures).length} vínculo(s) de cliente sem label neste contexto
+          (consulta leve falhou; fila avançou). IDs permanecem visíveis até correção/retry de sessão.
+        </AlertDescription>
+      </Alert>
+    )}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={e=>{e.preventDefault();setPage(1);setApplied(filters);}}><div className="md:col-span-2"><Input aria-label="Pesquisar pedido" maxLength={80} placeholder="Número do pedido" value={filters.search} onChange={e=>setFilters({...filters,search:e.target.value})}/></div><Select value={filters.status} onValueChange={v=>setFilters({...filters,status:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem>{Object.entries(PEDIDO_STATUS_LABELS).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Select value={filters.tipoOperacao} onValueChange={v=>setFilters({...filters,tipoOperacao:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="TODOS">Entrega e retirada</SelectItem><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select><Select value={filters.clienteEmpresaId} onValueChange={v=>setFilters({...filters,clienteEmpresaId:v})}><SelectTrigger><SelectValue placeholder="Clientes"/></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map(x=><SelectItem key={x.id} value={x.id}>{clientLabel(x.id)}</SelectItem>)}</SelectContent></Select><div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2"/>Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={()=>{const clean={search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'};setFilters(clean);setApplied(clean);setPage(1);}}><RefreshCw className="w-4 h-4"/></Button></div></form>
     {list.isLoading?<div className="flex-1 flex items-center justify-center">Carregando pedidos...</div>:list.isError?<div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{message(list.error)}</p><Button variant="outline" onClick={()=>list.refetch()}>Tentar novamente</Button></div>:rows.length===0?<div className="flex-1 flex flex-col items-center justify-center text-slate-500"><ShoppingCart className="w-10 h-10 mb-2"/><p>Nenhum pedido encontrado nesta empresa.</p></div>:<div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md"><Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Operação</TableHead><TableHead>Entrega solicitada</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{rows.map(row=><TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clientLabel(row.cliente_empresa_id)}</TableCell><TableCell>{row.tipo_operacao==='ENTREGA'?'Entrega':'Retirada'}</TableCell><TableCell>{date(row.data_entrega_solicitada)}</TableCell><TableCell><Badge variant={row.status==='CANCELADO'?'secondary':'default'}>{PEDIDO_STATUS_LABELS[row.status]||row.status}</Badge></TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={()=>show(row)}><Eye className="w-4 h-4"/></Button>{canEdit(row)&&<Button size="icon" variant="ghost" title="Editar" onClick={()=>openEdit(row)}><Pencil className="w-4 h-4"/></Button>}{canCancel(row)&&<Button size="icon" variant="ghost" title="Cancelar" onClick={()=>requestCancel(row)}><XCircle className="w-4 h-4"/></Button>}</div></TableCell></TableRow>)}</TableBody></Table></div>}
     <PaginationControls currentPage={page} totalItems={meta.total||0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={list.isFetching}/>
