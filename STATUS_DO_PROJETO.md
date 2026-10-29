@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#406 CI SUCCESS + P2 mixed-doc) (2026-10-29 08:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#406** tip docs CI **`ec4045679`** SUCCESS 6/6 |
+| **Código** | `44bc5dad9` + P2 mixed-doc (este tip) |
+| **P2 Codex** | insuficiência conhecida prevalece sobre advisory |
+| **#401** | atualizar composição após CI deste tip P2 |
+| **#405** | reopen BLOCKED publication (revert) |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** CI tip P2 · composição #401. Sem merge/deploy.
+
+(2026-10-29 08:43 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#397 parecer saldo/unidade + Contatos) (2026-10-29 08:35 America/Sao_Paulo)
 
 | Campo | Valor |

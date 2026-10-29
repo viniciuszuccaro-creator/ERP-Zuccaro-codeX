@@ -1,3 +1,9 @@
+## CURSOR — #406 CI SUCCESS ec4045679 + P2 mixed-doc (2026-10-29 08:43 America/Sao_Paulo)
+
+- CI tip docs `ec4045679` SUCCESS (40866588056 / 40866546457). Codex P2: mixed-doc.
+- Fix: `conversionStockOkFromAvailability` — algumIndisponivel bloqueia mesmo com fonte incompleta.
+- Composição #401 após CI deste tip. Sem merge/deploy/carga.
+
 ## CURSOR — #397 parecer Contatos/saldo/unidade (2026-10-29 08:35 America/Sao_Paulo)
 
 - Fecha gaps pós-#403 nos pareceres `6493733950`/`6493809228`: principal preservado;

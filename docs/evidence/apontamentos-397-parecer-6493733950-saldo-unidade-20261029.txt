@@ -32,3 +32,9 @@ node --test tests/orcamento-component-behavior.test.js → 16 PASS
 ## Classificação
 implementado · testado · demonstrado n/a · preparado PR · bloqueado merge/deploy/carga;
 fonte operacional canônica (ledger Expedição) continua coordenação Codex backend.
+
+## P2 Codex #406 (mixed-doc) — tip seguinte
+
+Insuficiência conhecida prevalece sobre `fontePronta===false` advisory.
+`conversionStockOkFromAvailability`: algumIndisponivel → bloqueia.
+CI tip docs `ec4045679` SUCCESS runs 40866588056 / 40866546457 — ≠ aprovação.
