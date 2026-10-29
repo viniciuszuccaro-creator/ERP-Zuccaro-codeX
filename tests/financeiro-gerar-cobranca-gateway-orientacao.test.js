@@ -41,13 +41,14 @@ test('Cadastros logística/banco: chrome sky windowMode (entrada em uso)', async
   }
 });
 
-test('Cadastros config: sky chrome Boletos/Evento/Modelo (Pacote3)', async () => {
+test('Cadastros config: sky chrome Evento/Modelo (Pacote3; Boletos permanece ID-only golden)', async () => {
   for (const file of [
-    'ConfiguracaoBoletosForm.jsx',
     'EventoNotificacaoForm.jsx',
     'ModeloDocumentoForm.jsx',
   ]) {
     const src = await readFile(new URL(`../src/components/cadastros/${file}`, import.meta.url), 'utf8');
     assert.match(src, /from-sky-50/, `${file} sky header`);
   }
+  const boletos = await readFile(new URL('../src/components/cadastros/ConfiguracaoBoletosForm.jsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(boletos, /from-sky-50/, 'ConfiguracaoBoletos fora do sky — coorte ID-only');
 });
