@@ -1,3 +1,27 @@
+## CURSOR — #418 tip bc813c667 CI SUCCESS (2026-10-29 13:08 America/Sao_Paulo)
+
+- Tip `bc813c667` CI SUCCESS 6/6 — PerfilAcesso sky+ID + ChatbotIntents windowMode.
+- Pins Fiscal/Empresa/Grupo/Usuario/CentroOperacao/Boletos intactos.
+- #414 tip `39c1055fe` SUCCESS; compose BLOCKED (WIP composição). Sem merge/VPS write.
+
+## CURSOR — #418 pin-safe PerfilAcesso sky (2026-10-29 13:02 America/Sao_Paulo)
+
+- CI FAIL `829d0aed2`: ID-only CadastroFiscal + Empresa date-hash.
+- Tip pin-safe: só PerfilAcesso sky+ID + ChatbotIntents windowMode; Fiscal/Empresa/Grupo/Usuario revertidos.
+- #414 compose BLOCKED (WIP composição). Sem merge/VPS write.
+
+## CURSOR — CadastroFiscal+admin sky (2026-10-29 12:52 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-fiscal-admin-sky-392b` ← #417 `8bf3cc5b4`.
+- Sky+ID: CadastroFiscal / Empresa / Grupo / Perfil / Usuario; ChatbotIntents→windowMode.
+- #417 CI SUCCESS + Codex limpo. #414 compose BLOCKED (WIP `/tmp/composicao-397-342`).
+- Demo writes=0 ≠ E2E; HTTP+PG convert Codex existe — falta UI isolada. Sem merge/VPS write.
+
+## CURSOR — #417 tip 8bf3cc5b4 CI SUCCESS (2026-10-29 12:48 America/Sao_Paulo)
+
+- Tip `8bf3cc5b4` CI SUCCESS + Codex limpo — ApiExterna+ChatbotCanal sky+ID.
+- Sem merge/deploy/VPS write.
+
 ## CURSOR — ApiExterna+ChatbotCanal sky (2026-10-29 12:42 America/Sao_Paulo)
 
 - Branch `cursor/cadastros-apiexterna-canal-sky-392b` ← #416.
