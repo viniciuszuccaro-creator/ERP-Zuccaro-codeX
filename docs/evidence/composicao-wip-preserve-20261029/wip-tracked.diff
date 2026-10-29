@@ -1,0 +1,1448 @@
+diff --git a/STATUS_DO_PROJETO.md b/STATUS_DO_PROJETO.md
+index e93a966b1..6f18f6c60 100644
+--- a/STATUS_DO_PROJETO.md
++++ b/STATUS_DO_PROJETO.md
+@@ -1,188 +1,32 @@
+-## CURSOR — VIGENTE (#401 HEAD 41728cbe + demo escopo) (2026-10-29 12:03 America/Sao_Paulo)
++## CURSOR — VIGENTE (#401 tip fbcca01b9 CI SUCCESS) (2026-10-29 09:59 America/Sao_Paulo)
+ 
+ | Campo | Valor |
+ |-------|-------|
+-| **HEAD docs** | **`41728cbe6`** CI5179 SUCCESS · código **`094cb4b7e`** |
+-| **Demo** | sintético writes=0 — **não** prova persistência E2E |
+-| **Novo P2** | #4413844021 cliente label fora da página busca → pacote #414 |
+-| **Codex** | tip 094cb4b7e/46368fc2f sem major |
+-| Fora | merge/deploy/carga · gravação VPS operacional |
+-
+-**Evidência:** `docs/evidence/c360-demo-escopo-bloqueios-20261029.txt`
+-**Próximo:** fix P2 label (#414) · demo persistência isolada com Codex.
+-
+-(2026-10-29 12:03 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#401 tip 094cb4b7e + demo C360) (2026-10-29 11:51 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#401** tip código **`094cb4b7e`** CI SUCCESS · docs `46368fc2f` |
+-| **Demo** | DEV `127.0.0.1:5173` SHA `46368fc2f` · writes=0 · sintético |
+-| **@codex** | review pedido tip `094cb4b7e` |
+-| Fora | merge/deploy/carga |
+-
+-**Evidência:** `docs/evidence/c360-fluxo-evidencia-20261029c.txt`
+-
+-(2026-10-29 11:51 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#401 tip 094cb4b7e CI SUCCESS) (2026-10-29 11:50 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#401** tip **`094cb4b7e`** — CI SUCCESS 6/6 |
+-| **Integra** | #411 `c8c5f24c7` + #412 `c0ccadeae` (+#407) + #410 + #406 |
+-| **Resíduos** | 6498240997 · 6498241434 · #4413059634 fechados |
+-| Fora | merge oficial · deploy · carga |
+-
+-**Próximo:** @codex review · demo navegável. Sem merge/deploy.
+-
+-(2026-10-29 11:50 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#401 + #411+#412+#407) (2026-10-29 11:43 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#401** composição — #411 `c8c5f24c7` + #412 `c0ccadeae` (+#407) |
+-| **Resíduos** | Contatos escalar · unidade vs saldo · nome recebedor max200 |
+-| **#410** | busca acentos `59ad3a5dc` |
+-| **#406** | A/B/C `90990801e` |
+-| Fora | merge oficial · deploy · carga |
+-
+-**Próximo:** CI composição · demo · @codex review. Sem merge/deploy.
+-
+-(2026-10-29 11:43 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#401 compose + #411 c8c5f24c7) (2026-10-29 11:43 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#401** — integra **#411** tip **`c8c5f24c7`** (Contatos+unidade) |
+-| **Próximo** | merge #412/`#407` · CI · demo |
+-| Fora | merge oficial · deploy · carga |
+-
+-(2026-10-29 11:43 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#411 tip c8c5f24c7 CI SUCCESS) (2026-10-29 11:43 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#411** tip **`c8c5f24c7`** — Contatos escalar + unidade vs saldo |
+-| **#412** | tip `c0ccadeae` CI SUCCESS — nome recebedor max200 |
+-| **Próximo** | compose #401 com #411+#412+#407 |
+-## CURSOR — VIGENTE (#412 tip c0ccadeae CI SUCCESS) (2026-10-29 11:43 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#412** tip **`c0ccadeae`** — nome recebedor max(200) |
+-| **Base** | #407 `ba431a2af` |
+-| Fora | merge/deploy/carga |
+-
+-(2026-10-29 11:43 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#411 residual Contatos+unidade) (2026-10-29 11:28 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **Branch** | `cursor/comercial360-achados-residual-p2-392b` ← #406 `73046b406` |
+-| **Parecer** | 6498240997 + Codex #4413059634 |
+-| **#401** | tip `450e830b6` — ainda SEM #407 |
+-| Fora | merge/deploy/carga |
+-
+-(2026-10-29 11:28 America/Sao_Paulo)
+-## CURSOR — VIGENTE (#401 tip 4dbfdc7cc CI SUCCESS) (2026-10-29 10:54 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#401** tip **`4dbfdc7cc`** — CI SUCCESS (pin + #410 acentos) |
+-| **Integra** | #410 `59ad3a5dc` · #406 `90990801e` · 342=`b5cb34e1` |
+-| **P2** | busca sem acentos fechada + pin selected-reference |
+-| **#409/#408/#407** | CI SUCCESS |
++| **PR** | **#401** tip **`fbcca01b9`** — CI SUCCESS `40876866103` / `40876856490` |
++| **Integra** | #406 `90990801e` (A/B/C + P2) sobre candidata `8026b2298` |
++| **Codex #342** | **`b5cb34e1`** (WIP `eb797672` fora) |
++| **#407** | recuperação indep. tip `a18a362ed` (CI pendente) |
+ | Fora | merge oficial · deploy · carga |
+ 
+-**Próximo:** @codex review tip `4dbfdc7cc`. Sem merge/deploy.
+-
+-(2026-10-29 10:54 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#401 pin cliente + #410 acentos) (2026-10-29 10:48 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#401** — CI frontend falhou: pin `postgresClienteRepository` |
+-| **Fix** | hunks selected-reference autorizam foldSearchText (hash histórico intacto) |
+-| **#410** | tip `59ad3a5dc` CI SUCCESS |
+-| Fora | merge/deploy/carga |
+-
+-**Próximo:** CI composição · @codex review. Sem merge/deploy.
+-
+-(2026-10-29 10:48 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#401 tip código + #410 59ad3a5dc) (2026-10-29 10:39 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#401** composição — integra **#410** tip **`59ad3a5dc`** (CI SUCCESS `40882835856` / `40882816622`) |
+-| **P2** | busca sem acentos fechada (foldSearchText / sqlFoldAccentExpr) |
+-| **#406** | `90990801e` / docs `73046b406` Codex limpo |
+-| **#409** | `7e27ee9f3` CI SUCCESS |
+-| Política | ≠ merge oficial · ≠ deploy/carga · só SHAs validados |
+-
+-**Evidência:** `docs/evidence/comercial-masters-busca-acentos-20261029.txt`
+-**Próximo:** CI composição · @codex review. Sem merge/deploy.
+-
+-(2026-10-29 10:39 America/Sao_Paulo)
+-
+-## CURSOR — #410 tip 59ad3a5dc CI SUCCESS (2026-10-29 10:39 America/Sao_Paulo)
++**Evidência:** `docs/evidence/composicao-397-342-resolvida-20261029.txt`
++**Próximo:** #407 CI · Funil×3/Separacao. Sem merge/deploy.
+ 
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#410** tip **`59ad3a5dc`** — CI SUCCESS `40882835856` / `40882816622` |
+-| **Fix** | foldSearchText + sqlFoldAccentExpr em listPage cliente/produto |
+-| Fora | merge/deploy/carga |
++(2026-10-29 09:59 America/Sao_Paulo)
+ 
+-(2026-10-29 10:39 America/Sao_Paulo)
+-## CURSOR — VIGENTE (#412 comprovante nome max200) (2026-10-29 11:29 America/Sao_Paulo)
++## COMPOSIÇÃO ISOLADA #401 atualizada (preview — sem merge oficial) (2026-10-29 09:51 America/Sao_Paulo)
+ 
+ | Campo | Valor |
+ |-------|-------|
+-| **Branch** | `cursor/recuperacao-comprovante-nome-200-392b` ← #407 |
+-| **Parecer** | 6498241434 |
+-| **#411** | Contatos+unidade tip `dbb1a4131` CI pendente |
+-| Fora | merge/deploy/carga |
+-
+-(2026-10-29 11:29 America/Sao_Paulo)
+-
+-## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
+-
+-| Campo | Valor |
+-|-------|-------|
+-| **PR** | **#407** tip **`a18a362ed`** — CI SUCCESS `40877458648` / `40877419771` |
+-| **Escopo** | sky+ID WhatsApp/Integração/Despesa/Filial · `buildComprovanteRecebedorPayload` |
+-| **#401** | tip código `fbcca01b9` CI SUCCESS · docs `716dabdeb` |
+-| **#406** | `90990801e` SUCCESS |
+-| Fora | merge/deploy/carga · CodigoField · WIP Codex |
+-
+-**Evidência:** `docs/evidence/recuperacao-config-comprovante-20261029.txt`
+-**Próximo:** Funil×3 / Separacao×IA keep-both (matriz Pacote 5). Sem merge/deploy.
+-
+-(2026-10-29 10:03 America/Sao_Paulo)
++| Entrada Cursor #397 base | `83499de99` (+ #403 `8b08b55ccd` + #406 `44bc5dad9`/`84c903c92`) |
++| Tip código validado | **`90990801e`** CI SUCCESS `40867597095` / `40867588389` |
++| Entrada Codex #342 | **`b5cb34e1`** (publicado na candidata; WIP `eb797672` **não** incorporado) |
++| Branch | `cursor/composicao-397-342-prep-392b` |
++| Política | ≠ merge oficial · ≠ deploy/carga · branches oficiais Cursor/Codex não editadas neste tip |
++| Conflitos | STATUS (esta resolução) · HANDOFF auto-merge · código Contatos/Validador do #406 |
+ 
+-## CURSOR — VIGENTE (#407 recuperação configs+comprovante) (2026-10-29 09:55 America/Sao_Paulo)
++Evidência: `docs/evidence/composicao-397-342-resolvida-20261029.txt` · apontamentos-397-parecer-6493733950
+ 
+-| Campo | Valor |
+-|-------|-------|
+-| **Branch** | `cursor/recuperacao-config-comprovante-392b` ← tip #406 `73046b406` |
+-| **Escopo** | WhatsApp/Integração/Despesa/Filial sky+ID · `buildComprovanteRecebedorPayload` |
+-| **#401** | tip composição `fbcca01b9` (CI em andamento) · 342=`b5cb34e1` |
+-| **#406** | tip `90990801e` CI SUCCESS — 3 achados fechados |
+-| **#405** | publication-baseline intocado |
+-| Testes | recuperacao-config-comprovante + residual + fluxo operacional PASS |
+-| Fora | merge/deploy/carga · CodigoField novo · WIP Codex |
+-
+-**Evidência:** `docs/evidence/recuperacao-config-comprovante-20261029.txt`
+-**Próximo:** CI deste tip · Funil×3/Separacao×IA keep-both. Sem merge/deploy.
+-
+-(2026-10-29 09:55 America/Sao_Paulo)
++(2026-10-29 09:51 America/Sao_Paulo)
+ 
+ ## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
+ 
+diff --git a/docs/HANDOFF_ATUAL.md b/docs/HANDOFF_ATUAL.md
+index 88a2b046c..e4d2ed0a1 100644
+--- a/docs/HANDOFF_ATUAL.md
++++ b/docs/HANDOFF_ATUAL.md
+@@ -1,65 +1,14 @@
+-## CURSOR — #401 demo escopo/bloqueios + P2 label (2026-10-29 12:03 America/Sao_Paulo)
++## CURSOR — #401 tip fbcca01b9 CI SUCCESS (2026-10-29 09:59 America/Sao_Paulo)
+ 
+-- HEAD `41728cbe6` / código `094cb4b7e`. Demo sintética ≠ persistência E2E.
+-- Novo P2 #4413844021 (cliente UUID fora da página) → branch independente #414.
+-- Resíduos 649824* não reabertos. Sem merge/deploy/carga/VPS write.
++- Composição tip `fbcca01b9` = #406 `90990801e` + candidata `8026b2298` + 342=`b5cb34e1`.
++- CI SUCCESS runs 40876866103 / 40876856490 (6/6). ≠ merge oficial.
++- #407 recuperação indep. em paralelo. Sem deploy/carga.
+ 
+-## CURSOR — #401 demo C360 writes=0 (2026-10-29 11:51 America/Sao_Paulo)
++## COMPOSIÇÃO #401 atualizada (2026-10-29 09:51 America/Sao_Paulo)
+ 
+-- DEV 5173 SHA `46368fc2f` · sintético · salvar disabled · writes=0.
+-- Codex review pedido tip `094cb4b7e`. Sem merge/deploy/carga.
+-
+-## CURSOR — #401 tip 094cb4b7e CI SUCCESS (2026-10-29 11:50 America/Sao_Paulo)
+-
+-- Composição tip `094cb4b7e` CI SUCCESS. @codex review + demo.
+-- Sem merge/deploy/carga.
+-
+-## CURSOR — #401 + #411+#412+#407 (2026-10-29 11:43 America/Sao_Paulo)
+-
+-- Integra #411 Contatos/unidade + #412/#407 comprovante nome max200.
+-- CI em seguida. Sem merge/deploy/carga.
+-
+-## CURSOR — #401 + #411 c8c5f24c7 (2026-10-29 11:43 America/Sao_Paulo)
+-
+-- Integra tip #411 Contatos escalar + unidade vs saldo (CI SUCCESS).
+-- Em seguida #412+#407. Sem merge/deploy/carga.
+-
+-## CURSOR — #411 tip c8c5f24c7 CI SUCCESS (2026-10-29 11:43 America/Sao_Paulo)
+-
+-- Residual Contatos+unidade CI SUCCESS. Compose #401 com #412+#407 em seguida.
+-## CURSOR — #401 tip 4dbfdc7cc CI SUCCESS (2026-10-29 10:54 America/Sao_Paulo)
+-
+-- Composição tip `4dbfdc7cc` = #410 `59ad3a5dc` + pin selected-reference + #406.
+-- CI SUCCESS 6/6. @codex review. Sem merge/deploy/carga.
+-
+-## CURSOR — #401 pin selected-reference + acentos (2026-10-29 10:48 America/Sao_Paulo)
+-
+-- CI frontend fail: pin `postgresClienteRepository` após #410.
+-- Hunks reverse autorizam foldSearchText; hash histórico preservado.
+-
+-## CURSOR — #401 composição + #410 59ad3a5dc (2026-10-29 10:39 America/Sao_Paulo)
+-
+-- Integra tip #410 **`59ad3a5dc`** (busca sem acentos CI SUCCESS) na composição #401.
+-- Fecha P2 Codex tip `716dabdeb`. Sem merge/deploy/carga.
+-
+-## CURSOR — #410 tip 59ad3a5dc CI SUCCESS (2026-10-29 10:39 America/Sao_Paulo)
+-
+-- Tip `59ad3a5dc` CI SUCCESS 40882835856 / 40882816622.
+-- Composição #401 atualizada. Sem merge/deploy/carga.
+-## CURSOR — #412 tip c0ccadeae CI SUCCESS (2026-10-29 11:43 America/Sao_Paulo)
+-
+-- Parecer 6498241434 fechado. Compose #401 com #411+#407.
+-
+-## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
+-
+-- Tip `a18a362ed` CI SUCCESS runs 40877458648 / 40877419771 (6/6).
+-- #401 tip código `fbcca01b9` SUCCESS. Sem merge/deploy/carga.
+-- Próximo indep.: Funil×3 / Separacao×IA keep-both.
+-
+-## CURSOR — #407 recuperação configs+comprovante (2026-10-29 09:55 America/Sao_Paulo)
+-
+-- Sky+ID residual WhatsApp/Integração/Despesa/Filial; contrato comprovante compartilhado.
+-- #401 composição tip  (CI). #406  SUCCESS. Sem merge/deploy/carga.
++- Integra tip #406 **`90990801e`** (A/B/C + P2) sobre candidata `8026b2298`.
++- Codex #342 permanece **`b5cb34e1`** na composição; WIP `eb797672` fora.
++- Sem merge oficial / deploy / carga.
+ 
+ ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
+ 
+diff --git a/docs/evidence/achados-residual-6498240997-20261029.txt b/docs/evidence/achados-residual-6498240997-20261029.txt
+deleted file mode 100644
+index a18dd58f5..000000000
+--- a/docs/evidence/achados-residual-6498240997-20261029.txt
++++ /dev/null
+@@ -1,10 +0,0 @@
+-Pareceres residuais 6498240997 / 4413059634 — 2026-10-29 11:28 America/Sao_Paulo
+-================================================================
+-1) Contatos escalar: principal multi-canal → reject (CONTATOS_SCALAR_OVERFLOW),
+-   rascunho preservado; hydrate ainda strip. scalarContractLockedRef após save.
+-2) Estoque: demanda vs unidade do saldo (CX≠UN) → unidadeIncompativel.
+-3) (comprovante 6498241434 → pacote #407 separado)
+-
+-Preserva: Contatos load/save/reopen canônico, DESCONHECIDO≠0, agregação, mixed-doc.
+-
+-## CI SUCCESS tip c8c5f24c7 (2026-10-29 11:43 America/Sao_Paulo)
+diff --git a/docs/evidence/c360-demo-escopo-bloqueios-20261029.txt b/docs/evidence/c360-demo-escopo-bloqueios-20261029.txt
+deleted file mode 100644
+index 2a725b595..000000000
+--- a/docs/evidence/c360-demo-escopo-bloqueios-20261029.txt
++++ /dev/null
+@@ -1,32 +0,0 @@
+-# Demo C360 candidata #401 — escopo e bloqueios (2026-10-29 12:03 America/Sao_Paulo)
+-
+-## HEAD reconciliado
+-| Campo | Valor |
+-|-------|-------|
+-| Docs/HEAD PR | `41728cbe6` CI5179 SUCCESS |
+-| Código composto | `094cb4b7e` |
+-| Incorporados | #406 · #410 · #411 · #412 (+#407) |
+-| Codex tip `094cb4b7e`/`46368fc2f` | receipt sem major; P2 novo #4413844021 (cliente label fora da página) |
+-
+-**Não reabrir** sem nova contraprova: Contatos A/B/C, saldo DESCONHECIDO, agregação unidade, mixed-doc, busca acentos, nome recebedor 190/200, principal escalar reject.
+-
+-## O que a demo DEV 5173 permite testar
+-- Navegação Orçamentos → Novo orçamento (modo proposta sintética)
+-- Preenchimento Cliente/Produto/Condição/Tabela ilustrativos
+-- Troca de painéis com **rascunho retido** (obs + qty)
+-- Salvar **desabilitado** · `writes=0` · tráfego externo abortado
+-- Layout desktop/tablet sem overflow horizontal
+-- Evidência: `docs/evidence/c360-fluxo-evidencia-20261029c.txt`
+-
+-## O que permanece bloqueado (não comprovado pela demo)
+-- Persistência ponta a ponta: criar→salvar→fechar→reabrir→editar→salvar
+-- Backend canônico HTTP/Postgres com sessão real
+-- Erro de rede, sessão expirada, troca Grupo/Empresa com recarga autoritativa
+-- RBAC fail-closed em mutações reais
+-- Gravação em VPS operacional (**proibida** para esta prova)
+-
+-## Demonstração isolada (coordenação Codex)
+-Ambiente: clone/workspace DEV com API local + tenant sintético (≠ VPS operacional).
+-Roteiro: login → Grupo/Empresa → Orçamento criar→salvar→fechar→reabrir→editar→salvar;
+-depois: simular 401/sessão, troca empresa (rascunho), erro 422.
+-Critério: SHA tip + `writes` auditados no backend de teste + evidência sanitizada.
+diff --git a/docs/evidence/c360-fluxo-evidencia-20261029c.txt b/docs/evidence/c360-fluxo-evidencia-20261029c.txt
+deleted file mode 100644
+index 1cdf0146b..000000000
+--- a/docs/evidence/c360-fluxo-evidencia-20261029c.txt
++++ /dev/null
+@@ -1,12 +0,0 @@
+-C360 demo navegável — 2026-10-29 11:51 America/Sao_Paulo
+-=============================================
+-SHA servido (workspace/vite 127.0.0.1:5173): 46368fc2f (46368fc2f8f033ae02d71836e81730e5492cff84)
+-Backend: Vite DEV local — HTTP 200; rotas externas abortadas no smoke
+-Dados: sintéticos (Cliente/Produto/Condição/Tabela ilustrativos)
+-Mutações: writes=0 (esperado 0)
+-Salvar orçamento: disabled=True
+-Rascunho retido entre painéis: retained=True qty=True
+-Overflow horizontal: False
+-Artefatos: /opt/cursor/artifacts/c360-smoke-20261029c/{desktop,tablet}.png + result
+-
+-≠ Codespace billing · ≠ merge/deploy/carga operacional
+diff --git a/docs/evidence/comercial-masters-busca-acentos-20261029.txt b/docs/evidence/comercial-masters-busca-acentos-20261029.txt
+deleted file mode 100644
+index 33ad3e269..000000000
+--- a/docs/evidence/comercial-masters-busca-acentos-20261029.txt
++++ /dev/null
+@@ -1,20 +0,0 @@
+-P2 #401 — busca mestres sem acentos (2026-10-29)
+-================================================
+-Parecer Codex #401 tip 716dabdeb — finding P2 httpApiClient comercialMasters /
+-PostgresProdutoRepository + PostgresClienteRepository listPage.
+-
+-Causa: search server-side usava lower()/LIKE/strpos sem dobrar diacríticos;
+-picker frontend (normalizeMasterQuery) já dobrava — registros filtrados no PG
+-não voltavam para o frontend.
+-
+-Fix (existente):
+-- server/src/domain/searchTextNormalize.ts — foldSearchText + sqlFoldAccentExpr
+-- postgresProdutoRepository / postgresClienteRepository listPage
+-
+-Paridade: "aco" → Aço; "sao jose" → São José
+-Base: #406 tip 73046b406. Sem merge/deploy/carga.
+-Testes: search-text-normalize + comercial-masters-busca-acentos
+-Tip registrado: (2026-10-29 10:31 America/Sao_Paulo)
+-
+-## CI SUCCESS tip 59ad3a5dc (2026-10-29 10:39 America/Sao_Paulo)
+-- Runs 40882835856 / 40882816622 — 6/6 SUCCESS.
+diff --git a/docs/evidence/composicao-397-342-resolvida-20261029.txt b/docs/evidence/composicao-397-342-resolvida-20261029.txt
+index 68651ea81..d4b33326c 100644
+--- a/docs/evidence/composicao-397-342-resolvida-20261029.txt
++++ b/docs/evidence/composicao-397-342-resolvida-20261029.txt
+@@ -35,9 +35,3 @@ Sem merge oficial / deploy / carga SQL.
+ - Runs: 40876866103 (pull_request) · 40876856490 (push) — frontend/backend/expedicao SUCCESS.
+ - Tip integra #406 90990801e; Codex 342 permanece b5cb34e1; WIP eb797672 fora.
+ - Sem merge oficial / deploy / carga.
+-
+-## tip 4dbfdc7cc CI SUCCESS (2026-10-29 10:54 America/Sao_Paulo)
+-- Integra #410 59ad3a5dc + pin foldSearchText. CI 6/6.
+-
+-## tip 094cb4b7e CI SUCCESS (2026-10-29 11:50 America/Sao_Paulo)
+-- #411+#412+#407+#410+#406. CI 6/6.
+diff --git a/docs/evidence/comprovante-nome-200-6498241434-20261029.txt b/docs/evidence/comprovante-nome-200-6498241434-20261029.txt
+deleted file mode 100644
+index 1d7a8c47d..000000000
+--- a/docs/evidence/comprovante-nome-200-6498241434-20261029.txt
++++ /dev/null
+@@ -1,8 +0,0 @@
+-Parecer 6498241434 — nome recebedor max(200) — 2026-10-29 11:29 America/Sao_Paulo
+-================================================================
+-buildComprovanteRecebedorPayload: limite 180→200 (expedicaoTypes).
+-190 chars preservados; >200 VALIDATION_ERROR (sem truncar).
+-GPS zero preservado. Consumidores já catch/toast (rascunho UI).
+-Base #407 ba431a2af.
+-
+-## CI SUCCESS tip c0ccadeae (2026-10-29 11:43 America/Sao_Paulo)
+diff --git a/docs/evidence/matriz-consolidacao-modulos-20261010.txt b/docs/evidence/matriz-consolidacao-modulos-20261010.txt
+index adaad4293..7b9d9d0e0 100644
+--- a/docs/evidence/matriz-consolidacao-modulos-20261010.txt
++++ b/docs/evidence/matriz-consolidacao-modulos-20261010.txt
+@@ -12,7 +12,7 @@
+ | ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |
+ | CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | Funil Visual canônico UI · mesma fonte Oportunidade | funil/scoring/IA | **keep both curto** · HTTP schema **BLOCKED** Codex · C360 usa adaptador legado (opção B) |
+ | SeparacaoConferencia × SeparacaoConferenciaIA | SeparacaoConferenciaIA | conferência+audit | keep both curto prazo |
+-| ComprovanteDigital × ComprovanteEntregaDigital | `buildComprovanteRecebedorPayload` compartilhado (2026-10-29) | POD · HTTP/GPS/estoque só no EntregaDigital | keep both curto · contrato unificado |
++| ComprovanteDigital × ComprovanteEntregaDigital | diff payload pendente | POD | keep both |
+ | Dashboard × DashboardCorporativo | escopos distintos | KPIs empresa vs grupo | keep both |
+ | HubAtendimento × ChatbotAtendimento | papéis complementares | fila vs bot | keep both |
+ 
+diff --git a/docs/evidence/recuperacao-config-comprovante-20261029.txt b/docs/evidence/recuperacao-config-comprovante-20261029.txt
+deleted file mode 100644
+index fb7b93bd3..000000000
+--- a/docs/evidence/recuperacao-config-comprovante-20261029.txt
++++ /dev/null
+@@ -1,44 +0,0 @@
+-Recuperação indep. — configs residual + contrato comprovante (2026-10-29)
+-=======================================================================
+-Branch: cursor/recuperacao-config-comprovante-392b ← tip #406 `73046b406`
+-Referência matriz: recuperacao-erp-integra-capacidades-20261029.txt
+-  + matriz-consolidacao-modulos-20261010.txt (Pacote 5 Comprovante×)
+-
+-Escopo (melhoria no existente — sem módulo paralelo)
+-----------------------------------------------------
+-1) Cadastros residual sky + ID técnico (padrão #404, pin RecordState preservado):
+-   - ConfiguracaoWhatsAppForm
+-   - ConfiguracaoIntegracaoForm
+-   - ConfiguracaoDespesaRecorrenteForm (header windowMode + ID)
+-   - FilialForm (chrome sky + ID no windowMode; reopen canônico intacto)
+-   Sem CadastroCodigoRegistroField novo · sem count+1 · sem graduação reopen
+-   CentroOperacao / pin publication-baseline (#405) intocados.
+-
+-2) ComprovanteDigital × ComprovanteEntregaDigital (keep both curto):
+-   - Extrai `buildComprovanteRecebedorPayload` em expedicaoFluxoOperacionalPolicy
+-   - Ambos consumidores reusam o contrato (recebedor/prova/GPS nullable)
+-   - Capacidades distintas preservadas:
+-     · EntregaDigital: HTTP expedicao + GPS explícito + baixa estoque
+-     · Digital: dialog/windowMode + geolocation no submit
+-   Classificação: B (equivalente parcial) + D parcialmente unificado no contrato
+-   — não apagar por semelhança de nome; sem terceiro módulo.
+-
+-Classificação registros (sem seed fictício)
+-------------------------------------------
+-- Config WhatsApp/Integração/Despesa: registro existente oculto por contexto/RBAC
+-  ≠ ausente; ID técnico agora visível na reabertura.
+-- Filial: reopen já canônico; chrome/ID melhoram leitura, não recuperam legado.
+-- Comprovante: perda real de unificação de payload → contrato compartilhado;
+-  dados de entrega continuam staging/gates privados.
+-
+-Testes
+-------
+-recuperacao-config-comprovante.test.js + residual pin + fluxo operacional → PASS
+-
+-Fora
+-----
+-merge/deploy/carga · WIP Codex #342 · reabrir ownership/paginação · substituir ERP
+-
+-## CI SUCCESS tip a18a362ed (2026-10-29 10:03 America/Sao_Paulo)
+-- Runs: 40877458648 (pull_request) · 40877419771 (push) — 6/6 SUCCESS.
+-- Sem merge oficial / deploy / carga.
+diff --git a/docs/evidence/recuperacao-erp-integra-capacidades-20261029.txt b/docs/evidence/recuperacao-erp-integra-capacidades-20261029.txt
+index 1c260fc62..ad961f39e 100644
+--- a/docs/evidence/recuperacao-erp-integra-capacidades-20261029.txt
++++ b/docs/evidence/recuperacao-erp-integra-capacidades-20261029.txt
+@@ -35,15 +35,7 @@ Não feito / bloqueado
+ - Restaurar OAuthConsent / Auth Base44 permissivo
+ - Carga operacional / deploy
+ 
+-Atualização (2026-10-29) — configs residual + comprovante contrato
+-- WhatsApp / Integração / DespesaRecorrente / Filial: sky windowMode + ID técnico
+-  (padrão #404; pin RecordState; sem CodigoField/count+1; #405 publication intacto)
+-- Comprovante×: `buildComprovanteRecebedorPayload` compartilhado — keep both curto
+-  (HTTP/GPS/estoque no EntregaDigital; dialog no Digital). Sem 3º módulo.
+-- Evidência: recuperacao-config-comprovante-20261029.txt
+-
+ Próximo capacidade a capacitar no existente
+-1. Param forms sky + reopen ID — #402 tip SUCCESS (fora deste tip)
++1. Param forms sky + reopen ID (sem tocar branches reservadas)
+ 2. Demo fluxo C360 Private quando franquia
+-3. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
+-4. ChatbotIntent / JobAgendado / Parametro* residual fora branches reservadas
++3. Matriz Pacote 5: Funil×3 / Separacao×IA / Comprovante× — keep both curto
+diff --git a/scripts/comercial360-preview-smoke.mjs b/scripts/comercial360-preview-smoke.mjs
+index 4be99e441..2217c0df4 100644
+--- a/scripts/comercial360-preview-smoke.mjs
++++ b/scripts/comercial360-preview-smoke.mjs
+@@ -22,22 +22,19 @@ await dialog.locator('#orc-condicao').click();await page.getByRole('option',{nam
+ await dialog.locator('#orc-tabela').click();await page.getByRole('option',{name:/Tabela ilustrativa/}).click();
+ await dialog.locator('input[inputmode="decimal"]').first().fill('2');
+ await dialog.locator('#orc-observacoes').fill('Rascunho SINTÉTICO preservado entre painéis.');
+-await dialog.getByRole('button',{name:'Produtos e preços',exact:true}).click();
++await dialog.getByRole('button',{name:'Produtos e disponibilidade',exact:true}).click();
+ await dialog.getByText('Disponibilidade ilustrativa: 30 UN',{exact:true}).waitFor();
+-await dialog.getByRole('button',{name:'Resumo e pagamento',exact:true}).click();await dialog.getByRole('region',{name:'Resumo e pagamento sintéticos'}).locator('dd.font-bold').filter({hasText:'20,00'}).waitFor();
++await dialog.getByRole('button',{name:'Resumo e pagamento',exact:true}).click();await dialog.getByRole('region',{name:'Resumo sintético'}).locator('dd.font-bold').filter({hasText:'20,00'}).waitFor();
+ await dialog.getByRole('button',{name:'Cliente e histórico',exact:true}).click();
+ const retained=await dialog.locator('#orc-observacoes').inputValue();const quantity=await dialog.locator('input[inputmode="decimal"]').first().inputValue();
+ const disabled=await dialog.getByRole('button',{name:'Salvar orçamento',exact:true}).isDisabled();
+ await page.screenshot({path:path.join(output,'desktop.png'),fullPage:false,animations:'disabled'});
+-await page.setViewportSize({width:1024,height:900});
+-// CSP bloqueia waitForTimeout/waitForFunction; settle sem eval no page.
+-await new Promise((resolve) => setTimeout(resolve, 400));
+-await dialog.getByRole('navigation',{name:'Painéis da proposta'}).scrollIntoViewIfNeeded();
++await page.setViewportSize({width:1024,height:900});await page.waitForFunction(()=>{const el=document.querySelector('[role=dialog]');if(!el)return false;const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;});await dialog.getByRole('navigation',{name:'Painéis da proposta'}).scrollIntoViewIfNeeded();
+ await dialog.getByRole('button',{name:'Resumo e pagamento',exact:true}).click();
+-await dialog.getByRole('region',{name:'Resumo e pagamento sintéticos'}).locator('dd.font-bold').filter({hasText:'20,00'}).waitFor();
++await dialog.getByRole('region',{name:'Resumo sintético'}).locator('dd.font-bold').filter({hasText:'20,00'}).waitFor();
+ await dialog.getByRole('button',{name:'Cliente e histórico',exact:true}).click();
+ await page.screenshot({path:path.join(output,'tablet.png'),fullPage:false,animations:'disabled'});
+-const geometry=await dialog.evaluate((el)=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return {left:r.left,right:r.right,width:r.width,viewport:innerWidth,cssWidth:s.width,minWidth:s.minWidth,maxWidth:s.maxWidth};});
++const geometry=await dialog.evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return {left:r.left,right:r.right,width:r.width,viewport:innerWidth,cssWidth:s.width,minWidth:s.minWidth,maxWidth:s.maxWidth};});
+ const overflow=geometry.left<0||geometry.right>geometry.viewport;
+ console.log(JSON.stringify({retained:retained==='Rascunho SINTÉTICO preservado entre painéis.',quantity:quantity==='2',saveDisabled:disabled,horizontalOverflow:overflow,geometry,writes:writes.length,blockedRequests:blocked.length,errors}));
+ if(retained!=='Rascunho SINTÉTICO preservado entre painéis.'||quantity!=='2'||!disabled||writes.length||overflow||errors.length)process.exitCode=1;
+diff --git a/server/src/domain/searchTextNormalize.ts b/server/src/domain/searchTextNormalize.ts
+deleted file mode 100644
+index 575c5f3a0..000000000
+--- a/server/src/domain/searchTextNormalize.ts
++++ /dev/null
+@@ -1,31 +0,0 @@
+-/**
+- * Normalização de busca com paridade ao frontend `normalizeMasterQuery`
+- * (comercialMasterPicker): remove diacríticos + lower + trim.
+- * Usado em listagens server-side (cliente/produto) para não descartar
+- * "Aço" quando o termo é "aco".
+- */
+-
+-const ACCENT_FROM = 'áàâãäéèêëíìîïóòôõöúùûüçñ';
+-const ACCENT_TO = 'aaaaaeeeeiiiiooooouuuucn';
+-
+-/** Termo de busca: NFD + strip combining marks (mesmo contrato do picker). */
+-export function foldSearchText(value: unknown): string {
+-  return String(value ?? '')
+-    .normalize('NFD')
+-    .replace(/[\u0300-\u036f]/g, '')
+-    .trim()
+-    .toLowerCase();
+-}
+-
+-/**
+- * Expressão SQL que dobra acentos em coluna/texto já trusted (nunca interpolar input).
+- * Ex.: sqlFoldAccentExpr("coalesce(nome,'')") → translate(lower(...), ...)
+- */
+-export function sqlFoldAccentExpr(columnSql: string): string {
+-  const expr = String(columnSql || '').trim();
+-  // Allowlist: identificador ou coalesce(col, '') — nunca interpolar input do cliente.
+-  if (!(/^[\w.]+$/.test(expr) || /^coalesce\([\w.]+,\s*''\)$/.test(expr))) {
+-    throw new Error('sqlFoldAccentExpr: expressão de coluna inválida');
+-  }
+-  return `translate(lower(${expr}), '${ACCENT_FROM}', '${ACCENT_TO}')`;
+-}
+diff --git a/server/src/repositories/postgresClienteRepository.ts b/server/src/repositories/postgresClienteRepository.ts
+index 1dd2c0e6f..b9bf1665e 100644
+--- a/server/src/repositories/postgresClienteRepository.ts
++++ b/server/src/repositories/postgresClienteRepository.ts
+@@ -19,7 +19,6 @@ import type {
+ import { reserveEntityCodigo } from './reserveEntityCodigo.js';
+ import { clienteBulkSnapshotSchema } from '../services/clienteBulkLifecycle.js';
+ import { clienteOperacaoLinksSchema } from './clienteTypes.js';
+-import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';
+ 
+ function mapCliente(row: Record<string, unknown>): Cliente {
+   return {
+@@ -161,28 +160,31 @@ export class PostgresClienteRepository implements ClienteRepository {
+       where.push(`documento_normalizado = $${params.length}`);
+     }
+     if (filter.search) {
+-      const q = `%${foldSearchText(filter.search)}%`;
++      const q = `%${filter.search.toLowerCase()}%`;
+       const docQ = normalizeDocumento(filter.search);
+       params.push(q);
+       const searchIdx = params.length;
+-      const foldedMatch = (
+-        `${sqlFoldAccentExpr("coalesce(nome,'')")} LIKE $${searchIdx}`
+-        + ` OR ${sqlFoldAccentExpr("coalesce(razao_social,'')")} LIKE $${searchIdx}`
+-        + ` OR ${sqlFoldAccentExpr("coalesce(nome_fantasia,'')")} LIKE $${searchIdx}`
+-        + ` OR ${sqlFoldAccentExpr("coalesce(email,'')")} LIKE $${searchIdx}`
+-        + ` OR ${sqlFoldAccentExpr("coalesce(telefone,'')")} LIKE $${searchIdx}`
+-        + ` OR ${sqlFoldAccentExpr("coalesce(celular,'')")} LIKE $${searchIdx}`
+-        + ` OR ${sqlFoldAccentExpr('codigo')} LIKE $${searchIdx}`
+-      );
+       if (docQ) {
+         params.push(`%${docQ}%`);
+         where.push(`(
+-          ${foldedMatch}
++          lower(coalesce(nome,'')) LIKE $${searchIdx}
++          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}
++          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}
++          OR lower(coalesce(email,'')) LIKE $${searchIdx}
++          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}
++          OR lower(coalesce(celular,'')) LIKE $${searchIdx}
++          OR lower(codigo) LIKE $${searchIdx}
+           OR documento_normalizado LIKE $${params.length}
+         )`);
+       } else {
+         where.push(`(
+-          ${foldedMatch}
++          lower(coalesce(nome,'')) LIKE $${searchIdx}
++          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}
++          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}
++          OR lower(coalesce(email,'')) LIKE $${searchIdx}
++          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}
++          OR lower(coalesce(celular,'')) LIKE $${searchIdx}
++          OR lower(codigo) LIKE $${searchIdx}
+         )`);
+       }
+     }
+diff --git a/server/src/repositories/postgresProdutoRepository.ts b/server/src/repositories/postgresProdutoRepository.ts
+index d778ded0d..3a92243d1 100644
+--- a/server/src/repositories/postgresProdutoRepository.ts
++++ b/server/src/repositories/postgresProdutoRepository.ts
+@@ -13,7 +13,6 @@ import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCrea
+ import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
+ import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
+ import { reserveEntityCodigo } from './reserveEntityCodigo.js';
+-import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';
+ 
+ function ts(row: Record<string, unknown>) {
+   return {
+@@ -192,15 +191,15 @@ export class PostgresProdutoRepository implements ProdutoRepository {
+       where.push(`lower(codigo_barras) = $${params.length}`);
+     }
+     if (filter.search) {
+-      params.push(foldSearchText(filter.search));
++      params.push(filter.search.toLowerCase());
+       where.push(
+-        `(strpos(${sqlFoldAccentExpr('descricao')}, $${params.length}) > 0`
+-        + ` OR strpos(${sqlFoldAccentExpr("coalesce(codigo,'')")}, $${params.length}) > 0`
+-        + ` OR strpos(${sqlFoldAccentExpr("coalesce(nome,'')")}, $${params.length}) > 0`
+-        + ` OR strpos(${sqlFoldAccentExpr("coalesce(codigo_barras,'')")}, $${params.length}) > 0`
+-        + ` OR strpos(${sqlFoldAccentExpr("coalesce(material,'')")}, $${params.length}) > 0`
+-        + ` OR strpos(${sqlFoldAccentExpr("coalesce(liga,'')")}, $${params.length}) > 0`
+-        + ` OR strpos(${sqlFoldAccentExpr("coalesce(norma_tecnica,'')")}, $${params.length}) > 0)`,
++        `(strpos(lower(descricao), $${params.length}) > 0`
++        + ` OR strpos(lower(coalesce(codigo,'')), $${params.length}) > 0`
++        + ` OR strpos(lower(coalesce(nome,'')), $${params.length}) > 0`
++        + ` OR strpos(lower(coalesce(codigo_barras,'')), $${params.length}) > 0`
++        + ` OR strpos(lower(coalesce(material,'')), $${params.length}) > 0`
++        + ` OR strpos(lower(coalesce(liga,'')), $${params.length}) > 0`
++        + ` OR strpos(lower(coalesce(norma_tecnica,'')), $${params.length}) > 0)`,
+       );
+     }
+     const whereSql = where.join(' AND ');
+diff --git a/server/tests/search-text-normalize.test.ts b/server/tests/search-text-normalize.test.ts
+deleted file mode 100644
+index 26b6892c0..000000000
+--- a/server/tests/search-text-normalize.test.ts
++++ /dev/null
+@@ -1,29 +0,0 @@
+-import assert from 'node:assert/strict';
+-import test from 'node:test';
+-import { readFileSync } from 'node:fs';
+-
+-import { foldSearchText, sqlFoldAccentExpr } from '../src/domain/searchTextNormalize.js';
+-
+-test('foldSearchText: paridade com picker (Aço / São José)', () => {
+-  assert.equal(foldSearchText('Aço CA-50'), 'aco ca-50');
+-  assert.equal(foldSearchText('  São José  '), 'sao jose');
+-  assert.equal(foldSearchText('aco'), 'aco');
+-  assert.ok(foldSearchText('Aço CA-50').includes(foldSearchText('aco')));
+-  assert.ok(foldSearchText('São José').includes(foldSearchText('sao jose')));
+-});
+-
+-test('sqlFoldAccentExpr: translate(lower(...)) sem interpolar aspas', () => {
+-  const expr = sqlFoldAccentExpr("coalesce(nome,'')");
+-  assert.match(expr, /^translate\(lower\(coalesce\(nome,''\)\), '/);
+-  assert.throws(() => sqlFoldAccentExpr("nome'; drop table"), /inválida/);
+-  assert.throws(() => sqlFoldAccentExpr(''), /inválida/);
+-});
+-
+-test('Postgres produto/cliente listPage dobra acentos na busca', () => {
+-  const produto = readFileSync('src/repositories/postgresProdutoRepository.ts', 'utf8');
+-  const cliente = readFileSync('src/repositories/postgresClienteRepository.ts', 'utf8');
+-  assert.match(produto, /foldSearchText\(filter\.search\)/);
+-  assert.match(produto, /sqlFoldAccentExpr\('descricao'\)/);
+-  assert.match(cliente, /foldSearchText\(filter\.search\)/);
+-  assert.match(cliente, /sqlFoldAccentExpr\("coalesce\(nome,''\)"\)/);
+-});
+diff --git a/src/components/cadastros/ConfiguracaoDespesaRecorrenteForm.jsx b/src/components/cadastros/ConfiguracaoDespesaRecorrenteForm.jsx
+index b80af5e32..38f410a73 100644
+--- a/src/components/cadastros/ConfiguracaoDespesaRecorrenteForm.jsx
++++ b/src/components/cadastros/ConfiguracaoDespesaRecorrenteForm.jsx
+@@ -183,19 +183,6 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
+     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
+       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
+         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
+-          {windowMode ? (
+-            <div className="flex items-center gap-3 mb-4 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+-              <Repeat className="w-8 h-8 text-sky-600" />
+-              <h2 className="text-2xl font-bold text-slate-900">
+-                {config?.id ? 'Editar Despesa Recorrente' : 'Nova Despesa Recorrente'}
+-              </h2>
+-            </div>
+-          ) : null}
+-          {config?.id ? (
+-            <p className="text-xs text-slate-500 mb-3">
+-              ID técnico: <span className="font-mono">{String(config.id)}</span>
+-            </p>
+-          ) : null}
+           <Tabs defaultValue="geral" className="w-full">
+             <TabsList className="grid w-full grid-cols-4">
+               <TabsTrigger value="geral">
+diff --git a/src/components/cadastros/ConfiguracaoIntegracaoForm.jsx b/src/components/cadastros/ConfiguracaoIntegracaoForm.jsx
+index 56fa3e520..1e630e4b9 100644
+--- a/src/components/cadastros/ConfiguracaoIntegracaoForm.jsx
++++ b/src/components/cadastros/ConfiguracaoIntegracaoForm.jsx
+@@ -80,16 +80,11 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
+       <Card>
+         <CardHeader>
+           <CardTitle className="flex items-center gap-2">
+-            <Link2 className="w-5 h-5 text-sky-600" />
++            <Link2 className="w-5 h-5 text-blue-600" />
+             Configuracao de Integracao
+           </CardTitle>
+         </CardHeader>
+         <CardContent className="space-y-4">
+-          {dadosIniciais?.id ? (
+-            <p className="text-xs text-slate-500">
+-              ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+-            </p>
+-          ) : null}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+               <Label>Marketplace *</Label>
+@@ -131,7 +126,7 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
+       </Card>
+ 
+       <div className="flex justify-end gap-3">
+-        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Integracoes.salvar" data-action="salvar-integracao" data-sensitive>
++        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Integracoes.salvar" data-action="salvar-integracao" data-sensitive>
+           <Save className="w-4 h-4 mr-2" />
+           {isSubmitting ? "Salvando..." : dadosIniciais ? "Atualizar" : "Criar"}
+         </Button>
+@@ -143,10 +138,7 @@ export default function ConfiguracaoIntegracaoForm({ config, item, data, initial
+     return (
+       <div className="w-full h-full overflow-auto bg-white p-6">
+         <div className="max-w-4xl mx-auto">
+-          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+-            <Link2 className="w-8 h-8 text-sky-600" />
+-            <h2 className="text-2xl font-bold text-slate-900">{dadosIniciais ? "Editar Integracao" : "Nova Integracao"}</h2>
+-          </div>
++          <div className="flex items-center gap-3 mb-6 pb-4 border-b"><Link2 className="w-8 h-8 text-blue-600" /><h2 className="text-2xl font-bold text-slate-900">{dadosIniciais ? "Editar Integracao" : "Nova Integracao"}</h2></div>
+           {form}
+         </div>
+       </div>
+diff --git a/src/components/cadastros/ConfiguracaoWhatsAppForm.jsx b/src/components/cadastros/ConfiguracaoWhatsAppForm.jsx
+index a759ffbb9..6babe1ce7 100644
+--- a/src/components/cadastros/ConfiguracaoWhatsAppForm.jsx
++++ b/src/components/cadastros/ConfiguracaoWhatsAppForm.jsx
+@@ -88,16 +88,11 @@ export default function ConfiguracaoWhatsAppForm({ config, item, data, initialDa
+       <Card>
+         <CardHeader>
+           <CardTitle className="flex items-center gap-2">
+-            <MessageCircle className="w-5 h-5 text-sky-600" />
++            <MessageCircle className="w-5 h-5 text-green-600" />
+             Configuracao WhatsApp Business
+           </CardTitle>
+         </CardHeader>
+         <CardContent className="space-y-4">
+-          {dadosIniciais?.id ? (
+-            <p className="text-xs text-slate-500">
+-              ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+-            </p>
+-          ) : null}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+               <Label>Provedor *</Label>
+@@ -155,7 +150,7 @@ export default function ConfiguracaoWhatsAppForm({ config, item, data, initialDa
+       </Card>
+ 
+       <div className="flex justify-end gap-3">
+-        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !podeSalvar} data-permission="Sistema.WhatsApp.salvar" data-action="salvar-configuracao-whatsapp" data-sensitive>
++        <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting || !podeSalvar} data-permission="Sistema.WhatsApp.salvar" data-action="salvar-configuracao-whatsapp" data-sensitive>
+           <Save className="w-4 h-4 mr-2" />
+           {isSubmitting ? "Salvando..." : dadosIniciais ? "Atualizar" : "Criar"}
+         </Button>
+@@ -167,8 +162,8 @@ export default function ConfiguracaoWhatsAppForm({ config, item, data, initialDa
+     return (
+       <div className="w-full h-full overflow-auto bg-white p-6">
+         <div className="max-w-4xl mx-auto">
+-          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+-            <MessageCircle className="w-8 h-8 text-sky-600" />
++          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
++            <MessageCircle className="w-8 h-8 text-green-600" />
+             <h2 className="text-2xl font-bold text-slate-900">
+               {dadosIniciais ? "Editar WhatsApp Business" : "Nova Configuracao WhatsApp"}
+             </h2>
+diff --git a/src/components/cadastros/FilialForm.jsx b/src/components/cadastros/FilialForm.jsx
+index 0fe00f03f..29f3fb5b5 100644
+--- a/src/components/cadastros/FilialForm.jsx
++++ b/src/components/cadastros/FilialForm.jsx
+@@ -165,23 +165,7 @@ export default function FilialForm({
+   );
+ 
+   if (windowMode) {
+-    return (
+-      <div className="w-full h-full overflow-auto bg-white p-6">
+-        <div className="max-w-4xl mx-auto">
+-          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+-            <h2 className="text-2xl font-bold text-slate-900">
+-              {filialBoundId ? 'Editar Filial' : 'Nova Filial'}
+-            </h2>
+-          </div>
+-          {filialBoundId ? (
+-            <p className="text-xs text-slate-500 mb-4">
+-              ID técnico: <span className="font-mono">{String(filialBoundId)}</span>
+-            </p>
+-          ) : null}
+-          {form}
+-        </div>
+-      </div>
+-    );
++    return <div className="w-full h-full overflow-auto bg-white p-6">{form}</div>;
+   }
+ 
+   return form;
+diff --git a/src/components/cadastros/PainelDinamicoCliente.jsx b/src/components/cadastros/PainelDinamicoCliente.jsx
+index d94eddfa4..7cbee01f4 100644
+--- a/src/components/cadastros/PainelDinamicoCliente.jsx
++++ b/src/components/cadastros/PainelDinamicoCliente.jsx
+@@ -95,27 +95,18 @@ function contatoDraftTemCanal(lista, hints) {
+ }
+ 
+ /**
+- * Preferência `principal` no contrato escalar HTTP com ≥2 canais valorados:
+- * - hydrate (`onConflict: 'strip'`): limpa principal inventado na UI
+- * - persist (`onConflict: 'reject'`): rejeita — sem sucesso com perda silenciosa
+- *   (parecer 6498240997). Backends com contatos[] canônico não entram aqui.
++ * Remove preferência principal quando há ≥2 canais com valor — somente no
++ * contrato escalar HTTP (fidelidade). Backends com contatos[] completo
++ * preservam principal legítimo (Codex P2 #4410814424).
+  */
+-function stripPrincipalQuandoMultiCanal(lista, { scalarContract = false, onConflict = "strip" } = {}) {
++function stripPrincipalQuandoMultiCanal(lista, { scalarContract = false } = {}) {
+   const next = Array.isArray(lista) ? lista.map((row) => ({ ...row })) : [];
+   if (!scalarContract) return next;
+-  const valued = next.filter((row) => String(row?.valor || "").trim() !== "");
+-  if (valued.length <= 1) return next;
+-  const hasPrincipal = valued.some((row) => row.principal === true);
+-  if (!hasPrincipal) return next;
+-  if (onConflict === "reject") {
+-    throw Object.assign(
+-      new Error(
+-        "Preferência principal não representável no contrato escalar (e-mail/telefone/celular). Ajuste canais ou use o cadastro completo.",
+-      ),
+-      { code: "CONTATOS_SCALAR_OVERFLOW", reason: "principal_nao_representavel", status: 422 },
+-    );
++  const valuedCount = next.filter((row) => String(row?.valor || "").trim() !== "").length;
++  if (valuedCount > 1) {
++    return next.map((row) => ({ ...row, principal: false }));
+   }
+-  return next.map((row) => ({ ...row, principal: false }));
++  return next;
+ }
+ 
+ /**
+@@ -173,8 +164,6 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
+   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+   const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, clienteProp?.id ?? null]);
+   const contatosPersistQueueRef = useRef(null);
+-  /** Trava contrato escalar na abertura — não promover rascunho a contatos[] após save (Codex #4413059634). */
+-  const scalarContractLockedRef = useRef(usesContatosScalarHttpContract(clienteProp));
+   if (!contatosPersistQueueRef.current) {
+     contatosPersistQueueRef.current = createContatosPersistQueue();
+   }
+@@ -182,7 +171,6 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
+   useEffect(() => {
+     setClienteLive(clienteProp);
+     setContatosDraft(seedContatosPainelDraft(clienteProp));
+-    scalarContractLockedRef.current = usesContatosScalarHttpContract(clienteProp);
+   }, [clienteProp?.id, clienteProp?.contatos, clienteProp?.contatos_escalares, clienteProp?.email, clienteProp?.telefone, clienteProp?.celular, painelScopeKey]);
+ 
+   // Reabertura: recarregar registro persistido (não reutilizar só o snapshot do pai).
+@@ -195,7 +183,6 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
+         if (cancelled || !fresh) return;
+         setClienteLive(fresh);
+         setContatosDraft(seedContatosPainelDraft(fresh));
+-        scalarContractLockedRef.current = usesContatosScalarHttpContract(fresh);
+       } catch {
+         // Mantém snapshot atual; não inventar contatos.
+       }
+@@ -205,22 +192,12 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
+ 
+   const persistContatosPainel = (next) => {
+     const incoming = Array.isArray(next) ? next.map((row) => ({ ...row })) : [];
+-    const previousDraft = contatosDraft;
+-    const scalarContract = scalarContractLockedRef.current
+-      || usesContatosScalarHttpContract(clienteLive || clienteProp);
+     // Persistência: lista do operador vence — não re-hidratar escalares apagados
+-    // (Codex P2 #4410814417). Principal multi-canal escalar → rejeita (6498240997).
+-    let lista;
+-    try {
+-      lista = stripPrincipalQuandoMultiCanal(incoming, {
+-        scalarContract,
+-        onConflict: "reject",
+-      });
+-    } catch (error) {
+-      toast.error(error?.message || "Contatos não representáveis no contrato escalar.");
+-      setContatosDraft(previousDraft);
+-      return Promise.resolve({ skipped: true, lista: previousDraft, error });
+-    }
++    // (Codex P2 #4410814417). Strip principal só no contrato escalar.
++    const lista = stripPrincipalQuandoMultiCanal(incoming, {
++      scalarContract: usesContatosScalarHttpContract(clienteLive || clienteProp),
++    });
++    const previousDraft = contatosDraft;
+     return contatosPersistQueueRef.current(async () => {
+       const live = clienteLive || clienteProp;
+       if (!live?.id) return { skipped: true, lista };
+@@ -235,7 +212,7 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
+         || (Array.isArray(live?.contatos_escalares?.items) && live.contatos_escalares.items.length > 0),
+       );
+       // Wipe total sem lista: ainda exige cadastro completo (proteção parcial HTTP).
+-      if (hasScalars && lista.length === 0 && scalarContract) {
++      if (hasScalars && lista.length === 0 && usesContatosScalarHttpContract(live)) {
+         toast.error("Contatos incompletos neste painel. Abra o cadastro completo antes de limpar canais.");
+         return { skipped: true, lista };
+       }
+@@ -243,21 +220,12 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
+       try {
+         // P1 #4410761980: não carimbar empresa_id no mestre — só group_id de escopo.
+         const updated = await updateInContext("Cliente", live.id, { contatos: lista }, "group_id");
+-        const nextDraft = Array.isArray(updated?.contatos) && updated.contatos.length > 0 && !scalarContract
++        const nextDraft = Array.isArray(updated?.contatos) && updated.contatos.length > 0
+           ? updated.contatos.map((row) => ({ ...row }))
+           : lista;
+         setContatosDraft(nextDraft);
+         if (updated && typeof updated === "object") {
+-          setClienteLive((prev) => {
+-            const merged = { ...(prev || live), ...updated };
+-            if (scalarContract) {
+-              // Rascunho fica em contatosDraft — não alterar identidade do contrato HTTP.
+-              delete merged.contatos;
+-            } else {
+-              merged.contatos = nextDraft;
+-            }
+-            return merged;
+-          });
++          setClienteLive((prev) => ({ ...(prev || live), ...updated, contatos: nextDraft }));
+         }
+         toast.success("Contatos atualizados.");
+         return { skipped: false, lista: nextDraft };
+diff --git a/src/components/comercial/ValidadorEstoquePedido.jsx b/src/components/comercial/ValidadorEstoquePedido.jsx
+index dd0018e92..e34d4f16d 100644
+--- a/src/components/comercial/ValidadorEstoquePedido.jsx
++++ b/src/components/comercial/ValidadorEstoquePedido.jsx
+@@ -20,29 +20,6 @@ export function chaveDemandaEstoqueLinha(item) {
+   return `${produtoId}::${unidadeNorm}`;
+ }
+ 
+-/** Unidade da linha de demanda (pedido/orçamento). */
+-export function unidadeDemandaLinha(item) {
+-  return String(item?.unidade_id ?? item?.unidade_sigla ?? item?.unidade ?? item?.unidade_medida ?? "")
+-    .trim()
+-    .toLowerCase();
+-}
+-
+-/**
+- * Unidade do saldo de estoque do produto (mestre).
+- * Sem conversão inventada: demanda e saldo só são comparáveis na mesma unidade.
+- */
+-export function unidadeSaldoProduto(produto) {
+-  if (!produto || typeof produto !== "object") return "";
+-  return String(
+-    produto.unidade_medida_id
+-    ?? produto.unidade_id
+-    ?? produto.unidade_medida
+-    ?? produto.unidade_sigla
+-    ?? produto.unidade
+-    ?? "",
+-  ).trim().toLowerCase();
+-}
+-
+ /**
+  * `estoque_atual` ausente no DTO ≠ zero (parecer #397 / produtoTypes MASTER).
+  * Reserva ausente com atual conhecido → 0 (sem inventar estoque).
+@@ -86,7 +63,7 @@ export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = [], option
+     const produtoId = item?.produto_id;
+     if (produtoId == null || produtoId === "") continue;
+     const key = String(produtoId);
+-    const unidade = unidadeDemandaLinha(item);
++    const unidade = String(item?.unidade_id ?? item?.unidade_sigla ?? item?.unidade ?? item?.unidade_medida ?? "").trim().toLowerCase();
+     if (!unidadesPorProduto.has(key)) unidadesPorProduto.set(key, new Set());
+     unidadesPorProduto.get(key).add(unidade);
+   }
+@@ -100,15 +77,7 @@ export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = [], option
+     const unidadesDoProduto = produtoId != null && produtoId !== ""
+       ? (unidadesPorProduto.get(String(produtoId)) || new Set())
+       : new Set();
+-    const unidadeDemanda = unidadeDemandaLinha(item);
+-    const unidadeSaldo = unidadeSaldoProduto(produto);
+-    // Parecer 6498240997: demanda CX vs saldo UN ≠ suficiente sem conversão comprovada.
+-    // Só quando ambas as unidades são conhecidas e diferem (saldo sem unidade ≠ inventar incompatível).
+-    const unidadeVsSaldoIncompativel = Boolean(produto)
+-      && unidadeDemanda !== ""
+-      && unidadeSaldo !== ""
+-      && unidadeDemanda !== unidadeSaldo;
+-    const unidadeIncompativel = unidadesDoProduto.size > 1 || unidadeVsSaldoIncompativel;
++    const unidadeIncompativel = unidadesDoProduto.size > 1;
+ 
+     // HTTP master ≠ saldo operacional; DTO sem estoque_atual ≠ zero fabricado.
+     const liquidoTotal = estoqueLiquidoDisponivel(produto);
+diff --git a/src/components/expedicao/ComprovanteDigital.jsx b/src/components/expedicao/ComprovanteDigital.jsx
+index f743d6045..9050d72e2 100644
+--- a/src/components/expedicao/ComprovanteDigital.jsx
++++ b/src/components/expedicao/ComprovanteDigital.jsx
+@@ -11,10 +11,7 @@ import { base44 } from "@/api/base44Client";
+ import { useContextoVisual } from "@/components/lib/useContextoVisual";
+ import { useUser } from "@/components/lib/UserContext";
+ import usePermissions from "@/components/lib/usePermissions";
+-import {
+-  buildComprovanteRecebedorPayload,
+-  resolveRegistroEntregaFinal,
+-} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
++import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+ 
+ const sanitizeText = (value) => String(value || "")
+   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
+@@ -164,20 +161,19 @@ export default function ComprovanteDigital({ entrega, isOpen, onClose, windowMod
+         id: entrega.id,
+         data: (() => {
+           const agora = new Date().toISOString();
+-          const comprovante = buildComprovanteRecebedorPayload({
+-            foto_comprovante: fotoUrl,
+-            nome_recebedor: nomeRecebedor,
+-            documento_recebedor: formData.documento_recebedor,
+-            cargo_recebedor: formData.cargo_recebedor,
+-            observacoes_recebimento: formData.observacoes_recebimento,
+-            latitude_entrega: latitude,
+-            longitude_entrega: longitude,
+-            now: agora,
+-          });
+           const resolved = resolveRegistroEntregaFinal({
+             before: entrega,
+             modo: "total",
+-            comprovante,
++            comprovante: {
++              foto_comprovante: fotoUrl,
++              nome_recebedor: nomeRecebedor,
++              documento_recebedor: sanitizeText(formData.documento_recebedor),
++              cargo_recebedor: sanitizeText(formData.cargo_recebedor),
++              data_hora_recebimento: agora,
++              latitude_entrega: latitude,
++              longitude_entrega: longitude,
++              observacoes_recebimento: sanitizeText(formData.observacoes_recebimento),
++            },
+             groupId: effectiveGroupId,
+             empresaId: effectiveEmpresaId,
+             confirmed: true,
+diff --git a/src/components/lib/expedicaoFluxoOperacionalPolicy.js b/src/components/lib/expedicaoFluxoOperacionalPolicy.js
+index b4f9b6f28..3bb85475a 100644
+--- a/src/components/lib/expedicaoFluxoOperacionalPolicy.js
++++ b/src/components/lib/expedicaoFluxoOperacionalPolicy.js
+@@ -406,65 +406,6 @@ export const resolveRomaneioDespacho = ({
+   };
+ };
+ 
+-/**
+- * Payload canônico do comprovante (recebedor + prova) compartilhado por
+- * ComprovanteDigital e ComprovanteEntregaDigital — sem terceiro módulo.
+- * GPS/foto/HTTP/estoque permanecem capacidades do consumidor (keep both curto).
+- * @param {{
+- *   nome_recebedor?: unknown,
+- *   documento_recebedor?: unknown,
+- *   cargo_recebedor?: unknown,
+- *   observacoes_recebimento?: unknown,
+- *   foto_comprovante?: unknown,
+- *   latitude_entrega?: unknown,
+- *   longitude_entrega?: unknown,
+- *   data_hora_recebimento?: unknown,
+- *   now?: string,
+- * }} input
+- * @returns {ExpedicaoRecord}
+- */
+-/** Limite canônico alinhado a expedicaoTypes.nome_recebedor max(200). */
+-export const COMPROVANTE_NOME_RECEBEDOR_MAX = 200;
+-
+-export const buildComprovanteRecebedorPayload = (input = {}) => {
+-  const sanitize = (value, max = 500, { rejectOver = false, field = 'campo' } = {}) => {
+-    const cleaned = String(value ?? '')
+-      .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '')
+-      .replace(/javascript:\s*/gi, '')
+-      .replace(/[<>]/g, '')
+-      .trim();
+-    if (rejectOver && cleaned.length > max) {
+-      throw Object.assign(new Error(`${field} excede ${max} caracteres`), {
+-        code: 'VALIDATION_ERROR',
+-        field,
+-        status: 422,
+-      });
+-    }
+-    return cleaned.slice(0, max);
+-  };
+-  // Parecer 6498241434: 190 chars válidos no contrato max(200) — não truncar a 180.
+-  const nome = sanitize(input.nome_recebedor, COMPROVANTE_NOME_RECEBEDOR_MAX, {
+-    rejectOver: true,
+-    field: 'nome_recebedor',
+-  });
+-  const latRaw = input.latitude_entrega;
+-  const lngRaw = input.longitude_entrega;
+-  const lat = latRaw == null || latRaw === '' ? null : Number(latRaw);
+-  const lng = lngRaw == null || lngRaw === '' ? null : Number(lngRaw);
+-  return {
+-    nome_recebedor: nome,
+-    documento_recebedor: sanitize(input.documento_recebedor, 60),
+-    cargo_recebedor: sanitize(input.cargo_recebedor, 120),
+-    observacoes_recebimento: sanitize(input.observacoes_recebimento, 2000),
+-    foto_comprovante: input.foto_comprovante == null || input.foto_comprovante === ''
+-      ? null
+-      : input.foto_comprovante,
+-    latitude_entrega: Number.isFinite(lat) ? lat : null,
+-    longitude_entrega: Number.isFinite(lng) ? lng : null,
+-    data_hora_recebimento: firstText(input.data_hora_recebimento, input.now) || new Date().toISOString(),
+-  };
+-};
+-
+ /**
+  * Registro final: total, parcial ou ocorrência — com prova/motivo e assert.
+  * @param {{
+diff --git a/src/components/logistica/ComprovanteEntregaDigital.jsx b/src/components/logistica/ComprovanteEntregaDigital.jsx
+index 4f9c5ea92..4d7284f73 100644
+--- a/src/components/logistica/ComprovanteEntregaDigital.jsx
++++ b/src/components/logistica/ComprovanteEntregaDigital.jsx
+@@ -13,10 +13,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
+ import usePermissions from "@/components/lib/usePermissions";
+ import { useUser } from "@/components/lib/UserContext";
+ import { assertEntregaOnCreate, assertEntregaOnUpdate } from "@/components/lib/expedicaoEntregaPolicy";
+-import {
+-  buildComprovanteRecebedorPayload,
+-  resolveRegistroEntregaFinal,
+-} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
++import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+ import { formatExpedicaoHttpError } from "@/components/lib/expedicaoHttpErrors";
+ 
+ const sanitizeText = (value) => String(value || "")
+@@ -211,16 +208,16 @@ export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess,
+       // Compensação multi-etapa: Entrega/Pedido primeiro; estoque depois (não TX atômica).
+       // UI NÃO declara sucesso se qualquer etapa posterior falhar após persistência parcial.
+       const agora = new Date().toISOString();
+-      const comprovanteData = buildComprovanteRecebedorPayload({
++      const comprovanteData = {
+         foto_comprovante: fotoComprovante,
+         nome_recebedor: recebedorSanitizado,
+-        documento_recebedor: documentoRecebedor,
+-        cargo_recebedor: cargoRecebedor,
+-        observacoes_recebimento: observacoes,
+-        latitude_entrega: geolocalizacao?.latitude ?? null,
+-        longitude_entrega: geolocalizacao?.longitude ?? null,
+-        now: agora,
+-      });
++        documento_recebedor: sanitizeText(documentoRecebedor),
++        cargo_recebedor: sanitizeText(cargoRecebedor),
++        data_hora_recebimento: agora,
++        latitude_entrega: geolocalizacao?.latitude || null,
++        longitude_entrega: geolocalizacao?.longitude || null,
++        observacoes_recebimento: sanitizeText(observacoes),
++      };
+ 
+       let entregaPersistidaId = entrega?.id || null;
+       if (entrega?.id) {
+diff --git a/tests/comercial-masters-busca-acentos.test.js b/tests/comercial-masters-busca-acentos.test.js
+deleted file mode 100644
+index 3a638c79b..000000000
+--- a/tests/comercial-masters-busca-acentos.test.js
++++ /dev/null
+@@ -1,26 +0,0 @@
+-import assert from 'node:assert/strict';
+-import test from 'node:test';
+-import fs from 'node:fs';
+-
+-import { normalizeMasterQuery } from '../src/components/comercial/comercialMasterPicker.js';
+-
+-test('normalizeMasterQuery frontend: aco encontra Aço; sao jose encontra São José', () => {
+-  assert.equal(normalizeMasterQuery('Aço CA-50').includes(normalizeMasterQuery('aco')), true);
+-  assert.equal(normalizeMasterQuery('São José').includes(normalizeMasterQuery('sao jose')), true);
+-});
+-
+-test('server searchTextNormalize alinhado ao picker e consumido nos repositórios', () => {
+-  const domain = fs.readFileSync('server/src/domain/searchTextNormalize.ts', 'utf8');
+-  assert.match(domain, /export function foldSearchText/);
+-  assert.match(domain, /export function sqlFoldAccentExpr/);
+-  const produto = fs.readFileSync('server/src/repositories/postgresProdutoRepository.ts', 'utf8');
+-  const cliente = fs.readFileSync('server/src/repositories/postgresClienteRepository.ts', 'utf8');
+-  assert.match(produto, /foldSearchText/);
+-  assert.match(produto, /sqlFoldAccentExpr/);
+-  assert.match(cliente, /foldSearchText/);
+-  assert.match(cliente, /sqlFoldAccentExpr/);
+-  // Clientes/produtos HTTP usam search no list — server dobra acentos no repositório
+-  const http = fs.readFileSync('src/api/httpApiClient.js', 'utf8');
+-  assert.ok(http.includes("/api/v1/clientes"));
+-  assert.ok(http.includes("/api/v1/produtos"));
+-});
+diff --git a/tests/helpers/consolidation81Remainder.js b/tests/helpers/consolidation81Remainder.js
+index b145fbbbe..08d8dbf50 100644
+--- a/tests/helpers/consolidation81Remainder.js
++++ b/tests/helpers/consolidation81Remainder.js
+@@ -305,16 +305,7 @@ export const clienteSelectedReferenceHunks={
+       [
+         "      params.push(filter.empresaId);\n      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}\n        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;\n      if (filter.clienteEmpresaId) {\n        params.push(filter.clienteEmpresaId);\n        where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql} AND ce.id=$${params.length}::uuid)`);\n      }\n      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);\n    }\n    const whereSql = where.join(' AND ');\n",
+         "      params.push(filter.empresaId);\n      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}\n        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;\n      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);\n    }\n    const whereSql = where.join(' AND ');\n"
+-      ],
+-      [
+-        "import { clienteOperacaoLinksSchema } from './clienteTypes.js';\nimport { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';\n\n",
+-        "import { clienteOperacaoLinksSchema } from './clienteTypes.js';\n\n"
+-      ],
+-      [
+-        "    if (filter.search) {\n      const q = `%${foldSearchText(filter.search)}%`;\n      const docQ = normalizeDocumento(filter.search);\n      params.push(q);\n      const searchIdx = params.length;\n      const foldedMatch = (\n        `${sqlFoldAccentExpr(\"coalesce(nome,'')\")} LIKE $${searchIdx}`\n        + ` OR ${sqlFoldAccentExpr(\"coalesce(razao_social,'')\")} LIKE $${searchIdx}`\n        + ` OR ${sqlFoldAccentExpr(\"coalesce(nome_fantasia,'')\")} LIKE $${searchIdx}`\n        + ` OR ${sqlFoldAccentExpr(\"coalesce(email,'')\")} LIKE $${searchIdx}`\n        + ` OR ${sqlFoldAccentExpr(\"coalesce(telefone,'')\")} LIKE $${searchIdx}`\n        + ` OR ${sqlFoldAccentExpr(\"coalesce(celular,'')\")} LIKE $${searchIdx}`\n        + ` OR ${sqlFoldAccentExpr('codigo')} LIKE $${searchIdx}`\n      );\n      if (docQ) {\n        params.push(`%${docQ}%`);\n        where.push(`(\n          ${foldedMatch}\n          OR documento_normalizado LIKE $${params.length}\n        )`);\n      } else {\n        where.push(`(\n          ${foldedMatch}\n        )`);\n      }\n    }\n",
+-        "    if (filter.search) {\n      const q = `%${filter.search.toLowerCase()}%`;\n      const docQ = normalizeDocumento(filter.search);\n      params.push(q);\n      const searchIdx = params.length;\n      if (docQ) {\n        params.push(`%${docQ}%`);\n        where.push(`(\n          lower(coalesce(nome,'')) LIKE $${searchIdx}\n          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}\n          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}\n          OR lower(coalesce(email,'')) LIKE $${searchIdx}\n          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}\n          OR lower(coalesce(celular,'')) LIKE $${searchIdx}\n          OR lower(codigo) LIKE $${searchIdx}\n          OR documento_normalizado LIKE $${params.length}\n        )`);\n      } else {\n        where.push(`(\n          lower(coalesce(nome,'')) LIKE $${searchIdx}\n          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}\n          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}\n          OR lower(coalesce(email,'')) LIKE $${searchIdx}\n          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}\n          OR lower(coalesce(celular,'')) LIKE $${searchIdx}\n          OR lower(codigo) LIKE $${searchIdx}\n        )`);\n      }\n    }\n"
+       ]
+-
+     ]
+   },
+   "src/api/httpApiClient.js": {
+diff --git a/tests/painel-dinamico-cliente-historico-tab.test.js b/tests/painel-dinamico-cliente-historico-tab.test.js
+index ed4c74fb1..9637f42b7 100644
+--- a/tests/painel-dinamico-cliente-historico-tab.test.js
++++ b/tests/painel-dinamico-cliente-historico-tab.test.js
+@@ -1011,38 +1011,3 @@ test('Histórico resetPaginationSession: zera loadingMore e limpa extras (P2 Cod
+   // finally da load-more só zera loading quando o controller ainda é o vigente
+   assert.match(src, /if \(loadMoreAbortRef\.current === controller\)/);
+ });
+-
+-test('parecer 6498240997: escalar email+telefone com principal → rejeita sem perda silenciosa', async () => {
+-  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+-  const start = src.indexOf('function usesContatosScalarHttpContract');
+-  const end = src.indexOf('/**\n * Serializa gravações de contatos', start);
+-  const helpers = src.slice(start, end);
+-  const { stripPrincipalQuandoMultiCanal, usesContatosScalarHttpContract } = new Function(
+-    `${helpers}; return { stripPrincipalQuandoMultiCanal, usesContatosScalarHttpContract };`,
+-  )();
+-
+-  const draft = [
+-    { tipo: 'E-mail', valor: 'a@b.c', principal: true },
+-    { tipo: 'Telefone', valor: '1133334444', principal: false },
+-  ];
+-  const scalarCliente = { email: 'a@b.c', telefone: '1133334444' };
+-  assert.equal(usesContatosScalarHttpContract(scalarCliente), true);
+-
+-  // hydrate ainda limpa (sem inventar preferência na UI)
+-  const hydrated = stripPrincipalQuandoMultiCanal(draft, { scalarContract: true, onConflict: 'strip' });
+-  assert.equal(hydrated.every((c) => c.principal === false), true);
+-
+-  // persist: rejeita — rascunho do chamador permanece intacto
+-  assert.throws(
+-    () => stripPrincipalQuandoMultiCanal(draft, { scalarContract: true, onConflict: 'reject' }),
+-    (err) => err?.code === 'CONTATOS_SCALAR_OVERFLOW' && err?.reason === 'principal_nao_representavel',
+-  );
+-  assert.equal(draft[0].principal, true, 'rascunho original preservado após rejeição');
+-});
+-
+-test('Codex #4413059634: após save escalar não promove rascunho a contatos[] no source', async () => {
+-  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+-  assert.match(src, /scalarContractLockedRef/);
+-  assert.match(src, /onConflict:\s*["']reject["']/);
+-  assert.match(src, /delete merged\.contatos/);
+-});
+diff --git a/tests/recuperacao-config-comprovante.test.js b/tests/recuperacao-config-comprovante.test.js
+deleted file mode 100644
+index 8bbbc6580..000000000
+--- a/tests/recuperacao-config-comprovante.test.js
++++ /dev/null
+@@ -1,137 +0,0 @@
+-import assert from 'node:assert/strict';
+-import test from 'node:test';
+-import fs from 'node:fs';
+-
+-import {
+-  buildComprovanteRecebedorPayload,
+-  resolveRegistroEntregaFinal,
+-} from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
+-
+-test('buildComprovanteRecebedorPayload: sanitiza e normaliza contrato compartilhado', () => {
+-  const agora = '2026-10-29T12:00:00.000Z';
+-  const payload = buildComprovanteRecebedorPayload({
+-    nome_recebedor: '  Maria <script>x</script> Silva  ',
+-    documento_recebedor: '123.456.789-00',
+-    cargo_recebedor: 'Porteiro',
+-    observacoes_recebimento: 'ok javascript:alert(1)',
+-    foto_comprovante: 'https://cdn.example/prova.jpg',
+-    latitude_entrega: '-23.5',
+-    longitude_entrega: '-46.6',
+-    now: agora,
+-  });
+-  assert.equal(payload.nome_recebedor, 'Maria  Silva');
+-  assert.equal(payload.documento_recebedor, '123.456.789-00');
+-  assert.equal(payload.cargo_recebedor, 'Porteiro');
+-  assert.equal(payload.observacoes_recebimento, 'ok alert(1)');
+-  assert.equal(payload.foto_comprovante, 'https://cdn.example/prova.jpg');
+-  assert.equal(payload.latitude_entrega, -23.5);
+-  assert.equal(payload.longitude_entrega, -46.6);
+-  assert.equal(payload.data_hora_recebimento, agora);
+-});
+-
+-test('buildComprovanteRecebedorPayload: GPS/foto ausentes ≠ zero inventado', () => {
+-  const payload = buildComprovanteRecebedorPayload({
+-    nome_recebedor: 'João',
+-    latitude_entrega: '',
+-    longitude_entrega: undefined,
+-    foto_comprovante: '',
+-    now: '2026-10-29T12:00:00.000Z',
+-  });
+-  assert.equal(payload.latitude_entrega, null);
+-  assert.equal(payload.longitude_entrega, null);
+-  assert.equal(payload.foto_comprovante, null);
+-  assert.equal(payload.nome_recebedor, 'João');
+-});
+-
+-
+-test('parecer 6498241434: nome 190 chars preservado; >200 rejeita sem truncar', () => {
+-  const nome190 = 'N' + 'a'.repeat(189);
+-  assert.equal(nome190.length, 190);
+-  const ok = buildComprovanteRecebedorPayload({
+-    nome_recebedor: nome190,
+-    now: '2026-10-29T12:00:00.000Z',
+-  });
+-  assert.equal(ok.nome_recebedor, nome190, '190 ≤ max(200) preservado integralmente');
+-
+-  const nome200 = 'X'.repeat(200);
+-  const ok200 = buildComprovanteRecebedorPayload({
+-    nome_recebedor: nome200,
+-    now: '2026-10-29T12:00:00.000Z',
+-  });
+-  assert.equal(ok200.nome_recebedor.length, 200);
+-
+-  const nome201 = 'Y'.repeat(201);
+-  assert.throws(
+-    () => buildComprovanteRecebedorPayload({ nome_recebedor: nome201 }),
+-    (err) => err?.code === 'VALIDATION_ERROR' && err?.field === 'nome_recebedor',
+-  );
+-});
+-
+-test('buildComprovanteRecebedorPayload: GPS zero numérico preservado (não vira null)', () => {
+-  const payload = buildComprovanteRecebedorPayload({
+-    nome_recebedor: 'Zero',
+-    latitude_entrega: 0,
+-    longitude_entrega: 0,
+-    now: '2026-10-29T12:00:00.000Z',
+-  });
+-  assert.equal(payload.latitude_entrega, 0);
+-  assert.equal(payload.longitude_entrega, 0);
+-});
+-
+-test('resolveRegistroEntregaFinal consome payload canônico do comprovante', () => {
+-  const agora = '2026-10-29T12:00:00.000Z';
+-  const comprovante = buildComprovanteRecebedorPayload({
+-    nome_recebedor: 'Ana',
+-    documento_recebedor: '11',
+-    foto_comprovante: 'blob:1',
+-    now: agora,
+-  });
+-  const resolved = resolveRegistroEntregaFinal({
+-    before: { id: 'ent-1', status: 'Em Rota', historico_status: [] },
+-    modo: 'total',
+-    comprovante,
+-    groupId: 'g1',
+-    empresaId: 'e1',
+-    confirmed: true,
+-    now: agora,
+-    usuario: 'tester',
+-  });
+-  assert.equal(resolved.patch.status, 'Entregue');
+-  assert.equal(resolved.patch.comprovante_entrega.nome_recebedor, 'Ana');
+-  assert.equal(resolved.patch.comprovante_entrega.foto_comprovante, 'blob:1');
+-});
+-
+-test('ComprovanteDigital e ComprovanteEntregaDigital reusam buildComprovanteRecebedorPayload', () => {
+-  const digital = fs.readFileSync('src/components/expedicao/ComprovanteDigital.jsx', 'utf8');
+-  const entrega = fs.readFileSync('src/components/logistica/ComprovanteEntregaDigital.jsx', 'utf8');
+-  assert.match(digital, /buildComprovanteRecebedorPayload/);
+-  assert.match(entrega, /buildComprovanteRecebedorPayload/);
+-  // Capacidades distintas preservadas (keep both curto — matriz Pacote 5)
+-  assert.match(entrega, /isHttpExpedicaoMode/);
+-  assert.match(entrega, /capturarGeolocalizacao|geolocalizacao/);
+-  assert.match(digital, /windowMode/);
+-  assert.match(digital, /navigator\.geolocation/);
+-});
+-
+-for (const [file, label] of [
+-  ['src/components/cadastros/ConfiguracaoWhatsAppForm.jsx', 'WhatsApp'],
+-  ['src/components/cadastros/ConfiguracaoIntegracaoForm.jsx', 'Integracao'],
+-  ['src/components/cadastros/ConfiguracaoDespesaRecorrenteForm.jsx', 'DespesaRecorrente'],
+-  ['src/components/cadastros/FilialForm.jsx', 'Filial'],
+-]) {
+-  test(`${label}: sky windowMode + ID técnico residual (sem CodigoField/count+1)`, () => {
+-    const source = fs.readFileSync(file, 'utf8');
+-    assert.match(source, /from-sky-50 to-sky-100/);
+-    assert.match(source, /ID técnico/);
+-    assert.doesNotMatch(source, /count\s*\+\s*1/);
+-    assert.doesNotMatch(source, /CadastroCodigoRegistroField/);
+-    // Preserva pin RecordState onde já existia
+-    if (label === 'WhatsApp' || label === 'Integracao' || label === 'DespesaRecorrente') {
+-      assert.match(source, /useCadastroRecordState/);
+-    }
+-    if (label === 'Filial') {
+-      assert.match(source, /useCadastroReopenOnIdentity/);
+-      assert.match(source, /filialBoundId/);
+-    }
+-  });
+-}
+diff --git a/tests/validador-estoque-disponibilidade.test.js b/tests/validador-estoque-disponibilidade.test.js
+index fa3c7e025..a5849a6ed 100644
+--- a/tests/validador-estoque-disponibilidade.test.js
++++ b/tests/validador-estoque-disponibilidade.test.js
+@@ -208,27 +208,3 @@ test('ValidadorEstoquePedido: HTTP advisory + saldo desconhecido + unidade no UI
+   assert.doesNotMatch(src, /estoque_atual \?\? 0/);
+   assert.doesNotMatch(src, /estoque_atual \|\| 0/);
+ });
+-
+-test('parecer 6498240997: demanda CX vs saldo UN → unidadeIncompativel (sem conversão)', async () => {
+-  const { avaliarDisponibilidadeLinhasEstoque, resumoDisponibilidadeEstoque } = await loadHelpers();
+-  const produtos = [{ id: 'p-aco', estoque_atual: 10, estoque_reservado: 0, unidade_medida: 'UN' }];
+-  const rows = avaliarDisponibilidadeLinhasEstoque(
+-    [{ produto_id: 'p-aco', quantidade: 2, unidade_sigla: 'CX' }],
+-    produtos,
+-  );
+-  assert.equal(rows[0].unidadeIncompativel, true);
+-  assert.equal(rows[0].fonteIndisponivel, true);
+-  assert.equal(rows[0].disponivel, false);
+-  assert.equal(rows[0].disponivelLiquido, null, 'não declara líquido convertível');
+-  const resumo = resumoDisponibilidadeEstoque(rows);
+-  assert.equal(resumo.unidadeIncompativel, true);
+-  assert.equal(resumo.todosDisponiveis, false);
+-  assert.equal(resumo.fontePronta, false);
+-  // Mesma unidade: ainda compara saldo
+-  const ok = avaliarDisponibilidadeLinhasEstoque(
+-    [{ produto_id: 'p-aco', quantidade: 2, unidade_sigla: 'UN' }],
+-    produtos,
+-  );
+-  assert.equal(ok[0].unidadeIncompativel, false);
+-  assert.equal(ok[0].disponivel, true);
+-});

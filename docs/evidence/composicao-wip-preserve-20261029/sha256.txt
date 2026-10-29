@@ -1,0 +1,3 @@
+6f6818d4455272dfd63322b2d9543e823abe9d38a328c60c265671c31c350e4f  /tmp/composicao-wip-preserve/wip-tracked.diff
+6f6818d4455272dfd63322b2d9543e823abe9d38a328c60c265671c31c350e4f  /tmp/composicao-wip-preserve/wip-staged.diff
+22729fba33c8953e876f15d18b64506408a8899df905d55c19db3b674d896ef4  /tmp/composicao-wip-preserve/status-porcelain.txt
