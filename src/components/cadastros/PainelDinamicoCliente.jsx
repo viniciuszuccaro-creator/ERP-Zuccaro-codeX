@@ -108,13 +108,12 @@ function stripPrincipalQuandoMultiCanal(lista, { scalarContract = false, onConfl
   const hasPrincipal = valued.some((row) => row.principal === true);
   if (!hasPrincipal) return next;
   if (onConflict === "reject") {
-    const error = new Error(
-      "Preferência principal não representável no contrato escalar (e-mail/telefone/celular). Ajuste canais ou use o cadastro completo.",
+    throw Object.assign(
+      new Error(
+        "Preferência principal não representável no contrato escalar (e-mail/telefone/celular). Ajuste canais ou use o cadastro completo.",
+      ),
+      { code: "CONTATOS_SCALAR_OVERFLOW", reason: "principal_nao_representavel", status: 422 },
     );
-    error.code = "CONTATOS_SCALAR_OVERFLOW";
-    error.reason = "principal_nao_representavel";
-    error.status = 422;
-    throw error;
   }
   return next.map((row) => ({ ...row, principal: false }));
 }
