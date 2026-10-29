@@ -1,22 +1,26 @@
-Composição isolada PR#401 — conflitos resolvidos (2026-10-29 07:15 America/Sao_Paulo)
+Composição isolada PR#401 — conflitos resolvidos (2026-10-29 America/Sao_Paulo)
 ============================================================
 Entrada Cursor PR397: 83499de995b8a7a2076f3e5bea9b9263f54ba07f
   CI SUCCESS run 40853365201 (frontend/backend/expedicao)
 Entrada Codex PR342:  b5cb34e1fb09d4a7dedc4fc9d66d501bfe2e16f7
-  draft; CI5052/5053 SUCCESS (tip publicado)
+  draft; tip publicado (não editado)
 
-Método: worktree isolado; reset --hard 397 tip; merge --no-ff 342; sem editar
-branches oficiais cursor/operador-historico-persist-392b nem
-codex/consolidacao-infra-20261017.
+Método: worktree isolado; merge --no-ff 397 tip + 342; integrou tip remoto
+eee7aba94 (evidência prep) sem force-push; sem editar branches oficiais
+cursor/operador-historico-persist-392b nem codex/consolidacao-infra-20261017.
 
 Conflitos (3) e resolução:
 1. STATUS_DO_PROJETO.md — tip Cursor vigente + tip Codex SQL/SSH preservados
 2. docs/HANDOFF_ATUAL.md — checkpoints Cursor + tip Codex preservados
 3. tests/helpers/consolidation81Remainder.js
-   - União hunks httpApiClient (comercialMasters Codex + pedidos.clienteId Cursor)
-   - Golden httpApiClient recalculado: f6537d32…
-   - clienteSelectedReference / clienteConferencia router: hunks + pedidos.clienteId
-     até e36231b3 (073952b5…) — sem apagar guardas; hashes verificados por conteúdo
+   - Camada selected httpApiClient: clienteId (Cursor) + comercialMasters (Codex)
+     → pin verificado 80478c6565b8…
+   - Camada historical/conferencia httpApiClient: 7 hunks Codex → pin c0350d35…
+   - identidade: 6 hunks Cursor (não os 2 reduzidos) → pin 53ed9f42…
+   - router/clienteService: selected+historical compostos já verificados
+   - Sem apagar guardas; hashes recalculados só após apply hunk→conteúdo
 
-Checks: 103 PASS dirigidos; tsc PASS; git diff --check limpo nos resolvidos.
+Checks dirigidos: 98 PASS (remainder/http/master-picker/pedido/orcamento/
+publication-channel) + 24 PASS (component-contract/pedido-frontend);
+npm run typecheck PASS; git diff --check limpo nos resolvidos.
 Sem merge oficial / deploy / carga SQL.
