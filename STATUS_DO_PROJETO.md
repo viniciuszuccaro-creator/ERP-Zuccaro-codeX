@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#424 Contatos seams + WIP13 coord) (2026-10-29 16:25 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#424** | tip **`d7174611d`** · CI SUCCESS `40928320707` · Codex limpo · seams **6/6 PASS** (tardio/concorrente/skipped/rascunho/audit empresa) |
+| **#401** | candidata **`7460c3a26` / `0195acc66`** — aguarda aceite; **sem** fold Contatos/WIP13 |
+| **WIP13** | snapshot Linux **9/9 PASS** (`266b1ebf…`); validação encerrada (#421); **publicação funcional** pedida ao Codex (sem apply automático) |
+| Reserva validação | liberada (logs locais `/tmp/codex-wip-inbox-validate/` preservados; runner idle) |
+| Fora | merge main / deploy / VPS / carga / HD externo |
+
+**Evidência #424:** `docs/evidence/cadastros-contatos-painel-achados-20261029.txt` + `tests/contatos-painel-counterproof-seams.test.js`
+**Próximo:** aceite owner #424 · Codex publicar WIP13 revisado · Pacote B persist com recording quando franquia.
+
 ## CURSOR — VIGENTE (#401 ← #414 fold settlement) (2026-10-29 14:40 America/Sao_Paulo)
 
 | Campo | Valor |

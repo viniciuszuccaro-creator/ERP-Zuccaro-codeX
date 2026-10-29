@@ -1046,3 +1046,26 @@ test('Codex #4413059634: após save escalar não promove rascunho a contatos[] n
   assert.match(src, /onConflict:\s*["']reject["']/);
   assert.match(src, /delete merged\.contatos/);
 });
+
+test('Codex #4414641595/#4415656862: epoch hidratação + reject skipped no painel/form', async () => {
+  const painel = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  const form = await readFile(new URL('../src/components/cadastros/GerenciarContatosClienteForm.jsx', import.meta.url), 'utf8');
+  assert.match(painel, /contatosHydrateEpochRef/);
+  assert.match(painel, /epoch !== contatosHydrateEpochRef\.current/);
+  assert.match(painel, /contatosHydrateEpochRef\.current \+= 1/);
+  assert.match(painel, /return Promise\.reject\(error\)/);
+  assert.doesNotMatch(painel, /return Promise\.resolve\(\{\s*skipped:\s*true,\s*lista:\s*previousDraft/);
+  assert.match(form, /result\.skipped/);
+  assert.match(form, /throw result\.error/);
+});
+
+test('Codex #4415730696: auditoria updateInContext não usa group_id como empresa_id', async () => {
+  const src = await readFile(new URL('../src/components/lib/useContextoVisual.jsx', import.meta.url), 'utf8');
+  assert.match(src, /resolveAuditEmpresaId/);
+  assert.match(src, /campo !== 'group_id' && campo !== 'grupo_id'/);
+  assert.match(src, /empresa_id:\s*resolveAuditEmpresaId\(stamped,\s*before,\s*campo\)/);
+  assert.doesNotMatch(
+    src,
+    /empresa_id:\s*stamped\[campo\]\s*\|\|\s*before\?\.\[campo\]/,
+  );
+});

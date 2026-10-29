@@ -1,3 +1,8 @@
+## CURSOR — #424 seams + WIP13 (2026-10-29 16:25 America/Sao_Paulo)
+- #424 `d7174611d` CI+Codex+seams 6/6. Sem fold #401.
+- WIP13: validação Linux encerrada; pedir publicação funcional ao Codex via #421.
+- Reserva validação liberada. Sem VPS/merge/deploy.
+
 ## CURSOR — #414 tip 532ac595a CI SUCCESS + Codex limpo (2026-10-29 12:48 America/Sao_Paulo)
 
 - Tip `532ac595a`/`05a09e667` CI SUCCESS 6/6. Codex tip `05a09e667`: sem major/findings.
