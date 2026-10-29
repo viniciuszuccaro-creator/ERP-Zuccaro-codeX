@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#414 tip 532ac595a CI SUCCESS + Codex limpo) (2026-10-29 12:48 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** tip código **`532ac595a`** / docs **`05a09e667`** — CI SUCCESS 6/6 |
+| **Codex** | tip `05a09e667` sem major / sem findings (P1/P2 fechados) |
+| **#401** | incorporar este tip na composição (única candidata) |
+| Fora | merge oficial main / deploy / carga / VPS write |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** compose #401 ← #414 · demo persistência isolada. Sem merge main.
+
+(2026-10-29 12:48 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#414 P1/P2 N+1 + fila hidratação) (2026-10-29 12:40 America/Sao_Paulo)
 
 | Campo | Valor |

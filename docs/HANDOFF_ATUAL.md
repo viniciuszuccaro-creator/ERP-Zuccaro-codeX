@@ -1,3 +1,8 @@
+## CURSOR — #414 tip 532ac595a CI SUCCESS + Codex limpo (2026-10-29 12:48 America/Sao_Paulo)
+
+- Tip `532ac595a`/`05a09e667` CI SUCCESS 6/6. Codex tip `05a09e667`: sem major/findings.
+- P1/P2 fechados. Próximo: compose #401 ← #414. Sem merge main/deploy/VPS write.
+
 ## CURSOR — #414 P1/P2 N+1 + fila (2026-10-29 12:40 America/Sao_Paulo)
 
 - Fecha Codex P1/P2 tip `af1a86048`: `resolveClienteEmpresa` (1×/clientes) + catálogo acumula lotes.
