@@ -19,6 +19,7 @@ import type {
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 import { clienteBulkSnapshotSchema } from '../services/clienteBulkLifecycle.js';
 import { clienteOperacaoLinksSchema } from './clienteTypes.js';
+import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
@@ -160,31 +161,28 @@ export class PostgresClienteRepository implements ClienteRepository {
       where.push(`documento_normalizado = $${params.length}`);
     }
     if (filter.search) {
-      const q = `%${filter.search.toLowerCase()}%`;
+      const q = `%${foldSearchText(filter.search)}%`;
       const docQ = normalizeDocumento(filter.search);
       params.push(q);
       const searchIdx = params.length;
+      const foldedMatch = (
+        `${sqlFoldAccentExpr("coalesce(nome,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(razao_social,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(nome_fantasia,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(email,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(telefone,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr("coalesce(celular,'')")} LIKE $${searchIdx}`
+        + ` OR ${sqlFoldAccentExpr('codigo')} LIKE $${searchIdx}`
+      );
       if (docQ) {
         params.push(`%${docQ}%`);
         where.push(`(
-          lower(coalesce(nome,'')) LIKE $${searchIdx}
-          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}
-          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}
-          OR lower(coalesce(email,'')) LIKE $${searchIdx}
-          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}
-          OR lower(coalesce(celular,'')) LIKE $${searchIdx}
-          OR lower(codigo) LIKE $${searchIdx}
+          ${foldedMatch}
           OR documento_normalizado LIKE $${params.length}
         )`);
       } else {
         where.push(`(
-          lower(coalesce(nome,'')) LIKE $${searchIdx}
-          OR lower(coalesce(razao_social,'')) LIKE $${searchIdx}
-          OR lower(coalesce(nome_fantasia,'')) LIKE $${searchIdx}
-          OR lower(coalesce(email,'')) LIKE $${searchIdx}
-          OR lower(coalesce(telefone,'')) LIKE $${searchIdx}
-          OR lower(coalesce(celular,'')) LIKE $${searchIdx}
-          OR lower(codigo) LIKE $${searchIdx}
+          ${foldedMatch}
         )`);
       }
     }

@@ -13,6 +13,7 @@ import type { Produto, ProdutoCreate, ProdutoEquivalente, ProdutoEquivalenteCrea
 import type { ProdutoCanal, ProdutoCanalCreate, ProdutoCanalUpdate } from './produtoTypes.js';
 import type { ProdutoListFilter, ProdutoReadOptions, ProdutoRepository } from './inMemoryProdutoRepository.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
+import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';
 
 function ts(row: Record<string, unknown>) {
   return {
@@ -191,15 +192,15 @@ export class PostgresProdutoRepository implements ProdutoRepository {
       where.push(`lower(codigo_barras) = $${params.length}`);
     }
     if (filter.search) {
-      params.push(filter.search.toLowerCase());
+      params.push(foldSearchText(filter.search));
       where.push(
-        `(strpos(lower(descricao), $${params.length}) > 0`
-        + ` OR strpos(lower(coalesce(codigo,'')), $${params.length}) > 0`
-        + ` OR strpos(lower(coalesce(nome,'')), $${params.length}) > 0`
-        + ` OR strpos(lower(coalesce(codigo_barras,'')), $${params.length}) > 0`
-        + ` OR strpos(lower(coalesce(material,'')), $${params.length}) > 0`
-        + ` OR strpos(lower(coalesce(liga,'')), $${params.length}) > 0`
-        + ` OR strpos(lower(coalesce(norma_tecnica,'')), $${params.length}) > 0)`,
+        `(strpos(${sqlFoldAccentExpr('descricao')}, $${params.length}) > 0`
+        + ` OR strpos(${sqlFoldAccentExpr("coalesce(codigo,'')")}, $${params.length}) > 0`
+        + ` OR strpos(${sqlFoldAccentExpr("coalesce(nome,'')")}, $${params.length}) > 0`
+        + ` OR strpos(${sqlFoldAccentExpr("coalesce(codigo_barras,'')")}, $${params.length}) > 0`
+        + ` OR strpos(${sqlFoldAccentExpr("coalesce(material,'')")}, $${params.length}) > 0`
+        + ` OR strpos(${sqlFoldAccentExpr("coalesce(liga,'')")}, $${params.length}) > 0`
+        + ` OR strpos(${sqlFoldAccentExpr("coalesce(norma_tecnica,'')")}, $${params.length}) > 0)`,
       );
     }
     const whereSql = where.join(' AND ');

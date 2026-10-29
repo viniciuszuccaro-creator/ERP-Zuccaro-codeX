@@ -1,32 +1,27 @@
-## CURSOR — VIGENTE (#401 tip fbcca01b9 CI SUCCESS) (2026-10-29 09:59 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 tip código + #410 59ad3a5dc) (2026-10-29 10:39 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **PR** | **#401** tip **`fbcca01b9`** — CI SUCCESS `40876866103` / `40876856490` |
-| **Integra** | #406 `90990801e` (A/B/C + P2) sobre candidata `8026b2298` |
-| **Codex #342** | **`b5cb34e1`** (WIP `eb797672` fora) |
-| **#407** | recuperação indep. tip `a18a362ed` (CI pendente) |
-| Fora | merge oficial · deploy · carga |
+| **PR** | **#401** composição — integra **#410** tip **`59ad3a5dc`** (CI SUCCESS `40882835856` / `40882816622`) |
+| **P2** | busca sem acentos fechada (foldSearchText / sqlFoldAccentExpr) |
+| **#406** | `90990801e` / docs `73046b406` Codex limpo |
+| **#409** | `7e27ee9f3` CI SUCCESS |
+| Política | ≠ merge oficial · ≠ deploy/carga · só SHAs validados |
 
-**Evidência:** `docs/evidence/composicao-397-342-resolvida-20261029.txt`
-**Próximo:** #407 CI · Funil×3/Separacao. Sem merge/deploy.
+**Evidência:** `docs/evidence/comercial-masters-busca-acentos-20261029.txt`
+**Próximo:** CI composição · @codex review. Sem merge/deploy.
 
-(2026-10-29 09:59 America/Sao_Paulo)
+(2026-10-29 10:39 America/Sao_Paulo)
 
-## COMPOSIÇÃO ISOLADA #401 atualizada (preview — sem merge oficial) (2026-10-29 09:51 America/Sao_Paulo)
+## CURSOR — #410 tip 59ad3a5dc CI SUCCESS (2026-10-29 10:39 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| Entrada Cursor #397 base | `83499de99` (+ #403 `8b08b55ccd` + #406 `44bc5dad9`/`84c903c92`) |
-| Tip código validado | **`90990801e`** CI SUCCESS `40867597095` / `40867588389` |
-| Entrada Codex #342 | **`b5cb34e1`** (publicado na candidata; WIP `eb797672` **não** incorporado) |
-| Branch | `cursor/composicao-397-342-prep-392b` |
-| Política | ≠ merge oficial · ≠ deploy/carga · branches oficiais Cursor/Codex não editadas neste tip |
-| Conflitos | STATUS (esta resolução) · HANDOFF auto-merge · código Contatos/Validador do #406 |
+| **PR** | **#410** tip **`59ad3a5dc`** — CI SUCCESS `40882835856` / `40882816622` |
+| **Fix** | foldSearchText + sqlFoldAccentExpr em listPage cliente/produto |
+| Fora | merge/deploy/carga |
 
-Evidência: `docs/evidence/composicao-397-342-resolvida-20261029.txt` · apontamentos-397-parecer-6493733950
-
-(2026-10-29 09:51 America/Sao_Paulo)
+(2026-10-29 10:39 America/Sao_Paulo)
 
 ## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
 

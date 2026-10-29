@@ -1,0 +1,20 @@
+P2 #401 — busca mestres sem acentos (2026-10-29)
+================================================
+Parecer Codex #401 tip 716dabdeb — finding P2 httpApiClient comercialMasters /
+PostgresProdutoRepository + PostgresClienteRepository listPage.
+
+Causa: search server-side usava lower()/LIKE/strpos sem dobrar diacríticos;
+picker frontend (normalizeMasterQuery) já dobrava — registros filtrados no PG
+não voltavam para o frontend.
+
+Fix (existente):
+- server/src/domain/searchTextNormalize.ts — foldSearchText + sqlFoldAccentExpr
+- postgresProdutoRepository / postgresClienteRepository listPage
+
+Paridade: "aco" → Aço; "sao jose" → São José
+Base: #406 tip 73046b406. Sem merge/deploy/carga.
+Testes: search-text-normalize + comercial-masters-busca-acentos
+Tip registrado: (2026-10-29 10:31 America/Sao_Paulo)
+
+## CI SUCCESS tip 59ad3a5dc (2026-10-29 10:39 America/Sao_Paulo)
+- Runs 40882835856 / 40882816622 — 6/6 SUCCESS.

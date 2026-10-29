@@ -1,14 +1,12 @@
-## CURSOR — #401 tip fbcca01b9 CI SUCCESS (2026-10-29 09:59 America/Sao_Paulo)
+## CURSOR — #401 composição + #410 59ad3a5dc (2026-10-29 10:39 America/Sao_Paulo)
 
-- Composição tip `fbcca01b9` = #406 `90990801e` + candidata `8026b2298` + 342=`b5cb34e1`.
-- CI SUCCESS runs 40876866103 / 40876856490 (6/6). ≠ merge oficial.
-- #407 recuperação indep. em paralelo. Sem deploy/carga.
+- Integra tip #410 **`59ad3a5dc`** (busca sem acentos CI SUCCESS) na composição #401.
+- Fecha P2 Codex tip `716dabdeb`. Sem merge/deploy/carga.
 
-## COMPOSIÇÃO #401 atualizada (2026-10-29 09:51 America/Sao_Paulo)
+## CURSOR — #410 tip 59ad3a5dc CI SUCCESS (2026-10-29 10:39 America/Sao_Paulo)
 
-- Integra tip #406 **`90990801e`** (A/B/C + P2) sobre candidata `8026b2298`.
-- Codex #342 permanece **`b5cb34e1`** na composição; WIP `eb797672` fora.
-- Sem merge oficial / deploy / carga.
+- Tip `59ad3a5dc` CI SUCCESS 40882835856 / 40882816622.
+- Composição #401 atualizada. Sem merge/deploy/carga.
 
 ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
 
