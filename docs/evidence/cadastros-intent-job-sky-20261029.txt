@@ -31,3 +31,7 @@ Fora: merge/deploy/carga · candidata concorrente a #401/#406
 - Mantidos sky windowMode + ID técnico (tip 7e27ee9 CI 6/6).
 - RBAC alterarStatus = lote futuro com restoreApproved* autorizado.
 - Candidata #401 tip 686ae322 intacta.
+
+## CI SUCCESS tip c2b43c150 (2026-10-29 18:08 America/Sao_Paulo)
+- Push run 40954181636 · PR run 40954192794 — 6/6 SUCCESS.
+- alterarStatus revertido; sky+ID intactos; #428 espelho 644697f1d também 6/6.

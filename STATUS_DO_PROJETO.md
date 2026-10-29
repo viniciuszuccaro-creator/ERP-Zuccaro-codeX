@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#409 tip c2b43c150 CI 6/6) (2026-10-29 18:08 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#409** tip **`c2b43c150`** — CI SUCCESS push `40954181636` / PR `40954192794` |
+| **Delta** | Reverte `alterarStatus` (quebra publication-baseline); mantém sky+ID |
+| **Paralelo** | #428 tip `644697f1d` também 6/6 — preferir #409 |
+| Fora | merge #401 · Auth VPS · harness |
+
+**Evidência:** `docs/evidence/cadastros-intent-job-sky-20261029.txt`
+
 ## CURSOR — VIGENTE (#409 tip 7e27ee9f3 CI SUCCESS) (2026-10-29 10:27 America/Sao_Paulo)
 
 | Campo | Valor |
