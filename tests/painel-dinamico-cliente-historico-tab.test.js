@@ -63,11 +63,49 @@ test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo n�
   const seeded = seedContatosPainelDraft(cliente);
   assert.equal(seeded.length, 3);
   assert.equal(seeded[0].valor, 'keep@sintetico.dev');
+  assert.equal(seeded.every((c) => c.principal === false), true, 'escalar não inventa principal');
   const onlyPhone = [{ tipo: 'Telefone', valor: '1155556666', nome: '', principal: true }];
   const merged = ensureContatosPreserveEscalars(onlyPhone, cliente);
   assert.equal(merged.some((c) => String(c.valor).includes('keep@sintetico.dev')), true);
   assert.equal(merged.some((c) => String(c.valor).includes('11999998888')), true);
   assert.equal(merged.some((c) => String(c.valor).includes('1155556666')), true);
+  assert.equal(merged.every((c) => c.principal === false), true, 'multi-canal limpa principal inventado');
+});
+
+test('P2 #397 Contatos: createContatosPersistQueue serializa A→B (A tardio não vence)', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  const start = src.indexOf('function createContatosPersistQueue');
+  const end = src.indexOf('/**\n * V21.1.2 - WINDOW MODE READY', start);
+  assert.ok(start > 0 && end > start, 'createContatosPersistQueue no source');
+  const helpers = src.slice(start, end);
+  const { createContatosPersistQueue } = new Function(
+    `${helpers}; return { createContatosPersistQueue };`,
+  )();
+  const queue = createContatosPersistQueue();
+  const persisted = [];
+  let releaseA;
+  const gateA = new Promise((resolve) => { releaseA = resolve; });
+  const pA = queue(async () => {
+    await gateA;
+    persisted.push(['A']);
+    return { lista: ['A'] };
+  });
+  const pB = queue(async () => {
+    persisted.push(['A', 'B']);
+    return { lista: ['A', 'B'] };
+  });
+  releaseA();
+  await Promise.all([pA, pB]);
+  assert.deepEqual(persisted, [['A'], ['A', 'B']]);
+  assert.deepEqual(persisted.at(-1), ['A', 'B'], 'última confirmação tem ambos');
+});
+
+test('P2 #397 Contatos Form: await onChange + bloqueio enquanto persistBusy', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/GerenciarContatosClienteForm.jsx', import.meta.url), 'utf8');
+  assert.match(src, /persistBusy/);
+  assert.match(src, /await Promise\.resolve\(onChange/);
+  assert.match(src, /Aguarde a gravação de contatos em andamento/);
+  assert.match(src, /bloqueado/);
 });
 
 async function mountHistoricoCliente({

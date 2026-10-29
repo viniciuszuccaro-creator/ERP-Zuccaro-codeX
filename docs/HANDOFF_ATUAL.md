@@ -1,3 +1,13 @@
+
+## CURSOR checkpoint Pacotes A/C (2026-10-29 06:33 America/Sao_Paulo)
+
+- HEADs: PR397 `d37c8dd5b` CI SUCCESS `40761941668`; PR342 `b5cb34e1` draft CI5052/5053 — reconfirmados antes do lote.
+- Pacote A: fechou P2 Contatos (`principal` falso na semente escalar; fila FIFO de gravação; Form aguarda `onChange`). Paginação Histórico permanece no guard `loadMoreAbortRef===controller` de `9474e7cb3`.
+- Pacote B: bloqueio documentado = SQL restrito (não SSH). Materiais/coorte/fingerprints privados fora do checkout; sem ampliar ACL/BYPASSRLS; carga sob gate.
+- Pacote C: ValidadorEstoque existente passou a líquido (atual−reservado) e entrou no diálogo Converter Orçamento→Pedido (fail-closed UI). Reserva/baixa backend do convert ainda não é dona — próximo backend no serviço canônico.
+- Pacote D: candidata operacional = PR397; sky Cadastros + Contatos + Orçamento/Pedido; aceite navegador Private 5173 = owner.
+- WIP: `stash@{0}` preservado. Sem force-push / sem editar Codex consolidação.
+
 ## CURSOR — VIGENTE (candidata única #397) (2026-10-28 17:20 America/Sao_Paulo)
 
 **Executor:** runner `/workspace`. Stash `stash@{0}` preservado. gh codespaces **403** neste runner.

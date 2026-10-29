@@ -14,7 +14,7 @@ import usePermissions from "@/components/lib/usePermissions";
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
  * Lacuna vs erp-integra-novo: botões de mutação sem RBAC fail-closed.
  */
-export default function GerenciarContatosClienteForm({ contatos = [], onChange, assertScopeCurrent }) {
+export default function GerenciarContatosClienteForm({ contatos = [], onChange, assertScopeCurrent, persistBusy = false }) {
   const { canEdit } = usePermissions();
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
   const assertScope = () => {
@@ -23,6 +23,8 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
   };
   const [dialogAberto, setDialogAberto] = useState(false);
   const [contatoEditando, setContatoEditando] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const bloqueado = Boolean(persistBusy || salvando);
 
   const [novoContato, setNovoContato] = useState({
     nome: "",
@@ -50,6 +52,10 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       toast.error("Sem permissão para editar contatos do cliente.");
       return;
     }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de contatos em andamento.");
+      return;
+    }
     try { assertScope(); } catch (error) {
       toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
@@ -58,9 +64,13 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
     setDialogAberto(true);
   };
 
-  const handleSalvarContato = () => {
+  const handleSalvarContato = async () => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar contatos do cliente.");
+      return;
+    }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de contatos em andamento.");
       return;
     }
     try { assertScope(); } catch (error) {
@@ -88,14 +98,23 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       });
     }
 
-    onChange(contatosAtualizados);
-    setDialogAberto(false);
-    resetForm();
+    setSalvando(true);
+    try {
+      await Promise.resolve(onChange(contatosAtualizados));
+      setDialogAberto(false);
+      resetForm();
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const handleEditarContato = (index) => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar contatos do cliente.");
+      return;
+    }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de contatos em andamento.");
       return;
     }
     try { assertScope(); } catch (error) {
@@ -107,9 +126,13 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
     setDialogAberto(true);
   };
 
-  const handleExcluirContato = (index) => {
+  const handleExcluirContato = async (index) => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar contatos do cliente.");
+      return;
+    }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de contatos em andamento.");
       return;
     }
     try { assertScope(); } catch (error) {
@@ -117,7 +140,12 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       return;
     }
     const contatosAtualizados = contatos.filter((_, i) => i !== index);
-    onChange(contatosAtualizados);
+    setSalvando(true);
+    try {
+      await Promise.resolve(onChange(contatosAtualizados));
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const getIcone = (tipo) => {
@@ -135,7 +163,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Contatos ({contatos.length})</h3>
         <Button
-          onClick={abrirNovo}
+          onClick={abrirNovo} disabled={bloqueado || !podeEditar}
           size="sm"
           disabled={!podeEditar}
           data-permission="Cadastros.Cliente.editar"

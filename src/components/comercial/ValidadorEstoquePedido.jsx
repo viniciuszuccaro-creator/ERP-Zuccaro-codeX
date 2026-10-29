@@ -7,47 +7,101 @@ import { AlertCircle, CheckCircle2, Box, Package } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 /**
- * 📦 VALIDADOR DE ESTOQUE PARA PEDIDO V21.5
- * 
- * Verifica disponibilidade de estoque antes de aprovar pedido
- * Exibe alertas de itens sem estoque
- * Calcula previsão de quando terá estoque (IA)
+ * Disponibilidade líquida: estoque_atual − estoque_reservado (nunca negativo).
+ * Reutilizado no conversor Orçamento→Pedido e na aprovação — sem inventar saldo.
  */
-export default function ValidadorEstoquePedido({ pedido, empresaId }) {
+export function estoqueLiquidoDisponivel(produto) {
+  const atual = Number(produto?.estoque_atual ?? 0);
+  const reservado = Number(produto?.estoque_reservado ?? 0);
+  if (!Number.isFinite(atual) || !Number.isFinite(reservado)) return 0;
+  return Math.max(0, atual - Math.max(0, reservado));
+}
+
+/**
+ * Avalia linhas de pedido/orçamento contra o mapa de produtos do escopo.
+ * Aceita `itens` canônico ou `itens_revenda` legado — sem cadastro paralelo.
+ */
+export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = []) {
+  const lista = Array.isArray(itens) ? itens : [];
+  const catalog = Array.isArray(produtos) ? produtos : [];
+  return lista.map((item) => {
+    const produto = catalog.find((p) => p.id === item.produto_id) || null;
+    const quantidadeNecessaria = Number(item.quantidade || 0);
+    const estoqueAtual = Number(produto?.estoque_atual || 0);
+    const estoqueReservado = Number(produto?.estoque_reservado || 0);
+    const disponivelLiquido = estoqueLiquidoDisponivel(produto);
+    const disponivel = Boolean(produto) && disponivelLiquido >= quantidadeNecessaria;
+    const falta = Math.max(0, quantidadeNecessaria - disponivelLiquido);
+    return {
+      item,
+      produto,
+      estoqueAtual,
+      estoqueReservado,
+      disponivelLiquido,
+      quantidadeNecessaria,
+      disponivel,
+      falta,
+      produtoAusente: !produto,
+    };
+  });
+}
+
+export function resumoDisponibilidadeEstoque(verificacoes) {
+  const list = Array.isArray(verificacoes) ? verificacoes : [];
+  return {
+    todosDisponiveis: list.length > 0 && list.every((v) => v.disponivel),
+    algumIndisponivel: list.some((v) => !v.disponivel),
+    vazio: list.length === 0,
+  };
+}
+
+/**
+ * 📦 VALIDADOR DE ESTOQUE PARA PEDIDO V21.5
+ *
+ * Verifica disponibilidade de estoque antes de aprovar/converter pedido.
+ * Exibe alertas de itens sem estoque líquido (atual − reservado).
+ */
+export default function ValidadorEstoquePedido({ pedido, orcamento, empresaId, onAvailabilityChange }) {
+  const fonte = pedido || orcamento || null;
+  const itens = Array.isArray(fonte?.itens) && fonte.itens.length > 0
+    ? fonte.itens
+    : (Array.isArray(fonte?.itens_revenda) ? fonte.itens_revenda : []);
+
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaId],
     queryFn: () => base44.entities.Produto.filter({ empresa_id: empresaId }),
     enabled: !!empresaId
   });
 
-  const itensRevenda = pedido?.itens_revenda || [];
-  
-  const verificacoes = itensRevenda.map(item => {
-    const produto = produtos.find(p => p.id === item.produto_id);
-    const estoqueAtual = produto?.estoque_atual || 0;
-    const quantidadeNecessaria = item.quantidade || 0;
-    const disponivel = estoqueAtual >= quantidadeNecessaria;
-    const falta = Math.max(0, quantidadeNecessaria - estoqueAtual);
-    
-    return {
-      item,
-      produto,
-      estoqueAtual,
-      quantidadeNecessaria,
-      disponivel,
-      falta
-    };
-  });
+  const verificacoes = avaliarDisponibilidadeLinhasEstoque(itens, produtos);
+  const { todosDisponiveis, algumIndisponivel, vazio } = resumoDisponibilidadeEstoque(verificacoes);
 
-  const todosDisponiveis = verificacoes.every(v => v.disponivel);
-  const algumIndisponivel = verificacoes.some(v => !v.disponivel);
+  React.useEffect(() => {
+    if (typeof onAvailabilityChange !== 'function') return;
+    onAvailabilityChange({
+      todosDisponiveis,
+      algumIndisponivel,
+      vazio,
+      ready: Boolean(empresaId),
+    });
+  }, [todosDisponiveis, algumIndisponivel, vazio, empresaId, onAvailabilityChange]);
 
-  if (itensRevenda.length === 0) {
+  if (vazio) {
     return (
       <Card className="border-slate-200">
         <CardContent className="p-4 text-center text-slate-500">
           <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Nenhum item de revenda neste pedido</p>
+          <p className="text-sm">Nenhum item neste documento para validar estoque</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!empresaId) {
+    return (
+      <Card className="border-amber-200 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione a empresa do contexto para consultar disponibilidade de estoque.
         </CardContent>
       </Card>
     );
@@ -79,7 +133,7 @@ export default function ValidadorEstoquePedido({ pedido, empresaId }) {
             <TableRow className="bg-white">
               <TableHead>Produto</TableHead>
               <TableHead>Qtd Necessária</TableHead>
-              <TableHead>Estoque Atual</TableHead>
+              <TableHead>Disponível líquido</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -87,11 +141,16 @@ export default function ValidadorEstoquePedido({ pedido, empresaId }) {
             {verificacoes.map((v, idx) => (
               <TableRow key={idx} className="hover:bg-white/50">
                 <TableCell className="font-medium">
-                  {v.item.descricao || v.item.produto_descricao}
+                  {v.item.descricao || v.item.produto_descricao || v.produto?.nome || v.item.produto_id}
                 </TableCell>
                 <TableCell>{v.quantidadeNecessaria}</TableCell>
                 <TableCell className={v.disponivel ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                  {v.estoqueAtual}
+                  {v.produtoAusente ? '—' : v.disponivelLiquido}
+                  {!v.produtoAusente && v.estoqueReservado > 0 ? (
+                    <span className="block text-xs font-normal text-slate-500">
+                      atual {v.estoqueAtual} · reservado {v.estoqueReservado}
+                    </span>
+                  ) : null}
                 </TableCell>
                 <TableCell>
                   {v.disponivel ? (
@@ -102,7 +161,7 @@ export default function ValidadorEstoquePedido({ pedido, empresaId }) {
                   ) : (
                     <Badge className="bg-red-100 text-red-700">
                       <AlertCircle className="w-3 h-3 mr-1" />
-                      Falta {v.falta}
+                      {v.produtoAusente ? 'Produto fora do escopo' : `Falta ${v.falta}`}
                     </Badge>
                   )}
                 </TableCell>
@@ -114,7 +173,7 @@ export default function ValidadorEstoquePedido({ pedido, empresaId }) {
         {algumIndisponivel && (
           <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded">
             <p className="text-sm text-red-800">
-              <strong>⚠️ Ação necessária:</strong> Ajuste as quantidades ou aguarde reposição de estoque antes de aprovar o pedido.
+              <strong>Ação necessária:</strong> Ajuste as quantidades ou aguarde reposição de estoque antes de converter/aprovar o pedido.
             </p>
           </div>
         )}
