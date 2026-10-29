@@ -1,3 +1,25 @@
+## CURSOR — VIGENTE (#430 tip 0ccabf750 CI 6/6) (2026-10-29 18:19 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#430** tip **`0ccabf750`** — CI SUCCESS 6/6 |
+| **Canônico** | `GerenciarContatosClienteForm` (RBAC+scope) |
+| **Órfão** | `comercial/GerenciarContatosCliente` — keep-both; **não apagar** |
+| Fora | 3º módulo · exclusão sem aceite · merge #401 |
+
+**Evidência:** `docs/evidence/pacote-e-contatos-orfao-keepboth-20261029.txt`
+
+## CURSOR — VIGENTE (Pacote E Contatos órfão keep-both) (2026-10-29 18:15 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-contatos-orfao-keepboth-392b` |
+| **Canônico** | `GerenciarContatosClienteForm` (RBAC+scope) |
+| **Órfão** | `comercial/GerenciarContatosCliente` — sem import; **não apagar** |
+| Fora | 3º módulo · exclusão sem aceite · merge #401 |
+
+**Evidência:** `docs/evidence/pacote-e-contatos-orfao-keepboth-20261029.txt`
+
 ## CURSOR — VIGENTE (#429 tip c3d708c0f CI 6/6) (2026-10-29 18:12 America/Sao_Paulo)
 
 | Campo | Valor |

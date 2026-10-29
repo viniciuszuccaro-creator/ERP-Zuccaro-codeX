@@ -1,3 +1,10 @@
+/**
+ * Pacote E — keep both (2026-10-29):
+ * Capacidade de edição de contatos do Cliente. Consumidor canônico atual:
+ * `cadastros/GerenciarContatosClienteForm.jsx` (RBAC Cadastros.Cliente + assertScope).
+ * Este arquivo NÃO tem import in-repo (Painel/Cadastro usam o Form). Não apagar
+ * sem inventário + aceite do usuário (Regra-Mãe §3/§1). Sem 3º módulo.
+ */
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
