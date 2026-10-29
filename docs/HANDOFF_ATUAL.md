@@ -1,4 +1,132 @@
-## Estado vigente - validacao condicional bloqueou aplicacao SQL (2026-10-28)
+## Estado vigente - candidata401 revisada29/10
+
+Lista unica/ordem no STATUS.4018026b2298e7bde731420ec1334c5e9397da91d81 compoe
+codigo39783499de9+342b5cb34e1;397754a05cf so docs posteriores. Ancestralidade de
+ambas entradas comprovada. CI4015079/5080 e3975081 SUCCESS nos SHAs exatos.
+Parecer401/6494773820 sem achados nos3conflitos: preservacao documental de ambas
+origens e helper integral,14remainders/56mutacoes, sem enfraquecer pins/guardas.
+Snapshot descartavel somente de TESTE do publicado, sem clone/branch/composicao;
+WIP desktop intacto por hash antes/depois. ArchiveWindowsCRLF causou4FAIL; blobsGitLF
+comprovados, reexportacao local sem gitconfig/alterar testes:105PASS/0FAIL/0SKIP.
+Percurso persistido canonico1PASS/0FAIL/0SKIP eHTTP/Auth16PASS/0FAIL/0SKIP separados:
+PGlite e fixturesHTTP/IDP sinteticas, nao browser+PostgreSQLexterno/reserva comercial.
+
+Pendencias funcionais3976493733950/6493809228 continuam por codigo834igual; antigo
+ownership nao reaberto. Cursor corrige UI e atualiza401; sem disputa de branches.
+Publicar somente este recibo/documentos sanitizados pela excecao documental16.2;
+codigoWIP ainda retido pelos dois checks POSIX. Nao copiar/integrar WIP em401 antes
+de publicar/validar. Coorte100 e harnessprivado dependem do canalCodespace bloqueado,
+sem transferencia/reconstrucao/SQLreal nova. Gates de cadeia334->342->397/preview401,
+schema/backup/menorprivilegio/browser/deploy/carga separados no STATUS. Nenhuma
+automacao permanente declarada, nenhum executor retido apos fechar.
+
+## Historico imediatamente anterior - pacote persistido29/10
+
+Lista unica/ordem no STATUS. Desktop342b5cb34e1, WIP16arquivos preservado;397HEAD
+83499de995b8a7a2076f3e5bea9b9263f54ba07f com checks3SUCCESS/run40853365201,
+nao atribuirCI5077/bbcf ao tip.401eee7aba948c18ac10f10ac13a71ab519914e179f e
+preparacao documental, nao composicao homologada; coordenacao6493774589.
+Nova prova comportamental no teste comercial-expedicao-composicao reutiliza SQL
+PGlite/servicos/guards canonicos e snapshots completos: ator/tenant trocados no
+await SQL nao alteram autorizacao/escopo. RedFAIL sem fix prepare, final31PASS/
+0FAIL/0SKIP com contexto imutavel restaurado; nao e prova PostgreSQL operacional.
+Audit/lint/typecheck/buildbackend/diff PASS,warning1preexistente; provas globais
+anteriores reutilizadas e dois checks POSIX continuam bloqueando commit/push.
+
+397parecer6493733950: perda de principal por limpeza multicanal, gate estoque0
+sem fonte de saldo HTTP e demanda duplicada nao agregada. Corrigir com Cursor no
+modulo real/rascunho/contraprova, nao editar sua branch ou reabrir ownership fechado.
+Complemento6493809228 aponta contratos existentes e separa estoque de Expedição de
+reserva/disponibilidade comercial; nao inventar saldo ou porta paralela.
+Coorte100/source e gates operacionais intactos, nenhuma SQL real de clientes/carga/
+ACL/deploy. Fonte privada posterior ao backup centralizado exige recuperar somente
+artefato congelado, nao retransferir/reselecionar. Nenhum novo SHA342/CI prometido.
+
+## Historico imediatamente anterior - retomada29/10
+
+Lista unica no STATUS; mesma branch342/HEAD b5cb34e1, WIP inicial preservado por
+hash.397 avancou554ad7668fcaae1b4f3ec65f4c37e21653aa0c69: contraprova real
+do handler antigo exit1/atual exit0, sem controle proposto artificial, encerra P2
+ownership. Parecer6478177392 atualizado; nao equivale a browser/merge/PR integral.
+Coorte congelada nao recuperada: Codespace unico bloqueado por franquia/orcamento;
+busca exata desktop negativa, backup23/10 nao comprova artefato26/10. Recuperar
+somente aquele arquivo privado/pin quando o canal suportado voltar, sem retransferir
+HD ou selecionar outra coorte. Dois checks POSIX permanecem abertos; WSL ausente e
+executor nao administrador, C~706MB. Procedimento de desbloqueio local em OPERACAO;
+alternativa e mesmo Codespace apos renovacao, sem custos adicionais. Sem novos
+testes globais/commit/push/CI, VPS operacional intacta. Nenhum escritor desta tarefa
+retido ao encerrar; nao prometer trabalho em segundo plano.
+
+## Historico imediatamente anterior - lote desktop (2026-10-28)
+
+Lista unica e resultados completos no topo de STATUS_DO_PROJETO.md. Mesmo clone e
+branch342, HEAD publicado b5cb34e1; WIP15 arquivos, sem commit/push novo enquanto
+dois checks POSIX falham no Windows. Foco final37PASS/0FAIL/0SKIP; nao somar provas
+para declarar suite completa verde. Instalar Linux indiscriminadamente e inseguro
+com C~0.14GB; Codespace unico depende da franquia, sem habilitar cobranca.
+
+Planejador/classificador de consulta fixa integrado no modulo legado existente,
+com pins independentes dos bytes/coorte, documentos/identidades nativas, ambiguidades
+fail-closed, contexto fixado, READ ONLY/RR/search_path/timeouts/ROLLBACK. SQL ensaiado
+na fixture canonica isolada; nao executado contra clientes reais. Revisao independente
+fechou dois P2 com contraprovas; fonte sem documento nao ganha documento inventado.
+
+Metadados do destino e canal administrativo existente conferidos sem dados de
+clientes: Grupo aprovado1/empresas2. Isso nao comprova menor privilegio da API.
+Recibos privados verificados; artefato congelado100 indisponivel nos caminhos
+limitadamente conferidos. Proximo passo exato: recuperar SOMENTE esse artefato
+privado e SHA dos bytes; validar plano e aprovar exportacao fixa administrativa
+restrita, sem ACL global/carga. Alternativa isolada exige frescor comprovado.
+Nao pedir HD de novo nem considerar destino vazio. Consulta real ainda nao feita.
+
+397 atualbf150d2179a8c4fc93f2a262156bec999683e1f4: apenas docs desde2fa7bd8;
+parecer6478177392 atualizado por SHA e alcance, sem alterar branch Cursor.
+Reserva342/6479319956 corresponde ao lote; liberar ao fechamento. Nenhuma automacao
+ativada nem trabalho em segundo plano prometido. Dados, hashes de artefatos privados
+e recibos detalhados continuam fora do Git.
+
+## Historico imediatamente anterior - desktop temporario (2026-10-28)
+
+Diretriz e lista unica atuais no topo de STATUS_DO_PROJETO.md; nao usar os
+cabecalhos historicos abaixo como fila vigente. Desenvolvimento no clone desktop
+independente existente, mesma branch PR342, base b5cb34e1 apos fast-forward seguro;
+Codespace unico preservado para validacao integrada quando franquia permitir.
+Computacao incluida120core-hours consumida, orcamento0/Usage blocked, storage nao
+esgotado; nenhuma mudanca de cobranca. Nao presumir staging/chaves/.vscode/WIP
+remotos disponiveis localmente. Node/npm/git/ssh locais; psql/docker nao no PATH.
+
+Codex reserva backend/contratos/testes de leitura/reabertura Orcamento/Pedido;
+Cursor interface/formularios/navegacao/recuperacao397. Correcao deste lote captura
+ctx em prepare antes de await, mantendo tenant/RBAC/scope estaveis. Red4 negativas
+novas falharam antes; foco29PASS apos. Nao altera persistencia/handlers UI e nao
+substitui prova PG/harness/navegacao anterior. Resultados de fechamento no STATUS.
+
+Legado: proposta PUBLIC ampla suspensa, sem aplicacao. Alternativa minima proposta
+e consulta fixa administrativa revisada, nao SQL livre nem novo leitor, restrita a
+coorte100/CPA/colunas e saida privada com READ ONLY/ROLLBACK. Falta ensaio do SQL
+exato e decisao especifica antes de ler negocio. Ausencia de acesso nao e destino
+vazio. Reutilizar snapshots/staging/pilotos privados existentes; nao solicitar HD
+ou recriar Grupo. Nenhuma carga, DDL, grant ou deploy autorizado por esta retomada.
+PR397 atual2fa7bd8f corrige owner/ref do primeiro load-more anterior. Novo P2 no
+finally libera ref de B por A obsoleta; contraprova do handler extraido e controle
+contrafactual sinteticos documentados no parecer397/6478177392, nao navegador React.
+Cursor deve cobrir A tardio COM B pendente/hasMore, sem Codex editar sua branch.
+Nao repetir contatos/guardas antigos. Proxima navegacao exige Codespace ativo.
+
+Checkpoint do lote: NAO PUBLICADO; base remota/local b5cb34e1. Backend completo
+serial546PASS/0FAIL/38SKIP, foco29PASS; raiz integral2408PASS/10FAIL/0SKIP. Oito
+falhas iniciais resolvidas nos focos apos LF canonico/Python3 real/parser POSIX;
+foco final92total/90PASS/2FAIL/0SKIP. As duas restantes sao protecoes de filesystem
+POSIX (Python mode/symlink e process.getuid), nao defeito dos dois servicos nem
+prova de seguranca no Windows. Nao remover/skip/relaxar para publicar. Audit/lint/
+typechecks/builds/diff passaram; detalhes/comandos/avisos no STATUS. Nao repetir
+suites aprovadas sem delta; futura validacao Linux deve executar as negativas reais.
+WSL nao instalado, C ~0.2GB livres: instalar agora nao e alternativa segura. Falta
+capacidade/runtime Linux local autorizado OU retorno da franquia do Codespace em
+01/11. Sem commit/push por regra de checks; nao houve novo CI. Todos os testes
+iniciados foram encerrados; nenhum servico permanente foi prometido/iniciado.
+
+## Historico - validacao condicional bloqueou aplicacao SQL (2026-10-28)
 
 Complemento do catalogo: CREATE no schema public nao e concedido a PUBLIC; seis bancos aceitam conexao PUBLIC (nao foram consultados registros neles). Isso tambem impede presumir escopo exclusivo do LOGIN. Nao corrigir somente as nove funcoes e declarar gate completo.
 PR397 avancou para 6bc890805efcd3536dc336f2e23bf5b2fa966b2a: tres achados antigos corrigidos na inspecao estatica. Novo P2: primeira load-more nao associa owner antes de setLoadingMore/erro, permitindo repeticao de offset/erro oculto; parecer #397/6474190419. Sem edicao/integracao da branch Cursor, sem alegar red/green executado.
