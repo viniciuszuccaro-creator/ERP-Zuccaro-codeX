@@ -57,3 +57,10 @@ Pré: HEAD 1a2cfc31d · tree c098fcba72… · limpo · patch419 6f6818d44… int
 Orphan tip #414 (raiz 532ac595a) → checkout paths (12) sobre 1a2 (filho próprio).
 Sem reset/stash/clean; sem demais pacotes; node_modules symlink preservado.
 Testes locais: label-catalogo 9 · http+master-picker 58 · orcamento-behavior 16 PASS.
+
+CI tip 0195acc66 (2026-10-29 ~14:45 America/Sao_Paulo)
+-------------------------------------------------------
+push 40922873833 + PR 40922889462: SUCCESS 6/6.
+Codex tip 0195acc66: findings remanescentes Contatos (PainelDinamicoCliente)
+e thread labels apontando mastersQuery legado — labels já cobertos por
+clienteCatalog+hydration (#414); Contatos fora deste fold (demais melhorias).

@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#401 ← #414 fold settlement) (2026-10-29 14:40 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#401** | tip composto a partir de HEAD pré-fold `1a2cfc31d` / tree `c098fcba72…` + paths tip **#414** `849419a6e` |
+| **#414** | CI SUCCESS + Codex limpo tip `849419a6e` (código `0e16923fc`) — settlement por índice |
+| **WIP** | backup **#419** intacto SHA256 `6f6818d44…` · reversão **não** commitada · tree limpa antes do fold |
+| Inbox | **#421** — ACK só após hash |
+| Fora | merge main / deploy / carga / VPS / DDL / demais pacotes |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** CI composição + `@codex review` tip #401. Sem merge main.
+
+(2026-10-29 14:40 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#414 settlement por índice useQueries) (2026-10-29 14:30 America/Sao_Paulo)
 
 | Campo | Valor |
