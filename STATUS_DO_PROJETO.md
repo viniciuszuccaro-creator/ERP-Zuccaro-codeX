@@ -1,3 +1,20 @@
+## CURSOR — VIGENTE (audit cadastros + WIP preserve) (2026-10-29 14:06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#419** | tip `c2de23f54` — snapshot WIP composição SHA256 `6f6818d44…` **não aplicado** |
+| **Branch audit** | `cursor/cadastros-audit-residual-392b` ← #418 |
+| **Escopo audit** | count+1 só Bloco2 tiles; pins sem sky; embeds RBAC; sem fictícios |
+| **#414** | `39c1055fe` / `532ac595a` — compose **BLOCKED** até liberação WIP |
+| **#418** | `bc813c667` CI SUCCESS + Codex limpo |
+| **Demo** | writes=0 ≠ E2E; HTTP+PG Codex existe — falta UI isolada |
+| Fora | reset WIP · merge/deploy/VPS write |
+
+**Evidência:** `docs/evidence/composicao-wip-preserve-20261029/` · `cadastros-audit-residual-20261029.txt` · `c360-persistencia-prova-estado-20261029.txt`
+**Próximo:** Codex libera WIP → compose #414. Sem merge/deploy.
+
+(2026-10-29 14:06 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#418 tip bc813c667 CI SUCCESS) (2026-10-29 13:08 America/Sao_Paulo)
 
 | Campo | Valor |

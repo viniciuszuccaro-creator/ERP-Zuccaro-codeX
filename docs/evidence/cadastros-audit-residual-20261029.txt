@@ -1,0 +1,54 @@
+PACOTE C — auditoria cadastros residual (2026-10-29 America/Sao_Paulo)
+=======================================================================
+Branch: cursor/cadastros-audit-residual-392b ← #418 tip d27a2b2b4
+Modalidade: grep + classificação; sem seed fictício; sem tocar WIP composição.
+
+Método
+------
+1) count+1 no browser → só Bloco2Produtos tiles (total UI), NÃO código mestre.
+2) windowMode / sky / ID técnico em *Form.jsx (61 forms).
+3) Separar: pin / legado / embed / residual sky adiado.
+
+count+1
+-------
+- src/components/cadastros/blocks/Bloco2Produtos.jsx:170-171 — totais de tile
+  (UI). Sequência canônica permanece backend/CodigoField / reserve_entity_codigo.
+- Nenhum *Form.jsx com count+1 para código de registro.
+
+Sem sky estrutural (windowMode presente) — PIN / adiado
+-------------------------------------------------------
+| Form | Motivo |
+|------|--------|
+| CentroOperacaoForm | publication pin |
+| ConfiguracaoBoletosForm | ID-only CANAL / e36231b3 |
+| CadastroFiscalForm | ID-only (sem windowMode; idOnly field OK) |
+| GrupoEmpresarialForm / UsuarioForm | ID-only golden e36231b3 |
+| EmpresaForm | date-arithmetic emittedBeforeSha256; wm sem ID no chrome |
+| ChatbotIntentsForm | adapter → ChatbotIntentForm (já sky+ID) |
+
+Embeds (sub-dialog; sem windowMode próprio)
+-------------------------------------------
+GerenciarContatosClienteForm / GerenciarEnderecosClienteForm — RBAC
+canEdit Cadastros.Cliente + assertScopeCurrent; mutação fail-closed.
+Não criar 3º módulo; não forçar sky de janela isolada.
+
+Legado
+------
+ProdutoForm.jsx — caminho canônico é ProdutoFormV22_Completo (matriz keep both).
+
+Já sky+ID (fila #413–#418)
+--------------------------
+Param* / ApiExterna / ChatbotCanal / Gateway / TabelaFiscal / NFe /
+Intent/Job/Evento/Modelo / PerfilAcesso / coorte mestres anteriores.
+
+Registros “sumidos”
+-------------------
+Tela aberta ≠ dados. Classificar: filtro/contexto/RBAC/projeção/API antes
+de declarar ausência. Fontes privadas/legado staging — gates SQL Codex;
+não inventar exemplos.
+
+Prova
+-----
+tests/cadastros-audit-residual.test.js
+
+≠ merge/deploy/VPS · ≠ composição #401 · WIP preserve em #419

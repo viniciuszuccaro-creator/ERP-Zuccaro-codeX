@@ -1,3 +1,10 @@
+## CURSOR — audit + WIP preserve (2026-10-29 14:06 America/Sao_Paulo)
+
+- #419 `c2de23f54`: snapshot WIP composição (não aplicado; sem reset).
+- Audit residual cadastros: count+1 só Bloco2; pins/embeds classificados.
+- #414 compose BLOCKED até Codex liberar WIP. Demo writes=0 ≠ E2E.
+- Sem merge/VPS write.
+
 ## CURSOR — #418 tip bc813c667 CI SUCCESS (2026-10-29 13:08 America/Sao_Paulo)
 
 - Tip `bc813c667` CI SUCCESS 6/6 — PerfilAcesso sky+ID + ChatbotIntents windowMode.

@@ -1,0 +1,24 @@
+PACOTE D — prova persistência comercial (estado 2026-10-29 America/Sao_Paulo)
+==============================================================================
+
+NÃO é prova desta etapa
+-----------------------
+- Demo/smoke writes=0 / salvar disabled (comercial360-preview-smoke).
+- Não apresentar como E2E com gravação.
+
+Já coberto por Codex (HTTP + PostgreSQL isolado, ≠ browser)
+-----------------------------------------------------------
+Fonte #401/6501377613 · tip composição código 094cb4b7e · ensaio 023fc720e
+- CI5181 COMMERCIAL_COMPOSITION_TOTAL_TESTS=2 PASS
+- TENANT_CONTEXT_TOTAL_TESTS=6 PASS
+- Fluxo: auth IDP sintético → Cliente → Orçamento POST/PATCH/GET →
+  converter Pedido 1× / 409 → PATCH/GET/histórico
+- Ambiente deste agente: DATABASE_URL ausente — sem rerun local PG aqui.
+
+Lacuna
+------
+UI isolada (browser) contra o mesmo backend canônico, sem VPS operacional:
+criar→salvar→fechar→reabrir→editar→salvar→converter Pedido
++ rede/sessão/troca Empresa/rascunho.
+
+Coordenação: fio #401. Snapshot WIP composição em #419 (não bloqueia demo isolada).
