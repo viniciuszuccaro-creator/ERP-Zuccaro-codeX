@@ -20,12 +20,12 @@ function bind(name, deps, text = source) {
   return new Function(...Object.keys(deps), `return (${fn.getText(ast)});`)(...Object.values(deps));
 }
 test('complete stage55 context source remains outside exact bounded changes', () => {
-  assert.equal(crypto.createHash('sha256').update(before).digest('hex'), 'd2a59a582c73eeb4e924181b60742c247ca410a55c2b0704ecf6e60cc8715610');
+  assert.equal(crypto.createHash('sha256').update(before).digest('hex'), '0508c1d1d91d68ecaaa8cfb19a57b92ce08e2475a82b494cc7e0f798a6b1413b');
   for (const [current] of contextReadHunks) {
     assert.throws(() => contextReadRemainder(file, source.replace(current, '')));
     assert.throws(() => contextReadRemainder(file, source.replace(current, current + current)));
   }
-  assert.notEqual(crypto.createHash('sha256').update(contextReadRemainder(file, '// unexpected\n' + source)).digest('hex'), 'd2a59a582c73eeb4e924181b60742c247ca410a55c2b0704ecf6e60cc8715610');
+  assert.notEqual(crypto.createHash('sha256').update(contextReadRemainder(file, '// unexpected\n' + source)).digest('hex'), '0508c1d1d91d68ecaaa8cfb19a57b92ce08e2475a82b494cc7e0f798a6b1413b');
 });
 function harness({ entity = {}, scope = { group_id: 'synthetic-group', empresa_id: 'synthetic-a' }, text = source, invoke } = {}) {
   const calls = [], fields = [], warnings = [];

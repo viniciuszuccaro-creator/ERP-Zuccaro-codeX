@@ -10,7 +10,7 @@ import {normalizeMultiempresaContext,validateMultiempresaContext} from '../src/c
 
 const hook='src/components/lib/useContextoVisual.jsx';
 const policy='src/components/cadastros/cadastroEditLoadPolicy.js';
-for(const [file,hash] of [[hook,'a441be7f3145c2afbd0d828c36f87d09a7d56e64634bd3d989a046128dce6f98'],[policy,'145389c4e91a9de08be176aff27842a19dd58ad4ee91ac071d3c8b7b60039774']])test(`${file}: complete executable runtime unchanged by contracts`,()=>{
+for(const [file,hash] of [[hook,'0dc4c949db81a011de164f4ea0edab868e7a3aadba7e29e6363837de0f305b15'],[policy,'145389c4e91a9de08be176aff27842a19dd58ad4ee91ac071d3c8b7b60039774']])test(`${file}: complete executable runtime unchanged by contracts`,()=>{
   const emitted=ts.transpileModule(contextReadRemainder(file,fs.readFileSync(file,'utf8')),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),hash);
 });

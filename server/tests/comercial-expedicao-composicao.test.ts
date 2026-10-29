@@ -118,3 +118,67 @@ if (process.env.DATABASE_URL) test('Composição PostgreSQL real isolado executa
   const f = await realCrmFixture(process.env.DATABASE_URL!);
   try { await journey(f); } finally { await f.close(); }
 });
+
+test('Leitores comerciais persistidos nao promovem ator nem tenant trocados durante validacao SQL', async () => {
+  const f = await localCrmFixture();
+  const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false', DATABASE_URL: 'postgresql://synthetic@localhost/erp_test' });
+  const ctx = { groupId: ID.groupA, empresaId: ID.empresaA, actorId: ID.runtimeActorA, requestId: 'synthetic-read-context' };
+  let afterTenant: (() => void) | undefined;
+  let mutations = 0;
+  const db: typeof f.admin = { ...f.admin, query: async (sql, params) => {
+    const result = await f.admin.query(sql, params);
+    if (afterTenant && sql === 'SELECT 1 AS ok FROM empresas WHERE id = $1 AND group_id = $2 LIMIT 1') {
+      const mutate = afterTenant;
+      afterTenant = undefined;
+      mutations++;
+      mutate();
+    }
+    return result;
+  } };
+  try {
+    const runtime = createApp({ config, db, useMemory: false });
+    const link = await runtime.clienteService.getEmpresaLink(ctx, ID.clientePjA, ID.empresaA);
+    const quote = await runtime.orcamentoService.create(ctx, { cliente_empresa_id: link.id,
+      condicao_pagamento_id: ID.condicaoPagamentoA, validade_em: '2027-06-01T00:00:00.000Z',
+      itens: [{ produto_id: ID.produtoA, unidade_id: ID.unidadeA, descricao: 'Synthetic immutable read',
+        unidade_sigla: 'KG', quantidade: '2', preco_unitario: '999', desconto: '0' }] });
+    const order = await runtime.pedidoService.convert(ctx, quote.id,
+      { tipo_operacao: 'RETIRADA', data_entrega_solicitada: '2027-06-01T00:00:00.000Z' });
+    const snapshot = async () => (await f.admin.query(`SELECT
+      (SELECT jsonb_agg(to_jsonb(q) ORDER BY id) FROM orcamentos q) quotes,
+      (SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM orcamento_itens i) quote_items,
+      (SELECT jsonb_agg(to_jsonb(p) ORDER BY id) FROM pedidos p) orders,
+      (SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM pedido_itens i) order_items,
+      (SELECT jsonb_agg(to_jsonb(h) ORDER BY id) FROM pedido_historico h) history,
+      (SELECT jsonb_agg(to_jsonb(a) ORDER BY id) FROM audit_logs a) audit,
+      (SELECT jsonb_agg(to_jsonb(s) ORDER BY group_id,entity_name) FROM entity_code_sequences s) sequences`)).rows;
+    const before = await snapshot();
+    const readers = [
+      async (input: typeof ctx) => [await runtime.orcamentoService.get(input, quote.id)],
+      async (input: typeof ctx) => (await runtime.orcamentoService.list(input)).data,
+      async (input: typeof ctx) => [await runtime.pedidoService.get(input, order.id)],
+      async (input: typeof ctx) => (await runtime.pedidoService.list(input)).data,
+      async (input: typeof ctx) => runtime.pedidoService.history(input, order.id),
+    ];
+    for (const read of readers) {
+      const unauthorized = { ...ctx, actorId: randomUUID() };
+      afterTenant = () => Object.assign(unauthorized, ctx);
+      await assert.rejects(() => read(unauthorized), (error: unknown) =>
+        typeof error === 'object' && error !== null && 'statusCode' in error && error.statusCode === 403);
+      assert.equal(afterTenant, undefined);
+      const initial = await read({ ...ctx });
+      assert.ok(Array.isArray(initial) && initial.length > 0);
+      assert.ok(initial.every(row => row.group_id === ctx.groupId && row.empresa_id === ctx.empresaId));
+      assert.ok(initial.some(row => 'pedido_id' in row ? row.pedido_id === order.id : row.id === quote.id || row.id === order.id));
+      const mutable = { ...ctx };
+      afterTenant = () => Object.assign(mutable, { groupId: ID.groupB, empresaId: ID.empresaB, actorId: ID.runtimeActorB });
+      assert.deepEqual(await read(mutable), initial);
+      assert.equal(afterTenant, undefined);
+    }
+    assert.equal(mutations, 10);
+    assert.deepEqual(await snapshot(), before);
+    await assert.rejects(() => runtime.pedidoService.get({ ...ctx, empresaId: ID.empresaB }, order.id));
+    await assert.rejects(() => runtime.orcamentoService.get({ ...ctx, actorId: randomUUID() }, quote.id));
+    assert.deepEqual(await snapshot(), before);
+  } finally { await f.close(); }
+});

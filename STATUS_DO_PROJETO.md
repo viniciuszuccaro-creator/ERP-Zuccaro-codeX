@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#401 composição 87db+424) (2026-10-29 17:00 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | `7460c3a26` |
+| **Entrada backend** | `87db6618cb3d6198ecdc185cc59d8ca48eeafa83` CI5265 — 11 paths checkout + Pedido cirúrgico |
+| **Entrada Contatos** | #424 `0aca05c653cddf0ebac3cc440ad64b3793846cec` CI5263 — path checkout |
+| **Pedido** | preserva getEmpresaLink/clienteId/inativo (#401) + `Object.freeze` prepare + testes contexto (87db) |
+| **Mapa** | comment 6506547493 |
+| **Provas** | Contatos 65 PASS · Pedido/Orçamento 31 PASS |
+| Fora | merge oficial / deploy / VPS / carga / reaplicar B78 |
+
+**Evidência:** `docs/evidence/composicao-401-87db-424-20261029.txt`
+**Próximo:** CI tip composto + `@codex review`. Demo persistência coordenada (ETAPA 2).
+
 ## CURSOR — VIGENTE (#401 ← #414 fold settlement) (2026-10-29 14:40 America/Sao_Paulo)
 
 | Campo | Valor |

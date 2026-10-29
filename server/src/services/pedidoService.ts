@@ -366,6 +366,7 @@ export class PedidoService {
   }
 
   private async prepare(ctx: RequestContext, action: RbacAction, executor?: DbQueryExecutor): Promise<PedidoScope> {
+    ctx = Object.freeze({ ...ctx });
     if (!ctx.groupId) throw new AppError(400, 'GROUP_ID_REQUIRED', 'groupId is required');
     if (!ctx.empresaId) throw new AppError(400, 'EMPRESA_ID_REQUIRED', 'empresaId is required');
     if (!ctx.actorId) throw new AppError(403, 'ACTOR_REQUIRED', 'actorId is required');

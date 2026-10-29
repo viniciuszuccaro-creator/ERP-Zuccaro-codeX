@@ -1,0 +1,31 @@
+Composição #401 ← backend 87db6618 + Contatos #424 0aca05c65 (2026-10-29 17:00 America/Sao_Paulo)
+=========================================================================================
+Base candidata: 7460c3a2669181138065b05112ba209629784479
+Entradas:
+  - Backend Codex 87db6618cb3d6198ecdc185cc59d8ca48eeafa83 (CI5265 SUCCESS)
+  - Contatos #424 0aca05c653cddf0ebac3cc440ad64b3793846cec (CI5263 SUCCESS; Codex limpo tip)
+Mapa sobreposição: #401 comment 6506547493
+≠ merge oficial · ≠ deploy · ≠ reaplicar patch B78 · ≠ substituir PedidoService inteiro
+
+## Backend (13 manifesto paths)
+| Path | Método |
+|------|--------|
+| 11 paths (base fdfed98≡7460) | `git checkout 87db… -- <path>` blobs idênticos a 87db |
+| server/src/services/pedidoService.ts | 7460 + 1 linha `ctx = Object.freeze({ ...ctx })` em `prepare` |
+| server/tests/runtime09-pedido-service.test.ts | 7460 (getEmpresaLink/clienteId/inativo/paginação) + 2 testes 87db (ator/contexto) |
+
+Preservados de #401 em Pedido: getEmpresaLink, filtro clienteId mestre, conflito clienteEmpresaId, histórico vínculo inativo.
+Preservados de 87db: freeze em prepare (Pedido+Orçamento via orcamento checkout), contraprovas contexto.
+
+## Contatos #424
+Path checkout tip 0aca05c65: Painel/Form/useContextoVisual + pins + seams + evidência.
+Alcance revisão Codex: tip 0aca05c limpo (sem major); seams 6/6 + CI SUCCESS.
+
+## Provas focadas neste tip (antes do push)
+| Suite | Resultado |
+|-------|----------|
+| Contatos/context seams+painel+pins | 65 PASS / 0 FAIL / EXIT 0 |
+| runtime08c+runtime09 (orcamento+pedido) | 31 PASS / 0 FAIL / EXIT 0 (inclui 87db×2 + 401 clienteId/inativo) |
+
+## Fora
+STATUS/HANDOFF de 87db não substituídos cegamente — topo vigente desta composição.

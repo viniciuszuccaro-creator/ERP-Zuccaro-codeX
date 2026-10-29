@@ -1,0 +1,37 @@
+Pacote D — Contatos painel achados Codex (fora candidata #401)
+==============================================================
+America/Sao_Paulo 2026-10-29 ~15:10
+
+Base: tip composição 7460c3a26 / código 0195acc66
+Branch: cursor/cadastros-contatos-painel-achados-392b
+
+Correções no existente:
+1. #4414641595 — contatosHydrateEpochRef: GET abertura descartado após mutação
+2. #4415656862 — Promise.reject em rejeição escalar/skip; form trata result.skipped
+3. #4415730696 — resolveAuditEmpresaId: AuditLog.empresa_id ≠ group_id carimbo
+
+Testes: painel-dinamico-cliente-historico-tab 31 PASS
+≠ fold #401 · ≠ VPS · WIP #419 intacto
+
+CI fix pins useContextoVisual (2026-10-29 ~15:10 America/Sao_Paulo)
+-------------------------------------------------------------------
+Frontend CI FAIL 3: golden runtime/stage55 do remainder context-read.
+Causa: resolveAuditEmpresaId no restante (fora hunks exatos).
+Pins atualizados:
+  runtime a441be7f… → 0dc4c949…
+  stage55 d2a59a58… → 0508c1d1…
+Hunks contextReadBoundaryRemainder intactos (2). 59 testes focados PASS.
+
+Revisão Cursor + contraprovas seams (2026-10-29 16:22 America/Sao_Paulo)
+-------------------------------------------------------------------
+Tip: d7174611d · CI erp-runtime-ci SUCCESS (run 40928320707) · Codex limpo.
+Foco prévio: painel/context 95 PASS / 0 FAIL.
+Seams novas: tests/contatos-painel-counterproof-seams.test.js → 6 PASS / 0 FAIL / 0 SKIP:
+  1. GET tardio pós-save descartado (epoch)
+  2. Mutação concorrente invalida GET de abertura anterior
+  3. Promise.reject preserva diálogo/rascunho do form
+  4. result.skipped legado não fecha/reseta
+  5. resolveAuditEmpresaId: group_id ≠ empresa_id (AST/vm do helper real)
+  6. Contrato fonte tip (epoch bump + reject + helper)
+≠ React montado · ≠ PG · ≠ fold #401 · ≠ VPS · WIP13 intacto.
+Pronto para aceite owner; composição #401 não alterada neste pacote.

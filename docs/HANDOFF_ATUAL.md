@@ -1,3 +1,8 @@
+## CURSOR — #401 composição 87db+424 (2026-10-29 17:00 America/Sao_Paulo)
+- Incorpora `87db6618` (backend) + #424 `0aca05c65` na candidata `7460c3a26`.
+- Pedido: freeze prepare + getEmpresaLink/clienteId/inativo preservados (mapa 6506547493).
+- Sem merge oficial/deploy. CI + @codex review no tip composto.
+
 ## CURSOR — #414 tip 532ac595a CI SUCCESS + Codex limpo (2026-10-29 12:48 America/Sao_Paulo)
 
 - Tip `532ac595a`/`05a09e667` CI SUCCESS 6/6. Codex tip `05a09e667`: sem major/findings.

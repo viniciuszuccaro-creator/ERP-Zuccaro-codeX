@@ -22,6 +22,7 @@ for (const [name, change] of [
   ['privilegio', d => { d.HostConfig.Privileged = true; }],
   ['root gravavel', d => { d.HostConfig.ReadonlyRootfs = false; }],
   ['montagem externa', d => { d.Mounts[0].Source = '/operational'; }],
+  ['montagem com separador Windows', d => { d.Mounts[0].Source = root.replaceAll('/', '\\') + '\\pgdata'; }],
   ['montagem adicional', d => { d.Mounts.push({ Type: 'volume', Source: '/other' }); }],
   ['imagem diferente', d => { d.Image = 'sha256:other'; }],
   ['lote diferente', d => { d.Config.Labels['erp.legacy.pilot'] = 'other'; }],
