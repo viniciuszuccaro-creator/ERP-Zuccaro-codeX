@@ -1,0 +1,1 @@
+ubuntu    323491 50.0  0.0   9856  4776 ?        S    17:15   0:00 rg -i composicao-397-342|git.*(composicao)

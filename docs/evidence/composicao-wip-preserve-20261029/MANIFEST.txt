@@ -25,3 +25,9 @@ para validação/restauração sem disputa de checkout. Incorporação #414
 532ac595a continua BLOCKED até liberação explícita do WIP.
 
 ≠ merge oficial · ≠ deploy · ≠ VPS write · ≠ apply automático do patch
+
+Atualização inventário (pedido Codex 6503220300)
+-----------------------------------------------
+RECIBO-AGREGADO.txt + per-file.tsv — HEAD/branch/blobs/wt_sha256/origem aparente.
+Nenhum processo escritor associado além do inventário readonly.
+Proprietário comprovado: NENHUM (Codex nega; Cursor não assume).

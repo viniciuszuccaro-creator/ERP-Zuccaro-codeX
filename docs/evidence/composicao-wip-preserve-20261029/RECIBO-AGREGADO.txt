@@ -1,0 +1,31 @@
+RECIBO AGREGADO — inventário readonly WIP composição
+=====================================================
+America/Sao_Paulo 2026-10-29 ~14:15
+Pedido Codex: #401 comentário 6503220300
+
+Checkout
+--------
+path: /tmp/composicao-397-342
+HEAD: 1a2cfc31d005b7bda2cd6f07996d2d1622bfbd53
+branch: cursor/composicao-397-342-prep-392b
+upstream: origin/cursor/composicao-397-342-prep-392b
+dirty: yes (30 paths)
+untracked: 0
+diff_sha256: 6f6818d4455272dfd63322b2d9543e823abe9d38a328c60c265671c31c350e4f
+snapshot_PR: #419 tip c2de23f54 (CI SUCCESS) — patch NÃO aplicado
+
+Propriedade
+-----------
+Codex (6503220300): nenhum escritor Codex ativo neste checkout; WIP≠desktop 13 arquivos.
+Cursor: não é dono comprovado deste WIP; não autoriza-se assumir autoria Codex.
+Origem aparente (leitura do diff): reversão parcial de pacotes Cursor já
+compostos (#407/#410/#411/#412 sky/acentos/comprovante/historico/estoque) +
+STATUS/HANDOFF/evidence — não parece WIP de feature nova.
+
+Processos
+---------
+ubuntu    323491 50.0  0.0   9856  4776 ?        S    17:15   0:00 rg -i composicao-397-342|git.*(composicao)
+
+Per-file: ver per-file.tsv (status|head_blob|wt_sha256|bytes|note)
+
+rows: 31
