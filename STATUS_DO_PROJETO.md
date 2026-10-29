@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (Pacote D registros + audit residual #420) (2026-10-29 16:40 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#420** | tip `ce2292848` + evidência registros-desaparecidos · audit test **4/4 PASS** |
+| Classes | A filtro/escopo · B contrato · C contexto/RBAC · D staging/schema (Fornecedor) |
+| Proibido | seed fictício · count+1 browser · apagar GATE-D SYNTH |
+| Fora | merge #401 · VPS · carga #211 sem autorização |
+
+**Evidência:** `docs/evidence/registros-desaparecidos-classificacao-20261029.txt`
+
 ## CURSOR — VIGENTE (audit cadastros + WIP preserve) (2026-10-29 14:06 America/Sao_Paulo)
 
 | Campo | Valor |
