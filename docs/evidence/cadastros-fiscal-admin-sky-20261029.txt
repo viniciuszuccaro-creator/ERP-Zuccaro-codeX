@@ -1,0 +1,27 @@
+CADASTROS residual sky+ID — Fiscal + admin (2026-10-29 America/Sao_Paulo)
+==========================================================================
+Branch: cursor/cadastros-fiscal-admin-sky-392b
+Base: #417 tip 8bf3cc5b4 (ApiExterna+ChatbotCanal CI SUCCESS)
+
+Escopo (melhoria do existente)
+------------------------------
+- CadastroFiscalForm: windowMode + chrome sky + ID técnico (idOnly field preservado)
+- EmpresaForm / GrupoEmpresarialForm / PerfilAcessoForm / UsuarioForm:
+  chrome windowMode → sky + ID técnico (sem redesign amplo)
+- ChatbotIntentsForm: propaga windowMode ao ChatbotIntentForm (já sky)
+
+Pin / fora
+----------
+- CentroOperacaoForm: publication pin — não tocado
+- ConfiguracaoBoletosForm: ID-only CANAL — não tocado (sky adiado)
+- ProdutoForm legado / GerenciarEnderecosCliente (embed) — fora
+- Composição #401 / WIP /tmp/composicao-397-342 — não editado
+- Sem count+1; useCadastroRecordState preservado
+
+Prova
+-----
+node --test tests/cadastros-fiscal-admin-sky.test.js
+
+Dados
+-----
+Tela ≠ registros. Sem seed fictício. Sem merge/deploy/VPS write.

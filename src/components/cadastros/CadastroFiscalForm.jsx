@@ -15,7 +15,7 @@ const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, 
 const sanitizeCode = (value) => String(value ?? "").replace(/[^0-9A-Za-z./-]/g, "").slice(0, 32).trim().toUpperCase();
 const toPercent = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 
-export default function CadastroFiscalForm({ cadastroFiscal, item, data, initialData, defaultValues, onSubmit, isSubmitting }) {
+export default function CadastroFiscalForm({ cadastroFiscal, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || cadastroFiscal;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -60,7 +60,7 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
     onSubmit(payload);
   };
 
-  return (
+  const form = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         idOnly
@@ -159,4 +159,29 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <FileText className="w-8 h-8 text-sky-600" />
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {dadosIniciais?.id ? 'Editar Cadastro Fiscal' : 'Novo Cadastro Fiscal'}
+              </h2>
+              {dadosIniciais?.id ? (
+                <p className="text-xs text-slate-500">
+                  ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+                </p>
+              ) : null}
+            </div>
+          </div>
+          {form}
+        </div>
+      </div>
+    );
+  }
+
+  return form;
 }
