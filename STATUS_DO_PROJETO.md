@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#401 tip 094cb4b7e + demo C360) (2026-10-29 11:51 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#401** tip código **`094cb4b7e`** CI SUCCESS · docs `46368fc2f` |
+| **Demo** | DEV `127.0.0.1:5173` SHA `46368fc2f` · writes=0 · sintético |
+| **@codex** | review pedido tip `094cb4b7e` |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/c360-fluxo-evidencia-20261029c.txt`
+
+(2026-10-29 11:51 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 tip 094cb4b7e CI SUCCESS) (2026-10-29 11:50 America/Sao_Paulo)
 
 | Campo | Valor |

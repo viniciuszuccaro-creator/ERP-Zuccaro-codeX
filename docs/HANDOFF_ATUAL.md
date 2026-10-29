@@ -1,3 +1,8 @@
+## CURSOR — #401 demo C360 writes=0 (2026-10-29 11:51 America/Sao_Paulo)
+
+- DEV 5173 SHA `46368fc2f` · sintético · salvar disabled · writes=0.
+- Codex review pedido tip `094cb4b7e`. Sem merge/deploy/carga.
+
 ## CURSOR — #401 tip 094cb4b7e CI SUCCESS (2026-10-29 11:50 America/Sao_Paulo)
 
 - Composição tip `094cb4b7e` CI SUCCESS. @codex review + demo.

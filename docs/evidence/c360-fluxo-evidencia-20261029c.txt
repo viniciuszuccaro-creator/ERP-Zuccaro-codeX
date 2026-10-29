@@ -1,0 +1,12 @@
+C360 demo navegável — 2026-10-29 11:51 America/Sao_Paulo
+=============================================
+SHA servido (workspace/vite 127.0.0.1:5173): 46368fc2f (46368fc2f8f033ae02d71836e81730e5492cff84)
+Backend: Vite DEV local — HTTP 200; rotas externas abortadas no smoke
+Dados: sintéticos (Cliente/Produto/Condição/Tabela ilustrativos)
+Mutações: writes=0 (esperado 0)
+Salvar orçamento: disabled=True
+Rascunho retido entre painéis: retained=True qty=True
+Overflow horizontal: False
+Artefatos: /opt/cursor/artifacts/c360-smoke-20261029c/{desktop,tablet}.png + result
+
+≠ Codespace billing · ≠ merge/deploy/carga operacional
