@@ -1,3 +1,23 @@
+## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
+
+- Fecha A Contatos / B saldo DESCONHECIDO / C agregação produto+unidade + P2 mixed-doc.
+- CI SUCCESS runs 40867597095 / 40867588389. Thread P2 respondido.
+- Próximo: atualizar composição #401 com SHAs publicados. Sem merge/deploy/carga.
+
+## CURSOR — #406 CI SUCCESS ec4045679 + P2 mixed-doc (2026-10-29 08:43 America/Sao_Paulo)
+
+- CI tip docs `ec4045679` SUCCESS (40866588056 / 40866546457). Codex P2: mixed-doc.
+- Fix: `conversionStockOkFromAvailability` — algumIndisponivel bloqueia mesmo com fonte incompleta.
+- Composição #401 após CI deste tip. Sem merge/deploy/carga.
+
+## CURSOR — #397 parecer Contatos/saldo/unidade (2026-10-29 08:35 America/Sao_Paulo)
+
+- Fecha gaps pós-#403 nos pareceres `6493733950`/`6493809228`: principal preservado;
+  saldo DTO ausente = DESCONHECIDO; agregação produto+unidade sem conversão inventada.
+- Testes 36+16 PASS. Evidência apontamentos-397-parecer-6493733950-saldo-unidade.
+- #404 `4e4770592` CI SUCCESS. #405 reopen CI. #401 composição após tip validado.
+- Sem merge/deploy/carga.
+
 
 
 ## CURSOR — #403 CI SUCCESS tip 8b08b55ccd (2026-10-29 08:10 America/Sao_Paulo)

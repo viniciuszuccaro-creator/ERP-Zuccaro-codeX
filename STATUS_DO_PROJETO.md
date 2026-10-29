@@ -1,3 +1,55 @@
+## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#406** tip **`90990801e`** — CI SUCCESS `40867597095` / `40867588389` |
+| **Código** | `44bc5dad9` (A/B/C) + `84c903c92` (P2 mixed-doc) |
+| **Pareceres** | `6493733950` · `6493809228` — fechados no tip |
+| **#401** | atualizar composição com estes SHAs (342 permanece `b5cb34e1` publicado na candidata) |
+| **#405** | reopen BLOCKED publication · tip revert `bbefcf3c7` CI SUCCESS |
+| Fora | merge/deploy/carga; WIP Codex #342 `eb797672` não tipado na composição |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** composição #401 · recuperação indep. Sem merge/deploy.
+
+(2026-10-29 09:50 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#406 CI SUCCESS + P2 mixed-doc) (2026-10-29 08:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#406** tip docs CI **`ec4045679`** SUCCESS 6/6 |
+| **Código** | `44bc5dad9` + P2 mixed-doc (este tip) |
+| **P2 Codex** | insuficiência conhecida prevalece sobre advisory |
+| **#401** | atualizar composição após CI deste tip P2 |
+| **#405** | reopen BLOCKED publication (revert) |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** CI tip P2 · composição #401. Sem merge/deploy.
+
+(2026-10-29 08:43 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#397 parecer saldo/unidade + Contatos) (2026-10-29 08:35 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial360-397-achados-saldo-unidade-392b` ← #403 |
+| **Pareceres** | `6493733950` · `6493809228` (SHA tip `83499de99` / base `8b08b55ccd`) |
+| **A Contatos** | principal canônico load/save/reopen sem wipe |
+| **B Estoque** | DTO sem `estoque_atual` → DESCONHECIDO ≠ 0 |
+| **C Agregação** | demanda por produto+unidade; incompatível explícito |
+| **Testes** | 36+16 PASS |
+| **#404** | tip smoke `4e4770592` CI SUCCESS 6/6 |
+| **#405** | reopen residual — CI em andamento |
+| **#401** | atualizar composição após CI deste tip |
+| Fora | merge/deploy/carga; ledger paralelo |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** CI deste tip · `@codex review` · composição #401. Sem merge/deploy.
+
+(2026-10-29 08:35 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#403 CI SUCCESS Contatos+Estoque) (2026-10-29 08:10 America/Sao_Paulo)
 
 | Campo | Valor |
