@@ -15,11 +15,13 @@ Forms tocados (existentes)
 3. ParametroRecebimentoNFeForm — idem (attrs switch preservados no pin)
 4. ParametroConciliacaoBancariaForm — idem
 5. ParametroOrigemPedidoForm — sky header windowMode + idOnly + CTA sky
-6. CentroOperacaoForm — sky chrome windowMode (já tinha idOnly)
+6. CentroOperacaoForm — **mantido** no golden ID-only e36231b3 (já tinha idOnly);
+   sky chrome adiado: pin `remaining ID-only additions` exige emit≡head
+   (mesmo padrão Webhook só libera sky via substituição explícita no teste).
 
 Fora deste lote
 - ParametroRoteirizacao / ApiExterna / ChatbotCanal = outras PRs
-- GatewayPagamento / TabelaFiscal / ConfiguracaoNFe = fila residual
+- GatewayPagamento / TabelaFiscal / ConfiguracaoNFe / CentroOperacao sky = fila
 - Registros desaparecidos = gate legado privado (não seed)
 - Sem count+1 de código no browser
 

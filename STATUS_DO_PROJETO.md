@@ -3,8 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | Branch | `cursor/cadastros-param-sky-reopen-392b` ← tip #397 `754a05cfa` |
-| Escopo | ParametroCaixa/Portal/NFe/Conciliação/OrigemPedido + CentroOperacao |
-| Mudança | chrome sky windowMode + ID técnico idOnly; pin RecordState NFe intacto |
+| Escopo | ParametroCaixa/Portal/NFe/Conciliação/OrigemPedido (CentroOperacao ID-only intacto) |
+| Mudança | chrome sky windowMode + ID técnico idOnly; pins RecordState/ID-only preservados |
 | Fora | ApiExterna/Roteirizacao/ChatbotCanal; merge/deploy/carga |
 | Evidência | `docs/evidence/cadastros-param-sky-reopen-20261029.txt` |
 | Próximo | Gateway/TabelaFiscal residual · demo C360 se franquia |
