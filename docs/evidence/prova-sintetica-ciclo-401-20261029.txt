@@ -59,7 +59,9 @@ B) API canônica HTTP (createApp + fixtures memória; sem segredo VPS):
 C) IdP sintético (supabase_user + fetch stub; sem ERP_DEV_LOGIN_*):
    server/tests/auth-session-http-exact.test.ts
    server/tests/auth-session-password.test.ts
-   (contagens no log /tmp/erp-synth-auth-idp-401.log — ver tip)
+   Resultado: **8 PASS / 0 FAIL / 0 SKIP**
+   Cobre: Bearer/perfil; 403 PERMISSION_DENIED; session admin/comum;
+         token inválido; credenciais inválidas sem vazar; tenant cross-group.
 
 D) Teardown: pg_ctl stop + rm datadir; 5432 main ainda down; sem 55432 listen.
 
