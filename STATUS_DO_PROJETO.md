@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#401 + #411+#412+#407) (2026-10-29 11:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#401** composição — #411 `c8c5f24c7` + #412 `c0ccadeae` (+#407) |
+| **Resíduos** | Contatos escalar · unidade vs saldo · nome recebedor max200 |
+| **#410** | busca acentos `59ad3a5dc` |
+| **#406** | A/B/C `90990801e` |
+| Fora | merge oficial · deploy · carga |
+
+**Próximo:** CI composição · demo · @codex review. Sem merge/deploy.
+
+(2026-10-29 11:43 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 compose + #411 c8c5f24c7) (2026-10-29 11:43 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -15,6 +29,12 @@
 | **PR** | **#411** tip **`c8c5f24c7`** — Contatos escalar + unidade vs saldo |
 | **#412** | tip `c0ccadeae` CI SUCCESS — nome recebedor max200 |
 | **Próximo** | compose #401 com #411+#412+#407 |
+## CURSOR — VIGENTE (#412 tip c0ccadeae CI SUCCESS) (2026-10-29 11:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#412** tip **`c0ccadeae`** — nome recebedor max(200) |
+| **Base** | #407 `ba431a2af` |
 | Fora | merge/deploy/carga |
 
 (2026-10-29 11:43 America/Sao_Paulo)
@@ -80,6 +100,48 @@
 | Fora | merge/deploy/carga |
 
 (2026-10-29 10:39 America/Sao_Paulo)
+## CURSOR — VIGENTE (#412 comprovante nome max200) (2026-10-29 11:29 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-comprovante-nome-200-392b` ← #407 |
+| **Parecer** | 6498241434 |
+| **#411** | Contatos+unidade tip `dbb1a4131` CI pendente |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:29 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#407** tip **`a18a362ed`** — CI SUCCESS `40877458648` / `40877419771` |
+| **Escopo** | sky+ID WhatsApp/Integração/Despesa/Filial · `buildComprovanteRecebedorPayload` |
+| **#401** | tip código `fbcca01b9` CI SUCCESS · docs `716dabdeb` |
+| **#406** | `90990801e` SUCCESS |
+| Fora | merge/deploy/carga · CodigoField · WIP Codex |
+
+**Evidência:** `docs/evidence/recuperacao-config-comprovante-20261029.txt`
+**Próximo:** Funil×3 / Separacao×IA keep-both (matriz Pacote 5). Sem merge/deploy.
+
+(2026-10-29 10:03 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#407 recuperação configs+comprovante) (2026-10-29 09:55 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-config-comprovante-392b` ← tip #406 `73046b406` |
+| **Escopo** | WhatsApp/Integração/Despesa/Filial sky+ID · `buildComprovanteRecebedorPayload` |
+| **#401** | tip composição `fbcca01b9` (CI em andamento) · 342=`b5cb34e1` |
+| **#406** | tip `90990801e` CI SUCCESS — 3 achados fechados |
+| **#405** | publication-baseline intocado |
+| Testes | recuperacao-config-comprovante + residual + fluxo operacional PASS |
+| Fora | merge/deploy/carga · CodigoField novo · WIP Codex |
+
+**Evidência:** `docs/evidence/recuperacao-config-comprovante-20261029.txt`
+**Próximo:** CI deste tip · Funil×3/Separacao×IA keep-both. Sem merge/deploy.
+
+(2026-10-29 09:55 America/Sao_Paulo)
 
 ## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
 

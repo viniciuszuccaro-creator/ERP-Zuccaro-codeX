@@ -1,3 +1,8 @@
+## CURSOR — #401 + #411+#412+#407 (2026-10-29 11:43 America/Sao_Paulo)
+
+- Integra #411 Contatos/unidade + #412/#407 comprovante nome max200.
+- CI em seguida. Sem merge/deploy/carga.
+
 ## CURSOR — #401 + #411 c8c5f24c7 (2026-10-29 11:43 America/Sao_Paulo)
 
 - Integra tip #411 Contatos escalar + unidade vs saldo (CI SUCCESS).
@@ -25,6 +30,20 @@
 
 - Tip `59ad3a5dc` CI SUCCESS 40882835856 / 40882816622.
 - Composição #401 atualizada. Sem merge/deploy/carga.
+## CURSOR — #412 tip c0ccadeae CI SUCCESS (2026-10-29 11:43 America/Sao_Paulo)
+
+- Parecer 6498241434 fechado. Compose #401 com #411+#407.
+
+## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
+
+- Tip `a18a362ed` CI SUCCESS runs 40877458648 / 40877419771 (6/6).
+- #401 tip código `fbcca01b9` SUCCESS. Sem merge/deploy/carga.
+- Próximo indep.: Funil×3 / Separacao×IA keep-both.
+
+## CURSOR — #407 recuperação configs+comprovante (2026-10-29 09:55 America/Sao_Paulo)
+
+- Sky+ID residual WhatsApp/Integração/Despesa/Filial; contrato comprovante compartilhado.
+- #401 composição tip  (CI). #406  SUCCESS. Sem merge/deploy/carga.
 
 ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
 

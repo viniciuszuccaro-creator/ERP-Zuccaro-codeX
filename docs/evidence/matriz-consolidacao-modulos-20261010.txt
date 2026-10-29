@@ -12,7 +12,7 @@
 | ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |
 | CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | Funil Visual canônico UI · mesma fonte Oportunidade | funil/scoring/IA | **keep both curto** · HTTP schema **BLOCKED** Codex · C360 usa adaptador legado (opção B) |
 | SeparacaoConferencia × SeparacaoConferenciaIA | SeparacaoConferenciaIA | conferência+audit | keep both curto prazo |
-| ComprovanteDigital × ComprovanteEntregaDigital | diff payload pendente | POD | keep both |
+| ComprovanteDigital × ComprovanteEntregaDigital | `buildComprovanteRecebedorPayload` compartilhado (2026-10-29) | POD · HTTP/GPS/estoque só no EntregaDigital | keep both curto · contrato unificado |
 | Dashboard × DashboardCorporativo | escopos distintos | KPIs empresa vs grupo | keep both |
 | HubAtendimento × ChatbotAtendimento | papéis complementares | fila vs bot | keep both |
 

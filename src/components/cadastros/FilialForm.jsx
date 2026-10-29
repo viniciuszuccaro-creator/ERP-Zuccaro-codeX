@@ -165,7 +165,23 @@ export default function FilialForm({
   );
 
   if (windowMode) {
-    return <div className="w-full h-full overflow-auto bg-white p-6">{form}</div>;
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <h2 className="text-2xl font-bold text-slate-900">
+              {filialBoundId ? 'Editar Filial' : 'Nova Filial'}
+            </h2>
+          </div>
+          {filialBoundId ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(filialBoundId)}</span>
+            </p>
+          ) : null}
+          {form}
+        </div>
+      </div>
+    );
   }
 
   return form;

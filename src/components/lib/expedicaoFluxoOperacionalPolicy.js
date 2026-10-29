@@ -407,6 +407,65 @@ export const resolveRomaneioDespacho = ({
 };
 
 /**
+ * Payload canônico do comprovante (recebedor + prova) compartilhado por
+ * ComprovanteDigital e ComprovanteEntregaDigital — sem terceiro módulo.
+ * GPS/foto/HTTP/estoque permanecem capacidades do consumidor (keep both curto).
+ * @param {{
+ *   nome_recebedor?: unknown,
+ *   documento_recebedor?: unknown,
+ *   cargo_recebedor?: unknown,
+ *   observacoes_recebimento?: unknown,
+ *   foto_comprovante?: unknown,
+ *   latitude_entrega?: unknown,
+ *   longitude_entrega?: unknown,
+ *   data_hora_recebimento?: unknown,
+ *   now?: string,
+ * }} input
+ * @returns {ExpedicaoRecord}
+ */
+/** Limite canônico alinhado a expedicaoTypes.nome_recebedor max(200). */
+export const COMPROVANTE_NOME_RECEBEDOR_MAX = 200;
+
+export const buildComprovanteRecebedorPayload = (input = {}) => {
+  const sanitize = (value, max = 500, { rejectOver = false, field = 'campo' } = {}) => {
+    const cleaned = String(value ?? '')
+      .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '')
+      .replace(/javascript:\s*/gi, '')
+      .replace(/[<>]/g, '')
+      .trim();
+    if (rejectOver && cleaned.length > max) {
+      throw Object.assign(new Error(`${field} excede ${max} caracteres`), {
+        code: 'VALIDATION_ERROR',
+        field,
+        status: 422,
+      });
+    }
+    return cleaned.slice(0, max);
+  };
+  // Parecer 6498241434: 190 chars válidos no contrato max(200) — não truncar a 180.
+  const nome = sanitize(input.nome_recebedor, COMPROVANTE_NOME_RECEBEDOR_MAX, {
+    rejectOver: true,
+    field: 'nome_recebedor',
+  });
+  const latRaw = input.latitude_entrega;
+  const lngRaw = input.longitude_entrega;
+  const lat = latRaw == null || latRaw === '' ? null : Number(latRaw);
+  const lng = lngRaw == null || lngRaw === '' ? null : Number(lngRaw);
+  return {
+    nome_recebedor: nome,
+    documento_recebedor: sanitize(input.documento_recebedor, 60),
+    cargo_recebedor: sanitize(input.cargo_recebedor, 120),
+    observacoes_recebimento: sanitize(input.observacoes_recebimento, 2000),
+    foto_comprovante: input.foto_comprovante == null || input.foto_comprovante === ''
+      ? null
+      : input.foto_comprovante,
+    latitude_entrega: Number.isFinite(lat) ? lat : null,
+    longitude_entrega: Number.isFinite(lng) ? lng : null,
+    data_hora_recebimento: firstText(input.data_hora_recebimento, input.now) || new Date().toISOString(),
+  };
+};
+
+/**
  * Registro final: total, parcial ou ocorrência — com prova/motivo e assert.
  * @param {{
  *   before?: ExpedicaoRecord,
