@@ -42,6 +42,12 @@ Atualização (2026-10-29) — configs residual + comprovante contrato
   (HTTP/GPS/estoque no EntregaDigital; dialog no Digital). Sem 3º módulo.
 - Evidência: recuperacao-config-comprovante-20261029.txt
 
+
+Atualização (2026-10-29) — Intent/Job/Evento/Modelo + C360 smoke
+- Sky+ID residual pós-#407; Parametro* permanece #402; CentroOperacao pin intocado
+- Demo C360: smoke PASS rascunho entre painéis · dados sintéticos · save bloqueado
+- Evidência: cadastros-intent-job-sky-20261029.txt · c360-fluxo-evidencia-20261029b.txt
+
 Próximo capacidade a capacitar no existente
 1. Param forms sky + reopen ID — #402 tip SUCCESS (fora deste tip)
 2. Demo fluxo C360 Private quando franquia

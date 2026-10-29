@@ -1,3 +1,14 @@
+## CURSOR — #409 tip 7e27ee9f3 CI SUCCESS (2026-10-29 10:27 America/Sao_Paulo)
+
+- Tip `7e27ee9f3` CI SUCCESS 40881114046 / 40881084134.
+- #406 Codex limpo; #401 P2 busca sem acentos a tratar. Sem merge/deploy/carga.
+
+## CURSOR — #409 Intent/Job sky+ID + C360 smoke (2026-10-29 10:20 America/Sao_Paulo)
+
+- Cadastros residual Intent/Job/Evento/Modelo; smoke C360 PASS (writes=0).
+- `@codex review` pedido em #406 tip `73046b406` e #401 tip `716dabdeb`.
+- Sem merge/deploy/carga.
+
 ## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
 
 - Tip `a18a362ed` CI SUCCESS runs 40877458648 / 40877419771 (6/6).

@@ -1,3 +1,48 @@
+## CURSOR — VIGENTE (#409 tip c2b43c150 CI 6/6) (2026-10-29 18:08 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#409** tip **`c2b43c150`** — CI SUCCESS push `40954181636` / PR `40954192794` |
+| **Delta** | Reverte `alterarStatus` (quebra publication-baseline); mantém sky+ID |
+| **Paralelo** | #428 tip `644697f1d` também 6/6 — preferir #409 |
+| Fora | merge #401 · Auth VPS · harness |
+
+**Evidência:** `docs/evidence/cadastros-intent-job-sky-20261029.txt`
+
+## CURSOR — VIGENTE (#409 tip 7e27ee9f3 CI SUCCESS) (2026-10-29 10:27 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#409** tip **`7e27ee9f3`** — CI SUCCESS `40881114046` / `40881084134` |
+| **#406** | tip `73046b406` Codex: sem achados major |
+| **#401** | tip `716dabdeb` Codex P2 busca sem acentos (tratar) |
+| **#408** | `6d62b99cf` CI SUCCESS |
+| C360 | smoke PASS writes=0 |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/cadastros-intent-job-sky-20261029.txt` · `c360-fluxo-evidencia-20261029b.txt`
+**Próximo:** P2 #401 busca diacríticos · Sem merge/deploy.
+
+(2026-10-29 10:27 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#409 Intent/Job sky+ID + C360 smoke) (2026-10-29 10:20 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-intent-job-sky-392b` ← #407 `ba431a2af` |
+| **Escopo** | ChatbotIntent/JobAgendado/Evento/Modelo sky+ID · smoke C360 |
+| **#406** | tip `73046b406` · `@codex review` pedido |
+| **#401** | tip `716dabdeb` · `@codex review` pedido |
+| **#407** | `ba431a2af` CI SUCCESS |
+| **#408** | Separacao hub (CI tip pins) |
+| C360 | smoke PASS writes=0 · labels Produtos e preços · CSP-safe |
+| Fora | merge/deploy/carga · Parametro* #402 · CentroOperacao pin |
+
+**Evidência:** `docs/evidence/cadastros-intent-job-sky-20261029.txt` · `c360-fluxo-evidencia-20261029b.txt`
+**Próximo:** CI deste tip. Sem merge/deploy.
+
+(2026-10-29 10:20 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 
 | Campo | Valor |

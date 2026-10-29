@@ -1,0 +1,19 @@
+C360 demo smoke — prévia sintética DEV (2026-10-29)
+====================================================
+Ambiente: http://127.0.0.1:5173 (Vite DEV existente · writes=0)
+Pacote tip branch: cursor/cadastros-intent-job-sky-392b (smoke labels alinhados)
+Dados: Cliente/Produto/Condição/Tabela SINTÉTICOS · sem carga operacional
+Backend: SPA local; gravação orçamento desabilitada na prévia (saveDisabled=true)
+
+Resultado smoke
+---------------
+{"retained":true,"quantity":true,"saveDisabled":true,"horizontalOverflow":false,
+ "writes":0,"blockedRequests":0,"errors":[]}
+
+Percurso: Orçamentos → Novo orçamento → cliente/produto/condição/tabela →
+qtd 2 → obs rascunho → painéis Produtos e preços / Resumo / Cliente (rascunho retido)
+
+Artefatos: /opt/cursor/artifacts/c360-smoke-20261029/{desktop,tablet}.png
+Script: scripts/comercial360-preview-smoke.mjs (labels Produtos e preços + CSP-safe settle)
+
+≠ deploy · ≠ carga · ≠ Codespace billing · ilustrativo ≠ registros recuperados

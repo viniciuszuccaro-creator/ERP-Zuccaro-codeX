@@ -51,6 +51,11 @@ export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit,
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
+      {dadosIniciais?.id ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Nome do Modelo *</Label>
