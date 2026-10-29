@@ -1,3 +1,8 @@
+## CURSOR — #410 tip 59ad3a5dc CI SUCCESS (2026-10-29 10:39 America/Sao_Paulo)
+
+- Tip `59ad3a5dc` CI SUCCESS 40882835856 / 40882816622.
+- Próximo: composição #401 com tip #410 validado. Sem merge/deploy/carga.
+
 ## CURSOR — #410 busca mestres sem acentos (2026-10-29 10:31 America/Sao_Paulo)
 
 - Fecha P2 Codex #401: listPage cliente/produto dobra diacríticos (paridade picker).

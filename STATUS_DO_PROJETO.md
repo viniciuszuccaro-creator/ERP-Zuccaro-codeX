@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#410 tip 59ad3a5dc CI SUCCESS) (2026-10-29 10:39 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#410** tip **`59ad3a5dc`** — CI SUCCESS `40882835856` / `40882816622` |
+| **Fix** | foldSearchText + sqlFoldAccentExpr em listPage cliente/produto |
+| **#401** | tip `716dabdeb` — atualizar composição com #410 validado |
+| **#406** | Codex limpo `73046b406` |
+| **#409** | `7e27ee9f3` CI SUCCESS |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/comercial-masters-busca-acentos-20261029.txt`
+**Próximo:** integrar #410 em #401 · Sem merge/deploy.
+
+(2026-10-29 10:39 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#410 busca mestres sem acentos) (2026-10-29 10:31 America/Sao_Paulo)
 
 | Campo | Valor |
