@@ -118,8 +118,14 @@ export function mergeComercialSelectedCliente(masters, selection) {
 /**
  * Une catálogos de cliente/vínculo sem descartar entradas já resolvidas
  * (página de busca temporária ≠ catálogo de labels da listagem/PDF/share).
+ * Preserva demais campos do masters (condicoes/produtos/…) — só troca cliente catalogs.
+ *
+ * @template {{ clientes?: any[], clientesEmpresa?: any[] }} T
+ * @param {T} [base]
+ * @param {{ clientes?: any[], clientesEmpresa?: any[] }} [patch]
+ * @returns {T & { clientes: any[], clientesEmpresa: any[] }}
  */
-export function unionComercialClienteCatalog(base = {}, patch = {}) {
+export function unionComercialClienteCatalog(base = /** @type {T} */ ({}), patch = {}) {
   const clientes = [...(base.clientes || [])];
   const links = [...(base.clientesEmpresa || [])];
   for (const cliente of patch.clientes || []) {
@@ -134,7 +140,11 @@ export function unionComercialClienteCatalog(base = {}, patch = {}) {
     if (idx >= 0) links[idx] = link;
     else links.push(link);
   }
-  return { ...base, clientes, clientesEmpresa: links };
+  return /** @type {T & { clientes: any[], clientesEmpresa: any[] }} */ ({
+    ...base,
+    clientes,
+    clientesEmpresa: links,
+  });
 }
 
 /** Lacunas remanescentes do contrato Orçamento (após 039 tabela_preco_id). */
