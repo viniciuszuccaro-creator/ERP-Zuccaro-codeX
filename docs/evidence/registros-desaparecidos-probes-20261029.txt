@@ -67,3 +67,7 @@ Pacote E anotado: Contatos comercial órfão × Form RBAC (keep both até aceite
 
 ## Fora
 Merge #401 · harness · Auth VPS · fictícios · apagar órfão Contatos
+
+## CI SUCCESS tip c3d708c0f (2026-10-29 18:12 America/Sao_Paulo)
+- Push/PR erp-runtime-ci — 6/6 SUCCESS (subscription branch).
+- Probes A/C/E + falso gap CodigoField confirmados em CI.
