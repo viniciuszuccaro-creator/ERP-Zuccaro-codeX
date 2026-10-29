@@ -1,0 +1,23 @@
+Cadastros residual pós-#407 — Intent/Job/Evento/Modelo (2026-10-29)
+====================================================================
+Branch: cursor/cadastros-intent-job-sky-392b ← #407 tip `ba431a2af`
+Não refaz #407 (WhatsApp/Integração/Despesa/Filial/comprovante).
+Não toca #402 Parametro* · #398–400 reservadas · CentroOperacao pin.
+
+Escopo (existente)
+------------------
+| Form | Mudança |
+|------|---------|
+| ChatbotIntentForm | sky windowMode + ID técnico · RecordState preservado |
+| JobAgendadoForm | sky windowMode + ID técnico · reopen canônico intacto |
+| EventoNotificacaoForm | ID técnico (sky já existia) |
+| ModeloDocumentoForm | ID técnico (sky já existia) |
+
+Classificação
+-------------
+- Chrome/ID: melhoria funcional azul-claro + leitura na reabertura (não seed)
+- Registros: tela com ID ≠ recuperação de legado; staging privado permanece gate
+- Sem count+1 / CodigoField novo / graduação reopen RecordState
+
+Testes: cadastros-intent-job-sky.test.js + residual pin
+Fora: merge/deploy/carga · candidata concorrente a #401/#406

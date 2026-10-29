@@ -1,3 +1,21 @@
+## CURSOR — VIGENTE (#409 Intent/Job sky+ID + C360 smoke) (2026-10-29 10:20 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-intent-job-sky-392b` ← #407 `ba431a2af` |
+| **Escopo** | ChatbotIntent/JobAgendado/Evento/Modelo sky+ID · smoke C360 |
+| **#406** | tip `73046b406` · `@codex review` pedido |
+| **#401** | tip `716dabdeb` · `@codex review` pedido |
+| **#407** | `ba431a2af` CI SUCCESS |
+| **#408** | Separacao hub (CI tip pins) |
+| C360 | smoke PASS writes=0 · labels Produtos e preços · CSP-safe |
+| Fora | merge/deploy/carga · Parametro* #402 · CentroOperacao pin |
+
+**Evidência:** `docs/evidence/cadastros-intent-job-sky-20261029.txt` · `c360-fluxo-evidencia-20261029b.txt`
+**Próximo:** CI deste tip. Sem merge/deploy.
+
+(2026-10-29 10:20 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 
 | Campo | Valor |

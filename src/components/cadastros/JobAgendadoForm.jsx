@@ -114,6 +114,11 @@ export default function JobAgendadoForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {jobBoundId ? (
+            <p className="text-xs text-slate-500">
+              ID técnico: <span className="font-mono">{String(jobBoundId)}</span>
+            </p>
+          ) : null}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Nome do Job *</Label>
@@ -225,7 +230,7 @@ export default function JobAgendadoForm({
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-sky-100">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
             <Clock className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
               {jobBoundId ? 'Editar Job Agendado' : 'Novo Job Agendado'}

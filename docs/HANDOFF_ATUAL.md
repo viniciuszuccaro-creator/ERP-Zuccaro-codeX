@@ -1,3 +1,9 @@
+## CURSOR — #409 Intent/Job sky+ID + C360 smoke (2026-10-29 10:20 America/Sao_Paulo)
+
+- Cadastros residual Intent/Job/Evento/Modelo; smoke C360 PASS (writes=0).
+- `@codex review` pedido em #406 tip `73046b406` e #401 tip `716dabdeb`.
+- Sem merge/deploy/carga.
+
 ## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
 
 - Tip `a18a362ed` CI SUCCESS runs 40877458648 / 40877419771 (6/6).
