@@ -12,3 +12,12 @@ Correções no existente:
 
 Testes: painel-dinamico-cliente-historico-tab 31 PASS
 ≠ fold #401 · ≠ VPS · WIP #419 intacto
+
+CI fix pins useContextoVisual (2026-10-29 ~15:10 America/Sao_Paulo)
+-------------------------------------------------------------------
+Frontend CI FAIL 3: golden runtime/stage55 do remainder context-read.
+Causa: resolveAuditEmpresaId no restante (fora hunks exatos).
+Pins atualizados:
+  runtime a441be7f… → 0dc4c949…
+  stage55 d2a59a58… → 0508c1d1…
+Hunks contextReadBoundaryRemainder intactos (2). 59 testes focados PASS.

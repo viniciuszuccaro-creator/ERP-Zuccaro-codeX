@@ -23,7 +23,7 @@ test('context hook keeps its complete executable JavaScript unchanged',()=>{
   const emitted=ts.transpileModule(contextReadRemainder(file,source),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,
     jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),
-    'a441be7f3145c2afbd0d828c36f87d09a7d56e64634bd3d989a046128dce6f98');
+    '0dc4c949db81a011de164f4ea0edab868e7a3aadba7e29e6363837de0f305b15');
 });
 
 function bind(context={},backend=async()=>[]){
