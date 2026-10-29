@@ -1,4 +1,27 @@
-## Estado vigente - codigo composto e testes revisados (2026-10-29)
+## Estado vigente - composicao publicada e navegador ainda pendente (2026-10-29)
+
+#401 `686ae3224fe44ed5a3154a972ca8391802974d94` recebeu o prefixo OPDEV vigente
+da342/1a03 e preservou integralmente o corpo c717 e ambos os historicos de
+STATUS/HANDOFF. Comparacao Git Codex: desde77c0 alterou somente esses tres
+documentos e dois recibos; nenhum runtime/teste/lock alterado. CI1a03 tres SUCCESS;
+CI686 compose SUCCESS, frontend/backend ainda em execucao na consulta do fechamento.
+
+Capacidade nativa PG16.15 + Chrome148 + Playwright1.56.1 comprovada no MESMO
+executor Cursor, sem Docker/instalacao/VPS. Provas adicionais isoladas:
+PostgreSQL5PASS/0FAIL/0SKIP; HTTP EM MEMORIA12/0/0; IdP/fetch sintetico8/0/0.
+Recibo publico sanitizado:401/docs/evidence/prova-sintetica-ciclo-401-20261029.txt.
+Teardown confirmado pelo executor: cluster efemero55432 encerrado/datadir removido,
+main5432 down e intocado. Nao e prova de navegador com persistencia.
+
+Falta exata para esse ciclo: o browser-harness.mjs privado no caminho Codespace
+ja registrado em OPERACAO. Ausente no executor Cursor e na busca limitada
+inspection-code-only deste desktop; nao declarar ausencia global. Proxima acao:
+recuperar esse arquivo/guardas por canal privado autorizado, conferir procedencia
+e executar UI->APIcanonica->PGisolado. Nao criar usuario/segredo VPS ou afrouxar
+guardas. A coorte100 final continua faltante separadamente, sem reconstruir outra.
+Nenhuma carga, DDL operacional, grant, mergeMain ou deploy ocorreu neste lote.
+
+## Detalhamento - codigo composto e testes revisados (2026-10-29)
 
 Publicacao funcional concluida em `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`,
 branch `codex/consolidacao-infra-20261017`, PR342, remoto confirmado e checkout limpo.

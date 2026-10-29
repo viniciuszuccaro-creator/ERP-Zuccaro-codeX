@@ -1,4 +1,27 @@
-## Estado vigente - composicao integrada em revisao (2026-10-29)
+## Estado vigente - composicao e limite da prova browser (2026-10-29)
+
+#401 HEAD `686ae3224fe44ed5a3154a972ca8391802974d94`: incorporacao backend87db e
+424 mantida; runtime/testes/locks iguais ao77c0 revisado. Delta posterior somente
+nos cinco documentos/recibos. OPDEV agora blob1fc7e685b, igual ao342/1a03;
+corpo historico c717 preservado integralmente, STATUS/HANDOFF retiveram ambos os lados.
+CI do1a03: tres jobs SUCCESS/run40947996411. CI do686: compose SUCCESS;
+frontend/backend ainda em execucao na ultima consulta, sem herdar resultado do77.
+
+Executor existente comprovou PostgreSQL16.15 nativo e Chrome148/Playwright1.56.1,
+sem instalar ambiente. Ensaio sintetico em cluster efemero55432: PG5/0/0;
+HTTP com fixtures em memoria12/0/0; autenticacao com IdP/fetch sintetico8/0/0.
+Nao equivalem a browser->API->PG. Recibo401/docs/evidence/prova-sintetica-ciclo-401-20261029.txt.
+Cluster5432 permaneceu down;55432/datadir de teste encerrados/removidos pelo executor.
+
+Bloqueio concreto do navegador: browser-harness.mjs privado documentado no OPDEV
+existe no volume do Codespace, nao esta disponivel no executor Cursor. Busca
+limitada em inspection-code-only desktop tambem sem arquivo; nao prova ausencia
+global. Recuperar SOMENTE esse artefato e guardas por canal privado suportado,
+conferir origem/versao antes de reutilizar. Nao provisionar Auth/VPS, afrouxar
+guardas nem substituir por demo writes0. Coorte100 final e pins continuam
+dependencia SEPARADA; sem nova selecao, transferencia integral ou carga real.
+
+## Detalhamento - incorporacao e revisao preservadas (2026-10-29)
 
 Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma
 branch da #342, remoto confirmado e checkout limpo. CI5265/run40940232207 SUCCESS:
