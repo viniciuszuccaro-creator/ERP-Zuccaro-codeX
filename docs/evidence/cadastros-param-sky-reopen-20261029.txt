@@ -1,0 +1,32 @@
+Cadastros — param forms sky + ID técnico (2026-10-29 America/Sao_Paulo)
+=======================================================================
+Base: tip PR397 `754a05cfa` (código CI SUCCESS `83499de99`).
+Branch: `cursor/cadastros-param-sky-reopen-392b` — independente; não edita
+ApiExterna / ParametroRoteirizacao / ChatbotCanal (reservadas).
+
+Recuperação vs integra (capacidade, não cópia)
+- Azul-claro funcional de entrada em uso (chrome windowMode + CTA sky),
+  não só pintura: ID técnico na reabertura, RBAC/contexto preservados,
+  switches NFe com permissão/disabled alinhados aos demais params.
+
+Forms tocados (existentes)
+1. ParametroCaixaDiarioForm — sky chrome + CadastroCodigoRegistroField idOnly
+2. ParametroPortalClienteForm — idem
+3. ParametroRecebimentoNFeForm — idem + data-permission nos switches
+4. ParametroConciliacaoBancariaForm — idem
+5. ParametroOrigemPedidoForm — sky header windowMode + idOnly + CTA sky
+6. CentroOperacaoForm — sky chrome windowMode (já tinha idOnly)
+
+Fora deste lote
+- ParametroRoteirizacao / ApiExterna / ChatbotCanal = outras PRs
+- GatewayPagamento / TabelaFiscal / ConfiguracaoNFe = fila residual
+- Registros desaparecidos = gate legado privado (não seed)
+- Sem count+1 de código no browser
+
+Testes
+- cadastros-transportadora-updated-at-identity + cursor-residual-independent: PASS
+- Sem merge/deploy/carga
+
+Próximo
+- GatewayPagamento / TabelaFiscal sky+reopen no existente
+- Demo C360 Private se franquia (rascunho anti-duplo já em OrcamentosTab)

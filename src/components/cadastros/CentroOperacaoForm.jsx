@@ -98,8 +98,8 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     onSubmit(payload);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-4 p-6">
       <CadastroCodigoRegistroField
         idOnly
         hasId={Boolean(dadosIniciais?.id)}
@@ -138,7 +138,7 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
       <BuscaCEP onEnderecoEncontrado={handleCEPFound} />
 
       {formData.geolocalizacao?.latitude && (
-        <Card className="border-green-200 bg-green-50"><CardContent className="p-3"><div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-green-600" /><p className="text-sm"><strong>GPS:</strong> {formData.geolocalizacao.latitude.toFixed(6)}, {formData.geolocalizacao.longitude.toFixed(6)}</p></div></CardContent></Card>
+        <Card className="border-sky-200 bg-sky-50"><CardContent className="p-3"><div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-600" /><p className="text-sm"><strong>GPS:</strong> {formData.geolocalizacao.latitude.toFixed(6)}, {formData.geolocalizacao.longitude.toFixed(6)}</p></div></CardContent></Card>
       )}
 
       <div className="flex items-center space-x-2 p-3 border rounded-lg">
@@ -152,10 +152,26 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} className="bg-blue-600 hover:bg-blue-700" data-permission="Cadastros.CentroOperacao.salvar" data-action="salvar-centro-operacao" data-sensitive>
+        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} className="bg-sky-600 hover:bg-sky-700" data-permission="Cadastros.CentroOperacao.salvar" data-action="salvar-centro-operacao" data-sensitive>
           {isSubmitting ? 'Salvando...' : (dadosIniciais ? 'Salvar' : 'Criar Centro')}
         </Button>
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <MapPin className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {dadosIniciais?.id ? 'Editar Centro de Operação' : 'Novo Centro de Operação'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto">{form}</div>
+      </div>
+    );
+  }
+
+  return form;
 }

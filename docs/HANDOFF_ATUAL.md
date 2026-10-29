@@ -1,5 +1,12 @@
 
 
+## CURSOR — lote indep. param sky/reopen (2026-10-29 07:35 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-param-sky-reopen-392b` sobre tip #397 `754a05cfa`.
+- Sky + ID técnico: CaixaDiario, PortalCliente, RecebimentoNFe, Conciliação, OrigemPedido, CentroOperacao.
+- Não toca branches reservadas ApiExterna/Roteirizacao/ChatbotCanal.
+- Evidência `docs/evidence/cadastros-param-sky-reopen-20261029.txt`. Sem deploy/carga.
+
 ## CURSOR checkpoint tip 83499de99 + composição #401 (2026-10-29 07:20 America/Sao_Paulo)
 
 - **PR #397 tip:** `83499de995` — CI SUCCESS `40853365201` (frontend/backend/expedicao). **≠ aprovação/merge/deploy.**
