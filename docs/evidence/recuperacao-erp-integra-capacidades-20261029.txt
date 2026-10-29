@@ -23,9 +23,8 @@ Padrão visual azul-claro
 - Cadastros sky chrome: lote anterior 17 forms + TabelaPreco/Regiao
 - Este lote: ConfiguracaoBoletos, EventoNotificacao, ModeloDocumento → sky
 - Residual 2026-10-29: GatewayPagamento / TabelaFiscal / ConfiguracaoNFe → sky + ID técnico (#404)
-- Graduação reopen 2026-10-29 (#405): Gateway / TabelaFiscal / ConfigNFe →
-  useCadastroReopenOnIdentity + CodigoField idOnly (padrão LocalEstoque)
-- Pin RecordState restante: CentroOperacao · ParametroOrigemPedido
+- Graduação reopen #405: **BLOCKED** publication-baseline (revertida ao sky+#404);
+  pin RecordState: CentroOperacao/TabelaFiscal/ParametroOrigemPedido/ConfiguracaoNFe
 - Paramétricos/API/Chatbot*: fila; respeitar branches reservadas
   ApiExterna/ParametroRoteirizacao/ChatbotCanal (#402 param sky separado)
 - Demo C360 runner 2026-10-29: smoke PASS sintético (writes=0) — Private owner ainda franquia
@@ -39,10 +38,9 @@ Não feito / bloqueado
 - Substituir ERP pelo integra-novo
 - Restaurar OAuthConsent / Auth Base44 permissivo
 - Carga operacional / deploy
-- Graduação CentroOperacao / ParametroOrigemPedido (pin restante)
+- Graduação reopen residual (publication-baseline) até tip autorizado
 
 Próximo capacidade a capacitar no existente
-1. CI #405 reopen residual · parecer Codex #403
-2. Graduar pin restante CentroOperacao/ParametroOrigemPedido se autorizado OU coorte ID-only
-   (CadastroFiscal/Webhook/ConfiguracaoBoletos/…)
+1. Fechar #406 parecer Contatos/saldo/unidade + CI
+2. Composição #401 após tip validado · reopen residual só com delta publication
 3. Matriz Pacote 5: Funil×3 / Separacao×IA / Comprovante× — keep both curto

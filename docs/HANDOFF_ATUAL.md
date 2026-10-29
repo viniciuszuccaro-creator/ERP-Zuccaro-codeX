@@ -1,3 +1,10 @@
+## CURSOR — #405 reopen BLOCKED; prioridade #406 (2026-10-29 08:37 America/Sao_Paulo)
+
+- Graduação reopen Gateway/TabelaFiscal/ConfigNFe **revertida**: CI quebrou
+  publication-baseline / pins RecordState (exige delta autorizado como LocalEstoque).
+- Tip #405 volta ao sky+#404. Prioridade: #406 parecer Contatos/saldo/unidade.
+- Sem merge/deploy/carga.
+
 ## CURSOR — residual reopen Gateway/TabelaFiscal/ConfigNFe (2026-10-29 08:27 America/Sao_Paulo)
 
 - Branch `cursor/cadastros-residual-reopen-392b` sobre tip #404 `4e4770592`.

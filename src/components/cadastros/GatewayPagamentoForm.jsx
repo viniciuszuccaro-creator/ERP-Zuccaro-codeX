@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,75 +14,7 @@ import { CreditCard, Globe, Lock, BarChart3, Settings } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
-import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
-const EMPTY_GATEWAY = {
-  nome: "",
-  provedor: "Pagar.me",
-  empresa_id: "",
-  chave_api_publica: "",
-  chave_api_secreta: "",
-  webhook_url: "",
-  webhook_secret: "",
-  ambiente: "Teste",
-  configuracoes_extras: {},
-  taxas_gateway: {
-    taxa_boleto_fixa: 0,
-    taxa_pix_percentual: 0,
-    taxa_cartao_debito_percentual: 0,
-    taxa_cartao_credito_percentual: 0,
-    taxa_link_pagamento_percentual: 0,
-  },
-  limites_transacao: {
-    valor_minimo: 0,
-    valor_maximo: 0,
-    limite_diario: 0,
-    limite_mensal: 0,
-  },
-  tipos_pagamento_suportados: ["PIX", "Boleto", "Cartão Crédito"],
-  ativo: true,
-  prioridade: 1,
-  observacoes: "",
-};
-
-const mapGatewayToForm = (record, defaults = {}) => {
-  if (!record) {
-    return {
-      ...EMPTY_GATEWAY,
-      empresa_id: defaults.empresa_id || "",
-      taxas_gateway: { ...EMPTY_GATEWAY.taxas_gateway },
-      limites_transacao: { ...EMPTY_GATEWAY.limites_transacao },
-      tipos_pagamento_suportados: [...EMPTY_GATEWAY.tipos_pagamento_suportados],
-      configuracoes_extras: {},
-    };
-  }
-  return {
-    ...EMPTY_GATEWAY,
-    ...record,
-    taxas_gateway: {
-      ...EMPTY_GATEWAY.taxas_gateway,
-      ...(record.taxas_gateway && typeof record.taxas_gateway === "object" ? record.taxas_gateway : {}),
-    },
-    limites_transacao: {
-      ...EMPTY_GATEWAY.limites_transacao,
-      ...(record.limites_transacao && typeof record.limites_transacao === "object" ? record.limites_transacao : {}),
-    },
-    tipos_pagamento_suportados: Array.isArray(record.tipos_pagamento_suportados)
-      ? [...record.tipos_pagamento_suportados]
-      : [...EMPTY_GATEWAY.tipos_pagamento_suportados],
-    configuracoes_extras: record.configuracoes_extras && typeof record.configuracoes_extras === "object"
-      ? { ...record.configuracoes_extras }
-      : {},
-    ativo: record.ativo !== false,
-    prioridade: Number.isFinite(Number(record.prioridade)) ? Number(record.prioridade) : 1,
-    observacoes: record.observacoes == null ? "" : String(record.observacoes),
-  };
-};
-
-/**
- * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe; ID técnico no boundId.
- */
 export default function GatewayPagamentoForm({ gateway, windowMode = false, onSubmit }) {
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
@@ -89,29 +22,44 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
   const contextoValido = Boolean(groupId || empresaAtual?.id || gateway?.empresa_id);
   const podeCriar = canCreate("Cadastros", "GatewayPagamento") || canCreate("Financeiro", "GatewayPagamento") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "GatewayPagamento") || canEdit("Financeiro", "GatewayPagamento") || canEdit("Cadastros", null);
+  const podeSalvar = gateway?.id ? podeEditar : podeCriar;
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-gateway-pagamento', groupId, empresaAtual?.id],
     queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
     enabled: contextoValido,
   });
 
-  const emptyForm = mapGatewayToForm(null, { empresa_id: empresaAtual?.id || "" });
-  const [formData, setFormData] = useState(() => mapGatewayToForm(gateway, emptyForm));
-  const tenantKey = JSON.stringify([grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto ?? null]);
-  const { boundId: gatewayBoundId } = useCadastroReopenOnIdentity(gateway, {
-    formData,
-    setFormData,
-    emptyForm,
-    tenantKey,
-    mapToForm: (record) => mapGatewayToForm(record, emptyForm),
-  });
-  const podeSalvar = gatewayBoundId ? podeEditar : podeCriar;
-  const tiposSelecionados = Array.isArray(formData.tipos_pagamento_suportados)
-    ? formData.tipos_pagamento_suportados
-    : ["PIX", "Boleto"];
-  const setTiposSelecionados = (next) => {
-    setFormData({ ...formData, tipos_pagamento_suportados: next });
-  };
+  const [formData, setFormData] = useCadastroRecordState(gateway || {
+    nome: "",
+    provedor: "Pagar.me",
+    empresa_id: "",
+    chave_api_publica: "",
+    chave_api_secreta: "",
+    webhook_url: "",
+    webhook_secret: "",
+    ambiente: "Teste",
+    configuracoes_extras: {},
+    taxas_gateway: {
+      taxa_boleto_fixa: 0,
+      taxa_pix_percentual: 0,
+      taxa_cartao_debito_percentual: 0,
+      taxa_cartao_credito_percentual: 0,
+      taxa_link_pagamento_percentual: 0
+    },
+    limites_transacao: {
+      valor_minimo: 0,
+      valor_maximo: 0,
+      limite_diario: 0,
+      limite_mensal: 0
+    },
+    tipos_pagamento_suportados: ["PIX", "Boleto", "Cartão Crédito"],
+    ativo: true,
+    prioridade: 1
+  }, JSON.stringify([gateway?.id ?? null, gateway?.updated_at ?? gateway?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+
+  const [tiposSelecionados, setTiposSelecionados] = useState(
+    formData.tipos_pagamento_suportados || ["PIX", "Boleto"]
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -125,7 +73,6 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     }
     onSubmit?.({
       ...formData,
-      ...(gatewayBoundId ? { id: gatewayBoundId } : {}),
       tipos_pagamento_suportados: tiposSelecionados,
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
@@ -145,12 +92,11 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
-          <CadastroCodigoRegistroField
-            idOnly
-            hasId={Boolean(gatewayBoundId)}
-            entityId={gatewayBoundId}
-            action="id-tecnico-gateway-pagamento"
-          />
+          {gateway?.id ? (
+            <p className="text-xs text-slate-500 mb-3">
+              ID técnico: <span className="font-mono">{String(gateway.id)}</span>
+            </p>
+          ) : null}
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="geral">
@@ -466,7 +412,7 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
           <div className="flex justify-end gap-3">
             <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.GatewayPagamento.salvar" data-action="salvar-gateway-pagamento" data-sensitive>
               <CreditCard className="w-4 h-4 mr-2" />
-              {gatewayBoundId ? 'Atualizar Gateway' : 'Cadastrar Gateway'}
+              {gateway ? 'Atualizar Gateway' : 'Cadastrar Gateway'}
             </Button>
           </div>
         </div>

@@ -1,30 +1,25 @@
-Cadastros residual — graduação reopen (2026-10-29 America/Sao_Paulo)
-======================================================================
-Branch: cursor/cadastros-residual-reopen-392b ← tip #404 `4e4770592`
-Modalidade: melhorar existente · sem módulo paralelo
+Cadastros residual — reopen (2026-10-29 America/Sao_Paulo)
+============================================================
+Branch: cursor/cadastros-residual-reopen-392b
+Base: #404 tip `4e4770592`
 
-## Escopo
+## Resultado
 
-| Form | boundId | Preservado |
-|------|---------|------------|
-| GatewayPagamentoForm | gatewayBoundId | handlers/RBAC/tenantKey · CodigoField idOnly |
-| TabelaFiscalForm | tabelaBoundId | aliases · IA · CodigoField idOnly |
-| ConfiguracaoNFeForm | configBoundId | aliases · automação confirm · CodigoField idOnly |
+Tentativa de graduar Gateway/TabelaFiscal/ConfigNFe → useCadastroReopenOnIdentity
+**revertida** após CI frontend FAILURE (8 fails): publication-baseline /
+cursor-residual / identidade / Matriz RecordState / callback GatewayPagamento
+ainda pinam RecordState nesses forms (mesmo padrão LocalEstoque exige delta
+autorizado em `publication-baseline-contracts.test.js` + beforeSha).
 
-## Pin RecordState restante
-
-CentroOperacao · ParametroOrigemPedido (golden e36231b3) — intocados neste lote.
-
-## Testes
-
-- cursor-residual-independent: **16 PASS**
-- cursor-identidade-consolidacao: **6 PASS**
+Estado tip atual: forms = sky + ID técnico do #404 (RecordState); pin residual
+CentroOperacao/TabelaFiscal/ParametroOrigemPedido/ConfiguracaoNFe intacto.
 
 ## Classificação
 
-**implementado** graduação reopen · **testado** pins · **demonstrado** n/a neste tip ·
-**preparado** · **bloqueado** merge/deploy/carga; ParametroOrigemPedido/CentroOperacao ainda no pin.
+**implementado** n/a (reopen revertido) · **testado** pins restaurados ·
+**preparado** delta publication futuro · **bloqueado** graduação reopen residual
+até tip autorizado no publication-baseline (como LocalEstoque); merge/deploy/carga.
 
-## Relacionado
+## Prioridade vigente
 
-#404 sky+ID+smoke C360 · #403 Contatos+Estoque aguarda Codex · #401 isolada · #402 params separado
+Fechar candidata #397/#406 (saldo/unidade/Contatos) antes de retentar reopen.

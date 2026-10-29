@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -11,71 +12,34 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { requireAutomacaoHumanConfirm } from "@/components/lib/automacaoAvancadaPolicy";
-import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
-import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
-const EMPTY_CONFIG_NFE = {
-  provedor: "eNotas",
-  api_url: "",
-  api_key: "",
-  certificado_digital_url: "",
-  senha_certificado: "",
-  ambiente: "Homologação",
-  serie_nfe: "1",
-  proximo_numero: 1,
-  emitir_automatico: false,
-  enviar_email_automatico: true,
-  ativo: true,
-  autoriza_emissao_producao: false,
-  observacoes: "",
-};
-
-const mapConfigNFeToForm = (record) => {
-  if (!record) return { ...EMPTY_CONFIG_NFE };
-  return {
-    ...EMPTY_CONFIG_NFE,
-    ...record,
-    proximo_numero: record.proximo_numero === "" || record.proximo_numero == null
-      ? ""
-      : (Number.isFinite(Number(record.proximo_numero)) ? Number(record.proximo_numero) : 1),
-    emitir_automatico: Boolean(record.emitir_automatico),
-    enviar_email_automatico: record.enviar_email_automatico !== false,
-    ativo: record.ativo !== false,
-    autoriza_emissao_producao: Boolean(record.autoriza_emissao_producao),
-    observacoes: record.observacoes == null ? "" : String(record.observacoes),
-  };
-};
-
-/**
- * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe; ID técnico no boundId.
- */
 export default function ConfiguracaoNFeForm({ config: configProp = undefined, item = undefined, data = undefined, initialData = undefined, defaultValues = undefined, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
   const config = configProp || item || data || initialData || defaultValues || null;
   const { toast } = useToast();
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
   const [localSubmitting, setLocalSubmitting] = useState(false);
-  const emptyForm = mapConfigNFeToForm(null);
-  const [formData, setFormData] = useState(() => mapConfigNFeToForm(config));
-  const tenantKey = JSON.stringify([
-    grupoAtual?.id ?? null,
-    empresaAtual?.id ?? null,
-    groupId ?? null,
-    empresaId ?? null,
-  ]);
-  const { boundId: configBoundId } = useCadastroReopenOnIdentity(config, {
-    formData,
-    setFormData,
-    emptyForm,
-    tenantKey,
-    mapToForm: mapConfigNFeToForm,
-  });
+  const [formData, setFormData] = useCadastroRecordState(config || {
+    provedor: "eNotas",
+    api_url: "",
+    api_key: "",
+    certificado_digital_url: "",
+    senha_certificado: "",
+    ambiente: "Homologação",
+    serie_nfe: "1",
+    proximo_numero: 1,
+    emitir_automatico: false,
+    enviar_email_automatico: true,
+    ativo: true,
+    autoriza_emissao_producao: false,
+    observacoes: ""
+  }, JSON.stringify([config?.id ?? null, config?.updated_at ?? config?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, groupId, empresaId]));
   const grupoIdAtual = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaIdAtual = empresaId || empresaAtual?.id || null;
   const scope = scopeProp || (empresaIdAtual ? { empresa_id: empresaIdAtual, group_id: grupoIdAtual } : null);
   const contextoValido = Boolean(empresaIdAtual && (grupoIdAtual || scope?.group_id));
   const salvando = !!isSubmitting || localSubmitting;
-  const podeSalvar = configBoundId
+  const podeSalvar = config?.id
     ? (canEdit("Fiscal", "ConfiguracaoNFe") || canEdit("Fiscal", "NF-e") || canEdit("Fiscal", "NotaFiscal"))
     : (canCreate("Fiscal", "ConfiguracaoNFe") || canCreate("Fiscal", "NF-e") || canCreate("Fiscal", "NotaFiscal"));
   const podeAutorizarProducao = hasPermission("Fiscal", "ConfiguracaoNFe", "configurar")
@@ -98,14 +62,7 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
       return;
     }
 
-    const payload = {
-      ...formData,
-      ...(configBoundId ? { id: configBoundId } : {}),
-      nome: formData.nome || (formData.provedor + ' - ' + formData.ambiente),
-      ...scope,
-      empresa_id: empresaIdAtual,
-      group_id: grupoIdAtual || scope?.group_id,
-    };
+    const payload = { ...formData, nome: formData.nome || (formData.provedor + ' - ' + formData.ambiente), ...scope, empresa_id: empresaIdAtual, group_id: grupoIdAtual || scope?.group_id };
 
     if (onSubmit) {
       await onSubmit(payload);
@@ -114,11 +71,11 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
 
     setLocalSubmitting(true);
     try {
-      const existentes = configBoundId
+      const existentes = config?.id
         ? []
         : await filterInContext('ConfiguracaoNFe', { nome: payload.nome, ...scope }, undefined, 1);
-      const result = configBoundId
-        ? await updateInContext('ConfiguracaoNFe', configBoundId, payload)
+      const result = config?.id
+        ? await updateInContext('ConfiguracaoNFe', config.id, payload)
         : existentes?.[0]?.id
           ? await updateInContext('ConfiguracaoNFe', existentes[0].id, { ...existentes[0], ...payload })
           : await createInContext('ConfiguracaoNFe', payload);
@@ -141,12 +98,11 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <CadastroCodigoRegistroField
-            idOnly
-            hasId={Boolean(configBoundId)}
-            entityId={configBoundId}
-            action="id-tecnico-configuracao-nfe"
-          />
+          {config?.id ? (
+            <p className="text-xs text-slate-500">
+              ID técnico: <span className="font-mono">{String(config.id)}</span>
+            </p>
+          ) : null}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Provedor *</Label>
@@ -302,7 +258,7 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
       <div className="flex justify-end gap-3">
         <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={salvando || !contextoValido || !podeSalvar} data-action="Fiscal.NFe.salvar">
           <Save className="w-4 h-4 mr-2" />
-          {salvando ? 'Salvando...' : configBoundId ? 'Atualizar' : 'Criar'}
+          {salvando ? 'Salvando...' : config ? 'Atualizar' : 'Criar'}
         </Button>
       </div>
     </form>
@@ -315,7 +271,7 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
           <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
             <FileText className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
-              {configBoundId ? 'Editar Configuração NF-e' : 'Nova Configuração NF-e'}
+              {config ? 'Editar Configuração NF-e' : 'Nova Configuração NF-e'}
             </h2>
           </div>
           {form}

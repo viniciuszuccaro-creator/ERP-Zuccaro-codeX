@@ -4,15 +4,8 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import ts from 'typescript';
 const parse = (file, source) => ts.createSourceFile(file, source.replace(/\r\n/g, '\n'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
-const names = ['CentroOperacao', 'ParametroOrigemPedido'];
-// LocalEstoque / TabelaFiscal / ConfiguracaoNFe / GatewayPagamento graduaram —
-// cobertos nos testes de graduação (não no pin RecordState).
-const graduatedResidual = {
-  LocalEstoque: { boundId: 'localBoundId', marker: /estrutura_fisica/ },
-  TabelaFiscal: { boundId: 'tabelaBoundId', marker: /mapTabelaFiscalToForm/ },
-  ConfiguracaoNFe: { boundId: 'configBoundId', marker: /mapConfigNFeToForm/ },
-  GatewayPagamento: { boundId: 'gatewayBoundId', marker: /mapGatewayToForm/ },
-};
+const names = ['CentroOperacao', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];
+// LocalEstoque graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).
 function find(tree, predicate) {
   const found = [];
   function visit(node) { if (predicate(node)) found.push(node); ts.forEachChild(node, visit); }
@@ -37,18 +30,16 @@ for (const name of names) test(`${name}: reopen keeps complete default values, h
   assert.deepEqual(controls(after), controls(before));
 });
 
-for (const [name, { boundId, marker }] of Object.entries(graduatedResidual)) {
-  test(`${name} graduou do pin RecordState para useCadastroReopenOnIdentity com ${boundId}`, () => {
-    const file = `src/components/cadastros/${name}Form.jsx`;
-    const source = fs.readFileSync(file, 'utf8');
-    assert.equal(names.includes(name), false);
-    assert.match(source, /useCadastroReopenOnIdentity/);
-    assert.match(source, new RegExp(boundId));
-    assert.match(source, marker);
-    assert.doesNotMatch(source, /useCadastroRecordState/);
-    assert.doesNotMatch(source, /prevUpdatedRef/);
-  });
-}
+test('LocalEstoque graduou do pin RecordState para useCadastroReopenOnIdentity com localBoundId', () => {
+  const file = 'src/components/cadastros/LocalEstoqueForm.jsx';
+  const source = fs.readFileSync(file, 'utf8');
+  assert.equal(names.includes('LocalEstoque'), false);
+  assert.match(source, /useCadastroReopenOnIdentity/);
+  assert.match(source, /localBoundId/);
+  assert.match(source, /estrutura_fisica/);
+  assert.doesNotMatch(source, /useCadastroRecordState/);
+  assert.doesNotMatch(source, /prevUpdatedRef/);
+});
 
 for (const [name, variable, primary] of [['TabelaFiscal', 'tabela', 'tabelaProp'], ['ParametroOrigemPedido', 'parametro', 'parametroProp'], ['ConfiguracaoNFe', 'config', 'configProp']]) {
   test(`${name}: aliases use the same normalized record in every existing permission/save handler`, () => {

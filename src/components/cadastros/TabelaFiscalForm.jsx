@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,68 +15,11 @@ import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
-import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * FORMULÁRIO DE TABELA FISCAL V21.2 - FASE 2
  * Configurações fiscais por empresa, regime e cenário
  * Com IA de Compliance Fiscal integrada
- */
-const EMPTY_TABELA_FISCAL = {
-  nome_regra: "",
-  empresa_id: "",
-  regime_tributario: "Simples Nacional",
-  cenario_operacao: "Venda Consumidor Final",
-  ncm: "",
-  cfop: "",
-  destino_operacao: "Dentro do Estado",
-  tipo_cliente: "Pessoa Física",
-  icms_cst_csosn: "",
-  icms_aliquota: 0,
-  icms_reducao_base: 0,
-  icms_st_aliquota: 0,
-  icms_st_mva: 0,
-  pis_cst: "",
-  pis_aliquota: 0,
-  cofins_cst: "",
-  cofins_aliquota: 0,
-  ipi_cst: "",
-  ipi_aliquota: 0,
-  fcp_aliquota: 0,
-  diferencial_aliquota: 0,
-  origem_mercadoria: "0 - Nacional",
-  regra_ativa: true,
-  prioridade: 100,
-};
-
-const mapTabelaFiscalToForm = (record, defaults = {}) => {
-  if (!record) {
-    return {
-      ...EMPTY_TABELA_FISCAL,
-      empresa_id: defaults.empresa_id || "",
-    };
-  }
-  const num = (v, fallback = 0) => (Number.isFinite(Number(v)) ? Number(v) : fallback);
-  return {
-    ...EMPTY_TABELA_FISCAL,
-    ...record,
-    icms_aliquota: num(record.icms_aliquota),
-    icms_reducao_base: num(record.icms_reducao_base),
-    icms_st_aliquota: num(record.icms_st_aliquota),
-    icms_st_mva: num(record.icms_st_mva),
-    pis_aliquota: num(record.pis_aliquota),
-    cofins_aliquota: num(record.cofins_aliquota),
-    ipi_aliquota: num(record.ipi_aliquota),
-    fcp_aliquota: num(record.fcp_aliquota),
-    diferencial_aliquota: num(record.diferencial_aliquota),
-    prioridade: num(record.prioridade, 100),
-    regra_ativa: record.regra_ativa !== false,
-  };
-};
-
-/**
- * Reopen canônico (#353): useCadastroReopenOnIdentity — anti-wipe; ID técnico no boundId.
  */
 export default function TabelaFiscalForm({ 
   tabela: tabelaProp = undefined,
@@ -92,18 +36,35 @@ export default function TabelaFiscalForm({
   const podeCriar = hasPermission?.("Cadastros.TabelaFiscal.criar") || hasPermission?.("Financeiro.TabelaFiscal.criar");
   const podeEditar = hasPermission?.("Cadastros.TabelaFiscal.editar") || hasPermission?.("Financeiro.TabelaFiscal.editar");
   const podeUsarIA = hasPermission?.("Cadastros.TabelaFiscal.ia") || hasPermission?.("Financeiro.TabelaFiscal.ia") || podeEditar || podeCriar;
+  const podeSalvar = tabela?.id ? podeEditar : podeCriar;
 
-  const emptyForm = mapTabelaFiscalToForm(null, { empresa_id: empresaAtual?.id || "" });
-  const [formData, setFormData] = useState(() => mapTabelaFiscalToForm(tabela, emptyForm));
-  const tenantKey = JSON.stringify([grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto ?? null]);
-  const { boundId: tabelaBoundId } = useCadastroReopenOnIdentity(tabela, {
-    formData,
-    setFormData,
-    emptyForm,
-    tenantKey,
-    mapToForm: (record) => mapTabelaFiscalToForm(record, emptyForm),
-  });
-  const podeSalvar = tabelaBoundId ? podeEditar : podeCriar;
+  const [formData, setFormData] = useCadastroRecordState({
+    nome_regra: "",
+    empresa_id: "",
+    regime_tributario: "Simples Nacional",
+    cenario_operacao: "Venda Consumidor Final",
+    ncm: "",
+    cfop: "",
+    destino_operacao: "Dentro do Estado",
+    tipo_cliente: "Pessoa Física",
+    icms_cst_csosn: "",
+    icms_aliquota: 0,
+    icms_reducao_base: 0,
+    icms_st_aliquota: 0,
+    icms_st_mva: 0,
+    pis_cst: "",
+    pis_aliquota: 0,
+    cofins_cst: "",
+    cofins_aliquota: 0,
+    ipi_cst: "",
+    ipi_aliquota: 0,
+    fcp_aliquota: 0,
+    diferencial_aliquota: 0,
+    origem_mercadoria: "0 - Nacional",
+    regra_ativa: true,
+    prioridade: 100,
+    ...tabela
+  }, JSON.stringify([tabela?.id ?? null, tabela?.updated_at ?? tabela?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const [abaAtiva, setAbaAtiva] = useState("configuracao");
   const [validandoIA, setValidandoIA] = useState(false);
@@ -203,7 +164,6 @@ Seja preciso e cite a legislação aplicável.`,
     if (onSubmit) {
       onSubmit({
         ...formData,
-        ...(tabelaBoundId ? { id: tabelaBoundId } : {}),
         empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
         group_id: groupId || formData.group_id,
         nome: formData.nome_regra,
@@ -262,12 +222,11 @@ Seja preciso e cite a legislação aplicável.`,
             </Alert>
           )}
 
-          <CadastroCodigoRegistroField
-            idOnly
-            hasId={Boolean(tabelaBoundId)}
-            entityId={tabelaBoundId}
-            action="id-tecnico-tabela-fiscal"
-          />
+          {tabela?.id ? (
+            <p className="text-xs text-slate-500 mb-3">
+              ID técnico: <span className="font-mono">{String(tabela.id)}</span>
+            </p>
+          ) : null}
 
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
             <TabsList className="grid grid-cols-3 w-full">
