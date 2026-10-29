@@ -1,5 +1,12 @@
 
 
+## CURSOR — #404 CI SUCCESS tip d33418caff (2026-10-29 08:25 America/Sao_Paulo)
+
+- PR **#404** tip **`d33418caff`** — CI SUCCESS `40863692132` / `40863688678`. **≠ merge.**
+- Residual sky+ID Gateway/TabelaFiscal/ConfigNFe (pin RecordState).
+- #403 Contatos+Estoque `8b08b55ccd` CI SUCCESS — `@codex review` pedido.
+- #401 `8026b2298` isolada. Próximo: evidência C360 (franquia) ou graduação reopen. Sem merge/deploy/carga.
+
 ## CURSOR — residual Cadastros sky+ID (2026-10-29 08:20 America/Sao_Paulo)
 
 - Branch indep. `cursor/cadastros-residual-sky-id-392b` (base tip #403).

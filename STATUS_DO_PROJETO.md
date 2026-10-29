@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#404 residual sky+ID CI SUCCESS) (2026-10-29 08:25 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#404** `cursor/cadastros-residual-sky-id-392b` ← #403 |
+| **Tip** | **`d33418caff`** — CI SUCCESS `40863692132` / `40863688678` — **≠ merge** |
+| **Escopo** | Gateway / TabelaFiscal / ConfigNFe — sky + ID técnico (pin RecordState) |
+| **#403** | tip código `8b08b55ccd` CI SUCCESS — `@codex review` pedido |
+| **#401** | `8026b2298` isolada |
+| Fora | graduação reopen; merge/deploy/carga; demo C360 = owner Private 5173 |
+
+**Evidência:** `docs/evidence/cadastros-residual-sky-id-20261029.txt`
+**Próximo:** demo/evidência C360 no existente (franquia) OU graduação reopen residual. Sem merge/deploy.
+
+(2026-10-29 08:25 America/Sao_Paulo)
+
 ## CURSOR — residual Cadastros sky+ID (indep.) (2026-10-29 08:20 America/Sao_Paulo)
 
 | Campo | Valor |
