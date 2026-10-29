@@ -103,6 +103,8 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       await Promise.resolve(onChange(contatosAtualizados));
       setDialogAberto(false);
       resetForm();
+    } catch {
+      // Mantém diálogo/form; pai já notificou e reverteu rascunho (Codex P2 #4410875120).
     } finally {
       setSalvando(false);
     }
@@ -143,6 +145,8 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
     setSalvando(true);
     try {
       await Promise.resolve(onChange(contatosAtualizados));
+    } catch {
+      // Pai notifica/reverte; lista prop permanece a confirmada.
     } finally {
       setSalvando(false);
     }

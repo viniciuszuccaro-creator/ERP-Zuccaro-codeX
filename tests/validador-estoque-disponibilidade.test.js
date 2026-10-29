@@ -64,10 +64,53 @@ test('avaliarDisponibilidadeLinhasEstoque: produto fora do escopo / empresa ≠ 
   assert.equal(resumoDisponibilidadeEstoque(rows).algumIndisponivel, true);
 });
 
-test('OrcamentosTab: conversão usa ValidadorEstoque e bloqueia submit sem estoque', async () => {
+test('P2 #4410761988: agrega demanda do mesmo produto nas linhas', async () => {
+  const { avaliarDisponibilidadeLinhasEstoque, resumoDisponibilidadeEstoque } = await loadHelpers();
+  const produtos = [{ id: 'p1', estoque_atual: 10, estoque_reservado: 0 }];
+  const rows = avaliarDisponibilidadeLinhasEstoque(
+    [
+      { produto_id: 'p1', quantidade: 6, descricao: 'L1' },
+      { produto_id: 'p1', quantidade: 6, descricao: 'L2' },
+    ],
+    produtos,
+  );
+  assert.equal(rows[0].disponivel, true);
+  assert.equal(rows[0].disponivelLiquido, 10);
+  assert.equal(rows[1].disponivel, false, '2ª linha consome saldo já usado pela 1ª');
+  assert.equal(rows[1].disponivelLiquido, 4);
+  assert.equal(rows[1].falta, 2);
+  assert.equal(resumoDisponibilidadeEstoque(rows).todosDisponiveis, false);
+  assert.equal(resumoDisponibilidadeEstoque(rows).algumIndisponivel, true);
+});
+
+test('P1 #4410814402: sem fonte local autoritativa não bloqueia como estoque insuficiente', async () => {
+  const { avaliarDisponibilidadeLinhasEstoque, resumoDisponibilidadeEstoque } = await loadHelpers();
+  const rows = avaliarDisponibilidadeLinhasEstoque(
+    [{ produto_id: 'http-only', quantidade: 5, descricao: 'Canônico' }],
+    [],
+    { fonteLocalAutoritativa: false },
+  );
+  assert.equal(rows[0].fonteIndisponivel, true);
+  assert.equal(rows[0].disponivel, false);
+  const resumo = resumoDisponibilidadeEstoque(rows);
+  assert.equal(resumo.fontePronta, false);
+  assert.equal(resumo.fonteIndisponivel, true);
+  assert.equal(resumo.algumIndisponivel, false, 'ausência de fonte ≠ estoque insuficiente');
+});
+
+test('OrcamentosTab: conversão usa ValidadorEstoque e bloqueia submit sem estoque autoritativo', async () => {
   const src = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   assert.match(src, /ValidadorEstoquePedido/);
   assert.match(src, /conversionStockOk/);
   assert.match(src, /Estoque insuficiente ou indisponível/);
   assert.match(src, /disabled=\{submitting \|\| !conversionStockOk\}/);
+  assert.match(src, /fontePronta/);
+});
+
+test('ValidadorEstoquePedido: HTTP advisory não consulta store local como autoritativo', async () => {
+  const src = await readFile(new URL('../src/components/comercial/ValidadorEstoquePedido.jsx', import.meta.url), 'utf8');
+  assert.match(src, /resolveErpBackendMode/);
+  assert.match(src, /fonteLocalAutoritativa/);
+  assert.match(src, /http-advisory|http-sem-fonte-operacional/);
+  assert.match(src, /demandaAcumulada/);
 });

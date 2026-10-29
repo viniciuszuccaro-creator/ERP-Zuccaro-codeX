@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { resolveErpBackendMode } from "@/api/runtimeBackend";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Box, Package } from "lucide-react";
@@ -19,19 +20,37 @@ export function estoqueLiquidoDisponivel(produto) {
 
 /**
  * Avalia linhas de pedido/orçamento contra o mapa de produtos do escopo.
+ * Agrega demanda do mesmo produto nas linhas anteriores (Codex P2 #4410761988).
  * Aceita `itens` canônico ou `itens_revenda` legado — sem cadastro paralelo.
+ * @param {object[]} [itens]
+ * @param {object[]} [produtos]
+ * @param {{ fonteLocalAutoritativa?: boolean }} [options]
  */
-export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = []) {
+export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = [], options = {}) {
   const lista = Array.isArray(itens) ? itens : [];
   const catalog = Array.isArray(produtos) ? produtos : [];
+  const fonteLocalAutoritativa = options.fonteLocalAutoritativa !== false;
+  /** @type {Map<string, number>} */
+  const demandaAcumulada = new Map();
   return lista.map((item) => {
-    const produto = catalog.find((p) => p.id === item.produto_id) || null;
+    const produtoId = item?.produto_id;
+    const produto = catalog.find((p) => p.id === produtoId) || null;
     const quantidadeNecessaria = Number(item.quantidade || 0);
+    const produtoAusente = !produto;
+    // HTTP: master/store local ≠ saldo operacional canônico (Codex P1 #4410814402).
+    const fonteIndisponivel = !fonteLocalAutoritativa;
     const estoqueAtual = Number(produto?.estoque_atual || 0);
     const estoqueReservado = Number(produto?.estoque_reservado || 0);
-    const disponivelLiquido = estoqueLiquidoDisponivel(produto);
-    const disponivel = Boolean(produto) && disponivelLiquido >= quantidadeNecessaria;
+    const liquidoTotal = estoqueLiquidoDisponivel(produto);
+    const jaConsumido = demandaAcumulada.get(produtoId) || 0;
+    const disponivelLiquido = Math.max(0, liquidoTotal - jaConsumido);
+    const disponivel = !fonteIndisponivel
+      && Boolean(produto)
+      && disponivelLiquido >= quantidadeNecessaria;
     const falta = Math.max(0, quantidadeNecessaria - disponivelLiquido);
+    if (produtoId != null && produtoId !== "") {
+      demandaAcumulada.set(produtoId, jaConsumido + Math.max(0, quantidadeNecessaria));
+    }
     return {
       item,
       produto,
@@ -40,18 +59,23 @@ export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = []) {
       disponivelLiquido,
       quantidadeNecessaria,
       disponivel,
-      falta,
-      produtoAusente: !produto,
+      falta: fonteIndisponivel ? 0 : falta,
+      produtoAusente,
+      fonteIndisponivel,
     };
   });
 }
 
 export function resumoDisponibilidadeEstoque(verificacoes) {
   const list = Array.isArray(verificacoes) ? verificacoes : [];
+  const authoritative = list.filter((v) => !v.fonteIndisponivel);
+  const fontePronta = list.length === 0 || authoritative.length === list.length;
   return {
-    todosDisponiveis: list.length > 0 && list.every((v) => v.disponivel),
-    algumIndisponivel: list.some((v) => !v.disponivel),
+    todosDisponiveis: authoritative.length > 0 && authoritative.every((v) => v.disponivel),
+    algumIndisponivel: authoritative.some((v) => !v.disponivel),
     vazio: list.length === 0,
+    fontePronta,
+    fonteIndisponivel: list.some((v) => v.fonteIndisponivel),
   };
 }
 
@@ -73,14 +97,23 @@ export default function ValidadorEstoquePedido({
     ? fonte.itens
     : (Array.isArray(fonte?.itens_revenda) ? fonte.itens_revenda : []);
 
+  // Produto HTTP master não carrega estoque_atual/reservado; piloto de listagem
+  // também exclui Produto. Em HTTP o store local não é fonte autoritativa.
+  const httpMode = resolveErpBackendMode() === 'http';
+  const fonteLocalAutoritativa = !httpMode;
+
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaId],
-    queryFn: () => base44.entities.Produto.filter({ empresa_id: empresaId }),
-    enabled: !!empresaId
+    queryKey: ['produtos-estoque-validacao', empresaId, fonteLocalAutoritativa ? 'local' : 'http-advisory'],
+    queryFn: () => (
+      fonteLocalAutoritativa
+        ? base44.entities.Produto.filter({ empresa_id: empresaId })
+        : Promise.resolve([])
+    ),
+    enabled: !!empresaId && fonteLocalAutoritativa,
   });
 
-  const verificacoes = avaliarDisponibilidadeLinhasEstoque(itens, produtos);
-  const { todosDisponiveis, algumIndisponivel, vazio } = resumoDisponibilidadeEstoque(verificacoes);
+  const verificacoes = avaliarDisponibilidadeLinhasEstoque(itens, produtos, { fonteLocalAutoritativa });
+  const { todosDisponiveis, algumIndisponivel, vazio, fontePronta, fonteIndisponivel } = resumoDisponibilidadeEstoque(verificacoes);
 
   React.useEffect(() => {
     if (typeof onAvailabilityChange !== 'function') return;
@@ -88,9 +121,11 @@ export default function ValidadorEstoquePedido({
       todosDisponiveis,
       algumIndisponivel,
       vazio,
-      ready: Boolean(empresaId),
+      fontePronta,
+      fonteIndisponivel,
+      ready: Boolean(empresaId) && (vazio || fontePronta),
     });
-  }, [todosDisponiveis, algumIndisponivel, vazio, empresaId, onAvailabilityChange]);
+  }, [todosDisponiveis, algumIndisponivel, vazio, fontePronta, fonteIndisponivel, empresaId, onAvailabilityChange]);
 
   if (vazio) {
     return (
@@ -113,15 +148,24 @@ export default function ValidadorEstoquePedido({
     );
   }
 
+  const cardTone = fonteIndisponivel
+    ? 'border-amber-300 bg-amber-50'
+    : (algumIndisponivel ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50');
+
   return (
-    <Card className={`border-2 ${algumIndisponivel ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+    <Card className={`border-2 ${cardTone}`} data-estoque-fonte={fonteLocalAutoritativa ? 'local' : 'http-advisory'}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-slate-900 flex items-center gap-2">
             <Box className="w-5 h-5" />
             Validação de Estoque
           </h3>
-          {todosDisponiveis ? (
+          {fonteIndisponivel ? (
+            <Badge className="bg-amber-600">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              Fonte canônica pendente
+            </Badge>
+          ) : todosDisponiveis ? (
             <Badge className="bg-green-600">
               <CheckCircle2 className="w-3 h-3 mr-1" />
               Estoque OK
@@ -133,6 +177,16 @@ export default function ValidadorEstoquePedido({
             </Badge>
           )}
         </div>
+
+        {fonteIndisponivel ? (
+          <div className="mb-3 p-3 bg-amber-100 border border-amber-300 rounded" data-estoque-advisory="http-sem-fonte-operacional">
+            <p className="text-sm text-amber-900">
+              Saldo operacional canônico (grupo/empresa) ainda não está conectado a esta conversão HTTP.
+              O cadastro master/store local não é fonte de estoque — a UI não bloqueia por ausência local;
+              reserva/baixa permanece no backend canônico quando disponível.
+            </p>
+          </div>
+        ) : null}
 
         <Table>
           <TableHeader>
@@ -150,16 +204,25 @@ export default function ValidadorEstoquePedido({
                   {v.item.descricao || v.item.produto_descricao || v.produto?.nome || v.item.produto_id}
                 </TableCell>
                 <TableCell>{v.quantidadeNecessaria}</TableCell>
-                <TableCell className={v.disponivel ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                  {v.produtoAusente ? '—' : v.disponivelLiquido}
-                  {!v.produtoAusente && v.estoqueReservado > 0 ? (
+                <TableCell className={
+                  v.fonteIndisponivel
+                    ? "text-amber-700 font-semibold"
+                    : (v.disponivel ? "text-green-600 font-semibold" : "text-red-600 font-semibold")
+                }>
+                  {v.fonteIndisponivel || v.produtoAusente ? '—' : v.disponivelLiquido}
+                  {!v.fonteIndisponivel && !v.produtoAusente && v.estoqueReservado > 0 ? (
                     <span className="block text-xs font-normal text-slate-500">
                       atual {v.estoqueAtual} · reservado {v.estoqueReservado}
                     </span>
                   ) : null}
                 </TableCell>
                 <TableCell>
-                  {v.disponivel ? (
+                  {v.fonteIndisponivel ? (
+                    <Badge className="bg-amber-100 text-amber-800">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Sem fonte operacional
+                    </Badge>
+                  ) : v.disponivel ? (
                     <Badge className="bg-green-100 text-green-700">
                       <CheckCircle2 className="w-3 h-3 mr-1" />
                       Disponível

@@ -1,0 +1,33 @@
+#401 composição — caminho de prévia (2026-10-29 America/Sao_Paulo)
+====================================================================
+Composição tip (isolada, sem merge oficial): 8026b2298
+= 397@83499de99 + 342@b5cb34e1 · CI5079/5080 SUCCESS
+Branches oficiais Cursor/Codex: não editadas neste documento.
+
+## Procedimento existente (sem Codespace billing / sem nova composição)
+
+1. Checkout isolado da tip 8026b2298 (worktree ou branch composição já publicada).
+2. Frontend DEV: `npm run dev` → Vite porta 5173 PRIVATE no host do executor.
+3. Rota de proposta: `/Comercial?proposta=comercial360` (sintético; sem gravação operacional).
+4. Smoke opcional: `node scripts/comercial360-preview-smoke.mjs <playwright> <outdir>`
+5. Endpoint DEV: `/__erp_preview` informa SHA/branch quando o servidor local estiver ativo.
+
+## Endereço / dados / backend
+
+| Campo | Valor |
+|-------|-------|
+| SHA servido (candidata composição) | **8026b2298** (quando checkout desta tip) |
+| Backend | local/http híbrido do checkout; **sem** carga operacional neste pacote |
+| Tipo de dados | sintético / fixture DEV · ≠ registros reais/legado |
+| Acesso | Private 5173 no Codespace owner (`potential-xylophone…-5173.app.github.dev`) quando franquia |
+| Runner `/workspace` | sem Codespace autenticado (gh 403) — **não** promete URL contínua daqui |
+
+## Diferenciação
+
+- Testes CI da tip composição: SUCCESS (CI5079/5080) — ≠ aprovação visual
+- Inspeção estática / evidências: docs deste repositório
+- Demonstração navegador: depende do owner no Codespace PRIVATE; não cobrada/não iniciada neste runner
+
+## Fora
+
+merge oficial · deploy · carga SQL · nova candidata paralela · re-resolução de conflitos

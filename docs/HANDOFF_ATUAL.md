@@ -1,5 +1,21 @@
 
 
+## CURSOR — #403 CI SUCCESS tip 8b08b55ccd (2026-10-29 08:10 America/Sao_Paulo)
+
+- PR **#403** tip **`8b08b55ccd`** — CI SUCCESS `40862369100` / `40862326757` (frontend/backend/expedicao). **≠ aprovação/merge.**
+- Fecha Codex P1/P2 Contatos+ValidadorEstoque sobre #397 `83499de99`.
+- Evidência: `docs/evidence/apontamentos-397-codex-p1p2-contatos-estoque-20261029.txt`.
+- **#401 `8026b2298` isolada.** Prévia: `docs/evidence/previa-composicao-401-caminho-20261029.txt`.
+- Pedido `@codex review` tip `8b08b55ccd`. Próximo indep.: residual Cadastros sem violar pin ID-only. Sem merge/deploy/carga.
+
+## CURSOR — Codex P1/P2 Contatos+Estoque (2026-10-29 08:00 America/Sao_Paulo)
+
+- Branch: `cursor/comercial360-codex-p1p2-contatos-estoque-392b` sobre tip #397 `83499de995`/`754a05cfa`.
+- Fecha achados Codex tip: Contatos (empresa stamp / delete≠hydrate / principal escalar / draft revert / reopen get) + Validador (agregação + HTTP advisory ≠ store local).
+- Testes: 33+16 PASS. Evidência: `docs/evidence/apontamentos-397-codex-p1p2-contatos-estoque-20261029.txt`.
+- **#401 `8026b2298` isolada** — caminho prévia: `docs/evidence/previa-composicao-401-caminho-20261029.txt` (Private 5173 owner; runner sem URL contínua).
+- Sem re-resolver composição. Sem merge/deploy/carga. Pedido `@codex review` no tip desta branch.
+
 ## CURSOR checkpoint tip 83499de99 + composição #401 (2026-10-29 07:20 America/Sao_Paulo)
 
 - **PR #397 tip:** `83499de995` — CI SUCCESS `40853365201` (frontend/backend/expedicao). **≠ aprovação/merge/deploy.**

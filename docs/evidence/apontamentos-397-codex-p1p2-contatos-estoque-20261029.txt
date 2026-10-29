@@ -1,0 +1,47 @@
+#397 — Codex P1/P2 Contatos + ValidadorEstoque (2026-10-29 America/Sao_Paulo)
+=======================================================================
+Modalidade: runner /workspace · testes comportamentais + inspeção estática
+≠ demonstração navegador · ≠ merge/deploy/carga
+
+Tip base: 754a05cfa / código 83499de99 (CI5081 SUCCESS)
+Branch: cursor/comercial360-codex-p1p2-contatos-estoque-392b
+
+## Achados tratados (reproduzíveis Codex no tip 83499de99)
+
+P1 #4410761980 — Contatos: updateInContext(..., "group_id") sem carimbar empresa_id no mestre
+P1 #4410814402 — Validador/OrcamentosTab: HTTP não usa store local como fonte autoritativa;
+                 conversionStockOk libera quando fontePronta===false (advisory explícito)
+P2 #4410761988 — Avaliar linhas agregando demanda do mesmo produto_id
+P2 #4410814417 — Persistência não re-hidrata escalares após exclusão explícita
+P2 #4410814424 — stripPrincipal só no contrato escalar HTTP (contatos[] canônico preserva)
+P2 #4410875120 — Falha de gravação: rascunho revertido; diálogo permanece
+P2 #4410939762 — Reabertura: Cliente.get + snapshot vivo (não só prop stale do pai)
+
+## Testes executados (comportamentais)
+
+node --test tests/validador-estoque-disponibilidade.test.js \
+            tests/painel-dinamico-cliente-historico-tab.test.js
+→ 33 PASS / 0 FAIL
+
+node --test tests/orcamento-component-behavior.test.js
+→ 16 PASS / 0 FAIL
+
+## Inspeção estática
+
+- Validador: resolveErpBackendMode + fonteLocalAutoritativa + demandaAcumulada
+- Painel: usesContatosScalarHttpContract; ensure só na semente; persist sem ensure
+- OrcamentosTab: gate usa fontePronta
+
+## Demonstração navegador
+
+Não executada neste lote (Codespace 403 neste runner; Private 5173 = owner).
+Prévia #401 permanece isolada em 8026b2298 — sem nova composição.
+
+## Classificação
+
+implementado: Contatos P1/P2 + Validador agregação/HTTP advisory
+testado: 33+16 PASS focados
+demonstrado: bloqueado (franquia navegador owner)
+recuperado: n/a neste lote
+preparado: PR deste tip sobre #397
+bloqueado: merge/deploy/carga; fonte estoque operacional canônica (ledger) ainda pendente backend
