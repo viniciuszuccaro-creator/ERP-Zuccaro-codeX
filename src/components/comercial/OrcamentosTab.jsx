@@ -23,7 +23,10 @@ import {
   clienteEmpresaPickerLabel,
   filterClienteEmpresaOptions,
   filterProdutoOptions,
+  clienteHydrationSettlementKey,
+  collectSettledClienteHydration,
   mergeComercialSelectedCliente,
+  nextClienteHydrationBatch,
   ORCAMENTO_PERSISTENCE_GAPS,
   produtoPickerLabel,
   resolveComercialMasterPages,
@@ -131,6 +134,9 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const listRows = proposalMode ? [] : listQuery.data?.data || [];
   /** Catálogo acumulado: labels de listagem/PDF/share independentes da página temporária de busca (P2 #4413844021). */
   const [clienteCatalog, setClienteCatalog] = useState({ clientes: [], clientesEmpresa: [] });
+  /** Tentativas terminadas (ok ou 404/erro) por identidade — evita starvation failure-only. */
+  const [clienteHydrationAttemptedIds, setClienteHydrationAttemptedIds] = useState(() => new Set());
+  const [clienteHydrationFailures, setClienteHydrationFailures] = useState(() => ({}));
   const selectedClienteQuery = useQuery({
     queryKey: ['orcamento-selected-cliente', groupId, empresaId, actorId, sessionCacheGeneration, form.cliente_empresa_id],
     queryFn: async ({ signal }) => resolveComercialSelectedCliente(
@@ -152,15 +158,19 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (form.cliente_empresa_id) ids.add(form.cliente_empresa_id);
     return [...ids].filter((id) => isCanonicalComercialId(id));
   }, [listRows, selected?.cliente_empresa_id, editing?.cliente_empresa_id, form.cliente_empresa_id]);
-  // Lote limitado (concorrência); resultados entram em clienteCatalog → fila avança (P2).
+  // Lote limitado; catálogo + tentativas (incl. 404) avançam a fila (P2 residual failure-only).
   const missingClienteEmpresaIds = useMemo(() => {
-    const known = new Set((clienteCatalog.clientesEmpresa || []).map((link) => link.id));
+    const knownLinkIds = (clienteCatalog.clientesEmpresa || []).map((link) => link.id);
     if (selectedClienteQuery.data?.clientesEmpresa?.[0]?.id) {
-      known.add(selectedClienteQuery.data.clientesEmpresa[0].id);
+      knownLinkIds.push(selectedClienteQuery.data.clientesEmpresa[0].id);
     }
-    for (const link of mastersQuery.data?.clientesEmpresa || []) known.add(link.id);
-    return neededClienteEmpresaIds.filter((id) => !known.has(id)).slice(0, 20);
-  }, [neededClienteEmpresaIds, clienteCatalog.clientesEmpresa, selectedClienteQuery.data, mastersQuery.data]);
+    for (const link of mastersQuery.data?.clientesEmpresa || []) knownLinkIds.push(link.id);
+    return nextClienteHydrationBatch(neededClienteEmpresaIds, {
+      knownLinkIds,
+      attemptedIds: clienteHydrationAttemptedIds,
+      limit: 20,
+    });
+  }, [neededClienteEmpresaIds, clienteCatalog.clientesEmpresa, selectedClienteQuery.data, mastersQuery.data, clienteHydrationAttemptedIds]);
   const rowClienteQueries = useQueries({
     queries: missingClienteEmpresaIds.map((clienteEmpresaId) => ({
       queryKey: ['orcamento-row-cliente', groupId, empresaId, actorId, sessionCacheGeneration, clienteEmpresaId],
@@ -174,13 +184,11 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       retry: false,
     })),
   });
-  const rowHydrationKey = rowClienteQueries
-    .map((query) => query.data?.clientesEmpresa?.[0]?.id)
-    .filter(Boolean)
-    .sort()
-    .join(',');
+  const rowHydrationKey = clienteHydrationSettlementKey(rowClienteQueries);
   useEffect(() => {
     setClienteCatalog({ clientes: [], clientesEmpresa: [] });
+    setClienteHydrationAttemptedIds(new Set());
+    setClienteHydrationFailures({});
   }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
   useEffect(() => {
     if (proposalMode || !mastersQuery.data) return undefined;
@@ -194,10 +202,22 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   }, [selectedClienteQuery.data, proposalMode]);
   useEffect(() => {
     if (proposalMode || !rowHydrationKey) return undefined;
+    const settled = collectSettledClienteHydration(rowClienteQueries);
+    setClienteHydrationAttemptedIds((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      for (const id of settled.attemptedIds) {
+        if (!next.has(id)) { next.add(id); changed = true; }
+      }
+      return changed ? next : prev;
+    });
+    if (Object.keys(settled.failures).length) {
+      setClienteHydrationFailures((prev) => ({ ...prev, ...settled.failures }));
+    }
     setClienteCatalog((prev) => {
       let next = prev;
-      for (const query of rowClienteQueries) {
-        if (query.data) next = mergeComercialSelectedCliente(next, query.data);
+      for (const payload of settled.successPayloads) {
+        next = mergeComercialSelectedCliente(next, payload);
       }
       return next;
     });
@@ -405,6 +425,15 @@ const convertToPedido = async () => {
     </div>
     {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos.</AlertDescription></Alert>}
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
+    {Object.keys(clienteHydrationFailures).length > 0 && (
+      <Alert className="mb-3" data-testid="orcamento-cliente-hydration-failures" role="status" aria-live="polite">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {Object.keys(clienteHydrationFailures).length} vínculo(s) de cliente sem label neste contexto
+          (consulta leve falhou; fila avançou). IDs permanecem visíveis até correção/retry de sessão.
+        </AlertDescription>
+      </Alert>
+    )}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>

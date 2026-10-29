@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import fs from 'node:fs';
 import {
+  clienteHydrationSettlementKey,
+  collectSettledClienteHydration,
   mergeComercialSelectedCliente,
+  nextClienteHydrationBatch,
   resolveComercialSelectedCliente,
   resolveComercialSelectedClienteLinks,
   unionComercialClienteCatalog,
@@ -75,6 +78,33 @@ test('resolveComercialSelectedCliente: aceita payload leve {clientes} sem mestre
   assert.equal(resolved.clientesEmpresa[0].id, LINK_ID);
 });
 
+test('nextClienteHydrationBatch: 20 falhas não prendem a 21ª identidade', () => {
+  const needed = Array.from({ length: 25 }, (_, i) => `id-${String(i + 1).padStart(2, '0')}`);
+  const attempted = needed.slice(0, 20);
+  const batch = nextClienteHydrationBatch(needed, {
+    knownLinkIds: [],
+    attemptedIds: attempted,
+    limit: 20,
+  });
+  assert.deepEqual(batch, ['id-21', 'id-22', 'id-23', 'id-24', 'id-25']);
+});
+
+test('collectSettledClienteHydration + settlementKey: 404 conta como tentativa', () => {
+  const queries = [
+    { queryKey: ['orcamento-row-cliente', 'g', 'e', 'a', 's', 'id-01'], isSuccess: false, isError: true, error: { status: 404 } },
+    { queryKey: ['orcamento-row-cliente', 'g', 'e', 'a', 's', 'id-02'], isSuccess: true, isError: false, data: { clientes: [{ id: 'c2' }], clientesEmpresa: [{ id: 'id-02', cliente_id: 'c2' }] } },
+    { queryKey: ['orcamento-row-cliente', 'g', 'e', 'a', 's', 'id-03'], isSuccess: false, isError: false },
+  ];
+  const settled = collectSettledClienteHydration(queries);
+  assert.deepEqual(settled.attemptedIds, ['id-01', 'id-02']);
+  assert.equal(settled.successPayloads.length, 1);
+  assert.equal(settled.failures['id-01'], 'HTTP 404');
+  const key = clienteHydrationSettlementKey(queries);
+  assert.match(key, /err:id-01/);
+  assert.match(key, /ok:id-02/);
+  assert.doesNotMatch(key, /id-03/);
+});
+
 test('OrcamentosTab: hidratação leve + catálogo acumulado (sem N×5 masters)', () => {
   const src = fs.readFileSync('src/components/comercial/OrcamentosTab.jsx', 'utf8');
   assert.match(src, /unionComercialClienteCatalog/);
@@ -83,6 +113,8 @@ test('OrcamentosTab: hidratação leve + catálogo acumulado (sem N×5 masters)'
   assert.match(src, /orcamento-row-cliente/);
   assert.match(src, /rowHydrationKey/);
   assert.match(src, /clienteCatalog/);
+  assert.match(src, /nextClienteHydrationBatch/);
+  assert.match(src, /clienteHydrationAttemptedIds/);
   assert.doesNotMatch(src, /comercialMasters\.list\(\{\s*clienteEmpresaId/);
   assert.match(src, /filterClienteEmpresaOptions\([^)]*form\.cliente_empresa_id/);
 });
@@ -94,5 +126,7 @@ test('PedidoCanonicoPanel: lookup leve + fila de hidratação avança via catál
   assert.match(src, /pedido-row-cliente/);
   assert.match(src, /rowHydrationKey/);
   assert.match(src, /clienteCatalog/);
+  assert.match(src, /nextClienteHydrationBatch/);
+  assert.match(src, /clienteHydrationAttemptedIds/);
   assert.doesNotMatch(src, /comercialMasters\.list\(\{\s*clienteEmpresaId/);
 });

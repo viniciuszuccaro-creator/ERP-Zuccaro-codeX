@@ -146,6 +146,62 @@ export function mergeComercialSelectedCliente(masters, selection) {
 }
 
 /**
+ * Próximo lote de hidratação: exclui vínculos já no catálogo e tentativas
+ * terminadas (sucesso ou 404/erro) para a fila avançar além do teto de 20.
+ * @param {string[]} neededIds
+ * @param {{ knownLinkIds?: Iterable<string>, attemptedIds?: Iterable<string>, limit?: number }} [opts]
+ * @returns {string[]}
+ */
+export function nextClienteHydrationBatch(neededIds, opts = {}) {
+  const known = new Set(opts.knownLinkIds || []);
+  for (const id of opts.attemptedIds || []) {
+    if (id) known.add(id);
+  }
+  const limit = Number.isFinite(opts.limit) ? opts.limit : 20;
+  return (neededIds || []).filter((id) => id && !known.has(id)).slice(0, limit);
+}
+
+/**
+ * Consolida queries de linha settled (sucesso ou erro terminal) por identidade.
+ * @param {Array<{ queryKey?: unknown[], isSuccess?: boolean, isError?: boolean, data?: any, error?: any }>} queries
+ * @returns {{ attemptedIds: string[], successPayloads: any[], failures: Record<string, string> }}
+ */
+export function collectSettledClienteHydration(queries = []) {
+  const attemptedIds = [];
+  const successPayloads = [];
+  /** @type {Record<string, string>} */
+  const failures = {};
+  for (const query of queries) {
+    const key = query?.queryKey;
+    const id = Array.isArray(key) ? key[key.length - 1] : undefined;
+    if (typeof id !== 'string' || !id) continue;
+    if (query.isSuccess || query.isError) attemptedIds.push(id);
+    if (query.isSuccess && query.data) successPayloads.push(query.data);
+    if (query.isError) {
+      const status = query.error?.status;
+      failures[id] = status ? `HTTP ${status}` : (query.error?.message || 'indisponível');
+    }
+  }
+  return { attemptedIds, successPayloads, failures };
+}
+
+/** Chave estável de lote settled — inclui erros para a fila avançar em failure-only. */
+export function clienteHydrationSettlementKey(queries = []) {
+  return queries
+    .map((query) => {
+      const key = query?.queryKey;
+      const id = Array.isArray(key) ? key[key.length - 1] : undefined;
+      if (typeof id !== 'string' || !id) return '';
+      if (query.isSuccess) return `ok:${id}`;
+      if (query.isError) return `err:${id}`;
+      return '';
+    })
+    .filter(Boolean)
+    .sort()
+    .join(',');
+}
+
+/**
  * Une catálogos de cliente/vínculo sem descartar entradas já resolvidas
  * (página de busca temporária ≠ catálogo de labels da listagem/PDF/share).
  * Preserva demais campos do masters (condicoes/produtos/…) — só troca cliente catalogs.

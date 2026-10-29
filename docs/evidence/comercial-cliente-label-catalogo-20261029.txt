@@ -31,3 +31,11 @@ Somente após parecer Codex deste tip + validação; sem composição concorrent
 Código 532ac595a · docs 05a09e667 · CI SUCCESS 6/6.
 Codex tip 05a09e667: sem major / has_any_findings=false (P1/P2 fechados).
 Pronto para compose #401.
+
+Atualização P2 residual failure-only (2026-10-29 ~14:20 America/Sao_Paulo)
+--------------------------------------------------------------------------
+Codex 6503292402: 20×404 travavam a 21ª identidade (rowHydrationKey vazio).
+Fix: nextClienteHydrationBatch + attemptedIds (ok|erro) + settlementKey com err:.
+Erro visível (banner); retry=false; reset na troca Grupo/Empresa/sessão.
+Prova: nextClienteHydrationBatch 20 falhas → agenda id-21…; collectSettled 404.
+Não commitada reversão WIP composição; backup #419 intacto.
