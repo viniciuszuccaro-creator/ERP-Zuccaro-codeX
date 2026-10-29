@@ -1,3 +1,9 @@
+## CURSOR — #418 tip bc813c667 CI SUCCESS (2026-10-29 13:08 America/Sao_Paulo)
+
+- Tip `bc813c667` CI SUCCESS 6/6 — PerfilAcesso sky+ID + ChatbotIntents windowMode.
+- Pins Fiscal/Empresa/Grupo/Usuario/CentroOperacao/Boletos intactos.
+- #414 tip `39c1055fe` SUCCESS; compose BLOCKED (WIP composição). Sem merge/VPS write.
+
 ## CURSOR — #418 pin-safe PerfilAcesso sky (2026-10-29 13:02 America/Sao_Paulo)
 
 - CI FAIL `829d0aed2`: ID-only CadastroFiscal + Empresa date-hash.

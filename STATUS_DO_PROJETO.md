@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#418 tip bc813c667 CI SUCCESS) (2026-10-29 13:08 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#418** tip **`bc813c667`** — CI SUCCESS 6/6 (runs `40907591639` / `40907603187`) |
+| **Escopo** | sky+ID PerfilAcesso + ChatbotIntents `windowMode` (pin-safe) |
+| **Pin** | Fiscal/Grupo/Usuario/CentroOperacao/Boletos · Empresa date-arith — intocados |
+| **#414** | tip `39c1055fe` CI SUCCESS; compose #401 **BLOCKED** (WIP composição) |
+| **#417** | tip `8bf3cc5b4` CI SUCCESS + Codex limpo |
+| Fora | merge/deploy/carga / VPS write / checkout composição |
+
+**Evidência:** `docs/evidence/cadastros-fiscal-admin-sky-20261029.txt`
+**Próximo:** `@codex review` #418 · compose #414 quando WIP limpo. Sem merge/deploy.
+
+(2026-10-29 13:08 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#418 pin-safe PerfilAcesso sky) (2026-10-29 13:02 America/Sao_Paulo)
 
 | Campo | Valor |

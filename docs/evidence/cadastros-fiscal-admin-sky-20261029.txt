@@ -18,6 +18,8 @@ Pins preservados (não tocados neste lote após CI FAIL)
 CI FAIL tip 829d0aed2: frontend 2 FAIL (ID-only CadastroFiscal + Empresa hash).
 Correção: reverter forms pinados; manter só PerfilAcesso + ChatbotIntents.
 
+Tip pin-safe **`bc813c667`** — CI SUCCESS 6/6 (runs 40907591639 / 40907603187).
+
 Prova
 -----
 node --test tests/cadastros-fiscal-admin-sky.test.js
