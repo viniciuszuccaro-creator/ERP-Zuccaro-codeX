@@ -25,9 +25,23 @@ WIPpatchB78 e manifestoC8A preservados. Revisao integral independente:694lines,
 13paths exatos,sem dados reais/credenciais/pins privados/relatorios. ManifestoSHA256
 c8a422240d2adff7823f619ba6e694c0cb90fef85b94e64ba575b12270eef99d;13blobs atuais
 iguais/0divergentes. Sanitizacao nao autoriza apply/publicacao funcional. Inbox421
-PUBLICA,descricao corrigida por Cursor6504335440; nada depositado/ACK. Decisao
-especifica do dono solicitada para artefato publico sanitizado PRE-validacao;
-ate la permanece no canal privado. Fechamento completo do snapshot ainda pendente.
+PUBLICA,descricao corrigida por Cursor6504335440. Autorizacao especifica posterior
+do dono RECEBIDA para patch/manifesto publicos sanitizados PRE-validacao.
+Deposito na MESMA branch342,sem editarbranchCursor421:
+docs/evidence/codex-wip-inbox/b78e612409ff31084a7ebf30f5dde7a216ca1f228fb45830a439b0bfc4829383/
+wip.patch SHA256b78e612409ff31084a7ebf30f5dde7a216ca1f228fb45830a439b0bfc4829383;
+MANIFEST.json SHA256c8a422240d2adff7823f619ba6e694c0cb90fef85b94e64ba575b12270eef99d.
+Bytes originais preservados inclusive CRLF do JSON. Atributos -text/-diff SOMENTE
+nos dois artefatos de hashes fixos preservam o formato e evitam interpretar linhas
+de contexto do patch como whitespace do codigo. Nao altera filtros/checks de fontes.
+Primeiro stage com core.autocrlf=false tambem preservou CRLF dos docs e falhou
+diff-check; docs reindexados com normalizacao habitual,sem alterarconfig global.
+Conferir bytes Git publicados antes de ACK.
+Commit contem artefatos inertes/documentacao,NAO os13arquivos funcionais aplicados.
+Sem apply/integracao automatica. Executor deve conferir base3cf0831563388131e2506b4aba9dad65947cdaff,
+patch/manifesto,13blobs e capacidade/dependencias antes da validacao descartavel.
+Sem editarcheckoutalheio,sem copiarsegredos/historicoGit,sem contornarpolitica.
+Fechamento completo do snapshot e ACK do destinatario ainda pendentes.
 
 Coordenacao401/6504448201 e mensagem direta visivel no agenteCursor existente:
 nao provisionar AuthDEV/ERP_DEV_LOGIN_RESTRICTED_* para ensaio isolado; nao ignorar

@@ -17,8 +17,12 @@ Checks de audit/lint/typecheck/build da candidata SUCCESS; nao sao checks do WIP
 WIP13:13blobs iguais/0divergencias; patchB78 preservado. Revisao integral independente
 dos694lines/hunks e manifesto:nenhum dado real/credencial/relatorio privado encontrado;
 13paths exatos,manifestoSHA256c8a422240d2adff7823f619ba6e694c0cb90fef85b94e64ba575b12270eef99d.
-NAO depositado nem validado integralmente no executor Linux. Inbox421 e PUBLICA;
-decisao especifica sobre publicar artefato sanitizado pre-validacao solicitada ao dono.
+Autorizacao especifica posterior recebida: publicar SOMENTE patch/manifesto sanitizados
+como artefatos PUBLICOS pre-validacao. Deposito na branch342 em
+docs/evidence/codex-wip-inbox/b78e612409ff31084a7ebf30f5dde7a216ca1f228fb45830a439b0bfc4829383/:
+wip.patch e MANIFEST.json,bytes exatos/pins acima. Inbox421 PUBLICA,sem editarbranchCursor.
+Nao e publicacao funcional do WIP13,nem apply/fold automatico; ACK remoto e fechamento
+integral ainda exigem conferencia do executor. Originais privados continuam intactos.
 Nao usar CI documental, overlayPOSIX12/0/0 ou sanitizacao como fechamento do snapshot.
 
 Coordenacao direta Cursor entregue e visivel:prova browser isolada nao exige criar
@@ -180,8 +184,9 @@ Nao declarar o WIP implantado, integrado na401, homologado ou importado.
 Lista unica/ordem operacional vigente (atualizada pelo estado do topo):
 - Publicacao backend (Codex): WIP preservado; receber patch+manifesto exatos em
   executor existente por canal suportado, fechar snapshot/checks e somente entao
-  publicar funcionalmente. Sanitizacao integral pronta; decisao de transporte publico
-  pre-validacao pendente. POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
+  publicar funcionalmente. Sanitizacao integral pronta e transporte publico do artefato
+  especificamente autorizado; falta ACK com hashes/13blobs e fechamento integral.
+  POSIX aprovado, sem WSL/Dexterno/VPS como laboratorio.
 - Revisao/composicao (Cursor+Codex):4017460c3a2/codigo0195acc66 incorpora414849419a6;
   parecer6504381068 sem novo defeito nesse delta. Liberacao419/failure-only encerrados.
   Falta navegador com gravacao; nao ampliar candidata com pacotes independentes.
