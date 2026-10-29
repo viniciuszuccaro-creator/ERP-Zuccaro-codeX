@@ -62,6 +62,7 @@ async function mount() {
       pedidos: { convertOrcamento: (...args) => request('convert', getScope(), args) },
     }) },
     './comercialProposalFixture':proposalFixture,'./OrcamentoProposalAside':{__esModule:true,default:'OrcamentoProposalAside'},
+    './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido'},
     './orcamentoUiPolicy': policy, './pedidoUiPolicy': pedidoPolicy, './comercialMasterPicker': picker,
     './centralCliente360Navigation': navigation,
     sonner: { toast: Object.fromEntries(['error', 'success'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },
