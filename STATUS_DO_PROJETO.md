@@ -1,3 +1,23 @@
+## CURSOR — VIGENTE (#397 parecer saldo/unidade + Contatos) (2026-10-29 08:35 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial360-397-achados-saldo-unidade-392b` ← #403 |
+| **Pareceres** | `6493733950` · `6493809228` (SHA tip `83499de99` / base `8b08b55ccd`) |
+| **A Contatos** | principal canônico load/save/reopen sem wipe |
+| **B Estoque** | DTO sem `estoque_atual` → DESCONHECIDO ≠ 0 |
+| **C Agregação** | demanda por produto+unidade; incompatível explícito |
+| **Testes** | 36+16 PASS |
+| **#404** | tip smoke `4e4770592` CI SUCCESS 6/6 |
+| **#405** | reopen residual — CI em andamento |
+| **#401** | atualizar composição após CI deste tip |
+| Fora | merge/deploy/carga; ledger paralelo |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** CI deste tip · `@codex review` · composição #401. Sem merge/deploy.
+
+(2026-10-29 08:35 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#403 CI SUCCESS Contatos+Estoque) (2026-10-29 08:10 America/Sao_Paulo)
 
 | Campo | Valor |

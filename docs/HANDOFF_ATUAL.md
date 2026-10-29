@@ -1,3 +1,11 @@
+## CURSOR — #397 parecer Contatos/saldo/unidade (2026-10-29 08:35 America/Sao_Paulo)
+
+- Fecha gaps pós-#403 nos pareceres `6493733950`/`6493809228`: principal preservado;
+  saldo DTO ausente = DESCONHECIDO; agregação produto+unidade sem conversão inventada.
+- Testes 36+16 PASS. Evidência apontamentos-397-parecer-6493733950-saldo-unidade.
+- #404 `4e4770592` CI SUCCESS. #405 reopen CI. #401 composição após tip validado.
+- Sem merge/deploy/carga.
+
 
 
 ## CURSOR — #403 CI SUCCESS tip 8b08b55ccd (2026-10-29 08:10 America/Sao_Paulo)
