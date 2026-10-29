@@ -20,6 +20,29 @@ export function chaveDemandaEstoqueLinha(item) {
   return `${produtoId}::${unidadeNorm}`;
 }
 
+/** Unidade da linha de demanda (pedido/orçamento). */
+export function unidadeDemandaLinha(item) {
+  return String(item?.unidade_id ?? item?.unidade_sigla ?? item?.unidade ?? item?.unidade_medida ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+/**
+ * Unidade do saldo de estoque do produto (mestre).
+ * Sem conversão inventada: demanda e saldo só são comparáveis na mesma unidade.
+ */
+export function unidadeSaldoProduto(produto) {
+  if (!produto || typeof produto !== "object") return "";
+  return String(
+    produto.unidade_medida_id
+    ?? produto.unidade_id
+    ?? produto.unidade_medida
+    ?? produto.unidade_sigla
+    ?? produto.unidade
+    ?? "",
+  ).trim().toLowerCase();
+}
+
 /**
  * `estoque_atual` ausente no DTO ≠ zero (parecer #397 / produtoTypes MASTER).
  * Reserva ausente com atual conhecido → 0 (sem inventar estoque).
@@ -63,7 +86,7 @@ export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = [], option
     const produtoId = item?.produto_id;
     if (produtoId == null || produtoId === "") continue;
     const key = String(produtoId);
-    const unidade = String(item?.unidade_id ?? item?.unidade_sigla ?? item?.unidade ?? item?.unidade_medida ?? "").trim().toLowerCase();
+    const unidade = unidadeDemandaLinha(item);
     if (!unidadesPorProduto.has(key)) unidadesPorProduto.set(key, new Set());
     unidadesPorProduto.get(key).add(unidade);
   }
@@ -77,7 +100,15 @@ export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = [], option
     const unidadesDoProduto = produtoId != null && produtoId !== ""
       ? (unidadesPorProduto.get(String(produtoId)) || new Set())
       : new Set();
-    const unidadeIncompativel = unidadesDoProduto.size > 1;
+    const unidadeDemanda = unidadeDemandaLinha(item);
+    const unidadeSaldo = unidadeSaldoProduto(produto);
+    // Parecer 6498240997: demanda CX vs saldo UN ≠ suficiente sem conversão comprovada.
+    // Só quando ambas as unidades são conhecidas e diferem (saldo sem unidade ≠ inventar incompatível).
+    const unidadeVsSaldoIncompativel = Boolean(produto)
+      && unidadeDemanda !== ""
+      && unidadeSaldo !== ""
+      && unidadeDemanda !== unidadeSaldo;
+    const unidadeIncompativel = unidadesDoProduto.size > 1 || unidadeVsSaldoIncompativel;
 
     // HTTP master ≠ saldo operacional; DTO sem estoque_atual ≠ zero fabricado.
     const liquidoTotal = estoqueLiquidoDisponivel(produto);

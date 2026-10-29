@@ -1,0 +1,10 @@
+Pareceres residuais 6498240997 / 4413059634 — 2026-10-29 11:28 America/Sao_Paulo
+================================================================
+1) Contatos escalar: principal multi-canal → reject (CONTATOS_SCALAR_OVERFLOW),
+   rascunho preservado; hydrate ainda strip. scalarContractLockedRef após save.
+2) Estoque: demanda vs unidade do saldo (CX≠UN) → unidadeIncompativel.
+3) (comprovante 6498241434 → pacote #407 separado)
+
+Preserva: Contatos load/save/reopen canônico, DESCONHECIDO≠0, agregação, mixed-doc.
+
+## CI SUCCESS tip c8c5f24c7 (2026-10-29 11:43 America/Sao_Paulo)

@@ -95,18 +95,27 @@ function contatoDraftTemCanal(lista, hints) {
 }
 
 /**
- * Remove preferência principal quando há ≥2 canais com valor — somente no
- * contrato escalar HTTP (fidelidade). Backends com contatos[] completo
- * preservam principal legítimo (Codex P2 #4410814424).
+ * Preferência `principal` no contrato escalar HTTP com ≥2 canais valorados:
+ * - hydrate (`onConflict: 'strip'`): limpa principal inventado na UI
+ * - persist (`onConflict: 'reject'`): rejeita — sem sucesso com perda silenciosa
+ *   (parecer 6498240997). Backends com contatos[] canônico não entram aqui.
  */
-function stripPrincipalQuandoMultiCanal(lista, { scalarContract = false } = {}) {
+function stripPrincipalQuandoMultiCanal(lista, { scalarContract = false, onConflict = "strip" } = {}) {
   const next = Array.isArray(lista) ? lista.map((row) => ({ ...row })) : [];
   if (!scalarContract) return next;
-  const valuedCount = next.filter((row) => String(row?.valor || "").trim() !== "").length;
-  if (valuedCount > 1) {
-    return next.map((row) => ({ ...row, principal: false }));
+  const valued = next.filter((row) => String(row?.valor || "").trim() !== "");
+  if (valued.length <= 1) return next;
+  const hasPrincipal = valued.some((row) => row.principal === true);
+  if (!hasPrincipal) return next;
+  if (onConflict === "reject") {
+    throw Object.assign(
+      new Error(
+        "Preferência principal não representável no contrato escalar (e-mail/telefone/celular). Ajuste canais ou use o cadastro completo.",
+      ),
+      { code: "CONTATOS_SCALAR_OVERFLOW", reason: "principal_nao_representavel", status: 422 },
+    );
   }
-  return next;
+  return next.map((row) => ({ ...row, principal: false }));
 }
 
 /**
@@ -164,6 +173,8 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
   const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, clienteProp?.id ?? null]);
   const contatosPersistQueueRef = useRef(null);
+  /** Trava contrato escalar na abertura — não promover rascunho a contatos[] após save (Codex #4413059634). */
+  const scalarContractLockedRef = useRef(usesContatosScalarHttpContract(clienteProp));
   if (!contatosPersistQueueRef.current) {
     contatosPersistQueueRef.current = createContatosPersistQueue();
   }
@@ -171,6 +182,7 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   useEffect(() => {
     setClienteLive(clienteProp);
     setContatosDraft(seedContatosPainelDraft(clienteProp));
+    scalarContractLockedRef.current = usesContatosScalarHttpContract(clienteProp);
   }, [clienteProp?.id, clienteProp?.contatos, clienteProp?.contatos_escalares, clienteProp?.email, clienteProp?.telefone, clienteProp?.celular, painelScopeKey]);
 
   // Reabertura: recarregar registro persistido (não reutilizar só o snapshot do pai).
@@ -183,6 +195,7 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         if (cancelled || !fresh) return;
         setClienteLive(fresh);
         setContatosDraft(seedContatosPainelDraft(fresh));
+        scalarContractLockedRef.current = usesContatosScalarHttpContract(fresh);
       } catch {
         // Mantém snapshot atual; não inventar contatos.
       }
@@ -192,12 +205,22 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
 
   const persistContatosPainel = (next) => {
     const incoming = Array.isArray(next) ? next.map((row) => ({ ...row })) : [];
-    // Persistência: lista do operador vence — não re-hidratar escalares apagados
-    // (Codex P2 #4410814417). Strip principal só no contrato escalar.
-    const lista = stripPrincipalQuandoMultiCanal(incoming, {
-      scalarContract: usesContatosScalarHttpContract(clienteLive || clienteProp),
-    });
     const previousDraft = contatosDraft;
+    const scalarContract = scalarContractLockedRef.current
+      || usesContatosScalarHttpContract(clienteLive || clienteProp);
+    // Persistência: lista do operador vence — não re-hidratar escalares apagados
+    // (Codex P2 #4410814417). Principal multi-canal escalar → rejeita (6498240997).
+    let lista;
+    try {
+      lista = stripPrincipalQuandoMultiCanal(incoming, {
+        scalarContract,
+        onConflict: "reject",
+      });
+    } catch (error) {
+      toast.error(error?.message || "Contatos não representáveis no contrato escalar.");
+      setContatosDraft(previousDraft);
+      return Promise.resolve({ skipped: true, lista: previousDraft, error });
+    }
     return contatosPersistQueueRef.current(async () => {
       const live = clienteLive || clienteProp;
       if (!live?.id) return { skipped: true, lista };
@@ -212,7 +235,7 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         || (Array.isArray(live?.contatos_escalares?.items) && live.contatos_escalares.items.length > 0),
       );
       // Wipe total sem lista: ainda exige cadastro completo (proteção parcial HTTP).
-      if (hasScalars && lista.length === 0 && usesContatosScalarHttpContract(live)) {
+      if (hasScalars && lista.length === 0 && scalarContract) {
         toast.error("Contatos incompletos neste painel. Abra o cadastro completo antes de limpar canais.");
         return { skipped: true, lista };
       }
@@ -220,12 +243,21 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
       try {
         // P1 #4410761980: não carimbar empresa_id no mestre — só group_id de escopo.
         const updated = await updateInContext("Cliente", live.id, { contatos: lista }, "group_id");
-        const nextDraft = Array.isArray(updated?.contatos) && updated.contatos.length > 0
+        const nextDraft = Array.isArray(updated?.contatos) && updated.contatos.length > 0 && !scalarContract
           ? updated.contatos.map((row) => ({ ...row }))
           : lista;
         setContatosDraft(nextDraft);
         if (updated && typeof updated === "object") {
-          setClienteLive((prev) => ({ ...(prev || live), ...updated, contatos: nextDraft }));
+          setClienteLive((prev) => {
+            const merged = { ...(prev || live), ...updated };
+            if (scalarContract) {
+              // Rascunho fica em contatosDraft — não alterar identidade do contrato HTTP.
+              delete merged.contatos;
+            } else {
+              merged.contatos = nextDraft;
+            }
+            return merged;
+          });
         }
         toast.success("Contatos atualizados.");
         return { skipped: false, lista: nextDraft };
