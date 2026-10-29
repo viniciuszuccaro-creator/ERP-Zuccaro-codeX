@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#414 settlement por índice useQueries) (2026-10-29 14:30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** — settlement associa `useQueries` ↔ `missingClienteEmpresaIds` por índice |
+| **Causa** | Codex tip `8db8bf4b5` P2: resultado TanStack sem `queryKey` → fila/banner mortos |
+| **#401** | worktree limpa `1a2cfc31d` / tree `c098fcba72…` · WIP backup **#419** · compose após CI+review deste tip |
+| Inbox | **#421** `docs/evidence/codex-wip-inbox/` — ACK só após hash |
+| Fora | merge main / deploy / carga / VPS / DDL |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** CI + `@codex review` tip novo → fold #414 na mesma #401. Sem merge main.
+
+(2026-10-29 14:30 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#414 tip 532ac595a CI SUCCESS + Codex limpo) (2026-10-29 12:48 America/Sao_Paulo)
 
 | Campo | Valor |
