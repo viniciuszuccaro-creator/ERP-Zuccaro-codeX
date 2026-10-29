@@ -21,3 +21,17 @@ Pins atualizados:
   runtime a441be7f… → 0dc4c949…
   stage55 d2a59a58… → 0508c1d1…
 Hunks contextReadBoundaryRemainder intactos (2). 59 testes focados PASS.
+
+Revisão Cursor + contraprovas seams (2026-10-29 16:22 America/Sao_Paulo)
+-------------------------------------------------------------------
+Tip: d7174611d · CI erp-runtime-ci SUCCESS (run 40928320707) · Codex limpo.
+Foco prévio: painel/context 95 PASS / 0 FAIL.
+Seams novas: tests/contatos-painel-counterproof-seams.test.js → 6 PASS / 0 FAIL / 0 SKIP:
+  1. GET tardio pós-save descartado (epoch)
+  2. Mutação concorrente invalida GET de abertura anterior
+  3. Promise.reject preserva diálogo/rascunho do form
+  4. result.skipped legado não fecha/reseta
+  5. resolveAuditEmpresaId: group_id ≠ empresa_id (AST/vm do helper real)
+  6. Contrato fonte tip (epoch bump + reject + helper)
+≠ React montado · ≠ PG · ≠ fold #401 · ≠ VPS · WIP13 intacto.
+Pronto para aceite owner; composição #401 não alterada neste pacote.
