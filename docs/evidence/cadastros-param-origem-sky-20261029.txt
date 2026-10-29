@@ -1,0 +1,7 @@
+Cadastros residual sky+ID — ParametroOrigemPedido — 2026-10-29 12:25 America/Sao_Paulo
+Base #415 tip ec0195c3e / a3d37ad7b.
+Pin RecordState preservado. Sem count+1.
+Independente da composição #401.
+
+## CI SUCCESS tip 2178967e6 / docs 4157cca8f (2026-10-29 12:31 America/Sao_Paulo)
+PR #416 — frontend/backend/expedicao SUCCESS 6/6.

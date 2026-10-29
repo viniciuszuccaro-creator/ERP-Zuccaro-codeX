@@ -1,3 +1,14 @@
+## CURSOR — #416 tip 2178967e6 CI SUCCESS (2026-10-29 12:31 America/Sao_Paulo)
+
+- Tip código `2178967e6` / docs `4157cca8f` CI SUCCESS 6/6 — ParametroOrigemPedido sky+ID.
+- #414/#415 SUCCESS; pareceres Codex. #401 estável; demo persistência isolada pedida.
+- Sem merge/deploy/carga/VPS write.
+
+## CURSOR — ParamOrigem sky+ID (2026-10-29 12:25 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-param-origem-sky-392b` ← #415: ParametroOrigemPedido sky+ID.
+- #414/#415 CI SUCCESS; pareceres Codex pendentes. Sem merge/deploy/VPS write.
+
 ## CURSOR — #415 tip a3d37ad7b CI SUCCESS (2026-10-29 12:19 America/Sao_Paulo)
 
 - Tip `a3d37ad7b` CI SUCCESS 6/6 — Parametro* sky+ID; Boletos ID-only.

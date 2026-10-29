@@ -1,3 +1,33 @@
+## CURSOR — VIGENTE (#416 tip 2178967e6 CI SUCCESS) (2026-10-29 12:31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#416** tip código **`2178967e6`** / docs **`4157cca8f`** — CI SUCCESS 6/6 |
+| **Escopo** | sky+ID ParametroOrigemPedido |
+| **#414/#415** | CI SUCCESS; pareceres Codex |
+| **#401** | estável · demo≠E2E · persistência isolada pedida |
+| Fora | merge/deploy/carga / VPS write |
+
+**Evidência:** `docs/evidence/cadastros-param-origem-sky-20261029.txt`
+**Próximo:** `@codex review` #416 · pareceres #414/#415 · demo persistência isolada. Sem merge/deploy.
+
+(2026-10-29 12:31 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#416 ParamOrigem sky+ID) (2026-10-29 12:25 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-param-origem-sky-392b` ← #415 |
+| **Escopo** | sky+ID ParametroOrigemPedido |
+| **#414/#415** | CI SUCCESS; aguardam parecer Codex |
+| **#401** | estável · demo≠E2E |
+| Fora | merge/deploy/carga / VPS write |
+
+**Evidência:** `docs/evidence/cadastros-param-origem-sky-20261029.txt`
+**Próximo:** CI deste tip · pareceres #414/#415. Sem merge/deploy.
+
+(2026-10-29 12:25 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#415 tip a3d37ad7b CI SUCCESS) (2026-10-29 12:19 America/Sao_Paulo)
 
 | Campo | Valor |
