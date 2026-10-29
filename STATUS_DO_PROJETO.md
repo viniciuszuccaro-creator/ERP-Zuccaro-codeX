@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (Pacote B persist isolada — evidência) (2026-10-29 16:30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Backend | in-memory R08C orçamento 16/16 · R08C HTTP 6/6 · R09 pedido 11/11 · convert 3/3 |
+| SHA contexto | candidata #401 `0195acc66` / docs `7460c3a26` (não alterados) |
+| Recording UI | **não** — NO_DOCKER / sem Auth DEV; demo writes=0 ≠ esta prova |
+| Fora | VPS operacional · fold WIP13 · merge main |
+
+**Evidência:** `docs/evidence/pacote-b-persist-orcamento-pedido-isolado-20261029.txt`
+**Próximo:** API local + tenant sintético + gravação de tela quando franquia.
+
 ## CURSOR — VIGENTE (#401 ← #414 fold settlement) (2026-10-29 14:40 America/Sao_Paulo)
 
 | Campo | Valor |

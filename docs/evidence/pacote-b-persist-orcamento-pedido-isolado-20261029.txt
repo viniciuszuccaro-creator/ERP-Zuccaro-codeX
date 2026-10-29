@@ -1,0 +1,27 @@
+Pacote B — persistência isolada orçamento→pedido (2026-10-29 16:25 America/Sao_Paulo)
+====================================================================================
+SHA workspace tip Contatos (contexto runner): d7174611d
+Candidata #401 código estável (não alterada): 0195acc66 / docs 7460c3a26
+Backend: server in-memory (tsx --test) · Node v22.23.4
+DATABASE_URL: unset · Docker: ausente · VPS operacional: NÃO usada
+
+Percurso sintético verificado (gravações in-memory + auditoria de serviço):
+| Etapa | Suite | Resultado |
+|-------|-------|----------|
+| criar/validar/list/get | runtime08c-orcamento-service 16/16 | PASS |
+| update/cancel + rollback | idem | PASS |
+| HTTP orçamento ciclo | runtime08c-orcamento-http 6/6 | PASS |
+| Pedido service | runtime09-pedido-service 11/11 | PASS |
+| conversão Orçamento→Pedido idempotente + snapshots | name-pattern convert 3/3 | PASS |
+| revalidação permissão na conversão | idem | PASS |
+
+Erro / sessão / permissão / Grupo×Empresa:
+- Cobertos nos suites R08C/R09 (tenant, actor, cross-tenant, permissão muda sem efeito parcial).
+- Sessão IdP real / 401 browser: NÃO demonstrado neste lote (sem Auth DEV provisionado).
+
+Gravação (screen recording) do percurso UI:
+- NÃO produzida — capacidade: NO_DOCKER + sem franquia navegador owner.
+- Demo writes=0 existente (c360-fluxo-evidencia) ≠ prova deste percurso com persistência.
+- Critério owner: não apresentar demo atual sem gravação como prova do percurso persistente.
+
+Próximo Pacote B: ambiente isolado com API local + tenant sintético + recording quando franquia/Auth DEV autorizados; ≠ VPS operacional.
