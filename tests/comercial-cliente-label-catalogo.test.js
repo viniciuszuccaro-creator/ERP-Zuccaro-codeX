@@ -89,20 +89,34 @@ test('nextClienteHydrationBatch: 20 falhas não prendem a 21ª identidade', () =
   assert.deepEqual(batch, ['id-21', 'id-22', 'id-23', 'id-24', 'id-25']);
 });
 
-test('collectSettledClienteHydration + settlementKey: 404 conta como tentativa', () => {
+test('collectSettledClienteHydration + settlementKey: 404 conta como tentativa (por índice)', () => {
+  // Forma real de useQueries: sem queryKey no resultado — IDs vêm da lista solicitada.
+  const requestedIds = ['id-01', 'id-02', 'id-03'];
   const queries = [
-    { queryKey: ['orcamento-row-cliente', 'g', 'e', 'a', 's', 'id-01'], isSuccess: false, isError: true, error: { status: 404 } },
-    { queryKey: ['orcamento-row-cliente', 'g', 'e', 'a', 's', 'id-02'], isSuccess: true, isError: false, data: { clientes: [{ id: 'c2' }], clientesEmpresa: [{ id: 'id-02', cliente_id: 'c2' }] } },
-    { queryKey: ['orcamento-row-cliente', 'g', 'e', 'a', 's', 'id-03'], isSuccess: false, isError: false },
+    { isSuccess: false, isError: true, error: { status: 404 } },
+    { isSuccess: true, isError: false, data: { clientes: [{ id: 'c2' }], clientesEmpresa: [{ id: 'id-02', cliente_id: 'c2' }] } },
+    { isSuccess: false, isError: false },
   ];
-  const settled = collectSettledClienteHydration(queries);
+  const settled = collectSettledClienteHydration(queries, requestedIds);
   assert.deepEqual(settled.attemptedIds, ['id-01', 'id-02']);
   assert.equal(settled.successPayloads.length, 1);
   assert.equal(settled.failures['id-01'], 'HTTP 404');
-  const key = clienteHydrationSettlementKey(queries);
+  const key = clienteHydrationSettlementKey(queries, requestedIds);
   assert.match(key, /err:id-01/);
   assert.match(key, /ok:id-02/);
   assert.doesNotMatch(key, /id-03/);
+});
+
+test('settlement sem requestedIds (forma useQueries) não avança — regressão queryKey', () => {
+  const queries = [
+    { isSuccess: false, isError: true, error: { status: 404 } },
+    { isSuccess: true, isError: false, data: { clientes: [{ id: 'c2' }], clientesEmpresa: [{ id: 'id-02' }] } },
+  ];
+  const settled = collectSettledClienteHydration(queries);
+  assert.deepEqual(settled.attemptedIds, []);
+  assert.equal(settled.successPayloads.length, 0);
+  assert.equal(Object.keys(settled.failures).length, 0);
+  assert.equal(clienteHydrationSettlementKey(queries), '');
 });
 
 test('OrcamentosTab: hidratação leve + catálogo acumulado (sem N×5 masters)', () => {
@@ -115,6 +129,8 @@ test('OrcamentosTab: hidratação leve + catálogo acumulado (sem N×5 masters)'
   assert.match(src, /clienteCatalog/);
   assert.match(src, /nextClienteHydrationBatch/);
   assert.match(src, /clienteHydrationAttemptedIds/);
+  assert.match(src, /clienteHydrationSettlementKey\(\s*rowClienteQueries\s*,\s*missingClienteEmpresaIds\s*\)/);
+  assert.match(src, /collectSettledClienteHydration\(\s*rowClienteQueries\s*,\s*missingClienteEmpresaIds\s*\)/);
   assert.doesNotMatch(src, /comercialMasters\.list\(\{\s*clienteEmpresaId/);
   assert.match(src, /filterClienteEmpresaOptions\([^)]*form\.cliente_empresa_id/);
 });
@@ -128,5 +144,7 @@ test('PedidoCanonicoPanel: lookup leve + fila de hidratação avança via catál
   assert.match(src, /clienteCatalog/);
   assert.match(src, /nextClienteHydrationBatch/);
   assert.match(src, /clienteHydrationAttemptedIds/);
+  assert.match(src, /clienteHydrationSettlementKey\(\s*rowClienteQueries\s*,\s*missingClienteEmpresaIds\s*\)/);
+  assert.match(src, /collectSettledClienteHydration\(\s*rowClienteQueries\s*,\s*missingClienteEmpresaIds\s*\)/);
   assert.doesNotMatch(src, /comercialMasters\.list\(\{\s*clienteEmpresaId/);
 });

@@ -163,18 +163,22 @@ export function nextClienteHydrationBatch(neededIds, opts = {}) {
 
 /**
  * Consolida queries de linha settled (sucesso ou erro terminal) por identidade.
- * @param {Array<{ queryKey?: unknown[], isSuccess?: boolean, isError?: boolean, data?: any, error?: any }>} queries
+ * TanStack `useQueries` NÃO expõe `queryKey` no resultado — associar por índice
+ * com a lista de IDs solicitados no mesmo lote (`missingClienteEmpresaIds`).
+ * @param {Array<{ isSuccess?: boolean, isError?: boolean, data?: any, error?: any }>} queries
+ * @param {string[]} [requestedIds]
  * @returns {{ attemptedIds: string[], successPayloads: any[], failures: Record<string, string> }}
  */
-export function collectSettledClienteHydration(queries = []) {
+export function collectSettledClienteHydration(queries = [], requestedIds = []) {
   const attemptedIds = [];
   const successPayloads = [];
   /** @type {Record<string, string>} */
   const failures = {};
-  for (const query of queries) {
-    const key = query?.queryKey;
-    const id = Array.isArray(key) ? key[key.length - 1] : undefined;
-    if (typeof id !== 'string' || !id) continue;
+  const n = Math.min(queries.length, requestedIds.length);
+  for (let i = 0; i < n; i += 1) {
+    const id = requestedIds[i];
+    const query = queries[i];
+    if (typeof id !== 'string' || !id || !query) continue;
     if (query.isSuccess || query.isError) attemptedIds.push(id);
     if (query.isSuccess && query.data) successPayloads.push(query.data);
     if (query.isError) {
@@ -185,20 +189,23 @@ export function collectSettledClienteHydration(queries = []) {
   return { attemptedIds, successPayloads, failures };
 }
 
-/** Chave estável de lote settled — inclui erros para a fila avançar em failure-only. */
-export function clienteHydrationSettlementKey(queries = []) {
-  return queries
-    .map((query) => {
-      const key = query?.queryKey;
-      const id = Array.isArray(key) ? key[key.length - 1] : undefined;
-      if (typeof id !== 'string' || !id) return '';
-      if (query.isSuccess) return `ok:${id}`;
-      if (query.isError) return `err:${id}`;
-      return '';
-    })
-    .filter(Boolean)
-    .sort()
-    .join(',');
+/**
+ * Chave estável de lote settled — inclui erros para a fila avançar em failure-only.
+ * Associa por índice com `requestedIds` (resultado de useQueries sem queryKey).
+ * @param {Array<{ isSuccess?: boolean, isError?: boolean }>} queries
+ * @param {string[]} [requestedIds]
+ */
+export function clienteHydrationSettlementKey(queries = [], requestedIds = []) {
+  const parts = [];
+  const n = Math.min(queries.length, requestedIds.length);
+  for (let i = 0; i < n; i += 1) {
+    const id = requestedIds[i];
+    const query = queries[i];
+    if (typeof id !== 'string' || !id || !query) continue;
+    if (query.isSuccess) parts.push(`ok:${id}`);
+    else if (query.isError) parts.push(`err:${id}`);
+  }
+  return parts.sort().join(',');
 }
 
 /**

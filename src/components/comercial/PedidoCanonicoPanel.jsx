@@ -153,7 +153,8 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
       staleTime:60000,retry:false,
     })),
   });
-  const rowHydrationKey=clienteHydrationSettlementKey(rowClienteQueries);
+  // IDs do lote por índice — useQueries não devolve queryKey no resultado.
+  const rowHydrationKey=clienteHydrationSettlementKey(rowClienteQueries,missingClienteEmpresaIds);
   useEffect(()=>{
     setClienteCatalog({clientes:[],clientesEmpresa:[]});
     setClienteHydrationAttemptedIds(new Set());
@@ -163,7 +164,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   useEffect(()=>{if(selectedCliente.data)setClienteCatalog((prev)=>mergeComercialSelectedCliente(prev,selectedCliente.data));},[selectedCliente.data]);
   useEffect(()=>{
     if(!rowHydrationKey)return undefined;
-    const settled=collectSettledClienteHydration(rowClienteQueries);
+    const settled=collectSettledClienteHydration(rowClienteQueries,missingClienteEmpresaIds);
     setClienteHydrationAttemptedIds((prev)=>{
       const next=new Set(prev);
       let changed=false;

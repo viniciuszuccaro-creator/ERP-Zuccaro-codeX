@@ -184,7 +184,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
       retry: false,
     })),
   });
-  const rowHydrationKey = clienteHydrationSettlementKey(rowClienteQueries);
+  // IDs do lote atual por índice — useQueries não devolve queryKey no resultado.
+  const rowHydrationKey = clienteHydrationSettlementKey(rowClienteQueries, missingClienteEmpresaIds);
   useEffect(() => {
     setClienteCatalog({ clientes: [], clientesEmpresa: [] });
     setClienteHydrationAttemptedIds(new Set());
@@ -202,7 +203,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   }, [selectedClienteQuery.data, proposalMode]);
   useEffect(() => {
     if (proposalMode || !rowHydrationKey) return undefined;
-    const settled = collectSettledClienteHydration(rowClienteQueries);
+    const settled = collectSettledClienteHydration(rowClienteQueries, missingClienteEmpresaIds);
     setClienteHydrationAttemptedIds((prev) => {
       const next = new Set(prev);
       let changed = false;
