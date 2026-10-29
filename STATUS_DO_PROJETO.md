@@ -1,3 +1,13 @@
+## CURSOR — VIGENTE (#413 tip 526fcdd52 CI SUCCESS) (2026-10-29 11:40 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#413** tip **`526fcdd52`** — CI SUCCESS Gateway/TabelaFiscal/NFe sky+ID |
+| **#411/#412** | typecheck tips CI em andamento → compose #401 após SUCCESS |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:40 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#413 Gateway/TabelaFiscal/NFe sky) (2026-10-29 11:30 America/Sao_Paulo)
 
 | Campo | Valor |
