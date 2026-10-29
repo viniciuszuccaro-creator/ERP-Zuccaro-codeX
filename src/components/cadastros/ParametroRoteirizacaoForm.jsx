@@ -49,6 +49,21 @@ export default function ParametroRoteirizacaoForm({ parametro, onSubmit, windowM
   return (
     <div className={containerClass}>
       <form onSubmit={handleSubmit} className="space-y-6">
+        {windowMode ? (
+          <div className="flex items-center gap-3 mb-4 pb-3 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-3">
+            <MapPin className="w-7 h-7 text-sky-600" />
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                {parametro?.id ? "Editar Parâmetros de Roteirização" : "Parâmetros de Roteirização"}
+              </h2>
+              {parametro?.id ? (
+                <p className="text-xs text-slate-500">
+                  ID técnico: <span className="font-mono">{String(parametro.id)}</span>
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

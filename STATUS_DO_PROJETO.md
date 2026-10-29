@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (param forms sky+ID) (2026-10-29 12:08 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-boletos-paramcaixa-sky-392b` ← #413 |
+| **Escopo** | sky+ID ParamCaixa/Conciliacao/Portal/RecebimentoNFe/Roteirizacao |
+| **Boletos** | permanece ID-only (CANAL / bbcf55030) |
+| **#414** | labels cliente — CI em andamento (indep. #401) |
+| **#401** | tip docs `1a2cfc31d` · código `094cb4b7e` · demo≠E2E |
+| Fora | merge/deploy/carga / VPS write |
+
+**Evidência:** `docs/evidence/cadastros-param-sky-20261029.txt`
+**Próximo:** CI deste tip · CI #414 · demo persistência isolada com Codex. Sem merge/deploy.
+
+(2026-10-29 12:08 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#413 tip 526fcdd52 CI SUCCESS) (2026-10-29 11:40 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,3 +1,9 @@
+## CURSOR — param forms sky+ID (2026-10-29 12:08 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-boletos-paramcaixa-sky-392b` ← #413: sky+ID em 5 Parametro*.
+- ConfiguracaoBoletos permanece ID-only (pin CANAL bbcf55030). Sem count+1.
+- #414 labels cliente CI em andamento. #401 tip `1a2cfc31d` demo≠E2E. Sem merge/deploy/VPS write.
+
 ## CURSOR — #413 tip 526fcdd52 CI SUCCESS (2026-10-29 11:40 America/Sao_Paulo)
 
 - Gateway/TabelaFiscal/NFe sky+ID CI SUCCESS. Independente da composição.
