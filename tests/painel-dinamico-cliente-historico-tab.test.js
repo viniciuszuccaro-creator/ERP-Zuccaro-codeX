@@ -98,6 +98,59 @@ test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo n�
   assert.equal(kept[0].principal, true);
 });
 
+test('parecer 6493733950 Contatos: principal multi-canal preservado em load/save/reopen sem edição', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  const start = src.indexOf('function usesContatosScalarHttpContract');
+  const end = src.indexOf('/**\n * Serializa gravações de contatos', start);
+  const helpers = src.slice(start, end);
+  const {
+    seedContatosPainelDraft,
+    ensureContatosPreserveEscalars,
+    stripPrincipalQuandoMultiCanal,
+    usesContatosScalarHttpContract,
+  } = new Function(
+    `${helpers}; return { seedContatosPainelDraft, ensureContatosPreserveEscalars, stripPrincipalQuandoMultiCanal, usesContatosScalarHttpContract };`,
+  )();
+
+  const persisted = {
+    id: 'cli-canon-1',
+    contatos: [
+      { tipo: 'E-mail', valor: 'principal@empresa.dev', principal: true },
+      { tipo: 'Telefone', valor: '1133334444', principal: false },
+    ],
+  };
+
+  // ANTES (bug tip 83499de9): strip incondicional com 2 valores → [false,false].
+  const buggy = stripPrincipalQuandoMultiCanal(persisted.contatos, { scalarContract: true });
+  assert.equal(buggy.every((c) => c.principal === false), true, 'contraprova do defeito: scalarContract apaga');
+
+  // DEPOIS: contrato canônico contatos[] — load
+  assert.equal(usesContatosScalarHttpContract(persisted), false);
+  const loaded = seedContatosPainelDraft(persisted);
+  assert.equal(loaded[0].principal, true);
+  assert.equal(loaded[1].principal, false);
+
+  // Sem alteração do usuário: persist path (strip só se scalar) mantém preferência
+  const toSave = stripPrincipalQuandoMultiCanal(loaded.map((r) => ({ ...r })), {
+    scalarContract: usesContatosScalarHttpContract(persisted),
+  });
+  assert.equal(toSave[0].principal, true, 'save sem edição preserva principal');
+  assert.deepEqual(
+    toSave.map((c) => ({ tipo: c.tipo, valor: c.valor, principal: c.principal })),
+    loaded.map((c) => ({ tipo: c.tipo, valor: c.valor, principal: c.principal })),
+  );
+
+  // Reabertura: seed a partir do registro “gravado” (Cliente.get) — sem wipe
+  const reopened = seedContatosPainelDraft({ ...persisted, contatos: toSave });
+  assert.equal(reopened[0].principal, true);
+  assert.equal(reopened[0].valor, 'principal@empresa.dev');
+
+  // ensure só na hidratação: não transforma metadado ausente em autorização para apagar
+  const hydrated = ensureContatosPreserveEscalars(reopened, persisted);
+  assert.equal(hydrated[0].principal, true, 'ensure canônico não apaga principal legítimo');
+  assert.equal(hydrated.length, 2);
+});
+
 test('P2 #397 Contatos: createContatosPersistQueue serializa A→B (A tardio não vence)', async () => {
   const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
   const start = src.indexOf('function createContatosPersistQueue');

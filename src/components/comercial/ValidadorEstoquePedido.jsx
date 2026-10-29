@@ -8,19 +8,42 @@ import { AlertCircle, CheckCircle2, Box, Package } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 /**
- * Disponibilidade líquida: estoque_atual − estoque_reservado (nunca negativo).
- * Reutilizado no conversor Orçamento→Pedido e na aprovação — sem inventar saldo.
+ * Chave canônica de demanda: produto + unidade (id|sigla|legado).
+ * Unidades distintas do mesmo produto NÃO se somam — sem conversão inventada.
+ */
+export function chaveDemandaEstoqueLinha(item) {
+  const produtoId = item?.produto_id == null || item?.produto_id === ""
+    ? ""
+    : String(item.produto_id);
+  const unidade = item?.unidade_id ?? item?.unidade_sigla ?? item?.unidade ?? item?.unidade_medida ?? "";
+  const unidadeNorm = String(unidade).trim().toLowerCase();
+  return `${produtoId}::${unidadeNorm}`;
+}
+
+/**
+ * `estoque_atual` ausente no DTO ≠ zero (parecer #397 / produtoTypes MASTER).
+ * Reserva ausente com atual conhecido → 0 (sem inventar estoque).
+ * @returns {number|null} líquido conhecido, ou null quando saldo DESCONHECIDO
  */
 export function estoqueLiquidoDisponivel(produto) {
-  const atual = Number(produto?.estoque_atual ?? 0);
-  const reservado = Number(produto?.estoque_reservado ?? 0);
-  if (!Number.isFinite(atual) || !Number.isFinite(reservado)) return 0;
-  return Math.max(0, atual - Math.max(0, reservado));
+  if (!produto || typeof produto !== "object") return null;
+  if (!Object.prototype.hasOwnProperty.call(produto, "estoque_atual") || produto.estoque_atual == null || produto.estoque_atual === "") {
+    return null;
+  }
+  const atual = Number(produto.estoque_atual);
+  if (!Number.isFinite(atual)) return null;
+  const reservadoRaw = Object.prototype.hasOwnProperty.call(produto, "estoque_reservado")
+    && produto.estoque_reservado != null
+    && produto.estoque_reservado !== ""
+    ? Number(produto.estoque_reservado)
+    : 0;
+  if (!Number.isFinite(reservadoRaw)) return null;
+  return Math.max(0, atual - Math.max(0, reservadoRaw));
 }
 
 /**
  * Avalia linhas de pedido/orçamento contra o mapa de produtos do escopo.
- * Agrega demanda do mesmo produto nas linhas anteriores (Codex P2 #4410761988).
+ * Agrega demanda por produto+unidade (Codex P2 #4410761988 + parecer unidade).
  * Aceita `itens` canônico ou `itens_revenda` legado — sem cadastro paralelo.
  * @param {object[]} [itens]
  * @param {object[]} [produtos]
@@ -32,25 +55,62 @@ export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = [], option
   const fonteLocalAutoritativa = options.fonteLocalAutoritativa !== false;
   /** @type {Map<string, number>} */
   const demandaAcumulada = new Map();
+  /** @type {Map<string, Set<string>>} produto → unidades vistas (detecta conflito) */
+  const unidadesPorProduto = new Map();
+
+  // Pré-passe: mapear unidades distintas por produto (sem conversão inventada).
+  for (const item of lista) {
+    const produtoId = item?.produto_id;
+    if (produtoId == null || produtoId === "") continue;
+    const key = String(produtoId);
+    const unidade = String(item?.unidade_id ?? item?.unidade_sigla ?? item?.unidade ?? item?.unidade_medida ?? "").trim().toLowerCase();
+    if (!unidadesPorProduto.has(key)) unidadesPorProduto.set(key, new Set());
+    unidadesPorProduto.get(key).add(unidade);
+  }
+
   return lista.map((item) => {
     const produtoId = item?.produto_id;
     const produto = catalog.find((p) => p.id === produtoId) || null;
     const quantidadeNecessaria = Number(item.quantidade || 0);
     const produtoAusente = !produto;
-    // HTTP: master/store local ≠ saldo operacional canônico (Codex P1 #4410814402).
-    const fonteIndisponivel = !fonteLocalAutoritativa;
-    const estoqueAtual = Number(produto?.estoque_atual || 0);
-    const estoqueReservado = Number(produto?.estoque_reservado || 0);
+    const demandaKey = chaveDemandaEstoqueLinha(item);
+    const unidadesDoProduto = produtoId != null && produtoId !== ""
+      ? (unidadesPorProduto.get(String(produtoId)) || new Set())
+      : new Set();
+    const unidadeIncompativel = unidadesDoProduto.size > 1;
+
+    // HTTP master ≠ saldo operacional; DTO sem estoque_atual ≠ zero fabricado.
     const liquidoTotal = estoqueLiquidoDisponivel(produto);
-    const jaConsumido = demandaAcumulada.get(produtoId) || 0;
-    const disponivelLiquido = Math.max(0, liquidoTotal - jaConsumido);
+    const saldoDesconhecido = Boolean(produto) && liquidoTotal == null;
+    const fonteIndisponivel = !fonteLocalAutoritativa || saldoDesconhecido || unidadeIncompativel;
+
+    const estoqueAtual = saldoDesconhecido || !produto
+      ? null
+      : Number(produto.estoque_atual);
+    const estoqueReservado = saldoDesconhecido || !produto
+      ? null
+      : (Object.prototype.hasOwnProperty.call(produto, "estoque_reservado")
+        && produto.estoque_reservado != null
+        && produto.estoque_reservado !== ""
+        ? Number(produto.estoque_reservado)
+        : 0);
+
+    const jaConsumido = demandaAcumulada.get(demandaKey) || 0;
+    const disponivelLiquido = fonteIndisponivel || liquidoTotal == null
+      ? null
+      : Math.max(0, liquidoTotal - jaConsumido);
     const disponivel = !fonteIndisponivel
       && Boolean(produto)
+      && disponivelLiquido != null
       && disponivelLiquido >= quantidadeNecessaria;
-    const falta = Math.max(0, quantidadeNecessaria - disponivelLiquido);
-    if (produtoId != null && produtoId !== "") {
-      demandaAcumulada.set(produtoId, jaConsumido + Math.max(0, quantidadeNecessaria));
+    const falta = (fonteIndisponivel || disponivelLiquido == null)
+      ? null
+      : Math.max(0, quantidadeNecessaria - disponivelLiquido);
+
+    if (produtoId != null && produtoId !== "" && !unidadeIncompativel) {
+      demandaAcumulada.set(demandaKey, jaConsumido + Math.max(0, quantidadeNecessaria));
     }
+
     return {
       item,
       produto,
@@ -59,9 +119,12 @@ export function avaliarDisponibilidadeLinhasEstoque(itens, produtos = [], option
       disponivelLiquido,
       quantidadeNecessaria,
       disponivel,
-      falta: fonteIndisponivel ? 0 : falta,
+      falta,
       produtoAusente,
       fonteIndisponivel,
+      saldoDesconhecido,
+      unidadeIncompativel,
+      demandaKey,
     };
   });
 }
@@ -71,11 +134,14 @@ export function resumoDisponibilidadeEstoque(verificacoes) {
   const authoritative = list.filter((v) => !v.fonteIndisponivel);
   const fontePronta = list.length === 0 || authoritative.length === list.length;
   return {
-    todosDisponiveis: authoritative.length > 0 && authoritative.every((v) => v.disponivel),
+    // Nunca declarar "estoque OK" quando há saldo desconhecido / unidade incompatível / fonte HTTP.
+    todosDisponiveis: fontePronta && authoritative.length > 0 && authoritative.every((v) => v.disponivel),
     algumIndisponivel: authoritative.some((v) => !v.disponivel),
     vazio: list.length === 0,
     fontePronta,
     fonteIndisponivel: list.some((v) => v.fonteIndisponivel),
+    saldoDesconhecido: list.some((v) => v.saldoDesconhecido),
+    unidadeIncompativel: list.some((v) => v.unidadeIncompativel),
   };
 }
 
@@ -113,7 +179,15 @@ export default function ValidadorEstoquePedido({
   });
 
   const verificacoes = avaliarDisponibilidadeLinhasEstoque(itens, produtos, { fonteLocalAutoritativa });
-  const { todosDisponiveis, algumIndisponivel, vazio, fontePronta, fonteIndisponivel } = resumoDisponibilidadeEstoque(verificacoes);
+  const {
+    todosDisponiveis,
+    algumIndisponivel,
+    vazio,
+    fontePronta,
+    fonteIndisponivel,
+    saldoDesconhecido,
+    unidadeIncompativel,
+  } = resumoDisponibilidadeEstoque(verificacoes);
 
   React.useEffect(() => {
     if (typeof onAvailabilityChange !== 'function') return;
@@ -123,9 +197,13 @@ export default function ValidadorEstoquePedido({
       vazio,
       fontePronta,
       fonteIndisponivel,
-      ready: Boolean(empresaId) && (vazio || fontePronta),
+      saldoDesconhecido,
+      unidadeIncompativel,
+      // Alinha OrcamentosTab: fontePronta===false (HTTP/desconhecido) ≠ bloqueio por “sem estoque”;
+      // bloqueio só com saldo conhecido insuficiente (todosDisponiveis===false).
+      ready: Boolean(empresaId) && (vazio || !fontePronta || todosDisponiveis),
     });
-  }, [todosDisponiveis, algumIndisponivel, vazio, fontePronta, fonteIndisponivel, empresaId, onAvailabilityChange]);
+  }, [todosDisponiveis, algumIndisponivel, vazio, fontePronta, fonteIndisponivel, saldoDesconhecido, unidadeIncompativel, empresaId, onAvailabilityChange]);
 
   if (vazio) {
     return (
@@ -153,7 +231,11 @@ export default function ValidadorEstoquePedido({
     : (algumIndisponivel ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50');
 
   return (
-    <Card className={`border-2 ${cardTone}`} data-estoque-fonte={fonteLocalAutoritativa ? 'local' : 'http-advisory'}>
+    <Card
+      className={`border-2 ${cardTone}`}
+      data-estoque-fonte={fonteLocalAutoritativa ? 'local' : 'http-advisory'}
+      data-estoque-saldo={saldoDesconhecido ? 'desconhecido' : (fontePronta ? 'conhecido' : 'pendente')}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -163,7 +245,9 @@ export default function ValidadorEstoquePedido({
           {fonteIndisponivel ? (
             <Badge className="bg-amber-600">
               <AlertCircle className="w-3 h-3 mr-1" />
-              Fonte canônica pendente
+              {unidadeIncompativel
+                ? 'Unidade incompatível'
+                : (saldoDesconhecido ? 'Saldo desconhecido' : 'Fonte canônica pendente')}
             </Badge>
           ) : todosDisponiveis ? (
             <Badge className="bg-green-600">
@@ -179,11 +263,14 @@ export default function ValidadorEstoquePedido({
         </div>
 
         {fonteIndisponivel ? (
-          <div className="mb-3 p-3 bg-amber-100 border border-amber-300 rounded" data-estoque-advisory="http-sem-fonte-operacional">
+          <div className="mb-3 p-3 bg-amber-100 border border-amber-300 rounded" data-estoque-advisory="saldo-nao-autoritativo">
             <p className="text-sm text-amber-900">
-              Saldo operacional canônico (grupo/empresa) ainda não está conectado a esta conversão HTTP.
-              O cadastro master/store local não é fonte de estoque — a UI não bloqueia por ausência local;
-              reserva/baixa permanece no backend canônico quando disponível.
+              {unidadeIncompativel
+                ? 'Há linhas do mesmo produto com unidades distintas — sem conversão inventada; alinhe a unidade antes de comparar saldo.'
+                : (saldoDesconhecido
+                  ? 'Saldo operacional ausente no DTO do produto (master ≠ estoque). Ausência ≠ zero: estado DESCONHECIDO — não declara “sem estoque” nem “estoque suficiente”.'
+                  : 'Saldo operacional canônico (grupo/empresa) ainda não está conectado a esta conversão HTTP. Cadastro master/store local não é fonte de estoque.')}
+              {' '}Reserva/baixa permanece no backend canônico quando disponível — sem ledger paralelo nesta UI.
             </p>
           </div>
         ) : null}
@@ -202,6 +289,11 @@ export default function ValidadorEstoquePedido({
               <TableRow key={idx} className="hover:bg-white/50">
                 <TableCell className="font-medium">
                   {v.item.descricao || v.item.produto_descricao || v.produto?.nome || v.item.produto_id}
+                  {v.item.unidade_sigla || v.item.unidade ? (
+                    <span className="block text-xs font-normal text-slate-500">
+                      un. {v.item.unidade_sigla || v.item.unidade}
+                    </span>
+                  ) : null}
                 </TableCell>
                 <TableCell>{v.quantidadeNecessaria}</TableCell>
                 <TableCell className={
@@ -209,15 +301,25 @@ export default function ValidadorEstoquePedido({
                     ? "text-amber-700 font-semibold"
                     : (v.disponivel ? "text-green-600 font-semibold" : "text-red-600 font-semibold")
                 }>
-                  {v.fonteIndisponivel || v.produtoAusente ? '—' : v.disponivelLiquido}
-                  {!v.fonteIndisponivel && !v.produtoAusente && v.estoqueReservado > 0 ? (
+                  {v.fonteIndisponivel || v.produtoAusente || v.disponivelLiquido == null ? '—' : v.disponivelLiquido}
+                  {!v.fonteIndisponivel && !v.produtoAusente && Number(v.estoqueReservado) > 0 ? (
                     <span className="block text-xs font-normal text-slate-500">
                       atual {v.estoqueAtual} · reservado {v.estoqueReservado}
                     </span>
                   ) : null}
                 </TableCell>
                 <TableCell>
-                  {v.fonteIndisponivel ? (
+                  {v.unidadeIncompativel ? (
+                    <Badge className="bg-amber-100 text-amber-800">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Unidade incompatível
+                    </Badge>
+                  ) : v.saldoDesconhecido ? (
+                    <Badge className="bg-amber-100 text-amber-800">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      Saldo desconhecido
+                    </Badge>
+                  ) : v.fonteIndisponivel ? (
                     <Badge className="bg-amber-100 text-amber-800">
                       <AlertCircle className="w-3 h-3 mr-1" />
                       Sem fonte operacional
