@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#401 tip 094cb4b7e CI SUCCESS) (2026-10-29 11:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#401** tip **`094cb4b7e`** — CI SUCCESS 6/6 |
+| **Integra** | #411 `c8c5f24c7` + #412 `c0ccadeae` (+#407) + #410 + #406 |
+| **Resíduos** | 6498240997 · 6498241434 · #4413059634 fechados |
+| Fora | merge oficial · deploy · carga |
+
+**Próximo:** @codex review · demo navegável. Sem merge/deploy.
+
+(2026-10-29 11:50 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 + #411+#412+#407) (2026-10-29 11:43 America/Sao_Paulo)
 
 | Campo | Valor |

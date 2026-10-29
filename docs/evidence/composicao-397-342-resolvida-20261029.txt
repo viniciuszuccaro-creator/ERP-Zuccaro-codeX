@@ -38,3 +38,6 @@ Sem merge oficial / deploy / carga SQL.
 
 ## tip 4dbfdc7cc CI SUCCESS (2026-10-29 10:54 America/Sao_Paulo)
 - Integra #410 59ad3a5dc + pin foldSearchText. CI 6/6.
+
+## tip 094cb4b7e CI SUCCESS (2026-10-29 11:50 America/Sao_Paulo)
+- #411+#412+#407+#410+#406. CI 6/6.

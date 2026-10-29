@@ -1,3 +1,8 @@
+## CURSOR — #401 tip 094cb4b7e CI SUCCESS (2026-10-29 11:50 America/Sao_Paulo)
+
+- Composição tip `094cb4b7e` CI SUCCESS. @codex review + demo.
+- Sem merge/deploy/carga.
+
 ## CURSOR — #401 + #411+#412+#407 (2026-10-29 11:43 America/Sao_Paulo)
 
 - Integra #411 Contatos/unidade + #412/#407 comprovante nome max200.
