@@ -183,6 +183,21 @@ Seja preciso e cite a legislação aplicável.`,
   return (
     <div className={containerClass}>
       <div className={contentClass}>
+        {windowMode ? (
+          <div className="flex items-center gap-3 mb-4 pb-3 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-3">
+            <Receipt className="w-7 h-7 text-sky-600" />
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                {tabela ? "Editar Tabela Fiscal" : "Nova Tabela Fiscal"}
+              </h2>
+              {tabela?.id ? (
+                <p className="text-xs text-slate-500">
+                  ID técnico: <span className="font-mono">{String(tabela.id)}</span>
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         <form onSubmit={handleSubmitForm} className="space-y-6">
           {/* SUGESTÃO IA */}
           {sugestaoIA && (
