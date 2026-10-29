@@ -1,3 +1,85 @@
+## CURSOR — VIGENTE (#414 settlement por índice useQueries) (2026-10-29 14:30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** — settlement associa `useQueries` ↔ `missingClienteEmpresaIds` por índice |
+| **Causa** | Codex tip `8db8bf4b5` P2: resultado TanStack sem `queryKey` → fila/banner mortos |
+| **#401** | worktree limpa `1a2cfc31d` / tree `c098fcba72…` · WIP backup **#419** · compose após CI+review deste tip |
+| Inbox | **#421** `docs/evidence/codex-wip-inbox/` — ACK só após hash |
+| Fora | merge main / deploy / carga / VPS / DDL |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** CI + `@codex review` tip novo → fold #414 na mesma #401. Sem merge main.
+
+(2026-10-29 14:30 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#414 tip 532ac595a CI SUCCESS + Codex limpo) (2026-10-29 12:48 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** tip código **`532ac595a`** / docs **`05a09e667`** — CI SUCCESS 6/6 |
+| **Codex** | tip `05a09e667` sem major / sem findings (P1/P2 fechados) |
+| **#401** | **BLOCKED** compose: worktree composição com WIP não commitado |
+| Fora | merge oficial main / deploy / carga / VPS write |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** Codex limpar/absorver WIP composição → fold #414 · demo persistência. Sem merge main.
+
+(2026-10-29 12:48 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#414 P1/P2 N+1 + fila hidratação) (2026-10-29 12:40 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** — tip P1 `resolveClienteEmpresa` + P2 fila via `clienteCatalog` |
+| **Base tip** | `238dd7f38` CI5195 SUCCESS · Codex tip `af1a86048` sem major + P1/P2 |
+| **#401** | `094cb4b7e` estável — incorporar #414 só após parecer deste tip |
+| Fora | merge/deploy/carga / VPS write / composição concorrente |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** CI + `@codex review` · demo persistência isolada (Pacote B). Sem merge.
+
+(2026-10-29 12:40 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#414 tip 238dd7f38 CI SUCCESS) (2026-10-29 12:23 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** tip **`238dd7f38`** — CI SUCCESS 6/6 labels cliente + typecheck |
+| **#415** | tip `a3d37ad7b` CI SUCCESS Parametro* sky+ID |
+| **#401** | código `094cb4b7e` estável · demo≠E2E · persistência isolada pedida ao Codex |
+| Fora | merge/deploy/carga / VPS write |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** `@codex review` #414 · demo persistência isolada. Sem merge/deploy.
+
+(2026-10-29 12:23 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#414 CI fix merge vazio + useQueries mock) (2026-10-29 12:12 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** — tip CI fix (merge vazio não empurra undefined; mock useQueries) |
+| **Causa** | frontend FAIL: `useQueries` ausente no mock + merge seleção vazia → `clientes=[undefined]` |
+| **#415** | param forms sky+ID (indep.) |
+| **#401** | candidata estável; demo≠E2E |
+| Fora | merge/deploy/carga / VPS write |
+
+**Próximo:** CI #414 · CI #415 · demo persistência isolada com Codex.
+
+(2026-10-29 12:12 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#414 cliente label catálogo) (2026-10-29 12:05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-cliente-label-catalogo-392b` |
+| **Parecer** | P2 #4413844021 |
+| **#401** | candidata estável; este pacote independente |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 12:05 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 HEAD 41728cbe + demo escopo) (2026-10-29 12:03 America/Sao_Paulo)
 
 | Campo | Valor |

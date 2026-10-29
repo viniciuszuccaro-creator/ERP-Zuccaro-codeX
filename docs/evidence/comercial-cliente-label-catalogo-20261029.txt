@@ -1,0 +1,59 @@
+P2 #4413844021 + Codex P1/P2 #414 — cliente label fora da página
+================================================================
+America/Sao_Paulo 2026-10-29
+
+## Tip código anterior (CI SUCCESS)
+- `238dd7f38` / docs `af1a86048` — CI5195 SUCCESS
+- Codex review tip `af1a86048`: sem major; findings P1/P2 em OrcamentosTab/Pedido
+
+## Correções P1/P2 (este tip)
+P1 N+1: `comercialMasters.resolveClienteEmpresa` — 1× GET /api/v1/clientes
+  (sem fan-out produtos/condições/unidades/tabelas por linha).
+P2 fila: resultados de hidratação acumulam em `clienteCatalog` via `rowHydrationKey`
+  → lote `.slice(0,20)` avança até esgotar IDs necessários (página 50+).
+
+## Cobertura comportamental / contrato
+- resolveComercialSelectedClienteLinks (página /clientes apenas)
+- resolveClienteEmpresa: urls.length === 1
+- Orcamento/Pedido: não usam `comercialMasters.list({clienteEmpresaId})` na hidratação
+- merge vazio fail-safe + union catalog (tips anteriores)
+- orcamento-component-behavior (sessão/proposta/duplo clique) PASS
+- CANAL selected-reference remainder PASS
+- typecheck PASS
+
+## O que a demo sintética NÃO cobre
+writes=0 / salvar desabilitado — não prova persistência E2E nem convert→Pedido.
+
+## Incorporação à #401
+Somente após parecer Codex deste tip + validação; sem composição concorrente.
+
+## CI SUCCESS + Codex limpo tip 05a09e667 (2026-10-29 12:48 America/Sao_Paulo)
+Código 532ac595a · docs 05a09e667 · CI SUCCESS 6/6.
+Codex tip 05a09e667: sem major / has_any_findings=false (P1/P2 fechados).
+Pronto para compose #401.
+
+Atualização P2 residual failure-only (2026-10-29 ~14:20 America/Sao_Paulo)
+--------------------------------------------------------------------------
+Codex 6503292402: 20×404 travavam a 21ª identidade (rowHydrationKey vazio).
+Fix: nextClienteHydrationBatch + attemptedIds (ok|erro) + settlementKey com err:.
+Erro visível (banner); retry=false; reset na troca Grupo/Empresa/sessão.
+Prova: nextClienteHydrationBatch 20 falhas → agenda id-21…; collectSettled 404.
+Não commitada reversão WIP composição; backup #419 intacto.
+
+Integração useQueries sem queryKey (Codex tip 8db8bf4b5 / discussion_r4415649621)
+--------------------------------------------------------------------------------
+America/Sao_Paulo 2026-10-29 ~14:30
+Problema: settlement lia `query.queryKey`; TanStack useQueries NÃO expõe queryKey
+→ attemptedIds/catalogo/banner nunca avançavam no React real (testes sintéticos mascaravam).
+Fix: collectSettledClienteHydration(queries, requestedIds) + settlementKey por índice
+com missingClienteEmpresaIds em OrcamentosTab e PedidoCanonicoPanel.
+Negativo: settlement sem requestedIds → attemptedIds=[] / key=''.
+9 testes PASS. WIP #419 intacto; composição #401 limpa c098fcba @ 1a2cfc31.
+
+Fold #414 → #401 mesma worktree (2026-10-29 ~14:40 America/Sao_Paulo)
+----------------------------------------------------------------------
+Pré: HEAD 1a2cfc31d · tree c098fcba72… · limpo · patch419 6f6818d44… intacto.
+#414 tip 849419a6e CI SUCCESS + Codex has_any_findings=false.
+Orphan tip #414 (raiz 532ac595a) → checkout paths (12) sobre 1a2 (filho próprio).
+Sem reset/stash/clean; sem demais pacotes; node_modules symlink preservado.
+Testes locais: label-catalogo 9 · http+master-picker 58 · orcamento-behavior 16 PASS.

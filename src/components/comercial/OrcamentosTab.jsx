@@ -1,7 +1,7 @@
 import OrcamentoProposalAside from './OrcamentoProposalAside';
 import { createComercialProposalFixture } from './comercialProposalFixture';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { readErpHttpSession } from '@/api/erpHttpSession';
@@ -23,9 +23,15 @@ import {
   clienteEmpresaPickerLabel,
   filterClienteEmpresaOptions,
   filterProdutoOptions,
+  clienteHydrationSettlementKey,
+  collectSettledClienteHydration,
+  mergeComercialSelectedCliente,
+  nextClienteHydrationBatch,
   ORCAMENTO_PERSISTENCE_GAPS,
   produtoPickerLabel,
   resolveComercialMasterPages,
+  resolveComercialSelectedCliente,
+  unionComercialClienteCatalog,
 } from './comercialMasterPicker';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 import { isCanonicalComercialId } from './centralCliente360Navigation';
@@ -125,7 +131,118 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     staleTime: 30000,
   });
   const proposalMasters = useMemo(createComercialProposalFixture,[]);
-  const masters = proposalMode ? proposalMasters : mastersQuery.data || { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] };
+  const listRows = proposalMode ? [] : listQuery.data?.data || [];
+  /** Catálogo acumulado: labels de listagem/PDF/share independentes da página temporária de busca (P2 #4413844021). */
+  const [clienteCatalog, setClienteCatalog] = useState({ clientes: [], clientesEmpresa: [] });
+  /** Tentativas terminadas (ok ou 404/erro) por identidade — evita starvation failure-only. */
+  const [clienteHydrationAttemptedIds, setClienteHydrationAttemptedIds] = useState(() => new Set());
+  const [clienteHydrationFailures, setClienteHydrationFailures] = useState(() => ({}));
+  const selectedClienteQuery = useQuery({
+    queryKey: ['orcamento-selected-cliente', groupId, empresaId, actorId, sessionCacheGeneration, form.cliente_empresa_id],
+    queryFn: async ({ signal }) => resolveComercialSelectedCliente(
+      await http.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId: form.cliente_empresa_id, signal }),
+      { groupId, empresaId },
+      form.cliente_empresa_id,
+    ),
+    enabled: contextReady && canView && !proposalMode && formOpen && isCanonicalComercialId(form.cliente_empresa_id),
+    staleTime: 30000,
+    retry: false,
+  });
+  const neededClienteEmpresaIds = useMemo(() => {
+    const ids = new Set();
+    for (const row of listRows) {
+      if (row?.cliente_empresa_id) ids.add(row.cliente_empresa_id);
+    }
+    if (selected?.cliente_empresa_id) ids.add(selected.cliente_empresa_id);
+    if (editing?.cliente_empresa_id) ids.add(editing.cliente_empresa_id);
+    if (form.cliente_empresa_id) ids.add(form.cliente_empresa_id);
+    return [...ids].filter((id) => isCanonicalComercialId(id));
+  }, [listRows, selected?.cliente_empresa_id, editing?.cliente_empresa_id, form.cliente_empresa_id]);
+  // Lote limitado; catálogo + tentativas (incl. 404) avançam a fila (P2 residual failure-only).
+  const missingClienteEmpresaIds = useMemo(() => {
+    const knownLinkIds = (clienteCatalog.clientesEmpresa || []).map((link) => link.id);
+    if (selectedClienteQuery.data?.clientesEmpresa?.[0]?.id) {
+      knownLinkIds.push(selectedClienteQuery.data.clientesEmpresa[0].id);
+    }
+    for (const link of mastersQuery.data?.clientesEmpresa || []) knownLinkIds.push(link.id);
+    return nextClienteHydrationBatch(neededClienteEmpresaIds, {
+      knownLinkIds,
+      attemptedIds: clienteHydrationAttemptedIds,
+      limit: 20,
+    });
+  }, [neededClienteEmpresaIds, clienteCatalog.clientesEmpresa, selectedClienteQuery.data, mastersQuery.data, clienteHydrationAttemptedIds]);
+  const rowClienteQueries = useQueries({
+    queries: missingClienteEmpresaIds.map((clienteEmpresaId) => ({
+      queryKey: ['orcamento-row-cliente', groupId, empresaId, actorId, sessionCacheGeneration, clienteEmpresaId],
+      queryFn: async ({ signal }) => resolveComercialSelectedCliente(
+        await http.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId, signal }),
+        { groupId, empresaId },
+        clienteEmpresaId,
+      ),
+      enabled: contextReady && canView && !proposalMode && isCanonicalComercialId(clienteEmpresaId),
+      staleTime: 60000,
+      retry: false,
+    })),
+  });
+  // IDs do lote atual por índice — useQueries não devolve queryKey no resultado.
+  const rowHydrationKey = clienteHydrationSettlementKey(rowClienteQueries, missingClienteEmpresaIds);
+  useEffect(() => {
+    setClienteCatalog({ clientes: [], clientesEmpresa: [] });
+    setClienteHydrationAttemptedIds(new Set());
+    setClienteHydrationFailures({});
+  }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !mastersQuery.data) return undefined;
+    setClienteCatalog((prev) => unionComercialClienteCatalog(prev, mastersQuery.data));
+    return undefined;
+  }, [mastersQuery.data, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !selectedClienteQuery.data) return undefined;
+    setClienteCatalog((prev) => mergeComercialSelectedCliente(prev, selectedClienteQuery.data));
+    return undefined;
+  }, [selectedClienteQuery.data, proposalMode]);
+  useEffect(() => {
+    if (proposalMode || !rowHydrationKey) return undefined;
+    const settled = collectSettledClienteHydration(rowClienteQueries, missingClienteEmpresaIds);
+    setClienteHydrationAttemptedIds((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      for (const id of settled.attemptedIds) {
+        if (!next.has(id)) { next.add(id); changed = true; }
+      }
+      return changed ? next : prev;
+    });
+    if (Object.keys(settled.failures).length) {
+      setClienteHydrationFailures((prev) => ({ ...prev, ...settled.failures }));
+    }
+    setClienteCatalog((prev) => {
+      let next = prev;
+      for (const payload of settled.successPayloads) {
+        next = mergeComercialSelectedCliente(next, payload);
+      }
+      return next;
+    });
+    return undefined;
+  }, [proposalMode, rowHydrationKey]);
+  // Hidratações da página atual entram no useMemo (sem effect — evita loop por referência de useQueries).
+  const masters = useMemo(() => {
+    if (proposalMode) return proposalMasters;
+    const core = mastersQuery.data || {
+      clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [],
+    };
+    let next = {
+      ...core,
+      clientes: clienteCatalog.clientes,
+      clientesEmpresa: clienteCatalog.clientesEmpresa,
+    };
+    next = mergeComercialSelectedCliente(next, selectedClienteQuery.data);
+    for (const query of rowClienteQueries) {
+      if (query.data) next = mergeComercialSelectedCliente(next, query.data);
+    }
+    // Página de busca atual permanece disponível no seletor mesmo antes do effect acumular.
+    next = unionComercialClienteCatalog(next, mastersQuery.data || {});
+    return next;
+  }, [proposalMode, proposalMasters, mastersQuery.data, clienteCatalog, selectedClienteQuery.data, rowClienteQueries]);
   const clientesById = useMemo(() => new Map(masters.clientes.map((item) => [item.id, item])), [masters.clientes]);
   const clienteLabel = (linkId) => {
     const link = masters.clientesEmpresa.find((item) => item.id === linkId);
@@ -137,8 +254,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     return row ? (row.codigo ? `${row.codigo} — ${row.nome || ''}` : (row.nome || id)) : id;
   };
   const clienteOptions = useMemo(
-    () => filterClienteEmpresaOptions(masters.clientesEmpresa, clientesById, clienteQuery),
-    [masters.clientesEmpresa, clientesById, clienteQuery],
+    () => filterClienteEmpresaOptions(masters.clientesEmpresa, clientesById, clienteQuery, form.cliente_empresa_id),
+    [masters.clientesEmpresa, clientesById, clienteQuery, form.cliente_empresa_id],
   );
   const produtoOptions = useMemo(
     () => filterProdutoOptions(masters.produtos, produtoQuery),
@@ -309,6 +426,15 @@ const convertToPedido = async () => {
     </div>
     {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos.</AlertDescription></Alert>}
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
+    {Object.keys(clienteHydrationFailures).length > 0 && (
+      <Alert className="mb-3" data-testid="orcamento-cliente-hydration-failures" role="status" aria-live="polite">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {Object.keys(clienteHydrationFailures).length} vínculo(s) de cliente sem label neste contexto
+          (consulta leve falhou; fila avançou). IDs permanecem visíveis até correção/retry de sessão.
+        </AlertDescription>
+      </Alert>
+    )}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>

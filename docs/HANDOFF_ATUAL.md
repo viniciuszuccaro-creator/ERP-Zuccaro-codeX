@@ -1,3 +1,19 @@
+## CURSOR — #414 tip 532ac595a CI SUCCESS + Codex limpo (2026-10-29 12:48 America/Sao_Paulo)
+
+- Tip `532ac595a`/`05a09e667` CI SUCCESS 6/6. Codex tip `05a09e667`: sem major/findings.
+- P1/P2 fechados. Próximo: compose #401 ← #414. Sem merge main/deploy/VPS write.
+
+## CURSOR — #414 P1/P2 N+1 + fila (2026-10-29 12:40 America/Sao_Paulo)
+
+- Fecha Codex P1/P2 tip `af1a86048`: `resolveClienteEmpresa` (1×/clientes) + catálogo acumula lotes.
+- Base `238dd7f38` CI5195. Incorporar #401 só após parecer deste tip. Sem merge/VPS write.
+
+## CURSOR — #414 tip 238dd7f38 CI SUCCESS (2026-10-29 12:23 America/Sao_Paulo)
+
+- Tip `238dd7f38` CI SUCCESS 6/6 — union catalog + merge fail-safe + useQueries mock + tipagem.
+- #415 `a3d37ad7b` SUCCESS. #401 estável; demo persistência isolada pedida ao Codex.
+- Sem merge/deploy/carga/VPS write.
+
 ## CURSOR — #401 demo escopo/bloqueios + P2 label (2026-10-29 12:03 America/Sao_Paulo)
 
 - HEAD `41728cbe6` / código `094cb4b7e`. Demo sintética ≠ persistência E2E.

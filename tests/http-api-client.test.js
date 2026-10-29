@@ -37,6 +37,34 @@ test('HTTP mestres resolve vinculo selecionado por identidade exata sem busca ou
   assert.equal(urls.length,count);
 });
 
+test('HTTP resolveClienteEmpresa: uma única chamada /clientes (sem fan-out de mestres)', async () => {
+  const { createHttpApiClient } = await import('../src/api/httpApiClient.js');
+  const linkId = '88888888-aaaa-4aaa-8aaa-888888888888';
+  const urls = [];
+  const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({
+      token: 'synthetic-only',
+      groupId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      empresaId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+      actorId: '11111111-aaaa-4aaa-8aaa-111111111111',
+    }),
+    fetchImpl: async (url) => {
+      urls.push(new URL(String(url)));
+      return new Response(JSON.stringify({
+        data: [], meta: { total: 0, limit: 1, offset: 0, hasMore: false },
+      }), { status: 200 });
+    },
+  });
+  await client.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId: linkId });
+  assert.equal(urls.length, 1);
+  assert.equal(urls[0].pathname, '/api/v1/clientes');
+  assert.equal(urls[0].searchParams.get('cliente_empresa_id'), linkId);
+  assert.equal(urls[0].searchParams.get('limit'), '1');
+  await assert.rejects(client.comercialMasters.resolveClienteEmpresa({ clienteEmpresaId: 'x' }), (e) => e.status === 422);
+  assert.equal(urls.length, 1);
+});
+
 import assert from 'node:assert/strict';
 import test from 'node:test';
 

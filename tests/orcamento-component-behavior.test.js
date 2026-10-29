@@ -55,7 +55,16 @@ async function mount() {
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: (key) => invalidations.push(key) }),
       useQuery: ({ queryKey,...options }) => (plans.push({queryKey,...options}),queries.push(queryKey), queryKey[0] === 'orcamentos-http')
         ? { data: { data: [current], meta: { total: 1 } } }
-        : { data: { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] } } },
+        : { data: { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] } },
+      // #414: hidratação por linha usa useQueries; mock não executa queryFn.
+      useQueries: ({ queries: batch = [] } = {}) => {
+        for (const item of batch) {
+          plans.push(item);
+          if (item?.queryKey) queries.push(item.queryKey);
+        }
+        return batch.map(() => ({ data: undefined, isError: false, isFetching: false, isLoading: false }));
+      },
+    },
     '@/api/erpHttpSession': { readErpHttpSession: () => active },
     '@/api/httpApiClient': { createHttpApiClient: ({ getScope }) => ({
       orcamentos: Object.fromEntries(['update', 'create', 'get', 'cancel'].map((method) => [method, (...args) => request(method, getScope(), args)])),
