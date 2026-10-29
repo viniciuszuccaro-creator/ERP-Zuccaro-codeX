@@ -93,11 +93,16 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText className="w-5 h-5 text-sky-600" />
             Configuração NF-e
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {config?.id ? (
+            <p className="text-xs text-slate-500">
+              ID técnico: <span className="font-mono">{String(config.id)}</span>
+            </p>
+          ) : null}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Provedor *</Label>
@@ -251,7 +256,7 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={salvando || !contextoValido || !podeSalvar} data-action="Fiscal.NFe.salvar">
+        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={salvando || !contextoValido || !podeSalvar} data-action="Fiscal.NFe.salvar">
           <Save className="w-4 h-4 mr-2" />
           {salvando ? 'Salvando...' : config ? 'Atualizar' : 'Criar'}
         </Button>
@@ -263,8 +268,8 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
-            <FileText className="w-8 h-8 text-blue-600" />
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <FileText className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
               {config ? 'Editar Configuração NF-e' : 'Nova Configuração NF-e'}
             </h2>

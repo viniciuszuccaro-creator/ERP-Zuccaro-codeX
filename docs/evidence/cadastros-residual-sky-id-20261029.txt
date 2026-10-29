@@ -1,0 +1,32 @@
+Cadastros residual — sky + ID técnico (2026-10-29 America/Sao_Paulo)
+=====================================================================
+Branch: cursor/cadastros-residual-sky-id-392b (base tip #403 `36b90df21`)
+Modalidade: runner /workspace · inspeção + testes pin · ≠ demo navegador
+
+## Escopo (existente — sem módulo paralelo)
+
+| Form | Sky chrome | ID técnico visível | CodigoField idOnly | Reopen canônico |
+|------|------------|--------------------|--------------------|-----------------|
+| GatewayPagamentoForm | submit sky | sim (texto) | **bloqueado** pin RecordState | pin residual |
+| TabelaFiscalForm | ICMS card + submit sky | sim (texto) | **bloqueado** pin residual | pin residual |
+| ConfiguracaoNFeForm | ícones/header/submit sky | sim (texto) | **bloqueado** pin residual | pin residual |
+| CentroOperacao | **intocado** | — | pin residual | pin residual |
+
+## Decisão
+
+- Pin `cursor-residual-independent` / golden `e36231b3` preservado: sem trocar
+  `useCadastroRecordState` → `useCadastroReopenOnIdentity` neste lote.
+- Sem `CadastroCodigoRegistroField` / `data-action` novos (quebraria deepEqual de controls).
+- ID técnico: parágrafo monoespaçado somente leitura (sem data-action).
+- Graduação reopen + CodigoField idOnly = pacote separado com delta de pin aprovado
+  (padrão LocalEstoque).
+
+## Recuperação vs integra
+
+Classificação: melhoria visual/organização no existente (azul-claro aprovado);
+não é cópia do integra-novo. Sequência de código continua backend — sem count+1.
+
+## Testes
+
+node --test tests/cursor-residual-independent.test.js
+(+ identidade consolidacao smoke se tocado)
