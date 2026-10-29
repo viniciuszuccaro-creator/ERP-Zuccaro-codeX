@@ -165,11 +165,14 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
             />
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+          <div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50/50">
             <Label>Intent Ativa</Label>
             <Switch
               checked={formData.ativo}
               onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.ChatbotIntent.alterarStatus"
+              data-action="alternar-status-intent-chatbot"
             />
           </div>
         </CardContent>

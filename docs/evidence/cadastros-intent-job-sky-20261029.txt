@@ -24,3 +24,9 @@ Fora: merge/deploy/carga · candidata concorrente a #401/#406
 
 ## CI SUCCESS tip 7e27ee9f3 (2026-10-29 10:27 America/Sao_Paulo)
 - Runs 40881114046 / 40881084134 — 6/6 SUCCESS.
+
+## Delta complementar Cursor (2026-10-29 17:45 America/Sao_Paulo)
+- ChatbotIntent switch ativo: disabled={!podeSalvar} + data-permission
+  Cadastros.ChatbotIntent.alterarStatus (RBAC fail-closed visual).
+- Sky/ID windowMode já neste tip; #428 paralelo alinhado a esta branch (#409).
+- Candidata #401 tip 686ae322 intacta.
