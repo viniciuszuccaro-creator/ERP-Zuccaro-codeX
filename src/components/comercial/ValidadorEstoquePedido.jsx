@@ -133,16 +133,32 @@ export function resumoDisponibilidadeEstoque(verificacoes) {
   const list = Array.isArray(verificacoes) ? verificacoes : [];
   const authoritative = list.filter((v) => !v.fonteIndisponivel);
   const fontePronta = list.length === 0 || authoritative.length === list.length;
+  const algumIndisponivel = authoritative.some((v) => !v.disponivel);
   return {
     // Nunca declarar "estoque OK" quando há saldo desconhecido / unidade incompatível / fonte HTTP.
     todosDisponiveis: fontePronta && authoritative.length > 0 && authoritative.every((v) => v.disponivel),
-    algumIndisponivel: authoritative.some((v) => !v.disponivel),
+    algumIndisponivel,
     vazio: list.length === 0,
     fontePronta,
     fonteIndisponivel: list.some((v) => v.fonteIndisponivel),
     saldoDesconhecido: list.some((v) => v.saldoDesconhecido),
     unidadeIncompativel: list.some((v) => v.unidadeIncompativel),
   };
+}
+
+/**
+ * Gate de conversão Orçamento→Pedido (Codex P2 #406 mixed-doc).
+ * - vazio → ok
+ * - alguma linha com saldo CONHECIDO insuficiente → bloqueia (prevalece sobre advisory)
+ * - fonte incompleta / saldo desconhecido sem insuficiência conhecida → advisory (não bloqueia como “sem estoque”)
+ * - fonte pronta → exige todosDisponiveis
+ */
+export function conversionStockOkFromAvailability(state) {
+  if (!state || typeof state !== 'object') return false;
+  if (state.vazio) return true;
+  if (state.algumIndisponivel) return false;
+  if (state.fontePronta === false) return true;
+  return Boolean(state.todosDisponiveis);
 }
 
 /**
@@ -199,9 +215,13 @@ export default function ValidadorEstoquePedido({
       fonteIndisponivel,
       saldoDesconhecido,
       unidadeIncompativel,
-      // Alinha OrcamentosTab: fontePronta===false (HTTP/desconhecido) ≠ bloqueio por “sem estoque”;
-      // bloqueio só com saldo conhecido insuficiente (todosDisponiveis===false).
-      ready: Boolean(empresaId) && (vazio || !fontePronta || todosDisponiveis),
+      // Insuficiência conhecida prevalece sobre advisory (Codex P2 mixed-doc #406).
+      ready: Boolean(empresaId) && conversionStockOkFromAvailability({
+        vazio,
+        algumIndisponivel,
+        fontePronta,
+        todosDisponiveis,
+      }),
     });
   }, [todosDisponiveis, algumIndisponivel, vazio, fontePronta, fonteIndisponivel, saldoDesconhecido, unidadeIncompativel, empresaId, onAvailabilityChange]);
 

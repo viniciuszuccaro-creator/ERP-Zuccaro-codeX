@@ -17,7 +17,7 @@ async function loadHelpers() {
   });
   const sandbox = { module: { exports: {} }, exports: {}, console };
   sandbox.exports = sandbox.module.exports;
-  vm.runInNewContext(`${outputText}\nmodule.exports = { chaveDemandaEstoqueLinha, estoqueLiquidoDisponivel, avaliarDisponibilidadeLinhasEstoque, resumoDisponibilidadeEstoque };`, sandbox, {
+  vm.runInNewContext(`${outputText}\nmodule.exports = { chaveDemandaEstoqueLinha, estoqueLiquidoDisponivel, avaliarDisponibilidadeLinhasEstoque, resumoDisponibilidadeEstoque, conversionStockOkFromAvailability };`, sandbox, {
     filename: 'ValidadorEstoquePedido.helpers.js',
   });
   return sandbox.module.exports;
@@ -148,14 +148,50 @@ test('P1 #4410814402: sem fonte local autoritativa (HTTP) não bloqueia como est
   assert.equal(resumo.algumIndisponivel, false, 'ausência de fonte ≠ estoque insuficiente');
 });
 
-test('OrcamentosTab: conversão usa ValidadorEstoque e distingue fontePronta de insuficiente', async () => {
+test('P2 #406 mixed-doc: insuficiência conhecida prevalece sobre saldo desconhecido', async () => {
+  const {
+    avaliarDisponibilidadeLinhasEstoque,
+    resumoDisponibilidadeEstoque,
+    conversionStockOkFromAvailability,
+  } = await loadHelpers();
+  const produtos = [
+    { id: 'p-zero', estoque_atual: 0, estoque_reservado: 0 },
+    { id: 'p-master', nome: 'Sem saldo no DTO' },
+  ];
+  const rows = avaliarDisponibilidadeLinhasEstoque(
+    [
+      { produto_id: 'p-zero', quantidade: 5, unidade_sigla: 'UN' },
+      { produto_id: 'p-master', quantidade: 1, unidade_sigla: 'UN' },
+    ],
+    produtos,
+    { fonteLocalAutoritativa: true },
+  );
+  const resumo = resumoDisponibilidadeEstoque(rows);
+  assert.equal(resumo.algumIndisponivel, true, 'linha com saldo 0 e demanda 5');
+  assert.equal(resumo.saldoDesconhecido, true);
+  assert.equal(resumo.fontePronta, false, 'há linha desconhecida');
+  // ANTES: fontePronta===false liberava conversão. DEPOIS: insuficiência conhecida bloqueia.
+  assert.equal(conversionStockOkFromAvailability(resumo), false);
+  assert.equal(
+    conversionStockOkFromAvailability({
+      vazio: false,
+      algumIndisponivel: false,
+      fontePronta: false,
+      todosDisponiveis: false,
+    }),
+    true,
+    'só desconhecido/advisory sem insuficiência conhecida → não bloqueia como sem estoque',
+  );
+});
+
+test('OrcamentosTab: conversão usa conversionStockOkFromAvailability (insuficiência > advisory)', async () => {
   const src = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
   assert.match(src, /ValidadorEstoquePedido/);
+  assert.match(src, /conversionStockOkFromAvailability/);
   assert.match(src, /conversionStockOk/);
   assert.match(src, /Estoque insuficiente ou indisponível/);
   assert.match(src, /disabled=\{submitting \|\| !conversionStockOk\}/);
-  assert.match(src, /fontePronta/);
-  assert.match(src, /fontePronta === false \? true/);
+  assert.doesNotMatch(src, /fontePronta === false \? true/);
 });
 
 test('ValidadorEstoquePedido: HTTP advisory + saldo desconhecido + unidade no UI', async () => {
@@ -166,6 +202,7 @@ test('ValidadorEstoquePedido: HTTP advisory + saldo desconhecido + unidade no UI
   assert.match(src, /chaveDemandaEstoqueLinha/);
   assert.match(src, /saldoDesconhecido/);
   assert.match(src, /unidadeIncompativel/);
+  assert.match(src, /conversionStockOkFromAvailability/);
   assert.match(src, /Saldo desconhecido/);
   assert.match(src, /Unidade incompatível/);
   assert.doesNotMatch(src, /estoque_atual \?\? 0/);
