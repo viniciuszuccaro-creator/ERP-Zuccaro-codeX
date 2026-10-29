@@ -1,0 +1,21 @@
+Pacote E — Contatos Cliente: keep both (2026-10-29 18:15 America/Sao_Paulo)
+===========================================================================
+Base: #429 probes c3d708c0f · pedido Regra-Mãe unificar sem apagar por nome.
+
+## Inventário
+| Artefato | Consumidores in-repo | RBAC/scope | Papel |
+|----------|----------------------|------------|-------|
+| `cadastros/GerenciarContatosClienteForm.jsx` | CadastroClienteCompleto, PainelDinamicoCliente | canEdit Cadastros.Cliente + assertScopeCurrent | **canônico** |
+| `comercial/GerenciarContatosCliente.jsx` | **nenhum** (órfão) | sem canEdit/assertScope; Cliente.update direto | legado/capacidade residual |
+
+Teste: `tests/cadastros-registros-probes.test.js` + `painel-dinamico-cliente-historico-tab`
+proíbem import do órfão no Painel.
+
+## Decisão (sem exclusão)
+- Manter ambos até aceite explícito de remoção/arquivamento.
+- Não criar 3º módulo “ContatosUnificado”.
+- Qualquer consolidação futura: extrair helpers compartilhados → Form canônico;
+  migrar consumidores; só então inativar órfão com homologação.
+
+## Fora
+Apagar arquivo · seed Contatos · Auth VPS · merge #401 · harness

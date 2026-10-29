@@ -42,6 +42,7 @@ test('Contatos canônico tem RBAC; comercial órfão não é importado pelo Pain
     path.join(ROOT, 'components/comercial/GerenciarContatosCliente.jsx'),
     'utf8',
   );
+  assert.match(orphan, /Pacote E — keep both/);
   assert.doesNotMatch(orphan, /canEdit|assertScopeCurrent|usePermissions/);
   assert.match(orphan, /base44\.entities\.Cliente\.update/);
 
