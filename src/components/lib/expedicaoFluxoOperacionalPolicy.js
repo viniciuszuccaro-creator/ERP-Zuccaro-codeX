@@ -434,11 +434,11 @@ export const buildComprovanteRecebedorPayload = (input = {}) => {
       .replace(/[<>]/g, '')
       .trim();
     if (rejectOver && cleaned.length > max) {
-      const error = new Error(`${field} excede ${max} caracteres`);
-      error.code = 'VALIDATION_ERROR';
-      error.field = field;
-      error.status = 422;
-      throw error;
+      throw Object.assign(new Error(`${field} excede ${max} caracteres`), {
+        code: 'VALIDATION_ERROR',
+        field,
+        status: 422,
+      });
     }
     return cleaned.slice(0, max);
   };
