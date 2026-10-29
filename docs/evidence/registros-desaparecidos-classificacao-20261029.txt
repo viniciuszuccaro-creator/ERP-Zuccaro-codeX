@@ -1,0 +1,36 @@
+Pacote D — registros “desaparecidos” ≠ recuperação visual (2026-10-29 16:40 America/Sao_Paulo)
+===========================================================================================
+Branch: cursor/cadastros-audit-residual-392b (#420)
+Reusa: registros-abcd-cadastros-397 · registros-recuperacao-matriz-20261009 ·
+       cadastros-audit-residual-20261029 · cadastros-codigo-inventario-completo
+Sem seed fictício · sem VPS · sem carga operacional · sem inventar exemplos.
+
+## Método
+1) Tela aberta / badge 0 ≠ ausência de registro.
+2) Classificar A/B/C antes de D (ABCD #397).
+3) Fontes: contexto grupo/empresa, filtros UI, projeção adapter, API HTTP,
+   store local `erp_integra_local_db_v1`, soft-delete, staging privado #211/#344.
+
+## Achados vigentes (sanitizado)
+| Sintoma | Classe | Evidência / ação |
+|---------|--------|------------------|
+| Badge Produto CPA 0 com n>0 no DB | A — filtro/escopo | matriz 20261009; não seed |
+| Lista vazia após troca empresa | C — contexto | queryKey + scopeKey Visualizador |
+| Contatos “sumiram” no painel | B/C — contrato escalar / permissão | #424 epoch/reject; não inventar lista |
+| Fornecedor n=0 ops | D — schema/tabela ausente | staging #211; **sem** fictício |
+| Volume Cliente/Produto ≪ legado | D — import não autorizado | authorized=0; gates Codex |
+| GATE-D SYNTH / ensaios | preservar | ≠ legado; não apagar com FK |
+
+## Auditoria cadastros residual (#420) — revalidada neste tip
+`node --test tests/cadastros-audit-residual.test.js` → **4 PASS / 0 FAIL / EXIT 0**
+- Forms: sem count+1 para código (Bloco2 tiles UI OK)
+- Pins ID-only / date-arith preservados
+- Embeds Contatos/Endereços RBAC fail-closed
+- PerfilAcesso sky+ID (#418) ok
+
+## Sequência canônica
+Backend `reserve_entity_codigo` / MASTER_CODE — nunca count+1 no navegador (prova residual).
+IDs/códigos importados: preservar; high-water no backend.
+
+## Fora deste lote
+Carga staging · DDL Fornecedor · merge #401 · WIP13 · HD externo
