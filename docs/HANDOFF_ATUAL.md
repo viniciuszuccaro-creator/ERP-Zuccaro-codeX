@@ -1,4 +1,41 @@
-## Estado vigente - candidata401 revisada29/10
+## Estado vigente - POSIX executado e revisoes por SHA (2026-10-29)
+
+Os dois checks POSIX foram executados no executor Linux existente, sem instalar
+WSL, usar a VPS operacional ou escrever no HD externo. Bundle sanitizado SHA256
+0c6173abd166519b11f1a269f9b0edad4fdd8a4c8b2101d1fcfb407e919c125b:
+48 fontes verificadas. Node24.22.1/Python3.12.14; comando node --test
+--test-concurrency=1 tests/legado-filesystem-precheck.test.js
+tests/legado-review-workflow.test.js, com TEST_PYTHON_EXECUTABLE explicito.
+TMPDIR deve ser irmao da extracao, nunca estar dentro da arvore testada: a
+primeira tentativa corretamente bloqueou staging dentro do repositorio.
+Resultado corrigido sem mudar testes:12PASS/0FAIL/0SKIP/exit0. Overlay do helper
+atual validado por SHA antes/depois:12PASS/0FAIL/0SKIP/exit0 novamente; log SHA256
+d3225a846aba4a33d1a2ceafc2fb4ba5f5b5335f469261755e8dd0f33cf9663e.
+Nao equivale ao fechamento integral do WIP13arquivos. Dependencias/checkout
+completo indisponiveis nesse executor: politica nega github.com:443 e
+registry.npmjs.org:443. Nao houve contorno, instalacao ou alteracao de politica.
+Intervencao minima, se usado esse executor: permitir esses destinos pela
+configuracao suportada do ambiente existente, sem criar outro ambiente/cobranca;
+depois validar o patch exato e seus blobs, nao uma reconstruicao equivalente.
+
+Revisao40673046b406d7ba9a0b68da6ee3f7454eb18d7033e e composicao401
+716dabdebed8ae28c60c542771a0e56be937685d: contraprovas dos helpers confirmam
+principal canonico preservado, saldo ausente desconhecido, demanda agregada e
+insuficiencia conhecida nao anulada por desconhecido. Nao manter os tres achados
+antigos abertos genericamente. Residuos P2 publicados em406/6498240997:
+principal no caminho escalar ainda perdido; demanda CX versus saldo UN ainda
+aceita sem conversao comprovada. Nao editada branch Cursor.
+Revisao407ba431a2af78f6adf04a6671011821ffd470aab52: contraprova real de helper e
+schema comprova nome valido de190caracteres truncado para180 (contrato aceita200).
+P2 publicado407/6498241434; GPSzero preservado. Sem homologacao browser/PGexterno.
+
+WIP preservado, patch privado SHA256
+b78e612409ff31084a7ebf30f5dde7a216ca1f228fb45830a439b0bfc4829383.
+Coorte final26/10 segue dependente do exemplar privado no Codespace; recibo nao
+substitui bytes. Nenhuma consulta real, ACL, carga, deploy ou migracao executada.
+Executor Linux encerrou os testes; nenhum trabalho permanente declarado.
+
+## Historico - candidata401 revisada antes da execucao Linux29/10
 
 Retificacao vigente: D e discoUSBexternoJMicron, nao volume interno; indicacao de
 WSLemD retirada. C e SSDNVMeinterno/deboot com~854MB livres. Nao houve instalacao,

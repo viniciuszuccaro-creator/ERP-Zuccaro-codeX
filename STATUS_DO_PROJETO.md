@@ -1,4 +1,23 @@
-## Estado vigente - revisao da composicao401 (2026-10-29)
+## Estado vigente - desbloqueio POSIX e revisao atual (2026-10-29)
+
+Dois checks POSIX:12PASS/0FAIL/0SKIP/exit0 em Linux existente, repetidos com
+overlay atual verificado:12PASS/0FAIL/0SKIP. Sem instalacao/HDexterno/VPS. Provas,
+hashes e comandos no HANDOFF existente. Nao somar esses resultados como nova
+suite completa: fechamento integral do WIP13arquivos ainda pendente, pois esse
+executor bloqueia GitHub/npm por politica. WIP/patch preservados; nenhum codigo
+funcional publicado neste lote. Proxima acao: canal suportado de dependencias no
+mesmo executor e validacao do patch exato, sem relaxar checks ou copiar historico
+Git indiscriminadamente. WSLemD continua proibido/retirado.
+
+40673046b40/401716dabde: antigas falhas genericas de principal canonico, saldo
+ausente e agregacao encerradas por contraprovas. Dois residuos P2: principal no
+caminho escalar e unidade da demanda versus unidade do saldo, parecer406/6498240997.
+407ba431a2a: nome de recebedor valido190 truncado180, parecer407/6498241434.
+Revisao sintetica dos helpers reais, nao browser/PostgreSQL. Cursor mantem autoria.
+Coorte100 final permanece inacessivel, nao vazia/recriada. Gates operacionais
+intactos. Sem nova carga/DDL/ACL/deploy; executor de validacao encerrado.
+
+## Historico - revisao da composicao401 antes da prova Linux (2026-10-29)
 
 Retificacao de seguranca29/10: C=disco0NVMeinterno, D=disco1JMicronUSBexterno,
 comprovados por particao->disco. RETIRADA orientacao WSLemD; nao usar HD do backup.
