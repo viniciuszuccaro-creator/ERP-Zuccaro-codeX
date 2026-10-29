@@ -4,15 +4,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, TrendingUp, Calendar, DollarSign, Flame, Snowflake, Sun } from "lucide-react";
+import {
+  filterOportunidadesPorEtapaFunil,
+  listFunilColunasUi,
+} from "@/components/lib/crmOportunidadePolicy";
 
-const etapas = [
-  { id: "Prospecção", nome: "Prospecção", cor: "bg-gray-500" },
-  { id: "Contato Inicial", nome: "Contato Inicial", cor: "bg-blue-500" },
-  { id: "Qualificação", nome: "Qualificação", cor: "bg-cyan-500" },
-  { id: "Proposta", nome: "Proposta", cor: "bg-purple-500" },
-  { id: "Negociação", nome: "Negociação", cor: "bg-orange-500" },
-  { id: "Fechamento", nome: "Fechamento", cor: "bg-green-500" }
-];
+const etapas = listFunilColunasUi('visual');
 
 export default function FunilVisual({ oportunidades, onMoverEtapa, onVisualizarOportunidade }) {
   const handleDragEnd = (result) => {
@@ -26,7 +23,7 @@ export default function FunilVisual({ oportunidades, onMoverEtapa, onVisualizarO
   };
 
   const getOportunidadesPorEtapa = (etapa) => {
-    return oportunidades.filter(opp => opp.etapa === etapa && (opp.status === "Aberto" || opp.status === "Em Andamento"));
+    return filterOportunidadesPorEtapaFunil(oportunidades, etapa, { mode: 'visual' });
   };
 
   const getTemperaturaIcon = (temp) => {

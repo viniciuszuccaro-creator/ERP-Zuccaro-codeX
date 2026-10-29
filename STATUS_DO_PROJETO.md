@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#408 Funil×3 / Separacao keep-both) (2026-10-29 10:05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** |  ← #407 |
+| **Escopo** |  + hub Separação IA/clássica |
+| **#407** | tip  CI SUCCESS · docs  |
+| **#401** | tip código  CI SUCCESS |
+| Testes | recuperacao-funil-separacao + crm-oportunidade-policy PASS |
+| Fora | merge/deploy/carga · 3º módulo · HTTP Funil Codex |
+
+**Evidência:** 
+**Próximo:** CI deste tip. Sem merge/deploy.
+
+(2026-10-29 10:05 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 
 | Campo | Valor |

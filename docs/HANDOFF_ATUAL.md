@@ -1,3 +1,8 @@
+## CURSOR — #408 Funil×3 / Separacao keep-both (2026-10-29 10:05 America/Sao_Paulo)
+
+- Etapas CRM_ETAPAS nos 3 funis; hub Expedicao Separação IA + clássica.
+- #407  SUCCESS. Sem merge/deploy/carga.
+
 ## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
 
 - Tip `a18a362ed` CI SUCCESS runs 40877458648 / 40877419771 (6/6).
@@ -7,7 +12,7 @@
 ## CURSOR — #407 recuperação configs+comprovante (2026-10-29 09:55 America/Sao_Paulo)
 
 - Sky+ID residual WhatsApp/Integração/Despesa/Filial; contrato comprovante compartilhado.
-- #401 composição tip  (CI). #406  SUCCESS. Sem merge/deploy/carga.
+- #401 composição tip `fbcca01b9` (CI). #406 `90990801e` SUCCESS. Sem merge/deploy/carga.
 
 ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
 

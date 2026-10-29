@@ -10,8 +10,8 @@
 | FormaPagamentoForm (simples) | FormaPagamentoFormCompleto | codigo+ID, abas | **keep both** curto prazo (Completo no Bloco3) |
 | ChatbotIntentsForm | ChatbotIntentForm | adapter já consolidado | **keep** (adapter) |
 | ProdutoFormCompleto legado | ProdutoFormV22_Completo | PIM/HTTP/DAM | **keep both** até portar Importacao NFe |
-| CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | Funil Visual canônico UI · mesma fonte Oportunidade | funil/scoring/IA | **keep both curto** · HTTP schema **BLOCKED** Codex · C360 usa adaptador legado (opção B) |
-| SeparacaoConferencia × SeparacaoConferenciaIA | SeparacaoConferenciaIA | conferência+audit | keep both curto prazo |
+| CRM FunilVisual × FunilComercialInteligente × FunilVendasAvancado | Funil Visual canônico UI · mesma fonte Oportunidade · `listFunilColunasUi`/`filterOportunidadesPorEtapaFunil` (2026-10-29) | funil/scoring/IA | **keep both curto** · etapas unificadas · HTTP schema **BLOCKED** Codex · C360 adaptador B |
+| SeparacaoConferencia × SeparacaoConferenciaIA | hub Expedicao ambos + Entregas→clássico (2026-10-29) | conferência+audit+IA | keep both curto · mesma entidade |
 | ComprovanteDigital × ComprovanteEntregaDigital | `buildComprovanteRecebedorPayload` compartilhado (2026-10-29) | POD · HTTP/GPS/estoque só no EntregaDigital | keep both curto · contrato unificado |
 | Dashboard × DashboardCorporativo | escopos distintos | KPIs empresa vs grupo | keep both |
 | HubAtendimento × ChatbotAtendimento | papéis complementares | fila vs bot | keep both |

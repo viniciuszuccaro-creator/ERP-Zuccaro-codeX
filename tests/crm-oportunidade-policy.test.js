@@ -133,7 +133,8 @@ test('CRM deixa de usar placeholders, funis usam updateInContext e client aplica
   assert.doesNotMatch(funilIa, /entities\.Oportunidade\.update/);
   assert.match(funilAv, /filtrarPorContexto\('Oportunidade'/);
   assert.match(funilAv, /updateInContext\('Oportunidade'/);
-  assert.match(funilAv, /Contato Inicial/);
+  assert.match(funilAv, /listFunilColunasUi\('avancado'\)/);
+  assert.match(funilAv, /filterOportunidadesPorEtapaFunil/);
   assert.match(lista, /canConvert/);
   assert.match(client, /assertOportunidadeOnUpdate/);
   assert.match(client, /oportunidadeStatusPermissionActions/);

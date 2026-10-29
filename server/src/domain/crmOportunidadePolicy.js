@@ -59,6 +59,27 @@ export const CRM_ETAPAS = [
   'Fechamento',
 ];
 
+/** Paletas UI dos funis (Visual / IA / Avançado) — mesma ordem canônica CRM_ETAPAS. */
+export const CRM_FUNIL_COLUNA_CORES = Object.freeze({
+  visual: ['bg-gray-500', 'bg-blue-500', 'bg-cyan-500', 'bg-purple-500', 'bg-orange-500', 'bg-green-500'],
+  ia: ['bg-slate-100', 'bg-blue-100', 'bg-purple-100', 'bg-indigo-100', 'bg-yellow-100', 'bg-green-100'],
+  avancado: ['bg-slate-100', 'bg-cyan-100', 'bg-blue-100', 'bg-yellow-100', 'bg-orange-100', 'bg-green-100'],
+});
+
+/**
+ * Colunas do funil a partir de CRM_ETAPAS (evita listas paralelas divergentes nos 3 UIs).
+ * @param {'visual'|'ia'|'avancado'} variant
+ * @returns {{ id: string, nome: string, cor: string }[]}
+ */
+export const listFunilColunasUi = (variant = 'visual') => {
+  const cores = CRM_FUNIL_COLUNA_CORES[variant] || CRM_FUNIL_COLUNA_CORES.visual;
+  return CRM_ETAPAS.map((etapa, index) => ({
+    id: etapa,
+    nome: variant === 'ia' && etapa === 'Contato Inicial' ? 'Contato' : etapa,
+    cor: cores[index] || cores[cores.length - 1],
+  }));
+};
+
 /** @param {string} entityName */
 export const isCrmEntity = (entityName) => CRM_ENTITIES.includes(entityName);
 
@@ -84,6 +105,30 @@ export const normalizeEtapaCrm = (value) => {
     prospecção: 'Prospecção',
   };
   return aliases[raw.toLowerCase()] || raw;
+};
+
+/**
+ * Filtra oportunidades por etapa canônica (normalizeEtapaCrm).
+ * @param {CrmRecord[]} oportunidades
+ * @param {unknown} etapaId
+ * @param {{ mode?: 'visual' | 'ia' | 'avancado' }} [options]
+ */
+export const filterOportunidadesPorEtapaFunil = (oportunidades = [], etapaId, options = {}) => {
+  const etapa = normalizeEtapaCrm(etapaId);
+  const mode = options.mode || 'avancado';
+  const rows = Array.isArray(oportunidades) ? oportunidades : [];
+  return rows.filter((opp) => {
+    const oppEtapa = normalizeEtapaCrm(opp?.etapa_funil || opp?.etapa);
+    if (oppEtapa !== etapa) return false;
+    const status = String(opp?.status || '');
+    if (mode === 'visual') {
+      return status === 'Aberto' || status === 'Em Andamento';
+    }
+    if (mode === 'ia') {
+      return status !== 'Ganho' && status !== 'Perdido';
+    }
+    return true;
+  });
 };
 
 /** @param {CrmRecord} record */

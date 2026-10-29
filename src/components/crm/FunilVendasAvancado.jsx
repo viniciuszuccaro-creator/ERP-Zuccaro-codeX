@@ -20,7 +20,11 @@ import {
   Award
 } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
-import { normalizeEtapaCrm } from "@/components/lib/crmOportunidadePolicy";
+import {
+  filterOportunidadesPorEtapaFunil,
+  listFunilColunasUi,
+  normalizeEtapaCrm,
+} from "@/components/lib/crmOportunidadePolicy";
 
 /**
  * ETAPA 10: FUNIL DE VENDAS AVANÇADO V21.4
@@ -38,14 +42,7 @@ import { normalizeEtapaCrm } from "@/components/lib/crmOportunidadePolicy";
  * - ✅ Responsivo w-full h-full
  */
 
-const etapas = [
-  { id: 'Prospecção', nome: 'Prospecção', cor: 'bg-slate-100' },
-  { id: 'Contato Inicial', nome: 'Contato Inicial', cor: 'bg-cyan-100' },
-  { id: 'Qualificação', nome: 'Qualificação', cor: 'bg-blue-100' },
-  { id: 'Proposta', nome: 'Proposta', cor: 'bg-yellow-100' },
-  { id: 'Negociação', nome: 'Negociação', cor: 'bg-orange-100' },
-  { id: 'Fechamento', nome: 'Fechamento', cor: 'bg-green-100' }
-];
+const etapas = listFunilColunasUi('avancado');
 
 export default function FunilVendasAvancado({ windowMode = false }) {
   const { toast } = useToast();
@@ -185,7 +182,7 @@ Calcule:
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {etapas.map(etapa => {
-            const opsEtapa = oportunidades.filter(op => normalizeEtapaCrm(op.etapa_funil || op.etapa) === etapa.id);
+            const opsEtapa = filterOportunidadesPorEtapaFunil(oportunidades, etapa.id, { mode: 'avancado' });
             const valorEtapa = opsEtapa.reduce((acc, op) => acc + (op.valor_estimado || 0), 0);
 
             return (
