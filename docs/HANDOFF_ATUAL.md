@@ -1,3 +1,11 @@
+## CURSOR — #401 + #411 c8c5f24c7 (2026-10-29 11:43 America/Sao_Paulo)
+
+- Integra tip #411 Contatos escalar + unidade vs saldo (CI SUCCESS).
+- Em seguida #412+#407. Sem merge/deploy/carga.
+
+## CURSOR — #411 tip c8c5f24c7 CI SUCCESS (2026-10-29 11:43 America/Sao_Paulo)
+
+- Residual Contatos+unidade CI SUCCESS. Compose #401 com #412+#407 em seguida.
 ## CURSOR — #401 tip 4dbfdc7cc CI SUCCESS (2026-10-29 10:54 America/Sao_Paulo)
 
 - Composição tip `4dbfdc7cc` = #410 `59ad3a5dc` + pin selected-reference + #406.

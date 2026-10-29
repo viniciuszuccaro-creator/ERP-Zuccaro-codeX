@@ -208,3 +208,27 @@ test('ValidadorEstoquePedido: HTTP advisory + saldo desconhecido + unidade no UI
   assert.doesNotMatch(src, /estoque_atual \?\? 0/);
   assert.doesNotMatch(src, /estoque_atual \|\| 0/);
 });
+
+test('parecer 6498240997: demanda CX vs saldo UN → unidadeIncompativel (sem conversão)', async () => {
+  const { avaliarDisponibilidadeLinhasEstoque, resumoDisponibilidadeEstoque } = await loadHelpers();
+  const produtos = [{ id: 'p-aco', estoque_atual: 10, estoque_reservado: 0, unidade_medida: 'UN' }];
+  const rows = avaliarDisponibilidadeLinhasEstoque(
+    [{ produto_id: 'p-aco', quantidade: 2, unidade_sigla: 'CX' }],
+    produtos,
+  );
+  assert.equal(rows[0].unidadeIncompativel, true);
+  assert.equal(rows[0].fonteIndisponivel, true);
+  assert.equal(rows[0].disponivel, false);
+  assert.equal(rows[0].disponivelLiquido, null, 'não declara líquido convertível');
+  const resumo = resumoDisponibilidadeEstoque(rows);
+  assert.equal(resumo.unidadeIncompativel, true);
+  assert.equal(resumo.todosDisponiveis, false);
+  assert.equal(resumo.fontePronta, false);
+  // Mesma unidade: ainda compara saldo
+  const ok = avaliarDisponibilidadeLinhasEstoque(
+    [{ produto_id: 'p-aco', quantidade: 2, unidade_sigla: 'UN' }],
+    produtos,
+  );
+  assert.equal(ok[0].unidadeIncompativel, false);
+  assert.equal(ok[0].disponivel, true);
+});

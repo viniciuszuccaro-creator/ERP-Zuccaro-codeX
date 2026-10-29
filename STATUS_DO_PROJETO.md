@@ -1,3 +1,34 @@
+## CURSOR — VIGENTE (#401 compose + #411 c8c5f24c7) (2026-10-29 11:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#401** — integra **#411** tip **`c8c5f24c7`** (Contatos+unidade) |
+| **Próximo** | merge #412/`#407` · CI · demo |
+| Fora | merge oficial · deploy · carga |
+
+(2026-10-29 11:43 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#411 tip c8c5f24c7 CI SUCCESS) (2026-10-29 11:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#411** tip **`c8c5f24c7`** — Contatos escalar + unidade vs saldo |
+| **#412** | tip `c0ccadeae` CI SUCCESS — nome recebedor max200 |
+| **Próximo** | compose #401 com #411+#412+#407 |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:43 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#411 residual Contatos+unidade) (2026-10-29 11:28 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial360-achados-residual-p2-392b` ← #406 `73046b406` |
+| **Parecer** | 6498240997 + Codex #4413059634 |
+| **#401** | tip `450e830b6` — ainda SEM #407 |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:28 America/Sao_Paulo)
 ## CURSOR — VIGENTE (#401 tip 4dbfdc7cc CI SUCCESS) (2026-10-29 10:54 America/Sao_Paulo)
 
 | Campo | Valor |

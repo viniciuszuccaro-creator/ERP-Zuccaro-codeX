@@ -1011,3 +1011,38 @@ test('Histórico resetPaginationSession: zera loadingMore e limpa extras (P2 Cod
   // finally da load-more só zera loading quando o controller ainda é o vigente
   assert.match(src, /if \(loadMoreAbortRef\.current === controller\)/);
 });
+
+test('parecer 6498240997: escalar email+telefone com principal → rejeita sem perda silenciosa', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  const start = src.indexOf('function usesContatosScalarHttpContract');
+  const end = src.indexOf('/**\n * Serializa gravações de contatos', start);
+  const helpers = src.slice(start, end);
+  const { stripPrincipalQuandoMultiCanal, usesContatosScalarHttpContract } = new Function(
+    `${helpers}; return { stripPrincipalQuandoMultiCanal, usesContatosScalarHttpContract };`,
+  )();
+
+  const draft = [
+    { tipo: 'E-mail', valor: 'a@b.c', principal: true },
+    { tipo: 'Telefone', valor: '1133334444', principal: false },
+  ];
+  const scalarCliente = { email: 'a@b.c', telefone: '1133334444' };
+  assert.equal(usesContatosScalarHttpContract(scalarCliente), true);
+
+  // hydrate ainda limpa (sem inventar preferência na UI)
+  const hydrated = stripPrincipalQuandoMultiCanal(draft, { scalarContract: true, onConflict: 'strip' });
+  assert.equal(hydrated.every((c) => c.principal === false), true);
+
+  // persist: rejeita — rascunho do chamador permanece intacto
+  assert.throws(
+    () => stripPrincipalQuandoMultiCanal(draft, { scalarContract: true, onConflict: 'reject' }),
+    (err) => err?.code === 'CONTATOS_SCALAR_OVERFLOW' && err?.reason === 'principal_nao_representavel',
+  );
+  assert.equal(draft[0].principal, true, 'rascunho original preservado após rejeição');
+});
+
+test('Codex #4413059634: após save escalar não promove rascunho a contatos[] no source', async () => {
+  const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
+  assert.match(src, /scalarContractLockedRef/);
+  assert.match(src, /onConflict:\s*["']reject["']/);
+  assert.match(src, /delete merged\.contatos/);
+});
