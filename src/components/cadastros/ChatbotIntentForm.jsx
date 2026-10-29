@@ -160,11 +160,14 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
             />
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+          <div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50/50">
             <Label>Intent Ativa</Label>
             <Switch
               checked={formData.ativo}
               onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.ChatbotIntent.alterarStatus"
+              data-action="alternar-status-intent-chatbot"
             />
           </div>
         </CardContent>
@@ -183,12 +186,17 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
             <MessageCircle className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
               {chatbotIntent ? 'Editar Intent' : 'Nova Intent'}
             </h2>
           </div>
+          {chatbotIntent?.id ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(chatbotIntent.id)}</span>
+            </p>
+          ) : null}
           {form}
         </div>
       </div>
