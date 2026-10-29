@@ -1,3 +1,8 @@
+## CURSOR — #414 P1/P2 N+1 + fila (2026-10-29 12:40 America/Sao_Paulo)
+
+- Fecha Codex P1/P2 tip `af1a86048`: `resolveClienteEmpresa` (1×/clientes) + catálogo acumula lotes.
+- Base `238dd7f38` CI5195. Incorporar #401 só após parecer deste tip. Sem merge/VPS write.
+
 ## CURSOR — #414 tip 238dd7f38 CI SUCCESS (2026-10-29 12:23 America/Sao_Paulo)
 
 - Tip `238dd7f38` CI SUCCESS 6/6 — union catalog + merge fail-safe + useQueries mock + tipagem.

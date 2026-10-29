@@ -1,9 +1,28 @@
-P2 #4413844021 — cliente label fora da página (2026-10-29 12:05 America/Sao_Paulo)
+P2 #4413844021 + Codex P1/P2 #414 — cliente label fora da página
 ================================================================
-unionComercialClienteCatalog + hidratação por clienteEmpresaId
-em OrcamentosTab e PedidoCanonicoPanel (listagem/PDF/share/form).
-Base composição tip docs. Independente — sem disputa de checkout.
+America/Sao_Paulo 2026-10-29
 
-## CI SUCCESS tip 238dd7f38 (2026-10-29 12:23 America/Sao_Paulo)
-PR #414 — frontend/backend/expedicao SUCCESS 6/6.
-Merge vazio fail-safe + mock useQueries + JSDoc union tipagem.
+## Tip código anterior (CI SUCCESS)
+- `238dd7f38` / docs `af1a86048` — CI5195 SUCCESS
+- Codex review tip `af1a86048`: sem major; findings P1/P2 em OrcamentosTab/Pedido
+
+## Correções P1/P2 (este tip)
+P1 N+1: `comercialMasters.resolveClienteEmpresa` — 1× GET /api/v1/clientes
+  (sem fan-out produtos/condições/unidades/tabelas por linha).
+P2 fila: resultados de hidratação acumulam em `clienteCatalog` via `rowHydrationKey`
+  → lote `.slice(0,20)` avança até esgotar IDs necessários (página 50+).
+
+## Cobertura comportamental / contrato
+- resolveComercialSelectedClienteLinks (página /clientes apenas)
+- resolveClienteEmpresa: urls.length === 1
+- Orcamento/Pedido: não usam `comercialMasters.list({clienteEmpresaId})` na hidratação
+- merge vazio fail-safe + union catalog (tips anteriores)
+- orcamento-component-behavior (sessão/proposta/duplo clique) PASS
+- CANAL selected-reference remainder PASS
+- typecheck PASS
+
+## O que a demo sintética NÃO cobre
+writes=0 / salvar desabilitado — não prova persistência E2E nem convert→Pedido.
+
+## Incorporação à #401
+Somente após parecer Codex deste tip + validação; sem composição concorrente.

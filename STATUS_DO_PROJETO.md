@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#414 P1/P2 N+1 + fila hidratação) (2026-10-29 12:40 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** — tip P1 `resolveClienteEmpresa` + P2 fila via `clienteCatalog` |
+| **Base tip** | `238dd7f38` CI5195 SUCCESS · Codex tip `af1a86048` sem major + P1/P2 |
+| **#401** | `094cb4b7e` estável — incorporar #414 só após parecer deste tip |
+| Fora | merge/deploy/carga / VPS write / composição concorrente |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** CI + `@codex review` · demo persistência isolada (Pacote B). Sem merge.
+
+(2026-10-29 12:40 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#414 tip 238dd7f38 CI SUCCESS) (2026-10-29 12:23 America/Sao_Paulo)
 
 | Campo | Valor |
