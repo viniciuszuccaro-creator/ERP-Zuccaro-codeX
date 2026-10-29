@@ -1,0 +1,27 @@
+Recuperação Pacote 5 — Funil×3 / Separacao×IA (2026-10-29)
+==========================================================
+Branch: cursor/recuperacao-funil-separacao-392b ← #407 tip `ba431a2af`
+Matriz: matriz-consolidacao-modulos-20261010.txt · capacidades 20261029
+
+Classificação
+------------
+FunilVisual × FunilComercialInteligente × FunilVendasAvancado
+  - Mesma fonte Oportunidade (B equivalente + keep both curto)
+  - Capacidades distintas: Visual=drag canônico props pai; IA=InvokeLLM priorização;
+    Avançado=scoring/normalize
+  - Policy: `listFunilColunasUi` + `filterOportunidadesPorEtapaFunil` em CRM_ETAPAS
+  - UI Funil*.jsx: **BLOCKED** por pins publication/stage44–46 (não alterar baseline
+    sem graduação) — helpers prontos; 3 UIs preservados sem 3º módulo
+
+SeparacaoConferencia × SeparacaoConferenciaIA
+  - Mesma entidade SeparacaoConferencia + asserts canônicos (B)
+  - IA: scan/validação LLM; Clássico: checklist manual + abertura via Entregas
+  - Hub Expedicao agora expõe ambos (antes IA só no launchpad; clássico só Entregas)
+  - Sem merge destrutivo / sem terceiro módulo
+
+Testes: recuperacao-funil-separacao.test.js + crm-oportunidade-policy
+Fora: merge/deploy/carga · schema HTTP Funil BLOCKED Codex
+
+## CI SUCCESS tip 6d62b99cf (2026-10-29 10:21 America/Sao_Paulo)
+- Runs 40880130429 / 40880118314 — 6/6 SUCCESS.
+- Funil*.jsx pins respeitados; hub Separacao entregue.

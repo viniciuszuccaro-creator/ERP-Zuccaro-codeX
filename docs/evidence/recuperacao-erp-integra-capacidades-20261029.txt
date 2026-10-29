@@ -42,8 +42,13 @@ Atualização (2026-10-29) — configs residual + comprovante contrato
   (HTTP/GPS/estoque no EntregaDigital; dialog no Digital). Sem 3º módulo.
 - Evidência: recuperacao-config-comprovante-20261029.txt
 
+Atualização (2026-10-29) — Funil×3 / Separacao×IA
+- Helpers CRM_ETAPAS (`listFunilColunasUi`) prontos; UI Funil*.jsx BLOCKED por pin publication/stage
+- Hub Expedicao: Separação IA + Separação clássica (Entregas preservado)
+- Evidência: recuperacao-funil-separacao-20261029.txt
+
 Próximo capacidade a capacitar no existente
 1. Param forms sky + reopen ID — #402 tip SUCCESS (fora deste tip)
 2. Demo fluxo C360 Private quando franquia
-3. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
-4. ChatbotIntent / JobAgendado / Parametro* residual fora branches reservadas
+3. ChatbotIntent / JobAgendado / Parametro* residual fora branches reservadas
+4. Cadastros restantes sem sky/ID (fora pins #405)

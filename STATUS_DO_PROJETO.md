@@ -1,3 +1,34 @@
+## CURSOR — VIGENTE (#408 tip 6d62b99cf CI SUCCESS) (2026-10-29 10:21 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#408** tip código **`6d62b99cf`** · docs **`65ffa15e7`** |
+| **CI** | SUCCESS 6/6 `40880130429` / `40880118314` |
+| **Escopo** | helpers CRM_ETAPAS + hub Separação IA/clássica · Funil*.jsx pin intacto |
+| Fora | merge/deploy/carga · graduação Funil UI |
+
+**Evidência:** `docs/evidence/recuperacao-funil-separacao-20261029.txt`
+**Próximo:** #409 Intent/Job. Sem merge/deploy.
+
+(2026-10-29 10:21 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#408 Funil×3 / Separacao keep-both) (2026-10-29 10:05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-funil-separacao-392b` ← #407 |
+| **Escopo** | `listFunilColunasUi` + hub Separação IA/clássica |
+| **#407** | tip `a18a362ed` CI SUCCESS · docs `ba431a2af` |
+| **#401** | tip código `fbcca01b9` CI SUCCESS |
+| **Tip** | `6d62b99cf` (fix pins Funil; hub Separacao + helpers) |
+| Testes | pin suite + recuperacao-funil-separacao PASS locais |
+| Fora | merge/deploy/carga · alterar Funil*.jsx sem graduação pin |
+
+**Evidência:** `docs/evidence/recuperacao-funil-separacao-20261029.txt`
+**Próximo:** CI tip `6d62b99cf`. Sem merge/deploy.
+
+(2026-10-29 10:05 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,3 +1,13 @@
+## CURSOR — #408 tip 6d62b99cf CI SUCCESS (2026-10-29 10:21 America/Sao_Paulo)
+
+- Tip código `6d62b99cf` / docs `65ffa15e7` CI SUCCESS 6/6.
+- Separacao hub + helpers; Funil UI pin preservado. Sem merge/deploy/carga.
+
+## CURSOR — #408 Funil×3 / Separacao keep-both (2026-10-29 10:05 America/Sao_Paulo)
+
+- Etapas CRM_ETAPAS nos 3 funis; hub Expedicao Separação IA + clássica.
+- Tip `8b09ae7e2`. #407 `a18a362ed` SUCCESS. Sem merge/deploy/carga.
+
 ## CURSOR — #407 tip a18a362ed CI SUCCESS (2026-10-29 10:03 America/Sao_Paulo)
 
 - Tip `a18a362ed` CI SUCCESS runs 40877458648 / 40877419771 (6/6).
@@ -7,7 +17,7 @@
 ## CURSOR — #407 recuperação configs+comprovante (2026-10-29 09:55 America/Sao_Paulo)
 
 - Sky+ID residual WhatsApp/Integração/Despesa/Filial; contrato comprovante compartilhado.
-- #401 composição tip  (CI). #406  SUCCESS. Sem merge/deploy/carga.
+- #401 composição tip `fbcca01b9` (CI). #406 `90990801e` SUCCESS. Sem merge/deploy/carga.
 
 ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
 

@@ -5,6 +5,9 @@
 export {
   CRM_ENTITIES,
   CRM_ETAPAS,
+  CRM_FUNIL_COLUNA_CORES,
+  listFunilColunasUi,
+  filterOportunidadesPorEtapaFunil,
   isCrmEntity,
   digitsOnly,
   normalizeEtapaCrm,
