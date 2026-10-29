@@ -1,3 +1,11 @@
+## CURSOR — C360 smoke demonstrado no runner (2026-10-29 08:24 America/Sao_Paulo)
+
+- Smoke `scripts/comercial360-preview-smoke.mjs` PASS em Vite `:5173` (sintético; writes=0; Salvar desabilitado).
+- Artefatos: `/opt/cursor/artifacts/c360-fluxo-20261029/{desktop,tablet}.png`.
+- Evidência: `docs/evidence/c360-fluxo-evidencia-20261029.txt`. Labels canônicos + CSP-safe timeout.
+- #404 residual sky+ID + tip smoke/docs. #403 Contatos+Estoque aguarda Codex. #401 isolada.
+- Próximo indep.: graduação reopen residual OU params. Sem merge/deploy/carga.
+
 
 
 ## CURSOR — #404 CI SUCCESS tip d33418caff (2026-10-29 08:25 America/Sao_Paulo)
