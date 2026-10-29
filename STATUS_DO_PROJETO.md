@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#414 tip 238dd7f38 CI SUCCESS) (2026-10-29 12:23 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#414** tip **`238dd7f38`** — CI SUCCESS 6/6 labels cliente + typecheck |
+| **#415** | tip `a3d37ad7b` CI SUCCESS Parametro* sky+ID |
+| **#401** | código `094cb4b7e` estável · demo≠E2E · persistência isolada pedida ao Codex |
+| Fora | merge/deploy/carga / VPS write |
+
+**Evidência:** `docs/evidence/comercial-cliente-label-catalogo-20261029.txt`
+**Próximo:** `@codex review` #414 · demo persistência isolada. Sem merge/deploy.
+
+(2026-10-29 12:23 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#414 CI fix merge vazio + useQueries mock) (2026-10-29 12:12 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,3 +1,9 @@
+## CURSOR — #414 tip 238dd7f38 CI SUCCESS (2026-10-29 12:23 America/Sao_Paulo)
+
+- Tip `238dd7f38` CI SUCCESS 6/6 — union catalog + merge fail-safe + useQueries mock + tipagem.
+- #415 `a3d37ad7b` SUCCESS. #401 estável; demo persistência isolada pedida ao Codex.
+- Sem merge/deploy/carga/VPS write.
+
 ## CURSOR — #401 demo escopo/bloqueios + P2 label (2026-10-29 12:03 America/Sao_Paulo)
 
 - HEAD `41728cbe6` / código `094cb4b7e`. Demo sintética ≠ persistência E2E.

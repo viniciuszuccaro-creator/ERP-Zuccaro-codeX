@@ -3,3 +3,7 @@ P2 #4413844021 — cliente label fora da página (2026-10-29 12:05 America/Sao_P
 unionComercialClienteCatalog + hidratação por clienteEmpresaId
 em OrcamentosTab e PedidoCanonicoPanel (listagem/PDF/share/form).
 Base composição tip docs. Independente — sem disputa de checkout.
+
+## CI SUCCESS tip 238dd7f38 (2026-10-29 12:23 America/Sao_Paulo)
+PR #414 — frontend/backend/expedicao SUCCESS 6/6.
+Merge vazio fail-safe + mock useQueries + JSDoc union tipagem.
