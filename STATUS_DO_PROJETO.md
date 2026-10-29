@@ -6,12 +6,12 @@
 | **Escopo** | `listFunilColunasUi` + hub Separação IA/clássica |
 | **#407** | tip `a18a362ed` CI SUCCESS · docs `ba431a2af` |
 | **#401** | tip código `fbcca01b9` CI SUCCESS |
-| **Tip** | `8b09ae7e2` |
-| Testes | recuperacao-funil-separacao + crm-oportunidade-policy PASS |
-| Fora | merge/deploy/carga · 3º módulo · HTTP Funil Codex |
+| **Tip** | `6d62b99cf` (fix pins Funil; hub Separacao + helpers) |
+| Testes | pin suite + recuperacao-funil-separacao PASS locais |
+| Fora | merge/deploy/carga · alterar Funil*.jsx sem graduação pin |
 
 **Evidência:** `docs/evidence/recuperacao-funil-separacao-20261029.txt`
-**Próximo:** CI deste tip. Sem merge/deploy.
+**Próximo:** CI tip `6d62b99cf`. Sem merge/deploy.
 
 (2026-10-29 10:05 America/Sao_Paulo)
 
