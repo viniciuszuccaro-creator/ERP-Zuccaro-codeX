@@ -1,5 +1,13 @@
 
 
+## CURSOR — #403 CI SUCCESS tip 8b08b55ccd (2026-10-29 08:10 America/Sao_Paulo)
+
+- PR **#403** tip **`8b08b55ccd`** — CI SUCCESS `40862369100` / `40862326757` (frontend/backend/expedicao). **≠ aprovação/merge.**
+- Fecha Codex P1/P2 Contatos+ValidadorEstoque sobre #397 `83499de99`.
+- Evidência: `docs/evidence/apontamentos-397-codex-p1p2-contatos-estoque-20261029.txt`.
+- **#401 `8026b2298` isolada.** Prévia: `docs/evidence/previa-composicao-401-caminho-20261029.txt`.
+- Pedido `@codex review` tip `8b08b55ccd`. Próximo indep.: residual Cadastros sem violar pin ID-only. Sem merge/deploy/carga.
+
 ## CURSOR — Codex P1/P2 Contatos+Estoque (2026-10-29 08:00 America/Sao_Paulo)
 
 - Branch: `cursor/comercial360-codex-p1p2-contatos-estoque-392b` sobre tip #397 `83499de995`/`754a05cfa`.

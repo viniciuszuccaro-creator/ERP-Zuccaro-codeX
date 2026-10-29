@@ -1,3 +1,21 @@
+## CURSOR — VIGENTE (#403 CI SUCCESS Contatos+Estoque) (2026-10-29 08:10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#403** ← #397 `operador-historico-persist` |
+| **Tip** | **`8b08b55ccd`** — CI SUCCESS `40862369100` / `40862326757` — **≠ aprovação/merge** |
+| **Achados** | P1 Contatos stamp · P1 estoque HTTP advisory · P2 agregação · delete≠hydrate · principal escalar · draft revert · reopen get |
+| **Composição #401** | tip **`8026b2298`** isolada |
+| Base Codex #342 | **`b5cb34e1`** — **não editada** |
+| Testes | 33+16 PASS + CI tip SUCCESS |
+| Pedido | `@codex review` tip `8b08b55ccd` (comentário PR) |
+| Fora | merge/deploy/carga/SQL |
+
+**Provas:** `docs/evidence/apontamentos-397-codex-p1p2-contatos-estoque-20261029.txt`
+**Próximo indep.:** residual Cadastros sem violar pin ID-only + delta recuperação. Sem merge/deploy.
+
+(2026-10-29 08:10 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (Codex P1/P2 Contatos+Estoque sobre #397) (2026-10-29 08:00 America/Sao_Paulo)
 
 | Campo | Valor |
