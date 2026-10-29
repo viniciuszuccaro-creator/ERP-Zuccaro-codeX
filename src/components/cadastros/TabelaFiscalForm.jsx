@@ -222,6 +222,12 @@ Seja preciso e cite a legislação aplicável.`,
             </Alert>
           )}
 
+          {tabela?.id ? (
+            <p className="text-xs text-slate-500 mb-3">
+              ID técnico: <span className="font-mono">{String(tabela.id)}</span>
+            </p>
+          ) : null}
+
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
             <TabsList className="grid grid-cols-3 w-full">
               <TabsTrigger value="configuracao">⚙️ Configuração</TabsTrigger>
@@ -341,7 +347,7 @@ Seja preciso e cite a legislação aplicável.`,
 
             {/* ABA TRIBUTOS */}
             <TabsContent value="tributos" className="space-y-4">
-              <Card className="bg-blue-50">
+              <Card className="bg-sky-50">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm">ICMS</CardTitle>
                 </CardHeader>
@@ -604,7 +610,7 @@ Seja preciso e cite a legislação aplicável.`,
               )}
               <Button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-sky-600 hover:bg-sky-700"
                 disabled={!contextoValido || !podeSalvar}
                 data-permission="Cadastros.TabelaFiscal.salvar"
                 data-sensitive="true"

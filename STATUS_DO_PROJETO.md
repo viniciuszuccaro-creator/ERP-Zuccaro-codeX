@@ -1,3 +1,51 @@
+## CURSOR — VIGENTE (C360 smoke demonstrado + #404) (2026-10-29 08:24 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#404** `cursor/cadastros-residual-sky-id-392b` |
+| **Demo C360** | smoke Playwright PASS em `127.0.0.1:5173` · writes=0 · PNG desktop/tablet |
+| **Script** | labels canônicos + `waitForTimeout` (CSP) |
+| **#403** | tip `8b08b55ccd` CI SUCCESS — aguarda Codex |
+| **#401** | `8026b2298` isolada (não refeita) |
+| Fora | merge/deploy/carga; graduação reopen residual = próximo indep. |
+
+**Evidência:** `docs/evidence/c360-fluxo-evidencia-20261029.txt`
+**Próximo:** graduação reopen residual (pin RecordState) OU params sky fora branches reservadas. Sem merge/deploy.
+
+(2026-10-29 08:24 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#404 residual sky+ID CI SUCCESS) (2026-10-29 08:25 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#404** `cursor/cadastros-residual-sky-id-392b` ← #403 |
+| **Tip** | **`d33418caff`** — CI SUCCESS `40863692132` / `40863688678` — **≠ merge** |
+| **Escopo** | Gateway / TabelaFiscal / ConfigNFe — sky + ID técnico (pin RecordState) |
+| **#403** | tip código `8b08b55ccd` CI SUCCESS — `@codex review` pedido |
+| **#401** | `8026b2298` isolada |
+| Fora | graduação reopen; merge/deploy/carga; demo C360 = owner Private 5173 |
+
+**Evidência:** `docs/evidence/cadastros-residual-sky-id-20261029.txt`
+**Próximo:** demo/evidência C360 no existente (franquia) OU graduação reopen residual. Sem merge/deploy.
+
+(2026-10-29 08:25 America/Sao_Paulo)
+
+## CURSOR — residual Cadastros sky+ID (indep.) (2026-10-29 08:20 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-residual-sky-id-392b` ← tip #403 |
+| **Escopo** | GatewayPagamento / TabelaFiscal / ConfiguracaoNFe — sky + ID técnico texto |
+| **Preservado** | pin RecordState residual / CentroOperacao intocado / sem CodigoField novo |
+| **Testes** | residual 15 PASS · identidade 6 PASS |
+| **#403** | tip código `8b08b55ccd` CI SUCCESS — `@codex review` pedido |
+| Fora | graduação reopen; merge/deploy/carga; branches param/API/Chatbot reservadas |
+
+**Evidência:** `docs/evidence/cadastros-residual-sky-id-20261029.txt`
+**Próximo:** CI desta branch · graduação reopen residual OU demo C360. Sem merge/deploy.
+
+(2026-10-29 08:20 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#403 CI SUCCESS Contatos+Estoque) (2026-10-29 08:10 America/Sao_Paulo)
 
 | Campo | Valor |

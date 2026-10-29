@@ -1,4 +1,27 @@
+## CURSOR — C360 smoke demonstrado no runner (2026-10-29 08:24 America/Sao_Paulo)
 
+- Smoke `scripts/comercial360-preview-smoke.mjs` PASS em Vite `:5173` (sintético; writes=0; Salvar desabilitado).
+- Artefatos: `/opt/cursor/artifacts/c360-fluxo-20261029/{desktop,tablet}.png`.
+- Evidência: `docs/evidence/c360-fluxo-evidencia-20261029.txt`. Labels canônicos + CSP-safe timeout.
+- #404 residual sky+ID + tip smoke/docs. #403 Contatos+Estoque aguarda Codex. #401 isolada.
+- Próximo indep.: graduação reopen residual OU params. Sem merge/deploy/carga.
+
+
+
+## CURSOR — #404 CI SUCCESS tip d33418caff (2026-10-29 08:25 America/Sao_Paulo)
+
+- PR **#404** tip **`d33418caff`** — CI SUCCESS `40863692132` / `40863688678`. **≠ merge.**
+- Residual sky+ID Gateway/TabelaFiscal/ConfigNFe (pin RecordState).
+- #403 Contatos+Estoque `8b08b55ccd` CI SUCCESS — `@codex review` pedido.
+- #401 `8026b2298` isolada. Próximo: evidência C360 (franquia) ou graduação reopen. Sem merge/deploy/carga.
+
+## CURSOR — residual Cadastros sky+ID (2026-10-29 08:20 America/Sao_Paulo)
+
+- Branch indep. `cursor/cadastros-residual-sky-id-392b` (base tip #403).
+- GatewayPagamento / TabelaFiscal / ConfiguracaoNFe: sky + ID técnico (texto).
+- Pin RecordState residual preservado; CentroOperacao intocado; sem CodigoField/data-action novos.
+- Testes: residual 15 + identidade 6 PASS. Evidência: `docs/evidence/cadastros-residual-sky-id-20261029.txt`.
+- #403 Contatos+Estoque tip `8b08b55ccd` CI SUCCESS — aguarda Codex. Sem merge/deploy/carga.
 
 ## CURSOR — #403 CI SUCCESS tip 8b08b55ccd (2026-10-29 08:10 America/Sao_Paulo)
 

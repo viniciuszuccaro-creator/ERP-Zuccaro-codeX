@@ -1,0 +1,65 @@
+Comercial 360 — evidência de fluxo (2026-10-29 America/Sao_Paulo)
+==================================================================
+Modalidade: runner /workspace
+Diferenciação obrigatória: testes · inspeção · demo navegador
+
+## Tip / candidatas
+
+| Papel | SHA / PR |
+|-------|----------|
+| Contatos+Estoque | #403 `8b08b55ccd` CI SUCCESS |
+| Residual Cadastros | #404 `d33418caff` (+ tip smoke/docs nesta branch) |
+| Composição isolada | #401 `8026b2298` |
+
+## Testes executados (comportamentais)
+
+node --test \
+  tests/central-cliente-360-pedido-navigation.test.js \
+  tests/central-cliente-360-pagina-ui.test.js \
+  tests/central-cliente-360-session.test.js \
+  tests/central-cliente-360-crm-legado.test.js
+→ 37 PASS (lote anterior nesta sessão; não reexecutado neste tip de evidência)
+
+Cobertura verificada:
+- navegação create Orçamento/Pedido só com vínculo elegível
+- painel Central360 sessão/tenant/Bearer fail-closed
+- paginação / carregar mais
+- CRM legado adaptador (sem módulo paralelo)
+- rascunho/proposta: fluxos Orçamento já cobertos em orcamento-component-behavior (16 PASS no #403)
+
+## Inspeção estática
+
+- `centralCliente360Navigation.js` — resolveCentralClienteEmpresaId só elegível
+- `CentralCliente360Panel.jsx` — openCentral*CreateWindow; sem ComercialV2
+- `OrcamentosTab` — ValidadorEstoque no convert; simulação≠efetiva em cobrança (#397)
+- Prévia sintética: `?proposta=comercial360` + `scripts/comercial360-preview-smoke.mjs`
+- Smoke script: labels canônicos «Produtos e preços» / «Resumo e pagamento sintéticos»;
+  `waitForTimeout(250)` no tablet (CSP bloqueia waitForFunction/eval)
+
+## Demonstração navegador (runner)
+
+| Item | Valor |
+|------|-------|
+| Vite | `127.0.0.1:5173` — checkout branch residual (`18662525e` + tip smoke) |
+| Rota | `/Comercial?proposta=comercial360` |
+| Backend | sem gravação — rota Playwright aborta hosts ≠ localhost:5173; writes=0 |
+| Tipo de dados | sintético (Cliente/Produto/Condição/Tabela SINTÉTICO) |
+| Smoke | PASS `retained` `quantity` `saveDisabled` `horizontalOverflow=false` writes=0 errors=[] |
+| Artefatos | `/opt/cursor/artifacts/c360-fluxo-20261029/{desktop,tablet}.png` |
+| Codespace Private | owner — caminho em `previa-composicao-401-caminho-20261029.txt` |
+| Cobrança Codespace | **não** habilitada |
+
+JSON smoke (resumo):
+{"retained":true,"quantity":true,"saveDisabled":true,"horizontalOverflow":false,"writes":0,"blockedRequests":0,"errors":[]}
+
+Classificação: **testado** (37 PASS C360) · **demonstrado** no runner (smoke PASS + PNG) · **preparado** Private owner · **bloqueado** merge/deploy/carga.
+
+## Fluxo integrado (existente — sem módulo novo)
+
+cliente → contatos/histórico → produtos/preços → orçamento → pedido → estoque (advisory HTTP) → entrega/financeiro (conforme RBAC)
+Rascunhos entre abas: preservados nos painéis da proposta (obs+qtd retidos no smoke).
+Simulações (cobrança/proposta): banner «PRÉVIA SINTÉTICA · sem gravação»; Salvar desabilitado.
+
+## Fora
+
+merge · deploy · carga · inventar demo operacional · nova composição #401

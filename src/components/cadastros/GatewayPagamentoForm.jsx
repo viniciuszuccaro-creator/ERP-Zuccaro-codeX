@@ -92,6 +92,11 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
+          {gateway?.id ? (
+            <p className="text-xs text-slate-500 mb-3">
+              ID técnico: <span className="font-mono">{String(gateway.id)}</span>
+            </p>
+          ) : null}
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="geral">
@@ -405,7 +410,7 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
 
         <div className={windowMode ? "border-t bg-slate-50 p-4" : "mt-6"}>
           <div className="flex justify-end gap-3">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.GatewayPagamento.salvar" data-action="salvar-gateway-pagamento" data-sensitive>
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.GatewayPagamento.salvar" data-action="salvar-gateway-pagamento" data-sensitive>
               <CreditCard className="w-4 h-4 mr-2" />
               {gateway ? 'Atualizar Gateway' : 'Cadastrar Gateway'}
             </Button>

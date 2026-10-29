@@ -26,7 +26,11 @@ Branches oficiais Cursor/Codex: não editadas neste documento.
 
 - Testes CI da tip composição: SUCCESS (CI5079/5080) — ≠ aprovação visual
 - Inspeção estática / evidências: docs deste repositório
-- Demonstração navegador: depende do owner no Codespace PRIVATE; não cobrada/não iniciada neste runner
+- Demonstração navegador runner (2026-10-29): Vite `127.0.0.1:5173` + smoke PASS
+  (`retained`/`quantity`/`saveDisabled`/sem overflow/writes=0) — artefatos
+  `/opt/cursor/artifacts/c360-fluxo-20261029/`; evidência `c360-fluxo-evidencia-20261029.txt`.
+  SHA servido neste smoke = tip da branch residual (não 8026b2298); fluxo sintético
+  idêntico ao procedimento acima. Codespace Private continua franquia do owner.
 
 ## Fora
 

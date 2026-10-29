@@ -22,8 +22,10 @@ Já classificados (mantidos)
 Padrão visual azul-claro
 - Cadastros sky chrome: lote anterior 17 forms + TabelaPreco/Regiao
 - Este lote: ConfiguracaoBoletos, EventoNotificacao, ModeloDocumento → sky
-- 26 forms windowMode ainda sem sky (paramétricos/API/Chatbot*): fila; respeitar
-  branches reservadas ApiExterna/ParametroRoteirizacao/ChatbotCanal
+- Residual 2026-10-29: GatewayPagamento / TabelaFiscal / ConfiguracaoNFe → sky + ID técnico
+  (pin RecordState preservado; CodigoField/reopen = graduação futura)
+- Paramétricos/API/Chatbot*: fila; respeitar branches reservadas
+  ApiExterna/ParametroRoteirizacao/ChatbotCanal (#402 param sky separado)
 
 Configurações Cadastros Gerais
 - Sequência código: backend/CodigoField — sem count+1 no browser (auditoria grep OK
@@ -34,8 +36,9 @@ Não feito / bloqueado
 - Substituir ERP pelo integra-novo
 - Restaurar OAuthConsent / Auth Base44 permissivo
 - Carga operacional / deploy
+- Graduação reopen residual (CentroOperacao/TabelaFiscal/ConfigNFe/Gateway) sem delta pin
 
 Próximo capacidade a capacitar no existente
-1. Param forms sky + reopen ID (sem tocar branches reservadas)
+1. Graduar residual RecordState → reopen+CodigoField (padrão LocalEstoque) OU param forms (#402)
 2. Demo fluxo C360 Private quando franquia
 3. Matriz Pacote 5: Funil×3 / Separacao×IA / Comprovante× — keep both curto
