@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (Pacote C classificação erp-integra) (2026-10-29 16:35 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Ref | `erp-integra-novo` `37c6f7d39` |
+| Achado | HistoricoProdutos HTTP **já canônico**; STATUS filterInContext obsoleto |
+| Painel 3-colunas | melhoria útil — extrair **após** #424 liberar arquivo |
+| Não restaurar | Documentacao / OAuthConsent / EmpresaOnboarding |
+| Fora | fold #401 · WIP13 · VPS · fictícios |
+
+**Evidência:** `docs/evidence/recuperacao-erp-integra-classificacao-20261029.txt`
+
 ## CURSOR — VIGENTE (#401 ← #414 fold settlement) (2026-10-29 14:40 America/Sao_Paulo)
 
 | Campo | Valor |

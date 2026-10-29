@@ -1,0 +1,33 @@
+Pacote C — recuperação vs erp-integra-novo (classificação 2026-10-29 16:35 America/Sao_Paulo)
+===========================================================================================
+Referência: viniciuszuccaro-creator/erp-integra-novo @ 37c6f7d39e60736cbb862d122de9be23c06db8f6
+Candidata/base: composição #401 tip docs 7460c3a26 / código 0195acc66
+Matriz reutilizada: docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt
+≠ substituir ERP novo · ≠ seed fictício · ≠ VPS · ≠ fold Contatos #424 / WIP13
+
+## Comparação pontual (não inventário completo)
+| Path | Ref | Nosso | Classificação |
+|------|-----|-------|--------------|
+| PainelDinamicoCliente.jsx | 100L extrai 3 colunas | 751L monolito + Contatos HTTP/epoch | Nosso **à frente** em segurança/persistência; layout 3-colunas da ref = melhoria de organização **após** liberar arquivo (#424 reserva) |
+| HistoricoProdutosCliente.jsx | 4.8KB legado | 22KB HTTP canônico + paginação + fail-closed | **Já recuperado** no novo; STATUS “ainda filterInContext em HTTP” está **obsoleto** (HTTP nunca cai no legado) |
+| DetalhesCliente.jsx | ausente na ref | presente + monta Histórico | Nosso |
+| pages Documentacao / EmpresaOnboarding / OAuthConsent | só ref | ausentes de propósito | **Não restaurar** (auth permissiva / remoção intencional) — matriz 2026-10-26 |
+| Extractions *.jsx comercial/cadastros/financeiro só ref | 55+69+21 | monolitos equivalentes locais | Duplicidade nome; consolidar só com inventário de consumidores — Regra-Mãe |
+
+## Ocultação vs perda vs melhoria
+| Achado | Tipo |
+|--------|------|
+| Abas Relatórios grant/deny | ocultação por permissão (já tratado #353) |
+| Historico HTTP exige empresa+sessão | fail-closed contexto (não “perda de registros”) |
+| Registros desaparecidos | Pacote D separado — filtrar contexto/API/fontes privadas; sem fictícios |
+| Layout azul-claro + 3 colunas info/histórico/tabs | melhoria útil da ref — extrair do monolito existente (751L>600) **em arquivo liberado** |
+| Contatos escalar/epoch/audit | avanço nosso (#424) — preservar ao extrair |
+
+## Reserva / paralelo
+- `PainelDinamicoCliente.jsx` / Contatos form / useContextoVisual: **escritor #424** até aceite.
+- Este pacote: somente evidência + classificação; sem editar produto neste tip.
+- Próximo implementação independente: candidatos sem cruzar #424 (ex.: consolidações financeiro/cadastros extratos já mapeados; PlanoContas id técnico — Pacote D).
+
+## Azul-claro
+Ref Painel: gradient `from-blue-50 to-slate-50` + badges status.
+Nosso: sky/blue já presentes; recuperação = organização/informação das 3 colunas, não só troca de cor.
