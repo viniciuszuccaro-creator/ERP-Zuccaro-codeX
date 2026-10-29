@@ -1,5 +1,15 @@
 
 
+## CURSOR checkpoint tip 83499de99 + composição #401 (2026-10-29 07:20 America/Sao_Paulo)
+
+- **PR #397 tip:** `83499de995` — CI SUCCESS `40853365201` (frontend/backend/expedicao). **≠ aprovação/merge/deploy.**
+- Cadeia: `4b74f058c`→`bb2a01ff3`(P2s)→`554ad7668`(mock Validador)→`bbcf55030`(Boletos ID-only)→`83499de99`(typecheck).
+- Provas Pacote1: Contatos e-mail/celular · paginação/concorrência/retry · sessão Grupo/Empresa · estoque líquido · vínculo elegível · simulação≠efetiva — `docs/evidence/apontamentos-397-pacote1-provas-20261029.txt`.
+- **Composição #401 (isolada):** tip `8026b2298` = 397@`83499de99` + 342@`b5cb34e1`. 3 conflitos resolvidos (STATUS/HANDOFF/remainder selected+historical). Branches oficiais Cursor/Codex **não** editadas. Sem merge oficial.
+- Base Codex #342 `b5cb34e1` draft — intocada.
+- Próximo indep.: param forms sky/reopen (fora branches reservadas) · demo C360 se franquia.
+- Sem deploy/carga/SQL/BYPASSRLS.
+
 ## CURSOR checkpoint Pacotes 1–5 (2026-10-29 06:50 America/Sao_Paulo)
 
 - HEAD reconfirmado: tip publicado citado `d37c8dd5` ≠ tip trabalho `4b74f058c` (+lote atual). CI tip ≠ revisão.

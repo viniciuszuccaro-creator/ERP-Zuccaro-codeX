@@ -1,18 +1,28 @@
-## CURSOR — VIGENTE (candidata única #397) (2026-10-29 06:50 America/Sao_Paulo)
+## CURSOR — VIGENTE (candidata única #397) (2026-10-29 07:20 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip prévio owner | **`d37c8dd5b`** CI5071 SUCCESS `40761941668` — **≠ revisão** |
-| Tip código anterior | **`4b74f058c`** Contatos P2 + estoque líquido (CI em curso ao iniciar) |
-| Lote Pacotes 1–5 | P2 Histórico botão loading · vínculo elegível create · cobrança simulação explícita · sky Boletos/Evento/Modelo · evidências integra/matriz |
+| **Tip HEAD** | **`83499de995`** — CI SUCCESS run `40853365201` (frontend/backend/expedicao) — **≠ aprovação/merge** |
+| Tip CI fix | `bbcf55030` (Boletos ID-only + pin Central360) → `83499de99` (typecheck Contatos/Validador) |
+| Pacotes 1–5 | Contatos e-mail/celular · Histórico paginação/retry · estoque líquido · vínculo elegível · simulação cobrança · sky Cadastros |
 | Base Codex #342 | **`b5cb34e1`** draft — **não editada** |
-| Composição | draft #401 preview 3 conflitos — sem merge oficial |
+| Composição #401 | tip **`8026b2298`** — 397@83499de99 + 342@b5cb34e1; 3 conflitos resolvidos; **revisão isolada, sem merge oficial** |
 | Modalidade | runner `/workspace` (Codespace só validação/franquia) |
 | Fora | merge/deploy/carga/SQL; branches ApiExterna/Roteirizacao/ChatbotCanal reservadas |
 
-**Provas:** navigation elegível · cobrança simulação · Contatos/histórico/estoque focados.
-**Próximo:** CI tip → @codex no SHA entregue → demo Private se franquia. Sem merge/deploy.
+**Provas:** `docs/evidence/apontamentos-397-pacote1-provas-20261029.txt` + tip CI SUCCESS.
+**Próximo indep.:** delta recuperação/cadastros (param forms sky/reopen) + demo C360 quando franquia. Sem merge/deploy.
+
+(2026-10-29 07:20 America/Sao_Paulo)
+
+## CURSOR — tip `83499de99` CI SUCCESS (histórico) (2026-10-29 06:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Tip prévio owner | **`d37c8dd5b`** CI5071 — **≠ este tip** |
+| Tip código | `4b74f058c`→`bb2a01ff3`→`554ad7668`→`bbcf55030`→**`83499de99`** |
+| Composição | draft #401 preview → tip resolvido `8026b2298` |
 
 (2026-10-29 06:50 America/Sao_Paulo)
 
