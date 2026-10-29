@@ -19,3 +19,7 @@ proíbem import do órfão no Painel.
 
 ## Fora
 Apagar arquivo · seed Contatos · Auth VPS · merge #401 · harness
+
+## CI SUCCESS tip 0ccabf750 (2026-10-29 18:19 America/Sao_Paulo)
+- erp-runtime-ci 6/6 SUCCESS (branch subscription).
+- Keep-both Contatos preservado; Form canônico intacto.
