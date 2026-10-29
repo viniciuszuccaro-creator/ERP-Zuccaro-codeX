@@ -1,0 +1,10 @@
+Cadastros residual sky+ID — Parametro* — 2026-10-29 12:08 America/Sao_Paulo
+Base #413 tip 30929adb4 / 526fcdd52.
+Forms: ParametroCaixaDiario, ParametroConciliacaoBancaria, ParametroPortalCliente,
+ParametroRecebimentoNFe, ParametroRoteirizacao.
+ConfiguracaoBoletos: permanece ID-only (CANAL golden / bbcf55030) — sem sky.
+Pin RecordState preservado. Sem count+1.
+Independente da composição #401.
+
+## CI SUCCESS tip a3d37ad7b (2026-10-29 12:19 America/Sao_Paulo)
+PR #415 — frontend/backend/expedicao SUCCESS 6/6.
