@@ -38,3 +38,7 @@ recuperacao-config-comprovante.test.js + residual pin + fluxo operacional → PA
 Fora
 ----
 merge/deploy/carga · WIP Codex #342 · reabrir ownership/paginação · substituir ERP
+
+## CI SUCCESS tip a18a362ed (2026-10-29 10:03 America/Sao_Paulo)
+- Runs: 40877458648 (pull_request) · 40877419771 (push) — 6/6 SUCCESS.
+- Sem merge oficial / deploy / carga.

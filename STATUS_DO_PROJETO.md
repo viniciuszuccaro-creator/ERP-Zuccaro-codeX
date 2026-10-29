@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#407** tip **`a18a362ed`** — CI SUCCESS `40877458648` / `40877419771` |
+| **Escopo** | sky+ID WhatsApp/Integração/Despesa/Filial · `buildComprovanteRecebedorPayload` |
+| **#401** | tip código `fbcca01b9` CI SUCCESS · docs `716dabdeb` |
+| **#406** | `90990801e` SUCCESS |
+| Fora | merge/deploy/carga · CodigoField · WIP Codex |
+
+**Evidência:** `docs/evidence/recuperacao-config-comprovante-20261029.txt`
+**Próximo:** Funil×3 / Separacao×IA keep-both (matriz Pacote 5). Sem merge/deploy.
+
+(2026-10-29 10:03 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#407 recuperação configs+comprovante) (2026-10-29 09:55 America/Sao_Paulo)
 
 | Campo | Valor |
