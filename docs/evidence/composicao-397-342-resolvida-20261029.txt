@@ -24,3 +24,9 @@ Checks dirigidos: 98 PASS (remainder/http/master-picker/pedido/orcamento/
 publication-channel) + 24 PASS (component-contract/pedido-frontend);
 npm run typecheck PASS; git diff --check limpo nos resolvidos.
 Sem merge oficial / deploy / carga SQL.
+
+## Atualização tip #406 (2026-10-29 09:52 America/Sao_Paulo)
+- Merge tip #406 `90990801e` (A Contatos / B DESCONHECIDO / C agregação + P2 mixed-doc) sobre candidata `8026b2298`.
+- Codex #342 permanece `b5cb34e1`; WIP `eb797672` fora.
+- Conflito STATUS resolvido (banner COMPOSIÇÃO + vigente #406).
+- Sem merge oficial / deploy / carga.

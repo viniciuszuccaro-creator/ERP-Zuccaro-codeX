@@ -1,0 +1,40 @@
+#397 — pareceres 6493733950 / 6493809228 (2026-10-29 America/Sao_Paulo)
+======================================================================
+SHA base conferido: tip #403 `8b08b55ccd` / docs `36b90df21` (sobre `83499de99`)
+Branch: cursor/comercial360-397-achados-saldo-unidade-392b
+Modalidade: testes comportamentais + inspeção · ≠ browser · ≠ merge/deploy
+
+## A) Contatos — principal multi-canal
+- Tip #403 já limitava strip ao contrato escalar HTTP.
+- Este tip: contraprova antes/depois (scalarContract apaga vs canônico preserva)
+  load → save sem edição → reopen (seed pós-Cliente.get) mantém principal.
+- Metadado ausente no escalar ≠ autorização para apagar preferência canônica.
+
+## B) Estoque — ausência DTO ≠ zero
+- `estoqueLiquidoDisponivel`: sem `estoque_atual` → null (DESCONHECIDO), não 0.
+- UI: badge «Saldo desconhecido» / «Fonte canônica pendente»; não «Estoque OK»
+  nem «Estoque Insuficiente» por zero fabricado.
+- HTTP advisory preservado; sem ledger/endpoint paralelo.
+- Conversão (OrcamentosTab): fontePronta===false libera com advisory; bloqueio
+  só com saldo conhecido insuficiente.
+
+## C) Linhas repetidas — produto+unidade
+- `chaveDemandaEstoqueLinha(produto_id + unidade_id|sigla|unidade)`.
+- Agrega só mesma chave; unidades distintas → unidadeIncompativel, sem conversão.
+- Contraprova: 6+6 saldo 10 → 2ª linha insuficiente (antes liberava).
+
+## Testes
+node --test tests/validador-estoque-disponibilidade.test.js \
+            tests/painel-dinamico-cliente-historico-tab.test.js
+→ 36 PASS
+node --test tests/orcamento-component-behavior.test.js → 16 PASS
+
+## Classificação
+implementado · testado · demonstrado n/a · preparado PR · bloqueado merge/deploy/carga;
+fonte operacional canônica (ledger Expedição) continua coordenação Codex backend.
+
+## P2 Codex #406 (mixed-doc) — tip seguinte
+
+Insuficiência conhecida prevalece sobre `fontePronta===false` advisory.
+`conversionStockOkFromAvailability`: algumIndisponivel → bloqueia.
+CI tip docs `ec4045679` SUCCESS runs 40866588056 / 40866546457 — ≠ aprovação.

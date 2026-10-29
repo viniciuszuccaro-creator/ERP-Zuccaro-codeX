@@ -1,3 +1,108 @@
+## COMPOSIÇÃO ISOLADA #401 atualizada (preview — sem merge oficial) (2026-10-29 09:51 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Entrada Cursor #397 base | `83499de99` (+ #403 `8b08b55ccd` + #406 `44bc5dad9`/`84c903c92`) |
+| Tip código validado | **`90990801e`** CI SUCCESS `40867597095` / `40867588389` |
+| Entrada Codex #342 | **`b5cb34e1`** (publicado na candidata; WIP `eb797672` **não** incorporado) |
+| Branch | `cursor/composicao-397-342-prep-392b` |
+| Política | ≠ merge oficial · ≠ deploy/carga · branches oficiais Cursor/Codex não editadas neste tip |
+| Conflitos | STATUS (esta resolução) · HANDOFF auto-merge · código Contatos/Validador do #406 |
+
+Evidência: `docs/evidence/composicao-397-342-resolvida-20261029.txt` · apontamentos-397-parecer-6493733950
+
+(2026-10-29 09:51 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#406** tip **`90990801e`** — CI SUCCESS `40867597095` / `40867588389` |
+| **Código** | `44bc5dad9` (A/B/C) + `84c903c92` (P2 mixed-doc) |
+| **Pareceres** | `6493733950` · `6493809228` — fechados no tip |
+| **#401** | atualizar composição com estes SHAs (342 permanece `b5cb34e1` publicado na candidata) |
+| **#405** | reopen BLOCKED publication · tip revert `bbefcf3c7` CI SUCCESS |
+| Fora | merge/deploy/carga; WIP Codex #342 `eb797672` não tipado na composição |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** composição #401 · recuperação indep. Sem merge/deploy.
+
+(2026-10-29 09:50 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#406 CI SUCCESS + P2 mixed-doc) (2026-10-29 08:43 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#406** tip docs CI **`ec4045679`** SUCCESS 6/6 |
+| **Código** | `44bc5dad9` + P2 mixed-doc (este tip) |
+| **P2 Codex** | insuficiência conhecida prevalece sobre advisory |
+| **#401** | atualizar composição após CI deste tip P2 |
+| **#405** | reopen BLOCKED publication (revert) |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** CI tip P2 · composição #401. Sem merge/deploy.
+
+(2026-10-29 08:43 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#397 parecer saldo/unidade + Contatos) (2026-10-29 08:35 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial360-397-achados-saldo-unidade-392b` ← #403 |
+| **Pareceres** | `6493733950` · `6493809228` (SHA tip `83499de99` / base `8b08b55ccd`) |
+| **A Contatos** | principal canônico load/save/reopen sem wipe |
+| **B Estoque** | DTO sem `estoque_atual` → DESCONHECIDO ≠ 0 |
+| **C Agregação** | demanda por produto+unidade; incompatível explícito |
+| **Testes** | 36+16 PASS |
+| **#404** | tip smoke `4e4770592` CI SUCCESS 6/6 |
+| **#405** | reopen residual — CI em andamento |
+| **#401** | atualizar composição após CI deste tip |
+| Fora | merge/deploy/carga; ledger paralelo |
+
+**Evidência:** `docs/evidence/apontamentos-397-parecer-6493733950-saldo-unidade-20261029.txt`
+**Próximo:** CI deste tip · `@codex review` · composição #401. Sem merge/deploy.
+
+(2026-10-29 08:35 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#403 CI SUCCESS Contatos+Estoque) (2026-10-29 08:10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#403** ← #397 `operador-historico-persist` |
+| **Tip** | **`8b08b55ccd`** — CI SUCCESS `40862369100` / `40862326757` — **≠ aprovação/merge** |
+| **Achados** | P1 Contatos stamp · P1 estoque HTTP advisory · P2 agregação · delete≠hydrate · principal escalar · draft revert · reopen get |
+| **Composição #401** | tip **`8026b2298`** isolada |
+| Base Codex #342 | **`b5cb34e1`** — **não editada** |
+| Testes | 33+16 PASS + CI tip SUCCESS |
+| Pedido | `@codex review` tip `8b08b55ccd` (comentário PR) |
+| Fora | merge/deploy/carga/SQL |
+
+**Provas:** `docs/evidence/apontamentos-397-codex-p1p2-contatos-estoque-20261029.txt`
+**Próximo indep.:** residual Cadastros sem violar pin ID-only + delta recuperação. Sem merge/deploy.
+
+(2026-10-29 08:10 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (Codex P1/P2 Contatos+Estoque sobre #397) (2026-10-29 08:00 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata base** | **PR #397** tip `83499de995` / docs `754a05cfa` CI5081 SUCCESS — **≠ merge** |
+| **Branch correção** | `cursor/comercial360-codex-p1p2-contatos-estoque-392b` (este tip) |
+| **Achados** | P1 empresa stamp Contatos · P1 estoque HTTP advisory · P2 agregação linhas · P2 delete≠hydrate · P2 principal escalar · P2 draft revert · P2 reopen get |
+| **Composição #401** | tip **`8026b2298`** isolada — **não** refeita; caminho prévia `docs/evidence/previa-composicao-401-caminho-20261029.txt` |
+| Base Codex #342 | **`b5cb34e1`** draft — **não editada** |
+| Testes | 33+16 PASS focados (painel/validador/orçamento) |
+| Modalidade | runner `/workspace` · demo Private 5173 = owner |
+| Fora | merge/deploy/carga/SQL; nova composição; Codespace billing |
+
+**Provas:** `docs/evidence/apontamentos-397-codex-p1p2-contatos-estoque-20261029.txt`
+**Próximo indep.:** cadastros residual (Gateway/TabelaFiscal/Config*) + delta recuperação; `@codex review` neste tip. Sem merge/deploy.
+
+(2026-10-29 08:00 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (candidata única #397) (2026-10-29 07:20 America/Sao_Paulo)
+
 ## COMPOSIÇÃO ISOLADA #401 (preview — sem merge oficial) (2026-10-29 07:15 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -19,16 +124,26 @@ Evidência: `docs/evidence/composicao-397-342-resolvida-20261029.txt`
 | Campo | Valor |
 |-------|-------|
 | **Candidata** | **PR #397** `cursor/operador-historico-persist-392b` ← `codex/consolidacao-infra-20261017` |
-| Tip prévio owner | **`d37c8dd5b`** CI5071 SUCCESS `40761941668` — **≠ revisão** |
-| Tip código anterior | **`4b74f058c`** Contatos P2 + estoque líquido (CI em curso ao iniciar) |
-| Lote Pacotes 1–5 | P2 Histórico botão loading · vínculo elegível create · cobrança simulação explícita · sky Boletos/Evento/Modelo · evidências integra/matriz |
+| **Tip HEAD** | **`83499de995`** — CI SUCCESS run `40853365201` (frontend/backend/expedicao) — **≠ aprovação/merge** |
+| Tip CI fix | `bbcf55030` (Boletos ID-only + pin Central360) → `83499de99` (typecheck Contatos/Validador) |
+| Pacotes 1–5 | Contatos e-mail/celular · Histórico paginação/retry · estoque líquido · vínculo elegível · simulação cobrança · sky Cadastros |
 | Base Codex #342 | **`b5cb34e1`** draft — **não editada** |
-| Composição | draft #401 preview 3 conflitos — sem merge oficial |
+| Composição #401 | tip **`8026b2298`** — 397@83499de99 + 342@b5cb34e1; 3 conflitos resolvidos; **revisão isolada, sem merge oficial** |
 | Modalidade | runner `/workspace` (Codespace só validação/franquia) |
 | Fora | merge/deploy/carga/SQL; branches ApiExterna/Roteirizacao/ChatbotCanal reservadas |
 
-**Provas:** navigation elegível · cobrança simulação · Contatos/histórico/estoque focados.
-**Próximo:** CI tip → @codex no SHA entregue → demo Private se franquia. Sem merge/deploy.
+**Provas:** `docs/evidence/apontamentos-397-pacote1-provas-20261029.txt` + tip CI SUCCESS.
+**Próximo indep.:** delta recuperação/cadastros (param forms sky/reopen) + demo C360 quando franquia. Sem merge/deploy.
+
+(2026-10-29 07:20 America/Sao_Paulo)
+
+## CURSOR — tip `83499de99` CI SUCCESS (histórico) (2026-10-29 06:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Tip prévio owner | **`d37c8dd5b`** CI5071 — **≠ este tip** |
+| Tip código | `4b74f058c`→`bb2a01ff3`→`554ad7668`→`bbcf55030`→**`83499de99`** |
+| Composição | draft #401 preview → tip resolvido `8026b2298` |
 
 (2026-10-29 06:50 America/Sao_Paulo)
 
