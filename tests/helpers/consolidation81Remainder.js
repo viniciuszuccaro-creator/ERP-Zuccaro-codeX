@@ -50,61 +50,60 @@ export const consolidation81Hunks={
   }
 };
 export function consolidation81Remainder(file,text,verify=true){return exactSourceRemainder(file,text,consolidation81Hunks[file],verify); }
-export function clienteConferenciaRemainder(file,text,verify=true){return exactSourceRemainder(file,text,clienteConferenciaHunks[file],verify); }
+export function clienteConferenciaRemainder(file,text,verify=true){
+ return clienteConferenciaHistoricalRemainder(file,clienteSelectedReferenceRemainder(file,text,verify),verify);
+}
+export function clienteSelectedReferenceRemainder(file,text,verify=true){return exactSourceRemainder(file,text,clienteSelectedReferenceHunks[file],verify);}
+export function clienteConferenciaHistoricalRemainder(file,text,verify=true){return exactSourceRemainder(file,text,clienteConferenciaHunks[file],verify);}
 function exactSourceRemainder(file,text,entry,verify){
  if(!entry)return text;
  let source=text.replace(/\r\n/g,'\n');
- for(const [after,before] of entry.hunks){assert.equal(source.split(after).length,2,file+': exact identity/checksum hunk');source=source.replace(after,before);}
+ for(const [after,before] of entry.hunks){assert.equal(source.split(after).length,2,file+': exact identity/checksum hunk');source=source.replace(after,()=>before);}
  if(verify)assert.equal(crypto.createHash('sha256').update(source).digest('hex'),entry.hash,file+': entire previous source');
  return text.includes('\r\n')?source.replace(/\n/g,'\r\n'):source;
 }
 
 export const clienteConferenciaHunks={
   "server/src/api/router.ts": {
-    "hash": "073952b5b23b414dd4e6686000f8158c036cc1feb39bbdf311a46bce2e9b21a5",
-    "hunks": [
-      [
-        "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.post('/api/v1/clientes/conferencia-legado', requireTenantScope, async (req, res, next) => {\n    try {\n      if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified Supabase session required');\n      res.set('cache-control', 'no-store');\n      res.json({ data: await service.conferirLegado(ctxFromReq(req), req.body) });\n    } catch (error) { next(error); }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n",
-        "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n"
-      ],
-      [
-        "        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        clienteId: typeof req.query.clienteId === 'string'\n          ? req.query.clienteId\n          : (typeof req.query.cliente_id === 'string' ? req.query.cliente_id : undefined),\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n",
-        "        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n"
+      "hash": "073952b5b23b414dd4e6686000f8158c036cc1feb39bbdf311a46bce2e9b21a5",
+      "hunks": [
+          [
+              "router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {\n    try {\n      const operacao = parseProdutoOperation(req.query.operacao);\n      if (operacao) {\n        if (!operationalClienteQuery.safeParse(req.query).success) throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');\n        res.setHeader('Cache-Control', 'no-store');\n      }\n      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;\n      const orderBy = orderByRaw === 'nome' || orderByRaw === 'codigo' ? orderByRaw : undefined;\n      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;\n      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        operacao,\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n        documento: req.query.documento ? String(req.query.documento) : undefined,\n        orderBy,\n        orderDir,\n        limit: req.query.limit ? Number(req.query.limit) : undefined,\n        offset: req.query.offset ? Number(req.query.offset) : undefined,\n      });\n      res.json(page);\n    } catch (error) {\n      next(error);\n    }\n  });\n\n",
+              "router.get('/api/v1/clientes', requireTenantScope, async (req, res, next) => {\n    try {\n      const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;\n      const orderBy = orderByRaw === 'nome' || orderByRaw === 'codigo' ? orderByRaw : undefined;\n      const orderDirRaw = req.query.order_dir ? String(req.query.order_dir).toLowerCase() : undefined;\n      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n        documento: req.query.documento ? String(req.query.documento) : undefined,\n        orderBy,\n        orderDir,\n        limit: req.query.limit ? Number(req.query.limit) : undefined,\n        offset: req.query.offset ? Number(req.query.offset) : undefined,\n      });\n      res.json(page);\n    } catch (error) {\n      next(error);\n    }\n  });\n\n"
+          ],
+          [
+              "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';\n  const operationalClienteQuery = z.object({\n    operacao: z.literal('true'), ativo: z.literal('true').optional(),\n    search: z.string().trim().max(200).optional(),\n    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),\n    limit: z.string().regex(/^[1-9]\\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),\n    offset: z.string().regex(/^(0|[1-9]\\d*)$/).transform(Number).refine(Number.isSafeInteger).optional(),\n  }).strict();",
+              "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';"
+          ],
+          [
+              "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.post('/api/v1/clientes/conferencia-legado', requireTenantScope, async (req, res, next) => {\n    try {\n      if (req.authVerified !== true) throw new AppError(401, 'AUTH_REQUIRED', 'Verified Supabase session required');\n      res.set('cache-control', 'no-store');\n      res.json({ data: await service.conferirLegado(ctxFromReq(req), req.body) });\n    } catch (error) { next(error); }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n",
+              "    } catch (error) {\n      next(error);\n    }\n  });\n\n  router.get('/api/v1/clientes/sugestao-vinculo', requireTenantScope, async (req, res, next) => {\n"
+          ],
+          [
+              "        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        clienteId: typeof req.query.clienteId === 'string'\n          ? req.query.clienteId\n          : (typeof req.query.cliente_id === 'string' ? req.query.cliente_id : undefined),\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n",
+              "        clienteEmpresaId: typeof req.query.clienteEmpresaId === 'string' ? req.query.clienteEmpresaId : undefined,\n        tipoOperacao: typeof req.query.tipoOperacao === 'string' ? req.query.tipoOperacao : undefined,\n"
+          ]
       ]
-    ]
-  },
-  "src/api/httpApiClient.js": {
-    "hash": "c0350d35d527c4af546efc459f7b8566377537a5c2870b1a274480be0c56b4c1",
-    "hunks": [
-      [
-        "    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, clienteId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */\n    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, clienteId, tipoOperacao, signal } = {}) {\n      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, clienteId, tipoOperacao }, signal, unwrap: false });\n    },\n",
-        "    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */\n    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, signal } = {}) {\n      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao }, signal, unwrap: false });\n    },\n"
-      ],
-      [
-        "import { toClienteMasterHttpPayload, withHydratedContatos } from './clienteHttpPayload.js';\n",
-        "import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';\n"
-      ],
-      [
-        "    Cliente: (() => {\n      const base = createCrudEntity('/api/v1/clientes', {\n        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],\n        // NÃO usar \"status\" aqui: filtros multiempresa / colunas status:\"Ativo\"\n        // quebravam parseAtivoQuery → ativo=false → grade vazia com API n>0.\n        ativoKeys: ['ativo', 'ativa'],\n      });\n      return {\n        ...base,\n        async get(id) {\n          return withHydratedContatos(await base.get(id));\n        },\n        async list(orderBy, limit = 100) {\n          const rows = await base.list(orderBy, limit);\n          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;\n        },\n        async filter(query = {}, orderBy, limit = 100, skip = 0) {\n          const rows = await base.filter(query, orderBy, limit, skip);\n          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;\n        },\n        async create(data) {\n          return withHydratedContatos(await base.create(toClienteMasterHttpPayload(data)));\n        },\n        async update(id, data) {\n          return withHydratedContatos(await base.update(id, toClienteMasterHttpPayload(data)));\n        },\n      };\n    })(),\n",
-        "    Cliente: (() => {\n      const base = createCrudEntity('/api/v1/clientes', {\n        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],\n        // NÃO usar \"status\" aqui: filtros multiempresa / colunas status:\"Ativo\"\n        // quebravam parseAtivoQuery → ativo=false → grade vazia com API n>0.\n        ativoKeys: ['ativo', 'ativa'],\n      });\n      return {\n        ...base,\n        async create(data) {\n          return base.create(toClienteMasterHttpPayload(data));\n        },\n        async update(id, data) {\n          return base.update(id, toClienteMasterHttpPayload(data));\n        },\n      };\n    })(),\n"
-      ],
-      [
-        "          if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;\n          else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;\n        }\n        const exact = {};\n        if (basePath === '/api/v1/clientes') {\n          for (const key of ['documento','codigo']) {\n            if (!Object.prototype.hasOwnProperty.call(query,key)) continue;\n            const value = query[key];\n            if (typeof value !== 'string' || !value || value !== value.trim() || value.length > (key === 'documento' ? 32 : 80)\n              || (key === 'documento' && (!/^[0-9.\\/\\- ]+$/.test(value) || ![11,14].includes(value.replace(/\\D/g,'').length)))) {\n              throw createHttpError(422,{error:{code:'VALIDATION_ERROR',message:'Explicit exact selector required'}}, undefined);\n            }\n            exact[key] = value;\n          }\n        }\n        return request(basePath, {\n          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n        });\n    }\n",
-        "          if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;\n          else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;\n        }\n        return request(basePath, {\n          query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n        });\n    }\n"
-      ],
-      [
-        "  };\n\n  const clientes = {\n    /** Read exact cohort inside the application; never exports the session.\n     * @param {{identidades: Array<Record<string,string>>}} input\n     * @param {{signal?: AbortSignal}} [options]\n     */\n    async conferirLegado(input, { signal } = {}) {\n      const fail = (status, code) => createHttpError(status, { error: { code, message: code } }, undefined);\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.groupId === before.groupId && current.actorId === before.actorId\n        && (current.empresaId || null) === null && current.token === before.token;\n      if (typeof before.token !== 'string' || !before.token.trim()\n        || typeof before.groupId !== 'string' || !before.groupId.trim()\n        || typeof before.actorId !== 'string' || !before.actorId.trim() || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');\n      if (!input || Object.keys(input).some(k => k !== 'identidades') || !Array.isArray(input.identidades)\n        || input.identidades.length < 1 || input.identidades.length > 100) throw fail(422, 'VALIDATION_ERROR');\n      const body = JSON.parse(JSON.stringify(input));\n      for (const item of body.identidades) {\n        if (!item || typeof item !== 'object' || Array.isArray(item)\n          || Object.keys(item).some(k => !['documento','sourceSystem','codigoLegado'].includes(k))\n          || (!item.documento && !(item.sourceSystem && item.codigoLegado))\n          || Boolean(item.sourceSystem) !== Boolean(item.codigoLegado)\n          || Object.values(item).some(v => typeof v !== 'string' || !v || v !== v.trim() || v.length > 80)\n          || (item.documento && (!/^[0-9.\\/\\- ]{1,32}$/.test(item.documento)\n            || ![11,14].includes(item.documento.replace(/\\D/g,'').length)))) throw fail(422,'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw fail(409, 'CONTEXT_CHANGED');\n      let result, failure;\n      try { result = await request('/api/v1/clientes/conferencia-legado', { method:'POST', body, signal }, before); }\n      catch (error) { failure = error; }\n      if (signal?.aborted || !matches(getScope() || {})) throw fail(409, 'CONTEXT_CHANGED');\n      if (failure) throw failure;\n      if (!Array.isArray(result) || result.length !== body.identidades.length) throw fail(502,'INVALID_RESPONSE');\n      return result.map((row, indice) => {\n        if (row?.indice !== indice || Object.keys(row).some(k=>!['indice','documento','legado'].includes(k))) throw fail(502,'INVALID_RESPONSE');\n        const match = value => {\n          if (value === null) return null;\n          if (!value || Object.keys(value).some(k=>!['id','codigo','ativo'].includes(k))\n            || typeof value.id !== 'string' || typeof value.codigo !== 'string' || typeof value.ativo !== 'boolean') throw fail(502,'INVALID_RESPONSE');\n          return { id:value.id, codigo:value.codigo, ativo:value.ativo };\n        };\n        return { indice, documento:match(row.documento), legado:match(row.legado) };\n      });\n    },\n    /**\n     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).\n     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).\n",
-        "  };\n\n  const clientes = {\n    /**\n     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).\n     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).\n"
-      ],
-      [
-        "export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;\nexport const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;\nexport const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\n\nexport const clienteConferenciaApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).clientes;\n",
-        "export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;\nexport const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;\nexport const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\n"
-      ]
-    ]
   },
   "server/src/services/clienteService.ts": {
     "hash": "87be7feaf5b33181ca9c3f4aa0dcfc3f2261a52280d399f7e951b56a6c9ce00d",
     "hunks": [
+      [
+        "export type ClienteListOptions = {\n  operacao?: boolean;\n  ativo?: boolean;",
+        "export type ClienteListOptions = {\n  ativo?: boolean;"
+      ],
+      [
+        "    if (options.operacao) {\n      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))\n        || (options.offset !== undefined && (!Number.isSafeInteger(options.offset) || options.offset < 0))\n        || (options.search !== undefined && (options.search.length > 200 || options.search !== options.search.trim()))) {\n        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');\n      }\n      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);\n    }\n    const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);\n    const offset = Math.max(options.offset ?? 0, 0);",
+        "    const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);\n    const offset = Math.max(options.offset ?? 0, 0);"
+      ],
+      [
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      operacao: options.operacao,\n      ativo,\n      search: options.search,",
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      ativo,\n      search: options.search,"
+      ],
+      [
+        "    if (options.operacao) await this.assertPermission(ctx, 'visualizar');\n    return {\n      data: page.rows,\n      meta: {",
+        "    return {\n      data: page.rows,\n      meta: {"
+      ],
       [
         "import { conferirClientesLegado } from './clienteConferencia.js';\nimport type { DbQueryExecutor } from '../db/client.js';\nimport type { AuditRepository, RequestContext } from '../audit/types.js';\nimport { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';\n",
         "import type { DbQueryExecutor } from '../db/client.js';\nimport type { AuditRepository, RequestContext } from '../audit/types.js';\nimport { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';\n"
@@ -118,22 +117,6 @@ export const clienteConferenciaHunks={
   "tests/cursor-identidade-consolidacao.test.js": {
     "hash": "53ed9f426d401e667420af481766664c1eed030fcaa592b351f875833368bd40",
     "hunks": [
-      [
-        "// Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B\n// graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.\nconst forms = ['CadastroFiscal', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario',\n  'ConfiguracaoBoletos', 'Webhook'];\nconst graduatedReopen = {\n  OperadorCaixa: 'operadorBoundId',\n  CondicaoComercial: 'condicaoBoundId',\n  MoedaIndice: 'moedaBoundId',\n  ContatoB2B: 'contatoBoundId',\n};\n",
-        "const forms = ['CadastroFiscal', 'ContatoB2B', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario', 'OperadorCaixa',\n  'MoedaIndice', 'CondicaoComercial', 'ConfiguracaoBoletos', 'Webhook'];\n"
-      ],
-      [
-        "test('remaining ID-only additions retain every existing handler context permission and field', () => {",
-        "test('ten ID-only additions retain every existing handler context permission and field', () => {"
-      ],
-      [
-        "const reopened = ['CadastroFiscal', 'CentroOperacao', 'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'].includes(name);",
-        "const reopened = ['CadastroFiscal', 'CentroOperacao', 'ContatoB2B', 'GrupoEmpresarial', 'Usuario', 'ConfiguracaoBoletos', 'Webhook'].includes(name);"
-      ],
-      [
-        "\n\ntest('OperadorCaixa CondicaoComercial MoedaIndice e ContatoB2B graduaram ID-only → reopen canônico com boundId', () => {\n  for (const [name, boundId] of Object.entries(graduatedReopen)) {\n    assert.equal(Object.hasOwn(MASTER_CODE_SPECS, name), false, `Master code contract must not be hidden: ${name}`);\n    const path = `src/components/cadastros/${name}Form.jsx`;\n    const source = read(path);\n    const ast = tree(path, source);\n    assert.match(source, /useCadastroReopenOnIdentity/);\n    assert.match(source, new RegExp(boundId));\n    assert.doesNotMatch(source, /prevUpdatedRef/);\n    assert.doesNotMatch(source, /useCadastroRecordState/);\n    let fields = 0;\n    const visit = (node) => {\n      if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(ast) === 'CadastroCodigoRegistroField') {\n        const attrs = node.attributes.properties;\n        assert.ok(attrs.some(a => a.name?.getText(ast) === 'idOnly' && !a.initializer));\n        assert.equal(attrs.find(a => a.name?.getText(ast) === 'entityId').initializer.expression.getText(ast), boundId);\n        assert.equal(attrs.find(a => a.name?.getText(ast) === 'hasId').initializer.expression.getText(ast), `Boolean(${boundId})`);\n        fields++;\n      }\n      ts.forEachChild(node, visit);\n    };\n    visit(ast);\n    assert.equal(fields, 1, name);\n  }\n});\n",
-        "\n"
-      ],
       [
         "import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';\nimport test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\n",
         "import test from 'node:test';\nimport assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\n"
@@ -211,6 +194,109 @@ export const clienteConferenciaHunks={
         "  const path = 'src/services/clienteService.ts';\n  const original = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:server/${path}`], { encoding: 'utf8' });\n  const parse = (source: string) => ts.createSourceFile(path, source.replaceAll('\\r\\n', '\\n'), ts.ScriptTarget.Latest, true);\n  const before = parse(original), after = parse(clienteConferenciaRemainder('server/'+path, fs.readFileSync(path, 'utf8')));\n  const members = (file: ts.SourceFile) => {\n    const declaration = file.statements.find(ts.isClassDeclaration);\n    assert(declaration);\n",
         "  const path = 'src/services/clienteService.ts';\n  const original = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:server/${path}`], { encoding: 'utf8' });\n  const parse = (source: string) => ts.createSourceFile(path, source.replaceAll('\\r\\n', '\\n'), ts.ScriptTarget.Latest, true);\n  const before = parse(original), after = parse(fs.readFileSync(path, 'utf8'));\n  const members = (file: ts.SourceFile) => {\n    const declaration = file.statements.find(ts.isClassDeclaration);\n    assert(declaration);\n"
       ]
+    ]
+  }
+};
+
+export const clienteSelectedReferenceHunks={
+  "server/src/api/router.ts": {
+      "hash": "3eef1ca66fa0b15aa06f55d5c05f6b7c90ea886a858895fc2150f930549e0db5",
+      "hunks": [
+          [
+              "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';\n  const operationalClienteQuery = z.object({\n    operacao: z.literal('true'), ativo: z.literal('true').optional(),\n    cliente_empresa_id: z.string().uuid().optional(),\n    search: z.string().trim().max(200).optional(),\n    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),\n    limit: z.string().regex(/^[1-9]\\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),\n",
+              "  const relationshipPath = '/api/v1/clientes/:clienteId/empresas';\n  const operationalClienteQuery = z.object({\n    operacao: z.literal('true'), ativo: z.literal('true').optional(),\n    search: z.string().trim().max(200).optional(),\n    order_by: z.enum(['codigo','nome']).optional(), order_dir: z.enum(['asc','desc']).optional(),\n    limit: z.string().regex(/^[1-9]\\d{0,2}$/).transform(Number).refine(n => n <= 200).optional(),\n"
+          ],
+          [
+              "      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        operacao,\n        clienteEmpresaId: typeof req.query.cliente_empresa_id === 'string' ? req.query.cliente_empresa_id : undefined,\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n",
+              "      const orderDir = orderDirRaw === 'desc' || orderDirRaw === 'asc' ? orderDirRaw : undefined;\n      const page = await service.list(ctxFromReq(req), {\n        operacao,\n        ativo: parseAtivoQuery(req.query.ativo),\n        search: req.query.search ? String(req.query.search) : undefined,\n        codigo: req.query.codigo ? String(req.query.codigo) : undefined,\n"
+          ]
+      ]
+  },
+  "server/src/services/clienteService.ts": {
+    "hash": "2c711fb1d47d5ba53e2c0e0099ec75d816a3746bcc583b77df6d0d0d0517578f",
+    "hunks": [
+      [
+        "import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';\nimport {\n  CLIENTE_FORBIDDEN_FIELDS,\n  clienteOperacaoLinkSchema,\n  clienteCreateSchema,\n  clienteUpdateSchema,\n  type Cliente,\n",
+        "import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';\nimport {\n  CLIENTE_FORBIDDEN_FIELDS,\n  clienteCreateSchema,\n  clienteUpdateSchema,\n  type Cliente,\n"
+      ],
+      [
+        "\nexport type ClienteListOptions = {\n  operacao?: boolean;\n  clienteEmpresaId?: string;\n  ativo?: boolean;\n  search?: string;\n  codigo?: string;\n",
+        "\nexport type ClienteListOptions = {\n  operacao?: boolean;\n  ativo?: boolean;\n  search?: string;\n  codigo?: string;\n"
+      ],
+      [
+        "  async list(ctx: RequestContext, options: ClienteListOptions = {}) {\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'visualizar');\n    if (options.clienteEmpresaId !== undefined && (!options.operacao\n      || !clienteOperacaoLinkSchema.shape.id.safeParse(options.clienteEmpresaId).success\n      || Boolean(options.search || options.codigo || options.documento)\n      || (options.offset ?? 0) !== 0)) {\n      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid exact operational customer selector');\n    }\n    if (options.operacao) {\n      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))\n",
+        "  async list(ctx: RequestContext, options: ClienteListOptions = {}) {\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'visualizar');\n    if (options.operacao) {\n      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))\n"
+      ],
+      [
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      operacao: options.operacao,\n      clienteEmpresaId: options.clienteEmpresaId,\n      ativo,\n      search: options.search,\n      codigo: options.codigo,\n",
+        "      groupId: ctx.groupId,\n      empresaId: ctx.empresaId,\n      operacao: options.operacao,\n      ativo,\n      search: options.search,\n      codigo: options.codigo,\n"
+      ]
+    ]
+  },
+  "server/src/repositories/inMemoryClienteRepository.ts": {
+    "hash": "cb2811d0bcb37f4f5f114955d4de9ff5766fdddfe3e3a92aca1a55bda9fc0db5",
+    "hunks": [
+      [
+        "\nexport type ClienteListFilter = Scope & ListOptions & {\n  operacao?: boolean;\n  clienteEmpresaId?: string;\n  offset?: number;\n  codigo?: string;\n  documento?: string;\n",
+        "\nexport type ClienteListFilter = Scope & ListOptions & {\n  operacao?: boolean;\n  offset?: number;\n  codigo?: string;\n  documento?: string;\n"
+      ],
+      [
+        "  }\n\n  async listPage(filter: ClienteListFilter): Promise<{ rows: ClienteListItem[]; total: number }> {\n    if (filter.clienteEmpresaId && !filter.operacao) {\n      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');\n    }\n    let all: ClienteListItem[] = [...this.rows.values()].filter((r) => this.matches(filter, r));\n    if (filter.operacao) {\n      if (!filter.empresaId || filter.ativo === false) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      all = all.flatMap(row => {\n        const links = [...this.empresaLinks.values()].filter(link => link.group_id === filter.groupId\n          && link.empresa_id === filter.empresaId && link.cliente_id === row.id && link.elegivel_operacao);\n        if (filter.clienteEmpresaId && !links.some(link => link.id === filter.clienteEmpresaId)) return [];\n        if (links.length > 1) throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');\n        return links.length === 1 ? [{ ...row, empresa_operacao: clienteOperacaoLinkSchema.parse(links[0]) }] : [];\n      });\n",
+        "  }\n\n  async listPage(filter: ClienteListFilter): Promise<{ rows: ClienteListItem[]; total: number }> {\n    let all: ClienteListItem[] = [...this.rows.values()].filter((r) => this.matches(filter, r));\n    if (filter.operacao) {\n      if (!filter.empresaId || filter.ativo === false) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');\n      all = all.flatMap(row => {\n        const links = [...this.empresaLinks.values()].filter(link => link.group_id === filter.groupId\n          && link.empresa_id === filter.empresaId && link.cliente_id === row.id && link.elegivel_operacao);\n        if (links.length > 1) throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');\n        return links.length === 1 ? [{ ...row, empresa_operacao: clienteOperacaoLinkSchema.parse(links[0]) }] : [];\n      });\n"
+      ]
+    ]
+  },
+  "server/src/repositories/postgresClienteRepository.ts": {
+    "hash": "f0b68691a479dc10758c2680ff4e2c0a40b0142ffcdaa02af19a1a9e038ab348",
+    "hunks": [
+      [
+        "  async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,\n    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }> {\n    if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');\n    if (filter.clienteEmpresaId && !filter.operacao) {\n      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');\n    }\n    const query = executor ?? this.db;\n    const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);\n    const offset = Math.max(filter.offset ?? 0, 0);\n",
+        "  async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,\n    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }> {\n    if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');\n    const query = executor ?? this.db;\n    const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);\n    const offset = Math.max(filter.offset ?? 0, 0);\n"
+      ],
+      [
+        "      params.push(filter.empresaId);\n      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}\n        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;\n      if (filter.clienteEmpresaId) {\n        params.push(filter.clienteEmpresaId);\n        where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql} AND ce.id=$${params.length}::uuid)`);\n      }\n      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);\n    }\n    const whereSql = where.join(' AND ');\n",
+        "      params.push(filter.empresaId);\n      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}\n        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;\n      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);\n    }\n    const whereSql = where.join(' AND ');\n"
+      ]
+    ]
+  }, "src/api/httpApiClient.js": {
+    "hash": "f6537d32b3f66df00f0df6c5d6257ccef17e2e27dc41456cc5c8a332e024900d",
+    "hunks": [
+          [
+                "    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, clienteId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */\n    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, clienteId, tipoOperacao, signal } = {}) {\n      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, clienteId, tipoOperacao }, signal, unwrap: false });\n    },\n",
+                "    /** @param {{ limit?: number, offset?: number, search?: string, status?: string, clienteEmpresaId?: string, tipoOperacao?: string, signal?: AbortSignal }} [options] */\n    list({ limit = 50, offset = 0, search, status, clienteEmpresaId, tipoOperacao, signal } = {}) {\n      return request('/api/v1/pedidos', { query: { limit, offset, search, status, clienteEmpresaId, tipoOperacao }, signal, unwrap: false });\n    },\n"
+          ],
+          [
+                "    comercialMasters,\n    orcamentos,\n    pedidos,\n    expedicao,",
+                "    orcamentos,\n    pedidos,\n    expedicao,"
+          ],
+          [
+                "import { toClienteMasterHttpPayload, withHydratedContatos } from './clienteHttpPayload.js';\n",
+                "import { toClienteMasterHttpPayload } from './clienteHttpPayload.js';\n"
+          ],
+          [
+                "    Cliente: (() => {\n      const base = createCrudEntity('/api/v1/clientes', {\n        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],\n        // NÃO usar \"status\" aqui: filtros multiempresa / colunas status:\"Ativo\"\n        // quebravam parseAtivoQuery → ativo=false → grade vazia com API n>0.\n        ativoKeys: ['ativo', 'ativa'],\n      });\n      return {\n        ...base,\n        async get(id) {\n          return withHydratedContatos(await base.get(id));\n        },\n        async list(orderBy, limit = 100) {\n          const rows = await base.list(orderBy, limit);\n          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;\n        },\n        async filter(query = {}, orderBy, limit = 100, skip = 0) {\n          const rows = await base.filter(query, orderBy, limit, skip);\n          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;\n        },\n        async create(data) {\n          return withHydratedContatos(await base.create(toClienteMasterHttpPayload(data)));\n        },\n        async update(id, data) {\n          return withHydratedContatos(await base.update(id, toClienteMasterHttpPayload(data)));\n        },\n      };\n    })(),\n",
+                "    Cliente: (() => {\n      const base = createCrudEntity('/api/v1/clientes', {\n        searchKeys: ['search', 'nome', 'razao_social', 'nome_fantasia', 'documento', 'cnpj', 'codigo'],\n        // NÃO usar \"status\" aqui: filtros multiempresa / colunas status:\"Ativo\"\n        // quebravam parseAtivoQuery → ativo=false → grade vazia com API n>0.\n        ativoKeys: ['ativo', 'ativa'],\n      });\n      return {\n        ...base,\n        async create(data) {\n          return base.create(toClienteMasterHttpPayload(data));\n        },\n        async update(id, data) {\n          return base.update(id, toClienteMasterHttpPayload(data));\n        },\n      };\n    })(),\n"
+          ],
+          [
+                "          if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;\n          else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;\n        }\n        const exact = {};\n        if (basePath === '/api/v1/clientes') {\n          for (const key of ['documento','codigo']) {\n            if (!Object.prototype.hasOwnProperty.call(query,key)) continue;\n            const value = query[key];\n            if (typeof value !== 'string' || !value || value !== value.trim() || value.length > (key === 'documento' ? 32 : 80)\n              || (key === 'documento' && (!/^[0-9.\\/\\- ]+$/.test(value) || ![11,14].includes(value.replace(/\\D/g,'').length)))) {\n              throw createHttpError(422,{error:{code:'VALIDATION_ERROR',message:'Explicit exact selector required'}}, undefined);\n            }\n            exact[key] = value;\n          }\n        }\n        return request(basePath, {\n          query: { limit, offset, search, ativo: ativoQuery, ...exact, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n        });\n    }\n",
+                "          if (['1', 'true', 'yes', 'ativo', 'ativa', 'active'].includes(raw)) ativoQuery = true;\n          else if (['0', 'false', 'no', 'inativo', 'inativa', 'inactive'].includes(raw)) ativoQuery = false;\n        }\n        return request(basePath, {\n          query: { limit, offset, search, ativo: ativoQuery, ...normalizeOrderByQuery(orderBy) },\n          unwrap,\n        });\n    }\n"
+          ],
+          [
+                "  };\n\n  const clientes = {\n    /** Read exact cohort inside the application; never exports the session.\n     * @param {{identidades: Array<Record<string,string>>}} input\n     * @param {{signal?: AbortSignal}} [options]\n     */\n    async conferirLegado(input, { signal } = {}) {\n      const fail = (status, code) => createHttpError(status, { error: { code, message: code } }, undefined);\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.groupId === before.groupId && current.actorId === before.actorId\n        && (current.empresaId || null) === null && current.token === before.token;\n      if (typeof before.token !== 'string' || !before.token.trim()\n        || typeof before.groupId !== 'string' || !before.groupId.trim()\n        || typeof before.actorId !== 'string' || !before.actorId.trim() || before.empresaId) throw fail(401, 'AUTH_GROUP_REQUIRED');\n      if (!input || Object.keys(input).some(k => k !== 'identidades') || !Array.isArray(input.identidades)\n        || input.identidades.length < 1 || input.identidades.length > 100) throw fail(422, 'VALIDATION_ERROR');\n      const body = JSON.parse(JSON.stringify(input));\n      for (const item of body.identidades) {\n        if (!item || typeof item !== 'object' || Array.isArray(item)\n          || Object.keys(item).some(k => !['documento','sourceSystem','codigoLegado'].includes(k))\n          || (!item.documento && !(item.sourceSystem && item.codigoLegado))\n          || Boolean(item.sourceSystem) !== Boolean(item.codigoLegado)\n          || Object.values(item).some(v => typeof v !== 'string' || !v || v !== v.trim() || v.length > 80)\n          || (item.documento && (!/^[0-9.\\/\\- ]{1,32}$/.test(item.documento)\n            || ![11,14].includes(item.documento.replace(/\\D/g,'').length)))) throw fail(422,'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw fail(409, 'CONTEXT_CHANGED');\n      let result, failure;\n      try { result = await request('/api/v1/clientes/conferencia-legado', { method:'POST', body, signal }, before); }\n      catch (error) { failure = error; }\n      if (signal?.aborted || !matches(getScope() || {})) throw fail(409, 'CONTEXT_CHANGED');\n      if (failure) throw failure;\n      if (!Array.isArray(result) || result.length !== body.identidades.length) throw fail(502,'INVALID_RESPONSE');\n      return result.map((row, indice) => {\n        if (row?.indice !== indice || Object.keys(row).some(k=>!['indice','documento','legado'].includes(k))) throw fail(502,'INVALID_RESPONSE');\n        const match = value => {\n          if (value === null) return null;\n          if (!value || Object.keys(value).some(k=>!['id','codigo','ativo'].includes(k))\n            || typeof value.id !== 'string' || typeof value.codigo !== 'string' || typeof value.ativo !== 'boolean') throw fail(502,'INVALID_RESPONSE');\n          return { id:value.id, codigo:value.codigo, ativo:value.ativo };\n        };\n        return { indice, documento:match(row.documento), legado:match(row.legado) };\n      });\n    },\n    /**\n     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).\n     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).\n",
+                "  };\n\n  const clientes = {\n    /**\n     * Read-model Central Cliente 360 (opt-in UI via VITE_ERP_HTTP_CLIENTE_360).\n     * Paginação canônica por bloco: *_limit / *_offset (servidor já valida).\n"
+          ],
+          [
+                "export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;\nexport const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;\nexport const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\n\nexport const clienteConferenciaApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).clientes;\n",
+                "export const a1CertificateApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).a1Certificates;\nexport const bankStatementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).bankStatements;\nexport const financialMovementApi = createHttpApiClient({ getScope: () => readErpHttpSession() || {} }).financialMovements;\n"
+          ],
+          [
+                "  };\n\n  const comercialMasters = {\n    /** @param {{clienteSearch?:string,produtoSearch?:string,clienteEmpresaId?:string,signal?:AbortSignal}} [options] */\n    async list({ clienteSearch = '', produtoSearch = '', clienteEmpresaId, signal } = {}) {\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.token === before.token && current.groupId === before.groupId\n        && current.empresaId === before.empresaId && current.actorId === before.actorId;\n",
+                "  };\n\n  const comercialMasters = {\n    /** @param {{clienteSearch?:string,produtoSearch?:string,signal?:AbortSignal}} [options] */\n    async list({ clienteSearch = '', produtoSearch = '', signal } = {}) {\n      const before = Object.freeze({ ...(getScope() || {}) });\n      const matches = current => current.token === before.token && current.groupId === before.groupId\n        && current.empresaId === before.empresaId && current.actorId === before.actorId;\n"
+          ],
+          [
+                "        throw failure(422, 'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');\n      if (clienteEmpresaId !== undefined && (typeof clienteEmpresaId !== 'string'\n        || clienteEmpresaId.length !== 36 || clienteEmpresaId !== clienteEmpresaId.trim() || clienteSearch)) {\n        throw failure(422, 'VALIDATION_ERROR');\n      }\n      let pages, caught;\n      try {\n        pages = await Promise.all([\n          request('/api/v1/clientes', { query: { operacao: true, ativo: true, cliente_empresa_id: clienteEmpresaId, search: clienteSearch, limit: clienteEmpresaId ? 1 : 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),\n          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),\n",
+                "        throw failure(422, 'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');\n      let pages, caught;\n      try {\n        pages = await Promise.all([\n          request('/api/v1/clientes', { query: { operacao: true, ativo: true, search: clienteSearch, limit: 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),\n          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),\n"
+          ]
     ]
   }
 };

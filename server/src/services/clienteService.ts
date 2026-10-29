@@ -13,6 +13,7 @@ import type { TenantGuard } from '../db/tenantGuard.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import {
   CLIENTE_FORBIDDEN_FIELDS,
+  clienteOperacaoLinkSchema,
   clienteCreateSchema,
   clienteUpdateSchema,
   type Cliente,
@@ -23,6 +24,8 @@ import {
 } from './clienteEmpresaOperations.js';
 
 export type ClienteListOptions = {
+  operacao?: boolean;
+  clienteEmpresaId?: string;
   ativo?: boolean;
   search?: string;
   codigo?: string;
@@ -61,6 +64,21 @@ export class ClienteService {
   async list(ctx: RequestContext, options: ClienteListOptions = {}) {
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
+    if (options.clienteEmpresaId !== undefined && (!options.operacao
+      || !clienteOperacaoLinkSchema.shape.id.safeParse(options.clienteEmpresaId).success
+      || Boolean(options.search || options.codigo || options.documento)
+      || (options.offset ?? 0) !== 0)) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Invalid exact operational customer selector');
+    }
+    if (options.operacao) {
+      if (!ctx.empresaId) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
+      if (options.ativo === false || (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200))
+        || (options.offset !== undefined && (!Number.isSafeInteger(options.offset) || options.offset < 0))
+        || (options.search !== undefined && (options.search.length > 200 || options.search !== options.search.trim()))) {
+        throw new AppError(422, 'VALIDATION_ERROR', 'Invalid operational customer selector');
+      }
+      await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId);
+    }
     const limit = Math.min(Math.max(options.limit ?? 50, 1), 200);
     const offset = Math.max(options.offset ?? 0, 0);
     // Fail-safe: sem ?ativo= explícito, listar SOMENTE ativo=true.
@@ -68,6 +86,8 @@ export class ClienteService {
     const page = await this.repo.listPage({
       groupId: ctx.groupId,
       empresaId: ctx.empresaId,
+      operacao: options.operacao,
+      clienteEmpresaId: options.clienteEmpresaId,
       ativo,
       search: options.search,
       codigo: options.codigo,
@@ -77,6 +97,7 @@ export class ClienteService {
       limit,
       offset,
     });
+    if (options.operacao) await this.assertPermission(ctx, 'visualizar');
     return {
       data: page.rows,
       meta: {
