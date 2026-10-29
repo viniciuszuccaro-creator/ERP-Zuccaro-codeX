@@ -1,3 +1,73 @@
+## Estado vigente - codigo composto e testes revisados (2026-10-29)
+
+Publicacao funcional concluida em `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`,
+branch `codex/consolidacao-infra-20261017`, PR342, remoto confirmado e checkout limpo.
+Os 13 blobs sao identicos ao manifesto C8A/patch B78 e a arvore `266b1ebf` validada.
+Delta dessa arvore para o commit publicado: SOMENTE STATUS/HANDOFF. Nao reaplicar
+o patch na implementacao ou confundir esse commit com o deposito anterior eead.
+
+CI5265/run40940232207 SUCCESS no SHA funcional. Frontend123681367223: 2419 PASS/
+0 FAIL/0 SKIP; backend123681367377: 565 PASS/0 FAIL/26 SKIP (591 testes).
+Audit/lint/typecheck/build/diff aprovados; nao repetir suites sem novo delta.
+Testes PG dirigidos: entrada/tenant6/0/0. Suite composicao3/0/0 inclui um percurso
+PostgreSQL real e dois PGlite (nova negativa de contexto e PGlite). Job separado
+expedicao-comercial-compose123681367493:1/0/0. Os 26 skips da suite unitaria nao
+viram aprovacao por existir outra prova PG. Nao e homologacao browser/operacional.
+Revisao automatizada por SHA:342/6506459572, sem achados maiores.
+
+Coordenacao6506537537 e mapa6506547493 recebidos: Cursor confirmou reserva limpa e
+incorporacao na MESMA401 no recibo6506970793. Codigo composto646ec43f80b884abe1589bb4a888650cfdeac927;
+HEAD posterior de testes/docs77c0eacd304d50da58b30b1e1bd83ca58229adbc. Prova mecanica
+independente:11blobs backend exatos87db; PedidoService INTEIRO=baseCursor7460+freeze;
+runtime09 INTEIRO=baseCursor+2testesCodex exatos;8paths contatos/testes iguais0aca;
+25paths alterados na allowlist,0extras. Canonicalizacao LF somente para comparacao
+dos hunks. Recibo privado code-only review401-composition-preservation.mjs.
+Preservados getEmpresaLink,clienteId/historico inativo/paginacao E contexto/contraprovas.
+Codex somente revisou objetos Git, sem checkout/edit da branch Cursor ou nova composicao.
+
+CI do77c0/run40946256544 SUCCESS:frontend123702286702=2641PASS/0FAIL/0SKIP;
+backend123702286119=574PASS/0FAIL/26SKIP(600total);compose123702286651SUCCESS.
+O wrapper de workflows lista somente eventosPR e pode retornar vazio para push;
+diagnostico nativo porHEAD confirmou a CI, sem rerun ou herdar resultado do646/parents.
+Runtime src/server/scripts/.github identico646->77; evidencias PG/HTTP desse runtime
+na CI sao separadas do navegador e nao convertem os26skips unitarios em aprovacao.
+
+#424abde6294339584b33cf18dab60b7c3622dd7e2a6/run40946134492 SUCCESS. Novo arquivo0aca
+anunciava callbacks reais, mas4testes usavam replicas; mutacoes somente emmemoria
+desabilitaram guards reais de epoch/skipped e os6testes continuaram PASS. P2 de
+COBERTURA6506994897 (nao novo defeito do produto) corrigido por Cursor via TypeScript
+AST no MESMO arquivo e incorporado no77. Blobteste8a8f21cd igual em424abde e40177.
+Repeti a MESMA contraprova:baseline6PASS; mutacoes agora geram1/2/4FAIL por rascunho
+sobrescrito/dialogo fechado. P2 encerrado6507247848. AfterSaveBump modela conclusao
+do save, nao orquestra toda persistencia; efeito/handler/auditoria sao extraidos do
+produto. Alcance de seams/AST, nao React montado/TanStack/auditoria transacional PG.
+Provas reais anteriores de persistContatosPainel e guardas integrais reutilizadas,
+pois o runtime nao mudou. Nenhuma assertion/teste removido para obter verde.
+
+Pendencia documental precisa: OPDEV da401 ainda blobc7176ef4; falta prefixo da342118f
+que suspende propostaPUBLIC e prioriza consulta fixaREADONLY/ROLLBACK. Nesta342 o
+prefixo foi atualizado para os gates POSIX/transporte/publicacaojaencerrados;
+Cursor deve portar o delta preservando corpo historico, nao substituir manual inteiro.
+Reserva OPDEV/STATUS/HANDOFF342 registrada6507263463; nenhum SQL/autorizacao alterado.
+Controle Chrome recuperado no MESMO agente, recebimento do ajuste comprovado na
+transcricao; nao foi criado executor/ambiente. Precheck somente leitura de binarios
+nativos PG/Chrome/harness solicitado, sem instalar/provisionar Auth/VPS ou presumir
+que NO_DOCKER/5432down bastem. Harness EXISTENTE segue no caminho privado documentado
+no OPERACAO; nao criar paralelo ou afrouxar guardas para contornar falta do arquivo.
+Sem mergeMain,DDL,grant,carga ou deploy. Browser com gravacao ainda nao homologado.
+
+Legado: busca SOMENTE de metadados Drive pelo nome exato do arquivo congelado100
+nao retornou resultado na conexao acessivel. Nao prova inexistencia global, nenhum
+conteudo lido/download/sharing. Recibos nao substituem bytes/pins finais, nao houve
+nova selecao, transferencia do HD ou consulta/carga real. Preparacao independente
+de consulta/classificacao/rejeicoes esta publicada no87db; executar so com fonte,
+destino, canal e escopo comprovados. Lista unica de gates/responsaveis no STATUS.
+
+## CURSOR — porta delta 1a03 OPDEV/STATUS (2026-10-29 17:30 America/Sao_Paulo)
+- OPDEV: prefixo vigente da 342/`1a03e6b2` sobre corpo histórico `c7176ef44` (prova endsWith do marker).
+- STATUS/HANDOFF: bloco «Estado vigente» 342 prepend + histórico Cursor 401 preservado.
+- Runtime intocado vs `77c0eacd3`. Prova browser sintética em andamento no mesmo checkout.
+
 ## CURSOR — #401 composição 87db+424 (2026-10-29 17:00 America/Sao_Paulo)
 - Incorpora `87db6618` (backend) + #424 `0aca05c65` na candidata `7460c3a26`.
 - Pedido: freeze prepare + getEmpresaLink/clienteId/inativo preservados (mapa 6506547493).

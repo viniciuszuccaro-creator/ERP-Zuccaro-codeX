@@ -1,3 +1,60 @@
+## Estado vigente - composicao integrada em revisao (2026-10-29)
+
+Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma
+branch da #342, remoto confirmado e checkout limpo. CI5265/run40940232207 SUCCESS:
+frontend, backend e composicao. Raiz: 2419 PASS/0 FAIL/0 SKIP; backend: 565 PASS/
+0 FAIL/26 SKIP (591 testes). Audit, lint, typecheck, build e diff aprovados.
+Entrada/tenant PostgreSQL: 6 PASS/0 FAIL/0 SKIP. A suite de composicao tem 3 PASS,
+mas somente um percurso usa PostgreSQL real; os outros usam PGlite, inclusive a
+nova negativa de contexto. Job adicional de composicao: 1 PASS/0 FAIL/0 SKIP.
+Revisao automatizada #342/6506459572 sem achados maiores nesse SHA.
+
+Os 13 blobs publicados correspondem ao manifesto e a arvore validada `266b1ebf`;
+entre essa arvore e o commit funcional mudaram somente STATUS/HANDOFF. Publicacao
+funcional encerrada, nao apenas deposito de patch. Os 26 skips nao sao aprovacao
+PostgreSQL; CI nao homologa navegador ou operacao. Reserva desktop liberada.
+
+Incorporacao na MESMA #401 executada pelo Cursor, reserva/recibo6506970793:
+codigo composto `646ec43f80b884abe1589bb4a888650cfdeac927`, depois HEAD de testes/docs
+`77c0eacd304d50da58b30b1e1bd83ca58229adbc`. CI propria77/run40946256544 SUCCESS:
+raiz2641PASS/0FAIL/0SKIP; backend574PASS/0FAIL/26SKIP(600total). Nao herdar CI dos
+parents. Codigo src/server/scripts/.github identico646->77; sem nova versao runtime.
+Revisao integral confirmou11blobs87db exatos, PedidoService completo=baseCursor+freeze,
+teste completo=baseCursor+2testesCodex,8paths contatos exatos0aca,25paths allowlisted,
+0extras. getEmpresaLink/clienteId/inativo/paginacao e contexto imutavel preservados.
+Codex nao editou branch Cursor nem criou composicao concorrente.
+
+#424 atual `abde6294339584b33cf18dab60b7c3622dd7e2a6`, CI40946134492 SUCCESS.
+Novo P2 apenas de cobertura no0aca (replicas de teste) foi reproduzido6506994897
+e corrigido no mesmo arquivo por AST. Contraprova independente no77:baseline6PASS;
+guards reais epoch/skipped desativados em memoria agora fazem1/2/4FAIL, como exigido.
+P2 fechado6507247848, sem reabrir fix de produto/guardas antigas. AfterSaveBump ainda
+modela conclusao do save: testes nao montam React/TanStack nem provam auditoria PG.
+Controle Chrome recuperado e mensagem de correcao recebida pelo mesmo agente.
+Falta reconciliar OPDEV na candidata (prefixo vigente/suspensao ACL); delta atualizado
+na342 neste lote documental para Cursor portar sem perder o corpo historico.
+Prova browser integrada continua pendente do harness/capacidade isolada, nao de
+usuario Auth/segredo na VPS. Precheck nativo PG/Chrome solicitado, resultado nao presumido.
+
+Coorte100: consulta de metadados no Drive somente pelo nome exato nao retornou
+resultados acessiveis. Nao prova ausencia global; nenhum conteudo/download/sharing.
+Fonte final segue pendente. Plano/classificador publicados e testados nao equivalem
+a reconciliacao real ou carga. Gates e responsaveis continuam na lista unica abaixo.
+
+## CURSOR — VIGENTE (#401 porta delta documental 1a03 + capacidade) (2026-10-29 17:30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#401 tip** | (este commit) — porta OPDEV prefixo 118f→1a03; STATUS/HANDOFF 2 lados |
+| **OPDEV** | blob = tip `1a03e6b2` OPDEV; corpo desde `### Atualizacao…` = `c7176ef44` (endsWith+ocorrência única) |
+| **Runtime** | src/server/scripts/.github/tests/package/locks **iguais** tip `77c0eacd3` (docs-only) |
+| **Capacidade** | PG16 nativo + Chrome/Playwright — recibo `capacidade-executor-pg-browser-20261029.txt` |
+| **Prova browser** | ciclo browser→API→PG sob harness canônico / lacuna reportada neste lote |
+| Fora | Auth operacional / ERP_DEV_LOGIN_* / VPS user / cluster 5432 |
+
+**Evidência OPDEV:** comment 401/6507418952 · SHA documental 342 `1a03e6b2db7563309b2fa10e2b9b2164a41f266f`
+**Próximo:** resultados da prova sintética isolada; sem merge main.
+
 ## CURSOR — VIGENTE (#401 prep capacidade PG/browser) (2026-10-29 17:20 America/Sao_Paulo)
 
 | Campo | Valor |
