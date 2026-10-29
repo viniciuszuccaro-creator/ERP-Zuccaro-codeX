@@ -1,0 +1,86 @@
+Recibo — capacidade executor nativo PG + Chrome/Playwright (prep sintética)
+==========================================================================
+Data: 2026-10-29 ~17:20 America/Sao_Paulo
+Executor: Cloud Agent / composição #401 tip base 77c0eacd3 (+ este recibo)
+Pedido: ACK Codex P2 FECHADO (424 abde / 401 77c0, comment 6507247848) —
+         próxima preparação independente SOMENTE inventário/capacidade;
+         sem Auth/VPS/segredos; sem outra composição; OPDEV delta 118f AGUARDA SHA.
+
+A) PostgreSQL nativo (NO_DOCKER / 5432 down ≠ ausência)
+-------------------------------------------------------
+Cluster operacional Ubuntu:
+  Ver Cluster Port Status Owner    Data directory
+  16  main    5432 down   postgres /var/lib/postgresql/16/main
+  → NÃO iniciado (serviço operacional intocado).
+
+Binários (versão 16.15 Ubuntu 16.15-0ubuntu0.24.04.1):
+  /usr/lib/postgresql/16/bin/postgres
+  /usr/lib/postgresql/16/bin/initdb
+  /usr/lib/postgresql/16/bin/pg_ctl
+  /usr/lib/postgresql/16/bin/psql
+  PATH também: /usr/bin/{psql,pg_isready,pg_config,createdb,dropdb}
+  PATH NÃO contém: postgres, initdb, pg_ctl  (usar prefixo /usr/lib/postgresql/16/bin)
+
+Pacotes dpkg ii: postgresql, postgresql-16, postgresql-client, postgresql-client-16,
+  postgresql-common, postgresql-client-common.
+Docker: AUSENTE (command not found) — irrelevante para prova nativa.
+
+Prova de isolamento (efêmero, loopback 127.0.0.1:55432, socket privado):
+  initdb → pg_ctl start -p 55432 → SELECT version OK → pg_ctl stop → rm datadir
+  Listen pós-cleanup: nenhum 5432/55432.
+
+Prep sintética (MESMO executor; fixtures canônicas; SEM Auth/VPS):
+  1) initdb user erp_test + CREATE DATABASE erp_test @ 55432
+  2) server: npm run migrate  → pending [] (migrações 017…044 aplicadas)
+  3) psql -f server/scripts/seed-dev-synthetic.sql  → INSERTs OK
+  4) pg Client: db=erp_test usr=erp_test port=55432; public tables=45; empresas=3
+  5) pg_ctl stop + remoção datadir (nenhum serviço deixado no ar)
+Harness canônico reutilizável quando reabrir efêmero:
+  server/scripts/runPostgresTests.mjs + server/tests/runtime09-pedido-postgres-e2e.test.ts
+  DATABASE_URL=postgresql://erp_test@127.0.0.1:55432/erp_test
+  (receita acima; não é homologação browser nem cluster main)
+
+B) Chrome / Playwright / harness browser
+----------------------------------------
+Chrome sistema:
+  /opt/google/chrome/chrome
+  /usr/bin/google-chrome-stable → Google Chrome 148.0.7778.96
+  headless about:blank exit 0 (dbus warnings irrelevantes)
+
+Cache browsers Playwright (sem reinstall):
+  ~/.cache/ms-playwright/chromium-1194/chrome-linux/chrome
+  ~/.cache/ms-playwright/chromium-1140/chrome-linux/chrome
+
+Módulo Playwright (NÃO está no lockfile/node_modules da composição):
+  /tmp/pw-pr350/node_modules/playwright/index.mjs          → 1.56.1  (preferido)
+  /home/ubuntu/.npm/_npx/…/node_modules/playwright/index.mjs → 1.48.0
+Canal se faltar no executor futuro (exato):
+  - binário Chrome: /opt/google/chrome/chrome OU cache ms-playwright chromium-*
+  - módulo: caminho absoluto playwright/index.mjs (padrão scripts/comercial360-preview-smoke.mjs
+    arg1) OU reinstalar FORA do lockfile em /tmp como histórico smoke
+  - NÃO basta reportar “falta Docker”
+
+Prova capacidade browser (no-auth, não homologação #401):
+  launch executablePath=/opt/google/chrome/chrome + playwright 1.56.1
+  → about:blank + DOM sintético + screenshot /tmp/erp-browser-capacity-prep-401/capacity.png
+  BROWSER_CAPACITY_OK; writes=0; auth=false; vps=false
+Harness canônico para prova real posterior (quando autorizada):
+  scripts/comercial360-preview-smoke.mjs
+  scripts/legado/cliente-conferencia-browser-smoke.mjs
+  → NÃO substituir por demo writes=0 (41728cbe6).
+
+C) Escopo / fora
+----------------
+- Runtime tip 77c0eacd3 idêntico a 646ec43f8 no alcance mecânico keep-both: CONFIRMADO
+  (P2 só testes; produto intocado). Homologação browser: NÃO neste recibo.
+- OPDEV #401 blob ainda c7176ef44… — falta prefixo vigente 342/118f (consulta fixa /
+  suspensão ACL). AGUARDAR SHA documental do proprietário para portar SÓ delta,
+  preservando corpo histórico. Sem editar OPDEV agora.
+- Sem provisionar Auth/VPS/segredos; sem iniciar cluster operacional 5432;
+  sem nova composição/branch paralela.
+
+D) Próximo gatilho
+------------------
+1) SHA documental OPDEV 342/118f → portar só prefixo vigente.
+2) Reabrir PG efêmero 55432 + runtime09/harness browser canônico quando pedido
+   de prova browser (não writes=0).
