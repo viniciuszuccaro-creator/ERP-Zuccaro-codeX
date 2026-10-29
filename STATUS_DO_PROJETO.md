@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#401 HEAD 41728cbe + demo escopo) (2026-10-29 12:03 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **HEAD docs** | **`41728cbe6`** CI5179 SUCCESS · código **`094cb4b7e`** |
+| **Demo** | sintético writes=0 — **não** prova persistência E2E |
+| **Novo P2** | #4413844021 cliente label fora da página busca → pacote #414 |
+| **Codex** | tip 094cb4b7e/46368fc2f sem major |
+| Fora | merge/deploy/carga · gravação VPS operacional |
+
+**Evidência:** `docs/evidence/c360-demo-escopo-bloqueios-20261029.txt`
+**Próximo:** fix P2 label (#414) · demo persistência isolada com Codex.
+
+(2026-10-29 12:03 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 tip 094cb4b7e + demo C360) (2026-10-29 11:51 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,3 +1,9 @@
+## CURSOR — #401 demo escopo/bloqueios + P2 label (2026-10-29 12:03 America/Sao_Paulo)
+
+- HEAD `41728cbe6` / código `094cb4b7e`. Demo sintética ≠ persistência E2E.
+- Novo P2 #4413844021 (cliente UUID fora da página) → branch independente #414.
+- Resíduos 649824* não reabertos. Sem merge/deploy/carga/VPS write.
+
 ## CURSOR — #401 demo C360 writes=0 (2026-10-29 11:51 America/Sao_Paulo)
 
 - DEV 5173 SHA `46368fc2f` · sintético · salvar disabled · writes=0.
