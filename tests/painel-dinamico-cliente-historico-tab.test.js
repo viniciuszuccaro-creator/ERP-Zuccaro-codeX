@@ -19,33 +19,39 @@ test('PainelDinamicoCliente recupera aba Contatos (GerenciarContatosClienteForm 
   assert.match(src, /TabsContent value="contatos"/);
   assert.match(src, /GerenciarContatosClienteForm/);
   assert.match(src, /updateInContext\("Cliente"/);
+  assert.match(src, /"group_id"/);
   assert.match(src, /data-action="painel-cliente-contatos"/);
   assert.equal((src.match(/<GerenciarContatosClienteForm\b/g) || []).length, 1);
   // Sem módulo paralelo: reutiliza form do cadastro completo.
   assert.doesNotMatch(src, /GerenciarContatosCliente[^F]/);
 });
 
-test('P1 #397 Painel Contatos: semente de escalares + preserve antes de gravar parcial', async () => {
+test('P1 #397 Painel Contatos: semente de escalares + preserve só na hidratação', async () => {
   const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
   assert.match(src, /function seedContatosPainelDraft/);
   assert.match(src, /contatos_escalares/);
   assert.match(src, /function ensureContatosPreserveEscalars/);
-  assert.match(src, /ensureContatosPreserveEscalars\(incoming, cliente\)/);
+  assert.match(src, /function usesContatosScalarHttpContract/);
   assert.match(src, /Abra o cadastro completo antes de limpar canais/);
-  // Contraprova: não gravar só { contatos: lista } sem preservar canais conhecidos.
-  assert.match(src, /push\("E-mail", cliente\?\.email/);
-  assert.match(src, /push\("Telefone", cliente\?\.telefone/);
-  assert.match(src, /push\("WhatsApp", cliente\?\.celular/);
+  // Persistência não re-hidrata escalares (exclusão explícita vence).
+  assert.doesNotMatch(src, /ensureContatosPreserveEscalars\(incoming/);
+  assert.match(src, /stripPrincipalQuandoMultiCanal\(incoming/);
+  assert.match(src, /Cliente\.get\(/);
 });
 
 test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo não apaga e-mail', async () => {
   const src = await readFile(new URL('../src/components/cadastros/PainelDinamicoCliente.jsx', import.meta.url), 'utf8');
-  const start = src.indexOf('function seedContatosPainelDraft');
-  const end = src.indexOf('/**\n * V21.1.2 - WINDOW MODE READY', start);
+  const start = src.indexOf('function usesContatosScalarHttpContract');
+  const end = src.indexOf('/**\n * Serializa gravações de contatos', start);
   assert.ok(start > 0 && end > start, 'helpers seed/ensure exportáveis no source');
   const helpers = src.slice(start, end);
-  const { seedContatosPainelDraft, ensureContatosPreserveEscalars } = new Function(
-    `${helpers}; return { seedContatosPainelDraft, ensureContatosPreserveEscalars };`,
+  const {
+    seedContatosPainelDraft,
+    ensureContatosPreserveEscalars,
+    stripPrincipalQuandoMultiCanal,
+    usesContatosScalarHttpContract,
+  } = new Function(
+    `${helpers}; return { seedContatosPainelDraft, ensureContatosPreserveEscalars, stripPrincipalQuandoMultiCanal, usesContatosScalarHttpContract };`,
   )();
   const cliente = {
     email: 'keep@sintetico.dev',
@@ -60,6 +66,7 @@ test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo n�
       ],
     },
   };
+  assert.equal(usesContatosScalarHttpContract(cliente), true);
   const seeded = seedContatosPainelDraft(cliente);
   assert.equal(seeded.length, 3);
   assert.equal(seeded[0].valor, 'keep@sintetico.dev');
@@ -70,6 +77,25 @@ test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo n�
   assert.equal(merged.some((c) => String(c.valor).includes('11999998888')), true);
   assert.equal(merged.some((c) => String(c.valor).includes('1155556666')), true);
   assert.equal(merged.every((c) => c.principal === false), true, 'multi-canal limpa principal inventado');
+
+  // Exclusão explícita no persist path: sem ensure — e-mail removido permanece fora.
+  const afterDelete = stripPrincipalQuandoMultiCanal(
+    [{ tipo: 'Telefone', valor: '1133334444', nome: '', principal: false }],
+    { scalarContract: true },
+  );
+  assert.equal(afterDelete.length, 1);
+  assert.equal(afterDelete.some((c) => String(c.valor).includes('keep@')), false);
+
+  // Backend com contatos[] canônico: principal legítimo preservado.
+  const canon = {
+    contatos: [
+      { tipo: 'Telefone', valor: '1133334444', principal: true },
+      { tipo: 'E-mail', valor: 'a@b.c', principal: false },
+    ],
+  };
+  assert.equal(usesContatosScalarHttpContract(canon), false);
+  const kept = stripPrincipalQuandoMultiCanal(canon.contatos, { scalarContract: false });
+  assert.equal(kept[0].principal, true);
 });
 
 test('P2 #397 Contatos: createContatosPersistQueue serializa A→B (A tardio não vence)', async () => {
