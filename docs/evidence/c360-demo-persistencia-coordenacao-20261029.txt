@@ -1,0 +1,28 @@
+PACOTE B — demonstração comercial com persistência (coordenação) 2026-10-29
+===========================================================================
+America/Sao_Paulo. Sem VPS operacional como laboratório.
+
+O que NÃO comprova persistência
+--------------------------------
+- Demo/smoke C360 atual: writes=0, salvar disabled, rascunho entre painéis.
+  Evidência: c360-demo-escopo-bloqueios / comercial360-preview-smoke.mjs
+- Não apresentar como prova desta etapa.
+
+O que Codex já cobriu (HTTP + PostgreSQL isolado, ≠ browser)
+------------------------------------------------------------
+Fonte: #401 comentário 6501377613 · tip composição código 094cb4b7e
+- CI5181 backend: COMMERCIAL_COMPOSITION_TOTAL_TESTS=2 PASS
+- TENANT_CONTEXT_TOTAL_TESTS=6 PASS (login/Grupo/Cliente/Orcamento/Pedido/…)
+- Ensaio 023fc720e: Cliente mestre+vínculo → orçamento POST/PATCH/GET →
+  converter Pedido 1× / 409 repetição → PATCH/GET/estados/histórico
+- Prova PostgreSQL+HTTP com IDP sintético — NÃO browser; WIP342 fora
+
+Lacuna restante (pedido Cursor ↔ Codex)
+---------------------------------------
+UI isolada (browser) contra o mesmo backend canônico:
+criar → salvar → fechar → reabrir → editar → salvar → converter Pedido
++ erro de rede / sessão expirada / troca Empresa / rascunho entre abas.
+Registrar: SHA servido, backend, tipo de dados, IDs gravados.
+
+Canal: fio #401. Sem habilitar gravação na VPS operacional.
+Candidata #401 estável; #414 compose BLOCKED até WIP composição limpo.
