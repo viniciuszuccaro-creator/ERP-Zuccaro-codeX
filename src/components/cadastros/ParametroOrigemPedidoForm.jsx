@@ -347,7 +347,7 @@ export default function ParametroOrigemPedidoForm({
                 Cancelar
               </Button>
             )}
-            <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={mutation.isPending || !contextoValido || !podeSalvar} data-permission="Cadastros.ParametroOrigemPedido.salvar" data-action="salvar-parametro-origem-pedido" data-sensitive>
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={mutation.isPending || !contextoValido || !podeSalvar}>
               <Save className="w-4 h-4 mr-2" />
               {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
             </Button>
@@ -364,7 +364,7 @@ export default function ParametroOrigemPedidoForm({
               Cancelar
             </Button>
           )}
-          <Button className="bg-sky-600 hover:bg-sky-700" onClick={handleSubmit} disabled={mutation.isPending || !contextoValido || !podeSalvar} data-permission="Cadastros.ParametroOrigemPedido.salvar" data-action="salvar-parametro-origem-pedido" data-sensitive>
+          <Button className="bg-sky-600 hover:bg-sky-700" onClick={handleSubmit} disabled={mutation.isPending || !contextoValido || !podeSalvar}>
             <Save className="w-4 h-4 mr-2" />
             {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
           </Button>

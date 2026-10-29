@@ -71,10 +71,6 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
                 <Switch
                   checked={formData.sugerir_cadastro_automatico_produto}
                   onCheckedChange={(val) => setFormData({ ...formData, sugerir_cadastro_automatico_produto: val })}
-                  disabled={!podeSalvar}
-                  data-permission="Cadastros.ParametroRecebimentoNFe.editar"
-                  data-action="alternar-sugerir-cadastro-produto-nfe"
-                  data-sensitive
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -82,10 +78,6 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
                 <Switch
                   checked={formData.usar_ia_para_classificacao}
                   onCheckedChange={(val) => setFormData({ ...formData, usar_ia_para_classificacao: val })}
-                  disabled={!podeSalvar}
-                  data-permission="Cadastros.ParametroRecebimentoNFe.editar"
-                  data-action="alternar-ia-classificacao-nfe"
-                  data-sensitive
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -93,10 +85,6 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
                 <Switch
                   checked={formData.vincular_produtos_fornecedor}
                   onCheckedChange={(val) => setFormData({ ...formData, vincular_produtos_fornecedor: val })}
-                  disabled={!podeSalvar}
-                  data-permission="Cadastros.ParametroRecebimentoNFe.editar"
-                  data-action="alternar-vincular-produtos-fornecedor-nfe"
-                  data-sensitive
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -104,10 +92,6 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
                 <Switch
                   checked={formData.exigir_conferencia_quantidade}
                   onCheckedChange={(val) => setFormData({ ...formData, exigir_conferencia_quantidade: val })}
-                  disabled={!podeSalvar}
-                  data-permission="Cadastros.ParametroRecebimentoNFe.editar"
-                  data-action="alternar-conferencia-quantidade-nfe"
-                  data-sensitive
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -115,10 +99,6 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
                 <Switch
                   checked={formData.alertar_divergencia_preco}
                   onCheckedChange={(val) => setFormData({ ...formData, alertar_divergencia_preco: val })}
-                  disabled={!podeSalvar}
-                  data-permission="Cadastros.ParametroRecebimentoNFe.editar"
-                  data-action="alternar-alerta-divergencia-preco-nfe"
-                  data-sensitive
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -126,10 +106,6 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
                 <Switch
                   checked={formData.gerar_movimentacao_estoque_automatica}
                   onCheckedChange={(val) => setFormData({ ...formData, gerar_movimentacao_estoque_automatica: val })}
-                  disabled={!podeSalvar}
-                  data-permission="Cadastros.ParametroRecebimentoNFe.editar"
-                  data-action="alternar-movimentacao-automatica-nfe"
-                  data-sensitive
                 />
               </div>
             </div>
@@ -140,10 +116,6 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
                 type="number"
                 value={formData.percentual_tolerancia_preco}
                 onChange={(e) => setFormData({ ...formData, percentual_tolerancia_preco: parseFloat(e.target.value) })}
-                disabled={!podeSalvar}
-                data-permission="Cadastros.ParametroRecebimentoNFe.editar"
-                data-action="editar-tolerancia-preco-nfe"
-                data-sensitive
               />
             </div>
           </CardContent>
