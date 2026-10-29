@@ -1,3 +1,8 @@
+## CURSOR — #407 recuperação configs+comprovante (2026-10-29 09:55 America/Sao_Paulo)
+
+- Sky+ID residual WhatsApp/Integração/Despesa/Filial; contrato comprovante compartilhado.
+- #401 composição tip  (CI). #406  SUCCESS. Sem merge/deploy/carga.
+
 ## CURSOR — #406 tip 90990801e CI SUCCESS (2026-10-29 09:50 America/Sao_Paulo)
 
 - Fecha A Contatos / B saldo DESCONHECIDO / C agregação produto+unidade + P2 mixed-doc.

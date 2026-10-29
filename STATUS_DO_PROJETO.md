@@ -1,3 +1,20 @@
+## CURSOR — VIGENTE (#407 recuperação configs+comprovante) (2026-10-29 09:55 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-config-comprovante-392b` ← tip #406 `73046b406` |
+| **Escopo** | WhatsApp/Integração/Despesa/Filial sky+ID · `buildComprovanteRecebedorPayload` |
+| **#401** | tip composição `fbcca01b9` (CI em andamento) · 342=`b5cb34e1` |
+| **#406** | tip `90990801e` CI SUCCESS — 3 achados fechados |
+| **#405** | publication-baseline intocado |
+| Testes | recuperacao-config-comprovante + residual + fluxo operacional PASS |
+| Fora | merge/deploy/carga · CodigoField novo · WIP Codex |
+
+**Evidência:** `docs/evidence/recuperacao-config-comprovante-20261029.txt`
+**Próximo:** CI deste tip · Funil×3/Separacao×IA keep-both. Sem merge/deploy.
+
+(2026-10-29 09:55 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
 
 | Campo | Valor |

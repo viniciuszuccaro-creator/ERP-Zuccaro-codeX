@@ -35,7 +35,15 @@ Não feito / bloqueado
 - Restaurar OAuthConsent / Auth Base44 permissivo
 - Carga operacional / deploy
 
+Atualização (2026-10-29) — configs residual + comprovante contrato
+- WhatsApp / Integração / DespesaRecorrente / Filial: sky windowMode + ID técnico
+  (padrão #404; pin RecordState; sem CodigoField/count+1; #405 publication intacto)
+- Comprovante×: `buildComprovanteRecebedorPayload` compartilhado — keep both curto
+  (HTTP/GPS/estoque no EntregaDigital; dialog no Digital). Sem 3º módulo.
+- Evidência: recuperacao-config-comprovante-20261029.txt
+
 Próximo capacidade a capacitar no existente
-1. Param forms sky + reopen ID (sem tocar branches reservadas)
+1. Param forms sky + reopen ID — #402 tip SUCCESS (fora deste tip)
 2. Demo fluxo C360 Private quando franquia
-3. Matriz Pacote 5: Funil×3 / Separacao×IA / Comprovante× — keep both curto
+3. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
+4. ChatbotIntent / JobAgendado / Parametro* residual fora branches reservadas

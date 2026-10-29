@@ -11,7 +11,10 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
-import { resolveRegistroEntregaFinal } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+import {
+  buildComprovanteRecebedorPayload,
+  resolveRegistroEntregaFinal,
+} from "@/components/lib/expedicaoFluxoOperacionalPolicy";
 
 const sanitizeText = (value) => String(value || "")
   .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
@@ -161,19 +164,20 @@ export default function ComprovanteDigital({ entrega, isOpen, onClose, windowMod
         id: entrega.id,
         data: (() => {
           const agora = new Date().toISOString();
+          const comprovante = buildComprovanteRecebedorPayload({
+            foto_comprovante: fotoUrl,
+            nome_recebedor: nomeRecebedor,
+            documento_recebedor: formData.documento_recebedor,
+            cargo_recebedor: formData.cargo_recebedor,
+            observacoes_recebimento: formData.observacoes_recebimento,
+            latitude_entrega: latitude,
+            longitude_entrega: longitude,
+            now: agora,
+          });
           const resolved = resolveRegistroEntregaFinal({
             before: entrega,
             modo: "total",
-            comprovante: {
-              foto_comprovante: fotoUrl,
-              nome_recebedor: nomeRecebedor,
-              documento_recebedor: sanitizeText(formData.documento_recebedor),
-              cargo_recebedor: sanitizeText(formData.cargo_recebedor),
-              data_hora_recebimento: agora,
-              latitude_entrega: latitude,
-              longitude_entrega: longitude,
-              observacoes_recebimento: sanitizeText(formData.observacoes_recebimento),
-            },
+            comprovante,
             groupId: effectiveGroupId,
             empresaId: effectiveEmpresaId,
             confirmed: true,

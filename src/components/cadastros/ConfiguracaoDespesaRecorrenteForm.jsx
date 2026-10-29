@@ -183,6 +183,19 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
+          {windowMode ? (
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+              <Repeat className="w-8 h-8 text-sky-600" />
+              <h2 className="text-2xl font-bold text-slate-900">
+                {config?.id ? 'Editar Despesa Recorrente' : 'Nova Despesa Recorrente'}
+              </h2>
+            </div>
+          ) : null}
+          {config?.id ? (
+            <p className="text-xs text-slate-500 mb-3">
+              ID técnico: <span className="font-mono">{String(config.id)}</span>
+            </p>
+          ) : null}
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="geral">

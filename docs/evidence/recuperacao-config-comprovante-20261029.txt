@@ -1,0 +1,40 @@
+Recuperação indep. — configs residual + contrato comprovante (2026-10-29)
+=======================================================================
+Branch: cursor/recuperacao-config-comprovante-392b ← tip #406 `73046b406`
+Referência matriz: recuperacao-erp-integra-capacidades-20261029.txt
+  + matriz-consolidacao-modulos-20261010.txt (Pacote 5 Comprovante×)
+
+Escopo (melhoria no existente — sem módulo paralelo)
+----------------------------------------------------
+1) Cadastros residual sky + ID técnico (padrão #404, pin RecordState preservado):
+   - ConfiguracaoWhatsAppForm
+   - ConfiguracaoIntegracaoForm
+   - ConfiguracaoDespesaRecorrenteForm (header windowMode + ID)
+   - FilialForm (chrome sky + ID no windowMode; reopen canônico intacto)
+   Sem CadastroCodigoRegistroField novo · sem count+1 · sem graduação reopen
+   CentroOperacao / pin publication-baseline (#405) intocados.
+
+2) ComprovanteDigital × ComprovanteEntregaDigital (keep both curto):
+   - Extrai `buildComprovanteRecebedorPayload` em expedicaoFluxoOperacionalPolicy
+   - Ambos consumidores reusam o contrato (recebedor/prova/GPS nullable)
+   - Capacidades distintas preservadas:
+     · EntregaDigital: HTTP expedicao + GPS explícito + baixa estoque
+     · Digital: dialog/windowMode + geolocation no submit
+   Classificação: B (equivalente parcial) + D parcialmente unificado no contrato
+   — não apagar por semelhança de nome; sem terceiro módulo.
+
+Classificação registros (sem seed fictício)
+------------------------------------------
+- Config WhatsApp/Integração/Despesa: registro existente oculto por contexto/RBAC
+  ≠ ausente; ID técnico agora visível na reabertura.
+- Filial: reopen já canônico; chrome/ID melhoram leitura, não recuperam legado.
+- Comprovante: perda real de unificação de payload → contrato compartilhado;
+  dados de entrega continuam staging/gates privados.
+
+Testes
+------
+recuperacao-config-comprovante.test.js + residual pin + fluxo operacional → PASS
+
+Fora
+----
+merge/deploy/carga · WIP Codex #342 · reabrir ownership/paginação · substituir ERP
