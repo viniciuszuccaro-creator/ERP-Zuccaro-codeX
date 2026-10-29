@@ -1,3 +1,23 @@
+## CURSOR — VIGENTE (#413 tip 526fcdd52 CI SUCCESS) (2026-10-29 11:40 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#413** tip **`526fcdd52`** — CI SUCCESS Gateway/TabelaFiscal/NFe sky+ID |
+| **#411/#412** | typecheck tips CI em andamento → compose #401 após SUCCESS |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:40 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (#413 Gateway/TabelaFiscal/NFe sky) (2026-10-29 11:30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-gateway-tabelafiscal-sky-392b` ← #409 |
+| **#411/#412** | CI pendente → compose #401 após SUCCESS |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:30 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#409 tip 7e27ee9f3 CI SUCCESS) (2026-10-29 10:27 America/Sao_Paulo)
 
 | Campo | Valor |

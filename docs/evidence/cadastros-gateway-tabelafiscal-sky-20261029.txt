@@ -1,0 +1,5 @@
+Cadastros residual sky+ID — Gateway/TabelaFiscal/NFe — 2026-10-29 11:30 America/Sao_Paulo
+Base #409 tip 684fad829. Pin RecordState preservado. Sem count+1.
+Independente da composição #401.
+
+## CI SUCCESS tip 526fcdd52 (2026-10-29 11:40 America/Sao_Paulo)

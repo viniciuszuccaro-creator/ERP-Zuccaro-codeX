@@ -1,3 +1,8 @@
+## CURSOR — #413 tip 526fcdd52 CI SUCCESS (2026-10-29 11:40 America/Sao_Paulo)
+
+- Gateway/TabelaFiscal/NFe sky+ID CI SUCCESS. Independente da composição.
+- #411/#412 typecheck tips aguardando CI para compose #401.
+
 ## CURSOR — #409 tip 7e27ee9f3 CI SUCCESS (2026-10-29 10:27 America/Sao_Paulo)
 
 - Tip `7e27ee9f3` CI SUCCESS 40881114046 / 40881084134.
