@@ -66,10 +66,33 @@ test('actual shared hook switches identity before effects, resets new records, p
   assert.equal(h.render({ nome: '' }, 'new:company-b')[0].nome, 'New company');
 });
 
+/** Pin e36231b3: strip RBAC aditivo do switch ativo (alterarStatus) só na comparação. */
+function chatbotIntentAlterarStatusRemainder(file, text) {
+  if (!/ChatbotIntentForm\.jsx$/.test(file)) return text;
+  return text.replace(
+    /<div className="flex items-center justify-between p-3 border border-sky-100 rounded bg-sky-50\/50">\s*<Label>Intent Ativa<\/Label>\s*<Switch\n([\s\S]*?)\/>\s*<\/div>/,
+    (_m, mid) => {
+      const stripped = mid
+        .replace(/\s*disabled=\{!podeSalvar\}\n/, '\n')
+        .replace(/\s*data-permission="Cadastros\.ChatbotIntent\.alterarStatus"\n/, '\n')
+        .replace(/\s*data-action="alternar-status-intent-chatbot"\n/, '\n');
+      return `<div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+            <Label>Intent Ativa</Label>
+            <Switch
+${stripped}/>
+          </div>`;
+    },
+  );
+}
+
 for (const name of names) test(`${name}: unchanged save, permission, fields and defaults; scoped reopen identity`, () => {
   const file = `src/components/cadastros/${name}Form.jsx`;
   // #353: CodigoField autorizado em RotaPadrao/TabelaPreco — remainder restaura pin e36231b3.
-  const after = parse(file, cadastroCodigoRegistroRemainder(file, fs.readFileSync(file, 'utf8')));
+  const raw = fs.readFileSync(file, 'utf8');
+  if (name === 'ChatbotIntent') {
+    assert.match(raw, /data-permission="Cadastros\.ChatbotIntent\.alterarStatus"/);
+  }
+  const after = parse(file, chatbotIntentAlterarStatusRemainder(file, cadastroCodigoRegistroRemainder(file, raw)));
   const before = parse(file, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }));
   const declarations = tree => find(tree, node => ts.isVariableDeclaration(node)
     && /^(handle|buildPayload|pode|contextoValido|groupId|dadosIniciais)/.test(node.name.getText(tree))).map(node => node.getText(tree));
