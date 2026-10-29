@@ -1,3 +1,17 @@
+## CURSOR — preservação WIP composição (2026-10-29 14:05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/composicao-wip-preserve-392b` ← tip composição `1a2cfc31d` |
+| **Escopo** | snapshot rastreável do WIP (diff SHA256 `6f6818d44…`) — **não aplicado** |
+| **#414** | tip `39c1055fe` / código `532ac595a` — compose BLOCKED até liberação WIP |
+| Fora | reset/limpeza/sobrescrita · merge/deploy/VPS write |
+
+**Evidência:** `docs/evidence/composicao-wip-preserve-20261029/`
+**Próximo:** Codex confirma propriedade/liberação do worktree. Sem merge/deploy.
+
+(2026-10-29 14:05 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#401 HEAD 41728cbe + demo escopo) (2026-10-29 12:03 America/Sao_Paulo)
 
 | Campo | Valor |

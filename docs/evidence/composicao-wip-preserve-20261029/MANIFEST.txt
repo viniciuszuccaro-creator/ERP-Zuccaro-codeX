@@ -1,0 +1,33 @@
+COMPOSIÇÃO WIP — preservação rastreável (2026-10-29 America/Sao_Paulo)
+======================================================================
+Procedimento: snapshot somente leitura do worktree /tmp/composicao-397-342.
+NÃO aplicado, NÃO resetado, NÃO sobrescrito. Sem autorização de descarte.
+
+| Campo | Valor |
+|-------|-------|
+| Worktree | /tmp/composicao-397-342 |
+| HEAD base | 1a2cfc31d005b7bda2cd6f07996d2d1622bfbd53 |
+| Branch WT | cursor/composicao-397-342-prep-392b |
+| Diff SHA256 | 6f6818d4455272dfd63322b2d9543e823abe9d38a328c60c265671c31c350e4f |
+| Arquivos | 30 (ver name-status.txt) |
+| Untracked | 0 |
+
+Natureza do WIP (leitura)
+-------------------------
+Diff ~913 linhas removidas / 102 adicionadas: reverte evidências Cursor
+(searchTextNormalize, sky configs, comprovante contrato, testes) e altera
+PainelDinamicoCliente / ValidadorEstoque / Comprovante× / remainder.
+
+Propriedade
+-----------
+WIP permanece no worktree Codex/composição. Cursor publicou este snapshot
+para validação/restauração sem disputa de checkout. Incorporação #414
+532ac595a continua BLOCKED até liberação explícita do WIP.
+
+≠ merge oficial · ≠ deploy · ≠ VPS write · ≠ apply automático do patch
+
+Atualização inventário (pedido Codex 6503220300)
+-----------------------------------------------
+RECIBO-AGREGADO.txt + per-file.tsv — HEAD/branch/blobs/wt_sha256/origem aparente.
+Nenhum processo escritor associado além do inventário readonly.
+Proprietário comprovado: NENHUM (Codex nega; Cursor não assume).
