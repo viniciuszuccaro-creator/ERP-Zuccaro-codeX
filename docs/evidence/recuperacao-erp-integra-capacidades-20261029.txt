@@ -22,7 +22,8 @@ Já classificados (mantidos)
 Padrão visual azul-claro
 - Cadastros sky chrome: lote anterior 17 forms + TabelaPreco/Regiao
 - Este lote: ConfiguracaoBoletos, EventoNotificacao, ModeloDocumento → sky
-- 26 forms windowMode ainda sem sky (paramétricos/API/Chatbot*): fila; respeitar
+- Lote 29/10 07:35: ParametroCaixa/Portal/NFe/Conciliação/OrigemPedido + CentroOperacao → sky+idOnly
+- Restantes windowMode sem sky (Gateway/TabelaFiscal/ConfigNFe + API/Chatbot*): fila; respeitar
   branches reservadas ApiExterna/ParametroRoteirizacao/ChatbotCanal
 
 Configurações Cadastros Gerais

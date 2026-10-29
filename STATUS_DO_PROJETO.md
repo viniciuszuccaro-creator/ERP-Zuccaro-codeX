@@ -1,3 +1,31 @@
+## CURSOR — param sky/reopen CI SUCCESS (2026-10-29 07:31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| PR | **#402** `cursor/cadastros-param-sky-reopen-392b` ← tip #397 `754a05cfa` |
+| **Tip HEAD** | **`deed8bee4`** |
+| CI | SUCCESS runs `40857332994` / `40857323487` — **≠ aprovação/merge** |
+| Escopo | ParametroCaixa/Portal/NFe/Conciliação/OrigemPedido sky+idOnly |
+| Fix CI | CentroOperacao mantido no golden ID-only e36231b3 (sky adiado) |
+| Evidência | `docs/evidence/cadastros-param-sky-reopen-20261029.txt` |
+| Próximo indep. | Gateway/TabelaFiscal residual · demo C360 se franquia |
+| Fora | ApiExterna/Roteirizacao/ChatbotCanal; merge/deploy/carga |
+
+(2026-10-29 07:31 America/Sao_Paulo)
+
+## CURSOR — param sky/reopen (lote indep.) (2026-10-29 07:35 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| Branch | `cursor/cadastros-param-sky-reopen-392b` ← tip #397 `754a05cfa` |
+| Escopo | ParametroCaixa/Portal/NFe/Conciliação/OrigemPedido (CentroOperacao ID-only intacto) |
+| Mudança | chrome sky windowMode + ID técnico idOnly; pins RecordState/ID-only preservados |
+| Fora | ApiExterna/Roteirizacao/ChatbotCanal; merge/deploy/carga |
+| Evidência | `docs/evidence/cadastros-param-sky-reopen-20261029.txt` |
+| Próximo | Gateway/TabelaFiscal residual · demo C360 se franquia |
+
+(2026-10-29 07:35 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (candidata única #397) (2026-10-29 07:20 America/Sao_Paulo)
 
 | Campo | Valor |

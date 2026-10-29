@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -46,15 +47,18 @@ export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMo
     });
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
-
-  return (
-    <div className={containerClass}>
+  const form = (
       <form onSubmit={handleSubmit} className="space-y-6">
+        <CadastroCodigoRegistroField
+          idOnly
+          hasId={Boolean(parametro?.id)}
+          entityId={parametro?.id}
+          action="id-tecnico-parametro-caixa-diario"
+        />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-emerald-600" />
+              <Wallet className="w-5 h-5 text-sky-600" />
               Parâmetros do Caixa Diário
             </CardTitle>
           </CardHeader>
@@ -136,12 +140,27 @@ export default function ParametroCaixaDiarioForm({ parametro, onSubmit, windowMo
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroCaixaDiario.salvar" data-action="salvar-parametros-caixa-diario" data-sensitive>
+          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroCaixaDiario.salvar" data-action="salvar-parametros-caixa-diario" data-sensitive>
             <Save className="w-4 h-4 mr-2" />
             Salvar Parâmetros
           </Button>
         </div>
       </form>
-    </div>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Wallet className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {parametro?.id ? 'Editar parâmetros do Caixa Diário' : 'Parâmetros do Caixa Diário'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto p-6">{form}</div>
+      </div>
+    );
+  }
+
+  return <div className="space-y-6">{form}</div>;
 }

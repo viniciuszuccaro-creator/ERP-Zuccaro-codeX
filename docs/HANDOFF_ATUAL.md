@@ -1,5 +1,19 @@
 
 
+## CURSOR — #402 CI SUCCESS tip deed8bee4 (2026-10-29 07:31 America/Sao_Paulo)
+
+- PR **#402** tip **`deed8bee4`** — CI SUCCESS `40857332994` / `40857323487`. **≠ aprovação/merge.**
+- Sky+idOnly: ParametroCaixa/Portal/NFe/Conciliação/OrigemPedido. CentroOperacao = golden ID-only (sky adiado).
+- Base #397 `754a05cfa` / código `83499de99`. Composição #401 `8026b2298` SUCCESS isolada.
+- Próximo indep.: Gateway/TabelaFiscal residual. Sem deploy/carga.
+
+## CURSOR — lote indep. param sky/reopen (2026-10-29 07:35 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-param-sky-reopen-392b` sobre tip #397 `754a05cfa`.
+- Sky + ID técnico: CaixaDiario, PortalCliente, RecebimentoNFe, Conciliação, OrigemPedido; CentroOperacao ID-only.
+- Não toca branches reservadas ApiExterna/Roteirizacao/ChatbotCanal.
+- Evidência `docs/evidence/cadastros-param-sky-reopen-20261029.txt`. Sem deploy/carga.
+
 ## CURSOR checkpoint tip 83499de99 + composição #401 (2026-10-29 07:20 America/Sao_Paulo)
 
 - **PR #397 tip:** `83499de995` — CI SUCCESS `40853365201` (frontend/backend/expedicao). **≠ aprovação/merge/deploy.**
