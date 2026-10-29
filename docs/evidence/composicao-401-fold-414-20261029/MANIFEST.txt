@@ -1,0 +1,24 @@
+Pacote A — delta #401 fold #414 → Codex
+America/Sao_Paulo 2026-10-29 ~15:00
+
+Tip docs: 7460c3a2669181138065b05112ba209629784479
+Tip código: 0195acc66f7c52cea6b64e92a0129d0ea322ff4a
+Parent: 1a2cfc31d005b7bda2cd6f07996d2d1622bfbd53
+Tree código: ae86fdbba2a7b8122be24a6c7da82e4b82597463
+CI tip docs: SUCCESS 40923937943
+CI tip código: SUCCESS 40922873833 / 40922889462
+#414 origem: 849419a6ee88c3490cb32b0ff2958e1e9e4bd841 CI SUCCESS
+WIP #419: SHA256 6f6818d4455272dfd63322b2d9543e823abe9d38a328c60c265671c31c350e4f intacto
+Reversão WIP: NÃO commitada
+
+Delta code.diff SHA256: f088fb0d4d8e027f900ba9cfaa87e4f746d04e29f84e543c42554cb12da34ebf
+Paths: ver name-status.txt (12; Contatos/Painel NÃO no delta)
+
+Achados Codex Contatos (PainelDinamicoCliente): fora do delta fold — Pacote D
+independente; não ampliar candidata neste tip.
+
+Persistência E2E: demo writes=0 ≠ prova; roteiro em c360-demo-escopo-bloqueios
+(ambiente isolado local/API sintética, ≠ VPS operacional) ainda pendente de
+execução com writes auditados.
+
+Hidratação: ver hidratacao-prova.txt (pass local, sem rede/VPS).
