@@ -32,5 +32,12 @@ Sem seed fictício · sem VPS · sem carga operacional · sem inventar exemplos.
 Backend `reserve_entity_codigo` / MASTER_CODE — nunca count+1 no navegador (prova residual).
 IDs/códigos importados: preservar; high-water no backend.
 
+## Atualização probes (2026-10-29 18:05 America/Sao_Paulo)
+Ver `registros-desaparecidos-probes-20261029.txt`:
+- Badge Produto 0 = filtro count empresa vs grupo + catch→0 (A).
+- Lista vazia pós-troca = scopeKey V24 (C).
+- Contatos: Form RBAC canônico; `comercial/GerenciarContatosCliente` órfão (E).
+- Sky_sem_id mestres: falso gap — CodigoField+entityId já mostra ID.
+
 ## Fora deste lote
 Carga staging · DDL Fornecedor · merge #401 · WIP13 · HD externo

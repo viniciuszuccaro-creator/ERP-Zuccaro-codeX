@@ -1,0 +1,73 @@
+Pacote C — probes código: registros ERP novo “desaparecidos” (2026-10-29 18:05 America/Sao_Paulo)
+===============================================================================================
+Pedido Codex #401/6507839365: investigar contexto/permissões/projeções/fontes, separado do legado,
+sem inserir exemplos. Base: #420 classificação ABCD + matriz 20261009.
+Sem seed · sem VPS · sem carga · candidata #401 686ae322 intacta.
+
+## Método (probes in-repo)
+1. Contagem Cadastros Gerais → `useCadastrosAllCounts` + `countEntities`.
+2. Lista/reabertura → `VisualizadorUniversalEntidadeV24` scopeKey.
+3. Contatos → Form cadastros (RBAC) × órfão comercial × C360 skipped.
+4. Sky/ID residual → CodigoField já expõe ID técnico nos mestres “sky_sem_id”.
+
+## Probe 1 — Badge Produto/CPA 0 com n>0 no DB (classe A)
+Arquivo: `src/components/cadastros/hooks/useCadastrosAllCounts.jsx`
+- `buildSimpleFilter`: se `empresaId` presente → `{ empresa_id }` **somente**
+  (ramo `groupId && !empresaId` não corre quando empresa está selecionada).
+- Produtos só com `group_id` / outra empresa do grupo → contagem 0 na UI empresa
+  mesmo com linhas no PG do grupo (matriz 20261009: badge CPA 0*).
+- Contexto grupo puro (`groupId` sem empresa): `{ group_id }` — depende da
+  expansão backend `countEntities` para empresas do grupo.
+- Falha `countEntities` (catch): normaliza entidade para 0 → **falso zero**
+  (sintoma “sumiu” sem ausência real). Fail-closed de escrita ≠ badge.
+
+≠ ausência D · ≠ autoriza seed. Ação: diagnosticar contexto UI + filtro antes
+de ETL; alinhar expansão empresa↔grupo no count (lote futuro, sem inventar rows).
+
+## Probe 2 — Lista vazia após troca empresa (classe C)
+Arquivo: `VisualizadorUniversalEntidadeV24.jsx`
+- `scopeKey = ENTITY:groupId:empresaId`; effect limpa form ao mudar scope.
+- queryKey de listagem inclui empresa/grupo (padrão V24).
+- Sintoma lista vazia pós-troca: escopo novo sem registros **ou** cache
+  placeholder/`placeholderData` de contagens (counts V5) até refetch —
+  não apagar dados do escopo anterior.
+
+## Probe 3 — Contatos “sumiram” (classe B/C)
+Canônico em uso:
+- `cadastros/GerenciarContatosClienteForm.jsx` — RBAC `Cadastros.Cliente` +
+  `assertScopeCurrent` fail-closed; usado por CadastroClienteCompleto e
+  PainelDinamicoCliente (teste proíbe import do órfão comercial).
+Órfão (sem consumidor in-repo):
+- `comercial/GerenciarContatosCliente.jsx` — mutação direta `Cliente.update`
+  **sem** canEdit/assertScope; lê `cliente.contatos` do entity filter.
+  Pacote E: não apagar sem autorização; consolidar só no Form existente.
+C360:
+- `CentralCliente360Panel` exibe `status === 'skipped'` (contrato epoch #424) —
+  skipped ≠ lista vazia inventável; respeitar reject/skipped.
+
+## Probe 4 — Sky sem label “ID técnico” (falso gap)
+30 forms com `from-sky-50` e sem string “ID técnico” **já** passam
+`CadastroCodigoRegistroField` + `entityId` → Label “ID técnico” no campo.
+Gap visual residual real: embeds (Contatos/Endereços), pins ID-only
+(CentroOperacao/Boletos/Grupo/Usuario), Produto legado (V22 canônico).
+
+## Fontes (procedência)
+| Fonte | Uso neste tip |
+|-------|----------------|
+| matriz `registros-recuperacao-matriz-20261009.txt` | contagens ops sanitizadas |
+| #420 `registros-desaparecidos-classificacao-20261029.txt` | ABCD vigente |
+| código hooks/V24/Form Contatos (SHAs tip branch) | probes acima |
+| Staging legado #211 | D — authorized=0; fora |
+
+## Conclusão
+Nenhum registro ERP novo “recuperado” por seed. Sintomas reclassificados:
+A (filtro count empresa vs grupo), C (scope troca), B/C (contrato Contatos),
+D permanece Fornecedor schema + volume legado só staging.
+Pacote E anotado: Contatos comercial órfão × Form RBAC (keep both até aceite).
+
+## Fora
+Merge #401 · harness · Auth VPS · fictícios · apagar órfão Contatos
+
+## CI SUCCESS tip c3d708c0f (2026-10-29 18:12 America/Sao_Paulo)
+- Push/PR erp-runtime-ci — 6/6 SUCCESS (subscription branch).
+- Probes A/C/E + falso gap CodigoField confirmados em CI.
