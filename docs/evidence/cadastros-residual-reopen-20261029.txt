@@ -1,0 +1,25 @@
+Cadastros residual — reopen (2026-10-29 America/Sao_Paulo)
+============================================================
+Branch: cursor/cadastros-residual-reopen-392b
+Base: #404 tip `4e4770592`
+
+## Resultado
+
+Tentativa de graduar Gateway/TabelaFiscal/ConfigNFe → useCadastroReopenOnIdentity
+**revertida** após CI frontend FAILURE (8 fails): publication-baseline /
+cursor-residual / identidade / Matriz RecordState / callback GatewayPagamento
+ainda pinam RecordState nesses forms (mesmo padrão LocalEstoque exige delta
+autorizado em `publication-baseline-contracts.test.js` + beforeSha).
+
+Estado tip atual: forms = sky + ID técnico do #404 (RecordState); pin residual
+CentroOperacao/TabelaFiscal/ParametroOrigemPedido/ConfiguracaoNFe intacto.
+
+## Classificação
+
+**implementado** n/a (reopen revertido) · **testado** pins restaurados ·
+**preparado** delta publication futuro · **bloqueado** graduação reopen residual
+até tip autorizado no publication-baseline (como LocalEstoque); merge/deploy/carga.
+
+## Prioridade vigente
+
+Fechar candidata #397/#406 (saldo/unidade/Contatos) antes de retentar reopen.

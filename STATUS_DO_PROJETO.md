@@ -1,3 +1,37 @@
+## CURSOR — VIGENTE (#405 reopen BLOCKED publication; #406 prioridade) (2026-10-29 08:37 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#406** | tip `44bc5dad9` — Contatos/saldo DESCONHECIDO/unidade — **prioridade candidata** |
+| **#405** | reopen residual **revertido** — publication-baseline pin RecordState |
+| **#404** | `4e4770592` CI SUCCESS — sky+ID residual preservado |
+| **#403** | `8b08b55ccd` base Contatos+Estoque |
+| **#401** | atualizar após CI #406 |
+| Fora | merge/deploy/carga; reopen sem delta publication |
+
+**Evidência:** `docs/evidence/cadastros-residual-reopen-20261029.txt` · parecer #406
+**Próximo:** CI #406 · composição #401. Sem merge/deploy.
+
+(2026-10-29 08:37 America/Sao_Paulo)
+
+## CURSOR — VIGENTE (residual reopen Gateway/TabelaFiscal/ConfigNFe) (2026-10-29 08:27 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-residual-reopen-392b` ← #404 `4e4770592` |
+| **Escopo** | Gateway / TabelaFiscal / ConfigNFe → `useCadastroReopenOnIdentity` + CodigoField idOnly |
+| **Pin restante** | CentroOperacao · ParametroOrigemPedido |
+| **Testes** | residual 16 PASS · identidade 6 PASS |
+| **#404** | tip smoke `4e4770592` (C360 demo runner) |
+| **#403** | tip `8b08b55ccd` — `@codex review` |
+| **#401** | `8026b2298` isolada |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/cadastros-residual-reopen-20261029.txt`
+**Próximo:** CI desta branch · aguardar Codex #403 · ParametroOrigemPedido/CentroOperacao se autorizado. Sem merge/deploy.
+
+(2026-10-29 08:27 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (C360 smoke demonstrado + #404) (2026-10-29 08:24 America/Sao_Paulo)
 
 | Campo | Valor |
