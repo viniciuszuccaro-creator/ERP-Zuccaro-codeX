@@ -21,3 +21,6 @@ Classificação
 
 Testes: cadastros-intent-job-sky.test.js + residual pin
 Fora: merge/deploy/carga · candidata concorrente a #401/#406
+
+## CI SUCCESS tip 7e27ee9f3 (2026-10-29 10:27 America/Sao_Paulo)
+- Runs 40881114046 / 40881084134 — 6/6 SUCCESS.

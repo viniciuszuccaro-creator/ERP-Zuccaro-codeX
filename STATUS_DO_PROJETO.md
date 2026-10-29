@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#409 tip 7e27ee9f3 CI SUCCESS) (2026-10-29 10:27 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#409** tip **`7e27ee9f3`** — CI SUCCESS `40881114046` / `40881084134` |
+| **#406** | tip `73046b406` Codex: sem achados major |
+| **#401** | tip `716dabdeb` Codex P2 busca sem acentos (tratar) |
+| **#408** | `6d62b99cf` CI SUCCESS |
+| C360 | smoke PASS writes=0 |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/cadastros-intent-job-sky-20261029.txt` · `c360-fluxo-evidencia-20261029b.txt`
+**Próximo:** P2 #401 busca diacríticos · Sem merge/deploy.
+
+(2026-10-29 10:27 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#409 Intent/Job sky+ID + C360 smoke) (2026-10-29 10:20 America/Sao_Paulo)
 
 | Campo | Valor |
