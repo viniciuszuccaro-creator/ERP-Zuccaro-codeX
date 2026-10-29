@@ -1,3 +1,9 @@
+## CURSOR — #415 tip a3d37ad7b CI SUCCESS (2026-10-29 12:19 America/Sao_Paulo)
+
+- Tip `a3d37ad7b` CI SUCCESS 6/6 — Parametro* sky+ID; Boletos ID-only.
+- #414 tip `238dd7f38` typecheck em CI. #401 estável; demo persistência isolada pedida ao Codex.
+- Sem merge/deploy/carga/VPS write.
+
 ## CURSOR — param forms sky+ID (2026-10-29 12:08 America/Sao_Paulo)
 
 - Branch `cursor/cadastros-boletos-paramcaixa-sky-392b` ← #413: sky+ID em 5 Parametro*.
