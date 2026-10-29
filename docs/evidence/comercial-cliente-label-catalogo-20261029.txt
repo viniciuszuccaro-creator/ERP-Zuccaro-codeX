@@ -26,3 +26,8 @@ writes=0 / salvar desabilitado — não prova persistência E2E nem convert→Pe
 
 ## Incorporação à #401
 Somente após parecer Codex deste tip + validação; sem composição concorrente.
+
+## CI SUCCESS + Codex limpo tip 05a09e667 (2026-10-29 12:48 America/Sao_Paulo)
+Código 532ac595a · docs 05a09e667 · CI SUCCESS 6/6.
+Codex tip 05a09e667: sem major / has_any_findings=false (P1/P2 fechados).
+Pronto para compose #401.
