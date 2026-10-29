@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#411 residual Contatos+unidade) (2026-10-29 11:28 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial360-achados-residual-p2-392b` ← #406 `73046b406` |
+| **Parecer** | 6498240997 + Codex #4413059634 |
+| **#401** | tip `450e830b6` — ainda SEM #407 |
+| Fora | merge/deploy/carga |
+
+(2026-10-29 11:28 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (#406 tip 90990801e CI SUCCESS — 3 achados + P2) (2026-10-29 09:50 America/Sao_Paulo)
 
 | Campo | Valor |
