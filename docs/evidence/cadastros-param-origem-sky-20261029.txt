@@ -1,0 +1,4 @@
+Cadastros residual sky+ID — ParametroOrigemPedido — 2026-10-29 12:25 America/Sao_Paulo
+Base #415 tip ec0195c3e / a3d37ad7b.
+Pin RecordState preservado. Sem count+1.
+Independente da composição #401.
