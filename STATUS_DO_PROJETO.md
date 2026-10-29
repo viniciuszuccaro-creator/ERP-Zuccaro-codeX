@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| **#401 tip** | `77c0eacd304d50da58b30b1e1bd83ca58229adbc` (+ este recibo) — CI SUCCESS run 40946256544 |
+| **#401 tip** | `fe91d0253cea487736fe6a48ea3b4b957106180b` (recibo capacidade; base P2 `77c0eacd3` CI SUCCESS 40946256544) |
 | **#424 tip** | `abde6294339584b33cf18dab60b7c3622dd7e2a6` — P2 FECHADO Codex 6507247848 |
 | **P2** | baseline 6 PASS; mutação externa epoch/skipped → fail 1/2/4 |
 | **PG nativo** | `/usr/lib/postgresql/16/bin/{postgres,initdb,pg_ctl,psql}` 16.15 — main 5432 **down** intocado |
