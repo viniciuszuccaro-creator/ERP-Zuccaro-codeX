@@ -10,12 +10,15 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { useWindow } from "@/components/lib/useWindow";
 import useContextoVisual from "@/components/lib/useContextoVisual";
-import {
-  filterOportunidadesPorEtapaFunil,
-  listFunilColunasUi,
-} from "@/components/lib/crmOportunidadePolicy";
 
-const etapasFunil = listFunilColunasUi('ia');
+const etapasFunil = [
+  { id: "Prospecção", nome: "Prospecção", cor: "bg-slate-100" },
+  { id: "Contato Inicial", nome: "Contato", cor: "bg-blue-100" },
+  { id: "Qualificação", nome: "Qualificação", cor: "bg-purple-100" },
+  { id: "Proposta", nome: "Proposta", cor: "bg-indigo-100" },
+  { id: "Negociação", nome: "Negociação", cor: "bg-yellow-100" },
+  { id: "Fechamento", nome: "Fechamento", cor: "bg-green-100" },
+];
 
 export default function FunilComercialInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
@@ -184,8 +187,8 @@ Retorne uma lista priorizada com score e motivo.`,
         <div className="flex-1 overflow-x-auto p-6">
           <div className="flex gap-4 h-full min-w-max">
             {etapasFunil.map(etapa => {
-              const oppsEtapa = filterOportunidadesPorEtapaFunil(oportunidades, etapa.id, { mode: 'ia' });
-
+              const oppsEtapa = oportunidades.filter(o => o.etapa === etapa.id && o.status !== "Ganho" && o.status !== "Perdido");
+              
               return (
                 <Droppable key={etapa.id} droppableId={etapa.id}>
                   {(provided, snapshot) => (

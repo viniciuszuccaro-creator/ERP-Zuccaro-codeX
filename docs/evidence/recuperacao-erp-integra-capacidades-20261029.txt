@@ -43,7 +43,7 @@ Atualização (2026-10-29) — configs residual + comprovante contrato
 - Evidência: recuperacao-config-comprovante-20261029.txt
 
 Atualização (2026-10-29) — Funil×3 / Separacao×IA
-- Etapas UI canônicas via CRM_ETAPAS; 3 funis keep both curto
+- Helpers CRM_ETAPAS (`listFunilColunasUi`) prontos; UI Funil*.jsx BLOCKED por pin publication/stage
 - Hub Expedicao: Separação IA + Separação clássica (Entregas preservado)
 - Evidência: recuperacao-funil-separacao-20261029.txt
 

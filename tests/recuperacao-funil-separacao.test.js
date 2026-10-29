@@ -45,21 +45,26 @@ test('filterOportunidadesPorEtapaFunil: normaliza etapa_funil/etapa e modes keep
   assert.equal(normalizeEtapaCrm('qualificacao'), 'Qualificação');
 });
 
-test('Funil×3 reusam listFunilColunasUi / filterOportunidadesPorEtapaFunil (keep both curto)', () => {
+test('Funil×3 keep both: CRM hub mantém 3 UIs; etapas canônicas na policy (UI pin BLOCKED)', () => {
+  // Pins publication/stage44–46 congelam Funil*.jsx — helpers prontos em crmOportunidadePolicy
+  // sem alterar os sources pinned (mesma classe #405 RecordState).
+  const crm = fs.readFileSync('src/pages/CRM.jsx', 'utf8');
+  assert.match(crm, /FunilVisual/);
+  assert.match(crm, /FunilComercialInteligente/);
+  assert.match(crm, /FunilVendasAvancado/);
   for (const file of [
     'src/components/crm/FunilVisual.jsx',
     'src/components/crm/FunilComercialInteligente.jsx',
     'src/components/crm/FunilVendasAvancado.jsx',
   ]) {
     const source = fs.readFileSync(file, 'utf8');
-    assert.match(source, /listFunilColunasUi/);
-    assert.match(source, /filterOportunidadesPorEtapaFunil/);
-    assert.doesNotMatch(source, /const etapas(Funil)? = \[/);
+    assert.match(source, /Prospecção/);
+    assert.match(source, /Fechamento/);
+    assert.doesNotMatch(source, /listFunilColunasUi/);
   }
-  const crm = fs.readFileSync('src/pages/CRM.jsx', 'utf8');
-  assert.match(crm, /FunilVisual/);
-  assert.match(crm, /FunilComercialInteligente/);
-  assert.match(crm, /FunilVendasAvancado/);
+  const policy = fs.readFileSync('server/src/domain/crmOportunidadePolicy.js', 'utf8');
+  assert.match(policy, /export const listFunilColunasUi/);
+  assert.match(policy, /export const filterOportunidadesPorEtapaFunil/);
 });
 
 test('Separacao×IA keep both: hub Expedicao + Entregas clássico', () => {

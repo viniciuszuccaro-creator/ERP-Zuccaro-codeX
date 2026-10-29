@@ -9,9 +9,9 @@ FunilVisual × FunilComercialInteligente × FunilVendasAvancado
   - Mesma fonte Oportunidade (B equivalente + keep both curto)
   - Capacidades distintas: Visual=drag canônico props pai; IA=InvokeLLM priorização;
     Avançado=scoring/normalize
-  - Recuperação: etapas UI unificadas via CRM_ETAPAS (`listFunilColunasUi` +
-    `filterOportunidadesPorEtapaFunil`) — sem 3º funil e sem apagar os existentes
-  - Normalização etapa_funil/etapa evita coluna vazia por alias
+  - Policy: `listFunilColunasUi` + `filterOportunidadesPorEtapaFunil` em CRM_ETAPAS
+  - UI Funil*.jsx: **BLOCKED** por pins publication/stage44–46 (não alterar baseline
+    sem graduação) — helpers prontos; 3 UIs preservados sem 3º módulo
 
 SeparacaoConferencia × SeparacaoConferenciaIA
   - Mesma entidade SeparacaoConferencia + asserts canônicos (B)
