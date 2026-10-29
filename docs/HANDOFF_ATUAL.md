@@ -1,3 +1,10 @@
+## CURSOR — residual reopen Gateway/TabelaFiscal/ConfigNFe (2026-10-29 08:27 America/Sao_Paulo)
+
+- Branch `cursor/cadastros-residual-reopen-392b` sobre tip #404 `4e4770592`.
+- Gradua RecordState → `useCadastroReopenOnIdentity` (boundId + CodigoField idOnly).
+- Pin restante: CentroOperacao · ParametroOrigemPedido. Testes residual 16 + identidade 6 PASS.
+- #403 aguarda Codex; #401 isolada; C360 smoke já demonstrado no #404. Sem merge/deploy/carga.
+
 ## CURSOR — C360 smoke demonstrado no runner (2026-10-29 08:24 America/Sao_Paulo)
 
 - Smoke `scripts/comercial360-preview-smoke.mjs` PASS em Vite `:5173` (sintético; writes=0; Salvar desabilitado).

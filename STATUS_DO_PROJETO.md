@@ -1,3 +1,21 @@
+## CURSOR — VIGENTE (residual reopen Gateway/TabelaFiscal/ConfigNFe) (2026-10-29 08:27 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-residual-reopen-392b` ← #404 `4e4770592` |
+| **Escopo** | Gateway / TabelaFiscal / ConfigNFe → `useCadastroReopenOnIdentity` + CodigoField idOnly |
+| **Pin restante** | CentroOperacao · ParametroOrigemPedido |
+| **Testes** | residual 16 PASS · identidade 6 PASS |
+| **#404** | tip smoke `4e4770592` (C360 demo runner) |
+| **#403** | tip `8b08b55ccd` — `@codex review` |
+| **#401** | `8026b2298` isolada |
+| Fora | merge/deploy/carga |
+
+**Evidência:** `docs/evidence/cadastros-residual-reopen-20261029.txt`
+**Próximo:** CI desta branch · aguardar Codex #403 · ParametroOrigemPedido/CentroOperacao se autorizado. Sem merge/deploy.
+
+(2026-10-29 08:27 America/Sao_Paulo)
+
 ## CURSOR — VIGENTE (C360 smoke demonstrado + #404) (2026-10-29 08:24 America/Sao_Paulo)
 
 | Campo | Valor |

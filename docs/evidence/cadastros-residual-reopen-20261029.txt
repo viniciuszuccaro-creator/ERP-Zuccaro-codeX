@@ -1,0 +1,30 @@
+Cadastros residual — graduação reopen (2026-10-29 America/Sao_Paulo)
+======================================================================
+Branch: cursor/cadastros-residual-reopen-392b ← tip #404 `4e4770592`
+Modalidade: melhorar existente · sem módulo paralelo
+
+## Escopo
+
+| Form | boundId | Preservado |
+|------|---------|------------|
+| GatewayPagamentoForm | gatewayBoundId | handlers/RBAC/tenantKey · CodigoField idOnly |
+| TabelaFiscalForm | tabelaBoundId | aliases · IA · CodigoField idOnly |
+| ConfiguracaoNFeForm | configBoundId | aliases · automação confirm · CodigoField idOnly |
+
+## Pin RecordState restante
+
+CentroOperacao · ParametroOrigemPedido (golden e36231b3) — intocados neste lote.
+
+## Testes
+
+- cursor-residual-independent: **16 PASS**
+- cursor-identidade-consolidacao: **6 PASS**
+
+## Classificação
+
+**implementado** graduação reopen · **testado** pins · **demonstrado** n/a neste tip ·
+**preparado** · **bloqueado** merge/deploy/carga; ParametroOrigemPedido/CentroOperacao ainda no pin.
+
+## Relacionado
+
+#404 sky+ID+smoke C360 · #403 Contatos+Estoque aguarda Codex · #401 isolada · #402 params separado
