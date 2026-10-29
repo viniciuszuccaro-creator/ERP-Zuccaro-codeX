@@ -1,5 +1,13 @@
 ## Estado vigente - candidata401 revisada29/10
 
+Atualizacao de desbloqueio: bundle minimo POSIX preparado em volumeD,48fontes
+com hashes verificados e11syntaxPASS; Linux nao executado, nao liberar codigo.
+OPERACAO tem os2checks exatos e procedimento minimo WSL/admin/reinicio seguro,
+sem instalar noC por inferencia. Recibos privados26/10 provam preparacao, nao
+exemplar final/outputSha256; coorte real continua inacessivel, nao vazia/recriada.
+CI30b1b619 confirmada6jobsSUCCESS, nao atribuida ao WIP.397/401 sem novo delta;
+Cursor coordenado6495610323, sem recibo presumido. Sem uso operacional daVPS.
+
 Lista unica/ordem no STATUS.4018026b2298e7bde731420ec1334c5e9397da91d81 compoe
 codigo39783499de9+342b5cb34e1;397754a05cf so docs posteriores. Ancestralidade de
 ambas entradas comprovada. CI4015079/5080 e3975081 SUCCESS nos SHAs exatos.

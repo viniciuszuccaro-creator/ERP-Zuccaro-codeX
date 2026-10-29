@@ -1,5 +1,19 @@
 ## Estado vigente - revisao da composicao401 (2026-10-29)
 
+Desbloqueio posterior29/10: WIP preservado por patch/hash,14arquivos pendentes
+apos publicacao documental. Preflight sem Linux/WSL/Store/Docker/Podman e sem
+administrador; C~3.6GB/D~239GB, hipervisor presente (nao presumir BIOS incorreto).
+Bundle minimo de testes POSIX preparado/recuperado por hashes:48fontes+manifesto,
+71487bytes, nenhuma dependencia npm/rede/banco/dado real.11modulos syntaxPASS,
+NAO testes POSIX. Dois testes exatos, procedimento administrativo WSL emD,
+reinicio seguro e execucao Linux nativa registrados no OPERACAO existente.
+Sem instalar/reiniciar/alterar VPS ou relaxar tests; codigo nao publicado por isso.
+Recibos privados26/10 localizados sustentam preparacao da coorte, nao exemplar
+final nem outputSha256; nao confundir com stagingArtifactSha256/cohortSha256.
+397/401 permanecem nos SHAs abaixo; coordenacao397/6495610323 pede correcao dos
+tres achados, nao presume recebimento. CI do commit documental30b1b619 agora
+confirmada6jobsSUCCESS (5093/5094), nao e CI do WIP. Sem repetir suites intactas.
+
 Entradas conferidas:342b5cb34e1fb09d4a7dedc4fc9d66d501bfe2e16f7;
 397754a05cfaba7d067f39594bde68411247c10ba41 e somente docs desde83499de9;
 4018026b2298e7bde731420ec1334c5e9397da91d81 compoe codigo83499de9+b5cb34e1.

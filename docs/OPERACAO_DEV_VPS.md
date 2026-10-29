@@ -1,5 +1,160 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Orientacao vigente de continuidade e reconciliacao (2026-10-28)
+
+Consulta fixa preparada no modulo scripts/legado/pilot-functional-load-plan.mjs,
+sem conectar ou executar automaticamente. Exige SHA dos bytes e da coorte,
+identidade do destino e Grupo/empresas aprovados. Ate100 identidades por documento
+validado OU par nativo;20 colunas declaradas e contagens de referencias restritas,
+sem LIMIT1/SELECT amplo. Resultado ambiguo/procedencia divergente permanece bloqueado.
+READ ONLY/REPEATABLE READ, search_path pg_catalog, limites de tempo e ROLLBACK.
+
+Alternativas: A) executor administrativo existente com SELECT fixo, revisado e
+autorizado, saida privada0600/hash e somente contagens publicas; sem delegar LOGIN
+ou SQL arbitrario. O principal permanece privilegiado, nao e leitor homologado.
+B) confronto isolado somente com identidade e atualidade comprovadas; restore
+historico nao comprova destino atual. C) novo leitor com mudancas globais PUBLIC
+permanece suspenso; nao aplicar por inercia autorizacoes condicionais anteriores.
+
+Prova desta retomada: conexao SQL existente real, metadados em transacao somente
+leitura e rollback; Grupo aprovado1/empresas2, zero linhas de clientes consultadas.
+Protecao e capacidade do diretorio privado conferidas, sem novos arquivos na VPS.
+Artefato congelado100 nao localizado na busca limitada; recuperar apenas esse
+artefato/pins, nao repetir backup/transferencia/inventario completo. A execucao da
+consulta de negocio continua pendente da fonte e do escopo autorizado concreto.
+
+Desenvolvimento temporario no clone desktop independente existente, sem usar raiz
+antiga/HD; GitHub canonico e Codespace unico reservado a validacao integrada quando
+houver franquia. Nunca presumir que arquivos/chaves privados do Codespace existem
+na estacao. Preservar ambos antes de sincronizar, um escritor por checkout.
+Detalhes e lista unica no STATUS/HANDOFF; sem outro manual/plano operacional.
+
+A proposta PUBLIC abaixo e HISTORICA/SUSPENSA pela decisao posterior do dono, nao
+uma fila para aplicar grants. Nenhuma ACL/role/policy foi alterada no DEV. Preferir
+para decisao consulta/exportacao FIXA no console administrativo existente: sem
+delegacao SQL arbitraria ou novo LOGIN, somente CPA/empresas/coorte100 fixados em
+recibos privados, colunas allowlisted, sem LIMIT1 em documento ambiguo, transacao
+REPEATABLE READ READ ONLY, timeouts, ROLLBACK e saida0600/hash privada. Privilegio do
+executor nao e prova de isolamento; escopo do SQL e ausencia de escrita exigem
+ensaio/revisao. Leitura de negocio aguarda autorizacao especifica desta alternativa.
+Nao herdar permissao de metadados como autorizacao de exportar clientes.
+
+Copia isolada e alternativa somente com identidade/schema/frescor comprovados e
+extracao minima; nao repetir restore inteiro por conveniencia. Novo LOGIN no alvo
+nao e a opcao minima diante de PUBLIC e bancos adicionais. Sem alterar PUBLIC/API,
+HBA/rede, conceder sudo/docker ou executar carga para contornar indisponibilidade.
+As autorizações especificas SSH anteriores permanecem, sem copiar chave pessoal.
+
+### Gate do executor desktop, sem mudar a VPS
+
+Atualizacao posterior29/10 - pacote minimo pronto, NAO executado em Linux:
+- WIP preservado em patch privado,14 arquivos pendentes apos commit documental.
+- Checks exatos: tests/legado-filesystem-precheck.test.js, teste "private staging
+  precheck uses real synthetic filesystem metadata only" (seis asserts Python de
+  capacidade/host/escopo/symlink/modes/ausenciaGit); e
+  tests/legado-review-workflow.test.js, teste "recibos existentes geram revisao
+  privada sem reexecutar piloto; linha inconsistente fica isolada" (getuid/owner/
+  mode700 e arquivos600 reais, sem mock de identidade).
+- Preflight atual: WSL/Store ausentes, Docker/Podman nao disponiveis e executor sem
+  administrador; C~3.6GB/D~239GB disponiveis. HypervisorPresent=true; indicadores
+  WMI de firmware/SLAT falsos nao bastam para exigir alteracao de BIOS. Nao mudar
+  BIOS/politicas/elevacao por tentativa. Nenhum runtime Linux comprovado.
+- Bundle de TESTE sintetico fora do checkout,48 arquivos fonte/dependencias e
+  manifesto,71487bytes comprimidos. SHA256
+  0c6173abd166519b11f1a269f9b0edad4fdd8a4c8b2101d1fcfb407e919c125b.
+  Arquivo posix-checks-wip-30b1b619-20261029.tar.gz no diretorio temporario de
+  validacao local.49 entradas verificadas por tamanho/SHA contra manifesto e
+  fontes; nenhum arquivo extra/dado real/chave/.env/node_modules.11JS passaram
+  node --check, NAO contam como teste POSIX aprovado. Mesmas assertions do WIP.
+  Nao exige npm install/rede/banco; SQLs automaticos sao somente evidencia de
+  leitura do teste, nao executar migrador. Nao e novo clone/ERP/implementacao.
+
+Intervencao minima se for usar WSL: proprietario abre PowerShell como administrador,
+confere capacidade do componente no C e preserva sessoes/aplicacoes antes de qualquer
+reinicio. Procedimento Microsoft, sem contratar recursos:
+
+```powershell
+wsl --install --no-distribution
+# Reinicio somente em janela segura pelo proprietario, caso exigido.
+wsl --install --distribution Ubuntu --location D:\WSL\ERP-Checks --no-launch
+```
+
+Se o bootstrap instalado nao aceitar --location, parar e consultar --help/versao;
+nao cair para instalacao automatica da distribuicao em C. Configuracao do usuario
+Linux e eventual credencial ocorrem localmente, nunca no chat/Git. Nao foram
+executados instalacao, elevacao, reinicio, alteracao de configuracao ou cobranca.
+Alternativa continua o MESMO Codespace quando a franquia permitir, nao outro.
+
+Com Node>=22/Python3 reais ja disponiveis no Linux, conferir SHA do bundle ANTES
+de extrair. Executar em filesystem Linux nativo, nao pasta montada NTFS:
+
+```bash
+umask 077
+checkdir=$(mktemp -d "$HOME/erp-posix-30b1.XXXXXX")
+mkdir "$checkdir/tmp"
+# BUNDLE aponta ao arquivo privado cuja soma acima foi conferida.
+tar -xzf "$BUNDLE" -C "$checkdir" --no-same-owner
+cd "$checkdir"
+TMPDIR="$checkdir/tmp" TEST_PYTHON_EXECUTABLE="$(command -v python3)" \
+  node --test --test-concurrency=1 tests/legado-filesystem-precheck.test.js tests/legado-review-workflow.test.js
+```
+
+Registrar versoes, UID, filesystem, hashes e resumo PASS/FAIL/SKIP real. Nao chamar
+esse gate de aprovado antes da execucao. Depois fechar validacoes proporcionais da
+secao16 do AGENTS sobre snapshot completo do MESMO WIP; dois testes isolados nao
+dispensam fechamento nem autorizam carga/deploy. Um escritor no checkout canonico.
+
+Rastreio privado restrito encontrou gerador/recibo de preparacao26/10, nao arquivo
+final nem outputSha256 contemporaneo. stagingArtifactSha256 (input), cohortSha256
+(selecao) e outputSha256 (arquivo final) sao tres pins diferentes. Gerador contendo
+o comando nao prova execucao/exemplar; nao executar de novo para substituir o
+congelado por outra selecao ou apresentar backup23/10 como sua recuperacao.
+
+Atualizacao29/10: WIP inicial conferiu o mesmo SHA256 do patch privado anterior,
+sem sincronizar o checkout. Codespace unico recusou retomada com a mensagem
+"You are out of monthly free usage or have exceeded your budget for Codespaces";
+nenhum aumento de orcamento ou novo ambiente. WSL --list --quiet exit1 confirma
+WSL ausente; executor Windows sem elevacao administrativa. C~706MB livres e D~239GB;
+isso nao libera instalar no C, apagar arquivos ou usar a VPS para desenvolvimento.
+Para antecipar os checks antes da renovacao da franquia, intervencao local minima:
+administrador preparar WSL conforme https://learn.microsoft.com/windows/wsl/install,
+preservando sessoes/trabalho antes do reinicio exigido. A referencia oficial
+https://learn.microsoft.com/windows/wsl/basic-commands suporta --location para
+armazenar a distribuicao em diretorio separado em D, nunca dentro do ERP/backup.
+Nao foi executada instalacao/elevacao/reinicio. Apos disponibilizar Linux, conferir
+Node/Python e executar os dois testes reais em filesystem Linux com owner/mode/
+symlinks reais; montar NTFS ou simular getuid nao substitui essa prova. Usar snapshot
+de teste sanitizado com hashes do WIP, nao criar outra frente de implementacao.
+
+Artefato de selecao100: busca exata adicional somente em ERP-Integracao-Privada
+desktop retornou zero. Copia centralizada23/10 antecede a selecao26/10; nao declarar
+que contem essa selecao posterior nem recria-la a partir do backup. Fonte registrada
+continua o arquivo privado decision-20261026/source-cohort-100-6ba10732.private.json
+do Codespace existente. Retomada bloqueada impede conferir/exportar esse arquivo;
+nenhum dado real recuperado nesta tentativa. Quando retomar pelo canal suportado,
+exportar SOMENTE esse arquivo fora do Git, conferir coorte congelada e registrar SHA
+dos bytes na origem e no destino privado; nao tratar o SHA da coorte como SHA do
+arquivo. Nao repetir transferencia integral ou considerar destino vazio.
+
+Em28/10 o clone desktop foi atualizado por fast-forward para b5cb34e1, preservando
+o Codespace bloqueado. Python3 real do bundle local foi comprovado; forneca o seu
+caminho absoluto em TEST_PYTHON_EXECUTABLE somente no processo de teste, nao em
+codigo/config global. WindowsStore python/python3 nao comprovam runtime instalado.
+As contraprovas literais exigem checkout LF conforme .gitattributes; nao mudar os
+18hashes historicos ou o remainder para aceitar alteracoes fora de escopo.
+Parser de mounts Docker interpreta paths POSIX independentemente do SO do agente.
+
+Owner/mode/symlinks POSIX da revisao privada NAO foram homologados em NTFS: nao
+simular getuid, remover assertions ou copiar dados reais para testes. WSL --list
+comprovou que nao esta instalado; C tem ~0.2GB livres, insuficiente para preparar
+uma distribuicao. Nao instalar/apagar/mover backups por inferencia. Opcao local
+gratuita exige espaco e preparacao WSL aprovada (procedimento Microsoft:
+https://learn.microsoft.com/windows/wsl/install), admin/reinicio e setup humano
+quando necessario; nao cria outro clone/ERP ou libera credenciais. Alternativa e
+retomar o Codespace unico apos franquia, conciliando/preservando primeiro o WIP.
+Sem runtime POSIX, manter BLOQUEADO o fechamento deste lote; VPS nao e substituto
+automatico de desenvolvimento e nenhuma role/DDL/carga acompanha essa decisao.
+
 ### Atualizacao de validacao condicional (2026-10-28)
 
 Assinaturas confirmadas no catalogo DEV com PUBLIC EXECUTE: lo_creat(integer),
