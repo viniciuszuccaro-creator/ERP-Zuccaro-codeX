@@ -163,9 +163,9 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Contatos ({contatos.length})</h3>
         <Button
-          onClick={abrirNovo} disabled={bloqueado || !podeEditar}
+          onClick={abrirNovo}
           size="sm"
-          disabled={!podeEditar}
+          disabled={bloqueado || !podeEditar}
           data-permission="Cadastros.Cliente.editar"
           data-action="Cadastros.Cliente.contato.adicionar"
         >

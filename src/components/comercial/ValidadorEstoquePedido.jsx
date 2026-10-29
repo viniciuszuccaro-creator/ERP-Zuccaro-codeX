@@ -60,8 +60,14 @@ export function resumoDisponibilidadeEstoque(verificacoes) {
  *
  * Verifica disponibilidade de estoque antes de aprovar/converter pedido.
  * Exibe alertas de itens sem estoque líquido (atual − reservado).
+ * @param {{ pedido?: object|null, orcamento?: object|null, empresaId?: string|null, onAvailabilityChange?: ((state: object) => void)|null }} [props]
  */
-export default function ValidadorEstoquePedido({ pedido, orcamento, empresaId, onAvailabilityChange }) {
+export default function ValidadorEstoquePedido({
+  pedido = null,
+  orcamento = null,
+  empresaId = null,
+  onAvailabilityChange = null,
+} = {}) {
   const fonte = pedido || orcamento || null;
   const itens = Array.isArray(fonte?.itens) && fonte.itens.length > 0
     ? fonte.itens
