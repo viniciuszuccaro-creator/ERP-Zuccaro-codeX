@@ -1,4 +1,41 @@
-## Estado vigente -434 incorporada na MESMA401, contagens fora (2026-10-30)
+## Estado Vigente - Contagens Incorporadas, Ainda Sem Aceite (2026-10-30)
+
+A instrucao vigente do proprietario autoriza implementar e compor contagens
+existentes em lote isolado na MESMA #401; nao aguardar confirmacao generica do
+mapa #440. Cursor escritor, Codex revisor; sem merge main, DDL, grants ou deploy.
+Mapa #440 e976c5ea revisado. #401 recebeu eab13aa5febf242b3ff7a389afe62c8ed4f282cc:
+contagens AGORA incorporadas, mas NAO aprovadas. CI5444/run41077845839 terminal
+FAILURE: frontend124138706841 2665PASS/1FAIL/0SKIP (2666total); backend e compose
+SUCCESS. Falha: cursor-identidade-consolidacao.test.js:134, helper de scope adicionado
+sem wiring no teste protegido. Corrigir hunks/import/normalizacao mantendo golden.
+
+Contraprova REAL no codigo composto eab (6526095660): hook queryFn -> bridge ->
+HttpApiClient com fetch sintetico adiado. Falha counts + listagem com 2linhas SEM
+total produz KPI2; cacheKey igual entre atores e resposta antiga42 aceita aposB.
+Remover autoridade page.length; usar count/meta.total canonico ou indisponibilidade.
+Vincular AMBOS hooks a identidade/sessao capturada, rejeitar obsoleto e separar key
+sem tokens. Alcance callbacks/HTTP simulado, nao React montado/server/PG ou dado real.
+Scriptprivado review440-count-path exit0 REPRODUZ problemas, nao aprova produto.
+
+Preservacao eab confirmada: server/API inteiros e5arquivos PainelP1/Completo/adapter/
+Forms exatos50e90d0b. Nenhum swap de servico/repo ou reversao dos contratos434.
+Prova do helper REAL restaura Visualizador INTEIRO a50e90; hunk completo rejeita
+omissao/duplicacao/forja e deixa mutacao externa visivel ao comparador integral.
+Driver privado foi corrigido apos erros de marker/subtrecho; recibo retificado
+6526190440. Nao alterar helper/produto/pin por erro de driver. Cursor deve fechar
+CI e os2defeitos funcionais no mesmo lote; recebimento do pedido nao confirmado.
+
+#439 cce8c0b4c338c5ac7131837a3b08f6833015131f:6jobsCI SUCCESS e parecer6526084353.
+Form CentroOperacao INTEIRO igual a baseba431 mais transformacao sky/ID exata;
+golden53ed preservado e25mutações rejeitadas. Sem novo bloqueador nesse alcance,
+nao prova visual/browser/persistencia ou recuperacao de registros. Segue SEPARADA.
+
+Gates finitos: corrigir/revisar counts/CI -> prova integrada -> cadeia de integracao
+-> esquema minimo/privilegios -> backup/retorno -> reconciliacao -> carga aprovada
+-> deploy -> aceite. Harness/coorte100 finais seguem dependencias privadas distintas,
+sem nova condicao de acesso; nao repeti busca, transferencia, pilotos ou instalacao.
+
+## Historico -434 Incorporada, Antes do Lote de Contagens (2026-10-30)
 
 #43450a010ce224f99cf90a93f905a200d3f8a7fb278 revisada,6jobsCI SUCCESS. Parecer
 6525097735 e pedido6525098122 recebidos/executados peloCursor (recibo6525109514).

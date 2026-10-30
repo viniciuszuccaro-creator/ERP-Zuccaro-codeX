@@ -1,4 +1,36 @@
-## Estado vigente -434 incorporada, provas e contagens separadas (2026-10-30)
+## Estado Vigente - Lote de Contagens Na401, Bloqueadores Reproduzidos (2026-10-30)
+
+Fila atual do dono autoriza implementacao/composicao isolada das contagens existentes;
+mapa440 docs nao exige nova autorizacao generica. Cursor permanece escritor da401.
+HEAD401 eab13aa5febf242b3ff7a389afe62c8ed4f282cc recebeu port de431. Atualizar rotulo
+antigo 'contagensNAOincluidas': AGORA incluidas, SEM aceite. CI5444 terminalFAILURE:
+raiz2665PASS/1FAIL/0SKIP;backend/composeSUCCESS. FalhaexecutadaVisualizador:helper
+scopeListCache adicionado sem import/wrapper no teste protegido; manter golden e
+contraprovas integrais. Pareceres6526095660/6526154414/6526190440.
+
+Prova queryFnREAL -> bridgeREAL -> HTTPfacadeREAL/fetch adiado noSHAeab reproduz:
+page.length2 semtotal aceito apos falha count; atorA/B usam keyigual, respostaA42
+aceita aposB. Nao React montado/backend/PG ou vazamento real. Fix obrigatorio nos
+hooks existentes:count/meta.total autoritativo ou erro;captura/key da identidade e
+descarte obsoleto. Sem trocar filtros/ACLs para aparecer registros. Preservados por
+blobs server/API/PainelP1/Completo/Contatos/Enderecos/get/skipped/draft/synclock da50e90.
+
+Helper de scope testado separadamente: retorna fonte Visualizador inteira50e90;
+3mutações DOHUNKCOMPLETO rejeitadas,fora permanece visivel. Driver privado teve
+erros de marker/subtrecho antes da execucao final exit0,retificados6526190440;
+isso nao modifica produto nem autoriza relaxar comparador integral.
+
+#439cce8c0b4 revisada porSHA:6jobsCIverde,formINTEIRO preservado apos chrome sky/ID,
+golden intacto+25counterproofs. Parecer6526084353,sem novo bloqueador estatico,nao
+homologacao visual ou recuperacao de dados. PermaneceSEPARADA da candidata.
+
+Proximos itens concretos:Cursor fechar countsfallback/ator/CI;Codex repetir so os
+deltas noSHA novo. Depois gates UIAPI PG,esquema/privilegios,backup/retorno,
+reconciliacao,cargaespecifica,deploy eaceite. Artefatosharness/coorte finais ainda
+inacessiveis sem nova condicao;nenhuma busca/transferencia/piloto intacto repetido.
+Nao houve carga operacional,mergeMain,DDL,grants ou deploy.
+
+## Historico -434 Incorporada, Antes do Lote de Contagens (2026-10-30)
 
 43450a010ce224f99cf90a93f905a200d3f8a7fb278 revisada6jobsCIverde(6525097735).
 Pedido4016525098122 teveexecucao REALconfirmada6525109514 naMESMA401:codigo
