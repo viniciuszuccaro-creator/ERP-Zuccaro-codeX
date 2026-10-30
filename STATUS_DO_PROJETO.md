@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#437 HistoricoClienteTab HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-cliente-tab-http-392b` ← #432 `2bc3dc6c7` |
+| **Fix** | Pedidos via `loadPedidosHistoricoHttp`; KPIs/Top20 fail-closed se página incompleta/erro |
+| **Keep both** | HistoricoClienteTab ≠ HistoricoProdutosCliente ≠ DetalhesCliente |
+| **Auxiliares** | NF/entrega/CR HTTP → indisponível (≠ lista vazia); legado `filterInContext` |
+| **#436** | tip `f84f63ed2` DetalhesCliente — CI/Codex em paralelo (não atribuir FAIL `8c0d05c16`) |
+| **#435** | tip `b51214245` CI SUCCESS 6/6 |
+| **#408** | Funil×Separacao tip `803764887` CI SUCCESS (Pacote 5) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI deste tip + #436; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-historico-cliente-tab-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

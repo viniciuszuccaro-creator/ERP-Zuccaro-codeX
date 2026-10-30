@@ -1,0 +1,47 @@
+Recuperação — HistoricoClienteTab HTTP fail-closed (2026-10-30 America/Sao_Paulo)
+================================================================================
+Branch: cursor/recuperacao-historico-cliente-tab-http-392b
+Base: #432 tip 2bc3dc6c7 (cadastros-audit-restante) — pacote independente de #436
+Referência: matriz recuperacao-erp-integra-capacidades / DetalhesCliente+#435 padrão
+
+Problema
+--------
+HistoricoClienteTab usava base44.entities.Pedido/ContaReceber/Entrega/NotaFiscal
+filter direto (sem Grupo/Empresa/sessão), KPIs com R$ 0,00 / 0% em erro/vazio,
+Top20 só itens_* legado (ignorava `itens` HTTP), e página incompleta publicada
+como definitiva (viola AGENTS §11).
+
+Classificação
+-------------
+Integração incompleta (fonte local/base44 em modo HTTP) — não ausência de tela.
+Keep both curto:
+  · HistoricoClienteTab = Top20 + auditoria expandida + add-to-pedido
+  · HistoricoProdutosCliente = linhas de produto paginadas
+  · DetalhesCliente = ficha KPIs/Últimos Pedidos
+Sem 3º módulo; sem nestar HistoricoProdutosCliente (já no PedidoTabsContainer).
+
+Mudança (existente)
+-------------------
+- Pedidos HTTP: loadPedidosHistoricoHttp + historicoSessionCacheKey (reuso)
+- Legado: filterInContext Pedido (não base44 cru)
+- KPIs: resolveHistoricoClienteKpisFromPage — hasMore/total incompleto → money "—";
+  qtd pode usar meta.total
+- Top20: computeHistoricoClienteTopProdutos inclui `itens` HTTP
+- Auxiliares NF/entrega/CR: só legado; HTTP fail-closed (banner + "—", ≠ lista vazia)
+- Chrome azul-clara (sky) no cabeçalho/KPIs — organização + informação, não só cor
+- RBAC: Comercial.Pedido / CRM.Cliente / Cadastros.Cliente visualizar
+
+Testes
+------
+tests/historico-cliente-tab-http-failclosed.test.js — 5 PASS
+git diff --check — limpo
+
+Fora
+----
+merge oficial / deploy / carga / seed fictício / substituir ERP
+#401 candidata intacta · #436 DetalhesCliente paralelo (não misturar tip CI)
+Funil×3 / Separacao×IA já em #408 tip 803764887 CI SUCCESS (capacidades doc desatualizado)
+
+Próximo
+-------
+CI + @codex review deste tip; auxiliar HTTP CR/Entrega/NF quando adapter existir.

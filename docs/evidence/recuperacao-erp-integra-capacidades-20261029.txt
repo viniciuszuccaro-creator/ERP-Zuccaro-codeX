@@ -56,5 +56,6 @@ Atualização (2026-10-29) — fila sky pós-#417
 
 Próximo capacidade a capacitar no existente
 1. Demo UI C360 contra backend isolado (HTTP+PG Codex já cobre convert; writes=0 ≠ E2E)
-2. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
+2. Matriz Pacote 5 Funil×3 / Separacao×IA — **entregue #408** tip `803764887` CI SUCCESS
 3. Forms ainda sem sky: CentroOperacao (pin) / Boletos (ID-only) / Produto legado / Endereços embed
+4. HistoricoClienteTab HTTP fail-closed — pacote `recuperacao-historico-cliente-tab-http` (2026-10-30)
