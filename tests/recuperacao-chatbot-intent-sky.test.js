@@ -10,14 +10,16 @@ import test from 'node:test';
 const INTENT = 'src/components/cadastros/ChatbotIntentForm.jsx';
 const INTENTS = 'src/components/cadastros/ChatbotIntentsForm.jsx';
 
-test('ChatbotIntent: sky windowMode + ID técnico (sem count+1)', () => {
+test('ChatbotIntent: sky windowMode + ID técnico (sem count+1; sem data-action novo)', () => {
   const source = readFileSync(INTENT, 'utf8');
   assert.match(source, /windowMode\s*=\s*false/);
   assert.match(source, /if\s*\(\s*windowMode\s*\)/);
   assert.match(source, /from-sky-50 to-sky-100/);
   assert.match(source, /bg-sky-600/);
   assert.match(source, /ID técnico/);
-  assert.match(source, /id-tecnico-chatbot-intent/);
+  // Sem data-action novo: pin RecordState e36231b3 compara attrs data-action.
+  assert.doesNotMatch(source, /data-action="chatbot-intent-window"/);
+  assert.doesNotMatch(source, /data-action="id-tecnico-chatbot-intent"/);
   assert.match(source, /data-permission="Cadastros\.ChatbotIntent/);
   assert.match(source, /useCadastroRecordState/);
   assert.doesNotMatch(source, /count\s*\+\s*1/);
