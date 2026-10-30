@@ -76,6 +76,8 @@ test('DetalhesCliente (montagem): renderiza HistoricoProdutosCliente com cliente
       'framer-motion': { motion: { div: 'motion.div' } },
       './HistoricoOrigemCliente': { __esModule: true, default: () => ({ type: 'HistoricoOrigemCliente', props: {}, children: [] }) },
       './HistoricoProdutosCliente': { __esModule: true, default: HistoricoProdutosCliente },
+      './HistoricoComprasCliente': { __esModule: true, default: () => ({ type: 'HistoricoComprasCliente', props: {}, children: [] }) },
+      './Top10ProdutosCliente': { __esModule: true, default: () => ({ type: 'Top10ProdutosCliente', props: {}, children: [] }) },
       './CentralCliente360Panel': { __esModule: true, default: () => ({ type: 'CentralCliente360Panel', props: {}, children: [] }) },
       '@/components/lib/useContextoVisual': {
         useContextoVisual: () => ({
@@ -107,6 +109,8 @@ test('DetalhesCliente (montagem): renderiza HistoricoProdutosCliente com cliente
   });
   const blocks = findByAction(tree, 'cliente-360-historico-produtos');
   assert.equal(blocks.length, 1, 'bloco data-action cliente-360-historico-produtos deve existir na árvore');
+  assert.equal(findByAction(tree, 'cliente-360-historico-compras').length, 1);
+  assert.equal(findByAction(tree, 'cliente-360-top10-produtos').length, 1);
   const hist = findHistoricoProdutos(tree);
   assert.equal(hist.length, 1, 'HistoricoProdutosCliente deve montar uma vez');
   assert.equal(hist[0].props.clienteId, 'cli-real-1');
@@ -139,6 +143,18 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
       './PedidoTabsNav': { __esModule: true, default: () => ({ type: 'PedidoTabsNav', props: {}, children: [] }) },
       '@/components/security/ProtectedSection': { __esModule: true, default: ({ children }) => children },
       '@/components/comercial/HistoricoProdutosCliente': { __esModule: true, default: HistoricoProdutosCliente },
+      '@/components/comercial/HistoricoComprasCliente': {
+        __esModule: true,
+        default: () => ({ type: 'HistoricoComprasCliente', props: {}, children: [] }),
+      },
+      '@/components/comercial/SugestoesProdutos': {
+        __esModule: true,
+        default: () => ({ type: 'SugestoesProdutos', props: {}, children: [] }),
+      },
+      '@/components/comercial/Top10ProdutosCliente': {
+        __esModule: true,
+        default: () => ({ type: 'Top10ProdutosCliente', props: {}, children: [] }),
+      },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
       sonner: { toast: { success: () => {}, error: () => {} } },
       '@/components/lib/useContextoVisual': {
@@ -179,6 +195,9 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
   });
   const blocks = findByAction(withCliente, 'pedido-historico-produtos');
   assert.equal(blocks.length, 1);
+  assert.equal(findByAction(withCliente, 'pedido-historico-compras').length, 1);
+  assert.equal(findByAction(withCliente, 'pedido-sugestoes-historico').length, 1);
+  assert.equal(findByAction(withCliente, 'pedido-top10-produtos').length, 1);
   const hist = findHistoricoProdutos(withCliente);
   assert.equal(hist.length, 1);
   assert.equal(hist[0].props.clienteId, 'cli-pedido-1');
@@ -195,6 +214,7 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
     pedido: null,
   });
   assert.equal(findByAction(semCliente, 'pedido-historico-produtos').length, 0);
+  assert.equal(findByAction(semCliente, 'pedido-historico-compras').length, 0);
   assert.equal(findByAction(semCliente, 'pedido-historico-produtos-sem-cliente').length, 1);
   assert.equal(findHistoricoProdutos(semCliente).length, 0);
 });

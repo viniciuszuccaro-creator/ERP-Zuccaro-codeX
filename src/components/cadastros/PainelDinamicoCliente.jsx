@@ -35,6 +35,7 @@ import { Link } from "react-router-dom";
 import { useWindow } from "@/components/lib/useWindow";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
 import HistoricoProdutosCliente from "@/components/comercial/HistoricoProdutosCliente";
+import HistoricoComprasCliente from "@/components/comercial/HistoricoComprasCliente";
 import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContatosClienteForm";
 import { toast } from "sonner";
 
@@ -645,8 +646,10 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
                   />
                 </TabsContent>
 
-                <TabsContent value="produtos" className="mt-4">
+                <TabsContent value="produtos" className="mt-4 space-y-4">
                   <Top10ProdutosCliente clienteId={cliente.id} />
+                  {/* Keep-both: agregação compras (leitura; Adicionar só no Pedido). */}
+                  <HistoricoComprasCliente clienteId={cliente.id} />
                 </TabsContent>
 
                 <TabsContent value="canais" className="mt-4">

@@ -1,0 +1,44 @@
+ETAPA A — conectar #441/#442 aos consumidores existentes (2026-10-30 America/Sao_Paulo)
+=======================================================================================
+Branch: cursor/comercial360-historico-sugestoes-wire-392b
+Base: #442 tip `dd619ff60` (Top10/Sugestões HTTP + policy #441)
+Fora: merge main · deploy · seed · inventar custo/estoque · 3º módulo
+
+## Inventário de montagem (antes)
+| Componente | Montagem viva |
+|------------|---------------|
+| HistoricoProdutosCliente | Detalhes / Painel / PedidoTabs |
+| HistoricoOrigemCliente | Detalhes / Painel / Wizard |
+| portal/HistoricoComprasCliente | PortalCliente |
+| comercial/HistoricoComprasCliente | **órfão** |
+| SugestoesProdutos | **órfão** |
+| Top10ProdutosCliente | Painel (sem callback); modal wizard órfão |
+
+## Mudança (consumidores existentes)
+1. `PedidoTabsContainer` aba histórico: monta HistoricoCompras + Sugestões + Top10
+   com Adicionar → `itens_revenda` (builder sem inventar custo/estoque/unidade/preço).
+2. `DetalhesCliente`: HistoricoCompras + Top10 em leitura (sem callback Adicionar).
+3. `PainelDinamicoCliente` aba produtos: HistoricoCompras em leitura sob Top10.
+4. Adicionar só renderiza se há callback (sem botão morto).
+5. Sugestões: título “pelo histórico / Frequência comprovada” (≠ IA).
+6. WizardEtapa2Itens: `onAdd` → `onAddItem` (prop real do modal).
+
+Policy compartilhada `historicoComprasClientePolicy` — sem duplicar.
+
+## Contraprovas runtime (Codex / testes)
+- Unidade original no texto + callback (KG/PC separados; sem inventar UN)
+- Agregação só produto::unidade compatíveis
+- Preço temporal (pedido mais recente; zero comprovado; ausente → —)
+- created_at HTTP no contrato Top10 IA
+- Troca empresa/sessão: EMPRESA_SESSION_MISMATCH / queryKey
+- Heurística frequência ≠ score_confianca IA
+- Adicionar leva payload comprovado ao itens_revenda no Pedido
+
+## Testes
+`comercial360-historico-sugestoes-wire` + `comercial-detalhes-historico-mount`
++ `historico-origem-compras-http-failclosed` + `top10-sugestoes-http-failclosed` — PASS
+
+## Não feito
+- Integração/merge da cadeia em #401
+- Harness navegador→API→PostgreSQL privado
+- Graduação ID-only / Produto legado residual

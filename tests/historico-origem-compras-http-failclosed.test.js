@@ -659,13 +659,13 @@ test('Compras montado: unidades mistas exibem KG/PC separados; Adicionar não in
     },
     __loadHttp: async () => ({ data: [], meta: { limit: 200, offset: 0, total: 0, hasMore: false } }),
     __filterInContext: async () => [],
-  });
+  }, { clienteId: 'c1', onAdicionarProduto: (p) => added.push(p) });
   const txt = textOf(tree);
   assert.match(txt, /CimentoMisto/);
   assert.match(txt, /KG/);
   assert.match(txt, /PC/);
   assert.doesNotMatch(txt, /\b5\s+unidades\b/i); // não soma 2+3 como "5 unidades"
-  // Clique Adicionar na linha KG
+  // Clique Adicionar na linha KG (só com callback — sem botão órfão)
   const buttons = findByAction(tree, 'adicionar-produto-historico-cliente');
   assert.ok(buttons.length >= 2);
   // Remount with callback to capture payload — recompile with onAdicionarProduto

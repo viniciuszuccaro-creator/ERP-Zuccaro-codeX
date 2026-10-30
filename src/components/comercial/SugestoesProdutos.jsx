@@ -222,9 +222,9 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
       <CardHeader className="bg-sky-50 border-b border-sky-100">
         <CardTitle className="text-sm flex items-center gap-2">
           <Zap className="w-4 h-4 text-sky-600" />
-          Sugestões Inteligentes
+          Sugestões pelo histórico
           <Badge className="bg-sky-600 ml-auto">
-            {paginaIncompleta ? "Parcial" : "Com Base no Histórico"}
+            {paginaIncompleta ? "Parcial" : "Frequência comprovada"}
           </Badge>
         </CardTitle>
         {paginaIncompleta ? (
@@ -258,22 +258,22 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
                   </div>
                 </div>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                disabled={!podeAdicionarProduto}
-                data-permission="Comercial.Pedido.criar"
-                data-action="adicionar-produto-sugerido"
-                onClick={() => {
-                  if (podeAdicionarProduto && onAdicionarProduto && typeof onAdicionarProduto === "function") {
-                    onAdicionarProduto(produto);
-                  }
-                }}
-                className="bg-sky-600 hover:bg-sky-700"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Adicionar
-              </Button>
+              {typeof onAdicionarProduto === "function" ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!podeAdicionarProduto}
+                  data-permission="Comercial.Pedido.criar"
+                  data-action="adicionar-produto-sugerido"
+                  onClick={() => {
+                    if (podeAdicionarProduto) onAdicionarProduto(produto);
+                  }}
+                  className="bg-sky-600 hover:bg-sky-700"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar
+                </Button>
+              ) : null}
             </div>
           ))}
         </div>

@@ -3,6 +3,9 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
 import HistoricoProdutosCliente from '@/components/comercial/HistoricoProdutosCliente';
+import HistoricoComprasCliente from '@/components/comercial/HistoricoComprasCliente';
+import SugestoesProdutos from '@/components/comercial/SugestoesProdutos';
+import Top10ProdutosCliente from '@/components/comercial/Top10ProdutosCliente';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import useContextoVisual from '@/components/lib/useContextoVisual';
@@ -18,6 +21,31 @@ const LogisticaEntregaTab = React.lazy(() => import('../LogisticaEntregaTab'));
 const FechamentoFinanceiroTab = React.lazy(() => import('../FechamentoFinanceiroTab'));
 const ArquivosProjetosTab = React.lazy(() => import('../ArquivosProjetosTab'));
 const AuditoriaAprovacaoTab = React.lazy(() => import('../AuditoriaAprovacaoTab'));
+
+/** Adiciona produto comprovado ao pedido — sem inventar custo/estoque/unidade/preço. */
+function buildItemRevendaFromHistorico(produto) {
+  const produtoId = produto?.id || produto?.produto_id || null;
+  if (!produtoId) return null;
+  const qtd = 1;
+  const precoRaw = produto.preco_venda ?? produto.ultimo_preco;
+  const preco = precoRaw == null || precoRaw === '' ? null : Number(precoRaw);
+  const precoOk = preco != null && Number.isFinite(preco);
+  const unidade = produto.unidade_medida || produto.unidade_sigla || produto.unidade || null;
+  const item = {
+    produto_id: produtoId,
+    codigo_sku: produto.codigo || produto.codigo_sku || null,
+    descricao: produto.descricao || '',
+    quantidade: qtd,
+  };
+  if (unidade) item.unidade_medida = unidade;
+  if (precoOk) {
+    item.preco_unitario = preco;
+    item.preco_unitario_bruto = preco;
+    item.preco_base_produto = preco;
+    item.valor_item = preco * qtd;
+  }
+  return item;
+}
 
 export default function PedidoTabsContainer({
   activeTab,
@@ -233,12 +261,69 @@ export default function PedidoTabsContainer({
         </TabsContent>
 
         <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0 space-y-4">
-          {/* Histórico paginado HTTP (clienteId) — mesma fonte do DetalhesCliente/Painel; não depende de base44.filter≤50. */}
+          {/* Capacidades #441/#442 montadas no consumidor Pedido — Adicionar muta itens_revenda. */}
           {formData?.cliente_id ? (
-            <div data-action="pedido-historico-produtos" data-permission="Comercial.Pedido.visualizar">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">Histórico de Produtos</h3>
-              <HistoricoProdutosCliente clienteId={formData.cliente_id} />
-            </div>
+            <>
+              <div data-action="pedido-historico-produtos" data-permission="Comercial.Pedido.visualizar">
+                <h3 className="text-sm font-semibold text-slate-900 mb-2">Histórico de Produtos</h3>
+                <HistoricoProdutosCliente clienteId={formData.cliente_id} />
+              </div>
+              <div data-action="pedido-historico-compras" data-permission="Comercial.Pedido.visualizar">
+                <HistoricoComprasCliente
+                  clienteId={formData.cliente_id}
+                  onAdicionarProduto={(produto) => {
+                    const item = buildItemRevendaFromHistorico(produto);
+                    if (!item) {
+                      toast.error('Produto sem identificação comprovada.');
+                      return;
+                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      itens_revenda: [...(prev?.itens_revenda || []), item],
+                    }));
+                    toast.success(`Produto ${item.descricao || item.produto_id} adicionado`);
+                    setActiveTab('revenda');
+                  }}
+                />
+              </div>
+              <div data-action="pedido-sugestoes-historico" data-permission="Comercial.Pedido.visualizar">
+                <SugestoesProdutos
+                  clienteId={formData.cliente_id}
+                  itensAtuais={formData?.itens_revenda || []}
+                  onAdicionarProduto={(produto) => {
+                    const item = buildItemRevendaFromHistorico(produto);
+                    if (!item) {
+                      toast.error('Produto sem identificação comprovada.');
+                      return;
+                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      itens_revenda: [...(prev?.itens_revenda || []), item],
+                    }));
+                    toast.success(`Produto ${item.descricao || item.produto_id} adicionado`);
+                    setActiveTab('revenda');
+                  }}
+                />
+              </div>
+              <div data-action="pedido-top10-produtos" data-permission="Comercial.Pedido.visualizar">
+                <Top10ProdutosCliente
+                  clienteId={formData.cliente_id}
+                  onSelecionarProduto={(produto) => {
+                    const item = buildItemRevendaFromHistorico(produto);
+                    if (!item) {
+                      toast.error('Produto sem identificação comprovada.');
+                      return;
+                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      itens_revenda: [...(prev?.itens_revenda || []), item],
+                    }));
+                    toast.success(`Produto ${item.descricao || item.produto_id} adicionado`);
+                    setActiveTab('revenda');
+                  }}
+                />
+              </div>
+            </>
           ) : (
             <p className="text-sm text-slate-500" data-action="pedido-historico-produtos-sem-cliente">
               Selecione o cliente na Identificação para consultar o histórico de produtos.
@@ -249,7 +334,16 @@ export default function PedidoTabsContainer({
               formData={formData}
               setFormData={setFormData}
               onAdicionarItemAoPedido={(produto) => {
-                toast.success(`Produto ${produto.descricao} adicionado!`);
+                const item = buildItemRevendaFromHistorico(produto);
+                if (!item) {
+                  toast.error('Produto sem identificação comprovada.');
+                  return;
+                }
+                setFormData((prev) => ({
+                  ...prev,
+                  itens_revenda: [...(prev?.itens_revenda || []), item],
+                }));
+                toast.success(`Produto ${item.descricao || item.produto_id} adicionado`);
                 setActiveTab('revenda');
               }}
             />
