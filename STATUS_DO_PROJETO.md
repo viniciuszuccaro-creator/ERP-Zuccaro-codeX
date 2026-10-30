@@ -1,15 +1,14 @@
-## CURSOR — VIGENTE (#434 prep #401 Contatos keep-both) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#434 tip 6678c23d6 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **PR** | **#434** `cursor/prep-401-contatos-get-draft-392b` |
+| **PR** | **#434** tip **`6678c23d6`** — CI SUCCESS 6/6 (`41050886646` / `41050882082`) |
+| **Codex** | tip limpo; P1 skipped ENCERRADO |
 | **Base** | #401 tip `686ae3224` — **sem merge oficial** |
-| **Fonte** | #432 tip `2bc3dc6c7` CI SUCCESS + Codex limpo |
-| **Port** | adapter get+bind · Forms sync-lock/commitMode · Completo draft≠save |
-| **Fix CI** | tip `48da23bc0` frontend FAIL 4 — restaura `#424` `result.skipped` + harness sync-lock |
-| **Keep-both** | skipped/epoch #424 · persistInFlight #432 · draft/get #431 |
+| **Keep-both** | Cliente.get/bind · draft≠save · persistInFlight · `#424` skipped/epoch |
+| **Ancestral** | `48da23bc0` FAIL 4 — **não atribuir** a este HEAD |
 | **Fora** | merge oficial · counts Pacote A · deploy · seed |
-| Preferir | CI deste tip → Codex; #401 estável |
+| Preferir | candidata #401 estável; indep. HistoricoProduto HTTP fail-closed |
 
 **Evidência:** `docs/evidence/prep-401-contatos-get-draft-20261030.txt`
 
