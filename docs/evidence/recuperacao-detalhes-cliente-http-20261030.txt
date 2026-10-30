@@ -28,3 +28,8 @@ KPIs money não usam 1ª página quando meta.hasMore/total>len; contagem via met
 
 ## Tip 8c0d05c16 FAIL typecheck (não atribuir)
 JSDoc resolveDetalhesClienteKpisFromPage sem pedidos/meta → tip seguinte.
+
+## CI SUCCESS tip f84f63ed2 (2026-10-30 America/Sao_Paulo)
+- Runs: 41057269903 (pull_request) · 41057261061 (push) — 6/6 SUCCESS.
+- Codex: tip f84f63ed2 sem achados major.
+- Não atribuir FAIL ancestral 8c0d05c16 / 7039d0221 / 506c4be3a.

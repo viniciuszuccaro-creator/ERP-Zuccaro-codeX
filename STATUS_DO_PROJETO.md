@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#436 FECHADO tip f84f63ed2) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** tip **`f84f63ed2`** — CI SUCCESS 6/6 (push `41057261061` + PR `41057269903`) |
+| **Codex** | tip `f84f63ed2` sem achados major (P1 KPIs 1ª página ENCERRADO em `8c0d05c16`) |
+| **Sobre** | não atribuir FAIL import `7039d0221` nem typecheck `8c0d05c16` / docs `506c4be3a` |
+| **#437** | HistoricoClienteTab HTTP — tip `7eeeec481` (pacote paralelo) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI #437; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#436 JSDoc KPIs typecheck) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
