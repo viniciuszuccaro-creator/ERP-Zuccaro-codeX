@@ -107,6 +107,10 @@ test('policy: canal ausente HTTP ≠ Manual; total canônico pedido/item', () =>
 function buildOrigemSandbox({
   backendMode = 'http',
   session = { token: 'tok', actorId: 'u1', groupId: 'g1' },
+  empresaId = 'e1',
+  groupId = 'g1',
+  contexto = 'empresa',
+  hasPermission = () => true,
   queryResult = {
     data: undefined,
     isError: false,
@@ -155,15 +159,15 @@ function buildOrigemSandbox({
       '@/components/lib/useContextoVisual': {
         useContextoVisual: () => ({
           filterInContext,
-          empresaAtual: { id: 'e1', group_id: 'g1' },
-          grupoAtual: { id: 'g1' },
-          contexto: 'empresa',
+          empresaAtual: empresaId ? { id: empresaId, group_id: groupId } : null,
+          grupoAtual: groupId ? { id: groupId } : null,
+          contexto,
         }),
       },
       '@/components/lib/usePermissions': {
         __esModule: true,
         default: () => ({
-          hasPermission: () => true,
+          hasPermission,
         }),
       },
       '@/api/runtimeBackend': { resolveErpBackendMode: () => backendMode },
@@ -370,4 +374,67 @@ test('Compras HTTP: consolidação com itens canônicos; sem custo/estoque fict�
   assert.match(textOf(tree), /Cimento/);
   assert.equal(queries.length, 1);
   assert.ok(queries[0].queryKey.includes('http'));
+});
+
+test('Origem HTTP: sessão ausente/expirada → indisponível (enabled false; ≠ Manual)', async () => {
+  const sandbox = buildOrigemSandbox({
+    session: null,
+    queryResult: { data: undefined, isError: false, isFetching: false, isLoading: false },
+  });
+  const tree = await mountOrigem(sandbox);
+  assert.equal(sandbox.queries[0].enabled, false);
+  assert.ok(findByAction(tree, 'historico-origem-http-indisponivel').length >= 1);
+  assert.doesNotMatch(textOf(tree), /Canal Preferido:\s*Manual|100%/);
+});
+
+test('Origem: sem permissão não consulta Pedido', async () => {
+  const sandbox = buildOrigemSandbox({
+    hasPermission: () => false,
+    backendMode: 'http',
+  });
+  const tree = await mountOrigem(sandbox);
+  assert.equal(sandbox.queries[0].enabled, false);
+  assert.match(textOf(tree), /permissão|contexto/i);
+});
+
+test('Origem HTTP: queryKey isola cliente/ator/empresa (troca de contexto sem dados antigos)', async () => {
+  const sandbox = buildOrigemSandbox({
+    session: { token: 'tok', actorId: 'actor-A', groupId: 'g1' },
+    empresaId: 'e1',
+  });
+  await mountOrigem(sandbox, { clienteId: 'cli-A' });
+  const key = sandbox.queries[0].queryKey;
+  assert.ok(key.includes('cli-A'));
+  assert.ok(key.includes('actor-A'));
+  assert.ok(key.includes('e1'));
+  assert.ok(key.includes('http'));
+});
+
+test('Compras HTTP: item.total líquido vence bruto no ranking montado', async () => {
+  const { tree } = await mountCompras({
+    __backendMode: 'http',
+    __session: { token: 'tok', actorId: 'u1', groupId: 'g1' },
+    __queryResult: {
+      data: {
+        data: [{
+          id: 'p1',
+          itens: [
+            { produto_id: 'bruto', descricao: 'BrutoAlto', quantidade: 10, preco_unitario: 20, total: 5 },
+            { produto_id: 'liq', descricao: 'LiquidoTopo', quantidade: 1, preco_unitario: 40, total: 40 },
+          ],
+        }],
+        meta: { limit: 200, offset: 0, total: 1, hasMore: false },
+      },
+      isError: false,
+      isFetching: false,
+      isLoading: false,
+    },
+    __loadHttp: async () => ({ data: [], meta: { limit: 200, offset: 0, total: 0, hasMore: false } }),
+    __filterInContext: async () => [],
+  });
+  const txt = textOf(tree);
+  const iLiq = txt.indexOf('LiquidoTopo');
+  const iBruto = txt.indexOf('BrutoAlto');
+  assert.ok(iLiq >= 0 && iBruto >= 0);
+  assert.ok(iLiq < iBruto, 'ranking deve listar líquido antes do bruto enganoso');
 });

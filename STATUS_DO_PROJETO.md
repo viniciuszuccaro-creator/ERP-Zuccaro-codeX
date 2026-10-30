@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#441 provas session/perm/queryKey/item.total) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-origem-compras-http-392b` ← #437 |
+| **Provas** | sessão null · sem permissão · queryKey cliente/ator/empresa · item.total ranking montado |
+| **Testes** | historico-origem-compras-http-failclosed **14 PASS** (antes 10) |
+| **P2 Codex** | canal/total/item.total já em `a1a6aa10e` — limpo 2× |
+| **Keep both** | portal · #436 Detalhes · #437 Tab — sem 3º módulo / sem integrar ainda |
+| **#401** | tip `3a80e0ffe` Contatos CONTEXT_CHANGED (CI em andamento) — **fora** |
+| Fora | merge main · deploy · seed · inventar canal/custo/estoque |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** CI deste tip + `@codex review`; indep. recuperação fora candidata.
+
 ## CURSOR — VIGENTE (#441 tip a1a6aa10e CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
