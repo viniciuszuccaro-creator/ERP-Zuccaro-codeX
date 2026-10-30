@@ -71,6 +71,15 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-4"}><div className={windowMode ? "p-6 space-y-4 flex-1" : "space-y-4"}>
+      {windowMode ? (
+        <div className="flex items-center gap-3 mb-2 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+          <CreditCard className="w-8 h-8 text-sky-600" />
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Gateways de Pagamento</h2>
+            <p className="text-sm text-slate-600">Provedores e estatísticas — sem inventar totais</p>
+          </div>
+        </div>
+      ) : null}
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -93,7 +102,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
             <CardTitle className="text-sm">Total Processado</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-2xl font-bold text-sky-600">
               R$ {totalProcessado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </CardContent>
@@ -104,7 +113,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
+              <CreditCard className="w-5 h-5 text-sky-600" />
               Gateways de Pagamento
             </CardTitle>
             <div className="flex gap-2">

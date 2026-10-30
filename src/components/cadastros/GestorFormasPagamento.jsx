@@ -144,9 +144,18 @@ export default function GestorFormasPagamento({ windowMode = false }) {
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}><div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
-      <Alert className="border-blue-300 bg-blue-50">
+      {windowMode ? (
+        <div className="flex items-center gap-3 mb-2 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+          <CreditCard className="w-8 h-8 text-sky-600" />
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Formas de Pagamento</h2>
+            <p className="text-sm text-slate-600">Configuração centralizada — PDV, Pedidos, CR/CP, Portal e E-commerce</p>
+          </div>
+        </div>
+      ) : null}
+      <Alert className="border-sky-300 bg-sky-50">
         <AlertDescription>
-          <strong>🏦 Gestão Centralizada V21.8:</strong> Formas configuradas aqui aparecem em PDV, Pedidos, Contas a Receber/Pagar, Portal e E-commerce
+          <strong>Gestão centralizada:</strong> Formas configuradas aqui aparecem em PDV, Pedidos, Contas a Receber/Pagar, Portal e E-commerce
         </AlertDescription>
       </Alert>
 
@@ -176,10 +185,16 @@ export default function GestorFormasPagamento({ windowMode = false }) {
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Formas de Pagamento</h2>
-          <p className="text-sm text-slate-600">Configuração centralizada de métodos de pagamento</p>
+          {!windowMode ? (
+            <>
+              <h2 className="text-2xl font-bold text-slate-900">Formas de Pagamento</h2>
+              <p className="text-sm text-slate-600">Configuração centralizada de métodos de pagamento</p>
+            </>
+          ) : (
+            <p className="text-sm text-slate-600">Lista e filtros da aba Gestão</p>
+          )}
         </div>
-        <Button onClick={handleNova} disabled={!contextoValido || !podeCriar} className="bg-sky-600 hover:bg-sky-700">
+        <Button onClick={handleNova} disabled={!contextoValido || !podeCriar} className="bg-sky-600 hover:bg-sky-700" data-permission="Cadastros.FormaPagamento.criar" data-action="gestor-formas-nova">
           <Plus className="w-4 h-4 mr-2" />
           Nova Forma
         </Button>
