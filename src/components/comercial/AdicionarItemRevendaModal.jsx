@@ -37,7 +37,9 @@ export default function AdicionarItemRevendaModal({
   tabelaPreco,
   tabelaPrecoItens = [],
   margemMinimaSistema = 10,
-  windowMode = false
+  windowMode = false,
+  /** Seed do histórico/sugestão — qty sempre 1 (frequência ≠ demanda). */
+  produtoInicial = null,
 }) {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [quantidade, setQuantidade] = useState(1);
@@ -47,6 +49,22 @@ export default function AdicionarItemRevendaModal({
   const [observacoes, setObservacoes] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrarSugestoes, setMostrarSugestoes] = useState(true);
+
+  // Prefill canônico: produto comprovado; quantidade = 1 (não usar frequência histórica).
+  useEffect(() => {
+    if (!isOpen) return;
+    if (produtoInicial?.id) {
+      setProdutoSelecionado(produtoInicial);
+      setSearchTerm(produtoInicial.descricao || produtoInicial.codigo || "");
+      setQuantidade(1);
+      setMostrarSugestoes(false);
+      return;
+    }
+    setProdutoSelecionado(null);
+    setQuantidade(1);
+    setSearchTerm("");
+    setMostrarSugestoes(true);
+  }, [isOpen, produtoInicial]);
 
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -109,11 +127,11 @@ export default function AdicionarItemRevendaModal({
       return;
     }
 
+    const unidadeComprovada = produtoSelecionado.unidade_medida || produtoSelecionado.unidade_sigla || null;
     const novoItem = {
       produto_id: produtoSelecionado.id,
       codigo_sku: produtoSelecionado.codigo,
       descricao: produtoSelecionado.descricao,
-      unidade: produtoSelecionado.unidade_medida,
       quantidade: quantidade,
       custo_unitario: calculo.custo_unitario,
       preco_base_produto: produtoSelecionado.preco_venda,
@@ -137,6 +155,11 @@ export default function AdicionarItemRevendaModal({
       observacoes: observacoes,
       _calculo_detalhado: calculo.detalhes_calculo
     };
+    // Unidade só se comprovada — ausente ≠ inventar UN.
+    if (unidadeComprovada) {
+      novoItem.unidade = unidadeComprovada;
+      novoItem.unidade_medida = unidadeComprovada;
+    }
 
     onAddItem(novoItem);
     resetForm();

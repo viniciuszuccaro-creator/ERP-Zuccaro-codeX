@@ -155,8 +155,15 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
         __esModule: true,
         default: () => ({ type: 'Top10ProdutosCliente', props: {}, children: [] }),
       },
+      '@/components/comercial/AdicionarItemRevendaModal': {
+        __esModule: true,
+        default: (props) => ({ type: 'AdicionarItemRevendaModal', props: props || {}, children: [] }),
+      },
+      '@/components/comercial/historicoComprasClientePolicy': {
+        seedProdutoFromHistorico: (p) => (p?.id || p?.produto_id ? { id: p.id || p.produto_id } : null),
+      },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
-      sonner: { toast: { success: () => {}, error: () => {} } },
+      sonner: { toast: { success: () => {}, error: () => {}, message: () => {} } },
       '@/components/lib/useContextoVisual': {
         __esModule: true,
         default: () => ({

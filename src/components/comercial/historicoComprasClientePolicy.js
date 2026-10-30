@@ -154,3 +154,29 @@ export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
   if (limit == null) return ranked;
   return ranked.slice(0, limit);
 }
+
+/**
+ * Seed do modal canônico AdicionarItemRevenda a partir do histórico/sugestão.
+ * Só campos comprovados; frequência/qty histórica ≠ demanda; ausente ≠ inventar UN/zero.
+ * @returns {object|null}
+ */
+export function seedProdutoFromHistorico(produto) {
+  const produtoId = produto?.id || produto?.produto_id || null;
+  if (!produtoId) return null;
+  const seed = {
+    id: produtoId,
+    codigo: produto.codigo || produto.codigo_sku || null,
+    descricao: produto.descricao || "",
+  };
+  const unidade = produto.unidade_medida || produto.unidade_sigla || produto.unidade || null;
+  if (unidade) {
+    seed.unidade_medida = unidade;
+    seed.unidade_sigla = unidade;
+  }
+  const precoRaw = produto.preco_venda ?? produto.ultimo_preco;
+  if (precoRaw != null && precoRaw !== "") {
+    const preco = Number(precoRaw);
+    if (Number.isFinite(preco)) seed.preco_venda = preco; // zero comprovado ok
+  }
+  return seed;
+}

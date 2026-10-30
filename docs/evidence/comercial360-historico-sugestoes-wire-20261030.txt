@@ -47,3 +47,21 @@ Policy compartilhada `historicoComprasClientePolicy` — sem duplicar.
 - Runs: push `41108231744` · PR `41108240889` — SUCCESS 6/6.
 - Fix tip: onAdicionarProduto opcional (TS2741 Detalhes/Painel).
 - CI verde ≠ encerramento: aguarda `@codex` montado (#442/#446).
+
+## Tip Adicionar canônico (modal) — 2026-10-30 America/Sao_Paulo
+Problema: Adicionar appendava direto em `itens_revenda` + toast + troca de aba
+(sem modal canônico; qty histórica/frequência tratável como demanda).
+
+Correção (existente):
+1. `PedidoTabsContainer`: `abrirAdicionarDoHistorico` → seed → abre
+   `AdicionarItemRevendaModal` com `produtoInicial`; confirma via `onAddItem`.
+2. `seedProdutoFromHistorico` na policy compartilhada — só id/código/desc/unidade/
+   preço comprovados; frequência e qty histórica omitidas; ausente ≠ UN/zero.
+3. Modal: qty sempre 1 no seed; usuário edita no modal; unidade só se comprovada
+   no item emitido.
+4. Rejeição sem id; duplicidade avisa e reabre modal; `bloquearEdicao` remove
+   callback (Adicionar ausente). Detalhes/Painel permanecem leitura.
+5. Removido `buildItemRevendaFromHistorico` (append direto).
+
+Testes locais: `comercial360-adicionar-historico-modal` + wire + mount — 10 PASS.
+Não feito: harness navegador→API→PG; integração #401; aceite Codex montado.

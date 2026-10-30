@@ -10,21 +10,23 @@ import test from 'node:test';
 
 const read = (p) => readFileSync(p, 'utf8');
 
-test('PedidoTabsContainer monta HistoricoCompras/Sugestões/Top10 com Adicionar → itens_revenda', () => {
+test('PedidoTabsContainer monta HistoricoCompras/Sugestões/Top10 com Adicionar → modal canônico', () => {
   const src = read('src/components/comercial/pedido/PedidoTabsContainer.jsx');
   assert.match(src, /import HistoricoComprasCliente/);
   assert.match(src, /import SugestoesProdutos/);
   assert.match(src, /import Top10ProdutosCliente/);
+  assert.match(src, /import AdicionarItemRevendaModal/);
   assert.match(src, /data-action="pedido-historico-compras"/);
   assert.match(src, /data-action="pedido-sugestoes-historico"/);
   assert.match(src, /data-action="pedido-top10-produtos"/);
-  assert.match(src, /buildItemRevendaFromHistorico/);
-  assert.match(src, /itens_revenda:\s*\[\.\.\.\(prev\?\.itens_revenda/);
+  assert.match(src, /seedProdutoFromHistorico/);
+  assert.match(src, /abrirAdicionarDoHistorico/);
+  assert.match(src, /AdicionarItemRevendaModal/);
+  assert.match(src, /itens_revenda:\s*\[\.\.\.atuais,\s*item\]/);
   assert.match(src, /onAdicionarProduto=\{/);
   assert.match(src, /onSelecionarProduto=\{/);
-  // Sem inventar custo/estoque no builder
+  assert.doesNotMatch(src, /buildItemRevendaFromHistorico/);
   assert.doesNotMatch(src, /custo_medio\s*\|\|\s*0/);
-  assert.doesNotMatch(src, /estoque_disponivel:\s*produto/);
 });
 
 test('DetalhesCliente e Painel montam HistoricoCompras (leitura; sem Adicionar órfão)', () => {
