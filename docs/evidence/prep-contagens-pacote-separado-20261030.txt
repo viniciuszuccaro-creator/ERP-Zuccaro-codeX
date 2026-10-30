@@ -12,6 +12,12 @@ A #434 e a incorporação controlada #434→#401 **NÃO incluem**:
 - pin cego de baselines de contagem
 - remoção de guardas multiempresa/RBAC para “passar” testes de count
 
+## Pacote separado já existente (NÃO misturar com #434)
+|#431 tip `2b523fdf8` — «Pacote A — contagem erro≠vazio + Contatos bind»
+| CI SUCCESS · evidência `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+| Incorporar na #401 só em lote próprio, keep-both, sem copiar serviço/repo divergente
+| nem atualizar pins cegamente. Contatos-bind de #431 já coberto via #434→#401.
+
 ## Por quê separado (AGENTS §11)
 KPI/total ≠ primeira página carregada. Contagens exigem:
 1. agregação/count server-side com `groupId`+`empresaId`

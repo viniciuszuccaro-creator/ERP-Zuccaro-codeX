@@ -1,8 +1,9 @@
 Incorporação controlada #434 → #401 (2026-10-30 America/Sao_Paulo)
 ====================================================================
-Candidata: #401 tip prévio `686ae3224` (cursor/composicao-397-342-prep-392b)
-Fonte: #434 tip `50a010ce2` / código `6678c23d6`+`d74701ea7` CI SUCCESS 6/6 + Codex
+Candidata: #401 tip `0b9c0ded8` (sobre `686ae3224`, cursor/composicao-397-342-prep-392b)
+Fonte: #434 tip `50a010ce2` / código `6678c23d6`+`d74701ea7` CI SUCCESS 6/6 + Codex limpo
 Método: port file-by-file keep-both (orphan-root #434 — SEM merge-base / sem substituir backend)
+CI/Codex deste tip: aguardando run próprio + `@codex review` em #401 (não herdar ancestral)
 
 ## Contratos portados
 | Arquivo | Capacidade |
