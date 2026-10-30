@@ -22,3 +22,13 @@ Tip base: `5d89e2708` (pós-incorporação #434). Achados Codex no tip `0b9c0ded
 ## Checks
 `tests/contatos-painel-counterproof-seams.test.js` 7/7 PASS (incl. P1 novo)
 Sem merge main · sem misturar contagens #431 · sem 2ª candidata
+
+## Tip `f5ac2a1de` — CI + Codex (2026-10-30 America/Sao_Paulo)
+| Item | Valor |
+|------|-------|
+| CI | run **41072707404 SUCCESS** — frontend/backend/expedicao-comercial-compose |
+| Codex | limpo neste HEAD (`f5ac2a1de9`) — sem achados novos |
+| Threads P1 | #4417291529 / #4417291538 resolvidos no GitHub |
+| Código #434 | `0b9c0ded8` CI 41071229904 SUCCESS (ancestral; não atribuir a este tip) |
+
+Fora: merge main · deploy · contagens #431 · E2E browser/harness

@@ -1,16 +1,16 @@
-## CURSOR — VIGENTE (#401 P1 hydrate windowMode + #434; contagens FORA) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 P1 hydrate CI SUCCESS + Codex limpo; contagens FORA) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **#401 tip** | (este commit) — sobre `0b9c0ded8` CI SUCCESS 41071229904 |
-| **P1 Codex** | #4417291529 windowMode hydrate · #4417291538 GET falho bloqueia save |
-| **#434** | tip `50a010ce2` incorporado keep-both (get/draft/skipped/sync-lock) |
+| **#401 tip** | `f5ac2a1de` — CI **41072707404 SUCCESS** + Codex limpo |
+| **P1** | windowMode hydrate + GET falho bloqueia save — threads resolvidos |
+| **#434** | `0b9c0ded8` CI 41071229904 SUCCESS (get/draft/skipped/sync-lock) |
 | **Contagens** | **FORA** — Pacote A #431 `2b523fdf8` |
-| **#439 indep.** | CentroOperacao sky `288dc8a69` (fora candidata) |
-| Fora | 2ª candidata · pin cego · merge main · deploy · VPS |
+| **#439 indep.** | CentroOperacao sky tip `619b26092` Codex limpo · CI em curso |
+| Fora | 2ª candidata · merge main · deploy · VPS · E2E browser |
 
 **Evidência:** `docs/evidence/codex-401-p1-hydrate-window-20261030.txt`
-**Próximo:** CI + `@codex review` deste tip; resolver threads P1 no GitHub.
+**Próximo:** CI #439; item indep. residual; Pacote A contagens só em lote próprio.
 
 ## Estado vigente - composicao integrada em revisao (2026-10-29)
 
