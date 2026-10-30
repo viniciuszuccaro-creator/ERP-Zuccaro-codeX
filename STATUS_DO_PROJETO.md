@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#450 tip 768981c87 CI SUCCESS — visual ≠ registros) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `768981c87` — CI SUCCESS 6/6 (push **5578** / PR **5579**) |
+| **Escopo** | #448/#449 chrome ≠ recuperação de dados; pin Fiscal preservado |
+| **Testes** | cadastros-448-449-visual-nao-registros — **3 PASS** |
+| **#446/#401** | fora |
+| Fora | merge · deploy · seed · inventar registros |
+
+**Evidência:** `docs/evidence/cadastros-448-449-visual-nao-registros-20261030.txt`
+**Próximo:** `@codex` #450; probes dados em fonte autorizada; #446 tip `611aaa6ee` CI5577.
+
 ## CURSOR — VIGENTE (#449 tip 7e67d6006 CI SUCCESS — Contatos embed sky) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

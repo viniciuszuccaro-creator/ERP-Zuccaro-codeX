@@ -1,0 +1,30 @@
+Pacote indep. — #448/#449 = visual, NÃO recuperação de registros (2026-10-30 America/Sao_Paulo)
+===========================================================================================
+Base: #449 tip Contatos embed sky (`c466b3289` docs / `7e67d6006` CI SUCCESS)
+
+## Classificação (ETAPA C)
+| Pacote | Tipo | ≠ dados |
+|--------|------|---------|
+| #448 Gestores Formas/Gateways/Despesas | chrome sky + organização | sim |
+| #449 Contatos embed sky | chrome sky (espelho Endereços) | sim |
+| #447 Produto/Endereços sky | visual + ID técnico | sim (#445≠registros) |
+
+Tela/chrome reaparecer **não** comprova retorno de registros desaparecidos.
+Investigação de dados permanece: contexto Grupo/Empresa, filtros (ex. só Ativo),
+projeções API, permissões, fontes privadas autorizadas — sem seed fictício.
+
+## Pins que bloqueiam sky estrutural neste lote
+CadastroFiscal / Empresa / Grupo / Usuario — `cadastros-fiscal-admin-sky.test.js`
+(from-sky-50 to-sky-100 proibido até graduação de pin). Não forçar.
+
+## Próximo dados (sem inventar)
+1. Probes existentes em branch `cadastros-registros-probes` — reutilizar, não duplicar.
+2. Confirmar filtros default / escopo multiempresa antes de alegar perda.
+3. Harness privado + fonte autorizada — gates; dados reais fora do Git.
+
+## Fora
+#401 · #446 · merge main · deploy · seed · carga operacional · HD externo
+
+## CI SUCCESS tip 768981c87 (2026-10-30 America/Sao_Paulo)
+- Runs SUCCESS 6/6 — push **5578** (`41125761118`) · PR **5579** (`41125784648`)
+- CI verde ≠ aceite operacional de dados; visual ≠ registros.
