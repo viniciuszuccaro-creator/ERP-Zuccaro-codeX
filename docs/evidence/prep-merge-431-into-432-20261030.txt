@@ -1,0 +1,21 @@
+Prep incorporação #431→#432 (sem push até CI tip #431) — 2026-10-30 America/Sao_Paulo
+=======================================================================================
+Base #432: 1cb967a83
+Incoming #431: 3769dc779 (código 75e97d5c6)
+
+## Auto-merge limpo
+- GerenciarContatosCliente.jsx (Cliente.get)
+- CadastroClienteCompleto.jsx (draft handlers + commitMode)
+- tests/cadastros-count-erro-vazio.test.js
+- docs/evidence/cadastros-count-erro-vazio-20261030.txt
+
+## Conflitos reconciliados (keep-both, sem substituir arquivo inteiro)
+| Arquivo | Keep |
+|---------|------|
+| GerenciarContatosClienteForm.jsx | #432 persistInFlightRef/beginPersist + #431 commitMode/busyLabel |
+| GerenciarEnderecosClienteForm.jsx | #432 sync-lock + #431 commitMode/busyLabel |
+| STATUS_DO_PROJETO.md | prepend seção Cliente.get; preservar histórico #432 |
+
+## Não feito nesta prep
+- commit/push em #432 (aguarda CI SUCCESS do tip #431)
+- merge oficial #401 / deploy
