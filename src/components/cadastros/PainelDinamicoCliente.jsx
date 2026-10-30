@@ -165,6 +165,10 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const [clienteLive, setClienteLive] = useState(clienteProp);
   const [contatosDraft, setContatosDraft] = useState(() => seedContatosPainelDraft(clienteProp));
   const [contatosSaving, setContatosSaving] = useState(false);
+  /** pending|ok|error — gravação bloqueada até GET bem-sucedido (Codex #4417291529/#4417291538). */
+  const [contatosHydrateStatus, setContatosHydrateStatus] = useState(
+    clienteProp?.id ? "pending" : "ok",
+  );
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
@@ -177,6 +181,8 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const scalarContractLockedRef = useRef(usesContatosScalarHttpContract(clienteProp));
   /** Epoch de hidratação: GET atrasado após mutação não sobrescreve rascunho confirmado (Codex #4414641595). */
   const contatosHydrateEpochRef = useRef(0);
+  /** Dialog `isOpen` OU janela `windowMode` (IconeAcessoCliente não passa isOpen). */
+  const painelAberto = Boolean(isOpen || windowMode);
   if (!contatosPersistQueueRef.current) {
     contatosPersistQueueRef.current = createContatosPersistQueue();
   }
@@ -185,13 +191,15 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
     setClienteLive(clienteProp);
     setContatosDraft(seedContatosPainelDraft(clienteProp));
     scalarContractLockedRef.current = usesContatosScalarHttpContract(clienteProp);
-  }, [clienteProp?.id, clienteProp?.contatos, clienteProp?.contatos_escalares, clienteProp?.email, clienteProp?.telefone, clienteProp?.celular, painelScopeKey]);
+    if (clienteProp?.id && painelAberto) setContatosHydrateStatus("pending");
+  }, [clienteProp?.id, clienteProp?.contatos, clienteProp?.contatos_escalares, clienteProp?.email, clienteProp?.telefone, clienteProp?.celular, painelScopeKey, painelAberto]);
 
   // Reabertura: recarregar registro persistido (não reutilizar só o snapshot do pai).
   useEffect(() => {
-    if (!isOpen || !clienteProp?.id) return undefined;
+    if (!painelAberto || !clienteProp?.id) return undefined;
     const epoch = ++contatosHydrateEpochRef.current;
     let cancelled = false;
+    setContatosHydrateStatus("pending");
     (async () => {
       try {
         const fresh = await base44.entities.Cliente.get(clienteProp.id);
@@ -199,16 +207,29 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         setClienteLive(fresh);
         setContatosDraft(seedContatosPainelDraft(fresh));
         scalarContractLockedRef.current = usesContatosScalarHttpContract(fresh);
-      } catch {
-        // Mantém snapshot atual; não inventar contatos.
+        setContatosHydrateStatus("ok");
+      } catch (error) {
+        if (cancelled || epoch !== contatosHydrateEpochRef.current) return;
+        // Fail-closed: não tratar snapshot do pai como base válida para wipe (Codex #4417291538).
+        setContatosHydrateStatus("error");
+        toast.error(error?.message || "Falha ao carregar contatos do cliente. Reabra o painel.");
       }
     })();
     return () => { cancelled = true; };
-  }, [isOpen, clienteProp?.id, painelScopeKey]);
+  }, [painelAberto, clienteProp?.id, painelScopeKey]);
 
   const persistContatosPainel = (next) => {
     const incoming = Array.isArray(next) ? next.map((row) => ({ ...row })) : [];
     const previousDraft = contatosDraft;
+    if (contatosHydrateStatus !== "ok") {
+      const err = new Error(
+        contatosHydrateStatus === "pending"
+          ? "Aguarde o carregamento dos contatos antes de salvar."
+          : "Contatos não carregados. Reabra o painel e tente novamente.",
+      );
+      toast.error(err.message);
+      return Promise.reject(err);
+    }
     const scalarContract = scalarContractLockedRef.current
       || usesContatosScalarHttpContract(clienteLive || clienteProp);
     // Persistência: lista do operador vence — não re-hidratar escalares apagados
@@ -289,19 +310,19 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos-cliente', clienteProp?.id],
     queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteProp.id }, '-data_pedido', 10),
-    enabled: !!clienteProp?.id && isOpen,
+    enabled: !!clienteProp?.id && painelAberto,
   });
 
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas-cliente', clienteProp?.id],
     queryFn: () => base44.entities.Entrega.filter({ cliente_id: clienteProp.id }, '-created_date', 5),
-    enabled: !!clienteProp?.id && isOpen,
+    enabled: !!clienteProp?.id && painelAberto,
   });
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contas-receber-cliente', clienteProp?.id],
     queryFn: () => base44.entities.ContaReceber.filter({ cliente_id: clienteProp.id }, '-data_vencimento', 5),
-    enabled: !!clienteProp?.id && isOpen,
+    enabled: !!clienteProp?.id && painelAberto,
   });
 
   if (!cliente) return null;
@@ -671,10 +692,15 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
                 <TabsContent value="contatos" className="mt-4" data-action="painel-cliente-contatos">
                   {/* Capacidade recuperada: GerenciarContatosClienteForm já existia no cadastro completo;
                       aba do Painel estava ausente — fluxo diário Cliente→contatos sem abrir form inteiro. */}
+                  {contatosHydrateStatus === "error" ? (
+                    <p className="text-sm text-destructive mb-3" role="alert" data-action="contatos-hydrate-error">
+                      Falha ao carregar contatos. Reabra o painel antes de editar.
+                    </p>
+                  ) : null}
                   <GerenciarContatosClienteForm
                     contatos={contatosDraft}
                     onChange={persistContatosPainel}
-                    persistBusy={contatosSaving}
+                    persistBusy={contatosSaving || contatosHydrateStatus !== "ok"}
                     assertScopeCurrent={() => {
                       const live = JSON.stringify([
                         grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,

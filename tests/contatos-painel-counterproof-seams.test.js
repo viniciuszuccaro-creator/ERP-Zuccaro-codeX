@@ -153,15 +153,22 @@ function createRealHydrateHarness(painelSource) {
     },
   };
 
+  const contatosHydrateStatus = { current: 'pending' };
+  const setContatosHydrateStatus = (v) => { contatosHydrateStatus.current = v; };
   const sandbox = {
     contatosHydrateEpochRef,
     scalarContractLockedRef,
     setContatosDraft,
     setClienteLive,
+    setContatosHydrateStatus,
     seedContatosPainelDraft,
     usesContatosScalarHttpContract,
     base44,
+    // P1 #4417291529: efeito usa painelAberto = isOpen || windowMode
+    painelAberto: true,
     isOpen: true,
+    windowMode: false,
+    toast: { error() {}, success() {} },
     clienteProp: { id: 'cli-1', nome: 'seed', canal: 'email' },
     console,
   };
@@ -443,4 +450,18 @@ test('#424 fonte tip: epoch bump + reject + resolveAuditEmpresaId presentes (con
   assert.match(form, /result\.skipped/);
   assert.match(ctx, /resolveAuditEmpresaId/);
   assert.equal(typeof ts.createSourceFile, 'function');
+});
+
+test('P1 #4417291529/#4417291538: hidrata em windowMode; GET falho bloqueia gravação', async () => {
+  const painel = read(painelPath);
+  const effectSrc = extractHydrateEffectSource(painel);
+  assert.match(painel, /const painelAberto = Boolean\(isOpen \|\| windowMode\)/);
+  assert.match(effectSrc, /painelAberto/);
+  assert.match(effectSrc, /setContatosHydrateStatus\(["']ok["']\)/);
+  assert.match(effectSrc, /setContatosHydrateStatus\(["']error["']\)/);
+  assert.match(effectSrc, /toast\.error/);
+  assert.doesNotMatch(effectSrc, /catch\s*\{\s*\/\/ Mantém snapshot/);
+  const persistSrc = extractPersistContatosSource(painel);
+  assert.match(persistSrc, /contatosHydrateStatus !== ["']ok["']/);
+  assert.match(painel, /persistBusy=\{contatosSaving \|\| contatosHydrateStatus !== ["']ok["']\}/);
 });

@@ -1,0 +1,24 @@
+Codex #401 — P1 Contatos hydrate windowMode + fail-closed (2026-10-30 America/Sao_Paulo)
+=========================================================================================
+Tip base: `5d89e2708` (pós-incorporação #434). Achados Codex no tip `0b9c0ded8`
+(summary has_findings) — threads P1 ainda abertos no Painel:
+
+## Tratado neste tip
+| ID | Achado | Keep-both |
+|----|--------|-----------|
+| #4417291529 | Hidratar também em `windowMode` (IconeAcessoCliente sem `isOpen`) | `painelAberto = isOpen \|\| windowMode` no effect + queries |
+| #4417291538 | GET falho não pode liberar gravação sobre snapshot do pai | `contatosHydrateStatus` pending/ok/error; toast; `persistBusy`; reject em persist |
+
+## Já resolvidos em tips anteriores (NÃO reabrir)
+| ID | Estado no tip |
+|----|---------------|
+| #4415656862 skipped | Form Contatos `result.skipped` (#434 port) |
+| #4414641595 epoch | `contatosHydrateEpochRef` + bump pós-save |
+| #4415730696 audit empresa | `resolveAuditEmpresaId` em useContextoVisual |
+| #4413059634 scalar | não promove rascunho a `contatos[]` |
+| #4412815510 acentos | Pacote #410 separado |
+| #4413844021 clienteLabel | fora deste lote Contatos |
+
+## Checks
+`tests/contatos-painel-counterproof-seams.test.js` 7/7 PASS (incl. P1 novo)
+Sem merge main · sem misturar contagens #431 · sem 2ª candidata

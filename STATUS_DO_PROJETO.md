@@ -1,16 +1,16 @@
-## CURSOR — VIGENTE (#401 ← #434 Contatos get+draft; contagens FORA) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 P1 hydrate windowMode + #434; contagens FORA) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **#401 tip** | código `0b9c0ded8` CI SUCCESS 41071229904 · recibo `e706b02fa` |
-| **Fonte** | #434 tip `50a010ce2` CI SUCCESS 6/6 + Codex limpo (sem achados) |
-| **Método** | port file-by-file keep-both (orphan-root #434 — SEM merge-base) |
-| **Contratos** | Cliente.get · bind editor · `result.skipped` · draft≠saveMutation · persistBusy · sync-lock |
-| **Contagens** | **NÃO incluídas** — pacote separado `docs/evidence/prep-contagens-pacote-separado-20261030.txt` |
-| Fora | 2ª candidata · swap serviço/repo · pin cego · merge main · deploy · VPS |
+| **#401 tip** | (este commit) — sobre `0b9c0ded8` CI SUCCESS 41071229904 |
+| **P1 Codex** | #4417291529 windowMode hydrate · #4417291538 GET falho bloqueia save |
+| **#434** | tip `50a010ce2` incorporado keep-both (get/draft/skipped/sync-lock) |
+| **Contagens** | **FORA** — Pacote A #431 `2b523fdf8` |
+| **#439 indep.** | CentroOperacao sky `288dc8a69` (fora candidata) |
+| Fora | 2ª candidata · pin cego · merge main · deploy · VPS |
 
-**Evidência:** `docs/evidence/incorporacao-434-into-401-20261030.txt`
-**Próximo:** CI própria deste tip + `@codex review` #401; item indep. recuperação fora da candidata.
+**Evidência:** `docs/evidence/codex-401-p1-hydrate-window-20261030.txt`
+**Próximo:** CI + `@codex review` deste tip; resolver threads P1 no GitHub.
 
 ## Estado vigente - composicao integrada em revisao (2026-10-29)
 
