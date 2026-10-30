@@ -1,6 +1,24 @@
-## Estado vigente - revisao431 com bloqueadores comprovados (2026-10-30)
+## Estado vigente -431 avancou para9d339ce5, ainda bloqueada (2026-10-30)
 
-#431 HEAD atual28b8e8d1543a52df01df4bcc9e8ff453bc564743, posterior ao fde6
+HEAD9d339ce5892100f77c0d242623acce598276bb01 revisado por delta e mesma contraprova.
+ENCERRADOS:chave ausente/envelopecounts{} agora READ_COUNT_PARTIAL; builder extraido
+canonicamente; checksum anterior preservado, baseline passa e25mutações dentro/fora,
+omissao/duplicacao rejeitadas. Nao manter as3falhas28b8 como atuais.
+CI9d frontendFAILURE nos2eventos; um evento completo terminouFAILURE com backend/
+composeSUCCESS, outro backend ainda em execucao na consulta. Job124003172173:
+2632PASS/2FAIL/0SKIP. Falhas cadastro-master-policy.test.js:249 e use-entity-counts-filter.test.js:5
+exigem regex buildMultiempresaReadFilter no hook apos extracao; seguir import/reexport
+e manter cobertura comportamental equivalente, nao adicionar comentario para passar.
+
+CONTINUAM no9d:P1contexto/leitura do adaptador, arquivo sem delta. Normalizacao
+ainda aceita null/false/stringvazia como0, negativos/fracionarios/inteiroinseguro.
+Scriptprivado com REVIEW431_SHA=9d completo exit0; nenhuma escrita real. BridgeHTTP
+continua requestigual, testesdeobjetofiltro nao comprovam autorizacao backend.
+Pareceres atualizados6520128216/6520145411; Cursor escritor.401nao ampliada.
+
+## Parecer historico -431 no28b8e8d1 (2026-10-30)
+
+#431 HEAD entao28b8e8d1543a52df01df4bcc9e8ff453bc564743, posterior ao fde6
 informado pelo dono. CI TERMINAL em ambos eventos:frontendFAILURE,backendSUCCESS,
 composeSUCCESS. Job123999858012:2626total/2623PASS/3FAIL/0SKIP. Causa comum das
 3falhas:preservacao integral tests/cursor-identidade-consolidacao.test.js,

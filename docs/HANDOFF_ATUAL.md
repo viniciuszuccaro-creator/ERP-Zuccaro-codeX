@@ -1,4 +1,21 @@
-## Estado vigente -431 revisada, ainda nao pronta (2026-10-30)
+## Estado vigente -431 no9d339ce5 revisada, ainda nao pronta (2026-10-30)
+
+HEAD9d339ce5892100f77c0d242623acce598276bb01 avancou durante revisao. Repeti somente
+contraprova sobre delta:parcial/chave ausente/envelope vazio agora rejeitados;
+golden preservado,baseline de normalizador passa,25mutações indevidas rejeitadas.
+CIfrontend nos2eventosFAILURE;um evento completo encerradoFAILURE, backend/compose
+SUCCESS;outro backend ainda em execucao na consulta. Job124003172173 tem2632PASS/
+2FAIL/0SKIP; agora regex antiga de buildMultiempresaReadFilter em2testes apos
+extracao do builder. Atualizar pelo contrato/import real com cobertura equivalente,
+nao string cosmetica.3falhas dechecksum28b8 sao HISTORICAS, nao atuais.
+
+P1adaptadorcontexto/leitura continua sem delta;null/false/stringvazia/negativo/
+fracionario/inteiroinseguro ainda aceitos como counts. REVIEW431_SHA=9d completo no
+scriptprivado exit0; chamadas de update sao MOCK, nao escrita/vazamento server.
+Pareceres6520128216/6520145411. Cursor escreve, Codex revisa;401permanece separada.
+Artefatos privados sem nova condicao;reconciliacao/E2Ebrowser continuam nao executados.
+
+## Parecer historico -431 no28b8e8d1 (2026-10-30)
 
 Revisao no HEAD28b8e8d1543a52df01df4bcc9e8ff453bc564743, nao fde6 anterior.
 CI TERMINAL:frontendFAILURE nos2eventos,backend/composeSUCCESS. Job123999858012
