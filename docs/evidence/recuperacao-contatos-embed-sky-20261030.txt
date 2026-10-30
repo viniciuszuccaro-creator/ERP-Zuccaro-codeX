@@ -20,3 +20,7 @@ substituir backend · candidata concorrente
 
 ## Testes
 cadastros-contatos-enderecos-rbac — inclui chrome sky Contatos↔Endereços
+
+## CI SUCCESS tip 7e67d6006 (2026-10-30 America/Sao_Paulo)
+- Runs SUCCESS 6/6 — push `41120826134` · PR `41120834643`
+- Código `d8d377da2`. CI verde ≠ aceite Codex; visual ≠ recuperação de registros.
