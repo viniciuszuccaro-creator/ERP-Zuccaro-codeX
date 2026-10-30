@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#401 P2 save×contexto Contatos) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | tip código `88332170e` CI SUCCESS + docs `0adf9a732` |
+| **P2 Codex** | #4425429376 — save Contatos após troca de empresa não bump epoch / não reaplica rascunho |
+| **Fix** | `painelScopeKeyRef` + `CONTEXT_CHANGED` skip antes do bump |
+| **Contagens** | INCORPORADAS (mantidas) |
+| **Indep.** | #441 tip `a1a6aa10e` P2 canal/total |
+| Fora | merge main · 2ª candidata |
+
+**Próximo:** CI + `@codex review` deste tip Contatos P2.
+
 ## CURSOR — VIGENTE (#401 contagens INCORPORADAS tip 88332170e) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
