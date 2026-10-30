@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#438 FECHADO tip 56447ea48) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#438** tip **`56447ea48`** — CI SUCCESS 6/6 + Codex limpo |
+| **Codex** | P2 paginação cancelados ENCERRADO; tip sem achados major |
+| **Sobre** | não atribuir FAIL ancestral se houver; tip código `56447ea48` |
+| **Keep both** | ≠ HistoricoClienteTab (#437) ≠ DetalhesCliente (#436) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | próximo indep.; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-copiar-ultimo-pedido-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#438 CopiarUltimoPedido HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

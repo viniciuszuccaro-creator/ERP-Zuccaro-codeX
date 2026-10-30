@@ -34,3 +34,7 @@ merge/deploy/carga · #401 candidata intacta
 - Achado: 1ª página só CANCELADO ocultava elegível com hasMore.
 - Fix: findUltimoPedidoNaoCanceladoPaginado; legado limit 50.
 - Testes: 4 PASS.
+
+## CI SUCCESS tip 56447ea48 (2026-10-30 America/Sao_Paulo)
+- Runs push+PR — 6/6 SUCCESS.
+- Codex: tip 56447ea48 sem achados major; P2 paginação ENCERRADO.
