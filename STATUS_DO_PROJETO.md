@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#435 CI SUCCESS 6/6 + Codex) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#435** tip **`b51214245`** / código `9945cd390` — CI SUCCESS 6/6 |
+| **Codex** | tip `b51214245` sem achados major (hunks exactos + JSDoc) |
+| **Sobre** | não atribuir FAILS `450c12d8f`/`b0510f41c`/`460b8155e` |
+| **#436** | tip `8c0d05c16` KPIs página incompleta — aguardar CI |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | #436 CI; candidata #401 intacta |
+
+**Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#436 KPIs ≠ 1ª página) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
