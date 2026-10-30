@@ -56,4 +56,4 @@ Atualização (2026-10-30) — Pacote B históricos + Pacote C Intent
 - #442 rebase policy #441; Top10 sem inventar UN
 - #443 ChatbotIntent sky + IntentsForm propaga windowMode (fora candidata #401)
 - #401 `34c4c0ee` CI5482 estável — contraprovas React montadas pedidas ao Codex; sem ampliar
-- Forms residual sky: Boletos ID-only → feito (sky keep-both; pin ID-only) / Produto legado / Endereços embed
+- Forms residual sky: Boletos ID-only → feito; Produto V22 windowMode + Endereços embed → feito (legado ProdutoForm keep-both)

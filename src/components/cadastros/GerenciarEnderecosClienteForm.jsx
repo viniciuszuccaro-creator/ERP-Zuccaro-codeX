@@ -161,13 +161,14 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Endereços de Entrega ({enderecos.length})</h3>
+    <div className="w-full space-y-4" data-action="cliente-enderecos-embed">
+      <div className="flex justify-between items-center gap-3 pb-3 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-sky-100 -mx-1 px-3 py-3 rounded-t">
+        <h3 className="text-lg font-semibold text-slate-900">Endereços de Entrega ({enderecos.length})</h3>
         <Button
           onClick={abrirNovo}
           size="sm"
           disabled={!podeEditar}
+          className="bg-sky-600 hover:bg-sky-700"
           data-permission="Cadastros.Cliente.editar"
           data-action="Cadastros.Cliente.endereco.adicionar"
         >
@@ -181,14 +182,14 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
           {enderecos.map((endereco, idx) => (
             <div 
               key={idx} 
-              className="p-3 border rounded-lg hover:border-blue-500 transition-all bg-white"
+              className="p-3 border border-sky-100 rounded-lg hover:border-sky-400 transition-all bg-white"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <MapPin className="w-4 h-4 text-blue-600" />
+                    <MapPin className="w-4 h-4 text-sky-600" />
                     <p className="font-semibold">{endereco.apelido || `Endereço ${idx + 1}`}</p>
-                    {endereco.principal && <Badge className="bg-green-600 text-xs">Principal</Badge>}
+                    {endereco.principal && <Badge className="bg-sky-600 text-xs">Principal</Badge>}
                     <Badge variant="outline" className="text-xs">{endereco.tipo_endereco || 'Entrega'}</Badge>
                   </div>
                   <p className="text-sm text-slate-700">

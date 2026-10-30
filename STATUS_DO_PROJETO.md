@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (Pacote C Produto V22 + Endereços sky) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-produto-sky-id-392b` ← #445 |
+| **Fix** | ProdutoFormV22 windowMode sky+ID; Endereços embed sky (RBAC intacto) |
+| **Testes** | recuperacao-produto-enderecos-sky + contatos-enderecos-rbac **PASS** |
+| **#401/#441/#446** | fora |
+| Fora | merge main · deploy · seed · tocar ProdutoForm legado |
+
+**Evidência:** `docs/evidence/recuperacao-produto-enderecos-sky-20261030.txt`
+**Próximo:** CI + `@codex`; residual cadastros se houver.
+
 ## CURSOR — VIGENTE (#445 Boletos sky tip 4c31434c5 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
