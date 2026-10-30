@@ -23,3 +23,19 @@ React Testing Library / jsdom full tree · PG · Auth · VPS · pin cego · merg
 - Pedido `@codex review` tip `3a80e0ffe`.
 - Candidata estável para aceite Contatos (contexto/late/erro≠vazio/save antigo).
 - Indep. fora candidata: #441 d46cf79dc · #442 Top10/Sugestões.
+
+## P1 Codex a9948387 — ator/sessão + Visualizador (2026-10-30 America/Sao_Paulo)
+Achado ReactDOM montado (6527629911): painelScopeKey só tenant/cliente → save atorA
+substituía rascunho atorB; useEntityCounts ignorava fingerprint de sessão; Visualizador
+rodapé `0 total` durante loading.
+
+Correção no existente:
+| Arquivo | Mudança |
+|---------|---------|
+| PainelDinamicoCliente | `buildPainelContatosScopeKey` + actorId/sessionKey; GET pedidos/entregas/CR isolados |
+| useEntityCounts / useCadastrosAllCounts | queryKey + `sessionKey` (central360SessionKey; sem token cru) |
+| VisualizadorUniversalEntidadeV24 | countKnown só com number validado; badge/rodapé `…` / `total …` no load |
+
+Provas: contatos-painel + count-erro-vazio **31 PASS** (inclui atorA→B com função REAL).
+Sem jsdom no ambiente Cursor — harness Chrome permanece privado Codex.
+Tenant-switch CONTEXT_CHANGED preservado.

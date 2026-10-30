@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#401 P1 ator/sessão Contatos + counts) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | `painelScopeKey` + ator/sessão (`buildPainelContatosScopeKey`); counts `sessionKey`; Visualizador loading ≠ `0 total` |
+| **Provas** | save atorA→B CONTEXT_CHANGED (função REAL); tenant-switch preservado; counts queryKey sessionKey |
+| **Testes** | contatos-painel-counterproof-seams + count-erro-vazio **31 PASS** |
+| **Keep** | tenant-switch #4425429376 · epoch/skipped/hydrate |
+| Fora | merge main · jsdom/Chrome privado Codex · seed · relaxar asserts |
+
+**Evidência:** `docs/evidence/prova-401-contatos-save-contexto-20261030.txt`
+**Próximo:** CI + `@codex review` (reprova ReactDOM montado se ainda disponível).
+
 ## CURSOR — VIGENTE (#401 tip 3a80e0ffe CI SUCCESS — aceite Contatos) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
