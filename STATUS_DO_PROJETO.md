@@ -1,4 +1,40 @@
-## Estado Vigente - Revisao Montada401 E Historicos441 (2026-10-30)
+## Estado Vigente - Correcoes401 Comprovadas, Historicos Separados (2026-10-30)
+
+#401 34c4c0ee0242cc959d3a8631f04504457132bb72 CI5482 SUCCESS confirmada.
+Contraprovas afetadas repetidas com componentes REAIS ReactDOM/ReactQuery montados
+em Chrome existente, fronteiras contexto/servico/UI sinteticas, sem instalacao/PG.
+Painel: save pendente em A->B, A->B->A e token novo no mesmo ator retorna
+skipped:true/CONTEXT_CHANGED; novo rascunho intacto, zero onClose/zero toast sucesso,
+pai ainda montado. Baselinea994 A->B->A reproduziu old-save sobrescrevendo draft.
+Counts agora reconsulta99 ao trocar token (antes7); Visualizador mostra `total ...`
+na carga, nao `0 total`. Achados anteriores ENCERRADOS nesses componentes/alcances;
+nao reabrir por headers historicos. Recibo4016528606297 e complemento na PR.
+Hook bruto ainda retorna total0 no loading, mas Visualizador usa countKnown;
+nao equivale a homologar todos os consumidores/dialogs folha ou E2E API/PG.
+
+#441 d46cf79dc69b1c68adf859da3046cf171eab5d54 CI5464 SUCCESS, runtime igual836b:
+achados de unidade, mistura, preco temporal e trocaEmpresa seguem pendentes por
+blobs iguais, sem repetir provas intactas. #4426c21c3d63b43f65a14f26cb9448d8fbf8e9325ea
+CI5481 SUCCESS, base441d46, separada401, reaproveita policy/loader dessa cadeia.
+Provas NOVAS montadas em Top10/Sugestoes: historico2KG vira UN no texto/callback;
+Top10 exibe20% de confianca calculado localmente, sem IA ou fonte probabilistica.
+Produto catalogado sem preco atual vira R$0,00 em Sugestoes; callback sem preco_venda.
+Policy real com2KG/3PC soma5UN, preco antigo10 vence20, created_at HTTP ignorado
+e ultima_compra:null. Recibos4426528633748/6528658820. Nao executar conversao
+de unidade nem tratar preco desconhecido/heuristica como preco zero/confianca real.
+Nao integrar441/442 antes de correcao/revisao; Cursor permanece unico escritor.
+Dependencias436/437: preservar capacidades distintas de Detalhes/Tab/historicos
+portal/comercial; base437 nao e incorporacao na401 nem recuperacao de dados reais.
+
+Harness E2E e coorte100 final/pins permanecem dependencias privadas distintas,
+sem mudanca de acesso: nenhuma busca repetida, novo recorte ou transferencia.
+Consulta fixa preparada aguarda bytes/pins/canal para READ ONLY/ROLLBACK autorizado;
+nao executada e destino nao considerado vazio. Proximas acoes: correcao441/442
+e provas afetadas; E2E original quando recuperado. Gates: aceite componentes ->
+prova integrada -> cadeia -> schema/minpriv -> backup/restore -> reconciliacao ->
+carga aprovada -> deploy -> aceite. Sem DDL/grants/merge/carga ou alteracao VPS.
+
+## Historico - Revisao Montada401 E Historicos441 (2026-10-30)
 
 Codex executou componentes REAIS com ReactDOM createRoot, React Query e Chrome
 headless existentes no desktop; Git somente leitura, scripts privados fora do

@@ -1,4 +1,32 @@
-## Estado Vigente - Provas Montadas E Bloqueadores Atuais (2026-10-30)
+## Estado Vigente - Aceite Montado401 E Revisao442 (2026-10-30)
+
+#40134c4c0ee0242cc959d3a8631f04504457132bb72 CI5482 SUCCESS. Ensaios afetados
+REALMENTE montados (ReactDOM/ReactQuery/Chrome existente, bordas sinteticas):
+saveA->B, A->B->A e renovacao sessao descartam retorno antigo, preservam novo draft,
+nao chamam onClose/sucesso e mantem pai montado. Baselinea994 A->B->A falhava.
+Token novo reconsulta contagem99 (antes reusava7), Visualizador loading `total ...`
+sem falso0. Achados ENCERRADOS nesse alcance; nao confundir AST/SSR/E2E ou todas
+as folhas de dialog. Recibo4016528606297 e complemento publicado na PR.
+
+#441d46cf79dc69b1c68adf859da3046cf171eab5d54 CI5464 SUCCESS, runtime836b igual,
+defeitos anteriores permanecem por igualdade de blobs. #4426c21c3d63b43f65a14f26cb9448d8fbf8e9325ea
+base441d46, CI5481 SUCCESS; separada da candidata. Top10/Sugestoes REAIS montados
+mostram2KG como UN/callbackUN, percentual20% local sem IA e preco desconhecido
+como R$0,00. Policy real soma2KG+3PC=5UN; data HTTP created_at ignorada, preco10
+antigo vence20 e ultima_compra:null. Pareceres4426528633748/6528658820. Solicitar
+correcao no modulo real com testes antes/depois, nao integrar pacote defeituoso.
+436/437 e portal mantidos como capacidades existentes, nao criar historico paralelo
+nem substituir API/servicos/repos da401. Cursor escreve; Codex revisa por SHA.
+
+Artefatos privados E2E/coorte100 final e pins continuam gates separados sem novo
+canal; nenhuma busca repetida, gerador substituto, transferencia, consulta ou carga.
+Consulta fixa READ ONLY/ROLLBACK pronta, nao executada sem fonte/canal comprovados.
+Nao chamar dado oculto/campo omitido/dado perdido/fonte inacessivel de recuperacao
+sem procedencia. Proximo: corrigir441/442 e repetir somente provas afetadas; E2E
+original quando acessivel. Cadeia/schema/minpriv/backup/reconciliacao/carga/deploy/
+aceite continuam gates especificos, sem acao operacional nesta rodada.
+
+## Historico - Provas Montadas E Bloqueadores Atuais (2026-10-30)
 
 #401 a9948387 CI5459 SUCCESS testada com ReactDOM/ReactQuery/Chrome REAIS montados,
 mock somente contexto/servico/UI de borda. Sem instalar, trocar checkout ou E2E.
