@@ -27,3 +27,8 @@ Correção: peel autorizado em `iaResponseValidationRemainder` reverte windowMod
 `<div className="w-full h-full bg-white">{content}</div>` antes do hash (mesmo padrão
 #439/#445 — não pin cego). Hashes golden `c26ca71d…` / `67a27312…` intactos.
 Testes: ia-grounded-batch-contracts + product-query-v5-options + sky — 47 PASS.
+
+## CI SUCCESS tip 9bd3b943d (2026-10-30 America/Sao_Paulo)
+- Runs: push `41110774032` · PR `41110783324` — SUCCESS 6/6.
+- Tip `509646810` FAIL pin → peel tip SUCCESS.
+- CI verde ≠ aceite montado; #445≠recuperação de registros; #401 fora.
