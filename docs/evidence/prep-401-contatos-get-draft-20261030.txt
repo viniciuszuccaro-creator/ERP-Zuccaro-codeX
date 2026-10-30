@@ -1,0 +1,38 @@
+Prep incorporação controlada #401 ← #431/#432 Contatos (2026-10-30 America/Sao_Paulo)
+=======================================================================================
+Base #401 tip: 686ae3224 (cursor/composicao-397-342-prep-392b)
+Fonte capacidades: #432 tip 2bc3dc6c7 (CI SUCCESS + Codex limpo)
+Históricos: unrelated — port cirúrgico por arquivo (sem merge git oficial)
+
+## Lacunas no tip #401 (antes)
+| Capacidade | #401 tip | Após prep |
+|------------|----------|-----------|
+| Contatos adapter Cliente.get + bind/ator/ausência | filter+[0] monolito | adapter thin + get |
+| Form Contatos persistInFlight + commitMode | await only | sync-lock + draft/backend |
+| Form Endereços persistBusy/sync-lock/commitMode | parcial | keep-both #432 |
+| Completo draft≠saveMutation | setFormData inline | commitMode=draft + apply*Draft |
+
+## Fora deste prep
+cadastroCountFilter / Pacote A counts · merge oficial #401 · deploy · seed
+
+## Checks
+Focados Contatos/Completo/stage48 remainder no worktree prep.
+
+## CI tip 48da23bc0 — frontend FAIL 4 (2026-10-30 America/Sao_Paulo)
+Runs `41050094523` / `41050063615` — tip `48da23bc0` (não atribuir ancestral).
+Causa: port #431/#432 sync-lock omitiu guard `#424` `result.skipped` no Form Contatos;
+harness seams não ligava `beginPersist`/`persistInFlightRef`.
+
+Keep-both neste tip:
+- Form: `result.skipped` → throw (não fecha/reseta) + `beginPersist`/`endPersist`
+- Harness: bindings sync-lock reais; asserts `beginPersist`/`endPersist` no handler
+- Capacidades #424 epoch/reject + #432 sync-lock + #431 draft/get preservadas
+
+Checks locais: contatos-painel-counterproof-seams + painel-dinamico + prep-401 → 39/39 PASS
+Sem merge oficial #401 · sem deploy.
+
+## CI tip 6678c23d6 — SUCCESS 6/6 (2026-10-30 America/Sao_Paulo)
+Runs `41050886646` (PR) / `41050882082` (push) — tip `6678c23d6`.
+Codex limpo neste HEAD; P1 skipped ENCERRADO.
+Não atribuir FAIL de `48da23bc0` a este tip.
+Próximo indep.: HistoricoProduto HTTP fail-closed (fora merge #401).

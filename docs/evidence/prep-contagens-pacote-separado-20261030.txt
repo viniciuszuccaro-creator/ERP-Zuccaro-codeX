@@ -1,0 +1,41 @@
+Pacote SEPARADO — Contagens (fora #434 / fora incorporação #401←#434)
+======================================================================
+Data: 2026-10-30 America/Sao_Paulo
+Candidata estável: #401 (cursor/composicao-397-342-prep-392b)
+Fonte NÃO misturada: #434 tip `50a010ce2` (Contatos get+draft) — SEM contagens.
+
+## Declaração explícita
+A #434 e a incorporação controlada #434→#401 **NÃO incluem**:
+- `cadastroCountFilter` / filtros de contagem server-side
+- Pacote A de KPIs/contagens de listagem
+- troca de serviços/repositórios de count
+- pin cego de baselines de contagem
+- remoção de guardas multiempresa/RBAC para “passar” testes de count
+
+## Por quê separado (AGENTS §11)
+KPI/total ≠ primeira página carregada. Contagens exigem:
+1. agregação/count server-side com `groupId`+`empresaId`
+2. queryKey com usuário+grupo+empresa+filtros
+3. fail-closed sem contexto
+4. sem `count+1` no navegador; sem inventar total a partir de `items.length` da página
+
+Misturar isso no port Contatos get/draft cria risco de:
+- copiar serviço/repo divergente da composição #401
+- remover guardas para satisfazer testes
+- atribuir regressão de count ao contrato Cliente.get/skipped/draft
+
+## Preparação (sem implementar neste lote)
+Inventário existente a reutilizar (não duplicar):
+- `VisualizadorUniversalEntidadeV24.jsx` — `counts`/`totalCount` já separados da página
+- `CadastrosGroupCountBadge.jsx` — badge de contagem por grupo
+- `base44/functions/countEntitiesOptimized` — count com filter
+- Contraprovas de listagem/paginação já na candidata — NÃO atualizar pins cegamente
+
+Escopo do pacote futuro (PR própria, fora merge #401 enquanto candidata estável):
+1. Diagnosticar telas onde total = `items.length` da 1ª página
+2. Portar/alinhar ao contrato de count já usado no Visualizador (não criar 3º caminho)
+3. Testes comportamentais: página N vs total; grupo A ≠ empresa B; sem permissão → 0/bloqueio
+4. Evidência + CI próprios; sem seed/deploy/VPS
+
+## Fora
+merge oficial · deploy · seed · HD externo · dados reais no GitHub

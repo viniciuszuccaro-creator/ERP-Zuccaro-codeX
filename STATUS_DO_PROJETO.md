@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#401 ← #434 Contatos get+draft; contagens FORA) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#401 tip** | (este commit) — base prévia `686ae3224` |
+| **Fonte** | #434 tip `50a010ce2` CI SUCCESS 6/6 + Codex limpo (sem achados) |
+| **Método** | port file-by-file keep-both (orphan-root #434 — SEM merge-base) |
+| **Contratos** | Cliente.get · bind editor · `result.skipped` · draft≠saveMutation · persistBusy · sync-lock |
+| **Contagens** | **NÃO incluídas** — pacote separado `docs/evidence/prep-contagens-pacote-separado-20261030.txt` |
+| Fora | 2ª candidata · swap serviço/repo · pin cego · merge main · deploy · VPS |
+
+**Evidência:** `docs/evidence/incorporacao-434-into-401-20261030.txt`
+**Próximo:** CI própria deste tip + `@codex review` #401; item indep. recuperação fora da candidata.
+
 ## Estado vigente - composicao integrada em revisao (2026-10-29)
 
 Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma

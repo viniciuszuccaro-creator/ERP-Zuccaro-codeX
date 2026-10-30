@@ -1,0 +1,28 @@
+Incorporação controlada #434 → #401 (2026-10-30 America/Sao_Paulo)
+====================================================================
+Candidata: #401 tip prévio `686ae3224` (cursor/composicao-397-342-prep-392b)
+Fonte: #434 tip `50a010ce2` / código `6678c23d6`+`d74701ea7` CI SUCCESS 6/6 + Codex
+Método: port file-by-file keep-both (orphan-root #434 — SEM merge-base / sem substituir backend)
+
+## Contratos portados
+| Arquivo | Capacidade |
+|---------|------------|
+| comercial/GerenciarContatosCliente.jsx | Cliente.get + bind/ator/ausência/late |
+| GerenciarContatosClienteForm.jsx | persistInFlightRef + commitMode + result.skipped |
+| GerenciarEnderecosClienteForm.jsx | sync-lock + commitMode + persistBusy |
+| CadastroClienteCompleto.jsx | apply*Draft ≠ saveMutation (cirúrgico) |
+| contatos-painel-counterproof-seams | harness beginPersist/skipped |
+| prep-401-contatos-get-draft.test.js | prova adapter/draft |
+| cadastro-query-payload-boundaries | peels exactos Completo draft (sem pin cego) |
+
+## Explicitamente NÃO incluído
+**Contagens** (`cadastroCountFilter` / Pacote A counts) — fora da #434 e desta incorporação.
+Pacote separado: `docs/evidence/prep-contagens-pacote-separado-20261030.txt`
+Sem copiar serviços/repositórios divergentes · sem remover guardas para verde.
+
+## Checks locais
+prep-401 + contatos-painel-counterproof-seams + cadastro-query-payload-boundaries + painel-dinamico
+→ PASS (8+6+14+31 focados aplicáveis)
+
+## Fora
+merge oficial GitHub UI · deploy · seed · VPS · HD externo
