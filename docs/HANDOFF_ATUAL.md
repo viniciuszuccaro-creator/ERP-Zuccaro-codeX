@@ -1,4 +1,32 @@
-## Estado Vigente - CI Verde, Residuos Funcionais446 Ainda Atuais (2026-10-30)
+## Estado Vigente - Revisao446 Por Geracao E Identidade (2026-10-30)
+
+#446c2f3 montado com Pedido/modal/calculador reais e bordas sinteticas: cliente/
+Grupo/Empresa/ator/visual separado e ABA de ator descartam antigo0writes; unknown
+cost/saldo/margem omitidos, UI efetiva sem justificativa ficticia. Preco ausente
+rejeita/0writes, zero comprovado passa; rejeicao preserva modal/draft. Unidade
+ausente omitida/naoUN; nao declarada validacao de linha incompleta no banco.
+Recibos6533069271/6533073948, nao reaplicacao de pareceres574/f8.
+
+HEAD611aaa6ee96be2a8f07e2717ab2d6b6888b74da0 corrige renewsimples0writes, mas
+PedidoID A->B ainda1write e sessaoABA com renderB comprometido1write/1success.
+Chave omitePedidoID e nao e contador de geracao; reutilizar padrao canonico401.
+Provas montadas6533169161/6533175759. Catalogo comprovado preserva custo/saldo;
+inativo encontrado bloqueia, mas ausencia em pagina500 e chamada inelegivel sem
+lookup exato. Sem alegar registro perdido ou acessoPII aprovado. UI precoausente
+continuaenabled emborahandler rejeite. CI5577SUCCESS/5576em execucao na consulta.
+40134c4 e aceites anteriores preservados; port so apos residuos eCI do novoSHA.
+
+4488684ba8b/CI5556 e449c466b328/CI5571SUCCESS: projecao AST preserva imports/
+logica nao-render e80props interativas;12contraprovas detectadas. Pareceres6533119710/
+6533120111. Escopo estrutural, NAO JSX/visual inteiro, montagem, persistencia,
+reabertura, KPIs ou dados recuperados. Separados da candidata; sem pin frouxo.
+Cursor escreve e Codex revisa porSHA, sem substituirAPI/repos/servicos401 ou nova
+composicao. Proximo: fix identidade/geracao/lookup e UI efetiva no existente.
+Harness E2E original e coorte100 final/pins continuam dependencias privadas
+separadas sem novo canal; nao repetir buscas/transferencia/selecoes. Consulta fixa
+nao executada sem fonte/canal. Gates operacionais inalterados, nenhuma acaoVPS.
+
+## Historico - CI Verde, Residuos Funcionais446 Ainda Atuais (2026-10-30)
 
 #44654fcd026 fixTS, HEAD574e2ea53692024debda527fc8eaac9b37871922 CI5557/5558
 SUCCESS. TSf8/CI5547-5548 e historico, nao falha atual. Runtime mudou apenas array

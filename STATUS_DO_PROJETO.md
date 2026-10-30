@@ -1,4 +1,46 @@
-## Estado Vigente - CI446 Corrigida, Vinculo Do Modal Pendente (2026-10-30)
+## Estado Vigente - Runtime446 Reavaliado E Residuos Precisos (2026-10-30)
+
+#40134c4 preservada. #446c2f3acb7e0434402ca700debb6feb04902d5f541 foi testada
+com Pedido/modal/calculador REAIS montados ReactDOM/ReactQuery/Chrome, bordas
+sinteticas, nao banco/E2E. Contextos cliente/Grupo/Empresa/ator e SO visualEmpresa
+(Pedido pinned) descartam0writes; ABA de ator com renderB comprometido0. Unknown
+custo/saldo/margem/situacao omitidos no item e UI sem justificativa ficticia; preco
+ausente0writes/alert, zero comprovado aceito, rejeicao preserva modal/draft. Unidade
+ausente omitida (naoUN), draft incompleto pode existir; nao homologa persistencia.
+Recibos6533069271/6533073948. Pareceres574/f8 nao foram reutilizados automaticamente.
+
+HEAD avancou611aaa6ee96be2a8f07e2717ab2d6b6888b74da0: renewsimples testado0writes,
+ENCERRADO. Porem Pedido A->B(id distintos, mesmo cliente/contexto/ator) ainda1write;
+sessao tokenA->B(renderB comprometido)->A tambem1write/1success. Chave nao inclui
+PedidoID e fingerprint final nao e geracao monotona. Recibos6533169161/6533175759.
+Usar captura/geracao canonica existente; nao outra implementacao paralela de sessao.
+Catalogo sintetico comprovado preservou custo7/saldo12/margem36.36; inativo encontrado
+bloqueia. Nova negativa: ausencia na pagina500 vira mensagem inativo/naovendavel;
+pagina limitada nao comprova inelegibilidade, exige lookup exato/unknown. Nao e
+prova de dado real perdido ou de autorizacao a PII. Botao precoausente ainda enabled
+mesmo com handler bloqueando; alinhar estado efetivo, nao justificativa como preco.
+CI611:5577SUCCESS/5576em execucao na consulta; sem reutilizar CI ancestral.
+
+Port401 continua bloqueado apenas residuos atuais; duploclique/status/readonly e
+positivos anteriores preservados. Cursor escritor, Codex revisor, sem outra candidata
+ou substituicao de API/repos/servicos/contexto/RBAC/persistencia/436-442.
+
+#4488684ba8b0ea57d563af36ba4d6a0c5878ddce729 CI5555/5556SUCCESS e
+#449c466b328963ca606f102a87f03c15b179ca4cb25 CI5570/5571SUCCESS: revisao AST
+preservou imports/logica NAO render e25/10/10/35propriedades interativas dos3Gestores
+e Contatos.12contraprovas (callback/disabled/forjaexterna) detectadas. Recibos6533119710/
+6533120111. Nao e JSX inteiro/visual equivalente, montagem, salvamento/reabertura,
+KPI confiavel ou dados recuperados. Mudancas de headers/classes/metadados declaradas
+revisadas em diff, sem pin cego; separados da candidata. Driver de mutacao foi
+corrigido por AST (regex nao atingia callbackarrow), nao alterou produto/testesERP.
+
+Harness E2E e coorte100 FINAL/pins permanecem bloqueios privados DISTINTOS sem
+mudanca de acesso; nenhuma busca identica/recorte/transferencia ou consulta real.
+Gates existentes: aceite446 -> composicao -> E2E -> cadeia -> schema/minpriv ->
+backup/restauracao -> reconciliacao -> carga aprovada -> deploy -> aceite. Sem
+grants/DDL/carga/deploy/VPS ou execucao permanente prometida.
+
+## Historico - CI446 Corrigida, Vinculo Do Modal Pendente (2026-10-30)
 
 #44654fcd026 corrigiu o TS anterior. HEAD574e2ea53692024debda527fc8eaac9b37871922
 CI5557/5558 SUCCESS confirmadas no SHA exato; falha5547/5548f8 e HISTORICA.
