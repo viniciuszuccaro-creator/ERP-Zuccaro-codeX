@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (#431 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#431** tip **`884012ed5`** / código `2277c5a33` — CI SUCCESS 6/6 |
+| **Provas** | actorId · ausência pós-refetch · counts safe-int · erro≠Form |
+| **#432** | tip `7941f984a` CI SUCCESS (cadeia) · docs `1cb967a83` |
+| **#401** | tip `686ae322` estável · harness BLOCKED |
+| Preferir | #409 · revisão; P2 só arquivos independentes |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
 ## CURSOR — VIGENTE (#431 actorId + ausência pós-refetch) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
