@@ -1,4 +1,40 @@
-## Estado Vigente - Correcoes401 Comprovadas, Historicos Separados (2026-10-30)
+## Estado Vigente - Historicos Corrigidos Por SHA, Residuos442 (2026-10-30)
+
+#40134c4c0ee/CI5482 e provas montadas6528606297 preservadas, sem repetir ensaios.
+#441d18dae95/CI5498: contraprovas novas REALMENTE montadas ReactDOM/ReactQuery/
+Chrome existente confirmaram2KG no texto/payload, preco11, sem quantidade de demanda
+inventada. Policy real separa KG/PC, usa created_at HTTP e preco maisrecente20;
+loader real -> fachadaHTTP real/fetch sintetico rejeita troca apenasEmpresa e
+4negativas(sessao/grupo/ator/token), envia clienteId restrito. Parecer6529728821.
+Preco ausente ainda0 nessa revisao foi reproduzido, NAO atribuido a runtime futuro.
+
+#441 avancou a6b2e7e42e7001905ff38cd2c180b2a7433b304e1 durante revisao: montagem
+afetada agora exibe preco/unidade desconhecidos como — e omite campos no callback.
+Policy desconhecido:null; zero comprovado maisrecente vence preco antigo20.
+Achados de unidade/mistura/preco/data/Empresa ENCERRADOS no alcance executado.
+Parecer6529778868. CI5508/5509 QUEUED na consulta, nao reutilizar5498 para esseSHA.
+Prova sintetica de componentes/HTTP, nao PostgreSQL/E2E ou recuperacao de registros.
+
+#4426ffd6f631a3dace37c9b0e9c3ba29c8addda5b90/CI5499 base441d18: Top10 montado
+agora preservaKG e preco11; sem unidade usa—/omite, corrigindoUN antigo. Porem
+preco desconhecido aindaR$0/callback0, Sugestoes sem preco atual exibeR$0/callback
+sem preco_venda; score20% heuristico segue sem qualificacao como heuristica.
+Parecer6529729264. Nao integrar enquanto esses residuos persistirem; nao presumir
+que fix4416b esteja incluido nessa branch. Quantidade_total e historico, nao demanda.
+
+Cadeia verificada:441base4371cde82af ancestral;442base441d18;436fa835bd5 e paralela
+NAO ancestral441. Mapa na4016529745832: preservar Detalhes/Tab/portal/Origem/Top10,
+portar somente hunks necessarios aos consumidores existentes apos fix/revisao/CI,
+sem substituir API/servicos/repos401. Cursor unico escritor, Codex revisa porSHA.
+Busca limitada de imports nao achou Compras comercial/Sugestoes/Tab em componentes;
+nao e prova de ausencia global nem autorizacao para criar novo modulo.
+
+Harness privado E2E e coorte100 final/pins continuam bloqueios distintos sem novo
+canal; nenhuma busca repetida, nova selecao/transferencia ou consulta real executada.
+Gates finitos existentes preservados: aceite pacotes/E2E/cadeia/schema/minpriv/
+backup/reconciliacao/carga aprovada/deploy/aceite. Sem DDL/grants/carga ou VPS.
+
+## Historico - Correcoes401 Comprovadas, Historicos Separados (2026-10-30)
 
 #401 34c4c0ee0242cc959d3a8631f04504457132bb72 CI5482 SUCCESS confirmada.
 Contraprovas afetadas repetidas com componentes REAIS ReactDOM/ReactQuery montados

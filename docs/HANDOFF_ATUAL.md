@@ -1,4 +1,33 @@
-## Estado Vigente - Aceite Montado401 E Revisao442 (2026-10-30)
+## Estado Vigente - Revisao441 Atualizada, Fix442 Pendente (2026-10-30)
+
+#40134c4c0ee/CI5482 e recibo6528606297 mantidos sem reteste. #441d18/CI5498
+retestada no alcance afetado: KG no texto/callback, KG/PC separados, created_at e
+preco temporal corretos, resposta apos troca apenasEmpresa rejeitada no loader
+real/fachadaHTTP real/fetch sintetico. Outras4negativas e clienteId preservados.
+Montagem real ReactDOM/ReactQuery/Chrome, fronteiras sinteticas; NAO PG/E2E.
+Preco ausente0 reproduzido nessa revisao motivou novo fix, nao permanece atribuido
+automaticamente aos proximos SHAs. Parecer6529728821.
+
+#441 novoHEAD6b2e7e42e7001905ff38cd2c180b2a7433b304e1: montagem mostra— para preco/
+unidade desconhecidos e omite campos no Adicionar. Policy desconhecido:null, zero
+comprovado maisrecente preservado; demais contratos afetados passam. Parecer6529778868.
+CI5508/5509 QUEUED na consulta, sem alegar sucesso do novoSHA a partir de5498.
+
+#4426ffd6f631a3dace37c9b0e9c3ba29c8addda5b90/CI5499, base441d18: KG/payload
+agora corretos e unidade ausente nao viraUN. Ainda preco desconhecido viraR$0 em
+Top10/Sugestoes (callback Top10 com preco0, Sugestoes sem preco atual); score20% local nao
+qualificado. Parecer6529729264. Precisa incorporar fix4416b por hunks e corrigir
+residuos antes de compor401. Quantidade historica nao vira demanda automaticamente.
+
+Cadeia:4371cde82af ancestral441;436fa835bd5 paralelo/nao ancestral;442 depende441.
+Mapa4016529745832 preserva capacidades portal/Detalhes/Tab/Origem/Top10 e servicos/
+repos/API atuais. Imports limitados nao demonstram alcancabilidade global de todos
+historicos; nao criar tela paralela para inclui-los. Cursor escreve, Codex revisa.
+Harness E2E original e coorte100 final/pins seguem gates privados DISTINTOS, sem
+mudanca de acesso ou buscas repetidas. Consulta fixa preparada, nao executada sem
+bytes/canal comprovados. Sem carga/DDL/grants/merge/deploy/VPS; gates vigentes mantidos.
+
+## Historico - Aceite Montado401 E Revisao442 (2026-10-30)
 
 #40134c4c0ee0242cc959d3a8631f04504457132bb72 CI5482 SUCCESS. Ensaios afetados
 REALMENTE montados (ReactDOM/ReactQuery/Chrome existente, bordas sinteticas):
