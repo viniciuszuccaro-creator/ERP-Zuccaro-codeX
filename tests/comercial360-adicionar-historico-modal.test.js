@@ -172,12 +172,13 @@ test('Modal: qty=1; preço/custo/estoque/margem fail-closed; elegibilidade; ause
   assert.doesNotMatch(src, /disabled=\{[^}]*calculo\?\.margem_violada && !justificativaDesconto/);
 });
 
-test('Top10 e HistoricoClienteTab: leitura sem callback — botão ausente/disabled', () => {
+test('Top10 e HistoricoClienteTab: leitura sem callback — cartão não interativo', () => {
   const top10 = read('src/components/comercial/Top10ProdutosCliente.jsx');
   const histTab = read('src/components/comercial/HistoricoClienteTab.jsx');
   assert.match(top10, /podeAcionarSelecao/);
   assert.match(top10, /typeof onSelecionarProduto === "function"/);
-  assert.match(top10, /disabled=\{!sug\.produto \|\| !podeAcionarSelecao\}/);
+  assert.match(top10, /top10-produto-leitura/);
+  assert.match(top10, /if \(!podeAcionarSelecao\)/);
   assert.match(histTab, /typeof onAdicionarItemAoPedido === "function"/);
 });
 
