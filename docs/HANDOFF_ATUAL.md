@@ -1,4 +1,31 @@
-## Estado vigente -4312451/4321cb revisadas, P2HTTP e mapa (2026-10-30)
+## Estado vigente -434 incorporada, provas e contagens separadas (2026-10-30)
+
+43450a010ce224f99cf90a93f905a200d3f8a7fb278 revisada6jobsCIverde(6525097735).
+Pedido4016525098122 teveexecucao REALconfirmada6525109514 naMESMA401:codigo
+0b9c0ded82292ef3001d6f72df6dd384b5fd4aa7,CI5427/run41071229904SUCCESS.
+Raiz2643/0/0;backend574/0/26(600),26SKIPnaoviraramPASSporprovasdirigidas.
+BuildsnpmAPI/web doSHA0bPASS;imagemdeploy/digestnovo nao foi produzido neste lote.
+HEADdocumentale706b02fad24f877ccbd3c165fc42a2a368c574c alterasomente2recibos;
+CI5428/run41071461266 SUCCESS terminal no proprioSHA,naoresultadoancestral.
+
+Review434-preservation Git+VM:11paths(9originais+2recibos),7blobsSRC/testexatos434,
+server/API ecountshooks/uselib EXATOS686;restoINTEIROCadastroCompletoexatoapos
+descontarhunksaprovados. Preservadosfreeze,getEmpresaLink,clienteId,inativos,
+acentos,lookupsemcopiarservicos/reposdivergentes. Contagens431 NÃOforamincorporadas.
+
+Callbacksreais434:exactget,ator/cliente/Empresa,404/403/ausencia/erro/tardiaOK;
+Contatos/Enderecos sync1,await/reject+toast/RBAC/persistBusy/skippedpreservadraft e
+reabrirprops. Actualdraftsettersnaogravam;saveMutationunico.424seambaseline6PASS,
+mutacoesguardasreais3FAIL;auditoriaresolverEmpresa realOK. AlcanceAST/VM,naoReact
+montado/browser/SQLauditlog. ProvaHTTPbackend342/PGlite/IdPsinteticoadicionalGET
+declientefora1apagina,semalterarclientes,naoehomologacaoPG/browser401.
+
+Parecerincorporacao6525135872,Cursorunicoescritor,nenhumanovacandidataCodex.
+Prosseguir gatesUIAPI PG/esquema/backup/reconciliacao/cargaaprovada/
+deploy/aceite,semautorizacaoinferidadeCI. Artefatosharness/coorte100semnovacondicao,
+naorepetirbusca/transferencia/instalacaoouprovisionarAuthVPS.
+
+## Parecer historico -4312451/4321cb revisadas, P2HTTP e mapa (2026-10-30)
 
 SHAs4312451d91c04d1348c0aabc85945fece6505d8ae14/4321cb967a837f92a9d54a34702e06f7f745e408e46
 tem6jobsCI SUCCESS cada. Contraprovas callbacksREAIS/VM encerraram ator/ausencia,

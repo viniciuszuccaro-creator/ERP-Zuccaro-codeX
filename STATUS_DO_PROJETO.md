@@ -1,4 +1,38 @@
-## Estado vigente - revisoes4312451/4321cb e mapa de composicao (2026-10-30)
+## Estado vigente -434 incorporada na MESMA401, contagens fora (2026-10-30)
+
+#43450a010ce224f99cf90a93f905a200d3f8a7fb278 revisada,6jobsCI SUCCESS. Parecer
+6525097735 e pedido6525098122 recebidos/executados peloCursor (recibo6525109514).
+401 codigo0b9c0ded82292ef3001d6f72df6dd384b5fd4aa7,CI5427/run41071229904 SUCCESS:
+frontend124115652105=2643PASS/0FAIL/0SKIP;backend124115615006=574PASS/0FAIL/26SKIP
+(600total). Suitesdirigidas adicionais sao separadas,nao eliminam26SKIP.
+Builds npm API eweb daCI0b PASS nomesmoSHA;nao foram produzidos neste lote
+imageIDs/digests de nova imagem deimplantacao. Nao reutilizar digest antigo como novo.
+HEAD posterior e706b02fad24f877ccbd3c165fc42a2a368c574c alteraSOMENTE2recibos;
+CI5428/run41071461266 SUCCESS terminal no proprioSHA,sem herdarCI do0b.
+
+Prova mecanica privada review434-preservation:11pathsallowlist(9da434+2recibos),
+7blobsSRC/testexatos434;arvoresserver/API/countshooks/useEntityCounts EXATAS686.
+CadastroCompleto INTEIRO retornaexato686 retirandosomentehunksdraft/persistBusy;
+settersreais preservam outroscampos/saveMutation. Contextoimutavel,getEmpresaLink,
+clienteId,historicoinativo,acentos,lookupleve preservadosporigualdadeintegra,nao swap.
+CountsNAOincluido,confirmado emcodigoerecibo separado;nao declarartudo integrado.
+
+Provas callback/AST/VM no434 reutilizadaspelosblobsidenticos:Cliente.getexato(sem
+filteramplo),ator/cliente/Empresa antigosbloqueados,ausencia/errosemForm,404/403/late;
+Contatos/Enderecos sync2->1,await/reject+toast/persistBusy/RBAC/dialogdraft/reabrirprops;
+skippednaofecha/naoreseta. BotaoContatoshabilitadodurantebusy,guardarefbloqueia.
+424baseline6PASS;desabilitarepoch/skippedreaisgera3FAIL1/2/4;resolverauditEmpresa
+real conservaEmpresa,nuncagroup_id. NaoReactmontado/SQLauditlog/browserPGdemonstrado.
+HTTPcanonicobackend342+PGlite/IdPsintetico:getencontraclientefora1apagina(1item/page),
+negativas401/403,snapshotclientesintacto;server/enginefechados. NaoE2E434/401.
+
+Revisao4016525135872:semnovobloqueadornodelta,não mergeMain/deploy/cargaliberados.
+Gatesrestantes:UIAPI PGintegrado,esquemaminimo/menorprivilegio,
+backup/retorno,reconciliacao/coorte,cargaespecifica,deploy eaceite. Contagens emlote
+separado431,semremovertenant/RBAC,errodepermissaonaoe0confiavel.
+Harness/coorte100 privados seguemsemacesso/novacondicao;semrebusca,recriacao oucarga.
+
+## Parecer historico -4312451/4321cb e mapa de composicao (2026-10-30)
 
 #4312451d91c04d1348c0aabc85945fece6505d8ae14 e4321cb967a837f92a9d54a34702e06f7f745e408e46:
 6jobsCI SUCCESS terminais porSHA. Provas reais AST/VM atualizadas encerram atorA
