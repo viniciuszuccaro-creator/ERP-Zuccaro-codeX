@@ -1,14 +1,13 @@
-## CURSOR — VIGENTE (#431 Pacote A count + Codex P1) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#431 tip 5b5c2cd69 CI 6/6) (2026-10-30 07:21 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
-| **Fix** | `cadastroCountFilter` canônico · parcial≠total · canal pin remainder · Contatos single-save |
-| **Tip anterior** | `28b8e8d15` CI frontend FAIL (hunk identidade sem registro) — corrigido |
-| **Testes** | cadastros-count-erro-vazio (erro/vazio/parcial/cross-tenant/sharing/contatos) + canal |
-| **#401** | tip `686ae322` estável · harness ainda pendente |
+| **PR** | **#431** tip **`5b5c2cd69`** — CI SUCCESS 6/6 |
+| **Fix** | `cadastroCountFilter` canônico · erro≠vazio · parcial≠total · canal pin · Contatos 1× save |
+| **Codex P1** | filtro compartilhado (sem 2ª implementação) |
+| **#401** | tip `686ae322` estável · harness ainda BLOCKED (SHA256 Codex) |
 | Preferir | #409 (não integrar #428 como delta distinto) |
-| Próximo | CI tip novo · Codex resolve P1 · etapas 2–5 em pacotes ortogonais |
+| Próximo | Pacote D cadastros restantes · etapas 2–5 ortogonais · harness Codex |
 
 **Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
 

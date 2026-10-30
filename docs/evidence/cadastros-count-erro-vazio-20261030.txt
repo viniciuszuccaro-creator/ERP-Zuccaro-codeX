@@ -1,31 +1,31 @@
-Pacote A / #431 — contagem erro≠vazio + filtro canônico (2026-10-30 America/Sao_Paulo)
+Pacote A / #431 — CI SUCCESS tip 5b5c2cd69 (2026-10-30 07:21 America/Sao_Paulo)
 =======================================================================================
-Base tip anterior: `28b8e8d15` (remainder lastGoodData) · fix comportamental `fde6dde99`
-Candidata #401 tip `686ae322` intacta. Preferir #409 (não fundir com #428).
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/431
+Branch: cursor/cadastros-count-erro-vazio-392b
+Tip: 5b5c2cd69c0904c812ce103376c03ddfd41b3bd1 — CI SUCCESS 6/6 (frontend+backend+compose × push/PR)
 
-## CI terminal tip `28b8e8d15`
-- frontend FAIL (3): publicação CANAL — `cursor-identidade-consolidacao.test.js` mudou
-  (import `scopeListCacheRemainder`) sem hunk autorizado em `clienteConferenciaHunks`.
-- Pin visualizer (ok local com remainder); canal exigia registrar after→before.
+## Cadeia de tips
+| Tip | Resultado |
+|-----|-----------|
+| fde6dde99 | fix filtro + erro≠vazio + Contatos adapter |
+| 28b8e8d15 | remainder lastGoodData — FAIL canal publicação |
+| 9d339ce58 | canal hunk + cadastroCountFilter — FAIL pins + (parcial) |
+| f45da87a3 | pins canônicos — FAIL typecheck JSDoc |
+| **5b5c2cd69** | JSDoc fetchCadastrosAllCounts — **SUCCESS 6/6** |
 
 ## Codex P1
-Duplicação `buildContextFilter` → extrair `src/components/lib/cadastroCountFilter.js`.
-Consumidores: `useEntityCounts.jsx` + `cadastrosAllCountsCore.js` (única política CAMPO_CTX/SHARED).
+`src/components/lib/cadastroCountFilter.js` — única política CAMPO_CTX/SHARED.
+Consumidores: useEntityCounts + cadastrosAllCountsCore.
 
-## Comportamentos comprovados (tests/cadastros-count-erro-vazio.test.js)
-| Caso | Resultado |
-|------|----------|
-| Erro consulta | rejects READ_COUNT_UNAVAILABLE — nunca Produto:0 |
-| Vazio real | Produto:0 + Marca:0 sem throw (≠ falha) |
-| Parcial | READ_COUNT_PARTIAL — não vira total |
-| Cross-empresa / cross-grupo | filtros distintos; sem isolamento removido |
-| Compartilhamento Cliente | `shared:true` + empresas_compartilhadas_ids no contrato |
-| Troca escopo lista | lastGoodData/everLoaded zerados (+ remainder pin) |
-| Tardia | queryKey escopo + placeholderData undefined; parcial batch descartada |
-| Contatos adapter | 1× Cliente.update · Form canônico · assertScope · sem 3º módulo |
+## Comportamentos comprovados
+- Erro consulta → badge `—` / banner; nunca zero falso
+- Vazio real (0) ≠ falha
+- Parcial → READ_COUNT_PARTIAL / batch incompleto descartado
+- Troca Grupo/Empresa → lastGoodData/everLoaded zerados (+ remainder pin e36231b3)
+- Tardia → queryKey escopo + placeholderData undefined
+- Sharing Cliente → shared:true + empresas_compartilhadas_ids
+- Negativos cross-empresa/grupo
+- Contatos: 1× Cliente.update · Form canônico · assertScope · sem 3º módulo
 
-## Não feito (proposital)
-- Remover isolamento Grupo/Empresa
-- Ampliar permissões / seed fictício
-- Auth VPS / harness paralelo / merge #401
-- Apagar `comercial/GerenciarContatosCliente.jsx`
+## Fora / intacto
+#401 tip 686ae322 · Auth VPS · harness privado · preferir #409 · sem seed fictício
