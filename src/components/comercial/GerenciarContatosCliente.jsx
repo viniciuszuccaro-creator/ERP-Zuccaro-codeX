@@ -82,14 +82,27 @@ export default function GerenciarContatosCliente({ clienteId }) {
       if (!asked.groupId && !asked.empresaId) {
         throw new Error("Contexto multiempresa obrigatório para carregar contatos.");
       }
-      const clientes = await base44.entities.Cliente.filter({ id: clienteId });
+      // Leitura canônica por id (HTTP GET / local get) — filter({id}) não transmite id na fachada HTTP.
+      let row = null;
+      try {
+        row = await base44.entities.Cliente.get(clienteId);
+      } catch (readErr) {
+        const status = Number(readErr?.status);
+        const msg = String(readErr?.message || "");
+        const notFound = status === 404
+          || /nao encontrado|não encontrado|not found/i.test(msg);
+        if (!notFound) throw readErr;
+        row = null;
+      }
       // Resposta tardia: escopo/ator ou geração já mudou — não promover a bind.
       if (!sameScope(asked, liveScopeRef.current) || genAtStart !== editorGenRef.current) {
         const err = new Error("READ_STALE_SCOPE");
         err.code = "READ_STALE_SCOPE";
         throw err;
       }
-      const row = clientes[0] || null;
+      if (row && String(row.id) !== String(clienteId)) {
+        throw new Error("Cliente retornado diverge do id solicitado.");
+      }
       if (!row) return null;
       const rowGroup = row.group_id || row.grupo_id || null;
       if (asked.groupId && rowGroup && String(rowGroup) !== String(asked.groupId)) {
