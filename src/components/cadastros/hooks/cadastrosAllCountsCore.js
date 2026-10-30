@@ -20,7 +20,9 @@ export function buildCadastrosAllCountsFilter(entityName, empresaId, groupId, em
   return buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) ?? {};
 }
 
+/** @param {string[]} [entities] @returns {Record<string, number>} */
 export function emptyCadastrosCounts(entities = ALL_ENTITIES) {
+  /** @type {Record<string, number>} */
   const vazio = {};
   entities.forEach((e) => { vazio[e] = 0; });
   return vazio;
@@ -28,9 +30,13 @@ export function emptyCadastrosCounts(entities = ALL_ENTITIES) {
 
 /**
  * Exige todas as entidades pedidas. Chave ausente = parcial ≠ total confirmado.
- * @throws {Error} READ_COUNT_PARTIAL
+ * @param {Record<string, unknown>|null|undefined} raw
+ * @param {string[]} [entities]
+ * @returns {Record<string, number>}
+ * @throws {Error & { code?: string, missing?: string[] }}
  */
 export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
+  /** @type {Record<string, number>} */
   const full = {};
   const missing = [];
   for (const e of entities) {
@@ -38,7 +44,7 @@ export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
       missing.push(e);
       continue;
     }
-    const n = Number(raw[e]);
+    const n = Number(/** @type {Record<string, unknown>} */ (raw || {})[e]);
     if (!Number.isFinite(n)) {
       missing.push(e);
       continue;
@@ -46,6 +52,7 @@ export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
     full[e] = n;
   }
   if (missing.length) {
+    /** @type {Error & { code?: string, missing?: string[] }} */
     const err = new Error('READ_COUNT_PARTIAL');
     err.code = 'READ_COUNT_PARTIAL';
     err.missing = missing;
@@ -56,6 +63,13 @@ export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
 
 /**
  * Conta em lote. Falha/parcial propaga (erro ≠ vazio; parcial ≠ total).
+ * @param {object} [options]
+ * @param {(name: string, body?: object) => Promise<{ data?: any }>} [options.invoke]
+ * @param {string|null} [options.empresaId]
+ * @param {string|null} [options.groupId]
+ * @param {Array<{ id?: string }>} [options.empresasDoGrupo]
+ * @param {string[]} [options.entities]
+ * @returns {Promise<Record<string, number>>}
  */
 export async function fetchCadastrosAllCounts({
   invoke,
@@ -78,12 +92,13 @@ export async function fetchCadastrosAllCounts({
 
   try {
     const res = await invoke('countEntities', { entities: batch });
-    const raw = res?.data?.counts || res?.data || {};
+    const raw = /** @type {Record<string, unknown>} */ (res?.data?.counts || res?.data || {});
     if (raw && typeof raw === 'object' && Object.keys(raw).length > 0) {
       return normalizeCadastrosCounts(raw, entities);
     }
   } catch (error) {
-    if (error?.code === 'READ_COUNT_PARTIAL' || error?.message === 'READ_COUNT_PARTIAL') {
+    const partial = /** @type {{ code?: string, message?: string }|null|undefined} */ (error);
+    if (partial?.code === 'READ_COUNT_PARTIAL' || partial?.message === 'READ_COUNT_PARTIAL') {
       throw error;
     }
     if (typeof console !== 'undefined') {
@@ -91,6 +106,7 @@ export async function fetchCadastrosAllCounts({
     }
   }
 
+  /** @type {Record<string, unknown>} */
   const result = {};
   const BATCH = 8;
   for (let i = 0; i < batch.length; i += BATCH) {
@@ -101,7 +117,7 @@ export async function fetchCadastrosAllCounts({
     if (!raw || typeof raw !== 'object') {
       throw new Error('READ_COUNT_UNAVAILABLE');
     }
-    Object.assign(result, raw);
+    Object.assign(result, /** @type {Record<string, unknown>} */ (raw));
   }
   return normalizeCadastrosCounts(result, entities);
 }
