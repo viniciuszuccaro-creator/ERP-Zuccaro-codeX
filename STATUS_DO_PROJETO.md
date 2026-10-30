@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#401 P2 geração A→B→A + P1 ator/sessão) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip código** | `04a1d713e` — contatosScopeGenerationRef A→B→A |
+| **Fix** | geração de escopo: save antigo descartado mesmo se chave final = início |
+| **P1** | ator/sessão + counts sessionKey + Visualizador load ≠ 0 (`42c63e538`) |
+| **Testes** | contatos-painel + count-erro-vazio **32 PASS** |
+| **Keep** | tenant-switch · epoch/skipped/hydrate |
+| Fora | merge main · seed · relaxar asserts |
+
+**Evidência:** `docs/evidence/prova-401-contatos-save-contexto-20261030.txt`
+**Próximo:** CI + `@codex review` tip `04a1d713e`.
+
 ## CURSOR — VIGENTE (#401 P1 ator/sessão Contatos + counts) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

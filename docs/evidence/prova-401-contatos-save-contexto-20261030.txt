@@ -39,3 +39,11 @@ Correção no existente:
 Provas: contatos-painel + count-erro-vazio **31 PASS** (inclui atorA→B com função REAL).
 Sem jsdom no ambiente Cursor — harness Chrome permanece privado Codex.
 Tenant-switch CONTEXT_CHANGED preservado.
+
+## P2 Codex 3a80e0ffe — geração A→B→A (2026-10-30 America/Sao_Paulo)
+Achado: save inicia em A, operador A→B→A, conclusão antes do GET de A; scopeAtStart
+coincidia com key atual → bump epoch → GET descartado / hydrate pending.
+
+Correção: `contatosScopeGenerationRef` incrementa a cada mudança de painelScopeKey;
+persist captura `generationAtStart` e descarta se geração mudou **mesmo** com chave final
+igual. Teste: A→B→A epoch intacto / rascunho intacto — **32 PASS**.
