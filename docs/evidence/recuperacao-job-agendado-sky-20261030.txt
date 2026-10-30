@@ -14,3 +14,7 @@ JobAgendado já usa useCadastroReopenOnIdentity (abertura única).
 
 ## Testes
 `tests/recuperacao-job-agendado-sky.test.js` — 1 PASS
+
+## CI SUCCESS tip 109f8d6c8 (2026-10-30 America/Sao_Paulo)
+- Runs: push `41102546943` · PR `41102576414` — SUCCESS 6/6.
+- CI verde ≠ encerramento: aguarda `@codex review` montado.
