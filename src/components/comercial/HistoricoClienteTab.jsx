@@ -55,9 +55,21 @@ export function isHistoricoClientePedidosPageComplete(meta, pedidos) {
 }
 
 /**
- * @param {{ pedidos?: unknown[], meta?: { hasMore?: boolean, total?: number } | null }} [options]
+ * Taxa de entrega a partir do status do Pedido só no legado (`Entregue`).
+ * HTTP canônico (`PEDIDO_STATUS`) termina em `FINALIZADO`; entrega comprovada
+ * vive na entidade Entrega — sem adapter auxiliar, taxa fica indisponível (≠ 0%).
+ *
+ * @param {{
+ *   pedidos?: unknown[],
+ *   meta?: { hasMore?: boolean, total?: number } | null,
+ *   deliveryRateFromPedidoStatus?: boolean,
+ * }} [options]
  */
-export function resolveHistoricoClienteKpisFromPage({ pedidos, meta } = {}) {
+export function resolveHistoricoClienteKpisFromPage({
+  pedidos,
+  meta,
+  deliveryRateFromPedidoStatus = false,
+} = {}) {
   const rows = Array.isArray(pedidos) ? pedidos : [];
   const complete = isHistoricoClientePedidosPageComplete(meta, rows);
   const totalMeta = Number(meta?.total);
@@ -75,11 +87,14 @@ export function resolveHistoricoClienteKpisFromPage({ pedidos, meta } = {}) {
   const valorTotalHistorico = ativos.reduce((sum, p) => sum + historicoPedidoValorTotal(p), 0);
   const totalPedidos = rows.length;
   const ticketMedio = ativos.length > 0 ? valorTotalHistorico / ativos.length : 0;
-  const pedidosEntregues = rows.filter((p) => {
-    const s = String(p?.status || "").toUpperCase();
-    return s === "ENTREGUE" || s === "DELIVERED";
-  }).length;
-  const taxaEntrega = totalPedidos > 0 ? (pedidosEntregues / totalPedidos) * 100 : 0;
+  let taxaEntrega = null;
+  if (deliveryRateFromPedidoStatus) {
+    const pedidosEntregues = rows.filter((p) => {
+      const s = String(p?.status || "").toUpperCase();
+      return s === "ENTREGUE" || s === "DELIVERED";
+    }).length;
+    taxaEntrega = totalPedidos > 0 ? (pedidosEntregues / totalPedidos) * 100 : 0;
+  }
   return {
     moneyIncomplete: false,
     totalPedidos,
@@ -286,7 +301,12 @@ export default function HistoricoClienteTab({ formData, setFormData: _setFormDat
   const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
   const kpisDisponiveis = consultaPedidosHabilitada && !pedidosErro && pedidosPage != null;
   const resolved = kpisDisponiveis
-    ? resolveHistoricoClienteKpisFromPage({ pedidos, meta: pedidosPage?.meta })
+    ? resolveHistoricoClienteKpisFromPage({
+        pedidos,
+        meta: pedidosPage?.meta,
+        // HTTP: status Pedido ≠ prova de entrega (FINALIZADO ≠ ENTREGUE); auxiliares fail-closed.
+        deliveryRateFromPedidoStatus: !httpMode,
+      })
     : {
         moneyIncomplete: false,
         totalPedidos: null,
@@ -420,10 +440,15 @@ export default function HistoricoClienteTab({ formData, setFormData: _setFormDat
                 <p className="text-2xl font-bold text-orange-600">
                   {pedidosFetching && !kpisDisponiveis
                     ? "…"
-                    : resolved.moneyIncomplete
+                    : resolved.taxaEntrega == null
                       ? "—"
                       : fmtPct(resolved.taxaEntrega)}
                 </p>
+                {httpMode && kpisDisponiveis && !resolved.moneyIncomplete && resolved.taxaEntrega == null && (
+                  <p className="text-[10px] text-slate-500" data-action="historico-cliente-tab-taxa-http-indisponivel">
+                    Exige Entrega HTTP — não inferir 0% de Pedido.FINALIZADO
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>

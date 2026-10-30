@@ -46,3 +46,8 @@ Funil×3 / Separacao×IA já em #408 tip 803764887 CI SUCCESS (capacidades doc d
 Próximo
 -------
 CI + @codex review deste tip; auxiliar HTTP CR/Entrega/NF quando adapter existir.
+
+## Codex P2 taxa HTTP (2026-10-30 America/Sao_Paulo)
+- Achado: PEDIDO_STATUS sem ENTREGUE; taxa 0% falsa em HTTP.
+- Fix: deliveryRateFromPedidoStatus só legado; HTTP taxa null + hint.
+- Testes: 6 PASS.

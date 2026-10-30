@@ -121,6 +121,25 @@ test('helpers: página incompleta não publica ticket/top', async () => {
   assert.equal(incomplete.totalPedidos, 80);
   assert.equal(incomplete.ticketMedio, null);
   assert.equal(incomplete.valorTotalHistorico, null);
+  assert.equal(incomplete.taxaEntrega, null);
+
+  // HTTP canônico: sem deliveryRateFromPedidoStatus → taxa null (≠ 0% de FINALIZADO).
+  const httpComplete = resolveHistoricoClienteKpisFromPage({
+    pedidos: [{ id: '1', status: 'FINALIZADO', total: 100 }],
+    meta: { total: 1, hasMore: false, limit: 50, offset: 0 },
+  });
+  assert.equal(httpComplete.moneyIncomplete, false);
+  assert.equal(httpComplete.taxaEntrega, null);
+
+  const legadoTaxa = resolveHistoricoClienteKpisFromPage({
+    pedidos: [
+      { id: '1', status: 'Entregue', valor_total: 100 },
+      { id: '2', status: 'Aberto', valor_total: 50 },
+    ],
+    meta: { total: 2, hasMore: false },
+    deliveryRateFromPedidoStatus: true,
+  });
+  assert.equal(legadoTaxa.taxaEntrega, 50);
 
   const top = computeHistoricoClienteTopProdutos([
     {
@@ -219,6 +238,38 @@ test('HTTP hasMore: contagem meta; ticket "—"; top incompleto; auxiliares fail
   assert.ok(findByAction(tree, 'historico-cliente-tab-kpi-incompleto').length >= 1);
   assert.ok(findByAction(tree, 'historico-cliente-tab-top-incompleto').length >= 1);
   assert.ok(findByAction(tree, 'historico-cliente-tab-auxiliar-http-indisponivel').length >= 1);
+});
+
+test('HTTP página completa: taxa entrega "—" (≠ 0% de FINALIZADO); ticket ok', async () => {
+  const compiled = await compileJsx(new URL('../src/components/comercial/HistoricoClienteTab.jsx', import.meta.url));
+  const { sandbox } = buildSandbox({
+    queryResults: {
+      'historico-cliente-tab-pedidos': {
+        data: {
+          data: [
+            { id: '1', status: 'FINALIZADO', total: 80, itens: [{ produto_id: 'a', descricao: 'A', quantidade: 1, total: 80 }] },
+          ],
+          meta: { limit: 50, offset: 0, total: 1, hasMore: false },
+        },
+        isError: false,
+        isFetching: false,
+      },
+    },
+  });
+  vm.runInNewContext(`var React = require("react");\n${compiled}`, sandbox);
+  const Comp = sandbox.exports.default;
+  const tree = Comp({ formData: { cliente_id: 'c1', empresa_id: 'e1', group_id: 'g1' } });
+  const kpiNode = findByAction(tree, 'historico-cliente-tab-kpis')[0];
+  const kpiText = textOf(kpiNode);
+  assert.ok(kpiText.includes('R$'), 'ticket monetário publicado com página completa');
+  // Hint menciona "0%" como anti-padrão; o valor publicado deve ser "—", não "0%".
+  assert.ok(findByAction(tree, 'historico-cliente-tab-taxa-http-indisponivel').length >= 1);
+  const taxaHint = textOf(findByAction(tree, 'historico-cliente-tab-taxa-http-indisponivel')[0]);
+  assert.ok(taxaHint.includes('0%'));
+  // Removido o hint, o bloco KPI não deve restar com percentual publicado.
+  const withoutHint = kpiText.replace(taxaHint, '');
+  assert.ok(!/\d+%/.test(withoutHint), `taxa publicada indevida: ${withoutHint.slice(0, 240)}`);
+  assert.equal(findByAction(tree, 'historico-cliente-tab-top-incompleto').length, 0);
 });
 
 test('duas leituras do mesmo queryFn HTTP produzem uma chamada loadHttp por invocação controlada', async () => {
