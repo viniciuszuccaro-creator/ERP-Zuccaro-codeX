@@ -1,14 +1,17 @@
-## CURSOR — VIGENTE (#401 tip contagens + P2 Visualizador) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 contagens INCORPORADAS tip 88332170e) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **#401** | tip prévio `62cf79469` CI SUCCESS; P2 Visualizador countsUnavailable neste tip |
-| **Keep** | #434 Contatos/Endereços/Completo · API/backend |
-| **Contagens** | **INCORPORADAS** (#431 via #440) + erro≠zero no Visualizador |
-| Fora | merge main · pin cego · page.length KPI · 2ª candidata |
+| **#401 tip** | **`88332170e`** — CI run **41080598445 SUCCESS** 6/6 |
+| **Cadeia** | `eab13aa5f` (port #431) → `62cf79469` (CI5444) → `88332170e` (P2 Visualizador) |
+| **Contagens** | **INCORPORADAS** (#431 via mapa #440) — erro≠vazio · ator no queryKey · sem page.length |
+| **P2** | Visualizador `countsUnavailable` → totalCount null / badge "—" (discussion_r4425266951) |
+| **Keep** | #434 Contatos/Endereços/Completo · API/backend · Cliente.get/draft/skipped |
+| **Indep.** | #441 HistoricoOrigem/Compras HTTP (fora candidata) |
+| Fora | merge main · pin cego · 2ª candidata · harness VPS |
 
 **Evidência:** `docs/evidence/incorporacao-contagens-431-into-401-20261030.txt`
-**Próximo:** CI + @codex deste tip P2.
+**Próximo:** `@codex review` tip `88332170e`; resolver thread P2 se limpo.
 
 
 ## Estado vigente - composicao integrada em revisao (2026-10-29)

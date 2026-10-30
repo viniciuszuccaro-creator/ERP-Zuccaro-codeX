@@ -39,3 +39,13 @@ Merge main · deploy · VPS · seed · 2ª candidata · swap serviço/repo
 discussion_r4425266951: erro de count não vira total 0 / seleção cross-page.
 Visualizador: totalCount null + badge "—" + bloqueio activate/delete-all.
 Remainder scopeListCache estendido (hunks exact); golden e36231b3 mantido.
+
+## Tip composto publicado (2026-10-30 America/Sao_Paulo)
+| Tip | CI | Nota |
+|-----|-----|------|
+| `eab13aa5f` | FAIL CI5444 | port inicial |
+| `62cf79469` | SUCCESS 41079280818 | identidade+ator+sem page.length |
+| `88332170e` | **SUCCESS 41080598445** | P2 Visualizador countsUnavailable |
+
+SHA remoto candidata: `88332170ed29f88fb002801f8d26b33349ddb484`
+Pedido `@codex review` neste tip. Sem merge main.
