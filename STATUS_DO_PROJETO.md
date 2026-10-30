@@ -1,19 +1,19 @@
-## CURSOR — VIGENTE (#446 Adicionar canônico modal — prova rascunho) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#446 tip af95c4cca CI SUCCESS — modal canônico) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
+| **Tip** | `af95c4cca` — CI SUCCESS 6/6 (`41110477273` push · `41110487857` PR) |
 | **Fluxo** | Histórico Adicionar → `AdicionarItemRevendaModal` + `produtoInicial` → qty editável → `itens_revenda` |
 | **Policy** | `seedProdutoFromHistorico` — freq≠demanda; ausente≠UN/zero; preço zero comprovado ok |
 | **Leitura** | Detalhes/Painel: callback `undefined` — Adicionar ausente |
 | **Provas** | rejeição sem id · duplicidade toast · clique reabre modal · `bloquearEdicao` |
 | **Testes** | adicionar-historico-modal + wire + mount — **10 PASS** |
-| **CI anterior** | tip `f7a122ac1` SUCCESS 6/6 — este tip aguarda CI |
-| **Codex** | pedir review montado — CI verde ≠ aceite Pedido real |
+| **Codex** | `@codex review` pedido — CI verde ≠ aceite Pedido real / harness |
 | **#401** | fora — sem integrar antes de Codex |
 | Fora | merge main · deploy · seed · API antiga |
 
 **Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
-**Próximo:** push + CI + `@codex review`; #447 CI; pacote indep. se fila vazia.
+**Próximo:** aceite Codex montado; #447 CI peel; #401 intacta.
 
 ## CURSOR — VIGENTE (#446 wire tip f7a122ac1 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 

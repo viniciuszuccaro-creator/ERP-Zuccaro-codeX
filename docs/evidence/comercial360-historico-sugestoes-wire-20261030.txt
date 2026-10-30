@@ -65,3 +65,8 @@ Correção (existente):
 
 Testes locais: `comercial360-adicionar-historico-modal` + wire + mount — 10 PASS.
 Não feito: harness navegador→API→PG; integração #401; aceite Codex montado.
+
+## CI SUCCESS tip af95c4cca (2026-10-30 America/Sao_Paulo)
+- Runs: push `41110477273` · PR `41110487857` — SUCCESS 6/6.
+- Modal canônico + seed policy + leitura fail-closed.
+- CI verde ≠ encerramento: aguarda `@codex` montado; #401 fora.
