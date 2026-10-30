@@ -24,7 +24,9 @@ const hashes = [
   ['src/components/crm/FunilVendasAvancado.jsx','f06224b74b17273cf6f10edb54d4c8bab18574990e7f968b0b9e674130ffa588'],
   ['src/pages/DashboardCorporativo.jsx','5b7e965aa4955815f753684167f36221e5b9d985355ec125603044e7919248de'],
   ['src/components/cadastros/DashboardCanaisOrigem.jsx','5753ef70c87aeb32d6f25e4be14892b88cf1aaf6bfd137fcd6c6dabbfc050dfb'],
-  ['src/components/cadastros/HistoricoProduto.jsx','bfdd237c2e172268d275a6727778f72ad229b34f77057860525a87c5aa054c2c'],
+  // Graduação 2026-10-30: HTTP fail-closed (sem filterInContext Pedido/OP/mov em HTTP; ≠ zeros).
+  // toFixed peel stage45 permanece; remainder atualizado de bfdd237c… → 4c74e841…
+  ['src/components/cadastros/HistoricoProduto.jsx','4c74e8410a0e39c2b35df7b897dfa74f4c887ef93b2285810602c5372772a743'],
   ['src/components/producao/DashboardRefugoIA.jsx','65e14a60239cbf60dee4ed080cf43e3c874d23187663497bb5fd0c70dac7192e'],
 ];
 const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');

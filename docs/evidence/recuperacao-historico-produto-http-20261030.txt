@@ -1,0 +1,27 @@
+Recuperação — HistoricoProduto HTTP fail-closed (2026-10-30 America/Sao_Paulo)
+================================================================================
+Base: #432 tip 2bc3dc6c7 (independente da prep #434 / candidata #401).
+Referência matriz: recuperacao-erp-integra-capacidades — agregados Pedido em HTTP.
+
+## Diagnóstico
+`HistoricoProduto.jsx` (aba Produto) usava `filterInContext('Pedido'|OP|Mov)` com
+enabled só por contexto — em HTTP a facade podia resolver vazio e a UI mostrava
+zeros como se não houvesse vendas (perda falsa).
+
+HistoricoProdutosCliente (cliente) já tinha HTTP canônico; este pacote é o
+histórico por PRODUTO no cadastro — capacidade distinta (keep both).
+
+## Correção no existente
+| Item | Decisão |
+|------|---------|
+| Policy `historicoProdutoConsultaPolicy.js` | HTTP detect + legado enabled |
+| Queries | `enabled: legadoConsultaHabilitada` — sem facade HTTP |
+| Métricas | null em HTTP; UI "—" / banner (≠ zero) |
+| Legado | filterInContext preservado |
+| stage44 | graduação remainder toFixed-peel → hash 4c74e841… |
+
+## Fora
+API dedicada pedidos-por-produto · merge #401 · deploy · seed fictício
+
+## Checks
+historico-produto-http-failclosed + primitive-ui-boundary (HistoricoProduto) → PASS
