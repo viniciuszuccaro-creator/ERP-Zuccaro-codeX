@@ -1,0 +1,35 @@
+Recuperação — DetalhesCliente KPIs/Últimos Pedidos HTTP fail-closed (2026-10-30 America/Sao_Paulo)
+==============================================================================================
+Base: #432 tip 2bc3dc6c7 (independente de #435 HistoricoProduto / prep #434 / candidata #401).
+Reutiliza: loadPedidosHistoricoHttp + historicoSessionCacheKey (HistoricoProdutosCliente).
+
+## Diagnóstico
+DetalhesCliente usava filterInContext('Pedido') com enabled só por contexto —
+em HTTP a facade podia resolver [] e KPIs mostravam R$ 0,00 / 0 pedidos (perda falsa).
+Histórico de Produtos no mesmo painel já era HTTP canônico; KPIs ficavam inconsistentes.
+
+## Correção no existente
+| Item | Decisão |
+|------|---------|
+| HTTP | loadPedidosHistoricoHttp (mesmo contrato do histórico) |
+| Legado | filterInContext preservado |
+| KPIs | null → "—" quando indisponível/erro; não inventar zero |
+| Banner | data-action detalhes-cliente-pedidos-http-indisponivel |
+| Keep both | DetalhesCliente ≠ HistoricoProdutosCliente (capacidades distintas) |
+
+## Fora
+merge #401 · deploy · seed fictício · API dedicada agregados
+
+## Checks
+detalhes-cliente-pedidos-http-failclosed + comercial-detalhes-historico-mount → 7 PASS
+
+## Codex P1 (tip pós-aa4f3bca2)
+KPIs money não usam 1ª página quando meta.hasMore/total>len; contagem via meta.total; banner data-action detalhes-cliente-kpis-pagina-incompleta.
+
+## Tip 8c0d05c16 FAIL typecheck (não atribuir)
+JSDoc resolveDetalhesClienteKpisFromPage sem pedidos/meta → tip seguinte.
+
+## CI SUCCESS tip f84f63ed2 (2026-10-30 America/Sao_Paulo)
+- Runs: 41057269903 (pull_request) · 41057261061 (push) — 6/6 SUCCESS.
+- Codex: tip f84f63ed2 sem achados major.
+- Não atribuir FAIL ancestral 8c0d05c16 / 7039d0221 / 506c4be3a.

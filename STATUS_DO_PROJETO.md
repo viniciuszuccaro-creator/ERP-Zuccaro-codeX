@@ -1,3 +1,79 @@
+## CURSOR — VIGENTE (#436 FECHADO tip f84f63ed2) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** tip **`f84f63ed2`** — CI SUCCESS 6/6 (push `41057261061` + PR `41057269903`) |
+| **Codex** | tip `f84f63ed2` sem achados major (P1 KPIs 1ª página ENCERRADO em `8c0d05c16`) |
+| **Sobre** | não atribuir FAIL import `7039d0221` nem typecheck `8c0d05c16` / docs `506c4be3a` |
+| **#437** | HistoricoClienteTab HTTP — tip `7eeeec481` (pacote paralelo) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI #437; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
+## CURSOR — VIGENTE (#436 JSDoc KPIs typecheck) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** `cursor/recuperacao-detalhes-cliente-http-392b` |
+| **Sobre** | tip `8c0d05c16` typecheck FAIL — **não atribuir** |
+| **Causa** | `resolveDetalhesClienteKpisFromPage` sem JSDoc de `pedidos`/`meta` |
+| **Fix** | `@param {{ pedidos?, meta? }}` explícito |
+| **#435** | tip `b51214245` CI SUCCESS 6/6 + Codex |
+| Preferir | CI deste tip; #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
+## CURSOR — VIGENTE (#435 CI SUCCESS 6/6 + Codex) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#435** tip **`b51214245`** / código `9945cd390` — CI SUCCESS 6/6 |
+| **Codex** | tip `b51214245` sem achados major (hunks exactos + JSDoc) |
+| **Sobre** | não atribuir FAILS `450c12d8f`/`b0510f41c`/`460b8155e` |
+| **#436** | tip `8c0d05c16` KPIs página incompleta — aguardar CI |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | #436 CI; candidata #401 intacta |
+
+**Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
+
+## CURSOR — VIGENTE (#436 KPIs ≠ 1ª página) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** tip pós-`aa4f3bca2` |
+| **Codex P1** | money KPIs fail-closed se `hasMore`/total incompleto; qtd=`meta.total` |
+| **Sobre** | tip `7039d0221` FAIL import — **não atribuir** |
+| Preferir | CI deste tip; #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
+## CURSOR — VIGENTE (#436 import assertion + HTTP KPIs) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** `cursor/recuperacao-detalhes-cliente-http-392b` |
+| **Sobre** | tip `7039d0221` frontend FAIL — **não atribuir** |
+| **Causa** | `comercial-clientes-tab-v24` esperava import default-only |
+| **Fix** | regex aceita default+named (`loadPedidosHistoricoHttp`) |
+| Preferir | CI deste tip; #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
+## CURSOR — VIGENTE (DetalhesCliente KPIs HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-detalhes-cliente-http-392b` ← #432 `2bc3dc6c7` |
+| **Fix** | KPIs/Últimos Pedidos: HTTP via `loadPedidosHistoricoHttp`; legado preservado |
+| **UI** | erro/sem sessão → "—"/banner; não R$ 0,00 |
+| **Keep both** | DetalhesCliente ≠ HistoricoProdutosCliente |
+| **#435** | HistoricoProduto (produto) pacote paralelo — tip peel stage44 |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI deste tip; candidata #401 intacta |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

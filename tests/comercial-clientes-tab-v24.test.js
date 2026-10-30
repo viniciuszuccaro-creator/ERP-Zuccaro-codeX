@@ -138,7 +138,12 @@ test('DetalhesCliente monta HistoricoProdutosCliente no fluxo Comercial360', asy
     new URL('../src/components/comercial/DetalhesCliente.jsx', import.meta.url),
     'utf8',
   );
-  assert.match(detalhes, /import HistoricoProdutosCliente from ["']\.\/HistoricoProdutosCliente["']/);
+  // Default + named (loadPedidosHistoricoHttp) — HTTP KPIs reutilizam o loader do histórico.
+  assert.match(
+    detalhes,
+    /import HistoricoProdutosCliente(?:,\s*\{[\s\S]*?\})?\s+from ["']\.\/HistoricoProdutosCliente["']/,
+  );
+  assert.match(detalhes, /loadPedidosHistoricoHttp/);
   assert.match(detalhes, /data-action="cliente-360-historico-produtos"/);
   assert.match(detalhes, /<HistoricoProdutosCliente\s+clienteId=\{cliente\.id\}\s*\/>/);
   assert.equal((detalhes.match(/<HistoricoProdutosCliente\b/g) || []).length, 1);
