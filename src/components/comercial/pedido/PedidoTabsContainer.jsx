@@ -68,10 +68,13 @@ export default function PedidoTabsContainer({
     || (formData?.cliente_id ? { id: formData.cliente_id } : null);
 
   function geracaoHistoricoAtual() {
+    // Pedido e visual em slots distintos — formData.empresa_id não mascara troca do seletor.
     return buildHistoricoModalGeracao({
       clienteId: formData?.cliente_id || null,
-      empresaId: formData?.empresa_id || empresaAtual?.id || null,
-      groupId: formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null,
+      pedidoEmpresaId: formData?.empresa_id || null,
+      pedidoGroupId: formData?.group_id || formData?.grupo_id || null,
+      visualEmpresaId: empresaAtual?.id || null,
+      visualGroupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
       actorId: user?.id || null,
     });
   }

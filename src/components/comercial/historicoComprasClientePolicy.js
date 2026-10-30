@@ -169,19 +169,28 @@ export function pedidoItensBloqueadosPorStatus(formData) {
 }
 
 /**
- * Geração imutável do modal histórico — cliente/empresa/grupo/ator.
+ * Geração imutável do modal histórico.
+ * Pedido (formData) e contexto visual (seletor global) entram em slots separados:
+ * trocar só o visual com pedido já contendo empresa_id/group_id ainda invalida.
  * Confirmação com geracao ≠ atual: modal obsoleto (não inserir no rascunho novo).
  */
 export function buildHistoricoModalGeracao({
   clienteId = null,
+  pedidoEmpresaId = null,
+  pedidoGroupId = null,
+  visualEmpresaId = null,
+  visualGroupId = null,
+  actorId = null,
+  // Compat legada (mescla → pedido; preferir slots explícitos).
   empresaId = null,
   groupId = null,
-  actorId = null,
 } = {}) {
   return JSON.stringify([
     clienteId || null,
-    empresaId || null,
-    groupId || null,
+    pedidoEmpresaId || empresaId || null,
+    pedidoGroupId || groupId || null,
+    visualEmpresaId || null,
+    visualGroupId || null,
     actorId || null,
   ]);
 }

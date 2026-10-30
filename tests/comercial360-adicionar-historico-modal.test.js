@@ -18,18 +18,31 @@ import {
 
 const read = (p) => readFileSync(p, 'utf8');
 
-test('buildHistoricoModalGeracao + numeroComprovado: contexto e zero comprovado', () => {
+test('buildHistoricoModalGeracao + numeroComprovado: pedido≠visual; zero comprovado', () => {
   assert.equal(
-    buildHistoricoModalGeracao({ clienteId: 'c1', empresaId: 'e1', groupId: 'g1', actorId: 'u1' }),
-    buildHistoricoModalGeracao({ clienteId: 'c1', empresaId: 'e1', groupId: 'g1', actorId: 'u1' }),
+    buildHistoricoModalGeracao({
+      clienteId: 'c1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
+      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1',
+    }),
+    buildHistoricoModalGeracao({
+      clienteId: 'c1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
+      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1',
+    }),
   );
   assert.notEqual(
-    buildHistoricoModalGeracao({ clienteId: 'c1', empresaId: 'e1', groupId: 'g1', actorId: 'u1' }),
-    buildHistoricoModalGeracao({ clienteId: 'c2', empresaId: 'e1', groupId: 'g1', actorId: 'u1' }),
+    buildHistoricoModalGeracao({ clienteId: 'c1', pedidoEmpresaId: 'e1', visualEmpresaId: 'v1', actorId: 'u1' }),
+    buildHistoricoModalGeracao({ clienteId: 'c2', pedidoEmpresaId: 'e1', visualEmpresaId: 'v1', actorId: 'u1' }),
   );
+  // Pedido fixo + troca só do visual → gerações distintas (Codex P1).
   assert.notEqual(
-    buildHistoricoModalGeracao({ clienteId: 'c1', empresaId: 'eA', groupId: 'g1', actorId: 'u1' }),
-    buildHistoricoModalGeracao({ clienteId: 'c1', empresaId: 'eB', groupId: 'g1', actorId: 'u1' }),
+    buildHistoricoModalGeracao({
+      clienteId: 'c1', pedidoEmpresaId: 'pedido-A', pedidoGroupId: 'g1',
+      visualEmpresaId: 'visual-A', visualGroupId: 'g1', actorId: 'u1',
+    }),
+    buildHistoricoModalGeracao({
+      clienteId: 'c1', pedidoEmpresaId: 'pedido-A', pedidoGroupId: 'g1',
+      visualEmpresaId: 'visual-B', visualGroupId: 'g1', actorId: 'u1',
+    }),
   );
   assert.equal(numeroComprovado(0), 0);
   assert.equal(numeroComprovado(''), null);
@@ -96,6 +109,8 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /pedidoItensBloqueadosPorStatus/);
   assert.match(src, /buildHistoricoModalGeracao/);
   assert.match(src, /modalHistoricoGeracao/);
+  assert.match(src, /pedidoEmpresaId/);
+  assert.match(src, /visualEmpresaId/);
   assert.match(src, /Contexto alterado/);
   assert.match(src, /onAdicionarHistorico/);
   assert.match(src, /confirmandoHistoricoRef/);
@@ -112,9 +127,12 @@ test('Modal: qty=1; preço/custo/estoque/margem fail-closed; ausente≠UN/zero/S
   assert.match(src, /precoComprovadoDisponivel/);
   assert.match(src, /custoComprovado/);
   assert.match(src, /estoqueComprovado/);
+  assert.match(src, /margemVioladaEfetiva/);
   assert.match(src, /Custo\/estoque\/margem\/Sob Encomenda só com fonte/);
   assert.match(src, /Justificativa de margem NÃO autoriza fabricar preço/);
   assert.doesNotMatch(src, /estoque_disponivel:\s*produtoSelecionado\.estoque_disponivel \|\| .* \|\| 0/);
+  // Confirm/UI não usam margem_violada crua do calculador (custo 0 inventado).
+  assert.doesNotMatch(src, /disabled=\{[^}]*calculo\?\.margem_violada && !justificativaDesconto/);
 });
 
 test('Top10 e HistoricoClienteTab: leitura sem callback — botão ausente/disabled', () => {

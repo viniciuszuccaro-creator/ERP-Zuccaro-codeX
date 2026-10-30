@@ -131,6 +131,15 @@ export default function AdicionarItemRevendaModal({
   })();
   const precoComprovadoDisponivel = itemTabelaComprovado != null || precoBaseComprovado != null;
 
+  // Custo/estoque comprovados no escopo do produto selecionado — ausente ≠ 0 fabricado.
+  const custoComprovado = produtoSelecionado
+    ? numeroComprovado(produtoSelecionado.custo_medio ?? produtoSelecionado.custo_aquisicao)
+    : null;
+  const estoqueComprovado = produtoSelecionado
+    ? numeroComprovado(produtoSelecionado.estoque_disponivel ?? produtoSelecionado.estoque_atual)
+    : null;
+  const margemConhecida = custoComprovado != null;
+
   const calculo = produtoSelecionado && precoComprovadoDisponivel ? calcularPrecoItem({
     produto: {
       ...produtoSelecionado,
@@ -147,6 +156,9 @@ export default function AdicionarItemRevendaModal({
     margemMinimaSistema: margemMinimaSistema
   }) : null;
 
+  // Calculador pode devolver margem_violada com custo 0 inventado — só efetiva se custo comprovado.
+  const margemVioladaEfetiva = Boolean(margemConhecida && calculo?.margem_violada);
+
   const handleAdicionarItem = () => {
     if (!acaoHabilitada) {
       alert("Selecione um contexto de grupo/empresa e confirme permissao para alterar pedido comercial.");
@@ -160,21 +172,25 @@ export default function AdicionarItemRevendaModal({
       return;
     }
 
-    const custoComprovado = numeroComprovado(
-      produtoSelecionado.custo_medio ?? produtoSelecionado.custo_aquisicao,
-    );
-    const estoqueComprovado = numeroComprovado(
-      produtoSelecionado.estoque_disponivel ?? produtoSelecionado.estoque_atual,
-    );
     // Margem só com custo comprovado; ausente ≠ margem 0 / violação fabricada.
-    const margemConhecida = custoComprovado != null;
-    if (margemConhecida && calculo.margem_violada && !justificativaDesconto.trim()) {
+    if (margemVioladaEfetiva && !justificativaDesconto.trim()) {
       alert("Margem mínima violada! É necessário informar uma justificativa para o desconto.");
       return;
     }
     // Justificativa de margem NÃO autoriza fabricar preço — preço já validado acima.
 
     const unidadeComprovada = produtoSelecionado.unidade_medida || produtoSelecionado.unidade_sigla || null;
+    const detalhesCalculo = {
+      preco_inicial: calculo.detalhes_calculo?.preco_inicial,
+      desconto_padrao_cliente_valor: calculo.detalhes_calculo?.desconto_padrao_cliente_valor,
+      desconto_item_valor: calculo.detalhes_calculo?.desconto_item_valor,
+      preco_final: calculo.detalhes_calculo?.preco_final,
+    };
+    if (margemConhecida) {
+      detalhesCalculo.custo = custoComprovado;
+      detalhesCalculo.margem_valor = calculo.margem_valor;
+      detalhesCalculo.margem_percentual = calculo.margem_percentual;
+    }
     const novoItem = {
       produto_id: produtoSelecionado.id,
       codigo_sku: produtoSelecionado.codigo,
@@ -190,7 +206,7 @@ export default function AdicionarItemRevendaModal({
       justificativa_desconto: justificativaDesconto,
       ncm: produtoSelecionado.ncm,
       observacoes: observacoes,
-      _calculo_detalhado: calculo.detalhes_calculo,
+      _calculo_detalhado: detalhesCalculo,
     };
     if (precoBaseComprovado != null) novoItem.preco_base_produto = precoBaseComprovado;
     if (calculo.origem_preco === "tabela_preco") novoItem.preco_tabela = calculo.preco_unitario_bruto;
@@ -454,22 +470,28 @@ export default function AdicionarItemRevendaModal({
                       <div className="space-y-2 border-l pl-4">
                         <div className="flex justify-between">
                           <span className="text-slate-600">Custo Unitário:</span>
-                          <span className="font-semibold">R$ {calculo.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          <span className="font-semibold">
+                            {margemConhecida
+                              ? `R$ ${custoComprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              : '—'}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Margem:</span>
                           <span className={`font-bold ${
-                            calculo.margem_violada ? 'text-red-600' : 'text-green-600'
+                            !margemConhecida ? 'text-slate-500' : margemVioladaEfetiva ? 'text-red-600' : 'text-green-600'
                           }`}>
-                            {calculo.margem_percentual.toFixed(2)}%
+                            {margemConhecida ? `${calculo.margem_percentual.toFixed(2)}%` : '—'}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Lucro Unitário:</span>
                           <span className={`font-semibold ${
-                            calculo.margem_violada ? 'text-red-600' : 'text-green-600'
+                            !margemConhecida ? 'text-slate-500' : margemVioladaEfetiva ? 'text-red-600' : 'text-green-600'
                           }`}>
-                            R$ {((calculo.preco_unitario - calculo.custo_unitario)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {margemConhecida
+                              ? `R$ ${((calculo.preco_unitario - custoComprovado)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              : '—'}
                           </span>
                         </div>
                         <div className="flex justify-between border-t pt-2">
@@ -481,7 +503,7 @@ export default function AdicionarItemRevendaModal({
                       </div>
                     </div>
 
-                    {calculo.margem_violada && (
+                    {margemVioladaEfetiva && (
                       <Card className="border-red-300 bg-red-50">
                         <CardContent className="p-3">
                           <div className="flex items-center gap-2">
@@ -502,7 +524,7 @@ export default function AdicionarItemRevendaModal({
                       </Card>
                     )}
 
-                    {quantidade > (produtoSelecionado.estoque_disponivel || 0) && (
+                    {estoqueComprovado != null && quantidade > estoqueComprovado && (
                       <Card className="border-orange-300 bg-orange-50">
                         <CardContent className="p-3">
                           <div className="flex items-center gap-2">
@@ -510,9 +532,9 @@ export default function AdicionarItemRevendaModal({
                             <div>
                               <p className="font-semibold text-orange-900">Atenção: Estoque Insuficiente</p>
                               <p className="text-sm text-orange-700">
-                                Disponível: {produtoSelecionado.estoque_disponivel || 0} | 
+                                Disponível: {estoqueComprovado} | 
                                 Solicitado: {quantidade} | 
-                                Falta: {quantidade - (produtoSelecionado.estoque_disponivel || 0)}
+                                Falta: {quantidade - estoqueComprovado}
                               </p>
                               <p className="text-xs text-orange-600 mt-1">
                                 Item será marcado como "Sob Encomenda"
@@ -542,7 +564,7 @@ export default function AdicionarItemRevendaModal({
                 </Card>
               )}
 
-              {calculo?.margem_violada && (
+              {margemVioladaEfetiva && (
                 <div>
                   <Label className="text-red-600">Justificativa do Desconto *</Label>
                   <Textarea
@@ -578,13 +600,13 @@ export default function AdicionarItemRevendaModal({
         <Button
           type="button"
           onClick={handleAdicionarItem}
-          disabled={!acaoHabilitada || !produtoSelecionado || quantidade <= 0 || (calculo?.margem_violada && !justificativaDesconto.trim())}
+          disabled={!acaoHabilitada || !produtoSelecionado || quantidade <= 0 || (margemVioladaEfetiva && !justificativaDesconto.trim())}
           data-permission="Comercial.Pedido.criar"
           data-action="adicionar-item-revenda"
           data-sensitive="true"
-          className={calculo?.margem_violada ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"}
+          className={margemVioladaEfetiva ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"}
         >
-          {calculo?.margem_violada ? "Adicionar (Aguardando Aprovação)" : "Adicionar Item"}
+          {margemVioladaEfetiva ? "Adicionar (Aguardando Aprovação)" : "Adicionar Item"}
         </Button>
       </div>
             </>
