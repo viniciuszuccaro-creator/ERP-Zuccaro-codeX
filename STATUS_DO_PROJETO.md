@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (indep. #448/#449 visual ≠ registros) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | #449 Contatos sky CI SUCCESS |
+| **Escopo** | evidência + teste: chrome #448/#449 ≠ recuperação de dados |
+| **Pin** | CadastroFiscal sem sky estrutural (preservado) |
+| **#446/#401** | fora |
+| Fora | merge · deploy · seed · inventar registros |
+
+**Evidência:** `docs/evidence/cadastros-448-449-visual-nao-registros-20261030.txt`
+**Próximo:** probes dados/contexto em fonte autorizada; #446 Codex tip atual.
+
 ## CURSOR — VIGENTE (#449 tip 7e67d6006 CI SUCCESS — Contatos embed sky) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
