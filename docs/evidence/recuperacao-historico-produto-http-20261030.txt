@@ -23,5 +23,11 @@ histórico por PRODUTO no cadastro — capacidade distinta (keep both).
 ## Fora
 API dedicada pedidos-por-produto · merge #401 · deploy · seed fictício
 
+## Codex P1/P2 (tip pós-8566ca788)
+| Achado | Correção |
+|--------|----------|
+| P1 `totalUsadoProducao.toFixed` no painel OP | `fmtAgregado`; contagens OP `—` em HTTP |
+| P2 série vazia → “Sem dados”/estável/0% | tendência `indisponivel`; gráfico/projeção `—` |
+
 ## Checks
 historico-produto-http-failclosed + primitive-ui-boundary (HistoricoProduto) → PASS

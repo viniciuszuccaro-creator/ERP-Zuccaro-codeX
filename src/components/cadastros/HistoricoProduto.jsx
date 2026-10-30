@@ -125,10 +125,16 @@ export default function HistoricoProduto({ produtoId, produto }) {
         custo: m.custo_medio
       }));
 
-  // Tendências
+  // Tendências — custo cadastrado permanece; série/tendência HTTP ≠ “estável 0%”.
   const custoAtual = produto?.custo_medio || 0;
-  const custoAnterior = dadosCusto.length > 1 ? dadosCusto[dadosCusto.length - 2].custo : custoAtual;
-  const tendenciaCusto = custoAtual > custoAnterior ? 'alta' : custoAtual < custoAnterior ? 'baixa' : 'estavel';
+  const custoAnterior = !httpMode && dadosCusto.length > 1
+    ? dadosCusto[dadosCusto.length - 2].custo
+    : null;
+  const tendenciaCusto = httpMode
+    ? 'indisponivel'
+    : (custoAnterior == null
+      ? 'estavel'
+      : (custoAtual > custoAnterior ? 'alta' : custoAtual < custoAnterior ? 'baixa' : 'estavel'));
 
   // Análise de ruptura — sem média HTTP, não fingir ruptura “90+ dias”.
   const diasParaRuptura = httpMode
@@ -269,13 +275,15 @@ export default function HistoricoProduto({ produtoId, produto }) {
               {tendenciaCusto === 'alta' && <TrendingUp className="w-5 h-5 text-red-500" />}
               {tendenciaCusto === 'baixa' && <TrendingDown className="w-5 h-5 text-green-500" />}
               {tendenciaCusto === 'estavel' && <Activity className="w-5 h-5 text-blue-500" />}
+              {tendenciaCusto === 'indisponivel' && <Activity className="w-5 h-5 text-slate-400" />}
             </div>
             <p className="text-2xl font-bold text-blue-700">
               R$ {custoAtual?.toFixed(2) || '0.00'}
             </p>
             <p className="text-xs text-slate-600 mt-1">
-              {tendenciaCusto === 'alta' ? '📈 Tendência de alta' : 
-               tendenciaCusto === 'baixa' ? '📉 Tendência de baixa' : 
+              {tendenciaCusto === 'indisponivel' ? 'Tendência histórica indisponível em HTTP' :
+               tendenciaCusto === 'alta' ? '📈 Tendência de alta' :
+               tendenciaCusto === 'baixa' ? '📉 Tendência de baixa' :
                '➡️ Estável'}
             </p>
           </CardContent>
@@ -370,9 +378,13 @@ export default function HistoricoProduto({ produtoId, produto }) {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-slate-500" data-historico-custo-serie={httpMode ? 'indisponivel' : 'vazio'}>
               <Activity className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Sem dados de movimentação ainda</p>
+              <p className="text-sm">
+                {httpMode
+                  ? 'Série de custo por movimentação indisponível em HTTP'
+                  : 'Sem dados de movimentação ainda'}
+              </p>
             </div>
           )}
         </CardContent>
@@ -390,7 +402,9 @@ export default function HistoricoProduto({ produtoId, produto }) {
             <div className="p-3 bg-white rounded border">
               <p className="text-xs text-slate-600 mb-1">Projeção Custo (30d)</p>
               <p className="font-bold text-sky-700">
-                {tendenciaCusto === 'alta' ? '+3.5%' : tendenciaCusto === 'baixa' ? '-2.1%' : '0%'}
+                {tendenciaCusto === 'indisponivel' ? '—' :
+                 tendenciaCusto === 'alta' ? '+3.5%' :
+                 tendenciaCusto === 'baixa' ? '-2.1%' : '0%'}
               </p>
             </div>
 
@@ -433,27 +447,31 @@ export default function HistoricoProduto({ produtoId, produto }) {
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-xs text-slate-600 mb-2">Total de OPs</p>
-                <p className="text-2xl font-bold text-orange-700">{ordensProducao.length}</p>
+                <p className="text-2xl font-bold text-orange-700">
+                  {httpMode ? '—' : ordensProducao.length}
+                </p>
               </div>
 
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-xs text-slate-600 mb-2">Quantidade Usada</p>
                 <p className="text-2xl font-bold text-orange-700">
-                  {totalUsadoProducao.toFixed(0)} {produto?.unidade_principal}
+                  {fmtAgregado(totalUsadoProducao)} {produto?.unidade_principal}
                 </p>
               </div>
 
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-xs text-slate-600 mb-2">OPs em Andamento</p>
                 <p className="text-2xl font-bold text-orange-700">
-                  {ordensProducao.filter(op => 
-                    ['Em Produção', 'Aguardando'].includes(op.status)
-                  ).length}
+                  {httpMode
+                    ? '—'
+                    : ordensProducao.filter(op =>
+                      ['Em Produção', 'Aguardando'].includes(op.status)
+                    ).length}
                 </p>
               </div>
             </div>
 
-            {ordensProducao.length > 0 && (
+            {!httpMode && ordensProducao.length > 0 && (
               <div>
                 <p className="font-semibold text-orange-900 mb-2">Últimas OPs que usaram este produto:</p>
                 <div className="space-y-2">

@@ -59,6 +59,13 @@ test('HistoricoProduto: HTTP não habilita filterInContext Pedido/OP/Mov; banner
   assert.match(src, /httpMode \? null : ordensProducao\.reduce/);
   assert.match(src, /fmtAgregado/);
   assert.match(src, /Number\.isFinite\(value\) \? value\.toFixed\(0\) : '—'/);
+  // P1: painel Uso em Produção não chama toFixed em null.
+  assert.doesNotMatch(src, /totalUsadoProducao\.toFixed/);
+  assert.match(src, /fmtAgregado\(totalUsadoProducao\)/);
+  // P2: série/tendência/projeção HTTP ≠ vazio/estável inventado.
+  assert.match(src, /tendenciaCusto = httpMode\s*\n\s*\? 'indisponivel'/);
+  assert.match(src, /Série de custo por movimentação indisponível em HTTP/);
+  assert.match(src, /tendenciaCusto === 'indisponivel' \? '—'/);
   // Legado path preservado (não apagar filterInContext).
   assert.match(src, /filterInContext\('Pedido'/);
   assert.match(src, /filterInContext\('OrdemProducao'/);

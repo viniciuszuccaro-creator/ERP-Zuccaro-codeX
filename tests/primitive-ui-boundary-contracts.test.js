@@ -25,8 +25,9 @@ const hashes = [
   ['src/pages/DashboardCorporativo.jsx','5b7e965aa4955815f753684167f36221e5b9d985355ec125603044e7919248de'],
   ['src/components/cadastros/DashboardCanaisOrigem.jsx','5753ef70c87aeb32d6f25e4be14892b88cf1aaf6bfd137fcd6c6dabbfc050dfb'],
   // Graduação 2026-10-30: HTTP fail-closed (sem filterInContext Pedido/OP/mov em HTTP; ≠ zeros).
-  // toFixed peel stage45 permanece; remainder atualizado de bfdd237c… → 4c74e841…
-  ['src/components/cadastros/HistoricoProduto.jsx','4c74e8410a0e39c2b35df7b897dfa74f4c887ef93b2285810602c5372772a743'],
+  // P1/P2 Codex: painel OP + série/tendência/projeção indisponíveis (não vazio/estável).
+  // toFixed peel stage45 permanece; remainder bfdd237c… → 9ba1e3f0…
+  ['src/components/cadastros/HistoricoProduto.jsx','9ba1e3f0a0b25adbf1865b4c6418befed8f9272388d10af1eb6afee486e62f41'],
   ['src/components/producao/DashboardRefugoIA.jsx','65e14a60239cbf60dee4ed080cf43e3c874d23187663497bb5fd0c70dac7192e'],
 ];
 const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
