@@ -210,8 +210,11 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
                       {produto.quantidade_total}{" "}
                       {produto.unidade || "—"}
                     </Badge>
-                    <span className="text-xs text-slate-600">
-                      Último preço: R$ {Number(produto.ultimo_preco || 0).toFixed(2)}
+                    <span className="text-xs text-slate-600" data-action="historico-compras-ultimo-preco">
+                      Último preço:{" "}
+                      {produto.ultimo_preco == null
+                        ? "—"
+                        : `R$ ${Number(produto.ultimo_preco).toFixed(2)}`}
                     </span>
                   </div>
                 </div>
@@ -227,9 +230,12 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
                       id: produto.produto_id,
                       codigo: produto.codigo_sku,
                       descricao: produto.descricao,
-                      preco_venda: produto.ultimo_preco,
-                      // Sem custo/estoque inventados; unidade só se comprovada (KG≠UN).
+                      // Sem custo/estoque inventados; preço/unidade só se comprovados
+                      // (zero comprovado ≠ ausente; KG≠UN).
                     };
+                    if (produto.ultimo_preco != null) {
+                      payload.preco_venda = produto.ultimo_preco;
+                    }
                     if (produto.unidade) {
                       payload.unidade_medida = produto.unidade;
                       payload.unidade_sigla = produto.unidade;

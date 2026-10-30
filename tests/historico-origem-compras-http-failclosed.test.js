@@ -14,6 +14,7 @@ import {
   extractItensPedidoHistorico,
   resolveDataPedidoHistorico,
   resolveOrigemCanalComprovada,
+  resolvePrecoUnitarioComprovado,
   resolveUnidadeItemHistorico,
   resolveValorItemHistorico,
   resolveValorPedidoHistorico,
@@ -503,6 +504,34 @@ test('policy Pacote B: último preço pela data do pedido, não pela ordem do lo
   assert.equal(forward[0].quantidade_total, 2);
 });
 
+test('policy: created_at HTTP conta como data; preço zero comprovado vence antigo', () => {
+  assert.equal(resolveDataPedidoHistorico({ created_at: '2026-03-15T12:00:00Z' }), '2026-03-15T12:00:00Z');
+  assert.equal(resolvePrecoUnitarioComprovado({ preco_unitario: '0.000000' }), 0);
+  assert.equal(resolvePrecoUnitarioComprovado({}), null);
+  assert.equal(resolvePrecoUnitarioComprovado({ preco_unitario: '' }), null);
+
+  const jan = {
+    id: 'jan',
+    created_at: '2026-01-10T00:00:00Z',
+    itens: [{ produto_id: 'p', descricao: 'P', quantidade: 1, preco_unitario: 10, total: 10, unidade_sigla: 'KG' }],
+  };
+  const marZero = {
+    id: 'mar',
+    created_at: '2026-03-10T00:00:00Z',
+    itens: [{ produto_id: 'p', descricao: 'P', quantidade: 1, preco_unitario: '0.000000', total: 0, unidade_sigla: 'KG' }],
+  };
+  const forward = consolidateTopProdutosFromPedidos([jan, marZero], { limit: 5 });
+  const reverse = consolidateTopProdutosFromPedidos([marZero, jan], { limit: 5 });
+  assert.equal(forward[0].ultimo_preco, 0);
+  assert.equal(reverse[0].ultimo_preco, 0);
+  assert.ok(String(forward[0].ultima_compra).includes('2026-03'));
+  // Ausência de preço: null (≠ inventar 0)
+  const semPreco = consolidateTopProdutosFromPedidos([
+    { created_at: '2026-04-01', itens: [{ produto_id: 'x', descricao: 'X', quantidade: 1, total: 5, unidade_sigla: 'UN' }] },
+  ]);
+  assert.equal(semPreco[0].ultimo_preco, null);
+});
+
 test('assertHistoricoHttpScope: troca de empresa na sessão invalida resposta pendente', async () => {
   const source = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
   const compiled = ts.transpileModule(source, {
@@ -555,6 +584,56 @@ test('assertHistoricoHttpScope: troca de empresa na sessão invalida resposta pe
     empresaId: 'emp-A',
     expectedEmpresaId: 'emp-A',
   }));
+});
+
+test('Compras montado: preço ausente → — e Adicionar sem preco_venda; zero comprovado ok', async () => {
+  const added = [];
+  const code = await compileJsx(new URL('../src/components/comercial/HistoricoComprasCliente.jsx', import.meta.url));
+  const sb = buildOrigemSandbox({
+    queryResult: {
+      data: {
+        data: [
+          {
+            id: 'p-old',
+            created_at: '2026-01-01T00:00:00Z',
+            itens: [{ produto_id: 'z', descricao: 'ZeroPreco', quantidade: 1, preco_unitario: 10, total: 10, unidade_sigla: 'KG' }],
+          },
+          {
+            id: 'p-new',
+            created_at: '2026-03-01T00:00:00Z',
+            itens: [{ produto_id: 'z', descricao: 'ZeroPreco', quantidade: 1, preco_unitario: '0.000000', total: 0, unidade_sigla: 'KG' }],
+          },
+          {
+            id: 'p-sem',
+            created_at: '2026-02-01T00:00:00Z',
+            itens: [{ produto_id: 's', descricao: 'SemPreco', quantidade: 2, total: 0, unidade_sigla: 'PC' }],
+          },
+        ],
+        meta: { limit: 200, offset: 0, total: 3, hasMore: false },
+      },
+      isError: false,
+      isFetching: false,
+      isLoading: false,
+    },
+  });
+  vm.runInNewContext(code, sb);
+  const Comp = sb.module.exports.default || sb.exports.default;
+  const tree = Comp({ clienteId: 'c1', onAdicionarProduto: (p) => added.push(p) });
+  const txt = textOf(tree);
+  assert.match(txt, /ZeroPreco/);
+  assert.match(txt, /R\$ 0\.00/); // zero comprovado
+  assert.match(txt, /SemPreco/);
+  assert.match(txt, /Último preço:\s*—/);
+  const btns = findByAction(tree, 'adicionar-produto-historico-cliente');
+  assert.ok(btns.length >= 2);
+  btns.forEach((b) => b.props.onClick());
+  const zero = added.find((p) => p.descricao === 'ZeroPreco');
+  const sem = added.find((p) => p.descricao === 'SemPreco');
+  assert.ok(zero && sem);
+  assert.equal(zero.preco_venda, 0);
+  assert.equal(zero.unidade_medida, 'KG');
+  assert.equal(sem.preco_venda, undefined);
+  assert.equal(sem.unidade_medida, 'PC');
 });
 
 test('Compras montado: unidades mistas exibem KG/PC separados; Adicionar não inventa UN', async () => {

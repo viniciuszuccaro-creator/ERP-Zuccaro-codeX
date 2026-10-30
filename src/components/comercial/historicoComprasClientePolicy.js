@@ -70,13 +70,28 @@ export function resolveUnidadeItemHistorico(item) {
   return null;
 }
 
-/** Data do pedido para último preço — não depender da ordem do loop. */
+/**
+ * Data do pedido para último preço — não depender da ordem do loop.
+ * HTTP canônico: `created_at`; legado: `data_pedido` / `created_date`.
+ */
 export function resolveDataPedidoHistorico(pedido) {
   if (!pedido || typeof pedido !== "object") return null;
   const raw = pedido.data_pedido || pedido.created_date || pedido.created_at || null;
   if (raw == null || raw === "") return null;
   const t = new Date(raw).getTime();
   return Number.isFinite(t) ? raw : null;
+}
+
+/**
+ * Preço unitário comprovado — zero válido (≠ ausente/inválido).
+ * @returns {number|null} null = desconhecido; 0 = comprovado zero
+ */
+export function resolvePrecoUnitarioComprovado(item) {
+  if (!item || typeof item !== "object") return null;
+  if (item.preco_unitario == null || item.preco_unitario === "") return null;
+  const preco = Number(item.preco_unitario);
+  if (!Number.isFinite(preco) || preco < 0) return null;
+  return preco;
 }
 
 function isDataPedidoNewer(candidate, current) {
@@ -89,7 +104,9 @@ function isDataPedidoNewer(candidate, current) {
  * Consolida top produtos a partir da página de pedidos confirmada.
  * - Unidade comprovada por linha; KG ≠ UN; sem inventar UN.
  * - Quantidades de unidades distintas NÃO somam (chave produto+unidade).
- * - Último preço pela data do pedido mais recente, não pela ordem de iteração.
+ * - Último preço pela data do pedido mais recente (inclui `created_at` HTTP).
+ * - Preço zero comprovado vence preço antigo positivo (Codex P2).
+ * - `limit: null` = sem corte (Sugestões ordena por frequência depois).
  * Não inventa zeros quando a consulta falhou — o chamador só invoca com dados ok.
  */
 export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
@@ -110,7 +127,7 @@ export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
           quantidade_total: 0,
           valor_total: 0,
           frequencia: 0,
-          ultimo_preco: 0,
+          ultimo_preco: null, // null = desconhecido (≠ inventar 0)
           unidade: unidade, // null = indisponível (≠ inventar UN)
           ultima_compra: null,
         };
@@ -122,18 +139,18 @@ export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
       acc.valor_total += valorItem;
       acc.frequencia += 1;
 
-      const preco = Number(item.preco_unitario);
-      const precoOk = Number.isFinite(preco) && preco > 0;
-      if (precoOk && isDataPedidoNewer(dataPedido, acc.ultima_compra)) {
+      const preco = resolvePrecoUnitarioComprovado(item);
+      if (preco != null && isDataPedidoNewer(dataPedido, acc.ultima_compra)) {
         acc.ultimo_preco = preco;
         acc.ultima_compra = dataPedido;
-      } else if (precoOk && !acc.ultima_compra && !(acc.ultimo_preco > 0)) {
-        // Sem data comprovada: só preenche se ainda vazio (não sobrescrever).
+      } else if (preco != null && !acc.ultima_compra && acc.ultimo_preco == null) {
+        // Sem data comprovada: só preenche se ainda desconhecido (não sobrescrever).
         acc.ultimo_preco = preco;
       }
     }
   }
-  return Object.values(produtosConsolidados)
-    .sort((a, b) => b.valor_total - a.valor_total)
-    .slice(0, limit);
+  const ranked = Object.values(produtosConsolidados)
+    .sort((a, b) => b.valor_total - a.valor_total);
+  if (limit == null) return ranked;
+  return ranked.slice(0, limit);
 }
