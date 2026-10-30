@@ -7,56 +7,14 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { buildMultiempresaReadFilter } from "@/components/lib/contextoMultiempresaPolicy";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useMemo, useEffect } from "react";
+import {
+  SIMPLE_CATALOG,
+  buildContextFilter,
+} from "@/components/lib/cadastroCountFilter.js";
 
-// Entidades que NÃO precisam de filtro de empresa/grupo (catálogos globais)
-export const SIMPLE_CATALOG = new Set([
-  'Banco','FormaPagamento','TipoDespesa','MoedaIndice','TipoFrete',
-  'UnidadeMedida','Departamento','Cargo','Turno','GrupoProduto','Marca',
-  'SetorAtividade','LocalEstoque','TabelaFiscal','CentroResultado',
-  'OperadorCaixa','RotaPadrao','ModeloDocumento','KitProduto','CatalogoWeb',
-  'Servico','CondicaoComercial','TabelaPreco','PerfilAcesso',
-  'ConfiguracaoNFe','ConfiguracaoBoletos','ConfiguracaoWhatsApp',
-  'GatewayPagamento','ApiExterna','Webhook','ChatbotIntent','ChatbotCanal',
-  'JobAgendado','EventoNotificacao','SegmentoCliente','RegiaoAtendimento',
-  'ContatoB2B','CentroCusto','PlanoDeContas','PlanoContas',
-  'Veiculo','Motorista','Representante','GrupoEmpresarial','Empresa',
-  'ConfiguracaoDespesaRecorrente',
-]);
-
-const CAMPO_CTX = {
-  Fornecedor: 'empresa_dona_id',
-  Transportadora: 'empresa_dona_id',
-  Colaborador: 'empresa_alocada_id',
-};
-
-const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
-
-/**
- * buildContextFilter — escopo multiempresa para contagens.
- * Alinhado ao Visualizador (buildMultiempresaReadFilter + shared/CAMPO_CTX)
- * para badge e lista não divergirem (ex.: Cliente grupo consolidado).
- */
-export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  if (!groupId && !empresaId) {
-    if (SIMPLE_CATALOG.has(entityName)) return {};
-    return { id: '__escopo_multiempresa_obrigatorio__' };
-  }
-  const ctxField = CAMPO_CTX[entityName] || 'empresa_id';
-  const tenantMaster = entityName === 'Empresa' || entityName === 'GrupoEmpresarial';
-  return buildMultiempresaReadFilter({
-    groupId,
-    empresaId: tenantMaster ? null : empresaId,
-    ctxField,
-    shared: SHARED.has(entityName),
-    empresaIdsDoGrupo: (!tenantMaster && !empresaId && Array.isArray(empresasDoGrupo))
-      ? empresasDoGrupo.map((e) => e.id).filter(Boolean)
-      : [],
-    rest: {},
-  });
-}
+export { SIMPLE_CATALOG, buildContextFilter };
 
 // Fallback: contagem individual. Falha propaga — nunca fabricar 0 como “vazio”.
 async function countSingle(entityName, filter) {
@@ -133,14 +91,29 @@ export function useEntityCounts(entities = []) {
         });
         const d = res?.data;
         if (d?.counts && typeof d.counts === 'object') {
-          // CORREÇÃO: 'fixed' nunca existiu — ReferenceError silencioso zerrava todos os counts
-          return { ...d.counts };
+          // Parcial ≠ total: exige chave finita para cada entidade pedida.
+          const full = {};
+          let complete = true;
+          for (const entityName of normalized) {
+            if (!Object.prototype.hasOwnProperty.call(d.counts, entityName)) {
+              complete = false;
+              break;
+            }
+            const n = Number(d.counts[entityName]);
+            if (!Number.isFinite(n)) {
+              complete = false;
+              break;
+            }
+            full[entityName] = n;
+          }
+          if (complete) return full;
+          console.warn('[useEntityCounts] Contagem parcial descartada (≠ total)');
         }
       } catch (error) {
         console.warn('[useEntityCounts] Contagem agregada indisponivel', error);
       }
 
-      // Fallback sequencial: falha propaga (erro ≠ vazio)
+      // Fallback sequencial: falha propaga (erro ≠ vazio); nunca misturar parcial com total
       const result = {};
       for (let i = 0; i < batchPayload.length; i++) {
         const { entityName, filter } = batchPayload[i];

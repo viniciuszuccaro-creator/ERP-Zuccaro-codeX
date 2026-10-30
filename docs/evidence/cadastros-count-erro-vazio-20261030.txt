@@ -1,28 +1,31 @@
-Pacote A — correção count erro≠vazio + filtro multiempresa (2026-10-30 06:50 America/Sao_Paulo)
-===============================================================================================
-Base: #429 probes 7ad1d35d · #430 Contatos keep-both 8ab11904
-Candidata #401 tip 686ae322 intacta. Preferir #409 (não fundir com #428).
+Pacote A / #431 — contagem erro≠vazio + filtro canônico (2026-10-30 America/Sao_Paulo)
+=======================================================================================
+Base tip anterior: `28b8e8d15` (remainder lastGoodData) · fix comportamental `fde6dde99`
+Candidata #401 tip `686ae322` intacta. Preferir #409 (não fundir com #428).
 
-## Causas (probes → correção)
-| Sintoma | Causa | Correção |
-|---------|-------|----------|
-| Badge Produto/CPA 0 | `buildSimpleFilter` só `{empresa_id}` | `buildCadastrosAllCountsFilter` = multiempresa `$and` grupo∧empresa |
-| Erro → zero | catch preenchia 0 | `fetchCadastrosAllCounts` propaga; UI `—` + banner |
-| Lista pós-troca | `lastGoodData` de outro tenant | zera lastGoodData/everLoaded no scopeKey |
-| Contatos ocultos/órfão | path comercial sem RBAC | adaptador → Form canônico (RBAC+assertScope) |
+## CI terminal tip `28b8e8d15`
+- frontend FAIL (3): publicação CANAL — `cursor-identidade-consolidacao.test.js` mudou
+  (import `scopeListCacheRemainder`) sem hunk autorizado em `clienteConferenciaHunks`.
+- Pin visualizer (ok local com remainder); canal exigia registrar after→before.
 
-## Contraprova sintética (mesmo escopo)
-- ANTES: invoke lança READ_COUNT_UNAVAILABLE → rejects (não retorna Produto:0)
-- DEPOIS: mesmo groupId=`grp-synth-001` + empresaId=`emp-synth-cpa` → Produto:1 Marca:2
-- Filtro Produto no request carrega `$and` (não só empresa_id)
+## Codex P1
+Duplicação `buildContextFilter` → extrair `src/components/lib/cadastroCountFilter.js`.
+Consumidores: `useEntityCounts.jsx` + `cadastrosAllCountsCore.js` (única política CAMPO_CTX/SHARED).
 
-Testes: `tests/cadastros-count-erro-vazio.test.js` + probes/audit.
+## Comportamentos comprovados (tests/cadastros-count-erro-vazio.test.js)
+| Caso | Resultado |
+|------|----------|
+| Erro consulta | rejects READ_COUNT_UNAVAILABLE — nunca Produto:0 |
+| Vazio real | Produto:0 + Marca:0 sem throw (≠ falha) |
+| Parcial | READ_COUNT_PARTIAL — não vira total |
+| Cross-empresa / cross-grupo | filtros distintos; sem isolamento removido |
+| Compartilhamento Cliente | `shared:true` + empresas_compartilhadas_ids no contrato |
+| Troca escopo lista | lastGoodData/everLoaded zerados (+ remainder pin) |
+| Tardia | queryKey escopo + placeholderData undefined; parcial batch descartada |
+| Contatos adapter | 1× Cliente.update · Form canônico · assertScope · sem 3º módulo |
 
 ## Não feito (proposital)
 - Remover isolamento Grupo/Empresa
-- Ampliar permissões para “aparecer” registro
-- Seed fictício / Auth VPS / harness paralelo
+- Ampliar permissões / seed fictício
+- Auth VPS / harness paralelo / merge #401
 - Apagar `comercial/GerenciarContatosCliente.jsx`
-
-## Fora
-Merge #401 · carga #211 · HD externo

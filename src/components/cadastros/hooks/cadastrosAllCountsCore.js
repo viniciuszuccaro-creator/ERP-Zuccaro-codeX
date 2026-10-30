@@ -1,17 +1,8 @@
 /**
  * Núcleo puro das contagens Cadastros Gerais (Pacote A).
- * Sem React/JSX — importável em testes Node e no hook.
- * Filtro alinhado a buildContextFilter / Visualizador (contextoMultiempresaPolicy).
+ * Sem React/JSX — reutiliza buildContextFilter canônico (cadastroCountFilter).
  */
-import { buildMultiempresaReadFilter } from '../../lib/contextoMultiempresaPolicy.js';
-
-/** Espelho de SIMPLE_CATALOG / CAMPO_CTX / SHARED de useEntityCounts (manter alinhado). */
-const CAMPO_CTX = {
-  Fornecedor: 'empresa_dona_id',
-  Transportadora: 'empresa_dona_id',
-  Colaborador: 'empresa_alocada_id',
-};
-const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
+import { buildContextFilter } from '../../lib/cadastroCountFilter.js';
 
 export const BLOCOS_ENTITIES = {
   bloco1: ["Cliente","Fornecedor","Transportadora","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"],
@@ -24,23 +15,9 @@ export const BLOCOS_ENTITIES = {
 
 export const ALL_ENTITIES = Object.values(BLOCOS_ENTITIES).flat();
 
-/** Mesmo contrato de buildContextFilter (useEntityCounts). */
+/** Alias estável — mesma função canônica do useEntityCounts. */
 export function buildCadastrosAllCountsFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  if (!groupId && !empresaId) {
-    return { id: '__escopo_multiempresa_obrigatorio__' };
-  }
-  const ctxField = CAMPO_CTX[entityName] || 'empresa_id';
-  const tenantMaster = entityName === 'Empresa' || entityName === 'GrupoEmpresarial';
-  return buildMultiempresaReadFilter({
-    groupId,
-    empresaId: tenantMaster ? null : empresaId,
-    ctxField,
-    shared: SHARED.has(entityName),
-    empresaIdsDoGrupo: (!tenantMaster && !empresaId && Array.isArray(empresasDoGrupo))
-      ? empresasDoGrupo.map((e) => e.id).filter(Boolean)
-      : [],
-    rest: {},
-  });
+  return buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) ?? {};
 }
 
 export function emptyCadastrosCounts(entities = ALL_ENTITIES) {
@@ -49,17 +26,36 @@ export function emptyCadastrosCounts(entities = ALL_ENTITIES) {
   return vazio;
 }
 
+/**
+ * Exige todas as entidades pedidas. Chave ausente = parcial ≠ total confirmado.
+ * @throws {Error} READ_COUNT_PARTIAL
+ */
 export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
   const full = {};
-  entities.forEach((e) => {
-    const n = Number(raw?.[e]);
-    full[e] = Number.isFinite(n) ? n : 0;
-  });
+  const missing = [];
+  for (const e of entities) {
+    if (!Object.prototype.hasOwnProperty.call(raw || {}, e)) {
+      missing.push(e);
+      continue;
+    }
+    const n = Number(raw[e]);
+    if (!Number.isFinite(n)) {
+      missing.push(e);
+      continue;
+    }
+    full[e] = n;
+  }
+  if (missing.length) {
+    const err = new Error('READ_COUNT_PARTIAL');
+    err.code = 'READ_COUNT_PARTIAL';
+    err.missing = missing;
+    throw err;
+  }
   return full;
 }
 
 /**
- * Conta em lote. Qualquer falha de transporte/autorização propaga (erro ≠ vazio).
+ * Conta em lote. Falha/parcial propaga (erro ≠ vazio; parcial ≠ total).
  */
 export async function fetchCadastrosAllCounts({
   invoke,
@@ -87,6 +83,9 @@ export async function fetchCadastrosAllCounts({
       return normalizeCadastrosCounts(raw, entities);
     }
   } catch (error) {
+    if (error?.code === 'READ_COUNT_PARTIAL' || error?.message === 'READ_COUNT_PARTIAL') {
+      throw error;
+    }
     if (typeof console !== 'undefined') {
       console.warn('[cadastrosAllCountsCore] Contagem agregada indisponivel', error);
     }

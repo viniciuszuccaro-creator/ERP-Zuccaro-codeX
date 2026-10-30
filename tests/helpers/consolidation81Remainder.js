@@ -141,6 +141,14 @@ export const clienteConferenciaHunks={
       [
         "\ntest('operational routes and sensitive infrastructure remain unchanged by this cohort', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts',\n    'src/api/localCadastroMasterPolicy.js']) assert.equal(clienteConferenciaRemainder(path, read(path)), head(path));\n  assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));\n  const path = 'src/components/cadastros/cadastroEditLoadPolicy.js';\n  const annotation = ' * @param {{entityName?: string, expectedId?: string | number,\\n'\n",
         "\ntest('operational routes and sensitive infrastructure remain unchanged by this cohort', () => {\n  for (const path of ['server/src/app.ts', 'server/src/api/router.ts',\n    'src/api/localCadastroMasterPolicy.js']) assert.equal(read(path), head(path));\n  assert.equal(httpMirrorAnnotationRemainder(read('src/api/localBase44Client.js')), head('src/api/localBase44Client.js'));\n  const path = 'src/components/cadastros/cadastroEditLoadPolicy.js';\n  const annotation = ' * @param {{entityName?: string, expectedId?: string | number,\\n'\n"
+      ],
+      [
+        "import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';\nimport { scopeListCacheRemainder } from './helpers/scopeListCacheRemainder.js';\n",
+        "import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';\n"
+      ],
+      [
+        "const path = 'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', source = clienteNavigationRemainder(perfilViewerRemainder(scopeListCacheRemainder(read(path)))), ast = tree(path, source);",
+        "const path = 'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', source = clienteNavigationRemainder(perfilViewerRemainder(read(path))), ast = tree(path, source);"
       ]
     ]
   },
