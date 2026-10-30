@@ -57,5 +57,22 @@ export function iaResponseValidationRemainder(file, source) {
     source = source.replace(literal, '.map((id) => entregasSelecionadas.find((e) => String(e.id) === String(id)))');
   }
   // #353 classe A: CodigoField em TabelaPreco — pin IA permanece após strip autorizado.
-  return cadastroCodigoRegistroRemainder(file, source);
+  source = cadastroCodigoRegistroRemainder(file, source);
+  // #447 keep-both: chrome sky windowMode no Produto V22 — peela para golden simples
+  // (pin stage46 / query-v5 intactos; não é pin cego de hash).
+  if (file.endsWith('ProdutoFormV22_Completo.jsx')) {
+    const skyChrome =
+      /if \(windowMode\) \{\r?\n    return \(\r?\n      <div className="w-full h-full overflow-auto bg-white p-6">\r?\n        <div className="max-w-5xl mx-auto">\r?\n          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">\r?\n            <Package className="w-8 h-8 text-sky-600" \/>\r?\n            <h2 className="text-2xl font-bold text-slate-900">\r?\n              \{produto\?\.id \? 'Editar Produto' : 'Novo Produto'\}\r?\n            <\/h2>\r?\n          <\/div>\r?\n          \{\/\* ID técnico sem data-action novo — campo id-tecnico-produto já existe no form\. \*\/\}\r?\n          \{produto\?\.id \? \(\r?\n            <p className="text-xs text-slate-500 mb-4">\r?\n              ID técnico: <span className="font-mono">\{String\(produto\.id\)\}<\/span>\r?\n            <\/p>\r?\n          \) : null\}\r?\n          \{content\}\r?\n        <\/div>\r?\n      <\/div>\r?\n    \);\r?\n  \}/;
+    assert.equal(
+      [...source.matchAll(new RegExp(skyChrome.source, 'g'))].length,
+      1,
+      'ProdutoFormV22 sky windowMode chrome deve existir exatamente 1× para peel',
+    );
+    const nl = source.includes('\r\n') ? '\r\n' : '\n';
+    source = source.replace(
+      skyChrome,
+      `if (windowMode) {${nl}    return <div className="w-full h-full bg-white">{content}</div>;${nl}  }`,
+    );
+  }
+  return source;
 }

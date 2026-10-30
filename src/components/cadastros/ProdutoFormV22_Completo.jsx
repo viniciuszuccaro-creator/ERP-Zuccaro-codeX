@@ -1435,7 +1435,25 @@ Caso contrário, sugira:
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <Package className="w-8 h-8 text-sky-600" />
+            <h2 className="text-2xl font-bold text-slate-900">
+              {produto?.id ? 'Editar Produto' : 'Novo Produto'}
+            </h2>
+          </div>
+          {/* ID técnico sem data-action novo — campo id-tecnico-produto já existe no form. */}
+          {produto?.id ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(produto.id)}</span>
+            </p>
+          ) : null}
+          {content}
+        </div>
+      </div>
+    );
   }
 
   return content;

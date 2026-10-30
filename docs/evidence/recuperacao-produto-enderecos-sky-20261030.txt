@@ -1,0 +1,34 @@
+Recuperação indep. — Produto V22 sky windowMode + Endereços embed sky (2026-10-30 America/Sao_Paulo)
+====================================================================================================
+Base: #445 tip Boletos sky ID-only (CI SUCCESS)
+Branch: cursor/recuperacao-produto-sky-id-392b
+Fora: candidata #401 · cadeia #441/#442/#446 · merge main · deploy · seed
+
+## Classificação (matriz erp-integra)
+Melhoria útil azul-clara no existente:
+- ProdutoFormV22_Completo: windowMode existia sem chrome sky + ID no header (canônico; legado keep-both).
+- GerenciarEnderecosClienteForm: embed em Cliente/Painel sem chrome sky (integração visual incompleta).
+
+## Mudança
+1. `ProdutoFormV22_Completo.jsx` — header from-sky-50 + ID técnico (sem data-action novo; id-tecnico-produto intacto).
+2. `GerenciarEnderecosClienteForm.jsx` — chrome sky embed; RBAC/podeEditar preservados.
+
+## Não feito
+- count+1 / alterar ProdutoForm.jsx legado (keep-both)
+- pin RecordState / graduação
+- integração #401/#446
+
+## Testes
+`tests/recuperacao-produto-enderecos-sky.test.js` + contatos-enderecos-rbac — PASS
+
+## Tip pin peel (CI FAIL tip 509646810 → fix)
+Frontend FAIL: stage46 product + product-query-v5 ProdutoFormV22 (hash mudou pelo chrome sky).
+Correção: peel autorizado em `iaResponseValidationRemainder` reverte windowMode sky→
+`<div className="w-full h-full bg-white">{content}</div>` antes do hash (mesmo padrão
+#439/#445 — não pin cego). Hashes golden `c26ca71d…` / `67a27312…` intactos.
+Testes: ia-grounded-batch-contracts + product-query-v5-options + sky — 47 PASS.
+
+## CI SUCCESS tip 9bd3b943d (2026-10-30 America/Sao_Paulo)
+- Runs: push `41110774032` · PR `41110783324` — SUCCESS 6/6.
+- Tip `509646810` FAIL pin → peel tip SUCCESS.
+- CI verde ≠ aceite montado; #445≠recuperação de registros; #401 fora.
