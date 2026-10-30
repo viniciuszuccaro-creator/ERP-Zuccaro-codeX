@@ -1,0 +1,19 @@
+Prep incorporação controlada #401 ← #431/#432 Contatos (2026-10-30 America/Sao_Paulo)
+=======================================================================================
+Base #401 tip: 686ae3224 (cursor/composicao-397-342-prep-392b)
+Fonte capacidades: #432 tip 2bc3dc6c7 (CI SUCCESS + Codex limpo)
+Históricos: unrelated — port cirúrgico por arquivo (sem merge git oficial)
+
+## Lacunas no tip #401 (antes)
+| Capacidade | #401 tip | Após prep |
+|------------|----------|-----------|
+| Contatos adapter Cliente.get + bind/ator/ausência | filter+[0] monolito | adapter thin + get |
+| Form Contatos persistInFlight + commitMode | await only | sync-lock + draft/backend |
+| Form Endereços persistBusy/sync-lock/commitMode | parcial | keep-both #432 |
+| Completo draft≠saveMutation | setFormData inline | commitMode=draft + apply*Draft |
+
+## Fora deste prep
+cadastroCountFilter / Pacote A counts · merge oficial #401 · deploy · seed
+
+## Checks
+Focados Contatos/Completo/stage48 remainder no worktree prep.

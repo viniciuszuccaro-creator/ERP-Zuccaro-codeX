@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (prep #401 Contatos get+draft) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/prep-401-contatos-get-draft-392b` |
+| **Base** | #401 tip `686ae3224` |
+| **Fonte** | #432 tip `2bc3dc6c7` CI SUCCESS + Codex limpo |
+| **Port** | adapter get+bind · Forms sync-lock/commitMode · Completo draft≠save |
+| **Fora** | merge oficial · counts Pacote A · deploy |
+| Preferir | CI desta prep; counts em pacote separado |
+
+**Evidência:** `docs/evidence/prep-401-contatos-get-draft-20261030.txt`
+
 ## Estado vigente - composicao integrada em revisao (2026-10-29)
 
 Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma
