@@ -41,7 +41,54 @@ function once(source, current, previous) {
 }
 // Browser-proven absence is not an explicit empty list. Preserve the old golden;
 // accept only these two exact hunks, never arbitrary spread expressions.
+// #431 draft≠save: peels commitMode/draft handlers — gravação canônica permanece saveMutation.
 function clienteContactPresenceRemainder(source) {
+  source = once(source,
+    '  /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */\n'
+    + '  const applyContatosDraft = (novosContatos) => {\n'
+    + '    setFormData((prev) => ({ ...prev, contatos: novosContatos }));\n'
+    + '  };\n'
+    + '  const applyEnderecosDraft = (novosEnderecos) => {\n'
+    + '    setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));\n'
+    + '  };\n'
+    + '\n'
+    + '  /** Gravação efetiva no backend (proprietário canônico de persistência deste cadastro). */\n'
+    + '  const handleSave = () => {\n',
+    '  const handleSave = () => {\n');
+  source = once(source,
+    '            <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
+    + '              <GerenciarContatosClienteForm\n'
+    + '                contatos={formData.contatos || []}\n'
+    + '                onChange={applyContatosDraft}\n'
+    + '                commitMode="draft"\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '                persistBusy={isSaving || saveMutation.isPending}\n'
+    + '              />\n'
+    + '            </TabsContent>\n',
+    '            <TabsContent value="contatos" className="m-0 mt-4">\n'
+    + '              <GerenciarContatosClienteForm\n'
+    + '                contatos={formData.contatos || []}\n'
+    + '                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '              />\n'
+    + '            </TabsContent>\n');
+  source = once(source,
+    '            <TabsContent value="enderecos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
+    + '              <GerenciarEnderecosClienteForm\n'
+    + '                enderecos={formData.locais_entrega || []}\n'
+    + '                onChange={applyEnderecosDraft}\n'
+    + '                commitMode="draft"\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '                persistBusy={isSaving || saveMutation.isPending}\n'
+    + '              />\n'
+    + '            </TabsContent>\n',
+    '            <TabsContent value="enderecos" className="m-0 mt-4">\n'
+    + '              <GerenciarEnderecosClienteForm\n'
+    + '                enderecos={formData.locais_entrega || []}\n'
+    + '                onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '              />\n'
+    + '            </TabsContent>\n');
   source = once(source, '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),',
     '    contatos: sanitizeContatos(data.contatos),');
   return once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',

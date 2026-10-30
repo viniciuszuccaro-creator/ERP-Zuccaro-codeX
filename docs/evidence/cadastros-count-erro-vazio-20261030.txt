@@ -29,3 +29,6 @@ Positivo mock invoke ≠ autorização backend SQL. Bridge HTTP filter≠session
 | rascunho vs gravação no Completo | `commitMode="draft"` + `applyContatosDraft`/`applyEnderecosDraft`; só `saveMutation`/`handleSave` persiste |
 
 CI anterior tip docs `2451d91c0` SUCCESS 6/6 — não atribuir a este HEAD até checks do novo tip.
+
+## Fix CI tip 75e97d5c6 (2026-10-30 America/Sao_Paulo)
+stage48 Completo: clienteContactPresenceRemainder peels draft/commitMode hunks (sem pin cego). Hash 4edac364… restaurado.
