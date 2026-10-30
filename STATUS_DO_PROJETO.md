@@ -1,17 +1,17 @@
-## CURSOR — VIGENTE (#441 residual P2 preço zero + created_at) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#441 tip 6b2e7e42e CI SUCCESS — residual P2) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Fix** | preço zero comprovado vence antigo; `ultimo_preco` null=desconhecido; Adicionar sem inventar preço |
-| **Policy** | `resolvePrecoUnitarioComprovado` · `created_at` HTTP já na data · `limit: null` |
+| **Tip** | `6b2e7e42e` — CI SUCCESS 6/6 (`41102222425` push · `41102230940` PR) |
+| **Código** | `9dfb956e4` — preço zero comprovado · ausente=null · created_at HTTP |
 | **Testes** | historico-origem-compras-http-failclosed **21 PASS** |
-| **Base tip** | código `529c56741` CI5498 SUCCESS — CI verde ≠ aceite |
-| **#401** | `34c4c0ee` Codex montado — **fora**; não integrar |
-| **#442** | port policy compartilhada + resíduos Top10/Sugestões |
+| **Codex** | `@codex review` pedido — CI verde ≠ aceite montado |
+| **#401** | `34c4c0ee` — **fora**; não integrar |
+| **#442** | `1570f35ab` rebase residual — CI em curso |
 | Fora | merge main · deploy · seed |
 
 **Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
-**Próximo:** push + CI + `@codex` montado; port #442.
+**Próximo:** contraprova Codex montada; #401 intacta.
 
 ## CURSOR — VIGENTE (#441 Pacote B tip 529c56741 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 

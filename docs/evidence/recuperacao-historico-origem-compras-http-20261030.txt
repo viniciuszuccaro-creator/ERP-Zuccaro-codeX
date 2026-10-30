@@ -77,3 +77,7 @@ Testes: `historico-origem-compras-http-failclosed` **19 PASS** (antes 14).
 - UI: preço ausente → "—"; Adicionar só envia `preco_venda` se comprovado (inclui 0).
 - `created_at` HTTP já em `resolveDataPedidoHistorico`; testes cobrem created_at + zero.
 - Harness: **21 PASS**. CI verde ≠ aceite montado.
+
+## CI SUCCESS tip 6b2e7e42e (2026-10-30 America/Sao_Paulo)
+- Runs: push `41102222425` · PR `41102230940` — SUCCESS 6/6.
+- Código: `9dfb956e4`. Aguarda `@codex` montado (zero/ausente/created_at).
