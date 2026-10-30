@@ -276,4 +276,9 @@ test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () =>
   assert.doesNotMatch(orphan, /queryKey:[^\n]*token/);
   assert.doesNotMatch(orphan, /scopePair\([^)]*token/);
   assert.doesNotMatch(orphan, /bound\.token|askedScope\.token|liveScope\.token/);
+  // Ausência pós-refetch (success/data=null) invalida bound — não mantém Form antigo
+  assert.match(orphan, /data-contatos-read-empty/);
+  assert.match(orphan, /if \(!loaded\?\.row \|\| !loaded\?\.askedScope\) \{\s*setBound\(null\)/s);
+  assert.match(orphan, /if \(isError\) \{\s*setBound\(null\)/s);
+  assert.match(orphan, /String\(loaded\.row\.id\) !== String\(clienteId\)/);
 });
