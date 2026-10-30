@@ -1,0 +1,23 @@
+Pacote D — Endereços alinhados ao contrato Contatos (2026-10-30 America/Sao_Paulo)
+====================================================================================
+Branch: cursor/cadastros-audit-restante-392b (sobre #431 tip 5b5c2cd69 / docs a4c03ed19)
+Base PR: cursor/cadastros-count-erro-vazio-392b
+
+## Motivo
+Após Contatos (#430/#431) ganharem persistBusy + onChange async fail-closed,
+Endereços ainda fechava diálogo / propagava mutação sem aguardar persistência
+nem bloquear durante save do cadastro completo.
+
+## Mudança (existente — sem 3º módulo)
+- `GerenciarEnderecosClienteForm`: persistBusy, salvando, bloqueado;
+  handleSalvar/Excluir async com await Promise.resolve(onChange);
+  falha mantém diálogo; botões gated.
+- `CadastroClienteCompleto`: passa persistBusy={isSaving||saveMutation.isPending}
+  a Contatos e Endereços (rascunho entre abas intacto).
+
+## Pins / fora
+CentroOperacao / Boletos / Usuario / Grupo / Empresa — sem sky (pin).
+ProdutoForm legado keep both. Sem seed fictício. #401 intacta.
+
+## Testes
+tests/cadastros-contatos-enderecos-rbac.test.js (+ persistBusy)

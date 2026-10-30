@@ -14,10 +14,16 @@ import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
- * Dialogs internos são permitidos quando fazem parte de um fluxo maior
- * Lacuna vs erp-integra-novo / Regra-Mãe: mutações sem RBAC fail-closed.
+ * Dialogs internos são permitidos quando fazem parte de um fluxo maior.
+ * Pacote D (#431+): mesmo contrato Contatos — RBAC + assertScope + persistBusy;
+ * onChange assíncrono (falha mantém diálogo; sem double-close).
  */
-export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange, assertScopeCurrent }) {
+export default function GerenciarEnderecosClienteForm({
+  enderecos = [],
+  onChange,
+  assertScopeCurrent,
+  persistBusy = false,
+}) {
   const { canEdit } = usePermissions();
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
   const assertScope = () => {
@@ -26,6 +32,8 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
   };
   const [dialogAberto, setDialogAberto] = useState(false);
   const [enderecoEditando, setEnderecoEditando] = useState(null);
+  const [salvando, setSalvando] = useState(false);
+  const bloqueado = Boolean(persistBusy || salvando);
 
   const [novoEndereco, setNovoEndereco] = useState({
     apelido: "",
@@ -77,6 +85,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de endereços em andamento.");
+      return;
+    }
     try { assertScope(); } catch (error) {
       toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
@@ -85,9 +97,13 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
     setDialogAberto(true);
   };
 
-  const handleSalvarEndereco = () => {
+  const handleSalvarEndereco = async () => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de endereços em andamento.");
       return;
     }
     try { assertScope(); } catch (error) {
@@ -128,14 +144,25 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       });
     }
 
-    onChange(enderecosAtualizados);
-    setDialogAberto(false);
-    resetForm();
+    setSalvando(true);
+    try {
+      await Promise.resolve(onChange(enderecosAtualizados));
+      setDialogAberto(false);
+      resetForm();
+    } catch {
+      // Mantém diálogo/form; pai já notificou e reverteu rascunho.
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const handleEditarEndereco = (index) => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de endereços em andamento.");
       return;
     }
     try { assertScope(); } catch (error) {
@@ -147,9 +174,13 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
     setDialogAberto(true);
   };
 
-  const handleExcluirEndereco = (index) => {
+  const handleExcluirEndereco = async (index) => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (bloqueado) {
+      toast.error("Aguarde a gravação de endereços em andamento.");
       return;
     }
     try { assertScope(); } catch (error) {
@@ -157,7 +188,14 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       return;
     }
     const enderecosAtualizados = enderecos.filter((_, i) => i !== index);
-    onChange(enderecosAtualizados);
+    setSalvando(true);
+    try {
+      await Promise.resolve(onChange(enderecosAtualizados));
+    } catch {
+      // Pai notifica/reverte; lista prop permanece a confirmada.
+    } finally {
+      setSalvando(false);
+    }
   };
 
   return (
@@ -167,7 +205,7 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
         <Button
           onClick={abrirNovo}
           size="sm"
-          disabled={!podeEditar}
+          disabled={bloqueado || !podeEditar}
           data-permission="Cadastros.Cliente.editar"
           data-action="Cadastros.Cliente.endereco.adicionar"
         >
@@ -239,7 +277,7 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditarEndereco(idx)}
-                    disabled={!podeEditar}
+                    disabled={bloqueado || !podeEditar}
                     data-permission="Cadastros.Cliente.editar"
                     data-action="Cadastros.Cliente.endereco.editar"
                   >
@@ -249,7 +287,7 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
                     variant="ghost"
                     size="icon"
                     onClick={() => handleExcluirEndereco(idx)}
-                    disabled={!podeEditar}
+                    disabled={bloqueado || !podeEditar}
                     data-permission="Cadastros.Cliente.editar"
                     data-action="Cadastros.Cliente.endereco.excluir"
                   >
@@ -269,7 +307,7 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
             variant="outline"
             size="sm"
             className="mt-3"
-            disabled={!podeEditar}
+            disabled={bloqueado || !podeEditar}
             data-permission="Cadastros.Cliente.editar"
             data-action="Cadastros.Cliente.endereco.adicionar"
           >
@@ -484,7 +522,7 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
               </Button>
               <Button
                 onClick={handleSalvarEndereco}
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
                 data-permission="Cadastros.Cliente.editar"
                 data-action="Cadastros.Cliente.endereco.salvar"
               >

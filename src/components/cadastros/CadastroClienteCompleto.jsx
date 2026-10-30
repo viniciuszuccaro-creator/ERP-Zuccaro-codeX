@@ -1178,6 +1178,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 contatos={formData.contatos || []}
                 onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}
                 assertScopeCurrent={assertFormScopeCurrent}
+                persistBusy={isSaving || saveMutation.isPending}
               />
             </TabsContent>
 
@@ -1186,6 +1187,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 enderecos={formData.locais_entrega || []}
                 onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}
                 assertScopeCurrent={assertFormScopeCurrent}
+                persistBusy={isSaving || saveMutation.isPending}
               />
             </TabsContent>
 
