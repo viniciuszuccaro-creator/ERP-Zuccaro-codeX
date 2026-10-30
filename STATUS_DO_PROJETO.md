@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#436 JSDoc KPIs typecheck) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** `cursor/recuperacao-detalhes-cliente-http-392b` |
+| **Sobre** | tip `8c0d05c16` typecheck FAIL — **não atribuir** |
+| **Causa** | `resolveDetalhesClienteKpisFromPage` sem JSDoc de `pedidos`/`meta` |
+| **Fix** | `@param {{ pedidos?, meta? }}` explícito |
+| **#435** | tip `b51214245` CI SUCCESS 6/6 + Codex |
+| Preferir | CI deste tip; #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#435 CI SUCCESS 6/6 + Codex) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

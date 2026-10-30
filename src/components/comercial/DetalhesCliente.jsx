@@ -61,7 +61,10 @@ export function isDetalhesClientePedidosPageComplete(meta, pedidos) {
   return true;
 }
 
-/** @returns {{ kpis: ReturnType<typeof computeDetalhesClientePedidosKpis> & { totalCompras: number|null, ticketMedio: number|null, qtdPedidos: number|null }, moneyIncomplete: boolean }} */
+/**
+ * @param {{ pedidos?: unknown[], meta?: { hasMore?: boolean, total?: number, limit?: number, offset?: number } | null }} [options]
+ * @returns {{ moneyIncomplete: boolean, kpis: { totalCompras: number|null, ticketMedio: number|null, qtdPedidos: number|null, qtdAtivos: number|null } }}
+ */
 export function resolveDetalhesClienteKpisFromPage({ pedidos, meta } = {}) {
   const rows = Array.isArray(pedidos) ? pedidos : [];
   const complete = isDetalhesClientePedidosPageComplete(meta, rows);

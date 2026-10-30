@@ -25,3 +25,6 @@ detalhes-cliente-pedidos-http-failclosed + comercial-detalhes-historico-mount �
 
 ## Codex P1 (tip pós-aa4f3bca2)
 KPIs money não usam 1ª página quando meta.hasMore/total>len; contagem via meta.total; banner data-action detalhes-cliente-kpis-pagina-incompleta.
+
+## Tip 8c0d05c16 FAIL typecheck (não atribuir)
+JSDoc resolveDetalhesClienteKpisFromPage sem pedidos/meta → tip seguinte.
