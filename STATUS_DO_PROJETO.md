@@ -1,18 +1,27 @@
+## CURSOR — VIGENTE (#446 tip 611aaa6ee CI5577 SUCCESS — demos+Top10) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `611aaa6ee` — CI SUCCESS 6/6 (push **5576** · PR **5577**) |
+| **Base CI** | `c2f3acb7e` CI5569 · código demos `be52e3498` |
+| **Demos** | sessionKey · A→B→A · elegibilidade · zero · rejeição · Top10 leitura |
+| **Codex** | `@codex review` pedido no HEAD atual — CI ≠ aceite montado |
+| **#401** | mapa pronto — **fora** até limpo |
+| Fora | merge main · deploy · seed · trocar backend |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** aceite Codex montado tip `611aaa6ee`; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 tip c2f3acb7 CI5569 + demos runtime) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **CI** | `c2f3acb7e` SUCCESS 6/6 — PR run **5569** (`41122467714`) · push 5568 |
-| **Código** | tip demos: sessionKey + elegibilidade + A→B→A + zero + rejeição preserva modal |
-| **Geração** | pedido ≠ visual; `buildSessionFingerprint` (renew token); effect/confirm |
-| **Margem** | `margemVioladaEfetiva`; elegível só Ativo+vendável no catálogo |
-| **Provas** | 14 PASS — visual A→B→A · sessão renew · zero comprovado · rejeição modal+rascunho |
-| **Codex** | `@codex review` no tip **atual** (não SHA antigo) |
-| **#401** | mapa port atualizado — **fora** até limpo; sem trocar backend |
-| Fora | merge main · deploy · seed · candidata concorrente |
+| **CI** | `c2f3acb7e` SUCCESS 6/6 — **5569** |
+| **#401** | fora |
+| Fora | merge · deploy · seed |
 
-**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · port-mapa
-**Próximo:** CI tip demos + Codex montado runtime; port #401 só após limpo.
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** tip `611aaa6ee` CI5577.
 
 ## CURSOR — VIGENTE (#446 Codex P1/P2 pós CI c52cc707a) (2026-10-30 America/Sao_Paulo)
 

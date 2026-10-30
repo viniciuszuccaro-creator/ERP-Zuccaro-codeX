@@ -127,3 +127,9 @@ Provas pedidas (montagem harness + policy; ≠ PG/E2E):
 4. `margemVioladaEfetiva` + elegibilidade Ativo+vendável no catálogo.
 5. Rejeição preço preserva modal e rascunho.
 Testes: 14 PASS. #401 fora até Codex limpo no tip atual.
+
+## CI SUCCESS tip 611aaa6ee — runs 5576/5577 (2026-10-30 America/Sao_Paulo)
+- Código: demos `be52e3498` + Top10 leitura `611aaa6ee`.
+- Push **5576** · PR **5577** SUCCESS 6/6.
+- Inclui: sessionKey, A→B→A, elegibilidade, zero, rejeição, cartão Top10 leitura.
+- CI verde ≠ aceite Codex montado; #401 fora.
