@@ -1,4 +1,20 @@
-## Estado Vigente - Lote de Contagens Na401, Bloqueadores Reproduzidos (2026-10-30)
+## Estado Vigente - Revisao Incremental Das Contagens Corrigidas (2026-10-30)
+
+#401 atual 62cf794697348beb6089b27c9cf789d318c2fd6b, Cursor unico escritor.
+Parecer6526312519: contraprova real queryFn/bridge/fachada HTTP com fetch sintetico
+agora rejeita fallback de pagina (READ_COUNT_UNAVAILABLE) e separa keys atorA/B.
+Encerrados esses achados no alcance testado; promise A ainda resolve na key A,
+nao foi demonstrado rerender React nem browser/PG. Sem alegar vazamento real ou E2E.
+Wiring scopeListCacheRemainder corrigido por import/wrapper e dois hunks exatos,
+sem trocar golden. CI5446/run41079280818 em execucao na consulta; resultado do
+SHAeab/5444 e historico, nao resultado desta correcao. Contagens ja incorporadas.
+Proximo: CI terminal, prova montada e ciclo integrado com harness original. Nao
+confundir #439 revisada/separada com inclusao na candidata ou recuperacao de dados.
+Harness e coorte100 final/pins seguem dependencias privadas distintas, sem novo
+canal comprovado; nenhuma busca repetida, nova coorte, transferencia ou carga.
+Demais gates operacionais inalterados. Checkout Codex somente docs nesta rodada.
+
+## Historico - Lote de Contagens Na401, Bloqueadores Reproduzidos (2026-10-30)
 
 Fila atual do dono autoriza implementacao/composicao isolada das contagens existentes;
 mapa440 docs nao exige nova autorizacao generica. Cursor permanece escritor da401.

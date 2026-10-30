@@ -1,4 +1,22 @@
-## Estado Vigente - Contagens Incorporadas, Ainda Sem Aceite (2026-10-30)
+## Estado Vigente - Correcao Das Contagens Revisada Por SHA (2026-10-30)
+
+Cursor publicou #401 62cf794697348beb6089b27c9cf789d318c2fd6b sobre eab13aa5.
+Contraprova repetida no hook real -> bridge real -> fachada HTTP real, fetch
+sintetico: falha count rejeita READ_COUNT_UNAVAILABLE, sem page.length; atores
+A/B geram keys diferentes. Achados anteriores corrigidos nesse alcance. Promise
+antiga ainda resolve na key A; nao equivale a dado exibido para B. Nao foi provado
+rerender de sessao em React montado nem navegador/API/PostgreSQL integrado.
+Delta conecta scopeListCacheRemainder ao teste e normaliza somente dois hunks,
+sem alterar golden. Parecer #401/6526312519. CI5446/run41079280818 em execucao
+na consulta; nao atribuir o FAILURE5444 ao novo SHA nem presumir CI verde.
+Contagens incorporadas, aceite integral ainda pendente. #439 segue separada.
+Artefatos privados harness/coorte final continuam inacessiveis neste executor;
+sem mudanca de acesso, nao repetir busca nem substituir artefatos ou origem.
+Proxima acao: CI terminal do SHA corrigido e prova montada/integrada com artefato
+existente recuperado. Preservados gates de schema, privilegio, backup, reconciliacao,
+carga especifica, deploy e aceite. Sem escrita operacional ou outra candidata.
+
+## Historico - Contagens Incorporadas, Ainda Sem Aceite (2026-10-30)
 
 A instrucao vigente do proprietario autoriza implementar e compor contagens
 existentes em lote isolado na MESMA #401; nao aguardar confirmacao generica do
