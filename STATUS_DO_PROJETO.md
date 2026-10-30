@@ -1,3 +1,29 @@
+## CURSOR — VIGENTE (#438 FECHADO tip 56447ea48) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#438** tip **`56447ea48`** — CI SUCCESS 6/6 + Codex limpo |
+| **Codex** | P2 paginação cancelados ENCERRADO; tip sem achados major |
+| **Sobre** | não atribuir FAIL ancestral se houver; tip código `56447ea48` |
+| **Keep both** | ≠ HistoricoClienteTab (#437) ≠ DetalhesCliente (#436) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | próximo indep.; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-copiar-ultimo-pedido-http-20261030.txt`
+
+## CURSOR — VIGENTE (#438 CopiarUltimoPedido HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-copiar-ultimo-pedido-http-392b` ← #432 `2bc3dc6c7` |
+| **Fix** | Último pedido via `loadPedidosHistoricoHttp`; banner se HTTP indisponível |
+| **Keep both** | ≠ HistoricoClienteTab (#437) ≠ DetalhesCliente (#436) |
+| **#437** | tip `5a33ac0c9` FECHADO CI SUCCESS 6/6 + Codex |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI deste tip; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-copiar-ultimo-pedido-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

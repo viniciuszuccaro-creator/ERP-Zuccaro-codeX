@@ -1,0 +1,40 @@
+Recuperação — CopiarUltimoPedido HTTP fail-closed (2026-10-30 America/Sao_Paulo)
+================================================================================
+Branch: cursor/recuperacao-copiar-ultimo-pedido-http-392b
+Base: #432 tip 2bc3dc6c7 — pacote independente (#437 HistoricoClienteTab FECHADO)
+
+Problema
+--------
+CopiarUltimoPedido usava base44.entities.Pedido.filter sem Grupo/Empresa/sessão;
+erro/HTTP ausente retornava null (cartão some) — confundível com “sem pedidos”.
+Itens só `itens_revenda` (HTTP canônico usa `itens`).
+
+Classificação
+-------------
+Integração incompleta. Keep both: ≠ HistoricoClienteTab ≠ DetalhesCliente ≠ HistoricoProdutosCliente.
+
+Mudança
+-------
+- HTTP: loadPedidosHistoricoHttp (limit 5) + pickUltimoPedidoNaoCancelado
+- Legado: filterInContext Pedido
+- Fail-closed: banner se sessão/empresa/erro (≠ return null)
+- resolveCopiarPedidoItensRevenda mapeia `itens` HTTP → payload de cópia
+- Chrome sky; RBAC Comercial.Pedido.visualizar
+
+Testes
+------
+tests/copiar-ultimo-pedido-http-failclosed.test.js — 4 PASS
+typecheck local sem erro neste arquivo · git diff --check limpo
+
+Fora
+----
+merge/deploy/carga · #401 candidata intacta
+
+## Codex P2 paginação cancelados (2026-10-30 America/Sao_Paulo)
+- Achado: 1ª página só CANCELADO ocultava elegível com hasMore.
+- Fix: findUltimoPedidoNaoCanceladoPaginado; legado limit 50.
+- Testes: 4 PASS.
+
+## CI SUCCESS tip 56447ea48 (2026-10-30 America/Sao_Paulo)
+- Runs push+PR — 6/6 SUCCESS.
+- Codex: tip 56447ea48 sem achados major; P2 paginação ENCERRADO.
