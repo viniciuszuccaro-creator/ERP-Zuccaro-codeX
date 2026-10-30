@@ -1,4 +1,40 @@
-## Estado vigente -431 avancou para9d339ce5, ainda bloqueada (2026-10-30)
+## Estado vigente - revisoes431beba e432707, contrato isolado (2026-10-30)
+
+431 avancou a4c03ed1->bebaad9eceb441b759e9f12aea9e026b752dc657;432 avancou
+2dc48183->79272de5->707759c5034bb62311c2a9b66dc2b4b0f9c5527e. Revisoes porSHA,
+nao herdar achados antigos.431beba,432707 e342f4b:6jobsSUCCESS cadaSHA,terminais.
+
+ENCERRADOS431beba por callbacks/fontes REAIS AST/VM:parcial/envelopevazio rejeitados;
+6valoresinvalidos rejeitados,zero real aceito;callback antigo aposEmpresa/cliente
+bloqueado;erro de leitura nao montaeditor;resposta tardiaREAD_STALE_SCOPE.
+ResidualATOR:binding/queryKey/generation ainda nao incluem identidade da sessao;
+callbackeditorA noMESMOcliente/Grupo/Empresa chega ao updateMock sobatorB autorizado.
+Nao e mesma falhaEmpresa ja corrigida nem escrita/vazamento server demonstrado.
+Parecer431/6520737800,scriptprivado review431-bound-editor exit0;Cursor escritor.
+Outro residual doMESMObinding reproduzido6520798060:aposloadvalido,refetchSUCESSO
+dataNULL no mesmoescopo deixa bound anterior/Formeditavel e onChangeupdateMock.
+Nao confundir com erroexplicito403 ja bloqueado;invalidar ausencia atual e ator.
+
+ENCERRADO432707 no alcance callbacks reais/state simulado:duas invocacoesantes de
+rerender agora1onChange (antes2),persistInFlightRef. Await/reject/toast/rascunho/
+persistBusy/RBAC/reabertura depropsconfirmados passam. Parecer6520751459;naoReact
+montado/browser/DB. CadastroCompleto.onChange altera RASCUNHO;saveMutation continua
+dono da persistencia.432707 depende431beba,nao incorporar isolando a dependencia.
+
+Prova INDEPENDENTE executada bridge->HTTP loopback->createApp/Supabase/RBAC/servico/
+repositorio canonicos da #342f4b sobre fixturePGlite e IdPsintetico:clienteMestreGrupo
+empresa_idNULL visivel em2Empresas autorizadas,count2;EmpresaA2mesmoGrupo negada
+quando perfil restritoA;outroGrupo/Empresaestrangeira403;expirado401;revogacao403.
+Snapshotclientes intacto,server/engine fechadosfinally. Recibo6520592667/script
+privado count-api-context-proof exit0. FixtureADMIN:NAO provaRLS/principalPG,
+PostgreSQL/browser ou composicao431 inteira. Seu servico/repo divergempreviamente
+da342em seletoresoperacionais;composicao devepreservar ambos,naocopiararquivos.
+Nao conclui queempresa_id causou desaparecimento de registros reais.
+
+401estavel permanece separada. Artefatosharness/coorte100 semnova condicao,nova
+busca ou recriacao;E2Ebrowser/reconciliacao/carga real continuamNAOexecutados.
+
+## Parecer historico -431 no9d339ce5 (2026-10-30)
 
 HEAD9d339ce5892100f77c0d242623acce598276bb01 revisado por delta e mesma contraprova.
 ENCERRADOS:chave ausente/envelopecounts{} agora READ_COUNT_PARTIAL; builder extraido

@@ -1,4 +1,31 @@
-## Estado vigente -431 no9d339ce5 revisada, ainda nao pronta (2026-10-30)
+## Estado vigente -431beba revisada e432707 em validacao (2026-10-30)
+
+Nao retomar9d comoHEAD:431bebaad9eceb441b759e9f12aea9e026b752dc657 tem6jobsSUCCESS.
+432707759c5034bb62311c2a9b66dc2b4b0f9c5527e depende431beba;6jobsCI SUCCESS
+terminais confirmados.342f4b24e3a anterior6jobsSUCCESS conferidos.
+
+Revisoes reais/scriptsprivados atualizados:431beba encerra safecount/Empresa/
+cliente/leituraerro/respostatardia;ATOR ainda ausente do binding/key/generation.
+Mesmoescopo ecliente com trocaatorA->B deixa callbackA chegar a updateMOCK.
+RefetchSUCESSO dataNULL aposloadvalido tambem conserva bound/Formeditavel e chega
+a updateMOCK(6520798060);nao e o erroexplicito que jafoibloqueado.
+Parecer6520737800,naoescrita/vazamentoserver nem antiga falhaEmpresa encerrada.
+432707 trava sincrona fecha contraprova2->1onChange;await/reject+toast/persistBusy/
+RBAC/dialogo/rascunho/reaberturaprops confirmados passam (6520751459). ScopeVM,
+naoReactmontado/DB. ParentsetFormData apenasdraft,donoDBsaveMutation preservado.
+
+Prova adicional6520592667:bridge+HTTP+app/servico/repositorio canonicos da342f4b,
+fixturePGliteADMIN/IdPsintetico. MestreGrupoNULLempresa visivelem2empresasautorizadas;
+perfilrestritoEmpresaA negaA2mesmoGrupo403;outroGrupo/empresaestrangeira403;
+expirado401;revogacao403;clientesintactos;server/engineencerrados. Naoatribuir a
+PostgreSQL/RLS/browser ou431inteira:backend431 temdeltas preexistentes de seletores
+com342. Compor keep-both aposrevisao/CI;401naoampliada. Nao causageneralizada de
+desaparecimento real nem recuperacao de dados pela contagemsintetica.
+
+Doisartefatosprivados continuamfaltantes,semnovacondicao e semrepetirbuscas.
+Nao criarharness/coorte/usuariosVPS;gates de carga/deploy/DDL intactos.
+
+## Parecer historico -431 no9d339ce5 (2026-10-30)
 
 HEAD9d339ce5892100f77c0d242623acce598276bb01 avancou durante revisao. Repeti somente
 contraprova sobre delta:parcial/chave ausente/envelope vazio agora rejeitados;
