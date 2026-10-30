@@ -35,6 +35,86 @@ function field(source) {
 }
 const markup = (component, props) => renderToStaticMarkup(React.createElement(component, props));
 
+/** Keep-both #439: aplica chrome sky+windowMode ao golden ID-only (handlers/RBAC intactos). */
+function applyCentroOperacaoSkyChrome(golden) {
+  let out = golden;
+  const swaps = [
+    [
+      'data-action="editar-nome-centro-operacao" data-sensitive />',
+      'data-action="editar-nome-centro-operacao" data-sensitive className="border-sky-100" />',
+    ],
+    [
+      'data-action="selecionar-tipo-centro-operacao" data-sensitive><SelectValue />',
+      'data-action="selecionar-tipo-centro-operacao" data-sensitive className="border-sky-100"><SelectValue />',
+    ],
+    [
+      'data-action="selecionar-responsavel-centro-operacao" data-sensitive><SelectValue placeholder="Selecione o responsavel" />',
+      'data-action="selecionar-responsavel-centro-operacao" data-sensitive className="border-sky-100"><SelectValue placeholder="Selecione o responsavel" />',
+    ],
+    [
+      '<Card className="border-green-200 bg-green-50"><CardContent className="p-3"><div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-green-600" />',
+      '<Card className="border-sky-200 bg-sky-50"><CardContent className="p-3"><div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-600" />',
+    ],
+    [
+      '<div className="flex items-center space-x-2 p-3 border rounded-lg">',
+      '<div className="flex items-center space-x-2 p-3 border border-sky-100 rounded-lg">',
+    ],
+    [
+      'data-action="editar-observacoes-centro-operacao" data-sensitive />',
+      'data-action="editar-observacoes-centro-operacao" data-sensitive className="border-sky-100" />',
+    ],
+    [
+      '<div className="flex justify-end gap-3 pt-4 border-t">\n        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} className="bg-blue-600 hover:bg-blue-700"',
+      '<div className="flex justify-end gap-3 pt-4 border-t border-sky-100">\n        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} className="bg-sky-600 hover:bg-sky-700"',
+    ],
+    [
+      "{isSubmitting ? 'Salvando...' : (dadosIniciais ? 'Salvar' : 'Criar Centro')}",
+      "{isSubmitting ? 'Salvando...' : (dadosIniciais?.id ? 'Salvar' : 'Criar Centro')}",
+    ],
+  ];
+  for (const [before, after] of swaps) {
+    assert.equal(out.split(before).length, 2, `CentroOperacao sky swap missing: ${before.slice(0, 48)}`);
+    out = out.replace(before, after);
+  }
+  const oldReturn = `  return (
+    <form onSubmit={handleSubmit} className="space-y-4">`;
+  const newReturn = `  const form = (
+    <form onSubmit={handleSubmit} className="space-y-4">`;
+  assert.equal(out.split(oldReturn).length, 2);
+  out = out.replace(oldReturn, newReturn);
+  const oldClose = `    </form>
+  );
+}`;
+  const newClose = `    </form>
+  );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <h2 className="text-2xl font-bold text-slate-900">
+              {dadosIniciais?.id ? 'Editar Centro de Operação' : 'Novo Centro de Operação'}
+            </h2>
+          </div>
+          {dadosIniciais?.id ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+            </p>
+          ) : null}
+          {form}
+        </div>
+      </div>
+    );
+  }
+
+  return form;
+}`;
+  assert.equal(out.split(oldClose).length, 2);
+  out = out.replace(oldClose, newClose);
+  return out;
+}
+
 test('Cursor ID-only retains literal identity and never fabricates a master code', () => {
   const current = field(read(fieldPath));
   for (const id of ['0007', 0, '0', 'synthetic-uuid-like-id']) {
@@ -99,6 +179,10 @@ test('remaining ID-only additions retain every existing handler context permissi
           assert.equal(expected.split(before).length, 2);
           expected = expected.replace(before, after);
         }
+      }
+      if (name === 'CentroOperacao') {
+        // #439 sky windowMode — deltas documentados (não pin cego). Golden e36231b3 + chrome.
+        expected = applyCentroOperacaoSkyChrome(expected);
       }
       assert.equal(emit(ts.createPrinter().printFile(transformed.transformed[0])), emit(expected), name);
     } finally { transformed.dispose(); }

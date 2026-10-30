@@ -24,3 +24,7 @@ windowMode era prop aceita sem chrome — integração visual incompleta no exis
 
 ## Checks
 `tests/recuperacao-centro-operacao-sky.test.js` + focados sky/comprovante aplicáveis
+
+## CI tip 288dc8a69 — frontend FAIL
+Run 41071683111: pin identidade CentroOperacao (golden e36231b3).
+Fix: applyCentroOperacaoSkyChrome documentado em cursor-identidade-consolidacao (padrão Webhook) — não pin cego.
