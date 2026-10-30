@@ -47,3 +47,7 @@ coincidia com key atual → bump epoch → GET descartado / hydrate pending.
 Correção: `contatosScopeGenerationRef` incrementa a cada mudança de painelScopeKey;
 persist captura `generationAtStart` e descarta se geração mudou **mesmo** com chave final
 igual. Teste: A→B→A epoch intacto / rascunho intacto — **32 PASS**.
+
+## CI SUCCESS tip 8ddde92c1 (2026-10-30 America/Sao_Paulo)
+- CI SUCCESS (frontend+backend+compose) — remainder countKnown + P1/P2 Contatos.
+- Pedido @codex review tip 8ddde92c1 / 04a1d713e.

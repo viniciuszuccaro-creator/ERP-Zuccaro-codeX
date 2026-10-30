@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (#401 tip 8ddde92c1 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `8ddde92c1` — CI SUCCESS (remainder Visualizador + P1/P2 Contatos) |
+| **Código** | P2 geração `04a1d713e` · P1 ator/sessão `42c63e538` · contagens |
+| **Provas** | atorA→B · A→B→A · tenant-switch · load ≠ 0 · 32 PASS locais |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/prova-401-contatos-save-contexto-20261030.txt`
+**Próximo:** `@codex review` tip `8ddde92c1` / `04a1d713e` — aceite candidata.
+
 ## CURSOR — VIGENTE (#401 P2 geração A→B→A + P1 ator/sessão) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
