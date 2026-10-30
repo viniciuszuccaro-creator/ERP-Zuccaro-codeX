@@ -1,4 +1,35 @@
-## Estado vigente - revisoes431beba e432707, contrato isolado (2026-10-30)
+## Estado vigente - revisoes4312451/4321cb e mapa de composicao (2026-10-30)
+
+#4312451d91c04d1348c0aabc85945fece6505d8ae14 e4321cb967a837f92a9d54a34702e06f7f745e408e46:
+6jobsCI SUCCESS terminais porSHA. Provas reais AST/VM atualizadas encerram atorA
+aposatorB inclusive semrender,ausenciaaposrefetch retiraeditor,errosemForm,tardia,
+Empresa/cliente antigos,safecount,zeroverdadeiro;432duasinvocacoes->1onChange,
+await/reject+toast/dialogo/rascunho/persistBusy/RBAC/reaberturaprops. Alcance callbacks
+e estado simulado,naoReactmontado/browser/PG. Pareceres6521236217/6521236590.
+
+P2 NOVO do caminhoHTTP:Cliente.filter({id}) ignora id e dois clientes produzem
+MESMO GET/api/v1/clientes semid; queryFn seleciona clientes[0]. Binding rejeita
+rowId divergente(sem gravacao errada provada),mas abertura de outrocliente pode
+ficar aguardando e consulta ampla persiste. Leitor exato Cliente.get(id) EXISTE.
+Prova de fachada REAL com fetchsintetico,review431-client-exact-read exit0;sem
+rede/dadosreais. Nao tratar isso como defeito no filtroLOCAL,nem reabrirP1encerrados.
+Cursor deve corrigir por contrato existente e testar2ocliente/fora1apagina/404/403/tardia.
+
+Mapa de composicao6521237041 enviadoCursor,nenhuma incorporacaoCodex.432mergebase
+com431=884012ed5;2451doc naoancestral masruntimeequivalente,432somadeltaForms/testes.
+5sobreposicoes:STATUS,HANDOFF,smokeC360,ContatosForm,consolidation81Remainder.
+NAO copiar8arquivos divergentes da432sobre401:clienteTypes,inMemoryClienteRepository,
+postgresClienteRepository,ClienteService(seletoresoperacionais/snapshotvinculos),
+OrcamentoService/PedidoService(freeze87),postgresProdutoRepository(buscasemacentos),
+httpApiClient(comercialMasters/resolveClienteEmpresa/contextoimutavel). Sao diferencas
+PREEXISTENTES debranches,naoregressao causada pelo delta431. Preservar ambos os lados.
+
+401686ae322 permaneceestavel/separada. Gates finitos na lista unica:fecharP2,
+compor/revisar/checks,provaUIAPI PG,esquema/minimoprivilegio,backup/retorno,
+reconciliacao/coorte,cargaaprovada,deploy eaceite;sem inferir merge emmain.
+Harness/coorte final seguemprivados semnovacondicao,nova busca ou recriacao.
+
+## Parecer historico -431beba e432707 (2026-10-30)
 
 431 avancou a4c03ed1->bebaad9eceb441b759e9f12aea9e026b752dc657;432 avancou
 2dc48183->79272de5->707759c5034bb62311c2a9b66dc2b4b0f9c5527e. Revisoes porSHA,

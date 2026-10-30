@@ -1,4 +1,28 @@
-## Estado vigente -431beba revisada e432707 em validacao (2026-10-30)
+## Estado vigente -4312451/4321cb revisadas, P2HTTP e mapa (2026-10-30)
+
+SHAs4312451d91c04d1348c0aabc85945fece6505d8ae14/4321cb967a837f92a9d54a34702e06f7f745e408e46
+tem6jobsCI SUCCESS cada. Contraprovas callbacksREAIS/VM encerraram ator/ausencia,
+inclusive ator semrerender;guardasEmpresa/cliente/erro/tardia/safecount preservadas.
+432:2acoesantesrender->1onChange;await/reject+toast/rascunho/RBAC/reaberturapropsOK.
+NaoReactmontado/browser/DB. Pareceres6521236217/6521236590,não manterbeba/707 comoHEAD.
+
+NovoP2HTTP:filter({id}) deCliente fazlistagemsemid;2ids gerammesmaURL equeryFn pega
+primeiralinha. Bindingnovo bloqueia rowId errado,maseditor deoutrocliente aguardaria.
+get(id) canonico EXISTE e geracaminhoexato. Prova fachadaHTTP/fetchsinteticoexit0,
+semrede/registroreal;nao generalizar ao filtroLOCAL. Cursor corrige existente,
+prova2ocliente/fora1apagina+404/403/tardia antesda incorporacao401.
+
+Mapa6521237041:432 compartilha runtime431 masnao docHEAD2451 porancestralidade.
+SobreposicoesSTATUS/HANDOFF/smoke/ContatosForm/consolidation81Remainder exigemkeepboth.
+8arquivosbackendAPIdivergentes sao preexistentes:preservarseletoresoperacionais
+Cliente/types/repos,freezeOrcamento/Pedido,buscaProdutoacentos ecomercialMasters da401.
+Nao copiararquivos inteiros ou criaroutra candidata. Cursor escritor/Codexrevisor.
+
+401686 intacta;artefatosharness/coorte aindaindisponiveis,semnovacondicao deacesso.
+Nao repetirbusca/transferencia/instalacao/provasintactas;E2Ebrowser/reconciliacao real
+e carga NAOexecutados. Gatesoperacionais preservados,nenhum merge/deploy/DDL/grant.
+
+## Parecer historico -431beba e432707 (2026-10-30)
 
 Nao retomar9d comoHEAD:431bebaad9eceb441b759e9f12aea9e026b752dc657 tem6jobsSUCCESS.
 432707759c5034bb62311c2a9b66dc2b4b0f9c5527e depende431beba;6jobsCI SUCCESS
