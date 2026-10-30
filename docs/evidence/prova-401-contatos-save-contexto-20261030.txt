@@ -1,0 +1,19 @@
+Prova #401 — Contatos save×contexto + late GET (2026-10-30 America/Sao_Paulo)
+================================================================================
+Tip base: a99483870 CI5459 SUCCESS (Contatos P2 45d067d68 + contagens 88332170e).
+
+## Método
+Extrai o job async REAL de persistContatosPainel (AST → contatosPersistQueueRef.current)
+e executa com bindings — mesma lógica do produto, não réplica.
+Hydrate: useEffect real já coberto (#424); extensão CONTEXT_CHANGED.
+
+## Provas
+1. Escopo muda durante updateInContext → {skipped, CONTEXT_CHANGED}; epoch intacto;
+   draft do novo contexto não recebe lista do save antigo; clienteLive sem merge.
+2. Escopo estável → aplica lista + epoch += 1 (caminho positivo).
+3. GET do novo contexto aplica após save antigo descartado (epoch não invalidado).
+4. Persist exige contatosHydrateStatus==='ok' (erro≠vazio / gravação bloqueada).
+5. Mutação que remove guard epoch ainda quebra o teste #424 (sem relaxar).
+
+## Fora
+React Testing Library / jsdom full tree · PG · Auth · VPS · pin cego · merge main

@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#401 prova save×contexto comportamental) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | tip `a99483870` CI5459 SUCCESS (Contatos P2 + contagens + Codex limpo) |
+| **Prova** | job `persistContatosPainel` REAL: CONTEXT_CHANGED sem bump; rascunho novo intacto; GET novo aplica |
+| **Testes** | contatos-painel-counterproof-seams **11 PASS** · count-erro-vazio 18 PASS |
+| **Keep** | guardas epoch/skipped/hydrate; sem pin cego |
+| **#441** | tip `836b7e333` CI SUCCESS · Codex limpo `a1a6aa10e` — pacote separado |
+| Fora | merge main · ampliar candidata · relaxar asserts |
+
+**Evidência:** `docs/evidence/prova-401-contatos-save-contexto-20261030.txt`
+**Próximo:** CI deste tip; indep. #441 docs closeout / recuperação.
+
 ## CURSOR — VIGENTE (#401 Contatos P2 + contagens CI/Codex limpo) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
