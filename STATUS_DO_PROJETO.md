@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#446 tip 54fcd026d CI SUCCESS — residual + typecheck) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `54fcd026d` — CI SUCCESS 6/6 (typecheck fix pós `f8a20831e`) |
+| **Código residual** | lock status · Top10 leitura · Sugestões anti-loop · modal canônico |
+| **Codex** | `@codex review` pedido em `f8a20831e` — CI verde ≠ aceite montado |
+| **#401** | `34c4c0ee` — **fora**; mapa port pronto sem merge |
+| Fora | merge main · deploy · seed · fundir linhas |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** aceite Codex montado tip residual; port controlado #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 residual lock/Top10/Sugestões — pós Codex b161) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
