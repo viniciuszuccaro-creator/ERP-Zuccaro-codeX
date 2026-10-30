@@ -49,3 +49,9 @@ Remainder scopeListCache estendido (hunks exact); golden e36231b3 mantido.
 
 SHA remoto candidata: `88332170ed29f88fb002801f8d26b33349ddb484`
 Pedido `@codex review` neste tip. Sem merge main.
+
+## P2 Contatos save×contexto + Codex limpo (2026-10-30 America/Sao_Paulo)
+- Achado Codex tip `88332170e`: discussion_r4425429376 (epoch após troca de empresa).
+- Fix tip `45d067d68` — CI SUCCESS 41083156927.
+- Docs tip `63b186008` — CI SUCCESS 41083216569; Codex Review: sem major issues (receipt 6526891094).
+- Contagens tip `88332170e` permanece CI SUCCESS 41080598445.

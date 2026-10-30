@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#401 Contatos P2 + contagens CI/Codex limpo) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip código Contatos P2** | `45d067d68` — CI **41083156927 SUCCESS** |
+| **Tip docs** | `63b186008` — CI **41083216569 SUCCESS** · Codex **sem major** (6526891094) |
+| **Contagens** | `88332170e` CI **41080598445 SUCCESS** · INCORPORADAS |
+| **P2 #4425429376** | FECHADO — CONTEXT_CHANGED sem bump epoch |
+| **Indep.** | #441 tip `a1a6aa10e` CI SUCCESS — aguarda Codex |
+| Fora | merge main · 2ª candidata · harness VPS |
+
+**Evidência:** `docs/evidence/incorporacao-contagens-431-into-401-20261030.txt`
+**Próximo:** indep. recuperação / C360; candidata estável para aceite Contatos+contagens.
+
 ## CURSOR — VIGENTE (#401 P2 save×contexto Contatos) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
