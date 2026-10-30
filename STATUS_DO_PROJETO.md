@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (#436 import assertion + HTTP KPIs) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** `cursor/recuperacao-detalhes-cliente-http-392b` |
+| **Sobre** | tip `7039d0221` frontend FAIL — **não atribuir** |
+| **Causa** | `comercial-clientes-tab-v24` esperava import default-only |
+| **Fix** | regex aceita default+named (`loadPedidosHistoricoHttp`) |
+| Preferir | CI deste tip; #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
 ## CURSOR — VIGENTE (DetalhesCliente KPIs HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
