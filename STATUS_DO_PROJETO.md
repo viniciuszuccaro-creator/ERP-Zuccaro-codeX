@@ -6,13 +6,26 @@
 | **Fix** | Pedidos via `loadPedidosHistoricoHttp`; KPIs/Top20 fail-closed se página incompleta/erro |
 | **Keep both** | HistoricoClienteTab ≠ HistoricoProdutosCliente ≠ DetalhesCliente |
 | **Auxiliares** | NF/entrega/CR HTTP → indisponível (≠ lista vazia); legado `filterInContext` |
-| **#436** | tip `f84f63ed2` DetalhesCliente — CI/Codex em paralelo (não atribuir FAIL `8c0d05c16`) |
+| **#436** | tip `f84f63ed2` FECHADO — CI SUCCESS 6/6 + Codex limpo |
 | **#435** | tip `b51214245` CI SUCCESS 6/6 |
 | **#408** | Funil×Separacao tip `803764887` CI SUCCESS (Pacote 5) |
 | **#401** | tip `686ae322` estável · sem merge oficial |
-| Preferir | CI deste tip + #436; candidata intacta |
+| Preferir | CI deste tip; candidata #401 intacta |
 
 **Evidência:** `docs/evidence/recuperacao-historico-cliente-tab-http-20261030.txt`
+
+## CURSOR — VIGENTE (#436 FECHADO tip f84f63ed2) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** tip **`f84f63ed2`** — CI SUCCESS 6/6 (push+PR) |
+| **Codex** | tip `f84f63ed2` sem achados major (P1 KPIs 1ª página ENCERRADO) |
+| **Sobre** | não atribuir FAIL import `7039d0221` nem typecheck `8c0d05c16` |
+| **#437** | HistoricoClienteTab HTTP — tip `7eeeec481` (este branch) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI #437; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
 
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 

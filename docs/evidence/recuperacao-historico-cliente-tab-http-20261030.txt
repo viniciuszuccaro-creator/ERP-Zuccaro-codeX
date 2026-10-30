@@ -1,6 +1,7 @@
 Recuperação — HistoricoClienteTab HTTP fail-closed (2026-10-30 America/Sao_Paulo)
 ================================================================================
 Branch: cursor/recuperacao-historico-cliente-tab-http-392b
+Tip código: 7eeeec481
 Base: #432 tip 2bc3dc6c7 (cadastros-audit-restante) — pacote independente de #436
 Referência: matriz recuperacao-erp-integra-capacidades / DetalhesCliente+#435 padrão
 
