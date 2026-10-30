@@ -1,4 +1,28 @@
-## Estado vigente - revisoes por SHA e recuperacao pendente (2026-10-30)
+## Estado vigente -431 revisada, ainda nao pronta (2026-10-30)
+
+Revisao no HEAD28b8e8d1543a52df01df4bcc9e8ff453bc564743, nao fde6 anterior.
+CI TERMINAL:frontendFAILURE nos2eventos,backend/composeSUCCESS. Job123999858012
+2623PASS/3FAIL/0SKIP;3assertions de fonte integral do teste cursor-identidade,
+nao ambiente. Pin/remainder deve preservar tudo fora do hunk e contraprovas,
+nao atualizar hash apenas para aprovar.342/9a29b85d confirmou6jobsSUCCESS.
+
+Prova code-only privada review431-residuals-20261030.mjs exit0 usa fonte real do
+SHA, callbacks AST/VM, bridgeHTTP/HttpApiClient reais com fetch/update sinteticos.
+P2:resposta parcial ou envelope vazio ainda normalizam desconhecido em0. P1:
+callback de contatos aberto emA chega ao updateMock emB apos troca+efeitos,
+pois loadedScopeRef acompanha o contexto em vez de fixar o da edicao; erro de
+leitura renderiza editor vazio e tambem permite updateMock. NegativaRBAC bloqueia.
+Sem prova de gravacao/vazamento backend ou React montado. Corrigir binding,
+reabertura e bloqueio de leitura no existente, sem mudar dono da persistencia.
+
+Filtroempresa antigo e novo$and geram requestHTTP igual no caminho real testado;
+autorizacao/visibilidade depende da sessao/contrato backend. MockProduto1 nao prova
+recuperacao de mestre compartilhado. Parecer431/6520027433 e6520058442 publicado;
+Cursor escritor, recebimento ainda nao comprovado.401estavel sem esse pacote.
+Dois artefatos privados sem mudanca de condicao:nao repetir buscas/instalacoes,
+nao recriarharness/coorte ou provisionarAuthVPS. Gates operacionais preservados.
+
+## Detalhamento - revisoes anteriores e recuperacao pendente (2026-10-30)
 
 HEADs409c07f3722/4297ad1d35d/4308ab11904 reconferidos,6jobsSUCCESS em cadaSHA.
 Pareceres6519758646/6519748889/6519758957:409 sem novo defeito no delta visual/ID,

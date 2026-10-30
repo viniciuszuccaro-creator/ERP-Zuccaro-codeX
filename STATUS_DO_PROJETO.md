@@ -1,4 +1,35 @@
-## Estado vigente - revisao de recuperacao funcional (2026-10-30)
+## Estado vigente - revisao431 com bloqueadores comprovados (2026-10-30)
+
+#431 HEAD atual28b8e8d1543a52df01df4bcc9e8ff453bc564743, posterior ao fde6
+informado pelo dono. CI TERMINAL em ambos eventos:frontendFAILURE,backendSUCCESS,
+composeSUCCESS. Job123999858012:2626total/2623PASS/3FAIL/0SKIP. Causa comum das
+3falhas:preservacao integral tests/cursor-identidade-consolidacao.test.js,
+hash9b26... versus53ed..., nao infraestrutura. Nao aprovar trocando pin cegamente.
+342/9a29b85d anterior:6jobsSUCCESS confirmados por SHA.
+
+Contraprova privada code-only review431-residuals-20261030.mjs exit0, fonte real
+doSHA via AST/modulosGit; dependencias/contexto/fetch/update sinteticos, sem rede
+ou banco. Transporte403 agora rejeita, placeholder do hook removido: progresso.
+P2 residual:counts parcial{Cliente:2} para duas entidades produzProduto0; envelope
+counts{} produz todos0. Falta validar completude/tipo/inteiroseguro nao-negativo.
+P1 adaptadorContatos:efeito reatribui loadedScopeRef ao novo contexto; callback
+antigoA apos render/efeitosB passaassertScope e chega ao updateMock emB. Query
+com erro/dataundefined tambem renderiza Form vazio editavel e aceita updateMock.
+RBAC negativo bloqueou chamada. Nao e gravacao real nem vazamento server provado.
+Exigir binding imutavel cliente/escopo/ator carregado, leitura valida e invalidacao
+do editor antigo; preservar callback/Form/proprietario unico da persistencia.
+
+BridgeHTTP+HttpApiClient REAIS: filtros antigoempresa e novo$and produziram URL
+e headers identicos, contexto pela sessao. Fetch de teste retornoumeta.total2,
+sem fallback local. Logo mockProduto1 nao prova recuperar mestreGrupo noHTTP.
+Pareceres431/6520027433 e6520058442; Cursor escritor da correcao, Codex revisor.
+Recebimento/correcao ainda nao comprovados.401estavel NAO alterada/incorporada431.
+
+Harness e coorte100 seguem dependencias privadas separadas, sem nova condicao de
+acesso:nao repetir busca/transferencia/instalacao. Nao houve E2Ebrowser ou consulta
+real/reconciliacao/carga. ProvasPG5/HTTPmemoria12/IdP8 nao substituem ciclointegrado.
+
+## Detalhamento - revisao anterior de recuperacao funcional (2026-10-30)
 
 #409c07f3722749a1a91000a1c8a98ce56107b14b664, #4297ad1d35d6b8801d00d5d4f28124638244f392ca2
 e #4308ab119048af7ddda84e3d0c0442422298371a9db reconferidas:6jobsSUCCESS cadaSHA.
