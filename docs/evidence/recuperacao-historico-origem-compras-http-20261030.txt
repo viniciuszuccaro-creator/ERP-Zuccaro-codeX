@@ -70,3 +70,10 @@ Testes: `historico-origem-compras-http-failclosed` **19 PASS** (antes 14).
 - Runs: push `41095944334` · PR `41095952821` — SUCCESS 6/6.
 - Port #442 já em `d4eeb5ea7` (rebase policy compartilhada).
 - CI verde ≠ encerramento: aguarda `@codex review` montado (KG/UN, qty, preço, empresa A→B).
+
+## Residual P2 Codex (discussion_r4426381872) — preço zero + created_at
+- `preco > 0` descartava `preco_unitario: "0.000000"` do pedido mais recente.
+- Fix: `resolvePrecoUnitarioComprovado` (0 válido; ausente=null); `ultimo_preco` inicia null.
+- UI: preço ausente → "—"; Adicionar só envia `preco_venda` se comprovado (inclui 0).
+- `created_at` HTTP já em `resolveDataPedidoHistorico`; testes cobrem created_at + zero.
+- Harness: **21 PASS**. CI verde ≠ aceite montado.
