@@ -48,38 +48,58 @@ function once(source, current, previous) {
 }
 // Browser-proven absence is not an explicit empty list. Preserve the old golden;
 // accept only these exact hunks, never arbitrary spread expressions.
-// #432: persistBusy wiring Contatos+Endereços — peels authorized lines, keeps stage48 hash.
+// #431+#432 keep-both: peels draft/commitMode/persistBusy Completo → stage48; saveMutation canônico.
 function clienteContactPresenceRemainder(source) {
+  source = once(source,
+    '  /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */\n'
+    + '  const applyContatosDraft = (novosContatos) => {\n'
+    + '    setFormData((prev) => ({ ...prev, contatos: novosContatos }));\n'
+    + '  };\n'
+    + '  const applyEnderecosDraft = (novosEnderecos) => {\n'
+    + '    setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));\n'
+    + '  };\n'
+    + '\n'
+    + '  /** Gravação efetiva no backend (proprietário canônico de persistência deste cadastro). */\n'
+    + '  const handleSave = () => {\n',
+    '  const handleSave = () => {\n');
+  source = once(source,
+    '            <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
+    + '              <GerenciarContatosClienteForm\n'
+    + '                contatos={formData.contatos || []}\n'
+    + '                onChange={applyContatosDraft}\n'
+    + '                commitMode="draft"\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '                persistBusy={isSaving || saveMutation.isPending}\n'
+    + '              />\n'
+    + '            </TabsContent>\n',
+    '            <TabsContent value="contatos" className="m-0 mt-4">\n'
+    + '              <GerenciarContatosClienteForm\n'
+    + '                contatos={formData.contatos || []}\n'
+    + '                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '              />\n'
+    + '            </TabsContent>\n');
+  source = once(source,
+    '            <TabsContent value="enderecos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
+    + '              <GerenciarEnderecosClienteForm\n'
+    + '                enderecos={formData.locais_entrega || []}\n'
+    + '                onChange={applyEnderecosDraft}\n'
+    + '                commitMode="draft"\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '                persistBusy={isSaving || saveMutation.isPending}\n'
+    + '              />\n'
+    + '            </TabsContent>\n',
+    '            <TabsContent value="enderecos" className="m-0 mt-4">\n'
+    + '              <GerenciarEnderecosClienteForm\n'
+    + '                enderecos={formData.locais_entrega || []}\n'
+    + '                onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '              />\n'
+    + '            </TabsContent>\n');
   source = once(source, '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),',
     '    contatos: sanitizeContatos(data.contatos),');
-  source = once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
+  return once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
     '      contatos: record.contatos || [],');
-  // Contatos Form: prop persistBusy (gravação única / bloqueio UI) — authorized #432.
-  source = once(source,
-    '              <GerenciarContatosClienteForm\n'
-    + '                contatos={formData.contatos || []}\n'
-    + '                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}\n'
-    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
-    + '                persistBusy={isSaving || saveMutation.isPending}\n'
-    + '              />',
-    '              <GerenciarContatosClienteForm\n'
-    + '                contatos={formData.contatos || []}\n'
-    + '                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}\n'
-    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
-    + '              />');
-  // Endereços Form: mesma prop — authorized #432.
-  return once(source,
-    '              <GerenciarEnderecosClienteForm\n'
-    + '                enderecos={formData.locais_entrega || []}\n'
-    + '                onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}\n'
-    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
-    + '                persistBusy={isSaving || saveMutation.isPending}\n'
-    + '              />',
-    '              <GerenciarEnderecosClienteForm\n'
-    + '                enderecos={formData.locais_entrega || []}\n'
-    + '                onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}\n'
-    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
-    + '              />');
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).

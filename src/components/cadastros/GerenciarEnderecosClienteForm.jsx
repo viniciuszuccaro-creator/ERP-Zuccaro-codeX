@@ -19,15 +19,27 @@ import usePermissions from "@/components/lib/usePermissions";
  * onChange assíncrono (falha mantém diálogo; sem double-close).
  * Trava síncrona (ref) além de setSalvando: duplo clique antes do re-render
  * não dispara onChange duas vezes (Codex #432 — botão disabled ≠ gravação única).
+ * commitMode "draft" = rascunho CadastroCompleto; "backend" = gravação do adaptador.
  */
 export default function GerenciarEnderecosClienteForm({
   enderecos = [],
   onChange,
   assertScopeCurrent,
   persistBusy = false,
+  commitMode = "backend",
 }) {
   const { canEdit } = usePermissions();
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const isDraftCommit = commitMode === "draft";
+  const busyLabel = isDraftCommit
+    ? "Aguarde a atualização do rascunho de endereços."
+    : "Aguarde a gravação de endereços em andamento.";
+  const failSaveLabel = isDraftCommit
+    ? "Falha ao atualizar rascunho de endereços."
+    : "Falha ao salvar endereços.";
+  const failDeleteLabel = isDraftCommit
+    ? "Falha ao atualizar rascunho ao excluir endereço."
+    : "Falha ao excluir endereço.";
   const assertScope = () => {
     if (typeof assertScopeCurrent !== "function") return;
     assertScopeCurrent();
@@ -101,7 +113,7 @@ export default function GerenciarEnderecosClienteForm({
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
-      toast.error("Aguarde a gravação de endereços em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -118,7 +130,7 @@ export default function GerenciarEnderecosClienteForm({
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
-      toast.error("Aguarde a gravação de endereços em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -160,7 +172,7 @@ export default function GerenciarEnderecosClienteForm({
     }
 
     if (!beginPersist()) {
-      toast.error("Aguarde a gravação de endereços em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try {
@@ -181,7 +193,7 @@ export default function GerenciarEnderecosClienteForm({
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
-      toast.error("Aguarde a gravação de endereços em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -199,7 +211,7 @@ export default function GerenciarEnderecosClienteForm({
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
-      toast.error("Aguarde a gravação de endereços em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -208,13 +220,13 @@ export default function GerenciarEnderecosClienteForm({
     }
     const enderecosAtualizados = enderecos.filter((_, i) => i !== index);
     if (!beginPersist()) {
-      toast.error("Aguarde a gravação de endereços em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try {
       await Promise.resolve(onChange(enderecosAtualizados));
     } catch (error) {
-      toast.error(error?.message || "Falha ao excluir endereço.");
+      toast.error(error?.message || failDeleteLabel);
     } finally {
       endPersist();
     }
@@ -230,6 +242,7 @@ export default function GerenciarEnderecosClienteForm({
           disabled={bloqueado || !podeEditar}
           data-permission="Cadastros.Cliente.editar"
           data-action="Cadastros.Cliente.endereco.adicionar"
+          data-commit-mode={commitMode}
         >
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Endereço

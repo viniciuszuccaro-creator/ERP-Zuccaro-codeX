@@ -21,3 +21,14 @@ Este tip: Contatos binding imutável + normalize sem coerção + testes função
 
 ## Limite de evidência
 Positivo mock invoke ≠ autorização backend SQL. Bridge HTTP filter≠session headers documentado; não remove tenant filters.
+
+## Delta tip Cliente.get + CadastroCompleto draft≠save (2026-10-30 America/Sao_Paulo)
+| Achado Codex 2451d91c0 | Correção |
+|------------------------|----------|
+| `Cliente.filter({id})`+`[0]` — HTTP não transmite id | `Cliente.get(clienteId)`; 404/not-found → ausência; id diverge → erro; late `READ_STALE_SCOPE` preservado |
+| rascunho vs gravação no Completo | `commitMode="draft"` + `applyContatosDraft`/`applyEnderecosDraft`; só `saveMutation`/`handleSave` persiste |
+
+CI anterior tip docs `2451d91c0` SUCCESS 6/6 — não atribuir a este HEAD até checks do novo tip.
+
+## Fix CI tip 75e97d5c6 (2026-10-30 America/Sao_Paulo)
+stage48 Completo: clienteContactPresenceRemainder peels draft/commitMode hunks (sem pin cego). Hash 4edac364… restaurado.

@@ -266,6 +266,10 @@ test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () =>
   assert.match(orphan, /data-contatos-read-error/);
   assert.match(orphan, /READ_STALE_SCOPE/);
   assert.match(orphan, /queryKey:\s*\["cliente",\s*clienteId,\s*liveScope\.key\]/);
+  // Leitura canônica por id (HTTP GET) — filter({id})+ [0] não transmite id na fachada
+  assert.match(orphan, /Cliente\.get\(clienteId\)/);
+  assert.doesNotMatch(orphan, /Cliente\.filter\(\{\s*id:\s*clienteId\s*\}\)/);
+  assert.doesNotMatch(orphan, /clientes\[0\]/);
   assert.doesNotMatch(orphan, /loadedScopeRef\.current = \{ groupId, empresaId \}/);
   assert.doesNotMatch(orphan, /base44\.entities\.Contato/);
   // Ator canônico na identidade de escopo (Codex residual A→B); sem token em key/cache/log

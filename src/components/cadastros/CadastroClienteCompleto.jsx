@@ -503,6 +503,15 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     setFormData({ ...formData, status: novoStatus });
   };
 
+  /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */
+  const applyContatosDraft = (novosContatos) => {
+    setFormData((prev) => ({ ...prev, contatos: novosContatos }));
+  };
+  const applyEnderecosDraft = (novosEnderecos) => {
+    setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
+  };
+
+  /** Gravação efetiva no backend (proprietário canônico de persistência deste cadastro). */
   const handleSave = () => {
     try { assertFormScopeCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
@@ -1173,19 +1182,21 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               </div>
             </TabsContent>
 
-            <TabsContent value="contatos" className="m-0 mt-4">
+            <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">
               <GerenciarContatosClienteForm
                 contatos={formData.contatos || []}
-                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}
+                onChange={applyContatosDraft}
+                commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
                 persistBusy={isSaving || saveMutation.isPending}
               />
             </TabsContent>
 
-            <TabsContent value="enderecos" className="m-0 mt-4">
+            <TabsContent value="enderecos" className="m-0 mt-4" data-cadastro-commit="draft">
               <GerenciarEnderecosClienteForm
                 enderecos={formData.locais_entrega || []}
-                onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}
+                onChange={applyEnderecosDraft}
+                commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
                 persistBusy={isSaving || saveMutation.isPending}
               />

@@ -1,3 +1,41 @@
+## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#432** `cursor/cadastros-audit-restante-392b` |
+| **Merge** | #431 tip `2b523fdf8` CI SUCCESS 6/6 (Cliente.get + draft≠save + remainder) |
+| **Keep-both** | Forms: persistInFlightRef #432 + commitMode draft #431 |
+| **Codex** | tip 3769dc7 sem achados major; ator/ausência/counts ENCERRADOS |
+| **#401** | tip `686ae322` estável — prep incorporação sem merge oficial |
+| Preferir | CI deste tip → prep #401 |
+
+**Evidência:** `docs/evidence/prep-merge-431-into-432-20261030.txt` · `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
+## CURSOR — VIGENTE (#431 Cliente.get + Completo draft≠save) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
+| **Sobre** | tip docs `2451d91c0` CI SUCCESS 6/6 — **não atribuir** a este HEAD |
+| **Fix** | Contatos `Cliente.get` canônico; Completo `commitMode=draft` ≠ `saveMutation` |
+| **Codex** | residual HTTP filter→get; ator/ausência/counts ENCERRADOS |
+| **#432** | herdar via merge após CI deste tip |
+| Preferir | CI tip → merge #432 → prep #401 sem merge oficial |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
+## CURSOR — VIGENTE (#431 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#431** tip **`884012ed5`** / código `2277c5a33` — CI SUCCESS 6/6 |
+| **Provas** | actorId · ausência pós-refetch · counts safe-int · erro≠Form |
+| **#432** | tip `7941f984a` CI SUCCESS (cadeia) · docs `1cb967a83` |
+| **#401** | tip `686ae322` estável · harness BLOCKED |
+| Preferir | #409 · revisão; P2 só arquivos independentes |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
 ## CURSOR — VIGENTE (#431+#432 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
