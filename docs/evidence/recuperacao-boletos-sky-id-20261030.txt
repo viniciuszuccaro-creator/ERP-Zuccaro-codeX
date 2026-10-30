@@ -1,0 +1,31 @@
+Recuperação indep. — ConfiguracaoBoletos sky windowMode + ID técnico (2026-10-30 America/Sao_Paulo)
+====================================================================================================
+Base: #444 tip JobAgendado sky (CI SUCCESS docs cfaf9bfaa / código 109f8d6c8)
+Branch: cursor/recuperacao-boletos-sky-id-392b
+Fora: candidata #401 · cadeia #441/#442 · merge main · deploy · seed · graduação reopen
+
+## Classificação (matriz erp-integra)
+Melhoria útil da experiência azul-clara no form existente.
+windowMode existia com chrome verde; ID-only (CadastroCodigoRegistroField + RecordState) preservado.
+Não é perda de dados; não cria módulo paralelo.
+
+## Mudança (somente existente)
+`src/components/cadastros/ConfiguracaoBoletosForm.jsx`
+- header windowMode `from-sky-50 to-sky-100` + ícone/botão sky
+- ID técnico visível na edição (fonte mono; sem data-action novo)
+- título/submit usam `dadosIniciais?.id`
+- preserva: idOnly field, RecordState, sanitize, multiempresa, data-permission, ações existentes
+
+## Pin / CANAL
+- `applyConfiguracaoBoletosSkyChrome` documentado em cursor-identidade-consolidacao (padrão CentroOperacao)
+- PEEL hunks em consolidation81Remainder — hash baseline `53ed9f42…` intacto
+- financeiro-gerar-cobranca: Boletos passa a exigir sky (não mais “fora do sky”)
+
+## Testes
+`tests/recuperacao-boletos-sky-id.test.js` + identidade + financeiro-orientacao + publication-channel — PASS
+
+## Não feito
+- count+1 / geração de código no browser
+- graduação ID-only → reopen
+- Produto legado / Endereços embed (próximos residuais)
+- integração #401/#441/#442

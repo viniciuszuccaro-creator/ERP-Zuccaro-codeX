@@ -1,8 +1,21 @@
-## CURSOR — VIGENTE (#444 JobAgendado sky tip 109f8d6c8 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (Pacote C Boletos sky ID-only) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Tip** | `109f8d6c8` — CI SUCCESS 6/6 (`41102546943` push · `41102576414` PR) |
+| **Branch** | `cursor/recuperacao-boletos-sky-id-392b` ← #444 |
+| **Fix** | ConfiguracaoBoletos sky windowMode + ID técnico; ID-only pin + CANAL PEEL |
+| **Testes** | recuperacao-boletos-sky-id · identidade · financeiro-orientacao · publication-channel **PASS** |
+| **#401/#441/#442** | fora — sem integrar |
+| Fora | merge main · deploy · seed · pin cego · graduação reopen |
+
+**Evidência:** `docs/evidence/recuperacao-boletos-sky-id-20261030.txt`
+**Próximo:** CI + `@codex`; residual Produto legado / Endereços embed.
+
+## CURSOR — VIGENTE (#444 JobAgendado sky tip cfaf9bfaa docs / 109f8d6c8 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | código `109f8d6c8` · docs `cfaf9bfaa` — CI SUCCESS 6/6 (`41102546943` push · `41102576414` PR) |
 | **Fix** | JobAgendado windowMode sky + ID técnico (sem data-action novo) |
 | **Codex** | `@codex review` pedido — CI verde ≠ encerrar achados montados |
 | **#401/#441** | fora |
