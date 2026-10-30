@@ -1,14 +1,14 @@
-## CURSOR — VIGENTE (#435 dual-hash audit-callback) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#435 recovery peel stage44 + d312fbcd) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **PR** | **#435** `cursor/recuperacao-historico-produto-http-392b` |
-| **Sobre** | tip `450c12d8f` frontend FAIL — **não atribuir** a este HEAD |
-| **Causa** | dual-freeze: primitive-ui já `9ba1e3f0…`; audit-callback ainda `bfdd237c…` |
-| **Fix** | `audit-callback-contract-types` HistoricoProduto → `9ba1e3f0…` |
-| **Codex** | tip `450c12d8f` P1/P2 ENCERRADOS (sem reabrir no hash-only) |
+| **Sobre** | tip `b0510f41c` frontend FAIL — **não atribuir** a este HEAD |
+| **Causa** | graduar string em audit-callback quebra `runtime-proof` (SHAs = d312fbcd) |
+| **Fix** | peel #435 → fixture stage44; hashes permanecem `bfdd237c…` |
+| **Vivo** | HTTP fail-closed + P1/P2 intactos (markers obrigatórios) |
 | **#401** | tip `686ae322` estável · #434 prep sem merge oficial |
-| Preferir | CI deste tip; não atribuir FAIL ancestral |
+| Preferir | CI deste tip; não atribuir FAIL de `450c12d8f`/`b0510f41c` |
 
 **Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
 

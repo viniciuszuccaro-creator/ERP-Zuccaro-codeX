@@ -36,6 +36,11 @@ historico-produto-http-failclosed + primitive-ui-boundary (HistoricoProduto) →
 frontend: audit-callback HistoricoProduto expected bfdd237c… actual 9ba1e3f0…
 (dual-freeze: primitive-ui graduado; audit-callback esquecido)
 
-## Fix dual-hash
-tests/audit-callback-contract-types.test.js → hash 9ba1e3f0a0b25adbf1865b4c6418befed8f9272388d10af1eb6afee486e62f41
-Checks locais: audit-callback + primitive-ui + historico-produto-http-failclosed → 44 pass
+## Fix dual-hash (tip b0510f41c — FAIL, não atribuir ao tip seguinte)
+Graduar string audit-callback → 9ba1e3f0… quebra runtime-proof (SHAs congelados = d312fbcd).
+
+## Fix recovery peel (tip seguinte)
+- Fonte vivo: HTTP fail-closed + P1/P2 (markers obrigatórios)
+- Remainder: fixture `tests/helpers/fixtures/historicoProduto.stage44.jsx` (pré-#435)
+- Hashes audit-callback + primitive-ui permanecem `bfdd237c…`
+Checks locais: audit-callback + primitive-ui + runtime-proof + historico-produto → 47 pass
