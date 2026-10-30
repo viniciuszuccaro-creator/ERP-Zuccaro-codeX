@@ -11,8 +11,8 @@ import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
- * Dialogs internos são permitidos quando fazem parte de um fluxo maior
- * Lacuna vs erp-integra-novo: botões de mutação sem RBAC fail-closed.
+ * Dialogs internos são permitidos quando fazem parte de um fluxo maior.
+ * RBAC fail-closed (Cadastros.Cliente) + chrome sky alinhado ao embed Endereços.
  */
 export default function GerenciarContatosClienteForm({ contatos = [], onChange, assertScopeCurrent, persistBusy = false }) {
   const { canEdit } = usePermissions();
@@ -163,13 +163,14 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Contatos ({contatos.length})</h3>
+    <div className="w-full space-y-4" data-action="cliente-contatos-embed">
+      <div className="flex justify-between items-center gap-3 pb-3 border-b border-sky-100 bg-gradient-to-r from-sky-50 to-sky-100 -mx-1 px-3 py-3 rounded-t">
+        <h3 className="text-lg font-semibold text-slate-900">Contatos ({contatos.length})</h3>
         <Button
           onClick={abrirNovo}
           size="sm"
           disabled={bloqueado || !podeEditar}
+          className="bg-sky-600 hover:bg-sky-700"
           data-permission="Cadastros.Cliente.editar"
           data-action="Cadastros.Cliente.contato.adicionar"
         >
@@ -183,7 +184,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
           {contatos.map((contato, idx) => (
             <div 
               key={idx} 
-              className="p-3 border rounded-lg hover:border-sky-500 transition-all bg-white"
+              className="p-3 border border-sky-100 rounded-lg hover:border-sky-400 transition-all bg-white"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
@@ -191,7 +192,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-semibold">{contato.nome || 'Sem nome'}</p>
-                      {contato.principal && <Badge className="bg-green-600 text-xs">Principal</Badge>}
+                      {contato.principal && <Badge className="bg-sky-600 text-xs">Principal</Badge>}
                     </div>
                     {contato.cargo && (
                       <p className="text-xs text-slate-600">{contato.cargo}</p>
@@ -230,14 +231,14 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
-          <Phone className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+        <div className="text-center py-8 border-2 border-dashed border-sky-100 rounded-lg bg-sky-50/40">
+          <Phone className="w-12 h-12 text-sky-300 mx-auto mb-2" />
           <p className="text-slate-500 text-sm">Nenhum contato cadastrado</p>
           <Button 
             onClick={abrirNovo}
             variant="outline"
             size="sm"
-            className="mt-3"
+            className="mt-3 border-sky-200 text-sky-700 hover:bg-sky-50"
             disabled={!podeEditar}
             data-permission="Cadastros.Cliente.editar"
             data-action="Cadastros.Cliente.contato.adicionar"
@@ -251,7 +252,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
         <DialogContent className="max-w-md z-[9999]">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-slate-900">
               {contatoEditando !== null ? 'Editar' : 'Novo'} Contato
             </DialogTitle>
           </DialogHeader>
@@ -314,7 +315,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
               />
             </div>
 
-            <div className="flex items-center gap-2 p-3 bg-green-50 rounded border">
+            <div className="flex items-center gap-2 p-3 bg-sky-50 rounded border border-sky-100">
               <input
                 type="checkbox"
                 checked={novoContato.principal}
@@ -325,13 +326,14 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
               <Label className="cursor-pointer font-normal">Marcar como contato principal</Label>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-4 border-t border-sky-100">
               <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }}>
                 Cancelar
               </Button>
               <Button
                 onClick={handleSalvarContato}
                 disabled={!podeEditar}
+                className="bg-sky-600 hover:bg-sky-700"
                 data-permission="Cadastros.Cliente.editar"
                 data-action="Cadastros.Cliente.contato.salvar"
               >
