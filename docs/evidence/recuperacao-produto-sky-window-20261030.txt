@@ -15,6 +15,10 @@ Base: #432 tip (cadeia #431/#432 CI verde) — pacote ortogonal, sem reabrir Con
 - `ProdutoFormV22_Completo`: windowMode → header `from-sky-50 to-sky-100` + ID técnico
 - `ProdutoFormCompleto`: aceita windowMode com mesmo chrome (legado)
 - Testes: presença sky/ID; keep-both NFe; sem ProdutoFormV3
+- Remainder `produtoWindowSkyRemainder`: peels chrome autorizado; **preserva CRLF** de `runtimeProofSource` (product-query-v5 `67a27312…`) e LF de stage46 (`c26ca71d…`) — sem pin cego
+
+## Checks locais (focados)
+- product-query-v5-options · ia-grounded-batch-contracts · produto-form-sky-window · runtime-proof-source → pass 49/49
 
 ## Fora
 #401 · Auth VPS · seed · count+1 · apagar Completo
