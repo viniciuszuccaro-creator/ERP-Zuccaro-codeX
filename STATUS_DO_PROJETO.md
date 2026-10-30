@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#441 tip a1a6aa10e CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `a1a6aa10e` — CI SUCCESS 41082969606 / 41082959522 |
+| **P2 Codex** | canal≠Manual · Pedido.total · item.total — tratados |
+| **Testes** | historico-origem-compras-http-failclosed 10 PASS |
+| **#401** | Contatos P2 + contagens CI/Codex limpo — fora deste pacote |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** `@codex review` tip `a1a6aa10e`.
+
 ## CURSOR — VIGENTE (HistoricoOrigem+Compras HTTP) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

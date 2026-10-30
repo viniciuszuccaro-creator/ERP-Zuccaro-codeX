@@ -29,3 +29,8 @@ Keep both: portal/HistoricoComprasCliente; DetalhesCliente (#436) / HistoricoCli
 
 ## Relação #401
 Independente. Candidata tip `88332170e` (contagens+P2 Visualizador) intocada neste pacote.
+
+## CI SUCCESS tip a1a6aa10e (2026-10-30 America/Sao_Paulo)
+- Runs: 41082969606 / 41082959522 — SUCCESS.
+- P2 Codex 4425419699/9709/9714 tratados (canal/total/item.total).
+- Pedido `@codex review` neste tip.
