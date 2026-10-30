@@ -1,15 +1,14 @@
-## CURSOR — VIGENTE (Pacote indep. Gestores pagamentos sky) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#448 tip 25450a049 CI SUCCESS — Gestores sky) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/recuperacao-gestores-pagamentos-sky-392b` ← #447 |
+| **Tip** | `25450a049` — CI SUCCESS 6/6 |
 | **Fix** | GestorFormas/Gateways/Despesas: sky windowMode + organização |
-| **Testes** | recuperacao-gestores-pagamentos-sky — PASS |
 | **#401/#446** | fora |
-| Fora | merge main · deploy · seed · #447≠registros · Produto legado |
+| Fora | merge main · deploy · seed · visual≠registros · Produto legado |
 
 **Evidência:** `docs/evidence/recuperacao-gestores-pagamentos-sky-20261030.txt`
-**Próximo:** CI; #446 tip f8a20831e Codex/CI em paralelo.
+**Próximo:** #446 tip typecheck `54fcd026d` CI; Codex #446; #401 intacta.
 
 ## CURSOR — VIGENTE (#447 tip 9bd3b943d CI SUCCESS — Produto sky + pin peel) (2026-10-30 America/Sao_Paulo)
 

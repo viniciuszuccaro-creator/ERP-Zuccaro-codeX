@@ -21,3 +21,6 @@ Melhoria útil azul-clara + organização no existente:
 
 ## Testes
 tests/recuperacao-gestores-pagamentos-sky.test.js — PASS
+
+## CI SUCCESS tip 25450a049 (2026-10-30 America/Sao_Paulo)
+- CI SUCCESS 6/6. Visual≠registros. #401/#446 fora.
