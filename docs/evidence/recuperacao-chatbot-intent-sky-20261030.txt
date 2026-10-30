@@ -30,3 +30,7 @@ Keep both: Intent canônico + adapter Intents (migração legado) — sem 3º m�
   — `data-action="chatbot-intent-window"` / `id-tecnico-chatbot-intent` extras.
 - Fix: remover data-action novos; manter sky gradient + texto ID técnico.
 - Sem pin cego / sem alterar golden. RecordState pin + sky PASS locais.
+
+## CI SUCCESS tip 84441e9db (2026-10-30 America/Sao_Paulo)
+- Runs: push `41098316291` · PR `41098326148` — SUCCESS 6/6.
+- CI verde ≠ encerramento: aguarda `@codex review` montado.

@@ -1,16 +1,15 @@
-## CURSOR — VIGENTE (Pacote C ChatbotIntent sky — pin fix) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#443 ChatbotIntent sky tip 84441e9db CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/recuperacao-chatbot-intent-sky-392b` ← #439 |
-| **Tip** | `ec2a5e9a5` — remove data-action novos (pin RecordState e36231b3); sky+ID preservados |
-| **CI** | tip `32a0f2e27` FAIL frontend pin — corrigido; CI em curso |
-| **Testes** | sky 2 PASS · ChatbotIntent RecordState pin PASS |
+| **Tip** | `84441e9db` — CI SUCCESS 6/6 (`41098316291` push · `41098326148` PR) |
+| **Código** | `ec2a5e9a5` sky+ID; pin fix sem data-action novos |
+| **Codex** | `@codex review` pedido — CI verde ≠ encerrar achados montados |
 | **#401/#441** | fora |
 | Fora | merge main · deploy · seed · pin cego |
 
 **Evidência:** `docs/evidence/recuperacao-chatbot-intent-sky-20261030.txt`
-**Próximo:** CI tip fix + `@codex`.
+**Próximo:** contraprova Codex; residual forms sem sky na matriz.
 
 ## CURSOR — VIGENTE (#439 tip 4acfe43d4 CI SUCCESS + Codex limpo) (2026-10-30 America/Sao_Paulo)
 
