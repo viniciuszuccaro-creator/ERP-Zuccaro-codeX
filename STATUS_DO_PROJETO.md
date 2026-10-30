@@ -1,4 +1,26 @@
-## Estado Vigente - Modal Canonico446 E Revisao447 (2026-10-30)
+## Estado Vigente - CI446 Corrigida, Vinculo Do Modal Pendente (2026-10-30)
+
+#44654fcd026 corrigiu o TS anterior. HEAD574e2ea53692024debda527fc8eaac9b37871922
+CI5557/5558 SUCCESS confirmadas no SHA exato; falha5547/5548f8 e HISTORICA.
+Delta funcional f8->574 so SUGESTOES_VAZIAS readonly->mutavel estavel; Pedido,
+modal, calculador e policy iguais por diff exit0. Nao tratar CI verde como fix
+dos residuos funcionais sem delta. Aceites anteriores401/441/442/447 preservados.
+Provas NOVAS montadas Pedido+modal+calculador REAIS/React/Query/Chrome com bordas
+sinteticas: abrirEmpresaA, trocarB/resetdraft, confirmar ainda1write/1success;
+renovar SO sessao no mesmo ator/contexto/resetdraft tambem1write/1success. Recibo
+4466532337539. Rejeicao sincronica574:0writes/0success/draft preservado/modalretido,
+recibo6532366877. Uma coleta incompleta nao foi contada; processos encerrados.
+Unidade/preco/custo/saldo desconhecidos ainda pendentes no runtime identico,
+provas anteriores reutilizadas por blobs, sem reabrir duplicidade/Faturado/readonly.
+Port446 continua bloqueado SOMENTE residuos funcionais; mapa4016532367321.
+Solicitacao ao escritor Cursor publicada; recebimento/reserva nao presumidos.
+Sem edicao em branch Cursor, nova candidata, E2E/PG ou operacaoVPS. Harness E2E
+original e coorte100 final/pins seguem bloqueios privados distintos sem mudanca
+de acesso, busca repetida/recorte/transferencia ou consulta real. Gates vigentes
+inalterados; proxima acao concreta e fix de binding/unknowns no modulo existente,
+revisao montada porSHA e port controlado. Sem DDL/grants/carga/deploy.
+
+## Historico - Modal Canonico446 E Revisao447 (2026-10-30)
 
 #40134c4 e aceites anteriores preservados. #4467008a0e655b008974f6022e958044a11599da9d9
 CI5543/5544 SUCCESS confirmadas, mas revisao NOVA encontrou residuos. Pedido+

@@ -1,4 +1,23 @@
-## Estado Vigente - Revisao Do Modal446 Atual E Preservacao447 (2026-10-30)
+## Estado Vigente - CI Verde, Residuos Funcionais446 Ainda Atuais (2026-10-30)
+
+#44654fcd026 fixTS, HEAD574e2ea53692024debda527fc8eaac9b37871922 CI5557/5558
+SUCCESS. TSf8/CI5547-5548 e historico, nao falha atual. Runtime mudou apenas array
+vazio estavel de Sugestoes; Pedido/modal/calculador/policy iguaisf8 por diffexit0.
+Revisao montada574 com componentes reais e bordas sinteticas (naoPG/E2E): trocar
+Empresa ou renovar sessao com modal aberto/resetdraft ainda insere1item antigo/
+1sucesso. Recibo6532337539. Rejeicao sincronica preservou draft/modal e0success,
+recibo6532366877; coleta incompleta anterior nao contabilizada, processos encerrados.
+Unknowns de unidade/preco/custo/saldo seguem pendentes por igualdade de blobs e
+provas previas, nao repetir as intactas. Duplicidade/Faturado/readonly e aceites401/
+441/442/447 continuam encerrados nos alcances registrados. Port4016532367321
+aguarda fix funcional no existente, nao CI/typecheck antigo; codigo Cursor,
+Codex revisa sem outra composicao. Solicitacao publicada nao prova recebimento.
+Harness original E2E e coorte100 final/pins seguem dependencias privadas distintas;
+sem novo canal, nao repetir busca/recorte/transferencia, nem consulta sem fonte.
+Gates de composicao/E2E/cadeia/schema/privilegios/backup/reconciliacao/carga/deploy/
+aceite mantidos. Nenhuma escrita operacional, DDL/grants, VPS ou background permanente.
+
+## Historico - Revisao Do Modal446 Atual E Preservacao447 (2026-10-30)
 
 #4467008/CI5544 SUCCESS foi testada com Pedido+modal+calculador REAIS montados,
 nao so componentes isolados: qtdhistorica200 nao e demanda, modal inicia1/editavel3;
