@@ -17,3 +17,9 @@ Hydrate: useEffect real já coberto (#424); extensão CONTEXT_CHANGED.
 
 ## Fora
 React Testing Library / jsdom full tree · PG · Auth · VPS · pin cego · merge main
+
+## CI SUCCESS tip 3a80e0ffe (2026-10-30 America/Sao_Paulo)
+- frontend + backend + expedicao-comercial-compose — SUCCESS.
+- Pedido `@codex review` tip `3a80e0ffe`.
+- Candidata estável para aceite Contatos (contexto/late/erro≠vazio/save antigo).
+- Indep. fora candidata: #441 d46cf79dc · #442 Top10/Sugestões.
