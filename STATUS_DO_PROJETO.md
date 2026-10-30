@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (prep contagens #431→#401 docs; #439 CI) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Prep** | `docs/evidence/prep-contagens-431-into-401-20261030.txt` — mapa keep-both |
+| **#431** | tip `2b523fdf8` CI SUCCESS — **ainda fora** da #401 |
+| **#401** | tip `50e90d0bc` / código Contatos `f5ac2a1de` — #434 fechado; **sem contagens** |
+| **#439** | tip `4acfe43d4` remainder CANAL CentroOperacao — CI em curso |
+| Fora | port código agora · merge main · pin cego · 2ª candidata |
+
+**Próximo:** CI #439; port contagens só após autorização/CI, preservando sync-lock/#434.
+
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 
 | Campo | Valor |
