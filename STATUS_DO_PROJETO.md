@@ -1,4 +1,42 @@
-## Estado Vigente - Historicos Revisados E Percurso De Uso (2026-10-30)
+## Estado Vigente - Consumidor446 Testado, Negativos Pendentes (2026-10-30)
+
+#40134c4c0ee e aceites anteriores441/442 preservados, sem repetir casos encerrados.
+#446 HEADb161babac731bab890fe25636bbcfd5c79d49cc0 posteriorf7a, CI5531/5532
+SUCCESS confirmadas nesseSHA. Consumidor PedidoTabsContainer REAL + Compras REAL
+montados ReactDOM/ReactQuery/Chrome com wrapper useState real do draft, bordas
+UI/contexto/rede sinteticas. CliqueDOM agora gera item produto/KG/preco11/qtd1,
+mesmo quando historicoqtd200; defeito toastsemalteracao encerrado no positivo.
+Nao e persistencia banco/HTTP/PG/E2E, nem copia de demanda historica.
+
+Negativos REPRODUZIDOS em b161 (4466530876160): dois cliques imediatos geram2linhas/
+2sucessos; sem unidade/preco insere linha incompleta/sucesso; bloquearEdicao=true e
+statusFaturado ainda permitem insercao/sucesso. Nao alegar bypass backend. Permissao
+negada0writes/0success; setter rejeitando sincronicamente0writes/0success. Troca de
+cliente/Empresa/ator+reset real de draft e clique no DOM antigo destacado:0writes/
+0sucesso nesse cenario, nao prova todas callbacks tardias. Reutilizar guardas e
+handler canonico, sem fundir linhas legitimas automaticamente para resolver duploclique.
+
+DetalhesCliente REAL e Painel REAL com Top10/Compras REAIS montados: Compras sem
+callback ocultaAdicionar; Top10 ainda apresenta1botao enabled semcallback e clique
+nao faz nada (sucesso0). Pareceres4466530902136/6530942866. Nao chamar isso de falso
+toast, e controle operacional sem acao. Manter446 separada401 ate correcao/revisao.
+Mapa4016530943341: port por hunks apos negativos, preservar servicos/repos/API,
+proprietario persistencia/RBAC/contexto; Cursor escreve, Codex revisa, sem outra candidata.
+
+#44531e68ce1ed624e7ae15994cf2cb007edc6222733/basecfaf9bfa: formulario inteiro igual
+base+transformacao sky/ID-only declarada, goldenCANAL53ed9f42 inalterado;28mutacoes
+de preservacao rejeitadas. Parecer6530913483 sem bloqueador nesse alcance, separado
+da candidata; nao e React montado/aceite visual/persistencia/emissao boleto ou dado
+recuperado. Driver montado teve erros de stub lazy/icone corrigidos ANTES dos
+resultados acima; nao foram classificados como defeito do ERP nem suites aprovadas.
+
+Harness E2E original e coorte100 final/pins seguem bloqueios privados distintos sem
+mudanca de acesso: nenhuma busca repetida, selecao substituta ou transferencia.
+Consulta fixa pronta, nao executada sem bytes/canal. Gates existentes preservados:
+pacotes -> composicao -> E2E -> cadeia -> schema/minpriv -> backup/restauracao ->
+reconciliacao -> carga aprovada -> deploy -> aceite. Sem carga/DDL/grants/VPS.
+
+## Historico - Historicos Revisados E Percurso De Uso (2026-10-30)
 
 #40134c4c0ee/CI5482 e aceite montado6528606297 preservados, sem reteste.
 #44153d7e727c65ecebd32c7abb4d5dce31656527306 CI5517 SUCCESS; src/server

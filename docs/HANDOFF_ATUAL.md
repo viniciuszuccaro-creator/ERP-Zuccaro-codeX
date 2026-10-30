@@ -1,4 +1,33 @@
-## Estado Vigente - Revisao442 Encerrada No Alcance E Uso Mapeado (2026-10-30)
+## Estado Vigente - Prova Do Consumidor446 E Pendencias (2026-10-30)
+
+#446b161babac731bab890fe25636bbcfd5c79d49cc0 CI5531/5532 SUCCESS; anteriorf7a
+nao e HEAD atual. PedidoTabsContainer+HistoricoComprasCliente REAIS montados com
+ReactDOM/ReactQuery/Chrome e wrapper useState real de formData (bordas sinteticas).
+Clique agora altera itens_revenda: produto/KG/preco11/qtd1, historico200 nao vira
+demanda. Positivo corrige toastsemalteracao, sem alegar persistencia no banco/E2E.
+
+Negativos4466530876160:2clicks imediatos2linhas/2sucessos; dado semunidade/preco
+entra incompleto; bloquearEdicao/Faturado nao impedem insercao. Corrigir no fluxo
+canonico, sem ampliar RBAC ou fundir linhas legitimas por palpite. Permissao negada
+e rejeicao sincronica nao alteram draft nem anunciam sucesso; troca contexto/reset
+draft+clique antigo DOM destacado tambem0writes nesse cenario, nao prova universal.
+Detalhes/Painel REAIS montados: Compras readonly ocultaAdicionar, Top10 readonly
+ainda1botao operacional semcallback/semacao (toast0). Recibos6530902136/6530942866.
+40134c4 e aceites anteriores preservados; mapa6530943341 mantem446 separada ate
+correcao e port controlado pelos hunks, nunca substituir API/repos/servicos atuais.
+
+#44531e68ce1/basecfaf9bfa revisada independente: formulario inteiro=base+chrome
+declarado, goldenCANAL intacto e28contraprovas rejeitadas, recibo6530913483. Nao
+aceite visual/React/banco/emissao ou recuperacao de registros; fora401. Erros iniciais
+do driver de montagem eram stubs lazy/icones, corrigidos sem alterar produto.
+
+Cursor escritor de codigo/composicao, Codex revisor. Proximo: negativos446 no modulo
+real e montagem antes/depois, depois port/revisaoSHA. E2E/harness e coorte100 final
+continuam gates privados DISTINTOS sem mudanca de canal ou buscas repetidas.
+Consulta fixa nao executada sem fonte/canal. Cadeia/schema/privilegios/backup/
+reconciliacao/carga aprovada/deploy/aceite seguem gates; nenhuma acao operacional.
+
+## Historico - Revisao442 Encerrada No Alcance E Uso Mapeado (2026-10-30)
 
 #40134c4/CI5482 mantida sem reteste. #44153d7e727c65ecebd32c7abb4d5dce31656527306
 CI5517 SUCCESS, runtime6b2 igual. #442dd619ff60997bcbeade3f35b04ef13a74e9f3a58
