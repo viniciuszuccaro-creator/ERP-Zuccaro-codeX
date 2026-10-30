@@ -32,7 +32,17 @@ const sanitizeArray = (values, max = 20) => Array.isArray(values) ? values.map((
  * âœ… MantÃ©m 100% do formulÃ¡rio original
  * âœ… Adiciona funcionalidades avanÃ§adas
  */
-export default function ProdutoFormCompleto({ produto, item, data, initialData, defaultValues, onSubmit, isSubmitting, onProdutosCriados }) {
+export default function ProdutoFormCompleto({
+  produto,
+  item,
+  data,
+  initialData,
+  defaultValues,
+  onSubmit,
+  isSubmitting,
+  onProdutosCriados,
+  windowMode = false,
+}) {
   const dadosIniciais = item || data || initialData || defaultValues || produto;
   const { canCreate, canEdit, user } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -192,9 +202,9 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
     );
   }
 
-  return (
+  const formBody = (
     <div className="space-y-6 w-full h-full overflow-auto">
-      {/* Header com BotÃµes de ImportaÃ§Ã£o */}
+      {/* Header com Botões de Importação */}
       <ProdutoFormHeader
         produto={dadosIniciais}
         onImportarNFe={() => setModoImportacao('nfe')}
@@ -202,16 +212,16 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
         disabledImportacoes={!contextoValido || !podeCriar}
       />
 
-      {/* Abas do FormulÃ¡rio */}
+      {/* Abas do Formulário — keep both com ProdutoFormV22; chrome sky só em windowMode */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full h-full">
-        <TabsList className="grid grid-cols-4 w-full bg-slate-100">
+        <TabsList className={`grid grid-cols-4 w-full ${windowMode ? 'bg-sky-100' : 'bg-slate-100'}`}>
           <TabsTrigger value="dados-gerais" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
             Dados Gerais
           </TabsTrigger>
           <TabsTrigger value="conversoes" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
-            ConversÃµes
+            Conversões
           </TabsTrigger>
           <TabsTrigger value="ecommerce" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
@@ -220,7 +230,7 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
           {dadosIniciais && (
             <TabsTrigger value="historico" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              HistÃ³rico
+              Histórico
             </TabsTrigger>
           )}
         </TabsList>
@@ -274,4 +284,29 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
       </Tabs>
     </div>
   );
+
+  // Recuperação azul-clara (erp-integra): windowMode reutiliza o form existente — sem 3º módulo.
+  if (windowMode) {
+    const boundId = dadosIniciais?.id || null;
+    return (
+      <div className="w-full h-full flex flex-col bg-white" data-produto-window-sky="true">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Package className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {boundId ? 'Editar Produto' : 'Novo Produto'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto p-6">
+          {boundId ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(boundId)}</span>
+            </p>
+          ) : null}
+          {formBody}
+        </div>
+      </div>
+    );
+  }
+
+  return formBody;
 }

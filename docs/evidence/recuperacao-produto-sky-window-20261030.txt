@@ -1,0 +1,20 @@
+P2 recuperação — Produto windowMode azul-clara (2026-10-30 America/Sao_Paulo)
+================================================================================
+Branch: cursor/recuperacao-produto-sky-window-392b
+Base: #432 tip (cadeia #431/#432 CI verde) — pacote ortogonal, sem reabrir Contatos/Endereços
+
+## Classificação (matriz integra)
+| Item | Classe | Ação |
+|------|--------|------|
+| ProdutoFormV22 windowMode só `bg-white` | D (experiência azul-clara faltante no canônico) | chrome sky + ID técnico no existente |
+| ProdutoFormCompleto (legado NFe) | B keep-both | windowMode sky; sem apagar; sem V3 |
+| CentroOperacao / Boletos ID-only | pin | fora |
+| Funil/Separacao | #408 | não duplicar |
+
+## Mudança
+- `ProdutoFormV22_Completo`: windowMode → header `from-sky-50 to-sky-100` + ID técnico
+- `ProdutoFormCompleto`: aceita windowMode com mesmo chrome (legado)
+- Testes: presença sky/ID; keep-both NFe; sem ProdutoFormV3
+
+## Fora
+#401 · Auth VPS · seed · count+1 · apagar Completo
