@@ -20,3 +20,10 @@ Melhoria útil azul-clara no existente:
 
 ## Testes
 `tests/recuperacao-produto-enderecos-sky.test.js` + contatos-enderecos-rbac — PASS
+
+## Tip pin peel (CI FAIL tip 509646810 → fix)
+Frontend FAIL: stage46 product + product-query-v5 ProdutoFormV22 (hash mudou pelo chrome sky).
+Correção: peel autorizado em `iaResponseValidationRemainder` reverte windowMode sky→
+`<div className="w-full h-full bg-white">{content}</div>` antes do hash (mesmo padrão
+#439/#445 — não pin cego). Hashes golden `c26ca71d…` / `67a27312…` intactos.
+Testes: ia-grounded-batch-contracts + product-query-v5-options + sky — 47 PASS.

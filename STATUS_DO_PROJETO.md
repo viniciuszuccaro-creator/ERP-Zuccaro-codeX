@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#447 pin peel sky Produto V22) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | `iaResponseValidationRemainder` peela chrome sky windowMode → golden simples |
+| **Pins** | stage46 product + query-v5 ProdutoFormV22 — hashes originais (não pin cego) |
+| **CI anterior** | tip `509646810` frontend FAIL 2 pin; tip peel aguarda CI |
+| **#401/#446** | fora |
+| Fora | merge main · deploy · seed · hash cego |
+
+**Evidência:** `docs/evidence/recuperacao-produto-enderecos-sky-20261030.txt`
+**Próximo:** CI 6/6 + `@codex`; #446 modal tip `af95c4cca` em paralelo.
+
 ## CURSOR — VIGENTE (Pacote C Produto V22 + Endereços sky) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
