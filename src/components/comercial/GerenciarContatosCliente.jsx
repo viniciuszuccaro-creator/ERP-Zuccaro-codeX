@@ -4,26 +4,42 @@
  * `cadastros/GerenciarContatosClienteForm.jsx` (RBAC Cadastros.Cliente + assertScope).
  * Este arquivo permanece como adaptador (clienteId → Form), sem 3º módulo e sem apagar
  * o path comercial. Mutação só com canEdit; escopo vinculado imutavelmente ao load.
+ * Binding inclui actorId canônico da sessão (sem token em queryKey/cache/log).
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { readErpHttpSession } from "@/api/erpHttpSession";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContatosClienteForm";
 
-function scopePair(groupId, empresaId) {
+/** Identidade de escopo: grupo + empresa + ator. Nunca inclui token. */
+function scopePair(groupId, empresaId, actorId) {
   return {
     groupId: groupId || null,
     empresaId: empresaId || null,
-    key: `${groupId || ""}:${empresaId || ""}`,
+    actorId: actorId || null,
+    key: `${groupId || ""}:${empresaId || ""}:${actorId || ""}`,
   };
 }
 
 function sameScope(a, b) {
   return String(a?.groupId || "") === String(b?.groupId || "")
-    && String(a?.empresaId || "") === String(b?.empresaId || "");
+    && String(a?.empresaId || "") === String(b?.empresaId || "")
+    && String(a?.actorId || "") === String(b?.actorId || "");
+}
+
+/** Ator efetivo da sessão HTTP; sem token — só UUID do ator. */
+function readSessionActorId() {
+  try {
+    const session = readErpHttpSession();
+    const actorId = typeof session?.actorId === "string" ? session.actorId.trim() : "";
+    return actorId || null;
+  } catch {
+    return null;
+  }
 }
 
 export default function GerenciarContatosCliente({ clienteId }) {
@@ -33,13 +49,14 @@ export default function GerenciarContatosCliente({ clienteId }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const liveScope = scopePair(groupId, empresaId);
+  const actorId = readSessionActorId();
+  const liveScope = scopePair(groupId, empresaId, actorId);
   const liveScopeRef = useRef(liveScope);
   liveScopeRef.current = liveScope;
 
-  /** Geração do editor: troca de contexto/cliente invalida callbacks antigos. */
+  /** Geração do editor: troca de contexto/cliente/ator invalida callbacks antigos. */
   const [editorGen, setEditorGen] = useState(0);
-  /** Binding imutável ao load bem-sucedido (cliente + escopo + geração). */
+  /** Binding imutável ao load bem-sucedido (cliente + escopo/ator + geração). */
   const [bound, setBound] = useState(null);
   const editorGenRef = useRef(0);
 
@@ -60,13 +77,13 @@ export default function GerenciarContatosCliente({ clienteId }) {
     queryKey: ["cliente", clienteId, liveScope.key],
     queryFn: async () => {
       if (!clienteId) return null;
-      const asked = scopePair(groupId, empresaId);
+      const asked = scopePair(groupId, empresaId, actorId);
       const genAtStart = editorGenRef.current;
       if (!asked.groupId && !asked.empresaId) {
         throw new Error("Contexto multiempresa obrigatório para carregar contatos.");
       }
       const clientes = await base44.entities.Cliente.filter({ id: clienteId });
-      // Resposta tardia: escopo ou geração já mudou — não promover a bind.
+      // Resposta tardia: escopo/ator ou geração já mudou — não promover a bind.
       if (!sameScope(asked, liveScopeRef.current) || genAtStart !== editorGenRef.current) {
         const err = new Error("READ_STALE_SCOPE");
         err.code = "READ_STALE_SCOPE";
@@ -99,6 +116,8 @@ export default function GerenciarContatosCliente({ clienteId }) {
 
   const assertScopeCurrent = useCallback(() => {
     const live = liveScopeRef.current;
+    // Releitura canônica: troca de ator na sessão sem remount ainda falha aqui.
+    const sessionActor = readSessionActorId();
     if (!bound || bound.clienteId !== clienteId) {
       throw new Error("Contatos ainda não vinculados ao cliente carregado. Reabra antes de salvar.");
     }
@@ -107,6 +126,10 @@ export default function GerenciarContatosCliente({ clienteId }) {
     }
     if (!sameScope(live, bound.scope)) {
       throw new Error("Contexto alterado. Reabra os contatos antes de salvar.");
+    }
+    if (String(bound.scope.actorId || "") !== String(sessionActor || "")
+      || String(live.actorId || "") !== String(sessionActor || "")) {
+      throw new Error("Sessão/ator alterado. Reabra os contatos antes de salvar.");
     }
   }, [bound, clienteId, editorGen]);
 

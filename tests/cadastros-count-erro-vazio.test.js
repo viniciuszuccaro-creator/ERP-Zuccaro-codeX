@@ -268,4 +268,12 @@ test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () =>
   assert.match(orphan, /queryKey:\s*\["cliente",\s*clienteId,\s*liveScope\.key\]/);
   assert.doesNotMatch(orphan, /loadedScopeRef\.current = \{ groupId, empresaId \}/);
   assert.doesNotMatch(orphan, /base44\.entities\.Contato/);
+  // Ator canônico na identidade de escopo (Codex residual A→B); sem token em key/cache/log
+  assert.match(orphan, /readErpHttpSession/);
+  assert.match(orphan, /actorId/);
+  assert.match(orphan, /readSessionActorId/);
+  assert.match(orphan, /Sessão\/ator alterado/);
+  assert.doesNotMatch(orphan, /queryKey:[^\n]*token/);
+  assert.doesNotMatch(orphan, /scopePair\([^)]*token/);
+  assert.doesNotMatch(orphan, /bound\.token|askedScope\.token|liveScope\.token/);
 });
