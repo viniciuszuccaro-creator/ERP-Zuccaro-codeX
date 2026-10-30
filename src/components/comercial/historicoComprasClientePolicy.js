@@ -57,15 +57,51 @@ export function resolveValorItemHistorico(item) {
 }
 
 /**
+ * Unidade comprovada da linha — nunca inventar "UN" quando ausente.
+ * HTTP: unidade_sigla; legado: unidade / unidade_medida.
+ * @returns {string|null}
+ */
+export function resolveUnidadeItemHistorico(item) {
+  if (!item || typeof item !== "object") return null;
+  for (const key of ["unidade_sigla", "unidade", "unidade_medida", "sigla_unidade"]) {
+    const raw = item[key];
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+  }
+  return null;
+}
+
+/** Data do pedido para último preço — não depender da ordem do loop. */
+export function resolveDataPedidoHistorico(pedido) {
+  if (!pedido || typeof pedido !== "object") return null;
+  const raw = pedido.data_pedido || pedido.created_date || pedido.created_at || null;
+  if (raw == null || raw === "") return null;
+  const t = new Date(raw).getTime();
+  return Number.isFinite(t) ? raw : null;
+}
+
+function isDataPedidoNewer(candidate, current) {
+  if (!candidate) return false;
+  if (!current) return true;
+  return new Date(candidate).getTime() > new Date(current).getTime();
+}
+
+/**
  * Consolida top produtos a partir da página de pedidos confirmada.
+ * - Unidade comprovada por linha; KG ≠ UN; sem inventar UN.
+ * - Quantidades de unidades distintas NÃO somam (chave produto+unidade).
+ * - Último preço pela data do pedido mais recente, não pela ordem de iteração.
  * Não inventa zeros quando a consulta falhou — o chamador só invoca com dados ok.
  */
 export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
   const produtosConsolidados = {};
   for (const pedido of Array.isArray(pedidos) ? pedidos : []) {
+    const dataPedido = resolveDataPedidoHistorico(pedido);
     for (const item of extractItensPedidoHistorico(pedido)) {
-      const key = item.produto_id || item.produtoId || item.descricao || item.nome;
-      if (!key) continue;
+      const produtoId = item.produto_id || item.produtoId || item.descricao || item.nome;
+      if (!produtoId) continue;
+      const unidade = resolveUnidadeItemHistorico(item);
+      // Escopo por unidade comprovada (ou ausência explícita) — não misturar KG+PC.
+      const key = `${produtoId}::${unidade ?? ""}`;
       if (!produtosConsolidados[key]) {
         produtosConsolidados[key] = {
           produto_id: item.produto_id || item.produtoId || null,
@@ -75,15 +111,26 @@ export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
           valor_total: 0,
           frequencia: 0,
           ultimo_preco: 0,
+          unidade: unidade, // null = indisponível (≠ inventar UN)
+          ultima_compra: null,
         };
       }
+      const acc = produtosConsolidados[key];
       const qty = Number(item.quantidade) || 0;
       const valorItem = resolveValorItemHistorico(item);
-      produtosConsolidados[key].quantidade_total += qty;
-      produtosConsolidados[key].valor_total += valorItem;
-      produtosConsolidados[key].frequencia += 1;
-      produtosConsolidados[key].ultimo_preco =
-        Number(item.preco_unitario) || produtosConsolidados[key].ultimo_preco;
+      acc.quantidade_total += qty;
+      acc.valor_total += valorItem;
+      acc.frequencia += 1;
+
+      const preco = Number(item.preco_unitario);
+      const precoOk = Number.isFinite(preco) && preco > 0;
+      if (precoOk && isDataPedidoNewer(dataPedido, acc.ultima_compra)) {
+        acc.ultimo_preco = preco;
+        acc.ultima_compra = dataPedido;
+      } else if (precoOk && !acc.ultima_compra && !(acc.ultimo_preco > 0)) {
+        // Sem data comprovada: só preenche se ainda vazio (não sobrescrever).
+        acc.ultimo_preco = preco;
+      }
     }
   }
   return Object.values(produtosConsolidados)

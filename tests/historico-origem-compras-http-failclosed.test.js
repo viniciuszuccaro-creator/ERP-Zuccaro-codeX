@@ -12,7 +12,9 @@ import vm from 'node:vm';
 import {
   consolidateTopProdutosFromPedidos,
   extractItensPedidoHistorico,
+  resolveDataPedidoHistorico,
   resolveOrigemCanalComprovada,
+  resolveUnidadeItemHistorico,
   resolveValorItemHistorico,
   resolveValorPedidoHistorico,
 } from '../src/components/comercial/historicoComprasClientePolicy.js';
@@ -61,9 +63,18 @@ test('contrato: Origem/Compras usam HTTP canônico e não engolem erro como []',
   assert.match(compras, /historicoComprasClientePolicy/);
   assert.doesNotMatch(compras, /custo_aquisicao:\s*produto\.ultimo_preco\s*\*\s*0\.6/);
   assert.doesNotMatch(compras, /estoque_atual:\s*100/);
+  // Pacote B: Adicionar não inventa UN; unidade só se comprovada.
+  assert.doesNotMatch(compras, /unidade_medida:\s*["']UN["']/);
+  assert.match(compras, /if\s*\(\s*produto\.unidade\s*\)/);
+  assert.match(compras, /resolveUnidadeItemHistorico|produto\.unidade/);
   const policy = sourceContract('src/components/comercial/historicoComprasClientePolicy.js');
   assert.match(policy, /extractItensPedidoHistorico/);
   assert.match(policy, /itens_revenda/);
+  assert.match(policy, /resolveUnidadeItemHistorico/);
+  assert.match(policy, /produtoId\}::\$\{unidade/);
+  const produtos = sourceContract('src/components/comercial/HistoricoProdutosCliente.jsx');
+  assert.match(produtos, /EMPRESA_SESSION_MISMATCH/);
+  assert.match(produtos, /expectedEmpresaId/);
 });
 
 test('extractItens + consolidate: HTTP itens e legado itens_revenda; sem inventar', () => {
@@ -184,6 +195,8 @@ function buildOrigemSandbox({
         resolveOrigemCanalComprovada,
         resolveValorPedidoHistorico,
         resolveValorItemHistorico,
+        resolveUnidadeItemHistorico,
+        resolveDataPedidoHistorico,
       },
       './historicoComprasClientePolicy.js': {
         __esModule: true,
@@ -192,6 +205,8 @@ function buildOrigemSandbox({
         resolveOrigemCanalComprovada,
         resolveValorPedidoHistorico,
         resolveValorItemHistorico,
+        resolveUnidadeItemHistorico,
+        resolveDataPedidoHistorico,
       },
     },
   };
@@ -437,4 +452,212 @@ test('Compras HTTP: item.total líquido vence bruto no ranking montado', async (
   const iBruto = txt.indexOf('BrutoAlto');
   assert.ok(iLiq >= 0 && iBruto >= 0);
   assert.ok(iLiq < iBruto, 'ranking deve listar líquido antes do bruto enganoso');
+});
+
+test('policy Pacote B: KG ≠ UN; unidades distintas não somam; ausência ≠ inventar UN', () => {
+  assert.equal(resolveUnidadeItemHistorico({ unidade_sigla: 'KG' }), 'KG');
+  assert.equal(resolveUnidadeItemHistorico({ unidade: 'PC' }), 'PC');
+  assert.equal(resolveUnidadeItemHistorico({ quantidade: 1, preco_unitario: 10 }), null);
+
+  const top = consolidateTopProdutosFromPedidos([
+    {
+      id: 'p1',
+      data_pedido: '2026-01-10',
+      itens: [
+        { produto_id: 'cimento', descricao: 'Cimento', quantidade: 2, preco_unitario: 30, total: 60, unidade_sigla: 'KG' },
+        { produto_id: 'cimento', descricao: 'Cimento', quantidade: 3, preco_unitario: 5, total: 15, unidade_sigla: 'PC' },
+      ],
+    },
+  ], { limit: 5 });
+  assert.equal(top.length, 2, 'KG e PC do mesmo produto viram linhas distintas');
+  const kg = top.find((r) => r.unidade === 'KG');
+  const pc = top.find((r) => r.unidade === 'PC');
+  assert.ok(kg && pc);
+  assert.equal(kg.quantidade_total, 2);
+  assert.equal(pc.quantidade_total, 3);
+  // Sem unidade comprovada: null (≠ UN inventada)
+  const semUn = consolidateTopProdutosFromPedidos([
+    { itens: [{ produto_id: 'x', descricao: 'X', quantidade: 1, preco_unitario: 1, total: 1 }] },
+  ]);
+  assert.equal(semUn[0].unidade, null);
+});
+
+test('policy Pacote B: último preço pela data do pedido, não pela ordem do loop', () => {
+  // Ordem inversa: pedido antigo primeiro no array, recente por último —
+  // e o inverso: recente primeiro. Ambos devem fixar preço do mais recente.
+  const antigo = {
+    id: 'old',
+    data_pedido: '2025-01-01',
+    itens: [{ produto_id: 'p', descricao: 'P', quantidade: 1, preco_unitario: 10, total: 10, unidade_sigla: 'UN' }],
+  };
+  const recente = {
+    id: 'new',
+    data_pedido: '2026-06-01',
+    itens: [{ produto_id: 'p', descricao: 'P', quantidade: 1, preco_unitario: 99, total: 99, unidade_sigla: 'UN' }],
+  };
+  assert.equal(resolveDataPedidoHistorico(recente), '2026-06-01');
+  const forward = consolidateTopProdutosFromPedidos([antigo, recente], { limit: 5 });
+  const reverse = consolidateTopProdutosFromPedidos([recente, antigo], { limit: 5 });
+  assert.equal(forward[0].ultimo_preco, 99);
+  assert.equal(reverse[0].ultimo_preco, 99);
+  assert.equal(forward[0].quantidade_total, 2);
+});
+
+test('assertHistoricoHttpScope: troca de empresa na sessão invalida resposta pendente', async () => {
+  const source = await readFile(new URL('../src/components/comercial/HistoricoProdutosCliente.jsx', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
+  }).outputText;
+  const sessionLive = { token: 'tok-a', actorId: 'actor-a', groupId: 'g1', empresaId: 'emp-A' };
+  const sandbox = {
+    exports: {},
+    module: { exports: {} },
+    require(id) {
+      if (id === 'react') {
+        return {
+          __esModule: true,
+          default: { createElement: () => null },
+          createElement: () => null,
+          useState: (v) => [v, () => {}],
+          useRef: (v) => ({ current: v }),
+          useMemo: (f) => f(),
+          useEffect: () => {},
+        };
+      }
+      if (id === '@tanstack/react-query') return { useQuery: () => ({}) };
+      if (id === '@/components/lib/useContextoVisual') return { useContextoVisual: () => ({}) };
+      if (id === '@/components/lib/usePermissions') return { __esModule: true, default: () => ({ hasPermission: () => true }) };
+      if (id === '@/api/runtimeBackend') return { resolveErpBackendMode: () => 'http' };
+      if (id === '@/api/erpHttpSession') return { readErpHttpSession: () => sessionLive };
+      if (id === '@/api/httpApiClient') return { createHttpApiClient: () => ({ pedidos: { list: async () => ({ data: [] }) } }) };
+      if (id.startsWith('@/components/ui/')) return new Proxy({}, { get: () => 'UI' });
+      if (id === 'lucide-react') return new Proxy({}, { get: () => 'Icon' });
+      throw new Error(`Import inesperado: ${id}`);
+    },
+  };
+  vm.runInNewContext(compiled, sandbox);
+  const assertHistoricoHttpScope = sandbox.exports.assertHistoricoHttpScope || sandbox.module.exports.assertHistoricoHttpScope;
+  assert.equal(typeof assertHistoricoHttpScope, 'function');
+  // Request iniciada com emp-A; sessão agora aponta emp-B → EMPRESA_SESSION_MISMATCH
+  assert.throws(
+    () => assertHistoricoHttpScope({
+      session: { ...sessionLive, empresaId: 'emp-B' },
+      groupId: 'g1',
+      empresaId: 'emp-A',
+      expectedEmpresaId: 'emp-A',
+    }),
+    (err) => err?.code === 'EMPRESA_SESSION_MISMATCH',
+  );
+  // Mesma empresa: ok
+  assert.doesNotThrow(() => assertHistoricoHttpScope({
+    session: sessionLive,
+    groupId: 'g1',
+    empresaId: 'emp-A',
+    expectedEmpresaId: 'emp-A',
+  }));
+});
+
+test('Compras montado: unidades mistas exibem KG/PC separados; Adicionar não inventa UN', async () => {
+  const added = [];
+  const { tree, sandbox } = await mountCompras({
+    __backendMode: 'http',
+    __session: { token: 'tok', actorId: 'u1', groupId: 'g1' },
+    __queryResult: {
+      data: {
+        data: [{
+          id: 'p1',
+          data_pedido: '2026-03-01',
+          itens: [
+            { produto_id: 'cimento', descricao: 'CimentoMisto', quantidade: 2, preco_unitario: 30, total: 60, unidade_sigla: 'KG' },
+            { produto_id: 'cimento', descricao: 'CimentoMisto', quantidade: 3, preco_unitario: 5, total: 15, unidade_sigla: 'PC' },
+          ],
+        }],
+        meta: { limit: 200, offset: 0, total: 1, hasMore: false },
+      },
+      isError: false,
+      isFetching: false,
+      isLoading: false,
+    },
+    __loadHttp: async () => ({ data: [], meta: { limit: 200, offset: 0, total: 0, hasMore: false } }),
+    __filterInContext: async () => [],
+  });
+  const txt = textOf(tree);
+  assert.match(txt, /CimentoMisto/);
+  assert.match(txt, /KG/);
+  assert.match(txt, /PC/);
+  assert.doesNotMatch(txt, /\b5\s+unidades\b/i); // não soma 2+3 como "5 unidades"
+  // Clique Adicionar na linha KG
+  const buttons = findByAction(tree, 'adicionar-produto-historico-cliente');
+  assert.ok(buttons.length >= 2);
+  // Remount with callback to capture payload — recompile with onAdicionarProduto
+  const code = await compileJsx(new URL('../src/components/comercial/HistoricoComprasCliente.jsx', import.meta.url));
+  const sb = buildOrigemSandbox({
+    queryResult: {
+      data: {
+        data: [{
+          id: 'p1',
+          data_pedido: '2026-03-01',
+          itens: [
+            { produto_id: 'cimento', descricao: 'CimentoKG', quantidade: 2, preco_unitario: 30, total: 60, unidade_sigla: 'KG' },
+            { produto_id: 'sem-un', descricao: 'SemUnidade', quantidade: 1, preco_unitario: 10, total: 10 },
+          ],
+        }],
+        meta: { limit: 200, offset: 0, total: 1, hasMore: false },
+      },
+      isError: false,
+      isFetching: false,
+      isLoading: false,
+    },
+  });
+  vm.runInNewContext(code, sb);
+  const Comp = sb.module.exports.default || sb.exports.default;
+  const tree2 = Comp({
+    clienteId: 'c1',
+    onAdicionarProduto: (p) => added.push(p),
+  });
+  const addBtns = findByAction(tree2, 'adicionar-produto-historico-cliente');
+  assert.ok(addBtns.length >= 2);
+  // Ranking por valor: CimentoKG (60) antes de SemUnidade (10)
+  addBtns[0].props.onClick();
+  addBtns[1].props.onClick();
+  assert.equal(added.length, 2);
+  const kgPayload = added.find((p) => p.descricao === 'CimentoKG');
+  const semPayload = added.find((p) => p.descricao === 'SemUnidade');
+  assert.ok(kgPayload && semPayload);
+  assert.equal(kgPayload.unidade_medida, 'KG');
+  assert.equal(kgPayload.unidade_sigla, 'KG');
+  assert.equal(semPayload.unidade_medida, undefined);
+  assert.equal(semPayload.unidade_sigla, undefined);
+  assert.ok(!('custo_aquisicao' in kgPayload));
+  assert.ok(!('estoque_atual' in kgPayload));
+  void sandbox;
+});
+
+test('Compras montado: página incompleta (hasMore) não inventa top completo; badge unidade comprovada', async () => {
+  const { tree } = await mountCompras({
+    __backendMode: 'http',
+    __session: { token: 'tok', actorId: 'u1', groupId: 'g1' },
+    __queryResult: {
+      data: {
+        data: [{
+          id: 'p1',
+          data_pedido: '2026-02-01',
+          itens: [
+            { produto_id: 'a', descricao: 'Areia', quantidade: 10, preco_unitario: 8, total: 80, unidade_sigla: 'KG' },
+          ],
+        }],
+        meta: { limit: 200, offset: 0, total: 50, hasMore: true },
+      },
+      isError: false,
+      isFetching: false,
+      isLoading: false,
+    },
+    __loadHttp: async () => ({ data: [], meta: { limit: 200, offset: 0, total: 0, hasMore: false } }),
+    __filterInContext: async () => [],
+  });
+  const badges = findByAction(tree, 'historico-compras-unidade');
+  assert.ok(badges.length >= 1);
+  assert.match(textOf(badges[0]), /10\s+KG/);
+  // Página incompleta: UI continua listando o que veio; não inventa total=50 nem canal.
+  assert.doesNotMatch(textOf(tree), /Manual/);
 });

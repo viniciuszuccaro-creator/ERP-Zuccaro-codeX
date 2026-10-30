@@ -205,12 +205,13 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
                 <div>
                   <p className="font-semibold text-sm">{produto.descricao}</p>
                   <div className="flex gap-2 mt-1">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs" data-action="historico-compras-unidade">
                       <TrendingUp className="w-3 h-3 mr-1" />
-                      {produto.quantidade_total} unidades
+                      {produto.quantidade_total}{" "}
+                      {produto.unidade || "—"}
                     </Badge>
                     <span className="text-xs text-slate-600">
-                      Último preço: R$ {produto.ultimo_preco.toFixed(2)}
+                      Último preço: R$ {Number(produto.ultimo_preco || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -222,14 +223,18 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
                 onClick={() => {
                   if (!podeAdicionarProduto) return;
                   if (onAdicionarProduto && typeof onAdicionarProduto === "function") {
-                    onAdicionarProduto({
+                    const payload = {
                       id: produto.produto_id,
                       codigo: produto.codigo_sku,
                       descricao: produto.descricao,
                       preco_venda: produto.ultimo_preco,
-                      // Sem custo inventado — caller/simulação decide; não fabricar 0.6×.
-                      unidade_medida: "UN",
-                    });
+                      // Sem custo/estoque inventados; unidade só se comprovada (KG≠UN).
+                    };
+                    if (produto.unidade) {
+                      payload.unidade_medida = produto.unidade;
+                      payload.unidade_sigla = produto.unidade;
+                    }
+                    onAdicionarProduto(payload);
                   }
                 }}
                 disabled={!podeAdicionarProduto}

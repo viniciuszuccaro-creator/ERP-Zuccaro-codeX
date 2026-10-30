@@ -50,3 +50,19 @@ Novos casos em `historico-origem-compras-http-failclosed.test.js`:
 Local: **14 PASS** / 0 fail.
 Keep both #436/#437: arquivos distintos (DetalhesCliente / HistoricoClienteTab vs Origem+Compras) — não duplicar; integração só após CI+Codex deste tip.
 #401 candidata: tip `3a80e0ffe` Contatos CONTEXT_CHANGED — pacote separado.
+
+## Pacote B — unidades/preço/empresa (2026-10-30 America/Sao_Paulo)
+Achados Codex montados (CI verde ≠ encerramento):
+| Achado | Correção |
+|--------|----------|
+| KG→UN no Adicionar | payload só com `unidade_medida`/`unidade_sigla` se comprovada |
+| 2KG+3PC somados | chave consolidação `produtoId::unidade`; linhas distintas |
+| ultimo_preco por ordem do loop | `resolveDataPedidoHistorico` + preço do pedido mais recente |
+| empresa A→B aceita pós-rede | `expectedEmpresaId` + `EMPRESA_SESSION_MISMATCH` |
+| ausência inventa UN/canal/custo | unidade null; sem custo/estoque; canal já fail-closed |
+
+Arquivos: `historicoComprasClientePolicy.js`, `HistoricoComprasCliente.jsx`,
+`HistoricoProdutosCliente.jsx` (`assertHistoricoHttpScope`).
+Testes: `historico-origem-compras-http-failclosed` **19 PASS** (antes 14).
+#401 candidata `34c4c0ee` CI5482 — **fora**; não integrar cadeia enquanto defeito aberto.
+Próximo: CI deste tip + port policy compartilhada na #442 (sem duplicar).

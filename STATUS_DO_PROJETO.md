@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (#441 Pacote B unidades/preço/empresa) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-origem-compras-http-392b` ← #437 |
+| **Fix** | KG≠UN · qty por unidade · último preço por data · empresa A→B invalida · Adicionar sem inventar UN |
+| **Policy** | `resolveUnidadeItemHistorico` · chave `produto::unidade` · `resolveDataPedidoHistorico` |
+| **Scope** | `assertHistoricoHttpScope` + `EMPRESA_SESSION_MISMATCH` / `expectedEmpresaId` |
+| **Testes** | historico-origem-compras-http-failclosed **19 PASS** (antes 14) |
+| **#401** | tip `34c4c0ee` CI5482 SUCCESS — **fora**; não integrar enquanto defeito #441 aberto |
+| **#442** | port policy compartilhada após CI deste tip — sem duplicar |
+| Fora | merge main · deploy · seed · inventar canal/custo/estoque/total |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** push + CI + `@codex review`; port #442; Pacote A contraprovas #401.
+
 ## CURSOR — VIGENTE (#441 provas session/perm/queryKey/item.total) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
