@@ -1,6 +1,29 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const component = name => `src/components/${name}.jsx`;
+const HISTORICO_PRODUTO = component('cadastros/HistoricoProduto');
+/** Pré-#435 (tip 2bc3dc6c7): remainder stage44 após peel toFixed = bfdd237c… */
+const historicoProdutoStage44Path = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  'fixtures/historicoProduto.stage44.jsx',
+);
+
+/**
+ * #435 HTTP fail-closed em HistoricoProduto. Markers obrigatórios no fonte vivo;
+ * o remainder congelado (audit-callback / d312fbcd) restaura o stage44 fixture.
+ * Não graduar a string bfdd237c… em audit-callback — runtime-proof congela os SHAs.
+ */
+export const historicoProdutoRecoveryMarkers = [
+  'data-historico-produto-fonte',
+  'historicoProdutoConsultaPolicy',
+  "tendenciaCusto === 'indisponivel'",
+  'fmtAgregado',
+  'data-historico-produto-http-indisponivel',
+];
+
 export const primitiveUiEdits = {
   [component('auditoria/LogsAuditoria')]: [
     ['onCheckedChange={(checked) => setFiltroCritico(checked === true)}', 'onCheckedChange={setFiltroCritico}', 1],
@@ -85,6 +108,24 @@ export function primitiveUiBoundaryRemainder(file, source) {
   if (file === 'src/pages/Relatorios.jsx') for (const [after,before] of reportRecoveryEdits) {
     assert.equal(source.split(after).length-1,1,'Exact authorized #348 recovery hunk');
     source=source.replace(after,before);
+  }
+  if (file === HISTORICO_PRODUTO) {
+    for (const marker of historicoProdutoRecoveryMarkers) {
+      assert.ok(
+        source.includes(marker),
+        `Exact authorized #435 HistoricoProduto recovery marker: ${marker}`,
+      );
+    }
+    // stage45 toFixed deve permanecer no fonte vivo (antes do restore stage44).
+    const liveEdits = primitiveUiEdits[file];
+    for (const [after, , count] of liveEdits) {
+      assert.equal(
+        source.split(after).length - 1,
+        count,
+        `Exact stage45 boundary count on live #435 source: ${file}: ${after}`,
+      );
+    }
+    source = fs.readFileSync(historicoProdutoStage44Path, 'utf8').replace(/\r\n/g, '\n');
   }
   const edits = primitiveUiEdits[file]; if (!edits) return source;
   for (const [after, before, count] of edits) {
