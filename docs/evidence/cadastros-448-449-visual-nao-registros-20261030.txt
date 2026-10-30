@@ -24,3 +24,7 @@ CadastroFiscal / Empresa / Grupo / Usuario — `cadastros-fiscal-admin-sky.test.
 
 ## Fora
 #401 · #446 · merge main · deploy · seed · carga operacional · HD externo
+
+## CI SUCCESS tip 768981c87 (2026-10-30 America/Sao_Paulo)
+- Runs SUCCESS 6/6 — push **5578** (`41125761118`) · PR **5579** (`41125784648`)
+- CI verde ≠ aceite operacional de dados; visual ≠ registros.
