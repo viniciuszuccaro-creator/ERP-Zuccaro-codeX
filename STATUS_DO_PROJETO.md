@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#446 tip febb8ed0a CI5587 SUCCESS — residual) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `febb8ed0a` — CI SUCCESS 6/6 (push **5586** · PR **5587**) |
+| **Base** | `3c149488` CI5585 |
+| **Residual** | pedidoId · pedidoVisualCompativel · bumpSessionEpoch A→B→A · elegivel null≠inativo · podeConfirmarPreco · custo zero-safe |
+| **Codex** | `@codex review` pedido no tip — CI ≠ aceite montado |
+| **#401** | mapa pronto — **fora** até limpo |
+| **Indep.** | #451 `d74debd88` CI5589 — org ID técnico (UX ≠ registros) |
+| Fora | merge main · deploy · seed · substituir backend |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · mapa port
+**Próximo:** aceite Codex montado tip `febb8ed0a`; port seletivo #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 residual pedido/epoch/preço pós CI5585) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

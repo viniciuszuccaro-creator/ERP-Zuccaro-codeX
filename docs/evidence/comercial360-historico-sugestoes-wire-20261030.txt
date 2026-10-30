@@ -150,3 +150,9 @@ Base tip `3c149488` CI5585 SUCCESS. Fechos precisos (sem regra comercial nova):
 
 Testes: comercial360-adicionar-historico-modal + wire + mount — PASS.
 #401: mapa port atualizado; **sem merge / sem substituir backend** até Codex limpo neste tip.
+
+## CI SUCCESS tip febb8ed0a — runs 5586/5587 (2026-10-30 America/Sao_Paulo)
+- Push **5586** · PR **5587** SUCCESS 6/6.
+- Residual: pedidoId · visual · epoch A→B→A · elegivel null · podeConfirmarPreco · custo 0.
+- CI verde ≠ aceite Codex montado; #401 fora.
+- Indep. paralelo #451 tip `d74debd88` CI5589 (org ID técnico UX).
