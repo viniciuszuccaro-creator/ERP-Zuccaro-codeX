@@ -164,9 +164,11 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
         seedProdutoFromHistorico: (p) => (p?.id || p?.produto_id ? { id: p.id || p.produto_id } : null),
         pedidoItensBloqueadosPorStatus: () => false,
         buildHistoricoModalGeracao: () => '["cli","e","g","u"]',
+        buildSessionFingerprint: () => null,
         numeroComprovado: (v) => (v == null || v === '' ? null : Number(v)),
       },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
+      '@/api/erpHttpSession': { readErpHttpSession: () => null },
       sonner: { toast: { success: () => {}, error: () => {}, message: () => {} } },
       '@/components/lib/useContextoVisual': {
         __esModule: true,

@@ -11,22 +11,25 @@ import ts from 'typescript';
 import vm from 'node:vm';
 import {
   buildHistoricoModalGeracao,
+  buildSessionFingerprint,
   numeroComprovado,
   pedidoItensBloqueadosPorStatus,
+  produtoElegivelRevendaNoCatalogo,
   seedProdutoFromHistorico,
 } from '../src/components/comercial/historicoComprasClientePolicy.js';
 
 const read = (p) => readFileSync(p, 'utf8');
+const vendavelStub = (t) => t === 'Revenda' || t === 'Acabado';
 
-test('buildHistoricoModalGeracao + numeroComprovado: pedido≠visual; zero comprovado', () => {
+test('buildHistoricoModalGeracao + session + elegibilidade: pedido≠visual; zero; renew', () => {
   assert.equal(
     buildHistoricoModalGeracao({
       clienteId: 'c1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
-      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1',
+      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1', sessionKey: 's1',
     }),
     buildHistoricoModalGeracao({
       clienteId: 'c1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
-      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1',
+      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1', sessionKey: 's1',
     }),
   );
   assert.notEqual(
@@ -44,10 +47,40 @@ test('buildHistoricoModalGeracao + numeroComprovado: pedido≠visual; zero compr
       visualEmpresaId: 'visual-B', visualGroupId: 'g1', actorId: 'u1',
     }),
   );
+  // Renew token (mesmo ator) → sessionKey distinta.
+  assert.notEqual(
+    buildHistoricoModalGeracao({ actorId: 'u1', sessionKey: buildSessionFingerprint('token-AAA') }),
+    buildHistoricoModalGeracao({ actorId: 'u1', sessionKey: buildSessionFingerprint('token-BBB') }),
+  );
+  assert.equal(buildSessionFingerprint(''), null);
   assert.equal(numeroComprovado(0), 0);
   assert.equal(numeroComprovado(''), null);
   assert.equal(numeroComprovado(undefined), null);
   assert.equal(numeroComprovado(12.5), 12.5);
+  assert.equal(
+    produtoElegivelRevendaNoCatalogo(
+      [{ id: 'p1', status: 'Ativo', tipo_item: 'Revenda' }],
+      'p1',
+      vendavelStub,
+    ),
+    true,
+  );
+  assert.equal(
+    produtoElegivelRevendaNoCatalogo(
+      [{ id: 'p1', status: 'Inativo', tipo_item: 'Revenda' }],
+      'p1',
+      vendavelStub,
+    ),
+    false,
+  );
+  assert.equal(
+    produtoElegivelRevendaNoCatalogo(
+      [{ id: 'outro', status: 'Ativo', tipo_item: 'Revenda' }],
+      'p1',
+      vendavelStub,
+    ),
+    null,
+  );
 });
 
 test('seedProdutoFromHistorico: comprovados só; frequência/qty histórica omitidas; zero ok; ausente omitido; preco_medio≠unitário', () => {
@@ -111,6 +144,8 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /modalHistoricoGeracao/);
   assert.match(src, /pedidoEmpresaId/);
   assert.match(src, /visualEmpresaId/);
+  assert.match(src, /buildSessionFingerprint/);
+  assert.match(src, /sessionKey/);
   assert.match(src, /Contexto alterado/);
   assert.match(src, /onAdicionarHistorico/);
   assert.match(src, /confirmandoHistoricoRef/);
@@ -118,7 +153,7 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.doesNotMatch(src, /onAdicionarProduto=\{bloquearEdicao \? undefined/);
 });
 
-test('Modal: qty=1; preço/custo/estoque/margem fail-closed; ausente≠UN/zero/SobEncomenda', () => {
+test('Modal: qty=1; preço/custo/estoque/margem fail-closed; elegibilidade; ausente≠UN/zero/SobEncomenda', () => {
   const src = read('src/components/comercial/AdicionarItemRevendaModal.jsx');
   assert.match(src, /produtoInicial\s*=\s*null/);
   assert.match(src, /setQuantidade\(1\)/);
@@ -128,6 +163,8 @@ test('Modal: qty=1; preço/custo/estoque/margem fail-closed; ausente≠UN/zero/S
   assert.match(src, /custoComprovado/);
   assert.match(src, /estoqueComprovado/);
   assert.match(src, /margemVioladaEfetiva/);
+  assert.match(src, /produtoElegivelRevendaNoCatalogo/);
+  assert.match(src, /Produto inativo ou não vendável/);
   assert.match(src, /Custo\/estoque\/margem\/Sob Encomenda só com fonte/);
   assert.match(src, /Justificativa de margem NÃO autoriza fabricar preço/);
   assert.doesNotMatch(src, /estoque_disponivel:\s*produtoSelecionado\.estoque_disponivel \|\| .* \|\| 0/);
@@ -170,6 +207,8 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   let activeTab = 'historico';
   const setActiveTab = (t) => { activeTab = t; };
   const toasts = [];
+  let sessionToken = 'token-sessao-A';
+  const visualCtx = { empresaAtual: { id: 'visual-A', group_id: 'g1' }, grupoAtual: { id: 'g1' } };
 
   const states = [];
   let slot = 0;
@@ -217,9 +256,13 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
         seedProdutoFromHistorico,
         pedidoItensBloqueadosPorStatus,
         buildHistoricoModalGeracao,
+        buildSessionFingerprint,
         numeroComprovado,
       },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
+      '@/api/erpHttpSession': {
+        readErpHttpSession: () => (sessionToken ? { token: sessionToken } : null),
+      },
       sonner: {
         toast: {
           success: (m) => toasts.push(['ok', m]),
@@ -232,8 +275,8 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
         default: () => ({
           createInContext: async () => ({}),
           filterInContext: async () => [],
-          empresaAtual: { id: 'e1' },
-          grupoAtual: { id: 'g1' },
+          empresaAtual: visualCtx.empresaAtual,
+          grupoAtual: visualCtx.grupoAtual,
         }),
       },
       '@/components/lib/UserContext': { useUser: () => ({ user: { id: 'u1' } }) },
@@ -341,7 +384,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   assert.equal(formData.itens_revenda[1].unidade_medida, 'KG');
   assert.equal(activeTab, 'revenda');
 
-  // Preço ausente rejeitado (≠ inventar 0)
+  // Preço ausente rejeitado (≠ inventar 0); modal e rascunho preservados
   toasts.length = 0;
   formData = { ...formData, status: 'Rascunho' };
   tree = render();
@@ -359,9 +402,32 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   });
   assert.equal(formData.itens_revenda.length, beforeReject);
   assert.ok(toasts.some((t) => t[0] === 'err' && /preço/i.test(String(t[1]))));
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1, 'rejeição preserva modal');
 
-  // Troca empresa com modal aberto → confirm rejeita; effect fecha; rascunho preservado
+  // Preço zero comprovado aceito
   toasts.length = 0;
+  tree = render();
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'zero-ok',
+    descricao: 'ZeroOk',
+    unidade: 'UN',
+    ultimo_preco: 0,
+  });
+  tree = render();
+  const beforeZero = formData.itens_revenda.length;
+  findType(tree, 'AdicionarItemRevendaModal')[0].props.onAddItem({
+    produto_id: 'zero-ok',
+    descricao: 'ZeroOk',
+    quantidade: 1,
+    preco_unitario: 0,
+    valor_item: 0,
+  });
+  assert.equal(formData.itens_revenda.length, beforeZero + 1);
+  assert.equal(formData.itens_revenda[beforeZero].preco_unitario, 0);
+
+  // Visual A→B: confirm rejeita; effect fecha; A→B→A não reabre modal antigo; rascunho intacto
+  toasts.length = 0;
+  visualCtx.empresaAtual = { id: 'visual-A', group_id: 'g1' };
   tree = render();
   findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
     produto_id: 'ctx-old',
@@ -372,8 +438,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   tree = render();
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
   const lenBeforeCtx = formData.itens_revenda.length;
-  formData = { ...formData, empresa_id: 'empresa-B-nova' };
-  // Paint com contexto novo sem flush: confirm usa geracao atual ≠ modal → rejeita
+  visualCtx.empresaAtual = { id: 'visual-B', group_id: 'g1' };
   slot = 0;
   pendingEffects.length = 0;
   tree = PedidoTabsContainer({
@@ -395,10 +460,48 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   });
   assert.equal(formData.itens_revenda.length, lenBeforeCtx);
   assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
-  // Flush effect + re-render → modal obsoleto some
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+  // Volta visual A — modal antigo permanece fechado (exige novo Adicionar)
+  visualCtx.empresaAtual = { id: 'visual-A', group_id: 'g1' };
   tree = render();
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
   assert.equal(formData.itens_revenda.length, lenBeforeCtx);
+
+  // Renew sessão (token) com modal aberto → confirm rejeita; rascunho preservado
+  toasts.length = 0;
+  sessionToken = 'token-sessao-A';
+  tree = render();
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'sess-old',
+    descricao: 'SessOld',
+    unidade: 'KG',
+    ultimo_preco: 5,
+  });
+  tree = render();
+  const lenBeforeSess = formData.itens_revenda.length;
+  sessionToken = 'token-sessao-RENEW';
+  slot = 0;
+  pendingEffects.length = 0;
+  tree = PedidoTabsContainer({
+    activeTab: 'historico',
+    setActiveTab,
+    formData,
+    setFormData,
+    clientes: [{ id: 'cli-1', nome: 'Cliente' }],
+    bloquearEdicao: true,
+    validacoes: {},
+    errors: {},
+    pedido: null,
+  });
+  findType(tree, 'AdicionarItemRevendaModal')[0].props.onAddItem({
+    produto_id: 'sess-old',
+    descricao: 'SessOld',
+    quantidade: 1,
+    preco_unitario: 5,
+  });
+  assert.equal(formData.itens_revenda.length, lenBeforeSess);
+  assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
 
   // Duplicidade legítima: avisa, reabre modal, não funde
   toasts.length = 0;

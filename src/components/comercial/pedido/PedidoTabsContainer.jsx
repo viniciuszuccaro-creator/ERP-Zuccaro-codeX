@@ -9,10 +9,12 @@ import Top10ProdutosCliente from '@/components/comercial/Top10ProdutosCliente';
 import AdicionarItemRevendaModal from '@/components/comercial/AdicionarItemRevendaModal';
 import {
   buildHistoricoModalGeracao,
+  buildSessionFingerprint,
   pedidoItensBloqueadosPorStatus,
   seedProdutoFromHistorico,
 } from '@/components/comercial/historicoComprasClientePolicy';
 import { base44 } from '@/api/base44Client';
+import { readErpHttpSession } from '@/api/erpHttpSession';
 import { toast } from 'sonner';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { useUser } from '@/components/lib/UserContext';
@@ -69,6 +71,13 @@ export default function PedidoTabsContainer({
 
   function geracaoHistoricoAtual() {
     // Pedido e visual em slots distintos — formData.empresa_id não mascara troca do seletor.
+    // sessionKey: renew de token (mesmo ator) invalida modal antigo.
+    let sessionKey = null;
+    try {
+      sessionKey = buildSessionFingerprint(readErpHttpSession()?.token || null);
+    } catch {
+      sessionKey = null;
+    }
     return buildHistoricoModalGeracao({
       clienteId: formData?.cliente_id || null,
       pedidoEmpresaId: formData?.empresa_id || null,
@@ -76,6 +85,7 @@ export default function PedidoTabsContainer({
       visualEmpresaId: empresaAtual?.id || null,
       visualGroupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
       actorId: user?.id || null,
+      sessionKey,
     });
   }
 

@@ -169,9 +169,22 @@ export function pedidoItensBloqueadosPorStatus(formData) {
 }
 
 /**
+ * Impressão digital opaca de sessão (token renovado ≠ mesma geração).
+ * Não armazena o token; só length+hash para invalidar modal após renew.
+ */
+export function buildSessionFingerprint(token) {
+  if (token == null || token === "") return null;
+  const s = String(token);
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return `s${s.length}:${h}`;
+}
+
+/**
  * Geração imutável do modal histórico.
  * Pedido (formData) e contexto visual (seletor global) entram em slots separados:
  * trocar só o visual com pedido já contendo empresa_id/group_id ainda invalida.
+ * sessionKey muda na renovação de token (mesmo ator).
  * Confirmação com geracao ≠ atual: modal obsoleto (não inserir no rascunho novo).
  */
 export function buildHistoricoModalGeracao({
@@ -181,6 +194,7 @@ export function buildHistoricoModalGeracao({
   visualEmpresaId = null,
   visualGroupId = null,
   actorId = null,
+  sessionKey = null,
   // Compat legada (mescla → pedido; preferir slots explícitos).
   empresaId = null,
   groupId = null,
@@ -192,7 +206,20 @@ export function buildHistoricoModalGeracao({
     visualEmpresaId || null,
     visualGroupId || null,
     actorId || null,
+    sessionKey || null,
   ]);
+}
+
+/**
+ * Elegibilidade de revenda no catálogo carregado.
+ * true = Ativo+vendável; false = encontrado inelegível; null = ausente/desconhecido (sem inventar).
+ */
+export function produtoElegivelRevendaNoCatalogo(produtos, produtoId, isProdutoVendavelFn) {
+  if (produtoId == null || produtoId === "") return null;
+  if (!Array.isArray(produtos) || typeof isProdutoVendavelFn !== "function") return null;
+  const cat = produtos.find((p) => String(p?.id) === String(produtoId));
+  if (!cat) return null;
+  return cat.status === "Ativo" && isProdutoVendavelFn(cat.tipo_item) === true;
 }
 
 /** Número finito comprovado (inclui zero); ausente/NaN → null. */

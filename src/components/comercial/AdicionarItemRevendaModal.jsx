@@ -25,7 +25,10 @@ import Top10ProdutosCliente from "./Top10ProdutosCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { isProdutoVendavel } from "@/components/cadastros/produto/produtoTipoPolicy";
-import { numeroComprovado } from "@/components/comercial/historicoComprasClientePolicy";
+import {
+  numeroComprovado,
+  produtoElegivelRevendaNoCatalogo,
+} from "@/components/comercial/historicoComprasClientePolicy";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -86,17 +89,24 @@ export default function AdicionarItemRevendaModal({
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarProduto);
   const acaoHabilitada = Boolean(contextoValido && podeAdicionarItem);
 
-  const { data: produtos = [] } = useQuery({
+  const { data: produtos = [], isFetched: catalogoFetched } = useQuery({
     queryKey: ["produtos-revenda-contexto", groupId, empresaId, contexto],
     queryFn: () => filterInContext("Produto", {}, "descricao", 500),
     enabled: consultaHabilitada,
   });
 
   // Enriquecer seed com catálogo no escopo (custo/estoque só se vierem do catálogo; sem inventar).
+  // Inelegível (inativo / não vendável) comprovado pelo catálogo → limpa seleção (≠ inserir).
   useEffect(() => {
     if (!isOpen || !produtoInicial?.id || !Array.isArray(produtos) || produtos.length === 0) return;
     const cat = produtos.find((p) => String(p?.id) === String(produtoInicial.id));
     if (!cat) return;
+    const elegivel = produtoElegivelRevendaNoCatalogo(produtos, produtoInicial.id, isProdutoVendavel);
+    if (elegivel === false) {
+      setProdutoSelecionado(null);
+      setMostrarSugestoes(true);
+      return;
+    }
     setProdutoSelecionado((prev) => {
       if (!prev || String(prev.id) !== String(produtoInicial.id)) return prev;
       const merged = { ...prev, ...cat, id: prev.id };
@@ -170,6 +180,19 @@ export default function AdicionarItemRevendaModal({
     if (!precoComprovadoDisponivel || !calculo) {
       alert("Preço unitário não comprovado — não inventar zero. Informe preço na tabela/cadastro ou selecione produto com preço.");
       return;
+    }
+
+    // Catálogo carregado: inativo/não vendável ou ausente com catálogo populado → rejeita (sem inventar elegibilidade).
+    if (consultaHabilitada && catalogoFetched) {
+      const elegivel = produtoElegivelRevendaNoCatalogo(
+        produtos,
+        produtoSelecionado.id,
+        isProdutoVendavel,
+      );
+      if (elegivel === false || (elegivel == null && produtos.length > 0)) {
+        alert("Produto inativo ou não vendável no contexto atual — não inserir no rascunho.");
+        return;
+      }
     }
 
     // Margem só com custo comprovado; ausente ≠ margem 0 / violação fabricada.
