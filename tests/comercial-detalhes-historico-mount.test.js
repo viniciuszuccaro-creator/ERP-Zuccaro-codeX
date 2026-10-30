@@ -165,6 +165,11 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
         pedidoItensBloqueadosPorStatus: () => false,
         buildHistoricoModalGeracao: () => '["cli","e","g","u"]',
         buildSessionFingerprint: () => null,
+        bumpSessionEpoch: (epoch, prevFp, nextFp) => ({
+          epoch: prevFp === nextFp ? epoch : (Number(epoch) || 0) + 1,
+          fingerprint: nextFp,
+        }),
+        pedidoVisualCompativel: () => true,
         numeroComprovado: (v) => (v == null || v === '' ? null : Number(v)),
       },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },

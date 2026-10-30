@@ -133,3 +133,20 @@ Testes: 14 PASS. #401 fora até Codex limpo no tip atual.
 - Push **5576** · PR **5577** SUCCESS 6/6.
 - Inclui: sessionKey, A→B→A, elegibilidade, zero, rejeição, cartão Top10 leitura.
 - CI verde ≠ aceite Codex montado; #401 fora.
+
+## Residual pós CI5585 tip 3c149488 (2026-10-30 America/Sao_Paulo)
+Base tip `3c149488` CI5585 SUCCESS. Fechos precisos (sem regra comercial nova):
+
+1. **Pedido ≠ visual:** `pedidoId` na geração; `pedidoVisualCompativel` bloqueia abrir/confirm
+   quando empresa/grupo do pedido e do seletor divergem explicitamente.
+2. **PedidoA→PedidoB:** troca de `formData.id`/`pedido.id` invalida modal; confirm rejeita;
+   rascunho preservado.
+3. **Sessão A→B→A monotônica:** `bumpSessionEpoch` — voltar ao fingerprint A não rematch
+   da geração da 1ª visita (epoch sobe 1→2→3).
+4. **Catálogo página limitada:** `elegivel === false` só rejeita; `null` (ausente) ≠ inativo.
+5. **Preço ausente:** `podeConfirmarPreco` compartilhado por botão `disabled` e handler
+   (rascunho incompleto permitido ≠ inventar 0). Zero comprovado e custo_medio 0 preservados
+   (`CalculadorPrecoItem` sem `||` que engole zero).
+
+Testes: comercial360-adicionar-historico-modal + wire + mount — PASS.
+#401: mapa port atualizado; **sem merge / sem substituir backend** até Codex limpo neste tip.

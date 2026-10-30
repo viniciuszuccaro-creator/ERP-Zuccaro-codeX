@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#446 residual pedido/epoch/preço pós CI5585) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | `3c149488` CI5585 SUCCESS |
+| **Residual** | pedidoId · pedidoVisualCompativel · bumpSessionEpoch A→B→A · elegivel null≠inativo · podeConfirmarPreco botão+handler · custo zero-safe |
+| **Codex** | `@codex review` no tip deste commit — CI ≠ aceite montado |
+| **#401** | mapa atualizado — **fora** até limpo; sem substituir backend |
+| Fora | merge main · deploy · seed · inventar UN/preço/custo |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · mapa `docs/evidence/comercial360-446-port-mapa-401-20261030.txt`
+**Próximo:** CI tip + aceite Codex montado; port seletivo #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 tip 611aaa6ee CI5577 SUCCESS — demos+Top10) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

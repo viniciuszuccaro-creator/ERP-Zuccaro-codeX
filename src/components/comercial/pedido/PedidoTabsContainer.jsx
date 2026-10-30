@@ -10,7 +10,9 @@ import AdicionarItemRevendaModal from '@/components/comercial/AdicionarItemReven
 import {
   buildHistoricoModalGeracao,
   buildSessionFingerprint,
+  bumpSessionEpoch,
   pedidoItensBloqueadosPorStatus,
+  pedidoVisualCompativel,
   seedProdutoFromHistorico,
 } from '@/components/comercial/historicoComprasClientePolicy';
 import { base44 } from '@/api/base44Client';
@@ -60,6 +62,8 @@ export default function PedidoTabsContainer({
   const [produtoSeedHistorico, setProdutoSeedHistorico] = useState(null);
   const [modalHistoricoGeracao, setModalHistoricoGeracao] = useState(null);
   const confirmandoHistoricoRef = useRef(false);
+  const sessionEpochRef = useRef(0);
+  const sessionFpRef = useRef(null);
 
   // bloquearEdicao = trava de origem (sempre true); itens usam status do pedido.
   const itensBloqueados = pedidoItensBloqueadosPorStatus(formData);
@@ -69,23 +73,38 @@ export default function PedidoTabsContainer({
     (Array.isArray(clientes) ? clientes.find((c) => c?.id === formData?.cliente_id) : null)
     || (formData?.cliente_id ? { id: formData.cliente_id } : null);
 
-  function geracaoHistoricoAtual() {
-    // Pedido e visual em slots distintos — formData.empresa_id não mascara troca do seletor.
-    // sessionKey: renew de token (mesmo ator) invalida modal antigo.
-    let sessionKey = null;
-    try {
-      sessionKey = buildSessionFingerprint(readErpHttpSession()?.token || null);
-    } catch {
-      sessionKey = null;
-    }
-    return buildHistoricoModalGeracao({
+  function idsContextoAtual() {
+    return {
+      pedidoId: formData?.id || pedido?.id || null,
       clienteId: formData?.cliente_id || null,
       pedidoEmpresaId: formData?.empresa_id || null,
       pedidoGroupId: formData?.group_id || formData?.grupo_id || null,
       visualEmpresaId: empresaAtual?.id || null,
       visualGroupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
       actorId: user?.id || null,
-      sessionKey,
+    };
+  }
+
+  function sessionEpochAtual() {
+    let fp = null;
+    try {
+      fp = buildSessionFingerprint(readErpHttpSession()?.token || null);
+    } catch {
+      fp = null;
+    }
+    const next = bumpSessionEpoch(sessionEpochRef.current, sessionFpRef.current, fp);
+    sessionEpochRef.current = next.epoch;
+    sessionFpRef.current = next.fingerprint;
+    return { epoch: next.epoch, fingerprint: next.fingerprint };
+  }
+
+  function geracaoHistoricoAtual() {
+    const ids = idsContextoAtual();
+    const sess = sessionEpochAtual();
+    return buildHistoricoModalGeracao({
+      ...ids,
+      sessionKey: sess.fingerprint,
+      sessionEpoch: sess.epoch,
     });
   }
 
@@ -95,7 +114,7 @@ export default function PedidoTabsContainer({
     setModalHistoricoGeracao(null);
   }
 
-  // Troca cliente/empresa/grupo/ator com modal aberto → descarta seleção antiga; preserva rascunho novo.
+  // Troca pedido/cliente/empresa/grupo/ator/visual com modal aberto → descarta seleção; preserva rascunho.
   useEffect(() => {
     if (!modalRevendaAberto || !modalHistoricoGeracao) return;
     if (geracaoHistoricoAtual() === modalHistoricoGeracao) return;
@@ -105,10 +124,12 @@ export default function PedidoTabsContainer({
   }, [
     modalRevendaAberto,
     modalHistoricoGeracao,
+    formData?.id,
     formData?.cliente_id,
     formData?.empresa_id,
     formData?.group_id,
     formData?.grupo_id,
+    pedido?.id,
     empresaAtual?.id,
     grupoAtual?.id,
     user?.id,
@@ -117,6 +138,12 @@ export default function PedidoTabsContainer({
   function abrirAdicionarDoHistorico(produto) {
     if (pedidoItensBloqueadosPorStatus(formData)) {
       toast.error('Pedido bloqueado para edição de itens.');
+      return;
+    }
+    const ids = idsContextoAtual();
+    // Pedido e visual divergentes → não abrir (não misturar catálogo B no rascunho A).
+    if (!pedidoVisualCompativel(ids)) {
+      toast.error('Contexto visual diverge do pedido — alinhe empresa/grupo antes de adicionar.');
       return;
     }
     const seed = seedProdutoFromHistorico(produto);
@@ -143,7 +170,12 @@ export default function PedidoTabsContainer({
       toast.error('Pedido bloqueado para edição de itens.');
       return;
     }
-    // Modal obsoleto após troca de contexto: não inserir no rascunho novo.
+    if (!pedidoVisualCompativel(idsContextoAtual())) {
+      fecharModalHistoricoObsoleto();
+      toast.error('Contexto visual diverge do pedido — item não foi inserido.');
+      return;
+    }
+    // Modal obsoleto após troca de contexto/pedido/sessão: não inserir no rascunho novo.
     if (!modalHistoricoGeracao || geracaoHistoricoAtual() !== modalHistoricoGeracao) {
       fecharModalHistoricoObsoleto();
       toast.error('Contexto alterado — item do histórico anterior não foi inserido.');

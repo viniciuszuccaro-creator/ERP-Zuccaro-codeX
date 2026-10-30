@@ -181,38 +181,72 @@ export function buildSessionFingerprint(token) {
 }
 
 /**
+ * Época monotônica de sessão: A→B→A não reutiliza a geração da primeira visita a A.
+ * `bumpSessionEpoch(prevEpoch, prevFp, nextFp)` — só incrementa quando o fingerprint muda.
+ */
+export function bumpSessionEpoch(prevEpoch, prevFingerprint, nextFingerprint) {
+  const prev = Number.isFinite(Number(prevEpoch)) ? Math.max(0, Math.floor(Number(prevEpoch))) : 0;
+  const a = prevFingerprint || null;
+  const b = nextFingerprint || null;
+  if (a === b) return { epoch: prev, fingerprint: b };
+  return { epoch: prev + 1, fingerprint: b };
+}
+
+/**
+ * Pedido e contexto visual alinhados (ambos preenchidos e iguais).
+ * Divergência explícita → bloquear Adicionar/confirm (não misturar catálogo B no rascunho A).
+ */
+export function pedidoVisualCompativel({
+  pedidoEmpresaId = null,
+  pedidoGroupId = null,
+  visualEmpresaId = null,
+  visualGroupId = null,
+} = {}) {
+  const pe = pedidoEmpresaId || null;
+  const pg = pedidoGroupId || null;
+  const ve = visualEmpresaId || null;
+  const vg = visualGroupId || null;
+  if (pe && ve && String(pe) !== String(ve)) return false;
+  if (pg && vg && String(pg) !== String(vg)) return false;
+  return true;
+}
+
+/**
  * Geração imutável do modal histórico.
- * Pedido (formData) e contexto visual (seletor global) entram em slots separados:
- * trocar só o visual com pedido já contendo empresa_id/group_id ainda invalida.
- * sessionKey muda na renovação de token (mesmo ator).
+ * Pedido (id/empresa/grupo) e contexto visual entram em slots separados.
+ * sessionEpoch monotônico: renew A→B→A não rematch da geração antiga.
  * Confirmação com geracao ≠ atual: modal obsoleto (não inserir no rascunho novo).
  */
 export function buildHistoricoModalGeracao({
   clienteId = null,
+  pedidoId = null,
   pedidoEmpresaId = null,
   pedidoGroupId = null,
   visualEmpresaId = null,
   visualGroupId = null,
   actorId = null,
   sessionKey = null,
+  sessionEpoch = null,
   // Compat legada (mescla → pedido; preferir slots explícitos).
   empresaId = null,
   groupId = null,
 } = {}) {
   return JSON.stringify([
     clienteId || null,
+    pedidoId || null,
     pedidoEmpresaId || empresaId || null,
     pedidoGroupId || groupId || null,
     visualEmpresaId || null,
     visualGroupId || null,
     actorId || null,
     sessionKey || null,
+    sessionEpoch == null ? null : Number(sessionEpoch),
   ]);
 }
 
 /**
  * Elegibilidade de revenda no catálogo carregado.
- * true = Ativo+vendável; false = encontrado inelegível; null = ausente/desconhecido (sem inventar).
+ * true = Ativo+vendável; false = encontrado inelegível; null = ausente na página (≠ inventar inativo).
  */
 export function produtoElegivelRevendaNoCatalogo(produtos, produtoId, isProdutoVendavelFn) {
   if (produtoId == null || produtoId === "") return null;

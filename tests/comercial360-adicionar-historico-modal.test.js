@@ -12,8 +12,10 @@ import vm from 'node:vm';
 import {
   buildHistoricoModalGeracao,
   buildSessionFingerprint,
+  bumpSessionEpoch,
   numeroComprovado,
   pedidoItensBloqueadosPorStatus,
+  pedidoVisualCompativel,
   produtoElegivelRevendaNoCatalogo,
   seedProdutoFromHistorico,
 } from '../src/components/comercial/historicoComprasClientePolicy.js';
@@ -24,17 +26,28 @@ const vendavelStub = (t) => t === 'Revenda' || t === 'Acabado';
 test('buildHistoricoModalGeracao + session + elegibilidade: pedido≠visual; zero; renew', () => {
   assert.equal(
     buildHistoricoModalGeracao({
-      clienteId: 'c1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
-      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1', sessionKey: 's1',
+      clienteId: 'c1', pedidoId: 'ped-1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
+      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1', sessionKey: 's1', sessionEpoch: 0,
     }),
     buildHistoricoModalGeracao({
-      clienteId: 'c1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
-      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1', sessionKey: 's1',
+      clienteId: 'c1', pedidoId: 'ped-1', pedidoEmpresaId: 'pe', pedidoGroupId: 'pg',
+      visualEmpresaId: 've', visualGroupId: 'vg', actorId: 'u1', sessionKey: 's1', sessionEpoch: 0,
     }),
   );
   assert.notEqual(
     buildHistoricoModalGeracao({ clienteId: 'c1', pedidoEmpresaId: 'e1', visualEmpresaId: 'v1', actorId: 'u1' }),
     buildHistoricoModalGeracao({ clienteId: 'c2', pedidoEmpresaId: 'e1', visualEmpresaId: 'v1', actorId: 'u1' }),
+  );
+  // Pedido id A→B (mesmo visual) → gerações distintas.
+  assert.notEqual(
+    buildHistoricoModalGeracao({
+      clienteId: 'c1', pedidoId: 'pedido-A', pedidoEmpresaId: 'e1',
+      visualEmpresaId: 'e1', visualGroupId: 'g1', actorId: 'u1',
+    }),
+    buildHistoricoModalGeracao({
+      clienteId: 'c1', pedidoId: 'pedido-B', pedidoEmpresaId: 'e1',
+      visualEmpresaId: 'e1', visualGroupId: 'g1', actorId: 'u1',
+    }),
   );
   // Pedido fixo + troca só do visual → gerações distintas (Codex P1).
   assert.notEqual(
@@ -52,6 +65,33 @@ test('buildHistoricoModalGeracao + session + elegibilidade: pedido≠visual; zer
     buildHistoricoModalGeracao({ actorId: 'u1', sessionKey: buildSessionFingerprint('token-AAA') }),
     buildHistoricoModalGeracao({ actorId: 'u1', sessionKey: buildSessionFingerprint('token-BBB') }),
   );
+  // Sessão A→B→A: epoch monotônico (não rematch da geração da 1ª visita a A).
+  const fpA = buildSessionFingerprint('token-A');
+  const fpB = buildSessionFingerprint('token-B');
+  let sess = bumpSessionEpoch(0, null, fpA);
+  assert.equal(sess.epoch, 1);
+  assert.equal(sess.fingerprint, fpA);
+  sess = bumpSessionEpoch(sess.epoch, sess.fingerprint, fpB);
+  assert.equal(sess.epoch, 2);
+  sess = bumpSessionEpoch(sess.epoch, sess.fingerprint, fpA);
+  assert.equal(sess.epoch, 3);
+  assert.equal(sess.fingerprint, fpA);
+  assert.notEqual(
+    buildHistoricoModalGeracao({ actorId: 'u1', sessionKey: fpA, sessionEpoch: 1 }),
+    buildHistoricoModalGeracao({ actorId: 'u1', sessionKey: fpA, sessionEpoch: 3 }),
+  );
+  // Mesmo fp → epoch estável.
+  assert.deepEqual(bumpSessionEpoch(3, fpA, fpA), { epoch: 3, fingerprint: fpA });
+  // Pedido ≠ visual explícito → incompatível; um lado vazio → compatível (não inventar).
+  assert.equal(pedidoVisualCompativel({
+    pedidoEmpresaId: 'e-A', visualEmpresaId: 'e-B', pedidoGroupId: 'g1', visualGroupId: 'g1',
+  }), false);
+  assert.equal(pedidoVisualCompativel({
+    pedidoEmpresaId: 'e-A', visualEmpresaId: 'e-A', pedidoGroupId: 'g1', visualGroupId: 'g1',
+  }), true);
+  assert.equal(pedidoVisualCompativel({
+    pedidoEmpresaId: 'e-A', visualEmpresaId: null, pedidoGroupId: 'g1', visualGroupId: 'g1',
+  }), true);
   assert.equal(buildSessionFingerprint(''), null);
   assert.equal(numeroComprovado(0), 0);
   assert.equal(numeroComprovado(''), null);
@@ -73,6 +113,7 @@ test('buildHistoricoModalGeracao + session + elegibilidade: pedido≠visual; zer
     ),
     false,
   );
+  // Ausente na página limitada ≠ inativo (null; só false rejeita).
   assert.equal(
     produtoElegivelRevendaNoCatalogo(
       [{ id: 'outro', status: 'Ativo', tipo_item: 'Revenda' }],
@@ -81,6 +122,7 @@ test('buildHistoricoModalGeracao + session + elegibilidade: pedido≠visual; zer
     ),
     null,
   );
+  assert.equal(produtoElegivelRevendaNoCatalogo([], 'p1', vendavelStub), null);
 });
 
 test('seedProdutoFromHistorico: comprovados só; frequência/qty histórica omitidas; zero ok; ausente omitido; preco_medio≠unitário', () => {
@@ -144,9 +186,14 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /modalHistoricoGeracao/);
   assert.match(src, /pedidoEmpresaId/);
   assert.match(src, /visualEmpresaId/);
+  assert.match(src, /pedidoId:/);
+  assert.match(src, /bumpSessionEpoch/);
+  assert.match(src, /pedidoVisualCompativel/);
+  assert.match(src, /sessionEpoch/);
   assert.match(src, /buildSessionFingerprint/);
   assert.match(src, /sessionKey/);
   assert.match(src, /Contexto alterado/);
+  assert.match(src, /Contexto visual diverge/);
   assert.match(src, /onAdicionarHistorico/);
   assert.match(src, /confirmandoHistoricoRef/);
   assert.doesNotMatch(src, /buildItemRevendaFromHistorico/);
@@ -160,16 +207,29 @@ test('Modal: qty=1; preço/custo/estoque/margem fail-closed; elegibilidade; ause
   assert.match(src, /unidadeComprovada/);
   assert.match(src, /ausente ≠ inventar UN/);
   assert.match(src, /precoComprovadoDisponivel/);
+  assert.match(src, /podeConfirmarPreco/);
   assert.match(src, /custoComprovado/);
   assert.match(src, /estoqueComprovado/);
   assert.match(src, /margemVioladaEfetiva/);
   assert.match(src, /produtoElegivelRevendaNoCatalogo/);
   assert.match(src, /Produto inativo ou não vendável/);
+  assert.match(src, /elegivel === false/);
+  assert.doesNotMatch(src, /elegivel == null && produtos\.length > 0/);
+  assert.match(src, /!podeConfirmarPreco/);
   assert.match(src, /Custo\/estoque\/margem\/Sob Encomenda só com fonte/);
   assert.match(src, /Justificativa de margem NÃO autoriza fabricar preço/);
   assert.doesNotMatch(src, /estoque_disponivel:\s*produtoSelecionado\.estoque_disponivel \|\| .* \|\| 0/);
   // Confirm/UI não usam margem_violada crua do calculador (custo 0 inventado).
   assert.doesNotMatch(src, /disabled=\{[^}]*calculo\?\.margem_violada && !justificativaDesconto/);
+  // Botão e handler compartilham podeConfirmarPreco (preço ausente).
+  assert.match(src, /disabled=\{[^}]*!podeConfirmarPreco/);
+});
+
+test('CalculadorPrecoItem: custo_medio zero comprovado não cai em custo_aquisicao via ||', () => {
+  const src = read('src/components/comercial/CalculadorPrecoItem.jsx');
+  assert.match(src, /custoMedioRaw/);
+  assert.match(src, /Number\.isFinite\(Number\(custoMedioRaw\)\)/);
+  assert.doesNotMatch(src, /produto\.custo_medio \|\| produto\.custo_aquisicao \|\| 0/);
 });
 
 test('Top10 e HistoricoClienteTab: leitura sem callback — cartão não interativo', () => {
@@ -258,6 +318,8 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
         pedidoItensBloqueadosPorStatus,
         buildHistoricoModalGeracao,
         buildSessionFingerprint,
+        bumpSessionEpoch,
+        pedidoVisualCompativel,
         numeroComprovado,
       },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
@@ -504,8 +566,95 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   assert.equal(formData.itens_revenda.length, lenBeforeSess);
   assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
 
+  // Sessão A→B→A: voltar ao token A não rematch da geração antiga (epoch monotônico)
+  toasts.length = 0;
+  sessionToken = 'token-sessao-A';
+  tree = render();
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'sess-aba',
+    descricao: 'SessABA',
+    unidade: 'KG',
+    ultimo_preco: 4,
+  });
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
+  const lenBeforeABA = formData.itens_revenda.length;
+  sessionToken = 'token-sessao-B';
+  tree = render(); // effect fecha modal (epoch↑)
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+  sessionToken = 'token-sessao-A';
+  tree = render(); // volta A — modal permanece fechado (epoch≠ da 1ª visita)
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+  assert.equal(formData.itens_revenda.length, lenBeforeABA);
+
+  // PedidoA→PedidoB (mesmo visual/cliente): modal da geração A não confirma em B
+  toasts.length = 0;
+  formData = {
+    ...formData,
+    id: 'pedido-A',
+    empresa_id: 'e1',
+    group_id: 'g1',
+    status: 'Rascunho',
+  };
+  visualCtx.empresaAtual = { id: 'e1', group_id: 'g1' };
+  visualCtx.grupoAtual = { id: 'g1' };
+  sessionToken = 'token-sessao-stable';
+  tree = render();
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'ped-switch',
+    descricao: 'PedSwitch',
+    unidade: 'KG',
+    ultimo_preco: 8,
+  });
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
+  const lenBeforePed = formData.itens_revenda.length;
+  formData = { ...formData, id: 'pedido-B' };
+  slot = 0;
+  pendingEffects.length = 0;
+  tree = PedidoTabsContainer({
+    activeTab: 'historico',
+    setActiveTab,
+    formData,
+    setFormData,
+    clientes: [{ id: 'cli-1', nome: 'Cliente' }],
+    bloquearEdicao: true,
+    validacoes: {},
+    errors: {},
+    pedido: { id: 'pedido-B' },
+  });
+  findType(tree, 'AdicionarItemRevendaModal')[0].props.onAddItem({
+    produto_id: 'ped-switch',
+    descricao: 'PedSwitch',
+    quantidade: 1,
+    preco_unitario: 8,
+  });
+  assert.equal(formData.itens_revenda.length, lenBeforePed);
+  assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+
+  // Pedido vs visual divergentes → abrir bloqueado
+  toasts.length = 0;
+  formData = { ...formData, id: 'pedido-C', empresa_id: 'e-pedido', group_id: 'g1', status: 'Rascunho' };
+  visualCtx.empresaAtual = { id: 'e-visual', group_id: 'g1' };
+  tree = render();
+  const beforeDiverg = formData.itens_revenda.length;
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'div-ctx',
+    descricao: 'DivCtx',
+    unidade: 'KG',
+    ultimo_preco: 3,
+  });
+  assert.equal(formData.itens_revenda.length, beforeDiverg);
+  assert.ok(toasts.some((t) => t[0] === 'err' && /visual diverge/i.test(String(t[1]))));
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+
   // Duplicidade legítima: avisa, reabre modal, não funde
   toasts.length = 0;
+  formData = { ...formData, empresa_id: 'e1', group_id: 'g1', status: 'Rascunho' };
+  visualCtx.empresaAtual = { id: 'e1', group_id: 'g1' };
   tree = render();
   findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
     produto_id: 'existente',

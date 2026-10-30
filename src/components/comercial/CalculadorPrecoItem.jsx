@@ -41,7 +41,18 @@ export function calcularPrecoItem({
     }
   }
 
-  const custoUnitario = produto.custo_medio || produto.custo_aquisicao || 0;
+  // Zero comprovado em custo_medio deve prevalecer (≠ cair em custo_aquisicao via ||).
+  const custoMedioRaw = produto?.custo_medio;
+  const custoAqRaw = produto?.custo_aquisicao;
+  const custoUnitario = (() => {
+    if (custoMedioRaw != null && custoMedioRaw !== "" && Number.isFinite(Number(custoMedioRaw))) {
+      return Number(custoMedioRaw);
+    }
+    if (custoAqRaw != null && custoAqRaw !== "" && Number.isFinite(Number(custoAqRaw))) {
+      return Number(custoAqRaw);
+    }
+    return 0;
+  })();
   
   // 2. Aplicar desconto padrão do cliente
   let precoAposDescontoPadrao = precoUnitarioBruto;

@@ -155,6 +155,10 @@ export default function AdicionarItemRevendaModal({
       ...produtoSelecionado,
       // Evita `preco_venda || 0` inventado no calculador quando só tabela comprova.
       preco_venda: precoBaseComprovado != null ? precoBaseComprovado : (itemTabelaComprovado ?? undefined),
+      // Mesma fonte de custo comprovado (inclui zero) no cálculo e no payload.
+      ...(margemConhecida
+        ? { custo_medio: custoComprovado, custo_aquisicao: undefined }
+        : {}),
     },
     tabelaPreco: tabelaPreco,
     tabelaPrecoItens: tabelaPrecoItens,
@@ -168,6 +172,8 @@ export default function AdicionarItemRevendaModal({
 
   // Calculador pode devolver margem_violada com custo 0 inventado — só efetiva se custo comprovado.
   const margemVioladaEfetiva = Boolean(margemConhecida && calculo?.margem_violada);
+  // Preço ausente: botão e handler compartilham o mesmo estado efetivo (rascunho incompleto ≠ inventar 0).
+  const podeConfirmarPreco = Boolean(precoComprovadoDisponivel && calculo);
 
   const handleAdicionarItem = () => {
     if (!acaoHabilitada) {
@@ -177,19 +183,20 @@ export default function AdicionarItemRevendaModal({
 
     if (!produtoSelecionado) return;
 
-    if (!precoComprovadoDisponivel || !calculo) {
+    if (!podeConfirmarPreco) {
       alert("Preço unitário não comprovado — não inventar zero. Informe preço na tabela/cadastro ou selecione produto com preço.");
       return;
     }
 
-    // Catálogo carregado: inativo/não vendável ou ausente com catálogo populado → rejeita (sem inventar elegibilidade).
+    // Só rejeita inelegível comprovado (encontrado inativo/não vendável).
+    // Ausente na página limitada do catálogo ≠ classificar como inativo.
     if (consultaHabilitada && catalogoFetched) {
       const elegivel = produtoElegivelRevendaNoCatalogo(
         produtos,
         produtoSelecionado.id,
         isProdutoVendavel,
       );
-      if (elegivel === false || (elegivel == null && produtos.length > 0)) {
+      if (elegivel === false) {
         alert("Produto inativo ou não vendável no contexto atual — não inserir no rascunho.");
         return;
       }
@@ -623,7 +630,7 @@ export default function AdicionarItemRevendaModal({
         <Button
           type="button"
           onClick={handleAdicionarItem}
-          disabled={!acaoHabilitada || !produtoSelecionado || quantidade <= 0 || (margemVioladaEfetiva && !justificativaDesconto.trim())}
+          disabled={!acaoHabilitada || !produtoSelecionado || quantidade <= 0 || !podeConfirmarPreco || (margemVioladaEfetiva && !justificativaDesconto.trim())}
           data-permission="Comercial.Pedido.criar"
           data-action="adicionar-item-revenda"
           data-sensitive="true"
