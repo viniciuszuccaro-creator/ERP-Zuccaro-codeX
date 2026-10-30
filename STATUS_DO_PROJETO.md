@@ -1,14 +1,14 @@
-## CURSOR — VIGENTE (#435 recovery peel stage44 + d312fbcd) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#435 hunks exactos + typecheck policy) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **PR** | **#435** `cursor/recuperacao-historico-produto-http-392b` |
-| **Sobre** | tip `b0510f41c` frontend FAIL — **não atribuir** a este HEAD |
-| **Causa** | graduar string em audit-callback quebra `runtime-proof` (SHAs = d312fbcd) |
-| **Fix** | peel #435 → fixture stage44; hashes permanecem `bfdd237c…` |
-| **Vivo** | HTTP fail-closed + P1/P2 intactos (markers obrigatórios) |
-| **#401** | tip `686ae322` estável · #434 prep sem merge oficial |
-| Preferir | CI deste tip; não atribuir FAIL de `450c12d8f`/`b0510f41c` |
+| **Sobre** | tip `460b8155e` FAIL typecheck + Codex P1 fixture — **não atribuir** |
+| **Fix** | JSDoc policy `produtoId`/`contextoValido`; peel = 12 hunks exactos (#348) |
+| **Codex P1** | mutação `enabled: true` quebra peel; edit fora muda hash |
+| **Hashes** | `bfdd237c…` intactos (d312fbcd); vivo HTTP/P1/P2 |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI deste tip; não atribuir FAIL `450c12d8f`/`b0510f41c`/`460b8155e` |
 
 **Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
 
