@@ -1,4 +1,27 @@
-## Estado vigente - composicao e limite da prova browser (2026-10-29)
+## Estado vigente - revisao de recuperacao funcional (2026-10-30)
+
+#409c07f3722749a1a91000a1c8a98ce56107b14b664, #4297ad1d35d6b8801d00d5d4f28124638244f392ca2
+e #4308ab119048af7ddda84e3d0c0442422298371a9db reconferidas:6jobsSUCCESS cadaSHA.
+Revisoes publicadas6519758646/6519748889/6519758957 respectivamente, sem editar
+branches Cursor ou ampliar401.409: delta sky/ID nao altera persistencia; smoke
+continua writes0/saveDisabled, nao E2E.430: somente comentario keep-both no runtime;
+banner/teste de texto nao recuperam registros nem corrigem autorizacao do orfao.
+
+P2 CONCRETO429: executei hook REAL do Git via AST/VM, contexto e erros sinteticos,
+sem alterar produto.7requisicoes rejeitadas resultam48countsZERO; troca Empresa
+altera queryKey mas placeholderData devolve counts anteriores. Prova code-only
+privada review429-count-contract-20261030.mjs, exit0. Alcance callbacks VM, nao
+React montado/HTTP/PG/registro recuperado. Cursor deve corrigir causa no existente,
+com negativos, resultado parcial/tardio e troca de contexto; nao remover filtros
+tenant nem ampliar acesso. Hipotese empresa excluir mestreGrupo ainda exige
+contrato/bridge/count server: regex de filtro e scopeKey nao comprovam essa causa.
+Recebimento da solicitacao ainda nao confirmado; publicado nao significa recebido.
+
+Harness/coorte100 final continuam dependencias privadas SEPARADAS. Sem mudanca de
+canal/condicao, nao repeti buscas/transferencias/instalacoes ou pilotos intactos.
+Reconciliacao real, prova integrada browser e carga continuam NAO EXECUTADAS.
+
+## Detalhamento vigente - composicao e limite da prova browser (2026-10-29)
 
 #401 HEAD `686ae3224fe44ed5a3154a972ca8391802974d94`: incorporacao backend87db e
 424 mantida; runtime/testes/locks iguais ao77c0 revisado. Delta posterior somente

@@ -1,4 +1,26 @@
-## Estado vigente - composicao publicada e navegador ainda pendente (2026-10-29)
+## Estado vigente - revisoes por SHA e recuperacao pendente (2026-10-30)
+
+HEADs409c07f3722/4297ad1d35d/4308ab11904 reconferidos,6jobsSUCCESS em cadaSHA.
+Pareceres6519758646/6519748889/6519758957:409 sem novo defeito no delta visual/ID,
+nao homologacao de reabertura;430 preserva runtime por comentario, nao recupera
+registros. A exigencia de banner nao e cobertura funcional. Manter separados401
+estavel, revisao estatica e provas comportamentais.
+
+Contraprova REAL429 executada fora do checkout: AST/VM do hookuseCadastrosAllCounts
+noSHA7ad1d35d completo.7requests rejeitadas ->48contagensZERO; troca Empresa muda
+queryKey mas conserva placeholder anterior. P2 publicado6519748889; Cursor dono
+da correcao, sem Codex editar UI/branch dele. Testesregex atuais nao provam
+recuperacao nem legitimam retirar filtrotenant. Causa empresa x mestreGrupo ainda
+depende de contrato/bridge/backend; nao aplicar filtro mais amplo por suposicao.
+Solicitacao publicada, recebimento/correcao ainda nao comprovados.
+
+Dois artefatos privados seguem indisponiveis pelos canais documentados, sem nova
+condicao que justifique repetir busca. Nao recriar harness/coorte nem provisionar
+Auth/VPS. Retomar navegador somente apos recuperar bytes/guardas e conferir
+origem/versao/tamanho/hash; coorte exige pins finais separadamente. Reutilizar
+provas de consulta/rejeicoes/idempotencia/reversao ja publicadas, sem novos pilotos.
+
+## Detalhamento vigente - composicao publicada e navegador pendente (2026-10-29)
 
 #401 `686ae3224fe44ed5a3154a972ca8391802974d94` recebeu o prefixo OPDEV vigente
 da342/1a03 e preservou integralmente o corpo c717 e ambos os historicos de
