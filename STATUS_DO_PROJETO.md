@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#401 tip 3a80e0ffe CI SUCCESS — aceite Contatos) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `3a80e0ffe` — CI SUCCESS frontend+backend+compose |
+| **Base** | `a99483870` CI5459 SUCCESS (Contatos P2 + contagens + Codex limpo) |
+| **Prova** | job REAL: CONTEXT_CHANGED sem bump; rascunho novo intacto; GET novo aplica; late/erro≠vazio |
+| **Testes** | contatos-painel-counterproof-seams **11 PASS** |
+| **Keep** | guardas epoch/skipped/hydrate; sem pin cego / relaxar asserts |
+| **Indep.** | #441 `d46cf79dc` provas session/perm · #442 Top10/Sugestões — fora candidata |
+| Fora | merge main · ampliar candidata · deploy · harness VPS |
+
+**Evidência:** `docs/evidence/prova-401-contatos-save-contexto-20261030.txt`
+**Próximo:** `@codex review` tip `3a80e0ffe`; aceite estável; indep. recuperação.
+
 ## CURSOR — VIGENTE (#401 prova save×contexto comportamental) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
