@@ -1,0 +1,28 @@
+Pacote D / #432 — Endereços persistBusy + toast em falha (2026-10-30 America/Sao_Paulo)
+=======================================================================================
+Branch: cursor/cadastros-audit-restante-392b
+Base: #431 (Contatos bind + counts safe-int merge)
+
+## Codex P1 (#432 discussion_r4422647807)
+catch engolia rejeição de onChange → toast.error + mantém diálogo/rascunho.
+
+## Codex residual (concorrência pré-rerender)
+`setSalvando` não é trava síncrona: dois cliques no mesmo tick chamavam onChange 2×.
+Fix: `persistInFlightRef` + `beginPersist`/`endPersist` em Endereços e Contatos Form.
+Teste comportamental: duplo clique síncrono → changes.length === 1 (não só botão disabled).
+
+## Cobertura
+| Caso | Prova |
+|------|-------|
+| await onChange | `await Promise.resolve(onChange(...))` |
+| reject | toast.error; changes.length 0 |
+| persistBusy | botão disabled + handler “Aguarde…” |
+| duplo clique sync | ref `persistInFlightRef` — 1× onChange antes do re-render |
+| salvando | `setSalvando` + re-render (camada UI) |
+| Contatos Form | mesmo toast + mesma trava síncrona |
+
+## Merge
+Incorpora #431 Contatos bind imutável + counts safe-int≥0.
+
+## Fora
+Pins sky · seed fictício · #401 · Auth VPS

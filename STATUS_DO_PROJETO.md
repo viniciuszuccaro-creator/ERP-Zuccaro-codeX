@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#432** `cursor/cadastros-audit-restante-392b` |
+| **Merge** | #431 tip `2b523fdf8` CI SUCCESS 6/6 (Cliente.get + draft≠save + remainder) |
+| **Keep-both** | Forms: persistInFlightRef #432 + commitMode draft #431 |
+| **Codex** | tip 3769dc7 sem achados major; ator/ausência/counts ENCERRADOS |
+| **#401** | tip `686ae322` estável — prep incorporação sem merge oficial |
+| Preferir | CI deste tip → prep #401 |
+
+**Evidência:** `docs/evidence/prep-merge-431-into-432-20261030.txt` · `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
 ## CURSOR — VIGENTE (#431 Cliente.get + Completo draft≠save) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -22,6 +35,31 @@
 | Preferir | #409 · revisão; P2 só arquivos independentes |
 
 **Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
+## CURSOR — VIGENTE (#431+#432 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#431** | tip **`884012ed5`** / código `2277c5a33` — CI SUCCESS 6/6 |
+| **#432** | tip **`7941f984a`** — CI SUCCESS 6/6 |
+| **Provas** | Contatos actorId+ausência · Endereços sync-lock+toast+remainder |
+| **#401** | tip `686ae322` estável · harness BLOCKED |
+| Preferir | #409 · revisão cadeia; P2 só arquivos independentes |
+
+**Evidência:** `docs/evidence/cadastros-enderecos-persistbusy-20261030.txt` · `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
+## CURSOR — VIGENTE (#432 sync-lock + merge #431 ausência) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#432** `cursor/cadastros-audit-restante-392b` |
+| **Fix** | toast + persistInFlightRef + remainder; merge #431 actorId + ausência pós-refetch |
+| **Codex** | concorrência ENCERRADA em 707; herda ator+ausência do #431 |
+| **#431** | tip `884012ed5` / código `2277c5a33` |
+| **#401** | tip `686ae322` estável · harness BLOCKED |
+| Preferir | #409 · estabilizar #431+#432 antes de novos pacotes dependentes |
+
+**Evidência:** `docs/evidence/cadastros-enderecos-persistbusy-20261030.txt` · `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
 
 ## CURSOR — VIGENTE (#431 actorId + ausência pós-refetch) (2026-10-30 America/Sao_Paulo)
 

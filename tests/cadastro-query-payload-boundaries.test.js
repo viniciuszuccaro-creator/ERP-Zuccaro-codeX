@@ -2,6 +2,7 @@ test('Cliente contatos: remainder rejeita omissao repeticao e efeito colateral n
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const payload = '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),';
   const mapper = '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),';
+  const persistBusy = '                persistBusy={isSaving || saveMutation.isPending}';
   for (const hunk of [payload, mapper]) {
     assert.equal(source.split(hunk).length - 1, 1);
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, '')));
@@ -10,6 +11,12 @@ test('Cliente contatos: remainder rejeita omissao repeticao e efeito colateral n
     const forged = hunk.replace(variable + '.contatos ===', `Object.assign(${variable},{nome:'FORGED'}).contatos ===`);
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, forged)));
   }
+  // #432 persistBusy: exatamente 2 ocorrências; omitir/forjar quebra remainder (não pin cego).
+  assert.equal(source.split(persistBusy).length - 1, 2);
+  assert.throws(() => clienteContactPresenceRemainder(source.replace(persistBusy, '')));
+  assert.throws(() => clienteContactPresenceRemainder(
+    source.replace(persistBusy, '                persistBusy={false /* FORGED */}'),
+  ));
 });
 
 test('Cliente contatos: remainder mantem alteracao externa visivel ao hash integral', () => {
@@ -40,8 +47,8 @@ function once(source, current, previous) {
   return source.replace(current, previous);
 }
 // Browser-proven absence is not an explicit empty list. Preserve the old golden;
-// accept only these two exact hunks, never arbitrary spread expressions.
-// #431 draft≠save: peels commitMode/draft handlers — gravação canônica permanece saveMutation.
+// accept only these exact hunks, never arbitrary spread expressions.
+// #431+#432 keep-both: peels draft/commitMode/persistBusy Completo → stage48; saveMutation canônico.
 function clienteContactPresenceRemainder(source) {
   source = once(source,
     '  /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */\n'

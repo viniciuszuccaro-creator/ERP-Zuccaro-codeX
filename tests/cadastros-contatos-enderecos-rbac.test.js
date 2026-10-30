@@ -180,6 +180,135 @@ test('UI enderecos: mudança de Grupo/sessão bloqueia excluir no componente rea
   assert.ok(state.errors.some((e) => /contexto alterado|reabra/i.test(e)));
 });
 
+test('UI enderecos: persistBusy e falha de onChange não fecham como sucesso (contrato Contatos)', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', import.meta.url), 'utf8');
+  assert.match(source, /persistBusy/);
+  assert.match(source, /await Promise\.resolve\(onChange/);
+  assert.match(source, /bloqueado \|\| !podeEditar/);
+  assert.match(source, /Aguarde a gravação de endereços/);
+  assert.match(source, /toast\.error\(error\?\.message/);
+  // Gravação única: salvando + persistBusy + ref síncrona — não só botão disabled
+  assert.match(source, /persistInFlightRef/);
+  assert.match(source, /beginPersist/);
+  assert.match(source, /setSalvando\(true\)/);
+
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const enderecos = [{ apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' }];
+  render({
+    enderecos,
+    persistBusy: true,
+    onChange: (next) => state.changes.push(next),
+  });
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.endereco.excluir');
+  assert.ok(del?.disabled, 'excluir bloqueado durante persistBusy');
+  del.onClick();
+  assert.equal(state.changes.length, 0);
+  assert.ok(state.errors.some((e) => /aguarde|gravação|andamento/i.test(e)));
+});
+
+test('UI enderecos: duplo clique síncrono chama onChange uma vez (ref, não só disabled)', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const enderecos = [
+    { apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' },
+    { apelido: 'Dep', logradouro: 'Rua B', numero: '2', cidade: 'SP', estado: 'SP' },
+  ];
+  let resolveSave;
+  const pending = new Promise((resolve) => { resolveSave = resolve; });
+  render({
+    enderecos,
+    onChange: async (next) => {
+      state.changes.push(next);
+      await pending;
+    },
+  });
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.endereco.excluir');
+  assert.equal(del?.disabled, false);
+  // Dois cliques no mesmo tick, antes de qualquer re-render — setSalvando sozinho não bastaria.
+  const p1 = del.onClick();
+  const p2 = del.onClick();
+  assert.equal(state.changes.length, 1, 'ref síncrona impede 2ª gravação antes do re-render');
+  assert.ok(state.errors.some((e) => /aguarde|gravação|andamento/i.test(e)));
+  resolveSave();
+  await Promise.all([p1, p2]);
+  assert.equal(state.changes.length, 1);
+});
+
+test('UI contatos: duplo clique síncrono chama onChange uma vez (ref, não só disabled)', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarContatosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const contatos = [
+    { nome: 'A', tipo: 'Telefone', valor: '11', principal: true },
+    { nome: 'B', tipo: 'E-mail', valor: 'b@x.com', principal: false },
+  ];
+  let resolveSave;
+  const pending = new Promise((resolve) => { resolveSave = resolve; });
+  render({
+    contatos,
+    onChange: async (next) => {
+      state.changes.push(next);
+      await pending;
+    },
+  });
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.contato.excluir');
+  const p1 = del.onClick();
+  const p2 = del.onClick();
+  assert.equal(state.changes.length, 1, 'ref síncrona impede 2ª gravação de contato');
+  assert.ok(state.errors.some((e) => /aguarde|gravação|andamento/i.test(e)));
+  resolveSave();
+  await Promise.all([p1, p2]);
+  assert.equal(state.changes.length, 1);
+});
+
+test('UI enderecos: onChange reject comunica erro e não propaga sucesso', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const enderecos = [
+    { apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' },
+    { apelido: 'Dep', logradouro: 'Rua B', numero: '2', cidade: 'SP', estado: 'SP' },
+  ];
+  render({
+    enderecos,
+    onChange: async () => {
+      throw new Error('SAVE_REJECTED');
+    },
+  });
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.endereco.excluir');
+  assert.equal(del?.disabled, false);
+  await del.onClick();
+  assert.equal(state.changes.length, 0, 'rejeição não registra mudança de sucesso');
+  assert.ok(state.errors.some((e) => /SAVE_REJECTED|Falha ao excluir/i.test(e)));
+});
+
+test('UI contatos Form: reject de onChange também comunica toast (não engole)', async () => {
+  const source = await readFile(new URL('../src/components/cadastros/GerenciarContatosClienteForm.jsx', import.meta.url), 'utf8');
+  assert.match(source, /toast\.error\(error\?\.message/);
+  assert.match(source, /await Promise\.resolve\(onChange/);
+
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarContatosClienteForm.jsx', {
+    canEditCliente: true,
+  });
+  const contatos = [
+    { nome: 'A', tipo: 'Telefone', valor: '11', principal: true },
+    { nome: 'B', tipo: 'E-mail', valor: 'b@x.com', principal: false },
+  ];
+  render({
+    contatos,
+    onChange: async () => {
+      throw new Error('CONTATO_SAVE_REJECTED');
+    },
+  });
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.contato.excluir');
+  await del.onClick();
+  assert.equal(state.changes.length, 0);
+  assert.ok(state.errors.some((e) => /CONTATO_SAVE_REJECTED|Falha ao excluir/i.test(e)));
+});
+
 test('salvar contato principal: botão gated + algoritmo real limpa duplicidade', async () => {
   const source = await readFile(new URL('../src/components/cadastros/GerenciarContatosClienteForm.jsx', import.meta.url), 'utf8');
   assert.match(source, /data-action="Cadastros\.Cliente\.contato\.salvar"/);

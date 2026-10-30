@@ -19,3 +19,9 @@ Incoming #431: 3769dc779 (código 75e97d5c6)
 ## Não feito nesta prep
 - commit/push em #432 (aguarda CI SUCCESS do tip #431)
 - merge oficial #401 / deploy
+
+## Merge publicado (2026-10-30 America/Sao_Paulo)
+- #431 tip CI SUCCESS 6/6: `2b523fdf8`
+- Keep-both Forms + remainder stage48 consolidado (#431 draft peels supersede #432-only persistBusy peels)
+- Checks locais: cadastro-query-payload-boundaries + count-erro-vazio + contatos-enderecos-rbac → pass 43/43
+- Sem merge oficial #401

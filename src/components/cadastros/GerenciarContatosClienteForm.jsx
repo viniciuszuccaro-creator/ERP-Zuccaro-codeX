@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,10 +13,9 @@ import usePermissions from "@/components/lib/usePermissions";
  * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
  * Lacuna vs erp-integra-novo: botões de mutação sem RBAC fail-closed.
- *
- * commitMode:
- * - "backend" (default): onChange é a gravação efetiva (adaptador comercial / painel).
- * - "draft": onChange só altera rascunho do CadastroCompleto; backend via saveMutation do pai.
+ * Trava síncrona (ref) além de setSalvando: duplo clique antes do re-render
+ * não dispara onChange duas vezes (mesmo contrato Endereços / Codex #432).
+ * commitMode "draft" = rascunho CadastroCompleto; "backend" = gravação do adaptador.
  */
 export default function GerenciarContatosClienteForm({
   contatos = [],
@@ -44,7 +43,20 @@ export default function GerenciarContatosClienteForm({
   const [dialogAberto, setDialogAberto] = useState(false);
   const [contatoEditando, setContatoEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
-  const bloqueado = Boolean(persistBusy || salvando);
+  /** Sync lock — setState só re-renderiza depois; ref bloqueia o 2º clique no mesmo tick. */
+  const persistInFlightRef = useRef(false);
+  const bloqueado = Boolean(persistBusy || salvando || persistInFlightRef.current);
+
+  const beginPersist = () => {
+    if (persistInFlightRef.current) return false;
+    persistInFlightRef.current = true;
+    setSalvando(true);
+    return true;
+  };
+  const endPersist = () => {
+    persistInFlightRef.current = false;
+    setSalvando(false);
+  };
 
   const [novoContato, setNovoContato] = useState({
     nome: "",
@@ -72,7 +84,7 @@ export default function GerenciarContatosClienteForm({
       toast.error("Sem permissão para editar contatos do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
     }
@@ -89,7 +101,7 @@ export default function GerenciarContatosClienteForm({
       toast.error("Sem permissão para editar contatos do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
     }
@@ -118,7 +130,10 @@ export default function GerenciarContatosClienteForm({
       });
     }
 
-    setSalvando(true);
+    if (!beginPersist()) {
+      toast.error(busyLabel);
+      return;
+    }
     try {
       // draft: só rascunho do pai; backend: onChange é a gravação canônica do adaptador.
       await Promise.resolve(onChange(contatosAtualizados));
@@ -128,7 +143,7 @@ export default function GerenciarContatosClienteForm({
       // Mantém diálogo/rascunho; comunica falha (não engolir — AGENTS § persistência).
       toast.error(error?.message || failSaveLabel);
     } finally {
-      setSalvando(false);
+      endPersist();
     }
   };
 
@@ -137,7 +152,7 @@ export default function GerenciarContatosClienteForm({
       toast.error("Sem permissão para editar contatos do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
     }
@@ -155,7 +170,7 @@ export default function GerenciarContatosClienteForm({
       toast.error("Sem permissão para editar contatos do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
     }
@@ -164,13 +179,16 @@ export default function GerenciarContatosClienteForm({
       return;
     }
     const contatosAtualizados = contatos.filter((_, i) => i !== index);
-    setSalvando(true);
+    if (!beginPersist()) {
+      toast.error(busyLabel);
+      return;
+    }
     try {
       await Promise.resolve(onChange(contatosAtualizados));
     } catch (error) {
       toast.error(error?.message || failDeleteLabel);
     } finally {
-      setSalvando(false);
+      endPersist();
     }
   };
 
