@@ -65,4 +65,8 @@ Arquivos: `historicoComprasClientePolicy.js`, `HistoricoComprasCliente.jsx`,
 `HistoricoProdutosCliente.jsx` (`assertHistoricoHttpScope`).
 Testes: `historico-origem-compras-http-failclosed` **19 PASS** (antes 14).
 #401 candidata `34c4c0ee` CI5482 — **fora**; não integrar cadeia enquanto defeito aberto.
-Próximo: CI deste tip + port policy compartilhada na #442 (sem duplicar).
+
+## CI SUCCESS tip 529c56741 (2026-10-30 America/Sao_Paulo)
+- Runs: push `41095944334` · PR `41095952821` — SUCCESS 6/6.
+- Port #442 já em `d4eeb5ea7` (rebase policy compartilhada).
+- CI verde ≠ encerramento: aguarda `@codex review` montado (KG/UN, qty, preço, empresa A→B).

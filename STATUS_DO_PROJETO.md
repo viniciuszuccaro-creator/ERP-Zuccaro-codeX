@@ -1,18 +1,17 @@
-## CURSOR — VIGENTE (#441 Pacote B unidades/preço/empresa) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#441 Pacote B tip 529c56741 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/recuperacao-historico-origem-compras-http-392b` ← #437 |
-| **Fix** | KG≠UN · qty por unidade · último preço por data · empresa A→B invalida · Adicionar sem inventar UN |
-| **Policy** | `resolveUnidadeItemHistorico` · chave `produto::unidade` · `resolveDataPedidoHistorico` |
-| **Scope** | `assertHistoricoHttpScope` + `EMPRESA_SESSION_MISMATCH` / `expectedEmpresaId` |
-| **Testes** | historico-origem-compras-http-failclosed **19 PASS** (antes 14) |
-| **#401** | tip `34c4c0ee` CI5482 SUCCESS — **fora**; não integrar enquanto defeito #441 aberto |
-| **#442** | port policy compartilhada após CI deste tip — sem duplicar |
+| **Tip** | `529c56741` — CI SUCCESS 6/6 (`41095944334` push · `41095952821` PR) |
+| **Fix** | KG≠UN · qty por unidade · preço por data · EMPRESA_SESSION_MISMATCH · Adicionar sem UN |
+| **Testes** | historico-origem-compras-http-failclosed **19 PASS** |
+| **Codex** | `@codex review` pedido — CI verde ≠ encerrar achados montados |
+| **#442** | tip `d4eeb5ea7` rebase policy — CI em curso |
+| **#401** | `34c4c0ee` CI5482 — **fora**; não integrar enquanto defeito reproduzível |
 | Fora | merge main · deploy · seed · inventar canal/custo/estoque/total |
 
 **Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
-**Próximo:** push + CI + `@codex review`; port #442; Pacote A contraprovas #401.
+**Próximo:** contraprova Codex montada; manter #442 alinhado; #401 intacta.
 
 ## CURSOR — VIGENTE (#441 provas session/perm/queryKey/item.total) (2026-10-30 America/Sao_Paulo)
 
