@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#437 FECHADO tip 5a33ac0c9) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#437** tip **`5a33ac0c9`** — CI SUCCESS 6/6 (push `41059503966` + PR `41059515157`) |
+| **Codex** | tip `5a33ac0c9` sem achados major; P2 taxa HTTP ENCERRADO em `7fa57c3ab` |
+| **Sobre** | não atribuir FAIL `7eeeec481`/`4cb34387d`/`7fa57c3ab` (typecheck ancestral) |
+| **Keep both** | HistoricoClienteTab ≠ HistoricoProdutosCliente ≠ DetalhesCliente |
+| **#436** | tip `f84f63ed2` FECHADO |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | próximo indep. recuperação; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-historico-cliente-tab-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#437 HistoricoClienteTab HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -10,7 +24,7 @@
 | **#435** | tip `b51214245` CI SUCCESS 6/6 |
 | **#408** | Funil×Separacao tip `803764887` CI SUCCESS (Pacote 5) |
 | **#401** | tip `686ae322` estável · sem merge oficial |
-| Preferir | CI deste tip; candidata #401 intacta |
+| Preferir | tip `5a33ac0c9` FECHADO — ver bloco abaixo |
 
 **Evidência:** `docs/evidence/recuperacao-historico-cliente-tab-http-20261030.txt`
 

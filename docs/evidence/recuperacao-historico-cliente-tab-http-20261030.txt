@@ -51,3 +51,8 @@ CI + @codex review deste tip; auxiliar HTTP CR/Entrega/NF quando adapter existir
 - Achado: PEDIDO_STATUS sem ENTREGUE; taxa 0% falsa em HTTP.
 - Fix: deliveryRateFromPedidoStatus só legado; HTTP taxa null + hint.
 - Testes: 6 PASS.
+
+## CI SUCCESS tip 5a33ac0c9 (2026-10-30 America/Sao_Paulo)
+- Runs: 41059515157 (pull_request) · 41059503966 (push) — 6/6 SUCCESS.
+- Codex: tip 5a33ac0c9 sem achados major; P2 taxa HTTP tratado em 7fa57c3ab.
+- Não atribuir FAIL ancestral 7eeeec481 / 4cb34387d / 7fa57c3ab (typecheck unknown[]).
