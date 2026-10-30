@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (Pacote C JobAgendado sky) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-job-agendado-sky-392b` ← #443 |
+| **Fix** | JobAgendado windowMode sky + ID técnico (sem data-action novo) |
+| **Testes** | recuperacao-job-agendado-sky **1 PASS** |
+| **#401/#441** | fora |
+| Fora | merge main · deploy · seed · pin cego |
+
+**Evidência:** `docs/evidence/recuperacao-job-agendado-sky-20261030.txt`
+**Próximo:** CI + `@codex`; residual forms sem sky.
+
 ## CURSOR — VIGENTE (#443 ChatbotIntent sky tip 84441e9db CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
