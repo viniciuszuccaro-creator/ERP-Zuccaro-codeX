@@ -42,3 +42,8 @@ Policy compartilhada `historicoComprasClientePolicy` — sem duplicar.
 - Integração/merge da cadeia em #401
 - Harness navegador→API→PostgreSQL privado
 - Graduação ID-only / Produto legado residual
+
+## CI SUCCESS tip f7a122ac1 (2026-10-30 America/Sao_Paulo)
+- Runs: push `41108231744` · PR `41108240889` — SUCCESS 6/6.
+- Fix tip: onAdicionarProduto opcional (TS2741 Detalhes/Painel).
+- CI verde ≠ encerramento: aguarda `@codex` montado (#442/#446).

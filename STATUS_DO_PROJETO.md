@@ -1,11 +1,16 @@
-## CURSOR — FIX (#446 typecheck onAdicionarProduto opcional) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#446 wire tip f7a122ac1 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Fix** | `onAdicionarProduto = undefined` em HistoricoCompras/Sugestoes — leitura Detalhes/Painel |
-| **Causa** | CI frontend FAIL TS2741 prop obrigatória |
-| **Base** | wire `8333e0d80` |
-| Fora | #401 · merge main |
+| **Tip** | `f7a122ac1` — CI SUCCESS 6/6 (`41108231744` push · `41108240889` PR) |
+| **Wire** | HistoricoCompras/Sugestões/Top10 em Pedido/Detalhes/Painel |
+| **Fix** | onAdicionarProduto opcional (TS2741) — leitura sem botão órfão |
+| **Codex** | contraprovas pedidas em #442/#446 — CI verde ≠ aceite montado |
+| **#401** | fora — sem integrar |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** aceite Codex montado; residual Produto legado / Endereços embed.
 
 ## CURSOR — VIGENTE (#442 tip 1570f35ab CI SUCCESS — residual ETAPA A) (2026-10-30 America/Sao_Paulo)
 
