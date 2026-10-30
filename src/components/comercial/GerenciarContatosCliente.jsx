@@ -101,10 +101,24 @@ export default function GerenciarContatosCliente({ clienteId }) {
     retry: false,
   });
 
+  // Promove bind só com row confirmado + sessão atual; ausência/erro invalidam bind anterior
+  // (refetch success/data=null não pode manter Form do load antigo — Codex residual).
   useEffect(() => {
-    if (!isSuccess || !loaded?.row || !loaded?.askedScope) return;
+    if (isError) {
+      setBound(null);
+      return;
+    }
+    if (!isSuccess) return;
+    if (!loaded?.row || !loaded?.askedScope) {
+      setBound(null);
+      return;
+    }
     if (loaded.gen !== editorGenRef.current) return;
     if (!sameScope(loaded.askedScope, liveScopeRef.current)) return;
+    if (String(loaded.row.id) !== String(clienteId)) {
+      setBound(null);
+      return;
+    }
     setBound({
       clienteId,
       scope: loaded.askedScope,
@@ -112,7 +126,7 @@ export default function GerenciarContatosCliente({ clienteId }) {
       rowId: loaded.row.id,
       contatos: Array.isArray(loaded.row.contatos) ? loaded.row.contatos : [],
     });
-  }, [isSuccess, loaded, clienteId]);
+  }, [isSuccess, isError, loaded, clienteId]);
 
   const assertScopeCurrent = useCallback(() => {
     const live = liveScopeRef.current;
@@ -177,6 +191,14 @@ export default function GerenciarContatosCliente({ clienteId }) {
         {error?.message && error.message !== "READ_STALE_SCOPE"
           ? error.message
           : "Falha ao carregar contatos. Reabra o cliente no contexto atual."}
+      </p>
+    );
+  }
+  // Ausência confirmada (success sem row) ≠ Form editável com bind antigo.
+  if (isSuccess && (!loaded || !loaded.row)) {
+    return (
+      <p className="text-sm text-slate-500 p-3" data-contatos-read-empty="true">
+        Cliente não encontrado neste contexto. Reabra o cadastro.
       </p>
     );
   }
