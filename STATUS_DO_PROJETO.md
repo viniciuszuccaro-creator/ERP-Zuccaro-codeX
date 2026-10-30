@@ -1,12 +1,12 @@
-## CURSOR — VIGENTE (#431 Contatos bind + counts safe-int) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#431 actorId + Contatos bind) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
-| **Sobre** | tip código `5b5c2cd69` CI 6/6 + docs `a4c03ed19` |
-| **Fix** | Contatos bind imutável/gen · erro≠Form vazio · counts safe-int≥0 · testes função real |
-| **Codex** | 6520128216 (callback A→B + coerção) tratado |
-| **#401** | tip `686ae322` estável · harness BLOCKED |
+| **Sobre** | tip anterior `bebaad9ec` CI 6/6; residual ator |
+| **Fix** | Contatos: `actorId` em scope/queryKey/bound/assert (sem token); gen invalida A→B ator |
+| **Codex** | achados empresa/counts/late ENCERRADOS; residual ator tratado neste tip |
+| **Base** | #430 Contatos keep-both · não integrar #401 ainda |
 | Preferir | #409 · estabilizar #431+#432 antes de novos pacotes dependentes |
 
 **Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`

@@ -3,13 +3,14 @@ Pacote A / #431 — tip Contatos bind + counts safe-int (2026-10-30 America/Sao_
 Código base CI SUCCESS: 5b5c2cd69 · docs a4c03ed19
 Este tip: Contatos binding imutável + normalize sem coerção + testes função real.
 
-## Achados Codex (6520128216) tratados
+## Achados Codex tratados
 | Achado | Correção |
 |--------|----------|
 | loadedScopeRef promovido na troca → callback A grava em B | `bound` só no load sucesso; `editorGen` invalida; assert compara bound↔live |
 | leitura 403 → Form [] editável | `isError` → `data-contatos-read-error`; sem Form |
 | null/false/''/-1/1.5/overflow → 0 | `isValidCountValue`: typeof number ∧ safe-int ∧ ≥0 |
 | testes só regex localização | import real `buildContextFilter` / reexport assert |
+| ator A→B mesmo grupo/empresa/cliente (parecer bebaad9ec) | `actorId` via `readErpHttpSession` em scopePair/key/queryKey/bound/assert; **sem token** em cache/log |
 
 ## Comportamentos
 - Erro ≠ vazio ≠ parcial
