@@ -24,3 +24,9 @@ Keep both: Intent canônico + adapter Intents (migração legado) — sem 3º m�
 ## Relação
 - #401 `34c4c0ee` CI5482 — fora
 - #441/#442 Pacote B históricos — cadeia separada; não integrar
+
+## CI FAIL tip 32a0f2e27 → fix ec2a5e9a5 (2026-10-30 America/Sao_Paulo)
+- Frontend FAIL: pin `cursor-callback-record-state` ChatbotIntent (e36231b3)
+  — `data-action="chatbot-intent-window"` / `id-tecnico-chatbot-intent` extras.
+- Fix: remover data-action novos; manter sky gradient + texto ID técnico.
+- Sem pin cego / sem alterar golden. RecordState pin + sky PASS locais.
