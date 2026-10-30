@@ -1,14 +1,14 @@
-## CURSOR — VIGENTE (CentroOperacao sky+ID indep.; #401←#434 em CI) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#439 CentroOperacao CANAL remainder; #401←#434 fechado) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Indep.** | CentroOperacaoForm sky windowMode + ID técnico (base #407 `ba431a2af`) |
-| **#401 tip** | `e706b02fa` — incorpora #434 Contatos get+draft; **contagens fora** (#431 `2b523fdf8`) |
-| **#434** | tip `50a010ce2` CI SUCCESS + Codex limpo — NÃO inclui contagens |
-| Fora | 2ª candidata · merge main · deploy · seed · VPS |
+| **#439** | tip `619b26092` + remainder hunks (hash `53ed9f42…`) — sky+ID CentroOperacao |
+| **#401 tip** | `f5ac2a1de` — #434 Contatos get+draft + P1 hydrate; **contagens fora** (#431 `2b523fdf`) |
+| **#434** | tip `50a010ce` CI SUCCESS — NÃO inclui contagens |
+| Fora | 2ª candidata · merge main · deploy · seed · VPS · pin cego |
 
 **Evidência:** `docs/evidence/recuperacao-centro-operacao-sky-20261030.txt` · `docs/evidence/incorporacao-434-into-401-20261030.txt`
-**Próximo:** CI #401 tip + CI deste indep.; Pacote A contagens só em lote próprio.
+**Próximo:** CI #439 pós-remainder; item B+/C indep. separado. Contagens só em #431.
 
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 

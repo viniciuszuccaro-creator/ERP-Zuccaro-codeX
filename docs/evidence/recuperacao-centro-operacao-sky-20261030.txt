@@ -28,3 +28,12 @@ windowMode era prop aceita sem chrome — integração visual incompleta no exis
 ## CI tip 288dc8a69 — frontend FAIL
 Run 41071683111: pin identidade CentroOperacao (golden e36231b3).
 Fix: applyCentroOperacaoSkyChrome documentado em cursor-identidade-consolidacao (padrão Webhook) — não pin cego.
+
+## CI tip 619b26092 — frontend FAIL (CANAL/publication)
+Pin `tests/cursor-identidade-consolidacao.test.js` hash `53ed9f42…` desatualizado após helper sky.
+Correção: 2 hunks exact [after→before] em `clienteConferenciaHunks` (fn applyCentroOperacaoSkyChrome + if CentroOperacao).
+Local: PEEL OK → hash 53ed9f42; publication-channel-counterproof + identidade 15/15 PASS.
+Sem pin cego / sem alterar golden e36231b3.
+
+## Tip atual
+Aguardando commit/push do remainder + CI no tip seguinte.
