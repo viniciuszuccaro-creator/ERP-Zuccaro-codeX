@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| **#401 tip** | (este commit) — base prévia `686ae3224` |
+| **#401 tip** | código `0b9c0ded8` CI SUCCESS 41071229904 · recibo `e706b02fa` |
 | **Fonte** | #434 tip `50a010ce2` CI SUCCESS 6/6 + Codex limpo (sem achados) |
 | **Método** | port file-by-file keep-both (orphan-root #434 — SEM merge-base) |
 | **Contratos** | Cliente.get · bind editor · `result.skipped` · draft≠saveMutation · persistBusy · sync-lock |
