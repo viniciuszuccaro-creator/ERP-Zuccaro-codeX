@@ -1,0 +1,34 @@
+Pacote A / #431 — tip Contatos bind + counts safe-int (2026-10-30 America/Sao_Paulo)
+=======================================================================================
+Código base CI SUCCESS: 5b5c2cd69 · docs a4c03ed19
+Este tip: Contatos binding imutável + normalize sem coerção + testes função real.
+
+## Achados Codex tratados
+| Achado | Correção |
+|--------|----------|
+| loadedScopeRef promovido na troca → callback A grava em B | `bound` só no load sucesso; `editorGen` invalida; assert compara bound↔live |
+| leitura 403 → Form [] editável | `isError` → `data-contatos-read-error`; sem Form |
+| null/false/''/-1/1.5/overflow → 0 | `isValidCountValue`: typeof number ∧ safe-int ∧ ≥0 |
+| testes só regex localização | import real `buildContextFilter` / reexport assert |
+| ator A→B mesmo grupo/empresa/cliente (parecer bebaad9ec) | `actorId` via `readErpHttpSession` em scopePair/key/queryKey/bound/assert; **sem token** em cache/log |
+| success/data=null após load (ausência pós-refetch) | efeito `setBound(null)`; UI `data-contatos-read-empty`; row.id deve bater clienteId |
+
+## Comportamentos
+- Erro ≠ vazio ≠ parcial
+- Cross-empresa/grupo filtros distintos
+- Single Cliente.update; Form canônico; toast em catch do Form
+- #401 686ae322 intacta
+
+## Limite de evidência
+Positivo mock invoke ≠ autorização backend SQL. Bridge HTTP filter≠session headers documentado; não remove tenant filters.
+
+## Delta tip Cliente.get + CadastroCompleto draft≠save (2026-10-30 America/Sao_Paulo)
+| Achado Codex 2451d91c0 | Correção |
+|------------------------|----------|
+| `Cliente.filter({id})`+`[0]` — HTTP não transmite id | `Cliente.get(clienteId)`; 404/not-found → ausência; id diverge → erro; late `READ_STALE_SCOPE` preservado |
+| rascunho vs gravação no Completo | `commitMode="draft"` + `applyContatosDraft`/`applyEnderecosDraft`; só `saveMutation`/`handleSave` persiste |
+
+CI anterior tip docs `2451d91c0` SUCCESS 6/6 — não atribuir a este HEAD até checks do novo tip.
+
+## Fix CI tip 75e97d5c6 (2026-10-30 America/Sao_Paulo)
+stage48 Completo: clienteContactPresenceRemainder peels draft/commitMode hunks (sem pin cego). Hash 4edac364… restaurado.

@@ -1,0 +1,30 @@
+Incorporação Pacote A contagens #431 → candidata #401 (2026-10-30 America/Sao_Paulo)
+=====================================================================================
+Mapa: #440 tip `e976c5ea0` / `prep-contagens-431-into-401-20261030.txt`
+Fonte: #431 tip `2b523fdf8` CI SUCCESS
+Alvo: #401 tip pré-port `50e90d0bc` (#434 Contatos já incorporado)
+
+## Keep #401 (não sobrescrito)
+- GerenciarContatosCliente.jsx / CadastroClienteCompleto.jsx (idênticos ou já canônicos)
+- GerenciarContatosClienteForm.jsx — sync-lock / persistInFlightRef / result.skipped
+- GerenciarEnderecosClienteForm.jsx — sync-lock
+- Cliente.get · draft≠saveMutation · commitMode
+- consolidation81Remainder / cursor-identidade (sem pin cego / sem tip #431 wholesale)
+- cadastro-query-payload-boundaries peels #401
+
+## Port #431 (contagens)
+- cadastroCountFilter.js + cadastrosAllCountsCore.js (ONLY)
+- useEntityCounts / useCadastrosAllCounts / GroupCountBadge
+- Cadastros.jsx banner + countsUnavailable
+- Visualizador: lastGoodData/everLoaded zerados na troca de escopo
+- tests: count-erro-vazio (+ contrato HTTP countEntities), registros-probes,
+  use-entity-counts-filter, master-policy asserts, scopeListCacheRemainder
+- evidence cadastros-count-erro-vazio
+
+## Provas (focado)
+erro≠vazio · parcial rejeitado · contagem válida · late/queryKey sem placeholder ·
+cross grupo/empresa · invoke('countEntities') com filtro canônico · bridge HTTP piloto ·
+Contatos Cliente.get/draft/sync-lock regressão
+
+## Fora
+Merge main · deploy · VPS · seed · 2ª candidata · swap serviço/repo

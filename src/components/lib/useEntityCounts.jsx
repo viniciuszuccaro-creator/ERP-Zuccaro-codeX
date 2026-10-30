@@ -7,58 +7,16 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { buildMultiempresaReadFilter } from "@/components/lib/contextoMultiempresaPolicy";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useMemo, useEffect } from "react";
+import {
+  SIMPLE_CATALOG,
+  buildContextFilter,
+} from "@/components/lib/cadastroCountFilter.js";
 
-// Entidades que NÃO precisam de filtro de empresa/grupo (catálogos globais)
-export const SIMPLE_CATALOG = new Set([
-  'Banco','FormaPagamento','TipoDespesa','MoedaIndice','TipoFrete',
-  'UnidadeMedida','Departamento','Cargo','Turno','GrupoProduto','Marca',
-  'SetorAtividade','LocalEstoque','TabelaFiscal','CentroResultado',
-  'OperadorCaixa','RotaPadrao','ModeloDocumento','KitProduto','CatalogoWeb',
-  'Servico','CondicaoComercial','TabelaPreco','PerfilAcesso',
-  'ConfiguracaoNFe','ConfiguracaoBoletos','ConfiguracaoWhatsApp',
-  'GatewayPagamento','ApiExterna','Webhook','ChatbotIntent','ChatbotCanal',
-  'JobAgendado','EventoNotificacao','SegmentoCliente','RegiaoAtendimento',
-  'ContatoB2B','CentroCusto','PlanoDeContas','PlanoContas',
-  'Veiculo','Motorista','Representante','GrupoEmpresarial','Empresa',
-  'ConfiguracaoDespesaRecorrente',
-]);
+export { SIMPLE_CATALOG, buildContextFilter };
 
-const CAMPO_CTX = {
-  Fornecedor: 'empresa_dona_id',
-  Transportadora: 'empresa_dona_id',
-  Colaborador: 'empresa_alocada_id',
-};
-
-const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
-
-/**
- * buildContextFilter — escopo multiempresa para contagens.
- * Alinhado ao Visualizador (buildMultiempresaReadFilter + shared/CAMPO_CTX)
- * para badge e lista não divergirem (ex.: Cliente grupo consolidado).
- */
-export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  if (!groupId && !empresaId) {
-    if (SIMPLE_CATALOG.has(entityName)) return {};
-    return { id: '__escopo_multiempresa_obrigatorio__' };
-  }
-  const ctxField = CAMPO_CTX[entityName] || 'empresa_id';
-  const tenantMaster = entityName === 'Empresa' || entityName === 'GrupoEmpresarial';
-  return buildMultiempresaReadFilter({
-    groupId,
-    empresaId: tenantMaster ? null : empresaId,
-    ctxField,
-    shared: SHARED.has(entityName),
-    empresaIdsDoGrupo: (!tenantMaster && !empresaId && Array.isArray(empresasDoGrupo))
-      ? empresasDoGrupo.map((e) => e.id).filter(Boolean)
-      : [],
-    rest: {},
-  });
-}
-
-// Fallback: contagem individual via countEntities (single mode)
+// Fallback: contagem individual. Falha propaga — nunca fabricar 0 como “vazio”.
 async function countSingle(entityName, filter) {
   try {
     const res = await base44.functions.invoke('countEntities', {
@@ -66,7 +24,8 @@ async function countSingle(entityName, filter) {
       filter: filter || {},
     });
     const d = res?.data;
-    if (typeof d?.count === 'number') return d.count;
+    const n = d?.count;
+    if (typeof n === 'number' && Number.isSafeInteger(n) && n >= 0) return n;
   } catch (error) {
     console.error('[useEntityCounts] Falha na contagem individual', error, { entityName });
   }
@@ -78,11 +37,12 @@ async function countSingle(entityName, filter) {
       sortDirection: 'asc',
       limit: 2000,
     });
-    return Array.isArray(res?.data) ? res.data.length : 0;
+    if (Array.isArray(res?.data)) return res.data.length;
   } catch (error) {
     console.error('[useEntityCounts] Falha na contagem por listagem', error, { entityName });
+    throw error;
   }
-  return 0;
+  throw new Error('READ_COUNT_UNAVAILABLE');
 }
 
 export function useEntityCounts(entities = []) {
@@ -110,7 +70,7 @@ export function useEntityCounts(entities = []) {
   // contexto do grupo/empresa quando disponível
   const canFetch = normalized.length > 0;
 
-  const { data: counts = {}, isLoading } = useQuery({
+  const { data: counts = {}, isLoading, isError, error } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!normalized.length) return {};
@@ -132,14 +92,29 @@ export function useEntityCounts(entities = []) {
         });
         const d = res?.data;
         if (d?.counts && typeof d.counts === 'object') {
-          // CORREÇÃO: 'fixed' nunca existiu — ReferenceError silencioso zerrava todos os counts
-          return { ...d.counts };
+          // Parcial ≠ total: exige number safe-integer ≥0 por entidade (sem coerção null/false/'').
+          const full = {};
+          let complete = true;
+          for (const entityName of normalized) {
+            if (!Object.prototype.hasOwnProperty.call(d.counts, entityName)) {
+              complete = false;
+              break;
+            }
+            const n = d.counts[entityName];
+            if (typeof n !== 'number' || !Number.isSafeInteger(n) || n < 0) {
+              complete = false;
+              break;
+            }
+            full[entityName] = n;
+          }
+          if (complete) return full;
+          console.warn('[useEntityCounts] Contagem parcial descartada (≠ total)');
         }
       } catch (error) {
         console.warn('[useEntityCounts] Contagem agregada indisponivel', error);
       }
 
-      // Fallback sequencial com delay para evitar 429
+      // Fallback sequencial: falha propaga (erro ≠ vazio); nunca misturar parcial com total
       const result = {};
       for (let i = 0; i < batchPayload.length; i++) {
         const { entityName, filter } = batchPayload[i];
@@ -150,10 +125,12 @@ export function useEntityCounts(entities = []) {
     },
     staleTime: 30_000,     // 30s — contagens frescas após cadastros
     gcTime: 300_000,
-    placeholderData: (prev) => prev,
+    // Sem placeholder cross-tenant (evita badge do tenant anterior após troca)
+    placeholderData: undefined,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     enabled: canFetch,
+    retry: 1,
   });
 
   // Invalidar quando registros mudam
@@ -170,11 +147,18 @@ export function useEntityCounts(entities = []) {
   }, [entitiesKey, queryClient]);
 
   const total = useMemo(
-    () => normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0),
-    [counts, normalized]
+    () => (isError ? null : normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0)),
+    [counts, normalized, isError]
   );
 
-  return { counts: counts || {}, total, isLoading };
+  return {
+    counts: isError ? {} : (counts || {}),
+    total,
+    isLoading,
+    isError,
+    error: error || null,
+    countsUnavailable: Boolean(isError),
+  };
 }
 
 export default useEntityCounts;
