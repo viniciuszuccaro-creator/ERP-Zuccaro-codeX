@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
@@ -7,7 +7,10 @@ import HistoricoComprasCliente from '@/components/comercial/HistoricoComprasClie
 import SugestoesProdutos from '@/components/comercial/SugestoesProdutos';
 import Top10ProdutosCliente from '@/components/comercial/Top10ProdutosCliente';
 import AdicionarItemRevendaModal from '@/components/comercial/AdicionarItemRevendaModal';
-import { seedProdutoFromHistorico } from '@/components/comercial/historicoComprasClientePolicy';
+import {
+  pedidoItensBloqueadosPorStatus,
+  seedProdutoFromHistorico,
+} from '@/components/comercial/historicoComprasClientePolicy';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import useContextoVisual from '@/components/lib/useContextoVisual';
@@ -52,14 +55,19 @@ export default function PedidoTabsContainer({
   const [conformidade, setConformidade] = useState({ ok: false, motivos: [] });
   const [modalRevendaAberto, setModalRevendaAberto] = useState(false);
   const [produtoSeedHistorico, setProdutoSeedHistorico] = useState(null);
+  const confirmandoHistoricoRef = useRef(false);
+
+  // bloquearEdicao = trava de origem (sempre true); itens usam status do pedido.
+  const itensBloqueados = pedidoItensBloqueadosPorStatus(formData);
+  const onAdicionarHistorico = itensBloqueados ? undefined : abrirAdicionarDoHistorico;
 
   const clientePedido =
     (Array.isArray(clientes) ? clientes.find((c) => c?.id === formData?.cliente_id) : null)
     || (formData?.cliente_id ? { id: formData.cliente_id } : null);
 
-  const abrirAdicionarDoHistorico = (produto) => {
-    if (bloquearEdicao) {
-      toast.error('Pedido bloqueado para edição.');
+  function abrirAdicionarDoHistorico(produto) {
+    if (pedidoItensBloqueadosPorStatus(formData)) {
+      toast.error('Pedido bloqueado para edição de itens.');
       return;
     }
     const seed = seedProdutoFromHistorico(produto);
@@ -71,30 +79,44 @@ export default function PedidoTabsContainer({
       (it) => String(it?.produto_id) === String(seed.id),
     );
     if (jaNoRascunho) {
+      // Duplicidade legítima: avisa e reabre modal (não funde linhas automaticamente).
       toast.message('Produto já está no rascunho — confirme quantidade no modal.');
     }
-    // Clique repetido com mesmo seed: reabre o modal (não append direto).
+    // Clique repetido: reabre o mesmo modal (não append direto).
     setProdutoSeedHistorico(seed);
     setModalRevendaAberto(true);
-  };
+  }
 
-  const confirmarItemRevendaDoHistorico = (item) => {
+  function confirmarItemRevendaDoHistorico(item) {
+    if (confirmandoHistoricoRef.current) return;
+    if (pedidoItensBloqueadosPorStatus(formData)) {
+      toast.error('Pedido bloqueado para edição de itens.');
+      return;
+    }
     if (!item?.produto_id) {
       toast.error('Item rejeitado: sem produto_id.');
       return;
     }
-    setFormData((prev) => {
-      const atuais = Array.isArray(prev?.itens_revenda) ? prev.itens_revenda : [];
-      return {
-        ...prev,
-        itens_revenda: [...atuais, item],
-      };
-    });
-    setModalRevendaAberto(false);
-    setProdutoSeedHistorico(null);
-    toast.success(`Produto ${item.descricao || item.produto_id} no rascunho`);
-    setActiveTab('revenda');
-  };
+    confirmandoHistoricoRef.current = true;
+    try {
+      setFormData((prev) => {
+        const atuais = Array.isArray(prev?.itens_revenda) ? prev.itens_revenda : [];
+        return {
+          ...prev,
+          itens_revenda: [...atuais, item],
+        };
+      });
+      setModalRevendaAberto(false);
+      setProdutoSeedHistorico(null);
+      // Sucesso = rascunho em memória aceito (≠ persistência banco).
+      toast.success(`Produto ${item.descricao || item.produto_id} no rascunho`);
+      setActiveTab('revenda');
+    } finally {
+      Promise.resolve().then(() => {
+        confirmandoHistoricoRef.current = false;
+      });
+    }
+  }
 
   const auditTabsPedido = async (acao, detalhes = {}, sucesso = true) => {
     const empresaId = formData?.empresa_id || empresaAtual?.id || null;
@@ -293,20 +315,20 @@ export default function PedidoTabsContainer({
               <div data-action="pedido-historico-compras" data-permission="Comercial.Pedido.visualizar">
                 <HistoricoComprasCliente
                   clienteId={formData.cliente_id}
-                  onAdicionarProduto={bloquearEdicao ? undefined : abrirAdicionarDoHistorico}
+                  onAdicionarProduto={onAdicionarHistorico}
                 />
               </div>
               <div data-action="pedido-sugestoes-historico" data-permission="Comercial.Pedido.visualizar">
                 <SugestoesProdutos
                   clienteId={formData.cliente_id}
                   itensAtuais={formData?.itens_revenda || []}
-                  onAdicionarProduto={bloquearEdicao ? undefined : abrirAdicionarDoHistorico}
+                  onAdicionarProduto={onAdicionarHistorico}
                 />
               </div>
               <div data-action="pedido-top10-produtos" data-permission="Comercial.Pedido.visualizar">
                 <Top10ProdutosCliente
                   clienteId={formData.cliente_id}
-                  onSelecionarProduto={bloquearEdicao ? undefined : abrirAdicionarDoHistorico}
+                  onSelecionarProduto={onAdicionarHistorico}
                 />
               </div>
             </>
@@ -319,7 +341,7 @@ export default function PedidoTabsContainer({
             <HistoricoClienteTab
               formData={formData}
               setFormData={setFormData}
-              onAdicionarItemAoPedido={bloquearEdicao ? undefined : abrirAdicionarDoHistorico}
+              onAdicionarItemAoPedido={onAdicionarHistorico}
             />
           </Suspense>
           {modalRevendaAberto ? (

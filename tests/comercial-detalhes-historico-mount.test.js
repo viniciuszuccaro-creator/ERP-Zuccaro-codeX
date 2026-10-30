@@ -126,6 +126,7 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
     createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
     useState(initial) { return [typeof initial === 'function' ? initial() : initial, () => {}]; },
     useEffect() {},
+    useRef(v) { return { current: v }; },
     lazy: (fn) => { fn(); return function LazyStub() { return { type: 'LazyStub', props: {}, children: [] }; }; },
   };
   const Suspense = ({ children }) => ({ type: 'Suspense', props: {}, children: [].concat(children) });
@@ -161,6 +162,7 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
       },
       '@/components/comercial/historicoComprasClientePolicy': {
         seedProdutoFromHistorico: (p) => (p?.id || p?.produto_id ? { id: p.id || p.produto_id } : null),
+        pedidoItensBloqueadosPorStatus: () => false,
       },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
       sonner: { toast: { success: () => {}, error: () => {}, message: () => {} } },

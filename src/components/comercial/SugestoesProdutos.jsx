@@ -16,6 +16,9 @@ import {
 import { consolidateTopProdutosFromPedidos } from "./historicoComprasClientePolicy";
 
 const PEDIDOS_SUGESTOES_LIMIT = 100;
+/** Evita novo `[]` a cada render quando a query ainda não tem data (Codex P1 loop). */
+const PEDIDOS_VAZIOS = Object.freeze([]);
+const SUGESTOES_VAZIAS = Object.freeze([]);
 
 /**
  * Sugestões por frequência no histórico — keep both com Top10 (IA) e HistoricoCompras.
@@ -109,20 +112,23 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
     retry: false,
   });
 
-  const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
+  const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : PEDIDOS_VAZIOS;
   const dadosPedidosDisponiveis = consultaHabilitada && !pedidosErro && pedidosPage != null;
   const paginaIncompleta = Boolean(pedidosPage?.meta?.hasMore)
     || (Number.isFinite(Number(pedidosPage?.meta?.total))
       && Number(pedidosPage.meta.total) > pedidos.length);
 
   useEffect(() => {
+    const clearSugestoes = () => {
+      setSugestoes((prev) => (prev.length === 0 ? prev : SUGESTOES_VAZIAS));
+    };
     if (!consultaHabilitada || !dadosPedidosDisponiveis || produtos.length === 0) {
-      setSugestoes([]);
+      clearSugestoes();
       return;
     }
 
     if (pedidos.length === 0) {
-      setSugestoes([]);
+      clearSugestoes();
       return;
     }
 

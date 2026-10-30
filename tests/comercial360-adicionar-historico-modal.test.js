@@ -1,7 +1,7 @@
 /**
  * ETAPA A #446 — Adicionar do histórico via modal canônico (não toast-only).
  * Fluxo: seed comprovado → modal → onAddItem → rascunho itens_revenda → qty editável.
- * Frequência histórica ≠ demanda; ausente ≠ UN/zero.
+ * Frequência histórica ≠ demanda; ausente ≠ UN/zero; bloquearEdicao(origem) ≠ lock itens.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -9,11 +9,14 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import ts from 'typescript';
 import vm from 'node:vm';
-import { seedProdutoFromHistorico } from '../src/components/comercial/historicoComprasClientePolicy.js';
+import {
+  pedidoItensBloqueadosPorStatus,
+  seedProdutoFromHistorico,
+} from '../src/components/comercial/historicoComprasClientePolicy.js';
 
 const read = (p) => readFileSync(p, 'utf8');
 
-test('seedProdutoFromHistorico: comprovados só; frequência/qty histórica omitidas; zero ok; ausente omitido', () => {
+test('seedProdutoFromHistorico: comprovados só; frequência/qty histórica omitidas; zero ok; ausente omitido; preco_medio≠unitário', () => {
   assert.equal(seedProdutoFromHistorico(null), null);
   assert.equal(seedProdutoFromHistorico({ descricao: 'x' }), null);
 
@@ -24,13 +27,22 @@ test('seedProdutoFromHistorico: comprovados só; frequência/qty histórica omit
     ultimo_preco: 0,
     frequencia: 99,
     quantidade_total: 500,
+    preco_medio: 7.7,
   });
   assert.equal(kg.id, 'p1');
   assert.equal(kg.unidade_medida, 'KG');
   assert.equal(kg.preco_venda, 0);
   assert.equal(Object.hasOwn(kg, 'frequencia'), false);
   assert.equal(Object.hasOwn(kg, 'quantidade_total'), false);
-  assert.equal(Object.hasOwn(kg, 'quantidade'), false);
+  assert.equal(Object.hasOwn(kg, 'preco_medio'), false);
+
+  const soMedia = seedProdutoFromHistorico({
+    id: 'p3',
+    descricao: 'Só média',
+    preco_medio: 12,
+  });
+  assert.equal(soMedia.id, 'p3');
+  assert.equal(Object.hasOwn(soMedia, 'preco_venda'), false);
 
   const sem = seedProdutoFromHistorico({
     id: 'p2',
@@ -43,15 +55,28 @@ test('seedProdutoFromHistorico: comprovados só; frequência/qty histórica omit
   assert.doesNotMatch(JSON.stringify(sem), /"UN"/);
 });
 
-test('PedidoTabsContainer: Adicionar abre modal canônico (não append direto + toast)', () => {
+test('pedidoItensBloqueadosPorStatus: Faturado/transfer/Cancelado; origem≠itens', () => {
+  assert.equal(pedidoItensBloqueadosPorStatus({}), false);
+  assert.equal(pedidoItensBloqueadosPorStatus({ status: 'Rascunho' }), false);
+  assert.equal(pedidoItensBloqueadosPorStatus({ status: 'Faturado' }), true);
+  assert.equal(pedidoItensBloqueadosPorStatus({ status: 'Cancelado' }), true);
+  assert.equal(pedidoItensBloqueadosPorStatus({ status: 'Pronto para Faturar' }), true);
+  assert.equal(pedidoItensBloqueadosPorStatus({ status: 'Pronto para Faturar', __liberado_gerencia: true }), false);
+  assert.equal(pedidoItensBloqueadosPorStatus({ status: 'Em Expedição' }), true);
+});
+
+test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status (não bloquearEdicao origem)', () => {
   const src = read('src/components/comercial/pedido/PedidoTabsContainer.jsx');
   assert.match(src, /AdicionarItemRevendaModal/);
   assert.match(src, /produtoInicial=\{produtoSeedHistorico\}/);
   assert.match(src, /abrirAdicionarDoHistorico/);
   assert.match(src, /confirmarItemRevendaDoHistorico/);
   assert.match(src, /seedProdutoFromHistorico/);
+  assert.match(src, /pedidoItensBloqueadosPorStatus/);
+  assert.match(src, /onAdicionarHistorico/);
+  assert.match(src, /confirmandoHistoricoRef/);
   assert.doesNotMatch(src, /buildItemRevendaFromHistorico/);
-  assert.match(src, /bloquearEdicao \? undefined/);
+  assert.doesNotMatch(src, /onAdicionarProduto=\{bloquearEdicao \? undefined/);
 });
 
 test('Modal: produtoInicial pré-seleciona qty=1; unidade só se comprovada no item', () => {
@@ -62,7 +87,23 @@ test('Modal: produtoInicial pré-seleciona qty=1; unidade só se comprovada no i
   assert.match(src, /ausente ≠ inventar UN/);
 });
 
-test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty do modal', async () => {
+test('Top10 e HistoricoClienteTab: leitura sem callback — botão ausente/disabled', () => {
+  const top10 = read('src/components/comercial/Top10ProdutosCliente.jsx');
+  const histTab = read('src/components/comercial/HistoricoClienteTab.jsx');
+  assert.match(top10, /podeAcionarSelecao/);
+  assert.match(top10, /typeof onSelecionarProduto === "function"/);
+  assert.match(top10, /disabled=\{!sug\.produto \|\| !podeAcionarSelecao\}/);
+  assert.match(histTab, /typeof onAdicionarItemAoPedido === "function"/);
+});
+
+test('SugestoesProdutos: array vazio estável (anti-loop)', () => {
+  const src = read('src/components/comercial/SugestoesProdutos.jsx');
+  assert.match(src, /PEDIDOS_VAZIOS/);
+  assert.match(src, /Object\.freeze\(\[\]\)/);
+  assert.match(src, /prev\.length === 0 \? prev/);
+});
+
+test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem callback; duplo clique sem append', async () => {
   const source = await readFile(new URL('../src/components/comercial/pedido/PedidoTabsContainer.jsx', import.meta.url), 'utf8');
   const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
@@ -70,6 +111,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
 
   let formData = {
     cliente_id: 'cli-1',
+    status: 'Rascunho',
     itens_revenda: [
       { produto_id: 'existente', descricao: 'Já no rascunho', quantidade: 7, unidade_medida: 'PC' },
     ],
@@ -91,10 +133,10 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
       return [states[i], (n) => { states[i] = typeof n === 'function' ? n(states[i]) : n; }];
     },
     useEffect() {},
+    useRef(v) { return { current: v }; },
     lazy: () => function LazyStub() { return { type: 'Lazy', props: {}, children: [] }; },
   };
 
-  // Nome da função = type.name no createElement stub (findType usa name).
   function HistoricoComprasCliente(props) {
     return { type: 'HistoricoComprasCliente', props, children: [] };
   }
@@ -105,6 +147,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
   const sandbox = {
     exports: {},
     module: { exports: {} },
+    Promise,
     require(id) {
       if (!sandbox.__modules[id]) throw new Error(`Import inesperado: ${id}`);
       return sandbox.__modules[id];
@@ -121,6 +164,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
       '@/components/comercial/AdicionarItemRevendaModal': { __esModule: true, default: AdicionarItemRevendaModal },
       '@/components/comercial/historicoComprasClientePolicy': {
         seedProdutoFromHistorico,
+        pedidoItensBloqueadosPorStatus,
       },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
       sonner: {
@@ -170,7 +214,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
       formData,
       setFormData,
       clientes: [{ id: 'cli-1', nome: 'Cliente' }],
-      bloquearEdicao: false,
+      bloquearEdicao: true, // origem sempre true — NÃO deve remover Adicionar
       validacoes: {},
       errors: {},
       pedido: null,
@@ -180,22 +224,24 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
   let tree = render();
   let compras = findType(tree, 'HistoricoComprasCliente');
   assert.ok(compras.length >= 1, 'HistoricoCompras montado');
-  assert.equal(typeof compras[0].props.onAdicionarProduto, 'function');
+  assert.equal(typeof compras[0].props.onAdicionarProduto, 'function', 'origem bloqueada ≠ sem Adicionar');
 
   // Rejeição sem id
   compras[0].props.onAdicionarProduto({ descricao: 'sem-id', frequencia: 9 });
   assert.ok(toasts.some((t) => t[0] === 'err'));
 
-  // Adicionar KG → abre modal sem mutar ainda
+  // Duplo clique Adicionar → só abre/reabre modal; sem mutar rascunho
   const beforeLen = formData.itens_revenda.length;
-  compras[0].props.onAdicionarProduto({
+  const payload = {
     produto_id: 'novo-kg',
     descricao: 'CimentoKG',
     unidade: 'KG',
     ultimo_preco: 12.5,
     frequencia: 40,
     quantidade_total: 999,
-  });
+  };
+  compras[0].props.onAdicionarProduto(payload);
+  compras[0].props.onAdicionarProduto(payload);
   assert.equal(formData.itens_revenda.length, beforeLen);
 
   tree = render();
@@ -207,7 +253,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
   assert.equal(modals[0].props.produtoInicial?.preco_venda, 12.5);
   assert.equal(Object.hasOwn(modals[0].props.produtoInicial || {}, 'frequencia'), false);
 
-  // Confirmar qty=3 → preserva existente
+  // Confirmar qty=3 → preserva existente (rascunho ≠ banco)
   modals[0].props.onAddItem({
     produto_id: 'novo-kg',
     descricao: 'CimentoKG',
@@ -224,7 +270,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
   assert.equal(formData.itens_revenda[1].unidade_medida, 'KG');
   assert.equal(activeTab, 'revenda');
 
-  // Duplicidade
+  // Duplicidade legítima: avisa, reabre modal, não funde
   toasts.length = 0;
   tree = render();
   findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
@@ -234,11 +280,8 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens e aplica qty d
   });
   assert.ok(toasts.some((t) => t[0] === 'msg'));
 
-  // bloquearEdicao
-  slot = 0;
-  tree = PedidoTabsContainer({
-    activeTab: 'historico', setActiveTab, formData, setFormData,
-    clientes: [{ id: 'cli-1' }], bloquearEdicao: true, validacoes: {}, errors: {}, pedido: null,
-  });
+  // Faturado → callback ausente
+  formData = { ...formData, status: 'Faturado' };
+  tree = render();
   assert.equal(findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto, undefined);
 });

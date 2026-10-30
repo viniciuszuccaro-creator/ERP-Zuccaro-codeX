@@ -1,3 +1,21 @@
+## CURSOR — VIGENTE (#446 residual lock/Top10/Sugestões — pós Codex b161) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | lock itens por **status** (`pedidoItensBloqueadosPorStatus`) — `bloquearEdicao`=origem≠itens |
+| **Top10** | `podeAcionarSelecao` — sem callback → disabled (leitura) |
+| **HistoricoClienteTab** | Adicionar só com callback função |
+| **Sugestões** | `PEDIDOS_VAZIOS` estável + setState no-op (anti-loop P1) |
+| **Duplo clique** | Adicionar reabre modal sem append; confirm ref anti-reentrada |
+| **Seed** | `preco_medio` omitido; zero comprovado ok |
+| **Testes** | adicionar-historico-modal + wire + mount — **13 PASS** |
+| **Codex** | pedir review tip novo — não atribuir negativos b161 sem contraprova |
+| **#401** | `34c4c0ee` — **fora**; port só após aceite |
+| Fora | merge main · deploy · seed · fundir linhas · inventar UN/preço |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** CI + `@codex` montado; mapa port #401 sem merge.
+
 ## CURSOR — VIGENTE (#446 tip af95c4cca CI SUCCESS — modal canônico) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

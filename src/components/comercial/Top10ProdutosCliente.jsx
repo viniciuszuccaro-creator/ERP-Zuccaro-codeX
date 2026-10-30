@@ -68,6 +68,9 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
     hasPermission("Comercial.Pedido.editar") ||
     hasPermission("comercial", "criar_pedido") ||
     hasPermission("comercial", "editar_pedido");
+  // Leitura (Detalhes/Painel): sem callback → botão indisponível; com callback válido mantém capacidade.
+  const podeAcionarSelecao =
+    typeof onSelecionarProduto === "function" && podeSelecionarProduto;
   const podeUsarIA = contextoValido && podeVisualizarHistorico && podeSelecionarProduto;
   const consultaHabilitada = Boolean(
     clienteId
@@ -412,8 +415,8 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
       <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
         {sugestoesExibir.slice(0, 10).map((sug, idx) => (
           <button key={sug.produto?.id || "sug-" + idx} type="button" onClick={() => {
-            if (podeSelecionarProduto && onSelecionarProduto && typeof onSelecionarProduto === "function" && sug.produto) onSelecionarProduto(sug.produto);
-          }} className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed" disabled={!sug.produto || !podeSelecionarProduto} data-permission="Comercial.Pedido.criar" data-action="selecionar-sugestao-produto-cliente">
+            if (podeAcionarSelecao && sug.produto) onSelecionarProduto(sug.produto);
+          }} className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed" disabled={!sug.produto || !podeAcionarSelecao} data-permission="Comercial.Pedido.criar" data-action="selecionar-sugestao-produto-cliente">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="font-medium text-sm">{sug.produto?.descricao || "Produto desconhecido"}</p>

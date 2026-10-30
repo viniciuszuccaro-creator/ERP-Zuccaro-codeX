@@ -1,0 +1,26 @@
+Mapa port controlado #446 → #401 (preparação — SEM merge) (2026-10-30 America/Sao_Paulo)
+======================================================================================
+Candidata #401 tip estável: `34c4c0ee` (sem #446).
+Fonte #446: tip residual (pós af95c4cca) após CI + Codex tip novo.
+
+## Incluir (cherry / port seletivo)
+- `historicoComprasClientePolicy`: seedProdutoFromHistorico + pedidoItensBloqueadosPorStatus
+- `PedidoTabsContainer`: modal AdicionarItemRevenda + onAdicionarHistorico por status
+- `AdicionarItemRevendaModal`: produtoInicial + unidadeComprovada
+- `HistoricoComprasCliente` / `SugestoesProdutos`: onAdicionarProduto opcional + PEDIDOS_VAZIOS
+- `Top10ProdutosCliente`: podeAcionarSelecao
+- `HistoricoClienteTab`: Adicionar só com callback
+- Wire Detalhes/Painel leitura (sem callback)
+- Testes: comercial360-adicionar-historico-modal + wire + mount
+
+## Preservar na candidata (NÃO substituir)
+- Serviços/repositórios/API HTTP existentes da #401
+- Contratos Contatos/cadastros/contagens já em #401
+- Base `codex/consolidacao-infra-20261017`
+
+## Fora até aceite
+- Merge automático · rebase destrutivo · trocar API antiga
+- Harness PG privado · deploy
+
+## Critério de port
+CI tip #446 SUCCESS + Codex montado limpo nos negativos status/Top10/duplo-clique.

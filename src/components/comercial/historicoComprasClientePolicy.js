@@ -156,8 +156,22 @@ export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
 }
 
 /**
+ * Lock de itens do pedido por status (≠ bloquearEdicao de origem do useOrigemPedido).
+ * Alinha a isLockedFooter do PedidoFormCompleto: Faturado/Cancelado/transfer sem liberação.
+ */
+export function pedidoItensBloqueadosPorStatus(formData) {
+  const st = formData?.status;
+  if (!st) return false;
+  if (st === "Faturado" || st === "Cancelado") return true;
+  const transfer = ["Pronto para Faturar", "Em Expedição", "Em Trânsito"];
+  if (transfer.includes(st) && !formData?.__liberado_gerencia) return true;
+  return false;
+}
+
+/**
  * Seed do modal canônico AdicionarItemRevenda a partir do histórico/sugestão.
  * Só campos comprovados; frequência/qty histórica ≠ demanda; ausente ≠ inventar UN/zero.
+ * preco_medio (média agregada) ≠ preço unitário comprovado — omitir.
  * @returns {object|null}
  */
 export function seedProdutoFromHistorico(produto) {

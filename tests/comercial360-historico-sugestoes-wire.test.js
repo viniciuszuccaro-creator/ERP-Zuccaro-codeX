@@ -41,16 +41,20 @@ test('DetalhesCliente e Painel montam HistoricoCompras (leitura; sem Adicionar �
   assert.doesNotMatch(painel, /onAdicionarProduto=/);
 });
 
-test('Adicionar só aparece com callback; Sugestões não se apresentam como IA', () => {
+test('Adicionar só aparece com callback; Sugestões não se apresentam como IA; Top10 leitura', () => {
   const compras = read('src/components/comercial/HistoricoComprasCliente.jsx');
   const sug = read('src/components/comercial/SugestoesProdutos.jsx');
+  const top10 = read('src/components/comercial/Top10ProdutosCliente.jsx');
   assert.match(compras, /typeof onAdicionarProduto === "function"/);
   assert.match(sug, /typeof onAdicionarProduto === "function"/);
   assert.match(sug, /Sugestões pelo histórico/);
   assert.match(sug, /Frequência comprovada/);
+  assert.match(sug, /PEDIDOS_VAZIOS/);
   assert.doesNotMatch(sug, /Sugestões Inteligentes/);
   assert.doesNotMatch(sug, /score_confianca/);
   assert.doesNotMatch(sug, /probabilidade/);
+  assert.match(top10, /podeAcionarSelecao/);
+  assert.match(top10, /typeof onSelecionarProduto === "function"/);
 });
 
 test('WizardEtapa2Itens usa onAddItem do modal (não onAdd órfão)', () => {

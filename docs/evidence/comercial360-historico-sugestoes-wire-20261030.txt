@@ -70,3 +70,19 @@ Não feito: harness navegador→API→PG; integração #401; aceite Codex montad
 - Runs: push `41110477273` · PR `41110487857` — SUCCESS 6/6.
 - Modal canônico + seed policy + leitura fail-closed.
 - CI verde ≠ encerramento: aguarda `@codex` montado; #401 fora.
+
+## Tip residual pós Codex b161 / achados af95c4cca (2026-10-30 America/Sao_Paulo)
+Não atribuir negativos do append direto (b161) ao tip modal sem contraprova.
+
+Correções no tip novo:
+1. `bloquearEdicao` (origem, sempre true) NÃO remove Adicionar — lock por
+   `pedidoItensBloqueadosPorStatus` (Faturado/Cancelado/transfer sem liberação).
+2. Top10: `podeAcionarSelecao` exige callback função (leitura Detalhes/Painel).
+3. HistoricoClienteTab: Adicionar só se callback função.
+4. SugestoesProdutos: `PEDIDOS_VAZIOS` + setState no-op (Codex P1 loop []).
+5. Duplo Adicionar: reabre modal sem append; confirm ref anti-reentrada;
+   duplicidade legítima avisa e NÃO funde linhas.
+6. Seed: não usa `preco_medio` (média≠unitário); zero comprovado ok.
+7. Toast success = rascunho em memória (≠ persistência PostgreSQL).
+
+Testes: 13 PASS. #401 `34c4c0ee` intacta — port controlado só após Codex tip novo.
