@@ -1,0 +1,36 @@
+Recuperação indep. — ChatbotIntent sky windowMode + ID técnico (2026-10-30 America/Sao_Paulo)
+=============================================================================================
+Base: #439 tip `cce8c0b4c` (CentroOperacao sky CI SUCCESS)
+Branch: cursor/recuperacao-chatbot-intent-sky-392b
+Fora: candidata #401 · cadeia #441/#442 · merge main · deploy · seed
+
+## Classificação (matriz erp-integra)
+Melhoria útil da experiência azul-clara no form existente.
+Integração incompleta: adapter `ChatbotIntentsForm` forçava `windowMode={false}`
+mesmo quando o shell pedia janela — chrome sky do Intent canônico nunca aparecia
+pela rota legado. Não é perda de registro; Auth/RBAC/auditoria preservados.
+
+## Mudança (somente existente)
+| Arquivo | Decisão |
+|---------|---------|
+| ChatbotIntentForm.jsx | windowMode: header `from-sky-50 to-sky-100` + ID técnico mono |
+| ChatbotIntentsForm.jsx | propaga `windowMode` (padrão #418; não força false) |
+
+Keep both: Intent canônico + adapter Intents (migração legado) — sem 3º módulo.
+
+## Testes
+`tests/recuperacao-chatbot-intent-sky.test.js` — 2 PASS
+
+## Relação
+- #401 `34c4c0ee` CI5482 — fora
+- #441/#442 Pacote B históricos — cadeia separada; não integrar
+
+## CI FAIL tip 32a0f2e27 → fix ec2a5e9a5 (2026-10-30 America/Sao_Paulo)
+- Frontend FAIL: pin `cursor-callback-record-state` ChatbotIntent (e36231b3)
+  — `data-action="chatbot-intent-window"` / `id-tecnico-chatbot-intent` extras.
+- Fix: remover data-action novos; manter sky gradient + texto ID técnico.
+- Sem pin cego / sem alterar golden. RecordState pin + sky PASS locais.
+
+## CI SUCCESS tip 84441e9db (2026-10-30 America/Sao_Paulo)
+- Runs: push `41098316291` · PR `41098326148` — SUCCESS 6/6.
+- CI verde ≠ encerramento: aguarda `@codex review` montado.
