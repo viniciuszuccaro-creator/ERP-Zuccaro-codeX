@@ -1,3 +1,41 @@
+## CURSOR — VIGENTE (#431 Cliente.get + Completo draft≠save) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
+| **Sobre** | tip docs `2451d91c0` CI SUCCESS 6/6 — **não atribuir** a este HEAD |
+| **Fix** | Contatos `Cliente.get` canônico; Completo `commitMode=draft` ≠ `saveMutation` |
+| **Codex** | residual HTTP filter→get; ator/ausência/counts ENCERRADOS |
+| **#432** | herdar via merge após CI deste tip |
+| Preferir | CI tip → merge #432 → prep #401 sem merge oficial |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
+## CURSOR — VIGENTE (#431 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#431** tip **`884012ed5`** / código `2277c5a33` — CI SUCCESS 6/6 |
+| **Provas** | actorId · ausência pós-refetch · counts safe-int · erro≠Form |
+| **#432** | tip `7941f984a` CI SUCCESS (cadeia) · docs `1cb967a83` |
+| **#401** | tip `686ae322` estável · harness BLOCKED |
+| Preferir | #409 · revisão; P2 só arquivos independentes |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
+## CURSOR — VIGENTE (#431 actorId + ausência pós-refetch) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
+| **Sobre** | tip `789dae57f` actorId; residual ausência |
+| **Fix** | actorId + bind só com row confirmado; success/null e isError → `setBound(null)` + empty UI |
+| **Codex** | empresa/counts/late ENCERRADOS; ator + ausência pós-refetch neste tip |
+| **Base** | #430 Contatos keep-both · não integrar #401 ainda |
+| Preferir | #409 · estabilizar #431+#432 antes de novos pacotes dependentes |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
 ## CURSOR — VIGENTE (#430 tip 0ccabf750 CI 6/6) (2026-10-29 18:19 America/Sao_Paulo)
 
 | Campo | Valor |

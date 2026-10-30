@@ -16,16 +16,30 @@ import usePermissions from "@/components/lib/usePermissions";
  * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
  * Lacuna vs erp-integra-novo / Regra-Mãe: mutações sem RBAC fail-closed.
+ *
+ * commitMode "draft" = só rascunho do CadastroCompleto; "backend" = onChange grava (adaptador).
+ * persistBusy bloqueia mutações enquanto o pai grava (saveMutation).
  */
-export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange, assertScopeCurrent }) {
+export default function GerenciarEnderecosClienteForm({
+  enderecos = [],
+  onChange,
+  assertScopeCurrent,
+  persistBusy = false,
+  commitMode = "backend",
+}) {
   const { canEdit } = usePermissions();
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const isDraftCommit = commitMode === "draft";
+  const busyLabel = isDraftCommit
+    ? "Aguarde a atualização do rascunho de endereços."
+    : "Aguarde a gravação de endereços em andamento.";
   const assertScope = () => {
     if (typeof assertScopeCurrent !== "function") return;
     assertScopeCurrent();
   };
   const [dialogAberto, setDialogAberto] = useState(false);
   const [enderecoEditando, setEnderecoEditando] = useState(null);
+  const bloqueado = Boolean(persistBusy);
 
   const [novoEndereco, setNovoEndereco] = useState({
     apelido: "",
@@ -77,6 +91,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (bloqueado) {
+      toast.error(busyLabel);
+      return;
+    }
     try { assertScope(); } catch (error) {
       toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
@@ -88,6 +106,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
   const handleSalvarEndereco = () => {
     if (!podeEditar) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (bloqueado) {
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -138,6 +160,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (bloqueado) {
+      toast.error(busyLabel);
+      return;
+    }
     try { assertScope(); } catch (error) {
       toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
@@ -152,10 +178,15 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (bloqueado) {
+      toast.error(busyLabel);
+      return;
+    }
     try { assertScope(); } catch (error) {
       toast.error(error?.message || "Contexto alterado. Reabra o cadastro.");
       return;
     }
+    // draft: rascunho do pai; backend: onChange grava no adaptador.
     const enderecosAtualizados = enderecos.filter((_, i) => i !== index);
     onChange(enderecosAtualizados);
   };
@@ -167,9 +198,10 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
         <Button
           onClick={abrirNovo}
           size="sm"
-          disabled={!podeEditar}
+          disabled={bloqueado || !podeEditar}
           data-permission="Cadastros.Cliente.editar"
           data-action="Cadastros.Cliente.endereco.adicionar"
+          data-commit-mode={commitMode}
         >
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Endereço

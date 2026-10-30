@@ -13,10 +13,30 @@ import usePermissions from "@/components/lib/usePermissions";
  * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior
  * Lacuna vs erp-integra-novo: botões de mutação sem RBAC fail-closed.
+ *
+ * commitMode:
+ * - "backend" (default): onChange é a gravação efetiva (adaptador comercial / painel).
+ * - "draft": onChange só altera rascunho do CadastroCompleto; backend via saveMutation do pai.
  */
-export default function GerenciarContatosClienteForm({ contatos = [], onChange, assertScopeCurrent, persistBusy = false }) {
+export default function GerenciarContatosClienteForm({
+  contatos = [],
+  onChange,
+  assertScopeCurrent,
+  persistBusy = false,
+  commitMode = "backend",
+}) {
   const { canEdit } = usePermissions();
   const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const isDraftCommit = commitMode === "draft";
+  const busyLabel = isDraftCommit
+    ? "Aguarde a atualização do rascunho de contatos."
+    : "Aguarde a gravação de contatos em andamento.";
+  const failSaveLabel = isDraftCommit
+    ? "Falha ao atualizar rascunho de contatos."
+    : "Falha ao salvar contatos.";
+  const failDeleteLabel = isDraftCommit
+    ? "Falha ao atualizar rascunho ao excluir contato."
+    : "Falha ao excluir contato.";
   const assertScope = () => {
     if (typeof assertScopeCurrent !== "function") return;
     assertScopeCurrent();
@@ -53,7 +73,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       return;
     }
     if (bloqueado) {
-      toast.error("Aguarde a gravação de contatos em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -70,7 +90,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       return;
     }
     if (bloqueado) {
-      toast.error("Aguarde a gravação de contatos em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -100,11 +120,13 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
 
     setSalvando(true);
     try {
+      // draft: só rascunho do pai; backend: onChange é a gravação canônica do adaptador.
       await Promise.resolve(onChange(contatosAtualizados));
       setDialogAberto(false);
       resetForm();
-    } catch {
-      // Mantém diálogo/form; pai já notificou e reverteu rascunho (Codex P2 #4410875120).
+    } catch (error) {
+      // Mantém diálogo/rascunho; comunica falha (não engolir — AGENTS § persistência).
+      toast.error(error?.message || failSaveLabel);
     } finally {
       setSalvando(false);
     }
@@ -116,7 +138,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       return;
     }
     if (bloqueado) {
-      toast.error("Aguarde a gravação de contatos em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -134,7 +156,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       return;
     }
     if (bloqueado) {
-      toast.error("Aguarde a gravação de contatos em andamento.");
+      toast.error(busyLabel);
       return;
     }
     try { assertScope(); } catch (error) {
@@ -145,8 +167,8 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
     setSalvando(true);
     try {
       await Promise.resolve(onChange(contatosAtualizados));
-    } catch {
-      // Pai notifica/reverte; lista prop permanece a confirmada.
+    } catch (error) {
+      toast.error(error?.message || failDeleteLabel);
     } finally {
       setSalvando(false);
     }
