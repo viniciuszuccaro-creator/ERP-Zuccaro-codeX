@@ -1,4 +1,36 @@
-## Estado Vigente - Revisao441 Atualizada, Fix442 Pendente (2026-10-30)
+## Estado Vigente - Revisao442 Encerrada No Alcance E Uso Mapeado (2026-10-30)
+
+#40134c4/CI5482 mantida sem reteste. #44153d7e727c65ecebd32c7abb4d5dce31656527306
+CI5517 SUCCESS, runtime6b2 igual. #442dd619ff60997bcbeade3f35b04ef13a74e9f3a58
+CI5518 SUCCESS, base44153d7; policy+loader iguais441 por diff exit0, reutilizadas
+provas de unidades/dataHTTP/preco temporal/trocaEmpresa/sessao, nao testes repetidos.
+Top10/Sugestoes realmente montados ReactDOM/Query/Chrome existentes com bordas
+sinteticas em6casos: conhecido11/KG, ausencia—/campos omitidos, zero comprovado0,
+sem unidadeUN inventada ou score historico apresentado como confiancaIA. Parecer
+6530387026, achados anteriores encerrados nesse alcance, nao E2E/PostgreSQL.
+
+Mapa de uso corrigido/ampliado: lazy HistoricoClienteTab em PedidoFormCompleto/
+PedidoTabsContainer, aba historico; Origem lazy no CadastroCompleto e em Painel/
+Detalhes/Wizard. Top10 em Painel/AdicionarItemRevendaModal; Detalhes via Visualizador
+openWindow. Portal possui HistoricoCompras proprio, preservar capacidades distintas.
+Compras comercial/Sugestoes existentes e montados isoladamente, sem referencias
+de uso encontradas na busca src: NAO prova ausencia global/dinamica. Rotas registradas
+Comercial/Cadastros/Portal nao sao comprovacao de acesso real autenticado.
+
+Novo achado de percurso4016530401052: callback REAL de PedidoTabsContainer extraido
+AST/VM executa toastsucesso/trocaaba sem mudar rascunho (draftWrites0/success1);
+callback40134c4 integralmente igual ao executado emdd619 por comparacao AST.
+HistoricoClienteTab apenas delega. Nao e Pedido montado/PG. Cursor deve conectar
+handler/modal canonico e confirmar alteracao antes do sucesso; nao duplicar modulo
+ou proprietario da persistencia. Port441/442 por hunks aprovados, sem substituir
+API/repos/servicos401, outra candidata ou confundir aprovacao tecnica com operacao.
+
+Harness E2E/coorte100 final e pins permanecem gates privados separados; sem novo
+canal, nao repetir busca/transferencia/recorte. Consulta fixa nao executada sem fonte
+e canal comprovados; destino nao presumido vazio. Cadeia/schema/privilegios/backup/
+reconciliacao/carga aprovada/deploy/aceite seguem gates especificos, sem acao VPS.
+
+## Historico - Revisao441 Atualizada, Fix442 Pendente (2026-10-30)
 
 #40134c4c0ee/CI5482 e recibo6528606297 mantidos sem reteste. #441d18/CI5498
 retestada no alcance afetado: KG no texto/callback, KG/PC separados, created_at e

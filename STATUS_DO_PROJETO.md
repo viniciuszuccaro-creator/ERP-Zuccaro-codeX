@@ -1,4 +1,47 @@
-## Estado Vigente - Historicos Corrigidos Por SHA, Residuos442 (2026-10-30)
+## Estado Vigente - Historicos Revisados E Percurso De Uso (2026-10-30)
+
+#40134c4c0ee/CI5482 e aceite montado6528606297 preservados, sem reteste.
+#44153d7e727c65ecebd32c7abb4d5dce31656527306 CI5517 SUCCESS; src/server
+identicos6b2e7e42 ja testado. #442dd619ff60997bcbeade3f35b04ef13a74e9f3a58
+CI5518 SUCCESS, base44153d7. Policy+loader identicos441 por diff exit0: reuse
+provas de datasHTTP/temporais, separacaoKG/PC e negativas Empresa/sessao, sem repetir.
+Seis cenarios afetados em Top10/Sugestoes REAIS montados ReactDOM/ReactQuery/Chrome,
+bordas sinteticas, IA externa proibida: preco conhecido11/KG preservados; desconhecido
+exibe—/omite preco; zero comprovado exibe/envia0; unidade desconhecida nao viraUN;
+ranking historico nao exibe mais score% de confianca. Parecer6530387026. Achados
+anteriores ENCERRADOS nesse alcance; nao e aceite E2E/banco ou todos consumidores.
+Top10 nao envia quantidade de demanda; Sugestoes manda agregado historico2 separado.
+
+Mapa ampliado (inclui lazy imports/JSX, nao so import estatico):
+| Capacidade | Consumidor no codigo | Alcance comprovado |
+|---|---|---|
+| DetalhesCliente | Visualizador -> openWindow | Fonte; acesso real nao homologado |
+| HistoricoClienteTab | PedidoFormCompleto/PedidoTabsContainer lazy, aba historico | Fonte; callback Adicionar executado por AST/VM |
+| HistoricoOrigem | Completo lazy, Painel, Detalhes, WizardEtapa1 | Fonte; nao equivale a montagem atual de todos pais |
+| HistoricoCompras comercial | Componente existente, referencias de uso nao encontradas na busca em src | Montagem isolada anterior; ausencia global NAO provada |
+| Top10 | Painel e AdicionarItemRevendaModal | Montagem isolada atual; consumidor real mantem quantidade propria |
+| SugestoesProdutos | Existente, referencias de uso nao encontradas na busca em src | Montagem isolada atual; ausencia global NAO provada |
+Portal usa HistoricoCompras de portal (distinto). RotasComercial/Cadastros/Portal
+registradas em pages.config; isso NAO prova login/tenant/permissao/rota acessivel.
+Corrige a limitacao historica do mapa que nao capturou lazyTab/OrigemCompleto.
+
+Novo achado DE USO emdd619, nao regressao de441/442: PedidoTabsContainer callback
+onAdicionarItemAoPedido so toast.success e muda aba; corpo REAL extraido/executado
+AST/VM produziu draftWrites0/success1. Callback40134c4 integralmente igual ao
+executado emdd619, comprovado por AST. HistoricoClienteTab so delega, nao persiste.
+Parecer4016530401052: Cursor reutilizar fluxo/handler/modal canonico, sem sucesso
+antes de alterar rascunho, preservando dono da persistencia/contexto/RBAC. Nao e
+Pedido montado/PG. Nao bloquear por defeito antigo inventado nem declarar fluxo pronto.
+Preparar port CONTROLADO dos hunks aprovados, mantendo401API/repos/servicos e
+capacidades436/437/portal; escritor Cursor, revisao Codex, sem outra candidata.
+
+Harness E2E original e coorte100 final/pins seguem bloqueios privados DISTINTOS,
+sem mudanca de acesso: nenhuma busca identica, nova selecao ou transferencia.
+Consulta fixa preparada, nao executada sem bytes/canal. Gates vigentes: pacotes ->
+composicao -> E2E -> cadeia -> schema/minpriv -> backup/restore -> reconciliacao ->
+carga aprovada -> deploy -> aceite. Sem DDL/grants/carga/deploy ou alteracao VPS.
+
+## Historico - Historicos Corrigidos Por SHA, Residuos442 (2026-10-30)
 
 #40134c4c0ee/CI5482 e provas montadas6528606297 preservadas, sem repetir ensaios.
 #441d18dae95/CI5498: contraprovas novas REALMENTE montadas ReactDOM/ReactQuery/
