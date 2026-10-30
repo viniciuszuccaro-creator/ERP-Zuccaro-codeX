@@ -1,0 +1,23 @@
+Recuperação indep. — Gestores Formas/Gateways/Despesas sky (2026-10-30 America/Sao_Paulo)
+==========================================================================================
+Base: #447 tip Produto/Endereços sky (CI SUCCESS)
+Branch: cursor/recuperacao-gestores-pagamentos-sky-392b
+Fora: #401 · #446 · merge main · deploy · seed · declarar registros recuperados
+
+## Classificação (matriz)
+Melhoria útil azul-clara + organização no existente:
+- GestorFormasPagamento: windowMode sem header sky; alerta blue residual
+- GestorGatewaysPagamento / GestorDespesasRecorrentes: windowMode sem chrome
+
+## Mudança
+1. Header sky windowMode com título/subtítulo informativo (organização, não só cor)
+2. Alert/KPIs alinhados sky; abas/RBAC/listas intactos
+3. data-action gestor-formas-nova no botão existente
+
+## Não feito
+- ProdutoForm legado (keep-both intocado)
+- Recuperação de registros / seed
+- Integração #401/#446
+
+## Testes
+tests/recuperacao-gestores-pagamentos-sky.test.js — PASS
