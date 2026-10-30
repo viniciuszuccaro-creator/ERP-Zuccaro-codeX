@@ -251,6 +251,7 @@ test('product form no longer invents the next code from a frontend list', async 
   const client = await readFile(new URL('../src/api/localBase44Client.js', import.meta.url), 'utf8');
   const viewer = await readFile(new URL('../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', import.meta.url), 'utf8');
   const counts = await readFile(new URL('../src/components/lib/useEntityCounts.jsx', import.meta.url), 'utf8');
+  const countFilter = await readFile(new URL('../src/components/lib/cadastroCountFilter.js', import.meta.url), 'utf8');
   assert.doesNotMatch(form, /ultimoCodigo \+ 1/);
   assert.doesNotMatch(form, /produtos-codes-sample/);
   assert.match(form, /Gerado ao salvar/);
@@ -261,10 +262,12 @@ test('product form no longer invents the next code from a frontend list', async 
   assert.match(viewer, /buildMultiempresaReadFilter/);
   assert.doesNotMatch(viewer, /return orConds\.length \? \{ \$or: orConds \} : \{\}/);
   assert.match(viewer, /contextoValido = !!\(empresaId \|\| groupId\)/);
-  // Contagens alinhadas ao Visualizador (buildMultiempresaReadFilter); SIMPLE_CATALOG só fail-open sem contexto
-  assert.match(counts, /buildMultiempresaReadFilter/);
-  assert.match(counts, /Alinhado ao Visualizador/);
-  assert.match(counts, /SIMPLE_CATALOG\.has\(entityName\)/);
+  // Contagens: filtro canônico (cadastroCountFilter) — useEntityCounts só consome; SIMPLE_CATALOG fail-open sem contexto
+  assert.match(counts, /cadastroCountFilter\.js/);
+  assert.match(counts, /buildContextFilter/);
+  assert.match(countFilter, /buildMultiempresaReadFilter/);
+  assert.match(countFilter, /alinhado ao Visualizador/i);
+  assert.match(countFilter, /SIMPLE_CATALOG\.has\(entityName\)/);
 });
 
 test('legacy reference fields are exposed with RBAC and searchable by backend', async () => {
