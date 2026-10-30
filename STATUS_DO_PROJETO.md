@@ -1,4 +1,44 @@
-## Estado Vigente - Correcao Das Contagens Revisada Por SHA (2026-10-30)
+## Estado Vigente - Revisao Montada401 E Historicos441 (2026-10-30)
+
+Codex executou componentes REAIS com ReactDOM createRoot, React Query e Chrome
+headless existentes no desktop; Git somente leitura, scripts privados fora do
+checkout, contexto/servicos/UI de borda sinteticos. Nao SSR/AST, nem E2E/PG.
+Sem instalar dependencias, acessar VPS, criar candidata ou editar branch Cursor.
+
+#401 a994838705af5d549fe7bfc1bf0fadc583560eee, CI5459 SUCCESS: novos achados
+montados6527629911: save atorA pendente, atorB mesmo tenant/cliente + novo rascunho,
+retornoA aplica old-draft e skipped:false; painelScopeKey nao inclui ator/sessao.
+Token novo no mesmo ator reutiliza count7; API nova sintetica contaria99. Loading
+tem total0 e Visualizador mostra rodape `0 total` sem total comprovado. Positivos:
+ator novo recebe99, resposta antiga de outraEmpresa nao substitui31, vazio valido0,
+parcial/invalido terminam total:null/unavailable:true, permissao nega Visualizador.
+Nao reabrir page.length/ator-key/tenant-switch antigos: sao casos distintos.
+HEAD posterior3a80e0ffea8d67d14d7074303b7b7c9fe2fac816 CI5462 SUCCESS so muda
+testes/docs; src/server exatosa994 (diff exit0). Achados permanecem. Runner novo
+de job AST/VM nao e React montado. Parecer6527716759; codigo reservado ao Cursor.
+
+#441 836b7e333449967f38275c717567989f8de5a5ed CI5460/5461 SUCCESS, separada.
+Montagem real Compras: item KG sai UN no callback Adicionar; policy soma2KG+3PC=5
+sem unidade e ultimo_preco termina com valor antigo10 apos recente20. Loader real
+-> fachada HTTP real/fetch sintetico envia clienteId, rejeita4negativas
+(sessao/grupo/ator/token), mas aceita troca apenasEmpresa durante resposta pendente.
+Positivos montados: erro nao vira vazio, sessao ausente e permissao negada bloqueiam;
+pagina incompleta mostra parcial/sem total. Custo/estoque artificiais removidos.
+Pareceres6527642874/6527676305. HEAD d46cf79dc69b1c68adf859da3046cf171eab5d54
+somente testes/docs, runtime exato836b; CI5463/5464 em execucao na consulta.
+Parecer6527717129. Base1cde82af/#437, merge-base401 ba431a2a: preservar servicos/
+repos/API atuais, portar apenas hunks revisados; nao incorporar antes de corrigir.
+
+Harness E2E e coorte100 final/pins seguem bloqueios privados DISTINTOS, sem
+mudanca de acesso; nao repetir buscas/transferencia nem substituir por gerador.
+Consulta fixa existente exige bytes/pins/canal antes de READ ONLY/ROLLBACK real.
+Nenhuma reconciliacao real, recuperacao de registros, carga ou homologacao declarada.
+Proxima acao: Cursor corrigir runtime401/441 + montagem antes/depois; Codex revisar
+delta/SHA. Gates: aceite componentes -> E2E existente -> cadeia -> schema/minpriv
+-> backup/restore -> reconciliacao -> carga aprovada -> deploy -> aceite. Originais
+intactos, recursos locais de teste encerrados; nenhuma operacao em segundo plano.
+
+## Historico - Correcao Das Contagens Revisada Por SHA (2026-10-30)
 
 Cursor publicou #401 62cf794697348beb6089b27c9cf789d318c2fd6b sobre eab13aa5.
 Contraprova repetida no hook real -> bridge real -> fachada HTTP real, fetch

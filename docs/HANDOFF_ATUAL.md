@@ -1,4 +1,36 @@
-## Estado Vigente - Revisao Incremental Das Contagens Corrigidas (2026-10-30)
+## Estado Vigente - Provas Montadas E Bloqueadores Atuais (2026-10-30)
+
+#401 a9948387 CI5459 SUCCESS testada com ReactDOM/ReactQuery/Chrome REAIS montados,
+mock somente contexto/servico/UI de borda. Sem instalar, trocar checkout ou E2E.
+Contraprova6527629911: saveA apos atorB mesmo tenant/cliente sobrescreve novo draft,
+skipped:false; falta ator/sessao no binding. Count cache reutiliza7 apos token novo
+mesmo ator; loading unknown tem total0 e rodape Visualizador `0 total`. Corrigir
+codigo real, nao somente bindings de teste. Negativas parcial/invalido passam;
+vazio0 legitimo, ator novo99, resposta antiga de Empresa nao substitui31, permissao
+nega Visualizador. Nao reabrir achados antigos encerrados.
+HEAD4013a80e0ffea8d67d14d7074303b7b7c9fe2fac816 CI5462 SUCCESS somente testes/docs,
+runtime exatoa994; parecer6527716759. Job AST/VM novo nao equivale a montagem.
+
+#441836b7e33 CI5460/5461 SUCCESS: componente Compras REAL montado transforma KG
+em UN no callback; policy soma KG+PC e preco antigo vence como ultimo_preco. Loader
+REAL + fachadaHTTP REAL/fetch sintetico envia clienteId/rejeita4negativas, porem
+aceita resposta apos troca somenteEmpresa. Sem alegar vazamento banco ou E2E.
+Erro/sessao ausente/permissao e pagina incompleta tratados corretamente na montagem.
+Pareceres6527642874/6527676305. HEAD441d46cf79dc69b1c68adf859da3046cf171eab5d54
+somente testes/docs, runtime836b identico; CI5463/5464 em execucao na consulta.
+Parecer6527717129. Base437/1cde82af, merge-base401ba431a2a; manter441 separada
+ate correcao/revisao, nao sobrescrever API/servicos/repos da candidata.
+
+Scripts/reproducoes sinteticas privados fora do checkout, sem dados reais/segredos;
+Node24.15, Chrome existente, zero processos Chrome do teste ao fechamento.
+Harness privado E2E e arquivo FINAL da coorte100/pins continuam dependencias
+distintas sem mudanca de acesso: nenhuma busca repetida, selecao substituta ou carga.
+Consulta fixa/READ ONLY/ROLLBACK permanece preparada, NAO executada sem fonte/canal.
+Proximo passo concreto: correcoes runtime pelo Cursor, contraprovas montadas
+antes/depois e CI do SHA corrigido; Codex revisa, nao escreve composicao concorrente.
+Gates operacionais e cadeia preservados; sem DDL/grants/merge/deploy/carga.
+
+## Historico - Revisao Incremental Das Contagens Corrigidas (2026-10-30)
 
 #401 atual 62cf794697348beb6089b27c9cf789d318c2fd6b, Cursor unico escritor.
 Parecer6526312519: contraprova real queryFn/bridge/fachada HTTP com fetch sintetico
