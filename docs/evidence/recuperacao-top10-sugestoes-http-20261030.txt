@@ -27,3 +27,9 @@ Keep both: HistoricoComprasCliente · HistoricoOrigemCliente · portal — sem 3
 
 ## Relação #401 / #441
 Independente da candidata. Empilha em #441 (policy compartilhada). Sem merge oficial.
+
+## Residual ETAPA A (2026-10-30 America/Sao_Paulo)
+- Rebase #441 `9dfb956e4` (preço zero + created_at policy).
+- Top10: created_at no payload IA; fallback sem score_confianca heurístico; catálogo preserva unidade/preço.
+- Sugestões: consolidate limit null → ordena frequência → slice 3; preço ausente → —.
+- Testes: 10+21 PASS. CI verde ≠ aceite montado.

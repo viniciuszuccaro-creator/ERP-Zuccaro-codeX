@@ -60,6 +60,12 @@ test('contrato: Top10/Sugestoes usam HTTP canônico e não engolem erro como vaz
   // Pacote B: Top10 não inventa UN quando policy devolve null.
   assert.doesNotMatch(top10, /unidade:\s*row\.unidade\s*\|\|\s*["']UN["']/);
   assert.match(top10, /unidade:\s*row\.unidade\s*\|\|\s*null/);
+  // created_at HTTP no payload IA; heurística local ≠ score_confianca.
+  assert.match(top10, /created_at/);
+  assert.match(top10, /fonte_sugestao:\s*["']historico["']/);
+  assert.doesNotMatch(top10, /score_confianca:\s*Math\.min\(100,\s*t\.frequencia/);
+  // Sugestões: sem corte valor→50 antes da frequência.
+  assert.match(sug, /limit:\s*null/);
 });
 
 test('policy: Top10 consolida itens HTTP + unidade/ultima_compra; item.total líquido', () => {
@@ -460,6 +466,36 @@ test('Top10 HTTP Pacote B: KG comprovado; ausência de unidade ≠ inventar UN n
   assert.match(txt, /2 KG/);
   assert.match(txt, /1 —/);
   assert.doesNotMatch(txt, /1 UN|UN anteriormente/);
+  // Fallback histórico: sem barra de % heurística (≠ confiança IA).
+  assert.equal(findByAction(tree, 'top10-score-ia').length, 0);
+});
+
+test('policy compartilhada: created_at + preço zero; Sugestões limit null não corta por valor', () => {
+  const jan = {
+    created_at: '2026-01-10T00:00:00Z',
+    itens: [{ produto_id: 'p', descricao: 'P', quantidade: 1, preco_unitario: 10, total: 10, unidade_sigla: 'KG' }],
+  };
+  const marZero = {
+    created_at: '2026-03-10T00:00:00Z',
+    itens: [{ produto_id: 'p', descricao: 'P', quantidade: 1, preco_unitario: '0.000000', total: 0, unidade_sigla: 'KG' }],
+  };
+  const top = consolidateTopProdutosFromPedidos([jan, marZero], { limit: 10 });
+  assert.equal(top[0].ultimo_preco, 0);
+  // limit null: todos os produtos participam (frequência depois).
+  const muitos = Array.from({ length: 60 }, (_, i) => ({
+    created_at: `2026-01-${String((i % 28) + 1).padStart(2, '0')}T00:00:00Z`,
+    itens: [{
+      produto_id: `prod-${i}`,
+      descricao: `P${i}`,
+      quantidade: i === 55 ? 20 : 1,
+      preco_unitario: i === 55 ? 1 : 100,
+      total: i === 55 ? 20 : 100,
+      unidade_sigla: 'UN',
+    }],
+  }));
+  const all = consolidateTopProdutosFromPedidos(muitos, { limit: null });
+  assert.ok(all.length >= 60);
+  assert.ok(all.some((r) => r.produto_id === 'prod-55'));
 });
 
 test('Sugestoes HTTP: erro → banner (não return null silencioso)', async () => {

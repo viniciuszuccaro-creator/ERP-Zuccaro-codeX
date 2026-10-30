@@ -126,7 +126,8 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
       return;
     }
 
-    const consolidados = consolidateTopProdutosFromPedidos(pedidos, { limit: 50 });
+    // Sem limite intermediário por valor — corta só após ordenar por frequência (Codex P2).
+    const consolidados = consolidateTopProdutosFromPedidos(pedidos, { limit: null });
     const idsAtuais = (Array.isArray(itensAtuais) ? itensAtuais : [])
       .map((i) => i?.produto_id)
       .filter(Boolean);
@@ -137,12 +138,22 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
       .slice(0, 3)
       .map((pc) => {
         const produtoCompleto = produtos.find((p) => p.id === pc.produto_id);
-        return {
+        const merged = {
           ...pc,
           ...produtoCompleto,
           frequencia: pc.frequencia,
           descricao: produtoCompleto?.descricao || pc.descricao,
         };
+        // Catálogo manda em unidade/preço atuais; ausência ≠ inventar 0 / misturar UN.
+        const precoCat = produtoCompleto?.preco_venda;
+        const precoCatOk = precoCat != null && precoCat !== "" && Number.isFinite(Number(precoCat));
+        if (precoCatOk) {
+          merged.preco_venda = Number(precoCat);
+        } else {
+          delete merged.preco_venda;
+          delete merged.ultimo_preco;
+        }
+        return merged;
       })
       .filter((s) => s.id && s.status === "Ativo");
 
@@ -239,8 +250,10 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
                       <TrendingUp className="w-3 h-3 mr-1" />
                       Comprado {produto.frequencia}x
                     </Badge>
-                    <span className="text-xs text-slate-600">
-                      R$ {(produto.preco_venda || 0).toFixed(2)}
+                    <span className="text-xs text-slate-600" data-action="sugestoes-preco-exibir">
+                      {produto.preco_venda == null
+                        ? "—"
+                        : `R$ ${Number(produto.preco_venda).toFixed(2)}`}
                     </span>
                   </div>
                 </div>

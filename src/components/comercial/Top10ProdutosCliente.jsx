@@ -200,7 +200,8 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
         }
         const valorPedido = Number(p?.total ?? p?.valor_total);
         return {
-          data: p.data_pedido || p.created_date || null,
+          // HTTP canônico: created_at; legado: data_pedido / created_date (Codex P2).
+          data: p.data_pedido || p.created_date || p.created_at || null,
           valor: Number.isFinite(valorPedido) ? valorPedido : 0,
           group_id: p.group_id || groupId || null,
           empresa_id: p.empresa_id || empresaId || null,
@@ -305,18 +306,22 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
             id: t.produto_id,
             codigo: t.codigo,
             descricao: t.descricao,
-            preco_venda: t.ultimo_preco,
           };
-      // Unidade comprovada apenas — ausência ≠ inventar UN no payload do Adicionar.
-      if (t.unidade) {
-        fullProduct.unidade_medida = t.unidade;
-        fullProduct.unidade_sigla = t.unidade;
+      // Sem catálogo: só preço/unidade históricos comprovados.
+      // Com catálogo: NÃO sobrescrever unidade/preço (evita KG histórico + preço PC).
+      if (!catalog) {
+        if (t.ultimo_preco != null) fullProduct.preco_venda = t.ultimo_preco;
+        if (t.unidade) {
+          fullProduct.unidade_medida = t.unidade;
+          fullProduct.unidade_sigla = t.unidade;
+        }
       }
       const unidadeLabel = t.unidade || "—";
       return {
         produto: fullProduct,
         motivo_sugestao: "Comprado " + t.quantidade_total + " " + unidadeLabel + " anteriormente",
-        score_confianca: Math.min(100, t.frequencia * 20 + (t.valor_total / 100)),
+        // Heurística local de frequência ≠ score_confianca de IA — omitir no fallback.
+        fonte_sugestao: "historico",
       };
     });
 
@@ -413,17 +418,21 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
               <div className="flex-1">
                 <p className="font-medium text-sm">{sug.produto?.descricao || "Produto desconhecido"}</p>
                 <p className="text-xs text-slate-600 mt-1">{sug.motivo_sugestao || "Sugestao comercial"}</p>
-                {sug.score_confianca !== undefined && (
-                  <div className="flex items-center gap-2 mt-2">
+                {sug.fonte_sugestao !== "historico" && sug.score_confianca !== undefined && (
+                  <div className="flex items-center gap-2 mt-2" data-action="top10-score-ia">
                     <div className="flex-1 bg-slate-200 rounded-full h-1.5">
-                      <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: Math.max(0, Math.min(100, sug.score_confianca)) + "%" }} />
+                      <div className="bg-sky-600 h-1.5 rounded-full transition-all" style={{ width: Math.max(0, Math.min(100, sug.score_confianca)) + "%" }} />
                     </div>
                     <span className="text-xs text-slate-500">{Math.round(sug.score_confianca)}%</span>
                   </div>
                 )}
               </div>
               <div className="text-right ml-4">
-                <p className="font-bold text-green-600">R$ {(sug.produto?.preco_venda || 0).toFixed(2)}</p>
+                <p className="font-bold text-green-600" data-action="top10-preco-exibir">
+                  {sug.produto?.preco_venda == null
+                    ? "—"
+                    : `R$ ${Number(sug.produto.preco_venda).toFixed(2)}`}
+                </p>
                 <Badge variant="outline" className="text-xs mt-1">{sug.produto?.codigo || "N/A"}</Badge>
               </div>
             </div>
