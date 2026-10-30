@@ -529,7 +529,7 @@ function createRealPersistJobRunner(painelSource) {
     module.exports = async function runPersistJob(bindings) {
       const {
         clienteLive, clienteProp, groupId, empresaId, lista, scalarContract,
-        previousDraft, painelScopeKeyRef, contatosHydrateEpochRef,
+        previousDraft, painelScopeKeyRef, contatosScopeGenerationRef, contatosHydrateEpochRef,
         setContatosDraft, setClienteLive, setContatosSaving, updateInContext, toast,
       } = bindings;
       return await (${jobSrc})();
@@ -543,12 +543,16 @@ function createRealPersistJobRunner(painelSource) {
     async run({
       scopeAtStart = '["g1","e1","empresa","cli-1"]',
       scopeAfterAwait = scopeAtStart,
+      /** Se true, simula A→B→A: chave final = início, mas geração avançou. */
+      generationBumpDuringAwait = 0,
+      generationAtStart = 0,
       lista = [{ nome: 'novo', canal: 'email' }],
       previousDraft = [{ nome: 'prev' }],
       updated = { id: 'cli-1', contatos: [{ nome: 'novo', canal: 'email' }] },
       updateError = null,
     } = {}) {
       const painelScopeKeyRef = { current: scopeAtStart };
+      const contatosScopeGenerationRef = { current: generationAtStart };
       const contatosHydrateEpochRef = { current: 7 };
       let contatosDraft = previousDraft.map((r) => ({ ...r }));
       let clienteLive = { id: 'cli-1', nome: 'Live' };
@@ -563,6 +567,7 @@ function createRealPersistJobRunner(painelSource) {
         scalarContract: false,
         previousDraft,
         painelScopeKeyRef,
+        contatosScopeGenerationRef,
         contatosHydrateEpochRef,
         setContatosDraft: (v) => {
           contatosDraft = typeof v === 'function' ? v(contatosDraft) : v;
@@ -574,6 +579,7 @@ function createRealPersistJobRunner(painelSource) {
         updateInContext: async () => {
           // Troca de contexto DURANTE a gravação (antes do retorno).
           painelScopeKeyRef.current = scopeAfterAwait;
+          contatosScopeGenerationRef.current += Number(generationBumpDuringAwait) || 0;
           if (updateError) throw updateError;
           return updated;
         },
@@ -587,6 +593,7 @@ function createRealPersistJobRunner(painelSource) {
         draft: contatosDraft,
         live: clienteLive,
         epoch: contatosHydrateEpochRef.current,
+        generation: contatosScopeGenerationRef.current,
         saving: contatosSaving,
         toasts,
         scopeNow: painelScopeKeyRef.current,
@@ -625,6 +632,29 @@ test('P2 #4425429376 comportamental: save antigo com contexto trocado NÃO bump 
   assert.equal(ok.result?.skipped, false);
   assert.equal(ok.epoch, 8);
   assert.equal(ok.draft[0].nome, 'salvo');
+});
+
+test('P2 3a80e0ffe: A→B→A (chave final = início) descarta save por geração', async () => {
+  const painel = read(painelPath);
+  assert.match(painel, /contatosScopeGenerationRef/);
+  assert.match(painel, /generationAtStart/);
+  const runner = createRealPersistJobRunner(painel);
+  const rascunho = [{ nome: 'draft-apos-volta-A' }];
+  const scopeA = '["g1","e-A","empresa","cli-1","actor-A","sess-A"]';
+  const out = await runner.run({
+    scopeAtStart: scopeA,
+    scopeAfterAwait: scopeA, // chave final idêntica (voltou para A)
+    generationAtStart: 1,
+    generationBumpDuringAwait: 2, // passou por B e voltou → geração avançou
+    previousDraft: rascunho,
+    lista: [{ nome: 'save-antigo-A' }],
+    updated: { id: 'cli-1', contatos: [{ nome: 'save-antigo-A' }] },
+  });
+  assert.equal(out.result?.skipped, true);
+  assert.equal(out.result?.reason, 'CONTEXT_CHANGED');
+  assert.equal(out.epoch, 7, 'epoch do GET atual preservado — save antigo não bumpa');
+  assert.deepEqual(out.draft, rascunho);
+  assert.notEqual(out.draft[0]?.nome, 'save-antigo-A');
 });
 
 test('P1 a9948387 comportamental: save atorA → atorB (mesmo tenant/cliente) CONTEXT_CHANGED', async () => {

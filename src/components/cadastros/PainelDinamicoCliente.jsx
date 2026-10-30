@@ -215,6 +215,16 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const contatosPersistQueueRef = useRef(null);
   /** Escopo vivo — conclusão de save antiga não aplica rascunho/epoch no contexto/ator novo (Codex #4425429376 / P1 a9948387). */
   const painelScopeKeyRef = useRef(painelScopeKey);
+  /**
+   * Geração de escopo: A→B→A incrementa mesmo quando a chave final volta.
+   * Save antigo não pode bump epoch só porque scopeAtStart === key atual (Codex P2 3a80e0ffe).
+   */
+  const contatosScopeGenerationRef = useRef(0);
+  const painelScopeKeySeenRef = useRef(painelScopeKey);
+  if (painelScopeKeySeenRef.current !== painelScopeKey) {
+    painelScopeKeySeenRef.current = painelScopeKey;
+    contatosScopeGenerationRef.current += 1;
+  }
   painelScopeKeyRef.current = painelScopeKey;
   /** Trava contrato escalar na abertura — não promover rascunho a contatos[] após save (Codex #4413059634). */
   const scalarContractLockedRef = useRef(usesContatosScalarHttpContract(clienteProp));
@@ -310,13 +320,17 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         throw err;
       }
       const scopeAtStart = painelScopeKeyRef.current;
+      const generationAtStart = contatosScopeGenerationRef.current;
       setContatosSaving(true);
       try {
         // P1 #4410761980: não carimbar empresa_id no mestre — só group_id de escopo.
         const updated = await updateInContext("Cliente", live.id, { contatos: lista }, "group_id");
-        // Contexto/empresa/cliente trocou durante a gravação: não bump epoch nem reaplicar rascunho
-        // no painel novo (senão invalida o GET do novo escopo — Codex #4425429376).
-        if (scopeAtStart !== painelScopeKeyRef.current) {
+        // Contexto/ator/sessão trocou (ou A→B→A com geração nova): não bump epoch nem reaplicar
+        // rascunho — senão invalida o GET atual (Codex #4425429376 / P2 3a80e0ffe).
+        if (
+          scopeAtStart !== painelScopeKeyRef.current
+          || generationAtStart !== contatosScopeGenerationRef.current
+        ) {
           toast.error("Contexto alterado durante a gravação de contatos. Reabra o painel no contexto atual.");
           return { skipped: true, reason: "CONTEXT_CHANGED" };
         }
@@ -341,8 +355,11 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         toast.success("Contatos atualizados.");
         return { skipped: false, lista: nextDraft };
       } catch (error) {
-        // P2 #4410875120: reverter rascunho só se o escopo ainda for o da gravação.
-        if (scopeAtStart === painelScopeKeyRef.current) {
+        // P2 #4410875120: reverter rascunho só se o escopo/geração ainda forem os da gravação.
+        if (
+          scopeAtStart === painelScopeKeyRef.current
+          && generationAtStart === contatosScopeGenerationRef.current
+        ) {
           setContatosDraft(previousDraft);
           toast.error(error?.message || "Falha ao salvar contatos.");
         }
