@@ -94,6 +94,11 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
         value={formData.codigo}
         action="codigo-registro-marca"
       />
+      {marcaBoundId ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(marcaBoundId)}</span>
+        </p>
+      ) : null}
       <div>
         <Label>Nome da Marca *</Label>
         <Input

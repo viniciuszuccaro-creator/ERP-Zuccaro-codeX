@@ -101,6 +101,11 @@ export default function DepartamentoForm({ departamento, item, data, initialData
         action="codigo-registro-departamento"
       />
       </div>
+      {departamentoBoundId ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(departamentoBoundId)}</span>
+        </p>
+      ) : null}
 
       <div>
         <Label>Descrição</Label>
@@ -164,7 +169,7 @@ export default function DepartamentoForm({ departamento, item, data, initialData
       <div className="w-full h-full flex flex-col bg-white">
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
           <Building2 className="w-6 h-6 text-sky-600" />
-          <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Departamento' : 'Novo Departamento'}</h2>
+          <h2 className="text-lg font-bold text-slate-900">{departamentoBoundId ? 'Editar Departamento' : 'Novo Departamento'}</h2>
         </div>
         <div className="flex-1 overflow-auto p-6">{formContent}</div>
       </div>

@@ -88,6 +88,11 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
         value={formData.codigo}
         action="codigo-registro-setor-atividade"
       />
+      {setorBoundId ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(setorBoundId)}</span>
+        </p>
+      ) : null}
       <div>
         <Label>Nome do Setor *</Label>
         <Input
@@ -210,7 +215,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
       <div className="w-full h-full flex flex-col bg-white">
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
           <Factory className="w-6 h-6 text-sky-600" />
-          <h2 className="text-lg font-bold text-slate-900">{setor ? 'Editar Setor de Atividade' : 'Novo Setor de Atividade'}</h2>
+          <h2 className="text-lg font-bold text-slate-900">{setorBoundId ? 'Editar Setor de Atividade' : 'Novo Setor de Atividade'}</h2>
         </div>
         <div className="flex-1 overflow-auto p-6">{formContent}</div>
       </div>

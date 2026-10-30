@@ -1,3 +1,31 @@
+## CURSOR — VIGENTE (#451 tip d74debd88 CI5589 SUCCESS — org ID técnico) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `d74debd88` — CI SUCCESS 6/6 (push **5588** · PR **5589**) |
+| **Escopo** | Cargo/Departamento/Marca/SetorAtividade — ID técnico boundId |
+| **Classe** | melhoria UX ≠ recuperação de registros (#450) |
+| **#446** | tip `febb8ed0a` CI5587 — paralelo; **fora desta candidata** |
+| Pins | Fiscal/Empresa/Grupo/Usuario/CentroOperacao/Boletos intocados |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/cadastros-org-id-tecnico-20261030.txt`
+**Próximo:** @codex opcional; próximo indep. cadastros sem ID / registros reais privados.
+
+## CURSOR — VIGENTE (cadastros org ID técnico — indep. de #446) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-org-id-tecnico-392b` ← #450 `579181678` |
+| **Escopo** | Cargo/Departamento/Marca/SetorAtividade — ID técnico via boundId |
+| **Classe** | melhoria UX (sky já presente) — **≠** recuperação de registros |
+| **#446** | tip `febb8ed0a` residual — **fora desta candidata** |
+| **Pins** | Fiscal/Empresa/Grupo/Usuario/CentroOperacao/Boletos intocados |
+| Fora | merge main · deploy · seed · count+1 |
+
+**Evidência:** `docs/evidence/cadastros-org-id-tecnico-20261030.txt`
+**Próximo:** CI tip; #446 Codex/CI em paralelo.
+
 ## CURSOR — VIGENTE (#450 tip 768981c87 CI SUCCESS — visual ≠ registros) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
