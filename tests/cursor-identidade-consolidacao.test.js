@@ -35,6 +35,34 @@ function field(source) {
 }
 const markup = (component, props) => renderToStaticMarkup(React.createElement(component, props));
 
+/** Keep-both residual: ConfiguracaoBoletos sky windowMode + ID técnico (ID-only pin intacto). */
+function applyConfiguracaoBoletosSkyChrome(golden) {
+  let out = golden;
+  const swaps = [
+    [
+      '<DollarSign className="w-5 h-5 text-green-600" />',
+      '<DollarSign className="w-5 h-5 text-sky-600" />',
+    ],
+    [
+      '<Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting || !podeSalvar} data-permission="Sistema.Boletos.salvar" data-action="salvar-configuracao-boletos" data-sensitive>',
+      '<Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !podeSalvar} data-permission="Sistema.Boletos.salvar" data-action="salvar-configuracao-boletos" data-sensitive>',
+    ],
+    [
+      '{isSubmitting ? "Salvando..." : dadosIniciais ? "Atualizar" : "Criar"}',
+      '{isSubmitting ? "Salvando..." : dadosIniciais?.id ? "Atualizar" : "Criar"}',
+    ],
+    [
+      '          <div className="flex items-center gap-3 mb-6 pb-4 border-b">\n            <DollarSign className="w-8 h-8 text-green-600" />\n            <h2 className="text-2xl font-bold text-slate-900">\n              {dadosIniciais ? "Editar Configuracao Boletos & PIX" : "Nova Configuracao Boletos & PIX"}\n            </h2>\n          </div>\n          {form}',
+      '          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">\n            <DollarSign className="w-8 h-8 text-sky-600" />\n            <h2 className="text-2xl font-bold text-slate-900">\n              {dadosIniciais?.id ? "Editar Configuracao Boletos & PIX" : "Nova Configuracao Boletos & PIX"}\n            </h2>\n          </div>\n          {/* ID técnico sem data-action novo — ConfiguracaoBoletos permanece coorte ID-only (CadastroCodigoRegistroField). */}\n          {dadosIniciais?.id ? (\n            <p className="text-xs text-slate-500 mb-4">\n              ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>\n            </p>\n          ) : null}\n          {form}',
+    ],
+  ];
+  for (const [before, after] of swaps) {
+    assert.equal(out.split(before).length, 2, `ConfiguracaoBoletos sky swap missing: ${before.slice(0, 48)}`);
+    out = out.replace(before, after);
+  }
+  return out;
+}
+
 /** Keep-both #439: aplica chrome sky+windowMode ao golden ID-only (handlers/RBAC intactos). */
 function applyCentroOperacaoSkyChrome(golden) {
   let out = golden;
@@ -183,6 +211,10 @@ test('remaining ID-only additions retain every existing handler context permissi
       if (name === 'CentroOperacao') {
         // #439 sky windowMode — deltas documentados (não pin cego). Golden e36231b3 + chrome.
         expected = applyCentroOperacaoSkyChrome(expected);
+      }
+      if (name === 'ConfiguracaoBoletos') {
+        // Keep-both residual: sky windowMode + ID técnico; ID-only pin preservado.
+        expected = applyConfiguracaoBoletosSkyChrome(expected);
       }
       assert.equal(emit(ts.createPrinter().printFile(transformed.transformed[0])), emit(expected), name);
     } finally { transformed.dispose(); }

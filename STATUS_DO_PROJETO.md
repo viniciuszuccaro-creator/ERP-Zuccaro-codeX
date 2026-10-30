@@ -1,8 +1,22 @@
-## CURSOR — VIGENTE (#444 JobAgendado sky tip 109f8d6c8 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#445 Boletos sky tip 4c31434c5 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Tip** | `109f8d6c8` — CI SUCCESS 6/6 (`41102546943` push · `41102576414` PR) |
+| **Tip** | `4c31434c5` — CI SUCCESS 6/6 |
+| **Fix** | ConfiguracaoBoletos sky windowMode + ID técnico; ID-only pin + CANAL PEEL |
+| **Codex** | `@codex review` pedido — CI verde ≠ aceite montado |
+| **#401/#441/#442** | fora |
+| Fora | merge main · deploy · seed · pin cego · graduação reopen |
+
+**Evidência:** `docs/evidence/recuperacao-boletos-sky-id-20261030.txt`
+**Próximo:** contraprova Codex; residual Produto legado / Endereços embed.
+
+
+## CURSOR — VIGENTE (#444 JobAgendado sky tip cfaf9bfaa docs / 109f8d6c8 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | código `109f8d6c8` · docs `cfaf9bfaa` — CI SUCCESS 6/6 (`41102546943` push · `41102576414` PR) |
 | **Fix** | JobAgendado windowMode sky + ID técnico (sem data-action novo) |
 | **Codex** | `@codex review` pedido — CI verde ≠ encerrar achados montados |
 | **#401/#441** | fora |

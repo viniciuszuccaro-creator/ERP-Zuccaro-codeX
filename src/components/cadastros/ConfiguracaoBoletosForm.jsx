@@ -93,7 +93,7 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-green-600" />
+            <DollarSign className="w-5 h-5 text-sky-600" />
             Configuracao Boletos & PIX
           </CardTitle>
         </CardHeader>
@@ -172,9 +172,9 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting || !podeSalvar} data-permission="Sistema.Boletos.salvar" data-action="salvar-configuracao-boletos" data-sensitive>
+        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !podeSalvar} data-permission="Sistema.Boletos.salvar" data-action="salvar-configuracao-boletos" data-sensitive>
           <Save className="w-4 h-4 mr-2" />
-          {isSubmitting ? "Salvando..." : dadosIniciais ? "Atualizar" : "Criar"}
+          {isSubmitting ? "Salvando..." : dadosIniciais?.id ? "Atualizar" : "Criar"}
         </Button>
       </div>
     </form>
@@ -184,12 +184,18 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
-            <DollarSign className="w-8 h-8 text-green-600" />
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <DollarSign className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
-              {dadosIniciais ? "Editar Configuracao Boletos & PIX" : "Nova Configuracao Boletos & PIX"}
+              {dadosIniciais?.id ? "Editar Configuracao Boletos & PIX" : "Nova Configuracao Boletos & PIX"}
             </h2>
           </div>
+          {/* ID técnico sem data-action novo — ConfiguracaoBoletos permanece coorte ID-only (CadastroCodigoRegistroField). */}
+          {dadosIniciais?.id ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+            </p>
+          ) : null}
           {form}
         </div>
       </div>
