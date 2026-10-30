@@ -24,7 +24,8 @@ async function countSingle(entityName, filter) {
       filter: filter || {},
     });
     const d = res?.data;
-    if (typeof d?.count === 'number') return d.count;
+    const n = d?.count;
+    if (typeof n === 'number' && Number.isSafeInteger(n) && n >= 0) return n;
   } catch (error) {
     console.error('[useEntityCounts] Falha na contagem individual', error, { entityName });
   }
@@ -91,7 +92,7 @@ export function useEntityCounts(entities = []) {
         });
         const d = res?.data;
         if (d?.counts && typeof d.counts === 'object') {
-          // Parcial ≠ total: exige chave finita para cada entidade pedida.
+          // Parcial ≠ total: exige number safe-integer ≥0 por entidade (sem coerção null/false/'').
           const full = {};
           let complete = true;
           for (const entityName of normalized) {
@@ -99,8 +100,8 @@ export function useEntityCounts(entities = []) {
               complete = false;
               break;
             }
-            const n = Number(d.counts[entityName]);
-            if (!Number.isFinite(n)) {
+            const n = d.counts[entityName];
+            if (typeof n !== 'number' || !Number.isSafeInteger(n) || n < 0) {
               complete = false;
               break;
             }
