@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#431 Cliente.get + Completo draft≠save) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
+| **Sobre** | tip docs `2451d91c0` CI SUCCESS 6/6 — **não atribuir** a este HEAD |
+| **Fix** | Contatos `Cliente.get` canônico; Completo `commitMode=draft` ≠ `saveMutation` |
+| **Codex** | residual HTTP filter→get; ator/ausência/counts ENCERRADOS |
+| **#432** | herdar via merge após CI deste tip |
+| Preferir | CI tip → merge #432 → prep #401 sem merge oficial |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
 ## CURSOR — VIGENTE (#431 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
