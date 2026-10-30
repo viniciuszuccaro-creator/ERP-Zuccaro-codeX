@@ -1,14 +1,16 @@
-## CURSOR — VIGENTE (#439 CentroOperacao CANAL remainder; #401←#434 fechado) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#439 tip 4acfe43d4 CI SUCCESS + Codex limpo) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **#439** | tip `619b26092` + remainder hunks (hash `53ed9f42…`) — sky+ID CentroOperacao |
-| **#401 tip** | `f5ac2a1de` — #434 Contatos get+draft + P1 hydrate; **contagens fora** (#431 `2b523fdf`) |
-| **#434** | tip `50a010ce` CI SUCCESS — NÃO inclui contagens |
+| **#439** | tip código `4acfe43d4` — CentroOperacao sky+ID + CANAL PEEL `53ed9f42…` |
+| **CI** | SUCCESS `41074651481` / `41074642701` (6/6) |
+| **Codex** | limpo em `4acfe43d4` |
+| **#401** | tip docs `50e90d0bc` / Contatos `f5ac2a1de` — #434 fechado; **contagens fora** (#431 `2b523fdf`) |
+| **#440** | prep docs keep-both contagens (sem port) |
 | Fora | 2ª candidata · merge main · deploy · seed · VPS · pin cego |
 
-**Evidência:** `docs/evidence/recuperacao-centro-operacao-sky-20261030.txt` · `docs/evidence/incorporacao-434-into-401-20261030.txt`
-**Próximo:** CI #439 pós-remainder; item B+/C indep. separado. Contagens só em #431.
+**Evidência:** `docs/evidence/recuperacao-centro-operacao-sky-20261030.txt` · `docs/evidence/prep-contagens-431-into-401-20261030.txt`
+**Próximo:** item B+/C indep. separado; port contagens só com autorização.
 
 ## CURSOR — VIGENTE (#407 tip a18a362ed CI SUCCESS) (2026-10-29 10:03 America/Sao_Paulo)
 

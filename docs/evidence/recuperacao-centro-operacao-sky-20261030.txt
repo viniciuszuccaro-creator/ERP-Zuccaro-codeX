@@ -35,5 +35,7 @@ Correção: 2 hunks exact [after→before] em `clienteConferenciaHunks` (fn appl
 Local: PEEL OK → hash 53ed9f42; publication-channel-counterproof + identidade 15/15 PASS.
 Sem pin cego / sem alterar golden e36231b3.
 
-## Tip atual
-Aguardando commit/push do remainder + CI no tip seguinte.
+## Tip 4acfe43d4 — CI SUCCESS + Codex limpo
+Runs: `41074651481` / `41074642701` (frontend+backend+compose 6/6 SUCCESS).
+Codex review: limpo em `4acfe43d4a` (receipt issuecomment-6525628565).
+Fora candidata #401 · #434 · contagens #431 · merge/deploy.
