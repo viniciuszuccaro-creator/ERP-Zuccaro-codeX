@@ -1,3 +1,12 @@
+## CURSOR — FIX (#446 typecheck onAdicionarProduto opcional) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | `onAdicionarProduto = undefined` em HistoricoCompras/Sugestoes — leitura Detalhes/Painel |
+| **Causa** | CI frontend FAIL TS2741 prop obrigatória |
+| **Base** | wire `8333e0d80` |
+| Fora | #401 · merge main |
+
 ## CURSOR — VIGENTE (#442 tip 1570f35ab CI SUCCESS — residual ETAPA A) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

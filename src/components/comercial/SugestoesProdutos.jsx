@@ -21,7 +21,7 @@ const PEDIDOS_SUGESTOES_LIMIT = 100;
  * Sugestões por frequência no histórico — keep both com Top10 (IA) e HistoricoCompras.
  * HTTP: loadPedidosHistoricoHttp + policy; erro ≠ painel ausente / lista vazia.
  */
-export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdicionarProduto }) {
+export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdicionarProduto = undefined }) {
   const [sugestoes, setSugestoes] = useState([]);
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();

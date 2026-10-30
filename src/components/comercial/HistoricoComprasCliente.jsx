@@ -21,7 +21,7 @@ const PEDIDOS_COMPRAS_LIMIT = 200;
  * Histórico de compras do cliente (Comercial) — keep both com portal/HistoricoComprasCliente.
  * HTTP: loadPedidosHistoricoHttp; erro ≠ lista vazia / top inventado.
  */
-export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto }) {
+export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto = undefined }) {
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
