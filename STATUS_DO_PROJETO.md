@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#444 JobAgendado sky tip 109f8d6c8 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `109f8d6c8` — CI SUCCESS 6/6 (`41102546943` push · `41102576414` PR) |
+| **Fix** | JobAgendado windowMode sky + ID técnico (sem data-action novo) |
+| **Codex** | `@codex review` pedido — CI verde ≠ encerrar achados montados |
+| **#401/#441** | fora |
+| Fora | merge main · deploy · seed · pin cego |
+
+**Evidência:** `docs/evidence/recuperacao-job-agendado-sky-20261030.txt`
+**Próximo:** contraprova Codex; residual forms sem sky.
+
 ## CURSOR — VIGENTE (#443 ChatbotIntent sky tip 84441e9db CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

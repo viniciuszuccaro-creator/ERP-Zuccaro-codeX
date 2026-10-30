@@ -225,12 +225,18 @@ export default function JobAgendadoForm({
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-sky-100">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
             <Clock className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
               {jobBoundId ? 'Editar Job Agendado' : 'Novo Job Agendado'}
             </h2>
           </div>
+          {/* ID técnico sem data-action novo — JobAgendado já graduou do pin RecordState. */}
+          {jobBoundId ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(jobBoundId)}</span>
+            </p>
+          ) : null}
           {form}
         </div>
       </div>

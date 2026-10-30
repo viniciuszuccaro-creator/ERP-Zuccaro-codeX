@@ -1,0 +1,20 @@
+Recuperação indep. — JobAgendado sky windowMode + ID técnico (2026-10-30 America/Sao_Paulo)
+===========================================================================================
+Base: #443 tip ChatbotIntent sky (CI SUCCESS)
+Branch: cursor/recuperacao-job-agendado-sky-392b
+Fora: candidata #401 · cadeia #441/#442 · merge main · deploy · seed
+
+## Classificação (matriz erp-integra)
+Melhoria útil da experiência azul-clara no form existente.
+windowMode existia sem gradient header + ID técnico visível.
+JobAgendado já usa useCadastroReopenOnIdentity (abertura única).
+
+## Mudança
+`JobAgendadoForm.jsx`: header from-sky-50 + ID técnico (sem data-action novo).
+
+## Testes
+`tests/recuperacao-job-agendado-sky.test.js` — 1 PASS
+
+## CI SUCCESS tip 109f8d6c8 (2026-10-30 America/Sao_Paulo)
+- Runs: push `41102546943` · PR `41102576414` — SUCCESS 6/6.
+- CI verde ≠ encerramento: aguarda `@codex review` montado.
