@@ -1,17 +1,30 @@
+## CURSOR — VIGENTE (#446 tip c2f3acb7 CI5569 + demos runtime) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **CI** | `c2f3acb7e` SUCCESS 6/6 — PR run **5569** (`41122467714`) · push 5568 |
+| **Código** | tip demos: sessionKey + elegibilidade + A→B→A + zero + rejeição preserva modal |
+| **Geração** | pedido ≠ visual; `buildSessionFingerprint` (renew token); effect/confirm |
+| **Margem** | `margemVioladaEfetiva`; elegível só Ativo+vendável no catálogo |
+| **Provas** | 14 PASS — visual A→B→A · sessão renew · zero comprovado · rejeição modal+rascunho |
+| **Codex** | `@codex review` no tip **atual** (não SHA antigo) |
+| **#401** | mapa port atualizado — **fora** até limpo; sem trocar backend |
+| Fora | merge main · deploy · seed · candidata concorrente |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · port-mapa
+**Próximo:** CI tip demos + Codex montado runtime; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 Codex P1/P2 pós CI c52cc707a) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **CI tip** | `c52cc707a` SUCCESS 6/6 (`41120413232` push · `41120421114` PR) |
-| **P1** | geração: slots `pedidoEmpresaId`/`visualEmpresaId` separados — seletor global invalida mesmo com formData.empresa_id |
-| **P2** | `margemVioladaEfetiva` — UI/botão/justificativa/detalhes só com custo comprovado; ausente → "—" |
-| **Testes** | adicionar-historico-modal + wire + mount — **14 PASS** |
-| **Codex** | pedir review tip novo — CI ≠ aceite montado |
-| **#401** | fora até limpo |
-| Fora | merge main · deploy · seed · inventar UN/preço/custo |
+| **CI tip** | `c52cc707a` SUCCESS 6/6; tip docs `c2f3acb7e` CI5569 SUCCESS |
+| **P1/P2** | visual≠pedido · margemVioladaEfetiva |
+| **#401** | fora |
+| Fora | merge main · deploy · seed |
 
 **Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
-**Próximo:** CI tip Codex-fix + aceite montado; port #401 só após limpo.
+**Próximo:** tip demos + Codex tip atual.
 
 ## CURSOR — VIGENTE (#446 residual contexto/preço/custo/estoque fail-closed) (2026-10-30 America/Sao_Paulo)
 

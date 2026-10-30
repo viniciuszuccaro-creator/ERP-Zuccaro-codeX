@@ -114,3 +114,16 @@ Testes: 14 PASS (modal + wire + mount). #401 fora — mapa port atualizado sem m
 2. Modal: `margemVioladaEfetiva`; UI/botão/justificativa/`_calculo_detalhado` sem custo/margem fabricados.
 3. Estoque insuficiente só com estoqueComprovado.
 Testes: 14 PASS. #401 fora.
+
+## CI SUCCESS tip c2f3acb7e — run 5569 (2026-10-30 America/Sao_Paulo)
+- PR run **5569** (`41122467714`) SUCCESS 6/6 · push 5568 (`41122454584`).
+- Código base tip `64524d86c` + docs. CI verde ≠ aceite Codex montado no runtime atual.
+
+## Demos runtime tip (pós 5569) (2026-10-30 America/Sao_Paulo)
+Provas pedidas (montagem harness + policy; ≠ PG/E2E):
+1. Pedido e visual com gerações/slots corretos; A→B confirma rejeita; A→B→A não reabre modal antigo.
+2. Renew token (`sessionKey`/`buildSessionFingerprint`) invalida confirm; rascunho preservado.
+3. Preço/unidade/custo/saldo desconhecidos sem defaults; zero comprovado aceito.
+4. `margemVioladaEfetiva` + elegibilidade Ativo+vendável no catálogo.
+5. Rejeição preço preserva modal e rascunho.
+Testes: 14 PASS. #401 fora até Codex limpo no tip atual.
