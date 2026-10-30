@@ -98,7 +98,7 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     onSubmit(payload);
   };
 
-  return (
+  const form = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         idOnly
@@ -108,13 +108,13 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
       />
       <div>
         <Label>Nome do Centro *</Label>
-        <Input value={formData.nome_centro} onChange={(e) => setFormData({ ...formData, nome_centro: e.target.value })} placeholder="Ex: CD Guarulhos, Obra Cliente X" disabled={!podeSalvar} data-permission="Cadastros.CentroOperacao.editar" data-action="editar-nome-centro-operacao" data-sensitive />
+        <Input value={formData.nome_centro} onChange={(e) => setFormData({ ...formData, nome_centro: e.target.value })} placeholder="Ex: CD Guarulhos, Obra Cliente X" disabled={!podeSalvar} data-permission="Cadastros.CentroOperacao.editar" data-action="editar-nome-centro-operacao" data-sensitive className="border-sky-100" />
       </div>
 
       <div>
         <Label>Tipo *</Label>
         <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })} disabled={!podeSalvar}>
-          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-tipo-centro-operacao" data-sensitive><SelectValue /></SelectTrigger>
+          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-tipo-centro-operacao" data-sensitive className="border-sky-100"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="CD">Centro de Distribuicao</SelectItem>
             <SelectItem value="Obra">Obra (Temporario)</SelectItem>
@@ -128,7 +128,7 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
       <div>
         <Label>Responsavel</Label>
         <Select value={formData.responsavel_id} onValueChange={(value) => { const colab = colaboradores.find(c => c.id === value); setFormData({ ...formData, responsavel_id: value, responsavel_nome: colab?.nome_completo }); }} disabled={!podeSalvar || !contextoValido}>
-          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-responsavel-centro-operacao" data-sensitive><SelectValue placeholder="Selecione o responsavel" /></SelectTrigger>
+          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-responsavel-centro-operacao" data-sensitive className="border-sky-100"><SelectValue placeholder="Selecione o responsavel" /></SelectTrigger>
           <SelectContent>
             {colaboradores.map(c => (<SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>))}
           </SelectContent>
@@ -138,24 +138,46 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
       <BuscaCEP onEnderecoEncontrado={handleCEPFound} />
 
       {formData.geolocalizacao?.latitude && (
-        <Card className="border-green-200 bg-green-50"><CardContent className="p-3"><div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-green-600" /><p className="text-sm"><strong>GPS:</strong> {formData.geolocalizacao.latitude.toFixed(6)}, {formData.geolocalizacao.longitude.toFixed(6)}</p></div></CardContent></Card>
+        <Card className="border-sky-200 bg-sky-50"><CardContent className="p-3"><div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-sky-600" /><p className="text-sm"><strong>GPS:</strong> {formData.geolocalizacao.latitude.toFixed(6)}, {formData.geolocalizacao.longitude.toFixed(6)}</p></div></CardContent></Card>
       )}
 
-      <div className="flex items-center space-x-2 p-3 border rounded-lg">
+      <div className="flex items-center space-x-2 p-3 border border-sky-100 rounded-lg">
         <Checkbox checked={formData.permite_estoque} onCheckedChange={(checked) => setFormData({ ...formData, permite_estoque: checked })} disabled={!podeSalvar} data-permission="Cadastros.CentroOperacao.editar" data-action="alternar-estoque-centro-operacao" data-sensitive />
         <Label>Permite controle de estoque</Label>
       </div>
 
       <div>
         <Label>Observacoes</Label>
-        <Textarea value={formData.observacoes || ''} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} rows={3} disabled={!podeSalvar} data-permission="Cadastros.CentroOperacao.editar" data-action="editar-observacoes-centro-operacao" data-sensitive />
+        <Textarea value={formData.observacoes || ''} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} rows={3} disabled={!podeSalvar} data-permission="Cadastros.CentroOperacao.editar" data-action="editar-observacoes-centro-operacao" data-sensitive className="border-sky-100" />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} className="bg-blue-600 hover:bg-blue-700" data-permission="Cadastros.CentroOperacao.salvar" data-action="salvar-centro-operacao" data-sensitive>
-          {isSubmitting ? 'Salvando...' : (dadosIniciais ? 'Salvar' : 'Criar Centro')}
+      <div className="flex justify-end gap-3 pt-4 border-t border-sky-100">
+        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} className="bg-sky-600 hover:bg-sky-700" data-permission="Cadastros.CentroOperacao.salvar" data-action="salvar-centro-operacao" data-sensitive>
+          {isSubmitting ? 'Salvando...' : (dadosIniciais?.id ? 'Salvar' : 'Criar Centro')}
         </Button>
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <h2 className="text-2xl font-bold text-slate-900">
+              {dadosIniciais?.id ? 'Editar Centro de Operação' : 'Novo Centro de Operação'}
+            </h2>
+          </div>
+          {dadosIniciais?.id ? (
+            <p className="text-xs text-slate-500 mb-4">
+              ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+            </p>
+          ) : null}
+          {form}
+        </div>
+      </div>
+    );
+  }
+
+  return form;
 }

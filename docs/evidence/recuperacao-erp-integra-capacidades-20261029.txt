@@ -24,6 +24,8 @@ Padrão visual azul-claro
 - Este lote: ConfiguracaoBoletos, EventoNotificacao, ModeloDocumento → sky
 - 26 forms windowMode ainda sem sky (paramétricos/API/Chatbot*): fila; respeitar
   branches reservadas ApiExterna/ParametroRoteirizacao/ChatbotCanal
+- Atualização (2026-10-30): CentroOperacaoForm sky windowMode + ID técnico
+  (indep. fora #401; evidência recuperacao-centro-operacao-sky-20261030.txt)
 
 Configurações Cadastros Gerais
 - Sequência código: backend/CodigoField — sem count+1 no browser (auditoria grep OK

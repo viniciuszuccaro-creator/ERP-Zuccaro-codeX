@@ -1,0 +1,41 @@
+Recuperação indep. — CentroOperacao sky windowMode + ID técnico (2026-10-30 America/Sao_Paulo)
+=============================================================================================
+Base: #407 tip `ba431a2af` (cursor/recuperacao-config-comprovante-392b) — CI SUCCESS
+Branch: cursor/recuperacao-centro-operacao-sky-392b
+Fora: candidata #401 · #434 Contatos · Pacote A contagens #431 · merge main · deploy · VPS
+
+## Classificação (matriz erp-integra)
+Melhoria útil da experiência azul-clara aprovada no form existente.
+Não é perda de dados; ID técnico + RecordState + RBAC já existiam.
+windowMode era prop aceita sem chrome — integração visual incompleta no existente.
+
+## Mudança (somente existente)
+`src/components/cadastros/CentroOperacaoForm.jsx`
+- windowMode: header `from-sky-50 to-sky-100` + `w-full h-full`
+- ID técnico visível na edição (fonte mono)
+- botão/bordas sky (substitui blue do submit)
+- preserva: CadastroCodigoRegistroField idOnly, RecordState, sanitize, multiempresa, data-permission
+
+## Não feito
+- count+1 / geração de código no browser
+- módulo paralelo / 3º form
+- seed fictício / registros
+- swap serviço/repo
+
+## Checks
+`tests/recuperacao-centro-operacao-sky.test.js` + focados sky/comprovante aplicáveis
+
+## CI tip 288dc8a69 — frontend FAIL
+Run 41071683111: pin identidade CentroOperacao (golden e36231b3).
+Fix: applyCentroOperacaoSkyChrome documentado em cursor-identidade-consolidacao (padrão Webhook) — não pin cego.
+
+## CI tip 619b26092 — frontend FAIL (CANAL/publication)
+Pin `tests/cursor-identidade-consolidacao.test.js` hash `53ed9f42…` desatualizado após helper sky.
+Correção: 2 hunks exact [after→before] em `clienteConferenciaHunks` (fn applyCentroOperacaoSkyChrome + if CentroOperacao).
+Local: PEEL OK → hash 53ed9f42; publication-channel-counterproof + identidade 15/15 PASS.
+Sem pin cego / sem alterar golden e36231b3.
+
+## Tip 4acfe43d4 — CI SUCCESS + Codex limpo
+Runs: `41074651481` / `41074642701` (frontend+backend+compose 6/6 SUCCESS).
+Codex review: limpo em `4acfe43d4a` (receipt issuecomment-6525628565).
+Fora candidata #401 · #434 · contagens #431 · merge/deploy.
