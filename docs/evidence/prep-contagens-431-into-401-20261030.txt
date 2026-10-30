@@ -1,0 +1,55 @@
+Prep Pacote A contagens #431 → candidata #401 (SEM incorporar ainda)
+====================================================================
+Data: 2026-10-30 America/Sao_Paulo
+Fonte #431: tip `2b523fdf8` CI SUCCESS (Pacote A — contagem erro≠vazio + Contatos bind)
+Alvo #401: tip docs `50e90d0bc` · código P1 Contatos `f5ac2a1de` (já tem #434 get+draft)
+Histórias: **unrelated** — merge git recusado; port keep-both obrigatório (igual #434).
+
+## Premissas explícitas
+1. **#434 NÃO inclui contagens** — Contatos get/draft/skipped/persistBusy já na #401.
+2. Contagens permanecem **pacote separado** até port dedicado pós-CI/revisão.
+3. **Não** copiar serviços/repositórios divergentes.
+4. **Não** remover guardas (skipped, sync-lock, draft≠save, Cliente.get) para verde.
+5. **Não** atualizar pins CANAL cegamente — só hunks exact [after→before] dos deltas de contagem.
+
+## Mapa por arquivo (#431 vs #401)
+
+| Arquivo | Estado | Tratamento |
+|---------|--------|------------|
+| `GerenciarContatosCliente.jsx` | IDENTICAL | noop |
+| `CadastroClienteCompleto.jsx` | IDENTICAL | noop (draft/commitMode já na #401) |
+| `GerenciarContatosClienteForm.jsx` | DIVERGE | **Keep #401** sync-lock/`persistInFlightRef`/`result.skipped`; **não** reverter para tip #431 |
+| `GerenciarEnderecosClienteForm.jsx` | DIVERGE | **Keep #401** sync-lock; não sobrescrever com tip #431 |
+| `GroupCountBadge.jsx` | DIVERGE | Port #431: `countsUnavailable` / erro≠zero / "—" |
+| `cadastrosAllCountsCore.js` | ONLY_431 | Adicionar (extração; sem serviço paralelo) |
+| `cadastroCountFilter.js` | ONLY_431 | Adicionar — filtro canônico multiempresa |
+| `useCadastrosAllCounts.jsx` | DIVERGE | Port lógica #431 (erro≠vazio); preservar consumidores #401 |
+| `useEntityCounts.jsx` | DIVERGE | Port `isError`/`isValidCountValue`; keep filters tenant |
+| `VisualizadorUniversalEntidadeV24.jsx` | DIVERGE | Port mínimo badge unavailable |
+| `Cadastros.jsx` | DIVERGE | Port wiring badge/unavailable; keep rotas/RBAC #401 |
+| `tests/cadastros-count-erro-vazio.test.js` | ONLY_431 | Trazer |
+| `tests/cadastros-registros-probes.test.js` | ONLY_431 | Trazer (probes; sem seed) |
+| `tests/use-entity-counts-filter.test.js` | DIVERGE | Port asserts #431 |
+| `tests/cadastro-master-policy.test.js` | DIVERGE | Hunks mínimos |
+| `tests/helpers/scopeListCacheRemainder.js` | ONLY_431 | Trazer se consumidor exigir |
+| `tests/helpers/consolidation81Remainder.js` | DIVERGE | **Só** hunks dos deltas de contagem; PEEL local → hash; **proibido** pin cego |
+| `tests/cursor-identidade-consolidacao.test.js` | DIVERGE | Avaliar se delta contagem toca; senão noop |
+| `STATUS_DO_PROJETO.md` / evidence | docs | Prepend; não apagar histórico #401/#434 |
+
+## Ordem de port (quando autorizado)
+1. Helpers puros: `cadastroCountFilter.js` + `cadastrosAllCountsCore.js` + testes focados.
+2. `useEntityCounts` / `useCadastrosAllCounts` / `GroupCountBadge`.
+3. Wiring `Cadastros.jsx` + Visualizador (mínimo).
+4. Testes + remainder CANAL com PEEL OK (sem tocar Contatos Form/Completo).
+5. CI + @codex na **mesma** #401; registrar SHA.
+
+## Fora deste prep
+- Commit de código na candidata
+- Merge main / deploy / VPS / seed fictício
+- Swap `clienteService` / repos
+- Remoção de `Cliente.get`, skipped, draft, persistBusy
+
+## Relação com #432
+Prep anterior `#431→#432` (`prep-merge-431-into-432-20261030.txt`) ficou histórica:
+#401 já absorveu contratos Contatos/Endereços via #434 keep-both.
+Contagens restantes = só badges/hooks/páginas/testes da tabela acima.
