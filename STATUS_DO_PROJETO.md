@@ -1,3 +1,75 @@
+## CURSOR — VIGENTE (#441 tip 6b2e7e42e CI SUCCESS — residual P2) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `6b2e7e42e` — CI SUCCESS 6/6 (`41102222425` push · `41102230940` PR) |
+| **Código** | `9dfb956e4` — preço zero comprovado · ausente=null · created_at HTTP |
+| **Testes** | historico-origem-compras-http-failclosed **21 PASS** |
+| **Codex** | `@codex review` pedido — CI verde ≠ aceite montado |
+| **#401** | `34c4c0ee` — **fora**; não integrar |
+| **#442** | `1570f35ab` rebase residual — CI em curso |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** contraprova Codex montada; #401 intacta.
+
+## CURSOR — VIGENTE (#441 Pacote B tip 529c56741 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `529c56741` — CI SUCCESS 6/6 (`41095944334` push · `41095952821` PR) |
+| **Fix** | KG≠UN · qty por unidade · preço por data · EMPRESA_SESSION_MISMATCH · Adicionar sem UN |
+| **Testes** | historico-origem-compras-http-failclosed **19 PASS** |
+| **Codex** | `@codex review` pedido — CI verde ≠ encerrar achados montados |
+| **#442** | tip `d4eeb5ea7` rebase policy — CI em curso |
+| **#401** | `34c4c0ee` CI5482 — **fora**; não integrar enquanto defeito reproduzível |
+| Fora | merge main · deploy · seed · inventar canal/custo/estoque/total |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** contraprova Codex montada; manter #442 alinhado; #401 intacta.
+
+## CURSOR — VIGENTE (#441 provas session/perm/queryKey/item.total) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-origem-compras-http-392b` ← #437 |
+| **Provas** | sessão null · sem permissão · queryKey cliente/ator/empresa · item.total ranking montado |
+| **Testes** | historico-origem-compras-http-failclosed **14 PASS** (antes 10) |
+| **P2 Codex** | canal/total/item.total já em `a1a6aa10e` — limpo 2× |
+| **Keep both** | portal · #436 Detalhes · #437 Tab — sem 3º módulo / sem integrar ainda |
+| **#401** | tip `3a80e0ffe` Contatos CONTEXT_CHANGED (CI em andamento) — **fora** |
+| Fora | merge main · deploy · seed · inventar canal/custo/estoque |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** CI deste tip + `@codex review`; indep. recuperação fora candidata.
+
+## CURSOR — VIGENTE (#441 tip a1a6aa10e CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `a1a6aa10e` — CI SUCCESS 41082969606 / 41082959522 |
+| **P2 Codex** | canal≠Manual · Pedido.total · item.total — tratados |
+| **Testes** | historico-origem-compras-http-failclosed 10 PASS |
+| **#401** | Contatos P2 + contagens CI/Codex limpo — fora deste pacote |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** `@codex review` tip `a1a6aa10e`.
+
+## CURSOR — VIGENTE (HistoricoOrigem+Compras HTTP) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-origem-compras-http-392b` ← #437 `1cde82af7` |
+| **Fix** | Origem+Compras: `loadPedidosHistoricoHttp`; erro≠vazio; página incompleta → "—"; itens HTTP |
+| **Policy** | `historicoComprasClientePolicy.js` (extract+consolidate) |
+| **Keep both** | portal/HistoricoComprasCliente · #436 Detalhes · #437 Tab |
+| **#401** | tip `88332170e` CI SUCCESS (contagens+P2) — **fora deste pacote** |
+| Testes | `historico-origem-compras-http-failclosed` 7 PASS |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** CI + @codex deste tip; candidata #401 revisão contagens.
+
 ## CURSOR — VIGENTE (#437 FECHADO tip 5a33ac0c9) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

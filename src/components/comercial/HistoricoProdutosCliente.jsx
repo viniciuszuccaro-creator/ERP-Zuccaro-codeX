@@ -115,7 +115,8 @@ export function historicoSessionCacheKey(session) {
 
 /**
  * Revalida sessão/tenant antes e depois da listagem.
- * Descarta resultado se usuário/empresa/grupo mudarem durante a request.
+ * Descarta resultado se usuário/empresa/grupo/sessão mudarem durante a request.
+ * Troca só de empresaId na sessão (mesmo grupo/ator/token) também invalida (Codex #441).
  */
 export function assertHistoricoHttpScope({
   session,
@@ -123,6 +124,7 @@ export function assertHistoricoHttpScope({
   empresaId,
   expectedActorId = null,
   expectedSessionKey = null,
+  expectedEmpresaId = null,
 }) {
   if (!session?.token || !session?.actorId || !session?.groupId) {
     throw Object.assign(new Error("Sessao HTTP ausente para historico de produtos."), {
@@ -150,6 +152,17 @@ export function assertHistoricoHttpScope({
       code: "EMPRESA_CONTEXT_REQUIRED",
     });
   }
+  const expectedEmpresa = expectedEmpresaId || empresaId;
+  const sessionEmpresa = session.empresaId != null && String(session.empresaId).trim()
+    ? String(session.empresaId).trim()
+    : null;
+  // Sessão com empresa explícita deve bater com o contexto da request — resposta
+  // pendente após A→B empresa não entra no cache do painel atual.
+  if (sessionEmpresa && expectedEmpresa && sessionEmpresa !== String(expectedEmpresa)) {
+    throw Object.assign(new Error("Empresa da sessao diverge do contexto do historico."), {
+      code: "EMPRESA_SESSION_MISMATCH",
+    });
+  }
 }
 
 export async function loadPedidosHistoricoHttp({
@@ -169,6 +182,7 @@ export async function loadPedidosHistoricoHttp({
     empresaId,
     expectedActorId,
     expectedSessionKey,
+    expectedEmpresaId: empresaId,
   });
   if (!clienteId) {
     throw Object.assign(new Error("Historico HTTP exige clienteId."), {
@@ -193,13 +207,14 @@ export async function loadPedidosHistoricoHttp({
     clienteId,
     signal,
   });
-  // Revalida após a rede — resposta tardia com sessão/tenant trocado não entra no cache.
+  // Revalida após a rede — resposta tardia com sessão/empresa/tenant trocado não entra no cache.
   assertHistoricoHttpScope({
     session: readErpHttpSession(),
     groupId,
     empresaId,
     expectedActorId: expectedActorId || sessionBefore.actorId,
     expectedSessionKey: expectedSessionKey || historicoSessionCacheKey(sessionBefore),
+    expectedEmpresaId: empresaId,
   });
   const rows = Array.isArray(page?.data) ? page.data : (Array.isArray(page) ? page : []);
   const meta = page?.meta && typeof page.meta === "object"
