@@ -27,7 +27,12 @@ export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
   const [acordeonAberto, setAcordeonAberto] = useState(["bloco1"]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
-  const { counts: allCounts, totals, isLoading: countsLoading } = useCadastrosAllCounts();
+  const {
+    counts: allCounts,
+    totals,
+    isLoading: countsLoading,
+    countsUnavailable,
+  } = useCadastrosAllCounts();
   const { isAdmin, hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
@@ -46,7 +51,11 @@ export default function Cadastros() {
     bloco6: { nome: "Tecnologia", permissao: "Cadastros.Tecnologia.visualizar" },
   };
 
-  const getTotalBloco = (blocoId) => Number(totals?.[blocoId] || 0);
+  const getTotalBloco = (blocoId) => {
+    if (countsUnavailable) return null;
+    const n = totals?.[blocoId];
+    return n == null ? 0 : Number(n);
+  };
 
   const getDadosContextoCadastros = () => ({
     contexto: grupoAtual?.id ? "grupo" : empresaAtual?.id ? "empresa" : "sem-contexto",
@@ -231,13 +240,23 @@ export default function Cadastros() {
             </Card>
           )}
 
+          {countsUnavailable && contextoAtivo && (
+            <Card className="rounded-sm border border-amber-300 bg-amber-50" data-counts-unavailable="true" role="status">
+              <CardContent className="p-3 text-sm text-amber-950">
+                Contagens indisponíveis por erro de consulta — isso <strong>não</strong> significa
+                que os cadastros estejam vazios. Tente novamente ou confira permissão/contexto.
+                Badges exibem &quot;—&quot; até a contagem responder.
+              </CardContent>
+            </Card>
+          )}
+
           {/* DASHBOARD DE TOTAIS */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')} data-permission="Cadastros.Pessoas.visualizar" data-action="alternar-bloco-pessoas" data-context-required="group-or-company">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Users className="w-5 h-5 text-blue-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco1} badgeClassName="bg-blue-600 text-white text-xs px-1.5 border-blue-600" />
+                  <GroupCountBadge precomputedTotal={totals.bloco1} badgeClassName="bg-blue-600 text-white text-xs px-1.5 border-blue-600" countsUnavailable={countsUnavailable} />
                 </div>
                 <div className="text-lg font-bold text-blue-900">Pessoas</div>
                 <p className="text-xs text-blue-700">& Parceiros</p>
@@ -247,7 +266,7 @@ export default function Cadastros() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Package className="w-5 h-5 text-purple-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco2} badgeClassName="bg-purple-600 text-white text-xs px-1.5 border-purple-600" />
+                  <GroupCountBadge precomputedTotal={totals.bloco2} badgeClassName="bg-purple-600 text-white text-xs px-1.5 border-purple-600" countsUnavailable={countsUnavailable} />
                 </div>
                 <div className="text-lg font-bold text-purple-900">Produtos</div>
                 <p className="text-xs text-purple-700">& Serviços</p>
@@ -257,7 +276,7 @@ export default function Cadastros() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <DollarSign className="w-5 h-5 text-green-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco3} badgeClassName="bg-green-600 text-white text-xs px-1.5 border-green-600" />
+                  <GroupCountBadge precomputedTotal={totals.bloco3} badgeClassName="bg-green-600 text-white text-xs px-1.5 border-green-600" countsUnavailable={countsUnavailable} />
                 </div>
                 <div className="text-lg font-bold text-green-900">Financeiro</div>
                 <p className="text-xs text-green-700">& Fiscal</p>
@@ -267,7 +286,7 @@ export default function Cadastros() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Truck className="w-5 h-5 text-orange-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco4} badgeClassName="bg-orange-600 text-white text-xs px-1.5 border-orange-600" />
+                  <GroupCountBadge precomputedTotal={totals.bloco4} badgeClassName="bg-orange-600 text-white text-xs px-1.5 border-orange-600" countsUnavailable={countsUnavailable} />
                 </div>
                 <div className="text-lg font-bold text-orange-900">Logística</div>
                 <p className="text-xs text-orange-700">Frota & Almox.</p>
@@ -277,7 +296,7 @@ export default function Cadastros() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Building2 className="w-5 h-5 text-indigo-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco5} badgeClassName="bg-indigo-600 text-white text-xs px-1.5 border-indigo-600" />
+                  <GroupCountBadge precomputedTotal={totals.bloco5} badgeClassName="bg-indigo-600 text-white text-xs px-1.5 border-indigo-600" countsUnavailable={countsUnavailable} />
                 </div>
                 <div className="text-lg font-bold text-indigo-900">Organizacional</div>
                 <p className="text-xs text-indigo-700">Estrutura</p>
@@ -287,7 +306,7 @@ export default function Cadastros() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <Cpu className="w-5 h-5 text-cyan-600" />
-                  <GroupCountBadge precomputedTotal={totals.bloco6} badgeClassName="bg-cyan-600 text-white text-xs px-1.5 border-cyan-600" />
+                  <GroupCountBadge precomputedTotal={totals.bloco6} badgeClassName="bg-cyan-600 text-white text-xs px-1.5 border-cyan-600" countsUnavailable={countsUnavailable} />
                 </div>
                 <div className="text-lg font-bold text-cyan-900">Tecnologia</div>
                 <p className="text-xs text-cyan-700">IA & Parâmetros</p>
@@ -316,7 +335,7 @@ export default function Cadastros() {
                     <p className="font-bold text-lg text-blue-900">1️⃣ Pessoas & Parceiros</p>
                     <p className="text-xs text-blue-700">Clientes • Fornecedores • Transportadoras • Colaboradores • Representantes • Contatos B2B</p>
                   </div>
-                  <GroupCountBadge precomputedTotal={totals.bloco1} badgeClassName="ml-auto bg-blue-600 text-white border-blue-600 text-xs" />
+                  <GroupCountBadge precomputedTotal={totals.bloco1} badgeClassName="ml-auto bg-blue-600 text-white border-blue-600 text-xs" countsUnavailable={countsUnavailable} />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -332,7 +351,7 @@ export default function Cadastros() {
                     <p className="font-bold text-lg text-purple-900">2️⃣ Produtos & Serviços</p>
                     <p className="text-xs text-purple-700">Produtos • Serviços • Setores • Grupos • Marcas • Tabelas de Preço</p>
                   </div>
-                  <GroupCountBadge precomputedTotal={totals.bloco2} badgeClassName="ml-auto bg-purple-600 text-white border-purple-600 text-xs" />
+                  <GroupCountBadge precomputedTotal={totals.bloco2} badgeClassName="ml-auto bg-purple-600 text-white border-purple-600 text-xs" countsUnavailable={countsUnavailable} />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -348,7 +367,7 @@ export default function Cadastros() {
                     <p className="font-bold text-lg text-green-900">3️⃣ Financeiro & Fiscal</p>
                     <p className="text-xs text-green-700">Bancos • Contas • Formas Pagamento • Plano Contas • Centros Custo</p>
                   </div>
-                  <GroupCountBadge precomputedTotal={totals.bloco3} badgeClassName="ml-auto bg-green-600 text-white border-green-600 text-xs" />
+                  <GroupCountBadge precomputedTotal={totals.bloco3} badgeClassName="ml-auto bg-green-600 text-white border-green-600 text-xs" countsUnavailable={countsUnavailable} />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -364,7 +383,7 @@ export default function Cadastros() {
                     <p className="font-bold text-lg text-orange-900">4️⃣ Logística, Frota & Almoxarifado</p>
                     <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos Frete • Locais Estoque • Rotas</p>
                   </div>
-                  <GroupCountBadge precomputedTotal={totals.bloco4} badgeClassName="ml-auto bg-orange-600 text-white border-orange-600 text-xs" />
+                  <GroupCountBadge precomputedTotal={totals.bloco4} badgeClassName="ml-auto bg-orange-600 text-white border-orange-600 text-xs" countsUnavailable={countsUnavailable} />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -380,7 +399,7 @@ export default function Cadastros() {
                     <p className="font-bold text-lg text-indigo-900">5️⃣ Estrutura Organizacional</p>
                     <p className="text-xs text-indigo-700">Grupos • Empresas • Departamentos • Cargos • Turnos</p>
                   </div>
-                  <GroupCountBadge precomputedTotal={totals.bloco5} badgeClassName="ml-auto bg-indigo-600 text-white border-indigo-600 text-xs" />
+                  <GroupCountBadge precomputedTotal={totals.bloco5} badgeClassName="ml-auto bg-indigo-600 text-white border-indigo-600 text-xs" countsUnavailable={countsUnavailable} />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -396,7 +415,7 @@ export default function Cadastros() {
                     <p className="font-bold text-lg text-cyan-900">6️⃣ Tecnologia, IA & Parâmetros</p>
                     <p className="text-xs text-cyan-700">APIs • Webhooks • Chatbot • Jobs • Gateways • Parâmetros Operacionais</p>
                   </div>
-                  <GroupCountBadge precomputedTotal={totals.bloco6} badgeClassName="ml-auto bg-cyan-600 text-white border-cyan-600 text-xs" />
+                  <GroupCountBadge precomputedTotal={totals.bloco6} badgeClassName="ml-auto bg-cyan-600 text-white border-cyan-600 text-xs" countsUnavailable={countsUnavailable} />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">

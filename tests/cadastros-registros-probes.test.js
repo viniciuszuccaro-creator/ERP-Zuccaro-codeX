@@ -9,15 +9,16 @@ import path from 'node:path';
 
 const ROOT = path.resolve('src');
 
-test('useCadastrosAllCounts: empresa selecionada não manda só group_id no filtro', () => {
+test('useCadastrosAllCounts: filtro via buildContextFilter; erro≠vazio', () => {
   const src = fs.readFileSync(
     path.join(ROOT, 'components/cadastros/hooks/useCadastrosAllCounts.jsx'),
     'utf8',
   );
-  assert.match(src, /if \(groupId && !empresaId\) return \{ group_id: groupId \}/);
-  assert.match(src, /if \(empresaId\) return \{ empresa_id: empresaId \}/);
-  // queryKey inclui empresa+grupo — troca de contexto invalida
-  assert.match(src, /\["cadastros-all-counts-v5", empresaId, groupId\]/);
+  assert.match(src, /buildContextFilter/);
+  assert.match(src, /countsUnavailable/);
+  assert.doesNotMatch(src, /if \(empresaId\) return \{ empresa_id: empresaId \}/);
+  // queryKey inclui empresa+grupo (+ empresas do grupo) — troca de contexto invalida
+  assert.match(src, /\["cadastros-all-counts-v5", empresaId, groupId/);
   assert.match(src, /invalidateQueries\(\{ queryKey: \["cadastros-all-counts-v5"\] \}\)/);
 });
 
@@ -42,9 +43,10 @@ test('Contatos canônico tem RBAC; comercial órfão não é importado pelo Pain
     path.join(ROOT, 'components/comercial/GerenciarContatosCliente.jsx'),
     'utf8',
   );
-  assert.match(orphan, /Pacote E — keep both/);
-  assert.doesNotMatch(orphan, /canEdit|assertScopeCurrent|usePermissions/);
-  assert.match(orphan, /base44\.entities\.Cliente\.update/);
+  assert.match(orphan, /Pacote E \/ D — keep both|Pacote E — keep both/);
+  assert.match(orphan, /GerenciarContatosClienteForm/);
+  assert.match(orphan, /canEdit\("Cadastros", "Cliente"\)/);
+  assert.match(orphan, /assertScopeCurrent/);
 
   const painel = fs.readFileSync(
     path.join(ROOT, 'components/cadastros/PainelDinamicoCliente.jsx'),

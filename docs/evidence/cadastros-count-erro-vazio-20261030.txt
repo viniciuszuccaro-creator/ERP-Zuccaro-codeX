@@ -1,0 +1,28 @@
+Pacote A — correção count erro≠vazio + filtro multiempresa (2026-10-30 06:50 America/Sao_Paulo)
+===============================================================================================
+Base: #429 probes 7ad1d35d · #430 Contatos keep-both 8ab11904
+Candidata #401 tip 686ae322 intacta. Preferir #409 (não fundir com #428).
+
+## Causas (probes → correção)
+| Sintoma | Causa | Correção |
+|---------|-------|----------|
+| Badge Produto/CPA 0 | `buildSimpleFilter` só `{empresa_id}` | `buildCadastrosAllCountsFilter` = multiempresa `$and` grupo∧empresa |
+| Erro → zero | catch preenchia 0 | `fetchCadastrosAllCounts` propaga; UI `—` + banner |
+| Lista pós-troca | `lastGoodData` de outro tenant | zera lastGoodData/everLoaded no scopeKey |
+| Contatos ocultos/órfão | path comercial sem RBAC | adaptador → Form canônico (RBAC+assertScope) |
+
+## Contraprova sintética (mesmo escopo)
+- ANTES: invoke lança READ_COUNT_UNAVAILABLE → rejects (não retorna Produto:0)
+- DEPOIS: mesmo groupId=`grp-synth-001` + empresaId=`emp-synth-cpa` → Produto:1 Marca:2
+- Filtro Produto no request carrega `$and` (não só empresa_id)
+
+Testes: `tests/cadastros-count-erro-vazio.test.js` + probes/audit.
+
+## Não feito (proposital)
+- Remover isolamento Grupo/Empresa
+- Ampliar permissões para “aparecer” registro
+- Seed fictício / Auth VPS / harness paralelo
+- Apagar `comercial/GerenciarContatosCliente.jsx`
+
+## Fora
+Merge #401 · carga #211 · HD externo

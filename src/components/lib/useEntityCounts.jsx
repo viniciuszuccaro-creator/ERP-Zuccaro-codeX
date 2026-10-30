@@ -58,7 +58,7 @@ export function buildContextFilter(entityName, empresaId, groupId, empresasDoGru
   });
 }
 
-// Fallback: contagem individual via countEntities (single mode)
+// Fallback: contagem individual. Falha propaga — nunca fabricar 0 como “vazio”.
 async function countSingle(entityName, filter) {
   try {
     const res = await base44.functions.invoke('countEntities', {
@@ -78,11 +78,12 @@ async function countSingle(entityName, filter) {
       sortDirection: 'asc',
       limit: 2000,
     });
-    return Array.isArray(res?.data) ? res.data.length : 0;
+    if (Array.isArray(res?.data)) return res.data.length;
   } catch (error) {
     console.error('[useEntityCounts] Falha na contagem por listagem', error, { entityName });
+    throw error;
   }
-  return 0;
+  throw new Error('READ_COUNT_UNAVAILABLE');
 }
 
 export function useEntityCounts(entities = []) {
@@ -110,7 +111,7 @@ export function useEntityCounts(entities = []) {
   // contexto do grupo/empresa quando disponível
   const canFetch = normalized.length > 0;
 
-  const { data: counts = {}, isLoading } = useQuery({
+  const { data: counts = {}, isLoading, isError, error } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!normalized.length) return {};
@@ -139,7 +140,7 @@ export function useEntityCounts(entities = []) {
         console.warn('[useEntityCounts] Contagem agregada indisponivel', error);
       }
 
-      // Fallback sequencial com delay para evitar 429
+      // Fallback sequencial: falha propaga (erro ≠ vazio)
       const result = {};
       for (let i = 0; i < batchPayload.length; i++) {
         const { entityName, filter } = batchPayload[i];
@@ -150,10 +151,12 @@ export function useEntityCounts(entities = []) {
     },
     staleTime: 30_000,     // 30s — contagens frescas após cadastros
     gcTime: 300_000,
-    placeholderData: (prev) => prev,
+    // Sem placeholder cross-tenant (evita badge do tenant anterior após troca)
+    placeholderData: undefined,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     enabled: canFetch,
+    retry: 1,
   });
 
   // Invalidar quando registros mudam
@@ -170,11 +173,18 @@ export function useEntityCounts(entities = []) {
   }, [entitiesKey, queryClient]);
 
   const total = useMemo(
-    () => normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0),
-    [counts, normalized]
+    () => (isError ? null : normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0)),
+    [counts, normalized, isError]
   );
 
-  return { counts: counts || {}, total, isLoading };
+  return {
+    counts: isError ? {} : (counts || {}),
+    total,
+    isLoading,
+    isError,
+    error: error || null,
+    countsUnavailable: Boolean(isError),
+  };
 }
 
 export default useEntityCounts;

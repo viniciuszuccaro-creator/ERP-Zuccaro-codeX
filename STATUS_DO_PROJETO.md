@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (Pacote A count erro≠vazio) (2026-10-30 06:50 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-count-erro-vazio-392b` |
+| **Fix** | filtro multiempresa + erro≠vazio + scope lista + Contatos→Form |
+| **Testes** | cadastros-count-erro-vazio + probes/audit |
+| **#401** | tip `686ae322` estável · harness ainda pendente |
+| Preferir | #409 (não integrar #428 como delta distinto) |
+
+**Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
+
 ## CURSOR — VIGENTE (#430 tip 0ccabf750 CI 6/6) (2026-10-29 18:19 America/Sao_Paulo)
 
 | Campo | Valor |

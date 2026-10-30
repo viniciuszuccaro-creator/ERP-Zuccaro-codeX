@@ -348,11 +348,14 @@ export default function VisualizadorUniversalEntidadeV24({
   const previousScopeRef = useRef(scopeKey);
   activeScopeRef.current = scopeKey;
 
-  // Troca de empresa/grupo: fecha form, limpa seleção e invalida carga em voo (fail-closed multiempresa).
+  // Troca de empresa/grupo: fecha form, limpa seleção/cache de lista e invalida carga em voo.
+  // lastGoodData zerado: erro/vazio do novo escopo não reutiliza linhas do tenant anterior.
   useEffect(function() {
     if (previousScopeRef.current === scopeKey) return;
     previousScopeRef.current = scopeKey;
     formScopeRef.current = null;
+    lastGoodData.current = [];
+    everLoadedRef.current = false;
     const reset = buildCadastroScopeSwitchReset({ formKey: 0 });
     if (reset.bumpEditRequest) editRequestRef.current += 1;
     setIsLoadingEdit(reset.isLoadingEdit);
