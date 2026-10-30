@@ -144,7 +144,8 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
     ? consolidateTopProdutosFromPedidos(pedidos, { limit: 10 }).map((row) => ({
         ...row,
         codigo: row.codigo_sku || "",
-        unidade: row.unidade || "UN",
+        // Unidade só se comprovada pela policy — nunca inventar "UN" (Pacote B / #441).
+        unidade: row.unidade || null,
       }))
     : [];
 
@@ -297,16 +298,24 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
   const sugestoesExibir = sugestoesVisiveis.length > 0
     ? sugestoesVisiveis
     : top10Produtos.map(t => {
-      const fullProduct = produtos.find(p => p.id === t.produto_id) || {
-        id: t.produto_id,
-        codigo: t.codigo,
-        descricao: t.descricao,
-        preco_venda: t.ultimo_preco,
-        unidade_medida: t.unidade,
-      };
+      const catalog = produtos.find(p => p.id === t.produto_id);
+      const fullProduct = catalog
+        ? { ...catalog }
+        : {
+            id: t.produto_id,
+            codigo: t.codigo,
+            descricao: t.descricao,
+            preco_venda: t.ultimo_preco,
+          };
+      // Unidade comprovada apenas — ausência ≠ inventar UN no payload do Adicionar.
+      if (t.unidade) {
+        fullProduct.unidade_medida = t.unidade;
+        fullProduct.unidade_sigla = t.unidade;
+      }
+      const unidadeLabel = t.unidade || "—";
       return {
         produto: fullProduct,
-        motivo_sugestao: "Comprado " + t.quantidade_total + " " + t.unidade + " anteriormente",
+        motivo_sugestao: "Comprado " + t.quantidade_total + " " + unidadeLabel + " anteriormente",
         score_confianca: Math.min(100, t.frequencia * 20 + (t.valor_total / 100)),
       };
     });

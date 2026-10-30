@@ -57,6 +57,9 @@ test('contrato: Top10/Sugestoes usam HTTP canônico e não engolem erro como vaz
   assert.match(top10, /top10-produtos-http-indisponivel/);
   assert.match(sug, /sugestoes-produtos-http-indisponivel/);
   assert.doesNotMatch(top10, /itens_revenda\?\.map/);
+  // Pacote B: Top10 não inventa UN quando policy devolve null.
+  assert.doesNotMatch(top10, /unidade:\s*row\.unidade\s*\|\|\s*["']UN["']/);
+  assert.match(top10, /unidade:\s*row\.unidade\s*\|\|\s*null/);
 });
 
 test('policy: Top10 consolida itens HTTP + unidade/ultima_compra; item.total líquido', () => {
@@ -73,7 +76,32 @@ test('policy: Top10 consolida itens HTTP + unidade/ultima_compra; item.total lí
   assert.equal(top[0].valor_total, 40);
   assert.equal(top.find((r) => r.produto_id === 'a')?.unidade, 'CX');
   assert.equal(top.find((r) => r.produto_id === 'a')?.ultima_compra, '2026-01-10');
+  assert.equal(top.find((r) => r.produto_id === 'b')?.unidade, null);
   assert.equal(resolveValorItemHistorico({ quantidade: 10, preco_unitario: 20, total: 5 }), 5);
+});
+
+test('policy compartilhada #441: KG≠UN; unidades mistas não somam; preço por data', () => {
+  const mistos = consolidateTopProdutosFromPedidos([
+    {
+      data_pedido: '2025-01-01',
+      itens: [
+        { produto_id: 'c', descricao: 'Cimento', quantidade: 2, preco_unitario: 10, total: 20, unidade_sigla: 'KG' },
+      ],
+    },
+    {
+      data_pedido: '2026-06-01',
+      itens: [
+        { produto_id: 'c', descricao: 'Cimento', quantidade: 3, preco_unitario: 50, total: 150, unidade_sigla: 'PC' },
+        { produto_id: 'c', descricao: 'Cimento', quantidade: 1, preco_unitario: 99, total: 99, unidade_sigla: 'KG' },
+      ],
+    },
+  ], { limit: 10 });
+  const kg = mistos.find((r) => r.unidade === 'KG');
+  const pc = mistos.find((r) => r.unidade === 'PC');
+  assert.ok(kg && pc);
+  assert.equal(kg.quantidade_total, 3); // 2+1 KG — não mistura com PC
+  assert.equal(pc.quantidade_total, 3);
+  assert.equal(kg.ultimo_preco, 99); // data 2026-06 vence 2025-01
 });
 
 function buildReact() {
@@ -399,6 +427,39 @@ test('Top10 HTTP: página incompleta banner; ranking com item.total', async () =
   assert.ok(findByAction(tree, 'top10-produtos-pagina-incompleta').length >= 1);
   const txt = textOf(tree);
   assert.ok(txt.indexOf('LiquidoTopo') < txt.indexOf('BrutoAlto'));
+});
+
+test('Top10 HTTP Pacote B: KG comprovado; ausência de unidade ≠ inventar UN no motivo', async () => {
+  const { tree } = await mountTop10({
+    queryResults: {
+      'top10-pedidos-cliente-contexto': {
+        data: {
+          data: [{
+            id: 'p1',
+            data_pedido: '2026-03-01',
+            itens: [
+              { produto_id: 'kg1', descricao: 'AreiaKG', quantidade: 2, preco_unitario: 30, total: 60, unidade_sigla: 'KG' },
+              { produto_id: 'sem', descricao: 'SemUnidade', quantidade: 1, preco_unitario: 10, total: 10 },
+            ],
+          }],
+          meta: { limit: 200, offset: 0, total: 1, hasMore: false },
+        },
+        isError: false,
+        isFetching: false,
+        isLoading: false,
+      },
+      'top10-produtos-disponiveis-contexto': {
+        data: [],
+        isLoading: false,
+        isError: false,
+        isFetching: false,
+      },
+    },
+  });
+  const txt = textOf(tree);
+  assert.match(txt, /2 KG/);
+  assert.match(txt, /1 —/);
+  assert.doesNotMatch(txt, /1 UN|UN anteriormente/);
 });
 
 test('Sugestoes HTTP: erro → banner (não return null silencioso)', async () => {
