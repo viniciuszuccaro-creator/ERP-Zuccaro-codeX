@@ -33,3 +33,7 @@ Independente da candidata. Empilha em #441 (policy compartilhada). Sem merge ofi
 - Top10: created_at no payload IA; fallback sem score_confianca heurístico; catálogo preserva unidade/preço.
 - Sugestões: consolidate limit null → ordena frequência → slice 3; preço ausente → —.
 - Testes: 10+21 PASS. CI verde ≠ aceite montado.
+
+## CI SUCCESS tip 1570f35ab (2026-10-30 America/Sao_Paulo)
+- Runs: push `41102422599` · PR `41102429708` — SUCCESS 6/6.
+- Aguarda `@codex` montado (created_at / score / unit-preço / limit).

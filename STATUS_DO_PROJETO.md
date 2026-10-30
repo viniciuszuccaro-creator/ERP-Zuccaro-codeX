@@ -1,16 +1,17 @@
-## CURSOR — VIGENTE (#442 residual: created_at / score / unit-preço / limit) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#442 tip 1570f35ab CI SUCCESS — residual ETAPA A) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/recuperacao-top10-sugestoes-http-392b` ← #441 `9dfb956e4` |
-| **Fix** | created_at IA · sem heurística como confiança · catálogo≠mistura unidade/preço · Sugestões limit null |
-| **Policy** | compartilhada #441 (zero comprovado; ultimo_preco null) — sem duplicar |
-| **Testes** | top10-sugestoes **10 PASS** + origem **21 PASS** = **31** |
+| **Tip** | `1570f35ab` — CI SUCCESS 6/6 (`41102422599` push · `41102429708` PR) |
+| **Fix** | created_at IA · sem heurística como confiança · catálogo≠mistura · Sugestões limit null |
+| **Policy** | compartilhada #441 — sem duplicar |
+| **Testes** | top10 + origem **31 PASS** |
+| **Codex** | `@codex review` pedido — CI verde ≠ aceite montado |
 | **#401** | `34c4c0ee` — **fora**; não integrar |
 | Fora | merge main · deploy · seed |
 
 **Evidência:** `docs/evidence/recuperacao-top10-sugestoes-http-20261030.txt`
-**Próximo:** push + CI + `@codex` montado.
+**Próximo:** contraprova Codex montada; #401 intacta.
 
 ## CURSOR — VIGENTE (#441 residual P2 preço zero + created_at) (2026-10-30 America/Sao_Paulo)
 
