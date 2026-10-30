@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Contatos embed sky — indep. pós #448) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | #448 `8684ba8b0` Gestores sky CI SUCCESS |
+| **Escopo** | `GerenciarContatosClienteForm` chrome azul-clara (espelho Endereços #447) |
+| **Preservado** | RBAC · persistBusy · assertScope · data-actions · sem inventar registros |
+| **Testes** | cadastros-contatos-enderecos-rbac — **10 PASS** |
+| **#446/#401** | fora desta candidata |
+| Fora | merge main · deploy · seed · visual≠registros |
+
+**Evidência:** `docs/evidence/recuperacao-contatos-embed-sky-20261030.txt`
+**Próximo:** CI tip + `@codex`; #446 residual em paralelo na outra branch.
+
 ## CURSOR — VIGENTE (#448 tip 25450a049 CI SUCCESS — Gestores sky) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
