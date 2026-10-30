@@ -1,0 +1,26 @@
+Recuperação indep. — CentroOperacao sky windowMode + ID técnico (2026-10-30 America/Sao_Paulo)
+=============================================================================================
+Base: #407 tip `ba431a2af` (cursor/recuperacao-config-comprovante-392b) — CI SUCCESS
+Branch: cursor/recuperacao-centro-operacao-sky-392b
+Fora: candidata #401 · #434 Contatos · Pacote A contagens #431 · merge main · deploy · VPS
+
+## Classificação (matriz erp-integra)
+Melhoria útil da experiência azul-clara aprovada no form existente.
+Não é perda de dados; ID técnico + RecordState + RBAC já existiam.
+windowMode era prop aceita sem chrome — integração visual incompleta no existente.
+
+## Mudança (somente existente)
+`src/components/cadastros/CentroOperacaoForm.jsx`
+- windowMode: header `from-sky-50 to-sky-100` + `w-full h-full`
+- ID técnico visível na edição (fonte mono)
+- botão/bordas sky (substitui blue do submit)
+- preserva: CadastroCodigoRegistroField idOnly, RecordState, sanitize, multiempresa, data-permission
+
+## Não feito
+- count+1 / geração de código no browser
+- módulo paralelo / 3º form
+- seed fictício / registros
+- swap serviço/repo
+
+## Checks
+`tests/recuperacao-centro-operacao-sky.test.js` + focados sky/comprovante aplicáveis
