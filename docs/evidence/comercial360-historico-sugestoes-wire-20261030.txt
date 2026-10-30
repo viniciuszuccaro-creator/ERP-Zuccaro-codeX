@@ -103,3 +103,14 @@ Fechamento dos resíduos do modal no tip #446 (sem inventar UN/preço/custo/esto
 7. Positivos preservados: qty editável, confirmação única, status lock, leitura sem fake action.
 
 Testes: 14 PASS (modal + wire + mount). #401 fora — mapa port atualizado sem merge.
+
+## CI SUCCESS tip c52cc707a (2026-10-30 America/Sao_Paulo)
+- Runs SUCCESS 6/6 — push `41120413232` · PR `41120421114`.
+- Codex montado no tip: P1 visual≠pedido na geração; P2 margemVioladaEfetiva (custo desconhecido).
+- CI verde ≠ aceite; #401 fora.
+
+## Codex P1/P2 pós c52cc707a (2026-10-30 America/Sao_Paulo)
+1. `buildHistoricoModalGeracao`: slots pedidoEmpresaId/pedidoGroupId + visualEmpresaId/visualGroupId.
+2. Modal: `margemVioladaEfetiva`; UI/botão/justificativa/`_calculo_detalhado` sem custo/margem fabricados.
+3. Estoque insuficiente só com estoqueComprovado.
+Testes: 14 PASS. #401 fora.

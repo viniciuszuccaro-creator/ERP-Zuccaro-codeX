@@ -1,20 +1,30 @@
+## CURSOR — VIGENTE (#446 Codex P1/P2 pós CI c52cc707a) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **CI tip** | `c52cc707a` SUCCESS 6/6 (`41120413232` push · `41120421114` PR) |
+| **P1** | geração: slots `pedidoEmpresaId`/`visualEmpresaId` separados — seletor global invalida mesmo com formData.empresa_id |
+| **P2** | `margemVioladaEfetiva` — UI/botão/justificativa/detalhes só com custo comprovado; ausente → "—" |
+| **Testes** | adicionar-historico-modal + wire + mount — **14 PASS** |
+| **Codex** | pedir review tip novo — CI ≠ aceite montado |
+| **#401** | fora até limpo |
+| Fora | merge main · deploy · seed · inventar UN/preço/custo |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** CI tip Codex-fix + aceite montado; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 residual contexto/preço/custo/estoque fail-closed) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Base tip** | `54fcd026d` CI SUCCESS — residual sobre modal canônico |
-| **Contexto** | `buildHistoricoModalGeracao` + effect: troca cliente/empresa/grupo/ator fecha modal obsoleto; confirm rejeita geracao ≠ atual; rascunho preservado |
-| **Preço** | `precoComprovadoDisponivel` / `numeroComprovado` — ausente ≠ 0; zero finito ok; justificativa margem ≠ fabricar preço |
-| **Custo/estoque** | omitidos sem fonte; UI "—"; sem inventar Sob Encomenda / margem 0 |
-| **Unidade** | só se comprovada (ausente ≠ UN) |
-| **Positivos** | qty editável · confirmação única · status lock · rejeição · leitura sem ação fictícia |
-| **Testes** | adicionar-historico-modal + wire + mount — **14 PASS** |
-| **Codex** | pedir `@codex review` tip novo — CI ≠ aceite |
-| **#401** | `34c4c0ee` — **fora**; mapa port atualizado sem merge/backend |
-| Fora | merge main · deploy · seed · inventar UN/preço/custo/estoque |
+| **Tip** | `c52cc707a` — CI SUCCESS 6/6 |
+| **Contexto** | `buildHistoricoModalGeracao` + effect; confirm rejeita geracao ≠ atual |
+| **#401** | fora |
+| Fora | merge main · deploy · seed |
 
-**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · `docs/evidence/comercial360-446-port-mapa-401-20261030.txt`
-**Próximo:** CI tip + Codex montado; port #401 só após limpo.
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** Codex P1/P2 tip; port #401 só após limpo.
 
 ## CURSOR — VIGENTE (#446 tip 54fcd026d CI SUCCESS — residual + typecheck) (2026-10-30 America/Sao_Paulo)
 
