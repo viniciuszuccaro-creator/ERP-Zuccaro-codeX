@@ -24,3 +24,7 @@ node --test tests/cadastros-org-id-tecnico-sky.test.js
 Fora
 ----
 merge main · deploy · carga · Auth VPS · ampliar #446
+
+## CI SUCCESS tip d74debd88 — runs 5588/5589 (2026-10-30 America/Sao_Paulo)
+- Push **5588** · PR **5589** SUCCESS 6/6.
+- Melhoria UX ID técnico; ≠ recuperação de registros.
