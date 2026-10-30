@@ -16,10 +16,16 @@ export function scopeListCacheRemainder(source) {
 
   result = peelOnce(
     result,
-    `  // Contagem — erro ≠ zero: countsUnavailable impede KPI/seleção cross-page com total fabricado
+    `  // Contagem — erro ≠ zero; loading ≠ 0: total desconhecido até number validado (Codex P1 a9948387).
   const { counts, isLoading: countsLoading, countsUnavailable } = useEntityCounts(ENTITY ? [ENTITY] : []);
-  const totalCount = countsUnavailable ? null : Number((counts && counts[ENTITY]) || 0);
-  const countKnown = typeof totalCount === "number";
+  const rawEntityCount = counts && Object.prototype.hasOwnProperty.call(counts, ENTITY)
+    ? counts[ENTITY]
+    : undefined;
+  const countKnown = !countsUnavailable
+    && typeof rawEntityCount === "number"
+    && Number.isSafeInteger(rawEntityCount)
+    && rawEntityCount >= 0;
+  const totalCount = countKnown ? rawEntityCount : null;
 
   useEffect(function() {
     if (countsUnavailable && crossPageAll) {
@@ -98,8 +104,8 @@ export function scopeListCacheRemainder(source) {
           >
             {countsUnavailable
               ? <span aria-label="Contagem indisponível">—</span>
-              : (countsLoading && totalCount === 0)
-                ? <span className="animate-pulse text-[10px]">···</span>
+              : !countKnown
+                ? <span className="animate-pulse text-[10px]" data-counts-unknown-during-load="true" aria-label="Contagem carregando">···</span>
                 : totalCount.toLocaleString("pt-BR")}
           </Badge>
 `,
@@ -114,7 +120,14 @@ export function scopeListCacheRemainder(source) {
 
   result = peelOnce(
     result,
-    `        <span>Pág. {page} · {items.length} exibidos · {countsUnavailable ? "total indisponível" : (totalCount + " total")}</span>
+    `        <span>
+          Pág. {page} · {items.length} exibidos ·{" "}
+          {countsUnavailable
+            ? "total indisponível"
+            : !countKnown
+              ? "total …"
+              : (totalCount + " total")}
+        </span>
 `,
     `        <span>Pág. {page} · {items.length} exibidos · {totalCount} total</span>
 `,
