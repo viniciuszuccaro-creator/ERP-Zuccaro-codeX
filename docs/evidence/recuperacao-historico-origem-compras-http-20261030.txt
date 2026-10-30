@@ -1,0 +1,31 @@
+Recuperação — HistoricoOrigemCliente + HistoricoComprasCliente HTTP fail-closed
+==============================================================================
+Data: 2026-10-30 America/Sao_Paulo
+Branch: cursor/recuperacao-historico-origem-compras-http-392b
+Base: #437 tip `1cde82af7` (HistoricoClienteTab HTTP CI SUCCESS)
+Fora: candidata #401 · merge main · deploy · seed fictício · portal/HistoricoComprasCliente
+
+## Diagnóstico
+- HistoricoOrigemCliente: `filterInContext("Pedido")` + `initialData: []` — em HTTP
+  facade/erro virava canal ausente (null) ou distribuição inventada.
+- HistoricoComprasCliente: `catch → return []` (erro=vazio) + só `itens_revenda`
+  (ignorava `itens` HTTP) + custo/estoque fictícios no Adicionar (0.6× / 100).
+- Classificação: integração incompleta (B/D parcial) — tela existia; fonte HTTP incompleta.
+  Não é perda de registro de negócio; não fabricar dados.
+
+## Mudança (existente)
+| Arquivo | Decisão |
+|---------|---------|
+| HistoricoOrigemCliente.jsx | HTTP `loadPedidosHistoricoHttp`; legado `filterInContext`; banner `historico-origem-http-indisponivel`; página incompleta → % "—" |
+| HistoricoComprasCliente.jsx | Idem + sem catch→[]; chrome sky; remove custo/estoque inventados no payload |
+| historicoComprasClientePolicy.js | Extração: `extractItensPedidoHistorico` + `consolidateTopProdutosFromPedidos` (itens + itens_*) |
+
+Reutiliza: `loadPedidosHistoricoHttp` / `historicoSessionCacheKey` (HistoricoProdutosCliente).
+Keep both: portal/HistoricoComprasCliente; DetalhesCliente (#436) / HistoricoClienteTab (#437) paralelos — sem 3º módulo.
+
+## Testes
+`tests/historico-origem-compras-http-failclosed.test.js` — 7 PASS
+(contrato; consolidate; erro≠vazio Origem/Compras; queryFn HTTP; página incompleta)
+
+## Relação #401
+Independente. Candidata tip `88332170e` (contagens+P2 Visualizador) intocada neste pacote.

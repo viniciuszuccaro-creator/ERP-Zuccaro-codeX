@@ -8,10 +8,19 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { History, TrendingUp, ShoppingCart, ShieldAlert } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { resolveErpBackendMode } from "@/api/runtimeBackend";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import {
+  historicoSessionCacheKey,
+  loadPedidosHistoricoHttp,
+} from "./HistoricoProdutosCliente";
+
+const PEDIDOS_ORIGEM_LIMIT = 200;
 
 /**
  * V21.6 - Histórico de Origens de um Cliente
- * Mostra preferências e padrões de compra por canal
+ * Mostra preferências e padrões de compra por canal.
+ * HTTP: reutiliza loadPedidosHistoricoHttp — erro/indisponível ≠ canal vazio.
  */
 export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -20,20 +29,76 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
   const contextoValido = Boolean(groupId || empresaId);
+  const httpMode = resolveErpBackendMode() === "http";
+  const sessionSnapshot = readErpHttpSession();
+  const sessionActorId = sessionSnapshot?.actorId || null;
+  const sessionCacheKey = historicoSessionCacheKey(sessionSnapshot);
   const podeVisualizarHistorico =
     hasPermission("Comercial.Pedido.visualizar") ||
     hasPermission("CRM.Cliente.visualizar") ||
     hasPermission("comercial", "visualizar_pedido");
-  const consultaHabilitada = Boolean(clienteId && contextoValido && podeVisualizarHistorico);
+  const consultaHabilitada = Boolean(
+    clienteId
+      && contextoValido
+      && podeVisualizarHistorico
+      && (!httpMode || (empresaId && sessionActorId && sessionCacheKey)),
+  );
 
-  const { data: pedidosCliente = [], isLoading } = useQuery({
-    queryKey: ["pedidos-cliente-origem-contexto", clienteId, groupId, empresaId, contexto],
-    queryFn: () => filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", 200),
-    initialData: [],
-    enabled: consultaHabilitada
+  const {
+    data: pedidosPage,
+    isError: pedidosErro,
+    isFetching: pedidosFetching,
+    isLoading,
+  } = useQuery({
+    queryKey: [
+      "pedidos-cliente-origem-contexto",
+      clienteId,
+      groupId,
+      empresaId,
+      contexto,
+      sessionActorId,
+      sessionCacheKey,
+      httpMode ? "http" : "legado",
+    ],
+    queryFn: async ({ signal }) => {
+      if (!clienteId || !contextoValido || !podeVisualizarHistorico) {
+        throw Object.assign(new Error("Historico de origem bloqueado: contexto ou permissao ausente."), {
+          code: "ORIGEM_CONTEXT_DENIED",
+        });
+      }
+      if (httpMode) {
+        if (!empresaId) {
+          throw Object.assign(new Error("Historico de origem HTTP exige empresa no contexto."), {
+            code: "EMPRESA_CONTEXT_REQUIRED",
+          });
+        }
+        return loadPedidosHistoricoHttp({
+          clienteId,
+          groupId,
+          empresaId,
+          signal,
+          limit: PEDIDOS_ORIGEM_LIMIT,
+          offset: 0,
+          expectedActorId: sessionActorId,
+          expectedSessionKey: sessionCacheKey,
+        });
+      }
+      const rows = await filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", PEDIDOS_ORIGEM_LIMIT);
+      const data = Array.isArray(rows) ? rows : [];
+      return {
+        data,
+        meta: { limit: PEDIDOS_ORIGEM_LIMIT, offset: 0, total: data.length, hasMore: false },
+      };
+    },
+    enabled: consultaHabilitada,
+    staleTime: 60_000,
+    retry: false,
   });
 
-  if (!clienteId || isLoading) return null;
+  const pedidosCliente = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
+  const dadosDisponiveis = consultaHabilitada && !pedidosErro && pedidosPage != null;
+
+  if (!clienteId) return null;
 
   if (!contextoValido || !podeVisualizarHistorico) {
     if (compact) return null;
@@ -47,15 +112,78 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
     );
   }
 
+  if (httpMode && (!empresaId || !sessionActorId || !sessionCacheKey)) {
+    if (compact) {
+      return (
+        <div
+          className="w-full h-full flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200"
+          data-action="historico-origem-http-indisponivel"
+          data-permission="Comercial.Pedido.visualizar"
+        >
+          <History className="w-4 h-4 text-amber-700" />
+          <p className="text-xs text-amber-800">Canal preferido indisponível (HTTP sem empresa/sessão).</p>
+        </div>
+      );
+    }
+    return (
+      <Alert
+        className="w-full h-full border-amber-200 bg-amber-50"
+        data-action="historico-origem-http-indisponivel"
+        data-permission="Comercial.Pedido.visualizar"
+      >
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Histórico de canais HTTP exige empresa no contexto e sessão autenticada — não inventar distribuição vazia.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoading || (pedidosFetching && !dadosDisponiveis)) {
+    if (compact) return null;
+    return (
+      <Card className="w-full h-full border-sky-200 bg-sky-50/40" data-action="historico-origem-carregando">
+        <CardContent className="p-4 text-sm text-slate-600">Carregando histórico de canais…</CardContent>
+      </Card>
+    );
+  }
+
+  if (pedidosErro || !dadosDisponiveis) {
+    if (compact) {
+      return (
+        <div
+          className="w-full h-full flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200"
+          data-action="historico-origem-http-indisponivel"
+          data-permission="Comercial.Pedido.visualizar"
+        >
+          <History className="w-4 h-4 text-amber-700" />
+          <p className="text-xs text-amber-800">Canal preferido indisponível (consulta falhou).</p>
+        </div>
+      );
+    }
+    return (
+      <Alert
+        className="w-full h-full border-amber-200 bg-amber-50"
+        data-action="historico-origem-http-indisponivel"
+        data-permission="Comercial.Pedido.visualizar"
+      >
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Não foi possível carregar o histórico de canais. Erro ≠ ausência de pedidos.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (pedidosCliente.length === 0) return null;
 
   const porOrigem = pedidosCliente.reduce((acc, p) => {
-    const origem = p.origem_pedido || "Manual";
+    const origem = p.origem_pedido || p.origem || "Manual";
     if (!acc[origem]) {
       acc[origem] = { count: 0, valor: 0 };
     }
     acc[origem].count++;
-    acc[origem].valor += p.valor_total || 0;
+    acc[origem].valor += Number(p.valor_total) || 0;
     return acc;
   }, {});
 
@@ -68,32 +196,43 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
   const CORES = ["#3b82f6", "#22c55e", "#a855f7", "#f97316", "#ef4444", "#eab308", "#ec4899", "#06b6d4"];
   const origemPreferida = dadosPizza[0];
   const percentualPreferida = (origemPreferida.value / pedidosCliente.length) * 100;
+  const paginaIncompleta = Boolean(pedidosPage?.meta?.hasMore)
+    || (Number.isFinite(Number(pedidosPage?.meta?.total))
+      && Number(pedidosPage.meta.total) > pedidosCliente.length);
 
   if (compact) {
     return (
-      <div className="w-full h-full flex items-center gap-2 p-3 bg-slate-50 rounded-lg border" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
-        <History className="w-4 h-4 text-slate-600" />
+      <div className="w-full h-full flex items-center gap-2 p-3 bg-sky-50 rounded-lg border border-sky-200" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
+        <History className="w-4 h-4 text-sky-700" />
         <div className="flex-1">
           <p className="text-xs text-slate-600">Canal Preferido:</p>
           <BadgeOrigemPedido origemPedido={origemPreferida.name} showLock={false} />
         </div>
-        <Badge className="bg-blue-100 text-blue-700">
-          {percentualPreferida.toFixed(0)}%
+        <Badge className="bg-sky-100 text-sky-800">
+          {paginaIncompleta ? "—" : `${percentualPreferida.toFixed(0)}%`}
         </Badge>
       </div>
     );
   }
 
   return (
-    <Card className="w-full h-full border-blue-300 bg-gradient-to-br from-blue-50 to-slate-50" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
+    <Card className="w-full h-full border-sky-300 bg-gradient-to-br from-sky-50 to-slate-50" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <History className="w-5 h-5 text-blue-600" />
+          <History className="w-5 h-5 text-sky-600" />
           Histórico de Canais
         </CardTitle>
         <p className="text-xs text-slate-600 mt-1">
-          Análise de {pedidosCliente.length} pedidos deste cliente
+          Análise de {paginaIncompleta ? "—" : pedidosCliente.length} pedidos deste cliente
+          {paginaIncompleta ? " (página incompleta — sem % inventado)" : ""}
         </p>
+        {paginaIncompleta ? (
+          <Alert className="mt-2 border-amber-200 bg-amber-50" data-action="historico-origem-pagina-incompleta">
+            <AlertDescription className="text-amber-800 text-xs">
+              Há mais pedidos além desta página. Percentuais de canal ficam indisponíveis até agregação completa.
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -105,7 +244,8 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) =>
+                    paginaIncompleta ? name : `${name}: ${(percent * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -134,7 +274,7 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
                   <div className="flex items-center justify-between mb-2">
                     <BadgeOrigemPedido origemPedido={origem.name} showLock={false} />
                     <Badge className="bg-slate-100 text-slate-700">
-                      {percentual.toFixed(0)}%
+                      {paginaIncompleta ? "—" : `${percentual.toFixed(0)}%`}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs">
@@ -152,10 +292,11 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
           </div>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-900">
+        <div className="mt-4 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+          <p className="text-sm text-sky-900">
             <TrendingUp className="w-4 h-4 inline mr-1" />
-            <strong>Canal Preferido:</strong> {origemPreferida.name} ({percentualPreferida.toFixed(0)}% dos pedidos)
+            <strong>Canal Preferido:</strong> {origemPreferida.name}
+            {paginaIncompleta ? " (participação % indisponível — página incompleta)" : ` (${percentualPreferida.toFixed(0)}% dos pedidos)`}
           </p>
         </div>
       </CardContent>
