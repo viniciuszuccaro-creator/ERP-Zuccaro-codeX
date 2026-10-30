@@ -17,6 +17,10 @@ import {
 } from "./HistoricoProdutosCliente";
 
 const ULTIMO_PEDIDO_FETCH_LIMIT = 5;
+/** Páginas HTTP máximas ao pular prefixo só-cancelados (Codex P2). */
+const ULTIMO_PEDIDO_HTTP_MAX_PAGES = 10;
+/** Legado: janela maior — filterInContext sem hasMore. */
+const ULTIMO_PEDIDO_LEGADO_LIMIT = 50;
 
 /** @param {{ status?: string } | null | undefined} pedido */
 export function isCopiarPedidoCancelado(pedido) {
@@ -84,6 +88,33 @@ export function pickUltimoPedidoNaoCancelado(pedidos) {
 }
 
 /**
+ * Pagina HTTP até achar pedido elegível ou esgotar `hasMore`.
+ * Lista inclui CANCELADO; limitar só a 1ª página ocultaria elegíveis seguintes (Codex P2).
+ *
+ * @param {{
+ *   loadPage: (args: { limit: number, offset: number }) => Promise<{ data?: unknown[], meta?: { hasMore?: boolean, limit?: number, offset?: number } }>,
+ *   limit?: number,
+ *   maxPages?: number,
+ * }} options
+ */
+export async function findUltimoPedidoNaoCanceladoPaginado({
+  loadPage,
+  limit = ULTIMO_PEDIDO_FETCH_LIMIT,
+  maxPages = ULTIMO_PEDIDO_HTTP_MAX_PAGES,
+}) {
+  let offset = 0;
+  for (let pageIdx = 0; pageIdx < maxPages; pageIdx += 1) {
+    const page = await loadPage({ limit, offset });
+    const picked = pickUltimoPedidoNaoCancelado(page?.data);
+    if (picked) return picked;
+    if (!page?.meta?.hasMore) return null;
+    const step = Number(page?.meta?.limit) || limit;
+    offset += step;
+  }
+  return null;
+}
+
+/**
  * V21.1.2 - WINDOW MODE READY
  * Repetir último pedido do cliente — HTTP fail-closed (≠ base44 cru).
  * Keep both: capacidade distinta de HistoricoClienteTab / DetalhesCliente / HistoricoProdutosCliente.
@@ -139,23 +170,25 @@ export default function CopiarUltimoPedido({ clienteId, onCopiar, windowMode = f
             code: "EMPRESA_CONTEXT_REQUIRED",
           });
         }
-        const page = await loadPedidosHistoricoHttp({
-          clienteId,
-          groupId,
-          empresaId,
-          signal,
-          limit: ULTIMO_PEDIDO_FETCH_LIMIT,
-          offset: 0,
-          expectedActorId: sessionActorId,
-          expectedSessionKey: sessionCacheKey,
+        return findUltimoPedidoNaoCanceladoPaginado({
+          loadPage: ({ limit, offset }) =>
+            loadPedidosHistoricoHttp({
+              clienteId,
+              groupId,
+              empresaId,
+              signal,
+              limit,
+              offset,
+              expectedActorId: sessionActorId,
+              expectedSessionKey: sessionCacheKey,
+            }),
         });
-        return pickUltimoPedidoNaoCancelado(page?.data);
       }
       const rows = await filterInContext(
         "Pedido",
         { cliente_id: clienteId },
         "-data_pedido",
-        ULTIMO_PEDIDO_FETCH_LIMIT,
+        ULTIMO_PEDIDO_LEGADO_LIMIT,
       );
       return pickUltimoPedidoNaoCancelado(rows);
     },

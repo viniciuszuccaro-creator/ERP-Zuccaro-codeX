@@ -94,12 +94,13 @@ function buildSandbox({
   return { sandbox, queries };
 }
 
-test('helpers: pick ignora cancelado; itens HTTP → revenda', async () => {
+test('helpers: pick ignora cancelado; itens HTTP → revenda; pagina além de cancelados', async () => {
   const compiled = await compileJsx(new URL('../src/components/comercial/CopiarUltimoPedido.jsx', import.meta.url));
   const { sandbox } = buildSandbox();
   vm.runInNewContext(`var React = require("react");\n${compiled}`, sandbox);
   const {
     pickUltimoPedidoNaoCancelado,
+    findUltimoPedidoNaoCanceladoPaginado,
     resolveCopiarPedidoItensRevenda,
     copiarPedidoValorTotal,
     isCopiarPedidoCancelado,
@@ -115,6 +116,27 @@ test('helpers: pick ignora cancelado; itens HTTP → revenda', async () => {
   assert.equal(itens.length, 1);
   assert.equal(itens[0].descricao, 'A');
   assert.equal(itens[0].valor_item, 90);
+
+  let pages = 0;
+  const found = await findUltimoPedidoNaoCanceladoPaginado({
+    limit: 5,
+    maxPages: 10,
+    loadPage: async ({ offset }) => {
+      pages += 1;
+      if (offset === 0) {
+        return {
+          data: Array.from({ length: 5 }, (_, i) => ({ id: `c${i}`, status: 'CANCELADO' })),
+          meta: { hasMore: true, limit: 5, offset: 0 },
+        };
+      }
+      return {
+        data: [{ id: 'elegivel', status: 'FINALIZADO', total: 10 }],
+        meta: { hasMore: false, limit: 5, offset: 5 },
+      };
+    },
+  });
+  assert.equal(found?.id, 'elegivel');
+  assert.equal(pages, 2);
 });
 
 test('HTTP sem sessão: banner indisponível (≠ return null silencioso)', async () => {

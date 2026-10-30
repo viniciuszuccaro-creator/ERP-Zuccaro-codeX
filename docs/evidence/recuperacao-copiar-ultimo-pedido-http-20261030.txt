@@ -29,3 +29,8 @@ typecheck local sem erro neste arquivo · git diff --check limpo
 Fora
 ----
 merge/deploy/carga · #401 candidata intacta
+
+## Codex P2 paginação cancelados (2026-10-30 America/Sao_Paulo)
+- Achado: 1ª página só CANCELADO ocultava elegível com hasMore.
+- Fix: findUltimoPedidoNaoCanceladoPaginado; legado limit 50.
+- Testes: 4 PASS.
