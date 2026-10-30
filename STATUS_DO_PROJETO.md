@@ -1,3 +1,27 @@
+## CURSOR — VIGENTE (P2 Produto sky + remainder CRLF) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#433** `cursor/recuperacao-produto-sky-window-392b` |
+| **Fix** | sky+ID V22/Completo; `produtoWindowSkyRemainder` peels + **preserva CRLF** (query-v5) / LF (stage46) |
+| **Pins** | product-query `67a27312…` · stage46 product `c26ca71d…` — sem pin cego |
+| **#431/#432** | tip docs CI SUCCESS 6/6 — residual Codex HTTP `Cliente.get` em pacote #431 |
+| Preferir | fechar residual #431 get-by-id; #401 intacta |
+
+**Evidência:** `docs/evidence/recuperacao-produto-sky-window-20261030.txt`
+
+## CURSOR — VIGENTE (P2 Produto sky window) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-produto-sky-window-392b` |
+| **Base** | #432 tip (cadeia CI verde) — ortogonal |
+| **Fix** | Produto V22 windowMode sky+ID; Completo legado keep-both |
+| **#431/#432** | tip código CI SUCCESS — não reabrir |
+| Preferir | #409 · Funil #408 já aberto |
+
+**Evidência:** `docs/evidence/recuperacao-produto-sky-window-20261030.txt`
+
 ## CURSOR — VIGENTE (#431+#432 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

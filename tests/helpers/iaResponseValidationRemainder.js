@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import ts from 'typescript';
 import {partialInputRemainder} from './partialInputRemainder.js';
 import {cadastroCodigoRegistroRemainder} from './cadastroCodigoRegistroRemainder.js';
+import {produtoWindowSkyRemainder} from './produtoWindowSkyRemainder.js';
 
 const entries = {
   'src/components/comercial/CorteDobraIATab.jsx': ['validarPosicoesCorteDobraIA'],
@@ -19,6 +20,8 @@ const entries = {
 };
 
 export function iaResponseValidationRemainder(file, source) {
+  // #433: peels windowMode sky chrome before stage46 IA/query pins.
+  source = produtoWindowSkyRemainder(file, source);
   const entry = entries[file]; if (!entry) return source;
   source=partialInputRemainder(file,source);
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);

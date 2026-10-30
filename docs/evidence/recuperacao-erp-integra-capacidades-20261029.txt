@@ -54,7 +54,15 @@ Atualização (2026-10-29) — fila sky pós-#417
   (+ ChatbotIntents propaga windowMode). Pin: CentroOperacao / Boletos ID-only.
 - Evidência: cadastros-fiscal-admin-sky-20261029.txt
 
+Atualização (2026-10-30) — cadeia #431/#432 CI SUCCESS + Produto sky window
+- #431 tip `2277c5a33`: Contatos actorId + ausência pós-refetch + counts safe-int
+- #432 tip `7941f984a`: Endereços sync-lock + toast + remainder; merge #431
+- Produto canônico V22 windowMode: chrome sky + ID técnico (era só bg-white)
+- ProdutoFormCompleto legado: windowMode sky keep-both (Importação NFe) — sem V3
+- CentroOperacao (pin) / Boletos (ID-only) / Endereços embed: fora deste lote
+- Funil #408 já aberto — não duplicar
+
 Próximo capacidade a capacitar no existente
 1. Demo UI C360 contra backend isolado (HTTP+PG Codex já cobre convert; writes=0 ≠ E2E)
-2. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
-3. Forms ainda sem sky: CentroOperacao (pin) / Boletos (ID-only) / Produto legado / Endereços embed
+2. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — #408 keep both (não reabrir)
+3. Forms ainda sem sky: CentroOperacao (pin) / Boletos (ID-only) / Endereços embed

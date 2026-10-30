@@ -1434,8 +1434,28 @@ Caso contrário, sugira:
     </FormWrapper>
   );
 
+  // Recuperação azul-clara (erp-integra): chrome sky + ID técnico no windowMode existente.
+  // Keep both com ProdutoFormCompleto; sem 3º módulo; sem alterar persistência/RBAC.
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    const boundId = produto?.id || null;
+    return (
+      <div className="w-full h-full flex flex-col bg-white" data-produto-v22-window-sky="true">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 shrink-0">
+          <Package className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {boundId ? 'Editar Produto' : 'Novo Produto'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto min-h-0">
+          {boundId ? (
+            <p className="text-xs text-slate-500 px-4 pt-3">
+              ID técnico: <span className="font-mono">{String(boundId)}</span>
+            </p>
+          ) : null}
+          {content}
+        </div>
+      </div>
+    );
   }
 
   return content;
