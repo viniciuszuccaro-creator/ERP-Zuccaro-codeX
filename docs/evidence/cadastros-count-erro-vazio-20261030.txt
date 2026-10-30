@@ -11,6 +11,7 @@ Este tip: Contatos binding imutável + normalize sem coerção + testes função
 | null/false/''/-1/1.5/overflow → 0 | `isValidCountValue`: typeof number ∧ safe-int ∧ ≥0 |
 | testes só regex localização | import real `buildContextFilter` / reexport assert |
 | ator A→B mesmo grupo/empresa/cliente (parecer bebaad9ec) | `actorId` via `readErpHttpSession` em scopePair/key/queryKey/bound/assert; **sem token** em cache/log |
+| success/data=null após load (ausência pós-refetch) | efeito `setBound(null)`; UI `data-contatos-read-empty`; row.id deve bater clienteId |
 
 ## Comportamentos
 - Erro ≠ vazio ≠ parcial

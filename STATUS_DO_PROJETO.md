@@ -1,11 +1,11 @@
-## CURSOR — VIGENTE (#431 actorId + Contatos bind) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#431 actorId + ausência pós-refetch) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
-| **Sobre** | tip anterior `bebaad9ec` CI 6/6; residual ator |
-| **Fix** | Contatos: `actorId` em scope/queryKey/bound/assert (sem token); gen invalida A→B ator |
-| **Codex** | achados empresa/counts/late ENCERRADOS; residual ator tratado neste tip |
+| **Sobre** | tip `789dae57f` actorId; residual ausência |
+| **Fix** | actorId + bind só com row confirmado; success/null e isError → `setBound(null)` + empty UI |
+| **Codex** | empresa/counts/late ENCERRADOS; ator + ausência pós-refetch neste tip |
 | **Base** | #430 Contatos keep-both · não integrar #401 ainda |
 | Preferir | #409 · estabilizar #431+#432 antes de novos pacotes dependentes |
 
