@@ -29,3 +29,8 @@ Não é perda de dados; não cria módulo paralelo.
 - graduação ID-only → reopen
 - Produto legado / Endereços embed (próximos residuais)
 - integração #401/#441/#442
+
+## CI SUCCESS tip 4c31434c5 (2026-10-30 America/Sao_Paulo)
+- CI SUCCESS 6/6 no tip código.
+- CI verde ≠ encerramento: aguarda `@codex review` montado.
+- Wire #446 empilha em #442 (fora desta branch).
