@@ -103,8 +103,9 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
       await Promise.resolve(onChange(contatosAtualizados));
       setDialogAberto(false);
       resetForm();
-    } catch {
-      // Mantém diálogo/form; pai já notificou e reverteu rascunho (Codex P2 #4410875120).
+    } catch (error) {
+      // Mantém diálogo/rascunho; comunica falha (não engolir — AGENTS § persistência).
+      toast.error(error?.message || "Falha ao salvar contatos.");
     } finally {
       setSalvando(false);
     }
@@ -145,8 +146,8 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange, 
     setSalvando(true);
     try {
       await Promise.resolve(onChange(contatosAtualizados));
-    } catch {
-      // Pai notifica/reverte; lista prop permanece a confirmada.
+    } catch (error) {
+      toast.error(error?.message || "Falha ao excluir contato.");
     } finally {
       setSalvando(false);
     }

@@ -1,31 +1,21 @@
-Pacote A / #431 — CI SUCCESS tip 5b5c2cd69 (2026-10-30 07:21 America/Sao_Paulo)
+Pacote A / #431 — tip Contatos bind + counts safe-int (2026-10-30 America/Sao_Paulo)
 =======================================================================================
-PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/431
-Branch: cursor/cadastros-count-erro-vazio-392b
-Tip: 5b5c2cd69c0904c812ce103376c03ddfd41b3bd1 — CI SUCCESS 6/6 (frontend+backend+compose × push/PR)
+Código base CI SUCCESS: 5b5c2cd69 · docs a4c03ed19
+Este tip: Contatos binding imutável + normalize sem coerção + testes função real.
 
-## Cadeia de tips
-| Tip | Resultado |
-|-----|-----------|
-| fde6dde99 | fix filtro + erro≠vazio + Contatos adapter |
-| 28b8e8d15 | remainder lastGoodData — FAIL canal publicação |
-| 9d339ce58 | canal hunk + cadastroCountFilter — FAIL pins + (parcial) |
-| f45da87a3 | pins canônicos — FAIL typecheck JSDoc |
-| **5b5c2cd69** | JSDoc fetchCadastrosAllCounts — **SUCCESS 6/6** |
+## Achados Codex (6520128216) tratados
+| Achado | Correção |
+|--------|----------|
+| loadedScopeRef promovido na troca → callback A grava em B | `bound` só no load sucesso; `editorGen` invalida; assert compara bound↔live |
+| leitura 403 → Form [] editável | `isError` → `data-contatos-read-error`; sem Form |
+| null/false/''/-1/1.5/overflow → 0 | `isValidCountValue`: typeof number ∧ safe-int ∧ ≥0 |
+| testes só regex localização | import real `buildContextFilter` / reexport assert |
 
-## Codex P1
-`src/components/lib/cadastroCountFilter.js` — única política CAMPO_CTX/SHARED.
-Consumidores: useEntityCounts + cadastrosAllCountsCore.
+## Comportamentos
+- Erro ≠ vazio ≠ parcial
+- Cross-empresa/grupo filtros distintos
+- Single Cliente.update; Form canônico; toast em catch do Form
+- #401 686ae322 intacta
 
-## Comportamentos comprovados
-- Erro consulta → badge `—` / banner; nunca zero falso
-- Vazio real (0) ≠ falha
-- Parcial → READ_COUNT_PARTIAL / batch incompleto descartado
-- Troca Grupo/Empresa → lastGoodData/everLoaded zerados (+ remainder pin e36231b3)
-- Tardia → queryKey escopo + placeholderData undefined
-- Sharing Cliente → shared:true + empresas_compartilhadas_ids
-- Negativos cross-empresa/grupo
-- Contatos: 1× Cliente.update · Form canônico · assertScope · sem 3º módulo
-
-## Fora / intacto
-#401 tip 686ae322 · Auth VPS · harness privado · preferir #409 · sem seed fictício
+## Limite de evidência
+Positivo mock invoke ≠ autorização backend SQL. Bridge HTTP filter≠session headers documentado; não remove tenant filters.

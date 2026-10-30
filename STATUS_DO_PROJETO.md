@@ -1,26 +1,25 @@
-## CURSOR — VIGENTE (Pacote D Endereços persistBusy) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#432 Endereços + merge #431) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/cadastros-audit-restante-392b` (sobre #431) |
-| **Fix** | Endereços = contrato Contatos (persistBusy + onChange async fail-closed) |
-| **#431** | tip código **`5b5c2cd69`** CI SUCCESS 6/6 · docs `a4c03ed19` |
-| **#401** | tip `686ae322` estável · harness BLOCKED (SHA256 Codex) |
-| Preferir | #409 · pins CentroOperacao/Boletos/Usuario/Grupo/Empresa intocados |
-| Próximo | CI deste pacote · harness Codex · residual sky só se sair do pin |
+| **PR** | **#432** `cursor/cadastros-audit-restante-392b` |
+| **Fix** | Endereços persistBusy/async + toast em falha; cadeia com #431 Contatos bind |
+| **#431** | tip Contatos bind + counts safe-int (merge) |
+| **#401** | tip `686ae322` estável · harness BLOCKED |
+| Preferir | #409 · estabilizar #431+#432 antes de novos pacotes dependentes |
 
 **Evidência:** `docs/evidence/cadastros-enderecos-persistbusy-20261030.txt` · `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
 
-## CURSOR — VIGENTE (#431 tip 5b5c2cd69 CI 6/6) (2026-10-30 07:21 America/Sao_Paulo)
+## CURSOR — VIGENTE (#431 Contatos bind + counts safe-int) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **PR** | **#431** tip **`5b5c2cd69`** — CI SUCCESS 6/6 |
-| **Fix** | `cadastroCountFilter` canônico · erro≠vazio · parcial≠total · canal pin · Contatos 1× save |
-| **Codex P1** | filtro compartilhado (sem 2ª implementação) |
-| **#401** | tip `686ae322` estável · harness ainda BLOCKED (SHA256 Codex) |
-| Preferir | #409 (não integrar #428 como delta distinto) |
-| Próximo | Pacote D cadastros restantes · etapas 2–5 ortogonais · harness Codex |
+| **PR** | **#431** `cursor/cadastros-count-erro-vazio-392b` |
+| **Sobre** | tip código `5b5c2cd69` CI 6/6 + docs `a4c03ed19` |
+| **Fix** | Contatos bind imutável/gen · erro≠Form vazio · counts safe-int≥0 · testes função real |
+| **Codex** | 6520128216 (callback A→B + coerção) tratado |
+| **#401** | tip `686ae322` estável · harness BLOCKED |
+| Preferir | #409 · estabilizar #431+#432 antes de novos pacotes dependentes |
 
 **Evidência:** `docs/evidence/cadastros-count-erro-vazio-20261030.txt`
 

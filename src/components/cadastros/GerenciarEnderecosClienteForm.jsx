@@ -149,8 +149,9 @@ export default function GerenciarEnderecosClienteForm({
       await Promise.resolve(onChange(enderecosAtualizados));
       setDialogAberto(false);
       resetForm();
-    } catch {
-      // Mantém diálogo/form; pai já notificou e reverteu rascunho.
+    } catch (error) {
+      // Mantém diálogo/rascunho; comunica falha (Codex P1 — não engolir).
+      toast.error(error?.message || "Falha ao salvar endereço.");
     } finally {
       setSalvando(false);
     }
@@ -191,8 +192,8 @@ export default function GerenciarEnderecosClienteForm({
     setSalvando(true);
     try {
       await Promise.resolve(onChange(enderecosAtualizados));
-    } catch {
-      // Pai notifica/reverte; lista prop permanece a confirmada.
+    } catch (error) {
+      toast.error(error?.message || "Falha ao excluir endereço.");
     } finally {
       setSalvando(false);
     }

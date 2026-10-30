@@ -35,6 +35,18 @@ export function emptyCadastrosCounts(entities = ALL_ENTITIES) {
  * @returns {Record<string, number>}
  * @throws {Error & { code?: string, missing?: string[] }}
  */
+/**
+ * Contagem válida: number finito, safe integer, ≥ 0.
+ * null/false/''/-1/1.5/overflow → indisponível (parcial), nunca coerção a 0.
+ * @param {unknown} value
+ * @returns {value is number}
+ */
+export function isValidCountValue(value) {
+  return typeof value === 'number'
+    && Number.isSafeInteger(value)
+    && value >= 0;
+}
+
 export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
   /** @type {Record<string, number>} */
   const full = {};
@@ -44,12 +56,12 @@ export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
       missing.push(e);
       continue;
     }
-    const n = Number(/** @type {Record<string, unknown>} */ (raw || {})[e]);
-    if (!Number.isFinite(n)) {
+    const v = /** @type {Record<string, unknown>} */ (raw || {})[e];
+    if (!isValidCountValue(v)) {
       missing.push(e);
       continue;
     }
-    full[e] = n;
+    full[e] = v;
   }
   if (missing.length) {
     /** @type {Error & { code?: string, missing?: string[] }} */

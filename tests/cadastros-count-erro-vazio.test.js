@@ -11,6 +11,7 @@ import {
   buildCadastrosAllCountsFilter,
   fetchCadastrosAllCounts,
   normalizeCadastrosCounts,
+  isValidCountValue,
 } from '../src/components/cadastros/hooks/cadastrosAllCountsCore.js';
 import {
   buildContextFilter,
@@ -133,6 +134,22 @@ test('parcial ≠ total: chave ausente lança READ_COUNT_PARTIAL (não preenche 
   );
 });
 
+test('valores inválidos não viram total (null/false/\'\'/-1/1.5/overflow)', () => {
+  for (const bad of [null, false, '', -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '2', undefined]) {
+    assert.equal(isValidCountValue(bad), false, String(bad));
+    assert.throws(
+      () => normalizeCadastrosCounts({ Produto: bad, Marca: 1 }, ['Produto', 'Marca']),
+      (err) => err?.code === 'READ_COUNT_PARTIAL' && err.missing.includes('Produto'),
+    );
+  }
+  assert.equal(isValidCountValue(0), true);
+  assert.equal(isValidCountValue(2), true);
+  assert.deepEqual(normalizeCadastrosCounts({ Produto: 0, Marca: 2 }, ['Produto', 'Marca']), {
+    Produto: 0,
+    Marca: 2,
+  });
+});
+
 test('parcial no batch agregada não vira total (fetch rejeita)', async () => {
   let calls = 0;
   const invoke = async () => {
@@ -231,7 +248,7 @@ test('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', 
   assert.match(rem, /everLoadedRef\.current = false/);
 });
 
-test('Contatos comercial adapta ao Form canônico sem double-save nem 3º módulo', () => {
+test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () => {
   const orphan = fs.readFileSync(
     path.join(ROOT, 'components/comercial/GerenciarContatosCliente.jsx'),
     'utf8',
@@ -239,14 +256,16 @@ test('Contatos comercial adapta ao Form canônico sem double-save nem 3º módul
   assert.match(orphan, /GerenciarContatosClienteForm/);
   assert.match(orphan, /canEdit\("Cadastros", "Cliente"\)/);
   assert.match(orphan, /assertScopeCurrent/);
-  // Um único caminho de persistência canônica (Cliente.update via mutation)
   assert.equal((orphan.match(/Cliente\.update/g) || []).length, 1);
   assert.equal((orphan.match(/mutateAsync/g) || []).length, 1);
   assert.match(orphan, /onChange=\{handleChange\}/);
   assert.match(orphan, /persistBusy=\{updateClienteMutation\.isPending\}/);
-  // Escopo na queryKey + refs para descartar/tardio/contexto trocado
-  assert.match(orphan, /queryKey:\s*\["cliente",\s*clienteId,\s*scopeKey\]/);
-  assert.match(orphan, /liveScopeRef/);
-  assert.match(orphan, /loadedScopeRef/);
+  // Binding ao load; troca invalida geração; erro de leitura não abre Form
+  assert.match(orphan, /setBound\(null\)/);
+  assert.match(orphan, /editorGen/);
+  assert.match(orphan, /data-contatos-read-error/);
+  assert.match(orphan, /READ_STALE_SCOPE/);
+  assert.match(orphan, /queryKey:\s*\["cliente",\s*clienteId,\s*liveScope\.key\]/);
+  assert.doesNotMatch(orphan, /loadedScopeRef\.current = \{ groupId, empresaId \}/);
   assert.doesNotMatch(orphan, /base44\.entities\.Contato/);
 });

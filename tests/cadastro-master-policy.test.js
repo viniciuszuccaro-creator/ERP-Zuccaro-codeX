@@ -262,12 +262,18 @@ test('product form no longer invents the next code from a frontend list', async 
   assert.match(viewer, /buildMultiempresaReadFilter/);
   assert.doesNotMatch(viewer, /return orConds\.length \? \{ \$or: orConds \} : \{\}/);
   assert.match(viewer, /contextoValido = !!\(empresaId \|\| groupId\)/);
-  // Contagens: filtro canônico (cadastroCountFilter) — useEntityCounts só consome; SIMPLE_CATALOG fail-open sem contexto
-  assert.match(counts, /cadastroCountFilter\.js/);
-  assert.match(counts, /buildContextFilter/);
+  // Contagens: useEntityCounts reexporta o filtro canônico (sem segunda implementação)
+  assert.match(counts, /from "@\/components\/lib\/cadastroCountFilter\.js"/);
+  assert.match(counts, /export \{ SIMPLE_CATALOG, buildContextFilter \}/);
+  assert.doesNotMatch(counts, /function buildContextFilter\s*\(/);
   assert.match(countFilter, /buildMultiempresaReadFilter/);
-  assert.match(countFilter, /alinhado ao Visualizador/i);
   assert.match(countFilter, /SIMPLE_CATALOG\.has\(entityName\)/);
+  const { buildContextFilter } = await import('../src/components/lib/cadastroCountFilter.js');
+  const { buildCadastrosAllCountsFilter } = await import('../src/components/cadastros/hooks/cadastrosAllCountsCore.js');
+  assert.deepEqual(
+    buildContextFilter('Marca', 'emp-x', 'grp-y', [{ id: 'emp-x' }]),
+    buildCadastrosAllCountsFilter('Marca', 'emp-x', 'grp-y', [{ id: 'emp-x' }]),
+  );
 });
 
 test('legacy reference fields are exposed with RBAC and searchable by backend', async () => {
