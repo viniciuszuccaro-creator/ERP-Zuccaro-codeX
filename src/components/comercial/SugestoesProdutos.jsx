@@ -18,7 +18,8 @@ import { consolidateTopProdutosFromPedidos } from "./historicoComprasClientePoli
 const PEDIDOS_SUGESTOES_LIMIT = 100;
 /** Evita novo `[]` a cada render quando a query ainda não tem data (Codex P1 loop). */
 const PEDIDOS_VAZIOS = Object.freeze([]);
-const SUGESTOES_VAZIAS = Object.freeze([]);
+/** Mutável para SetStateAction<any[]>; referência estável no clear no-op. */
+const SUGESTOES_VAZIAS = [];
 
 /**
  * Sugestões por frequência no histórico — keep both com Top10 (IA) e HistoricoCompras.
