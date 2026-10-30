@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#434 tip 6678c23d6 CI SUCCESS 6/6) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#434** tip **`6678c23d6`** — CI SUCCESS 6/6 (`41050886646` / `41050882082`) |
+| **Codex** | tip limpo; P1 skipped ENCERRADO |
+| **Base** | #401 tip `686ae3224` — **sem merge oficial** |
+| **Keep-both** | Cliente.get/bind · draft≠save · persistInFlight · `#424` skipped/epoch |
+| **Ancestral** | `48da23bc0` FAIL 4 — **não atribuir** a este HEAD |
+| **Fora** | merge oficial · counts Pacote A · deploy · seed |
+| Preferir | candidata #401 estável; indep. HistoricoProduto HTTP fail-closed |
+
+**Evidência:** `docs/evidence/prep-401-contatos-get-draft-20261030.txt`
+
 ## Estado vigente - composicao integrada em revisao (2026-10-29)
 
 Codigo funcional: `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`, publicado na mesma
