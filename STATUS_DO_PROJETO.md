@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#435 dual-hash audit-callback) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#435** `cursor/recuperacao-historico-produto-http-392b` |
+| **Sobre** | tip `450c12d8f` frontend FAIL — **não atribuir** a este HEAD |
+| **Causa** | dual-freeze: primitive-ui já `9ba1e3f0…`; audit-callback ainda `bfdd237c…` |
+| **Fix** | `audit-callback-contract-types` HistoricoProduto → `9ba1e3f0…` |
+| **Codex** | tip `450c12d8f` P1/P2 ENCERRADOS (sem reabrir no hash-only) |
+| **#401** | tip `686ae322` estável · #434 prep sem merge oficial |
+| Preferir | CI deste tip; não atribuir FAIL ancestral |
+
+**Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
+
 ## CURSOR — VIGENTE (HistoricoProduto HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
