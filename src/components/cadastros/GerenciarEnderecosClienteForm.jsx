@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import usePermissions from "@/components/lib/usePermissions";
  * Dialogs internos são permitidos quando fazem parte de um fluxo maior.
  * Pacote D (#431+): mesmo contrato Contatos — RBAC + assertScope + persistBusy;
  * onChange assíncrono (falha mantém diálogo; sem double-close).
+ * Trava síncrona (ref) além de setSalvando: duplo clique antes do re-render
+ * não dispara onChange duas vezes (Codex #432 — botão disabled ≠ gravação única).
  */
 export default function GerenciarEnderecosClienteForm({
   enderecos = [],
@@ -33,7 +35,20 @@ export default function GerenciarEnderecosClienteForm({
   const [dialogAberto, setDialogAberto] = useState(false);
   const [enderecoEditando, setEnderecoEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
-  const bloqueado = Boolean(persistBusy || salvando);
+  /** Sync lock — setState só re-renderiza depois; ref bloqueia o 2º clique no mesmo tick. */
+  const persistInFlightRef = useRef(false);
+  const bloqueado = Boolean(persistBusy || salvando || persistInFlightRef.current);
+
+  const beginPersist = () => {
+    if (persistInFlightRef.current) return false;
+    persistInFlightRef.current = true;
+    setSalvando(true);
+    return true;
+  };
+  const endPersist = () => {
+    persistInFlightRef.current = false;
+    setSalvando(false);
+  };
 
   const [novoEndereco, setNovoEndereco] = useState({
     apelido: "",
@@ -85,7 +100,7 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error("Aguarde a gravação de endereços em andamento.");
       return;
     }
@@ -102,7 +117,7 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error("Aguarde a gravação de endereços em andamento.");
       return;
     }
@@ -144,7 +159,10 @@ export default function GerenciarEnderecosClienteForm({
       });
     }
 
-    setSalvando(true);
+    if (!beginPersist()) {
+      toast.error("Aguarde a gravação de endereços em andamento.");
+      return;
+    }
     try {
       await Promise.resolve(onChange(enderecosAtualizados));
       setDialogAberto(false);
@@ -153,7 +171,7 @@ export default function GerenciarEnderecosClienteForm({
       // Mantém diálogo/rascunho; comunica falha (Codex P1 — não engolir).
       toast.error(error?.message || "Falha ao salvar endereço.");
     } finally {
-      setSalvando(false);
+      endPersist();
     }
   };
 
@@ -162,7 +180,7 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error("Aguarde a gravação de endereços em andamento.");
       return;
     }
@@ -180,7 +198,7 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
-    if (bloqueado) {
+    if (bloqueado || persistInFlightRef.current) {
       toast.error("Aguarde a gravação de endereços em andamento.");
       return;
     }
@@ -189,13 +207,16 @@ export default function GerenciarEnderecosClienteForm({
       return;
     }
     const enderecosAtualizados = enderecos.filter((_, i) => i !== index);
-    setSalvando(true);
+    if (!beginPersist()) {
+      toast.error("Aguarde a gravação de endereços em andamento.");
+      return;
+    }
     try {
       await Promise.resolve(onChange(enderecosAtualizados));
     } catch (error) {
       toast.error(error?.message || "Falha ao excluir endereço.");
     } finally {
-      setSalvando(false);
+      endPersist();
     }
   };
 

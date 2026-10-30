@@ -1,10 +1,11 @@
-## CURSOR — VIGENTE (#432 Endereços + merge #431) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#432 sync-lock + toast) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **PR** | **#432** `cursor/cadastros-audit-restante-392b` |
-| **Fix** | Endereços persistBusy/async + toast em falha; cadeia com #431 Contatos bind |
-| **#431** | tip Contatos bind + counts safe-int (merge) |
+| **Fix** | Endereços/Contatos: toast em falha + `persistInFlightRef` (duplo clique 1× onChange) |
+| **Codex** | swallow catch tratado; residual concorrência pré-rerender tratado |
+| **#431** | tip Contatos bind + counts safe-int (merge) · CI tip em curso |
 | **#401** | tip `686ae322` estável · harness BLOCKED |
 | Preferir | #409 · estabilizar #431+#432 antes de novos pacotes dependentes |
 
