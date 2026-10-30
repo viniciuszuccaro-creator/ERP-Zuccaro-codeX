@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#449 tip 7e67d6006 CI SUCCESS — Contatos embed sky) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `7e67d6006` — CI SUCCESS 6/6 (`41120826134` push · `41120834643` PR) |
+| **Código** | `d8d377da2` — Contatos embed sky (espelho Endereços #447) |
+| **Base** | #448 Gestores sky |
+| **Preservado** | RBAC · persistBusy · assertScope · data-actions · sem inventar registros |
+| **Codex** | `@codex review` pedido — CI verde ≠ aceite; visual ≠ registros |
+| **#446/#401** | fora desta candidata |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/recuperacao-contatos-embed-sky-20261030.txt`
+**Próximo:** aceite Codex #449; #446 tip Codex P1/P2 em paralelo.
+
 ## CURSOR — VIGENTE (#448 tip 25450a049 CI SUCCESS — Gestores sky) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

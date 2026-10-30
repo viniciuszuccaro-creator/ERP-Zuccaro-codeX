@@ -245,6 +245,27 @@ test('UI contatos: salvar com contexto capturado — resposta tardia não muta a
   assert.ok(capturedScopes.includes('stale'), 'assertScope captura contexto no momento do salvar');
 });
 
+test('Contatos embed: chrome sky alinhado a Endereços (organização azul-clara; RBAC preservado)', async () => {
+  const contatos = await readFile(new URL('../src/components/cadastros/GerenciarContatosClienteForm.jsx', import.meta.url), 'utf8');
+  const enderecos = await readFile(new URL('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', import.meta.url), 'utf8');
+  assert.match(contatos, /data-action="cliente-contatos-embed"/);
+  assert.match(enderecos, /data-action="cliente-enderecos-embed"/);
+  assert.match(contatos, /from-sky-50 to-sky-100/);
+  assert.match(contatos, /bg-sky-600 hover:bg-sky-700/);
+  assert.match(contatos, /border-sky-100/);
+  // Ações/RBAC canônicas intactas (≠ inventar data-action).
+  for (const action of [
+    'Cadastros.Cliente.contato.adicionar',
+    'Cadastros.Cliente.contato.editar',
+    'Cadastros.Cliente.contato.excluir',
+    'Cadastros.Cliente.contato.salvar',
+  ]) {
+    assert.match(contatos, new RegExp(action.replace(/\./g, '\\.')));
+  }
+  assert.match(contatos, /persistBusy/);
+  assert.match(contatos, /podeEditar/);
+});
+
 test('contrato HTTP: BFF .strict rejeita contatos crus; adapter projeta para email/telefone/celular', async () => {
   const types = await readFile(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url), 'utf8');
   const service = await readFile(new URL('../server/src/services/clienteService.ts', import.meta.url), 'utf8');

@@ -1,0 +1,26 @@
+Pacote indep. — Contatos embed sky (#448+) (2026-10-30 America/Sao_Paulo)
+===========================================================================
+Base: cursor/recuperacao-gestor-formas-sky-392b tip `8684ba8b0` (#448 CI SUCCESS)
+Referência matriz: recuperacao-erp-integra-capacidades-20261029.txt
+Espelho: GerenciarEnderecosClienteForm chrome sky (#447)
+
+## Mudança (existente)
+- `GerenciarContatosClienteForm`: header from-sky-50→sky-100, botões bg-sky-600,
+  cards border-sky-100, empty state sky, Principal badge sky, data-action embed.
+- Preservado: RBAC Cadastros.Cliente, persistBusy, assertScope, data-actions
+  adicionar/editar/excluir/salvar, projeção HTTP/adapter (sem inventar registros).
+
+## Classificação vs erp-integra-novo
+- Lacuna era visual/organização no embed (não perda de dados).
+- ≠ recuperação comprovada de registros (#447/#445 ≠ dados).
+
+## Fora
+#401 · #446 · merge main · deploy · seed fictício · ProdutoForm legado ·
+substituir backend · candidata concorrente
+
+## Testes
+cadastros-contatos-enderecos-rbac — inclui chrome sky Contatos↔Endereços
+
+## CI SUCCESS tip 7e67d6006 (2026-10-30 America/Sao_Paulo)
+- Runs SUCCESS 6/6 — push `41120826134` · PR `41120834643`
+- Código `d8d377da2`. CI verde ≠ aceite Codex; visual ≠ recuperação de registros.
