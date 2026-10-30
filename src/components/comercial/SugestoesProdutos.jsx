@@ -7,7 +7,20 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TrendingUp, Package, Plus, Zap, ShieldAlert } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { resolveErpBackendMode } from "@/api/runtimeBackend";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import {
+  historicoSessionCacheKey,
+  loadPedidosHistoricoHttp,
+} from "./HistoricoProdutosCliente";
+import { consolidateTopProdutosFromPedidos } from "./historicoComprasClientePolicy";
 
+const PEDIDOS_SUGESTOES_LIMIT = 100;
+
+/**
+ * Sugestões por frequência no histórico — keep both com Top10 (IA) e HistoricoCompras.
+ * HTTP: loadPedidosHistoricoHttp + policy; erro ≠ painel ausente / lista vazia.
+ */
 export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdicionarProduto }) {
   const [sugestoes, setSugestoes] = useState([]);
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -16,6 +29,10 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
   const contextoValido = Boolean(groupId || empresaId);
+  const httpMode = resolveErpBackendMode() === "http";
+  const sessionSnapshot = readErpHttpSession();
+  const sessionActorId = sessionSnapshot?.actorId || null;
+  const sessionCacheKey = historicoSessionCacheKey(sessionSnapshot);
   const podeVisualizarSugestoes =
     hasPermission("Comercial.Pedido.visualizar") ||
     hasPermission("Comercial.Pedido.criar") ||
@@ -27,73 +44,110 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
     hasPermission("Comercial.Pedido.editar") ||
     hasPermission("comercial", "criar_pedido") ||
     hasPermission("comercial", "editar_pedido");
-  const consultaHabilitada = Boolean(clienteId && contextoValido && podeVisualizarSugestoes);
+  const consultaHabilitada = Boolean(
+    clienteId
+      && contextoValido
+      && podeVisualizarSugestoes
+      && (!httpMode || (empresaId && sessionActorId && sessionCacheKey)),
+  );
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ["pedidosClienteContexto", clienteId, groupId, empresaId, contexto],
-    queryFn: async () => filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", 100),
-    enabled: consultaHabilitada
+  const {
+    data: pedidosPage,
+    isError: pedidosErro,
+    isFetching: pedidosFetching,
+    isLoading: isLoadingPedidos,
+  } = useQuery({
+    queryKey: [
+      "pedidosClienteContexto",
+      clienteId,
+      groupId,
+      empresaId,
+      contexto,
+      sessionActorId,
+      sessionCacheKey,
+      httpMode ? "http" : "legado",
+    ],
+    queryFn: async ({ signal }) => {
+      if (!clienteId || !contextoValido || !podeVisualizarSugestoes) {
+        throw Object.assign(new Error("Sugestoes bloqueadas: contexto ou permissao ausente."), {
+          code: "SUGESTOES_CONTEXT_DENIED",
+        });
+      }
+      if (httpMode) {
+        if (!empresaId) {
+          throw Object.assign(new Error("Sugestoes HTTP exigem empresa no contexto."), {
+            code: "EMPRESA_CONTEXT_REQUIRED",
+          });
+        }
+        return loadPedidosHistoricoHttp({
+          clienteId,
+          groupId,
+          empresaId,
+          signal,
+          limit: PEDIDOS_SUGESTOES_LIMIT,
+          offset: 0,
+          expectedActorId: sessionActorId,
+          expectedSessionKey: sessionCacheKey,
+        });
+      }
+      const rows = await filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", PEDIDOS_SUGESTOES_LIMIT);
+      const data = Array.isArray(rows) ? rows : [];
+      return {
+        data,
+        meta: { limit: PEDIDOS_SUGESTOES_LIMIT, offset: 0, total: data.length, hasMore: false },
+      };
+    },
+    enabled: consultaHabilitada,
+    staleTime: 60_000,
+    retry: false,
   });
 
-  const { data: produtos = [] } = useQuery({
+  const { data: produtos = [], isLoading: isLoadingProdutos } = useQuery({
     queryKey: ["produtosSugestoesContexto", groupId, empresaId, contexto],
     queryFn: () => filterInContext("Produto", {}, "descricao", 500),
     enabled: Boolean(contextoValido && podeVisualizarSugestoes),
+    retry: false,
   });
 
+  const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
+  const dadosPedidosDisponiveis = consultaHabilitada && !pedidosErro && pedidosPage != null;
+  const paginaIncompleta = Boolean(pedidosPage?.meta?.hasMore)
+    || (Number.isFinite(Number(pedidosPage?.meta?.total))
+      && Number(pedidosPage.meta.total) > pedidos.length);
+
   useEffect(() => {
-    if (!consultaHabilitada || pedidos.length === 0 || produtos.length === 0) {
+    if (!consultaHabilitada || !dadosPedidosDisponiveis || produtos.length === 0) {
       setSugestoes([]);
       return;
     }
 
-    try {
-      const produtosComprados = {};
-
-      pedidos.forEach(pedido => {
-        const itensRevenda = Array.isArray(pedido.itens_revenda) ? pedido.itens_revenda : [];
-
-        itensRevenda.forEach(item => {
-          if (!item || typeof item !== "object") return;
-
-          const produtoId = item.produto_id;
-          if (!produtoId) return;
-
-          if (!produtosComprados[produtoId]) {
-            produtosComprados[produtoId] = {
-              produto_id: produtoId,
-              descricao: item.descricao,
-              quantidade_total: 0,
-              frequencia: 0
-            };
-          }
-
-          produtosComprados[produtoId].quantidade_total += item.quantidade || 0;
-          produtosComprados[produtoId].frequencia += 1;
-        });
-      });
-
-      const idsAtuais = itensAtuais.map(i => i.produto_id).filter(Boolean);
-
-      const sugestoesCalculadas = Object.values(produtosComprados)
-        .filter(pc => !idsAtuais.includes(pc.produto_id))
-        .sort((a, b) => b.frequencia - a.frequencia)
-        .slice(0, 3)
-        .map(pc => {
-          const produtoCompleto = produtos.find(p => p.id === pc.produto_id);
-          return {
-            ...pc,
-            ...produtoCompleto
-          };
-        })
-        .filter(s => s.id && s.status === "Ativo");
-
-      setSugestoes(sugestoesCalculadas);
-    } catch (error) {
-      console.error("Erro ao calcular sugestões:", error);
+    if (pedidos.length === 0) {
       setSugestoes([]);
+      return;
     }
-  }, [consultaHabilitada, pedidos, produtos, itensAtuais]);
+
+    const consolidados = consolidateTopProdutosFromPedidos(pedidos, { limit: 50 });
+    const idsAtuais = (Array.isArray(itensAtuais) ? itensAtuais : [])
+      .map((i) => i?.produto_id)
+      .filter(Boolean);
+
+    const sugestoesCalculadas = consolidados
+      .filter((pc) => pc.produto_id && !idsAtuais.includes(pc.produto_id))
+      .sort((a, b) => b.frequencia - a.frequencia)
+      .slice(0, 3)
+      .map((pc) => {
+        const produtoCompleto = produtos.find((p) => p.id === pc.produto_id);
+        return {
+          ...pc,
+          ...produtoCompleto,
+          frequencia: pc.frequencia,
+          descricao: produtoCompleto?.descricao || pc.descricao,
+        };
+      })
+      .filter((s) => s.id && s.status === "Ativo");
+
+    setSugestoes(sugestoesCalculadas);
+  }, [consultaHabilitada, dadosPedidosDisponiveis, pedidos, produtos, itensAtuais]);
 
   if (!clienteId) {
     return null;
@@ -110,26 +164,73 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
     );
   }
 
+  if (httpMode && (!empresaId || !sessionActorId || !sessionCacheKey)) {
+    return (
+      <Alert
+        className="w-full h-full border-amber-200 bg-amber-50"
+        data-action="sugestoes-produtos-http-indisponivel"
+        data-permission="Comercial.Pedido.visualizar"
+      >
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Sugestões HTTP exigem empresa no contexto e sessão autenticada — não ocultar falha como ausência.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoadingPedidos || isLoadingProdutos || (pedidosFetching && !dadosPedidosDisponiveis)) {
+    return (
+      <Card className="w-full h-full border-sky-200 bg-sky-50/40" data-action="sugestoes-produtos-carregando">
+        <CardContent className="p-4 text-sm text-slate-600">Carregando sugestões…</CardContent>
+      </Card>
+    );
+  }
+
+  if (pedidosErro || !dadosPedidosDisponiveis) {
+    return (
+      <Alert
+        className="w-full h-full border-amber-200 bg-amber-50"
+        data-action="sugestoes-produtos-http-indisponivel"
+        data-permission="Comercial.Pedido.visualizar"
+      >
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Não foi possível carregar o histórico para sugestões. Erro ≠ painel oculto.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (sugestoes.length === 0) {
     return null;
   }
 
   return (
-    <Card className="w-full h-full border-2 border-purple-200 bg-purple-50" data-context-required="true" data-permission="Comercial.Pedido.visualizar" data-action="sugerir-produtos">
-      <CardHeader className="bg-gradient-to-r from-purple-100 to-purple-50 border-b">
+    <Card className="w-full h-full border-2 border-sky-200 bg-sky-50/30" data-context-required="true" data-permission="Comercial.Pedido.visualizar" data-action="sugerir-produtos">
+      <CardHeader className="bg-sky-50 border-b border-sky-100">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Zap className="w-4 h-4 text-purple-600" />
+          <Zap className="w-4 h-4 text-sky-600" />
           Sugestões Inteligentes
-          <Badge className="bg-purple-600 ml-auto">Com Base no Histórico</Badge>
+          <Badge className="bg-sky-600 ml-auto">
+            {paginaIncompleta ? "Parcial" : "Com Base no Histórico"}
+          </Badge>
         </CardTitle>
+        {paginaIncompleta ? (
+          <Alert className="mt-2 border-amber-200 bg-amber-50" data-action="sugestoes-produtos-pagina-incompleta">
+            <AlertDescription className="text-amber-800 text-xs">
+              Há mais pedidos além desta página. Frequência é parcial (não inventar total).
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </CardHeader>
       <CardContent className="p-4">
         <div className="space-y-2">
           {sugestoes.map((produto, idx) => (
-            <div key={produto.id || idx} className="flex items-center justify-between p-3 bg-white rounded-lg border hover:border-purple-300 transition-all">
+            <div key={produto.id || idx} className="flex items-center justify-between p-3 bg-white rounded-lg border hover:border-sky-300 transition-all">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded">
-                  <Package className="w-5 h-5 text-purple-600" />
+                <div className="p-2 bg-sky-100 rounded">
+                  <Package className="w-5 h-5 text-sky-600" />
                 </div>
                 <div>
                   <p className="font-semibold text-sm">{produto.descricao}</p>
@@ -155,7 +256,7 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
                     onAdicionarProduto(produto);
                   }
                 }}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-sky-600 hover:bg-sky-700"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Adicionar

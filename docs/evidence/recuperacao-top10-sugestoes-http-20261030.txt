@@ -1,0 +1,29 @@
+Recuperação — Top10ProdutosCliente + SugestoesProdutos HTTP fail-closed
+=======================================================================
+Data: 2026-10-30 America/Sao_Paulo
+Branch: cursor/recuperacao-top10-sugestoes-http-392b
+Base: #441 tip `d46cf79dc` (HistoricoOrigem/Compras + policy)
+Fora: candidata #401 · merge main · deploy · seed · inventar custo/estoque
+
+## Diagnóstico
+- Top10ProdutosCliente: `filterInContext("Pedido")` + só `itens_revenda` +
+  `data: pedidos = []` — erro HTTP virava "Cliente sem historico".
+- SugestoesProdutos: idem + `catch → setSugestoes([])` + return null no vazio —
+  falha = painel oculto.
+- Classificação: integração incompleta (B) — reutilizar loader/policy #441;
+  capacidade distinta de HistoricoCompras (IA + frequência excl. itens atuais).
+
+## Mudança (existente)
+| Arquivo | Decisão |
+|---------|---------|
+| Top10ProdutosCliente.jsx | HTTP `loadPedidosHistoricoHttp`; banner erro≠sem histórico; página incompleta; IA usa total/itens canônicos |
+| SugestoesProdutos.jsx | Idem + banner erro≠null; sky chrome; frequência via policy |
+| historicoComprasClientePolicy.js | +unidade/+ultima_compra na consolidação (compatível #441) |
+
+Keep both: HistoricoComprasCliente · HistoricoOrigemCliente · portal — sem 3º módulo.
+
+## Testes
+`tests/top10-sugestoes-http-failclosed.test.js` + regressão #441 — **21 PASS**
+
+## Relação #401 / #441
+Independente da candidata. Empilha em #441 (policy compartilhada). Sem merge oficial.
