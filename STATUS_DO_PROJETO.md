@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (HistoricoProduto HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-produto-http-392b` ← #432 `2bc3dc6c7` |
+| **Fix** | HTTP: sem `filterInContext` Pedido/OP/Mov; banner; null≠0 |
+| **Policy** | `historicoProdutoConsultaPolicy.js` (legado preservado) |
+| **stage44** | remainder graduado `4c74e841…` (toFixed peel intacto) |
+| **#434** | tip `6678c23d6` CI SUCCESS 6/6 + Codex — **sem merge #401** |
+| Preferir | CI deste tip; candidata #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
