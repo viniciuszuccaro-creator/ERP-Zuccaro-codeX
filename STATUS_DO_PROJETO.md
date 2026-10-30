@@ -1,13 +1,15 @@
-## CURSOR — VIGENTE (prep #401 Contatos get+draft) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#434 prep #401 Contatos keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/prep-401-contatos-get-draft-392b` |
-| **Base** | #401 tip `686ae3224` |
+| **PR** | **#434** `cursor/prep-401-contatos-get-draft-392b` |
+| **Base** | #401 tip `686ae3224` — **sem merge oficial** |
 | **Fonte** | #432 tip `2bc3dc6c7` CI SUCCESS + Codex limpo |
 | **Port** | adapter get+bind · Forms sync-lock/commitMode · Completo draft≠save |
-| **Fora** | merge oficial · counts Pacote A · deploy |
-| Preferir | CI desta prep; counts em pacote separado |
+| **Fix CI** | tip `48da23bc0` frontend FAIL 4 — restaura `#424` `result.skipped` + harness sync-lock |
+| **Keep-both** | skipped/epoch #424 · persistInFlight #432 · draft/get #431 |
+| **Fora** | merge oficial · counts Pacote A · deploy · seed |
+| Preferir | CI deste tip → Codex; #401 estável |
 
 **Evidência:** `docs/evidence/prep-401-contatos-get-draft-20261030.txt`
 
