@@ -1,0 +1,53 @@
+Recuperação — HistoricoProduto HTTP fail-closed (2026-10-30 America/Sao_Paulo)
+================================================================================
+Base: #432 tip 2bc3dc6c7 (independente da prep #434 / candidata #401).
+Referência matriz: recuperacao-erp-integra-capacidades — agregados Pedido em HTTP.
+
+## Diagnóstico
+`HistoricoProduto.jsx` (aba Produto) usava `filterInContext('Pedido'|OP|Mov)` com
+enabled só por contexto — em HTTP a facade podia resolver vazio e a UI mostrava
+zeros como se não houvesse vendas (perda falsa).
+
+HistoricoProdutosCliente (cliente) já tinha HTTP canônico; este pacote é o
+histórico por PRODUTO no cadastro — capacidade distinta (keep both).
+
+## Correção no existente
+| Item | Decisão |
+|------|---------|
+| Policy `historicoProdutoConsultaPolicy.js` | HTTP detect + legado enabled |
+| Queries | `enabled: legadoConsultaHabilitada` — sem facade HTTP |
+| Métricas | null em HTTP; UI "—" / banner (≠ zero) |
+| Legado | filterInContext preservado |
+| stage44 | graduação remainder toFixed-peel → hash 4c74e841… |
+
+## Fora
+API dedicada pedidos-por-produto · merge #401 · deploy · seed fictício
+
+## Codex P1/P2 (tip pós-8566ca788)
+| Achado | Correção |
+|--------|----------|
+| P1 `totalUsadoProducao.toFixed` no painel OP | `fmtAgregado`; contagens OP `—` em HTTP |
+| P2 série vazia → “Sem dados”/estável/0% | tendência `indisponivel`; gráfico/projeção `—` |
+
+## Checks
+historico-produto-http-failclosed + primitive-ui-boundary (HistoricoProduto) → PASS
+
+## CI tip 450c12d8f (FAIL — não atribuir ao tip seguinte)
+frontend: audit-callback HistoricoProduto expected bfdd237c… actual 9ba1e3f0…
+(dual-freeze: primitive-ui graduado; audit-callback esquecido)
+
+## Fix dual-hash (tip b0510f41c — FAIL, não atribuir ao tip seguinte)
+Graduar string audit-callback → 9ba1e3f0… quebra runtime-proof (SHAs congelados = d312fbcd).
+
+## Fix recovery peel fixture (tip 460b8155e — FAIL, não atribuir)
+- Typecheck: JSDoc policy sem `produtoId`/`contextoValido`
+- Codex P1: fixture integral mascarava edits (`enabled: true` passava)
+
+## Fix hunks exactos + JSDoc (tip seguinte)
+- 12 hunks after→before (padrão #348 Relatorios); CRLF→LF no peel
+- Mutação `enabled: legadoConsultaHabilitada`→`true` quebra peel
+- Edit fora dos hunks muda remainder hash
+- JSDoc `@param {{ produtoId?, contextoValido?, httpMode? }}`
+- Fixture stage44 permanece só como referência de regeneração
+- 3× `enabled: legadoConsultaHabilitada` no teste HTTP
+Checks locais: audit-callback + primitive-ui + runtime-proof + historico-produto → 47 pass; tsc limpo p/ HistoricoProduto

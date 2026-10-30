@@ -15,6 +15,11 @@ import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { PRODUTO_TIPOS_CANONICOS, isProdutoMateriaPrima } from "./produto/produtoTipoPolicy";
+import {
+  historicoProdutoHttpIndisponivelMessage,
+  historicoProdutoLegadoConsultaEnabled,
+  isHistoricoProdutoHttpMode,
+} from "./historicoProdutoConsultaPolicy";
 
 /**
  * V21.6 - Histórico e Análise Futurista do Produto
@@ -33,6 +38,12 @@ export default function HistoricoProduto({ produtoId, produto }) {
   const empresaId = contexto === "empresa" ? empresaAtual?.id : produto?.empresa_id || null;
   const contextoValido = Boolean(groupId || empresaId);
   const podeEditarProduto = canEdit("Cadastros", "Produto") || canEdit("Estoque", "Produto") || canEdit("Cadastros", null);
+  const httpMode = isHistoricoProdutoHttpMode();
+  const legadoConsultaHabilitada = historicoProdutoLegadoConsultaEnabled({
+    produtoId,
+    contextoValido,
+    httpMode,
+  });
 
   /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditHistoricoProduto = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
@@ -58,70 +69,86 @@ export default function HistoricoProduto({ produtoId, produto }) {
   };
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes-produto', produtoId, groupId, empresaId],
+    queryKey: ['movimentacoes-produto', produtoId, groupId, empresaId, httpMode ? 'http' : 'legado'],
     queryFn: () => filterInContext('MovimentacaoEstoque', {
       produto_id: produtoId
     }, '-data_movimentacao', 100),
-    enabled: !!produtoId && contextoValido
+    // HTTP: sem facade filterInContext — não inventar lista vazia como “sem movimento”.
+    enabled: legadoConsultaHabilitada
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-produto', produtoId, groupId, empresaId],
+    queryKey: ['pedidos-produto', produtoId, groupId, empresaId, httpMode ? 'http' : 'legado'],
     queryFn: async () => {
       const allPedidos = await filterInContext('Pedido', {}, '-created_date', 500);
       return allPedidos.filter(p => 
         p.itens_revenda?.some(item => item.produto_id === produtoId)
       ).slice(0, 50);
     },
-    enabled: !!produtoId && contextoValido
+    enabled: legadoConsultaHabilitada
   });
 
   const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ordens-producao-produto', produtoId, groupId, empresaId],
+    queryKey: ['ordens-producao-produto', produtoId, groupId, empresaId, httpMode ? 'http' : 'legado'],
     queryFn: async () => {
       const all = await filterInContext('OrdemProducao', {}, '-created_date', 500);
       return all.filter(op => 
         op.itens?.some(item => item.produto_id === produtoId)
       );
     },
-    enabled: !!produtoId && contextoValido
+    enabled: legadoConsultaHabilitada
   });
 
-  // Calcular métricas
-  const totalVendido = pedidos.reduce((sum, p) => {
+  // Calcular métricas — em HTTP agregados ficam indisponíveis (≠ zero).
+  const totalVendido = httpMode ? null : pedidos.reduce((sum, p) => {
     const item = p.itens_revenda?.find(i => i.produto_id === produtoId);
     return sum + (item?.quantidade || 0);
   }, 0);
 
-  const totalUsadoProducao = ordensProducao.reduce((sum, op) => {
+  const totalUsadoProducao = httpMode ? null : ordensProducao.reduce((sum, op) => {
     const item = op.itens?.find(i => i.produto_id === produtoId);
     return sum + (item?.quantidade || 0);
   }, 0);
 
-  const mediaVendasMes = pedidos.length > 0 ? totalVendido / 12 : 0;
+  const mediaVendasMes = (!httpMode && pedidos.length > 0 && Number.isFinite(totalVendido))
+    ? totalVendido / 12
+    : 0;
 
-  // Dados para gráfico de custo médio
-  const dadosCusto = movimentacoes
-    .filter(m => m.custo_medio > 0)
-    .slice(-30)
-    .map(m => ({
-      data: new Date(m.data_movimentacao).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-      custo: m.custo_medio
-    }));
+  // Dados para gráfico de custo médio (legado); HTTP não inventa série vazia.
+  const dadosCusto = httpMode
+    ? []
+    : movimentacoes
+      .filter(m => m.custo_medio > 0)
+      .slice(-30)
+      .map(m => ({
+        data: new Date(m.data_movimentacao).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        custo: m.custo_medio
+      }));
 
-  // Tendências
+  // Tendências — custo cadastrado permanece; série/tendência HTTP ≠ “estável 0%”.
   const custoAtual = produto?.custo_medio || 0;
-  const custoAnterior = dadosCusto.length > 1 ? dadosCusto[dadosCusto.length - 2].custo : custoAtual;
-  const tendenciaCusto = custoAtual > custoAnterior ? 'alta' : custoAtual < custoAnterior ? 'baixa' : 'estavel';
+  const custoAnterior = !httpMode && dadosCusto.length > 1
+    ? dadosCusto[dadosCusto.length - 2].custo
+    : null;
+  const tendenciaCusto = httpMode
+    ? 'indisponivel'
+    : (custoAnterior == null
+      ? 'estavel'
+      : (custoAtual > custoAnterior ? 'alta' : custoAtual < custoAnterior ? 'baixa' : 'estavel'));
 
-  // Análise de ruptura
-  const diasParaRuptura = produto?.estoque_disponivel && mediaVendasMes > 0
-    ? Math.floor((produto.estoque_disponivel / mediaVendasMes) * 30)
-    : 999;
+  // Análise de ruptura — sem média HTTP, não fingir ruptura “90+ dias”.
+  const diasParaRuptura = httpMode
+    ? null
+    : (produto?.estoque_disponivel && mediaVendasMes > 0
+      ? Math.floor((produto.estoque_disponivel / mediaVendasMes) * 30)
+      : 999);
 
-  const riscoRuptura = diasParaRuptura < 7 ? 'alto' : diasParaRuptura < 15 ? 'medio' : 'baixo';
+  const riscoRuptura = diasParaRuptura == null
+    ? 'indisponivel'
+    : (diasParaRuptura < 7 ? 'alto' : diasParaRuptura < 15 ? 'medio' : 'baixo');
 
   const ehProducao = isProdutoMateriaPrima(produto?.tipo_item);
+  const fmtAgregado = (value) => (Number.isFinite(value) ? value.toFixed(0) : '—');
 
   // V21.6: Converter para produção
   const enviarParaProducao = async () => {
@@ -178,7 +205,19 @@ export default function HistoricoProduto({ produtoId, produto }) {
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full" data-historico-produto-fonte={httpMode ? 'http' : 'legado'}>
+      {httpMode && (
+        <Alert
+          className="border-amber-200 bg-amber-50"
+          data-historico-produto-http-indisponivel="true"
+          role="status"
+        >
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-900">
+            {historicoProdutoHttpIndisponivelMessage()}
+          </AlertDescription>
+        </Alert>
+      )}
       {/* V21.6: NOVO - Alerta de Conversão */}
       {!ehProducao && (
         <Alert className="border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50">
@@ -214,7 +253,8 @@ export default function HistoricoProduto({ produtoId, produto }) {
               <div>
                 <p className="font-semibold text-green-900">✅ Produto configurado para Produção</p>
                 <p className="text-sm text-green-700">
-                  Disponível em Ordens de Produção • Usado em {ordensProducao.length} OP(s)
+                  Disponível em Ordens de Produção
+                  {httpMode ? ' • agregados OP indisponíveis em HTTP' : ` • Usado em ${ordensProducao.length} OP(s)`}
                 </p>
               </div>
               <Badge className="bg-green-600 text-white text-base px-3 py-1">
@@ -235,13 +275,15 @@ export default function HistoricoProduto({ produtoId, produto }) {
               {tendenciaCusto === 'alta' && <TrendingUp className="w-5 h-5 text-red-500" />}
               {tendenciaCusto === 'baixa' && <TrendingDown className="w-5 h-5 text-green-500" />}
               {tendenciaCusto === 'estavel' && <Activity className="w-5 h-5 text-blue-500" />}
+              {tendenciaCusto === 'indisponivel' && <Activity className="w-5 h-5 text-slate-400" />}
             </div>
             <p className="text-2xl font-bold text-blue-700">
               R$ {custoAtual?.toFixed(2) || '0.00'}
             </p>
             <p className="text-xs text-slate-600 mt-1">
-              {tendenciaCusto === 'alta' ? '📈 Tendência de alta' : 
-               tendenciaCusto === 'baixa' ? '📉 Tendência de baixa' : 
+              {tendenciaCusto === 'indisponivel' ? 'Tendência histórica indisponível em HTTP' :
+               tendenciaCusto === 'alta' ? '📈 Tendência de alta' :
+               tendenciaCusto === 'baixa' ? '📉 Tendência de baixa' :
                '➡️ Estável'}
             </p>
           </CardContent>
@@ -254,10 +296,12 @@ export default function HistoricoProduto({ produtoId, produto }) {
               <Package className="w-5 h-5 text-green-600" />
             </div>
             <p className="text-2xl font-bold text-green-700">
-              {totalVendido.toFixed(0)} {produto?.unidade_principal || 'UN'}
+              {fmtAgregado(totalVendido)} {produto?.unidade_principal || 'UN'}
             </p>
             <p className="text-xs text-slate-600 mt-1">
-              Média: {mediaVendasMes.toFixed(1)}/{produto?.unidade_principal || 'UN'} mês
+              {httpMode
+                ? 'Agregado indisponível em HTTP'
+                : `Média: ${mediaVendasMes.toFixed(1)}/${produto?.unidade_principal || 'UN'} mês`}
             </p>
           </CardContent>
         </Card>
@@ -270,10 +314,12 @@ export default function HistoricoProduto({ produtoId, produto }) {
               <Factory className="w-5 h-5 text-orange-600" />
             </div>
             <p className="text-2xl font-bold text-orange-700">
-              {totalUsadoProducao.toFixed(0)} {produto?.unidade_principal || 'UN'}
+              {fmtAgregado(totalUsadoProducao)} {produto?.unidade_principal || 'UN'}
             </p>
             <p className="text-xs text-slate-600 mt-1">
-              {ordensProducao.length} OP(s) • {ehProducao ? '✅ Ativo' : '⚠️ Inativo'}
+              {httpMode
+                ? `Agregado indisponível • ${ehProducao ? '✅ Ativo' : '⚠️ Inativo'}`
+                : `${ordensProducao.length} OP(s) • ${ehProducao ? '✅ Ativo' : '⚠️ Inativo'}`}
             </p>
           </CardContent>
         </Card>
@@ -291,12 +337,14 @@ export default function HistoricoProduto({ produtoId, produto }) {
             <p className={`text-2xl font-bold ${
               riscoRuptura === 'alto' ? 'text-red-700' :
               riscoRuptura === 'medio' ? 'text-yellow-700' :
+              riscoRuptura === 'indisponivel' ? 'text-slate-600' :
               'text-green-700'
             }`}>
-              {diasParaRuptura > 90 ? '90+' : diasParaRuptura} dias
+              {diasParaRuptura == null ? '—' : `${diasParaRuptura > 90 ? '90+' : diasParaRuptura} dias`}
             </p>
             <p className="text-xs text-slate-600 mt-1">
-              {riscoRuptura === 'alto' ? '🚨 Reabastecer urgente' :
+              {riscoRuptura === 'indisponivel' ? 'Agregado indisponível em HTTP' :
+               riscoRuptura === 'alto' ? '🚨 Reabastecer urgente' :
                riscoRuptura === 'medio' ? '⚠️ Monitorar' :
                '✅ Estoque OK'}
             </p>
@@ -330,9 +378,13 @@ export default function HistoricoProduto({ produtoId, produto }) {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center py-12 text-slate-500">
+            <div className="text-center py-12 text-slate-500" data-historico-custo-serie={httpMode ? 'indisponivel' : 'vazio'}>
               <Activity className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Sem dados de movimentação ainda</p>
+              <p className="text-sm">
+                {httpMode
+                  ? 'Série de custo por movimentação indisponível em HTTP'
+                  : 'Sem dados de movimentação ainda'}
+              </p>
             </div>
           )}
         </CardContent>
@@ -350,7 +402,9 @@ export default function HistoricoProduto({ produtoId, produto }) {
             <div className="p-3 bg-white rounded border">
               <p className="text-xs text-slate-600 mb-1">Projeção Custo (30d)</p>
               <p className="font-bold text-sky-700">
-                {tendenciaCusto === 'alta' ? '+3.5%' : tendenciaCusto === 'baixa' ? '-2.1%' : '0%'}
+                {tendenciaCusto === 'indisponivel' ? '—' :
+                 tendenciaCusto === 'alta' ? '+3.5%' :
+                 tendenciaCusto === 'baixa' ? '-2.1%' : '0%'}
               </p>
             </div>
 
@@ -393,27 +447,31 @@ export default function HistoricoProduto({ produtoId, produto }) {
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-xs text-slate-600 mb-2">Total de OPs</p>
-                <p className="text-2xl font-bold text-orange-700">{ordensProducao.length}</p>
+                <p className="text-2xl font-bold text-orange-700">
+                  {httpMode ? '—' : ordensProducao.length}
+                </p>
               </div>
 
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-xs text-slate-600 mb-2">Quantidade Usada</p>
                 <p className="text-2xl font-bold text-orange-700">
-                  {totalUsadoProducao.toFixed(0)} {produto?.unidade_principal}
+                  {fmtAgregado(totalUsadoProducao)} {produto?.unidade_principal}
                 </p>
               </div>
 
               <div className="p-4 bg-white rounded-lg border">
                 <p className="text-xs text-slate-600 mb-2">OPs em Andamento</p>
                 <p className="text-2xl font-bold text-orange-700">
-                  {ordensProducao.filter(op => 
-                    ['Em Produção', 'Aguardando'].includes(op.status)
-                  ).length}
+                  {httpMode
+                    ? '—'
+                    : ordensProducao.filter(op =>
+                      ['Em Produção', 'Aguardando'].includes(op.status)
+                    ).length}
                 </p>
               </div>
             </div>
 
-            {ordensProducao.length > 0 && (
+            {!httpMode && ordensProducao.length > 0 && (
               <div>
                 <p className="font-semibold text-orange-900 mb-2">Últimas OPs que usaram este produto:</p>
                 <div className="space-y-2">

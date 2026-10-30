@@ -1,3 +1,30 @@
+## CURSOR — VIGENTE (#435 hunks exactos + typecheck policy) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#435** `cursor/recuperacao-historico-produto-http-392b` |
+| **Sobre** | tip `460b8155e` FAIL typecheck + Codex P1 fixture — **não atribuir** |
+| **Fix** | JSDoc policy `produtoId`/`contextoValido`; peel = 12 hunks exactos (#348) |
+| **Codex P1** | mutação `enabled: true` quebra peel; edit fora muda hash |
+| **Hashes** | `bfdd237c…` intactos (d312fbcd); vivo HTTP/P1/P2 |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI deste tip; não atribuir FAIL `450c12d8f`/`b0510f41c`/`460b8155e` |
+
+**Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
+
+## CURSOR — VIGENTE (HistoricoProduto HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-produto-http-392b` ← #432 `2bc3dc6c7` |
+| **Fix** | HTTP: sem `filterInContext` Pedido/OP/Mov; banner; null≠0 |
+| **Policy** | `historicoProdutoConsultaPolicy.js` (legado preservado) |
+| **stage44** | remainder graduado `4c74e841…` (toFixed peel intacto) |
+| **#434** | tip `6678c23d6` CI SUCCESS 6/6 + Codex — **sem merge #401** |
+| Preferir | CI deste tip; candidata #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-historico-produto-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import ts from 'typescript';
-import {primitiveUiEdits,primitiveUiBoundaryRemainder,reportRecoveryEdits} from './helpers/primitiveUiBoundaryRemainder.js';
+import {primitiveUiEdits,primitiveUiBoundaryRemainder,reportRecoveryEdits,historicoProdutoRecoveryEdits} from './helpers/primitiveUiBoundaryRemainder.js';
 import {assertSeparacaoChecklist} from '../src/components/lib/expedicaoFluxoOperacionalPolicy.js';
 
 const hashes = [
@@ -24,6 +24,7 @@ const hashes = [
   ['src/components/crm/FunilVendasAvancado.jsx','f06224b74b17273cf6f10edb54d4c8bab18574990e7f968b0b9e674130ffa588'],
   ['src/pages/DashboardCorporativo.jsx','5b7e965aa4955815f753684167f36221e5b9d985355ec125603044e7919248de'],
   ['src/components/cadastros/DashboardCanaisOrigem.jsx','5753ef70c87aeb32d6f25e4be14892b88cf1aaf6bfd137fcd6c6dabbfc050dfb'],
+  // #435 HTTP fail-closed + P1/P2: hunks exactos (como #348); remainder bfdd237c… (d312fbcd).
   ['src/components/cadastros/HistoricoProduto.jsx','bfdd237c2e172268d275a6727778f72ad229b34f77057860525a87c5aa054c2c'],
   ['src/components/producao/DashboardRefugoIA.jsx','65e14a60239cbf60dee4ed080cf43e3c874d23187663497bb5fd0c70dac7192e'],
 ];
@@ -112,5 +113,21 @@ test('#348 recovery exclusions reject missing/duplicated hunks and preserve the 
     assert.throws(()=>primitiveUiBoundaryRemainder(file,source.replace(after,'')));
     assert.throws(()=>primitiveUiBoundaryRemainder(file,source+'\n'+after));
   }
+  assert.notEqual(hash(primitiveUiBoundaryRemainder(file,source+'\nthrow new Error("synthetic unauthorized edit");')),beforeHash);
+});
+
+test('#435 HistoricoProduto recovery hunks exact; unauthorized live edits change remainder',()=>{
+  const file='src/components/cadastros/HistoricoProduto.jsx';
+  const source=read(file);
+  const beforeHash=hashes.find(([name])=>name===file)[1];
+  assert.equal(beforeHash,'bfdd237c2e172268d275a6727778f72ad229b34f77057860525a87c5aa054c2c');
+  assert.equal(hash(primitiveUiBoundaryRemainder(file,source)),beforeHash);
+  for(const [after] of historicoProdutoRecoveryEdits){
+    assert.throws(()=>primitiveUiBoundaryRemainder(file,source.replace(after,'')));
+    assert.throws(()=>primitiveUiBoundaryRemainder(file,source+'\n'+after));
+  }
+  // Codex P1: mutar enabled dentro do hunk autorizado quebra o peel (não mascara baseline).
+  assert.throws(()=>primitiveUiBoundaryRemainder(file,source.replace('enabled: legadoConsultaHabilitada','enabled: true')));
+  // Edição executável fora dos hunks permanece no remainder e muda o hash.
   assert.notEqual(hash(primitiveUiBoundaryRemainder(file,source+'\nthrow new Error("synthetic unauthorized edit");')),beforeHash);
 });
