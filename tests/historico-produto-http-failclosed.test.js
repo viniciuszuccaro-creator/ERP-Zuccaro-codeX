@@ -48,7 +48,8 @@ test('HistoricoProduto: HTTP não habilita filterInContext Pedido/OP/Mov; banner
   const src = await readFile(formPath, 'utf8');
   assert.match(src, /isHistoricoProdutoHttpMode/);
   assert.match(src, /legadoConsultaHabilitada/);
-  assert.match(src, /enabled:\s*legadoConsultaHabilitada/);
+  // Codex: cada consulta Pedido/OP/Mov deve usar legadoConsultaHabilitada (não só uma ocorrência).
+  assert.equal((src.match(/enabled:\s*legadoConsultaHabilitada/g) || []).length, 3);
   assert.doesNotMatch(
     src,
     /enabled:\s*!!produtoId\s*&&\s*contextoValido/,

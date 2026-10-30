@@ -39,8 +39,15 @@ frontend: audit-callback HistoricoProduto expected bfdd237c… actual 9ba1e3f0�
 ## Fix dual-hash (tip b0510f41c — FAIL, não atribuir ao tip seguinte)
 Graduar string audit-callback → 9ba1e3f0… quebra runtime-proof (SHAs congelados = d312fbcd).
 
-## Fix recovery peel (tip seguinte)
-- Fonte vivo: HTTP fail-closed + P1/P2 (markers obrigatórios)
-- Remainder: fixture `tests/helpers/fixtures/historicoProduto.stage44.jsx` (pré-#435)
-- Hashes audit-callback + primitive-ui permanecem `bfdd237c…`
-Checks locais: audit-callback + primitive-ui + runtime-proof + historico-produto → 47 pass
+## Fix recovery peel fixture (tip 460b8155e — FAIL, não atribuir)
+- Typecheck: JSDoc policy sem `produtoId`/`contextoValido`
+- Codex P1: fixture integral mascarava edits (`enabled: true` passava)
+
+## Fix hunks exactos + JSDoc (tip seguinte)
+- 12 hunks after→before (padrão #348 Relatorios); CRLF→LF no peel
+- Mutação `enabled: legadoConsultaHabilitada`→`true` quebra peel
+- Edit fora dos hunks muda remainder hash
+- JSDoc `@param {{ produtoId?, contextoValido?, httpMode? }}`
+- Fixture stage44 permanece só como referência de regeneração
+- 3× `enabled: legadoConsultaHabilitada` no teste HTTP
+Checks locais: audit-callback + primitive-ui + runtime-proof + historico-produto → 47 pass; tsc limpo p/ HistoricoProduto

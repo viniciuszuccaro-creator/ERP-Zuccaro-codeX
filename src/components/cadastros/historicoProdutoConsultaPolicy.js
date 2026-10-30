@@ -10,7 +10,10 @@ export function isHistoricoProdutoHttpMode(env) {
   return resolveErpBackendMode(env) === 'http';
 }
 
-/** Consultas agregadas legado só fora de HTTP e com contexto/produto. */
+/**
+ * Consultas agregadas legado só fora de HTTP e com contexto/produto.
+ * @param {{ produtoId?: string | null, contextoValido?: boolean, httpMode?: boolean }} [options]
+ */
 export function historicoProdutoLegadoConsultaEnabled({
   produtoId,
   contextoValido,
