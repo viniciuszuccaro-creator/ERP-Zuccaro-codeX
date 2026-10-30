@@ -1,145 +1,376 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  ShoppingCart, 
-  TrendingUp, 
-  Package, 
-  Clock, 
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  ShoppingCart,
+  TrendingUp,
+  Package,
+  Clock,
   DollarSign,
   FileText,
   Truck,
   CheckCircle2,
   Plus,
-  BarChart3
-} from 'lucide-react';
+  BarChart3,
+  ShieldAlert,
+} from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { resolveErpBackendMode } from "@/api/runtimeBackend";
+import {
+  loadPedidosHistoricoHttp,
+  historicoSessionCacheKey,
+} from "./HistoricoProdutosCliente";
+
+const PEDIDOS_PAGE_LIMIT = 50;
+const AUX_PAGE_LIMIT = 20;
 
 /**
- * V21.1.2-R1 - HISTÓRICO EXPANDIDO DO CLIENTE
- * ✅ Top 20 produtos mais comprados
- * ✅ Auditoria completa de entregas, NF-e, pagamentos
- * ✅ Timeline de relacionamento
- * ✅ Botão para adicionar produto novamente ao pedido
+ * Status cancelado (legado string ou canônico HTTP).
+ * @param {{ status?: string } | null | undefined} pedido
  */
-export default function HistoricoClienteTab({ formData, setFormData, onAdicionarItemAoPedido }) {
-  const [produtosFrequentes, setProdutosFrequentes] = useState([]);
-  const [analisando, setAnalisando] = useState(false);
+export function isHistoricoPedidoCancelado(pedido) {
+  const s = String(pedido?.status || "").toUpperCase();
+  return s === "CANCELADO" || s === "CANCELLED";
+}
 
-  // Buscar pedidos anteriores do cliente
-  const { data: pedidosAnteriores = [] } = useQuery({
-    queryKey: ['pedidos-cliente', formData.cliente_id],
-    queryFn: () => formData.cliente_id 
-      ? base44.entities.Pedido.filter({ cliente_id: formData.cliente_id }, '-data_pedido', 50)
-      : Promise.resolve([]),
-    enabled: !!formData.cliente_id
-  });
+/**
+ * Valor do pedido: legado `valor_total` ou canônico HTTP `total`.
+ * @param {{ valor_total?: number, total?: number } | null | undefined} pedido
+ * @returns {number}
+ */
+export function historicoPedidoValorTotal(pedido) {
+  const raw = pedido?.valor_total ?? pedido?.total;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+}
 
-  // Buscar contas a receber do cliente
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-cliente', formData.cliente_id],
-    queryFn: () => formData.cliente_id
-      ? base44.entities.ContaReceber.filter({ cliente_id: formData.cliente_id }, '-data_vencimento', 20)
-      : Promise.resolve([]),
-    enabled: !!formData.cliente_id
-  });
+/**
+ * AGENTS §11: não publicar KPIs monetários pela 1ª página quando há mais registros.
+ * Contagem pode usar `meta.total`; somas/ticket/taxa só com página completa.
+ * @param {{ hasMore?: boolean, total?: number } | null | undefined} meta
+ * @param {unknown[] | null | undefined} pedidos
+ */
+export function isHistoricoClientePedidosPageComplete(meta, pedidos) {
+  const rows = Array.isArray(pedidos) ? pedidos : [];
+  if (meta?.hasMore) return false;
+  const total = Number(meta?.total);
+  if (Number.isFinite(total) && total > rows.length) return false;
+  return true;
+}
 
-  // Buscar entregas do cliente
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-cliente', formData.cliente_id],
-    queryFn: () => formData.cliente_id
-      ? base44.entities.Entrega.filter({ cliente_id: formData.cliente_id }, '-created_date', 20)
-      : Promise.resolve([]),
-    enabled: !!formData.cliente_id
-  });
+/**
+ * Taxa de entrega a partir do status do Pedido só no legado (`Entregue`).
+ * HTTP canônico (`PEDIDO_STATUS`) termina em `FINALIZADO`; entrega comprovada
+ * vive na entidade Entrega — sem adapter auxiliar, taxa fica indisponível (≠ 0%).
+ *
+ * @param {{
+ *   pedidos?: Array<{
+ *     status?: string,
+ *     valor_total?: number,
+ *     total?: number,
+ *     data_pedido?: string,
+ *     created_at?: string,
+ *     itens?: unknown[],
+ *     itens_revenda?: unknown[],
+ *     itens_armado_padrao?: unknown[],
+ *   }>,
+ *   meta?: { hasMore?: boolean, total?: number, limit?: number, offset?: number } | null,
+ *   deliveryRateFromPedidoStatus?: boolean,
+ * }} [options]
+ */
+export function resolveHistoricoClienteKpisFromPage({
+  pedidos,
+  meta,
+  deliveryRateFromPedidoStatus = false,
+} = {}) {
+  const rows = Array.isArray(pedidos) ? pedidos : [];
+  const complete = isHistoricoClientePedidosPageComplete(meta, rows);
+  const totalMeta = Number(meta?.total);
+  const qtdFromMeta = Number.isFinite(totalMeta) ? totalMeta : null;
+  if (!complete) {
+    return {
+      moneyIncomplete: true,
+      totalPedidos: qtdFromMeta,
+      ticketMedio: null,
+      valorTotalHistorico: null,
+      taxaEntrega: null,
+    };
+  }
+  const ativos = rows.filter((p) => !isHistoricoPedidoCancelado(p));
+  const valorTotalHistorico = ativos.reduce((sum, p) => sum + historicoPedidoValorTotal(p), 0);
+  const totalPedidos = rows.length;
+  const ticketMedio = ativos.length > 0 ? valorTotalHistorico / ativos.length : 0;
+  let taxaEntrega = /** @type {number|null} */ (null);
+  if (deliveryRateFromPedidoStatus) {
+    const pedidosEntregues = rows.filter((p) => {
+      const s = String(p?.status || "").toUpperCase();
+      return s === "ENTREGUE" || s === "DELIVERED";
+    }).length;
+    taxaEntrega = totalPedidos > 0 ? (pedidosEntregues / totalPedidos) * 100 : 0;
+  }
+  return {
+    moneyIncomplete: false,
+    totalPedidos,
+    ticketMedio,
+    valorTotalHistorico,
+    taxaEntrega,
+  };
+}
 
-  // Buscar notas fiscais do cliente
-  const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['nfe-cliente', formData.cliente_id],
-    queryFn: () => formData.cliente_id
-      ? base44.entities.NotaFiscal.filter({ cliente_fornecedor_id: formData.cliente_id }, '-data_emissao', 20)
-      : Promise.resolve([]),
-    enabled: !!formData.cliente_id
-  });
+/**
+ * Top 20 a partir de itens legado (`itens_*`) e canônico HTTP (`itens`).
+ * @param {Array<{
+ *   data_pedido?: string,
+ *   created_at?: string,
+ *   itens?: Array<{ produto_id?: string, descricao?: string, quantidade?: number, total?: number, valor_total?: number, subtotal?: number }>,
+ *   itens_revenda?: Array<{ produto_id?: string, descricao?: string, quantidade?: number, valor_item?: number, valor_total?: number, total?: number }>,
+ *   itens_armado_padrao?: Array<{ peca_id?: string, descricao_peca?: string, quantidade?: number, preco_venda_total?: number, valor_total?: number, total?: number }>,
+ * }> | null | undefined} pedidos
+ */
+export function computeHistoricoClienteTopProdutos(pedidos) {
+  /** @type {Record<string, { produto_id: string|null, descricao: string, quantidade_total: number, valor_total: number, frequencia: number, ultima_compra: string|null, tipo?: string, preco_medio: number }>} */
+  const mapaProdutos = {};
+  const list = Array.isArray(pedidos) ? pedidos : [];
 
-  // Analisar produtos mais comprados
-  useEffect(() => {
-    if (pedidosAnteriores.length === 0) return;
+  /**
+   * @param {string|number|null|undefined} key
+   * @param {{ produto_id?: string|null, descricao?: string, quantidade?: number, valor?: number, tipo?: string }} patch
+   * @param {string|null|undefined} dataPedido
+   */
+  const bump = (key, patch, dataPedido) => {
+    if (key == null || key === "") return;
+    const mapKey = String(key);
+    if (!mapaProdutos[mapKey]) {
+      mapaProdutos[mapKey] = {
+        produto_id: patch.produto_id || null,
+        descricao: patch.descricao || "-",
+        quantidade_total: 0,
+        valor_total: 0,
+        frequencia: 0,
+        ultima_compra: dataPedido || null,
+        tipo: patch.tipo,
+        preco_medio: 0,
+      };
+    }
+    const row = mapaProdutos[mapKey];
+    row.quantidade_total += Number(patch.quantidade) || 0;
+    row.valor_total += Number(patch.valor) || 0;
+    row.frequencia += 1;
+    if (dataPedido && (!row.ultima_compra || dataPedido > row.ultima_compra)) {
+      row.ultima_compra = dataPedido;
+    }
+  };
 
-    setAnalisando(true);
-    const mapaProdutos = {};
-
-    pedidosAnteriores.forEach(pedido => {
-      // Itens de revenda
-      (pedido.itens_revenda || []).forEach(item => {
-        const key = item.produto_id || item.descricao;
-        if (!mapaProdutos[key]) {
-          mapaProdutos[key] = {
+  list.forEach((pedido) => {
+    const dataPedido = pedido.data_pedido || pedido.created_at || null;
+    (pedido.itens_revenda || []).forEach((item) => {
+      bump(
+        item.produto_id || item.descricao,
+        {
+          produto_id: item.produto_id,
+          descricao: item.descricao,
+          quantidade: item.quantidade,
+          valor: item.valor_item ?? item.valor_total ?? item.total,
+        },
+        dataPedido,
+      );
+    });
+    (pedido.itens_armado_padrao || []).forEach((item) => {
+      bump(
+        item.peca_id || item.descricao_peca,
+        {
+          produto_id: item.peca_id,
+          descricao: item.descricao_peca,
+          quantidade: item.quantidade,
+          valor: item.preco_venda_total ?? item.valor_total ?? item.total,
+          tipo: "Armado",
+        },
+        dataPedido,
+      );
+    });
+    if (Array.isArray(pedido.itens) && pedido.itens.length) {
+      pedido.itens.forEach((item) => {
+        bump(
+          item.produto_id || item.descricao,
+          {
             produto_id: item.produto_id,
             descricao: item.descricao,
-            quantidade_total: 0,
-            valor_total: 0,
-            frequencia: 0,
-            ultima_compra: pedido.data_pedido,
-            preco_medio: 0
-          };
-        }
-        mapaProdutos[key].quantidade_total += item.quantidade || 0;
-        mapaProdutos[key].valor_total += item.valor_item || 0;
-        mapaProdutos[key].frequencia += 1;
-        if (pedido.data_pedido > mapaProdutos[key].ultima_compra) {
-          mapaProdutos[key].ultima_compra = pedido.data_pedido;
-        }
+            quantidade: item.quantidade,
+            valor: item.total ?? item.valor_total ?? item.subtotal,
+          },
+          dataPedido,
+        );
       });
+    }
+  });
 
-      // Itens armado padrão
-      (pedido.itens_armado_padrao || []).forEach(item => {
-        const key = item.peca_id || item.descricao_peca;
-        if (!mapaProdutos[key]) {
-          mapaProdutos[key] = {
-            produto_id: item.peca_id,
-            descricao: item.descricao_peca,
-            quantidade_total: 0,
-            valor_total: 0,
-            frequencia: 0,
-            ultima_compra: pedido.data_pedido,
-            tipo: 'Armado'
-          };
+  return Object.values(mapaProdutos)
+    .sort((a, b) => b.quantidade_total - a.quantidade_total)
+    .slice(0, 20)
+    .map((p) => ({
+      ...p,
+      preco_medio: p.quantidade_total > 0 ? p.valor_total / p.quantidade_total : 0,
+    }));
+}
+
+/**
+ * V21.1.2-R1 - HISTÓRICO EXPANDIDO DO CLIENTE (melhoria no existente)
+ * Top 20 / auditoria NF-e / entregas / pagamentos / add-to-pedido.
+ * Keep both: ≠ HistoricoProdutosCliente (linhas de produto) e ≠ DetalhesCliente (ficha KPIs).
+ * HTTP: pedidos via loadPedidosHistoricoHttp; auxiliares sem adapter → fail-closed (≠ lista vazia).
+ */
+export default function HistoricoClienteTab({ formData, setFormData: _setFormData, onAdicionarItemAoPedido }) {
+  const clienteId = formData?.cliente_id || null;
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const groupId =
+    formData?.group_id ||
+    formData?.grupo_id ||
+    grupoAtual?.id ||
+    empresaAtual?.group_id ||
+    empresaAtual?.grupo_id ||
+    null;
+  const empresaId =
+    formData?.empresa_id ||
+    formData?.empresa_dona_id ||
+    (contexto === "empresa" ? empresaAtual?.id : null);
+  const contextoValido = Boolean(groupId || empresaId);
+  const httpMode = resolveErpBackendMode() === "http";
+  const sessionSnapshot = readErpHttpSession();
+  const sessionActorId = sessionSnapshot?.actorId || null;
+  const sessionCacheKey = historicoSessionCacheKey(sessionSnapshot);
+  const podeVisualizar =
+    hasPermission("Comercial.Pedido.visualizar") ||
+    hasPermission("CRM.Cliente.visualizar") ||
+    hasPermission("Cadastros.Cliente.visualizar") ||
+    hasPermission("comercial", "visualizar_pedido");
+  const consultaPedidosHabilitada = Boolean(
+    clienteId
+      && contextoValido
+      && podeVisualizar
+      && (!httpMode || (empresaId && sessionActorId && sessionCacheKey)),
+  );
+  // Auxiliares (CR/Entrega/NF) ainda sem list HTTP por cliente — só legado com contexto.
+  const consultaAuxLegado = Boolean(clienteId && contextoValido && podeVisualizar && !httpMode);
+
+  const {
+    data: pedidosPage,
+    isError: pedidosErro,
+    isFetching: pedidosFetching,
+    error: pedidosError,
+  } = useQuery({
+    queryKey: [
+      "historico-cliente-tab-pedidos",
+      clienteId,
+      groupId,
+      empresaId,
+      contexto,
+      sessionActorId,
+      sessionCacheKey,
+      httpMode ? "http" : "legado",
+    ],
+    queryFn: async ({ signal }) => {
+      if (!clienteId || !contextoValido || !podeVisualizar) {
+        throw Object.assign(new Error("Histórico bloqueado: contexto ou permissão ausente."), {
+          code: "HISTORICO_TAB_CONTEXT_DENIED",
+        });
+      }
+      if (httpMode) {
+        if (!empresaId) {
+          throw Object.assign(new Error("Histórico HTTP exige empresa no contexto."), {
+            code: "EMPRESA_CONTEXT_REQUIRED",
+          });
         }
-        mapaProdutos[key].quantidade_total += item.quantidade || 0;
-        mapaProdutos[key].valor_total += item.preco_venda_total || 0;
-        mapaProdutos[key].frequencia += 1;
-      });
-    });
+        return loadPedidosHistoricoHttp({
+          clienteId,
+          groupId,
+          empresaId,
+          signal,
+          limit: PEDIDOS_PAGE_LIMIT,
+          offset: 0,
+          expectedActorId: sessionActorId,
+          expectedSessionKey: sessionCacheKey,
+        });
+      }
+      const rows = await filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", PEDIDOS_PAGE_LIMIT);
+      const data = Array.isArray(rows) ? rows : [];
+      return {
+        data,
+        meta: { limit: PEDIDOS_PAGE_LIMIT, offset: 0, total: data.length, hasMore: false },
+      };
+    },
+    enabled: consultaPedidosHabilitada,
+    staleTime: 60_000,
+    retry: false,
+  });
 
-    const top20 = Object.values(mapaProdutos)
-      .sort((a, b) => b.quantidade_total - a.quantidade_total)
-      .slice(0, 20)
-      .map(p => ({
-        ...p,
-        preco_medio: p.valor_total / p.quantidade_total
-      }));
+  const { data: contasReceber = [], isError: contasErro } = useQuery({
+    queryKey: ["historico-cliente-tab-contas", clienteId, groupId, empresaId, "legado"],
+    queryFn: () => filterInContext("ContaReceber", { cliente_id: clienteId }, "-data_vencimento", AUX_PAGE_LIMIT),
+    enabled: consultaAuxLegado,
+    retry: false,
+  });
 
-    setProdutosFrequentes(top20);
-    setAnalisando(false);
-  }, [pedidosAnteriores]);
+  const { data: entregas = [], isError: entregasErro } = useQuery({
+    queryKey: ["historico-cliente-tab-entregas", clienteId, groupId, empresaId, "legado"],
+    queryFn: () => filterInContext("Entrega", { cliente_id: clienteId }, "-created_date", AUX_PAGE_LIMIT),
+    enabled: consultaAuxLegado,
+    retry: false,
+  });
 
-  // Calcular estatísticas
-  const totalPedidos = pedidosAnteriores.length;
-  const valorTotalHistorico = pedidosAnteriores.reduce((sum, p) => sum + (p.valor_total || 0), 0);
-  const ticketMedio = totalPedidos > 0 ? valorTotalHistorico / totalPedidos : 0;
-  const pedidosEntregues = pedidosAnteriores.filter(p => p.status === 'Entregue').length;
-  const taxaEntrega = totalPedidos > 0 ? (pedidosEntregues / totalPedidos) * 100 : 0;
+  const { data: notasFiscais = [], isError: nfErro } = useQuery({
+    queryKey: ["historico-cliente-tab-nfe", clienteId, groupId, empresaId, "legado"],
+    queryFn: () =>
+      filterInContext("NotaFiscal", { cliente_fornecedor_id: clienteId }, "-data_emissao", AUX_PAGE_LIMIT),
+    enabled: consultaAuxLegado,
+    retry: false,
+  });
 
-  const contasPagas = contasReceber.filter(c => c.status === 'Recebido').length;
-  const contasAtrasadas = contasReceber.filter(c => c.status === 'Atrasado').length;
+  const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
+  const kpisDisponiveis = consultaPedidosHabilitada && !pedidosErro && pedidosPage != null;
+  const resolved = kpisDisponiveis
+    ? resolveHistoricoClienteKpisFromPage({
+        pedidos,
+        meta: pedidosPage?.meta,
+        // HTTP: status Pedido ≠ prova de entrega (FINALIZADO ≠ ENTREGUE); auxiliares fail-closed.
+        deliveryRateFromPedidoStatus: !httpMode,
+      })
+    : {
+        moneyIncomplete: false,
+        totalPedidos: null,
+        ticketMedio: null,
+        valorTotalHistorico: null,
+        taxaEntrega: null,
+      };
+  const produtosFrequentes = useMemo(
+    () => (kpisDisponiveis && !resolved.moneyIncomplete ? computeHistoricoClienteTopProdutos(pedidos) : []),
+    [kpisDisponiveis, resolved.moneyIncomplete, pedidos],
+  );
 
-  if (!formData.cliente_id) {
+  const contasList = Array.isArray(contasReceber) ? contasReceber : [];
+  const entregasList = Array.isArray(entregas) ? entregas : [];
+  const nfList = Array.isArray(notasFiscais) ? notasFiscais : [];
+  const contasPagas = contasList.filter((c) => c.status === "Recebido").length;
+  const contasAtrasadas = contasList.filter((c) => c.status === "Atrasado").length;
+
+  const fmtMoney = (n) =>
+    n == null ? "—" : `R$ ${n.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  const fmtCount = (n) => (n == null ? "—" : String(n));
+  const fmtPct = (n) => (n == null ? "—" : `${n.toFixed(0)}%`);
+
+  const httpPedidosIndisponivel =
+    httpMode && podeVisualizar && contextoValido && (!consultaPedidosHabilitada || pedidosErro);
+  const httpAuxIndisponivel = httpMode && podeVisualizar && contextoValido;
+
+  if (!clienteId) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-slate-500" data-action="historico-cliente-tab-sem-cliente">
         <Clock className="w-16 h-16 mx-auto mb-4 opacity-30" />
         <p>Selecione um cliente para ver o histórico</p>
       </div>
@@ -147,24 +378,65 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
   }
 
   return (
-    <div className="space-y-6">
-      {/* V21.1.2-R1: CABEÇALHO DA ABA */}
-      <Alert className="border-purple-200 bg-purple-50">
-        <BarChart3 className="w-4 h-4 text-purple-600" />
-        <AlertDescription className="text-sm text-purple-900">
-          📊 <strong>Histórico Expandido V21.1.2:</strong> Top 20 produtos, auditoria de NF-e, entregas e pagamentos
+    <div
+      className="w-full h-full space-y-6"
+      data-context-required="true"
+      data-permission="Comercial.Pedido.visualizar"
+      data-action="historico-cliente-tab"
+    >
+      <Alert className="border-sky-200 bg-sky-50">
+        <BarChart3 className="w-4 h-4 text-sky-700" />
+        <AlertDescription className="text-sm text-sky-900">
+          <strong>Histórico expandido do cliente:</strong> Top 20 produtos, auditoria de NF-e, entregas e pagamentos.
+          Capacidade distinta do Histórico de Produtos (linhas) — keep both.
         </AlertDescription>
       </Alert>
 
-      {/* ESTATÍSTICAS GERAIS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {(!contextoValido || !podeVisualizar) && (
+        <Alert className="border-amber-200 bg-amber-50" data-action="historico-cliente-tab-contexto-negado">
+          <ShieldAlert className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-800">
+            Histórico exige contexto de grupo/empresa e permissão para visualizar pedidos ou clientes.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {httpPedidosIndisponivel && (
+        <Alert
+          className="border-sky-200 bg-sky-50"
+          data-action="historico-cliente-tab-pedidos-http-indisponivel"
+        >
+          <ShieldAlert className="h-4 w-4 text-sky-700" />
+          <AlertDescription className="text-sky-900">
+            {pedidosError?.message
+              || "Pedidos do cliente indisponíveis em HTTP até sessão/empresa válidos. Não use R$ 0,00 como “sem compras”."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {httpAuxIndisponivel && (
+        <Alert
+          className="border-slate-200 bg-slate-50"
+          data-action="historico-cliente-tab-auxiliar-http-indisponivel"
+        >
+          <ShieldAlert className="h-4 w-4 text-slate-600" />
+          <AlertDescription className="text-slate-800">
+            NF-e, entregas e contas a receber por cliente ainda sem listagem HTTP canônica neste painel —
+            seções auxiliares ficam indisponíveis (fail-closed), sem inventar lista vazia.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-action="historico-cliente-tab-kpis">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <ShoppingCart className="w-8 h-8 text-blue-600" />
+              <ShoppingCart className="w-8 h-8 text-sky-700" />
               <div>
                 <p className="text-xs text-slate-600">Total Pedidos</p>
-                <p className="text-2xl font-bold text-blue-600">{totalPedidos}</p>
+                <p className="text-2xl font-bold text-sky-800">
+                  {pedidosFetching && !kpisDisponiveis ? "…" : fmtCount(resolved.totalPedidos)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -173,12 +445,21 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-green-600" />
+              <DollarSign className="w-8 h-8 text-emerald-700" />
               <div>
                 <p className="text-xs text-slate-600">Ticket Médio</p>
-                <p className="text-2xl font-bold text-green-600">
-                  R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                <p className="text-2xl font-bold text-emerald-800">
+                  {pedidosFetching && !kpisDisponiveis
+                    ? "…"
+                    : resolved.moneyIncomplete
+                      ? "—"
+                      : fmtMoney(resolved.ticketMedio)}
                 </p>
+                {resolved.moneyIncomplete && (
+                  <p className="text-[10px] text-slate-500" data-action="historico-cliente-tab-kpi-incompleto">
+                    Página incompleta — agregação monetária indisponível
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -190,7 +471,18 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
               <Truck className="w-8 h-8 text-orange-600" />
               <div>
                 <p className="text-xs text-slate-600">Taxa Entrega</p>
-                <p className="text-2xl font-bold text-orange-600">{taxaEntrega.toFixed(0)}%</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {pedidosFetching && !kpisDisponiveis
+                    ? "…"
+                    : resolved.taxaEntrega == null
+                      ? "—"
+                      : fmtPct(resolved.taxaEntrega)}
+                </p>
+                {httpMode && kpisDisponiveis && !resolved.moneyIncomplete && resolved.taxaEntrega == null && (
+                  <p className="text-[10px] text-slate-500" data-action="historico-cliente-tab-taxa-http-indisponivel">
+                    Exige Entrega HTTP — não inferir 0% de Pedido.FINALIZADO
+                  </p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -199,12 +491,18 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <FileText className="w-8 h-8 text-purple-600" />
+              <FileText className="w-8 h-8 text-sky-700" />
               <div>
                 <p className="text-xs text-slate-600">Pagamentos</p>
-                <p className="text-lg font-bold text-green-600">{contasPagas} OK</p>
-                {contasAtrasadas > 0 && (
-                  <p className="text-sm font-semibold text-red-600">{contasAtrasadas} Atrasadas</p>
+                {httpAuxIndisponivel || contasErro ? (
+                  <p className="text-lg font-bold text-slate-500">—</p>
+                ) : (
+                  <>
+                    <p className="text-lg font-bold text-emerald-700">{contasPagas} OK</p>
+                    {contasAtrasadas > 0 && (
+                      <p className="text-sm font-semibold text-red-600">{contasAtrasadas} Atrasadas</p>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -212,27 +510,39 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         </Card>
       </div>
 
-      {/* TOP 20 PRODUTOS MAIS COMPRADOS */}
       <Card>
-        <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 border-b">
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-purple-600" />
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-slate-50 border-b">
+          <CardTitle className="flex items-center gap-2 text-sky-900">
+            <TrendingUp className="w-5 h-5 text-sky-700" />
             Top 20 Produtos Mais Comprados
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          {analisando ? (
+          {pedidosFetching && !kpisDisponiveis ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto" />
               <p className="text-sm text-slate-600 mt-2">Analisando histórico...</p>
+            </div>
+          ) : !kpisDisponiveis || pedidosErro ? (
+            <div className="text-center py-8 text-slate-500" data-action="historico-cliente-tab-top-indisponivel">
+              <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>Top produtos indisponível neste contexto (fail-closed).</p>
+            </div>
+          ) : resolved.moneyIncomplete ? (
+            <div className="text-center py-8 text-slate-500" data-action="historico-cliente-tab-top-incompleto">
+              <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>Há mais pedidos além desta página — Top 20 não é publicado pela 1ª página.</p>
             </div>
           ) : produtosFrequentes.length > 0 ? (
             <div className="space-y-2">
               {produtosFrequentes.map((produto, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                <div
+                  key={`${produto.produto_id || produto.descricao}-${idx}`}
+                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-purple-600 text-white">#{idx + 1}</Badge>
+                      <Badge className="bg-sky-700 text-white">#{idx + 1}</Badge>
                       <p className="font-semibold text-sm">{produto.descricao}</p>
                       {produto.tipo && (
                         <Badge variant="outline" className="text-xs">{produto.tipo}</Badge>
@@ -242,11 +552,18 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
                       <span>Qtd Total: <strong>{produto.quantidade_total.toFixed(2)}</strong></span>
                       <span>Frequência: <strong>{produto.frequencia}x</strong></span>
                       <span>Média: <strong>R$ {produto.preco_medio.toFixed(2)}</strong></span>
-                      <span>Última: <strong>{new Date(produto.ultima_compra).toLocaleDateString('pt-BR')}</strong></span>
+                      <span>
+                        Última:{" "}
+                        <strong>
+                          {produto.ultima_compra
+                            ? new Date(produto.ultima_compra).toLocaleDateString("pt-BR")
+                            : "—"}
+                        </strong>
+                      </span>
                     </div>
                   </div>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => onAdicionarItemAoPedido && onAdicionarItemAoPedido(produto)}
                   >
@@ -265,31 +582,39 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         </CardContent>
       </Card>
 
-      {/* AUDITORIA INTEGRADA - NF-E */}
       <Card>
-        <CardHeader className="bg-green-50 border-b">
+        <CardHeader className="bg-emerald-50 border-b">
           <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-green-600" />
-            Notas Fiscais Emitidas ({notasFiscais.length})
+            <FileText className="w-5 h-5 text-emerald-700" />
+            Notas Fiscais Emitidas
+            {!httpAuxIndisponivel && !nfErro ? ` (${nfList.length})` : ""}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          {notasFiscais.length > 0 ? (
+          {httpAuxIndisponivel || nfErro ? (
+            <p className="text-center text-slate-500 py-4" data-action="historico-cliente-tab-nfe-indisponivel">
+              NF-e indisponível neste modo (fail-closed).
+            </p>
+          ) : nfList.length > 0 ? (
             <div className="space-y-2">
-              {notasFiscais.slice(0, 10).map(nf => (
+              {nfList.slice(0, 10).map((nf) => (
                 <div key={nf.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <p className="font-semibold text-sm">NF-e {nf.numero} - Série {nf.serie}</p>
                     <p className="text-xs text-slate-600">
-                      {new Date(nf.data_emissao).toLocaleDateString('pt-BR')} • 
-                      R$ {(nf.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      {new Date(nf.data_emissao).toLocaleDateString("pt-BR")} •
+                      R$ {(nf.valor_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </p>
                   </div>
-                  <Badge className={
-                    nf.status === 'Autorizada' ? 'bg-green-600' :
-                    nf.status === 'Cancelada' ? 'bg-red-600' :
-                    'bg-orange-600'
-                  }>
+                  <Badge
+                    className={
+                      nf.status === "Autorizada"
+                        ? "bg-green-600"
+                        : nf.status === "Cancelada"
+                          ? "bg-red-600"
+                          : "bg-orange-600"
+                    }
+                  >
                     {nf.status}
                   </Badge>
                 </div>
@@ -301,35 +626,48 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         </CardContent>
       </Card>
 
-      {/* AUDITORIA INTEGRADA - ENTREGAS */}
       <Card>
         <CardHeader className="bg-orange-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-orange-600" />
-            Histórico de Entregas ({entregas.length})
+            Histórico de Entregas
+            {!httpAuxIndisponivel && !entregasErro ? ` (${entregasList.length})` : ""}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          {entregas.length > 0 ? (
+          {httpAuxIndisponivel || entregasErro ? (
+            <p className="text-center text-slate-500 py-4" data-action="historico-cliente-tab-entregas-indisponivel">
+              Entregas indisponíveis neste modo (fail-closed).
+            </p>
+          ) : entregasList.length > 0 ? (
             <div className="space-y-2">
-              {entregas.slice(0, 10).map(entrega => (
+              {entregasList.slice(0, 10).map((entrega) => (
                 <div key={entrega.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <p className="font-semibold text-sm">
-                      {entrega.endereco_entrega_completo?.cidade || 'Endereço não especificado'}
+                      {entrega.endereco_entrega_completo?.cidade || "Endereço não especificado"}
                     </p>
                     <p className="text-xs text-slate-600">
-                      Previsão: {entrega.data_previsao ? new Date(entrega.data_previsao).toLocaleDateString('pt-BR') : '-'} • 
+                      Previsão:{" "}
+                      {entrega.data_previsao
+                        ? new Date(entrega.data_previsao).toLocaleDateString("pt-BR")
+                        : "-"}{" "}
+                      •
                       {entrega.peso_total_kg && ` ${entrega.peso_total_kg} kg`} •
                       {entrega.km_rodado && ` ${entrega.km_rodado} km`}
                     </p>
                   </div>
-                  <Badge className={
-                    entrega.status === 'Entregue' ? 'bg-green-600' :
-                    entrega.status === 'Em Trânsito' ? 'bg-blue-600' :
-                    entrega.status === 'Entrega Frustrada' ? 'bg-red-600' :
-                    'bg-orange-600'
-                  }>
+                  <Badge
+                    className={
+                      entrega.status === "Entregue"
+                        ? "bg-green-600"
+                        : entrega.status === "Em Trânsito"
+                          ? "bg-blue-600"
+                          : entrega.status === "Entrega Frustrada"
+                            ? "bg-red-600"
+                            : "bg-orange-600"
+                    }
+                  >
                     {entrega.status}
                   </Badge>
                 </div>
@@ -341,32 +679,40 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         </CardContent>
       </Card>
 
-      {/* AUDITORIA INTEGRADA - PAGAMENTOS */}
       <Card>
-        <CardHeader className="bg-blue-50 border-b">
+        <CardHeader className="bg-sky-50 border-b">
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-blue-600" />
-            Histórico Financeiro ({contasReceber.length})
+            <DollarSign className="w-5 h-5 text-sky-700" />
+            Histórico Financeiro
+            {!httpAuxIndisponivel && !contasErro ? ` (${contasList.length})` : ""}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          {contasReceber.length > 0 ? (
+          {httpAuxIndisponivel || contasErro ? (
+            <p className="text-center text-slate-500 py-4" data-action="historico-cliente-tab-contas-indisponivel">
+              Contas a receber indisponíveis neste modo (fail-closed).
+            </p>
+          ) : contasList.length > 0 ? (
             <div className="space-y-2">
-              {contasReceber.slice(0, 10).map(conta => (
+              {contasList.slice(0, 10).map((conta) => (
                 <div key={conta.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <p className="font-semibold text-sm">{conta.descricao}</p>
                     <p className="text-xs text-slate-600">
-                      Vencimento: {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')} • 
-                      R$ {(conta.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      Vencimento: {new Date(conta.data_vencimento).toLocaleDateString("pt-BR")} •
+                      R$ {(conta.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                       {conta.forma_recebimento && ` • ${conta.forma_recebimento}`}
                     </p>
                   </div>
-                  <Badge className={
-                    conta.status === 'Recebido' ? 'bg-green-600' :
-                    conta.status === 'Atrasado' ? 'bg-red-600' :
-                    'bg-orange-600'
-                  }>
+                  <Badge
+                    className={
+                      conta.status === "Recebido"
+                        ? "bg-green-600"
+                        : conta.status === "Atrasado"
+                          ? "bg-red-600"
+                          : "bg-orange-600"
+                    }
+                  >
                     {conta.status}
                   </Badge>
                 </div>
@@ -378,10 +724,9 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         </CardContent>
       </Card>
 
-      {/* RESUMO CONSOLIDADO */}
-      <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-blue-50">
+      <Card className="border-sky-200 bg-gradient-to-br from-sky-50 to-slate-50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-purple-900">
+          <CardTitle className="flex items-center gap-2 text-sky-900">
             <CheckCircle2 className="w-5 h-5" />
             Resumo do Relacionamento
           </CardTitle>
@@ -389,22 +734,30 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
         <CardContent className="p-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-slate-600">Total Faturado (12 meses)</p>
-              <p className="text-xl font-bold text-green-600">
-                R$ {valorTotalHistorico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <p className="text-slate-600">Total Faturado (escopo carregado)</p>
+              <p className="text-xl font-bold text-emerald-700">
+                {resolved.moneyIncomplete || !kpisDisponiveis
+                  ? "—"
+                  : fmtMoney(resolved.valorTotalHistorico)}
               </p>
             </div>
             <div>
               <p className="text-slate-600">Produtos Diferentes</p>
-              <p className="text-xl font-bold text-purple-600">{produtosFrequentes.length}</p>
+              <p className="text-xl font-bold text-sky-800">
+                {resolved.moneyIncomplete || !kpisDisponiveis ? "—" : produtosFrequentes.length}
+              </p>
             </div>
             <div>
               <p className="text-slate-600">NF-e Emitidas</p>
-              <p className="text-xl font-bold text-blue-600">{notasFiscais.length}</p>
+              <p className="text-xl font-bold text-sky-800">
+                {httpAuxIndisponivel || nfErro ? "—" : nfList.length}
+              </p>
             </div>
             <div>
               <p className="text-slate-600">Entregas Realizadas</p>
-              <p className="text-xl font-bold text-orange-600">{entregas.length}</p>
+              <p className="text-xl font-bold text-orange-600">
+                {httpAuxIndisponivel || entregasErro ? "—" : entregasList.length}
+              </p>
             </div>
           </div>
         </CardContent>

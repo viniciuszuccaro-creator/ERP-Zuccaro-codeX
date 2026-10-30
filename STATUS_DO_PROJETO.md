@@ -1,3 +1,46 @@
+## CURSOR — VIGENTE (#437 FECHADO tip 5a33ac0c9) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#437** tip **`5a33ac0c9`** — CI SUCCESS 6/6 (push `41059503966` + PR `41059515157`) |
+| **Codex** | tip `5a33ac0c9` sem achados major; P2 taxa HTTP ENCERRADO em `7fa57c3ab` |
+| **Sobre** | não atribuir FAIL `7eeeec481`/`4cb34387d`/`7fa57c3ab` (typecheck ancestral) |
+| **Keep both** | HistoricoClienteTab ≠ HistoricoProdutosCliente ≠ DetalhesCliente |
+| **#436** | tip `f84f63ed2` FECHADO |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | próximo indep. recuperação; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-historico-cliente-tab-http-20261030.txt`
+
+## CURSOR — VIGENTE (#437 HistoricoClienteTab HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-cliente-tab-http-392b` ← #432 `2bc3dc6c7` |
+| **Fix** | Pedidos via `loadPedidosHistoricoHttp`; KPIs/Top20 fail-closed se página incompleta/erro |
+| **Keep both** | HistoricoClienteTab ≠ HistoricoProdutosCliente ≠ DetalhesCliente |
+| **Auxiliares** | NF/entrega/CR HTTP → indisponível (≠ lista vazia); legado `filterInContext` |
+| **#436** | tip `f84f63ed2` FECHADO — CI SUCCESS 6/6 + Codex limpo |
+| **#435** | tip `b51214245` CI SUCCESS 6/6 |
+| **#408** | Funil×Separacao tip `803764887` CI SUCCESS (Pacote 5) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | tip `5a33ac0c9` FECHADO — ver bloco abaixo |
+
+**Evidência:** `docs/evidence/recuperacao-historico-cliente-tab-http-20261030.txt`
+
+## CURSOR — VIGENTE (#436 FECHADO tip f84f63ed2) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** tip **`f84f63ed2`** — CI SUCCESS 6/6 (push+PR) |
+| **Codex** | tip `f84f63ed2` sem achados major (P1 KPIs 1ª página ENCERRADO) |
+| **Sobre** | não atribuir FAIL import `7039d0221` nem typecheck `8c0d05c16` |
+| **#437** | HistoricoClienteTab HTTP — tip `7eeeec481` (este branch) |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI #437; candidata intacta |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
