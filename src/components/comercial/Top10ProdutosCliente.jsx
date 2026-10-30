@@ -16,12 +16,7 @@ import {
   historicoSessionCacheKey,
   loadPedidosHistoricoHttp,
 } from "./HistoricoProdutosCliente";
-import {
-  consolidateTopProdutosFromPedidos,
-  extractItensPedidoHistorico,
-  resolveValorPedidoHistorico,
-  resolveValorItemHistorico,
-} from "./historicoComprasClientePolicy";
+import { consolidateTopProdutosFromPedidos } from "./historicoComprasClientePolicy";
 
 const PEDIDOS_TOP10_LIMIT = 200;
 
@@ -163,12 +158,11 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
       return;
     }
 
-    if (!clienteId || !produtos.length || !dadosPedidosDisponiveis || !pedidos.length) {
+    // Somente ids do harness IA (erp-ia-invocation-contract): sem free refs de policy/query.
+    if (!clienteId || !produtos.length || !pedidos.length) {
       toast({
         title: "Aviso",
-        description: pedidosErro
-          ? "Historico de pedidos indisponivel — nao inventar sugestoes a partir de falha."
-          : "Nao ha dados suficientes de cliente, produtos ou pedidos para gerar sugestoes de IA.",
+        description: "Nao ha dados suficientes de cliente, produtos ou pedidos para gerar sugestoes de IA.",
         variant: "destructive"
       });
       return;
@@ -183,17 +177,35 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
 
     try {
       assertIaUiContext({ groupId, empresaId, scopeType });
-      const historicoPedidos = pedidos.map(p => ({
-        data: p.data_pedido || p.created_date || null,
-        valor: resolveValorPedidoHistorico(p),
-        group_id: p.group_id || groupId || null,
-        empresa_id: p.empresa_id || empresaId || null,
-        itens: extractItensPedidoHistorico(p).map(i => ({
-          produto: i.descricao || i.nome || null,
-          quantidade: i.quantidade,
-          valor: resolveValorItemHistorico(i),
-        })),
-      }));
+      // Inline canônico HTTP+legado — evita free refs (extract/resolve*) no callback extraído.
+      const historicoPedidos = pedidos.map(p => {
+        const buckets = [p?.itens, p?.itens_revenda, p?.itens_producao, p?.itens_servico];
+        const linhas = [];
+        for (const bucket of buckets) {
+          if (!Array.isArray(bucket)) continue;
+          for (const i of bucket) {
+            if (!i || typeof i !== "object") continue;
+            const qty = Number(i.quantidade) || 0;
+            const valorLinha = Number(
+              i.total ?? i.valor_item ?? i.valor_total
+                ?? ((Number(i.preco_unitario) || 0) * qty),
+            );
+            linhas.push({
+              produto: i.descricao || i.nome || null,
+              quantidade: i.quantidade,
+              valor: Number.isFinite(valorLinha) ? valorLinha : 0,
+            });
+          }
+        }
+        const valorPedido = Number(p?.total ?? p?.valor_total);
+        return {
+          data: p.data_pedido || p.created_date || null,
+          valor: Number.isFinite(valorPedido) ? valorPedido : 0,
+          group_id: p.group_id || groupId || null,
+          empresa_id: p.empresa_id || empresaId || null,
+          itens: linhas,
+        };
+      });
 
       const linhasProdutos = produtos
         .slice(0, 50)
