@@ -465,3 +465,16 @@ test('P1 #4417291529/#4417291538: hidrata em windowMode; GET falho bloqueia grav
   assert.match(persistSrc, /contatosHydrateStatus !== ["']ok["']/);
   assert.match(painel, /persistBusy=\{contatosSaving \|\| contatosHydrateStatus !== ["']ok["']\}/);
 });
+
+test('P2 #4425429376: save após troca de contexto descarta conclusão (não bump epoch)', () => {
+  const painel = read(painelPath);
+  const persistSrc = extractPersistContatosSource(painel);
+  assert.match(painel, /painelScopeKeyRef/);
+  assert.match(persistSrc, /scopeAtStart/);
+  assert.match(persistSrc, /CONTEXT_CHANGED/);
+  // Bump de epoch só no caminho de escopo estável (após o guard).
+  const guardIdx = persistSrc.indexOf('CONTEXT_CHANGED');
+  const bumpIdx = persistSrc.indexOf('contatosHydrateEpochRef.current += 1');
+  assert.ok(guardIdx >= 0 && bumpIdx > guardIdx, 'guard CONTEXT_CHANGED deve preceder o bump de epoch');
+  assert.match(persistSrc, /scopeAtStart === painelScopeKeyRef\.current/);
+});

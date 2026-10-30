@@ -177,6 +177,9 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
   const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, clienteProp?.id ?? null]);
   const contatosPersistQueueRef = useRef(null);
+  /** Escopo vivo — conclusão de save antiga não aplica rascunho/epoch no contexto novo (Codex #4425429376). */
+  const painelScopeKeyRef = useRef(painelScopeKey);
+  painelScopeKeyRef.current = painelScopeKey;
   /** Trava contrato escalar na abertura — não promover rascunho a contatos[] após save (Codex #4413059634). */
   const scalarContractLockedRef = useRef(usesContatosScalarHttpContract(clienteProp));
   /** Epoch de hidratação: GET atrasado após mutação não sobrescreve rascunho confirmado (Codex #4414641595). */
@@ -270,10 +273,17 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         toast.error(err.message);
         throw err;
       }
+      const scopeAtStart = painelScopeKeyRef.current;
       setContatosSaving(true);
       try {
         // P1 #4410761980: não carimbar empresa_id no mestre — só group_id de escopo.
         const updated = await updateInContext("Cliente", live.id, { contatos: lista }, "group_id");
+        // Contexto/empresa/cliente trocou durante a gravação: não bump epoch nem reaplicar rascunho
+        // no painel novo (senão invalida o GET do novo escopo — Codex #4425429376).
+        if (scopeAtStart !== painelScopeKeyRef.current) {
+          toast.error("Contexto alterado durante a gravação de contatos. Reabra o painel no contexto atual.");
+          return { skipped: true, reason: "CONTEXT_CHANGED" };
+        }
         // Invalida GET de abertura em voo — não reaplicar snapshot pré-save.
         contatosHydrateEpochRef.current += 1;
         const nextDraft = Array.isArray(updated?.contatos) && updated.contatos.length > 0 && !scalarContract
@@ -295,9 +305,11 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         toast.success("Contatos atualizados.");
         return { skipped: false, lista: nextDraft };
       } catch (error) {
-        // P2 #4410875120: reverter rascunho / manter base confirmada.
-        setContatosDraft(previousDraft);
-        toast.error(error?.message || "Falha ao salvar contatos.");
+        // P2 #4410875120: reverter rascunho só se o escopo ainda for o da gravação.
+        if (scopeAtStart === painelScopeKeyRef.current) {
+          setContatosDraft(previousDraft);
+          toast.error(error?.message || "Falha ao salvar contatos.");
+        }
         throw error;
       } finally {
         setContatosSaving(false);
