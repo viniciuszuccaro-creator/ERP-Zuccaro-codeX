@@ -11,7 +11,7 @@ const sanitizeList = (items = []) => items
   .filter(Boolean);
 
 // Adapter: mantem a API antiga mas grava/edita na entidade consolidada ChatbotIntent.
-export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
+export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting, windowMode = false }) {
   const { empresaAtual, grupoAtual, contexto, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || intent?.group_id || null;
@@ -165,5 +165,6 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
     if (typeof onSubmit === "function") onSubmit(toLegacy(registro || payload));
   };
 
-  return <ChatbotIntentForm chatbotIntent={initial} onSubmit={handleSubmit} isSubmitting={isSubmitting} windowMode={false} />;
+  // Propaga windowMode — não forçar false (sky chrome do Intent canônico; #418 padrão).
+  return <ChatbotIntentForm chatbotIntent={initial} onSubmit={handleSubmit} isSubmitting={isSubmitting} windowMode={windowMode} />;
 }

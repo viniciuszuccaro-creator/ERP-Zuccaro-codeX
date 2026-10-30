@@ -181,14 +181,19 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
+      <div className="w-full h-full overflow-auto bg-white p-6" data-action="chatbot-intent-window">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
             <MessageCircle className="w-8 h-8 text-sky-600" />
             <h2 className="text-2xl font-bold text-slate-900">
-              {chatbotIntent ? 'Editar Intent' : 'Nova Intent'}
+              {chatbotIntent?.id ? 'Editar Intent' : 'Nova Intent'}
             </h2>
           </div>
+          {chatbotIntent?.id ? (
+            <p className="text-xs text-slate-500 mb-4" data-action="id-tecnico-chatbot-intent">
+              ID técnico: <span className="font-mono">{String(chatbotIntent.id)}</span>
+            </p>
+          ) : null}
           {form}
         </div>
       </div>
