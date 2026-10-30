@@ -29,13 +29,20 @@ import {
 const PEDIDOS_PAGE_LIMIT = 50;
 const AUX_PAGE_LIMIT = 20;
 
-/** Status cancelado (legado string ou canônico HTTP). */
+/**
+ * Status cancelado (legado string ou canônico HTTP).
+ * @param {{ status?: string } | null | undefined} pedido
+ */
 export function isHistoricoPedidoCancelado(pedido) {
   const s = String(pedido?.status || "").toUpperCase();
   return s === "CANCELADO" || s === "CANCELLED";
 }
 
-/** Valor do pedido: legado `valor_total` ou canônico HTTP `total`. */
+/**
+ * Valor do pedido: legado `valor_total` ou canônico HTTP `total`.
+ * @param {{ valor_total?: number, total?: number } | null | undefined} pedido
+ * @returns {number}
+ */
 export function historicoPedidoValorTotal(pedido) {
   const raw = pedido?.valor_total ?? pedido?.total;
   const n = Number(raw);
@@ -45,6 +52,8 @@ export function historicoPedidoValorTotal(pedido) {
 /**
  * AGENTS §11: não publicar KPIs monetários pela 1ª página quando há mais registros.
  * Contagem pode usar `meta.total`; somas/ticket/taxa só com página completa.
+ * @param {{ hasMore?: boolean, total?: number } | null | undefined} meta
+ * @param {unknown[] | null | undefined} pedidos
  */
 export function isHistoricoClientePedidosPageComplete(meta, pedidos) {
   const rows = Array.isArray(pedidos) ? pedidos : [];
@@ -60,8 +69,17 @@ export function isHistoricoClientePedidosPageComplete(meta, pedidos) {
  * vive na entidade Entrega — sem adapter auxiliar, taxa fica indisponível (≠ 0%).
  *
  * @param {{
- *   pedidos?: unknown[],
- *   meta?: { hasMore?: boolean, total?: number } | null,
+ *   pedidos?: Array<{
+ *     status?: string,
+ *     valor_total?: number,
+ *     total?: number,
+ *     data_pedido?: string,
+ *     created_at?: string,
+ *     itens?: unknown[],
+ *     itens_revenda?: unknown[],
+ *     itens_armado_padrao?: unknown[],
+ *   }>,
+ *   meta?: { hasMore?: boolean, total?: number, limit?: number, offset?: number } | null,
  *   deliveryRateFromPedidoStatus?: boolean,
  * }} [options]
  */
@@ -87,7 +105,7 @@ export function resolveHistoricoClienteKpisFromPage({
   const valorTotalHistorico = ativos.reduce((sum, p) => sum + historicoPedidoValorTotal(p), 0);
   const totalPedidos = rows.length;
   const ticketMedio = ativos.length > 0 ? valorTotalHistorico / ativos.length : 0;
-  let taxaEntrega = null;
+  let taxaEntrega = /** @type {number|null} */ (null);
   if (deliveryRateFromPedidoStatus) {
     const pedidosEntregues = rows.filter((p) => {
       const s = String(p?.status || "").toUpperCase();
@@ -104,15 +122,31 @@ export function resolveHistoricoClienteKpisFromPage({
   };
 }
 
-/** Top 20 a partir de itens legado (`itens_*`) e canônico HTTP (`itens`). */
+/**
+ * Top 20 a partir de itens legado (`itens_*`) e canônico HTTP (`itens`).
+ * @param {Array<{
+ *   data_pedido?: string,
+ *   created_at?: string,
+ *   itens?: Array<{ produto_id?: string, descricao?: string, quantidade?: number, total?: number, valor_total?: number, subtotal?: number }>,
+ *   itens_revenda?: Array<{ produto_id?: string, descricao?: string, quantidade?: number, valor_item?: number, valor_total?: number, total?: number }>,
+ *   itens_armado_padrao?: Array<{ peca_id?: string, descricao_peca?: string, quantidade?: number, preco_venda_total?: number, valor_total?: number, total?: number }>,
+ * }> | null | undefined} pedidos
+ */
 export function computeHistoricoClienteTopProdutos(pedidos) {
+  /** @type {Record<string, { produto_id: string|null, descricao: string, quantidade_total: number, valor_total: number, frequencia: number, ultima_compra: string|null, tipo?: string, preco_medio: number }>} */
   const mapaProdutos = {};
   const list = Array.isArray(pedidos) ? pedidos : [];
 
+  /**
+   * @param {string|number|null|undefined} key
+   * @param {{ produto_id?: string|null, descricao?: string, quantidade?: number, valor?: number, tipo?: string }} patch
+   * @param {string|null|undefined} dataPedido
+   */
   const bump = (key, patch, dataPedido) => {
-    if (!key) return;
-    if (!mapaProdutos[key]) {
-      mapaProdutos[key] = {
+    if (key == null || key === "") return;
+    const mapKey = String(key);
+    if (!mapaProdutos[mapKey]) {
+      mapaProdutos[mapKey] = {
         produto_id: patch.produto_id || null,
         descricao: patch.descricao || "-",
         quantidade_total: 0,
@@ -123,7 +157,7 @@ export function computeHistoricoClienteTopProdutos(pedidos) {
         preco_medio: 0,
       };
     }
-    const row = mapaProdutos[key];
+    const row = mapaProdutos[mapKey];
     row.quantidade_total += Number(patch.quantidade) || 0;
     row.valor_total += Number(patch.valor) || 0;
     row.frequencia += 1;
