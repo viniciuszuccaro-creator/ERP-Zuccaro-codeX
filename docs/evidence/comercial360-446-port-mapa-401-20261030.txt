@@ -1,12 +1,12 @@
 Mapa port controlado #446 → #401 (preparação — SEM merge) (2026-10-30 America/Sao_Paulo)
 ======================================================================================
 Candidata #401 tip estável: `34c4c0ee` (sem #446).
-Fonte #446: tip residual (pós af95c4cca) após CI + Codex tip novo.
+Fonte #446: tip residual contexto/preço/custo (pós 54fcd026d) após CI + Codex tip novo.
 
 ## Incluir (cherry / port seletivo)
-- `historicoComprasClientePolicy`: seedProdutoFromHistorico + pedidoItensBloqueadosPorStatus
-- `PedidoTabsContainer`: modal AdicionarItemRevenda + onAdicionarHistorico por status
-- `AdicionarItemRevendaModal`: produtoInicial + unidadeComprovada
+- `historicoComprasClientePolicy`: seed + pedidoItensBloqueadosPorStatus + buildHistoricoModalGeracao + numeroComprovado
+- `PedidoTabsContainer`: modal + geracao contexto + confirm fail-closed preço/contexto + status lock
+- `AdicionarItemRevendaModal`: produtoInicial + preço/custo/estoque/margem/unidade comprovados (ausente≠0/UN/SobEncomenda)
 - `HistoricoComprasCliente` / `SugestoesProdutos`: onAdicionarProduto opcional + PEDIDOS_VAZIOS
 - `Top10ProdutosCliente`: podeAcionarSelecao
 - `HistoricoClienteTab`: Adicionar só com callback
@@ -16,11 +16,12 @@ Fonte #446: tip residual (pós af95c4cca) após CI + Codex tip novo.
 ## Preservar na candidata (NÃO substituir)
 - Serviços/repositórios/API HTTP existentes da #401
 - Contratos Contatos/cadastros/contagens já em #401
+- Backend da candidata — sem trocar por tip #446
 - Base `codex/consolidacao-infra-20261017`
 
 ## Fora até aceite
-- Merge automático · rebase destrutivo · trocar API antiga
-- Harness PG privado · deploy
+- Merge automático · rebase destrutivo · trocar API/backend
+- Candidata concorrente · Harness PG privado · deploy
 
 ## Critério de port
-CI tip #446 SUCCESS + Codex montado limpo nos negativos status/Top10/duplo-clique.
+CI tip #446 SUCCESS + Codex montado limpo (contexto/preço/custo/status/Top10/duplo-clique).

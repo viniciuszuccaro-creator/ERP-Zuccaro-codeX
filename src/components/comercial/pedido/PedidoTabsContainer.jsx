@@ -8,6 +8,7 @@ import SugestoesProdutos from '@/components/comercial/SugestoesProdutos';
 import Top10ProdutosCliente from '@/components/comercial/Top10ProdutosCliente';
 import AdicionarItemRevendaModal from '@/components/comercial/AdicionarItemRevendaModal';
 import {
+  buildHistoricoModalGeracao,
   pedidoItensBloqueadosPorStatus,
   seedProdutoFromHistorico,
 } from '@/components/comercial/historicoComprasClientePolicy';
@@ -55,6 +56,7 @@ export default function PedidoTabsContainer({
   const [conformidade, setConformidade] = useState({ ok: false, motivos: [] });
   const [modalRevendaAberto, setModalRevendaAberto] = useState(false);
   const [produtoSeedHistorico, setProdutoSeedHistorico] = useState(null);
+  const [modalHistoricoGeracao, setModalHistoricoGeracao] = useState(null);
   const confirmandoHistoricoRef = useRef(false);
 
   // bloquearEdicao = trava de origem (sempre true); itens usam status do pedido.
@@ -64,6 +66,40 @@ export default function PedidoTabsContainer({
   const clientePedido =
     (Array.isArray(clientes) ? clientes.find((c) => c?.id === formData?.cliente_id) : null)
     || (formData?.cliente_id ? { id: formData.cliente_id } : null);
+
+  function geracaoHistoricoAtual() {
+    return buildHistoricoModalGeracao({
+      clienteId: formData?.cliente_id || null,
+      empresaId: formData?.empresa_id || empresaAtual?.id || null,
+      groupId: formData?.group_id || formData?.grupo_id || grupoAtual?.id || empresaAtual?.group_id || null,
+      actorId: user?.id || null,
+    });
+  }
+
+  function fecharModalHistoricoObsoleto() {
+    setModalRevendaAberto(false);
+    setProdutoSeedHistorico(null);
+    setModalHistoricoGeracao(null);
+  }
+
+  // Troca cliente/empresa/grupo/ator com modal aberto → descarta seleção antiga; preserva rascunho novo.
+  useEffect(() => {
+    if (!modalRevendaAberto || !modalHistoricoGeracao) return;
+    if (geracaoHistoricoAtual() === modalHistoricoGeracao) return;
+    fecharModalHistoricoObsoleto();
+    toast.message('Contexto alterado — confirmação do histórico anterior cancelada.');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- geracao lida no corpo
+  }, [
+    modalRevendaAberto,
+    modalHistoricoGeracao,
+    formData?.cliente_id,
+    formData?.empresa_id,
+    formData?.group_id,
+    formData?.grupo_id,
+    empresaAtual?.id,
+    grupoAtual?.id,
+    user?.id,
+  ]);
 
   function abrirAdicionarDoHistorico(produto) {
     if (pedidoItensBloqueadosPorStatus(formData)) {
@@ -83,6 +119,7 @@ export default function PedidoTabsContainer({
       toast.message('Produto já está no rascunho — confirme quantidade no modal.');
     }
     // Clique repetido: reabre o mesmo modal (não append direto).
+    setModalHistoricoGeracao(geracaoHistoricoAtual());
     setProdutoSeedHistorico(seed);
     setModalRevendaAberto(true);
   }
@@ -93,8 +130,19 @@ export default function PedidoTabsContainer({
       toast.error('Pedido bloqueado para edição de itens.');
       return;
     }
+    // Modal obsoleto após troca de contexto: não inserir no rascunho novo.
+    if (!modalHistoricoGeracao || geracaoHistoricoAtual() !== modalHistoricoGeracao) {
+      fecharModalHistoricoObsoleto();
+      toast.error('Contexto alterado — item do histórico anterior não foi inserido.');
+      return;
+    }
     if (!item?.produto_id) {
       toast.error('Item rejeitado: sem produto_id.');
+      return;
+    }
+    // Preço ausente ≠ inventar 0 (zero comprovado chega como Number finito).
+    if (item.preco_unitario == null || !Number.isFinite(Number(item.preco_unitario))) {
+      toast.error('Item rejeitado: preço unitário não comprovado.');
       return;
     }
     confirmandoHistoricoRef.current = true;
@@ -106,8 +154,7 @@ export default function PedidoTabsContainer({
           itens_revenda: [...atuais, item],
         };
       });
-      setModalRevendaAberto(false);
-      setProdutoSeedHistorico(null);
+      fecharModalHistoricoObsoleto();
       // Sucesso = rascunho em memória aceito (≠ persistência banco).
       toast.success(`Produto ${item.descricao || item.produto_id} no rascunho`);
       setActiveTab('revenda');
@@ -347,10 +394,7 @@ export default function PedidoTabsContainer({
           {modalRevendaAberto ? (
             <AdicionarItemRevendaModal
               isOpen={modalRevendaAberto}
-              onClose={() => {
-                setModalRevendaAberto(false);
-                setProdutoSeedHistorico(null);
-              }}
+              onClose={fecharModalHistoricoObsoleto}
               onAddItem={confirmarItemRevendaDoHistorico}
               cliente={clientePedido}
               tabelaPreco={formData?.tabela_preco || null}

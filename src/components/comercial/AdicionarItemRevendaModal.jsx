@@ -25,6 +25,7 @@ import Top10ProdutosCliente from "./Top10ProdutosCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { isProdutoVendavel } from "@/components/cadastros/produto/produtoTipoPolicy";
+import { numeroComprovado } from "@/components/comercial/historicoComprasClientePolicy";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -91,6 +92,24 @@ export default function AdicionarItemRevendaModal({
     enabled: consultaHabilitada,
   });
 
+  // Enriquecer seed com catálogo no escopo (custo/estoque só se vierem do catálogo; sem inventar).
+  useEffect(() => {
+    if (!isOpen || !produtoInicial?.id || !Array.isArray(produtos) || produtos.length === 0) return;
+    const cat = produtos.find((p) => String(p?.id) === String(produtoInicial.id));
+    if (!cat) return;
+    setProdutoSelecionado((prev) => {
+      if (!prev || String(prev.id) !== String(produtoInicial.id)) return prev;
+      const merged = { ...prev, ...cat, id: prev.id };
+      // Seed histórico manda em unidade/preço já comprovados se catálogo omitir.
+      if (prev.unidade_medida && !cat.unidade_medida) merged.unidade_medida = prev.unidade_medida;
+      if (prev.unidade_sigla && !cat.unidade_sigla) merged.unidade_sigla = prev.unidade_sigla;
+      if (numeroComprovado(prev.preco_venda) != null && numeroComprovado(cat.preco_venda) == null) {
+        merged.preco_venda = prev.preco_venda;
+      }
+      return merged;
+    });
+  }, [isOpen, produtoInicial, produtos]);
+
   const produtosAtivos = consultaHabilitada ? produtos.filter(p =>
     p.status === 'Ativo' && 
     isProdutoVendavel(p.tipo_item)
@@ -102,8 +121,22 @@ export default function AdicionarItemRevendaModal({
     p.codigo_barras?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const calculo = produtoSelecionado ? calcularPrecoItem({
-    produto: produtoSelecionado,
+  const precoBaseComprovado = produtoSelecionado
+    ? numeroComprovado(produtoSelecionado.preco_venda)
+    : null;
+  const itemTabelaComprovado = (() => {
+    if (!produtoSelecionado?.id || !tabelaPreco || !Array.isArray(tabelaPrecoItens)) return null;
+    const row = tabelaPrecoItens.find((i) => String(i?.produto_id) === String(produtoSelecionado.id));
+    return row ? numeroComprovado(row.preco_com_desconto) : null;
+  })();
+  const precoComprovadoDisponivel = itemTabelaComprovado != null || precoBaseComprovado != null;
+
+  const calculo = produtoSelecionado && precoComprovadoDisponivel ? calcularPrecoItem({
+    produto: {
+      ...produtoSelecionado,
+      // Evita `preco_venda || 0` inventado no calculador quando só tabela comprova.
+      preco_venda: precoBaseComprovado != null ? precoBaseComprovado : (itemTabelaComprovado ?? undefined),
+    },
     tabelaPreco: tabelaPreco,
     tabelaPrecoItens: tabelaPrecoItens,
     descontoPadraoCliente: cliente?.condicao_comercial?.percentual_desconto || 0,
@@ -120,12 +153,26 @@ export default function AdicionarItemRevendaModal({
       return;
     }
 
-    if (!produtoSelecionado || !calculo) return;
+    if (!produtoSelecionado) return;
 
-    if (calculo.margem_violada && !justificativaDesconto.trim()) {
+    if (!precoComprovadoDisponivel || !calculo) {
+      alert("Preço unitário não comprovado — não inventar zero. Informe preço na tabela/cadastro ou selecione produto com preço.");
+      return;
+    }
+
+    const custoComprovado = numeroComprovado(
+      produtoSelecionado.custo_medio ?? produtoSelecionado.custo_aquisicao,
+    );
+    const estoqueComprovado = numeroComprovado(
+      produtoSelecionado.estoque_disponivel ?? produtoSelecionado.estoque_atual,
+    );
+    // Margem só com custo comprovado; ausente ≠ margem 0 / violação fabricada.
+    const margemConhecida = custoComprovado != null;
+    if (margemConhecida && calculo.margem_violada && !justificativaDesconto.trim()) {
       alert("Margem mínima violada! É necessário informar uma justificativa para o desconto.");
       return;
     }
+    // Justificativa de margem NÃO autoriza fabricar preço — preço já validado acima.
 
     const unidadeComprovada = produtoSelecionado.unidade_medida || produtoSelecionado.unidade_sigla || null;
     const novoItem = {
@@ -133,32 +180,39 @@ export default function AdicionarItemRevendaModal({
       codigo_sku: produtoSelecionado.codigo,
       descricao: produtoSelecionado.descricao,
       quantidade: quantidade,
-      custo_unitario: calculo.custo_unitario,
-      preco_base_produto: produtoSelecionado.preco_venda,
-      preco_tabela: calculo.origem_preco === "tabela_preco" ? calculo.preco_unitario_bruto : null,
-      preco_unitario_bruto: calculo.preco_unitario_bruto,
       desconto_padrao_cliente_percentual: cliente?.condicao_comercial?.percentual_desconto || 0,
       desconto_item_percentual: descontoPercentual,
       desconto_item_valor: descontoValor,
+      preco_unitario_bruto: calculo.preco_unitario_bruto,
       preco_unitario: calculo.preco_unitario,
       valor_item: calculo.valor_item,
-      margem_percentual: calculo.margem_percentual,
-      margem_valor: calculo.margem_valor,
-      margem_minima_produto: produtoSelecionado.margem_minima_percentual,
-      margem_violada: calculo.margem_violada,
-      aprovacao_margem_necessaria: calculo.margem_violada,
       aprovacao_margem_concedida: false,
       justificativa_desconto: justificativaDesconto,
-      estoque_disponivel: produtoSelecionado.estoque_disponivel || produtoSelecionado.estoque_atual || 0,
-      situacao_item: (produtoSelecionado.estoque_disponivel || 0) >= quantidade ? "Em Estoque" : "Sob Encomenda",
       ncm: produtoSelecionado.ncm,
       observacoes: observacoes,
-      _calculo_detalhado: calculo.detalhes_calculo
+      _calculo_detalhado: calculo.detalhes_calculo,
     };
+    if (precoBaseComprovado != null) novoItem.preco_base_produto = precoBaseComprovado;
+    if (calculo.origem_preco === "tabela_preco") novoItem.preco_tabela = calculo.preco_unitario_bruto;
     // Unidade só se comprovada — ausente ≠ inventar UN.
     if (unidadeComprovada) {
       novoItem.unidade = unidadeComprovada;
       novoItem.unidade_medida = unidadeComprovada;
+    }
+    // Custo/estoque/margem/Sob Encomenda só com fonte — ausente ≠ zero / rótulo inventado.
+    if (custoComprovado != null) {
+      novoItem.custo_unitario = custoComprovado;
+      novoItem.margem_percentual = calculo.margem_percentual;
+      novoItem.margem_valor = calculo.margem_valor;
+      novoItem.margem_violada = calculo.margem_violada;
+      novoItem.aprovacao_margem_necessaria = calculo.margem_violada;
+    }
+    if (numeroComprovado(produtoSelecionado.margem_minima_percentual) != null) {
+      novoItem.margem_minima_produto = Number(produtoSelecionado.margem_minima_percentual);
+    }
+    if (estoqueComprovado != null) {
+      novoItem.estoque_disponivel = estoqueComprovado;
+      novoItem.situacao_item = estoqueComprovado >= quantidade ? "Em Estoque" : "Sob Encomenda";
     }
 
     onAddItem(novoItem);
@@ -249,16 +303,24 @@ export default function AdicionarItemRevendaModal({
                           <Badge variant="outline" className="text-xs">{produto.codigo}</Badge>
                           <span className="text-xs text-slate-600">{produto.unidade_medida}</span>
                           <span className="text-xs text-slate-600">
-                            Estoque: {produto.estoque_disponivel || produto.estoque_atual || 0}
+                            Estoque:{" "}
+                            {numeroComprovado(produto.estoque_disponivel ?? produto.estoque_atual) == null
+                              ? "—"
+                              : numeroComprovado(produto.estoque_disponivel ?? produto.estoque_atual)}
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-green-600">
-                          R$ {(produto.preco_venda || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {numeroComprovado(produto.preco_venda) == null
+                            ? "—"
+                            : `R$ ${numeroComprovado(produto.preco_venda).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                         </p>
                         <p className="text-xs text-slate-500">
-                          Custo: R$ {(produto.custo_medio || produto.custo_aquisicao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          Custo:{" "}
+                          {numeroComprovado(produto.custo_medio ?? produto.custo_aquisicao) == null
+                            ? "—"
+                            : `R$ ${numeroComprovado(produto.custo_medio ?? produto.custo_aquisicao).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                         </p>
                       </div>
                     </div>

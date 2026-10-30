@@ -90,3 +90,16 @@ Testes: 13 PASS. #401 `34c4c0ee` intacta — port controlado só após Codex tip
 ## CI SUCCESS tip 54fcd026d (2026-10-30 America/Sao_Paulo)
 - Runs SUCCESS 6/6 — typecheck SUGESTOES_VAZIAS mutável.
 - Residual f8a20831e incluído. CI verde ≠ aceite Codex montado; #401 fora.
+
+## Residual contexto/preço/custo/estoque (pós 54fcd026d) (2026-10-30 America/Sao_Paulo)
+Fechamento dos resíduos do modal no tip #446 (sem inventar UN/preço/custo/estoque/demanda):
+
+1. `buildHistoricoModalGeracao(cliente, empresa, grupo, ator)` — geração imutável.
+2. Troca de contexto com modal aberto → effect cancela confirmação; rascunho novo intacto.
+3. Confirm com geracao ≠ atual → rejeita inserção indevida.
+4. Preço ausente rejeitado (`numeroComprovado`); zero finito comprovado ok.
+5. Custo/estoque/margem/Sob Encomenda só com fonte; UI lista usa "—" quando ausente.
+6. Justificativa de margem NÃO autoriza fabricar preço.
+7. Positivos preservados: qty editável, confirmação única, status lock, leitura sem fake action.
+
+Testes: 14 PASS (modal + wire + mount). #401 fora — mapa port atualizado sem merge.

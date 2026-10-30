@@ -169,6 +169,31 @@ export function pedidoItensBloqueadosPorStatus(formData) {
 }
 
 /**
+ * Geração imutável do modal histórico — cliente/empresa/grupo/ator.
+ * Confirmação com geracao ≠ atual: modal obsoleto (não inserir no rascunho novo).
+ */
+export function buildHistoricoModalGeracao({
+  clienteId = null,
+  empresaId = null,
+  groupId = null,
+  actorId = null,
+} = {}) {
+  return JSON.stringify([
+    clienteId || null,
+    empresaId || null,
+    groupId || null,
+    actorId || null,
+  ]);
+}
+
+/** Número finito comprovado (inclui zero); ausente/NaN → null. */
+export function numeroComprovado(raw) {
+  if (raw == null || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
  * Seed do modal canônico AdicionarItemRevenda a partir do histórico/sugestão.
  * Só campos comprovados; frequência/qty histórica ≠ demanda; ausente ≠ inventar UN/zero.
  * preco_medio (média agregada) ≠ preço unitário comprovado — omitir.

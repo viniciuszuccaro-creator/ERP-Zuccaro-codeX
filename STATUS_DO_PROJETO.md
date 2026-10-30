@@ -1,3 +1,21 @@
+## CURSOR — VIGENTE (#446 residual contexto/preço/custo/estoque fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base tip** | `54fcd026d` CI SUCCESS — residual sobre modal canônico |
+| **Contexto** | `buildHistoricoModalGeracao` + effect: troca cliente/empresa/grupo/ator fecha modal obsoleto; confirm rejeita geracao ≠ atual; rascunho preservado |
+| **Preço** | `precoComprovadoDisponivel` / `numeroComprovado` — ausente ≠ 0; zero finito ok; justificativa margem ≠ fabricar preço |
+| **Custo/estoque** | omitidos sem fonte; UI "—"; sem inventar Sob Encomenda / margem 0 |
+| **Unidade** | só se comprovada (ausente ≠ UN) |
+| **Positivos** | qty editável · confirmação única · status lock · rejeição · leitura sem ação fictícia |
+| **Testes** | adicionar-historico-modal + wire + mount — **14 PASS** |
+| **Codex** | pedir `@codex review` tip novo — CI ≠ aceite |
+| **#401** | `34c4c0ee` — **fora**; mapa port atualizado sem merge/backend |
+| Fora | merge main · deploy · seed · inventar UN/preço/custo/estoque |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · `docs/evidence/comercial360-446-port-mapa-401-20261030.txt`
+**Próximo:** CI tip + Codex montado; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 tip 54fcd026d CI SUCCESS — residual + typecheck) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
