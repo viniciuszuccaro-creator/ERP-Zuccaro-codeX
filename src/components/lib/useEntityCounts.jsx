@@ -7,6 +7,7 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { readErpHttpSession } from "@/api/erpHttpSession";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useMemo, useEffect } from "react";
 import {
@@ -16,7 +17,14 @@ import {
 
 export { SIMPLE_CATALOG, buildContextFilter };
 
-// Fallback: contagem individual. Falha propaga — nunca fabricar 0 como “vazio”.
+/** Ator canônico da sessão HTTP — sem token em queryKey/cache/log. */
+function readSessionActorId() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" ? session.actorId.trim() : "";
+  return actorId || null;
+}
+
+// Contagem individual via countEntities. Falha propaga — nunca fabricar KPI com page.length.
 async function countSingle(entityName, filter) {
   try {
     const res = await base44.functions.invoke('countEntities', {
@@ -29,25 +37,13 @@ async function countSingle(entityName, filter) {
   } catch (error) {
     console.error('[useEntityCounts] Falha na contagem individual', error, { entityName });
   }
-  try {
-    const res = await base44.functions.invoke('entityListSorted', {
-      entityName,
-      filter: filter || {},
-      sortField: 'id',
-      sortDirection: 'asc',
-      limit: 2000,
-    });
-    if (Array.isArray(res?.data)) return res.data.length;
-  } catch (error) {
-    console.error('[useEntityCounts] Falha na contagem por listagem', error, { entityName });
-    throw error;
-  }
   throw new Error('READ_COUNT_UNAVAILABLE');
 }
 
 export function useEntityCounts(entities = []) {
   const { grupoAtual, empresaAtual, empresasDoGrupo } = useContextoVisual();
   const queryClient = useQueryClient();
+  const actorId = readSessionActorId();
 
   const groupId = grupoAtual?.id || null;
   const empresaId = empresaAtual?.id || null;
@@ -64,7 +60,7 @@ export function useEntityCounts(entities = []) {
     [empresasDoGrupo]
   );
 
-  const queryKey = ['entityCounts_v5', entitiesKey, groupId, empresaId, grupoEmpIdsKey];
+  const queryKey = ['entityCounts_v5', entitiesKey, groupId, empresaId, grupoEmpIdsKey, actorId];
 
   // Sempre busca — se não há contexto, usa filtro vazio (conta tudo) ou
   // contexto do grupo/empresa quando disponível

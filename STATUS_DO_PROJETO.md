@@ -1,16 +1,15 @@
-## CURSOR — VIGENTE (#401 P1 hydrate CI SUCCESS + Codex limpo; contagens FORA) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 contagens fix identidade+ator+page.length) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **#401 tip** | `f5ac2a1de` — CI **41072707404 SUCCESS** + Codex limpo |
-| **P1** | windowMode hydrate + GET falho bloqueia save — threads resolvidos |
-| **#434** | `0b9c0ded8` CI 41071229904 SUCCESS (get/draft/skipped/sync-lock) |
-| **Contagens** | **FORA** — Pacote A #431 `2b523fdf8` |
-| **#439 indep.** | CentroOperacao sky tip `619b26092` Codex limpo · CI em curso |
-| Fora | 2ª candidata · merge main · deploy · VPS · E2E browser |
+| **#401** | tip pós-CI5444: wire `scopeListCacheRemainder` + CANAL hunks; counts sem page.length; queryKey+actorId |
+| **Keep** | Cliente.get · skipped · draft · sync-lock · Painel/Forms/API bytes |
+| **CI prévio** | `eab13aa5f` frontend 1 FAIL (identidade visualizer) |
+| Fora | pin cego · swap backend · 2ª candidata · merge/deploy |
 
-**Evidência:** `docs/evidence/codex-401-p1-hydrate-window-20261030.txt`
-**Próximo:** CI #439; item indep. residual; Pacote A contagens só em lote próprio.
+**Evidência:** `docs/evidence/incorporacao-contagens-431-into-401-20261030.txt`
+**Próximo:** CI + @codex deste tip.
+
 
 ## Estado vigente - composicao integrada em revisao (2026-10-29)
 

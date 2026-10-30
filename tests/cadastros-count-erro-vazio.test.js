@@ -247,11 +247,28 @@ test('resposta tardia de outro escopo é descartável via queryKey (hooks sem pl
     'utf8',
   );
   const ent = fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
-  assert.match(all, /queryKey:\s*\["cadastros-all-counts-v5",\s*empresaId,\s*groupId,\s*grupoEmpIds\]/);
+  assert.match(all, /queryKey:\s*\["cadastros-all-counts-v5",\s*empresaId,\s*groupId,\s*grupoEmpIds,\s*actorId\]/);
+  assert.match(ent, /const queryKey = \['entityCounts_v5',\s*entitiesKey,\s*groupId,\s*empresaId,\s*grupoEmpIdsKey,\s*actorId\];/);
   assert.match(all, /placeholderData:\s*undefined/);
   assert.match(ent, /placeholderData:\s*undefined/);
   assert.match(ent, /entityCounts_v5/);
   assert.match(ent, /Contagem parcial descartada/);
+  // Ator canônico na key (A≠B); sem token em cache/key/log
+  assert.match(all, /readErpHttpSession/);
+  assert.match(ent, /readErpHttpSession/);
+  assert.match(all, /readSessionActorId/);
+  assert.match(ent, /readSessionActorId/);
+  assert.doesNotMatch(all, /queryKey:[^\n]*token/);
+  assert.doesNotMatch(ent, /queryKey:[^\n]*token/);
+});
+
+test('falha countEntities não vira KPI via page.length / entityListSorted', () => {
+  const ent = fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
+  assert.doesNotMatch(ent, /entityListSorted/);
+  assert.doesNotMatch(ent, /limit:\s*2000/);
+  assert.doesNotMatch(ent, /res\.data\.length/);
+  assert.match(ent, /READ_COUNT_UNAVAILABLE/);
+  assert.match(ent, /nunca fabricar KPI com page\.length/);
 });
 
 test('UI Cadastros distingue erro (—) de zero; banner data-counts-unavailable', () => {

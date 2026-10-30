@@ -8,6 +8,7 @@
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { readErpHttpSession } from "@/api/erpHttpSession";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useEffect } from "react";
 import {
@@ -20,10 +21,18 @@ import {
 
 export { BLOCOS_ENTITIES, buildCadastrosAllCountsFilter, fetchCountsCore as fetchCadastrosAllCounts };
 
+/** Ator canônico da sessão HTTP — sem token em queryKey/cache/log. */
+function readSessionActorId() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" ? session.actorId.trim() : "";
+  return actorId || null;
+}
+
 export default function useCadastrosAllCounts() {
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const actorId = readSessionActorId();
   const contextoValido = Boolean(empresaId || groupId);
   const queryClient = useQueryClient();
   const grupoEmpIds = (Array.isArray(empresasDoGrupo) ? empresasDoGrupo : [])
@@ -33,7 +42,7 @@ export default function useCadastrosAllCounts() {
     .join(",");
 
   const { data, isLoading, isError, error, isFetching, failureReason } = useQuery({
-    queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds],
+    queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds, actorId],
     queryFn: async () => {
       if (!contextoValido) return emptyCadastrosCounts();
       return fetchCountsCore({
@@ -55,7 +64,7 @@ export default function useCadastrosAllCounts() {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
     queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
-  }, [empresaId, groupId, grupoEmpIds, queryClient]);
+  }, [empresaId, groupId, grupoEmpIds, actorId, queryClient]);
 
   useEffect(() => {
     const unsubs = ALL_ENTITIES.map((name) => {
@@ -67,7 +76,7 @@ export default function useCadastrosAllCounts() {
       });
     }).filter(Boolean);
     return () => { unsubs.forEach((u) => { if (typeof u === "function") u(); }); };
-  }, [empresaId, groupId, queryClient]);
+  }, [empresaId, groupId, actorId, queryClient]);
 
   const counts = isError ? {} : (data || {});
   const totals = Object.fromEntries(

@@ -28,3 +28,9 @@ Contatos Cliente.get/draft/sync-lock regressão
 
 ## Fora
 Merge main · deploy · VPS · seed · 2ª candidata · swap serviço/repo
+
+## Fix CI5444 / eab (2026-10-30 America/Sao_Paulo)
+- Wire `scopeListCacheRemainder` no teste identidade + 2 hunks CANAL exact (hash 53ed9f42)
+- `useEntityCounts`: remove fallback entityListSorted/page.length → READ_COUNT_UNAVAILABLE
+- queryKey counts inclui actorId canônico (readErpHttpSession); sem token
+- Sem tocar Contatos/Endereços/Completo/Painel/API/backend

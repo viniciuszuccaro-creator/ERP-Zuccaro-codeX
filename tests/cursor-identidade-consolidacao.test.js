@@ -10,6 +10,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MASTER_CODE_SPECS } from '../src/api/localCadastroMasterPolicy.js';
 import { clienteNavigationRemainder } from './helpers/clienteNavigationRemainder.js';
 import { perfilPolicyRemainder, perfilViewerRemainder } from './helpers/perfilGateRemainder.js';
+import { scopeListCacheRemainder } from './helpers/scopeListCacheRemainder.js';
 
 // Coorte ID-only restante (golden e36231b3). Operador/Condicao/MoedaIndice/ContatoB2B
 // graduaram para useCadastroReopenOnIdentity — cobertos no teste seguinte.
@@ -132,7 +133,7 @@ test('OperadorCaixa CondicaoComercial MoedaIndice e ContatoB2B graduaram ID-only
 });
 
 test('visualizer retains existing contracts after exact alias labels and initial-ID integration hunks', () => {
-  const path = 'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', source = clienteNavigationRemainder(perfilViewerRemainder(read(path))), ast = tree(path, source);
+  const path = 'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx', source = clienteNavigationRemainder(perfilViewerRemainder(scopeListCacheRemainder(read(path)))), ast = tree(path, source);
   const aliases = ['cadastroFiscal', 'comissao', 'notaFiscal'];
   const found = { aliases: 0, labels: 0, fallback: 0 };
   const transform = context => {
