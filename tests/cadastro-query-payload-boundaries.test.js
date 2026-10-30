@@ -2,6 +2,7 @@ test('Cliente contatos: remainder rejeita omissao repeticao e efeito colateral n
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const payload = '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),';
   const mapper = '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),';
+  const persistBusy = '                persistBusy={isSaving || saveMutation.isPending}';
   for (const hunk of [payload, mapper]) {
     assert.equal(source.split(hunk).length - 1, 1);
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, '')));
@@ -10,6 +11,12 @@ test('Cliente contatos: remainder rejeita omissao repeticao e efeito colateral n
     const forged = hunk.replace(variable + '.contatos ===', `Object.assign(${variable},{nome:'FORGED'}).contatos ===`);
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, forged)));
   }
+  // #432 persistBusy: exatamente 2 ocorrências; omitir/forjar quebra remainder (não pin cego).
+  assert.equal(source.split(persistBusy).length - 1, 2);
+  assert.throws(() => clienteContactPresenceRemainder(source.replace(persistBusy, '')));
+  assert.throws(() => clienteContactPresenceRemainder(
+    source.replace(persistBusy, '                persistBusy={false /* FORGED */}'),
+  ));
 });
 
 test('Cliente contatos: remainder mantem alteracao externa visivel ao hash integral', () => {
@@ -40,12 +47,39 @@ function once(source, current, previous) {
   return source.replace(current, previous);
 }
 // Browser-proven absence is not an explicit empty list. Preserve the old golden;
-// accept only these two exact hunks, never arbitrary spread expressions.
+// accept only these exact hunks, never arbitrary spread expressions.
+// #432: persistBusy wiring Contatos+Endereços — peels authorized lines, keeps stage48 hash.
 function clienteContactPresenceRemainder(source) {
   source = once(source, '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),',
     '    contatos: sanitizeContatos(data.contatos),');
-  return once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
+  source = once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
     '      contatos: record.contatos || [],');
+  // Contatos Form: prop persistBusy (gravação única / bloqueio UI) — authorized #432.
+  source = once(source,
+    '              <GerenciarContatosClienteForm\n'
+    + '                contatos={formData.contatos || []}\n'
+    + '                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '                persistBusy={isSaving || saveMutation.isPending}\n'
+    + '              />',
+    '              <GerenciarContatosClienteForm\n'
+    + '                contatos={formData.contatos || []}\n'
+    + '                onChange={(novosContatos) => setFormData({ ...formData, contatos: novosContatos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '              />');
+  // Endereços Form: mesma prop — authorized #432.
+  return once(source,
+    '              <GerenciarEnderecosClienteForm\n'
+    + '                enderecos={formData.locais_entrega || []}\n'
+    + '                onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '                persistBusy={isSaving || saveMutation.isPending}\n'
+    + '              />',
+    '              <GerenciarEnderecosClienteForm\n'
+    + '                enderecos={formData.locais_entrega || []}\n'
+    + '                onChange={(novosEnderecos) => setFormData({ ...formData, locais_entrega: novosEnderecos })}\n'
+    + '                assertScopeCurrent={assertFormScopeCurrent}\n'
+    + '              />');
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
