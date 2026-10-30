@@ -481,6 +481,23 @@ test('P2 #4425429376: save após troca de contexto descarta conclusão (não bum
   assert.match(persistSrc, /scopeAtStart === painelScopeKeyRef\.current/);
 });
 
+test('P1 a9948387: painelScopeKey inclui ator+sessão (≠ só tenant/cliente)', () => {
+  const painel = read(painelPath);
+  assert.match(painel, /buildPainelContatosScopeKey/);
+  assert.match(painel, /central360SessionKey/);
+  assert.match(painel, /readErpHttpSession/);
+  assert.match(painel, /sessionActorId/);
+  assert.match(painel, /sessionCacheKey/);
+  // Escopo do produto carrega actorId + sessionKey — tenant-only era o bug.
+  const scopeFn = painel.slice(
+    painel.indexOf('export function buildPainelContatosScopeKey'),
+    painel.indexOf('export default function PainelDinamicoCliente'),
+  );
+  assert.match(scopeFn, /actorId/);
+  assert.match(scopeFn, /sessionKey/);
+  assert.match(scopeFn, /clienteId/);
+});
+
 /**
  * Job async REAL passado a contatosPersistQueueRef.current — corpo do produto, não réplica.
  */
@@ -583,8 +600,8 @@ test('P2 #4425429376 comportamental: save antigo com contexto trocado NÃO bump 
   const runner = createRealPersistJobRunner(painel);
   const novoRascunhoContexto = [{ nome: 'rascunho-empresa-B' }];
   const out = await runner.run({
-    scopeAtStart: '["g1","e-A","empresa","cli-1"]',
-    scopeAfterAwait: '["g1","e-B","empresa","cli-1"]',
+    scopeAtStart: '["g1","e-A","empresa","cli-1","actor-A","sess-A"]',
+    scopeAfterAwait: '["g1","e-B","empresa","cli-1","actor-A","sess-A"]',
     previousDraft: novoRascunhoContexto,
     lista: [{ nome: 'salvo-em-A' }],
     updated: { id: 'cli-1', contatos: [{ nome: 'salvo-em-A' }] },
@@ -599,8 +616,8 @@ test('P2 #4425429376 comportamental: save antigo com contexto trocado NÃO bump 
 
   // Mesmo job, escopo estável → aplica e bumpa (prova positiva do caminho real).
   const ok = await runner.run({
-    scopeAtStart: '["g1","e-A","empresa","cli-1"]',
-    scopeAfterAwait: '["g1","e-A","empresa","cli-1"]',
+    scopeAtStart: '["g1","e-A","empresa","cli-1","actor-A","sess-A"]',
+    scopeAfterAwait: '["g1","e-A","empresa","cli-1","actor-A","sess-A"]',
     previousDraft: [{ nome: 'prev' }],
     lista: [{ nome: 'salvo' }],
     updated: { id: 'cli-1', contatos: [{ nome: 'salvo' }] },
@@ -608,6 +625,51 @@ test('P2 #4425429376 comportamental: save antigo com contexto trocado NÃO bump 
   assert.equal(ok.result?.skipped, false);
   assert.equal(ok.epoch, 8);
   assert.equal(ok.draft[0].nome, 'salvo');
+});
+
+test('P1 a9948387 comportamental: save atorA → atorB (mesmo tenant/cliente) CONTEXT_CHANGED', async () => {
+  // Importa a função REAL do produto (não réplica) via transpile+vm.
+  const painel = read(painelPath);
+  const fnStart = painel.indexOf('export function buildPainelContatosScopeKey');
+  const fnEnd = painel.indexOf('export default function PainelDinamicoCliente');
+  assert.ok(fnStart >= 0 && fnEnd > fnStart);
+  const fnSrc = painel.slice(fnStart, fnEnd).replace(/^export\s+/m, '');
+  const compiled = compile(`
+    ${fnSrc}
+    module.exports = { buildPainelContatosScopeKey };
+  `);
+  const sandbox = { module: { exports: {} }, exports: {}, console };
+  vm.runInNewContext(compiled, sandbox);
+  const { buildPainelContatosScopeKey } = sandbox.module.exports;
+
+  const base = {
+    groupId: 'g1',
+    empresaId: 'e1',
+    contexto: 'empresa',
+    clienteId: 'cli-1',
+  };
+  const scopeA = buildPainelContatosScopeKey({ ...base, actorId: 'actor-A', sessionKey: 'sess-A' });
+  const scopeB = buildPainelContatosScopeKey({ ...base, actorId: 'actor-B', sessionKey: 'sess-B' });
+  assert.notEqual(scopeA, scopeB, 'ator/sessão distintos ⇒ escopo distinto (mesmo tenant/cliente)');
+  assert.equal(
+    buildPainelContatosScopeKey({ ...base, actorId: 'actor-A', sessionKey: 'sess-A' }),
+    scopeA,
+  );
+
+  const runner = createRealPersistJobRunner(painel);
+  const rascunhoB = [{ nome: 'draft-ator-B' }];
+  const out = await runner.run({
+    scopeAtStart: scopeA,
+    scopeAfterAwait: scopeB,
+    previousDraft: rascunhoB,
+    lista: [{ nome: 'old-actor-save' }],
+    updated: { id: 'cli-1', contatos: [{ nome: 'old-actor-save' }] },
+  });
+  assert.equal(out.result?.skipped, true);
+  assert.equal(out.result?.reason, 'CONTEXT_CHANGED');
+  assert.equal(out.epoch, 7);
+  assert.deepEqual(out.draft, rascunhoB, 'rascunho do ator B intacto — não recebe old-actor-save');
+  assert.notEqual(out.draft[0]?.nome, 'old-actor-save');
 });
 
 test('P2 #4425429376 + #424: GET tardio do novo contexto sobrevive a save antigo descartado', async () => {

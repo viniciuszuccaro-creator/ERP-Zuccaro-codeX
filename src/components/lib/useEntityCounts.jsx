@@ -8,6 +8,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useMemo, useEffect } from "react";
 import {
@@ -22,6 +23,12 @@ function readSessionActorId() {
   const session = readErpHttpSession();
   const actorId = typeof session?.actorId === "string" ? session.actorId.trim() : "";
   return actorId || null;
+}
+
+/** Fingerprint de sessão (não o token) — troca A→B mesmo com mesmo ator invalida cache. */
+function readSessionCacheKey() {
+  const session = readErpHttpSession();
+  return central360SessionKey(session?.token);
 }
 
 // Contagem individual via countEntities. Falha propaga — nunca fabricar KPI com page.length.
@@ -44,6 +51,7 @@ export function useEntityCounts(entities = []) {
   const { grupoAtual, empresaAtual, empresasDoGrupo } = useContextoVisual();
   const queryClient = useQueryClient();
   const actorId = readSessionActorId();
+  const sessionKey = readSessionCacheKey();
 
   const groupId = grupoAtual?.id || null;
   const empresaId = empresaAtual?.id || null;
@@ -60,7 +68,8 @@ export function useEntityCounts(entities = []) {
     [empresasDoGrupo]
   );
 
-  const queryKey = ['entityCounts_v5', entitiesKey, groupId, empresaId, grupoEmpIdsKey, actorId];
+  // sessionKey (fingerprint) ≠ token cru — sessão rotacionada invalida; sem segredo na key.
+  const queryKey = ['entityCounts_v5', entitiesKey, groupId, empresaId, grupoEmpIdsKey, actorId, sessionKey];
 
   // Sempre busca — se não há contexto, usa filtro vazio (conta tudo) ou
   // contexto do grupo/empresa quando disponível

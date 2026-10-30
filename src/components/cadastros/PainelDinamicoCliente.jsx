@@ -28,6 +28,8 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
 import Top10ProdutosCliente from "@/components/comercial/Top10ProdutosCliente";
 import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
@@ -37,6 +39,28 @@ import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompl
 import HistoricoProdutosCliente from "@/components/comercial/HistoricoProdutosCliente";
 import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContatosClienteForm";
 import { toast } from "sonner";
+
+/**
+ * Escopo vivo do painel Contatos — tenant + cliente + ator/sessão.
+ * Sem ator/sessão, save do ator A concluía no rascunho do ator B (Codex P1 a9948387).
+ */
+export function buildPainelContatosScopeKey({
+  groupId = null,
+  empresaId = null,
+  contexto = null,
+  clienteId = null,
+  actorId = null,
+  sessionKey = null,
+} = {}) {
+  return JSON.stringify([
+    groupId ?? null,
+    empresaId ?? null,
+    contexto ?? null,
+    clienteId ?? null,
+    actorId ?? null,
+    sessionKey ?? null,
+  ]);
+}
 
 /**
  * Contrato escalar HTTP: contatos[] canônico ausente/vazio e só há
@@ -175,9 +199,21 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const { updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
-  const painelScopeKey = JSON.stringify([groupId, empresaId, contexto, clienteProp?.id ?? null]);
+  const sessionSnapshot = readErpHttpSession();
+  const sessionActorId = typeof sessionSnapshot?.actorId === "string" && sessionSnapshot.actorId.trim()
+    ? sessionSnapshot.actorId.trim()
+    : null;
+  const sessionCacheKey = central360SessionKey(sessionSnapshot?.token);
+  const painelScopeKey = buildPainelContatosScopeKey({
+    groupId,
+    empresaId,
+    contexto,
+    clienteId: clienteProp?.id ?? null,
+    actorId: sessionActorId,
+    sessionKey: sessionCacheKey,
+  });
   const contatosPersistQueueRef = useRef(null);
-  /** Escopo vivo — conclusão de save antiga não aplica rascunho/epoch no contexto novo (Codex #4425429376). */
+  /** Escopo vivo — conclusão de save antiga não aplica rascunho/epoch no contexto/ator novo (Codex #4425429376 / P1 a9948387). */
   const painelScopeKeyRef = useRef(painelScopeKey);
   painelScopeKeyRef.current = painelScopeKey;
   /** Trava contrato escalar na abertura — não promover rascunho a contatos[] após save (Codex #4413059634). */
@@ -320,19 +356,19 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const cliente = clienteLive || clienteProp;
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-cliente', clienteProp?.id],
+    queryKey: ['pedidos-cliente', clienteProp?.id, groupId, empresaId, sessionActorId, sessionCacheKey],
     queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteProp.id }, '-data_pedido', 10),
     enabled: !!clienteProp?.id && painelAberto,
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-cliente', clienteProp?.id],
+    queryKey: ['entregas-cliente', clienteProp?.id, groupId, empresaId, sessionActorId, sessionCacheKey],
     queryFn: () => base44.entities.Entrega.filter({ cliente_id: clienteProp.id }, '-created_date', 5),
     enabled: !!clienteProp?.id && painelAberto,
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-cliente', clienteProp?.id],
+    queryKey: ['contas-receber-cliente', clienteProp?.id, groupId, empresaId, sessionActorId, sessionCacheKey],
     queryFn: () => base44.entities.ContaReceber.filter({ cliente_id: clienteProp.id }, '-data_vencimento', 5),
     enabled: !!clienteProp?.id && painelAberto,
   });

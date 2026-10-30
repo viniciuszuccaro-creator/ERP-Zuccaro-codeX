@@ -380,10 +380,16 @@ export default function VisualizadorUniversalEntidadeV24({
     return function() { clearTimeout(debRef.current); };
   }, [search]);
 
-  // Contagem — erro ≠ zero: countsUnavailable impede KPI/seleção cross-page com total fabricado
+  // Contagem — erro ≠ zero; loading ≠ 0: total desconhecido até number validado (Codex P1 a9948387).
   const { counts, isLoading: countsLoading, countsUnavailable } = useEntityCounts(ENTITY ? [ENTITY] : []);
-  const totalCount = countsUnavailable ? null : Number((counts && counts[ENTITY]) || 0);
-  const countKnown = typeof totalCount === "number";
+  const rawEntityCount = counts && Object.prototype.hasOwnProperty.call(counts, ENTITY)
+    ? counts[ENTITY]
+    : undefined;
+  const countKnown = !countsUnavailable
+    && typeof rawEntityCount === "number"
+    && Number.isSafeInteger(rawEntityCount)
+    && rawEntityCount >= 0;
+  const totalCount = countKnown ? rawEntityCount : null;
 
   useEffect(function() {
     if (countsUnavailable && crossPageAll) {
@@ -1178,8 +1184,8 @@ export default function VisualizadorUniversalEntidadeV24({
           >
             {countsUnavailable
               ? <span aria-label="Contagem indisponível">—</span>
-              : (countsLoading && totalCount === 0)
-                ? <span className="animate-pulse text-[10px]">···</span>
+              : !countKnown
+                ? <span className="animate-pulse text-[10px]" data-counts-unknown-during-load="true" aria-label="Contagem carregando">···</span>
                 : totalCount.toLocaleString("pt-BR")}
           </Badge>
         </div>
@@ -1345,7 +1351,14 @@ export default function VisualizadorUniversalEntidadeV24({
       )}
       {/* Paginação */}
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
-        <span>Pág. {page} · {items.length} exibidos · {countsUnavailable ? "total indisponível" : (totalCount + " total")}</span>
+        <span>
+          Pág. {page} · {items.length} exibidos ·{" "}
+          {countsUnavailable
+            ? "total indisponível"
+            : !countKnown
+              ? "total …"
+              : (totalCount + " total")}
+        </span>
         <div className="flex gap-1">
           <button
             type="button"

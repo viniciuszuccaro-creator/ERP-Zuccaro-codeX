@@ -247,19 +247,23 @@ test('resposta tardia de outro escopo é descartável via queryKey (hooks sem pl
     'utf8',
   );
   const ent = fs.readFileSync(path.join(ROOT, 'components/lib/useEntityCounts.jsx'), 'utf8');
-  assert.match(all, /queryKey:\s*\["cadastros-all-counts-v5",\s*empresaId,\s*groupId,\s*grupoEmpIds,\s*actorId\]/);
-  assert.match(ent, /const queryKey = \['entityCounts_v5',\s*entitiesKey,\s*groupId,\s*empresaId,\s*grupoEmpIdsKey,\s*actorId\];/);
+  assert.match(all, /queryKey:\s*\["cadastros-all-counts-v5",\s*empresaId,\s*groupId,\s*grupoEmpIds,\s*actorId,\s*sessionKey\]/);
+  assert.match(ent, /const queryKey = \['entityCounts_v5',\s*entitiesKey,\s*groupId,\s*empresaId,\s*grupoEmpIdsKey,\s*actorId,\s*sessionKey\];/);
   assert.match(all, /placeholderData:\s*undefined/);
   assert.match(ent, /placeholderData:\s*undefined/);
   assert.match(ent, /entityCounts_v5/);
   assert.match(ent, /Contagem parcial descartada/);
-  // Ator canônico na key (A≠B); sem token em cache/key/log
+  // Ator + fingerprint de sessão (A≠B / token rotacionado); sem token cru na key/log
   assert.match(all, /readErpHttpSession/);
   assert.match(ent, /readErpHttpSession/);
   assert.match(all, /readSessionActorId/);
   assert.match(ent, /readSessionActorId/);
-  assert.doesNotMatch(all, /queryKey:[^\n]*token/);
-  assert.doesNotMatch(ent, /queryKey:[^\n]*token/);
+  assert.match(all, /central360SessionKey/);
+  assert.match(ent, /central360SessionKey/);
+  assert.match(all, /readSessionCacheKey/);
+  assert.match(ent, /readSessionCacheKey/);
+  assert.doesNotMatch(all, /queryKey:[^\n]*\btoken\b/);
+  assert.doesNotMatch(ent, /queryKey:[^\n]*\btoken\b/);
 });
 
 test('falha countEntities não vira KPI via page.length / entityListSorted', () => {
@@ -314,9 +318,12 @@ test('Visualizador propaga countsUnavailable — total ≠ 0 fabricado; cross-pa
   );
   assert.match(src, /countsUnavailable/);
   assert.match(src, /countKnown/);
-  assert.match(src, /countsUnavailable \? null : Number/);
+  assert.match(src, /data-counts-unknown-during-load/);
+  assert.match(src, /total …/);
   assert.match(src, /data-counts-unavailable/);
   assert.match(src, /Contagem indisponível/);
+  // Loading/ausência ≠ "0 total" no rodapé (Codex P1 a9948387).
+  assert.doesNotMatch(src, /countsUnavailable \? "total indisponível" : \(totalCount \+ " total"\)/);
   assert.match(src, /total indisponível/);
   assert.match(src, /if \(!countKnown\) return;/);
   assert.match(src, /Exclusao em lote bloqueada: contagem indisponivel/);
