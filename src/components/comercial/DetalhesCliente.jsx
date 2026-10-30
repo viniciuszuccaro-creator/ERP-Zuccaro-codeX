@@ -50,6 +50,41 @@ export function computeDetalhesClientePedidosKpis(pedidos) {
 }
 
 /**
+ * AGENTS §11: não publicar KPIs pela 1ª página quando há mais registros.
+ * Contagem pode usar `meta.total` (agregação server-side); somas/ticket só com página completa.
+ */
+export function isDetalhesClientePedidosPageComplete(meta, pedidos) {
+  const rows = Array.isArray(pedidos) ? pedidos : [];
+  if (meta?.hasMore) return false;
+  const total = Number(meta?.total);
+  if (Number.isFinite(total) && total > rows.length) return false;
+  return true;
+}
+
+/** @returns {{ kpis: ReturnType<typeof computeDetalhesClientePedidosKpis> & { totalCompras: number|null, ticketMedio: number|null, qtdPedidos: number|null }, moneyIncomplete: boolean }} */
+export function resolveDetalhesClienteKpisFromPage({ pedidos, meta } = {}) {
+  const rows = Array.isArray(pedidos) ? pedidos : [];
+  const complete = isDetalhesClientePedidosPageComplete(meta, rows);
+  const totalMeta = Number(meta?.total);
+  const qtdFromMeta = Number.isFinite(totalMeta) ? totalMeta : null;
+  if (!complete) {
+    return {
+      moneyIncomplete: true,
+      kpis: {
+        totalCompras: null,
+        ticketMedio: null,
+        qtdPedidos: qtdFromMeta,
+        qtdAtivos: null,
+      },
+    };
+  }
+  return {
+    moneyIncomplete: false,
+    kpis: computeDetalhesClientePedidosKpis(rows),
+  };
+}
+
+/**
  * V21.1.2 - WINDOW MODE READY
  * Central 360 HTTP (opt-in) composta sobre este detalhe existente.
  * Token Bearer da sessão autenticada é passado ao painel (não ativar flag sem supabase_user).
@@ -137,9 +172,11 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
 
   const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
   const kpisDisponiveis = consultaHabilitada && !pedidosErro && pedidosPage != null;
-  const kpis = kpisDisponiveis
-    ? computeDetalhesClientePedidosKpis(pedidos)
-    : { totalCompras: null, ticketMedio: null, qtdPedidos: null, qtdAtivos: null };
+  const resolvedKpis = kpisDisponiveis
+    ? resolveDetalhesClienteKpisFromPage({ pedidos, meta: pedidosPage?.meta })
+    : { moneyIncomplete: false, kpis: { totalCompras: null, ticketMedio: null, qtdPedidos: null, qtdAtivos: null } };
+  const kpis = resolvedKpis.kpis;
+  const kpisMoneyIncomplete = Boolean(resolvedKpis.moneyIncomplete);
 
   const fmtMoney = (n) =>
     n == null
@@ -181,6 +218,19 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
             {pedidosErro
               ? (pedidosError?.message || "Falha ao carregar pedidos do cliente em HTTP. KPIs não usam zero como ausência.")
               : "Pedidos do cliente indisponíveis em HTTP até sessão/empresa válidos. Não use R$ 0,00 como “sem compras”."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {kpisDisponiveis && kpisMoneyIncomplete && (
+        <Alert
+          className="mb-4 border-sky-200 bg-sky-50"
+          data-action="detalhes-cliente-kpis-pagina-incompleta"
+          data-context-required="true"
+        >
+          <ShieldAlert className="h-4 w-4 text-sky-700" />
+          <AlertDescription className="text-sky-900">
+            Total/ticket não calculados pela 1ª página ({PEDIDOS_KPI_LIMIT}). Contagem usa total do servidor quando disponível; agregação monetária completa = gate futuro.
           </AlertDescription>
         </Alert>
       )}

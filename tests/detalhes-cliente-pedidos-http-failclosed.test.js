@@ -118,8 +118,13 @@ test('helpers: KPIs distinguem cancelado e usam total HTTP', async () => {
   const compiled = await compileJsx(new URL('../src/components/comercial/DetalhesCliente.jsx', import.meta.url));
   const { sandbox } = buildSandbox();
   vm.runInNewContext(`var React = require("react");\n${compiled}`, sandbox);
-  const { computeDetalhesClientePedidosKpis, pedidoValorTotal, isPedidoCancelado } =
-    sandbox.exports;
+  const {
+    computeDetalhesClientePedidosKpis,
+    pedidoValorTotal,
+    isPedidoCancelado,
+    resolveDetalhesClienteKpisFromPage,
+    isDetalhesClientePedidosPageComplete,
+  } = sandbox.exports;
   assert.equal(pedidoValorTotal({ total: 10 }), 10);
   assert.equal(pedidoValorTotal({ valor_total: 20 }), 20);
   assert.equal(isPedidoCancelado({ status: 'Cancelado' }), true);
@@ -132,6 +137,23 @@ test('helpers: KPIs distinguem cancelado e usam total HTTP', async () => {
   assert.equal(k.qtdPedidos, 2);
   assert.equal(k.qtdAtivos, 1);
   assert.equal(k.ticketMedio, 100);
+  // Codex P1 / AGENTS §11: hasMore → money null; contagem via meta.total
+  assert.equal(isDetalhesClientePedidosPageComplete({ hasMore: true, total: 80 }, [{ id: 1 }]), false);
+  const incomplete = resolveDetalhesClienteKpisFromPage({
+    pedidos: [{ status: 'CONFIRMADO', total: 100 }],
+    meta: { hasMore: true, total: 80, limit: 50, offset: 0 },
+  });
+  assert.equal(incomplete.moneyIncomplete, true);
+  assert.equal(incomplete.kpis.totalCompras, null);
+  assert.equal(incomplete.kpis.ticketMedio, null);
+  assert.equal(incomplete.kpis.qtdPedidos, 80);
+  const complete = resolveDetalhesClienteKpisFromPage({
+    pedidos: [{ status: 'CONFIRMADO', total: 40 }],
+    meta: { hasMore: false, total: 1, limit: 50, offset: 0 },
+  });
+  assert.equal(complete.moneyIncomplete, false);
+  assert.equal(complete.kpis.totalCompras, 40);
+  assert.equal(complete.kpis.qtdPedidos, 1);
 });
 
 test('HTTP sem sessão: consulta desabilitada; KPIs — (não R$ 0,00)', async () => {
@@ -225,6 +247,36 @@ test('HTTP queryFn chama loadPedidosHistoricoHttp (não filterInContext)', async
   assert.match(textOf(findByAction(tree, 'kpi-total-compras')[0]), /80/);
   assert.equal(textOf(findByAction(tree, 'kpi-qtd-pedidos')[0]).trim(), '1');
   assert.equal(findByAction(tree, 'detalhes-cliente-pedidos-http-indisponivel').length, 0);
+  assert.equal(findByAction(tree, 'detalhes-cliente-kpis-pagina-incompleta').length, 0);
+});
+
+test('HTTP hasMore: money KPIs —; contagem usa meta.total; banner incompleta', async () => {
+  const compiled = await compileJsx(new URL('../src/components/comercial/DetalhesCliente.jsx', import.meta.url));
+  const page = {
+    data: Array.from({ length: 50 }, (_, i) => ({
+      id: `p${i}`,
+      numero: `P-${i}`,
+      total: 10,
+      status: 'CONFIRMADO',
+      created_at: '2026-10-01',
+    })),
+    meta: { limit: 50, offset: 0, total: 120, hasMore: true },
+  };
+  const { sandbox, resetSlot } = buildSandbox({
+    backendMode: 'http',
+    queryResult: { data: page, isError: false, isFetching: false, error: null },
+  });
+  vm.runInNewContext(`var React = require("react");\n${compiled}`, sandbox);
+  const DetalhesCliente = sandbox.exports.default;
+  resetSlot();
+  const tree = DetalhesCliente({
+    cliente: { id: 'cli-1', nome: 'Cli', status: 'Ativo' },
+    windowMode: true,
+  });
+  assert.equal(findByAction(tree, 'detalhes-cliente-kpis-pagina-incompleta').length, 1);
+  assert.equal(textOf(findByAction(tree, 'kpi-total-compras')[0]).trim(), '—');
+  assert.equal(textOf(findByAction(tree, 'kpi-ticket-medio')[0]).trim(), '—');
+  assert.equal(textOf(findByAction(tree, 'kpi-qtd-pedidos')[0]).trim(), '120');
 });
 
 test('legado: queryFn usa filterInContext; HTTP loader não roda', async () => {

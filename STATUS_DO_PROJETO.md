@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#436 KPIs ≠ 1ª página) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | **#436** tip pós-`aa4f3bca2` |
+| **Codex P1** | money KPIs fail-closed se `hasMore`/total incompleto; qtd=`meta.total` |
+| **Sobre** | tip `7039d0221` FAIL import — **não atribuir** |
+| Preferir | CI deste tip; #401 estável |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#436 import assertion + HTTP KPIs) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

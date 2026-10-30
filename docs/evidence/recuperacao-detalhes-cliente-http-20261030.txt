@@ -22,3 +22,6 @@ merge #401 · deploy · seed fictício · API dedicada agregados
 
 ## Checks
 detalhes-cliente-pedidos-http-failclosed + comercial-detalhes-historico-mount → 7 PASS
+
+## Codex P1 (tip pós-aa4f3bca2)
+KPIs money não usam 1ª página quando meta.hasMore/total>len; contagem via meta.total; banner data-action detalhes-cliente-kpis-pagina-incompleta.
