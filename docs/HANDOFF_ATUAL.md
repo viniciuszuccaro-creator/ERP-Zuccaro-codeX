@@ -1,4 +1,36 @@
-## Estado Vigente - Prova Do Consumidor446 E Pendencias (2026-10-30)
+## Estado Vigente - Revisao Do Modal446 Atual E Preservacao447 (2026-10-30)
+
+#4467008/CI5544 SUCCESS foi testada com Pedido+modal+calculador REAIS montados,
+nao so componentes isolados: qtdhistorica200 nao e demanda, modal inicia1/editavel3;
+identidade/permissao bloqueiam, rejeicao sincronica preserva modal/draft; zero
+comprovado mantido no fluxo de margem, sem aprovacao concedida. Prova6532017194.
+HEADf8a20831e52c483f1cccc9684a1b67ff861baa6c teve novas correcoes retestadas:
+confirmar2clicks1write, Faturado0writes, Detalhes/Painel readonly sem botoes operacionais.
+Encerrados esses achados. bloquearEdicao e origem; lock de itens segue status.
+
+Residuos f8 ATUAIS6532083063/6532100106: selecao antiga do modal confirma no draft
+apos trocaEmpresa; unidade ausente entra e preco ausente vira0 no calculador. Seed
+descarta custo/saldo da entrada e defaults viram0/SobEncomenda semfonte. Preservar
+unknown/consultar fonte com escopo/RBAC; nao usar justificativa de margem como
+autorizacao de dado inventado. Nenhuma escrita de banco ou E2E foi testada.
+CI5547/5548 FAILURE: frontendtypecheck SugestoesProdutos.jsx:123 TS2345 readonly
+vs SetStateAction mutavel; test/lint/auditPASS, buildSKIP, backend/composeSUCCESS.
+Nao reutilizarCI7008 no f8. Parecer6532119906; preservar antirenderloop sem supressao.
+
+#447d29c07ae6efe94b4449541391d55bce74daa63a0 CI5546 SUCCESS: peelREAL/normalizador
+anterior com Produto inteiro igual e Enderecos inteiro igualbase+chromeexato;
+4contraprovas de preservacao passaram. Salvar/reabrir/RBAC/contexto preservados por
+igualdade de fonte, NAO persistencia/reabertura/visual executadas. Recibo6532051946;
+separada candidata, nao chamar cor/ID/tela de recuperacao de registros ou ERP antigo.
+
+Proximo: Cursor corrigir residuos runtime446 e TS, Codex revisarnovoSHA/repetir
+somenteafetados; depoisportcontrolado para40134c4 mantendoAPI/repos/servicos/436-442.
+Harness E2E original e arquivo FINAL coorte100/pins continuam bloqueios privados
+distintos sem mudanca de acesso, nenhuma busca identica/transferencia/recorte.
+Consulta fixa nao executada sem bytes/canal. Gates de cadeia/schema/minpriv/backup/
+reconciliacao/carga/deploy/aceite mantidos; sem acao VPS, banco operacional ou automacao permanente.
+
+## Historico - Prova Do Consumidor446 E Pendencias (2026-10-30)
 
 #446b161babac731bab890fe25636bbcfd5c79d49cc0 CI5531/5532 SUCCESS; anteriorf7a
 nao e HEAD atual. PedidoTabsContainer+HistoricoComprasCliente REAIS montados com

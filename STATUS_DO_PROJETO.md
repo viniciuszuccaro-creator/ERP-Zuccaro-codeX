@@ -1,4 +1,50 @@
-## Estado Vigente - Consumidor446 Testado, Negativos Pendentes (2026-10-30)
+## Estado Vigente - Modal Canonico446 E Revisao447 (2026-10-30)
+
+#40134c4 e aceites anteriores preservados. #4467008a0e655b008974f6022e958044a11599da9d9
+CI5543/5544 SUCCESS confirmadas, mas revisao NOVA encontrou residuos. Pedido+
+Compras+AdicionarItemRevendaModal+CalculadorPrecoItem REAIS montados em Chrome/
+ReactDOM/ReactQuery, wrapper useState real de draft e bordas UI/contexto/rede
+sinteticas (nao PG/E2E). Historico200 abre modal comqtd1, input editado3 envia3;
+confirmar conhecido KG/preco11 altera1draft. Sem identidade/permissao/bloqueio
+explicito0writes; rejeicao sincronica preserva draft/modal e0success; zero comprovado
+preservado com justificativa sintetica de margem, aprovacao ainda false. Recibo6532017194.
+
+HEAD avancou a f8a20831e52c483f1cccc9684a1b67ff861baa6c. Repetidos so afetados:
+2clicks confirmacao agora1write/1sucesso, Faturado bloqueia, Detalhes/Painel reais
+readonly0botoesTop10 operacionais/0Compras/0success. Achados correspondentes
+ENCERRADOS, nao manter parecer antigo. bloquearEdicao em useOrigemPedido trava
+origem, nao e lock geral de itens; respeitar status/liberacoes canonicos. Recibo6532083063.
+
+Residuos ATUAIS f8 reproduzidos: modal abertoEmpresaA, trocaB/resetdraft, confirmar
+insere selecao antiga emB; sem unidade insere incompleto, sempreco calculador volta
+a0 e insere0 apos justificativa. Justificativa de margem nao valida preco inventado.
+Seed real descarta custo/saldo conhecidos da entrada sintetica; calculador gera
+custo0/margem0 e modal defaulta estoque0/SobEncomenda sem fonte. Parecer6532100106:
+consultar contrato no escopo/permissao devida ou manter desconhecido/bloquear so
+dependente, nunca copiar PII/custo por conveniencia ou ampliar acesso. Nao e escrita
+ou bypass de banco. Cliente/Grupo/Empresa/ator obsoletos tambem reproduzidos7008;
+f8 retestadoEmpresa. Port controlado401 continua bloqueado nesses residuos.
+
+CI f8:5547/5548 FAILURE, frontend SugestoesProdutos.jsx:123 TS2345 arrayreadonly
+no updater de estado mutavel. Audit/test/lintPASS; buildfrontendSKIP apos typecheck;
+backend/composeSUCCESS. Recibo6532119906. Corrigir tipo real preservando emptyestavel/
+antiloop, sem casts/any/supressoes/config frouxa. Nao usarCI5544 ancestral como prova.
+
+#447d29c07ae6efe94b4449541391d55bce74daa63a0 CI5545/5546 SUCCESS. Produto inteiro
+normalizado pelo peel REAL igualbase31e68, Enderecos inteiro igualbase+7trocas
+exatas sky;4contraprovas (omissao/duplicacao/forja dentro e fora visivel) passaram.
+Handlers/RBAC/contexto/salvar/reabrir preservados por comparacao, SEM ensaio de
+persistencia/reabertura/visual. Recibo6532051946, nao recuperacao de registros ou
+versao antiga. Mantida separada. Driver corrigiu marcadores repetidos sem alterar
+produto/peel; nao classificar erro de driver como falha de produto ou verde global.
+
+Harness E2E e coorte100 final/pins seguem gates privados DISTINTOS sem mudanca de
+canal; nenhuma busca repetida, recorte/transferencia ou consulta real. Gates vigentes
+preservados: aceite446 -> composicao -> E2E -> cadeia -> schema/minpriv -> backup/
+restauracao -> reconciliacao -> carga aprovada -> deploy -> aceite. Cursor escreve,
+Codex revisa; sem outra candidata, DDL/grants/carga/deploy/VPS ou background permanente.
+
+## Historico - Consumidor446 Testado, Negativos Pendentes (2026-10-30)
 
 #40134c4c0ee e aceites anteriores441/442 preservados, sem repetir casos encerrados.
 #446 HEADb161babac731bab890fe25636bbcfd5c79d49cc0 posteriorf7a, CI5531/5532
