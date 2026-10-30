@@ -91,6 +91,11 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
         value={formData.codigo ?? dadosIniciais?.codigo}
         action="codigo-registro-cargo"
       />
+      {cargoBoundId ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(cargoBoundId)}</span>
+        </p>
+      ) : null}
 
       <div>
         <Label>Nome do Cargo *</Label>
@@ -210,7 +215,7 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
       <div className="w-full h-full flex flex-col bg-white">
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
           <Briefcase className="w-6 h-6 text-sky-600" />
-          <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Cargo' : 'Novo Cargo'}</h2>
+          <h2 className="text-lg font-bold text-slate-900">{cargoBoundId ? 'Editar Cargo' : 'Novo Cargo'}</h2>
         </div>
         <div className="flex-1 overflow-auto p-6">{formContent}</div>
       </div>

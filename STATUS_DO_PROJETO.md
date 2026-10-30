@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (cadastros org ID técnico — indep. de #446) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-org-id-tecnico-392b` ← #450 `579181678` |
+| **Escopo** | Cargo/Departamento/Marca/SetorAtividade — ID técnico via boundId |
+| **Classe** | melhoria UX (sky já presente) — **≠** recuperação de registros |
+| **#446** | tip `febb8ed0a` residual — **fora desta candidata** |
+| **Pins** | Fiscal/Empresa/Grupo/Usuario/CentroOperacao/Boletos intocados |
+| Fora | merge main · deploy · seed · count+1 |
+
+**Evidência:** `docs/evidence/cadastros-org-id-tecnico-20261030.txt`
+**Próximo:** CI tip; #446 Codex/CI em paralelo.
+
 ## CURSOR — VIGENTE (#450 tip 768981c87 CI SUCCESS — visual ≠ registros) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
