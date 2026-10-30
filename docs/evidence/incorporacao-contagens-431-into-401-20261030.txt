@@ -34,3 +34,8 @@ Merge main · deploy · VPS · seed · 2ª candidata · swap serviço/repo
 - `useEntityCounts`: remove fallback entityListSorted/page.length → READ_COUNT_UNAVAILABLE
 - queryKey counts inclui actorId canônico (readErpHttpSession); sem token
 - Sem tocar Contatos/Endereços/Completo/Painel/API/backend
+
+## P2 Codex 62cf79469 — Visualizador countsUnavailable (2026-10-30 America/Sao_Paulo)
+discussion_r4425266951: erro de count não vira total 0 / seleção cross-page.
+Visualizador: totalCount null + badge "—" + bloqueio activate/delete-all.
+Remainder scopeListCache estendido (hunks exact); golden e36231b3 mantido.

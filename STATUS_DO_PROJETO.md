@@ -1,14 +1,14 @@
-## CURSOR — VIGENTE (#401 contagens fix identidade+ator+page.length) (2026-10-30 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 tip contagens + P2 Visualizador) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **#401** | tip pós-CI5444: wire `scopeListCacheRemainder` + CANAL hunks; counts sem page.length; queryKey+actorId |
-| **Keep** | Cliente.get · skipped · draft · sync-lock · Painel/Forms/API bytes |
-| **CI prévio** | `eab13aa5f` frontend 1 FAIL (identidade visualizer) |
-| Fora | pin cego · swap backend · 2ª candidata · merge/deploy |
+| **#401** | tip prévio `62cf79469` CI SUCCESS; P2 Visualizador countsUnavailable neste tip |
+| **Keep** | #434 Contatos/Endereços/Completo · API/backend |
+| **Contagens** | **INCORPORADAS** (#431 via #440) + erro≠zero no Visualizador |
+| Fora | merge main · pin cego · page.length KPI · 2ª candidata |
 
 **Evidência:** `docs/evidence/incorporacao-contagens-431-into-401-20261030.txt`
-**Próximo:** CI + @codex deste tip.
+**Próximo:** CI + @codex deste tip P2.
 
 
 ## Estado vigente - composicao integrada em revisao (2026-10-29)

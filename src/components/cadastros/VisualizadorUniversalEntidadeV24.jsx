@@ -380,9 +380,18 @@ export default function VisualizadorUniversalEntidadeV24({
     return function() { clearTimeout(debRef.current); };
   }, [search]);
 
-  // Contagem
-  const { counts, isLoading: countsLoading } = useEntityCounts(ENTITY ? [ENTITY] : []);
-  const totalCount = Number((counts && counts[ENTITY]) || 0);
+  // Contagem — erro ≠ zero: countsUnavailable impede KPI/seleção cross-page com total fabricado
+  const { counts, isLoading: countsLoading, countsUnavailable } = useEntityCounts(ENTITY ? [ENTITY] : []);
+  const totalCount = countsUnavailable ? null : Number((counts && counts[ENTITY]) || 0);
+  const countKnown = typeof totalCount === "number";
+
+  useEffect(function() {
+    if (countsUnavailable && crossPageAll) {
+      setCrossPageAll(false);
+      setDeselectedIds(new Set());
+      setSelectedIds(new Set());
+    }
+  }, [countsUnavailable, crossPageAll]);
 
   const buildAuditPayload = useCallback(function(extra) {
     return Object.assign({
@@ -852,6 +861,11 @@ export default function VisualizadorUniversalEntidadeV24({
       alert("Sem permissao para excluir.");
       return;
     }
+    if (crossPageAll && !countKnown) {
+      await auditCadastroEvent("Bloqueio", "Exclusao em lote bloqueada: contagem indisponivel", { sucesso: false, acao_sensivel: true });
+      alert("Contagem indisponivel — nao e possivel excluir todas as paginas sem total confirmado.");
+      return;
+    }
     const effCount = crossPageAll
       ? Math.max(0, totalCount - deselectedIds.size)
       : selectedIds.size;
@@ -914,7 +928,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setCrossPageAll(false);
     setPage(1);
     invalidateAll(queryClient, ENTITY);
-  }, [ENTITY, TITULO, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length, deleteInContext, canDeleteCadastro, contextoValido, auditCadastroEvent]);
+  }, [ENTITY, TITULO, crossPageAll, totalCount, countKnown, selectedIds, deselectedIds, readFilter, queryClient, items.length, deleteInContext, canDeleteCadastro, contextoValido, auditCadastroEvent]);
 
   // ── seleção ──────────────────────────────────────────────────────────────────
   const isItemSelected = useCallback(function(id) {
@@ -956,8 +970,9 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [crossPageAll, allPageSelected, items]);
 
   const handleActivateCrossPage = useCallback(function() {
+    if (!countKnown) return;
     setCrossPageAll(true); setDeselectedIds(new Set()); setSelectedIds(new Set());
-  }, []);
+  }, [countKnown]);
   const handleCancelSelection = useCallback(function() {
     setCrossPageAll(false); setDeselectedIds(new Set()); setSelectedIds(new Set());
   }, []);
@@ -968,8 +983,8 @@ export default function VisualizadorUniversalEntidadeV24({
     return <ChevronUp className="w-3.5 h-3.5 text-blue-500" />;
   }
 
-  const effSelectedCount = crossPageAll ? Math.max(0, totalCount - deselectedIds.size) : selectedIds.size;
-  const showCrossPageBanner = !crossPageAll && selectedIds.size > 0 && allPageSelected && totalCount > items.length;
+  const effSelectedCount = (crossPageAll && countKnown) ? Math.max(0, totalCount - deselectedIds.size) : selectedIds.size;
+  const showCrossPageBanner = countKnown && !crossPageAll && selectedIds.size > 0 && allPageSelected && totalCount > items.length;
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   if (!canViewCadastro) {
@@ -1155,10 +1170,17 @@ export default function VisualizadorUniversalEntidadeV24({
       <div className="flex items-center gap-2 flex-wrap shrink-0">
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-sm font-semibold text-slate-700 truncate max-w-[160px]">{TITULO}:</span>
-          <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200 font-bold tabular-nums min-w-[32px] text-center">
-            {(countsLoading && totalCount === 0)
-              ? <span className="animate-pulse text-[10px]">···</span>
-              : totalCount.toLocaleString("pt-BR")}
+          <Badge
+            variant="outline"
+            className={"rounded-sm font-bold tabular-nums min-w-[32px] text-center " + (countsUnavailable ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-blue-50 text-blue-700 border-blue-200")}
+            title={countsUnavailable ? "Contagem indisponível (erro de consulta — não é zero)" : undefined}
+            data-counts-unavailable={countsUnavailable ? "true" : "false"}
+          >
+            {countsUnavailable
+              ? <span aria-label="Contagem indisponível">—</span>
+              : (countsLoading && totalCount === 0)
+                ? <span className="animate-pulse text-[10px]">···</span>
+                : totalCount.toLocaleString("pt-BR")}
           </Badge>
         </div>
 
@@ -1323,7 +1345,7 @@ export default function VisualizadorUniversalEntidadeV24({
       )}
       {/* Paginação */}
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
-        <span>Pág. {page} · {items.length} exibidos · {totalCount} total</span>
+        <span>Pág. {page} · {items.length} exibidos · {countsUnavailable ? "total indisponível" : (totalCount + " total")}</span>
         <div className="flex gap-1">
           <button
             type="button"

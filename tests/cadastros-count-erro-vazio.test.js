@@ -307,6 +307,28 @@ test('Visualizador zera lastGoodData na troca de escopo (lista pós-contexto)', 
   assert.match(rem, /everLoadedRef\.current = false/);
 });
 
+test('Visualizador propaga countsUnavailable — total ≠ 0 fabricado; cross-page bloqueado', () => {
+  const src = fs.readFileSync(
+    path.join(ROOT, 'components/cadastros/VisualizadorUniversalEntidadeV24.jsx'),
+    'utf8',
+  );
+  assert.match(src, /countsUnavailable/);
+  assert.match(src, /countKnown/);
+  assert.match(src, /countsUnavailable \? null : Number/);
+  assert.match(src, /data-counts-unavailable/);
+  assert.match(src, /Contagem indisponível/);
+  assert.match(src, /total indisponível/);
+  assert.match(src, /if \(!countKnown\) return;/);
+  assert.match(src, /Exclusao em lote bloqueada: contagem indisponivel/);
+  assert.doesNotMatch(src, /entityListSorted[\s\S]{0,80}totalCount/);
+  const rem = fs.readFileSync(
+    path.join(path.resolve('tests/helpers/scopeListCacheRemainder.js')),
+    'utf8',
+  );
+  assert.match(rem, /countsUnavailable/);
+  assert.match(rem, /visualizer countsUnavailable hook/);
+});
+
 test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () => {
   const orphan = fs.readFileSync(
     path.join(ROOT, 'components/comercial/GerenciarContatosCliente.jsx'),
