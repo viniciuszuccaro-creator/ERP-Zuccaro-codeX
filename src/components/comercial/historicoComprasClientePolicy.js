@@ -18,6 +18,45 @@ export function extractItensPedidoHistorico(pedido) {
 }
 
 /**
+ * Canal comprovado — HTTP Pedido não expõe origem_pedido/origem no contrato.
+ * Nunca inventar "Manual" quando o campo está ausente.
+ * @returns {string|null}
+ */
+export function resolveOrigemCanalComprovada(pedido) {
+  if (!pedido || typeof pedido !== "object") return null;
+  for (const key of ["origem_pedido", "origem", "canal_origem", "origemPedido"]) {
+    const raw = pedido[key];
+    if (typeof raw === "string" && raw.trim()) return raw.trim();
+  }
+  return null;
+}
+
+/**
+ * Valor monetário do pedido: HTTP canônico `total`; legado `valor_total`.
+ */
+export function resolveValorPedidoHistorico(pedido) {
+  if (!pedido || typeof pedido !== "object") return 0;
+  const n = Number(pedido.total ?? pedido.valor_total);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * Valor efetivo da linha: HTTP `item.total` (líquido) antes de bruto/fallback.
+ */
+export function resolveValorItemHistorico(item) {
+  if (!item || typeof item !== "object") return 0;
+  const qty = Number(item.quantidade) || 0;
+  const n = Number(
+    item.total
+      ?? item.valor_item
+      ?? item.valor_total
+      ?? item.preco_venda_total
+      ?? ((Number(item.preco_unitario) || 0) * qty),
+  );
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
  * Consolida top produtos a partir da página de pedidos confirmada.
  * Não inventa zeros quando a consulta falhou — o chamador só invoca com dados ok.
  */
@@ -39,9 +78,7 @@ export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
         };
       }
       const qty = Number(item.quantidade) || 0;
-      const valorItem = Number(
-        item.valor_item ?? item.valor_total ?? (Number(item.preco_unitario) || 0) * qty,
-      ) || 0;
+      const valorItem = resolveValorItemHistorico(item);
       produtosConsolidados[key].quantidade_total += qty;
       produtosConsolidados[key].valor_total += valorItem;
       produtosConsolidados[key].frequencia += 1;

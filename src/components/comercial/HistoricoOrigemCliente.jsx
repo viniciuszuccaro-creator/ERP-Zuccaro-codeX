@@ -14,6 +14,10 @@ import {
   historicoSessionCacheKey,
   loadPedidosHistoricoHttp,
 } from "./HistoricoProdutosCliente";
+import {
+  resolveOrigemCanalComprovada,
+  resolveValorPedidoHistorico,
+} from "./historicoComprasClientePolicy";
 
 const PEDIDOS_ORIGEM_LIMIT = 200;
 
@@ -177,13 +181,17 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
 
   if (pedidosCliente.length === 0) return null;
 
+  // HTTP: contrato Pedido sem origem_pedido — não inventar "Manual" (Codex #4425419699).
+  // Legado: fallback Manual só quando o campo existe no snapshot local.
   const porOrigem = pedidosCliente.reduce((acc, p) => {
-    const origem = p.origem_pedido || p.origem || "Manual";
+    const comprovada = resolveOrigemCanalComprovada(p);
+    const origem = comprovada || (httpMode ? null : "Manual");
+    if (!origem) return acc;
     if (!acc[origem]) {
       acc[origem] = { count: 0, valor: 0 };
     }
     acc[origem].count++;
-    acc[origem].valor += Number(p.valor_total) || 0;
+    acc[origem].valor += resolveValorPedidoHistorico(p);
     return acc;
   }, {});
 
@@ -193,9 +201,37 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
     valor: dados.valor
   })).sort((a, b) => b.value - a.value);
 
+  if (dadosPizza.length === 0) {
+    if (compact) {
+      return (
+        <div
+          className="w-full h-full flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200"
+          data-action="historico-origem-canal-indisponivel"
+          data-permission="Comercial.Pedido.visualizar"
+        >
+          <History className="w-4 h-4 text-amber-700" />
+          <p className="text-xs text-amber-800">Canal preferido indisponível (origem não comprovada no contrato).</p>
+        </div>
+      );
+    }
+    return (
+      <Alert
+        className="w-full h-full border-amber-200 bg-amber-50"
+        data-action="historico-origem-canal-indisponivel"
+        data-permission="Comercial.Pedido.visualizar"
+      >
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Pedidos carregados, mas o canal de origem não está no contrato HTTP — não inferir &quot;Manual&quot;.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   const CORES = ["#3b82f6", "#22c55e", "#a855f7", "#f97316", "#ef4444", "#eab308", "#ec4899", "#06b6d4"];
   const origemPreferida = dadosPizza[0];
-  const percentualPreferida = (origemPreferida.value / pedidosCliente.length) * 100;
+  const pedidosComCanal = dadosPizza.reduce((sum, row) => sum + row.value, 0);
+  const percentualPreferida = (origemPreferida.value / pedidosComCanal) * 100;
   const paginaIncompleta = Boolean(pedidosPage?.meta?.hasMore)
     || (Number.isFinite(Number(pedidosPage?.meta?.total))
       && Number(pedidosPage.meta.total) > pedidosCliente.length);
@@ -266,7 +302,7 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
 
           <div className="space-y-2">
             {dadosPizza.map((origem, idx) => {
-              const percentual = (origem.value / pedidosCliente.length) * 100;
+              const percentual = (origem.value / pedidosComCanal) * 100;
               const ticketMedio = origem.valor / origem.value;
 
               return (

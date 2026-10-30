@@ -12,6 +12,9 @@ import vm from 'node:vm';
 import {
   consolidateTopProdutosFromPedidos,
   extractItensPedidoHistorico,
+  resolveOrigemCanalComprovada,
+  resolveValorItemHistorico,
+  resolveValorPedidoHistorico,
 } from '../src/components/comercial/historicoComprasClientePolicy.js';
 
 function walk(node) {
@@ -77,6 +80,28 @@ test('extractItens + consolidate: HTTP itens e legado itens_revenda; sem inventa
   assert.equal(top[0].valor_total, 20);
   assert.deepEqual(consolidateTopProdutosFromPedidos(null), []);
   assert.deepEqual(extractItensPedidoHistorico(null), []);
+});
+
+test('policy: canal ausente HTTP ≠ Manual; total canônico pedido/item', () => {
+  assert.equal(resolveOrigemCanalComprovada({ id: '1', total: '90' }), null);
+  assert.equal(resolveOrigemCanalComprovada({ origem_pedido: 'WhatsApp' }), 'WhatsApp');
+  assert.equal(resolveValorPedidoHistorico({ total: '150.5', valor_total: 1 }), 150.5);
+  assert.equal(resolveValorPedidoHistorico({ valor_total: 40 }), 40);
+  // item.total líquido vence bruto preco×qty (Codex #4425419714)
+  assert.equal(
+    resolveValorItemHistorico({ quantidade: 10, preco_unitario: 20, total: 10 }),
+    10,
+  );
+  const top = consolidateTopProdutosFromPedidos([
+    {
+      itens: [
+        { produto_id: 'cheap-net', descricao: 'Net', quantidade: 10, preco_unitario: 20, total: 10 },
+        { produto_id: 'mid', descricao: 'Mid', quantidade: 1, preco_unitario: 50, total: 50 },
+      ],
+    },
+  ], { limit: 5 });
+  assert.equal(top[0].produto_id, 'mid');
+  assert.equal(top[0].valor_total, 50);
 });
 
 function buildOrigemSandbox({
@@ -149,8 +174,20 @@ function buildOrigemSandbox({
         historicoSessionCacheKey: (s) => (s?.token && s?.actorId ? `${s.actorId}:fp` : null),
       },
       './historicoComprasClientePolicy': {
+        __esModule: true,
         consolidateTopProdutosFromPedidos,
         extractItensPedidoHistorico,
+        resolveOrigemCanalComprovada,
+        resolveValorPedidoHistorico,
+        resolveValorItemHistorico,
+      },
+      './historicoComprasClientePolicy.js': {
+        __esModule: true,
+        consolidateTopProdutosFromPedidos,
+        extractItensPedidoHistorico,
+        resolveOrigemCanalComprovada,
+        resolveValorPedidoHistorico,
+        resolveValorItemHistorico,
       },
     },
   };
@@ -233,8 +270,8 @@ test('Origem HTTP: página incompleta não inventa % no compact', async () => {
     queryResult: {
       data: {
         data: [
-          { id: '1', origem_pedido: 'Manual', valor_total: 10 },
-          { id: '2', origem_pedido: 'Manual', valor_total: 10 },
+          { id: '1', origem_pedido: 'WhatsApp', total: '10' },
+          { id: '2', origem_pedido: 'WhatsApp', total: '10' },
         ],
         meta: { limit: 200, offset: 0, total: 50, hasMore: true },
       },
@@ -245,6 +282,47 @@ test('Origem HTTP: página incompleta não inventa % no compact', async () => {
   });
   const tree = await mountOrigem(sandbox, { clienteId: 'c1', compact: true });
   assert.match(textOf(tree), /—/);
+});
+
+test('Origem HTTP: pedidos sem origem comprovada → canal indisponível (≠ Manual 100%)', async () => {
+  const sandbox = buildOrigemSandbox({
+    queryResult: {
+      data: {
+        data: [
+          { id: '1', total: '90' },
+          { id: '2', total: '10' },
+        ],
+        meta: { limit: 200, offset: 0, total: 2, hasMore: false },
+      },
+      isError: false,
+      isFetching: false,
+      isLoading: false,
+    },
+  });
+  const tree = await mountOrigem(sandbox);
+  assert.ok(findByAction(tree, 'historico-origem-canal-indisponivel').length >= 1);
+  assert.equal(findByAction(tree, 'historico-origem-canal-indisponivel').length >= 1, true);
+  // Banner explica a proibição; não há pizza/preferência "Manual" como canal.
+  assert.doesNotMatch(textOf(tree), /Canal Preferido:\s*Manual|100%/);
+});
+
+test('Origem HTTP: total canônico no ticket (não valor_total legado ausente)', async () => {
+  const sandbox = buildOrigemSandbox({
+    queryResult: {
+      data: {
+        data: [
+          { id: '1', origem_pedido: 'Portal', total: '100' },
+          { id: '2', origem_pedido: 'Portal', total: '50' },
+        ],
+        meta: { limit: 200, offset: 0, total: 2, hasMore: false },
+      },
+      isError: false,
+      isFetching: false,
+      isLoading: false,
+    },
+  });
+  const tree = await mountOrigem(sandbox);
+  assert.match(textOf(tree), /R\$ 75\.00|Portal/);
 });
 
 test('Compras HTTP: erro → banner (não top vazio); queryFn HTTP real', async () => {
