@@ -136,7 +136,11 @@ export default function GerenciarContatosClienteForm({
     }
     try {
       // draft: só rascunho do pai; backend: onChange é a gravação canônica do adaptador.
-      await Promise.resolve(onChange(contatosAtualizados));
+      const result = await Promise.resolve(onChange(contatosAtualizados));
+      // Pai pode resolver {skipped:true} legado — não fechar/limpar (Codex #4415656862 / #424).
+      if (result && typeof result === 'object' && result.skipped) {
+        throw result.error || new Error(result.message || 'Contatos não gravados.');
+      }
       setDialogAberto(false);
       resetForm();
     } catch (error) {

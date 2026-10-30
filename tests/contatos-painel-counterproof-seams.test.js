@@ -221,11 +221,15 @@ function createRealFormSaveRunner(formSource) {
   const bodyMatch = handlerSrc.match(/^async\s*\(\)\s*=>\s*\{([\s\S]*)\}\s*$/);
   assert.ok(bodyMatch, 'handleSalvarContato deve ser async arrow');
   const body = bodyMatch[1];
+  // Keep-both #424 skipped + #432 sync-lock: body real usa beginPersist/endPersist/persistInFlightRef.
+  assert.match(handlerSrc, /beginPersist/);
+  assert.match(handlerSrc, /endPersist/);
   const fnCode = compile(`
     async function runSave(__bindings) {
       const {
         podeEditar, bloqueado, assertScope, novoContato, contatos, contatoEditando,
-        onChange, setSalvando, setDialogAberto, resetForm, toast
+        onChange, setSalvando, setDialogAberto, resetForm, toast,
+        persistInFlightRef, beginPersist, endPersist, busyLabel, failSaveLabel,
       } = __bindings;
       ${body}
     }
@@ -238,6 +242,19 @@ function createRealFormSaveRunner(formSource) {
     let salvando = false;
     let closed = false;
     let reset = false;
+    const persistInFlightRef = { current: false };
+    const setSalvando = (v) => { salvando = Boolean(v); };
+    // Espelha beginPersist/endPersist do Form (ref + setSalvando) — não inventa atalho.
+    const beginPersist = () => {
+      if (persistInFlightRef.current) return false;
+      persistInFlightRef.current = true;
+      setSalvando(true);
+      return true;
+    };
+    const endPersist = () => {
+      persistInFlightRef.current = false;
+      setSalvando(false);
+    };
     const sandbox = {
       module: { exports: {} },
       exports: {},
@@ -253,7 +270,7 @@ function createRealFormSaveRunner(formSource) {
       contatos,
       contatoEditando: null,
       onChange,
-      setSalvando: (v) => { salvando = v; },
+      setSalvando,
       setDialogAberto: (v) => {
         dialogAberto = v;
         if (v === false) closed = true;
@@ -263,6 +280,11 @@ function createRealFormSaveRunner(formSource) {
         reset = true;
       },
       toast: { error() {}, success() {} },
+      persistInFlightRef,
+      beginPersist,
+      endPersist,
+      busyLabel: 'Aguarde a gravação de contatos em andamento.',
+      failSaveLabel: 'Falha ao salvar contatos.',
     };
     await runSave(bindings);
     return { dialogAberto, formNome, salvando, closed, reset };
