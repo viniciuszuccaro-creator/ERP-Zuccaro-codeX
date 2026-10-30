@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (DetalhesCliente KPIs HTTP fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-detalhes-cliente-http-392b` ← #432 `2bc3dc6c7` |
+| **Fix** | KPIs/Últimos Pedidos: HTTP via `loadPedidosHistoricoHttp`; legado preservado |
+| **UI** | erro/sem sessão → "—"/banner; não R$ 0,00 |
+| **Keep both** | DetalhesCliente ≠ HistoricoProdutosCliente |
+| **#435** | HistoricoProduto (produto) pacote paralelo — tip peel stage44 |
+| **#401** | tip `686ae322` estável · sem merge oficial |
+| Preferir | CI deste tip; candidata #401 intacta |
+
+**Evidência:** `docs/evidence/recuperacao-detalhes-cliente-http-20261030.txt`
+
 ## CURSOR — VIGENTE (#432 merge #431 get+draft keep-both) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
