@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (HistoricoOrigem+Compras HTTP) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/recuperacao-historico-origem-compras-http-392b` ← #437 `1cde82af7` |
+| **Fix** | Origem+Compras: `loadPedidosHistoricoHttp`; erro≠vazio; página incompleta → "—"; itens HTTP |
+| **Policy** | `historicoComprasClientePolicy.js` (extract+consolidate) |
+| **Keep both** | portal/HistoricoComprasCliente · #436 Detalhes · #437 Tab |
+| **#401** | tip `88332170e` CI SUCCESS (contagens+P2) — **fora deste pacote** |
+| Testes | `historico-origem-compras-http-failclosed` 7 PASS |
+
+**Evidência:** `docs/evidence/recuperacao-historico-origem-compras-http-20261030.txt`
+**Próximo:** CI + @codex deste tip; candidata #401 revisão contagens.
+
 ## CURSOR — VIGENTE (#437 FECHADO tip 5a33ac0c9) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |
