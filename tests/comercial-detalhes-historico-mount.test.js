@@ -75,7 +75,12 @@ test('DetalhesCliente (montagem): renderiza HistoricoProdutosCliente com cliente
       'lucide-react': new Proxy({}, { get: () => 'Icon' }),
       'framer-motion': { motion: { div: 'motion.div' } },
       './HistoricoOrigemCliente': { __esModule: true, default: () => ({ type: 'HistoricoOrigemCliente', props: {}, children: [] }) },
-      './HistoricoProdutosCliente': { __esModule: true, default: HistoricoProdutosCliente },
+      './HistoricoProdutosCliente': {
+        __esModule: true,
+        default: HistoricoProdutosCliente,
+        loadPedidosHistoricoHttp: async () => ({ data: [], meta: { limit: 50, offset: 0, total: 0, hasMore: false } }),
+        historicoSessionCacheKey: (s) => (s?.token && s?.actorId ? `${s.actorId}:fp` : null),
+      },
       './CentralCliente360Panel': { __esModule: true, default: () => ({ type: 'CentralCliente360Panel', props: {}, children: [] }) },
       '@/components/lib/useContextoVisual': {
         useContextoVisual: () => ({
@@ -93,6 +98,8 @@ test('DetalhesCliente (montagem): renderiza HistoricoProdutosCliente com cliente
         }),
       },
       '@/api/httpApiClient': { resolveErpAuthSessionToken: () => 'sess-synthetic' },
+      '@/api/erpHttpSession': { readErpHttpSession: () => null },
+      '@/api/runtimeBackend': { resolveErpBackendMode: () => 'local' },
       '@/lib/app-params': { appParams: { token: null } },
     },
   };

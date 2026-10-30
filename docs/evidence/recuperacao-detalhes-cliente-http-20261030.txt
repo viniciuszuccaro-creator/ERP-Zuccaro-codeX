@@ -1,0 +1,24 @@
+Recuperação — DetalhesCliente KPIs/Últimos Pedidos HTTP fail-closed (2026-10-30 America/Sao_Paulo)
+==============================================================================================
+Base: #432 tip 2bc3dc6c7 (independente de #435 HistoricoProduto / prep #434 / candidata #401).
+Reutiliza: loadPedidosHistoricoHttp + historicoSessionCacheKey (HistoricoProdutosCliente).
+
+## Diagnóstico
+DetalhesCliente usava filterInContext('Pedido') com enabled só por contexto —
+em HTTP a facade podia resolver [] e KPIs mostravam R$ 0,00 / 0 pedidos (perda falsa).
+Histórico de Produtos no mesmo painel já era HTTP canônico; KPIs ficavam inconsistentes.
+
+## Correção no existente
+| Item | Decisão |
+|------|---------|
+| HTTP | loadPedidosHistoricoHttp (mesmo contrato do histórico) |
+| Legado | filterInContext preservado |
+| KPIs | null → "—" quando indisponível/erro; não inventar zero |
+| Banner | data-action detalhes-cliente-pedidos-http-indisponivel |
+| Keep both | DetalhesCliente ≠ HistoricoProdutosCliente (capacidades distintas) |
+
+## Fora
+merge #401 · deploy · seed fictício · API dedicada agregados
+
+## Checks
+detalhes-cliente-pedidos-http-failclosed + comercial-detalhes-historico-mount → 7 PASS
