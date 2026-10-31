@@ -1,3 +1,12 @@
+## CURSOR — Pacote C Empresa+Perfil sky (2026-10-31 America/Sao_Paulo)
+- Branch `cursor/cadastros-empresa-perfil-sky-392b` ← #459 tip `248a8f52d`.
+- Sky windowMode + ID técnico em EmpresaForm e PerfilAcessoForm (espelho CentroResultado).
+- Pin ID-only intacto (Usuario/GrupoEmpresarial). Sem count+1.
+- Testes: empresa-perfil-sky + consolidacao + empresa-edicao PASS.
+- Pacote B tip `80d1393ee` publicado; ManagePullRequest OAuth BLOCKED (repo access). Abrir PR manual se necessário.
+- Pacote A: aguarda Codex montar #446 `900a3fcc9` antes de portar à #401.
+- Sem merge/deploy/carga.
+
 ## Checkpoint Cursor — #459 CI SUCCESS + Pacote A BLOCKED Codex (2026-10-31 America/Sao_Paulo)
 
 - #459 `0c127b034` SUCCESS. #446 aguarda mount Codex antes de consolidar em #401.

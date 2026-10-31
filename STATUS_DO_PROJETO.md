@@ -1,3 +1,27 @@
+## CURSOR — CI fix EmpresaForm date-arithmetic hash (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-empresa-perfil-sky-392b` |
+| **Causa** | `date-arithmetic-contracts` emit hash EmpresaForm mudou com sky windowMode |
+| **Graduação** | `emittedBeforeSha256` cbbf6c99… → 363d9281… (justificado: delta só header sky+ID; operands Date intactos) |
+| **Prova** | date-arithmetic-contracts 33 PASS |
+| Fora | merge · relaxar asserts Date |
+
+## CURSOR — VIGENTE (Pacote C Empresa+Perfil sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-empresa-perfil-sky-392b` ← #459 `248a8f52d` |
+| **Escopo** | EmpresaForm + PerfilAcessoForm sky windowMode + ID técnico |
+| **Preservado** | pin ID-only Usuario/GrupoEmpresarial · CentroResultado #459 · reopen/recordState |
+| **Testes** | empresa-perfil-sky 3 PASS · usuario-grupo-centro-sky 2 PASS · identidade-consolidacao 5 PASS · empresa-edicao 8 PASS |
+| **Pacote B** | tip `80d1393ee` pedido detail reopen (base orc-pedido) — PR create BLOCKED OAuth Cursor |
+| **Pacote A** | BLOCKED Codex mount #446 `900a3fcc9` |
+| Fora | merge · deploy · seed · sky em coorte ID-only |
+
+**Próximo:** CI deste tip; indep. Pacote D reopen transversal / unificação sobreposições.
+
 ## CURSOR — VIGENTE (#459 tip 0c127b034 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
