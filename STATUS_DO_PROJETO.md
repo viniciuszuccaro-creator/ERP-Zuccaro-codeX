@@ -1,9 +1,24 @@
+## CURSOR — VIGENTE (#401 P1 tabela effect + composto) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/composicao-397-342-prep-392b` (= PR #401) |
+| **Tip** | `dbbee42ea` — P1 `filterInContextRef` + bail-out Object.is no efeito TabelaPreco |
+| **Composto base** | `075fc2260` (= docs tip sobre `80d1393ee` FF #446+#453+#454+pedido-detail) |
+| **Aceites Codex** | #446 `900a3fcc` /6545437006 · #453 `cda612` /6545449667 · #454 `b4d8` /6545487624 · ação #401 /6547965046 · P1 loop filterInContext |
+| **Preservado** | Contatos/contagens #401 · `src/api` · `server/src` produto · RBAC · persistência |
+| **CI tip** | própria deste SHA (≠ herdar CI ancestral) |
+| Fora | merge main · deploy · VPS · edição Codex em branches Cursor |
+
+**Testes locais:** `comercial360-adicionar-historico-modal` **14 PASS** (incl. bail-out Object.is)
+**Próximo:** CI tip `dbbee42ea`; `@codex review` P1 + deltas composto; indep. cadastros sky/reopen.
+
 ## CURSOR — VIGENTE (#401 composto #446+#453+#454+pedido-detail) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch** | `cursor/composicao-397-342-prep-392b` (= PR #401) |
-| **Tip composto** | `80d1393ee` |
+| **Tip composto** | `80d1393ee` / docs `075fc2260` |
 | **Cadeia FF** | `34c4c0ee` ← #453 `cda612186` ← #454 `b4d8c1e02` ← pedido-detail `80d1393ee` |
 | **Aceites Codex** | #446 `900a3fcc` /6545437006 · #453 `cda612` /6545449667 · #454 `b4d8` /6545487624 · ação #401 /6547965046 |
 | **Preservado** | Contatos/contagens #401 · `src/api` · `server/src` produto · RBAC · persistência |
@@ -11,7 +26,7 @@
 | Fora | merge main · deploy · VPS · edição Codex em branches Cursor |
 
 **Testes locais:** comercial360 modal/wire/mount + orc/pedido-ui **56 PASS**
-**Próximo:** CI tip `80d1393ee`; `@codex review` deltas do composto; indep. cadastros sky/reopen.
+**Próximo:** supersedido por tip P1 `dbbee42ea`.
 
 ## CURSOR — VIGENTE (Pacote B Pedido detail reopen) (2026-10-31 America/Sao_Paulo)
 
