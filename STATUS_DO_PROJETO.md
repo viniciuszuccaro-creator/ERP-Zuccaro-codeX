@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#401 composto #446+#453+#454+pedido-detail) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/composicao-397-342-prep-392b` (= PR #401) |
+| **Tip composto** | `80d1393ee` |
+| **Cadeia FF** | `34c4c0ee` ← #453 `cda612186` ← #454 `b4d8c1e02` ← pedido-detail `80d1393ee` |
+| **Aceites Codex** | #446 `900a3fcc` /6545437006 · #453 `cda612` /6545449667 · #454 `b4d8` /6545487624 · ação #401 /6547965046 |
+| **Preservado** | Contatos/contagens #401 · `src/api` · `server/src` produto · RBAC · persistência |
+| **CI tip** | própria deste SHA (≠ herdar CI ancestral) |
+| Fora | merge main · deploy · VPS · edição Codex em branches Cursor |
+
+**Testes locais:** comercial360 modal/wire/mount + orc/pedido-ui **56 PASS**
+**Próximo:** CI tip `80d1393ee`; `@codex review` deltas do composto; indep. cadastros sky/reopen.
+
 ## CURSOR — VIGENTE (Pacote B Pedido detail reopen) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

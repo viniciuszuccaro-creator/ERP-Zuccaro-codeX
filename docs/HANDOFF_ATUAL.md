@@ -1,3 +1,10 @@
+## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
+- Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
+- Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
+- Sem merge main/deploy. Backend produto/`src/api` intactos vs `34c4c0ee` (só fixture CI PG16 seletiva autorizada).
+- Testes 56 PASS. CI própria do tip exigida; Codex revisa deltas do composto.
+- Nenhuma edição Codex em branches Cursor.
+
 ## CURSOR — Pacote B Pedido detail reopen (2026-10-31 America/Sao_Paulo)
 - Branch `cursor/comercial360-pedido-detail-reopen-392b` ← tip orc-pedido `b4d8c1e02`.
 - Espelho #454: salvar Pedido → fecha form → abre detalhe com gravado + histórico no mesmo ticket.

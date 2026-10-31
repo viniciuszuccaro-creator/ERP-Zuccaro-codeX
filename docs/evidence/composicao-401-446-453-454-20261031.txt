@@ -1,0 +1,10 @@
+Composição #401 — incorporação seletiva
+data: 2026-10-31 America/Sao_Paulo
+branch: cursor/composicao-397-342-prep-392b
+tip: 80d1393ee
+base_anterior: 34c4c0ee0
+cadeia: 34c4c0ee → cda612186 (#453/#446 port) → b4d8c1e02 (#454) → 80d1393ee (pedido-detail)
+aceites: 6545437006 / 6545449667 / 6545487624 / ação 6547965046
+preservado: Contatos, src/api, server/src produto, RBAC
+fora: merge main, deploy, VPS
+testes_locais: 56 PASS (modal/wire/mount/orc/pedido-ui)
