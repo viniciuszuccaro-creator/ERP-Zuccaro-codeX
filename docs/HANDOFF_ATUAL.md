@@ -1,3 +1,46 @@
+## Fila canonica A-E - aceite446 e provas encadeadas (2026-10-31)
+
+Esta fila atualiza a continuidade anterior; nao cria outro manual/candidata.
+Git origin canonico, desktop temporario,3428e985ec2 limpo no inicio; AGENTS
+inalterado d33f830c. ConectorGitHub retornou403 rate-limit: sem insistencia ou
+credenciais alternativas; Git existente e abaGitHub autenticada permitiram
+HEADs, publicacao e verificacaoDOM. CapturaCDP falhou, nao e evidencia visual.
+
+| Pacote / responsavel | Arquivos / reserva | Dependencia e aceite | Proxima acao |
+|---|---|---|---|
+| A / Cursor port, Codex revisao | UI446/port453 pertencem Cursor; Codex somente provas privadas e topos destes documentos | 446900a3fcc delta43a38577 aceito na montagem; CI pagina6/6. 453cda61218 revisado, ainda FORA da40134c4 | Cursor incorporar hunks aprovados na MESMA401 e publicarSHA/CI; Codex rever composto |
+| B / Cursor formularios, Codex contratos/prova | OrcamentosTab454 pertence Cursor; API/server/src/PedidoFormCompleto preservados no port | 454b4d8c1e0 save/reabrir e negativa tardia montados; ciclo completo depende candidata401 e harnessORIGINAL | Rever401; executar cadeia integrada apenas com origem/hash/harness/ambiente sintetico comprovados |
+| C / Codex legado344 | Mapeadores/importadores e artefatos privados existentes; sem nova selecao ou transferencia | FINALcoorte100+outputpins e harnessORIGINAL+pins ainda noCodespaceunico;01/11/franquia efetiva/budgetzero nao confirmados | RoteiroOPDEV vigente: recuperar somente2artefatos e pins quando canal/franquia comprovados; depois consulta fixa<=100 READONLY/ROLLBACK com principal/escopo validos |
+| D / Cursor recuperacao, Codex reconciliacao | Fonte/export privado por entidade; nao confundir com legado | 350/6542266870 sem resposta nova observada; fonteBase44original naoidentificada/autenticacao nao renovada no checkpoint | Identificar fonte/versao/IDs via canal autorizado; reconciliar ocultoUI/omitidoAPI/outrodestino/ausente/fonteinacessivel antes de restauracao |
+| E / Codex fechamento | Somente topoSTATUS/HANDOFF nesta reserva; sem runtimeCursor | Provaspinadas foraGit; diffcheck documental; nao repetir suites intactas | Publicar checkpoint, liberar propria reserva/trava; retomar o primeiro gate liberado sem pedir proximo |
+
+A: contraprova ReactDOM REAL Pedido/modal/calculador/policy em900a3fcc: consulta
+iniciadaA, renderB comprometido com mesmos cliente/escopo/ator/tabelaT, liberar
+respostaA99, abrir/confirmar ->1item11, sem preco_tabela99. Residual6542258428
+ENCERRADO neste alcance, parecer446/6545437006. IDexato e trocas tabela/Grupo/
+Empresa/sessao anteriores preservados; nao reabrir ABA/duploclique/status/zero.
+Port453cda612: mesmo blobPedido0316031f e prova afetadaPASS; diff de34c4 mostra
+server/src,src/api e PedidoFormCompleto intactos; Painel keep-both Top10+Compras
+readonly. Parecer453/6545449667 publicado; recebimentoCursor NAO presumido.
+Pagina453 mostra6checksSUCCESS; isso nao incorpora automaticamente401.
+
+B: OrcamentosTab/policies reais pinados em454b4d8c1e0, ReactDOM+Query, bordas
+sinteticas. Editar->2clicksSalvar com updatependente=1chamada; retorno com
+observacao/tabela diferentes aparece no Dialog de detalhe; formfecha e Editar
+reabre. TrocaEmpresa+token antes da resposta: Dialog naoexibe retornoobsoleto,
+sem sucesso. Requestja-iniciado=1 nao significa rollbackPG ou bypassSQL.
+Coleta negativa inicial sobretexto global era inconclusiva (listagem); observacao
+corrigida paraDialog antes do parecer454/6545487624. AjustesstubUI/imports nao
+sao achadosproduto. Nao e navegador->API->PG; harnessprivado original nao foi
+substituido. CI454SUCCESS registradaCursor6542475753, nao executada nesta montagem.
+
+C/D: nenhum dado real lido/recriado, legado nao substitui registrosERPnovo.
+GrupoCPA compartilhado nao atribui fiscal/titulos/saldos aEmpresa porpalpite.
+Lote operacional depende destino/schema/journals/principal/duplicidades/backup,
+restore/reversao/reconciliacao e liberacao especifica; provas existentes nao
+viram autorizacao por esta fila. Semmerge/deploy/DDL/grants/carga. Codespace nao
+iniciado nemcobranca habilitada. Nenhuma automacao nova/execucao permanente.
+
 ## Estado vigente - CI fechada e revisao exata da tabela446 (2026-10-31)
 
 342/0aa4c269: CI5610/run41191612010 e5611/run41191617006 SUCCESS terminal.
