@@ -1,3 +1,28 @@
+## CURSOR — CI fix FormaPagamento reopen graduation (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-forma-pagamento-reopen-sky-392b` |
+| **Causa** | CI FAIL: reopen-consolidacao exigia prevIdRef; stage49 hash pré-sky |
+| **Graduação** | FormaPagamento → recordState nos testes; hashes payment-config atualizados |
+| **Preservado** | Representante/Cliente/Fornecedor prevIdRef · handlers/payload |
+| Fora | merge · seed |
+
+## CURSOR — VIGENTE (Pacote D/E FormaPagamento reopen+sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-forma-pagamento-reopen-sky-392b` ← #459 `248a8f52d` |
+| **Escopo** | FormaPagamentoFormCompleto (montado) + FormaPagamentoForm: `useCadastroRecordState` + sky + ID técnico |
+| **Causa** | `prevIdRef` só por id — risco de wipe/reopen frágil entre abas/contexto |
+| **Preservado** | Bloco3/Gestor montam Completo · código≠ID · pin ID-only · sem count+1 |
+| **Testes** | forma-pagamento-reopen-sky 3 PASS · callback-record-state 41 PASS · identidade 5 PASS |
+| **Paralelos** | Pacote C `ee793f1ed` Empresa+Perfil · Pacote B `80d1393ee` Pedido detail |
+| **Pacote A** | BLOCKED Codex mount #446 `900a3fcc9` |
+| Fora | merge · deploy · seed · PR OAuth Cursor BLOCKED |
+
+**Próximo:** CI deste tip; indep. ClienteCompleto recordState (arquivo grande — extrair com cuidado) / aguardar Codex #446.
+
 ## CURSOR — VIGENTE (#459 tip 0c127b034 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
