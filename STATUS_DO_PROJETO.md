@@ -1,3 +1,11 @@
+## CURSOR — VIGENTE (#455 CI fix pin+PG16) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | OrigemPedido `groupId` ≡ pin residual; CI `ubuntu-24.04` + toolchain CRM (port #453) |
+| **Causa** | residual-independent pin; backend `3F000` por client PG no `ubuntu-latest` |
+| Fora | merge · alterar #342 além do port CI autorizado |
+
 ## CURSOR — VIGENTE (Parametro* sky+ID #portal) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

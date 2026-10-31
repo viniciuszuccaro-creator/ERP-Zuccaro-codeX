@@ -34,7 +34,7 @@ export default function ParametroOrigemPedidoForm({
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || parametro?.group_id || null;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = contextKey !== "sem-contexto";
   const podeSalvar = parametro?.id
