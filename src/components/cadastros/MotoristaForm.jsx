@@ -92,6 +92,11 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
         value={formData.codigo}
         action="codigo-registro-motorista"
       />
+      {motoristaBoundId ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(motoristaBoundId)}</span>
+        </p>
+      ) : null}
 
       <div>
         <Label>Nome Completo *</Label>

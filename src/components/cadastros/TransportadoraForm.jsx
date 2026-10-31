@@ -158,6 +158,11 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
         value={formData.codigo}
         action="codigo-registro-transportadora"
       />
+      {transportadora?.id ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(transportadora.id)}</span>
+        </p>
+      ) : null}
 <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
