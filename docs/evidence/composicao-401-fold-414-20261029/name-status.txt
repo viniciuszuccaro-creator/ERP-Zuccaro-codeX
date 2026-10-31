@@ -1,0 +1,12 @@
+M	STATUS_DO_PROJETO.md
+M	docs/HANDOFF_ATUAL.md
+A	docs/evidence/comercial-cliente-label-catalogo-20261029.txt
+M	src/api/httpApiClient.js
+M	src/components/comercial/OrcamentosTab.jsx
+M	src/components/comercial/PedidoCanonicoPanel.jsx
+M	src/components/comercial/comercialMasterPicker.js
+A	tests/comercial-cliente-label-catalogo.test.js
+M	tests/comercial-master-picker.test.js
+M	tests/helpers/consolidation81Remainder.js
+M	tests/http-api-client.test.js
+M	tests/orcamento-component-behavior.test.js
