@@ -1,3 +1,11 @@
+## CURSOR — Pacote B Pedido detail reopen (2026-10-31 America/Sao_Paulo)
+- Branch `cursor/comercial360-pedido-detail-reopen-392b` ← tip orc-pedido `b4d8c1e02`.
+- Espelho #454: salvar Pedido → fecha form → abre detalhe com gravado + histórico no mesmo ticket.
+- Detalhe: cliente, condição, tabela de preço (`pedido-detalhe-tabela-preco` / `tabelaLabel` Não informada|Desconhecida).
+- Testes: `pedido-ui-policy` 28 PASS. Sem merge/deploy.
+- Pacote A: #446 `900a3fcc9` e #401 `34c4c0ee` CI SUCCESS; BLOCKED até Codex montar tip #446 e aceitar hunks antes de portar à candidata.
+- Próximo indep.: sky residual Empresa/PerfilAcesso (fora coorte ID-only CadastroFiscal/CentroOperacao/GrupoEmpresarial/Usuario/Boletos/Webhook).
+
 ## Estado vigente - codigo composto e testes revisados (2026-10-29)
 
 Publicacao funcional concluida em `87db6618cb3d6198ecdc185cc59d8ca48eeafa83`,

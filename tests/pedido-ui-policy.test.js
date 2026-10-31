@@ -391,6 +391,23 @@ test('PedidoCanonicoPanel e OrcamentosTab usam explainPedidoPersistenceError (n�
   assert.match(orc, /explainPedidoPersistenceError/);
 });
 
+test('PedidoCanonicoPanel: salvar reabre detalhe com tabela_preco gravada (espelho #454 orçamento)', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const saveLine = panel.split('\n').find((value) => value.includes('const save=async'));
+  assert.ok(saveLine);
+  // Pós-sucesso: fecha form, abre detalhe com o gravado e carrega histórico no mesmo ticket.
+  assert.match(saveLine, /setSelected\(saved\);setDirty\(false\);setFormOpen\(false\);setEditing\(null\);setDetailOpen\(true\)/);
+  assert.match(saveLine, /if\(saved\?\.id\)await loadHistory\(saved\.id,ticket\)/);
+  assert.match(panel, /pedido-detalhe-tabela-preco/);
+  assert.match(panel, /tabelaLabel/);
+  assert.match(panel, /condicaoLabel/);
+  assert.match(panel, /Não informada/);
+  assert.match(panel, /Desconhecida/);
+  assert.match(panel, /tabelaLabel\(selected\.tabela_preco_id\)/);
+  assert.match(panel, /condicaoLabel\(selected\.condicao_pagamento_id\)/);
+  assert.match(panel, /clientLabel\(selected\.cliente_empresa_id\)/);
+});
+
 
 test('Pedido convertido mantém vínculo de orçamento no payload de edição e pedido direto não o inventa',()=>{
   for (const origin of ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null]) {
