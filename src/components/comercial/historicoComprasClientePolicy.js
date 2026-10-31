@@ -264,6 +264,19 @@ export function numeroComprovado(raw) {
 }
 
 /**
+ * Só aceita TabelaPreco com id exatamente igual ao pedido.
+ * Resposta inválida / outra linha (ex.: filter solto) → null — nunca `tabelas[0]`.
+ */
+export function pickTabelaPrecoExata(tabelas, tabelaId) {
+  if (tabelaId == null || tabelaId === "") return null;
+  if (!Array.isArray(tabelas)) return null;
+  const want = String(tabelaId);
+  const hit = tabelas.find((t) => t?.id != null && String(t.id) === want);
+  if (!hit?.id || String(hit.id) !== want) return null;
+  return hit;
+}
+
+/**
  * Seed do modal canônico AdicionarItemRevenda a partir do histórico/sugestão.
  * Só campos comprovados; frequência/qty histórica ≠ demanda; ausente ≠ inventar UN/zero.
  * preco_medio (média agregada) ≠ preço unitário comprovado — omitir.

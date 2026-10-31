@@ -13,6 +13,7 @@ import {
   bumpSessionEpoch,
   pedidoItensBloqueadosPorStatus,
   pedidoVisualCompativel,
+  pickTabelaPrecoExata,
   seedProdutoFromHistorico,
 } from '@/components/comercial/historicoComprasClientePolicy';
 import { base44 } from '@/api/base44Client';
@@ -99,35 +100,40 @@ export default function PedidoTabsContainer({
   // Fingerprint no render — effect observa renew (deps). Abertura/confirm releem a sessão canônica.
   const sessionFingerprintObservado = readSessionFingerprintCanonical();
 
-  // Resolve TabelaPreco + itens pelo ID do pedido (wizard não carrega objetos).
+  // Resolve TabelaPreco + itens pelo ID exato do pedido (wizard só id/nome).
+  // Troca ID/contexto/sessão: limpa na hora — estado anterior não fica confirmável; late response cancelada.
   useEffect(() => {
     let cancel = false;
     const tabelaId = formData?.tabela_preco_id || null;
     const embutida = formData?.tabela_preco || null;
     const itensEmbutidos = Array.isArray(formData?.tabela_preco_itens) ? formData.tabela_preco_itens : null;
+    const embutidaExata = pickTabelaPrecoExata(embutida ? [embutida] : [], tabelaId);
+
+    // Fail-closed imediato: troca de ID/contexto não deixa tabela anterior confirmável.
+    setTabelaPrecoResolvida(null);
+    setTabelaPrecoItensResolvidos([]);
 
     if (!tabelaId) {
-      setTabelaPrecoResolvida(embutida || null);
-      setTabelaPrecoItensResolvidos(itensEmbutidos || []);
       return undefined;
     }
-    if (
-      embutida?.id && String(embutida.id) === String(tabelaId)
-      && itensEmbutidos && itensEmbutidos.length > 0
-    ) {
-      setTabelaPrecoResolvida(embutida);
-      setTabelaPrecoItensResolvidos(itensEmbutidos);
-      return undefined;
+    if (embutidaExata && itensEmbutidos && itensEmbutidos.length > 0) {
+      const itensExatos = itensEmbutidos.filter(
+        (i) => !i?.tabela_preco_id || String(i.tabela_preco_id) === String(tabelaId),
+      );
+      if (itensExatos.length > 0) {
+        setTabelaPrecoResolvida(embutidaExata);
+        setTabelaPrecoItensResolvidos(itensExatos);
+        return undefined;
+      }
     }
 
     (async () => {
       try {
         const tabelas = await filterInContext('TabelaPreco', { id: tabelaId }, 'nome', 5);
-        const tabela = Array.isArray(tabelas)
-          ? (tabelas.find((t) => String(t?.id) === String(tabelaId)) || tabelas[0] || null)
-          : null;
+        // Nunca tabelas[0]: resposta WRONG ≠ EXPECTED → null (não vira tabela escolhida).
+        const tabela = pickTabelaPrecoExata(tabelas, tabelaId);
         if (cancel) return;
-        if (!tabela?.id) {
+        if (!tabela) {
           setTabelaPrecoResolvida(null);
           setTabelaPrecoItensResolvidos([]);
           return;
@@ -139,8 +145,11 @@ export default function PedidoTabsContainer({
           1000,
         );
         if (cancel) return;
+        const itensExatos = Array.isArray(itens)
+          ? itens.filter((i) => !i?.tabela_preco_id || String(i.tabela_preco_id) === String(tabelaId))
+          : [];
         setTabelaPrecoResolvida(tabela);
-        setTabelaPrecoItensResolvidos(Array.isArray(itens) ? itens : []);
+        setTabelaPrecoItensResolvidos(itensExatos);
       } catch (error) {
         console.error('[PedidoTabsContainer] Falha ao resolver tabela_preco_id', error);
         if (!cancel) {
@@ -154,6 +163,13 @@ export default function PedidoTabsContainer({
     formData?.tabela_preco_id,
     formData?.tabela_preco,
     formData?.tabela_preco_itens,
+    formData?.empresa_id,
+    formData?.group_id,
+    formData?.grupo_id,
+    formData?.cliente_id,
+    empresaAtual?.id,
+    grupoAtual?.id,
+    sessionFingerprintObservado,
     filterInContext,
   ]);
 

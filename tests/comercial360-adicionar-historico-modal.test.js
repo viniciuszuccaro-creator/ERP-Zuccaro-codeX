@@ -16,6 +16,7 @@ import {
   numeroComprovado,
   pedidoItensBloqueadosPorStatus,
   pedidoVisualCompativel,
+  pickTabelaPrecoExata,
   produtoElegivelRevendaNoCatalogo,
   seedProdutoFromHistorico,
 } from '../src/components/comercial/historicoComprasClientePolicy.js';
@@ -198,11 +199,14 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /sessionFingerprintObservado,/);
   // Abertura/confirm releem sessão (filho muta sem re-render do pai).
   assert.match(src, /Sempre releia/);
-  // P2: resolve TabelaPreco+itens pelo ID do pedido (wizard só preenche id/nome).
+  // P2/P1: resolve TabelaPreco+itens só com ID exato (nunca tabelas[0] / WRONG).
   assert.match(src, /tabelaPrecoResolvida/);
   assert.match(src, /TabelaPrecoItem/);
   assert.match(src, /tabela_preco_id/);
   assert.match(src, /tabelaPreco=\{tabelaPrecoResolvida\}/);
+  assert.match(src, /pickTabelaPrecoExata/);
+  assert.doesNotMatch(src, /\|\| tabelas\[0\]/);
+  assert.match(src, /Fail-closed imediato/);
   assert.match(src, /Contexto alterado/);
   assert.match(src, /Contexto visual diverge/);
   assert.match(src, /onAdicionarHistorico/);
@@ -378,6 +382,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
         bumpSessionEpoch,
         pedidoVisualCompativel,
         numeroComprovado,
+        pickTabelaPrecoExata,
       },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
       '@/api/erpHttpSession': {
@@ -735,4 +740,286 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   formData = { ...formData, status: 'Faturado' };
   tree = render();
   assert.equal(findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto, undefined);
+});
+
+test('pickTabelaPrecoExata: WRONG≠EXPECTED → null; nunca tabelas[0]', () => {
+  assert.equal(pickTabelaPrecoExata([{ id: 'WRONG', nome: 'x' }], 'EXPECTED'), null);
+  assert.equal(pickTabelaPrecoExata([{ id: 'WRONG' }, { id: 'EXPECTED', nome: 'ok' }], 'EXPECTED')?.id, 'EXPECTED');
+  assert.equal(pickTabelaPrecoExata([{ id: 'OTHER' }], 'EXPECTED'), null);
+  assert.equal(pickTabelaPrecoExata(null, 'EXPECTED'), null);
+  assert.equal(pickTabelaPrecoExata([{ id: 'EXPECTED' }], ''), null);
+});
+
+test('React harness: filterInContext WRONG id ≠ tabela escolhida; preço 11≠99; late response cancelada', async () => {
+  const calcSource = await readFile(new URL('../src/components/comercial/CalculadorPrecoItem.jsx', import.meta.url), 'utf8');
+  const calcCompiled = ts.transpileModule(calcSource, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
+  }).outputText;
+  const calcSandbox = {
+    exports: {},
+    module: { exports: {} },
+    require(id) {
+      if (id === 'react') return { __esModule: true, default: {}, createElement: () => null };
+      throw new Error(`Import inesperado: ${id}`);
+    },
+  };
+  vm.runInNewContext(calcCompiled, calcSandbox);
+  const { calcularPrecoItem } = calcSandbox.exports;
+
+  const source = await readFile(new URL('../src/components/comercial/pedido/PedidoTabsContainer.jsx', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
+  }).outputText;
+
+  const EXPECTED = 'EXPECTED';
+  const WRONG = 'WRONG';
+  let formData = {
+    cliente_id: 'cli-1',
+    status: 'Rascunho',
+    tabela_preco_id: EXPECTED,
+    empresa_id: 'e1',
+    group_id: 'g1',
+    itens_revenda: [],
+  };
+  const setFormData = (updater) => {
+    formData = typeof updater === 'function' ? updater(formData) : updater;
+  };
+  const setActiveTab = () => {};
+  let sessionToken = 'token-A';
+  const visualCtx = { empresaAtual: { id: 'e1', group_id: 'g1' }, grupoAtual: { id: 'g1' } };
+  const filterCalls = [];
+  let resolveTabelaGate;
+  const tabelaGate = new Promise((r) => { resolveTabelaGate = r; });
+
+  const states = [];
+  let slot = 0;
+  const pendingEffects = [];
+  const effectDepsPrev = [];
+  let effectSlot = 0;
+  const effectCleanups = [];
+  const react = {
+    createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
+    useState(initial) {
+      const i = slot++;
+      if (!(i in states)) states[i] = typeof initial === 'function' ? initial() : initial;
+      return [states[i], (n) => { states[i] = typeof n === 'function' ? n(states[i]) : n; }];
+    },
+    useEffect(fn, deps) {
+      const i = effectSlot++;
+      const key = deps === undefined ? `__nodeps_${i}` : JSON.stringify(deps);
+      if (effectDepsPrev[i] === key) return;
+      if (typeof effectCleanups[i] === 'function') {
+        try { effectCleanups[i](); } catch { /* ignore */ }
+        effectCleanups[i] = null;
+      }
+      effectDepsPrev[i] = key;
+      if (typeof fn === 'function') pendingEffects.push({ i, fn });
+    },
+    useRef(v) { return { current: v }; },
+    lazy: () => function LazyStub() { return { type: 'Lazy', props: {}, children: [] }; },
+  };
+
+  const sandbox = {
+    exports: {},
+    module: { exports: {} },
+    Promise,
+    console,
+    require(id) {
+      if (!sandbox.__modules[id]) throw new Error(`Import inesperado: ${id}`);
+      return sandbox.__modules[id];
+    },
+    __modules: {
+      react: { __esModule: true, default: react, ...react, Suspense: ({ children }) => children },
+      '@/components/ui/tabs': { Tabs: 'Tabs', TabsContent: 'TabsContent' },
+      './PedidoTabsNav': { __esModule: true, default: () => null },
+      '@/components/security/ProtectedSection': { __esModule: true, default: ({ children }) => children },
+      '@/components/comercial/HistoricoProdutosCliente': { __esModule: true, default: () => null },
+      '@/components/comercial/HistoricoComprasCliente': {
+        __esModule: true,
+        default: function HistoricoComprasCliente(props) {
+          return { type: 'HistoricoComprasCliente', props, children: [] };
+        },
+      },
+      '@/components/comercial/SugestoesProdutos': { __esModule: true, default: () => null },
+      '@/components/comercial/Top10ProdutosCliente': { __esModule: true, default: () => null },
+      '@/components/comercial/AdicionarItemRevendaModal': {
+        __esModule: true,
+        default: function AdicionarItemRevendaModal(props) {
+          return { type: 'AdicionarItemRevendaModal', props, children: [] };
+        },
+      },
+      '@/components/comercial/historicoComprasClientePolicy': {
+        seedProdutoFromHistorico,
+        pedidoItensBloqueadosPorStatus,
+        buildHistoricoModalGeracao,
+        buildSessionFingerprint,
+        bumpSessionEpoch,
+        pedidoVisualCompativel,
+        numeroComprovado,
+        pickTabelaPrecoExata,
+      },
+      '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
+      '@/api/erpHttpSession': {
+        readErpHttpSession: () => (sessionToken ? { token: sessionToken } : null),
+      },
+      sonner: { toast: { success: () => {}, error: () => {}, message: () => {} } },
+      '@/components/lib/useContextoVisual': {
+        __esModule: true,
+        default: () => ({
+          createInContext: async () => ({}),
+          filterInContext: async (entity, filter) => {
+            filterCalls.push({ entity, filter: { ...filter } });
+            if (entity === 'TabelaPreco') {
+              await tabelaGate;
+              // Fronteira sintética: consulta EXPECTED, devolve WRONG (≠ inventar aceite).
+              return [{ id: WRONG, nome: 'Tabela errada', preco_hint: 99 }];
+            }
+            if (entity === 'TabelaPrecoItem') {
+              return [{
+                produto_id: 'prod-1',
+                tabela_preco_id: WRONG,
+                preco_com_desconto: 99,
+              }];
+            }
+            return [];
+          },
+          empresaAtual: visualCtx.empresaAtual,
+          grupoAtual: visualCtx.grupoAtual,
+        }),
+      },
+      '@/components/lib/UserContext': { useUser: () => ({ user: { id: 'u1' } }) },
+      '../wizard/WizardEtapa1Cliente': { __esModule: true, default: () => null },
+      '../ItensRevendaTab': { __esModule: true, default: () => null },
+      '../ArmadoPadraoTab': { __esModule: true, default: () => null },
+      '../CorteDobraIATab': { __esModule: true, default: () => null },
+      '../HistoricoClienteTab': { __esModule: true, default: () => null },
+      '../LogisticaEntregaTab': { __esModule: true, default: () => null },
+      '../FechamentoFinanceiroTab': { __esModule: true, default: () => null },
+      '../ArquivosProjetosTab': { __esModule: true, default: () => null },
+      '../AuditoriaAprovacaoTab': { __esModule: true, default: () => null },
+    },
+  };
+
+  vm.runInNewContext(compiled, sandbox);
+  const PedidoTabsContainer = sandbox.exports.default || sandbox.module.exports.default;
+
+  function walk(n) {
+    if (!n || typeof n !== 'object') return [];
+    return [n, ...(n.children || []).flatMap(walk)];
+  }
+  function findType(tree, name) {
+    return walk(tree).filter((n) => n?.type === name || n?.type?.name === name);
+  }
+  function render() {
+    slot = 0;
+    effectSlot = 0;
+    pendingEffects.length = 0;
+    PedidoTabsContainer({
+      activeTab: 'historico',
+      setActiveTab,
+      formData,
+      setFormData,
+      clientes: [{ id: 'cli-1' }],
+      bloquearEdicao: true,
+      validacoes: {},
+      errors: {},
+      pedido: null,
+    });
+    const queued = pendingEffects.splice(0, pendingEffects.length);
+    for (const { i, fn } of queued) {
+      try {
+        const cleanup = fn();
+        if (typeof cleanup === 'function') effectCleanups[i] = cleanup;
+      } catch { /* async */ }
+    }
+    slot = 0;
+    effectSlot = 0;
+    return PedidoTabsContainer({
+      activeTab: 'historico',
+      setActiveTab,
+      formData,
+      setFormData,
+      clientes: [{ id: 'cli-1' }],
+      bloquearEdicao: true,
+      validacoes: {},
+      errors: {},
+      pedido: null,
+    });
+  }
+
+  let tree = render();
+  // Abre modal com seed preço comprovado 11.
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'prod-1',
+    descricao: 'Item',
+    unidade: 'UN',
+    ultimo_preco: 11,
+  });
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
+
+  resolveTabelaGate();
+  await Promise.resolve();
+  await Promise.resolve();
+  await new Promise((r) => setTimeout(r, 0));
+  tree = render();
+
+  const modal = findType(tree, 'AdicionarItemRevendaModal')[0];
+  assert.ok(modal, 'modal montado');
+  assert.equal(modal.props.tabelaPreco, null, 'WRONG≠EXPECTED → tabela null');
+  // Itens via realm do vm — comparar por length (≠ deepEqual cross-context).
+  assert.ok(Array.isArray(modal.props.tabelaPrecoItens) && modal.props.tabelaPrecoItens.length === 0);
+  assert.equal(states.find((s) => s && typeof s === 'object' && s.id === WRONG), undefined);
+
+  const produto = {
+    id: 'prod-1',
+    preco_venda: 11,
+    custo_medio: 5,
+    descricao: 'Item',
+  };
+  const calcSemTabela = calcularPrecoItem({
+    produto,
+    tabelaPreco: modal.props.tabelaPreco,
+    tabelaPrecoItens: modal.props.tabelaPrecoItens || [],
+    quantidade: 1,
+  });
+  assert.equal(calcSemTabela.preco_unitario_bruto, 11);
+  assert.equal(calcSemTabela.origem_preco, 'produto_base');
+  assert.notEqual(calcSemTabela.preco_unitario_bruto, 99);
+
+  const calcSeAceitasseWrong = calcularPrecoItem({
+    produto,
+    tabelaPreco: { id: WRONG, nome: 'errada' },
+    tabelaPrecoItens: [{ produto_id: 'prod-1', preco_com_desconto: 99 }],
+    quantidade: 1,
+  });
+  assert.equal(calcSeAceitasseWrong.preco_unitario_bruto, 99);
+
+  // Confirm canônico com props fail-closed: 1 write com 11, nunca preco_tabela 99.
+  let writes = 0;
+  modal.props.onAddItem({
+    produto_id: 'prod-1',
+    preco_unitario: calcSemTabela.preco_unitario,
+    ...(calcSemTabela.origem_preco === 'tabela_preco'
+      ? { preco_tabela: calcSemTabela.preco_unitario_bruto }
+      : {}),
+  });
+  // onAddItem do container confirma no rascunho
+  writes = formData.itens_revenda.length;
+  assert.equal(writes, 1);
+  assert.equal(formData.itens_revenda[0].preco_unitario, 11);
+  assert.notEqual(formData.itens_revenda[0].preco_tabela, 99);
+  assert.ok(filterCalls.some((c) => c.entity === 'TabelaPreco' && String(c.filter.id) === EXPECTED));
+
+  // Late response: limpa sync na troca de ID — estado anterior não confirmável.
+  formData = { ...formData, tabela_preco_id: 'OTHER', itens_revenda: [...formData.itens_revenda] };
+  tree = render();
+  const modalAposTroca = findType(tree, 'AdicionarItemRevendaModal')[0];
+  // Modal pode fechar por geracao/contexto; se aberto, tabela deve ser null.
+  if (modalAposTroca) {
+    assert.equal(modalAposTroca.props.tabelaPreco, null);
+    assert.ok(Array.isArray(modalAposTroca.props.tabelaPrecoItens)
+      && modalAposTroca.props.tabelaPrecoItens.length === 0);
+  }
+  assert.equal(states.find((s) => s && typeof s === 'object' && (s.id === WRONG || s.id === EXPECTED)), undefined);
 });
