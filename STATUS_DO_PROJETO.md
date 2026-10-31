@@ -1,3 +1,11 @@
+## CURSOR — VIGENTE (#459 pin ID-only: só CentroResultado) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | Reverte Usuario/GrupoEmpresarial (pin ID-only emit≡e36231b3); mantém CentroResultado sky |
+| **Causa** | `cursor-identidade-consolidacao` exige emit golden; sky só com allowlist (Webhook) |
+| Fora | merge · inventar allowlist sem parecer |
+
 ## CURSOR — VIGENTE (Usuario/Grupo/CentroResultado sky) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
