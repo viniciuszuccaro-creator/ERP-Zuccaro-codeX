@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#446 P1 sessão observada pós Codex 31/10) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | `534c08c5d` docs CI5587 · código `febb8ed0a` |
+| **P1 Codex** | `sessionFingerprintObservado` nas deps do effect — RenderB captura B; A→B→A modalAfterB=false / 0 writes |
+| **Sem** | fingerprint/identidade paralela — reusa `buildSessionFingerprint` |
+| **Preservado** | pedidoId · preço · elegivel null · zero · positivos fechados |
+| **Codex** | `@codex review` tip novo — CI ≠ aceite |
+| **#401** | **fora** — sem port até limpo |
+| Fora | merge main · deploy · seed · substituir backend |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** CI tip + aceite Codex montado; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 tip febb8ed0a CI5587 SUCCESS — residual) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

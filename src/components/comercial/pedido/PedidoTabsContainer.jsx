@@ -85,13 +85,17 @@ export default function PedidoTabsContainer({
     };
   }
 
+  // Fingerprint canônico no render — effect observa renew de token (sem identidade paralela).
+  let sessionFingerprintObservado = null;
+  try {
+    sessionFingerprintObservado = buildSessionFingerprint(readErpHttpSession()?.token || null);
+  } catch {
+    sessionFingerprintObservado = null;
+  }
+
   function sessionEpochAtual() {
-    let fp = null;
-    try {
-      fp = buildSessionFingerprint(readErpHttpSession()?.token || null);
-    } catch {
-      fp = null;
-    }
+    // Reusa o fp já lido no render quando disponível (mesma sessão canônica).
+    const fp = sessionFingerprintObservado;
     const next = bumpSessionEpoch(sessionEpochRef.current, sessionFpRef.current, fp);
     sessionEpochRef.current = next.epoch;
     sessionFpRef.current = next.fingerprint;
@@ -114,13 +118,14 @@ export default function PedidoTabsContainer({
     setModalHistoricoGeracao(null);
   }
 
-  // Troca pedido/cliente/empresa/grupo/ator/visual com modal aberto → descarta seleção; preserva rascunho.
+  // Troca pedido/cliente/empresa/grupo/ator/visual/sessão com modal aberto → descarta seleção; preserva rascunho.
+  // sessionFingerprintObservado nas deps: RenderB com token B captura B (epoch↑); volta A não rematch.
   useEffect(() => {
     if (!modalRevendaAberto || !modalHistoricoGeracao) return;
     if (geracaoHistoricoAtual() === modalHistoricoGeracao) return;
     fecharModalHistoricoObsoleto();
     toast.message('Contexto alterado — confirmação do histórico anterior cancelada.');
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- geracao lida no corpo
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- geracao lida no corpo; fp de sessão nas deps
   }, [
     modalRevendaAberto,
     modalHistoricoGeracao,
@@ -133,6 +138,7 @@ export default function PedidoTabsContainer({
     empresaAtual?.id,
     grupoAtual?.id,
     user?.id,
+    sessionFingerprintObservado,
   ]);
 
   function abrirAdicionarDoHistorico(produto) {

@@ -156,3 +156,18 @@ Testes: comercial360-adicionar-historico-modal + wire + mount — PASS.
 - Residual: pedidoId · visual · epoch A→B→A · elegivel null · podeConfirmarPreco · custo 0.
 - CI verde ≠ aceite Codex montado; #401 fora.
 - Indep. paralelo #451 tip `d74debd88` CI5589 (org ID técnico UX).
+
+## P1 Codex sessão observada (2026-10-31 America/Sao_Paulo)
+Achado montado HEAD `534c08c5d` / código `febb8ed0a`:
+- bumpSessionEpoch só em abrir/efeito/confirmar; deps do effect NÃO observavam sessão.
+- RenderB isolado não capturava B; A→B→A rematch da época anterior (1 write).
+
+Correção (canônica, sem identidade paralela):
+1. `sessionFingerprintObservado` = `buildSessionFingerprint(token)` no render.
+2. Incluído nas deps do effect de invalidação do modal.
+3. RenderB com token B → effect roda → epoch↑ → fecha modal (modalAfterB=false).
+4. Volta A: modal permanece fechado; 0 writes / 0 success.
+5. Harness de teste: useEffect respeita deps (prova integração, não só helper puro).
+
+Preservados: pedidoId, pedidoVisualCompativel, elegivel null, podeConfirmarPreco, zero, custo zero-safe.
+#401 fora até Codex limpo neste tip.

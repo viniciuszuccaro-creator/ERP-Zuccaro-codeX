@@ -190,8 +190,11 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /bumpSessionEpoch/);
   assert.match(src, /pedidoVisualCompativel/);
   assert.match(src, /sessionEpoch/);
+  assert.match(src, /sessionFingerprintObservado/);
   assert.match(src, /buildSessionFingerprint/);
   assert.match(src, /sessionKey/);
+  // Effect observa sessão canônica (Codex P1: RenderB captura B; A→B→A sem rematch).
+  assert.match(src, /sessionFingerprintObservado,/);
   assert.match(src, /Contexto alterado/);
   assert.match(src, /Contexto visual diverge/);
   assert.match(src, /onAdicionarHistorico/);
@@ -274,6 +277,9 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   const states = [];
   let slot = 0;
   const pendingEffects = [];
+  // Deps estáveis como React: só reexecuta efeito quando deps mudam (prova sessão observada).
+  const effectDepsPrev = [];
+  let effectSlot = 0;
   const react = {
     createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
     useState(initial) {
@@ -281,7 +287,11 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
       if (!(i in states)) states[i] = typeof initial === 'function' ? initial() : initial;
       return [states[i], (n) => { states[i] = typeof n === 'function' ? n(states[i]) : n; }];
     },
-    useEffect(fn) {
+    useEffect(fn, deps) {
+      const i = effectSlot++;
+      const key = deps === undefined ? `__nodeps_${i}` : JSON.stringify(deps);
+      if (effectDepsPrev[i] === key) return;
+      effectDepsPrev[i] = key;
       if (typeof fn === 'function') pendingEffects.push(fn);
     },
     useRef(v) { return { current: v }; },
@@ -367,6 +377,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   }
   function render() {
     slot = 0;
+    effectSlot = 0;
     pendingEffects.length = 0;
     PedidoTabsContainer({
       activeTab: 'historico',
@@ -379,12 +390,13 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
       errors: {},
       pedido: null,
     });
-    // Flush sync effects (contexto → fecha modal obsoleto); async conformidade ignora-se.
+    // Flush sync effects (contexto/sessão → fecha modal obsoleto); async conformidade ignora-se.
     const queued = pendingEffects.splice(0, pendingEffects.length);
     for (const fn of queued) {
       try { fn(); } catch { /* conformidade async / cancel */ }
     }
     slot = 0;
+    effectSlot = 0;
     return PedidoTabsContainer({
       activeTab: 'historico',
       setActiveTab,
@@ -503,6 +515,7 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   const lenBeforeCtx = formData.itens_revenda.length;
   visualCtx.empresaAtual = { id: 'visual-B', group_id: 'g1' };
   slot = 0;
+  effectSlot = 0;
   pendingEffects.length = 0;
   tree = PedidoTabsContainer({
     activeTab: 'historico',
@@ -515,23 +528,21 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
     errors: {},
     pedido: null,
   });
-  findType(tree, 'AdicionarItemRevendaModal')[0].props.onAddItem({
-    produto_id: 'ctx-old',
-    descricao: 'CtxOld',
-    quantidade: 1,
-    preco_unitario: 9,
-  });
-  assert.equal(formData.itens_revenda.length, lenBeforeCtx);
-  assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
+  // Flush effect (visual nas deps) antes do confirm — modal pode já fechar.
+  for (const fn of pendingEffects.splice(0, pendingEffects.length)) {
+    try { fn(); } catch { /* ignore */ }
+  }
   tree = render();
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+  assert.equal(formData.itens_revenda.length, lenBeforeCtx);
+  assert.ok(toasts.some((t) => t[0] === 'msg' && /Contexto alterado/i.test(String(t[1]))));
   // Volta visual A — modal antigo permanece fechado (exige novo Adicionar)
   visualCtx.empresaAtual = { id: 'visual-A', group_id: 'g1' };
   tree = render();
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
   assert.equal(formData.itens_revenda.length, lenBeforeCtx);
 
-  // Renew sessão (token) com modal aberto → confirm rejeita; rascunho preservado
+  // Renew sessão (token) com modal aberto → effect observa fp e fecha; confirm 0 writes
   toasts.length = 0;
   sessionToken = 'token-sessao-A';
   tree = render();
@@ -542,31 +553,15 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
     ultimo_preco: 5,
   });
   tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
   const lenBeforeSess = formData.itens_revenda.length;
   sessionToken = 'token-sessao-RENEW';
-  slot = 0;
-  pendingEffects.length = 0;
-  tree = PedidoTabsContainer({
-    activeTab: 'historico',
-    setActiveTab,
-    formData,
-    setFormData,
-    clientes: [{ id: 'cli-1', nome: 'Cliente' }],
-    bloquearEdicao: true,
-    validacoes: {},
-    errors: {},
-    pedido: null,
-  });
-  findType(tree, 'AdicionarItemRevendaModal')[0].props.onAddItem({
-    produto_id: 'sess-old',
-    descricao: 'SessOld',
-    quantidade: 1,
-    preco_unitario: 5,
-  });
+  // RenderB comprometido: só token muda; deps de sessão disparam efeito (Codex P1).
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0, 'RenderB com sessão B fecha modal');
   assert.equal(formData.itens_revenda.length, lenBeforeSess);
-  assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
 
-  // Sessão A→B→A: voltar ao token A não rematch da geração antiga (epoch monotônico)
+  // Sessão A→B→A (Codex P1): RenderB observa fp B nas deps → fecha; volta A sem rematch
   toasts.length = 0;
   sessionToken = 'token-sessao-A';
   tree = render();
@@ -580,12 +575,30 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
   const lenBeforeABA = formData.itens_revenda.length;
   sessionToken = 'token-sessao-B';
-  tree = render(); // effect fecha modal (epoch↑)
-  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+  // RenderB comprometido (só token); effect com sessionFingerprintObservado → epoch↑ e fecha
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0, 'modalAfterB deve ser false');
+  assert.equal(formData.itens_revenda.length, lenBeforeABA, 'RenderB = 0 writes');
   sessionToken = 'token-sessao-A';
-  tree = render(); // volta A — modal permanece fechado (epoch≠ da 1ª visita)
+  tree = render(); // volta A — modal permanece fechado (epoch monotônico; sem rematch)
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
-  assert.equal(formData.itens_revenda.length, lenBeforeABA);
+  assert.equal(formData.itens_revenda.length, lenBeforeABA, 'A→B→A = 0 writes / 0 success');
+  // Novo Adicionar após ABA: abre com geração nova (rascunho preservado)
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'sess-aba-novo',
+    descricao: 'SessABANovo',
+    unidade: 'KG',
+    ultimo_preco: 4,
+  });
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
+  findType(tree, 'AdicionarItemRevendaModal')[0].props.onAddItem({
+    produto_id: 'sess-aba-novo',
+    descricao: 'SessABANovo',
+    quantidade: 1,
+    preco_unitario: 4,
+  });
+  assert.equal(formData.itens_revenda.length, lenBeforeABA + 1);
 
   // PedidoA→PedidoB (mesmo visual/cliente): modal da geração A não confirma em B
   toasts.length = 0;
@@ -610,29 +623,10 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
   const lenBeforePed = formData.itens_revenda.length;
   formData = { ...formData, id: 'pedido-B' };
-  slot = 0;
-  pendingEffects.length = 0;
-  tree = PedidoTabsContainer({
-    activeTab: 'historico',
-    setActiveTab,
-    formData,
-    setFormData,
-    clientes: [{ id: 'cli-1', nome: 'Cliente' }],
-    bloquearEdicao: true,
-    validacoes: {},
-    errors: {},
-    pedido: { id: 'pedido-B' },
-  });
-  findType(tree, 'AdicionarItemRevendaModal')[0].props.onAddItem({
-    produto_id: 'ped-switch',
-    descricao: 'PedSwitch',
-    quantidade: 1,
-    preco_unitario: 8,
-  });
-  assert.equal(formData.itens_revenda.length, lenBeforePed);
-  assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
-  tree = render();
+  tree = render(); // effect observa pedidoId → fecha
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+  assert.equal(formData.itens_revenda.length, lenBeforePed);
+  assert.ok(toasts.some((t) => t[0] === 'msg' && /Contexto alterado/i.test(String(t[1]))));
 
   // Pedido vs visual divergentes → abrir bloqueado
   toasts.length = 0;
