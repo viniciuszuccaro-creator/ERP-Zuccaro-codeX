@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Building2, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
@@ -121,7 +121,26 @@ export default function FilialForm({ filial, item, data, initialData, defaultVal
   );
 
   if (windowMode) {
-    return <div className="w-full h-full overflow-auto bg-white p-6">{form}</div>;
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <Building2 className="w-8 h-8 text-sky-600" />
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {dadosIniciais?.id ? "Editar Filial" : "Nova Filial"}
+              </h2>
+              {dadosIniciais?.id ? (
+                <p className="text-xs text-slate-500">
+                  ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+                </p>
+              ) : null}
+            </div>
+          </div>
+          {form}
+        </div>
+      </div>
+    );
   }
 
   return form;

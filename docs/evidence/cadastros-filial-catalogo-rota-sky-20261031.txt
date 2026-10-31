@@ -1,0 +1,13 @@
+Cadastros — Filial/CatalogoWeb/RotaPadrao sky+ID (2026-10-31 America/Sao_Paulo)
+==============================================================================
+Branch: cursor/cadastros-filial-catalogo-rota-sky-392b
+Base: cursor/comercial360-proposta-347-evolucao-392b
+CI: ubuntu-24.04 + toolchain CRM (port #453)
+
+Delta (chrome windowMode only — pin-safe)
+- FilialForm: header sky + ID técnico (antes sem chrome)
+- CatalogoWebForm: blue→sky + ID técnico
+- RotaPadraoForm: orange→sky + ID técnico
+
+UX ID ≠ dados recuperados. Sem count+1. Sem merge/deploy.
+Teste: tests/cadastros-filial-catalogo-rota-sky.test.js
