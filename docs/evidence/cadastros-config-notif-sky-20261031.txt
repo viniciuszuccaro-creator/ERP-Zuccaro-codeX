@@ -1,0 +1,13 @@
+Cadastros — Config Integração/WhatsApp/Modelo/Evento sky+ID (2026-10-31 America/Sao_Paulo)
+========================================================================================
+Branch: cursor/cadastros-config-notif-sky-392b
+Base: cursor/comercial360-proposta-347-evolucao-392b
+
+Delta (chrome windowMode only — pin-safe)
+- ConfiguracaoIntegracaoForm
+- ConfiguracaoWhatsAppForm
+- ModeloDocumentoForm
+- EventoNotificacaoForm
+
+UX ID técnico ≠ registros recuperados. Sem count+1. Sem merge/deploy.
+Teste: tests/cadastros-config-notif-sky.test.js
