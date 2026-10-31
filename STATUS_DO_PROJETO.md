@@ -1,3 +1,37 @@
+## CURSOR — VIGENTE (#456 tip 33ac9807d CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `33ac9807d` — CI SUCCESS 6/6 (sky Gateway/TabelaFiscal/ConfigNFe + PG16) |
+| **Código** | sky `3d6cf1fa5` · CI fix `33ac9807d` |
+| Fora | merge main · deploy · seed |
+| Paralelo | #455/#457 CI em andamento |
+
+**Próximo:** CI #455/#457; Filial/Catálogo/RotaPadrao sky ou cadastros transversal.
+
+## CURSOR — VIGENTE (#456 CI PG16) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | CI `ubuntu-24.04` + toolchain CRM (port #453) — frontend já PASS |
+| **Causa** | backend `3F000` client PG no `ubuntu-latest` |
+| Fora | merge · alterar forms além do sky |
+
+## CURSOR — VIGENTE (Gateway/TabelaFiscal/ConfigNFe sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-gateway-fiscal-sky-392b` |
+| **Base** | `cursor/comercial360-proposta-347-evolucao-392b` |
+| **Delta** | GatewayPagamento + TabelaFiscal + ConfiguracaoNFe: sky windowMode + ID técnico |
+| **Fonte** | #413 `526fcdd52` CI SUCCESS; RecordState preservado |
+| **UX≠dados** | ID técnico ≠ registros recuperados |
+| Fora | merge · deploy · seed · ParametroRoteirizacao |
+
+**Teste:** `cadastros-gateway-tabelafiscal-sky.test.js` + RecordState
+**Paralelo:** #455 Parametro sky `a57628c5c`
+**Próximo:** CI; indep. ConfigIntegracao/WhatsApp/ModeloDocumento se lacuna.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

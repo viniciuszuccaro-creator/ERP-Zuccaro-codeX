@@ -92,6 +92,21 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     <div className={windowMode ? "w-full h-full flex flex-col" : ""}>
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 flex flex-col overflow-hidden" : ""}>
         <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
+          {windowMode ? (
+            <div className="flex items-center gap-3 mb-4 pb-3 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-3">
+              <Globe className="w-7 h-7 text-sky-600" />
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  {gateway ? "Editar Gateway de Pagamento" : "Novo Gateway de Pagamento"}
+                </h2>
+                {gateway?.id ? (
+                  <p className="text-xs text-slate-500">
+                    ID técnico: <span className="font-mono">{String(gateway.id)}</span>
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
           <Tabs defaultValue="geral" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="geral">
