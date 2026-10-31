@@ -216,6 +216,24 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /confirmandoHistoricoRef/);
   assert.doesNotMatch(src, /buildItemRevendaFromHistorico/);
   assert.doesNotMatch(src, /onAdicionarProduto=\{bloquearEdicao \? undefined/);
+  // Codex P1: filterInContext instável → ref; set []/null com bail-out Object.is (sem ciclo de render).
+  assert.match(src, /filterInContextRef/);
+  assert.match(src, /filterInContextRef\.current/);
+  assert.match(src, /Array\.isArray\(prev\) && prev\.length === 0 \? prev : \[\]/);
+  assert.doesNotMatch(src, /sessionFingerprintObservado,\s*filterInContext,/);
+});
+
+test('resolução tabela: clear vazio preserva referência (bail-out Object.is)', () => {
+  // Espelha o updater do painel: []→[] e null→null não reagendam render.
+  const clearItens = (prev) => (Array.isArray(prev) && prev.length === 0 ? prev : []);
+  const clearTabela = (prev) => (prev == null ? prev : null);
+  const empty = [];
+  assert.equal(clearItens(empty), empty);
+  assert.notEqual(clearItens([{ id: 1 }]), empty);
+  assert.equal(clearItens([{ id: 1 }]).length, 0);
+  assert.equal(clearTabela(null), null);
+  assert.equal(clearTabela(undefined), undefined);
+  assert.equal(clearTabela({ id: 't' }), null);
 });
 
 test('Modal: qty=1; preço/custo/estoque/margem fail-closed; elegibilidade; ausente≠UN/zero/SobEncomenda', () => {

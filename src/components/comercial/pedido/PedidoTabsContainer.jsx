@@ -46,6 +46,9 @@ export default function PedidoTabsContainer({
 }) {
   const { user } = useUser();
   const { createInContext, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  // filterInContext é recriado a cada render no contexto — ref evita ciclo no effect de tabela.
+  const filterInContextRef = useRef(filterInContext);
+  filterInContextRef.current = filterInContext;
   const abas = [
     { id: 'identificacao', label: 'Identificação', icon: null, valido: validacoes?.identificacao },
     { id: 'revenda', label: 'Itens Revenda', icon: null, count: formData?.itens_revenda?.length || 0 },
@@ -127,8 +130,9 @@ export default function PedidoTabsContainer({
     const embutidaExata = pickTabelaPrecoExata(embutida ? [embutida] : [], tabelaId);
 
     // Fail-closed imediato: troca Pedido/ID/contexto não deixa tabela anterior confirmável.
-    setTabelaPrecoResolvida(null);
-    setTabelaPrecoItensResolvidos([]);
+    // Bail-out Object.is: null/[] já vazios não reagendam render (Codex P1 ciclo filterInContext).
+    setTabelaPrecoResolvida((prev) => (prev == null ? prev : null));
+    setTabelaPrecoItensResolvidos((prev) => (Array.isArray(prev) && prev.length === 0 ? prev : []));
 
     const aindaVigente = () => !cancel && tabelaResolveTokenRef.current === resolveToken;
 
@@ -148,16 +152,16 @@ export default function PedidoTabsContainer({
 
     (async () => {
       try {
-        const tabelas = await filterInContext('TabelaPreco', { id: tabelaId }, 'nome', 5);
+        const tabelas = await filterInContextRef.current('TabelaPreco', { id: tabelaId }, 'nome', 5);
         // Nunca tabelas[0]: resposta WRONG ≠ EXPECTED → null (não vira tabela escolhida).
         const tabela = pickTabelaPrecoExata(tabelas, tabelaId);
         if (!aindaVigente()) return;
         if (!tabela) {
-          setTabelaPrecoResolvida(null);
-          setTabelaPrecoItensResolvidos([]);
+          setTabelaPrecoResolvida((prev) => (prev == null ? prev : null));
+          setTabelaPrecoItensResolvidos((prev) => (Array.isArray(prev) && prev.length === 0 ? prev : []));
           return;
         }
-        const itens = await filterInContext(
+        const itens = await filterInContextRef.current(
           'TabelaPrecoItem',
           { tabela_preco_id: tabela.id },
           'produto_descricao',
@@ -172,8 +176,8 @@ export default function PedidoTabsContainer({
       } catch (error) {
         console.error('[PedidoTabsContainer] Falha ao resolver tabela_preco_id', error);
         if (aindaVigente()) {
-          setTabelaPrecoResolvida(null);
-          setTabelaPrecoItensResolvidos([]);
+          setTabelaPrecoResolvida((prev) => (prev == null ? prev : null));
+          setTabelaPrecoItensResolvidos((prev) => (Array.isArray(prev) && prev.length === 0 ? prev : []));
         }
       }
     })();
@@ -192,7 +196,7 @@ export default function PedidoTabsContainer({
     grupoAtual?.id,
     user?.id,
     sessionFingerprintObservado,
-    filterInContext,
+    // filterInContext NÃO entra nas deps — identidade instável (useContextoVisual); usa filterInContextRef.
   ]);
 
   function sessionEpochAtual() {
