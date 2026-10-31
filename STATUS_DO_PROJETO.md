@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#446 port seletivo CI #342 0aa4c269) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Port** | seletivo de `0aa4c269` — `erp-runtime-ci.yml` (backend ubuntu-24.04 + report versões), `crmPostgresFixture.ts`, `crm-backup-toolchain.test.ts` |
+| **Revisão gate** | toolchain major match **antes** de snapshot/DROP; cleanup `IF EXISTS`; sem stderr/credencial |
+| **UI tip** | `a33f07893` P2 tabela_preco_id + sessão/preço/margem |
+| **#401** | **fora** até review/CI próprias deste tip |
+| Fora | docs/branch inteira · merge · deploy · port #401 |
+
+**Teste:** `crm-backup-toolchain` 4/4 · `comercial360-adicionar-historico-modal` 10/10
+**Próximo:** CI tip + `@codex review` independente; #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 P2 tabela_preco_id + fixture #342) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
