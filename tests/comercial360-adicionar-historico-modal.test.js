@@ -603,7 +603,9 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
   assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0, 'RenderB com sessão B fecha modal');
   assert.equal(formData.itens_revenda.length, lenBeforeSess);
 
-  // Sessão A→B→A (Codex P1): RenderB observa fp B nas deps → fecha; volta A sem rematch
+  // Sessão A→B→A no PedidoTabsContainer real (effect deps + fingerprint canônico).
+  // Espelha montagem Codex: RenderB com flush de efeitos → modalAfterB=false; volta A → 0 writes.
+  // Harness: useEffect só reexecuta quando deps mudam (sessionFingerprintObservado incluso).
   toasts.length = 0;
   sessionToken = 'token-sessao-A';
   tree = render();
@@ -614,16 +616,17 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
     ultimo_preco: 4,
   });
   tree = render();
-  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1);
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 1, 'modal aberto sob sessão A');
   const lenBeforeABA = formData.itens_revenda.length;
+  // Isolar mudança de sessão: nenhum outro dep (cliente/empresa/pedido) muda.
   sessionToken = 'token-sessao-B';
-  // RenderB comprometido (só token); effect com sessionFingerprintObservado → epoch↑ e fecha
   tree = render();
-  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0, 'modalAfterB deve ser false');
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0, 'modalAfterB=false (effect observou B)');
   assert.equal(formData.itens_revenda.length, lenBeforeABA, 'RenderB = 0 writes');
+  assert.ok(toasts.some((t) => t[0] === 'msg' && /Contexto alterado/i.test(String(t[1]))));
   sessionToken = 'token-sessao-A';
-  tree = render(); // volta A — modal permanece fechado (epoch monotônico; sem rematch)
-  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0);
+  tree = render();
+  assert.equal(findType(tree, 'AdicionarItemRevendaModal').length, 0, 'volta A: modal antigo não rematch');
   assert.equal(formData.itens_revenda.length, lenBeforeABA, 'A→B→A = 0 writes / 0 success');
   // Novo Adicionar após ABA: abre com geração nova (rascunho preservado)
   findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({

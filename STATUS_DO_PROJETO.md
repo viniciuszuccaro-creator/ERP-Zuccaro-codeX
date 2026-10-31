@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#446 CI5597 R40CRM + P1/P2 tip) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip base** | `3536c04de` P1/P2 sessão·preço×unidade·margem |
+| **CI5597** | FAIL real — R40CRM backup cleanup `3F000` schema missing (≠ infra) |
+| **Fix fixture** | `DROP SCHEMA/ROLE IF EXISTS` em cleanup/restore — sem relaxar asserts |
+| **ABA React** | PedidoTabsContainer: deps observam fp; modalAfterB=false; 0 writes |
+| **Codex** | `@codex review` tip novo + diagnóstico CI5597 |
+| **#401** | **fora** até limpo |
+| Fora | rerun cego · enfraquecer checks · merge · deploy |
+
+**Evidência:** `docs/evidence/comercial360-446-ci5597-r40crm-20261031.txt`
+**Próximo:** CI tip + aceite Codex; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 P1/P2 Codex review tip aa24ac8d7) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
