@@ -76,6 +76,9 @@ test('DetalhesCliente (montagem): renderiza HistoricoProdutosCliente com cliente
       'framer-motion': { motion: { div: 'motion.div' } },
       './HistoricoOrigemCliente': { __esModule: true, default: () => ({ type: 'HistoricoOrigemCliente', props: {}, children: [] }) },
       './HistoricoProdutosCliente': { __esModule: true, default: HistoricoProdutosCliente },
+      // Keep-both #446: montagem leitura (Adicionar só no Pedido) — stub sem alterar prova HistoricoProdutos.
+      './HistoricoComprasCliente': { __esModule: true, default: () => ({ type: 'HistoricoComprasCliente', props: {}, children: [] }) },
+      './Top10ProdutosCliente': { __esModule: true, default: () => ({ type: 'Top10ProdutosCliente', props: {}, children: [] }) },
       './CentralCliente360Panel': { __esModule: true, default: () => ({ type: 'CentralCliente360Panel', props: {}, children: [] }) },
       '@/components/lib/useContextoVisual': {
         useContextoVisual: () => ({
@@ -122,6 +125,7 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
     createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity) }),
     useState(initial) { return [typeof initial === 'function' ? initial() : initial, () => {}]; },
     useEffect() {},
+    useRef(v) { return { current: v }; },
     lazy: (fn) => { fn(); return function LazyStub() { return { type: 'LazyStub', props: {}, children: [] }; }; },
   };
   const Suspense = ({ children }) => ({ type: 'Suspense', props: {}, children: [].concat(children) });
@@ -139,8 +143,23 @@ test('PedidoTabsContainer (montagem): aba historico inclui HistoricoProdutosClie
       './PedidoTabsNav': { __esModule: true, default: () => ({ type: 'PedidoTabsNav', props: {}, children: [] }) },
       '@/components/security/ProtectedSection': { __esModule: true, default: ({ children }) => children },
       '@/components/comercial/HistoricoProdutosCliente': { __esModule: true, default: HistoricoProdutosCliente },
+      // Keep-both #446 — stubs; prova continua em HistoricoProdutosCliente.
+      '@/components/comercial/HistoricoComprasCliente': { __esModule: true, default: () => null },
+      '@/components/comercial/SugestoesProdutos': { __esModule: true, default: () => null },
+      '@/components/comercial/Top10ProdutosCliente': { __esModule: true, default: () => null },
+      '@/components/comercial/AdicionarItemRevendaModal': { __esModule: true, default: () => null },
+      '@/components/comercial/historicoComprasClientePolicy': {
+        buildHistoricoModalGeracao: () => 'g',
+        buildSessionFingerprint: () => null,
+        bumpSessionEpoch: (e) => ({ epoch: e || 0, fingerprint: null }),
+        pedidoItensBloqueadosPorStatus: () => false,
+        pedidoVisualCompativel: () => true,
+        pickTabelaPrecoExata: () => null,
+        seedProdutoFromHistorico: () => null,
+      },
       '@/api/base44Client': { base44: { functions: { invoke: async () => ({}) } } },
-      sonner: { toast: { success: () => {}, error: () => {} } },
+      '@/api/erpHttpSession': { readErpHttpSession: () => ({ token: 't' }) },
+      sonner: { toast: { success: () => {}, error: () => {}, message: () => {} } },
       '@/components/lib/useContextoVisual': {
         __esModule: true,
         default: () => ({
