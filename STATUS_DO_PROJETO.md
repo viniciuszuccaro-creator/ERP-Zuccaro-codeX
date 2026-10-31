@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#455 tip 6f1540626 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `6f1540626` — CI SUCCESS 6/6 (Parametro* sky+idOnly + PG16) |
+| **Código** | sky `a57628c5c` · fix pin+CI `6f1540626` |
+| Fora | merge · deploy · seed · Roteirizacao |
+| Irmãos | #456/#457 também SUCCESS |
+
+**Próximo:** Filial/Catálogo/RotaPadrao sky ou cadastros transversal; Codex #446.
+
 ## CURSOR — VIGENTE (#455 CI fix pin+PG16) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

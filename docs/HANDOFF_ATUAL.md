@@ -1,3 +1,7 @@
+## Checkpoint Cursor — #455 CI SUCCESS (2026-10-31 America/Sao_Paulo)
+
+- Tip `6f1540626` SUCCESS 6/6. Sem merge.
+
 ## Checkpoint Cursor — Parametro portal sky+ID (2026-10-31 America/Sao_Paulo)
 
 - Pacote indep.: `cursor/cadastros-param-portal-sky-id-392b` — sky+idOnly+aliases em 5 Parametro* (sem Roteirizacao).
