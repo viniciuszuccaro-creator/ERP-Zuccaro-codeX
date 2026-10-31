@@ -198,6 +198,11 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /sessionFingerprintObservado,/);
   // Abertura/confirm releem sessão (filho muta sem re-render do pai).
   assert.match(src, /Sempre releia/);
+  // P2: resolve TabelaPreco+itens pelo ID do pedido (wizard só preenche id/nome).
+  assert.match(src, /tabelaPrecoResolvida/);
+  assert.match(src, /TabelaPrecoItem/);
+  assert.match(src, /tabela_preco_id/);
+  assert.match(src, /tabelaPreco=\{tabelaPrecoResolvida\}/);
   assert.match(src, /Contexto alterado/);
   assert.match(src, /Contexto visual diverge/);
   assert.match(src, /onAdicionarHistorico/);

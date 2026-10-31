@@ -61,6 +61,9 @@ export default function PedidoTabsContainer({
   const [modalRevendaAberto, setModalRevendaAberto] = useState(false);
   const [produtoSeedHistorico, setProdutoSeedHistorico] = useState(null);
   const [modalHistoricoGeracao, setModalHistoricoGeracao] = useState(null);
+  // Wizard preenche só tabela_preco_id/nome — resolve objeto+itens no contexto (≠ inventar preço).
+  const [tabelaPrecoResolvida, setTabelaPrecoResolvida] = useState(null);
+  const [tabelaPrecoItensResolvidos, setTabelaPrecoItensResolvidos] = useState([]);
   const confirmandoHistoricoRef = useRef(false);
   const sessionEpochRef = useRef(0);
   const sessionFpRef = useRef(null);
@@ -95,6 +98,64 @@ export default function PedidoTabsContainer({
 
   // Fingerprint no render — effect observa renew (deps). Abertura/confirm releem a sessão canônica.
   const sessionFingerprintObservado = readSessionFingerprintCanonical();
+
+  // Resolve TabelaPreco + itens pelo ID do pedido (wizard não carrega objetos).
+  useEffect(() => {
+    let cancel = false;
+    const tabelaId = formData?.tabela_preco_id || null;
+    const embutida = formData?.tabela_preco || null;
+    const itensEmbutidos = Array.isArray(formData?.tabela_preco_itens) ? formData.tabela_preco_itens : null;
+
+    if (!tabelaId) {
+      setTabelaPrecoResolvida(embutida || null);
+      setTabelaPrecoItensResolvidos(itensEmbutidos || []);
+      return undefined;
+    }
+    if (
+      embutida?.id && String(embutida.id) === String(tabelaId)
+      && itensEmbutidos && itensEmbutidos.length > 0
+    ) {
+      setTabelaPrecoResolvida(embutida);
+      setTabelaPrecoItensResolvidos(itensEmbutidos);
+      return undefined;
+    }
+
+    (async () => {
+      try {
+        const tabelas = await filterInContext('TabelaPreco', { id: tabelaId }, 'nome', 5);
+        const tabela = Array.isArray(tabelas)
+          ? (tabelas.find((t) => String(t?.id) === String(tabelaId)) || tabelas[0] || null)
+          : null;
+        if (cancel) return;
+        if (!tabela?.id) {
+          setTabelaPrecoResolvida(null);
+          setTabelaPrecoItensResolvidos([]);
+          return;
+        }
+        const itens = await filterInContext(
+          'TabelaPrecoItem',
+          { tabela_preco_id: tabela.id },
+          'produto_descricao',
+          1000,
+        );
+        if (cancel) return;
+        setTabelaPrecoResolvida(tabela);
+        setTabelaPrecoItensResolvidos(Array.isArray(itens) ? itens : []);
+      } catch (error) {
+        console.error('[PedidoTabsContainer] Falha ao resolver tabela_preco_id', error);
+        if (!cancel) {
+          setTabelaPrecoResolvida(null);
+          setTabelaPrecoItensResolvidos([]);
+        }
+      }
+    })();
+    return () => { cancel = true; };
+  }, [
+    formData?.tabela_preco_id,
+    formData?.tabela_preco,
+    formData?.tabela_preco_itens,
+    filterInContext,
+  ]);
 
   function sessionEpochAtual() {
     // Sempre releia: filho (modal) pode mutar sem re-render do pai; sessão pode expirar.
@@ -451,8 +512,8 @@ export default function PedidoTabsContainer({
               onClose={fecharModalHistoricoObsoleto}
               onAddItem={confirmarItemRevendaDoHistorico}
               cliente={clientePedido}
-              tabelaPreco={formData?.tabela_preco || null}
-              tabelaPrecoItens={formData?.tabela_preco_itens || []}
+              tabelaPreco={tabelaPrecoResolvida}
+              tabelaPrecoItens={tabelaPrecoItensResolvidos}
               produtoInicial={produtoSeedHistorico}
             />
           ) : null}
