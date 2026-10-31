@@ -109,6 +109,13 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /tabela_preco_id/);
   assert.match(tab, /http\.comercialMasters\.list/);
   assert.match(tab, /resolveComercialMasterPages/);
+  // Salvamento → reabre detalhe com gravado; tabela visível (≠ inventar; ausente=Não informada/Desconhecida).
+  assert.match(tab, /setDetailOpen\(true\)/);
+  assert.match(tab, /orcamento-detalhe-tabela-preco/);
+  assert.match(tab, /tabelaLabel/);
+  assert.match(tab, /Não informada/);
+  assert.match(tab, /Desconhecida/);
+  assert.match(tab, /openEdit[\s\S]*tabela_preco_id: row\.tabela_preco_id/);
   const transport = await readFile(new URL('../src/api/httpApiClient.js', import.meta.url), 'utf8');
   assert.ok(transport.includes("request('/api/v1/tabelas-preco'"));
   assert.match(tab, /ORCAMENTO_PERSISTENCE_GAPS/);
