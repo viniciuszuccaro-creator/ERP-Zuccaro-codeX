@@ -1,3 +1,11 @@
+## CURSOR — VIGENTE (#457 CI PG16) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | CI `ubuntu-24.04` + toolchain CRM (port #453) — frontend já PASS |
+| **Causa** | backend `3F000` client PG no `ubuntu-latest` |
+| Fora | merge |
+
 ## CURSOR — VIGENTE (Config/WhatsApp/Modelo/Evento sky) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
