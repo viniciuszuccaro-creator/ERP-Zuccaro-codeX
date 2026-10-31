@@ -1,3 +1,31 @@
+## CURSOR — VIGENTE (#459 tip 0c127b034 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `0c127b034` — CI SUCCESS 6/6 (CentroResultado sky; Usuario/Grupo pin) |
+| Fora | merge · allowlist ID-only sem parecer |
+| **Pacote A** | #446 `900a3fcc9` CI SUCCESS — **BLOCKED** até mount Codex; #401 `34c4c0ee` + port #453 `cda612186` aguardam aceite |
+| **Sky fila** | #455–#458 SUCCESS |
+
+**Próximo:** Pacote B C360 Pedido persist/reabrir; Pacote C/D lacunas sem reinventário.
+
+## CURSOR — VIGENTE (#459 pin ID-only: só CentroResultado) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | Reverte Usuario/GrupoEmpresarial (pin ID-only emit≡e36231b3); mantém CentroResultado sky |
+| **Causa** | `cursor-identidade-consolidacao` exige emit golden; sky só com allowlist (Webhook) |
+| Fora | merge · inventar allowlist sem parecer |
+
+## CURSOR — VIGENTE (Usuario/Grupo/CentroResultado sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-usuario-grupo-centro-sky-392b` |
+| **Delta** | Usuario + GrupoEmpresarial + CentroResultado: sky + ID técnico |
+| **CI** | PG16 ubuntu-24 incluso |
+| Fora | merge · #451 (Cargo/Depto/Marca/Setor — pacote distinto) |
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

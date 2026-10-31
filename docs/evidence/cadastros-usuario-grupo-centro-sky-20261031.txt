@@ -1,0 +1,6 @@
+Cadastros — CentroResultado sky+ID (2026-10-31 America/Sao_Paulo)
+================================================================
+Branch: cursor/cadastros-usuario-grupo-centro-sky-392b
+CentroResultadoForm: sky windowMode + ID técnico.
+Usuario/GrupoEmpresarial: FORA — pin ID-only (emit≡e36231b3); sky exigiria allowlist no teste.
+CI PG16 incluso. ≠ #451.
