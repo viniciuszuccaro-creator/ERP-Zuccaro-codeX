@@ -1,3 +1,13 @@
+## CURSOR — CI fix FormaPagamento reopen graduation (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-forma-pagamento-reopen-sky-392b` |
+| **Causa** | CI FAIL: reopen-consolidacao exigia prevIdRef; stage49 hash pré-sky |
+| **Graduação** | FormaPagamento → recordState nos testes; hashes payment-config atualizados |
+| **Preservado** | Representante/Cliente/Fornecedor prevIdRef · handlers/payload |
+| Fora | merge · seed |
+
 ## CURSOR — VIGENTE (Pacote D/E FormaPagamento reopen+sky) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
