@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#446 P1/P2 Codex review tip aa24ac8d7) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | `aa24ac8d7` sessão observada |
+| **P1** | confirm/abrir releem `readErpHttpSession` (filho sem re-render do pai) |
+| **P1** | preço histórico só se unidade efetiva compatível (KG≠UN) |
+| **P2** | custo zero comprovado → margem 100% (≠ violada indevida); ausente → 0 |
+| **#401** | **fora** até limpo |
+| Fora | merge main · deploy · seed · identidade paralela |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** CI tip + `@codex review`; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 P1 sessão observada pós Codex 31/10) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

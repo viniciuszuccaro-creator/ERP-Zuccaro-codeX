@@ -44,13 +44,12 @@ export function calcularPrecoItem({
   // Zero comprovado em custo_medio deve prevalecer (≠ cair em custo_aquisicao via ||).
   const custoMedioRaw = produto?.custo_medio;
   const custoAqRaw = produto?.custo_aquisicao;
+  const custoMedioExplicit = custoMedioRaw != null && custoMedioRaw !== "" && Number.isFinite(Number(custoMedioRaw));
+  const custoAqExplicit = custoAqRaw != null && custoAqRaw !== "" && Number.isFinite(Number(custoAqRaw));
+  const custoComprovadoNoCalc = custoMedioExplicit || custoAqExplicit;
   const custoUnitario = (() => {
-    if (custoMedioRaw != null && custoMedioRaw !== "" && Number.isFinite(Number(custoMedioRaw))) {
-      return Number(custoMedioRaw);
-    }
-    if (custoAqRaw != null && custoAqRaw !== "" && Number.isFinite(Number(custoAqRaw))) {
-      return Number(custoAqRaw);
-    }
+    if (custoMedioExplicit) return Number(custoMedioRaw);
+    if (custoAqExplicit) return Number(custoAqRaw);
     return 0;
   })();
   
@@ -75,11 +74,16 @@ export function calcularPrecoItem({
 
   const valorItem = precoUnitario * quantidade;
 
-  // 4. Calcular margem
+  // 4. Calcular margem — custo zero comprovado + preço > 0 → 100% (≠ classificar como margem 0).
+  // Custo ausente (default 0 sem fonte) permanece margem 0 (fail-closed; UI usa margemVioladaEfetiva).
   const margemValor = (precoUnitario - custoUnitario) * quantidade;
-  const margemPercentual = custoUnitario > 0 
-    ? ((precoUnitario - custoUnitario) / precoUnitario) * 100 
-    : 0;
+  const margemPercentual = (() => {
+    if (!(precoUnitario > 0)) return 0;
+    if (custoUnitario > 0 || (custoComprovadoNoCalc && custoUnitario === 0)) {
+      return ((precoUnitario - custoUnitario) / precoUnitario) * 100;
+    }
+    return 0;
+  })();
 
   // 5. Determinar margem mínima aplicável
   const margemMinimaAplicada = Math.min(

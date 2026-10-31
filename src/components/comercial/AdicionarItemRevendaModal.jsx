@@ -110,11 +110,24 @@ export default function AdicionarItemRevendaModal({
     setProdutoSelecionado((prev) => {
       if (!prev || String(prev.id) !== String(produtoInicial.id)) return prev;
       const merged = { ...prev, ...cat, id: prev.id };
-      // Seed histórico manda em unidade/preço já comprovados se catálogo omitir.
-      if (prev.unidade_medida && !cat.unidade_medida) merged.unidade_medida = prev.unidade_medida;
-      if (prev.unidade_sigla && !cat.unidade_sigla) merged.unidade_sigla = prev.unidade_sigla;
+      const prevUn = prev.unidade_medida || prev.unidade_sigla || null;
+      const catUn = cat.unidade_medida || cat.unidade_sigla || null;
+      // Seed histórico manda em unidade se catálogo omitir.
+      if (prevUn && !catUn) {
+        if (prev.unidade_medida) merged.unidade_medida = prev.unidade_medida;
+        if (prev.unidade_sigla) merged.unidade_sigla = prev.unidade_sigla;
+      }
+      const mergedUn = merged.unidade_medida || merged.unidade_sigla || null;
+      const unidadesCompativeis = Boolean(
+        prevUn && mergedUn && String(prevUn).toUpperCase() === String(mergedUn).toUpperCase(),
+      );
+      // Preço histórico só com unidade efetiva compatível (KG@12,50 ≠ UN sem conversão).
       if (numeroComprovado(prev.preco_venda) != null && numeroComprovado(cat.preco_venda) == null) {
-        merged.preco_venda = prev.preco_venda;
+        if (unidadesCompativeis) {
+          merged.preco_venda = prev.preco_venda;
+        } else if (catUn && prevUn && String(catUn).toUpperCase() !== String(prevUn).toUpperCase()) {
+          delete merged.preco_venda;
+        }
       }
       return merged;
     });

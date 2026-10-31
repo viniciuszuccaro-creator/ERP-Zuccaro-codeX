@@ -85,17 +85,20 @@ export default function PedidoTabsContainer({
     };
   }
 
-  // Fingerprint canônico no render — effect observa renew de token (sem identidade paralela).
-  let sessionFingerprintObservado = null;
-  try {
-    sessionFingerprintObservado = buildSessionFingerprint(readErpHttpSession()?.token || null);
-  } catch {
-    sessionFingerprintObservado = null;
+  function readSessionFingerprintCanonical() {
+    try {
+      return buildSessionFingerprint(readErpHttpSession()?.token || null);
+    } catch {
+      return null;
+    }
   }
 
+  // Fingerprint no render — effect observa renew (deps). Abertura/confirm releem a sessão canônica.
+  const sessionFingerprintObservado = readSessionFingerprintCanonical();
+
   function sessionEpochAtual() {
-    // Reusa o fp já lido no render quando disponível (mesma sessão canônica).
-    const fp = sessionFingerprintObservado;
+    // Sempre releia: filho (modal) pode mutar sem re-render do pai; sessão pode expirar.
+    const fp = readSessionFingerprintCanonical();
     const next = bumpSessionEpoch(sessionEpochRef.current, sessionFpRef.current, fp);
     sessionEpochRef.current = next.epoch;
     sessionFpRef.current = next.fingerprint;

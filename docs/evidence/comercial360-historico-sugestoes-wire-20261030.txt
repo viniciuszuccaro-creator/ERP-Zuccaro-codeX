@@ -171,3 +171,10 @@ Correção (canônica, sem identidade paralela):
 
 Preservados: pedidoId, pedidoVisualCompativel, elegivel null, podeConfirmarPreco, zero, custo zero-safe.
 #401 fora até Codex limpo neste tip.
+
+## P1/P2 Codex review tip aa24ac8d7 (2026-10-31 America/Sao_Paulo)
+1. sessionEpochAtual releia `readErpHttpSession` na abertura/confirm; effect mantém fp nas deps.
+2. Merge catálogo: preço histórico só com `unidadesCompativeis`; KG≠UN → delete preco_venda.
+3. Calculador: custo zero comprovado + preço > 0 → margem 100%; custo ausente → margem 0.
+Preservados: A→B→A · pedidoId · elegivel null · podeConfirmarPreco · zero preço.
+#401 fora.

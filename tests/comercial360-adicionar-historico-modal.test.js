@@ -191,10 +191,13 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /pedidoVisualCompativel/);
   assert.match(src, /sessionEpoch/);
   assert.match(src, /sessionFingerprintObservado/);
+  assert.match(src, /readSessionFingerprintCanonical/);
   assert.match(src, /buildSessionFingerprint/);
   assert.match(src, /sessionKey/);
   // Effect observa sessão canônica (Codex P1: RenderB captura B; A→B→A sem rematch).
   assert.match(src, /sessionFingerprintObservado,/);
+  // Abertura/confirm releem sessão (filho muta sem re-render do pai).
+  assert.match(src, /Sempre releia/);
   assert.match(src, /Contexto alterado/);
   assert.match(src, /Contexto visual diverge/);
   assert.match(src, /onAdicionarHistorico/);
@@ -228,11 +231,50 @@ test('Modal: qty=1; preço/custo/estoque/margem fail-closed; elegibilidade; ause
   assert.match(src, /disabled=\{[^}]*!podeConfirmarPreco/);
 });
 
-test('CalculadorPrecoItem: custo_medio zero comprovado não cai em custo_aquisicao via ||', () => {
+test('CalculadorPrecoItem: custo zero comprovado → margem 100%; ausente → margem 0', async () => {
   const src = read('src/components/comercial/CalculadorPrecoItem.jsx');
   assert.match(src, /custoMedioRaw/);
+  assert.match(src, /custoComprovadoNoCalc/);
   assert.match(src, /Number\.isFinite\(Number\(custoMedioRaw\)\)/);
   assert.doesNotMatch(src, /produto\.custo_medio \|\| produto\.custo_aquisicao \|\| 0/);
+  assert.match(src, /custoComprovadoNoCalc && custoUnitario === 0/);
+
+  const source = await readFile(new URL('../src/components/comercial/CalculadorPrecoItem.jsx', import.meta.url), 'utf8');
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React },
+  }).outputText;
+  const sandbox = {
+    exports: {},
+    module: { exports: {} },
+    require(id) {
+      if (id === 'react') return { __esModule: true, default: {}, createElement: () => null };
+      throw new Error(`Import inesperado: ${id}`);
+    },
+  };
+  vm.runInNewContext(compiled, sandbox);
+  const { calcularPrecoItem } = sandbox.exports;
+  const zero = calcularPrecoItem({
+    produto: { id: 'p', preco_venda: 20, custo_medio: 0, custo_aquisicao: 10, margem_minima_percentual: 10 },
+    quantidade: 1,
+    margemMinimaSistema: 10,
+  });
+  assert.equal(zero.custo_unitario, 0);
+  assert.equal(zero.margem_percentual, 100);
+  assert.equal(zero.margem_violada, false);
+  const ausente = calcularPrecoItem({
+    produto: { id: 'p', preco_venda: 20, margem_minima_percentual: 10 },
+    quantidade: 1,
+    margemMinimaSistema: 10,
+  });
+  assert.equal(ausente.custo_unitario, 0);
+  assert.equal(ausente.margem_percentual, 0);
+});
+
+test('Modal merge: preço histórico só com unidade compatível (KG≠UN)', () => {
+  const src = read('src/components/comercial/AdicionarItemRevendaModal.jsx');
+  assert.match(src, /unidadesCompativeis/);
+  assert.match(src, /delete merged\.preco_venda/);
+  assert.match(src, /Preço histórico só com unidade efetiva compatível/);
 });
 
 test('Top10 e HistoricoClienteTab: leitura sem callback — cartão não interativo', () => {
@@ -599,6 +641,30 @@ test('fluxo montado: Adicionar→modal→onAddItem preserva itens; Faturado sem 
     preco_unitario: 4,
   });
   assert.equal(formData.itens_revenda.length, lenBeforeABA + 1);
+
+  // Confirm releia sessão sem re-render do pai (Codex P1): token some → 0 writes
+  toasts.length = 0;
+  sessionToken = 'token-sessao-A';
+  tree = render();
+  findType(tree, 'HistoricoComprasCliente')[0].props.onAdicionarProduto({
+    produto_id: 'sess-expire',
+    descricao: 'SessExpire',
+    unidade: 'KG',
+    ultimo_preco: 6,
+  });
+  tree = render();
+  const lenBeforeExpire = formData.itens_revenda.length;
+  const modalAntesExpire = findType(tree, 'AdicionarItemRevendaModal')[0];
+  assert.ok(modalAntesExpire);
+  sessionToken = null; // sessão removida; filho muta sem re-render do pai
+  modalAntesExpire.props.onAddItem({
+    produto_id: 'sess-expire',
+    descricao: 'SessExpire',
+    quantidade: 1,
+    preco_unitario: 6,
+  });
+  assert.equal(formData.itens_revenda.length, lenBeforeExpire, 'confirm com sessão expirada = 0 writes');
+  assert.ok(toasts.some((t) => t[0] === 'err' && /Contexto alterado/i.test(String(t[1]))));
 
   // PedidoA→PedidoB (mesmo visual/cliente): modal da geração A não confirma em B
   toasts.length = 0;
