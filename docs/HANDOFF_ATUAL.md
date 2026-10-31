@@ -1,3 +1,37 @@
+## Estado vigente - CI fechada e revisao exata da tabela446 (2026-10-31)
+
+342/0aa4c269: CI5610/run41191612010 e5611/run41191617006 SUCCESS terminal.
+Cliente psql/pg_dump/pg_restore16.15=servidor160015; backup restores ok4,
+test:postgres, guard, R07B e composicao passaram. Nao repetir reruns5595/5597.
+446/0a56894a: CI5621/5622 SUCCESS; port CI3arquivos feito pelo Cursor,
+sem implicar aceiteUI ou incorporacao401. 401 segue34c4c0ee, semultimoport.
+
+Revisao ReactDOM real de Pedido/modal/calculador/policy pinados em0a56894a,
+fronteiras sinteticas (NAO navegador->API->PostgreSQL): WRONG!=EXPECTED agora
+rejeitado, rascunho aceita preco comprovado11 sem preco_tabela99. RespostaA
+pendente apos troca tabelaID/Grupo/Empresa/sessao e descartada nos4casos.
+Residual6542258428: PedidoA->B, mesmo cliente/escopo/ator/tabelaT, respostaA
+liberada depois do renderB e aceita como tabela99; confirmacao grava1item no
+rascunhoB com99. Effect da resolucao nao observa formData.id/pedido.id.
+Cursor proprietario dos hunks: corrigir invalidacao/resposta tardia de Pedido,
+sem helper paralelo de sessao/contexto ou regra nova contra rascunho incompleto.
+Positivos ABA/duploclique/status/zero/unknown encerrados nao foram reabertos.
+
+Fila finita: Cursor corrigePedido446 -> Codexmontagemafetada/CI porSHA -> port
+seletivo Cursor na MESMA401 -> CIcomposta -> harness ORIGINAL integrado.
+Ciclo01/11 ainda futuro nesta verificacao; nao presumir franquia/budgetzero.
+CoorteFINAL100+outputpins e harnessORIGINAL+pins dependem Codespaceunico/canal
+comprovado. Roteiro existente em OPERACAO_DEV_VPS permanece pronto, nao executado.
+Consulta limitada READONLY/ROLLBACK depende fonte/destino/principal/Grupo; nao
+houve leitura real nem selecao nova. Mapeadores/gates existentes preservam
+IDs/codigos/inatividade/procedencia, sem operacoes fiscais/saldos por inferencia.
+RecuperacaoERPnovo: fonteoriginal segue inacessivel/naoidentificada no checkpoint;
+coordenacao direta350/6542266870 solicita delta, sem repetirUNAUTHORIZED ou usar
+seeds/legado como registros recuperados. Sem reconciliacao nao declarar perda
+ou recuperacao. Sem merge/deploy/DDL/grants/carga operacional. Desktoptemporario,
+sem nova automacao ou promessa de execucao permanente. Alteracao documental:
+diffcheck aplicavel; suites inalteradas nao repetidas.
+
 ## Estado Vigente - CI PostgreSQL E Sessao446 (2026-10-31)
 
 CI5595/34201a312f0 e5597/446aa24ac8d lidas integralmente pelos jobs124503194753/
