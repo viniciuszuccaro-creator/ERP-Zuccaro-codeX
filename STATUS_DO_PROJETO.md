@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#446 P1 pickTabelaPrecoExata + port CI) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **P1** | remove `\|\| tabelas[0]`; `pickTabelaPrecoExata`; clear sync em troca ID/contexto/sessão; late cancel |
+| **Contraprova** | harness React: filter WRONG→tabela null; calc 11≠99; 1 write sem preco_tabela 99 |
+| **CI port** | tip `e47c47aaa` ubuntu-24 + gate (inalterado neste delta UI) |
+| **#401** | **fora** até CI/review deste tip |
+| Fora | inventar preço · merge · deploy |
+
+**Teste:** `comercial360-adicionar-historico-modal` 12/12
+**Próximo:** CI + `@codex review`; #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 port seletivo CI #342 0aa4c269) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
