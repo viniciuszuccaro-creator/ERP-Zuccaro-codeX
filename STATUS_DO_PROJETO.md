@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (Parametro* sky+ID #portal) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-param-portal-sky-id-392b` |
+| **Base** | `cursor/comercial360-proposta-347-evolucao-392b` |
+| **Delta** | Portal/Caixa/Conciliação/NFe: sky+idOnly pin-safe; Origem: sky+idOnly+aliases |
+| **Fonte** | #402 (CI SUCCESS); pin RecordState e36231b3; **fora** Roteirizacao/ApiExterna/ChatbotCanal |
+| **UX≠dados** | ID técnico ≠ registros recuperados (#451/#452) |
+| Fora | merge · deploy · seed · #446 mount |
+
+**Teste:** `cadastros-param-portal-sky-id.test.js`
+**Evidência:** `docs/evidence/cadastros-param-portal-sky-id-20261031.txt`
+**Próximo:** CI deste tip; indep. Gateway/TabelaFiscal/ConfigNFe sky; aguardar Codex #446.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

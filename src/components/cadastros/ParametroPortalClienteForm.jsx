@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Globe, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ParametroPortalClienteForm({ parametro, onSubmit, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -27,7 +28,7 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
     permitir_download_documentos: true,
     prazo_expiracao_link_dias: 30,
     observacoes: ""
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -46,15 +47,18 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
     });
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
-
-  return (
-    <div className={containerClass}>
+  const form = (
       <form onSubmit={handleSubmit} className="space-y-6">
+        <CadastroCodigoRegistroField
+          idOnly
+          hasId={Boolean(parametro?.id)}
+          entityId={parametro?.id}
+          action="id-tecnico-parametro-portal-cliente"
+        />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-blue-600" />
+              <Globe className="w-5 h-5 text-sky-600" />
               Parâmetros do Portal do Cliente
             </CardTitle>
           </CardHeader>
@@ -144,12 +148,27 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroPortalCliente.salvar" data-action="salvar-parametros-portal-cliente" data-sensitive>
+          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroPortalCliente.salvar" data-action="salvar-parametros-portal-cliente" data-sensitive>
             <Save className="w-4 h-4 mr-2" />
             Salvar Parâmetros
           </Button>
         </div>
       </form>
-    </div>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Globe className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {parametro?.id ? 'Editar parâmetros do Portal' : 'Parâmetros do Portal do Cliente'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto p-6">{form}</div>
+      </div>
+    );
+  }
+
+  return <div className="space-y-6">{form}</div>;
 }

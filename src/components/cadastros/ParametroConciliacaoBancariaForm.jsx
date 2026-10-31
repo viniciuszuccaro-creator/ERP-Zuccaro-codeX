@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Landmark, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, windowMode = false }) {
   const { canCreate, canEdit } = usePermissions();
@@ -28,7 +29,7 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
     usar_ia_aprendizado: true,
     conciliacao_automatica_ativa: false,
     ativo: true
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -47,15 +48,18 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
     });
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
-
-  return (
-    <div className={containerClass}>
+  const form = (
       <form onSubmit={handleSubmit} className="space-y-6">
+        <CadastroCodigoRegistroField
+          idOnly
+          hasId={Boolean(parametro?.id)}
+          entityId={parametro?.id}
+          action="id-tecnico-parametro-conciliacao-bancaria"
+        />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-cyan-600" />
+              <Landmark className="w-5 h-5 text-sky-600" />
               Parâmetros de Conciliação Bancária
             </CardTitle>
           </CardHeader>
@@ -152,12 +156,27 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroConciliacaoBancaria.salvar" data-action="salvar-parametros-conciliacao-bancaria" data-sensitive>
+          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroConciliacaoBancaria.salvar" data-action="salvar-parametros-conciliacao-bancaria" data-sensitive>
             <Save className="w-4 h-4 mr-2" />
             Salvar Parâmetros
           </Button>
         </div>
       </form>
-    </div>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Landmark className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {parametro?.id ? 'Editar parâmetros de Conciliação' : 'Parâmetros de Conciliação Bancária'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto p-6">{form}</div>
+      </div>
+    );
+  }
+
+  return <div className="space-y-6">{form}</div>;
 }
