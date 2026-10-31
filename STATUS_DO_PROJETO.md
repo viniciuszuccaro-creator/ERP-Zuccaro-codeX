@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#446 P1 PedidoA→B late tabela + port #401) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **P1 residual** | resolução tabela depende de `formData.id`/`pedido.id` + `tabelaResolveTokenRef`; late A≠B |
+| **Aceite WRONG** | preservado (pickTabelaPrecoExata; 11≠99) |
+| **CI ref** | `0a56894a` CI5622 SUCCESS — tip residual em push |
+| **#401** | port seletivo após este tip + checks composição; sem merge/deploy |
+| Fora | reabrir ABA/sessão/unidade sem contraprova · merge · deploy |
+
+**Teste:** `comercial360-adicionar-historico-modal` 13/13
+**Próximo:** CI tip residual; port hunks UI→#401; pacotes indep. Cadastros/integra.
+
 ## CURSOR — VIGENTE (#446 tip 530db1b11 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
