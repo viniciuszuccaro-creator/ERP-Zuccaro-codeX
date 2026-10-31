@@ -3,17 +3,17 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch** | `cursor/composicao-397-342-prep-392b` (= PR #401) |
-| **Tip** | `749bc0201` — stage54 PedidoFormCompleto graduado (CI frontend fail tip `70a333197`) |
+| **Tip** | `f01e69110` — CI **SUCCESS** 3/3 (stage54 + P1+P2) |
 | **P2** | `ae4fdc86f` — `hostWindowMode` eleva Dialog Adicionar acima WindowManager |
 | **P1** | `dbbee42ea` — `filterInContextRef` + bail-out Object.is |
 | **Composto base** | `075fc2260` (= docs tip sobre `80d1393ee` FF #446+#453+#454+pedido-detail) |
 | **Aceites Codex** | #446 `900a3fcc` /6545437006 · #453 `cda612` /6545449667 · #454 `b4d8` /6545487624 · ação #401 /6547965046 · P1 loop · P2 z-index modal |
 | **Preservado** | Contatos/contagens #401 · `src/api` · `server/src` produto · RBAC · persistência |
-| **CI tip** | própria deste SHA (≠ herdar CI ancestral) |
+| **CI tip** | `f01e69110` SUCCESS frontend+backend+expedicao-comercial-compose |
 | Fora | merge main · deploy · VPS · edição Codex em branches Cursor |
 
 **Testes locais:** historico-modal **15 PASS** + browser-runtime-contracts **12 PASS**
-**Próximo:** CI tip `749bc0201`; `@codex review` P1+P2 + deltas composto.
+**Próximo:** `@codex review` tip `f01e69110` (P1+P2 + deltas composto); sem merge/deploy.
 
 ## CURSOR — VIGENTE (#401 composto #446+#453+#454+pedido-detail) (2026-10-31 America/Sao_Paulo)
 
