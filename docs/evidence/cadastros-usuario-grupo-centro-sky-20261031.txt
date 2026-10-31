@@ -1,0 +1,4 @@
+Cadastros — Usuario/GrupoEmpresarial/CentroResultado sky+ID (2026-10-31 America/Sao_Paulo)
+========================================================================================
+Branch: cursor/cadastros-usuario-grupo-centro-sky-392b
+≠ #451 (Cargo/Depto/Marca/Setor). Chrome pin-safe + CI PG16.

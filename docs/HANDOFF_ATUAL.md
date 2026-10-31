@@ -1,3 +1,7 @@
+## Checkpoint Cursor — Usuario/Grupo/Centro sky (2026-10-31 America/Sao_Paulo)
+
+- Pacote indep. ≠ #451. Sem merge.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

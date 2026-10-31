@@ -1,3 +1,12 @@
+## CURSOR — VIGENTE (Usuario/Grupo/CentroResultado sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-usuario-grupo-centro-sky-392b` |
+| **Delta** | Usuario + GrupoEmpresarial + CentroResultado: sky + ID técnico |
+| **CI** | PG16 ubuntu-24 incluso |
+| Fora | merge · #451 (Cargo/Depto/Marca/Setor — pacote distinto) |
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
