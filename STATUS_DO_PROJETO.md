@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Pacote B Pedido detail reopen) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial360-pedido-detail-reopen-392b` ← `orc-pedido-persist` `b4d8c1e02` |
+| **Gap** | pós-salvar Pedido fechava form sem reabrir detalhe (orçamento #454 já corrigia) |
+| **Fix** | `setDetailOpen(true)` + `loadHistory` no sucesso; detalhe com cliente/condição/`tabelaLabel` |
+| **Marcadores** | `pedido-detalhe-tabela-preco` · Não informada/Desconhecida |
+| **Testes** | `pedido-ui-policy` **28 PASS** |
+| **Pacote A** | BLOCKED — #446 `900a3fcc9` CI SUCCESS; #401 `34c4c0ee` CI SUCCESS; falta mount Codex do tip #446 antes de consolidar |
+| Fora | merge main · deploy · inventar preço · seed |
+
+**Próximo:** CI deste tip; `@codex review` tip Pedido; indep. sky residual (Empresa/PerfilAcesso) sem violar pin ID-only.
+
 ## CURSOR — VIGENTE (#401 port seletivo #446) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
