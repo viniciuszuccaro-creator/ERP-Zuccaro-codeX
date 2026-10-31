@@ -1,3 +1,8 @@
+## Checkpoint Cursor — #459 CI SUCCESS + Pacote A BLOCKED Codex (2026-10-31 America/Sao_Paulo)
+
+- #459 `0c127b034` SUCCESS. #446 aguarda mount Codex antes de consolidar em #401.
+- Continuar Pacote B/C/D independentes; sem merge/deploy.
+
 ## Checkpoint Cursor — Usuario/Grupo/Centro sky (2026-10-31 America/Sao_Paulo)
 
 - Pacote indep. ≠ #451. Sem merge.

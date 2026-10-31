@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#459 tip 0c127b034 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `0c127b034` — CI SUCCESS 6/6 (CentroResultado sky; Usuario/Grupo pin) |
+| Fora | merge · allowlist ID-only sem parecer |
+| **Pacote A** | #446 `900a3fcc9` CI SUCCESS — **BLOCKED** até mount Codex; #401 `34c4c0ee` + port #453 `cda612186` aguardam aceite |
+| **Sky fila** | #455–#458 SUCCESS |
+
+**Próximo:** Pacote B C360 Pedido persist/reabrir; Pacote C/D lacunas sem reinventário.
+
 ## CURSOR — VIGENTE (#459 pin ID-only: só CentroResultado) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
