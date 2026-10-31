@@ -263,11 +263,18 @@ export default function ConfiguracaoNFeForm({ config: configProp = undefined, it
     return (
       <div className="w-full h-full overflow-auto bg-white p-6">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
-            <FileText className="w-8 h-8 text-blue-600" />
-            <h2 className="text-2xl font-bold text-slate-900">
-              {config ? 'Editar Configuração NF-e' : 'Nova Configuração NF-e'}
-            </h2>
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+            <FileText className="w-8 h-8 text-sky-600" />
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {config ? 'Editar Configuração NF-e' : 'Nova Configuração NF-e'}
+              </h2>
+              {config?.id ? (
+                <p className="text-xs text-slate-500">
+                  ID técnico: <span className="font-mono">{String(config.id)}</span>
+                </p>
+              ) : null}
+            </div>
           </div>
           {form}
         </div>

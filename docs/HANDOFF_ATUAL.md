@@ -1,3 +1,8 @@
+## Checkpoint Cursor — Gateway/TabelaFiscal/ConfigNFe sky (2026-10-31 America/Sao_Paulo)
+
+- Pacote indep. `cursor/cadastros-gateway-fiscal-sky-392b` (fonte #413) paralelo a #455 Parametro*.
+- Sem merge/deploy; #446 aguarda Codex.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

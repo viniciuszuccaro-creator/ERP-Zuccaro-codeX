@@ -1,0 +1,15 @@
+Cadastros — Gateway/TabelaFiscal/ConfigNFe sky+ID (2026-10-31 America/Sao_Paulo)
+===============================================================================
+Branch: cursor/cadastros-gateway-fiscal-sky-392b
+Base: cursor/comercial360-proposta-347-evolucao-392b
+Fonte: #413 tip 526fcdd52 CI SUCCESS
+
+Delta
+- GatewayPagamentoForm: sky header windowMode + ID técnico
+- TabelaFiscalForm: idem
+- ConfiguracaoNFeForm: idem (windowMode chrome)
+- RecordState preservado; sem count+1; sem CadastroCodigoRegistroField novo (pin-safe)
+- UX ID ≠ dados recuperados
+
+Teste: tests/cadastros-gateway-tabelafiscal-sky.test.js
+Fora: merge/deploy/carga
