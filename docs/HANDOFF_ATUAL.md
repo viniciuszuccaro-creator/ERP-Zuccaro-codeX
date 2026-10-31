@@ -1,4 +1,59 @@
-## Estado Vigente - Desktop Local E Revisao Montada446 (2026-10-31)
+## Estado Vigente - CI PostgreSQL E Sessao446 (2026-10-31)
+
+CI5595/34201a312f0 e5597/446aa24ac8d lidas integralmente pelos jobs124503194753/
+124503638208. Mesma falha runtime40-crm-postgres-e2e backup restores, exit1;
+3F000 em cleanup crmPostgresFixture101/test263 mascara falha anterior do restore.
+Ambos PG16.15 rejeitam SET transaction_timeout=0. Duracoes do caso2.60s/2.39s,
+nao timeout60s; locktimeouts tambem presentes no5591SUCCESS, sao negativas.
+Comparacao com5591/backend124353925563: mesmo servidor160015 e helper/test/
+workflow intactos; runnerubuntu24.04/image20261025.353.1. Os falhos usaram
+ubuntu26.04/image20261025.179.1. Deriva ubuntu-latest/toolchain, nao defeito UI
+ou suposta indisponibilidade transitoria. Nao repetir runs antigos cegamente.
+
+Correcao Codex em342, coordenada comCursor6541893195/6541928316: backend CI
+pinado ubuntu-24.04 (ambiente valido anterior), diagnostico de versoes cliente/
+servidor; helper exige major pg_dump/pg_restore=servidor ANTES de snapshot/DROP.
+Ferramenta ausente/incompativel rejeita com erro minimo, sem stderr/credenciais.
+Cleanup IF EXISTS nao mascara falha original quando restore deixou schema ausente.
+Nenhum timeout aumentado, teste/golden/asserção de restauracao removido; snapshot,
+ACL/RLS, IDs/vinculos/replay/reconciliacao completos permanecem obrigatorios.
+Nao e backup operacional executado nem mudanca de runtime/API ou configuracaoVPS.
+
+Foco novo4PASS/0FAIL/0SKIP: major igual; 15/17/18 divergentes; ferramenta ausente/
+malformada; helper REAL recusa antes de snapshot/DROP/replay. Typechecks frontend/
+backend, audit, lint e build PASS no lock vigente. Backend local594testes:
+556PASS/0FAIL/38SKIP (nao aprovacao PG). npm ausente e dependencias antigas
+compartilhadas causaram primeira tentativa invalida; dependencias dos locks
+instaladas em espaco interno aprovado, sem alterar outros worktrees; vinculos
+antigos preservados. Root completo Windows tentou executar: dois contratos POSIX
+privados inalterados falham emNTFS; diagnostico dirigido confirmou WinError1314
+ao criar symlink, PRIVATE_DIRECTORY_PERMISSIONS_REQUIRED e process.getuid ausente.
+Tentativa completa foi interrompida pelo dono apos esses erros; nao declarada
+concluida/verdes. Nao simular owner/mode nem relaxar guardas; LinuxCI e o gate.
+Resultado Linux/PG real do NOVO SHA exige CI propria, sem declarar verde local
+ou usar CI anterior. Checks aplicaveis e limitacoes registrados no recibo final.
+
+UI446: contraprova ABA REAL montada noaa24ac8d agora modalAfterB=false,
+0writes/0success; no3536c04d tambem troca de token sem re-render do pai0/0.
+Pedido/modal/calculador/policy reais, ReactDOM flushSync/Query/Chrome existentes;
+bordas sinteticas, NAO harnessE2E/PG. Delta353 preco KG->UN sem preco comprovado:
+botao disabled/0writes; custo0comprovado com preco11: margem100/1write sem
+justificativa indevida. Positivos encerrados preservados; rascunho incompleto
+continua distinto de salvar/converter. Pareceres6541882423/6541916017.
+Port da MESMA40134c4 depende do fixCI publicado/aceite/CI composto, sem trocar
+backend/API/repos/RBAC ou dono da persistencia. Cursor devolveu helper àreserva
+Codex (6541928316); nao houve escrita na branch dele nem outra candidata.
+
+Roteiro concreto dos DOIS artefatos em OPDEV: ciclo01/11 informado, franquia e
+budgetzero ainda a reconfirmar antes do Codespaceunico; nao habilitar cobranca.
+Recuperar somente FINALcoorte100/outputpin e browser-harness ORIGINAL/pins,
+sem gerador/recibo substituto/reselecao/inventario ou transferencia integral.
+Conferir origem/hash/bytes/guardas e armazenamento privado; consulta fixa limitada
+READONLY/ROLLBACK somente com fonte/destino/ator/escopo comprovados. Nenhum dado
+real consultado ou recuperado nesta tarefa. E2E completo permanece separado da
+montagemReact. Sem usoVPS/DDL/grants/carga/merge/deploy ou execucao permanente.
+
+## Historico - Desktop Local E Revisao Montada446 (2026-10-31)
 
 Retomada em casa conforme decisao desktop temporario do programa. Reutilizado
 checkout local existente comercial-composicao-20261017, limpo, origin canonico;

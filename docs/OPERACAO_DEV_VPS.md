@@ -1,5 +1,51 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Roteiro vigente - recuperar dois artefatos no ciclo informado de01/11 (2026-10-31)
+
+Preparacao, NAO franquia liberada ou tarefa agendada. Em01/11 conferir na conta
+GitHub a franquia efetiva e orcamento zero antes de iniciar SOMENTE o Codespace
+potential-xylophone-5gj7r9v9qqg637vxp. Nao habilitar cobranca, alterar budget,
+criar outro ou presumir liberacao pela data. Se continuar bloqueado, registrar
+a mensagem e parar essa frente sem repetir buscas/inventarios ou usar VPS como
+laboratorio. Desenvolvimento/revisao continuam no checkout desktop existente.
+
+1. No Codespace retomado, conferir cwd/origin sanitizado/branch/HEAD/status/
+   processos/trava contra GitHub atual; preservar qualquer WIP desconhecido.
+   Nao resetar nem atualizar sobre outro escritor. Nao confundir sourceSha
+   do harness original com HEAD candidato atual.
+2. Recuperar APENAS os dois caminhos privados ja documentados sob
+   /home/codespace/erp-legado-privado-20261023:
+   - decision-20261026/source-cohort-100-6ba10732.private.json (arquivo FINAL);
+   - decision-20261026/resume-20261028/browser-harness.mjs (harness ORIGINAL).
+   stat/lstat desses paths exatos e ancestrais: dono, modo, ausencia de symlink,
+   tamanho/data; nenhum novo inventario do backup/HD. Ausencia ou arquivo diverso
+   bloqueiam essa recuperacao, nao autorizam gerador/recibo/reselecao.
+3. Antes de exportar bytes, conferir origem/versao e pins privados existentes.
+   Comparar SHA256 do arquivo FINAL com outputSha256 contemporaneo; cohortSha256
+   (selecao) e stagingArtifactSha256 (entrada) NAO substituem esse pin. Se faltar
+   esse confronto, manter desconhecido/bloqueado, sem reconstruir a coorte.
+   Harness exige seu proprio sourceSha/tamanho/hash e guardas, nao hash de recibo.
+4. Usar somente canal autenticado existente para copiar esses bytes e pins para
+   diretorio privado aprovado FORA Git/build/preview/CI. Conferir SHA256 e bytes
+   origem=destino e ACL efetiva local (NTFS nao comprova owner/mode POSIX).
+   Nao sobrescrever exemplar divergente nem publicar registros/pins vinculaveis.
+   Fonte original preservada; recibo publico somente agregado/sanitizado.
+5. Harness recuperado e validado segue o comando existente nesta secao operacional,
+   sem retirar guardas de Codespace/origin/branch/SHA. Antes de executar, comprovar
+   Node22, ausencia de dono alheio5173 e recursos sinteticos isolados. Conferir
+   /__erp_fixture (sourceSha,synthetic,operationalDatabase=false), /__erp_preview
+   (SHA candidato executado), encaminhamento Private e sessao somente sintetica.
+   Provar cliente->preco/condicao->orcamento salvar/reabrir/editar->Pedido/historico,
+   concorrencia/contexto/permissao/gravação unica/auditoria/rollback; teardown
+   somente dos recursos proprios. Montagem React isolada nao substitui esse ciclo.
+6. Coorte recuperada nao autoriza carga. Consulta fixa ja existente somente com
+   destino/ator/Grupo/empresas e leitura especificamente comprovados: ate100,
+   colunas allowlist, REPEATABLE READ READ ONLY, timeouts vigentes e ROLLBACK;
+   saida privada e reconciliacao sem escolher duplicata ou promover historico.
+   Clientes/fornecedores/produtos preservam nomes/codigos/IDs/status/vinculos/
+   procedencia; titulos/saldos/fiscal dependem de prova, sem Empresa por palpite.
+   Gates schema/privilégios/backup/restore/carga/deploy permanecem separados.
+
 ## Orientacao vigente de continuidade e reconciliacao (2026-10-29)
 
 Consulta fixa preparada no modulo scripts/legado/pilot-functional-load-plan.mjs,
