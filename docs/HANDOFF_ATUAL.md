@@ -1,3 +1,7 @@
+## Checkpoint Cursor — #457 CI SUCCESS (2026-10-31 America/Sao_Paulo)
+
+- Tip `5dc9784dd` SUCCESS 6/6. Sem merge.
+
 ## Checkpoint Cursor — Config/WhatsApp/Modelo/Evento sky (2026-10-31 America/Sao_Paulo)
 
 - Pacote indep. `cursor/cadastros-config-notif-sky-392b` paralelo a #455/#456.

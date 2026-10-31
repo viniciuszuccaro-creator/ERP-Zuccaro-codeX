@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#457 tip 5dc9784dd CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `5dc9784dd` — CI SUCCESS 6/6 (Config/WhatsApp/Modelo/Evento sky + PG16) |
+| **Código** | sky `2c8f5559c` · CI fix `5dc9784dd` |
+| Fora | merge · deploy · seed |
+| Irmãos | #455/#456 SUCCESS |
+
+**Próximo:** Filial/Catálogo/RotaPadrao sky; Codex #446.
+
 ## CURSOR — VIGENTE (#457 CI PG16) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
