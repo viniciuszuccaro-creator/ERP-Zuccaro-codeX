@@ -43,6 +43,8 @@ export default function PedidoTabsContainer({
   validacoes,
   errors,
   pedido,
+  /** Propagado de PedidoFormCompleto — eleva modal Adicionar acima da janela WindowManager. */
+  windowMode = false,
 }) {
   const { user } = useUser();
   const { createInContext, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
@@ -557,6 +559,7 @@ export default function PedidoTabsContainer({
               tabelaPreco={tabelaPrecoResolvida}
               tabelaPrecoItens={tabelaPrecoItensResolvidos}
               produtoInicial={produtoSeedHistorico}
+              hostWindowMode={Boolean(windowMode)}
             />
           ) : null}
         </TabsContent>

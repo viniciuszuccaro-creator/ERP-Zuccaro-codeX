@@ -221,6 +221,22 @@ test('PedidoTabsContainer: Adicionar abre modal canônico; lock por status; gera
   assert.match(src, /filterInContextRef\.current/);
   assert.match(src, /Array\.isArray\(prev\) && prev\.length === 0 \? prev : \[\]/);
   assert.doesNotMatch(src, /sessionFingerprintObservado,\s*filterInContext,/);
+  // Codex P2: modal Adicionar acima da janela WindowManager (hostWindowMode).
+  assert.match(src, /hostWindowMode=\{Boolean\(windowMode\)\}/);
+  assert.match(src, /windowMode\s*=\s*false/);
+});
+
+test('AdicionarItemRevendaModal: hostWindowMode eleva Dialog acima WindowManager', () => {
+  const modal = read('src/components/comercial/AdicionarItemRevendaModal.jsx');
+  const form = read('src/components/comercial/PedidoFormCompleto.jsx');
+  assert.match(modal, /hostWindowMode\s*=\s*false/);
+  assert.match(modal, /zIndex:\s*1000000000/);
+  assert.match(modal, /zIndex:\s*999999999/);
+  assert.match(modal, /overlayStyle=\{dialogOverlayStyle\}/);
+  assert.match(modal, /data-host-window/);
+  // windowMode (conteúdo sem Dialog) ≠ hostWindowMode (Dialog elevado).
+  assert.match(modal, /if \(windowMode\)/);
+  assert.match(form, /windowMode=\{windowMode\}/);
 });
 
 test('resolução tabela: clear vazio preserva referência (bail-out Object.is)', () => {

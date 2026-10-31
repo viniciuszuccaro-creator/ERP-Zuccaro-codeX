@@ -42,6 +42,8 @@ export default function AdicionarItemRevendaModal({
   tabelaPrecoItens = [],
   margemMinimaSistema = 10,
   windowMode = false,
+  /** Pedido/host aberto via WindowManager — eleva Dialog acima do z-index da janela (~1e8). ≠ windowMode (conteúdo sem Dialog). */
+  hostWindowMode = false,
   /** Seed do histórico/sugestão — qty sempre 1 (frequência ≠ demanda). */
   produtoInicial = null,
 }) {
@@ -661,9 +663,18 @@ export default function AdicionarItemRevendaModal({
     return <div className="w-full h-full bg-white">{content}</div>;
   }
 
+  // WindowManager usa z ≈ 99999000+; Dialog padrão z-50 fica atrás da janela do pedido.
+  const dialogLayerStyle = hostWindowMode ? { zIndex: 1000000000 } : undefined;
+  const dialogOverlayStyle = hostWindowMode ? { zIndex: 999999999 } : undefined;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetForm(); onClose(); } }}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-5xl max-h-[90vh] overflow-y-auto"
+        style={dialogLayerStyle}
+        overlayStyle={dialogOverlayStyle}
+        data-host-window={hostWindowMode ? 'true' : undefined}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-600" />

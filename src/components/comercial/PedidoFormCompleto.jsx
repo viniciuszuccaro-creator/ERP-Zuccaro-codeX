@@ -323,6 +323,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
         validacoes={validacoes}
         errors={errors}
         pedido={pedido}
+        windowMode={windowMode}
       />
 
       {/* Footer com Ações - FIXO */}
