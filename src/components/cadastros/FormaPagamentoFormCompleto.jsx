@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
+import useCadastroRecordState from './useCadastroRecordState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,7 +41,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     enabled: contextoValido,
   });
 
-  const [formData, setFormData] = useState(() => formaPagamentoNorm || {
+  const emptyFormData = {
     group_id: groupId || undefined,
     empresa_id: contexto === 'empresa' ? empresaAtual?.id : undefined,
     codigo: '',
@@ -65,7 +66,18 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     disponivel_ecommerce: false,
     disponivel_pdv: true,
     observacoes: ''
-  });
+  };
+  const recordIdentity = JSON.stringify([
+    formaPagamentoNorm?.id ?? null,
+    formaPagamentoNorm?.updated_date ?? null,
+    groupId,
+    empresaAtual?.id ?? null,
+    contexto,
+  ]);
+  const [formData, setFormData] = useCadastroRecordState(
+    formaPagamentoNorm || emptyFormData,
+    recordIdentity,
+  );
 
   // Gerar configuração de parcelas quando tipo é Cartão Crédito
   const gerarConfiguracaoParcelas = (maxParcelas) => {
@@ -103,14 +115,6 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
     
     setFormData({...formData, configuracao_parcelas_cartao: novaConfig});
   };
-
-  const prevIdRef = useRef(formaPagamentoNorm?.id);
-  useEffect(() => {
-    if (formaPagamentoNorm?.id && formaPagamentoNorm.id !== prevIdRef.current) {
-      prevIdRef.current = formaPagamentoNorm.id;
-      setFormData({ ...formaPagamentoNorm });
-    }
-  }, [formaPagamentoNorm?.id]);
 
   const handleSubmit = async () => {
     if (!formData.descricao) {
@@ -724,7 +728,22 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <CreditCard className="w-6 h-6 text-sky-600" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">{formaPagamentoNorm?.id ? 'Editar Forma de Pagamento' : 'Nova Forma de Pagamento'}</h2>
+            {formaPagamentoNorm?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(formaPagamentoNorm.id)}</span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto bg-white">{content}</div>
+      </div>
+    );
   }
 
   return content;

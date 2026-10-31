@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+﻿import React from "react";
+import useCadastroRecordState from "./useCadastroRecordState";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -43,15 +44,14 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
     maximo_parcelas: 1,
     intervalo_parcelas_dias: 30
   };
-  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
-  const prevIdRef = useRef(dadosIniciais?.id || null);
-  useEffect(() => {
-    const nextId = dadosIniciais?.id || null;
-    if (nextId !== prevIdRef.current) {
-      prevIdRef.current = nextId;
-      setFormData(dadosIniciais || emptyFormData);
-    }
-  }, [dadosIniciais?.id]);
+  const recordIdentity = JSON.stringify([
+    dadosIniciais?.id ?? null,
+    dadosIniciais?.updated_date ?? null,
+    groupId,
+    empresaAtual?.id ?? null,
+    contexto,
+  ]);
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || emptyFormData, recordIdentity);
 
   const schema = z.object({
     descricao: z.string().min(1, "Descricao e obrigatoria"),
@@ -214,14 +214,19 @@ export default function FormaPagamentoForm({ forma, item, data, initialData, def
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-blue-600" />
-            {dadosIniciais ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}
-          </h2>
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <CreditCard className="w-6 h-6 text-sky-600" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">{dadosIniciais?.id ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}</h2>
+            {dadosIniciais?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
-        {formContent}
+        <div className="flex-1 overflow-auto p-6 bg-white">{formContent}</div>
       </div>
     );
   }

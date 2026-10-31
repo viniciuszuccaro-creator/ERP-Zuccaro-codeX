@@ -1,3 +1,11 @@
+## CURSOR — Pacote D/E FormaPagamento reopen+sky (2026-10-31 America/Sao_Paulo)
+- Branch `cursor/cadastros-forma-pagamento-reopen-sky-392b` ← #459 `248a8f52d`.
+- Completo (canônico Bloco3/Gestor) e Form: `useCadastroRecordState` com identity id+updated_date+grupo+empresa+contexto; sky windowMode + ID técnico.
+- Removido `prevIdRef` (reopen só por id). Código de registro preservado via CadastroCodigoRegistroField.
+- Testes 3+41+consolidacao PASS. Sem merge/deploy/seed.
+- ManagePullRequest OAuth BLOCKED neste agente — branches pushadas; abrir PR manual se portal não criar.
+- Pacote A: #446 `900a3fcc9` CI SUCCESS aguarda mount Codex antes de portar à #401.
+
 ## Checkpoint Cursor — #459 CI SUCCESS + Pacote A BLOCKED Codex (2026-10-31 America/Sao_Paulo)
 
 - #459 `0c127b034` SUCCESS. #446 aguarda mount Codex antes de consolidar em #401.
