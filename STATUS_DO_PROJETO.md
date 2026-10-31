@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (#452 logística ID técnico — indep. de #446) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-logistica-id-tecnico-392b` ← #451 |
+| **Escopo** | Banco/Transportadora/Motorista/Veiculo — ID técnico |
+| **Classe** | UX/apresentação ≠ recuperação de registros |
+| **#446** | tip `715860267` CI5597 fix — **fora desta candidata** |
+| Fora | merge · deploy · seed · count+1 |
+
+**Evidência:** `docs/evidence/cadastros-logistica-id-tecnico-20261031.txt`
+
 ## CURSOR — VIGENTE (#451 tip d74debd88 CI5589 SUCCESS — org ID técnico) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

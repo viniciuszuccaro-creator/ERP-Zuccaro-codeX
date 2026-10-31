@@ -92,6 +92,11 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
         value={formData.codigo ?? dadosIniciais?.codigo}
         action="codigo-registro-banco"
       />
+      {bancoBoundId ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(bancoBoundId)}</span>
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4">
         <div>

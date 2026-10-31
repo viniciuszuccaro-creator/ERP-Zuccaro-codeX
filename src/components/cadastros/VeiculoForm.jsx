@@ -75,11 +75,16 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
   const formContent = (
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id || veiculo?.id)}
-        entityId={dadosIniciais?.id || veiculo?.id}
+        hasId={Boolean(veiculoBoundId)}
+        entityId={veiculoBoundId}
         value={formData.codigo}
         action="codigo-registro-veiculo"
       />
+      {veiculoBoundId ? (
+        <p className="text-xs text-slate-500">
+          ID técnico: <span className="font-mono">{String(veiculoBoundId)}</span>
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-4">
         <div>

@@ -1,0 +1,14 @@
+Cadastros logística — ID técnico residual (sky já presente) 2026-10-31 America/Sao_Paulo
+========================================================================================
+Branch: cursor/cadastros-logistica-id-tecnico-392b
+Base: #451 tip `be2b732e5` (org ID técnico) — fora de #446.
+
+Escopo (melhoria UX)
+--------------------
+- BancoForm / TransportadoraForm / MotoristaForm / VeiculoForm: ID técnico legível.
+- Sky chrome + CodigoField/backend sequence intactos (sem count+1).
+
+Classificação: **somente apresentação/UX** — ≠ recuperação de registros/dados.
+Pins ID-only e candidata #446 intocados.
+
+Prova: node --test tests/cadastros-logistica-id-tecnico-sky.test.js
