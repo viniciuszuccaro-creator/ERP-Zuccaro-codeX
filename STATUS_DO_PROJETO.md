@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#446 P2 tabela_preco_id + fixture #342) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **P2** | `PedidoTabsContainer` resolve `TabelaPreco`+itens por `tabela_preco_id` (wizard só id/nome) |
+| **Helper** | `crmPostgresFixture` **reservado Codex #342** — tip `1c64debd7` sem edição paralela |
+| **CI5597** | alinhado Codex; sem rerun cego; ubuntu-26 vs 24 |
+| **#401** | **fora** até limpo + CI PG + aceite Codex |
+| Fora | inventar preço · editar fixture · merge · deploy |
+
+**Teste:** `node --test tests/comercial360-adicionar-historico-modal.test.js` → 10/10
+**Próximo:** CI tip + `@codex review`; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 UI tip; CI5597 helper → Codex #342) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
