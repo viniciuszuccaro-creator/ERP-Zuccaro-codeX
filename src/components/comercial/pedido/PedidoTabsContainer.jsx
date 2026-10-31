@@ -68,6 +68,8 @@ export default function PedidoTabsContainer({
   const confirmandoHistoricoRef = useRef(false);
   const sessionEpochRef = useRef(0);
   const sessionFpRef = useRef(null);
+  /** Token da resolução em voo — PedidoA→B / ator / sessão descartam resposta tardia. */
+  const tabelaResolveTokenRef = useRef('');
 
   // bloquearEdicao = trava de origem (sempre true); itens usam status do pedido.
   const itensBloqueados = pedidoItensBloqueadosPorStatus(formData);
@@ -101,29 +103,46 @@ export default function PedidoTabsContainer({
   const sessionFingerprintObservado = readSessionFingerprintCanonical();
 
   // Resolve TabelaPreco + itens pelo ID exato do pedido (wizard só id/nome).
-  // Troca ID/contexto/sessão: limpa na hora — estado anterior não fica confirmável; late response cancelada.
+  // PedidoA→B / ator / contexto / sessão: deps + token — limpa sync; late de A não grava em B.
   useEffect(() => {
     let cancel = false;
+    const pedidoId = formData?.id || pedido?.id || null;
     const tabelaId = formData?.tabela_preco_id || null;
+    const actorId = user?.id || null;
+    const resolveToken = [
+      pedidoId || '',
+      tabelaId || '',
+      formData?.empresa_id || '',
+      formData?.group_id || formData?.grupo_id || '',
+      formData?.cliente_id || '',
+      empresaAtual?.id || '',
+      grupoAtual?.id || '',
+      actorId || '',
+      sessionFingerprintObservado || '',
+    ].join('|');
+    tabelaResolveTokenRef.current = resolveToken;
+
     const embutida = formData?.tabela_preco || null;
     const itensEmbutidos = Array.isArray(formData?.tabela_preco_itens) ? formData.tabela_preco_itens : null;
     const embutidaExata = pickTabelaPrecoExata(embutida ? [embutida] : [], tabelaId);
 
-    // Fail-closed imediato: troca de ID/contexto não deixa tabela anterior confirmável.
+    // Fail-closed imediato: troca Pedido/ID/contexto não deixa tabela anterior confirmável.
     setTabelaPrecoResolvida(null);
     setTabelaPrecoItensResolvidos([]);
 
+    const aindaVigente = () => !cancel && tabelaResolveTokenRef.current === resolveToken;
+
     if (!tabelaId) {
-      return undefined;
+      return () => { cancel = true; };
     }
     if (embutidaExata && itensEmbutidos && itensEmbutidos.length > 0) {
       const itensExatos = itensEmbutidos.filter(
         (i) => !i?.tabela_preco_id || String(i.tabela_preco_id) === String(tabelaId),
       );
-      if (itensExatos.length > 0) {
+      if (itensExatos.length > 0 && aindaVigente()) {
         setTabelaPrecoResolvida(embutidaExata);
         setTabelaPrecoItensResolvidos(itensExatos);
-        return undefined;
+        return () => { cancel = true; };
       }
     }
 
@@ -132,7 +151,7 @@ export default function PedidoTabsContainer({
         const tabelas = await filterInContext('TabelaPreco', { id: tabelaId }, 'nome', 5);
         // Nunca tabelas[0]: resposta WRONG ≠ EXPECTED → null (não vira tabela escolhida).
         const tabela = pickTabelaPrecoExata(tabelas, tabelaId);
-        if (cancel) return;
+        if (!aindaVigente()) return;
         if (!tabela) {
           setTabelaPrecoResolvida(null);
           setTabelaPrecoItensResolvidos([]);
@@ -144,7 +163,7 @@ export default function PedidoTabsContainer({
           'produto_descricao',
           1000,
         );
-        if (cancel) return;
+        if (!aindaVigente()) return;
         const itensExatos = Array.isArray(itens)
           ? itens.filter((i) => !i?.tabela_preco_id || String(i.tabela_preco_id) === String(tabelaId))
           : [];
@@ -152,7 +171,7 @@ export default function PedidoTabsContainer({
         setTabelaPrecoItensResolvidos(itensExatos);
       } catch (error) {
         console.error('[PedidoTabsContainer] Falha ao resolver tabela_preco_id', error);
-        if (!cancel) {
+        if (aindaVigente()) {
           setTabelaPrecoResolvida(null);
           setTabelaPrecoItensResolvidos([]);
         }
@@ -160,6 +179,8 @@ export default function PedidoTabsContainer({
     })();
     return () => { cancel = true; };
   }, [
+    formData?.id,
+    pedido?.id,
     formData?.tabela_preco_id,
     formData?.tabela_preco,
     formData?.tabela_preco_itens,
@@ -169,6 +190,7 @@ export default function PedidoTabsContainer({
     formData?.cliente_id,
     empresaAtual?.id,
     grupoAtual?.id,
+    user?.id,
     sessionFingerprintObservado,
     filterInContext,
   ]);
