@@ -31,3 +31,12 @@ quando cleanup encontra schema já dropado.
 - Classificar como infra e ignorar
 - Rerun repetido sem hipótese
 - Alterar asserts de conteúdo/IDs/links/permissões do restore
+
+## Coordenação Codex (2026-10-31 America/Sao_Paulo)
+Parecer montado #446: P1 sessão ABA **fechado** em `aa24ac8d7` (modalAfterB=false / 0 writes).
+CI5597 lido nos logs: 3F000 cleanup mascara pg_restore; **PG16.15 rejeita transaction_timeout**
+antes; 5591 SUCCESS no mesmo helper (ubuntu-24) vs falhas ubuntu-26.
+**Helper CI/backup/contraprovas reservados Codex na #342** — Cursor **não** edita esses
+trechos em paralelo. Fixture `crmPostgresFixture` revertido nesta candidata #446.
+Cursor segue UI tip `3536c04de`+ (sessão/preço/unidade/margem) e envia SHA para port
+coordenado quando validado. Sem rerun cego.

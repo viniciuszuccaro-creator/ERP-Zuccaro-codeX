@@ -62,8 +62,7 @@ export async function proveCrmFixtureBackup(value:string,f:Awaited<ReturnType<ty
     const restore=async(file:string)=>{
       if(createHash('sha256').update(await readFile(file)).digest('hex')!==hash)throw new Error('CRM_BACKUP_HASH_MISMATCH');
       run('pg_restore',['--list',file]);
-      // DROP antes do restore; cleanup do fixture usa IF EXISTS (não mascarar falha do restore).
-      await f.exec(`DROP SCHEMA IF EXISTS "${f.schema}" CASCADE`);
+      await f.exec(`DROP SCHEMA "${f.schema}" CASCADE`);
       run('pg_restore',['--exit-on-error','--single-transaction',`--dbname=${database}`,file]);
     };
     await writeFile(damaged,bytes.subarray(0,Math.max(1,Math.floor(bytes.length/2))));
@@ -98,13 +97,10 @@ export async function realCrmFixture(value:string,options:{restrictedLogin?:bool
   };
   const admin=make(adminPool,false);
   const cleanup=async()=>{
-    // Idempotente: proveCrmFixtureBackup DROP SCHEMA antes do pg_restore; cleanup não pode
-    // falhar com 3F000 e mascarar erro real do restore (CI5597/5596 R40CRM).
-    try{await dataPool.end();}catch{/* pool já encerrado */}
-    try{
-      if(schemaCreated)await adminPool.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
-      if(roleCreated)await adminPool.query(`DROP ROLE IF EXISTS "${role}"`);
-    }finally{try{await adminPool.end();}catch{/* pool já encerrado */}}
+    await dataPool.end();
+    try{if(schemaCreated)await adminPool.query(`DROP SCHEMA "${schema}" CASCADE`);
+      if(roleCreated)await adminPool.query(`DROP ROLE "${role}"`);
+    }finally{await adminPool.end();}
   };
   try{
     await adminPool.query(`CREATE SCHEMA "${schema}"`);schemaCreated=true;

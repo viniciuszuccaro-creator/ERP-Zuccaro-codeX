@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#446 UI tip; CI5597 helper → Codex #342) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **UI tip** | `3536c04de` + ABA deps — P1 sessão ABA **fechado** (Codex montado) |
+| **CI5597** | 3F000 cleanup mascara restore; PG16.15 `transaction_timeout`; ubuntu-26 vs 24 |
+| **Helper** | `crmPostgresFixture` / backup **reservado Codex #342** — Cursor sem edição paralela |
+| **Fixture** | revertido nesta candidata (não competir com #342) |
+| **#401** | **fora** até limpo + CI PG coordenado |
+| Fora | rerun cego · merge · deploy · editar helper backup |
+
+**Evidência:** `docs/evidence/comercial360-446-ci5597-r40crm-20261031.txt`
+**Próximo:** CI UI tip; Codex #342 helper; port #401 só após limpo.
+
 ## CURSOR — VIGENTE (#446 CI5597 R40CRM + P1/P2 tip) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
