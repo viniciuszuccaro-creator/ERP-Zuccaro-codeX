@@ -1,3 +1,37 @@
+## CURSOR — VIGENTE (#455 tip 6f1540626 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `6f1540626` — CI SUCCESS 6/6 (Parametro* sky+idOnly + PG16) |
+| **Código** | sky `a57628c5c` · fix pin+CI `6f1540626` |
+| Fora | merge · deploy · seed · Roteirizacao |
+| Irmãos | #456/#457 também SUCCESS |
+
+**Próximo:** Filial/Catálogo/RotaPadrao sky ou cadastros transversal; Codex #446.
+
+## CURSOR — VIGENTE (#455 CI fix pin+PG16) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | OrigemPedido `groupId` ≡ pin residual; CI `ubuntu-24.04` + toolchain CRM (port #453) |
+| **Causa** | residual-independent pin; backend `3F000` por client PG no `ubuntu-latest` |
+| Fora | merge · alterar #342 além do port CI autorizado |
+
+## CURSOR — VIGENTE (Parametro* sky+ID #portal) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-param-portal-sky-id-392b` |
+| **Base** | `cursor/comercial360-proposta-347-evolucao-392b` |
+| **Delta** | Portal/Caixa/Conciliação/NFe: sky+idOnly pin-safe; Origem: sky+idOnly+aliases |
+| **Fonte** | #402 (CI SUCCESS); pin RecordState e36231b3; **fora** Roteirizacao/ApiExterna/ChatbotCanal |
+| **UX≠dados** | ID técnico ≠ registros recuperados (#451/#452) |
+| Fora | merge · deploy · seed · #446 mount |
+
+**Teste:** `cadastros-param-portal-sky-id.test.js`
+**Evidência:** `docs/evidence/cadastros-param-portal-sky-id-20261031.txt`
+**Próximo:** CI deste tip; indep. Gateway/TabelaFiscal/ConfigNFe sky; aguardar Codex #446.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

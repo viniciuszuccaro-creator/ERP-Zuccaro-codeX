@@ -1,0 +1,23 @@
+Cadastros — Parametro Portal/Caixa/Conciliação/NFe/Origem sky+ID (2026-10-31 America/Sao_Paulo)
+============================================================================================
+Branch: cursor/cadastros-param-portal-sky-id-392b
+Base: cursor/comercial360-proposta-347-evolucao-392b
+Fonte aprovada: #402 tip (sky+idOnly); pin RecordState e36231b3 nos 4 Parametro*
+Fora: ParametroRoteirizacao (#399) · ApiExterna · ChatbotCanal · CentroOperacao sky
+
+Recuperação (capacidade, não seed)
+- Chrome azul-claro windowMode (from-sky-50 → to-sky-100) + CTA sky
+- CadastroCodigoRegistroField idOnly (ID técnico ≠ código mestre; sem MASTER_CODE nestes)
+- Portal/Caixa/Conciliação/NFe: pin-safe (sem dadosIniciais; declarações handle/pode/groupId ≡ golden)
+- OrigemPedido (fora pin): aliases Visualizador + updated_at??updated_date
+- Sem count+1; sem merge/deploy/carga
+
+Forms
+1. ParametroPortalClienteForm (pin-safe)
+2. ParametroCaixaDiarioForm (pin-safe)
+3. ParametroConciliacaoBancariaForm (pin-safe)
+4. ParametroRecebimentoNFeForm (pin-safe)
+5. ParametroOrigemPedidoForm (aliases OK)
+
+Teste: tests/cadastros-param-portal-sky-id.test.js
+Próximo: GatewayPagamento / TabelaFiscal / ConfiguracaoNFe sky no existente; C360 indep.

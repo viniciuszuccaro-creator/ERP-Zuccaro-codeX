@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Save, X, Settings, Zap } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * Formulário para configurar origens de pedido por canal
@@ -54,7 +55,7 @@ export default function ParametroOrigemPedidoForm({
     cor_badge: parametro?.cor_badge || 'blue',
     empresa_id: parametro?.empresa_id || empresaAtual?.id || '',
     group_id: parametro?.group_id || groupId || '',
-  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, groupId, empresaAtual?.id ?? null]));
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_at ?? parametro?.updated_date ?? null, groupId, empresaAtual?.id ?? null]));
 
   const mutation = useMutation({
     mutationFn: (data) => {
@@ -91,12 +92,25 @@ export default function ParametroOrigemPedidoForm({
 
   return (
     <div className={containerClass}>
+      {windowMode ? (
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Settings className="w-6 h-6 text-sky-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {parametro?.id ? 'Editar canal de origem' : 'Novo canal de origem'}
+          </h2>
+        </div>
+      ) : null}
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 overflow-auto p-6 space-y-6" : "space-y-6"}>
-        
+        <CadastroCodigoRegistroField
+          idOnly
+          hasId={Boolean(parametro?.id)}
+          entityId={parametro?.id}
+          action="id-tecnico-parametro-origem-pedido"
+        />
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Settings className="w-5 h-5 text-blue-600" />
+              <Settings className="w-5 h-5 text-sky-600" />
               Configuração do Canal
             </CardTitle>
           </CardHeader>
@@ -333,7 +347,7 @@ export default function ParametroOrigemPedidoForm({
                 Cancelar
               </Button>
             )}
-            <Button type="submit" disabled={mutation.isPending || !contextoValido || !podeSalvar}>
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={mutation.isPending || !contextoValido || !podeSalvar}>
               <Save className="w-4 h-4 mr-2" />
               {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
             </Button>
@@ -343,14 +357,14 @@ export default function ParametroOrigemPedidoForm({
       </form>
 
       {windowMode && (
-        <div className="p-4 border-t bg-white flex gap-3 justify-end">
+        <div className="p-4 border-t bg-sky-50/40 flex gap-3 justify-end">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               <X className="w-4 h-4 mr-2" />
               Cancelar
             </Button>
           )}
-          <Button onClick={handleSubmit} disabled={mutation.isPending || !contextoValido || !podeSalvar}>
+          <Button className="bg-sky-600 hover:bg-sky-700" onClick={handleSubmit} disabled={mutation.isPending || !contextoValido || !podeSalvar}>
             <Save className="w-4 h-4 mr-2" />
             {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
           </Button>

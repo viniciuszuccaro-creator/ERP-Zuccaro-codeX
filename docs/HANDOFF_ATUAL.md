@@ -1,3 +1,13 @@
+## Checkpoint Cursor — #455 CI SUCCESS (2026-10-31 America/Sao_Paulo)
+
+- Tip `6f1540626` SUCCESS 6/6. Sem merge.
+
+## Checkpoint Cursor — Parametro portal sky+ID (2026-10-31 America/Sao_Paulo)
+
+- Pacote indep.: `cursor/cadastros-param-portal-sky-id-392b` — sky+idOnly+aliases em 5 Parametro* (sem Roteirizacao).
+- #446/#453/#454: aguardam Codex mount; sem merge/deploy.
+- Próximo indep.: GatewayPagamento / TabelaFiscal / ConfiguracaoNFe sky no existente.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
