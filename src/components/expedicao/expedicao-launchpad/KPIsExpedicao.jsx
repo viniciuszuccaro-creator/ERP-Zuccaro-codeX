@@ -33,10 +33,10 @@ export default function KPIsExpedicao({ statusCounts }) {
         <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-indigo-600">Pronto</p>
-              <p className="text-2xl font-bold text-indigo-700">{statusCounts.pronto}</p>
+              <p className="text-xs text-sky-600">Pronto</p>
+              <p className="text-2xl font-bold text-sky-700">{statusCounts.pronto}</p>
             </div>
-            <CheckCircle2 className="w-7 h-7 text-indigo-500 opacity-30" />
+            <CheckCircle2 className="w-7 h-7 text-sky-500 opacity-30" />
           </div>
         </CardContent>
       </Card>

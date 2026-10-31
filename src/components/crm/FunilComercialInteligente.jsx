@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { validarPrioridadesOportunidadesIA } from '@/components/lib/iaResponsePolicy';
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,7 @@ export default function FunilComercialInteligente({ windowMode = false }) {
   });
 
   const updateEtapaMutation = useMutation({
-    mutationFn: ({ id, etapa }) => updateInContext('Oportunidade', id, {
+    mutationFn: (/** @type {{id: string, etapa: string}} */ { id, etapa }) => updateInContext('Oportunidade', id, {
       etapa,
       etapa_funil: etapa,
     }),
@@ -48,7 +49,7 @@ export default function FunilComercialInteligente({ windowMode = false }) {
     mutationFn: async () => {
       toast.info("🤖 IA priorizando leads...");
 
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = validarPrioridadesOportunidadesIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Analise estas oportunidades e priorize baseado em:
 - Probabilidade de fechamento
 - Valor estimado
@@ -60,7 +61,7 @@ Oportunidades: ${JSON.stringify(oportunidades.map(o => ({
   valor: o.valor_estimado,
   probabilidade: o.probabilidade,
   etapa: o.etapa,
-  dias_aberto: Math.floor((new Date() - new Date(o.data_abertura)) / (1000 * 60 * 60 * 24))
+  dias_aberto: Math.floor((new Date().getTime() - new Date(o.data_abertura).getTime()) / (1000 * 60 * 60 * 24))
 })))}
 
 Retorne uma lista priorizada com score e motivo.`,
@@ -80,7 +81,7 @@ Retorne uma lista priorizada com score e motivo.`,
             }
           }
         }
-      });
+      }), oportunidades);
 
       toast.success(`✅ IA priorizou ${result.oportunidades_priorizadas?.length || 0} oportunidades!`);
       return result;

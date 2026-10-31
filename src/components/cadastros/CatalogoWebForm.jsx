@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
   const podeCriar = hasPermission?.("Cadastros.CatalogoWeb.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.CatalogoWeb.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome_catalogo: '',
     descricao: '',
     produto_id: '',
@@ -27,7 +28,7 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
     exibir_marketplace: false,
     ordem_exibicao: 1,
     ativo: true
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

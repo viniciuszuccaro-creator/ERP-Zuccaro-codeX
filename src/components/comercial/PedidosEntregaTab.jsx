@@ -53,6 +53,11 @@ import { useUser } from "@/components/lib/UserContext";
  * - Upload/visualização de canhoto e fotos
  * - Integração com Expedição
  */
+/**
+ * @typedef {Record<string, unknown> & {id: string, numero_pedido?: string, empresa_id?: string, group_id?: string, grupo_id?: string, historico_status?: unknown[]}} PedidoStatusSnapshot
+ * @typedef {Record<string, unknown> & {id?: string, pedido_id?: string, empresa_id?: string, group_id?: string, grupo_id?: string, historico_status?: unknown[], comprovante_entrega?: {nome_recebedor?: string}}} EntregaStatusSnapshot
+ * @typedef {{novoStatus: string, motivo?: string, entrega?: EntregaStatusSnapshot} & ({pedido: PedidoStatusSnapshot, pedidoId?: string} | {pedido?: PedidoStatusSnapshot, pedidoId: string})} AtualizarStatusEntregaCommand
+ */
 export default function PedidosEntregaTab({ windowMode = false }) {
   const [busca, setBusca] = useState("");
   const [regiaoFiltro, setRegiaoFiltro] = useState("todas");
@@ -92,6 +97,8 @@ export default function PedidosEntregaTab({ windowMode = false }) {
     empresa_id: payload.empresa_id || effectiveEmpresaId,
   });
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, detalhes?: Record<string, unknown>,
+   * dadosAnteriores?: unknown, dadosNovos?: unknown, registroId?: string | number | null}} options */
   const auditEntrega = async ({ acao, sucesso = true, motivo = null, detalhes = {}, dadosAnteriores = null, dadosNovos = null, registroId = null }) => {
     try {
       await createInContext("AuditLog", {
@@ -230,7 +237,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   }, [pedidosParaEntrega, busca, statusFiltro, regiaoFiltro]);
 
   const atualizarStatusMutation = useMutation({
-    mutationFn: async ({ pedido, pedidoId, entrega, novoStatus, motivo }) => {
+    mutationFn: async (/** @type {AtualizarStatusEntregaCommand} */ { pedido, pedidoId, entrega, novoStatus, motivo }) => {
       const pedidoAlvo = pedido || pedidos.find(p => p.id === pedidoId);
       if (!pedidoAlvo) throw new Error("Pedido nao encontrado para atualizar status.");
       if (!contextoValido || !(canEdit || canEntregar)) {
@@ -339,7 +346,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           
           <Button
             onClick={() => abrirPainelLogistica(MapaRoteirizacaoIA, { title: 'Roteirizacao Inteligente', width: 1000, height: 700 }, "PedidoEntrega.roteirizacao_abrir", canRoute, true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700"
           >
             <Route className="w-4 h-4 mr-2" />
             🤖 Otimizar Rotas
@@ -384,7 +391,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
             <CardTitle className="text-sm text-slate-600">Em Trânsito</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
+            <div className="text-3xl font-bold text-sky-600">
               {pedidosParaEntrega.filter(p => p.status === 'Em Trânsito').length}
             </div>
           </CardContent>
@@ -606,7 +613,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                         <TableCell>
                           <Badge className={
                             pedido.status === 'Entregue' ? 'bg-green-600' :
-                            pedido.status === 'Em Trânsito' ? 'bg-purple-600' :
+                            pedido.status === 'Em Trânsito' ? 'bg-sky-600' :
                             pedido.status === 'Em Expedição' ? 'bg-orange-600' :
                             'bg-blue-600'
                           }>
@@ -701,6 +708,9 @@ export default function PedidosEntregaTab({ windowMode = false }) {
               <TimelineEntregaVisual 
                 pedido={entregaSelecionada.pedido} 
                 entrega={entregaSelecionada.entrega} 
+                contextoValido={contextoValido}
+                canView={canView}
+                onAudit={auditEntrega}
               />
 
               <Card className="bg-slate-50">
@@ -767,7 +777,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                         setDetalhesOpen(false);
                         toast.success("🚚 Pedido saiu para entrega!");
                       }}
-                      className="bg-purple-600 hover:bg-purple-700 w-full"
+                      className="bg-sky-600 hover:bg-sky-700 w-full"
                     >
                       <Truck className="w-4 h-4 mr-2" />
                       🚚 Confirmar Saída do Veículo

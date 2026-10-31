@@ -110,6 +110,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditOrdemCompra = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await createInContext('AuditLog', {
@@ -134,9 +135,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => createInContext('OrdemCompra', data),
+    mutationFn: (/** @type {Record<string, unknown>} */ data) => createInContext('OrdemCompra', data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['ordensCompra']);
+      queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
       setIsDialogOpen(false);
       resetForm();
       toast({ title: "✅ Ordem de Compra criada com sucesso!" });
@@ -144,9 +145,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateInContext('OrdemCompra', id, data),
+    mutationFn: (/** @type {{id: string, data: Record<string, unknown>}} */ { id, data }) => updateInContext('OrdemCompra', id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['ordensCompra']);
+      queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
       setIsDialogOpen(false);
       resetForm();
       toast({ title: "✅ Ordem de Compra atualizada com sucesso!" });
@@ -154,7 +155,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   });
 
   const aprovarMutation = useMutation({
-    mutationFn: async ({ id, oc }) => {
+    mutationFn: async (/** @type {{id: string, oc: import('../lib/comprasOrdemPolicy').ComprasRecord & {historico?: unknown[]}}} */ { id, oc }) => {
       if (!contextoValido || !canApproveOC) {
         await auditOrdemCompra({
           acao: 'OrdemCompra.aprovacao_bloqueada',
@@ -186,13 +187,13 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         acao: 'OrdemCompra.aprovada',
         dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc, status_anterior: oc?.status, status_novo: 'Aprovada' }
       });
-      queryClient.invalidateQueries(['ordensCompra']);
+      queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
       toast({ title: "Ordem de Compra aprovada!" });
     },
   });
 
   const enviarFornecedorMutation = useMutation({
-    mutationFn: async ({ id, oc }) => {
+    mutationFn: async (/** @type {{id: string, oc: import('../lib/comprasOrdemPolicy').ComprasRecord & {historico?: unknown[]}}} */ { id, oc }) => {
       if (!contextoValido || !canSendOC) {
         await auditOrdemCompra({
           acao: 'OrdemCompra.envio_bloqueado',
@@ -224,7 +225,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         acao: 'OrdemCompra.enviada_fornecedor',
         dados: { ordem_compra_id: id, numero_oc: oc?.numero_oc, status_anterior: oc?.status, status_novo: 'Enviada ao Fornecedor' }
       });
-      queryClient.invalidateQueries(['ordensCompra']);
+      queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
       toast({
         title: "OC enviada ao fornecedor!",
         description: "E-mail enviado (se configurado)"
@@ -233,7 +234,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   });
 
   const receberMutation = useMutation({
-    mutationFn: async ({ id, oc, dados }) => {
+    mutationFn: async (/** @type {{id: string, oc: import('../lib/comprasOrdemPolicy').ComprasRecord & {historico?: unknown[], data_envio_fornecedor: string, valor_total?: number, prazo_entrega_acordado?: number}, dados: {data_entrega_real: string, nota_fiscal_entrada: string}}} */ { id, oc, dados }) => {
       if (!contextoValido || !canReceiveOC) {
         await auditOrdemCompra({
           acao: 'OrdemCompra.recebimento_bloqueado',
@@ -245,7 +246,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       }
       const dataEnvio = new Date(oc.data_envio_fornecedor);
       const dataRecebimento = new Date(dados.data_entrega_real);
-      const leadTimeReal = Math.floor((dataRecebimento - dataEnvio) / (1000 * 60 * 60 * 24));
+      const leadTimeReal = Math.floor((dataRecebimento.getTime() - dataEnvio.getTime()) / (1000 * 60 * 60 * 24));
 
       // Atualizar OC
       await updateInContext('OrdemCompra', id, {
@@ -362,12 +363,12 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           conta_pagar_reuso: contaPagarReuso,
         }
       });
-      queryClient.invalidateQueries(['ordensCompra']);
-      queryClient.invalidateQueries(['fornecedores']);
-      queryClient.invalidateQueries(['movimentacoes']);
-      queryClient.invalidateQueries(['produtos']);
-      queryClient.invalidateQueries(['contasPagar']);
-      queryClient.invalidateQueries(['ContaPagar']);
+      queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
+      queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
+      queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos'] });
+      queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
+      queryClient.invalidateQueries({ queryKey: ['ContaPagar'] });
       
       setIsRecebimentoDialogOpen(false);
       
@@ -385,7 +386,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   });
 
   const avaliarFornecedorMutation = useMutation({
-    mutationFn: async ({ oc, avaliacao }) => {
+    mutationFn: async (/** @type {{oc: import('../lib/comprasOrdemPolicy').ComprasRecord & {id: string}, avaliacao: typeof avaliacaoFormData}} */ { oc, avaliacao }) => {
       const notaMedia = (
         avaliacao.qualidade +
         avaliacao.prazo +
@@ -442,8 +443,8 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       return { notaMedia, fornecedorNome: oc.fornecedor_nome };
     },
     onSuccess: ({ notaMedia, fornecedorNome }) => {
-      queryClient.invalidateQueries(['ordensCompra']);
-      queryClient.invalidateQueries(['fornecedores']);
+      queryClient.invalidateQueries({ queryKey: ['ordensCompra'] });
+      queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
       setIsAvaliacaoDialogOpen(false);
       setAvaliacaoFormData({
         nota: 5,

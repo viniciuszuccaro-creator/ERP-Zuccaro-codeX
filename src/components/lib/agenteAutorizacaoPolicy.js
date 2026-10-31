@@ -58,6 +58,11 @@ export const isCriticalAgentAction = (action, functionSpec = null) => {
   return CRITICAL_ACTIONS.has(String(action || '').toLowerCase());
 };
 
+/**
+ * @typedef {{agent?: string, modulo?: string, secao?: string, action?: string, critical?: boolean}} AgentFunctionSpec
+ */
+
+/** @param {{agent?: string|null, userAllowed?: boolean, action?: string, confirmed?: boolean, functionSpec?: AgentFunctionSpec|null}} [options] */
 export const assertAgentMayAct = ({
   agent,
   userAllowed,
@@ -85,6 +90,7 @@ export const assertAgentMayAct = ({
   };
 };
 
+/** @param {{functionName?: string, userAllowed?: boolean, confirmed?: boolean, agent?: string|null}} [options] */
 export const assertMappedAgentFunction = ({ functionName, userAllowed, confirmed = false, agent } = {}) => {
   const spec = AGENT_FUNCTION_MAP[functionName];
   if (!spec) return null;
@@ -105,6 +111,7 @@ export const requireAgentHumanConfirm = (mensagem) => {
   return Boolean(window.confirm(String(mensagem || 'Confirmar acao critica do agente?')));
 };
 
+/** @param {{agente?: string|null, functionName?: string|null, confirmed?: boolean, groupId?: string|null, empresaId?: string|null, extra?: Record<string, unknown>}} [options] */
 export const buildAgentInvokePayload = ({
   agente,
   functionName = null,

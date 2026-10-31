@@ -10,6 +10,16 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PROVISION = path.join(ROOT, 'scripts/vps/provision-owner-admin-profile.sh');
 const REBUILD = path.join(ROOT, 'scripts/vps/spa-login-rebuild-api-web.sh');
 
+const shellPath = value => process.platform === 'win32'
+  ? value.replaceAll('\\', '/').replace(/^([A-Za-z]):/, (_all, drive) => '/' + drive.toLowerCase())
+  : value;
+
+function runProvisionFixture(bin, env) {
+  return spawnSync('bash', ['-c', 'export PATH="$MOCK_BIN:$PATH"; [[ "$(command -v docker)" == "$MOCK_BIN/docker" ]] || exit 98; exec bash "$FIXTURE_SCRIPT"'], {
+    encoding: 'utf8', env: { ...env, MOCK_BIN: shellPath(bin), FIXTURE_SCRIPT: shellPath(PROVISION) },
+  });
+}
+
 test('provision script não usa min(uuid) e tem if docker exec não invertido', () => {
   const src = fs.readFileSync(PROVISION, 'utf8');
   assert.equal(/min\s*\(\s*id\s*\)/i.test(src), false);
@@ -58,7 +68,7 @@ test('provision grant: sucesso COMMITTED e falha SQL bloqueia postcheck', () => 
   const backupDir = path.join(tmp, 'backups');
 
   const stub = `#!/usr/bin/env bash
-echo "$*" >> "${logFile}"
+echo "$*" >> "${shellPath(logFile)}"
 if [[ "$1" == "cp" ]]; then exit 0; fi
 if [[ "$1" == "exec" ]]; then
   input="$(cat || true)"
@@ -98,6 +108,13 @@ fi
 exit 0
 `;
   fs.writeFileSync(path.join(bin, 'docker'), stub, { mode: 0o755 });
+  if (process.platform === 'win32') {
+    const python = process.env.TEST_PYTHON_EXECUTABLE;
+    assert.ok(python && path.isAbsolute(python) && fs.existsSync(python), 'Configure TEST_PYTHON_EXECUTABLE with a real Python 3 executable; Windows Store aliases do not qualify.');
+    const version = spawnSync(python, ['--version'], { encoding: 'utf8' });
+    assert.equal(version.status, 0); assert.match(version.stdout + version.stderr, /Python 3\./);
+    fs.writeFileSync(path.join(bin, 'python3'), `#!/usr/bin/env bash\nexec "${shellPath(python)}" "$@"\n`, { mode: 0o755 });
+  }
 
   const envBase = {
     ...process.env,
@@ -106,23 +123,20 @@ exit 0
     OWNER_EMAIL: 'owner@example.com',
     OWNER_GROUP_ID: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     OWNER_EMPRESA_ID: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
-    OWNER_PERMS_FILE: perms,
-    OWNER_PROV_BACKUP_DIR: backupDir,
+    OWNER_PERMS_FILE: shellPath(perms),
+    OWNER_PROV_BACKUP_DIR: shellPath(backupDir),
     DEMOTE_SYNTH: 'YES',
     EXPECTED_OWNER_ADMIN: '1',
     EXPECTED_SYNTH_ADMIN: '0',
   };
 
-  const ok = spawnSync('bash', [PROVISION], { encoding: 'utf8', env: envBase });
+  const ok = runProvisionFixture(bin, envBase);
   assert.equal(ok.status, 0, ok.stderr + ok.stdout);
   assert.match(ok.stdout, /transaction=COMMITTED/);
   assert.match(ok.stdout, /OWNER_ADMIN_PROVISION_OK/);
   assert.match(ok.stdout, /rollback_not=pg_dump_data_only_replay/);
 
-  const fail = spawnSync('bash', [PROVISION], {
-    encoding: 'utf8',
-    env: { ...envBase, FORCE_TX_FAIL: '1' },
-  });
+  const fail = runProvisionFixture(bin, { ...envBase, FORCE_TX_FAIL: '1' });
   assert.equal(fail.status, 4, fail.stderr + fail.stdout);
   assert.match(fail.stderr, /transaction_failed_rolled_back/);
   assert.equal(/OWNER_ADMIN_PROVISION_OK/.test(fail.stdout), false);
@@ -159,7 +173,7 @@ exit 0
 `, { mode: 0o755 });
 
   fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
-echo "docker:$*" >> "${events}"
+echo "docker:$*" >> "${shellPath(events)}"
 case "$1" in
   ps)
     if [[ "$*" == *"--filter publish=3080"* ]]; then exit 0; fi
@@ -299,26 +313,23 @@ test('REAL provision restore: falha docker cp não executa psql nem OK', () => {
   fs.writeFileSync(path.join(bin, 'docker'), `#!/usr/bin/env bash
 echo "docker:$*" >> "${events}"
 if [[ "$1" == "cp" ]]; then
-  echo 'cp_fail' >> "${events}"
+  echo 'cp_fail' >> "${shellPath(events)}"
   exit 1
 fi
 if [[ "$1" == "exec" ]]; then
-  echo 'PSQL_OR_EXEC' >> "${events}"
+  echo 'PSQL_OR_EXEC' >> "${shellPath(events)}"
   exit 0
 fi
 exit 0
 `, { mode: 0o755 });
 
-  const result = spawnSync('bash', [PROVISION], {
-    encoding: 'utf8',
-    env: {
+  const result = runProvisionFixture(bin, {
       ...process.env,
       PATH: `${bin}:${process.env.PATH}`,
       CONFIRM_OWNER_ADMIN_RESTORE: 'YES',
-      OWNER_PROV_RESTORE_FILE: jsonFile,
+      OWNER_PROV_RESTORE_FILE: shellPath(jsonFile),
       OWNER_PROFILE_EXISTED_BEFORE_FLAG: 'YES',
       OWNER_EMAIL: 'owner@example.com',
-    },
   });
   const log = fs.readFileSync(events, 'utf8');
   assert.notEqual(result.status, 0, result.stdout + result.stderr);

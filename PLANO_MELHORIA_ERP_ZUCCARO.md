@@ -1,6 +1,17 @@
 # Plano de Melhoria Geral do ERP Zuccaro
 
-Atualizado em: 2026-08-30
+Atualizado em: 2026-10-26 (repriorizacao; backlog e provas historicas preservados)
+
+## Prioridade vigente
+
+Seguir as cinco etapas de entrada em uso registradas em PLANO_GO_LIVE.md,
+secao "Prioridade vigente: entrada em uso". A lista unica de estado fica no
+topo de STATUS_DO_PROJETO.md e a continuidade em docs/HANDOFF_ATUAL.md.
+Nao criar outro plano. Comercial360/omnicanal avancados continuam no Codespace;
+nao antecedem a operacao inicial quando nao forem dependencia real dela.
+Recuperacao funcional/visual azul-clara e registros do ERP novo fazem parte
+da homologacao, com equivalencia/procedencia e sem substituir o ERP atual.
+A ordem de evolucao abaixo e historica e nao supera essa decisao nem os gates.
 
 Este plano organiza o que deve ser feito para melhorar o ERP Zuccaro respeitando a regra-mae: melhorar o existente, nao duplicar, nao apagar funcionalidades, perguntar antes de incluir ou excluir, manter multiempresa, RBAC, seguranca e auditoria.
 

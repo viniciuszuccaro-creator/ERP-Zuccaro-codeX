@@ -503,6 +503,7 @@ export const buildReconciliacaoMigracao = ({ origem = [], gravados = [], reusos 
   };
 };
 
+/** @param {Partial<ReturnType<typeof buildReconciliacaoMigracao>>} report */
 export const assertReconciliacaoMigracao = (report = {}) => {
   if (!report || typeof report !== 'object') {
     throw new Error('Reconciliacao de migracao obrigatoria.');
@@ -524,6 +525,7 @@ export const assertReconciliacaoMigracao = (report = {}) => {
   return true;
 };
 
+/** @param {{entityName?: string, record?: Record<string, unknown>, records?: Array<Record<string, unknown>>}} options */
 export const applyMigracaoOnCreate = ({ entityName, record = {}, records = [] } = {}) => {
   if (!isMigracaoRecord(record)) return { reuse: null, record };
   const stripped = stripSegredosMigracao(record);

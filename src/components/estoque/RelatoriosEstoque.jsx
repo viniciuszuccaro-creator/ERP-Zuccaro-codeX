@@ -102,11 +102,11 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   const itensParados = produtosFiltrados.filter(p => {
     const ultimaMov = movimentacoesFiltradas
       .filter(m => m.produto_id === p.id)
-      .sort((a, b) => new Date(b.data_movimentacao) - new Date(a.data_movimentacao))[0];
+      .sort((a, b) => new Date(b.data_movimentacao).getTime() - new Date(a.data_movimentacao).getTime())[0];
     
     if (!ultimaMov) return true;
     
-    const diasParado = Math.floor((hoje - new Date(ultimaMov.data_movimentacao)) / (1000 * 60 * 60 * 24));
+    const diasParado = Math.floor((hoje.getTime() - new Date(ultimaMov.data_movimentacao).getTime()) / (1000 * 60 * 60 * 24));
     return diasParado > 90;
   });
 
@@ -336,7 +336,7 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
                       <TableCell className="font-medium">{produto.descricao}</TableCell>
                       <TableCell className="text-right">{produto.estoque_atual}</TableCell>
                       <TableCell className="text-right font-semibold">
-                        <ProtectedField module="Estoque" submodule="Relatorios" field="valor_estoque" action="ver" asText>
+                        <ProtectedField module="Estoque" submodule="Relatorios" tab={null} field="valor_estoque" action="ver" asText>
                           R$ {produto.valor_estoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </ProtectedField>
                       </TableCell>
@@ -454,7 +454,7 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
                       </TableCell>
                       <TableCell className="text-right">{produto.estoque_atual}</TableCell>
                       <TableCell className="text-right font-semibold text-red-700">
-                        <ProtectedField module="Estoque" submodule="Relatorios" field="valor_imobilizado" action="ver" asText>
+                        <ProtectedField module="Estoque" submodule="Relatorios" tab={null} field="valor_imobilizado" action="ver" asText>
                           R$ {((produto.estoque_atual || 0) * (produto.custo_aquisicao || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </ProtectedField>
                       </TableCell>

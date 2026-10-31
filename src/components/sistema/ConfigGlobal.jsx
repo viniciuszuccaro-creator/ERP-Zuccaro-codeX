@@ -73,7 +73,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     return list.find(c => !c.empresa_id && !c.group_id) || list[0] || null;
   }, [configs, gId, eId]);
 
-  const [savingField, setSavingField] = useState({});
+  const [savingField, setSavingField] = useState(/** @returns {Record<string, boolean>} */ () => ({}));
   const handleSaveField = useCallback(async (chave, categoria, dados) => {
     if (!hasValidScope) {
       toast.error('Selecione um grupo ou empresa para salvar configurações.');

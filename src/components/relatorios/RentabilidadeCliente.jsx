@@ -103,7 +103,7 @@ export default function RentabilidadeCliente({ empresaId }) { // Kept empresaId 
       .forEach(c => {
         const key = c.cliente_id || c.cliente;
         if (porCliente[key]) {
-          const diasAtraso = Math.floor((hoje - new Date(c.data_vencimento)) / (1000 * 60 * 60 * 24));
+          const diasAtraso = Math.floor((hoje.getTime() - new Date(c.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));
           // Use a simple average or sum up and then average later. For now, track just one status.
           // This part needs more robust logic for multiple atrasos per client if desired.
           porCliente[key].dias_atraso_medio = (porCliente[key].dias_atraso_medio || 0) + diasAtraso; // Sum for now
@@ -119,7 +119,7 @@ export default function RentabilidadeCliente({ empresaId }) { // Kept empresaId 
         c.ticket_medio = c.quantidade_pedidos > 0 ? c.faturamento / c.quantidade_pedidos : 0;
 
         if (c.primeira_compra && c.ultima_compra) {
-          const diasAtivo = Math.floor((new Date(c.ultima_compra) - new Date(c.primeira_compra)) / (1000 * 60 * 60 * 24));
+          const diasAtivo = Math.floor((new Date(c.ultima_compra).getTime() - new Date(c.primeira_compra).getTime()) / (1000 * 60 * 60 * 24));
           c.dias_cliente = diasAtivo;
           c.frequencia_dias = c.quantidade_pedidos > 1 ? diasAtivo / (c.quantidade_pedidos - 1) : diasAtivo;
         }

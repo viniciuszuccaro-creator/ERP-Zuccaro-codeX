@@ -73,14 +73,14 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
   };
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {Omit<typeof novaMovimentacao, 'quantidade' | 'tipo_movimentacao'> & {quantidade: string | number, tipo_movimentacao?: string, tipo_movimento?: string, empresa_id?: string, origem_movimento?: string, documento?: string}} */ data) => {
       if (!canCreateMovimentacao) {
         throw new Error("Sem permissao para criar movimentacao de estoque.");
       }
       if (!contextoValido) {
         throw new Error("Selecione grupo ou empresa antes de movimentar estoque.");
       }
-      const quantidade = parseFloat(data.quantidade);
+      const quantidade = parseFloat(String(data.quantidade));
       if (!Number.isFinite(quantidade) || quantidade <= 0) {
         throw new Error("Quantidade da movimentacao deve ser maior que zero.");
       }

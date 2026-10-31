@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Search, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { validarSugestaoNcmConsultaIA, validarSugestaoRntrcConsultaIA } from '@/components/lib/iaResponsePolicy';
 
 /**
  * 🌐 BUSCA AUTOMÁTICA DE DADOS PÚBLICOS
@@ -11,22 +12,22 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
  * Funcionalidades:
  * - CNPJ/CPF: Receita Federal via IA
  * - CEP: ViaCEP
- * - NCM: Tabela oficial + alíquotas
- * - RNTRC: Validação transportadoras
+ * - NCM: sugestao IA nao verificada, para revisao manual
+ * - RNTRC: sugestao IA nao verificada, sem validacao cadastral
  */
 
 /**
  * Buscar dados de CNPJ na Receita Federal via IA
  * @param {string} cnpj - CNPJ formatado ou não
- * @returns {object} Dados da empresa
+ * @returns {Promise<object>} Dados da empresa
  */
 export async function buscarDadosCNPJ(cnpj) {
   const cnpjLimpo = cnpj?.replace(/\D/g, '') || '';
   
-  console.log('🔍 [Frontend] Iniciando busca CNPJ:', cnpjLimpo);
+  console.log('🔍 [Frontend] Iniciando busca CNPJ');
   
   if (cnpjLimpo.length !== 14) {
-    console.error('❌ [Frontend] CNPJ inválido:', cnpjLimpo);
+    console.error('❌ [Frontend] CNPJ inválido');
     return {
       sucesso: false,
       erro: 'CNPJ deve ter 14 dígitos'
@@ -36,21 +37,22 @@ export async function buscarDadosCNPJ(cnpj) {
   // ===== TENTATIVA 1: Backend Function (se habilitado) =====
   try {
     console.log('📡 [Frontend] Tentando backend function...');
-    const resultado = await base44.functions.ConsultarCNPJ({ cnpj: cnpjLimpo });
+    const response = await base44.functions.invoke('ConsultarCNPJ', { cnpj: cnpjLimpo });
+    const resultado = response?.data;
     
-    console.log('📦 [Frontend] Backend retornou:', resultado);
+    console.log('📦 [Frontend] Backend retornou');
     
     if (resultado && resultado.sucesso) {
-      console.log('✅ [Frontend] Backend SUCESSO:', resultado.dados?.razao_social);
+      console.log('✅ [Frontend] Backend SUCESSO');
       return resultado;
     }
     
     if (resultado && !resultado.sucesso) {
-      console.warn('⚠️ [Frontend] Backend sem sucesso:', resultado.erro);
+      console.warn('⚠️ [Frontend] Backend sem sucesso');
       // Continua para fallback direto
     }
   } catch (error) {
-    console.warn('⚠️ [Frontend] Backend não disponível:', error.message);
+    console.warn('⚠️ [Frontend] Backend não disponível');
     // Fallback para busca direta no frontend
   }
 
@@ -66,7 +68,7 @@ export async function buscarDadosCNPJ(cnpj) {
     
     if (response.ok) {
       const dados = await response.json();
-      console.log('✅ [Frontend] BrasilAPI SUCESSO:', dados.razao_social);
+      console.log('✅ [Frontend] BrasilAPI SUCESSO');
       
       if (dados.razao_social) {
         return {
@@ -102,7 +104,7 @@ export async function buscarDadosCNPJ(cnpj) {
       }
     }
   } catch (error) {
-    console.error('❌ [Frontend] BrasilAPI falhou:', error.message);
+    console.error('❌ [Frontend] BrasilAPI falhou');
   }
 
   // ===== TODAS AS TENTATIVAS FALHARAM =====
@@ -116,7 +118,7 @@ export async function buscarDadosCNPJ(cnpj) {
 /**
  * Buscar dados de CPF via IA (apenas validação + nome se público)
  * @param {string} cpf - CPF formatado ou não
- * @returns {object} Status do CPF
+ * @returns {Promise<object>} Status do CPF
  */
 export async function buscarDadosCPF(cpf) {
   const cpfLimpo = cpf.replace(/\D/g, '');
@@ -178,7 +180,7 @@ export async function buscarDadosCPF(cpf) {
 /**
  * Buscar endereço por CEP (ViaCEP + coordenadas)
  * @param {string} cep - CEP formatado ou não
- * @returns {object} Dados do endereço
+ * @returns {Promise<object>} Dados do endereço
  */
 export async function buscarEnderecoCEP(cep) {
   try {
@@ -222,7 +224,7 @@ export async function buscarEnderecoCEP(cep) {
         }
       }
     } catch (erroGPS) {
-      console.warn('Não foi possível obter coordenadas GPS:', erroGPS);
+      console.warn('Não foi possível obter coordenadas GPS');
     }
 
     return {
@@ -249,7 +251,7 @@ export async function buscarEnderecoCEP(cep) {
 /**
  * Buscar informações de NCM (código fiscal de produtos)
  * @param {string} ncm - Código NCM (8 dígitos)
- * @returns {object} Descrição e alíquotas
+ * @returns {Promise<object>} Descrição e alíquotas
  */
 export async function buscarDadosNCM(ncm) {
   try {
@@ -259,11 +261,11 @@ export async function buscarDadosNCM(ncm) {
       throw new Error('NCM deve ter 8 dígitos');
     }
 
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Busque informações oficiais do código NCM ${ncmLimpo} na tabela NCM brasileira (Nomenclatura Comum do Mercosul).
+    const resultado = validarSugestaoNcmConsultaIA(await base44.integrations.Core.InvokeLLM({
+      prompt: `Apresente uma sugestao nao verificada sobre o NCM ${ncmLimpo}. Nao afirme consulta ou confirmacao oficial. A revisao em fonte oficial e obrigatoria antes do preenchimento manual.
       
       Retorne:
-      - descricao (descrição oficial do produto)
+      - descricao (descricao sugerida do produto)
       - unidade (unidade padrão: KG, UN, MT, etc)
       - aliquota_ipi (% de IPI médio)
       - aliquota_pis (% de PIS padrão)
@@ -286,21 +288,20 @@ export async function buscarDadosNCM(ncm) {
           obs: { type: "string" }
         }
       }
-    });
-
-    if (resultado.erro) {
-      throw new Error(resultado.erro);
-    }
+    }));
 
     return {
       sucesso: true,
-      dados: resultado
+      verificado: false,
+      fonte: 'Sugestao IA nao verificada',
+      codigo_consultado: ncmLimpo,
+      sugestao: resultado
     };
 
   } catch (error) {
     return {
       sucesso: false,
-      erro: error.message || 'Erro ao buscar NCM'
+      erro: error?.message === 'NCM deve ter 8 dígitos' ? 'NCM deve ter 8 dígitos' : 'Nao foi possivel obter uma sugestao NCM valida.'
     };
   }
 }
@@ -308,12 +309,12 @@ export async function buscarDadosNCM(ncm) {
 /**
  * Validar RNTRC de transportadora (ANTT)
  * @param {string} rntrc - Código RNTRC
- * @returns {object} Status da transportadora
+ * @returns {Promise<object>} Status da transportadora
  */
 export async function buscarDadosRNTRC(rntrc) {
   try {
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Valide o código RNTRC ${rntrc} no registro da ANTT (Agência Nacional de Transportes Terrestres).
+    const resultado = validarSugestaoRntrcConsultaIA(await base44.integrations.Core.InvokeLLM({
+      prompt: `Apresente uma sugestao nao verificada sobre o RNTRC ${rntrc}. Nao afirme consulta ou validacao na ANTT. A revisao em fonte oficial e obrigatoria antes do preenchimento manual.
       
       Retorne:
       - valido (true/false)
@@ -333,21 +334,20 @@ export async function buscarDadosRNTRC(rntrc) {
           categoria: { type: "string" }
         }
       }
-    });
-
-    if (resultado.erro) {
-      throw new Error(resultado.erro);
-    }
+    }));
 
     return {
       sucesso: true,
-      dados: resultado
+      verificado: false,
+      fonte: 'Sugestao IA nao verificada',
+      codigo_consultado: rntrc,
+      sugestao: resultado
     };
 
   } catch (error) {
     return {
       sucesso: false,
-      erro: error.message || 'Erro ao validar RNTRC'
+      erro: 'Nao foi possivel obter uma sugestao RNTRC valida.'
     };
   }
 }
@@ -394,7 +394,7 @@ export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled
       const res = await funcao(valor);
       setResultado(res);
 
-      if (res.sucesso && onDadosEncontrados) {
+      if (res.sucesso && res.verificado !== false && onDadosEncontrados) {
         onDadosEncontrados(res.dados);
       }
     } catch (error) {
@@ -432,14 +432,25 @@ export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled
       </Button>
 
       {resultado && (
-        <Alert className={resultado.sucesso ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}>
-          {resultado.sucesso ? (
+        <Alert className={resultado.verificado === false ? 'border-amber-300 bg-amber-50' : resultado.sucesso ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}>
+          {resultado.sucesso && resultado.verificado !== false ? (
             <CheckCircle className="w-4 h-4 text-green-600" />
           ) : (
             <AlertCircle className="w-4 h-4 text-red-600" />
           )}
           <AlertDescription className="text-xs">
-            {resultado.sucesso ? (
+            {resultado.sucesso && resultado.verificado === false ? (
+              <div className="text-amber-900 break-words">
+                <p className="font-semibold">Sugestao IA nao verificada</p>
+                <p>Codigo consultado: {resultado.codigo_consultado}</p>
+                <p>Revise em fonte oficial antes de preencher manualmente. Nenhum campo foi preenchido ou validado automaticamente.</p>
+                <dl className="mt-2 space-y-1">
+                  {Object.entries(resultado.sugestao).map(([campo, valorSugerido]) => (
+                    <div key={campo}><dt className="font-medium">{campo.replaceAll('_', ' ')} (sugerido)</dt><dd>{typeof valorSugerido === 'boolean' ? (valorSugerido ? 'Sim' : 'Nao') : String(valorSugerido)}</dd></div>
+                  ))}
+                </dl>
+              </div>
+            ) : resultado.sucesso ? (
               <div className="text-green-900">
                 <p className="font-semibold">✅ Dados REAIS preenchidos!</p>
                 {resultado.fonte && (
@@ -463,11 +474,13 @@ export function useBuscaAutomatica(tipo) {
   const [buscando, setBuscando] = React.useState(false);
   const [dados, setDados] = React.useState(null);
   const [erro, setErro] = React.useState(null);
+  const [sugestao, setSugestao] = React.useState(null);
 
   const buscar = async (valor) => {
     setBuscando(true);
     setErro(null);
     setDados(null);
+    setSugestao(null);
 
     const funcoesBusca = {
       cnpj: buscarDadosCNPJ,
@@ -486,7 +499,9 @@ export function useBuscaAutomatica(tipo) {
 
     const resultado = await funcao(valor);
     
-    if (resultado.sucesso) {
+    if (resultado.sucesso && resultado.verificado === false) {
+      setSugestao(resultado.sugestao);
+    } else if (resultado.sucesso) {
       setDados(resultado.dados);
     } else {
       setErro(resultado.erro);
@@ -496,7 +511,7 @@ export function useBuscaAutomatica(tipo) {
     return resultado;
   };
 
-  return { buscar, buscando, dados, erro };
+  return { buscar, buscando, dados, erro, sugestao };
 }
 
 export default {

@@ -21,6 +21,16 @@ import {
 } from '@/components/lib/marketplacePedidoPolicy';
 
 /**
+ * Caller contract only; the existing runtime guards still decide import eligibility.
+ * Provider metadata is not authenticated by this type.
+ * @typedef {Record<string, unknown> & {
+ *   id: string, group_id: string, empresa_id: string, status_importacao: string,
+ *   id_externo: string, cliente_cpf_cnpj?: string, cliente_erp_id?: string,
+ *   itens?: import('../lib/marketplacePedidoPolicy').MarketplaceSkuItem[]
+ * }} MarketplaceImportCommand
+ */
+
+/**
  * Sincronização ATIVA de Marketplaces
  * Importação automática de pedidos do Mercado Livre, Shopee, Amazon, etc.
  */
@@ -89,7 +99,7 @@ export default function SincronizacaoMarketplacesAtiva() {
   });
 
   const importarPedidoMutation = useMutation({
-    mutationFn: async (pedidoExterno) => {
+    mutationFn: async (/** @type {MarketplaceImportCommand} */ pedidoExterno) => {
       if (!contextoValido) {
         await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de importar pedido externo sem grupo ou empresa.', { pedido_externo_id: pedidoExterno?.id });
         throw new Error('Selecione grupo e empresa antes de importar pedidos.');

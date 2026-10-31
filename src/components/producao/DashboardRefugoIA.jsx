@@ -148,7 +148,7 @@ export default function DashboardRefugoIA({ empresaId }) {
                   <XAxis dataKey="operador" tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={100} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip 
-                    formatter={(value) => `${value.toFixed(1)}%`}
+                    formatter={(value) => `${typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1) : '-'}%`}
                     contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                   />
                   <Bar dataKey="percentual" fill="#ef4444" />
@@ -179,7 +179,7 @@ export default function DashboardRefugoIA({ empresaId }) {
                   <XAxis type="number" tick={{ fontSize: 12 }} />
                   <YAxis dataKey="bitola" type="category" width={100} tick={{ fontSize: 11 }} />
                   <Tooltip 
-                    formatter={(value) => `${value.toFixed(1)} kg`}
+                    formatter={(value) => `${typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1) : '-'} kg`}
                     contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                   />
                   <Bar dataKey="total_kg" fill="#f97316" />

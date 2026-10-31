@@ -26,7 +26,7 @@ export function useOrigemPedido() {
     queryFn: () => base44.entities.ParametroOrigemPedido.list(),
     initialData: [],
     staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000, // 10 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
   });
 
   // Detectar origem AUTOMATICAMENTE (performance < 50ms)

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import useCadastroRecordState from './useCadastroRecordState';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 import BuscaCEP from "../comercial/BuscaCEP";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeEndereco = (endereco = {}) => Object.fromEntries(Object.entries(endereco || {}).map(([key, value]) => [key, sanitizeText(value, 180)]));
@@ -31,7 +33,7 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
   const podeCriar = canCreate("Cadastros", "CentroOperacao") || canCreate("Logistica", "CentroOperacao") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroOperacao") || canEdit("Logistica", "CentroOperacao") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useCadastroRecordState({
     nome_centro: '',
     tipo: 'CD',
     endereco: {},
@@ -39,7 +41,7 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     permite_estoque: true,
     ativo: true,
     ...dadosIniciais
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],
@@ -98,6 +100,12 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-centro-operacao"
+      />
       <div>
         <Label>Nome do Centro *</Label>
         <Input value={formData.nome_centro} onChange={(e) => setFormData({ ...formData, nome_centro: e.target.value })} placeholder="Ex: CD Guarulhos, Obra Cliente X" disabled={!podeSalvar} data-permission="Cadastros.CentroOperacao.editar" data-action="editar-nome-centro-operacao" data-sensitive />

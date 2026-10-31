@@ -49,7 +49,7 @@ export default function AgendamentoRelatorios({ empresaId }) {
   });
 
   const salvarMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {typeof agendamento} */ data) => {
       if (!contextoValido || !canEditAgendamento) {
         await base44.entities.AuditLog.create({
           acao: 'Bloqueio',

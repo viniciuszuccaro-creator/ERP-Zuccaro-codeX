@@ -81,7 +81,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const retirados = pedidos.filter(p => p.status === 'Entregue' && p.tipo_frete === 'Retirada').length;
 
   const atualizarStatusMutation = useMutation({
-    mutationFn: ({ pedidoId, novoStatus }) => 
+    mutationFn: (/** @type {{pedidoId: string, novoStatus: string}} */ { pedidoId, novoStatus }) =>
       base44.entities.Pedido.update(pedidoId, { status: novoStatus }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -90,7 +90,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   });
 
   const confirmarRetiradaMutation = useMutation({
-    mutationFn: async ({ pedido }) => {
+    mutationFn: async (/** @type {{pedido: Record<string, unknown> & {id: string, empresa_id?: string, numero_pedido?: string, cliente_id?: string, cliente_nome?: string, itens_revenda?: {produto_id?: string, descricao?: string, produto_descricao?: string, quantidade?: number, unidade?: string}[]}}} */ { pedido }) => {
       // Baixar estoque automaticamente
       if (pedido.itens_revenda?.length > 0) {
         for (const item of pedido.itens_revenda) {

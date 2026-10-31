@@ -1,0 +1,32 @@
+Recibo sanitizado — 2026-10-28
+Código de referência ac563ece (runtime b3e494ba, CI5003/5004 SUCCESS previamente comprovados).
+5173: listener real e Private; API canônica isolada, PostgreSQL17 network=none/tmpfs; operacional=false.
+Aviso sintético visível no navegador antes e depois do login; metadata /__erp_fixture conferida.
+44919: sem listener; log remoto local28/10 10:48 associa porta a callback OAuth Hostinger. Query omitida integralmente.
+HTTPS DEV /health: status ok/environment dev/database configured/version0.1.0-runtime-01; sem inferir SHA/principal/banco.
+Coorte:100 originais iguais ao staging com hash de manifesto conferido; leituras destino0/escritas0/importação0.
+SSH: nenhuma conexão; chave dedicada apenas local; hostkey não comprovada; proposta servidor não aplicada; grants0/deploy0.
+Provas privadas: decision-20261026/identity-preview-20261028; access-codex-readonly-20261028.
+Verificações: node --check, negativa SHA antes de alocação, browser pré/pós-login, network=none, ssh -G local; documentação diff-check.
+Sem dados reais, chaves privadas, parâmetros OAuth ou relatórios detalhados neste recibo.
+
+Complemento pacote seguinte: CI5011/40693817796 e CI5012/40693829224 SUCCESS terminal, SHA bbd09904037e0b273f247e604865a9e267022569,3 jobs cada.
+Listener5173 e metadata synthetic/network-none novamente conferidos; snapshot ac563ece.
+Proposta dedicada inclui expiração/revogação, sh -n PASS; nenhuma conexão/alteração VPS.
+Cursor353 continua eaad0b84; sem novo delta. Recuperação ERP novo separada A/B/C/D; nenhuma recuperação de registros comprovada.
+
+Aprovacao posterior: prazo chave20261227T235900Z/conta2026-12-28, revogacao antecipada obrigatoria.
+Mesma chave local; nenhum upload/conexao SSH. HOST confiavel/canal administrativo ainda ausentes.
+Procedimento administrativo unico em OPERACAO_DEV_VPS; scripts privados de provisionamento/revogacao sh -n PASS.
+Nenhuma alteracao de servidor/banco/grants/carga/deploy nesta preparacao.
+
+Retomada6f177a23: CI5021/40696096149 e CI5022/40696104751 SUCCESS,3 jobs cada.
+Prazo original conferido no chat:27/12/2026 20:59 Brasilia; conta28/12. Sem nova interpretacao.
+Procedimento executavel existente:4 simulacoes isoladas PASS; host errado/conta existente sem mutacao; sucesso; falha posterior expira conta. Nao houve acesso remoto.
+5173 listener/HTTP/metadata/Private conferidos, snapshot ac563ece/PG17 sintetico network=none.
+Canal Hostinger CLI nao configurado/acessivel, trusted_host ausente; intervencao unica do console detalhada no documento existente.
+
+Intervencao atomica:9checks receptor PASS, sem rede. Porta22/2222, alias literal, fingerprint, permissoes e recusa de vinculo alterado comprovados localmente.
+Mesmo usuario/chave/prazo aprovados. Script inclui confirmacao de endpoint/porta/listener e recibo HOST publico para transferencia via editor privado.
+Sem FileZilla/sessao SFTP autenticada comprovados. Nenhum recibo real HOST recebido, SSH nao tentado, arquivos verified nao instalados.
+CI5026/5027 SUCCESS no SHA e922e047.

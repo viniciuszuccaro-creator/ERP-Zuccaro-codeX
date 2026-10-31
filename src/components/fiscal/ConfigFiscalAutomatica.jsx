@@ -12,13 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
+import { a1CertificateApi, central360SessionKey } from "@/api/httpApiClient";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { sanitizeAuditPayload } from "@/components/lib/sanitizeOnWrite";
+import CertificadoA1Panel from "./CertificadoA1Panel";
 import {
   FileText,
   Shield,
   Settings,
   AlertTriangle,
   CheckCircle,
-  Upload,
   Download,
   Lock,
   Building2
@@ -53,7 +56,20 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
     enabled: !!empresaId,
   });
 
-  const [formData, setFormData] = useState({
+  const a1Scope = { groupId: groupId || empresa?.group_id || empresa?.grupo_id, empresaId, actorId: user?.id };
+  const certificateQueryKey = ['a1-certificate', a1Scope.groupId, empresaId, user?.id,
+    central360SessionKey(readErpHttpSession()?.token)];
+  const certificateQuery = useQuery({
+    queryKey: certificateQueryKey,
+    queryFn: ({ signal }) => a1CertificateApi.metadata(a1Scope, { signal }),
+    enabled: !!a1Scope.groupId && !!empresaId && !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+  const certificate = certificateQuery.data;
+
+  const [fiscalFormData, setFormData] = useState({
     ambiente_nfe: config?.ambiente || "Homologação",
     provedor_nf: config?.provedor_nf || "Nenhum",
     api_url: config?.api_url || "",
@@ -65,7 +81,6 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
     proximo_numero_nfce: config?.proximo_numero_nfce || 1,
     proximo_numero_nfse: config?.proximo_numero_nfse || 1,
     certificado_tipo: config?.certificado_tipo || "A1",
-    senha_certificado: config?.senha_certificado || "",
     data_validade_certificado: config?.data_validade_certificado || "",
     cfop_padrao_dentro_estado: config?.cfop_padrao_dentro_estado || "5102",
     cfop_padrao_fora_estado: config?.cfop_padrao_fora_estado || "6102",
@@ -80,6 +95,8 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
     emite_nfse: config?.emite_nfse || false,
     permite_emissao_sem_estoque: config?.permite_emissao_sem_estoque || false
   });
+  const formData = { ...fiscalFormData, data_validade_certificado: fiscalFormData.certificado_tipo === 'A1'
+    ? certificate?.validTo || '' : fiscalFormData.data_validade_certificado };
 
   React.useEffect(() => {
     if (config) {
@@ -95,7 +112,6 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
         proximo_numero_nfce: config.proximo_numero_nfce || 1,
         proximo_numero_nfse: config.proximo_numero_nfse || 1,
         certificado_tipo: config.certificado_tipo || "A1",
-        senha_certificado: config.senha_certificado || "",
         data_validade_certificado: config.data_validade_certificado || "",
         cfop_padrao_dentro_estado: config.cfop_padrao_dentro_estado || "5102",
         cfop_padrao_fora_estado: config.cfop_padrao_fora_estado || "6102",
@@ -118,9 +134,12 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
       if (!empresaId) {
         throw new Error("Selecione uma empresa antes de salvar a configuracao fiscal.");
       }
+      if (formData.certificado_tipo === 'A1' && (!certificateQuery.isSuccess || certificateQuery.isFetching)) {
+        throw new Error('Consulte o cofre A1 antes de salvar a configuracao.');
+      }
 
       const diasExpiracao = formData.data_validade_certificado
-        ? Math.floor((new Date(formData.data_validade_certificado) - new Date()) / (1000 * 60 * 60 * 24))
+        ? Math.floor((new Date(formData.data_validade_certificado).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
         : null;
 
       const alertas = [];
@@ -132,7 +151,7 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
         });
       }
 
-      if (!formData.arquivo_certificado && formData.certificado_tipo === "A1") {
+      if (!certificate && formData.certificado_tipo === "A1") {
         alertas.push({
           tipo: "configuracao_incompleta",
           mensagem: "Certificado A1 não enviado",
@@ -162,15 +181,15 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
             data: new Date().toISOString(),
             usuario: "Sistema",
             campo_alterado: "configuracao_geral",
-            valor_anterior: JSON.stringify(config || {}),
-            valor_novo: JSON.stringify(formData)
+            valor_anterior: JSON.stringify(sanitizeAuditPayload({ ...config, historico_alteracoes: undefined })),
+            valor_novo: JSON.stringify(sanitizeAuditPayload(formData))
           }
         ]
       };
 
       if (config?.id) {
         const result = await base44.entities.ConfigFiscalEmpresa.update(config.id, dadosCompletos);
-        return { ...result, __auditAction: "Edicao", __auditPrevious: config };
+        return { ...result, __auditAction: "Edicao", __auditPrevious: sanitizeAuditPayload({ ...config, historico_alteracoes: undefined }) };
       } else {
         const result = await base44.entities.ConfigFiscalEmpresa.create(dadosCompletos);
         return { ...result, __auditAction: "Criacao" };
@@ -190,7 +209,7 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
           registro_id: result?.id || config?.id || null,
           descricao: "Configuracao fiscal da empresa salva",
           dados_anteriores: result?.__auditPrevious || null,
-          dados_novos: formData,
+          dados_novos: sanitizeAuditPayload(formData),
           sucesso: true,
           data_hora: new Date().toISOString(),
         });
@@ -217,7 +236,7 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
 
   const certificadoValido = formData.data_validade_certificado && new Date(formData.data_validade_certificado) > new Date();
   const diasRestantes = formData.data_validade_certificado
-    ? Math.floor((new Date(formData.data_validade_certificado) - new Date()) / (1000 * 60 * 60 * 24))
+    ? Math.floor((new Date(formData.data_validade_certificado).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
   return (
@@ -418,36 +437,20 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
                 </Select>
               </div>
 
-              {formData.certificado_tipo === "A1" && (
-                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8">
-                  <div className="text-center">
-                    <Upload className="w-12 h-12 mx-auto mb-4 text-slate-400" />
-                    <p className="text-sm text-slate-600 mb-2">
-                      Faça upload do certificado .pfx ou .p12
-                    </p>
-                    <Button type="button" variant="outline" size="sm">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Selecionar Arquivo
-                    </Button>
-                  </div>
-                </div>
-              )}
+              {formData.certificado_tipo === "A1" && <>
+                <CertificadoA1Panel key={`${a1Scope.groupId}:${empresaId}:${user?.id}`}
+                  scope={a1Scope} metadata={certificate} ready={certificateQuery.isSuccess && !certificateQuery.isFetching}
+                  onUploaded={() => queryClient.invalidateQueries({ queryKey: certificateQueryKey })} />
+                {certificateQuery.isError && <p role="alert" className="text-sm text-red-700">Cofre A1 indisponivel. Nenhum envio ou validade foi confirmado.</p>}
+              </>}
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Senha do Certificado</Label>
-                  <Input
-                    type="password"
-                    value={formData.senha_certificado}
-                    onChange={(e) => setFormData({ ...formData, senha_certificado: e.target.value })}
-                    className="mt-2"
-                  />
-                </div>
                 <div>
                   <Label>Data de Validade</Label>
                   <Input
                     type="date"
-                    value={formData.data_validade_certificado}
+                    value={formData.data_validade_certificado?.slice(0, 10)}
+                    readOnly={formData.certificado_tipo === 'A1'}
                     onChange={(e) => setFormData({ ...formData, data_validade_certificado: e.target.value })}
                     className="mt-2"
                   />

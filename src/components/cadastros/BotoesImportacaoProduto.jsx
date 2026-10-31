@@ -72,7 +72,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
           variant="outline"
           onClick={abrirImportacaoNFe}
           disabled={!contextoValido || !podeImportarProduto}
-          className="border-purple-300 hover:bg-purple-50"
+          className="border-sky-300 hover:bg-sky-50"
           data-permission="Cadastros.Produto.importar"
           data-action="Cadastros.Produto.importar-nfe"
           data-context-required="group-and-company"

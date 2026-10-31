@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { useEffect, useRef } from 'react';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,8 +16,9 @@ import { clienteSchema } from "./cliente/clienteSchema";
 
 
 
-export default function ClienteForm({ cliente, onSubmit, isSubmitting }) {
-  const { carimbarContexto } = useContextoVisual();
+export default function ClienteForm({ cliente: clienteProp = undefined, item = undefined, data = undefined, initialData = undefined, defaultValues: defaultValuesProp = undefined, onSubmit, isSubmitting }) {
+  const cliente = clienteProp || item || data || initialData || defaultValuesProp || null;
+  const { carimbarContexto, grupoAtual, empresaAtual, contexto } = useContextoVisual();
   const defaultValues = (cliente || {
   nome: "",
   razao_social: "",
@@ -41,7 +43,7 @@ export default function ClienteForm({ cliente, onSubmit, isSubmitting }) {
   status: "Prospect"
 });
 
-const { control, handleSubmit, setValue, watch, formState: { errors, isSubmitting: isFormSubmitting } } = useForm({
+const { control, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting: isFormSubmitting } } = useForm({
   resolver: zodResolver(clienteSchema),
   mode: 'onBlur',
   defaultValues,
@@ -59,6 +61,15 @@ const setFormData = (updater) => {
 
   const [cpfCnpjValido, setCpfCnpjValido] = useState(false);
   const [dadosReceita, setDadosReceita] = useState(null);
+  const recordIdentity = JSON.stringify([cliente?.id ?? null, cliente?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]);
+  const hydratedIdentity = useRef(recordIdentity);
+  useEffect(() => {
+    if (hydratedIdentity.current === recordIdentity) return;
+    hydratedIdentity.current = recordIdentity;
+    reset(defaultValues);
+    setCpfCnpjValido(false);
+    setDadosReceita(null);
+  }, [recordIdentity, defaultValues, reset]);
 
   const handleCPFCNPJChange = (valor, valido, dadosConsulta) => {
     setCpfCnpjValido(valido);

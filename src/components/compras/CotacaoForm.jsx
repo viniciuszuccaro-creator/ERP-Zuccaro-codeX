@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import FormErrorSummary from "@/components/common/FormErrorSummary";
+import FormErrorSummary, { formErrorMessage } from "@/components/common/FormErrorSummary";
 import usePermissions from "@/components/lib/usePermissions";
 
 /**
@@ -170,7 +170,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                 data-action="Compras.CotacaoForm.dataLimite"
                 data-context-required="group-and-company"
               />
-              {errors.data_limite_resposta && <p className="text-red-600 text-xs mt-1">{errors.data_limite_resposta.message}</p>}
+              {errors.data_limite_resposta && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.data_limite_resposta.message)}</p>}
             </div>
 
             <div className="col-span-2">
@@ -182,7 +182,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                 data-action="Compras.CotacaoForm.descricao"
                 data-context-required="group-and-company"
               />
-              {errors.descricao && <p className="text-red-600 text-xs mt-1">{errors.descricao.message}</p>}
+              {errors.descricao && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.descricao.message)}</p>}
             </div>
           </div>
         </CardContent>

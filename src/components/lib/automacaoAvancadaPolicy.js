@@ -1,6 +1,9 @@
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
-/** Fail-closed: automacao exige grupo; empresa obrigatoria no escopo empresa. */
+/**
+ * Fail-closed: automacao exige grupo; empresa obrigatoria no escopo empresa.
+ * @param {{groupId?: string|null, empresaId?: string|null, scopeType?: string}} [options]
+ */
 export const assertAutomacaoContext = ({ groupId, empresaId, scopeType = 'empresa' } = {}) => {
   if (!firstText(groupId)) {
     throw new Error('Grupo obrigatorio para automacao.');
@@ -34,6 +37,15 @@ export const isEmitirAutomaticoEnabled = (configs = []) => {
   });
 };
 
+/** @typedef {{ok: boolean, modo: string, executado: boolean, cancelado?: boolean, acoes?: unknown[]}} AutomacaoResultDefaults */
+/** @overload
+ * @param {undefined} [payload]
+ * @returns {{ok: boolean, modo: string, executado: boolean}} */
+/** @template {Record<string, unknown>} T
+ * @overload
+ * @param {T} payload
+ * @returns {Omit<AutomacaoResultDefaults, keyof T> & T} */
+/** @param {Record<string, unknown>} [payload] */
 export const stampAutomacaoResult = (payload = {}) => ({
   ok: payload.ok !== false,
   modo: firstText(payload.modo) || 'sugestao',

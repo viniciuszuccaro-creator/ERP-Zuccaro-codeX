@@ -12,7 +12,7 @@ import {
   refreshErpHttpSessionFromServer,
 } from '@/api/erpHttpSession';
 
-const AuthContext = createContext();
+const AuthContext = createContext(undefined);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);

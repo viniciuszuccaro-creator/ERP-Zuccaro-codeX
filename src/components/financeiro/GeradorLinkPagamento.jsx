@@ -36,6 +36,12 @@ const isSafeUrl = (value) => {
 
 const allowedGateways = new Set(["asaas", "mercadopago", "pagseguro"]);
 
+/** @param {{titulo?: {id?: string, group_id?: string, grupo_id?: string, empresa_id?: string,
+ * valor_total?: number | string, valor?: number | string, cliente_nome?: string, cliente?: string,
+ * cliente_id?: string, cliente_cpf_cnpj?: string, numero_titulo?: string, numero_documento?: string},
+ * pedido?: {id?: string, group_id?: string, grupo_id?: string, empresa_id?: string,
+ * valor_total?: number | string, valor?: number | string, cliente_nome?: string, cliente?: string,
+ * cliente_id?: string, cliente_cpf_cnpj?: string}, onClose: () => void}} props */
 export default function GeradorLinkPagamento({ titulo, pedido, onClose }) {
   const { user } = useUser();
   const queryClient = useQueryClient();

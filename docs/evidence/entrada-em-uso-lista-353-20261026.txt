@@ -1,0 +1,67 @@
+ENTRADA EM USO — EVIDÊNCIA HISTÓRICA (candidata #353)
+=====================================================
+AVISO (2026-10-26): este arquivo NÃO é mais a lista vigente de prontidão.
+Lista UNICA vigente = topo de STATUS_DO_PROJETO.md (diretriz PLANO_GO_LIVE
+“Prioridade vigente: entrada em uso”). Manter aqui só como procedência.
+
+Decisão do proprietário 2026-10-26: reorganiza prioridades dos planos
+existentes; NÃO cria plano paralelo; NÃO substitui Regra-Mãe nem gates
+de VPS/permissões/migrations/merge/deploy/carga.
+
+Separação: VPS = operação aprovada · Codespace = evolução (C360/omnicanal)
+· GitHub = código · dados reais = privado.
+
+Snapshot desta evidência (histórico; tip atual d0e38a16 / remarge 82557565):
+- P1 publication guardas: ENCERRADO (contraprova Codex; não por CI).
+- Contatos principal/metadata: correção no tip Cursor; bloqueia até revisão
+  Codex do novo SHA. CI ≠ operacional VPS.
+- Pedido INSERT: dependencia 044 ausente no destino observado (Codex).
+
+Papéis: Cursor=candidata/recuperação/cadastros · Codex=legado/privilégio/carga
+
+────────────────────────────────────────────
+PRONTO PARA HOMOLOGAÇÃO (código/CI — NÃO = VPS liberada)
+────────────────────────────────────────────
+[P] Login + escopo Grupo/Empresa (arquitetura fail-closed existente) — HML
+[P] RBAC granular cadastros/comercial/relatorios (ensaios) — HML ≠ sessão real
+[P] Cadastros reopen/boundId (coorte + Forma/Setor/Cliente/Fornecedor)
+[P] Cliente HTTP MASTER escalares; contatos overflow honesto (principal/meta)
+[P] Relatorios: matriz/exportacao/agendamento/representantes/personalizado
+[P] Candidata #353 integrada sobre consolidação (aguardar CI do tip atual)
+
+────────────────────────────────────────────
+BLOQUEADOR DA ENTRADA EM USO
+────────────────────────────────────────────
+[B1] P1 publication guardas — ENCERRADO (contraprova; não reabrir por CI)
+[B1b] Contatos: tip e9d7ef15 + CI4797/4798; bot review sem major issues;
+      preferível contraprova humana dos 2 casos. Implementado+CI ≠ VPS
+[B2] Aprovação disponibilização HML/VPS (privilégio/policies/digests) — #344
+[B3] Medir SHA/build efetivamente servido (VPS/Codespace)
+[B4] Fornecedor PG ops: migration candidate — gate
+[B5] Contatos[] canônico (jsonb/filha) — evolução gate separado
+[B6] Merge/deploy candidata — gate humano
+[B7] Pedido INSERT: colunas 044 (idempotency_key/payload_fingerprint) ausentes
+     no destino observado — não declarar vendas prontas pela SPA
+
+────────────────────────────────────────────
+PENDÊNCIA DE DADOS
+────────────────────────────────────────────
+[D1] Staging + import_authorized coorte ≤100 (Codex/gates)
+[D2] Reconciliação identidade; sem sobrescrever preexistentes
+[D3] Auxiliares “sumidos”: classificar contexto/RBAC antes de ETL
+[D4] Fornecedores/produtos em escala + pendências com motivo
+[D5] Históricos/saldos: consulta ≠ cobrança/baixa/NF automática
+
+────────────────────────────────────────────
+MELHORIA POSTERIOR (Codespace)
+────────────────────────────────────────────
+[M1] Comercial360 omnicanal avançado
+[M2] Contatos jsonb / cliente_contatos
+[M3] Documentacao/EmpresaOnboarding/OAuthConsent — sem auth permissiva
+[M4] Demais recuperações erp-integra sem substituir ERP
+
+────────────────────────────────────────────
+ESCOPO OPERACIONAL INICIAL (rascunho HML)
+────────────────────────────────────────────
+Roteiro: docs/evidence/roteiro-homologacao-integrada-353-20261026.txt
+login → Grupo/Empresa → cadastro salvar/reabrir → orçamento → pedido (044).

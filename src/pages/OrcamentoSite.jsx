@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { ShoppingCart, Search, Store, ShieldCheck, CreditCard, Truck } from "lucide-react";
 import { createPageUrl } from "@/utils";
+import { displayScalar } from "@/lib/utils";
 import ChatbotWidget from "@/components/chatbot/ChatbotWidget";
 import OrcamentoAutomaticoIA from "@/components/site/OrcamentoAutomaticoIA";
 import {
@@ -341,8 +342,8 @@ export default function OrcamentoSite() {
                   return (
                     <Card key={p.id} className="flex flex-col">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-base line-clamp-2">{p.descricao}</CardTitle>
-                        <CardDescription className="text-xs">{p.codigo || p.slug_site || ""}</CardDescription>
+                        <CardTitle className="text-base line-clamp-2">{displayScalar(p.descricao)}</CardTitle>
+                        <CardDescription className="text-xs">{displayScalar(p.codigo) || displayScalar(p.slug_site) || ""}</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-1">
                         <div className="flex items-center justify-between text-sm">
@@ -360,6 +361,7 @@ export default function OrcamentoSite() {
                             disabled={!disponivel}
                             onClick={(e) => {
                               const qtyInput = e.currentTarget.parentElement?.querySelector("input[type='number']");
+                              if (!(qtyInput instanceof HTMLInputElement)) return;
                               const qty = Number(qtyInput?.dataset?.q || qtyInput?.value || 1) || 1;
                               addToCart(p, qty);
                               if (isProdutoDisponivelSite({ ...p, _precoResolvido: preco }, qty)) {

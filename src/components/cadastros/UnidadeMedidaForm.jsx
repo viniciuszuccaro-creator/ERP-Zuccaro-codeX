@@ -9,8 +9,9 @@ import { Ruler } from 'lucide-react';
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
-export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
+export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || unidadeMedida || unidade;
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -18,8 +19,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.UnidadeMedida.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.UnidadeMedida.editar") || hasPermission?.("Cadastros.Produto.editar");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+    const emptyFormData = {
     sigla: '',
     nome_completo: '',
     tipo_grandeza: 'Unidade',
@@ -29,18 +29,20 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
     usa_em_compras: true,
     usa_em_vendas: true,
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: unidadeBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = unidadeBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!contextoValido) {
       alert('Selecione um grupo ou empresa antes de salvar.');
       return;
@@ -51,6 +53,7 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
     }
     onSubmit({
       ...formData,
+      ...(unidadeBoundId ? { id: unidadeBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     });
@@ -59,8 +62,8 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
+        hasId={Boolean(unidadeBoundId)}
+        entityId={unidadeBoundId}
         value={formData.codigo}
         action="codigo-registro-unidade-medida"
       />
@@ -179,9 +182,9 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
       <Button
         type="submit"
-        className="w-full bg-indigo-600 hover:bg-indigo-700"
-        disabled={!contextoValido || !podeSalvar}
-        data-permission={dadosIniciais?.id ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
+        className="w-full bg-sky-600 hover:bg-sky-700"
+        disabled={isSubmitting || !contextoValido || !podeSalvar}
+        data-permission={unidadeBoundId ? "Cadastros.UnidadeMedida.editar" : "Cadastros.UnidadeMedida.criar"}
         data-action="salvar-unidade-medida"
         data-sensitive="true"
       >
@@ -193,8 +196,8 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
-          <Ruler className="w-6 h-6 text-indigo-600" />
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Ruler className="w-6 h-6 text-sky-600" />
           <h2 className="text-lg font-bold text-slate-900">
             {dadosIniciais ? 'Editar Unidade' : 'Nova Unidade de Medida'}
           </h2>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Package, TrendingUp, Award } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { isPortalClienteIdentificado } from '@/components/lib/portalClientePolicy';
 
 /**
  * V21.5 - Histórico de Compras Inteligente
@@ -13,17 +14,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
  * ✅ Sugestões personalizadas IA
  * ✅ Fidelidade e cashback
  */
+/** @param {{clienteId?: string}} props */
 export default function HistoricoComprasCliente({ clienteId }) {
   const { data: cliente } = useQuery({
     queryKey: ['cliente-historico', clienteId],
-    queryFn: () => base44.entities.Cliente.filter({ id: clienteId }).then(r => r[0]),
-    enabled: !!clienteId,
+    queryFn: () => isPortalClienteIdentificado(clienteId) ? base44.entities.Cliente.filter({ id: clienteId }).then(r => r[0]) : Promise.resolve(null),
+    enabled: isPortalClienteIdentificado(clienteId),
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['historico-pedidos', clienteId, cliente?.empresa_id, cliente?.group_id],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteId, empresa_id: cliente?.empresa_id || undefined, group_id: cliente?.group_id || undefined }, '-data_pedido', 100),
-    enabled: !!clienteId,
+    queryFn: () => isPortalClienteIdentificado(clienteId) ? base44.entities.Pedido.filter({ cliente_id: clienteId, empresa_id: cliente?.empresa_id || undefined, group_id: cliente?.group_id || undefined }, '-data_pedido', 100) : Promise.resolve([]),
+    enabled: isPortalClienteIdentificado(clienteId),
   });
 
   // Produtos mais comprados
@@ -52,6 +54,7 @@ export default function HistoricoComprasCliente({ clienteId }) {
     quantidade: p.quantidade,
   }));
 
+  if (!isPortalClienteIdentificado(clienteId)) return <p role="status">Cliente do portal nao identificado. Operacoes indisponiveis.</p>;
   return (
     <div className="space-y-6 w-full h-full">
       {/* KPIs de Fidelidade */}

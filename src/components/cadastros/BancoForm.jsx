@@ -8,6 +8,7 @@ import { Loader2, Landmark } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -20,8 +21,7 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "Banco") || canCreate("Financeiro", "Banco") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Banco") || canEdit("Financeiro", "Banco") || canEdit("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_banco: '',
     codigo_banco: '',
     agencia: '',
@@ -38,23 +38,25 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
     chave_pix: '',
     tipo_chave_pix: 'CNPJ',
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: bancoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = bancoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (dadosIniciais?.id && !podeEditar) {
+    if (isSubmitting) return;
+    if (bancoBoundId && !podeEditar) {
       alert("Sem permissao para editar bancos.");
       return;
     }
-    if (!dadosIniciais?.id && !podeCriar) {
+    if (!bancoBoundId && !podeCriar) {
       alert("Sem permissao para criar bancos.");
       return;
     }
@@ -69,6 +71,7 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
     // Injeta 'nome' para compatibilidade com o Visualizador Universal
     const payload = {
       ...formData,
+      ...(bancoBoundId ? { id: bancoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
       nome: formData.nome_banco
@@ -84,9 +87,9 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
-        value={formData.codigo}
+        hasId={Boolean(bancoBoundId)}
+        entityId={bancoBoundId}
+        value={formData.codigo ?? dadosIniciais?.codigo}
         action="codigo-registro-banco"
       />
 

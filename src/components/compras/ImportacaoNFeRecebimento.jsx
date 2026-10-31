@@ -31,6 +31,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
     hasPermission('Estoque', 'Movimentacoes', 'criar') ||
     hasPermission('Compras', null, 'criar');
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditImportacao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await createInContext('AuditLog', {
@@ -53,7 +54,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
   };
 
   const processarXMLMutation = useMutation({
-    mutationFn: async (file) => {
+    mutationFn: async (/** @type {File} */ file) => {
       if (!contextoValido || !canProcessarNFe) {
         await auditImportacao({
           acao: 'ImportacaoNFe.processamento_bloqueado',
@@ -134,7 +135,7 @@ export default function ImportacaoNFeRecebimento({ windowMode = false }) {
   });
 
   const confirmarRecebimentoMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {Awaited<ReturnType<typeof processarXMLMutation.mutateAsync>>} */ dados) => {
       if (!contextoValido || !canProcessarNFe) {
         await auditImportacao({
           acao: 'ImportacaoNFe.recebimento_bloqueado',

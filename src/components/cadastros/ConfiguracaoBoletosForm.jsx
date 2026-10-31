@@ -1,4 +1,5 @@
-﻿import React, { useState } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DollarSign, Save } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeSecret = (value) => String(value ?? "").replace(/[<>]/g, "").slice(0, 1200).trim();
@@ -24,7 +26,7 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
   const podeCriar = canCreate("Cadastros", "ConfiguracaoBoletos") || canCreate("Sistema", "Boletos") || canCreate("Financeiro", "Boletos") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ConfiguracaoBoletos") || canEdit("Sistema", "Boletos") || canEdit("Financeiro", "Boletos") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     provedor: "Asaas",
     api_url: "",
     api_key: "",
@@ -41,7 +43,7 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
     webhook_url: "",
     ativo: true,
     observacoes: ""
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,6 +84,12 @@ export default function ConfiguracaoBoletosForm({ config, item, data, initialDat
 
   const form = (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+            idOnly
+            hasId={Boolean(dadosIniciais?.id)}
+            entityId={dadosIniciais?.id}
+            action="id-tecnico-configuracao-boletos"
+          />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

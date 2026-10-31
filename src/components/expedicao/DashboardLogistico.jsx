@@ -21,12 +21,17 @@ import { useUser } from "@/components/lib/UserContext";
 
 export default function DashboardLogistico({ empresaId, entregas: entregasProp = [], windowMode }) {
   const queryClient = useQueryClient();
-  const { filterInContext, empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
-  const { hasPermission } = usePermissions();
-  const { user } = useUser();
+  const { filterInContext, empresaAtual, grupoAtual, createInContext, updateInContext, contextoValido: contextoCanonicoValido, isLoading: loadingContexto } = useContextoVisual();
+  const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const { user, isLoading: loadingUser } = useUser();
   const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
   const effectiveGroupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  const contextoValido = Boolean(contextoCanonicoValido && !loadingContexto && !loadingPermissions && !loadingUser && user?.id && effectiveGroupId && (!empresaId || empresaId === empresaAtual?.id));
+  const scopeKey = JSON.stringify([effectiveGroupId, effectiveEmpresaId, user?.id]);
+  const isEntregaInScope = React.useCallback((record) => Boolean(record &&
+    !(record.group_id && record.grupo_id && record.group_id !== record.grupo_id) &&
+    (record.group_id || record.grupo_id) === effectiveGroupId &&
+    (!effectiveEmpresaId || record.empresa_id === effectiveEmpresaId)), [effectiveGroupId, effectiveEmpresaId]);
   const canViewPainel = hasPermission("Expedicao", "Painel Logistico", "visualizar") || hasPermission("Expedicao", "Rotas", "visualizar") || hasPermission("Expedicao", "Entregas", "visualizar");
   const canEditRules = hasPermission("Expedicao", "Painel Logistico", "editar") || hasPermission("Expedicao", "Configuracoes", "editar");
   const canSimulate = hasPermission("Expedicao", "Painel Logistico", "editar") || hasPermission("Expedicao", "Rotas", "editar");
@@ -43,29 +48,31 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
         resultado: sucesso ? "sucesso" : "bloqueado", motivo, detalhes, data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.warn("Falha ao auditar painel logistico", error);
+      console.warn("Falha ao auditar painel logistico");
     }
   };
 
-  const [selected, setSelected] = React.useState(null);
+  const [selection, setSelection] = React.useState(null);
+  const setSelected = (record) => setSelection(record ? { scopeKey, record } : null);
   const [filters, setFilters] = React.useState({ q: '', statuses: [] });
-  const [simResult, setSimResult] = React.useState(null);
+  const [simulation, setSimulation] = React.useState(null);
+  const simResult = simulation?.scopeKey === scopeKey ? simulation.data : null;
   const [showReport, setShowReport] = React.useState(false);
 
   React.useEffect(() => {
-    const handler = (e) => setSimResult(e.detail || null);
+    const handler = (e) => setSimulation(e.detail ? { scopeKey, data: e.detail } : null);
     window.addEventListener('logistica:simulation', handler);
     window.addEventListener('logistica:route', handler);
     return () => {
       window.removeEventListener('logistica:simulation', handler);
       window.removeEventListener('logistica:route', handler);
     };
-  }, []);
+  }, [scopeKey]);
 
   // Regras configuraveis salvas em ConfiguracaoSistema
   const rulesKey = React.useMemo(() => effectiveEmpresaId ? `logistica_alertas_rules_${effectiveEmpresaId}` : `logistica_alertas_rules_${effectiveGroupId || "global"}`, [effectiveEmpresaId, effectiveGroupId]);
   const { data: rules, isLoading: loadingRules } = useQuery({
-    queryKey: ['log-rules', rulesKey, effectiveGroupId, effectiveEmpresaId],
+    queryKey: ['log-rules', rulesKey, effectiveGroupId, effectiveEmpresaId, user?.id],
     queryFn: async () => {
       const rows = await filterInContext('ConfiguracaoSistema', { chave: rulesKey }, undefined, 1);
       return rows?.[0]?.valor_json || rows?.[0]?.regras || { minAtrasoHoras: 1, maxFilaRota: 8, maxTransitoHoras: 6 };
@@ -100,7 +107,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
 
   // Carrega entregas em tempo quase real (fallback props)
   const { data: entregas = [] } = useQuery({
-    queryKey: ['painel-logistico-entregas', effectiveGroupId, effectiveEmpresaId],
+    queryKey: ['painel-logistico-entregas', effectiveGroupId, effectiveEmpresaId, user?.id],
     queryFn: async () => await filterInContext('Entrega', {}, '-updated_date', 400),
     initialData: entregasProp,
     staleTime: 15000,
@@ -109,7 +116,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
 
   const handleEntregaUpdated = (e) => {
     try {
-      setSelected(e);
+      setSelection(e ? { scopeKey, record: e, updated: true } : null);
     } catch (error) {
       console.error('[DashboardLogistico] Falha ao selecionar entrega atualizada', error);
     }
@@ -119,24 +126,33 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
   };
 
   const filtradas = React.useMemo(() => {
+    if (!contextoValido || !canViewPainel) return [];
     const q = (filters.q || '').toLowerCase();
     return (entregas || []).filter((e) => {
+      if (!isEntregaInScope(e)) return false;
       const byQ = !q || [e.cliente_nome, e.numero_pedido, e.motorista, e.regiao_entrega_nome].some(v => String(v || '').toLowerCase().includes(q));
       const byS = !filters.statuses?.length || filters.statuses.includes(e.status);
       return byQ && byS;
     });
-  }, [entregas, filters]);
+  }, [entregas, filters, contextoValido, canViewPainel, isEntregaInScope]);
+  const selectedRow = selection?.scopeKey === scopeKey ? (entregas || []).find((record) => isEntregaInScope(record) && record.id === selection.record?.id) : null;
+  const selected = selectedRow ? (selection.updated && isEntregaInScope(selection.record) ? selection.record : selectedRow) : null;
 
-  return (
-    <div className="w-full h-full" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
-      {(!contextoValido || !canViewPainel) && (
+  if (!contextoValido || !canViewPainel) {
+    return (
+      <div className="w-full h-full" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
         <Card className="mb-3 bg-red-50 border-red-300">
           <CardContent className="p-3 text-sm text-red-800">
             <p className="font-semibold">Painel logistico bloqueado</p>
             <p>{!contextoValido ? "Selecione grupo/empresa para visualizar o painel." : "Seu perfil nao tem permissao para visualizar o painel logistico."}</p>
           </CardContent>
         </Card>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full" data-permission="Expedicao.PainelLogistico.visualizar" data-context-required="true">
       <Card className="mb-3">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
@@ -163,14 +179,14 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
 
       <ResizablePanelGroup direction="horizontal" className="w-full h-[70vh] min-h-[480px]">
         <ResizablePanel defaultSize={65} minSize={45}>
-          <MapView entregas={filtradas} selected={selected} onSelect={setSelected} />
+          <MapView entregas={filtradas} selected={selected} onSelect={setSelected} contextoValido={contextoValido} canView={canViewPainel} onAudit={auditPainel} />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={35} minSize={30}>
           <div className="grid gap-3 h-full grid-rows-[1fr_1fr_1fr_1fr]">
-            <AlertsPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} />
-            <BottlenecksPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} />
-            <QueuePanels entregas={filtradas} onSelectEntrega={setSelected} />
+            <AlertsPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} contextoValido={contextoValido} canView={canViewPainel} onAudit={auditPainel} />
+            <BottlenecksPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} contextoValido={contextoValido} canView={canViewPainel} onAudit={auditPainel} />
+            <QueuePanels entregas={filtradas} onSelectEntrega={setSelected} contextoValido={contextoValido} canView={canViewPainel} onAudit={auditPainel} />
             {selected ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <DriverChat entrega={selected} onUpdated={handleEntregaUpdated} />

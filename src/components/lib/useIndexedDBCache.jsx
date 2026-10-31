@@ -15,14 +15,14 @@ async function openDB() {
   if (_db) return _db;
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
+    req.onupgradeneeded = () => {
+      const db = req.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'key' });
         store.createIndex('expires_at', 'expires_at', { unique: false });
       }
     };
-    req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
+    req.onsuccess = () => { _db = req.result; resolve(_db); };
     req.onerror = () => reject(req.error);
   });
 }

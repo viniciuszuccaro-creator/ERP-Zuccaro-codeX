@@ -9,6 +9,7 @@ import { Loader2, Briefcase, Trash2, Power, PowerOff } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -22,26 +23,27 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
   const podeCriar = canCreate("Cadastros", "Cargo") || canCreate("Sistema", "Cargo") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Cargo") || canEdit("Sistema", "Cargo") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Cargo") || canDelete("Sistema", "Cargo") || canDelete("Cadastros", null);
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_cargo: '',
     descricao: '',
     codigo_cbo: '',
     nivel_hierarquico: 'Operacional',
     salario_base: 0,
     ativo: true
-  });
+  };
+  const [formData, setFormData] = useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: cargoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = cargoBoundId ? podeEditar : podeCriar;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.nome_cargo) {
       alert('Preencha o nome do cargo');
       return;
@@ -56,6 +58,7 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
     }
     onSubmit({
       ...formData,
+      ...(cargoBoundId ? { id: cargoBoundId } : {}),
       nome: formData.nome_cargo,
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id,
@@ -83,9 +86,9 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
-        hasId={Boolean(dadosIniciais?.id)}
-        entityId={dadosIniciais?.id}
-        value={formData.codigo}
+        hasId={Boolean(cargoBoundId)}
+        entityId={cargoBoundId}
+        value={formData.codigo ?? dadosIniciais?.codigo}
         action="codigo-registro-cargo"
       />
 

@@ -139,10 +139,10 @@ export default function FormasPagamentoPedido({
   };
 
   return (
-    <Card className="border-purple-200">
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+    <Card className="border-sky-200">
+      <CardHeader className="bg-gradient-to-r from-sky-50 to-blue-50">
         <CardTitle className="text-base flex items-center gap-2">
-          <DollarSign className="w-5 h-5 text-purple-600" />
+          <DollarSign className="w-5 h-5 text-sky-600" />
           Formas de Pagamento
         </CardTitle>
       </CardHeader>
@@ -257,7 +257,7 @@ export default function FormasPagamentoPedido({
               <Card>
                 <CardHeader className="py-3">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-purple-600" />
+                    <Calendar className="w-4 h-4 text-sky-600" />
                     Parcelas Geradas
                   </CardTitle>
                 </CardHeader>

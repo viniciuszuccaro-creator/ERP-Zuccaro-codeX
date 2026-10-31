@@ -128,10 +128,10 @@ export default function SimularPagamentoModal({ isOpen, onClose, contaReceber })
       return pagamento;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['contasReceber']);
-      queryClient.invalidateQueries(['pagamentos-omnichannel']);
-      queryClient.invalidateQueries(['caixa-ordens-liquidacao']);
-      queryClient.invalidateQueries(['historico-cliente']);
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      queryClient.invalidateQueries({ queryKey: ['pagamentos-omnichannel'] });
+      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
+      queryClient.invalidateQueries({ queryKey: ['historico-cliente'] });
       setPago(true);
       setProcessando(false);
       toast.success("✅ Pagamento simulado com sucesso!");

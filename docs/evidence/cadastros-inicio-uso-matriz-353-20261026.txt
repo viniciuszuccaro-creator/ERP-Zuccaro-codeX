@@ -1,0 +1,56 @@
+MATRIZ CADASTROS — início de uso (#353 pacote navegável)
+========================================================
+Tip base pré-pacote: 661ae01d · modalidade: runner Cursor
+Contatos: NÃO reabrir (pareceres 6418918562/6419136043).
+
+Escopo entidades (operação inicial)
+-----------------------------------
+Cliente, Fornecedor, Representante, Produto(V22), TabelaPreco, Marca,
+GrupoProduto, UnidadeMedida, SetorAtividade, FormaPagamento, CondicaoComercial,
+Banco, CentroCusto, PlanoContas, Transportadora, SegmentoCliente,
+RegiaoAtendimento, TipoFrete, LocalEstoque, Veiculo, Motorista, RotaPadrao,
+Servico, KitProduto, Departamento, Cargo, Turno.
+
+| Critério | Resultado (sintético/CI) | Notas |
+|----------|--------------------------|-------|
+| Código numérico + ID técnico | PASS_SINT coorte MASTER_CODE | CadastroCodigoRegistroField / V22 custom |
+| Códigos importados | contrato backend reserve | sem renumerar; legado em campo próprio |
+| Sequência backend / concorrência | reserve_entity_codigo | sem count+1 no form |
+| Abrir tela única | PASS_SINT openCadastroEntityWindow | uniqueKey por entidade |
+| Editar sem esvaziar | PASS_SINT reopen coorte | Marca migrada neste pacote |
+| Salvar uma vez | isSubmitting nas coortes | Marca: guard isSubmitting |
+| Fechar/reabrir | boundId + updated_date policy | Regiao: reopen próprio (prevUpdated) |
+| Troca registro/sessão/Grupo | decideCadastroReopen | dirty confirm |
+
+Classe A corrigida neste pacote
+-------------------------------
+- MarcaForm: prevIdRef fraco → useCadastroReopenOnIdentity + marcaBoundId no
+  código/ID/salvar; chrome sky no header windowMode.
+- Marca fluxo sintético abrir→editar→salvar→fechar→reabrir + switch-reject:
+  tests/cadastros-reopen-banco-cargo-behavioral.test.js (PASS).
+- Histórico Produtos (cliente): TabsContent + consulta fail-closed sem
+  permissão/contexto; com permissão queryKey grupo/empresa + Pedido:
+  tests/painel-dinamico-cliente-historico-tab.test.js (PASS).
+  Aba montada ≠ histórico carregado.
+Já OK (não reabrir)
+-------------------
+TabelaPreco, PlanoContas idOnly, RotaPadrao, Cliente/Fornecedor/Representante,
+FormaPagamento, Setor/UM/GrupoProduto, CondicaoComercial (ID-only pin),
+auxiliares na coorte #351.
+Pendência: CondicaoComercial reopen canônico exige autorizar delta no pin
+consolidacao/CANAL — não forçar fora do envelope.
+
+RegiaoAtendimento: reopen custom com updated_date + dirty confirm — equivalente
+funcional; não forçar troca de hook neste lote (form grande).
+
+ProdutoFormCompleto: legado; V22 é o caminho canônico (codigo + id-tecnico).
+
+Classe B / ocultos
+------------------
+Ver cadastros-codigos-AB + registros-sumidos-fonte-api-ui + executor privado.
+Lista vazia ≠ ausência: filtrar contexto/RBAC primeiro.
+
+Pedido / ciclo comercial
+------------------------
+Orçamento: componente PASS_SINT. Pedido INSERT: BLOQ_SCHEMA 044 (Codex).
+Explain UI ≠ persistido.

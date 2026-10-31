@@ -35,7 +35,7 @@ export default function SolicitarOrcamento() {
   const queryClient = useQueryClient();
 
   const criarOportunidadeMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {typeof formData} */ data) => {
       const user = await base44.auth.me();
       // Resolver contexto multiempresa a partir do cliente vinculado ao usuário do portal
       let empresaId = null, groupId = null;
@@ -67,7 +67,7 @@ export default function SolicitarOrcamento() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['minhas-oportunidades']);
+      queryClient.invalidateQueries({ queryKey: ['minhas-oportunidades'] });
       setSuccess(true);
       toast.success('Orçamento solicitado com sucesso!');
       setTimeout(() => {

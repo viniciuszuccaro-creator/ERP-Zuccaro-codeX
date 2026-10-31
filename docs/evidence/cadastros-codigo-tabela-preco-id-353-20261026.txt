@@ -1,0 +1,29 @@
+CADASTROS — TabelaPreco código + ID técnico (classe A) · #353
+============================================================
+Data: 2026-10-26 (America/Sao_Paulo) · tip após remarge 7ae5bcd9
+
+Problema classificado
+---------------------
+A) Registro existe (PG reserva `codigo` via reserveEntityCodigo / TabelaPreco)
+   mas a UI Completo/Form só mostrava `codigo_tabela_legado` — ocultava o
+   código comercial numérico e o ID técnico.
+B) Não aplicável neste incremento (sem staging privado neste runner).
+
+Correção (existente, sem módulo paralelo)
+-----------------------------------------
+- src/components/cadastros/TabelaPrecoFormCompleto.jsx
+- src/components/cadastros/TabelaPrecoForm.jsx
+- Reuso: CadastroCodigoRegistroField (action codigo-registro-tabela-preco)
+- Teste: tests/cadastros-codigo-cobertura-entidades.test.js
+  «TabelaPreco forms expõem código de registro e ID técnico»
+
+Aceite
+------
+- Edição: Código de registro readonly + ID técnico distintos do legado.
+- Novo: mensagem de geração automática ao salvar (padrão do campo).
+- Legado preservado; sem count+1 no frontend.
+
+Não feito neste incremento
+--------------------------
+- CRUD TabelaPreco no PG destino (leitura #344 ≠ gravação homologada).
+- Recuperação de registros ausentes (classe B) — staging privado / Codex.

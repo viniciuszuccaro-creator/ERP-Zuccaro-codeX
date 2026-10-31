@@ -1,0 +1,35 @@
+Contatos[] ↔ escalares MASTER — fidelidade (2026-10-26)
+=======================================================
+Tip candidata pós-remarge d86f06b6 · runner Cursor
+
+Problema
+- Contrato HTTP/PG Cliente MASTER = email / telefone / celular.
+- UI Base44 = contatos[] com nome, tipo, valor, principal, observação (+ id/ordem).
+- Projeção silenciosa descartava múltiplos do mesmo tipo e metadados.
+- Hidratar contatos[] a partir de escalares fingia lista completa na reabertura.
+
+Correção (isolada, sem migration)
+- assessContatosScalarFidelity: ok só com ≤1 valor/canal e sem nome/obs/id/ordem.
+- applyContatosProjection: se !ok → CONTATOS_SCALAR_OVERFLOW (422), sem fetch.
+- withHydratedContatos: NÃO injeta contatos[]; anexa contatos_escalares
+  { source:'scalars', complete:false, items[] }.
+- Preserva contatos[] se o transporte já trouxer (Base44).
+
+Achados Codex 6416585754 (tip pós-7901f622) — corrigidos no mesmo adapter
+- P1: E-mail(principal=false)+Telefone(principal=true) → `principal_nao_representavel`
+  quando ≥2 valores e algum principal:true; não redefinir preferência; bloqueio
+  antes do fetch; mensagem explícita; rascunho UI preservado.
+- P2: valor vazio com nome/observacao/id/ordem → `metadata_sem_valor` ANTES do
+  early-return; rascunho vazio sem metadata permanece ok.
+- P1 antigo das guardas reopen: ENCERRADO (contraprova); não confundir com estes.
+
+Provas: tests/cliente-contatos-http-adapter.test.js
+(implementado ≠ revisado Codex ≠ demonstrado Codespace ≠ operacional VPS)
+
+Evolução mínima proposta (GATE SEPARADO — não neste lote)
+- Opção A: coluna jsonb `contatos` em `clientes` (candidate → migration + RLS +
+  schema strict allowlist + auditoria), reutilizando o array UI.
+- Opção B: tabela filha `cliente_contatos` (group_id/empresa_id/cliente_id),
+  espelhando padrão de `cliente_locais`.
+- Preferência: A para paridade Base44 rápida; B se RBAC/auditoria por linha
+  for exigida. Sem entidade paralela ContatoClienteV2.

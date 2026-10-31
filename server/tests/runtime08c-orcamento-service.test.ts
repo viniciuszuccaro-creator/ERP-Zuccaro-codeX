@@ -349,3 +349,30 @@ test('Orcamento captura contexto e consulta autoria no executor transacional', a
   f.audit.listByEntity=async (...args:any[])=>{executorSeen=args[2]===f.repo.executor;return (read as any)(...args);};
   await f.service.update(ctx,row.id,payload);assert.equal(executorSeen,true);
 });
+
+test('Orcamento get/list nao promovem ator trocado durante a espera de tenant', async () => {
+  for (const method of ['get', 'list'] as const) {
+    const f = fixture();
+    const row = await f.service.create(ctx, payload);
+    const caller = { ...ctx, actorId: '99999999-9999-4999-8999-999999999999' };
+    const pending = method === 'get' ? f.service.get(caller, row.id) : f.service.list(caller);
+    caller.actorId = ctx.actorId;
+    assert.equal(await code(pending), 'PERMISSION_DENIED', method);
+    assert.equal((await f.repo.list({ groupId, empresaId })).total, 1);
+    assert.equal((await f.audit.listByEntity('Orcamento', row.id)).length, 1);
+  }
+});
+
+test('Orcamento get/list preservam o tenant e ator capturados na reabertura', async () => {
+  const f = fixture();
+  const row = await f.service.create(ctx, payload);
+  const caller = { ...ctx };
+  const pendingGet = f.service.get(caller, row.id);
+  const pendingList = f.service.list(caller);
+  caller.groupId = otherEmpresa;
+  caller.empresaId = otherEmpresa;
+  caller.actorId = otherEmpresa;
+  const [reopened, page] = await Promise.all([pendingGet, pendingList]);
+  assert.equal(reopened.id, row.id);
+  assert.equal(page.data[0].id, row.id);
+});

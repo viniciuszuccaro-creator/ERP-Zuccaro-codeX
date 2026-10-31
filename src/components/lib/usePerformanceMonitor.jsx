@@ -199,6 +199,10 @@ export function useQueryPerformance(queryKey, threshold_ms = 1000) {
 
 /**
  * Medir performance de uma função assíncrona
+ * @template T
+ * @param {() => T | Promise<T>} fn
+ * @param {Record<string, unknown> & {threshold_ms?: number}} metadata
+ * @returns {Promise<T>}
  */
 export async function measurePerformance(fn, metadata = {}) {
   const startTime = performance.now();
@@ -214,6 +218,7 @@ export async function measurePerformance(fn, metadata = {}) {
     const endTime = performance.now();
     const duracao_ms = Math.round(endTime - startTime);
 
+    /** @type {{timestamp: string, duracao_ms: number, duracao_segundos: number, erro: boolean, erro_mensagem?: unknown, threshold_ms?: number, lento?: boolean, percentual_acima_threshold?: number} & Record<string, unknown>} */
     const perfData = {
       timestamp: new Date().toISOString(),
       duracao_ms,

@@ -13,6 +13,7 @@ import {
 import { format } from "date-fns";
 import { useUser } from "@/components/lib/UserContext";
 import { toast } from "sonner";
+import { isPortalClienteIdentificado } from '@/components/lib/portalClientePolicy';
 
 /**
  * V21.5 - Chat Direto Cliente → Vendedor COMPLETO
@@ -24,6 +25,7 @@ import { toast } from "sonner";
  * ✅ Status online/offline do vendedor
  * ✅ 100% Responsivo w-full h-full
  */
+/** @param {{clienteId?: string}} props */
 export default function ChatVendedor({ clienteId }) {
   const { user } = useUser();
   const queryClient = useQueryClient();
@@ -33,25 +35,27 @@ export default function ChatVendedor({ clienteId }) {
 
   const { data: cliente } = useQuery({
     queryKey: ['cliente', clienteId],
-    queryFn: () => base44.entities.Cliente.filter({ id: clienteId }).then(r => r[0]),
-    enabled: !!clienteId
+    queryFn: () => isPortalClienteIdentificado(clienteId) ? base44.entities.Cliente.filter({ id: clienteId }).then(r => r[0]) : Promise.resolve(null),
+    enabled: isPortalClienteIdentificado(clienteId)
   });
 
   const { data: conversas = [], isLoading } = useQuery({
     queryKey: ['chat-cliente', clienteId],
     queryFn: async () => {
+      if (!isPortalClienteIdentificado(clienteId)) return [];
       const interacoes = await base44.entities.ChatbotInteracao.filter({
         cliente_id: clienteId,
         canal: 'Portal'
       }, '-created_date');
       return interacoes;
     },
-    enabled: !!clienteId,
+    enabled: isPortalClienteIdentificado(clienteId),
     refetchInterval: 5000 // Atualiza a cada 5s
   });
 
   const enviarMensagemMutation = useMutation({
-    mutationFn: async (mensagemTexto) => {
+    mutationFn: async (/** @type {string} */ mensagemTexto) => {
+      if (!isPortalClienteIdentificado(clienteId)) throw new Error('Cliente do portal nao identificado.');
       // 1. Criar interação de chat
       const interacao = await base44.entities.ChatbotInteracao.create({
         cliente_id: clienteId,
@@ -83,14 +87,15 @@ export default function ChatVendedor({ clienteId }) {
       return interacao;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['chat-cliente', clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['chat-cliente', clienteId] });
       setMensagem('');
       toast.success('Mensagem enviada! Vendedor será notificado.');
     }
   });
 
   const responderMutation = useMutation({
-    mutationFn: async ({ interacaoId, resposta }) => {
+    mutationFn: async (/** @type {{interacaoId: string, resposta: string}} */ { interacaoId, resposta }) => {
+      if (!isPortalClienteIdentificado(clienteId)) throw new Error('Cliente do portal nao identificado.');
       await base44.entities.ChatbotInteracao.update(interacaoId, {
         resposta_agente: resposta,
         status: 'respondido',
@@ -98,7 +103,7 @@ export default function ChatVendedor({ clienteId }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['chat-cliente', clienteId]);
+      queryClient.invalidateQueries({ queryKey: ['chat-cliente', clienteId] });
     }
   });
 
@@ -112,6 +117,7 @@ export default function ChatVendedor({ clienteId }) {
     enviarMensagemMutation.mutate(mensagem);
   };
 
+  if (!isPortalClienteIdentificado(clienteId)) return <p role="status">Cliente do portal nao identificado. Operacoes indisponiveis.</p>;
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">

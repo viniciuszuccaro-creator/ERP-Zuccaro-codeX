@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { Loader2, FileText } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeCode = (value) => String(value ?? "").replace(/[^0-9A-Za-z./-]/g, "").slice(0, 32).trim().toUpperCase();
@@ -22,13 +24,13 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
   const podeCriar = canCreate("Cadastros", "CadastroFiscal") || canCreate("Fiscal", "CadastroFiscal") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CadastroFiscal") || canEdit("Fiscal", "CadastroFiscal") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     tipo_cadastro: 'NCM',
     codigo: '',
     descricao: '',
     aliquota_padrao: 0,
     observacoes: ''
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -60,6 +62,12 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-cadastro-fiscal"
+      />
       <div>
         <Label>Tipo de Cadastro *</Label>
         <Select value={formData.tipo_cadastro} onValueChange={(v) => setFormData({...formData, tipo_cadastro: v})} disabled={!podeSalvar}>

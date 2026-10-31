@@ -14,6 +14,7 @@ import { AlertTriangle, Trash2, CheckCircle } from 'lucide-react';
 /**
  * Diálogo de Confirmação antes de Excluir
  * V12.0 - Previne exclusões acidentais
+ * @param {{open: boolean, onOpenChange: (open: boolean) => void, onConfirm: React.MouseEventHandler<HTMLButtonElement>, title?: React.ReactNode, description?: React.ReactNode, variant?: string, confirmText?: React.ReactNode, cancelText?: React.ReactNode}} props
  */
 export default function ConfirmDialog({ 
   open, 
@@ -72,8 +73,11 @@ export default function ConfirmDialog({
 export function useConfirm() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [config, setConfig] = React.useState({});
+  /** @type {React.MutableRefObject<((value: boolean) => void) | undefined>} */
   const resolveRef = React.useRef();
 
+  /** @param {Partial<React.ComponentProps<typeof ConfirmDialog>>} options
+   * @returns {Promise<boolean>} */
   const confirm = (options) => {
     return new Promise((resolve) => {
       setConfig(options);

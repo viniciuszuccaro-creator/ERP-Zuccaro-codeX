@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
   const podeCriar = hasPermission?.("Cadastros.Servico.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.Servico.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     descricao: '',
     codigo_servico: '',
     tipo_servico: 'Produção',
@@ -35,7 +36,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
     aliquota_iss: 5,
     ativo: true,
     observacoes: ''
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

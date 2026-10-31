@@ -1,4 +1,5 @@
-﻿import React, { useState } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export default function ConfiguracaoWhatsAppForm({ config, item, data, initialDa
   const podeCriar = canCreate("Cadastros", "ConfiguracaoWhatsApp") || canCreate("Sistema", "WhatsApp") || canCreate("Comercial", "WhatsApp") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ConfiguracaoWhatsApp") || canEdit("Sistema", "WhatsApp") || canEdit("Comercial", "WhatsApp") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     provedor: "Evolution API",
     api_url: "",
     api_key: "",
@@ -42,7 +43,7 @@ export default function ConfiguracaoWhatsAppForm({ config, item, data, initialDa
     template_cobranca: "",
     ativo: true,
     observacoes: ""
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -85,6 +85,9 @@ export function mergeCadastroEditHydration(listRow, fullRecord) {
 
 /**
  * Distingue falha de carga, carga incompleta e campos realmente ausentes.
+ * @param {{entityName?: string, expectedId?: string | number,
+ * listRow?: Record<string, unknown> | null, fullRecord?: Record<string, unknown> | null,
+ * loadError?: unknown}} [options]
  * @returns {{ kind: 'ok'|'load_failed'|'load_incomplete', message: string|null, absentFields?: string[] }}
  */
 export function classifyCadastroEditLoad({
@@ -149,6 +152,12 @@ export function classifyCadastroEditLoad({
  * Mestre organizacional usa exatamente o gate efetivo do cliente local.
  * Não libera role=admin sozinha nem aliases que o backend recusaria.
  */
+export function getCadastroEntityPermissionKey(entityName, action) {
+  if (entityName === 'PerfilAcesso') return `Sistema.Controle de Acesso.${action}`;
+  const section = isTenantMasterEntity(entityName) ? 'Organizacional' : entityName;
+  return `Cadastros.${section}.${action}`;
+}
+
 export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   const entity = String(entityName || '');
   const act = String(action || 'visualizar');
@@ -156,6 +165,16 @@ export function hasCadastroEntityPermission(entityName, action, checkers = {}) {
   const canCreate = typeof checkers.canCreate === 'function' ? checkers.canCreate : null;
   const canEdit = typeof checkers.canEdit === 'function' ? checkers.canEdit : null;
   const canDelete = typeof checkers.canDelete === 'function' ? checkers.canDelete : null;
+
+  // PerfilAcesso belongs to the same owner as the existing local backend and form.
+  if (entity === 'PerfilAcesso') {
+    if (checkers.isLoading) return false;
+    if (act === 'visualizar') return Boolean(hasPermission && hasPermission('Sistema', 'Controle de Acesso', 'visualizar'));
+    if (act === 'criar') return Boolean(canCreate && canCreate('Sistema', 'Controle de Acesso'));
+    if (act === 'editar') return Boolean(canEdit && canEdit('Sistema', 'Controle de Acesso'));
+    if (act === 'excluir') return Boolean(canDelete && canDelete('Sistema', 'Controle de Acesso'));
+    return false;
+  }
 
   // #229: mestres = gate Organizacional do backend local (sem Sistema.* / Cadastros.Empresa sozinho).
   if (isTenantMasterEntity(entity)) {

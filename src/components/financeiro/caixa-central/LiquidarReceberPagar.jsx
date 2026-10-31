@@ -85,7 +85,7 @@ export default function LiquidarReceberPagar() {
   });
 
   const enviarParaCaixaMutation = useMutation({
-    mutationFn: async ({ titulos, tipo }) => {
+    mutationFn: async (/** @type {{titulos: (Record<string, unknown> & {id: string, valor?: number|string, numero_documento?: string, descricao?: string, cliente?: string, fornecedor?: string})[], tipo: string}} */ { titulos, tipo }) => {
       const lista = Array.isArray(titulos) ? titulos.filter(Boolean) : [];
       if (!contextoValido || !empresaId) {
         await auditLiquidacao("bloqueado_sem_contexto", false, { tipo, quantidade: lista.length });

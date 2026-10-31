@@ -3,6 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Users, Lock, Star } from 'lucide-react';
 
+/** @param {{cliente: {nome_fantasia?: string, razao_social?: string, nome?: string,
+ * classificacao_abc?: string, status?: string, cnpj?: string, tipo?: string, score_saude_cliente?: number} | null,
+ * spotlight?: {raw?: string, exp_minutes_remaining?: string | number}}} props */
 export default function PortalHeader({ cliente, spotlight }) {
   const nome = cliente?.nome_fantasia || cliente?.razao_social || cliente?.nome || 'Cliente';
   const iniciais = nome.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();

@@ -13,6 +13,16 @@ const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, 
 const sanitizeCode = (value, max = 20) => String(value ?? "").replace(/[^0-9A-Za-z_.\-/\s]/g, "").slice(0, max).trim();
 const toNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 
+// Keep the exact historical wire value until the user explicitly selects another origin.
+const origensMercadoria = [
+  ['0 - Nacional'],
+  ['1 - Estrangeira Importação Direta', '1 - Estrangeira ImportaÃ§Ã£o Direta'],
+  ['2 - Estrangeira Mercado Interno'],
+  ['3 - Nacional com Conteúdo Importado >40%', '3 - Nacional com ConteÃºdo Importado >40%'],
+  ['4 - Nacional por Proc. Prod. Básico', '4 - Nacional por Proc. Prod. BÃ¡sico'],
+  ['5 - Nacional com Conteúdo Importado <=40%', '5 - Nacional com ConteÃºdo Importado <=40%'],
+];
+
 export default function FiscalContabilSection({ formData, setFormData, sugestoesIA, handleDadosNCM, planoContas }) {
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
@@ -37,12 +47,12 @@ export default function FiscalContabilSection({ formData, setFormData, sugestoes
               <Select value={formData.origem_mercadoria} onValueChange={(v) => setFormData(prev => ({...prev, origem_mercadoria: sanitizeText(v, 120)}))}>
                 <SelectTrigger disabled={!canEdit} data-permission="Fiscal.Produto.editar" data-action="selecionar-origem-mercadoria-produto" data-sensitive><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0 - Nacional">0 - Nacional</SelectItem>
-                  <SelectItem value="1 - Estrangeira ImportaÃ§Ã£o Direta">1 - Estrangeira ImportaÃ§Ã£o Direta</SelectItem>
-                  <SelectItem value="2 - Estrangeira Mercado Interno">2 - Estrangeira Mercado Interno</SelectItem>
-                  <SelectItem value= "3 - Nacional com ConteÃºdo Importado >40%">3 - Nacional com ConteÃºdo Importado {'>'}40%</SelectItem>
-                  <SelectItem value="4 - Nacional por Proc. Prod. BÃ¡sico">4 - Nacional por Proc. Prod. BÃ¡sico</SelectItem>
-                  <SelectItem value= "5 - Nacional com ConteÃºdo Importado <=40%">5 - Nacional com ConteÃºdo Importado {'<'}=40%</SelectItem>
+                  {origensMercadoria.map(variants => (
+                    <SelectItem key={variants[0]} value={variants.includes(formData.origem_mercadoria) ? formData.origem_mercadoria : variants[0]}>{variants[0]}</SelectItem>
+                  ))}
+                  {formData.origem_mercadoria && !origensMercadoria.some(variants => variants.includes(formData.origem_mercadoria)) && (
+                    <SelectItem value={formData.origem_mercadoria} disabled>{formData.origem_mercadoria}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

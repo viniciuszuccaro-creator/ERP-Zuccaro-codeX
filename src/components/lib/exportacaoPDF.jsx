@@ -3,11 +3,7 @@
  * Usa window.print() com CSS otimizado
  */
 
-/**
- * Gera PDF de Pedido
- * @param {object} pedido - Dados do pedido
- * @param {object} empresa - Dados da empresa
- */
+/** @param {unknown} value */
 const escapeDocumentText = (value) => String(value ?? '')
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -19,7 +15,7 @@ const formatDocumentMoney = (value) => new Intl.NumberFormat('pt-BR', {
   style: 'currency', currency: 'BRL',
 }).format(Number(value || 0));
 
-export function gerarPDFOrcamento(orcamento, { empresa = {}, clienteNome = '', condicaoPagamento = '' } = {}) {
+export function gerarPDFOrcamento(orcamento, /** @type {{empresa?: Record<string, unknown>, clienteNome?: string, condicaoPagamento?: string}} */ { empresa = {}, clienteNome = '', condicaoPagamento = '' } = {}) {
   if (!orcamento) return false;
   const empresaNome = empresa.razao_social || empresa.nome_fantasia || empresa.nome || 'Empresa emissora';
   const documentoEmpresa = empresa.cnpj || empresa.cpf_cnpj || empresa.documento || '';
@@ -40,6 +36,7 @@ export function gerarPDFOrcamento(orcamento, { empresa = {}, clienteNome = '', c
   return true;
 }
 export function gerarPDFPedido(pedido, empresa = {}) {
+  if (!pedido) return false;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -386,6 +383,8 @@ export function gerarPDFPedido(pedido, empresa = {}) {
   
   // Abrir em nova janela e imprimir
   const printWindow = window.open('', '_blank');
+  if (!printWindow) return false;
+  printWindow.opener = null;
   printWindow.document.write(html);
   printWindow.document.close();
   
@@ -395,6 +394,7 @@ export function gerarPDFPedido(pedido, empresa = {}) {
       printWindow.print();
     }, 250);
   };
+  return true;
 }
 
 /**

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConfigFinanceiroLogistica from "./ConfigFinanceiroLogistica";
 
+/** @param {{title: import('react').ReactNode, children: import('react').ReactNode, extra?: import('react').ReactNode}} props */
 function Section({ title, children, extra }) {
   return (
     <Card>

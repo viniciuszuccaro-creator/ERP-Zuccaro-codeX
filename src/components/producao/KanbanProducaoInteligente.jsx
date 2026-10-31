@@ -79,7 +79,7 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }) => {
+    mutationFn: async (/** @type {{id: string, status: string}} */ { id, status }) => {
       const opAtual = ops.find(op => op.id === id);
       if (!contextoValido) {
         await auditarKanban({ acao: "Kanban.bloqueado", descricao: "Tentativa de mover OP sem contexto grupo/empresa.", sucesso: false, dadosNovos: { id, status }, dadosAnteriores: opAtual, registroId: id });

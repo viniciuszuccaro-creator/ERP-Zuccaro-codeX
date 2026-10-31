@@ -10,16 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: npm }
       - run: npm ci
+      - name: Install backend dependencies used by root contract tests
+        run: npm ci --prefix server
       - run: npm run audit:baseline
       - run: npm test
       - run: npm run lint
+      - run: npm run typecheck
       - run: npm run build
 
   backend:
-    runs-on: ubuntu-latest
+    # pg_dump/pg_restore must match the PostgreSQL 16 service. ubuntu-latest
+    # moved to 26.04; its client emitted transaction_timeout unsupported by 16.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16
@@ -36,12 +43,21 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: npm, cache-dependency-path: server/package-lock.json }
+      - name: Install root dependencies used by backend HTTP contract tests
+        run: npm ci
+        working-directory: .
       - run: npm install
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
       - run: npm run migrate
         env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }
+      - name: Report PostgreSQL backup client and server versions
+        run: |
+          psql --version
+          pg_dump --version
+          pg_restore --version
+          psql postgresql://erp_test:erp_test@localhost:5432/erp_test -Atc 'SHOW server_version_num'
       - run: psql postgresql://erp_test:erp_test@localhost:5432/erp_test -f scripts/seed-dev-synthetic.sql
       - run: npm run test:postgres
         env: { DATABASE_URL: postgresql://erp_test:erp_test@localhost:5432/erp_test }

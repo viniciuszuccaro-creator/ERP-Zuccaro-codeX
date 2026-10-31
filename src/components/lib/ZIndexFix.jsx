@@ -18,7 +18,7 @@ export function useZIndexGuard() {
       mutations.forEach((mutation) => {
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) { // Element node
+            if (node instanceof HTMLElement || node instanceof SVGElement) {
               // Corrigir Radix components - ABAIXO de janelas (999999)
               if (node.hasAttribute('data-radix-select-content')) {
                 node.style.zIndex = '999999';
@@ -42,8 +42,8 @@ export function useZIndexGuard() {
               const dropdowns = node.querySelectorAll('[data-radix-dropdown-menu-content]');
               const popovers = node.querySelectorAll('[data-radix-popover-content]');
               
-              [...selects, ...dropdowns, ...popovers].forEach(el => {
-                el.style.zIndex = '999999';
+              [...Array.from(selects), ...Array.from(dropdowns), ...Array.from(popovers)].forEach(el => {
+                if (el instanceof HTMLElement || el instanceof SVGElement) el.style.zIndex = '999999';
               });
             }
           });
@@ -63,8 +63,8 @@ export function useZIndexGuard() {
       const dropdowns = document.querySelectorAll('[data-radix-dropdown-menu-content]');
       const popovers = document.querySelectorAll('[data-radix-popover-content]');
       
-      [...selects, ...dropdowns, ...popovers].forEach(el => {
-        el.style.zIndex = '999999';
+      [...Array.from(selects), ...Array.from(dropdowns), ...Array.from(popovers)].forEach(el => {
+        if (el instanceof HTMLElement || el instanceof SVGElement) el.style.zIndex = '999999';
       });
     };
 

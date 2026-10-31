@@ -8,6 +8,7 @@ import {
   buildCadastroEditSavePayload,
   classifyCadastroEditLoad,
   hasCadastroEntityPermission,
+  getCadastroEntityPermissionKey,
   isCadastroEditLoadComplete,
   isCadastroSelfManagedScopeCurrent,
   mergeCadastroEditHydration,
@@ -407,7 +408,10 @@ test('Visualizador: Empresa usa loadEmpresaForEdit; demais getInContext + policy
   assert.match(source, /editLoadBlocked/);
   assert.match(source, /classifyCadastroEditLoad\(/);
   assert.match(source, /Falha ao carregar registro completo/);
-  assert.match(source, /permSection = isTenantMasterEntity\(ENTITY\) \? "Organizacional" : ENTITY/);
+  assert.match(source, /getCadastroEntityPermissionKey\(ENTITY, action\)/);
+  assert.equal(getCadastroEntityPermissionKey('Empresa', 'editar'), 'Cadastros.Organizacional.editar');
+  assert.equal(getCadastroEntityPermissionKey('GrupoEmpresarial', 'visualizar'), 'Cadastros.Organizacional.visualizar');
+  assert.equal(getCadastroEntityPermissionKey('PerfilAcesso', 'editar'), 'Sistema.Controle de Acesso.editar');
   assert.match(source, /Fallbacks só de rótulo/);
   assert.match(source, /uniqueKey: `Comercial\.Cliente\.detalhes\.\$\{item\.id\}`/);
 });

@@ -89,7 +89,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
-            <ArrowDown className="w-5 h-5 text-indigo-600" />
+            <ArrowDown className="w-5 h-5 text-sky-600" />
             Registrar Movimentação
           </h3>
 
@@ -237,7 +237,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
         <Button
           type="submit"
           disabled={controlesDesabilitados}
-          className="bg-indigo-600 hover:bg-indigo-700"
+          className="bg-sky-600 hover:bg-sky-700"
           data-permission="Estoque.Movimentacoes.criar"
           data-action="Estoque.Movimentacoes.form.registrar"
           data-context-required="group-or-company"

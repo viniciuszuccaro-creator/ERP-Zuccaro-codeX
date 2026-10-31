@@ -21,9 +21,13 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const { canCreate } = usePermissions();
-  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id)
+    && typeof groupId === 'string' && groupId.trim().length > 0
+    && [grupoAtual?.id, empresaAtual?.group_id, empresaAtual?.grupo_id]
+      .filter(value => value != null).every(value => value === groupId);
   const canCreateRequisicao = canCreate('Estoque', 'Requisicoes') || canCreate('Estoque', 'Requisições');
   const [formData, setFormData] = useState({
     numero_requisicao: `REQ-ALM-${Date.now()}`,
@@ -40,7 +44,7 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {Partial<typeof formData> & {produto_id?: string, produto_descricao?: string, quantidade?: string | number, setor_solicitante?: string}} */ data) => {
       if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de registrar requisicao.");
       if (!canCreateRequisicao) throw new Error("Sem permissao para registrar requisicao.");
       const itens = data.itens || [data];
@@ -62,7 +66,7 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
         }
         await createInContext('MovimentacaoEstoque', {
           empresa_id: empresaAtual?.id,
-          group_id: contexto?.group_id,
+          group_id: groupId,
           produto_id: item.produto_id,
           produto_descricao: item.produto_descricao,
           tipo_movimento: "saida",
@@ -98,8 +102,8 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
           ...data,
           quantidade_itens: itens.length
         },
-        group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || contexto?.group_id || null,
-        grupo_id: grupoAtual?.id || empresaAtual?.grupo_id || empresaAtual?.group_id || contexto?.group_id || null,
+        group_id: groupId,
+        grupo_id: groupId,
         empresa_id: empresaAtual?.id || null,
         sucesso: true,
         data_hora: new Date().toISOString()
@@ -114,7 +118,7 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   });
 
   const aprovarMutation = useMutation({
-    mutationFn: async ({ id, itens }) => {
+    mutationFn: async (/** @type {{id: string, itens: typeof formData.itens}} */ { id, itens }) => {
       if (!contextoValido) throw new Error("Selecione grupo ou empresa antes de aprovar requisicao.");
       if (!canCreateRequisicao) throw new Error("Sem permissao para aprovar requisicao.");
       // Processar baixa no estoque para cada item

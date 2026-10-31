@@ -142,11 +142,11 @@ RETORNE em JSON:
 
   if (analisando) {
     return (
-      <Card className="border-purple-200 bg-purple-50 w-full">
+      <Card className="border-sky-200 bg-sky-50 w-full">
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-            <p className="text-sm text-purple-900">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sky-600"></div>
+            <p className="text-sm text-sky-900">
               <Brain className="w-4 h-4 inline mr-1" />
               PriceBrain analisando histórico (apenas sugestao)...
             </p>
@@ -193,10 +193,10 @@ RETORNE em JSON:
   const Icon = cfg.icone;
 
   return (
-    <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-blue-50 w-full">
+    <Card className="border-2 border-sky-300 bg-gradient-to-br from-sky-50 to-blue-50 w-full">
       <CardHeader className="bg-white/80 border-b pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Zap className="w-5 h-5 text-purple-600" />
+          <Zap className="w-5 h-5 text-sky-600" />
           PriceBrain
           <Badge variant="outline" className="ml-auto text-xs">
             Confiança {sugestao.confianca || 0}%
@@ -205,7 +205,7 @@ RETORNE em JSON:
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start gap-3">
-          <Icon className="w-5 h-5 mt-0.5 text-purple-700" />
+          <Icon className="w-5 h-5 mt-0.5 text-sky-700" />
           <div className="flex-1">
             <p className="font-semibold text-sm">{cfg.titulo}</p>
             <p className="text-sm text-slate-700 mt-1">{sugestao.razao}</p>

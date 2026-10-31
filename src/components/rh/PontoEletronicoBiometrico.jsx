@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { validarAnomaliasPontoIA } from '@/components/lib/iaResponsePolicy';
 import { 
   Clock, 
   CheckCircle, 
@@ -69,10 +70,10 @@ export default function PontoEletronicoBiometrico() {
 
   // Mutation para registrar ponto
   const registrarPontoMutation = useMutation({
-    mutationFn: (data) => base44.entities.Ponto.create(data),
+    mutationFn: (/** @type {typeof registroPonto & {requer_aprovacao?: boolean, observacoes_ia?: string}} */ data) => base44.entities.Ponto.create(data),
     onSuccess: () => {
       toast({ title: "✅ Ponto registrado", description: "Registro efetuado com sucesso!" });
-      queryClient.invalidateQueries(['pontos-hoje']);
+      queryClient.invalidateQueries({ queryKey: ['pontos-hoje'] });
       setRegistroPonto({
         colaborador_id: '',
         colaborador_nome: '',
@@ -90,8 +91,8 @@ export default function PontoEletronicoBiometrico() {
 
   // Mutation para validação IA
   const validarPontoIAMutation = useMutation({
-    mutationFn: async (ponto) => {
-      return await base44.integrations.Core.InvokeLLM({
+    mutationFn: async (/** @type {typeof registroPonto} */ ponto) => {
+      return validarAnomaliasPontoIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Analise o registro de ponto:
         
 Colaborador: ${ponto.colaborador_nome}
@@ -114,7 +115,7 @@ Detecte anomalias:
             observacoes_ia: { type: "string" }
           }
         }
-      });
+      }));
     }
   });
 
@@ -171,15 +172,15 @@ Detecte anomalias:
       tracks.forEach(track => track.stop());
       
       setCameraAtiva(false);
-      toast({ title: "✅ Foto capturada", description: "Validação facial concluída" });
+      toast({ title: "Foto capturada", description: "Captura concluida; identidade facial nao verificada." });
     }
   };
 
   // Simular biometria digital
   const simularBiometria = () => {
     // Em produção, integraria com leitor biométrico real
-    setRegistroPonto(prev => ({ ...prev, biometria_validada: true }));
-    toast({ title: "✅ Biometria validada", description: "Digital reconhecida" });
+    setRegistroPonto(prev => ({ ...prev, biometria_validada: false }));
+    toast({ title: "Leitor biometrico indisponivel", description: "Nenhuma biometria foi validada." });
   };
 
   // Registrar ponto
@@ -189,6 +190,7 @@ Detecte anomalias:
       return;
     }
 
+    /** @type {Parameters<typeof registrarPontoMutation.mutate>[0]} */
     const pontoFinal = {
       ...registroPonto,
       colaborador_id: colaboradorSelecionado.id,
@@ -198,7 +200,11 @@ Detecte anomalias:
     };
 
     // Validar com IA
-    const validacao = await validarPontoIAMutation.mutateAsync(pontoFinal);
+    const validacao = await validarPontoIAMutation.mutateAsync(pontoFinal).catch(() => {
+      toast({ title: "Analise indisponivel", description: "Nao foi possivel validar a resposta da analise. Nenhum ponto foi registrado.", variant: "destructive" });
+      return null;
+    });
+    if (!validacao) return;
     
     if (validacao.risco === 'Alto' || validacao.requer_aprovacao_gestor) {
       toast({ 
