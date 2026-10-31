@@ -68,6 +68,9 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
     hasPermission("Comercial.Pedido.editar") ||
     hasPermission("comercial", "criar_pedido") ||
     hasPermission("comercial", "editar_pedido");
+  // Leitura (Detalhes/Painel): sem callback → botão indisponível; com callback válido mantém capacidade.
+  const podeAcionarSelecao =
+    typeof onSelecionarProduto === "function" && podeSelecionarProduto;
   const podeUsarIA = contextoValido && podeVisualizarHistorico && podeSelecionarProduto;
   const consultaHabilitada = Boolean(
     clienteId
@@ -410,10 +413,8 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
       ) : null}
 
       <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-        {sugestoesExibir.slice(0, 10).map((sug, idx) => (
-          <button key={sug.produto?.id || "sug-" + idx} type="button" onClick={() => {
-            if (podeSelecionarProduto && onSelecionarProduto && typeof onSelecionarProduto === "function" && sug.produto) onSelecionarProduto(sug.produto);
-          }} className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed" disabled={!sug.produto || !podeSelecionarProduto} data-permission="Comercial.Pedido.criar" data-action="selecionar-sugestao-produto-cliente">
+        {sugestoesExibir.slice(0, 10).map((sug, idx) => {
+          const cardBody = (
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="font-medium text-sm">{sug.produto?.descricao || "Produto desconhecido"}</p>
@@ -436,8 +437,35 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
                 <Badge variant="outline" className="text-xs mt-1">{sug.produto?.codigo || "N/A"}</Badge>
               </div>
             </div>
-          </button>
-        ))}
+          );
+          // Sem callback: cartão não interativo (leitura Detalhes/Painel) — sem botão órfão.
+          if (!podeAcionarSelecao) {
+            return (
+              <div
+                key={sug.produto?.id || "sug-" + idx}
+                className="w-full p-3 text-left border rounded-lg bg-slate-50"
+                data-action="top10-produto-leitura"
+              >
+                {cardBody}
+              </div>
+            );
+          }
+          return (
+            <button
+              key={sug.produto?.id || "sug-" + idx}
+              type="button"
+              onClick={() => {
+                if (sug.produto) onSelecionarProduto(sug.produto);
+              }}
+              className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!sug.produto}
+              data-permission="Comercial.Pedido.criar"
+              data-action="selecionar-sugestao-produto-cliente"
+            >
+              {cardBody}
+            </button>
+          );
+        })}
         {sugestoesExibir.length === 0 && (
           <div className="text-center py-8 text-slate-500" data-action="top10-produtos-sem-itens">
             <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />

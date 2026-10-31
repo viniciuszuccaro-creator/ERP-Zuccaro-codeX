@@ -25,6 +25,10 @@ import Top10ProdutosCliente from "./Top10ProdutosCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { isProdutoVendavel } from "@/components/cadastros/produto/produtoTipoPolicy";
+import {
+  numeroComprovado,
+  produtoElegivelRevendaNoCatalogo,
+} from "@/components/comercial/historicoComprasClientePolicy";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -37,7 +41,9 @@ export default function AdicionarItemRevendaModal({
   tabelaPreco,
   tabelaPrecoItens = [],
   margemMinimaSistema = 10,
-  windowMode = false
+  windowMode = false,
+  /** Seed do histórico/sugestão — qty sempre 1 (frequência ≠ demanda). */
+  produtoInicial = null,
 }) {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [quantidade, setQuantidade] = useState(1);
@@ -47,6 +53,22 @@ export default function AdicionarItemRevendaModal({
   const [observacoes, setObservacoes] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrarSugestoes, setMostrarSugestoes] = useState(true);
+
+  // Prefill canônico: produto comprovado; quantidade = 1 (não usar frequência histórica).
+  useEffect(() => {
+    if (!isOpen) return;
+    if (produtoInicial?.id) {
+      setProdutoSelecionado(produtoInicial);
+      setSearchTerm(produtoInicial.descricao || produtoInicial.codigo || "");
+      setQuantidade(1);
+      setMostrarSugestoes(false);
+      return;
+    }
+    setProdutoSelecionado(null);
+    setQuantidade(1);
+    setSearchTerm("");
+    setMostrarSugestoes(true);
+  }, [isOpen, produtoInicial]);
 
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -67,11 +89,49 @@ export default function AdicionarItemRevendaModal({
   const consultaHabilitada = Boolean(contextoValido && podeVisualizarProduto);
   const acaoHabilitada = Boolean(contextoValido && podeAdicionarItem);
 
-  const { data: produtos = [] } = useQuery({
+  const { data: produtos = [], isFetched: catalogoFetched } = useQuery({
     queryKey: ["produtos-revenda-contexto", groupId, empresaId, contexto],
     queryFn: () => filterInContext("Produto", {}, "descricao", 500),
     enabled: consultaHabilitada,
   });
+
+  // Enriquecer seed com catálogo no escopo (custo/estoque só se vierem do catálogo; sem inventar).
+  // Inelegível (inativo / não vendável) comprovado pelo catálogo → limpa seleção (≠ inserir).
+  useEffect(() => {
+    if (!isOpen || !produtoInicial?.id || !Array.isArray(produtos) || produtos.length === 0) return;
+    const cat = produtos.find((p) => String(p?.id) === String(produtoInicial.id));
+    if (!cat) return;
+    const elegivel = produtoElegivelRevendaNoCatalogo(produtos, produtoInicial.id, isProdutoVendavel);
+    if (elegivel === false) {
+      setProdutoSelecionado(null);
+      setMostrarSugestoes(true);
+      return;
+    }
+    setProdutoSelecionado((prev) => {
+      if (!prev || String(prev.id) !== String(produtoInicial.id)) return prev;
+      const merged = { ...prev, ...cat, id: prev.id };
+      const prevUn = prev.unidade_medida || prev.unidade_sigla || null;
+      const catUn = cat.unidade_medida || cat.unidade_sigla || null;
+      // Seed histórico manda em unidade se catálogo omitir.
+      if (prevUn && !catUn) {
+        if (prev.unidade_medida) merged.unidade_medida = prev.unidade_medida;
+        if (prev.unidade_sigla) merged.unidade_sigla = prev.unidade_sigla;
+      }
+      const mergedUn = merged.unidade_medida || merged.unidade_sigla || null;
+      const unidadesCompativeis = Boolean(
+        prevUn && mergedUn && String(prevUn).toUpperCase() === String(mergedUn).toUpperCase(),
+      );
+      // Preço histórico só com unidade efetiva compatível (KG@12,50 ≠ UN sem conversão).
+      if (numeroComprovado(prev.preco_venda) != null && numeroComprovado(cat.preco_venda) == null) {
+        if (unidadesCompativeis) {
+          merged.preco_venda = prev.preco_venda;
+        } else if (catUn && prevUn && String(catUn).toUpperCase() !== String(prevUn).toUpperCase()) {
+          delete merged.preco_venda;
+        }
+      }
+      return merged;
+    });
+  }, [isOpen, produtoInicial, produtos]);
 
   const produtosAtivos = consultaHabilitada ? produtos.filter(p =>
     p.status === 'Ativo' && 
@@ -84,8 +144,35 @@ export default function AdicionarItemRevendaModal({
     p.codigo_barras?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const calculo = produtoSelecionado ? calcularPrecoItem({
-    produto: produtoSelecionado,
+  const precoBaseComprovado = produtoSelecionado
+    ? numeroComprovado(produtoSelecionado.preco_venda)
+    : null;
+  const itemTabelaComprovado = (() => {
+    if (!produtoSelecionado?.id || !tabelaPreco || !Array.isArray(tabelaPrecoItens)) return null;
+    const row = tabelaPrecoItens.find((i) => String(i?.produto_id) === String(produtoSelecionado.id));
+    return row ? numeroComprovado(row.preco_com_desconto) : null;
+  })();
+  const precoComprovadoDisponivel = itemTabelaComprovado != null || precoBaseComprovado != null;
+
+  // Custo/estoque comprovados no escopo do produto selecionado — ausente ≠ 0 fabricado.
+  const custoComprovado = produtoSelecionado
+    ? numeroComprovado(produtoSelecionado.custo_medio ?? produtoSelecionado.custo_aquisicao)
+    : null;
+  const estoqueComprovado = produtoSelecionado
+    ? numeroComprovado(produtoSelecionado.estoque_disponivel ?? produtoSelecionado.estoque_atual)
+    : null;
+  const margemConhecida = custoComprovado != null;
+
+  const calculo = produtoSelecionado && precoComprovadoDisponivel ? calcularPrecoItem({
+    produto: {
+      ...produtoSelecionado,
+      // Evita `preco_venda || 0` inventado no calculador quando só tabela comprova.
+      preco_venda: precoBaseComprovado != null ? precoBaseComprovado : (itemTabelaComprovado ?? undefined),
+      // Mesma fonte de custo comprovado (inclui zero) no cálculo e no payload.
+      ...(margemConhecida
+        ? { custo_medio: custoComprovado, custo_aquisicao: undefined }
+        : {}),
+    },
     tabelaPreco: tabelaPreco,
     tabelaPrecoItens: tabelaPrecoItens,
     descontoPadraoCliente: cliente?.condicao_comercial?.percentual_desconto || 0,
@@ -96,47 +183,96 @@ export default function AdicionarItemRevendaModal({
     margemMinimaSistema: margemMinimaSistema
   }) : null;
 
+  // Calculador pode devolver margem_violada com custo 0 inventado — só efetiva se custo comprovado.
+  const margemVioladaEfetiva = Boolean(margemConhecida && calculo?.margem_violada);
+  // Preço ausente: botão e handler compartilham o mesmo estado efetivo (rascunho incompleto ≠ inventar 0).
+  const podeConfirmarPreco = Boolean(precoComprovadoDisponivel && calculo);
+
   const handleAdicionarItem = () => {
     if (!acaoHabilitada) {
       alert("Selecione um contexto de grupo/empresa e confirme permissao para alterar pedido comercial.");
       return;
     }
 
-    if (!produtoSelecionado || !calculo) return;
+    if (!produtoSelecionado) return;
 
-    if (calculo.margem_violada && !justificativaDesconto.trim()) {
-      alert("Margem mínima violada! É necessário informar uma justificativa para o desconto.");
+    if (!podeConfirmarPreco) {
+      alert("Preço unitário não comprovado — não inventar zero. Informe preço na tabela/cadastro ou selecione produto com preço.");
       return;
     }
 
+    // Só rejeita inelegível comprovado (encontrado inativo/não vendável).
+    // Ausente na página limitada do catálogo ≠ classificar como inativo.
+    if (consultaHabilitada && catalogoFetched) {
+      const elegivel = produtoElegivelRevendaNoCatalogo(
+        produtos,
+        produtoSelecionado.id,
+        isProdutoVendavel,
+      );
+      if (elegivel === false) {
+        alert("Produto inativo ou não vendável no contexto atual — não inserir no rascunho.");
+        return;
+      }
+    }
+
+    // Margem só com custo comprovado; ausente ≠ margem 0 / violação fabricada.
+    if (margemVioladaEfetiva && !justificativaDesconto.trim()) {
+      alert("Margem mínima violada! É necessário informar uma justificativa para o desconto.");
+      return;
+    }
+    // Justificativa de margem NÃO autoriza fabricar preço — preço já validado acima.
+
+    const unidadeComprovada = produtoSelecionado.unidade_medida || produtoSelecionado.unidade_sigla || null;
+    const detalhesCalculo = {
+      preco_inicial: calculo.detalhes_calculo?.preco_inicial,
+      desconto_padrao_cliente_valor: calculo.detalhes_calculo?.desconto_padrao_cliente_valor,
+      desconto_item_valor: calculo.detalhes_calculo?.desconto_item_valor,
+      preco_final: calculo.detalhes_calculo?.preco_final,
+    };
+    if (margemConhecida) {
+      detalhesCalculo.custo = custoComprovado;
+      detalhesCalculo.margem_valor = calculo.margem_valor;
+      detalhesCalculo.margem_percentual = calculo.margem_percentual;
+    }
     const novoItem = {
       produto_id: produtoSelecionado.id,
       codigo_sku: produtoSelecionado.codigo,
       descricao: produtoSelecionado.descricao,
-      unidade: produtoSelecionado.unidade_medida,
       quantidade: quantidade,
-      custo_unitario: calculo.custo_unitario,
-      preco_base_produto: produtoSelecionado.preco_venda,
-      preco_tabela: calculo.origem_preco === "tabela_preco" ? calculo.preco_unitario_bruto : null,
-      preco_unitario_bruto: calculo.preco_unitario_bruto,
       desconto_padrao_cliente_percentual: cliente?.condicao_comercial?.percentual_desconto || 0,
       desconto_item_percentual: descontoPercentual,
       desconto_item_valor: descontoValor,
+      preco_unitario_bruto: calculo.preco_unitario_bruto,
       preco_unitario: calculo.preco_unitario,
       valor_item: calculo.valor_item,
-      margem_percentual: calculo.margem_percentual,
-      margem_valor: calculo.margem_valor,
-      margem_minima_produto: produtoSelecionado.margem_minima_percentual,
-      margem_violada: calculo.margem_violada,
-      aprovacao_margem_necessaria: calculo.margem_violada,
       aprovacao_margem_concedida: false,
       justificativa_desconto: justificativaDesconto,
-      estoque_disponivel: produtoSelecionado.estoque_disponivel || produtoSelecionado.estoque_atual || 0,
-      situacao_item: (produtoSelecionado.estoque_disponivel || 0) >= quantidade ? "Em Estoque" : "Sob Encomenda",
       ncm: produtoSelecionado.ncm,
       observacoes: observacoes,
-      _calculo_detalhado: calculo.detalhes_calculo
+      _calculo_detalhado: detalhesCalculo,
     };
+    if (precoBaseComprovado != null) novoItem.preco_base_produto = precoBaseComprovado;
+    if (calculo.origem_preco === "tabela_preco") novoItem.preco_tabela = calculo.preco_unitario_bruto;
+    // Unidade só se comprovada — ausente ≠ inventar UN.
+    if (unidadeComprovada) {
+      novoItem.unidade = unidadeComprovada;
+      novoItem.unidade_medida = unidadeComprovada;
+    }
+    // Custo/estoque/margem/Sob Encomenda só com fonte — ausente ≠ zero / rótulo inventado.
+    if (custoComprovado != null) {
+      novoItem.custo_unitario = custoComprovado;
+      novoItem.margem_percentual = calculo.margem_percentual;
+      novoItem.margem_valor = calculo.margem_valor;
+      novoItem.margem_violada = calculo.margem_violada;
+      novoItem.aprovacao_margem_necessaria = calculo.margem_violada;
+    }
+    if (numeroComprovado(produtoSelecionado.margem_minima_percentual) != null) {
+      novoItem.margem_minima_produto = Number(produtoSelecionado.margem_minima_percentual);
+    }
+    if (estoqueComprovado != null) {
+      novoItem.estoque_disponivel = estoqueComprovado;
+      novoItem.situacao_item = estoqueComprovado >= quantidade ? "Em Estoque" : "Sob Encomenda";
+    }
 
     onAddItem(novoItem);
     resetForm();
@@ -226,16 +362,24 @@ export default function AdicionarItemRevendaModal({
                           <Badge variant="outline" className="text-xs">{produto.codigo}</Badge>
                           <span className="text-xs text-slate-600">{produto.unidade_medida}</span>
                           <span className="text-xs text-slate-600">
-                            Estoque: {produto.estoque_disponivel || produto.estoque_atual || 0}
+                            Estoque:{" "}
+                            {numeroComprovado(produto.estoque_disponivel ?? produto.estoque_atual) == null
+                              ? "—"
+                              : numeroComprovado(produto.estoque_disponivel ?? produto.estoque_atual)}
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-green-600">
-                          R$ {(produto.preco_venda || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {numeroComprovado(produto.preco_venda) == null
+                            ? "—"
+                            : `R$ ${numeroComprovado(produto.preco_venda).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                         </p>
                         <p className="text-xs text-slate-500">
-                          Custo: R$ {(produto.custo_medio || produto.custo_aquisicao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          Custo:{" "}
+                          {numeroComprovado(produto.custo_medio ?? produto.custo_aquisicao) == null
+                            ? "—"
+                            : `R$ ${numeroComprovado(produto.custo_medio ?? produto.custo_aquisicao).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                         </p>
                       </div>
                     </div>
@@ -369,22 +513,28 @@ export default function AdicionarItemRevendaModal({
                       <div className="space-y-2 border-l pl-4">
                         <div className="flex justify-between">
                           <span className="text-slate-600">Custo Unitário:</span>
-                          <span className="font-semibold">R$ {calculo.custo_unitario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                          <span className="font-semibold">
+                            {margemConhecida
+                              ? `R$ ${custoComprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              : '—'}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Margem:</span>
                           <span className={`font-bold ${
-                            calculo.margem_violada ? 'text-red-600' : 'text-green-600'
+                            !margemConhecida ? 'text-slate-500' : margemVioladaEfetiva ? 'text-red-600' : 'text-green-600'
                           }`}>
-                            {calculo.margem_percentual.toFixed(2)}%
+                            {margemConhecida ? `${calculo.margem_percentual.toFixed(2)}%` : '—'}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-600">Lucro Unitário:</span>
                           <span className={`font-semibold ${
-                            calculo.margem_violada ? 'text-red-600' : 'text-green-600'
+                            !margemConhecida ? 'text-slate-500' : margemVioladaEfetiva ? 'text-red-600' : 'text-green-600'
                           }`}>
-                            R$ {((calculo.preco_unitario - calculo.custo_unitario)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            {margemConhecida
+                              ? `R$ ${((calculo.preco_unitario - custoComprovado)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              : '—'}
                           </span>
                         </div>
                         <div className="flex justify-between border-t pt-2">
@@ -396,7 +546,7 @@ export default function AdicionarItemRevendaModal({
                       </div>
                     </div>
 
-                    {calculo.margem_violada && (
+                    {margemVioladaEfetiva && (
                       <Card className="border-red-300 bg-red-50">
                         <CardContent className="p-3">
                           <div className="flex items-center gap-2">
@@ -417,7 +567,7 @@ export default function AdicionarItemRevendaModal({
                       </Card>
                     )}
 
-                    {quantidade > (produtoSelecionado.estoque_disponivel || 0) && (
+                    {estoqueComprovado != null && quantidade > estoqueComprovado && (
                       <Card className="border-orange-300 bg-orange-50">
                         <CardContent className="p-3">
                           <div className="flex items-center gap-2">
@@ -425,9 +575,9 @@ export default function AdicionarItemRevendaModal({
                             <div>
                               <p className="font-semibold text-orange-900">Atenção: Estoque Insuficiente</p>
                               <p className="text-sm text-orange-700">
-                                Disponível: {produtoSelecionado.estoque_disponivel || 0} | 
+                                Disponível: {estoqueComprovado} | 
                                 Solicitado: {quantidade} | 
-                                Falta: {quantidade - (produtoSelecionado.estoque_disponivel || 0)}
+                                Falta: {quantidade - estoqueComprovado}
                               </p>
                               <p className="text-xs text-orange-600 mt-1">
                                 Item será marcado como "Sob Encomenda"
@@ -457,7 +607,7 @@ export default function AdicionarItemRevendaModal({
                 </Card>
               )}
 
-              {calculo?.margem_violada && (
+              {margemVioladaEfetiva && (
                 <div>
                   <Label className="text-red-600">Justificativa do Desconto *</Label>
                   <Textarea
@@ -493,13 +643,13 @@ export default function AdicionarItemRevendaModal({
         <Button
           type="button"
           onClick={handleAdicionarItem}
-          disabled={!acaoHabilitada || !produtoSelecionado || quantidade <= 0 || (calculo?.margem_violada && !justificativaDesconto.trim())}
+          disabled={!acaoHabilitada || !produtoSelecionado || quantidade <= 0 || !podeConfirmarPreco || (margemVioladaEfetiva && !justificativaDesconto.trim())}
           data-permission="Comercial.Pedido.criar"
           data-action="adicionar-item-revenda"
           data-sensitive="true"
-          className={calculo?.margem_violada ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"}
+          className={margemVioladaEfetiva ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"}
         >
-          {calculo?.margem_violada ? "Adicionar (Aguardando Aprovação)" : "Adicionar Item"}
+          {margemVioladaEfetiva ? "Adicionar (Aguardando Aprovação)" : "Adicionar Item"}
         </Button>
       </div>
             </>

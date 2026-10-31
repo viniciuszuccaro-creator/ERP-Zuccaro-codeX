@@ -134,7 +134,7 @@ export default function WizardEtapa2Itens({ dados, onChange }) {
         <AdicionarItemRevendaModal
           isOpen={modalRevenda}
           onClose={() => setModalRevenda(false)}
-          onAdd={(item) => {
+          onAddItem={(item) => {
             const novosItens = [...(dados.itens_revenda || []), item];
             onChange({ itens_revenda: novosItens });
             setModalRevenda(false);

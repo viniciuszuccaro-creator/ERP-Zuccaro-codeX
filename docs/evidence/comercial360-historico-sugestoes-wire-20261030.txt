@@ -1,0 +1,180 @@
+ETAPA A — conectar #441/#442 aos consumidores existentes (2026-10-30 America/Sao_Paulo)
+=======================================================================================
+Branch: cursor/comercial360-historico-sugestoes-wire-392b
+Base: #442 tip `dd619ff60` (Top10/Sugestões HTTP + policy #441)
+Fora: merge main · deploy · seed · inventar custo/estoque · 3º módulo
+
+## Inventário de montagem (antes)
+| Componente | Montagem viva |
+|------------|---------------|
+| HistoricoProdutosCliente | Detalhes / Painel / PedidoTabs |
+| HistoricoOrigemCliente | Detalhes / Painel / Wizard |
+| portal/HistoricoComprasCliente | PortalCliente |
+| comercial/HistoricoComprasCliente | **órfão** |
+| SugestoesProdutos | **órfão** |
+| Top10ProdutosCliente | Painel (sem callback); modal wizard órfão |
+
+## Mudança (consumidores existentes)
+1. `PedidoTabsContainer` aba histórico: monta HistoricoCompras + Sugestões + Top10
+   com Adicionar → `itens_revenda` (builder sem inventar custo/estoque/unidade/preço).
+2. `DetalhesCliente`: HistoricoCompras + Top10 em leitura (sem callback Adicionar).
+3. `PainelDinamicoCliente` aba produtos: HistoricoCompras em leitura sob Top10.
+4. Adicionar só renderiza se há callback (sem botão morto).
+5. Sugestões: título “pelo histórico / Frequência comprovada” (≠ IA).
+6. WizardEtapa2Itens: `onAdd` → `onAddItem` (prop real do modal).
+
+Policy compartilhada `historicoComprasClientePolicy` — sem duplicar.
+
+## Contraprovas runtime (Codex / testes)
+- Unidade original no texto + callback (KG/PC separados; sem inventar UN)
+- Agregação só produto::unidade compatíveis
+- Preço temporal (pedido mais recente; zero comprovado; ausente → —)
+- created_at HTTP no contrato Top10 IA
+- Troca empresa/sessão: EMPRESA_SESSION_MISMATCH / queryKey
+- Heurística frequência ≠ score_confianca IA
+- Adicionar leva payload comprovado ao itens_revenda no Pedido
+
+## Testes
+`comercial360-historico-sugestoes-wire` + `comercial-detalhes-historico-mount`
++ `historico-origem-compras-http-failclosed` + `top10-sugestoes-http-failclosed` — PASS
+
+## Não feito
+- Integração/merge da cadeia em #401
+- Harness navegador→API→PostgreSQL privado
+- Graduação ID-only / Produto legado residual
+
+## CI SUCCESS tip f7a122ac1 (2026-10-30 America/Sao_Paulo)
+- Runs: push `41108231744` · PR `41108240889` — SUCCESS 6/6.
+- Fix tip: onAdicionarProduto opcional (TS2741 Detalhes/Painel).
+- CI verde ≠ encerramento: aguarda `@codex` montado (#442/#446).
+
+## Tip Adicionar canônico (modal) — 2026-10-30 America/Sao_Paulo
+Problema: Adicionar appendava direto em `itens_revenda` + toast + troca de aba
+(sem modal canônico; qty histórica/frequência tratável como demanda).
+
+Correção (existente):
+1. `PedidoTabsContainer`: `abrirAdicionarDoHistorico` → seed → abre
+   `AdicionarItemRevendaModal` com `produtoInicial`; confirma via `onAddItem`.
+2. `seedProdutoFromHistorico` na policy compartilhada — só id/código/desc/unidade/
+   preço comprovados; frequência e qty histórica omitidas; ausente ≠ UN/zero.
+3. Modal: qty sempre 1 no seed; usuário edita no modal; unidade só se comprovada
+   no item emitido.
+4. Rejeição sem id; duplicidade avisa e reabre modal; `bloquearEdicao` remove
+   callback (Adicionar ausente). Detalhes/Painel permanecem leitura.
+5. Removido `buildItemRevendaFromHistorico` (append direto).
+
+Testes locais: `comercial360-adicionar-historico-modal` + wire + mount — 10 PASS.
+Não feito: harness navegador→API→PG; integração #401; aceite Codex montado.
+
+## CI SUCCESS tip af95c4cca (2026-10-30 America/Sao_Paulo)
+- Runs: push `41110477273` · PR `41110487857` — SUCCESS 6/6.
+- Modal canônico + seed policy + leitura fail-closed.
+- CI verde ≠ encerramento: aguarda `@codex` montado; #401 fora.
+
+## Tip residual pós Codex b161 / achados af95c4cca (2026-10-30 America/Sao_Paulo)
+Não atribuir negativos do append direto (b161) ao tip modal sem contraprova.
+
+Correções no tip novo:
+1. `bloquearEdicao` (origem, sempre true) NÃO remove Adicionar — lock por
+   `pedidoItensBloqueadosPorStatus` (Faturado/Cancelado/transfer sem liberação).
+2. Top10: `podeAcionarSelecao` exige callback função (leitura Detalhes/Painel).
+3. HistoricoClienteTab: Adicionar só se callback função.
+4. SugestoesProdutos: `PEDIDOS_VAZIOS` + setState no-op (Codex P1 loop []).
+5. Duplo Adicionar: reabre modal sem append; confirm ref anti-reentrada;
+   duplicidade legítima avisa e NÃO funde linhas.
+6. Seed: não usa `preco_medio` (média≠unitário); zero comprovado ok.
+7. Toast success = rascunho em memória (≠ persistência PostgreSQL).
+
+Testes: 13 PASS. #401 `34c4c0ee` intacta — port controlado só após Codex tip novo.
+
+## CI SUCCESS tip 54fcd026d (2026-10-30 America/Sao_Paulo)
+- Runs SUCCESS 6/6 — typecheck SUGESTOES_VAZIAS mutável.
+- Residual f8a20831e incluído. CI verde ≠ aceite Codex montado; #401 fora.
+
+## Residual contexto/preço/custo/estoque (pós 54fcd026d) (2026-10-30 America/Sao_Paulo)
+Fechamento dos resíduos do modal no tip #446 (sem inventar UN/preço/custo/estoque/demanda):
+
+1. `buildHistoricoModalGeracao(cliente, empresa, grupo, ator)` — geração imutável.
+2. Troca de contexto com modal aberto → effect cancela confirmação; rascunho novo intacto.
+3. Confirm com geracao ≠ atual → rejeita inserção indevida.
+4. Preço ausente rejeitado (`numeroComprovado`); zero finito comprovado ok.
+5. Custo/estoque/margem/Sob Encomenda só com fonte; UI lista usa "—" quando ausente.
+6. Justificativa de margem NÃO autoriza fabricar preço.
+7. Positivos preservados: qty editável, confirmação única, status lock, leitura sem fake action.
+
+Testes: 14 PASS (modal + wire + mount). #401 fora — mapa port atualizado sem merge.
+
+## CI SUCCESS tip c52cc707a (2026-10-30 America/Sao_Paulo)
+- Runs SUCCESS 6/6 — push `41120413232` · PR `41120421114`.
+- Codex montado no tip: P1 visual≠pedido na geração; P2 margemVioladaEfetiva (custo desconhecido).
+- CI verde ≠ aceite; #401 fora.
+
+## Codex P1/P2 pós c52cc707a (2026-10-30 America/Sao_Paulo)
+1. `buildHistoricoModalGeracao`: slots pedidoEmpresaId/pedidoGroupId + visualEmpresaId/visualGroupId.
+2. Modal: `margemVioladaEfetiva`; UI/botão/justificativa/`_calculo_detalhado` sem custo/margem fabricados.
+3. Estoque insuficiente só com estoqueComprovado.
+Testes: 14 PASS. #401 fora.
+
+## CI SUCCESS tip c2f3acb7e — run 5569 (2026-10-30 America/Sao_Paulo)
+- PR run **5569** (`41122467714`) SUCCESS 6/6 · push 5568 (`41122454584`).
+- Código base tip `64524d86c` + docs. CI verde ≠ aceite Codex montado no runtime atual.
+
+## Demos runtime tip (pós 5569) (2026-10-30 America/Sao_Paulo)
+Provas pedidas (montagem harness + policy; ≠ PG/E2E):
+1. Pedido e visual com gerações/slots corretos; A→B confirma rejeita; A→B→A não reabre modal antigo.
+2. Renew token (`sessionKey`/`buildSessionFingerprint`) invalida confirm; rascunho preservado.
+3. Preço/unidade/custo/saldo desconhecidos sem defaults; zero comprovado aceito.
+4. `margemVioladaEfetiva` + elegibilidade Ativo+vendável no catálogo.
+5. Rejeição preço preserva modal e rascunho.
+Testes: 14 PASS. #401 fora até Codex limpo no tip atual.
+
+## CI SUCCESS tip 611aaa6ee — runs 5576/5577 (2026-10-30 America/Sao_Paulo)
+- Código: demos `be52e3498` + Top10 leitura `611aaa6ee`.
+- Push **5576** · PR **5577** SUCCESS 6/6.
+- Inclui: sessionKey, A→B→A, elegibilidade, zero, rejeição, cartão Top10 leitura.
+- CI verde ≠ aceite Codex montado; #401 fora.
+
+## Residual pós CI5585 tip 3c149488 (2026-10-30 America/Sao_Paulo)
+Base tip `3c149488` CI5585 SUCCESS. Fechos precisos (sem regra comercial nova):
+
+1. **Pedido ≠ visual:** `pedidoId` na geração; `pedidoVisualCompativel` bloqueia abrir/confirm
+   quando empresa/grupo do pedido e do seletor divergem explicitamente.
+2. **PedidoA→PedidoB:** troca de `formData.id`/`pedido.id` invalida modal; confirm rejeita;
+   rascunho preservado.
+3. **Sessão A→B→A monotônica:** `bumpSessionEpoch` — voltar ao fingerprint A não rematch
+   da geração da 1ª visita (epoch sobe 1→2→3).
+4. **Catálogo página limitada:** `elegivel === false` só rejeita; `null` (ausente) ≠ inativo.
+5. **Preço ausente:** `podeConfirmarPreco` compartilhado por botão `disabled` e handler
+   (rascunho incompleto permitido ≠ inventar 0). Zero comprovado e custo_medio 0 preservados
+   (`CalculadorPrecoItem` sem `||` que engole zero).
+
+Testes: comercial360-adicionar-historico-modal + wire + mount — PASS.
+#401: mapa port atualizado; **sem merge / sem substituir backend** até Codex limpo neste tip.
+
+## CI SUCCESS tip febb8ed0a — runs 5586/5587 (2026-10-30 America/Sao_Paulo)
+- Push **5586** · PR **5587** SUCCESS 6/6.
+- Residual: pedidoId · visual · epoch A→B→A · elegivel null · podeConfirmarPreco · custo 0.
+- CI verde ≠ aceite Codex montado; #401 fora.
+- Indep. paralelo #451 tip `d74debd88` CI5589 (org ID técnico UX).
+
+## P1 Codex sessão observada (2026-10-31 America/Sao_Paulo)
+Achado montado HEAD `534c08c5d` / código `febb8ed0a`:
+- bumpSessionEpoch só em abrir/efeito/confirmar; deps do effect NÃO observavam sessão.
+- RenderB isolado não capturava B; A→B→A rematch da época anterior (1 write).
+
+Correção (canônica, sem identidade paralela):
+1. `sessionFingerprintObservado` = `buildSessionFingerprint(token)` no render.
+2. Incluído nas deps do effect de invalidação do modal.
+3. RenderB com token B → effect roda → epoch↑ → fecha modal (modalAfterB=false).
+4. Volta A: modal permanece fechado; 0 writes / 0 success.
+5. Harness de teste: useEffect respeita deps (prova integração, não só helper puro).
+
+Preservados: pedidoId, pedidoVisualCompativel, elegivel null, podeConfirmarPreco, zero, custo zero-safe.
+#401 fora até Codex limpo neste tip.
+
+## P1/P2 Codex review tip aa24ac8d7 (2026-10-31 America/Sao_Paulo)
+1. sessionEpochAtual releia `readErpHttpSession` na abertura/confirm; effect mantém fp nas deps.
+2. Merge catálogo: preço histórico só com `unidadesCompativeis`; KG≠UN → delete preco_venda.
+3. Calculador: custo zero comprovado + preço > 0 → margem 100%; custo ausente → margem 0.
+Preservados: A→B→A · pedidoId · elegivel null · podeConfirmarPreco · zero preço.
+#401 fora.

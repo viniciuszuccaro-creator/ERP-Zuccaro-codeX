@@ -1,0 +1,35 @@
+Mapa port controlado #446 → #401 (preparação — SEM merge) (2026-10-30 America/Sao_Paulo)
+======================================================================================
+Candidata #401 tip estável: `34c4c0ee` (sem #446).
+Fonte #446: tip residual pós CI5585 (`3c149488` base) — pedidoId · epoch · visual · preço botão.
+
+## Incluir (cherry / port seletivo — arquivos pontuais)
+- `historicoComprasClientePolicy`: seed · status lock · geracao (pedidoId + pedido≠visual +
+  sessionKey + sessionEpoch) · bumpSessionEpoch · pedidoVisualCompativel ·
+  numeroComprovado · produtoElegivelRevendaNoCatalogo (null≠inativo) · buildSessionFingerprint
+- `PedidoTabsContainer`: modal + geracao + confirm fail-closed + status lock +
+  pedidoVisualCompativel em abrir/confirm
+- `AdicionarItemRevendaModal`: produtoInicial · margemVioladaEfetiva · podeConfirmarPreco
+  (botão+handler) · elegivel===false só · custo comprovado (inclui 0) no calculador
+- `CalculadorPrecoItem`: custo_medio zero-safe (sem || engolir 0)
+- `HistoricoComprasCliente` / `SugestoesProdutos`: callback opcional + PEDIDOS_VAZIOS
+- `Top10ProdutosCliente`: podeAcionarSelecao
+- `HistoricoClienteTab`: Adicionar só com callback
+- Wire Detalhes/Painel leitura
+- Testes: comercial360-adicionar-historico-modal + wire + mount
+
+## Preservar na candidata (NÃO substituir)
+- Serviços/repositórios/API HTTP existentes da #401
+- Contratos Contatos/cadastros/contagens já em #401
+- Backend / arquivos inteiros de server — **sem replace**
+- Base `codex/consolidacao-infra-20261017`
+- Sem candidata concorrente
+
+## Fora até aceite
+- Merge automático · rebase destrutivo · trocar API/backend
+- Harness PG privado · deploy
+
+## Critério de port
+CI tip #446 SUCCESS + Codex montado limpo no SHA atual
+(pedidoId · PedidoA→B · epoch A→B→A · visual diverge · elegivel null ·
+podeConfirmarPreco · zero · rejeição).

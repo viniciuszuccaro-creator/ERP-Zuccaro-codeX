@@ -154,3 +154,151 @@ export function consolidateTopProdutosFromPedidos(pedidos, { limit = 5 } = {}) {
   if (limit == null) return ranked;
   return ranked.slice(0, limit);
 }
+
+/**
+ * Lock de itens do pedido por status (≠ bloquearEdicao de origem do useOrigemPedido).
+ * Alinha a isLockedFooter do PedidoFormCompleto: Faturado/Cancelado/transfer sem liberação.
+ */
+export function pedidoItensBloqueadosPorStatus(formData) {
+  const st = formData?.status;
+  if (!st) return false;
+  if (st === "Faturado" || st === "Cancelado") return true;
+  const transfer = ["Pronto para Faturar", "Em Expedição", "Em Trânsito"];
+  if (transfer.includes(st) && !formData?.__liberado_gerencia) return true;
+  return false;
+}
+
+/**
+ * Impressão digital opaca de sessão (token renovado ≠ mesma geração).
+ * Não armazena o token; só length+hash para invalidar modal após renew.
+ */
+export function buildSessionFingerprint(token) {
+  if (token == null || token === "") return null;
+  const s = String(token);
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return `s${s.length}:${h}`;
+}
+
+/**
+ * Época monotônica de sessão: A→B→A não reutiliza a geração da primeira visita a A.
+ * `bumpSessionEpoch(prevEpoch, prevFp, nextFp)` — só incrementa quando o fingerprint muda.
+ */
+export function bumpSessionEpoch(prevEpoch, prevFingerprint, nextFingerprint) {
+  const prev = Number.isFinite(Number(prevEpoch)) ? Math.max(0, Math.floor(Number(prevEpoch))) : 0;
+  const a = prevFingerprint || null;
+  const b = nextFingerprint || null;
+  if (a === b) return { epoch: prev, fingerprint: b };
+  return { epoch: prev + 1, fingerprint: b };
+}
+
+/**
+ * Pedido e contexto visual alinhados (ambos preenchidos e iguais).
+ * Divergência explícita → bloquear Adicionar/confirm (não misturar catálogo B no rascunho A).
+ */
+export function pedidoVisualCompativel({
+  pedidoEmpresaId = null,
+  pedidoGroupId = null,
+  visualEmpresaId = null,
+  visualGroupId = null,
+} = {}) {
+  const pe = pedidoEmpresaId || null;
+  const pg = pedidoGroupId || null;
+  const ve = visualEmpresaId || null;
+  const vg = visualGroupId || null;
+  if (pe && ve && String(pe) !== String(ve)) return false;
+  if (pg && vg && String(pg) !== String(vg)) return false;
+  return true;
+}
+
+/**
+ * Geração imutável do modal histórico.
+ * Pedido (id/empresa/grupo) e contexto visual entram em slots separados.
+ * sessionEpoch monotônico: renew A→B→A não rematch da geração antiga.
+ * Confirmação com geracao ≠ atual: modal obsoleto (não inserir no rascunho novo).
+ */
+export function buildHistoricoModalGeracao({
+  clienteId = null,
+  pedidoId = null,
+  pedidoEmpresaId = null,
+  pedidoGroupId = null,
+  visualEmpresaId = null,
+  visualGroupId = null,
+  actorId = null,
+  sessionKey = null,
+  sessionEpoch = null,
+  // Compat legada (mescla → pedido; preferir slots explícitos).
+  empresaId = null,
+  groupId = null,
+} = {}) {
+  return JSON.stringify([
+    clienteId || null,
+    pedidoId || null,
+    pedidoEmpresaId || empresaId || null,
+    pedidoGroupId || groupId || null,
+    visualEmpresaId || null,
+    visualGroupId || null,
+    actorId || null,
+    sessionKey || null,
+    sessionEpoch == null ? null : Number(sessionEpoch),
+  ]);
+}
+
+/**
+ * Elegibilidade de revenda no catálogo carregado.
+ * true = Ativo+vendável; false = encontrado inelegível; null = ausente na página (≠ inventar inativo).
+ */
+export function produtoElegivelRevendaNoCatalogo(produtos, produtoId, isProdutoVendavelFn) {
+  if (produtoId == null || produtoId === "") return null;
+  if (!Array.isArray(produtos) || typeof isProdutoVendavelFn !== "function") return null;
+  const cat = produtos.find((p) => String(p?.id) === String(produtoId));
+  if (!cat) return null;
+  return cat.status === "Ativo" && isProdutoVendavelFn(cat.tipo_item) === true;
+}
+
+/** Número finito comprovado (inclui zero); ausente/NaN → null. */
+export function numeroComprovado(raw) {
+  if (raw == null || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Só aceita TabelaPreco com id exatamente igual ao pedido.
+ * Resposta inválida / outra linha (ex.: filter solto) → null — nunca `tabelas[0]`.
+ */
+export function pickTabelaPrecoExata(tabelas, tabelaId) {
+  if (tabelaId == null || tabelaId === "") return null;
+  if (!Array.isArray(tabelas)) return null;
+  const want = String(tabelaId);
+  const hit = tabelas.find((t) => t?.id != null && String(t.id) === want);
+  if (!hit?.id || String(hit.id) !== want) return null;
+  return hit;
+}
+
+/**
+ * Seed do modal canônico AdicionarItemRevenda a partir do histórico/sugestão.
+ * Só campos comprovados; frequência/qty histórica ≠ demanda; ausente ≠ inventar UN/zero.
+ * preco_medio (média agregada) ≠ preço unitário comprovado — omitir.
+ * @returns {object|null}
+ */
+export function seedProdutoFromHistorico(produto) {
+  const produtoId = produto?.id || produto?.produto_id || null;
+  if (!produtoId) return null;
+  const seed = {
+    id: produtoId,
+    codigo: produto.codigo || produto.codigo_sku || null,
+    descricao: produto.descricao || "",
+  };
+  const unidade = produto.unidade_medida || produto.unidade_sigla || produto.unidade || null;
+  if (unidade) {
+    seed.unidade_medida = unidade;
+    seed.unidade_sigla = unidade;
+  }
+  const precoRaw = produto.preco_venda ?? produto.ultimo_preco;
+  if (precoRaw != null && precoRaw !== "") {
+    const preco = Number(precoRaw);
+    if (Number.isFinite(preco)) seed.preco_venda = preco; // zero comprovado ok
+  }
+  return seed;
+}

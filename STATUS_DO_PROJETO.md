@@ -1,3 +1,265 @@
+## CURSOR — VIGENTE (#446 P1 PedidoA→B late tabela + port #401) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **P1 residual** | resolução tabela depende de `formData.id`/`pedido.id` + `tabelaResolveTokenRef`; late A≠B |
+| **Aceite WRONG** | preservado (pickTabelaPrecoExata; 11≠99) |
+| **CI ref** | `0a56894a` CI5622 SUCCESS — tip residual em push |
+| **#401** | port seletivo após este tip + checks composição; sem merge/deploy |
+| Fora | reabrir ABA/sessão/unidade sem contraprova · merge · deploy |
+
+**Teste:** `comercial360-adicionar-historico-modal` 13/13
+**Próximo:** CI tip residual; port hunks UI→#401; pacotes indep. Cadastros/integra.
+
+## CURSOR — VIGENTE (#446 tip 530db1b11 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `530db1b11` (P1 `5014bb791` + docs) |
+| **CI** | run 41192115381 — frontend/backend/compose **SUCCESS** (ubuntu-24 + gate) |
+| **P1** | ID exato · clear sync · late cancel · contrapruva WRONG≠99 |
+| **#401** | **fora** até montagem Codex deste tip (verde CI ≠ port #401) |
+| Fora | merge · deploy · usar verde #342 como aceite UI |
+
+**Próximo:** `@codex review` tip `5014bb791`/`530db1b11`; port #401 só após montagem limpa.
+
+## CURSOR — VIGENTE (#446 P1 pickTabelaPrecoExata + port CI) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **P1** | remove `\|\| tabelas[0]`; `pickTabelaPrecoExata`; clear sync em troca ID/contexto/sessão; late cancel |
+| **Contraprova** | harness React: filter WRONG→tabela null; calc 11≠99; 1 write sem preco_tabela 99 |
+| **CI port** | tip `e47c47aaa` ubuntu-24 + gate (inalterado neste delta UI) |
+| **#401** | **fora** até CI/review deste tip |
+| Fora | inventar preço · merge · deploy |
+
+**Teste:** `comercial360-adicionar-historico-modal` 12/12
+**Próximo:** CI + `@codex review`; #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 port seletivo CI #342 0aa4c269) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Port** | seletivo de `0aa4c269` — `erp-runtime-ci.yml` (backend ubuntu-24.04 + report versões), `crmPostgresFixture.ts`, `crm-backup-toolchain.test.ts` |
+| **Revisão gate** | toolchain major match **antes** de snapshot/DROP; cleanup `IF EXISTS`; sem stderr/credencial |
+| **UI tip** | `a33f07893` P2 tabela_preco_id + sessão/preço/margem |
+| **#401** | **fora** até review/CI próprias deste tip |
+| Fora | docs/branch inteira · merge · deploy · port #401 |
+
+**Teste:** `crm-backup-toolchain` 4/4 · `comercial360-adicionar-historico-modal` 10/10
+**Próximo:** CI tip + `@codex review` independente; #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 P2 tabela_preco_id + fixture #342) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **P2** | `PedidoTabsContainer` resolve `TabelaPreco`+itens por `tabela_preco_id` (wizard só id/nome) |
+| **Helper** | `crmPostgresFixture` **reservado Codex #342** — tip `1c64debd7` sem edição paralela |
+| **CI5597** | alinhado Codex; sem rerun cego; ubuntu-26 vs 24 |
+| **#401** | **fora** até limpo + CI PG + aceite Codex |
+| Fora | inventar preço · editar fixture · merge · deploy |
+
+**Teste:** `node --test tests/comercial360-adicionar-historico-modal.test.js` → 10/10
+**Próximo:** CI tip + `@codex review`; port #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 UI tip; CI5597 helper → Codex #342) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **UI tip** | `3536c04de` + ABA deps — P1 sessão ABA **fechado** (Codex montado) |
+| **CI5597** | 3F000 cleanup mascara restore; PG16.15 `transaction_timeout`; ubuntu-26 vs 24 |
+| **Helper** | `crmPostgresFixture` / backup **reservado Codex #342** — Cursor sem edição paralela |
+| **Fixture** | revertido nesta candidata (não competir com #342) |
+| **#401** | **fora** até limpo + CI PG coordenado |
+| Fora | rerun cego · merge · deploy · editar helper backup |
+
+**Evidência:** `docs/evidence/comercial360-446-ci5597-r40crm-20261031.txt`
+**Próximo:** CI UI tip; Codex #342 helper; port #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 CI5597 R40CRM + P1/P2 tip) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip base** | `3536c04de` P1/P2 sessão·preço×unidade·margem |
+| **CI5597** | FAIL real — R40CRM backup cleanup `3F000` schema missing (≠ infra) |
+| **Fix fixture** | `DROP SCHEMA/ROLE IF EXISTS` em cleanup/restore — sem relaxar asserts |
+| **ABA React** | PedidoTabsContainer: deps observam fp; modalAfterB=false; 0 writes |
+| **Codex** | `@codex review` tip novo + diagnóstico CI5597 |
+| **#401** | **fora** até limpo |
+| Fora | rerun cego · enfraquecer checks · merge · deploy |
+
+**Evidência:** `docs/evidence/comercial360-446-ci5597-r40crm-20261031.txt`
+**Próximo:** CI tip + aceite Codex; port #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 P1/P2 Codex review tip aa24ac8d7) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | `aa24ac8d7` sessão observada |
+| **P1** | confirm/abrir releem `readErpHttpSession` (filho sem re-render do pai) |
+| **P1** | preço histórico só se unidade efetiva compatível (KG≠UN) |
+| **P2** | custo zero comprovado → margem 100% (≠ violada indevida); ausente → 0 |
+| **#401** | **fora** até limpo |
+| Fora | merge main · deploy · seed · identidade paralela |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** CI tip + `@codex review`; port #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 P1 sessão observada pós Codex 31/10) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | `534c08c5d` docs CI5587 · código `febb8ed0a` |
+| **P1 Codex** | `sessionFingerprintObservado` nas deps do effect — RenderB captura B; A→B→A modalAfterB=false / 0 writes |
+| **Sem** | fingerprint/identidade paralela — reusa `buildSessionFingerprint` |
+| **Preservado** | pedidoId · preço · elegivel null · zero · positivos fechados |
+| **Codex** | `@codex review` tip novo — CI ≠ aceite |
+| **#401** | **fora** — sem port até limpo |
+| Fora | merge main · deploy · seed · substituir backend |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** CI tip + aceite Codex montado; port #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 tip febb8ed0a CI5587 SUCCESS — residual) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `febb8ed0a` — CI SUCCESS 6/6 (push **5586** · PR **5587**) |
+| **Base** | `3c149488` CI5585 |
+| **Residual** | pedidoId · pedidoVisualCompativel · bumpSessionEpoch A→B→A · elegivel null≠inativo · podeConfirmarPreco · custo zero-safe |
+| **Codex** | `@codex review` pedido no tip — CI ≠ aceite montado |
+| **#401** | mapa pronto — **fora** até limpo |
+| **Indep.** | #451 `d74debd88` CI5589 — org ID técnico (UX ≠ registros) |
+| Fora | merge main · deploy · seed · substituir backend |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · mapa port
+**Próximo:** aceite Codex montado tip `febb8ed0a`; port seletivo #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 residual pedido/epoch/preço pós CI5585) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | `3c149488` CI5585 SUCCESS |
+| **Residual** | pedidoId · pedidoVisualCompativel · bumpSessionEpoch A→B→A · elegivel null≠inativo · podeConfirmarPreco botão+handler · custo zero-safe |
+| **Codex** | `@codex review` no tip deste commit — CI ≠ aceite montado |
+| **#401** | mapa atualizado — **fora** até limpo; sem substituir backend |
+| Fora | merge main · deploy · seed · inventar UN/preço/custo |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt` · mapa `docs/evidence/comercial360-446-port-mapa-401-20261030.txt`
+**Próximo:** CI tip + aceite Codex montado; port seletivo #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 tip 611aaa6ee CI5577 SUCCESS — demos+Top10) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `611aaa6ee` — CI SUCCESS 6/6 (push **5576** · PR **5577**) |
+| **Base CI** | `c2f3acb7e` CI5569 · código demos `be52e3498` |
+| **Demos** | sessionKey · A→B→A · elegibilidade · zero · rejeição · Top10 leitura |
+| **Codex** | `@codex review` pedido no HEAD atual — CI ≠ aceite montado |
+| **#401** | mapa pronto — **fora** até limpo |
+| Fora | merge main · deploy · seed · trocar backend |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** aceite Codex montado tip `611aaa6ee`; port #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 tip c2f3acb7 CI5569 + demos runtime) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **CI** | `c2f3acb7e` SUCCESS 6/6 — **5569** |
+| **#401** | fora |
+| Fora | merge · deploy · seed |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** tip `611aaa6ee` CI5577.
+
+## CURSOR — VIGENTE (#446 Codex P1/P2 pós CI c52cc707a) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **CI tip** | `c52cc707a` SUCCESS 6/6; tip docs `c2f3acb7e` CI5569 SUCCESS |
+| **P1/P2** | visual≠pedido · margemVioladaEfetiva |
+| **#401** | fora |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** tip demos + Codex tip atual.
+
+## CURSOR — VIGENTE (#446 residual contexto/preço/custo/estoque fail-closed) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base tip** | `54fcd026d` CI SUCCESS — residual sobre modal canônico |
+| **Tip** | `c52cc707a` — CI SUCCESS 6/6 |
+| **Contexto** | `buildHistoricoModalGeracao` + effect; confirm rejeita geracao ≠ atual |
+| **#401** | fora |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** Codex P1/P2 tip; port #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 tip 54fcd026d CI SUCCESS — residual + typecheck) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `54fcd026d` — CI SUCCESS 6/6 (typecheck fix pós `f8a20831e`) |
+| **Código residual** | lock status · Top10 leitura · Sugestões anti-loop · modal canônico |
+| **Codex** | `@codex review` pedido em `f8a20831e` — CI verde ≠ aceite montado |
+| **#401** | `34c4c0ee` — **fora**; mapa port pronto sem merge |
+| Fora | merge main · deploy · seed · fundir linhas |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** aceite Codex montado tip residual; port controlado #401 só após limpo.
+
+## CURSOR — VIGENTE (#446 residual lock/Top10/Sugestões — pós Codex b161) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Fix** | lock itens por **status** (`pedidoItensBloqueadosPorStatus`) — `bloquearEdicao`=origem≠itens |
+| **Top10** | `podeAcionarSelecao` — sem callback → disabled (leitura) |
+| **HistoricoClienteTab** | Adicionar só com callback função |
+| **Sugestões** | `PEDIDOS_VAZIOS` estável + setState no-op (anti-loop P1) |
+| **Duplo clique** | Adicionar reabre modal sem append; confirm ref anti-reentrada |
+| **Seed** | `preco_medio` omitido; zero comprovado ok |
+| **Testes** | adicionar-historico-modal + wire + mount — **13 PASS** |
+| **Codex** | pedir review tip novo — não atribuir negativos b161 sem contraprova |
+| **#401** | `34c4c0ee` — **fora**; port só após aceite |
+| Fora | merge main · deploy · seed · fundir linhas · inventar UN/preço |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** CI + `@codex` montado; mapa port #401 sem merge.
+
+## CURSOR — VIGENTE (#446 tip af95c4cca CI SUCCESS — modal canônico) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `af95c4cca` — CI SUCCESS 6/6 (`41110477273` push · `41110487857` PR) |
+| **Fluxo** | Histórico Adicionar → `AdicionarItemRevendaModal` + `produtoInicial` → qty editável → `itens_revenda` |
+| **Policy** | `seedProdutoFromHistorico` — freq≠demanda; ausente≠UN/zero; preço zero comprovado ok |
+| **Leitura** | Detalhes/Painel: callback `undefined` — Adicionar ausente |
+| **Provas** | rejeição sem id · duplicidade toast · clique reabre modal · `bloquearEdicao` |
+| **Testes** | adicionar-historico-modal + wire + mount — **10 PASS** |
+| **Codex** | `@codex review` pedido — CI verde ≠ aceite Pedido real / harness |
+| **#401** | fora — sem integrar antes de Codex |
+| Fora | merge main · deploy · seed · API antiga |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** aceite Codex montado; #447 CI peel; #401 intacta.
+
+## CURSOR — VIGENTE (#446 wire tip f7a122ac1 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `f7a122ac1` — CI SUCCESS 6/6 (`41108231744` push · `41108240889` PR) |
+| **Wire** | HistoricoCompras/Sugestões/Top10 em Pedido/Detalhes/Painel |
+| **Fix** | onAdicionarProduto opcional (TS2741) — leitura sem botão órfão |
+| **Codex** | contraprovas pedidas em #442/#446 — CI verde ≠ aceite montado |
+| **#401** | fora — sem integrar |
+| Fora | merge main · deploy · seed |
+
+**Evidência:** `docs/evidence/comercial360-historico-sugestoes-wire-20261030.txt`
+**Próximo:** aceite Codex montado; residual Produto legado / Endereços embed.
+
 ## CURSOR — VIGENTE (#442 tip 1570f35ab CI SUCCESS — residual ETAPA A) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

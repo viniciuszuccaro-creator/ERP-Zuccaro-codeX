@@ -9,6 +9,8 @@ import { X, TrendingUp, Package, FileText, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import HistoricoOrigemCliente from "./HistoricoOrigemCliente";
 import HistoricoProdutosCliente from "./HistoricoProdutosCliente";
+import HistoricoComprasCliente from "./HistoricoComprasCliente";
+import Top10ProdutosCliente from "./Top10ProdutosCliente";
 import CentralCliente360Panel from "./CentralCliente360Panel";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -170,6 +172,13 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
               <div data-action="cliente-360-historico-produtos" data-permission="Comercial.Pedido.visualizar">
                 <h3 className="font-semibold text-slate-900 mb-2">Histórico de Produtos</h3>
                 <HistoricoProdutosCliente clienteId={cliente.id} />
+              </div>
+              {/* Keep-both: agregação compras + Top10 (leitura; Adicionar só no Pedido). */}
+              <div data-action="cliente-360-historico-compras" data-permission="Comercial.Pedido.visualizar">
+                <HistoricoComprasCliente clienteId={cliente.id} />
+              </div>
+              <div data-action="cliente-360-top10-produtos" data-permission="Comercial.Pedido.visualizar">
+                <Top10ProdutosCliente clienteId={cliente.id} />
               </div>
             </div>
           </Tabs>

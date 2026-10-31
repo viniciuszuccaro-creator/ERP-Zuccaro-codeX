@@ -562,14 +562,17 @@ export default function HistoricoClienteTab({ formData, setFormData: _setFormDat
                       </span>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onAdicionarItemAoPedido && onAdicionarItemAoPedido(produto)}
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Adicionar
-                  </Button>
+                  {typeof onAdicionarItemAoPedido === "function" ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onAdicionarItemAoPedido(produto)}
+                      data-action="historico-cliente-tab-adicionar"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Adicionar
+                    </Button>
+                  ) : null}
                 </div>
               ))}
             </div>

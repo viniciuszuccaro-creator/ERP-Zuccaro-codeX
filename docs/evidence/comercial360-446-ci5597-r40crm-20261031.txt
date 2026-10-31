@@ -1,0 +1,42 @@
+CI5597 / CI5596 — diagnóstico PostgreSQL R40CRM (2026-10-31 America/Sao_Paulo)
+================================================================================
+Tips: `aa24ac8d7` (CI5596 push · CI5597 PR) — frontend + composição SUCCESS; backend FAIL.
+Tip verde anterior: `534c08c5d` CI5591 — mesmo R40CRM ok 4 passou.
+
+## Hipótese (não “infra automática”)
+Suite: `server/tests/runtime40-crm-postgres-e2e.test.ts`
+Caso: `CRM/Pedido PostgreSQL: custom backup restores content, IDs, links, permissions and idempotent replay`
+Erro: `schema "crm_test_<uuid>" does not exist` (SQLSTATE **3F000**)
+Stack: `crmPostgresFixture.ts:cleanup` ← `finally { f.close() }` do teste (linha ~263)
+
+Causa raiz no fixture existente:
+1. `proveCrmFixtureBackup` → `restore()` faz `DROP SCHEMA "<schema>" CASCADE` antes do `pg_restore`.
+2. Se o restore falha após o DROP, ou o schema já foi removido no fluxo, o `cleanup()`
+   executa outro `DROP SCHEMA` **sem IF EXISTS** e lança 3F000.
+3. Esse 3F000 no `finally` **mascara** o erro original do restore (se houver) e falha o caso.
+
+Não é timeout de runner, auth VPS nem rede — é fixture de teste com cleanup não idempotente
+após DROP intencional no round-trip de backup.
+
+Diff tip verde→vermelho: só frontend Comercial360 (#446 sessão) — **sem** alteração em
+`server/tests/helpers/crmPostgresFixture.ts` nesse intervalo. Falha intermitente exposta
+quando cleanup encontra schema já dropado.
+
+## Correção (sem enfraquecer asserts de restore)
+- `DROP SCHEMA IF EXISTS` / `DROP ROLE IF EXISTS` no `cleanup`.
+- `DROP SCHEMA IF EXISTS` no `restore` do backup.
+- Sem rerun cego; sem relaxar gates de hash/reconciliação/idempotência do backup.
+
+## Fora
+- Classificar como infra e ignorar
+- Rerun repetido sem hipótese
+- Alterar asserts de conteúdo/IDs/links/permissões do restore
+
+## Coordenação Codex (2026-10-31 America/Sao_Paulo)
+Parecer montado #446: P1 sessão ABA **fechado** em `aa24ac8d7` (modalAfterB=false / 0 writes).
+CI5597 lido nos logs: 3F000 cleanup mascara pg_restore; **PG16.15 rejeita transaction_timeout**
+antes; 5591 SUCCESS no mesmo helper (ubuntu-24) vs falhas ubuntu-26.
+**Helper CI/backup/contraprovas reservados Codex na #342** — Cursor **não** edita esses
+trechos em paralelo. Fixture `crmPostgresFixture` revertido nesta candidata #446.
+Cursor segue UI tip `3536c04de`+ (sessão/preço/unidade/margem) e envia SHA para port
+coordenado quando validado. Sem rerun cego.

@@ -16,12 +16,16 @@ import {
 import { consolidateTopProdutosFromPedidos } from "./historicoComprasClientePolicy";
 
 const PEDIDOS_SUGESTOES_LIMIT = 100;
+/** Evita novo `[]` a cada render quando a query ainda não tem data (Codex P1 loop). */
+const PEDIDOS_VAZIOS = Object.freeze([]);
+/** Mutável para SetStateAction<any[]>; referência estável no clear no-op. */
+const SUGESTOES_VAZIAS = [];
 
 /**
  * Sugestões por frequência no histórico — keep both com Top10 (IA) e HistoricoCompras.
  * HTTP: loadPedidosHistoricoHttp + policy; erro ≠ painel ausente / lista vazia.
  */
-export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdicionarProduto }) {
+export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdicionarProduto = undefined }) {
   const [sugestoes, setSugestoes] = useState([]);
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -109,20 +113,23 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
     retry: false,
   });
 
-  const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
+  const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : PEDIDOS_VAZIOS;
   const dadosPedidosDisponiveis = consultaHabilitada && !pedidosErro && pedidosPage != null;
   const paginaIncompleta = Boolean(pedidosPage?.meta?.hasMore)
     || (Number.isFinite(Number(pedidosPage?.meta?.total))
       && Number(pedidosPage.meta.total) > pedidos.length);
 
   useEffect(() => {
+    const clearSugestoes = () => {
+      setSugestoes((prev) => (prev.length === 0 ? prev : SUGESTOES_VAZIAS));
+    };
     if (!consultaHabilitada || !dadosPedidosDisponiveis || produtos.length === 0) {
-      setSugestoes([]);
+      clearSugestoes();
       return;
     }
 
     if (pedidos.length === 0) {
-      setSugestoes([]);
+      clearSugestoes();
       return;
     }
 
@@ -222,9 +229,9 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
       <CardHeader className="bg-sky-50 border-b border-sky-100">
         <CardTitle className="text-sm flex items-center gap-2">
           <Zap className="w-4 h-4 text-sky-600" />
-          Sugestões Inteligentes
+          Sugestões pelo histórico
           <Badge className="bg-sky-600 ml-auto">
-            {paginaIncompleta ? "Parcial" : "Com Base no Histórico"}
+            {paginaIncompleta ? "Parcial" : "Frequência comprovada"}
           </Badge>
         </CardTitle>
         {paginaIncompleta ? (
@@ -258,22 +265,22 @@ export default function SugestoesProdutos({ clienteId, itensAtuais = [], onAdici
                   </div>
                 </div>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                disabled={!podeAdicionarProduto}
-                data-permission="Comercial.Pedido.criar"
-                data-action="adicionar-produto-sugerido"
-                onClick={() => {
-                  if (podeAdicionarProduto && onAdicionarProduto && typeof onAdicionarProduto === "function") {
-                    onAdicionarProduto(produto);
-                  }
-                }}
-                className="bg-sky-600 hover:bg-sky-700"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Adicionar
-              </Button>
+              {typeof onAdicionarProduto === "function" ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!podeAdicionarProduto}
+                  data-permission="Comercial.Pedido.criar"
+                  data-action="adicionar-produto-sugerido"
+                  onClick={() => {
+                    if (podeAdicionarProduto) onAdicionarProduto(produto);
+                  }}
+                  className="bg-sky-600 hover:bg-sky-700"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar
+                </Button>
+              ) : null}
             </div>
           ))}
         </div>

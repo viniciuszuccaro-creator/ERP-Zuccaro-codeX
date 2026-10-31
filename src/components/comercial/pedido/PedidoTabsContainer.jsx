@@ -1,9 +1,23 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
 import HistoricoProdutosCliente from '@/components/comercial/HistoricoProdutosCliente';
+import HistoricoComprasCliente from '@/components/comercial/HistoricoComprasCliente';
+import SugestoesProdutos from '@/components/comercial/SugestoesProdutos';
+import Top10ProdutosCliente from '@/components/comercial/Top10ProdutosCliente';
+import AdicionarItemRevendaModal from '@/components/comercial/AdicionarItemRevendaModal';
+import {
+  buildHistoricoModalGeracao,
+  buildSessionFingerprint,
+  bumpSessionEpoch,
+  pedidoItensBloqueadosPorStatus,
+  pedidoVisualCompativel,
+  pickTabelaPrecoExata,
+  seedProdutoFromHistorico,
+} from '@/components/comercial/historicoComprasClientePolicy';
 import { base44 } from '@/api/base44Client';
+import { readErpHttpSession } from '@/api/erpHttpSession';
 import { toast } from 'sonner';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { useUser } from '@/components/lib/UserContext';
@@ -45,6 +59,264 @@ export default function PedidoTabsContainer({
   ];
 
   const [conformidade, setConformidade] = useState({ ok: false, motivos: [] });
+  const [modalRevendaAberto, setModalRevendaAberto] = useState(false);
+  const [produtoSeedHistorico, setProdutoSeedHistorico] = useState(null);
+  const [modalHistoricoGeracao, setModalHistoricoGeracao] = useState(null);
+  // Wizard preenche só tabela_preco_id/nome — resolve objeto+itens no contexto (≠ inventar preço).
+  const [tabelaPrecoResolvida, setTabelaPrecoResolvida] = useState(null);
+  const [tabelaPrecoItensResolvidos, setTabelaPrecoItensResolvidos] = useState([]);
+  const confirmandoHistoricoRef = useRef(false);
+  const sessionEpochRef = useRef(0);
+  const sessionFpRef = useRef(null);
+  /** Token da resolução em voo — PedidoA→B / ator / sessão descartam resposta tardia. */
+  const tabelaResolveTokenRef = useRef('');
+
+  // bloquearEdicao = trava de origem (sempre true); itens usam status do pedido.
+  const itensBloqueados = pedidoItensBloqueadosPorStatus(formData);
+  const onAdicionarHistorico = itensBloqueados ? undefined : abrirAdicionarDoHistorico;
+
+  const clientePedido =
+    (Array.isArray(clientes) ? clientes.find((c) => c?.id === formData?.cliente_id) : null)
+    || (formData?.cliente_id ? { id: formData.cliente_id } : null);
+
+  function idsContextoAtual() {
+    return {
+      pedidoId: formData?.id || pedido?.id || null,
+      clienteId: formData?.cliente_id || null,
+      pedidoEmpresaId: formData?.empresa_id || null,
+      pedidoGroupId: formData?.group_id || formData?.grupo_id || null,
+      visualEmpresaId: empresaAtual?.id || null,
+      visualGroupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+      actorId: user?.id || null,
+    };
+  }
+
+  function readSessionFingerprintCanonical() {
+    try {
+      return buildSessionFingerprint(readErpHttpSession()?.token || null);
+    } catch {
+      return null;
+    }
+  }
+
+  // Fingerprint no render — effect observa renew (deps). Abertura/confirm releem a sessão canônica.
+  const sessionFingerprintObservado = readSessionFingerprintCanonical();
+
+  // Resolve TabelaPreco + itens pelo ID exato do pedido (wizard só id/nome).
+  // PedidoA→B / ator / contexto / sessão: deps + token — limpa sync; late de A não grava em B.
+  useEffect(() => {
+    let cancel = false;
+    const pedidoId = formData?.id || pedido?.id || null;
+    const tabelaId = formData?.tabela_preco_id || null;
+    const actorId = user?.id || null;
+    const resolveToken = [
+      pedidoId || '',
+      tabelaId || '',
+      formData?.empresa_id || '',
+      formData?.group_id || formData?.grupo_id || '',
+      formData?.cliente_id || '',
+      empresaAtual?.id || '',
+      grupoAtual?.id || '',
+      actorId || '',
+      sessionFingerprintObservado || '',
+    ].join('|');
+    tabelaResolveTokenRef.current = resolveToken;
+
+    const embutida = formData?.tabela_preco || null;
+    const itensEmbutidos = Array.isArray(formData?.tabela_preco_itens) ? formData.tabela_preco_itens : null;
+    const embutidaExata = pickTabelaPrecoExata(embutida ? [embutida] : [], tabelaId);
+
+    // Fail-closed imediato: troca Pedido/ID/contexto não deixa tabela anterior confirmável.
+    setTabelaPrecoResolvida(null);
+    setTabelaPrecoItensResolvidos([]);
+
+    const aindaVigente = () => !cancel && tabelaResolveTokenRef.current === resolveToken;
+
+    if (!tabelaId) {
+      return () => { cancel = true; };
+    }
+    if (embutidaExata && itensEmbutidos && itensEmbutidos.length > 0) {
+      const itensExatos = itensEmbutidos.filter(
+        (i) => !i?.tabela_preco_id || String(i.tabela_preco_id) === String(tabelaId),
+      );
+      if (itensExatos.length > 0 && aindaVigente()) {
+        setTabelaPrecoResolvida(embutidaExata);
+        setTabelaPrecoItensResolvidos(itensExatos);
+        return () => { cancel = true; };
+      }
+    }
+
+    (async () => {
+      try {
+        const tabelas = await filterInContext('TabelaPreco', { id: tabelaId }, 'nome', 5);
+        // Nunca tabelas[0]: resposta WRONG ≠ EXPECTED → null (não vira tabela escolhida).
+        const tabela = pickTabelaPrecoExata(tabelas, tabelaId);
+        if (!aindaVigente()) return;
+        if (!tabela) {
+          setTabelaPrecoResolvida(null);
+          setTabelaPrecoItensResolvidos([]);
+          return;
+        }
+        const itens = await filterInContext(
+          'TabelaPrecoItem',
+          { tabela_preco_id: tabela.id },
+          'produto_descricao',
+          1000,
+        );
+        if (!aindaVigente()) return;
+        const itensExatos = Array.isArray(itens)
+          ? itens.filter((i) => !i?.tabela_preco_id || String(i.tabela_preco_id) === String(tabelaId))
+          : [];
+        setTabelaPrecoResolvida(tabela);
+        setTabelaPrecoItensResolvidos(itensExatos);
+      } catch (error) {
+        console.error('[PedidoTabsContainer] Falha ao resolver tabela_preco_id', error);
+        if (aindaVigente()) {
+          setTabelaPrecoResolvida(null);
+          setTabelaPrecoItensResolvidos([]);
+        }
+      }
+    })();
+    return () => { cancel = true; };
+  }, [
+    formData?.id,
+    pedido?.id,
+    formData?.tabela_preco_id,
+    formData?.tabela_preco,
+    formData?.tabela_preco_itens,
+    formData?.empresa_id,
+    formData?.group_id,
+    formData?.grupo_id,
+    formData?.cliente_id,
+    empresaAtual?.id,
+    grupoAtual?.id,
+    user?.id,
+    sessionFingerprintObservado,
+    filterInContext,
+  ]);
+
+  function sessionEpochAtual() {
+    // Sempre releia: filho (modal) pode mutar sem re-render do pai; sessão pode expirar.
+    const fp = readSessionFingerprintCanonical();
+    const next = bumpSessionEpoch(sessionEpochRef.current, sessionFpRef.current, fp);
+    sessionEpochRef.current = next.epoch;
+    sessionFpRef.current = next.fingerprint;
+    return { epoch: next.epoch, fingerprint: next.fingerprint };
+  }
+
+  function geracaoHistoricoAtual() {
+    const ids = idsContextoAtual();
+    const sess = sessionEpochAtual();
+    return buildHistoricoModalGeracao({
+      ...ids,
+      sessionKey: sess.fingerprint,
+      sessionEpoch: sess.epoch,
+    });
+  }
+
+  function fecharModalHistoricoObsoleto() {
+    setModalRevendaAberto(false);
+    setProdutoSeedHistorico(null);
+    setModalHistoricoGeracao(null);
+  }
+
+  // Troca pedido/cliente/empresa/grupo/ator/visual/sessão com modal aberto → descarta seleção; preserva rascunho.
+  // sessionFingerprintObservado nas deps: RenderB com token B captura B (epoch↑); volta A não rematch.
+  useEffect(() => {
+    if (!modalRevendaAberto || !modalHistoricoGeracao) return;
+    if (geracaoHistoricoAtual() === modalHistoricoGeracao) return;
+    fecharModalHistoricoObsoleto();
+    toast.message('Contexto alterado — confirmação do histórico anterior cancelada.');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- geracao lida no corpo; fp de sessão nas deps
+  }, [
+    modalRevendaAberto,
+    modalHistoricoGeracao,
+    formData?.id,
+    formData?.cliente_id,
+    formData?.empresa_id,
+    formData?.group_id,
+    formData?.grupo_id,
+    pedido?.id,
+    empresaAtual?.id,
+    grupoAtual?.id,
+    user?.id,
+    sessionFingerprintObservado,
+  ]);
+
+  function abrirAdicionarDoHistorico(produto) {
+    if (pedidoItensBloqueadosPorStatus(formData)) {
+      toast.error('Pedido bloqueado para edição de itens.');
+      return;
+    }
+    const ids = idsContextoAtual();
+    // Pedido e visual divergentes → não abrir (não misturar catálogo B no rascunho A).
+    if (!pedidoVisualCompativel(ids)) {
+      toast.error('Contexto visual diverge do pedido — alinhe empresa/grupo antes de adicionar.');
+      return;
+    }
+    const seed = seedProdutoFromHistorico(produto);
+    if (!seed) {
+      toast.error('Produto sem identificação comprovada.');
+      return;
+    }
+    const jaNoRascunho = (formData?.itens_revenda || []).some(
+      (it) => String(it?.produto_id) === String(seed.id),
+    );
+    if (jaNoRascunho) {
+      // Duplicidade legítima: avisa e reabre modal (não funde linhas automaticamente).
+      toast.message('Produto já está no rascunho — confirme quantidade no modal.');
+    }
+    // Clique repetido: reabre o mesmo modal (não append direto).
+    setModalHistoricoGeracao(geracaoHistoricoAtual());
+    setProdutoSeedHistorico(seed);
+    setModalRevendaAberto(true);
+  }
+
+  function confirmarItemRevendaDoHistorico(item) {
+    if (confirmandoHistoricoRef.current) return;
+    if (pedidoItensBloqueadosPorStatus(formData)) {
+      toast.error('Pedido bloqueado para edição de itens.');
+      return;
+    }
+    if (!pedidoVisualCompativel(idsContextoAtual())) {
+      fecharModalHistoricoObsoleto();
+      toast.error('Contexto visual diverge do pedido — item não foi inserido.');
+      return;
+    }
+    // Modal obsoleto após troca de contexto/pedido/sessão: não inserir no rascunho novo.
+    if (!modalHistoricoGeracao || geracaoHistoricoAtual() !== modalHistoricoGeracao) {
+      fecharModalHistoricoObsoleto();
+      toast.error('Contexto alterado — item do histórico anterior não foi inserido.');
+      return;
+    }
+    if (!item?.produto_id) {
+      toast.error('Item rejeitado: sem produto_id.');
+      return;
+    }
+    // Preço ausente ≠ inventar 0 (zero comprovado chega como Number finito).
+    if (item.preco_unitario == null || !Number.isFinite(Number(item.preco_unitario))) {
+      toast.error('Item rejeitado: preço unitário não comprovado.');
+      return;
+    }
+    confirmandoHistoricoRef.current = true;
+    try {
+      setFormData((prev) => {
+        const atuais = Array.isArray(prev?.itens_revenda) ? prev.itens_revenda : [];
+        return {
+          ...prev,
+          itens_revenda: [...atuais, item],
+        };
+      });
+      fecharModalHistoricoObsoleto();
+      // Sucesso = rascunho em memória aceito (≠ persistência banco).
+      toast.success(`Produto ${item.descricao || item.produto_id} no rascunho`);
+      setActiveTab('revenda');
+    } finally {
+      Promise.resolve().then(() => {
+        confirmandoHistoricoRef.current = false;
+      });
+    }
+  }
 
   const auditTabsPedido = async (acao, detalhes = {}, sucesso = true) => {
     const empresaId = formData?.empresa_id || empresaAtual?.id || null;
@@ -233,12 +505,33 @@ export default function PedidoTabsContainer({
         </TabsContent>
 
         <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0 space-y-4">
-          {/* Histórico paginado HTTP (clienteId) — mesma fonte do DetalhesCliente/Painel; não depende de base44.filter≤50. */}
+          {/* Capacidades #441/#442 montadas no consumidor Pedido — Adicionar muta itens_revenda. */}
           {formData?.cliente_id ? (
-            <div data-action="pedido-historico-produtos" data-permission="Comercial.Pedido.visualizar">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">Histórico de Produtos</h3>
-              <HistoricoProdutosCliente clienteId={formData.cliente_id} />
-            </div>
+            <>
+              <div data-action="pedido-historico-produtos" data-permission="Comercial.Pedido.visualizar">
+                <h3 className="text-sm font-semibold text-slate-900 mb-2">Histórico de Produtos</h3>
+                <HistoricoProdutosCliente clienteId={formData.cliente_id} />
+              </div>
+              <div data-action="pedido-historico-compras" data-permission="Comercial.Pedido.visualizar">
+                <HistoricoComprasCliente
+                  clienteId={formData.cliente_id}
+                  onAdicionarProduto={onAdicionarHistorico}
+                />
+              </div>
+              <div data-action="pedido-sugestoes-historico" data-permission="Comercial.Pedido.visualizar">
+                <SugestoesProdutos
+                  clienteId={formData.cliente_id}
+                  itensAtuais={formData?.itens_revenda || []}
+                  onAdicionarProduto={onAdicionarHistorico}
+                />
+              </div>
+              <div data-action="pedido-top10-produtos" data-permission="Comercial.Pedido.visualizar">
+                <Top10ProdutosCliente
+                  clienteId={formData.cliente_id}
+                  onSelecionarProduto={onAdicionarHistorico}
+                />
+              </div>
+            </>
           ) : (
             <p className="text-sm text-slate-500" data-action="pedido-historico-produtos-sem-cliente">
               Selecione o cliente na Identificação para consultar o histórico de produtos.
@@ -248,12 +541,20 @@ export default function PedidoTabsContainer({
             <HistoricoClienteTab
               formData={formData}
               setFormData={setFormData}
-              onAdicionarItemAoPedido={(produto) => {
-                toast.success(`Produto ${produto.descricao} adicionado!`);
-                setActiveTab('revenda');
-              }}
+              onAdicionarItemAoPedido={onAdicionarHistorico}
             />
           </Suspense>
+          {modalRevendaAberto ? (
+            <AdicionarItemRevendaModal
+              isOpen={modalRevendaAberto}
+              onClose={fecharModalHistoricoObsoleto}
+              onAddItem={confirmarItemRevendaDoHistorico}
+              cliente={clientePedido}
+              tabelaPreco={tabelaPrecoResolvida}
+              tabelaPrecoItens={tabelaPrecoItensResolvidos}
+              produtoInicial={produtoSeedHistorico}
+            />
+          ) : null}
         </TabsContent>
 
         <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">

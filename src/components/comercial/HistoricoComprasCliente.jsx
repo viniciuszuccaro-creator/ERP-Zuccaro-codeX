@@ -21,7 +21,7 @@ const PEDIDOS_COMPRAS_LIMIT = 200;
  * Histórico de compras do cliente (Comercial) — keep both com portal/HistoricoComprasCliente.
  * HTTP: loadPedidosHistoricoHttp; erro ≠ lista vazia / top inventado.
  */
-export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto }) {
+export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto = undefined }) {
   const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
@@ -219,13 +219,13 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
                   </div>
                 </div>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  if (!podeAdicionarProduto) return;
-                  if (onAdicionarProduto && typeof onAdicionarProduto === "function") {
+              {typeof onAdicionarProduto === "function" ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (!podeAdicionarProduto) return;
                     const payload = {
                       id: produto.produto_id,
                       codigo: produto.codigo_sku,
@@ -241,16 +241,16 @@ export default function HistoricoComprasCliente({ clienteId, onAdicionarProduto 
                       payload.unidade_sigla = produto.unidade;
                     }
                     onAdicionarProduto(payload);
-                  }
-                }}
-                disabled={!podeAdicionarProduto}
-                className="border-sky-300 text-sky-700 hover:bg-sky-50"
-                data-permission="Comercial.Pedido.criar"
-                data-action="adicionar-produto-historico-cliente"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Adicionar
-              </Button>
+                  }}
+                  disabled={!podeAdicionarProduto}
+                  className="border-sky-300 text-sky-700 hover:bg-sky-50"
+                  data-permission="Comercial.Pedido.criar"
+                  data-action="adicionar-produto-historico-cliente"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar
+                </Button>
+              ) : null}
             </div>
           ))}
         </div>
