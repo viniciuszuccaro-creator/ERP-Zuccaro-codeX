@@ -1,3 +1,10 @@
+## CURSOR — Pacote D Banco/TipoDespesa/Grupo reopen+sky (2026-10-31 America/Sao_Paulo)
+- Branch `cursor/cadastros-banco-tipodespesa-grupo-reopen-392b` ← #459.
+- `prevIdRef` → `useCadastroRecordState` (id+updated_date+grupo+empresa+contexto); sky+ID técnico.
+- Testes 3+46 PASS. Sem merge/deploy.
+- Pacote A: tip #446 `900a3fcc9` — residual A→B fechado na montagem Codex; unidade×preço/margem-zero já no tip; port #401 só após aceite formal.
+- PRs: OAuth ManagePullRequest BLOCKED — branches pushadas (`pedido-detail-reopen`, `empresa-perfil-sky`, `forma-pagamento-reopen-sky`, esta).
+
 ## Checkpoint Cursor — #459 CI SUCCESS + Pacote A BLOCKED Codex (2026-10-31 America/Sao_Paulo)
 
 - #459 `0c127b034` SUCCESS. #446 aguarda mount Codex antes de consolidar em #401.

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
+import useCadastroRecordState from './useCadastroRecordState';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,22 +22,21 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
   const podeCriar = canCreate("Cadastros", "TipoDespesa") || canCreate("Financeiro", "TipoDespesa") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "TipoDespesa") || canEdit("Financeiro", "TipoDespesa") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     codigo: '', nome: '', categoria: 'Operacional',
     conta_contabil_padrao_id: '', conta_contabil_padrao_nome: '',
     centro_resultado_padrao_id: '', centro_resultado_padrao_nome: '',
     exige_aprovacao: false, limite_aprovacao_automatica: 0,
     pode_ser_recorrente: false, ativo: true
-  });
-
-  // Garante sincronização quando o mesmo componente é reutilizado (ex: abrir outro registro sem desmontar)
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  };
+  const recordIdentity = JSON.stringify([
+    dadosIniciais?.id ?? null,
+    dadosIniciais?.updated_date ?? null,
+    groupId,
+    empresaAtual?.id ?? null,
+    contexto,
+  ]);
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || emptyFormData, recordIdentity);
 
   const { data: contasContabeis = [] } = useQuery({
     queryKey: ['tipo-despesa-plano-contas', contextKey],
@@ -179,7 +179,14 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
       <div className="w-full h-full flex flex-col">
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
           <Receipt className="w-6 h-6 text-sky-600" />
-          <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}</h2>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">{dadosIniciais?.id ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}</h2>
+            {dadosIniciais?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
       </div>
