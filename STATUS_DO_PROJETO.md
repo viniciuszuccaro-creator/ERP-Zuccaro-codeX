@@ -1,17 +1,18 @@
-## CURSOR — VIGENTE (#401 P1 tabela effect + composto) (2026-10-31 America/Sao_Paulo)
+## CURSOR — VIGENTE (#401 P1+P2 modal janela + composto) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch** | `cursor/composicao-397-342-prep-392b` (= PR #401) |
-| **Tip** | `dbbee42ea` — P1 `filterInContextRef` + bail-out Object.is no efeito TabelaPreco |
+| **Tip** | `ae4fdc86f` — P2 `hostWindowMode` eleva Dialog Adicionar acima WindowManager |
+| **P1** | `dbbee42ea` — `filterInContextRef` + bail-out Object.is |
 | **Composto base** | `075fc2260` (= docs tip sobre `80d1393ee` FF #446+#453+#454+pedido-detail) |
-| **Aceites Codex** | #446 `900a3fcc` /6545437006 · #453 `cda612` /6545449667 · #454 `b4d8` /6545487624 · ação #401 /6547965046 · P1 loop filterInContext |
+| **Aceites Codex** | #446 `900a3fcc` /6545437006 · #453 `cda612` /6545449667 · #454 `b4d8` /6545487624 · ação #401 /6547965046 · P1 loop · P2 z-index modal |
 | **Preservado** | Contatos/contagens #401 · `src/api` · `server/src` produto · RBAC · persistência |
 | **CI tip** | própria deste SHA (≠ herdar CI ancestral) |
 | Fora | merge main · deploy · VPS · edição Codex em branches Cursor |
 
-**Testes locais:** `comercial360-adicionar-historico-modal` **14 PASS** (incl. bail-out Object.is)
-**Próximo:** CI tip `dbbee42ea`; `@codex review` P1 + deltas composto; indep. cadastros sky/reopen.
+**Testes locais:** `comercial360-adicionar-historico-modal` **15 PASS**
+**Próximo:** CI tip `ae4fdc86f`; `@codex review` P1+P2 + deltas composto; indep. cadastros sky/reopen.
 
 ## CURSOR — VIGENTE (#401 composto #446+#453+#454+pedido-detail) (2026-10-31 America/Sao_Paulo)
 
