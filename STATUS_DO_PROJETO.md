@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (Filial/Catálogo/Rota sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-filial-catalogo-rota-sky-392b` |
+| **Base** | `cursor/comercial360-proposta-347-evolucao-392b` |
+| **Delta** | Filial + CatalogoWeb + RotaPadrao: sky windowMode + ID técnico |
+| **CI** | PG16 ubuntu-24 incluso (port #453) |
+| Fora | merge · deploy · seed · alterar pin RecordState |
+
+**Irmãos:** #455/#456/#457 SUCCESS
+**Próximo:** CI deste tip; Codex #446.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

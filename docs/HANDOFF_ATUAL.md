@@ -1,3 +1,7 @@
+## Checkpoint Cursor — Filial/Catálogo/Rota sky (2026-10-31 America/Sao_Paulo)
+
+- Pacote indep. chrome sky+ID; CI PG16; sem merge.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout

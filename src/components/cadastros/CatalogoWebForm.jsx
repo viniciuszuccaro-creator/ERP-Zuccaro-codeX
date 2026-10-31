@@ -155,11 +155,18 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-          <Globe className="w-6 h-6 text-blue-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Catálogo' : 'Novo Catálogo Web'}
-          </h2>
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Globe className="w-6 h-6 text-sky-600" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              {dadosIniciais ? 'Editar Catálogo' : 'Novo Catálogo Web'}
+            </h2>
+            {dadosIniciais?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
       </div>

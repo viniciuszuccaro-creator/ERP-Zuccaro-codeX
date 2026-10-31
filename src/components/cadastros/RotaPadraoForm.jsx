@@ -130,11 +130,18 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-orange-50 to-orange-100">
-          <MapPin className="w-6 h-6 text-orange-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Rota' : 'Nova Rota Padrão'}
-          </h2>
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <MapPin className="w-6 h-6 text-sky-600" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              {dadosIniciais ? 'Editar Rota' : 'Nova Rota Padrão'}
+            </h2>
+            {dadosIniciais?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
       </div>
