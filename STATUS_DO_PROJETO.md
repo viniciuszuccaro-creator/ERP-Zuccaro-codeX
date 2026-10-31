@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Pacote C Empresa+Perfil sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-empresa-perfil-sky-392b` ← #459 `248a8f52d` |
+| **Escopo** | EmpresaForm + PerfilAcessoForm sky windowMode + ID técnico |
+| **Preservado** | pin ID-only Usuario/GrupoEmpresarial · CentroResultado #459 · reopen/recordState |
+| **Testes** | empresa-perfil-sky 3 PASS · usuario-grupo-centro-sky 2 PASS · identidade-consolidacao 5 PASS · empresa-edicao 8 PASS |
+| **Pacote B** | tip `80d1393ee` pedido detail reopen (base orc-pedido) — PR create BLOCKED OAuth Cursor |
+| **Pacote A** | BLOCKED Codex mount #446 `900a3fcc9` |
+| Fora | merge · deploy · seed · sky em coorte ID-only |
+
+**Próximo:** CI deste tip; indep. Pacote D reopen transversal / unificação sobreposições.
+
 ## CURSOR — VIGENTE (#459 tip 0c127b034 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -309,14 +309,19 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Shield className="w-5 h-5 text-blue-600" />
-            {perfil ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}
-          </h2>
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Shield className="w-6 h-6 text-sky-600" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">{perfil ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}</h2>
+            {perfil?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(perfil.id)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
-        {formContent}
+        <div className="flex-1 overflow-auto p-6 bg-white">{formContent}</div>
       </div>
     );
   }
