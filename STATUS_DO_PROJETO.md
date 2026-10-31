@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Pacote D Banco/TipoDespesa/Grupo reopen+sky) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-banco-tipodespesa-grupo-reopen-392b` ← #459 `248a8f52d` |
+| **Escopo** | BancoForm · TipoDespesaForm · GrupoProdutoForm: recordState + sky + ID técnico |
+| **Causa** | `prevIdRef` só por id |
+| **Testes** | banco-tipodespesa-grupo-reopen 3 PASS · consolidacao+callback 46 PASS |
+| **CI paralelo** | Pedido detail `80d1393ee` SUCCESS · Empresa/Perfil + FormaPagamento in_progress |
+| **Pacote A** | #446 `900a3fcc9` P1 A→B ENCERRADO Codex; P1/P2 unidade/margem já em ancestral `3536c04de`; aguarda aceite formal para port #401 |
+| Fora | merge · deploy · seed · ManagePullRequest OAuth BLOCKED |
+
+**Próximo:** CI deste tip; ClienteCompleto/FornecedorCompleto recordState (arquivos grandes); aceite Codex #446.
+
 ## CURSOR — VIGENTE (#459 tip 0c127b034 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

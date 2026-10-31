@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -23,22 +24,22 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
   const podeEditar = hasPermission?.("Cadastros.GrupoProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeExcluir = hasPermission?.("Cadastros.GrupoProduto.excluir") || hasPermission?.("Cadastros.Produto.excluir");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const emptyFormData = {
     nome_grupo: '',
     codigo: '',
     natureza: 'Revenda',
     ncm_padrao: '',
     margem_sugerida: 0,
     ativo: true
-  });
-
-  const prevIdRef = useRef(dadosIniciais?.id);
-  useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  };
+  const recordIdentity = JSON.stringify([
+    dadosIniciais?.id ?? null,
+    dadosIniciais?.updated_date ?? null,
+    groupId,
+    empresaAtual?.id ?? null,
+    contexto,
+  ]);
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || emptyFormData, recordIdentity);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -197,14 +198,19 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Package className="w-5 h-5 text-blue-600" />
-            {dadosIniciais ? 'Editar Grupo de Produto' : 'Novo Grupo de Produto'}
-          </h2>
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Package className="w-6 h-6 text-sky-600" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">{dadosIniciais?.id ? 'Editar Grupo de Produto' : 'Novo Grupo de Produto'}</h2>
+            {dadosIniciais?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(dadosIniciais.id)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
-        {formContent}
+        <div className="flex-1 overflow-auto p-6 bg-white">{formContent}</div>
       </div>
     );
   }
