@@ -1,3 +1,12 @@
+## Checkpoint Cursor — #457 CI SUCCESS (2026-10-31 America/Sao_Paulo)
+
+- Tip `5dc9784dd` SUCCESS 6/6. Sem merge.
+
+## Checkpoint Cursor — Config/WhatsApp/Modelo/Evento sky (2026-10-31 America/Sao_Paulo)
+
+- Pacote indep. `cursor/cadastros-config-notif-sky-392b` paralelo a #455/#456.
+- Chrome sky + ID técnico; pin RecordState intacto.
+
 ## #344 — Grupo CPA: vínculos e permissões localizados; sessão ainda requerida (2026-10-25)
 
 Retomada6400924274, basea31d83fd, mesmo Codespace/branch Codex, checkout
