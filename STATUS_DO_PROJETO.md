@@ -1,3 +1,13 @@
+## CURSOR — CI fix EmpresaForm date-arithmetic hash (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-empresa-perfil-sky-392b` |
+| **Causa** | `date-arithmetic-contracts` emit hash EmpresaForm mudou com sky windowMode |
+| **Graduação** | `emittedBeforeSha256` cbbf6c99… → 363d9281… (justificado: delta só header sky+ID; operands Date intactos) |
+| **Prova** | date-arithmetic-contracts 33 PASS |
+| Fora | merge · relaxar asserts Date |
+
 ## CURSOR — VIGENTE (Pacote C Empresa+Perfil sky) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
