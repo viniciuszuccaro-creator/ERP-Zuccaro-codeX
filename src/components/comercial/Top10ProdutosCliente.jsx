@@ -10,7 +10,20 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { assertIaUiContext } from "@/components/lib/iaTransversalPolicy";
 import { validarSugestoesProdutosIA } from "@/components/lib/iaResponsePolicy.js";
+import { resolveErpBackendMode } from "@/api/runtimeBackend";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import {
+  historicoSessionCacheKey,
+  loadPedidosHistoricoHttp,
+} from "./HistoricoProdutosCliente";
+import { consolidateTopProdutosFromPedidos } from "./historicoComprasClientePolicy";
 
+const PEDIDOS_TOP10_LIMIT = 200;
+
+/**
+ * Top 10 produtos do cliente + IA — keep both com HistoricoComprasCliente (capacidade distinta).
+ * HTTP: reutiliza loadPedidosHistoricoHttp + policy; erro ≠ "sem histórico".
+ */
 export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = undefined }) {
   const [usandoIA, setUsandoIA] = useState(false);
   const [sugestoesIA, setSugestoesIA] = useState([]);
@@ -21,6 +34,10 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
   const scopeType = estaNoGrupo || contexto === "grupo" ? "grupo" : "empresa";
+  const httpMode = resolveErpBackendMode() === "http";
+  const sessionSnapshot = readErpHttpSession();
+  const sessionActorId = sessionSnapshot?.actorId || null;
+  const sessionCacheKey = historicoSessionCacheKey(sessionSnapshot);
   const iaIdentityKey = JSON.stringify([user?.id, clienteId, groupId, empresaId, scopeType]);
   const iaRequestScope = React.useRef({ key: iaIdentityKey, pending: false, active: true });
   const iaResultScope = React.useRef(null);
@@ -51,60 +68,89 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
     hasPermission("Comercial.Pedido.editar") ||
     hasPermission("comercial", "criar_pedido") ||
     hasPermission("comercial", "editar_pedido");
+  // Leitura (Detalhes/Painel): sem callback → botão indisponível; com callback válido mantém capacidade.
+  const podeAcionarSelecao =
+    typeof onSelecionarProduto === "function" && podeSelecionarProduto;
   const podeUsarIA = contextoValido && podeVisualizarHistorico && podeSelecionarProduto;
-  const consultaHabilitada = Boolean(clienteId && contextoValido && podeVisualizarHistorico);
+  const consultaHabilitada = Boolean(
+    clienteId
+      && contextoValido
+      && podeVisualizarHistorico
+      && (!httpMode || (empresaId && sessionActorId && sessionCacheKey)),
+  );
 
-  const { data: pedidos = [], isLoading: isLoadingPedidos } = useQuery({
-    queryKey: ["top10-pedidos-cliente-contexto", clienteId, groupId, empresaId, contexto],
-    queryFn: async () => filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", 200),
-    enabled: consultaHabilitada
+  const {
+    data: pedidosPage,
+    isError: pedidosErro,
+    isFetching: pedidosFetching,
+    isLoading: isLoadingPedidos,
+  } = useQuery({
+    queryKey: [
+      "top10-pedidos-cliente-contexto",
+      clienteId,
+      groupId,
+      empresaId,
+      contexto,
+      sessionActorId,
+      sessionCacheKey,
+      httpMode ? "http" : "legado",
+    ],
+    queryFn: async ({ signal }) => {
+      if (!clienteId || !contextoValido || !podeVisualizarHistorico) {
+        throw Object.assign(new Error("Top10 bloqueado: contexto ou permissao ausente."), {
+          code: "TOP10_CONTEXT_DENIED",
+        });
+      }
+      if (httpMode) {
+        if (!empresaId) {
+          throw Object.assign(new Error("Top10 HTTP exige empresa no contexto."), {
+            code: "EMPRESA_CONTEXT_REQUIRED",
+          });
+        }
+        return loadPedidosHistoricoHttp({
+          clienteId,
+          groupId,
+          empresaId,
+          signal,
+          limit: PEDIDOS_TOP10_LIMIT,
+          offset: 0,
+          expectedActorId: sessionActorId,
+          expectedSessionKey: sessionCacheKey,
+        });
+      }
+      const rows = await filterInContext("Pedido", { cliente_id: clienteId }, "-data_pedido", PEDIDOS_TOP10_LIMIT);
+      const data = Array.isArray(rows) ? rows : [];
+      return {
+        data,
+        meta: { limit: PEDIDOS_TOP10_LIMIT, offset: 0, total: data.length, hasMore: false },
+      };
+    },
+    enabled: consultaHabilitada,
+    staleTime: 60_000,
+    retry: false,
   });
 
   const { data: produtos = [], isLoading: isLoadingProdutos } = useQuery({
     queryKey: ["top10-produtos-disponiveis-contexto", clienteId, groupId, empresaId, contexto],
     queryFn: async () => filterInContext("Produto", {}, "descricao", 500),
-    enabled: consultaHabilitada
+    enabled: consultaHabilitada,
+    retry: false,
   });
 
-  const produtosConsolidados = {};
+  const pedidos = Array.isArray(pedidosPage?.data) ? pedidosPage.data : [];
+  const dadosPedidosDisponiveis = consultaHabilitada && !pedidosErro && pedidosPage != null;
+  const paginaIncompleta = Boolean(pedidosPage?.meta?.hasMore)
+    || (Number.isFinite(Number(pedidosPage?.meta?.total))
+      && Number(pedidosPage.meta.total) > pedidos.length);
 
-  pedidos.forEach(pedido => {
-    const itensRevenda = Array.isArray(pedido.itens_revenda) ? pedido.itens_revenda : [];
-
-    itensRevenda.forEach(item => {
-      if (!item || typeof item !== "object") return;
-
-      const key = item.produto_id || item.codigo_sku || item.descricao;
-      if (!key) return;
-
-      if (!produtosConsolidados[key]) {
-        produtosConsolidados[key] = {
-          produto_id: item.produto_id,
-          codigo: item.codigo_sku || "",
-          descricao: item.descricao || "Produto",
-          quantidade_total: 0,
-          valor_total: 0,
-          frequencia: 0,
-          ultimo_preco: 0,
-          ultima_compra: null,
-          unidade: item.unidade || "UN"
-        };
-      }
-
-      produtosConsolidados[key].quantidade_total += item.quantidade || 0;
-      produtosConsolidados[key].valor_total += item.valor_item || 0;
-      produtosConsolidados[key].frequencia += 1;
-      produtosConsolidados[key].ultimo_preco = item.preco_unitario || 0;
-
-      if (!produtosConsolidados[key].ultima_compra || (pedido.data_pedido && new Date(pedido.data_pedido) > new Date(produtosConsolidados[key].ultima_compra))) {
-        produtosConsolidados[key].ultima_compra = pedido.data_pedido;
-      }
-    });
-  });
-
-  const top10Produtos = Object.values(produtosConsolidados)
-    .sort((a, b) => b.valor_total - a.valor_total)
-    .slice(0, 10);
+  const top10Produtos = dadosPedidosDisponiveis
+    ? consolidateTopProdutosFromPedidos(pedidos, { limit: 10 }).map((row) => ({
+        ...row,
+        codigo: row.codigo_sku || "",
+        // Unidade só se comprovada pela policy — nunca inventar "UN" (Pacote B / #441).
+        unidade: row.unidade || null,
+      }))
+    : [];
 
   const buscarSugestoesIA = async () => {
     if (!podeUsarIA) {
@@ -116,6 +162,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
       return;
     }
 
+    // Somente ids do harness IA (erp-ia-invocation-contract): sem free refs de policy/query.
     if (!clienteId || !produtos.length || !pedidos.length) {
       toast({
         title: "Aviso",
@@ -134,17 +181,36 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
 
     try {
       assertIaUiContext({ groupId, empresaId, scopeType });
-      const historicoPedidos = pedidos.map(p => ({
-        data: p.data_pedido,
-        valor: p.valor_total,
-        group_id: p.group_id || groupId || null,
-        empresa_id: p.empresa_id || empresaId || null,
-        itens: p.itens_revenda?.map(i => ({
-          produto: i.descricao,
-          quantidade: i.quantidade,
-          valor: i.valor_item
-        }))
-      }));
+      // Inline canônico HTTP+legado — evita free refs (extract/resolve*) no callback extraído.
+      const historicoPedidos = pedidos.map(p => {
+        const buckets = [p?.itens, p?.itens_revenda, p?.itens_producao, p?.itens_servico];
+        const linhas = [];
+        for (const bucket of buckets) {
+          if (!Array.isArray(bucket)) continue;
+          for (const i of bucket) {
+            if (!i || typeof i !== "object") continue;
+            const qty = Number(i.quantidade) || 0;
+            const valorLinha = Number(
+              i.total ?? i.valor_item ?? i.valor_total
+                ?? ((Number(i.preco_unitario) || 0) * qty),
+            );
+            linhas.push({
+              produto: i.descricao || i.nome || null,
+              quantidade: i.quantidade,
+              valor: Number.isFinite(valorLinha) ? valorLinha : 0,
+            });
+          }
+        }
+        const valorPedido = Number(p?.total ?? p?.valor_total);
+        return {
+          // HTTP canônico: created_at; legado: data_pedido / created_date (Codex P2).
+          data: p.data_pedido || p.created_date || p.created_at || null,
+          valor: Number.isFinite(valorPedido) ? valorPedido : 0,
+          group_id: p.group_id || groupId || null,
+          empresa_id: p.empresa_id || empresaId || null,
+          itens: linhas,
+        };
+      });
 
       const linhasProdutos = produtos
         .slice(0, 50)
@@ -236,17 +302,29 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
   const sugestoesExibir = sugestoesVisiveis.length > 0
     ? sugestoesVisiveis
     : top10Produtos.map(t => {
-      const fullProduct = produtos.find(p => p.id === t.produto_id) || {
-        id: t.produto_id,
-        codigo: t.codigo,
-        descricao: t.descricao,
-        preco_venda: t.ultimo_preco,
-        unidade_medida: t.unidade,
-      };
+      const catalog = produtos.find(p => p.id === t.produto_id);
+      const fullProduct = catalog
+        ? { ...catalog }
+        : {
+            id: t.produto_id,
+            codigo: t.codigo,
+            descricao: t.descricao,
+          };
+      // Sem catálogo: só preço/unidade históricos comprovados.
+      // Com catálogo: NÃO sobrescrever unidade/preço (evita KG histórico + preço PC).
+      if (!catalog) {
+        if (t.ultimo_preco != null) fullProduct.preco_venda = t.ultimo_preco;
+        if (t.unidade) {
+          fullProduct.unidade_medida = t.unidade;
+          fullProduct.unidade_sigla = t.unidade;
+        }
+      }
+      const unidadeLabel = t.unidade || "—";
       return {
         produto: fullProduct,
-        motivo_sugestao: "Comprado " + t.quantidade_total + " " + t.unidade + " anteriormente",
-        score_confianca: Math.min(100, t.frequencia * 20 + (t.valor_total / 100)),
+        motivo_sugestao: "Comprado " + t.quantidade_total + " " + unidadeLabel + " anteriormente",
+        // Heurística local de frequência ≠ score_confianca de IA — omitir no fallback.
+        fonte_sugestao: "historico",
       };
     });
 
@@ -263,7 +341,22 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
     );
   }
 
-  if (isLoadingPedidos || isLoadingProdutos) {
+  if (httpMode && (!empresaId || !sessionActorId || !sessionCacheKey)) {
+    return (
+      <Alert
+        className="w-full h-full border-amber-200 bg-amber-50"
+        data-action="top10-produtos-http-indisponivel"
+        data-permission="Comercial.Pedido.visualizar"
+      >
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Top produtos HTTP exige empresa no contexto e sessao autenticada — nao inventar ranking vazio.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoadingPedidos || isLoadingProdutos || (pedidosFetching && !dadosPedidosDisponiveis)) {
     return (
       <div className="w-full h-full flex justify-center items-center min-h-48" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600" />
@@ -272,9 +365,24 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
     );
   }
 
+  if (pedidosErro || !dadosPedidosDisponiveis) {
+    return (
+      <Alert
+        className="w-full h-full border-amber-200 bg-amber-50"
+        data-action="top10-produtos-http-indisponivel"
+        data-permission="Comercial.Pedido.visualizar"
+      >
+        <ShieldAlert className="h-4 w-4 text-amber-600" />
+        <AlertDescription className="text-amber-800">
+          Nao foi possivel carregar o historico de pedidos deste cliente. Erro ≠ ausencia de compras.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
   if (pedidos.length === 0 && sugestoesVisiveis.length === 0 && top10Produtos.length === 0) {
     return (
-      <div className="w-full h-full text-center py-8 text-slate-500 border rounded-lg bg-white p-6 shadow-sm" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
+      <div className="w-full h-full text-center py-8 text-slate-500 border rounded-lg bg-white p-6 shadow-sm" data-context-required="true" data-permission="Comercial.Pedido.visualizar" data-action="top10-produtos-sem-historico">
         <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
         <p className="text-sm">Cliente sem historico de compras</p>
         <Button size="sm" variant="outline" onClick={buscarSugestoesIA} disabled={usandoIA || !podeUsarIA || isLoadingProdutos} className="mt-3 border-purple-300 text-purple-700 hover:bg-purple-50" data-permission="Comercial.Pedido.criar" data-action="buscar-sugestoes-ia-cliente" data-sensitive="true">
@@ -289,39 +397,77 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = 
       <div className="flex justify-between items-center">
         <p className="text-sm text-blue-700 font-medium">
           {sugestoesVisiveis.length > 0 ? "Sugestoes da IA" : "Baseado em historico"}
+          {paginaIncompleta ? " (parcial — página incompleta)" : ""}
         </p>
         <Button size="sm" variant="outline" onClick={buscarSugestoesIA} disabled={usandoIA || !podeUsarIA || isLoadingProdutos || isLoadingPedidos} className="border-purple-300 text-purple-700 hover:bg-purple-50" data-permission="Comercial.Pedido.criar" data-action="analisar-produtos-cliente-ia" data-sensitive="true">
           {usandoIA ? "Analisando..." : "Analisar com IA"}
         </Button>
       </div>
 
+      {paginaIncompleta ? (
+        <Alert className="border-amber-200 bg-amber-50" data-action="top10-produtos-pagina-incompleta">
+          <AlertDescription className="text-amber-800 text-xs">
+            Há mais pedidos além desta página. Ranking Top10 é parcial (não inventar total).
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-        {sugestoesExibir.slice(0, 10).map((sug, idx) => (
-          <button key={sug.produto?.id || "sug-" + idx} type="button" onClick={() => {
-            if (podeSelecionarProduto && onSelecionarProduto && typeof onSelecionarProduto === "function" && sug.produto) onSelecionarProduto(sug.produto);
-          }} className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed" disabled={!sug.produto || !podeSelecionarProduto} data-permission="Comercial.Pedido.criar" data-action="selecionar-sugestao-produto-cliente">
+        {sugestoesExibir.slice(0, 10).map((sug, idx) => {
+          const cardBody = (
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="font-medium text-sm">{sug.produto?.descricao || "Produto desconhecido"}</p>
                 <p className="text-xs text-slate-600 mt-1">{sug.motivo_sugestao || "Sugestao comercial"}</p>
-                {sug.score_confianca !== undefined && (
-                  <div className="flex items-center gap-2 mt-2">
+                {sug.fonte_sugestao !== "historico" && sug.score_confianca !== undefined && (
+                  <div className="flex items-center gap-2 mt-2" data-action="top10-score-ia">
                     <div className="flex-1 bg-slate-200 rounded-full h-1.5">
-                      <div className="bg-purple-600 h-1.5 rounded-full transition-all" style={{ width: Math.max(0, Math.min(100, sug.score_confianca)) + "%" }} />
+                      <div className="bg-sky-600 h-1.5 rounded-full transition-all" style={{ width: Math.max(0, Math.min(100, sug.score_confianca)) + "%" }} />
                     </div>
                     <span className="text-xs text-slate-500">{Math.round(sug.score_confianca)}%</span>
                   </div>
                 )}
               </div>
               <div className="text-right ml-4">
-                <p className="font-bold text-green-600">R$ {(sug.produto?.preco_venda || 0).toFixed(2)}</p>
+                <p className="font-bold text-green-600" data-action="top10-preco-exibir">
+                  {sug.produto?.preco_venda == null
+                    ? "—"
+                    : `R$ ${Number(sug.produto.preco_venda).toFixed(2)}`}
+                </p>
                 <Badge variant="outline" className="text-xs mt-1">{sug.produto?.codigo || "N/A"}</Badge>
               </div>
             </div>
-          </button>
-        ))}
+          );
+          // Sem callback: cartão não interativo (leitura Detalhes/Painel) — sem botão órfão.
+          if (!podeAcionarSelecao) {
+            return (
+              <div
+                key={sug.produto?.id || "sug-" + idx}
+                className="w-full p-3 text-left border rounded-lg bg-slate-50"
+                data-action="top10-produto-leitura"
+              >
+                {cardBody}
+              </div>
+            );
+          }
+          return (
+            <button
+              key={sug.produto?.id || "sug-" + idx}
+              type="button"
+              onClick={() => {
+                if (sug.produto) onSelecionarProduto(sug.produto);
+              }}
+              className="w-full p-3 text-left hover:bg-blue-100 transition-colors border rounded-lg bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!sug.produto}
+              data-permission="Comercial.Pedido.criar"
+              data-action="selecionar-sugestao-produto-cliente"
+            >
+              {cardBody}
+            </button>
+          );
+        })}
         {sugestoesExibir.length === 0 && (
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-slate-500" data-action="top10-produtos-sem-itens">
             <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
             <p className="text-sm">Nenhuma sugestao encontrada para este cliente.</p>
             <Button size="sm" variant="outline" onClick={buscarSugestoesIA} disabled={usandoIA || !podeUsarIA || isLoadingProdutos || isLoadingPedidos} className="mt-3 border-purple-300 text-purple-700 hover:bg-purple-50" data-permission="Comercial.Pedido.criar" data-action="tentar-sugestoes-ia-cliente" data-sensitive="true">

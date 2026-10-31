@@ -1,0 +1,7 @@
+## Port #446 → #401 (seletivo) 2026-10-31
+Fonte #446 tip: 43a385777 / docs 900a3fcc9
+Base #401: 34c4c0ee (cursor/composicao-397-342-prep-392b)
+Hunks: policy+PedidoTabs+modal+calculador+Historico*+Sugestoes+Top10+Detalhes+Painel wire+WizardEtapa2+CI ubuntu24+fixture+toolchain+testes
+Preservado: Contatos/painel persistência #401; backend HTTP contratos; sem merge/deploy
+Testes locais: wire+modal 17/17; toolchain 4/4
+Fora: merge · deploy · substituir backend

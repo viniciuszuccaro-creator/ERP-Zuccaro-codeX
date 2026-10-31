@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#401 port seletivo #446) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial360-446-port-401-392b` ← `34c4c0ee` |
+| **Fonte** | #446 `43a385777` (P1 PedidoA→B + pickTabela + CI PG16) |
+| **Hunks** | UI histórico/modal/policy/calculador + Painel wire keep-both + CI ubuntu-24/fixture |
+| **Preservado** | Contatos #401 · backend · pacotes composição |
+| Fora | merge · deploy · substituir API |
+
+**Teste:** wire+modal 17/17 · toolchain 4/4
+**Próximo:** CI composição; continuar Comercial360/cadastros/integra lacunas.
+
 ## CURSOR — VIGENTE (#401 tip 8ddde92c1 CI SUCCESS) (2026-10-30 America/Sao_Paulo)
 
 | Campo | Valor |

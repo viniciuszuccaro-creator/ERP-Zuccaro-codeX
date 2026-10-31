@@ -32,6 +32,7 @@ import { readErpHttpSession } from "@/api/erpHttpSession";
 import { central360SessionKey } from "@/api/httpApiClient";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
 import Top10ProdutosCliente from "@/components/comercial/Top10ProdutosCliente";
+import HistoricoComprasCliente from "@/components/comercial/HistoricoComprasCliente";
 import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
 import { Link } from "react-router-dom";
 import { useWindow } from "@/components/lib/useWindow";
@@ -780,8 +781,10 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
                   />
                 </TabsContent>
 
-                <TabsContent value="produtos" className="mt-4">
+                <TabsContent value="produtos" className="mt-4 space-y-4">
                   <Top10ProdutosCliente clienteId={cliente.id} />
+                  {/* Keep-both: agregação compras (leitura; Adicionar só no Pedido). */}
+                  <HistoricoComprasCliente clienteId={cliente.id} />
                 </TabsContent>
 
                 <TabsContent value="canais" className="mt-4">
