@@ -1,3 +1,14 @@
+## CURSOR — VIGENTE (#456 tip 33ac9807d CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `33ac9807d` — CI SUCCESS 6/6 (sky Gateway/TabelaFiscal/ConfigNFe + PG16) |
+| **Código** | sky `3d6cf1fa5` · CI fix `33ac9807d` |
+| Fora | merge main · deploy · seed |
+| Paralelo | #455/#457 CI em andamento |
+
+**Próximo:** CI #455/#457; Filial/Catálogo/RotaPadrao sky ou cadastros transversal.
+
 ## CURSOR — VIGENTE (#456 CI PG16) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

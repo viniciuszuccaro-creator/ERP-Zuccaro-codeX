@@ -1,3 +1,7 @@
+## Checkpoint Cursor — #456 CI SUCCESS (2026-10-31 America/Sao_Paulo)
+
+- Tip `33ac9807d` SUCCESS 6/6. Sem merge. Aguarda #455/#457.
+
 ## Checkpoint Cursor — Gateway/TabelaFiscal/ConfigNFe sky (2026-10-31 America/Sao_Paulo)
 
 - Pacote indep. `cursor/cadastros-gateway-fiscal-sky-392b` (fonte #413) paralelo a #455 Parametro*.
