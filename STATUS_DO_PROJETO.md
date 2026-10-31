@@ -1,3 +1,15 @@
+## CURSOR — VIGENTE (#446 tip 530db1b11 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `530db1b11` (P1 `5014bb791` + docs) |
+| **CI** | run 41192115381 — frontend/backend/compose **SUCCESS** (ubuntu-24 + gate) |
+| **P1** | ID exato · clear sync · late cancel · contrapruva WRONG≠99 |
+| **#401** | **fora** até montagem Codex deste tip (verde CI ≠ port #401) |
+| Fora | merge · deploy · usar verde #342 como aceite UI |
+
+**Próximo:** `@codex review` tip `5014bb791`/`530db1b11`; port #401 só após montagem limpa.
+
 ## CURSOR — VIGENTE (#446 P1 pickTabelaPrecoExata + port CI) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
