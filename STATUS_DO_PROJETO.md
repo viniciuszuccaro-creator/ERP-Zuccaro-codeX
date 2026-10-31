@@ -1,3 +1,13 @@
+## CURSOR — VIGENTE (#458 tip 568adc969 CI SUCCESS) (2026-10-31 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | `568adc969` — CI SUCCESS 6/6 (Filial/Catálogo/Rota sky + PG16) |
+| Fora | merge · deploy · seed |
+| Paralelo | #459 Usuario/Grupo/Centro CI |
+
+**Próximo:** CI #459; CondicaoComercial/MoedaIndice/ContatoB2B/OperadorCaixa sky residual; Codex #446.
+
 ## CURSOR — VIGENTE (Filial/Catálogo/Rota sky) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |

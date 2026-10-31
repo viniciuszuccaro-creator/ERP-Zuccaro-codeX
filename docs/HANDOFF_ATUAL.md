@@ -1,3 +1,7 @@
+## Checkpoint Cursor — #458 CI SUCCESS (2026-10-31 America/Sao_Paulo)
+
+- Tip `568adc969` SUCCESS 6/6. Sem merge.
+
 ## Checkpoint Cursor — Filial/Catálogo/Rota sky (2026-10-31 America/Sao_Paulo)
 
 - Pacote indep. chrome sky+ID; CI PG16; sem merge.
