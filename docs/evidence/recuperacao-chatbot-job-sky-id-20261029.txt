@@ -1,0 +1,28 @@
+Pacote B — ChatbotIntent + JobAgendado sky + ID técnico (2026-10-29)
+=====================================================================
+Candidata #401 tip `686ae322` CI5284 SUCCESS — ESTE pacote NÃO altera a candidata;
+branch separada `cursor/recuperacao-chatbot-job-sky-392b`.
+
+Referência matriz: recuperacao-erp-integra-capacidades-20261029.txt item 4
+  (ChatbotIntent / JobAgendado residual fora branches reservadas ChatbotCanal).
+Padrão visual: FilialForm / ConfiguracaoWhatsAppForm (from-sky-50 + ID técnico).
+
+Classificação vs erp-integra-novo
+- Experiência azul-clara incompleta no windowMode (header sem gradient; Job já
+  tinha botão sky; Intent ativo em slate) → B/melhoria no existente, não módulo novo.
+- ID técnico ausente na edição windowMode → lacuna de experiência/auditoria visual;
+  reopen/RecordState já existiam (Job via useCadastroReopenOnIdentity).
+
+Alterações (somente existente)
+- ChatbotIntentForm.jsx: gradient sky no windowMode; ID técnico se chatbotIntent.id;
+  switch ativo com border-sky + data-permission alterarStatus.
+- JobAgendadoForm.jsx: gradient sky no windowMode; ID técnico se jobBoundId.
+Sem count+1; sem Auth/VPS; sem tocar #401 tip.
+
+Provas
+- node --test tests/cadastros-chatbot-job-sky-id.test.js
+- node --test tests/cadastros-reopen-job-agendado-behavioral.test.js
+  (reopen/dirty/boundId intactos)
+
+Pacote A (paralelo): coordenação Codex harness privado em #401 comment 6507820406.
+Fora: Funil×3 / Separacao×IA já em #408; ChatbotCanal/ApiExterna/ParametroRoteirizacao reservados.
