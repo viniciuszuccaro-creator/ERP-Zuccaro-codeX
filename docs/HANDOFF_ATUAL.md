@@ -1,3 +1,9 @@
+## CURSOR — #469 CI SUCCESS + Contatos limpo (2026-11-02 America/Sao_Paulo)
+- #469 tip `b47bfcdf` CI SUCCESS 3/3 (código `8f50540f` BOM+pin; overlaps Forma/Pedido NÃO-CANÔNICO `f14cde57`). Codex limpo `8f50540f`.
+- #401 tip `b888b2c0`: Codex limpo Contatos assertScope. C360 proposta densificação publicada (canvas + evidence).
+- Canônicos Completos + PedidoFormCompleto. Funil/Separação keep-both. Prévia Codespace BLOCKED. Dados pré-perda BLOCKED.
+- Próximo: densificar condição/tabela/forma no DetalhesCliente (#468 base) sem ComercialV2. Sem merge/deploy/VPS.
+
 ## CURSOR — Contatos aceite + overlaps #469 (2026-11-02 America/Sao_Paulo)
 - #401 tip `b888b2c0`: Codex limpo Contatos assertScope (`has_any_findings: false`, 13:07 BRT). P2 generation/contexto confirmados tratados.
 - #469 HEAD `f14cde57`: FormaPagamento+PedidoForm NÃO-CANÔNICO; C360 proposta densificação (canvas + evidence). CI+`@codex review` em curso.

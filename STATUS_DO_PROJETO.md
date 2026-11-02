@@ -3,9 +3,9 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-overlaps-cliente-form-392b` = **#469** |
-| **HEAD tip** | `8f50540f` — remove BOM FormaPagamentoForm + pin stage49 |
-| **CI tip anterior** | `684460e0`/`c373ceb9` frontend FAIL — lint `no-irregular-whitespace` (BOM residual) |
-| **Parecer Codex** | tip `3ba1e367` limpo · tip Cliente `37ffef9a` limpo · #401 Contatos limpo · re-review após BOM+pin |
+| **HEAD tip** | `b47bfcdf` — docs CI SUCCESS (código `8f50540f` BOM+pin) |
+| **CI SUCCESS tip** | `b47bfcdf` 3/3 — [41481679969](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41481679969) / [41481667440](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41481667440) |
+| **Parecer Codex** | tip código `8f50540f` limpo · tip Cliente `37ffef9a` limpo · #401 Contatos limpo `b888b2c0` |
 | **Canônico** | Cliente → `CadastroClienteCompleto` · Representante → `RepresentanteFormCompleto` · TabelaPreco → `TabelaPrecoFormCompleto` · FormaPagamento → `FormaPagamentoFormCompleto` · Pedido (Comercial) → `PedidoFormCompleto` |
 | **Preservado (não apagar)** | Forms simples marcados NÃO-CANÔNICO · Funil×3 / Separacao×IA keep-both |
 | **C360 proposta** | canvas densificação + `docs/evidence/c360-proposta-densificacao-20261102.txt` |
