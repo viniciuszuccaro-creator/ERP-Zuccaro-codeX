@@ -1,3 +1,8 @@
+## CURSOR — Empresa Completo P1 gates (2026-11-02 America/Sao_Paulo)
+- #471 tip `9f78938f`: Completo com Organizacional data-permission + certificado granular.
+- Código canônico `d4c6a618`. CI tip `8cf53528` SUCCESS; Codex P1 tratados.
+- Sem merge/deploy/VPS.
+
 ## CURSOR — Empresa Completo canônico (2026-11-02 America/Sao_Paulo)
 - Bloco5 monta `EmpresaFormCompleto` com windowMode + sky + ID técnico.
 - `EmpresaForm` marcado NÃO-CANÔNICO (preservado). Base #469.
