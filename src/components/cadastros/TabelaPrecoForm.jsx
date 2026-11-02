@@ -1,3 +1,9 @@
+/**
+ * NÃO-CANÔNICO para montagem de janela/listagem (sobreposição preservada).
+ * Runtime de Tabela de Preço → `TabelaPrecoFormCompleto`
+ * (Bloco2Produtos, AcoesRapidas). Este Form simples permanece para
+ * padrões sky/ID/reopen; não montar como tela paralela.
+ */
 import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";

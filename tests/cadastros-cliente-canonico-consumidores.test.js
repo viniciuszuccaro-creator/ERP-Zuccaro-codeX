@@ -43,3 +43,37 @@ test('comercial/ClienteForm* marcados não-canônicos e preservados', () => {
   assert.match(completo, /export default/);
   assert.match(simples, /export default/);
 });
+
+const representanteConsumers = [
+  'src/components/cadastros/RepresentantesTab.jsx',
+  'src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx',
+  'src/components/cadastros/blocks/Bloco1Pessoas.jsx',
+];
+
+test('Representante: Completo canônico; Form simples não montado', () => {
+  for (const path of representanteConsumers) {
+    const source = read(path);
+    assert.match(source, /RepresentanteFormCompleto/, path);
+    assert.doesNotMatch(source, /from ["']\.\/RepresentanteForm["']/, path);
+    assert.doesNotMatch(source, /from ["']@\/components\/cadastros\/RepresentanteForm["']/, path);
+  }
+  const simples = read('src/components/cadastros/RepresentanteForm.jsx');
+  assert.match(simples, /NÃO-CANÔNICO/);
+  assert.match(simples, /RepresentanteFormCompleto/);
+});
+
+const tabelaConsumers = [
+  'src/components/cadastros/blocks/Bloco2Produtos.jsx',
+  'src/components/AcoesRapidasGlobal.jsx',
+];
+
+test('TabelaPreco: Completo canônico; Form simples não montado nas ações', () => {
+  for (const path of tabelaConsumers) {
+    const source = read(path);
+    assert.match(source, /TabelaPrecoFormCompleto/, path);
+    assert.doesNotMatch(source, /from ["']@\/components\/cadastros\/TabelaPrecoForm["']/, path);
+  }
+  const simples = read('src/components/cadastros/TabelaPrecoForm.jsx');
+  assert.match(simples, /NÃO-CANÔNICO|não montar/i);
+  assert.match(simples, /TabelaPrecoFormCompleto/);
+});
