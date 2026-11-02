@@ -3,7 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch** | `cursor/cadastros-representante-completo-sky-392b` ← #401 tip `b888b2c0` |
-| **Tip** | `afddc204` — chrome sky windowMode + ID técnico |
+| **Tip** | `bab9b381` — stage48 graduado pós-CI fail tip `9f6b8932` |
+| **Código sky** | `afddc204` — chrome sky windowMode + ID técnico |
 | **Preservado** | reopen `useCadastroReopenOnIdentity` · `CadastroCodigoRegistroField` · formulário simples já sky |
 | **Fora** | pin ID-only Grupo/Usuario · merge main · deploy · edição #401 |
 | **Testes** | `cadastros-representante-completo-sky` **2 PASS** |
