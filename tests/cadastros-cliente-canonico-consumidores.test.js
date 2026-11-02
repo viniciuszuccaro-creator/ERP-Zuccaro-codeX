@@ -77,3 +77,20 @@ test('TabelaPreco: Completo canônico; Form simples não montado nas ações', (
   assert.match(simples, /NÃO-CANÔNICO|não montar/i);
   assert.match(simples, /TabelaPrecoFormCompleto/);
 });
+
+const formaConsumers = [
+  'src/components/cadastros/blocks/Bloco3Financeiro.jsx',
+  'src/components/cadastros/GestorFormasPagamento.jsx',
+];
+
+test('FormaPagamento: Completo canônico; Form simples não montado', () => {
+  for (const path of formaConsumers) {
+    const source = read(path);
+    assert.match(source, /FormaPagamentoFormCompleto/, path);
+    assert.doesNotMatch(source, /from ["']@\/components\/cadastros\/FormaPagamentoForm["']/, path);
+    assert.doesNotMatch(source, /from ["']\.\/FormaPagamentoForm["']/, path);
+  }
+  const simples = read('src/components/cadastros/FormaPagamentoForm.jsx');
+  assert.match(simples, /NÃO-CANÔNICO/);
+  assert.match(simples, /FormaPagamentoFormCompleto/);
+});
