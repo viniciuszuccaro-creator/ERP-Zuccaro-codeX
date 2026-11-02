@@ -1,3 +1,8 @@
+## CURSOR — RH Férias #473 CI SUCCESS (2026-11-02 America/Sao_Paulo)
+- Tip `fe4332f98` CI SUCCESS 3/3 — pin MODULE + typecheck getTime/JSDoc.
+- Funcionalidade/aba recuperadas; registros NÃO. Sem merge/deploy/VPS.
+- Paralelo limpo: #471 CANAL · #474 Romaneio PDF.
+
 ## CURSOR — RH Férias typecheck #473 (2026-11-02 America/Sao_Paulo)
 - Tip `8a74fda2` frontend FAIL typecheck: Date arithmetic FeriasForm + useMutation vars void.
 - Fix: `getTime()` + JSDoc mutate (padrão Ponto/Notas). Pin MODULE intacto.
