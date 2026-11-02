@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (C360 Detalhes condição/tabela) (2026-11-02 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Branch / PR** | `cursor/comercial360-detalhe-condicao-392b` (base #468) |
+| **HEAD tip** | `3432474d` (código `41f970f5`) densifica condição/tabela/forma/crédito |
+| **CI SUCCESS tip** | `3432474d` 3/3 — [41482975943](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41482975943) / [41482967074](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41482967074) |
+| **Parecer Codex** | tip `3432474d` limpo (`has_any_findings: false`) |
+| **Base** | #468 tip `493f7e04` CI SUCCESS |
+| **Mudança** | Faixa somente-leitura de `condicao_comercial` no header sky existente |
+| **Preservado** | Central360 · históricos · KPIs #468 · sem ComercialV2 · sem fetch paralelo de mestres |
+| Fora | merge main · deploy · VPS · seed |
+
+**Próximo:** aceite visual owner da proposta densificação · Empresa Completo+windowMode (#463 sky separado) · dados pré-perda BLOCKED.
+
 ## CURSOR — VIGENTE (C360 DetalhesCliente densidade) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
