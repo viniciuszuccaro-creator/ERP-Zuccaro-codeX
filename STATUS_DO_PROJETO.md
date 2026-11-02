@@ -3,7 +3,7 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/comercial360-detalhe-condicao-392b` (base #468) |
-| **HEAD tip** | (pendente commit) densifica condição/tabela/forma/crédito no DetalhesCliente |
+| **HEAD tip** | `41f970f5` densifica condição/tabela/forma/crédito no DetalhesCliente |
 | **Base** | #468 tip `493f7e04` CI SUCCESS |
 | **Mudança** | Faixa somente-leitura de `condicao_comercial` no header sky existente |
 | **Preservado** | Central360 · históricos · KPIs #468 · sem ComercialV2 · sem fetch paralelo de mestres |
