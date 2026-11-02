@@ -1,3 +1,9 @@
+## CURSOR — Empresa Completo CANAL refs=6 #471 (2026-11-02 America/Sao_Paulo)
+- Tip `88297ee9` restore+manifest refs=6 ok; CANAL deepEqual vs histórico 90f0a315 exigia refs=5.
+- Fix: `CALLBACK_AUTHORIZED_MANIFEST_ENTRY` (beforeSha histórico + references=6) no mesmo padrão do reopen.
+- #472 tip `59e4aa50` CI SUCCESS 3/3. #473 RH Férias: reverter MODULE_BY_ENTITY (pin hash).
+- #401 `b888b2c0` CI SUCCESS. Sem merge/deploy/VPS.
+
 ## CURSOR — Empresa Completo publication #471 (2026-11-02 America/Sao_Paulo)
 - Tip `5c06aa53` pin AST ok; frontend FAIL publication refs 6≠5.
 - Fix: `restoreApprovedEmpresaCompletoCallbackDelta` + manifest references=6; beforeSha preservado.
