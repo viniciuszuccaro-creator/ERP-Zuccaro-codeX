@@ -1,4 +1,61 @@
-## Continuidade vigente - composto401 aceito em CI propria (2026-10-31)
+## Continuidade vigente — revisão401 e originais privados recuperados (2026-11-02)
+
+Base342 cccf3223ea33c4661fd7f8a6489ebbbb5865f358, CI5678 SUCCESS; candidata401
+57479b67ddd97bf9432d963191e95f2a7120a1f2, CI5683/run41235260756 SUCCESS, HEADs
+reconferidos. Port453 já incorporado: não repetir. Revisão dirigida6580502544
+dos deltas posteriores a075fc: referência estável do filtro, bailout sem mudança,
+prop windowMode/hostWindowMode, camada do Dialog e ajuste delimitado do teste54.
+API/backend e18 golden manifest sem delta nesse intervalo. Sem novo achado nessa
+revisão; isto não aprova automaticamente operação, dados ou ciclo E2E completo.
+
+Prova nova montada no SHA57479: WindowProvider/WindowRenderer/WindowModal,
+framer-motion, PedidoTabsContainer, modal/calculador e Radix REAIS, ReactDOM em
+Chrome headless. Uma janela z100099000; Dialog z1000000000 acima dela,
+hostWindow=true; uma consulta TabelaPreco antes/depois de8 renders com função
+filterInContext instável. Contexto/permissão/transporte nas bordas sintéticos;
+sem navegação completa/API/PG. Provas privadas fora Git. Contraprova adicional
+na075fc não concluiu dentro do limite local (NO_REPORT): não contá-la como PASS
+nem como novo defeito reproduzido. Casos anteriores sem delta não reexecutados.
+
+Mudança efetiva C: painel GitHub autenticado em02/11 mostrou período novembro,
+nenhuma computação listada na consulta e budget Codespaces0/Usage blocked;
+SOMENTE o Codespace existente retomado, sem cobrança/configuração alterada.
+Terminal funcional: cwd/origin/branch canônicos; HEAD remoto localb5cb34e1,
+36 commits atrás da342, apenas??.vscode/ desconhecido preservado; nenhum sync/reset.
+Processo2286 é app-server da extensão fora do checkout, não codex exec.
+
+Dois originais encontrados nos paths OPDEV, owner1000, sem symlink, ancestrais0700:
+FINAL348850 bytes0600; harness9953 bytes0644 protegido pelos pais0700.
+FINAL confrontado EXATAMENTE com outputSha256 contemporâneo de
+source-cohort-100-summary.private.log: PASS. Harness original lido e hash atual
+calculado; pin histórico do arquivo NÃO encontrado na busca única dos recibos
+privados metadata/logs pertinentes. Não substituir por hash de recibo ou alegar
+pin histórico validado. Cópias exclusivas origem=destino e checkpoint em
+/home/codespace/erp-legado-privado-20261023/resume-20261102,0700/0600, fora Git/build.
+Trava remota própria mkdir exclusivo/finally liberada. Leituras destino0,
+escritas negócio0, importação0. Recibo344/6580544004; não houve nova seleção.
+
+Fila finita atual (substitui o bloqueio antigo de franquia/arquivo ausente):
+- A/Codex: revisão dirigida57479 encerrada; Cursor mantém a mesma401.
+- B/Codex+Cursor: harness fixa branch Codex e recibos identity-preview de outubro;
+  candidata401 é outra branch. Coordenação401/6580502544 solicita snapshot imutável
+  da MESMA401 com identidade verificável e recibos novos exclusivos, preservando
+  original/guards. Falta pin histórico do harness; não executar snapshot antigo
+  como candidato atual nem escrever branch Cursor. Depois provar cadeia inteira
+  cliente/contatos/histórico/produto/unidade/preço/orçamento/Pedido, rejeições,
+  unicidade/reabertura/contexto, navegador→HTTP→PG e teardown próprios.
+- C/Codex344: fonte FINAL agora comprovada; destino/principal/sessão/Grupo e
+  autorização de leitura atual ainda são gates antes da consulta fixa<=100,
+  READ ONLY/ROLLBACK. Não inferir autorização da fonte ou de BYPASSRLS.
+- D/Cursor recuperação/Codex reconciliação: nenhum delta350 desde checkpoint
+  consultado; fonte original por entidade ainda necessária, sem repetir login ou
+  criar seeds. Exigir IDs/procedência e distinguir oculto/omitido/outro destino/
+  ausente/fonte inacessível antes de alegar recuperação de registros.
+- E/Codex: cadeia integrada→schema/privilégios→backup/restore do destino→
+  reconciliação→carga específica→deploy específico→aceite continuam separados.
+  Automação nativa existente conferida PAUSED; não ativada para polling vazio.
+
+## Histórico — composto401 aceito em CI própria (2026-10-31)
 
 Incorporacao seletiva REAL na MESMA401:075fc22602475209bb2b44a4bd06d14ed4320f82.
 Cursor confirmou recebimento6547987891 e publicou cadeia34c4->cda612->b4d8->

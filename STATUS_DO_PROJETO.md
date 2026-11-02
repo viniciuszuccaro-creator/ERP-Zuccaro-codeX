@@ -1,4 +1,37 @@
-## Continuidade vigente - composto401 aceito em CI propria (2026-10-31)
+## Continuidade vigente — revisão401 e recuperação privada (2026-11-02)
+
+342 cccf3223ea33c4661fd7f8a6489ebbbb5865f358/CI5678 SUCCESS e401
+57479b67ddd97bf9432d963191e95f2a7120a1f2/CI5683 SUCCESS reconferidos. Revisão
+dirigida posterior a075fc encerrada6580502544, sem novo achado: filtro estável,
+bailouts, windowMode/hostWindowMode e camada Radix;18 golden e API/backend sem
+delta. Montagem real WindowProvider/Renderer/Modal+framer-motion+Pedido+modal+
+calculador+Radix no57479:1 janela z100099000, Dialog1000000000 acima, hostWindow,
+1 consulta antes/depois de8 renders instáveis. Bordas sintéticas; NÃO E2E/API/PG.
+Tentativa adicional075fc terminou NO_REPORT dentro do limite, sem conclusão;
+não contar como teste aprovado ou prova de defeito. Provas válidas anteriores
+reutilizadas, não reexecutadas sem delta.
+
+Novembro efetivamente consultado no painel autenticado; budget Codespaces0 e
+Usage blocked preservados, sem compute listado na consulta inicial. Codespace
+ÚNICO retomado: terminal funciona, HEADb5cb34e1/branch342,??.vscode/ preservado,
+sem pull/reset. Processo Codex é app-server fora do checkout, não writer exec.
+FINALcoorte348850 bytes0600: outputSha256 contemporâneo EXATO PASS. Harness
+ORIGINAL9953 bytes0644/pais0700 encontrado/lido; hash atual preservado, pin
+histórico não encontrado na busca única pertinente. Cópias verificadas e recibo
+privado0700/0600 em resume-20261102; originais intactos, trava própria liberada.
+Destino reads0/business writes0/carga0. Recibo344/6580544004.
+
+Próximo concreto coordenado401/6580502544: executar MESMA401 por snapshot com
+identidade verificável e recibos exclusivos, pois harness fixa branch Codex e
+recibos antigos. Não relaxar guard, trocar branch Cursor ou usar snapshot antigo
+como prova atual. Fonte FINAL recuperada não libera consulta: principal/sessão,
+destino/Grupo e autorização atual continuam exigidos antes do SQL fixo<=100
+READ ONLY/ROLLBACK. Recuperação ERP novo separada, fonte/IDs/reconciliação ainda
+necessários; sem delta350 consultado. Fila e gates concretos no HANDOFF atual.
+Automação existente conferida PAUSED, sem polling criado ou autonomia permanente.
+Lote documental: diff-check obrigatório; nenhuma suíte runtime repetida por ele.
+
+## Histórico — composto401 aceito em CI própria (2026-10-31)
 
 Incorporacao seletiva REAL na MESMA401:075fc22602475209bb2b44a4bd06d14ed4320f82.
 Cursor confirmou recebimento6547987891 e publicou cadeia34c4->cda612->b4d8->

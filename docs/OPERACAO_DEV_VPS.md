@@ -1,6 +1,34 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Roteiro vigente - recuperar dois artefatos no ciclo informado de01/11 (2026-10-31)
+## Resultado da retomada dos dois originais (2026-11-02)
+
+Budget0/Usage blocked e período novembro conferidos antes de retomar SOMENTE o
+Codespace existente; nenhuma cobrança habilitada. Terminal funcional, HEADb5cb34e1
+na branch342,??.vscode/ preservado e nenhum pull/reset. App-server da extensão
+fora do checkout não é codex exec. Os dois caminhos abaixo existem, owner1000,
+sem symlink; FINAL348850 bytes0600 e harness9953 bytes0644 com ancestrais0700.
+outputSha256 do FINAL confrontado exatamente com source-cohort-100-summary.private.log,
+PASS. Hash atual do harness calculado e bytes preservados; pin HISTÓRICO do arquivo
+não encontrado na busca única dos recibos pertinentes, não presumir equivalência.
+
+Cópias novas exclusivas e checkpoint em resume-20261102 sob a base privada,
+diretório0700/arquivos0600, origem=destino conferidos sem expor registros ou pins
+vinculáveis. Fontes originais intactas. Trava própria mkdir exclusivo liberada
+em finally; leituras de destino0/escritas negócio0/carga0. Recibo344/6580544004.
+Não repetir inventário/transferência ou nova seleção. Fonte ausente/franquia
+não comprovada deixaram de ser os bloqueios atuais.
+
+O harness ORIGINAL fixa branch codex/consolidacao-infra-20261017 e recibos de
+identity-preview-20261028. A candidata aceita dirigida é401/57479b67, outra branch.
+Não remover guards nem rodar snapshot antigo como prova dela. Coordenação direta
+401/6580502544: preparar execução por snapshot imutável da MESMA401 com sourceSha
+e recibos novos exclusivos, preservando o original; obter eventual pin histórico.
+Só então comprovar cadeia browser→API→PostgreSQL com fixture sintética, rede none,
+porta Private e teardown próprios. Montagem React acima de WindowManager passou,
+mas não substitui esse ciclo. SQL operacional continua dependente de principal,
+sessão, destino/Grupo e autorização atuais, além do pin da fonte recuperada.
+
+## Roteiro preservado — recuperação dos originais (2026-10-31)
 
 Preparacao, NAO franquia liberada ou tarefa agendada. Em01/11 conferir na conta
 GitHub a franquia efetiva e orcamento zero antes de iniciar SOMENTE o Codespace
