@@ -30,7 +30,8 @@ for (const [file, expected] of [
   ['cadastros/FormaPagamentoFormCompleto.jsx', 'f37728123bf4998449da69c12206e1ea3aadd8f794560cb330310b497366a2cf'],
   // P1 #353: FormaPagamentoForm captura boundId no save (hash atualizado de propósito).
   // #397: windowMode chrome sky from-sky-50→to-sky-100 (hash atualizado de propósito; RBAC/reopen intactos).
-  ['cadastros/FormaPagamentoForm.jsx', '8c93ec6f98f18ffc738e8f409788e04aace7f06a512939ea4a2ec7ff49486a97'],
+  // #469: marcador NÃO-CANÔNICO (Completo canônico; Form preservado — Regra-Mãe). Handlers/RBAC/reopen intactos.
+  ['cadastros/FormaPagamentoForm.jsx', 'bfb4c9461c6e11ed012d87a5a342434fa7f4164680adf0f472d2003e3010c7a6'],
 ]) test(`${file}: source, handlers, permissions and persistence ownership unchanged from stage49`, () => {
   const path = 'src/components/' + file;
   const text = read(path);
