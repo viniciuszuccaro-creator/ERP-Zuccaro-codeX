@@ -97,7 +97,7 @@ function clienteContactPresenceRemainder(source) {
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', '4edac36448aeb24c521716a90ac4ef4bcf0b7fd73bf48e7866a50284ec2a1df9'], // #353 azul-claro sky no roteiro
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'ae4f9b2cbdf1b9b66c70340bd464c956c80577a6f231d09ccf166bd6a7d301dd'], // sky+ID + flex-col scroll (P1 Codex)
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];
