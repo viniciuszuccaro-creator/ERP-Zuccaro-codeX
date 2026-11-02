@@ -1,18 +1,32 @@
+## CURSOR — VIGENTE (CadastroFornecedorCompleto sky+ID) (2026-11-02 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Branch / PR** | `cursor/cadastros-fornecedor-completo-sky-392b` = **#467** |
+| **Código tip** | `aa66a2cb` — sky+ID + `flex flex-col` (P2 Codex) |
+| **HEAD docs** | `cad8eb78` |
+| **CI SUCCESS tip** | `cad8eb78` push 3/3 — [41470444491](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41470444491) (PR run em fechamento) |
+| **Parecer Codex** | tip `cad8eb78` limpo · tip sky `a2b1d0cd` CI SUCCESS prévia |
+| **stage48** | `973f1a9c77bc610cd3f880624f93cba82af74c217e3149bb3fa3c25fb7789734` |
+| **#466** | tip `9a5ff8fa` CI SUCCESS + Codex limpo (P1 flex) |
+| Fora | merge main · deploy · VPS · dados legado/seed |
+
+**Próximo:** confirmar CI PR tip · owner fold · #468.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **HEAD docs** | (este commit) — STATUS + P1 assertScopeCurrent |
-| **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 |
-| **CI SUCCESS tip** | `57479b67d` 3/3 (frontend+backend+compose) — própria do SHA; ≠ herdar ancestral |
-| **Parecer Codex P1+P2** | tip `70a333197` — “no major issues” /6548107136 (pré-stage54) |
-| **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail (`80d1393ee`) |
-| **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** (sem merge main / deploy / VPS) |
-| **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · persistência · aceites sessão/tabela/late/duplo-clique |
+| **HEAD docs** | `b888b2c0` — STATUS + P1 assertScopeCurrent |
+| **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 · `e340e170` assertScope |
+| **CI SUCCESS tip** | `b888b2c0` 3/3 — própria do SHA |
+| **Parecer Codex P1+P2** | tip `70a333197` limpo /6548107136 (deltas Contatos pós-parecer) |
+| **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail |
+| **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** |
+| **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · aceites sessão/tabela/late/duplo-clique |
 
-**Delta em curso:** P1 #4425981924 — `assertScopeCurrent` alinhado a `buildPainelContatosScopeKey` (ator+sessão); seams Contatos **15 PASS**.
 **Não repetir:** port #453/#446; nova candidata paralela.
-**Próximo:** CI deste tip · `@codex review` deltas Contatos guard · indep. cadastros sky (#455–#463 CI SUCCESS) / C360 residual.
+**Próximo:** `@codex review` · indep. sky (#455–#466) / C360 residual.
 
 ## CURSOR — VIGENTE (#401 P1+P2 modal janela + composto) (2026-10-31 America/Sao_Paulo)
 
