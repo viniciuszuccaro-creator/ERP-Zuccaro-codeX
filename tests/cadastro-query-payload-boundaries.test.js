@@ -99,7 +99,7 @@ function clienteContactPresenceRemainder(source) {
 const forms = [
   ['CadastroClienteCompleto', 'cliente', 'Cliente', '4edac36448aeb24c521716a90ac4ef4bcf0b7fd73bf48e7866a50284ec2a1df9'], // #353 azul-claro sky no roteiro
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
-  ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
+  ['RepresentanteFormCompleto', 'representante', 'Representante', 'b52ff5421dac7432382335ba8c65e2daf8399c35540e4c7573fd35a0570167b9'], // sky+ID windowMode #464
 ];
 for (const [name, recordKey, entity, previousHash] of forms) {
   const path = `src/components/cadastros/${name}.jsx`;
