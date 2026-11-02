@@ -40,9 +40,10 @@ export default function FeriasTab({ windowMode = false }) {
   } = useContextoVisual();
   const { canCreate, canEdit, canApprove, isLoading: permissionsLoading } = usePermissions();
   const { user } = useUser();
-  const canAprovar = !permissionsLoading && canApprove("RH", "Férias");
-  const podeCriar = !permissionsLoading && canCreate("RH", "Férias");
-  const podeEditar = !permissionsLoading && canEdit("RH", "Férias");
+  // Aceita grant modular RH ou seção Férias (perfis legados + granulares).
+  const canAprovar = !permissionsLoading && (canApprove("RH", "Férias") || canApprove("RH"));
+  const podeCriar = !permissionsLoading && (canCreate("RH", "Férias") || canCreate("RH"));
+  const podeEditar = !permissionsLoading && (canEdit("RH", "Férias") || canEdit("RH"));
   const groupId = grupoAtual?.id || null;
   const empresaId = empresaAtual?.id || null;
   const scopeKey = `${groupId || ""}:${empresaId || ""}`;
