@@ -117,3 +117,14 @@ test('Empresa: Bloco5 monta Completo; Form simples NÃO-CANÔNICO', () => {
   assert.match(completo, /from-sky-50/);
   assert.match(completo, /data-action="id-tecnico-empresa"/);
 });
+
+test('Empresa Completo: gate Organizacional + certificado granular (P1 #471)', () => {
+  const completo = read('src/components/cadastros/EmpresaFormCompleto.jsx');
+  assert.match(completo, /Cadastros\.Organizacional\.(criar|editar)/);
+  assert.match(completo, /permissaoFormulario/);
+  assert.doesNotMatch(completo, /data-permission=["']Cadastros\.Empresa\.salvar["']/);
+  assert.match(completo, /Cadastros\.Empresa\.Certificado\.editar/);
+  assert.match(completo, /podeEditarCertificado/);
+  assert.match(completo, /delete payload\.certificado_digital/);
+  assert.match(completo, /hasPermissionKey/);
+});

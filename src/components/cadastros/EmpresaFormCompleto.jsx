@@ -79,7 +79,7 @@ export default function EmpresaFormCompleto({
   loadIncomplete = false,
   isLoadingRecord = false,
 }) {
-  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission, hasPermissionKey } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const dadosIniciaisProps = empresa || item || data || initialData || defaultValues || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciaisProps?.group_id || null;
@@ -88,6 +88,13 @@ export default function EmpresaFormCompleto({
   const podeCriar = hasCadastroEntityPermission("Empresa", "criar", permCheckers);
   const podeEditar = hasCadastroEntityPermission("Empresa", "editar", permCheckers);
   const podeExcluir = hasCadastroEntityPermission("Empresa", "excluir", permCheckers);
+  const podeSalvar = dadosIniciaisProps?.id ? podeEditar : podeCriar;
+  // Gate executável do Button: Organizacional (não Cadastros.Empresa.* legado) — Codex P1 #471.
+  const permissaoFormulario = dadosIniciaisProps?.id
+    ? "Cadastros.Organizacional.editar"
+    : "Cadastros.Organizacional.criar";
+  const permissaoCertificado = "Cadastros.Empresa.Certificado.editar";
+  const podeEditarCertificado = Boolean(podeSalvar && hasPermissionKey?.(permissaoCertificado));
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
   const [activeTab, setActiveTab] = useState('dados');
   const [formData, setFormData] = useCadastroRecordState(mergeEmpresaCompletoData(dadosIniciaisProps), JSON.stringify([
@@ -104,6 +111,11 @@ export default function EmpresaFormCompleto({
   const handleCertificadoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!podeEditarCertificado) {
+      toast.error('Edicao de certificado exige permissao especifica.');
+      e.target.value = '';
+      return;
+    }
     if (!file.name.endsWith('.pfx')) {
       toast.error('❌ Apenas arquivos .pfx são aceitos');
       return;
@@ -131,11 +143,6 @@ export default function EmpresaFormCompleto({
       inscricao_estadual: sanitizeCode(formData.inscricao_estadual, 40),
       regime_tributario: sanitizeText(formData.regime_tributario, 80),
       endereco: sanitizeEndereco(formData.endereco),
-      certificado_digital: {
-        ...formData.certificado_digital,
-        arquivo_certificado: sanitizeUrl(formData.certificado_digital?.arquivo_certificado, 500),
-        tipo: sanitizeCode(formData.certificado_digital?.tipo || "A1", 20)
-      },
       configuracao_fiscal: {
         ambiente_nfe: sanitizeText(formData.configuracao_fiscal?.ambiente_nfe, 80),
         serie_nfe: sanitizeCode(formData.configuracao_fiscal?.serie_nfe, 20),
@@ -151,6 +158,18 @@ export default function EmpresaFormCompleto({
       group_id: dadosIniciaisProps?.group_id || formData.group_id || groupId,
       grupo_id: dadosIniciaisProps?.grupo_id || dadosIniciaisProps?.group_id || formData.grupo_id || formData.group_id || groupId,
     };
+    // Granular: sem Cadastros.Empresa.Certificado.editar não envia certificado (Form #227).
+    if (podeEditarCertificado) {
+      payload.certificado_digital = {
+        ...formData.certificado_digital,
+        arquivo_certificado: sanitizeUrl(formData.certificado_digital?.arquivo_certificado, 500),
+        tipo: sanitizeCode(formData.certificado_digital?.tipo || "A1", 20),
+        data_validade: sanitizeText(formData.certificado_digital?.data_validade, 20),
+        senha_certificado: sanitizeText(formData.certificado_digital?.senha_certificado, 500),
+      };
+    } else {
+      delete payload.certificado_digital;
+    }
     if (dadosIniciaisProps?.empresa_id != null && dadosIniciaisProps.empresa_id !== '') {
       payload.empresa_id = dadosIniciaisProps.empresa_id;
     } else {
@@ -302,13 +321,36 @@ export default function EmpresaFormCompleto({
               <Input type="number" value={formData.configuracao_fiscal?.proximo_numero_nfe} onChange={(e) => setFormData({...formData, configuracao_fiscal: {...formData.configuracao_fiscal, proximo_numero_nfe: Number(e.target.value)}})} />
             </div>
           </div>
-          <div>
+          <div data-action="empresa-completo-certificado">
             <Label>Certificado Digital (.pfx)</Label>
+            {!podeEditarCertificado && (
+              <p className="text-xs text-amber-700 mb-2" data-permission={permissaoCertificado}>
+                Edicao de certificado exige permissao especifica. Alteracoes nesta secao estao bloqueadas.
+              </p>
+            )}
             <div className="border-2 border-dashed rounded-lg p-6 text-center">
               <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-              <input type="file" accept=".pfx" onChange={handleCertificadoUpload} className="hidden" id="upload-cert" />
-              <label htmlFor="upload-cert" className="cursor-pointer">
-                <Button type="button" variant="outline" size="sm">Selecionar Certificado</Button>
+              <input
+                type="file"
+                accept=".pfx"
+                onChange={handleCertificadoUpload}
+                className="hidden"
+                id="upload-cert"
+                disabled={!podeEditarCertificado || saveBlocked}
+                data-permission={permissaoCertificado}
+              />
+              <label htmlFor="upload-cert" className={podeEditarCertificado ? "cursor-pointer" : "cursor-not-allowed opacity-60"}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!podeEditarCertificado || saveBlocked}
+                  data-permission={permissaoCertificado}
+                  data-action="selecionar-certificado-empresa"
+                  data-sensitive
+                >
+                  Selecionar Certificado
+                </Button>
               </label>
               {formData.certificado_digital?.arquivo_certificado && <p className="text-xs text-green-600 mt-2">✅ Certificado enviado</p>}
             </div>
@@ -369,7 +411,7 @@ export default function EmpresaFormCompleto({
               variant="outline"
               onClick={handleAlternarStatus}
               disabled={!podeEditar || !contextoValido}
-              data-permission="Cadastros.Empresa.alterarStatus"
+              data-permission="Cadastros.Organizacional.editar"
               data-sensitive
               className={formData.status === 'Ativa' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
@@ -380,15 +422,16 @@ export default function EmpresaFormCompleto({
               variant="destructive"
               onClick={handleExcluir}
               disabled={!podeExcluir || !contextoValido}
-              data-permission="Cadastros.Empresa.excluir"
+              data-permission="Cadastros.Organizacional.excluir"
               data-sensitive
             ><Trash2 className="w-4 h-4 mr-2" />Excluir</Button>
           </>
         )}
         <Button
           type="submit"
-          disabled={isSubmitting || saveBlocked || !contextoValido || (dadosIniciaisProps?.id ? !podeEditar : !podeCriar)}
-          data-permission="Cadastros.Empresa.salvar"
+          disabled={isSubmitting || saveBlocked || !contextoValido || !podeSalvar}
+          data-permission={permissaoFormulario}
+          data-action="salvar-empresa"
           data-sensitive
           className="bg-blue-600 hover:bg-blue-700"
         >
