@@ -2,15 +2,14 @@
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **Branch** | `cursor/cadastros-cliente-completo-sky-392b` (indep. ← #401 `b888b2c0`) |
-| **Código** | `CadastroClienteCompleto` windowMode sky (`from-sky-50`/`to-sky-100`) + ID técnico |
-| **stage48** | graduado `9b0f012d4dbfd8ed1e1d16fe4521ec522c7e582039773c0ce896fc04b7681e85` |
-| **#465 TabelaPrecoCompleto** | tip `3a93037b` — CI em curso (branch separada) |
-| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — `@codex review` pedido |
-| **#464 tip** | `96852279` CI SUCCESS — `@codex review` pedido |
-| Fora | merge main · deploy · VPS · re-port #446/#453 · dados legado/seed |
+| **Branch / PR** | `cursor/cadastros-cliente-completo-sky-392b` = **#466** |
+| **Código tip** | (este) — sky+ID + `flex flex-col` no wrapper (P1 Codex scroll) |
+| **CI tip anterior** | `a4b9e915` SUCCESS 3/3 [41468913520](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41468913520) |
+| **stage48** | `ae4f9b2cbdf1b9b66c70340bd464c956c80577a6f231d09ccf166bd6a7d301dd` |
+| **#465** | `3a93037b` CI SUCCESS + Codex limpo |
+| Fora | merge main · deploy · VPS · dados legado/seed |
 
-**Próximo:** CI própria · `@codex review` · indep. CadastroFornecedorCompleto sky / C360 residual.
+**Próximo:** CI deste tip · `@codex review` P1 flex · #467 Fornecedor flex P2.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
