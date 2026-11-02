@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (logística ID técnico residual) (2026-11-02 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Branch / PR** | `cursor/cadastros-logistica-id-tecnico-sky-392b` (nova) |
+| **Base** | #469 tip `058650a1` |
+| **Pacote** | ID técnico Banco/Transportadora/Motorista/Veiculo/UnidadeMedida (sky já presente) |
+| **Preservado** | código registro · reopen · Completos · #462 reopen Banco |
+| **≠** | recuperação de registros · seed/legado · #452 tip antigo (flake CRM) |
+| **#401 tip** | `b888b2c0` CI SUCCESS (reconfirmado) |
+| Fora | merge main · deploy · VPS |
+
+**Próximo:** CI+Codex deste tip · #471 pin `5c06aa53` em paralelo.
+
+
 ## CURSOR — VIGENTE (unificação overlaps Form/Completo) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

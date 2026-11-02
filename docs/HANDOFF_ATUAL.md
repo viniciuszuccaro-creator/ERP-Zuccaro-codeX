@@ -1,3 +1,8 @@
+## CURSOR — logística ID técnico residual (2026-11-02 America/Sao_Paulo)
+- Branch `cursor/cadastros-logistica-id-tecnico-sky-392b` ← #469 `058650a1`.
+- ID técnico (≠ código) em Banco/Transportadora/Motorista/Veiculo/UnidadeMedida; sky já existia.
+- UX ≠ registros. #452 tip antigo com flake backend CRM não reaberto. Sem merge/deploy/VPS.
+
 ## CURSOR — #469 CI SUCCESS + Contatos limpo (2026-11-02 America/Sao_Paulo)
 - #469 tip `b47bfcdf` CI SUCCESS 3/3 (código `8f50540f` BOM+pin; overlaps Forma/Pedido NÃO-CANÔNICO `f14cde57`). Codex limpo `8f50540f`.
 - #401 tip `b888b2c0`: Codex limpo Contatos assertScope. C360 proposta densificação publicada (canvas + evidence).
