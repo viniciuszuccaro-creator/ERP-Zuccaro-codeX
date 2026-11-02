@@ -47,3 +47,10 @@ Próximo capacidade a capacitar no existente
 2. Demo fluxo C360 Private quando franquia
 3. Matriz Pacote 5 restante: Funil×3 / Separacao×IA — keep both curto
 4. ChatbotIntent / JobAgendado / Parametro* residual fora branches reservadas
+
+Atualização (2026-11-02) — stubs históricos e Romaneio PDF
+- CentralAprovacoes abas Limite de Crédito / Duplicatas Vencidas: stub
+  "em desenvolvimento" também em erp-integra-novo@3c5788e2 — NÃO é regressão
+  local a recuperar por inventário; falta especificação/contrato de fila.
+- RomaneioImpressao "Baixar PDF": recuperado → gerarPDFRomaneio existente
+  (exportacaoPDF); impressão window.print já existia. Funcionalidade recuperada.

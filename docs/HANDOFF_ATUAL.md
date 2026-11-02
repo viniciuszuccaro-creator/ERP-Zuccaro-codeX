@@ -1,3 +1,9 @@
+## CURSOR — Romaneio PDF wire (2026-11-02 America/Sao_Paulo)
+- Stub alert "PDF em desenvolvimento" → `gerarPDFRomaneio` (exportacaoPDF).
+- Imprimir (`window.print`) preservado. Pin consumer-window exportacaoPDF intacto.
+- Limite/Duplicatas Aprovações: stub histórico também na referência integra — não inventar fila.
+- Base #472 `59e4aa50`. Sem merge/deploy/VPS.
+
 ## CURSOR — logística ID técnico residual (2026-11-02 America/Sao_Paulo)
 - Branch `cursor/cadastros-logistica-id-tecnico-sky-392b` ← #469 `058650a1`.
 - ID técnico (≠ código) em Banco/Transportadora/Motorista/Veiculo/UnidadeMedida; sky já existia.
