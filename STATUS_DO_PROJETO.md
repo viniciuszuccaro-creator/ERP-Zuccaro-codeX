@@ -3,16 +3,16 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-overlaps-cliente-form-392b` = **#469** |
-| **HEAD tip** | `37ffef9a` |
-| **CI SUCCESS tip** | `37ffef9a` 3/3 — [41472888080](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41472888080) / [41472877499](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41472877499) |
-| **Parecer Codex** | tip `37ffef9a` limpo |
+| **HEAD tip** | `3ba1e367` — Cliente/Representante/TabelaPreco canônicos |
+| **CI SUCCESS tip** | `3ba1e367` 3/3 — [41474259284](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41474259284) / [41474249104](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41474249104) |
+| **Parecer Codex** | tip `3ba1e367` limpo · tip Cliente `37ffef9a` limpo |
 | **Canônico** | Cliente → `CadastroClienteCompleto` · Representante → `RepresentanteFormCompleto` · TabelaPreco → `TabelaPrecoFormCompleto` |
-| **Preservado (não apagar)** | `ClienteForm*` · `RepresentanteForm` · `TabelaPrecoForm` marcados NÃO-CANÔNICO |
-| **#465–#468** | CI SUCCESS + Codex limpo |
-| **#401 tip** | `b888b2c0` CI SUCCESS — `@codex review` ainda pendente |
-| Fora | merge main · deploy · VPS · delete de form legado · dados legado/seed |
+| **Preservado (não apagar)** | Forms simples marcados NÃO-CANÔNICO |
+| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — Contatos assertScope aguarda aceite Codex |
+| **Prévia Codespace** | BLOCKED neste agente — `gh codespace` HTTP 403 |
+| Fora | merge main · deploy · VPS · delete · dados legado/seed |
 
-**Próximo:** demais overlaps com prova de consumidores · fold seletivo sky.
+**Próximo:** aceite Contatos #401 · C360 proposta densificação · lacunas recovery · FormaPagamento Form NÃO-CANÔNICO.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
