@@ -1,3 +1,10 @@
+## CURSOR — overlaps Form/Completo + C360 proposta (2026-11-02 America/Sao_Paulo)
+- Canônicos: Cliente Completo · Representante Completo · TabelaPreco Completo · FormaPagamento Completo · PedidoFormCompleto (Comercial).
+- Forms simples NÃO-CANÔNICO preservados (Regra-Mãe: não apagar). Testes consumidores 6 PASS.
+- C360 densificação: proposta navegável (canvas) + `docs/evidence/c360-proposta-densificacao-20261102.txt` — sem ComercialV2; consolidação visual só após aceite.
+- #401 tip `b888b2c0` CI SUCCESS; Contatos assertScope review Codex **Running**. Prévia Codespace BLOCKED (403). Dados pré-perda BLOCKED.
+- Branch #469 `cursor/cadastros-overlaps-cliente-form-392b` ← #401 `b888b2c0`. Sem merge/deploy/VPS.
+
 ## CURSOR — unificação Cliente canônico (2026-11-02 America/Sao_Paulo)
 - Runtime canônico: `CadastroClienteCompleto` (ClientesTab/V24/AcoesRapidas/Painel/Bloco1).
 - `comercial/ClienteFormCompleto` e `ClienteForm` preservados, marcados NÃO-CANÔNICO (sem delete).

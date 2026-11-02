@@ -94,3 +94,13 @@ test('FormaPagamento: Completo canônico; Form simples não montado', () => {
   assert.match(simples, /NÃO-CANÔNICO/);
   assert.match(simples, /FormaPagamentoFormCompleto/);
 });
+
+test('Pedido: Comercial monta PedidoFormCompleto; Form simples NÃO-CANÔNICO', () => {
+  const comercial = read('src/pages/Comercial.jsx');
+  assert.match(comercial, /PedidoFormCompleto/);
+  assert.doesNotMatch(comercial, /from ["'].*\/PedidoForm["']/);
+  assert.doesNotMatch(comercial, /openWindow\(\s*PedidoForm\b/);
+  const simples = read('src/components/comercial/PedidoForm.jsx');
+  assert.match(simples, /NÃO-CANÔNICO/);
+  assert.match(simples, /PedidoFormCompleto/);
+});

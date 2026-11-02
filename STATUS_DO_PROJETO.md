@@ -1,18 +1,20 @@
-## CURSOR — VIGENTE (unificação Cliente canônico) (2026-11-02 America/Sao_Paulo)
+## CURSOR — VIGENTE (unificação overlaps Form/Completo) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-overlaps-cliente-form-392b` = **#469** |
-| **HEAD tip** | `3ba1e367` — Cliente/Representante/TabelaPreco canônicos |
-| **CI SUCCESS tip** | `3ba1e367` 3/3 — [41474259284](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41474259284) / [41474249104](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41474249104) |
-| **Parecer Codex** | tip `3ba1e367` limpo · tip Cliente `37ffef9a` limpo |
-| **Canônico** | Cliente → `CadastroClienteCompleto` · Representante → `RepresentanteFormCompleto` · TabelaPreco → `TabelaPrecoFormCompleto` |
+| **HEAD tip** | (pós-commit) FormaPagamento + PedidoForm NÃO-CANÔNICO + C360 proposta |
+| **CI tip anterior** | `3ba1e367` 3/3 — [41474259284](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41474259284) |
+| **Parecer Codex** | tip `3ba1e367` limpo · tip Cliente `37ffef9a` limpo · delta Forma/Pedido aguarda CI+review |
+| **Canônico** | Cliente → `CadastroClienteCompleto` · Representante → `RepresentanteFormCompleto` · TabelaPreco → `TabelaPrecoFormCompleto` · FormaPagamento → `FormaPagamentoFormCompleto` · Pedido (Comercial) → `PedidoFormCompleto` |
 | **Preservado (não apagar)** | Forms simples marcados NÃO-CANÔNICO |
-| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — Contatos assertScope aguarda aceite Codex |
+| **C360 proposta** | canvas densificação + `docs/evidence/c360-proposta-densificacao-20261102.txt` |
+| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — Contatos assertScope: `@codex review` **Running** desde 2026-11-02 13:05 BRT |
 | **Prévia Codespace** | BLOCKED neste agente — `gh codespace` HTTP 403 |
+| **Dados desaparecidos** | BLOCKED — fonte pré-perda não identificada (sem seed/legado) |
 | Fora | merge main · deploy · VPS · delete · dados legado/seed |
 
-**Próximo:** aceite Contatos #401 · C360 proposta densificação · lacunas recovery · FormaPagamento Form NÃO-CANÔNICO.
+**Próximo:** aceite Contatos #401 · residual C360 no canônico (após aceite proposta) · Empresa Completo+windowMode (#463 sky separado) · lacunas Funil/Separação keep-both.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
