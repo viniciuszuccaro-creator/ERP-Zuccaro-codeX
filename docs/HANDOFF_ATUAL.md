@@ -1,3 +1,18 @@
+## CURSOR — checkpoint contínuo (2026-11-02 America/Sao_Paulo)
+
+| Item | Estado |
+|------|--------|
+| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — P1 assertScope Contatos; `@codex review` pedido |
+| **#464 RepresentanteCompleto sky** | `96852279` CI SUCCESS — `@codex review` pedido |
+| **#465 TabelaPrecoCompleto sky** | `3a93037b` CI SUCCESS + Codex limpo |
+| **#466 ClienteCompleto sky** | tip flex `9a5ff8fa` (P1) — CI; base `a4b9e915` SUCCESS |
+| **#467 FornecedorCompleto sky** | tip flex `cad8eb78` (P2) — CI; base `a2b1d0cd` SUCCESS |
+| **#468 C360 Detalhes densidade** | `8a263229` CI SUCCESS 3/3 — ID/contatos/KPIs header sky |
+| **Dados desaparecidos** | **BLOCKED** — fonte pré-perda ERP novo não comprovada; não usar legado/seed/exemplos |
+| Fora | merge main · deploy · VPS · re-port #446/#453 · edição Codex em branches Cursor |
+
+Um escritor por checkout. Incorporação ≠ merge main.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

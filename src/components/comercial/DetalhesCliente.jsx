@@ -71,11 +71,11 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
       )}
 
       <Card className={windowMode ? "border shadow-sm" : "border-0 shadow-none m-4"}>
-        <CardHeader className="border-b bg-white">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
+        <CardHeader className="border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
               <CardTitle className="text-xl">{cliente.nome || cliente.razao_social}</CardTitle>
-              <div className="flex flex-wrap items-center gap-3 mt-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1" data-action="cliente-360-identificacao">
                 {cliente.codigo != null && String(cliente.codigo).trim() !== '' && (
                   <p className="text-sm font-mono tabular-nums text-slate-700" data-action="codigo-registro-cliente-360" title="Código de registro (não é o ID técnico)">
                     Cód. {String(cliente.codigo)}
@@ -89,6 +89,15 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
                 <p className="text-sm text-slate-600">{cliente.tipo}</p>
                 <Badge className={statusColors[cliente.status]}>{cliente.status}</Badge>
               </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-slate-600" data-action="cliente-360-contatos">
+                {(cliente.documento || cliente.cpf_cnpj || cliente.cnpj || cliente.cpf) && (
+                  <span data-action="cliente-360-documento">{cliente.documento || cliente.cpf_cnpj || cliente.cnpj || cliente.cpf}</span>
+                )}
+                {cliente.email && <span data-action="cliente-360-email">{cliente.email}</span>}
+                {(cliente.telefone || cliente.celular || cliente.whatsapp) && (
+                  <span data-action="cliente-360-telefone">{cliente.telefone || cliente.celular || cliente.whatsapp}</span>
+                )}
+              </div>
             </div>
             {!windowMode && (
               <Button variant="ghost" size="icon" onClick={onClose}>
@@ -96,9 +105,36 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
               </Button>
             )}
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4" data-action="cliente-360-kpis">
+            <div className="rounded-md border bg-white/80 p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Package className="w-4 h-4 text-blue-600" />
+                <p className="text-xs text-slate-600">Total Compras</p>
+              </div>
+              <p className="text-lg font-bold text-blue-600">
+                R$ {totalCompras.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="rounded-md border bg-white/80 p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <FileText className="w-4 h-4 text-green-600" />
+                <p className="text-xs text-slate-600">Pedidos</p>
+              </div>
+              <p className="text-lg font-bold text-green-600">{pedidos.length}</p>
+            </div>
+            <div className="rounded-md border bg-white/80 p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp className="w-4 h-4 text-sky-600" />
+                <p className="text-xs text-slate-600">Ticket Médio</p>
+              </div>
+              <p className="text-lg font-bold text-sky-600">
+                R$ {ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
         </CardHeader>
 
-        <CardContent className="p-6">
+        <CardContent className="p-4 space-y-4">
           <CentralCliente360Panel
             clienteId={cliente.id}
             groupId={groupId}
@@ -109,46 +145,10 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
           />
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <Package className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <p className="text-xs text-slate-600">Total Compras</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    R$ {totalCompras.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <FileText className="w-5 h-5 text-green-600" />
-                  </div>
-                  <p className="text-xs text-slate-600">Pedidos</p>
-                  <p className="text-2xl font-bold text-green-600">{pedidos.length}</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <TrendingUp className="w-5 h-5 text-sky-600" />
-                  </div>
-                  <p className="text-xs text-slate-600">Ticket Médio</p>
-                  <p className="text-2xl font-bold text-sky-600">
-                    R$ {ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
             <div className="space-y-4">
               <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
 
-              <div>
+              <div data-action="cliente-360-ultimos-pedidos">
                 <h3 className="font-semibold text-slate-900 mb-2">Últimos Pedidos</h3>
                 {pedidos.slice(0, 5).map(pedido => (
                   <div key={pedido.id} className="flex items-center justify-between py-2 border-b">
@@ -173,7 +173,7 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
                 <h3 className="font-semibold text-slate-900 mb-2">Histórico de Produtos</h3>
                 <HistoricoProdutosCliente clienteId={cliente.id} />
               </div>
-              {/* Keep-both: agregação compras + Top10 (leitura; Adicionar só no Pedido). */}
+              {/* Keep-both: agregação compras + Top10 (leitura; sem Adicionar órfão). */}
               <div data-action="cliente-360-historico-compras" data-permission="Comercial.Pedido.visualizar">
                 <HistoricoComprasCliente clienteId={cliente.id} />
               </div>
