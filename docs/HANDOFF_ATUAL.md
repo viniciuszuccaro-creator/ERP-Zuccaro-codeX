@@ -1,8 +1,14 @@
+## CURSOR — Contatos aceite + overlaps #469 (2026-11-02 America/Sao_Paulo)
+- #401 tip `b888b2c0`: Codex limpo Contatos assertScope (`has_any_findings: false`, 13:07 BRT). P2 generation/contexto confirmados tratados.
+- #469 HEAD `f14cde57`: FormaPagamento+PedidoForm NÃO-CANÔNICO; C360 proposta densificação (canvas + evidence). CI+`@codex review` em curso.
+- Canônicos: Cliente/Representante/TabelaPreco/FormaPagamento Completo · PedidoFormCompleto. Forms simples preservados.
+- Prévia Codespace BLOCKED (403). Dados pré-perda BLOCKED. Sem merge/deploy/VPS. Empresa Completo+windowMode = #463 (não editar aqui).
+
 ## CURSOR — overlaps Form/Completo + C360 proposta (2026-11-02 America/Sao_Paulo)
 - Canônicos: Cliente Completo · Representante Completo · TabelaPreco Completo · FormaPagamento Completo · PedidoFormCompleto (Comercial).
 - Forms simples NÃO-CANÔNICO preservados (Regra-Mãe: não apagar). Testes consumidores 6 PASS.
 - C360 densificação: proposta navegável (canvas) + `docs/evidence/c360-proposta-densificacao-20261102.txt` — sem ComercialV2; consolidação visual só após aceite.
-- #401 tip `b888b2c0` CI SUCCESS; Contatos assertScope review Codex **Running**. Prévia Codespace BLOCKED (403). Dados pré-perda BLOCKED.
+- #401 tip `b888b2c0` CI SUCCESS; Contatos assertScope Codex limpo. Prévia Codespace BLOCKED (403). Dados pré-perda BLOCKED.
 - Branch #469 `cursor/cadastros-overlaps-cliente-form-392b` ← #401 `b888b2c0`. Sem merge/deploy/VPS.
 
 ## CURSOR — unificação Cliente canônico (2026-11-02 America/Sao_Paulo)
