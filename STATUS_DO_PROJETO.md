@@ -3,9 +3,9 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-overlaps-cliente-form-392b` = **#469** |
-| **HEAD tip** | `6f1faa7e` — docs Contatos aceite + Funil keep-both (código `f14cde57`) |
-| **CI tip código** | `f14cde57` / tip docs `6f1faa7e` — em fila (aguardar SUCCESS) |
-| **Parecer Codex** | tip `3ba1e367` limpo · tip Cliente `37ffef9a` limpo · #401 Contatos limpo · delta Forma/Pedido `@codex review` tip `6f1faa7e` |
+| **HEAD tip** | `c373ceb9` — pin stage49 FormaPagamentoForm após NÃO-CANÔNICO |
+| **CI tip anterior** | `6f1faa7e` frontend FAIL — pin `FormaPagamentoForm` stage49 (hash comentário NÃO-CANÔNICO) |
+| **Parecer Codex** | tip `3ba1e367` limpo · tip Cliente `37ffef9a` limpo · #401 Contatos limpo · delta Forma/Pedido re-review após pin |
 | **Canônico** | Cliente → `CadastroClienteCompleto` · Representante → `RepresentanteFormCompleto` · TabelaPreco → `TabelaPrecoFormCompleto` · FormaPagamento → `FormaPagamentoFormCompleto` · Pedido (Comercial) → `PedidoFormCompleto` |
 | **Preservado (não apagar)** | Forms simples marcados NÃO-CANÔNICO · Funil×3 / Separacao×IA keep-both |
 | **C360 proposta** | canvas densificação + `docs/evidence/c360-proposta-densificacao-20261102.txt` |
