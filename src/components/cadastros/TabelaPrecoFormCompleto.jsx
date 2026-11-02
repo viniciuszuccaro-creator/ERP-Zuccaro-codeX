@@ -1145,7 +1145,24 @@ RETORNE:
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white overflow-auto">{content}</div>;
+    return (
+      <div className="w-full h-full flex flex-col bg-white">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 shrink-0">
+          <DollarSign className="w-6 h-6 text-sky-600" />
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              {tabela?.id ? "Editar Tabela de Preço" : "Nova Tabela de Preço"}
+            </h2>
+            {tabela?.id ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(tabela.id)}</span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+        <div className="flex-1 min-h-0 overflow-auto">{content}</div>
+      </div>
+    );
   }
 
   return content;
