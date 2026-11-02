@@ -1,8 +1,8 @@
 ## CURSOR — C360 Detalhes condição/tabela (2026-11-02 America/Sao_Paulo)
-- Branch `cursor/comercial360-detalhe-condicao-392b` ← #468 `493f7e04`.
+- #470 tip `3432474d` CI SUCCESS 3/3 + Codex limpo (código `41f970f5`) ← #468 `493f7e04`.
 - Header DetalhesCliente: condição, tabela, forma e crédito do registro (Não informada se vazio).
 - Sem fetch paralelo / sem ComercialV2. Teste densidade ampliado.
-- Sem merge/deploy/VPS.
+- Sem merge/deploy/VPS. Próximo indep.: Empresa Completo+windowMode fora do sky #463.
 
 ## CURSOR — checkpoint contínuo (2026-11-02 America/Sao_Paulo)
 
