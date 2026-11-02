@@ -3,13 +3,15 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-cliente-completo-sky-392b` = **#466** |
-| **Código tip** | (este) — sky+ID + `flex flex-col` no wrapper (P1 Codex scroll) |
-| **CI tip anterior** | `a4b9e915` SUCCESS 3/3 [41468913520](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41468913520) |
+| **Código tip** | `b3c88a47` — sky+ID + `flex flex-col` (P1 Codex) |
+| **HEAD docs** | `9a5ff8fa` |
+| **CI SUCCESS tip** | `9a5ff8fa` 3/3 — [41470387278](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41470387278) / [41470376577](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41470376577) |
+| **Parecer Codex** | tip `9a5ff8fa` limpo · tip sky `a4b9e915` CI SUCCESS prévia |
 | **stage48** | `ae4f9b2cbdf1b9b66c70340bd464c956c80577a6f231d09ccf166bd6a7d301dd` |
-| **#465** | `3a93037b` CI SUCCESS + Codex limpo |
+| **#465** | `3a93037b` / docs `b1769465` CI SUCCESS + Codex limpo |
 | Fora | merge main · deploy · VPS · dados legado/seed |
 
-**Próximo:** CI deste tip · `@codex review` P1 flex · #467 Fornecedor flex P2.
+**Próximo:** owner fold seletivo · #467 flex CI · #468.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
