@@ -2,14 +2,15 @@
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **Branch / PR** | `cursor/expedicao-romaneio-pdf-wire-392b` (nova) |
+| **Branch / PR** | `cursor/expedicao-romaneio-pdf-wire-392b` = **#474** |
 | **Base** | #472 tip `59e4aa50` (CI SUCCESS) |
+| **CI tip** | `9cb9b9ef` **SUCCESS 3/3** |
 | **Pacote** | RomaneioImpressao "Baixar PDF" → `gerarPDFRomaneio` existente |
 | **Classificação** | funcionalidade recuperada · registros NÃO · `exportacaoPDF` pin intacto |
 | **Nota matriz** | Limite/Duplicatas CentralAprovacoes = stub também no integra-novo@3c5788e2 |
 | Fora | merge · deploy · VPS · jsPDF novo · alterar pin exportacaoPDF |
 
-**Próximo:** CI+Codex deste tip · #471 CANAL · #473 pin MODULE.
+**Próximo:** `@codex review` #474 · #473 typecheck tip `fe4332f98` · #471 limpo.
 
 ## CURSOR — VIGENTE (logística ID técnico residual) (2026-11-02 America/Sao_Paulo)
 

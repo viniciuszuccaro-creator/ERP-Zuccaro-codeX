@@ -1,3 +1,7 @@
+## CURSOR — Romaneio PDF #474 CI SUCCESS (2026-11-02 America/Sao_Paulo)
+- Tip `9cb9b9ef` CI SUCCESS 3/3 — Baixar PDF → gerarPDFRomaneio.
+- Sem merge/deploy/VPS. Paralelo: #473 typecheck · #471 limpo.
+
 ## CURSOR — Romaneio PDF wire (2026-11-02 America/Sao_Paulo)
 - Stub alert "PDF em desenvolvimento" → `gerarPDFRomaneio` (exportacaoPDF).
 - Imprimir (`window.print`) preservado. Pin consumer-window exportacaoPDF intacto.
