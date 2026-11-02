@@ -1,3 +1,8 @@
+## CURSOR — Empresa Completo #471 CI SUCCESS (2026-11-02 America/Sao_Paulo)
+- Tip `75c36737` CANAL callback refs=6 — CI SUCCESS 3/3 (frontend/backend/compose).
+- Código: `4fa635f22` autorização + docs. Sem merge/deploy/VPS.
+- Paralelo: #473 typecheck · #474 Romaneio PDF.
+
 ## CURSOR — Empresa Completo CANAL refs=6 #471 (2026-11-02 America/Sao_Paulo)
 - Tip `88297ee9` restore+manifest refs=6 ok; CANAL deepEqual vs histórico 90f0a315 exigia refs=5.
 - Fix: `CALLBACK_AUTHORIZED_MANIFEST_ENTRY` (beforeSha histórico + references=6) no mesmo padrão do reopen.

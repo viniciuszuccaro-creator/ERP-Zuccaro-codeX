@@ -3,10 +3,10 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-empresa-completo-canonico-392b` = **#471** |
-| **HEAD tip** | CANAL autoriza callback refs=6 (beforeSha histórico) |
+| **HEAD tip** | `75c36737` CANAL callback refs=6 — **CI SUCCESS 3/3**
 | **Código P1/pin** | `9f78938f` gates · `5c06aa53` contrato dedicado · `2afe92cc` restore |
 | **Código canônico** | `d4c6a618` Bloco5→Completo+windowMode/sky |
-| **CI tip anterior** | `88297ee9` frontend FAIL CANAL deepEqual refs 6≠5 · pin/restore ok |
+| **CI tip anterior** | `88297ee9` FAIL CANAL · tip `75c36737` SUCCESS [check-runs ok]
 | **Base** | #469 tip `058650a1` |
 | **Canônico** | Empresa → `EmpresaFormCompleto` |
 | **Preservado** | Form NÃO-CANÔNICO · #463 sky Form residual · handlers/escopo golden |
@@ -15,7 +15,7 @@
 | **#473** | RH Férias — pin `useContextoVisual` (MODULE_BY_ENTITY) a reverter |
 | Fora | merge main · deploy · VPS · tocar #463 · seed/legado |
 
-**Próximo:** CI+Codex tip CANAL callback · #473 reverter MODULE_BY_ENTITY · recuperação vs integra-novo `3c5788e2`.
+**Próximo:** `@codex review` #471 · #473 typecheck tip · #474 Romaneio PDF.
 
 
 ## CURSOR — VIGENTE (unificação overlaps Form/Completo) (2026-11-02 America/Sao_Paulo)
