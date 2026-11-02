@@ -35,6 +35,17 @@ export const REOPEN_AUTHORIZED_MANIFEST_ENTRY = Object.freeze({
   references: REOPEN_AUTHORIZED_REFERENCES,
 });
 
+/** #471 EmpresaFormCompleto — 6ª ref e36231b3 no callback-record-state; beforeSha histórico intacto. */
+export const CALLBACK_RECORD_STATE_PATH = 'tests/cursor-callback-record-state.test.js';
+export const CALLBACK_HISTORICAL_BEFORE_SHA =
+  '62a49942ff2912414a3106d4e5d4808d48d97a80bd9f8313acfe7e507b5f1848';
+export const CALLBACK_AUTHORIZED_REFERENCES = 6;
+export const CALLBACK_AUTHORIZED_MANIFEST_ENTRY = Object.freeze({
+  path: CALLBACK_RECORD_STATE_PATH,
+  beforeSha256: CALLBACK_HISTORICAL_BEFORE_SHA,
+  references: CALLBACK_AUTHORIZED_REFERENCES,
+});
+
 export function normalizePublicationSource(source) {
   return String(source ?? '').replace(/\r\n/g, '\n');
 }

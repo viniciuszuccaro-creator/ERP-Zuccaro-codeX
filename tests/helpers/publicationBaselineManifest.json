@@ -29,7 +29,7 @@
     {
       "path": "tests/cursor-callback-record-state.test.js",
       "beforeSha256": "62a49942ff2912414a3106d4e5d4808d48d97a80bd9f8313acfe7e507b5f1848",
-      "references": 5
+      "references": 6
     },
     {
       "path": "tests/cursor-identidade-consolidacao.test.js",

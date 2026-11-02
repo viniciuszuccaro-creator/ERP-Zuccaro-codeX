@@ -1,4 +1,9 @@
-﻿import React, { useEffect, useState } from "react";
+/**
+ * NÃO-CANÔNICO (sobreposição preservada — Regra-Mãe: não apagar).
+ * Runtime de Empresa → `EmpresaFormCompleto` (Bloco5Organizacional).
+ * Sky residual do Form simples permanece em #463; canônico usa Completo+windowMode.
+ */
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import useCadastroRecordState from './useCadastroRecordState';
 import { Label } from "@/components/ui/label";

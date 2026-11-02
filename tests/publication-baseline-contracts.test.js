@@ -1,5 +1,9 @@
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import {
+  CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  CALLBACK_AUTHORIZED_REFERENCES,
+  CALLBACK_HISTORICAL_BEFORE_SHA,
+  CALLBACK_RECORD_STATE_PATH,
   PUBLICATION_BASE,
   REOPEN_AUTHORIZED_CURRENT_SHA,
   REOPEN_AUTHORIZED_MANIFEST_ENTRY,
@@ -129,6 +133,15 @@ function restoreApprovedCatalogoWebCallbackDelta(source) {
  assert.equal(source.split(approvedCatalogoWebNames).length,2,'Only the exact CatalogoWeb names graduation delta may be normalized');
  assert.equal(source.split(approvedCatalogoWebGraduationTest).length,2,'Only the exact CatalogoWeb graduation test delta may be normalized');
  return source.replace(approvedCatalogoWebGraduationTest,'\n').replace(approvedCatalogoWebNames,previousCatalogoWebNames);
+}
+/** #471 EmpresaFormCompleto: saiu do deepEqual compartilhado e36231b3; reverse restaura Completo no for-loop + omite contrato dedicado. */
+const previousEmpresaCompletoPayloadLoop = "for (const file of ['cadastros/EmpresaForm.jsx', 'cadastros/EmpresaFormCompleto.jsx',\n  'cadastros/TransportadoraForm.jsx', 'cadastros/ProdutoForm.jsx',\n  'comercial/ClienteFormCompleto.jsx', 'cadastros/TabelaPrecoFormCompleto.jsx']) {";
+const approvedEmpresaCompletoPayloadLoop = "// EmpresaFormCompleto: pin e36231b3 não se aplica às decls/fields de RBAC — #471 alinha Completo ao\n// gate Organizacional + certificado granular já presente em EmpresaForm (e36231b3). Ver teste dedicado.\nfor (const file of ['cadastros/EmpresaForm.jsx',\n  'cadastros/TransportadoraForm.jsx', 'cadastros/ProdutoForm.jsx',\n  'comercial/ClienteFormCompleto.jsx', 'cadastros/TabelaPrecoFormCompleto.jsx']) {";
+const approvedEmpresaCompletoGraduationTest = "test('EmpresaFormCompleto #471: Organizacional + certificado granular; RecordState/initializer preservados', () => {\n  const path = 'src/components/cadastros/EmpresaFormCompleto.jsx';\n  const after = parse(path, iaResponseValidationRemainder(path, fs.readFileSync(path, 'utf8')));\n  const before = parse(path, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }));\n  const decl = (tree, name) => find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === name)[0];\n  const text = (tree, name) => decl(tree, name).getText(tree);\n  const newState = decl(after, '[formData, setFormData]');\n  const oldInitial = decl(before, '[formData, setFormData]').initializer.arguments[0];\n  assert.equal(newState.initializer.expression.getText(after), 'useCadastroRecordState');\n  // Mesmo unwrap do pin compartilhado: golden usava () => merge…; tip passa merge direto.\n  if (ts.isArrowFunction(oldInitial)) {\n    assert.equal(newState.initializer.arguments[0].getText(after), oldInitial.body.getText(before));\n  } else {\n    assert.equal(newState.initializer.arguments[0].getText(after), oldInitial.getText(before));\n  }\n  // RBAC canônico alinhado a EmpresaForm (#227/#471) — não Cadastros.Empresa.salvar legado.\n  assert.match(text(after, 'permissaoFormulario'), /Cadastros\\.Organizacional\\.(criar|editar)/);\n  assert.doesNotMatch(text(after, 'permissaoFormulario'), /Cadastros\\.Empresa\\.salvar/);\n  assert.equal(text(after, 'permissaoCertificado'), 'permissaoCertificado = \"Cadastros.Empresa.Certificado.editar\"');\n  assert.match(text(after, 'podeEditarCertificado'), /hasPermissionKey/);\n  assert.match(text(after, 'podeSalvar'), /podeEditar : podeCriar/);\n  assert.match(text(after, 'buildPayload'), /if \\(podeEditarCertificado\\)/);\n  assert.match(text(after, 'buildPayload'), /delete payload\\.certificado_digital/);\n  assert.match(text(after, 'handleCertificadoUpload'), /if \\(!podeEditarCertificado\\)/);\n  // Handlers/escopo multiempresa herdados do golden — sem regressão de ownership.\n  for (const name of ['groupId', 'contextoValido', 'podeCriar', 'podeEditar', 'podeExcluir', 'handleSubmit', 'handleExcluir', 'handleAlternarStatus']) {\n    assert.equal(text(after, name), text(before, name));\n  }\n  const source = fs.readFileSync(path, 'utf8');\n  assert.match(source, /data-permission=\\{permissaoFormulario\\}/);\n  assert.match(source, /data-permission=\\{permissaoCertificado\\}/);\n  assert.doesNotMatch(source, /data-permission=[\"']Cadastros\\.Empresa\\.salvar[\"']/);\n});\n\n";
+function restoreApprovedEmpresaCompletoCallbackDelta(source) {
+ assert.equal(source.split(approvedEmpresaCompletoPayloadLoop).length,2,'Only the exact EmpresaFormCompleto payload-loop delta may be normalized');
+ assert.equal(source.split(approvedEmpresaCompletoGraduationTest).length,2,'Only the exact EmpresaFormCompleto #471 graduation test delta may be normalized');
+ return source.replace(approvedEmpresaCompletoGraduationTest,'').replace(approvedEmpresaCompletoPayloadLoop,previousEmpresaCompletoPayloadLoop);
 }
 test('bulk lifecycle evolution retains the original hash and rejects changed or repeated delegation assertions',()=>{
  const source=fs.readFileSync('server/tests/bulk-consolidacao.test.ts','utf8').replace(/\r\n/g,'\n');
@@ -262,6 +275,15 @@ test('CatalogoWeb callback graduation rejects omission, repetition or out-of-sco
  assert.match(restored,/ApiExterna', 'CatalogoWeb'/);
  assert.throws(()=>restoreApprovedCatalogoWebCallbackDelta(source.replace("ApiExterna',","ApiExterna', 'Webhook',")));
 });
+test('EmpresaFormCompleto #471 callback graduation retains beforeSha and rejects omission, repetition or out-of-scope edit',()=>{
+ const source=fs.readFileSync('tests/cursor-callback-record-state.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedEmpresaCompletoCallbackDelta(source);
+ assert.equal(restored.includes(approvedEmpresaCompletoGraduationTest),false);
+ assert.match(restored,/EmpresaForm\.jsx', 'cadastros\/EmpresaFormCompleto\.jsx'/);
+ assert.throws(()=>restoreApprovedEmpresaCompletoCallbackDelta(source.replace(approvedEmpresaCompletoGraduationTest,'')));
+ assert.throws(()=>restoreApprovedEmpresaCompletoCallbackDelta(source+approvedEmpresaCompletoGraduationTest));
+ assert.throws(()=>restoreApprovedEmpresaCompletoCallbackDelta(source.replace("EmpresaForm.jsx',\n","EmpresaForm.jsx', 'Webhook',\n")));
+});
 /** #353 LocalEstoque: saiu do pin residual RecordState → reopen canônico. */
 const previousResidualNames = "const names = ['CentroOperacao', 'LocalEstoque', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n";
 const approvedResidualNames = "const names = ['CentroOperacao', 'TabelaFiscal', 'ParametroOrigemPedido', 'ConfiguracaoNFe'];\n// LocalEstoque graduou para useCadastroReopenOnIdentity — cobertos no teste seguinte (não no pin RecordState).\n";
@@ -293,15 +315,16 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
     ? restoreApprovedBulkDelta(reviewed)
     : entry.path==='tests/cursor-callback-record-state.test.js'
       ? restoreApprovedCodigoFieldCallbackDelta(
-          restoreApprovedContatoB2BCallbackDelta(
-            restoreApprovedServicoTipoFreteCallbackDelta(
-              restoreApprovedSegmentoClienteCallbackDelta(
-                restoreApprovedKitProdutoCallbackDelta(
-                  restoreApprovedFilialCallbackDelta(
-                    restoreApprovedCentroResultadoCallbackDelta(
-                      restoreApprovedJobAgendadoCallbackDelta(
-                        restoreApprovedRotaPadraoCallbackDelta(
-                          restoreApprovedCatalogoWebCallbackDelta(reviewed))))))))))
+          restoreApprovedEmpresaCompletoCallbackDelta(
+            restoreApprovedContatoB2BCallbackDelta(
+              restoreApprovedServicoTipoFreteCallbackDelta(
+                restoreApprovedSegmentoClienteCallbackDelta(
+                  restoreApprovedKitProdutoCallbackDelta(
+                    restoreApprovedFilialCallbackDelta(
+                      restoreApprovedCentroResultadoCallbackDelta(
+                        restoreApprovedJobAgendadoCallbackDelta(
+                          restoreApprovedRotaPadraoCallbackDelta(
+                            restoreApprovedCatalogoWebCallbackDelta(reviewed)))))))))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
         : reviewed;
@@ -340,11 +363,18 @@ test('CANAL publication tip does not rewrite manifest; P1 reopen delta is the ex
       assert.notDeepEqual(now, entry);
       continue;
     }
+    if(entry.path===CALLBACK_RECORD_STATE_PATH){
+      // #471: beforeSha histórico + references=6 (contrato dedicado EmpresaFormCompleto).
+      assert.deepEqual(now, CALLBACK_AUTHORIZED_MANIFEST_ENTRY);
+      assert.notDeepEqual(now, entry);
+      continue;
+    }
     assert.deepEqual(now,entry);
   }
   // Contraprova: adulterar outro case deve divergir do histórico.
-  const forged={...current,cases:current.cases.map((c)=>c.path===REOPEN_CONSOLIDACAO_PATH?c:{...c,references:(c.references||0)+99})};
-  assert.notEqual(JSON.stringify(forged.cases.find((c)=>c.path!==REOPEN_CONSOLIDACAO_PATH)),JSON.stringify(historical.cases.find((c)=>c.path!==REOPEN_CONSOLIDACAO_PATH)));
+  const authorizedPaths=new Set([REOPEN_CONSOLIDACAO_PATH, CALLBACK_RECORD_STATE_PATH]);
+  const forged={...current,cases:current.cases.map((c)=>authorizedPaths.has(c.path)?c:{...c,references:(c.references||0)+99})};
+  assert.notEqual(JSON.stringify(forged.cases.find((c)=>!authorizedPaths.has(c.path))),JSON.stringify(historical.cases.find((c)=>!authorizedPaths.has(c.path))));
 });
 
 test('P1 reopen guards reject assertion removal after beforeSha recalculation (Codex contraprova)',()=>{
@@ -408,4 +438,18 @@ test('P1 reopen guards reject internal mutation, omission, repetition and baseli
     { path: REOPEN_CONSOLIDACAO_PATH, beforeSha256: REOPEN_AUTHORIZED_CURRENT_SHA, references: REOPEN_AUTHORIZED_REFERENCES },
     REOPEN_AUTHORIZED_MANIFEST_ENTRY,
   ));
+
+  // #471 callback: references histórica (5) ou beforeSha trocado rejeitados; só refs=6 + beforeSha histórico.
+  assert.throws(()=>assert.deepEqual(
+    { path: CALLBACK_RECORD_STATE_PATH, beforeSha256: CALLBACK_HISTORICAL_BEFORE_SHA, references: 5 },
+    CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  ));
+  assert.throws(()=>assert.deepEqual(
+    { path: CALLBACK_RECORD_STATE_PATH, beforeSha256: REOPEN_AUTHORIZED_CURRENT_SHA, references: CALLBACK_AUTHORIZED_REFERENCES },
+    CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  ));
+  assert.deepEqual(
+    { path: CALLBACK_RECORD_STATE_PATH, beforeSha256: CALLBACK_HISTORICAL_BEFORE_SHA, references: CALLBACK_AUTHORIZED_REFERENCES },
+    CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  );
 });

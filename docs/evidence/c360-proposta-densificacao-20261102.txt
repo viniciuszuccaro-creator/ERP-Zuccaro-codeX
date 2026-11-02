@@ -1,0 +1,40 @@
+C360 densificação — proposta navegável (2026-11-02 America/Sao_Paulo)
+=====================================================================
+Canvas privado: C360 densificação — proposta navegável (Cursor canvas store).
+Base #401 tip b888b2c0 · pacote overlaps #469.
+
+Princípio
+---------
+Evoluir DetalhesCliente + CentralCliente360Panel + OrcamentosTab /
+PedidoCanonicoPanel / PedidoFormCompleto. Sem ComercialV2. Draft ≠ persist.
+
+Já entregue (não reabrir)
+-------------------------
+- Contatos no Painel + assertScope 6 campos (aguarda aceite Codex tip b888b2c0)
+- Create path Central → abas canônicas
+- hostWindowMode modal itens acima da janela
+- DetalhesCliente densificado (#468)
+- Canônicos Completo: Cliente / Representante / TabelaPreco / FormaPagamento
+- PedidoForm simples NÃO-CANÔNICO (#469)
+
+Residual (proposta — não consolidação visual silenciosa)
+--------------------------------------------------------
+1. Surface condição+tabela+totais+situação no mesmo viewport do processo
+2. Fechar rejeições / carregamento incompleto / troca de contexto no canônico
+3. Inventário GerenciarContatosCliente comercial vs Form antes de unificar exposição
+4. filterInContext mestres PedidoCanonicoPanel = lacuna Codex (não reimplementar)
+5. Demo Private: BLOCKED neste agente (gh codespace HTTP 403)
+
+Roteiro Private (quando franquia)
+---------------------------------
+1 Abrir cliente → Detalhes + Central
+2 Contatos no Painel
+3 Novo orçamento/pedido
+4 Modal itens acima da janela
+5 Salvar → reabrir mesmo ticket
+6 Converter com estoque líquido
+7 Troca Grupo/Empresa sem loop
+
+Fora
+----
+merge main · deploy · VPS · seed/legado como reposição · apagar Forms

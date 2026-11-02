@@ -1,3 +1,8 @@
+/**
+ * NÃO-CANÔNICO (sobreposição preservada — Regra-Mãe: não apagar).
+ * Runtime de Pedido em Comercial → `PedidoFormCompleto` (`src/pages/Comercial.jsx`).
+ * Painel HTTP canônico de listagem/edição → `PedidoCanonicoPanel` (quando montado).
+ */
 import React, { useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

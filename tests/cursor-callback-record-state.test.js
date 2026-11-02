@@ -223,7 +223,9 @@ test('Colaborador retains legacy-code permission and all save/status/delete hand
   assert.equal(state(after).initializer.expression.getText(after), 'useCadastroRecordState');
 });
 
-for (const file of ['cadastros/EmpresaForm.jsx', 'cadastros/EmpresaFormCompleto.jsx',
+// EmpresaFormCompleto: pin e36231b3 não se aplica às decls/fields de RBAC — #471 alinha Completo ao
+// gate Organizacional + certificado granular já presente em EmpresaForm (e36231b3). Ver teste dedicado.
+for (const file of ['cadastros/EmpresaForm.jsx',
   'cadastros/TransportadoraForm.jsx', 'cadastros/ProdutoForm.jsx',
   'comercial/ClienteFormCompleto.jsx', 'cadastros/TabelaPrecoFormCompleto.jsx']) {
   test(`${file}: retained payload owner, validators, complete initializer and permissions`, () => {
@@ -247,6 +249,40 @@ for (const file of ['cadastros/EmpresaForm.jsx', 'cadastros/EmpresaFormCompleto.
     assert.deepEqual(fields(after), fields(before));
   });
 }
+
+test('EmpresaFormCompleto #471: Organizacional + certificado granular; RecordState/initializer preservados', () => {
+  const path = 'src/components/cadastros/EmpresaFormCompleto.jsx';
+  const after = parse(path, iaResponseValidationRemainder(path, fs.readFileSync(path, 'utf8')));
+  const before = parse(path, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }));
+  const decl = (tree, name) => find(tree, node => ts.isVariableDeclaration(node) && node.name.getText(tree) === name)[0];
+  const text = (tree, name) => decl(tree, name).getText(tree);
+  const newState = decl(after, '[formData, setFormData]');
+  const oldInitial = decl(before, '[formData, setFormData]').initializer.arguments[0];
+  assert.equal(newState.initializer.expression.getText(after), 'useCadastroRecordState');
+  // Mesmo unwrap do pin compartilhado: golden usava () => merge…; tip passa merge direto.
+  if (ts.isArrowFunction(oldInitial)) {
+    assert.equal(newState.initializer.arguments[0].getText(after), oldInitial.body.getText(before));
+  } else {
+    assert.equal(newState.initializer.arguments[0].getText(after), oldInitial.getText(before));
+  }
+  // RBAC canônico alinhado a EmpresaForm (#227/#471) — não Cadastros.Empresa.salvar legado.
+  assert.match(text(after, 'permissaoFormulario'), /Cadastros\.Organizacional\.(criar|editar)/);
+  assert.doesNotMatch(text(after, 'permissaoFormulario'), /Cadastros\.Empresa\.salvar/);
+  assert.equal(text(after, 'permissaoCertificado'), 'permissaoCertificado = "Cadastros.Empresa.Certificado.editar"');
+  assert.match(text(after, 'podeEditarCertificado'), /hasPermissionKey/);
+  assert.match(text(after, 'podeSalvar'), /podeEditar : podeCriar/);
+  assert.match(text(after, 'buildPayload'), /if \(podeEditarCertificado\)/);
+  assert.match(text(after, 'buildPayload'), /delete payload\.certificado_digital/);
+  assert.match(text(after, 'handleCertificadoUpload'), /if \(!podeEditarCertificado\)/);
+  // Handlers/escopo multiempresa herdados do golden — sem regressão de ownership.
+  for (const name of ['groupId', 'contextoValido', 'podeCriar', 'podeEditar', 'podeExcluir', 'handleSubmit', 'handleExcluir', 'handleAlternarStatus']) {
+    assert.equal(text(after, name), text(before, name));
+  }
+  const source = fs.readFileSync(path, 'utf8');
+  assert.match(source, /data-permission=\{permissaoFormulario\}/);
+  assert.match(source, /data-permission=\{permissaoCertificado\}/);
+  assert.doesNotMatch(source, /data-permission=["']Cadastros\.Empresa\.salvar["']/);
+});
 
 test('Cliente RHF actual reset effect changes records, clears transient validation and preserves same-identity edits', () => {
   const path = 'src/components/comercial/ClienteForm.jsx';
