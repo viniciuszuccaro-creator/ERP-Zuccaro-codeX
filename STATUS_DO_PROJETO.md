@@ -2,15 +2,14 @@
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **Branch** | `cursor/cadastros-fornecedor-completo-sky-392b` (indep. ← #401 `b888b2c0`) |
-| **Código** | `CadastroFornecedorCompleto` windowMode sky + ID técnico |
-| **stage48** | graduado `d32ce116e98117a6a98ae680527cf1f153a27aa03efb1697e95114dbc0b859cc` |
-| **#466 ClienteCompleto** | tip `a4b9e915` — CI em curso |
-| **#465 TabelaPrecoCompleto** | tip `3a93037b` — CI em curso |
-| **#401 / #464** | `b888b2c0` / `96852279` CI SUCCESS — `@codex review` pedido |
-| Fora | merge main · deploy · VPS · re-port #446/#453 · dados legado/seed |
+| **Branch / PR** | `cursor/cadastros-fornecedor-completo-sky-392b` = **#467** |
+| **Código tip** | (este) — sky+ID + `flex flex-col` (P2 Codex scroll) |
+| **CI tip anterior** | `a2b1d0cd` SUCCESS 3/3 [41469094847](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41469094847) |
+| **stage48** | `973f1a9c77bc610cd3f880624f93cba82af74c217e3149bb3fa3c25fb7789734` |
+| **#465 / #466** | CI SUCCESS · #466 P1 flex tip `b3c88a47`/`9a5ff8fa` |
+| Fora | merge main · deploy · VPS · dados legado/seed |
 
-**Próximo:** CI própria · `@codex review` · C360 residual / unificação overlaps.
+**Próximo:** CI deste tip · `@codex review` P2 flex · #468 Detalhes.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
