@@ -1,3 +1,9 @@
+## CURSOR — C360 Detalhes condição/tabela (2026-11-02 America/Sao_Paulo)
+- Branch `cursor/comercial360-detalhe-condicao-392b` ← #468 `493f7e04`.
+- Header DetalhesCliente: condição, tabela, forma e crédito do registro (Não informada se vazio).
+- Sem fetch paralelo / sem ComercialV2. Teste densidade ampliado.
+- Sem merge/deploy/VPS.
+
 ## CURSOR — checkpoint contínuo (2026-11-02 America/Sao_Paulo)
 
 | Item | Estado |

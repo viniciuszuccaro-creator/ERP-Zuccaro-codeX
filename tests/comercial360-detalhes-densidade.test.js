@@ -28,3 +28,20 @@ test('DetalhesCliente: identificação + contatos + KPIs no header sky (sem dupl
   const centralIdx = source.indexOf('<CentralCliente360Panel');
   assert.ok(headerIdx >= 0 && kpiIdx > headerIdx && centralIdx > kpiIdx);
 });
+
+test('DetalhesCliente: condição/tabela/forma/crédito no header (registro existente, sem fetch paralelo)', () => {
+  const source = fs.readFileSync(path, 'utf8');
+  assert.match(source, /data-action="cliente-360-condicao-comercial"/);
+  assert.match(source, /data-action="cliente-360-condicao-pagamento"/);
+  assert.match(source, /data-action="cliente-360-tabela-preco"/);
+  assert.match(source, /data-action="cliente-360-forma-pagamento"/);
+  assert.match(source, /data-action="cliente-360-situacao-credito"/);
+  assert.match(source, /condicao_comercial/);
+  assert.match(source, /Não informada/);
+  // Sem segundo store/API de mestres neste detalhe
+  assert.doesNotMatch(source, /entities\.TabelaPreco|entities\.FormaPagamento|filterInContext\(\s*["']TabelaPreco/);
+  const contatosIdx = source.indexOf('data-action="cliente-360-contatos"');
+  const condicaoIdx = source.indexOf('data-action="cliente-360-condicao-comercial"');
+  const kpiIdx = source.indexOf('data-action="cliente-360-kpis"');
+  assert.ok(contatosIdx >= 0 && condicaoIdx > contatosIdx && kpiIdx > condicaoIdx);
+});

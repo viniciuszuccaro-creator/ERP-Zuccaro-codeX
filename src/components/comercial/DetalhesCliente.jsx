@@ -52,6 +52,27 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
 
   const ticketMedio = pedidos.length > 0 ? totalCompras / pedidos.length : 0;
 
+  // Condição comercial do registro já carregado — sem fetch paralelo nem inventar mestres.
+  const condicaoComercial = (cliente && typeof cliente.condicao_comercial === "object" && cliente.condicao_comercial)
+    ? cliente.condicao_comercial
+    : {};
+  const labelOrDash = (value) => {
+    const text = value == null ? "" : String(value).trim();
+    return text || "Não informada";
+  };
+  const condicaoPagamentoLabel = labelOrDash(
+    condicaoComercial.condicao_pagamento || cliente.condicao_pagamento,
+  );
+  const tabelaPrecoLabel = labelOrDash(
+    condicaoComercial.tabela_preco_nome || condicaoComercial.tabela_preco_id || cliente.tabela_preco_nome,
+  );
+  const formaPagamentoLabel = labelOrDash(
+    condicaoComercial.forma_pagamento_padrao_nome
+      || condicaoComercial.forma_pagamento_padrao_id
+      || cliente.forma_pagamento_padrao_nome,
+  );
+  const situacaoCreditoLabel = labelOrDash(condicaoComercial.situacao_credito || cliente.situacao_credito);
+
   const statusColors = {
     Ativo: "bg-green-100 text-green-700",
     Inativo: "bg-red-100 text-red-700",
@@ -97,6 +118,24 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
                 {(cliente.telefone || cliente.celular || cliente.whatsapp) && (
                   <span data-action="cliente-360-telefone">{cliente.telefone || cliente.celular || cliente.whatsapp}</span>
                 )}
+              </div>
+              <div
+                className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-slate-700"
+                data-action="cliente-360-condicao-comercial"
+                title="Condição, tabela, forma e crédito do cadastro (somente leitura neste detalhe)"
+              >
+                <span data-action="cliente-360-condicao-pagamento">
+                  Cond.: <span className="font-medium">{condicaoPagamentoLabel}</span>
+                </span>
+                <span data-action="cliente-360-tabela-preco">
+                  Tabela: <span className="font-medium">{tabelaPrecoLabel}</span>
+                </span>
+                <span data-action="cliente-360-forma-pagamento">
+                  Forma: <span className="font-medium">{formaPagamentoLabel}</span>
+                </span>
+                <span data-action="cliente-360-situacao-credito">
+                  Crédito: <span className="font-medium">{situacaoCreditoLabel}</span>
+                </span>
               </div>
             </div>
             {!windowMode && (
