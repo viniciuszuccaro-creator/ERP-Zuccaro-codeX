@@ -2,14 +2,17 @@
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **Branch** | `cursor/cadastros-overlaps-cliente-form-392b` (indep. ← #401 `b888b2c0`) |
+| **Branch / PR** | `cursor/cadastros-overlaps-cliente-form-392b` = **#469** |
+| **HEAD tip** | `37ffef9a` |
+| **CI SUCCESS tip** | `37ffef9a` 3/3 — [41472888080](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41472888080) / [41472877499](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41472877499) |
+| **Parecer Codex** | tip `37ffef9a` limpo |
 | **Canônico** | `cadastros/CadastroClienteCompleto` — ClientesTab · V24 · AcoesRapidas · Painel · Bloco1 |
 | **Preservado (não apagar)** | `comercial/ClienteFormCompleto` + `ClienteForm` marcados NÃO-CANÔNICO |
-| **#465–#468** | CI SUCCESS + Codex limpo (sky/flex/densidade) |
-| **#401 tip** | `b888b2c0` CI SUCCESS — `@codex review` pedido |
+| **#465–#468** | CI SUCCESS + Codex limpo |
+| **#401 tip** | `b888b2c0` CI SUCCESS — `@codex review` ainda pendente |
 | Fora | merge main · deploy · VPS · delete de form legado · dados legado/seed |
 
-**Próximo:** CI própria · `@codex review` · demais overlaps (só com prova de consumidores).
+**Próximo:** demais overlaps com prova de consumidores · fold seletivo sky.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
