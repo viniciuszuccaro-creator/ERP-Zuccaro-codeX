@@ -1,3 +1,8 @@
+## CURSOR — Empresa Completo pin #471 (2026-11-02 America/Sao_Paulo)
+- CI tip `9f78938f`/`7327098d` falhou no pin AST `cursor-callback-record-state` (Completo ≠ e36231b3).
+- Fix: Completo sai do deepEqual compartilhado; teste dedicado afirma Organizacional + certificado + RecordState/initializer/handlers golden.
+- #401 `b888b2c0` CI SUCCESS reconfirmado. Sem merge/deploy/VPS.
+
 ## CURSOR — Empresa Completo P1 gates (2026-11-02 America/Sao_Paulo)
 - #471 tip `9f78938f`: Completo com Organizacional data-permission + certificado granular.
 - Código canônico `d4c6a618`. CI tip `8cf53528` SUCCESS; Codex P1 tratados.

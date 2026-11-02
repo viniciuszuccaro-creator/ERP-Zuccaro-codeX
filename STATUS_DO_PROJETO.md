@@ -3,15 +3,17 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-empresa-completo-canonico-392b` = **#471** |
-| **HEAD tip** | `9f78938f` — P1 Organizacional + certificado granular |
+| **HEAD tip** | pin RecordState — Completo #471 fora do deepEqual e36231b3; contrato dedicado Organizacional+certificado |
+| **Código P1** | `9f78938f` Organizacional + certificado granular |
 | **Código canônico** | `d4c6a618` Bloco5→Completo+windowMode/sky |
-| **CI tip anterior** | `8cf53528` SUCCESS 3/3 — Codex P1 (gates) |
+| **CI tip anterior** | `9f78938f`/`7327098d` frontend FAIL (pin AST) · `8cf53528` SUCCESS pré-P1 |
 | **Base** | #469 tip `058650a1` |
 | **Canônico** | Empresa → `EmpresaFormCompleto` |
-| **Preservado** | Form NÃO-CANÔNICO · #463 sky Form residual |
-| Fora | merge main · deploy · VPS · tocar #463 |
+| **Preservado** | Form NÃO-CANÔNICO · #463 sky Form residual · handlers/escopo golden |
+| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 (reconfirmado) |
+| Fora | merge main · deploy · VPS · tocar #463 · seed/legado |
 
-**Próximo:** CI+Codex tip `9f78938f`.
+**Próximo:** CI+Codex deste tip pin · indep. enquanto aguarda (ex. #452 backend FAIL).
 
 
 ## CURSOR — VIGENTE (unificação overlaps Form/Completo) (2026-11-02 America/Sao_Paulo)
