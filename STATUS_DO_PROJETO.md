@@ -3,7 +3,7 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Branch / PR** | `cursor/cadastros-empresa-completo-canonico-392b` |
-| **HEAD tip** | (pendente) EmpresaFormCompleto + windowMode/sky; Form NÃO-CANÔNICO |
+| **HEAD tip** | `d4c6a618` EmpresaFormCompleto + windowMode/sky; Form NÃO-CANÔNICO |
 | **Base** | #469 tip `058650a1` |
 | **Canônico** | Empresa → `EmpresaFormCompleto` (Bloco5) |
 | **Preservado** | Form simples NÃO-CANÔNICO · sky Form residual #463 · sem delete |
