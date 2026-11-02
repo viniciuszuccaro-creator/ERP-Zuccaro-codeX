@@ -12,7 +12,7 @@ import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemai
 const entries = {
   cut: ['comercial/CorteDobraIATab', '9fdbbbc78b46ad2a3ce3b311ad63c1b25671546ac631ddc7a9b649efbf975f25', 'handleUploadIA'],
   quote: ['site/OrcamentoAutomaticoIA', 'bb5a5b347a1e9e0f1c621d187837daad06b2b3d1339641c9e282d4879e5f3c23', 'processarComIA'],
-  price: ['cadastros/TabelaPrecoFormCompleto', 'c14257497523df4afd8d1450b3597fa0aeb31455435eca35b3c9c8b124b3a7c4', 'handleSugerirPrecosIA'],
+  price: ['cadastros/TabelaPrecoFormCompleto', '2013dee7103ca4768e0e965fb9770ccb9751adfa27a73c52882ed5fc6bbc8ca3', 'handleSugerirPrecosIA'], // sky+ID windowMode
   production: ['cadastros/ConversaoProducaoMassa', 'c9fd2adcd6ee64ad24bd200782e183db672ccb919f753f3823ff1bb6a016259f', 'analisarComIA'],
   support: ['chatbot/SugestoesIA', '43dfba1d6549778d6fb465d47972ad0a32fb9f1f11f08ffc886dd10dea05c675', null],
 };
