@@ -1,3 +1,9 @@
+/**
+ * NÃO-CANÔNICO (sobreposição preservada — Regra-Mãe: não apagar).
+ * Runtime de Cliente → `cadastros/CadastroClienteCompleto`
+ * (ClientesTab, VisualizadorV24, AcoesRapidas, PainelDinamicoCliente, Bloco1Pessoas).
+ * Este arquivo permanece para histórico/schemas/tabs auxiliares; não montar como tela paralela.
+ */
 import React, { useState, useEffect, Suspense, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMemo } from 'react';

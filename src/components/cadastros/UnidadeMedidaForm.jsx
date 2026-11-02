@@ -67,6 +67,11 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
         value={formData.codigo}
         action="codigo-registro-unidade-medida"
       />
+      {unidadeBoundId ? (
+        <p className="text-xs text-slate-500" data-action="id-tecnico-unidade-medida">
+          ID técnico: <span className="font-mono">{String(unidadeBoundId)}</span>
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Sigla *</Label>

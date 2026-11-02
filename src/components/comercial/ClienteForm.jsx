@@ -1,3 +1,8 @@
+/**
+ * NÃO-CANÔNICO (sobreposição preservada — Regra-Mãe: não apagar).
+ * Runtime de Cliente → `cadastros/CadastroClienteCompleto`.
+ * Form RHF/Zod legado; não montar como cadastro paralelo.
+ */
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef } from 'react';
