@@ -1,3 +1,29 @@
+## CURSOR — #469 CI SUCCESS + Contatos limpo (2026-11-02 America/Sao_Paulo)
+- #469 tip `b47bfcdf` CI SUCCESS 3/3 (código `8f50540f` BOM+pin; overlaps Forma/Pedido NÃO-CANÔNICO `f14cde57`). Codex limpo `8f50540f`.
+- #401 tip `b888b2c0`: Codex limpo Contatos assertScope. C360 proposta densificação publicada (canvas + evidence).
+- Canônicos Completos + PedidoFormCompleto. Funil/Separação keep-both. Prévia Codespace BLOCKED. Dados pré-perda BLOCKED.
+- Próximo: densificar condição/tabela/forma no DetalhesCliente (#468 base) sem ComercialV2. Sem merge/deploy/VPS.
+
+## CURSOR — Contatos aceite + overlaps #469 (2026-11-02 America/Sao_Paulo)
+- #401 tip `b888b2c0`: Codex limpo Contatos assertScope (`has_any_findings: false`, 13:07 BRT). P2 generation/contexto confirmados tratados.
+- #469 HEAD `f14cde57`: FormaPagamento+PedidoForm NÃO-CANÔNICO; C360 proposta densificação (canvas + evidence). CI+`@codex review` em curso.
+- Canônicos: Cliente/Representante/TabelaPreco/FormaPagamento Completo · PedidoFormCompleto. Forms simples preservados.
+- Prévia Codespace BLOCKED (403). Dados pré-perda BLOCKED. Sem merge/deploy/VPS. Empresa Completo+windowMode = #463 (não editar aqui).
+
+## CURSOR — overlaps Form/Completo + C360 proposta (2026-11-02 America/Sao_Paulo)
+- Canônicos: Cliente Completo · Representante Completo · TabelaPreco Completo · FormaPagamento Completo · PedidoFormCompleto (Comercial).
+- Forms simples NÃO-CANÔNICO preservados (Regra-Mãe: não apagar). Testes consumidores 6 PASS.
+- C360 densificação: proposta navegável (canvas) + `docs/evidence/c360-proposta-densificacao-20261102.txt` — sem ComercialV2; consolidação visual só após aceite.
+- #401 tip `b888b2c0` CI SUCCESS; Contatos assertScope Codex limpo. Prévia Codespace BLOCKED (403). Dados pré-perda BLOCKED.
+- Branch #469 `cursor/cadastros-overlaps-cliente-form-392b` ← #401 `b888b2c0`. Sem merge/deploy/VPS.
+
+## CURSOR — unificação Cliente canônico (2026-11-02 America/Sao_Paulo)
+- Runtime canônico: `CadastroClienteCompleto` (ClientesTab/V24/AcoesRapidas/Painel/Bloco1).
+- `comercial/ClienteFormCompleto` e `ClienteForm` preservados, marcados NÃO-CANÔNICO (sem delete).
+- Branch `cursor/cadastros-overlaps-cliente-form-392b` ← #401 `b888b2c0`.
+- Sky/flex #465–#468 CI SUCCESS + Codex limpo. Dados desaparecidos BLOCKED (fonte pré-perda).
+- Sem merge main / deploy / VPS.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
