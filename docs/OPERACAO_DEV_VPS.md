@@ -1,5 +1,36 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Prévia privada da mesma401 disponível (2026-11-02)
+
+SHA servido b888b2c00eaf571820e0594b96afd45837dc689a; snapshot imutável git archive,
+sem trocar branch ou tocar .vscode do checkout b5cb34e1. Porta5173 Private e
+listener/HTTP/Chrome comprovados. URL privada autenticada pelo GitHub:
+https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial
+Login somente da fixture: entry.synthetic@example.test / synthetic-entry-only.
+Banner identifica dados sintéticos; API da fixture canônica e PG17 tmpfs/network
+none. NÃO é Supabase operacional nem importação de clientes reais. Configuração
+Vite do projeto e test-server canônico via harness privado, não npm dev alegado.
+
+Staging de execução existente: /home/codespace/erp-legado-privado-20261023/
+preview401-20261102-ofyvmdh6; checkpoint/recibos privados, original intacto. Dono
+do runtime é este executor, foreground Terminal1, TTL6h. Não encerrar processos
+alheios. Checkout remoto não sincronizado. Manter durante validação; ao ficar
+ocioso encerrar somente runtime/container próprios e parar o Codespace existente.
+Não criar outro recurso nem habilitar billing; budget0/Usage blocked preservado.
+
+Ciclo orçamento→Pedido persistiu no PG isolado e reabriu campos em nova sessão;
+401/403/teto200 e contagens sem mudança nas leituras. Matriz completa pendente
+está no HANDOFF. Contagens Cadastros limitadas por SELECT setores_atividade na
+fixture; não fazer grants nem interpretar desconhecido como registro ausente.
+
+WebConsole Hostinger atual: centralização e recovered/receipts/objects disponíveis,
+root0700/nosymlink; continuidade histórica2836arquivos/48359509373bytes lida sem
+inventário/transferência. Não confundir recibo antigo com rehash atual. Relatório
+privado resume-20261102/source-compatibility-b888.private.json comprova100fontes
+compatíveis e0duplicidades internas; nenhuma consulta/carga operacional. Próximo
+gate: destino/principal/sessão/Grupo comprovados para consulta fixa READONLY/ROLLBACK.
+Base44 exige reconexão do proprietário (avisará); não repetir login/listagem.
+
 ## Resultado da retomada dos dois originais (2026-11-02)
 
 Budget0/Usage blocked e período novembro conferidos antes de retomar SOMENTE o

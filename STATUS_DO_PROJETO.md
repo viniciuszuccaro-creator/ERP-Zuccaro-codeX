@@ -1,4 +1,33 @@
-## Continuidade vigente — revisão401 e recuperação privada (2026-11-02)
+## Continuidade vigente — prévia401 comprovada e fonte100 compatível (2026-11-02)
+
+401 b888b2c00eaf571820e0594b96afd45837dc689a servido por snapshot imutável no
+Codespace ÚNICO; checkout/WIP preservados. Porta5173 PRIVADA, HTTP/Chrome/login
+sintético/API/PG17 efêmero network none comprovados, nenhum banco operacional.
+Budget0/Usage blocked mantidos, novembro0.23h/$0 consultado. Harness original
+preservado; adaptação privada de identidade/recibos com contraprova SHA errado.
+
+Navegador→HTTP→PG: orçamento salvar/reabrir/editar→conversão única→Pedido editar/
+reabrir em nova sessão PASS.1orçamento/1Pedido vinculado/1item cada, totais iguais,
+histórico1/auditorias6.401sem sessão/403outro Grupo/teto200 e SQL READ ONLY/ROLLBACK
+sem alterar contagens. Contatos:5casos montados reais PASS e contraprova anterior,
+revisão401/6582082078; bordas sintéticas. Cadeia completa ainda NÃO declarada:
+Central360 navegador, conversões de unidade e matriz concorrente faltam.
+Erro SELECT setores_atividade limita contagens na fixture, não prova perda real.
+
+VPS centralização disponível agora via console existente;2836/48359509373 é
+valor do recibo histórico, não novo rehash. FINAL/pins preservados:100/100 válidos
+no schema b888,0duplicidades internas/0pendências de contrato. Destino não lido,
+reconciliação0/importação0. Fonte/principal/sessão/Grupo são gates distintos.
+Base44 exige reautenticação; proprietário avisará, sem repetir consultas até lá.
+Fonte inacessível não significa registros perdidos. Dados/recibos privados fora Git.
+
+Próximo concreto: Central360 no snapshot sintético existente; depois matriz
+pendente. Fila/responsáveis/gates no HANDOFF. Automação PAUSED; prévia durante
+validação do proprietário, parar quando ociosa; sem disponibilidade permanente.
+Base342 adeee097/CI5692+5693 SUCCESS; este lote só documenta provas executadas,
+diff-check aplicável, sem repetir suítes runtime ou editar branch Cursor.
+
+## Histórico — revisão401 e recuperação privada (2026-11-02)
 
 342 cccf3223ea33c4661fd7f8a6489ebbbb5865f358/CI5678 SUCCESS e401
 57479b67ddd97bf9432d963191e95f2a7120a1f2/CI5683 SUCCESS reconferidos. Revisão

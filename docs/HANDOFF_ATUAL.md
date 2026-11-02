@@ -1,4 +1,83 @@
-## Continuidade vigente — revisão401 e originais privados recuperados (2026-11-02)
+## Continuidade vigente — prévia401 e conferências privadas executadas (2026-11-02)
+
+Base342 adeee097f50353d678fef9c3c7adf54bc2ab3233, CI5692/5693 SUCCESS.
+MESMA401 b888b2c00eaf571820e0594b96afd45837dc689a reconferida; nenhum código
+Cursor alterado. Reserva documental342/6583059072; revisão401/6582082078.
+
+Prévia REAL no Codespace único: snapshot git archive imutável de b888, bytes e
+links confrontados ao archive; checkout b5cb34e1 e WIP .vscode preservados.
+Harness original intacto; executor privado adapta apenas controle de origem,
+identidade do snapshot e recibos exclusivos. SHA errado rejeitado antes de criar
+recursos. Pin histórico do harness continua não comprovado; hash atual/igualdade
+da cópia registrados. Dependências existentes reutilizadas, nenhuma instalação.
+Vite com configuração/plugins do projeto e backend da fixture canônica; NÃO
+alegar execução literal de npm run dev/server:dev. PostgreSQL17 efêmero tmpfs,
+network none, roles restritas da fixture; nenhum banco operacional conectado.
+Porta5173 Private, listener/HTTP/health e carregamento no Chrome comprovados.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial
+Banner sintético, login de fixture e API funcionais; não prova sessão Supabase
+operacional. Budget0/Usage blocked preservados; novembro0.23h consultado, $0.
+
+Prova navegador→HTTP→PG em b888: cliente PJ existente, produto/KG, quantidade2,
+preço canônico12.345678, condição/tabela; orçamento criado por duplo clique com
+1POST/1registro, reaberto/editado; conversão com1POST/1Pedido vinculado; Pedido
+editado e reaberto em NOVA sessão com observações preservadas no formulário.
+SQL READ ONLY/ROLLBACK no PG isolado:1orçamento,1Pedido da origem,1item em cada,
+totais24.691356 iguais,1histórico de status,6auditorias. Sem sessão401; outro
+Grupo403; listagem limit201 aplica teto canônico200 (não422). Contagens antes/
+depois iguais. Assertions do driver corrigidas: detalhe não exibe observações;
+edição de campos audita, mas não cria mudança de status. Timeouts do driver não
+foram classificados como defeito de produto. Recibos privados preservados.
+
+Montagem real de PainelDinamicoCliente+GerenciarContatosClienteForm e guard/UI:
+5casos PASS (positivo; retorno tardio Empresa/ator/token sem sucesso obsoleto,
+rascunho preservado; renovação antes do envio). Contraprova57479 positivo negado
+pelo key4vs6; b888 positivo permitido. Bordas de contexto/permissão/transporte
+sintéticas; não confundir com prova HTTP/PG de contatos. Não repetir casos estáveis.
+
+Legado: WebConsole Hostinger existente autenticada confirmou AGORA diretórios
+privados da centralização disponíveis, root0700, sem symlink. Recibo histórico
+continuity-final registra2836arquivos/48359509373bytes, hashes/recuperação completos
+na ocasião; NÃO rehash atual do backup inteiro. Nenhuma transferência/inventário.
+FINAL original348850bytes e pins contemporâneos reutilizados:100/100 payloads
+aceitos pelo clienteCreateSchema REAL de b888;100identidades nativas,0duplicidades
+internas por documento/identidade,0pendências de contrato. Hashes/rowHash/links
+conferidos, sem nova seleção. Relatório privado source-compatibility-b888.private.json
+em resume-20261102. Destino existente/divergente desconhecido, reconciliados0,
+leituras operacionais0/carga0; compatibilidade da fonte não libera destino.
+
+Fila finita por evidência:
+- A/Codex revisão dirigida b888 encerrada; Cursor proprietário da401. Sem port novo.
+- B/Codex: próximo independente é Central360/contatos/histórico via navegador no
+  MESMO snapshot sintético, depois negativos de concorrência/permissão ainda não
+  cobertos pelo ciclo. Não declarar cadeia completa: criação/edição de cliente,
+  conversão de unidade e toda matriz concorrente não exercitadas neste percurso.
+  Driver central360-readonly.mjs preparado/iniciado com timeout150s, sem criar
+  novos registros; resultado ainda NÃO conferido porque captura/input CDP do
+  Codespace expiraram. Ler central360-readonly.private.log e result antes de
+  qualquer nova execução; não contar tentativa como PASS. Runtime da prévia
+  permaneceu disponível na aba do proprietário; não encerrar durante seu uso.
+  Contagens de Cadastros mostram erro de SELECT setores_atividade na fixture;
+  desconhecido não é zero nem perda de dados. Não ampliar grants por conveniência.
+- C/Codex344:100fontes compatíveis; próxima consulta fixa exige destino/principal/
+  sessão/Grupo atuais comprovados, sem sugerirVinculo/auditoria de negócio. Root
+  da VPS e BYPASSRLS não autorizam leitura de clientes. Fornecedores/produtos usam
+  importadores/mapas existentes; não repetir pilotos revertidos nem inventar Empresa.
+- D/Cursor recuperação/Codex reconciliação: Base44 list_user_apps retornou exige
+  reautenticação e aba original indisponível. Proprietário avisará ao reconectar;
+  não repetir tentativa antes disso. Classificação: fonte inacessível, não ausente.
+- E: esquema/privilégios do DESTINO→backup/restauração/reversão executados sob
+  gate próprio→reconciliação→carga aprovada→deploy→aceite permanecem pendentes.
+  Preparação de comando não equivale à execução. Automação existente PAUSED;
+  nenhuma nova recorrência. Prévia mantida durante validação do proprietário,
+  executor com TTL6h; não prometer disponibilidade permanente. Parar quando ociosa.
+
+Provas privadas: base preview401-20261102-ofyvmdh6 sob staging privado existente,
+receipt/integrated-cycle.result.private.json, reopen-existing-order-fields.result.private.json
+e fixture-persistence-and-isolation.private.json. Fora Git/build, sem tokens reais.
+Lote no Git exclusivamente documental: diff-check; suítes runtime não repetidas.
+
+## Histórico — revisão401 e originais privados recuperados (2026-11-02)
 
 Base342 cccf3223ea33c4661fd7f8a6489ebbbb5865f358, CI5678 SUCCESS; candidata401
 57479b67ddd97bf9432d963191e95f2a7120a1f2, CI5683/run41235260756 SUCCESS, HEADs
