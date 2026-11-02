@@ -1,19 +1,32 @@
+## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **HEAD docs** | (este commit) — STATUS + P1 assertScopeCurrent |
+| **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 |
+| **CI SUCCESS tip** | `57479b67d` 3/3 (frontend+backend+compose) — própria do SHA; ≠ herdar ancestral |
+| **Parecer Codex P1+P2** | tip `70a333197` — “no major issues” /6548107136 (pré-stage54) |
+| **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail (`80d1393ee`) |
+| **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** (sem merge main / deploy / VPS) |
+| **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · persistência · aceites sessão/tabela/late/duplo-clique |
+
+**Delta em curso:** P1 #4425981924 — `assertScopeCurrent` alinhado a `buildPainelContatosScopeKey` (ator+sessão); seams Contatos **15 PASS**.
+**Não repetir:** port #453/#446; nova candidata paralela.
+**Próximo:** CI deste tip · `@codex review` deltas Contatos guard · indep. cadastros sky (#455–#463 CI SUCCESS) / C360 residual.
+
 ## CURSOR — VIGENTE (#401 P1+P2 modal janela + composto) (2026-10-31 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch** | `cursor/composicao-397-342-prep-392b` (= PR #401) |
-| **Tip** | `f01e69110` — CI **SUCCESS** 3/3 (stage54 + P1+P2) |
-| **P2** | `ae4fdc86f` — `hostWindowMode` eleva Dialog Adicionar acima WindowManager |
-| **P1** | `dbbee42ea` — `filterInContextRef` + bail-out Object.is |
-| **Composto base** | `075fc2260` (= docs tip sobre `80d1393ee` FF #446+#453+#454+pedido-detail) |
-| **Aceites Codex** | #446 `900a3fcc` /6545437006 · #453 `cda612` /6545449667 · #454 `b4d8` /6545487624 · ação #401 /6547965046 · P1 loop · P2 z-index modal |
-| **Preservado** | Contatos/contagens #401 · `src/api` · `server/src` produto · RBAC · persistência |
-| **CI tip** | `f01e69110` SUCCESS frontend+backend+expedicao-comercial-compose |
-| Fora | merge main · deploy · VPS · edição Codex em branches Cursor |
+| **HEAD docs** | `57479b67d` |
+| **CI tip** | `57479b67d` / `f01e69110` SUCCESS 3/3 |
+| **Código P2/P1** | `ae4fdc86f` / `dbbee42ea` |
+| **Parecer** | Codex `70a333197` limpo /6548107136 |
+| **Composto** | `075fc2260` |
+| Fora | merge main · deploy · VPS |
 
-**Testes locais:** historico-modal **15 PASS** + browser-runtime-contracts **12 PASS**
-**Próximo:** `@codex review` tip `f01e69110` (P1+P2 + deltas composto); sem merge/deploy.
+**Próximo:** supersedido pela fila canônica 2026-11-02 (assertScopeCurrent).
 
 ## CURSOR — VIGENTE (#401 composto #446+#453+#454+pedido-detail) (2026-10-31 America/Sao_Paulo)
 
