@@ -1,5 +1,9 @@
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 import {
+  CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  CALLBACK_AUTHORIZED_REFERENCES,
+  CALLBACK_HISTORICAL_BEFORE_SHA,
+  CALLBACK_RECORD_STATE_PATH,
   PUBLICATION_BASE,
   REOPEN_AUTHORIZED_CURRENT_SHA,
   REOPEN_AUTHORIZED_MANIFEST_ENTRY,
@@ -359,11 +363,18 @@ test('CANAL publication tip does not rewrite manifest; P1 reopen delta is the ex
       assert.notDeepEqual(now, entry);
       continue;
     }
+    if(entry.path===CALLBACK_RECORD_STATE_PATH){
+      // #471: beforeSha histórico + references=6 (contrato dedicado EmpresaFormCompleto).
+      assert.deepEqual(now, CALLBACK_AUTHORIZED_MANIFEST_ENTRY);
+      assert.notDeepEqual(now, entry);
+      continue;
+    }
     assert.deepEqual(now,entry);
   }
   // Contraprova: adulterar outro case deve divergir do histórico.
-  const forged={...current,cases:current.cases.map((c)=>c.path===REOPEN_CONSOLIDACAO_PATH?c:{...c,references:(c.references||0)+99})};
-  assert.notEqual(JSON.stringify(forged.cases.find((c)=>c.path!==REOPEN_CONSOLIDACAO_PATH)),JSON.stringify(historical.cases.find((c)=>c.path!==REOPEN_CONSOLIDACAO_PATH)));
+  const authorizedPaths=new Set([REOPEN_CONSOLIDACAO_PATH, CALLBACK_RECORD_STATE_PATH]);
+  const forged={...current,cases:current.cases.map((c)=>authorizedPaths.has(c.path)?c:{...c,references:(c.references||0)+99})};
+  assert.notEqual(JSON.stringify(forged.cases.find((c)=>!authorizedPaths.has(c.path))),JSON.stringify(historical.cases.find((c)=>!authorizedPaths.has(c.path))));
 });
 
 test('P1 reopen guards reject assertion removal after beforeSha recalculation (Codex contraprova)',()=>{
@@ -427,4 +438,18 @@ test('P1 reopen guards reject internal mutation, omission, repetition and baseli
     { path: REOPEN_CONSOLIDACAO_PATH, beforeSha256: REOPEN_AUTHORIZED_CURRENT_SHA, references: REOPEN_AUTHORIZED_REFERENCES },
     REOPEN_AUTHORIZED_MANIFEST_ENTRY,
   ));
+
+  // #471 callback: references histórica (5) ou beforeSha trocado rejeitados; só refs=6 + beforeSha histórico.
+  assert.throws(()=>assert.deepEqual(
+    { path: CALLBACK_RECORD_STATE_PATH, beforeSha256: CALLBACK_HISTORICAL_BEFORE_SHA, references: 5 },
+    CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  ));
+  assert.throws(()=>assert.deepEqual(
+    { path: CALLBACK_RECORD_STATE_PATH, beforeSha256: REOPEN_AUTHORIZED_CURRENT_SHA, references: CALLBACK_AUTHORIZED_REFERENCES },
+    CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  ));
+  assert.deepEqual(
+    { path: CALLBACK_RECORD_STATE_PATH, beforeSha256: CALLBACK_HISTORICAL_BEFORE_SHA, references: CALLBACK_AUTHORIZED_REFERENCES },
+    CALLBACK_AUTHORIZED_MANIFEST_ENTRY,
+  );
 });
