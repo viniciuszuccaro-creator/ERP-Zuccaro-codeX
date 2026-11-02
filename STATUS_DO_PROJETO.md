@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (Empresa Completo canônico) (2026-11-02 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Branch / PR** | `cursor/cadastros-empresa-completo-canonico-392b` |
+| **HEAD tip** | (pendente) EmpresaFormCompleto + windowMode/sky; Form NÃO-CANÔNICO |
+| **Base** | #469 tip `058650a1` |
+| **Canônico** | Empresa → `EmpresaFormCompleto` (Bloco5) |
+| **Preservado** | Form simples NÃO-CANÔNICO · sky Form residual #463 · sem delete |
+| Fora | merge main · deploy · VPS · tocar #463 |
+
+**Próximo:** CI+Codex deste tip.
+
 ## CURSOR — VIGENTE (unificação overlaps Form/Completo) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

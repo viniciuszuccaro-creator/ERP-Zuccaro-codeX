@@ -1,3 +1,8 @@
+## CURSOR — Empresa Completo canônico (2026-11-02 America/Sao_Paulo)
+- Bloco5 monta `EmpresaFormCompleto` com windowMode + sky + ID técnico.
+- `EmpresaForm` marcado NÃO-CANÔNICO (preservado). Base #469.
+- Sem merge/deploy/VPS. Sky do Form simples continua em #463.
+
 ## CURSOR — #469 CI SUCCESS + Contatos limpo (2026-11-02 America/Sao_Paulo)
 - #469 tip `b47bfcdf` CI SUCCESS 3/3 (código `8f50540f` BOM+pin; overlaps Forma/Pedido NÃO-CANÔNICO `f14cde57`). Codex limpo `8f50540f`.
 - #401 tip `b888b2c0`: Codex limpo Contatos assertScope. C360 proposta densificação publicada (canvas + evidence).

@@ -75,6 +75,7 @@ export default function EmpresaFormCompleto({
   defaultValues,
   onSubmit,
   isSubmitting,
+  windowMode = false,
   loadIncomplete = false,
   isLoadingRecord = false,
 }) {
@@ -206,7 +207,7 @@ export default function EmpresaFormCompleto({
     setFormData({ ...formData, status: formData.status === 'Ativa' ? 'Inativa' : 'Ativa' });
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-4 w-full">
@@ -396,4 +397,27 @@ export default function EmpresaFormCompleto({
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6" data-action="empresa-completo-window">
+        <div className="flex items-center gap-3 mb-4 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
+          <Building2 className="w-6 h-6 text-sky-700" />
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-slate-900">
+              {dadosIniciaisProps?.id ? "Editar Empresa" : "Nova Empresa"}
+            </h2>
+            {dadosIniciaisProps?.id ? (
+              <p className="text-xs text-slate-500 mt-0.5" data-action="id-tecnico-empresa">
+                ID técnico: <span className="font-mono">{String(dadosIniciaisProps.id)}</span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

@@ -104,3 +104,16 @@ test('Pedido: Comercial monta PedidoFormCompleto; Form simples NÃO-CANÔNICO', 
   assert.match(simples, /NÃO-CANÔNICO/);
   assert.match(simples, /PedidoFormCompleto/);
 });
+
+test('Empresa: Bloco5 monta Completo; Form simples NÃO-CANÔNICO', () => {
+  const bloco = read('src/components/cadastros/blocks/Bloco5Organizacional.jsx');
+  assert.match(bloco, /EmpresaFormCompleto/);
+  assert.doesNotMatch(bloco, /from ["']@\/components\/cadastros\/EmpresaForm["']/);
+  const simples = read('src/components/cadastros/EmpresaForm.jsx');
+  assert.match(simples, /NÃO-CANÔNICO/);
+  assert.match(simples, /EmpresaFormCompleto/);
+  const completo = read('src/components/cadastros/EmpresaFormCompleto.jsx');
+  assert.match(completo, /windowMode/);
+  assert.match(completo, /from-sky-50/);
+  assert.match(completo, /data-action="id-tecnico-empresa"/);
+});

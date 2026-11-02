@@ -12,7 +12,7 @@ import { Building2, Spline, Users, Briefcase, Clock, Shield } from "lucide-react
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import GrupoEmpresarialForm from "@/components/cadastros/GrupoEmpresarialForm";
-import EmpresaForm from "@/components/cadastros/EmpresaForm";
+import EmpresaFormCompleto from "@/components/cadastros/EmpresaFormCompleto";
 import DepartamentoForm from "@/components/cadastros/DepartamentoForm";
 import CargoForm from "@/components/cadastros/CargoForm";
 import TurnoForm from "@/components/cadastros/TurnoForm";
@@ -113,7 +113,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
   // Campos reais de cada entidade (sem alias — getDisplayValue faz fallback)
   const tiles = [
     { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['codigo','nome','nome_do_grupo','cnpj','descricao'],     f: GrupoEmpresarialForm },
-    { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['codigo','razao_social','nome_fantasia','cnpj','cidade'], f: EmpresaForm },
+    { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['codigo','razao_social','nome_fantasia','cnpj','cidade'], f: EmpresaFormCompleto },
     { k: 'Departamento',     t: 'Departamentos',        i: Users,     c: ['codigo','nome','descricao'],                                     f: DepartamentoForm },
     { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['codigo','nome','nome_cargo','descricao','nivel_hierarquico'],   f: CargoForm },
     { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['codigo','nome','nome_turno','horario_inicio','horario_fim'],     f: TurnoForm },
