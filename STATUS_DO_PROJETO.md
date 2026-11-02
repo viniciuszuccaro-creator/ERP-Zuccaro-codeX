@@ -2,13 +2,15 @@
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **Branch** | `cursor/comercial360-detalhes-densidade-392b` (indep. ← #401 `b888b2c0`) |
-| **Código** | `DetalhesCliente`: identificação+contatos+KPIs no header sky; Central/histórico/Top10 preservados |
-| **Sky Completo indep.** | #465 TabelaPreco · #466 Cliente · #467 Fornecedor |
-| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — `@codex review` pedido |
-| Fora | merge main · deploy · VPS · novo Comercial 360 · dados legado/seed como recuperação |
+| **Branch / PR** | `cursor/comercial360-detalhes-densidade-392b` = **#468** |
+| **Código tip** | `d710b434` — ID/contatos/KPIs no header sky |
+| **HEAD docs** | `8a263229` — HANDOFF checkpoint |
+| **CI SUCCESS tip** | `8a263229` 3/3 — [41469521553](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41469521553) |
+| **#465** | `3a93037b` CI SUCCESS + Codex limpo |
+| **#466 / #467** | P1/P2 flex tips em CI (`9a5ff8fa` / `cad8eb78`) |
+| Fora | merge main · deploy · VPS · novo Comercial 360 · dados legado/seed |
 
-**Próximo:** CI própria · `@codex review` · dados desaparecidos BLOCKED (fonte pré-perda ERP novo) · unificação overlaps.
+**Próximo:** `@codex review` #468 · CI flex #466/#467 · dados BLOCKED (fonte pré-perda).
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 

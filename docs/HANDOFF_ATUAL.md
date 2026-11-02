@@ -4,10 +4,10 @@
 |------|--------|
 | **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — P1 assertScope Contatos; `@codex review` pedido |
 | **#464 RepresentanteCompleto sky** | `96852279` CI SUCCESS — `@codex review` pedido |
-| **#465 TabelaPrecoCompleto sky** | `3a93037b` — CI |
-| **#466 ClienteCompleto sky** | `a4b9e915` — CI |
-| **#467 FornecedorCompleto sky** | `a2b1d0cd` — CI |
-| **C360 Detalhes densidade** | `d710b434` — ID/contatos/KPIs no header sky |
+| **#465 TabelaPrecoCompleto sky** | `3a93037b` CI SUCCESS + Codex limpo |
+| **#466 ClienteCompleto sky** | tip flex `9a5ff8fa` (P1) — CI; base `a4b9e915` SUCCESS |
+| **#467 FornecedorCompleto sky** | tip flex `cad8eb78` (P2) — CI; base `a2b1d0cd` SUCCESS |
+| **#468 C360 Detalhes densidade** | `8a263229` CI SUCCESS 3/3 — ID/contatos/KPIs header sky |
 | **Dados desaparecidos** | **BLOCKED** — fonte pré-perda ERP novo não comprovada; não usar legado/seed/exemplos |
 | Fora | merge main · deploy · VPS · re-port #446/#453 · edição Codex em branches Cursor |
 
