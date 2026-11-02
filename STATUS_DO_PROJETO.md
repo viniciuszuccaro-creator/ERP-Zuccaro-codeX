@@ -6,8 +6,8 @@
 | **HEAD tip** | `37ffef9a` |
 | **CI SUCCESS tip** | `37ffef9a` 3/3 — [41472888080](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41472888080) / [41472877499](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41472877499) |
 | **Parecer Codex** | tip `37ffef9a` limpo |
-| **Canônico** | `cadastros/CadastroClienteCompleto` — ClientesTab · V24 · AcoesRapidas · Painel · Bloco1 |
-| **Preservado (não apagar)** | `comercial/ClienteFormCompleto` + `ClienteForm` marcados NÃO-CANÔNICO |
+| **Canônico** | Cliente → `CadastroClienteCompleto` · Representante → `RepresentanteFormCompleto` · TabelaPreco → `TabelaPrecoFormCompleto` |
+| **Preservado (não apagar)** | `ClienteForm*` · `RepresentanteForm` · `TabelaPrecoForm` marcados NÃO-CANÔNICO |
 | **#465–#468** | CI SUCCESS + Codex limpo |
 | **#401 tip** | `b888b2c0` CI SUCCESS — `@codex review` ainda pendente |
 | Fora | merge main · deploy · VPS · delete de form legado · dados legado/seed |
