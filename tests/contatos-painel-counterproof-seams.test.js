@@ -498,6 +498,18 @@ test('P1 a9948387: painelScopeKey inclui ator+sessão (≠ só tenant/cliente)',
   assert.match(scopeFn, /clienteId/);
 });
 
+test('P1 #4425981924: assertScopeCurrent usa buildPainelContatosScopeKey (ator+sessão)', () => {
+  const painel = read(painelPath);
+  const guardStart = painel.indexOf('assertScopeCurrent={() => {');
+  assert.ok(guardStart >= 0, 'assertScopeCurrent presente no Painel');
+  const guardSrc = painel.slice(guardStart, guardStart + 700);
+  assert.match(guardSrc, /buildPainelContatosScopeKey\s*\(/);
+  assert.match(guardSrc, /actorId:\s*sessionActorId/);
+  assert.match(guardSrc, /sessionKey:\s*sessionCacheKey/);
+  // Guard antigo (4 campos) rejeitava sempre — não reintroduzir.
+  assert.doesNotMatch(guardSrc, /JSON\.stringify\(\[\s*grupoAtual/);
+});
+
 /**
  * Job async REAL passado a contatosPersistQueueRef.current — corpo do produto, não réplica.
  */

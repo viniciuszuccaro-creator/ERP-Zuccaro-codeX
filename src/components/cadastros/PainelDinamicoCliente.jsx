@@ -768,12 +768,15 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
                     onChange={persistContatosPainel}
                     persistBusy={contatosSaving || contatosHydrateStatus !== "ok"}
                     assertScopeCurrent={() => {
-                      const live = JSON.stringify([
-                        grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
-                        contexto === "empresa" ? empresaAtual?.id : null,
+                      // Codex P1 #4425981924: mesma chave 6-campos (ator+sessão) que painelScopeKey.
+                      const live = buildPainelContatosScopeKey({
+                        groupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+                        empresaId: contexto === "empresa" ? empresaAtual?.id : null,
                         contexto,
-                        cliente?.id ?? null,
-                      ]);
+                        clienteId: cliente?.id ?? null,
+                        actorId: sessionActorId,
+                        sessionKey: sessionCacheKey,
+                      });
                       if (live !== painelScopeKey) {
                         throw new Error("Contexto alterado. Reabra o painel do cliente.");
                       }
