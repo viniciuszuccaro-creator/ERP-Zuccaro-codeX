@@ -21,6 +21,7 @@ import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 
 const PontoTab = React.lazy(() => import("../components/rh/PontoTab"));
+const FeriasTab = React.lazy(() => import("../components/rh/FeriasTab"));
 const GameficacaoProducao = React.lazy(() => import("@/components/rh/GameficacaoProducao"));
 const MonitoramentoRHInteligente = React.lazy(() => import("@/components/rh/MonitoramentoRHInteligente"));
 const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/PontoEletronicoBiometrico"));
@@ -193,13 +194,15 @@ export default function RH() {
     },
     {
       title: 'Férias',
+      sectionKey: 'Férias',
       description: 'Solicitações e aprovações',
       icon: Calendar,
       color: 'blue',
-      component: () => <div className="p-4">Gestão de Férias (em desenvolvimento)</div>,
-      windowTitle: '🏖️ Férias',
+      component: FeriasTab,
+      windowTitle: 'Férias',
       width: 1200,
       height: 700,
+      props: { windowMode: true },
       badge: feriasPendentes > 0 ? `${feriasPendentes} pendentes` : null
     },
     {

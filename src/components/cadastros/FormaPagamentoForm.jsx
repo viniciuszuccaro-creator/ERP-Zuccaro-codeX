@@ -1,4 +1,9 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+/**
+ * NÃO-CANÔNICO (sobreposição preservada — Regra-Mãe: não apagar).
+ * Runtime de Forma de Pagamento → `FormaPagamentoFormCompleto`
+ * (Bloco3Financeiro, GestorFormasPagamento).
+ */
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";

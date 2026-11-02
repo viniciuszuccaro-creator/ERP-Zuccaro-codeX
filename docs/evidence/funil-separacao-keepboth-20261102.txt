@@ -1,0 +1,34 @@
+Funil ×3 / Separacao ×IA — keep both (2026-11-02 America/Sao_Paulo)
+====================================================================
+Reuso inventário recuperacao-erp-integra-capacidades-20261029.txt.
+Sem apagar · sem 3º módulo · HTTP schema Funil BLOCKED Codex.
+
+CRM — três Funis montados (keep both curto)
+------------------------------------------
+src/pages/CRM.jsx lazy-monta:
+  FunilVisual               — UI canônica visual / props oportunidades
+  FunilComercialInteligente — scoring/IA sobre mesma fonte Oportunidade
+  FunilVendasAvancado       — visão avançada (windowMode)
+
+Classificação: B (equivalentes sobrepostos) + keep both curto.
+Não consolidar destrutivamente sem inventário de campos/consumidores/
+permissões/histórico e aceite owner. C360 usa adaptador legado (opção B)
+já documentado — não reabrir.
+
+Expedição — Separacao × IA (keep both curto)
+--------------------------------------------
+SeparacaoConferencia      — montada em Expedicao.jsx + EntregasListagem
+SeparacaoConferenciaIA    — alvo com auditoria/RBAC; persistência
+                            SeparacaoConferencia via create/updateInContext
+
+Alvo de consolidação futura: SeparacaoConferenciaIA (capacidades + audit).
+Prazo curto: manter ambos; provar fluxos anteriores após qualquer fold.
+
+Cadastros Bloco*
+----------------
+Imports Form/Completo nos Bloco*.jsx: 0 missing (checagem 2026-11-02).
+
+Fora deste lote
+---------------
+merge · deploy · VPS · delete Funil* · seed dados
+Sky NFe/Gateway: já em #418 / gateway-tabelafiscal — não duplicar aqui.

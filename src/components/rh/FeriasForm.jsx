@@ -28,7 +28,7 @@ export default function FeriasForm({ ferias, colaboradores = [], onSubmit, windo
     if (formData.data_inicio && formData.data_fim) {
       const inicio = new Date(formData.data_inicio);
       const fim = new Date(formData.data_fim);
-      const diff = Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24)) + 1;
+      const diff = Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       setFormData({ ...formData, dias_solicitados: diff });
     }
   };
@@ -161,7 +161,15 @@ export default function FeriasForm({ ferias, colaboradores = [], onSubmit, windo
   );
 
   if (windowMode) {
-    return <div className="w-full h-full overflow-auto bg-white p-6">{content}</div>;
+    return (
+      <div className="w-full h-full overflow-auto bg-gradient-to-b from-sky-50 to-white">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Calendar className="w-5 h-5 text-sky-700" />
+          <p className="font-semibold text-slate-900">Solicitação de Férias</p>
+        </div>
+        <div className="p-6">{content}</div>
+      </div>
+    );
   }
 
   return content;

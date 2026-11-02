@@ -1,3 +1,8 @@
+/**
+ * NÃO-CANÔNICO (sobreposição preservada — Regra-Mãe: não apagar).
+ * Runtime de Representante → `RepresentanteFormCompleto`
+ * (RepresentantesTab, VisualizadorV24, Bloco1Pessoas).
+ */
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
