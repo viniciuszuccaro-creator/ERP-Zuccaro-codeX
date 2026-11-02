@@ -1,3 +1,9 @@
+## CURSOR — Empresa Completo publication #471 (2026-11-02 America/Sao_Paulo)
+- Tip `5c06aa53` pin AST ok; frontend FAIL publication refs 6≠5.
+- Fix: `restoreApprovedEmpresaCompletoCallbackDelta` + manifest references=6; beforeSha preservado.
+- #472 tip `59e4aa50` CI SUCCESS 3/3 (ID técnico logística+UnidadeMedida).
+- #401 `b888b2c0` CI SUCCESS. Sem merge/deploy/VPS.
+
 ## CURSOR — Empresa Completo pin #471 (2026-11-02 America/Sao_Paulo)
 - CI tip `9f78938f`/`7327098d` falhou no pin AST `cursor-callback-record-state` (Completo ≠ e36231b3).
 - Fix: Completo sai do deepEqual compartilhado; teste dedicado afirma Organizacional + certificado + RecordState/initializer/handlers golden.
