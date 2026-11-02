@@ -1,3 +1,8 @@
+## CURSOR — RH Férias typecheck #473 (2026-11-02 America/Sao_Paulo)
+- Tip `8a74fda2` frontend FAIL typecheck: Date arithmetic FeriasForm + useMutation vars void.
+- Fix: `getTime()` + JSDoc mutate (padrão Ponto/Notas). Pin MODULE intacto.
+- Sem merge/deploy/VPS.
+
 ## CURSOR — recuperação RH Férias pin #473 (2026-11-02 America/Sao_Paulo)
 - Tip `388ca88a`/`cb62dbc6` quebrava pin `useContextoVisual` (MODULE_BY_ENTITY +Colaborador/Ponto/Ferias).
 - Fix: reverte mapa; Ferias continua create/updateInContext com módulo auditoria fallback `Sistema`.

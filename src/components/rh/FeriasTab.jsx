@@ -68,6 +68,7 @@ export default function FeriasTab({ windowMode = false }) {
   });
 
   const createMutation = useMutation({
+    /** @param {Record<string, unknown>} data */
     mutationFn: async (data) => {
       if (!podeCriar) throw new Error("Sem permissão para solicitar férias.");
       if (!groupId) throw new Error("Sem contexto de grupo ativo — operação bloqueada.");
@@ -86,6 +87,7 @@ export default function FeriasTab({ windowMode = false }) {
   });
 
   const updateMutation = useMutation({
+    /** @param {{ id: string, data: Record<string, unknown>, antes?: Record<string, unknown>|null }} input */
     mutationFn: async ({ id, data, antes }) => {
       const mudancaStatus = data.status && antes?.status && data.status !== antes.status;
       if (mudancaStatus && !canAprovar) throw new Error("Sem permissão para aprovar/rejeitar férias.");

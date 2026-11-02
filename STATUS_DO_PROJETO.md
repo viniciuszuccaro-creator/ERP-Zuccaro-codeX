@@ -6,7 +6,7 @@
 | **Base** | #472 tip `59e4aa50` (CI SUCCESS) |
 | **Pacote** | RH Férias: stub → `FeriasTab` + Form + InContext |
 | **Classificação** | funcionalidade recuperada · apresentação sky · registros NÃO |
-| **Fix pin** | MODULE_BY_ENTITY revertido (hash `useContextoVisual`); Ferias audita fallback `Sistema` |
+| **Fix pin** | MODULE_BY_ENTITY revertido · typecheck FeriasForm/Tab (getTime + JSDoc mutate) |
 | **#401 tip** | `b888b2c0` CI SUCCESS |
 | **#471** | tip CANAL callback refs=6 em paralelo |
 | **integra-novo 02/11** | `3c5788e2` só packages base44 — inventário capacidades inalterado |

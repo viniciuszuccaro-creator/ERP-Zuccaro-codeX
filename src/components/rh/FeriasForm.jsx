@@ -28,7 +28,7 @@ export default function FeriasForm({ ferias, colaboradores = [], onSubmit, windo
     if (formData.data_inicio && formData.data_fim) {
       const inicio = new Date(formData.data_inicio);
       const fim = new Date(formData.data_fim);
-      const diff = Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24)) + 1;
+      const diff = Math.ceil((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       setFormData({ ...formData, dias_solicitados: diff });
     }
   };
