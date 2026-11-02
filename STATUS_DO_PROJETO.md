@@ -2,15 +2,17 @@
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **Branch / PR** | `cursor/cadastros-tabela-preco-completo-sky-392b` (indep. ← #401 `b888b2c0`) |
-| **Código** | `TabelaPrecoFormCompleto` windowMode sky (`from-sky-50`/`to-sky-100`) + ID técnico |
-| **Pin IA price** | remainder SHA256 `2013dee7103ca4768e0e965fb9770ccb9751adfa27a73c52882ed5fc6bbc8ca3` |
-| **Testes** | `cadastros-tabela-preco-completo-sky` + `ia-consumer-response-contracts` **27 PASS** |
-| **#401 tip estável** | `b888b2c0` CI SUCCESS 3/3 — assertScope Contatos; aguarda `@codex review` |
-| **#464 tip** | `96852279` CI SUCCESS — RepresentanteFormCompleto sky; aguarda `@codex review` |
+| **Branch / PR** | `cursor/cadastros-tabela-preco-completo-sky-392b` = **#465** (indep. ← #401 `b888b2c0`) |
+| **Código tip** | `3a93037b` — windowMode sky + ID técnico |
+| **CI SUCCESS tip** | `3a93037b` 3/3 — runs [41468639741](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41468639741) / [41468589596](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/41468589596) |
+| **Parecer Codex** | tip `3a93037b` — “no major issues” (limpo) |
+| **Pin IA price** | remainder `2013dee7103ca4768e0e965fb9770ccb9751adfa27a73c52882ed5fc6bbc8ca3` |
+| **Testes locais** | sky + ia-consumer **27 PASS** |
+| **#401 / #464** | `b888b2c0` / `96852279` CI SUCCESS — `@codex review` pedido |
+| **Irmãs** | #466 Cliente · #467 Fornecedor · #468 Detalhes densidade (CI) |
 | Fora | merge main · deploy · VPS · re-port #446/#453 · dados legado/seed |
 
-**Próximo:** CI própria deste tip · `@codex review` · indep. FormaPagamentoFormCompleto sky (se #460 não cobrir Completo) / C360 residual.
+**Próximo:** owner fold seletivo · indep. C360/#468 · dados BLOCKED (fonte pré-perda).
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
