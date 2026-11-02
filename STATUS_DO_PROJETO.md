@@ -1,18 +1,29 @@
+## CURSOR — VIGENTE (C360 DetalhesCliente densidade) (2026-11-02 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Branch** | `cursor/comercial360-detalhes-densidade-392b` (indep. ← #401 `b888b2c0`) |
+| **Código** | `DetalhesCliente`: identificação+contatos+KPIs no header sky; Central/histórico/Top10 preservados |
+| **Sky Completo indep.** | #465 TabelaPreco · #466 Cliente · #467 Fornecedor |
+| **#401 tip** | `b888b2c0` CI SUCCESS 3/3 — `@codex review` pedido |
+| Fora | merge main · deploy · VPS · novo Comercial 360 · dados legado/seed como recuperação |
+
+**Próximo:** CI própria · `@codex review` · dados desaparecidos BLOCKED (fonte pré-perda ERP novo) · unificação overlaps.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **HEAD docs** | (este commit) — STATUS + P1 assertScopeCurrent |
-| **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 |
-| **CI SUCCESS tip** | `57479b67d` 3/3 (frontend+backend+compose) — própria do SHA; ≠ herdar ancestral |
-| **Parecer Codex P1+P2** | tip `70a333197` — “no major issues” /6548107136 (pré-stage54) |
-| **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail (`80d1393ee`) |
-| **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** (sem merge main / deploy / VPS) |
-| **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · persistência · aceites sessão/tabela/late/duplo-clique |
+| **HEAD docs** | `b888b2c0` — STATUS + P1 assertScopeCurrent |
+| **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 · `e340e170` assertScope |
+| **CI SUCCESS tip** | `b888b2c0` 3/3 — própria do SHA |
+| **Parecer Codex P1+P2** | tip `70a333197` limpo /6548107136 (deltas Contatos pós-parecer) |
+| **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail |
+| **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** |
+| **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · aceites sessão/tabela/late/duplo-clique |
 
-**Delta em curso:** P1 #4425981924 — `assertScopeCurrent` alinhado a `buildPainelContatosScopeKey` (ator+sessão); seams Contatos **15 PASS**.
 **Não repetir:** port #453/#446; nova candidata paralela.
-**Próximo:** CI deste tip · `@codex review` deltas Contatos guard · indep. cadastros sky (#455–#463 CI SUCCESS) / C360 residual.
+**Próximo:** `@codex review` · indep. sky (#455–#467) / C360 densidade.
 
 ## CURSOR — VIGENTE (#401 P1+P2 modal janela + composto) (2026-10-31 America/Sao_Paulo)
 
