@@ -1,3 +1,8 @@
+## CURSOR — recuperação RH Férias pin #473 (2026-11-02 America/Sao_Paulo)
+- Tip `388ca88a`/`cb62dbc6` quebrava pin `useContextoVisual` (MODULE_BY_ENTITY +Colaborador/Ponto/Ferias).
+- Fix: reverte mapa; Ferias continua create/updateInContext com módulo auditoria fallback `Sistema`.
+- Funcionalidade/aba recuperadas; registros NÃO. Sem merge/deploy/VPS.
+
 ## CURSOR — recuperação RH Férias (2026-11-02 America/Sao_Paulo)
 - Stub RH Férias → `FeriasTab` (referência integra) + `FeriasForm` existente.
 - create/updateInContext + RBAC Férias + sky windowMode. Registros NÃO restaurados.

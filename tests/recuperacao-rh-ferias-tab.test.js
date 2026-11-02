@@ -36,7 +36,11 @@ test('FeriasForm: windowMode sky chrome preservado', () => {
   assert.match(form, /windowMode/);
 });
 
-test('Auditoria contextual mapeia Ferias → módulo RH', () => {
+test('Auditoria Ferias: MODULE_BY_ENTITY pinado — fallback Sistema (sem alterar hash useContextoVisual)', () => {
+  // Pin cadastro-context/context-filter/stage55: MODULE_BY_ENTITY byte-idêntico.
+  // create/updateInContext usa MODULE_BY_ENTITY[entity] || 'Sistema' — Ferias audita como Sistema
+  // até autorização separada de remainder no mapa (não nesta recuperação de aba).
   const ctx = read('src/components/lib/useContextoVisual.jsx');
-  assert.match(ctx, /Ferias:\s*['"]RH['"]/);
+  assert.doesNotMatch(ctx, /Ferias:\s*['"]RH['"]/);
+  assert.match(ctx, /MODULE_BY_ENTITY\[entityName\]\s*\|\|\s*['"]Sistema['"]/);
 });

@@ -2,15 +2,17 @@
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **Branch / PR** | `cursor/recuperacao-rh-ferias-tab-sky-392b` (nova) |
+| **Branch / PR** | `cursor/recuperacao-rh-ferias-tab-sky-392b` = **#473** |
 | **Base** | #472 tip `59e4aa50` (CI SUCCESS) |
 | **Pacote** | RH Férias: stub → `FeriasTab` + Form + InContext |
 | **Classificação** | funcionalidade recuperada · apresentação sky · registros NÃO |
+| **Fix pin** | MODULE_BY_ENTITY revertido (hash `useContextoVisual`); Ferias audita fallback `Sistema` |
 | **#401 tip** | `b888b2c0` CI SUCCESS |
+| **#471** | tip CANAL callback refs=6 em paralelo |
 | **integra-novo 02/11** | `3c5788e2` só packages base44 — inventário capacidades inalterado |
-| Fora | merge · deploy · VPS · seed/legado |
+| Fora | merge · deploy · VPS · seed/legado · alterar mapa MODULE pinado |
 
-**Próximo:** CI+Codex deste tip · #471 publication em paralelo.
+**Próximo:** CI+Codex deste tip · #471 CANAL · lacunas decorativas independentes.
 
 
 ## CURSOR — VIGENTE (logística ID técnico residual) (2026-11-02 America/Sao_Paulo)
