@@ -18,6 +18,7 @@ test('CadastroClienteCompleto: sky windowMode + ID técnico (sem count+1)', () =
   assert.match(wm, /to-sky-100/);
   assert.match(wm, /ID técnico/);
   assert.match(wm, /text-sky-600/);
+  assert.match(wm, /overflow-hidden flex flex-col/); // Tabs flex-1 precisa de coluna (P1 Codex)
   assert.doesNotMatch(wm, /from-purple-50/);
   assert.match(source, /useCadastroReopenOnIdentity/);
   assert.match(source, /CadastroCodigoRegistroField/);

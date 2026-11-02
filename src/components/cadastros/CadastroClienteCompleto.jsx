@@ -1637,7 +1637,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             ) : null}
           </div>
         </div>
-        <div className="flex-1 min-h-0 overflow-hidden">{content}</div>
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">{content}</div>
       </div>
     );
   }
