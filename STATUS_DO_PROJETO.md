@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (recuperação RH Férias) (2026-11-02 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Branch / PR** | `cursor/recuperacao-rh-ferias-tab-sky-392b` (nova) |
+| **Base** | #472 tip `59e4aa50` (CI SUCCESS) |
+| **Pacote** | RH Férias: stub → `FeriasTab` + Form + InContext |
+| **Classificação** | funcionalidade recuperada · apresentação sky · registros NÃO |
+| **#401 tip** | `b888b2c0` CI SUCCESS |
+| **integra-novo 02/11** | `3c5788e2` só packages base44 — inventário capacidades inalterado |
+| Fora | merge · deploy · VPS · seed/legado |
+
+**Próximo:** CI+Codex deste tip · #471 publication em paralelo.
+
+
 ## CURSOR — VIGENTE (logística ID técnico residual) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

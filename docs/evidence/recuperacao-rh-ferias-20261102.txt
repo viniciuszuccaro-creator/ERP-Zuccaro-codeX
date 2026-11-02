@@ -1,0 +1,17 @@
+Recuperação RH Férias (2026-11-02 America/Sao_Paulo)
+=====================================================
+Referência: erp-integra-novo FeriasTab @ 3c5788e2 (packages tip; capacidade já em main).
+Candidata: tip #472 `59e4aa50` + este pacote.
+
+Classificação
+- Apresentação: sky chrome windowMode no card Férias + Form.
+- Funcionalidade recuperada: stub "em desenvolvimento" → FeriasTab (listar/buscar/
+  solicitar/editar/aprovar/rejeitar) reutilizando FeriasForm + create/updateInContext.
+- Registros: NÃO recuperados neste lote (sem seed/legado). Contagens históricas das
+  imagens ≠ dados restaurados.
+
+Diferença vs referência
+- queryKey com scope grupo/empresa; RBAC section Férias; audit via InContext;
+  modal z-index windowMode; botão sky (não laranja).
+
+Fora: merge/deploy/VPS · dados privados · cobrança.

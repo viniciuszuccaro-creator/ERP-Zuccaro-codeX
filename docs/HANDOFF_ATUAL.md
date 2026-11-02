@@ -1,3 +1,8 @@
+## CURSOR — recuperação RH Férias (2026-11-02 America/Sao_Paulo)
+- Stub RH Férias → `FeriasTab` (referência integra) + `FeriasForm` existente.
+- create/updateInContext + RBAC Férias + sky windowMode. Registros NÃO restaurados.
+- Base #472 `59e4aa50`. Sem merge/deploy/VPS.
+
 ## CURSOR — logística ID técnico residual (2026-11-02 America/Sao_Paulo)
 - Branch `cursor/cadastros-logistica-id-tecnico-sky-392b` ← #469 `058650a1`.
 - ID técnico (≠ código) em Banco/Transportadora/Motorista/Veiculo/UnidadeMedida; sky já existia.

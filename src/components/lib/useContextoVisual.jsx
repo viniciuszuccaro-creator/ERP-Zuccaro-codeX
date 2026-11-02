@@ -293,7 +293,8 @@ export function useContextoVisual() {
     Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM', Pedido: 'Comercial', NotaFiscal: 'Fiscal', Entrega: 'Expedição',
     Fornecedor: 'Compras', SolicitacaoCompra: 'Compras', OrdemCompra: 'Compras', Produto: 'Estoque', MovimentacaoEstoque: 'Estoque',
     ContaPagar: 'Financeiro', ContaReceber: 'Financeiro', CaixaMovimento: 'Financeiro', ConciliacaoBancaria: 'Financeiro',
-    CentroCusto: 'Financeiro', PlanoDeContas: 'Financeiro', PlanoContas: 'Financeiro', User: 'Sistema'
+    CentroCusto: 'Financeiro', PlanoDeContas: 'Financeiro', PlanoContas: 'Financeiro', User: 'Sistema',
+    Colaborador: 'RH', Ponto: 'RH', Ferias: 'RH',
   };
   const sanitizeOnWrite = (obj) => {
     if (!obj || typeof obj !== 'object') return obj;

@@ -161,7 +161,15 @@ export default function FeriasForm({ ferias, colaboradores = [], onSubmit, windo
   );
 
   if (windowMode) {
-    return <div className="w-full h-full overflow-auto bg-white p-6">{content}</div>;
+    return (
+      <div className="w-full h-full overflow-auto bg-gradient-to-b from-sky-50 to-white">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <Calendar className="w-5 h-5 text-sky-700" />
+          <p className="font-semibold text-slate-900">Solicitação de Férias</p>
+        </div>
+        <div className="p-6">{content}</div>
+      </div>
+    );
   }
 
   return content;
