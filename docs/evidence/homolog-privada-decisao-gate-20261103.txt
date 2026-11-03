@@ -25,7 +25,8 @@ Candidata código publicada (#401 tip docs)
 - Destino histórico: /root/erp-private/centralizacao-legado-20261023
 - Recibo histórico: 2.836 arquivos / 48.359.509.373 bytes (HANDOFF).
 - Neste executor: ERP_DEV_VPS_SSH_* UNSET; path /root/erp-private ausente.
-- Hostinger VPS list (somente leitura, sem IP/senha): ver STATUS do lote.
+- Hostinger VPS list (MCP somente leitura): timeout nesta sessão — sem
+  identidade/VM confirmada por esse canal; não inventar hostname/IP.
 - Retomada: secrets Cursor ERP_DEV_VPS_SSH_* + hostkey verified (procedimento
   access-codex-readonly-20261028) OU console Codespace do proprietário com
   canal já autenticado. Não repetir inventário/HD.
