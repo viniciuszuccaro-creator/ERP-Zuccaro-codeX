@@ -108,8 +108,10 @@ export default function OrcamentoProposalAside({
               <p className="text-sm">
                 Preço ilustrativo: {money(item.preco_unitario)} / {item.unidade_sigla || '—'}
               </p>
-              <p className="text-sm text-sky-800">Disponibilidade ilustrativa: 30 {item.unidade_sigla || 'UN'}</p>
-              <p className="text-xs text-slate-500">Sem consulta ou reserva de estoque real.</p>
+              <p className="text-sm text-amber-800" data-action="proposta-saldo-desconhecido">
+                Disponibilidade: saldo não consultado (DESCONHECIDO)
+              </p>
+              <p className="text-xs text-slate-500">Sem consulta ou reserva de estoque real — rascunho ≠ persistência.</p>
             </div>
           ))}
           {itensComProduto.length === 0 && <p className="text-sm text-slate-600">Selecione um produto no editor.</p>}

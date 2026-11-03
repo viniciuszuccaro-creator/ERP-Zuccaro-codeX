@@ -1,0 +1,42 @@
+C360 densificação — proposta navegável (atualizado 2026-11-03)
+===============================================================
+Canvas privado: https://cursor.com/canvas/store-521c4ad9-9a95-43a2-8770-3ba5845cab88/15861e6d-0bcf-470a-862b-ae600c95f989
+Base #401 tip b888b2c00 · CI5684 SUCCESS.
+
+Princípio
+---------
+Evoluir DetalhesCliente + CentralCliente360Panel + OrcamentosTab /
+PedidoCanonicoPanel / PedidoFormCompleto. Sem ComercialV2. Draft ≠ persist.
+
+Já entregue / aceites encerrados (não reabrir)
+---------------------------------------------
+- Contatos Painel + assertScope — Codex limpo tip b888b2c00 / CI5684
+- Prévia Codex Orc→Pedido (browser/API/PG sintético) — encerrada
+- Create path Central → abas canônicas
+- hostWindowMode modal itens
+- DetalhesCliente densificado (#468) · condição (#470) — PRs limpos
+- Canônicos Completo: Cliente / Representante / TabelaPreco / FormaPagamento
+- PedidoForm simples NÃO-CANÔNICO (#469)
+- Aside proposta: saldo DESCONHECIDO (sem inventar "30")
+
+Residual (coordenação Codex — pacotes independentes)
+----------------------------------------------------
+1. Unidade alternativa canônica (gap persistência + Seletor montado)
+2. Concorrência submit Pedido (mestres já HTTP; prop filterInContext órfã)
+3. Completar surface totais+situação no viewport Central360
+4. Inventário GerenciarContatosCliente vs Form antes unificar
+5. Demo Private dados reais: BLOCKED (#475) neste agente
+
+Roteiro Private (quando franquia / homolog Codex)
+-------------------------------------------------
+1 Abrir cliente → Detalhes + Central
+2 Contatos no Painel
+3 Novo orçamento/pedido
+4 Modal itens acima da janela
+5 Salvar → reabrir mesmo ticket
+6 Converter com estoque líquido (sem saldo fabricado)
+7 Troca Grupo/Empresa sem loop
+
+Fora
+----
+merge main · deploy · VPS · seed/legado · apagar Forms · nova candidata

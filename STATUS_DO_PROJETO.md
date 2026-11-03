@@ -1,18 +1,35 @@
+## CURSOR — VIGENTE (C360 lacunas + continuidade #401) (2026-11-03 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS 3/3 (`41465152391`) |
+| **Branch pacote** | `cursor/comercial360-central-lacunas-392b` ← `b888b2c00` (independente; sem nova candidata) |
+| **Aceites ENCERRADOS** | Contatos assertScope/Painel · prévia Codex Orc→Pedido (browser/API/PG sintético) · densificação Detalhes #468/#470 |
+| **Código deste tip** | `OrcamentoProposalAside`: saldo **DESCONHECIDO** (remove inventário “30”) |
+| **Evidência** | `docs/evidence/c360-continuidade-aceites-20261103.txt` · densificação atualizada |
+| **Classificação** | apresentação recuperada (aside) · capacidade: sem alegar estoque · registros: NÃO tocados |
+| **Pedido masters** | já HTTP (`comercialMasters`); remainder “filterInContext mestres” SUPERSEDIDO |
+| Fora | merge main · deploy · VPS · port #453/#446 · seed/legado · Base44 reauth |
+
+**Testes locais:** `comercial-proposal-aside` **3 PASS**.
+**Residual C360:** unidade_alternativa (contrato) · concorrência submit Codex · surface Central360 · inventário Contatos comercial×Form · homolog #475 BLOCKED.
+**Próximo indep.:** inventário Contatos overlap / cadastros sky residual / matriz apresentação×funcional×registros — sem esperar merge deste PR.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **HEAD docs** | (este commit) — STATUS + P1 assertScopeCurrent |
+| **HEAD docs** | tip `b888b2c00` — fila canônica HEAD vs código vs CI vs parecer |
 | **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 |
-| **CI SUCCESS tip** | `57479b67d` 3/3 (frontend+backend+compose) — própria do SHA; ≠ herdar ancestral |
+| **CI SUCCESS tip** | **`b888b2c00`** run **5684** SUCCESS 3/3 — própria do SHA; ≠ herdar ancestral |
 | **Parecer Codex P1+P2** | tip `70a333197` — “no major issues” /6548107136 (pré-stage54) |
 | **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail (`80d1393ee`) |
 | **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** (sem merge main / deploy / VPS) |
 | **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · persistência · aceites sessão/tabela/late/duplo-clique |
 
-**Delta em curso:** P1 #4425981924 — `assertScopeCurrent` alinhado a `buildPainelContatosScopeKey` (ator+sessão); seams Contatos **15 PASS**.
+**Delta encerrado no tip:** P1 assertScopeCurrent (ator+sessão) + docs fila; aceites Contatos/prévia Orc→Pedido **não reabrir**.
 **Não repetir:** port #453/#446; nova candidata paralela.
-**Próximo:** CI deste tip · `@codex review` deltas Contatos guard · indep. cadastros sky (#455–#463 CI SUCCESS) / C360 residual.
+**Próximo:** supersedido pelo pacote C360 lacunas 2026-11-03 (aside DESCONHECIDO + continuidade).
 
 ## CURSOR — VIGENTE (#401 P1+P2 modal janela + composto) (2026-10-31 America/Sao_Paulo)
 
