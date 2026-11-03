@@ -1,4 +1,22 @@
-## Continuidade vigente — prévia401 comprovada e fonte100 compatível (2026-11-02)
+## Continuidade vigente - Central360 conferida; previa externa pendente (2026-11-03)
+
+342ef4ddf47 CI5757/5758 SUCCESS e401b888b2c0 CI5684 SUCCESS reconferidos.
+Resultado privado Central360 antes pendente:4 checks/errors0/quotePost0/
+conversionPost0 no snapshot b888, leitura sintetica HTTP/PG; nao e prova nova
+de conversao de unidade ou concorrencia completa. Recibos antigos preservados.
+Checkout Codespace b5cb/??.vscode intacto; desktop limpo atualizado por FF.
+Mesmo runner retomado com guardas/SHA/TTL, HTTP local200; URL externa404 e porta
+ausente no tunel, inclusive CLI visibility404. Nao anunciar previa utilizavel.
+Fixture propria encerrada; residual removido apos verificar label/nome/data/
+network none. ACTIVE=0/listeners5173=0 e WIP remoto ?? .vscode/ comprovados.
+Consulta100 real nao executada: canal hPanel expirou em Page.getFrameTree;
+fonteFINAL disponivel/100compativeis nao equivale a reconciliacao do destino.
+Proximos desbloqueios: registro PRIVADO5173 e console administrativo existente
+para identidade/principal/sessao/CPA + consulta fixa READONLY/ROLLBACK. Sem novos
+grants, carga/DDL/deploy/merge. Detalhes e limites no HANDOFF vigente; somente
+docs/diff-check neste lote, sem repetir provas estaveis ou criar outra fila.
+
+## Historico - previa401 comprovada e fonte100 compativel (2026-11-02)
 
 401 b888b2c00eaf571820e0594b96afd45837dc689a servido por snapshot imutável no
 Codespace ÚNICO; checkout/WIP preservados. Porta5173 PRIVADA, HTTP/Chrome/login

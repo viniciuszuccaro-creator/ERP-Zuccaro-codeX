@@ -1,4 +1,49 @@
-## Continuidade vigente — prévia401 e conferências privadas executadas (2026-11-02)
+## Continuidade vigente - Central360 conferida e acesso a previa pendente (2026-11-03)
+
+HEAD342 ef4ddf470dfede338e647809a294a0889ab63a5a, CI5757/5758 SUCCESS;
+401 b888b2c00eaf571820e0594b96afd45837dc689a, CI5684 SUCCESS reconferidos.
+Nao repetir ports, POSIX, publicacao ou ciclo Orcamento/Pedido encerrados.
+Desktop independente atualizado somente por fast-forward, sem WIP local.
+Codespace unico preservado em b5cb34e1, branch canonica, somente ?? .vscode/;
+nenhuma sincronizacao, nova candidata ou escrita na branch Cursor.
+
+Recibo central360-readonly.result.private.json anteriormente pendente LIDO:
+4 checks registrados, errors=[], quotePost=0, conversionPost=0. Login/banner,
+contexto, leitura HTTP/PG de orcamento/Pedido/historico e ausencia de novas
+gravacoes passaram no snapshot b888. Nao comprova conversao de unidade,
+criacao/edicao de contatos nem matriz concorrente completa. Resultado preservado
+com copia privada dos recibos antes de retomar o mesmo runner.
+
+Canal Chrome/terminal recuperado apos uma reconexao da pagina; nenhum rebuild
+ou reinicio do Codespace. Primeiro start do runner recusou cwd incorreto ANTES
+de criar recursos; repeticao no diretorio imutavel exigido passou as guardas.
+Fixture canonica retomada com TTL3600, PG17 tmpfs/network none, dados sinteticos,
+HTTP local200 e listener127.0.0.1:5173 comprovados. URL externa da previa retorna
+HTTP404; painel sem porta registrada e gh codespace ports visibility retorna
+404 Not Found ao obter tunnel port. Encaminhamento CLI temporario foi testado,
+sem tornar porta publica; nao declarar URL acessivel nem nova homologacao.
+Runtime proprio encerrado. O handler nao removeu o container residual; limpeza
+dirigida validou nome, label propria, data de criacao e network none antes de
+remover somente esse recurso sintetico. ACTIVE=0/listeners5173=0 comprovados;
+WIP remoto continua somente ?? .vscode/. Nao prometer disponibilidade permanente.
+
+FINAL100/pins e source-compatibility existentes continuam disponiveis; nao houve
+nova selecao, transferencia ou inventario. Consulta real nao executada: acesso
+ao hPanel pelo canal de controle expirou em Page.getFrameTree. Nao inferir sessao
+administrativa/SQL, destino vazio ou privilegio leitor a partir disso. Proximo:
+restabelecer console existente, comprovar destino/principal/sessao/CPA e executar
+somente consulta fixa limitada READ ONLY/ROLLBACK autorizada; resultado privado.
+Base44 sem reautenticacao nova: nao repetir consulta recusada. Carga isolada real
+exige identidade/isolamento do destino antes de gravar; carga operacional, DDL,
+grants, merge e deploy permanecem gates separados, nao executados.
+
+Proximo comercial: restabelecer registro PRIVADO da5173 no Codespace existente;
+depois conversoes de unidade/concorrencia ainda pendentes no snapshot b888.
+Sem reabrir aceites montados ou somar provas separadas como E2E. Reserva documental
+342/6601549043 e coordenacao401/6601332798; publicacao nao prova recebimento.
+Lote apenas documental: diff-check; suites inalteradas nao reexecutadas.
+
+## Historico - previa401 e conferencias privadas executadas (2026-11-02)
 
 Base342 adeee097f50353d678fef9c3c7adf54bc2ab3233, CI5692/5693 SUCCESS.
 MESMA401 b888b2c00eaf571820e0594b96afd45837dc689a reconferida; nenhum código
