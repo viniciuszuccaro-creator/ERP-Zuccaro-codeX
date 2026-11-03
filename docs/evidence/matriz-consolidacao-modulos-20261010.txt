@@ -38,6 +38,7 @@ Capacidades: form scope session freeze + actorId/token · assert delete · `useP
 |---|---|---|
 | WizardGatewayPagamento (integra) | GerarCobrancaModal orientação + simulação explícita | **keep** modal; sem Wizard paralelo |
 | Contatos aba Painel ausente | GerenciarContatosClienteForm existente | **recuperado** na aba Contatos |
+| comercial/GerenciarContatosCliente | Form canônico (já importa Form) | **KEEP órfão** — sem montagem produção; Painel/Completo usam Form; inventário 2026-11-03 `contatos-inventario-overlap-20261103.txt` — não apagar |
 | Histórico produtos órfão | HistoricoProdutosCliente + TabsContent | **recuperado** |
 | ValidadorEstoque (aprovação) | mesmo componente no Converter Orçamento→Pedido | **reuso** líquido atual−reservado |
 | FunilVisual × FunilComercial × FunilAvancado | mesma fonte Oportunidade | **keep both curto** — sem 3º |
