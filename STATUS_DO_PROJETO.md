@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (Central360 surface condição/tabela) (2026-11-03 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | #401 tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Branch** | `cursor/comercial360-central-surface-condicao-392b` |
+| **Delta** | projeção + UI: `condicao_pagamento_id` / `tabela_preco_id` / itens / subtotal nos blocos empresa·orçamento·pedido |
+| **Evidência** | `docs/evidence/c360-central-surface-condicao-20261103.txt` |
+| **Classificação** | apresentação + capacidade (IDs reais) · registros intocados |
+| Fora | resolver nomes mestres · unidade_alternativa · merge/deploy/VPS |
+
+**Próximo indep.:** CI deste tip · cadastros sky residual · homolog #475 BLOCKED.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

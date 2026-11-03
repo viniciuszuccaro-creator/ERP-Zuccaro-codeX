@@ -84,6 +84,8 @@ export type ClienteCentral360OrcamentoProjection = {
   numero: string;
   status: Orcamento['status'];
   cliente_empresa_id: string;
+  condicao_pagamento_id: string;
+  tabela_preco_id: string | null;
   validade_em: string;
   subtotal: string;
   desconto: string;
@@ -98,6 +100,8 @@ export type ClienteCentral360PedidoProjection = {
   numero: string;
   status: Pedido['status'];
   cliente_empresa_id: string;
+  condicao_pagamento_id: string;
+  tabela_preco_id: string | null;
   orcamento_id: string | null;
   tipo_operacao: Pedido['tipo_operacao'];
   data_entrega_solicitada: string;
@@ -237,6 +241,8 @@ function projectOrcamento(row: Orcamento): ClienteCentral360OrcamentoProjection 
     numero: row.numero,
     status: row.status,
     cliente_empresa_id: row.cliente_empresa_id,
+    condicao_pagamento_id: row.condicao_pagamento_id,
+    tabela_preco_id: row.tabela_preco_id,
     validade_em: row.validade_em,
     subtotal: row.subtotal,
     desconto: row.desconto,
@@ -253,6 +259,8 @@ function projectPedido(row: Pedido): ClienteCentral360PedidoProjection {
     numero: row.numero,
     status: row.status,
     cliente_empresa_id: row.cliente_empresa_id,
+    condicao_pagamento_id: row.condicao_pagamento_id,
+    tabela_preco_id: row.tabela_preco_id,
     orcamento_id: row.orcamento_id,
     tipo_operacao: row.tipo_operacao,
     data_entrega_solicitada: row.data_entrega_solicitada,

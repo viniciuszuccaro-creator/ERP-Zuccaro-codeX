@@ -1,0 +1,37 @@
+Central360 — surface condição/tabela/totais/itens (2026-11-03 America/Sao_Paulo)
+=================================================================================
+Base #401 tip b888b2c00 · branch cursor/comercial360-central-surface-condicao-392b
+Sem nova candidata · sem seed · sem inventar nomes de mestres
+
+Problema
+--------
+Lista Central360 de Orçamentos/Pedidos mostrava só número + status + total.
+Condição, tabela, itens e subtotal já existiam na entidade / no vínculo empresa,
+mas a projeção HTTP omitia condição/tabela nos blocos orcamentos/pedidos.
+
+Delta
+-----
+- `clienteCentral360Service`: projeta `condicao_pagamento_id` + `tabela_preco_id`
+  em orçamentos e pedidos (IDs canônicos; tabela pode ser null)
+- `CentralCliente360Panel`: `ProcessCommercialRefs` — Cond./Tab./itens/subtotal
+  nos blocos empresa, orçamento e pedido (Abrir segue detalhe canônico)
+
+Classificação
+-------------
+- Apresentação: refs de processo no mesmo viewport
+- Capacidade: campos reais da projeção (não decorativos)
+- Registros: NÃO tocados
+
+Testes
+------
+- `central-cliente-360-pedido-navigation` (marcadores UI + service)
+- runtime-onda3-cliente-central360 (assert condição nos rows) — quando suite PG
+
+Residual
+--------
+Labels nome/código da condição/tabela exigem join mestres — fora deste tip
+(coordenar Codex se precisar resolução no listado).
+
+Fora
+----
+merge main · deploy · VPS · port #453/#446 · unidade_alternativa
