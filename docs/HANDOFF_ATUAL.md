@@ -1,3 +1,8 @@
+## CURSOR — homologação privada #475 CI SUCCESS (2026-11-03 America/Sao_Paulo)
+- Tip `ee582093` CI SUCCESS 3/3 — decisão homolog/dados reais na fila canônica.
+- Gates Codespace/legado/Base44 permanecem BLOCKED neste agente (retomada no STATUS).
+- Sem dados reais no Git. Sem merge/deploy/carga.
+
 ## CURSOR — homologação privada + dados reais (2026-11-03 America/Sao_Paulo)
 - Decisão do proprietário incorporada à fila: Codespace isolado com dados reais autorizados;
   depois promoção VPS com versão+lotes aceitos. GitHub = código; dados reais fora do repo/CI.

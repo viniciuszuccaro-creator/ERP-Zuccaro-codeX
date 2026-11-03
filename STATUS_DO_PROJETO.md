@@ -3,7 +3,9 @@
 | Distinção | SHA / estado |
 |-----------|----------------|
 | **Decisão** | Codespace privado para teste com dados reais autorizados → promoção VPS só pós-aceite |
-| **Branch docs** | `cursor/homolog-privada-decisao-fila-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/homolog-privada-decisao-fila-392b` = **#475** |
+| **CI tip** | `ee582093` **SUCCESS 3/3** |
+| **Base** | #401 `b888b2c00` |
 | **Código candidata** | #401 tip `b888b2c00` (CI SUCCESS Contatos); pacotes limpos #471/#473/#474 aguardam Codex |
 | **Evidência sanitizada** | `docs/evidence/homolog-privada-decisao-gate-20261103.txt` |
 | **Codespace neste agente** | **BLOCKED** — `gh codespace` HTTP 403; sem Docker; sem path legado Codespace |
@@ -15,7 +17,7 @@
 
 **Retomada Codespace:** proprietário no Codespace único com franquia **ou** grant API Codespaces a este agente.  
 **Retomada legado:** secrets `ERP_DEV_VPS_SSH_*` + hostkey verified **ou** console Codespace já autenticado.  
-**Próximo executável independente:** CI/Codex #471/#473/#474 · lacunas código sem dados.
+**Próximo:** `@codex review` #475 · retomada Codespace/legado (gates) · #471/#473/#474 Codex.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
