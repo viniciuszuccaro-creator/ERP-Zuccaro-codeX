@@ -1,0 +1,53 @@
+Homologação privada com dados reais — decisão incorporada (2026-11-03 America/Sao_Paulo)
+========================================================================================
+Fonte da decisão: ordem do proprietário (Codespace privado + legado VPS + recuperação
+registros ERP novo + promoção pós-aceite). GitHub = código oficial. Dados reais FORA
+do Git/CI/build/artefatos públicos.
+
+Candidata código publicada (#401 tip docs)
+- Branch: cursor/composicao-397-342-prep-392b
+- Tip docs/código referência fila: b888b2c00 (Contatos assertScope CI SUCCESS 3/3)
+- Pacotes paralelos limpos (CI SUCCESS, aguardam Codex): #471 Empresa Completo,
+  #473 RH Férias, #474 Romaneio PDF — não misturar com carga de dados.
+
+1) Codespace / prévia isolada — estado neste executor Cursor Cloud
+- gh codespace list → HTTP 403 (Resource not accessible by integration).
+- Sem Docker neste VM; sem path /home/codespace/erp-legado-privado-20261023.
+- Harness canônico permanece o existente sob Codespace do proprietário
+  (OPERACAO_DEV_VPS § Prévia privada). Prévia histórica era SINTÉTICA
+  (operationalDatabase=false); dados reais exigem banco isolado ≠ operacional
+  + desligar emissões externas (NF/WhatsApp/cobrança).
+- Retomada: (A) proprietário abre o MESMO Codespace com franquia e porta Private;
+  ou (B) concede API Codespaces a este agente + franquia; (C) não ligar prévia
+  ao banco operacional por conveniência.
+
+2) Legado centralizado VPS — sem retransferência
+- Destino histórico: /root/erp-private/centralizacao-legado-20261023
+- Recibo histórico: 2.836 arquivos / 48.359.509.373 bytes (HANDOFF).
+- Neste executor: ERP_DEV_VPS_SSH_* UNSET; path /root/erp-private ausente.
+- Hostinger VPS list (somente leitura, sem IP/senha): ver STATUS do lote.
+- Retomada: secrets Cursor ERP_DEV_VPS_SSH_* + hostkey verified (procedimento
+  access-codex-readonly-20261028) OU console Codespace do proprietário com
+  canal já autenticado. Não repetir inventário/HD.
+
+3) Carga/reconciliação homolog
+- Mecanismos: scripts/legado existentes (pilot-functional-load-plan, importadores,
+  mapeadores, FINAL coorte). Sem substituir seleções silenciosamente.
+- Prioridade: clientes → fornecedores → produtos; depois históricos/títulos com
+  distinção consulta vs lançamento operacional.
+- Grupo CPA: modelo aprovado; sem atribuir fiscal/saldos à CPA/3Z por palpite.
+- Contagens públicas apenas; divergências em revisão privada 0600.
+
+4) Recuperação registros ERP novo (≠ legado)
+- URL histórica: erp-integra-eabbae52.base44.app — código GitHub não prova registros.
+- Canal: reconectar Base44 existente (OPERACAO § Recuperação ERP novo).
+- Classificar por entidade: UI/RBAC oculto | API omitido | outro destino |
+  ausente | fonte inacessível. Sem seed para bater contagens das imagens.
+
+5) Promoção VPS
+- Somente após aceite explícito da versão+lotes; backup destino + prova restore +
+  plano carga/reversão. Sem sobrescrever operacional inteiro fora do gate.
+
+Independentes enquanto BLOCKED
+- Manter CI/Codex nos PRs de código; não criar módulo/manual paralelo.
+- Este arquivo: evidência sanitizada (sem dados reais).

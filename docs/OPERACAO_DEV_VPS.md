@@ -414,6 +414,31 @@ No MESMO cliente/conta proprietária e workspace: Plugins → Installed → Base
 
 Após conclusão, avisar somente que a conexão foi renovada. Executor lista apps autorizados uma vez e valida nome/URL/ID, conta/tenant, procedência e data da fonte pré-perda antes de ler registros. Não escolher primeiro app/seed por semelhança. O app original ainda não está identificado de forma confiável; .env local sem referência Base44 não prova identidade. Consulta UNAUTHORIZED anterior não foi repetida. Recuperar registros exige comparação privada no mesmo escopo; não usar entidades Git/fixtures/coorte legado como substituto.
 
+### Homologação privada com dados reais autorizados (decisão 2026-11-03)
+
+Objetivo: o proprietário testa a candidata GitHub com dados reais autorizados em
+ambiente **isolado** (Codespace + banco efêmero/homolog ≠ operacional); pós-aceite,
+preparar promoção/carga na VPS com backup e reversão. Não publicar dados reais no
+GitHub, CI, builds ou artefatos públicos.
+
+Reutilizar: harness Codespace existente; FINAL/mapeadores/importadores legado;
+destino `/root/erp-private/centralizacao-legado-20261023` (recibo histórico 2836
+arquivos / 48 359 509 373 bytes — conferir disponibilidade pelo canal autorizado,
+sem inventário/HD de novo); RBAC/Grupo-Empresa/auditoria canônicos; desligar
+integrações que emitam NF, mensagens, cobrança ou efeitos externos.
+
+Prioridade de carga em homolog: clientes → fornecedores → produtos; depois
+históricos/títulos, separando consulta de lançamentos que alteram saldo/estoque/fiscal.
+Grupo CPA conforme modelo aprovado. Recuperação de registros do ERP novo é canal
+distinto (Base44 / URL histórica) — ver secção seguinte; não seed.
+
+Bloqueios observados no executor Cursor Cloud (2026-11-03): `gh codespace` HTTP 403;
+Docker ausente; secrets `ERP_DEV_VPS_SSH_*` unset; path privado Codespace/VPS não
+montado. Retomada: franquia + Codespace do proprietário (ou grant API) para prévia;
+secrets + hostkey verified (ou console autenticado) para legado. Não ligar prévia
+ao banco operacional. Evidência sanitizada:
+`docs/evidence/homolog-privada-decisao-gate-20261103.txt`.
+
 ### Prévia privada sintética — iniciar, verificar e retomar
 
 Reutilizar harness privado existente `decision-20261026/resume-20261028/browser-harness.mjs` sob `/home/codespace/erp-legado-privado-20261023`. Não é deploy nem banco operacional. Executar somente após conferir checkout/branch/HEAD/status/processos e inexistência de outro dono da5173. Em terminal próprio, cwd canônico, Node22:
