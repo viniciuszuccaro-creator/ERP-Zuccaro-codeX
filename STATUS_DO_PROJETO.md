@@ -1,18 +1,38 @@
+## CURSOR — VIGENTE (homologação privada + dados reais) (2026-11-03 America/Sao_Paulo)
+
+| Distinção | SHA / estado |
+|-----------|----------------|
+| **Decisão** | Codespace privado para teste com dados reais autorizados → promoção VPS só pós-aceite |
+| **Branch / PR** | `cursor/homolog-privada-decisao-fila-392b` = **#475** |
+| **CI tip** | `ee582093` **SUCCESS 3/3** |
+| **Base** | #401 `b888b2c00` |
+| **Código candidata** | #401 tip `b888b2c00` (CI SUCCESS Contatos); pacotes limpos #471/#473/#474 aguardam Codex |
+| **Evidência sanitizada** | `docs/evidence/homolog-privada-decisao-gate-20261103.txt` |
+| **Codespace neste agente** | **BLOCKED** — `gh codespace` HTTP 403; sem Docker; sem path legado Codespace |
+| **Legado VPS** | destino `/root/erp-private/centralizacao-legado-20261023` (recibo hist. 2836 / 48 359 509 373 B) — **não recontado** aqui; SSH secrets UNSET |
+| **Prévia real** | BLOCKED até ambiente isolado ≠ operacional + RBAC canônico + integrações externas desligadas |
+| **Registros ERP novo** | ≠ legado; fonte Base44/URL hist. — reconectar canal (OPERACAO); sem seed |
+| **GitHub** | só código; **proibido** dados reais / exports / credenciais / CI logs |
+| Fora | merge main · deploy · carga operacional · cobrança · prévia→banco prod |
+
+**Retomada Codespace:** proprietário no Codespace único com franquia **ou** grant API Codespaces a este agente.  
+**Retomada legado:** secrets `ERP_DEV_VPS_SSH_*` + hostkey verified **ou** console Codespace já autenticado.  
+**Próximo:** `@codex review` #475 · retomada Codespace/legado (gates) · #471/#473/#474 Codex.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **HEAD docs** | (este commit) — STATUS + P1 assertScopeCurrent |
-| **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 |
-| **CI SUCCESS tip** | `57479b67d` 3/3 (frontend+backend+compose) — própria do SHA; ≠ herdar ancestral |
-| **Parecer Codex P1+P2** | tip `70a333197` — “no major issues” /6548107136 (pré-stage54) |
-| **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail (`80d1393ee`) |
-| **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** (sem merge main / deploy / VPS) |
-| **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · persistência · aceites sessão/tabela/late/duplo-clique |
+| **HEAD docs** | `b888b2c00` — STATUS + P1 assertScopeCurrent |
+| **Código runtime prévio** | `ae4fdc86f` P2 · `dbbee42ea` P1 · `749bc0201` stage54 · `e340e170` assertScope |
+| **CI SUCCESS tip** | `b888b2c00` 3/3 — própria do SHA |
+| **Parecer Codex Contatos** | tip limpo (assertScope) |
+| **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail |
+| **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** |
+| **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC |
 
-**Delta em curso:** P1 #4425981924 — `assertScopeCurrent` alinhado a `buildPainelContatosScopeKey` (ator+sessão); seams Contatos **15 PASS**.
-**Não repetir:** port #453/#446; nova candidata paralela.
-**Próximo:** CI deste tip · `@codex review` deltas Contatos guard · indep. cadastros sky (#455–#463 CI SUCCESS) / C360 residual.
+**Não repetir:** port #453/#446; nova candidata paralela.  
+**Próximo:** fold seletivo sky #455–#468 · homologação privada (bloco vigente acima).
 
 ## CURSOR — VIGENTE (#401 P1+P2 modal janela + composto) (2026-10-31 America/Sao_Paulo)
 

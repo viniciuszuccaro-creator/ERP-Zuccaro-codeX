@@ -1,3 +1,20 @@
+## CURSOR — homologação privada #475 CI SUCCESS (2026-11-03 America/Sao_Paulo)
+- Tip `ee582093` CI SUCCESS 3/3 — decisão homolog/dados reais na fila canônica.
+- Gates Codespace/legado/Base44 permanecem BLOCKED neste agente (retomada no STATUS).
+- Sem dados reais no Git. Sem merge/deploy/carga.
+
+## CURSOR — homologação privada + dados reais (2026-11-03 America/Sao_Paulo)
+- Decisão do proprietário incorporada à fila: Codespace isolado com dados reais autorizados;
+  depois promoção VPS com versão+lotes aceitos. GitHub = código; dados reais fora do repo/CI.
+- Codespace neste agente Cursor Cloud: **BLOCKED** (`gh codespace` 403). Sem Docker local;
+  harness canônico continua o do Codespace do proprietário (OPERACAO — prévia; histórico = sintético).
+- Legado: reutilizar `/root/erp-private/centralizacao-legado-20261023` (recibo 2836/48 359 509 373);
+  sem retransferir HD. Canal SSH deste executor: secrets UNSET → conferência de disponibilidade **pendente**.
+- Recuperação registros ERP novo ≠ import legado: Base44/URL `erp-integra-eabbae52.base44.app`;
+  classificar oculto/API/outro destino/ausente/fonte inacessível; sem seed para contagens das imagens.
+- Evidência: `docs/evidence/homolog-privada-decisao-gate-20261103.txt`. Pacotes código limpos
+  #471/#473/#474 seguem independentes. Sem merge/deploy/carga operacional.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
