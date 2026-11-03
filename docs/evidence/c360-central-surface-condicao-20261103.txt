@@ -26,6 +26,8 @@ Testes
 ------
 - `central-cliente-360-pedido-navigation` (marcadores UI + service)
 - runtime-onda3-cliente-central360 (assert condição nos rows) — quando suite PG
+- stage51 `read-boundary-contracts`: pin Central360 atualizado `ab22a667…`
+  (hunks stage51 intactos; hash de propósito — CI frontend falhou 1× no pin antigo)
 
 Residual
 --------

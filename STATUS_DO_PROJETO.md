@@ -3,13 +3,15 @@
 | Campo | Valor |
 |-------|-------|
 | **Base** | #401 tip **`b888b2c00`** · CI **5684** SUCCESS |
-| **Branch** | `cursor/comercial360-central-surface-condicao-392b` |
+| **Branch / PR** | `cursor/comercial360-central-surface-condicao-392b` = **#478** |
 | **Delta** | projeção + UI: `condicao_pagamento_id` / `tabela_preco_id` / itens / subtotal nos blocos empresa·orçamento·pedido |
+| **Boundary** | stage51 pin Central360 → `ab22a667…` (hunks intactos; hash de propósito pós-surface) |
 | **Evidência** | `docs/evidence/c360-central-surface-condicao-20261103.txt` |
 | **Classificação** | apresentação + capacidade (IDs reais) · registros intocados |
+| **Paralelo** | #476 tip `55675c853` CI SUCCESS 6/6 · #477 inventário Contatos (CI em curso) |
 | Fora | resolver nomes mestres · unidade_alternativa · merge/deploy/VPS |
 
-**Próximo indep.:** CI deste tip · cadastros sky residual · homolog #475 BLOCKED.
+**Próximo indep.:** CI tip #478 · fold seletivo sob Codex · homolog #475 BLOCKED.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
