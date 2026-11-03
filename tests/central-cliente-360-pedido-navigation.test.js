@@ -161,6 +161,20 @@ test('Central e Pedido consomem a mesma seleção inicial sem cadastrar fonte pa
   assert.match(central, /disabled=\{Boolean\(openingRecord\.pedido\)\}/);
 });
 
+test('Central360 lista condição/tabela/itens/subtotal do processo sem inventar mestres', async () => {
+  const central = await readFile(new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url), 'utf8');
+  const service = await readFile(new URL('../server/src/services/clienteCentral360Service.ts', import.meta.url), 'utf8');
+  assert.match(central, /ProcessCommercialRefs/);
+  assert.match(central, /central360-\$\{prefix\}-condicao/);
+  assert.match(central, /central360-\$\{prefix\}-tabela/);
+  assert.match(central, /prefix="orcamento"/);
+  assert.match(central, /prefix="pedido"/);
+  assert.match(central, /prefix="empresa"/);
+  assert.match(service, /condicao_pagamento_id: row\.condicao_pagamento_id/);
+  assert.match(service, /tabela_preco_id: row\.tabela_preco_id/);
+  assert.equal((service.match(/condicao_pagamento_id: row\.condicao_pagamento_id/g) || []).length >= 2, true);
+});
+
 test('resolveCentralClienteEmpresaId usa vínculo da empresa ativa sem inventar registro', () => {
   const empresas = {
     status: 'ok',

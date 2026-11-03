@@ -323,6 +323,14 @@ test('Central 360 compoe identidade + blocos com PII revelado quando autorizado'
   assert.equal(result.body.data.blocks.crm.status, 'skipped');
   assert.equal(result.body.data.blocks.locais.data[0].id, seeded.localId);
   assert.equal(result.body.data.blocks.obras.data[0].id, seeded.obraId);
+  const orcamentoRow = result.body.data.blocks.orcamentos.data[0];
+  const pedidoRow = result.body.data.blocks.pedidos.data[0];
+  assert.equal(orcamentoRow.condicao_pagamento_id, CONDICAO_ID);
+  assert.equal(pedidoRow.condicao_pagamento_id, CONDICAO_ID);
+  assert.ok('tabela_preco_id' in orcamentoRow);
+  assert.ok('tabela_preco_id' in pedidoRow);
+  assert.ok(Number(orcamentoRow.quantidade_itens) >= 1);
+  assert.ok(Number(pedidoRow.quantidade_itens) >= 1);
   assert.ok(!JSON.stringify(result.body).includes('Item sintetico'));
 });
 

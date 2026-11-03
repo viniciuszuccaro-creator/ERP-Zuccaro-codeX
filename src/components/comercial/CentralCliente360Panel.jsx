@@ -151,6 +151,37 @@ function CrmLegadoAdapterBlock({ clienteId, groupId, empresaId, actorId, session
   );
 }
 
+/** Refs de processo já projetadas (IDs canônicos; labels resolvidos no detalhe Abrir). */
+function ProcessCommercialRefs({ row, prefix }) {
+  const condicao = row?.condicao_pagamento_id ? String(row.condicao_pagamento_id) : '';
+  const tabela = row?.tabela_preco_id ? String(row.tabela_preco_id) : '';
+  const itens = Number.isFinite(Number(row?.quantidade_itens)) ? Number(row.quantidade_itens) : null;
+  return (
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500" data-action={`central360-${prefix}-processo`}>
+      {condicao ? (
+        <span title={condicao} data-action={`central360-${prefix}-condicao`}>
+          Cond. <span className="font-mono">{condicao.slice(0, 8)}</span>
+        </span>
+      ) : (
+        <span data-action={`central360-${prefix}-condicao-ausente`}>Cond. —</span>
+      )}
+      {tabela ? (
+        <span title={tabela} data-action={`central360-${prefix}-tabela`}>
+          Tab. <span className="font-mono">{tabela.slice(0, 8)}</span>
+        </span>
+      ) : (
+        <span data-action={`central360-${prefix}-tabela-ausente`}>Tab. —</span>
+      )}
+      {itens != null ? (
+        <span data-action={`central360-${prefix}-itens`}>{itens} it.</span>
+      ) : null}
+      {row?.subtotal != null ? (
+        <span data-action={`central360-${prefix}-subtotal`}>Sub {money(row.subtotal)}</span>
+      ) : null}
+    </span>
+  );
+}
+
 function BlockCard({ title, icon: Icon, block, blockKey, renderRow, onLoadMore, loadingMore }) {
   if (!block) return null;
   const status = block.status;
@@ -556,10 +587,13 @@ export default function CentralCliente360Panel({
           onLoadMore={handleLoadMore}
           loadingMore={loadingMore}
           renderRow={(row) => (
-            <>
-              <span className="font-mono text-xs">{String(row.empresa_id).slice(0, 8)}</span>
-              <Badge variant="outline">{row.situacao_comercial}</Badge>
-            </>
+            <div className="flex w-full flex-col gap-0.5 min-w-0">
+              <span className="flex items-center justify-between gap-2">
+                <span className="font-mono text-xs">{String(row.empresa_id).slice(0, 8)}</span>
+                <Badge variant="outline">{row.situacao_comercial}</Badge>
+              </span>
+              <ProcessCommercialRefs row={row} prefix="empresa" />
+            </div>
           )}
         />
         <BlockCard
@@ -598,19 +632,22 @@ export default function CentralCliente360Panel({
           onLoadMore={handleLoadMore}
           loadingMore={loadingMore}
           renderRow={(row) => (
-            <>
-              <span className="min-w-0 flex-1">
-                <span className="font-mono" data-action="central360-orcamento-numero">{row.numero}</span>
-                {row.id ? (
-                  <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-orcamento-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
-                ) : null}
+            <div className="flex w-full flex-col gap-0.5 min-w-0">
+              <span className="flex items-center justify-between gap-2 min-w-0">
+                <span className="min-w-0 flex-1">
+                  <span className="font-mono" data-action="central360-orcamento-numero">{row.numero}</span>
+                  {row.id ? (
+                    <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-orcamento-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
+                  ) : null}
+                </span>
+                <span className="flex items-center gap-2 shrink-0">
+                  {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
+                  <span data-action="central360-orcamento-total">{money(row.total)}</span>
+                  {!permissionsLoading&&hasPermission('Comercial','orcamento','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-orcamento-abrir" disabled={Boolean(openingRecord.orcamento)} onClick={()=>void openRecord(row,'orcamento')}>{openingRecord.orcamento===row.id?'Abrindo...':'Abrir'}</Button>}
+                </span>
               </span>
-              <span className="flex items-center gap-2 shrink-0">
-                {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
-                <span>{money(row.total)}</span>
-                {!permissionsLoading&&hasPermission('Comercial','orcamento','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-orcamento-abrir" disabled={Boolean(openingRecord.orcamento)} onClick={()=>void openRecord(row,'orcamento')}>{openingRecord.orcamento===row.id?'Abrindo...':'Abrir'}</Button>}
-              </span>
-            </>
+              <ProcessCommercialRefs row={row} prefix="orcamento" />
+            </div>
           )}
         />
         {orcamentoOpenError&&<p role="alert" className="text-sm text-red-700" data-testid="central360-orcamento-open-error">{orcamentoOpenError}</p>}
@@ -622,19 +659,22 @@ export default function CentralCliente360Panel({
           onLoadMore={handleLoadMore}
           loadingMore={loadingMore}
           renderRow={(row) => (
-            <>
-              <span className="min-w-0 flex-1">
-                <span className="font-mono" data-action="central360-pedido-numero">{row.numero}</span>
-                {row.id ? (
-                  <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-pedido-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
-                ) : null}
+            <div className="flex w-full flex-col gap-0.5 min-w-0">
+              <span className="flex items-center justify-between gap-2 min-w-0">
+                <span className="min-w-0 flex-1">
+                  <span className="font-mono" data-action="central360-pedido-numero">{row.numero}</span>
+                  {row.id ? (
+                    <span className="ml-2 font-mono text-[10px] text-slate-400" data-action="central360-pedido-id" title="ID técnico">{String(row.id).slice(0, 8)}</span>
+                  ) : null}
+                </span>
+                <span className="flex items-center gap-2 shrink-0">
+                  {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
+                  <span data-action="central360-pedido-total">{money(row.total)}</span>
+                  {!permissionsLoading&&hasPermission('Comercial','pedido','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-pedido-abrir" disabled={Boolean(openingRecord.pedido)} onClick={()=>void openRecord(row,'pedido')}>{openingRecord.pedido===row.id?'Abrindo...':'Abrir'}</Button>}
+                </span>
               </span>
-              <span className="flex items-center gap-2 shrink-0">
-                {row.status ? <Badge variant="outline">{row.status}</Badge> : null}
-                <span>{money(row.total)}</span>
-                {!permissionsLoading&&hasPermission('Comercial','pedido','visualizar')&&<Button type="button" size="sm" variant="outline" data-action="central360-pedido-abrir" disabled={Boolean(openingRecord.pedido)} onClick={()=>void openRecord(row,'pedido')}>{openingRecord.pedido===row.id?'Abrindo...':'Abrir'}</Button>}
-              </span>
-            </>
+              <ProcessCommercialRefs row={row} prefix="pedido" />
+            </div>
           )}
         />
         {pedidoOpenError&&<p role="alert" className="text-sm text-red-700" data-testid="central360-pedido-open-error">{pedidoOpenError}</p>}
