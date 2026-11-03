@@ -1,0 +1,54 @@
+Comercial360 / #401 — continuidade e aceites encerrados (2026-11-03 America/Sao_Paulo)
+=======================================================================================
+Candidata: cursor/composicao-397-342-prep-392b tip b888b2c00
+CI: run_number 5684 SUCCESS 3/3 (erp-runtime-ci) — frontend/backend/compose
+
+Aceites ENCERRADOS (não manter como pendentes)
+----------------------------------------------
+1. Contatos assertScope / Painel — Codex limpo no tip b888b2c00
+2. Prévia Codex: navegador + API + PostgreSQL sintético — ciclo
+   Cliente→Orçamento→salvar/reabrir→converter→Pedido (HANDOFF prova sintética;
+   ≠ login real / ≠ VPS operacional)
+3. Casos dirigidos Contatos (A/B/C, late/session) — tip limpo
+4. Pacotes densificação Detalhes (#468/#470) CI SUCCESS + Codex limpo — PRs
+   paralelos; fold seletivo sob coordenação Codex (sem nova candidata)
+
+Não repetir
+-----------
+- Port #453/#446
+- Nova candidata paralela a #401
+- Seed/legado como “recuperação” de registros do ERP novo
+- Reabrir Contatos/saldo-DESCONHECIDO/agregação unidade sem nova contraprova
+
+Residual C360 (coordenar Codex / pacotes independentes)
+-------------------------------------------------------
+A) Unidade alternativa no Orçamento/Pedido canônico HTTP
+   — ORCAMENTO_PERSISTENCE_GAPS.unidade_alternativa ainda vigente
+   — SeletorUnidadeComConversao existe mas NÃO montado no canônico
+     (PedidoFormCompleto / OrcamentosTab / PedidoCanonicoPanel: só unidade
+     principal do produto; README_V22 desatualizado)
+   — Exige contrato backend + testes; não inventar conversão no UI só
+B) Concorrência submit PedidoCanonicoPanel
+   — mestres JÁ são HTTP (`comercialMasters.list` / resolveClienteEmpresa);
+     prop `filterInContext` na assinatura está ORFA (não usada no corpo)
+   — remainder STATUS antigo “masters filterInContext” SUPERSEDIDO neste tip
+   — residual real: coordenar Codex se houver race submit/hydrate além do
+     mutationGate/detailGate já presentes
+C) Surface condição+tabela+totais+situação no mesmo viewport do processo
+   — parcial em Detalhes (#468/#470); Central360 complementar
+D) GerenciarContatosCliente comercial vs Form — inventário antes unificar
+E) Homolog privada dados reais — #475 gates (Codespace/legado/Base44 BLOCKED
+   neste agente Cursor Cloud)
+
+Este tip código
+---------------
+- Proposta aside: remove quantidade inventada "30" → saldo DESCONHECIDO
+  (alinha política estoque; rascunho ≠ estoque real)
+
+Classificação entrega
+--------------------
+- Apresentação: aside proposta (saldo desconhecido explícito)
+- Capacidade funcional: sem alegar consulta de estoque na demo
+- Registros: NÃO tocados
+
+Fora: merge main · deploy · VPS · dados reais no Git

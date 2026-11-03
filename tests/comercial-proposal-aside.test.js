@@ -88,3 +88,36 @@ test('347 fixture sintética não usa IDs/códigos de cadastro operacional', () 
     }
   }
 });
+
+test('proposta produtos: saldo DESCONHECIDO — sem inventar quantidade de estoque', async () => {
+  const fixture = createComercialProposalFixture();
+  const h = await mountAside({
+    cliente: fixture.clientes[0].razao_social,
+    clienteCodigo: fixture.clientes[0].codigo,
+    clienteIdTecnico: fixture.clientes[0].id,
+    itens: [{
+      produto_id: fixture.produtos[0].id,
+      produto_codigo: fixture.produtos[0].codigo,
+      descricao: fixture.produtos[0].descricao,
+      preco_unitario: '10.00',
+      unidade_sigla: 'KG',
+    }],
+    totals: { subtotal: '10', desconto: '0', total: '10' },
+    condicao: '—',
+    tabela: '—',
+  });
+  const tabButtons = (node, acc = []) => {
+    if (!node || typeof node !== 'object') return acc;
+    if (node.type === 'Button' && String(node.props?.['data-action'] || '').startsWith('proposta-painel-')) acc.push(node);
+    for (const child of node.children || []) tabButtons(child, acc);
+    return acc;
+  };
+  let tree = h.render();
+  tabButtons(tree).find((btn) => btn.props['data-action'] === 'proposta-painel-produtos').props.onClick();
+  tree = h.render();
+  const text = JSON.stringify(tree);
+  assert.match(text, /saldo não consultado \(DESCONHECIDO\)/);
+  assert.match(text, /proposta-saldo-desconhecido/);
+  assert.doesNotMatch(text, /Disponibilidade ilustrativa:\s*30/);
+  assert.doesNotMatch(text, /: 30 KG/);
+});
