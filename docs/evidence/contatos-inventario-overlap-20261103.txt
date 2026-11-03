@@ -1,0 +1,52 @@
+Contatos — inventário overlap comercial × Form (2026-11-03 America/Sao_Paulo)
+================================================================================
+Base #401 tip b888b2c00 · branch cursor/cadastros-contatos-inventario-overlap-392b
+Sem nova candidata · sem apagar path · sem seed
+
+Método
+------
+Comparar finalidade, campos, consumidores de produção, permissões, persistência
+e histórico — não unificar por nome semelhante.
+
+Canônico
+--------
+`src/components/cadastros/GerenciarContatosClienteForm.jsx`
+- UI: adicionar/editar/excluir · principal · tipo/valor
+- data-action: Cadastros.Cliente.contato.*
+- Recebe contatos + onChange + assertScopeCurrent + persistBusy
+- Sem fetch próprio — persistência no pai
+
+Consumidores de produção (montagem JSX)
+---------------------------------------
+1. CadastroClienteCompleto — aba Contatos do form completo
+2. PainelDinamicoCliente — aba Contatos (`persistContatosPainel` +
+   assertScope via buildPainelContatosScopeKey ator+sessão)
+
+Adaptador comercial (ÓRFÃO de montagem)
+---------------------------------------
+`src/components/comercial/GerenciarContatosCliente.jsx`
+- Já consolida no Form (import + render Form)
+- GET Cliente + bind escopo/ator + mutation update + canEdit Cadastros.Cliente
+- assertScopeCurrent (ator+sessão) alinhado tip b888b2c00
+- Nenhum import de produção fora do próprio arquivo (grep src/)
+- Testes ainda cobrem o adaptador (prep-401, registros-probes, count-erro-vazio)
+- Decisão: **KEEP** — não apagar (Regra-Mãe); não criar 3º módulo;
+  Painel/Completo já usam Form direto (caminho diário)
+
+Classificação entrega
+--------------------
+- Apresentação: n/a (sem chrome novo)
+- Capacidade funcional: consolidação JÁ no Form; adaptador preservado
+- Registros: NÃO tocados
+
+Não fazer
+---------
+- Apagar GerenciarContatosCliente comercial
+- Remountar adaptador no Painel (duplicaria hydrate/persist)
+- Tratar overlap como “falta unificar” — unificação de UI já feita
+- Seed/legado como recuperação de contatos
+
+Próximo (se owner pedir montagem do adaptador)
+---------------------------------------------
+Só com consumidor real sem Form próprio; hoje não há.
+Residual C360 Contatos (continuidade) = ENCERRADO neste inventário.

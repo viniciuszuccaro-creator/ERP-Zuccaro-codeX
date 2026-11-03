@@ -1,0 +1,42 @@
+Recuperação ERP — classificação por eixos (2026-11-03 America/Sao_Paulo)
+=======================================================================
+Candidata #401 tip b888b2c00 · CI5684 SUCCESS
+Referência histórica: erp-integra-novo + imagens (não meta de contagem)
+Base44 / Codespace / legado: BLOCKED neste agente (#475) — sem reauth cega
+
+Eixos (obrigatório separar nas entregas)
+---------------------------------------
+A) Apresentação recuperada — chrome/sky, abas montadas, labels, densidade
+B) Capacidade funcional recuperada — ações reais, HTTP fail-closed, reopen
+C) Registros efetivamente reconciliados — fonte original + staging; NÃO seed
+
+Estado vigente (síntese; detalhes nos evidence já existentes)
+------------------------------------------------------------
+A apresentação
+- Cadastros sky chrome (lote #353/#397/#404+) — categorias multi-cor preservadas
+- Aside proposta C360: DESCONHECIDO (#476) — sem inventar estoque “30”
+- Painel Contatos aba montada (Form existente)
+- Relatórios triggers matriz/export/agendamento (oculto≠ausente)
+
+B capacidade
+- Contatos Form canônico + Painel persistContatosPainel + assertScope
+- Orçamento/Pedido mestres HTTP; tip #401 prévia Orc→Pedido sintética ENCERRADA
+- HistoricoOrigem/Compras/Top10 HTTP: PRs #441/#442 abertos (não re-portar aqui)
+- Unidade alternativa: gap contrato — Seletor NÃO montado no canônico
+- PedidoForm simples: NÃO-CANÔNICO (#469)
+
+C registros
+- Contagens das imagens = históricas, não metas
+- Base44 UNAUTHORIZED — não repetir sem mudança de condição
+- Staging legado / gates SQL privados — coordenar Codex
+- Nenhuma fabricação de cadastros “recuperados” neste agente
+
+Overlaps (matriz-consolidacao + inventário Contatos 2026-11-03)
+---------------------------------------------------------------
+- Contatos comercial×Form: UI unificada no Form; adaptador comercial KEEP órfão
+- Funil×3 / Separacao×IA / Comprovante×: keep both curto (já documentado)
+- AprovacaoDescontos → CentralAprovacoes: redirect feito
+
+Fora
+----
+merge main · deploy · VPS fora gates · nova candidata · port #453/#446

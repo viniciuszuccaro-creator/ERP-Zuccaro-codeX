@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (Contatos inventário overlap + eixos recuperação) (2026-11-03 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | #401 tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Branch** | `cursor/cadastros-contatos-inventario-overlap-392b` (indep.; sem nova candidata) |
+| **Achado** | UI Contatos já unificada em `GerenciarContatosClienteForm`; adaptador `comercial/GerenciarContatosCliente` **KEEP órfão** (sem montagem produção) |
+| **Consumidores** | CadastroClienteCompleto + PainelDinamicoCliente → Form |
+| **Evidência** | `contatos-inventario-overlap-20261103.txt` · `recuperacao-classificacao-eixos-20261103.txt` · matriz consolidação atualizada |
+| **Teste** | `contatos-inventario-overlap` PASS |
+| Fora | apagar adaptador · remount Painel · seed · merge/deploy/VPS |
+
+**Classificação:** apresentação n/a · capacidade consolidada (Form) · registros intocados.
+**Próximo indep.:** surface Central360 / cadastros sky residual / Historico HTTP só sob fold Codex (#441/#442) — sem re-port.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
