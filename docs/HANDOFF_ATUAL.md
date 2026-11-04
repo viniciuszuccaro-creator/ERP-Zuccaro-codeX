@@ -1,3 +1,9 @@
+## CURSOR — #491 provas + fila (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00` **não** inclui #488–#493 (uniqueKeys ausentes no tree).
+- #491: provas comportamentais WindowManager (dois cliques, ids distintos, fechar/reabrir).
+- Incorporação seletiva na candidata **somente após aceite Codex**.
+- Homolog: 100 clientes HML privados — Cursor não altera IDs/nomes; API/tela pendente Codex; sem dados públicos.
+
 ## CURSOR — #491 CI SUCCESS (2026-11-04 America/Sao_Paulo)
 - Tip `524df3390` · PR #491 · CI SUCCESS 3/3.
 - Expedição Entregas uniqueKey + pin date DetalhesEntrega. #488–#490 verdes. Homolog #475 BLOCKED.

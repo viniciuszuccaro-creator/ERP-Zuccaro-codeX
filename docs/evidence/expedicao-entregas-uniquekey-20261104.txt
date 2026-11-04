@@ -32,3 +32,11 @@ CI
 --
 Tip 524df3390 SUCCESS frontend+backend+compose
 Pin residual date-arithmetic DetalhesEntregaView sobre 633fc3df0.
+
+Provas comportamentais
+---------------------
+Dois cliques mesmo id → reuse.
+Id distinto / view≠edit≠sep≠reversa → janelas distintas.
+Fechar libera uniqueKey → reabrir cria nova.
+WindowManager canônico (uniqueKeyRegistryRef); sem segundo gerenciador.
+#401 tip b888b2c00: chaves ausentes — integração só após aceite.

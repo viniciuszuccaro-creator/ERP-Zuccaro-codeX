@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#491 provas comportamentais uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#491](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/491) tip prévio **`f128f54c4`** CI SUCCESS |
+| **Candidata #401** | tip **`b888b2c00`** — **NÃO** contém `expedicao-entrega-*` (ausente no tree) |
+| **Este tip** | provas: dois cliques / id distinto / view≠edit / fechar→reabrir / WindowManager canônico |
+| **Integração** | **BLOCKED** até aceite Codex — sem FF automático na candidata |
+| Classificação | navegação · prova comportamental |
+| Fora | merge/deploy · seed · dados reais · segundo WindowManager |
+
+**Fila uniqueKey OPEN (base #401, não incorporados):** #488–#493.
+**Homolog:** #475 BLOCKED — 100 clientes HML privados aguardam conexão API/tela (Codex); sem fallback sintético.
+
 ## CURSOR — VIGENTE (#491 Expedição Entregas uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |
