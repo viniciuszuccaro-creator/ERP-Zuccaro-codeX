@@ -27,3 +27,8 @@ primitive-ui-boundary-contracts (pin) PASS
 Fora
 ----
 merge/deploy · seed · Base44 · Hub (#484)
+
+CI
+--
+tip cd92838e7 — frontend/backend/compose SUCCESS (2026-11-04)
+#476–#485 verdes
