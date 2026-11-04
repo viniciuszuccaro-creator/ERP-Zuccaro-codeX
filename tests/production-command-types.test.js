@@ -9,7 +9,8 @@ import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemai
 const hashes={
   'src/pages/ProducaoMobile.jsx':'883f842f7858638b1546786663b624fba9c703a8c96400cfd52d5fec8306bea3',
   'src/components/producao/FormularioOrdemProducao.jsx':'48e3a21004e5ca4d9c91f509681193247fc617d31d94050225bbecbfd1da678b',
-  'src/components/producao/KanbanProducaoInteligente.jsx':'f7664fa534d3a58781977966658b6e1223278e7a39f2d0b73f951f5593a99957',
+  // 2026-11-04: uniqueKey create/view openWindow (anti-duplicata).
+  'src/components/producao/KanbanProducaoInteligente.jsx':'5c8690fdfe4ce0a12fef944a75ad683f324e4e90ae9e027f7b43eb85169eb655',
   'src/components/producao/ConfiguracaoProducao.jsx':'2cf1a23c55a464a1f5ca240b3c508cd1dd5fd54c04e1e060bd91b897fea38e96',
   'src/components/cadastros/VisualizadorProdutos.jsx':'f66a24a75f1c50d47b0b8331350dc82f91cd4e2235de676cc5d7aedd9d3cbf57',
   'src/components/producao/SeletorProdutosProducao.jsx':'2f5a5f946d7673a535f7ac347ffcf327de07c5e533442c26add3fbe66862ce59',

@@ -161,6 +161,7 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
       title: `OP ${op.numero_op} - ${op.cliente_nome}`,
       width: 1400,
       height: 900,
+      uniqueKey: op?.id != null ? `producao-op-view-${String(op.id)}` : 'producao-op-view-sem-id',
     });
   };
 
@@ -180,6 +181,7 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
       title: "Nova Ordem de Produção",
       width: 1400,
       height: 900,
+      uniqueKey: `producao-op-create-kanban-${JSON.stringify([groupId, empresaId])}`,
     });
   };
 

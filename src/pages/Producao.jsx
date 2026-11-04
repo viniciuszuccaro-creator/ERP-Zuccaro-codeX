@@ -308,6 +308,7 @@ export default function Producao() {
       title: 'Nova Ordem de Produção',
       width: 1400,
       height: 900,
+      uniqueKey: `producao-op-create-${JSON.stringify([groupId, empresaId])}`,
     });
   };
   const handleModuleClick = (module) => {

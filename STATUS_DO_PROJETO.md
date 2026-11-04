@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Produção OP uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos verdes** | #476–#491 |
+| **Este pacote** | `cursor/producao-op-uniquekey-392b` — Nova OP / Kanban anti-duplicata |
+| **Evidência** | `docs/evidence/producao-op-uniquekey-20261104.txt` |
+| Classificação | navegação |
+| Fora | merge/deploy · seed · dados reais |
+
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · C360 residual · fail-closed residual.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
