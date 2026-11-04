@@ -1,7 +1,7 @@
 ## CURSOR — Pedido/Ações uniqueKey (2026-11-04 America/Sao_Paulo)
-- #401 tip `b888b2c00`. Branch `cursor/comercial360-pedido-uniquekey-392b`.
+- #401 tip `b888b2c00`. Branch `cursor/comercial360-pedido-uniquekey-392b` tip `6b463436c` **CI SUCCESS**.
 - Comercial criar/editar Pedido + ValidarExternos + Ações Rápidas: uniqueKey por escopo/ID.
-- Paralelo #481 KPI fail-closed. #476–#480 verdes. Homolog #475 BLOCKED. Sem merge/deploy/seed.
+- #481 KPI `21c3655c4` CI SUCCESS. #476–#482 verdes. Homolog #475 BLOCKED. Sem merge/deploy/seed.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

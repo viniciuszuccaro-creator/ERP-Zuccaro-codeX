@@ -28,3 +28,9 @@ comercial-clientes-tab-v24 (regressão AcoesRapidas)
 Fora
 ----
 PedidosTab (hash pin) · Icone (#480) · Painel (#481) · merge/deploy · seed
+
+CI
+--
+tip 6b463436c — frontend/backend/compose SUCCESS (2026-11-04)
+#481 tip 21c3655c4 — SUCCESS em paralelo
+
