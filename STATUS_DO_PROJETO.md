@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (DetalhesCliente KPI fail-closed + continuidade) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **PRs verdes** | #476–#482 CI SUCCESS |
+| **Este pacote** | tip **`21c3655c4`** CI SUCCESS — KPI pedidos DESCONHECIDO ≠ 0 |
+| **Extra** | Painel editar cadastro com `uniqueKey` |
+| **Evidência** | `docs/evidence/c360-detalhes-kpi-failclosed-20261104.txt` |
+| Classificação | capacidade fail-closed · registros intocados |
+| Fora | port #441 · mount Seletor · merge/deploy/VPS · seed · Base44 reauth |
+
+**Homolog privada:** #475 gates — Codespace/legado/Base44 BLOCKED neste agente; sem dados reais em CI.
+**Próximo indep.:** CI deste tip · Historico HTTP sob fold Codex · cadastros fora reservas.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

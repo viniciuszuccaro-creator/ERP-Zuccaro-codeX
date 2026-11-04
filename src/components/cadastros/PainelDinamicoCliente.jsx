@@ -394,6 +394,7 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   if (!cliente) return null;
 
   const handleEditarCadastro = () => {
+    const clienteId = cliente?.id != null ? String(cliente.id) : "";
     openWindow(
       CadastroClienteCompleto,
       { cliente, windowMode: true },
@@ -401,6 +402,9 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         title: `Editar Cliente: ${cliente.nome || cliente.razao_social}`,
         width: 1100,
         height: 650,
+        uniqueKey: clienteId
+          ? `cadastro-cliente-completo-${clienteId}`
+          : `cadastro-cliente-completo-sem-id`,
       }
     );
     if (onClose) onClose();

@@ -1,0 +1,36 @@
+C360 — DetalhesCliente KPI fail-closed (2026-11-04 America/Sao_Paulo)
+======================================================================
+Base #401 tip b888b2c00 · branch cursor/comercial360-detalhes-kpi-failclosed-392b
+Paralelos verdes: #476–#480
+
+Problema
+--------
+useQuery de pedidos em DetalhesCliente usava `data: pedidos = []`.
+Em erro/indisponível o KPI virava R$ 0,00 e 0 pedidos — fabricava zero.
+
+Delta
+-----
+- Status KPI: blocked | unavailable | loading | ok
+- unavailable/loading/blocked → DESCONHECIDO (não R$ 0)
+- ok + lista vazia → zeros confirmados + mensagem vazia
+- PainelDinamicoCliente: uniqueKey ao abrir CadastroClienteCompleto
+
+Classificação
+-------------
+- Apresentação: hint KPI / lista
+- Capacidade: fail-closed (erro ≠ vazio)
+- Registros: NÃO tocados
+
+Testes
+------
+comercial-detalhes-kpi-failclosed PASS
+comercial-detalhes-historico-mount (regressão)
+
+Fora
+----
+port Historico HTTP #441 · seed · merge/deploy · nova candidata
+
+CI
+--
+tip 21c3655c4 — frontend/backend/compose SUCCESS (2026-11-04)
+#476–#482 verdes; não reabrir.
