@@ -2,13 +2,14 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/expedicao-reversa-uniquekey-392b` |
+| **Branch / PR** | `cursor/expedicao-reversa-uniquekey-392b` = **#506** |
+| **Tip CI SUCCESS** | `498f026eef7ec2e6070103c0c2669d4c664245c3` · 6/6 |
 | **Delta** | DetalhesEntregaView · logística reversa por entrega id |
-| **Paralelos** | #491–#505 |
-| **Candidata #401** | tip `b888b2c00` |
+| **Pins** | date-arithmetic → 06c9c915… · runtime-proof → 938e6e052 |
 | **Homolog 100** | BLOCKED |
 | Classificação | navegação · registros intocados |
 | Fora | merge/deploy · FF #401 sem aceite |
+
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 

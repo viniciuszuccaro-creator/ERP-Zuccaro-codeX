@@ -1,3 +1,7 @@
+## CURSOR — LogisticaReversa uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#506** tip `498f026ee` CI SUCCESS 6/6 (após pin date-arithmetic). Homolog 100 BLOCKED.
+- Fila uniqueKey #491–#506 verdes na base #401. FF seletiva após aceite Codex.
+
 ## CURSOR — LogisticaReversa uniqueKey (2026-11-04 America/Sao_Paulo)
 - DetalhesEntregaView: uniqueKey por entrega. Homolog 100 BLOCKED.
 
