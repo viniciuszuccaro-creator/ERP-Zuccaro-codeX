@@ -1,3 +1,6 @@
+## CURSOR — CentralAprovacoes uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#503** tip `15bb36bf5` CI SUCCESS 6/6 (após pin renew). Homolog 100 BLOCKED.
+
 ## CURSOR — CentralAprovacoes uniqueKey (2026-11-04 America/Sao_Paulo)
 - `cursor/comercial-aprovacoes-uniquekey-392b`: analisar vs fechar com keys distintas (não misturam callbacks).
 - Paralelos #491–#502. Homolog 100 BLOCKED. Aceite antes de FF.

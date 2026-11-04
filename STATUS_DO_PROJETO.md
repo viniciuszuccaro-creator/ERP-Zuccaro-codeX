@@ -2,13 +2,14 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-aprovacoes-uniquekey-392b` |
-| **Delta** | CentralAprovacoesManager · analisar/fechar por pedido (modos distintos) |
-| **Paralelos** | #491–#502 |
-| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Branch / PR** | `cursor/comercial-aprovacoes-uniquekey-392b` = **#503** |
+| **Tip CI SUCCESS** | `15bb36bf5f6bac8d46f49a7cc9642b35f0e41117` · 6/6 |
+| **Delta** | CentralAprovacoesManager · analisar/fechar por pedido |
+| **Pins** | approval-command → 0a374ec3… · browser-runtime → 0d6e82ca… · runtime-proof → eafc2e4d8 |
 | **Homolog 100** | BLOCKED |
 | Classificação | navegação · registros intocados |
 | Fora | merge/deploy · FF #401 sem aceite |
+
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
