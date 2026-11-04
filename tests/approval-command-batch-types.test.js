@@ -17,7 +17,7 @@ const entries={
   pdv:{file:'financeiro/CaixaPDVCompleto',hash:'9fe62f62709098a9e800e4aa92f8993b564171eaeb7784ba8e83fcde642bbaee',names:['abrirCaixa','liquidarTitulo'],state:'saldoInicial'},
   retirada:{file:'comercial/PedidosRetiradaTab',hash:'59b05bce4cb0cce1126e0815e6fb91e4bf290dbaa671a62a55ddcbc4c5255cfb',names:['atualizarStatusMutation','confirmarRetiradaMutation']},
   central:{file:'comercial/CentralAprovacoesManager',hash:'3cd1cf8a9292a75d061ebbb000dfb28146fb45f396f397d6d485b7fe65383ee1',names:['aprovarPedidoMutation','negarPedidoMutation']},
-  entrega:{file:'comercial/PedidosEntregaTab',hash:'158c6dc5c5eafdb3b6b06500aea3a00c6952049c84a654602264cfdfad5f0dd2',names:['atualizarStatusMutation']},
+  entrega:{file:'comercial/PedidosEntregaTab',hash:'f606304441c1f0a6167006d784f90cc1c35fed88f68c8500840c7988162554a4',names:['atualizarStatusMutation']},
   compra:{file:'compras/OrdensCompraTab',hash:'4fd71e268eb4ac9a454d986314501dd362d06fcf76aea9e09cc78b753dddd78c',names:['createMutation','updateMutation','aprovarMutation','enviarFornecedorMutation','avaliarFornecedorMutation'],state:'avaliacaoFormData'},
 };
 function astFor(kind){const file='src/components/'+entries[kind].file+'.jsx';return ts.createSourceFile(file,fs.readFileSync(file,'utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX);}
