@@ -1,0 +1,30 @@
+Assinatura modal — IP fail-closed (2026-11-04 America/Sao_Paulo)
+================================================================
+Base #401 tip b888b2c00 · branch cursor/assinatura-modal-ip-failclosed-392b
+Paralelo #486 Form (CI SUCCESS)
+
+Problema
+--------
+AssinaturaEletronicaModal fabricava IP 192.168.1.{random} ("Simular IP").
+
+Delta
+-----
+- ip_address = null + UI DESCONHECIDO
+- Espelho do Form #486; sem lookup externo
+
+Classificação
+-------------
+auditoria fail-closed · registros não inventados
+
+Testes
+------
+assinatura-modal-ip-failclosed PASS
+
+Fora
+----
+captura IP server-side · merge/deploy · seed · Base44
+
+CI
+--
+tip b22bbacdd — frontend/backend/compose SUCCESS (2026-11-04)
+#476–#487 verdes
