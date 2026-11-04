@@ -1,3 +1,15 @@
+## CURSOR — Cadastros gestores uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Branch** | `cursor/cadastros-gestores-uniquekey-392b` |
+| **Delta** | `GestorDespesasRecorrentes` + `GestorGatewaysPagamento` · create por escopo · edit por id |
+| **Paralelos** | #488–#493 provas · #494 Contratos `cec94aa1d` |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos; identidade só fonte canônica |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
