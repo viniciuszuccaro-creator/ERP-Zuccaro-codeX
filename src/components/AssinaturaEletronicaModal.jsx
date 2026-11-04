@@ -85,8 +85,9 @@ export default function AssinaturaEletronicaModal({
       navegador = "Safari";
     }
 
-    // Simular IP (em produção viria do backend)
-    const ip_address = "192.168.1." + Math.floor(Math.random() * 255);
+    // Sem fonte canônica de IP no browser → DESCONHECIDO (não fabricar 192.168.x).
+    // Persistência/auditoria server-side deve capturar IP real quando disponível.
+    const ip_address = null;
 
     setDadosAssinatura(prev => ({
       ...prev,
@@ -462,11 +463,13 @@ export default function AssinaturaEletronicaModal({
                     <p className="font-semibold">{dadosAssinatura.navegador}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" data-action="assinatura-modal-ip" data-kpi-status={dadosAssinatura.ip_address ? "ok" : "unavailable"}>
                   <MapPin className="w-4 h-4 text-slate-500" />
                   <div>
                     <p className="text-slate-500">IP</p>
-                    <p className="font-semibold">{dadosAssinatura.ip_address}</p>
+                    <p className={`font-semibold ${dadosAssinatura.ip_address ? "" : "text-amber-800"}`} data-action={dadosAssinatura.ip_address ? undefined : "assinatura-modal-ip-desconhecido"}>
+                      {dadosAssinatura.ip_address || "DESCONHECIDO"}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 col-span-2">
@@ -549,7 +552,9 @@ export default function AssinaturaEletronicaModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">IP:</span>
-                  <strong>{dadosAssinatura.ip_address}</strong>
+                  <strong className={!dadosAssinatura.ip_address ? "text-amber-800" : undefined}>
+                    {dadosAssinatura.ip_address || "DESCONHECIDO"}
+                  </strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-600">Dispositivo:</span>
