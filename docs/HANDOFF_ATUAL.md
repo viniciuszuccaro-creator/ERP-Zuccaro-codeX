@@ -1,3 +1,6 @@
+## CURSOR — #492 provas comportamentais (2026-11-04)
+- Provas WindowManager create/view. #401 tip b888b2c00 sem estas chaves. Integração só após aceite.
+
 ## CURSOR — #492 CI SUCCESS (2026-11-04 America/Sao_Paulo)
 - Tip `6edb243a2` · PR #492 · CI SUCCESS 3/3.
 - Produção Nova OP / Kanban uniqueKey. #488–#491 verdes. Homolog #475 BLOCKED.

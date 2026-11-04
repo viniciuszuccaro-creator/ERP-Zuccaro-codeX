@@ -1,3 +1,12 @@
+## CURSOR — #492 provas comportamentais uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#492](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/492) |
+| **Candidata #401** | tip `b888b2c00` — **sem** `producao-op-*` |
+| **Provas** | create escopo A≠B · view id · dois cliques · fechar/reabrir · WM canônico |
+| **Integração** | BLOCKED até aceite Codex |
+
 ## CURSOR — VIGENTE (#492 Produção OP uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |
