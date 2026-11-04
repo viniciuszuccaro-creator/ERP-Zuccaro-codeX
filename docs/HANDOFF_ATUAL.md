@@ -1,3 +1,8 @@
+## CURSOR — #494 Contratos CI SUCCESS + provas #491–#493 verdes (2026-11-04 America/Sao_Paulo)
+- Tip `cec94aa1d` · PR #494 · CI SUCCESS 6/6.
+- Provas #491 `2bca31fa0` · #492 `c5a1c45d9` · #493 `1a0a93ef6` também CI SUCCESS; **não** em #401 `b888b2c00`.
+- #495 Gestores tip `b2728957c` CI em curso. Homolog 100 BLOCKED. Aceite antes de FF seletivo.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

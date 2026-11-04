@@ -575,7 +575,12 @@ export default function ContratosPage() {
     clientes,
     fornecedores,
     onSubmit: (/** @type {Contrato} */ data) => createMutation.mutateAsync(data)
-  }, { title: '📄 Novo Contrato', width: 1100, height: 700 });
+  }, {
+    title: '📄 Novo Contrato',
+    width: 1100,
+    height: 700,
+    uniqueKey: `contratos-create-${JSON.stringify([contextoCanonico.groupId, empresaAtual?.id || null])}`,
+  });
 
   /** @param {Contrato} contrato */
   const abrirEdicaoContrato = (contrato) => openWindow(ContratoForm, {
@@ -588,7 +593,14 @@ export default function ContratosPage() {
       await queryClient.invalidateQueries({ queryKey: ['contratos'] });
       toast({ title: '✅ Contrato atualizado!' });
     }
-  }, { title: `✏️ Editar: ${contrato.numero_contrato}`, width: 1100, height: 700 });
+  }, {
+    title: `✏️ Editar: ${contrato.numero_contrato}`,
+    width: 1100,
+    height: 700,
+    uniqueKey: contrato?.id != null
+      ? `contratos-edit-${String(contrato.id)}`
+      : 'contratos-edit-sem-id',
+  });
 
   return (
     <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">

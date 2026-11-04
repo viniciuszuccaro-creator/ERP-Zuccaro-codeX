@@ -1,3 +1,18 @@
+## CURSOR — #494 Contratos uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#494](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/494) `cursor/contratos-uniquekey-392b` |
+| **Tip** | **`cec94aa1d`** · CI SUCCESS 6/6 (frontend+backend+compose × push/PR) |
+| **Código** | `contratos-create-[groupId,empresaId]` · `contratos-edit-{id}` |
+| **Paralelos provas verdes** | #491 `2bca31fa0` · #492 `c5a1c45d9` · #493 `1a0a93ef6` (CI SUCCESS) |
+| **#495 Gestores** | tip `b2728957c` — CI em curso |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
+| **Incorporação** | seletiva na #401 **somente após aceite** Codex |
+| Classificação | navegação · registros intocados |
+| Fora | merge main · deploy · seed · Base44 |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
