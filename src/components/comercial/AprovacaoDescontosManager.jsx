@@ -439,7 +439,9 @@ function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
                             {
                               title: `🔐 Análise: ${pedido.numero_pedido}`,
                               width: 1400,
-                              height: 800
+                              height: 800,
+                              // Alinhado a CentralAprovacoesManager (analisar) — mesma finalidade
+                              uniqueKey: `comercial-aprovacao-analisar-${String(pedido?.id || "")}`,
                             }
                           );
                         }}

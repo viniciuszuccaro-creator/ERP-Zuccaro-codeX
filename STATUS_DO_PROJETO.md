@@ -1,3 +1,16 @@
+## CURSOR — AprovacaoDescontos uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-aprovacao-descontos-uniquekey-392b` |
+| **Delta** | AprovacaoDescontosManager · key alinhada a Central (`comercial-aprovacao-analisar-{id}`) |
+| **Overlap** | #503 CentralAprovacoes — mesma key de analisar; modos fechar ficam só na Central |
+| **Paralelos** | #491–#503 |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
