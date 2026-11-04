@@ -1,3 +1,15 @@
+## CURSOR — ExternalApps uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/external-apps-uniquekey-392b` |
+| **Delta** | `ExternalAppsHub` — Portal/Motorista/Chatbot/Produção/Chat/Orçamento site com uniqueKey por escopo |
+| **Paralelos verdes** | #491–#496 · #482 |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
