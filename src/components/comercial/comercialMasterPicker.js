@@ -240,7 +240,11 @@ export function unionComercialClienteCatalog(base = /** @type {T} */ ({}), patch
   });
 }
 
-/** Lacunas remanescentes do contrato Orçamento (após 039 tabela_preco_id). */
+/**
+ * Lacunas remanescentes do contrato Orçamento/Pedido (após 039 tabela_preco_id).
+ * unidade_alternativa: compartilhada — SeletorUnidadeComConversao NÃO montado nos canônicos
+ * (OrcamentosTab / PedidoCanonicoPanel); montar só com contrato backend + testes Codex.
+ */
 export const ORCAMENTO_PERSISTENCE_GAPS = Object.freeze({
   preco_unitario_ui: 'UI pode divergir do gravado — servidor sobrescreve snapshot',
   unidade_alternativa: 'somente unidade principal do produto; sem conversão',

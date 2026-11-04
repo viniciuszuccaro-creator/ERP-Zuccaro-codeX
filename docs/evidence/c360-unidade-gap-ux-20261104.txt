@@ -1,0 +1,41 @@
+C360 — unidade alternativa gap UX (2026-11-04 America/Sao_Paulo)
+=================================================================
+Base #401 tip b888b2c00 · CI5684 SUCCESS
+Branch cursor/comercial360-unidade-gap-ux-392b
+Paralelos verdes: #476 55675c853 · #477 60fccfd9a · #478 fdd80ad6a
+
+Problema
+--------
+Orçamento já marcava unidade readOnly com title do gap; Pedido canônico
+tinha Input readOnly sem title/data-action — operador podia achar que
+conversão existia. SeletorUnidadeComConversao NÃO está montado nos canônicos
+(OrcamentosTab / PedidoCanonicoPanel). README_V22 afirma montagem em
+PedidoFormCompleto — desatualizado; não inventar mount sem contrato backend.
+
+Delta (sem alterar proprietário da persistência)
+-----------------------------------------------
+- PedidoCanonicoPanel: title + data-action pedido-unidade-principal-only +
+  descrição do formulário explícita; reusa ORCAMENTO_PERSISTENCE_GAPS
+- OrcamentosTab: data-action orcamento-unidade-principal-only
+- comercialMasterPicker: comentário — montar Seletor só com contrato Codex
+
+Concorrência (diagnóstico, sem reimplementar)
+---------------------------------------------
+- PedidoCanonicoPanel: mestres HTTP (`comercialMasters.list`); mutationGate/
+  detailGate já presentes; prop filterInContext órfã (sem chamada no corpo)
+- Residual Codex: race submit/hydrate além dos gates, se houver contraprova nova
+
+Classificação
+-------------
+- Apresentação: gap de unidade visível no canônico Pedido/Orçamento
+- Capacidade: fail-closed (sem conversão inventada)
+- Registros: NÃO tocados
+
+Testes
+------
+comercial-unidade-gap-ux PASS
+
+Não fazer
+---------
+Montar SeletorUnidadeComConversao nos canônicos sem contrato
+Port #453/#446 · nova candidata · seed · merge/deploy/VPS

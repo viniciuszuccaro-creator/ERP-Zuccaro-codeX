@@ -1,3 +1,8 @@
+## CURSOR — C360 unidade gap UX + continuidade (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00`/CI5684. PRs #476/#477/#478 CI SUCCESS — não reabrir aceites.
+- Pacote `cursor/comercial360-unidade-gap-ux-392b`: Pedido+Orçamento unidade principal only (data-action/title); Seletor NÃO montado nos canônicos.
+- Concorrência: mestres HTTP + mutationGate. Sem inventar conversão / sem nova candidata / sem merge-deploy.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
