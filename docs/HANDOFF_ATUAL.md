@@ -1,3 +1,6 @@
+## CURSOR — FormasPagamento uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#502** tip `61400f3f7` CI SUCCESS 6/6. Homolog 100 BLOCKED. Aceite antes de FF.
+
 ## CURSOR — FormasPagamento uniqueKey (2026-11-04 America/Sao_Paulo)
 - `cursor/cadastros-formas-pagamento-uniquekey-392b`: create/edit uniqueKey no WindowManager canônico.
 - Paralelos #491–#501. Homolog 100 BLOCKED. Aceite antes de FF.

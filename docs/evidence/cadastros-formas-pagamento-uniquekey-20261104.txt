@@ -1,9 +1,11 @@
 PR branch: cursor/cadastros-formas-pagamento-uniquekey-392b
-Tip: 1fd37f954b9de24d129e0d725dedc3f269d4ff7a
+PR: #502
+Tip: 61400f3f71ce22f7e45bc9943a40bc75d61cc054
+CI: SUCCESS 6/6
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Escopo: uniqueKey WindowManager em GestorFormasPagamento
 Keys: cadastros-forma-pagamento-create-[g,e] · cadastros-forma-pagamento-edit-{id}
 Testes: tests/cadastros-formas-pagamento-uniquekey.test.js 4 PASS
 Classificação: navegação · registros intocados
-Homolog 100 clientes HML: BLOCKED
+Homolog 100: BLOCKED
 Fora: merge main · deploy · seed · FF #401 sem aceite
