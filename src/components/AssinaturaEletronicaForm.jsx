@@ -69,7 +69,9 @@ export default function AssinaturaEletronicaForm({
     else if (userAgent.indexOf("Safari") > -1) navegador = "Safari";
     else if (userAgent.indexOf("Edge") > -1) navegador = "Edge";
 
-    const ip_address = "192.168.1." + Math.floor(Math.random() * 255);
+    // Sem fonte canônica de IP no browser → DESCONHECIDO (não fabricar 192.168.x).
+    // Persistência/auditoria server-side deve capturar IP real quando disponível.
+    const ip_address = null;
 
     setDadosAssinatura(prev => ({ ...prev, dispositivo, navegador, ip_address }));
   };
@@ -339,11 +341,13 @@ export default function AssinaturaEletronicaForm({
                   <p className="font-semibold">{dadosAssinatura.navegador}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-action="assinatura-ip" data-kpi-status={dadosAssinatura.ip_address ? "ok" : "unavailable"}>
                 <MapPin className="w-4 h-4 text-slate-500" />
                 <div>
                   <p className="text-slate-500">IP</p>
-                  <p className="font-semibold">{dadosAssinatura.ip_address}</p>
+                  <p className={`font-semibold ${dadosAssinatura.ip_address ? "" : "text-amber-800"}`} data-action={dadosAssinatura.ip_address ? undefined : "assinatura-ip-desconhecido"}>
+                    {dadosAssinatura.ip_address || "DESCONHECIDO"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 col-span-2">
@@ -406,12 +410,12 @@ export default function AssinaturaEletronicaForm({
                 ['Assinante', dadosAssinatura.nome_completo],
                 ['CPF', dadosAssinatura.cpf],
                 ['Data/Hora', new Date().toLocaleString('pt-BR')],
-                ['IP', dadosAssinatura.ip_address],
+                ['IP', dadosAssinatura.ip_address || 'DESCONHECIDO'],
                 ['Dispositivo', `${dadosAssinatura.dispositivo} - ${dadosAssinatura.navegador}`]
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between">
                   <span className="text-slate-600">{label}:</span>
-                  <strong>{value}</strong>
+                  <strong className={label === 'IP' && !dadosAssinatura.ip_address ? 'text-amber-800' : undefined}>{value}</strong>
                 </div>
               ))}
             </div>

@@ -1,0 +1,26 @@
+Assinatura eletrônica — IP fail-closed (2026-11-04 America/Sao_Paulo)
+=====================================================================
+Base #401 tip b888b2c00 · branch cursor/assinatura-ip-failclosed-392b
+Paralelos verdes: #476–#485
+
+Problema
+--------
+obterDadosDispositivo fabricava IP `192.168.1.{random}` e exibia/gravava
+como se fosse real — polui auditoria.
+
+Delta
+-----
+- ip_address = null + UI DESCONHECIDO
+- Sem lookup externo; IP real cabe ao backend na persistência
+
+Classificação
+-------------
+capacidade fail-closed / auditoria · registros não inventados
+
+Testes
+------
+assinatura-ip-failclosed PASS
+
+Fora
+----
+captura server-side de IP · merge/deploy · seed · Base44
