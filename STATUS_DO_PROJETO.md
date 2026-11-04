@@ -1,18 +1,34 @@
+## CURSOR — VIGENTE (C360 unidade gap UX + continuidade) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS — sem nova candidata |
+| **PRs verdes** | #476 `55675c853` · #477 `60fccfd9a` · #478 `fdd80ad6a` (CI 6/6) |
+| **Este pacote** | `cursor/comercial360-unidade-gap-ux-392b` — Pedido/Orçamento unidade principal only |
+| **Não montado** | `SeletorUnidadeComConversao` nos canônicos — exige contrato backend Codex |
+| **Concorrência** | mestres HTTP + mutationGate; sem reimplementar filterInContext |
+| **Evidência** | `docs/evidence/c360-unidade-gap-ux-20261104.txt` |
+| Classificação | apresentação + capacidade fail-closed · registros intocados |
+| Fora | mount Seletor · port #453/#446 · merge/deploy/VPS · seed |
+
+**Aceites encerrados:** Contatos/prévia Orc→Pedido · inventário Contatos · surface Central360 · aside DESCONHECIDO.
+**Próximo indep.:** CI deste tip · Historico HTTP sob fold Codex (#441/#442) · cadastros sky só fora reservas · homolog #475 BLOCKED.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
 |-----------|----------------|
-| **HEAD docs** | (este commit) — STATUS + P1 assertScopeCurrent |
+| **HEAD docs** | tip `b888b2c00` — fila canônica |
 | **Código runtime prévio** | `ae4fdc86f` P2 hostWindowMode · `dbbee42ea` P1 filterInContextRef · `749bc0201` stage54 |
-| **CI SUCCESS tip** | `57479b67d` 3/3 (frontend+backend+compose) — própria do SHA; ≠ herdar ancestral |
+| **CI SUCCESS tip** | **`b888b2c00`** run **5684** SUCCESS 3/3 |
 | **Parecer Codex P1+P2** | tip `70a333197` — “no major issues” /6548107136 (pré-stage54) |
 | **Composto aceito** | `075fc2260` = FF #446+#453+#454+pedido-detail (`80d1393ee`) |
 | **Branch / PR** | `cursor/composicao-397-342-prep-392b` = **#401** (sem merge main / deploy / VPS) |
 | **Preservado** | Contatos/contagens · `src/api` · `server/src` · RBAC · persistência · aceites sessão/tabela/late/duplo-clique |
 
-**Delta em curso:** P1 #4425981924 — `assertScopeCurrent` alinhado a `buildPainelContatosScopeKey` (ator+sessão); seams Contatos **15 PASS**.
+**Delta tip encerrado:** P1 assertScopeCurrent + docs fila; aceites Contatos/prévia **não reabrir**.
 **Não repetir:** port #453/#446; nova candidata paralela.
-**Próximo:** CI deste tip · `@codex review` deltas Contatos guard · indep. cadastros sky (#455–#463 CI SUCCESS) / C360 residual.
+**Próximo:** supersedido pela continuidade 2026-11-04 (unidade gap UX + PRs #476–#478).
 
 ## CURSOR — VIGENTE (#401 P1+P2 modal janela + composto) (2026-10-31 America/Sao_Paulo)
 
