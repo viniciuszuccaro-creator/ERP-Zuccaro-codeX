@@ -1,0 +1,29 @@
+Financeiro Contas — uniqueKey anti-duplicata (2026-11-04 America/Sao_Paulo)
+===========================================================================
+Base #401 tip b888b2c00 · branch cursor/financeiro-contas-uniquekey-392b
+Paralelos verdes: #476–#487
+
+Problema
+--------
+ContasReceberTab / ContasPagarTab abriam Form sem uniqueKey → janelas duplicadas.
+
+Delta
+-----
+- CR create: financeiro-cr-create-{scope}
+- CR edit/view: financeiro-cr-edit|view-{id}
+- CP create/edit: financeiro-cp-create-{scope} / financeiro-cp-edit-{id}
+- Pins financial-title + purchase-financial-audit renovados (justificativa uniqueKey)
+
+Classificação
+-------------
+navegação anti-duplicata · registros intocados
+
+Testes
+------
+financeiro-contas-uniquekey PASS
+financial-title-command-types PASS
+purchase-financial-audit-types PASS
+
+Fora
+----
+merge/deploy · seed · Base44 · Historico HTTP

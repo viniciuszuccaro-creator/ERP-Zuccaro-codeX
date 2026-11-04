@@ -468,7 +468,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
             queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
             toast({ title: "✅ Conta criada!" });
           }
-        }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 }) }}
+        }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600, uniqueKey: `financeiro-cp-create-${JSON.stringify([groupId, empresaId, authUser?.id || null])}` }) }}
         onEnviarCaixa={() => {
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           if (!hasPermission('Financeiro','ContaPagar','enviar_caixa') && !hasPermission('Financeiro','ContaPagar','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
@@ -494,7 +494,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
             queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
             toast({ title: "✅ Conta atualizada!" });
           }
-        }, { title: `✏️ Editar: ${conta.fornecedor}`, width: 900, height: 600 })}}
+        }, { title: `✏️ Editar: ${conta.fornecedor}`, width: 900, height: 600, uniqueKey: conta?.id != null ? `financeiro-cp-edit-${String(conta.id)}` : 'financeiro-cp-edit-sem-id' })}}
         onAprovar={(contaId) => {
           if (!podeAprovarPagar) { toast({ title: '⛔ Sem permissão para aprovar', variant: 'destructive' }); return; }
           if (!contextoValido) { toast({ title: 'Selecione grupo ou empresa para aprovar pagamento', variant: 'destructive' }); return; }

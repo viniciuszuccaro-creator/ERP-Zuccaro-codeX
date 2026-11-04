@@ -477,7 +477,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
             queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
             toast({ title: "✅ Conta criada!" });
           }
-        }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 })}}
+        }, { title: '💰 Nova Conta a Receber', width: 900, height: 600, uniqueKey: `financeiro-cr-create-${JSON.stringify([groupId, empresaId, authUser?.id || null])}` })}}
         onEnviarCaixa={() => { if (!hasPermission('Financeiro','ContaReceber','enviar_caixa') && !hasPermission('Financeiro','ContaReceber','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           if (!contextoValido || titulos.length === 0) { toast({ title: 'Selecione contexto e titulos para enviar ao Caixa', variant: 'destructive' }); return; }
@@ -505,7 +505,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
               toast({ title: "✅ Conta atualizada!" });
             }
           }
-        }, { title: editar ? `✏️ Editar: ${conta.cliente}` : `👁️ Detalhes: ${conta.cliente}`, width: 900, height: 600 })}}
+        }, { title: editar ? `✏️ Editar: ${conta.cliente}` : `👁️ Detalhes: ${conta.cliente}`, width: 900, height: 600, uniqueKey: conta?.id != null ? `financeiro-cr-${editar ? 'edit' : 'view'}-${String(conta.id)}` : `financeiro-cr-${editar ? 'edit' : 'view'}-sem-id` })}}
         onGerarCobranca={(conta) => {
           setContaParaCobranca(conta);
           setGerarCobrancaDialogOpen(true);

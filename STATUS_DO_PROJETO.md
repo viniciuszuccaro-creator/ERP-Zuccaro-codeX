@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Financeiro Contas uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **PRs verdes** | #476–#487 CI SUCCESS |
+| **Este pacote** | `cursor/financeiro-contas-uniquekey-392b` — CR/CP anti-duplicata |
+| **Evidência** | `docs/evidence/financeiro-contas-uniquekey-20261104.txt` |
+| Classificação | navegação · pins renovados com justificativa |
+| Fora | merge/deploy · seed · Base44 · port Historico |
+
+**Homolog privada:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · cadastros residual · sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
