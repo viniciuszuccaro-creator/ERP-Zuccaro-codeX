@@ -14,8 +14,9 @@ const cases=[
   {file:'src/components/compras/OrdensCompraTab.jsx',name:'auditOrdemCompra',hash:'e647200f64d6e115f479bbed8740244962417e1301f88f7798537975e2904ed3',kind:'record',error:'Auditoria obrigatoria falhou para ordem de compra.'},
   {file:'src/components/compras/SolicitacoesCompraTab.jsx',name:'auditSolicitacaoCompra',hash:'aebd4dfc9c1fd5aaa78de56cba53cb10510cfe30c21d185e85d2defe25204b1a',kind:'record'},
   {file:'src/components/estoque/ImportadorProdutosPlanilha.jsx',name:'auditImportadorProdutos',hash:'662fff9f0c0fbcb56de2da4e37a4c396484e4ec19cc247fac430e7f73b0464f3',kind:'record',error:'Auditoria obrigatoria falhou para importacao de migracao.'},
-  {file:'src/components/financeiro/ContasPagarTab.jsx',name:'auditarFinanceiro',hash:'0898138298e1e1ecc4981110d7d04e43e7eeb1207e744dfd5cbbf9fe25225d5b',kind:'financial'},
-  {file:'src/components/financeiro/ContasReceberTab.jsx',name:'auditarFinanceiro',hash:'cfdaadd2fddf6086814801b08ebf0dc0e941b22884360e02c2381ef41c2700cb',kind:'financial'},
+  // Pins renovados 2026-11-04: uniqueKey anti-duplicata (auditarFinanceiro intacto).
+  {file:'src/components/financeiro/ContasPagarTab.jsx',name:'auditarFinanceiro',hash:'60ac833074ce25b421affe2cafbb1c7d29f57b507ebcc88f17b2791a335644b5',kind:'financial'},
+  {file:'src/components/financeiro/ContasReceberTab.jsx',name:'auditarFinanceiro',hash:'bb15bcc21c53b7b48217ce562fed731246b7c89ed41138dc6b5babddccd318be',kind:'financial'},
   {file:'src/components/financeiro/CartoesACompensar.jsx',name:'auditarCartao',hash:'a852813df03f95e6a4f37ccda51a93da4aa8f9cd2162926d776b6aa56e4bbe0a',kind:'cartao'},
   {file:'src/components/financeiro/caixa-central/OrdensLiquidacaoPendentes.jsx',name:'auditarOrdem',hash:'0cf6ee6db1ec49d7905908157c7a6a760c8b1c2bec37a64e7537f20a484a36e8',kind:'ordem'},
 ];

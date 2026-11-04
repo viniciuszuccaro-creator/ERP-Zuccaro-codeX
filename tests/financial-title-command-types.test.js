@@ -9,7 +9,8 @@ import {buildFinanceiroTitulosScopeSwitchReset} from '../src/components/financei
 
 const policy='src/components/financeiro/financeiroLaunchpadAccess.js';
 const pagar='src/components/financeiro/ContasPagarTab.jsx',receber='src/components/financeiro/ContasReceberTab.jsx';
-for(const [file,hash] of [[policy,'e67dfcf158ad233218fff8809ddff7c1a1e182a6dd5fac51eeb778e2ad25cb85'],[pagar,'0898138298e1e1ecc4981110d7d04e43e7eeb1207e744dfd5cbbf9fe25225d5b'],[receber,'cfdaadd2fddf6086814801b08ebf0dc0e941b22884360e02c2381ef41c2700cb']])test(`${file}: full executable runtime unchanged`,()=>{
+// Pins Contas* renovados 2026-11-04: uniqueKey anti-duplicata nas janelas (commands/audit intactos).
+for(const [file,hash] of [[policy,'e67dfcf158ad233218fff8809ddff7c1a1e182a6dd5fac51eeb778e2ad25cb85'],[pagar,'60ac833074ce25b421affe2cafbb1c7d29f57b507ebcc88f17b2791a335644b5'],[receber,'bb15bcc21c53b7b48217ce562fed731246b7c89ed41138dc6b5babddccd318be']])test(`${file}: full executable runtime unchanged`,()=>{
   const emitted=ts.transpileModule(portalReadRemainder(file,fs.readFileSync(file,'utf8')),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),hash);
 });

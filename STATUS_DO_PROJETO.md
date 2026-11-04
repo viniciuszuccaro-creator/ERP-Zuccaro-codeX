@@ -1,3 +1,41 @@
+## CURSOR — VIGENTE (#488 Contas uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#488](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/488) `cursor/financeiro-contas-uniquekey-392b` |
+| **Tip** | **`0aae053e5`** · CI SUCCESS (frontend+backend+compose) · runs 41880248563 / 41880266706 |
+| **Código** | uniqueKey CR/CP · tip funcional `ad688751d` + pin residual batch/portal |
+| Classificação | navegação anti-duplicata |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos verdes:** #476–#487 · #489 tip `d53eb7302`.
+**Em curso:** #490 pin residual tip `7e46c7f32`.
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** CI #490 · C360 residual sem port #441.
+
+## CURSOR — #488 pin residual Contas (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | (este commit) sobre `ad688751d` |
+| **Causa CI** | frontend: `financial-batch-permission` + `portal-read-boundaries` pins Contas* desatualizados após uniqueKey |
+| **Fix** | renovar hashes ContasPagar/Receber (justificativa uniqueKey); filtros/DRE intactos |
+| Fora | merge/deploy · mudança de mutação |
+
+## CURSOR — VIGENTE (Financeiro Contas uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **PRs verdes** | #476–#487 CI SUCCESS |
+| **Este pacote** | `cursor/financeiro-contas-uniquekey-392b` — CR/CP anti-duplicata |
+| **Evidência** | `docs/evidence/financeiro-contas-uniquekey-20261104.txt` |
+| Classificação | navegação · pins renovados com justificativa |
+| Fora | merge/deploy · seed · Base44 · port Historico |
+
+**Homolog privada:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · cadastros residual · sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

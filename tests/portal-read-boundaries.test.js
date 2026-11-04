@@ -15,7 +15,8 @@ const read = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 const digest = text => crypto.createHash('sha256').update(text).digest('hex');
 const frozen = {
   'src/lib/utils.js': '6f2e6d5cae1cce7c8663be5906fc9617a208d78fd6cf2815c8e260a10132e417',
-  'src/components/financeiro/ContasReceberTab.jsx': 'd3168dad16aacf9e706a27f23b30b05fe310f792eee0db42ab76ae9ea796901a',
+  // 2026-11-04: uniqueKey anti-duplicata openWindow (read hunks intactos).
+  'src/components/financeiro/ContasReceberTab.jsx': '31566937bfacb7e52be9783d37d4d6642996d3b3c8a164944861ba81724f79fc',
   'src/components/portal/DocumentosCliente.jsx': 'c648f7cbdf1bc7b6c461e5dbe784b9563466bad0d4c1dc5d810bd77825662f4e',
   'src/components/portal/BoletosList.jsx': '4bfd944b20d67fadbbd5d8534280f420d7754ba29262c64df949d2b7eac362e0',
 };

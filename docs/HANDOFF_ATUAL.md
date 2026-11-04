@@ -1,3 +1,14 @@
+## CURSOR — #488 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `0aae053e5` · PR #488 · CI SUCCESS 3/3 (runs 41880248563/41880266706).
+- Contas Receber/Pagar uniqueKey + pins batch/portal. Paralelo #489 verde. #490 em curso. Homolog #475 BLOCKED.
+
+## CURSOR — #488 pin residual Contas (2026-11-04)
+- CI frontend FAIL: pins batch/portal Contas*. Hashes renovados. uniqueKey intacto.
+
+## CURSOR — Financeiro Contas uniqueKey (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00`. Branch `cursor/financeiro-contas-uniquekey-392b`.
+- ContasReceber/Pagar: uniqueKey create/edit/view. Pins renovados. #476–#487 verdes. Homolog #475 BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
