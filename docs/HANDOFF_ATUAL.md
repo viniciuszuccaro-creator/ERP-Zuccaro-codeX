@@ -1,3 +1,6 @@
+## CURSOR — Fechamento dashboard uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#505** tip `59f3d9c75` CI SUCCESS 6/6. Homolog 100 BLOCKED.
+
 ## CURSOR — Fechamento dashboard uniqueKey (2026-11-04 America/Sao_Paulo)
 - WidgetFechamentoPedidos: uniqueKey por empresaId. Homolog 100 BLOCKED.
 
