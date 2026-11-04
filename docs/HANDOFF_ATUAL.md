@@ -1,3 +1,8 @@
+## CURSOR — #493 provas + homolog checkpoint (2026-11-04)
+- Provas WindowManager rh-ponto-create. #401 sem a chave.
+- Homolog: 100 clientes reais HML privados — conectar API/tela sem alterar IDs/nomes; sem fallback sintético; sem expor dados.
+- Fila #488–#493 OPEN na base #401; incorporação seletiva só após aceite.
+
 ## CURSOR — #493 CI SUCCESS (2026-11-04 America/Sao_Paulo)
 - Tip `ef4e0c358` · PR #493 · CI SUCCESS 3/3.
 - RH Ponto uniqueKey + pins. #488–#492 verdes. Homolog #475 BLOCKED.

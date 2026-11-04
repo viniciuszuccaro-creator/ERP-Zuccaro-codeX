@@ -1,3 +1,13 @@
+## CURSOR — #493 provas comportamentais uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#493](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/493) |
+| **Candidata #401** | tip `b888b2c00` — **sem** `rh-ponto-create` |
+| **Provas** | dois cliques singleton · fechar/reabrir · sem colisão com outra entidade · WM canônico |
+| **Integração** | BLOCKED até aceite Codex |
+| **Homolog** | 100 clientes HML privados (Codex) — API/tela pendente; sem dados em git |
+
 ## CURSOR — VIGENTE (#493 RH Ponto uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |
