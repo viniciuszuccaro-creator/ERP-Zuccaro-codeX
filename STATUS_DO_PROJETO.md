@@ -3,12 +3,13 @@
 | Campo | Valor |
 |-------|-------|
 | **PR** | [#496](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/496) `cursor/acoes-rapidas-uniquekey-392b` |
-| **Tip** | **`f0cedd3c0`** · CI SUCCESS 6/6 (frontend+backend+compose) |
+| **Tip** | **`f0cedd3c0`** · CI SUCCESS 6/6 · docs `edebc37bb` |
 | **Código** | creates Ações Rápidas com uniqueKey escopo · CR/CP alinhados #488 · `crm-oportunidade-nova` |
-| **Paralelos verdes** | #491–#495 |
+| **Overlap** | [#482](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/482) já cobre Ações Rápidas + Comercial create/edit — FF seletivo: Comercial de #482; de #496 alinhar `financeiro-cr/cp-create` + `crm-oportunidade-nova` |
+| **Paralelos verdes** | #491–#495 · #482 |
 | **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
 | **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
-| **Incorporação** | seletiva na #401 **somente após aceite** Codex |
+| **Incorporação** | seletiva na #401 **somente após aceite** · sem duplicar #482 |
 | Classificação | navegação · registros intocados |
 | Fora | merge/deploy · seed · Base44 |
 
