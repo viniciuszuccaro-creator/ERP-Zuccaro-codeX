@@ -26,3 +26,7 @@ production-command-types PASS
 Fora
 ----
 merge/deploy · seed · Base44 · homolog dados reais
+
+CI
+--
+Tip 6edb243a2 SUCCESS frontend+backend+compose

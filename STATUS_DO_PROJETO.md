@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (#492 Produção OP uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#492](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/492) `cursor/producao-op-uniquekey-392b` |
+| **Tip** | **`6edb243a2`** · CI SUCCESS (frontend+backend+compose) |
+| Classificação | navegação anti-duplicata |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos verdes:** #476–#491 (#488–#491 neste lote).
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** C360 residual · fail-closed residual · RH uniqueKey.
+
 ## CURSOR — VIGENTE (Produção OP uniqueKey) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |

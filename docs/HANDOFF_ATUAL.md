@@ -1,3 +1,8 @@
+## CURSOR — #492 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `6edb243a2` · PR #492 · CI SUCCESS 3/3.
+- Produção Nova OP / Kanban uniqueKey. #488–#491 verdes. Homolog #475 BLOCKED.
+- Próximo indep.: C360/fail-closed residual.
+
 ## CURSOR — Produção OP uniqueKey (2026-11-04 America/Sao_Paulo)
 - #401 tip `b888b2c00`. Branch `cursor/producao-op-uniquekey-392b`.
 - Producao Nova OP + Kanban create/view uniqueKey. Pin production-command renovado.
