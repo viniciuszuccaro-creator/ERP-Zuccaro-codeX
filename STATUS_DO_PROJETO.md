@@ -1,3 +1,12 @@
+## CURSOR — #490 pin residual date+runtime-proof (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Sobre** | tip `8a128ccb8` · CI frontend FAIL |
+| **Causa** | `date-arithmetic` OrdensCompraTab + `runtime-proof` six suites (baseline d312fbcd) |
+| **Fix** | fixture emittedBeforeSha256 · baseline runtime-proof → `8a128ccb8` (uniqueKey) |
+| Fora | merge/deploy · mutação |
+
 ## CURSOR — VIGENTE (Estoque/Compras uniqueKey) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |

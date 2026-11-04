@@ -1,3 +1,7 @@
+## CURSOR — #490 pin residual (2026-11-04)
+- CI frontend FAIL: date-arithmetic OrdensCompra + runtime-proof six suites.
+- Fix: fixture hash + baseline `8a128ccb8`. uniqueKey intacto.
+
 ## CURSOR — Estoque/Compras uniqueKey (2026-11-04 America/Sao_Paulo)
 - #401 tip `b888b2c00`. Branch `cursor/estoque-compras-uniquekey-392b`.
 - uniqueKey em OrdensCompraTab (create/view/receber/avaliar), Compras Nova OC, CotacoesTab, MovimentacoesTab, RecebimentoTab, SolicitacoesTab.
