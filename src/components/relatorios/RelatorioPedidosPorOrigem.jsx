@@ -366,12 +366,16 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => openWindow({
-                              title: `Pedido ${pedido.numero_pedido}`,
-                              component: PedidoFormCompleto,
-                              props: { pedido, clientes },
-                              size: 'xlarge'
-                            })}
+                            onClick={() => openWindow(
+                              PedidoFormCompleto,
+                              { pedido, clientes, windowMode: true },
+                              {
+                                title: `Pedido ${pedido.numero_pedido}`,
+                                width: 1200,
+                                height: 800,
+                                uniqueKey: `comercial-pedido-origem-view-${String(pedido?.id || "")}`,
+                              },
+                            )}
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
