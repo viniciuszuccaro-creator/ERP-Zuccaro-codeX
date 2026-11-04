@@ -1,11 +1,10 @@
 PR branch: cursor/comercial-comissoes-uniquekey-392b
 PR: #501
-Tip: b9830feef2719d069fb36db6499f8c492cb3b667
+Tip: 590e829388f104d8c1c2cb96bac3e512bc5c5934
+CI: SUCCESS 6/6
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
-Escopo: uniqueKey WindowManager em ComissoesTab (calcular + detalhe)
 Keys: comercial-comissoes-calcular-[g,e,u] · comercial-comissao-detalhe-{id}
-Pins: command-payload ComissoesTab → 0a0d3fec… · runtime-proof → tip pin
-Testes: comercial-comissoes-uniquekey 4 PASS + pin renew
+Pins: command-payload ComissoesTab → 0a0d3fec… · runtime-proof → 4fdd89de0
 Classificação: navegação · registros intocados
 Homolog 100: BLOCKED
 Fora: merge main · deploy · FF #401 sem aceite

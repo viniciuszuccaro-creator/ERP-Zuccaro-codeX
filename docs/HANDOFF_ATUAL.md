@@ -1,3 +1,6 @@
+## CURSOR — Comissoes uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#501** tip `590e82938` CI SUCCESS 6/6 (após pin renew). Homolog 100 BLOCKED.
+
 ## CURSOR — Comissoes uniqueKey (2026-11-04 America/Sao_Paulo)
 - `cursor/comercial-comissoes-uniquekey-392b`: calcular/detalhe com uniqueKey no WindowManager canônico.
 - Paralelos #491–#500. Homolog 100 BLOCKED. Aceite antes de FF.
