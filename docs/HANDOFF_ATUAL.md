@@ -1,6 +1,6 @@
 ## CURSOR — Assinatura IP fail-closed (2026-11-04 America/Sao_Paulo)
-- #401 tip `b888b2c00`. Branch `cursor/assinatura-ip-failclosed-392b`.
-- Remove IP `192.168.1.x` aleatório → DESCONHECIDO. #476–#485 verdes. Homolog #475 BLOCKED.
+- #401 tip `b888b2c00`. Branch tip `80f570498` **CI SUCCESS**.
+- Remove IP `192.168.1.x` aleatório → DESCONHECIDO. #476–#486 verdes. Homolog #475 BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
