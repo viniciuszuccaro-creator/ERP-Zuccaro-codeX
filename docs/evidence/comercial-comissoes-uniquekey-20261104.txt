@@ -1,9 +1,11 @@
 PR branch: cursor/comercial-comissoes-uniquekey-392b
-Tip: 5d04dcc980b103d4ede4114490dd0cb9c7b2bde3
+PR: #501
+Tip: b9830feef2719d069fb36db6499f8c492cb3b667
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Escopo: uniqueKey WindowManager em ComissoesTab (calcular + detalhe)
 Keys: comercial-comissoes-calcular-[g,e,u] · comercial-comissao-detalhe-{id}
-Testes: tests/comercial-comissoes-uniquekey.test.js 4 PASS
+Pins: command-payload ComissoesTab → 0a0d3fec… · runtime-proof → tip pin
+Testes: comercial-comissoes-uniquekey 4 PASS + pin renew
 Classificação: navegação · registros intocados
-Homolog 100 clientes HML: BLOCKED
-Fora: merge main · deploy · seed · FF #401 sem aceite
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite
