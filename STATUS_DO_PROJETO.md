@@ -1,14 +1,16 @@
-## CURSOR — ExternalApps uniqueKey (2026-11-04 America/Sao_Paulo)
+## CURSOR — #497 ExternalApps uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/external-apps-uniquekey-392b` |
-| **Delta** | `ExternalAppsHub` — Portal/Motorista/Chatbot/Produção/Chat/Orçamento site com uniqueKey por escopo |
+| **PR** | [#497](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/497) `cursor/external-apps-uniquekey-392b` |
+| **Tip** | código **`b48313694`** · docs **`97053586d`** · CI SUCCESS (frontend+backend+compose) |
+| **Código** | ExternalAppsHub uniqueKey por app+escopo Grupo/Empresa |
 | **Paralelos verdes** | #491–#496 · #482 |
 | **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
 | **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
+| **Incorporação** | seletiva na #401 **somente após aceite** Codex |
 | Classificação | navegação · registros intocados |
-| Fora | merge/deploy · FF #401 sem aceite |
+| Fora | merge/deploy · seed · Base44 |
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 

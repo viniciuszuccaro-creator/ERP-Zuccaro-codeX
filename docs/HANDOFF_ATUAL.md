@@ -1,6 +1,6 @@
-## CURSOR — ExternalApps uniqueKey (2026-11-04 America/Sao_Paulo)
-- `cursor/external-apps-uniquekey-392b`: ExternalAppsHub singleton por app+escopo Grupo/Empresa.
-- Paralelos #491–#496 CI SUCCESS (#496 overlap #482 documentado). Homolog 100 BLOCKED. Aceite antes de FF.
+## CURSOR — #497 ExternalApps CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip código `b48313694` · docs `97053586d` · PR #497 · CI SUCCESS.
+- ExternalAppsHub uniqueKey. Paralelos #491–#496 · #482 verdes. #401 sem as keys. Homolog 100 BLOCKED. Aceite antes de FF.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
