@@ -22,6 +22,9 @@ export default function ExternalAppsHub() {
   const { openWindow } = useWindow();
   const { grupoAtual, empresaAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeKey = JSON.stringify([groupId, empresaId]);
   const contextoValido = Boolean((grupoAtual?.id || empresaAtual?.group_id) && empresaAtual?.id);
   const canAppMotorista =
     hasPermission('Expedicao', 'Entrega', 'entregar')
@@ -29,7 +32,12 @@ export default function ExternalAppsHub() {
     || hasPermission('Expedicao', 'Motorista', 'visualizar')
     || hasPermission('Cadastros', 'Motorista', 'visualizar');
 
-  const launch = (Component, props, options) => () => openWindow(Component, { windowMode: true, ...(props || {}) }, { width: 1200, height: 720, ...(options || {}) });
+  const launch = (Component, props, options) => () => openWindow(Component, { windowMode: true, ...(props || {}) }, {
+    width: 1200,
+    height: 720,
+    ...options,
+    uniqueKey: options?.uniqueKey || `external-apps-${String(options?.title || 'app').toLowerCase().replace(/\s+/g, '-')}-${scopeKey}`,
+  });
 
   const launchAppMotorista = () => {
     if (!contextoValido) {
@@ -40,7 +48,12 @@ export default function ExternalAppsHub() {
       toast.error('Sem permissao para o App Motorista');
       return;
     }
-    openWindow(AppEntregasMotorista, { windowMode: true }, { title: "Apontamento de Entregas", width: 420, height: 800 });
+    openWindow(AppEntregasMotorista, { windowMode: true }, {
+      title: "Apontamento de Entregas",
+      width: 420,
+      height: 800,
+      uniqueKey: `external-apps-motorista-${scopeKey}`,
+    });
   };
 
   const items = [
@@ -49,14 +62,19 @@ export default function ExternalAppsHub() {
         toast.error('Selecione grupo e empresa antes de abrir o Portal');
         return;
       }
-      openWindow(PortalCliente, { windowMode: true, adminMode: true }, { title: "Portal do Cliente", width: 1200, height: 720 });
+      openWindow(PortalCliente, { windowMode: true, adminMode: true }, {
+        title: "Portal do Cliente",
+        width: 1200,
+        height: 720,
+        uniqueKey: `external-apps-portal-cliente-${scopeKey}`,
+      });
     }, desc: "Acesso do cliente aos pedidos e financeiro", route: createPageUrl("PortalCliente") },
-    { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard" }), desc: "Central de atendimento automatizado", route: createPageUrl("HubAtendimento") },
+    { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard", uniqueKey: `external-apps-chatbot-dashboard-${scopeKey}` }), desc: "Central de atendimento automatizado", route: createPageUrl("HubAtendimento") },
     { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launchAppMotorista, desc: "App de entrega para motoristas", route: createPageUrl("EntregasMobile") },
-    { title: "Apontamento da Produção", icon: Factory, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(ApontamentoProducao, {}, { title: "Apontamento da Produção" }), desc: "Registro de produção no chão de fábrica", route: createPageUrl("Producao") },
-    { title: "Apontamento Mobile", icon: Smartphone, color: "text-teal-600", bg: "from-teal-50 to-teal-100", action: launch(ProducaoMobile, {}, { title: "Apontamento Mobile" }), desc: "Versão mobile para produção", route: createPageUrl("ProducaoMobile") },
-    { title: "Chat do Cliente", icon: MessageCircle, color: "text-indigo-600", bg: "from-indigo-50 to-indigo-100", action: launch(ChatCliente, {}, { title: "Chat do Cliente" }), desc: "Chat em tempo real com o cliente" },
-    { title: "Orçamento (Site Público)", icon: ShoppingCart, color: "text-rose-600", bg: "from-rose-50 to-rose-100", action: launch(OrcamentoSite, {}, { title: "Orçamento Site Público" }), desc: "Formulário público de orçamento", route: createPageUrl("OrcamentoSite") },
+    { title: "Apontamento da Produção", icon: Factory, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(ApontamentoProducao, {}, { title: "Apontamento da Produção", uniqueKey: `external-apps-apontamento-producao-${scopeKey}` }), desc: "Registro de produção no chão de fábrica", route: createPageUrl("Producao") },
+    { title: "Apontamento Mobile", icon: Smartphone, color: "text-teal-600", bg: "from-teal-50 to-teal-100", action: launch(ProducaoMobile, {}, { title: "Apontamento Mobile", uniqueKey: `external-apps-apontamento-mobile-${scopeKey}` }), desc: "Versão mobile para produção", route: createPageUrl("ProducaoMobile") },
+    { title: "Chat do Cliente", icon: MessageCircle, color: "text-indigo-600", bg: "from-indigo-50 to-indigo-100", action: launch(ChatCliente, {}, { title: "Chat do Cliente", uniqueKey: `external-apps-chat-cliente-${scopeKey}` }), desc: "Chat em tempo real com o cliente" },
+    { title: "Orçamento (Site Público)", icon: ShoppingCart, color: "text-rose-600", bg: "from-rose-50 to-rose-100", action: launch(OrcamentoSite, {}, { title: "Orçamento Site Público", uniqueKey: `external-apps-orcamento-site-${scopeKey}` }), desc: "Formulário público de orçamento", route: createPageUrl("OrcamentoSite") },
   ];
 
   return (
