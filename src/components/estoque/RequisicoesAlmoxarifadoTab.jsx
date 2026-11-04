@@ -254,7 +254,8 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
           }, {
             title: '📋 Nova Requisição Almoxarifado',
             width: 900,
-            height: 650
+            height: 650,
+            uniqueKey: `estoque-requisicao-create-${JSON.stringify([groupId, empresaAtual?.id || null])}`,
           })}
         >
             <Plus className="w-4 h-4 mr-2" />

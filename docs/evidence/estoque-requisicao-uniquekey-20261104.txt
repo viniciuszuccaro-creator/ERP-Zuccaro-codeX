@@ -1,0 +1,8 @@
+PR branch: cursor/estoque-requisicao-uniquekey-392b
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Escopo: uniqueKey WindowManager em Nova Requisição Almoxarifado
+Keys: estoque-requisicao-create-[groupId,empresaId]
+Pins: command-payload-batch-types req + command-audit-boundaries request renovados
+Classificação: navegação · registros intocados
+Homolog 100 clientes HML: BLOCKED (API/tela — sem dados públicos)
+Fora: merge main · deploy · seed · FF #401 sem aceite
