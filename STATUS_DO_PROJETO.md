@@ -1,3 +1,17 @@
+## CURSOR — FormasPagamento uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-formas-pagamento-uniquekey-392b` = **#502** |
+| **Tip CI SUCCESS** | `61400f3f71ce22f7e45bc9943a40bc75d61cc054` · 6/6 |
+| **Delta** | GestorFormasPagamento · create (escopo) + edit (id) |
+| **Paralelos** | #491–#501/#503–#506 |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
