@@ -150,7 +150,8 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
             {
               title: '📊 Dashboard de Fechamento Automático',
               width: 1200,
-              height: 700
+              height: 700,
+              uniqueKey: `comercial-fechamento-dashboard-${JSON.stringify([empresaId || null])}`,
             }
           )}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"

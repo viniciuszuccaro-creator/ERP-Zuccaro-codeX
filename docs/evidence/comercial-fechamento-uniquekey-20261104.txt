@@ -1,0 +1,9 @@
+PR branch: cursor/comercial-fechamento-uniquekey-392b
+PR: #505
+Tip: 59f3d9c75add61a8dd6dd0f06cdb0375bdc46eb4
+CI: SUCCESS 6/6
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Key: comercial-fechamento-dashboard-[empresaId]
+Classificação: navegação · registros intocados
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite
