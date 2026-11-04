@@ -1,6 +1,32 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - gate isolado HML CPA executado; API/web pendentes (2026-11-04)
+## Estado vigente - dependencia de controle e contrato de Grupo HML (2026-11-04)
+
+O gate isolado abaixo permanece executado; nao repetir carga, replay ou restore.
+Retomada de342cde57dd4/CI5880 e401b888 sem consulta/escrita remota: Browser anterior
+nao exposto, controle nativo falha antes de listar janelas com failed to write
+kernel assets (erro3), inclusive apos reset suportado. Reabrir somente Codex
+Desktop para restaurar ferramentas, nao reiniciar Codespace/PG nem instalar
+ambiente no HD externo. Estado remoto atual nao foi reobservado nesta sessao.
+
+Contraprova4checks do guard real (blob igual em342/401): user com permissoes
+explicitas permite Empresa autorizada mas nega visao Grupo; admin com mesma
+arvore permite Grupo, estrangeira negada. Perfil HML permanece user, sem nova
+concessao; nao apresentar binding SQL anterior como sessao/visao Grupo homologada.
+Antes de promover role ou alterar politica, preparar impacto em todos os
+consumidores e obter decisao especifica; nao usar admin como atalho para acesso.
+
+Ao retomar bootstrap, manter API/Auth/Data no mesmo namespace/pool canonico.
+AUTH_DATABASE_URL ausente reutiliza db como authDb; se configurar pools separados
+sobre Unix socket, o preflight atual rejeita endereco NULL. Nao resolver por
+NULL=NULL ou retirar a guarda. Preflight fisico deve conferir recibo do destino,
+schema, role, referencias e search_path HML,pg_catalog,pg_temp antes de READY.
+Canal de provedor Auth real ainda nao configurado/conferido nesta retomada;
+nao copiar bearer, inventar IdP ou apontar AuthDB ao operacional.
+Nenhuma URL com dados reais disponivel por esta rodada. Provas de helpers/callbacks
+das488/489 sao separadas desse gate; pareceres e SHAs no HANDOFF existente.
+
+## Historico - gate isolado HML CPA executado; API/web pendentes (2026-11-04)
 
 A autorizacao posterior do proprietario foi aplicada SOMENTE no PG privado
 existente, apos backup integral, restauracao, ensaio e revisao independente.

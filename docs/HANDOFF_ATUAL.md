@@ -1,4 +1,61 @@
-## Continuidade vigente - namespace HML CPA e mesma100 persistidos (2026-11-04)
+## Continuidade vigente - bootstrap pendente e revisoes488/489 (2026-11-04)
+
+Base342cde57dd492ef9a1313fb8f8dc5c2347877cd797a/CI5880 SUCCESS e401b888
+reconferidas no GitHub. Desktop na mesma branch/HEAD, limpo antes da edicao;
+fetch de objetos exatos somente para revisao, sem trocar checkout ou compor.
+Reserva344/6640062890: Codex analise bootstrap/checkpoint, sem branch Cursor.
+Nao repetir importacao/replay/reversao/restauracao da HML100 ja comprovados.
+
+CANAL: a ferramenta Browser/Chrome anterior nao esta exposta nesta sessao.
+Alternativa nativa suportada @oai/sky via node_repl falha ANTES de importar/listar
+janelas: failed to write kernel assets, Windows erro3. js_reset funcionou, mas
+nova inicializacao repetiu erro. TEMP e diretorios informados existem; nao
+inspecionados protocolos internos nem executaveis auxiliares fora do mecanismo
+suportado. Nao houve comando/consulta no Codespace/PG/VPS nesta retomada.
+Intervencao minima solicitada: salvar tarefa/reabrir SOMENTE Codex Desktop para
+recarregar ferramentas, mantendo Codespace/Chrome/PG/WIP. Nenhuma reinstalacao,
+rebuild, novo ambiente ou suposta falha do Codespace. Pedido ao Cursor por canal
+existente registrado344; recebimento/capacidade remota ainda NAO comprovados.
+
+RBAC: contraprova nova4checks/0erros com resolveSessionEntityGuard real, fixture
+sintetica, sem servidor/banco. Blob d03d594712eafae79874a19f570b7b3eff4ef2f6 igual
+em342 e401b888. Perfil user/empresa_id null/arvore cliente.visualizar: Grupo=false,
+Empresa autorizada=true, estrangeira=false; role admin+mesma arvore: Grupo=true.
+O teste auth-session-http-exact existente tambem exige negacao do user no Grupo.
+Assim, perfil HML limitado da rodada anterior nao homologa visao de Grupo no SPA.
+NAO promover perfil nem remover guarda por inferencia. Preparar matriz dos
+consumidores de role/permissao e decisao especifica antes de qualquer ampliacao;
+sessao Auth HML pode ser provada independentemente antes dessa alteracao.
+
+CONEXOES: createRuntimeDbClients suporta authDb=db se AUTH_DATABASE_URL ausente;
+se duas URLs forem usadas, o preflight exige endereco/porta nao nulos. Sobre Unix
+socket ambos inet_server_addr sao NULL; nao enfraquecer comparacao para aceitar
+NULL=NULL. Ao retomar, avaliar pool unico canonico + guarda fisica explicita de
+DB/schema/role/search_path/referencias antes de READY, mantendo Auth/Data no mesmo
+namespace. Isso e preparo por inspecao, NAO configuracao aplicada ou login HML.
+
+REVISOES PUBLICADAS:489/0a9d0ea17d2fb7f0370156d4728bd114d69bef74, CI5854
+terminal SUCCESS.12checks do modulo exato via blob Git: label/prefixo/fallback
+desconhecido/entrada imutavel; AST confirma todas as declaracoes anteriores
+preservadas. Parecer489/6640140082.488/61a3ef7306994480e0ff9efda6560a849852b940,
+CI5860 terminal SUCCESS.11checks extraindo callback openWindow REAL e expressoes
+uniqueKey dos dois consumidores, com setters enfileirados: mesmo ID/uma janela/
+props originais e create por Grupo/Empresa/ator. WindowManager byte-a-byte igual
+a401b888; parecer488/6640140486. Nao sao React montado/HTTP/banco/browser. Chaves
+edit/view apos troca de contexto/sessao pendem consumidor montado; sem achado de
+vazamento alegado sem reproducao. Demais490-493 nao revisadas neste lote. Nenhuma
+incorporacao:401 continua b888, correcoes de navegacao nao recuperam registros.
+
+RETOMADA: apos recuperar ferramenta, selecionar URL do MESMO Codespace, conferir
+processos/reserva e recibos hml344-cpa-20261104, sem nova carga. Conferir somente
+metadados/configuracao do provedor Auth REAL pelo canal autorizado; nunca bearer,
+service-role ou .env em logs/Git. Configurar bootstrap canonico no namespace
+persistido, provar sessao/perfil/contexto/consultas/negativas e acesso privado.
+Faltam API/browser real, solucao de visao Grupo sem ampliacao inferida e aceite
+do proprietario. Base44 continua fonte com reautenticacao pendente, nao tentada.
+Sem DDL/grants/carga operacional/deploy ou alteracao de dados/perfil nesta rodada.
+
+## Historico - namespace HML CPA e mesma100 persistidos (2026-11-04)
 
 342a8398383/CI5858 SUCCESS e401b888 reconferidos. Reserva344/6638313274 executada
 somente em artefatos/PG privados; nenhum arquivo/branch Cursor ou candidata

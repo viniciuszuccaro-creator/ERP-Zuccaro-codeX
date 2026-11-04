@@ -1,4 +1,37 @@
-## Continuidade vigente - HML CPA100 persistida e recuperavel (2026-11-04)
+## Continuidade vigente - bootstrap HML e revisoes direcionadas (2026-11-04)
+
+342cde57dd4/CI5880 SUCCESS e401b888 reconferidos; desktop limpo antes do lote.
+Carga HML100/replay/reversao/backup anteriores preservados, NAO repetidos.
+Sem acesso remoto nesta retomada: Browser anterior nao exposto; controle nativo
+node_repl falha antes de listar janelas com failed to write kernel assets,
+Windows erro3; reset suportado nao resolveu. Nao concluir Codespace parado ou
+dados perdidos. Intervencao solicitada: reabrir somente Codex Desktop, sem
+reiniciar Codespace/Chrome/PG nem instalar outro ambiente. Reserva344/6640062890.
+
+Contrato novo comprovado: authSessionService tem MESMO blob d03d5947 em342/401.
+Quatro contraprovas sinteticas no guard real: user+permissao cliente.visualizar
+nega Grupo, permite Empresa autorizada, nega Empresa estrangeira; admin com a
+mesma arvore permite Grupo. Teste vigente exige isso. Perfil HML user NAO foi
+promovido, guarda NAO relaxada. Falta definir solucao de acesso Grupo sem ampliar
+permissoes; primeiro provar sessao Auth HML no canal real, que ainda nao ocorreu.
+Pools distintos por Unix socket nao podem passar preflight por comparar NULLs;
+avaliar modo canonico de pool unico Auth/Data com guarda fisica antes de READY.
+
+Revisoes independentes:489/0a9d0ea1/CI5854 SUCCESS,12checks helpers PASS/0FAIL,
+declaracoes antigas integralmente preservadas por AST; nao prova React/browser
+ou recuperacao de registros.488/61a3ef73/CI5860 SUCCESS,11checks callback REAL
+openWindow com setters enfileirados, uma janela/rascunho preservado e chaves
+create separadas por Grupo/Empresa/ator. Nao e React montado/persistencia; edit/
+view apos troca de contexto/sessao ainda pedem prova no consumidor montado.
+Pareceres489/6640140082 e488/6640140486 publicados; nenhuma incorporacao a401.
+
+Proximo exato: recuperar canal de controle, conferir reserva/processos/recibos
+privados e ligar bootstrap canonico ao namespace HML ja carregado e ao provedor
+Auth REAL existente. Sem fallback operacional/IdP sintetico, nova carga ou
+renomear fixtures. API HML/browser/nomes reais visiveis seguem NAO comprovados.
+Nenhum dado privado ou runtime alterado; lote documental/diff-check apenas.
+
+## Historico - HML CPA100 persistida e recuperavel (2026-11-04)
 
 Base342a8398383/CI5858 SUCCESS reconferida; candidata401b888 preservada. A
 autorizacao posterior do proprietario liberou namespace separado exclusivamente
