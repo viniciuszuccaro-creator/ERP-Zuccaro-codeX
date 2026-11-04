@@ -7,12 +7,12 @@ import { readFile } from "node:fs/promises";
  * segundo open com a mesma uniqueKey reutiliza a janela; chaves distintas
  * abrem janelas distintas. Não une registros diferentes.
  */
-function openWithUniqueKey(registry, uniqueKey) {
+function openWithUniqueKey(registry, uniqueKey, seq) {
   const key = uniqueKey ? String(uniqueKey) : "";
   if (key && registry.has(key)) {
     return { id: registry.get(key), reused: true, uniqueKey: key };
   }
-  const id = `window-${registry.size + 1}`;
+  const id = `window-${seq.nextId++}`;
   if (key) registry.set(key, id);
   return { id, reused: false, uniqueKey: key || null };
 }
