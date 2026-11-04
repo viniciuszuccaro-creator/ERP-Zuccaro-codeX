@@ -201,8 +201,9 @@ export default function HubAtendimento() {
           const hoje = new Date().toDateString();
           return new Date(c.data_finalizacao).toDateString() === hoje;
         }).length,
-        tempoMedioResposta: 2.5, // TODO: calcular real
-        taxaResolucaoBot: 78 // TODO: calcular real
+        // Sem campo canônico agregado → DESCONHECIDO (não fabricar 2.5 / 78).
+        tempoMedioResposta: null,
+        taxaResolucaoBot: null,
       };
     },
     enabled: contextoValido && podeAtenderTransbordo,
@@ -666,37 +667,49 @@ export default function HubAtendimento() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-action="hub-kpi-tempo-medio" data-kpi-status={metricas.tempoMedioResposta == null ? "unavailable" : "ok"}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 text-purple-600 text-sm mb-1">
                   <TrendingUp className="w-4 h-4" />
                   Tempo Médio
                 </div>
-                <p className="text-2xl font-bold text-purple-600">{metricas.tempoMedioResposta}min</p>
+                {metricas.tempoMedioResposta == null ? (
+                  <p className="text-lg font-semibold text-amber-800" data-action="hub-kpi-desconhecido">DESCONHECIDO</p>
+                ) : (
+                  <p className="text-2xl font-bold text-purple-600">{metricas.tempoMedioResposta}min</p>
+                )}
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-action="hub-kpi-resolucao-bot" data-kpi-status={metricas.taxaResolucaoBot == null ? "unavailable" : "ok"}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 text-indigo-600 text-sm mb-1">
                   <Bot className="w-4 h-4" />
                   Resolução Bot
                 </div>
-                <p className="text-2xl font-bold text-indigo-600">{metricas.taxaResolucaoBot}%</p>
+                {metricas.taxaResolucaoBot == null ? (
+                  <p className="text-lg font-semibold text-amber-800" data-action="hub-kpi-desconhecido">DESCONHECIDO</p>
+                ) : (
+                  <p className="text-2xl font-bold text-indigo-600">{metricas.taxaResolucaoBot}%</p>
+                )}
               </CardContent>
             </Card>
           </div>
         )}
 
-        <Card className="mt-4">
+        <Card className="mt-4" data-action="hub-kpi-bot-sla" data-kpi-status={botSla.sla_total ? "ok" : "unavailable"}>
           <CardContent className="p-3 lg:p-4">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="text-sm text-slate-600">Conversas 24h:</div>
               <Badge variant="outline" className="text-xs">{botSla.chats}</Badge>
               <div className="text-sm text-slate-600 ml-4">SLA 1ª resp ≤ 60s:</div>
-              <Badge className={(botSla.sla_total ? Math.round(100*(botSla.sla_ok/(botSla.sla_total||1))) : 0) >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
-                {botSla.sla_total ? Math.round(100*(botSla.sla_ok/(botSla.sla_total||1))) : 0}%
-              </Badge>
+              {botSla.sla_total ? (
+                <Badge className={Math.round(100 * (botSla.sla_ok / botSla.sla_total)) >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+                  {Math.round(100 * (botSla.sla_ok / botSla.sla_total))}%
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-amber-800" data-action="hub-kpi-desconhecido">DESCONHECIDO</Badge>
+              )}
             </div>
           </CardContent>
         </Card>

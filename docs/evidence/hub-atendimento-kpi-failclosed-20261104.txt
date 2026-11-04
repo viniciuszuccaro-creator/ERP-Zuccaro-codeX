@@ -1,0 +1,39 @@
+Hub Atendimento — KPI fail-closed (2026-11-04 America/Sao_Paulo)
+================================================================
+Base #401 tip b888b2c00 · branch cursor/hub-atendimento-kpi-failclosed-392b
+Paralelos verdes: #476–#483
+
+Problema
+--------
+metricas inventava tempoMedioResposta=2.5 e taxaResolucaoBot=78 (TODO).
+SLA bot mostrava 0% quando sla_total=0 (vazio ≠ zero).
+
+Delta
+-----
+- tempo/taxa → null + UI DESCONHECIDO
+- SLA 24h sem amostra → DESCONHECIDO (não 0%)
+- Contagens reais (total/emProgresso/…) preservadas
+
+Classificação
+-------------
+- Capacidade fail-closed (KPI)
+- Registros: NÃO tocados
+
+Testes
+------
+hub-atendimento-kpi-failclosed PASS
+
+Fora
+----
+cálculo real de tempo médio (falta campo canônico) · merge/deploy · seed · Base44
+
+Pin
+---
+atendimento-command-types HubAtendimento hash renovado com justificativa:
+KPI fail-closed (DESCONHECIDO) — não afrouxa RBAC/comando; só UI métricas.
+
+CI
+--
+tip c38cb89e9 — frontend/backend/compose SUCCESS (2026-11-04)
+Pin atendimento-command-types renovado com justificativa KPI fail-closed.
+#476–#484 verdes
