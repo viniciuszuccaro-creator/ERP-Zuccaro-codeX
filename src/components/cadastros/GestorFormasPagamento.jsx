@@ -98,7 +98,8 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     }, {
       title: '🏦 Nova Forma de Pagamento',
       width: 900,
-      height: 700
+      height: 700,
+      uniqueKey: `cadastros-forma-pagamento-create-${JSON.stringify([groupId || null, empresaAtual?.id || null])}`,
     });
   };
 
@@ -119,7 +120,8 @@ export default function GestorFormasPagamento({ windowMode = false }) {
     }, {
       title: `✏️ Editar: ${forma.descricao}`,
       width: 900,
-      height: 700
+      height: 700,
+      uniqueKey: `cadastros-forma-pagamento-edit-${String(forma?.id || '')}`,
     });
   };
 
