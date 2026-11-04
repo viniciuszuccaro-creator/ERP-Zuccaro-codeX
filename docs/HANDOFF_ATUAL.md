@@ -1,3 +1,6 @@
+## CURSOR — RelatorioPedidosPorOrigem uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#510** tip `875a9ad49` CI SUCCESS 6/6. Fila uniqueKey #491–#510 verdes. Homolog 100 BLOCKED. Aceite antes de FF #401.
+
 ## CURSOR — RelatorioPedidosPorOrigem uniqueKey (2026-11-04 America/Sao_Paulo)
 - Rewire openWindow legado → canônico + uniqueKey por pedido id. Homolog 100 BLOCKED.
 
