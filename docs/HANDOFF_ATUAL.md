@@ -1,3 +1,7 @@
+## CURSOR — #488 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `0aae053e5` · PR #488 · CI SUCCESS 3/3 (runs 41880248563/41880266706).
+- Contas Receber/Pagar uniqueKey + pins batch/portal. Paralelo #489 verde. #490 em curso. Homolog #475 BLOCKED.
+
 ## CURSOR — #488 pin residual Contas (2026-11-04)
 - CI frontend FAIL: pins batch/portal Contas*. Hashes renovados. uniqueKey intacto.
 

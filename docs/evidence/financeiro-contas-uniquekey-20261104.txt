@@ -27,3 +27,8 @@ purchase-financial-audit-types PASS
 Fora
 ----
 merge/deploy · seed · Base44 · Historico HTTP
+
+CI
+--
+Tip 0aae053e5 SUCCESS frontend+backend+compose (41880248563 / 41880266706)
+Pin residual batch/portal sobre ad688751d.
