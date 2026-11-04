@@ -3,14 +3,15 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
-| **PRs verdes** | #476–#483 CI SUCCESS |
-| **Este pacote** | `cursor/hub-atendimento-kpi-failclosed-392b` — remove KPI inventados 2.5/78 |
+| **PRs verdes** | #476–#**484** CI SUCCESS (não reabrir) |
+| **Este pacote** | tip **`c38cb89e9`** CI SUCCESS — Hub KPI DESCONHECIDO |
+| **Paralelo** | #485 Dashboard Atendente KPI (CI em curso) |
 | **Evidência** | `docs/evidence/hub-atendimento-kpi-failclosed-20261104.txt` |
 | Classificação | capacidade fail-closed · registros intocados |
 | Fora | cálculo canônico tempo médio · merge/deploy · seed · Base44 |
 
 **Homolog privada:** #475 BLOCKED.
-**Próximo indep.:** CI deste tip · cadastros residual · sem port #441.
+**Próximo indep.:** CI #485 · cadastros residual · sem port #441.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 

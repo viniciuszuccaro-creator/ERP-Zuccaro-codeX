@@ -31,3 +31,9 @@ Pin
 ---
 atendimento-command-types HubAtendimento hash renovado com justificativa:
 KPI fail-closed (DESCONHECIDO) — não afrouxa RBAC/comando; só UI métricas.
+
+CI
+--
+tip c38cb89e9 — frontend/backend/compose SUCCESS (2026-11-04)
+Pin atendimento-command-types renovado com justificativa KPI fail-closed.
+#476–#484 verdes
