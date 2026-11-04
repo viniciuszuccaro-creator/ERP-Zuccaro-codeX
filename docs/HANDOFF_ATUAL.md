@@ -1,4 +1,60 @@
-## Continuidade vigente - reconciliacao100 executada e previa comprovada (2026-11-04)
+## Continuidade vigente - mesma FINAL100 comprovada no PG privado (2026-11-04)
+
+Base342 bcaf3d1bc4b6f2c40c98acceca4e5407534f347b e candidata401
+b888b2c00eaf571820e0594b96afd45837dc689a reconferidas; CI5806/5807 ainda
+QUEUED na abertura; consulta de fechamento confirmou ambas SUCCESS no mesmo SHA.
+Reserva runtime401/6635753738
+e documental342/6636044290; publicacao nao comprova ACK do Cursor. Desktop limpo,
+Codespace b5cb/??.vscode preservado, sem escritor concorrente observado.
+
+V5 CONCLUIDO: resultado privado recuperado antes de repetir testes, seis checks,
+errors vazio: login/banner sinteticos, unidade principal KG, unidade adulterada
+422, rascunho preservado, contagens PG inalteradas e ausencia de create success.
+Prova navegador/HTTP/PG; nao prova conversao com fator. Contrato atual aceita
+somente unidade principal. Matriz concorrente ampliada continua pendente.
+
+MESMA COORTE: plano congelado conferido pelo SHA privado preservado. Destino
+historico existente retomado somente apos assertIsolationDescriptor: network none,
+sem porta publicada; identidade database/role/endereco/system_identifier identica
+ao recibo. Persistencia conservada: grupo isolado anterior com17471 clientes,
+todos inativos apos reversao anterior. Nao corresponde ao Grupo CPA operacional.
+
+Confronto dirigido da FINAL100 com journal canonico anterior:100 cargas unicas,
+100 replay,100 reversoes e100 payloads equivalentes nos campos da fonte; batch e
+source_system do ensaio sao bindings distintos, nao equivalencia operacional.
+Consulta PG REPEATABLE READ READ ONLY/ROLLBACK aos mesmos100 IDs confirmou
+IDs/codigos/documentos/nomes/vinculos/procedencia preservados,100 inativos e
+auditoria soft_delete exatamente uma por registro/request de reversao, alem da
+auditoria do lote original. Nenhuma nova carga/reativacao ou escrita nesta rodada.
+Reutilizacao de prova historica com verificacao atual, NAO novo ensaio de importacao.
+Driver inicialmente usou uuid[] contra audit_logs.entity_id text; corrigido para
+text[] e consulta aprovada. Erro do driver, nao defeito de produto ou PASS inicial.
+Recibos privados: resume-20261102/cohort100-historical-proof-20261104.private.json
+e cohort100-persisted-proof-20261104.private.json, modo600, fora Git/build/CI.
+
+PREVIA NESTA RETOMADA: mesmo runner b888, recibos anteriores copiados antes do
+inicio e janela limitada3600; HTTP local200, porta5173/processo observados,
+visibilidade Private e protocolo HTTP confirmados. URL externa retornou404 nesta
+sessao, inclusive pelo Abrir no Navegador do painel. Registro privado removido e
+recriado pela interface suportada sem corrigir o acesso; sessao GitHub autenticada
+do proprietario e unico Codespace Active confirmados. Nao desfaz a prova externa
+historica, mas NAO anunciar acesso/login atual aprovado. Idle timeout configurado30
+minutos; nao ha evidencia suficiente para atribuir a parada anterior a idle/OOM/
+cobranca. Sem rebuild, instalacao, alteracao de visibilidade ou recursos pagos.
+Ao fechar, runner proprio encerrado por SIGINT apos conferir PID/cwd/comando;
+container sintetico removido pelo cleanup existente, PID ausente e sem listener5173.
+Container historico parado novamente sem remover persistencia; WIP apenas.vscode.
+Nao ha previa ativa ou tarefa deixada executando em segundo plano neste fechamento.
+
+Fila finita atual: recuperar encaminhamento externo privado -> matriz concorrente
+restante -> homologacao privada dos dados reais (atualmente revertidos/inativos)
+com binding/RBAC/schema adequados -> auxiliares e completude -> backup/principal/
+schema e autorizacao especifica de carga -> cadeia/deploy/aceite. NEW100 da
+consulta administrativa anterior permanece valido somente no recorte; BYPASSRLS
+nao e leitor restrito nem autorizacao de escrita. Base44 segue reautenticacao.
+Nao repetir transferencia, selecao FINAL100, pilotos completos ou V5 aprovado.
+
+## Historico - reconciliacao100 executada e previa comprovada (2026-11-04)
 
 Base342 7fbc6122a11366abf3250adb8a9f0d79ba4d6a61, CI5797/5798 SUCCESS;
 401 b888b2c00eaf571820e0594b96afd45837dc689a/CI5684 SUCCESS reconferidos.

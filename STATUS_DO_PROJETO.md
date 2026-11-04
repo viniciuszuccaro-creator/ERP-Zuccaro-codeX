@@ -1,4 +1,31 @@
-## Continuidade vigente - reconciliacao real100 concluida no recorte (2026-11-04)
+## Continuidade vigente - FINAL100 e reversao preservadas no PG privado (2026-11-04)
+
+Base342 bcaf3d1b e401b888b2c0 reconferidas. CI5806/5807 inicialmente QUEUED;
+fechamento confirmou ambas SUCCESS no SHA exato. Sem alteracao de runtime/candidata,
+WIP Codespace preservado. Recursos proprios parados, sem previa ativa ao fechar.
+V5 recuperado:6 checks/errors0, navegador/HTTP/PG, unidade KG, unidade adulterada
+422, rascunho e contagens preservados. Nao repetir; conversao sem fator nao liberada.
+
+Destino PG privado existente: guardas de isolamento e identidade completa aprovadas,
+persistencia conservada. MESMA FINAL100 confrontada com journals anteriores:
+100 cargas/100 replay/100 reversoes; campos da fonte equivalentes100. PG atual
+confirma os100 IDs, campos preservados, inatividade apos reversao e auditorias.
+READ ONLY/ROLLBACK, novas escritas0; sem reativacao ou carga repetida. Binding do
+grupo sintetico/batch/source_system isolados nao comprova CPA operacional. Erro
+de tipo no driver de auditoria corrigido; detalhes e recibos privados no HANDOFF.
+
+Previa retomada local200/b888/5173 Private/HTTP. Acesso externo desta sessao404,
+mesmo apos reencaminhamento suportado; nao anunciar login atual aprovado. Prova
+externa anterior preservada como historica. Idle30 configurado nao prova causa da
+parada. Sem rebuild/recurso pago/visibilidade publica ou escrita na VPS operacional.
+
+Fila: encaminhamento privado -> concorrencia restante -> HML privada real com
+binding/permissoes/schema -> auxiliares -> backup/principal/carga aprovada ->
+cadeia/deploy/aceite. Consulta real anterior NEW100 permanece no recorte; nao
+destino vazio/codigos livres. Base44 pendente. Sem carga operacional/DDL/grants/
+deploy. Lote documental sanitizado, validacao diff-check; provas intactas reutilizadas.
+
+## Historico - reconciliacao real100 concluida no recorte (2026-11-04)
 
 3427fbc6122/CI5797-5798 SUCCESS e401b888b2c0/CI5684 SUCCESS reconferidos.
 Previa5173 PRIVATE, HTTP local200+URL externa autenticada+login sintetico ate
