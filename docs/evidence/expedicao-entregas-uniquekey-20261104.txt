@@ -27,3 +27,8 @@ expedicao-fluxo-operacional PASS (20)
 Fora
 ----
 merge/deploy · seed · Base44 · homolog dados reais
+
+CI
+--
+Tip 524df3390 SUCCESS frontend+backend+compose
+Pin residual date-arithmetic DetalhesEntregaView sobre 633fc3df0.

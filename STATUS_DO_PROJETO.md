@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (#491 Expedição Entregas uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#491](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/491) `cursor/expedicao-entregas-uniquekey-392b` |
+| **Tip** | **`524df3390`** · CI SUCCESS (frontend+backend+compose) |
+| **Código** | uniqueKey view/edit/separação/reversa · tip `633fc3df0` + pin date DetalhesEntrega |
+| Classificação | navegação anti-duplicata |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos verdes:** #476–#490 (#488 Contas · #489 Switcher · #490 Estoque/Compras).
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** Produção Nova OP uniqueKey · C360 residual · fail-closed residual.
+
 ## CURSOR — #491 pin residual DetalhesEntregaView (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |

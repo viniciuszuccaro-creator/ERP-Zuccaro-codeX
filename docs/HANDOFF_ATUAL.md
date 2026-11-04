@@ -1,3 +1,8 @@
+## CURSOR — #491 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `524df3390` · PR #491 · CI SUCCESS 3/3.
+- Expedição Entregas uniqueKey + pin date DetalhesEntrega. #488–#490 verdes. Homolog #475 BLOCKED.
+- Próximo indep.: Produção Nova OP uniqueKey / C360 residual.
+
 ## CURSOR — #491 pin residual (2026-11-04)
 - CI frontend FAIL: date-arithmetic DetalhesEntregaView. Fixture hash renovado. uniqueKey intacto.
 
