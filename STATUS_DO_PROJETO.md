@@ -1,4 +1,27 @@
-## Continuidade vigente - FINAL100 e reversao preservadas no PG privado (2026-11-04)
+## Continuidade vigente - previa privada e concorrencia complementar aprovadas (2026-11-04)
+
+342f41789f2/CI5812-5813 SUCCESS e401b888b2c0/CI5684 SUCCESS reconferidas.
+Mesmo Codespace/snapshot/WIP preservados; sem outro executor observado. URL privada
+externa voltou a carregar, login sintetico e SHA externo b888 comprovados. Local200,
+tunelPrivate e externo sem credenciais302 distinguidos; causa do404 anterior nao
+comprovada. Janela timeout3600 ate aproximadamente14:55 Brasilia, nao servico permanente.
+
+Cenario novo7checks/errors0: UI cria Orcamento;5PATCH concorrentes200 preservam
+seus itens;5conversoes1Pedido/4conflitos409; retry409; reabertura/vinculo/total.
+PG real da mesma fixture:1Orcamento/1item/1Pedido/1item, totais iguais,5auditorias
+de edicao e1historico, READ ONLY/ROLLBACK. Erros do driver SQL corrigidos, sem
+defeito novo de runtime/assertion enfraquecida. Nao equivale a cinco cliques no
+navegador/CAS/todas as intercalacoes. Contexto/tardias conservam prova montada anterior.
+Parecer401/6636933464, recibos detalhados privados; V5/100/pilotos nao repetidos.
+
+Dados reais ainda NAO disponibilizados nesta previa. Pacote de HML no OPERACAO:
+mesma FINAL100, sem reativar historicos; destino/binding CPA/schema/RBAC, conflitos
+globais de codigos e auxiliares pendentes antes de carga. NEW100 nao destino vazio.
+Fonte Base44 depende da reconexao existente; sem consultas recusadas repetidas.
+Sem mudanca de runtime/candidata/VPS operacional, merge/DDL/grants/carga/deploy.
+Validacao documental diff-check; suites intactas reutilizadas. Detalhes no HANDOFF.
+
+## Historico - FINAL100 e reversao preservadas no PG privado (2026-11-04)
 
 Base342 bcaf3d1b e401b888b2c0 reconferidas. CI5806/5807 inicialmente QUEUED;
 fechamento confirmou ambas SUCCESS no SHA exato. Sem alteracao de runtime/candidata,

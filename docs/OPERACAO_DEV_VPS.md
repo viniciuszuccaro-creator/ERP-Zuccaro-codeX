@@ -1,6 +1,47 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - consulta100 executada; previa suspensa (2026-11-04)
+## Estado vigente - previa privada acessivel; gate HML real separado (2026-11-04)
+
+401b888b2c0: acesso externo/login sintetico e SHA de /__erp_preview comprovados
+nesta retomada; URL5173 Private, sem torná-la publica ou criar recurso. Janela
+04/11 16:55:45Z--17:55:45Z, timeout3600/handlers stop existentes. Roteiro e provas
+no HANDOFF; nao anunciar disponibilidade apos a janela sem nova verificacao.
+Nova concorrencia UI-create/HTTP/PG aprovada no alcance401/6636933464, sem alterar
+codigo. Previa contem somente dados sinteticos, NAO os100 clientes reais.
+
+Pacote concreto para HML real, PREPARADO/NAO EXECUTADO:
+- Registros: MESMA FINAL100/pins,100 mestres ativos da fonte; historicos17471 e
+  os100 revertidos no grupo sintetico permanecem intactos/inativos. Nao reativar,
+  sobrescrever, fundir ou selecionar outra coorte para apresentar dados na tela.
+- Destino: armazenamento PG privado persistente ja inspecionado e isolado por
+  networknone/sem portas; NAO banco efetivo da API operacional ou PG tmpfs da previa.
+  Antes de gravar, fixar namespace/grupo de homologacao e binding CPA explicito
+  aos IDs aprovados, sem afirmar que grupo sintetico anterior equivale ao CPA.
+- Prechecks faltantes: conflitos dos100 codigos contra TODO o escopo relevante
+  autorizado e documentos/identidades concorrentes; schema/journals efetivos e
+  auxiliares/vinculos por campo. Consulta administrativa anterior nao prova isso.
+  Consultas fixas restritas/READ ONLY/ROLLBACK, sem ampliar ACL global/BYPASSRLS.
+- Principal: Auth/RBAC canonicamente vinculados ao grupo de HML, nao administrador
+  da consulta anterior; comprovar negativas cross-tenant e efeitos externos OFF.
+  Preservar o guard sintetico do harness: nao apontar sua config atual a dados reais.
+- Efeito proposto: somente novos mestres compartilhados do Grupo, procedencia,
+  codigos e IDs de origem preservados; empresa_id NULL, sem vinculo fiscal,
+  cobranca, mensagem, saldo ou estoque. Auxiliar ausente continua pendente.
+- Backup/reversao: snapshot recuperavel do destino privado ANTES de escrita,
+  integridade/restore conforme recibos existentes e delta; lote/importador/ledger
+  canonicos com CAS/idempotencia/auditoria e reversao logica, sem apagar historico.
+  Nao usar backup de workspace/origem como backup desse destino de HML.
+- Liberacao: autorizar somente a aplicacao do binding e lote identificado depois
+  dessas provas; esta preparacao nao autoriza load operacional/DDL/grants/deploy.
+  Sem efeito no destino atual e sem nova decisao generica solicitada nesta rodada.
+
+Gate de uso finito: HML/binding/auxiliares -> schema/principal/backup -> lote
+autorizado e reconciliacao -> cadeia real de PRs -> deploy aprovado -> aceite.
+Fornecedores/produtos mantem mapas/contratos existentes e pendencias individuais;
+historicos para consulta nao geram efeitos financeiros/fiscais/estoque por inferencia.
+Recuperacao ERP novo permanece separada, procedimento Base44 existente abaixo.
+
+## Historico - consulta100 executada; previa suspensa (2026-11-04)
 
 Mesma401 b888b2c0 foi acessada pela URL privada5173, com login de fixture e banner
 sintetico; HTTP local200 e registroPrivate do CLI conferidos. Posteriormente o

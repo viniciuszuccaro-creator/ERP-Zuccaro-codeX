@@ -1,4 +1,51 @@
-## Continuidade vigente - mesma FINAL100 comprovada no PG privado (2026-11-04)
+## Continuidade vigente - previa externa e concorrencia complementar aprovadas (2026-11-04)
+
+Base342 f41789f2221e94b565f32af000bfc21521667f56/CI5812-5813 SUCCESS e
+401b888b2c00eaf571820e0594b96afd45837dc689a/CI5684 SUCCESS reconferidas.
+Reserva runtime401/6636642608 e documental342/6636904345; sem ACK novo do Cursor.
+Checkout Codespace b5cb apenas.vscode, nenhum outro executor observado antes de
+retomar; snapshot imutavel e branch Cursor intactos. Sem sincronizar checkout.
+
+PREVIA ATUAL: mesma URL privada5173 voltou a carregar nesta retomada. Diagnostico
+diferencial: nome/repo/stateAvailable e dominio app.github.dev conferidos, local200,
+portaPrivate, HTTP externo sem credenciais302. Chrome passou pela autenticacao do
+tunel, exibiu login/banner e entrou em Comercial com identidade sintetica. SHA
+externo conferido em /__erp_preview: b888, dirtyfalse/immutableSnapshottrue.
+404 anterior nao reproduzido agora; causa NAO atribuida a cookie/restart/OOM/cota.
+Nao repetido reencaminhamento nem alterada visibilidade/cobranca/infraestrutura.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial
+Janela iniciada16:55:45Z, timeout3600 ate aproximadamente17:55:45Z (14:55 Brasilia).
+Runner possui handlers SIGINT/SIGTERM stop, conferidos; nao e servico permanente.
+Login somente sintetico entry.synthetic@example.test / synthetic-entry-only.
+Roteiro: Comercial -> Orcamentos -> Novo -> Cliente/condicao/tabela/produto ->
+salvar/reabrir. Dados reais NAO estao nesta previa; sem login/saldo/fiscal operacional.
+
+CONCORRENCIA COMPLEMENTAR: driver derivado do prefixo/guardas do integrado original,
+preservado e com hashes de proveniencia.7checks/errors0/exit0: login/banner, criacao
+UI unica;5PATCH simultaneos com quantidades distintas200 e cada resposta com seu
+item; reabertura com1item;5conversoes simultaneas1Pedido/4x409
+ORCAMENTO_ALREADY_CONVERTED; repeticao409; Pedido reabre com vinculo/total iguais.
+PG REAL da MESMA fixture:1Orcamento/1item/1Pedido/1item, total49.382712 em ambos,
+5auditoriasupdate e1historico; READ ONLY/ROLLBACK. Nao e teste CAS, cinco cliques
+simultaneos no navegador ou prova de todas as ordens de edit-versus-convert.
+Troca de contexto/respostas tardias mantem alcance das provas montadas anteriores,
+sem inventar ampliacao ao navegador. V5/100/pilotos estaveis nao repetidos.
+Driver SQL inicialmente presumiu databasepostgres/nome de historico incorreto;
+corrigido para POSTGRES_DB da fixture identificada e pedido_historico, sem alterar
+produto/assertions. Recibos600 privados receipt/concurrency-20261104/result.private.json,
+entities.private.json,postgres.private.json e receipt/concurrency-20261104.driver.mjs.
+provenance.private.json (arquivo adjacente ao driver); fora Git.
+Parecer por SHA e alcance publicado401/6636933464. Nenhum defeito novo reproduzido.
+
+PROXIMO GATE REAL: pacote concreto de homologacao no topo de OPERACAO_DEV_VPS,
+sem reativar historicos ou converter permissoes administrativas em acesso de carga.
+Conflitos globais de codigo/auxiliares e binding/RBAC/schema da HML nao comprovados.
+Base44: reconectar a integracao EXISTENTE pela conta proprietaria em Plugins ->
+Installed -> Base44; depois validar app/tenant/procedencia antes de ler registros.
+Nao repetida consulta recusada nem usados seeds como reposicao. Demais entidades
+seguem mapas/pilotos existentes; sem nova equivalencia, saldo ou Empresa presumida.
+
+## Historico - mesma FINAL100 comprovada no PG privado (2026-11-04)
 
 Base342 bcaf3d1bc4b6f2c40c98acceca4e5407534f347b e candidata401
 b888b2c00eaf571820e0594b96afd45837dc689a reconferidas; CI5806/5807 ainda
