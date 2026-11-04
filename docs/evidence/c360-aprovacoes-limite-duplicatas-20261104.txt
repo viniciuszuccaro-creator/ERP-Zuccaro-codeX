@@ -1,0 +1,32 @@
+C360 — CentralAprovacoes Limite/Duplicatas (2026-11-04 America/Sao_Paulo)
+=========================================================================
+Base #401 tip b888b2c00 · branch cursor/comercial360-aprovacoes-limite-duplicatas-392b
+Paralelos verdes: #476–#482
+
+Problema
+--------
+Abas Limite de Crédito e Duplicatas Vencidas exibiam stub
+"Funcionalidade em desenvolvimento" (botão/aba decorativa).
+
+Delta
+-----
+- CentralAprovacoesLayout.AprovacoesPlaceholder recupera listagens reais
+- Limite: Pedidos status_aprovacao=pendente (contexto + RBAC)
+- Duplicatas: ContaReceber status=Atrasado
+- Fail-closed: blocked/unavailable/loading → DESCONHECIDO (não inventa zero)
+- Manager NÃO alterado (hash pin stage54 / approval-command intacto)
+
+Classificação
+-------------
+- Apresentação: remove stub
+- Capacidade: listagem operacional existente (filterInContext)
+- Registros: NÃO tocados / sem seed
+
+Testes
+------
+comercial-aprovacoes-limite-duplicatas PASS
+browser-runtime-contracts (pin Manager) — regressão
+
+Fora
+----
+nova mutação aprovar-crédito · port Historico · merge/deploy · Base44 · seed
