@@ -28,3 +28,8 @@ purchase-financial / shared-query / scoped / approval / purchase-request / comma
 Fora
 ----
 merge/deploy · seed · Base44 · homolog dados reais
+
+CI
+--
+Tip 7e46c7f32 SUCCESS frontend+backend+compose
+Pin residual date-arithmetic + runtime-proof sobre 8a128ccb8.

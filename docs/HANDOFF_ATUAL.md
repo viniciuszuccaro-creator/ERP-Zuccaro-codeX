@@ -1,3 +1,8 @@
+## CURSOR — #490 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `7e46c7f32` · PR #490 · CI SUCCESS 3/3.
+- Estoque/Compras uniqueKey + pin date/runtime-proof. #488/#489 verdes. Homolog #475 BLOCKED.
+- Próximo indep.: C360/cadastros residual sem port #441.
+
 ## CURSOR — #490 pin residual (2026-11-04)
 - CI frontend FAIL: date-arithmetic OrdensCompra + runtime-proof six suites.
 - Fix: fixture hash + baseline `8a128ccb8`. uniqueKey intacto.
