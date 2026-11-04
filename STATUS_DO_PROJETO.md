@@ -1,4 +1,50 @@
-## Continuidade vigente - prechecks100 e gate HML CPA identificado (2026-11-04)
+## Continuidade vigente - HML CPA100 persistida e recuperavel (2026-11-04)
+
+Base342a8398383/CI5858 SUCCESS reconferida; candidata401b888 preservada. A
+autorizacao posterior do proprietario liberou namespace separado exclusivamente
+no PostgreSQL privado existente, condicionado a backup, ensaio e revisao. Esse
+gate foi executado; o bloco anterior abaixo e historico, nao espera vigente.
+
+Backup integral privado7798535bytes restaurado com nove fingerprints de dados;
+schema inteiro no archive/TOC. Na copia restaurada, novo namespace HML recebeu
+15tabelas dos SQLs canonicos001/003/004/009/010/011/014, sem migrador geral.
+014 atende condicao_pagamento_id do contrato ClienteEmpresa; tabelas de condicoes
+vazias, sem concessao de escrita.045-049 e banco operacional intocados.
+Grupo CPA e2empresas espelhados dos IDs/dados comprovados; perfil da identidade
+Auth existente confirmado por sessao200/no-store, sem copiar bearer ou criar
+Auth/segredo. Perfil HML user com subconjunto de permissoes, nao copia de admin.
+
+MESMA FINAL100/bytes/pins:100processados/100inseridos/100reconciliados/0rejeitados;
+reexecucao100reutilizados/0novos, comparacao integral dos registros preservada.
+Auditoria:100create+100possible_duplicate da conferencia canonica, NAO100novas
+gravacoes de cliente. Reversao logica100 ensaiada por servico dentro de transacao
+revertida:100ativos permanecem APENAS na HML; historicos antigos inativos intactos.
+Mestres compartilhados,0vinculos empresariais/0enderecos inventados;5emails
+preservados.100enderecos incompletos/4CEP_FORMAT seguem revisao proporcional.
+
+Provas finais:15checks schema/RLS com rollback;8login SQL real/negativas;7retomada,
+servicos/cross-tenant e recuperacao. Backup do novo namespace135978bytes restaurado
+em outro DB logico do MESMO container isolado,15tabelas iguais por contagem e
+fingerprint.24artefatos privados8461411bytes inventariados com SHA256/0600/pai0700
+antes do proprio manifesto; nada enviado ao Git. Falhas intermediarias de driver
+(quoting/tipos/regclass/expectativa de auditoria) preservadas e corrigidas, sem
+enfraquecer comparacao ou modificar produto. Nao e nova suite global aprovada.
+
+RLS FORCE nas15tabelas, funcoes invoker/path fixado, PUBLIC revogado somente nos
+objetos novos. Login existente sem super/BYPASS/create-role/create-db e negativas
+comprovados; TEMP/lo_create PUBLIC preexistentes continuam riscos residuais, nao
+chamar essa role de leitor estrito. Exportacao com row_security=off continua fora
+do perfil/aceite. Container parado, networknone/0portas, checkout/WIP preservados.
+
+PROXIMO: API/Auth e Data no mesmo namespace HML com search_path explicito
+HML,pg_catalog,pg_temp e preflight fisico; reutilizar provedor Auth real existente,
+sem IdP sintetico nem fallback ao banco operacional. Login/binding confirmado nao
+prova sessao na API HML. Falta disponibilizar e aceitar dados reais no navegador;
+previa sintetica anterior nao mudou de origem. Sem carga operacional/merge/deploy.
+Lote publicado somente documental; diff-check e CI do novo SHA separados das
+provas PostgreSQL privadas. Recibos e retomada no HANDOFF/OPERACAO existentes.
+
+## Historico - prechecks100 e gate HML CPA identificado (2026-11-04)
 
 Base342999cafd5/401b888 reconferidas, trabalho alheio/WIP/historicos preservados.
 Nova consulta real READ ONLY/ROLLBACK:100 codigos da MESMA FINAL100 livres,

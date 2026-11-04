@@ -1,6 +1,61 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - precheck de codigos fechado; binding HML pendente (2026-11-04)
+## Estado vigente - gate isolado HML CPA executado; API/web pendentes (2026-11-04)
+
+A autorizacao posterior do proprietario foi aplicada SOMENTE no PG privado
+existente, apos backup integral, restauracao, ensaio e revisao independente.
+Nao aplicar o procedimento historico abaixo na VPS.342a8398383/CI5858 SUCCESS;
+fonte de runtime imutavel401b888, sem alterar candidata ou checkout Codespace.
+
+Destino exato privado e recuperacao constam em hml344-cpa-20261104/
+schema-applied.private.json e hml100-recovery.private.json, sob o root privado
+ja documentado no HANDOFF. Namespace separado na copia restaurada do PG privado,
+nao novo projeto ERP e nao substituicao da API DEV/operacao. Grupo CPA/2empresas
+espelhados dos dados/IDs comprovados, perfil ligado ao Auth existente verificado
+apos login200/no-store; nenhum Auth/segredo novo. Perfil user reduzido, sem
+permissao exportar ou vincular empresa/fiscal por inferencia.
+
+Envelope executado: SQLs canonicos001/003/004/009/010/011/014,15tabelas com RLS
+FORCE, bootstrap limitado aos IDs aprovados antes de contexto, dados vinculados
+ao Grupo e app.group_id.014 resolve condicao_pagamento_id; condicoes vazias sem
+grants de escrita. Funcoes novas invoker/path fixado; PUBLIC revogado APENAS no
+namespace novo.045-049 permanecem privadas/fora migrador. Nao marcar SQL
+operacional como aplicado nem alterar journals antigos por causa deste ensaio.
+
+Role existente testada por LOGIN real: sem super/BYPASS/create-role/create-db;
+negativas de admin/profile/schema/auditoria, ator/Grupo e importacao empresarial.
+PUBLIC TEMP/lo_create preexistentes preservados e declarados como risco residual;
+essa e role de importacao privada, nao prova de leitor SQL estrito. Exportacao
+row_security=off permanece bloqueada/incompativel, sem workaround BYPASSRLS.
+
+MESMA FINAL100/bytes e cohort pin:100inseridos/100reconciliados/0rejeitados;
+replay100reutilizados/0novos, comparacao integral preservada. Auditoria final
+100create+100possible_duplicate por conferencia canonica. Reversao logica100
+ensaiada com auditoria e ROLLBACK, mantendo100ativos HML para futura conferencia;
+historicos anteriores inativos intocados.0enderecos ou vinculos inventados.
+Cinco emails preservados;100enderecos incompletos/4CEP_FORMAT nao homologam
+entrega/cobranca/fiscal dependentes. Nenhuma escrita no banco operacional.
+
+Recuperacao: dump anterior integral7798535bytes restaurado; novo dump do namespace
+135978bytes restaurado em outro DB logico da mesma instancia,15tabelas iguais por
+contagem/fingerprint. SHA256/TOC/recibos privados0600/pai0700, manifest24arquivos
+8461411bytes antes do proprio manifesto.15checks schema +8login +7retomada/
+negativas/restore finais aprovados; falhas de driver preservadas, nao produto
+alterado para esconder assercao. Container parado networknone/0portas.
+
+Retomada sem nova carga: conferir manifest/result/recovery, identidade do
+container e pg_isready; usar somente DB/schema apontados no recibo. Configurar
+AuthDB e DataDB canonicos no MESMO namespace com search_path explicito
+HML,pg_catalog,pg_temp e verificar alvo fisico antes de READY. Canal de Auth REAL
+existente ainda precisa ser conferido no runtime HML; login DEV nao prova login
+HML. Nao copiar bearer nem usar provedor sintetico para liberar dados reais.
+API/browser reais ainda NAO disponibilizados/homologados; falta ciclo de sessao,
+contexto, RBAC, listagem/reabertura e acesso externo privado pelo proprietario.
+Retorno: parar apenas API/web HML, preservar namespace/recibos; reversao de lote
+somente com CAS/auditoria canonicos, nunca DROP, reativacao antiga ou overwrite.
+Merge, deploy, grants/DDL operacionais e carga real operacional seguem gates.
+
+## Historico - precheck de codigos fechado; binding HML pendente (2026-11-04)
 
 MESMA FINAL100/pins: consulta nova por100codigos exatos no GrupoCPA completo,
 incluindo empresas/inativos,100livres/0conflitos; UNIQUE(group_id,codigo) efetiva.

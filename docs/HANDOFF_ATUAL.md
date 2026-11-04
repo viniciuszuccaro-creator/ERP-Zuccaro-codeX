@@ -1,4 +1,66 @@
-## Continuidade vigente - codigos CPA e auxiliares100 conferidos (2026-11-04)
+## Continuidade vigente - namespace HML CPA e mesma100 persistidos (2026-11-04)
+
+342a8398383/CI5858 SUCCESS e401b888 reconferidos. Reserva344/6638313274 executada
+somente em artefatos/PG privados; nenhum arquivo/branch Cursor ou candidata
+alterado. Codespace permaneceu no checkout antigo preservado, apenas.vscode
+nao rastreado; fonte executada foi o snapshot imutavel b888 fora do checkout.
+Nao sincronizar esse checkout por inferencia nem repetir pilotos anteriores.
+
+AUTORIZACAO ATUAL: proprietario aprovou namespace HML separado no PG privado,
+espelho CPA/2empresas/perfil Auth existente e policies/grants minimos apos gates.
+Login concluido foi conferido na resposta canonica GET auth/session200/no-store:
+subject Auth e perfil existentes distintos, Grupo/empresas exatos, sem token em
+recibo. Perfil HML role=user e permissoes explicitas reduzidas; nenhum novo Auth,
+senha/chave, grant operacional, porta publica ou mudanca de identidade fiscal.
+
+EXECUTADO: dump integral7798535bytes/TOC/SHA256, restore na mesma instancia privada
+networknone/sem portas e igualdade de nove tabelas de dados; nao confundir nove
+fingerprints com escopo seletivo do dump. Nesse DB restaurado foi criado o
+namespace hml344_cpa_20261104, usando001/003/004/009/010/011/014 canonicos b888.
+Revisao independente identificou014 necessaria ao INSERT ClienteEmpresa e os
+cuidados bootstrap/Auth/path; incorporados somente no namespace novo.15tabelas
+ENABLE/FORCE RLS; funcoes invoker com search_path HML,pg_catalog,pg_temp e sem
+EXECUTE PUBLIC. Nao reaplicar014 cegamente: triggers nao sao idempotentes.
+
+Ensaios finais:15checks com rollback,8login da role REAL existente/negativas,
+7retomada/negativas de servico/restauracao. Sem super/BYPASS/create-role/create-db,
+sem troca para admin, criacao de tabela, alteracao de perfil ou DELETE de auditoria.
+TEMP/lo_create PUBLIC anteriores NAO foram revogados globalmente nem omitidos do
+risco residual; nao e principal leitor irrestritamente homologado. Exportacao
+row_security=off ainda incompativel com RLS; sem permissao exportar na HML.
+
+MESMA100:348850bytes/pin do arquivo e cohortSha256 conferidos separadamente;
+importador persistirClienteGrupoLegado + ClienteService/repositorio/DB/RBAC/audit
+canonicos, sem nova selecao.100inseridos,100reconciliados,0rejeitados; replay100
+reutilizados/0novos e registros integralmente iguais.100create+100possible_duplicate
+por sugerirVinculo sao a auditoria esperada; nao remover essa protecao para obter
+contagem artificial100. Primeiras tentativas ficaram em rollback por erros de
+driver; ajustes de quoting/regclass/tipo entity_id e expectativa de auditoria
+nao alteraram produto/assertions de dados. Reversao softDelete100 dentro de TX
+com auditoria ensaiada e ROLLBACK:100 permanecem ativos so no namespace HML;
+historicos publicos anteriores permanecem inativos.0vinculos/0enderecos fabricados.
+Cinco emails preservados;100enderecos incompletos/4CEP_FORMAT seguem pendentes.
+
+RECUPERACAO: novo dump HML135978bytes restaurado em DB logico auxiliar no MESMO
+container privado;15tabelas iguais por contagem/fingerprint, fonte HML preservada.
+Container parado no finally, networknone/0portas/writer.lock ausente.24artefatos
+8461411bytes (antes do manifesto) com SHA256/0600, pai0700, fora Git/build/CI.
+Root privado: /home/codespace/erp-legado-privado-20261023/hml344-cpa-20261104.
+Retomar pelos arquivos manifest.private.json, schema-applied.private.json,
+role-login.private.json, hml100-committed.private.json, hml100-result.private.json
+e hml100-recovery.private.json. Esse ultimo identifica DB/schema/backup atual.
+Preservar tambem falhas/partial; nao repetir carga/reversao ou recriar namespace.
+
+PROXIMO ITEM CONCRETO: ligar os pools Auth e Data canonicos ao DB/schema HML
+identificados no recibo, com path explicito HML,pg_catalog,pg_temp e guarda fisica
+antes de READY. Conferir canal do provedor Auth REAL existente, sem copiar bearer,
+novo segredo, IdP sintetico ou AuthDB operacional. Ainda nao comprovados: sessao
+HTTP HML, navegador com dados reais e aceite do proprietario. A previa b888 antiga
+continua sintetica; nao anunciar URL real antes de prova externa privada.
+Nenhuma carga operacional, DDL/grants VPS, merge ou deploy. Suite de aplicacao
+inalterada nao repetida; commit desta rodada e sanitizado/documental.
+
+## Historico - codigos CPA e auxiliares100 conferidos (2026-11-04)
 
 Base342999cafd5546802b92c024130ca77d293a5b8c74f e401b888 reconferidas, desktop
 limpo; reserva344/6637529470 e documental342/6637859072. Nenhum runtime/branch
