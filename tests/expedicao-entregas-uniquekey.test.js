@@ -44,12 +44,13 @@ test("DetalhesEntregaView: logística reversa reusa a mesma uniqueKey da listage
 
 test("comportamental: dois cliques no mesmo id reusam; id distinto e ação distinta nao colidem", () => {
   const registry = new Map();
-  const view1a = openWithUniqueKey(registry, "expedicao-entrega-view-e1");
-  const view1b = openWithUniqueKey(registry, "expedicao-entrega-view-e1");
-  const view2 = openWithUniqueKey(registry, "expedicao-entrega-view-e2");
-  const edit1 = openWithUniqueKey(registry, "expedicao-entrega-edit-e1");
-  const sep1 = openWithUniqueKey(registry, "expedicao-entrega-separacao-e1");
-  const rev1 = openWithUniqueKey(registry, "expedicao-entrega-reversa-e1");
+  const seq = { nextId: 1 };
+  const view1a = openWithUniqueKey(registry, "expedicao-entrega-view-e1", seq);
+  const view1b = openWithUniqueKey(registry, "expedicao-entrega-view-e1", seq);
+  const view2 = openWithUniqueKey(registry, "expedicao-entrega-view-e2", seq);
+  const edit1 = openWithUniqueKey(registry, "expedicao-entrega-edit-e1", seq);
+  const sep1 = openWithUniqueKey(registry, "expedicao-entrega-separacao-e1", seq);
+  const rev1 = openWithUniqueKey(registry, "expedicao-entrega-reversa-e1", seq);
 
   assert.equal(view1a.reused, false);
   assert.equal(view1b.reused, true);
@@ -63,9 +64,10 @@ test("comportamental: dois cliques no mesmo id reusam; id distinto e ação dist
 
 test("comportamental: fechar libera uniqueKey para reabrir o mesmo registro", () => {
   const registry = new Map();
-  const first = openWithUniqueKey(registry, "expedicao-entrega-view-e9");
+  const seq = { nextId: 1 };
+  const first = openWithUniqueKey(registry, "expedicao-entrega-view-e9", seq);
   closeWithUniqueKey(registry, "expedicao-entrega-view-e9");
-  const second = openWithUniqueKey(registry, "expedicao-entrega-view-e9");
+  const second = openWithUniqueKey(registry, "expedicao-entrega-view-e9", seq);
   assert.equal(first.reused, false);
   assert.equal(second.reused, false);
   assert.notEqual(second.id, first.id);
