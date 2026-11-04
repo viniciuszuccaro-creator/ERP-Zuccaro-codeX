@@ -1,3 +1,15 @@
+## CURSOR — CentralAprovacoes uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-aprovacoes-uniquekey-392b` |
+| **Delta** | CentralAprovacoesManager · analisar/fechar por pedido (modos distintos) |
+| **Paralelos** | #491–#502 |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
