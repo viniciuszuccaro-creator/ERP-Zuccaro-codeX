@@ -1,0 +1,37 @@
+EmpresaSwitcher — identidade Grupo sem duplicar prefixo (2026-11-04 America/Sao_Paulo)
+=====================================================================================
+Base #401 tip b888b2c00 · branch cursor/empresa-switcher-grupo-label-392b
+Paralelos: #476–#487 verdes · #488 Contas uniqueKey CI em curso
+
+Problema
+--------
+Trigger/lista do switcher: `Grupo · ${grupo.nome_do_grupo}`.
+Quando nome_do_grupo / group_name da sessão já é "Grupo CPA", a UI mostra
+"Grupo · Grupo CPA". Não é dado errado no banco — é composição do prefixo visual.
+
+Delta
+-----
+- formatGrupoSwitcherDisplayName(nome): se começa com "Grupo", retorna o nome;
+  senão "Grupo · {nome}". Vazio → "—".
+- formatEmpresaSwitcherDisplayName(empresa): fantasia → razão → "—".
+- EmpresaSwitcher usa os helpers no trigger e nos itens do Select.
+- Sem hardcode de GRUPO CPA / CPA FERRO E AÇO / 3Z LTDA.
+- Pin policy-options-types renovado (justificativa: helpers de label).
+
+Classificação
+-------------
+identidade de exibição · não é recuperação de registro · IDs/CNPJs intactos
+
+Testes
+------
+contexto-multiempresa-policy PASS (novos asserts de label)
+http-tenant-mirror-preserve-empresa PASS (switcher sem `Grupo · ${`)
+policy-options-types PASS (hash fa339dc857…)
+
+Fora
+----
+merge/deploy · seed · rename fixtures · Base44 · homolog com dados reais
+
+CI
+--
+Tip d53eb7302 SUCCESS frontend+backend+compose (41878663921 / 41878693431)

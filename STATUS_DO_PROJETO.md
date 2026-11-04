@@ -1,3 +1,34 @@
+## CURSOR — VIGENTE (#489 Switcher identidade CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#489](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/489) `cursor/empresa-switcher-grupo-label-392b` |
+| **Tip** | **`d53eb7302`** · CI SUCCESS (frontend+backend+compose) · runs 41878663921 / 41878693431 |
+| **Causa** | composição `Grupo ·` + nome já prefixado → "Grupo · Grupo CPA" |
+| **Fix** | `formatGrupoSwitcherDisplayName` / `formatEmpresaSwitcherDisplayName` (sem hardcode tenant) |
+| Classificação | identidade de exibição · IDs/CNPJs intactos |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos:** #488 Contas uniqueKey (pin residual tip `0aae053e5`) · #490 Estoque/Compras uniqueKey.
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** CI #488/#490 · C360 residual sem port #441.
+
+## CURSOR — VIGENTE (Switcher identidade Grupo sem duplicar) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos** | #476–#487 CI SUCCESS · #488 Contas uniqueKey tip `ad688751d` (CI em curso) |
+| **Este pacote** | `cursor/empresa-switcher-grupo-label-392b` — composição visual sem mascarar dados |
+| **Causa** | `EmpresaSwitcher` fazia `Grupo · ${nome_do_grupo}`; se API/sessão já trazia "Grupo CPA" → "Grupo · Grupo CPA" |
+| **Fix** | `formatGrupoSwitcherDisplayName` / `formatEmpresaSwitcherDisplayName` em `contextoMultiempresaPolicy` (sem hardcode de tenant) |
+| **Evidência** | `docs/evidence/empresa-switcher-grupo-label-20261104.txt` |
+| Classificação | identidade de exibição · fantasia ≠ razão · prefixo visual separado |
+| Fora | merge/deploy · seed · rename fixture · dados reais · Base44 |
+
+**Homolog privada:** #475 BLOCKED (sem expor conteúdo privado).
+**Próximo indep.:** CI deste tip · uniqueKey estoque/compras residual · C360 sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

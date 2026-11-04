@@ -9,7 +9,9 @@ import {componentContractRemainder} from './helpers/componentContractRemainder.j
 // Emitted JavaScript hashes recorded before the stage16 type-only edits.
 const runtimeHashes = {
   'base44/functions/_lib/security/entityGuardPolicy/entry.ts': '273c55877cfd3715c817b7bd7ea97512b2036088277a505157457114285be093',
-  'src/components/lib/contextoMultiempresaPolicy.js': 'ec585b48fd0d3009812d1a3f78a67a0f8454a6b0cdb0629bb75f224fa84faf5a',
+  // 2026-11-04: formatGrupoSwitcherDisplayName / formatEmpresaSwitcherDisplayName
+  // (prefixo visual sem duplicar "Grupo" quando nome_do_grupo já começa com Grupo).
+  'src/components/lib/contextoMultiempresaPolicy.js': 'fa339dc857f61a20e9b41a435e5d84dd38dd6ef7902a768e06930fc7f2a36bba',
   'src/components/lib/sensitiveActionGuardPolicy.js': '0d2f9b0a361616bf0f9ca6e248eb04c0c2b9d5ad9149d7cc697166ed38342f80',
   'src/components/lib/agenteAutorizacaoPolicy.js': 'a3d6cd0e9c9798713a18f5a4c6fce0552855f87044a53e653b9a07156f4cb71c',
   'src/components/lib/automacaoAvancadaPolicy.js': '1192097485ae27e6ec0b5027e5eeb8e94a24f35e93d90f9578c19380142e912c',
