@@ -11,7 +11,7 @@ const cnab='src/components/financeiro/GestaoRemessaRetorno.jsx',crm='src/compone
 const delivery='src/components/comercial/PedidosEntregaTab.jsx';
 const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
 const hashes={
- [request]:'9e8789398e487531a0999ccbb451c70a20b9a35ec3121291e7385a0aa6d17436',
+ [request]:'80d95ac0c3e32d2d13d27f03627f1e56a636c9703af35feb9dd5766f6cc6e1cd',
  [xml]:'05bb711a152d1282df6fdcf13ca0b971903680c6edee70a4774b1c501e5f6d96',
  [cnab]:'21dbf581aff477adc3ae9c67d21158a6609ec7e81335ef421545acac14d1b674',
  [crm]:'7411e59147125363149d393df40bb943720f07bc3b90ad022d703313573accbf',

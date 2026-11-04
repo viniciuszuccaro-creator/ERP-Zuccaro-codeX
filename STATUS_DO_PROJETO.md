@@ -1,3 +1,17 @@
+## CURSOR — #499 Estoque Requisição uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#499](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/499) `cursor/estoque-requisicao-uniquekey-392b` |
+| **Tip** | código `7f793a4f4` · pin **`4d290f6c0`** · CI SUCCESS 6/6 |
+| **Código** | `estoque-requisicao-create-*` · pins command-payload + command-audit + runtime-proof |
+| **Paralelos verdes** | #491–#498 · #482 · #490 |
+| **Candidata #401** | tip `b888b2c00` — **sem** esta key |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
+| **Incorporação** | seletiva na #401 **somente após aceite** Codex |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · seed · Base44 |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

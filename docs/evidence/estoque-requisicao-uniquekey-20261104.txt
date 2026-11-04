@@ -1,0 +1,9 @@
+PR branch: cursor/estoque-requisicao-uniquekey-392b
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Tip: 7f793a4f4 (código) · 4d290f6c0 (runtime-proof) — CI SUCCESS 6/6
+Escopo: uniqueKey WindowManager em Nova Requisição Almoxarifado
+Keys: estoque-requisicao-create-[groupId,empresaId]
+Pins: command-payload-batch-types req + command-audit-boundaries + runtime-proof baseline 7f793a4f4
+Classificação: navegação · registros intocados
+Homolog 100 clientes HML: BLOCKED (API/tela — sem dados públicos)
+Fora: merge main · deploy · seed · FF #401 sem aceite
