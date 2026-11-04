@@ -1,7 +1,7 @@
 ## CURSOR — CentralAprovacoes Limite/Duplicatas (2026-11-04 America/Sao_Paulo)
-- #401 tip `b888b2c00`. Branch `cursor/comercial360-aprovacoes-limite-duplicatas-392b`.
-- Layout recupera listagens Limite (pedidos pendentes) e Duplicatas (CR Atrasado); fail-closed DESCONHECIDO.
-- Manager intocado (hash pin). #476–#482 verdes. Homolog #475 BLOCKED. Sem merge/deploy/seed.
+- #401 tip `b888b2c00`. Branch tip `896ec8401` **CI SUCCESS**.
+- Layout recupera Limite/Duplicatas fail-closed; Manager hash-pin intacto.
+- #476–#483 verdes. Homolog #475 BLOCKED. Sem merge/deploy/seed.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

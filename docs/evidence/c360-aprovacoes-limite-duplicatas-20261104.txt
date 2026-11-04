@@ -30,3 +30,8 @@ browser-runtime-contracts (pin Manager) — regressão
 Fora
 ----
 nova mutação aprovar-crédito · port Historico · merge/deploy · Base44 · seed
+
+CI
+--
+tip 896ec8401 — frontend/backend/compose SUCCESS (2026-11-04)
+#476–#483 verdes
