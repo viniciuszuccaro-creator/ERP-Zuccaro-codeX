@@ -1,3 +1,15 @@
+## CURSOR — Fechamento dashboard uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-fechamento-uniquekey-392b` |
+| **Delta** | WidgetFechamentoPedidos · dashboard por empresaId |
+| **Paralelos** | #491–#504 |
+| **Candidata #401** | tip `b888b2c00` |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
