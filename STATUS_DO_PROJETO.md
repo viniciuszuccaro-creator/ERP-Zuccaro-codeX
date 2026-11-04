@@ -1,3 +1,12 @@
+## CURSOR — #488 pin residual Contas (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | (este commit) sobre `ad688751d` |
+| **Causa CI** | frontend: `financial-batch-permission` + `portal-read-boundaries` pins Contas* desatualizados após uniqueKey |
+| **Fix** | renovar hashes ContasPagar/Receber (justificativa uniqueKey); filtros/DRE intactos |
+| Fora | merge/deploy · mudança de mutação |
+
 ## CURSOR — VIGENTE (Financeiro Contas uniqueKey) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |

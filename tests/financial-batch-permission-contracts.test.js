@@ -9,9 +9,10 @@ import {normalizeGuardAction, resolveGuardPermission} from '../base44/functions/
 import {financialBatchHunks, financialBatchPermissionRemainder as remainder} from './helpers/financialBatchPermissionRemainder.js';
 
 const read = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+// 2026-11-04: ContasPagar/Receber pins renovados (uniqueKey anti-duplicata openWindow).
 const hashes = [
-  '6351c880855076ab2b5acbb32546ca3f619137aa0523f5a2a1993a57b0fd9098',
-  '9877fa1fc73f12bc706a52bce3e4e04cbcc11699322ce80874b505ec47fb99ae',
+  'a2e3fcc2db11e89e7b42717aa824ddd747bfb291e65369e0f052b9b3ee8a68ff',
+  'a73ee63142317d0cb6f4cae14c2d5b9c7ab212bd4688a6d9cf4f24217e820518',
   '17476d9f90f95c6aacfb88b96b6d6787e3d9c7b4fb720135ed6863c79de57b99',
   '40df5e3a4e90a196abffdc306f5d9ace185281bb6f1b481bfe4a5ce4a8849a27',
   '3ab4481c0d6e31ae451f3dd3c6045c6cfef7e00c85462ff9934e010db061893e',

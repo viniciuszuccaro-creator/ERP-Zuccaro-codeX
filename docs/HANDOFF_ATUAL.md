@@ -1,3 +1,6 @@
+## CURSOR — #488 pin residual Contas (2026-11-04)
+- CI frontend FAIL: pins batch/portal Contas*. Hashes renovados. uniqueKey intacto.
+
 ## CURSOR — Financeiro Contas uniqueKey (2026-11-04 America/Sao_Paulo)
 - #401 tip `b888b2c00`. Branch `cursor/financeiro-contas-uniquekey-392b`.
 - ContasReceber/Pagar: uniqueKey create/edit/view. Pins renovados. #476–#487 verdes. Homolog #475 BLOCKED.
