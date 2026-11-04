@@ -1,3 +1,6 @@
+## CURSOR — #491 pin residual (2026-11-04)
+- CI frontend FAIL: date-arithmetic DetalhesEntregaView. Fixture hash renovado. uniqueKey intacto.
+
 ## CURSOR — Expedição Entregas uniqueKey (2026-11-04 America/Sao_Paulo)
 - #401 tip `b888b2c00`. Branch `cursor/expedicao-entregas-uniquekey-392b`.
 - EntregasListagem + DetalhesEntregaView: uniqueKey view/edit/separacao/reversa.

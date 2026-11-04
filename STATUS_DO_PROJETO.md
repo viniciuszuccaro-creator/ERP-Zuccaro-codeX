@@ -1,3 +1,12 @@
+## CURSOR — #491 pin residual DetalhesEntregaView (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Sobre** | tip `633fc3df0` · CI frontend FAIL |
+| **Causa** | `date-arithmetic` DetalhesEntregaView após uniqueKey reversa |
+| **Fix** | renovar `emittedBeforeSha256` (justificativa uniqueKey) |
+| Fora | merge/deploy · mutação |
+
 ## CURSOR — VIGENTE (Expedição Entregas uniqueKey) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |
