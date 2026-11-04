@@ -1,3 +1,20 @@
+## CURSOR — #493 provas + homolog checkpoint (2026-11-04)
+- Provas WindowManager rh-ponto-create. #401 sem a chave.
+- Homolog: 100 clientes reais HML privados — conectar API/tela sem alterar IDs/nomes; sem fallback sintético; sem expor dados.
+- Fila #488–#493 OPEN na base #401; incorporação seletiva só após aceite.
+
+## CURSOR — #493 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `ef4e0c358` · PR #493 · CI SUCCESS 3/3.
+- RH Ponto uniqueKey + pins. #488–#492 verdes. Homolog #475 BLOCKED.
+
+## CURSOR — #493 pin residual partial-input (2026-11-04)
+- CI frontend FAIL: partial-input PontoTab. Hash renovado. uniqueKey intacto.
+
+## CURSOR — RH Ponto uniqueKey (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00`. Branch `cursor/rh-ponto-uniquekey-392b`.
+- PontoTab: uniqueKey `rh-ponto-create`. Pins command-payload + date renovados; runtime-proof baseline atualizado.
+- #488–#492 verdes. Homolog #475 BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

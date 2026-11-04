@@ -8,7 +8,8 @@ import {partialInputHunks,partialInputRemainder} from './helpers/partialInputRem
 
 const sheet='src/components/estoque/ImportadorProdutosPlanilha.jsx',clock='src/components/rh/PontoTab.jsx';
 const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
-for(const [file,hash] of [[sheet,'a48d3917ab035f0e064064cc01f774a6b31a6d9ce438e72bcdc6d33d06b9bc59'],[clock,'1ae0829a4660085f9d02013c44f5d038072f1bdd957779ee0a5340ab693f2237']])test(`${file}: full prior source retained outside exact partial-input hunks`,()=>{
+// 2026-11-04: PontoTab pin renovado (uniqueKey rh-ponto-create).
+for(const [file,hash] of [[sheet,'a48d3917ab035f0e064064cc01f774a6b31a6d9ce438e72bcdc6d33d06b9bc59'],[clock,'70ef40e69052bd828d53505a75647b8d2631d94639bdcc8e97054f650cf64e30']])test(`${file}: full prior source retained outside exact partial-input hunks`,()=>{
  const source=read(file);assert.equal(crypto.createHash('sha256').update(partialInputRemainder(file,source)).digest('hex'),hash);
  for(const [after] of partialInputHunks[file]){
   assert.throws(()=>partialInputRemainder(file,source.replace(after,'')));

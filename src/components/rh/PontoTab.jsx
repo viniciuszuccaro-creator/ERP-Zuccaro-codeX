@@ -165,7 +165,8 @@ export default function PontoTab({ pontos, colaboradores }) {
           }, {
             title: '🕐 Registrar Ponto',
             width: 900,
-            height: 650
+            height: 650,
+            uniqueKey: 'rh-ponto-create',
           })}
         >
           <Plus className="w-4 h-4 mr-2" />

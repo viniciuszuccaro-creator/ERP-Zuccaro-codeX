@@ -15,7 +15,8 @@ const entries={
   com:{file:'comercial/ComissoesTab',state:'formData',hash:'607ca50f47dc604a41855afd0441fe2d5da4f8616c75c3c7ea48c4c7be6609e5',names:['aprovarComissaoMutation','recusarComissaoMutation','pagarComissaoMutation']},
   mov:{file:'estoque/MovimentacoesTab',state:'novaMovimentacao',hash:'5b1250a041a07300e08dc70bfc7f515fc38930fa9ee5a7a40a2521b744e3178e',names:['createMutation']},
   req:{file:'estoque/RequisicoesAlmoxarifadoTab',state:'formData',hash:'13a0cc8d20a1d62f3428f2095c53357f82c4a5f2d33ed4b8c847ba6d3d32ece3',names:['createMutation','aprovarMutation']},
-  ponto:{file:'rh/PontoTab',state:'formData',hash:'8dd0af3b4ee555a34439b921bc4cb89a7604cbd246cec7e5016b994d2c74d658',names:['createMutation','aprovarMutation','rejeitarMutation']},
+  // 2026-11-04: uniqueKey create openWindow em PontoTab (anti-duplicata).
+  ponto:{file:'rh/PontoTab',state:'formData',hash:'aaf43b58e58f4e68d188f309e1c7f16ee9fd2dccace95204a179f55e7781c3a5',names:['createMutation','aprovarMutation','rejeitarMutation']},
   bio:{file:'rh/PontoEletronicoBiometrico',state:'registroPonto',hash:'b5971442075bd17af52ae391afd92f9be1a10ac00713e036cf28a04c08a19c65',names:['registrarPontoMutation','validarPontoIAMutation']},
   chamado:{file:'portal/ChamadosCliente',state:'formChamado',hash:'6c06bd3e4e5faffc2744d2f30a732e498466321e188e68274fc2577e0c061b88',names:['criarChamadoMutation','avaliarChamadoMutation']},
   orc:{file:'portal/SolicitarOrcamento',state:'formData',hash:'eec59444919fdb494bd777efc6d59c1e2ae95729c6e5c555db8e1b16bddce2d1',names:['criarOportunidadeMutation']},

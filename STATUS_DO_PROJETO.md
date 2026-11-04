@@ -1,3 +1,49 @@
+## CURSOR — #493 provas comportamentais uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#493](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/493) |
+| **Candidata #401** | tip `b888b2c00` — **sem** `rh-ponto-create` |
+| **Provas** | dois cliques singleton · fechar/reabrir · sem colisão com outra entidade · WM canônico |
+| **Integração** | BLOCKED até aceite Codex |
+| **Homolog** | 100 clientes HML privados (Codex) — API/tela pendente; sem dados em git |
+
+## CURSOR — VIGENTE (#493 RH Ponto uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#493](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/493) `cursor/rh-ponto-uniquekey-392b` |
+| **Tip** | **`ef4e0c358`** · CI SUCCESS (frontend+backend+compose) |
+| **Código** | uniqueKey `rh-ponto-create` · tip `27e8c9a9c` + pins command/date/partial/runtime-proof |
+| Classificação | navegação anti-duplicata |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos verdes:** #476–#492 (#488–#492 neste lote) + #493.
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** C360 residual · fail-closed residual · cadastros.
+
+## CURSOR — #493 pin residual partial-input PontoTab (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Sobre** | tip `5f551408e` · CI frontend FAIL |
+| **Causa** | `partial-input-contracts` PontoTab pin desatualizado |
+| **Fix** | renovar hash (justificativa uniqueKey) |
+| Fora | merge/deploy |
+
+## CURSOR — VIGENTE (RH Ponto uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos verdes** | #476–#492 |
+| **Este pacote** | `cursor/rh-ponto-uniquekey-392b` — Registrar Ponto anti-duplicata |
+| **Evidência** | `docs/evidence/rh-ponto-uniquekey-20261104.txt` |
+| Classificação | navegação |
+| Fora | merge/deploy · seed · dados reais |
+
+**Homolog:** #475 BLOCKED.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
