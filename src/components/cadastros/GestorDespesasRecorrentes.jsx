@@ -132,7 +132,8 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                 }, {
                   title: '🔄 Nova Despesa Recorrente',
                   width: 900,
-                  height: 650
+                  height: 650,
+                  uniqueKey: `cadastros-despesa-recorrente-create-${JSON.stringify([groupId, empresaAtual?.id || null])}`,
                 })}
                 disabled={!contextoValido || !podeCriar}
                 className="bg-purple-600 hover:bg-purple-700"
@@ -212,7 +213,10 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         }, {
                           title: `✏️ Editar: ${config.descricao}`,
                           width: 900,
-                          height: 650
+                          height: 650,
+                          uniqueKey: config?.id != null
+                            ? `cadastros-despesa-recorrente-edit-${String(config.id)}`
+                            : 'cadastros-despesa-recorrente-edit-sem-id',
                         })}
                         disabled={!contextoValido || !podeEditar}
                         title="Editar"
