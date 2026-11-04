@@ -1,0 +1,9 @@
+PR branch: cursor/expedicao-reversa-uniquekey-392b
+Tip: b888b2c00eaf571820e0594b96afd45837dc689a
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Escopo: uniqueKey WindowManager em DetalhesEntregaView (LogisticaReversa)
+Key: expedicao-logistica-reversa-{entregaId}
+Testes: tests/expedicao-reversa-uniquekey.test.js 4 PASS
+Classificação: navegação · registros intocados
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite
