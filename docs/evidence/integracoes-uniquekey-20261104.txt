@@ -1,5 +1,7 @@
 PR branch: cursor/integracoes-uniquekey-392b
-Tip: 4f6891e026cc276a4466122d8c4e41376b48ba44
+PR: #500
+Tip: 2a6278a474c9c4476e9d7528b5e8e94690fa6cf8
+CI: SUCCESS 6/6
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Escopo: uniqueKey WindowManager em CentralIntegracoes + IntegrationConfigButtons
 Keys: integracoes-config-{key}-[groupId,empresaId] (mesma key nas duas entradas)

@@ -1,3 +1,7 @@
+## CURSOR — Integracoes uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#500** tip `2a6278a47` CI SUCCESS 6/6. Keys: integracoes-config-{key}-[g,e].
+- Homolog 100 BLOCKED. Aceite antes de FF #401.
+
 ## CURSOR — Integracoes uniqueKey (2026-11-04 America/Sao_Paulo)
 - `cursor/integracoes-uniquekey-392b`: config NF-e/Boletos/WhatsApp etc. com uniqueKey compartilhado Central+Buttons.
 - Paralelos #491–#499 CI SUCCESS. Homolog 100 BLOCKED. Aceite antes de FF.

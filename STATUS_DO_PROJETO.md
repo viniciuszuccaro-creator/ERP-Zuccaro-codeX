@@ -2,9 +2,10 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/integracoes-uniquekey-392b` |
+| **Branch / PR** | `cursor/integracoes-uniquekey-392b` = **#500** |
+| **Tip CI SUCCESS** | `2a6278a474c9c4476e9d7528b5e8e94690fa6cf8` · 6/6 checks |
 | **Delta** | CentralIntegracoes + IntegrationConfigButtons · mesma key por integração+escopo |
-| **Paralelos verdes** | #491–#499 |
+| **Paralelos** | #491–#499 verdes; #501–#503 CI |
 | **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
 | **Homolog 100** | BLOCKED |
 | Classificação | navegação · registros intocados |
