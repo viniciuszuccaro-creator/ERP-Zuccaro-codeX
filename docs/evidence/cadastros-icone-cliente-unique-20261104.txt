@@ -1,0 +1,30 @@
+Cadastros — IconeAcessoCliente uniqueKey (2026-11-04 America/Sao_Paulo)
+=======================================================================
+Base #401 tip b888b2c00 · branch cursor/cadastros-icone-cliente-unique-392b
+
+Problema
+--------
+Variants inline/badge/default chamavam openWindow sem uniqueKey → risco de
+janelas duplicadas do mesmo cliente. Variants inline/badge também montavam
+PainelDinamicoCliente com isOpen={painelAberto} nunca true (caminho morto).
+
+Delta
+-----
+- Helper openClientePainel com uniqueKey `painel-cliente-${id}`
+- data-action cadastros-icone-cliente-abrir em todas as variants
+- Remove mount morto (painelAberto); preserva abertura via janela existente
+  PainelDinamicoCliente (contatos/histórico intactos)
+
+Classificação
+-------------
+- Apresentação: n/a (mesmo Painel)
+- Capacidade: abertura única do painel existente
+- Registros: NÃO tocados
+
+Testes
+------
+cadastros-icone-cliente-unique PASS
+
+Fora
+----
+nova candidata · seed · merge/deploy/VPS · apagar Painel
