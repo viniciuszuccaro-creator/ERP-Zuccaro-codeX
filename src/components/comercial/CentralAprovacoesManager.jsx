@@ -473,7 +473,8 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                                   {
                                     title: `🔐 Análise: ${pedido.numero_pedido}`,
                                     width: 1400,
-                                    height: 800
+                                    height: 800,
+                                    uniqueKey: `comercial-aprovacao-analisar-${String(pedido?.id || "")}`,
                                   }
                                 );
                               }}
@@ -524,7 +525,8 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                                   {
                                     title: `🔐 Análise: ${pedido.numero_pedido}`,
                                     width: 1400,
-                                    height: 800
+                                    height: 800,
+                                    uniqueKey: `comercial-aprovacao-fechar-${String(pedido?.id || "")}`,
                                   }
                                 );
                               }}

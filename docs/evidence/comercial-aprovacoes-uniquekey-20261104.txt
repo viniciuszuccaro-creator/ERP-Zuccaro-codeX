@@ -1,0 +1,10 @@
+PR branch: cursor/comercial-aprovacoes-uniquekey-392b
+PR: #503
+Tip: 15bb36bf5f6bac8d46f49a7cc9642b35f0e41117
+CI: SUCCESS 6/6
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Keys: comercial-aprovacao-analisar-{id} · comercial-aprovacao-fechar-{id}
+Pins: approval-command → 0a374ec3… · browser-runtime → 0d6e82ca… · runtime-proof → eafc2e4d8
+Classificação: navegação · registros intocados
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite

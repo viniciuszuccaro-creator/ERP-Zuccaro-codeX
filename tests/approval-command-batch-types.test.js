@@ -16,7 +16,7 @@ const entries={
   crm:{file:'crm/FunilVendasAvancado',hash:'4863f01a512e1fdc4c62b31a94d9914c8af1c7ceb05443c278f48704c7ff0737',names:['updateEtapaMutation','priorizarIAMutation']},
   pdv:{file:'financeiro/CaixaPDVCompleto',hash:'9fe62f62709098a9e800e4aa92f8993b564171eaeb7784ba8e83fcde642bbaee',names:['abrirCaixa','liquidarTitulo'],state:'saldoInicial'},
   retirada:{file:'comercial/PedidosRetiradaTab',hash:'59b05bce4cb0cce1126e0815e6fb91e4bf290dbaa671a62a55ddcbc4c5255cfb',names:['atualizarStatusMutation','confirmarRetiradaMutation']},
-  central:{file:'comercial/CentralAprovacoesManager',hash:'3cd1cf8a9292a75d061ebbb000dfb28146fb45f396f397d6d485b7fe65383ee1',names:['aprovarPedidoMutation','negarPedidoMutation']},
+  central:{file:'comercial/CentralAprovacoesManager',hash:'0a374ec3f6faee7112b82fd45eccb8a2d3d1164eb4972c74deb2b33359616c08',names:['aprovarPedidoMutation','negarPedidoMutation']},
   entrega:{file:'comercial/PedidosEntregaTab',hash:'158c6dc5c5eafdb3b6b06500aea3a00c6952049c84a654602264cfdfad5f0dd2',names:['atualizarStatusMutation']},
   compra:{file:'compras/OrdensCompraTab',hash:'4fd71e268eb4ac9a454d986314501dd362d06fcf76aea9e09cc78b753dddd78c',names:['createMutation','updateMutation','aprovarMutation','enviarFornecedorMutation','avaliarFornecedorMutation'],state:'avaliacaoFormData'},
 };

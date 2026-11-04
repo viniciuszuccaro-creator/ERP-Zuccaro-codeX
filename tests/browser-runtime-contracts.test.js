@@ -11,7 +11,7 @@ const read = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 const digest = text => crypto.createHash('sha256').update(text).digest('hex');
 const frozen = {
   [hook]: 'a40d1d7d68a80855cd3956254541fe58e931bc18ce9c61c12088b9ccd207c500',
-  'src/components/comercial/CentralAprovacoesManager.jsx': '83ad4e3b0fe276e61e4ea4edf8eff7ae63c452d8c62b83f84701bd7bc6e2d62c',
+  'src/components/comercial/CentralAprovacoesManager.jsx': '0d6e82cac144587ac96cb7185a2160c8f2d62fb82f52bc07f14442ac054fd4a4',
   'src/components/comercial/PedidoFormCompleto.jsx': '11532f44ee23f67c934913579008ed6121b8d83559b29e122abb7a1098c4d8b3',
 };
 for (const [file, hash] of Object.entries(frozen)) test(`${file}: only one type-only reference added to stage54 source`, () => {
