@@ -1,3 +1,6 @@
+## CURSOR — PedidosEntrega uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#509** tip `1811626e6` CI SUCCESS 6/6. Fila #491–#509 verdes. Homolog 100 BLOCKED.
+
 ## CURSOR — PedidosEntrega uniqueKey (2026-11-04 America/Sao_Paulo)
 - abrirPainelLogistica injeta uniqueKey por ação+Grupo/Empresa. Homolog 100 BLOCKED.
 

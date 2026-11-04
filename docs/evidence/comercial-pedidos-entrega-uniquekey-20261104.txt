@@ -1,9 +1,10 @@
 PR branch: cursor/comercial-pedidos-entrega-uniquekey-392b
 PR: #509
-Tip: 81e5bbecd6b639f4362ea7fdb019246cf45ebf5b
+Tip: 1811626e6e2a672ea3a5d81b3bf359c34666679d
+CI: SUCCESS 6/6
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Key: comercial-pedido-entrega-{acao}-[groupId,empresaId]
-Pins: approval-command → f6063044… · audit-callback → f6063044… · command-audit → ccf58031… · runtime-proof → 53ab4a9c5
+Pins: approval+audit-callback → f6063044… · command-audit → ccf58031… · runtime-proof → 53ab4a9c5
 Classificação: navegação · registros intocados
 Homolog 100: BLOCKED
 Fora: merge main · deploy · FF #401 sem aceite

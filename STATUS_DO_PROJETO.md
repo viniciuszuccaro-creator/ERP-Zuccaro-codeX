@@ -2,12 +2,15 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-pedidos-entrega-uniquekey-392b` |
-| **Delta** | PedidosEntregaTab · abrirPainelLogistica (métricas/analytics/rotas) por ação+escopo |
+| **Branch / PR** | `cursor/comercial-pedidos-entrega-uniquekey-392b` = **#509** |
+| **Tip CI SUCCESS** | `1811626e6e2a672ea3a5d81b3bf359c34666679d` · 6/6 |
+| **Delta** | PedidosEntregaTab · abrirPainelLogistica por ação+escopo |
+| **Pins** | approval+audit-callback → f6063044… · command-audit → ccf58031… · runtime-proof → 53ab4a9c5 |
 | **Paralelos** | #491–#508 |
 | **Homolog 100** | BLOCKED |
 | Classificação | navegação · registros intocados |
 | Fora | merge/deploy · FF #401 sem aceite |
+
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
