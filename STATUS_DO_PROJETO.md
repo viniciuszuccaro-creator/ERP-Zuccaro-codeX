@@ -1,14 +1,14 @@
-## CURSOR — Estoque Produtos uniqueKey (2026-11-04 America/Sao_Paulo)
+## CURSOR — #498 Estoque Produtos uniqueKey pin residual (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/estoque-produtos-uniquekey-392b` |
-| **Delta** | `ProdutosTab` create/dashboard/conversão/import · pin product-query renovado |
-| **Paralelos verdes** | #491–#497 · #482 |
+| **PR** | [#498](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/498) |
+| **Sobre** | tip `49b7cda48` · CI frontend FAIL |
+| **Causa** | `runtime-proof-source` ainda no baseline `d312fbcd` após renovar product-query |
+| **Fix** | apontar freeze das six suites para tip `49b7cda48` (uniqueKey autorizado) |
 | **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
-| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
-| Classificação | navegação · registros intocados |
-| Fora | merge/deploy · FF #401 sem aceite |
+| Homolog | BLOCKED |
+| Fora | merge/deploy |
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
