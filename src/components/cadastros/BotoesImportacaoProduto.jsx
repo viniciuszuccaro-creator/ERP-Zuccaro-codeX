@@ -61,7 +61,12 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
     openWindow(
       ImportacaoProdutoNFe,
       { windowMode: true, onProdutosCriados: (produtos) => { onProdutosCriados && onProdutosCriados(produtos); } },
-      { title: 'Importar Produtos via NF-e', width: 1100, height: 800 }
+      {
+        title: 'Importar Produtos via NF-e',
+        width: 1100,
+        height: 800,
+        uniqueKey: `cadastros-importacao-produto-nfe-${JSON.stringify([groupId || null, empresaId || null])}`,
+      }
     );
   };
 

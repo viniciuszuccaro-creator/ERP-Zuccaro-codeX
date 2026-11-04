@@ -1,3 +1,15 @@
+## CURSOR — ImportacaoProdutoNFe uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-importacao-produto-uniquekey-392b` |
+| **Delta** | BotoesImportacaoProduto · import NF-e por Grupo/Empresa |
+| **Paralelos** | #491–#506 CI SUCCESS |
+| **Candidata #401** | tip `b888b2c00` |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
