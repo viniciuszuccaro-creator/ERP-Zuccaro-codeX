@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (CentralAprovacoes Limite/Duplicatas) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **PRs verdes** | #476–#**483** CI SUCCESS (não reabrir) |
+| **Este pacote** | tip **`896ec8401`** CI SUCCESS — Limite/Duplicatas sem stub |
+| **Evidência** | `docs/evidence/c360-aprovacoes-limite-duplicatas-20261104.txt` |
+| Classificação | capacidade listagem · Manager hash-pin intacto · registros intocados |
+| Fora | mutação crédito nova · Historico HTTP · merge/deploy · seed · Base44 |
+
+**Homolog privada:** #475 gates BLOCKED neste agente.
+**Próximo indep.:** cadastros/C360 residual fora reservas · sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
