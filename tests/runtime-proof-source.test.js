@@ -39,9 +39,11 @@ test('all six proof suites retain every frozen expected SHA from the published c
   const suites = ['approval-command-batch-types', 'audit-callback-contract-types',
     'command-payload-batch-types', 'date-arithmetic-contracts',
     'product-query-v5-options', 'shared-query-dom-contracts'];
+  // 2026-11-04: baseline 49b7cda48 — uniqueKey ProdutosTab renovou pin product-query;
+  // d312fbcd permanece ancestral.
   for (const suite of suites) {
     const file = 'tests/' + suite + '.test.js';
-    const original = execFileSync('git', ['show', 'd312fbcd46641c4be9d05b17bce1ecb1fbd4c9c3:' + file], {encoding:'utf8'});
+    const original = execFileSync('git', ['show', '49b7cda481319ea9ab51976624ea0d5d2160ec7c:' + file], {encoding:'utf8'});
     assert.deepEqual(fs.readFileSync(file, 'utf8').match(/[a-f0-9]{64}/g), original.match(/[a-f0-9]{64}/g), file);
   }
 });

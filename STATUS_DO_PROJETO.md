@@ -1,3 +1,17 @@
+## CURSOR — #498 Estoque Produtos uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#498](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/498) `cursor/estoque-produtos-uniquekey-392b` |
+| **Tip** | código `49b7cda48` · pin `07e6493e4` · docs **`3391ec550`** · CI SUCCESS 6/6 |
+| **Código** | ProdutosTab uniqueKey create/dashboard/conversão/import · product-query + runtime-proof |
+| **Paralelos verdes** | #491–#497 · #482 · #490 |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
+| **Incorporação** | seletiva na #401 **somente após aceite** Codex |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · seed · Base44 |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
