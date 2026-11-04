@@ -1,3 +1,12 @@
+## CURSOR — #493 pin residual partial-input PontoTab (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Sobre** | tip `5f551408e` · CI frontend FAIL |
+| **Causa** | `partial-input-contracts` PontoTab pin desatualizado |
+| **Fix** | renovar hash (justificativa uniqueKey) |
+| Fora | merge/deploy |
+
 ## CURSOR — VIGENTE (RH Ponto uniqueKey) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |

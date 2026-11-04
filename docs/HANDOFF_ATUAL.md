@@ -1,3 +1,6 @@
+## CURSOR — #493 pin residual partial-input (2026-11-04)
+- CI frontend FAIL: partial-input PontoTab. Hash renovado. uniqueKey intacto.
+
 ## CURSOR — RH Ponto uniqueKey (2026-11-04 America/Sao_Paulo)
 - #401 tip `b888b2c00`. Branch `cursor/rh-ponto-uniquekey-392b`.
 - PontoTab: uniqueKey `rh-ponto-create`. Pins command-payload + date renovados; runtime-proof baseline atualizado.
