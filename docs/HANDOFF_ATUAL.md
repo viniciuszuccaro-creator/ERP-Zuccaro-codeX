@@ -1,3 +1,18 @@
+## CURSOR — #490 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `7e46c7f32` · PR #490 · CI SUCCESS 3/3.
+- Estoque/Compras uniqueKey + pin date/runtime-proof. #488/#489 verdes. Homolog #475 BLOCKED.
+- Próximo indep.: C360/cadastros residual sem port #441.
+
+## CURSOR — #490 pin residual (2026-11-04)
+- CI frontend FAIL: date-arithmetic OrdensCompra + runtime-proof six suites.
+- Fix: fixture hash + baseline `8a128ccb8`. uniqueKey intacto.
+
+## CURSOR — Estoque/Compras uniqueKey (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00`. Branch `cursor/estoque-compras-uniquekey-392b`.
+- uniqueKey em OrdensCompraTab (create/view/receber/avaliar), Compras Nova OC, CotacoesTab, MovimentacoesTab, RecebimentoTab, SolicitacoesTab.
+- Pins renovados: purchase-financial, shared-query, scoped, approval, purchase-request, command-payload.
+- Paralelos: #488 Contas · #489 Switcher identidade. Homolog #475 BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

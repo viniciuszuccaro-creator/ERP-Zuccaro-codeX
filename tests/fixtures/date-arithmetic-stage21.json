@@ -83,7 +83,7 @@
   },
   {
     "file": "src/components/compras/OrdensCompraTab.jsx",
-    "emittedBeforeSha256": "e7bff1402de0dfbae3c39f919f5846c268440020174dc7971f2a7643bef35061",
+    "emittedBeforeSha256": "702c91d225f750f882dbfc248d706c8ab2dd7a134c891d00c90a115eb792cfe6",
     "operands": 2,
     "lines": [
       {

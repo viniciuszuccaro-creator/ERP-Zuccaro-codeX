@@ -1,3 +1,41 @@
+## CURSOR — VIGENTE (#490 Estoque/Compras uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#490](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/490) `cursor/estoque-compras-uniquekey-392b` |
+| **Tip** | **`7e46c7f32`** · CI SUCCESS (frontend+backend+compose) |
+| **Código** | uniqueKey OC/cotação/mov/receb/solicitação · tip `8a128ccb8` + pin date/runtime-proof |
+| Classificação | navegação anti-duplicata |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos verdes:** #476–#489 (#488 Contas · #489 Switcher identidade).
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** C360 residual / cadastros sem port #441 · fail-closed residual.
+
+## CURSOR — #490 pin residual date+runtime-proof (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Sobre** | tip `8a128ccb8` · CI frontend FAIL |
+| **Causa** | `date-arithmetic` OrdensCompraTab + `runtime-proof` six suites (baseline d312fbcd) |
+| **Fix** | fixture emittedBeforeSha256 · baseline runtime-proof → `8a128ccb8` (uniqueKey) |
+| Fora | merge/deploy · mutação |
+
+## CURSOR — VIGENTE (Estoque/Compras uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos** | #476–#487 verdes · #488 Contas uniqueKey · #489 Switcher Grupo label |
+| **Este pacote** | `cursor/estoque-compras-uniquekey-392b` — anti-duplicata openWindow |
+| **Delta** | OC create/view/receber/avaliar · Nova OC página · Cotação · Movimentação · Recebimento · Solicitação |
+| **Evidência** | `docs/evidence/estoque-compras-uniquekey-20261104.txt` |
+| Classificação | navegação · pins renovados com justificativa |
+| Fora | merge/deploy · seed · Base44 · dados reais |
+
+**Homolog privada:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · identidade #489 · C360 residual sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

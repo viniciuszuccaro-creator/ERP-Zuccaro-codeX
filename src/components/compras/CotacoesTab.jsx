@@ -262,7 +262,8 @@ export default function CotacoesTab({ windowMode = false }) {
             }, {
               title: '📊 Nova Cotação de Compras',
               width: 1100,
-              height: 700
+              height: 700,
+              uniqueKey: `compras-cotacao-create-${JSON.stringify([groupId, empresaId])}`,
             })}
           >
             <Plus className="w-4 h-4 mr-2" />

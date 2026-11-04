@@ -11,7 +11,8 @@ import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemai
 
 const cases=[
   {file:'src/components/compras/ImportacaoNFeRecebimento.jsx',name:'auditImportacao',hash:'9102904194633e691c60b152b550938c91b2bb556832d7a121e11559a4402eaa',kind:'record',error:'synthetic audit failure'},
-  {file:'src/components/compras/OrdensCompraTab.jsx',name:'auditOrdemCompra',hash:'e647200f64d6e115f479bbed8740244962417e1301f88f7798537975e2904ed3',kind:'record',error:'Auditoria obrigatoria falhou para ordem de compra.'},
+  // 2026-11-04: uniqueKey create/view/receber/avaliar openWindow (anti-duplicata).
+  {file:'src/components/compras/OrdensCompraTab.jsx',name:'auditOrdemCompra',hash:'2b5f4e7d3aefe6f0dd8c64ddd6c5ec64bb45b75a45f3869347d8fe509b400e2b',kind:'record',error:'Auditoria obrigatoria falhou para ordem de compra.'},
   {file:'src/components/compras/SolicitacoesCompraTab.jsx',name:'auditSolicitacaoCompra',hash:'aebd4dfc9c1fd5aaa78de56cba53cb10510cfe30c21d185e85d2defe25204b1a',kind:'record'},
   {file:'src/components/estoque/ImportadorProdutosPlanilha.jsx',name:'auditImportadorProdutos',hash:'662fff9f0c0fbcb56de2da4e37a4c396484e4ec19cc247fac430e7f73b0464f3',kind:'record',error:'Auditoria obrigatoria falhou para importacao de migracao.'},
   {file:'src/components/financeiro/ContasPagarTab.jsx',name:'auditarFinanceiro',hash:'0898138298e1e1ecc4981110d7d04e43e7eeb1207e744dfd5cbbf9fe25225d5b',kind:'financial'},

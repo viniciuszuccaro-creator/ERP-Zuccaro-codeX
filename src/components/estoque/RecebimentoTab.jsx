@@ -96,6 +96,8 @@ export default function RecebimentoTab({ recebimentos = [], ordensCompra = [], p
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const canCreateRecebimento = canCreate('Estoque', 'Recebimento');
   const [formData, setFormData] = useState(createInitialFormData);
 
@@ -257,7 +259,8 @@ export default function RecebimentoTab({ recebimentos = [], ordensCompra = [], p
           }, {
             title: '📦 Novo Recebimento',
             width: 1000,
-            height: 700
+            height: 700,
+            uniqueKey: `estoque-receb-create-${JSON.stringify([groupId, empresaId])}`,
           })}
         >
             <Plus className="w-4 h-4 mr-2" />
