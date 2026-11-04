@@ -1,3 +1,14 @@
+## CURSOR — PedidosEntrega uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-pedidos-entrega-uniquekey-392b` |
+| **Delta** | PedidosEntregaTab · abrirPainelLogistica (métricas/analytics/rotas) por ação+escopo |
+| **Paralelos** | #491–#508 |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

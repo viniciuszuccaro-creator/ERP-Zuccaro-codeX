@@ -160,7 +160,19 @@ export default function PedidosEntregaTab({ windowMode = false }) {
       return;
     }
     await auditEntrega({ acao, detalhes: { tela: config?.title } });
-    openWindow(Component, { windowMode: true, contextoValido, empresaId: effectiveEmpresaId, groupId: effectiveGroupId }, config);
+    openWindow(
+      Component,
+      { windowMode: true, contextoValido, empresaId: effectiveEmpresaId, groupId: effectiveGroupId },
+      {
+        ...config,
+        uniqueKey:
+          config?.uniqueKey ||
+          `comercial-pedido-entrega-${String(acao || "painel")}-${JSON.stringify([
+            effectiveGroupId || null,
+            effectiveEmpresaId || null,
+          ])}`,
+      },
+    );
   };
 
   const abrirDialogEntrega = async (tipo, pedido, entrega, permitido = true) => {
