@@ -20,7 +20,8 @@ const hashes = [
   ['src/components/expedicao/painel-logistico/BottlenecksPanel.jsx','ec3181c6ace8a34d0e6acffd6d041ee4c51553137593d7b2696d031f0c6b4645'],
   ['src/components/producao/RelatoriosProducao.jsx','723d550c7191303284206d36395eaffa4a87303ffc294a1ecd3c6ee76fd1ecbf'],
   ['src/components/portal/ChamadosCliente.jsx','6c06bd3e4e5faffc2744d2f30a732e498466321e188e68274fc2577e0c061b88'],
-  ['src/components/chatbot/DashboardAtendente.jsx','ea837f257d99bb269547b841e80b395f9714a5ca3d9397070c05ba19be80997e'],
+  // Pin renovado 2026-11-04: KPI fail-closed (policy + DESCONHECIDO; streak real).
+  ['src/components/chatbot/DashboardAtendente.jsx','f7dd167f700c5c8b01754b0c554c52865494e2df49ad6d58545a968a7a701d82'],
   ['src/components/crm/FunilVendasAvancado.jsx','f06224b74b17273cf6f10edb54d4c8bab18574990e7f968b0b9e674130ffa588'],
   ['src/pages/DashboardCorporativo.jsx','5b7e965aa4955815f753684167f36221e5b9d985355ec125603044e7919248de'],
   ['src/components/cadastros/DashboardCanaisOrigem.jsx','5753ef70c87aeb32d6f25e4be14892b88cf1aaf6bfd137fcd6c6dabbfc050dfb'],
