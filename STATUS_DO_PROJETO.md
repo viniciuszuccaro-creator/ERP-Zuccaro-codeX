@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (#489 Switcher identidade CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#489](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/489) `cursor/empresa-switcher-grupo-label-392b` |
+| **Tip** | **`d53eb7302`** · CI SUCCESS (frontend+backend+compose) · runs 41878663921 / 41878693431 |
+| **Causa** | composição `Grupo ·` + nome já prefixado → "Grupo · Grupo CPA" |
+| **Fix** | `formatGrupoSwitcherDisplayName` / `formatEmpresaSwitcherDisplayName` (sem hardcode tenant) |
+| Classificação | identidade de exibição · IDs/CNPJs intactos |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos:** #488 Contas uniqueKey (pin residual tip `0aae053e5`) · #490 Estoque/Compras uniqueKey.
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** CI #488/#490 · C360 residual sem port #441.
+
 ## CURSOR — VIGENTE (Switcher identidade Grupo sem duplicar) (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |

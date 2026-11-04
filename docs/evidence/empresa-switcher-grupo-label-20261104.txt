@@ -31,3 +31,7 @@ policy-options-types PASS (hash fa339dc857…)
 Fora
 ----
 merge/deploy · seed · rename fixtures · Base44 · homolog com dados reais
+
+CI
+--
+Tip d53eb7302 SUCCESS frontend+backend+compose (41878663921 / 41878693431)

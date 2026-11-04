@@ -1,3 +1,8 @@
+## CURSOR — #489 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `d53eb7302` · PR #489 · CI SUCCESS 3/3 (runs 41878663921/41878693431).
+- Switcher: prefixo visual sem duplicar "Grupo". Sem hardcode CPA/3Z.
+- Paralelos: #488 pin residual · #490 uniqueKey estoque/compras. Homolog #475 BLOCKED.
+
 ## CURSOR — Switcher identidade Grupo (2026-11-04 America/Sao_Paulo)
 - #401 tip `b888b2c00`. Branch `cursor/empresa-switcher-grupo-label-392b`.
 - Causa: composição `Grupo ·` + `nome_do_grupo` já prefixado → "Grupo · Grupo CPA".
