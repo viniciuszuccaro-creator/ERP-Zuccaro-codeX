@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (IconeAcessoCliente uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Base** | #401 tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Branch** | `cursor/cadastros-icone-cliente-unique-392b` |
+| **Fix** | `uniqueKey=painel-cliente-${id}` · remove modal morto `painelAberto` |
+| **Evidência** | `docs/evidence/cadastros-icone-cliente-unique-20261104.txt` |
+| **Paralelo** | #476–#478 verdes · #479 unidade gap UX |
+| Classificação | capacidade (abertura única) · registros intocados |
+| Fora | merge/deploy/VPS · seed · nova candidata |
+
+**Próximo indep.:** CI deste tip · Historico HTTP sob fold Codex · homolog #475 BLOCKED.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
