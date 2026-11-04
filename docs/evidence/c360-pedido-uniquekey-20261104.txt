@@ -1,0 +1,36 @@
+C360 — uniqueKey Pedido/Ações Rápidas (2026-11-04 America/Sao_Paulo)
+======================================================================
+Base #401 tip b888b2c00 · branch cursor/comercial360-pedido-uniquekey-392b
+Paralelo: #481 KPI fail-closed (outra branch)
+
+Problema
+--------
+Comercial.jsx criar/editar Pedido e Ações Rápidas abriam janelas sem uniqueKey.
+Duplo clique / reabrir gerava segunda janela do mesmo formulário.
+
+Delta
+-----
+- Comercial: comercial-pedido-create-{scope} · comercial-pedido-edit-{id}
+- ValidarPedidosExternos: uniqueKey por grupo/empresa
+- AcoesRapidasGlobal: uniqueKey por ação + scope (grupo/empresa/ator)
+
+Classificação
+-------------
+- Apresentação/navegação: anti-duplicata de janela
+- Capacidade: preserva fluxo existente (só impede abertura paralela)
+- Registros: NÃO tocados
+
+Testes
+------
+comercial-pedido-uniquekey-open PASS
+comercial-clientes-tab-v24 (regressão AcoesRapidas)
+
+Fora
+----
+PedidosTab (hash pin) · Icone (#480) · Painel (#481) · merge/deploy · seed
+
+CI
+--
+tip 6b463436c — frontend/backend/compose SUCCESS (2026-11-04)
+#481 tip 21c3655c4 — SUCCESS em paralelo
+

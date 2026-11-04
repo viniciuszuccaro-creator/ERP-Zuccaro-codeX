@@ -251,6 +251,7 @@ function ComercialContent() {
 
   const handleCreateNewPedido = () => {
     let pedidoCriado = false;
+    const scopeKey = JSON.stringify([groupId, empresaId, user?.id || null]);
     openWindow(
       PedidoFormCompleto,
       {
@@ -274,12 +275,18 @@ function ComercialContent() {
           }
         }
       },
-      { title: ' Novo Pedido', width: 1400, height: 800 }
+      {
+        title: ' Novo Pedido',
+        width: 1400,
+        height: 800,
+        uniqueKey: `comercial-pedido-create-${scopeKey}`,
+      }
     );
   };
 
   const handleEditPedido = (pedido) => {
     let atualizacaoEmAndamento = false;
+    const pedidoId = pedido?.id != null ? String(pedido.id) : '';
     let windowIdRef = openWindow(
       PedidoFormCompleto,
       {
@@ -300,7 +307,14 @@ function ComercialContent() {
           }
         }
       },
-      { title: `Editar: ${pedido.numero_pedido}`, width: 1400, height: 800 }
+      {
+        title: `Editar: ${pedido.numero_pedido}`,
+        width: 1400,
+        height: 800,
+        uniqueKey: pedidoId
+          ? `comercial-pedido-edit-${pedidoId}`
+          : `comercial-pedido-edit-sem-id`,
+      }
     );
   };
 
@@ -488,7 +502,7 @@ function ComercialContent() {
                   <Button
                     data-permission="Comercial.Pedidos.visualizar"
                     variant="outline"
-                    onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
+                    onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800, uniqueKey: `comercial-validar-externos-${JSON.stringify([groupId, empresaId])}` })}
                   >Validar Pedido Externo</Button>
                 </ProtectedSection>
               </div>}
