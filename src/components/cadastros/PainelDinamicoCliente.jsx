@@ -401,6 +401,8 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
         title: `Editar Cliente: ${cliente.nome || cliente.razao_social}`,
         width: 1100,
         height: 650,
+        // Distinto de painel-cliente-{id} (IconeAcessoCliente) — não unir painel e formulário
+        uniqueKey: `cadastros-cliente-edit-${String(cliente?.id || "")}`,
       }
     );
     if (onClose) onClose();

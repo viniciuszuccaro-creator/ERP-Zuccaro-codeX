@@ -1,3 +1,9 @@
+## CURSOR — PainelCliente edit uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#508** tip `f6df898d4` CI SUCCESS 6/6. Fila #491–#508 verdes. Homolog 100 BLOCKED.
+
+## CURSOR — PainelCliente edit uniqueKey (2026-11-04 America/Sao_Paulo)
+- Edit form key distinta do painel (`cadastros-cliente-edit` ≠ `painel-cliente`). Homolog 100 BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
