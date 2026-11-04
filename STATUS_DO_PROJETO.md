@@ -1,4 +1,32 @@
-## Continuidade vigente - previa privada e concorrencia complementar aprovadas (2026-11-04)
+## Continuidade vigente - prechecks100 e gate HML CPA identificado (2026-11-04)
+
+Base342999cafd5/401b888 reconferidas, trabalho alheio/WIP/historicos preservados.
+Nova consulta real READ ONLY/ROLLBACK:100 codigos da MESMA FINAL100 livres,
+0conflitos no Grupo CPA completo, incluindo inativos/empresas; constraint efetiva
+UNIQUE(group_id,codigo). Nao repetir a consulta100 por documento/nativeID nem
+tratar resultado atual como reserva permanente de codigo. Principal BYPASSRLS
+continua administrativo, sem grant/DDL/escrita ou liberacao operacional.
+
+Grupo CPA/2 empresas aprovadas reconferidos no alvo efetivo; sem renomear dados,
+excluir terceira linha ou usar fixture como origem real. No PG privado historico,
+Grupo CPA ausente e6policies vinculadas ao grupo anterior: binding/RBAC HML ainda
+NAO fechados. Role sem super/BYPASS/createdb/createrole nao prova toda a matriz
+efetiva. Colunas existentes comportam15campos do mestre, nao schema HML completo.
+
+Auxiliares FINAL100:100enderecos incompletos,4tambem com CEP_FORMAT; numero/pais/
+finalidade/nome do local nao inventados.5emails canonicos com procedencia direta.
+Pendencias bloqueiam acoes dependentes, nao autorizam paralisar mestres aptos.
+DEV web/API nao equiparados a candidata: asset/imageIDs/APP_VERSION registrados,
+SHA servido do DEV nao comprovado. Previa b888 permanece exclusivamente sintetica.
+
+Confirmacao especifica solicitada: namespace/binding CPA/perfil Auth existente e
+policies minimas apenas no PG privado, apos backup/ensaio/revisao; nada aplicado.
+Proximo: decisao desse gate, validar privilegios efetivos/PUBLIC/Auth, preparar
+patch isolado e so entao lote identificado/reexecucao/reversao/leitura API/tela.
+Dados reais ainda NAO disponibilizados na HML. Detalhes/recibos privados no HANDOFF.
+Sem runtime alterado, diff-check documental; sem merge/carga operacional/deploy.
+
+## Historico - previa privada e concorrencia complementar aprovadas (2026-11-04)
 
 342f41789f2/CI5812-5813 SUCCESS e401b888b2c0/CI5684 SUCCESS reconferidas.
 Mesmo Codespace/snapshot/WIP preservados; sem outro executor observado. URL privada

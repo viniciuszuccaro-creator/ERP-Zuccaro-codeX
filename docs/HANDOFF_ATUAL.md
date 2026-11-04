@@ -1,4 +1,63 @@
-## Continuidade vigente - previa externa e concorrencia complementar aprovadas (2026-11-04)
+## Continuidade vigente - codigos CPA e auxiliares100 conferidos (2026-11-04)
+
+Base342999cafd5546802b92c024130ca77d293a5b8c74f e401b888 reconferidas, desktop
+limpo; reserva344/6637529470 e documental342/6637859072. Nenhum runtime/branch
+Cursor alterado; WIP Codespace apenas.vscode e historicos inativos preservados.
+
+NOVO PRECHECK REAL: extraidos SOMENTE100 codigos exatos da MESMA FINAL100, com
+sourceArtifactSha256/cohortSha256 conferidos contra o plano ja reconciliado.
+Artefato4231bytes transportado privadamente, SHA256 identico,600/nosymlink; sem
+nova selecao ou transferencia do backup. Consulta parametrizada por codigo e
+Grupo, sobre TODOS os registros desse Grupo (todas empresas/inativos), nao somente
+coorte/primeira pagina. Resultado100 codigos livres/0conflitos. Constraint efetiva
+UNIQUE(group_id,codigo) confirmada, alem das constraints de ID/documento. Nao
+extrapolar a outro Grupo/instante nem dispensar recheck transacional antes de carga.
+Destino/sessao/endereco/porta/database comparados ao recibo da API efetiva;
+REPEATABLE READ READ ONLY/timeouts/search_path/ROLLBACK, escritas0. Mesmo principal
+administrativo BYPASSRLS, NAO principal restrito para HML. Nenhum grant/DDL aplicado.
+
+BINDING: no alvo efetivo existem o Grupo CPA e2 empresas com IDs aprovados. Nome
+de grupo armazenado e nome de exibicao/prefixo sao conceitos distintos; razao
+social e fantasia das empresas nao foram renomeadas. Terceira linha nao excluida
+ou tratada como descartavel. Copia PG privada historica tem identidade completa
+conferida, networknone/sem portas e role existente NOSUPERUSER/NOBYPASSRLS/
+NOCREATEDB/NOCREATEROLE; seis policies, mas Grupo CPA AUSENTE e policies nao
+vinculadas a ele. Container retomado somente para metadados e parado no finally;
+readiness pg_isready necessario, primeira conexao imediata falhou sem escrita.
+Nao promover atributos de role a prova de privilegios efetivos/Auth/RBAC completos.
+
+SCHEMA/AUXILIARES: as colunas da copia privada comportam os15 campos distintos
+do payload mestre congelado; nao homologa FKs/journals/Auth/schema HML novo.
+classifyLegacyAddresses existente, aplicado somente aos originais da FINAL100:
+100 enderecos principais incompletos;96 sem conflito adicional e4 CEP_FORMAT.
+Faltam nome do local/numero/pais/finalidades, sem preencher por suposicao; nenhum
+endereco declarado canonicalReady. Cinco emails canonicos correspondem diretamente
+a contato_email/legacy_email_raw na fonte; campos brutos email/telefone/celular
+vazios nao foram usados para declarar ausencia geral de contato. Sem conversao ou
+escolha automatica de contatos. Mestre elegivel nao equivale a cadastro completo;
+entrega/cobranca/fiscal dependentes de endereco permanecem bloqueadas/revisaveis.
+
+AMBIENTES: Codespace serve snapshot b888 sintetico/harness/PG efemero da prova;
+nao apontado ao operacional. erp-dev.cpaferroeaco.com.br abriu sessao existente
+do proprietario/Grupo CPA, asset publico /assets/index-BZF22CJa.js. API container
+erp-api-dev/ERP_ENVdev/APP_VERSION0.1.0-runtime-01 e DB efetivo reconferidos;
+IDs LOCAIS de imagens API/web preservados privadamente, labels revision ausentes.
+SHA Git servido do DEV NAO comprovado; tag/asset/imageID nao sao commit ou digest
+de registry. Nao afirmar que DEV serve b888 ou renomear fixture para simular carga.
+
+GATE ESPECIFICO: confirmacao solicitada para namespace HML separado SOMENTE no PG
+privado existente, espelho de IDs/dados CPA e2 empresas, identidade Auth existente
+conferida e policies/grants minimos, condicionado a backup/ensaio/revisao. Sem novo
+Auth/segredo, sem alterar schema/historicos anteriores ou VPS operacional. NAO
+aplicado; vinculo/permissoes ainda nao fechados, nenhuma carga/reativacao. Auxiliares
+incompletos seguem revisao assistida proporcional. Antes de aplicar, verificar
+privilegios efetivos/herdados/PUBLIC e identidade Auth, nao apenas atributos da role.
+Recibos detalhados600 fora Git: VPS operational-gates-344-20261026/cohort100-code-*
+e hml-precheck-executor-20261104.private.json; Codespace resume-20261102/
+hml-binding-precheck*,hml-schema-contract-precheck*,cohort100-auxiliary-precheck*
+e cohort100-contact-provenance*. Executor/template, pins e fingerprints preservados.
+
+## Historico - previa externa e concorrencia complementar aprovadas (2026-11-04)
 
 Base342 f41789f2221e94b565f32af000bfc21521667f56/CI5812-5813 SUCCESS e
 401b888b2c00eaf571820e0594b96afd45837dc689a/CI5684 SUCCESS reconferidas.

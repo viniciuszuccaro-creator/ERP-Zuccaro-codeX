@@ -1,6 +1,45 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - previa privada acessivel; gate HML real separado (2026-11-04)
+## Estado vigente - precheck de codigos fechado; binding HML pendente (2026-11-04)
+
+MESMA FINAL100/pins: consulta nova por100codigos exatos no GrupoCPA completo,
+incluindo empresas/inativos,100livres/0conflitos; UNIQUE(group_id,codigo) efetiva.
+READ ONLY/REPEATABLE READ/ROLLBACK, destino/sessao conferidos, sem escrita. Nao
+e reserva de codigo ou prova de outro Grupo; recheck no lote permanece obrigatorio.
+Principal administrativo com BYPASSRLS nao pode ser descrito como leitor restrito.
+
+No PG privado persistente ja existente: Grupo CPA nao existe; seis policies do
+principal do piloto limitam-se ao grupo anterior. Sem super/BYPASS/createdb/createrole,
+mas privilegios herdados/PUBLIC/Auth efetivos ainda precisam de prova. As colunas
+de clientes comportam15campos do payload mestre, nao todo o schema de HML.
+Nenhum novo namespace, perfil, grant, policy ou Grupo foi criado nesta rodada.
+
+Confirmação especifica solicitada para namespace HML separado nesse PG isolado,
+nome proposto hml344_cpa_20261104 (ainda inexistente), sem mover tabelas atuais;
+espelho dos IDs/dados CPA/duas empresas e perfil de identidade Auth ja existente
+previamente conferida, grants/policies minimos somente nesse escopo, apos backup,
+ensaio e revisao. Preservar PUBLIC e roles anteriores; qualquer ajuste fora desse
+escopo exige gate correspondente. Sem novo usuario Auth/segredo ou alteracao na
+VPS operacional. Confirmacao pendente nao pode ser registrada como autorizacao.
+Efeito proposto apos os gates: carregar somente a MESMA100 pelo importador/ledger
+canonicos nesse namespace; copiar referencias comprovadas, nao fixtures renomeadas.
+Retorno: parar apenas runtime HML, revogar apenas concessoes novas e reverter lote
+por fluxo logico/auditoria; preservar namespace/recibos para reconciliacao, sem DROP
+ou reativacao de historicos. Backup do PG privado anterior ao patch fica privado.
+
+Auxiliares:100enderecos incompletos (96sem conflito adicional,4CEP_FORMAT), faltam
+nome do local/numero/pais/finalidades; cinco emails canonicos sustentados diretamente
+pela fonte. Nao inventar complementos nem declarar cadastro completo. HML deve
+exibir motivos/operacoes bloqueadas pelo fluxo de revisao existente.
+
+DEV efetivo: SPA asset /assets/index-BZF22CJa.js, API erp-api-dev/version
+0.1.0-runtime-01/ERP_ENVdev, DB confrontado em recibo privado. Imagens locais sem
+label Gitrevision; SHA servido nao comprovado, nao equiparar a b888. Grupo CPA e
+duas empresas existentes nao renomeados; razao social/fantasia/prefixo distintos,
+terceira linha intacta. Codespace e seu harness permanecem sinteticos/separados.
+Detalhes/identidades/pins/SQL e resultados permanecem privados conforme HANDOFF.
+
+## Historico - previa privada acessivel; gate HML real separado (2026-11-04)
 
 401b888b2c0: acesso externo/login sintetico e SHA de /__erp_preview comprovados
 nesta retomada; URL5173 Private, sem torná-la publica ou criar recurso. Janela
