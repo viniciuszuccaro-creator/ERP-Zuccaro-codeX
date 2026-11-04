@@ -26,6 +26,9 @@ export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
   const { getFiltroContexto, createInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeKey = JSON.stringify([groupId, empresaId]);
   const filtroEmpresaKey = React.useMemo(() => JSON.stringify(getFiltroContexto('empresa_id', true) || {}), [getFiltroContexto, empresaAtual?.id, grupoAtual?.id]);
   const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
@@ -223,13 +226,15 @@ export default function ProdutosTab(props) {
                 }, {
                   title: '🏭 Conversão em Massa',
                   width: 1000,
-                  height: 700
+                  height: 700,
+                  uniqueKey: `estoque-produto-conversao-massa-${scopeKey}`,
                 });
               }
             }, {
               title: '📊 Dashboard Produção',
               width: 1200,
-              height: 700
+              height: 700,
+              uniqueKey: `estoque-produto-dashboard-producao-${scopeKey}`,
             })}
           >
             <Factory className="w-4 h-4 mr-2" />
@@ -253,7 +258,8 @@ export default function ProdutosTab(props) {
             }, {
               title: '🏭 Conversão em Massa para Produção',
               width: 1000,
-              height: 700
+              height: 700,
+              uniqueKey: `estoque-produto-conversao-massa-${scopeKey}`,
             })}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -276,7 +282,8 @@ export default function ProdutosTab(props) {
             }, {
               title: '📥 Importar Planilha',
               width: 1100,
-              height: 700
+              height: 700,
+              uniqueKey: `estoque-produto-importar-planilha-${scopeKey}`,
             })}
           >
             <Upload className="w-4 h-4 mr-2" />
@@ -322,7 +329,8 @@ export default function ProdutosTab(props) {
             }, {
               title: '📦 Novo Produto',
               width: 1200,
-              height: 700
+              height: 700,
+              uniqueKey: `estoque-produto-create-${scopeKey}`,
             })}
             >
               <Plus className="w-4 h-4 mr-2" />

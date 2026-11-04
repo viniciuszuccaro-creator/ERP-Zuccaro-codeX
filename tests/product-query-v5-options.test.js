@@ -9,7 +9,7 @@ import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemai
 
 const cases=[
   {file:'src/components/cadastros/ProdutoFormV22_Completo.jsx',count:5,hash:'67a27312ee2786c0576e0a330e81025ff85562b8bb6c9c30bd7079d5e30a0520'},
-  {file:'src/components/estoque/ProdutosTab.jsx',count:4,hash:'cd8dd5ebcac1f1558ef3b2e27f86e26748e0ede0e486cd222139aae8babd59f4'},
+  {file:'src/components/estoque/ProdutosTab.jsx',count:4,hash:'c42ffe51ce88a845dbc6e1bdf33853eb78a98dbe664fc69cb8548a5a9b47147e'},
 ];
 function queries(file){
   const source=runtimeProofSource(file),ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JSX),result=[];
