@@ -3,10 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  MessageCircle, 
-  Clock, 
-  CheckCircle, 
+import {
+  MessageCircle,
+  Clock,
+  CheckCircle,
   Star,
   Award,
   Target,
@@ -18,7 +18,7 @@ import { buildMetricasAtendenteFromConversas } from '@/components/chatbot/dashbo
 
 /**
  * V21.6 - DASHBOARD DO ATENDENTE
- * 
+ *
  * Métricas individuais:
  * ✅ Conversas atendidas hoje
  * ✅ Tempo médio de resposta
@@ -106,7 +106,7 @@ export default function DashboardAtendente() {
               <Badge className="bg-white/30">Nível {metricas.nivel}</Badge>
             </div>
           </div>
-          
+
           {metricas.diasConsecutivos >= 3 && (
             <div className="mt-3 flex items-center gap-2 text-sm" data-action="dashboard-atendente-streak">
               <Flame className="w-4 h-4 text-orange-300" />
@@ -153,9 +153,9 @@ export default function DashboardAtendente() {
             ) : (
               <>
                 <p className="text-2xl font-bold text-purple-600">{metricas.tempoMedioResposta}min</p>
-                <Progress 
+                <Progress
                   value={Math.min((metaSLA / parseFloat(String(metricas.tempoMedioResposta || 1))) * 100, 100)}
-                  className="h-1 mt-1" 
+                  className="h-1 mt-1"
                 />
               </>
             )}
@@ -202,9 +202,9 @@ export default function DashboardAtendente() {
               )}
             </div>
             {metricas.taxaResolucao != null ? (
-              <Progress 
-                value={Math.min((metricas.taxaResolucao / metaResolucao) * 100, 100)} 
-                className="h-2" 
+              <Progress
+                value={Math.min((metricas.taxaResolucao / metaResolucao) * 100, 100)}
+                className="h-2"
               />
             ) : null}
           </div>
@@ -221,11 +221,11 @@ export default function DashboardAtendente() {
               )}
             </div>
             {metricas.tempoMedioResposta != null ? (
-              <Progress 
-                value={metricas.tempoMedioResposta <= metaSLA 
-                  ? 100 
-                  : Math.max(0, 100 - ((metricas.tempoMedioResposta - metaSLA) * 20))} 
-                className="h-2" 
+              <Progress
+                value={metricas.tempoMedioResposta <= metaSLA
+                  ? 100
+                  : Math.max(0, 100 - ((metricas.tempoMedioResposta - metaSLA) * 20))}
+                className="h-2"
               />
             ) : null}
           </div>
