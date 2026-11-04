@@ -1,14 +1,14 @@
-## CURSOR — Contratos uniqueKey + fila janelas (2026-11-04 America/Sao_Paulo)
+## CURSOR — #494 Contratos uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Candidata #401** | tip `b888b2c00` — **sem** keys #488–#493 nem Contratos |
-| **#491 Expedição** | tip provas `2bca31fa0` (CI em curso) — não incorporar antes do aceite |
-| **#492 Produção** | tip provas `c5a1c45d9` (CI em curso) |
-| **#493 RH** | tip provas `1a0a93ef6` (CI em curso) |
-| **Este pacote** | `cursor/contratos-uniquekey-392b` · `contratos-create-*` / `contratos-edit-*` |
-| **Provas** | clique repetido · escopo Grupo/Empresa · ids distintos · fechar/reabrir · WM canônico · 10 PASS |
-| **Homolog 100** | BLOCKED — HML privada Codex; API/tela pendente; sem IDs/nomes/fallback sintético em git; identidade só da fonte canônica (Grupo CPA · CPA FERRO E AÇO · 3Z LTDA) |
+| **PR** | [#494](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/494) `cursor/contratos-uniquekey-392b` |
+| **Tip** | **`cec94aa1d`** · CI SUCCESS 6/6 (frontend+backend+compose × push/PR) |
+| **Código** | `contratos-create-[groupId,empresaId]` · `contratos-edit-{id}` |
+| **Paralelos provas verdes** | #491 `2bca31fa0` · #492 `c5a1c45d9` · #493 `1a0a93ef6` (CI SUCCESS) |
+| **#495 Gestores** | tip `b2728957c` — CI em curso |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
 | **Incorporação** | seletiva na #401 **somente após aceite** Codex |
 | Classificação | navegação · registros intocados |
 | Fora | merge main · deploy · seed · Base44 |

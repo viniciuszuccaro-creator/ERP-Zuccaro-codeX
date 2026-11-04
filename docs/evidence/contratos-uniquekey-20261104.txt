@@ -1,5 +1,6 @@
 PR branch: cursor/contratos-uniquekey-392b
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Tip: cec94aa1d — CI SUCCESS 6/6 (2026-11-04)
 Escopo: uniqueKey WindowManager em Novo/Editar Contrato
 Keys: contratos-create-[groupId,empresaId] · contratos-edit-{id}
 Classificação: navegação · registros intocados
