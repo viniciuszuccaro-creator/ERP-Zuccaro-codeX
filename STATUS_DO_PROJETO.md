@@ -1,3 +1,16 @@
+## CURSOR — AcoesRapidas uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/acoes-rapidas-uniquekey-392b` |
+| **Delta** | `AcoesRapidasGlobal` creates com uniqueKey por escopo Grupo/Empresa/usuário |
+| **Alinhamento** | `financeiro-cr/cp-create` (#488) · `crm-oportunidade-nova` |
+| **Paralelos verdes** | #491–#495 |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

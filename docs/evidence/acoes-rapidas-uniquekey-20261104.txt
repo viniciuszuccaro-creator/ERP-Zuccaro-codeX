@@ -1,0 +1,7 @@
+PR branch: cursor/acoes-rapidas-uniquekey-392b
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Escopo: uniqueKey WindowManager em AcoesRapidasGlobal (creates)
+Keys: acoes-rapidas-*-create-[groupId,empresaId,userId] · financeiro-cr/cp-create (alinhado #488) · crm-oportunidade-nova
+Classificação: navegação · registros intocados
+Homolog 100 clientes HML: BLOCKED (API/tela — sem dados públicos)
+Fora: merge main · deploy · seed · FF #401 sem aceite
