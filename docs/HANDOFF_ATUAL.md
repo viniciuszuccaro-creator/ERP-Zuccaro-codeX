@@ -1,3 +1,6 @@
+## CURSOR — PainelCliente edit uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#508** tip `f6df898d4` CI SUCCESS 6/6. Fila #491–#508 verdes. Homolog 100 BLOCKED.
+
 ## CURSOR — PainelCliente edit uniqueKey (2026-11-04 America/Sao_Paulo)
 - Edit form key distinta do painel (`cadastros-cliente-edit` ≠ `painel-cliente`). Homolog 100 BLOCKED.
 

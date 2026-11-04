@@ -1,10 +1,10 @@
 PR branch: cursor/cadastros-painel-cliente-uniquekey-392b
-Tip: a1323a30fa69f99c5dc608663492381db7583576
+PR: #508
+Tip: f6df898d4298a9497abe1debff69fe0ed0b3f827
+CI: SUCCESS 6/6
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
-Escopo: uniqueKey WindowManager em PainelDinamicoCliente (edit)
 Key: cadastros-cliente-edit-{id} (≠ painel-cliente-{id})
-Overlap: IconeAcessoCliente — keys distintas (painel vs formulário)
-Testes: tests/cadastros-painel-cliente-uniquekey.test.js 4 PASS
+Overlap: IconeAcessoCliente — keys distintas
 Classificação: navegação · registros intocados
 Homolog 100: BLOCKED
 Fora: merge main · deploy · FF #401 sem aceite
