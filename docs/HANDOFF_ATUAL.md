@@ -1,9 +1,6 @@
-## CURSOR — #498 pin residual runtime-proof (2026-11-04 America/Sao_Paulo)
-- CI frontend FAIL: runtime-proof ainda em d312fbcd após product-query. Baseline → `49b7cda48`. uniqueKey intacto.
-
-## CURSOR — Estoque Produtos uniqueKey (2026-11-04 America/Sao_Paulo)
-- `cursor/estoque-produtos-uniquekey-392b`: ProdutosTab WindowManager uniqueKey; conversão compartilhada; pin product-query renovado.
-- Paralelos #491–#497 CI SUCCESS. Homolog 100 BLOCKED. Aceite antes de FF.
+## CURSOR — #498 Estoque Produtos CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `3391ec550` (código `49b7cda48` + pin `07e6493e4`) · PR #498 · CI SUCCESS 6/6.
+- ProdutosTab uniqueKey. Paralelos #491–#497 · #482 · #490 verdes. #401 sem as keys. Homolog 100 BLOCKED. Aceite antes de FF.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

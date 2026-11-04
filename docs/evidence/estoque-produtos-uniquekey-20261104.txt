@@ -1,8 +1,9 @@
 PR branch: cursor/estoque-produtos-uniquekey-392b
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Tip: 49b7cda48 (código) · 07e6493e4 (runtime-proof) · 3391ec550 (docs) — CI SUCCESS 6/6
 Escopo: uniqueKey WindowManager em ProdutosTab (create, dashboard, conversão, import)
 Keys: estoque-produto-*-{scopeKey}; conversão compartilhada entre botão e dashboard
-Pin: product-query-v5-options ProdutosTab hash renovado (justificativa uniqueKey)
+Pin: product-query-v5-options + runtime-proof baseline 49b7cda48
 Classificação: navegação · registros intocados
 Homolog 100 clientes HML: BLOCKED (API/tela — sem dados públicos)
 Fora: merge main · deploy · seed · FF #401 sem aceite
