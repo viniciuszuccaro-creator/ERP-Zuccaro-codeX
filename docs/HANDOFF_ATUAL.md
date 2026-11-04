@@ -1,3 +1,16 @@
+## CURSOR — #492 provas comportamentais (2026-11-04)
+- Provas WindowManager create/view. #401 tip b888b2c00 sem estas chaves. Integração só após aceite.
+
+## CURSOR — #492 CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `6edb243a2` · PR #492 · CI SUCCESS 3/3.
+- Produção Nova OP / Kanban uniqueKey. #488–#491 verdes. Homolog #475 BLOCKED.
+- Próximo indep.: C360/fail-closed residual.
+
+## CURSOR — Produção OP uniqueKey (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00`. Branch `cursor/producao-op-uniquekey-392b`.
+- Producao Nova OP + Kanban create/view uniqueKey. Pin production-command renovado.
+- #488–#491 verdes. Homolog #475 BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

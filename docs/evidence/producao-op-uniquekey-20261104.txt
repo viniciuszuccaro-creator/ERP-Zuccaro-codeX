@@ -1,0 +1,32 @@
+Produção OP — uniqueKey anti-duplicata (2026-11-04 America/Sao_Paulo)
+====================================================================
+Base #401 tip b888b2c00 · branch cursor/producao-op-uniquekey-392b
+Paralelos verdes: #476–#491
+
+Problema
+--------
+Nova OP (página + Kanban) e abertura de OP no Kanban sem uniqueKey.
+
+Delta
+-----
+- producao-op-create-{groupId,empresaId}
+- producao-op-create-kanban-{groupId,empresaId}
+- producao-op-view-{id}
+- Pin production-command-types Kanban renovado
+
+Classificação
+-------------
+navegação anti-duplicata · registros intocados
+
+Testes
+------
+producao-op-uniquekey PASS
+production-command-types PASS
+
+Fora
+----
+merge/deploy · seed · Base44 · homolog dados reais
+
+CI
+--
+Tip 6edb243a2 SUCCESS frontend+backend+compose

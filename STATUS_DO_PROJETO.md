@@ -1,3 +1,39 @@
+## CURSOR — #492 provas comportamentais uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#492](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/492) |
+| **Candidata #401** | tip `b888b2c00` — **sem** `producao-op-*` |
+| **Provas** | create escopo A≠B · view id · dois cliques · fechar/reabrir · WM canônico |
+| **Integração** | BLOCKED até aceite Codex |
+
+## CURSOR — VIGENTE (#492 Produção OP uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#492](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/492) `cursor/producao-op-uniquekey-392b` |
+| **Tip** | **`6edb243a2`** · CI SUCCESS (frontend+backend+compose) |
+| Classificação | navegação anti-duplicata |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos verdes:** #476–#491 (#488–#491 neste lote).
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** C360 residual · fail-closed residual · RH uniqueKey.
+
+## CURSOR — VIGENTE (Produção OP uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos verdes** | #476–#491 |
+| **Este pacote** | `cursor/producao-op-uniquekey-392b` — Nova OP / Kanban anti-duplicata |
+| **Evidência** | `docs/evidence/producao-op-uniquekey-20261104.txt` |
+| Classificação | navegação |
+| Fora | merge/deploy · seed · dados reais |
+
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · C360 residual · fail-closed residual.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
