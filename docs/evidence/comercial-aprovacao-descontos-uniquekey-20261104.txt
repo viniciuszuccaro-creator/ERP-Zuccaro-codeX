@@ -1,0 +1,10 @@
+PR branch: cursor/comercial-aprovacao-descontos-uniquekey-392b
+Tip: d77c407fd5e854febae246516e7b5031087c5b66
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Escopo: uniqueKey WindowManager em AprovacaoDescontosManager
+Key: comercial-aprovacao-analisar-{id} (alinhada a #503 Central)
+Overlap: #503 — mesma finalidade analisar; fechar só na Central
+Testes: tests/comercial-aprovacao-descontos-uniquekey.test.js 4 PASS
+Classificação: navegação · registros intocados
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite
