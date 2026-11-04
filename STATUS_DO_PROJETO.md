@@ -1,4 +1,32 @@
-## Continuidade vigente - Central360 conferida; previa externa pendente (2026-11-03)
+## Continuidade vigente - reconciliacao real100 concluida no recorte (2026-11-04)
+
+3427fbc6122/CI5797-5798 SUCCESS e401b888b2c0/CI5684 SUCCESS reconferidos.
+Previa5173 PRIVATE, HTTP local200+URL externa autenticada+login sintetico ate
+Comercial comprovados no mesmo snapshot b888. Bloqueio404 anterior encerrado.
+Depois o Codespace entrou Stopping->Stopped sem comando deste executor; causa
+nao comprovada. URL agora suspensa, nao disponibilidade permanente ou homologacao
+operacional. WIP b5cb/??.vscode e candidata Cursor intactos.
+
+Legado344: canal administrativo recuperado, destino EFETIVO da API e binding CPA/
+2empresas conferidos; consulta fixa<=100 executada READ ONLY/REPEATABLE READ,
+timeouts e ROLLBACK. Classificador canonico b888: NEW100/COMPATIBLE0/DUPLICATE0/
+DIVERGENT0/BLOCKED0. Novos por documento/identidade nativa; nao destino vazio nem
+codigo livre fora do recorte. Executor postgres tem BYPASSRLS, NAO leitor restrito;
+nenhum grant/DDL/carga. Cinco artefatos privados600/pai700/nosymlink e hashes
+conferidos. Recibo344/6635287552, detalhes no HANDOFF; liberados operacionalmente0.
+
+Ensaio novo de unidade v5 interrompido antes da coleta final; nao PASS. Tentativas
+iniciais tiveram erros do driver, nao defeito de produto. Ler resultado privado
+v5 antes de repetir. Provas antigas estaveis preservadas, sem refazer ciclo inteiro.
+Fila finita: reserva/retomada do MESMO Codespace -> resultado unidade/concorrencia ->
+destino privado isolado da MESMA coorte e idempotencia/reversao -> codigo/auxiliares/
+schema/principal/backup atual -> autorizacao de carga -> cadeia/deploy/aceite.
+Piloto historico de grupo sintetico nao substitui FINAL100/CPA; Base44 ainda depende
+de reautenticacao, sem repetir consulta recusada. Nenhum dado declarado recuperado
+por cor/tela/contagem. Fonte e consulta100 nao sao mais bloqueios. Somente docs/
+diff-check neste lote; sem merge, carga operacional, DDL/grants ou deploy.
+
+## Historico - Central360 conferida; previa externa pendente (2026-11-03)
 
 342ef4ddf47 CI5757/5758 SUCCESS e401b888b2c0 CI5684 SUCCESS reconferidos.
 Resultado privado Central360 antes pendente:4 checks/errors0/quotePost0/

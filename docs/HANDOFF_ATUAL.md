@@ -1,4 +1,90 @@
-## Continuidade vigente - Central360 conferida e acesso a previa pendente (2026-11-03)
+## Continuidade vigente - reconciliacao100 executada e previa comprovada (2026-11-04)
+
+Base342 7fbc6122a11366abf3250adb8a9f0d79ba4d6a61, CI5797/5798 SUCCESS;
+401 b888b2c00eaf571820e0594b96afd45837dc689a/CI5684 SUCCESS reconferidos.
+Checkout Codespace b5cb34e1/??.vscode preservado; nenhuma sincronizacao, port,
+nova candidata ou escrita na branch Cursor. Desktop limpo no inicio desta reserva.
+
+PREVIA: o registro5173 voltou a aparecer no painel e no CLI como private.
+Mesmo runner/snapshot imutavel b888 retomado com guardas, recibos anteriores
+copiados privadamente e TTL3600. HTTP local200, autenticacao do encaminhamento
+GitHub, URL externa e login sintetico ate Comercial comprovados. Bloqueio404
+anterior ENCERRADO neste alcance, sem alterar visibilidade para publica.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial
+Dados exclusivamente sinteticos, PG17 efemero network none; nao e login Supabase
+operacional nem clientes importados. Guardas e original do harness preservados.
+
+ESTADO FINAL DA PREVIA: durante ensaio novo o Codespace passou a Stopping e
+depois Stopped/?autoStart=false, sem comando de parada deste executor. GitHub
+confirmou mesmo ambiente/2core/WIP, sem Active. Causa NAO atribuida a OOM,
+franquia ou outro executor sem prova. Nao anunciar URL atualmente disponivel,
+reiniciar contra possivel reserva ou prometer processo permanente. Coordenacao
+direta401/6635287991 solicita motivo/reserva; publicacao nao prova recebimento.
+
+COMERCIAL: provas existentes Orcamento/Pedido e Central360 reutilizadas. Nova
+negativa usa prefixo/guardas do driver integrado existente, UI real, request de
+unidade adulterada e contagens PostgreSQL, com recibos novos fora Git. Tentativas
+iniciais falharam na montagem/entrada do driver e localizacao do schema privado,
+NAO demonstraram defeito do produto nem PASS. Ajustes apenas no executor privado,
+sem enfraquecer assertions. Na parada, resultado v5 ainda nao conferido: ler
+receipt/unit-negative-20261104-v5/unit-negative-20261104.result.private.json e
+provenance antes de repetir. Unidade comercial atual e principal/KG sem conversao;
+nao inventar fator ou declarar conversao homologada. Matriz concorrente completa
+continua distinta dos duplos cliques/reaberturas anteriormente comprovados.
+
+LEGADO344: console administrativo EXISTENTE recuperado e VPS identificada.
+Metadados da conexao efetivamente usada pela API confrontados ao container DB;
+comparacao inicial recusou sufixo CIDR, normalizacao por ipaddress confirmou
+mesmo endereco/porta/database. Nenhuma leitura de clientes antes do binding.
+Grupo CPA existente e2 referencias empresariais aprovadas conferidos pelos IDs
+do recibo privado anterior; sem criar Grupo/empresa ou atribuir fiscal/saldo.
+20 colunas requeridas da consulta presentes. Sessao postgres NOSUPERUSER com
+BYPASSRLS: executor administrativo da consulta fixa, NAO leitor restrito ou
+homologacao de menor privilegio/RBAC da importacao. Nenhum grant/role/policy novo.
+
+FINAL/pins existentes geraram o plano pelo buildClientReconciliationReadPlan de
+b888,100 identidades/0bloqueios de fonte; nao houve nova selecao/inventario/backup
+transferido. Transporte privado do plano conferido por SHA256 identico, sem eco
+ou historico contendo seu payload. Consulta parametrizada FIXA<=100, limites e
+timeouts canonicos, REPEATABLE READ READ ONLY, search_path pg_catalog e ROLLBACK
+confirmados; binding fisico/sessao/Grupo/empresas rechecados antes do SELECT.
+Resultado100 completo preservado. Classificador REAL classifyClientReconciliationReadResult
+empacotado do mesmo snapshot, bundle fiel/hash confrontado; nenhuma implementacao
+paralela. Normalizacao CRLF->LF do clipboard somente para recuperar bytes do bundle.
+
+CLASSIFICACAO: NEW100 / COMPATIBLE0 / DUPLICATE0 / DIVERGENT0 / BLOCKED0.
+Escopo estrito: documento/identidade nativa da coorte. NAO significa destino vazio,
+ausencia global de duplicidade, codigo livre ou cadastro auxiliar completo.
+Sem escrita de negocio, carga, reativacao, baixa, saldo ou emissao. Flags conservadoras
+do classificador puro nao comprovam autenticacao por si; recibos externos comprovam
+sessao administrativa/destino, nao login/RBAC operacional do usuario importador.
+Cinco artefatos privados em operational-gates-344-20261026: binding, plano, resultado,
+classificado e bundle; root0600/pai0700/nosymlink conferidos. Hashes detalhados e
+registros ficam privados. Recibo agregado344/6635287552, dados fora checkout/CI/build.
+
+PRIMEIRA CARGA PROPOSTA: mesma coorte congelada100, mestres compartilhados do Grupo
+CPA, IDs/codigos/procedencia/status preservados; sem sobrescrever ou fundir atuais,
+reativar historicos ou criar vinculo fiscal por inferencia. Pacote privado ja contem
+selecao exata, comparacoes, binding e rejeicoes. Liberados operacionalmente0.
+Gates restantes finitos: colisao de codigo fora do recorte/auxiliares; schema/journals
+e principal minimo da carga; destino privado isolado comprovado para a mesma coorte,
+idempotencia/auditoria/reversao; backup atual do destino/recuperacao; autorizacao
+operacional especifica e cadeia/deploy/aceite. Restore antigo nao prova frescor hoje.
+O piloto historico usa grupo sintetico e selecao propria: NAO executa-lo para
+substituir silenciosamente FINAL100 ou provar CPA. Inspecao direcionada de seu
+destino foi interrompida pelo canal; nao declarar destino isolado disponivel.
+Fornecedores/produtos mantem contratos/mapas/pilotos existentes, sem repetir os
+intactos nem liberar conversoes por significado de sigla. Base44 continua aguardando
+reautenticacao, nao consultada novamente; registro inacessivel nao e perdido.
+
+PROXIMO: conferir reserva/motivo da parada, retomar SOMENTE Codespace existente,
+ler recibo v5 e inspecionar destino privado pelo current-pilot.json/guards existentes;
+nao repetir consulta100 concluida. Depois fechar negativa de unidade/concorrencia
+e preparar ensaio isolado do FINAL sem mudar a coorte. Nenhum recurso pago ou
+cobranca habilitados. Reserva documental342/6635293293; somente docs neste lote,
+diff-check aplicavel; suites runtime inalteradas nao repetidas.
+
+## Historico - Central360 conferida e acesso a previa pendente (2026-11-03)
 
 HEAD342 ef4ddf470dfede338e647809a294a0889ab63a5a, CI5757/5758 SUCCESS;
 401 b888b2c00eaf571820e0594b96afd45837dc689a, CI5684 SUCCESS reconferidos.

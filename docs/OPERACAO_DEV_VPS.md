@@ -1,6 +1,37 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Prévia privada da mesma401 disponível (2026-11-02)
+## Estado vigente - consulta100 executada; previa suspensa (2026-11-04)
+
+Mesma401 b888b2c0 foi acessada pela URL privada5173, com login de fixture e banner
+sintetico; HTTP local200 e registroPrivate do CLI conferidos. Posteriormente o
+Codespace passou a Stopped/?autoStart=false sem comando deste executor; motivo
+ainda nao comprovado. Nao anunciar URL disponivel agora nem criar outro ambiente.
+Na retomada coordenada, manter snapshot/guards/recibos e ler resultado privado
+unit-negative-20261104-v5 antes de nova execucao. Checkout b5cb/??.vscode preservado.
+
+Console administrativo existente voltou a funcionar. Banco efetivo da API foi
+confrontado ao container por endereco normalizado/porta/database; Grupo CPA e
+duas empresas aprovadas conferidos pelos IDs privados anteriores. Consulta FIXA
+do modulo pilot-functional-load-plan.mjs, gerada do FINAL100/pins existentes e
+SHA de transporte conferido:100 linhas, READ ONLY/REPEATABLE READ, limites/
+timeouts/search_path canonicos e ROLLBACK. Classificacao canonicab888:100NEW,
+0COMPATIBLE/0DUPLICATE/0DIVERGENT/0BLOCKED. Nao repetir leitura intacta.
+Escopo documento/identidade nativa; colisoes de codigo fora da coorte e auxiliares
+continuam pendentes. Postgres administrativo tem BYPASSRLS, NAO leitor restrito
+ou permissao homologada de carga. Sem ACL/role/policy/DDL/escrita de negocio.
+Binding/plano/resultado/classificado/bundle permanecem privados no diretorio
+operational-gates-344-20261026 existente, root0600/pai0700/nosymlink verificados.
+Recibo publico agregado344/6635287552; nao publicar registros ou manifesto detalhado.
+
+Primeira carga proposta: MESMOS100 mestres do Grupo CPA, preservando origem,
+codigos/IDs/status/vinculos; autorizados operacionalmente0. Usar destino privado
+isolado comprovado para ensaio, nao esta previa sintetica ou banco operacional.
+current-pilot.json e guardas existentes sao o ponto de inspecao; nao executar
+piloto antigo com nova selecao/grupo sintetico como se fosse FINAL100/CPA.
+Schema/journals/principal minimo/backup atual/restore/reversao e liberacao especifica
+continuam gates. Proposta PUBLIC historica abaixo permanece SUSPENSA, nao aplicar.
+
+## Historico - previa privada da mesma401 disponivel (2026-11-02)
 
 SHA servido b888b2c00eaf571820e0594b96afd45837dc689a; snapshot imutável git archive,
 sem trocar branch ou tocar .vscode do checkout b5cb34e1. Porta5173 Private e
