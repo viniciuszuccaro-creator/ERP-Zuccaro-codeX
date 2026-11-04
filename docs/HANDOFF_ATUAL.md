@@ -1,3 +1,9 @@
+## CURSOR — DetalhesCliente KPI fail-closed (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00`. Branch `cursor/comercial360-detalhes-kpi-failclosed-392b`.
+- KPI pedidos: erro/loading/bloqueio → DESCONHECIDO (não R$ 0). Lista vazia ok = zero.
+- Painel: uniqueKey ao editar CadastroClienteCompleto. PRs #476–#480 verdes preservados.
+- Homolog privada/Base44 BLOCKED (#475). Sem merge/deploy/seed.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

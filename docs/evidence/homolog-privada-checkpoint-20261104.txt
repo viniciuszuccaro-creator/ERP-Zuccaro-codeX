@@ -1,0 +1,30 @@
+Homologação privada — checkpoint (2026-11-04 America/Sao_Paulo)
+================================================================
+Candidata #401 tip b888b2c00 · CI5684 SUCCESS
+PRs Cursor verdes (sem fold automático): #476 #477 #478 #479 #480
+
+Eixos (não misturar)
+--------------------
+A) Apresentação recuperada — aside DESCONHECIDO · surface Central360 · sky cadastros (PRs)
+B) Capacidade funcional — Contatos Form · unidade gap UX · Icone uniqueKey · KPI fail-closed
+C) Registros reconciliados — BLOCKED (Base44 reauth / Codespace / legado privado)
+
+Gates para teste com dados reais (Codex + owner)
+-----------------------------------------------
+1. Canal autenticado (sem dados reais em Git/CI/fixtures)
+2. Coorte reconciliada privada (não fabricar contagens das imagens)
+3. Provas: busca, paginação, contagens, abrir/editar/reabrir, códigos ≠ ID, vínculos
+4. Sem reduzir RBAC; fail-closed preservado
+5. VPS só pelos gates OPERACAO_DEV_VPS (versão/backup/reversão)
+
+Roteiro Private (quando franquia)
+---------------------------------
+1 Cliente → Detalhes/Central/Painel Contatos
+2 KPI: erro ≠ zero; lista vazia = zero
+3 Orçamento/Pedido: unidade principal only; salvar/reabrir/converter
+4 Icone cliente: segunda abertura não duplica janela
+5 Troca Grupo/Empresa sem loop
+
+Não fazer
+---------
+Seed como “recuperação” · reauth Base44 cega · merge main · deploy · nova candidata

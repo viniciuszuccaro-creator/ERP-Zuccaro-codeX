@@ -40,17 +40,42 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
   const actorEmail = user?.email || null;
   const sessionToken = resolveErpAuthSessionToken({ appToken: appParams?.token });
 
-  const { data: pedidos = [] } = useQuery({
+  const {
+    data: pedidos = [],
+    isError: pedidosErro,
+    isLoading: pedidosLoading,
+    isFetching: pedidosFetching,
+    error: pedidosError,
+  } = useQuery({
     queryKey: ["pedidos-cliente-contexto", cliente.id, groupId, empresaId, contexto],
     queryFn: () => filterInContext("Pedido", { cliente_id: cliente.id }, "-data_pedido", 50),
-    enabled: consultaHabilitada
+    enabled: consultaHabilitada,
+    retry: false,
   });
 
-  const totalCompras = pedidos
-    .filter(p => p.status !== "Cancelado")
-    .reduce((sum, p) => sum + (p.valor_total || 0), 0);
-
-  const ticketMedio = pedidos.length > 0 ? totalCompras / pedidos.length : 0;
+  // Erro/indisponível ≠ zero confirmado (política DESCONHECIDO; sem fabricar KPI).
+  const pedidosKpiStatus = !consultaHabilitada
+    ? "blocked"
+    : pedidosErro
+      ? "unavailable"
+      : (pedidosLoading || (pedidosFetching && !pedidos.length))
+        ? "loading"
+        : "ok";
+  const totalCompras = pedidosKpiStatus === "ok"
+    ? pedidos.filter((p) => p.status !== "Cancelado").reduce((sum, p) => sum + (p.valor_total || 0), 0)
+    : null;
+  const ticketMedio = pedidosKpiStatus === "ok" && pedidos.length > 0
+    ? totalCompras / pedidos.length
+    : pedidosKpiStatus === "ok"
+      ? 0
+      : null;
+  const pedidosKpiHint = pedidosKpiStatus === "blocked"
+    ? "Contexto ou permissão insuficientes"
+    : pedidosKpiStatus === "unavailable"
+      ? (pedidosError?.message || "Pedidos indisponíveis neste contexto")
+      : pedidosKpiStatus === "loading"
+        ? "Carregando pedidos…"
+        : null;
 
   const statusColors = {
     Ativo: "bg-green-100 text-green-700",
@@ -109,16 +134,26 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
           />
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6"
+              data-action="cliente-360-kpi-pedidos"
+              data-kpi-status={pedidosKpiStatus}
+            >
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <Package className="w-5 h-5 text-blue-600" />
                   </div>
                   <p className="text-xs text-slate-600">Total Compras</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    R$ {totalCompras.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </p>
+                  {pedidosKpiStatus === "ok" ? (
+                    <p className="text-2xl font-bold text-blue-600" data-action="cliente-360-kpi-total-compras">
+                      R$ {totalCompras.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </p>
+                  ) : (
+                    <p className="text-lg font-semibold text-amber-800" data-action="cliente-360-kpi-desconhecido">
+                      {pedidosKpiStatus === "loading" ? "…" : "DESCONHECIDO"}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -128,7 +163,13 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
                     <FileText className="w-5 h-5 text-green-600" />
                   </div>
                   <p className="text-xs text-slate-600">Pedidos</p>
-                  <p className="text-2xl font-bold text-green-600">{pedidos.length}</p>
+                  {pedidosKpiStatus === "ok" ? (
+                    <p className="text-2xl font-bold text-green-600" data-action="cliente-360-kpi-qtd-pedidos">{pedidos.length}</p>
+                  ) : (
+                    <p className="text-lg font-semibold text-amber-800" data-action="cliente-360-kpi-desconhecido">
+                      {pedidosKpiStatus === "loading" ? "…" : "DESCONHECIDO"}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -138,34 +179,53 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
                     <TrendingUp className="w-5 h-5 text-sky-600" />
                   </div>
                   <p className="text-xs text-slate-600">Ticket Médio</p>
-                  <p className="text-2xl font-bold text-sky-600">
-                    R$ {ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </p>
+                  {pedidosKpiStatus === "ok" ? (
+                    <p className="text-2xl font-bold text-sky-600" data-action="cliente-360-kpi-ticket-medio">
+                      R$ {ticketMedio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    </p>
+                  ) : (
+                    <p className="text-lg font-semibold text-amber-800" data-action="cliente-360-kpi-desconhecido">
+                      {pedidosKpiStatus === "loading" ? "…" : "DESCONHECIDO"}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
+            {pedidosKpiHint ? (
+              <p className="text-sm text-amber-800 mb-4" role="status" data-action="cliente-360-kpi-hint">{pedidosKpiHint}</p>
+            ) : null}
 
             <div className="space-y-4">
               <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
 
               <div>
                 <h3 className="font-semibold text-slate-900 mb-2">Últimos Pedidos</h3>
-                {pedidos.slice(0, 5).map(pedido => (
-                  <div key={pedido.id} className="flex items-center justify-between py-2 border-b">
-                    <div>
-                      <p className="font-medium">{pedido.numero_pedido}</p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(pedido.data_pedido).toLocaleDateString("pt-BR")}
-                      </p>
+                {pedidosKpiStatus === "unavailable" ? (
+                  <p className="text-sm text-amber-800" role="alert" data-action="cliente-360-ultimos-pedidos-erro">
+                    {pedidosKpiHint}
+                  </p>
+                ) : pedidosKpiStatus === "loading" || pedidosKpiStatus === "blocked" ? (
+                  <p className="text-sm text-slate-500" data-action="cliente-360-ultimos-pedidos-pendente">{pedidosKpiHint || "—"}</p>
+                ) : pedidos.length === 0 ? (
+                  <p className="text-sm text-slate-500" data-action="cliente-360-ultimos-pedidos-vazio">Nenhum pedido neste contexto.</p>
+                ) : (
+                  pedidos.slice(0, 5).map((pedido) => (
+                    <div key={pedido.id} className="flex items-center justify-between py-2 border-b">
+                      <div>
+                        <p className="font-medium">{pedido.numero_pedido}</p>
+                        <p className="text-xs text-slate-500">
+                          {new Date(pedido.data_pedido).toLocaleDateString("pt-BR")}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">
+                          R$ {(pedido.valor_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </p>
+                        <Badge variant="outline" className="text-xs">{pedido.status}</Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        R$ {(pedido.valor_total || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </p>
-                      <Badge variant="outline" className="text-xs">{pedido.status}</Badge>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
               {/* Histórico de produtos paginado — mesmo componente do Painel Cadastros; fluxo Comercial360. */}
