@@ -1,3 +1,6 @@
+## CURSOR — ImportacaoProdutoNFe uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#507** tip `817d93fda` CI SUCCESS 6/6. Fila #491–#507 verdes. Homolog 100 BLOCKED. Aceite antes de FF.
+
 ## CURSOR — ImportacaoProdutoNFe uniqueKey (2026-11-04 America/Sao_Paulo)
 - BotoesImportacaoProduto: uniqueKey por escopo. Fila #491–#506 verdes. Homolog 100 BLOCKED.
 
