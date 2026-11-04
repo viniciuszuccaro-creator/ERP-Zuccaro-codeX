@@ -10,7 +10,8 @@ import {QueryClient} from '@tanstack/react-query';
 const hashes={
   'src/components/chatbot/ChatbotWidget.jsx':'799369856b23b2243ffc25888ff5595b34ee4f90d129b8a1803cacd710bc44e7',
   'src/components/chatbot/ChatbotWidgetAvancado.jsx':'9db0674af24a161ea3dc9f3a5178ab6f7a917e54b03440b0889a9065fdd56dd5',
-  'src/pages/HubAtendimento.jsx':'11c82013421eb5d0066d75f06159e620780b557a03b5d3f02a7cddbc2d9e3ef3',
+  // Pin renovado 2026-11-04: KPI fail-closed (remove 2.5/78 fabricados + SLA sem amostra ≠ 0%).
+  'src/pages/HubAtendimento.jsx':'b05b5841f36e6c8e0c09abd0b727e8d949237eb824d4fb2e0da40e6c1e11be2d',
   'src/components/portal/ChatCliente.jsx':'f4e04036c7135376e86e928770a98a4c3d8e1c08195e9641c95bd71a8869ceaf',
   'src/components/portal/ChatVendedor.jsx':'160258c0126beb1a158c129c3fac569ccc041d76804ff92cb656bc572ce18b86',
   'src/components/comercial/BadgeOrigemPedido.jsx':'734d90c115c16fd8092355bee7fe92431e1ff4f382cdc5ec2f018c33b1c96547',

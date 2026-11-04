@@ -26,3 +26,8 @@ hub-atendimento-kpi-failclosed PASS
 Fora
 ----
 cálculo real de tempo médio (falta campo canônico) · merge/deploy · seed · Base44
+
+Pin
+---
+atendimento-command-types HubAtendimento hash renovado com justificativa:
+KPI fail-closed (DESCONHECIDO) — não afrouxa RBAC/comando; só UI métricas.
