@@ -1,3 +1,16 @@
+## CURSOR — Integracoes uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/integracoes-uniquekey-392b` = **#500** |
+| **Tip CI SUCCESS** | `2a6278a474c9c4476e9d7528b5e8e94690fa6cf8` · 6/6 checks |
+| **Delta** | CentralIntegracoes + IntegrationConfigButtons · mesma key por integração+escopo |
+| **Paralelos** | #491–#499 verdes; #501–#503 CI |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

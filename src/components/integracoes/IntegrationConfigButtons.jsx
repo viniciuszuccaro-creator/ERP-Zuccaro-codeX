@@ -97,7 +97,8 @@ export default function IntegrationConfigButtons({ integracao, empresaId, groupI
     }, {
       title: cfg.title,
       width: 1000,
-      height: 700
+      height: 700,
+      uniqueKey: `integracoes-config-${String(cfg.key || integracao.id)}-${JSON.stringify([groupId || null, empresaId || null])}`,
     });
   };
 
