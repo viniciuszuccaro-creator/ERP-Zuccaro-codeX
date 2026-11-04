@@ -11,5 +11,6 @@ test("AssinaturaEletronicaForm: não fabrica IP 192.168.1.x aleatório", async (
   assert.doesNotMatch(source, /Math\.floor\(Math\.random\(\)/);
   assert.match(source, /ip_address = null/);
   assert.match(source, /DESCONHECIDO/);
-  assert.match(source, /data-action="assinatura-ip-desconhecido"/);
+  assert.match(source, /assinatura-ip-desconhecido/);
+  assert.match(source, /data-action="assinatura-ip"/);
 });
