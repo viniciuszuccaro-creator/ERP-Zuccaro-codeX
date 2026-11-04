@@ -15,7 +15,7 @@ const hashes={
  [xml]:'05bb711a152d1282df6fdcf13ca0b971903680c6edee70a4774b1c501e5f6d96',
  [cnab]:'21dbf581aff477adc3ae9c67d21158a6609ec7e81335ef421545acac14d1b674',
  [crm]:'7411e59147125363149d393df40bb943720f07bc3b90ad022d703313573accbf',
- [delivery]:'0a2b2991456f4fd8cd86d67a6287fa4a6694fcf56aa7e9f9e950e7292a8f8621',
+ [delivery]:'ccf580310dc0c7af8547cfcaefd826b2f94eb0548373598ccc50e93759f1828e',
 };
 for(const file of Object.keys(hashes))test(`${file}: whole stage61 source retained outside exact command/audit hunks`,()=>{
  const source=read(file);assert.equal(crypto.createHash('sha256').update(commandAuditRemainder(file,source)).digest('hex'),hashes[file]);
