@@ -1,0 +1,10 @@
+PR branch: cursor/expedicao-reversa-uniquekey-392b
+PR: #506
+Tip: 498f026eef7ec2e6070103c0c2669d4c664245c3
+CI: SUCCESS 6/6
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Key: expedicao-logistica-reversa-{entregaId}
+Pins: date-arithmetic → 06c9c915… · runtime-proof → 938e6e052
+Classificação: navegação · registros intocados
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite

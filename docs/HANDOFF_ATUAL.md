@@ -1,3 +1,10 @@
+## CURSOR — LogisticaReversa uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#506** tip `498f026ee` CI SUCCESS 6/6 (após pin date-arithmetic). Homolog 100 BLOCKED.
+- Fila uniqueKey #491–#506 verdes na base #401. FF seletiva após aceite Codex.
+
+## CURSOR — LogisticaReversa uniqueKey (2026-11-04 America/Sao_Paulo)
+- DetalhesEntregaView: uniqueKey por entrega. Homolog 100 BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

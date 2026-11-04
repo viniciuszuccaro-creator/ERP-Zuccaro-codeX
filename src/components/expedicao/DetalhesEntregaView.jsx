@@ -531,7 +531,12 @@ export default function DetalhesEntregaView({
                   openWindow(
                     LogisticaReversa,
                     { entrega, windowMode: true, onConcluido: () => {} },
-                    { title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`, width: 720, height: 680 },
+                    {
+                      title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`,
+                      width: 720,
+                      height: 680,
+                      uniqueKey: `expedicao-logistica-reversa-${String(entrega?.id || "")}`,
+                    },
                   );
                 }}
                 disabled={!contextoValido || !canLogisticaReversa || !elegivelReversa}
