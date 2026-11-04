@@ -29,3 +29,8 @@ comercial-detalhes-historico-mount (regressão)
 Fora
 ----
 port Historico HTTP #441 · seed · merge/deploy · nova candidata
+
+CI
+--
+tip 21c3655c4 — frontend/backend/compose SUCCESS (2026-11-04)
+#476–#482 verdes; não reabrir.

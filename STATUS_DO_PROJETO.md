@@ -3,8 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
-| **PRs verdes** | #476–#480 CI SUCCESS — aceites não reabrir |
-| **Este pacote** | `cursor/comercial360-detalhes-kpi-failclosed-392b` — KPI pedidos DESCONHECIDO ≠ 0 |
+| **PRs verdes** | #476–#482 CI SUCCESS |
+| **Este pacote** | tip **`21c3655c4`** CI SUCCESS — KPI pedidos DESCONHECIDO ≠ 0 |
 | **Extra** | Painel editar cadastro com `uniqueKey` |
 | **Evidência** | `docs/evidence/c360-detalhes-kpi-failclosed-20261104.txt` |
 | Classificação | capacidade fail-closed · registros intocados |
