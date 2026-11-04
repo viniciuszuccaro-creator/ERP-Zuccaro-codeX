@@ -197,7 +197,10 @@ export default function CentralIntegracoes() {
           groupId: grupoAtivoId || null,
           scope,
         },
-        integracao.win || { title: "Configuracao", width: 1000, height: 700 }
+        {
+          ...(integracao.win || { title: "Configuracao", width: 1000, height: 700 }),
+          uniqueKey: `integracoes-config-${String(integracao.key || integracao.nome)}-${JSON.stringify([grupoAtivoId || null, empresaAtual?.id || null])}`,
+        }
       );
     } else {
       toast({

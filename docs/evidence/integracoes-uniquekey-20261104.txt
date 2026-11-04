@@ -1,0 +1,7 @@
+PR branch: cursor/integracoes-uniquekey-392b
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Escopo: uniqueKey WindowManager em CentralIntegracoes + IntegrationConfigButtons
+Keys: integracoes-config-{key}-[groupId,empresaId] (mesma key nas duas entradas)
+Classificação: navegação · registros intocados
+Homolog 100 clientes HML: BLOCKED (API/tela — sem dados públicos)
+Fora: merge main · deploy · seed · FF #401 sem aceite
