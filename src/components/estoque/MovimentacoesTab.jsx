@@ -28,6 +28,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
   const { canCreate } = usePermissions();
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const canCreateMovimentacao = canCreate('Estoque', 'Movimentações') || canCreate('Estoque', 'Movimentacoes');
   const filtroMovimentacoes = getFiltroContexto('empresa_id', true) || {};
   const { data: movsBackend = [] } = useEntityListSorted('MovimentacaoEstoque', filtroMovimentacoes, { sortField: 'data_movimentacao', sortDirection: 'desc', limit: 500, enabled: contextoValido });
@@ -221,7 +222,8 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
           }, {
             title: '📦 Nova Movimentação',
             width: 900,
-            height: 600
+            height: 600,
+            uniqueKey: `estoque-mov-create-${JSON.stringify([groupId, empresaId, authUser?.id || null])}`,
           })}
         >
             <Plus className="w-4 h-4 mr-2" />

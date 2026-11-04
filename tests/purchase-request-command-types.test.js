@@ -25,7 +25,8 @@ function payload(file,name){
   if(name==='gerarOCMutation')return {id:'synthetic-request',produto_id:'synthetic-product',produto_descricao:'Synthetic product',quantidade_solicitada:2,unidade_medida:'UN'};
   return form(file);
 }
-for(const [file,hash] of [[cot,'a47e21080cf561c2a9f9d20038519e90acfdc8cf11d2a4e5be4978f7341b64c9'],[sol,'aebd4dfc9c1fd5aaa78de56cba53cb10510cfe30c21d185e85d2defe25204b1a']])test(`${file}: full executable runtime unchanged`,()=>{
+// 2026-11-04: CotacoesTab uniqueKey create openWindow (anti-duplicata).
+for(const [file,hash] of [[cot,'ae149e299ea0b3cbba5e985a6b17e5b1ccfe6b307392373a092165e2fbb21710'],[sol,'aebd4dfc9c1fd5aaa78de56cba53cb10510cfe30c21d185e85d2defe25204b1a']])test(`${file}: full executable runtime unchanged`,()=>{
   const emitted=ts.transpileModule(iaResponseValidationRemainder(file,fs.readFileSync(file,'utf8')),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),hash);
 });

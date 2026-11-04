@@ -1,0 +1,30 @@
+Estoque/Compras — uniqueKey anti-duplicata (2026-11-04 America/Sao_Paulo)
+=======================================================================
+Base #401 tip b888b2c00 · branch cursor/estoque-compras-uniquekey-392b
+Paralelos: #476–#487 verdes · #488 Contas · #489 Switcher Grupo
+
+Problema
+--------
+openWindow sem uniqueKey em OC/cotação/movimentação/recebimento/solicitação
+→ janelas duplicadas no WindowManager.
+
+Delta
+-----
+- compras-oc-create-{scope} / compras-oc-view|receber|avaliar-{id}
+- compras-oc-create-page-{contextKey}
+- compras-cotacao-create-{scope}
+- estoque-mov-create-{scope} / estoque-receb-create-{scope} / estoque-solicitacao-create-{scope}
+- Pins renovados (justificativa uniqueKey)
+
+Classificação
+-------------
+navegação anti-duplicata · registros intocados
+
+Testes
+------
+estoque-compras-uniquekey PASS
+purchase-financial / shared-query / scoped / approval / purchase-request / command-payload PASS (94)
+
+Fora
+----
+merge/deploy · seed · Base44 · homolog dados reais

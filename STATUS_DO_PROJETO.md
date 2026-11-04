@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (Estoque/Compras uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos** | #476–#487 verdes · #488 Contas uniqueKey · #489 Switcher Grupo label |
+| **Este pacote** | `cursor/estoque-compras-uniquekey-392b` — anti-duplicata openWindow |
+| **Delta** | OC create/view/receber/avaliar · Nova OC página · Cotação · Movimentação · Recebimento · Solicitação |
+| **Evidência** | `docs/evidence/estoque-compras-uniquekey-20261104.txt` |
+| Classificação | navegação · pins renovados com justificativa |
+| Fora | merge/deploy · seed · Base44 · dados reais |
+
+**Homolog privada:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · identidade #489 · C360 residual sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

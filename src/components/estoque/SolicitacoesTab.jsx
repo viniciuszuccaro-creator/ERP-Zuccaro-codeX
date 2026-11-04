@@ -23,6 +23,8 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
   const { canCreate, canApprove, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
   const podeCriarSolicitacao = canCreate('Estoque', 'Solicitações Compra') || canCreate('Estoque', 'Solicitacoes Compra') || canCreate('Compras', 'Solicitações') || canCreate('Compras', 'Solicitacoes');
   const podeAprovarSolicitacao = canApprove('Estoque', 'Solicitações Compra') || canApprove('Estoque', 'Solicitacoes Compra') || canApprove('Compras', 'Solicitações') || canApprove('Compras', 'Solicitacoes') || canEdit('Compras', 'Solicitações') || canEdit('Compras', 'Solicitacoes');
   const [searchTerm, setSearchTerm] = useState("");
@@ -142,7 +144,8 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
           }, {
             title: '🛒 Nova Solicitação de Compra',
             width: 900,
-            height: 650
+            height: 650,
+            uniqueKey: `estoque-solicitacao-create-${JSON.stringify([groupId, empresaId])}`,
           })}
         >
           <Plus className="w-4 h-4 mr-2" />

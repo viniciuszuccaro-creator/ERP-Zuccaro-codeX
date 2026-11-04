@@ -549,7 +549,8 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     }, {
       title: `📦 Receber: ${oc.numero_oc}`,
       width: 800,
-      height: 600
+      height: 600,
+      uniqueKey: oc?.id != null ? `compras-oc-receber-${String(oc.id)}` : 'compras-oc-receber-sem-id',
     });
   };
 
@@ -602,7 +603,8 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           }, {
             title: '🛒 Nova Ordem de Compra',
             width: 1100,
-            height: 700
+            height: 700,
+            uniqueKey: `compras-oc-create-${JSON.stringify([groupId, empresaId, authUser?.id || null])}`,
           })
         }}
       />
@@ -811,12 +813,12 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             onSort={(field) => { setSortField(field); setSortDirection(prev => (sortField===field && prev==='asc')?'desc':'asc'); }}
             statusColors={statusColors}
             onImprimir={(oc)=>{ const empresa = empresas?.find(e => e.id === oc.empresa_id); const fornecedor = fornecedores?.find(f => f.id === oc.fornecedor_id); ImprimirOrdemCompra({ oc, empresa, fornecedor }); }}
-            onVer={(oc)=> openWindow(OrdemCompraForm, { ordemCompra: oc, windowMode: true, onSubmit: async (data) => { try { await updateMutation.mutateAsync({ id: oc.id, data }); sonnerToast.success('✅ OC atualizada!'); } catch { sonnerToast.error('Erro ao atualizar OC'); } } }, { title: `👁️ Ver: ${oc.numero_oc}`, width: 1100, height: 700 })}
+            onVer={(oc)=> openWindow(OrdemCompraForm, { ordemCompra: oc, windowMode: true, onSubmit: async (data) => { try { await updateMutation.mutateAsync({ id: oc.id, data }); sonnerToast.success('✅ OC atualizada!'); } catch { sonnerToast.error('Erro ao atualizar OC'); } } }, { title: `👁️ Ver: ${oc.numero_oc}`, width: 1100, height: 700, uniqueKey: oc?.id != null ? `compras-oc-view-${String(oc.id)}` : 'compras-oc-view-sem-id' })}
             onEditar={handleEdit}
             onAprovar={(oc)=> { if (!contextoValido || !canApproveOC) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de aprovar' : 'Sem permissao para aprovar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma aprovar a OC ${oc.numero_oc}?`)) { auditOrdemCompra({ acao: 'OrdemCompra.aprovacao_cancelada', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } aprovarMutation.mutate({ id: oc.id, oc }); }}
             onEnviar={(oc)=> { if (!contextoValido || !canSendOC) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de enviar' : 'Sem permissao para enviar', variant: 'destructive' }); return; } if (!window.confirm(`Confirma enviar a OC ${oc.numero_oc} ao fornecedor?`)) { auditOrdemCompra({ acao: 'OrdemCompra.envio_cancelado', sucesso: false, motivo: 'confirmacao_cancelada', dados: { ordem_compra_id: oc.id, numero_oc: oc.numero_oc } }); return; } enviarFornecedorMutation.mutate({ id: oc.id, oc }); }}
             onReceber={handleReceberClick}
-            onAvaliar={(oc)=> { if (!contextoValido || !canEvaluateSupplier) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de avaliar' : 'Sem permissao para avaliar', variant: 'destructive' }); return; } openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 }); }}
+            onAvaliar={(oc)=> { if (!contextoValido || !canEvaluateSupplier) { toast({ title: !contextoValido ? 'Selecione grupo e empresa antes de avaliar' : 'Sem permissao para avaliar', variant: 'destructive' }); return; } openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650, uniqueKey: oc?.id != null ? `compras-oc-avaliar-${String(oc.id)}` : 'compras-oc-avaliar-sem-id' }); }}
           />
 
           <OCPaginacao

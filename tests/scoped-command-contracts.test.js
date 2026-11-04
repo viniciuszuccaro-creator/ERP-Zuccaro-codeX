@@ -12,10 +12,12 @@ import {stampMovimentacaoRecebimentoOc, stampContaPagarRecebimentoOc, findContaP
 
 const entries = {
   stock: {file: 'estoque/IAReposicao', hash: '70108036cf8376d2557cedc01ac52b54772e4a10c49de4db19ea097b01fdec12', names: ['gerarSolicitacaoMutation']},
-  request: {file: 'estoque/SolicitacoesTab', hash: '8bdd86f9de2411d15a6b73aee884c5d9b539ac719099e9dd1e80a11bd566be03', names: ['aprovarSolicitacaoMutation','rejeitarSolicitacaoMutation']},
+  // 2026-11-04: uniqueKey create openWindow em SolicitacoesTab.
+  request: {file: 'estoque/SolicitacoesTab', hash: 'e8418702c5247e345b942265d9daba6185f2427c5f1613941d9c5f794ef42f3a', names: ['aprovarSolicitacaoMutation','rejeitarSolicitacaoMutation']},
   crm: {file: 'crm/OportunidadesLista', hash: '3dde6824a32763be296d3a20918a107967f04e5aa6fe533feb911cfbb700ba7b', names: ['convertMutation']},
   funnel: {file: 'crm/FunilComercialInteligente', hash: '46605320887ab58b62dff04ea67ddb271e1147efef488a2bef902786fe89bf19', names: ['updateEtapaMutation']},
-  purchase: {file: 'compras/OrdensCompraTab', hash: '4fd71e268eb4ac9a454d986314501dd362d06fcf76aea9e09cc78b753dddd78c', names: ['receberMutation']},
+  // 2026-11-04: uniqueKey create/view/receber/avaliar em OrdensCompraTab.
+  purchase: {file: 'compras/OrdensCompraTab', hash: '78b4e7fa5af65efb8534e2be5b0ea97f6b0826c095bc4e003980e74e9c5e4d8e', names: ['receberMutation']},
   config: {file: 'expedicao/financeiro/ConfigFinanceiroLogistica', hash: 'f1dc46fb48eb29876ad48dbe758babbc55c1a4b56c1557270328ccb7dd7ad9de', names: ['saveMutation'], state: 'form'},
   cashier: {file: 'financeiro/caixa-central/LiquidarReceberPagar', hash: 'b9856099444f6c2ffc68e8ecf1cb7c48aced6a48f0dbccedb7146224945976b8', names: ['enviarParaCaixaMutation']},
   allocation: {file: 'financeiro/RateioMultiempresa', hash: 'b292e05282b44f1e3cf44dfca4f0b44316a5ff40d3d78bfe18fe18b020ef88ff', names: ['criarRateioMutation'], state: 'formRateio'},
