@@ -1,7 +1,9 @@
 PR branch: cursor/comercial-comissoes-uniquekey-392b
+Tip: 5d04dcc980b103d4ede4114490dd0cb9c7b2bde3
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Escopo: uniqueKey WindowManager em ComissoesTab (calcular + detalhe)
 Keys: comercial-comissoes-calcular-[g,e,u] · comercial-comissao-detalhe-{id}
+Testes: tests/comercial-comissoes-uniquekey.test.js 4 PASS
 Classificação: navegação · registros intocados
 Homolog 100 clientes HML: BLOCKED
 Fora: merge main · deploy · seed · FF #401 sem aceite
