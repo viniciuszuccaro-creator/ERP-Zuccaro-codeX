@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Assinatura IP fail-closed) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **PRs verdes** | #476–#**486** CI SUCCESS (não reabrir) |
+| **Este pacote** | tip **`80f570498`** CI SUCCESS — IP assinatura DESCONHECIDO |
+| **Evidência** | `docs/evidence/assinatura-ip-failclosed-20261104.txt` |
+| Classificação | auditoria fail-closed · registros intocados |
+| Fora | captura IP server-side · merge/deploy · seed · Base44 |
+
+**Homolog privada:** #475 BLOCKED.
+**Próximo indep.:** cadastros residual · C360 residual fora reservas · sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
