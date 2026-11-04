@@ -1,9 +1,11 @@
 PR branch: cursor/expedicao-reversa-uniquekey-392b
-Tip: c5e0d81599c99a1a660880a188d857e9b749bfe8
+PR: #506
+Tip: 3efa013c71a4be83fc812e91b35f8413b7a1878b
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Escopo: uniqueKey WindowManager em DetalhesEntregaView (LogisticaReversa)
 Key: expedicao-logistica-reversa-{entregaId}
-Testes: tests/expedicao-reversa-uniquekey.test.js 4 PASS
+Pins: date-arithmetic → 06c9c915… · runtime-proof → 18625ed83
+Nota: backend LEGACY_RECONCILIATION_REQUIRED no run anterior parece flake runtime04 (sem delta server); revalidar no tip pin.
 Classificação: navegação · registros intocados
 Homolog 100: BLOCKED
 Fora: merge main · deploy · FF #401 sem aceite
