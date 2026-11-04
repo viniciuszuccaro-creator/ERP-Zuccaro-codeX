@@ -1,3 +1,17 @@
+## CURSOR — #495 Gestores uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#495](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/495) `cursor/cadastros-gestores-uniquekey-392b` |
+| **Tip** | **`b2728957c`** · CI SUCCESS 6/6 (frontend+backend+compose) |
+| **Código** | `cadastros-despesa-recorrente-create/edit-*` · `cadastros-gateway-pagamento-create/edit-*` |
+| **Paralelos verdes** | #491–#493 provas · #494 Contratos `cec94aa1d` |
+| **Candidata #401** | tip `b888b2c00` — **sem** estas keys |
+| **Homolog 100** | BLOCKED — API/tela; sem dados públicos |
+| **Incorporação** | seletiva na #401 **somente após aceite** Codex |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · seed · Base44 |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
