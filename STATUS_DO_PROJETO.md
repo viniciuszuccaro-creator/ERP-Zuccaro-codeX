@@ -1,3 +1,15 @@
+## CURSOR — PainelCliente edit uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-painel-cliente-uniquekey-392b` |
+| **Delta** | PainelDinamicoCliente · edit form `cadastros-cliente-edit-{id}` (≠ painel-cliente) |
+| **Overlap** | IconeAcessoCliente usa `painel-cliente-{id}` — keys distintas |
+| **Paralelos** | #491–#507 |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
