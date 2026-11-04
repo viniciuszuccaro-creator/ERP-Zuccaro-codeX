@@ -26,3 +26,8 @@ date-arithmetic PontoTab PASS
 Fora
 ----
 merge/deploy · seed · Base44 · homolog dados reais
+
+CI
+--
+Tip ef4e0c358 SUCCESS frontend+backend+compose
+Pin residual partial-input sobre 5f551408e.
