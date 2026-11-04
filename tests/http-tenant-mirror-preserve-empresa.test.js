@@ -108,11 +108,14 @@ test('Input: onChange/onBlur/ref vêm depois do spread (RHF não perde digitaç�
 test('EmpresaSwitcher distingue Grupo vs Empresa operacional', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../src/components/EmpresaSwitcher.jsx', import.meta.url), 'utf8');
-  assert.match(source, /Grupo · \$\{/);
+  assert.match(source, /formatGrupoSwitcherDisplayName/);
+  assert.match(source, /formatEmpresaSwitcherDisplayName/);
   assert.match(source, /Empresa · \{/);
   assert.match(source, /data-scope=["']grupo["']/);
   assert.match(source, /data-scope=["']empresa["']/);
   assert.match(source, /Empresa operacional/);
+  assert.doesNotMatch(source, /Grupo · \$\{/);
+  assert.doesNotMatch(source, /Grupo · \{grupo\.nome_do_grupo\}/);
 });
 
 test('Empresas view expõe origem do CNPJ', async () => {

@@ -1,3 +1,19 @@
+## CURSOR — VIGENTE (Switcher identidade Grupo sem duplicar) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos** | #476–#487 CI SUCCESS · #488 Contas uniqueKey tip `ad688751d` (CI em curso) |
+| **Este pacote** | `cursor/empresa-switcher-grupo-label-392b` — composição visual sem mascarar dados |
+| **Causa** | `EmpresaSwitcher` fazia `Grupo · ${nome_do_grupo}`; se API/sessão já trazia "Grupo CPA" → "Grupo · Grupo CPA" |
+| **Fix** | `formatGrupoSwitcherDisplayName` / `formatEmpresaSwitcherDisplayName` em `contextoMultiempresaPolicy` (sem hardcode de tenant) |
+| **Evidência** | `docs/evidence/empresa-switcher-grupo-label-20261104.txt` |
+| Classificação | identidade de exibição · fantasia ≠ razão · prefixo visual separado |
+| Fora | merge/deploy · seed · rename fixture · dados reais · Base44 |
+
+**Homolog privada:** #475 BLOCKED (sem expor conteúdo privado).
+**Próximo indep.:** CI deste tip · uniqueKey estoque/compras residual · C360 sem port #441.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

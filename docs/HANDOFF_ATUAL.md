@@ -1,3 +1,10 @@
+## CURSOR — Switcher identidade Grupo (2026-11-04 America/Sao_Paulo)
+- #401 tip `b888b2c00`. Branch `cursor/empresa-switcher-grupo-label-392b`.
+- Causa: composição `Grupo ·` + `nome_do_grupo` já prefixado → "Grupo · Grupo CPA".
+- Fix: helpers canônicos no policy (sem hardcode Grupo CPA / CPA FERRO / 3Z). Fantasia → razão na empresa.
+- Testes: contexto-multiempresa + http-tenant-mirror + policy-options-types PASS. Pin policy renovado.
+- #488 Contas uniqueKey tip `ad688751d` CI em paralelo. Homolog #475 BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

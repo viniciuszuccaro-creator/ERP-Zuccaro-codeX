@@ -135,6 +135,33 @@ export const buildMultiempresaQueryScopeKey = ({ groupId, empresaId } = {}) => {
   return `${g}:${e}`;
 };
 
+/**
+ * Prefixo visual do switcher ("Grupo ·") + nome vindo do contexto/API.
+ * Se o nome já começa com "Grupo", não duplica o prefixo (ex.: "Grupo CPA" →
+ * "Grupo CPA", não "Grupo · Grupo CPA"). Não hardcodar nomes de tenant.
+ * @param {string|null|undefined} nomeDoGrupo
+ * @returns {string}
+ */
+export const formatGrupoSwitcherDisplayName = (nomeDoGrupo) => {
+  const raw = String(nomeDoGrupo ?? '').trim();
+  if (!raw) return '—';
+  if (/^grupo(\s|$|·)/i.test(raw)) return raw;
+  return `Grupo · ${raw}`;
+};
+
+/**
+ * Nome de exibição da empresa no switcher: fantasia → razão social.
+ * Sem inventar valor quando ambos faltam.
+ * @param {{nome_fantasia?: string|null, razao_social?: string|null}|null|undefined} empresa
+ * @returns {string}
+ */
+export const formatEmpresaSwitcherDisplayName = (empresa) => {
+  if (!empresa || typeof empresa !== 'object') return '—';
+  const fantasia = String(empresa.nome_fantasia ?? '').trim();
+  const razao = String(empresa.razao_social ?? '').trim();
+  return fantasia || razao || '—';
+};
+
 export const userTemAcessoGrupo = (user, grupoId) => {
   const id = normalizeIdentifier(grupoId);
   if (!user || !id) return false;

@@ -15,6 +15,10 @@ import { Building2, Users, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
+import {
+  formatEmpresaSwitcherDisplayName,
+  formatGrupoSwitcherDisplayName,
+} from "@/components/lib/contextoMultiempresaPolicy";
 
 /**
  * Componente seletor de contexto: GRUPO ou EMPRESA
@@ -141,8 +145,8 @@ export default function EmpresaSwitcher() {
     : `empresa:${empresaAtual?.id}`;
 
   const nomeAtual = contexto === 'grupo'
-    ? grupoAtual?.nome_do_grupo
-    : (empresaAtual?.nome_fantasia || empresaAtual?.razao_social);
+    ? formatGrupoSwitcherDisplayName(grupoAtual?.nome_do_grupo)
+    : formatEmpresaSwitcherDisplayName(empresaAtual);
 
   return (
     <div className="relative">
@@ -163,7 +167,7 @@ export default function EmpresaSwitcher() {
                 {contexto === 'grupo' ? 'Grupo Corporativo' : 'Empresa operacional'}
               </span>
               <span className="text-sm font-medium text-slate-900 truncate w-full">
-                {contexto === 'grupo' ? `Grupo · ${nomeAtual || '—'}` : (nomeAtual || '—')}
+                {nomeAtual}
               </span>
             </div>
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -198,7 +202,7 @@ export default function EmpresaSwitcher() {
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">Grupo · {grupo.nome_do_grupo}</span>
+                        <span className="font-medium">{formatGrupoSwitcherDisplayName(grupo.nome_do_grupo)}</span>
                       </div>
                       <span className="text-[10px] text-slate-400 font-mono ml-6 truncate max-w-[200px]" title={grupo.id}>
                         id {String(grupo.id || '').slice(0, 8)}…
@@ -233,7 +237,7 @@ export default function EmpresaSwitcher() {
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-purple-600" />
                         <span className="font-medium">
-                          Empresa · {empresa.nome_fantasia || empresa.razao_social}
+                          Empresa · {formatEmpresaSwitcherDisplayName(empresa)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 ml-6 flex-wrap">

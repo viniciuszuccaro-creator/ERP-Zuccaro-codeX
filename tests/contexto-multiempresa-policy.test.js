@@ -6,6 +6,8 @@ import {
   buildMultiempresaReadFilter,
   empresaPertenceAoGrupo,
   entityRequiresEmpresaOnWrite,
+  formatEmpresaSwitcherDisplayName,
+  formatGrupoSwitcherDisplayName,
   isTenantMasterEntity,
   normalizeIdentifier,
   normalizeMultiempresaContext,
@@ -18,6 +20,27 @@ import {
   userTemAcessoGrupo,
   validateMultiempresaContext,
 } from '../src/components/lib/contextoMultiempresaPolicy.js';
+
+test('switcher label does not duplicate Grupo prefix when nome_do_grupo already starts with Grupo', () => {
+  assert.equal(formatGrupoSwitcherDisplayName('Grupo CPA'), 'Grupo CPA');
+  assert.equal(formatGrupoSwitcherDisplayName('GRUPO CPA'), 'GRUPO CPA');
+  assert.equal(formatGrupoSwitcherDisplayName('CPA Holding'), 'Grupo · CPA Holding');
+  assert.equal(formatGrupoSwitcherDisplayName(''), '—');
+  assert.equal(formatGrupoSwitcherDisplayName(null), '—');
+});
+
+test('empresa switcher prefers fantasia then razao without inventing names', () => {
+  assert.equal(
+    formatEmpresaSwitcherDisplayName({ nome_fantasia: 'CPA FERRO E AÇO', razao_social: 'CPA FERRO E ACO LTDA' }),
+    'CPA FERRO E AÇO',
+  );
+  assert.equal(
+    formatEmpresaSwitcherDisplayName({ nome_fantasia: '', razao_social: '3Z LTDA' }),
+    '3Z LTDA',
+  );
+  assert.equal(formatEmpresaSwitcherDisplayName({}), '—');
+  assert.equal(formatEmpresaSwitcherDisplayName(null), '—');
+});
 
 test('canonical context accepts Grupo CPA and both companies without mixing scope', () => {
   assert.deepEqual(normalizeMultiempresaContext({ scopeType: 'grupo', groupId: 'grupo-cpa', empresaId: 'cpa-aco' }), {
