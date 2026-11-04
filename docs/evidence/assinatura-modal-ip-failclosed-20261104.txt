@@ -23,3 +23,8 @@ assinatura-modal-ip-failclosed PASS
 Fora
 ----
 captura IP server-side · merge/deploy · seed · Base44
+
+CI
+--
+tip b22bbacdd — frontend/backend/compose SUCCESS (2026-11-04)
+#476–#487 verdes

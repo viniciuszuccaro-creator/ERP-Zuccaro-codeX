@@ -3,14 +3,14 @@
 | Campo | Valor |
 |-------|-------|
 | **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
-| **PRs verdes** | #476–#486 CI SUCCESS |
-| **Este pacote** | `cursor/assinatura-modal-ip-failclosed-392b` — modal sem IP fabricado |
+| **PRs verdes** | #476–#**487** CI SUCCESS (não reabrir) |
+| **Este pacote** | tip **`b22bbacdd`** CI SUCCESS — Modal IP DESCONHECIDO |
 | **Evidência** | `docs/evidence/assinatura-modal-ip-failclosed-20261104.txt` |
 | Classificação | auditoria fail-closed · espelho #486 Form |
 | Fora | captura IP server-side · merge/deploy · seed · Base44 |
 
 **Homolog privada:** #475 BLOCKED.
-**Próximo indep.:** CI deste tip · cadastros residual · sem port #441.
+**Próximo indep.:** cadastros residual · C360 residual fora reservas · sem port #441.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
