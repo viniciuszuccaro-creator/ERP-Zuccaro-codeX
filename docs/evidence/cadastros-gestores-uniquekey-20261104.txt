@@ -1,5 +1,6 @@
 PR branch: cursor/cadastros-gestores-uniquekey-392b
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Tip: b2728957c — CI SUCCESS 6/6 (2026-11-04)
 Escopo: uniqueKey WindowManager em GestorDespesasRecorrentes + GestorGatewaysPagamento
 Keys: cadastros-despesa-recorrente-create/edit-* · cadastros-gateway-pagamento-create/edit-*
 Classificação: navegação · registros intocados
