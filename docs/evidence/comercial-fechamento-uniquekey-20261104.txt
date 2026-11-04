@@ -1,5 +1,5 @@
 PR branch: cursor/comercial-fechamento-uniquekey-392b
-Tip: b888b2c00eaf571820e0594b96afd45837dc689a
+Tip: be672df601312614e4ce8ff5437d05108c922260
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Escopo: uniqueKey WindowManager em WidgetFechamentoPedidos
 Key: comercial-fechamento-dashboard-[empresaId]
