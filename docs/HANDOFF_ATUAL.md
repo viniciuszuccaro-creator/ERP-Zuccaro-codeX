@@ -1,3 +1,6 @@
+## CURSOR — AprovacaoDescontos uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#504** tip `1aac7747e` CI SUCCESS 6/6. Homolog 100 BLOCKED.
+
 ## CURSOR — AprovacaoDescontos uniqueKey (2026-11-04 America/Sao_Paulo)
 - Key alinhada a #503 analisar (não unir registros distintos; não misturar modo fechar).
 - Homolog 100 BLOCKED. Aceite antes de FF.
