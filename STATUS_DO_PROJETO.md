@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Dashboard Atendente KPI fail-closed) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **PRs verdes** | #476–#483 CI SUCCESS · #484 Hub (CI pin fix) |
+| **Este pacote** | `cursor/dashboard-atendente-kpi-failclosed-392b` — streak real + DESCONHECIDO |
+| **Evidência** | `docs/evidence/dashboard-atendente-kpi-failclosed-20261104.txt` |
+| Classificação | capacidade fail-closed · registros intocados |
+| Fora | merge/deploy · seed · Base44 · port Historico |
+
+**Homolog privada:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip + #484 · cadastros residual.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

@@ -1,0 +1,29 @@
+Dashboard Atendente — KPI fail-closed (2026-11-04 America/Sao_Paulo)
+====================================================================
+Base #401 tip b888b2c00 · branch cursor/dashboard-atendente-kpi-failclosed-392b
+Paralelos: #476–#483 verdes · #484 Hub KPI (CI pin fix)
+
+Problema
+--------
+diasConsecutivos = 5 (TODO) fabricava streak.
+tempoMedio/CSAT/taxa usavam 0 sem amostra.
+
+Delta
+-----
+- computeDiasConsecutivosAtendente a partir de datas reais
+- Sem amostra → null + UI DESCONHECIDO
+- Erro de query → DESCONHECIDO (não painel vazio enganoso)
+- Pin primitive-ui DashboardAtendente renovado com justificativa
+
+Classificação
+-------------
+capacidade fail-closed · registros intocados
+
+Testes
+------
+dashboard-atendente-kpi-failclosed PASS
+primitive-ui-boundary-contracts (pin) PASS
+
+Fora
+----
+merge/deploy · seed · Base44 · Hub (#484)
