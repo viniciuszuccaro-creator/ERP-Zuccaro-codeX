@@ -1,6 +1,6 @@
-## CURSOR — Estoque Requisição uniqueKey (2026-11-04 America/Sao_Paulo)
-- `cursor/estoque-requisicao-uniquekey-392b`: Nova Requisição Almoxarifado uniqueKey; pins command-payload/audit renovados.
-- Paralelos #491–#498 CI SUCCESS. Homolog 100 BLOCKED. Aceite antes de FF.
+## CURSOR — #499 Estoque Requisição CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `4d290f6c0` (código `7f793a4f4`) · PR #499 · CI SUCCESS 6/6.
+- Requisição Almoxarifado uniqueKey. Paralelos #491–#498 verdes. #401 sem a key. Homolog 100 BLOCKED. Aceite antes de FF.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
