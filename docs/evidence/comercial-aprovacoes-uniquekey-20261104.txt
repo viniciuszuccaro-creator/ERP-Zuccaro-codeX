@@ -1,0 +1,9 @@
+PR branch: cursor/comercial-aprovacoes-uniquekey-392b
+Tip: 066b8daabd5c32686c224a49052d6fbbeb28bbe2
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Escopo: uniqueKey WindowManager em CentralAprovacoesManager
+Keys: comercial-aprovacao-analisar-{id} · comercial-aprovacao-fechar-{id}
+Testes: tests/comercial-aprovacoes-uniquekey.test.js 4 PASS
+Classificação: navegação · registros intocados
+Homolog 100 clientes HML: BLOCKED
+Fora: merge main · deploy · seed · FF #401 sem aceite
