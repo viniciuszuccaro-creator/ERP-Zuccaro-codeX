@@ -1,3 +1,55 @@
+## CURSOR — VIGENTE (#491 provas comportamentais uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#491](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/491) tip prévio **`f128f54c4`** CI SUCCESS |
+| **Candidata #401** | tip **`b888b2c00`** — **NÃO** contém `expedicao-entrega-*` (ausente no tree) |
+| **Este tip** | provas: dois cliques / id distinto / view≠edit / fechar→reabrir / WindowManager canônico |
+| **Integração** | **BLOCKED** até aceite Codex — sem FF automático na candidata |
+| Classificação | navegação · prova comportamental |
+| Fora | merge/deploy · seed · dados reais · segundo WindowManager |
+
+**Fila uniqueKey OPEN (base #401, não incorporados):** #488–#493.
+**Homolog:** #475 BLOCKED — 100 clientes HML privados aguardam conexão API/tela (Codex); sem fallback sintético.
+
+## CURSOR — VIGENTE (#491 Expedição Entregas uniqueKey CI SUCCESS) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#491](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/491) `cursor/expedicao-entregas-uniquekey-392b` |
+| **Tip** | **`524df3390`** · CI SUCCESS (frontend+backend+compose) |
+| **Código** | uniqueKey view/edit/separação/reversa · tip `633fc3df0` + pin date DetalhesEntrega |
+| Classificação | navegação anti-duplicata |
+| Fora | merge/deploy · seed · dados reais |
+
+**Paralelos verdes:** #476–#490 (#488 Contas · #489 Switcher · #490 Estoque/Compras).
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** Produção Nova OP uniqueKey · C360 residual · fail-closed residual.
+
+## CURSOR — #491 pin residual DetalhesEntregaView (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Sobre** | tip `633fc3df0` · CI frontend FAIL |
+| **Causa** | `date-arithmetic` DetalhesEntregaView após uniqueKey reversa |
+| **Fix** | renovar `emittedBeforeSha256` (justificativa uniqueKey) |
+| Fora | merge/deploy · mutação |
+
+## CURSOR — VIGENTE (Expedição Entregas uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos verdes** | #476–#490 (#488 Contas · #489 Switcher · #490 Estoque/Compras) |
+| **Este pacote** | `cursor/expedicao-entregas-uniquekey-392b` — anti-duplicata listagem/detalhe |
+| **Delta** | view/edit/separação/reversa com uniqueKey por id |
+| **Evidência** | `docs/evidence/expedicao-entregas-uniquekey-20261104.txt` |
+| Classificação | navegação |
+| Fora | merge/deploy · seed · dados reais |
+
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · Produção Nova OP uniqueKey · C360 residual.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
