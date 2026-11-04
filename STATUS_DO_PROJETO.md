@@ -1,3 +1,16 @@
+## CURSOR — VIGENTE (RH Ponto uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos verdes** | #476–#492 |
+| **Este pacote** | `cursor/rh-ponto-uniquekey-392b` — Registrar Ponto anti-duplicata |
+| **Evidência** | `docs/evidence/rh-ponto-uniquekey-20261104.txt` |
+| Classificação | navegação |
+| Fora | merge/deploy · seed · dados reais |
+
+**Homolog:** #475 BLOCKED.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

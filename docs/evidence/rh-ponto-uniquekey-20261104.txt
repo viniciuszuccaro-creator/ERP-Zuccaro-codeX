@@ -1,0 +1,28 @@
+RH Ponto — uniqueKey anti-duplicata (2026-11-04 America/Sao_Paulo)
+=================================================================
+Base #401 tip b888b2c00 · branch cursor/rh-ponto-uniquekey-392b
+Paralelos verdes: #476–#492
+
+Problema
+--------
+PontoTab abria Registrar Ponto sem uniqueKey → janelas duplicadas.
+
+Delta
+-----
+- uniqueKey: rh-ponto-create (singleton create)
+- Pins command-payload + date-arithmetic renovados
+- runtime-proof six suites baseline → tip deste pacote
+
+Classificação
+-------------
+navegação anti-duplicata · registros intocados
+
+Testes
+------
+rh-ponto-uniquekey PASS
+command-payload-batch-types PASS
+date-arithmetic PontoTab PASS
+
+Fora
+----
+merge/deploy · seed · Base44 · homolog dados reais
