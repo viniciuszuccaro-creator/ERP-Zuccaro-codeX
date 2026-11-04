@@ -1,0 +1,11 @@
+PR branch: cursor/cadastros-importacao-produto-uniquekey-392b
+PR: #507
+Tip: 817d93fda93239936b9d7183bb9f3d3d43612ef9
+CI: SUCCESS 6/6
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Key: cadastros-importacao-produto-nfe-[groupId,empresaId]
+Testes: tests/cadastros-importacao-produto-uniquekey.test.js 4 PASS
+Paralelos: #491–#506 CI SUCCESS
+Classificação: navegação · registros intocados
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite
