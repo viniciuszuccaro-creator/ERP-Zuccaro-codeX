@@ -1,0 +1,29 @@
+Expedição Entregas — uniqueKey anti-duplicata (2026-11-04 America/Sao_Paulo)
+===========================================================================
+Base #401 tip b888b2c00 · branch cursor/expedicao-entregas-uniquekey-392b
+Paralelos verdes: #476–#490
+
+Problema
+--------
+EntregasListagem/DetalhesEntregaView abriam view/edit/separação/reversa
+sem uniqueKey → janelas duplicadas.
+
+Delta
+-----
+- expedicao-entrega-view-{id}
+- expedicao-entrega-edit-{id}
+- expedicao-entrega-separacao-{id}
+- expedicao-entrega-reversa-{id} (listagem + detalhe)
+
+Classificação
+-------------
+navegação anti-duplicata · registros intocados
+
+Testes
+------
+expedicao-entregas-uniquekey PASS
+expedicao-fluxo-operacional PASS (20)
+
+Fora
+----
+merge/deploy · seed · Base44 · homolog dados reais

@@ -1,3 +1,18 @@
+## CURSOR — VIGENTE (Expedição Entregas uniqueKey) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **Paralelos verdes** | #476–#490 (#488 Contas · #489 Switcher · #490 Estoque/Compras) |
+| **Este pacote** | `cursor/expedicao-entregas-uniquekey-392b` — anti-duplicata listagem/detalhe |
+| **Delta** | view/edit/separação/reversa com uniqueKey por id |
+| **Evidência** | `docs/evidence/expedicao-entregas-uniquekey-20261104.txt` |
+| Classificação | navegação |
+| Fora | merge/deploy · seed · dados reais |
+
+**Homolog:** #475 BLOCKED.
+**Próximo indep.:** CI deste tip · Produção Nova OP uniqueKey · C360 residual.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

@@ -95,7 +95,12 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
         windowMode: true,
         onConcluido: () => {},
       },
-      { title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`, width: 720, height: 680 },
+      {
+        title: `Logística Reversa ${entrega.numero_pedido || entrega.id}`,
+        width: 720,
+        height: 680,
+        uniqueKey: entrega?.id != null ? `expedicao-entrega-reversa-${String(entrega.id)}` : 'expedicao-entrega-reversa-sem-id',
+      },
     );
   };
 
@@ -405,7 +410,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={async () => { await auditListagem({ acao: 'Entrega.visualizar', detalhes: { entrega_id: e.id, numero_pedido: e.numero_pedido } }); openWindow(DetalhesEntregaView, { entrega: e, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${e.numero_pedido}`, width: 1000, height: 700 }); }}
+                    onClick={async () => { await auditListagem({ acao: 'Entrega.visualizar', detalhes: { entrega_id: e.id, numero_pedido: e.numero_pedido } }); openWindow(DetalhesEntregaView, { entrega: e, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${e.numero_pedido}`, width: 1000, height: 700, uniqueKey: e?.id != null ? `expedicao-entrega-view-${String(e.id)}` : 'expedicao-entrega-view-sem-id' }); }}
                     className="h-7 w-7"
                     data-permission="Expedicao.Entrega.visualizar" data-context-required="true"
                     data-action="Entrega.visualizar"
@@ -417,7 +422,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={async () => { await auditListagem({ acao: 'Entrega.editar.abrir', detalhes: { entrega_id: e.id, numero_pedido: e.numero_pedido } }); openWindow(FormularioEntrega, { formData: e, windowMode: true, isEditing: true }, { title: `Editar ${e.numero_pedido}`, width: 1100, height: 650 }); }}
+                      onClick={async () => { await auditListagem({ acao: 'Entrega.editar.abrir', detalhes: { entrega_id: e.id, numero_pedido: e.numero_pedido } }); openWindow(FormularioEntrega, { formData: e, windowMode: true, isEditing: true }, { title: `Editar ${e.numero_pedido}`, width: 1100, height: 650, uniqueKey: e?.id != null ? `expedicao-entrega-edit-${String(e.id)}` : 'expedicao-entrega-edit-sem-id' }); }}
                       className="h-7 w-7"
                       data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive="true"
                       data-action="Entrega.editar"
@@ -435,7 +440,12 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                         openWindow(
                           SeparacaoConferencia,
                           { entregaId: e.id, pedido: pedidoRelacionado, empresaId: e.empresa_id, windowMode: true },
-                          { title: `Separação ${e.numero_pedido || e.id}`, width: 1200, height: 800 },
+                          {
+                            title: `Separação ${e.numero_pedido || e.id}`,
+                            width: 1200,
+                            height: 800,
+                            uniqueKey: e?.id != null ? `expedicao-entrega-separacao-${String(e.id)}` : 'expedicao-entrega-separacao-sem-id',
+                          },
                         );
                       }}
                       className="h-7 w-7"
@@ -542,7 +552,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openWindow(DetalhesEntregaView, { entrega, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${entrega.numero_pedido}`, width: 1000, height: 700 })}
+                          onClick={() => openWindow(DetalhesEntregaView, { entrega, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `Entrega ${entrega.numero_pedido}`, width: 1000, height: 700, uniqueKey: entrega?.id != null ? `expedicao-entrega-view-${String(entrega.id)}` : 'expedicao-entrega-view-sem-id' })}
                           className="h-7 w-7"
                           data-action="Entrega.visualizar"
                           data-permission="Expedicao.Entrega.visualizar"
@@ -555,7 +565,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => openWindow(FormularioEntrega, { formData: entrega, windowMode: true, isEditing: true }, { title: `Editar ${entrega.numero_pedido}`, width: 1100, height: 650 })}
+                            onClick={() => openWindow(FormularioEntrega, { formData: entrega, windowMode: true, isEditing: true }, { title: `Editar ${entrega.numero_pedido}`, width: 1100, height: 650, uniqueKey: entrega?.id != null ? `expedicao-entrega-edit-${String(entrega.id)}` : 'expedicao-entrega-edit-sem-id' })}
                             className="h-7 w-7"
                             data-action="Entrega.editar"
                             data-permission="Expedicao.Entrega.editar"
