@@ -1,6 +1,6 @@
-## CURSOR — AcoesRapidas uniqueKey (2026-11-04 America/Sao_Paulo)
-- `cursor/acoes-rapidas-uniquekey-392b`: creates no botão + com uniqueKey escopo; CR/CP alinhados #488; oportunidade `crm-oportunidade-nova`.
-- Paralelos #491–#495 CI SUCCESS. Homolog 100 BLOCKED. #401 sem as keys. Aceite antes de FF.
+## CURSOR — #496 AcoesRapidas CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- Tip `f0cedd3c0` · PR #496 · CI SUCCESS 6/6.
+- Ações Rápidas creates uniqueKey. Paralelos #491–#495 verdes. #401 sem as keys. Homolog 100 BLOCKED. Aceite antes de FF.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

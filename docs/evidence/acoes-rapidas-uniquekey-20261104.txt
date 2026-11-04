@@ -1,5 +1,6 @@
 PR branch: cursor/acoes-rapidas-uniquekey-392b
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Tip: f0cedd3c0 — CI SUCCESS 6/6 (2026-11-04)
 Escopo: uniqueKey WindowManager em AcoesRapidasGlobal (creates)
 Keys: acoes-rapidas-*-create-[groupId,empresaId,userId] · financeiro-cr/cp-create (alinhado #488) · crm-oportunidade-nova
 Classificação: navegação · registros intocados
