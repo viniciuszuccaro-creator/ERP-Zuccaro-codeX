@@ -1,3 +1,10 @@
+## CURSOR — Comissoes uniqueKey CI SUCCESS (2026-11-04 America/Sao_Paulo)
+- PR **#501** tip `590e82938` CI SUCCESS 6/6 (após pin renew). Homolog 100 BLOCKED.
+
+## CURSOR — Comissoes uniqueKey (2026-11-04 America/Sao_Paulo)
+- `cursor/comercial-comissoes-uniquekey-392b`: calcular/detalhe com uniqueKey no WindowManager canônico.
+- Paralelos #491–#500. Homolog 100 BLOCKED. Aceite antes de FF.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

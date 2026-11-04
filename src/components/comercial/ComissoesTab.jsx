@@ -217,7 +217,8 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
       {
         title: 'ðŸ“Š Calcular ComissÃµes',
         width: 900,
-        height: 700
+        height: 700,
+        uniqueKey: `comercial-comissoes-calcular-${JSON.stringify([groupId || null, empresaId || null, user?.id || null])}`,
       }
     );
   };
@@ -246,7 +247,8 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
     }, {
       title: `ðŸ’° ${comissao.vendedor} - ${comissao.numero_pedido}`,
       width: 800,
-      height: 600
+      height: 600,
+      uniqueKey: `comercial-comissao-detalhe-${String(comissao?.id || '')}`,
     });
   };
 

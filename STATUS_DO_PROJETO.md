@@ -1,3 +1,16 @@
+## CURSOR — Comissoes uniqueKey (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-comissoes-uniquekey-392b` = **#501** |
+| **Tip CI SUCCESS** | `590e829388f104d8c1c2cb96bac3e512bc5c5934` · 6/6 |
+| **Delta** | ComissoesTab · calcular (escopo+user) + detalhe (id) |
+| **Pins** | command-payload → 0a0d3fec… · runtime-proof → 4fdd89de0 |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
