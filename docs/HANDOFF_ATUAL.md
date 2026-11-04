@@ -1,3 +1,9 @@
+## CURSOR — Contratos uniqueKey + homolog checkpoint (2026-11-04 America/Sao_Paulo)
+- Pacote indep. `cursor/contratos-uniquekey-392b`: Novo/Editar Contrato via WindowManager canônico (`contratos-create-[groupId,empresaId]` / `contratos-edit-{id}`).
+- Provas #491 `2bca31fa0` · #492 `c5a1c45d9` · #493 `1a0a93ef6` publicadas; **não** estão em #401 `b888b2c00`.
+- Homolog 100 clientes HML: BLOCKED até conexão API/tela; preservar IDs/nomes/permissões; sem fallback sintético; identidade Grupo CPA / CPA FERRO E AÇO / 3Z LTDA só da fonte canônica; dados reais fora de git/CI/logs.
+- Incorporação seletiva na candidata só após aceite.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

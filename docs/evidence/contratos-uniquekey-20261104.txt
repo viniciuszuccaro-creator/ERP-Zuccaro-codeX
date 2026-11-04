@@ -1,0 +1,7 @@
+PR branch: cursor/contratos-uniquekey-392b
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Escopo: uniqueKey WindowManager em Novo/Editar Contrato
+Keys: contratos-create-[groupId,empresaId] · contratos-edit-{id}
+Classificação: navegação · registros intocados
+Homolog 100 clientes HML: BLOCKED (API/tela — sem dados públicos neste artefato)
+Fora: merge main · deploy · seed · FF #401 sem aceite
