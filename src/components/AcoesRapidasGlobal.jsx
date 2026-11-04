@@ -58,6 +58,12 @@ export default function AcoesRapidasGlobal() {
     fn();
   };
 
+  const scopeKey = JSON.stringify([
+    grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+    empresaAtual?.id || null,
+    user?.id || null,
+  ]);
+
   const actionHandlers = {
     novoPedido: requireContexto('criar pedido', () => openWindow(
       PedidoFormCompleto,
@@ -74,16 +80,16 @@ export default function AcoesRapidasGlobal() {
         },
         onCancel: () => {}
       },
-      { title: '🛒 Novo Pedido', width: 1400, height: 800 }
+      { title: '🛒 Novo Pedido', width: 1400, height: 800, uniqueKey: `acoes-rapidas-pedido-create-${scopeKey}` }
     )),
     novoCliente: requireContexto('criar cliente', () => openWindow(
       CadastroClienteCompleto,
       { windowMode: true },
-      { title: '🧑 Novo Cliente', width: 1100, height: 650 },
+      { title: '🧑 Novo Cliente', width: 1100, height: 650, uniqueKey: `acoes-rapidas-cliente-create-${scopeKey}` },
     )),
-    novoProduto: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, { title: '📦 Novo Produto', width: 1200, height: 700 }),
-    novoFornecedor: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, { title: '🏢 Novo Fornecedor', width: 1100, height: 650 }),
-    novaTabelaPreco: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, { title: '💰 Nova Tabela', width: 1200, height: 700 }),
+    novoProduto: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, { title: '📦 Novo Produto', width: 1200, height: 700, uniqueKey: `acoes-rapidas-produto-create-${scopeKey}` }),
+    novoFornecedor: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, { title: '🏢 Novo Fornecedor', width: 1100, height: 650, uniqueKey: `acoes-rapidas-fornecedor-create-${scopeKey}` }),
+    novaTabelaPreco: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, { title: '💰 Nova Tabela', width: 1200, height: 700, uniqueKey: `acoes-rapidas-tabela-create-${scopeKey}` }),
     novaContaReceber: () => openWindow(ContaReceberForm, {
       windowMode: true,
       onSubmit: async (data) => {
@@ -94,7 +100,7 @@ export default function AcoesRapidasGlobal() {
           toast.error('Erro ao criar conta');
         }
       }
-    }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 }),
+    }, { title: '💰 Nova Conta a Receber', width: 900, height: 600, uniqueKey: `acoes-rapidas-cr-create-${scopeKey}` }),
     novaContaPagar: () => openWindow(ContaPagarForm, {
       windowMode: true,
       onSubmit: async (data) => {
@@ -105,7 +111,7 @@ export default function AcoesRapidasGlobal() {
           toast.error('Erro ao criar conta');
         }
       }
-    }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 }),
+    }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600, uniqueKey: `acoes-rapidas-cp-create-${scopeKey}` }),
     novaOportunidade: () => openWindow(OportunidadeForm, {
       windowMode: true,
       onSubmit: async (data) => {
@@ -116,7 +122,7 @@ export default function AcoesRapidasGlobal() {
           toast.error('Erro ao criar oportunidade');
         }
       }
-    }, { title: '🎯 Nova Oportunidade', width: 1000, height: 650 }),
+    }, { title: '🎯 Nova Oportunidade', width: 1000, height: 650, uniqueKey: `acoes-rapidas-oportunidade-create-${scopeKey}` }),
     novoEvento: () => openWindow(EventoForm, {
       windowMode: true,
       onSubmit: async (data) => {
@@ -136,7 +142,7 @@ export default function AcoesRapidasGlobal() {
           toast.error('Erro ao criar evento');
         }
       }
-    }, { title: '📅 Novo Evento', width: 1000, height: 650 }),
+    }, { title: '📅 Novo Evento', width: 1000, height: 650, uniqueKey: `acoes-rapidas-evento-create-${scopeKey}` }),
     novaNFe: () => navigate(createPageUrl('Fiscal') + '?action=nova-nfe'),
   };
 

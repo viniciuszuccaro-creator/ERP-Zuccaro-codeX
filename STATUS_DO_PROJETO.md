@@ -1,3 +1,17 @@
+## CURSOR — VIGENTE (Pedido/Ações uniqueKey anti-duplicata) (2026-11-04 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata #401** | tip **`b888b2c00`** · CI **5684** SUCCESS |
+| **PRs verdes** | #476–#480 CI SUCCESS · #481 KPI (CI em curso) |
+| **Este pacote** | `cursor/comercial360-pedido-uniquekey-392b` — uniqueKey Pedido/Ações |
+| **Evidência** | `docs/evidence/c360-pedido-uniquekey-20261104.txt` |
+| Classificação | navegação anti-duplicata · registros intocados |
+| Fora | PedidosTab hash-pin · Icone #480 · Painel #481 · merge/deploy · seed |
+
+**Homolog privada:** #475 gates — Base44/Codespace BLOCKED; sem dados reais em CI.
+**Próximo indep.:** CI #481+#este · Historico HTTP sob fold Codex · cadastros fora reservas.
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
