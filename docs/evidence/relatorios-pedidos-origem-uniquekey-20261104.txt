@@ -1,0 +1,9 @@
+PR branch: cursor/relatorios-pedidos-origem-uniquekey-392b
+PR: #510
+Tip: 875a9ad497c2412ccbc345a43bc225e591977782
+CI: SUCCESS 6/6
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Key: comercial-pedido-origem-view-{pedidoId}
+Classificação: navegação · registros intocados
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite
