@@ -1,9 +1,11 @@
 PR branch: cursor/comercial-aprovacoes-uniquekey-392b
-Tip: 066b8daabd5c32686c224a49052d6fbbeb28bbe2
+PR: #503
+Tip: 7cb959228b80a03e7db0028806805f2a42ce1742
 Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
 Escopo: uniqueKey WindowManager em CentralAprovacoesManager
 Keys: comercial-aprovacao-analisar-{id} · comercial-aprovacao-fechar-{id}
-Testes: tests/comercial-aprovacoes-uniquekey.test.js 4 PASS
+Pins: approval-command → 0a374ec3… · browser-runtime → 0d6e82ca… · runtime-proof → eafc2e4d8
+Testes: comercial-aprovacoes-uniquekey 4 PASS + pins
 Classificação: navegação · registros intocados
-Homolog 100 clientes HML: BLOCKED
-Fora: merge main · deploy · seed · FF #401 sem aceite
+Homolog 100: BLOCKED
+Fora: merge main · deploy · FF #401 sem aceite
