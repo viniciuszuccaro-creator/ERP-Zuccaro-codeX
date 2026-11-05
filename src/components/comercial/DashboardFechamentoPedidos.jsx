@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -20,6 +19,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
+import useContextoVisual from '@/components/lib/useContextoVisual';
 
 /**
  * V21.6 - DASHBOARD DE FECHAMENTO AUTOMÁTICO
@@ -33,45 +33,54 @@ import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
 export default function DashboardFechamentoPedidos({ windowMode = false, empresaId = null }) {
   // V21.6: Multi-empresa + IA Analytics
   const [estatisticasIA, setEstatisticasIA] = React.useState(null);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaCtx = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaCtx);
+  const scopeCriteria = empresaCtx ? { empresa_id: empresaCtx } : {};
 
   // Carregar estatísticas via IA
   React.useEffect(() => {
-    obterEstatisticasAutomacao(empresaId, 7).then(stats => {
+    if (!contextoValido) {
+      setEstatisticasIA(null);
+      return;
+    }
+    obterEstatisticasAutomacao(empresaCtx, 7).then(stats => {
       setEstatisticasIA(stats);
     });
-  }, [empresaId]);
+  }, [empresaCtx, contextoValido]);
   
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaId],
-    queryFn: () => empresaId 
-      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.Pedido.list('-created_date', 100),
+  // Escopo multiempresa: sem list unscoped.
+  const { data: pedidos = [], isError: isErrorPedidosFech } = useQuery({
+    queryKey: ['pedidos-fechamento', groupId, empresaCtx],
+    queryFn: () => filterInContext('Pedido', scopeCriteria, '-created_date', 100),
+    enabled: contextoValido,
     initialData: [],
   });
 
-  const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.MovimentacaoEstoque.list('-created_date', 100),
+  const { data: movimentacoes = [], isError: isErrorMovFech } = useQuery({
+    queryKey: ['movimentacoes-fechamento', groupId, empresaCtx],
+    queryFn: () => filterInContext('MovimentacaoEstoque', scopeCriteria, '-created_date', 100),
+    enabled: contextoValido,
     initialData: [],
   });
 
-  const { data: contas = [] } = useQuery({
-    queryKey: ['contas-receber', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.ContaReceber.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.ContaReceber.list('-created_date', 100),
+  const { data: contas = [], isError: isErrorContasFech } = useQuery({
+    queryKey: ['contas-receber-fechamento', groupId, empresaCtx],
+    queryFn: () => filterInContext('ContaReceber', scopeCriteria, '-created_date', 100),
+    enabled: contextoValido,
     initialData: [],
   });
 
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.Entrega.list('-created_date', 100),
+  const { data: entregas = [], isError: isErrorEntregasFech } = useQuery({
+    queryKey: ['entregas-fechamento', groupId, empresaCtx],
+    queryFn: () => filterInContext('Entrega', scopeCriteria, '-created_date', 100),
+    enabled: contextoValido,
     initialData: [],
   });
+
+  const mastersFechamentoIndisponiveis = isErrorPedidosFech || isErrorMovFech
+    || isErrorContasFech || isErrorEntregasFech;
 
   // Análise de pedidos fechados nos últimos 7 dias
   const dataLimite = new Date();
@@ -176,8 +185,23 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
     <div className={containerClass}>{children}</div>
   );
 
+  if (!contextoValido) {
+    return (
+      <Wrapper>
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa para ver o fechamento.
+          </CardContent>
+        </Card>
+      </Wrapper>
+    );
+  }
+
   return (
     <Wrapper>
+      {mastersFechamentoIndisponiveis && (
+        <p className="text-xs text-slate-500 mb-2">Indicadores indisponíveis (erro de carga ≠ zero).</p>
+      )}
       
       {/* Header com IA Analytics */}
       <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
