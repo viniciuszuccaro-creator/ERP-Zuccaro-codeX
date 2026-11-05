@@ -1,3 +1,14 @@
+## CURSOR — PedidosTab uniqueKey aprovações/automação (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-pedidos-tab-uniquekey-392b` ← #401 |
+| **Código** | `uniqueKey` em CentralAprovações (grupo/empresa) e Automação (pedido id) via WindowManager |
+| **Testes** | `tests/comercial-pedidos-tab-uniquekey.test.js` **4 PASS** (clique repetido, pedidos distintos, fechar/reabrir) |
+| **Fila** | #549/#551 CI SUCCESS · #550 typecheck fix em CI · #505 WidgetFechamento UK já verde |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
