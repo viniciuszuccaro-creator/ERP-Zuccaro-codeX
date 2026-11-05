@@ -1,3 +1,14 @@
+## CURSOR — #522 pin + #523 MonitoramentoRH scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| #516–#521 | — | CI SUCCESS |
+| #522 PontoEletronicoBiometrico | `349171419` | pin evidence + bind; aguarda CI |
+| #523 MonitoramentoRHInteligente | (este) | filterInContext Colaborador/MonitoramentoRH; erro≠zero |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+| **Fora** | Central360 UI/rename · merge main · VPS | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
