@@ -1,3 +1,13 @@
+## CURSOR — #530 ContasPagar Empresa scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#526+#528** | multiempresa | **CI SUCCESS** |
+| #527/#529 | Alertas pin / ContasReceber cobranca | CI em curso |
+| #530 ContasPagar Empresa | (este) | Empresa filterInContext |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
