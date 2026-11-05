@@ -1,6 +1,5 @@
 ## CURSOR — GerenciarContatosCliente escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-gerenciar-contatos-scope-392b` ← #401.
-- getInContext/updateInContext; sessionKey em queryKey; READ_STALE_SCOPE preservado. Testes 3+2 PASS.
+- #565: getInContext/updateInContext. CI frontend FAIL → pin count-erro-vazio alinhado; re-CI.
 - #554–#564 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)

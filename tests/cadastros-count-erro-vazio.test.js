@@ -344,8 +344,10 @@ test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () =>
   assert.match(orphan, /GerenciarContatosClienteForm/);
   assert.match(orphan, /canEdit\("Cadastros", "Cliente"\)/);
   assert.match(orphan, /assertScopeCurrent/);
-  assert.equal((orphan.match(/Cliente\.update/g) || []).length, 1);
+  // Single-save: uma mutação InContext (não Contato paralelo / não update unscoped).
+  assert.equal((orphan.match(/updateInContext\(\s*["']Cliente["']/g) || []).length, 1);
   assert.equal((orphan.match(/mutateAsync/g) || []).length, 1);
+  assert.doesNotMatch(orphan, /entities\.Cliente\.update\(/);
   assert.match(orphan, /onChange=\{handleChange\}/);
   assert.match(orphan, /persistBusy=\{updateClienteMutation\.isPending\}/);
   // Binding ao load; troca invalida geração; erro de leitura não abre Form
@@ -353,17 +355,19 @@ test('Contatos comercial: bind imutável, erro≠form vazio, single-save', () =>
   assert.match(orphan, /editorGen/);
   assert.match(orphan, /data-contatos-read-error/);
   assert.match(orphan, /READ_STALE_SCOPE/);
-  assert.match(orphan, /queryKey:\s*\["cliente",\s*clienteId,\s*liveScope\.key\]/);
-  // Leitura canônica por id (HTTP GET) — filter({id})+ [0] não transmite id na fachada
-  assert.match(orphan, /Cliente\.get\(clienteId\)/);
+  assert.match(orphan, /buildGerenciarContatosClienteQueryKey/);
+  // Leitura canônica por id via getInContext — filter({id})+[0] não transmite id na fachada
+  assert.match(orphan, /getInContext\(\s*["']Cliente["']\s*,\s*clienteId\s*\)/);
+  assert.doesNotMatch(orphan, /entities\.Cliente\.get\(/);
   assert.doesNotMatch(orphan, /Cliente\.filter\(\{\s*id:\s*clienteId\s*\}\)/);
   assert.doesNotMatch(orphan, /clientes\[0\]/);
   assert.doesNotMatch(orphan, /loadedScopeRef\.current = \{ groupId, empresaId \}/);
   assert.doesNotMatch(orphan, /base44\.entities\.Contato/);
-  // Ator canônico na identidade de escopo (Codex residual A→B); sem token em key/cache/log
+  // Ator + fingerprint de sessão na identidade de escopo; sem token em key/cache/log
   assert.match(orphan, /readErpHttpSession/);
   assert.match(orphan, /actorId/);
-  assert.match(orphan, /readSessionActorId/);
+  assert.match(orphan, /sessionKey/);
+  assert.match(orphan, /readSessionActorAndKey/);
   assert.match(orphan, /Sessão\/ator alterado/);
   assert.doesNotMatch(orphan, /queryKey:[^\n]*token/);
   assert.doesNotMatch(orphan, /scopePair\([^)]*token/);
