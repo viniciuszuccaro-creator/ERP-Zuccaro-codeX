@@ -1,6 +1,6 @@
-## CURSOR — #536 BitolasDisponiveis Empresa scope (2026-11-05 America/Sao_Paulo)
-- Produto via filterInContext; fail-closed sem contexto; erro≠zero.
-- #535 Dashboard em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #536 BitolasDisponiveis CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `d44ce5f3b` **CI SUCCESS** 6/6. Produto filterInContext.
+- **#522–#536** multiempresa verde. #537 Monitoramento em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 
