@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Download, Calendar, DollarSign, Filter } from 'lucide-react';
 import { format, subDays } from 'date-fns';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * RELATÓRIO AVANÇADO DE FORMAS DE PAGAMENTO V21.8
@@ -14,38 +14,48 @@ import { format, subDays } from 'date-fns';
  */
 export default function RelatorioFormasPagamento() {
   const [periodo, setPeriodo] = useState(30); // dias
-  
-  const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
+
+  // Escopo multiempresa: sem list unscoped; enabled exige contexto; erro ≠ zero KPI.
+  const { data: formasPagamento = [], isError: isErrorFormas } = useQuery({
+    queryKey: ['formas-pagamento-relatorio', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('FormaPagamento', {}, 'descricao', 500),
+    enabled: contextoValido,
   });
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-relatorio', periodo],
+  const { data: pedidos = [], isError: isErrorPedidos } = useQuery({
+    queryKey: ['pedidos-relatorio', groupId, empresaAtual?.id, periodo],
     queryFn: async () => {
       const dataInicio = subDays(new Date(), periodo);
-      const todos = await base44.entities.Pedido.list('-created_date', 2000);
+      const todos = await filterInContext('Pedido', {}, '-created_date', 2000);
       return todos.filter(p => new Date(p.data_pedido) >= dataInicio);
     },
+    enabled: contextoValido,
   });
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-relatorio', periodo],
+  const { data: contasReceber = [], isError: isErrorContas } = useQuery({
+    queryKey: ['contas-receber-relatorio', groupId, empresaAtual?.id, periodo],
     queryFn: async () => {
       const dataInicio = subDays(new Date(), periodo);
-      const todas = await base44.entities.ContaReceber.list('-created_date', 2000);
+      const todas = await filterInContext('ContaReceber', {}, '-created_date', 2000);
       return todas.filter(c => new Date(c.data_emissao) >= dataInicio);
     },
+    enabled: contextoValido,
   });
 
-  const { data: movimentosCaixa = [] } = useQuery({
-    queryKey: ['movimentos-caixa-relatorio', periodo],
+  const { data: movimentosCaixa = [], isError: isErrorMovimentos } = useQuery({
+    queryKey: ['movimentos-caixa-relatorio', groupId, empresaAtual?.id, periodo],
     queryFn: async () => {
       const dataInicio = subDays(new Date(), periodo);
-      const todos = await base44.entities.CaixaMovimento.list('-data_movimento', 2000);
+      const todos = await filterInContext('CaixaMovimento', {}, '-data_movimento', 2000);
       return todos.filter(m => new Date(m.data_movimento) >= dataInicio);
     },
+    enabled: contextoValido,
   });
+
+  const cargaIndisponivel = isErrorFormas || isErrorPedidos || isErrorContas || isErrorMovimentos;
 
   // ANALYTICS TEMPORAL
   const gerarDadosTemporal = () => {
@@ -121,6 +131,13 @@ export default function RelatorioFormasPagamento() {
 
   return (
     <div className="space-y-6">
+      {(cargaIndisponivel || !contextoValido) && (
+        <p className="text-xs text-slate-500">
+          {!contextoValido
+            ? 'Selecione um grupo ou empresa para carregar o relatório de formas de pagamento.'
+            : 'Relatório indisponível (erro de carga ≠ zero).'}
+        </p>
+      )}
       {/* CONTROLES */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
@@ -146,7 +163,11 @@ export default function RelatorioFormasPagamento() {
             90 dias
           </Button>
         </div>
-        <Button onClick={exportarCSV} className="bg-green-600 hover:bg-green-700">
+        <Button
+          onClick={exportarCSV}
+          className="bg-green-600 hover:bg-green-700"
+          disabled={!contextoValido || cargaIndisponivel || totalizadores.length === 0}
+        >
           <Download className="w-4 h-4 mr-2" />
           Exportar CSV
         </Button>
