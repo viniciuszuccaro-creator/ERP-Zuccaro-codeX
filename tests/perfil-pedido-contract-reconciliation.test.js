@@ -7,8 +7,12 @@ import { getCadastroEntityPermissionKey, hasCadastroEntityPermission } from '../
 import { isTenantMasterEntity, assertCadastroFormScopeCurrent } from '../src/components/lib/contextoMultiempresaPolicy.js';
 import { pedidoLegacyStatusLabel, matchesPedidoLegacyStatusFilter, isPedidoLegacyProducaoSobMedida,
   PEDIDO_STATUS_LABELS, nextPedidoStatus, canUsePedidoAction, evaluatePedidoStatusTransitionUiGate } from '../src/components/comercial/pedidoUiPolicy.js';
+import { pedidosTabUniqueKeyRemainder } from './helpers/pedidosTabUniqueKeyRemainder.js';
 
-function parse(path) { return ts.createSourceFile(path, fs.readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX); }
+function parse(path, source) {
+  const text = source != null ? source : fs.readFileSync(path, 'utf8');
+  return ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
+}
 function variables(ast) {
   const result = new Map();
   function visit(node) { if (ts.isVariableDeclaration(node)) result.set(node.name.getText(ast), node.initializer); ts.forEachChild(node, visit); }
@@ -125,7 +129,11 @@ test('HTTP transitions preserve the exact existing state machine and reject miss
   }
 });
 test('Pedidos tab keeps separate canonical routing and preserves all mutation handlers from stage14', () => {
-  const path = 'src/components/comercial/PedidosTab.jsx', ast = parse(path), source = ast.getFullText();
+  const path = 'src/components/comercial/PedidosTab.jsx';
+  const live = fs.readFileSync(path, 'utf8');
+  // #552 uniqueKey: remainder restaura pin e36231b3 nos handlers; prova em comercial-pedidos-tab-uniquekey.
+  const ast = parse(path, pedidosTabUniqueKeyRemainder(path, live));
+  const source = live;
   const old = ts.createSourceFile(path, execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`], { encoding: 'utf8' }), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
   const names = ['deleteMutation', 'executarAcaoSensivelPedido', 'marcarProntoParaFaturarSeguro', 'marcarProntoParaFaturarMutation',
     'solicitarExclusaoPedido', 'analisarAprovacaoSeguro', 'exportarPedidosCSV'];
@@ -143,4 +151,6 @@ test('Pedidos tab keeps separate canonical routing and preserves all mutation ha
   assert.ok(source.includes('const matchStatus = matchesPedidoLegacyStatusFilter(p.status, statusFilter);'));
   assert.ok(source.includes('pedidoLegacyStatusLabel(p.status).toLowerCase().includes(searchLower)'));
   assert.ok(source.includes('canGerarOP && (isPedidoLegacyProducaoSobMedida(pedido.tipo_pedido)'));
+  assert.ok(source.includes('comercial-pedidos-aprovacoes-'));
+  assert.ok(source.includes('comercial-pedidos-automacao-'));
 });

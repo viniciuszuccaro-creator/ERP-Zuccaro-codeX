@@ -1,3 +1,15 @@
+## CURSOR — PedidosTab uniqueKey aprovações/automação (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-pedidos-tab-uniquekey-392b` = **#552** |
+| **Tip CI** | **`f90887d36`** · **CI SUCCESS** 6/6 |
+| **Código** | `uniqueKey` CentralAprovações (grupo/empresa) + Automação (pedido); remainder pin + publication authorize |
+| **Testes** | `comercial-pedidos-tab-uniquekey` **4 PASS** · pins audit/perfil/publication verdes |
+| **Fila** | #549–#553 CI SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

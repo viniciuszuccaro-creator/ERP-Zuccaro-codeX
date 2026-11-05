@@ -288,7 +288,17 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
       return;
     }
     await auditPedido({ acao: 'Analise de aprovacao', pedido, descricao: 'Abrir Central de Aprovacoes' });
-    openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: 'Central de Aprovações', width: 1200, height: 700 });
+    openWindow(
+      CentralAprovacoesManager,
+      { windowMode: true, initialTab: 'descontos' },
+      {
+        title: 'Central de Aprovações',
+        width: 1200,
+        height: 700,
+        // Clique repetido / mesmo escopo → reusa a mesma janela (WindowManager).
+        uniqueKey: `comercial-pedidos-aprovacoes-${JSON.stringify([groupId || null, empresaContextoId || null])}`,
+      },
+    );
   };
 
   const abrirAutomacaoFechamentoSeguro = async (pedido) => {
@@ -320,7 +330,13 @@ function PedidosOperacaoLegada({ pedidos, clientes, isLoading, empresas, onCreat
           toast({ title: 'Pedido fechado com sucesso!' });
         }
       },
-      { title: `Automacao - Pedido ${pedido.numero_pedido}`, width: 1200, height: 700 }
+      {
+        title: `Automacao - Pedido ${pedido.numero_pedido}`,
+        width: 1200,
+        height: 700,
+        // Pedidos distintos → janelas distintas; mesmo pedido → reusa (não une contextos).
+        uniqueKey: `comercial-pedidos-automacao-${String(pedido?.id || pedido?.numero_pedido || '')}`,
+      }
     );
   };
 
