@@ -1,6 +1,6 @@
-## CURSOR — #534 ImportadorProdutos Empresa scope (2026-11-05 America/Sao_Paulo)
-- GrupoEmpresarial/Empresa via filterInContext (sem list unscoped); erro≠zero.
-- Pin partialInput/ia-grounded: reverse hunks. #533 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #534 ImportadorProdutos CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `93726dd7a` — frontend+backend+compose PASS. filterInContext Grupo/Empresa.
+- #522–#534 verdes. #535 Dashboard em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 

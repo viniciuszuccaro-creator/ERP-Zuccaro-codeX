@@ -1,10 +1,9 @@
-## CURSOR — #534 ImportadorProdutos Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #534 ImportadorProdutos CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#532** | multiempresa | **CI SUCCESS** |
-| #533 ConfigFiscalAutomatica | `e3331f418` | aguarda CI |
-| #534 ImportadorProdutos | (este) | filterInContext Grupo/Empresa |
+| **#522–#534** | multiempresa | **CI SUCCESS** (#534 tip `93726dd7a`) |
+| #535 DashboardCorporativo | `447e819a0` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
