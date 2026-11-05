@@ -1,3 +1,15 @@
+## CURSOR — GerenciarEnderecosCliente escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-gerenciar-enderecos-scope-392b` = **#557** |
+| **Tip CI** | **`dbc46057f`** · **CI SUCCESS** 6/6 |
+| **Código** | Cliente via filterInContext + updateInContext; loading/erro ≠ zero endereços; STALE_SCOPE |
+| **Testes** | `tests/comercial-gerenciar-enderecos-scope.test.js` **5 PASS** |
+| **Fila** | #554–#556 SUCCESS · #558/#559 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,16 +6,48 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Plus, Edit, Trash2, Check, ExternalLink } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import BuscaCEP from "./BuscaCEP";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildGerenciarEnderecosClienteQueryKey,
+  isGerenciarEnderecosClienteScopeCurrent,
+  resolveGerenciarEnderecosClienteKpiState,
+  pickClienteEnderecosFromRows,
+  listLocaisEntrega,
+} from "./gerenciarEnderecosClienteScope";
 
+function readGerenciarEnderecosActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
+
+/**
+ * Gerencia locais_entrega do Cliente.
+ * Escopo multiempresa: leitura via filterInContext; gravação via updateInContext.
+ * Loading/erro ≠ “zero endereços”. STALE_SCOPE em resposta tardia.
+ */
 export default function GerenciarEnderecosCliente({ clienteId, onSelecionarEndereco }) {
   const [dialogAberto, setDialogAberto] = useState(false);
   const [enderecoEditando, setEnderecoEditando] = useState(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readGerenciarEnderecosActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+  const queryKey = buildGerenciarEnderecosClienteQueryKey({
+    clienteId, groupId, empresaId, actorId, sessionKey,
+  });
 
   const [novoEndereco, setNovoEndereco] = useState({
     apelido: "",
@@ -35,22 +66,43 @@ export default function GerenciarEnderecosCliente({ clienteId, onSelecionarEnder
     principal: false
   });
 
-  const { data: cliente } = useQuery({
-    queryKey: ['cliente', clienteId],
-    queryFn: async () => {
-      if (!clienteId) return null;
-      const clientes = await base44.entities.Cliente.filter({ id: clienteId });
-      return clientes[0] || null;
+  const {
+    data: cliente,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey,
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Cliente', { id: clienteId }, undefined, 1);
+      if (signal?.aborted) {
+        const err = new Error('GERENCIAR_ENDERECOS_CLIENTE_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isGerenciarEnderecosClienteScopeCurrent(scopeExpected, readGerenciarEnderecosActorAndSession())) {
+        throw new Error('GERENCIAR_ENDERECOS_CLIENTE_STALE_SCOPE');
+      }
+      return pickClienteEnderecosFromRows(rows);
     },
-    enabled: !!clienteId
+    enabled: Boolean(clienteId) && contextoValido,
+  });
+
+  const kpiState = resolveGerenciarEnderecosClienteKpiState({
+    contextoValido,
+    clienteId,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: cliente !== undefined,
   });
 
   const updateClienteMutation = useMutation({
     mutationFn: async (data) => {
-      return await base44.entities.Cliente.update(clienteId, data);
+      return await updateInContext('Cliente', clienteId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cliente', clienteId] });
+      queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({ title: "✅ Endereços Atualizados!" });
       setDialogAberto(false);
@@ -88,7 +140,7 @@ export default function GerenciarEnderecosCliente({ clienteId, onSelecionarEnder
       return;
     }
 
-    const enderecosAtualizados = [...(cliente?.locais_entrega || [])];
+    const enderecosAtualizados = [...listLocaisEntrega(cliente)];
 
     if (enderecoEditando !== null) {
       // Editando
@@ -112,12 +164,12 @@ export default function GerenciarEnderecosCliente({ clienteId, onSelecionarEnder
 
   const handleEditarEndereco = (index) => {
     setEnderecoEditando(index);
-    setNovoEndereco({ ...(cliente?.locais_entrega[index]) });
+    setNovoEndereco({ ...(listLocaisEntrega(cliente)[index]) });
     setDialogAberto(true);
   };
 
   const handleExcluirEndereco = (index) => {
-    const enderecosAtualizados = (cliente?.locais_entrega || []).filter((_, i) => i !== index);
+    const enderecosAtualizados = listLocaisEntrega(cliente).filter((_, i) => i !== index);
     updateClienteMutation.mutate({ locais_entrega: enderecosAtualizados });
   };
 
@@ -142,7 +194,37 @@ export default function GerenciarEnderecosCliente({ clienteId, onSelecionarEnder
 
   if (!clienteId) return null;
 
-  const enderecos = cliente?.locais_entrega || [];
+  if (kpiState === 'unavailable') {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-slate-600">
+          Contexto de Grupo/Empresa necessário para gerenciar endereços.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (kpiState === 'loading') {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-slate-600">
+          Carregando endereços do cliente…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (kpiState === 'error') {
+    return (
+      <Card className="border-red-300">
+        <CardContent className="p-4 text-sm text-red-700">
+          Não foi possível carregar endereços (erro ≠ zero endereços).
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const enderecos = listLocaisEntrega(cliente);
 
   return (
     <Card>
