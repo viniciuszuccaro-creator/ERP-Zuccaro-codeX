@@ -1,6 +1,6 @@
 ## CURSOR — ArmadoPadraoTab bitolas escopo (2026-11-05 America/Sao_Paulo)
-- #558: filterInContext + pin `armado-padrao-policy` alinhado (CI frontend fail → fix).
-- Homolog BLOCKED. FF #401 aguarda Codex. Aguarda re-CI tip.
+- Tip `72675b136` **CI SUCCESS** 6/6 (#558). filterInContext + pin policy alinhado.
+- #554–#557/#560 SUCCESS; #559/#561 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
