@@ -1,3 +1,14 @@
+## CURSOR — #570 RateioMultiempresa CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `c8e9ee5ea` SUCCESS. Lote #566–#570 verde. Homolog BLOCKED. FF #401 aguarda Codex. Próximo: PainelDinamicoCliente.
+
+## CURSOR — #570 Rateio pin/contrato (2026-11-05 America/Sao_Paulo)
+- Pin stage43 + environment InContext. Testes 22 PASS. #566–#569 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
+
+## CURSOR — RateioMultiempresa escopo (2026-11-05 America/Sao_Paulo)
+- Branch `cursor/financeiro-rateio-multiempresa-scope-392b` ← #401.
+- create/update InContext; fail-closed; STALE_SCOPE. Testes 5 PASS.
+- #566–#569 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

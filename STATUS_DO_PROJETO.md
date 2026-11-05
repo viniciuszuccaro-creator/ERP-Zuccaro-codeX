@@ -1,3 +1,32 @@
+## CURSOR — #570 RateioMultiempresa CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #570 `c8e9ee5ea` — frontend + backend + compose **SUCCESS** |
+| **Código** | create/update InContext; fail-closed Grupo; STALE_SCOPE; pin stage43 |
+| **Fila** | #566–#570 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — #570 Rateio pin/contrato (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | frontend FAIL: stage43 hash + bind mutationFn sem free vars InContext |
+| **Fix** | Renova hash `4015dd51…`; environment stubs scope/helpers; remove replace dist.valor |
+| **Testes** | scoped-command-contracts + rateio-scope **22 PASS** |
+| **Fila** | #566–#569 SUCCESS · #568 docs em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — RateioMultiempresa escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/financeiro-rateio-multiempresa-scope-392b` ← #401 `b888b2c00` |
+| **Código** | createInContext/updateInContext; fail-closed Grupo; STALE_SCOPE |
+| **Testes** | `financeiro-rateio-multiempresa-scope` **5 PASS** |
+| **Fila** | #566–#569 SUCCESS · #568 docs tip em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
