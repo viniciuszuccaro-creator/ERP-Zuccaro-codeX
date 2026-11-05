@@ -3,10 +3,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CreditCard, TrendingUp, TrendingDown, AlertCircle, CheckCircle, DollarSign } from "lucide-react";
+import { CreditCard, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildLimiteCreditoWidgetQueryKey,
+  isLimiteCreditoWidgetScopeCurrent,
+  resolveLimiteCreditoWidgetKpiState,
+  sumContasReceberPendentes,
+} from "./limiteCreditoWidgetScope";
 
+function readLimiteCreditoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
+
+/**
+ * Widget de limite de crédito do cliente.
+ * Escopo multiempresa: ContaReceber via filterInContext (sem filter unscoped).
+ * Sem default []: loading/erro ≠ zero utilizado. STALE_SCOPE em resposta tardia.
+ */
 export default function LimiteCreditoWidget({ 
   cliente, 
   valorPedidoAtual = 0,
@@ -15,21 +37,60 @@ export default function LimiteCreditoWidget({
   const [limiteAtual, setLimiteAtual] = useState(cliente?.condicao_comercial?.limite_credito || 0);
   const [limiteUtilizado, setLimiteUtilizado] = useState(cliente?.condicao_comercial?.limite_credito_utilizado || 0);
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceberCliente', cliente?.id],
-    queryFn: () => cliente?.id ? base44.entities.ContaReceber.filter({ cliente_id: cliente.id }) : Promise.resolve([]),
-    enabled: !!cliente?.id
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readLimiteCreditoActorAndSession();
+  const clienteId = cliente?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  const {
+    data: contasReceber,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildLimiteCreditoWidgetQueryKey({
+      clienteId, groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'ContaReceber',
+        { cliente_id: clienteId },
+        '-created_date',
+        500,
+      );
+      if (signal?.aborted) {
+        const err = new Error('LIMITE_CREDITO_WIDGET_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isLimiteCreditoWidgetScopeCurrent(scopeExpected, readLimiteCreditoActorAndSession())) {
+        throw new Error('LIMITE_CREDITO_WIDGET_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: Boolean(clienteId) && contextoValido,
+  });
+
+  const kpiState = resolveLimiteCreditoWidgetKpiState({
+    contextoValido,
+    clienteId,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: contasReceber !== undefined,
   });
 
   useEffect(() => {
+    if (kpiState !== 'ready') return;
     calcularLimiteUtilizado();
-  }, [contasReceber, cliente]);
+  }, [contasReceber, cliente, kpiState]);
 
   const calcularLimiteUtilizado = () => {
-    // Soma de contas pendentes
-    const totalPendente = contasReceber
-      .filter(c => c.status === 'Pendente' || c.status === 'Atrasado')
-      .reduce((sum, c) => sum + (c.valor || 0), 0);
+    // Soma de contas pendentes — só com KPI ready (erro/loading ≠ zero).
+    const totalPendente = sumContasReceberPendentes(contasReceber);
     
     setLimiteUtilizado(totalPendente);
 
@@ -64,6 +125,7 @@ export default function LimiteCreditoWidget({
     }
   };
 
+  const contagemIndisponivel = kpiState !== 'ready';
   const limiteDisponivel = limiteAtual - limiteUtilizado;
   const percentualUtilizado = limiteAtual > 0 ? (limiteUtilizado / limiteAtual) * 100 : 0;
   const percentualComPedido = limiteAtual > 0 ? ((limiteUtilizado + valorPedidoAtual) / limiteAtual) * 100 : 0;
@@ -79,14 +141,32 @@ export default function LimiteCreditoWidget({
                   scorePagamento >= 60 ? 'text-yellow-600' :
                   'text-red-600';
 
+  if (!clienteId) {
+    return null;
+  }
+
+  if (kpiState === 'unavailable') {
+    return (
+      <Card className="border-slate-200 bg-slate-50">
+        <CardContent className="p-4 text-sm text-slate-600">
+          Contexto de Grupo/Empresa necessário para o limite de crédito.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className={`border-2 ${
+      contagemIndisponivel ? 'border-slate-200 bg-slate-50' :
       temLimiteSuficiente ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
     }`}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <CreditCard className={`w-5 h-5 ${temLimiteSuficiente ? 'text-green-600' : 'text-red-600'}`} />
+            <CreditCard className={`w-5 h-5 ${
+              contagemIndisponivel ? 'text-slate-500' :
+              temLimiteSuficiente ? 'text-green-600' : 'text-red-600'
+            }`} />
             Limite de Crédito
           </span>
           <Badge className={`${
@@ -99,7 +179,16 @@ export default function LimiteCreditoWidget({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Valores */}
+        {kpiState === 'loading' && (
+          <p className="text-sm text-slate-600">Carregando contas a receber…</p>
+        )}
+        {kpiState === 'error' && (
+          <p className="text-sm text-red-700">
+            Não foi possível carregar contas a receber (erro ≠ zero utilizado).
+          </p>
+        )}
+
+        {/* Valores — utilizado só confiável em ready */}
         <div className="grid grid-cols-3 gap-3">
           <div>
             <p className="text-xs text-slate-600 mb-1">Limite Total</p>
@@ -114,29 +203,38 @@ export default function LimiteCreditoWidget({
           </div>
           <div>
             <p className="text-xs text-slate-600 mb-1">Utilizado</p>
-            <p className="text-lg font-bold text-orange-600">
-              R$ {limiteUtilizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            <p className={`text-lg font-bold ${contagemIndisponivel ? 'text-slate-400' : 'text-orange-600'}`}>
+              {contagemIndisponivel
+                ? '—'
+                : `R$ ${limiteUtilizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             </p>
           </div>
           <div>
             <p className="text-xs text-slate-600 mb-1">Disponível</p>
-            <p className={`text-lg font-bold ${limiteDisponivel > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              R$ {limiteDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            <p className={`text-lg font-bold ${
+              contagemIndisponivel ? 'text-slate-400' :
+              limiteDisponivel > 0 ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {contagemIndisponivel
+                ? '—'
+                : `R$ ${limiteDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
             </p>
           </div>
         </div>
 
         {/* Barra de Progresso */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-xs text-slate-600">Utilização</span>
-            <span className="text-xs font-semibold">{percentualUtilizado.toFixed(1)}%</span>
+        {!contagemIndisponivel && (
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-slate-600">Utilização</span>
+              <span className="text-xs font-semibold">{percentualUtilizado.toFixed(1)}%</span>
+            </div>
+            <Progress value={percentualUtilizado} className={`h-2 ${corProgress}`} />
           </div>
-          <Progress value={percentualUtilizado} className={`h-2 ${corProgress}`} />
-        </div>
+        )}
 
         {/* Simulação com Pedido Atual */}
-        {valorPedidoAtual > 0 && (
+        {!contagemIndisponivel && valorPedidoAtual > 0 && (
           <div className={`p-3 rounded-lg ${
             temLimiteSuficiente ? 'bg-green-100' : 'bg-red-100'
           }`}>
@@ -205,7 +303,7 @@ export default function LimiteCreditoWidget({
         </div>
 
         {/* Alertas */}
-        {scorePagamento < 70 && (
+        {kpiState === 'ready' && scorePagamento < 70 && (
           <Card className="bg-amber-50 border-amber-200">
             <CardContent className="p-3">
               <p className="text-xs text-amber-800">
@@ -215,7 +313,7 @@ export default function LimiteCreditoWidget({
           </Card>
         )}
 
-        {scorePagamento >= 90 && limiteAtual > (cliente?.condicao_comercial?.limite_credito || 0) && (
+        {kpiState === 'ready' && scorePagamento >= 90 && limiteAtual > (cliente?.condicao_comercial?.limite_credito || 0) && (
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-3">
               <p className="text-xs text-green-800">

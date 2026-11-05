@@ -1,3 +1,14 @@
+## CURSOR — LimiteCreditoWidget escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-limite-credito-scope-392b` ← #401 `b888b2c00` |
+| **Código** | ContaReceber via `filterInContext`; sem `= []`; loading/erro ≠ zero utilizado; STALE_SCOPE |
+| **Testes** | `tests/comercial-limite-credito-widget-scope.test.js` **5 PASS** |
+| **Paralelo** | #554 WidgetPerfilRisco · #549–#553 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
