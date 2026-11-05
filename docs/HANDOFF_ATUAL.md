@@ -1,6 +1,6 @@
-## CURSOR — #537 MonitoramentoCanaisRealtime Empresa scope (2026-11-05 America/Sao_Paulo)
-- Pedido + ParametroOrigemPedido via filterInContext; fail-closed; erro≠zero.
-- Pin primitiveUi: reverse autorizado fora de getTime edits. #535 SUCCESS. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #537 MonitoramentoCanaisRealtime CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `b26c8d1bb` **CI SUCCESS** 6/6. Pedido+ParametroOrigem filterInContext; pin LF/CRLF.
+- **#522–#538** multiempresa verde. #539 Widget em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
