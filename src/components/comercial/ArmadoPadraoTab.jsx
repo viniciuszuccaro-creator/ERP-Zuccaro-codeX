@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,23 @@ import {
   gerarItensRevenda,
   TIPOS_PECA
 } from './armado-padrao/armadoPadraoPolicy';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  buildArmadoPadraoBitolasQueryKey,
+  isArmadoPadraoScopeCurrent,
+  resolveArmadoPadraoBitolasKpiState,
+} from './armadoPadraoScope';
+
+function readArmadoPadraoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /** @typedef {import('./armado-padrao/armadoPadraoPolicy.js').ArmadoItem} ArmadoItem */
 /** @typedef {import('./armado-padrao/armadoPadraoPolicy.js').TipoPeca} TipoPeca */
@@ -44,21 +60,52 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
   const [dadosPeca, setDadosPeca] = useState(/** @type {ArmadoItem} */ ({}));
   const [pecaEditandoIndex, setPecaEditandoIndex] = useState(/** @type {number|null} */ (null));
 
-  const { data: bitolas = [] } = useQuery({
-    queryKey: ['bitolas', formData?.group_id, empresaId || formData?.empresa_id],
-    queryFn: async () => {
-      const empId = empresaId || formData?.empresa_id;
-      if (!empId) return [];
-      const filter = {
-        ...(formData?.group_id ? { group_id: formData.group_id } : {}),
-        empresa_id: empId,
-        eh_bitola: true,
-        status: 'Ativo'
-      };
-      return /** @type {Promise<Bitola[]>} */ (base44.entities.Produto.filter(filter));
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = formData?.group_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empId = empresaId || formData?.empresa_id || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readArmadoPadraoActorAndSession();
+  const contextoValido = Boolean(groupId || empId);
+  const scopeExpected = { actorId, sessionKey };
+
+  // Escopo multiempresa: Produto bitola via filterInContext (sem filter unscoped).
+  // Sem default []: loading/erro ≠ zero bitolas. STALE_SCOPE em resposta tardia.
+  const {
+    data: bitolasData,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildArmadoPadraoBitolasQueryKey({
+      groupId, empresaId: empId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Produto',
+        { eh_bitola: true, status: 'Ativo' },
+        'descricao',
+        500,
+      );
+      if (signal?.aborted) {
+        const err = new Error('ARMADO_PADRAO_BITOLAS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isArmadoPadraoScopeCurrent(scopeExpected, readArmadoPadraoActorAndSession())) {
+        throw new Error('ARMADO_PADRAO_BITOLAS_STALE_SCOPE');
+      }
+      return /** @type {Bitola[]} */ (rows);
     },
-    enabled: Boolean(empresaId || formData?.empresa_id)
+    enabled: contextoValido,
   });
+
+  const kpiState = resolveArmadoPadraoBitolasKpiState({
+    contextoValido,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: bitolasData !== undefined,
+  });
+  const bitolas = kpiState === 'ready' && Array.isArray(bitolasData) ? bitolasData : [];
 
   const adicionarOuEditarPeca = () => {
     if (!tipoPeca) {
@@ -133,6 +180,28 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
 
   return (
     <div className="w-full h-full space-y-6 overflow-auto">
+      {kpiState === 'unavailable' && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Contexto de Grupo/Empresa necessário para listar bitolas.
+          </CardContent>
+        </Card>
+      )}
+      {kpiState === 'loading' && (
+        <Card className="border-slate-200 bg-slate-50">
+          <CardContent className="p-4 text-sm text-slate-600">
+            Carregando bitolas…
+          </CardContent>
+        </Card>
+      )}
+      {kpiState === 'error' && (
+        <Card className="border-red-300 bg-red-50">
+          <CardContent className="p-4 text-sm text-red-700">
+            Não foi possível carregar bitolas (erro ≠ zero bitolas).
+          </CardContent>
+        </Card>
+      )}
+
       {/* Seleção de Tipo */}
       {!tipoPeca && (
         <Card>
