@@ -44,7 +44,8 @@ import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
 import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function DashboardCorporativo() {
-  const { grupoAtual, empresasDoGrupo, estaNoGrupo } = useContextoGrupoEmpresa();
+  const { grupoAtual, empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoGrupoEmpresa();
+  const contextoValido = Boolean(grupoAtual?.id || empresaAtual?.id);
   
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
   const [empresaSelecionada, setEmpresaSelecionada] = useState("todas");
@@ -86,93 +87,93 @@ export default function DashboardCorporativo() {
 
   const { dataInicio, dataFim } = getDateRange();
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-dashboard', grupoAtual?.id],
-    queryFn: () => estaNoGrupo
-      ? base44.entities.Pedido.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
-      : base44.entities.Pedido.list('-created_date', 9999),
+  // Escopo multiempresa: fail-closed sem grupo/empresa (nunca list unscoped).
+  const scopeFilter = estaNoGrupo && grupoAtual?.id
+    ? { group_id: grupoAtual.id }
+    : (empresaAtual?.id ? { empresa_id: empresaAtual.id } : null);
+
+  const { data: pedidos = [], isError: isErrorPedidosCorp } = useQuery({
+    queryKey: ['pedidos-dashboard', grupoAtual?.id, empresaAtual?.id],
+    queryFn: () => base44.entities.Pedido.filter(scopeFilter, '-created_date', 9999),
+    enabled: contextoValido && !!scopeFilter,
   });
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes-dashboard', grupoAtual?.id],
-    queryFn: () => estaNoGrupo
-      ? base44.entities.Cliente.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
-      : base44.entities.Cliente.list('-created_date', 9999),
+  const { data: clientes = [], isError: isErrorClientesCorp } = useQuery({
+    queryKey: ['clientes-dashboard', grupoAtual?.id, empresaAtual?.id],
+    queryFn: () => base44.entities.Cliente.filter(scopeFilter, '-created_date', 9999),
+    enabled: contextoValido && !!scopeFilter,
   });
 
   const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['clientes-count-corp', grupoAtual?.id],
+    queryKey: ['clientes-count-corp', grupoAtual?.id, empresaAtual?.id],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
-          filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
+          filter: scopeFilter || {}
         });
         return response.data?.count || clientes.length;
       } catch {
         return clientes.length;
       }
     },
+    enabled: contextoValido && !!scopeFilter,
     staleTime: 60000,
     retry: 1
   });
 
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-dashboard'],
-    queryFn: () => base44.entities.Empresa.list(),
-  });
+  // Empresas do seletor: empresasDoGrupo (fonte canônica) — sem Empresa.list unscoped.
 
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-dashboard', grupoAtual?.id],
-    queryFn: () => estaNoGrupo
-      ? base44.entities.Produto.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
-      : base44.entities.Produto.list('-created_date', 9999),
+  const { data: produtos = [], isError: isErrorProdutosCorp } = useQuery({
+    queryKey: ['produtos-dashboard', grupoAtual?.id, empresaAtual?.id],
+    queryFn: () => base44.entities.Produto.filter(scopeFilter, '-created_date', 9999),
+    enabled: contextoValido && !!scopeFilter,
   });
 
   const { data: totalProdutos = 0 } = useQuery({
-    queryKey: ['produtos-count-corp', grupoAtual?.id],
+    queryKey: ['produtos-count-corp', grupoAtual?.id, empresaAtual?.id],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
-          filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
+          filter: scopeFilter || {}
         });
         return response.data?.count || produtos.length;
       } catch {
         return produtos.length;
       }
     },
+    enabled: contextoValido && !!scopeFilter,
     staleTime: 60000,
     retry: 1
   });
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-dashboard', grupoAtual?.id],
-    queryFn: () => estaNoGrupo
-      ? base44.entities.ContaReceber.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
-      : base44.entities.ContaReceber.list(),
+  const { data: contasReceber = [], isError: isErrorReceberCorp } = useQuery({
+    queryKey: ['contas-receber-dashboard', grupoAtual?.id, empresaAtual?.id],
+    queryFn: () => base44.entities.ContaReceber.filter(scopeFilter, '-created_date', 9999),
+    enabled: contextoValido && !!scopeFilter,
   });
 
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contas-pagar-dashboard', grupoAtual?.id],
-    queryFn: () => estaNoGrupo
-      ? base44.entities.ContaPagar.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
-      : base44.entities.ContaPagar.list(),
+  const { data: contasPagar = [], isError: isErrorPagarCorp } = useQuery({
+    queryKey: ['contas-pagar-dashboard', grupoAtual?.id, empresaAtual?.id],
+    queryFn: () => base44.entities.ContaPagar.filter(scopeFilter, '-created_date', 9999),
+    enabled: contextoValido && !!scopeFilter,
   });
 
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-dashboard', grupoAtual?.id],
-    queryFn: () => estaNoGrupo
-      ? base44.entities.Entrega.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
-      : base44.entities.Entrega.list('-created_date', 9999),
+  const { data: entregas = [], isError: isErrorEntregasCorp } = useQuery({
+    queryKey: ['entregas-dashboard', grupoAtual?.id, empresaAtual?.id],
+    queryFn: () => base44.entities.Entrega.filter(scopeFilter, '-created_date', 9999),
+    enabled: contextoValido && !!scopeFilter,
   });
 
-  const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ops-dashboard', grupoAtual?.id],
-    queryFn: () => estaNoGrupo
-      ? base44.entities.OrdemProducao.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
-      : base44.entities.OrdemProducao.list(),
+  const { data: ordensProducao = [], isError: isErrorOpsCorp } = useQuery({
+    queryKey: ['ops-dashboard', grupoAtual?.id, empresaAtual?.id],
+    queryFn: () => base44.entities.OrdemProducao.filter(scopeFilter, '-created_date', 9999),
+    enabled: contextoValido && !!scopeFilter,
   });
+
+  const mastersCorpIndisponiveis = isErrorPedidosCorp || isErrorClientesCorp || isErrorProdutosCorp
+    || isErrorReceberCorp || isErrorPagarCorp || isErrorEntregasCorp || isErrorOpsCorp;
 
   // Filtrar por período e empresa
   const pedidosFiltrados = pedidos.filter(p => {
@@ -303,6 +304,9 @@ export default function DashboardCorporativo() {
     <ProtectedSection module="Dashboard" section={["Corporativo"]} action="visualizar">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex-1 overflow-auto p-6 space-y-6">
+        {mastersCorpIndisponiveis && (
+          <p className="text-xs text-slate-500">Indicadores indisponíveis (erro de carga ≠ zero).</p>
+        )}
         {/* Header com Filtros */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
