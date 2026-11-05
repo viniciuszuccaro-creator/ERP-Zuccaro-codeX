@@ -1,6 +1,7 @@
-## CURSOR — #521 CI SUCCESS (2026-11-05 America/Sao_Paulo)
-- #521 PontoForm `6ff26e6b8` CI SUCCESS. Fila #516–#520 verde. FF #401 aguarda Codex.
-- Próximo: PontoEletronicoBiometrico Colaborador/Ponto via filterInContext.
+## CURSOR — #522 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #522 tip `349171419` CI SUCCESS 6/6 (frontend/backend/compose ×2). Pin evidence + bind createInContext.
+- Paralelos: #523 MonitoramentoRH `5a6514e4a` · #524 ConfiguracaoCobranca `67811ba15` · #525 Gameficacao `c27af0a08` (CI em curso).
+- FF #401 aguarda Codex. Homolog 100 BLOCKED. Sem Central360 UI. Próximo indep.: RelatorioFormasPagamento scope.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 

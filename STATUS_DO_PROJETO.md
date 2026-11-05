@@ -1,12 +1,17 @@
-## CURSOR — #521 PontoForm CI SUCCESS + próximo biometrico (2026-11-05 America/Sao_Paulo)
+## CURSOR — #522 CI SUCCESS + fila #523–#525 (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| #516–#520 | — | CI SUCCESS |
-| #521 PontoForm | `6ff26e6b8` | CI SUCCESS |
-| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| #516–#521 | — | CI SUCCESS |
+| **#522 Biometrico** | `349171419` | **CI SUCCESS** (6/6) |
+| #523 MonitoramentoRH | `5a6514e4a` | CI em curso |
+| #524 ConfiguracaoCobranca | `67811ba15` | CI em curso |
+| #525 GameficacaoProducao | `c27af0a08` | CI em curso |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex (sem merge) |
 | **Homolog 100** | BLOCKED | |
-| **Próximo** | PontoEletronicoBiometrico scope | |
+| **Fora** | Central360 UI/rename · VPS · inventário completo | |
+
+Contrato: `filterInContext`/`createInContext` + queryKey(groupId,empresaId) + enabled contexto + erro≠zero. Incorporação seletiva só após aceite Codex.
 
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
