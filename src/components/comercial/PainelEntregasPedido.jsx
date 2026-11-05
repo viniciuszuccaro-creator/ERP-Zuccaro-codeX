@@ -1,26 +1,73 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Truck, Package, MapPin, Calendar, ExternalLink } from "lucide-react";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildPainelEntregasQueryKey,
+  isPainelEntregasScopeCurrent,
+} from "./painelEntregasScope";
+
+function readPainelActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1.2: Painel de Entregas do Pedido - WINDOW MODE READY
  * Mostra todas as entregas vinculadas a um pedido
  */
 export default function PainelEntregasPedido({ pedidoId, windowMode = false }) {
-  const { data: entregas = [], isLoading } = useQuery({
-    queryKey: ['entregas-pedido', pedidoId],
-    queryFn: async () => {
-      const todas = await base44.entities.Entrega.list('-created_date');
-      return todas.filter(e => e.pedido_id === pedidoId);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readPainelActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  // Escopo multiempresa: Entrega via filterInContext por pedido_id (sem list unscoped).
+  // Cache: pedido+Grupo+Empresa+ator+sessão. Sem initialData vazio.
+  const {
+    data: entregas,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildPainelEntregasQueryKey({
+      pedidoId, groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Entrega',
+        { pedido_id: pedidoId },
+        '-created_date',
+        200,
+      );
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_ENTREGAS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelEntregasScopeCurrent(scopeExpected, readPainelActorAndSession())) {
+        throw new Error('PAINEL_ENTREGAS_STALE_SCOPE');
+      }
+      return rows;
     },
-    enabled: !!pedidoId,
+    enabled: Boolean(pedidoId) && contextoValido,
   });
+
+  const lista = Array.isArray(entregas) ? entregas : [];
+  const contagemIndisponivel = !contextoValido || isLoading || isError || (isFetching && entregas === undefined);
 
   const statusColors = {
     'Aguardando Separação': 'bg-yellow-100 text-yellow-700',
@@ -32,7 +79,17 @@ export default function PainelEntregasPedido({ pedidoId, windowMode = false }) {
     'Entrega Frustrada': 'bg-red-100 text-red-700'
   };
 
-  if (isLoading) {
+  if (!contextoValido) {
+    return (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione grupo ou empresa para listar entregas do pedido.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isLoading || (isFetching && entregas === undefined)) {
     return (
       <Card>
         <CardContent className="p-8 text-center text-slate-500">
@@ -43,12 +100,22 @@ export default function PainelEntregasPedido({ pedidoId, windowMode = false }) {
     );
   }
 
+  if (isError) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-sm text-slate-600">
+          Entregas indisponíveis (erro de carga ≠ zero).
+        </CardContent>
+      </Card>
+    );
+  }
+
   const content = (
     <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-slate-900 flex items-center gap-2">
           <Truck className="w-5 h-5 text-blue-600" />
-          Entregas ({entregas.length})
+          Entregas ({contagemIndisponivel ? '…' : lista.length})
         </h3>
         <Link to={createPageUrl("Expedicao")}>
           <Button variant="outline" size="sm">
@@ -58,7 +125,7 @@ export default function PainelEntregasPedido({ pedidoId, windowMode = false }) {
         </Link>
       </div>
 
-      {entregas.length === 0 ? (
+      {lista.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center text-slate-500">
             <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -67,7 +134,7 @@ export default function PainelEntregasPedido({ pedidoId, windowMode = false }) {
         </Card>
       ) : (
         <div className="space-y-3">
-          {entregas.map(entrega => (
+          {lista.map(entrega => (
             <Card key={entrega.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
