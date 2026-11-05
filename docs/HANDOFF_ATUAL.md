@@ -1,3 +1,7 @@
+## CURSOR — #568 SimularPagamento pin fix (2026-11-05 America/Sao_Paulo)
+- Renova hunk financialUiBoundary (new→baseline + invalidations). Pin stage50 preservado.
+- #567 SUCCESS. #566/#569 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — SimularPagamentoModal escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/financeiro-simular-pagamento-scope-392b` ← #401.
 - create/update InContext; fail-closed; STALE_SCOPE. Testes 4 PASS.

@@ -1,3 +1,13 @@
+## CURSOR — #568 SimularPagamento pin fix (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #568 — renova hunk `financialUiBoundary` (padrão #532 DuplicarMes) |
+| **Causa** | frontend FAIL: stage50 frozen hash fora dos hunks contados |
+| **Testes** | `financial-ui-command-boundaries` **26 PASS** + scope **4 PASS** |
+| **Fila** | #567 SUCCESS · #566/#569 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — SimularPagamentoModal escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
