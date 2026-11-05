@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -40,6 +39,12 @@ import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompl
 import HistoricoProdutosCliente from "@/components/comercial/HistoricoProdutosCliente";
 import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContatosClienteForm";
 import { toast } from "sonner";
+import {
+  resolvePainelDinamicoKpiState,
+  isPainelDinamicoScopeCurrent,
+  sumPainelDinamicoTotalVendas,
+  sumPainelDinamicoTotalEmAberto,
+} from "./painelDinamicoClienteScope";
 
 /**
  * Escopo vivo do painel Contatos — tenant + cliente + ator/sessão.
@@ -197,14 +202,23 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { updateInContext, getInContext, filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
   const sessionSnapshot = readErpHttpSession();
   const sessionActorId = typeof sessionSnapshot?.actorId === "string" && sessionSnapshot.actorId.trim()
     ? sessionSnapshot.actorId.trim()
     : null;
   const sessionCacheKey = central360SessionKey(sessionSnapshot?.token);
+  const scopeExpected = { actorId: sessionActorId, sessionKey: sessionCacheKey };
+  const readPainelActorAndSession = () => {
+    const session = readErpHttpSession();
+    const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  };
   const painelScopeKey = buildPainelContatosScopeKey({
     groupId,
     empresaId,
@@ -252,7 +266,13 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
     setContatosHydrateStatus("pending");
     (async () => {
       try {
-        const fresh = await base44.entities.Cliente.get(clienteProp.id);
+        if (!contextoValido) {
+          throw new Error("Contexto de Grupo/Empresa necessário para carregar o cliente.");
+        }
+        const fresh = await getInContext("Cliente", clienteProp.id);
+        if (!isPainelDinamicoScopeCurrent(scopeExpected, readPainelActorAndSession())) {
+          throw new Error("PAINEL_DINAMICO_CLIENTE_STALE_SCOPE");
+        }
         if (cancelled || !fresh || epoch !== contatosHydrateEpochRef.current) return;
         setClienteLive(fresh);
         setContatosDraft(seedContatosPainelDraft(fresh));
@@ -372,24 +392,79 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
   };
 
   const cliente = clienteLive || clienteProp;
+  const clienteId = clienteProp?.id || null;
+  const queriesEnabled = Boolean(clienteId) && painelAberto && contextoValido;
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-cliente', clienteProp?.id, groupId, empresaId, sessionActorId, sessionCacheKey],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteProp.id }, '-data_pedido', 10),
-    enabled: !!clienteProp?.id && painelAberto,
+  const pedidosQuery = useQuery({
+    queryKey: ['pedidos-cliente', clienteId, groupId, empresaId, sessionActorId, sessionCacheKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Pedido', { cliente_id: clienteId }, '-data_pedido', 10);
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_DINAMICO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelDinamicoScopeCurrent(scopeExpected, readPainelActorAndSession())) {
+        throw new Error('PAINEL_DINAMICO_PEDIDOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-cliente', clienteProp?.id, groupId, empresaId, sessionActorId, sessionCacheKey],
-    queryFn: () => base44.entities.Entrega.filter({ cliente_id: clienteProp.id }, '-created_date', 5),
-    enabled: !!clienteProp?.id && painelAberto,
+  const entregasQuery = useQuery({
+    queryKey: ['entregas-cliente', clienteId, groupId, empresaId, sessionActorId, sessionCacheKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Entrega', { cliente_id: clienteId }, '-created_date', 5);
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_DINAMICO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelDinamicoScopeCurrent(scopeExpected, readPainelActorAndSession())) {
+        throw new Error('PAINEL_DINAMICO_ENTREGAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-cliente', clienteProp?.id, groupId, empresaId, sessionActorId, sessionCacheKey],
-    queryFn: () => base44.entities.ContaReceber.filter({ cliente_id: clienteProp.id }, '-data_vencimento', 5),
-    enabled: !!clienteProp?.id && painelAberto,
+  const contasQuery = useQuery({
+    queryKey: ['contas-receber-cliente', clienteId, groupId, empresaId, sessionActorId, sessionCacheKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ContaReceber', { cliente_id: clienteId }, '-data_vencimento', 5);
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_DINAMICO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelDinamicoScopeCurrent(scopeExpected, readPainelActorAndSession())) {
+        throw new Error('PAINEL_DINAMICO_CONTAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
+
+  const pedidosKpi = resolvePainelDinamicoKpiState({
+    painelAberto, contextoValido, clienteId,
+    isLoading: pedidosQuery.isLoading, isError: pedidosQuery.isError,
+    isFetching: pedidosQuery.isFetching, dataDefined: pedidosQuery.data !== undefined,
+  });
+  const entregasKpi = resolvePainelDinamicoKpiState({
+    painelAberto, contextoValido, clienteId,
+    isLoading: entregasQuery.isLoading, isError: entregasQuery.isError,
+    isFetching: entregasQuery.isFetching, dataDefined: entregasQuery.data !== undefined,
+  });
+  const contasKpi = resolvePainelDinamicoKpiState({
+    painelAberto, contextoValido, clienteId,
+    isLoading: contasQuery.isLoading, isError: contasQuery.isError,
+    isFetching: contasQuery.isFetching, dataDefined: contasQuery.data !== undefined,
+  });
+
+  const pedidos = pedidosKpi === 'ready' && Array.isArray(pedidosQuery.data) ? pedidosQuery.data : [];
+  const entregas = entregasKpi === 'ready' && Array.isArray(entregasQuery.data) ? entregasQuery.data : [];
+  const contasReceber = contasKpi === 'ready' && Array.isArray(contasQuery.data) ? contasQuery.data : [];
 
   if (!cliente) return null;
 
@@ -406,14 +481,8 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
     if (onClose) onClose();
   };
 
-  const totalEmAberto = contasReceber
-    .filter(c => c.status === 'Pendente' || c.status === 'Atrasado')
-    .reduce((sum, c) => sum + (c.valor || 0), 0);
-
-  const totalVendas = pedidos
-    .filter(p => p.status !== 'Cancelado')
-    .reduce((sum, p) => sum + (p.valor_total || 0), 0);
-
+  const totalEmAberto = contasKpi === 'ready' ? sumPainelDinamicoTotalEmAberto(contasReceber) : null;
+  const totalVendas = pedidosKpi === 'ready' ? sumPainelDinamicoTotalVendas(pedidos) : null;
   const content = (
     <>
       <div className={`border-b pb-4 px-6 pt-6 flex-shrink-0 ${windowMode ? '' : 'bg-gradient-to-r from-blue-50 to-slate-50'}`}>
@@ -532,9 +601,20 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
 
                   <div>
                     <p className="text-xs text-slate-500">Em Aberto</p>
-                    <p className={`text-lg font-semibold ${totalEmAberto > 0 ? 'text-orange-600' : 'text-slate-600'}`}>
-                      R$ {totalEmAberto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
+                    {contasKpi === 'loading' && (
+                      <p className="text-sm text-slate-500 animate-pulse">Carregando…</p>
+                    )}
+                    {contasKpi === 'error' && (
+                      <p className="text-sm text-red-600">Erro ≠ zero em aberto</p>
+                    )}
+                    {contasKpi === 'unavailable' && (
+                      <p className="text-sm text-amber-700">Contexto necessário</p>
+                    )}
+                    {contasKpi === 'ready' && (
+                      <p className={`text-lg font-semibold ${totalEmAberto > 0 ? 'text-orange-600' : 'text-slate-600'}`}>
+                        R$ {(totalEmAberto || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    )}
                   </div>
 
                   {cliente.condicao_comercial?.tabela_preco_nome && (

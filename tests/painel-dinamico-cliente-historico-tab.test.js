@@ -36,7 +36,9 @@ test('P1 #397 Painel Contatos: semente de escalares + preserve só na hidrataç�
   // Persistência não re-hidrata escalares (exclusão explícita vence).
   assert.doesNotMatch(src, /ensureContatosPreserveEscalars\(incoming/);
   assert.match(src, /stripPrincipalQuandoMultiCanal\(incoming/);
-  assert.match(src, /Cliente\.get\(/);
+  // Hidratação canônica: getInContext (não entities.Cliente.get unscoped).
+  assert.match(src, /getInContext\(\s*"Cliente"/);
+  assert.doesNotMatch(src, /entities\.Cliente\.get\(/);
 });
 
 test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo não apaga e-mail', async () => {

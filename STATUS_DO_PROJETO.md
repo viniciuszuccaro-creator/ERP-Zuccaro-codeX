@@ -1,3 +1,13 @@
+## CURSOR — PainelDinamicoCliente escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-painel-dinamico-scope-392b` ← #401 `b888b2c00` |
+| **Código** | getInContext Cliente; filterInContext Pedido/Entrega/CR; KPI ≠ zero; STALE_SCOPE |
+| **Testes** | scope + historico + counterproof seams **49 PASS** |
+| **Fila** | #566–#570 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
