@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -11,14 +10,42 @@ import { Zap, CheckCircle2, X, CreditCard, QrCode } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  isSimularPagamentoScopeCurrent,
+  resolveSimularPagamentoScopeIds,
+  buildSimularPagamentoPayload,
+} from "./simularPagamentoScope";
+
+function readSimularPagamentoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * ETAPA 4 - Simulador de Pagamento
- * Simula webhook de gateway para testar fluxo completo
+ * Simula webhook de gateway para testar fluxo completo.
+ * Mutações via createInContext/updateInContext (sem entities.*.create/update unscoped).
+ * Fail-closed sem Grupo/Empresa; STALE_SCOPE se ator/sessão mudar no meio.
  */
 export default function SimularPagamentoModal({ isOpen, onClose, contaReceber }) {
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scopeResolved = resolveSimularPagamentoScopeIds({
+    groupId, empresaId, conta: contaReceber,
+  });
+  const { actorId, sessionKey } = readSimularPagamentoActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
+
   const [processando, setProcessando] = useState(false);
   const [pago, setPago] = useState(false);
   const [dadosSimulacao, setDadosSimulacao] = useState({
@@ -31,99 +58,56 @@ export default function SimularPagamentoModal({ isOpen, onClose, contaReceber })
     mutationFn: async () => {
       setProcessando(true);
 
+      if (!scopeResolved.ok) {
+        const err = new Error(
+          scopeResolved.reason === 'GROUP_MISMATCH' || scopeResolved.reason === 'EMPRESA_MISMATCH'
+            ? 'Conta fora do contexto de Grupo/Empresa atual'
+            : 'Contexto de Grupo/Empresa necessário para simular pagamento',
+        );
+        err.code = 'SIMULAR_PAGAMENTO_SCOPE_BLOCKED';
+        throw err;
+      }
+      if (!isSimularPagamentoScopeCurrent(scopeExpected, readSimularPagamentoActorAndSession())) {
+        throw new Error('SIMULAR_PAGAMENTO_STALE_SCOPE');
+      }
+
+      const { pagamento: pagamentoPayload, contaUpdate, ordemLiquidacao, historico, logCobranca } =
+        buildSimularPagamentoPayload({
+          groupId: scopeResolved.groupId,
+          empresaId: scopeResolved.empresaId,
+          contaReceber,
+          dadosSimulacao,
+          user,
+          pagamentoId: null,
+        });
+
       // 1. Criar Pagamento Omnichannel
-      const pagamento = await base44.entities.PagamentoOmnichannel.create({
-        group_id: contaReceber.group_id,
-        empresa_id: contaReceber.empresa_id,
-        origem_pagamento: "Simulação Manual",
-        id_cliente: contaReceber.cliente_id,
-        cliente_nome: contaReceber.cliente,
-        cliente_cpf_cnpj: contaReceber.cliente_cpf_cnpj,
-        valor_bruto: dadosSimulacao.valor_pago,
-        valor_liquido: dadosSimulacao.valor_pago,
-        forma_pagamento: dadosSimulacao.forma_pagamento,
-        gateway_utilizado: contaReceber.provedor_pagamento || 'Asaas',
-        status_transacao: "Aprovado",
-        status_conferencia: "Pendente",
-        data_transacao: dadosSimulacao.data_pagamento,
-        id_transacao_gateway: `sim_${Date.now()}`,
-        conta_receber_id: contaReceber.id,
-        webhook_recebido: true,
-        webhook_payload: {
-          simulado: true,
-          event: 'PAYMENT_RECEIVED',
-          payment: {
-            id: contaReceber.id_cobranca_externa,
-            status: 'RECEIVED',
-            value: dadosSimulacao.valor_pago
-          }
-        }
-      });
+      const pagamento = await createInContext('PagamentoOmnichannel', pagamentoPayload);
+
+      if (!isSimularPagamentoScopeCurrent(scopeExpected, readSimularPagamentoActorAndSession())) {
+        throw new Error('SIMULAR_PAGAMENTO_STALE_SCOPE');
+      }
 
       // 2. Baixar Conta a Receber
-      await base44.entities.ContaReceber.update(contaReceber.id, {
-        status: 'Recebido',
-        data_recebimento: dadosSimulacao.data_pagamento,
-        valor_recebido: dadosSimulacao.valor_pago,
-        forma_recebimento: dadosSimulacao.forma_pagamento,
-        data_retorno_pagamento: new Date().toISOString(),
-        status_cobranca: 'paga',
-        webhook_status: 'pago'
-      });
+      await updateInContext('ContaReceber', contaReceber.id, contaUpdate);
 
       // 3. Criar Ordem de Liquidação para Caixa
-      await base44.entities.CaixaOrdemLiquidacao.create({
-        group_id: contaReceber.group_id,
-        empresa_id: contaReceber.empresa_id,
-        tipo_operacao: 'Recebimento',
-        origem: 'Simulação Gateway',
-        valor_total: dadosSimulacao.valor_pago,
-        forma_pagamento_pretendida: dadosSimulacao.forma_pagamento,
-        status: 'Pendente',
-        titulos_vinculados: [{
-          titulo_id: contaReceber.id,
-          numero_titulo: contaReceber.numero_documento || contaReceber.descricao,
-          cliente_fornecedor_nome: contaReceber.cliente,
-          valor_titulo: dadosSimulacao.valor_pago,
-          data_vencimento: contaReceber.data_vencimento
-        }],
+      await createInContext('CaixaOrdemLiquidacao', {
+        ...ordemLiquidacao,
         pagamento_omnichannel_id: pagamento.id,
-        usuario_solicitante_id: user?.id
       });
 
       // 4. Criar Histórico Cliente
-      if (contaReceber.cliente_id) {
-        await base44.entities.HistoricoCliente.create({
-          group_id: contaReceber.group_id,
-          empresa_id: contaReceber.empresa_id,
-          cliente_id: contaReceber.cliente_id,
-          cliente_nome: contaReceber.cliente,
-          modulo_origem: "Financeiro",
-          referencia_id: contaReceber.id,
-          referencia_tipo: "ContaReceber",
-          tipo_evento: "Recebimento",
-          titulo_evento: `Recebimento via ${dadosSimulacao.forma_pagamento}`,
-          descricao_detalhada: `Simulação de pagamento - R$ ${dadosSimulacao.valor_pago.toFixed(2)}`,
-          usuario_responsavel: user?.full_name || "Sistema",
-          data_evento: dadosSimulacao.data_pagamento,
-          valor_relacionado: dadosSimulacao.valor_pago,
-          resolvido: true
-        });
+      if (historico) {
+        await createInContext('HistoricoCliente', historico);
       }
 
       // 5. Log de Cobrança
-      await base44.entities.LogCobranca.create({
-        group_id: contaReceber.group_id,
-        empresa_id: contaReceber.empresa_id,
-        conta_receber_id: contaReceber.id,
-        tipo_operacao: "webhook_pagamento",
-        provedor: contaReceber.provedor_pagamento || "Simulação",
-        data_hora: new Date().toISOString(),
-        status_operacao: "simulado",
-        mensagem: "Pagamento simulado manualmente",
-        valor_operacao: dadosSimulacao.valor_pago,
-        usuario_nome: user?.full_name || "Sistema"
-      });
+      await createInContext('LogCobranca', logCobranca);
+
+      if (!isSimularPagamentoScopeCurrent(scopeExpected, readSimularPagamentoActorAndSession())) {
+        throw new Error('SIMULAR_PAGAMENTO_STALE_SCOPE');
+      }
 
       return pagamento;
     },
@@ -143,6 +127,28 @@ export default function SimularPagamentoModal({ isOpen, onClose, contaReceber })
   });
 
   if (!isOpen) return null;
+
+  if (!scopeResolved.ok) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <Card className="w-full max-w-md border-amber-200">
+          <CardHeader className="bg-amber-50 border-b">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-amber-900 text-base">Simular Pagamento</CardTitle>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4 text-sm text-amber-900">
+            {scopeResolved.reason === 'GROUP_MISMATCH' || scopeResolved.reason === 'EMPRESA_MISMATCH'
+              ? 'Conta fora do contexto de Grupo/Empresa atual.'
+              : 'Contexto de Grupo/Empresa necessário para simular pagamento.'}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

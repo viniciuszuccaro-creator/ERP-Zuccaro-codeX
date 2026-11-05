@@ -1,3 +1,14 @@
+## CURSOR — SimularPagamentoModal escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/financeiro-simular-pagamento-scope-392b` ← #401 `b888b2c00` |
+| **Código** | createInContext/updateInContext; fail-closed mismatch; STALE_SCOPE |
+| **Testes** | `financeiro-simular-pagamento-scope` **4 PASS** |
+| **Fila** | #566/#567 em CI · #543/#554–#565 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
