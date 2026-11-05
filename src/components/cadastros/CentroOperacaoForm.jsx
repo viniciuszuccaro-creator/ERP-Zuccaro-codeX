@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import useCadastroRecordState from './useCadastroRecordState';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -28,8 +28,6 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
-  const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || 'sem-contexto';
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "CentroOperacao") || canCreate("Logistica", "CentroOperacao") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroOperacao") || canEdit("Logistica", "CentroOperacao") || canEdit("Cadastros", null);
@@ -44,18 +42,13 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     ...dadosIniciais
   }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
-  const {
-    data: colaboradores,
-    isLoading: loadingColaboradores,
-    isError: isErrorColaboradores,
-  } = useQuery({
-    queryKey: ['colaboradores-centro-operacao', contextKey],
+  // Escopo multiempresa: Colaborador via filterInContext (empresa_alocada_id).
+  // Sem initialData sintético — enabled exige contexto; erro deixa data undefined (Select vazio ≠ zero fabricado de KPI).
+  const { data: colaboradores = [], isError: isErrorColaboradores } = useQuery({
+    queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],
     queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500),
     enabled: contextoValido,
   });
-
-  const listaColaboradores = Array.isArray(colaboradores) ? colaboradores : [];
-  const colaboradoresIndisponiveis = !contextoValido || loadingColaboradores || isErrorColaboradores;
 
   const handleCEPFound = async (endereco) => {
     if (!podeSalvar) return;
@@ -135,26 +128,15 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
 
       <div>
         <Label>Responsavel</Label>
-        <Select
-          value={formData.responsavel_id}
-          onValueChange={(value) => {
-            const colab = listaColaboradores.find((c) => c.id === value);
-            setFormData({ ...formData, responsavel_id: value, responsavel_nome: colab?.nome_completo });
-          }}
-          disabled={!podeSalvar || !contextoValido || colaboradoresIndisponiveis}
-        >
-          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-responsavel-centro-operacao" data-sensitive>
-            <SelectValue placeholder={colaboradoresIndisponiveis ? 'Colaboradores indisponíveis no contexto' : 'Selecione o responsavel'} />
-          </SelectTrigger>
+        <Select value={formData.responsavel_id} onValueChange={(value) => { const colab = colaboradores.find(c => c.id === value); setFormData({ ...formData, responsavel_id: value, responsavel_nome: colab?.nome_completo }); }} disabled={!podeSalvar || !contextoValido}>
+          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-responsavel-centro-operacao" data-sensitive><SelectValue placeholder="Selecione o responsavel" /></SelectTrigger>
           <SelectContent>
-            {listaColaboradores.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>
-            ))}
+            {colaboradores.map(c => (<SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>))}
           </SelectContent>
         </Select>
-        {colaboradoresIndisponiveis && (
+        {isErrorColaboradores && (
           <p className="text-xs text-slate-500 mt-1">
-            Contagem de colaboradores indisponível (contexto/erro/carregamento ≠ zero).
+            Contagem de colaboradores indisponível (erro de carga ≠ zero).
           </p>
         )}
       </div>

@@ -101,6 +101,27 @@ test('remaining ID-only additions retain every existing handler context permissi
           expected = expected.replace(before, after);
         }
       }
+      if (name === 'CentroOperacao') {
+        // Delta autorizado: Colaborador via filterInContext (sem list unscoped).
+        for (const [before, after] of [
+          ['import { base44 } from "@/api/base44Client";\n', ''],
+          [
+            '  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();\n',
+            '  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();\n',
+          ],
+          [
+            "  const { data: colaboradores = [] } = useQuery({\n    queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],\n    queryFn: () => base44.entities.Colaborador.list(),\n    enabled: contextoValido,\n  });\n",
+            "  // Escopo multiempresa: Colaborador via filterInContext (empresa_alocada_id).\n  // Sem initialData sintético — enabled exige contexto; erro deixa data undefined (Select vazio ≠ zero fabricado de KPI).\n  const { data: colaboradores = [], isError: isErrorColaboradores } = useQuery({\n    queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],\n    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500),\n    enabled: contextoValido,\n  });\n",
+          ],
+          [
+            '            {colaboradores.map(c => (<SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>))}\n          </SelectContent>\n        </Select>\n      </div>\n',
+            '            {colaboradores.map(c => (<SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>))}\n          </SelectContent>\n        </Select>\n        {isErrorColaboradores && (\n          <p className="text-xs text-slate-500 mt-1">\n            Contagem de colaboradores indisponível (erro de carga ≠ zero).\n          </p>\n        )}\n      </div>\n',
+          ],
+        ]) {
+          assert.equal(expected.split(before).length, 2, `CentroOperacao expected hunk missing: ${before.slice(0, 60)}`);
+          expected = expected.replace(before, after);
+        }
+      }
       assert.equal(emit(ts.createPrinter().printFile(transformed.transformed[0])), emit(expected), name);
     } finally { transformed.dispose(); }
   }
