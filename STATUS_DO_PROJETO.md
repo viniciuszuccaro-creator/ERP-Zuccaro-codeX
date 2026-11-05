@@ -1,4 +1,16 @@
+## CURSOR — fila uniqueKey/scope CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| #516–#518 scope | `36ca28040` / `e39bb88d4` / `b10c99a38` | CI SUCCESS |
+| #519 Gateways uniqueKey | `433d599d4` | CI SUCCESS |
+| #511–#515 | — | CI SUCCESS |
+| **Base** | #401 `b888b2c00` | FF aguarda aceite Codex |
+| **Homolog 100** | BLOCKED | |
+| **Próximo** | GestorDespesasRecorrentes uniqueKey | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
