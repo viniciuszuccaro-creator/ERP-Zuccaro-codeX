@@ -1,4 +1,15 @@
+## CURSOR — #534 ImportadorProdutos Empresa scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#532** | multiempresa | **CI SUCCESS** |
+| #533 ConfigFiscalAutomatica | `e3331f418` | aguarda CI |
+| #534 ImportadorProdutos | (este) | filterInContext Grupo/Empresa |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
