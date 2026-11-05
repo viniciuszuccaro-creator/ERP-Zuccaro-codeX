@@ -1,3 +1,14 @@
+## CURSOR — #566–#569 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#566** | ValidacaoCredito `04ba118fd` SUCCESS |
+| **#567** | DetalhesCadastro `fb7f80ec6` SUCCESS |
+| **#568** | SimularPagamento `df6c7e2dd` SUCCESS (pin + typecheck) |
+| **#569** | DetalhesColaborador `72b630446` SUCCESS |
+| **Fila** | #543/#554–#569 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — #568 typecheck fix (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

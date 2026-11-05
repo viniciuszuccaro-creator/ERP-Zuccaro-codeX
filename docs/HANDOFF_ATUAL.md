@@ -1,3 +1,7 @@
+## CURSOR — #566–#569 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #566 `04ba118fd` · #567 `fb7f80ec6` · #568 `df6c7e2dd` · #569 `72b630446` — todos SUCCESS.
+- Homolog BLOCKED. FF #401 aguarda Codex. Próximo residual independente.
+
 ## CURSOR — #568 typecheck fix (2026-11-05 America/Sao_Paulo)
 - TS2339 Error.code → Object.assign; pin financialUiBoundary regenerado. #566/#567/#569 SUCCESS.
 - Homolog BLOCKED. FF #401 aguarda Codex.
