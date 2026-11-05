@@ -1,3 +1,6 @@
+## CURSOR — #576 AssinaturaEletronicaModal CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `400fa2180` SUCCESS. Lote #566–#576 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — AssinaturaEletronicaModal escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/assinatura-modal-scope-392b` ← #401.
 - updateInContext Contrato/Pedido; STALE_SCOPE. Testes 2 PASS.
