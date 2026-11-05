@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,44 +22,187 @@ import {
   AlertCircle
 } from "lucide-react";
 import TimelineCliente, { ResumoHistorico } from "../cliente/TimelineCliente";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildDetalhesCadastroQueryKey,
+  isDetalhesCadastroScopeCurrent,
+  resolveDetalhesCadastroKpiState,
+  sumDetalhesCadastroTotalVendas,
+  sumDetalhesCadastroTotalReceber,
+  countDetalhesCadastroContasAtrasadas,
+} from "./detalhesCadastroScope";
+
+function readDetalhesCadastroActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1.2 - WINDOW MODE READY
- * Convertido para suportar modo janela independente
+ * Convertido para suportar modo janela independente.
+ * Escopo multiempresa: Pedido/ContaReceber/Entrega/NotaFiscal via filterInContext.
+ * Sem default []: loading/erro ≠ zero registros. STALE_SCOPE em resposta tardia.
  */
 export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("historico");
 
-  // Buscar dados relacionados
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-cliente', registro.id],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: registro.id }, '-data_pedido', 20),
-    enabled: tipo === 'cliente'
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readDetalhesCadastroActorAndSession();
+  const clienteId = registro?.id || null;
+  const isClienteTipo = tipo === 'cliente';
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+  const queriesEnabled = isClienteTipo && Boolean(clienteId) && contextoValido;
+
+  const pedidosQuery = useQuery({
+    queryKey: buildDetalhesCadastroQueryKey('pedidos-cliente', {
+      groupId, empresaId, actorId, sessionKey, clienteId,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Pedido',
+        { cliente_id: clienteId },
+        '-data_pedido',
+        20,
+      );
+      if (signal?.aborted) {
+        const err = new Error('DETALHES_CADASTRO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isDetalhesCadastroScopeCurrent(scopeExpected, readDetalhesCadastroActorAndSession())) {
+        throw new Error('DETALHES_CADASTRO_PEDIDOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-cliente', registro.id],
-    queryFn: () => base44.entities.ContaReceber.filter({ cliente_id: registro.id }, '-data_vencimento', 20),
-    enabled: tipo === 'cliente'
+  const contasQuery = useQuery({
+    queryKey: buildDetalhesCadastroQueryKey('contas-cliente', {
+      groupId, empresaId, actorId, sessionKey, clienteId,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'ContaReceber',
+        { cliente_id: clienteId },
+        '-data_vencimento',
+        20,
+      );
+      if (signal?.aborted) {
+        const err = new Error('DETALHES_CADASTRO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isDetalhesCadastroScopeCurrent(scopeExpected, readDetalhesCadastroActorAndSession())) {
+        throw new Error('DETALHES_CADASTRO_CONTAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-cliente', registro.id],
-    queryFn: () => base44.entities.Entrega.filter({ cliente_id: registro.id }, '-created_date', 20),
-    enabled: tipo === 'cliente'
+  const entregasQuery = useQuery({
+    queryKey: buildDetalhesCadastroQueryKey('entregas-cliente', {
+      groupId, empresaId, actorId, sessionKey, clienteId,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Entrega',
+        { cliente_id: clienteId },
+        '-created_date',
+        20,
+      );
+      if (signal?.aborted) {
+        const err = new Error('DETALHES_CADASTRO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isDetalhesCadastroScopeCurrent(scopeExpected, readDetalhesCadastroActorAndSession())) {
+        throw new Error('DETALHES_CADASTRO_ENTREGAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notas-cliente', registro.id],
-    queryFn: () => base44.entities.NotaFiscal.filter({ cliente_fornecedor_id: registro.id }, '-data_emissao', 20),
-    enabled: tipo === 'cliente'
+  const notasQuery = useQuery({
+    queryKey: buildDetalhesCadastroQueryKey('notas-cliente', {
+      groupId, empresaId, actorId, sessionKey, clienteId,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'NotaFiscal',
+        { cliente_fornecedor_id: clienteId },
+        '-data_emissao',
+        20,
+      );
+      if (signal?.aborted) {
+        const err = new Error('DETALHES_CADASTRO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isDetalhesCadastroScopeCurrent(scopeExpected, readDetalhesCadastroActorAndSession())) {
+        throw new Error('DETALHES_CADASTRO_NOTAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const totalVendas = pedidos.reduce((sum, p) => sum + (p.valor_total || 0), 0);
-  const totalReceber = contasReceber.filter(c => c.status === 'Pendente').reduce((sum, c) => sum + (c.valor || 0), 0);
-  const contasAtrasadas = contasReceber.filter(c => 
-    c.status === 'Pendente' && new Date(c.data_vencimento) < new Date()
-  ).length;
+  const pedidosKpi = resolveDetalhesCadastroKpiState({
+    isClienteTipo,
+    contextoValido,
+    clienteId,
+    isLoading: pedidosQuery.isLoading,
+    isError: pedidosQuery.isError,
+    isFetching: pedidosQuery.isFetching,
+    dataDefined: pedidosQuery.data !== undefined,
+  });
+  const contasKpi = resolveDetalhesCadastroKpiState({
+    isClienteTipo,
+    contextoValido,
+    clienteId,
+    isLoading: contasQuery.isLoading,
+    isError: contasQuery.isError,
+    isFetching: contasQuery.isFetching,
+    dataDefined: contasQuery.data !== undefined,
+  });
+  const entregasKpi = resolveDetalhesCadastroKpiState({
+    isClienteTipo,
+    contextoValido,
+    clienteId,
+    isLoading: entregasQuery.isLoading,
+    isError: entregasQuery.isError,
+    isFetching: entregasQuery.isFetching,
+    dataDefined: entregasQuery.data !== undefined,
+  });
+  const notasKpi = resolveDetalhesCadastroKpiState({
+    isClienteTipo,
+    contextoValido,
+    clienteId,
+    isLoading: notasQuery.isLoading,
+    isError: notasQuery.isError,
+    isFetching: notasQuery.isFetching,
+    dataDefined: notasQuery.data !== undefined,
+  });
+
+  const pedidos = pedidosKpi === 'ready' && Array.isArray(pedidosQuery.data) ? pedidosQuery.data : [];
+  const contasReceber = contasKpi === 'ready' && Array.isArray(contasQuery.data) ? contasQuery.data : [];
+  const entregas = entregasKpi === 'ready' && Array.isArray(entregasQuery.data) ? entregasQuery.data : [];
+  const notasFiscais = notasKpi === 'ready' && Array.isArray(notasQuery.data) ? notasQuery.data : [];
+
+  const totalVendas = pedidosKpi === 'ready' ? sumDetalhesCadastroTotalVendas(pedidos) : null;
+  const totalReceber = contasKpi === 'ready' ? sumDetalhesCadastroTotalReceber(contasReceber) : null;
+  const contasAtrasadas = contasKpi === 'ready' ? countDetalhesCadastroContasAtrasadas(contasReceber) : null;
 
   const content = (
     <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-6' : ''}>
@@ -84,7 +226,7 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
             </TabsTrigger>
             <TabsTrigger value="pedidos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <ShoppingBag className="w-4 h-4 mr-2" />
-              Pedidos ({pedidos.length})
+              Pedidos ({pedidosKpi === 'ready' ? pedidos.length : '…'})
             </TabsTrigger>
             <TabsTrigger value="financeiro" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <DollarSign className="w-4 h-4 mr-2" />
@@ -92,7 +234,7 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
             </TabsTrigger>
             <TabsTrigger value="entregas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Truck className="w-4 h-4 mr-2" />
-              Entregas ({entregas.length})
+              Entregas ({entregasKpi === 'ready' ? entregas.length : '…'})
             </TabsTrigger>
             <TabsTrigger value="documentos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <FileText className="w-4 h-4 mr-2" />
@@ -104,6 +246,14 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
             </TabsTrigger>
           </TabsList>
 
+          {isClienteTipo && !contextoValido && (
+            <Card className="border-amber-200 bg-amber-50 mb-4">
+              <CardContent className="p-4 text-sm text-amber-900">
+                Contexto de Grupo/Empresa necessário para carregar o histórico do cliente.
+              </CardContent>
+            </Card>
+          )}
+
           {/* ABA: TIMELINE UNIFICADA */}
           <TabsContent value="historico" className="space-y-4">
             <ResumoHistorico clienteId={registro.id} />
@@ -112,6 +262,20 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
 
           {/* ABA: PEDIDOS */}
           <TabsContent value="pedidos" className="space-y-4">
+            {pedidosKpi === 'loading' && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4"><div className="animate-pulse">Carregando pedidos…</div></CardContent>
+              </Card>
+            )}
+            {pedidosKpi === 'error' && (
+              <Card className="border-red-300 bg-red-50">
+                <CardContent className="p-4 text-sm text-red-700">
+                  Não foi possível carregar pedidos (erro ≠ ausência de registros).
+                </CardContent>
+              </Card>
+            )}
+            {pedidosKpi === 'ready' && (
+              <>
             <div className="grid grid-cols-3 gap-4 mb-4">
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4">
@@ -123,7 +287,7 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
                 <CardContent className="p-4">
                   <p className="text-sm text-green-700">Total em Vendas</p>
                   <p className="text-2xl font-bold text-green-900">
-                    R$ {totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {(totalVendas || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </CardContent>
               </Card>
@@ -131,7 +295,7 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
                 <CardContent className="p-4">
                   <p className="text-sm text-sky-700">Ticket Médio</p>
                   <p className="text-2xl font-bold text-sky-900">
-                    R$ {pedidos.length > 0 ? (totalVendas / pedidos.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
+                    R$ {pedidos.length > 0 ? ((totalVendas || 0) / pedidos.length).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '0,00'}
                   </p>
                 </CardContent>
               </Card>
@@ -176,23 +340,39 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
                 <p>Nenhum pedido encontrado</p>
               </div>
             )}
+              </>
+            )}
           </TabsContent>
 
           {/* ABA: FINANCEIRO */}
           <TabsContent value="financeiro" className="space-y-4">
+            {contasKpi === 'loading' && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4"><div className="animate-pulse">Carregando financeiro…</div></CardContent>
+              </Card>
+            )}
+            {contasKpi === 'error' && (
+              <Card className="border-red-300 bg-red-50">
+                <CardContent className="p-4 text-sm text-red-700">
+                  Não foi possível carregar contas (erro ≠ ausência de registros).
+                </CardContent>
+              </Card>
+            )}
+            {contasKpi === 'ready' && (
+              <>
             <div className="grid grid-cols-3 gap-4 mb-4">
               <Card className="bg-green-50 border-green-200">
                 <CardContent className="p-4">
                   <p className="text-sm text-green-700">A Receber</p>
                   <p className="text-2xl font-bold text-green-900">
-                    R$ {totalReceber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R$ {(totalReceber || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </CardContent>
               </Card>
               <Card className="bg-red-50 border-red-200">
                 <CardContent className="p-4">
                   <p className="text-sm text-red-700">Contas Atrasadas</p>
-                  <p className="text-2xl font-bold text-red-900">{contasAtrasadas}</p>
+                  <p className="text-2xl font-bold text-red-900">{contasAtrasadas ?? '—'}</p>
                 </CardContent>
               </Card>
               <Card className="bg-blue-50 border-blue-200">
@@ -238,10 +418,26 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
                 <p>Nenhuma conta a receber</p>
               </div>
             )}
+              </>
+            )}
           </TabsContent>
 
           {/* ABA: ENTREGAS */}
           <TabsContent value="entregas" className="space-y-4">
+            {entregasKpi === 'loading' && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4"><div className="animate-pulse">Carregando entregas…</div></CardContent>
+              </Card>
+            )}
+            {entregasKpi === 'error' && (
+              <Card className="border-red-300 bg-red-50">
+                <CardContent className="p-4 text-sm text-red-700">
+                  Não foi possível carregar entregas (erro ≠ ausência de registros).
+                </CardContent>
+              </Card>
+            )}
+            {entregasKpi === 'ready' && (
+              <>
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
@@ -289,10 +485,26 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
                 <p>Nenhuma entrega encontrada</p>
               </div>
             )}
+              </>
+            )}
           </TabsContent>
 
           {/* ABA: DOCUMENTOS */}
           <TabsContent value="documentos" className="space-y-4">
+            {notasKpi === 'loading' && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-4"><div className="animate-pulse">Carregando documentos…</div></CardContent>
+              </Card>
+            )}
+            {notasKpi === 'error' && (
+              <Card className="border-red-300 bg-red-50">
+                <CardContent className="p-4 text-sm text-red-700">
+                  Não foi possível carregar notas fiscais (erro ≠ ausência de registros).
+                </CardContent>
+              </Card>
+            )}
+            {notasKpi === 'ready' && (
+              <>
             <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
@@ -337,6 +549,8 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, wi
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
                 <p>Nenhuma nota fiscal encontrada</p>
               </div>
+            )}
+              </>
             )}
           </TabsContent>
 
