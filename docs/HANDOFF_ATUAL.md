@@ -1,6 +1,7 @@
-## CURSOR — #529 ContasReceber cobranca scope (2026-11-05 America/Sao_Paulo)
-- Empresa/ConfiguracaoCobrancaEmpresa via filterInContext; gera cobrança fail-closed se masters indisponíveis.
-- #522–#526 CI SUCCESS; #527 pin renew; #528 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #527 SUCCESS + #529 pin remainder (2026-11-05 America/Sao_Paulo)
+- #527 `da848764c` CI SUCCESS. #522–#528 verdes.
+- #529: autoriza delta cobranca/filterInContext em `financialBatchPermissionRemainder` (pins batch/title/portal/audit).
+- #530 ContasPagar em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

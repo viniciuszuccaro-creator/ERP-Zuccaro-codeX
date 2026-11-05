@@ -1,11 +1,10 @@
-## CURSOR — #529 ContasReceber cobranca scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #527 SUCCESS + #529 pin remainder (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#526** | multiempresa | **CI SUCCESS** |
-| #527 Alertas | `da848764c` | pin renew; aguarda CI |
-| #528 CanaisOrigem | `b501e5d2c` | aguarda CI |
-| #529 ContasReceber cobranca | (este) | Empresa/ConfigCobranca filterInContext |
+| **#522–#528** | multiempresa | **CI SUCCESS** ( #527 tip `da848764c`) |
+| #529 ContasReceber cobranca | (este) | reverse hunks financialBatchRemainder |
+| #530 ContasPagar Empresa | `1ea4e458b` | CI em curso |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
