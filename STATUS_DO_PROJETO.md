@@ -3,8 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/comercial-gerenciar-contatos-scope-392b` = **#565** |
+| **Tip CI** | **`a03065c68`** · **CI SUCCESS** 6/6 (pin InContext autorizado) |
 | **Código** | Cliente.get/update → getInContext/updateInContext; queryKey + sessão; bind fail-closed |
-| **CI** | tip `1f9b7434d` frontend FAIL → pin `cadastros-count-erro-vazio` alinhado InContext (re-CI) |
 | **Testes** | scope **3** + prep-401 **2** + count-erro-vazio Contatos pin PASS |
 | **Fila** | #554–#564 SUCCESS · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
