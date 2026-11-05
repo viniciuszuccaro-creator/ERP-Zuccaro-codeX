@@ -1,29 +1,40 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal, Award, Star, TrendingUp } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Gamificação e Ranking de Colaboradores
  * Top Operadores, Vendedores e Motoristas
  */
 export default function GameficacaoProducao({ empresaId }) {
-  const { data: ops = [] } = useQuery({
-    queryKey: ['ordens-producao'],
-    queryFn: () => base44.entities.OrdemProducao.list('-created_date', 200),
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaScopeId = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(empresaScopeId || groupId);
+
+  // Escopo multiempresa: sem list unscoped; enabled exige contexto; erro ≠ zero KPI.
+  const { data: ops = [], isError: isErrorOps } = useQuery({
+    queryKey: ['ordens-producao-game', groupId, empresaScopeId],
+    queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 200),
+  const { data: pedidos = [], isError: isErrorPedidos } = useQuery({
+    queryKey: ['pedidos-game', groupId, empresaScopeId],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
 
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 200),
+  const { data: entregas = [], isError: isErrorEntregas } = useQuery({
+    queryKey: ['entregas-game', groupId, empresaScopeId],
+    queryFn: () => filterInContext('Entrega', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
+
+  const cargaIndisponivel = isErrorOps || isErrorPedidos || isErrorEntregas;
 
   // Ranking de Operadores (menor refugo)
   const rankingOperadores = ops
@@ -109,6 +120,14 @@ export default function GameficacaoProducao({ empresaId }) {
   ];
 
   return (
+    <div className="space-y-3">
+      {(cargaIndisponivel || !contextoValido) && (
+        <p className="text-xs text-slate-500">
+          {!contextoValido
+            ? 'Selecione um grupo ou empresa para carregar rankings.'
+            : 'Ranking RH indisponível (erro de carga ≠ zero).'}
+        </p>
+      )}
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Ranking Operadores */}
       <Card className="border-0 shadow-md">
@@ -138,7 +157,9 @@ export default function GameficacaoProducao({ empresaId }) {
             );
           })}
           {topOperadores.length === 0 && (
-            <p className="text-center text-slate-500 py-8 text-sm">Sem dados de produção</p>
+            <p className="text-center text-slate-500 py-8 text-sm">
+              {cargaIndisponivel ? 'Produção indisponível (erro ≠ zero)' : 'Sem dados de produção'}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -176,7 +197,9 @@ export default function GameficacaoProducao({ empresaId }) {
             );
           })}
           {topVendedores.length === 0 && (
-            <p className="text-center text-slate-500 py-8 text-sm">Sem dados de vendas</p>
+            <p className="text-center text-slate-500 py-8 text-sm">
+              {cargaIndisponivel ? 'Vendas indisponíveis (erro ≠ zero)' : 'Sem dados de vendas'}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -209,10 +232,13 @@ export default function GameficacaoProducao({ empresaId }) {
             );
           })}
           {topMotoristas.length === 0 && (
-            <p className="text-center text-slate-500 py-8 text-sm">Sem dados de entregas</p>
+            <p className="text-center text-slate-500 py-8 text-sm">
+              {cargaIndisponivel ? 'Entregas indisponíveis (erro ≠ zero)' : 'Sem dados de entregas'}
+            </p>
           )}
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 }

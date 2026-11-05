@@ -1,3 +1,13 @@
+## CURSOR — #525 GameficacaoProducao scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| #516–#521 | — | CI SUCCESS |
+| #522–#524 | Biometrico / Monitoramento / Cobranca | aguarda CI |
+| #525 GameficacaoProducao | (este) | OP/Pedido/Entrega filterInContext |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
