@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-armado-padrao-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-armado-padrao-scope-392b` = **#558** |
+| **Tip** | fix CI: alinha `armado-padrao-policy` ao filterInContext (pin legado empresa) |
 | **Código** | Produto `eh_bitola` via filterInContext; sem `= []`; STALE_SCOPE; loading/erro ≠ zero |
-| **Testes** | `tests/comercial-armado-padrao-scope.test.js` **4 PASS** |
-| **Paralelo** | #554 SUCCESS · #555–#557 em CI · FF #401 aguarda Codex |
+| **Testes** | `comercial-armado-padrao-scope` **4 PASS** + `armado-padrao-policy` **4 PASS** |
+| **Paralelo** | #554–#557 SUCCESS · #559/#560 em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 

@@ -49,11 +49,15 @@ test('gera item de revenda sem divisao por zero', () => {
   assert.equal(item.origem_armado, true);
 });
 
-test('consulta de bitolas fecha sem empresa e preserva grupo no filtro', async () => {
+test('consulta de bitolas fecha sem contexto e usa filterInContext multiempresa', async () => {
   const source = await readFile(new URL('../src/components/comercial/ArmadoPadraoTab.jsx', import.meta.url), 'utf8');
 
-  assert.match(source, /enabled: Boolean\(empresaId \|\| formData\?\.empresa_id\)/);
-  assert.match(source, /if \(!empId\) return \[\]/);
-  assert.match(source, /group_id: formData\.group_id/);
-  assert.doesNotMatch(source, /: \{ eh_bitola: true, status: 'Ativo' \}/);
+  // Fail-closed: sem Grupo/Empresa não dispara query; escopo via filterInContext (não Produto.filter).
+  assert.match(source, /enabled: contextoValido/);
+  assert.match(source, /filterInContext\(\s*'Produto'/);
+  assert.match(source, /eh_bitola:\s*true/);
+  assert.match(source, /ARMADO_PADRAO_BITOLAS_STALE_SCOPE/);
+  assert.match(source, /erro ≠ zero bitolas/);
+  assert.doesNotMatch(source, /entities\.Produto\.filter\(/);
+  assert.doesNotMatch(source, /data:\s*bitolas\s*=\s*\[\]/);
 });
