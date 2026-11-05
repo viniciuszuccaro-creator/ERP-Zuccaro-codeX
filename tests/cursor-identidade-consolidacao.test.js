@@ -101,6 +101,27 @@ test('remaining ID-only additions retain every existing handler context permissi
           expected = expected.replace(before, after);
         }
       }
+      if (name === 'Usuario') {
+        // Delta autorizado: PerfilAcesso via filterInContext (sem list unscoped).
+        for (const [before, after] of [
+          ['import { base44 } from "@/api/base44Client";\n', ''],
+          [
+            '  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();\n',
+            '  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();\n',
+          ],
+          [
+            "  const { data: perfis = [] } = useQuery({\n    queryKey: ['perfis-acesso', groupId, empresaAtual?.id],\n    queryFn: () => base44.entities.PerfilAcesso.list(),\n  });\n",
+            "  // Escopo multiempresa: PerfilAcesso via filterInContext (padrão CentralPerfis/UsuariosTab).\n  // Sem list unscoped; enabled exige contexto; erro ≠ zero KPI fabricado.\n  const { data: perfis = [], isError: isErrorPerfis } = useQuery({\n    queryKey: ['perfis-acesso', groupId, empresaAtual?.id],\n    queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 500),\n    enabled: contextoValido,\n  });\n",
+          ],
+          [
+            '            {perfis.map(p => (\n              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>\n            ))}\n          </SelectContent>\n        </Select>\n      </div>\n',
+            '            {perfis.map(p => (\n              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>\n            ))}\n          </SelectContent>\n        </Select>\n        {isErrorPerfis && (\n          <p className="text-xs text-slate-500 mt-1">\n            Contagem de perfis indisponível (erro de carga ≠ zero).\n          </p>\n        )}\n      </div>\n',
+          ],
+        ]) {
+          assert.equal(expected.split(before).length, 2, `Usuario expected hunk missing: ${before.slice(0, 60)}`);
+          expected = expected.replace(before, after);
+        }
+      }
       assert.equal(emit(ts.createPrinter().printFile(transformed.transformed[0])), emit(expected), name);
     } finally { transformed.dispose(); }
   }

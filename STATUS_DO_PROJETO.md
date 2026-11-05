@@ -1,4 +1,18 @@
+## CURSOR — UsuarioForm escopo multiempresa (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-usuario-form-scope-392b` |
+| **Base** | #401 tip `b888b2c00` |
+| **Delta** | UsuarioForm · PerfilAcesso via filterInContext; enabled contexto; erro ≠ zero |
+| **Identidade** | transforms autorizados Usuario (base44→filterInContext) |
+| **Testes** | `cadastros-usuario-form-scope` + identidade — PASS local |
+| **Paralelos** | #511–#515 SUCCESS · #516 pin tip `e7816afa1`/`f285614d2` aguarda CI |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 · merge/deploy · dados reais |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
