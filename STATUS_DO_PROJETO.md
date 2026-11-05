@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-pedidos-tab-uniquekey-392b` ← #401 |
-| **Código** | `uniqueKey` em CentralAprovações (grupo/empresa) e Automação (pedido id) via WindowManager |
-| **Testes** | `tests/comercial-pedidos-tab-uniquekey.test.js` **4 PASS** (clique repetido, pedidos distintos, fechar/reabrir) |
-| **Fila** | #549/#551 CI SUCCESS · #550 typecheck fix em CI · #505 WidgetFechamento UK já verde |
+| **Branch / PR** | `cursor/comercial-pedidos-tab-uniquekey-392b` = **#552** |
+| **Tip CI** | **`f90887d36`** · **CI SUCCESS** 6/6 |
+| **Código** | `uniqueKey` CentralAprovações (grupo/empresa) + Automação (pedido); remainder pin + publication authorize |
+| **Testes** | `comercial-pedidos-tab-uniquekey` **4 PASS** · pins audit/perfil/publication verdes |
+| **Fila** | #549–#553 CI SUCCESS · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
