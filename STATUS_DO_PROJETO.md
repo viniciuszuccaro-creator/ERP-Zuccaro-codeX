@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-itens-revenda-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-itens-revenda-scope-392b` = **#560** |
+| **Tip CI** | **`395369b9d`** · **CI SUCCESS** 6/6 |
 | **Código** | Produto + Pedido via filterInContext; copiar/sugerir scoped; KPI ≠ zero produtos |
 | **Testes** | `tests/comercial-itens-revenda-scope.test.js` **5 PASS** |
-| **Paralelo** | #554–#557 SUCCESS · #558/#559 em CI · FF #401 aguarda Codex |
+| **Fila** | #554–#557 SUCCESS · #558/#559 re-CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
