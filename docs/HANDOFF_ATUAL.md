@@ -1,3 +1,6 @@
+## CURSOR — #573 SeletorEnderecoEntrega CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `f08063a3b` SUCCESS. Lote #566–#573 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — SeletorEnderecoEntrega escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/expedicao-seletor-endereco-scope-392b` ← #401.
 - updateInContext Cliente; STALE_SCOPE. Testes 2 PASS.
