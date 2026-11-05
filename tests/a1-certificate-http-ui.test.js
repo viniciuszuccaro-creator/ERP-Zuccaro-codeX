@@ -117,6 +117,9 @@ test('formulario fiscal usa validade backend e nao serializa senha/arquivo em co
   let saved;
   const env = { formData, certificate: metadata, certificateQuery: { isSuccess: true, isFetching: false },
     config, empresaId: expected.empresaId, groupId: expected.groupId, empresa: {}, sanitizeAuditPayload: exports.sanitizeAuditPayload,
+    contextoValido: true, isErrorEmpresaFiscal: false, isErrorConfigFiscal: false,
+    updateInContext: async (_entity, _id, data) => { saved = data; return { id: 'fixture' }; },
+    createInContext: async () => ({ id: 'fixture' }),
     base44: { entities: { ConfigFiscalEmpresa: { update: async (_id, data) => { saved = data; return { id: 'fixture' }; } } } } };
   const run = new Function(...Object.keys(env), `return (${mutation});`)(...Object.values(env));
   await run();

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 import { a1CertificateApi, central360SessionKey } from "@/api/httpApiClient";
 import { readErpHttpSession } from "@/api/erpHttpSession";
 import { sanitizeAuditPayload } from "@/components/lib/sanitizeOnWrite";
@@ -35,25 +35,28 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const contextoValido = Boolean(groupId && empresaId);
 
-  const { data: empresa } = useQuery({
-    queryKey: ['empresa', empresaId],
+  // Escopo multiempresa: Empresa/ConfigFiscal via filterInContext (não list unscoped).
+  const { data: empresa, isError: isErrorEmpresaFiscal } = useQuery({
+    queryKey: ['empresa', groupId, empresaId],
     queryFn: async () => {
-      const empresas = await base44.entities.Empresa.list();
-      return empresas.find(e => e.id === empresaId);
+      const empresas = await filterInContext('Empresa', { id: empresaId }, 'nome_fantasia', 20);
+      return empresas.find(e => e.id === empresaId) || null;
     },
-    enabled: !!empresaId,
+    enabled: contextoValido,
   });
 
-  const { data: config } = useQuery({
-    queryKey: ['config-fiscal', empresaId],
+  const { data: config, isError: isErrorConfigFiscal } = useQuery({
+    queryKey: ['config-fiscal', groupId, empresaId],
     queryFn: async () => {
-      const configs = await base44.entities.ConfigFiscalEmpresa.filter({
+      const configs = await filterInContext('ConfigFiscalEmpresa', {
         empresa_id: empresaId
-      });
+      }, '-created_date', 20);
       return configs[0] || null;
     },
-    enabled: !!empresaId,
+    enabled: contextoValido,
   });
 
   const a1Scope = { groupId: groupId || empresa?.group_id || empresa?.grupo_id, empresaId, actorId: user?.id };
@@ -187,18 +190,22 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
         ]
       };
 
+      if (!contextoValido) throw new Error('Selecione grupo e empresa antes de salvar.');
+      if (isErrorEmpresaFiscal || isErrorConfigFiscal) {
+        throw new Error('Masters fiscais indisponíveis (erro ≠ zero).');
+      }
       if (config?.id) {
-        const result = await base44.entities.ConfigFiscalEmpresa.update(config.id, dadosCompletos);
+        const result = await updateInContext('ConfigFiscalEmpresa', config.id, dadosCompletos);
         return { ...result, __auditAction: "Edicao", __auditPrevious: sanitizeAuditPayload({ ...config, historico_alteracoes: undefined }) };
       } else {
-        const result = await base44.entities.ConfigFiscalEmpresa.create(dadosCompletos);
+        const result = await createInContext('ConfigFiscalEmpresa', dadosCompletos);
         return { ...result, __auditAction: "Criacao" };
       }
     },
     onSuccess: async (result) => {
-      queryClient.invalidateQueries({ queryKey: ['config-fiscal'] });
+      queryClient.invalidateQueries({ queryKey: ['config-fiscal', groupId, empresaId] });
       try {
-        await base44.entities.AuditLog.create({
+        await createInContext('AuditLog', {
           usuario: user?.full_name || user?.email || "Sistema",
           usuario_id: user?.id || null,
           empresa_id: empresaId || null,
@@ -214,7 +221,8 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
           data_hora: new Date().toISOString(),
         });
       } catch (auditError) {
-        console.warn("[Fiscal] Falha ao auditar configuracao fiscal:", auditError);
+        toast({ title: "Configuração salva, mas auditoria falhou", description: String(auditError?.message || auditError), variant: "destructive" });
+        return;
       }
       toast({ title: "✅ Configuração fiscal salva!" });
     },
@@ -223,12 +231,22 @@ export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
     },
   });
 
-  if (!empresaId) {
+  if (!empresaId || !groupId) {
     return (
       <Card>
         <CardContent className="p-12 text-center text-slate-500">
           <Building2 className="w-16 h-16 mx-auto mb-4 opacity-30" />
-          <p>Selecione uma empresa para configurar</p>
+          <p>Selecione grupo e empresa para configurar</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isErrorEmpresaFiscal || isErrorConfigFiscal) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-sm text-slate-600">
+          Masters fiscais indisponíveis (erro de carga ≠ zero).
         </CardContent>
       </Card>
     );

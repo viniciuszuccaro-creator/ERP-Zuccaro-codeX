@@ -1,4 +1,15 @@
+## CURSOR — #533 ConfigFiscalAutomatica Empresa scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#531** | multiempresa | **CI SUCCESS** |
+| #532 DuplicarMesAnterior | `eceb26ee4` | aguarda CI |
+| #533 ConfigFiscalAutomatica | (este) | filterInContext + create/updateInContext |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
