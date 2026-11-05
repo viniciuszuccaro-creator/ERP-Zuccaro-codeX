@@ -6,7 +6,8 @@
 | **Código** | `HistoricoCliente` via `filterInContext`; filtro legado pedido_id\|referencia_id; cache alvo+ator/sessão; STALE_SCOPE; loading/erro ≠ zero |
 | **Testes** | `tests/comercial-historico-comunicacao-scope.test.js` **5 PASS** |
 | **Central360** | componente de histórico reutilizável; sem UI paralela |
-| **Fila** | #544 provas #549 · #545–#548 CI SUCCESS · FF #401 aguarda Codex |
+| **Tip CI** | **`57750ad65`** · **CI SUCCESS** 6/6 (fix typecheck) |
+| **Fila** | #549/#551 SUCCESS · #552 PedidosTab UK em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
