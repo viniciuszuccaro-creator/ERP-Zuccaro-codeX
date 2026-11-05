@@ -1,13 +1,15 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - dependencia de controle e contrato de Grupo HML (2026-11-04)
+## Estado vigente - controle por URL e contrato de Grupo HML (2026-11-05)
 
 O gate isolado abaixo permanece executado; nao repetir carga, replay ou restore.
-Retomada de342cde57dd4/CI5880 e401b888 sem consulta/escrita remota: Browser anterior
-nao exposto, controle nativo falha antes de listar janelas com failed to write
-kernel assets (erro3), inclusive apos reset suportado. Reabrir somente Codex
-Desktop para restaurar ferramentas, nao reiniciar Codespace/PG nem instalar
-ambiente no HD externo. Estado remoto atual nao foi reobservado nesta sessao.
+Retomada de3420891a340/CI5897 e401b888 sem consulta/escrita remota. Em05/11 o
+controle nativo voltou a listar janelas; kernel assets deixou de ser o bloqueio.
+A observacao do Chrome foi interrompida pela ferramenta por URL nao verificavel
+com seguranca. Nao contornar por outro mecanismo de Computer Use nesta execucao.
+Selecionar a aba Codespace JA existente e deixar barra URL visivel para verificacao
+suportada; nao repetir restart/rebuild/install de Codex/Chrome/Codespace/PG.
+Estado remoto atual nao foi reobservado, nem carga100/backups repetidos.
 
 Contraprova4checks do guard real (blob igual em342/401): user com permissoes
 explicitas permite Empresa autorizada mas nega visao Grupo; admin com mesma
@@ -15,6 +17,17 @@ arvore permite Grupo, estrangeira negada. Perfil HML permanece user, sem nova
 concessao; nao apresentar binding SQL anterior como sessao/visao Grupo homologada.
 Antes de promover role ou alterar politica, preparar impacto em todos os
 consumidores e obter decisao especifica; nao usar admin como atalho para acesso.
+
+Proposta minima REVISAVEL, nao aplicada: preservar role=user e a arvore explicita
+Cadastros.cliente (visualizar/editar conforme a acao), sem wildcard ou chave de
+Grupo inventada. O RbacGuard de dominio ja resolve perfil/Grupo/empresa/acao sem
+exigir admin; o guard de sessao para visao Grupo acrescenta a exigencia admin.
+A decisao especifica e se um perfil autenticado de Grupo (empresa_id NULL), com
+a permissao canonica explicita da entidade, deve poder acessar essa mesma visao
+sem admin. Se aprovada, reconciliar guard e seletores existentes, nao criar
+guard paralelo: negar outro Grupo, perfil empresarial em Grupo, permissao ausente,
+revogada e callback de sessao antiga; validar frontend e endpoint reais juntos.
+Isso nao autoriza nova concessao/perfil, ampliar a arvore ou alterar policies.
 
 Ao retomar bootstrap, manter API/Auth/Data no mesmo namespace/pool canonico.
 AUTH_DATABASE_URL ausente reutiliza db como authDb; se configurar pools separados

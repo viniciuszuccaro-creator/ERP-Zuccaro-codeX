@@ -1,4 +1,58 @@
-## Continuidade vigente - bootstrap pendente e revisoes488/489 (2026-11-04)
+## Continuidade vigente - decisao Central360, controle e deltas novos (2026-11-05)
+
+Base3420891a3409ed2fc855ab5eb01191c202d713542e3/CI5897 SUCCESS e401b888
+reconferidas. Desktop na mesma branch, limpo; fetch de objetos para revisao sem
+trocar checkout. Reserva342/6662535007 somente programa/COMERCIAL_360/STATUS/
+HANDOFF; nenhum arquivo Cursor/candidata ou artefato privado alterado.
+
+Decisao: Orcamentos evoluira para Central de Vendas360, desenho ainda PENDENTE.
+Programa existente recebeu mapa12frentes e dependencias dirigidas por entidade;
+COMERCIAL_360 marcou diagnostico de ausencia das APIs como historico superado.
+Nao criar outra tela/hub/importador ou aplicar layout amplo. Orçamento e Pedido
+seguem distintos/vinculados. Site/marketplace/pagamentos simulados nao sao
+provedores reais; GoTo permanece integracao nao comprovada, nao ausencia global.
+Fornecedores reutilizam servico/repo/candidato SQL existentes; nao ha rota HTTP
+nos router/app inspecionados. HML requer envelope/RBAC proprio antes desse lote.
+Produtos reutilizam mapas/aprovacoes/pins privados; nao reapontar bootstrap
+historico que cria contexto sintetico, nem presumir todos os schemas liberados.
+
+CONTROLE: node_repl/@oai/sky agora iniciou e listou janelas. Falha kernel assets
+anterior NAO e mais o bloqueio atual. Ao tentar observar Chrome, ferramenta
+interrompeu Computer Use nesta execucao por nao conseguir verificar URL atual
+com seguranca. Nenhuma acao UI posterior ou tentativa por canal que contorne
+essa barreira. Janela Chrome retornada tinha titulo Multi360; nao prova estado
+do Codespace nem perda de dados. Intervencao unica pedida: selecionar aba normal
+JA existente do Codespace potential-xylophone com barra URL visivel; sem reiniciar
+Codex/Chrome/Codespace/PG, instalar ou recriar ambiente. Retomar apenas quando
+canal puder verificar a URL pelo mecanismo suportado. Nenhum comando remoto
+executado nesta rodada;100HML/replay/reversao/backups anteriores preservados.
+
+REVISAO511/26f96d1b0a191ded5c10cbfe7752a84757fd11e4:6contraprovas com
+expressoes reais AST e QueryClient real, nao React montado/HTTP. Com parametros
+prontos/pedidos pending, KPI exibe0; erro de pedidos oculta KPI geral mas mantem
+metricas0 em cards/export/insights. Cache ['parametros-origem-pedido',contextKey]
+e ['pedidos-ultimos',contextKey] reutiliza dados entre atores/sessoes. Prova de
+cache, nao vazamento HTTP alegado. Parecer511/6662661405, corrigir antes de port;
+CI5986 terminal SUCCESS depois confirmada, sem encerrar os defeitos reproduzidos.
+
+REVISAO508/bb273346c7650a765932309c5660a00d3f3f4a6d:CI5973 terminal SUCCESS,
+7checks PASS/0FAIL no handler REAL handleEditarCadastro e callback REAL openWindow,
+setters enfileirados: uma janela edit, props/cliente/editor preservados, distintos
+clientes e painel nao colidem. Manager byte-a-byte igual401. Parecer6662691320;
+nao e React montado/persistencia. Pedido401/6662691819 fixa ports489/488/508 na
+MESMA candidata apos negativos montados/contexto/sessao/rascunho e CI composta;
+solicitacao nao comprova recebimento/execucao. Nenhum port executado pelo Codex.
+
+PROXIMO: recuperar controle suportado, conferir URL/executor/reservas/recibos
+hml344-cpa-20261104 e bootstrap Auth/Data no MESMO namespace com preflight fisico.
+Provedor real/configuracao ainda nao conferidos neste retorno; nao IdP sintetico,
+NULL=NULL em sockets ou fallback operacional. Perfil HML user nao promover;
+preparar contrato/permissao de visao Grupo antes de qualquer ampliacao.100reais
+no PG nao equivalem a API/browser prontos. Base44 continua reautenticacao pendente;
+apos canal voltar, verificar sessao da conta existente na fonte original, sem
+novo app/seed como recuperacao. Dados reais/manifestos/dumps fora Git/build/CI.
+
+## Historico - bootstrap pendente e revisoes488/489 (2026-11-04)
 
 Base342cde57dd492ef9a1313fb8f8dc5c2347877cd797a/CI5880 SUCCESS e401b888
 reconferidas no GitHub. Desktop na mesma branch/HEAD, limpo antes da edicao;

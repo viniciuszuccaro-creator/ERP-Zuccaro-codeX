@@ -1,4 +1,74 @@
-## Continuidade vigente - decisao desktop temporario (2026-10-28)
+## Decisao vigente - Central de Vendas360 no Orcamentos existente (2026-11-05)
+
+Decisao expressa do proprietario: o submodulo Orcamentos evoluira para Central
+de Vendas360. O desenho ainda esta em definicao; NAO aplicar reorganizacao visual
+ampla, renomear rotas ou criar outra central/tela/importador. Preservar Orcamento
+e Pedido como agregados distintos, vinculados por conversao canonica idempotente.
+Entrada em uso e gates do PLANO_GO_LIVE continuam prioritarios; omnicanal completo
+nao e requisito implicito para liberar o nucleo. GitHub oficial, desktop existente
+para codigo e Codespace unico para validacao quando houver canal/franquia.
+
+### Mapa dirigido de reaproveitamento e provas
+
+Base inspecionada342/0891a340; candidata401/b888 preservada. Esta tabela descreve
+contratos/codigo e provas ja registradas, NAO integra pacotes nem homologa provedores.
+Funcional significa apenas o percurso/ambiente indicado; parcial nao significa
+ausente. Referencias antigas de ondas abaixo permanecem programa, nao autorizacao.
+
+| Frente | Reuso existente / contrato | Estado comprovado e proxima dependencia |
+|---|---|---|
+| Nucleo comercial | `src/pages/Comercial.jsx`, `orcamentoService.ts`, `pedidoService.ts`, rotas `/api/v1/orcamentos`, `/api/v1/pedidos`, conversao e historico | Funcional nos ensaios sinteticos ja registrados; preservar snapshots, contexto e persistencia unica. Nao equivale ao ciclo com clientes reais HML |
+| Mestres e preco/condicao | Cliente/ClienteEmpresa, Produto/Unidade, TabelaPreco e CondicaoPagamento canonicos |100clientes reais persistidos apenas no PG HML; API/Auth/browser ainda pendentes. Dados de outras entidades nao podem ser chamados de reais por heranca |
+| Atendimento/chatbot | `ChatbotAtendimento`, `HubAtendimento`, `atendimentoConversaPolicy`, consumidores existentes | Parcial: codigo de conversa/transbordo/contexto; comentario100% ou icone nao prova canal externo. Conectar ao nucleo, nao criar terceiro hub |
+| GoTo/telefonia | Onda18 deste programa | Integracao nao comprovada. Busca dirigida nos paths de codigo nao localizou adaptador GoTo; isso nao prova ausencia global. Fixar contrato/provider/canal antes de implementar |
+| Site/e-commerce/portal | `OrcamentoSite`, `siteOrigemPolicy`, `PortalCliente`; consumidor `paymentStatusManager` | Parcial: checkout/origem e placeholder de pagamento presentes. Nao e provedor real de pagamento ou segunda verdade de Pedido |
+| Marketplaces | `SincronizacaoMarketplaces`, `SincronizacaoMarketplacesAtiva`, `marketplacePedidoPolicy` | Simulacao explicita por `createMarketplaceSimulationOrders`/stamp de simulacao. Nao importar como dados reais nem anunciar marketplace conectado |
+| CRM | `clienteCentral360CrmProjection`, `crmOportunidadePolicy`, flag `ENABLE_CRM_HTTP` | Parcial: projecao minimizada e backend condicionado; contrato `/capabilities` distingue frontend/backend. Habilitacao/schema/conversao no ambiente exigem prova propria |
+| Financeiro/pagamentos | `integracaoBoletos`, rotas/servicos bancarios existentes, `paymentStatusManager` | Parcial: caminhos simulado/real sao distintos. Configuracao nao comprova cobranca, baixa ou conciliacao. Nenhum efeito externo autorizado na HML |
+| Fiscal/A1 | `integracaoNFe`, cofre A1 preservado e contratos fiscais existentes | Parcial/dependente de provedor, certificado e empresa juridica. Nao inferir emissao por Grupo ou pelo nome de biblioteca; gates fiscais/A1 preservados |
+| Estoque/reserva | contratos de Produto/Pedido e `expedicaoPersistentPorts` | Parcial por dominio: saldo de Expedicao nao e disponibilidade/reserva comercial. `createApp` recebe portas de Expedicao opcionais; existencia de arquivo nao comprova wiring ou saldo de abertura |
+| Producao | `requer_producao` nos itens e componentes/ondas de engenharia ja existentes | Parcial: flag/encaminhamento nao comprovam apontamento, CAD, corte/dobra, fabricacao ou montagem. Preservar as frentes, liberar por percurso |
+| Entregas | `ExpedicaoService`, repositorio PG, rotas `/api/v1/entregas`, historico/separacao/registro/devolucao | Contratos presentes; efeitos de pedido/estoque dependem de portas e schema efetivos. Nao somar essa prova aos ensaios comerciais como E2E unico |
+
+### Lotes de dados e dependencias concretas
+
+- Cliente100: manter a MESMA carga HML e historicos inativos.100enderecos incompletos/
+  4CEP_FORMAT bloqueiam somente acoes dependentes;5emails preservados. Nao inventar
+  numero/pais/finalidade nem criar vinculo empresarial para fazer um fluxo passar.
+- Fornecedor: reutilizar `FornecedorService`/`PostgresFornecedorRepository`,
+  `fornecedorImportSchema` e `server/schema-candidates/fornecedor_master.sql`.
+  Servico exige Grupo e permissoes explicitas importar+criar, locks por identidade/
+  codigo/documento, replay identico e reversao CAS por lote/revisao/fingerprint.
+  Nao esta conectado por rota HTTP no router/app inspecionados; nao anunciar tela
+  persistente homologada. Namespace HML atual precisa envelope proprio e RBAC
+  fornecedor antes de carga; nenhum DDL/grant executado nesta rodada.
+- Produto: reutilizar `pilot-functional-products.mjs`, mapeadores/pins e aprovacao
+  privada existentes. Executor historico cria contexto sintetico: NAO executa-lo
+  cegamente ou reapontar seus pointers para a HML CPA. Conferir o lote e os IDs
+  nativos de classe/unidade; sem fator inventado, PC distinto de UN, unidade teste
+  excluida. Derivar schema minimo do caminho realmente consumido; nao aplicar
+  todas as migrations de Produto/041 por conveniencia. Quantidades aptas atuais
+  nao reconferidas por falta de canal: desconhecido, nao zero.
+- Compras/documentos/financeiro historicos: consulta/conferencia primeiro, mantendo
+  IDs/vinculos/procedencia; eventos que geram titulo, baixa, fiscal ou saldo seguem
+  empresa proprietaria e gates proprios. Nao atribuir CPA/3Z por nome ou palpite.
+
+### Aceite, integracao e proximo item
+
+Auth HML precisa provedor REAL e alvo fisico/path comprovados antes de READY;
+nao IdP sintetico ou fallback operacional. Perfil HML user documentado nao passa
+o guard de visao Grupo; nao promover a admin. Falta proposta especifica de acesso
+Grupo com permissoes canonicas e impacto nos consumidores, sem aplicacao inferida.
+API/session/company pode ser provada independentemente quando o canal voltar.
+
+Codex registra pareceres por SHA; Cursor permanece escritor da mesma401. Ports
+de489/488/508 dependem dos negativos no consumidor montado e CI da composicao,
+nao acumulacao de PRs tomada como integracao.511/26f96d1b tem contraprovas novas
+de zero falso e cache compartilhado, parecer6662661405; corrigir antes de port.
+Provas de callbacks/AST/cache nao sao React montado, HTTP/PG ou navegador.
+Estado de acesso, reservas e proxima acao no STATUS/HANDOFF, sem outro manual.
+
+## Historico - decisao desktop temporario (2026-10-28)
 
 Desenvolvimento no clone desktop independente existente; Codespace unico reservado
 para validacao integrada e navegacao quando houver franquia, sem habilitar gastos.

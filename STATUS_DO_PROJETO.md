@@ -1,4 +1,34 @@
-## Continuidade vigente - bootstrap HML e revisoes direcionadas (2026-11-04)
+## Continuidade vigente - base Central de Vendas360 e revisao511 (2026-11-05)
+
+3420891a340/CI5897 SUCCESS e401b888 reconferidas; desktop limpo antes do lote.
+Decisao do proprietario incorporada ao programa/COMERCIAL_360 existentes:
+evoluir Orcamentos, desenho PENDENTE, sem reorganizacao visual ou nova central.
+Mapa dirigido12frentes distingue contratos/codigo/simulacao/integração pendente;
+Orcamento/Pedido distintos. Fornecedor: candidato SQL/servico/repo existentes,
+sem rota HTTP comprovada; Produto: reuso de pointers/pins, nao executar bootstrap
+historico para outra carga CPA. Nenhum novo DDL/grant/schema/servico criado.
+
+Canal mudou: kernel nativo voltou e listou janelas, mas leitura do Chrome foi
+INTERROMPIDA pela validacao de URL. Nenhuma acao UI posterior, sem contornar a
+barreira. Janela observada Multi360, nao Codespace comprovado. Acao unica pedida:
+selecionar aba Codespace existente/barra de enderecos visivel, sem restart/install.
+Nada executado no PG/HML/VPS; carga100 e provas anteriores NAO repetidas.
+
+Revisoes novas:511/26f96d1b,6contraprovas PASS de defeitos (nao aceite): pedidos
+pendentes exibidos0, metricas de falha ainda0 e cache sem ator/sessao. Parecer
+6662661405 pede correcao ao Cursor; CI5986 SUCCESS nao encerra os achados.508/bb273346,
+CI5973 SUCCESS,7checks handler consumidor REAL+WindowManager real/setters
+enfileirados, sem defeito novo nesse delta. Parecer6662691320, NAO React montado/
+persistencia.401/6662691819 organiza ports489/488/508 condicionados a negativos
+montados e CI propria; recebimento/execucao nao presumidos.401 continua b888.
+
+Proximo: recuperar controle com URL verificavel; conferir reservas/recibos sem
+reimport e provar provedor Auth REAL/pools/path/alvo HML. Perfil user continua
+sem autorizacao de visao Grupo: nao promover a admin. Base44 segue dependencia
+de reautenticacao, nao consultada novamente. Sem carga operacional/merge/deploy.
+Lote documental sanitizado; diff-check, sem repetir suites inalteradas.
+
+## Historico - bootstrap HML e revisoes direcionadas (2026-11-04)
 
 342cde57dd4/CI5880 SUCCESS e401b888 reconferidos; desktop limpo antes do lote.
 Carga HML100/replay/reversao/backup anteriores preservados, NAO repetidos.
