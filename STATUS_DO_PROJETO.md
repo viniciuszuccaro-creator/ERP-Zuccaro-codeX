@@ -1,12 +1,11 @@
-## CURSOR — #543 PedidosRetiradaTab escopo multiempresa (2026-11-05 America/Sao_Paulo)
+## CURSOR — #543 PedidosRetiradaTab CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-pedidos-retirada-scope-392b` ← #401 `b888b2c00` |
-| **Código** | `PedidosRetiradaTab`: Pedido via `filterInContext` (sem `.list`); fail-closed + banner erro≠zero |
-| **Pin** | reverse em `commandAuditRemainder` — approval-command hash intacto |
-| **Testes** | `comercial-pedidos-retirada-scope` + `approval-command-batch-types` **PASS** |
-| **Paralelos** | #522–#542 CI SUCCESS; FF #401 aguarda Codex |
+| **PR** | [#543](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/543) |
+| **Tip** | **`2ae991c1f`** · **CI SUCCESS** 6/6 |
+| **Código** | Pedido via `filterInContext`; fail-closed; banner erro≠zero; pin approval intacto |
+| **Paralelos** | #522–#542 verdes · #544 cache #511 em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
