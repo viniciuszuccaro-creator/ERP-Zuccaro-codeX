@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { validarAnomaliasPontoIA } from '@/components/lib/iaResponsePolicy';
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { 
   Clock, 
   CheckCircle, 
@@ -40,6 +41,9 @@ export default function PontoEletronicoBiometrico() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const videoRef = useRef(null);
+  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
   
   const [registroPonto, setRegistroPonto] = useState({
     colaborador_id: '',
@@ -56,21 +60,26 @@ export default function PontoEletronicoBiometrico() {
   const [cameraAtiva, setCameraAtiva] = useState(false);
   const [colaboradorSelecionado, setColaboradorSelecionado] = useState(null);
 
-  // Fetch colaboradores
-  const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list()
+  // Escopo multiempresa: Colaborador/Ponto via filterInContext (padrão DashboardRHRealtime).
+  // Sem list unscoped; enabled exige contexto; erro ≠ zero KPI.
+  const { data: colaboradores = [], isError: isErrorColaboradores } = useQuery({
+    queryKey: ['colaboradores', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500),
+    enabled: contextoValido,
   });
 
-  // Fetch pontos do dia
-  const { data: pontosHoje = [] } = useQuery({
-    queryKey: ['pontos-hoje'],
-    queryFn: () => base44.entities.Ponto.list()
+  const { data: pontosHoje = [], isError: isErrorPontos } = useQuery({
+    queryKey: ['pontos-hoje', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Ponto', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
 
-  // Mutation para registrar ponto
+  // Mutation para registrar ponto (createInContext — sem Ponto.create unscoped)
   const registrarPontoMutation = useMutation({
-    mutationFn: (/** @type {typeof registroPonto & {requer_aprovacao?: boolean, observacoes_ia?: string}} */ data) => base44.entities.Ponto.create(data),
+    mutationFn: (/** @type {typeof registroPonto & {requer_aprovacao?: boolean, observacoes_ia?: string}} */ data) => {
+      if (!contextoValido) throw new Error('Selecione um grupo ou empresa antes de registrar ponto.');
+      return createInContext('Ponto', data);
+    },
     onSuccess: () => {
       toast({ title: "✅ Ponto registrado", description: "Registro efetuado com sucesso!" });
       queryClient.invalidateQueries({ queryKey: ['pontos-hoje'] });
@@ -262,6 +271,11 @@ Detecte anomalias:
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {(isErrorColaboradores || isErrorPontos) && (
+              <p className="text-xs text-slate-500">
+                Contagem RH indisponível (erro de carga ≠ zero).
+              </p>
+            )}
             <div className="grid grid-cols-1 gap-3">
               {colaboradores.slice(0, 8).map(colab => (
                 <Button
