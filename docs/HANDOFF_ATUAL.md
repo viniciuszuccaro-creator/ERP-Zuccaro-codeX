@@ -1,3 +1,8 @@
+## CURSOR — #512 CI SUCCESS RepresentantesTab (2026-11-05 America/Sao_Paulo)
+- Tip `a18056fc0` · 6/6 CI SUCCESS.
+- Sem FF #401. Homolog BLOCKED. Paralelos #511/#513.
+
+
 ## CURSOR — RepresentantesTab uniqueKey (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-representantes-tab-uniquekey-392b` ← #401 `b888b2c00`.
 - Legacy `openWindow({id, component: string})` → canônico + uniqueKey; list/métricas `filterInContext`; erro≠0.

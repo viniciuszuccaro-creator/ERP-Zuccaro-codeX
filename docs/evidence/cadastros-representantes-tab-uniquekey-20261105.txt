@@ -17,3 +17,5 @@ Fora:
 - FF #401 sem aceite
 - Homolog 100 BLOCKED
 - Dados reais em commit/CI
+
+CI tip SUCCESS: a18056fc0 · 6/6 (2026-11-05 America/Sao_Paulo)

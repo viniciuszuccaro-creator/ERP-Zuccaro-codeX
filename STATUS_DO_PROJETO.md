@@ -1,3 +1,15 @@
+## CURSOR — RepresentantesTab uniqueKey CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-representantes-tab-uniquekey-392b` = **#512** |
+| **Tip CI SUCCESS** | `a18056fc0` · 6/6 |
+| **Delta** | RepresentantesTab · openWindow canônico + uniqueKey create/edit · filterInContext · métricas fail-closed |
+| **Paralelos** | #511 ParamOrigem · #513 origem-consumidores · #507–#510 |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · FF #401 sem aceite |
+
+
 ## CURSOR — RepresentantesTab uniqueKey + escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
