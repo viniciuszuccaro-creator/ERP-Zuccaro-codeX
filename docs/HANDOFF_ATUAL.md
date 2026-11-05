@@ -1,3 +1,6 @@
+## CURSOR — #574 PainelConciliacao CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `6b0b8eb2b` SUCCESS. Lote #566–#574 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — PainelConciliacao escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/financeiro-painel-conciliacao-scope-392b` ← #401.
 - filter/update InContext; mismatch empresa; KPI ≠ 0. Testes 2 PASS.
