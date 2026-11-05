@@ -1,7 +1,6 @@
 ## CURSOR — SugestorCanalInteligente filterInContext (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-sugestor-canal-scope-392b` ← #401.
-- Sem initialData/list unscoped; loading/erro ≠ widget sumindo. Testes 4 PASS.
-- #549–#551 SUCCESS; #552 UK em CI. Homolog BLOCKED.
+- Tip `cbb3ec6dc` **CI SUCCESS** 6/6 (#553). Sem initialData/list unscoped; KPI ≠ zero.
+- #549–#551 SUCCESS; #552 tip `47dc03eeb` remainder em CI. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

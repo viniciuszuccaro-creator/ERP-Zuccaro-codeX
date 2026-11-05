@@ -5,7 +5,8 @@
 | **Branch** | `cursor/comercial-sugestor-canal-scope-392b` ← #401 |
 | **Código** | Remove `initialData:[]` + Pedido.filter/Cliente.get; `filterInContext`; cache; STALE; loading/erro ≠ zero |
 | **Testes** | `tests/comercial-sugestor-canal-scope.test.js` **4 PASS** |
-| **Fila** | #549–#551 SUCCESS · #550 tip `57750ad65` · #552 UK em CI · FF #401 aguarda Codex |
+| **Tip CI** | **`cbb3ec6dc`** · **CI SUCCESS** 6/6 |
+| **Fila** | #549–#551/#553 SUCCESS · #552 tip `47dc03eeb` remainder em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
