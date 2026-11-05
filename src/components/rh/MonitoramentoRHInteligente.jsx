@@ -1,19 +1,27 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, TrendingDown, TrendingUp, Users, Shield } from "lucide-react";
+import { AlertTriangle, TrendingUp, Users, Shield } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function MonitoramentoRHInteligente({ windowMode = false }) {
-  const { data: monitoramentos = [], isLoading } = useQuery({
-    queryKey: ["monitoramento-rh"],
-    queryFn: () => base44.entities.MonitoramentoRH.list(),
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
+
+  // Escopo multiempresa: MonitoramentoRH/Colaborador via filterInContext.
+  // Sem list unscoped; enabled exige contexto; erro ≠ zero KPI.
+  const { data: monitoramentos = [], isLoading, isError: isErrorMonitoramentos } = useQuery({
+    queryKey: ["monitoramento-rh", groupId, empresaAtual?.id],
+    queryFn: () => filterInContext("MonitoramentoRH", {}, "-created_date", 500),
+    enabled: contextoValido,
   });
 
-  const { data: colaboradores = [] } = useQuery({
-    queryKey: ["colaboradores"],
-    queryFn: () => base44.entities.Colaborador.list(),
+  const { data: colaboradores = [], isError: isErrorColaboradores } = useQuery({
+    queryKey: ["colaboradores-monitoramento-rh", groupId, empresaAtual?.id],
+    queryFn: () => filterInContext("Colaborador", {}, "nome_completo", 500),
+    enabled: contextoValido,
   });
 
   const alertasCriticos = monitoramentos.filter(m => 
@@ -28,6 +36,7 @@ export default function MonitoramentoRHInteligente({ windowMode = false }) {
   if (isLoading) return <div className="p-6">Carregando monitoramento...</div>;
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+  const cargaIndisponivel = isErrorMonitoramentos || isErrorColaboradores;
 
   return (
     <div className={containerClass}>
@@ -35,6 +44,16 @@ export default function MonitoramentoRHInteligente({ windowMode = false }) {
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Monitoramento RH Inteligente</h2>
         <p className="text-sm text-slate-600 mt-1">IA detecta riscos e padrões comportamentais</p>
+        {cargaIndisponivel && (
+          <p className="text-xs text-slate-500 mt-1">
+            Contagem RH indisponível (erro de carga ≠ zero).
+          </p>
+        )}
+        {!contextoValido && (
+          <p className="text-xs text-slate-500 mt-1">
+            Selecione um grupo ou empresa para carregar o monitoramento.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -43,7 +62,7 @@ export default function MonitoramentoRHInteligente({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600">Colaboradores</p>
-                <p className="text-2xl font-bold">{colaboradores.length}</p>
+                <p className="text-2xl font-bold">{cargaIndisponivel ? "—" : colaboradores.length}</p>
               </div>
               <Users className="w-8 h-8 text-blue-500" />
             </div>
@@ -55,7 +74,7 @@ export default function MonitoramentoRHInteligente({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600">Risco Turnover</p>
-                <p className="text-2xl font-bold text-red-600">{riscoTurnoverAlto.length}</p>
+                <p className="text-2xl font-bold text-red-600">{cargaIndisponivel ? "—" : riscoTurnoverAlto.length}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
@@ -67,7 +86,7 @@ export default function MonitoramentoRHInteligente({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600">Alertas Críticos</p>
-                <p className="text-2xl font-bold text-orange-600">{alertasCriticos.length}</p>
+                <p className="text-2xl font-bold text-orange-600">{cargaIndisponivel ? "—" : alertasCriticos.length}</p>
               </div>
               <Shield className="w-8 h-8 text-orange-500" />
             </div>
@@ -80,7 +99,9 @@ export default function MonitoramentoRHInteligente({ windowMode = false }) {
               <div>
                 <p className="text-sm text-slate-600">Produtividade</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {monitoramentos.length > 0
+                  {cargaIndisponivel
+                    ? "—"
+                    : monitoramentos.length > 0
                     ? (monitoramentos.reduce((acc, m) => acc + (m.metricas_produtividade?.produtividade_vs_meta || 0), 0) / monitoramentos.length).toFixed(0)
                     : 0}%
                 </p>
@@ -161,8 +182,10 @@ export default function MonitoramentoRHInteligente({ windowMode = false }) {
             {monitoramentos.filter(m => m.alertas_gerados?.length > 0).length === 0 && (
               <div className="text-center py-12 text-slate-500">
                 <TrendingUp className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                <p>Nenhum alerta detectado</p>
-                <p className="text-xs mt-2">Tudo está funcionando bem! 🎉</p>
+                <p>{cargaIndisponivel ? "Alertas indisponíveis (erro ≠ lista vazia)" : "Nenhum alerta detectado"}</p>
+                {!cargaIndisponivel && (
+                  <p className="text-xs mt-2">Tudo está funcionando bem! 🎉</p>
+                )}
               </div>
             )}
           </div>

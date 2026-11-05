@@ -1,3 +1,16 @@
+## CURSOR — #522+#523 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| #516–#521 | — | CI SUCCESS |
+| **#522 Biometrico** | `349171419` | **CI SUCCESS** 6/6 |
+| **#523 MonitoramentoRH** | `5a6514e4a` | **CI SUCCESS** 6/6 |
+| #524–#525 | Cobranca / Gameficacao | CI em curso |
+| #526 RelatorioFormas | `3e058e201` | publicado; aguarda CI |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+| **Fora** | Central360 UI/rename · merge main · VPS | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
