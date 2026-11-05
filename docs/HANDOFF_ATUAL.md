@@ -1,6 +1,6 @@
-## CURSOR — #542 AcoesRapidasGlobal Cliente scope (2026-11-05 America/Sao_Paulo)
-- Cliente via filterInContext; fail-closed; erro≠zero.
-- #540 SUCCESS; #541 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #542 AcoesRapidasGlobal CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `c15bf427c` **CI SUCCESS** 6/6. Cliente filterInContext; Evento via user RBAC.
+- **#522–#542** multiempresa verde. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
