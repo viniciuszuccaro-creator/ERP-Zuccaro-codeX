@@ -1,8 +1,23 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Lock, Bolt, User } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildBadgeOrigemQueryKey,
+  isBadgeOrigemScopeCurrent,
+} from "./badgeOrigemScope";
+
+function readBadgeActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * Badge visual inteligente para origem de pedido
@@ -15,13 +30,39 @@ export default function BadgeOrigemPedido({
   showLock = true,
   className = "" 
 }) {
-  
-  // Buscar parâmetros configurados
-  const { data: parametros = [] } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: [],
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readBadgeActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  // Escopo multiempresa: ParametroOrigemPedido via filterInContext (sem list unscoped).
+  // Sem initialData vazio — loading ≠ fallback silencioso. Cache ator/sessão.
+  const {
+    data: parametros,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildBadgeOrigemQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ParametroOrigemPedido', {}, 'canal', 200);
+      if (signal?.aborted) {
+        const err = new Error('BADGE_ORIGEM_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isBadgeOrigemScopeCurrent(scopeExpected, readBadgeActorAndSession())) {
+        throw new Error('BADGE_ORIGEM_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
+
+  const lista = Array.isArray(parametros) ? parametros : [];
+  const parametrosIndisponiveis = !contextoValido || isLoading || isError || (isFetching && parametros === undefined);
 
   // Mapear origem para canal
   const origemParaCanal = {
@@ -38,7 +79,7 @@ export default function BadgeOrigemPedido({
   };
 
   const canal = origemParaCanal[origemPedido] || 'ERP';
-  const parametro = parametros.find(p => p.canal === canal);
+  const parametro = parametrosIndisponiveis ? null : lista.find(p => p.canal === canal);
 
   // Cores por badge
   const coresClasses = {
@@ -68,10 +109,19 @@ export default function BadgeOrigemPedido({
 
   const ehBloqueado = parametro?.tipo_criacao === 'Automático' && parametro?.bloquear_edicao_automatico;
 
+  // Fail-closed de apresentação: sem contexto/erro mostra origem crua, sem inventar parâmetro.
+  const rotulo = parametrosIndisponiveis
+    ? (origemPedido || '—')
+    : (parametro?.nome || origemPedido);
+
   return (
-    <Badge className={`${corClasse} border ${className}`}>
+    <Badge
+      className={`${corClasse} border ${className}`}
+      title={isError ? 'Parâmetros de origem indisponíveis (erro de carga ≠ zero)' : undefined}
+      data-origem-indisponivel={parametrosIndisponiveis ? '1' : '0'}
+    >
       <Icone className="w-3 h-3 mr-1" />
-      {parametro?.nome || origemPedido}
+      {rotulo}
       {ehBloqueado && showLock && (
         <Lock className="w-3 h-3 ml-1" />
       )}
