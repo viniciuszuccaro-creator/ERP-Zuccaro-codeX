@@ -1,6 +1,28 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - bloqueio anterior ao TLS (2026-11-05)
+## Estado vigente - console HTML acessivel, backend desconectado (2026-11-05)
+
+Uma nova abertura pelo botao Console da Web do MESMO hPanel carregou o console
+esperado, mas exibiu 'Conexao com o servidor perdida'. Sem prompt, nenhum comando
+VPS enviado. Isto muda ERR_CONNECTION_RESET para perda de conexao no console;
+nao comprova shell recuperado, listeners, firewall interno ou Auth HML funcional.
+Nao reiniciar VPS/Auth/PG, alterar senha/chave, abrir porta ou tunel por tentativa.
+
+Diagnostico sanitizado pronto para o canal existente hPanel -> Fale com um agente:
+"VPS srv1982741. O Console da Web abre a pagina, mas mostra Conexao com o servidor
+perdida, sem prompt. No ensaio privado anterior do Codespace, DNS de Auth e DEV
+resolveu ao mesmo IPv4; TCP443 expirou antes de TLS e SSH22 expirou antes de
+autenticar. A API da conta retornou firewall_list total0; o firewall interno e os
+listeners ainda nao foram inspecionados. Solicito diagnostico somente leitura da
+conectividade/console e caminhos existentes. Nao autorizo restart, reinstalacao,
+reset de credencial, regra de firewall, exposicao ou mudanca de plano. Qual canal
+administrativo existente permite recuperar a inspecao sem alterar a operacao?"
+Mensagem PREPARADA, nao enviada ao suporte nem recebimento alegado. Nao incluir
+URL de sessao, token, chave, .env, clientes ou dump. Se precisar de logs privados,
+verificar seu conteudo/destino antes de anexar. Ao recuperar o shell, conferir
+hostname, ss443/8000 e firewall/proxy em leitura antes de qualquer proposta.
+
+## Historico - bloqueio anterior ao TLS (2026-11-05)
 
 Chrome e Codespace retomados pelo controle suportado; checkout/WIP preservados.
 DNS Auth e DEV resolvem ao mesmo IPv4, Auth tambem tem AAAA; proxy ausente.

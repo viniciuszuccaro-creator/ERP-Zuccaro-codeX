@@ -1,4 +1,41 @@
-## Continuidade vigente - diagnostico TCP e checkpoint preservado (2026-11-05)
+## Continuidade vigente - provas montadas e fila finita de composicao (2026-11-05)
+
+342c96908f8/CI6160 SUCCESS e401b888 reconferidos. Sem sincronizar checkout remoto,
+alterar branch Cursor ou integrar pacote automaticamente. Desktop limpo antes do
+lote; testes leem objetos Git por SHA, servidor de review somente127.0.0.1.
+
+Review privado review-mounted-401-441-20261030.mjs reutilizado/ampliado; nenhum
+novo harness do ERP. Primitivas/contexto/RBAC/transporte/estatisticas sao fronteiras
+sinteticas; os cinco componentes e ReactDOM/QueryClient sao reais montados.
+Recibo publico sanitizado: docs/evidence/codex-mounted-544-547-20261105.json.
+12PASS/6FAIL/0SKIP MONTADOS, sem mascarar falhas apesar das cinco CIs verdes:
+5440297b1d2(6174)2/3;54595e43aa9(6178)0/2;5426516d5ed(6153)2/1;
+546cfc15be9(6182)3/0;5471d5d6cff(6190)5/0. Nenhuma prova de banco/HTTP por isso.
+547 ainda teve3PASS de preservacao no helper REAL com imports reais: peel igual
+ao arquivo inteiro401; showLock alterado e acrescimo fora de escopo rejeitados.
+Cleanup inicial esperava conexoes HTTP: driver privado corrigido para fechar so
+suas conexoes. Reports emitidos preservados; um processo de cleanup encerrado
+apos report, nao marcado exit0. Nenhum processo desse driver restou ao fechar.
+
+Pareceres:544/6668285181 (pending/erro de Pedido ainda vira0);
+545/6668285536 (auxiliares pendentes0/estatistica tardia de outra Empresa);
+542/6668286078 (negativa REAL novoPedido/atorB recebe cacheA);
+546/6668286509 e547/6668286998 (aceites limitados);547/6668311865 (guard3checks).
+Coord401/6668312529 pede ao escritor conjunto finito, sem nova candidata/merge.
+Nao incorporar544/545/542 antes de correcao;546/547 so hunks/alcances aceitos com
+preservacao de dependencias e CI propria. Publicar pedido nao comprova recebimento.
+
+Rede: uma recuperacao suportada do console abriu a pagina correta mas mostrou
+'Conexao com o servidor perdida', sem shell. Nao afirmar recuperacao SSH/Auth.
+Diagnostico para suporte no OPERACAO_DEV_VPS; nao repetir sondas sem nova condicao.
+100HML mantidos, sem DDL/grant/carga/backup/restore, API HML ainda nao READY.
+Fornecedor tem servico/repo/SQL, sem wiring nos app/router inspecionados. Nao criar
+importador paralelo ou executar seu bootstrap sintetico historico sobre HML CPA.
+Base44 continua fonte inacessivel por reautenticacao, nao consultada novamente.
+Proximo: Cursor corrigir negativos montados, suportar console existente, depois
+preflight fisico/Auth real no namespace ja carregado; layout Central360 pendente.
+
+## Historico - diagnostico TCP e checkpoint preservado (2026-11-05)
 
 Base342d493e54f/CI6063 SUCCESS confirmada;401b888, sem nova composicao. Chrome
 suportado funcionando. Codespace estava interrompido; uma retomada, sem rebuild,

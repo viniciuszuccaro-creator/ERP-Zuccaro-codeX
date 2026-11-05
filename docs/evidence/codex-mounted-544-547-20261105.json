@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-05",
+  "base": "c96908f873a122932fad41a499df0875cad459c9",
+  "candidate": "b888b2c00eaf571820e0594b96afd45837dc689a",
+  "scope": "Real target components mounted with ReactDOM and QueryClient in Chrome. Synthetic context, RBAC, transport, statistics, menu and UI primitive boundaries. Not HTTP/PostgreSQL, complete child forms, canonical Auth or HML E2E.",
+  "execution": "Existing private review-mounted-401-441-20261030.mjs extended in place; read-only Git objects; esbuild write:false; manual browser through supported CUA; no package installation or production service",
+  "driverBeforeSha256": "d12049392025832ea449dbba7b7f2ea745ca440fdc782f55d2bcf6d299373cec",
+  "driverAfterSha256": "e4cc41fd0821afd28d870fa6e30c3cea3b1c29cb9090c9a1a8de2ba346e2991e",
+  "mounted": [
+    { "pr": 544, "sha": "0297b1d24349f7d3edbe9b965e05894287c779e3", "ci": 6174, "ciConclusion": "SUCCESS", "component": "GerenciadorCanaisOrigem", "pass": 2, "fail": 3, "skip": 0, "failures": ["Pending orders displayed as zero", "Pending orders exported as zero", "Rejected orders exported as zero"], "controls": ["Rejected orders general KPI unknown", "Proven empty orders remain zero"], "review": 6668285181 },
+    { "pr": 545, "sha": "95e43aa999f67a702b4daaa8e00fbbcd52b40420", "ci": 6178, "ciConclusion": "SUCCESS", "component": "DashboardFechamentoPedidos", "pass": 0, "fail": 2, "skip": 0, "failures": ["Pending auxiliary dependency displayed as zero", "Late company A statistics applied in company B"], "review": 6668285536 },
+    { "pr": 542, "sha": "6516d5ed4ac4ee05795905594102615ec6c2f7ff", "ci": 6153, "ciConclusion": "SUCCESS", "component": "AcoesRapidasGlobal", "pass": 2, "fail": 1, "skip": 0, "failures": ["Actual new-order action passes actor A clients after actor/session B switch"], "controls": ["Actor A receives fixture A", "Denied permission removes action"], "review": 6668286078 },
+    { "pr": 546, "sha": "cfc15be957ab793efdedc6ccc464bdc9b757cfb9", "ci": 6182, "ciConclusion": "SUCCESS", "component": "AplicadorTabelaPreco", "pass": 3, "fail": 0, "skip": 0, "controls": ["Late table not applied after company change", "Rejected read does not apply table", "Unavailable state visible"], "review": 6668286509 },
+    { "pr": 547, "sha": "1d5d6cff9c94eab6ef13da5c13848891c0e3da4a", "ci": 6190, "ciConclusion": "SUCCESS", "component": "BadgeOrigemPedido", "pass": 5, "fail": 0, "skip": 0, "controls": ["Loading preserves raw origin", "Late company A response discarded", "Company B value rendered", "Session-renewal read error preserves raw origin", "Previous name absent after error"], "review": 6668286998 }
+  ],
+  "mountedTotals": { "pass": 12, "fail": 6, "skip": 0 },
+  "preservation": { "pr": 547, "checks": 3, "pass": 3, "fail": 0, "skip": 0, "scope": "Actual portalIdentityRemainder bundled with its real imported guard chain", "controls": ["Entire peeled source equals candidate401 source", "Changed showLock rejected", "Appended outside-scope change rejected"], "originalFileSha256": "8f81dad783a568024e0dff277da17f9bdfaa8a6396cbe3217ee7fb2abb1ede33", "review": 6668311865 },
+  "cleanup": "First manual-driver runs emitted complete reports but waited on HTTP connections. Existing private driver now closes only its own connections. Original origem/quick processes exited 0; badge cleanup process was stopped after its complete report (exit1), not classified as functional failure or clean process PASS. Later aplicador/dashboard exited0. No review-driver node process remained at closing.",
+  "limitations": ["No production code edited", "No Cursor branch edited", "No automatic candidate integration", "No HML load or restore repeated", "No complete product homologation inferred from CI"]
+}

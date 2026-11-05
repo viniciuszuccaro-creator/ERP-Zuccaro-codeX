@@ -1,4 +1,37 @@
-## Continuidade vigente - rede anterior ao TLS e revisao542 (2026-11-05)
+## Continuidade vigente - revisao montada544-547 e console sem shell (2026-11-05)
+
+Base342c96908f8/CI6160 terminal SUCCESS;401b888 inalterada. Desktop limpo e sem
+index.lock antes do lote. Nenhum arquivo Cursor/candidata ou dado HML editado.
+Review privado EXISTENTE ampliado no proprio arquivo, sem novo harness ERP/HML,
+dependencias ou instalacao. ReactDOM/QueryClient reais, alvos reais montados;
+contexto/RBAC/transporte/estatisticas/primitivas sinteticos, NAO HTTP/PG/HML E2E.
+
+Resultados por SHA, CI terminal SUCCESS de cada um conferida:
+-5440297b1d2/6174:2PASS/3FAIL; Pedido pending ainda0 no KPI/export, erro no export0.
+-54595e43aa9/6178:0PASS/2FAIL; auxiliares pending0 e estatistica tardiaEmpresaA emB.
+-5426516d5ed/6153:2PASS/1FAIL; acao REAL novoPedido entrega clientesA ao atorB.
+-546cfc15be9/6182:3PASS/0FAIL nos negativos tardiaEmpresa/erro do Aplicador.
+-5471d5d6cff/6190:5PASS/0FAIL no Badge; mais3PASS no peel/guard REAL, fonte inteira
+igual401 e alteracoes indevidas rejeitadas. Nao aceitar apenas pin atualizado.
+Total MONTADO12PASS/6FAIL/0SKIP; preservacao3PASS separada. Recibo sanitizado em
+docs/evidence/codex-mounted-544-547-20261105.json, inclusive limite do cleanup.
+Pareceres6668285181/5536/6078/6509/6998 e6668311865 publicados nas PRs respectivas.
+Pedido401/6668312529 solicita conjunto controlado, sem presumir recebimento/port.
+Nao compor544/545/542 enquanto os negativos falham.546/547 aceitos so no alcance.
+
+Console administrativo voltou a carregar a pagina, mas exibiu 'Conexao com o
+servidor perdida': NENHUM shell/comando VPS nesta retomada. Nao confundir HTML
+acessivel com terminal funcional. Suporte: mensagem concreta no procedimento
+existente; nao repetir sondas TCP, trocar chaves ou reiniciar servicos.
+100HML/carga/backup preservados. API/Auth/Data, Grupo e dados reais no navegador
+continuam pendentes; nenhuma nova URL real homologada ou dados recuperados alegados.
+Fornecedor: servico/repositorio/SQL candidato existentes; app.ts/api/router.ts
+inspecionados sem wiring dessa entidade, nao prova de ausencia global. Nao executar
+bootstrap sintetico historico sobre CPA nem aplicar DDL/grant por inferencia.
+Central de Vendas360 continua evolucao de Orcamentos, sem layout amplo novo.
+Fechamento documental/evidencia: diff-check; suites intactas nao repetidas.
+
+## Historico - rede anterior ao TLS e revisao542 (2026-11-05)
 
 342d493e54f/CI6063 terminal SUCCESS conferidos;401b888 preservada. Desktop limpo
 antes do lote. Codespace encontrado INTERROMPIDO: uma retomada suportada, sem
