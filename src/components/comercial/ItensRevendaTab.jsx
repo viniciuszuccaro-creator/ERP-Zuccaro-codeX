@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,10 +11,31 @@ import { Plus, Trash2, Search, Copy, Package, ChevronRight, Calculator, Sparkles
 import { toast } from 'sonner';
 import { converterUnidade, ExibirEquivalenteKG, PreviewConversao } from '@/components/lib/CalculadoraUnidades';
 import { PRODUTO_TIPOS_CANONICOS } from '@/components/cadastros/produto/produtoTipoPolicy';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  buildItensRevendaProdutosQueryKey,
+  isItensRevendaScopeCurrent,
+  resolveItensRevendaProdutosKpiState,
+  filterProdutosRevendaBusca,
+} from './itensRevendaScope';
+
+function readItensRevendaActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1 - Aba 2: Itens de Revenda
  * AGORA COM: Conversão PC/MT/KG + IA de Sugestão
+ *
+ * Escopo multiempresa: Produto/Pedido via filterInContext (sem filter unscoped).
+ * Loading/erro ≠ zero produtos. STALE_SCOPE em resposta tardia.
  */
 export default function ItensRevendaTab({ formData, setFormData, onNext }) {
   const [search, setSearch] = useState('');
@@ -24,21 +44,51 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
   const [unidadeVenda, setUnidadeVenda] = useState('UN'); // V21.1: Dropdown dinâmico
   const [descontoItem, setDescontoItem] = useState(0);
 
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-revenda', formData?.empresa_id],
-    queryFn: async () => {
-      const filter = formData?.empresa_id 
-        ? { empresa_id: formData.empresa_id, tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA, status: 'Ativo' }
-        : { tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA, status: 'Ativo' };
-      return await base44.entities.Produto.filter(filter);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = formData?.group_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = formData?.empresa_id || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readItensRevendaActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  const {
+    data: produtosData,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildItensRevendaProdutosQueryKey({
+      groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Produto',
+        { tipo_item: PRODUTO_TIPOS_CANONICOS.REVENDA, status: 'Ativo' },
+        'descricao',
+        500,
+      );
+      if (signal?.aborted) {
+        const err = new Error('ITENS_REVENDA_PRODUTOS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isItensRevendaScopeCurrent(scopeExpected, readItensRevendaActorAndSession())) {
+        throw new Error('ITENS_REVENDA_PRODUTOS_STALE_SCOPE');
+      }
+      return rows;
     },
-    enabled: true
+    enabled: contextoValido,
   });
 
-  const produtosFiltrados = produtos.filter(p =>
-    p.descricao?.toLowerCase().includes(search.toLowerCase()) ||
-    p.codigo?.toLowerCase().includes(search.toLowerCase())
-  );
+  const kpiState = resolveItensRevendaProdutosKpiState({
+    contextoValido,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: produtosData !== undefined,
+  });
+  const produtos = kpiState === 'ready' && Array.isArray(produtosData) ? produtosData : [];
+  const produtosFiltrados = filterProdutosRevendaBusca(produtos, search);
 
   const adicionarItem = () => {
     if (!produtoSelecionado) {
@@ -107,26 +157,40 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
       toast.error('Selecione um cliente primeiro');
       return;
     }
+    if (!contextoValido) {
+      toast.error('Contexto de Grupo/Empresa necessário');
+      return;
+    }
 
-    const pedidosCliente = await base44.entities.Pedido.filter(
-      { cliente_id: formData.cliente_id },
-      '-data_pedido',
-      1
-    );
-
-    if (pedidosCliente.length > 0) {
-      const ultimoPedido = pedidosCliente[0];
-      if (ultimoPedido.itens_revenda && ultimoPedido.itens_revenda.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          itens_revenda: [...(prev?.itens_revenda || []), ...ultimoPedido.itens_revenda]
-        }));
-        toast.success(`✅ ${ultimoPedido.itens_revenda.length} item(ns) copiado(s)`);
-      } else {
-        toast.error('Último pedido não tem itens de revenda');
+    try {
+      const pedidosCliente = await filterInContext(
+        'Pedido',
+        { cliente_id: formData.cliente_id },
+        '-data_pedido',
+        1,
+      );
+      if (!isItensRevendaScopeCurrent(scopeExpected, readItensRevendaActorAndSession())) {
+        toast.error('Contexto alterado — recarregue e tente de novo');
+        return;
       }
-    } else {
-      toast.error('Cliente não tem pedidos anteriores');
+
+      if (pedidosCliente.length > 0) {
+        const ultimoPedido = pedidosCliente[0];
+        if (ultimoPedido.itens_revenda && ultimoPedido.itens_revenda.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            itens_revenda: [...(prev?.itens_revenda || []), ...ultimoPedido.itens_revenda]
+          }));
+          toast.success(`✅ ${ultimoPedido.itens_revenda.length} item(ns) copiado(s)`);
+        } else {
+          toast.error('Último pedido não tem itens de revenda');
+        }
+      } else {
+        toast.error('Cliente não tem pedidos anteriores');
+      }
+    } catch (error) {
+      console.error('Erro ao copiar último pedido:', error);
+      toast.error('Falha ao carregar último pedido (erro ≠ ausência).');
     }
   };
 
@@ -136,11 +200,22 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
       toast.info('Selecione um cliente e um produto antes de pedir sugestões.');
       return;
     }
+    if (!contextoValido) {
+      toast.info('Contexto de Grupo/Empresa necessário para sugestões.');
+      return;
+    }
 
     try {
-      const historicoPedidos = await base44.entities.Pedido.filter({
-        cliente_id: formData.cliente_id
-      }, '-data_pedido', 5); // Busca os últimos 5 pedidos
+      const historicoPedidos = await filterInContext(
+        'Pedido',
+        { cliente_id: formData.cliente_id },
+        '-data_pedido',
+        5,
+      );
+      if (!isItensRevendaScopeCurrent(scopeExpected, readItensRevendaActorAndSession())) {
+        toast.error('Contexto alterado — recarregue e tente de novo');
+        return;
+      }
 
       let quantidadeTotal = 0;
       let numeroDeCompras = 0;
@@ -178,7 +253,29 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
   const opcoesUnidade = produtoSelecionado?.unidades_secundarias || ['UN'];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6">
+      {kpiState === 'unavailable' && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Contexto de Grupo/Empresa necessário para listar produtos de revenda.
+          </CardContent>
+        </Card>
+      )}
+      {kpiState === 'loading' && (
+        <Card className="border-slate-200 bg-slate-50">
+          <CardContent className="p-4 text-sm text-slate-600">
+            Carregando produtos de revenda…
+          </CardContent>
+        </Card>
+      )}
+      {kpiState === 'error' && (
+        <Card className="border-red-300 bg-red-50">
+          <CardContent className="p-4 text-sm text-red-700">
+            Não foi possível carregar produtos (erro ≠ zero produtos).
+          </CardContent>
+        </Card>
+      )}
+
       {/* Busca e Adição */}
       <Card className="border-2 border-blue-300 bg-blue-50">
         <CardHeader>
