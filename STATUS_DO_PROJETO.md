@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-limite-credito-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-limite-credito-scope-392b` = **#555** |
+| **Tip CI** | **`23e9e351d`** · **CI SUCCESS** 6/6 |
 | **Código** | ContaReceber via `filterInContext`; sem `= []`; loading/erro ≠ zero utilizado; STALE_SCOPE |
 | **Testes** | `tests/comercial-limite-credito-widget-scope.test.js` **5 PASS** |
-| **Paralelo** | #554 WidgetPerfilRisco · #549–#553 SUCCESS · FF #401 aguarda Codex |
+| **Fila** | #554 SUCCESS · #556 SUCCESS · #557/#558 em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
