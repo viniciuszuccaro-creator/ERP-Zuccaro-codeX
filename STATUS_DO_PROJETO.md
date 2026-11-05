@@ -1,3 +1,12 @@
+## CURSOR — #575 AssinaturaEletronicaForm CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #575 `6ed785308` — frontend + backend + compose **SUCCESS** |
+| **Código** | updateInContext Contrato/Pedido; fail-closed; STALE_SCOPE |
+| **Fila** | #566–#575 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — AssinaturaEletronicaForm escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

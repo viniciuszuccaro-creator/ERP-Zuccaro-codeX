@@ -1,3 +1,6 @@
+## CURSOR — #575 AssinaturaEletronicaForm CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `6ed785308` SUCCESS. Lote #566–#575 verde. Homolog BLOCKED. FF #401 aguarda Codex. Próximo: AssinaturaEletronicaModal.
+
 ## CURSOR — AssinaturaEletronicaForm escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/assinatura-form-scope-392b` ← #401.
 - updateInContext Contrato/Pedido; STALE_SCOPE. Testes 2 PASS.
