@@ -1,3 +1,15 @@
+## CURSOR — CorteDobraIATab bitolas escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-corte-dobra-scope-392b` = **#559** |
+| **Tip CI** | **`2db2182ca`** · **CI SUCCESS** 6/6 (pin IA cut autorizado) |
+| **Código** | Produto eh_bitola via filterInContext; Upload/IA intactos; STALE_SCOPE; KPI ≠ zero |
+| **Testes** | `comercial-corte-dobra-scope` **4 PASS** + pin `ia-consumer-response-contracts` cut |
+| **Fila** | #554–#558/#560 SUCCESS · #561 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

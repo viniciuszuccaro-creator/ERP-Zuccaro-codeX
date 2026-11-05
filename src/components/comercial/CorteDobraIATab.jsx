@@ -12,27 +12,80 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, Plus, Trash2, Eye, Download, Bot, Layers, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import VisualizadorPeca from './VisualizadorPeca';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  buildCorteDobraBitolasQueryKey,
+  isCorteDobraScopeCurrent,
+  resolveCorteDobraBitolasKpiState,
+} from './corteDobraScope';
+
+function readCorteDobraActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1 - Aba 4: Corte e Dobra (IA)
  * AGORA COM: etapa_obra_id + Consolidação + Visualizador Restaurado
+ *
+ * Escopo multiempresa: bitolas via filterInContext (sem Produto.filter unscoped).
+ * Upload/IA preservados. Loading/erro ≠ zero bitolas. STALE_SCOPE.
  */
 export default function CorteDobraIATab({ formData, setFormData, empresaId, onNext }) {
   const [posicaoSelecionada, setPosicaoSelecionada] = useState(null);
   const [editando, setEditando] = useState(null);
   const [processandoIA, setProcessandoIA] = useState(false);
 
-  const { data: bitolas = [] } = useQuery({
-    queryKey: ['bitolas', empresaId || formData?.empresa_id],
-    queryFn: async () => {
-      const empId = empresaId || formData?.empresa_id;
-      const filter = empId
-        ? { empresa_id: empId, eh_bitola: true, status: 'Ativo' }
-        : { eh_bitola: true, status: 'Ativo' };
-      return await base44.entities.Produto.filter(filter);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = formData?.group_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empId = empresaId || formData?.empresa_id || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readCorteDobraActorAndSession();
+  const contextoValido = Boolean(groupId || empId);
+  const scopeExpected = { actorId, sessionKey };
+
+  const {
+    data: bitolasData,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildCorteDobraBitolasQueryKey({
+      groupId, empresaId: empId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Produto',
+        { eh_bitola: true, status: 'Ativo' },
+        'descricao',
+        500,
+      );
+      if (signal?.aborted) {
+        const err = new Error('CORTE_DOBRA_BITOLAS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isCorteDobraScopeCurrent(scopeExpected, readCorteDobraActorAndSession())) {
+        throw new Error('CORTE_DOBRA_BITOLAS_STALE_SCOPE');
+      }
+      return rows;
     },
-    enabled: true
+    enabled: contextoValido,
   });
+
+  const kpiState = resolveCorteDobraBitolasKpiState({
+    contextoValido,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: bitolasData !== undefined,
+  });
+  const bitolas = kpiState === 'ready' && Array.isArray(bitolasData) ? bitolasData : [];
 
   const formatosDisponiveis = [
     { id: 'reto', label: 'Reto', medidas: ['A'] },
@@ -239,6 +292,28 @@ Retorne APENAS posições claramente identificadas.`,
   const formatoSelecionado = formatosDisponiveis.find(f => f.id === editando?.formato);
 
   return (
+    <div className="w-full h-full space-y-3">
+      {kpiState === 'unavailable' && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="p-3 text-sm text-amber-900">
+            Contexto de Grupo/Empresa necessário para listar bitolas.
+          </CardContent>
+        </Card>
+      )}
+      {kpiState === 'loading' && (
+        <Card className="border-slate-200 bg-slate-50">
+          <CardContent className="p-3 text-sm text-slate-600">
+            Carregando bitolas…
+          </CardContent>
+        </Card>
+      )}
+      {kpiState === 'error' && (
+        <Card className="border-red-300 bg-red-50">
+          <CardContent className="p-3 text-sm text-red-700">
+            Não foi possível carregar bitolas (erro ≠ zero bitolas).
+          </CardContent>
+        </Card>
+      )}
     <div className="grid grid-cols-2 gap-6" style={{ height: 'calc(100vh - 400px)' }}>
       {/* LADO ESQUERDO: Planilha */}
       <div className="space-y-4 overflow-auto">
@@ -557,6 +632,7 @@ Retorne APENAS posições claramente identificadas.`,
           posicao={posicaoSelecionada !== null ? formData.itens_corte_dobra[posicaoSelecionada] : null}
         />
       </div>
+    </div>
     </div>
   );
 }
