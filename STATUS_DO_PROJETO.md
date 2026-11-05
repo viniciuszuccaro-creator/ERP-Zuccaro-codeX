@@ -1,3 +1,13 @@
+## CURSOR — #538 DashboardFechamentoPedidos Empresa scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#536** | multiempresa | **CI SUCCESS** |
+| #537 MonitoramentoCanais | `38e5b350c` | aguarda CI |
+| #538 DashboardFechamento | (este) | Pedido/Mov/CR/Entrega filterInContext |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
