@@ -1,10 +1,10 @@
-## CURSOR — #541 PesquisaUniversal Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #541 PesquisaUniversal CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#539** | multiempresa | **CI SUCCESS** |
-| #540 ComissaoForm | `df67a72b2` | aguarda CI |
-| #541 PesquisaUniversal | (este) | filtrarPorContexto→filterInContext |
+| **#522–#541** | multiempresa | **CI SUCCESS** |
+| #541 PesquisaUniversal | `83639b4c0` | **CI SUCCESS** 6/6 |
+| #542 AcoesRapidas Cliente | `3810698d2` | frontend fail — corrigindo |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
