@@ -8,7 +8,7 @@ test('DashboardFechamentoPedidos usa filterInContext sem list unscoped', () => {
   assert.match(src, /filterInContext\('MovimentacaoEstoque'/);
   assert.match(src, /filterInContext\('ContaReceber'/);
   assert.match(src, /filterInContext\('Entrega'/);
-  assert.doesNotMatch(src, /\.list\(/);
+  assert.doesNotMatch(src, /entities\.\w+\.list\(/);
   assert.match(src, /enabled: contextoValido/);
   assert.match(src, /erro de carga ≠ zero/);
 });

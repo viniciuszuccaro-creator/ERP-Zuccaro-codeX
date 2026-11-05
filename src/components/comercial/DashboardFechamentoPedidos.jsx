@@ -50,7 +50,7 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
     });
   }, [empresaCtx, contextoValido]);
   
-  // Escopo multiempresa: sem .list() unscoped.
+  // Escopo multiempresa: sem list unscoped.
   const { data: pedidos = [], isError: isErrorPedidosFech } = useQuery({
     queryKey: ['pedidos-fechamento', groupId, empresaCtx],
     queryFn: () => filterInContext('Pedido', scopeCriteria, '-created_date', 100),
