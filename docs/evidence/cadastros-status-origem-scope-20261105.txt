@@ -1,0 +1,8 @@
+Pacote: StatusOrigemPedido100 escopo multiempresa
+Branch: cursor/cadastros-status-origem-scope-392b
+Base: #401 b888b2c00
+Data: 2026-11-05 America/Sao_Paulo
+Provas: tests/cadastros-status-origem-scope.test.js
+Fora: FF #401, homolog 100, dados reais
+
+CI tip SUCCESS: b9a3b8478 · 6/6 (2026-11-05 America/Sao_Paulo)
