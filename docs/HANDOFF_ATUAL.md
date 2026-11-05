@@ -1,7 +1,6 @@
 ## CURSOR — CalcularComissoesForm escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-calcular-comissoes-scope-392b` ← #401.
-- createInContext Comissao; fail-closed; STALE_SCOPE. Testes 5 PASS.
-- #562/#563 em CI; #554–#561 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
+- Tip `29f245317` **CI SUCCESS** 6/6 (#564). createInContext; fail-closed; STALE_SCOPE.
+- #554–#563 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

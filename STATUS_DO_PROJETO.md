@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch / PR** | `cursor/comercial-calcular-comissoes-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-calcular-comissoes-scope-392b` = **#564** |
+| **Tip CI** | **`29f245317`** · **CI SUCCESS** 6/6 (push+PR) |
 | **Código** | Comissao.create via createInContext; fail-closed sem contexto; STALE_SCOPE mid-loop |
 | **Testes** | `comercial-calcular-comissoes-scope` **5 PASS** |
-| **Fila** | #554–#561 SUCCESS · #562/#563 em CI · FF #401 aguarda Codex |
+| **Fila** | #554–#563 SUCCESS · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
