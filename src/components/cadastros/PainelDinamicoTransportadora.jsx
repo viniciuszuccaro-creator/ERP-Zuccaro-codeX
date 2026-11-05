@@ -15,29 +15,95 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query"; // Changed from @tantml:react-query
-import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  resolvePainelTransportadoraKpiState,
+  isPainelTransportadoraScopeCurrent,
+  countPainelTransportadoraEntregasRealizadas,
+  countPainelTransportadoraEntregasFrustradas,
+  computePainelTransportadoraTaxaSucesso,
+} from "./painelDinamicoTransportadoraScope";
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ * Entrega/Romaneio via filterInContext; KPI loading/erro ≠ 0%.
  */
 export default function PainelDinamicoTransportadora({ transportadora, isOpen, onClose, windowMode = false }) {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const painelAberto = Boolean(isOpen || windowMode);
+  const transportadoraId = transportadora?.id || null;
+  const sessionSnapshot = readErpHttpSession();
+  const actorId = typeof sessionSnapshot?.actorId === "string" && sessionSnapshot.actorId.trim()
+    ? sessionSnapshot.actorId.trim()
+    : null;
+  const sessionKey = central360SessionKey(sessionSnapshot?.token);
+  const scopeExpected = { actorId, sessionKey };
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const nextActor = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId: nextActor, sessionKey: central360SessionKey(session?.token) };
+  };
+  const queriesEnabled = Boolean(transportadoraId) && painelAberto && contextoValido;
 
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-transportadora', transportadora?.id],
-    queryFn: () => base44.entities.Entrega.filter({ transportadora_id: transportadora.id }, '-data_saida'),
-    enabled: !!transportadora?.id,
+  const entregasQuery = useQuery({
+    queryKey: ['entregas-transportadora', transportadoraId, groupId, empresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Entrega', { transportadora_id: transportadoraId }, '-data_saida');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_TRANSPORTADORA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelTransportadoraScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_TRANSPORTADORA_ENTREGAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: romaneios = [] } = useQuery({
-    queryKey: ['romaneios-transportadora', transportadora?.id],
-    queryFn: () => base44.entities.Romaneio.filter({ motorista: transportadora.nome }, '-data_romaneio'),
-    enabled: !!transportadora?.id,
+  const romaneiosQuery = useQuery({
+    queryKey: ['romaneios-transportadora', transportadoraId, transportadora?.nome, groupId, empresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Romaneio', { motorista: transportadora.nome }, '-data_romaneio');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_TRANSPORTADORA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelTransportadoraScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_TRANSPORTADORA_ROMANEIOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
+
+  const entregasKpi = resolvePainelTransportadoraKpiState({
+    painelAberto, contextoValido, transportadoraId,
+    isLoading: entregasQuery.isLoading, isError: entregasQuery.isError,
+    isFetching: entregasQuery.isFetching, dataDefined: entregasQuery.data !== undefined,
+  });
+  const romaneiosKpi = resolvePainelTransportadoraKpiState({
+    painelAberto, contextoValido, transportadoraId,
+    isLoading: romaneiosQuery.isLoading, isError: romaneiosQuery.isError,
+    isFetching: romaneiosQuery.isFetching, dataDefined: romaneiosQuery.data !== undefined,
+  });
+
+  const entregas = entregasKpi === 'ready' && Array.isArray(entregasQuery.data) ? entregasQuery.data : [];
+  const romaneios = romaneiosKpi === 'ready' && Array.isArray(romaneiosQuery.data) ? romaneiosQuery.data : [];
 
   const podeEditar = hasPermission('cadastros', 'editar');
 
@@ -48,12 +114,9 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
 
   if (!transportadora) return null;
 
-  const entregasRealizadas = entregas.filter(e => e.status === 'Entregue').length;
-  const entregasFrustradas = entregas.filter(e => e.status === 'Entrega Frustrada').length;
-  const taxaSucesso = entregas.length > 0 
-    ? ((entregasRealizadas / entregas.length) * 100).toFixed(1) 
-    : 0;
-
+  const entregasRealizadas = entregasKpi === 'ready' ? countPainelTransportadoraEntregasRealizadas(entregas) : null;
+  const entregasFrustradas = entregasKpi === 'ready' ? countPainelTransportadoraEntregasFrustradas(entregas) : null;
+  const taxaSucesso = entregasKpi === 'ready' ? computePainelTransportadoraTaxaSucesso(entregas) : null;
   const content = (
     <>
       <div className="border-b pb-4 mb-6">
@@ -202,6 +265,17 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
             </h3>
 
             <div className="grid grid-cols-2 gap-3">
+              {entregasKpi === 'loading' && (
+                <p className="col-span-2 text-sm text-slate-500 animate-pulse">Carregando desempenho…</p>
+              )}
+              {entregasKpi === 'error' && (
+                <p className="col-span-2 text-sm text-red-600">Erro ≠ 0 entregas / 0%</p>
+              )}
+              {entregasKpi === 'unavailable' && (
+                <p className="col-span-2 text-sm text-amber-700">Contexto necessário</p>
+              )}
+              {entregasKpi === 'ready' && (
+                <>
               <div className="p-3 bg-green-50 rounded-lg">
                 <p className="text-xs text-green-700">Entregas Realizadas</p>
                 <p className="text-2xl font-bold text-green-900">{entregasRealizadas}</p>
@@ -214,11 +288,22 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
                 <p className="text-xs text-blue-700">Taxa de Sucesso</p>
                 <p className="text-3xl font-bold text-blue-900">{taxaSucesso}%</p>
               </div>
+                </>
+              )}
             </div>
 
             <div className="pt-4 border-t">
               <p className="font-medium text-slate-900 text-sm mb-3">Romaneios Recentes</p>
-              {romaneios.length > 0 ? (
+              {romaneiosKpi === 'loading' && (
+                <p className="text-xs text-slate-500 animate-pulse">Carregando romaneios…</p>
+              )}
+              {romaneiosKpi === 'error' && (
+                <p className="text-xs text-red-600">Erro ≠ lista vazia</p>
+              )}
+              {romaneiosKpi === 'unavailable' && (
+                <p className="text-xs text-amber-700">Contexto necessário</p>
+              )}
+              {romaneiosKpi === 'ready' && romaneios.length > 0 && (
                 <div className="space-y-2 max-h-[280px] overflow-y-auto">
                   {romaneios.slice(0, 8).map((romaneio) => (
                     <div key={romaneio.id} className="p-2 bg-slate-50 rounded-lg text-xs">
@@ -243,7 +328,8 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
                     </div>
                   ))}
                 </div>
-              ) : (
+              )}
+              {romaneiosKpi === 'ready' && romaneios.length === 0 && (
                 <div className="text-center py-6 text-slate-500">
                   <Package className="w-10 h-10 mx-auto mb-2 opacity-30" />
                   <p className="text-xs">Nenhum romaneio registrado</p>
@@ -260,7 +346,16 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
             </h3>
 
             <div className="max-h-[440px] overflow-y-auto">
-              {entregas.length > 0 ? (
+              {entregasKpi === 'loading' && (
+                <p className="text-sm text-slate-500 animate-pulse py-6 text-center">Carregando entregas…</p>
+              )}
+              {entregasKpi === 'error' && (
+                <p className="text-sm text-red-600 py-6 text-center">Erro ≠ histórico vazio</p>
+              )}
+              {entregasKpi === 'unavailable' && (
+                <p className="text-sm text-amber-700 py-6 text-center">Contexto necessário</p>
+              )}
+              {entregasKpi === 'ready' && entregas.length > 0 && (
                 <div className="space-y-2">
                   {entregas.slice(0, 15).map((entrega) => (
                     <div key={entrega.id} className="p-3 bg-slate-50 rounded-lg text-sm">
@@ -309,7 +404,8 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
                     </div>
                   ))}
                 </div>
-              ) : (
+              )}
+              {entregasKpi === 'ready' && entregas.length === 0 && (
                 <div className="text-center py-12 text-slate-500">
                   <Truck className="w-16 h-16 mx-auto mb-4 opacity-30" />
                   <p className="text-sm">Nenhuma entrega registrada</p>
