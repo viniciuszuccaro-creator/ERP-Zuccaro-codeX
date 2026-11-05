@@ -11,7 +11,19 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  isAssinaturaModalScopeCurrent,
+  assertAssinaturaModalContext,
+  assertAssinaturaModalDocumento,
+  buildAssinaturaModalCampoContrato,
+  buildAssinaturaModalCampoPedido,
+  resolveAssinaturaModalEntity,
+} from "./assinaturaEletronicaModalScope";
 
+/** Persistência Contrato/Pedido via updateInContext (não entities.update unscoped). */
 export default function AssinaturaEletronicaModal({ 
   isOpen, 
   onClose, 
@@ -20,13 +32,22 @@ export default function AssinaturaEletronicaModal({
   onAssinado
 }) {
   const { toast } = useToast();
+  const { updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  };
   const canvasRef = useRef(null);
   const [assinando, setAssinando] = useState(false);
   const [assinado, setAssinado] = useState(false);
   const [desenhando, setDesenhando] = useState(false);
   const [assinaturaVazia, setAssinaturaVazia] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-
   const [dadosAssinatura, setDadosAssinatura] = useState({
     nome_completo: "",
     cpf: "",
@@ -221,6 +242,9 @@ export default function AssinaturaEletronicaModal({
 
     try {
       setAssinando(true);
+      assertAssinaturaModalContext(groupId, empresaId);
+      const documentoId = assertAssinaturaModalDocumento(documento, tipo);
+      const scopeExpected = readActorAndSession();
 
       // Obter assinatura em base64
       const assinaturaImagem = obterAssinaturaBase64();
@@ -241,29 +265,15 @@ export default function AssinaturaEletronicaModal({
       // Simular upload da assinatura
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Atualizar documento com assinatura
-      let campoAssinatura = {};
-      
-      if (tipo === "contrato") {
-        campoAssinatura = {
-          assinado: true,
-          data_assinatura: new Date().toISOString().split('T')[0],
-          assinatura_digital: assinatura,
-          status: documento.status === "Aguardando Assinatura" ? "Vigente" : documento.status
-        };
-      } else if (tipo === "pedido") {
-        campoAssinatura = {
-          assinado_cliente: true,
-          data_assinatura_cliente: new Date().toISOString(),
-          assinatura_cliente: assinatura
-        };
-      }
+      const campoAssinatura = tipo === "contrato"
+        ? buildAssinaturaModalCampoContrato(documento, assinatura)
+        : buildAssinaturaModalCampoPedido(assinatura);
+      await updateInContext(resolveAssinaturaModalEntity(tipo), documentoId, campoAssinatura);
 
-      // Atualizar no banco
-      if (tipo === "contrato") {
-        await base44.entities.Contrato.update(documento.id, campoAssinatura);
-      } else if (tipo === "pedido") {
-        await base44.entities.Pedido.update(documento.id, campoAssinatura);
+      if (!isAssinaturaModalScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw Object.assign(new Error("ASSINATURA_MODAL_STALE_SCOPE"), {
+          code: "ASSINATURA_MODAL_STALE_SCOPE",
+        });
       }
 
       setAssinado(true);
@@ -288,7 +298,6 @@ export default function AssinaturaEletronicaModal({
       setAssinando(false);
     }
   };
-
   // Baixar comprovante
   const baixarComprovante = () => {
     const canvas = canvasRef.current;
