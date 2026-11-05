@@ -1,3 +1,16 @@
+## CURSOR — StatusOrigemPedido100 escopo multiempresa (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-status-origem-scope-392b` |
+| **Base** | #401 tip `b888b2c00` |
+| **Delta** | StatusOrigemPedido100 · filterInContext + KPI fail-closed (erro≠0; % nulo se indisponível) |
+| **Testes** | `tests/cadastros-status-origem-scope.test.js` |
+| **Paralelos** | #511–#513 CI SUCCESS |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 · merge/deploy · dados reais |
+
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
