@@ -1,3 +1,6 @@
+## CURSOR — #577 LiveMap CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `5c2e722ef` SUCCESS. Lote #566–#577 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — LiveMap escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/expedicao-livemap-scope-392b` ← #401.
 - filterInContext Entrega; STALE_SCOPE. Testes 2 PASS.
