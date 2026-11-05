@@ -1,7 +1,8 @@
 ## CURSOR — CentroOperacaoForm escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/cadastros-centro-operacao-scope-392b` ← #401.
-- Responsável: Colaborador escopado; indisponível ≠ lista vazia silenciosa.
-- Paralelos #511–#515. Sem FF #401. Homolog BLOCKED.
+- Branch `cursor/cadastros-centro-operacao-scope-392b` = #516 ← #401 tip `b888b2c00`.
+- Tip `e7816afa1`: pin JSX Select/residual + identidade transforms autorizadas; Colaborador via filterInContext.
+- Paralelos #511–#515 CI SUCCESS. Sem FF #401. Homolog BLOCKED.
+- Próximo indep.: próximo form unscoped / uniqueKey (fora checkout #516).
 
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
