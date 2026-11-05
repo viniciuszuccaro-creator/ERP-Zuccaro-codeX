@@ -1,10 +1,10 @@
-## CURSOR — #535 DashboardCorporativo Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #535 DashboardCorporativo CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#533** | multiempresa | **CI SUCCESS** |
-| #534 ImportadorProdutos | `93726dd7a` | aguarda CI |
-| #535 DashboardCorporativo | (este) | fail-closed scopeFilter; sem list unscoped |
+| **#522–#535** | multiempresa | **CI SUCCESS** |
+| #535 DashboardCorporativo | `447e819a0` | **CI SUCCESS** 6/6 |
+| #536 BitolasDisponiveis | `d44ce5f3b` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
