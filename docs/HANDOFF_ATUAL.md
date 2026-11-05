@@ -1,3 +1,6 @@
+## CURSOR — #570 RateioMultiempresa CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `c8e9ee5ea` SUCCESS. Lote #566–#570 verde. Homolog BLOCKED. FF #401 aguarda Codex. Próximo: PainelDinamicoCliente.
+
 ## CURSOR — #570 Rateio pin/contrato (2026-11-05 America/Sao_Paulo)
 - Pin stage43 + environment InContext. Testes 22 PASS. #566–#569 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
 

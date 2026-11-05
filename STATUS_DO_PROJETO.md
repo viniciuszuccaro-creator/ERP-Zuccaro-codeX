@@ -1,3 +1,12 @@
+## CURSOR — #570 RateioMultiempresa CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #570 `c8e9ee5ea` — frontend + backend + compose **SUCCESS** |
+| **Código** | create/update InContext; fail-closed Grupo; STALE_SCOPE; pin stage43 |
+| **Fila** | #566–#570 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — #570 Rateio pin/contrato (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
