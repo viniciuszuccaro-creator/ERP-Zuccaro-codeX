@@ -1,3 +1,8 @@
+## CURSOR — #544 consumidor provas (2026-11-05 America/Sao_Paulo)
+- Branch `cursor/cadastros-param-origem-consumer-proof-392b` ← #544 `ebadfcad5`.
+- Prova consumidor: KPI `…`/`Erro`/`—` ≠ zero; Tab+Gerenciador com cache/STALE/contagemIndisponivel.
+- #545/#546 CI SUCCESS; #547/#548 CI em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+
 ## CURSOR — #544 ParamOrigem cache CI SUCCESS (2026-11-05 America/Sao_Paulo)
 - Tip `ebadfcad5` **CI SUCCESS** 6/6. Cache ator/sessão; KPI≠zero; STALE_SCOPE.
 - #543/#545 verdes. FF #401 aguarda Codex. Homolog BLOCKED.

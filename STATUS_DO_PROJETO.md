@@ -1,3 +1,16 @@
+## CURSOR — #544 consumidor: provas loading/erro/cache/stale (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-param-origem-consumer-proof-392b` ← tip #544 `ebadfcad5` |
+| **Prova** | `tests/cadastros-param-origem-cache-scope.test.js` **5 PASS** — KPI label `…`/`Erro`/`—` ≠ zero; consumidores `ParametrosOrigemPedidoTab` + `GerenciadorCanaisOrigem` com queryKey/STALE_SCOPE/`contagemIndisponivel` |
+| **#545** | tip `9f3fe0100` já cobre consumidores #536–#539 (cache + sem `initialData: []`) · **CI SUCCESS** |
+| **#546/#547** | CI SUCCESS · AplicadorTabela / BadgeOrigem |
+| **#548** | PainelEntregas tip `c3876181c` — CI em curso |
+| **FF #401** | aguarda aceite Codex (PR publicada ≠ na candidata) |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — #544 ParamOrigem cache/KPI CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
