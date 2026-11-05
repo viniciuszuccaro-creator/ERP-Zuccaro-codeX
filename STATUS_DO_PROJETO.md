@@ -1,11 +1,9 @@
-## CURSOR — #531 ConciliacaoBancaria Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #531 ConciliacaoBancaria CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#528** | multiempresa | **CI SUCCESS** |
-| #529 ContasReceber | `399dab3bb` | pin remainder; aguarda CI |
-| #530 ContasPagar | `972b66ce5` | pin remainder; aguarda CI |
-| #531 ConciliacaoBancaria | (este) | filterInContext + fail-closed listas |
+| **#522–#531** | multiempresa | **CI SUCCESS** (#531 tip `da30a9a85`) |
+| #532 DuplicarMesAnterior | `eceb26ee4` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
