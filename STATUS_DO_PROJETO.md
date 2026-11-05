@@ -1,3 +1,15 @@
+## CURSOR — #536–#539 cache/KPI follow-up (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-fechamento-cache-392b` ← #401 `b888b2c00` |
+| **Delta** | Bitolas + Monitoramento + Dashboard/Widget Fechamento: queryKey ator/sessão/Grupo/Empresa; remove `initialData` vazio; STALE_SCOPE; KPI loading/erro≠zero |
+| **Pin** | `monitoramentoCanaisScopeEdits` regenerado — primitive-ui **27 PASS** |
+| **Provas** | fechamento-cache + scopes **8 PASS** |
+| **Overlap** | consolida lacuna residual de #536–#539 (PRs verdes); FF seletivo após aceite |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
