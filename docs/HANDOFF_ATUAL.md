@@ -1,6 +1,6 @@
-## CURSOR — #538 DashboardFechamentoPedidos Empresa scope (2026-11-05 America/Sao_Paulo)
-- Pedido/MovimentacaoEstoque/ContaReceber/Entrega via filterInContext; fail-closed; erro≠zero.
-- #536 SUCCESS; #537 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #538 DashboardFechamentoPedidos CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `6f580bf1b` **CI SUCCESS** 6/6. Pedido/Mov/CR/Entrega filterInContext.
+- #537 Monitoramento fix CRLF `b26c8d1bb` em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
