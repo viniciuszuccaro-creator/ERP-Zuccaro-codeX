@@ -1,11 +1,9 @@
-## CURSOR — #532 DuplicarMesAnterior Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #532 DuplicarMesAnterior CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#528** | multiempresa | **CI SUCCESS** |
-| #529/#530 | ContasReceber/Pagar pin | frontend PASS / CI em curso |
-| #531 ConciliacaoBancaria | `da30a9a85` | aguarda CI |
-| #532 DuplicarMesAnterior | (este) | filterInContext + createInContext |
+| **#522–#532** | multiempresa | **CI SUCCESS** (#532 tip `eceb26ee4`) |
+| #533 ConfigFiscalAutomatica | `e3331f418` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 

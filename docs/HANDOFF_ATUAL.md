@@ -1,6 +1,6 @@
-## CURSOR — #532 DuplicarMesAnterior Empresa scope (2026-11-05 America/Sao_Paulo)
-- Empresa/Config/ContaPagar via filterInContext; createInContext (sem bulkCreate unscoped); empresa obrigatória.
-- Pin financialUiBoundary: reverse autorizado. #531 Conciliacao em CI. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #532 DuplicarMesAnterior CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `eceb26ee4` — frontend+backend+compose PASS. filterInContext + createInContext; empresa obrigatória.
+- #522–#532 verdes. #533 ConfigFiscal em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 
