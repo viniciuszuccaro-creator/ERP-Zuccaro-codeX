@@ -1,3 +1,14 @@
+## CURSOR — ArmadoPadraoTab bitolas escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-armado-padrao-scope-392b` ← #401 `b888b2c00` |
+| **Código** | Produto `eh_bitola` via filterInContext; sem `= []`; STALE_SCOPE; loading/erro ≠ zero |
+| **Testes** | `tests/comercial-armado-padrao-scope.test.js` **4 PASS** |
+| **Paralelo** | #554 SUCCESS · #555–#557 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
