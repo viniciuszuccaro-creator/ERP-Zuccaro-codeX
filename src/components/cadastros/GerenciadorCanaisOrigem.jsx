@@ -1,19 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { usePermissions } from "@/components/lib/usePermissions";
+import usePermissions from "@/components/lib/usePermissions";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 import { 
   Activity, 
   CheckCircle, 
-  XCircle, 
   AlertTriangle,
   Settings,
-  TrendingUp,
   Bolt,
   Shield,
   Download
@@ -26,27 +23,64 @@ import ExportButton from "@/components/ExportButton";
  * Ativação/desativação rápida + insights + controle de acesso
  */
 export default function GerenciadorCanaisOrigem({ windowMode = false }) {
-  const { user } = usePermissions();
+  const { user, canEdit, hasPermission, isAdmin } = usePermissions();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const podeVer = hasPermission('Cadastros', 'ParametroOrigemPedido', 'visualizar')
+    || hasPermission('Cadastros', 'Canais de Origem', 'visualizar')
+    || hasPermission('Cadastros', null, 'visualizar');
+  const podeEditar = canEdit('Cadastros', 'ParametroOrigemPedido')
+    || canEdit('Cadastros', 'Canais de Origem')
+    || canEdit('Cadastros', null)
+    || (typeof isAdmin === 'function' ? isAdmin() : false)
+    || user?.role === 'admin';
 
-  const { data: parametros = [], isLoading } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: [],
+  const {
+    data: parametros,
+    isLoading,
+    isError,
+    error,
+    isFetching,
+  } = useQuery({
+    queryKey: ['parametros-origem-pedido', contextKey],
+    queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'canal', 500),
+    enabled: contextoValido && podeVer,
   });
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-ultimos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 200),
-    initialData: [],
+  const {
+    data: pedidos,
+    isError: isErrorPedidos,
+  } = useQuery({
+    queryKey: ['pedidos-ultimos', contextKey],
+    queryFn: () => filterInContext(
+      'Pedido',
+      empresaId ? { empresa_id: empresaId } : {},
+      '-created_date',
+      200,
+    ),
+    enabled: contextoValido && podeVer,
   });
+
+  const lista = Array.isArray(parametros) ? parametros : [];
+  const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
+  const contagemIndisponivel = !contextoValido || !podeVer || isLoading || isError || (isFetching && parametros === undefined);
 
   const toggleAtivo = useMutation({
-    mutationFn: ({ id, ativo }) => 
-      base44.entities.ParametroOrigemPedido.update(id, { ativo }),
+    mutationFn: async ({ id, ativo }) => {
+      if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de alterar status.');
+      if (!podeEditar) throw new Error('Sem permissão para alterar status de canais.');
+      return updateInContext('ParametroOrigemPedido', id, { ativo });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['parametros-origem-pedido'] });
       toast.success('Status atualizado!');
+    },
+    onError: (err) => {
+      toast.error(err?.message || 'Falha ao atualizar status do canal.');
     },
   });
 
@@ -66,7 +100,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
 
     const origemEsperada = origemMap[param.canal] || param.canal;
     
-    const pedidosCanal = pedidos.filter(p => {
+    const pedidosCanal = listaPedidos.filter(p => {
       const origemPedido = origemMap[p.origem_pedido] || p.origem_pedido;
       return origemPedido === param.canal || p.origem_pedido === origemEsperada;
     });
@@ -104,8 +138,32 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
     );
   }
 
-  const canaisAtivos = parametros.filter(p => p.ativo);
-  const canaisInativos = parametros.filter(p => !p.ativo);
+  if (!contextoValido || !podeVer) {
+    return (
+      <div className={containerClass}>
+        <Alert className="border-slate-300 bg-slate-50">
+          <AlertDescription className="text-sm text-slate-700">
+            Contexto de grupo/empresa e permissão são obrigatórios. Contagens indisponíveis não são zero.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className={containerClass}>
+        <Alert className="border-red-300 bg-red-50">
+          <AlertDescription className="text-sm text-red-700">
+            Falha ao carregar canais: {error?.message || 'erro desconhecido'}. Contagens não são zero.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const canaisAtivos = lista.filter(p => p.ativo);
+  const kpiLabel = (value) => (contagemIndisponivel || isErrorPedidos ? '—' : value);
 
   return (
     <div className={containerClass}>
@@ -117,7 +175,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Total Canais</p>
-                <p className="text-2xl font-bold text-blue-600">{parametros.length}</p>
+                <p className="text-2xl font-bold text-blue-600" data-testid="gerenciador-origem-kpi-total">{kpiLabel(lista.length)}</p>
               </div>
               <Settings className="w-8 h-8 text-blue-600 opacity-20" />
             </div>
@@ -129,7 +187,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Canais Ativos</p>
-                <p className="text-2xl font-bold text-green-600">{canaisAtivos.length}</p>
+                <p className="text-2xl font-bold text-green-600" data-testid="gerenciador-origem-kpi-ativos">{kpiLabel(canaisAtivos.length)}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-600 opacity-20" />
             </div>
@@ -141,8 +199,8 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Automáticos</p>
-                <p className="text-2xl font-bold text-sky-600">
-                  {parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length}
+                <p className="text-2xl font-bold text-sky-600" data-testid="gerenciador-origem-kpi-auto">
+                  {kpiLabel(lista.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length)}
                 </p>
               </div>
               <Bolt className="w-8 h-8 text-sky-600 opacity-20" />
@@ -155,7 +213,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Pedidos (últimos 200)</p>
-                <p className="text-2xl font-bold text-orange-600">{pedidos.length}</p>
+                <p className="text-2xl font-bold text-orange-600" data-testid="gerenciador-origem-kpi-pedidos">{kpiLabel(listaPedidos.length)}</p>
               </div>
               <Activity className="w-8 h-8 text-orange-600 opacity-20" />
             </div>
@@ -164,11 +222,11 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
       </div>
 
       {/* Alerta se nenhum canal ativo */}
-      {canaisAtivos.length === 0 && (
+      {!contagemIndisponivel && canaisAtivos.length === 0 && (
         <Alert className="mb-6 border-orange-300 bg-orange-50">
           <AlertTriangle className="w-4 h-4 text-orange-600" />
           <AlertDescription className="text-sm text-orange-800">
-            ⚠️ Nenhum canal está ativo! Ative pelo menos um canal para começar a rastrear origens de pedidos.
+            Nenhum canal está ativo. Ative pelo menos um canal para começar a rastrear origens de pedidos.
           </AlertDescription>
         </Alert>
       )}
@@ -181,7 +239,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             Canais Configurados
           </h3>
           <ExportButton
-            data={parametros.map(p => calcularMetricas(p))}
+            data={lista.map(p => ({ ...calcularMetricas(p), canal: p.canal, nome: p.nome, ativo: p.ativo }))}
             filename="canais-origem-status"
             className="bg-green-600 hover:bg-green-700"
           >
@@ -191,7 +249,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
         </div>
 
         <div className="space-y-2">
-          {parametros.map((param) => {
+          {lista.map((param) => {
             const metricas = calcularMetricas(param);
             const temAtividade = metricas.ultimos7dias > 0;
 
@@ -271,15 +329,16 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
                       </div>
                       
                       <Switch
-                        checked={param.ativo}
+                        checked={!!param.ativo}
                         onCheckedChange={(checked) => {
-                          if (user?.role !== 'admin') {
-                            toast.error('Apenas administradores podem alterar status de canais');
+                          if (!podeEditar) {
+                            toast.error('Sem permissão para alterar status de canais');
                             return;
                           }
                           toggleAtivo.mutate({ id: param.id, ativo: checked });
                         }}
-                        disabled={toggleAtivo.isPending}
+                        disabled={toggleAtivo.isPending || !podeEditar}
+                        data-permission="Cadastros.ParametroOrigemPedido.editar"
                       />
                     </div>
                   </div>
@@ -303,7 +362,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             const insights = [];
 
             // Insight: Canais sem atividade
-            const canaisSemAtividade = parametros.filter(p => {
+            const canaisSemAtividade = lista.filter(p => {
               const metricas = calcularMetricas(p);
               return p.ativo && metricas.ultimos7dias === 0;
             });
@@ -311,12 +370,12 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             if (canaisSemAtividade.length > 0) {
               insights.push({
                 tipo: 'warning',
-                texto: `⚠️ ${canaisSemAtividade.length} canal(is) ativo(s) sem pedidos nos últimos 7 dias - considere desativar ou investigar`
+                texto: `${canaisSemAtividade.length} canal(is) ativo(s) sem pedidos nos últimos 7 dias — considere desativar ou investigar`
               });
             }
 
             // Insight: Potencial de automação
-            const canaisManuaisComVolume = parametros.filter(p => {
+            const canaisManuaisComVolume = lista.filter(p => {
               const metricas = calcularMetricas(p);
               return p.tipo_criacao === 'Manual' && metricas.totalPedidos > 10;
             });
@@ -324,36 +383,36 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             if (canaisManuaisComVolume.length > 0) {
               insights.push({
                 tipo: 'info',
-                texto: `🤖 ${canaisManuaisComVolume.length} canal(is) manual(is) com alto volume - considere implementar automação (tipo Misto)`
+                texto: `${canaisManuaisComVolume.length} canal(is) manual(is) com alto volume — considere implementar automação (tipo Misto)`
               });
             }
 
             // Insight: Taxa de automação
-            const canaisAutomaticos = parametros.filter(p => 
+            const canaisAutomaticos = lista.filter(p =>
               p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto'
             ).length;
-            const taxaAutomacao = parametros.length > 0 
-              ? (canaisAutomaticos / parametros.length) * 100 
+            const taxaAutomacao = lista.length > 0
+              ? (canaisAutomaticos / lista.length) * 100
               : 0;
 
             if (taxaAutomacao < 50) {
               insights.push({
                 tipo: 'info',
-                texto: `📊 Taxa de automação: ${taxaAutomacao.toFixed(0)}% - você pode aumentar convertendo canais manuais em automáticos`
+                texto: `Taxa de automação: ${taxaAutomacao.toFixed(0)}% — você pode aumentar convertendo canais manuais em automáticos`
               });
             } else {
               insights.push({
                 tipo: 'success',
-                texto: `✅ Taxa de automação: ${taxaAutomacao.toFixed(0)}% - excelente nível de automação!`
+                texto: `Taxa de automação: ${taxaAutomacao.toFixed(0)}% — excelente nível de automação`
               });
             }
 
             // Insight: Canais bloqueados
-            const canaisBloqueados = parametros.filter(p => p.bloquear_edicao_automatico).length;
-            if (canaisBloqueados === parametros.length && parametros.length > 0) {
+            const canaisBloqueados = lista.filter(p => p.bloquear_edicao_automatico).length;
+            if (canaisBloqueados === lista.length && lista.length > 0) {
               insights.push({
                 tipo: 'success',
-                texto: `🔒 100% dos canais automáticos estão com bloqueio ativo - máxima segurança de rastreamento`
+                texto: `100% dos canais estão com bloqueio de edição automática ativo`
               });
             }
 
@@ -376,24 +435,22 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
       </Card>
 
       {/* Controle de Acesso */}
-      {user?.role === 'admin' && (
-        <Card className="mt-6 border-slate-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Shield className="w-5 h-5 text-slate-600" />
-              Controle de Acesso
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert>
-              <AlertDescription className="text-sm text-slate-600">
-                👤 Apenas <strong>Administradores</strong> podem ativar/desativar canais e modificar configurações de origem.
-                Vendedores podem apenas visualizar os canais configurados.
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      )}
+      <Card className="mt-6 border-slate-300">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Shield className="w-5 h-5 text-slate-600" />
+            Controle de Acesso
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert>
+            <AlertDescription className="text-sm text-slate-600">
+              Ativar/desativar canais exige permissão de edição em Cadastros / Parâmetro de Origem (ou perfil admin).
+              Sem permissão, o toggle permanece desabilitado (fail-closed).
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
 
     </div>
   );

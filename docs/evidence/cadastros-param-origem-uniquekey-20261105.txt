@@ -1,0 +1,27 @@
+Pacote: ParametrosOrigemPedidoTab + GerenciadorCanaisOrigem
+Branch: cursor/cadastros-param-origem-uniquekey-392b
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Data: 2026-11-05 America/Sao_Paulo
+
+Delta:
+- openWindow canônico (Component, props, options) + uniqueKey create/edit
+  create: cadastros-param-origem-create-[groupId,empresaId]
+  edit:   cadastros-param-origem-edit-{id}
+- listagem/KPI via filterInContext (sem base44.list unscoped)
+- Gerenciador: filterInContext + updateInContext; toggle fail-closed por RBAC
+- erro/carregamento/sem contexto ≠ zero registros
+
+Provas comportamentais (tests/cadastros-param-origem-uniquekey.test.js):
+- clique repetido / mesmo escopo reusa
+- empresas distintas não colidem
+- edit por id ≠ create ≠ outro registro
+- fechar libera reabertura
+- WindowManager canônico permanece dono
+
+Fora deste pacote:
+- FF seletivo em #401 (aguarda aceite Codex)
+- rename/UI Central de Vendas360
+- homolog 100 clientes (API/tela BLOCKED)
+- dados reais em commit/CI
+
+CI tip SUCCESS: 26f96d1b0 · 6/6 (2026-11-05 America/Sao_Paulo)

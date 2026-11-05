@@ -1,3 +1,49 @@
+## CURSOR — ParametrosOrigem uniqueKey CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-param-origem-uniquekey-392b` = **#511** |
+| **Tip CI SUCCESS** | `26f96d1b0` · 6/6 |
+| **Delta** | ParametrosOrigemPedidoTab + GerenciadorCanaisOrigem · uniqueKey + filterInContext/updateInContext · KPI erro≠0 |
+| **Paralelos** | #507–#510 · #512 RepresentantesTab |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
+
+## CURSOR — ParametrosOrigem uniqueKey + escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-param-origem-uniquekey-392b` |
+| **Base** | #401 `cursor/composicao-397-342-prep-392b` tip `b888b2c00` |
+| **Delta** | `ParametrosOrigemPedidoTab` API canônica + uniqueKey create/edit; listagem `filterInContext`; KPI fail-closed (erro≠0); `GerenciadorCanaisOrigem` escopo + `updateInContext` |
+| **Testes** | `tests/cadastros-param-origem-uniquekey.test.js` |
+| **Paralelos CI SUCCESS** | #507 ImportacaoProduto · #508 PainelCliente · #509 PedidosEntrega · #510 RelatorioPedidosPorOrigem |
+| **Central360** | inventário apenas (abaixo); sem rename/UI |
+| **Homolog 100** | BLOCKED (API/tela) |
+| Classificação | navegação + multiempresa · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite · dados reais |
+
+### Central360 — inventário de reuso (sem antecipar desenho)
+
+Decisão do proprietário: Orçamentos → “Central de Vendas360”. Host atual: `OrcamentosTab` (`Comercial.jsx` section `orcamento`). **Não** criar central paralela; **não** reorganizar visual amplo antes da aprovação.
+
+| Área | Componentes/contratos existentes a reutilizar | Lacuna real |
+|------|-----------------------------------------------|-------------|
+| Host / fluxo | `OrcamentosTab`, status `EM_ABERTO`→validações→converter pedido (`ENTREGA`/`RETIRADA`), `Voltar` = navegação (não estorno) | Rename/rótulo e layout Central360 pendentes de desenho |
+| Cliente360 | `CentralCliente360Panel`, `DetalhesCliente`, navegação CRM | Wire visual na Central360 sob desenho |
+| Histórico | `HistoricoProdutosCliente` / wires Comercial360 existentes | Confirmar superfície na nova composição |
+| Canais / origem | `ParametrosOrigemPedidoTab`, `ParametroOrigemPedidoForm`, `DashboardCanaisOrigem`, `GerenciadorCanaisOrigem`, `useOrigemPedido` | Pacote uniqueKey+escopo neste PR; consumidores comerciais ainda com queryKey sem contextKey |
+| Estoque | `ValidadorEstoquePedido` no convert | Já no fluxo de conversão |
+| Financeiro / pagamentos | condição/tabela no orçamento; CR/caixa em pedidos | Não copiar regras para o frontend; lacuna de superfície unificada |
+| Produção / entrega / mapa | pós-pedido (Expedição/Produção existentes) | Integração visual na Central360 = desenho |
+| Fiscal / documentos | impressão/PDF/share já no detalhe do orçamento | Emissão NF só na empresa (Regra-Mãe) |
+| Proposal | `proposalMode` (prévia sintética sem gravação) | Manter separado da operação real |
+
+**Próximo:** CI deste tip · `@codex review` · indep. cadastros reopen residual · FF seletiva #488–#510+#este após aceite · homolog 100 quando liberada.
+
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
