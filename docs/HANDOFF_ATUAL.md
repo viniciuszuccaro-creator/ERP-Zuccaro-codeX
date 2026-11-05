@@ -1,3 +1,7 @@
+## CURSOR — #566 ValidacaoCredito CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `61e77a47f` CI SUCCESS (frontend/backend/compose).
+- get/filter InContext; KPI ≠ zerado. #567–#569 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — ValidacaoCredito escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/financeiro-validacao-credito-scope-392b` ← #401.
 - getInContext Cliente + filterInContext Pedido; KPI ≠ zerado; STALE_SCOPE. Testes 5 PASS.

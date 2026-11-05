@@ -1,3 +1,14 @@
+## CURSOR — #566 ValidacaoCredito CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #566 `61e77a47f` — frontend + backend + compose **SUCCESS** |
+| **Código** | getInContext Cliente; filterInContext Pedido; KPI ≠ crédito zerado; STALE_SCOPE |
+| **Testes** | `financeiro-validacao-credito-scope` **5 PASS** (CI) |
+| **Fila** | #567–#569 em CI · #543/#554–#565 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR publicada ≠ recurso na candidata |
+
 ## CURSOR — ValidacaoCredito escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
