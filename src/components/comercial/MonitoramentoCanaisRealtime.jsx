@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Activity, TrendingUp, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 
 /**
  * V21.6 - Monitoramento em Tempo Real de Pedidos por Canal
@@ -13,26 +13,34 @@ import { motion, AnimatePresence } from "framer-motion";
  */
 export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = true }) {
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(new Date());
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaCtx = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaCtx);
 
-  // Buscar pedidos em tempo real
-  const { data: pedidos = [], refetch } = useQuery({
-    queryKey: ['pedidos-realtime', empresaId],
-    queryFn: () => {
-      if (empresaId) {
-        return base44.entities.Pedido.filter({ empresa_id: empresaId });
-      }
-      return base44.entities.Pedido.list('-created_date', 100);
-    },
+  // Escopo multiempresa: Pedido e ParametroOrigemPedido via filterInContext (sem list unscoped).
+  const { data: pedidos = [], refetch, isError: isErrorPedidosCanal } = useQuery({
+    queryKey: ['pedidos-realtime', groupId, empresaCtx],
+    queryFn: () => filterInContext(
+      'Pedido',
+      empresaCtx ? { empresa_id: empresaCtx } : {},
+      '-created_date',
+      100
+    ),
+    enabled: contextoValido,
     initialData: [],
     refetchInterval: autoRefresh ? 30000 : false // 30 segundos
   });
 
   // Buscar parâmetros
-  const { data: parametros = [] } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
+  const { data: parametros = [], isError: isErrorParamsCanal } = useQuery({
+    queryKey: ['parametros-origem-pedido', groupId, empresaCtx],
+    queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'nome', 200),
+    enabled: contextoValido,
     initialData: []
   });
+
+  const mastersCanalIndisponiveis = isErrorPedidosCanal || isErrorParamsCanal;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -93,6 +101,16 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
 
   const tempoDesdeUltimaAtualizacao = Math.floor((agora.getTime() - ultimaAtualizacao.getTime()) / 1000);
 
+  if (!contextoValido) {
+    return (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione grupo ou empresa para monitorar canais.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-cyan-300 bg-gradient-to-r from-cyan-50 to-blue-50">
       <CardHeader className="px-6 flex flex-col space-y-1.5">
@@ -113,6 +131,9 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
         </div>
       </CardHeader>
       <CardContent>
+        {mastersCanalIndisponiveis && (
+          <p className="text-xs text-slate-500 mb-2">Canais indisponíveis (erro de carga ≠ zero).</p>
+        )}
         
         {/* Resumo Últimos 30min */}
         <div className="bg-white/60 mb-1 px-3 rounded-lg flex items-center gap-4 border border-cyan-200">
