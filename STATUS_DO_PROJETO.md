@@ -1,3 +1,13 @@
+## CURSOR — #568 typecheck fix (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | tip `228ceacc9` frontend FAIL: TS2339 `Error.code` em SimularPagamentoModal |
+| **Fix** | `Object.assign(new Error(...), { code })` + regenera hunk financialUiBoundary |
+| **Testes** | boundaries **26 PASS** · scope **4 PASS** · typecheck limpo |
+| **Fila** | #566/#567/#569 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #568 SimularPagamento pin fix (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

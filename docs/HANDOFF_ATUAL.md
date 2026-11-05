@@ -1,3 +1,7 @@
+## CURSOR — #568 typecheck fix (2026-11-05 America/Sao_Paulo)
+- TS2339 Error.code → Object.assign; pin financialUiBoundary regenerado. #566/#567/#569 SUCCESS.
+- Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — #568 SimularPagamento pin fix (2026-11-05 America/Sao_Paulo)
 - Renova hunk financialUiBoundary (new→baseline + invalidations). Pin stage50 preservado.
 - #567 SUCCESS. #566/#569 em CI. Homolog BLOCKED. FF #401 aguarda Codex.

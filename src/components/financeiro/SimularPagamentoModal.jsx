@@ -59,13 +59,11 @@ export default function SimularPagamentoModal({ isOpen, onClose, contaReceber })
       setProcessando(true);
 
       if (!scopeResolved.ok) {
-        const err = new Error(
+        throw Object.assign(new Error(
           scopeResolved.reason === 'GROUP_MISMATCH' || scopeResolved.reason === 'EMPRESA_MISMATCH'
             ? 'Conta fora do contexto de Grupo/Empresa atual'
             : 'Contexto de Grupo/Empresa necessário para simular pagamento',
-        );
-        err.code = 'SIMULAR_PAGAMENTO_SCOPE_BLOCKED';
-        throw err;
+        ), { code: 'SIMULAR_PAGAMENTO_SCOPE_BLOCKED' });
       }
       if (!isSimularPagamentoScopeCurrent(scopeExpected, readSimularPagamentoActorAndSession())) {
         throw new Error('SIMULAR_PAGAMENTO_STALE_SCOPE');
