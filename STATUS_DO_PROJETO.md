@@ -1,3 +1,22 @@
+## CURSOR — #575 AssinaturaEletronicaForm CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #575 `6ed785308` — frontend + backend + compose **SUCCESS** |
+| **Código** | updateInContext Contrato/Pedido; fail-closed; STALE_SCOPE |
+| **Fila** | #566–#575 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — AssinaturaEletronicaForm escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/assinatura-form-scope-392b` ← #401 `b888b2c00` |
+| **Código** | updateInContext Contrato/Pedido; fail-closed; STALE_SCOPE |
+| **Testes** | `assinatura-eletronica-form-scope` **2 PASS** |
+| **Fila** | #566–#574 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
