@@ -10,7 +10,6 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { Loader2, User, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -24,7 +23,7 @@ const sanitizeEmail = (value) => sanitizeText(value, 180).toLowerCase();
 export default function UsuarioForm({ usuario, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || usuario;
   const { canCreate, canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "Usuario") || canCreate("Sistema", "Usuario") || canCreate("Sistema", "Controle de Acesso") || canCreate("Cadastros", null);
@@ -39,9 +38,12 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
     ativo: true
   }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
-  const { data: perfis = [] } = useQuery({
+  // Escopo multiempresa: PerfilAcesso via filterInContext (padrão CentralPerfis/UsuariosTab).
+  // Sem list unscoped; enabled exige contexto; erro ≠ zero KPI fabricado.
+  const { data: perfis = [], isError: isErrorPerfis } = useQuery({
     queryKey: ['perfis-acesso', groupId, empresaAtual?.id],
-    queryFn: () => base44.entities.PerfilAcesso.list(),
+    queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 500),
+    enabled: contextoValido,
   });
 
   const schema = z.object({
@@ -131,6 +133,11 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
             ))}
           </SelectContent>
         </Select>
+        {isErrorPerfis && (
+          <p className="text-xs text-slate-500 mt-1">
+            Contagem de perfis indisponível (erro de carga ≠ zero).
+          </p>
+        )}
       </div>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
