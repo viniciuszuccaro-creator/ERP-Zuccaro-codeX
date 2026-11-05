@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,11 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, DollarSign, Calculator } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Comissão Form - Adaptado para Window Mode
  */
 export default function ComissaoForm({ comissao, onSubmit, windowMode = false }) {
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+
   const [formData, setFormData] = useState(comissao || {
     vendedor: '',
     vendedor_id: '',
@@ -27,9 +32,11 @@ export default function ComissaoForm({ comissao, onSubmit, windowMode = false })
     observacoes: ''
   });
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+  // Escopo multiempresa: Pedido via filterInContext (sem list unscoped).
+  const { data: pedidos = [], isError: isErrorPedidosComissao } = useQuery({
+    queryKey: ['pedidos-comissao', groupId, empresaId],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const handlePedidoChange = (pedidoId) => {
@@ -64,6 +71,18 @@ export default function ComissaoForm({ comissao, onSubmit, windowMode = false })
     onSubmit(formData);
   };
 
+  if (!contextoValido) {
+    const blocked = (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione grupo ou empresa para registrar comissão.
+        </CardContent>
+      </Card>
+    );
+    if (windowMode) return <div className="w-full h-full bg-white p-6">{blocked}</div>;
+    return blocked;
+  }
+
   const content = (
     <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
@@ -72,6 +91,9 @@ export default function ComissaoForm({ comissao, onSubmit, windowMode = false })
             <DollarSign className="w-5 h-5 text-green-600" />
             Comissão de Vendas
           </h3>
+          {isErrorPedidosComissao && (
+            <p className="text-xs text-slate-500">Pedidos indisponíveis (erro de carga ≠ zero).</p>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
@@ -80,6 +102,7 @@ export default function ComissaoForm({ comissao, onSubmit, windowMode = false })
                 value={formData.pedido_id}
                 onValueChange={handlePedidoChange}
                 required
+                disabled={isErrorPedidosComissao}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
