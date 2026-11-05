@@ -31,7 +31,7 @@ function slice(source, node) {
   return source.slice(node.getStart(), node.getEnd());
 }
 
-/** useEffect cujo callback referencia contatosHydrateEpochRef + Cliente.get */
+/** useEffect cujo callback referencia contatosHydrateEpochRef + getInContext("Cliente") */
 function extractHydrateEffectSource(painelSource) {
   const tree = parseJsx('PainelDinamicoCliente.jsx', painelSource);
   let found = null;
@@ -42,7 +42,10 @@ function extractHydrateEffectSource(painelSource) {
       && node.arguments[0]
     ) {
       const argText = slice(painelSource, node.arguments[0]);
-      if (argText.includes('contatosHydrateEpochRef') && argText.includes('Cliente.get')) {
+      if (
+        argText.includes('contatosHydrateEpochRef')
+        && (argText.includes('getInContext') || argText.includes('Cliente.get'))
+      ) {
         found = argText;
       }
     }
@@ -124,7 +127,7 @@ function compile(expr) {
 
 /**
  * Harness: executa o useEffect real de hidratação + bump de epoch do persistContatosPainel real.
- * deps (base44/setState/seed) são stubs; a LÓGICA de epoch/cancel vem do source AST.
+ * deps (getInContext/setState/seed) são stubs; a LÓGICA de epoch/cancel vem do source AST.
  */
 function createRealHydrateHarness(painelSource) {
   const effectSrc = extractHydrateEffectSource(painelSource);
@@ -154,6 +157,9 @@ function createRealHydrateHarness(painelSource) {
       },
     },
   };
+  const getInContext = async (_entity, id) => getImpl(id);
+  const isPainelDinamicoScopeCurrent = () => true;
+  const readPainelActorAndSession = () => ({ actorId: 'actor-1', sessionKey: 'sess-1' });
 
   const contatosHydrateStatus = { current: 'pending' };
   const setContatosHydrateStatus = (v) => { contatosHydrateStatus.current = v; };
@@ -166,6 +172,11 @@ function createRealHydrateHarness(painelSource) {
     seedContatosPainelDraft,
     usesContatosScalarHttpContract,
     base44,
+    getInContext,
+    contextoValido: true,
+    scopeExpected: { actorId: 'actor-1', sessionKey: 'sess-1' },
+    isPainelDinamicoScopeCurrent,
+    readPainelActorAndSession,
     // P1 #4417291529: efeito usa painelAberto = isOpen || windowMode
     painelAberto: true,
     isOpen: true,
