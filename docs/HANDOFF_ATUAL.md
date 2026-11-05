@@ -1,6 +1,7 @@
-## CURSOR — #530 ContasPagar Empresa scope (2026-11-05 America/Sao_Paulo)
-- ContasPagarTab: Empresa via filterInContext; erro≠zero. Espelho de #529 no lado pagar.
-- #528 CI SUCCESS. #527/#529 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #530 ContasPagar pin remainder (2026-11-05 America/Sao_Paulo)
+- ContasPagarTab: Empresa via filterInContext; erro≠zero.
+- Pin: reverse hunks em `financialBatchPermissionRemainder` (espelho #529).
+- #522–#528 SUCCESS; #529 `399dab3bb` aguarda CI. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
