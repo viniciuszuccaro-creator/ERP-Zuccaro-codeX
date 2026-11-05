@@ -10,9 +10,21 @@ import {
   Shield, Clock, User, MapPin, Smartphone, Monitor
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  isAssinaturaFormScopeCurrent,
+  assertAssinaturaFormContext,
+  assertAssinaturaFormDocumento,
+  buildAssinaturaFormCampoContrato,
+  buildAssinaturaFormCampoPedido,
+  resolveAssinaturaFormEntity,
+} from "./assinaturaEletronicaFormScope";
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ * Persistência Contrato/Pedido via updateInContext (não entities.update unscoped).
  */
 export default function AssinaturaEletronicaForm({ 
   documento, 
@@ -21,13 +33,22 @@ export default function AssinaturaEletronicaForm({
   windowMode = false
 }) {
   const { toast } = useToast();
+  const { updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  };
   const canvasRef = useRef(null);
   const [assinando, setAssinando] = useState(false);
   const [assinado, setAssinado] = useState(false);
   const [desenhando, setDesenhando] = useState(false);
   const [assinaturaVazia, setAssinaturaVazia] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-
   const [dadosAssinatura, setDadosAssinatura] = useState({
     nome_completo: "",
     cpf: "",
@@ -172,6 +193,9 @@ export default function AssinaturaEletronicaForm({
 
     try {
       setAssinando(true);
+      assertAssinaturaFormContext(groupId, empresaId);
+      const documentoId = assertAssinaturaFormDocumento(documento, tipo);
+      const scopeExpected = readActorAndSession();
 
       const assinaturaImagem = obterAssinaturaBase64();
       const assinatura = {
@@ -188,23 +212,15 @@ export default function AssinaturaEletronicaForm({
 
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      let campoAssinatura = {};
-      
-      if (tipo === "contrato") {
-        campoAssinatura = {
-          assinado: true,
-          data_assinatura: new Date().toISOString().split('T')[0],
-          assinatura_digital: assinatura,
-          status: documento.status === "Aguardando Assinatura" ? "Vigente" : documento.status
-        };
-        await base44.entities.Contrato.update(documento.id, campoAssinatura);
-      } else if (tipo === "pedido") {
-        campoAssinatura = {
-          assinado_cliente: true,
-          data_assinatura_cliente: new Date().toISOString(),
-          assinatura_cliente: assinatura
-        };
-        await base44.entities.Pedido.update(documento.id, campoAssinatura);
+      const campoAssinatura = tipo === "contrato"
+        ? buildAssinaturaFormCampoContrato(documento, assinatura)
+        : buildAssinaturaFormCampoPedido(assinatura);
+      await updateInContext(resolveAssinaturaFormEntity(tipo), documentoId, campoAssinatura);
+
+      if (!isAssinaturaFormScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw Object.assign(new Error("ASSINATURA_FORM_STALE_SCOPE"), {
+          code: "ASSINATURA_FORM_STALE_SCOPE",
+        });
       }
 
       setAssinado(true);
@@ -219,7 +235,6 @@ export default function AssinaturaEletronicaForm({
       setAssinando(false);
     }
   };
-
   const baixarComprovante = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
