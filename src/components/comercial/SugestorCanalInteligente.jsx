@@ -1,38 +1,132 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Sparkles, TrendingUp, Target, Zap } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildSugestorCanalQueryKey,
+  isSugestorCanalScopeCurrent,
+  resolveSugestorCanalKpiState,
+} from "./sugestorCanalScope";
+
+function readSugestorActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.6 - IA que sugere o melhor canal de venda por cliente
- * Baseado no histórico de compras e preferências
+ * Baseado no histórico de compras e preferências.
+ *
+ * Escopo multiempresa: Pedido/Cliente via filterInContext (sem filter/list unscoped).
+ * Sem initialData vazio; loading/erro ≠ zero pedidos (não some o widget silenciosamente).
  */
 export default function SugestorCanalInteligente({ clienteId, className = "" }) {
-  
-  // Buscar histórico do cliente
-  const { data: pedidosCliente = [] } = useQuery({
-    queryKey: ['pedidos-cliente', clienteId],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteId }),
-    initialData: [],
-    enabled: !!clienteId
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readSugestorActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+  const scopeInput = { clienteId, groupId, empresaId, actorId, sessionKey };
+
+  const {
+    data: pedidosCliente,
+    isLoading: isLoadingPedidos,
+    isError: isErrorPedidos,
+    isFetching: isFetchingPedidos,
+  } = useQuery({
+    queryKey: buildSugestorCanalQueryKey('sugestor-canal-pedidos', scopeInput),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Pedido',
+        { cliente_id: clienteId },
+        '-created_date',
+        200,
+      );
+      if (signal?.aborted) {
+        const err = new Error('SUGESTOR_CANAL_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isSugestorCanalScopeCurrent(scopeExpected, readSugestorActorAndSession())) {
+        throw new Error('SUGESTOR_CANAL_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: Boolean(clienteId) && contextoValido,
   });
 
-  // Buscar uso do portal
-  const { data: cliente } = useQuery({
-    queryKey: ['cliente', clienteId],
-    queryFn: () => base44.entities.Cliente.get(clienteId),
-    enabled: !!clienteId
+  const {
+    data: cliente,
+    isLoading: isLoadingCliente,
+    isError: isErrorCliente,
+    isFetching: isFetchingCliente,
+  } = useQuery({
+    queryKey: buildSugestorCanalQueryKey('sugestor-canal-cliente', scopeInput),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Cliente', { id: clienteId }, undefined, 1);
+      if (signal?.aborted) {
+        const err = new Error('SUGESTOR_CANAL_CLIENTE_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isSugestorCanalScopeCurrent(scopeExpected, readSugestorActorAndSession())) {
+        throw new Error('SUGESTOR_CANAL_CLIENTE_STALE_SCOPE');
+      }
+      return Array.isArray(rows) ? rows[0] || null : null;
+    },
+    enabled: Boolean(clienteId) && contextoValido,
   });
 
-  if (!clienteId || pedidosCliente.length === 0) {
+  const kpiState = resolveSugestorCanalKpiState({
+    contextoValido,
+    clienteId,
+    isLoading: isLoadingPedidos || isLoadingCliente,
+    isError: isErrorPedidos || isErrorCliente,
+    isFetching: isFetchingPedidos || isFetchingCliente,
+    dataDefined: pedidosCliente !== undefined,
+  });
+
+  if (kpiState === 'unavailable') {
+    return null;
+  }
+
+  if (kpiState === 'loading') {
+    return (
+      <Card className={`border-slate-200 bg-slate-50 ${className}`}>
+        <CardContent className="p-4 text-sm text-slate-600">
+          Analisando canais do cliente…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (kpiState === 'error') {
+    return (
+      <Card className={`border-red-300 bg-red-50 ${className}`}>
+        <CardContent className="p-4 text-sm text-red-900">
+          Não foi possível analisar canais (erro ≠ zero pedidos).
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const lista = Array.isArray(pedidosCliente) ? pedidosCliente : [];
+  if (lista.length === 0) {
     return null;
   }
 
   // Analisar padrões
-  const analise = pedidosCliente.reduce((acc, p) => {
+  const analise = lista.reduce((acc, p) => {
     const origem = p.origem_pedido || 'Manual';
     if (!acc[origem]) {
       acc[origem] = { count: 0, valorTotal: 0, ultimaCompra: null };
@@ -55,18 +149,14 @@ export default function SugestorCanalInteligente({ clienteId, className = "" }) 
 
   // Análise de uso do portal
   const usaPortal = cliente?.uso_portal?.total_acessos > 0;
-  const canalSugerido = usaPortal && !canalPreferido?.[0]?.includes('Portal') 
-    ? 'Portal' 
-    : canalPreferido?.[0];
 
   // Gerar recomendação IA
   const gerarRecomendacao = () => {
     const insights = [];
 
-    // Insight 1: Canal preferido
     if (canalPreferido) {
       const [canal, dados] = canalPreferido;
-      const percentual = (dados.count / pedidosCliente.length) * 100;
+      const percentual = (dados.count / lista.length) * 100;
       
       insights.push({
         tipo: 'preferencia',
@@ -78,7 +168,6 @@ export default function SugestorCanalInteligente({ clienteId, className = "" }) 
       });
     }
 
-    // Insight 2: Canal mais rentável
     if (canalRentavel && canalRentavel[0] !== canalPreferido?.[0]) {
       const [canal, dados] = canalRentavel;
       const ticketMedio = dados.valorTotal / dados.count;
@@ -93,7 +182,6 @@ export default function SugestorCanalInteligente({ clienteId, className = "" }) 
       });
     }
 
-    // Insight 3: Oportunidade Portal
     if (usaPortal && !canalPreferido?.[0]?.includes('Portal')) {
       insights.push({
         tipo: 'oportunidade',
@@ -105,7 +193,6 @@ export default function SugestorCanalInteligente({ clienteId, className = "" }) 
       });
     }
 
-    // Insight 4: Multi-canal
     const canaisUsados = Object.keys(analise).length;
     if (canaisUsados >= 3) {
       insights.push({
@@ -181,7 +268,7 @@ export default function SugestorCanalInteligente({ clienteId, className = "" }) 
         })}
 
         <div className="text-xs text-slate-500 text-center pt-2 border-t">
-          🤖 Análise baseada em {pedidosCliente.length} pedido(s) do cliente
+          🤖 Análise baseada em {lista.length} pedido(s) do cliente
         </div>
       </CardContent>
     </Card>

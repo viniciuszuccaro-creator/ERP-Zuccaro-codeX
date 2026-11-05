@@ -1,3 +1,14 @@
+## CURSOR — SugestorCanalInteligente escopo/KPI (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-sugestor-canal-scope-392b` ← #401 |
+| **Código** | Remove `initialData:[]` + Pedido.filter/Cliente.get; `filterInContext`; cache; STALE; loading/erro ≠ zero |
+| **Testes** | `tests/comercial-sugestor-canal-scope.test.js` **4 PASS** |
+| **Fila** | #549–#551 SUCCESS · #550 tip `57750ad65` · #552 UK em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
