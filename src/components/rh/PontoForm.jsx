@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +9,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Save, Clock, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Ponto Form - Adaptado para Window Mode
  */
 export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
   const [formData, setFormData] = useState(ponto || {
     colaborador_id: '',
     colaborador_nome: '',
@@ -30,9 +33,12 @@ export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
     horas_extras: 0
   });
 
-  const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list(),
+  // Escopo multiempresa: Colaborador via filterInContext (padrão DashboardRHRealtime).
+  // Sem list unscoped; enabled exige contexto; erro ≠ zero KPI.
+  const { data: colaboradores = [], isError: isErrorColaboradores } = useQuery({
+    queryKey: ['colaboradores-ponto-form', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500),
+    enabled: contextoValido,
   });
 
   const calcularHoras = () => {
@@ -89,9 +95,10 @@ export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
                   });
                 }}
                 required
+                disabled={!contextoValido}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder={contextoValido ? "Selecione..." : "Selecione grupo/empresa"} />
                 </SelectTrigger>
                 <SelectContent>
                   {colaboradores.filter(c => c.status === 'Ativo').map(c => (
@@ -101,6 +108,11 @@ export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
                   ))}
                 </SelectContent>
               </Select>
+              {isErrorColaboradores && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Contagem de colaboradores indisponível (erro de carga ≠ zero).
+                </p>
+              )}
             </div>
 
             <div>

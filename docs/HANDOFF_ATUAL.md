@@ -1,4 +1,15 @@
+## CURSOR — #521 PontoForm pin date-arithmetic (2026-11-05 America/Sao_Paulo)
+- CI frontend falhou: `PontoForm.jsx: exact timestamp edits preserve all remaining executable code`.
+- Causa: escopo Colaborador (filterInContext) mudou emit hash; hunks `.getTime()` intactos.
+- Fix: renova `emittedBeforeSha256` → `93a9bd979a051cbc04d0fa44449179fc20271e8749172ec9e5809fe388633cfe`.
+- Sem FF #401 / merge. Homolog BLOCKED.
+
+## CURSOR — #516–#520 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Scope #516–#518 + uniqueKey #519–#520 verdes. FF #401 aguarda Codex. Homolog BLOCKED.
+- Próximo: PontoForm Colaborador via filterInContext.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
+
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
 - Sem merge main/deploy. Backend produto/`src/api` intactos vs `34c4c0ee` (só fixture CI PG16 seletiva autorizada).

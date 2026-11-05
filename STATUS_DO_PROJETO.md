@@ -1,4 +1,28 @@
+## CURSOR — #521 PontoForm pin date-arithmetic (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / branch** | #521 `cursor/rh-ponto-form-scope-392b` |
+| **Causa CI** | `date-arithmetic-contracts` — SHA emitido PontoForm após filterInContext |
+| **Fix** | Renova `emittedBeforeSha256` em `date-arithmetic-stage21.json`; hunks `.getTime()` intactos |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| **Próximo** | CI deste tip · sem FF #401 |
+
+## CURSOR — fila #516–#520 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| #516–#518 scope | `36ca28040` / `e39bb88d4` / `b10c99a38` | CI SUCCESS |
+| #519 Gateways UK | `433d599d4` | CI SUCCESS |
+| #520 Despesas UK | `8c7209292` | CI SUCCESS |
+| #511–#515 | — | CI SUCCESS |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+| **Próximo** | PontoForm Colaborador scope | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
