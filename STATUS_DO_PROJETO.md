@@ -1,3 +1,14 @@
+## CURSOR — #524 ConfiguracaoCobranca scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| #516–#521 | — | CI SUCCESS |
+| #522 Biometrico | `349171419` | pin; aguarda CI |
+| #523 MonitoramentoRH | `5a6514e4a` | aguarda CI |
+| #524 ConfiguracaoCobranca | (este) | filter/create/update InContext |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
