@@ -1,3 +1,16 @@
+## CURSOR — FilialForm escopo multiempresa (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-filial-form-scope-392b` |
+| **Base** | #401 tip `b888b2c00` |
+| **Delta** | FilialForm · Empresas/matrizes via `filterInContext`; select fail-closed; reopen/sky preservados |
+| **Testes** | `tests/cadastros-filial-form-scope.test.js` |
+| **Paralelos** | #511–#514 CI SUCCESS |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 · merge/deploy · dados reais |
+
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
