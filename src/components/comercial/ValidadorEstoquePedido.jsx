@@ -1,11 +1,27 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { resolveErpBackendMode } from "@/api/runtimeBackend";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Box, Package } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  buildValidadorEstoqueProdutosQueryKey,
+  isValidadorEstoqueScopeCurrent,
+  resolveValidadorEstoqueProdutosKpiState,
+} from "./validadorEstoquePedidoScope";
+
+function readValidadorEstoqueActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" ? session.actorId.trim() : "";
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * Chave canônica de demanda: produto + unidade (id|sigla|legado).
@@ -197,6 +213,10 @@ export function conversionStockOkFromAvailability(state) {
  *
  * Verifica disponibilidade de estoque antes de aprovar/converter pedido.
  * Exibe alertas de itens sem estoque líquido (atual − reservado).
+ *
+ * Escopo multiempresa: Produto via filterInContext (sem filter unscoped).
+ * Loading/erro ≠ zero produtos / “estoque insuficiente”. STALE_SCOPE em resposta tardia.
+ * HTTP advisory preservado (master ≠ saldo operacional).
  * @param {{ pedido?: object|null, orcamento?: object|null, empresaId?: string|null, onAvailabilityChange?: ((state: object) => void)|null }} [props]
  */
 export default function ValidadorEstoquePedido({
@@ -215,15 +235,51 @@ export default function ValidadorEstoquePedido({
   const httpMode = resolveErpBackendMode() === 'http';
   const fonteLocalAutoritativa = !httpMode;
 
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-estoque-validacao', empresaId, fonteLocalAutoritativa ? 'local' : 'http-advisory'],
-    queryFn: () => (
-      fonteLocalAutoritativa
-        ? base44.entities.Produto.filter({ empresa_id: empresaId })
-        : Promise.resolve([])
-    ),
-    enabled: !!empresaId && fonteLocalAutoritativa,
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaEscopo = empresaId || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readValidadorEstoqueActorAndSession();
+  const contextoValido = Boolean(empresaEscopo);
+  const scopeExpected = { actorId, sessionKey };
+  const fonteKey = fonteLocalAutoritativa ? 'local' : 'http-advisory';
+
+  const {
+    data: produtosData,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildValidadorEstoqueProdutosQueryKey({
+      groupId,
+      empresaId: empresaEscopo,
+      actorId,
+      sessionKey,
+      fonte: fonteKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Produto', {}, '-updated_date', 500);
+      if (signal?.aborted) {
+        const err = new Error('VALIDADOR_ESTOQUE_PRODUTOS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isValidadorEstoqueScopeCurrent(scopeExpected, readValidadorEstoqueActorAndSession())) {
+        throw new Error('VALIDADOR_ESTOQUE_PRODUTOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido && fonteLocalAutoritativa,
   });
+
+  const kpiState = resolveValidadorEstoqueProdutosKpiState({
+    contextoValido,
+    fonteLocalAutoritativa,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: produtosData !== undefined,
+  });
+  const produtos = kpiState === 'ready' && Array.isArray(produtosData) ? produtosData : [];
 
   const verificacoes = avaliarDisponibilidadeLinhasEstoque(itens, produtos, { fonteLocalAutoritativa });
   const {
@@ -236,8 +292,25 @@ export default function ValidadorEstoquePedido({
     unidadeIncompativel,
   } = resumoDisponibilidadeEstoque(verificacoes);
 
+  const catalogoPronto = !fonteLocalAutoritativa || kpiState === 'ready';
+
   React.useEffect(() => {
     if (typeof onAvailabilityChange !== 'function') return;
+    // Loading/erro/contexto: fail-closed (ready false) — não inventar “estoque insuficiente” por catálogo vazio.
+    if (!contextoValido || (fonteLocalAutoritativa && kpiState !== 'ready')) {
+      onAvailabilityChange({
+        todosDisponiveis: false,
+        algumIndisponivel: false,
+        vazio,
+        fontePronta: false,
+        fonteIndisponivel: true,
+        saldoDesconhecido: false,
+        unidadeIncompativel: false,
+        ready: false,
+        kpiState,
+      });
+      return;
+    }
     onAvailabilityChange({
       todosDisponiveis,
       algumIndisponivel,
@@ -246,15 +319,29 @@ export default function ValidadorEstoquePedido({
       fonteIndisponivel,
       saldoDesconhecido,
       unidadeIncompativel,
+      kpiState,
       // Insuficiência conhecida prevalece sobre advisory (Codex P2 mixed-doc #406).
-      ready: Boolean(empresaId) && conversionStockOkFromAvailability({
+      ready: Boolean(empresaEscopo) && conversionStockOkFromAvailability({
         vazio,
         algumIndisponivel,
         fontePronta,
         todosDisponiveis,
       }),
     });
-  }, [todosDisponiveis, algumIndisponivel, vazio, fontePronta, fonteIndisponivel, saldoDesconhecido, unidadeIncompativel, empresaId, onAvailabilityChange]);
+  }, [
+    todosDisponiveis,
+    algumIndisponivel,
+    vazio,
+    fontePronta,
+    fonteIndisponivel,
+    saldoDesconhecido,
+    unidadeIncompativel,
+    empresaEscopo,
+    contextoValido,
+    fonteLocalAutoritativa,
+    kpiState,
+    onAvailabilityChange,
+  ]);
 
   if (vazio) {
     return (
@@ -267,7 +354,7 @@ export default function ValidadorEstoquePedido({
     );
   }
 
-  if (!empresaId) {
+  if (!contextoValido || kpiState === 'unavailable') {
     return (
       <Card className="border-amber-200 bg-amber-50">
         <CardContent className="p-4 text-sm text-amber-900">
@@ -275,6 +362,30 @@ export default function ValidadorEstoquePedido({
         </CardContent>
       </Card>
     );
+  }
+
+  if (fonteLocalAutoritativa && kpiState === 'loading') {
+    return (
+      <Card className="border-slate-200 bg-slate-50">
+        <CardContent className="p-4 text-sm text-slate-600">
+          Carregando produtos para validação de estoque…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (fonteLocalAutoritativa && kpiState === 'error') {
+    return (
+      <Card className="border-red-300 bg-red-50">
+        <CardContent className="p-4 text-sm text-red-700">
+          Não foi possível carregar produtos (erro ≠ zero produtos / estoque insuficiente).
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!catalogoPronto) {
+    return null;
   }
 
   const cardTone = fonteIndisponivel
