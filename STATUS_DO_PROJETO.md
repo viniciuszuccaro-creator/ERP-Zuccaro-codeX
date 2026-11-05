@@ -1,3 +1,22 @@
+## CURSOR — #576 AssinaturaEletronicaModal CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #576 `400fa2180` — frontend + backend + compose **SUCCESS** |
+| **Código** | updateInContext Contrato/Pedido; fail-closed; STALE_SCOPE |
+| **Fila** | #566–#576 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — AssinaturaEletronicaModal escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/assinatura-modal-scope-392b` ← #401 `b888b2c00` |
+| **Código** | updateInContext Contrato/Pedido; fail-closed; STALE_SCOPE |
+| **Testes** | `assinatura-eletronica-modal-scope` **2 PASS** |
+| **Fila** | #566–#575 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
