@@ -1,3 +1,14 @@
+## CURSOR — CopiarUltimoPedido escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-copiar-ultimo-pedido-scope-392b` ← #401 `b888b2c00` |
+| **Código** | Pedido via `filterInContext`; exclui Cancelado local; loading/erro ≠ ausência; STALE_SCOPE |
+| **Testes** | `tests/comercial-copiar-ultimo-pedido-scope.test.js` **5 PASS** |
+| **Paralelo** | #554/#555 em CI · #549–#553 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

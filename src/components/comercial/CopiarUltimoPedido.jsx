@@ -2,32 +2,112 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Clock, Package, DollarSign } from "lucide-react";
+import { Copy, Clock, Package } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildCopiarUltimoPedidoQueryKey,
+  isCopiarUltimoPedidoScopeCurrent,
+  resolveCopiarUltimoPedidoKpiState,
+  pickUltimoPedidoNaoCancelado,
+} from "./copiarUltimoPedidoScope";
+
+function readCopiarUltimoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1.2 - WINDOW MODE READY
  * Convertido para suportar window mode independente
+ *
+ * Escopo multiempresa: Pedido via filterInContext (sem filter unscoped / $ne).
+ * Loading/erro ≠ ausência de último pedido. STALE_SCOPE em resposta tardia.
  */
 export default function CopiarUltimoPedido({ clienteId, onCopiar, windowMode = false }) {
   const { toast } = useToast();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readCopiarUltimoActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
 
-  const { data: ultimoPedido } = useQuery({
-    queryKey: ['ultimoPedidoCliente', clienteId],
-    queryFn: async () => {
-      if (!clienteId) return null;
-      const pedidos = await base44.entities.Pedido.filter(
-        { cliente_id: clienteId, status: { $ne: 'Cancelado' } },
+  const {
+    data: ultimoPedido,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildCopiarUltimoPedidoQueryKey({
+      clienteId, groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      // Sem $ne no filtro server: lote recente + exclusão Cancelado local (contrato legado).
+      const rows = await filterInContext(
+        'Pedido',
+        { cliente_id: clienteId },
         '-data_pedido',
-        1
+        20,
       );
-      return pedidos[0] || null;
+      if (signal?.aborted) {
+        const err = new Error('COPIAR_ULTIMO_PEDIDO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isCopiarUltimoPedidoScopeCurrent(scopeExpected, readCopiarUltimoActorAndSession())) {
+        throw new Error('COPIAR_ULTIMO_PEDIDO_STALE_SCOPE');
+      }
+      return pickUltimoPedidoNaoCancelado(rows);
     },
-    enabled: !!clienteId
+    enabled: Boolean(clienteId) && contextoValido,
   });
+
+  const kpiState = resolveCopiarUltimoPedidoKpiState({
+    contextoValido,
+    clienteId,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: ultimoPedido !== undefined,
+  });
+
+  if (kpiState === 'unavailable') {
+    return null;
+  }
+
+  if (kpiState === 'loading') {
+    const loading = (
+      <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : ''}>
+        <Card className="border-slate-200 bg-slate-50">
+          <CardContent className="p-4 text-sm text-slate-600">
+            Carregando último pedido do cliente…
+          </CardContent>
+        </Card>
+      </div>
+    );
+    return loading;
+  }
+
+  if (kpiState === 'error') {
+    return (
+      <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : ''}>
+        <Card className="border-red-300 bg-red-50">
+          <CardContent className="p-4 text-sm text-red-700">
+            Não foi possível carregar o último pedido (erro ≠ ausência).
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!ultimoPedido) return null;
 
