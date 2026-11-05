@@ -19,8 +19,12 @@ export function isHistoricoComunicacaoScopeCurrent(expected, live) {
 /**
  * Preserva o filtro legado: pedido via pedido_id OU referencia_id;
  * cliente via cliente_id quando sem pedido.
+ * @param {unknown} eventos
+ * @param {{ clienteId?: string|null, pedidoId?: string|null }|null|undefined} [filtros]
  */
-export function filterHistoricoComunicacaoEventos(eventos, { clienteId, pedidoId } = {}) {
+export function filterHistoricoComunicacaoEventos(eventos, filtros) {
+  const clienteId = filtros?.clienteId || null;
+  const pedidoId = filtros?.pedidoId || null;
   const rows = Array.isArray(eventos) ? eventos : [];
   if (pedidoId) {
     return rows.filter((e) => e?.referencia_id === pedidoId || e?.pedido_id === pedidoId);
