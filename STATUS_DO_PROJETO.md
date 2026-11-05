@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-widget-perfil-risco-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-widget-perfil-risco-scope-392b` = **#554** |
+| **Tip CI** | **`2c6882b95`** · **CI SUCCESS** 6/6 |
 | **Código** | `filterInContext('Cliente')` + queryKey ator/sessão + STALE_SCOPE; loading/erro ≠ ausência |
 | **Testes** | `tests/comercial-widget-perfil-risco-scope.test.js` **5 PASS** |
-| **Fila** | #549–#553 CI SUCCESS (paralelos) · FF #401 aguarda Codex |
+| **Fila** | #549–#553 SUCCESS · #555–#557 em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed · Central360 UI nova |
 
