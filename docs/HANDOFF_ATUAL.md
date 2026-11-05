@@ -1,7 +1,6 @@
 ## CURSOR — GerenciarEnderecosCliente escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-gerenciar-enderecos-scope-392b` ← #401.
-- filterInContext + updateInContext; KPI ≠ zero endereços. Testes 5 PASS.
-- #554–#556 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+- Tip `dbc46057f` **CI SUCCESS** 6/6 (#557). filterInContext + updateInContext; KPI ≠ zero endereços.
+- #554–#556 SUCCESS; #558/#559 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
