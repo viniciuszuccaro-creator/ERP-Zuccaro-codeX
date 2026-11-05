@@ -1,4 +1,37 @@
-## Continuidade vigente - Chrome comprovado; canal Auth HML pendente (2026-11-05)
+## Continuidade vigente - rede anterior ao TLS e revisao542 (2026-11-05)
+
+342d493e54f/CI6063 terminal SUCCESS conferidos;401b888 preservada. Desktop limpo
+antes do lote. Codespace encontrado INTERROMPIDO: uma retomada suportada, sem
+rebuild/outro ambiente. Checkout b5cb34e1 e .vscode/ novo intactos; sem executor
+correspondente observado. Nao atribuir interrupcao a custo/OOM sem evidencia.
+
+Diagnostico novo: DNS resolve Auth (A/AAAA) e DEV (A), mesmo IPv4; sem proxy
+HTTP/HTTPS/ALL no Codespace. Duas sondas IPv4 limitadas: Auth e controle DEV
+HTTP000/curl28; resolucao <1ms, TCP/TLS nao estabelecidos. SSH dedicado via
+config verified existente:255/timeout TCP antes de autenticar. Nao trocar chave.
+Console administrativo existente: ERR_CONNECTION_RESET. API Hostinger conectada,
+vps_firewall_list total0; firewall interno/listeners/causa de rede DESCONHECIDOS.
+Nao e prova de Auth invalido, firewall ausente, VPS parada ou necessidade de grants.
+Sem alteracao de rede, VPS, dados, perfil ou efeitos externos;100HML preservados.
+
+Revisao542/6516d5ed:4contraprovas AST da queryKey REAL + QueryClient REAL,0FAIL;
+mesmo Grupo/Empresa reutiliza cache entre atores/sessoes, outra Empresa separada.
+Omissao preexistente, nao regressao nova atribuida ao port. Parecer6667098325 pede
+negativa montada antes da composicao; nao prova HTTP/React montado. CI6153 ainda
+em execucao na leitura.511 HEAD6b39973a segue sem delta de runtime, nao repetir
+as seis contraprovas intactas. Pedido401/6662691819 ainda sem resposta posterior
+na timeline consultada: publicacao nao comprova recebimento/port pelo Cursor.
+
+Proxima acao: recuperar acesso ao Console da Web existente para inspecionar
+listeners e firewall interno SOMENTE leitura. Se tambem falhar ao proprietario,
+encaminhar os erros exatos ao suporte Hostinger antes de propor regra/tunel.
+API/Auth/Data HML e visao Grupo continuam gates separados; Empresa autorizada
+pode provar apenas seu escopo quando o canal voltar, sem vinculos artificiais.
+Fornecedor/produto: nao executar o bootstrap historico sintetico sobre HML CPA;
+envelope/RBAC correspondente deve preceder persistencia. Nenhum ensaio repetido.
+Lote documental; diff-check PASS, sem repeticao de suites intactas.
+
+## Historico - Chrome comprovado; canal Auth HML pendente (2026-11-05)
 
 7074fa8f publicado e SHA remoto conferido; CI6050 terminal SUCCESS no mesmo SHA.
 401 permanece b888, sem nova composicao nesta rodada.

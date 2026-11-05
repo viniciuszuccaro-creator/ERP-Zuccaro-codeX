@@ -1,4 +1,37 @@
-## Continuidade vigente - conexao recuperada e limite Auth comprovado (2026-11-05)
+## Continuidade vigente - diagnostico TCP e checkpoint preservado (2026-11-05)
+
+Base342d493e54f/CI6063 SUCCESS confirmada;401b888, sem nova composicao. Chrome
+suportado funcionando. Codespace estava interrompido; uma retomada, sem rebuild,
+sincronizacao ou nova copia. HEAD remoto do checkout continua b5cb34e1/.vscode
+novo, preservados; nao confundir esse checkout com o snapshot candidato b888.
+
+DNS Auth/DEV resolvidos e IPv4 comum, proxy HTTP/HTTPS/ALL ausente. Ensaios IPv4
+Auth health e controle DEV/session SEM credenciais: HTTP000/curl28, TCP/TLS0;
+resolucao <1ms, timeout conexao5s. SSH via ssh_config.verified existente: timeout
+TCP6s/255 antes de autenticar, nao defeito de chave/conta comprovado. Console
+administrativo do MESMO painel: ERR_CONNECTION_RESET. Conector Hostinger leu
+firewall_list total0, sem alterar nada. Nao equivale a ausencia de firewall interno.
+Nao repetir essas sondas sem mudanca; listeners/rota/filtro internos inconclusivos.
+Recibo privado auth-network-20261105.json fora do checkout; sem credenciais,
+IP bruto, URL de sessao ou dados de negocio. Nenhum PG/API iniciado/carga repetida.
+
+Intervencao minima: hPanel -> VPS srv1982741 -> Console da Web, verificar se abre
+o terminal existente; nao redefinir senha/reiniciar VPS. Se ERR_CONNECTION_RESET
+persistir, suporte Hostinger: informar VPS, horario do recibo, console resetado,
+DNS positivo, TCP443 e SSH22 expirados do Codespace, firewall API total0; solicitar
+diagnostico de conectividade/console, SEM autorizar reset, firewall ou exposicao.
+Quando recuperar: ss de443/8000, estado de proxy e firewall interno somente leitura;
+entao escolher canal ja suportado. Nenhum tunel/regra/grant novo autorizado por isso.
+
+542/6516d5ed: parecer6667098325,4checks AST real/QueryClient, sem React montado
+ou HTTP. Chave separa Empresa, nao ator/sessao; lacuna ja existia e permanece no
+caminho alterado. CI6153 nao terminal na leitura.5116b39973a continua apenas
+documental sobre26f96d1b, sem correcoes novas de runtime para testar.401 timeline
+nao mostrou resposta posterior ao pedido6662691819; nao presumir aceite Cursor.
+100HML preservados; API/Auth/Data, visao Grupo, fornecedores/produtos e Base44
+mantem os gates especificos abaixo. Nao criar outra central, harness ou candidata.
+
+## Historico - conexao recuperada e limite Auth comprovado (2026-11-05)
 
 Publicacao7074fa8f55bb4b1d7048a097f2886df0a95a4cf0 chegou ao remoto por push
 normal; CI6050 terminal SUCCESS no mesmo SHA. Sem force/reset/rules bypass.

@@ -1,6 +1,25 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - canal Chrome recuperado; Auth externo ainda sem prova (2026-11-05)
+## Estado vigente - bloqueio anterior ao TLS (2026-11-05)
+
+Chrome e Codespace retomados pelo controle suportado; checkout/WIP preservados.
+DNS Auth e DEV resolvem ao mesmo IPv4, Auth tambem tem AAAA; proxy ausente.
+Sondas IPv4 SEM credencial, TLS nao desligado: ambos HTTP000/curl28, resolucao
+<1ms e sem conexao TCP/TLS; timeout5s. SSH dedicado por config verified existente
+tambem expira TCP6s/255, ANTES da autenticacao. Nao reprovisionar conta/chave.
+Console da Web existente retorna ERR_CONNECTION_RESET; API Hostinger autenticada
+retornou firewall_list total0. Nao concluir que UFW/nftables ou filtros internos
+estao ausentes; listeners e causa ainda desconhecidos. Nenhuma mudanca aplicada.
+
+Retomada minima: recuperar Console da Web do MESMO VPS no hPanel. Se o erro
+persistir tambem ao proprietario, pedir suporte de conectividade/console com os
+resultados acima; nao autorizar restart, reset de credencial, regra ou exposicao.
+Com canal recuperado, inspecionar ss443/8000, proxy e firewall interno em leitura,
+antes de propor qualquer configuracao. Nao repetir curl/SSH identicos sem delta.
+Health Auth interno200 anterior continua prova separada; nao e sessao API HML.
+Sem READY ou URL real homologada, sem fallback ao operacional e sem novo IdP.
+
+## Historico - canal Chrome recuperado; Auth externo ainda sem prova (2026-11-05)
 
 Controle suportado Chrome Pessoa1 comprovou URL e terminal do MESMO Codespace.
 Nao reinstalar, reiniciar ou recriar ambiente para esse bloqueio encerrado.
