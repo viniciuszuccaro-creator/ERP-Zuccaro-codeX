@@ -1,3 +1,14 @@
+## CURSOR — DetalhesColaborador escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-detalhes-colaborador-scope-392b` ← #401 `b888b2c00` |
+| **Código** | Ponto/Ferias/OP filterInContext; Colaborador updateInContext; KPI ≠ zero |
+| **Testes** | `cadastros-detalhes-colaborador-scope` **5 PASS** |
+| **Fila** | #566–#568 em CI · SUCCESS anteriores · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

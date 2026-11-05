@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,11 +30,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildDetalhesColaboradorQueryKey,
+  isDetalhesColaboradorScopeCurrent,
+  resolveDetalhesColaboradorKpiState,
+  filterPontosDoMes,
+  sumHorasTrabalhadas,
+  sumHorasExtras,
+  filterFeriasAtivas,
+} from "./detalhesColaboradorScope";
+
+function readDetalhesColaboradorActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1.2 - WINDOW MODE READY
  * Convertido para suportar modo janela independente
  * SUB-DIALOGS internos mantidos para adicionar documentos (UX)
+ * Escopo multiempresa: Ponto/Ferias/OP via filterInContext; Colaborador.update InContext.
+ * Sem default []: loading/erro ≠ zero. STALE_SCOPE em resposta tardia.
  */
 export default function DetalhesColaborador({ colaborador, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("historico");
@@ -56,45 +78,120 @@ export default function DetalhesColaborador({ colaborador, onClose, windowMode =
 
   const queryClient = useQueryClient();
   const { canEdit, isAdmin } = usePermissions();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readDetalhesColaboradorActorAndSession();
+  const colaboradorId = colaborador?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+  const queriesEnabled = Boolean(colaboradorId) && contextoValido;
 
-  // Buscar dados relacionados
-  const { data: pontos = [] } = useQuery({
-    queryKey: ['pontos-colaborador', colaborador.id],
-    queryFn: () => base44.entities.Ponto.filter({ colaborador_id: colaborador.id }),
-    enabled: !!colaborador.id
+  const pontosQuery = useQuery({
+    queryKey: buildDetalhesColaboradorQueryKey('pontos-colaborador', {
+      groupId, empresaId, actorId, sessionKey, colaboradorId,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Ponto', { colaborador_id: colaboradorId });
+      if (signal?.aborted) {
+        const err = new Error('DETALHES_COLABORADOR_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isDetalhesColaboradorScopeCurrent(scopeExpected, readDetalhesColaboradorActorAndSession())) {
+        throw new Error('DETALHES_COLABORADOR_PONTOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: ferias = [] } = useQuery({
-    queryKey: ['ferias-colaborador', colaborador.id],
-    queryFn: () => base44.entities.Ferias.filter({ colaborador_id: colaborador.id }),
-    enabled: !!colaborador.id
+  const feriasQuery = useQuery({
+    queryKey: buildDetalhesColaboradorQueryKey('ferias-colaborador', {
+      groupId, empresaId, actorId, sessionKey, colaboradorId,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Ferias', { colaborador_id: colaboradorId });
+      if (signal?.aborted) {
+        const err = new Error('DETALHES_COLABORADOR_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isDetalhesColaboradorScopeCurrent(scopeExpected, readDetalhesColaboradorActorAndSession())) {
+        throw new Error('DETALHES_COLABORADOR_FERIAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ops-colaborador', colaborador.id],
-    queryFn: () => base44.entities.OrdemProducao.filter({ responsavel: colaborador.nome_completo }),
-    enabled: !!colaborador.id
+  const opsQuery = useQuery({
+    queryKey: buildDetalhesColaboradorQueryKey('ops-colaborador', {
+      groupId, empresaId, actorId, sessionKey, colaboradorId,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'OrdemProducao',
+        { responsavel: colaborador.nome_completo },
+      );
+      if (signal?.aborted) {
+        const err = new Error('DETALHES_COLABORADOR_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isDetalhesColaboradorScopeCurrent(scopeExpected, readDetalhesColaboradorActorAndSession())) {
+        throw new Error('DETALHES_COLABORADOR_OPS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
+
+  const pontosKpi = resolveDetalhesColaboradorKpiState({
+    contextoValido,
+    colaboradorId,
+    isLoading: pontosQuery.isLoading,
+    isError: pontosQuery.isError,
+    isFetching: pontosQuery.isFetching,
+    dataDefined: pontosQuery.data !== undefined,
+  });
+  const feriasKpi = resolveDetalhesColaboradorKpiState({
+    contextoValido,
+    colaboradorId,
+    isLoading: feriasQuery.isLoading,
+    isError: feriasQuery.isError,
+    isFetching: feriasQuery.isFetching,
+    dataDefined: feriasQuery.data !== undefined,
+  });
+  // opsQuery mantém contrato de leitura (consumidores futuros / invalidação); KPI não alimenta UI atual
+  void opsQuery;
 
   const updateColaboradorMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Colaborador.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      if (!contextoValido) {
+        const err = new Error('Contexto de Grupo/Empresa necessário para atualizar colaborador');
+        err.code = 'DETALHES_COLABORADOR_SCOPE_BLOCKED';
+        throw err;
+      }
+      if (!isDetalhesColaboradorScopeCurrent(scopeExpected, readDetalhesColaboradorActorAndSession())) {
+        throw new Error('DETALHES_COLABORADOR_UPDATE_STALE_SCOPE');
+      }
+      return updateInContext('Colaborador', id, data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['colaboradores'] });
       toast.success("Colaborador atualizado com sucesso!");
     },
   });
 
-  // Cálculos
-  const pontosMes = pontos.filter(p => {
-    const dataP = new Date(p.data);
-    const hoje = new Date();
-    return dataP.getMonth() === hoje.getMonth() && dataP.getFullYear() === hoje.getFullYear();
-  });
+  const pontos = pontosKpi === 'ready' && Array.isArray(pontosQuery.data) ? pontosQuery.data : [];
+  const ferias = feriasKpi === 'ready' && Array.isArray(feriasQuery.data) ? feriasQuery.data : [];
 
-  const totalHorasMes = pontosMes.reduce((sum, p) => sum + (p.horas_trabalhadas || 0), 0);
-  const totalHorasExtras = pontosMes.reduce((sum, p) => sum + (p.horas_extras || 0), 0);
-
-  const feriasAtivas = ferias.filter(f => f.status === 'Em Gozo' || f.status === 'Aprovado');
+  const pontosMes = pontosKpi === 'ready' ? filterPontosDoMes(pontos) : [];
+  const totalHorasMes = pontosKpi === 'ready' ? sumHorasTrabalhadas(pontosMes) : null;
+  const totalHorasExtras = pontosKpi === 'ready' ? sumHorasExtras(pontosMes) : null;
+  const feriasAtivas = feriasKpi === 'ready' ? filterFeriasAtivas(ferias) : [];
+  void feriasAtivas;
   const feriasDisponiveis = colaborador.dias_ferias_disponiveis || 30;
 
   const tempoEmpresa = colaborador.data_admissao 
@@ -157,18 +254,28 @@ export default function DetalhesColaborador({ colaborador, onClose, windowMode =
     'Desligado': 'bg-red-100 text-red-700'
   };
 
-  // IA - Análise de desempenho
+  // IA - Análise de desempenho (só com KPI ready — loading/erro ≠ zero horas)
   const getAnaliseDesempenho = () => {
+    if (pontosKpi !== 'ready') {
+      if (pontosKpi === 'loading') {
+        return { tipo: 'loading', mensagem: 'Carregando análise de ponto…', cor: 'text-slate-500' };
+      }
+      if (pontosKpi === 'error') {
+        return { tipo: 'error', mensagem: 'Não foi possível analisar ponto (erro ≠ zero horas).', cor: 'text-red-600' };
+      }
+      return { tipo: 'unavailable', mensagem: 'Contexto de Grupo/Empresa necessário para analisar ponto.', cor: 'text-amber-700' };
+    }
     const diasSemFalta = pontosMes.filter(p => p.horas_trabalhadas >= 8).length;
     const percentualPresenca = pontosMes.length > 0 ? (diasSemFalta / pontosMes.length) * 100 : 100;
+    const extras = totalHorasExtras || 0;
 
-    if (percentualPresenca >= 95 && totalHorasExtras < 20) {
+    if (percentualPresenca >= 95 && extras < 20) {
       return {
         tipo: 'excelente',
         mensagem: 'Colaborador com ótimo histórico de presença, sem atrasos nos últimos 90 dias, desempenho consistente.',
         cor: 'text-green-600'
       };
-    } else if (totalHorasExtras > 40) {
+    } else if (extras > 40) {
       return {
         tipo: 'alerta',
         mensagem: 'Atenção: Excesso de horas extras detectado. Considere revisar a carga de trabalho.',
@@ -257,13 +364,17 @@ export default function DetalhesColaborador({ colaborador, onClose, windowMode =
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-xs text-slate-600">Horas Mês</p>
-                    <p className="text-2xl font-bold text-blue-600">{totalHorasMes.toFixed(1)}h</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {pontosKpi === 'ready' ? `${totalHorasMes.toFixed(1)}h` : '—'}
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-xs text-slate-600">Horas Extras</p>
-                    <p className="text-2xl font-bold text-orange-600">{totalHorasExtras.toFixed(1)}h</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {pontosKpi === 'ready' ? `${totalHorasExtras.toFixed(1)}h` : '—'}
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
