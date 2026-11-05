@@ -103,7 +103,10 @@ test('JSON high-risk response now uses the same rule instead of ignoring its fie
  const h=handler({reply:JSON.stringify(response({risco:'Alto'}))});await h.run('entrada');assert.equal(h.commands[0].requer_aprovacao,true);
 });
 test('actual registration command still propagates storage failure without an invented success',async()=>{
- let calls=0;const fn=bind('registrarPontoMutation',{base44:{entities:{Ponto:{create:async()=>{calls++;throw Error('synthetic persistence failure');}}}}},false,true);
+ let calls=0;const fn=bind('registrarPontoMutation',{
+  contextoValido:true,
+  createInContext:async()=>{calls++;throw Error('synthetic persistence failure');},
+ },false,true);
  await assert.rejects(()=>fn(initial()),/synthetic persistence failure/);assert.equal(calls,1);
 });
 test('producer point payload reuses the actual registration command type and rejects wrong optional metadata in real TypeScript',()=>{
