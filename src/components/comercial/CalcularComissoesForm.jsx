@@ -6,19 +6,55 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calculator, Calendar } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  buildCalcularComissoesInvalidateKey,
+  isCalcularComissoesScopeCurrent,
+  filtrarPedidosPeriodoComissao,
+  agruparComissoesPorVendedor,
+} from './calcularComissoesScope';
 
+function readCalcularComissoesActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
+
+/**
+ * Cálculo de comissões por período.
+ * Escopo multiempresa: Comissao.create via createInContext (sem create unscoped).
+ * Fail-closed sem Grupo/Empresa. STALE_SCOPE se ator/sessão mudar mid-loop.
+ */
 export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = [] }) {
   const [periodo, setPeriodo] = useState('mes');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey } = readCalcularComissoesActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
 
   const handleCalcularComissoes = async () => {
     try {
+      if (!contextoValido) {
+        toast({
+          title: 'Contexto de Grupo/Empresa obrigatório para calcular comissões',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const hoje = new Date();
       let dataInicioCalculo = new Date();
       let dataFimCalculo = hoje;
@@ -35,39 +71,21 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
         dataFimCalculo = new Date(dataFim);
       }
 
-      const pedidosPeriodo = pedidos.filter(p => {
-        if (p.status !== 'Aprovado' && p.status !== 'Faturado' && p.status !== 'Entregue') return false;
-        const dataPedido = new Date(p.data_pedido);
-        return dataPedido >= dataInicioCalculo && dataPedido <= dataFimCalculo;
-      });
+      const pedidosPeriodo = filtrarPedidosPeriodoComissao(pedidos, dataInicioCalculo, dataFimCalculo);
 
       if (pedidosPeriodo.length === 0) {
         toast({ title: '⚠️ Nenhum pedido encontrado no período selecionado', variant: 'destructive' });
         return;
       }
 
-      const comissoesPorVendedor = {};
-      pedidosPeriodo.forEach(pedido => {
-        const vendedor = pedido.vendedor || 'Sem Vendedor';
-        if (!comissoesPorVendedor[vendedor]) {
-          comissoesPorVendedor[vendedor] = {
-            vendedor,
-            vendedor_id: pedido.vendedor_id,
-            pedidos: [],
-            total_vendas: 0
-          };
-        }
-        comissoesPorVendedor[vendedor].pedidos.push(pedido);
-        comissoesPorVendedor[vendedor].total_vendas += pedido.valor_total || 0;
-      });
+      const agrupadas = agruparComissoesPorVendedor(pedidosPeriodo, 5);
 
       let contador = 0;
-      for (const vendedor in comissoesPorVendedor) {
-        const dados = comissoesPorVendedor[vendedor];
-        const percentual = 5;
-        const valorComissao = dados.total_vendas * (percentual / 100);
-
-        await base44.entities.Comissao.create({
+      for (const dados of agrupadas) {
+        if (!isCalcularComissoesScopeCurrent(scopeExpected, readCalcularComissoesActorAndSession())) {
+          throw new Error('CALCULAR_COMISSOES_STALE_SCOPE');
+        }
+        await createInContext('Comissao', {
           vendedor: dados.vendedor,
           vendedor_id: dados.vendedor_id,
           pedido_id: dados.pedidos[0]?.id,
@@ -75,16 +93,20 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
           cliente: `${dados.pedidos.length} vendas`,
           data_venda: new Date().toISOString().split('T')[0],
           valor_venda: dados.total_vendas,
-          percentual_comissao: percentual,
-          valor_comissao: valorComissao,
+          percentual_comissao: dados.percentual_comissao,
+          valor_comissao: dados.valor_comissao,
           status: 'Pendente',
-          observacoes: `Comissão calculada automaticamente para ${dados.pedidos.length} vendas no período.`
+          observacoes: `Comissão calculada automaticamente para ${dados.pedidos.length} vendas no período.`,
         });
         contador++;
       }
 
       toast({ title: `✅ ${contador} comissões calculadas com sucesso!` });
-      queryClient.invalidateQueries({ queryKey: ['comissoes'] });
+      queryClient.invalidateQueries({
+        queryKey: buildCalcularComissoesInvalidateKey({
+          groupId, empresaId, actorId, sessionKey,
+        }),
+      });
       onSubmit();
     } catch (error) {
       toast({ title: '❌ Erro ao calcular comissões', description: error.message, variant: 'destructive' });
@@ -116,6 +138,18 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
     acc[p.status] = (acc[p.status] || 0) + 1;
     return acc;
   }, {});
+
+  if (!contextoValido) {
+    return (
+      <div className="p-6 w-full h-full">
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa para calcular comissões (contexto obrigatório).
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 w-full h-full flex flex-col">

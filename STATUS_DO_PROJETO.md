@@ -1,3 +1,14 @@
+## CURSOR — CalcularComissoesForm escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-calcular-comissoes-scope-392b` ← #401 `b888b2c00` |
+| **Código** | Comissao.create via createInContext; fail-closed sem contexto; STALE_SCOPE mid-loop |
+| **Testes** | `comercial-calcular-comissoes-scope` **5 PASS** |
+| **Fila** | #554–#561 SUCCESS · #562/#563 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
