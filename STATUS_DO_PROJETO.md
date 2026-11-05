@@ -1,3 +1,22 @@
+## CURSOR — #572 VisaoConsolidadaGrupo CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #572 `31b1f73f6` — frontend + backend + compose **SUCCESS** |
+| **Código** | filterInContext; mismatch grupo; KPI ≠ R$0; STALE_SCOPE |
+| **Fila** | #566–#572 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — VisaoConsolidadaGrupo escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/financeiro-visao-consolidada-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filterInContext Empresa/CP/CR; mismatch grupo; KPI ≠ R$0; STALE_SCOPE |
+| **Testes** | `financeiro-visao-consolidada-scope` **3 PASS** |
+| **Fila** | #566–#571 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
