@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import React from "react";
 import useCadastroRecordState from './useCadastroRecordState';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -27,8 +26,10 @@ const sanitizeGeo = (geo = {}) => ({
 export default function CentroOperacaoForm({ centro, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || centro;
   const { canCreate, canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "CentroOperacao") || canCreate("Logistica", "CentroOperacao") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "CentroOperacao") || canEdit("Logistica", "CentroOperacao") || canEdit("Cadastros", null);
@@ -43,11 +44,18 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     ...dadosIniciais
   }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
-  const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],
-    queryFn: () => base44.entities.Colaborador.list(),
+  const {
+    data: colaboradores,
+    isLoading: loadingColaboradores,
+    isError: isErrorColaboradores,
+  } = useQuery({
+    queryKey: ['colaboradores-centro-operacao', contextKey],
+    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500),
     enabled: contextoValido,
   });
+
+  const listaColaboradores = Array.isArray(colaboradores) ? colaboradores : [];
+  const colaboradoresIndisponiveis = !contextoValido || loadingColaboradores || isErrorColaboradores;
 
   const handleCEPFound = async (endereco) => {
     if (!podeSalvar) return;
@@ -127,12 +135,28 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
 
       <div>
         <Label>Responsavel</Label>
-        <Select value={formData.responsavel_id} onValueChange={(value) => { const colab = colaboradores.find(c => c.id === value); setFormData({ ...formData, responsavel_id: value, responsavel_nome: colab?.nome_completo }); }} disabled={!podeSalvar || !contextoValido}>
-          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-responsavel-centro-operacao" data-sensitive><SelectValue placeholder="Selecione o responsavel" /></SelectTrigger>
+        <Select
+          value={formData.responsavel_id}
+          onValueChange={(value) => {
+            const colab = listaColaboradores.find((c) => c.id === value);
+            setFormData({ ...formData, responsavel_id: value, responsavel_nome: colab?.nome_completo });
+          }}
+          disabled={!podeSalvar || !contextoValido || colaboradoresIndisponiveis}
+        >
+          <SelectTrigger data-permission="Cadastros.CentroOperacao.editar" data-action="selecionar-responsavel-centro-operacao" data-sensitive>
+            <SelectValue placeholder={colaboradoresIndisponiveis ? 'Colaboradores indisponíveis no contexto' : 'Selecione o responsavel'} />
+          </SelectTrigger>
           <SelectContent>
-            {colaboradores.map(c => (<SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>))}
+            {listaColaboradores.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
+        {colaboradoresIndisponiveis && (
+          <p className="text-xs text-slate-500 mt-1">
+            Contagem de colaboradores indisponível (contexto/erro/carregamento ≠ zero).
+          </p>
+        )}
       </div>
 
       <BuscaCEP onEnderecoEncontrado={handleCEPFound} />

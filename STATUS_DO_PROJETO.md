@@ -1,3 +1,16 @@
+## CURSOR — CentroOperacaoForm escopo multiempresa (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-centro-operacao-scope-392b` |
+| **Base** | #401 tip `b888b2c00` |
+| **Delta** | CentroOperacaoForm · Colaborador via filterInContext (`empresa_alocada_id`); select fail-closed |
+| **Testes** | `tests/cadastros-centro-operacao-scope.test.js` |
+| **Paralelos** | #511–#515 CI SUCCESS |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 · merge/deploy · dados reais |
+
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
