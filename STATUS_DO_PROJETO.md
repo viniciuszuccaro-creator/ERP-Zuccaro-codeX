@@ -1,3 +1,45 @@
+## CURSOR — #566–#569 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#566** | ValidacaoCredito `04ba118fd` SUCCESS |
+| **#567** | DetalhesCadastro `fb7f80ec6` SUCCESS |
+| **#568** | SimularPagamento `df6c7e2dd` SUCCESS (pin + typecheck) |
+| **#569** | DetalhesColaborador `72b630446` SUCCESS |
+| **Fila** | #543/#554–#569 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — #568 typecheck fix (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | tip `228ceacc9` frontend FAIL: TS2339 `Error.code` em SimularPagamentoModal |
+| **Fix** | `Object.assign(new Error(...), { code })` + regenera hunk financialUiBoundary |
+| **Testes** | boundaries **26 PASS** · scope **4 PASS** · typecheck limpo |
+| **Fila** | #566/#567/#569 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #568 SimularPagamento pin fix (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #568 — renova hunk `financialUiBoundary` (padrão #532 DuplicarMes) |
+| **Causa** | frontend FAIL: stage50 frozen hash fora dos hunks contados |
+| **Testes** | `financial-ui-command-boundaries` **26 PASS** + scope **4 PASS** |
+| **Fila** | #567 SUCCESS · #566/#569 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — SimularPagamentoModal escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/financeiro-simular-pagamento-scope-392b` ← #401 `b888b2c00` |
+| **Código** | createInContext/updateInContext; fail-closed mismatch; STALE_SCOPE |
+| **Testes** | `financeiro-simular-pagamento-scope` **4 PASS** |
+| **Fila** | #566/#567 em CI · #543/#554–#565 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
