@@ -1,3 +1,8 @@
+## CURSOR — #514 CI SUCCESS StatusOrigem (2026-11-05 America/Sao_Paulo)
+- Tip `b9a3b8478` · 6/6 CI SUCCESS.
+- Sem FF #401. Homolog BLOCKED.
+
+
 ## CURSOR — StatusOrigemPedido100 escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-status-origem-scope-392b` ← #401.
 - Widget status: listagens escopadas; completude não fabrica 100% sob erro/sem contexto.

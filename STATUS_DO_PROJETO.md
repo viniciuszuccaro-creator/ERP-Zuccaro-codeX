@@ -1,3 +1,15 @@
+## CURSOR — #514 StatusOrigem CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-status-origem-scope-392b` = **#514** |
+| **Tip CI SUCCESS** | `b9a3b8478` · 6/6 |
+| **Delta** | StatusOrigemPedido100 · filterInContext · KPI fail-closed |
+| **Paralelos** | #511–#513 · #507–#510 |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 sem aceite · merge/deploy |
+
+
 ## CURSOR — StatusOrigemPedido100 escopo multiempresa (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
