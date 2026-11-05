@@ -33,7 +33,7 @@ import {
 } from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
-  const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { createInContext, updateInContext, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { user: authUser } = useUser();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const empresaId = empresaAtual?.id || null;
@@ -101,19 +101,21 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
     setDadosBaixa(reset.dadosBaixa);
   }, [scopeKey, queryClient]);
 
-  const { data: empresasQuery = [] } = useQuery({
+  // Escopo multiempresa: Empresa/ConfiguracaoCobrancaEmpresa via filterInContext (não list unscoped).
+  const { data: empresasQuery = [], isError: isErrorEmpresasCobranca } = useQuery({
     queryKey: ['empresas', scopeKey],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
     enabled: contextoValido,
   });
 
-  const { data: configsCobranca = [] } = useQuery({
+  const { data: configsCobranca = [], isError: isErrorConfigsCobranca } = useQuery({
     queryKey: ['configs-cobranca', scopeKey],
-    queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
+    queryFn: () => filterInContext('ConfiguracaoCobrancaEmpresa', {}, '-created_date', 500),
     enabled: contextoValido,
   });
 
   const empresasData = empresas.length > 0 ? empresas : empresasQuery;
+  const cobrancaMastersIndisponiveis = isErrorEmpresasCobranca || isErrorConfigsCobranca;
 
   /** @param {{acao: string, entidade: string, registroId?: string | number | null, descricao: string,
    * dadosAnteriores?: unknown, dadosNovos?: unknown, sucesso?: boolean}} options */
@@ -507,6 +509,14 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           }
         }, { title: editar ? `✏️ Editar: ${conta.cliente}` : `👁️ Detalhes: ${conta.cliente}`, width: 900, height: 600 })}}
         onGerarCobranca={(conta) => {
+          if (!contextoValido) {
+            toast({ title: 'Selecione grupo ou empresa antes de gerar cobrança', variant: 'destructive' });
+            return;
+          }
+          if (cobrancaMastersIndisponiveis) {
+            toast({ title: 'Configuração de cobrança indisponível (erro ≠ zero)', variant: 'destructive' });
+            return;
+          }
           setContaParaCobranca(conta);
           setGerarCobrancaDialogOpen(true);
         }}
