@@ -1,7 +1,6 @@
-## CURSOR — #527 SUCCESS + #529 pin remainder (2026-11-05 America/Sao_Paulo)
-- #527 `da848764c` CI SUCCESS. #522–#528 verdes.
-- #529: autoriza delta cobranca/filterInContext em `financialBatchPermissionRemainder` (pins batch/title/portal/audit).
-- #530 ContasPagar em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #529 ContasReceber cobranca CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `399dab3bb` — frontend+backend+compose PASS. Pin remainder autoriza filterInContext/cobrança.
+- #522–#529 verdes. #530–#532 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
