@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,13 +10,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { CreditCard, DollarSign, Building2, CheckCircle, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * Configuração de Cobrança (Boletos/PIX) por Empresa
  */
-export default function ConfiguracaoCobranca({ empresas, windowMode = false }) {
+export default function ConfiguracaoCobranca({ empresas: empresasProp, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
 
   const [empresaSelecionada, setEmpresaSelecionada] = React.useState(null);
   const [config, setConfig] = React.useState({
@@ -47,15 +50,26 @@ export default function ConfiguracaoCobranca({ empresas, windowMode = false }) {
     webhook_token: ""
   });
 
-  const { data: configsExistentes = [] } = useQuery({
-    queryKey: ['configs-cobranca'],
-    queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
+  // Escopo multiempresa: sem list/create/update unscoped; erro ≠ zero.
+  const { data: empresasContext = [], isError: isErrorEmpresas } = useQuery({
+    queryKey: ['empresas-config-cobranca', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido && !(Array.isArray(empresasProp) && empresasProp.length > 0),
+  });
+  const empresas = (Array.isArray(empresasProp) && empresasProp.length > 0) ? empresasProp : empresasContext;
+
+  const { data: configsExistentes = [], isError: isErrorConfigs } = useQuery({
+    queryKey: ['configs-cobranca', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('ConfiguracaoCobrancaEmpresa', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const salvarMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) throw new Error('Selecione um grupo ou empresa antes de salvar cobrança.');
+      if (!empresaSelecionada?.id) throw new Error('Selecione a empresa da configuração de cobrança.');
       const dadosConfig = {
-        group_id: empresaSelecionada.grupo_id,
+        group_id: empresaSelecionada.grupo_id || empresaSelecionada.group_id || groupId,
         empresa_id: empresaSelecionada.id,
         empresa_nome: empresaSelecionada.nome_fantasia || empresaSelecionada.razao_social,
         ...config,
@@ -65,14 +79,20 @@ export default function ConfiguracaoCobranca({ empresas, windowMode = false }) {
       const existente = configsExistentes.find(c => c.empresa_id === empresaSelecionada.id);
 
       if (existente) {
-        return await base44.entities.ConfiguracaoCobrancaEmpresa.update(existente.id, dadosConfig);
-      } else {
-        return await base44.entities.ConfiguracaoCobrancaEmpresa.create(dadosConfig);
+        return await updateInContext('ConfiguracaoCobrancaEmpresa', existente.id, dadosConfig);
       }
+      return await createInContext('ConfiguracaoCobrancaEmpresa', dadosConfig);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['configs-cobranca'] });
       toast({ title: "✅ Configuração de cobrança salva!" });
+    },
+    onError: (err) => {
+      toast({
+        title: "Não foi possível salvar",
+        description: err?.message || "Erro de contexto ou persistência.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -99,6 +119,16 @@ export default function ConfiguracaoCobranca({ empresas, windowMode = false }) {
           <CardTitle className="text-base">Selecione a Empresa</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
+          {!contextoValido && (
+            <p className="text-xs text-slate-500 mb-3">
+              Selecione um grupo ou empresa para carregar configurações de cobrança.
+            </p>
+          )}
+          {(isErrorEmpresas || isErrorConfigs) && (
+            <p className="text-xs text-slate-500 mb-3">
+              Contagem de cobrança indisponível (erro de carga ≠ zero).
+            </p>
+          )}
           <div className="grid gap-3">
             {empresas.map(empresa => {
               const config = configsExistentes.find(c => c.empresa_id === empresa.id);
@@ -413,7 +443,7 @@ export default function ConfiguracaoCobranca({ empresas, windowMode = false }) {
           <div className="flex justify-end">
             <Button
               type="submit"
-              disabled={salvarMutation.isPending}
+              disabled={salvarMutation.isPending || !contextoValido || !empresaSelecionada?.id}
               className="bg-blue-600 hover:bg-blue-700"
             >
               {salvarMutation.isPending ? 'Salvando...' : 'Salvar Configuração'}
