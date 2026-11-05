@@ -1,3 +1,8 @@
+## CURSOR — GerenciarContatosCliente escopo (2026-11-05 America/Sao_Paulo)
+- Branch `cursor/comercial-gerenciar-contatos-scope-392b` ← #401.
+- getInContext/updateInContext; sessionKey em queryKey; READ_STALE_SCOPE preservado. Testes 3+2 PASS.
+- #554–#564 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

@@ -7,38 +7,47 @@
  * Binding inclui actorId canônico da sessão (sem token em queryKey/cache/log).
  */
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import GerenciarContatosClienteForm from "@/components/cadastros/GerenciarContatosClienteForm";
+import {
+  buildGerenciarContatosClienteQueryKey,
+  isGerenciarContatosClienteScopeCurrent,
+} from "./gerenciarContatosClienteScope";
 
-/** Identidade de escopo: grupo + empresa + ator. Nunca inclui token. */
-function scopePair(groupId, empresaId, actorId) {
+/** Identidade de escopo: grupo + empresa + ator + fingerprint de sessão. Nunca inclui token. */
+function scopePair(groupId, empresaId, actorId, sessionKey) {
   return {
     groupId: groupId || null,
     empresaId: empresaId || null,
     actorId: actorId || null,
-    key: `${groupId || ""}:${empresaId || ""}:${actorId || ""}`,
+    sessionKey: sessionKey || null,
+    key: `${groupId || ""}:${empresaId || ""}:${actorId || ""}:${sessionKey || ""}`,
   };
 }
 
 function sameScope(a, b) {
   return String(a?.groupId || "") === String(b?.groupId || "")
     && String(a?.empresaId || "") === String(b?.empresaId || "")
-    && String(a?.actorId || "") === String(b?.actorId || "");
+    && String(a?.actorId || "") === String(b?.actorId || "")
+    && String(a?.sessionKey || "") === String(b?.sessionKey || "");
 }
 
-/** Ator efetivo da sessão HTTP; sem token — só UUID do ator. */
-function readSessionActorId() {
+/** Ator + fingerprint de sessão HTTP; sem token em queryKey/cache/log. */
+function readSessionActorAndKey() {
   try {
     const session = readErpHttpSession();
     const actorId = typeof session?.actorId === "string" ? session.actorId.trim() : "";
-    return actorId || null;
+    return {
+      actorId: actorId || null,
+      sessionKey: central360SessionKey(session?.token),
+    };
   } catch {
-    return null;
+    return { actorId: null, sessionKey: null };
   }
 }
 
@@ -46,11 +55,11 @@ export default function GerenciarContatosCliente({ clienteId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, getInContext, updateInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const actorId = readSessionActorId();
-  const liveScope = scopePair(groupId, empresaId, actorId);
+  const { actorId, sessionKey } = readSessionActorAndKey();
+  const liveScope = scopePair(groupId, empresaId, actorId, sessionKey);
   const liveScopeRef = useRef(liveScope);
   liveScopeRef.current = liveScope;
 
@@ -74,18 +83,20 @@ export default function GerenciarContatosCliente({ clienteId }) {
     isFetching,
     isSuccess,
   } = useQuery({
-    queryKey: ["cliente", clienteId, liveScope.key],
+    queryKey: buildGerenciarContatosClienteQueryKey({
+      groupId, empresaId, actorId, sessionKey, clienteId,
+    }),
     queryFn: async () => {
       if (!clienteId) return null;
-      const asked = scopePair(groupId, empresaId, actorId);
+      const asked = scopePair(groupId, empresaId, actorId, sessionKey);
       const genAtStart = editorGenRef.current;
       if (!asked.groupId && !asked.empresaId) {
         throw new Error("Contexto multiempresa obrigatório para carregar contatos.");
       }
-      // Leitura canônica por id (HTTP GET / local get) — filter({id}) não transmite id na fachada HTTP.
+      // Leitura canônica por id via getInContext — filter({id}) não transmite id na fachada HTTP.
       let row = null;
       try {
-        row = await base44.entities.Cliente.get(clienteId);
+        row = await getInContext("Cliente", clienteId);
       } catch (readErr) {
         const status = Number(readErr?.status);
         const msg = String(readErr?.message || "");
@@ -94,8 +105,12 @@ export default function GerenciarContatosCliente({ clienteId }) {
         if (!notFound) throw readErr;
         row = null;
       }
-      // Resposta tardia: escopo/ator ou geração já mudou — não promover a bind.
-      if (!sameScope(asked, liveScopeRef.current) || genAtStart !== editorGenRef.current) {
+      // Resposta tardia: escopo/ator/sessão ou geração já mudou — não promover a bind.
+      if (
+        !isGerenciarContatosClienteScopeCurrent(asked, liveScopeRef.current)
+        || !sameScope(asked, liveScopeRef.current)
+        || genAtStart !== editorGenRef.current
+      ) {
         const err = new Error("READ_STALE_SCOPE");
         err.code = "READ_STALE_SCOPE";
         throw err;
@@ -104,10 +119,6 @@ export default function GerenciarContatosCliente({ clienteId }) {
         throw new Error("Cliente retornado diverge do id solicitado.");
       }
       if (!row) return null;
-      const rowGroup = row.group_id || row.grupo_id || null;
-      if (asked.groupId && rowGroup && String(rowGroup) !== String(asked.groupId)) {
-        throw new Error("Cliente fora do grupo selecionado.");
-      }
       return { row, askedScope: asked, gen: genAtStart };
     },
     enabled: Boolean(clienteId),
@@ -143,8 +154,8 @@ export default function GerenciarContatosCliente({ clienteId }) {
 
   const assertScopeCurrent = useCallback(() => {
     const live = liveScopeRef.current;
-    // Releitura canônica: troca de ator na sessão sem remount ainda falha aqui.
-    const sessionActor = readSessionActorId();
+    // Releitura canônica: troca de ator/sessão sem remount ainda falha aqui.
+    const sessionNow = readSessionActorAndKey();
     if (!bound || bound.clienteId !== clienteId) {
       throw new Error("Contatos ainda não vinculados ao cliente carregado. Reabra antes de salvar.");
     }
@@ -154,8 +165,8 @@ export default function GerenciarContatosCliente({ clienteId }) {
     if (!sameScope(live, bound.scope)) {
       throw new Error("Contexto alterado. Reabra os contatos antes de salvar.");
     }
-    if (String(bound.scope.actorId || "") !== String(sessionActor || "")
-      || String(live.actorId || "") !== String(sessionActor || "")) {
+    if (!isGerenciarContatosClienteScopeCurrent(bound.scope, sessionNow)
+      || !isGerenciarContatosClienteScopeCurrent(live, sessionNow)) {
       throw new Error("Sessão/ator alterado. Reabra os contatos antes de salvar.");
     }
   }, [bound, clienteId, editorGen]);
@@ -169,10 +180,14 @@ export default function GerenciarContatosCliente({ clienteId }) {
       if (!bound?.rowId || String(bound.rowId) !== String(clienteId)) {
         throw new Error("Cliente vinculado inválido para salvar contatos.");
       }
-      return await base44.entities.Cliente.update(bound.rowId, data);
+      return await updateInContext("Cliente", bound.rowId, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cliente", clienteId] });
+      queryClient.invalidateQueries({
+        queryKey: buildGerenciarContatosClienteQueryKey({
+          groupId, empresaId, actorId, sessionKey, clienteId,
+        }),
+      });
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       toast({ title: "Contatos atualizados" });
     },
