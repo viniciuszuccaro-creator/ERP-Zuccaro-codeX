@@ -1,0 +1,13 @@
+Pacote: consumidores ParametroOrigemPedido escopo multiempresa
+Branch: cursor/cadastros-origem-consumidores-scope-392b
+Base: #401 b888b2c00
+Data: 2026-11-05 America/Sao_Paulo
+
+Arquivos:
+- src/components/lib/useOrigemPedido.jsx
+- src/components/comercial/BadgeOrigemPedido.jsx
+- src/components/comercial/MonitoramentoCanaisRealtime.jsx
+- src/components/comercial/wizard/WizardEtapa1Cliente.jsx
+
+Provas: tests/cadastros-origem-consumidores-scope.test.js
+Fora: FF #401, homolog 100, dados reais
