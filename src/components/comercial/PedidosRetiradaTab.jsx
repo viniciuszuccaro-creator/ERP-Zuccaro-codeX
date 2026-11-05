@@ -46,9 +46,6 @@ function readPedidosRetiradaActorAndSession() {
  * - Notificação quando pronto
  * - Confirmação de retirada com assinatura
  * - Baixa automática de estoque na retirada
- *
- * Escopo: listagem filterInContext; mutações *InContext (Pedido/Produto/Movimentacao/Entrega).
- * Loading/erro ≠ zero. STALE_SCOPE em resposta tardia e mid-loop.
  */
 export default function PedidosRetiradaTab({ windowMode = false }) {
   const [busca, setBusca] = useState("");
@@ -287,7 +284,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
         <p className="text-xs text-red-600 mb-2">Pedidos indisponíveis (erro de carga ≠ zero).</p>
       )}
 
-      {/* Estatísticas — só em ready (loading/erro ≠ zero fabricado) */}
+      {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
