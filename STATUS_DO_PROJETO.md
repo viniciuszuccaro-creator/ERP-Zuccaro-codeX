@@ -1,10 +1,10 @@
-## CURSOR — #537 MonitoramentoCanaisRealtime Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #537 MonitoramentoCanaisRealtime CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#535** | multiempresa | **CI SUCCESS** |
-| #536 BitolasDisponiveis | `d44ce5f3b` | aguarda CI |
-| #537 MonitoramentoCanais | (este) | Pedido+ParametroOrigem via filterInContext |
+| **#522–#538** | multiempresa | **CI SUCCESS** |
+| #537 MonitoramentoCanais | `b26c8d1bb` | **CI SUCCESS** 6/6 (fix CRLF pin) |
+| #539 WidgetFechamento | `346ad1306` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
