@@ -1,10 +1,10 @@
-## CURSOR — #536 BitolasDisponiveis Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #536 BitolasDisponiveis CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#534** | multiempresa | **CI SUCCESS** |
-| #535 DashboardCorporativo | `447e819a0` | aguarda CI |
-| #536 BitolasDisponiveis | (este) | Produto filterInContext |
+| **#522–#536** | multiempresa | **CI SUCCESS** |
+| #536 BitolasDisponiveis | `d44ce5f3b` | **CI SUCCESS** 6/6 |
+| #537 MonitoramentoCanais | `38e5b350c` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
