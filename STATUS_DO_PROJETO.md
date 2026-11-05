@@ -1,3 +1,14 @@
+## CURSOR — WizardEtapa1Cliente escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-wizard-etapa1-scope-392b` ← #401 `b888b2c00` |
+| **Código** | ParametroOrigem via filterInContext; Cliente endereços via getInContext; sem initialData:[]; KPI ≠ 0 canais |
+| **Testes** | `comercial-wizard-etapa1-scope` **5 PASS** |
+| **Fila** | #554–#561 SUCCESS · #562 ValidadorEstoque em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

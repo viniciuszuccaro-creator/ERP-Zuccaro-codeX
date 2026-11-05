@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,35 +8,113 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronRight, MapPin, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/components/lib/UserContext';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
 import WidgetPerfilRiscoCliente from '../WidgetPerfilRiscoCliente';
 import SugestorCanalInteligente from '../SugestorCanalInteligente';
 import HistoricoOrigemCliente from '../HistoricoOrigemCliente';
+import {
+  buildWizardEtapa1ParametrosOrigemQueryKey,
+  buildWizardEtapa1EnderecosClienteQueryKey,
+  isWizardEtapa1ScopeCurrent,
+  resolveWizardEtapa1ParametrosKpiState,
+  pickLocaisEntregaFromCliente,
+} from './wizardEtapa1ClienteScope';
+
+function readWizardEtapa1ActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * Aba 1: Identificação do Pedido e Seleção de Cliente
  * V21.6 - Com detecção automática de origem, bloqueio e IA de sugestão
+ *
+ * Escopo multiempresa: ParametroOrigemPedido via filterInContext;
+ * endereços do Cliente via getInContext. Sem initialData/list/get unscoped.
+ * Loading/erro ≠ “0 canais”. STALE_SCOPE em resposta tardia.
  */
 export default function WizardEtapa1Cliente({ formData, setFormData, clientes = [], onNext, bloquearOrigemEdicao = false }) {
   const { user } = useUser();
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  
-  // V21.6: Buscar configurações de origem
-  const { data: parametrosOrigem = [] } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: [],
+  const { empresaAtual, grupoAtual, filterInContext, getInContext } = useContextoVisual();
+  const groupId = formData?.group_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = formData?.empresa_id || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readWizardEtapa1ActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  // V21.6: Buscar configurações de origem (sem initialData vazio — loading ≠ 0 canais)
+  const {
+    data: parametrosOrigemData,
+    isLoading: parametrosLoading,
+    isError: parametrosError,
+    isFetching: parametrosFetching,
+  } = useQuery({
+    queryKey: buildWizardEtapa1ParametrosOrigemQueryKey({
+      groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ParametroOrigemPedido', {}, 'canal', 200);
+      if (signal?.aborted) {
+        const err = new Error('WIZARD_ETAPA1_PARAMETROS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isWizardEtapa1ScopeCurrent(scopeExpected, readWizardEtapa1ActorAndSession())) {
+        throw new Error('WIZARD_ETAPA1_PARAMETROS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  // Buscar endereços do cliente quando cliente mudar
-  const { data: enderecosCliente = [] } = useQuery({
-    queryKey: ['enderecos-cliente', formData.cliente_id],
-    queryFn: async () => {
-      if (!formData.cliente_id) return [];
-      const cliente = await base44.entities.Cliente.get(formData.cliente_id);
-      return cliente.locais_entrega || [];
-    },
-    enabled: !!formData.cliente_id
+  const parametrosKpi = resolveWizardEtapa1ParametrosKpiState({
+    contextoValido,
+    isLoading: parametrosLoading,
+    isError: parametrosError,
+    isFetching: parametrosFetching,
+    dataDefined: parametrosOrigemData !== undefined,
   });
+  const parametrosOrigem = parametrosKpi === 'ready' && Array.isArray(parametrosOrigemData)
+    ? parametrosOrigemData
+    : [];
+
+  // Buscar endereços do cliente quando cliente mudar (getInContext — multiempresa)
+  const {
+    data: enderecosClienteData,
+    isLoading: enderecosLoading,
+    isError: enderecosError,
+  } = useQuery({
+    queryKey: buildWizardEtapa1EnderecosClienteQueryKey({
+      groupId,
+      empresaId,
+      actorId,
+      sessionKey,
+      clienteId: formData.cliente_id || null,
+    }),
+    queryFn: async ({ signal }) => {
+      if (!formData.cliente_id) return [];
+      const cliente = await getInContext('Cliente', formData.cliente_id);
+      if (signal?.aborted) {
+        const err = new Error('WIZARD_ETAPA1_ENDERECOS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isWizardEtapa1ScopeCurrent(scopeExpected, readWizardEtapa1ActorAndSession())) {
+        throw new Error('WIZARD_ETAPA1_ENDERECOS_STALE_SCOPE');
+      }
+      return pickLocaisEntregaFromCliente(cliente);
+    },
+    enabled: contextoValido && !!formData.cliente_id,
+  });
+
+  const enderecosCliente = Array.isArray(enderecosClienteData) ? enderecosClienteData : [];
 
   const handleObraDestinoChange = (obraId) => {
     const obra = enderecosCliente.find(e => (e.id || `obra-${enderecosCliente.indexOf(e)}`) === obraId);
@@ -249,7 +326,22 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
           <p className="text-xs text-blue-700 mt-1 font-medium">
             🤖 Campo bloqueado - origem detectada automaticamente pelo sistema
           </p>
-          {parametrosOrigem.length > 0 && (
+          {parametrosKpi === 'loading' && (
+            <p className="text-xs text-slate-500 mt-1">
+              Carregando canais de origem…
+            </p>
+          )}
+          {parametrosKpi === 'error' && (
+            <p className="text-xs text-red-600 mt-1">
+              Não foi possível carregar canais (erro ≠ 0 canais).
+            </p>
+          )}
+          {parametrosKpi === 'unavailable' && (
+            <p className="text-xs text-amber-700 mt-1">
+              Contexto de Grupo/Empresa necessário para listar canais de origem.
+            </p>
+          )}
+          {parametrosKpi === 'ready' && parametrosOrigem.length > 0 && (
             <p className="text-xs text-slate-500 mt-1">
               ✅ Rastreamento ativo em {parametrosOrigem.length} canais configurados
             </p>
@@ -258,7 +350,15 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
       </div>
 
       {/* NOVO V21.1: Obra de Destino */}
-      {formData.cliente_id && enderecosCliente.length > 0 && (
+      {formData.cliente_id && enderecosLoading && (
+        <p className="text-xs text-slate-500 col-span-2">Carregando obras/endereços do cliente…</p>
+      )}
+      {formData.cliente_id && enderecosError && (
+        <p className="text-xs text-red-600 col-span-2">
+          Não foi possível carregar endereços (erro ≠ lista vazia).
+        </p>
+      )}
+      {formData.cliente_id && !enderecosLoading && !enderecosError && enderecosCliente.length > 0 && (
         <div className="col-span-2">
           <Label htmlFor="obra-destino-select" className="flex items-center gap-2 mb-1">
             <MapPin className="w-4 h-4 text-blue-600" />
