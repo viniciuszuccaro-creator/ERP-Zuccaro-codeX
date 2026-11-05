@@ -1,3 +1,15 @@
+## CURSOR — GerenciarContatosCliente escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-gerenciar-contatos-scope-392b` = **#565** |
+| **Tip CI** | **`a03065c68`** · **CI SUCCESS** 6/6 (pin InContext autorizado) |
+| **Código** | Cliente.get/update → getInContext/updateInContext; queryKey + sessão; bind fail-closed |
+| **Testes** | scope **3** + prep-401 **2** + count-erro-vazio Contatos pin PASS |
+| **Fila** | #554–#564 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
