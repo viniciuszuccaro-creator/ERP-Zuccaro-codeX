@@ -1,6 +1,6 @@
-## CURSOR — #536–#539 cache/KPI follow-up (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-fechamento-cache-392b`: cache ator/sessão; sem initialData vazio; STALE_SCOPE; pin Monitoramento regenerado.
-- Provas 8+27 PASS. Overlap #536–#539. Homolog BLOCKED. FF #401 aguarda Codex.
+## CURSOR — #545 fechamento cache CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `9f3fe0100` **CI SUCCESS** 6/6. #536–#539 cache ator/sessão; KPI≠zero; STALE_SCOPE.
+- Overlap #536–#539. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
