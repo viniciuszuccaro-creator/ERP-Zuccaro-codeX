@@ -1,3 +1,8 @@
+## CURSOR — #513 CI SUCCESS origem consumidores (2026-11-05 America/Sao_Paulo)
+- Tip `7e901c422` · 6/6 CI SUCCESS (pin renew pós-`0c9834e11`).
+- Sem FF #401. Homolog BLOCKED. Fila uniqueKey/escopo origem fechada neste eixo.
+
+
 ## CURSOR — #513 pin renew (2026-11-05 America/Sao_Paulo)
 - Renova pins após escopo multiempresa em useOrigemPedido/Badge/Monitoramento.
 - Sem FF #401. Homolog BLOCKED.

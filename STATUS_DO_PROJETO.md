@@ -1,3 +1,15 @@
+## CURSOR — #513 origem consumidores CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-origem-consumidores-scope-392b` = **#513** |
+| **Tip CI SUCCESS** | `7e901c422` · 6/6 (código `0c9834e11` + pin renew) |
+| **Delta** | useOrigemPedido/Badge/Monitor/Wizard · filterInContext · pins renovados |
+| **Paralelos** | #511 · #512 · #507–#510 CI SUCCESS |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 sem aceite · merge/deploy |
+
+
 ## CURSOR — #513 pin renew origem consumidores (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
