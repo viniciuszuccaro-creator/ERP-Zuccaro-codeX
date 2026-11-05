@@ -1,3 +1,15 @@
+## CURSOR — FormasPagamentoPedido escopo real (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-formas-pagamento-pedido-scope-392b` ← #401 |
+| **Código** | Remove mock/`FormaPagamento.list`; `filterInContext`; cache ator/sessão; STALE_SCOPE; loading/erro ≠ zero |
+| **Testes** | `tests/comercial-formas-pagamento-pedido-scope.test.js` **5 PASS** |
+| **Central360** | base de pagamentos reutilizável; sem UI paralela |
+| **Fila** | #549 provas #544 · #550 HistoricoComunicacao · #545–#548 CI SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

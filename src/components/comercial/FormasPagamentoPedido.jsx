@@ -1,69 +1,38 @@
-
 import React, { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, Percent, Calendar } from "lucide-react"; // Changed CreditCard to DollarSign, added Percent
+import { DollarSign, Percent, Calendar } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildFormasPagamentoPedidoQueryKey,
+  isFormasPagamentoPedidoScopeCurrent,
+  resolveFormasPagamentoPedidoKpiState,
+  pickFormasPagamentoAtivas,
+} from "./formasPagamentoPedidoScope";
 
-// Assuming base44 and useQuery are available in the project context
-// For a fully functional example, you might need to mock or define 'base44' and 'useQuery'
-// Example of useQuery if react-query is installed:
-// import { useQuery } from '@tanstack/react-query';
-// const base44 = {
-//   entities: {
-//     FormaPagamento: {
-//       list: async () => [
-//         { id: "1", tipo: "À Vista", descricao: "Pagamento total", icone: "💵", ativa: true },
-//         { id: "2", tipo: "PIX", descricao: "Via PIX", icone: "🔷", ativa: true },
-//         { id: "3", tipo: "Boleto", descricao: "Boleto bancário", icone: "📄", ativa: true },
-//         { id: "4", tipo: "Cartão de Crédito", descricao: "Cartão de crédito", icone: "💳", ativa: true },
-//         { id: "5", tipo: "Cartão de Débito", descricao: "Cartão de débito", icone: "💳", ativa: true },
-//         { id: "6", tipo: "Transferência", descricao: "Transferência bancária", icone: "🏦", ativa: true },
-//         { id: "7", tipo: "Dinheiro", descricao: "Em espécie", icone: "💵", ativa: true },
-//         { id: "8", tipo: "Parcelado", descricao: "Pagamento parcelado", icone: "📊", ativa: true },
-//         { id: "9", tipo: "Outro", descricao: "Outra forma", icone: "❔", ativa: false }, // Inactive example
-//       ],
-//     },
-//   },
-// };
-// import { useQuery } from 'react-query'; // Or '@tanstack/react-query'
+function readFormasActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
-// Placeholder for `useQuery` and `base44` if not actually imported in the project
-// In a real project, these would be properly imported and configured.
-const useQuery = ({ queryKey, queryFn }) => {
-  const [data, setData] = useState([]);
-  useEffect(() => {
-    queryFn().then(setData);
-  }, [queryKey[0]]);
-  return { data };
-};
-
-const base44 = {
-  entities: {
-    FormaPagamento: {
-      list: async () => [
-        { id: "1", tipo: "À Vista", descricao: "Pagamento total", icone: "💵", ativa: true },
-        { id: "2", tipo: "PIX", descricao: "Via PIX", icone: "🔷", ativa: true },
-        { id: "3", tipo: "Boleto", descricao: "Boleto bancário", icone: "📄", ativa: true },
-        { id: "4", tipo: "Cartão de Crédito", descricao: "Cartão de crédito", icone: "💳", ativa: true },
-        { id: "5", tipo: "Cartão de Débito", descricao: "Cartão de débito", icone: "💳", ativa: true },
-        { id: "6", tipo: "Transferência", descricao: "Transferência bancária", icone: "🏦", ativa: true },
-        { id: "7", tipo: "Dinheiro", descricao: "Em espécie", icone: "💵", ativa: true },
-        { id: "8", tipo: "Parcelado", descricao: "Pagamento parcelado", icone: "📊", ativa: true },
-        { id: "9", tipo: "Outro", descricao: "Outra forma", icone: "❔", ativa: false }, // Inactive example
-      ],
-    },
-  },
-};
-
-
-export default function FormasPagamentoPedido({ 
-  valorTotal, 
-  formaPagamento, 
+/**
+ * Formas de pagamento do pedido — cadastro real via filterInContext.
+ * Sem mock/list unscoped; loading/erro ≠ zero formas; STALE_SCOPE.
+ */
+export default function FormasPagamentoPedido({
+  valorTotal,
+  formaPagamento,
   condicaoPagamento,
   parcelas = [],
   acrescimo = 0,
@@ -75,35 +44,62 @@ export default function FormasPagamentoPedido({
   const [numeroParcelas, setNumeroParcelas] = useState(1);
   const [percentualAcrescimo, setPercentualAcrescimo] = useState(acrescimo || 0);
 
-  const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readFormasActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  const {
+    data: formasPagamento,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildFormasPagamentoPedidoQueryKey({
+      groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('FormaPagamento', {}, 'ordem_exibicao', 200);
+      if (signal?.aborted) {
+        const err = new Error('FORMAS_PAGAMENTO_PEDIDO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isFormasPagamentoPedidoScopeCurrent(scopeExpected, readFormasActorAndSession())) {
+        throw new Error('FORMAS_PAGAMENTO_PEDIDO_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  const formasAtivas = formasPagamento.filter(f => f.ativa);
+  const kpiState = resolveFormasPagamentoPedidoKpiState({
+    contextoValido,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: formasPagamento !== undefined,
+  });
+  const formasAtivas = kpiState === 'ready'
+    ? pickFormasPagamentoAtivas(formasPagamento)
+    : [];
+  const contagemIndisponivel = kpiState !== 'ready';
 
   useEffect(() => {
-    // Only generate parcels if the payment method is 'Parcelado'
-    // and there's more than one parcel or if it's explicitly set to 1 and we need to refresh
     if (formaPagamento === 'Parcelado' && numeroParcelas > 0 && onParcelasChange) {
       gerarParcelas();
     } else if (formaPagamento !== 'Parcelado' && parcelas.length > 0) {
-      // Clear parcels if payment method changes from 'Parcelado'
       onParcelasChange([]);
     }
-  }, [numeroParcelas, valorTotal, percentualAcrescimo, formaPagamento]); // Added formaPagamento to dependencies
+  }, [numeroParcelas, valorTotal, percentualAcrescimo, formaPagamento]);
 
-  // Effect to update local state if props change from parent
   useEffect(() => {
     if (acrescimo !== percentualAcrescimo) {
       setPercentualAcrescimo(acrescimo);
     }
   }, [acrescimo]);
-
-  // Effect to handle initial parcel count from prop, if needed.
-  // The current outline does not explicitly handle initial `numeroParcelas` from prop.
-  // If `parcelas.length` is used to infer initial `numeroParcelas`, it would go here.
-  // For now, it defaults to 1.
 
   const gerarParcelas = () => {
     const valorComAcrescimo = valorTotal * (1 + percentualAcrescimo / 100);
@@ -112,9 +108,6 @@ export default function FormasPagamentoPedido({
 
     for (let i = 1; i <= numeroParcelas; i++) {
       const dataVencimento = new Date();
-      // Set date for the i-th month from now.
-      // E.g., for i=1, it's 30 days from now. For i=2, 60 days from now.
-      // This is a common way to calculate monthly intervals.
       dataVencimento.setDate(dataVencimento.getDate() + (i * 30));
 
       novasParcelas.push({
@@ -122,7 +115,7 @@ export default function FormasPagamentoPedido({
         data_vencimento: dataVencimento.toISOString().split('T')[0],
         valor: valorParcela,
         status: 'Pendente',
-        forma_cobranca: formaPagamento // Use the selected formaPagamento for cobranca
+        forma_cobranca: formaPagamento
       });
     }
 
@@ -138,6 +131,12 @@ export default function FormasPagamentoPedido({
     }
   };
 
+  const optionLabel = (forma) => {
+    const icon = forma.icone ? `${forma.icone} ` : '';
+    return `${icon}${forma.descricao || forma.tipo || forma.id}`;
+  };
+  const optionValue = (forma) => forma.tipo || forma.descricao || forma.id;
+
   return (
     <Card className="border-sky-200">
       <CardHeader className="bg-gradient-to-r from-sky-50 to-blue-50">
@@ -147,25 +146,39 @@ export default function FormasPagamentoPedido({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
+        {!contextoValido && (
+          <div className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            Selecione grupo ou empresa para carregar formas de pagamento do cadastro.
+          </div>
+        )}
+        {kpiState === 'error' && (
+          <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+            Não foi possível carregar formas de pagamento (erro ≠ zero opções).
+          </div>
+        )}
+        {kpiState === 'loading' && (
+          <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+            Carregando formas de pagamento…
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="forma-pagamento-select">Forma de Pagamento *</Label>
             <Select
               value={formaPagamento}
               onValueChange={onFormaPagamentoChange}
+              disabled={contagemIndisponivel || formasAtivas.length === 0}
             >
               <SelectTrigger id="forma-pagamento-select">
-                <SelectValue placeholder="Selecione..." />
+                <SelectValue placeholder={contagemIndisponivel ? "Aguardando cadastro…" : "Selecione..."} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="À Vista">💵 À Vista</SelectItem>
-                <SelectItem value="PIX">🔷 PIX</SelectItem>
-                <SelectItem value="Boleto">📄 Boleto</SelectItem>
-                <SelectItem value="Cartão de Crédito">💳 Cartão de Crédito</SelectItem>
-                <SelectItem value="Cartão de Débito">💳 Cartão de Débito</SelectItem>
-                <SelectItem value="Transferência">🏦 Transferência</SelectItem>
-                <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
-                <SelectItem value="Parcelado">📊 Parcelado</SelectItem>
+                {formasAtivas.map((forma) => (
+                  <SelectItem key={forma.id || optionValue(forma)} value={optionValue(forma)}>
+                    {optionLabel(forma)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -192,7 +205,6 @@ export default function FormasPagamentoPedido({
           </div>
         </div>
 
-        {/* ACRÉSCIMO/JUROS PARA PARCELAMENTO */}
         {(formaPagamento === 'Parcelado' || formaPagamento === 'Cartão de Crédito') && (
           <Card className="border-orange-200 bg-orange-50">
             <CardContent className="p-4">
@@ -226,7 +238,6 @@ export default function FormasPagamentoPedido({
           </Card>
         )}
 
-        {/* PARCELAMENTO */}
         {formaPagamento === 'Parcelado' && (
           <div className="space-y-3">
             <div className="flex items-center gap-4">
@@ -281,8 +292,7 @@ export default function FormasPagamentoPedido({
           </div>
         )}
 
-        {/* RESUMO DE FORMAS DISPONÍVEIS */}
-        {formaPagamento === undefined && formasAtivas.length > 0 && (
+        {!contagemIndisponivel && formaPagamento === undefined && formasAtivas.length > 0 && (
           <>
             <Separator />
             <h4 className="font-semibold text-base mb-2">Selecione uma Forma de Pagamento</h4>
@@ -292,15 +302,21 @@ export default function FormasPagamentoPedido({
                   key={forma.id}
                   type="button"
                   variant="outline"
-                  onClick={() => onFormaPagamentoChange(forma.tipo)}
+                  onClick={() => onFormaPagamentoChange(optionValue(forma))}
                   className="h-auto py-3 flex flex-col items-center gap-1 text-center"
                 >
                   <span className="text-lg">{forma.icone || '💰'}</span>
-                  <span className="text-xs font-medium">{forma.descricao}</span>
+                  <span className="text-xs font-medium">{forma.descricao || forma.tipo}</span>
                 </Button>
               ))}
             </div>
           </>
+        )}
+
+        {!contagemIndisponivel && formasAtivas.length === 0 && (
+          <div className="text-sm text-slate-500">
+            Nenhuma forma de pagamento ativa no cadastro deste contexto.
+          </div>
         )}
       </CardContent>
     </Card>
