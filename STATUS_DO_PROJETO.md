@@ -1,10 +1,10 @@
-## CURSOR — #539 WidgetFechamentoPedidos Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #539 WidgetFechamentoPedidos CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#536+#538** | multiempresa | **CI SUCCESS** |
-| #537 MonitoramentoCanais | `b26c8d1bb` | aguarda CI |
-| #539 WidgetFechamento | (este) | Pedido filterInContext |
+| **#522–#539** | multiempresa | **CI SUCCESS** |
+| #539 WidgetFechamento | `346ad1306` | **CI SUCCESS** 6/6 |
+| #540 ComissaoForm | `df67a72b2` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
