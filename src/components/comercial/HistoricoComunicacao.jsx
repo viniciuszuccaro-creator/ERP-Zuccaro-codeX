@@ -1,11 +1,9 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   FileText, 
-  Package, 
   Truck, 
   DollarSign, 
   MessageSquare,
@@ -17,26 +15,83 @@ import {
   User,
   MapPin
 } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildHistoricoComunicacaoQueryKey,
+  isHistoricoComunicacaoScopeCurrent,
+  filterHistoricoComunicacaoEventos,
+  resolveHistoricoComunicacaoKpiState,
+} from "./historicoComunicacaoScope";
+
+function readHistoricoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * Timeline de Comunicação e Histórico do Pedido/Cliente
  * Integra todos os módulos: Pedido, Produção, Estoque, Expedição, Fiscal, Financeiro
+ *
+ * Escopo multiempresa: HistoricoCliente via filterInContext (sem list unscoped).
+ * Cache: alvo+Grupo+Empresa+ator+sessão. Loading/erro ≠ zero eventos.
  */
 export default function HistoricoComunicacao({ clienteId, pedidoId }) {
-  const { data: historico = [], isLoading } = useQuery({
-    queryKey: ['historico-cliente', clienteId, pedidoId],
-    queryFn: async () => {
-      let eventos = await base44.entities.HistoricoCliente.list('-data_evento', 100);
-      
-      if (pedidoId) {
-        eventos = eventos.filter(e => e.referencia_id === pedidoId || e.pedido_id === pedidoId);
-      } else if (clienteId) {
-        eventos = eventos.filter(e => e.cliente_id === clienteId);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readHistoricoActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const hasTarget = Boolean(clienteId || pedidoId);
+  const scopeExpected = { actorId, sessionKey };
+
+  const {
+    data: historico,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildHistoricoComunicacaoQueryKey({
+      clienteId, pedidoId, groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      // Preferir filtro server-side; OR legado pedido_id|referencia_id aplicado após o escopo.
+      const baseFilter = clienteId ? { cliente_id: clienteId } : {};
+      const rows = await filterInContext(
+        'HistoricoCliente',
+        baseFilter,
+        '-data_evento',
+        200,
+      );
+      if (signal?.aborted) {
+        const err = new Error('HISTORICO_COMUNICACAO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
       }
-      
-      return eventos;
+      if (!isHistoricoComunicacaoScopeCurrent(scopeExpected, readHistoricoActorAndSession())) {
+        throw new Error('HISTORICO_COMUNICACAO_STALE_SCOPE');
+      }
+      return filterHistoricoComunicacaoEventos(rows, { clienteId, pedidoId });
     },
+    enabled: hasTarget && contextoValido,
   });
+
+  const kpiState = resolveHistoricoComunicacaoKpiState({
+    contextoValido,
+    clienteId,
+    pedidoId,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: historico !== undefined,
+  });
+  const lista = Array.isArray(historico) ? historico : [];
+  const contagemIndisponivel = kpiState !== 'ready';
 
   const getIcone = (moduloOrigem, tipoEvento) => {
     if (moduloOrigem === "Pedido" || moduloOrigem === "Comercial") return FileText;
@@ -65,7 +120,27 @@ export default function HistoricoComunicacao({ clienteId, pedidoId }) {
     return "gray";
   };
 
-  if (isLoading) {
+  if (!contextoValido) {
+    return (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione grupo ou empresa para listar o histórico de comunicação.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!hasTarget) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center text-slate-500">
+          Informe cliente ou pedido para carregar a linha do tempo.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (kpiState === 'loading') {
     return (
       <Card>
         <CardContent className="p-12 text-center text-slate-500">
@@ -75,16 +150,28 @@ export default function HistoricoComunicacao({ clienteId, pedidoId }) {
     );
   }
 
+  if (kpiState === 'error') {
+    return (
+      <Card className="border-red-300 bg-red-50">
+        <CardContent className="p-4 text-sm text-red-900">
+          Não foi possível carregar o histórico (erro de carga ≠ zero eventos).
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const tituloContagem = contagemIndisponivel ? '…' : `${lista.length} eventos`;
+
   return (
     <Card>
       <CardHeader className="bg-slate-50 border-b">
         <CardTitle className="text-base">
-          Linha do Tempo - {pedidoId ? 'Pedido' : 'Cliente'} ({historico.length} eventos)
+          Linha do Tempo - {pedidoId ? 'Pedido' : 'Cliente'} ({tituloContagem})
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         <div className="space-y-4">
-          {historico.map((evento, idx) => {
+          {lista.map((evento, idx) => {
             const Icone = getIcone(evento.modulo_origem, evento.tipo_evento);
             const cor = getCorModulo(evento.modulo_origem);
             
@@ -95,7 +182,7 @@ export default function HistoricoComunicacao({ clienteId, pedidoId }) {
                   <div className={`w-10 h-10 rounded-full bg-${cor}-100 flex items-center justify-center flex-shrink-0`}>
                     <Icone className={`w-5 h-5 text-${cor}-600`} />
                   </div>
-                  {idx < historico.length - 1 && (
+                  {idx < lista.length - 1 && (
                     <div className="w-0.5 h-full bg-slate-200 flex-1 min-h-[40px]"></div>
                   )}
                 </div>
@@ -187,7 +274,7 @@ export default function HistoricoComunicacao({ clienteId, pedidoId }) {
           })}
         </div>
 
-        {historico.length === 0 && (
+        {!contagemIndisponivel && lista.length === 0 && (
           <div className="text-center py-12 text-slate-500">
             <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
             <p>Nenhum evento registrado</p>

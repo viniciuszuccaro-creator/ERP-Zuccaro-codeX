@@ -1,3 +1,16 @@
+## CURSOR — HistoricoComunicacao escopo multiempresa (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-historico-comunicacao-scope-392b` ← #401 tip `b888b2c00` |
+| **Código** | `HistoricoCliente` via `filterInContext`; filtro legado pedido_id\|referencia_id; cache alvo+ator/sessão; STALE_SCOPE; loading/erro ≠ zero |
+| **Testes** | `tests/comercial-historico-comunicacao-scope.test.js` **5 PASS** |
+| **Central360** | componente de histórico reutilizável; sem UI paralela |
+| **Tip CI** | **`57750ad65`** · **CI SUCCESS** 6/6 (fix typecheck) |
+| **Fila** | #549/#551 SUCCESS · #552 PedidosTab UK em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
