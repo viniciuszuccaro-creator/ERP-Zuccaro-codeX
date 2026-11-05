@@ -1,0 +1,19 @@
+Pacote: RepresentantesTab uniqueKey + escopo multiempresa
+Branch: cursor/cadastros-representantes-tab-uniquekey-392b
+Base: cursor/composicao-397-342-prep-392b (#401 tip b888b2c00)
+Data: 2026-11-05 America/Sao_Paulo
+
+Delta:
+- openWindow canônico (Component, props, options); remove legado {id, component: string}
+- uniqueKey create: cadastros-representante-create-[groupId,empresaId]
+- uniqueKey edit:  cadastros-representante-edit-{id} (Editar e Detalhe do mesmo registro reusam)
+- listagem Representante/Cliente/Pedido via filterInContext
+- métricas e lista: erro/carregamento/sem contexto ≠ zero
+- preserva FormCompleto (sky+#464); sem central paralela
+
+Provas: tests/cadastros-representantes-tab-uniquekey.test.js
+
+Fora:
+- FF #401 sem aceite
+- Homolog 100 BLOCKED
+- Dados reais em commit/CI
