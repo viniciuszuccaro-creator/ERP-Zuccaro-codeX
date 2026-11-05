@@ -101,6 +101,27 @@ test('remaining ID-only additions retain every existing handler context permissi
           expected = expected.replace(before, after);
         }
       }
+      if (name === 'GrupoEmpresarial') {
+        // Delta autorizado: Empresa via filterInContext (sem list unscoped).
+        for (const [before, after] of [
+          ['import { base44 } from "@/api/base44Client";\n', ''],
+          [
+            '  const { empresaAtual, grupoAtual } = useContextoVisual();\n',
+            '  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();\n',
+          ],
+          [
+            '  const { data: empresas = [] } = useQuery({\n    queryKey: ["empresas", groupId || "sem-grupo"],\n    queryFn: () => base44.entities.Empresa.list(),\n  });\n',
+            "  // Escopo multiempresa: Empresa via filterInContext (group_id). Sem list unscoped.\n  // enabled exige contexto; erro ≠ zero KPI fabricado.\n  const { data: empresas = [], isError: isErrorEmpresas } = useQuery({\n    queryKey: [\"empresas\", groupId || \"sem-grupo\"],\n    queryFn: () => filterInContext('Empresa', groupId ? { group_id: groupId } : {}, 'razao_social', 500),\n    enabled: contextoValido,\n  });\n",
+          ],
+          [
+            '            {empresasDoGrupo.length === 0 && (\n              <p className="text-sm text-slate-500 text-center py-4">\n                Nenhuma empresa cadastrada\n              </p>\n            )}\n',
+            "            {empresasDoGrupo.length === 0 && (\n              <p className=\"text-sm text-slate-500 text-center py-4\">\n                {isErrorEmpresas\n                  ? 'Contagem de empresas indisponível (erro de carga ≠ zero).'\n                  : 'Nenhuma empresa cadastrada'}\n              </p>\n            )}\n",
+          ],
+        ]) {
+          assert.equal(expected.split(before).length, 2, `GrupoEmpresarial expected hunk missing: ${before.slice(0, 60)}`);
+          expected = expected.replace(before, after);
+        }
+      }
       assert.equal(emit(ts.createPrinter().printFile(transformed.transformed[0])), emit(expected), name);
     } finally { transformed.dispose(); }
   }

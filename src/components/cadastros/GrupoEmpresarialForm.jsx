@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Network, CheckCircle2, Trash2, Power, PowerOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -33,7 +32,7 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
 
   const dadosIniciais = normalize(item || data || initialData || defaultValues || grupo);
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || dadosIniciais?.id || null;
   const contextoValido = Boolean(groupId || dadosIniciais?.id);
   const podeCriar = canCreate("Cadastros", "GrupoEmpresarial") || canCreate("Sistema", "Grupos") || canCreate("Cadastros", null);
@@ -52,9 +51,12 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
     score_integracao_erp: 0
   }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
 
-  const { data: empresas = [] } = useQuery({
+  // Escopo multiempresa: Empresa via filterInContext (group_id). Sem list unscoped.
+  // enabled exige contexto; erro ≠ zero KPI fabricado.
+  const { data: empresas = [], isError: isErrorEmpresas } = useQuery({
     queryKey: ["empresas", groupId || "sem-grupo"],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: () => filterInContext('Empresa', groupId ? { group_id: groupId } : {}, 'razao_social', 500),
+    enabled: contextoValido,
   });
 
   const empresasDoGrupo = useMemo(() => empresas.filter((empresa) => {
@@ -182,7 +184,9 @@ export default function GrupoEmpresarialForm({ grupo, item, data, initialData, d
 
             {empresasDoGrupo.length === 0 && (
               <p className="text-sm text-slate-500 text-center py-4">
-                Nenhuma empresa cadastrada
+                {isErrorEmpresas
+                  ? 'Contagem de empresas indisponível (erro de carga ≠ zero).'
+                  : 'Nenhuma empresa cadastrada'}
               </p>
             )}
           </CardContent>
