@@ -29,10 +29,11 @@ import KPIsConciliacao from "./conciliacao/KPIsConciliacao";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import ExtratoBancarioImportDialog from "./ExtratoBancarioImportDialog";
+import { buildFinanceiroQueryScopeKey } from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ConciliacaoBancaria({ windowMode = false }) {
   const { user } = useUser();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const [sourceOpen, setSourceOpen] = useState(false);
   const [filtros, setFiltros] = useState({
@@ -45,33 +46,37 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
   const [lancamentoSelecionado, setLancamentoSelecionado] = useState(null);
   const [movimentoParaConciliar, setMovimentoParaConciliar] = useState(null);
 
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
+  const empresaId = empresaAtual?.id || null;
+  const scopeKey = buildFinanceiroQueryScopeKey({ groupId: groupId || null, empresaId });
+  const contextoValido = scopeKey !== 'sem-contexto';
+
+  // Escopo multiempresa: Empresa via filterInContext (não list unscoped).
+  const { data: empresas = [], isError: isErrorEmpresasConciliacao } = useQuery({
+    queryKey: ['empresas', scopeKey],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido,
   });
 
+  // Fail-closed: sem empresa selecionada não lista extratos/conciliações/movimentos de todas as empresas.
   const { data: extratos = [] } = useQuery({
-    queryKey: ['extratos-bancarios', empresaSelecionada],
-    queryFn: () => empresaSelecionada 
-      ? base44.entities.ExtratoBancario.filter({ empresa_id: empresaSelecionada })
-      : base44.entities.ExtratoBancario.list('-data_movimento'),
+    queryKey: ['extratos-bancarios', scopeKey, empresaSelecionada],
+    queryFn: () => base44.entities.ExtratoBancario.filter({ empresa_id: empresaSelecionada }),
+    enabled: contextoValido && !!empresaSelecionada,
   });
 
   const { data: conciliacoes = [] } = useQuery({
-    queryKey: ['conciliacoes-bancarias', empresaSelecionada],
-    queryFn: () => empresaSelecionada
-      ? base44.entities.ConciliacaoBancaria.filter({ empresa_id: empresaSelecionada })
-      : base44.entities.ConciliacaoBancaria.list('-created_date'),
+    queryKey: ['conciliacoes-bancarias', scopeKey, empresaSelecionada],
+    queryFn: () => base44.entities.ConciliacaoBancaria.filter({ empresa_id: empresaSelecionada }),
+    enabled: contextoValido && !!empresaSelecionada,
   });
 
   const { data: movimentos = [] } = useQuery({
-    queryKey: ['caixa-movimentos', empresaSelecionada],
-    queryFn: () => empresaSelecionada
-      ? base44.entities.CaixaMovimento.filter({ empresa_id: empresaSelecionada })
-      : base44.entities.CaixaMovimento.list('-data_movimento'),
+    queryKey: ['caixa-movimentos', scopeKey, empresaSelecionada],
+    queryFn: () => base44.entities.CaixaMovimento.filter({ empresa_id: empresaSelecionada }),
+    enabled: contextoValido && !!empresaSelecionada,
   });
 
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id;
   const sourceScope = typeof groupId === 'string' && typeof empresaAtual?.id === 'string' && typeof user?.id === 'string'
     && (!empresaSelecionada || empresaSelecionada === empresaAtual.id)
     ? {groupId, empresaId:empresaAtual.id, actorId:user.id} : null;
@@ -89,6 +94,16 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
   const content = (
     <div className="space-y-1.5">
       <HeaderConciliacaoCompacto />
+      {isErrorEmpresasConciliacao && (
+        <p className="text-xs text-slate-500 px-1">
+          Lista de empresas indisponível (erro de carga ≠ zero).
+        </p>
+      )}
+      {!contextoValido && (
+        <p className="text-xs text-amber-700 px-1">
+          Selecione grupo ou empresa para carregar a conciliação.
+        </p>
+      )}
       {sourceOpen && sourceScope && canReadSource && <ExtratoBancarioImportDialog
         key={`${sourceScope.actorId}:${sourceScope.groupId}:${sourceScope.empresaId}`}
         scope={sourceScope} canImport={hasPermission('Financeiro','conciliacao','importar')}
