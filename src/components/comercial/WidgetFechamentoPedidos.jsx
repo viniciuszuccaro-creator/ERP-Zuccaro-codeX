@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Zap, TrendingUp, CheckCircle2, ArrowRight, Sparkles, Activity } from 'l
 import { useWindow } from '@/components/lib/useWindow';
 import DashboardFechamentoPedidos from './DashboardFechamentoPedidos';
 import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
+import useContextoVisual from '@/components/lib/useContextoVisual';
 
 /**
  * V21.6 FINAL - WIDGET RESUMIDO COM IA ANALYTICS
@@ -15,21 +15,34 @@ import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
 export default function WidgetFechamentoPedidos({ empresaId = null }) {
   const { openWindow } = useWindow();
   const [estatisticasIA, setEstatisticasIA] = useState(null);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaCtx = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaCtx);
 
   // Carregar estatísticas IA
   useEffect(() => {
-    obterEstatisticasAutomacao(empresaId, 7).then(stats => {
+    if (!contextoValido) {
+      setEstatisticasIA(null);
+      return;
+    }
+    obterEstatisticasAutomacao(empresaCtx, 7).then(stats => {
       setEstatisticasIA(stats);
     }).catch(() => {
       setEstatisticasIA(null);
     });
-  }, [empresaId]);
+  }, [empresaCtx, contextoValido]);
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', 50)
-      : base44.entities.Pedido.list('-created_date', 50),
+  // Escopo multiempresa: Pedido via filterInContext (sem list unscoped).
+  const { data: pedidos = [], isError: isErrorPedidosWidget } = useQuery({
+    queryKey: ['pedidos-widget-fechamento', groupId, empresaCtx],
+    queryFn: () => filterInContext(
+      'Pedido',
+      empresaCtx ? { empresa_id: empresaCtx } : {},
+      '-created_date',
+      50
+    ),
+    enabled: contextoValido,
     initialData: [],
   });
 
@@ -60,6 +73,16 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
     (p.itens_revenda?.length > 0 || p.itens_armado_padrao?.length > 0)
   );
 
+  if (!contextoValido) {
+    return (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione grupo ou empresa para o widget de fechamento.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-2 border-blue-400 bg-gradient-to-br from-blue-50 to-sky-50 hover:shadow-xl transition-all duration-300">
       <CardHeader>
@@ -78,6 +101,9 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {isErrorPedidosWidget && (
+          <p className="text-xs text-slate-500">Indicadores indisponíveis (erro de carga ≠ zero).</p>
+        )}
         
         {/* Taxa de Automação */}
         <div className="bg-white/80 p-4 rounded-lg border border-blue-200">
