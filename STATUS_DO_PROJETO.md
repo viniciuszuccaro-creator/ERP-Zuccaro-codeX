@@ -1,3 +1,16 @@
+## CURSOR — #511 achados cache/KPI follow-up (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/cadastros-param-origem-cache-392b` ← tip #511 `6b39973a3` |
+| **Achados** | zero-em-carga · métrica≠0 · cache ator/sessão/Grupo/Empresa · late discard |
+| **Código** | `parametrosOrigemScope.js` + Tab/Gerenciador queryKey canônica + STALE_SCOPE |
+| **Provas** | uniqueKey + cache-scope **9 PASS** |
+| **#536–#539** | filterInContext OK; lacuna residual: queryKey sem ator/sessão |
+| **Fila** | #401 `b888b2c00` · #522–#542 verdes · #543 aguarda CI · FF aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — ParametrosOrigem uniqueKey CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
