@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,9 +15,31 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildGerarOpModalQueryKey,
+  isGerarOpModalScopeCurrent,
+  resolveGerarOpModalProdutosKpiState,
+  pickConfiguracaoProducao,
+} from "./gerarOpModalScope";
+
+function readGerarOpActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ *
+ * Escopo multiempresa: Produto/ConfiguracaoProducao via filterInContext;
+ * mutações via createInContext/updateInContext/getInContext.
+ * Loading/erro ≠ zero produtos. STALE_SCOPE em resposta tardia.
  */
 export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = false }) {
   const { toast } = useToast();
@@ -36,11 +57,29 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
     prioridade: "Normal"
   });
 
-  const [configProducao, setConfigProducao] = useState(null);
-
   const queryClient = useQueryClient();
   const { user } = useUser();
   const { hasPermission } = usePermissions();
+  const {
+    empresaAtual,
+    grupoAtual,
+    filterInContext,
+    createInContext,
+    updateInContext,
+    getInContext,
+  } = useContextoVisual();
+  const groupId = pedido?.group_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = pedido?.empresa_id || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readGerarOpActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+  const scopeInput = {
+    pedidoId: pedido?.id || null,
+    groupId,
+    empresaId,
+    actorId,
+    sessionKey,
+  };
   const canGerarOP = hasPermission('Comercial', 'Pedido', 'gerarOP')
     || hasPermission('Producao', 'OrdemProducao', 'criar')
     || hasPermission('Produção', 'OrdemProducao', 'criar')
@@ -48,37 +87,66 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
     || hasPermission('Produção', 'Ordens Produção', 'criar');
 
   // Fetch all active products for the company to look up bitolas
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', pedido?.empresa_id],
-    queryFn: async () => {
-      if (!pedido?.empresa_id) return [];
-      const response = await base44.entities.Produto.filter({ empresa_id: pedido.empresa_id, status: "Ativo" });
-      return response;
+  const {
+    data: produtosData,
+    isLoading: isLoadingProdutos,
+    isError: isErrorProdutos,
+    isFetching: isFetchingProdutos,
+  } = useQuery({
+    queryKey: buildGerarOpModalQueryKey('gerar-op-produtos', scopeInput),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Produto', { status: 'Ativo' }, 'descricao', 500);
+      if (signal?.aborted) {
+        const err = new Error('GERAR_OP_PRODUTOS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isGerarOpModalScopeCurrent(scopeExpected, readGerarOpActorAndSession())) {
+        throw new Error('GERAR_OP_PRODUTOS_STALE_SCOPE');
+      }
+      return rows;
     },
-    enabled: !!pedido?.empresa_id && isOpen,
+    enabled: Boolean(isOpen) && contextoValido,
   });
 
+  const kpiProdutos = resolveGerarOpModalProdutosKpiState({
+    contextoValido,
+    isOpen,
+    isLoading: isLoadingProdutos,
+    isError: isErrorProdutos,
+    isFetching: isFetchingProdutos,
+    dataDefined: produtosData !== undefined,
+  });
+  const produtos = kpiProdutos === 'ready' && Array.isArray(produtosData) ? produtosData : [];
+
   // Load production configuration for the company
+  const { data: configProducao } = useQuery({
+    queryKey: buildGerarOpModalQueryKey('gerar-op-config-producao', scopeInput),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ConfiguracaoProducao', {}, undefined, 20);
+      if (signal?.aborted) {
+        const err = new Error('GERAR_OP_CONFIG_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isGerarOpModalScopeCurrent(scopeExpected, readGerarOpActorAndSession())) {
+        throw new Error('GERAR_OP_CONFIG_STALE_SCOPE');
+      }
+      return pickConfiguracaoProducao(rows);
+    },
+    enabled: Boolean(isOpen) && contextoValido,
+  });
+
   useEffect(() => {
-    if (isOpen && pedido?.empresa_id) {
-      base44.entities.ConfiguracaoProducao.filter({
-        empresa_id: pedido.empresa_id
-      }).then(configs => {
-        if (configs[0]) {
-          setConfigProducao(configs[0]);
-          // Pre-fill configGlobal with defaults from configProducao if available and not already set
-          setConfigGlobal(prev => ({
-            ...prev,
-            setor_producao: configs[0].setor_producao_padrao || prev.setor_producao,
-            turno: configs[0].turno_padrao || prev.turno,
-            prioridade: configs[0].prioridade_padrao || prev.prioridade,
-            // Optionally set data_inicio_prevista to today if not set, or based on config
-            data_inicio_prevista: prev.data_inicio_prevista || new Date().toISOString().split('T')[0],
-          }));
-        }
-      });
-    }
-  }, [isOpen, pedido]);
+    if (!configProducao) return;
+    setConfigGlobal((prev) => ({
+      ...prev,
+      setor_producao: configProducao.setor_producao_padrao || prev.setor_producao,
+      turno: configProducao.turno_padrao || prev.turno,
+      prioridade: configProducao.prioridade_padrao || prev.prioridade,
+      data_inicio_prevista: prev.data_inicio_prevista || new Date().toISOString().split('T')[0],
+    }));
+  }, [configProducao]);
 
   // Carregar itens de produção do pedido
   useEffect(() => {
@@ -248,8 +316,8 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
       inicio.setDate(inicio.getDate() + (configProducao?.prazo_padrao_op_dias || 7));
       const dataConclusaoPrevista = inicio.toISOString().split('T')[0];
       
-      // Create OP
-      const op = await base44.entities.OrdemProducao.create({
+      // Create OP (carimbo multiempresa via createInContext)
+      const op = await createInContext('OrdemProducao', {
         group_id: pedido.group_id,
         empresa_id: pedido.empresa_id,
         pedido_id: pedido.id,
@@ -314,10 +382,10 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
           if (!material.produto_id || !material.disponivel_estoque) continue;
           
           // Re-fetch product to get latest stock before reservation to avoid race conditions
-          const currentProduct = await base44.entities.Produto.get(material.produto_id);
+          const currentProduct = await getInContext('Produto', material.produto_id);
           if (!currentProduct) continue;
 
-          const movReserva = await base44.entities.MovimentacaoEstoque.create({
+          const movReserva = await createInContext('MovimentacaoEstoque', {
             group_id: pedido.group_id,
             empresa_id: pedido.empresa_id,
             origem_movimento: "producao",
@@ -342,26 +410,26 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
           reservasIds.push(movReserva.id);
           
           // Update product with reserved stock
-          await base44.entities.Produto.update(material.produto_id, {
+          await updateInContext('Produto', material.produto_id, {
             estoque_reservado: (currentProduct.estoque_reservado || 0) + material.quantidade_kg
           });
         }
         
         // Update OP with reservation IDs
-        await base44.entities.OrdemProducao.update(op.id, {
+        await updateInContext('OrdemProducao', op.id, {
           estoque_reservado: true,
           reserva_estoque_ids: reservasIds
         });
       }
       
       // Update pedido
-      await base44.entities.Pedido.update(pedido.id, {
+      await updateInContext('Pedido', pedido.id, {
         ordem_producao_ids: [...(pedido.ordem_producao_ids || []), op.id],
         status: faltaEstoque ? "Aguardando Matéria-Prima" : "Em Produção"
       });
       
       // Record history
-      await base44.entities.HistoricoCliente.create({
+      await createInContext('HistoricoCliente', {
         group_id: pedido.group_id,
         empresa_id: pedido.empresa_id,
         cliente_id: pedido.cliente_id,
@@ -788,6 +856,21 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
             )}
           </DialogTitle>
         </DialogHeader>
+        {kpiProdutos === 'unavailable' && (
+          <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded p-3 mb-3">
+            Contexto de Grupo/Empresa necessário para gerar OP.
+          </p>
+        )}
+        {kpiProdutos === 'loading' && (
+          <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded p-3 mb-3">
+            Carregando produtos para OP…
+          </p>
+        )}
+        {kpiProdutos === 'error' && (
+          <p className="text-sm text-red-700 bg-red-50 border border-red-300 rounded p-3 mb-3">
+            Não foi possível carregar produtos (erro ≠ zero produtos).
+          </p>
+        )}
         {content}
       </DialogContent>
     </Dialog>

@@ -1,3 +1,15 @@
+## CURSOR — GerarOPModal escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-gerar-op-modal-scope-392b` = **#561** |
+| **Tip CI** | **`8758de870`** · **CI SUCCESS** 6/6 (push+PR) |
+| **Código** | Produto/Config via filterInContext; OP/estoque/pedido via *InContext; KPI ≠ zero |
+| **Testes** | `tests/comercial-gerar-op-modal-scope.test.js` **5 PASS** |
+| **Fila** | #554–#560 SUCCESS · FF #401 aguarda Codex · sem FF sem aceite |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
