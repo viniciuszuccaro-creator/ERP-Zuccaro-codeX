@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-copiar-ultimo-pedido-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-copiar-ultimo-pedido-scope-392b` = **#556** |
+| **Tip CI** | **`f5248cb7a`** · **CI SUCCESS** 6/6 |
 | **Código** | Pedido via `filterInContext`; exclui Cancelado local; loading/erro ≠ ausência; STALE_SCOPE |
 | **Testes** | `tests/comercial-copiar-ultimo-pedido-scope.test.js` **5 PASS** |
-| **Paralelo** | #554/#555 em CI · #549–#553 SUCCESS · FF #401 aguarda Codex |
+| **Fila** | #554/#555 SUCCESS · #557/#558 em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 

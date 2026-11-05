@@ -1,7 +1,6 @@
 ## CURSOR — CopiarUltimoPedido escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-copiar-ultimo-pedido-scope-392b` ← #401.
-- Pedido via filterInContext; Cancelado filtrado local; KPI ≠ ausência. Testes 5 PASS.
-- #554/#555 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+- Tip `f5248cb7a` **CI SUCCESS** 6/6 (#556). Pedido via filterInContext; Cancelado local; KPI ≠ ausência.
+- #554/#555 SUCCESS; #557/#558 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
