@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch / PR** | `cursor/comercial-validador-estoque-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-validador-estoque-scope-392b` = **#562** |
+| **Tip CI** | **`a62f1537e`** · **CI SUCCESS** 6/6 (push+PR) |
 | **Código** | Produto via filterInContext; queryKey Grupo/Empresa/ator/sessão; KPI ≠ zero; HTTP advisory preservado |
 | **Testes** | `comercial-validador-estoque-scope` **5 PASS** + `validador-estoque-disponibilidade` **11 PASS** |
-| **Fila** | #554–#561 SUCCESS · FF #401 aguarda Codex |
+| **Fila** | #554–#561/#563/#564 SUCCESS · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 

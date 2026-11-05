@@ -1,7 +1,6 @@
 ## CURSOR — ValidadorEstoquePedido escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-validador-estoque-scope-392b` ← #401.
-- filterInContext Produto; STALE_SCOPE; loading/erro ≠ zero/insuficiente; HTTP advisory intacto. Testes 5+11 PASS.
-- #554–#561 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
+- Tip `a62f1537e` **CI SUCCESS** 6/6 (#562). filterInContext; HTTP advisory intacto.
+- #554–#561/#563/#564 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
