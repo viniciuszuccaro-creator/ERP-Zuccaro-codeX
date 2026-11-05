@@ -1,45 +1,158 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Building2, TrendingUp, TrendingDown, DollarSign, AlertTriangle } from 'lucide-react';
+import { Building2, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  resolveVisaoConsolidadaKpiState,
+  isVisaoConsolidadaScopeCurrent,
+  assertVisaoConsolidadaGroupMatch,
+  sumVisaoConsolidadaPendente,
+  sumVisaoConsolidadaAtrasado,
+  buildVisaoConsolidadaPorEmpresa,
+} from './visaoConsolidadaGrupoScope';
+
+function formatMoney(value) {
+  return (value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+function KpiMoney({ state, value, positiveClass, negativeClass, zeroClass }) {
+  if (state === 'loading') {
+    return <span className="text-sm text-slate-500 animate-pulse">Carregando…</span>;
+  }
+  if (state === 'error') {
+    return <span className="text-sm text-red-600">Erro ≠ R$ 0,00</span>;
+  }
+  if (state === 'unavailable') {
+    return <span className="text-sm text-amber-700">Contexto necessário</span>;
+  }
+  const cls = value > 0 ? positiveClass : value < 0 ? negativeClass : zeroClass;
+  return <span className={`text-2xl font-bold ${cls}`}>R$ {formatMoney(value)}</span>;
+}
 
 export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-grupo', groupId],
-    queryFn: () => base44.entities.Empresa.filter({ group_id: groupId }),
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const resolvedGroupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  let effectiveGroupId = null;
+  let groupMismatch = false;
+  try {
+    effectiveGroupId = assertVisaoConsolidadaGroupMatch(groupId, resolvedGroupId);
+  } catch {
+    groupMismatch = true;
+  }
+  const contextoValido = Boolean(effectiveGroupId) && !groupMismatch;
+
+  const sessionSnapshot = readErpHttpSession();
+  const actorId = typeof sessionSnapshot?.actorId === 'string' && sessionSnapshot.actorId.trim()
+    ? sessionSnapshot.actorId.trim()
+    : null;
+  const sessionKey = central360SessionKey(sessionSnapshot?.token);
+  const scopeExpected = { actorId, sessionKey };
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const nextActor = typeof session?.actorId === 'string' && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId: nextActor, sessionKey: central360SessionKey(session?.token) };
+  };
+
+  const empresasQuery = useQuery({
+    queryKey: ['empresas-grupo', effectiveGroupId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Empresa', { group_id: effectiveGroupId });
+      if (signal?.aborted) {
+        const err = new Error('VISAO_CONSOLIDADA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isVisaoConsolidadaScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('VISAO_CONSOLIDADA_EMPRESAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contas-pagar-grupo', groupId],
-    queryFn: () => base44.entities.ContaPagar.filter({ group_id: groupId }),
+  const pagarQuery = useQuery({
+    queryKey: ['contas-pagar-grupo', effectiveGroupId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ContaPagar', { group_id: effectiveGroupId });
+      if (signal?.aborted) {
+        const err = new Error('VISAO_CONSOLIDADA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isVisaoConsolidadaScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('VISAO_CONSOLIDADA_PAGAR_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-grupo', groupId],
-    queryFn: () => base44.entities.ContaReceber.filter({ group_id: groupId }),
+  const receberQuery = useQuery({
+    queryKey: ['contas-receber-grupo', effectiveGroupId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ContaReceber', { group_id: effectiveGroupId });
+      if (signal?.aborted) {
+        const err = new Error('VISAO_CONSOLIDADA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isVisaoConsolidadaScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('VISAO_CONSOLIDADA_RECEBER_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  const totalPagar = contasPagar.filter(c => c.status === 'Pendente').reduce((acc, c) => acc + (c.valor || 0), 0);
-  const totalReceber = contasReceber.filter(c => c.status === 'Pendente').reduce((acc, c) => acc + (c.valor || 0), 0);
-  const saldoConsolidado = totalReceber - totalPagar;
-
-  const pagarAtrasado = contasPagar.filter(c => c.status === 'Atrasado').reduce((acc, c) => acc + (c.valor || 0), 0);
-  const receberAtrasado = contasReceber.filter(c => c.status === 'Atrasado').reduce((acc, c) => acc + (c.valor || 0), 0);
-
-  const dadosPorEmpresa = empresas.map(emp => {
-    const pagarEmpresa = contasPagar.filter(c => c.empresa_id === emp.id && c.status === 'Pendente').reduce((acc, c) => acc + (c.valor || 0), 0);
-    const receberEmpresa = contasReceber.filter(c => c.empresa_id === emp.id && c.status === 'Pendente').reduce((acc, c) => acc + (c.valor || 0), 0);
-    const saldoEmpresa = receberEmpresa - pagarEmpresa;
-
-    return {
-      empresa: emp.nome_fantasia || emp.razao_social,
-      pagar: pagarEmpresa,
-      receber: receberEmpresa,
-      saldo: saldoEmpresa
-    };
+  const empresasKpi = resolveVisaoConsolidadaKpiState({
+    contextoValido,
+    isLoading: empresasQuery.isLoading,
+    isError: empresasQuery.isError || groupMismatch,
+    isFetching: empresasQuery.isFetching,
+    dataDefined: empresasQuery.data !== undefined,
   });
+  const pagarKpi = resolveVisaoConsolidadaKpiState({
+    contextoValido,
+    isLoading: pagarQuery.isLoading,
+    isError: pagarQuery.isError || groupMismatch,
+    isFetching: pagarQuery.isFetching,
+    dataDefined: pagarQuery.data !== undefined,
+  });
+  const receberKpi = resolveVisaoConsolidadaKpiState({
+    contextoValido,
+    isLoading: receberQuery.isLoading,
+    isError: receberQuery.isError || groupMismatch,
+    isFetching: receberQuery.isFetching,
+    dataDefined: receberQuery.data !== undefined,
+  });
+
+  const agregadosKpi = [empresasKpi, pagarKpi, receberKpi].includes('error')
+    ? 'error'
+    : [empresasKpi, pagarKpi, receberKpi].includes('unavailable')
+      ? 'unavailable'
+      : [empresasKpi, pagarKpi, receberKpi].includes('loading')
+        ? 'loading'
+        : empresasKpi === 'ready' && pagarKpi === 'ready' && receberKpi === 'ready'
+          ? 'ready'
+          : 'loading';
+
+  const empresas = empresasKpi === 'ready' && Array.isArray(empresasQuery.data) ? empresasQuery.data : [];
+  const contasPagar = pagarKpi === 'ready' && Array.isArray(pagarQuery.data) ? pagarQuery.data : [];
+  const contasReceber = receberKpi === 'ready' && Array.isArray(receberQuery.data) ? receberQuery.data : [];
+
+  const totalPagar = agregadosKpi === 'ready' ? sumVisaoConsolidadaPendente(contasPagar) : null;
+  const totalReceber = agregadosKpi === 'ready' ? sumVisaoConsolidadaPendente(contasReceber) : null;
+  const saldoConsolidado = agregadosKpi === 'ready' ? (totalReceber - totalPagar) : null;
+  const pagarAtrasado = agregadosKpi === 'ready' ? sumVisaoConsolidadaAtrasado(contasPagar) : null;
+  const receberAtrasado = agregadosKpi === 'ready' ? sumVisaoConsolidadaAtrasado(contasReceber) : null;
+  const dadosPorEmpresa = agregadosKpi === 'ready'
+    ? buildVisaoConsolidadaPorEmpresa(empresas, contasPagar, contasReceber)
+    : [];
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-4"}>
@@ -49,6 +162,12 @@ export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
         <h2 className="text-2xl font-bold text-slate-900">Visão Consolidada do Grupo</h2>
       </div>
 
+      {groupMismatch && (
+        <p className="text-sm text-red-600 mb-2" role="alert">
+          Grupo da prop diverge do contexto visual — consulta bloqueada (≠ R$ 0,00).
+        </p>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -57,13 +176,17 @@ export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">
-                R$ {totalReceber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
+              <KpiMoney
+                state={agregadosKpi}
+                value={totalReceber}
+                positiveClass="text-green-600"
+                negativeClass="text-green-600"
+                zeroClass="text-green-600"
+              />
             </div>
-            {receberAtrasado > 0 && (
+            {agregadosKpi === 'ready' && receberAtrasado > 0 && (
               <p className="text-xs text-red-600 mt-1">
-                R$ {receberAtrasado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} atrasado
+                R$ {formatMoney(receberAtrasado)} atrasado
               </p>
             )}
           </CardContent>
@@ -76,13 +199,17 @@ export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-red-600" />
-              <span className="text-2xl font-bold text-red-600">
-                R$ {totalPagar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
+              <KpiMoney
+                state={agregadosKpi}
+                value={totalPagar}
+                positiveClass="text-red-600"
+                negativeClass="text-red-600"
+                zeroClass="text-red-600"
+              />
             </div>
-            {pagarAtrasado > 0 && (
+            {agregadosKpi === 'ready' && pagarAtrasado > 0 && (
               <p className="text-xs text-orange-600 mt-1">
-                R$ {pagarAtrasado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} atrasado
+                R$ {formatMoney(pagarAtrasado)} atrasado
               </p>
             )}
           </CardContent>
@@ -95,9 +222,13 @@ export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
           <CardContent>
             <div className="flex items-center gap-2">
               <DollarSign className={`w-5 h-5 ${saldoConsolidado >= 0 ? 'text-blue-600' : 'text-red-600'}`} />
-              <span className={`text-2xl font-bold ${saldoConsolidado >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                R$ {saldoConsolidado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
+              <KpiMoney
+                state={agregadosKpi}
+                value={saldoConsolidado}
+                positiveClass="text-blue-600"
+                negativeClass="text-red-600"
+                zeroClass="text-blue-600"
+              />
             </div>
           </CardContent>
         </Card>
@@ -109,7 +240,15 @@ export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
           <CardContent>
             <div className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-slate-600" />
-              <span className="text-2xl font-bold text-slate-900">{empresas.length}</span>
+              {empresasKpi === 'ready' ? (
+                <span className="text-2xl font-bold text-slate-900">{empresas.length}</span>
+              ) : empresasKpi === 'loading' ? (
+                <span className="text-sm text-slate-500 animate-pulse">Carregando…</span>
+              ) : empresasKpi === 'error' || groupMismatch ? (
+                <span className="text-sm text-red-600">Erro ≠ 0</span>
+              ) : (
+                <span className="text-sm text-amber-700">Contexto necessário</span>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -123,31 +262,42 @@ export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          {agregadosKpi === 'loading' && (
+            <p className="text-sm text-slate-500 animate-pulse">Carregando saldos…</p>
+          )}
+          {agregadosKpi === 'error' && (
+            <p className="text-sm text-red-600">Erro ≠ lista vazia / R$ 0,00</p>
+          )}
+          {agregadosKpi === 'unavailable' && (
+            <p className="text-sm text-amber-700">Selecione o Grupo para consolidar.</p>
+          )}
+          {agregadosKpi === 'ready' && (
           <div className="space-y-3">
-            {dadosPorEmpresa.map((dado, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
+            {dadosPorEmpresa.map((dado) => (
+              <div key={dado.empresaId || dado.empresa} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
                 <div className="flex-1">
                   <p className="font-medium text-slate-900">{dado.empresa}</p>
                 </div>
                 <div className="flex gap-4 text-sm">
                   <div className="text-right">
                     <p className="text-xs text-slate-500">A Receber</p>
-                    <p className="font-semibold text-green-600">R$ {dado.receber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-green-600">R$ {formatMoney(dado.receber)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-slate-500">A Pagar</p>
-                    <p className="font-semibold text-red-600">R$ {dado.pagar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="font-semibold text-red-600">R$ {formatMoney(dado.pagar)}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-slate-500">Saldo</p>
                     <p className={`font-bold ${dado.saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      R$ {dado.saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {formatMoney(dado.saldo)}
                     </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
     </div></div>
