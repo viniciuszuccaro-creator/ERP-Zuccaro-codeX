@@ -1,3 +1,18 @@
+## CURSOR — CentroOperacaoForm escopo multiempresa (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-centro-operacao-scope-392b` = **#516** |
+| **Base** | #401 tip `b888b2c00` |
+| **Tip** | `e7816afa1` — pin JSX residual + identidade delta autorizado filterInContext |
+| **Delta** | CentroOperacaoForm · Colaborador via filterInContext (`empresa_alocada_id`); Select shape pin; erro ≠ zero KPI |
+| **Testes** | scope + identidade + residual — PASS local |
+| **Paralelos** | #511–#515 CI SUCCESS |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 · merge/deploy · dados reais |
+| **Próximo indep.** | gap cadastro scope/uniqueKey (GrupoEmpresarial/Usuario ou próximo `.list()` unscoped) |
+
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

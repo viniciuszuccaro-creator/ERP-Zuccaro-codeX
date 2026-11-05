@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import useCadastroRecordState from './useCadastroRecordState';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -27,7 +26,7 @@ const sanitizeGeo = (geo = {}) => ({
 export default function CentroOperacaoForm({ centro, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || centro;
   const { canCreate, canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = canCreate("Cadastros", "CentroOperacao") || canCreate("Logistica", "CentroOperacao") || canCreate("Cadastros", null);
@@ -43,9 +42,11 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
     ...dadosIniciais
   }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_at ?? dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
-  const { data: colaboradores = [] } = useQuery({
+  // Escopo multiempresa: Colaborador via filterInContext (empresa_alocada_id).
+  // Sem initialData sintético — enabled exige contexto; erro deixa data undefined (Select vazio ≠ zero fabricado de KPI).
+  const { data: colaboradores = [], isError: isErrorColaboradores } = useQuery({
     queryKey: ['colaboradores-centro-operacao', groupId, empresaAtual?.id],
-    queryFn: () => base44.entities.Colaborador.list(),
+    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500),
     enabled: contextoValido,
   });
 
@@ -133,6 +134,11 @@ export default function CentroOperacaoForm({ centro, item, data, initialData, de
             {colaboradores.map(c => (<SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>))}
           </SelectContent>
         </Select>
+        {isErrorColaboradores && (
+          <p className="text-xs text-slate-500 mt-1">
+            Contagem de colaboradores indisponível (erro de carga ≠ zero).
+          </p>
+        )}
       </div>
 
       <BuscaCEP onEnderecoEncontrado={handleCEPFound} />
