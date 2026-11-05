@@ -1,3 +1,13 @@
+## CURSOR — RateioMultiempresa escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/financeiro-rateio-multiempresa-scope-392b` ← #401 `b888b2c00` |
+| **Código** | createInContext/updateInContext; fail-closed Grupo; STALE_SCOPE |
+| **Testes** | `financeiro-rateio-multiempresa-scope` **5 PASS** |
+| **Fila** | #566–#569 SUCCESS · #568 docs tip em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,9 +9,31 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Split, Shuffle, Building2, DollarSign, Percent } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  isRateioMultiempresaScopeCurrent,
+  resolveRateioMultiempresaGroupId,
+  resolveRateioTituloEntity,
+  buildRateioFinanceiroCreatePayload,
+  buildRateioTituloCreatePayload,
+  buildRateioDistribuicaoRealizada,
+} from "./rateioMultiempresaScope";
+
+function readRateioMultiempresaActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
- * Componente de rateio automático de despesas/receitas do GRUPO para as empresas
+ * Componente de rateio automático de despesas/receitas do GRUPO para as empresas.
+ * Mutações via createInContext/updateInContext (sem entities.*.create/update unscoped).
+ * Fail-closed sem Grupo; STALE_SCOPE se ator/sessão mudar no meio.
  * @typedef {{tipo_documento: string, descricao: string, categoria: string, valor_total: number,
  * data_vencimento: string, criterio_rateio: string,
  * distribuicao: {empresa_id: string, empresa_nome: string, percentual: number, valor: number|string, observacao: string}[]}} RateioForm
@@ -23,6 +44,14 @@ import { Split, Shuffle, Building2, DollarSign, Percent } from "lucide-react";
 export default function RateioMultiempresa({ empresas, grupoId, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const groupIdCtx = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const scopeResolved = resolveRateioMultiempresaGroupId({
+    groupId: groupIdCtx,
+    propGrupoId: grupoId,
+  });
+  const { actorId, sessionKey } = readRateioMultiempresaActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
 
   /** @type {[RateioForm, import('react').Dispatch<import('react').SetStateAction<RateioForm>>]} */
   const [formRateio, setFormRateio] = useState({
@@ -43,63 +72,51 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
 
   const criarRateioMutation = useMutation({
     mutationFn: async (/** @type {typeof formRateio} */ dados) => {
+      if (!scopeResolved.ok) {
+        throw Object.assign(new Error(
+          scopeResolved.reason === 'GROUP_MISMATCH'
+            ? 'Grupo da prop fora do contexto atual'
+            : 'Contexto de Grupo necessário para rateio multiempresa',
+        ), { code: 'RATEIO_MULTIEMPRESA_SCOPE_BLOCKED' });
+      }
+      if (!isRateioMultiempresaScopeCurrent(scopeExpected, readRateioMultiempresaActorAndSession())) {
+        throw new Error('RATEIO_MULTIEMPRESA_STALE_SCOPE');
+      }
+
+      const groupId = scopeResolved.groupId;
+
       // 1. Criar registro de rateio
-      const rateio = await base44.entities.RateioFinanceiro.create({
-        group_id: grupoId,
-        tipo_documento: dados.tipo_documento,
-        descricao: dados.descricao,
-        valor_total: dados.valor_total,
-        criterio_rateio: dados.criterio_rateio,
-        data_rateio: new Date().toISOString().split('T')[0],
-        distribuicao: dados.distribuicao,
-        categoria: dados.categoria,
-        responsavel: "Sistema",
-        status_consolidacao: "pendente"
-      });
+      const rateio = await createInContext(
+        'RateioFinanceiro',
+        buildRateioFinanceiroCreatePayload({ groupId, dados }),
+      );
+
+      if (!isRateioMultiempresaScopeCurrent(scopeExpected, readRateioMultiempresaActorAndSession())) {
+        throw new Error('RATEIO_MULTIEMPRESA_STALE_SCOPE');
+      }
 
       // 2. Criar títulos individuais para cada empresa
       const titulosCriados = [];
-      
+      const entityName = resolveRateioTituloEntity(dados.tipo_documento);
+
       for (const dist of dados.distribuicao) {
         if (Number(dist.valor) > 0) {
-          const EntidadeAlvo = dados.tipo_documento === "ContaPagar" 
-            ? base44.entities.ContaPagar 
-            : base44.entities.ContaReceber;
-
-          const titulo = await EntidadeAlvo.create({
-            group_id: grupoId,
-            empresa_id: dist.empresa_id,
-            origem: "grupo",
-            e_replicado: true,
-            documento_grupo_id: rateio.id,
-            rateio_id: rateio.id,
-            descricao: `${dados.descricao} (${dist.empresa_nome})`,
-            [dados.tipo_documento === "ContaPagar" ? "fornecedor" : "cliente"]: dados.descricao,
-            valor: parseFloat(String(dist.valor)),
-            valor_original_grupo: dados.valor_total,
-            percentual_rateio: dist.percentual,
-            data_emissao: new Date().toISOString().split('T')[0],
-            data_vencimento: dados.data_vencimento,
-            categoria: dados.categoria,
-            status: "Pendente",
-            observacoes: `Rateio do grupo - ${dist.observacao}`
-          });
-
+          const titulo = await createInContext(
+            entityName,
+            buildRateioTituloCreatePayload({ groupId, dados, dist, rateioId: rateio.id }),
+          );
           titulosCriados.push(titulo);
         }
       }
 
       // 3. Atualizar rateio com distribuição realizada
-      await base44.entities.RateioFinanceiro.update(rateio.id, {
-        distribuicao_realizada: titulosCriados.map((t, idx) => ({
-          empresa_id: dados.distribuicao[idx].empresa_id,
-          empresa_nome: dados.distribuicao[idx].empresa_nome,
-          titulo_id: t.id,
-          valor: t.valor,
-          percentual: t.percentual_rateio,
-          status: t.status
-        }))
+      await updateInContext('RateioFinanceiro', rateio.id, {
+        distribuicao_realizada: buildRateioDistribuicaoRealizada(titulosCriados, dados.distribuicao),
       });
+
+      if (!isRateioMultiempresaScopeCurrent(scopeExpected, readRateioMultiempresaActorAndSession())) {
+        throw new Error('RATEIO_MULTIEMPRESA_STALE_SCOPE');
+      }
 
       return { rateio, titulos: titulosCriados };
     },
@@ -164,6 +181,17 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (!scopeResolved.ok) {
+      toast({
+        title: "⚠️ Contexto necessário",
+        description: scopeResolved.reason === 'GROUP_MISMATCH'
+          ? 'Grupo da prop fora do contexto atual.'
+          : 'Contexto de Grupo necessário para rateio multiempresa.',
+        variant: "destructive"
+      });
+      return;
+    }
+
     const totalPercentual = formRateio.distribuicao.reduce((sum, d) => sum + (parseFloat(String(d.percentual)) || 0), 0);
     
     if (Math.abs(totalPercentual - 100) > 0.01) {
@@ -188,6 +216,13 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
       </CardHeader>
       <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!scopeResolved.ok && (
+            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-3">
+              {scopeResolved.reason === 'GROUP_MISMATCH'
+                ? 'Grupo da prop fora do contexto atual.'
+                : 'Contexto de Grupo necessário para rateio multiempresa.'}
+            </p>
+          )}
           {/* Tipo e Categoria */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -383,7 +418,7 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
             </Button>
             <Button
               type="submit"
-              disabled={criarRateioMutation.isPending}
+              disabled={criarRateioMutation.isPending || !scopeResolved.ok}
               className="bg-purple-600 hover:bg-purple-700"
             >
               {criarRateioMutation.isPending ? (
