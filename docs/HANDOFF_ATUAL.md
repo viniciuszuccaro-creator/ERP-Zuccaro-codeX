@@ -1,4 +1,38 @@
-## Continuidade vigente - decisao Central360, controle e deltas novos (2026-11-05)
+## Continuidade vigente - conexao recuperada e limite Auth comprovado (2026-11-05)
+
+Publicacao7074fa8f55bb4b1d7048a097f2886df0a95a4cf0 chegou ao remoto por push
+normal; CI6050 terminal SUCCESS no mesmo SHA. Sem force/reset/rules bypass.
+Controle Chrome suportado comprovou URL do Codespace existente e terminal.
+Nao repetir reinstalacao ou pedido para abrir Codespace. Checkout remoto b5cb34e1
+com somente .vscode/ novo preservado; NAO sincronizar esse checkout sobre WIP.
+Executar candidata pelo snapshot b888 ja preparado, com exclusividade conferida.
+
+Recibos privados HML100 confirmados:100 reconciliados, sem writer.lock ou executor
+correspondente observado. Nenhum start PG/API, carga, replay, reversao ou restore
+nesta retomada. Nao tratar ausencia de processo observado como trava permanente.
+
+Pelo console administrativo existente, somente metadados do Auth e GET health:
+supabase_user, configuracao presente, health interno200. Nao lidos token, senha,
+service key, sessao, corpo da resposta ou dados de clientes. URL externa declarada
+pelo Auth testada do Codespace com validacao TLS: HTTP000/curl28, timeout conexao5s.
+Health interno positivo NAO demonstra conectividade externa ou login HML. Erros
+anteriores de quoting shell foram corrigidos, nao classificados como defeito ERP.
+
+Proxima acao exata: diagnosticar roteamento/allowlist para o endpoint Auth ja
+declarado, sem repetir o mesmo curl sem mudanca de condicao. Se exigir tunel ou
+exposicao novos, apresentar alvo, duracao, acesso e reversao para gate especifico;
+nao alterar chave/restrict, rede, grants ou proxy por inferencia. Guard de Grupo
+continua decisao separada documentada em OPERACAO_DEV_VPS, perfil user preservado.
+Bootstrap deve conferir alvo fisico/search_path e Auth/Data HML antes de READY.
+Nao usar NULL=NULL, IdP sintetico ou AuthDB operacional para superar bloqueio.
+
+Reserva344/6665115771 encerrada sem edicao runtime, lock adquirido ou servico
+iniciado. Pareceres508/511 e pedido401 continuam nos SHAs/alcances abaixo;
+publicacao de pedido nao comprova recebimento Cursor. Sem nova candidata/layout.
+Provas de carga100, fornecedores/produtos e Base44 nao devem ser reiniciadas.
+Nenhuma URL de clientes reais homologada nesta rodada; efeitos externos nao ativados.
+
+## Historico - decisao Central360, controle e deltas novos (2026-11-05)
 
 Base3420891a3409ed2fc855ab5eb01191c202d713542e3/CI5897 SUCCESS e401b888
 reconferidas. Desktop na mesma branch, limpo; fetch de objetos para revisao sem

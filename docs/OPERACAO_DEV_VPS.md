@@ -1,6 +1,32 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - controle por URL e contrato de Grupo HML (2026-11-05)
+## Estado vigente - canal Chrome recuperado; Auth externo ainda sem prova (2026-11-05)
+
+Controle suportado Chrome Pessoa1 comprovou URL e terminal do MESMO Codespace.
+Nao reinstalar, reiniciar ou recriar ambiente para esse bloqueio encerrado.
+Checkout b5cb34e1/.vscode novo preservado; candidato b888 continua no snapshot
+privado existente. Recibo HML100/reconciliacao confirmado, sem repetir operacoes.
+
+Diagnostico somente leitura no console administrativo existente: API DEV usa
+supabase_user e endpoint Auth interno, anon configurada, service key nao lida.
+GET /auth/v1/health pelo endpoint configurado respondeu200, corpo nao lido.
+O host da configuracao e alias de rede, nao nome de container comprovado:
+docker inspect pelo alias falhou; isso NAO prova Auth parado (health200).
+Nao usar essa tentativa como motivo para criar/reiniciar gateway.
+
+URL HTTPS externa declarada pelo Auth testada do Codespace, sem credencial,
+sem -k e sem alterar proxy/rede: HTTP000/curl28, timeout de conexao5s.
+Limite comprovado: esse canal externo nao conectou naquele ensaio; causa e
+alcance global inconclusivos. Nao atribuir a cota, firewall ou Auth sem evidencia.
+Proximo: conferir roteamento/allowlist do endpoint existente; nova exposicao ou
+tunel exige proposta/gate especifico (alvo exato, menor acesso, prazo e reversao).
+Nenhum token ou chave deve ser copiado do DEV para contornar esse resultado.
+
+Guard de Grupo e preflight socket abaixo permanecem pendentes independentes.
+Nao promover user, comparar NULL como identidade fisica ou usar AuthDB operacional.
+Sem API HML READY, sessao HML ou browser com clientes reais comprovados nesta rodada.
+
+## Historico - controle por URL e contrato de Grupo HML (2026-11-05)
 
 O gate isolado abaixo permanece executado; nao repetir carga, replay ou restore.
 Retomada de3420891a340/CI5897 e401b888 sem consulta/escrita remota. Em05/11 o

@@ -1,4 +1,33 @@
-## Continuidade vigente - base Central de Vendas360 e revisao511 (2026-11-05)
+## Continuidade vigente - Chrome comprovado; canal Auth HML pendente (2026-11-05)
+
+7074fa8f publicado e SHA remoto conferido; CI6050 terminal SUCCESS no mesmo SHA.
+401 permanece b888, sem nova composicao nesta rodada.
+Chrome Pessoa1/controle suportado recuperado, URL do mesmo Codespace conferida.
+Checkout remoto b5cb34e1, apenas .vscode/ nao rastreado, preservado sem sincronizar;
+runtime candidato continua no snapshot privado b888, nao no checkout antigo.
+Sem escritor/lock HML observado na verificacao; nenhuma carga, replay ou restore.
+Recibo privado confirma100 reconciliados e namespace/database HML ja existentes.
+
+Auth real: modo supabase_user e configuracao presente; healthcheck interno pela
+API DEV HTTP200, sem ler sessao/corpo ou expor chaves. URL externa declarada foi
+testada do Codespace com TLS normal: HTTP000, curl28, timeout de conexao5s.
+Nao comprova indisponibilidade global nem causa de rede; nao prova sessao HML.
+Sem porta aberta, tunel novo, segredo copiado, fallback ou alteracao operacional.
+Dois comandos de diagnostico tiveram erros de quoting/expansao shell; corrigidos
+antes dos resultados acima, nao eram falhas do ERP ou do provedor.
+
+Proximo desbloqueio: canal HTTPS/privado suportado do Codespace ao Auth existente;
+verificar roteamento/allowlist do endpoint declarado antes de propor exposicao.
+Separadamente, guard de Grupo ainda exige admin: proposta minima no procedimento,
+sem promocao de perfil ou permissao inventada. Preflight fisico antes de READY;
+dois enderecos socket NULL nao comprovam identidade. API/sessao/browser HML e
+aceite dos clientes reais seguem PENDENTES, nao repetir carga100 para resolvê-los.
+Reservas:344/6665115771 somente bootstrap privado/metadados; liberada no fechamento,
+sem arquivo runtime alterado ou processo proprio iniciado.511/508 mantem os
+alcances dos pareceres por SHA abaixo, sem alegar React montado ou persistencia.
+Mudanca documental: diff-check; suites intactas nao repetidas.
+
+## Historico - base Central de Vendas360 e revisao511 (2026-11-05)
 
 3420891a340/CI5897 SUCCESS e401b888 reconferidas; desktop limpo antes do lote.
 Decisao do proprietario incorporada ao programa/COMERCIAL_360 existentes:
