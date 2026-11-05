@@ -4,3 +4,5 @@ Base: #401 b888b2c00
 Data: 2026-11-05 America/Sao_Paulo
 Provas: tests/cadastros-filial-form-scope.test.js (+ reopen filial behavioral)
 Fora: FF #401, homolog 100, dados reais
+
+CI tip SUCCESS: 32f93c80a · 6/6 (2026-11-05 America/Sao_Paulo)

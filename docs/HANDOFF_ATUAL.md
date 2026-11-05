@@ -1,3 +1,8 @@
+## CURSOR — #515 CI SUCCESS FilialForm (2026-11-05 America/Sao_Paulo)
+- Tip `32f93c80a` · 6/6 CI SUCCESS.
+- Sem FF #401. Homolog BLOCKED.
+
+
 ## CURSOR — FilialForm escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-filial-form-scope-392b` ← #401.
 - Matriz select: `Empresa` via filterInContext; indisponível ≠ lista vazia silenciosa.

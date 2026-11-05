@@ -1,3 +1,15 @@
+## CURSOR — #515 FilialForm CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-filial-form-scope-392b` = **#515** |
+| **Tip CI SUCCESS** | `32f93c80a` · 6/6 |
+| **Delta** | FilialForm · matrizes via filterInContext · select fail-closed |
+| **Paralelos** | #511–#514 · #507–#510 |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 sem aceite · merge/deploy |
+
+
 ## CURSOR — FilialForm escopo multiempresa (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
