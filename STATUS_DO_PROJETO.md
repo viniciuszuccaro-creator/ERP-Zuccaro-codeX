@@ -1,4 +1,16 @@
+## CURSOR — #531 ConciliacaoBancaria Empresa scope (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#528** | multiempresa | **CI SUCCESS** |
+| #529 ContasReceber | `399dab3bb` | pin remainder; aguarda CI |
+| #530 ContasPagar | `972b66ce5` | pin remainder; aguarda CI |
+| #531 ConciliacaoBancaria | (este) | filterInContext + fail-closed listas |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
