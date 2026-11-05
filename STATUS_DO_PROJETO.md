@@ -1,3 +1,13 @@
+## CURSOR — #537 MonitoramentoCanaisRealtime CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#538** | multiempresa | **CI SUCCESS** |
+| #537 MonitoramentoCanais | `b26c8d1bb` | **CI SUCCESS** 6/6 (fix CRLF pin) |
+| #539 WidgetFechamento | `346ad1306` | aguarda CI |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
