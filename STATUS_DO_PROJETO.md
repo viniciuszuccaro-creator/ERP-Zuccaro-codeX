@@ -1,3 +1,14 @@
+## CURSOR — PedidosRetirada mutações InContext (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-pedidos-retirada-scope-392b` = **#543** (delta mutações) |
+| **Código** | Pedido/Produto/Movimentacao/Entrega via *InContext; KPI ≠ zero; STALE_SCOPE |
+| **Testes** | `comercial-pedidos-retirada-scope` **4 PASS** |
+| **Fila** | #554–#565 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — #543 PedidosRetiradaTab CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

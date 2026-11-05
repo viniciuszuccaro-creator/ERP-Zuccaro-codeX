@@ -23,6 +23,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildPedidosRetiradaQueryKey,
+  isPedidosRetiradaScopeCurrent,
+  resolvePedidosRetiradaKpiState,
+} from "./pedidosRetiradaScope";
+
+function readPedidosRetiradaActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" ? session.actorId.trim() : "";
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -30,6 +46,9 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
  * - Notificação quando pronto
  * - Confirmação de retirada com assinatura
  * - Baixa automática de estoque na retirada
+ *
+ * Escopo: listagem filterInContext; mutações *InContext (Pedido/Produto/Movimentacao/Entrega).
+ * Loading/erro ≠ zero. STALE_SCOPE em resposta tardia e mid-loop.
  */
 export default function PedidosRetiradaTab({ windowMode = false }) {
   const [busca, setBusca] = useState("");
@@ -41,17 +60,51 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const [observacoes, setObservacoes] = useState("");
 
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const {
+    empresaAtual,
+    grupoAtual,
+    filterInContext,
+    getInContext,
+    createInContext,
+    updateInContext,
+  } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readPedidosRetiradaActorAndSession();
   const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
 
   // Escopo multiempresa: Pedido via filterInContext (sem list unscoped).
-  const { data: pedidos = [], isError: isErrorPedidosRetirada } = useQuery({
-    queryKey: ['pedidos-retirada', groupId, empresaId],
-    queryFn: () => filterInContext('Pedido', {}, '-created_date', 500),
+  const {
+    data: pedidosData,
+    isLoading,
+    isError: isErrorPedidosRetirada,
+    isFetching,
+  } = useQuery({
+    queryKey: buildPedidosRetiradaQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Pedido', {}, '-created_date', 500);
+      if (signal?.aborted) {
+        const err = new Error('PEDIDOS_RETIRADA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPedidosRetiradaScopeCurrent(scopeExpected, readPedidosRetiradaActorAndSession())) {
+        throw new Error('PEDIDOS_RETIRADA_STALE_SCOPE');
+      }
+      return rows;
+    },
     enabled: contextoValido,
   });
+
+  const kpiState = resolvePedidosRetiradaKpiState({
+    contextoValido,
+    isLoading,
+    isError: isErrorPedidosRetirada,
+    isFetching,
+    dataDefined: pedidosData !== undefined,
+  });
+  const pedidos = kpiState === 'ready' && Array.isArray(pedidosData) ? pedidosData : [];
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -87,32 +140,49 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const prontoParaRetirada = pedidos.filter(p => p.status === 'Pronto para Retirada').length;
   const retirados = pedidos.filter(p => p.status === 'Entregue' && p.tipo_frete === 'Retirada').length;
 
+  const invalidateRetiradaCaches = () => {
+    queryClient.invalidateQueries({
+      queryKey: buildPedidosRetiradaQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    });
+    queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+    queryClient.invalidateQueries({ queryKey: ['entregas'] });
+    queryClient.invalidateQueries({ queryKey: ['produtos'] });
+    queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
+  };
+
   const atualizarStatusMutation = useMutation({
-    mutationFn: (/** @type {{pedidoId: string, novoStatus: string}} */ { pedidoId, novoStatus }) =>
-      base44.entities.Pedido.update(pedidoId, { status: novoStatus }),
+    mutationFn: async (/** @type {{pedidoId: string, novoStatus: string}} */ { pedidoId, novoStatus }) => {
+      if (!contextoValido) {
+        throw new Error('Contexto de Grupo/Empresa obrigatório para atualizar status.');
+      }
+      if (!isPedidosRetiradaScopeCurrent(scopeExpected, readPedidosRetiradaActorAndSession())) {
+        throw new Error('PEDIDOS_RETIRADA_STALE_SCOPE');
+      }
+      return updateInContext('Pedido', pedidoId, { status: novoStatus });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      invalidateRetiradaCaches();
       toast.success("✅ Status atualizado!");
     }
   });
 
   const confirmarRetiradaMutation = useMutation({
     mutationFn: async (/** @type {{pedido: Record<string, unknown> & {id: string, empresa_id?: string, numero_pedido?: string, cliente_id?: string, cliente_nome?: string, itens_revenda?: {produto_id?: string, descricao?: string, produto_descricao?: string, quantidade?: number, unidade?: string}[]}}} */ { pedido }) => {
-      // Baixar estoque automaticamente
+      if (!contextoValido) {
+        throw new Error('Contexto de Grupo/Empresa obrigatório para confirmar retirada.');
+      }
+      // Baixar estoque automaticamente (get/create/update InContext — sem filter({id}) unscoped)
       if (pedido.itens_revenda?.length > 0) {
         for (const item of pedido.itens_revenda) {
           if (item.produto_id) {
-            const produtos = await base44.entities.Produto.filter({ 
-              id: item.produto_id,
-              empresa_id: pedido.empresa_id 
-            });
-            
-            const produto = produtos[0];
+            if (!isPedidosRetiradaScopeCurrent(scopeExpected, readPedidosRetiradaActorAndSession())) {
+              throw new Error('PEDIDOS_RETIRADA_STALE_SCOPE');
+            }
+            const produto = await getInContext('Produto', item.produto_id);
             if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
               const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-              
-              await base44.entities.MovimentacaoEstoque.create({
-                empresa_id: pedido.empresa_id,
+
+              await createInContext('MovimentacaoEstoque', {
                 tipo_movimento: "saida",
                 origem_movimento: "pedido",
                 origem_documento_id: pedido.id,
@@ -128,8 +198,8 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                 responsavel: user?.full_name || "Sistema",
                 aprovado: true
               });
-              
-              await base44.entities.Produto.update(item.produto_id, {
+
+              await updateInContext('Produto', item.produto_id, {
                 estoque_atual: novoEstoque
               });
             }
@@ -137,19 +207,22 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
         }
       }
 
+      if (!isPedidosRetiradaScopeCurrent(scopeExpected, readPedidosRetiradaActorAndSession())) {
+        throw new Error('PEDIDOS_RETIRADA_STALE_SCOPE');
+      }
+
       // Atualizar pedido
-      await base44.entities.Pedido.update(pedido.id, {
+      await updateInContext('Pedido', pedido.id, {
         status: 'Entregue',
         data_entrega_real: new Date().toISOString()
       });
 
       // Criar registro de entrega
-      await base44.entities.Entrega.create({
+      await createInContext('Entrega', {
         pedido_id: pedido.id,
         numero_pedido: pedido.numero_pedido,
         cliente_id: pedido.cliente_id,
         cliente_nome: pedido.cliente_nome,
-        empresa_id: pedido.empresa_id,
         tipo_frete: 'Retirada',
         status: 'Entregue',
         data_entrega: new Date().toISOString(),
@@ -162,10 +235,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      queryClient.invalidateQueries({ queryKey: ['entregas'] });
-      queryClient.invalidateQueries({ queryKey: ['produtos'] });
-      queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
+      invalidateRetiradaCaches();
       toast.success("✅ Retirada confirmada e estoque baixado!");
       setDetalhesOpen(false);
       setPedidoSelecionado(null);
@@ -210,18 +280,23 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
           <p className="text-slate-600 text-sm">Pedidos que o cliente irá buscar no local</p>
         </div>
       </div>
-      {isErrorPedidosRetirada && (
-        <p className="text-xs text-slate-500 mb-2">Pedidos indisponíveis (erro de carga ≠ zero).</p>
+      {kpiState === 'loading' && (
+        <p className="text-xs text-slate-500 mb-2">Carregando pedidos de retirada…</p>
+      )}
+      {kpiState === 'error' && (
+        <p className="text-xs text-red-600 mb-2">Pedidos indisponíveis (erro de carga ≠ zero).</p>
       )}
 
-      {/* Estatísticas */}
+      {/* Estatísticas — só em ready (loading/erro ≠ zero fabricado) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-slate-600">Total para Retirar</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{pedidosParaRetirada.length}</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {kpiState === 'ready' ? pedidosParaRetirada.length : '—'}
+            </div>
           </CardContent>
         </Card>
 
@@ -230,7 +305,9 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
             <CardTitle className="text-sm text-slate-600">Prontos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">{prontoParaRetirada}</div>
+            <div className="text-3xl font-bold text-green-600">
+              {kpiState === 'ready' ? prontoParaRetirada : '—'}
+            </div>
           </CardContent>
         </Card>
 
@@ -239,7 +316,9 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
             <CardTitle className="text-sm text-slate-600">Já Retirados</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-600">{retirados}</div>
+            <div className="text-3xl font-bold text-slate-600">
+              {kpiState === 'ready' ? retirados : '—'}
+            </div>
           </CardContent>
         </Card>
       </div>
