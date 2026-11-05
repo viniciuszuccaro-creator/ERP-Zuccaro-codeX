@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-gerar-op-modal-scope-392b` ← #401 `b888b2c00` |
+| **Branch / PR** | `cursor/comercial-gerar-op-modal-scope-392b` = **#561** |
+| **Tip CI** | **`8758de870`** · **CI SUCCESS** 6/6 (push+PR) |
 | **Código** | Produto/Config via filterInContext; OP/estoque/pedido via *InContext; KPI ≠ zero |
 | **Testes** | `tests/comercial-gerar-op-modal-scope.test.js` **5 PASS** |
-| **Paralelo** | #554–#557/#560 SUCCESS · #558/#559 re-CI · FF #401 aguarda Codex |
+| **Fila** | #554–#560 SUCCESS · FF #401 aguarda Codex · sem FF sem aceite |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
