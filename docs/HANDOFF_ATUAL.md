@@ -1,3 +1,6 @@
+## CURSOR — #571 PainelDinamicoCliente CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `c5087f09f` SUCCESS. Lote #566–#571 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — PainelDinamicoCliente escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-painel-dinamico-scope-392b` ← #401.
 - get/filter InContext; KPI ≠ zero; STALE_SCOPE. Testes 49 PASS.

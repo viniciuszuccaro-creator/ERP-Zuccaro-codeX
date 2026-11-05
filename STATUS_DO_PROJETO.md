@@ -1,3 +1,12 @@
+## CURSOR — #571 PainelDinamicoCliente CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #571 `c5087f09f` — frontend + backend + compose **SUCCESS** |
+| **Código** | get/filter InContext; KPI ≠ zero; STALE_SCOPE; pins hidratação |
+| **Fila** | #566–#571 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — PainelDinamicoCliente escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
