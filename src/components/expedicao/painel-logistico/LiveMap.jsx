@@ -3,23 +3,61 @@ import { MapContainer, TileLayer, Marker, Circle, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  isLiveMapScopeCurrent,
+  canLiveMapFetchDestino,
+  pickLiveMapDestinoFromEntrega,
+} from './liveMapScope';
 
 export default function LiveMap({ posicao, entregaId, height = 340, contextoValido = true, canView = true, onAudit }) {
   const { filterInContext } = useContextoVisual();
   const [destino, setDestino] = useState(null);
   const [eta, setEta] = useState(null);
+  const [destinoStatus, setDestinoStatus] = useState('idle'); // idle|unavailable|loading|error|ready
+
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const actorId = typeof session?.actorId === 'string' && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  };
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!entregaId) return;
-      const list = await base44.entities.Entrega.filter({ id: entregaId }, undefined, 1);
-      const e = list?.[0];
-      if (!e) return;
-      const lat = e?.endereco_entrega_completo?.latitude;
-      const lng = e?.endereco_entrega_completo?.longitude;
-      if (typeof lat === 'number' && typeof lng === 'number') {
-        if (!cancelled) setDestino({ lat, lng, cliente: e.cliente_nome });
+      if (!canLiveMapFetchDestino({ entregaId, contextoValido, canView })) {
+        if (!cancelled) {
+          setDestino(null);
+          setDestinoStatus(!contextoValido || !canView ? 'unavailable' : 'idle');
+        }
+        return;
+      }
+      const scopeExpected = readActorAndSession();
+      if (!cancelled) setDestinoStatus('loading');
+      try {
+        const list = await filterInContext('Entrega', { id: entregaId }, undefined, 1);
+        if (!isLiveMapScopeCurrent(scopeExpected, readActorAndSession())) {
+          throw new Error('LIVE_MAP_DESTINO_STALE_SCOPE');
+        }
+        const next = pickLiveMapDestinoFromEntrega(list?.[0]);
+        if (!cancelled) {
+          setDestino(next);
+          setDestinoStatus('ready');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setDestino(null);
+          setDestinoStatus('error');
+          await onAudit?.({
+            acao: 'PainelLogistico.mapaVivo.destino.erro',
+            sucesso: false,
+            motivo: error?.message || 'erro_destino',
+            detalhes: { entrega_id: entregaId },
+          });
+        }
       }
     })();
     return () => { cancelled = true; };
@@ -65,6 +103,11 @@ export default function LiveMap({ posicao, entregaId, height = 340, contextoVali
             </Marker>
             <Circle center={[posicao.latitude, posicao.longitude]} radius={posicao.precisao_metros || 30} pathOptions={{ color: '#2563eb', fillOpacity: 0.1 }} />
           </>
+        )}
+        {destinoStatus === 'error' && (
+          <div className="absolute z-[1000] left-2 top-2 rounded bg-white/95 px-2 py-1 text-xs text-red-700 shadow">
+            Destino indisponível (erro ≠ mapa vazio silencioso)
+          </div>
         )}
         {destino && (
           <Marker position={[destino.lat, destino.lng]}>

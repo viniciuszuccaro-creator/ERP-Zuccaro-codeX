@@ -1,3 +1,13 @@
+## CURSOR — LiveMap escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/expedicao-livemap-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filterInContext Entrega; fail-closed sem contexto/perm; STALE_SCOPE |
+| **Testes** | `expedicao-livemap-scope` **2 PASS** |
+| **Fila** | #566–#576 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
