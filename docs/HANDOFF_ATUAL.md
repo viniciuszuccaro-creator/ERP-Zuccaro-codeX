@@ -1,6 +1,6 @@
-## CURSOR — #533 ConfigFiscalAutomatica Empresa scope (2026-11-05 America/Sao_Paulo)
-- Empresa/ConfigFiscal via filterInContext; create/updateInContext; AuditLog createInContext; fail-closed sem grupo/empresa.
-- #531 SUCCESS; #532 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #533 ConfigFiscalAutomatica CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `e3331f418` — frontend+backend+compose PASS. filterInContext + create/updateInContext.
+- #522–#533 verdes. #534 Importador em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 
