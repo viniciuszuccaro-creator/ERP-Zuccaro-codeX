@@ -1,10 +1,9 @@
-## CURSOR — #542 AcoesRapidasGlobal Cliente scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #542 AcoesRapidasGlobal CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#540** | multiempresa | **CI SUCCESS** |
-| #541 PesquisaUniversal | `83639b4c0` | aguarda CI |
-| #542 AcoesRapidas Cliente | (este) | Cliente filterInContext |
+| **#522–#542** | multiempresa | **CI SUCCESS** |
+| #542 AcoesRapidas Cliente | `c15bf427c` | **CI SUCCESS** 6/6 (lint fix) |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
