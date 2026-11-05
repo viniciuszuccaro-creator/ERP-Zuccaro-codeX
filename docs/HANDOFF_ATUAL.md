@@ -1,3 +1,12 @@
+## CURSOR — #567 DetalhesCadastro CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `7b6b25eff` CI SUCCESS 6/6. filterInContext + KPI ≠ zero.
+- #568 frontend FAIL (em correção). #566/#569 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
+## CURSOR — DetalhesCadastro escopo (2026-11-05 America/Sao_Paulo)
+- Branch `cursor/cadastros-detalhes-cliente-scope-392b` ← #401.
+- filterInContext Pedido/CR/Entrega/NF; KPI ≠ zero; STALE_SCOPE. Testes 5 PASS.
+- #566 ValidacaoCredito em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).
