@@ -1,7 +1,6 @@
-## CURSOR — #543 PedidosRetiradaTab escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-pedidos-retirada-scope-392b` ← #401 `b888b2c00`.
-- Pedido via `filterInContext`; fail-closed; banner erro≠zero; pin approval via `commandAuditRemainder`.
-- Testes scope + approval-command PASS. Homolog BLOCKED. FF #401 aguarda Codex.
+## CURSOR — #543 PedidosRetiradaTab CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `2ae991c1f` **CI SUCCESS** 6/6. Pedido filterInContext; fail-closed; erro≠zero; pin approval.
+- #522–#543 multiempresa. #544 cache #511 em CI. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
