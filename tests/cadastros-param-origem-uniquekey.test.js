@@ -27,7 +27,9 @@ test("ParametrosOrigemPedidoTab usa API canônica openWindow + uniqueKey create/
   assert.match(src, /uniqueKey:\s*`cadastros-param-origem-edit-/);
   assert.match(src, /groupId \|\| null, empresaId \|\| null/);
   assert.match(src, /filterInContext\('ParametroOrigemPedido'/);
-  assert.match(src, /queryKey:\s*\['parametros-origem-pedido',\s*contextKey\]/);
+  assert.match(src, /buildParametrosOrigemQueryKey/);
+  assert.match(src, /isParametrosOrigemScopeCurrent/);
+  assert.match(src, /PARAM_ORIGEM_STALE_SCOPE/);
   assert.doesNotMatch(src, /openWindow\(\{\s*title:/);
   assert.doesNotMatch(src, /base44\.entities\.ParametroOrigemPedido\.list\(/);
   assert.match(src, /Contagens indisponíveis não são zero|Contagens não são zero/);
@@ -40,7 +42,9 @@ test("GerenciadorCanaisOrigem lista/atualiza no escopo multiempresa", async () =
   );
   assert.match(src, /filterInContext\('ParametroOrigemPedido'/);
   assert.match(src, /updateInContext\('ParametroOrigemPedido'/);
-  assert.match(src, /queryKey:\s*\['parametros-origem-pedido',\s*contextKey\]/);
+  assert.match(src, /buildParametrosOrigemQueryKey/);
+  assert.match(src, /buildPedidosUltimosOrigemQueryKey/);
+  assert.match(src, /PARAM_ORIGEM_STALE_SCOPE|PARAM_ORIGEM_PEDIDOS_STALE_SCOPE/);
   assert.doesNotMatch(src, /base44\.entities\.ParametroOrigemPedido\.(list|update)\(/);
   assert.match(src, /Contagens indisponíveis não são zero|Contagens não são zero/);
 });

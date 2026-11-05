@@ -6,6 +6,14 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import usePermissions from "@/components/lib/usePermissions";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildParametrosOrigemQueryKey,
+  buildPedidosUltimosOrigemQueryKey,
+  isParametrosOrigemScopeCurrent,
+  resolveParametrosOrigemKpiState,
+} from "./parametrosOrigemScope";
 import { 
   Activity, 
   CheckCircle, 
@@ -18,6 +26,15 @@ import {
 import { toast } from "sonner";
 import ExportButton from "@/components/ExportButton";
 
+function readOrigemActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
+
 /**
  * V21.6 - Gerenciador Avançado de Canais de Origem
  * Ativação/desativação rápida + insights + controle de acesso
@@ -28,8 +45,8 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
   const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || 'sem-contexto';
-  const contextoValido = contextKey !== 'sem-contexto';
+  const { actorId, sessionKey } = readOrigemActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
   const podeVer = hasPermission('Cadastros', 'ParametroOrigemPedido', 'visualizar')
     || hasPermission('Cadastros', 'Canais de Origem', 'visualizar')
     || hasPermission('Cadastros', null, 'visualizar');
@@ -38,6 +55,9 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
     || canEdit('Cadastros', null)
     || (typeof isAdmin === 'function' ? isAdmin() : false)
     || user?.role === 'admin';
+  const origemQueryKey = buildParametrosOrigemQueryKey({ groupId, empresaId, actorId, sessionKey });
+  const pedidosQueryKey = buildPedidosUltimosOrigemQueryKey({ groupId, empresaId, actorId, sessionKey });
+  const scopeExpected = { actorId, sessionKey };
 
   const {
     data: parametros,
@@ -46,8 +66,19 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
     error,
     isFetching,
   } = useQuery({
-    queryKey: ['parametros-origem-pedido', contextKey],
-    queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'canal', 500),
+    queryKey: origemQueryKey,
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ParametroOrigemPedido', {}, 'canal', 500);
+      if (signal?.aborted) {
+        const err = new Error('PARAM_ORIGEM_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession())) {
+        throw new Error('PARAM_ORIGEM_STALE_SCOPE');
+      }
+      return rows;
+    },
     enabled: contextoValido && podeVer,
   });
 
@@ -55,19 +86,38 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
     data: pedidos,
     isError: isErrorPedidos,
   } = useQuery({
-    queryKey: ['pedidos-ultimos', contextKey],
-    queryFn: () => filterInContext(
-      'Pedido',
-      empresaId ? { empresa_id: empresaId } : {},
-      '-created_date',
-      200,
-    ),
+    queryKey: pedidosQueryKey,
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Pedido',
+        empresaId ? { empresa_id: empresaId } : {},
+        '-created_date',
+        200,
+      );
+      if (signal?.aborted) {
+        const err = new Error('PARAM_ORIGEM_PEDIDOS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession())) {
+        throw new Error('PARAM_ORIGEM_PEDIDOS_STALE_SCOPE');
+      }
+      return rows;
+    },
     enabled: contextoValido && podeVer,
   });
 
   const lista = Array.isArray(parametros) ? parametros : [];
   const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
-  const contagemIndisponivel = !contextoValido || !podeVer || isLoading || isError || (isFetching && parametros === undefined);
+  const kpiState = resolveParametrosOrigemKpiState({
+    contextoValido,
+    podeVer,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: parametros !== undefined,
+  });
+  const contagemIndisponivel = kpiState !== 'ready';
 
   const toggleAtivo = useMutation({
     mutationFn: async ({ id, ativo }) => {

@@ -1,0 +1,108 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  buildParametrosOrigemQueryKey,
+  buildPedidosUltimosOrigemQueryKey,
+  isParametrosOrigemScopeCurrent,
+  resolveParametrosOrigemKpiState,
+} from '../src/components/cadastros/parametrosOrigemScope.js';
+
+// Helpers puros — sem @/ — para prova de cache/KPI/late fora do React.
+
+test('queryKey separa Grupo, Empresa, ator e sessão', () => {
+  const base = {
+    groupId: 'g1',
+    empresaId: 'e1',
+    actorId: 'a1',
+    sessionKey: 's1',
+  };
+  const k = buildParametrosOrigemQueryKey(base);
+  assert.deepEqual(k, ['parametros-origem-pedido', 'g1', 'e1', 'a1', 's1']);
+
+  assert.notDeepEqual(
+    buildParametrosOrigemQueryKey({ ...base, groupId: 'g2' }),
+    k,
+  );
+  assert.notDeepEqual(
+    buildParametrosOrigemQueryKey({ ...base, empresaId: 'e2' }),
+    k,
+  );
+  assert.notDeepEqual(
+    buildParametrosOrigemQueryKey({ ...base, actorId: 'a2' }),
+    k,
+  );
+  assert.notDeepEqual(
+    buildParametrosOrigemQueryKey({ ...base, sessionKey: 's2' }),
+    k,
+  );
+
+  const pedidos = buildPedidosUltimosOrigemQueryKey(base);
+  assert.deepEqual(pedidos, ['pedidos-ultimos', 'g1', 'e1', 'a1', 's1']);
+  assert.notDeepEqual(
+    buildPedidosUltimosOrigemQueryKey({ ...base, sessionKey: 's2' }),
+    pedidos,
+  );
+});
+
+test('KPI: carregando ou erro nunca vira zero (estado ≠ ready)', () => {
+  assert.equal(
+    resolveParametrosOrigemKpiState({
+      contextoValido: true,
+      podeVer: true,
+      isLoading: true,
+      isError: false,
+      isFetching: false,
+      dataDefined: false,
+    }),
+    'loading',
+  );
+  assert.equal(
+    resolveParametrosOrigemKpiState({
+      contextoValido: true,
+      podeVer: true,
+      isLoading: false,
+      isError: true,
+      isFetching: false,
+      dataDefined: false,
+    }),
+    'error',
+  );
+  assert.equal(
+    resolveParametrosOrigemKpiState({
+      contextoValido: false,
+      podeVer: true,
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      dataDefined: false,
+    }),
+    'unavailable',
+  );
+  assert.equal(
+    resolveParametrosOrigemKpiState({
+      contextoValido: true,
+      podeVer: true,
+      isLoading: false,
+      isError: false,
+      isFetching: false,
+      dataDefined: true,
+    }),
+    'ready',
+  );
+});
+
+test('resposta tardia: troca de ator/sessão invalida escopo corrente', () => {
+  const expected = { actorId: 'a1', sessionKey: 's1' };
+  assert.equal(
+    isParametrosOrigemScopeCurrent(expected, { actorId: 'a1', sessionKey: 's1' }),
+    true,
+  );
+  assert.equal(
+    isParametrosOrigemScopeCurrent(expected, { actorId: 'a2', sessionKey: 's1' }),
+    false,
+  );
+  assert.equal(
+    isParametrosOrigemScopeCurrent(expected, { actorId: 'a1', sessionKey: 's2' }),
+    false,
+  );
+});
