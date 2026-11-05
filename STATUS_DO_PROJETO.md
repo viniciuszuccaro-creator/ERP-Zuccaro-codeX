@@ -1,4 +1,15 @@
+## CURSOR — #536 BitolasDisponiveis CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#536** | multiempresa | **CI SUCCESS** |
+| #536 BitolasDisponiveis | `d44ce5f3b` | **CI SUCCESS** 6/6 |
+| #537 MonitoramentoCanais | `38e5b350c` | aguarda CI |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
