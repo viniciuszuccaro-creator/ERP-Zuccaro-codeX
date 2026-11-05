@@ -87,7 +87,11 @@ export const reportRecoveryEdits = [
 ];
 
 export function primitiveUiBoundaryRemainder(file, source) {
-  if (file === 'src/components/comercial/MonitoramentoCanaisRealtime.jsx') for (const [after,before] of monitoramentoCanaisScopeEdits) {
+  if (file === 'src/components/comercial/MonitoramentoCanaisRealtime.jsx') for (const [afterLf,beforeLf] of monitoramentoCanaisScopeEdits) {
+    const toCr = (s) => s.replace(/\r?\n/g, '\r\n');
+    const usesCr = source.includes('\r\n');
+    const after = usesCr ? toCr(afterLf) : afterLf;
+    const before = usesCr ? toCr(beforeLf) : beforeLf;
     assert.equal(source.split(after).length-1,1,'Exact authorized #537 monitoramento scope hunk');
     source=source.replace(after,before);
   }
