@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronRight, MapPin, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/components/lib/UserContext';
+import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
 import WidgetPerfilRiscoCliente from '../WidgetPerfilRiscoCliente';
 import SugestorCanalInteligente from '../SugestorCanalInteligente';
 import HistoricoOrigemCliente from '../HistoricoOrigemCliente';
@@ -20,13 +21,16 @@ import HistoricoOrigemCliente from '../HistoricoOrigemCliente';
 export default function WizardEtapa1Cliente({ formData, setFormData, clientes = [], onNext, bloquearOrigemEdicao = false }) {
   const { user } = useUser();
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  
-  // V21.6: Buscar configurações de origem
-  const { data: parametrosOrigem = [] } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: [],
-  });
+
+  // V21.6: configurações de origem no escopo multiempresa (hook canônico)
+  const {
+    parametros: parametrosOrigemRaw,
+    isLoading: loadingOrigem,
+    isError: isErrorOrigem,
+    contextoValido: contextoOrigemValido,
+  } = useOrigemPedido();
+  const parametrosOrigem = Array.isArray(parametrosOrigemRaw) ? parametrosOrigemRaw : [];
+  const origemContagemIndisponivel = !contextoOrigemValido || loadingOrigem || isErrorOrigem;
 
   // Buscar endereços do cliente quando cliente mudar
   const { data: enderecosCliente = [] } = useQuery({
@@ -247,13 +251,17 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             </div>
           </div>
           <p className="text-xs text-blue-700 mt-1 font-medium">
-            🤖 Campo bloqueado - origem detectada automaticamente pelo sistema
+            Campo bloqueado — origem detectada automaticamente pelo sistema
           </p>
-          {parametrosOrigem.length > 0 && (
+          {origemContagemIndisponivel ? (
             <p className="text-xs text-slate-500 mt-1">
-              ✅ Rastreamento ativo em {parametrosOrigem.length} canais configurados
+              Contagem de canais indisponível (contexto/erro/carregamento ≠ zero).
             </p>
-          )}
+          ) : parametrosOrigem.length > 0 ? (
+            <p className="text-xs text-slate-500 mt-1">
+              Rastreamento ativo em {parametrosOrigem.length} canais configurados
+            </p>
+          ) : null}
         </div>
       </div>
 

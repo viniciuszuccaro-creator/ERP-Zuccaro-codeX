@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Activity, TrendingUp, Clock } from "lucide-react";
+import { Activity, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 
 /**
  * V21.6 - Monitoramento em Tempo Real de Pedidos por Canal
@@ -13,26 +13,43 @@ import { motion, AnimatePresence } from "framer-motion";
  */
 export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = true }) {
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(new Date());
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaEscopo = empresaId || empresaAtual?.id || null;
+  const contextKey = empresaEscopo || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
 
-  // Buscar pedidos em tempo real
-  const { data: pedidos = [], refetch } = useQuery({
-    queryKey: ['pedidos-realtime', empresaId],
-    queryFn: () => {
-      if (empresaId) {
-        return base44.entities.Pedido.filter({ empresa_id: empresaId });
-      }
-      return base44.entities.Pedido.list('-created_date', 100);
-    },
-    initialData: [],
-    refetchInterval: autoRefresh ? 30000 : false // 30 segundos
+  // Buscar pedidos em tempo real no escopo multiempresa
+  const {
+    data: pedidos,
+    isLoading: loadingPedidos,
+    isError: isErrorPedidos,
+  } = useQuery({
+    queryKey: ['pedidos-realtime', contextKey],
+    queryFn: () => filterInContext(
+      'Pedido',
+      empresaEscopo ? { empresa_id: empresaEscopo } : {},
+      '-created_date',
+      100,
+    ),
+    enabled: contextoValido,
+    refetchInterval: autoRefresh ? 30000 : false,
   });
 
-  // Buscar parâmetros
-  const { data: parametros = [] } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: []
+  // Buscar parâmetros no mesmo escopo
+  const {
+    data: parametros,
+    isLoading: loadingParametros,
+    isError: isErrorParametros,
+  } = useQuery({
+    queryKey: ['parametros-origem-pedido', contextKey],
+    queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'canal', 500),
+    enabled: contextoValido,
   });
+
+  const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
+  const listaParametros = Array.isArray(parametros) ? parametros : [];
+  const contagemIndisponivel = !contextoValido || loadingPedidos || loadingParametros || isErrorPedidos || isErrorParametros;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,13 +62,13 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
   const agora = new Date();
   const ultimos30min = new Date(agora.getTime() - 30 * 60 * 1000);
 
-  const pedidosRecentes = pedidos.filter((p) => {
+  const pedidosRecentes = contagemIndisponivel ? [] : listaPedidos.filter((p) => {
     const dataPedido = new Date(p.created_date || p.data_pedido);
     return dataPedido >= ultimos30min;
   });
 
   // Agrupar por canal
-  const porCanal = parametros.map((param) => {
+  const porCanal = contagemIndisponivel ? [] : listaParametros.map((param) => {
     const origemMap = {
       'ERP': 'Manual',
       'Site': 'Site',
@@ -113,15 +130,26 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
         </div>
       </CardHeader>
       <CardContent>
-        
+        {contagemIndisponivel && (
+          <Alert className="mb-3 border-slate-300 bg-slate-50">
+            <AlertDescription className="text-sm text-slate-700">
+              {!contextoValido
+                ? 'Selecione grupo ou empresa para monitorar canais. Contagens indisponíveis não são zero.'
+                : (isErrorPedidos || isErrorParametros)
+                  ? 'Falha ao carregar monitoramento. Contagens não são zero.'
+                  : 'Carregando monitoramento…'}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Resumo Últimos 30min */}
         <div className="bg-white/60 mb-1 px-3 rounded-lg flex items-center gap-4 border border-cyan-200">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-cyan-600" />
             <div>
               <p className="text-xs text-slate-600">Últimos 30 minutos</p>
-              <p className="text-2xl font-bold text-cyan-600">
-                {pedidosRecentes.length}
+              <p className="text-2xl font-bold text-cyan-600" data-testid="monitor-origem-kpi-30m">
+                {contagemIndisponivel ? '—' : pedidosRecentes.length}
               </p>
               <p className="text-xs text-slate-500">pedidos recebidos</p>
             </div>
@@ -150,21 +178,21 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
         </div>
 
         {/* Lista de Canais Ativos */}
-        {porCanal.length > 0 ?
-        <div className="space-y-2">
+        {!contagemIndisponivel && porCanal.length > 0 && (
+          <div className="space-y-2">
             {porCanal.map((canal, idx) => {
-            const tempoUltimo = canal.ultimoPedido ?
+              const tempoUltimo = canal.ultimoPedido ?
             Math.floor((agora.getTime() - new Date(canal.ultimoPedido).getTime()) / 60000) :
             null;
 
-            return (
-              <motion.div
-                key={canal.canal}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="flex items-center justify-between p-3 bg-white rounded-lg border hover:shadow-md transition-all">
-
+              return (
+                <motion.div
+                  key={canal.canal}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="flex items-center justify-between p-3 bg-white rounded-lg border hover:shadow-md transition-all"
+                >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 bg-gradient-to-br ${CORES[canal.cor] || CORES.blue} rounded-lg flex items-center justify-center`}>
                       <span className="text-white font-bold text-lg">{canal.count}</span>
@@ -172,37 +200,43 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
                     <div>
                       <p className="font-semibold text-slate-900">{canal.nome}</p>
                       <p className="text-xs text-slate-500">
-                        {tempoUltimo !== null ?
-                      tempoUltimo === 0 ? 'Agora mesmo' :
-                      tempoUltimo === 1 ? 'Há 1 minuto' :
-                      `Há ${tempoUltimo} minutos` :
-                      'Sem pedidos recentes'}
+                        {tempoUltimo !== null
+                          ? tempoUltimo === 0
+                            ? 'Agora mesmo'
+                            : tempoUltimo === 1
+                              ? 'Há 1 minuto'
+                              : `Há ${tempoUltimo} minutos`
+                          : 'Sem pedidos recentes'}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${
-                  tempoUltimo !== null && tempoUltimo < 5 ?
-                  'bg-green-500 animate-pulse' :
-                  tempoUltimo < 15 ?
-                  'bg-yellow-500' :
-                  'bg-slate-300'}`
-                  } />
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        tempoUltimo !== null && tempoUltimo < 5
+                          ? 'bg-green-500 animate-pulse'
+                          : tempoUltimo !== null && tempoUltimo < 15
+                            ? 'bg-yellow-500'
+                            : 'bg-slate-300'
+                      }`}
+                    />
                   </div>
-                </motion.div>);
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
-          })}
-          </div> :
-
-        <Alert className="border-slate-300">
+        {!contagemIndisponivel && porCanal.length === 0 && (
+          <Alert className="border-slate-300">
             <AlertDescription className="text-sm text-slate-600">
               Nenhum pedido recebido nos últimos 30 minutos
             </AlertDescription>
           </Alert>
-        }
+        )}
 
       </CardContent>
-    </Card>);
-
+    </Card>
+  );
 }

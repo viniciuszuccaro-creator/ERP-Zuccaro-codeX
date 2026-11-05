@@ -1,44 +1,38 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Lock, Bolt, User } from "lucide-react";
+import { useOrigemPedido } from "@/components/lib/useOrigemPedido";
 
 /**
  * Badge visual inteligente para origem de pedido
- * Mostra cor e ícone baseado no parâmetro configurado
- * 
+ * Mostra cor e ícone baseado no parâmetro configurado (escopo multiempresa via hook canônico)
+ *
  * @param {{origemPedido: string, showLock?: boolean, className?: string}} props
  */
-export default function BadgeOrigemPedido({ 
-  origemPedido, 
+export default function BadgeOrigemPedido({
+  origemPedido,
   showLock = true,
-  className = "" 
+  className = "",
 }) {
-  
-  // Buscar parâmetros configurados
-  const { data: parametros = [] } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: [],
-  });
+  const { parametros, isLoading, isError, contextoValido } = useOrigemPedido();
 
   // Mapear origem para canal
   const origemParaCanal = {
-    'Manual': 'ERP',
-    'Site': 'Site',
+    Manual: 'ERP',
+    Site: 'Site',
     'E-commerce': 'E-commerce',
-    'Chatbot': 'Chatbot',
-    'WhatsApp': 'WhatsApp',
-    'Portal': 'Portal Cliente',
-    'Marketplace': 'Marketplace',
-    'API': 'API',
-    'App': 'App Mobile',
-    'Importado': 'API'
+    Chatbot: 'Chatbot',
+    WhatsApp: 'WhatsApp',
+    Portal: 'Portal Cliente',
+    Marketplace: 'Marketplace',
+    API: 'API',
+    App: 'App Mobile',
+    Importado: 'API',
   };
 
   const canal = origemParaCanal[origemPedido] || 'ERP';
-  const parametro = parametros.find(p => p.canal === canal);
+  const parametro = Array.isArray(parametros) ? parametros.find((p) => p.canal === canal) : null;
+  const configIndisponivel = !contextoValido || isLoading || isError;
 
   // Cores por badge
   const coresClasses = {
@@ -49,30 +43,33 @@ export default function BadgeOrigemPedido({
     red: 'bg-red-100 text-red-800 border-red-300',
     yellow: 'bg-yellow-100 text-yellow-800 border-yellow-300',
     pink: 'bg-pink-100 text-pink-800 border-pink-300',
-    cyan: 'bg-cyan-100 text-cyan-800 border-cyan-300'
+    cyan: 'bg-cyan-100 text-cyan-800 border-cyan-300',
   };
 
-  const corClasse = parametro?.cor_badge 
-    ? coresClasses[parametro.cor_badge] 
+  const corClasse = parametro?.cor_badge
+    ? coresClasses[parametro.cor_badge]
     : coresClasses.blue;
 
   const iconesTipo = {
-    'Manual': User,
-    'Automático': Bolt,
-    'Misto': Bolt
+    Manual: User,
+    Automático: Bolt,
+    Misto: Bolt,
   };
 
-  const Icone = parametro?.tipo_criacao 
-    ? iconesTipo[parametro.tipo_criacao] 
+  const Icone = parametro?.tipo_criacao
+    ? iconesTipo[parametro.tipo_criacao]
     : User;
 
   const ehBloqueado = parametro?.tipo_criacao === 'Automático' && parametro?.bloquear_edicao_automatico;
+  const rotulo = configIndisponivel
+    ? (origemPedido || '—')
+    : (parametro?.nome || origemPedido || '—');
 
   return (
-    <Badge className={`${corClasse} border ${className}`}>
+    <Badge className={`${corClasse} border ${className}`} title={configIndisponivel ? 'Configuração de canal indisponível no contexto' : undefined}>
       <Icone className="w-3 h-3 mr-1" />
-      {parametro?.nome || origemPedido}
-      {ehBloqueado && showLock && (
+      {rotulo}
+      {ehBloqueado && showLock && !configIndisponivel && (
         <Lock className="w-3 h-3 ml-1" />
       )}
     </Badge>

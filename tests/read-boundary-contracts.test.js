@@ -27,7 +27,7 @@ const hashes = {
   // #397: create path Novo orçamento/pedido (hash atualizado de propósito; hunks read-boundary intactos).
   'src/components/comercial/CentralCliente360Panel.jsx': '2b45f3e4b2286bc53d68e07fd2f7458b34dfcfc16fe70294e3bab855b6fc0ebc',
   'src/components/comercial/centralCliente360Pagination.js': '7b145f34bb94590472286238105fa619912c24cf7653f9467d4a728f2829fcc7',
-  'src/components/lib/useOrigemPedido.jsx': '70d8f7b0fb44893989359e3d1b7cc527cc33ea80731de52fb64a805587bdba0e',
+  'src/components/lib/useOrigemPedido.jsx': '9e9afd6f99b3b9f819598aea400a1fbe87e631bada0988fde26d32b4ee2b6ec4',
 };
 for (const [file, expected] of Object.entries(hashes)) test(`${file}: whole stage51 source retained outside exact read-boundary hunks`, () => {
   const digest = text => createHash('sha256').update(text).digest('hex');
@@ -144,15 +144,23 @@ test('actual TypeScript checks preserve concrete numeric pagination shape withou
   assert.deepEqual(diagnostics(true).map(error => error.code), [2322]);
 });
 
-test('installed QueryClient: actual origin query has ten-minute gcTime, not ignored cacheTime; query/URL logic otherwise frozen', () => {
+test('installed QueryClient: actual origin query has ten-minute gcTime, not ignored cacheTime; scoped filterInContext; no synthetic initialData', () => {
   const file = 'src/components/lib/useOrigemPedido.jsx', ast = parse(file);
+  // First useQuery in useOrigemPedido (lista canônica); useParametroOrigem tem o segundo.
   const query = nodes(ast, node => ts.isCallExpression(node) && node.expression.getText(ast) === 'useQuery')[0];
-  const options = bind(query.arguments[0].getText(ast), { base44: { entities: { ParametroOrigemPedido: { list: () => [] } } } });
+  const options = bind(query.arguments[0].getText(ast), {
+    contextKey: 'synthetic-context',
+    contextoValido: true,
+    filterInContext: async () => [],
+  });
   const client = new QueryClient({ defaultOptions: { queries: { gcTime: 300000 } } });
   try {
     const legacy = { ...options, queryKey: ['synthetic-legacy'], cacheTime: options.gcTime }; delete legacy.gcTime;
     assert.equal(client.getQueryCache().build(client, legacy).gcTime, 300000);
     assert.equal(client.getQueryCache().build(client, options).gcTime, 600000);
-    assert.equal(options.staleTime, 300000); assert.deepEqual(options.initialData, []);
+    assert.equal(options.staleTime, 300000);
+    assert.equal(options.initialData, undefined);
+    assert.deepEqual(options.queryKey, ['parametros-origem-pedido', 'synthetic-context']);
+    assert.equal(options.enabled, true);
   } finally { client.clear(); }
 });
