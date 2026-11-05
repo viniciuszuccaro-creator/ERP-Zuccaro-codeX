@@ -1,5 +1,5 @@
 ## CURSOR — PedidosRetirada mutações InContext (2026-11-05 America/Sao_Paulo)
-- #543 delta InContext; CI frontend FAIL → remainder/pickup pin alinhados; re-CI.
+- Tip `bb807bc2e` **CI SUCCESS** 6/6 (#543). *InContext mutações; pin autorizado.
 - #554–#565 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #543 PedidosRetiradaTab CI SUCCESS (2026-11-05 America/Sao_Paulo)

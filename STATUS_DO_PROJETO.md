@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch / PR** | `cursor/comercial-pedidos-retirada-scope-392b` = **#543** (delta mutações) |
-| **CI** | tip `f84ca69c6` frontend FAIL → remainder + pickup pin InContext (re-CI) |
+| **Branch / PR** | `cursor/comercial-pedidos-retirada-scope-392b` = **#543** |
+| **Tip CI** | **`bb807bc2e`** · **CI SUCCESS** 6/6 (pin InContext autorizado) |
 | **Código** | Pedido/Produto/Movimentacao/Entrega via *InContext; KPI ≠ zero; STALE_SCOPE |
 | **Testes** | scope **4** + approval-command-batch PedidosRetirada **PASS** |
 | **Fila** | #554–#565 SUCCESS · FF #401 aguarda Codex |
