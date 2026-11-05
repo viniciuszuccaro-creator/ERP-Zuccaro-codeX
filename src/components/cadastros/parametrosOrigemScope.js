@@ -1,19 +1,17 @@
 /** Cache key canônica: Grupo + Empresa + ator + fingerprint de sessão (sem token). */
-export function buildParametrosOrigemQueryKey({
-  groupId = null,
-  empresaId = null,
-  actorId = null,
-  sessionKey = null,
-} = {}) {
+export function buildParametrosOrigemQueryKey(input) {
+  const groupId = input?.groupId ?? null;
+  const empresaId = input?.empresaId ?? null;
+  const actorId = input?.actorId ?? null;
+  const sessionKey = input?.sessionKey ?? null;
   return ['parametros-origem-pedido', groupId || null, empresaId || null, actorId || null, sessionKey || null];
 }
 
-export function buildPedidosUltimosOrigemQueryKey({
-  groupId = null,
-  empresaId = null,
-  actorId = null,
-  sessionKey = null,
-} = {}) {
+export function buildPedidosUltimosOrigemQueryKey(input) {
+  const groupId = input?.groupId ?? null;
+  const empresaId = input?.empresaId ?? null;
+  const actorId = input?.actorId ?? null;
+  const sessionKey = input?.sessionKey ?? null;
   return ['pedidos-ultimos', groupId || null, empresaId || null, actorId || null, sessionKey || null];
 }
 
@@ -28,16 +26,16 @@ export function isParametrosOrigemScopeCurrent(expected, live) {
 
 /**
  * KPI: pedidos/contagens pendentes ou em falha nunca viram zero.
+ * @param {object} [input]
  * @returns {'unavailable'|'loading'|'error'|'ready'}
  */
-export function resolveParametrosOrigemKpiState({
-  contextoValido,
-  podeVer,
-  isLoading,
-  isError,
-  isFetching,
-  dataDefined,
-} = {}) {
+export function resolveParametrosOrigemKpiState(input) {
+  const contextoValido = Boolean(input?.contextoValido);
+  const podeVer = Boolean(input?.podeVer);
+  const isLoading = Boolean(input?.isLoading);
+  const isError = Boolean(input?.isError);
+  const isFetching = Boolean(input?.isFetching);
+  const dataDefined = Boolean(input?.dataDefined);
   if (!contextoValido || !podeVer) return 'unavailable';
   if (isError) return 'error';
   if (isLoading || (isFetching && !dataDefined)) return 'loading';
