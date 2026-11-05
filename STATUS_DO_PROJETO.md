@@ -1,10 +1,9 @@
-## CURSOR — #533 ConfigFiscalAutomatica Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #533 ConfigFiscalAutomatica CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#531** | multiempresa | **CI SUCCESS** |
-| #532 DuplicarMesAnterior | `eceb26ee4` | aguarda CI |
-| #533 ConfigFiscalAutomatica | (este) | filterInContext + create/updateInContext |
+| **#522–#533** | multiempresa | **CI SUCCESS** (#533 tip `e3331f418`) |
+| #534 ImportadorProdutos | `93726dd7a` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 
