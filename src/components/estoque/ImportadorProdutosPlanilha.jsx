@@ -262,29 +262,23 @@ const [suggesting, setSuggesting] = useState(false);
       throw new Error('Auditoria obrigatoria falhou para importacao de migracao.');
     }
   };
-  const { data: grupos = [] } = useQuery({
-    queryKey: ['grupos-empresariais'],
-    queryFn: () => base44.entities.GrupoEmpresarial.list(),
+  // Escopo multiempresa: Grupo/Empresa via filterInContext (não list unscoped).
+  const { data: grupos = [], isError: isErrorGruposImportador } = useQuery({
+    queryKey: ['grupos-empresariais', contextoGrupoId],
+    queryFn: () => filterInContext('GrupoEmpresarial', {}, 'nome', 500),
+    enabled: Boolean(contextoGrupoId || empresaAtual?.id),
     staleTime: 300000,
   });
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-por-grupo', grupoId],
+  const { data: empresas = [], isError: isErrorEmpresasImportador } = useQuery({
+    queryKey: ['empresas-por-grupo', contextoGrupoId, grupoId],
     queryFn: async () => {
-      // Garantir que o grupo selecionado existe e recarregar quando trocar
-      if (!grupoId) return base44.entities.Empresa.list();
-      // Alguns clientes usam campos diferentes (group_id vs grupo_id)
-      const [byGroup, byGrupo, byGroupExact] = await Promise.all([
-        base44.entities.Empresa.filter({ group_id: grupoId }),
-        base44.entities.Empresa.filter({ grupo_id: grupoId }),
-        base44.entities.Empresa.filter({ groupId: grupoId }),
-      ]);
-      const merged = [...(byGroup || []), ...(byGrupo || []), ...(byGroupExact || [])];
-      // dedup por id
-      const map = new Map();
-      merged.forEach(e => { if (e?.id) map.set(e.id, e); });
-      const arr = Array.from(map.values());
-      return arr.length ? arr : [];
+      // Fail-closed: filterInContext (nunca Empresa.list unscoped).
+      if (grupoId) {
+        return filterInContext('Empresa', { group_id: grupoId }, 'razao_social', 500);
+      }
+      return filterInContext('Empresa', {}, 'razao_social', 500);
     },
+    enabled: Boolean(contextoGrupoId || empresaAtual?.id),
     staleTime: 60000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
@@ -1545,6 +1539,9 @@ const [suggesting, setSuggesting] = useState(false);
           </Alert>
         )}
 
+        {(isErrorGruposImportador || isErrorEmpresasImportador) && (
+          <p className="text-xs text-slate-500">Masters de grupo/empresa indisponíveis (erro de carga ≠ zero).</p>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label>Grupo (opcional)</Label>

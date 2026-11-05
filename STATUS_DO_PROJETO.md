@@ -1,4 +1,14 @@
+## CURSOR — #534 ImportadorProdutos CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#534** | multiempresa | **CI SUCCESS** (#534 tip `93726dd7a`) |
+| #535 DashboardCorporativo | `447e819a0` | aguarda CI |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
