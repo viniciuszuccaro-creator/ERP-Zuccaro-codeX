@@ -1,3 +1,15 @@
+## CURSOR — #566/#569 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **#566** | ValidacaoCredito tip `04ba118fd` — frontend/backend/compose **SUCCESS** |
+| **#569** | DetalhesColaborador tip `c97c640e7` — frontend/backend/compose **SUCCESS** |
+| **#567** | DetalhesCadastro tip código `7b6b25eff` SUCCESS (docs `fb7f80ec6` revalidando) |
+| **#568** | SimularPagamento pin fix tip `228ceacc9` em CI |
+| **Fila** | #543/#554–#565/#566/#569 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — DetalhesColaborador escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

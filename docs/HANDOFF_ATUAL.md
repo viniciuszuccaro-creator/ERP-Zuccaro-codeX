@@ -1,3 +1,7 @@
+## CURSOR — #566/#569 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #566 `04ba118fd` SUCCESS · #569 `c97c640e7` SUCCESS · #567 SUCCESS · #568 pin `228ceacc9` em CI.
+- Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — DetalhesColaborador escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-detalhes-colaborador-scope-392b` ← #401.
 - filterInContext + updateInContext; KPI ≠ zero; STALE_SCOPE. Testes 5 PASS.
