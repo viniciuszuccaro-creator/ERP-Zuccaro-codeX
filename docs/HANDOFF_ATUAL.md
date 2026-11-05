@@ -1,6 +1,6 @@
-## CURSOR — #511 cache/KPI follow-up (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/cadastros-param-origem-cache-392b` ← #511: queryKey Grupo+Empresa+ator+sessão; KPI loading/erro≠zero; late STALE_SCOPE.
-- Provas 9 PASS. #536–#539: falta ator/sessão na key (próximo). #543 aguarda CI. Homolog BLOCKED.
+## CURSOR — #544 ParamOrigem cache CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `ebadfcad5` **CI SUCCESS** 6/6. Cache ator/sessão; KPI≠zero; STALE_SCOPE.
+- #543/#545 verdes. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #511 CI SUCCESS ParamOrigem (2026-11-05 America/Sao_Paulo)
 - Tip `26f96d1b0` · 6/6 CI SUCCESS.
