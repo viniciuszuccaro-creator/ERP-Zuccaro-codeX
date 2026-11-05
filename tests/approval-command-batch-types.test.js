@@ -77,7 +77,9 @@ function environment(override={}){
   const base44={entities:{},integrations:{Core:{InvokeLLM:async()=>{throw new Error('synthetic provider disabled');}}}};
   for(const entity of ['Notificacao','Pedido','MovimentacaoEstoque','Produto','Entrega'])base44.entities[entity]={create:data=>create(entity,data),update:(id,data)=>update(entity,id,data),filter:async query=>{lookups.push([entity,query]);return [{id:'synthetic-product',estoque_atual:10}];}};
   base44.entities.BackupAutomatico={restore:async(id,options)=>{writes.push(['synthetic-restore',id,options]);return {backup:{id},summary:{synthetic:true}};}};
-  const deps={base44,createInContext:create,updateInContext:update,filterInContext:async(entity,filter)=>{lookups.push([entity,filter]);return [record()];},
+  const getInContext=async(entity,id)=>{lookups.push([entity,{id,empresa_id:'synthetic-a'}]);return {id:id||'synthetic-product',estoque_atual:10};};
+  const deps={base44,createInContext:create,updateInContext:update,getInContext,filterInContext:async(entity,filter)=>{lookups.push([entity,filter]);return [record()];},
+    isPedidosRetiradaScopeCurrent:()=>true,scopeExpected:{actorId:'synthetic-actor',sessionKey:'synthetic-session'},readPedidosRetiradaActorAndSession:()=>({actorId:'synthetic-actor',sessionKey:'synthetic-session'}),
     contextoValido:true,podeEditarAprovacoes:true,canEdit:true,canEntregar:true,canRegisterProof:true,canApproveOC:true,canSendOC:true,canRestaurar:true,canExpirar:true,controlesDesabilitados:false,podeLiquidarTitulosReceber:true,podeLiquidarTitulosPagar:true,
     user:{id:'synthetic-user',full_name:'Synthetic user'},authUser:{id:'synthetic-user',full_name:'Synthetic user'},hasPermission:()=>false,validarLimiteCredito:async()=>({aprovado:true}),
     groupId:'synthetic-group',empresaId:'synthetic-a',empresaContextoId:'synthetic-a',empresaAtual:{id:'synthetic-a'},grupoAtivoId:'synthetic-group',empresaAtivaId:'synthetic-a',effectiveGroupId:'synthetic-group',effectiveEmpresaId:'synthetic-a',
@@ -116,7 +118,9 @@ test('delivery status retains context/proof/confirmation gates and Entrega then 
 });
 test('pickup preserves product lookup company and movement/product/order/delivery ordering with synthetic stock',async()=>{
   const e=environment();await bind('retirada','confirmarRetiradaMutation',e.deps)(payload('retirada','confirmarRetiradaMutation'));
-  assert.equal(e.lookups[0][1].empresa_id,'synthetic-a');assert.deepEqual(e.writes.map(row=>row[1]),['MovimentacaoEstoque','Produto','Pedido','Entrega']);assert.equal(e.writes[1][3].estoque_atual,8);assert.equal(e.writes[3][2].comprovante_entrega.nome_recebedor,'Synthetic recipient');
+  // getInContext('Produto', id) carimba empresa no lookup sintético (≠ filter unscoped).
+  assert.equal(e.lookups[0][0],'Produto');assert.equal(e.lookups[0][1].empresa_id,'synthetic-a');assert.equal(e.lookups[0][1].id,'synthetic-product');
+  assert.deepEqual(e.writes.map(row=>row[1]),['MovimentacaoEstoque','Produto','Pedido','Entrega']);assert.equal(e.writes[1][3].estoque_atual,8);assert.equal(e.writes[3][2].comprovante_entrega.nome_recebedor,'Synthetic recipient');
   const status=environment();await bind('retirada','atualizarStatusMutation',status.deps)(payload('retirada','atualizarStatusMutation'));assert.equal(status.writes[0][3].status,'Pronto para Retirada');
 });
 test('purchase basic/edit/approve/send/evaluation commands preserve guarded transitions and current fields',async()=>{

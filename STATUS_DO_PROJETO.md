@@ -1,3 +1,26 @@
+## CURSOR — PedidosRetirada mutações InContext (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/comercial-pedidos-retirada-scope-392b` = **#543** |
+| **Tip CI** | **`bb807bc2e`** · **CI SUCCESS** 6/6 (pin InContext autorizado) |
+| **Código** | Pedido/Produto/Movimentacao/Entrega via *InContext; KPI ≠ zero; STALE_SCOPE |
+| **Testes** | scope **4** + approval-command-batch PedidosRetirada **PASS** |
+| **Fila** | #554–#565 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
+## CURSOR — #543 PedidosRetiradaTab CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#543](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/543) |
+| **Tip** | **`2ae991c1f`** · **CI SUCCESS** 6/6 |
+| **Código** | Pedido via `filterInContext`; fail-closed; banner erro≠zero; pin approval intacto |
+| **Paralelos** | #522–#542 verdes · #544 cache #511 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
