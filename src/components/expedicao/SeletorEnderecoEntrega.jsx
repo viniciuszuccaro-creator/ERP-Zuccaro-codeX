@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,16 +8,37 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin, Plus, CheckCircle } from "lucide-react";
 import BuscaCEP from "../comercial/BuscaCEP";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  isSeletorEnderecoScopeCurrent,
+  assertSeletorEnderecoContext,
+  assertSeletorEnderecoClienteId,
+  buildSeletorEnderecoLocais,
+} from "./seletorEnderecoEntregaScope";
 
 /**
  * Seletor de Endereço de Entrega
- * Permite escolher endereço cadastrado ou criar novo
+ * Permite escolher endereço cadastrado ou criar novo.
+ * Persistência no Cliente via updateInContext (não entities.update unscoped).
  */
 export default function SeletorEnderecoEntrega({ cliente, onEnderecoSelecionado }) {
   const [modo, setModo] = useState("selecionar"); // selecionar | novo
   const [enderecoSelecionado, setEnderecoSelecionado] = useState(null);
   const [salvarNoCliente, setSalvarNoCliente] = useState(false);
   const queryClient = useQueryClient();
+  const { updateInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  };
 
   const [novoEndereco, setNovoEndereco] = useState({
     apelido: "Endereço de Entrega",
@@ -38,15 +58,25 @@ export default function SeletorEnderecoEntrega({ cliente, onEnderecoSelecionado 
   const salvarEnderecoMutation = useMutation({
     mutationFn: async () => {
       if (salvarNoCliente) {
-        const novosLocais = [...(cliente.locais_entrega || []), novoEndereco];
-        await base44.entities.Cliente.update(cliente.id, {
-          locais_entrega: novosLocais
+        assertSeletorEnderecoContext(groupId, empresaId);
+        const clienteId = assertSeletorEnderecoClienteId(cliente);
+        const scopeExpected = readActorAndSession();
+        const novosLocais = buildSeletorEnderecoLocais(cliente, novoEndereco);
+        await updateInContext("Cliente", clienteId, {
+          locais_entrega: novosLocais,
         });
+        if (!isSeletorEnderecoScopeCurrent(scopeExpected, readActorAndSession())) {
+          throw Object.assign(new Error("SELETOR_ENDERECO_STALE_SCOPE"), {
+            code: "SELETOR_ENDERECO_STALE_SCOPE",
+          });
+        }
       }
       return novoEndereco;
     },
     onSuccess: (endereco) => {
-      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({
+        queryKey: ["clientes", groupId, empresaId],
+      });
       onEnderecoSelecionado(endereco, salvarNoCliente);
     },
   });
