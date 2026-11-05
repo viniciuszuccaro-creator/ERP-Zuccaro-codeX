@@ -1,10 +1,10 @@
-## CURSOR — #540 ComissaoForm Empresa scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #540 ComissaoForm CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522–#538** | multiempresa | **CI SUCCESS** |
-| #539 WidgetFechamento | `346ad1306` | aguarda CI |
-| #540 ComissaoForm | (este) | Pedido filterInContext |
+| **#522–#540** | multiempresa | **CI SUCCESS** |
+| #540 ComissaoForm | `df67a72b2` | **CI SUCCESS** 6/6 |
+| #541 PesquisaUniversal | `83639b4c0` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 

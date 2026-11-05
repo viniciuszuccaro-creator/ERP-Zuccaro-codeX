@@ -1,6 +1,6 @@
-## CURSOR — #540 ComissaoForm Empresa scope (2026-11-05 America/Sao_Paulo)
-- Pedido via filterInContext; fail-closed; erro≠zero.
-- #537 SUCCESS; #539 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #540 ComissaoForm CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `df67a72b2` **CI SUCCESS** 6/6. Pedido filterInContext.
+- **#522–#540** multiempresa verde. #541 Pesquisa em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
