@@ -1,6 +1,6 @@
-## CURSOR — #531 ConciliacaoBancaria Empresa scope (2026-11-05 America/Sao_Paulo)
-- ConciliacaoBancaria: Empresa via filterInContext; extratos/conciliações/movimentos fail-closed sem empresa; queryKey com scopeKey.
-- Pin consolidation80: reverse hunks autorizam o delta. #529/#530 pin remainder em CI. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #531 ConciliacaoBancaria CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `da30a9a85` — frontend+backend+compose PASS. Empresa filterInContext + fail-closed listas.
+- #522–#531 verdes. #532 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 
