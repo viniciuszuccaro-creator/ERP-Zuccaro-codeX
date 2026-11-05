@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,69 +6,172 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { CheckCircle, XCircle, Link as LinkIcon, Search, Filter } from "lucide-react";
+import { CheckCircle, Link as LinkIcon, Search } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  resolvePainelConciliacaoKpiState,
+  isPainelConciliacaoScopeCurrent,
+  assertPainelConciliacaoEmpresaMatch,
+  buildPainelConciliacaoTituloUpdate,
+  buildPainelConciliacaoExtratoUpdate,
+} from "./painelConciliacaoScope";
 
 export default function PainelConciliacao({ empresaId, windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const resolvedEmpresaId = empresaAtual?.id || null;
+  let effectiveEmpresaId = null;
+  let empresaMismatch = false;
+  let scopeBlocked = false;
+  try {
+    effectiveEmpresaId = assertPainelConciliacaoEmpresaMatch(empresaId, resolvedEmpresaId);
+  } catch (err) {
+    if (err?.code === 'PAINEL_CONCILIACAO_EMPRESA_MISMATCH') empresaMismatch = true;
+    else scopeBlocked = true;
+  }
+  const contextoValido = Boolean(effectiveEmpresaId) && !empresaMismatch && !scopeBlocked;
 
-  const { data: extratos = [] } = useQuery({
-    queryKey: ['extratos', empresaId],
-    queryFn: () => base44.entities.ExtratoBancario.filter({ empresa_id: empresaId }, '-data_movimento'),
-    enabled: !!empresaId
+  const sessionSnapshot = readErpHttpSession();
+  const actorId = typeof sessionSnapshot?.actorId === "string" && sessionSnapshot.actorId.trim()
+    ? sessionSnapshot.actorId.trim()
+    : null;
+  const sessionKey = central360SessionKey(sessionSnapshot?.token);
+  const scopeExpected = { actorId, sessionKey };
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const nextActor = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId: nextActor, sessionKey: central360SessionKey(session?.token) };
+  };
+
+  const extratosQuery = useQuery({
+    queryKey: ['extratos', groupId, effectiveEmpresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ExtratoBancario', { empresa_id: effectiveEmpresaId }, '-data_movimento');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_CONCILIACAO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelConciliacaoScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_CONCILIACAO_EXTRATOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber', empresaId],
-    queryFn: () => base44.entities.ContaReceber.filter({ empresa_id: empresaId }, '-data_vencimento'),
-    enabled: !!empresaId
+  const receberQuery = useQuery({
+    queryKey: ['contas-receber', groupId, effectiveEmpresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ContaReceber', { empresa_id: effectiveEmpresaId }, '-data_vencimento');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_CONCILIACAO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelConciliacaoScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_CONCILIACAO_RECEBER_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contas-pagar', empresaId],
-    queryFn: () => base44.entities.ContaPagar.filter({ empresa_id: empresaId }, '-data_vencimento'),
-    enabled: !!empresaId
+  const pagarQuery = useQuery({
+    queryKey: ['contas-pagar', groupId, effectiveEmpresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ContaPagar', { empresa_id: effectiveEmpresaId }, '-data_vencimento');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_CONCILIACAO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelConciliacaoScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_CONCILIACAO_PAGAR_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
+
+  const extratosKpi = resolvePainelConciliacaoKpiState({
+    contextoValido,
+    isLoading: extratosQuery.isLoading,
+    isError: extratosQuery.isError || empresaMismatch || scopeBlocked,
+    isFetching: extratosQuery.isFetching,
+    dataDefined: extratosQuery.data !== undefined,
+  });
+  const receberKpi = resolvePainelConciliacaoKpiState({
+    contextoValido,
+    isLoading: receberQuery.isLoading,
+    isError: receberQuery.isError || empresaMismatch || scopeBlocked,
+    isFetching: receberQuery.isFetching,
+    dataDefined: receberQuery.data !== undefined,
+  });
+  const pagarKpi = resolvePainelConciliacaoKpiState({
+    contextoValido,
+    isLoading: pagarQuery.isLoading,
+    isError: pagarQuery.isError || empresaMismatch || scopeBlocked,
+    isFetching: pagarQuery.isFetching,
+    dataDefined: pagarQuery.data !== undefined,
+  });
+
+  const listaKpi = [extratosKpi, receberKpi, pagarKpi].includes('error')
+    ? 'error'
+    : [extratosKpi, receberKpi, pagarKpi].includes('unavailable')
+      ? 'unavailable'
+      : [extratosKpi, receberKpi, pagarKpi].includes('loading')
+        ? 'loading'
+        : extratosKpi === 'ready' && receberKpi === 'ready' && pagarKpi === 'ready'
+          ? 'ready'
+          : 'loading';
+
+  const extratos = listaKpi === 'ready' && Array.isArray(extratosQuery.data) ? extratosQuery.data : [];
+  const contasReceber = listaKpi === 'ready' && Array.isArray(receberQuery.data) ? receberQuery.data : [];
+  const contasPagar = listaKpi === 'ready' && Array.isArray(pagarQuery.data) ? pagarQuery.data : [];
 
   const conciliarMutation = useMutation({
     mutationFn: async ({ extratoId, tituloId, tipo }) => {
+      assertPainelConciliacaoEmpresaMatch(empresaId, resolvedEmpresaId);
+      const scopeAtStart = readActorAndSession();
       const extrato = extratos.find(e => e.id === extratoId);
-      const titulo = tipo === 'receber' 
-        ? contasReceber.find(t => t.id === tituloId)
-        : contasPagar.find(t => t.id === tituloId);
+      if (!extrato) {
+        throw Object.assign(new Error('PAINEL_CONCILIACAO_EXTRATO_NOT_FOUND'), {
+          code: 'PAINEL_CONCILIACAO_EXTRATO_NOT_FOUND',
+        });
+      }
 
-      // Atualizar extrato
-      await base44.entities.ExtratoBancario.update(extratoId, {
-        conciliado: true,
-        conciliado_com_tipo: tipo === 'receber' ? 'ContaReceber' : 'ContaPagar',
-        conciliado_com_id: tituloId,
-        conciliado_por: "Sistema",
-        data_conciliacao: new Date().toISOString()
-      });
+      await updateInContext('ExtratoBancario', extratoId, buildPainelConciliacaoExtratoUpdate(tipo, tituloId));
+      const tituloEntity = tipo === 'receber' ? 'ContaReceber' : 'ContaPagar';
+      await updateInContext(tituloEntity, tituloId, buildPainelConciliacaoTituloUpdate(tipo, extrato));
 
-      // Atualizar título
-      const Entity = tipo === 'receber' ? base44.entities.ContaReceber : base44.entities.ContaPagar;
-      await Entity.update(tituloId, {
-        status: tipo === 'receber' ? 'Recebido' : 'Pago',
-        [tipo === 'receber' ? 'data_recebimento' : 'data_pagamento']: extrato.data_movimento,
-        [tipo === 'receber' ? 'valor_recebido' : 'valor_pago']: extrato.valor
-      });
+      if (!isPainelConciliacaoScopeCurrent(scopeAtStart, readActorAndSession())) {
+        throw Object.assign(new Error('PAINEL_CONCILIACAO_MUTATE_STALE_SCOPE'), {
+          code: 'PAINEL_CONCILIACAO_MUTATE_STALE_SCOPE',
+        });
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['extratos'] });
-      queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
-      queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
+      queryClient.invalidateQueries({ queryKey: ['extratos', groupId, effectiveEmpresaId] });
+      queryClient.invalidateQueries({ queryKey: ['contas-receber', groupId, effectiveEmpresaId] });
+      queryClient.invalidateQueries({ queryKey: ['contas-pagar', groupId, effectiveEmpresaId] });
       toast({ title: "✅ Conciliação realizada!" });
     },
   });
 
   const conciliarAutomaticoMutation = useMutation({
     mutationFn: async () => {
+      assertPainelConciliacaoEmpresaMatch(empresaId, resolvedEmpresaId);
       let conciliados = 0;
-      
+
       for (const extrato of extratos.filter(e => !e.conciliado)) {
-        // Buscar título correspondente por valor e proximidade de data
         const toleranciaDias = 3;
         const dataExtrato = new Date(extrato.data_movimento);
 
@@ -77,22 +179,20 @@ export default function PainelConciliacao({ empresaId, windowMode = false }) {
         let tipoMatch = null;
 
         if (extrato.tipo === 'credito') {
-          // Buscar em contas a receber
           tituloMatch = contasReceber.find(t => {
             const dataTitulo = new Date(t.data_vencimento);
             const diffDias = Math.abs((dataExtrato - dataTitulo) / (1000 * 60 * 60 * 24));
-            return t.status === 'Pendente' && 
-                   Math.abs(t.valor - extrato.valor) < 0.01 && 
+            return t.status === 'Pendente' &&
+                   Math.abs(t.valor - extrato.valor) < 0.01 &&
                    diffDias <= toleranciaDias;
           });
           tipoMatch = 'receber';
         } else {
-          // Buscar em contas a pagar
           tituloMatch = contasPagar.find(t => {
             const dataTitulo = new Date(t.data_vencimento);
             const diffDias = Math.abs((dataExtrato - dataTitulo) / (1000 * 60 * 60 * 24));
-            return t.status === 'Pendente' && 
-                   Math.abs(t.valor - extrato.valor) < 0.01 && 
+            return t.status === 'Pendente' &&
+                   Math.abs(t.valor - extrato.valor) < 0.01 &&
                    diffDias <= toleranciaDias;
           });
           tipoMatch = 'pagar';
@@ -111,20 +211,20 @@ export default function PainelConciliacao({ empresaId, windowMode = false }) {
       return conciliados;
     },
     onSuccess: (conciliados) => {
-      toast({ 
-        title: "✅ Conciliação Automática Concluída!", 
+      toast({
+        title: "✅ Conciliação Automática Concluída!",
         description: `${conciliados} movimento(s) conciliado(s) automaticamente.`
       });
     },
   });
 
-  const extratosFiltrados = extratos.filter(e => 
+  const extratosFiltrados = extratos.filter(e =>
     e.historico?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.documento?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const extratosPendentes = extratosFiltrados.filter(e => !e.conciliado);
-  const extratosConciliados = extratosFiltrados.filter(e => e.conciliado);
+  const extratosPendentes = listaKpi === 'ready' ? extratosFiltrados.filter(e => !e.conciliado) : [];
+  const extratosConciliados = listaKpi === 'ready' ? extratosFiltrados.filter(e => e.conciliado) : [];
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}>
@@ -133,14 +233,22 @@ export default function PainelConciliacao({ empresaId, windowMode = false }) {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Conciliação Bancária</h2>
-          <p className="text-sm text-slate-600">
-            {extratosPendentes.length} movimentos pendentes • {extratosConciliados.length} conciliados
-          </p>
+          {listaKpi === 'ready' ? (
+            <p className="text-sm text-slate-600">
+              {extratosPendentes.length} movimentos pendentes • {extratosConciliados.length} conciliados
+            </p>
+          ) : listaKpi === 'loading' ? (
+            <p className="text-sm text-slate-500 animate-pulse">Carregando movimentos…</p>
+          ) : listaKpi === 'error' || empresaMismatch ? (
+            <p className="text-sm text-red-600">Erro ≠ 0 pendentes / tudo conciliado</p>
+          ) : (
+            <p className="text-sm text-amber-700">Selecione a Empresa para conciliar.</p>
+          )}
         </div>
         <div className="flex gap-3">
           <Button
             onClick={() => conciliarAutomaticoMutation.mutate()}
-            disabled={conciliarAutomaticoMutation.isPending || extratosPendentes.length === 0}
+            disabled={listaKpi !== 'ready' || conciliarAutomaticoMutation.isPending || extratosPendentes.length === 0}
             className="bg-green-600 hover:bg-green-700"
           >
             {conciliarAutomaticoMutation.isPending ? 'Conciliando...' : '🤖 Conciliar Automaticamente'}
@@ -158,6 +266,7 @@ export default function PainelConciliacao({ empresaId, windowMode = false }) {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
+              disabled={listaKpi !== 'ready'}
             />
           </div>
         </CardContent>
@@ -169,6 +278,17 @@ export default function PainelConciliacao({ empresaId, windowMode = false }) {
           <CardTitle className="text-base">Movimentos Pendentes de Conciliação</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          {listaKpi === 'loading' && (
+            <div className="text-center py-12 text-slate-500 animate-pulse">Carregando…</div>
+          )}
+          {listaKpi === 'error' && (
+            <div className="text-center py-12 text-red-600">Erro ≠ lista vazia / tudo conciliado</div>
+          )}
+          {listaKpi === 'unavailable' && (
+            <div className="text-center py-12 text-amber-700">Contexto de Empresa necessário</div>
+          )}
+          {listaKpi === 'ready' && (
+          <>
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
@@ -183,14 +303,13 @@ export default function PainelConciliacao({ empresaId, windowMode = false }) {
             </TableHeader>
             <TableBody>
               {extratosPendentes.map(extrato => {
-                // Buscar sugestões de conciliação
                 const sugestoes = extrato.tipo === 'credito'
-                  ? contasReceber.filter(t => 
-                      t.status === 'Pendente' && 
+                  ? contasReceber.filter(t =>
+                      t.status === 'Pendente' &&
                       Math.abs(t.valor - extrato.valor) < 0.01
                     ).slice(0, 3)
-                  : contasPagar.filter(t => 
-                      t.status === 'Pendente' && 
+                  : contasPagar.filter(t =>
+                      t.status === 'Pendente' &&
                       Math.abs(t.valor - extrato.valor) < 0.01
                     ).slice(0, 3);
 
@@ -254,11 +373,13 @@ export default function PainelConciliacao({ empresaId, windowMode = false }) {
               <p className="text-sm mt-2">Não há movimentos pendentes de conciliação</p>
             </div>
           )}
+          </>
+          )}
         </CardContent>
       </Card>
 
       {/* Movimentos Conciliados */}
-      {extratosConciliados.length > 0 && (
+      {listaKpi === 'ready' && extratosConciliados.length > 0 && (
         <Card className="border-0 shadow-md">
           <CardHeader className="bg-green-50 border-b">
             <CardTitle className="text-base">Movimentos Conciliados</CardTitle>
