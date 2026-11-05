@@ -1,11 +1,11 @@
-## CURSOR — #546 AplicadorTabelaPreco escopo (2026-11-05 America/Sao_Paulo)
+## CURSOR — #546 AplicadorTabelaPreco CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-aplicador-tabela-scope-392b` ← #401 `b888b2c00` |
-| **Código** | `TabelaPreco` via `filterInContext`; cache ator/sessão; fail-closed; STALE_SCOPE; erro≠zero |
-| **Testes** | `comercial-aplicador-tabela-scope` **3 PASS** |
-| **Paralelos** | #543–#545 CI SUCCESS; FF #401 aguarda Codex |
+| **PR** | [#546](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/546) |
+| **Tip** | **`3aefbe921`** · **CI SUCCESS** 6/6 |
+| **Código** | `TabelaPreco` via `filterInContext`; cache ator/sessão; STALE_SCOPE; erro≠zero |
+| **Paralelos** | #543–#545 verdes · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 

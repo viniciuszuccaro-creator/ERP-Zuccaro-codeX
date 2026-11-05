@@ -1,6 +1,6 @@
-## CURSOR — #546 AplicadorTabelaPreco escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-aplicador-tabela-scope-392b`: TabelaPreco filterInContext; cache ator/sessão; STALE_SCOPE; erro≠zero.
-- Testes 3 PASS. #543–#545 verdes. Homolog BLOCKED. FF #401 aguarda Codex.
+## CURSOR — #546 AplicadorTabelaPreco CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `3aefbe921` **CI SUCCESS** 6/6. TabelaPreco filterInContext; cache ator/sessão; STALE_SCOPE.
+- #543–#546 verdes. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
