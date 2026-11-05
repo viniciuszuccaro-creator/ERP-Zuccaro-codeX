@@ -1,3 +1,22 @@
+## CURSOR — #573 SeletorEnderecoEntrega CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #573 `f08063a3b` — frontend + backend + compose **SUCCESS** |
+| **Código** | updateInContext Cliente; fail-closed; STALE_SCOPE |
+| **Fila** | #566–#573 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — SeletorEnderecoEntrega escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/expedicao-seletor-endereco-scope-392b` ← #401 `b888b2c00` |
+| **Código** | updateInContext Cliente; fail-closed sem Grupo/Empresa; STALE_SCOPE |
+| **Testes** | `expedicao-seletor-endereco-scope` **2 PASS** |
+| **Fila** | #566–#572 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
