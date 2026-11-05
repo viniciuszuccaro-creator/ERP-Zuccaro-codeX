@@ -1,26 +1,100 @@
-
 import React from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Shield, DollarSign, CheckCircle, XCircle, Brain } from 'lucide-react';
+import { AlertTriangle, Shield, CheckCircle, XCircle, Brain } from 'lucide-react';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  buildPerfilRiscoClienteQueryKey,
+  isPerfilRiscoClienteScopeCurrent,
+  resolvePerfilRiscoClienteKpiState,
+  pickClienteRiscoFromRows,
+} from './perfilRiscoClienteScope';
+
+function readPerfilRiscoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.1 - Widget de Perfil de Risco do Cliente
  * Usado na Aba 1 - Identificação
  * Bloqueia pedido se: Inapto, Alto Risco ou Limite Excedido
+ *
+ * Escopo multiempresa: Cliente via filterInContext (sem get unscoped).
+ * Cache: cliente+Grupo+Empresa+ator+sessão. Loading/erro ≠ ausência silenciosa.
  */
 export default function WidgetPerfilRiscoCliente({ clienteId, valorPedido = 0 }) {
-  const { data: cliente, isLoading } = useQuery({
-    queryKey: ['cliente-risco', clienteId],
-    queryFn: () => base44.entities.Cliente.get(clienteId),
-    enabled: !!clienteId
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readPerfilRiscoActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  const {
+    data: cliente,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildPerfilRiscoClienteQueryKey({
+      clienteId, groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Cliente', { id: clienteId }, undefined, 1);
+      if (signal?.aborted) {
+        const err = new Error('PERFIL_RISCO_CLIENTE_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPerfilRiscoClienteScopeCurrent(scopeExpected, readPerfilRiscoActorAndSession())) {
+        throw new Error('PERFIL_RISCO_CLIENTE_STALE_SCOPE');
+      }
+      return pickClienteRiscoFromRows(rows);
+    },
+    enabled: Boolean(clienteId) && contextoValido,
   });
 
-  if (!clienteId || isLoading) {
+  const kpiState = resolvePerfilRiscoClienteKpiState({
+    contextoValido,
+    clienteId,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: cliente !== undefined,
+  });
+
+  if (kpiState === 'unavailable') {
     return null;
+  }
+
+  if (kpiState === 'loading') {
+    return (
+      <Card className="border-slate-200 bg-slate-50">
+        <CardContent className="p-4 text-sm text-slate-600">
+          Carregando perfil de risco do cliente…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (kpiState === 'error') {
+    return (
+      <Alert className="border-red-300 bg-red-50">
+        <AlertTriangle className="h-4 w-4 text-red-700" />
+        <AlertDescription className="text-sm text-red-700">
+          Não foi possível carregar o perfil de risco (erro ≠ ausência de cliente).
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   if (!cliente) {
