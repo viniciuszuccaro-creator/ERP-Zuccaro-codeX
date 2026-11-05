@@ -1,6 +1,6 @@
-## CURSOR — #535 DashboardCorporativo Empresa scope (2026-11-05 America/Sao_Paulo)
-- Removido Empresa.list morto; queries via scopeFilter grupo/empresa; enabled fail-closed; erro≠zero.
-- Pin primitiveUi: reverse autorizado. #534 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #535 DashboardCorporativo CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `447e819a0` **CI SUCCESS** 6/6. Escopo fail-closed + pin reverse.
+- **#522–#535** multiempresa verde. #536 Bitolas em curso. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 
