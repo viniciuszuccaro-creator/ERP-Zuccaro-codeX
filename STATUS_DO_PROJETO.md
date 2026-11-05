@@ -1,3 +1,14 @@
+## CURSOR — #546 AplicadorTabelaPreco CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#546](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/546) |
+| **Tip** | **`3aefbe921`** · **CI SUCCESS** 6/6 |
+| **Código** | `TabelaPreco` via `filterInContext`; cache ator/sessão; STALE_SCOPE; erro≠zero |
+| **Paralelos** | #543–#545 verdes · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
