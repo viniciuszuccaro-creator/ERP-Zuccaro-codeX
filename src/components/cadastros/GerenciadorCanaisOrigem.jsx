@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePermissions } from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { 
   Activity, 
   CheckCircle, 
@@ -28,25 +28,36 @@ import ExportButton from "@/components/ExportButton";
 export default function GerenciadorCanaisOrigem({ windowMode = false }) {
   const { user } = usePermissions();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
 
-  const { data: parametros = [], isLoading } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: [],
+  // Escopo multiempresa: sem list/update unscoped; sem initialData=[] (erro≠zero).
+  const { data: parametros = [], isLoading, isError: isErrorParametros } = useQuery({
+    queryKey: ['parametros-origem-pedido', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('ParametroOrigemPedido', {}, '-updated_date', 500),
+    enabled: contextoValido,
   });
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-ultimos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 200),
-    initialData: [],
+  const { data: pedidos = [], isError: isErrorPedidos } = useQuery({
+    queryKey: ['pedidos-ultimos-canais', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
+
+  const cargaIndisponivel = isErrorParametros || isErrorPedidos;
 
   const toggleAtivo = useMutation({
-    mutationFn: ({ id, ativo }) => 
-      base44.entities.ParametroOrigemPedido.update(id, { ativo }),
+    mutationFn: ({ id, ativo }) => {
+      if (!contextoValido) throw new Error('Selecione um grupo ou empresa antes de alterar canais.');
+      return updateInContext('ParametroOrigemPedido', id, { ativo });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['parametros-origem-pedido'] });
       toast.success('Status atualizado!');
+    },
+    onError: (err) => {
+      toast.error(err?.message || 'Não foi possível atualizar o canal.');
     },
   });
 
@@ -96,7 +107,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
     ? "w-full h-full overflow-auto p-6" 
     : "";
 
-  if (isLoading) {
+  if (contextoValido && isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -106,9 +117,17 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
 
   const canaisAtivos = parametros.filter(p => p.ativo);
   const canaisInativos = parametros.filter(p => !p.ativo);
+  const kpiOrDash = (n) => (cargaIndisponivel || !contextoValido ? '—' : n);
 
   return (
     <div className={containerClass}>
+      {(cargaIndisponivel || !contextoValido) && (
+        <p className="text-xs text-slate-500 mb-3">
+          {!contextoValido
+            ? 'Selecione um grupo ou empresa para carregar canais de origem.'
+            : 'Contagem de canais indisponível (erro de carga ≠ zero).'}
+        </p>
+      )}
       
       {/* Header KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -117,7 +136,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Total Canais</p>
-                <p className="text-2xl font-bold text-blue-600">{parametros.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{kpiOrDash(parametros.length)}</p>
               </div>
               <Settings className="w-8 h-8 text-blue-600 opacity-20" />
             </div>
@@ -129,7 +148,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Canais Ativos</p>
-                <p className="text-2xl font-bold text-green-600">{canaisAtivos.length}</p>
+                <p className="text-2xl font-bold text-green-600">{kpiOrDash(canaisAtivos.length)}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-600 opacity-20" />
             </div>
@@ -142,7 +161,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
               <div>
                 <p className="text-xs text-slate-600">Automáticos</p>
                 <p className="text-2xl font-bold text-sky-600">
-                  {parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length}
+                  {kpiOrDash(parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length)}
                 </p>
               </div>
               <Bolt className="w-8 h-8 text-sky-600 opacity-20" />
@@ -155,7 +174,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Pedidos (últimos 200)</p>
-                <p className="text-2xl font-bold text-orange-600">{pedidos.length}</p>
+                <p className="text-2xl font-bold text-orange-600">{kpiOrDash(pedidos.length)}</p>
               </div>
               <Activity className="w-8 h-8 text-orange-600 opacity-20" />
             </div>
@@ -164,7 +183,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
       </div>
 
       {/* Alerta se nenhum canal ativo */}
-      {canaisAtivos.length === 0 && (
+      {contextoValido && !cargaIndisponivel && canaisAtivos.length === 0 && (
         <Alert className="mb-6 border-orange-300 bg-orange-50">
           <AlertTriangle className="w-4 h-4 text-orange-600" />
           <AlertDescription className="text-sm text-orange-800">

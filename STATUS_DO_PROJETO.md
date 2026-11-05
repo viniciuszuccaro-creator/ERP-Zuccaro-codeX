@@ -1,3 +1,13 @@
+## CURSOR — #522–#525 SUCCESS + #528 CanaisOrigem (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#525** | multiempresa RH/Fin | **CI SUCCESS** |
+| #526–#527 | RelatorioFormas / Alertas | CI em curso |
+| #528 GerenciadorCanaisOrigem | (este) | ParametroOrigem/Pedido filter+update InContext; sem initialData=[] |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
