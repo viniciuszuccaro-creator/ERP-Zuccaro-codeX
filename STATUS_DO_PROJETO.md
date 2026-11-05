@@ -1,3 +1,14 @@
+## CURSOR — #567 DetalhesCadastro CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #567 `7b6b25eff` — frontend + backend + compose **SUCCESS** (6/6) |
+| **Código** | Pedido/CR/Entrega/NF filterInContext; KPI ≠ zero; STALE_SCOPE |
+| **Testes** | `cadastros-detalhes-cliente-scope` **5 PASS** (CI) |
+| **Fila** | #566 docs tip revalidando · #568 frontend FAIL (em correção) · #569 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — DetalhesCadastro escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

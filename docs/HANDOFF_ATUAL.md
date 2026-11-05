@@ -1,3 +1,7 @@
+## CURSOR — #567 DetalhesCadastro CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `7b6b25eff` CI SUCCESS 6/6. filterInContext + KPI ≠ zero.
+- #568 frontend FAIL (em correção). #566/#569 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — DetalhesCadastro escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-detalhes-cliente-scope-392b` ← #401.
 - filterInContext Pedido/CR/Entrega/NF; KPI ≠ zero; STALE_SCOPE. Testes 5 PASS.
