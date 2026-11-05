@@ -1,3 +1,8 @@
+## CURSOR — #513 pin renew (2026-11-05 America/Sao_Paulo)
+- Renova pins após escopo multiempresa em useOrigemPedido/Badge/Monitoramento.
+- Sem FF #401. Homolog BLOCKED.
+
+
 ## CURSOR — Origem consumidores escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-origem-consumidores-scope-392b` ← #401.
 - Hook canônico + Badge/Monitor/Wizard sem `ParametroOrigemPedido.list()` unscoped; contagens fail-closed.

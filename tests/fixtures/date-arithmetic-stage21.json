@@ -68,7 +68,7 @@
   },
   {
     "file": "src/components/comercial/MonitoramentoCanaisRealtime.jsx",
-    "emittedBeforeSha256": "77602fdf29f178b9be6a9b0c271666c6e62149a8aa340b3afef93b56c7416b7a",
+    "emittedBeforeSha256": "0c5f18c83c70d9e56e2ed42d89be28bcaf4c0de393eb8cdff0847560a3c3fe6d",
     "operands": 3,
     "lines": [
       {
@@ -109,8 +109,8 @@
     "operands": 1,
     "lines": [
       {
-        "before": "Dias desde último contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now())) / 86400000)}",
-        "after": "Dias desde último contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now()).getTime()) / 86400000)}"
+        "before": "Dias desde \u00faltimo contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now())) / 86400000)}",
+        "after": "Dias desde \u00faltimo contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now()).getTime()) / 86400000)}"
       }
     ]
   },

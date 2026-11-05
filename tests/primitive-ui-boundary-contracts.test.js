@@ -14,7 +14,7 @@ const hashes = [
   ['src/pages/Agenda.jsx','af4c1d9eeb172ace8fd6aa033a62d079a6aca8c611068ec1ae6bc38c3833b0c8'],
   ['src/pages/Relatorios.jsx','77f4036cb1c0fa5fdaefb96bff7483b2fc11d607be97139aa138891a80e7d4ee'],
   ['src/components/chatbot/MonitorSLA.jsx','1c502a26db270d419e5b58ac9afaee7bc82b818a01a8098ca89f53635698a006'],
-  ['src/components/comercial/MonitoramentoCanaisRealtime.jsx','9c53a8836a3958abd3d2948c95eb691e9d74f16d063ca62a18d648f119856dff'],
+  ['src/components/comercial/MonitoramentoCanaisRealtime.jsx','0f2a657d918aae2f447f95f33f10e0bbb546b3ca3f4c60f484f2c312fba678b2'],
   ['src/components/estoque/ControleLotesValidade.jsx','2be7914bbf1697d54f4610730e5f4c4077068f73cff615c2def39bb9c934901b'],
   ['src/components/expedicao/painel-logistico/AlertsPanel.jsx','28a3289b866db08bda07a3c589ddd14a6c1a5b10117910ef0b6d80163845a214'],
   ['src/components/expedicao/painel-logistico/BottlenecksPanel.jsx','ec3181c6ace8a34d0e6acffd6d041ee4c51553137593d7b2696d031f0c6b4645'],

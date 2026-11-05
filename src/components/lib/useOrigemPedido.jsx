@@ -30,8 +30,8 @@ export function useOrigemPedido() {
     queryKey: ['parametros-origem-pedido', contextKey],
     queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'canal', 500),
     enabled: contextoValido,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
   });
 
   const lista = Array.isArray(parametros) ? parametros : [];

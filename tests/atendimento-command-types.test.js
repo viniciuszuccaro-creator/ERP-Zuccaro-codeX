@@ -13,7 +13,7 @@ const hashes={
   'src/pages/HubAtendimento.jsx':'11c82013421eb5d0066d75f06159e620780b557a03b5d3f02a7cddbc2d9e3ef3',
   'src/components/portal/ChatCliente.jsx':'f4e04036c7135376e86e928770a98a4c3d8e1c08195e9641c95bd71a8869ceaf',
   'src/components/portal/ChatVendedor.jsx':'160258c0126beb1a158c129c3fac569ccc041d76804ff92cb656bc572ce18b86',
-  'src/components/comercial/BadgeOrigemPedido.jsx':'734d90c115c16fd8092355bee7fe92431e1ff4f382cdc5ec2f018c33b1c96547',
+  'src/components/comercial/BadgeOrigemPedido.jsx':'24c654f30e40f37d9f360596e1421fee6bfddfddf5c4a8ad2a0eb67d10a94c92',
 };
 for(const [file,hash] of Object.entries(hashes))test(`${file}: unchanged executable except two exact query-filter conversions`,()=>{
   let source=portalIdentityRemainder(file,fs.readFileSync(file,'utf8'));

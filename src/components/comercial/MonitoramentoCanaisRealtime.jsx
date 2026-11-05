@@ -181,9 +181,9 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
         {!contagemIndisponivel && porCanal.length > 0 && (
           <div className="space-y-2">
             {porCanal.map((canal, idx) => {
-              const tempoUltimo = canal.ultimoPedido
-                ? Math.floor((agora.getTime() - new Date(canal.ultimoPedido).getTime()) / 60000)
-                : null;
+              const tempoUltimo = canal.ultimoPedido ?
+            Math.floor((agora.getTime() - new Date(canal.ultimoPedido).getTime()) / 60000) :
+            null;
 
               return (
                 <motion.div

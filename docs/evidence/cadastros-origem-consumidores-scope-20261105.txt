@@ -11,3 +11,5 @@ Arquivos:
 
 Provas: tests/cadastros-origem-consumidores-scope.test.js
 Fora: FF #401, homolog 100, dados reais
+
+pin renew: atendimento/Badge + primitive-ui/Monitor + date-arithmetic fixture + read-boundary useOrigemPedido

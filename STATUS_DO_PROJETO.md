@@ -1,3 +1,14 @@
+## CURSOR — #513 pin renew origem consumidores (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-origem-consumidores-scope-392b` = **#513** |
+| **Código** | `0c9834e11` + pin renew |
+| **Pins** | atendimento BadgeOrigem · primitive-ui Monitoramento · date-arithmetic fixture · read-boundary useOrigemPedido (+ QueryClient sem initialData) |
+| **Homolog 100** | BLOCKED |
+| Fora | FF #401 · merge/deploy |
+
+
 ## CURSOR — Origem consumidores escopo multiempresa (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
