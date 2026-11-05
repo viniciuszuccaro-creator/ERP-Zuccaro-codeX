@@ -1,6 +1,6 @@
 ## CURSOR — CorteDobraIATab bitolas escopo (2026-11-05 America/Sao_Paulo)
-- #559: filterInContext + pin IA cut atualizado (CI frontend fail → fix). Homolog BLOCKED.
-- FF #401 aguarda Codex. Aguarda re-CI tip.
+- Tip `2db2182ca` **CI SUCCESS** 6/6 (#559). filterInContext + pin IA cut autorizado.
+- #554–#558/#560 SUCCESS; #561 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
