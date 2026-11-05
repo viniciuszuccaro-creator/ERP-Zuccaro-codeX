@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -7,6 +6,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, DollarSign } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildAplicadorTabelaQueryKey,
+  isAplicadorTabelaScopeCurrent,
+} from "./aplicadorTabelaScope";
+
+function readAplicadorActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * Componente que gerencia aplicação de tabela de preço
@@ -21,23 +36,54 @@ export default function AplicadorTabelaPreco({
   onHistoricoAdd 
 }) {
   const [tabelaAlteradaManualmente, setTabelaAlteradaManualmente] = useState(false);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readAplicadorActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
 
-  const { data: tabelas = [] } = useQuery({
-    queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list(),
+  // Escopo multiempresa: TabelaPreco via filterInContext (sem list unscoped).
+  // Cache ator/sessão/Grupo/Empresa; sem initialData vazio.
+  const {
+    data: tabelas,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
+    queryKey: buildAplicadorTabelaQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('TabelaPreco', {}, 'nome', 500);
+      if (signal?.aborted) {
+        const err = new Error('APLICADOR_TABELA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isAplicadorTabelaScopeCurrent(scopeExpected, readAplicadorActorAndSession())) {
+        throw new Error('APLICADOR_TABELA_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
 
-  const tabelasVigentes = tabelas.filter(t => {
-    if (!t.ativo) return false;
-    const hoje = new Date();
-    if (t.data_fim && new Date(t.data_fim) < hoje) return false;
-    return true;
-  });
+  const listaTabelas = Array.isArray(tabelas) ? tabelas : [];
+  const tabelasIndisponiveis = !contextoValido || isLoading || isError || (isFetching && tabelas === undefined);
+
+  const tabelasVigentes = tabelasIndisponiveis
+    ? []
+    : listaTabelas.filter(t => {
+      if (!t.ativo) return false;
+      const hoje = new Date();
+      if (t.data_fim && new Date(t.data_fim) < hoje) return false;
+      return true;
+    });
 
   // Carregar tabela padrão do cliente
   useEffect(() => {
+    if (!contextoValido || tabelasIndisponiveis) return;
     if (cliente?.condicao_comercial?.tabela_preco_id && !tabelaSelecionada && !tabelaAlteradaManualmente) {
-      const tabelaPadrao = tabelas.find(t => t.id === cliente.condicao_comercial.tabela_preco_id);
+      const tabelaPadrao = listaTabelas.find(t => t.id === cliente.condicao_comercial.tabela_preco_id);
       if (tabelaPadrao) {
         onTabelaChange(tabelaPadrao);
         if (onHistoricoAdd) {
@@ -50,10 +96,11 @@ export default function AplicadorTabelaPreco({
         }
       }
     }
-  }, [cliente, tabelas]);
+  }, [cliente, listaTabelas, contextoValido, tabelasIndisponiveis, tabelaSelecionada, tabelaAlteradaManualmente, onTabelaChange, onHistoricoAdd]);
 
   const handleTrocarTabela = (tabelaId) => {
-    const novaTabela = tabelas.find(t => t.id === tabelaId);
+    if (tabelasIndisponiveis) return;
+    const novaTabela = listaTabelas.find(t => t.id === tabelaId);
     if (novaTabela) {
       setTabelaAlteradaManualmente(true);
       onTabelaChange(novaTabela);
@@ -85,6 +132,16 @@ export default function AplicadorTabelaPreco({
 
   if (!cliente) return null;
 
+  if (!contextoValido) {
+    return (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-3 text-sm text-amber-900">
+          Selecione grupo ou empresa para aplicar tabela de preço.
+        </CardContent>
+      </Card>
+    );
+  }
+
   const temTabelaPadrao = cliente?.condicao_comercial?.tabela_preco_id;
 
   return (
@@ -104,7 +161,14 @@ export default function AplicadorTabelaPreco({
         )}
       </div>
 
-      {!temTabelaPadrao && !tabelaSelecionada && (
+      {isError && (
+        <p className="text-xs text-slate-500">Tabelas indisponíveis (erro de carga ≠ zero).</p>
+      )}
+      {isLoading && (
+        <p className="text-xs text-slate-500">Carregando tabelas…</p>
+      )}
+
+      {!temTabelaPadrao && !tabelaSelecionada && !tabelasIndisponiveis && (
         <Card className="border-orange-300 bg-orange-50">
           <CardContent className="p-3">
             <div className="flex items-center gap-2">
@@ -125,9 +189,10 @@ export default function AplicadorTabelaPreco({
       <Select
         value={tabelaSelecionada?.id || ""}
         onValueChange={handleTrocarTabela}
+        disabled={tabelasIndisponiveis}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Selecione uma tabela de preço..." />
+          <SelectValue placeholder={tabelasIndisponiveis ? "Tabelas indisponíveis…" : "Selecione uma tabela de preço..."} />
         </SelectTrigger>
         <SelectContent>
           {tabelasVigentes.map(tabela => (

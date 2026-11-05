@@ -1,3 +1,14 @@
+## CURSOR — #546 AplicadorTabelaPreco escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-aplicador-tabela-scope-392b` ← #401 `b888b2c00` |
+| **Código** | `TabelaPreco` via `filterInContext`; cache ator/sessão; fail-closed; STALE_SCOPE; erro≠zero |
+| **Testes** | `comercial-aplicador-tabela-scope` **3 PASS** |
+| **Paralelos** | #543–#545 CI SUCCESS; FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
