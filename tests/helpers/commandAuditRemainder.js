@@ -24,6 +24,21 @@ export const commandAuditHunks={
  'src/components/comercial/PedidosEntregaTab.jsx':[
   ['                contextoValido={contextoValido}\n                canView={canView}\n                onAudit={auditEntrega}\n',''],
  ],
+ // #543: PedidosRetiradaTab — Pedido via filterInContext (sem list unscoped).
+ 'src/components/comercial/PedidosRetiradaTab.jsx':[
+  [
+    'import { Textarea } from "@/components/ui/textarea";\nimport useContextoVisual from "@/components/lib/useContextoVisual";\n',
+    'import { Textarea } from "@/components/ui/textarea";\n',
+  ],
+  [
+    '  const queryClient = useQueryClient();\n  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;\n  const empresaId = empresaAtual?.id || null;\n  const contextoValido = Boolean(groupId || empresaId);\n\n  // Escopo multiempresa: Pedido via filterInContext (sem list unscoped).\n  const { data: pedidos = [], isError: isErrorPedidosRetirada } = useQuery({\n    queryKey: [\'pedidos-retirada\', groupId, empresaId],\n    queryFn: () => filterInContext(\'Pedido\', {}, \'-created_date\', 500),\n    enabled: contextoValido,\n  });\n',
+    '  const queryClient = useQueryClient();\n\n  const { data: pedidos = [] } = useQuery({\n    queryKey: [\'pedidos\'],\n    queryFn: () => base44.entities.Pedido.list(\'-created_date\'),\n  });\n',
+  ],
+  [
+    '  if (!contextoValido) {\n    return (\n      <div className={containerClass}>\n        <Card className="border-amber-300 bg-amber-50">\n          <CardContent className="p-4 text-sm text-amber-900">\n            Selecione grupo ou empresa para listar pedidos de retirada.\n          </CardContent>\n        </Card>\n      </div>\n    );\n  }\n\n  return (\n    <div className={containerClass}>\n      {/* Header */}\n      <div className="flex justify-between items-center mb-6">\n        <div>\n          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">\n            <Package className="w-7 h-7 text-green-600" />\n            Pedidos para Retirada\n          </h2>\n          <p className="text-slate-600 text-sm">Pedidos que o cliente irá buscar no local</p>\n        </div>\n      </div>\n      {isErrorPedidosRetirada && (\n        <p className="text-xs text-slate-500 mb-2">Pedidos indisponíveis (erro de carga ≠ zero).</p>\n      )}\n',
+    '  return (\n    <div className={containerClass}>\n      {/* Header */}\n      <div className="flex justify-between items-center mb-6">\n        <div>\n          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">\n            <Package className="w-7 h-7 text-green-600" />\n            Pedidos para Retirada\n          </h2>\n          <p className="text-slate-600 text-sm">Pedidos que o cliente irá buscar no local</p>\n        </div>\n      </div>\n',
+  ],
+ ],
 };
 export function commandAuditRemainder(file,text){
  text=backupCapabilityRemainder(file,text);

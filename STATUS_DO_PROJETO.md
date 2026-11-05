@@ -1,3 +1,15 @@
+## CURSOR — #543 PedidosRetiradaTab escopo multiempresa (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-pedidos-retirada-scope-392b` ← #401 `b888b2c00` |
+| **Código** | `PedidosRetiradaTab`: Pedido via `filterInContext` (sem `.list`); fail-closed + banner erro≠zero |
+| **Pin** | reverse em `commandAuditRemainder` — approval-command hash intacto |
+| **Testes** | `comercial-pedidos-retirada-scope` + `approval-command-batch-types` **PASS** |
+| **Paralelos** | #522–#542 CI SUCCESS; FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -40,10 +41,16 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const [observacoes, setObservacoes] = useState("");
 
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+  // Escopo multiempresa: Pedido via filterInContext (sem list unscoped).
+  const { data: pedidos = [], isError: isErrorPedidosRetirada } = useQuery({
+    queryKey: ['pedidos-retirada', groupId, empresaId],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: user } = useQuery({
@@ -179,6 +186,18 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
 
   const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
 
+  if (!contextoValido) {
+    return (
+      <div className={containerClass}>
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa para listar pedidos de retirada.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className={containerClass}>
       {/* Header */}
@@ -191,6 +210,9 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
           <p className="text-slate-600 text-sm">Pedidos que o cliente irá buscar no local</p>
         </div>
       </div>
+      {isErrorPedidosRetirada && (
+        <p className="text-xs text-slate-500 mb-2">Pedidos indisponíveis (erro de carga ≠ zero).</p>
+      )}
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
