@@ -1,4 +1,17 @@
+## CURSOR — fila scope/uniqueKey CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| #516 CentroOperacao | `36ca28040` | CI SUCCESS |
+| #517 UsuarioForm | `e39bb88d4` | CI SUCCESS |
+| #518 GrupoEmpresarial | `b10c99a38` | CI SUCCESS |
+| #511–#515 | — | CI SUCCESS |
+| **Base** | #401 `b888b2c00` | FF aguarda aceite Codex |
+| **Homolog 100** | BLOCKED | |
+| **Próximo** | GestorGatewaysPagamento uniqueKey | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
+
 
 | Distinção | SHA / estado |
 |-----------|----------------|
