@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import usePermissions from '@/components/lib/usePermissions';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import useCadastroReopenOnIdentity from '@/components/cadastros/useCadastroReopenOnIdentity';
@@ -55,8 +54,10 @@ export default function FilialForm({
 }) {
   const dadosIniciais = item || data || initialData || defaultValues || filial;
   const { canCreate, canEdit } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || 'sem-contexto';
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const emptyForm = mapFilialToForm(null, {
     empresa_id: empresaAtual?.id || '',
@@ -75,15 +76,29 @@ export default function FilialForm({
   const podeEditar = canEdit('Cadastros', 'Filial') || canEdit('Administracao', 'Filial') || canEdit('Cadastros', null);
   const podeSalvar = filialBoundId ? podeEditar : podeCriar;
 
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas', groupId],
-    queryFn: () => base44.entities.Empresa.list(),
+  const {
+    data: empresas,
+    isLoading: loadingEmpresas,
+    isError: isErrorEmpresas,
+  } = useQuery({
+    queryKey: ['empresas', contextKey],
+    queryFn: () => filterInContext('Empresa', groupId ? { group_id: groupId } : {}, 'razao_social', 500),
+    enabled: contextoValido,
   });
 
-  const matrizes = useMemo(() => empresas.filter((empresa) => {
-    const mesmoGrupo = !groupId || empresa.group_id === groupId || empresa.grupo_id === groupId || empresa.id === empresaAtual?.id;
-    return empresa.tipo === 'Matriz' && mesmoGrupo;
-  }), [empresas, groupId, empresaAtual?.id]);
+  const listaEmpresas = Array.isArray(empresas) ? empresas : [];
+  const matrizesIndisponiveis = !contextoValido || loadingEmpresas || isErrorEmpresas;
+
+  const matrizes = useMemo(() => {
+    if (matrizesIndisponiveis) return [];
+    return listaEmpresas.filter((empresa) => {
+      const mesmoGrupo = !groupId
+        || empresa.group_id === groupId
+        || empresa.grupo_id === groupId
+        || empresa.id === empresaAtual?.id;
+      return empresa.tipo === 'Matriz' && mesmoGrupo;
+    });
+  }, [listaEmpresas, groupId, empresaAtual?.id, matrizesIndisponiveis]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -143,9 +158,13 @@ export default function FilialForm({
 
       <div>
         <Label>Matriz</Label>
-        <Select value={formData.matriz_id} onValueChange={(v) => setFormData({ ...formData, matriz_id: v })} disabled={!podeSalvar}>
+        <Select
+          value={formData.matriz_id}
+          onValueChange={(v) => setFormData({ ...formData, matriz_id: v })}
+          disabled={!podeSalvar || matrizesIndisponiveis}
+        >
           <SelectTrigger data-permission="Cadastros.Filial.editar" data-action="selecionar-matriz-filial" data-sensitive className="border-sky-100">
-            <SelectValue placeholder="Selecione a matriz" />
+            <SelectValue placeholder={matrizesIndisponiveis ? 'Matrizes indisponíveis no contexto' : 'Selecione a matriz'} />
           </SelectTrigger>
           <SelectContent>
             {matrizes.map((matriz) => (
@@ -153,6 +172,11 @@ export default function FilialForm({
             ))}
           </SelectContent>
         </Select>
+        {matrizesIndisponiveis && (
+          <p className="text-xs text-slate-500 mt-1">
+            Contagem de matrizes indisponível (contexto/erro/carregamento ≠ zero).
+          </p>
+        )}
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-sky-100">
