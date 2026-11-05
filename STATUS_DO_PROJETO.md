@@ -1,12 +1,11 @@
-## CURSOR — #536–#539 cache/KPI follow-up (2026-11-05 America/Sao_Paulo)
+## CURSOR — #545 fechamento cache/KPI CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-fechamento-cache-392b` ← #401 `b888b2c00` |
-| **Delta** | Bitolas + Monitoramento + Dashboard/Widget Fechamento: queryKey ator/sessão/Grupo/Empresa; remove `initialData` vazio; STALE_SCOPE; KPI loading/erro≠zero |
-| **Pin** | `monitoramentoCanaisScopeEdits` regenerado — primitive-ui **27 PASS** |
-| **Provas** | fechamento-cache + scopes **8 PASS** |
-| **Overlap** | consolida lacuna residual de #536–#539 (PRs verdes); FF seletivo após aceite |
+| **PR** | [#545](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/545) |
+| **Tip** | **`9f3fe0100`** · **CI SUCCESS** 6/6 |
+| **Delta** | #536–#539: cache ator/sessão; sem initialData vazio; STALE_SCOPE; KPI≠zero |
+| **Overlap** | consolida lacuna residual de #536–#539; FF seletivo após aceite Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
