@@ -1,44 +1,47 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle2, Clock, DollarSign } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMode = false }) {
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['alertas-pagar', empresaId],
-    queryFn: () => base44.entities.ContaPagar.filter(
-      empresaId ? { empresa_id: empresaId } : { group_id: groupId }
-    ),
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const resolvedGroupId = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const resolvedEmpresaId = empresaId || empresaAtual?.id || null;
+  const contextoValido = Boolean(resolvedEmpresaId || resolvedGroupId);
+
+  // Escopo multiempresa canônico: filterInContext (não entity.filter/list unscoped).
+  // enabled exige contexto; erro ≠ zero KPI.
+  const { data: contasPagar = [], isError: isErrorPagar } = useQuery({
+    queryKey: ['alertas-pagar', resolvedGroupId, resolvedEmpresaId],
+    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 500),
+    enabled: contextoValido,
   });
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['alertas-receber', empresaId],
-    queryFn: () => base44.entities.ContaReceber.filter(
-      empresaId ? { empresa_id: empresaId } : { group_id: groupId }
-    ),
+  const { data: contasReceber = [], isError: isErrorReceber } = useQuery({
+    queryKey: ['alertas-receber', resolvedGroupId, resolvedEmpresaId],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 500),
+    enabled: contextoValido,
   });
 
-  const { data: conciliacoes = [] } = useQuery({
-    queryKey: ['alertas-conciliacao', empresaId],
-    queryFn: () => base44.entities.ConciliacaoBancaria.filter({ 
-      status: 'Pendente',
-      ...(empresaId ? { empresa_id: empresaId } : { group_id: groupId })
-    }),
+  const { data: conciliacoes = [], isError: isErrorConciliacao } = useQuery({
+    queryKey: ['alertas-conciliacao', resolvedGroupId, resolvedEmpresaId],
+    queryFn: () => filterInContext('ConciliacaoBancaria', { status: 'Pendente' }, '-created_date', 500),
+    enabled: contextoValido,
   });
 
-  const { data: pedidosAprovacao = [] } = useQuery({
-    queryKey: ['alertas-aprovacao', empresaId],
+  const { data: pedidosAprovacao = [], isError: isErrorPedidos } = useQuery({
+    queryKey: ['alertas-aprovacao', resolvedGroupId, resolvedEmpresaId],
     queryFn: async () => {
-      const pedidos = await base44.entities.Pedido.list();
-      return pedidos.filter(p => 
-        p.status_aprovacao === 'pendente' && 
-        (empresaId ? p.empresa_id === empresaId : p.group_id === groupId)
-      );
+      const pedidos = await filterInContext('Pedido', {}, '-created_date', 500);
+      return pedidos.filter(p => p.status_aprovacao === 'pendente');
     },
+    enabled: contextoValido,
   });
+
+  const cargaIndisponivel = isErrorPagar || isErrorReceber || isErrorConciliacao || isErrorPedidos;
 
   const hoje = new Date();
   const pagarVencendo = contasPagar.filter(c => {
@@ -113,6 +116,13 @@ export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMo
         <AlertTriangle className="w-6 h-6 text-orange-600" />
         <h2 className="text-2xl font-bold text-slate-900">Alertas Financeiros</h2>
       </div>
+      {(cargaIndisponivel || !contextoValido) && (
+        <p className="text-xs text-slate-500 mb-2">
+          {!contextoValido
+            ? 'Selecione um grupo ou empresa para carregar alertas financeiros.'
+            : 'Alertas indisponíveis (erro de carga ≠ zero).'}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {alertas.map((alerta, idx) => {
@@ -154,7 +164,7 @@ export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMo
         })}
       </div>
 
-      {alertas.every(a => a.quantidade === 0) && (
+      {!cargaIndisponivel && contextoValido && alertas.every(a => a.quantidade === 0) && (
         <Card className="border-2 border-green-200 bg-green-50">
           <CardContent className="p-8 text-center">
             <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />

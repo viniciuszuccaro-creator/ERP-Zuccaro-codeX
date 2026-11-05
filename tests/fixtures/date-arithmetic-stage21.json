@@ -220,7 +220,7 @@
   },
   {
     "file": "src/components/financeiro/AlertasFinanceirosEmpresa.jsx",
-    "emittedBeforeSha256": "1ab00b0b284292660427eec9bcbcd2052b7f27eef1896951a499315f5774cfc2",
+    "emittedBeforeSha256": "cffc535ae1f4451a1be700293676909259f48ade3b2bffb3f9f95be06ab986e6",
     "operands": 4,
     "lines": [
       {
