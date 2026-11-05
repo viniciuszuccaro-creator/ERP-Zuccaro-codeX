@@ -9,6 +9,13 @@ import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemai
 import {buildReposicaoSuggestions, assertForecastUiContext} from '../src/components/lib/iaTransversalPolicy.js';
 import {buildDocumentoFromOportunidade, stampOportunidadeConvertida} from '../src/components/lib/crmOportunidadePolicy.js';
 import {stampMovimentacaoRecebimentoOc, stampContaPagarRecebimentoOc, findContaPagarOc} from '../src/components/lib/comprasOrdemPolicy.js';
+import {
+  isRateioMultiempresaScopeCurrent,
+  resolveRateioTituloEntity,
+  buildRateioFinanceiroCreatePayload,
+  buildRateioTituloCreatePayload,
+  buildRateioDistribuicaoRealizada,
+} from '../src/components/financeiro/rateioMultiempresaScope.js';
 
 const entries = {
   stock: {file: 'estoque/IAReposicao', hash: '70108036cf8376d2557cedc01ac52b54772e4a10c49de4db19ea097b01fdec12', names: ['gerarSolicitacaoMutation']},
@@ -18,7 +25,7 @@ const entries = {
   purchase: {file: 'compras/OrdensCompraTab', hash: '4fd71e268eb4ac9a454d986314501dd362d06fcf76aea9e09cc78b753dddd78c', names: ['receberMutation']},
   config: {file: 'expedicao/financeiro/ConfigFinanceiroLogistica', hash: 'f1dc46fb48eb29876ad48dbe758babbc55c1a4b56c1557270328ccb7dd7ad9de', names: ['saveMutation'], state: 'form'},
   cashier: {file: 'financeiro/caixa-central/LiquidarReceberPagar', hash: 'b9856099444f6c2ffc68e8ecf1cb7c48aced6a48f0dbccedb7146224945976b8', names: ['enviarParaCaixaMutation']},
-  allocation: {file: 'financeiro/RateioMultiempresa', hash: 'b292e05282b44f1e3cf44dfca4f0b44316a5ff40d3d78bfe18fe18b020ef88ff', names: ['criarRateioMutation'], state: 'formRateio'},
+  allocation: {file: 'financeiro/RateioMultiempresa', hash: '4015dd519aa5b15e7775c0dde4aa08d70ac19e54bc5d7fa4152a928d3d335a4e', names: ['criarRateioMutation'], state: 'formRateio'},
 };
 const read = kind => fs.readFileSync('src/components/' + entries[kind].file + '.jsx', 'utf8').replace(/\r\n/g, '\n');
 function variable(kind, name) {
@@ -67,7 +74,7 @@ for (const [kind, entry] of Object.entries(entries)) test(`${entry.file}: whole 
   if (kind === 'allocation') {
     const replace = (after, before, count) => { assert.equal(source.split(after).length - 1, count); source = source.split(after).join(before); };
     replace('Number(dist.valor) > 0', 'dist.valor > 0', 1);
-    replace('parseFloat(String(dist.valor))', 'parseFloat(dist.valor)', 1);
+    // parseFloat(String(dist.valor)) moveu para rateioMultiempresaScope (createInContext).
     replace('parseFloat(String(d.percentual))', 'parseFloat(d.percentual)', 3);
     replace('parseFloat(String(d.valor))', 'parseFloat(d.valor)', 1);
   }
@@ -105,6 +112,15 @@ function environment(overrides = {}) {
     groupId: 'synthetic-group', empresaId: 'synthetic-company', scopeType: 'empresa', grupoId: 'synthetic-group', effectiveGroupId: 'synthetic-group', effectiveEmpresaId: 'synthetic-company',
     empresaAtual: {id: 'synthetic-company'}, user: {id: 'synthetic-user', full_name: 'Synthetic user'}, authUser: {id: 'synthetic-user'}, fornecedores: [],
     requireIaHumanConfirm: () => true, assertForecastUiContext, buildDocumentoFromOportunidade, stampOportunidadeConvertida, stampMovimentacaoRecebimentoOc, stampContaPagarRecebimentoOc, findContaPagarOc,
+    // RateioMultiempresa InContext: binds mutationFn free vars used by #570 scope.
+    scopeResolved: { ok: true, reason: null, groupId: 'synthetic-group' },
+    scopeExpected: { actorId: 'synthetic-actor', sessionKey: 'synthetic-session' },
+    readRateioMultiempresaActorAndSession: () => ({ actorId: 'synthetic-actor', sessionKey: 'synthetic-session' }),
+    isRateioMultiempresaScopeCurrent,
+    resolveRateioTituloEntity,
+    buildRateioFinanceiroCreatePayload,
+    buildRateioTituloCreatePayload,
+    buildRateioDistribuicaoRealizada,
     auditConfig: async row => audits.push(row), auditOrdemCompra: async row => audits.push(row), auditLiquidacao: async (...args) => audits.push(args),
     cfgKey: 'synthetic-config', sanitizeText: value => String(value || '').trim(), window: {confirm: () => true}, formatCurrency: String,
     withContext: data => ({...data, group_id: 'synthetic-group', grupo_id: 'synthetic-group', empresa_id: 'synthetic-company'}), ...overrides};

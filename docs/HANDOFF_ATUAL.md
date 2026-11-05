@@ -1,3 +1,6 @@
+## CURSOR — #570 Rateio pin/contrato (2026-11-05 America/Sao_Paulo)
+- Pin stage43 + environment InContext. Testes 22 PASS. #566–#569 SUCCESS. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — RateioMultiempresa escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/financeiro-rateio-multiempresa-scope-392b` ← #401.
 - create/update InContext; fail-closed; STALE_SCOPE. Testes 5 PASS.

@@ -1,3 +1,13 @@
+## CURSOR — #570 Rateio pin/contrato (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | frontend FAIL: stage43 hash + bind mutationFn sem free vars InContext |
+| **Fix** | Renova hash `4015dd51…`; environment stubs scope/helpers; remove replace dist.valor |
+| **Testes** | scoped-command-contracts + rateio-scope **22 PASS** |
+| **Fila** | #566–#569 SUCCESS · #568 docs em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — RateioMultiempresa escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
