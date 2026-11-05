@@ -123,13 +123,12 @@ export default function AcoesRapidasGlobal() {
         try {
           const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
           const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
-          const me = await base44.auth.me();
           await createInContext('Evento', {
             ...data,
             data_inicio: dataInicio,
             data_fim: dataFim,
-            responsavel: me?.full_name || 'Usuário',
-            responsavel_id: me?.id
+            responsavel: user?.full_name || 'Usuário',
+            responsavel_id: user?.id
           });
           toast.success('✅ Evento criado!');
         } catch (error) {
