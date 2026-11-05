@@ -1,11 +1,11 @@
-## CURSOR — #547 BadgeOrigemPedido escopo (2026-11-05 America/Sao_Paulo)
+## CURSOR — #547 BadgeOrigemPedido CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-badge-origem-scope-392b` ← #401 `b888b2c00` |
-| **Código** | `ParametroOrigemPedido` via `filterInContext`; cache ator/sessão; sem initialData; STALE_SCOPE |
-| **Testes** | `comercial-badge-origem-scope` **3 PASS** |
-| **Paralelos** | #543–#546 CI SUCCESS; FF #401 aguarda Codex |
+| **PR** | [#547](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/547) |
+| **Tip** | **`04f9d6fb3`** · **CI SUCCESS** 6/6 |
+| **Código** | ParametroOrigemPedido filterInContext; cache ator/sessão; pin portalIdentity |
+| **Paralelos** | #543–#546 verdes · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
