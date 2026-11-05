@@ -280,6 +280,33 @@ test('LocalEstoque residual graduation retains beforeSha and rejects omission, r
  assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source+approvedLocalEstoqueGraduationTest));
  assert.throws(()=>restoreApprovedLocalEstoqueResidualDelta(source.replace("CentroOperacao',","CentroOperacao', 'Webhook',")));
 });
+const previousPerfilPedidoParse = "function parse(path) { return ts.createSourceFile(path, fs.readFileSync(path, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX); }\n";
+const approvedPerfilPedidoImport = "import { pedidosTabUniqueKeyRemainder } from './helpers/pedidosTabUniqueKeyRemainder.js';\n";
+const approvedPerfilPedidoParse = "function parse(path, source) {\n  const text = source != null ? source : fs.readFileSync(path, 'utf8');\n  return ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);\n}\n";
+const previousPerfilPedidoTabTestOpen = "test('Pedidos tab keeps separate canonical routing and preserves all mutation handlers from stage14', () => {\n  const path = 'src/components/comercial/PedidosTab.jsx', ast = parse(path), source = ast.getFullText();\n";
+const approvedPerfilPedidoTabTestOpen = "test('Pedidos tab keeps separate canonical routing and preserves all mutation handlers from stage14', () => {\n  const path = 'src/components/comercial/PedidosTab.jsx';\n  const live = fs.readFileSync(path, 'utf8');\n  // #552 uniqueKey: remainder restaura pin e36231b3 nos handlers; prova em comercial-pedidos-tab-uniquekey.\n  const ast = parse(path, pedidosTabUniqueKeyRemainder(path, live));\n  const source = live;\n";
+const previousPerfilPedidoTabTestClose = "  assert.ok(source.includes('canGerarOP && (isPedidoLegacyProducaoSobMedida(pedido.tipo_pedido)'));\n});\n";
+const approvedPerfilPedidoTabTestClose = "  assert.ok(source.includes('canGerarOP && (isPedidoLegacyProducaoSobMedida(pedido.tipo_pedido)'));\n  assert.ok(source.includes('comercial-pedidos-aprovacoes-'));\n  assert.ok(source.includes('comercial-pedidos-automacao-'));\n});\n";
+function restoreApprovedPedidosTabUniqueKeyPerfilDelta(source) {
+ assert.equal(source.split(approvedPerfilPedidoImport).length,2,'Only the exact #552 perfil import delta may be normalized');
+ assert.equal(source.split(approvedPerfilPedidoParse).length,2,'Only the exact #552 perfil parse delta may be normalized');
+ assert.equal(source.split(approvedPerfilPedidoTabTestOpen).length,2,'Only the exact #552 perfil tab-open delta may be normalized');
+ assert.equal(source.split(approvedPerfilPedidoTabTestClose).length,2,'Only the exact #552 perfil tab-close delta may be normalized');
+ return source
+  .replace(approvedPerfilPedidoImport,'')
+  .replace(approvedPerfilPedidoParse,previousPerfilPedidoParse)
+  .replace(approvedPerfilPedidoTabTestOpen,previousPerfilPedidoTabTestOpen)
+  .replace(approvedPerfilPedidoTabTestClose,previousPerfilPedidoTabTestClose);
+}
+test('#552 PedidosTab uniqueKey perfil delta retains beforeSha and rejects omission',()=>{
+ const source=fs.readFileSync('tests/perfil-pedido-contract-reconciliation.test.js','utf8').replace(/\r\n/g,'\n');
+ const restored=restoreApprovedPedidosTabUniqueKeyPerfilDelta(source);
+ assert.equal(restored.includes('pedidosTabUniqueKeyRemainder'),false);
+ assert.equal(restored.includes('comercial-pedidos-aprovacoes-'),false);
+ assert.throws(()=>restoreApprovedPedidosTabUniqueKeyPerfilDelta(source.replace(approvedPerfilPedidoImport,'')));
+ assert.throws(()=>restoreApprovedPedidosTabUniqueKeyPerfilDelta(source+approvedPerfilPedidoImport));
+});
+
 for(const entry of manifest.cases)test(entry.path+': publication fixes only Git reference, preserving every prior assertion',()=>{
  const source=fs.readFileSync(entry.path,'utf8').replace(/\r\n/g,'\n');
  assert.equal(source.includes('HEAD:'),false);
@@ -304,7 +331,9 @@ for(const entry of manifest.cases)test(entry.path+': publication fixes only Git 
                           restoreApprovedCatalogoWebCallbackDelta(reviewed))))))))))
       : entry.path==='tests/cursor-residual-independent.test.js'
         ? restoreApprovedLocalEstoqueResidualDelta(reviewed)
-        : reviewed;
+        : entry.path==='tests/perfil-pedido-contract-reconciliation.test.js'
+          ? restoreApprovedPedidosTabUniqueKeyPerfilDelta(reviewed)
+          : reviewed;
  const restored=prior.replaceAll(base+':','HEAD:').replaceAll(JSON.stringify(base),"'HEAD'");
  assert.equal(crypto.createHash('sha256').update(restored).digest('hex'),entry.beforeSha256);
 });
