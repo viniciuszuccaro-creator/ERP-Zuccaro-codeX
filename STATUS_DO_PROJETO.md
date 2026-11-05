@@ -1,3 +1,14 @@
+## CURSOR — #528 CanaisOrigem CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#526** | multiempresa | **CI SUCCESS** |
+| **#528 GerenciadorCanaisOrigem** | `b501e5d2c` | **CI SUCCESS** 6/6 |
+| #527 Alertas | `da848764c` | pin renew; CI em curso |
+| #529 ContasReceber cobranca | `95156511b` | CI em curso |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
