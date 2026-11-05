@@ -130,7 +130,8 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                 }, {
                   title: '💳 Novo Gateway de Pagamento',
                   width: 900,
-                  height: 600
+                  height: 600,
+                  uniqueKey: `cadastros-gateway-pagamento-create-${JSON.stringify([groupId || null, empresaAtual?.id || null])}`,
                 })}
                 disabled={!contextoValido || !podeCriar}
                 className="bg-blue-600 hover:bg-blue-700"
@@ -228,7 +229,8 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                         }, {
                           title: `✏️ Editar: ${gateway.nome}`,
                           width: 900,
-                          height: 600
+                          height: 600,
+                          uniqueKey: `cadastros-gateway-pagamento-edit-${String(gateway?.id || '')}`,
                         })}
                         disabled={!contextoValido || !podeEditar}
                         title="Editar"
