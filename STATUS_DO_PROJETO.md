@@ -1,3 +1,12 @@
+## CURSOR — #572 VisaoConsolidadaGrupo CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #572 `31b1f73f6` — frontend + backend + compose **SUCCESS** |
+| **Código** | filterInContext; mismatch grupo; KPI ≠ R$0; STALE_SCOPE |
+| **Fila** | #566–#572 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — VisaoConsolidadaGrupo escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

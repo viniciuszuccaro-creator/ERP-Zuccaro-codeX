@@ -1,3 +1,6 @@
+## CURSOR — #572 VisaoConsolidadaGrupo CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `31b1f73f6` SUCCESS. Lote #566–#572 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — VisaoConsolidadaGrupo escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/financeiro-visao-consolidada-scope-392b` ← #401.
 - filterInContext; mismatch grupo; KPI ≠ R$0. Testes 3 PASS.
