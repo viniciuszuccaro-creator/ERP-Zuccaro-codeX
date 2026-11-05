@@ -1,6 +1,6 @@
-## CURSOR — #524 ConfiguracaoCobranca scope (2026-11-05 America/Sao_Paulo)
-- filterInContext Empresa/ConfiguracaoCobrancaEmpresa; create/update InContext; erro≠zero; save fail-closed.
-- Paralelo a #522/`349171419` e #523/`5a6514e4a`. FF #401 aguarda Codex. Homolog BLOCKED. Sem Central360 UI.
+## CURSOR — #522–#524 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #522 `349171419` · #523 `5a6514e4a` · #524 `67811ba15` CI SUCCESS 6/6.
+- #525–#527 publicados; FF #401 aguarda Codex. Homolog BLOCKED. Sem Central360 UI.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
