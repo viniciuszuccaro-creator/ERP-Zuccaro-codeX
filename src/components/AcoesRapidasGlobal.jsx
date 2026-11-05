@@ -12,7 +12,6 @@ import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck, Calend
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useWindow } from '@/components/lib/useWindow';
 import { Badge } from '@/components/ui/badge';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -38,17 +37,18 @@ import { toast } from 'sonner';
 export default function AcoesRapidasGlobal() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
-  const { empresaAtual, grupoAtual, estaNoGrupo, createInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, estaNoGrupo, createInContext, filterInContext } = useContextoVisual();
 
-  const { data: clientes = [] } = useQuery({
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+
+  // Escopo multiempresa: Cliente via filterInContext (sem list unscoped).
+  const { data: clientes = [], isError: isErrorClientesAcoes } = useQuery({
     queryKey: ['clientes', empresaAtual?.id || null, grupoAtual?.id || null],
-    queryFn: () => base44.entities.Cliente.list(),
-    enabled: Boolean(empresaAtual?.id || grupoAtual?.id),
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { hasPermission, isLoading: loadingPerms, user } = usePermissions();
-
-  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
 
   const requireContexto = (label, fn) => () => {
     if (!contextoValido) {
@@ -194,6 +194,9 @@ export default function AcoesRapidasGlobal() {
             </Badge>
           )}
         </DropdownMenuLabel>
+        {isErrorClientesAcoes && (
+          <p className="px-2 py-1 text-xs text-slate-500">Clientes indisponíveis (erro de carga ≠ zero).</p>
+        )}
         <DropdownMenuSeparator />
         {acoes.map((acao) => {
           const Icon = acao.icon;
