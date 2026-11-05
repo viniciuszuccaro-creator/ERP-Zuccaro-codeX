@@ -10,7 +10,9 @@ import {
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 
 const entries = {
-  cut: ['comercial/CorteDobraIATab', '9fdbbbc78b46ad2a3ce3b311ad63c1b25671546ac631ddc7a9b649efbf975f25', 'handleUploadIA'],
+  // #559: pin após filterInContext/STALE_SCOPE em bitolas; handleUploadIA/IA intactos (remainder strip validator).
+  cut: ['comercial/CorteDobraIATab', '45ebc8dc3900885506f726304588fecdbc9893c5bf5a6c9e38beb3f6b84b4cae', 'handleUploadIA'],
+
   quote: ['site/OrcamentoAutomaticoIA', 'bb5a5b347a1e9e0f1c621d187837daad06b2b3d1339641c9e282d4879e5f3c23', 'processarComIA'],
   price: ['cadastros/TabelaPrecoFormCompleto', 'c14257497523df4afd8d1450b3597fa0aeb31455435eca35b3c9c8b124b3a7c4', 'handleSugerirPrecosIA'],
   production: ['cadastros/ConversaoProducaoMassa', 'c9fd2adcd6ee64ad24bd200782e183db672ccb919f753f3823ff1bb6a016259f', 'analisarComIA'],

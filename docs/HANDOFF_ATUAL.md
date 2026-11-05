@@ -1,7 +1,6 @@
 ## CURSOR — CorteDobraIATab bitolas escopo (2026-11-05 America/Sao_Paulo)
-- Branch `cursor/comercial-corte-dobra-scope-392b` ← #401.
-- Bitolas via filterInContext; Upload/IA ok; KPI ≠ zero. Testes 4 PASS.
-- #554–#556 SUCCESS; #557/#558 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+- #559: filterInContext + pin IA cut atualizado (CI frontend fail → fix). Homolog BLOCKED.
+- FF #401 aguarda Codex. Aguarda re-CI tip.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.

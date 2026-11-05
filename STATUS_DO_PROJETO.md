@@ -2,10 +2,11 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/comercial-corte-dobra-scope-392b` ← #401 `b888b2c00` |
-| **Código** | Produto eh_bitola via filterInContext; Upload/IA preservados; STALE_SCOPE; KPI ≠ zero |
-| **Testes** | `tests/comercial-corte-dobra-scope.test.js` **4 PASS** |
-| **Paralelo** | #554–#556 SUCCESS · #557/#558 em CI · FF #401 aguarda Codex |
+| **Branch / PR** | `cursor/comercial-corte-dobra-scope-392b` = **#559** |
+| **Tip** | fix CI: pin IA `cut` atualizado (filterInContext bitolas; Upload/IA intactos) |
+| **Código** | Produto eh_bitola via filterInContext; STALE_SCOPE; KPI ≠ zero |
+| **Testes** | `comercial-corte-dobra-scope` **4 PASS** + pin `ia-consumer-response-contracts` cut |
+| **Paralelo** | #554–#557 SUCCESS · #558/#560 em CI · FF #401 aguarda Codex |
 | **Homolog 100** | BLOCKED |
 | Fora | merge/deploy · VPS · seed |
 
