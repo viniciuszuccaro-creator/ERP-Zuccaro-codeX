@@ -1,3 +1,22 @@
+## CURSOR — #574 PainelConciliacao CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #574 `6b0b8eb2b` — frontend + backend + compose **SUCCESS** |
+| **Código** | filter/update InContext; mismatch empresa; KPI ≠ 0 |
+| **Fila** | #566–#574 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — PainelConciliacao escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/financeiro-painel-conciliacao-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filter/update InContext Extrato/CR/CP; mismatch empresa; KPI ≠ 0 |
+| **Testes** | `financeiro-painel-conciliacao-scope` **2 PASS** |
+| **Fila** | #566–#573 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
