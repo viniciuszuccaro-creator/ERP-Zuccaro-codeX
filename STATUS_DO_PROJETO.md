@@ -1,10 +1,11 @@
-## CURSOR — #527 AlertasFinanceiros scope (2026-11-05 America/Sao_Paulo)
+## CURSOR — #526 SUCCESS + #527 date-arithmetic pin (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |
 |----|-----|--------|
-| **#522+#523** | `349171419` / `5a6514e4a` | **CI SUCCESS** |
-| #524–#526 | Cobranca / Gameficacao / RelatorioFormas | CI em curso |
-| #527 AlertasFinanceiros | (este) | ContaPagar/Receber/Conciliacao/Pedido filterInContext |
+| **#522–#525** | multiempresa | **CI SUCCESS** |
+| **#526 RelatorioFormas** | `3e058e201` | **CI SUCCESS** 6/6 |
+| #527 AlertasFinanceiros | (este) | pin date-arithmetic renew `cffc535a…` pós-escopo |
+| #528 CanaisOrigem | `b501e5d2c` | aguarda CI |
 | **Base** | #401 `b888b2c00` | FF aguarda Codex |
 | **Homolog 100** | BLOCKED | |
 

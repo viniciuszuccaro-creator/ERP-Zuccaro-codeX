@@ -1,6 +1,7 @@
-## CURSOR — #527 AlertasFinanceiros scope (2026-11-05 America/Sao_Paulo)
-- ContaPagar/Receber/ConciliacaoBancaria/Pedido via filterInContext; props+contexto; erro≠“tudo em ordem”.
-- #522+#523 CI SUCCESS. #524–#526 em curso. FF #401 aguarda Codex. Homolog BLOCKED.
+## CURSOR — #526 SUCCESS + #527 pin date-arithmetic (2026-11-05 America/Sao_Paulo)
+- #526 `3e058e201` CI SUCCESS. #522–#525 verdes.
+- #527: renova `emittedBeforeSha256` AlertasFinanceiros (`cffc535a…`); hunks timestamp intactos.
+- #528 CanaisOrigem `b501e5d2c` aguarda CI. FF #401 aguarda Codex. Homolog BLOCKED.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
