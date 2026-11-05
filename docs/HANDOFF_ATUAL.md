@@ -1,3 +1,8 @@
+## CURSOR — #511 CI SUCCESS ParamOrigem (2026-11-05 America/Sao_Paulo)
+- Tip `26f96d1b0` · 6/6 CI SUCCESS.
+- Sem FF #401. Homolog 100 BLOCKED. Paralelo #512 RepresentantesTab.
+
+
 ## CURSOR — ParametrosOrigem uniqueKey + Central360 inventário (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-param-origem-uniquekey-392b` ← #401 `b888b2c00`.
 - Fix: Tab+Gerenciador canais origem — openWindow canônico, uniqueKey create/edit, `filterInContext`/`updateInContext`, KPI erro≠0.

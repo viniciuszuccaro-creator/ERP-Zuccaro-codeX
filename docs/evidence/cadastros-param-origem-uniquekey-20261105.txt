@@ -23,3 +23,5 @@ Fora deste pacote:
 - rename/UI Central de Vendas360
 - homolog 100 clientes (API/tela BLOCKED)
 - dados reais em commit/CI
+
+CI tip SUCCESS: 26f96d1b0 · 6/6 (2026-11-05 America/Sao_Paulo)

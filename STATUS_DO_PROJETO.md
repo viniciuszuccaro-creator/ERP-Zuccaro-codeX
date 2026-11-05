@@ -1,3 +1,16 @@
+## CURSOR — ParametrosOrigem uniqueKey CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-param-origem-uniquekey-392b` = **#511** |
+| **Tip CI SUCCESS** | `26f96d1b0` · 6/6 |
+| **Delta** | ParametrosOrigemPedidoTab + GerenciadorCanaisOrigem · uniqueKey + filterInContext/updateInContext · KPI erro≠0 |
+| **Paralelos** | #507–#510 · #512 RepresentantesTab |
+| **Homolog 100** | BLOCKED |
+| Classificação | navegação · registros intocados |
+| Fora | merge/deploy · FF #401 sem aceite |
+
+
 ## CURSOR — ParametrosOrigem uniqueKey + escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
