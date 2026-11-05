@@ -1,3 +1,14 @@
+## CURSOR — CorteDobraIATab bitolas escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/comercial-corte-dobra-scope-392b` ← #401 `b888b2c00` |
+| **Código** | Produto eh_bitola via filterInContext; Upload/IA preservados; STALE_SCOPE; KPI ≠ zero |
+| **Testes** | `tests/comercial-corte-dobra-scope.test.js` **4 PASS** |
+| **Paralelo** | #554–#556 SUCCESS · #557/#558 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
