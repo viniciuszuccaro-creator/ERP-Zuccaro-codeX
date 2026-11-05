@@ -29,7 +29,7 @@ import {
 } from "@/components/financeiro/financeiroLaunchpadAccess";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
-  const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { createInContext, updateInContext, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { user: authUser } = useUser();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const empresaId = empresaAtual?.id || null;
@@ -85,9 +85,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
     setDadosBaixa(reset.dadosBaixa);
   }, [scopeKey, queryClient]);
 
-  const { data: empresas = [] } = useQuery({
+  // Escopo multiempresa: Empresa via filterInContext (não list unscoped).
+  const { data: empresas = [], isError: isErrorEmpresasPagar } = useQuery({
     queryKey: ['empresas', scopeKey],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
     enabled: contextoValido,
   });
 
@@ -426,6 +427,11 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const content = (
     <div className="space-y-1.5">
       <HeaderPagarCompacto />
+      {isErrorEmpresasPagar && (
+        <p className="text-xs text-slate-500 px-1">
+          Lista de empresas indisponível (erro de carga ≠ zero).
+        </p>
+      )}
       <KPIsPagar totais={totais} />
       <FiltrosPagar
         searchTerm={searchTerm}

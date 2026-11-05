@@ -24,6 +24,21 @@ financialBatchHunks['src/components/fiscal/RelatorioDRE.jsx'] = [[
   "new Date(Number(periodo.split('-')[0]), Number(periodo.split('-')[1]), 0)",
   "new Date(periodo.split('-')[0], periodo.split('-')[1], 0)",
 ]];
+// Delta autorizado: ContasPagar Empresa via filterInContext (#530).
+financialBatchHunks['src/components/financeiro/ContasPagarTab.jsx'].push(
+  [
+    '  const { createInContext, updateInContext, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();\n',
+    '  const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();\n',
+  ],
+  [
+    "  // Escopo multiempresa: Empresa via filterInContext (não list unscoped).\n  const { data: empresas = [], isError: isErrorEmpresasPagar } = useQuery({\n    queryKey: ['empresas', scopeKey],\n    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),\n    enabled: contextoValido,\n  });\n",
+    "  const { data: empresas = [] } = useQuery({\n    queryKey: ['empresas', scopeKey],\n    queryFn: () => base44.entities.Empresa.list(),\n    enabled: contextoValido,\n  });\n",
+  ],
+  [
+    "      <HeaderPagarCompacto />\n      {isErrorEmpresasPagar && (\n        <p className=\"text-xs text-slate-500 px-1\">\n          Lista de empresas indisponível (erro de carga ≠ zero).\n        </p>\n      )}\n",
+    "      <HeaderPagarCompacto />\n",
+  ],
+);
 export function financialBatchPermissionRemainder(file, text) {
   if (!financialBatchHunks[file]) return text;
   let source = text.replace(/\r\n/g, '\n');
