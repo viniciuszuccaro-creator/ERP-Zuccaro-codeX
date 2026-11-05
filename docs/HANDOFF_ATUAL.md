@@ -1,7 +1,7 @@
-## CURSOR — #522 pin + #523 MonitoramentoRH (2026-11-05 America/Sao_Paulo)
-- #522 tip `349171419`: reverse hunks escopo no biometricEvidenceRemainder (hash `61eeef9a`); shared-query/command-payload em `b5971442`; bind `createInContext` no teste de falha.
-- #523: `MonitoramentoRHInteligente` — filterInContext Colaborador/MonitoramentoRH; KPI erro≠zero; sem list unscoped.
-- Fila #516–#521 CI SUCCESS. FF #401 aguarda Codex. Homolog 100 BLOCKED. Sem Central360 UI.
+## CURSOR — #522+#523 CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #522 `349171419` e #523 `5a6514e4a` CI SUCCESS 6/6.
+- #524–#525 CI em curso; #526 RelatorioFormas `3e058e201` publicado.
+- FF #401 aguarda Codex. Homolog BLOCKED. Sem Central360 UI.
 
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
