@@ -1,3 +1,40 @@
+## CURSOR — #583 NotificationCenter CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #583 `99c8fc66f` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#583 SUCCESS · #584 fix `965f14c3b` em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #583 NotificationCenter frozen-SHA fix (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #583 |
+| **Fix** | shared-query via `notificationCenterScopeRemainder` — hash congelado preservado |
+| **Testes** | shared-query + approval + runtime-proof + scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #583 NotificationCenter CI fix contracts (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #583 `cursor/ui-notification-center-scope-392b` |
+| **Fix** | 3× invalidateQueries; remainder approval; hash shared-query InContext |
+| **Testes** | shared-query + approval + ui-notification-center-scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — NotificationCenter escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/ui-notification-center-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filter/update InContext Notificacao; badge KPI ≠ 0; STALE_SCOPE; sem auth.me |
+| **Testes** | `ui-notification-center-scope` **2 PASS** |
+| **Fila** | #580–#582 em CI · este PR · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

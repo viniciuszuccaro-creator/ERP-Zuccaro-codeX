@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, X, Check, AlertTriangle, Info, CheckCircle2, XCircle, Target } from "lucide-react";
+import { Bell, X, Check, AlertTriangle, Info, CheckCircle2, XCircle } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
@@ -13,33 +14,80 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  buildNotificationCenterQueryKey,
+  isNotificationCenterScopeCurrent,
+  resolveNotificationCenterKpiState,
+  filterNotificacoesVisiveis,
+  countNotificacoesNaoLidas,
+} from "./notificationCenterScope";
 
+function readNotificationActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  const email = typeof session?.email === "string" && session.email.trim()
+    ? session.email.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token), email };
+}
+
+/**
+ * Notificacao via filter/update InContext; badge KPI ≠ 0 em loading/erro.
+ */
 export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { empresaAtual, estaNoGrupo } = useContextoVisual();
+  const {
+    filterInContext,
+    updateInContext,
+    empresaAtual,
+    grupoAtual,
+    contexto,
+  } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey, email: actorEmail } = readNotificationActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
 
-  const { data: notificacoes = [], refetch } = useQuery({
-    queryKey: ['notificacoes', empresaAtual?.id],
-    queryFn: async () => {
-      const user = await base44.auth.me();
-      // Preferir filtro no servidor para respeitar multiempresa
-      const filtroSrv = (!estaNoGrupo && empresaAtual) ? { empresa_id: empresaAtual.id } : {};
-      const todas = await base44.entities.Notificacao.filter(filtroSrv, '-created_date', 100);
-      const visiveis = todas.filter(n => !n.arquivada && (!n.destinatario_email || n.destinatario_email === user.email));
-      return visiveis;
+  const notificacoesQuery = useQuery({
+    queryKey: buildNotificationCenterQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Notificacao', {}, '-created_date', 100);
+      if (signal?.aborted) {
+        const err = new Error('NOTIFICATION_CENTER_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isNotificationCenterScopeCurrent(scopeExpected, readNotificationActorAndSession())) {
+        throw new Error('NOTIFICATION_CENTER_STALE_SCOPE');
+      }
+      return filterNotificacoesVisiveis(rows, actorEmail);
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
+    enabled: contextoValido,
+    refetchInterval: 30000,
   });
 
-  // Separar notificações
-  const naoLidas = notificacoes.filter(n => !n.lida);
-  const lidas = notificacoes.filter(n => n.lida);
+  const kpiState = resolveNotificationCenterKpiState({
+    contextoValido,
+    isLoading: notificacoesQuery.isLoading,
+    isError: notificacoesQuery.isError,
+    isFetching: notificacoesQuery.isFetching,
+    dataDefined: notificacoesQuery.data !== undefined,
+  });
+  const notificacoes = kpiState === 'ready' && Array.isArray(notificacoesQuery.data)
+    ? notificacoesQuery.data
+    : [];
+  const contagemIndisponivel = kpiState !== 'ready';
+  const naoLidas = notificacoes.filter((n) => !n.lida);
+  const badgeCount = contagemIndisponivel ? null : countNotificacoesNaoLidas(notificacoes);
 
   const marcarComoLidaMutation = useMutation({
-    mutationFn: (/** @type {string} */ id) => base44.entities.Notificacao.update(id, {
-      lida: true, 
-      data_leitura: new Date().toISOString() 
+    mutationFn: (/** @type {string} */ id) => updateInContext('Notificacao', id, {
+      lida: true,
+      data_leitura: new Date().toISOString(),
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
@@ -48,11 +96,11 @@ export default function NotificationCenter() {
 
   const marcarTodasComoLidasMutation = useMutation({
     mutationFn: async () => {
-      const promises = naoLidas.map(n => 
-        base44.entities.Notificacao.update(n.id, { 
-          lida: true, 
-          data_leitura: new Date().toISOString() 
-        })
+      const promises = naoLidas.map((n) =>
+        updateInContext('Notificacao', n.id, {
+          lida: true,
+          data_leitura: new Date().toISOString(),
+        }),
       );
       return Promise.all(promises);
     },
@@ -62,7 +110,7 @@ export default function NotificationCenter() {
   });
 
   const arquivarMutation = useMutation({
-    mutationFn: (/** @type {string} */ id) => base44.entities.Notificacao.update(id, { arquivada: true }),
+    mutationFn: (/** @type {string} */ id) => updateInContext('Notificacao', id, { arquivada: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
     },
@@ -92,16 +140,19 @@ export default function NotificationCenter() {
     }
   };
 
+  const tabNaoLidasLabel = contagemIndisponivel ? 'Não lidas (…)' : `Não lidas (${naoLidas.length})`;
+  const tabTodasLabel = contagemIndisponivel ? 'Todas (…)' : `Todas (${notificacoes.length})`;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
-          {naoLidas.length > 0 && (
-            <Badge 
+          {badgeCount !== null && badgeCount > 0 && (
+            <Badge
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-600"
             >
-              {naoLidas.length > 9 ? '9+' : naoLidas.length}
+              {badgeCount > 9 ? '9+' : badgeCount}
             </Badge>
           )}
         </Button>
@@ -111,7 +162,7 @@ export default function NotificationCenter() {
           <CardHeader className="border-b">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">Notificações</CardTitle>
-              {naoLidas.length > 0 && (
+              {!contagemIndisponivel && naoLidas.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -124,13 +175,27 @@ export default function NotificationCenter() {
               )}
             </div>
           </CardHeader>
+          {kpiState === 'unavailable' && (
+            <div className="p-4 text-sm text-amber-800 bg-amber-50 border-b border-amber-200">
+              Selecione grupo ou empresa para listar notificações.
+            </div>
+          )}
+          {kpiState === 'error' && (
+            <div className="p-4 text-sm text-red-800 bg-red-50 border-b border-red-200">
+              Erro ao carregar (erro ≠ badge 0).
+            </div>
+          )}
+          {kpiState === 'loading' && (
+            <div className="p-8 text-center text-slate-500 text-sm">Carregando…</div>
+          )}
+          {kpiState === 'ready' && (
           <Tabs defaultValue="nao-lidas" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="nao-lidas">
-                Não lidas ({naoLidas.length})
+                {tabNaoLidasLabel}
               </TabsTrigger>
               <TabsTrigger value="todas">
-                Todas ({notificacoes.length})
+                {tabTodasLabel}
               </TabsTrigger>
             </TabsList>
             <ScrollArea className="h-96">
@@ -254,6 +319,7 @@ export default function NotificationCenter() {
               </TabsContent>
             </ScrollArea>
           </Tabs>
+          )}
         </Card>
       </PopoverContent>
     </Popover>

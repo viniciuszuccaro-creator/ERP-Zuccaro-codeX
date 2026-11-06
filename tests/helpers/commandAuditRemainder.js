@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {backupCapabilityRemainder} from './backupCapabilityRemainder.js';
 import {financialFileCommandRemainder} from './financialFileCommandRemainder.js';
+import {notificationCenterScopeRemainder} from './notificationCenterScopeRemainder.js';
 
 export const commandAuditHunks={
  'src/components/estoque/RequisicoesAlmoxarifadoTab.jsx':[
@@ -27,6 +28,7 @@ export const commandAuditHunks={
 };
 export function commandAuditRemainder(file,text){
  text=backupCapabilityRemainder(file,text);
+ text=notificationCenterScopeRemainder(file,text);
  if(!commandAuditHunks[file])return text;
  let source=financialFileCommandRemainder(file,text).replace(/\r\n/g,'\n');
  for(const [after,before] of commandAuditHunks[file]){
