@@ -78,5 +78,41 @@ test('Fornecedor master: PostgreSQL engine synthetic fixture, not operational pr
       assert.equal((await f.admin.query('SELECT count(*)::int AS n FROM fornecedores')).rows[0].n, 1);
       assert.equal((await f.admin.query("SELECT count(*)::int AS n FROM audit_logs WHERE entity='Fornecedor'")).rows[0].n, 3);
     });
+    for (const operation of ['get', 'importar', 'softDelete'] as const) {
+      await t.test(`${operation} keeps the initial actor/group after caller context changes`, async () => {
+        const incoming = { ...ctx, requestId: randomUUID() };
+        const expected = { ...incoming };
+        const seen: typeof incoming[] = [];
+        class ChangingCallerGuard extends PostgresRbacGuard {
+          private changed = false;
+          override async assertAllowed(...args: Parameters<PostgresRbacGuard['assertAllowed']>) {
+            seen.push({ ...args[0], empresaId: args[0].empresaId ?? null, actorId: args[0].actorId ?? '' });
+            await super.assertAllowed(...args);
+            if (!this.changed) {
+              this.changed = true;
+              Object.assign(incoming, { groupId: ID.groupB, actorId: ID.runtimeActorB, requestId: randomUUID() });
+            }
+          }
+        }
+        const guarded = new FornecedorService(repo, audit, new ChangingCallerGuard(f.data));
+        const before = await f.admin.query('SELECT * FROM fornecedores ORDER BY id');
+        const auditBefore = await f.admin.query('SELECT * FROM audit_logs ORDER BY id');
+        const r = created.registro;
+        if (operation === 'get') {
+          const found = await guarded.get(incoming, r.id);
+          assert.equal(found.id, r.id); assert.equal(found.ativo, false);
+        } else if (operation === 'importar') {
+          await assert.rejects(guarded.importar(incoming, payload), { code: 'LEGACY_RECONCILIATION_REQUIRED' });
+        } else {
+          await assert.rejects(guarded.softDelete(incoming, r.id, r.revision, r.source_system,
+            r.migration_batch, fingerprintFornecedor(r)), { code: 'FORNECEDOR_REVISION_CONFLICT' });
+        }
+        assert.ok(seen.length >= 2);
+        for (const context of seen) assert.deepEqual(context, expected);
+        assert.equal(incoming.actorId, ID.runtimeActorB);
+        assert.deepEqual((await f.admin.query('SELECT * FROM fornecedores ORDER BY id')).rows, before.rows);
+        assert.deepEqual((await f.admin.query('SELECT * FROM audit_logs ORDER BY id')).rows, auditBefore.rows);
+      });
+    }
   } finally { await f.close(); }
 });

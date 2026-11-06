@@ -1,4 +1,42 @@
-## Continuidade vigente - patch Fornecedor e validacao pendente (2026-11-06)
+## Continuidade vigente - gate Linux fechado e publicacao Fornecedor (2026-11-06)
+
+Base bfb4416c/CI6439 SUCCESS; somente2blobs funcionais preservados97f2fcf3 e
+e079ae2e. Chrome/terminal do Codespace existente recuperados; checkout antigo
+b5cb34e1 com .vscode nao rastreado NAO sincronizado. Processo Codex observado sem
+filhos de trabalho e cwd da extensao; sem teste/escritor correspondente antes
+da validacao. Area separada por git archive bfb4416c, nao clone/candidata nova.
+Patch publico421/6682058561 baixado pelo gh existente, Base64 decodificado apenas
+apos SHA256 f6584735ec1b8582acf1e9ddc139f810185fcb023c4a8f4b87ea2b561d7d08ff
+conferir;4204bytes. git apply --check, hashes finais e lockfiles identicos.
+Dependencias existentes compartilhadas por symlink, sem npm install/rede contornada.
+
+Comandos no snapshot: TEST_PYTHON_EXECUTABLE=$(command -v python3) node --test
+tests/legado-filesystem-precheck.test.js tests/legado-review-workflow.test.js:
+12PASS0FAIL0SKIP; server node --import tsx --test tests/fornecedor-import.test.ts:
+10PASS0FAIL0SKIP. Raiz npm test -- --test-concurrency=2 'tests/**/*.test.js',
+GIT_DIR do checkout existente somente para objetos historicos e GIT_WORK_TREE
+do snapshot:2419PASS0FAIL0SKIP, ROOT_FULL_EXIT=0,283483.600734ms. Node24.21.0.
+Logs ficam privados na area validation-fornecedor-20261106, fora do checkout.
+Backend560PASS0FAIL38SKIP e demais checks Windows inalterados reutilizados;
+nao somar rechecks a suite nem chamar skips de aprovacao. Publicar somente os
+2arquivos funcionais e continuidade conferidos, confirmar SHA remoto/CI.
+
+4010c4a85c6/runtime4f76d3de3 agora inclui542/544/545. Retestes montados no
+conjunto:quick4PASS/origem5PASS/dashboard2PASS,0FAIL0SKIP. Diff dos arquivos/
+helpers dos ports igual aos runtimes de origem. Parecer6683772341; sem editar
+branch Cursor, sem alegar PG/HTTP/HML ou rascunho comercial completo. Workflow
+dos SHAs compostos nao retornou pelo conector: conferir CI propria, nao ancestral.
+
+VPS console recuperado e rota finalmente observada: somente hosts API DEV/web
+DEV no Caddy; host Auth declarado ausente, curl local com TLS preservado falha35.
+API DEV401/TLS valido, web200 nao e prova Auth. Nenhuma alteracao operacional.
+Proprietario decidiu permitir visao do PROPRIO Grupo a perfil de Grupo com
+permissao explicita, sem admin; proximo lote deve reconciliar guard existente,
+negar perfil empresarial/outro Grupo/revogacao/sessao antiga, sem grants VPS.
+Preflight socket/identidade fisica e Auth externo continuam gates separados.
+HML100/backups/historicos nao repetidos, nenhum dado real publicado.
+
+## Historico - patch Fornecedor e validacao pendente (2026-11-06)
 
 Base33b121cc/CI6204 SUCCESS;401b888 preservada. Reserva6681724732.
 CORRECOES RECEBIDAS DURANTE O LOTE:542e808598e/CI6433SUCCESS (runtime3c6c855b);

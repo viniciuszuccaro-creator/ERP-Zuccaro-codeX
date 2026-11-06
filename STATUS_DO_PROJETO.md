@@ -1,4 +1,33 @@
-## Continuidade vigente - Fornecedor corrigido em WIP; gate Linux (2026-11-06)
+## Continuidade vigente - Fornecedor validado no Linux e composicao revisada (2026-11-06)
+
+Base bfb4416c/CI6439 SUCCESS. Mesmo Codespace recuperado pelo controle suportado;
+checkout b5cb34e1 e .vscode nao rastreado preservados, sem pull/rebuild/novo ambiente.
+Validacao isolada por git archive da base bfb4416c, patch publico4204bytes com
+SHA256 f6584735ec1b8582acf1e9ddc139f810185fcb023c4a8f4b87ea2b561d7d08ff.
+Blobs97f2fcf3/e079ae2e e lockfiles raiz/server conferidos; dependencias existentes,
+sem instalacao. POSIX atual12PASS0FAIL0SKIP; Fornecedor10PASS0FAIL0SKIP;
+raiz COMPLETA Linux2419PASS0FAIL0SKIP, ROOT_FULL_EXIT=0,283483.600734ms.
+Backend Windows560PASS0FAIL38SKIP/598 e audit/lint/typechecks/builds anteriores
+reutilizados porque codigo/dependencias nao mudaram. Skips nao aprovam PG real;
+avisos antigos de lint/chunks preservados. Nao e prova Fornecedor HTTP/HML.
+Correcao funcional pronta para commit/push nesta branch, sem merge/deploy/carga.
+
+401 avancou para0c4a85c6 (runtime4f76d3de3), com542/544/545 incorporadas.
+Arquivos e auxiliares desses ports iguais aos runtimes revisados; backend nao
+alterado pelo delta b888..HEAD. Reteste REAL montado no composto:4+5+2=11PASS,
+0FAIL0SKIP; parecer6683772341. Fronteiras sinteticas, nao HTTP/PG/HML E2E.
+Conector nao retornou workflow dos dois SHAs compostos nesta leitura: CI propria
+nao inferida das PRs de origem. Cursor continua escritor da composicao.
+
+Roteamento VPS conferido SOMENTE leitura: Caddy tem hosts API DEV/web DEV;
+host externo declarado Auth nao consta no adapt e handshake local falha curl35.
+API DEV responde401 com TLS valido; web200 nesse caminho nao comprova Auth.
+Sem mudar proxy/firewall/grants/servicos. HML100/backups/historicos intactos;
+sem URL real homologada. Proximo: contrato granular de Grupo aprovado pelo
+proprietario (perfil do proprio Grupo + permissao explicita, sem admin), seguido
+de preflight fisico/API/Auth HML; nao usar NULL=NULL ou fallback operacional.
+
+## Historico - Fornecedor corrigido em WIP; gate Linux (2026-11-06)
 
 Base publicada34233b121cc/CI6204 SUCCESS e401b888 reconferidas. Durante o lote
 chegaram correcoes542e808598e/CI6433SUCCESS,5440a43dcd6/CI6437emexecucao e

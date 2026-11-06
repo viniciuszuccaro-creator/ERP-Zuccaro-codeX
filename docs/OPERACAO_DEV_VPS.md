@@ -1,6 +1,33 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - console HTML acessivel, backend desconectado (2026-11-05)
+## Estado vigente - shell e roteamento observados, Auth HML nao homologado (2026-11-06)
+
+Mesmo hPanel/VPS srv1982741, Console da Web autenticado e shell real conferidos.
+Inspecao somente leitura caddy adapt, emitindo apenas host/upstream: API DEV
+aponta127.0.0.1:3080 e web DEV127.0.0.1:3081. Host HTTPS declarado pelo Auth nao
+consta nesse adapt. Sondas locais --resolve host:443:127.0.0.1, sem -k ou token:
+host Auth HTTP000/curl35 (alerta TLS); API DEV /auth/v1/health401/TLS_VERIFY0;
+web no mesmo caminho200/TLS_VERIFY0, sem alegar que SPA200 seja health Auth.
+Health interno Auth200 anterior e separado. Nao atribuir timeout externo a uma
+causa unica; estas provas locais identificam uma incompatibilidade de roteamento.
+Nao houve restart, proxy/firewall/porta/grant/role/DDL ou mudanca de credencial.
+
+Canal minimo ainda necessario: endpoint HTTPS REAL do provedor existente,
+alcancavel pela API HML e com TLS valido. Nao usar endpoint web200, copiar bearer,
+desligar TLS ou expor Kong por inferencia. Qualquer alteracao de rota/exposicao
+exige alvo, impacto, prazo e reversao aprovados antes da aplicacao; preparar com
+o procedimento existente, sem substituir o par operacional ou criar novo IdP.
+
+Decisao do proprietario06/11: perfil de Grupo (empresa_id NULL) pode acessar a
+visao do proprio Grupo pela permissao explicita da entidade/acao sem ser admin.
+Reconciliar resolveSessionEntityGuard existente com o guard de dominio; manter
+negativas de outro Grupo/perfil empresarial/permissao ausente/revogacao/sessao
+antiga. Nao autoriza novos grants ou mudancas VPS. Proposta historica abaixo
+deixa de ser uma decisao pendente; implementacao/testes ainda precisam fechar.
+Preflight de pools por socket continua separado: NULL=NULL nao comprova destino.
+HML100, backup/restauracao e historicos preservados; sem API HML READY/URL real.
+
+## Historico - console HTML acessivel, backend desconectado (2026-11-05)
 
 Uma nova abertura pelo botao Console da Web do MESMO hPanel carregou o console
 esperado, mas exibiu 'Conexao com o servidor perdida'. Sem prompt, nenhum comando
