@@ -1,3 +1,6 @@
+## CURSOR — #578 PainelDinamicoTransportadora CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `3e785e06c` SUCCESS. Lote #566–#578 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — PainelDinamicoTransportadora escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-painel-transportadora-scope-392b` ← #401.
 - filterInContext Entrega/Romaneio; KPI ≠ 0%. Testes 2 PASS.

@@ -1,3 +1,12 @@
+## CURSOR — #578 PainelDinamicoTransportadora CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #578 `3e785e06c` — frontend + backend + compose **SUCCESS** |
+| **Código** | filterInContext Entrega/Romaneio; KPI ≠ 0%; STALE_SCOPE |
+| **Fila** | #566–#578 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — PainelDinamicoTransportadora escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
