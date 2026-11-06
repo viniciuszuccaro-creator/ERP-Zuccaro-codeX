@@ -1,4 +1,28 @@
-## Continuidade vigente - Fornecedor HTTP validado e bootstrap HML (2026-11-06)
+## Continuidade vigente - sessao real HML aceita; contexto UI bloqueado (2026-11-06)
+
+Fornecedor HTTP publicado6b81004fc4edbf23f5b951a99c87225539a75a4f, push remoto
+conferido; CIs6462/6463 terminais SUCCESS no mesmo SHA. Reserva dos9arquivos
+liberada e solicitacao de revisao/port publicada na401, sem alegar recebimento.
+
+Login do proprietario concluido na HML: navegador observou GETauth/session200,
+perfil user/empresa_idNULL, Grupo CPA e2empresas aprovadas; GETclientes200,
+limit1/offset0/meta.total100/hasMoretrue, procedencia presente. Sem nomes,
+documentos ou token no recibo publico. Recibo agregado privado0600 em
+auth-browser-20261106.private.json; nao comprova edicao/reabertura nem E2E.
+Bootstrap finalc32ef95a usa WebSocket no MESMO listener privado5173; conectado
+no navegador. SIGTERM com HMR conectado PASS, lock/socket liberados e PG
+restituido parado. Janela20min reaberta, nao disponibilidade permanente.
+
+Bloqueio reproduzido: seletor UI so oferece empresas; Clientes exige contexto.
+erpHttpSession ainda exigeadmin em switchGrupo/buildUser/login/refresh apesar
+da permissao explicita do proprio Grupo aprovada. Mesmas guardas conferidas
+no HEAD4015d9a7e37; coordenacao6690425383, Cursor escritor da composicao.
+Nao promover user nem ampliar grants. Tambem observados contagem auxiliar500
+e negativa de Expedicao transformada em erro global, sem alegar causa unica
+ou recuperacao dos registros. Proximo: reconciliar guardas UI pela permissao
+servidor, validar contexto e nomes reais na listagem/detalhes. HML nao homologada.
+
+## Historico - Fornecedor HTTP validado e bootstrap HML (2026-11-06)
 
 Reserva342/6688424027: adapter HTTP opt-in reutiliza FornecedorService e
 PostgresFornecedorRepository, sem cadastro/importador paralelo. Importacao,

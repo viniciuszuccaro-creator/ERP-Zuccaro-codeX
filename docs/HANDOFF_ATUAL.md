@@ -1,4 +1,37 @@
-## Continuidade vigente - adapter Fornecedor e Auth HML configurado (2026-11-06)
+## Continuidade vigente - Auth real HML aceito; proxima correcao UI (2026-11-06)
+
+Publicado adapter Fornecedor6b81004fc4edbf23f5b951a99c87225539a75a4f na mesma
+branch342, remoto conferido, checkout limpo apos commit. Reserva dos9arquivos
+encerrada; revisao/port solicitados diretamente401, sem integrar por inferencia.
+Checks anteriores abaixo correspondem aos mesmos9blobs; CIs6462/6463 terminais
+SUCCESS no mesmo SHA (backend,frontend,composicao aprovados em ambas).
+
+Auth anon existente localizada/reutilizada conforme autorizacao posterior.
+Login real do proprietario observado no navegador: GET/api/v1/auth/session200,
+perfil user de Grupo/empresa_idNULL, Grupo CPA e2empresas aprovadas; resposta
+GET/api/v1/clientes200, limit1/offset0/meta.total100/hasMoretrue, procedencia
+presente. Nao imprimir token/userpayload, documentos ou nomes de clientes.
+Recibo privado0600 auth-browser-20261106.private.json. Nao e prova de toda
+listagem, edicao/reabertura ou negativas cross-tenant nesta janela.
+
+Bootstrap final pin c32ef95a23b0494964769d7f465c8e8900ca94a6dc1d58005db8cd1b3272c1b3,
+par explicito API50b60e46/webb888b2c0. HMR privado no MESMO listener5173:
+tela login/WS conectado PASS. SIGTERM com browser conectado PASS: STOPPED,
+lock/socket removidos, PG devolvido parado; janela20min reaberta sem recarga100.
+As tentativas anteriores e seus recibos foram preservados, nao sobrescritos.
+
+Bloqueio atual concreto UI: quatro guardasadmin-only em erpHttpSession.js
+(switch grupo, pode_operar_em_grupo, login scopeType, refresh groupView) impedem
+perfiluser com permissao explicita do proprio Grupo. Reproduzido em webb888,
+mesmas guardas inspecionadas no4015d9a7e37; coordenacao401/6690425383. Seletor
+mostra empresas mas nao Grupo; listagem diz selecionar escopo. Nao promoveruser
+ou manipular storage para passar. Cursor permanece escritor visual/composicao;
+aguardar ownership do hunk ou correcao por ele, depois testes montados e HML.
+Auxiliar setores-atividade500 e negativa Expedicao com erro global tambem
+observados; nao remover RBAC nem inventarzero. HML clientes UI NAO homologada.
+Dados100/historicos/backups preservados, sem carga/DDL/grants/deploy operacional.
+
+## Historico - adapter Fornecedor e Auth HML configurado (2026-11-06)
 
 Lote da reserva342/6688424027 fechado no snapshot de9 arquivos, manifesto em
 421/6688762059 (patch590f178bf70c90efb4386f7a461ea3511b3ea8dbd194d3ed249bb9e9bf206b13).

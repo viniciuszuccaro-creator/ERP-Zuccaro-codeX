@@ -1,6 +1,22 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - Auth configurado e bootstrap privado ensaiado (2026-11-06)
+## Estado vigente - sessao real aceita; UI Grupo pendente (2026-11-06)
+
+Login real HML conferido pelo navegador apos acao do proprietario: auth/session
+200, perfiluser/empresa_idNULL, Grupo e2empresas aprovadas; clientes200 com
+meta.total100. Nenhum token/nome/documento no recibo publico. Prova privada
+auth-browser-20261106.private.json0600; API50b/webb888, nao composicao401 atual.
+Bootstrap c32ef95a com HMR no listener privado5173 e encerramento com browser
+conectado PASS; lock/socket liberados e PG restituido parado antes da nova
+janela20min. Nao e servico permanente ou deploy ERP.
+
+Bloqueio UI reproduzido: guardasadmin-only de erpHttpSession.js impedem selecionar
+o proprio Grupo com permissao explicita; mesmas guardas no4015d9a7e37. Decisao
+ja aprovada nao autoriza promoveruser ou ampliargrants; corrigir contrato UI,
+coordenado6690425383, antes de declarar nomes/listagem/edicao homologados.
+Nao repetir importacao100, backup/restore ou criar IdP/Authuser para contornar.
+
+## Historico - Auth configurado e bootstrap privado ensaiado (2026-11-06)
 
 As rotas GET/auth/v1/user e POST/auth/v1/token ja foram aplicadas no HTTPS
 existente conforme gate especifico e recibos no HANDOFF. O bloqueio historico
