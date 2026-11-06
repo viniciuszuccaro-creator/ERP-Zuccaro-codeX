@@ -27,7 +27,11 @@ canonico e testes HTTP existentes: antes2FAIL, depois12PASS0FAIL0SKIP focados;
 backend560PASS0FAIL38SKIP. Fronteiras Auth/DB sinteticas, sem afirmar login HML.
 Proposta historica abaixo deixa de ser decisao pendente; codigo ainda precisa
 de publicacao/CI e incorporacao controlada, nao esta implantado na VPS.
-Preflight de pools por socket continua separado: NULL=NULL nao comprova destino.
+Lote posterior no cliente existente: URLs Auth/Data explicitamente identicas
+reutilizam um unico cliente/pool, com preflight de roles e banco/schema mantido.
+URLs distintas sobre socket continuam rejeitadas quando endereco/porta saoNULL;
+NULL=NULL nao comprova destino. Testes de factory/contexto passaram, mas ainda
+e necessario conferir descriptor, namespace e identidade fisica da HML real.
 HML100, backup/restauracao e historicos preservados; sem API HML READY/URL real.
 
 ### Proposta minima revisavel de canal Auth - NAO AUTORIZADA/APLICADA

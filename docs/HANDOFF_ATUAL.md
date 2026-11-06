@@ -1,4 +1,32 @@
-## Continuidade vigente - Grupo granular implementado, HML ainda sem READY (2026-11-06)
+## Continuidade vigente - pool compartilhado explicito, HML ainda sem READY (2026-11-06)
+
+9b5de2bc/CI6444 e2f588154/CI6448 terminal SUCCESS. Reserva6684002998 somente
+server/src/db/client.ts e auth-data-connection.test.ts, mais continuidade.
+Implementacao existente aceita URLs Auth/Data IDENTICAS explicitamente como
+um cliente/pool unico. Sem retirar ENABLE_TENANT_CONTEXT/AUTH_DATABASE_URL;
+preflight ainda consulta/valida roles NOSUPER/NOBYPASS de login e execucao,
+banco/schema preenchidos e iguais. URL diferente, inclusive outro parametro
+no mesmo socket, continua dois pools e NULLs nao provam identidade: rejeitada.
+end/falha fecha o pool unico uma vez. Nenhum segredo/URL real entra no codigo.
+Teste antes4PASS1FAIL, depois13PASS Auth/session/data e11PASS contexto/RBAC/
+rollback/auth READ ONLY; factories/HTTP sinteticos, nao PG real homologado.
+Backend599tests561PASS0FAIL38SKIP,187300.8085ms; audit/lint/typecheck/build PASS,
+warning lint antigo mantido. Root2419 e frontend checks do snapshot anterior
+reutilizados por ausencia de delta frontend/root; CI propria deve confirmar.
+Proximo: usar codigo publicado para preflight no PG HML privado existente,
+conferindo descriptor/namespace/role antes de READY. Nao repetir carga100/backup.
+
+401 atualb3609bdf acrescentou remainder sobre runtime4f76d3de3. Consulta REST
+generica mostrou CI push6445 SUCCESS no d44ad52c; wrapper anterior so retornava
+runs pull_request, por isso desconhecido nao significava ausencia global de CI.
+Novo P1 por SHA publicado6684093828: helper real devolve fixture integral e
+aceita fonte original com throw extra fora do escopo, remainder identico. Exigir
+preservacao integral/peel estreito e negativos antes de aceitar nova guarda.
+11montados anteriores seguem validos; nao editar branch Cursor/abrir candidata.
+Auth externo ainda depende do gate de rota descrito no procedimento; sem URL
+HML real ou carga operacional. Dados100/historicos privados permanecem intactos.
+
+## Historico - Grupo granular implementado, HML ainda sem READY (2026-11-06)
 
 Fornecedor publicado9b5de2bc9cdbe65f62f74311a8bcc911183dd87e; remoto conferido,
 CI6444 terminal SUCCESS. Recebimento do validador Linux deixou de ser

@@ -1,4 +1,27 @@
-## Continuidade vigente - permissao explicita do proprio Grupo (2026-11-06)
+## Continuidade vigente - pool explicito e novo P1 da composicao (2026-11-06)
+
+Fornecedor9b5de2bc/CI6444 SUCCESS e Grupo granular2f588154/CI6448 SUCCESS publicados.
+Reserva6684002998: createRuntimeDbClients existente reutiliza UM MESMO cliente
+somente quando DATABASE_URL e AUTH_DATABASE_URL sao strings explicitamente iguais.
+Nao e fallback, comparacao NULL=NULL ou relaxamento de config. Roles de login/
+execucao continuam NOSUPER/NOBYPASS; banco/schema devem existir e coincidir.
+URLs diferentes continuam pools separados, enderecos/portas NULL rejeitados;
+fechamento encerra cliente compartilhado uma vez. Sem grants/DDL/config VPS.
+Teste novo antes4PASS1FAIL, depois Auth/session/data13PASS e contexto11PASS,
+0FAIL0SKIP; factory/HTTP sinteticos, nao prova fisica HML. Backend completo599:
+561PASS0FAIL38SKIP,187300.8085ms; audit/lint/typecheck/build backend PASS.
+Root2419PASS e frontend checks inalterados reutilizados; nenhum consumidor root
+le client.ts diretamente no conjunto pesquisado. Proximo: preflight real privado
+do codigo publicado, sem carga100/replay/restore, e canal Auth aprovado.
+
+401 avancou para b3609bdf (CI push6445 SUCCESS em d44ad52c, nao inferir para HEAD).
+Novo P1 executado6684093828: monitoramentoCanaisScopeRemainder devolve STAGE44
+integral depois de poucos marcadores. Fonte real + throw fora do escopo produz
+MESMO remainder, ocultando alteracao indevida. Cursor deve corrigir peel/preservacao
+integral e negativos; nao editar sua branch nem integrar pela CI. Os11montados
+do runtime4f76d3de3/0c4 permanecem validos; nao reabrir542/544/545 antigos.
+
+## Historico - permissao explicita do proprio Grupo (2026-11-06)
 
 Fornecedor ja publicado9b5de2bc9cdbe65f62f74311a8bcc911183dd87e, push conferido;
 CI6444 terminal SUCCESS. Reserva6683858625: authSessionService.ts
