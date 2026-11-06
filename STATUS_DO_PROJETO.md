@@ -1,3 +1,13 @@
+## CURSOR — PainelGovernanca escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/governanca-painel-scope-392b` ← #401 |
+| **Código** | filterInContext GovernancaEmpresa + KPIs fail-closed; STALE_SCOPE |
+| **Testes** | `governanca-painel-scope` **2 PASS** |
+| **Fila** | #579–#582 SUCCESS · #583 em CI · este PR · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

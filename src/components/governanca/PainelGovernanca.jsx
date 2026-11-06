@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,10 +17,29 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import {
+  buildPainelGovernancaQueryKey,
+  isPainelGovernancaScopeCurrent,
+  resolvePainelGovernancaKpiState,
+  countPainelGovernancaLoginsHoje,
+  countPainelGovernancaTentativasFalhas,
+  countPainelGovernancaAltoRisco,
+  countPainelGovernancaAlertasIa,
+} from './painelGovernancaScope';
+
+function readPainelGovernancaActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
 
 /**
  * Painel de Governança Corporativa
- * Compliance, Auditoria e Segurança
+ * Compliance, Auditoria e Segurança — filterInContext; KPI ≠ zeros.
  */
 /** @param {{empresaId?: string, grupoId?: string}} props */
 export default function PainelGovernanca({ empresaId, grupoId }) {
@@ -30,56 +48,109 @@ export default function PainelGovernanca({ empresaId, grupoId }) {
   const { isAdmin, hasPermission } = usePermissions();
   const groupId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaAtivaId = empresaId || empresaAtual?.id || null;
-  const scopeKey = empresaAtivaId || groupId || 'sem-contexto';
-  const scope = {
-    ...(groupId ? { group_id: groupId } : {}),
-    ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
-  };
-  const contextoValido = scopeKey !== 'sem-contexto';
+  const contextoValido = Boolean(groupId || empresaAtivaId);
   const podeVerGovernanca = isAdmin() || hasPermission('Sistema', 'Seguranca', 'visualizar') || hasPermission('Sistema', 'Segurança', 'visualizar');
+  const { actorId, sessionKey } = readPainelGovernancaActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
+  const queriesEnabled = contextoValido && podeVerGovernanca;
 
-  const { data: auditoriaGlobal = [] } = useQuery({
-    queryKey: ['auditoria-global', scopeKey],
-    queryFn: () => filterInContext('AuditoriaGlobal', {}, '-data_hora', 100),
-    enabled: contextoValido && podeVerGovernanca,
-  });
-
-  const { data: auditoriaAcessos = [] } = useQuery({
-    queryKey: ['auditoria-acessos', scopeKey],
-    queryFn: () => filterInContext('AuditoriaAcesso', {}, '-data_hora', 50),
-    enabled: contextoValido && podeVerGovernanca,
-  });
-
-  const { data: governanca } = useQuery({
-    queryKey: ['governanca-empresa', scopeKey],
-    queryFn: async () => {
-      const configs = await base44.entities.GovernancaEmpresa.filter(scope);
-      return configs[0];
+  const globalQuery = useQuery({
+    queryKey: buildPainelGovernancaQueryKey('auditoria-global', {
+      groupId, empresaId: empresaAtivaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('AuditoriaGlobal', {}, '-data_hora', 100);
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_GOVERNANCA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelGovernancaScopeCurrent(scopeExpected, readPainelGovernancaActorAndSession())) {
+        throw new Error('PAINEL_GOVERNANCA_GLOBAL_STALE_SCOPE');
+      }
+      return rows;
     },
-    enabled: contextoValido && podeVerGovernanca
+    enabled: queriesEnabled,
   });
+
+  const acessosQuery = useQuery({
+    queryKey: buildPainelGovernancaQueryKey('auditoria-acessos', {
+      groupId, empresaId: empresaAtivaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('AuditoriaAcesso', {}, '-data_hora', 50);
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_GOVERNANCA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelGovernancaScopeCurrent(scopeExpected, readPainelGovernancaActorAndSession())) {
+        throw new Error('PAINEL_GOVERNANCA_ACESSOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
+  });
+
+  const governancaQuery = useQuery({
+    queryKey: buildPainelGovernancaQueryKey('governanca-empresa', {
+      groupId, empresaId: empresaAtivaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const criterios = empresaAtivaId ? { empresa_id: empresaAtivaId } : {};
+      const configs = await filterInContext('GovernancaEmpresa', criterios, '-updated_date', 20);
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_GOVERNANCA_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelGovernancaScopeCurrent(scopeExpected, readPainelGovernancaActorAndSession())) {
+        throw new Error('PAINEL_GOVERNANCA_CONFIG_STALE_SCOPE');
+      }
+      return Array.isArray(configs) ? configs[0] : null;
+    },
+    enabled: queriesEnabled,
+  });
+
+  const acessosKpi = resolvePainelGovernancaKpiState({
+    contextoValido, podeVerGovernanca,
+    isLoading: acessosQuery.isLoading, isError: acessosQuery.isError,
+    isFetching: acessosQuery.isFetching, dataDefined: acessosQuery.data !== undefined,
+  });
+  const globalKpi = resolvePainelGovernancaKpiState({
+    contextoValido, podeVerGovernanca,
+    isLoading: globalQuery.isLoading, isError: globalQuery.isError,
+    isFetching: globalQuery.isFetching, dataDefined: globalQuery.data !== undefined,
+  });
+  const configKpi = resolvePainelGovernancaKpiState({
+    contextoValido, podeVerGovernanca,
+    isLoading: governancaQuery.isLoading, isError: governancaQuery.isError,
+    isFetching: governancaQuery.isFetching, dataDefined: governancaQuery.data !== undefined,
+  });
+
+  const auditoriaGlobal = globalKpi === 'ready' && Array.isArray(globalQuery.data) ? globalQuery.data : [];
+  const auditoriaAcessos = acessosKpi === 'ready' && Array.isArray(acessosQuery.data) ? acessosQuery.data : [];
+  const governanca = configKpi === 'ready' ? (governancaQuery.data || null) : null;
 
   if (!podeVerGovernanca) {
     return <div className="p-4 text-sm text-slate-500">Sem permissao para visualizar governanca.</div>;
   }
 
-  // KPIs de Governança
-  const loginsHoje = auditoriaAcessos.filter(a => 
-    a.tipo_acao === 'Login' && 
-    a.sucesso &&
-    new Date(a.data_hora).toDateString() === new Date().toDateString()
-  ).length;
+  if (!contextoValido) {
+    return (
+      <div className="p-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg">
+        Selecione grupo ou empresa para carregar governança (KPI ≠ zeros).
+      </div>
+    );
+  }
 
-  const tentativasFalhas = auditoriaAcessos.filter(a => 
-    !a.sucesso &&
-    new Date(a.data_hora).toDateString() === new Date().toDateString()
-  ).length;
-
-  const acoesAltoRisco = auditoriaGlobal.filter(a => 
-    a.nivel_risco === 'Alto' || a.nivel_risco === 'Crítico'
-  ).length;
-
-  const alertasIA = auditoriaGlobal.filter(a => a.alerta_ia_gerado).length;
+  const contagemAcessosIndisponivel = acessosKpi !== 'ready';
+  const contagemGlobalIndisponivel = globalKpi !== 'ready';
+  const loginsHoje = contagemAcessosIndisponivel ? null : countPainelGovernancaLoginsHoje(auditoriaAcessos);
+  const tentativasFalhas = contagemAcessosIndisponivel ? null : countPainelGovernancaTentativasFalhas(auditoriaAcessos);
+  const acoesAltoRisco = contagemGlobalIndisponivel ? null : countPainelGovernancaAltoRisco(auditoriaGlobal);
+  const alertasIA = contagemGlobalIndisponivel ? null : countPainelGovernancaAlertasIa(auditoriaGlobal);
+  const fmt = (n) => (n === null ? '…' : String(n));
 
   return (
     <div className="space-y-6">
@@ -90,7 +161,7 @@ export default function PainelGovernanca({ empresaId, grupoId }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-green-700">Logins Hoje</p>
-                <p className="text-3xl font-bold text-green-900">{loginsHoje}</p>
+                <p className="text-3xl font-bold text-green-900">{fmt(loginsHoje)}</p>
               </div>
               <CheckCircle className="w-10 h-10 text-green-600 opacity-50" />
             </div>
@@ -102,7 +173,7 @@ export default function PainelGovernanca({ empresaId, grupoId }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-orange-700">Tentativas Falhas</p>
-                <p className="text-3xl font-bold text-orange-900">{tentativasFalhas}</p>
+                <p className="text-3xl font-bold text-orange-900">{fmt(tentativasFalhas)}</p>
               </div>
               <AlertTriangle className="w-10 h-10 text-orange-600 opacity-50" />
             </div>
@@ -114,7 +185,7 @@ export default function PainelGovernanca({ empresaId, grupoId }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-red-700">Ações Alto Risco</p>
-                <p className="text-3xl font-bold text-red-900">{acoesAltoRisco}</p>
+                <p className="text-3xl font-bold text-red-900">{fmt(acoesAltoRisco)}</p>
               </div>
               <Shield className="w-10 h-10 text-red-600 opacity-50" />
             </div>
@@ -126,7 +197,7 @@ export default function PainelGovernanca({ empresaId, grupoId }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-purple-700">Alertas IA</p>
-                <p className="text-3xl font-bold text-purple-900">{alertasIA}</p>
+                <p className="text-3xl font-bold text-purple-900">{fmt(alertasIA)}</p>
               </div>
               <Activity className="w-10 h-10 text-purple-600 opacity-50" />
             </div>
