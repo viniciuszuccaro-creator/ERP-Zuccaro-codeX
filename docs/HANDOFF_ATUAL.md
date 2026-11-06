@@ -1,3 +1,7 @@
+## CURSOR — #590 ControleAcessoLogistica CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- Tip `eecf644f9` **CI SUCCESS** 9/9. getInContext fail-closed.
+- Sem FF #401 (`b888b2c00`). Homolog BLOCKED. Sem merge/deploy/VPS.
+
 ## CURSOR — ControleAcessoLogistica InContext (2026-11-06 America/Sao_Paulo)
 - Sem auth.me / Perfil.filter; getInContext; fail-closed visualizarRotas. Homolog BLOCKED.
 
