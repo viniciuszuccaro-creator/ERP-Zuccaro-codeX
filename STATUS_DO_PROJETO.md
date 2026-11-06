@@ -1,3 +1,21 @@
+## CURSOR — #586 UsuariosTab CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #586 `c8cf62ca5` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#586 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #586 UsuariosTab InContext (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | User/Perfil list unscoped → filterInContext; KPI fail-closed |
+| **Branch** | `cursor/admin-usuarios-tab-scope-392b` |
+| **Base** | tip #401 |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
