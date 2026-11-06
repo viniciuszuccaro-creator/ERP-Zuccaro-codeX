@@ -15,7 +15,8 @@ import {
         Calendar,
         BarChart3,
         Factory,
-        MessageCircle
+        MessageCircle,
+        Bot
       } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -69,6 +70,8 @@ const navigationItems = [
   
   
   { title: "Hub de Atendimento", url: createPageUrl("HubAtendimento"), icon: MessageCircle, group: "principal" },
+  // Página canônica do bot (complementar ao Hub — matriz keep both); estava só em pages.config.
+  { title: "Chatbot de Atendimento", url: createPageUrl("ChatbotAtendimento"), icon: Bot, group: "principal" },
   ];
 
 // React Query client centralizado (padrões seguros + performance)
@@ -110,6 +113,7 @@ function LayoutContent({ children, currentPageName }) {
     // Rota direta /Integracoes — mesmo módulo da aba Admin (proteção granular na página).
     Integracoes: 'Sistema',
     HubAtendimento: 'CRM',
+    ChatbotAtendimento: 'CRM',
     PortalCliente: 'Portal',
     OrcamentoSite: 'Comercial',
     EntregasMobile: 'Expedição',

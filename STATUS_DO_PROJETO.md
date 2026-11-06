@@ -13,7 +13,7 @@
 | **Homolog** | BLOCKED dados reais — tip **`3fc45c320`** CI OK para Codex validar nomes HML |
 | Fora | merge · deploy · VPS · refazer P1 remainder · dados reais GitHub |
 
-**Próximo:** Codex HML seletor no tip `3fc45c320` · próximo desconectado matriz.
+**Próximo:** Codex HML seletor no tip `3fc45c320` · ChatbotAtendimento menu reconectado neste append · C360 prep sem redesign.
 
 ## CURSOR — HML Grupo UI + erro isolado + Fornecedor HTTP (2026-11-06 America/Sao_Paulo)
 
