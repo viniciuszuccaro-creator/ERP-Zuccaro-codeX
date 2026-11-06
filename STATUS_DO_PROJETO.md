@@ -1,3 +1,12 @@
+## CURSOR — #585 AuditTrailPanel CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #585 `c26927bdd` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#585 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #585 AuditTrailPanel InContext (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

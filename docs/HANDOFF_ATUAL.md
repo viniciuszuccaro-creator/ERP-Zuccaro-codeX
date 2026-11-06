@@ -1,3 +1,6 @@
+## CURSOR — #585 AuditTrailPanel CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #585 tip `c26927bdd` CI **SUCCESS 6/6**. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — AuditTrailPanel InContext (2026-11-05 America/Sao_Paulo)
 - User via filterInContext; STALE_SCOPE; lista ≠ ready em loading/erro.
 - Homolog BLOCKED. FF #401 aguarda Codex.
