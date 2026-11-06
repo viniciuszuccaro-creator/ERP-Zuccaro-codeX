@@ -1,3 +1,12 @@
+## CURSOR — #587 SegurancaDashboard CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #587 `9715c1333` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#587 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #587 SegurancaDashboard InContext (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
