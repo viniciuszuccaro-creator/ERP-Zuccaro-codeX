@@ -1,3 +1,7 @@
+## CURSOR — #582 TimelineCliente CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #582 tip `a836a30da` CI **SUCCESS 6/6**.
+- #583 tip `99c8fc66f` em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — #582 TimelineCliente CI fix (2026-11-05 America/Sao_Paulo)
 - Remainder baseline para date-arithmetic; InContext intacto. Homolog BLOCKED.
 

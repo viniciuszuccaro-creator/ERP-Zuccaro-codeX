@@ -1,3 +1,12 @@
+## CURSOR — #582 TimelineCliente CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #582 `a836a30da` (código+remainder) |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#582 SUCCESS · #583 tip `99c8fc66f` em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #582 TimelineCliente CI fix date-arithmetic (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
