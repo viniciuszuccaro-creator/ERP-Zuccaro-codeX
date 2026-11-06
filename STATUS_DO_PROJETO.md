@@ -1,4 +1,52 @@
-## Continuidade vigente - sessao real HML aceita; contexto UI bloqueado (2026-11-06)
+## Continuidade vigente - fonte Base44 preservada; Setor RBAC em WIP (2026-11-06)
+
+3423b4c856b/CI6464-6465 e4015d9a7e37/CI6461 reconferidos; sem port novo
+observado. Cursor segue escritor da candidata/UI. Pedido de correcao granular
+erpHttpSession6690425383 ainda sem recebimento/correcao comprovados. Nao
+promoveruser. Sessao HML/total100 anteriores validos no alcance; UI ainda nao
+homologada. Nao repetir carga100, replay, backup/restauracao ou transporte.
+
+Base44 navegador autenticado: appERP Integra/conta proprietaria/Grupo CPA
+conferidos. MCP separadamente retornou reauthentication/UNAUTHORIZED nesta
+retomada; nao chamar navegador de inacessivel por causa do conector. Exportacao
+nativa privada preservada fora do Git: Produto871/871IDs distintos,870ativos,
+1inativo,0codigo ausente/duplicado; GrupoProduto91/91IDs distintos. DoisCSV,
+708133bytes, SHA256 origem/copia iguais, diretorio com ACL restrita. Download
+event expirou mas arquivos nativos efetivamente recebidos e conferidos em disco.
+Confronto exato fonte-fonte:817referencias de classe nao resolvidas,54ausentes;
+nao religar por nome. Uma origem de Grupo em ambos. Nenhum registro restaurado
+no ERP atual, nem estoque/preco/fiscal promovidos. Matriz existente atualizada.
+
+Reserva342/6690866419: Setor HTTP canonico nao chamava RBAC. WIP7 preservado
+por patch/manifesto a909abcbc2f37f10e0fe711ace0008741d2b221406ccafa9b92fa128902e7e40
+em421/6690965286 (PUBLICO, somente codigo sanitizado autorizado). TenantCrudService
+reutiliza guard existente por opcao especifica Setor:visualizar/criar/editar/
+inativar antes do repo, contexto copiado/congelado e wildcardglobal negado.
+Demais factories preservadas. Antes cliente-only retornava500 em vez de403;
+depois HTTP/runtime13PASS, guardas5PASS, raiz afetada35PASS; backend completo
+573PASS0FAIL38SKIP. Audit/lint/typechecks/buildserver/diff-check PASS; buildweb
+inalterado reutilizado. Perfil de fixture recebeu grant explicito, assertions
+preservadas. SQL autorizado com42501 continua500, nunca vazio/zero/403 falso.
+Causa SQLSTATE original HML ainda nao obtida. Sem DDL/grants/flag/deploy.
+
+Falta suite raiz completa no snapshot Linux exato; nao confundir artefato421
+com implementacao publicada. Chrome perdeu controle: Debugger unattached;
+reassumir mesma aba750 falhou em Emulation.setFocusEmulationEnabled. Nenhum
+reinicio/rebuild/instalacao; CLIgh/bash nao disponiveis no PATH desktop. Nao
+repetir POSIX/WSL. Intervencao minima solicitada: reconectar controle da mesma
+aba. Alternativa de validacao pelo executorCursor existente solicitada6691112770,
+sem alegar recebimento. WIP permanece fora do commit documental deste checkpoint.
+
+Revisao401/6691042172: LayoutComercialP1 continua por contraprova do mapa atual;
+rotaIntegracoes sem ProtectedSection granular e upsertConfig HTTP→local sao
+novos riscos estaticos, nao prova de bypassbackend ou persistencia homologada.
+P1remainder antigo continua encerrado. Gates finitos: contextoUI/nomes reais,
+raizLinux/WIPSetor, parecer/portCursor, auxiliares/schema/principal, backup,
+reconciliacao/carga especificamente aprovada, deploy e aceite. Proximo: validar
+snapshot7 no Linux existente apos reconexao, publicar somente quando gatesPASS;
+revisar correcao UI e comparar referencias Base44 por IDs sem inferencia.
+
+## Historico - sessao real HML aceita; contexto UI bloqueado (2026-11-06)
 
 Fornecedor HTTP publicado6b81004fc4edbf23f5b951a99c87225539a75a4f, push remoto
 conferido; CIs6462/6463 terminais SUCCESS no mesmo SHA. Reserva dos9arquivos

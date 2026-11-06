@@ -1,4 +1,67 @@
-## Continuidade vigente - Auth real HML aceito; proxima correcao UI (2026-11-06)
+## Continuidade vigente - Base44 disponivel; WIP Setor aguardando Linux (2026-11-06)
+
+HEADs reconferidos3423b4c856b (CI6464/6465 SUCCESS),4015d9a7e37
+(CI6461 SUCCESS). Desktop limpo no inicio; nenhum processo identificado usando
+o clone. Reserva backend342/6690866419, Cursor mantido exclusivo na candidata
+e UI; nao editar erpHttpSession enquanto ownership nao confirmado. Solicitacoes
+6690425383/6690489345 ainda sem recebimento/correcao observados, nao repetir
+guardas antigas como se o servidor nao tivesse sido corrigido. BackendGrupo
+ja publicado; atual bloqueio pertence ao frontend. HML100 preservada.
+
+Fonte ERP NOVO separada do legado: Base44 app68fcb5ede1b2b91deabbae52/ERP Integra,
+conta proprietaria eGrupo CPA conferidos pelo navegador autenticado. MCPreadme
+retornou UNAUTHORIZED/reautenticacao, capacidade distinta. Nao bloquear leitura
+web por esse erro. Exportacao NATIVA Produto871 eGrupoProduto91 recebida;
+evento download nao sinalizou a ferramenta, mas bytes finais no Downloads foram
+conferidos/copias privadas com hashesiguais. Diretorio privado local
+base44-recovery-20261106, fora do checkout, ACL sem heranca/apenas proprietario,
+SYSTEM/Administradores. C: tinha9GB livres; nada instalado ou copiado no HD D:.
+DoisCSV total708133bytes. Produto871IDs unicos,0codigo ausente/duplicado,
+870ativos/1inativo; classe91IDs unicos. Originais sem transformacao preservados.
+Confronto exato dos IDs:817referencias de classe sem correspondente nesse export,
+54sem classe. Nao mapear por nomes ou recriar seeds. Recibos detalhados privados,
+inclusive IDs nao resolvidos; nenhum dado real no artefato publico/Git/build.
+Matriz registros-recuperacao existente atualizada; restauracao no ERP NAO feita.
+
+WIP7 de Setor, base3b4c856b, patchSHA256
+a909abcbc2f37f10e0fe711ace0008741d2b221406ccafa9b92fa128902e7e40,
+manifesto/publicacao CODE-ONLY421/6690965286. Arquivos: app.ts (hunkSetor),
+tenantCrudService.ts, runtime02.test.ts, setor-rbac-http.test.ts,
+fornecedorHttpRemainder.js, setorRbacRemainder.js, setor-rbac-preservation.test.js.
+Reutiliza TenantCrudService/RbacGuard; opcao de autorizacao somenteSetor,
+5operacoes com contexto imutavel antes do await, wildcardglobal desabilitado.
+Helper novo e somente peel de teste necessario para verificar TODO app anterior;
+nao e servico/modulo paralelo, nao troca pins cegamente. Contraprovas rejeitam
+alteracoes extras, wiring divergente/repetido; fonte atual exige wiring unico.
+Fixture positiva ganhou permissao explicita, sem retirar assertions.
+
+Antes: HTTP cliente-only500!=403; apos:13PASS focoHTTP/runtime;5PASSguardas,
+35PASSraizafetada; backendcompleto611tests/573PASS0FAIL38SKIP,145731ms.
+Audit/lint/typechecks/buildserver PASS (unico aviso lint anterior preservado).
+Webbuild nao alterado reutilizado; PGHTTP usa PGlite/Auth sintetico, nao HML.
+Teste SQL autorizado continua500, nao zero/403; SQLSTATE original HML desconhecido.
+Revisao independente sem P1/P2 nos7arquivos; positivos HTTP de todas as escritas
+nao ampliados neste pacote alem dos percursos existentes. Sem DDL/grants/flags.
+
+PENDENTE exclusivamente para publicar WIP: suite raiz completa no snapshot
+Linux exato. ControleChrome Debuggerunattached; reassumir aba Codespace750
+falhou Emulation.setFocusEmulationEnabled (10s/3s). Nao repetir sem mudanca;
+pedido humano reconectar SOMENTEcontrole da aba, sem abrir/reiniciar/rebuild.
+gh/bash indisponiveis no PATH desktop; nao instalarWSL/reabrir POSIX encerrado.
+Solicitada validacao pelo executorCursor existente6691112770, recebimento nao
+comprovado. Artefatos locais inspection-code-only/setor-rbac-20261106.patch e
+.manifest.json; comparar7hashes antes de testar. Nao sobrescrever snapshots
+anteriores ou checkout alheio. HML anterior tinha janela ate14:11BRT, estado
+atual apos expiracao nao reinspecionado devido canal; nao anunciar URL util agora.
+
+Parecer401/6691042172 no5d9a7e37: mapaComercialP1 continua (contraprova executada,
+nao browser); nova rota Integracoes sem gate granular e acao upsertConfig com
+fallbacklocalHTTP sao riscos ESTATICOS, nao bypassbackend comprovado. Antiga
+guarda permanece encerrada. Proxima sequencia: raizLinux7→publicar/revisarport;
+correcaoGrupoUI→nomes/detalhes reais; fontes Base44/classes excluidas/anteriores
+porID; fornecedores/produtos pelo importador existente, sem carga operacional.
+
+## Historico - Auth real HML aceito; proxima correcao UI (2026-11-06)
 
 Publicado adapter Fornecedor6b81004fc4edbf23f5b951a99c87225539a75a4f na mesma
 branch342, remoto conferido, checkout limpo apos commit. Reserva dos9arquivos
