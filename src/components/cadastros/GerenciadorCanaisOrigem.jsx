@@ -64,7 +64,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
     || user?.role === 'admin';
   const origemQueryKey = buildParametrosOrigemQueryKey({ groupId, empresaId, actorId, sessionKey });
   const pedidosQueryKey = buildPedidosUltimosOrigemQueryKey({ groupId, empresaId, actorId, sessionKey });
-  const scopeExpected = { actorId, sessionKey };
+  const scopeExpected = { actorId, sessionKey, groupId, empresaId };
 
   const {
     data: parametros,
@@ -81,7 +81,8 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
         err.name = 'AbortError';
         throw err;
       }
-      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession(user))) {
+      const live = { ...readOrigemActorAndSession(user), groupId, empresaId };
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, live)) {
         throw new Error('PARAM_ORIGEM_STALE_SCOPE');
       }
       return rows;
@@ -108,7 +109,8 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
         err.name = 'AbortError';
         throw err;
       }
-      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession(user))) {
+      const livePed = { ...readOrigemActorAndSession(user), groupId, empresaId };
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, livePed)) {
         throw new Error('PARAM_ORIGEM_PEDIDOS_STALE_SCOPE');
       }
       return rows;

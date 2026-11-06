@@ -21,7 +21,9 @@ export function buildPedidosUltimosOrigemQueryKey(input) {
  */
 export function isParametrosOrigemScopeCurrent(expected, live) {
   return (expected?.actorId || null) === (live?.actorId || null)
-    && (expected?.sessionKey || null) === (live?.sessionKey || null);
+    && (expected?.sessionKey || null) === (live?.sessionKey || null)
+    && (expected?.groupId || null) === (live?.groupId || null)
+    && (expected?.empresaId || null) === (live?.empresaId || null);
 }
 
 /**

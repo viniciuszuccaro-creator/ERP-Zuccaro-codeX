@@ -94,18 +94,26 @@ test('KPI: carregando ou erro nunca vira zero (estado ≠ ready)', () => {
   );
 });
 
-test('resposta tardia: troca de ator/sessão invalida escopo corrente', () => {
-  const expected = { actorId: 'a1', sessionKey: 's1' };
+test('resposta tardia: troca de ator/sessão/grupo/empresa invalida escopo corrente', () => {
+  const expected = { actorId: 'a1', sessionKey: 's1', groupId: 'g1', empresaId: 'e1' };
   assert.equal(
-    isParametrosOrigemScopeCurrent(expected, { actorId: 'a1', sessionKey: 's1' }),
+    isParametrosOrigemScopeCurrent(expected, { ...expected }),
     true,
   );
   assert.equal(
-    isParametrosOrigemScopeCurrent(expected, { actorId: 'a2', sessionKey: 's1' }),
+    isParametrosOrigemScopeCurrent(expected, { ...expected, actorId: 'a2' }),
     false,
   );
   assert.equal(
-    isParametrosOrigemScopeCurrent(expected, { actorId: 'a1', sessionKey: 's2' }),
+    isParametrosOrigemScopeCurrent(expected, { ...expected, sessionKey: 's2' }),
+    false,
+  );
+  assert.equal(
+    isParametrosOrigemScopeCurrent(expected, { ...expected, groupId: 'g2' }),
+    false,
+  );
+  assert.equal(
+    isParametrosOrigemScopeCurrent(expected, { ...expected, empresaId: 'e2' }),
     false,
   );
 });
@@ -168,5 +176,7 @@ test('#544 GerenciadorCanaisOrigem: isHttpBackendMode + metricas KPI + export di
   assert.match(src, /canExportParametrosOrigemMetricas/);
   assert.match(src, /disabled=\{!podeExportarMetricas\}/);
   assert.match(src, /kpiPedidosLabel/);
+  assert.match(src, /scopeExpected = \{ actorId, sessionKey, groupId, empresaId \}/);
+  assert.match(src, /PARAM_ORIGEM_PEDIDOS_STALE_SCOPE/);
   assert.doesNotMatch(src, /function readOrigemActorAndSession\(\)\s*\{\s*const session = readErpHttpSession\(\)/);
 });

@@ -1,3 +1,30 @@
+## CURSOR — #544 tip STALE grupo/empresa + inventário fila (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#544](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/544) |
+| **Tip** | (este commit) — STALE inclui groupId/empresaId; KPI Pedido agregado; export só ready |
+| **#542** | tip `3c6c855bb` — freeze queryKey alinhado; CI em curso |
+| **#545** | tip `a8b8437ce`/`35b6f43e2` — KPI auxiliar + stats binding; CI em curso |
+| **#401** | `b888b2c00` — **não** FF #542/#544/#545 enquanto negativos/CI abertos |
+| **#589/#590** | tips CI sem fail de job (Bugbot NEUTRAL) — RelatorioQualidade / ControleAcessoLogistica |
+| Homolog | BLOCKED |
+
+### Inventário pacotes #542–#588 (estado na publicação; ≠ integrado na candidata)
+
+| Faixa | Tema | Notas |
+|-------|------|-------|
+| #542–#545 | AcoesRapidas / origem KPI / fechamento | **prioridade** — corrigir antes de FF |
+| #543,#546–#565 | Comercial filterInContext mecanico | revisado na origem; integrar só após aceite Codex + sem overlap com #542–#545 |
+| #549 | provas consumidor #544 | depende tip #544 |
+| #566–#574 | Financeiro/expedição/cadastros painéis | escopo InContext; não unificar contrato User/Audit |
+| #575–#576 | Assinatura | updateInContext |
+| #577–#581 | LiveMap / painéis cadastro | |
+| #582–#588 | Timeline / notif / governança / audit / users / segurança / acessos | **preservar contratos próprios** (User/Perfil/Audit ≠ empresa_id universal); sem fallback global |
+| #589–#590 | Qualidade / logística acesso | CI tip verde residual |
+
+**Próximo:** CI #542/#544/#545 → parecer Codex → só então composição seletiva na #401. Restauração visual/registros/Central360 mapa: após trilho crítico.
+
 ## CURSOR — #544 Param/Canais KPI Pedido pendente ≠ zero (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

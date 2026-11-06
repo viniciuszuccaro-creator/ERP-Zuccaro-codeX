@@ -66,7 +66,7 @@ export default function ParametrosOrigemPedidoTab() {
   const podeCriar = canCreate('Cadastros', 'ParametroOrigemPedido') || canCreate('Cadastros', 'Canais de Origem') || canCreate('Cadastros', null);
   const podeEditar = canEdit('Cadastros', 'ParametroOrigemPedido') || canEdit('Cadastros', 'Canais de Origem') || canEdit('Cadastros', null);
   const origemQueryKey = buildParametrosOrigemQueryKey({ groupId, empresaId, actorId, sessionKey });
-  const scopeExpected = { actorId, sessionKey };
+  const scopeExpected = { actorId, sessionKey, groupId, empresaId };
 
   const {
     data: parametros,
@@ -83,7 +83,7 @@ export default function ParametrosOrigemPedidoTab() {
         err.name = 'AbortError';
         throw err;
       }
-      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession(user))) {
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, { ...readOrigemActorAndSession(user), groupId, empresaId })) {
         throw new Error('PARAM_ORIGEM_STALE_SCOPE');
       }
       return rows;

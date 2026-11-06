@@ -1,3 +1,8 @@
+## CURSOR — #544 STALE G/E + inventário #542–#588 (2026-11-06 America/Sao_Paulo)
+- Tip #544: `isParametrosOrigemScopeCurrent` com groupId/empresaId; Gerenciador/Tab bind live; export/KPI Pedido já fail-closed.
+- #542 `3c6c855bb` freeze CI; #545 `a8b8437ce` KPI agregado. Sem FF #401 (`b888b2c00`).
+- Fila #546–#588: mecânica InContext revisável; admin/audit/users NÃO assumir mesmo modelo empresa. Homolog BLOCKED.
+
 ## CURSOR — #544 fix KPI Pedido agregado (2026-11-06 America/Sao_Paulo)
 - Pedido pendente/erro ≠ zero em card/export/insight. Homolog BLOCKED.
 
