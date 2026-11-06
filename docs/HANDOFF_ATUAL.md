@@ -1,3 +1,7 @@
+## CURSOR — #544 flake Date no Pedido print (2026-11-06 America/Sao_Paulo)
+- CI `ac9a15560` FAIL: timestamp `Documento gerado em` entre current/old. Date congelada no teste.
+- Runtime origem (#544) intacto. Sem FF #401. Homolog BLOCKED.
+
 ## CURSOR — #544 STALE G/E + inventário #542–#588 (2026-11-06 America/Sao_Paulo)
 - Tip #544: `isParametrosOrigemScopeCurrent` com groupId/empresaId; Gerenciador/Tab bind live; export/KPI Pedido já fail-closed.
 - #542 `3c6c855bb` freeze CI; #545 `a8b8437ce` KPI agregado. Sem FF #401 (`b888b2c00`).

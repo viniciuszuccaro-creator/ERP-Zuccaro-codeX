@@ -1,3 +1,13 @@
+## CURSOR — #544 tip flake print Date (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#544](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/544) |
+| **CI tip anterior** | `ac9a15560` frontend FAIL — `consumer-window-contracts` Pedido print HTML `Documento gerado em` 1s drift |
+| **Causa** | teste compara current vs remainder com `new Date()` real entre duas corridas |
+| **Fix** | congela `Date` no subteste de sucesso (sem alterar exportacaoPDF) |
+| **Homolog** | BLOCKED · sem FF #401 |
+
 ## CURSOR — #544 tip STALE grupo/empresa + inventário fila (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
