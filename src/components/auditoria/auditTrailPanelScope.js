@@ -44,7 +44,16 @@ export function normalizeAuditTrailEmpresaIds(values = []) {
     .filter(Boolean);
 }
 
-/** Filtro local adicional sobre User (defense-in-depth após filterInContext). */
+/**
+ * Filtro local adicional sobre User (defense-in-depth após filterInContext).
+ * @param {object|null|undefined} u
+ * @param {{
+ *   contexto?: string|null,
+ *   grupoAtivoId?: string|null,
+ *   empresaAtivaId?: string|null,
+ *   empresasDoGrupo?: Array<{id?: string}>,
+ * }} [opts]
+ */
 export function usuarioNoEscopoAuditTrail(u, {
   contexto,
   grupoAtivoId,
@@ -57,7 +66,9 @@ export function usuarioNoEscopoAuditTrail(u, {
     || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
   if (!temMarcacaoEscopo) return true;
   if (contexto === 'grupo') {
-    const empresasIds = (Array.isArray(empresasDoGrupo) ? empresasDoGrupo : []).map((e) => e.id);
+    const empresasIds = (Array.isArray(empresasDoGrupo) ? empresasDoGrupo : [])
+      .map((e) => (e && typeof e === 'object' ? e.id : null))
+      .filter(Boolean);
     return u.group_id === grupoAtivoId
       || u.grupo_id === grupoAtivoId
       || u.grupo_atual_id === grupoAtivoId
