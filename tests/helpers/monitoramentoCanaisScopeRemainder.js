@@ -16,5 +16,12 @@ export function monitoramentoCanaisScopeRemainder(source) {
   assert.match(normalized, /CANAIS_PEDIDOS_STALE_SCOPE/, 'composed Monitoramento tip marker');
   assert.match(normalized, /buildFechamentoQueryKey/, 'composed Monitoramento tip marker');
   assert.match(normalized, /resolveFechamentoKpiState/, 'composed Monitoramento tip marker');
+  // Fail-closed: não esconder fórmula stage45 ausente/duplicada (teste adversarial).
+  const boundary = 'agora.getTime() - ultimaAtualizacao.getTime()';
+  assert.equal(
+    normalized.split(boundary).length - 1,
+    1,
+    `Exact stage45 boundary count: MonitoramentoCanaisRealtime: ${boundary}`,
+  );
   return STAGE44;
 }

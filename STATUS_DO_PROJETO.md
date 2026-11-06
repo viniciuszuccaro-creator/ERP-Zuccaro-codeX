@@ -1,3 +1,12 @@
+## CURSOR — #401 remainder Monitoramento fail-closed adversarial (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **CI tip** | `dc4570234` FAIL — adversarial `exact boundary helper cannot hide…` |
+| **Causa** | swap stage44 escondia fórmula stage45 ausente/duplicada |
+| **Fix** | exigir 1× `agora.getTime() - ultimaAtualizacao.getTime()` antes do remainder |
+| Homolog | BLOCKED |
+
 ## CURSOR — #401 composto: remainder Monitoramento stage44 (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

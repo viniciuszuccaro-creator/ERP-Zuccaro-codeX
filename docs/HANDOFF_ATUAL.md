@@ -1,3 +1,7 @@
+## CURSOR — #401 remainder Monitoramento adversarial (2026-11-06 America/Sao_Paulo)
+- `dc4570234` FAIL: remainder full-swap ocultava fórmula ausente. Agora exige contagem exata stage45 antes do swap.
+- Homolog BLOCKED.
+
 ## CURSOR — #401 remainder Monitoramento (2026-11-06 America/Sao_Paulo)
 - CI composto FAIL: stage44/date-arithmetic em MonitoramentoCanaisRealtime.
 - Remainder autorizado + fixture stage44; testes #545 intactos. Sem FF fraco. Homolog BLOCKED.
