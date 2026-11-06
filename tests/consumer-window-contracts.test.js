@@ -53,12 +53,20 @@ test('Pedido print absent record does not open a window',()=>{
  const current=printer();assert.equal(current.run(null),false);assert.equal(current.run(undefined),false);assert.deepEqual(current.calls,[]);
 });
 test('Pedido print success returns true, severs opener and retains full original HTML and timer',()=>{
- const current=printer(),old=printer(true);assert.equal(current.run(pedido,{nome_fantasia:'Synthetic'}),true);
- assert.equal(old.run(pedido,{nome_fantasia:'Synthetic'}),undefined);
- assert.deepEqual(current.calls,old.calls);assert.equal(current.popup.opener,null);
- current.popup.onload();old.popup.onload();assert.equal(current.timers[0].delay,250);
- assert.equal(current.calls.filter(c=>c[0]==='print').length,0);
- current.timers[0].fn();old.timers[0].fn();assert.deepEqual(current.calls,old.calls);
+ // Congela o relógio: HTML embute toLocaleString; 1s entre current/old quebrava CI (#544 flake).
+ const fixedMs=Date.parse('2026-01-15T15:30:00.000Z');
+ const RealDate=globalThis.Date;
+ function FakeDate(...args){if(new.target){return args.length?Reflect.construct(RealDate,args):new RealDate(fixedMs);}return RealDate(...args);}
+ FakeDate.now=()=>fixedMs;FakeDate.parse=RealDate.parse;FakeDate.UTC=RealDate.UTC;FakeDate.prototype=RealDate.prototype;
+ globalThis.Date=FakeDate;
+ try{
+  const current=printer(),old=printer(true);assert.equal(current.run(pedido,{nome_fantasia:'Synthetic'}),true);
+  assert.equal(old.run(pedido,{nome_fantasia:'Synthetic'}),undefined);
+  assert.deepEqual(current.calls,old.calls);assert.equal(current.popup.opener,null);
+  current.popup.onload();old.popup.onload();assert.equal(current.timers[0].delay,250);
+  assert.equal(current.calls.filter(c=>c[0]==='print').length,0);
+  current.timers[0].fn();old.timers[0].fn();assert.deepEqual(current.calls,old.calls);
+ }finally{globalThis.Date=RealDate;}
 });
 test('Pedido print write failure propagates instead of returning a success receipt',()=>{
  const current=printer();current.popup.document.write=()=>{throw Error('synthetic failure');};

@@ -1,3 +1,9 @@
+## CURSOR — #401 composição #542+#544+#545 (2026-11-06 America/Sao_Paulo)
+- Base `b888b2c00` confirmada. Path-checkout dos tips `3c6c855bb` / `b3b450539` / `6c6827bed` (CI SUCCESS; Codex 11 montados).
+- #544/#545 sem ancestral comum com #401 → sem FF cego. Fornecedor WIP intocado.
+- Negativos locais 20 PASS. Homolog BLOCKED. Sem merge/deploy/VPS.
+- Fila #543/#546–#590 publicada ≠ integrada; admin/audit preservam contratos próprios.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

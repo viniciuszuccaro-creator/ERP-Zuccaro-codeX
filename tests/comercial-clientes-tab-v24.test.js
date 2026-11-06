@@ -38,7 +38,10 @@ test('AcoesRapidasGlobal: Novo Cliente exige contexto e expõe data-action', asy
   assert.match(source, /data-action="acoes-rapidas-novo"/);
   assert.match(source, /loadingPerms \|\| !user/);
   assert.match(source, /Selecione grupo ou empresa/);
-  assert.match(source, /queryKey: \['clientes', empresaAtual\?\.id/);
+  // #542: cache multi-ator — não reutilizar lista só por empresaAtual?.id
+  assert.match(source, /buildAcoesRapidasClientesQueryKey\(\{\s*groupId,\s*empresaId,\s*actorId,\s*sessionKey\s*\}\)/);
+  assert.match(source, /resolveClientesParaNovoPedido/);
+  assert.match(source, /ACOES_RAPIDAS_STALE_SCOPE/);
 });
 
 test('Visualizador V24: botão Novo Cliente usa data-action cliente-novo', async () => {

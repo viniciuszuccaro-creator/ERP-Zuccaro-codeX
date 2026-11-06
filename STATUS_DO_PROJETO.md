@@ -1,3 +1,35 @@
+## CURSOR — #401 composição #542+#544+#545 (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Candidata** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) `cursor/composicao-397-342-prep-392b` |
+| **Base pré-composição** | **`b888b2c00`** (confirmada; sem presumir update) |
+| **Fontes** | #542 tip `3c6c855bb` · #544 tip `b3b450539` · #545 tip `6c6827bed` (CI SUCCESS; recibo Codex 11 montados) |
+| **Método** | path-checkout seletivo (sem FF cego; #544/#545 órfãs vs #401) |
+| **Preservado** | Contatos/API/server · Fornecedor WIP intocado · rascunho/janela |
+| **Homolog 100** | BLOCKED |
+| Fora | merge main · deploy · VPS · seed · dados reais |
+
+### Paths compostos
+- **#542:** `AcoesRapidasGlobal` + `acoesRapidasScope` + testes multi-ator/novoPedido
+- **#544:** `parametrosOrigemScope` + Gerenciador/Tab origem + uniqueKey + flake Date print
+- **#545:** `fechamentoCacheScope` + Dashboard/Widget + Bitolas/Monitoramento (consumidores do helper) + testes KPI agregado
+
+### Validação local (este tip)
+- Foco #542/#544/#545: **20 PASS / 0 FAIL**
+- Suite consumer-window (com Date freeze): incluída · 0 FAIL
+- `git diff --check` limpo
+
+### Fila (sem abrir novos mecânicos)
+| Estado | PRs |
+|--------|-----|
+| Corrigida + CI + parecer Codex (composita agora) | #542 #544 #545 |
+| Publicada CI verde · **não** integrada nesta composição | #543 #546–#590 (InContext / admin-audit) |
+| Contratos próprios (User/Perfil/Audit ≠ empresa_id) | #582–#588 — integrar só com parecer dedicado |
+| WIP reservado | Fornecedor (#359/#580 etc.) — **não editar** |
+
+**Próximo:** CI deste composto · inventário/restauração/visual só após verde · Central360 mapa já em `docs/COMERCIAL_360.md` (layout amplo aguarda desenho).
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
