@@ -1,8 +1,14 @@
+## CURSOR — #401 tip `76cd4e299` CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- **CI SUCCESS 3/3** em `76cd4e299`: Integrações reconnect + `initialTab={null}` (typecheck).
+- Base `912bc7b0f` P1/Dashboard. Pacote Codex: `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt`.
+- Fornecedor WIP · Banco #462 rebase · Homolog BLOCKED. Sem merge/deploy/VPS.
+
 ## CURSOR — #401 pacote Codex + Integrações (2026-11-06 America/Sao_Paulo)
 - Ref HEAD docs `c63f5047e`; tip código CI `912bc7b0f` SUCCESS. Pacote: `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt`.
 - Não refazer P1 sem achado. Integrações: página vazia → `IntegracoesIndex` canônico + rota.
 - Fornecedor #467 CONFLICTING/#580 WIP — sem port. Banco #462 = cadastro mestre ≠ infra DB.
 - Cadastros servido = `pages/Cadastros.jsx`. Homolog/registros BLOCKED. Sem merge/deploy/VPS.
+- `1cd06d087` FAIL typecheck → `76cd4e299`.
 
 ## CURSOR — #401 tip `912bc7b0f` CI SUCCESS (2026-11-06 America/Sao_Paulo)
 - **CI SUCCESS 3/3** em `912bc7b0f`: P1 remainder 6684093828 + #518 Grupo + WidgetFechamento recuperado + peel Dashboard.

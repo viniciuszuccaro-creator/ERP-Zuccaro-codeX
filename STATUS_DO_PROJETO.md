@@ -1,3 +1,18 @@
+## CURSOR — #401 Integrações + pacote Codex CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) |
+| **Tip CI** | **`76cd4e299`** · **CI SUCCESS 3/3** (typecheck `initialTab` + reconnect Integrações) |
+| **Base código** | `912bc7b0f` CI SUCCESS — P1+#518+Dashboard; docs ref `c63f5047e` |
+| **Pacote Codex** | `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt` — **não** refazer P1 sem achado |
+| **Recuperação** | `Integracoes.jsx` → `IntegracoesIndex` (`initialTab={null}`) + rota |
+| **Visual** | servido = `Cadastros.jsx`; PageLayout órfão ≠ canônico |
+| **Deps** | Fornecedor #467/#580 WIP · Banco #462 rebase · Homolog BLOCKED |
+| Fora | merge main · deploy · VPS · seed · dados reais |
+
+**Próximo:** parecer Codex · liberar WIP Fornecedor · rebase #462 · próximo desconectado da matriz.
+
 ## CURSOR — #401 revisão Codex + Integrações reconnect (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -7,6 +22,7 @@
 | **Pacote Codex** | `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt` — SHA/diff/testes; **não** refazer P1 sem achado |
 | **Dashboard aceite** | Widget+rota+RBAC Comercial+KPI ≠ zero+pin Dashboard preservado |
 | **Recuperação lote** | `pages/Integracoes.jsx` → `IntegracoesIndex` canônico (Admin); rota `pages.config`; sem shell paralelo |
+| **CI `1cd06d087`** | FAIL typecheck TS2741 `initialTab` → fix `76cd4e299` |
 | **Visual** | superfície servida = `pages/Cadastros.jsx` (cores categoria); PageLayout órfão ≠ alterar canônico |
 | **Fornecedor** | #467 CONFLICTING + #580 WIP — **bloquear port** até liberar reserva |
 | **Banco #462** | cadastro mestre `BancoForm` (≠ infra DB); base desalinhada — rebase antes |

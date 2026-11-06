@@ -9,6 +9,8 @@ Tip código CI SUCCESS 3/3: 912bc7b0f90a83a358ca775c4f3d13164f20c497
   run: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/42235589755
 Docs HEAD (STATUS/HANDOFF): c63f5047e6875fc2ebeb56ef23c46b630befda1d
   run: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/42236569232 (SUCCESS)
+Tip Integrações reconnect CI SUCCESS 3/3: 76cd4e2997f8467afebaf361cecb0f35b517a394
+  (initialTab={null}; pages/Integracoes → IntegracoesIndex)
 
 P1 isolado (também CI SUCCESS 3/3): 730d413985d87db1484fcf706830cf8fc3ac0f3e
   parecer origem: Codex 6684093828
