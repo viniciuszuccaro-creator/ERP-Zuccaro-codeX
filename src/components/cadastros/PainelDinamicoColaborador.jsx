@@ -16,36 +16,117 @@ import {
   Award
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  resolvePainelColaboradorKpiState,
+  isPainelColaboradorScopeCurrent,
+  painelColaboradorKpiLabel,
+} from "./painelDinamicoColaboradorScope";
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ * Ponto/Ferias/OrdemProducao via filterInContext; KPI loading/erro ≠ lista vazia.
  */
 export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose, windowMode = false }) {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const painelAberto = Boolean(isOpen || windowMode);
+  const colaboradorId = colaborador?.id || null;
+  const sessionSnapshot = readErpHttpSession();
+  const actorId = typeof sessionSnapshot?.actorId === "string" && sessionSnapshot.actorId.trim()
+    ? sessionSnapshot.actorId.trim()
+    : null;
+  const sessionKey = central360SessionKey(sessionSnapshot?.token);
+  const scopeExpected = { actorId, sessionKey };
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const nextActor = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId: nextActor, sessionKey: central360SessionKey(session?.token) };
+  };
+  const queriesEnabled = Boolean(colaboradorId) && painelAberto && contextoValido;
 
-  const { data: pontos = [] } = useQuery({
-    queryKey: ['pontos-colaborador', colaborador?.id],
-    queryFn: () => base44.entities.Ponto.filter({ colaborador_id: colaborador.id }, '-data'),
-    enabled: !!colaborador?.id,
+  const pontosQuery = useQuery({
+    queryKey: ['pontos-colaborador', colaboradorId, groupId, empresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Ponto', { colaborador_id: colaboradorId }, '-data');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_COLABORADOR_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelColaboradorScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_COLABORADOR_PONTO_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: ferias = [] } = useQuery({
-    queryKey: ['ferias-colaborador', colaborador?.id],
-    queryFn: () => base44.entities.Ferias.filter({ colaborador_id: colaborador.id }, '-data_solicitacao'),
-    enabled: !!colaborador?.id,
+  const feriasQuery = useQuery({
+    queryKey: ['ferias-colaborador', colaboradorId, groupId, empresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Ferias', { colaborador_id: colaboradorId }, '-data_solicitacao');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_COLABORADOR_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelColaboradorScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_COLABORADOR_FERIAS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
 
-  const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ops-colaborador', colaborador?.id],
-    queryFn: () => base44.entities.OrdemProducao.filter({ operador_responsavel_id: colaborador.id }, '-data_emissao'),
-    enabled: !!colaborador?.id,
+  const opsQuery = useQuery({
+    queryKey: ['ops-colaborador', colaboradorId, groupId, empresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('OrdemProducao', { operador_responsavel_id: colaboradorId }, '-data_emissao');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_COLABORADOR_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelColaboradorScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_COLABORADOR_OPS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: queriesEnabled,
   });
+
+  const pontosKpi = resolvePainelColaboradorKpiState({
+    painelAberto, contextoValido, colaboradorId,
+    isLoading: pontosQuery.isLoading, isError: pontosQuery.isError,
+    isFetching: pontosQuery.isFetching, dataDefined: pontosQuery.data !== undefined,
+  });
+  const feriasKpi = resolvePainelColaboradorKpiState({
+    painelAberto, contextoValido, colaboradorId,
+    isLoading: feriasQuery.isLoading, isError: feriasQuery.isError,
+    isFetching: feriasQuery.isFetching, dataDefined: feriasQuery.data !== undefined,
+  });
+  const opsKpi = resolvePainelColaboradorKpiState({
+    painelAberto, contextoValido, colaboradorId,
+    isLoading: opsQuery.isLoading, isError: opsQuery.isError,
+    isFetching: opsQuery.isFetching, dataDefined: opsQuery.data !== undefined,
+  });
+
+  const pontos = pontosKpi === 'ready' && Array.isArray(pontosQuery.data) ? pontosQuery.data : [];
+  const ferias = feriasKpi === 'ready' && Array.isArray(feriasQuery.data) ? feriasQuery.data : [];
+  const ordensProducao = opsKpi === 'ready' && Array.isArray(opsQuery.data) ? opsQuery.data : [];
 
   const podeEditar = hasPermission('cadastros', 'editar');
   const podeVerSalario = hasPermission('rh', 'ver_salarios');
@@ -207,7 +288,13 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
               </TabsList>
 
               <TabsContent value="ops" className="max-h-[380px] overflow-y-auto">
-                {ordensProducao.length > 0 ? (
+                {opsKpi !== 'ready' && (
+                  <div className="text-center py-8 text-slate-500">
+                    <Briefcase className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">{painelColaboradorKpiLabel(opsKpi)}</p>
+                  </div>
+                )}
+                {opsKpi === 'ready' && ordensProducao.length > 0 && (
                   <div className="space-y-2">
                     {ordensProducao.slice(0, 10).map((op) => (
                       <div key={op.id} className="p-3 bg-slate-50 rounded-lg text-sm">
@@ -235,7 +322,8 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
                       </div>
                     ))}
                   </div>
-                ) : (
+                )}
+                {opsKpi === 'ready' && ordensProducao.length === 0 && (
                   <div className="text-center py-8 text-slate-500">
                     <Briefcase className="w-12 h-12 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">Nenhuma OP registrada</p>
@@ -292,7 +380,13 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
                   Registros de Ponto
                 </h3>
 
-                {pontos.length > 0 ? (
+                {pontosKpi !== 'ready' && (
+                  <div className="text-center py-8 text-slate-500">
+                    <Clock className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">{painelColaboradorKpiLabel(pontosKpi)}</p>
+                  </div>
+                )}
+                {pontosKpi === 'ready' && pontos.length > 0 && (
                   <div className="space-y-2">
                     {pontos.slice(0, 15).map((ponto) => (
                       <div key={ponto.id} className="p-2 bg-slate-50 rounded-lg text-xs">
@@ -322,7 +416,8 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
                       </div>
                     ))}
                   </div>
-                ) : (
+                )}
+                {pontosKpi === 'ready' && pontos.length === 0 && (
                   <div className="text-center py-8 text-slate-500">
                     <Clock className="w-12 h-12 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">Nenhum ponto registrado</p>
@@ -336,7 +431,13 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
                   Histórico de Férias
                 </h3>
 
-                {ferias.length > 0 ? (
+                {feriasKpi !== 'ready' && (
+                  <div className="text-center py-8 text-slate-500">
+                    <Calendar className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">{painelColaboradorKpiLabel(feriasKpi)}</p>
+                  </div>
+                )}
+                {feriasKpi === 'ready' && ferias.length > 0 && (
                   <div className="space-y-3">
                     {ferias.slice(0, 10).map((feria) => (
                       <div key={feria.id} className="p-3 bg-slate-50 rounded-lg text-sm">
@@ -365,7 +466,8 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
                       </div>
                     ))}
                   </div>
-                ) : (
+                )}
+                {feriasKpi === 'ready' && ferias.length === 0 && (
                   <div className="text-center py-8 text-slate-500">
                     <Calendar className="w-12 h-12 mx-auto mb-2 opacity-30" />
                     <p className="text-sm">Nenhum período de férias</p>
