@@ -68,6 +68,7 @@ import Financeiro from './pages/Financeiro';
 import Fiscal from './pages/Fiscal';
 import Home from './pages/Home';
 import HubAtendimento from './pages/HubAtendimento';
+import Integracoes from './pages/Integracoes';
 import OrcamentoSite from './pages/OrcamentoSite';
 import PortalCliente from './pages/PortalCliente';
 import Producao from './pages/Producao';
@@ -100,6 +101,7 @@ export const PAGES = {
     "Fiscal": Fiscal,
     "Home": Home,
     "HubAtendimento": HubAtendimento,
+    "Integracoes": Integracoes,
     "OrcamentoSite": OrcamentoSite,
     "PortalCliente": PortalCliente,
     "Producao": Producao,

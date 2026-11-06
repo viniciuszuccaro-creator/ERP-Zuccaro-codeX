@@ -102,6 +102,12 @@ abertos/orçamentos → verificações → fechados → produção, entrega ou r
 | Bots respeitam preço/estoque/crédito/RBAC/aprovação | contrato a amarrar; exceções → atendimento |
 
 ### Próximo executável
-1. ~~Fechar CI+aceite #542/#544/#545~~ → compostos em #401 (`4f76d3de3` / CI `d44ad52cb`); P1 remainder 6684093828 em tip `730d41398`+.
-2. CI própria do tip composto atual; parecer Codex do P1; ports #467/#462 só com WIP/base liberados.
-3. Desenho visual da Central — só após aprovação; até lá só contratos/correções.
+1. ~~CI #542+#544+#545 + P1+Dashboard~~ → tip código `912bc7b0f` CI SUCCESS; pacote Codex em `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt`.
+2. Ports #467/#580 Fornecedor só após liberar WIP; #462 Banco (cadastro mestre ≠ infra DB) após rebase na candidata.
+3. Desenho visual da Central — só após aprovação; até lá contratos/mapa abaixo.
+
+### Contratos a preservar no desenho (sem tela paralela)
+- Persistência: `createHttpApiClient().orcamentos` / pedidos canônicos — sem Base44 como fonte oficial.
+- Rascunho: abrir painéis (histórico/crédito/estoque/entregas) sem perder itens/totais da sessão.
+- Ações de etapa: Incluir item · Salvar · Avançar · Voltar — mesmos rodapés do form existente.
+- Bots/canais: consumidores; exceções → atendimento humano; não marcar integração futura como funcional.

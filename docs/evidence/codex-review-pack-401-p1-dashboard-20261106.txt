@@ -1,0 +1,61 @@
+Pacote revisão Codex — #401 P1 + Dashboard recuperação (2026-11-06 America/Sao_Paulo)
+======================================================================================
+PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401
+Branch: cursor/composicao-397-342-prep-392b
+
+SHA para revisão independente (código CI)
+-----------------------------------------
+Tip código CI SUCCESS 3/3: 912bc7b0f90a83a358ca775c4f3d13164f20c497
+  run: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/42235589755
+Docs HEAD (STATUS/HANDOFF): c63f5047e6875fc2ebeb56ef23c46b630befda1d
+  run: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/42236569232 (SUCCESS)
+
+P1 isolado (também CI SUCCESS 3/3): 730d413985d87db1484fcf706830cf8fc3ac0f3e
+  parecer origem: Codex 6684093828
+
+Não refazer o pacote P1 sem achado novo. Pacote já publicado + contraprovas.
+
+Diff autorizado (arquivos)
+--------------------------
+P1 730d41398:
+  tests/helpers/monitoramentoCanaisScopeRemainder.js
+  tests/fixtures/monitoramento-canais-realtime-authorized-composed.jsx
+  tests/monitoramento-canais-scope-remainder-p1.test.js
+  STATUS_DO_PROJETO.md / docs/HANDOFF_ATUAL.md
+
+Recuperação Dashboard + #518 (1cff58e25) + peel (912bc7b0f):
+  src/pages/Dashboard.jsx                    — WidgetFechamento lazy + RBAC canSeeComercial
+  src/pages/DashboardFechamentoPedidos.jsx   — wrapper (antes vazio)
+  src/pages.config.js                        — rota DashboardFechamentoPedidos
+  src/components/cadastros/GrupoEmpresarialForm.jsx — filterInContext Empresa
+  tests/helpers/readBoundaryRemainder.js     — peels autorizados (pin 5b8ddf19… preservado)
+  tests/dashboard-fechamento-reconnect.test.js
+  tests/cadastros-grupo-empresarial-scope.test.js
+  tests/helpers/consolidation81Remainder.js (+ cursor-identidade)
+
+Testes locais do pacote
+-----------------------
+  node --test tests/monitoramento-canais-scope-remainder-p1.test.js
+  node --test tests/dashboard-fechamento-reconnect.test.js
+  node --test tests/browser-indicator-contracts.test.js
+  node --test tests/cadastros-grupo-empresarial-scope.test.js
+Aceite Dashboard a validar no parecer:
+  - WidgetFechamento remontado no Dashboard com canSeeComercial
+  - página DashboardFechamentoPedidos + rota pages.config
+  - openWindow do widget para o dashboard completo
+  - KPI fail-closed: loading/erro/unavailable ≠ zero
+  - restante do Dashboard preservado via peels (hash pin intacto)
+NÃO declarar recuperação total do ERP por esta entrega localizada.
+
+Dependências (sem path-checkout mecânico)
+-----------------------------------------
+Fornecedor #467 (cdd53f139) — base #401, mergeable CONFLICTING após tip;
+  WIP reservado — liberar reserva Codex antes de integrar.
+Fornecedor #580 (21bce7ffc) — PainelDinamicoFornecedor InContext; mesma reserva WIP.
+Banco #462 (71f8f5cd4) — cadastro mestre BancoForm/TipoDespesa/GrupoProduto (≠ infra DB);
+  base cursor/cadastros-usuario-grupo-centro-sky-392b — rebase/aceite antes do port.
+Fila #581–#590: publicada ≠ integrada; contratos próprios admin/audit.
+
+Homolog / registros HML
+-----------------------
+BLOCKED: leitura HML real com Codex; sem inventar contagens; dados reais fora do GitHub.

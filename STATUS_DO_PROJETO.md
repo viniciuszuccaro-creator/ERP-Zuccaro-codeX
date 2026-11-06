@@ -1,3 +1,20 @@
+## CURSOR — #401 revisão Codex + Integrações reconnect (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / HEAD docs** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) · `c63f5047e` (ref) |
+| **Tip código CI** | **`912bc7b0f`** · **CI SUCCESS 3/3** (run 42235589755) |
+| **Pacote Codex** | `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt` — SHA/diff/testes; **não** refazer P1 sem achado |
+| **Dashboard aceite** | Widget+rota+RBAC Comercial+KPI ≠ zero+pin Dashboard preservado |
+| **Recuperação lote** | `pages/Integracoes.jsx` → `IntegracoesIndex` canônico (Admin); rota `pages.config`; sem shell paralelo |
+| **Visual** | superfície servida = `pages/Cadastros.jsx` (cores categoria); PageLayout órfão ≠ alterar canônico |
+| **Fornecedor** | #467 CONFLICTING + #580 WIP — **bloquear port** até liberar reserva |
+| **Banco #462** | cadastro mestre `BancoForm` (≠ infra DB); base desalinhada — rebase antes |
+| **Homolog / registros** | BLOCKED — HML com Codex; sem inventar dados |
+| Fora | merge main · deploy · VPS · seed · path-checkout mecânico fila |
+
+**Próximo:** parecer Codex do pacote · liberar WIP Fornecedor · rebase #462 · próximo desconectado da matriz.
+
 ## CURSOR — #401 P1 + #518 + recuperação CI SUCCESS (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
