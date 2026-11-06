@@ -1,5 +1,5 @@
 ## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
-- Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · **CI SUCCESS 9/9** no tip `60096f050` (fix `b1c7ed6b5`). Coord 6690425383.
+- Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip **`bdb912541`** · **CI SUCCESS 9/9**. Coord 6690425383.
 - UI Grupo: `erpHttpSession` deixa de exigir `role===admin` para visão Grupo quando `profileEmpresaId` null. Negativa cross-tenant preservada.
 - Contagens: SetorAtividade 500 isolado (`READ_COUNT_PARTIAL` + `partialCounts`); Expedição KPI erro≠zero.
 - Fornecedor HTTP: port `6b81004fc` (flag OFF). Banco #462: aceite por `boundId`+sky+ID técnico (sem regressão path-checkout).
