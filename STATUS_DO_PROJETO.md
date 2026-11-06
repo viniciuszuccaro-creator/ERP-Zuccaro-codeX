@@ -1,3 +1,16 @@
+## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tips** | parecer **`3fc45c320`** CI SUCCESS 9/9 · Chatbot menu · Separação clássica + Fechamento hub |
+| **Coord / parecer** | 6690425383 · 6691042172 fechado |
+| **Recuperação** | ChatbotAtendimento no menu (Hub keep both); SeparacaoConferencia no launchpad Expedição; Fechamento no Comercial + ProtectedSection rota; ConfiguracoesUsuario ≠ falso bloqueio Sistema |
+| **Homolog** | BLOCKED dados reais — Codex validar seletor no tip CI verde |
+| Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
+
+**Próximo:** CI deste tip · Codex HML · C360 prep sem redesign · próximo desconectado matriz.
+
 ## CURSOR — parecer 6691042172 + Setor RBAC + HML (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

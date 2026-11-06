@@ -117,6 +117,8 @@ function LayoutContent({ children, currentPageName }) {
     PortalCliente: 'Portal',
     OrcamentoSite: 'Comercial',
     EntregasMobile: 'Expedição',
+    // Preferências do próprio usuário (footer/avatar) — não auditar como Sistema.
+    ConfiguracoesUsuario: 'ConfiguracoesUsuario',
   };
   const moduleName = pageToModule?.[currentPageName] || 'Sistema';
               // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado
@@ -1295,6 +1297,8 @@ function LayoutContent({ children, currentPageName }) {
 
   useEffect(() => {
     if (!moduleName) return;
+    // Self-service: ConfiguracoesUsuario não exige módulo Sistema.
+    if (currentPageName === 'ConfiguracoesUsuario' || moduleName === 'ConfiguracoesUsuario') return;
     const key = `audit_block_${moduleName}`;
     try {
       const allowed = hasPermission(moduleName, null, 'ver');

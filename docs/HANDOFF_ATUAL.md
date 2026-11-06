@@ -1,8 +1,8 @@
-## CURSOR — parecer 6691042172 + Setor RBAC + Chatbot menu (2026-11-06 America/Sao_Paulo)
-- Tip funcional **`3fc45c320`** · PR #591 · **CI SUCCESS 9/9** (+ append Chatbot menu).
-- Coord **6690425383** confirmada; parecer **6691042172** fechado.
-- Layout: `DashboardFechamentoPedidos`→Comercial; `/Integracoes` ProtectedSection; ChatbotAtendimento no menu (keep both Hub).
-- `upsertConfig` fail-closed fora do local; Setor RBAC `221b6822a`. Homolog BLOCKED. Sem merge/deploy/VPS.
+## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
+- PR #591 · tip parecer **`3fc45c320`** CI SUCCESS 9/9 · appends Chatbot/Separação/Fechamento.
+- Coord **6690425383**; parecer **6691042172** fechado.
+- Recuperação: ChatbotAtendimento menu; SeparacaoConferencia (keep both IA); Fechamento no Comercial + rota ProtectedSection; ConfiguracoesUsuario sem falso audit Sistema.
+- Homolog BLOCKED. Sem merge/deploy/VPS/redesign C360.
 
 ## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
 - Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip **`bdb912541`** · **CI SUCCESS 9/9**. Coord 6690425383.

@@ -1,5 +1,6 @@
 import React from 'react';
 import DashboardFechamentoPedidos from '@/components/comercial/DashboardFechamentoPedidos';
+import ProtectedSection from '@/components/security/ProtectedSection';
 
 /**
  * Página canônica do dashboard de fechamento.
@@ -8,8 +9,10 @@ import DashboardFechamentoPedidos from '@/components/comercial/DashboardFechamen
  */
 export default function DashboardFechamentoPedidosPage() {
   return (
-    <div className="w-full h-full p-4 md:p-6">
-      <DashboardFechamentoPedidos />
-    </div>
+    <ProtectedSection module="Comercial" section="Fechamento" action="visualizar">
+      <div className="w-full h-full p-4 md:p-6" data-permission="Comercial.Fechamento.visualizar">
+        <DashboardFechamentoPedidos />
+      </div>
+    </ProtectedSection>
   );
 }

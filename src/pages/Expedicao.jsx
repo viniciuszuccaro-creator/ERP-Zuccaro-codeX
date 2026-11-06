@@ -193,6 +193,18 @@ export default function Expedicao() {
       width: 1400,
       height: 850,
     },
+    // Matriz keep both curto: clássica permanece disponível (não só a variante IA).
+    {
+      title: 'Separação Conferência',
+      sectionKey: 'Separação',
+      description: 'Conferência operacional',
+      icon: Package,
+      color: 'blue',
+      component: SeparacaoConferencia,
+      windowTitle: '📦 Separação Conferência',
+      width: 1400,
+      height: 850,
+    },
     {
       title: 'Romaneios',
       description: 'Gestão de cargas',
