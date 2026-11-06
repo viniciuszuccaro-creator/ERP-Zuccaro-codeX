@@ -1,3 +1,6 @@
+## CURSOR — #586 UsuariosTab CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #586 tip `c8cf62ca5` CI **SUCCESS 6/6**. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — UsuariosTab InContext (2026-11-05 America/Sao_Paulo)
 - User/PerfilAcesso/Empresa via filterInContext; sem fallback list; STALE_SCOPE.
 - Homolog BLOCKED. FF #401 aguarda Codex.
