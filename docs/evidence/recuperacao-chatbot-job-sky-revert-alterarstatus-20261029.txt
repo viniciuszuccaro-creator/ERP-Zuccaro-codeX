@@ -1,0 +1,8 @@
+Pacote B paralelo #428 — alinhar a #409 (sky+ID sem alterarStatus)
+
+## 2026-10-29 17:55 America/Sao_Paulo
+- Reverte alterarStatus no switch Intent Ativa (quebra pin e36231b3).
+- Remove remainder/assert aditivo do cursor-callback-record-state.
+- Mantém windowMode sky + ID técnico (JobAgendado intacto).
+- Preferir merge via #409 (base com ancestry publication-baseline).
+- Candidata #401 tip 686ae322 intacta.

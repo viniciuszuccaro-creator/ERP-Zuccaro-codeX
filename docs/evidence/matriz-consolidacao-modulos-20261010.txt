@@ -63,3 +63,10 @@ Não apagar por nome parecido; sem terceiro módulo substituto.
 
 ## Recuperado
 NÃO legado · SYNTH≠recuperado · #211 Codex Legado
+
+## Atualização Pacote B ChatbotIntent/JobAgendado (2026-10-29)
+| origem | destino | decisão |
+|---|---|---|
+| ChatbotIntent windowMode sem gradient/ID | ChatbotIntentForm existente | sky gradient + ID técnico |
+| JobAgendado windowMode sem gradient/ID | JobAgendadoForm existente (reopen intacto) | sky gradient + ID técnico |
+Branch `cursor/recuperacao-chatbot-job-sky-392b` — fora tip #401 até aceite.
