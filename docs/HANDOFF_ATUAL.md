@@ -1,3 +1,6 @@
+## CURSOR — #588 GestaoAcessosIndex CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- #588 tip `675857ae3` CI **SUCCESS 6/6**. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — GestaoAcessosIndex InContext (2026-11-05 America/Sao_Paulo)
 - Sem User/Perfil list; STALE_SCOPE; KPI 0 ≠ ready. Homolog BLOCKED.
 

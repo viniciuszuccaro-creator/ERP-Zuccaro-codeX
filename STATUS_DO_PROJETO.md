@@ -1,3 +1,12 @@
+## CURSOR — #588 GestaoAcessosIndex CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #588 `675857ae3` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#588 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #588 GestaoAcessosIndex InContext (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
