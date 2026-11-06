@@ -1,3 +1,12 @@
+## CURSOR — #584 PainelGovernanca CI fix consumer-window (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #584 |
+| **Fix** | remainder baseline stage60 + optional metadata via remainder |
+| **Testes** | consumer-window + governanca-painel-scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — PainelGovernanca escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

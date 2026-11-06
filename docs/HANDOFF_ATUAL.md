@@ -1,3 +1,6 @@
+## CURSOR — #584 PainelGovernanca CI fix (2026-11-05 America/Sao_Paulo)
+- Remainder consumer-window stage60. Homolog BLOCKED.
+
 ## CURSOR — PainelGovernanca escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/governanca-painel-scope-392b` ← #401.
 - filterInContext GovernancaEmpresa; KPI ≠ zeros. Testes 2 PASS. Homolog BLOCKED.
