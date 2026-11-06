@@ -6,10 +6,30 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuditDetailsDialog from "./AuditDetailsDialog";
+import {
+  resolveAuditTrailKpiState,
+  isAuditTrailScopeCurrent,
+  buildAuditTrailLogsQueryKey,
+  buildAuditTrailUsersQueryKey,
+  usuarioNoEscopoAuditTrail,
+} from "./auditTrailPanelScope";
 
+function readAuditTrailActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
+
+/**
+ * AuditLog/User via filterInContext; lista vazia ≠ ready em loading/erro.
+ */
 export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = null }) {
   const { getFiltroContexto, contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
   const { isAdmin, user, hasPermission } = usePermissions();
@@ -24,31 +44,11 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
     hasPermission('Sistema', 'Logs', 'visualizar');
 
   const filtroBase = getFiltroContexto("empresa_id", true) || {};
-  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
-  })();
-  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
-  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
-
-  const usuarioNoEscopo = (u) => {
-    if (!u) return false;
-    const vinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
-    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
-    if (!temMarcacaoEscopo) return true;
-    if (contexto === 'grupo') {
-      const empresasIds = empresasDoGrupo.map((e) => e.id);
-      return u.group_id === grupoAtivoId ||
-        u.grupo_id === grupoAtivoId ||
-        u.grupo_atual_id === grupoAtivoId ||
-        vinculadas.some((id) => empresasIds.includes(id));
-    }
-    return u.empresa_id === empresaAtivaId ||
-      u.empresa_atual_id === empresaAtivaId ||
-      vinculadas.includes(empresaAtivaId);
-  };
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'grupo' ? null : (empresaAtual?.id || null);
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey } = readAuditTrailActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
 
   const filtro = useMemo(() => {
     const f = { ...filtroBase };
@@ -62,26 +62,61 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
     return f;
   }, [filtroBase, modulo, entidade, escopo, user, isAdmin, usuarioId]);
 
-  const { data: logs = [] } = useQuery({
-    queryKey: ["audit-logs", filtro, limit, scopeKey, contexto],
-    queryFn: async () => {
+  const logsQuery = useQuery({
+    queryKey: buildAuditTrailLogsQueryKey({
+      groupId, empresaId, actorId, sessionKey, filtro, limit,
+    }),
+    queryFn: async ({ signal }) => {
       const { group_id, empresa_id, ...criterios } = filtro;
       const rows = await filterInContext('AuditLog', criterios, "-data_hora", limit);
+      if (signal?.aborted) {
+        const err = new Error('AUDIT_TRAIL_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isAuditTrailScopeCurrent(scopeExpected, readAuditTrailActorAndSession())) {
+        throw new Error('AUDIT_TRAIL_STALE_SCOPE');
+      }
       return rows;
     },
-    enabled: canViewAudit && scopeKey !== 'sem-contexto',
+    enabled: canViewAudit && contextoValido,
     staleTime: 3000,
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['admin-users', scopeKey],
-    queryFn: async () => {
-      const rows = await base44.entities.User.list();
-      return rows.filter(usuarioNoEscopo);
+  const usersQuery = useQuery({
+    queryKey: buildAuditTrailUsersQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('User', {}, 'full_name', 500);
+      if (signal?.aborted) {
+        const err = new Error('AUDIT_TRAIL_USERS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isAuditTrailScopeCurrent(scopeExpected, readAuditTrailActorAndSession())) {
+        throw new Error('AUDIT_TRAIL_STALE_SCOPE');
+      }
+      return (Array.isArray(rows) ? rows : []).filter((u) => usuarioNoEscopoAuditTrail(u, {
+        contexto,
+        grupoAtivoId: groupId,
+        empresaAtivaId: empresaId,
+        empresasDoGrupo,
+      }));
     },
-    enabled: canViewAudit && isAdmin() && scopeKey !== 'sem-contexto',
+    enabled: canViewAudit && isAdmin() && contextoValido,
     staleTime: 60000,
   });
+
+  const kpiState = resolveAuditTrailKpiState({
+    canView: canViewAudit,
+    contextoValido,
+    isLoading: logsQuery.isLoading,
+    isError: logsQuery.isError,
+    isFetching: logsQuery.isFetching,
+    dataDefined: logsQuery.data !== undefined,
+  });
+  const logs = kpiState === 'ready' && Array.isArray(logsQuery.data) ? logsQuery.data : [];
+  const users = Array.isArray(usersQuery.data) ? usersQuery.data : [];
+  const listaIndisponivel = kpiState !== 'ready';
 
   useEffect(() => {
     const unsubscribe = base44.entities.AuditLog.subscribe(() => {
@@ -138,7 +173,13 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {logs.length === 0 ? (
+            {listaIndisponivel ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-slate-500 py-6">
+                  {kpiState === 'loading' ? 'Carregando eventos…' : kpiState === 'error' ? 'Erro ao carregar eventos.' : 'Contexto indisponível.'}
+                </TableCell>
+              </TableRow>
+            ) : logs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-slate-500 py-6">
                   Nenhum evento encontrado.
