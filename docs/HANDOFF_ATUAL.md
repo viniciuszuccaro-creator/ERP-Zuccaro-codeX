@@ -1,3 +1,7 @@
+## CURSOR — #583 NotificationCenter CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #583 tip `99c8fc66f` CI **SUCCESS 6/6**.
+- #584 fix em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — #583 NotificationCenter frozen-SHA fix (2026-11-05 America/Sao_Paulo)
 - Remainder no shared-query preserva SHA congelado tip d312fbcd. Homolog BLOCKED.
 

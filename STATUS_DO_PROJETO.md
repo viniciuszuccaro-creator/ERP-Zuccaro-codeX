@@ -1,3 +1,12 @@
+## CURSOR — #583 NotificationCenter CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #583 `99c8fc66f` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#583 SUCCESS · #584 fix `965f14c3b` em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #583 NotificationCenter frozen-SHA fix (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
