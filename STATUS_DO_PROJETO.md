@@ -2,21 +2,17 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Tips** | parecer **`3fc45c320`** CI SUCCESS 9/9 · Chatbot · Separação/Fechamento · Empresas unify |
+| **Branch / HEAD / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · **`792e265f1`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 3/3** (push+PR) |
+| **Tips verdes** | parecer **`3fc45c320`** · hash **`a670ec7cc`** · 404 **`e7926b4a2`** · docs **`0d51`/`4146`/`792e`** |
 | **Coord / parecer** | 6690425383 · 6691042172 fechado |
-| **Recuperação** | Chatbot menu; SeparacaoConferencia keep both; Fechamento Comercial+rota; ConfiguracoesUsuario ≠ Sistema |
-| **Unificação** | Empresas×Cadastros: canônico EmpresaForm; KPIs Empresas preservados + banner |
-| **C360 prep** | `docs/evidence/comercial360-prep-slots-orcamentos-20261106.txt` — slots mapeados sem redesign |
-| **Homolog** | BLOCKED dados reais |
+| **Recuperação** | Chatbot menu; SeparacaoConferencia keep both; Fechamento Comercial+rota; ConfiguracoesUsuario ≠ Sistema; 404 aliases |
+| **Unificação** | Empresas×Cadastros: EmpresaForm canônico; KPIs preservados + banner |
+| **C360 prep** | evidence slots Orçamentos — sem redesign |
+| **Homolog** | BLOCKED dados reais — Codex validar seletor no tip **`792e265f1`** / **`e7926b4a2`** |
 | Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
 
-**CI:**
-- tips `c9ef`/`c6ba8` FAIL = hash Chatbot → fix **`a670ec7cc`** push **CI SUCCESS 3/3**
-- **`e7926b4a2`** (404) push **CI SUCCESS 3/3**
-- PR run `e792` flake backend postgres `LEGACY_RECONCILIATION_REQUIRED` (runtime04 legado) — fora do diff HML; push verde
-- HEAD docs **`0d51ab30a`** CI em curso
-**Próximo:** CI HEAD · Codex HML seletor no tip verde · próximo desconectado matriz.
+**CI note:** `c9ef`/`c6ba8` FAIL = hash Chatbot (fix `a670`); flake legado runtime04 ocasional em PR — push verde prevalece.
+**Próximo:** Codex HML seletor · próximo desconectado matriz.
 
 ## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
 
