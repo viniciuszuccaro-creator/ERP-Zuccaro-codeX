@@ -1,4 +1,36 @@
-## Continuidade vigente - pool compartilhado explicito, HML ainda sem READY (2026-11-06)
+## Continuidade vigente - preflight PG real comprovado, Auth/browser pendentes (2026-11-06)
+
+Tres commits funcionais publicados e CIs terminais:9b5de2bc/6444SUCCESS,
+2f588154/6448SUCCESS,f51376fa/6450SUCCESS. Checkout desktop limpo apos publicacao;
+Codex nao editou branch/composicao Cursor. Sem merge/deploy/carga operacional.
+PG HML existente: preflight real do client.ts publicado (blob
+4e10224a97ec10a584c89e1a9d4295e675999a5c) PASS. Descriptor existente conferido
+ANTES de start: imagem/mounts privados fixados, rede none/0portas/rootfsreadonly.
+DB/schema/role efetivos conferidos por metadados; roles login/execucao passaram
+NOSUPER/NOBYPASS. URLs identicas usaram MESMO pool; nada inferido de doisNULL.
+Consulta de identidade em BEGIN READ ONLY terminou ROLLBACK,0writes de negocio.
+Pool fechado, container devolvido ao estado anterior PARADO, writer.lock liberado.
+Recibo pool-preflight-f51376fa.private.json e hash ficam privados0600. Nao repetir
+carga100/replay/restore para reproduzir prova. Erro inicial do DRIVER por tsx na
+raiz ocorreu antes do corpo; loader existente no server resolveu, sem instalar.
+Colagem inicial falhou; somente symlink aninhado criado por essa tentativa foi
+conferido/removido. Checkout Codespace continua b5cb34e1 e ?? .vscode/, sem reset.
+
+Alcance real: PostgreSQL/preflight, NAO AuthHTTP, API READY ou nomes reais visiveis.
+Proximo gate concreto: canal HTTPS do Auth existente conforme proposta minima
+OPERACAO_DEV_VPS (requer aprovacao especifica da nova rota), depois sessao real,
+perfil/permissoes, Grupo/Empresa, API e navegador no namespace HML. Nao promover
+user, copiar segredo ou usar fallback operacional. Guard Grupo ja publicado;
+config privada de API ainda nao aplicada. Preservar os riscos residuais da role.
+
+Composicao401b3609bdf tem novoP1 de remainder6684093828; runtime montado anterior
+11PASS preservado. Escritor Cursor deve corrigir nova guarda e portar os3commits
+apenas apos revisao/checks, sem copiar branches. Pedido6684266093 publicado, nao
+alegar recebimento/port. Fornecedor HTTP/lotes e unidades dependem dos contratos
+HML correspondentes; nao chamar preflight de carga. Base44 segue dependencia
+separada de autenticacao, sem seeds como recuperacao de registros.
+
+## Historico - pool compartilhado explicito, HML ainda sem READY (2026-11-06)
 
 9b5de2bc/CI6444 e2f588154/CI6448 terminal SUCCESS. Reserva6684002998 somente
 server/src/db/client.ts e auth-data-connection.test.ts, mais continuidade.

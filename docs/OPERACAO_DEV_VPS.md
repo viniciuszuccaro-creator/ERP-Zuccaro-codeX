@@ -25,13 +25,18 @@ negativas de outro Grupo/perfil empresarial/permissao ausente/revogacao/sessao
 antiga. Nao autoriza novos grants ou mudancas VPS. Implementacao local no guard
 canonico e testes HTTP existentes: antes2FAIL, depois12PASS0FAIL0SKIP focados;
 backend560PASS0FAIL38SKIP. Fronteiras Auth/DB sinteticas, sem afirmar login HML.
-Proposta historica abaixo deixa de ser decisao pendente; codigo ainda precisa
-de publicacao/CI e incorporacao controlada, nao esta implantado na VPS.
+Proposta historica abaixo deixa de ser decisao pendente; codigo publicado na342
+em2f588154/CI6448 SUCCESS ainda depende de incorporacao, nao implantado na VPS.
 Lote posterior no cliente existente: URLs Auth/Data explicitamente identicas
 reutilizam um unico cliente/pool, com preflight de roles e banco/schema mantido.
 URLs distintas sobre socket continuam rejeitadas quando endereco/porta saoNULL;
-NULL=NULL nao comprova destino. Testes de factory/contexto passaram, mas ainda
-e necessario conferir descriptor, namespace e identidade fisica da HML real.
+NULL=NULL nao comprova destino. f51376fa/CI6450 SUCCESS validado depois no PG HML
+privado REAL: descriptor existente guardado antes do start, namespace/banco/role
+esperados, NOSUPER/NOBYPASS login/execucao, mesmo cliente/pool por URL identica,
+metadados em READ ONLY/ROLLBACK e0writes de negocio. Container devolvido a parado,
+lock liberado, recibo detalhado0600 fora do Git;344/6684265740 sanitizado.
+Arquivo executado igual ao blob4e10224a97ec10a584c89e1a9d4295e675999a5c.
+Isto fecha o preflight SQL nesse destino, NAO autentica sessao/HTTP nem libera API.
 HML100, backup/restauracao e historicos preservados; sem API HML READY/URL real.
 
 ### Proposta minima revisavel de canal Auth - NAO AUTORIZADA/APLICADA

@@ -1,6 +1,16 @@
 ## Continuidade vigente - pool explicito e novo P1 da composicao (2026-11-06)
 
 Fornecedor9b5de2bc/CI6444 SUCCESS e Grupo granular2f588154/CI6448 SUCCESS publicados.
+Pool f51376fa46d725cdbaaf9197611b564eb859ef44/CI6450 terminal SUCCESS.
+Preflight FISICO no PostgreSQL HML privado existente PASS (recibo344/6684265740):
+descriptor canonicamente validado, imagem/mounts fixados, rede none/0portas,
+namespace/banco/role esperados, login/execucao NOSUPER/NOBYPASS. Arquivo executado
+igual ao blob publicado4e10224a97ec10a584c89e1a9d4295e675999a5c. Um pool REAL;
+identidade consultada READ ONLY/ROLLBACK,0writes de negocio. Estado do container
+reposto a parado e lock liberado. HML100/historicos/backups nao repetidos.
+Nao e AuthHTTP, API READY ou nomes reais na interface. Proximo: gate de rota
+Auth proposto no procedimento, sessao real e port controlado na candidata.
+
 Reserva6684002998: createRuntimeDbClients existente reutiliza UM MESMO cliente
 somente quando DATABASE_URL e AUTH_DATABASE_URL sao strings explicitamente iguais.
 Nao e fallback, comparacao NULL=NULL ou relaxamento de config. Roles de login/
@@ -11,8 +21,8 @@ Teste novo antes4PASS1FAIL, depois Auth/session/data13PASS e contexto11PASS,
 0FAIL0SKIP; factory/HTTP sinteticos, nao prova fisica HML. Backend completo599:
 561PASS0FAIL38SKIP,187300.8085ms; audit/lint/typecheck/build backend PASS.
 Root2419PASS e frontend checks inalterados reutilizados; nenhum consumidor root
-le client.ts diretamente no conjunto pesquisado. Proximo: preflight real privado
-do codigo publicado, sem carga100/replay/restore, e canal Auth aprovado.
+le client.ts diretamente no conjunto pesquisado. Preflight real privado acima
+executado depois da publicacao, sem carga100/replay/restore; canal Auth pendente.
 
 401 avancou para b3609bdf (CI push6445 SUCCESS em d44ad52c, nao inferir para HEAD).
 Novo P1 executado6684093828: monitoramentoCanaisScopeRemainder devolve STAGE44
