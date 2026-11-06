@@ -1,11 +1,27 @@
+## CURSOR — #401 P1 remainder Monitoramento 6684093828 (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) |
+| **Parecer** | Codex **6684093828** — STAGE44 full-swap escondia append `OUTSIDE_AUTHORIZED_SCOPE` |
+| **Causa** | `monitoramentoCanaisScopeRemainder` validava marcadores/fórmula e devolvia STAGE44, descartando o restante do source |
+| **Fix** | igualdade integral com tip composto autorizado (`tests/fixtures/monitoramento-canais-realtime-authorized-composed.jsx`) antes de devolver STAGE44 |
+| **Contraprova** | vulnerable ACEITA `AUTHORIZED + throw OUTSIDE…` → STAGE44; fixed REJEITA |
+| **Negativos** | alteração fora · omissão · repetição · instrução extra · marcadores válidos + conteúdo indevido (`tests/monitoramento-canais-scope-remainder-p1.test.js`) |
+| **Preservado** | #542+#544+#545 · Contatos/API/server · Fornecedor WIP · stage44 hash pin |
+| **Homolog 100** | BLOCKED |
+| Fora | merge main · deploy · VPS · seed · só atualizar hash/pin |
+
+**Próximo:** CI própria deste tip · parecer Codex re-review P1 · port Fornecedor/grupo/banco só com aceite · fila #580–#590 sem path-checkout mecânico.
+
 ## CURSOR — #401 composição #542+#544+#545 CI SUCCESS (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **PR** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) |
-| **Tip CI** | **`d44ad52cb`** · **CI SUCCESS** 3/3 |
+| **Tip CI** | **`d44ad52cb`** · **CI SUCCESS** 3/3 · docs HEAD **`b3609bdf6`** |
 | **Composição** | `4f76d3de3` path-checkout #542/`3c6c855bb` + #544/`b3b450539` + #545/`6c6827bed` sobre `b888b2c00` |
-| **Remainder** | Monitoramento stage44 + fórmula stage45 fail-closed (adversarial) |
+| **Remainder** | Monitoramento stage44 + fórmula stage45 fail-closed (adversarial) — **supersedido pelo P1 6684093828** (igualdade autorizada) |
 | **Negativos locais** | 20 PASS (ator/sessão/Empresa/late/novoPedido/KPI) |
 | **Fila #580–#590** | CI origem verde · **não** integrada · #580 Fornecedor reservado |
 | **Homolog 100** | BLOCKED |

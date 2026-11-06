@@ -1,6 +1,12 @@
+## CURSOR — #401 P1 remainder 6684093828 (2026-11-06 America/Sao_Paulo)
+- Parecer Codex: STAGE44 full-swap escondia append fora do escopo.
+- Fix: igualdade exacta tip autorizado → STAGE44; vulnerable export só para contraprova.
+- Negativos: append/alter/omit/repeat/extra/markers+smuggle. Homolog BLOCKED.
+- Sem merge/deploy/VPS. Fornecedor WIP intocado.
+
 ## CURSOR — #401 composto CI SUCCESS (2026-11-06 America/Sao_Paulo)
 - Tip `d44ad52cb` **CI SUCCESS** 3/3. Integra #542+#544+#545 sobre `b888b2c00` (path-checkout).
-- Remainder Monitoramento autorizado. Fornecedor WIP intocado. Homolog BLOCKED. Sem merge/deploy/VPS.
+- Remainder Monitoramento autorizado (pré-P1). Fornecedor WIP intocado. Homolog BLOCKED. Sem merge/deploy/VPS.
 - Fila #580–#590 publicada ≠ integrada.
 
 ## CURSOR — #401 remainder Monitoramento adversarial (2026-11-06 America/Sao_Paulo)
