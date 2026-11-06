@@ -1,3 +1,12 @@
+## CURSOR — #587 SegurancaDashboard InContext (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | Remover User.list fallback; KPI fail-closed; keys multi-ator |
+| **Branch** | `cursor/admin-seguranca-dashboard-scope-392b` |
+| **Base** | tip #401 |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
