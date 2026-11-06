@@ -1,3 +1,7 @@
+## CURSOR — #580 PainelDinamicoFornecedor CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #580 tip `4f32aac0d` CI **SUCCESS 6/6**.
+- #579 SUCCESS. #581–#583 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — PainelDinamicoFornecedor escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-painel-fornecedor-scope-392b` ← #401.
 - filterInContext OrdemCompra; KPI ≠ R$0. Testes 2 PASS.

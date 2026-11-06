@@ -1,3 +1,12 @@
+## CURSOR — #580 PainelDinamicoFornecedor CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #580 `4f32aac0d` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579 SUCCESS · #581–#583 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — PainelDinamicoFornecedor escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
