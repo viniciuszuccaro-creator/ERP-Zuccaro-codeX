@@ -1,3 +1,6 @@
+## CURSOR — #542 AcoesRapidas fix ator/sessão (2026-11-06 America/Sao_Paulo)
+- queryKey multi-ator; novoPedido bloqueia loading/erro/stale. Homolog BLOCKED.
+
 ## CURSOR — #542 AcoesRapidasGlobal CI SUCCESS (2026-11-05 America/Sao_Paulo)
 - Tip `c15bf427c` **CI SUCCESS** 6/6. Cliente filterInContext; Evento via user RBAC.
 - **#522–#542** multiempresa verde. FF #401 aguarda Codex. Homolog BLOCKED.

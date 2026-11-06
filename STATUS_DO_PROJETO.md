@@ -1,3 +1,12 @@
+## CURSOR — #542 AcoesRapidas ator/sessão + fail-closed novoPedido (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | queryKey sem ator/sessão; novoPedido reutilizava clientes de outro ator |
+| **Correção** | keys multi-ator; STALE_SCOPE; resolveClientesParaNovoPedido; isHttpBackendMode |
+| **Negativos** | atorA→B mesmo G/E; loading; stale; EmpresaB chave separada |
+| **Homolog 100** | BLOCKED · FF #401 aguarda Codex |
+
 ## CURSOR — #542 AcoesRapidasGlobal CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | PR | Tip | Estado |

@@ -8,10 +8,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck, Calendar, Target, Factory, Building2 } from 'lucide-react';
+import { Plus, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
+import { isHttpBackendMode } from '@/api/base44Client';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
 import { useWindow } from '@/components/lib/useWindow';
 import { Badge } from '@/components/ui/badge';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -24,31 +27,84 @@ import TabelaPrecoFormCompleto from '@/components/cadastros/TabelaPrecoFormCompl
 import PedidoFormCompleto from '@/components/comercial/PedidoFormCompleto';
 import ContaReceberForm from '@/components/financeiro/ContaReceberForm';
 import ContaPagarForm from '@/components/financeiro/ContaPagarForm';
-import FormularioEntrega from '@/components/expedicao/FormularioEntrega';
 import OportunidadeForm from '@/components/crm/OportunidadeForm';
 import EventoForm from '@/components/agenda/EventoForm';
 import { toast } from 'sonner';
+import {
+  resolveAcoesRapidasClientesKpiState,
+  isAcoesRapidasScopeCurrent,
+  buildAcoesRapidasClientesQueryKey,
+  resolveClientesParaNovoPedido,
+} from './acoesRapidasScope';
 
 /**
- * Ações Rápidas Globais - Botão + Novo
- * Acesso rápido às ações mais comuns do sistema
- * V21.7: Integrado com Sistema de Janelas Multitarefa + Contexto Multiempresa
+ * Identidade de cache: HTTP usa sessão ERP; legado/remoto usa user.id (sem limpar token Base44).
+ */
+export function readAcoesRapidasActorAndSession(user) {
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    const actorId = (typeof session?.actorId === 'string' && session.actorId.trim())
+      || (typeof user?.id === 'string' && user.id.trim())
+      || null;
+    return {
+      actorId,
+      sessionKey: central360SessionKey(session?.token),
+    };
+  }
+  const actorId = typeof user?.id === 'string' && user.id.trim() ? user.id.trim() : null;
+  return {
+    actorId,
+    sessionKey: actorId ? `legacy-actor:${actorId}` : null,
+  };
+}
+
+/**
+ * Ações Rápidas Globais — Cliente via filterInContext; cache multi-ator; novoPedido fail-closed.
  */
 export default function AcoesRapidasGlobal() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
   const { empresaAtual, grupoAtual, estaNoGrupo, createInContext, filterInContext } = useContextoVisual();
+  const { hasPermission, isLoading: loadingPerms, user } = usePermissions();
 
-  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey } = readAcoesRapidasActorAndSession(user);
+  const scopeExpected = { actorId, sessionKey, groupId, empresaId };
 
-  // Escopo multiempresa: Cliente via filterInContext (sem list unscoped).
-  const { data: clientes = [], isError: isErrorClientesAcoes } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id || null, grupoAtual?.id || null],
-    queryFn: () => filterInContext('Cliente', {}, '-created_date', 500),
-    enabled: contextoValido,
+  const clientesQuery = useQuery({
+    queryKey: buildAcoesRapidasClientesQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Cliente', {}, '-created_date', 500);
+      if (signal?.aborted) {
+        const err = new Error('ACOES_RAPIDAS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      const live = {
+        ...readAcoesRapidasActorAndSession(user),
+        groupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+        empresaId: empresaAtual?.id || null,
+      };
+      if (!isAcoesRapidasScopeCurrent(scopeExpected, live)) {
+        throw new Error('ACOES_RAPIDAS_STALE_SCOPE');
+      }
+      return Array.isArray(rows) ? rows : [];
+    },
+    enabled: contextoValido && Boolean(actorId),
   });
 
-  const { hasPermission, isLoading: loadingPerms, user } = usePermissions();
+  const kpiState = resolveAcoesRapidasClientesKpiState({
+    contextoValido: contextoValido && Boolean(actorId),
+    isLoading: clientesQuery.isLoading,
+    isError: clientesQuery.isError,
+    isFetching: clientesQuery.isFetching,
+    dataDefined: clientesQuery.data !== undefined,
+  });
+  const clientesReady = kpiState === 'ready' && Array.isArray(clientesQuery.data)
+    ? clientesQuery.data
+    : null;
 
   const requireContexto = (label, fn) => () => {
     if (!contextoValido) {
@@ -59,23 +115,46 @@ export default function AcoesRapidasGlobal() {
   };
 
   const actionHandlers = {
-    novoPedido: requireContexto('criar pedido', () => openWindow(
-      PedidoFormCompleto,
-      {
-        clientes,
-        windowMode: true,
-        onSubmit: async (formData) => {
-          try {
-            await createInContext('Pedido', formData);
-            toast.success('✅ Pedido criado com sucesso!');
-          } catch (error) {
-            toast.error('Erro ao salvar pedido');
-          }
+    novoPedido: requireContexto('criar pedido', () => {
+      const live = {
+        ...readAcoesRapidasActorAndSession(user),
+        groupId: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+        empresaId: empresaAtual?.id || null,
+      };
+      const clientes = resolveClientesParaNovoPedido({
+        kpiState,
+        clientes: clientesReady,
+        scopeExpected,
+        scopeLive: live,
+      });
+      if (!clientes) {
+        toast.error(
+          kpiState === 'loading'
+            ? 'Aguarde o carregamento dos clientes antes de criar pedido.'
+            : kpiState === 'error'
+              ? 'Clientes indisponíveis (erro de carga ≠ zero).'
+              : 'Contexto ou sessão inválidos para criar pedido.',
+        );
+        return;
+      }
+      openWindow(
+        PedidoFormCompleto,
+        {
+          clientes,
+          windowMode: true,
+          onSubmit: async (formData) => {
+            try {
+              await createInContext('Pedido', formData);
+              toast.success('✅ Pedido criado com sucesso!');
+            } catch (error) {
+              toast.error('Erro ao salvar pedido');
+            }
+          },
+          onCancel: () => {}
         },
-        onCancel: () => {}
-      },
-      { title: '🛒 Novo Pedido', width: 1400, height: 800 }
-    )),
+        { title: '🛒 Novo Pedido', width: 1400, height: 800 }
+      );
+    }),
     novoCliente: requireContexto('criar cliente', () => openWindow(
       CadastroClienteCompleto,
       { windowMode: true },
@@ -193,8 +272,12 @@ export default function AcoesRapidasGlobal() {
             </Badge>
           )}
         </DropdownMenuLabel>
-        {isErrorClientesAcoes && (
-          <p className="px-2 py-1 text-xs text-slate-500">Clientes indisponíveis (erro de carga ≠ zero).</p>
+        {(kpiState === 'error' || kpiState === 'loading') && (
+          <p className="px-2 py-1 text-xs text-slate-500">
+            {kpiState === 'loading'
+              ? 'Carregando clientes…'
+              : 'Clientes indisponíveis (erro de carga ≠ zero).'}
+          </p>
         )}
         <DropdownMenuSeparator />
         {acoes.map((acao) => {
