@@ -1,3 +1,12 @@
+## CURSOR — #582 TimelineCliente CI fix date-arithmetic (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #582 tip fix |
+| **Fix** | remainder baseline date-arithmetic-stage21; getTime canônico no JSX |
+| **Testes** | date-arithmetic Timeline + cliente-timeline-scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — TimelineCliente escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

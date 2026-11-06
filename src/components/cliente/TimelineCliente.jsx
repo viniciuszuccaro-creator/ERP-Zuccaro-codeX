@@ -35,7 +35,6 @@ import {
   resolveTimelineClienteKpiState,
   countTimelineEventosPorModuloTipo,
   countTimelineComunicacoes,
-  diasDesdeUltimoEvento,
 } from "./timelineClienteScope";
 
 function readTimelineActorAndSession() {
@@ -431,8 +430,10 @@ export function ResumoHistorico({ clienteId }) {
   const totalPagamentos = contagemIndisponivel ? null : countTimelineEventosPorModuloTipo(eventos, "Financeiro", "Pagamento");
   const totalComunicacoes = contagemIndisponivel ? null : countTimelineComunicacoes(eventos);
 
-  const ultimoEvento = eventos[0];
-  const diasDesdeUltimo = contagemIndisponivel ? null : diasDesdeUltimoEvento(eventos);
+  const ultimoEvento = contagemIndisponivel ? null : eventos[0];
+  const diasDesdeUltimo = ultimoEvento
+    ? Math.floor((new Date().getTime() - new Date(ultimoEvento.data_evento).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
   const fmt = (n) => (n === null ? '…' : String(n));
 
   return (

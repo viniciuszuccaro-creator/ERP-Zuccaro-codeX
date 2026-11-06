@@ -1,3 +1,6 @@
+## CURSOR — #582 TimelineCliente CI fix (2026-11-05 America/Sao_Paulo)
+- Remainder baseline para date-arithmetic; InContext intacto. Homolog BLOCKED.
+
 ## CURSOR — TimelineCliente escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cliente-timeline-scope-392b` ← #401.
 - filter/create InContext HistoricoCliente; Resumo KPI ≠ zeros. Testes 2 PASS.
