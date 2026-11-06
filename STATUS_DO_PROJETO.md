@@ -1,3 +1,21 @@
+## CURSOR — #401 P1 + #518 + recuperação CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) |
+| **Tip CI** | **`912bc7b0f`** · **CI SUCCESS 3/3** (frontend+backend+compose) |
+| **P1 6684093828** | tip `730d41398` CI SUCCESS — igualdade tip autorizado → STAGE44; vulnerable ACEITA / fixed REJEITA |
+| **#518 Grupo** | `GrupoEmpresarialForm` via `filterInContext` (erro ≠ zero) |
+| **Recuperação** | WidgetFechamento no Dashboard + página/rota; remainder Dashboard peels autorizados |
+| **CI `1cff58e25`** | FAIL browser-indicator dashboard → fix `912bc7b0f` (peel, não só pin) |
+| **Fornecedor #467** | origem verde · WIP — **não** integrado |
+| **Banco #462** | base desalinhada — coordenar rebase |
+| **Visual / unificar** | cores categoria em `Cadastros.jsx`; PageLayout slate órfão ≠ canônico |
+| **Homolog 100** | BLOCKED |
+| Fora | merge main · deploy · VPS · seed · dados reais |
+
+**Próximo:** parecer Codex P1+composto · liberar WIP Fornecedor/#467 · Banco/#462 · registros HML com fonte privada.
+
 ## CURSOR — #401 P1 + #518 + recuperação fechamento (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

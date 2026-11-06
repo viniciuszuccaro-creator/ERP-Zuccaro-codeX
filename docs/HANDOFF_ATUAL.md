@@ -1,3 +1,8 @@
+## CURSOR — #401 tip `912bc7b0f` CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- **CI SUCCESS 3/3** em `912bc7b0f`: P1 remainder 6684093828 + #518 Grupo + WidgetFechamento recuperado + peel Dashboard.
+- P1 isolado `730d41398` também CI SUCCESS. Fornecedor #467 WIP. Banco #462 base desalinhada. Homolog BLOCKED.
+- Sem merge/deploy/VPS/dados reais.
+
 ## CURSOR — #401 P1 + #518 + recuperação fechamento (2026-11-06 America/Sao_Paulo)
 - P1 `730d41398` + path-checkout #518 GrupoEmpresarial InContext + WidgetFechamento no Dashboard / página wrapper.
 - Fornecedor #467 NÃO integrado (WIP). Banco #462 base desalinhada. Homolog BLOCKED.
