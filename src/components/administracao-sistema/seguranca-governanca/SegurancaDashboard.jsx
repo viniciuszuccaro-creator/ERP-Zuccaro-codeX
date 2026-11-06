@@ -1,10 +1,29 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import DashboardSeguranca from "@/components/sistema/DashboardSeguranca";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  resolveSegurancaDashboardKpiState,
+  isSegurancaDashboardScopeCurrent,
+  buildSegurancaDashboardQueryKey,
+  usuarioNoEscopoSegurancaDashboard,
+  buildSegurancaDashboardEstatisticas,
+} from "./segurancaDashboardScope";
 
+function readSegurancaDashboardActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
+
+/**
+ * User/Perfil/AuditLog via filterInContext; KPI 0 ≠ ready em loading/erro.
+ */
 export default function SegurancaDashboard() {
   const { filterInContext, createInContext, contexto, empresasDoGrupo = [], empresaAtual, grupoAtual } = useContextoVisual();
   const { isAdmin, hasPermission } = usePermissions();
@@ -12,48 +31,56 @@ export default function SegurancaDashboard() {
     isAdmin() ||
     hasPermission("Sistema", "Seguranca", "visualizar") ||
     hasPermission("Sistema", "Segurança", "visualizar");
-  const scopeKey = empresaAtual?.id || grupoAtual?.id || "sem-contexto";
-  const contextoValido = scopeKey !== "sem-contexto";
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "grupo" ? null : (empresaAtual?.id || null);
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey } = readSegurancaDashboardActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
+  const escopoOpts = {
+    contexto,
+    grupoAtivoId: groupId,
+    empresaAtivaId: empresaId,
+    empresasDoGrupo,
+  };
 
-  const usuarioNoEscopo = React.useCallback((usuario = {}) => {
-    if (!usuario) return false;
-    if (contexto === "grupo") {
-      const empresasIds = empresasDoGrupo.map((empresa) => empresa.id).filter(Boolean);
-      const vinculadas = Array.isArray(usuario.empresas_vinculadas) ? usuario.empresas_vinculadas : [];
-      return usuario.group_id === grupoAtual?.id ||
-        usuario.grupo_id === grupoAtual?.id ||
-        usuario.grupo_atual_id === grupoAtual?.id ||
-        vinculadas.some((v) => empresasIds.includes(v?.empresa_id || v?.id || v));
-    }
-    return !empresaAtual?.id ||
-      usuario.empresa_id === empresaAtual.id ||
-      usuario.empresa_atual_id === empresaAtual.id ||
-      (Array.isArray(usuario.empresas_vinculadas) && usuario.empresas_vinculadas.some((v) => (v?.empresa_id || v?.id || v) === empresaAtual.id));
-  }, [contexto, empresasDoGrupo, empresaAtual?.id, grupoAtual?.id]);
-
-  const { data } = useQuery({
-    queryKey: ["seguranca-dashboard-real", scopeKey],
+  const dashboardQuery = useQuery({
+    queryKey: buildSegurancaDashboardQueryKey({ groupId, empresaId, actorId, sessionKey }),
     enabled: canView && contextoValido,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const [usuariosRaw, perfis, auditoriaAcessos] = await Promise.all([
-        filterInContext("User", {}, "-updated_date", 500).catch(() => base44.entities.User.list("-updated_date", 500)),
+        filterInContext("User", {}, "-updated_date", 500),
         filterInContext("PerfilAcesso", {}, "-updated_date", 500),
         filterInContext("AuditLog", {}, "-data_hora", 100),
       ]);
-      const usuarios = (usuariosRaw || []).filter(usuarioNoEscopo);
-      const usuariosComPerfil = usuarios.filter((usuario) => usuario.perfil_acesso_id).length;
+      if (signal?.aborted) {
+        const err = new Error('SEGURANCA_DASHBOARD_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isSegurancaDashboardScopeCurrent(scopeExpected, readSegurancaDashboardActorAndSession())) {
+        throw new Error('SEGURANCA_DASHBOARD_STALE_SCOPE');
+      }
+      const usuarios = (Array.isArray(usuariosRaw) ? usuariosRaw : [])
+        .filter((u) => usuarioNoEscopoSegurancaDashboard(u, escopoOpts));
       return {
         usuarios,
-        perfis,
-        auditoriaAcessos,
-        estatisticas: {
-          cobertura: usuarios.length ? Math.round((usuariosComPerfil / usuarios.length) * 100) : 0,
-          totalUsuarios: usuarios.length,
-          conflitosTotal: auditoriaAcessos.filter((item) => String(item?.acao || item?.descricao || "").toLowerCase().includes("conflito")).length,
-        },
+        perfis: Array.isArray(perfis) ? perfis : [],
+        auditoriaAcessos: Array.isArray(auditoriaAcessos) ? auditoriaAcessos : [],
+        estatisticas: buildSegurancaDashboardEstatisticas(usuarios, auditoriaAcessos),
       };
     },
   });
+
+  const kpiState = resolveSegurancaDashboardKpiState({
+    canView,
+    contextoValido,
+    isLoading: dashboardQuery.isLoading,
+    isError: dashboardQuery.isError,
+    isFetching: dashboardQuery.isFetching,
+    dataDefined: dashboardQuery.data !== undefined,
+  });
+  const ready = kpiState === 'ready';
+  const data = ready ? dashboardQuery.data : null;
 
   React.useEffect(() => {
     const acao = canView ? "visualizar_dashboard_seguranca" : "bloqueio_dashboard_seguranca";
@@ -66,16 +93,18 @@ export default function SegurancaDashboard() {
         : "Bloqueio de acesso ao dashboard de seguranca por RBAC",
       severidade: canView ? "info" : "warning",
       sucesso: canView,
-      group_id: grupoAtual?.id || null,
-      grupo_id: grupoAtual?.id || null,
-      empresa_id: empresaAtual?.id || null,
+      group_id: groupId || null,
+      grupo_id: groupId || null,
+      empresa_id: empresaId,
       dados_novos: {
         contexto: contexto || "indefinido",
-        escopo: scopeKey,
+        escopo: groupId || empresaId || "sem-contexto",
         permissao: "Sistema.Seguranca.visualizar",
       },
-    }).catch(() => {});
-  }, [canView, contexto, contextoValido, createInContext, empresaAtual?.id, grupoAtual?.id, scopeKey]);
+    }).catch((error) => {
+      console.warn("Falha ao auditar dashboard de seguranca:", error);
+    });
+  }, [canView, contexto, contextoValido, createInContext, empresaId, groupId]);
 
   if (!canView) {
     return <div className="w-full h-full p-4 text-sm text-slate-500">Acesso restrito.</div>;
@@ -89,10 +118,18 @@ export default function SegurancaDashboard() {
     );
   }
 
+  if (!ready) {
+    return (
+      <div className="w-full h-full p-4 text-sm text-slate-500">
+        {kpiState === 'loading' ? 'Carregando dashboard de seguranca…' : 'Erro ao carregar dashboard de seguranca.'}
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-full" data-permission="Sistema.Seguranca.visualizar">
       <DashboardSeguranca
-        estatisticas={data?.estatisticas || { cobertura: 0, totalUsuarios: 0, conflitosTotal: 0 }}
+        estatisticas={data?.estatisticas}
         perfis={data?.perfis || []}
         usuarios={data?.usuarios || []}
         auditoriaAcessos={data?.auditoriaAcessos || []}

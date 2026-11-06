@@ -27,6 +27,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
+import { segurancaDashboardScopeRemainder } from './helpers/segurancaDashboardScopeRemainder.js';
 
 const read = path => fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 const parse = (path, source = read(path)) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
@@ -189,13 +190,15 @@ test('Timeline lazy loader uses the actual default export, retaining separate Re
 });
 
 const dashboard = 'src/components/administracao-sistema/seguranca-governanca/SegurancaDashboard.jsx';
+// #587 InContext: stage48 via remainder (delta coberto por admin-seguranca-dashboard-scope).
+const readDashboard = () => segurancaDashboardScopeRemainder(dashboard, read(dashboard));
 test('Dashboard stage48 source retained except five exact query-read hunks', () => {
-  let source = once(read(dashboard), 'const { data } = useQuery({', 'const { data = {} } = useQuery({');
+  let source = once(readDashboard(), 'const { data } = useQuery({', 'const { data = {} } = useQuery({');
   for (const field of ['estatisticas', 'perfis', 'usuarios', 'auditoriaAcessos']) source = once(source, `data?.${field} ||`, `data.${field} ||`);
   assert.equal(createHash('sha256').update(source).digest('hex'), '59a7d00ec09641022de0d1703611ffed85391bc0588d9dd65f2f3d7e52ffea09');
 });
 test('Dashboard query absent/present data renders unchanged fallbacks without authorizing a query', () => {
-  const tree = parse(dashboard);
+  const tree = parse(dashboard, readDashboard());
   const fields = ['estatisticas', 'perfis', 'usuarios', 'auditoriaAcessos'];
   const attrs = nodes(tree, node => ts.isJsxAttribute(node) && fields.includes(node.name.getText(tree)));
   assert.equal(attrs.length, 4);
