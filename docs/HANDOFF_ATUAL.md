@@ -5,7 +5,7 @@
 - Unificação: Empresas×Cadastros (EmpresaForm canônico; KPIs preservados). C360 prep: evidence slots.
 - CI: hash fix **`a670ec7cc`** + 404 **`e7926b4a2`** push **SUCCESS 3/3**; `c9ef`/`c6ba8` FAIL só hash.
 - PR flake postgres legado `LEGACY_RECONCILIATION_REQUIRED` (fora do diff) — push verde prevalece.
-- HEAD docs **`0d51ab30a`**. Homolog BLOCKED. Sem merge/deploy/VPS.
+- docs **`0d51ab30a`** SUCCESS; HEAD **`4146f04c2`**. Homolog BLOCKED. Sem merge/deploy/VPS.
 
 ## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
 - Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip **`bdb912541`** · **CI SUCCESS 9/9**. Coord 6690425383.
