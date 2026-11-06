@@ -12,7 +12,8 @@
 | Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
 
 **CI note:** `c9ef`/`c6ba8` FAIL = hash Chatbot (fix `a670`); flake legado runtime04 ocasional em PR — push verde prevalece.
-**Próximo:** Codex HML seletor · próximo desconectado matriz.
+**Append:** Expedição — `MapaRoteirizacaoIA` + `ConfigFinanceiroLogistica` reconectados ao launchpad (lazy órfãos).
+**Próximo:** CI deste tip · Codex HML seletor · próximo desconectado matriz.
 
 ## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
 

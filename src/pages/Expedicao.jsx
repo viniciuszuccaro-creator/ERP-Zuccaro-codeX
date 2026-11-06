@@ -243,6 +243,23 @@ export default function Expedicao() {
       width: 1400,
       height: 800,
     },
+    // Canônico existente desconectado do launchpad (lazy import órfão).
+    {
+      title: 'Mapa Roteirização IA',
+      sectionKey: 'Roteirizacao',
+      description: 'Mapa com otimização IA',
+      icon: Map,
+      color: 'blue',
+      component: MapaRoteirizacaoIA,
+      windowTitle: '🗺️ Mapa Roteirização IA',
+      width: 1400,
+      height: 850,
+      props: {
+        pedidosSelecionados: pedidosLista.filter((p) => (
+          Boolean(p?.empresa_id) && isPedidoStatusElegivelRomaneio(p?.status)
+        )),
+      },
+    },
     {
       title: 'Métricas Realtime',
       description: 'Monitoramento ao vivo',
@@ -283,6 +300,18 @@ export default function Expedicao() {
       windowTitle: '💸 Financeiro Logístico',
       width: 1300,
       height: 800,
+      props: { empresaId: empresaAtual?.id }
+    },
+    {
+      title: 'Config Financeiro Logística',
+      sectionKey: 'Financeiro Logistica',
+      description: 'Parâmetros financeiros',
+      icon: Settings,
+      color: 'blue',
+      component: ConfigFinanceiroLogistica,
+      windowTitle: '⚙️ Config Financeiro Logística',
+      width: 1200,
+      height: 700,
       props: { empresaId: empresaAtual?.id }
     },
     {
