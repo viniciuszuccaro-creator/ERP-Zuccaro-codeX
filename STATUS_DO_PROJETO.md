@@ -2,8 +2,8 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch / HEAD / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · **`792e265f1`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 3/3** (push+PR) |
-| **Tips verdes** | parecer **`3fc45c320`** · hash **`a670ec7cc`** · 404 **`e7926b4a2`** · docs **`0d51`/`4146`/`792e`** |
+| **Branch / HEAD / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · **`b16b4865a`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 3/3** (push+PR) |
+| **Tips verdes** | parecer **`3fc45c320`** · hash **`a670`** · 404 **`e792`** · docs **`792e`** · Expedição mapa/config **`b16b4865a`** |
 | **Coord / parecer** | 6690425383 · 6691042172 fechado |
 | **Recuperação** | Chatbot menu; SeparacaoConferencia keep both; Fechamento Comercial+rota; ConfiguracoesUsuario ≠ Sistema; 404 aliases |
 | **Unificação** | Empresas×Cadastros: EmpresaForm canônico; KPIs preservados + banner |
@@ -12,8 +12,8 @@
 | Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
 
 **CI note:** `c9ef`/`c6ba8` FAIL = hash Chatbot (fix `a670`); flake legado runtime04 ocasional em PR — push verde prevalece.
-**Append:** Expedição — `MapaRoteirizacaoIA` + `ConfigFinanceiroLogistica` reconectados ao launchpad (lazy órfãos).
-**Próximo:** CI deste tip · Codex HML seletor · próximo desconectado matriz.
+**Append:** Expedição — `MapaRoteirizacaoIA` + `ConfigFinanceiroLogistica` reconectados · tip **`b16b4865a`** **CI SUCCESS 3/3**.
+**Próximo:** Codex HML seletor · próximo desconectado matriz.
 
 ## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
 

@@ -1,9 +1,8 @@
 ## CURSOR — recuperação + Empresas unify + C360 prep (2026-11-06 America/Sao_Paulo)
-- PR #591 HEAD **`792e265f1`** · **CI SUCCESS 3/3** (push+PR).
+- PR #591 HEAD **`b16b4865a`** · **CI SUCCESS 3/3** (push+PR).
 - Coord **6690425383**; parecer **6691042172** fechado; tip parecer **`3fc45c320`** SUCCESS.
-- Recuperação: Chatbot; Separacao keep both; Fechamento hub; ConfiguracoesUsuario; 404 aliases.
+- Recuperação: Chatbot; Separacao keep both; Fechamento hub; ConfiguracoesUsuario; 404; MapaRoteirizacaoIA + ConfigFinanceiroLogistica.
 - Unificação Empresas×Cadastros + C360 prep (evidence, sem redesign).
-- Tips verdes: `a670`/`e792`/`0d51`/`4146`/`792e`. Append: MapaRoteirizacaoIA + ConfigFinanceiroLogistica no launchpad Expedição.
 - Homolog BLOCKED. Sem merge/deploy/VPS.
 
 ## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
