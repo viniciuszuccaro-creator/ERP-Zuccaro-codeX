@@ -25,6 +25,26 @@ export const readBoundaryHunks = {
     [' * @returns {{[K in keyof T]: number} & Record<string, number>}\n', '', 1],
   ],
   'src/components/lib/useOrigemPedido.jsx': [['gcTime: 10 * 60 * 1000, // 10 minutos', 'cacheTime: 10 * 60 * 1000, // 10 minutos', 1]],
+  // Recuperação #401: remontar WidgetFechamentoPedidos no Dashboard (RBAC Comercial).
+  'src/pages/Dashboard.jsx': [
+    [
+      'const WidgetFechamentoPedidos = React.lazy(() => import("@/components/comercial/WidgetFechamentoPedidos"));\n',
+      '',
+      1,
+    ],
+    [
+      '          {/* Fechamento de pedidos — recurso existente reconectado ao Dashboard */}\n' +
+        '          {canSeeComercial && (\n' +
+        '            <ErrorBoundary fallback={<div className="text-sm text-slate-500 p-3">Widget de fechamento indisponível.</div>}>\n' +
+        '              <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>\n' +
+        '                <WidgetFechamentoPedidos empresaId={empresaAtual?.id || null} />\n' +
+        '              </Suspense>\n' +
+        '            </ErrorBoundary>\n' +
+        '          )}\n\n',
+      '',
+      1,
+    ],
+  ],
 };
 export function readBoundaryRemainder(file, text) {
   const hunks = readBoundaryHunks[file];
