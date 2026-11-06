@@ -2,18 +2,18 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Branch / tip / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · tip **`3fc45c320`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 9/9** |
 | **Coord** | 6690425383 (Grupo HML) · parecer **6691042172** (Layout/Integracoes/upsertConfig) |
-| **Grupo UI** | já em tip CI `bdb912541` — `profileEmpresaId` null; sem admin-only |
+| **Grupo UI** | tip CI `bdb912541` — `profileEmpresaId` null; sem admin-only |
 | **Layout** | `pageToModule.DashboardFechamentoPedidos='Comercial'`; `Integracoes='Sistema'` |
 | **Integracoes rota** | `ProtectedSection` Sistema/Integracoes/visualizar |
 | **upsertConfig** | HTTP/remote: falha ≠ fallback entity local; local explícito preservado (`configPersistPolicy`) |
 | **Setor RBAC** | port Codex `221b6822a` — `TenantCrudService` + authorization setor_atividade |
 | **Fornecedor / Banco** | HTTP flag OFF · #462 aceite boundId+ID técnico |
-| **Homolog** | BLOCKED dados reais — tip CI para Codex validar nomes HML |
+| **Homolog** | BLOCKED dados reais — tip **`3fc45c320`** CI OK para Codex validar nomes HML |
 | Fora | merge · deploy · VPS · refazer P1 remainder · dados reais GitHub |
 
-**Próximo:** CI deste tip · Codex HML seletor · próximo desconectado matriz.
+**Próximo:** Codex HML seletor no tip `3fc45c320` · próximo desconectado matriz.
 
 ## CURSOR — HML Grupo UI + erro isolado + Fornecedor HTTP (2026-11-06 America/Sao_Paulo)
 

@@ -1,9 +1,9 @@
 ## CURSOR — parecer 6691042172 + Setor RBAC (2026-11-06 America/Sao_Paulo)
-- Coord **6690425383** confirmada no canal (Grupo HML); parecer **6691042172** fechado neste tip.
-- Layout: `DashboardFechamentoPedidos` → módulo Comercial; rota `/Integracoes` com `ProtectedSection` granular.
-- `upsertConfig`: HTTP/remote não cai em entity local; modo local explícito preservado.
-- Setor RBAC: port `221b6822a` (authorization `Cadastros/setor_atividade`). P1 remainder NÃO refeito.
-- Homolog dados reais BLOCKED. Sem merge/deploy/VPS.
+- Tip **`3fc45c320`** · PR #591 · **CI SUCCESS 9/9**.
+- Coord **6690425383** confirmada (Grupo HML); parecer **6691042172** fechado.
+- Layout: `DashboardFechamentoPedidos` → Comercial; `/Integracoes` com `ProtectedSection` granular.
+- `upsertConfig`: HTTP/remote ≠ fallback entity local; modo local explícito preservado.
+- Setor RBAC: port `221b6822a`. P1 remainder NÃO refeito. Homolog BLOCKED. Sem merge/deploy/VPS.
 
 ## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
 - Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip **`bdb912541`** · **CI SUCCESS 9/9**. Coord 6690425383.
