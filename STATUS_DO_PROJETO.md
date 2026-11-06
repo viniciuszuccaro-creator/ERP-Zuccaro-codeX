@@ -1,3 +1,12 @@
+## CURSOR — #585 AuditTrailPanel InContext (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | User.list → filterInContext; keys multi-ator; KPI fail-closed |
+| **Branch** | `cursor/auditoria-audit-trail-scope-392b` |
+| **Base** | tip #401 `cursor/composicao-397-342-prep-392b` |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
