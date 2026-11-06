@@ -1,3 +1,18 @@
+## CURSOR — #401 composição #542+#544+#545 CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) |
+| **Tip CI** | **`d44ad52cb`** · **CI SUCCESS** 3/3 |
+| **Composição** | `4f76d3de3` path-checkout #542/`3c6c855bb` + #544/`b3b450539` + #545/`6c6827bed` sobre `b888b2c00` |
+| **Remainder** | Monitoramento stage44 + fórmula stage45 fail-closed (adversarial) |
+| **Negativos locais** | 20 PASS (ator/sessão/Empresa/late/novoPedido/KPI) |
+| **Fila #580–#590** | CI origem verde · **não** integrada · #580 Fornecedor reservado |
+| **Homolog 100** | BLOCKED |
+| Fora | merge main · deploy · VPS · seed |
+
+**Próximo:** parecer Codex do composto; integrar fila só com dependência/aceite; restauração/visual/Central360 layout após desenho.
+
 ## CURSOR — #401 remainder Monitoramento fail-closed adversarial (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

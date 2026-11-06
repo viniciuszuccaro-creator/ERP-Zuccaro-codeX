@@ -1,3 +1,8 @@
+## CURSOR — #401 composto CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- Tip `d44ad52cb` **CI SUCCESS** 3/3. Integra #542+#544+#545 sobre `b888b2c00` (path-checkout).
+- Remainder Monitoramento autorizado. Fornecedor WIP intocado. Homolog BLOCKED. Sem merge/deploy/VPS.
+- Fila #580–#590 publicada ≠ integrada.
+
 ## CURSOR — #401 remainder Monitoramento adversarial (2026-11-06 America/Sao_Paulo)
 - `dc4570234` FAIL: remainder full-swap ocultava fórmula ausente. Agora exige contagem exata stage45 antes do swap.
 - Homolog BLOCKED.
