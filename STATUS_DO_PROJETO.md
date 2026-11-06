@@ -1,3 +1,12 @@
+## CURSOR — #545 tip lint fix mastersFechamentoIndisponiveis (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#545](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/545) |
+| **CI tip anterior** | `35b6f43e2` frontend FAIL — `mastersFechamentoIndisponiveis` no-undef após KPI agregado |
+| **Fix** | banner de erro usa `kpiState === 'error'` |
+| **Homolog** | BLOCKED · sem FF #401 |
+
 ## CURSOR — #545 tip KPI agregado + stats stale (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

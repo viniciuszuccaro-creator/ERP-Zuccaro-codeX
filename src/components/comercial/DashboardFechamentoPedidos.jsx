@@ -284,7 +284,7 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
 
   return (
     <Wrapper>
-      {mastersFechamentoIndisponiveis && (
+      {kpiState === 'error' && (
         <p className="text-xs text-slate-500 mb-2">Indicadores indisponíveis (erro de carga ≠ zero).</p>
       )}
       

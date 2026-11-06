@@ -1,3 +1,7 @@
+## CURSOR — #545 lint fix kpiState error banner (2026-11-06 America/Sao_Paulo)
+- CI `35b6f43e2` FAIL: `mastersFechamentoIndisponiveis` no-undef. Banner → `kpiState === 'error'`.
+- Sem FF #401. Homolog BLOCKED.
+
 ## CURSOR — #545 tip KPI agregado + stats stale (2026-11-06 America/Sao_Paulo)
 - Tip `a8b8437ce` em `cursor/comercial-fechamento-cache-392b` (#545).
 - Causa: KPI só via Pedido; auxiliares pendentes viravam 0; stats IA sem cancel/binding; keys `*-fechamento` fora de invalidateQueries(['pedidos']).
