@@ -22,19 +22,24 @@ import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { central360SessionKey } from '@/api/httpApiClient';
+import { isHttpBackendMode } from '@/api/base44Client';
 import {
   buildFechamentoQueryKey,
   isFechamentoScopeCurrent,
-  resolveFechamentoKpiState,
+  resolveFechamentoDashboardKpiState,
 } from '@/components/comercial/fechamentoCacheScope';
 
-function readFechamentoActorAndSession() {
-  const session = readErpHttpSession();
-  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
-  return {
-    actorId: actorId || null,
-    sessionKey: central360SessionKey(session?.token),
-  };
+/** HTTP: sessão ERP. Legado/remoto: sem limpar token Base44 órfão. */
+function readFechamentoActorAndSession(userId = null) {
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    const actorId = (typeof session?.actorId === 'string' && session.actorId.trim())
+      || (typeof userId === 'string' && userId.trim())
+      || null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  }
+  const actorId = typeof userId === 'string' && userId.trim() ? userId.trim() : null;
+  return { actorId, sessionKey: actorId ? `legacy-actor:${actorId}` : null };
 }
 
 /**
@@ -58,16 +63,31 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
   const scopeExpected = { actorId, sessionKey };
   const scopeKeyArgs = { groupId, empresaId: empresaCtx, actorId, sessionKey };
 
-  // Carregar estatísticas via IA
+  // Estatísticas IA — limpa na troca de Empresa/ator; cancela resposta tardia (#545).
+  const scopeLiveRef = React.useRef({ actorId, sessionKey, groupId, empresaId: empresaCtx });
+  scopeLiveRef.current = { actorId, sessionKey, groupId, empresaId: empresaCtx };
+
   React.useEffect(() => {
-    if (!contextoValido) {
-      setEstatisticasIA(null);
-      return;
-    }
-    obterEstatisticasAutomacao(empresaCtx, 7).then(stats => {
+    setEstatisticasIA(null);
+    if (!contextoValido) return undefined;
+    let cancelled = false;
+    const generation = { actorId, sessionKey, groupId, empresaId: empresaCtx };
+    obterEstatisticasAutomacao(empresaCtx, 7).then((stats) => {
+      if (cancelled) return;
+      const liveSession = readFechamentoActorAndSession();
+      const live = {
+        actorId: liveSession.actorId,
+        sessionKey: liveSession.sessionKey,
+        groupId: scopeLiveRef.current.groupId,
+        empresaId: scopeLiveRef.current.empresaId,
+      };
+      if (!isFechamentoScopeCurrent(generation, live)) return;
       setEstatisticasIA(stats);
+    }).catch(() => {
+      if (!cancelled) setEstatisticasIA(null);
     });
-  }, [empresaCtx, contextoValido]);
+    return () => { cancelled = true; };
+  }, [empresaCtx, contextoValido, groupId, actorId, sessionKey]);
 
   const fetchScoped = async (entity, signal, staleCode) => {
     const rows = await filterInContext(entity, scopeCriteria, '-created_date', 100);
@@ -76,51 +96,67 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
       err.name = 'AbortError';
       throw err;
     }
-    if (!isFechamentoScopeCurrent(scopeExpected, readFechamentoActorAndSession())) {
+    const live = {
+      ...readFechamentoActorAndSession(),
+      groupId,
+      empresaId: empresaCtx,
+    };
+    if (!isFechamentoScopeCurrent({ ...scopeExpected, groupId, empresaId: empresaCtx }, live)) {
       throw new Error(`${staleCode}_STALE_SCOPE`);
     }
     return rows;
   };
   
-  // Escopo multiempresa: sem list unscoped. Sem initialData vazio (loading ≠ zero).
+  // Namespaces raiz preservam invalidateQueries(['pedidos'|'movimentacoes'|…]) dos mutadores.
   const { data: pedidos, isLoading: isLoadingPedidos, isError: isErrorPedidosFech, isFetching: isFetchingPedidos } = useQuery({
-    queryKey: buildFechamentoQueryKey('pedidos-fechamento', scopeKeyArgs),
+    queryKey: buildFechamentoQueryKey('pedidos', { ...scopeKeyArgs, extra: 'fechamento' }),
     queryFn: ({ signal }) => fetchScoped('Pedido', signal, 'FECHAMENTO_PEDIDOS'),
     enabled: contextoValido,
   });
 
-  const { data: movimentacoes, isError: isErrorMovFech } = useQuery({
-    queryKey: buildFechamentoQueryKey('movimentacoes-fechamento', scopeKeyArgs),
+  const { data: movimentacoes, isLoading: isLoadingMov, isError: isErrorMovFech, isFetching: isFetchingMov } = useQuery({
+    queryKey: buildFechamentoQueryKey('movimentacoes', { ...scopeKeyArgs, extra: 'fechamento' }),
     queryFn: ({ signal }) => fetchScoped('MovimentacaoEstoque', signal, 'FECHAMENTO_MOV'),
     enabled: contextoValido,
   });
 
-  const { data: contas, isError: isErrorContasFech } = useQuery({
-    queryKey: buildFechamentoQueryKey('contas-receber-fechamento', scopeKeyArgs),
+  const { data: contas, isLoading: isLoadingContas, isError: isErrorContasFech, isFetching: isFetchingContas } = useQuery({
+    queryKey: buildFechamentoQueryKey('contas-receber', { ...scopeKeyArgs, extra: 'fechamento' }),
     queryFn: ({ signal }) => fetchScoped('ContaReceber', signal, 'FECHAMENTO_CR'),
     enabled: contextoValido,
   });
 
-  const { data: entregas, isError: isErrorEntregasFech } = useQuery({
-    queryKey: buildFechamentoQueryKey('entregas-fechamento', scopeKeyArgs),
+  const { data: entregas, isLoading: isLoadingEntregas, isError: isErrorEntregasFech, isFetching: isFetchingEntregas } = useQuery({
+    queryKey: buildFechamentoQueryKey('entregas', { ...scopeKeyArgs, extra: 'fechamento' }),
     queryFn: ({ signal }) => fetchScoped('Entrega', signal, 'FECHAMENTO_ENTREGAS'),
     enabled: contextoValido,
   });
 
-  const mastersFechamentoIndisponiveis = isErrorPedidosFech || isErrorMovFech
-    || isErrorContasFech || isErrorEntregasFech;
-  const kpiState = resolveFechamentoKpiState({
+  // #545: Pedido ready + auxiliar pendente ≠ Itens Baixados/Contas/Entregas 0.
+  const kpiState = resolveFechamentoDashboardKpiState({
     contextoValido,
-    isLoading: isLoadingPedidos,
-    isError: mastersFechamentoIndisponiveis,
-    isFetching: isFetchingPedidos,
-    dataDefined: pedidos !== undefined,
+    pedidosIsLoading: isLoadingPedidos,
+    pedidosIsError: isErrorPedidosFech,
+    pedidosIsFetching: isFetchingPedidos,
+    pedidosDataDefined: pedidos !== undefined,
+    movIsLoading: isLoadingMov,
+    movIsError: isErrorMovFech,
+    movIsFetching: isFetchingMov,
+    movDataDefined: movimentacoes !== undefined,
+    contasIsLoading: isLoadingContas,
+    contasIsError: isErrorContasFech,
+    contasIsFetching: isFetchingContas,
+    contasDataDefined: contas !== undefined,
+    entregasIsLoading: isLoadingEntregas,
+    entregasIsError: isErrorEntregasFech,
+    entregasIsFetching: isFetchingEntregas,
+    entregasDataDefined: entregas !== undefined,
   });
   const contagemIndisponivel = kpiState !== 'ready';
-  const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
-  const listaMov = Array.isArray(movimentacoes) ? movimentacoes : [];
-  const listaContas = Array.isArray(contas) ? contas : [];
-  const listaEntregas = Array.isArray(entregas) ? entregas : [];
+  const listaPedidos = kpiState === 'ready' && Array.isArray(pedidos) ? pedidos : [];
+  const listaMov = kpiState === 'ready' && Array.isArray(movimentacoes) ? movimentacoes : [];
+  const listaContas = kpiState === 'ready' && Array.isArray(contas) ? contas : [];
+  const listaEntregas = kpiState === 'ready' && Array.isArray(entregas) ? entregas : [];
 
   // Análise de pedidos fechados nos últimos 7 dias
   const dataLimite = new Date();

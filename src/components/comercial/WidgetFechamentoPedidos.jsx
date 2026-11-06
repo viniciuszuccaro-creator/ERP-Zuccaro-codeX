@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,19 +10,24 @@ import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { central360SessionKey } from '@/api/httpApiClient';
+import { isHttpBackendMode } from '@/api/base44Client';
 import {
   buildFechamentoQueryKey,
   isFechamentoScopeCurrent,
   resolveFechamentoKpiState,
 } from '@/components/comercial/fechamentoCacheScope';
 
-function readFechamentoActorAndSession() {
-  const session = readErpHttpSession();
-  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
-  return {
-    actorId: actorId || null,
-    sessionKey: central360SessionKey(session?.token),
-  };
+/** HTTP: sessão ERP. Legado/remoto: sem limpar token Base44 órfão. */
+function readFechamentoActorAndSession(userId = null) {
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    const actorId = (typeof session?.actorId === 'string' && session.actorId.trim())
+      || (typeof userId === 'string' && userId.trim())
+      || null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  }
+  const actorId = typeof userId === 'string' && userId.trim() ? userId.trim() : null;
+  return { actorId, sessionKey: actorId ? `legacy-actor:${actorId}` : null };
 }
 
 /**
@@ -38,18 +43,31 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
   const contextoValido = Boolean(groupId || empresaCtx);
   const scopeExpected = { actorId, sessionKey };
 
-  // Carregar estatísticas IA
+  // Estatísticas IA — limpa na troca; cancela/descarta resposta tardia (#545).
+  const scopeLiveRef = useRef({ actorId, sessionKey, groupId, empresaId: empresaCtx });
+  scopeLiveRef.current = { actorId, sessionKey, groupId, empresaId: empresaCtx };
+
   useEffect(() => {
-    if (!contextoValido) {
-      setEstatisticasIA(null);
-      return;
-    }
-    obterEstatisticasAutomacao(empresaCtx, 7).then(stats => {
+    setEstatisticasIA(null);
+    if (!contextoValido) return undefined;
+    let cancelled = false;
+    const generation = { actorId, sessionKey, groupId, empresaId: empresaCtx };
+    obterEstatisticasAutomacao(empresaCtx, 7).then((stats) => {
+      if (cancelled) return;
+      const liveSession = readFechamentoActorAndSession();
+      const live = {
+        actorId: liveSession.actorId,
+        sessionKey: liveSession.sessionKey,
+        groupId: scopeLiveRef.current.groupId,
+        empresaId: scopeLiveRef.current.empresaId,
+      };
+      if (!isFechamentoScopeCurrent(generation, live)) return;
       setEstatisticasIA(stats);
     }).catch(() => {
-      setEstatisticasIA(null);
+      if (!cancelled) setEstatisticasIA(null);
     });
-  }, [empresaCtx, contextoValido]);
+    return () => { cancelled = true; };
+  }, [empresaCtx, contextoValido, groupId, actorId, sessionKey]);
 
   // Escopo multiempresa: Pedido via filterInContext (sem list unscoped).
   // Sem initialData vazio — loading/erro ≠ zero. Cache ator/sessão/Grupo/Empresa.
@@ -59,8 +77,8 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
     isError: isErrorPedidosWidget,
     isFetching,
   } = useQuery({
-    queryKey: buildFechamentoQueryKey('pedidos-widget-fechamento', {
-      groupId, empresaId: empresaCtx, actorId, sessionKey,
+    queryKey: buildFechamentoQueryKey('pedidos', {
+      groupId, empresaId: empresaCtx, actorId, sessionKey, extra: 'widget-fechamento',
     }),
     queryFn: async ({ signal }) => {
       const rows = await filterInContext(
@@ -74,7 +92,12 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
         err.name = 'AbortError';
         throw err;
       }
-      if (!isFechamentoScopeCurrent(scopeExpected, readFechamentoActorAndSession())) {
+      const live = {
+        ...readFechamentoActorAndSession(),
+        groupId,
+        empresaId: empresaCtx,
+      };
+      if (!isFechamentoScopeCurrent({ ...scopeExpected, groupId, empresaId: empresaCtx }, live)) {
         throw new Error('WIDGET_FECHAMENTO_STALE_SCOPE');
       }
       return rows;
@@ -90,7 +113,7 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
     dataDefined: pedidos !== undefined,
   });
   const contagemIndisponivel = kpiState !== 'ready';
-  const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
+  const listaPedidos = kpiState === 'ready' && Array.isArray(pedidos) ? pedidos : [];
 
   const dataLimite = new Date();
   dataLimite.setDate(dataLimite.getDate() - 7);
@@ -174,11 +197,11 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
         {/* Estatísticas */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-white/80 p-3 rounded-lg border text-center">
-            <p className="text-xl font-bold text-green-600">{pedidosComAutomacao.length}</p>
+            <p className="text-xl font-bold text-green-600">{kpiLabel(contagemIndisponivel ? null : pedidosComAutomacao.length)}</p>
             <p className="text-xs text-slate-600">Fechados</p>
           </div>
           <div className="bg-white/80 p-3 rounded-lg border text-center">
-            <p className="text-xl font-bold text-orange-600">{pedidosProntosFechar.length}</p>
+            <p className="text-xl font-bold text-orange-600">{kpiLabel(contagemIndisponivel ? null : pedidosProntosFechar.length)}</p>
             <p className="text-xs text-slate-600">Prontos</p>
           </div>
           <div className="bg-white/80 p-3 rounded-lg border text-center">

@@ -1,3 +1,19 @@
+## CURSOR — #545 tip KPI agregado + stats stale (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#545](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/545) |
+| **Branch** | `cursor/comercial-fechamento-cache-392b` |
+| **Gap Codex** | auxiliares pendentes como 0; `obterEstatisticasAutomacao` sem cancel/binding; namespaces `*-fechamento` fora de `invalidateQueries(['pedidos'])` |
+| **Fix** | `resolveFechamentoDashboardKpiState` (Pedido+mov+CR+entregas); stats com cancel+scopeLiveRef+clear; keys `['pedidos',…,'fechamento']` |
+| **Negativos** | ator/sessão/grupo/empresa; Pedido ready+aux loading; error auxiliar; widget KPI≠0 |
+| **Testes** | `comercial-fechamento*` + dashboard/widget scope **12 PASS** |
+| **Candidata #401** | tip `b888b2c00` — **não** incorporar enquanto CI/negativos deste tip não fecharem |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** CI deste tip · fechar CI #542 (teste congelado `queryKey: ['clientes', empresaAtual?.id`) · CI #544 · inventário #546–#588.
+
 ## CURSOR — #545 fechamento cache/KPI CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
