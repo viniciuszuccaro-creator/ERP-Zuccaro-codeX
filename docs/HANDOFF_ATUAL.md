@@ -1,4 +1,8 @@
 ## CURSOR — #579 useRealtimeData CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #579 tip `1bbaabe82` CI **SUCCESS 6/6**.
+- #580 Fornecedor SUCCESS. #581–#583 em CI. Homolog BLOCKED. FF #401 aguarda Codex.
+
+## CURSOR — #579 useRealtimeData CI SUCCESS (2026-11-05 America/Sao_Paulo)
 - Tip `e2120ca98` SUCCESS. Lote #566–#579 verde. Homolog BLOCKED. FF #401 aguarda Codex.
 
 ## CURSOR — useRealtimeData escopo (2026-11-05 America/Sao_Paulo)

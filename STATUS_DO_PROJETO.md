@@ -2,6 +2,15 @@
 
 | Campo | Valor |
 |-------|-------|
+| **PR / tip** | #579 `1bbaabe82` (docs) · código `e2120ca98` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #580 Fornecedor SUCCESS · #581–#583 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #579 useRealtimeData CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
 | **PR / tip** | #579 `e2120ca98` — frontend + backend + compose **SUCCESS** |
 | **Código** | filterInContext realtime hooks; sem fallback; KPI ≠ 0 |
 | **Fila** | #566–#579 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
