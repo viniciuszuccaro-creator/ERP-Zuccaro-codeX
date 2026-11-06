@@ -81,7 +81,7 @@ export default function CotacoesTab({ windowMode = false }) {
   });
 
   const criarCotacaoMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {typeof formCotacao} */ data) => {
       if (!contextoValido || !canCreateCotacao) {
         await auditCotacao({
           acao: 'Cotacao.criar_bloqueada',
@@ -124,7 +124,7 @@ export default function CotacoesTab({ windowMode = false }) {
   });
 
   const gerarOrdemCompraMutation = useMutation({
-    mutationFn: async (proposta) => {
+    mutationFn: async (/** @type {{fornecedor_id: string, fornecedor_nome: string, valor_total: number, forma_pagamento: string, prazo_entrega: number, itens: {produto_descricao: string, quantidade: number, preco_unitario: number, valor_total: number}[]}} */ proposta) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       if (!contextoValido || !canGerarOC) {
         await auditCotacao({

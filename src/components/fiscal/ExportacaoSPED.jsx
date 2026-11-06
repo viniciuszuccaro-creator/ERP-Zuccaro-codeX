@@ -43,7 +43,7 @@ export default function ExportacaoSPED({ empresaId }) {
   const [gerando, setGerando] = useState(false);
 
   const gerarSPEDMutation = useMutation({
-    mutationFn: async ({ tipoSped, periodoInicial, periodoFinal }) => {
+    mutationFn: async (/** @type {{tipoSped: string, periodoInicial: string, periodoFinal: string}} */ { tipoSped, periodoInicial, periodoFinal }) => {
       if (!contextoValido || !canGenerateSPED) {
         await base44.entities.AuditLog.create({
           acao: 'Bloqueio',

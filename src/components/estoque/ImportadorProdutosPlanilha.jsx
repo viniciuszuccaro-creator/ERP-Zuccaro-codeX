@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { validarSugestoesNcmIA } from '@/components/lib/iaResponsePolicy';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -118,9 +119,11 @@ const FIELD_LABELS = {
 };
 
 // Auto-mapeamento: sugere cabeçalhos para cada campo a partir da lista disponível
+/** @param {string[]} [headers] */
 const autoMapFromHeaders = (headers = []) => {
   const n = (s) => norm(s).replace(/^\uFEFF/, '');
   const headersNorm = headers.map((h) => ({ raw: h, norm: n(String(h || '')) }));
+  /** @type {Record<string, string>} */
   const result = {};
   Object.keys(HEADERS).forEach((field) => {
     const syns = HEADERS[field] || [];
@@ -181,6 +184,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [processando, setProcessando] = useState(false);
   const [preview, setPreview] = useState([]);
   const [fileUrl, setFileUrl] = useState(null);
+  /** @type {[Record<string, string>, React.Dispatch<React.SetStateAction<Record<string, string>>>]} */
   const [columnMap, setColumnMap] = useState({}); // {campoERP: headerPlanilha}
   const [availableHeaders, setAvailableHeaders] = useState([]);
   const [parsedRows, setParsedRows] = useState([]);
@@ -232,6 +236,7 @@ const [suggesting, setSuggesting] = useState(false);
     });
   };
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditImportadorProdutos = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await createInContext('AuditLog', {
@@ -404,7 +409,7 @@ const [suggesting, setSuggesting] = useState(false);
         'Responda estritamente no JSON do schema.',
         'Itens:', JSON.stringify(itens, null, 2)
       ].join('\n');
-      const res = await base44.integrations.Core.InvokeLLM({
+      const res = validarSugestoesNcmIA(await base44.integrations.Core.InvokeLLM({
         prompt,
         response_json_schema: {
           type: 'object',
@@ -425,7 +430,7 @@ const [suggesting, setSuggesting] = useState(false);
           },
           required: ['sugestoes']
         }
-      });
+      }), itens);
       const sugestoes = Array.isArray(res?.sugestoes) ? res.sugestoes : [];
       const map = {};
       sugestoes.forEach(s => {
@@ -727,7 +732,8 @@ const [suggesting, setSuggesting] = useState(false);
           file_url: file_url,
           json_schema: { type: 'array', items: { type: 'array' } }
         });
-        const arr = Array.isArray(r?.output) ? r.output : [];
+        const output = r !== null && typeof r === 'object' && 'output' in r ? r.output : null;
+        const arr = Array.isArray(output) ? output : [];
         if (arr.length > 0 && Array.isArray(arr[0])) {
           const headerRow = arr[0].map((h) => String(h ?? '').trim());
           const dataRows = arr.slice(1);
@@ -757,7 +763,7 @@ const [suggesting, setSuggesting] = useState(false);
           file_url: file_url,
           json_schema: { type: 'object', additionalProperties: true }
         });
-        const out = r2?.output || {};
+        const out = r2 !== null && typeof r2 === 'object' && 'output' in r2 ? r2.output || {} : {};
         const pickArrayOfObjects = (obj) => {
           if (Array.isArray(obj) && obj.every((it) => typeof it === 'object' && !Array.isArray(it))) return obj;
           if (Array.isArray(obj?.rows)) return obj.rows;
@@ -923,7 +929,7 @@ const [suggesting, setSuggesting] = useState(false);
       }
 
       setParsedRows(rows);
-      const dataRows = rows.filter((r) => !isHeaderRow(r));
+      const dataRows = rows.filter(() => !isHeaderRow());
       setTotalLinhas(dataRows.length);
 
       // Criar automaticamente unidades de medida ausentes (opção B)
@@ -1086,7 +1092,7 @@ const [suggesting, setSuggesting] = useState(false);
     try {
       // Reextrai linhas para processar tudo (não só o preview)
       const rows = await extrairLinhas(arquivo);
-      const dataRows = rows.filter((r) => !isHeaderRow(r));
+      const dataRows = rows.filter(() => !isHeaderRow());
 
       // 1) Criar automaticamente grupos e setores ausentes
       const localGruposByCodigo = { ...gruposByCodigo };

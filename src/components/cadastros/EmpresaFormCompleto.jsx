@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,18 +89,11 @@ export default function EmpresaFormCompleto({
   const podeExcluir = hasCadastroEntityPermission("Empresa", "excluir", permCheckers);
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
   const [activeTab, setActiveTab] = useState('dados');
-  const [formData, setFormData] = useState(() => mergeEmpresaCompletoData(dadosIniciaisProps));
-
-  useEffect(() => {
-    if (!dadosIniciaisProps) return;
-    setFormData(mergeEmpresaCompletoData(dadosIniciaisProps));
-  }, [
-    dadosIniciaisProps?.id,
-    dadosIniciaisProps?.updated_date,
-    dadosIniciaisProps?.razao_social,
-    dadosIniciaisProps?.cnpj,
-    dadosIniciaisProps?.nome_fantasia,
-  ]);
+  const [formData, setFormData] = useCadastroRecordState(mergeEmpresaCompletoData(dadosIniciaisProps), JSON.stringify([
+    dadosIniciaisProps?.id ?? null, dadosIniciaisProps?.updated_date ?? null,
+    dadosIniciaisProps?.razao_social, dadosIniciaisProps?.cnpj, dadosIniciaisProps?.nome_fantasia,
+    grupoAtual?.id ?? null, empresaAtual?.id ?? null,
+  ]));
 
   const handleCEPFound = (endereco) => {
     setFormData({...formData, endereco});

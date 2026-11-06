@@ -1,5 +1,6 @@
 import React from 'react';
 import { base44 } from '@/api/base44Client';
+import { validarSugestoesAtendimentoIA } from '@/components/lib/iaResponsePolicy';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -64,7 +65,7 @@ export default function SugestoesIA({ conversa, mensagens = [] }) {
         if (!mensagemCliente) return null;
 
         // Gerar sugestões usando IA
-        const resultado = await base44.integrations.Core.InvokeLLM({
+        const resultado = validarSugestoesAtendimentoIA(await base44.integrations.Core.InvokeLLM({
           prompt: `Você é um assistente de atendimento ao cliente de um ERP industrial.
 
 ÚLTIMA MENSAGEM DO CLIENTE:
@@ -107,7 +108,7 @@ Também sugira 2 ações que o atendente deve considerar.`,
               }
             }
           }
-        });
+        }));
 
         await createInContext('AuditLog', {
           ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),

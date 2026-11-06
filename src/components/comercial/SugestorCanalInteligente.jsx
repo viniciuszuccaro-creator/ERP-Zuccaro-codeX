@@ -130,22 +130,22 @@ export default function SugestorCanalInteligente({ clienteId, className = "" }) 
   const coresClasse = {
     blue: 'border-blue-300 bg-blue-50',
     green: 'border-green-300 bg-green-50',
-    purple: 'border-purple-300 bg-purple-50',
+    purple: 'border-sky-300 bg-sky-50',
     orange: 'border-orange-300 bg-orange-50'
   };
 
   const coresBadge = {
     blue: 'bg-blue-600 text-white',
     green: 'bg-green-600 text-white',
-    purple: 'bg-purple-600 text-white',
+    purple: 'bg-sky-600 text-white',
     orange: 'bg-orange-600 text-white'
   };
 
   return (
-    <Card className={`border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50 ${className}`}>
+    <Card className={`border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50 ${className}`}>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="w-5 h-5 text-purple-600 animate-pulse" />
+          <Sparkles className="w-5 h-5 text-sky-600 animate-pulse" />
           💡 IA: Sugestões de Canal de Venda
         </CardTitle>
       </CardHeader>

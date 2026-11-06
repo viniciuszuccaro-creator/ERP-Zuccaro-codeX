@@ -1,5 +1,7 @@
 import React from "react";
 
+/** @param {{title?: React.ReactNode, subtitle?: React.ReactNode, actions?: React.ReactNode,
+ * children?: React.ReactNode, className?: string}} props */
 export default function ModuleHeader({ title, subtitle, actions, children, className = "" }) {
   return (
     <div className={`flex items-center justify-between gap-2 py-2 px-1.5 ${className}`}>

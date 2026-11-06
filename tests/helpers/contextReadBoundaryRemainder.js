@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+export const contextReadHunks = [
+  [
+    "   * @param {string | Record<string, unknown>} [campo]\n   * @param {string} [maybeOrder]\n   * @param {number} [maybeLimit]\n   * @param {string} [maybeCampo]\n   * @returns {ReturnType<typeof filterInContext>}\n   */\n  const filtrarPorContexto = (arg, campo = 'empresa_id', maybeOrder, maybeLimit, maybeCampo) => {\n    // Caso 1: entidade (string) => usa backend ordenado e multiempresa\n    if (typeof arg === 'string') {\n      const entityName = arg;\n      const criterios = typeof campo === 'object' ? campo : {};\n      const order = typeof maybeOrder === 'string' ? maybeOrder : undefined;\n      const limit = typeof maybeLimit === 'number' ? maybeLimit : undefined;\n      const contextoCampo = typeof maybeCampo === 'string' && maybeCampo ? maybeCampo : (typeof campo === 'string' ? campo : 'empresa_id');\n      return filterInContext(entityName, criterios, order, limit, contextoCampo);\n    }\n\n",
+    "   * @param {string | Record<string, unknown>} [campo]\n   * @param {string} [maybeOrder]\n   * @param {number} [maybeLimit]\n   * @returns {ReturnType<typeof filterInContext>}\n   */\n  const filtrarPorContexto = (arg, campo = 'empresa_id', maybeOrder, maybeLimit) => {\n    // Caso 1: entidade (string) => usa backend ordenado e multiempresa\n    if (typeof arg === 'string') {\n      const entityName = arg;\n      const criterios = typeof campo === 'object' ? campo : {};\n      const order = typeof maybeOrder === 'string' ? maybeOrder : undefined;\n      const limit = typeof maybeLimit === 'number' ? maybeLimit : undefined;\n      const contextoCampo = typeof campo === 'string' ? campo : 'empresa_id';\n      return filterInContext(entityName, criterios, order, limit, contextoCampo);\n    }\n\n"
+  ],
+  [
+    "                   let hasGroupField = true;\n                   let hasCtxField = true;\n                   try {\n                     const entity = base44.entities?.[entityName];\n                     if (entity && 'schema' in entity && typeof entity.schema === 'function') {\n                       /** @type {unknown} */\n                       const sch = await entity.schema();\n                       if (sch && typeof sch === 'object' && 'properties' in sch) {\n                         const props = sch.properties;\n                         if (props && typeof props === 'object' && !Array.isArray(props)) {\n                           hasGroupField = Object.prototype.hasOwnProperty.call(props, 'group_id');\n                           hasCtxField = Object.prototype.hasOwnProperty.call(props, ctxCampo);\n                         }\n                       }\n                     }\n                   } catch {\n                     console.warn('[useContextoVisual] Schema indisponivel; filtro de contexto obrigatorio.');\n                   }\n                   const noContext = !hasGroupField && !hasCtxField;\n\n",
+    "                   let hasGroupField = true;\n                   let hasCtxField = true;\n                   try {\n                     const sch = (base44.entities?.[entityName]?.schema ? await base44.entities[entityName].schema() : null);\n                     const props = sch?.properties || {};\n                     hasGroupField = Object.prototype.hasOwnProperty.call(props, 'group_id');\n                     hasCtxField = Object.prototype.hasOwnProperty.call(props, ctxCampo);\n                   } catch {\n                     // Schema remoto indisponivel: a verificacao conservadora abaixo permanece ativa.\n                   }\n                   const noContext = !hasGroupField && !hasCtxField;\n\n"
+  ]
+];
+export function contextReadRemainder(file, text) {
+  if (file !== 'src/components/lib/useContextoVisual.jsx') return text;
+  let source = text.replace(/\r\n/g, '\n');
+  for (const [current, previous] of contextReadHunks) {
+    assert.equal(source.split(current).length - 1, 1, 'exact context read hunk');
+    source = source.replace(current, previous);
+  }
+  return source;
+}

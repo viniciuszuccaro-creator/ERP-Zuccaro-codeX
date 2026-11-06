@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import React, { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,9 +12,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Repeat, DollarSign, Calendar, Bell, Users } from "lucide-react";
 import { toast } from "sonner";
+import useCadastroRecordState from './useCadastroRecordState';
+import useCadastroFormScopeGuard from './hooks/useCadastroFormScopeGuard';
+import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
+import { assertCadastroRecordInTenant, hasCadastroEntityPermission } from './cadastroEditLoadPolicy';
 
 export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode = false, onSubmit }) {
-  const [formData, setFormData] = useState(config || {
+  const permissions = usePermissions();
+  const { user } = useUser();
+  const { grupoAtual, empresaAtual, contexto, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const scope = useCadastroFormScopeGuard(groupId, empresaId);
+  const podeSalvar = !permissions.isLoading && hasCadastroEntityPermission('ConfiguracaoDespesaRecorrente', config?.id ? 'editar' : 'criar', permissions);
+  const podeConsultar = !permissions.isLoading && hasCadastroEntityPermission('ConfiguracaoDespesaRecorrente', 'visualizar', permissions);
+  const lookupKey = [user?.id || null, groupId, empresaId, contexto];
+  const identity = JSON.stringify([config?.id ?? null, config?.updated_date ?? null, ...lookupKey]);
+  const current = useRef(null);
+  current.current = { identity, podeConsultar, podeSalvar };
+  const scopedLookup = async (entity, filters = {}) => {
+    scope.assertCurrent();
+    if (!current.current.podeConsultar || current.current.identity !== identity) throw new Error('Consulta indisponivel neste contexto.');
+    const rows = await filterInContext(entity, filters);
+    scope.assertCurrent();
+    if (!current.current.podeConsultar || current.current.identity !== identity) throw new Error('Consulta indisponivel neste contexto.');
+    return rows;
+  };
+  const visibleRows = rows => podeConsultar && scope.isCurrent() ? rows : [];
+  const [formData, setFormData] = useCadastroRecordState(config || {
     tipo_despesa_id: "",
     tipo_despesa_nome: "",
     descricao: "",
@@ -48,45 +74,73 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
     ativa: true,
     empresa_id: "",
     origem: "empresa"
+  }, identity);
+
+  const { data: fornecedores = [], isSuccess: fornecedoresReady } = useQuery({
+    queryKey: ['fornecedores', ...lookupKey],
+    queryFn: () => scopedLookup('Fornecedor'),
+    enabled: podeConsultar && scope.isCurrent(),
+    select: visibleRows,
   });
 
-  const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+  const { data: centrosCusto = [], isSuccess: centrosCustoReady } = useQuery({
+    queryKey: ['centros-custo', ...lookupKey],
+    queryFn: () => scopedLookup('CentroCusto'),
+    enabled: podeConsultar && scope.isCurrent(),
+    select: visibleRows,
   });
 
-  const { data: centrosCusto = [] } = useQuery({
-    queryKey: ['centros-custo'],
-    queryFn: () => base44.entities.CentroCusto.list(),
+  const { data: formasPagamento = [], isSuccess: formasPagamentoReady } = useQuery({
+    queryKey: ['formas-pagamento', ...lookupKey],
+    queryFn: () => scopedLookup('FormaPagamento'),
+    enabled: podeConsultar && scope.isCurrent(),
+    select: visibleRows,
   });
 
-  const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
+  const { data: empresas = [], isSuccess: empresasReady } = useQuery({
+    queryKey: ['empresas', ...lookupKey],
+    queryFn: () => scopedLookup('Empresa'),
+    enabled: podeConsultar && scope.isCurrent(),
+    select: visibleRows,
   });
 
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+  const { data: tiposDespesa = [], isSuccess: tiposDespesaReady } = useQuery({
+    queryKey: ['tipos-despesa', ...lookupKey],
+    queryFn: () => scopedLookup('TipoDespesa', { pode_ser_recorrente: true, ativo: true }),
+    enabled: podeConsultar && scope.isCurrent(),
+    select: visibleRows,
   });
 
-  const { data: tiposDespesa = [] } = useQuery({
-    queryKey: ['tipos-despesa'],
-    queryFn: () => base44.entities.TipoDespesa.filter({ pode_ser_recorrente: true, ativo: true }),
+  const { data: planoContas = [], isSuccess: planoContasReady } = useQuery({
+    queryKey: ['plano-contas', ...lookupKey],
+    queryFn: () => scopedLookup('PlanoDeContas'),
+    enabled: podeConsultar && scope.isCurrent(),
+    select: visibleRows,
   });
 
-  const { data: planoContas = [] } = useQuery({
-    queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
-  });
-
-  const { data: centrosResultado = [] } = useQuery({
-    queryKey: ['centros-resultado'],
-    queryFn: () => base44.entities.CentroResultado.list(),
+  const { data: centrosResultado = [], isSuccess: centrosResultadoReady } = useQuery({
+    queryKey: ['centros-resultado', ...lookupKey],
+    queryFn: () => scopedLookup('CentroResultado'),
+    enabled: podeConsultar && scope.isCurrent(),
+    select: visibleRows,
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!current.current.podeSalvar || current.current.identity !== identity || !scope.isCurrent()) {
+      toast.error('Contexto ou permissao indisponiveis. Reabra a despesa antes de salvar.');
+      return;
+    }
+    if (!podeConsultar || ![fornecedoresReady, centrosCustoReady, formasPagamentoReady, empresasReady, tiposDespesaReady, planoContasReady, centrosResultadoReady].every(Boolean)) {
+      toast.error('Aguarde a verificacao dos cadastros vinculados. Falha de consulta bloqueia o salvamento.');
+      return;
+    }
+    try {
+      assertCadastroRecordInTenant('ConfiguracaoDespesaRecorrente', config, { groupId, empresaId, scopeType: empresaId ? 'empresa' : 'grupo' });
+    } catch {
+      toast.error('Despesa fora do contexto ativo.');
+      return;
+    }
     if (!formData.tipo_despesa_id) {
       toast.error("Selecione um Tipo de Despesa.");
       return;
@@ -574,7 +628,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
 
         <div className={windowMode ? "border-t bg-slate-50 p-4" : "mt-6"}>
           <div className="flex justify-end gap-3">
-            <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700">
               <Repeat className="w-4 h-4 mr-2" />
               {config ? 'Atualizar Configuração' : 'Criar Configuração'}
             </Button>

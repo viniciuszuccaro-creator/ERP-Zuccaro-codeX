@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeEmail = (value) => sanitizeText(value, 180).toLowerCase();
@@ -28,14 +30,14 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
   const podeCriar = canCreate("Cadastros", "Usuario") || canCreate("Sistema", "Usuario") || canCreate("Sistema", "Controle de Acesso") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Usuario") || canEdit("Sistema", "Usuario") || canEdit("Sistema", "Controle de Acesso") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     full_name: '',
     email: '',
     role: 'user',
     perfil_acesso_id: '',
     empresas_vinculadas: [],
     ativo: true
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso', groupId, empresaAtual?.id],
@@ -71,6 +73,12 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
 
   const formContent = (
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-usuario"
+      />
       <div>
         <Label>Nome Completo *</Label>
         <Input

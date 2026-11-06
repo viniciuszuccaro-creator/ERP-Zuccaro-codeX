@@ -373,7 +373,7 @@ export default function DetalhesEntregaView({
             <div>
               <Label className="text-slate-600">Empresa Responsavel</Label>
               <div className="flex items-center gap-2 mt-1">
-                <Building2 className="w-5 h-5 text-purple-600" />
+                <Building2 className="w-5 h-5 text-sky-600" />
                 <span className="font-semibold">{obterNomeEmpresa(entrega.empresa_id)}</span>
               </div>
             </div>
@@ -466,7 +466,7 @@ export default function DetalhesEntregaView({
                 onClick={() => handleStatusChangeLocal("Pronto para Expedir")}
                 disabled={!contextoValido || !canUpdateEntrega || entrega.status !== "Em Separacao"}
                 size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700"
+                className="bg-sky-600 hover:bg-sky-700"
                 data-permission="Expedicao.Entrega.editar" data-context-required="true" data-sensitive
                 data-action="pronto-para-expedir"
               >
@@ -594,7 +594,7 @@ export default function DetalhesEntregaView({
           {entrega.historico_status?.length > 0 ? (
             <div className="space-y-3">
               {entrega.historico_status
-                .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))
+                .sort((a, b) => new Date(b.data_hora).getTime() - new Date(a.data_hora).getTime())
                 .map((h, idx) => (
                 <div key={idx} className="flex gap-3 items-start p-3 bg-slate-50 rounded">
                   <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
@@ -620,7 +620,7 @@ export default function DetalhesEntregaView({
           {entrega.notificacoes_enviadas?.length > 0 ? (
             <div className="space-y-3">
               {entrega.notificacoes_enviadas
-                .sort((a, b) => new Date(b.data_envio) - new Date(a.data_envio))
+                .sort((a, b) => new Date(b.data_envio).getTime() - new Date(a.data_envio).getTime())
                 .map((n, idx) => (
                 <div key={idx} className="p-3 bg-blue-50 rounded border border-blue-200">
                   <div className="flex justify-between items-start">

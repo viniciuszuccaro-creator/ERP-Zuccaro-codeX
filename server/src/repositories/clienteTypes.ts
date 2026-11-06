@@ -138,6 +138,15 @@ export type Cliente = {
   updated_at: string;
 };
 
+/** Read-only operational projection; never accepted by create/update schemas. */
+export const clienteOperacaoLinkSchema = z.object({
+  id: z.string().uuid(), group_id: z.string().uuid(), cliente_id: z.string().uuid(),
+  empresa_id: z.string().uuid(), ativo: z.literal(true), situacao_comercial: z.literal('ATIVO'),
+  habilitado_operacao: z.literal(true), bloqueado: z.literal(false), elegivel_operacao: z.literal(true),
+});
+export const clienteOperacaoLinksSchema = z.array(clienteOperacaoLinkSchema).length(1);
+export type ClienteListItem = Cliente & { empresa_operacao?: z.infer<typeof clienteOperacaoLinkSchema> };
+
 const clienteEmpresaEditableFields = {
   situacao_comercial: z.enum(CLIENTE_EMPRESA_SITUACOES).optional(),
   habilitado_operacao: z.boolean().optional(),

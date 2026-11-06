@@ -225,7 +225,7 @@ export default function HubAtendimento() {
 
   // Enviar mensagem do atendente
   const enviarMensagemMutation = useMutation({
-    mutationFn: async ({ mensagem, arquivo }) => {
+    mutationFn: async (/** @type {{mensagem: string, arquivo?: File | null}} */ { mensagem, arquivo }) => {
       if (!conversaSelecionada) return;
       if (!contextoValido || !podeEditarAtendimento) {
         throw new Error('Selecione grupo/empresa e confirme permissao de atendimento antes de enviar mensagem.');

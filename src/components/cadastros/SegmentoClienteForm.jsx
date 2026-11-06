@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+import useCadastroRecordState from './useCadastroRecordState';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,11 +22,11 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
   const podeCriar = canCreate('Cadastros', 'SegmentoCliente') || canCreate('Comercial', 'SegmentoCliente') || canCreate('Cadastros', null);
   const podeEditar = canEdit('Cadastros', 'SegmentoCliente') || canEdit('Comercial', 'SegmentoCliente') || canEdit('Cadastros', null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome_segmento: '',
     tipo_segmento: 'Comercial',
     ativo: true
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const buildPayload = () => ({
     ...formData,

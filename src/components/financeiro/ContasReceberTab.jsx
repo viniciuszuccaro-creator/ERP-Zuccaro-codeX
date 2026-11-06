@@ -25,6 +25,7 @@ import TabelaReceber from "./contas-receber/TabelaReceber";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
+import { isSafeHttpUrl } from "@/lib/utils";
 import {
   buildFinanceiroQueryScopeKey,
   buildFinanceiroTitulosScopeSwitchReset,
@@ -34,7 +35,7 @@ import {
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { user: authUser } = useUser();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const scopeKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
@@ -52,20 +53,14 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const { openWindow } = useWindow();
   const { formasPagamento } = useFormasPagamento();
   const podeBaixarReceber = hasPermission('Financeiro','ContaReceber','receber') || hasPermission('Financeiro','ContaReceber','baixar') || hasPermission('Financeiro','ContaReceber','liquidar');
+  const podeBaixarMultiplaReceber = !permissionsLoading && podeBaixarReceber && hasPermission('Financeiro','ContaReceber','baixar_multiplos');
   const podeEnviarCaixaReceber = hasPermission('Financeiro','ContaReceber','enviar_caixa') || hasPermission('Financeiro','ContaReceber','editar');
   const podeExportarReceber = hasPermission('Financeiro','ContaReceber','exportar');
   const sanitizeText = (value) => String(value || "")
     .replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, "")
     .replace(/javascript:\s*/gi, "")
     .trim();
-  const isSafeUrl = (value) => {
-    try {
-      const url = new URL(String(value || ""));
-      return ['http:', 'https:'].includes(url.protocol);
-    } catch (_) {
-      return false;
-    }
-  };
+  const isSafeUrl = isSafeHttpUrl;
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [gerarCobrancaDialogOpen, setGerarCobrancaDialogOpen] = useState(false);
@@ -120,6 +115,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const empresasData = empresas.length > 0 ? empresas : empresasQuery;
 
+  /** @param {{acao: string, entidade: string, registroId?: string | number | null, descricao: string,
+   * dadosAnteriores?: unknown, dadosNovos?: unknown, sucesso?: boolean}} options */
   const auditarFinanceiro = async ({ acao, entidade, registroId, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -145,7 +142,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   };
 
   const enviarParaCaixaMutation = useMutation({
-    mutationFn: async (titulos) => {
+    mutationFn: async (/** @type {Record<string, unknown>[]} */ titulos) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de enviar titulos ao Caixa.');
       if (!podeEnviarCaixaReceber) throw new Error('Sem permissao para enviar titulos ao Caixa.');
       if (!Array.isArray(titulos) || titulos.length === 0) throw new Error('Selecione ao menos um titulo para enviar ao Caixa.');
@@ -206,7 +203,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   });
 
   const baixarTituloMutation = useMutation({
-    mutationFn: async ({ id, dados }) => {
+    mutationFn: async (/** @type {{id: string, dados: typeof dadosBaixa}} */ { id, dados }) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de baixar titulo.');
       if (!podeBaixarReceber) throw new Error('Sem permissao para baixar titulo.');
       const conta = contasList.find(c => c.id === id);
@@ -277,9 +274,9 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   });
 
   const baixarMultiplaMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {typeof dadosBaixa} */ dados) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes da baixa multipla.');
-      if (!podeBaixarReceber) throw new Error('Sem permissao para baixa multipla.');
+      if (!podeBaixarMultiplaReceber) throw new Error('Sem permissao para baixa multipla.');
       if (contasSelecionadas.length === 0) throw new Error('Selecione ao menos um titulo para baixa multipla.');
       await Promise.all(contasSelecionadas.map(async (contaId) => {
         const conta = contasList.find(c => c.id === contaId);
@@ -385,7 +382,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
       toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
       return;
     }
-    if (!podeBaixarReceber) {
+    if (!podeBaixarMultiplaReceber) {
       toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
       return;
     }
@@ -410,6 +407,10 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
     e.preventDefault();
     if (!contextoValido) {
       toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo ou empresa antes de confirmar a baixa.', variant: 'destructive' });
+      return;
+    }
+    if (!contaAtual && !podeBaixarMultiplaReceber) {
+      toast({ title: 'Sem permissao para baixa multipla', variant: 'destructive' });
       return;
     }
     const totalTitulos = contaAtual ? 1 : contasSelecionadas.length;
@@ -609,7 +610,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)} data-action="ContaReceber.baixa_cancelar">Cancelar</Button>
-              <Button type="submit" disabled={!contextoValido || baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600" data-action="ContaReceber.baixar" data-permission="Financeiro.ContaReceber.baixar" data-context-required="true" data-sensitive>
+              <Button type="submit" disabled={!contextoValido || (!contaAtual && !podeBaixarMultiplaReceber) || baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600" data-action={contaAtual ? 'ContaReceber.baixar' : 'ContaReceber.baixar_multiplos'} data-permission={contaAtual ? 'Financeiro.ContaReceber.baixar' : 'Financeiro.ContaReceber.baixar_multiplos'} data-context-required="true" data-sensitive>
                 {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Baixando...' : 'Confirmar'}
               </Button>
             </div>

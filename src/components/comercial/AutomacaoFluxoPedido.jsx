@@ -420,7 +420,7 @@ export default function AutomacaoFluxoPedido({
   return (
     <Wrapper>
       {/* Header */}
-      <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-sky-50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">

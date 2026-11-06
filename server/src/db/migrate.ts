@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadConfig } from '../config/env.js';
-import { createDbClient } from './client.js';
+import { createDbClient, type DbClient } from './client.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../migrations');
@@ -52,6 +52,25 @@ export async function applyMigrations(databaseUrl?: string) {
   return { applied: [...appliedSet], executed, pending: files.filter((f) => !appliedSet.has(f) && !executed.includes(f)) };
 }
 
+/** Missing, inaccessible or incomplete journals cannot prove an empty database. */
+export async function inspectMigrationStatus(db: Pick<DbClient, 'withTransaction'>, files: readonly string[]) {
+  const snapshot = [...files];
+  try {
+    return await db.withTransaction(async q => {
+      await q.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      await q.query('SET LOCAL row_security = off');
+      const result = await q.query<{ id: string }>('SELECT id FROM schema_migrations ORDER BY id');
+      const applied = result.rows.map(row => row.id);
+      if (applied.some(id => typeof id !== 'string' || !/^\d+_.*\.sql$/i.test(id) || !snapshot.includes(id))
+        || new Set(applied).size !== applied.length) throw new Error('INVALID_MIGRATION_JOURNAL');
+      const appliedSet = new Set(applied);
+      return { files: snapshot, applied, pending: snapshot.filter(file => !appliedSet.has(file)) };
+    });
+  } catch {
+    throw new Error('MIGRATION_STATUS_UNAVAILABLE');
+  }
+}
+
 export async function migrationStatus(databaseUrl?: string) {
   const config = loadConfig({
     ...process.env,
@@ -59,21 +78,12 @@ export async function migrationStatus(databaseUrl?: string) {
     REQUIRE_DATABASE: 'true',
   });
   const db = createDbClient(config);
-  const files = listMigrationFiles();
-  let applied: string[] = [];
   try {
-    const result = await db.query<{ id: string }>('SELECT id FROM schema_migrations ORDER BY id');
-    applied = result.rows.map((r) => r.id);
-  } catch {
-    applied = [];
+    return await inspectMigrationStatus(db, listMigrationFiles());
+  } finally {
+    try { await db.end(); }
+    catch { throw new Error('MIGRATION_STATUS_CLEANUP_FAILED'); }
   }
-  await db.end();
-  const appliedSet = new Set(applied);
-  return {
-    files,
-    applied,
-    pending: files.filter((f) => !appliedSet.has(f)),
-  };
 }
 
 async function main() {

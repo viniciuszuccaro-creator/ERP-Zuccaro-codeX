@@ -132,7 +132,7 @@ export default function VisualizadorPeca({ posicao }) {
               </div>
               <div className="bg-white p-3 rounded-lg border">
                 <p className="text-xs text-slate-600">Formato</p>
-                <p className="text-lg font-bold text-purple-600">{posicao.formato}</p>
+                <p className="text-lg font-bold text-sky-600">{posicao.formato}</p>
               </div>
               <div className="bg-white p-3 rounded-lg border">
                 <p className="text-xs text-slate-600">Peso Total</p>

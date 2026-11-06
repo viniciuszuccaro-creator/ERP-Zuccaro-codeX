@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
   const podeCriar = canCreate("Cadastros", "ApiExterna") || canCreate("Sistema", "ApiExterna") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ApiExterna") || canEdit("Sistema", "ApiExterna") || canEdit("Cadastros", null);
   const podeSalvar = apiExterna?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(apiExterna || {
+  const [formData, setFormData] = useCadastroRecordState(apiExterna || {
     nome_integracao: "",
     tipo_api: "REST",
     descricao: "",
@@ -29,7 +30,7 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
     timeout_segundos: 30,
     ativo: true,
     observacoes: ""
-  });
+  }, JSON.stringify([apiExterna?.id ?? null, apiExterna?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

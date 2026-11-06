@@ -66,8 +66,8 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
       <div className="border-b pb-4 mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <UserCircle className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-sky-100 rounded-xl flex items-center justify-center">
+              <UserCircle className="w-6 h-6 text-sky-600" />
             </div>
             <div>
               <h2 className="text-2xl font-bold">
@@ -249,7 +249,7 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
                     {colaborador.historico_cargos.map((hist, idx) => (
                       <div key={idx} className="p-3 bg-slate-50 rounded-lg text-sm">
                         <div className="flex items-center gap-2 mb-2">
-                          <Award className="w-4 h-4 text-purple-600" />
+                          <Award className="w-4 h-4 text-sky-600" />
                           <p className="font-semibold text-slate-900">{hist.cargo_novo}</p>
                         </div>
                         {hist.cargo_anterior && (

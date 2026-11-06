@@ -421,9 +421,10 @@ export async function loginErpHttpSession(input) {
   }
   if (!response.ok) {
     const message = body?.error?.message || `Falha no login (HTTP ${response.status})`;
-    const err = new Error(message);
-    err.status = response.status;
-    err.code = body?.error?.code;
+    const err = Object.assign(new Error(message), {
+      status: response.status,
+      code: body?.error?.code,
+    });
     throw err;
   }
   const data = body?.data || {};
@@ -678,7 +679,7 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
  *   evidência de autorização no mesmo grupo (outro perfil do grupo com essa empresa).
  * - Preferência incompatível → contexto autorizado do perfil ou null; nunca mistura.
  * @param {{
- *   profile: { group_id?: string, empresa_id?: string | null },
+ *   profile: { group_id?: string, empresa_id?: string | null, empresas?: Array<{ id?: string }> },
  *   profiles: Array<{ group_id?: string, empresa_id?: string | null }>,
  *   preferredEmpresaId?: string | null,
  * }} input

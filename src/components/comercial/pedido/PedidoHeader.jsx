@@ -4,7 +4,7 @@ import { AlertTriangle } from "lucide-react";
 
 export default function PedidoHeader({ formData, pedido }) {
   return (
-    <div className="flex-shrink-0 p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50 w-full">
+    <div className="flex-shrink-0 p-6 border-b bg-gradient-to-r from-blue-50 to-sky-50 w-full">
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="flex items-center gap-2">
@@ -27,7 +27,7 @@ export default function PedidoHeader({ formData, pedido }) {
               Urgente
             </Badge>
           )}
-          <Badge className={`${formData.origem_pedido === 'Manual' ? 'bg-slate-600' : 'bg-gradient-to-r from-purple-600 to-blue-600'}`}>
+          <Badge className={`${formData.origem_pedido === 'Manual' ? 'bg-slate-600' : 'bg-gradient-to-r from-sky-600 to-blue-600'}`}>
             🎯 {formData.origem_pedido}
           </Badge>
         </div>

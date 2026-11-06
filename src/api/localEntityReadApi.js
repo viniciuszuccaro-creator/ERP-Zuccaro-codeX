@@ -159,16 +159,68 @@ export const createLocalEntityReadApi = (entityName, dependencies) => {
   };
 };
 
+/** Access observation is local instrumentation, never backend authorization.
+ * @type {WeakMap<object, Set<(name:string, api:unknown)=>void>>} */
+const entityApiObservers = new WeakMap();
+/** @type {WeakMap<object, Set<string>>} */
+const observingEntityNames = new WeakMap();
+/** @type {WeakMap<object, Map<string, 'local'|'http'>>} */
+const entityApiTransports = new WeakMap();
+
+/** HTTP owns its tenant headers and payload schema; a local stamper must not rewrite them.
+ * @param {object} root @param {string} name */
+export function isHttpEntityApiAccess(root, name) {
+  return entityApiTransports.get(root)?.get(name) === 'http';
+}
+
+/** @param {object} root @param {(name:string, api:unknown)=>void} observer */
+export function observeEntityApiAccess(root, observer) {
+  let observers = entityApiObservers.get(root);
+  if (!observers) { observers = new Set(); entityApiObservers.set(root, observers); }
+  observers.add(observer);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    observers.delete(observer);
+    if (!observers.size) entityApiObservers.delete(root);
+  };
+}
+
+/** @template T @param {object} root @param {string} name @param {T} api
+ * @param {'local'|'http'} [transport] @returns {T} */
+export function notifyEntityApiAccess(root, name, api, transport = 'local') {
+  let transports = entityApiTransports.get(root);
+  if (!transports) { transports = new Map(); entityApiTransports.set(root, transports); }
+  transports.set(name, transport);
+  const observers = entityApiObservers.get(root);
+  if (!observers?.size) return api;
+  let active = observingEntityNames.get(root);
+  if (active?.has(name)) return api;
+  if (!active) { active = new Set(); observingEntityNames.set(root, active); }
+  active.add(name);
+  try {
+    for (const observer of [...observers]) observer(name, api);
+    return api;
+  } finally {
+    active.delete(name);
+    if (!active.size) observingEntityNames.delete(root);
+  }
+}
+
 /**
  * Mantem o carregamento tardio das entidades e a mesma instancia por nome.
  * @template T
- * @param {(entityName: string) => T} createEntityApi
- * @returns {Record<string, T>}
+ * @param {(entityName:string)=>T} createEntityApi
+ * @returns {Record<string,T>}
  */
-export const createLocalEntityProxy = (createEntityApi) => new Proxy({}, {
+export const createLocalEntityProxy = (createEntityApi) => {
+ const root = new Proxy({}, {
   get(target, prop) {
     if (typeof prop !== 'string') return undefined;
     if (!target[prop]) target[prop] = createEntityApi(prop);
-    return target[prop];
+    return notifyEntityApiAccess(root, prop, target[prop]);
   },
-});
+ });
+ return root;
+};

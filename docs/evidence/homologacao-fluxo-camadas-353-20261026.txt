@@ -1,0 +1,44 @@
+HOMOLOGAÇÃO INTEGRADA — CAMADAS DE PROVA (#353)
+================================================
+Roteiro: docs/evidence/roteiro-homologacao-integrada-353-20261026.txt
+Tip código contatos: e9d7ef15 · tip docs CI: 9756f457 · tip deste lote: (após push)
+
+Distinção obrigatória
+---------------------
+| Camada | O que comprova | O que NÃO comprova |
+|--------|----------------|--------------------|
+| Teste sintético (node --test) | Overflow contatos; explain 044; orçamento save/retry/escopo | Sessão real IdP; SHA servido |
+| Runner CI | Suite + typecheck no SHA tip | Destino VPS; dados reais |
+| Codespace | UI com build medido do tip | Operação VPS aprovada |
+| VPS operacional | Só após gate merge/deploy + medição SHA/digest | — |
+
+Estado atual (não inventar)
+---------------------------
+1) Login / Grupo / Empresa
+   - Arquitetura fail-closed existente (sintético/CI).
+   - Sessão real IdP: pendente demonstração Codespace/HML com SHA medido.
+
+2) Cadastro Cliente abrir/editar/salvar/reabrir
+   - Reopen/boundId: testes comportamentais coorte.
+   - Contatos principal/metadata: overflow fail-closed (e9d7ef15); bot review
+     sem major issues; aguarda contraprova humana Codex dos 2 casos.
+   - Azul-claro (sky): Cliente/FormaPagamento/Contatos/PedidosTab neste tip.
+
+3) Orçamento
+   - Componente real OrcamentosTab: save duplo, escopo, permissão, conversão
+     gate (orcamento-component-behavior) — sintético/CI.
+   - Persistência no destino observado: depende Auth+schema do alvo (Codex).
+
+4) Pedido
+   - INSERT referencia idempotency_key/payload_fingerprint (repo PG).
+   - Destino sem 044: explainPedidoPersistenceError na UI (PedidoCanonicoPanel
+     + conversão em OrcamentosTab) — mensagem explícita; sem “salvo” falso.
+   - Aplicação 044: reserva Codex; Cursor não executa DDL neste lote.
+
+Provas locais deste lote (proporcionais)
+----------------------------------------
+- tests/cliente-contatos-http-adapter.test.js
+- tests/pedido-ui-policy.test.js (explainPedidoPersistenceError)
+- tests/orcamento-component-behavior.test.js (stub pedidoUiPolicy)
+
+Sem merge / deploy / carga.

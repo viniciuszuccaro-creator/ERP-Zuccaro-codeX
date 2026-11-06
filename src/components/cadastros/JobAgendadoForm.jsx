@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
   const podeCriar = canCreate("Cadastros", "JobAgendado") || canCreate("Sistema", "JobAgendado") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "JobAgendado") || canEdit("Sistema", "JobAgendado") || canEdit("Cadastros", null);
   const podeSalvar = jobAgendado?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(jobAgendado || {
+  const [formData, setFormData] = useCadastroRecordState(jobAgendado || {
     nome_job: "",
     tipo_job: "IA_Fiscal",
     descricao: "",
@@ -27,7 +28,7 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
     parametros_execucao: {},
     ativo: true,
     observacoes: ""
-  });
+  }, JSON.stringify([jobAgendado?.id ?? null, jobAgendado?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

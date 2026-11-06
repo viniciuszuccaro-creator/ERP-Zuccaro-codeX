@@ -30,7 +30,7 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
   const queryClient = useQueryClient();
 
   const aprovarSolicitacaoMutation = useMutation({
-    mutationFn: async ({ solicitacao, aprovador }) => {
+    mutationFn: async (/** @type {{solicitacao: Record<string, unknown> & {id: string}, aprovador: string}} */ { solicitacao, aprovador }) => {
       if (!podeAprovarSolicitacao) throw new Error("Sem permissao para aprovar solicitacao.");
       const updated = await updateInContext('SolicitacaoCompra', solicitacao.id, {
         status: 'Aprovada',
@@ -45,7 +45,7 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
   });
 
   const rejeitarSolicitacaoMutation = useMutation({
-    mutationFn: async ({ solicitacao, aprovador, motivo }) => {
+    mutationFn: async (/** @type {{solicitacao: Record<string, unknown> & {id: string}, aprovador: string, motivo: string}} */ { solicitacao, aprovador, motivo }) => {
       if (!podeAprovarSolicitacao) throw new Error("Sem permissao para rejeitar solicitacao.");
       const updated = await updateInContext('SolicitacaoCompra', solicitacao.id, {
         status: 'Rejeitada',

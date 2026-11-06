@@ -106,7 +106,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
 
 
   const aprovarComissaoMutation = useMutation({
-    mutationFn: ({ id, aprovador }) => updateInContext('Comissao', id, withComissaoContext(sanitizeOnWrite({
+    mutationFn: (/** @type {{id: string, aprovador: string}} */ { id, aprovador }) => updateInContext('Comissao', id, withComissaoContext(sanitizeOnWrite({
       status: 'Aprovada',
       aprovador: aprovador,
       data_aprovacao: new Date().toISOString().split('T')[0]
@@ -118,7 +118,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   });
 
   const recusarComissaoMutation = useMutation({
-    mutationFn: ({ id, motivo }) => updateInContext('Comissao', id, withComissaoContext(sanitizeOnWrite({
+    mutationFn: (/** @type {{id: string, motivo: string}} */ { id, motivo }) => updateInContext('Comissao', id, withComissaoContext(sanitizeOnWrite({
       status: 'Cancelada',
       observacoes: `${comissoes.find(c => c.id === id)?.observacoes || ''}\n\nRecusada: ${motivo}`
     }))),
@@ -129,7 +129,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   });
 
   const pagarComissaoMutation = useMutation({
-    mutationFn: async ({ id, comissao }) => {
+    mutationFn: async (/** @type {{id: string, comissao: Pick<typeof formData, 'vendedor' | 'valor_comissao' | 'numero_pedido'>}} */ { id, comissao }) => {
       // Atualizar status da comissão
       await updateInContext('Comissao', id, withComissaoContext({
         status: 'Paga',

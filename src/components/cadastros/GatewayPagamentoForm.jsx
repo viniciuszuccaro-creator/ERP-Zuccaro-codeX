@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     enabled: contextoValido,
   });
 
-  const [formData, setFormData] = useState(gateway || {
+  const [formData, setFormData] = useCadastroRecordState(gateway || {
     nome: "",
     provedor: "Pagar.me",
     empresa_id: "",
@@ -54,7 +55,7 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
     tipos_pagamento_suportados: ["PIX", "Boleto", "Cartão Crédito"],
     ativo: true,
     prioridade: 1
-  });
+  }, JSON.stringify([gateway?.id ?? null, gateway?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const [tiposSelecionados, setTiposSelecionados] = useState(
     formData.tipos_pagamento_suportados || ["PIX", "Boleto"]

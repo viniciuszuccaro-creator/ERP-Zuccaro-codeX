@@ -1,7 +1,7 @@
 import { useUser } from "./UserContext";
 import { useQuery } from "@tanstack/react-query";
 import { base44, isHttpBackendMode } from "@/api/base44Client";
-import { normalizeGuardAction } from "../../../base44/functions/_lib/security/entityGuardPolicy/entry.ts";
+import { normalizeGuardAction } from "../../../base44/functions/_lib/security/entityGuardPolicy/entry";
 
 export default function usePermissions() {
   const { user, isLoading: loadingUser } = useUser();

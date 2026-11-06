@@ -365,7 +365,10 @@ const ensureRecord = (db, entityName, id, factory) => {
 
 /**
  * Espelho tenant HTTP→local sem passar por RBAC de create (bootstrap de sessão).
- * @param {{ groupId: string, empresaId?: string | null }} input
+ * @param {{ groupId?: string, empresaId?: string | null, groupName?: string | null,
+ * empresas?: Array<{id: string, group_id?: string, razao_social?: string, nome_fantasia?: string | null, cnpj?: string | null, status?: string}>,
+ * perfilAcessoId?: string | null, permissoes?: Record<string, unknown> | null,
+ * perfilNome?: string | null }} input
  */
 export function upsertHttpTenantLocalMirror(input = {}) {
   const groupId = String(input.groupId || '').trim();

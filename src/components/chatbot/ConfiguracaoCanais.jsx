@@ -89,7 +89,7 @@ export default function ConfiguracaoCanais() {
 
   // Salvar configuração
   const salvarConfigMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {Record<string, unknown>} */ dados) => {
       if (!contextoValido || !canEditConfig) {
         throw new Error("Contexto ou permissao insuficiente para salvar configuracao de canal");
       }

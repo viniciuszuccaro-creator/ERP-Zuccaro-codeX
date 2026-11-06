@@ -42,7 +42,7 @@ export function createPedidoMutationGate() {
     },
     isPending(scope) { return pending.has(key(scope)); },
     end(ticket) { if (ticket && pending.delete(ticket.scopeKey)) notify(); },
-    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener); }; },
   };
 }
 
@@ -88,11 +88,32 @@ export const PEDIDO_STATUS_LABELS = {
   PRONTO_RETIRADA: 'Pronto para retirada', FINALIZADO: 'Finalizado', CANCELADO: 'Cancelado',
 };
 
+// Presentation-only aliases observed in the legacy producer/UI. Never map to HTTP states.
+const PEDIDO_LEGACY_STATUS_LABELS = {
+  'Aguardando AprovaÃ§Ã£o': 'Aguardando Aprovação',
+  'Em ExpediÃ§Ã£o': 'Em Expedição',
+  'Em TrÃ¢nsito': 'Em Trânsito',
+};
+
+export function pedidoLegacyStatusLabel(status) {
+  if (typeof status !== 'string') return '';
+  return Object.hasOwn(PEDIDO_LEGACY_STATUS_LABELS, status) ? PEDIDO_LEGACY_STATUS_LABELS[status] : status;
+}
+
+export function matchesPedidoLegacyStatusFilter(status, filter) {
+  return filter === 'todos' || (typeof status === 'string' && typeof filter === 'string'
+    && pedidoLegacyStatusLabel(status) === pedidoLegacyStatusLabel(filter));
+}
+
+export function isPedidoLegacyProducaoSobMedida(tipo) {
+  return tipo === 'Produção Sob Medida' || tipo === 'ProduÃ§Ã£o Sob Medida';
+}
+
 /** Alinhado ao pedidoService.cancel (3–500). */
 export const PEDIDO_CANCEL_MOTIVO_MIN = 3;
 export const PEDIDO_CANCEL_MOTIVO_MAX = 500;
 
-export function canUsePedidoAction(hasPermission, action, status = 'EM_ABERTO') {
+export function canUsePedidoAction(hasPermission, action, status = undefined) {
   if (typeof hasPermission !== 'function') return false;
   if (!hasPermission('Comercial', 'pedido', action)) return false;
   return ['editar', 'cancelar'].includes(action) ? status === 'EM_ABERTO' : true;
@@ -167,7 +188,8 @@ export function evaluatePedidoStatusMotivoUiGate(motivo) {
 }
 
 export function nextPedidoStatus(row) {
-  if (!row) return null;
+  if (!row || !['ENTREGA', 'RETIRADA'].includes(row.tipo_operacao)) return null;
+  if (row.status === 'EM_ABERTO' && !Array.isArray(row.itens)) return null;
   const ready = row.tipo_operacao === 'ENTREGA' ? 'PRONTO_ENTREGA' : 'PRONTO_RETIRADA';
   if (row.status === 'EM_ABERTO') return row.itens?.some((item) => item.requer_producao) ? 'EM_PRODUCAO' : ready;
   if (row.status === 'EM_PRODUCAO') return ready;
@@ -175,6 +197,17 @@ export function nextPedidoStatus(row) {
   return null;
 }
 
+/**
+ * @typedef {Object} PedidoGateRow
+ * @property {string} [id]
+ * @property {string|number} [numero]
+ * @property {string|number} [numero_pedido]
+ * @property {string} [status]
+ * @property {string} [tipo_operacao]
+ * @property {Array<{requer_producao?: boolean}>} [itens]
+ */
+
+/** @param {{row?: PedidoGateRow|null, groupId?: string|null, empresaId?: string|null, canTransition?: boolean}} [options] */
 export function evaluatePedidoStatusTransitionUiGate({ row, groupId, empresaId, canTransition } = {}) {
   if (!groupId || !empresaId) {
     return { blockTransition: true, mode: 'context', target: null, hint: 'Selecione grupo e empresa antes de alterar o status.' };
@@ -189,7 +222,10 @@ export function evaluatePedidoStatusTransitionUiGate({ row, groupId, empresaId, 
   return { blockTransition: false, mode: 'ready', target, hint: null };
 }
 
-/** empty ≠ erro; loading/error fail-closed. */
+/**
+ * empty ≠ erro; loading/error fail-closed.
+ * @param {{events?: unknown, isLoading?: boolean, isError?: boolean, errorMessage?: string|null}} [options]
+ */
 export function resolvePedidoHistoryUiState({ events, isLoading, isError, errorMessage } = {}) {
   if (isLoading) {
     return { mode: 'loading', hint: 'Carregando histórico...', events: [], canRetry: false };
@@ -217,6 +253,7 @@ export function resolvePedidoHistoryUiState({ events, isLoading, isError, errorM
   return { mode: 'ready', hint: null, events: list, canRetry: false };
 }
 
+/** @param {{row?: PedidoGateRow|null, groupId?: string|null, empresaId?: string|null, canPrint?: boolean}} [options] */
 export function evaluatePedidoPrintPdfUiGate({ row, groupId, empresaId, canPrint } = {}) {
   if (!groupId || !empresaId) {
     return { blockPrint: true, mode: 'context', hint: 'Selecione grupo e empresa antes de imprimir.' };
@@ -254,6 +291,7 @@ export function buildPedidoShareText(pedido, { empresaNome = 'Empresa', clienteN
   ].join('\n');
 }
 
+/** @param {{row?: PedidoGateRow|null, groupId?: string|null, empresaId?: string|null, canShare?: boolean}} [options] */
 export function evaluatePedidoShareUiGate({ row, groupId, empresaId, canShare } = {}) {
   if (!groupId || !empresaId) {
     return { blockShare: true, mode: 'context', hint: 'Selecione grupo e empresa antes de compartilhar.' };
@@ -272,6 +310,7 @@ export function mapPedidoRowToForm(row) {
     throw new Error('Pedido inválido para recarregar o formulário.');
   }
   return {
+    orcamento_id: row.orcamento_id || '',
     cliente_empresa_id: row.cliente_empresa_id || '',
     cliente_local_id: row.cliente_local_id || '',
     obra_id: row.obra_id || '',
@@ -326,4 +365,44 @@ export function buildPedidoPayload(form, idempotencyKey) {
 export function calculatePedidoTotals(items) {
   const total = calculateTotals(items);
   return { subtotal: microsToDecimal(total.subtotal), desconto: microsToDecimal(total.desconto), total: microsToDecimal(total.total) };
+}
+
+/**
+ * Traduz falhas de persistência de Pedido (ex.: destino sem migration 044)
+ * para mensagem explícita. Não mascara ausência de schema como “salvo”.
+ * Coordenação Codex — Cursor não aplica DDL neste lote.
+ *
+ * @param {unknown} error
+ * @returns {string|null}
+ */
+export function explainPedidoPersistenceError(error) {
+  if (!error || typeof error !== 'object') return null;
+  const err = /** @type {Record<string, unknown>} */ (error);
+  const body = err.body && typeof err.body === 'object'
+    ? /** @type {Record<string, unknown>} */ (err.body)
+    : null;
+  const nested = body?.error && typeof body.error === 'object'
+    ? /** @type {Record<string, unknown>} */ (body.error)
+    : null;
+  const chunks = [
+    err.message,
+    err.code,
+    nested?.message,
+    nested?.code,
+    body?.message,
+    body?.code,
+  ].filter((v) => v != null && String(v).trim() !== '').map((v) => String(v));
+  const raw = chunks.join(' ').toLowerCase();
+  if (!raw) return null;
+
+  const mentionsIdempotency = raw.includes('idempotency_key') || raw.includes('payload_fingerprint');
+  const missingColumn = (
+    (raw.includes('column') && (raw.includes('does not exist') || raw.includes('undefined_column')))
+    || raw.includes('42703')
+  );
+  if (mentionsIdempotency || (missingColumn && (raw.includes('pedido') || mentionsIdempotency))) {
+    return 'Persistência de Pedido indisponível neste destino: faltam colunas de idempotência (migration 044). '
+      + 'Não declare vendas prontas. Coordene aplicação autorizada com Codex; o rascunho não foi confirmado como salvo.';
+  }
+  return null;
 }

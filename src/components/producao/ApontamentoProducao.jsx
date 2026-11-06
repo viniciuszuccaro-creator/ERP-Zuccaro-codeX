@@ -539,7 +539,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
             <h3 className="font-semibold mb-3 text-sm">Histórico de Apontamentos</h3>
             <div className="space-y-2">
               {op.apontamentos
-                .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))
+                .sort((a, b) => new Date(b.data_hora).getTime() - new Date(a.data_hora).getTime())
                 .slice(0, 10)
                 .map((apt, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded text-sm">

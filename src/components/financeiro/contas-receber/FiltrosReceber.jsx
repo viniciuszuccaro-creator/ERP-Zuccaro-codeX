@@ -25,7 +25,7 @@ export default function FiltrosReceber({
     <Card className="border-0 shadow-sm min-h-[80px] max-h-[80px]">
       <CardContent className="p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <ProtectedAction permission="financeiro_receber_exportar">
+          <ProtectedAction module="Financeiro" section="ContaReceber" action="exportar">
             <Button variant="outline" size="sm" onClick={onExportar}>
               <Download className="w-3 h-3 mr-1" /> CSV
             </Button>
@@ -57,7 +57,7 @@ export default function FiltrosReceber({
                 {contasSelecionadas.length} • R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </Badge>
               
-              <ProtectedAction permission="financeiro_receber_baixar_multiplos">
+              <ProtectedAction module="Financeiro" section="ContaReceber" action="baixar_multiplos">
                 <Button variant="outline" size="sm" onClick={onBaixarMultipla} disabled={baixarPending}>
                   <CheckCircle2 className="w-3 h-3 mr-1" /> Baixar
                 </Button>
@@ -69,7 +69,7 @@ export default function FiltrosReceber({
             </>
           )}
 
-          <ProtectedAction permission="financeiro_receber_criar">
+          <ProtectedAction module="Financeiro" section="ContaReceber" action="criar">
             <Button size="sm" onClick={onNovaConta} className="bg-green-600 hover:bg-green-700 ml-auto">
               <Plus className="w-3 h-3 mr-1" /> Nova
             </Button>

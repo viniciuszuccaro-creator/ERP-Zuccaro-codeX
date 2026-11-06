@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { validarPlanoProducaoIA } from '@/components/lib/iaResponsePolicy';
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,7 +102,7 @@ export default function FormularioOrdemProducao({ op, onClose }) {
   };
 
   const saveMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {{empresa_id?: string, group_id?: string, status?: string, numero_op?: string} & Record<string, unknown>} */ data) => {
       if (!contextoValido) {
         await auditarOP({ acao: "OP.bloqueada", descricao: "Tentativa de salvar OP sem contexto grupo/empresa.", sucesso: false, dadosNovos: data });
         throw new Error("Contexto multiempresa obrigatório.");
@@ -166,7 +167,7 @@ export default function FormularioOrdemProducao({ op, onClose }) {
         return;
       }
 
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = validarPlanoProducaoIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Analise este pedido e sugira otimização de produção:
         
 Pedido: ${pedido.numero_pedido}
@@ -189,7 +190,7 @@ Retorne sugestões de:
             gargalos: { type: "array", items: { type: "string" } }
           }
         }
-      });
+      }));
 
       setFormData(prev => ({
         ...prev,

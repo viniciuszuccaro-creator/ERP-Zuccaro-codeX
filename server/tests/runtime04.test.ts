@@ -873,3 +873,61 @@ test('Legado Cliente: Grupo canonical persistence retry edit reopen reversal and
 if(process.env.DATABASE_URL)test('Legado Cliente PostgreSQL real isolated persistence and rollback',async()=>{
  await proveLegacyClient(await legacyIsolatedPostgres(process.env.DATABASE_URL));
 });
+
+
+test('operational picker: canonical link identity, eligibility and company scope without writes', async () => {
+  const repo = createInMemoryClienteRepo(), audit = new InMemoryAuditRepository(), guard = linkedRbacGuard();
+  const service = new ClienteService(repo, audit, linkedGuard(), guard);
+  const ctx = { groupId: GROUP_A, empresaId: EMPRESA_A, actorId: ACTOR_A, requestId: 'synthetic-picker' };
+  const linked = await service.create(ctx, { tipo: 'Pessoa Jurídica', documento: CNPJ_A, razao_social: 'SYNTHETIC LINKED' });
+  await service.create({ ...ctx, empresaId: undefined }, { tipo: 'Pessoa Física', documento: CPF_B, nome: 'SYNTHETIC UNLINKED', empresa_id: null });
+  const before = await audit.listByEntity('Cliente', linked.id);
+  const page = await service.list(ctx, { operacao: true, limit: 1 });
+  assert.equal(page.meta.total, 1); assert.equal(page.data.length, 1);
+  const item = page.data[0];
+  assert.equal(item.id, linked.id); assert.equal(item.codigo, linked.codigo);
+  assert.ok(item.empresa_operacao); assert.notEqual(item.empresa_operacao.id, linked.id);
+  assert.equal(item.empresa_operacao.cliente_id, linked.id); assert.equal(item.empresa_operacao.empresa_id, EMPRESA_A);
+  assert.equal(item.empresa_operacao.elegivel_operacao, true);
+  assert.deepEqual(Object.keys(item.empresa_operacao).sort(), ['ativo','bloqueado','cliente_id','elegivel_operacao','empresa_id','group_id','habilitado_operacao','id','situacao_comercial'].sort());
+  const empty = await service.list(ctx, { operacao: true, limit: 1, offset: 1 });
+  assert.equal(empty.meta.total, 1); assert.deepEqual(empty.data, []);
+  assert.deepEqual(await audit.listByEntity('Cliente', linked.id), before);
+  await repo.setEmpresaLinkBlocked({ groupId: GROUP_A, empresaId: EMPRESA_A }, linked.id, EMPRESA_A, true);
+  assert.equal((await service.list(ctx, { operacao: true })).meta.total, 0);
+  await repo.setEmpresaLinkBlocked({ groupId: GROUP_A, empresaId: EMPRESA_A }, linked.id, EMPRESA_A, false);
+  await assert.rejects(service.updateEmpresaLink(ctx, linked.id, EMPRESA_A, { situacao_comercial: 'INATIVO', habilitado_operacao: false }), { statusCode: 403, code: 'PERMISSION_DENIED' });
+  await repo.updateEmpresaLink({ groupId: GROUP_A, empresaId: EMPRESA_A }, linked.id, EMPRESA_A, { situacao_comercial: 'INATIVO', habilitado_operacao: false });
+  assert.equal((await service.list(ctx, { operacao: true })).meta.total, 0);
+  await repo.updateEmpresaLink({ groupId: GROUP_A, empresaId: EMPRESA_A }, linked.id, EMPRESA_A, { situacao_comercial: 'ATIVO', habilitado_operacao: true });
+  assert.equal((await service.list(ctx, { operacao: true })).data[0].empresa_operacao?.id, item.empresa_operacao.id);
+  await assert.rejects(service.list({ ...ctx, empresaId: EMPRESA_B }, { operacao: true }));
+});
+
+test('operational picker: permission, exact pagination and revocation fail closed', async () => {
+  const repo = createInMemoryClienteRepo(), guard = linkedRbacGuard();
+  const service = new ClienteService(repo, new InMemoryAuditRepository(), linkedGuard(), guard);
+  const ctx = { groupId: GROUP_A, empresaId: EMPRESA_A, actorId: ACTOR_A, requestId: 'synthetic-picker-negative' };
+  await assert.rejects(service.list({ ...ctx, empresaId: undefined }, { operacao: true }));
+  await assert.rejects(service.list({ ...ctx, actorId: ACTOR_CREATE_ONLY }, { operacao: true }));
+  for (const options of [{limit:201},{limit:1.5},{offset:-1},{offset:0.5},{ativo:false},{search:' trailing '}]) {
+    await assert.rejects(service.list(ctx, { ...options, operacao: true }));
+  }
+  const read = repo.listPage.bind(repo);
+  repo.listPage = async filter => {
+    const page = await read(filter);
+    guard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions: { Cadastros: { cliente: ['criar'] } } });
+    return page;
+  };
+  await assert.rejects(service.list(ctx, { operacao: true }));
+});
+
+test('operational picker: no arbitrary first link on ambiguous or invalid source', async () => {
+  const { clienteOperacaoLinksSchema } = await import('../src/repositories/clienteTypes.ts');
+  const link = { id: ACTOR_A, group_id: GROUP_A, cliente_id: ACTOR_B, empresa_id: EMPRESA_A,
+    ativo: true, situacao_comercial: 'ATIVO', habilitado_operacao: true, bloqueado: false, elegivel_operacao: true };
+  assert.equal(clienteOperacaoLinksSchema.safeParse([link]).success, true);
+  assert.equal(clienteOperacaoLinksSchema.safeParse([link, { ...link, id: ACTOR_LIMITED }]).success, false);
+  assert.equal(clienteOperacaoLinksSchema.safeParse([]).success, false);
+  assert.equal(clienteOperacaoLinksSchema.safeParse([{ ...link, bloqueado: true }]).success, false);
+});

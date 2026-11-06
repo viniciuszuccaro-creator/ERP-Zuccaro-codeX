@@ -105,7 +105,7 @@ export default function SincronizacaoMarketplaces({ empresaId: empresaIdProp }) 
   });
 
   const sincronizarMutation = useMutation({
-    mutationFn: async (marketplace) => {
+    mutationFn: async (/** @type {string} */ marketplace) => {
       if (!contextoValido) {
         await auditarMarketplace('Bloqueio sem contexto', 'Tentativa de sincronizar marketplace sem grupo ou empresa.', { marketplace });
         throw new Error('Selecione grupo e empresa antes de sincronizar marketplaces.');

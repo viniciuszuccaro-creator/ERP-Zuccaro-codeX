@@ -31,7 +31,7 @@ export const validateMfaProviderConfig = ({ provider, secret }) => {
   return { valid: true, error: null, provider: normalizedProvider };
 };
 
-export const resolveMfaDestination = (provider, user = {}) => {
+export const resolveMfaDestination = (provider, user: Record<string,any> = {}) => {
   if (provider === 'email') {
     const email = text(user.email).toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
@@ -101,7 +101,7 @@ export const evaluateMfaVerificationRateLimit = (records = [], nowMs = Date.now(
     : { allowed: true, reason: 'verification_allowed' };
 };
 
-export const evaluateMfaScopeAccess = (context, { user, groups = [], companies = [] } = {}) => {
+export const evaluateMfaScopeAccess = (context, { user, groups = [], companies = [] }: { user?:any; groups?:any[]; companies?:any[] } = {}) => {
   if (!user?.id) return { allowed: false, reason: 'unauthorized' };
   const groupId = normalizeId(context.groupId);
   const empresaId = normalizeId(context.empresaId);

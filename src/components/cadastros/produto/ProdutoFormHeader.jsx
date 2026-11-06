@@ -18,7 +18,7 @@ export default function ProdutoFormHeader({ produto, onImportarNFe, onImportarLo
             variant="outline"
             onClick={onImportarNFe}
             disabled={disabledImportacoes}
-            className="border-purple-300"
+            className="border-sky-300"
             data-permission="Cadastros.Produto.criar"
             data-action="importar-produto-nfe"
             data-sensitive

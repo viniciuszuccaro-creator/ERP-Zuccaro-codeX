@@ -22,6 +22,15 @@ import usePermissions from "@/components/lib/usePermissions";
  * Consolidação e melhoria do módulo de produção
  */
 
+/** @param {unknown} disponibilidade @param {unknown} performance @param {unknown} qualidade */
+export function calcularOEE(disponibilidade, performance, qualidade) {
+  if (typeof disponibilidade !== 'number' || typeof performance !== 'number'
+    || typeof qualidade !== 'number') return null;
+  if (![disponibilidade, performance, qualidade].every(value => Number.isFinite(value)
+    && value >= 0 && value <= 100)) return null;
+  return (disponibilidade * performance * qualidade) / 10000;
+}
+
 function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
   const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -36,13 +45,14 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
     hasPermission("Produção", null, "visualizar") ||
     hasPermission("Producao", "Dashboard", "visualizar") ||
     hasPermission("Producao", null, "visualizar");
+  /** @type {[{eficienciaGeral: string, opsAtrasadas: number, pesoProducaoHoje: string, tempoMedioProducao: string, taxaRefugo: string, oee: number | null}, React.Dispatch<React.SetStateAction<{eficienciaGeral: string, opsAtrasadas: number, pesoProducaoHoje: string, tempoMedioProducao: string, taxaRefugo: string, oee: number | null}>>]} */
   const [metricas, setMetricas] = useState({
-    eficienciaGeral: 0,
+    eficienciaGeral: '0',
     opsAtrasadas: 0,
-    pesoProducaoHoje: 0,
-    tempoMedioProducao: 0,
-    taxaRefugo: 0,
-    oee: 0
+    pesoProducaoHoje: '0',
+    tempoMedioProducao: '0',
+    taxaRefugo: '0',
+    oee: null
   });
 
   const { data: ops = [] } = useQuery({
@@ -89,11 +99,8 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
         ? (opsAtivas.filter(op => (op.progresso_fisico_percentual || 0) >= 80).length / opsAtivas.length) * 100
         : 0;
 
-      // OEE simplificado (Overall Equipment Effectiveness)
-      const disponibilidade = 85; // Mock - seria calculado com dados reais de máquinas
-      const performance = eficiencia;
-      const qualidade = 100 - taxaRefugo;
-      const oee = (disponibilidade * performance * qualidade) / 10000;
+      // Sem fonte real de disponibilidade, OEE nao e uma medicao disponivel.
+      const oee = calcularOEE(null, eficiencia, 100 - taxaRefugo);
 
       setMetricas({
         eficienciaGeral: eficiencia.toFixed(1),
@@ -101,7 +108,7 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
         pesoProducaoHoje: pesoHoje.toFixed(2),
         tempoMedioProducao: tempoMedio.toFixed(0),
         taxaRefugo: taxaRefugo.toFixed(2),
-        oee: oee.toFixed(1)
+        oee
       });
     }
   }, [ops, apontamentos]);
@@ -144,7 +151,7 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <TrendingUp className={`w-5 h-5 ${metricas.eficienciaGeral >= 80 ? 'text-green-600' : 'text-yellow-600'}`} />
+              <TrendingUp className={`w-5 h-5 ${Number(metricas.eficienciaGeral) >= 80 ? 'text-green-600' : 'text-yellow-600'}`} />
               <span className="text-2xl font-bold">{metricas.eficienciaGeral}%</span>
             </div>
           </CardContent>
@@ -194,7 +201,7 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <AlertTriangle className={`w-5 h-5 ${metricas.taxaRefugo <= 3 ? 'text-green-600' : 'text-red-600'}`} />
+              <AlertTriangle className={`w-5 h-5 ${Number(metricas.taxaRefugo) <= 3 ? 'text-green-600' : 'text-red-600'}`} />
               <span className="text-2xl font-bold">{metricas.taxaRefugo}%</span>
             </div>
           </CardContent>
@@ -206,8 +213,8 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Target className={`w-5 h-5 ${metricas.oee >= 75 ? 'text-green-600' : 'text-yellow-600'}`} />
-              <span className="text-2xl font-bold">{metricas.oee}%</span>
+              <Target className={`w-5 h-5 ${metricas.oee === null ? 'text-slate-400' : metricas.oee >= 75 ? 'text-green-600' : 'text-yellow-600'}`} />
+              <span className="text-2xl font-bold">{metricas.oee === null ? 'Sem dados' : `${metricas.oee.toFixed(1)}%`}</span>
             </div>
           </CardContent>
         </Card>
@@ -282,7 +289,7 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
               </div>
             )}
             
-            {metricas.taxaRefugo > 3 && (
+            {Number(metricas.taxaRefugo) > 3 && (
               <div className="p-3 bg-orange-50 border border-orange-200 rounded">
                 <div className="flex items-center gap-2">
                   <Badge className="bg-orange-600">Médio</Badge>
@@ -294,7 +301,7 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
               </div>
             )}
 
-            {metricas.oee < 75 && (
+            {metricas.oee !== null && metricas.oee < 75 && (
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
                 <div className="flex items-center gap-2">
                   <Badge className="bg-yellow-600">Baixo</Badge>
@@ -306,7 +313,7 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
               </div>
             )}
 
-            {metricas.opsAtrasadas === 0 && metricas.taxaRefugo <= 3 && metricas.oee >= 75 && (
+            {metricas.opsAtrasadas === 0 && Number(metricas.taxaRefugo) <= 3 && metricas.oee !== null && metricas.oee >= 75 && (
               <div className="p-3 bg-green-50 border border-green-200 rounded text-center">
                 <div className="flex items-center justify-center gap-2">
                   <Zap className="w-5 h-5 text-green-600" />

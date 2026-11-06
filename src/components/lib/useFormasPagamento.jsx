@@ -73,6 +73,13 @@ export function useFormasPagamento(filtros = {}) {
     
     return {
       ...forma,
+      ativa: forma.ativa,
+      aceita_desconto: forma.aceita_desconto,
+      percentual_desconto_padrao: forma.percentual_desconto_padrao,
+      aplicar_acrescimo: forma.aplicar_acrescimo,
+      percentual_acrescimo_padrao: forma.percentual_acrescimo_padrao,
+      taxa_por_parcela: forma.taxa_por_parcela,
+      intervalo_parcelas_dias: forma.intervalo_parcelas_dias,
       banco: banco,
       gateway: gateway,
       usa_gateway: forma.usa_gateway || false,

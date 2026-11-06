@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
   const podeCriar = canCreate("Cadastros", "EventoNotificacao") || canCreate("Sistema", "EventoNotificacao") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "EventoNotificacao") || canEdit("Sistema", "EventoNotificacao") || canEdit("Cadastros", null);
   const podeSalvar = evento?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(evento || {
+  const [formData, setFormData] = useCadastroRecordState(evento || {
     nome_evento: "",
     tipo_evento: "Sistema",
     descricao: "",
@@ -27,7 +28,7 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
     prioridade: "Media",
     usuarios_destinatarios: [],
     ativo: true
-  });
+  }, JSON.stringify([evento?.id ?? null, evento?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = async (e) => {
     e.preventDefault();

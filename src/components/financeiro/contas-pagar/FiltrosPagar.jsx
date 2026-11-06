@@ -27,7 +27,7 @@ export default function FiltrosPagar({
     <Card className="border-0 shadow-sm min-h-[80px] max-h-[80px]">
       <CardContent className="p-3">
         <div className="flex gap-2">
-          <ProtectedAction permission="financeiro_pagar_exportar">
+          <ProtectedAction module="Financeiro" section="ContaPagar" action="exportar">
             <Button variant="outline" size="sm" onClick={onExportar}>
               <Download className="w-3 h-3 mr-1" /> CSV
             </Button>
@@ -59,7 +59,7 @@ export default function FiltrosPagar({
                 {contasSelecionadas.length} • R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </Badge>
               
-              <ProtectedAction permission="financeiro_pagar_baixar_multiplos">
+              <ProtectedAction module="Financeiro" section="ContaPagar" action="baixar_multiplos">
                 <Button variant="outline" size="sm" onClick={onBaixarMultipla} disabled={baixarPending}>
                   <CheckCircle2 className="w-3 h-3 mr-1" /> Pagar
                 </Button>

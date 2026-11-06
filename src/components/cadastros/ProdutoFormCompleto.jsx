@@ -1,4 +1,4 @@
-﻿import React, { useState, Suspense } from "react";
+﻿import React, { useState, useRef, useCallback, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import ProdutoFormHeader from "./produto/ProdutoFormHeader";
 import ProtectedSection from "@/components/security/ProtectedSection"; // mantido para futuras proteÃ§Ãµes de abas
 
 import ProdutoForm from "./ProdutoForm";
+import useCadastroRecordState from "./useCadastroRecordState";
 const AbaConversoesProduto = React.lazy(() => import("./AbaConversoesProduto"));
 const AbaEcommerceProduto = React.lazy(() => import("./AbaEcommerceProduto"));
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
@@ -33,7 +34,7 @@ const sanitizeArray = (values, max = 20) => Array.isArray(values) ? values.map((
  */
 export default function ProdutoFormCompleto({ produto, item, data, initialData, defaultValues, onSubmit, isSubmitting, onProdutosCriados }) {
   const dadosIniciais = item || data || initialData || defaultValues || produto;
-  const { canCreate, canEdit } = usePermissions();
+  const { canCreate, canEdit, user } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [modoImportacao, setModoImportacao] = useState(null); // 'nfe' | 'lote' | null
@@ -42,6 +43,37 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
   const podeCriar = canCreate("Cadastros", "Produto") || canCreate("Estoque", "Produto") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "Produto") || canEdit("Estoque", "Produto") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
+
+  // Only a draft: the caller remains the sole persistence/audit owner.
+  const recordScope = JSON.stringify([
+    dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,
+    groupId, empresaAtual?.id ?? null, contexto, user?.id ?? null,
+  ]);
+  const currentScope = useRef(recordScope);
+  currentScope.current = recordScope;
+  const currentAccess = useRef(false);
+  currentAccess.current = contextoValido && podeSalvar && !isSubmitting;
+  const pendingSave = useRef(false);
+  const [ecommercePatch, setEcommercePatch] = useCadastroRecordState({}, recordScope);
+  const ecommerceData = { ...dadosIniciais, ...ecommercePatch };
+  // Read-only projection of the general form draft; saving still belongs to onSubmit.
+  const [conversionDraft, setConversionDraft] = useCadastroRecordState(null, recordScope);
+  const onConversionDraft = useCallback((draft) => {
+    if (currentScope.current !== recordScope || !currentAccess.current || pendingSave.current) return;
+    setConversionDraft(draft);
+  }, [recordScope, setConversionDraft]);
+
+  const changeEcommerce = (next) => {
+    if (!currentAccess.current || pendingSave.current) return;
+    setEcommercePatch(previous => {
+      const before = { ...dadosIniciais, ...previous };
+      const after = typeof next === "function" ? next(before) : next;
+      // Merge changed fields only, never a stale copy of the general form.
+      return Object.fromEntries(Object.entries(after || {})
+        .filter(([key, value]) => Object.hasOwn(previous, key) || !Object.is(value, before[key]))
+        .map(([key, value]) => [key, value]));
+    });
+  };
 
   const buildPayload = (formData = {}) => ({
     ...formData,
@@ -82,7 +114,8 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
     empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id || dadosIniciais?.empresa_id
   });
 
-  const handleSubmit = (formData) => {
+  const handleSubmit = async (formData) => {
+    if (currentScope.current !== recordScope || !currentAccess.current || pendingSave.current) return;
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de salvar o produto.");
       return;
@@ -92,12 +125,21 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
       return;
     }
 
-    const payload = buildPayload(formData);
+    const payload = buildPayload({ ...formData, ...ecommercePatch });
     if (!payload.descricao) {
       toast.error("Descricao do produto e obrigatoria.");
       return;
     }
-    if (onSubmit) onSubmit(payload);
+    if (!onSubmit) return;
+    pendingSave.current = true;
+    try {
+      await onSubmit(payload);
+    } catch (_error) {
+      // ProdutoForm's legacy callback does not await: handle failures here too.
+      toast.error("Erro ao salvar o produto. Os dados preenchidos foram preservados.");
+    } finally {
+      pendingSave.current = false;
+    }
   };
 
   const handleProdutosCriadosImportacao = (produtos) => {
@@ -183,10 +225,12 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
           )}
         </TabsList>
 
-        <TabsContent value="dados-gerais">
+        <TabsContent value="dados-gerais" forceMount className="data-[state=inactive]:hidden">
           <ProdutoForm
+            key={recordScope}
             produto={dadosIniciais}
             onSubmit={handleSubmit}
+            onConversionDraft={onConversionDraft}
             isSubmitting={isSubmitting}
           />
         </TabsContent>
@@ -196,8 +240,7 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
             <div className="p-6">
               <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
                 <AbaConversoesProduto
-                  formData={dadosIniciais || {}}
-                  setFormData={() => {}}
+                  formData={{ ...dadosIniciais, ...conversionDraft }}
                 />
               </Suspense>
             </div>
@@ -209,10 +252,13 @@ export default function ProdutoFormCompleto({ produto, item, data, initialData, 
           <Card>
             <div className="p-6">
               <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
-                <AbaEcommerceProduto
-                  formData={dadosIniciais || {}}
-                  setFormData={() => {}}
-                />
+                <fieldset disabled={!contextoValido || !podeSalvar || isSubmitting}>
+                  <AbaEcommerceProduto
+                    key={recordScope}
+                    formData={ecommerceData}
+                    setFormData={changeEcommerce}
+                  />
+                </fieldset>
               </Suspense>
             </div>
           </Card>

@@ -37,12 +37,12 @@ export default function NotificationCenter() {
   const lidas = notificacoes.filter(n => n.lida);
 
   const marcarComoLidaMutation = useMutation({
-    mutationFn: (id) => base44.entities.Notificacao.update(id, { 
+    mutationFn: (/** @type {string} */ id) => base44.entities.Notificacao.update(id, {
       lida: true, 
       data_leitura: new Date().toISOString() 
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificacoes']);
+      queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
     },
   });
 
@@ -57,14 +57,14 @@ export default function NotificationCenter() {
       return Promise.all(promises);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificacoes']);
+      queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
     },
   });
 
   const arquivarMutation = useMutation({
-    mutationFn: (id) => base44.entities.Notificacao.update(id, { arquivada: true }),
+    mutationFn: (/** @type {string} */ id) => base44.entities.Notificacao.update(id, { arquivada: true }),
     onSuccess: () => {
-      queryClient.invalidateQueries(['notificacoes']);
+      queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
     },
   });
 

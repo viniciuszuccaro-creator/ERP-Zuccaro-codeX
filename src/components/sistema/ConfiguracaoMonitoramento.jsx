@@ -97,7 +97,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
   }, [config]);
 
   const salvarMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {Record<string, unknown>} */ data) => {
       const stamped = { ...data, empresa_id: empresaAtivaId || null, group_id: grupoAtivoId || null };
       const result = config?.id
         ? await updateInContext('ConfiguracaoMonitoramento', config.id, stamped)

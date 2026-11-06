@@ -1,4 +1,254 @@
+## Decisao vigente - Central de Vendas360 no Orcamentos existente (2026-11-05)
+
+Decisao expressa do proprietario: o submodulo Orcamentos evoluira para Central
+de Vendas360. O desenho ainda esta em definicao; NAO aplicar reorganizacao visual
+ampla, renomear rotas ou criar outra central/tela/importador. Preservar Orcamento
+e Pedido como agregados distintos, vinculados por conversao canonica idempotente.
+Entrada em uso e gates do PLANO_GO_LIVE continuam prioritarios; omnicanal completo
+nao e requisito implicito para liberar o nucleo. GitHub oficial, desktop existente
+para codigo e Codespace unico para validacao quando houver canal/franquia.
+
+### Mapa dirigido de reaproveitamento e provas
+
+Base inspecionada342/0891a340; candidata401/b888 preservada. Esta tabela descreve
+contratos/codigo e provas ja registradas, NAO integra pacotes nem homologa provedores.
+Funcional significa apenas o percurso/ambiente indicado; parcial nao significa
+ausente. Referencias antigas de ondas abaixo permanecem programa, nao autorizacao.
+
+| Frente | Reuso existente / contrato | Estado comprovado e proxima dependencia |
+|---|---|---|
+| Nucleo comercial | `src/pages/Comercial.jsx`, `orcamentoService.ts`, `pedidoService.ts`, rotas `/api/v1/orcamentos`, `/api/v1/pedidos`, conversao e historico | Funcional nos ensaios sinteticos ja registrados; preservar snapshots, contexto e persistencia unica. Nao equivale ao ciclo com clientes reais HML |
+| Mestres e preco/condicao | Cliente/ClienteEmpresa, Produto/Unidade, TabelaPreco e CondicaoPagamento canonicos |100clientes reais persistidos apenas no PG HML; API/Auth/browser ainda pendentes. Dados de outras entidades nao podem ser chamados de reais por heranca |
+| Atendimento/chatbot | `ChatbotAtendimento`, `HubAtendimento`, `atendimentoConversaPolicy`, consumidores existentes | Parcial: codigo de conversa/transbordo/contexto; comentario100% ou icone nao prova canal externo. Conectar ao nucleo, nao criar terceiro hub |
+| GoTo/telefonia | Onda18 deste programa | Integracao nao comprovada. Busca dirigida nos paths de codigo nao localizou adaptador GoTo; isso nao prova ausencia global. Fixar contrato/provider/canal antes de implementar |
+| Site/e-commerce/portal | `OrcamentoSite`, `siteOrigemPolicy`, `PortalCliente`; consumidor `paymentStatusManager` | Parcial: checkout/origem e placeholder de pagamento presentes. Nao e provedor real de pagamento ou segunda verdade de Pedido |
+| Marketplaces | `SincronizacaoMarketplaces`, `SincronizacaoMarketplacesAtiva`, `marketplacePedidoPolicy` | Simulacao explicita por `createMarketplaceSimulationOrders`/stamp de simulacao. Nao importar como dados reais nem anunciar marketplace conectado |
+| CRM | `clienteCentral360CrmProjection`, `crmOportunidadePolicy`, flag `ENABLE_CRM_HTTP` | Parcial: projecao minimizada e backend condicionado; contrato `/capabilities` distingue frontend/backend. Habilitacao/schema/conversao no ambiente exigem prova propria |
+| Financeiro/pagamentos | `integracaoBoletos`, rotas/servicos bancarios existentes, `paymentStatusManager` | Parcial: caminhos simulado/real sao distintos. Configuracao nao comprova cobranca, baixa ou conciliacao. Nenhum efeito externo autorizado na HML |
+| Fiscal/A1 | `integracaoNFe`, cofre A1 preservado e contratos fiscais existentes | Parcial/dependente de provedor, certificado e empresa juridica. Nao inferir emissao por Grupo ou pelo nome de biblioteca; gates fiscais/A1 preservados |
+| Estoque/reserva | contratos de Produto/Pedido e `expedicaoPersistentPorts` | Parcial por dominio: saldo de Expedicao nao e disponibilidade/reserva comercial. `createApp` recebe portas de Expedicao opcionais; existencia de arquivo nao comprova wiring ou saldo de abertura |
+| Producao | `requer_producao` nos itens e componentes/ondas de engenharia ja existentes | Parcial: flag/encaminhamento nao comprovam apontamento, CAD, corte/dobra, fabricacao ou montagem. Preservar as frentes, liberar por percurso |
+| Entregas | `ExpedicaoService`, repositorio PG, rotas `/api/v1/entregas`, historico/separacao/registro/devolucao | Contratos presentes; efeitos de pedido/estoque dependem de portas e schema efetivos. Nao somar essa prova aos ensaios comerciais como E2E unico |
+
+### Lotes de dados e dependencias concretas
+
+- Cliente100: manter a MESMA carga HML e historicos inativos.100enderecos incompletos/
+  4CEP_FORMAT bloqueiam somente acoes dependentes;5emails preservados. Nao inventar
+  numero/pais/finalidade nem criar vinculo empresarial para fazer um fluxo passar.
+- Fornecedor: reutilizar `FornecedorService`/`PostgresFornecedorRepository`,
+  `fornecedorImportSchema` e `server/schema-candidates/fornecedor_master.sql`.
+  Servico exige Grupo e permissoes explicitas importar+criar, locks por identidade/
+  codigo/documento, replay identico e reversao CAS por lote/revisao/fingerprint.
+  Nao esta conectado por rota HTTP no router/app inspecionados; nao anunciar tela
+  persistente homologada. Namespace HML atual precisa envelope proprio e RBAC
+  fornecedor antes de carga; nenhum DDL/grant executado nesta rodada.
+- Produto: reutilizar `pilot-functional-products.mjs`, mapeadores/pins e aprovacao
+  privada existentes. Executor historico cria contexto sintetico: NAO executa-lo
+  cegamente ou reapontar seus pointers para a HML CPA. Conferir o lote e os IDs
+  nativos de classe/unidade; sem fator inventado, PC distinto de UN, unidade teste
+  excluida. Derivar schema minimo do caminho realmente consumido; nao aplicar
+  todas as migrations de Produto/041 por conveniencia. Quantidades aptas atuais
+  nao reconferidas por falta de canal: desconhecido, nao zero.
+- Compras/documentos/financeiro historicos: consulta/conferencia primeiro, mantendo
+  IDs/vinculos/procedencia; eventos que geram titulo, baixa, fiscal ou saldo seguem
+  empresa proprietaria e gates proprios. Nao atribuir CPA/3Z por nome ou palpite.
+
+### Aceite, integracao e proximo item
+
+Auth HML precisa provedor REAL e alvo fisico/path comprovados antes de READY;
+nao IdP sintetico ou fallback operacional. Perfil HML user documentado nao passa
+o guard de visao Grupo; nao promover a admin. Falta proposta especifica de acesso
+Grupo com permissoes canonicas e impacto nos consumidores, sem aplicacao inferida.
+API/session/company pode ser provada independentemente quando o canal voltar.
+
+Codex registra pareceres por SHA; Cursor permanece escritor da mesma401. Ports
+de489/488/508 dependem dos negativos no consumidor montado e CI da composicao,
+nao acumulacao de PRs tomada como integracao.511/26f96d1b tem contraprovas novas
+de zero falso e cache compartilhado, parecer6662661405; corrigir antes de port.
+Provas de callbacks/AST/cache nao sao React montado, HTTP/PG ou navegador.
+Estado de acesso, reservas e proxima acao no STATUS/HANDOFF, sem outro manual.
+
+## Historico - decisao desktop temporario (2026-10-28)
+
+Desenvolvimento no clone desktop independente existente; Codespace unico reservado
+para validacao integrada e navegacao quando houver franquia, sem habilitar gastos.
+GitHub segue canonico, VPS separada por gates. Lista unica e resultados vigentes no
+STATUS/HANDOFF. Codex: backend/contratos/persistencia/legado; Cursor: interface,
+formularios/navegacao/recuperacao. Um escritor por checkout e reservas na PR342.
+Nao presumir WIP/staging/chaves remotos locais nem reconstruir trabalho inacessivel.
+Preservados programa, visual azul-claro com funcionalidades, IDs/codigos/vinculos
+e contratos atuais; nenhuma nova aprovacao visual ou carga acompanha a retomada.
+
+## Historico #342/#344/#350 (2026-10-24)
+
+Retomada no Codespace unico e branch de consolidacao, base4ab7a61b. Defeito de
+captura assincrona na correcao canonica do nome inativo reproduzido e corrigido:
+comando/prova/contexto capturados antes do await, sem mudar RBAC/CAS/auditoria
+transacional/replay/reversao. Foco10 e raiz2279 PASS; backend532 PASS/24SKIP;
+checks locais exit0. CI do novo SHA/revisao independente sao gates separados.
+Provas, comandos e limites no topo de HANDOFF/STATUS. Cursor3502d1f289f/CI4505
+verde, sem editar/integrar branch ou conceder aprovacao visual. Previa nao
+iniciada nesta retomada. Backup e pilotos344 ja concluidos NAO devem ser
+repetidos por instrucoes historicas de canal ausente abaixo. Dados reais privados,
+revisao40009 com zero liberados operacionalmente; cinco gates e agendamento
+LegadoPAUSED preservados. Proximo passo segue ligacao canonica de revisoes
+explicitamente autorizadas, primeiro isolada; este ajuste nao a declara pronta.
+
+## #347 — proposta navegável entregue para revisão (2026-10-23)
+
+Área Comercial existente, opt-in DEV proposta=comercial360, objetos sintéticos em
+memória e gravação bloqueada. Reuso do editor/pickers/cálculo/rascunho, com nova
+composição azul-clara; corrigido bloqueio de clique do diálogo em janela multitarefa.
+Prévia5173 PRIVATE, hostname exato e SHA servido via /__erp_preview. Roteiro,
+capturas sanitizadas, testes e limites no topo do HANDOFF/STATUS. Aprovação visual
+PENDENTE antes de adoção ampla; nenhum registro recuperado ou dado operacional.
+#3480409d3f7 tem ambas CIs SUCCESS; legado344/staging seguem sem vínculo privado
+já documentado, sem repetição de tentativa. PAUSED e gates mantidos.
+
+## #348 — recuperação publicada no lote desta seção (2026-10-23)
+
+Contrato compartilhado de leitura corrigido nos três handlers existentes;
+Representantes/Personalizado reintegrados com RBAC próprio, escopo, projeção,
+paginação/completude e exportação auditada. Foco56 e geral2225 PASS, checks exit0.
+Detalhes/limites no topo do HANDOFF e STATUS: HTTP/local continuam indisponíveis
+sem adaptador seguro, sem deploy ou recuperação de registros presumidos.
+Próximo347 já autorizado: prévia privada/gate visual; legado344 segue separado,
+sem canal privado e sem repetição de inventário/tentativa. PAUSED preservado.
+
+## Recuperacao e evolucao com referencia externa — investigacao integrada (2026-10-23)
+
+## Fila346→348→347 — execução atual (2026-10-23)
+
+346: lacuna de sessão/cache reproduzida e corrigida no Orçamento existente,
+sem refazer Produto. Gates/HTTP/persistência atuais reutilizados; testes/resultado
+no topo de HANDOFF/STATUS.348: correção compartilhada server-side explicitamente
+autorizada, antes de remontar abas;347: prévia privada e aprovação visual própria.
+Código publicado/testado não comprova implantação ou recuperação de registros.
+
+
+## Continuidade345/348 (2026-10-23)
+
+348 bloqueada ANTES de reexpor Relatórios: handler genérico real aceita leitura
+com service role sem autorização específica/empresa comprovada em duas fixtures
+sintéticas; sem dados reais. Componentes preservados; não declarar recuperação.
+345 segue autorizada no Codespace único: preview do rascunho usa callback/state
+existentes, fatores/unidades atualizados antes de salvar; nenhum writer adicional,
+SEO/slug/conversor/payload mantidos. Testes e limites no topo do HANDOFF/STATUS.
+346/347 continuam sequenciais, aprovação visual exigida para redesign amplo.
+
+
+Solicitacao expressa do proprietario, vinculada a issue347 existente; nao cria plano/manual paralelo. Fonte de investigacao: https://github.com/viniciuszuccaro-creator/erp-integra-novo/tree/37c6f7d39e60736cbb862d122de9be23c06db8f6 (main conferida nesse SHA). Candidata comparada: c9f1c71c31526dd1d9795627f2fbc5cd985793ff, PR342 sobre334. A referencia NAO substitui candidata/main, Auth ou persistencia. Todas as frentes do programa permanecem.
+
+### Cobertura e limites da comparacao
+
+Inventarios Git completos sem truncamento comparados, filtrando src com extensoes js/jsx/ts/tsx/css: referencia953, candidata1426;99 paths/blobs iguais,456 mesmos paths alterados,398 paths exclusivos referencia,871 exclusivos candidata. Contagem inclui documentacao com extensao de codigo: nao e contagem de funcionalidades. Leitura dirigida de60 arquivos (34 referencia/26 candidata):25 paginas referencia,22 homonimas candidata e entradas de navegacao/configuracao/adaptadores. Candidata tem46 paginas contra25 referencia. Muitos paths exclusivos da referencia sao extracoes: ausencia do arquivo NAO comprova perda de capacidade nem justifica copia.
+
+Esta e cobertura ESTRUTURAL de todos os modulos de entrada, nao comparacao comportamental completa de cada submodulo/campo/botao/relatorio/integracao. Esse detalhamento deve seguir consumidores e testes por pacote/ator/contexto; nao foi declarado completo. Nenhum arquivo de export/dado real foi lido. Nenhuma verificacao de UI rodou no Codespace por este executor; trabalho de leitura coordenadora ocorreu fora checkout, sem implementacao paralela.
+
+### Quadro sanitizado de classificacao/prioridade
+
+| Classe | Evidencia e destino | Estado / prioridade |
+| --- | --- | --- |
+| Atual com evidencias de testes | SEO/slug5ab608e6 e Conversoes990e6c9a, recibo2186/0/0 e CI4442/4443; base documentalc9f1c71c CI4448/4449 SUCCESS | Preservar; nao regredir/recopiar |
+| Codigo presente mas entrada ausente | Relatorios.jsx atual importa DashboardRepresentantes sem montar a aba; nao monta Personalizado; ambos componentes canonicos existem. Referencia monta abas representantes/personalizado | Recuperacao candidata P1 issue348; gates de seguranca antes de expor |
+| Exclusivo referencia, anterioridade nao provada | Documentacao.jsx, EmpresaOnboarding.jsx, OAuthConsent.jsx ausentes pelo mesmo path na candidata | Investigar equivalente/historico, NAO afirmar removido nem restaurar auth automaticamente |
+| Adicional potencialmente util | Extracoes de Agenda, Cadastros, Relatorios e Layout; mapeamento entityCodeFields da referencia | Avaliar manutencao/consumidores; nao copiar modulo inteiro nem supor equivalente inferior |
+| Atual deve permanecer | Auth real, tenant/RBAC/auditoria, reservas backend/IDs e precos snapshotados; consolidacao atual/Comercial360; componentes de relatorio ja possuem gates que a referencia nao substitui | Nao importar admin local/fallback/permissoes referencia |
+| Fonte de registros ERP novo | Referencia possui adaptadores local-base44/snapshot/store; sao codigo, nao prova de registros. Arvore local-imports tem3 arquivos17185563bytes, conteudo nao aberto | Origem/conteudo/exposicao/integridade ainda desconhecidos; investigacao privada, nao Git publico |
+| Legado ERP antigo | Inventario privado/VPS/HD da344, frente SEPARADA da recuperacao ERP novo | Canal privado ausente; transferencia/piloto NOT RUN |
+
+Evidencia do achado de Relatorios: referencia src/pages/Relatorios.jsx linhas108-109 e161-162; candidata mesmo path linhas29 e410-564, apenas import de DashboardRepresentantes e nenhuma montagem dessas duas abas. Componentes atuais src/components/relatorios/DashboardRepresentantes.jsx e RelatorioPersonalizado.jsx devem ser reutilizados com negativos RBAC/tenant/exportacao; outros consumers encontrados foram mencoes documentais, nao navegacao funcional. Codigo existente pode conter limites de query/export e nao e liberado apenas pela restauracao da aba.
+
+### Matriz de paginas — contagens sao somente TabsTrigger literais detectados
+
+| Entrada | Referencia | Candidata | Evidencia estatica / pendencia |
+| --- | ---: | ---: | --- |
+| AdministracaoSistema | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Agenda | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| CRM | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Cadastros | 2 | 2 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Comercial | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Compras | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| ConfiguracoesUsuario | 3 | 3 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Contratos | 5 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Dashboard | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Documentacao | 2 | — | Path exclusivo da referencia; equivalente/historico anterior pendentes |
+| EmpresaOnboarding | 0 | — | Path exclusivo da referencia; equivalente/historico anterior pendentes |
+| EntregasMobile | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Estoque | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Expedicao | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Financeiro | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Fiscal | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Home | 0 | 0 | Mesmo blob; funcionamento/permissoes nao homologados por isso |
+| HubAtendimento | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| OAuthConsent | 0 | — | Path exclusivo da referencia; equivalente/historico anterior pendentes |
+| OrcamentoSite | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| PortalCliente | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Producao | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| ProducaoMobile | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| RH | 0 | 0 | Entrada presente e alterada; equivalencia de capacidades ainda a verificar |
+| Relatorios | 11 | 11 | Entradas recuperadas348; contrato remoto testado, sem deploy; HTTP/local bloqueados |
+
+Abas dinamicas/configuradas por dados nao entram nessa contagem; zero nao significa pagina vazia. Para todos os modulos acima, o detalhamento deve registrar rotas/imports/consumidores, abas/campos/acoes, perm/contexto/config, teste e disponibilidade na interface antes de classificar como funcionando ou inferior. ERP implantado nao e deduzido de codigo/CI.
+
+### Registros e codigos — investigacao sem inventar recuperacao
+
+Distinguir definicao de entidade, registro real, auxiliar/configuracao e sintetico. Base44/snapshots/localStorage/exports sao fontes CANDIDATAS ate origem e abrangencia comprovadas. Nao ler dumps/PII em logs/chats nem republicar dados ja publicos; avaliar possivel exposicao privadamente e avisar proprietario por canal protegido se confirmada. Nenhum dado foi recuperado/copied; original protegido. Reconciliação/deduplicacao, IDs/codigos/vinculos e Grupo/Empresa obrigatorios antes de carga. Manter recuperacao ERP novo separada da importacao ERP antigo344.
+
+Codigo numerico sequencial: mapear TODOS cadastros/campos e escopo, confrontar mecanismo backend existente e consumidores; preservar IDs tecnicos/codigos importados. entityCodeFields da referencia e apenas mapeamento de nomes, NAO reserva concorrente. Nao copiar count+1, renumerar em massa ou substituir codigo legado. Conflito exige preservar legado, reservar canonicamente e mapear/auditar. Cobertura backend de todos cadastros ainda nao afirmada.
+
+### Pacotes coordenados e aceite
+
+Issue347 foi ampliada para o ERP inteiro/layout, com proposta navegavel no MESMO Codespace, azul-claro e melhorias preservados, aprovacao visual antes de redesenho amplo. Fonte visual exata e comportamento anterior ainda precisam ser demonstrados, nao mera troca de cores. Comercial integrado preserva rascunhos e componentes346 existentes.
+
+Issue348 e a primeira recuperacao coesa selecionada: reabrir capacidades Representantes/Personalizado nos componentes canonicos, primeiro teste que reproduza entrada ausente e valida RBAC granular/tenant/consulta/exportacao/auditoria/completude. Bloquear exposicao se faltar contrato seguro, nao copiar seguranca referencia. Teste pre/pós-fix, checks Regra-Mae, docs/commit/push/CI e recibo por SHA. Estado AGUARDANDO ACEITE do MESMO agente Codespace, nao implementado/encaminhado automaticamente. Nao tocar Produto345 ou Comercial346/347 sem reserva.
+
+Coordenacao leu fonte e publicou tarefas/docs; nao possui Browser/ponte autenticada para iniciar aquele agente. Sem escritor concorrente, sem novo ambiente/billing, merge/deploy/migrations045-049/carga operacional. PAUSED legado mantido. Continuidade em347/348 e documentos existentes, nao manual novo.
+
 # PROGRAMA COMERCIAL 360 OMNICANAL — EXECUÇÃO AUTÔNOMA
+
+## Continuidade — conversões existentes de Produto (2026-10-22)
+
+No Codespace único comprovado, base4456137f/PR342 sobre334, lote localizado na
+aba Conversões: reutiliza o conversor de Vendas, corrige TON→PÇ e abertura com
+fatores ausentes/decimais legados. Fonte persistida e escritor/auditoria atuais
+preservados; SEO/slug5ab608e6 não reimplementado. Sem ativação HTTP/canal/IA.
+Provas, checks, publicação e limites no topo de HANDOFF_ATUAL.md e STATUS.
+Canal SSH/SFTP não configurado neste runtime: inventário privado não executado;
+nenhum dado real transferido ou aberto. PAUSED e gates operacionais preservados.
+
+
+## Referencia atual de coordenacao e precedencia (2026-10-22)
+
+Este e o programa existente; nao reiniciar ondas nem criar manual paralelo.
+Coordenador: **Nuvem ERP-Zuccaro-codeX**. Desenvolvimento/testes: Codespace unico
+existente; clone local standby e UM escritor autorizado por checkout. Branch
+codex/consolidacao-infra-20261017,PR342 draft sobre334; d425138f e base documental
+deste checkpoint. Cabecalho PR33 e estados iniciais abaixo sao HISTORICOS.
+Nao iniciar Gate2 pela sugestao antiga: ambiente unico -> Comercial360 -> legado.
+
+Decisoes recebidas do proprietario e lacunas estao no topo de
+[HANDOFF_ATUAL.md](HANDOFF_ATUAL.md). Preservar layout azul-claro aprovado,
+funcionalidades, recuperacao/submodulos e DESENHO APROVADO antes de mudancas amplas;
+codigos NUMERICOS SEQUENCIAIS em TODOS cadastros com reserva backend concorrente,
+IDs/vinculos/codigos importados e mapeamento de colisao sem renumeracao silenciosa.
+A experiencia Comercial360 e unica; site/app/marketplaces/chatbots/telefonia,
+logistica/corte-dobra/CAD/fabricacao/montagem permanecem nas ondas previstas.
+
+Autorizacao posterior permite staging privado remoto e acesso protegido a lotes
+minimos no Codespace/Cursor fora do checkout/Git,com original RO e gates de destino,
+ACL,criptografia/recuperacao,integridade/retencao. Nao e importacao operacional.
+Historico comercial/financeiro com procedencia,separado de regras fiscais;
+extrato nao gera titulos/baixas e sugestao IA nao e fonte oficial. Piloto
+PREPARED_NOT_AUTHORIZED,agendamentoPAUSED,045-049 foraexecucaoautomatica.
+Checkpoint funcional posterior (22/10): SEO/slug manuais de ProdutoFormCompleto
+conectados ao escritor existente V24; Produto V22 conserva sua persistencia propria.
+Execucao local no sandbox explicitamente declarado, um escritor, sem conexao
+Codespace presumida. Testes/commit/CI e limites no topo do HANDOFF e STATUS;
+nao e homologacao operacional, publicacao de canal ou ativacao HTTP. O registro
+anterior de setter vazio descreve o planejamento em66b88c2b, nao estado atual.
+
+### Cabecalho e baseline historicos — nao descrevem o estado atual
 
 > Documento mestre para Codex e Cursor — CPA Ferro e Aço / ERP Zuccaro / Site CPA
 > Baseline verificado em 24/09/2026: PR #33 draft, branch `codex/comercial-360`,
@@ -42,7 +292,7 @@ Toda instrução deste documento é destinada conjuntamente ao **Codex e ao Curs
 
 1. Ler este documento completamente antes de modificar código.
 2. Executar as ondas na ordem de dependência indicada.
-3. Frentes independentes podem ser trabalhadas em paralelo, sempre em branches/worktrees isoladas.
+3. Nesta continuidade, uma unica frente e um escritor por checkout. Paralelismo historico nao autoriza nova frente sem decisao expressa do proprietario.
 4. Não parar após inventário, diagnóstico, documento, teste local ou commit intermediário.
 5. Após cada checkpoint estável: revisar, testar, commitar, fazer push e confirmar o remoto.
 6. Acompanhar a CI; corrigir automaticamente falhas corrigíveis.
@@ -1074,3 +1324,12 @@ Branch `codex/comercial-composicao-20261017`, base #331 `b3a683bba1bdd8dc3870ce4
 Percurso sintético persistido Cliente → Orçamento editado → conversão concorrente única → Pedido editado/status → separação → romaneio/despacho → parcial → devolução, mais Pedido direto/replay/cancelamento. Testa preço servidor, snapshot, tenant/RBAC, revogação dentro da transação, falha de auditoria/rollback e saldo sintético. Corrigidos data serializada, executor da autorização, quantidades entregues por item e catálogo explícito Expedição. Backend geral: 410 pass/23 skips por ausência local de PostgreSQL externo; suites PostgreSQL obrigatórias e sem skip na CI. Foco backend 25/25, rechecagem 16/16, frontend Expedição 59/59, compatibilidade histórica migrations 1/1 PGlite. CI do novo SHA e parecer Cursor ainda necessários.
 
 Limites abertos: typecheck global frontend (base #331 1660 diagnósticos; primeira composição 1741, exige reconciliação, não declarar verde); suíte root Windows sem Bash teve 53 falhas/1014 e nova execução com Git Bash ficou presa no precheck VPS, interrompida sem alterar testes. Exigir CI Linux. Nenhum banco operacional, VPS, provider, importação real ou backup foi modificado. Retomada: fechar diagnósticos do delta, CI PostgreSQL/Linux e parecer Cursor do SHA final; manter portas operacionais reservadas até gates canônicos.
+
+## Checkpoint executado — Pedido: motivo obrigatório (2026-10-25)
+
+Reserva344/6399158275: lacuna entre contrato Onda5/UI existente e backend
+resolvida no PedidoService canônico. Motivo ausente agora retorna422 antes
+da transação; histórico/auditoria/tenant/RBAC e snapshots preservados.
+Contraprova anterior reproduzida; serviço+HTTP15PASS e checks do pacote
+registrados em HANDOFF/STATUS e recibo344/342. Nenhuma integração downstream
+ou gate operacional é considerado concluído por esta mudança.

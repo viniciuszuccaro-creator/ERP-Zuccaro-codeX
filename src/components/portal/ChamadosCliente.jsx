@@ -71,7 +71,7 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
   });
 
   const criarChamadoMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {typeof formChamado} */ data) => {
       const cli = clienteData || (await base44.entities.Cliente.filter({ id: clienteId }).then(r=>r?.[0]));
       if (!cli?.group_id || !cli?.empresa_id) {
         throw new Error('Contexto de Grupo e Empresa obrigatorio para abrir chamado.');
@@ -120,7 +120,7 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
   });
 
   const avaliarChamadoMutation = useMutation({
-    mutationFn: ({ chamadoId, avaliacao }) => {
+    mutationFn: (/** @type {{chamadoId: string, avaliacao: {nota: number, comentario: string}}} */ { chamadoId, avaliacao }) => {
       return base44.entities.Chamado.update(chamadoId, { avaliacao });
     },
     onSuccess: async () => {
@@ -356,7 +356,7 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
                           className="text-amber-600"
                           onClick={() => {
                             const nota = prompt("Avalie de 1 a 5:");
-                            if (nota && !isNaN(nota) && nota >= 1 && nota <= 5) {
+                            if (nota && !isNaN(Number(nota)) && Number(nota) >= 1 && Number(nota) <= 5) {
                               avaliarChamadoMutation.mutate({
                                 chamadoId: chamado.id,
                                 avaliacao: { nota: parseInt(nota), comentario: "" }

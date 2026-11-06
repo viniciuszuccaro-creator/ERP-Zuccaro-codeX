@@ -42,10 +42,8 @@ test('runHttpPilotAwareCountEntities batch usa HTTP no piloto e local no restant
     pilotSet: new Set(['Cliente']),
     httpEntities: {
       Cliente: {
-        filter: async (filter, _order, limit, skip) => {
-          calls.push(['http', filter, limit, skip]);
-          return [{ id: '1' }, { id: '2' }, { id: '3' }, { id: '4' }, { id: '5' }];
-        },
+        filter: async () => { throw new Error('must not count page rows'); },
+        count: async filter => { calls.push(['http', filter]); return 1505; },
       },
     },
     countLocal: async (entityName, filter) => {
@@ -54,9 +52,19 @@ test('runHttpPilotAwareCountEntities batch usa HTTP no piloto e local no restant
     },
   });
 
-  assert.deepEqual(result.data.counts, { Cliente: 5, Fornecedor: 2 });
-  assert.equal(result.data.Cliente, 5);
+  assert.deepEqual(result.data.counts, { Cliente: 1505, Fornecedor: 2 });
+  assert.equal(result.data.Cliente, 1505);
   assert.equal(result.data.Fornecedor, 2);
-  assert.deepEqual(calls[0], ['http', { group_id: 'g1' }, 500, 0]);
+  assert.deepEqual(calls[0], ['http', { group_id: 'g1' }]);
   assert.deepEqual(calls[1], ['local', 'Fornecedor', { group_id: 'g1' }]);
+});
+
+test('HTTP count never falls back to rows or local data when its contract is unavailable', async () => {
+  for (const count of [undefined, async () => null, async () => -1, async () => NaN]) {
+    await assert.rejects(runHttpPilotAwareCountEntities({ entityName: 'Cliente' }, {
+      pilotSet: new Set(['Cliente']),
+      httpEntities: { Cliente: { filter: async () => { throw new Error('page must not be read'); }, count } },
+      countLocal: async () => { throw new Error('local must not be read'); },
+    }), /HTTP_COUNT_UNAVAILABLE/);
+  }
 });

@@ -1,10 +1,13 @@
 import { AppError } from '../api/errors.js';
+import { clienteOperacaoLinkSchema } from './clienteTypes.js';
 import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { DbQueryExecutor } from '../db/client.js';
+import type { CadastroBulkRow } from '../services/cadastroBulkPolicy.js';
 import type {
   Cliente,
+  ClienteListItem,
   ClienteCreate,
   ClienteEmpresa,
   ClienteEmpresaCreate,
@@ -15,6 +18,8 @@ import type {
 function nowIso() { return new Date().toISOString(); }
 
 export type ClienteListFilter = Scope & ListOptions & {
+  operacao?: boolean;
+  clienteEmpresaId?: string;
   offset?: number;
   codigo?: string;
   documento?: string;
@@ -33,6 +38,8 @@ export type ClienteEmpresaListFilter = Scope & ListOptions & {
 };
 
 export interface ClienteRepository extends TenantEntityRepository<Cliente, ClienteCreate, ClienteUpdate> {
+  prepareExport?(scope: Scope, executor: DbQueryExecutor): Promise<() => Promise<void>>;
+  getBulkSnapshot?(scope: Scope, id: string, executor: DbQueryExecutor): Promise<CadastroBulkRow | null>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   create(
     scope: Scope,
@@ -43,7 +50,8 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
   getById(scope: Scope,id:string,executor?:DbQueryExecutor,options?:{forUpdate?:boolean}):Promise<Cliente|null>;
   update(scope:Scope,id:string,data:ClienteUpdate,executor?:DbQueryExecutor):Promise<Cliente|null>;
   softDelete(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Cliente|null>;
-  listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }>;
+  listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,
+    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }>;
   findByDocumento(groupId: string, documentoNormalizado: string,executor?:DbQueryExecutor): Promise<Cliente | null>;
   findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null>;
   restore(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<Cliente | null>;
@@ -209,8 +217,21 @@ export class InMemoryClienteRepository implements ClienteRepository {
     return page.rows;
   }
 
-  async listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }> {
-    let all = [...this.rows.values()].filter((r) => this.matches(filter, r));
+  async listPage(filter: ClienteListFilter): Promise<{ rows: ClienteListItem[]; total: number }> {
+    if (filter.clienteEmpresaId && !filter.operacao) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');
+    }
+    let all: ClienteListItem[] = [...this.rows.values()].filter((r) => this.matches(filter, r));
+    if (filter.operacao) {
+      if (!filter.empresaId || filter.ativo === false) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
+      all = all.flatMap(row => {
+        const links = [...this.empresaLinks.values()].filter(link => link.group_id === filter.groupId
+          && link.empresa_id === filter.empresaId && link.cliente_id === row.id && link.elegivel_operacao);
+        if (filter.clienteEmpresaId && !links.some(link => link.id === filter.clienteEmpresaId)) return [];
+        if (links.length > 1) throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');
+        return links.length === 1 ? [{ ...row, empresa_operacao: clienteOperacaoLinkSchema.parse(links[0]) }] : [];
+      });
+    }
     const orderBy = filter.orderBy ?? 'codigo';
     const dir = filter.orderDir === 'desc' ? -1 : 1;
     all.sort((a, b) => {
@@ -236,9 +257,13 @@ export class InMemoryClienteRepository implements ClienteRepository {
   }
 
   async findByDocumento(groupId: string, documentoNormalizado: string,_executor?:DbQueryExecutor): Promise<Cliente | null> {
-    return [...this.rows.values()].find(
-      (r) => r.group_id === groupId && r.documento_normalizado === documentoNormalizado,
-    ) ?? null;
+    let match: Cliente | null = null;
+    for (const row of this.rows.values()) {
+      if (row.group_id !== groupId || row.documento_normalizado !== documentoNormalizado) continue;
+      if (match) throw new AppError(409, 'LEGACY_RECONCILIATION_REQUIRED', 'Ambiguous customer document');
+      match = row;
+    }
+    return match;
   }
 
   async create(

@@ -85,7 +85,7 @@ export default function WizardEtapa4Revisao({ dados, clientes }) {
       <Card>
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle className="text-base flex items-center gap-2">
-            <Package className="w-5 h-5 text-purple-600" />
+            <Package className="w-5 h-5 text-sky-600" />
             Itens ({totalItens})
           </CardTitle>
         </CardHeader>

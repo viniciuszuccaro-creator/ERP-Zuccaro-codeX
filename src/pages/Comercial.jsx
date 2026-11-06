@@ -42,6 +42,14 @@ const reportComercialRealtimeFailure = (operation, error, context = {}) => {
 };
 
 export default function Comercial() {
+  if (new URLSearchParams(window.location.search).get('conferencia_legado') === '1') {
+    return <Suspense fallback={<p>Carregando conferência…</p>}><ClientesTab /></Suspense>;
+  }
+  return <ComercialContent />;
+}
+
+function ComercialContent() {
+  const propostaIntegrada = import.meta.env.DEV && new URLSearchParams(window.location.search).get('proposta') === 'comercial360';
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const canViewComercial = (section = null) => (
     hasPermission('Comercial', section, 'visualizar')
@@ -339,7 +347,7 @@ export default function Comercial() {
       windowTitle: 'Orçamentos',
       width: 1500,
       height: 850,
-      props: { groupId, empresaId, actorId: user?.id, actorEmail: user?.email, empresaAtual, hasPermission, filterInContext }
+      props: { groupId, empresaId, actorId: user?.id, actorEmail: user?.email, empresaAtual, hasPermission, filterInContext, proposalMode:propostaIntegrada }
     },
     {
       title: 'Pedidos',
@@ -471,7 +479,7 @@ export default function Comercial() {
     <ErrorBoundary>
       <ModuleLayout
               title="Comercial e Vendas"
-              subtitle="Vendas, clientes e canais"
+              subtitle={propostaIntegrada ? "Proposta visual: abra Orçamentos → Novo orçamento. Demonstração sintética, sem gravação." : "Vendas, clientes e canais"}
               actions={<div className="flex items-center gap-2">
                 <ProtectedSection module="Comercial" section="Pedidos" action="criar">
                   <Button data-permission="Comercial.Pedidos.criar" data-sensitive onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>

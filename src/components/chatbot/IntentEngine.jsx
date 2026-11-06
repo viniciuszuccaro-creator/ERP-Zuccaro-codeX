@@ -1,4 +1,5 @@
-import { base44 } from '@/api/base44Client';
+import { base44, invokeErpIa } from '@/api/base44Client';
+import { validarIntentAtendimentoIA } from '../lib/atendimentoIaResponsePolicy.js';
 
 const reportIntentFailure = (operation, error, context = {}) => {
   console.error('[IntentEngine] ' + operation, {
@@ -168,6 +169,7 @@ const IntentEngine = {
     // Detectar intent baseado em palavras-chave (estático)
     let intentDetectado = 'desconhecido';
     let confianca = 0;
+    /** @type {{prioridade: number, requer_humano?: boolean, acao?: unknown}} */
     let melhorMatch = null;
 
     for (const [intent, config] of Object.entries(this.intents)) {
@@ -660,7 +662,7 @@ const IntentEngine = {
       if (!mensagemSanitizada) return null;
 
       const { groupId, empresaId } = getContextIds(contexto);
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = await invokeErpIa('atendimento_intencao', {
         prompt: `Analise a mensagem de um cliente e retorne:
 1. Intent principal (consultar_pedido, consultar_entrega, segunda_via_boleto, orcamento, suporte_tecnico, falar_atendente, cancelamento, saudacao, agradecimento, despedida, desconhecido)
 2. Confiança de 0 a 100
@@ -686,7 +688,7 @@ Contexto seguro: ${JSON.stringify(buildSafeLLMContext(contexto))}`,
           }
         }
       });
-      return resultado;
+      return validarIntentAtendimentoIA(resultado);
     } catch (error) {
       console.warn('IA indisponível, usando fallback:', error.message);
       return null;

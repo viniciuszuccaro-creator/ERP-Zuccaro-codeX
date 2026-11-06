@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
   const podeCriar = canCreate("Cadastros", "ParametroConciliacaoBancaria") || canCreate("Financeiro", "ConciliacaoBancaria") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ParametroConciliacaoBancaria") || canEdit("Financeiro", "ConciliacaoBancaria") || canEdit("Cadastros", null);
   const podeSalvar = parametro?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(parametro || {
+  const [formData, setFormData] = useCadastroRecordState(parametro || {
     tipo_lancamento: "Ambos",
     usar_nsu: true,
     usar_historico: true,
@@ -27,7 +28,7 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
     usar_ia_aprendizado: true,
     conciliacao_automatica_ativa: false,
     ativo: true
-  });
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

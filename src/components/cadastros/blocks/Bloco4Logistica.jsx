@@ -202,7 +202,7 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "" 
                     App
                   </Button>
                 )}
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+                <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                   onClick={() => openList(k, t, Icon, c, FormComp)()}
                   disabled={!contextoValido || !canViewEntity(k)}
                   data-permission={`Cadastros.${k}.visualizar`}

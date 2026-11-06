@@ -83,7 +83,7 @@ export default function MonitorSLA() {
     const criticas = conversas.filter(c => {
       if (c.status === 'Resolvida' || c.status === 'Arquivada') return false;
       
-      const tempoDecorrido = (agora - new Date(c.data_inicio)) / 1000 / 60; // minutos
+      const tempoDecorrido = (agora.getTime() - new Date(c.data_inicio).getTime()) / 1000 / 60; // minutos
       const limiteRestante = metasSLA.tempo_resolucao_minutos - tempoDecorrido;
       
       return limiteRestante < 15 && limiteRestante > 0; // Alerta 15min antes
@@ -91,7 +91,7 @@ export default function MonitorSLA() {
 
     const excedidas = conversas.filter(c => {
       if (c.status === 'Resolvida' || c.status === 'Arquivada') return false;
-      const tempoDecorrido = (agora - new Date(c.data_inicio)) / 1000 / 60;
+      const tempoDecorrido = (agora.getTime() - new Date(c.data_inicio).getTime()) / 1000 / 60;
       return tempoDecorrido > metasSLA.tempo_resolucao_minutos;
     });
 
@@ -155,7 +155,7 @@ export default function MonitorSLA() {
                   <span className="text-sm text-slate-600">Tempo Médio</span>
                   <span className="text-2xl font-bold text-blue-600">{metricas.tfrMedio}min</span>
                 </div>
-                <Progress value={(metricas.tfrMedio / metasSLA.tempo_primeira_resposta_minutos) * 100} className="h-2" />
+                <Progress value={(Number(metricas.tfrMedio) / metasSLA.tempo_primeira_resposta_minutos) * 100} className="h-2" />
                 <p className="text-xs text-slate-500 mt-1">Meta: {metasSLA.tempo_primeira_resposta_minutos} minutos</p>
               </div>
 
@@ -198,7 +198,7 @@ export default function MonitorSLA() {
                   <span className="text-sm text-slate-600">Tempo Médio</span>
                   <span className="text-2xl font-bold text-purple-600">{metricas.trMedio}min</span>
                 </div>
-                <Progress value={(metricas.trMedio / metasSLA.tempo_resolucao_minutos) * 100} className="h-2" />
+                <Progress value={(Number(metricas.trMedio) / metasSLA.tempo_resolucao_minutos) * 100} className="h-2" />
                 <p className="text-xs text-slate-500 mt-1">Meta: {metasSLA.tempo_resolucao_minutos} minutos</p>
               </div>
 

@@ -70,6 +70,7 @@ export async function openCrmQuoteOrderWindow(row,{api,assertCurrent,scope,viewK
 export function createCrmFormSubmissionGate() {
   let pending = null;
   return {
+    /** @param {{payload: unknown, submit: (payload: unknown) => unknown, assertCurrent: () => void, onPending?: (pending: boolean) => void}} input */
     run({ payload, submit, assertCurrent, onPending = () => {} }) {
       if (pending) return pending;
       if (typeof submit !== 'function') return Promise.reject(new Error('Gravação indisponível.'));

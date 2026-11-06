@@ -36,7 +36,8 @@ const ACTOR_B = '66666666-2222-4222-8222-666666666666';
 
 function linkedRbac() {
   const guard = new InMemoryRbacGuard();
-  const permissions = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'] } };
+  const permissions = { Cadastros: { produto: ['visualizar', 'criar', 'editar', 'inativar'],
+    setor_atividade: ['visualizar', 'criar', 'editar', 'inativar'] } };
   guard.link({ actorId: ACTOR_A, groupId: GROUP_A, permissions });
   guard.link({ actorId: ACTOR_B, groupId: GROUP_B, permissions });
   return guard;

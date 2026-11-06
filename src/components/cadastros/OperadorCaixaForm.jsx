@@ -12,6 +12,7 @@ import { Wallet, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, windowMode = false }) {
   const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
@@ -133,6 +134,12 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
   return (
     <div className={containerClass}>
       <form onSubmit={handleSubmit} className="space-y-6">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-operador-caixa"
+      />
         <Card>
           <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b">
             <CardTitle className="flex items-center gap-2">

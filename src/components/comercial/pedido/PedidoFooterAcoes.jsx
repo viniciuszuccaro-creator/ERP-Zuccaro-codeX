@@ -38,7 +38,7 @@ export default function PedidoFooterAcoes({
           {etapasCount > 0 && (
             <div className="text-sm">
               <p className="text-slate-600">Etapas de Faturamento</p>
-              <p className="text-xl font-bold text-purple-600">{etapasCount}</p>
+              <p className="text-xl font-bold text-sky-600">{etapasCount}</p>
             </div>
           )}
         </div>

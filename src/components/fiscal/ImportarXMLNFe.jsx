@@ -53,6 +53,7 @@ export default function ImportarXMLNFe({ empresaId }) {
     hasPermission('Compras', 'ImportacaoNFe', 'criar') ||
     hasPermission('Estoque', 'Movimentacoes', 'criar');
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditImportacaoXML = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await createInContext('AuditLog', {
@@ -62,14 +63,14 @@ export default function ImportarXMLNFe({ empresaId }) {
         tipo_auditoria: sucesso ? 'fiscal' : 'seguranca',
         descricao: motivo || 'Auditoria de importacao XML NF-e.',
         dados_novos: dados,
-        group_id: groupId || dados.group_id || null,
-        grupo_id: groupId || dados.group_id || null,
-        empresa_id: empresaSelecionadaId || dados.empresa_id || null,
+        group_id: groupId || null,
+        grupo_id: groupId || null,
+        empresa_id: empresaSelecionadaId || null,
         sucesso,
         data_hora: new Date().toISOString()
       });
     } catch (error) {
-      console.error('Falha ao auditar importacao XML NF-e:', error);
+      console.error('Falha ao auditar importacao XML NF-e.');
       throw error;
     }
   };

@@ -26,9 +26,9 @@ export default function TabelaReceber({
   onSimularPagamento,
   onBaixar,
   configsCobranca,
-  sortField,
-  sortDirection,
-  onSortChange
+  sortField = undefined,
+  sortDirection = undefined,
+  onSortChange = undefined
 }) {
   const obterConfigEmpresa = (empresaId) => configsCobranca.find(c => c.empresa_id === empresaId);
 
@@ -61,7 +61,7 @@ export default function TabelaReceber({
     },
     { key: 'data_vencimento', label: 'Vencimento', render: (r) => {
         const vencida = (r.status === 'Pendente' || r.status === 'Atrasado') && new Date(r.data_vencimento) < new Date();
-        const diasAtraso = vencida ? Math.floor((new Date() - new Date(r.data_vencimento)) / (1000*60*60*24)) : 0;
+        const diasAtraso = vencida ? Math.floor((new Date().getTime() - new Date(r.data_vencimento).getTime()) / (1000*60*60*24)) : 0;
         return (
           <div>
             <p className="text-sm">{new Date(r.data_vencimento).toLocaleDateString('pt-BR')}</p>

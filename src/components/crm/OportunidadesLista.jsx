@@ -55,8 +55,9 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
   };
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {unknown} */ data) => {
       assertWrite("criar");
+      if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Dados da oportunidade invalidos.');
       const result = await createInContext("Oportunidade", {
         ...data,
         quantidade_interacoes: 0,
@@ -73,7 +74,7 @@ export default function OportunidadesLista({ oportunidades = [], windowMode = fa
   });
 
   const convertMutation = useMutation({
-    mutationFn: async ({ oportunidade, tipo }) => {
+    mutationFn: async (/** @type {{oportunidade: Parameters<typeof buildDocumentoFromOportunidade>[0] & {id: string}, tipo: string}} */ { oportunidade, tipo }) => {
       if (!canConvert) throw new Error("Sem permissao para converter oportunidade.");
       const documento = await createInContext(
         "Pedido",

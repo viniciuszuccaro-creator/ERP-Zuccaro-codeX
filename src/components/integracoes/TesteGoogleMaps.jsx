@@ -15,6 +15,7 @@ import usePermissions from "@/components/lib/usePermissions";
  * Teste de Integração Google Maps API
  * V21.1.2 - WINDOW MODE READY
  */
+/** @param {{configuracao?: {integracao_maps?: {api_key?: string, ativa?: boolean}}, windowMode?: boolean}} props */
 export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
   const [testando, setTestando] = useState(false);
   const [resultado, setResultado] = useState(null);

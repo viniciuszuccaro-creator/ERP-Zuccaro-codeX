@@ -611,7 +611,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={checklist.conferiu_quantidade}
-                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_quantidade: v })}
+                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_quantidade: v === true })}
                     id="conferiu_quantidade"
                   />
                   <Label htmlFor="conferiu_quantidade" className="text-base">Conferiu quantidade de todos os itens</Label>
@@ -619,7 +619,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={checklist.conferiu_qualidade}
-                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_qualidade: v })}
+                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_qualidade: v === true })}
                     id="conferiu_qualidade"
                   />
                   <Label htmlFor="conferiu_qualidade" className="text-base">Conferiu qualidade visual (sem avarias)</Label>
@@ -627,7 +627,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={checklist.conferiu_embalagem}
-                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_embalagem: v })}
+                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_embalagem: v === true })}
                     id="conferiu_embalagem"
                   />
                   <Label htmlFor="conferiu_embalagem" className="text-base">Conferiu embalagem adequada</Label>
@@ -635,7 +635,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={checklist.conferiu_etiquetas}
-                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_etiquetas: v })}
+                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_etiquetas: v === true })}
                     id="conferiu_etiquetas"
                   />
                   <Label htmlFor="conferiu_etiquetas" className="text-base">Conferiu etiquetas e identificação</Label>
@@ -643,7 +643,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={checklist.conferiu_documentos}
-                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_documentos: v })}
+                    onCheckedChange={(v) => setChecklist({ ...checklist, conferiu_documentos: v === true })}
                     id="conferiu_documentos"
                   />
                   <Label htmlFor="conferiu_documentos" className="text-base">Conferiu documentos (NF, pedido, etc.)</Label>

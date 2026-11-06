@@ -10,6 +10,7 @@ import {
   ArrowRight, Sparkles, Loader2, Package 
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { validarSelecaoProducaoIA } from '@/components/lib/iaResponsePolicy';
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
   const contextoValido = Boolean(groupId || empresaId);
   const podeEditarProduto = canEdit('Cadastros', 'Produto') || canEdit('Estoque', 'Produto') || canEdit('Producao', 'Produto') || canEdit('Cadastros', null) || canEdit('Estoque', null);
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditConversao = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -100,7 +102,7 @@ export default function ConversaoProducaoMassa({ produtos, onConcluido }) {
         .map(p => p.descricao)
         .join('; ');
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = validarSelecaoProducaoIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Analise esta lista de produtos e identifique quais devem ser usados na PRODUÇÃO (matéria-prima):
 
 Produtos: ${descricoes}
@@ -127,7 +129,7 @@ Retorne apenas os índices (0, 1, 2...) dos produtos que DEVEM ir para produçã
             justificativa: { type: "string" }
           }
         }
-      });
+      }), Math.min(produtosConversiveis.length, 20));
 
       const indicados = resultado.indices_producao || [];
       const produtosIndicados = produtosConversiveis

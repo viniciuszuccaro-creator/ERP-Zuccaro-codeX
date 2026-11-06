@@ -18,7 +18,7 @@ export default function AlertsPanel({ entregas = [], rules, onSelectEntrega, con
     (entregas || []).forEach((e) => {
       const prev = toDate(e.data_previsao);
       if (prev && e.status !== 'Entregue' && prev < now) {
-        const diffH = Math.round((now - prev) / 36e5);
+        const diffH = Math.round((now.getTime() - prev.getTime()) / 36e5);
         if (diffH >= (rules?.minAtrasoHoras ?? 1)) {
           res.push({
             id: `late-${e.id}`,
@@ -41,7 +41,7 @@ export default function AlertsPanel({ entregas = [], rules, onSelectEntrega, con
         }
         if (!tsPronto && e.data_separacao) tsPronto = new Date(e.data_separacao);
         if (tsPronto) {
-          const diffH = Math.round((now - tsPronto) / 36e5);
+          const diffH = Math.round((now.getTime() - tsPronto.getTime()) / 36e5);
           if (diffH >= (rules?.maxEsperaCentroHoras ?? 4)) {
             res.push({ id: `espera-${e.id}`, sev: diffH>8?'high':'medium', title: `Espera prolongada no CD`, desc: `${diffH}h aguardando expedição • ${e.cliente_nome}`, entrega: e });
           }
@@ -69,7 +69,7 @@ export default function AlertsPanel({ entregas = [], rules, onSelectEntrega, con
       if (e.status === 'Em Trânsito' || e.status === 'Saiu para Entrega') {
         const saida = toDate(e.data_saida);
         if (saida) {
-          const diffH = Math.round((now - saida) / 36e5);
+          const diffH = Math.round((now.getTime() - saida.getTime()) / 36e5);
           if (diffH >= (rules?.maxTransitoHoras ?? 6)) {
             res.push({ id: `transito-${e.id}`, sev: 'low', title: `Transporte prolongado`, desc: `${diffH}h em trânsito • ${e.cliente_nome}`, entrega: e });
           }

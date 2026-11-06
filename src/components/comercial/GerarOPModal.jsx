@@ -496,7 +496,7 @@ export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = fal
                         <div className="flex items-center gap-2 mb-2">
                           <Badge className="bg-blue-600">{item.tipo_peca}</Badge>
                           <Badge variant="outline">{item.identificador}</Badge>
-                          <Badge className="bg-purple-100 text-purple-700">
+                          <Badge className="bg-sky-100 text-sky-700">
                             {item.quantidade}x
                           </Badge>
                         </div>

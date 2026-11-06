@@ -52,7 +52,7 @@ export default function VisualizadorProdutos(props) {
   });
 
   const updateSetorMutation = useMutation({
-    mutationFn: async ({ setorId, setorNome }) => {
+    mutationFn: async (/** @type {{setorId: string, setorNome?: string}} */ { setorId, setorNome }) => {
       if (!contextoValido) throw new Error('Selecione um grupo ou empresa antes de atualizar produtos.');
       if (!podeEditarProduto) throw new Error('Seu perfil nao permite editar produtos.');
       await registrarAuditoriaProduto('Atualizacao em massa', 'Inicio da atualizacao de setor em massa de produtos', {

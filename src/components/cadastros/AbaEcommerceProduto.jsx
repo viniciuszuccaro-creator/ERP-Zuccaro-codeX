@@ -100,9 +100,9 @@ export default function AbaEcommerceProduto({ formData, setFormData }) {
       </Alert>
 
       {/* Habilitação de Canais */}
-      <Card className="border-purple-200 bg-purple-50">
+      <Card className="border-sky-200 bg-sky-50">
         <CardContent className="p-6 space-y-4">
-          <h3 className="font-bold text-purple-900">🛒 Canais de Venda</h3>
+          <h3 className="font-bold text-sky-900">🛒 Canais de Venda</h3>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
@@ -215,9 +215,9 @@ export default function AbaEcommerceProduto({ formData, setFormData }) {
 
       {/* Controle de Estoque Online */}
       {(formData.exibir_no_site || formData.exibir_no_marketplace) && (
-        <Card className="border-indigo-200 bg-indigo-50">
+        <Card className="border-sky-200 bg-sky-50">
           <CardContent className="p-6 space-y-4">
-            <h3 className="font-bold text-indigo-900">📊 Controle de Estoque Online</h3>
+            <h3 className="font-bold text-sky-900">📊 Controle de Estoque Online</h3>
 
             <div className="grid grid-cols-2 gap-4">
               <div>

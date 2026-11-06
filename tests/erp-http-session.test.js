@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as realErpHttpSession from '../src/api/erpHttpSession.js';
 import {
   buildHttpDevAdminUser,
   buildHttpSessionUser,
@@ -36,8 +37,11 @@ async function loadRealHook(file, dependencies, globals = {}) {
     jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   vm.runInNewContext(compiled, { exports, require: id => {
-    assert.ok(id in dependencies, `Unmocked dependency ${id}`);
-    return dependencies[id];
+    const canonical = id === '../../../base44/functions/_lib/security/entityGuardPolicy/entry'
+      ? `${id}.ts` : id;
+    if (canonical === './erpHttpSession.js') return realErpHttpSession;
+    assert.ok(canonical in dependencies, `Unmocked dependency ${id}`);
+    return dependencies[canonical];
   }, console, localStorage: memoryStorage(), window: { addEventListener() {}, removeEventListener() {} }, ...globals });
   return exports;
 }

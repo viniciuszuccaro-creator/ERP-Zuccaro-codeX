@@ -139,7 +139,9 @@ test('backup existente deixa de simular restore e a central congela a janela', a
   assert.match(tela, /Boolean\(grupoAtivoId\)/);
   assert.match(center, /janela_migracao_congelada/);
   assert.doesNotMatch(historico, /Restauracao simulada|Simular restauracao|Simular restaura/);
-  assert.match(historico, /BackupAutomatico\.restore/);
+  assert.match(historico, /const backupApi = base44\.entities\.BackupAutomatico/);
+  assert.match(historico, /await backupApi\.restore\(backup\.id/);
+  assert.match(historico, /typeof backupApi\.restore !== 'function'/);
   assert.match(historico, /canRestaurar/);
   assert.match(client, /async restore\(/);
   assert.match(client, /buildBackupEntitySnapshot/);

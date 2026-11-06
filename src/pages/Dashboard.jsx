@@ -660,9 +660,9 @@ export default function Dashboard() {
       value: `${taxaConversao}%`,
       subtitle: "vendas/clientes",
       icon: TrendingUp,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600",
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600",
       link: createPageUrl("Comercial"),
       drillDown: () => handleDrillDown(createPageUrl("Comercial"))
     }
@@ -676,8 +676,8 @@ export default function Dashboard() {
       value: `${otd}%`,
       subtitle: `${entregasNoPrazo.length}/${entregasConcluidas.length} entregas`,
       icon: CheckCircle,
-      color: otd >= 90 ? "text-green-600" : otd >= 70 ? "text-orange-600" : "text-red-600",
-      bgColor: otd >= 90 ? "bg-green-50" : otd >= 70 ? "bg-orange-50" : "bg-red-50",
+      color: Number(otd) >= 90 ? "text-green-600" : Number(otd) >= 70 ? "text-orange-600" : "text-red-600",
+      bgColor: Number(otd) >= 90 ? "bg-green-50" : Number(otd) >= 70 ? "bg-orange-50" : "bg-red-50",
       drillDown: () => handleDrillDown(createPageUrl("Expedicao"))
     },
     {
@@ -694,8 +694,8 @@ export default function Dashboard() {
       value: `${aproveitamentoBarra}%`,
       subtitle: "aproveitamento de barra",
       icon: Percent,
-      color: aproveitamentoBarra >= 90 ? "text-green-600" : aproveitamentoBarra >= 80 ? "text-orange-600" : "text-red-600",
-      bgColor: aproveitamentoBarra >= 90 ? "bg-green-50" : aproveitamentoBarra >= 80 ? "bg-orange-50" : "bg-red-50",
+      color: Number(aproveitamentoBarra) >= 90 ? "text-green-600" : Number(aproveitamentoBarra) >= 80 ? "text-orange-600" : "text-red-600",
+      bgColor: Number(aproveitamentoBarra) >= 90 ? "bg-green-50" : Number(aproveitamentoBarra) >= 80 ? "bg-orange-50" : "bg-red-50",
       drillDown: () => handleDrillDown(createPageUrl("Producao"))
     },
     {
@@ -703,8 +703,8 @@ export default function Dashboard() {
       value: `${taxaInadimplencia}%`,
       subtitle: `R$ ${valorVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} vencido`,
       icon: AlertCircle,
-      color: taxaInadimplencia < 5 ? "text-green-600" : taxaInadimplencia < 10 ? "text-orange-600" : "text-red-600",
-      bgColor: taxaInadimplencia < 5 ? "bg-green-50" : taxaInadimplencia < 10 ? "bg-orange-50" : "bg-red-50",
+      color: Number(taxaInadimplencia) < 5 ? "text-green-600" : Number(taxaInadimplencia) < 10 ? "text-orange-600" : "text-red-600",
+      bgColor: Number(taxaInadimplencia) < 5 ? "bg-green-50" : Number(taxaInadimplencia) < 10 ? "bg-orange-50" : "bg-red-50",
       drillDown: () => handleDrillDown(createPageUrl("Financeiro"))
     }
   ];
@@ -782,7 +782,7 @@ export default function Dashboard() {
       title: "Comercial e Vendas",
       description: "Gestão de Clientes e Vendas",
       icon: ShoppingCart,
-      color: "from-purple-500 to-purple-600",
+      color: "from-blue-500 to-blue-600",
       url: createPageUrl("Comercial"),
       permission: "Comercial.visualizar",
       count: pedidosPeriodo.length

@@ -81,7 +81,7 @@ export default function ChatbotAtendimento() {
   }, [empresaId, clienteAutenticado?.id]);
 
   const enviarMensagemMutation = useMutation({
-    mutationFn: async (msg) => {
+    mutationFn: async (/** @type {string} */ msg) => {
       if (!contextoValido || !canUseChatbot) {
         throw new Error('Contexto (grupo+empresa) ou permissao obrigatoria para o chatbot.');
       }

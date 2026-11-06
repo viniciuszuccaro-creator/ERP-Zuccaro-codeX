@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/components/lib/UserContext";
 import { format } from "date-fns";
-import { resolvePortalSessionState } from "@/components/lib/portalClientePolicy";
+import { resolvePortalSessionState, resolvePortalClienteVinculado } from "@/components/lib/portalClientePolicy";
 
 /**
  * V21.5 - Dashboard Interativo COMPLETO com Tempo Real
@@ -32,10 +32,11 @@ export default function DashboardClienteInterativo() {
   const vinculoQuery = useQuery({
     queryKey: ['cliente-portal', user?.id],
     queryFn: async () => {
+      if (!user?.id || authLoading || authError) throw new Error('Sessao do portal indisponivel.');
       const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
-      return clientes[0] || null;
+      return resolvePortalClienteVinculado(clientes, user);
     },
-    enabled: !!user?.id && !authLoading,
+    enabled: !!user?.id && !authLoading && !authError,
     refetchInterval: 30000
   });
   const session = resolvePortalSessionState({

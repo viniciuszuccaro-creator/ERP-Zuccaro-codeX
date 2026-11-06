@@ -1,3 +1,5 @@
+import OrcamentoProposalAside from './OrcamentoProposalAside';
+import { createComercialProposalFixture } from './comercialProposalFixture';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, Trash2, XCircle } from 'lucide-react';
@@ -16,12 +18,14 @@ import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, createOrcamentoActionGate, microsToDecimal, sameOrcamentoScope } from './orcamentoUiPolicy';
+import { explainPedidoPersistenceError } from './pedidoUiPolicy';
 import {
   clienteEmpresaPickerLabel,
   filterClienteEmpresaOptions,
   filterProdutoOptions,
   ORCAMENTO_PERSISTENCE_GAPS,
   produtoPickerLabel,
+  resolveComercialMasterPages,
 } from './comercialMasterPicker';
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 import { isCanonicalComercialId } from './centralCliente360Navigation';
@@ -31,6 +35,11 @@ const emptyForm = () => ({ cliente_empresa_id: '', condicao_pagamento_id: '', ta
 const money = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value || 0));
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
 const errorMessage = (error) => {
+  // Conversão orçamento→pedido pode falhar por schema 044 no destino — não mascarar.
+  const pedidoSchema = explainPedidoPersistenceError(error);
+  if (pedidoSchema) return pedidoSchema;
+  if (error?.message === 'COMERCIAL_REFERENCE_PAGINATION_REQUIRED') return 'Catalogo auxiliar incompleto para esta selecao.';
+  if (error?.message === 'COMERCIAL_MASTERS_INVALID') return 'Nao foi possivel validar os cadastros vinculados nesta empresa.';
   if (error?.status === 403) return 'Seu perfil não possui permissão para esta ação.';
   if (error?.status === 404) return 'Orçamento não encontrado neste contexto.';
   if (error?.status === 409) return 'O orçamento foi alterado e não está mais em aberto.';
@@ -39,7 +48,10 @@ const errorMessage = (error) => {
   return 'Não foi possível comunicar com o servidor. Tente novamente.';
 };
 
-export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, sessionToken, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null }) {
+// Cache generations never contain credentials and are unique across remounts.
+let orcamentoSessionSequence = 0;
+
+export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, sessionToken, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null, proposalMode = false }) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -57,7 +69,9 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const cancelScope = useRef(null);
   const conversionScope = useRef(null);
   const renderedScope = useRef(null);
-  renderedScope.current = { groupId, empresaId, actorId };
+  const sessionIdentity = sessionToken || readErpHttpSession()?.token || null;
+  const sessionCacheGeneration = useMemo(() => ++orcamentoSessionSequence, [sessionIdentity]);
+  renderedScope.current = { groupId, empresaId, actorId, token: sessionIdentity };
   const activeScope = () => readErpHttpSession();
   const beginAction = (opened) => {
     const ticket = actionGate.current.begin(opened, renderedScope.current, activeScope());
@@ -80,35 +94,35 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const canCancel = (row) => canUseOrcamentoAction(hasPermission, 'cancelar', row?.status);
   const contextReady = Boolean(groupId && empresaId && actorId);
   const http = useMemo(() => createHttpApiClient({
-    getScope: () => ({ groupId, empresaId, actorId, actorEmail, token: sessionToken }),
-  }), [groupId, empresaId, actorId, actorEmail, sessionToken]);
+    getScope: () => ({ groupId, empresaId, actorId, actorEmail, token: sessionIdentity }),
+  }), [groupId, empresaId, actorId, actorEmail, sessionIdentity]);
   const api = http.orcamentos;
   const pedidosApi = http.pedidos;
   const canConvert = hasPermission('Comercial', 'pedido', 'converter-pedido');
-  const queryKey = ['orcamentos-http', groupId, empresaId, page, pageSize, appliedFilters];
+  const queryKey = ['orcamentos-http', groupId, empresaId, actorId, sessionCacheGeneration, proposalMode ? 'proposal':'operacional', page, pageSize, appliedFilters];
   const listQuery = useQuery({
     queryKey,
     queryFn: ({ signal }) => api.list({ limit: pageSize, offset: (page - 1) * pageSize, search: appliedFilters.search || undefined, status: appliedFilters.status === 'TODOS' ? undefined : appliedFilters.status, clienteEmpresaId: appliedFilters.clienteEmpresaId === 'TODOS' ? undefined : appliedFilters.clienteEmpresaId, validadeDe: appliedFilters.validadeDe || undefined, validadeAte: appliedFilters.validadeAte || undefined, signal }),
-    enabled: contextReady && canView,
+    enabled: contextReady && canView && !proposalMode,
     retry: 1,
   });
+  // Keep the legacy prop compatible, but operational lookup must share the HTTP session/source.
+  void filterInContext;
   const mastersQuery = useQuery({
-    queryKey: ['orcamento-masters', groupId, empresaId],
-    queryFn: async () => {
-      const [clientesEmpresa, clientes, condicoes, produtos, unidades, tabelas] = await Promise.all([
-        filterInContext('ClienteEmpresa', { ativo: true, habilitado_operacao: true }, 'codigo', 500),
-        filterInContext('Cliente', { ativo: true }, 'razao_social', 500),
-        filterInContext('CondicaoPagamento', { ativo: true }, 'nome', 500),
-        filterInContext('Produto', { ativo: true }, 'descricao', 500),
-        filterInContext('UnidadeMedida', { ativo: true }, 'sigla', 500),
-        filterInContext('TabelaPreco', { ativo: true }, 'nome', 500),
-      ]);
-      return { clientesEmpresa, clientes, condicoes, produtos, unidades, tabelas };
+    queryKey: ['orcamento-masters', groupId, empresaId, actorId, sessionCacheGeneration,
+      proposalMode ? 'proposal':'operacional', clienteQuery, produtoQuery],
+    queryFn: async ({ signal }) => {
+      const opened = { ...renderedScope.current };
+      if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) throw new Error('CONTEXT_CHANGED');
+      const pages = await http.comercialMasters.list({ clienteSearch: clienteQuery.trim(), produtoSearch: produtoQuery.trim(), signal });
+      if (signal?.aborted || !sameOrcamentoScope(opened, renderedScope.current, activeScope())) throw new Error('CONTEXT_CHANGED');
+      return resolveComercialMasterPages(pages, opened);
     },
-    enabled: contextReady && canView,
+    enabled: contextReady && canView && !proposalMode,
     staleTime: 30000,
   });
-  const masters = mastersQuery.data || { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] };
+  const proposalMasters = useMemo(createComercialProposalFixture,[]);
+  const masters = proposalMode ? proposalMasters : mastersQuery.data || { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] };
   const clientesById = useMemo(() => new Map(masters.clientes.map((item) => [item.id, item])), [masters.clientes]);
   const clienteLabel = (linkId) => {
     const link = masters.clientesEmpresa.find((item) => item.id === linkId);
@@ -128,7 +142,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     [masters.produtos, produtoQuery],
   );
 
-  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId]);
+  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
@@ -139,7 +153,15 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
     setFormOpen(false); setDirty(false); setEditing(null);
   };
-  const openCreate = () => { formScope.current = renderedScope.current; setEditing(null); setForm(emptyForm()); setDirty(false); setFormOpen(true); };
+  const openCreate = () => {
+    // Clique duplo / segundo "Novo" não abre outro fluxo nem zera rascunho já em criação.
+    if (formOpen && !editing) return;
+    formScope.current = renderedScope.current;
+    setEditing(null);
+    setForm(emptyForm());
+    setDirty(false);
+    setFormOpen(true);
+  };
   const openEdit = (row) => {
     if (!canEdit(row)) return;
     formScope.current = renderedScope.current;
@@ -163,7 +185,12 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     const produto = masters.produtos.find((item) => item.id === produtoId);
     const unidade = masters.unidades.find((item) => item.id === produto?.unidade_medida_id);
     setForm((current) => ({ ...current, itens: current.itens.map((item, i) => i === index ? {
-      ...item, produto_id: produtoId, unidade_id: produto?.unidade_medida_id || '', descricao: produto?.descricao || produto?.nome || '', unidade_sigla: unidade?.sigla || '',
+      ...item,
+      ...(proposalMode ? { preco_unitario: produto?.preco_venda || '0', produto_codigo: produto?.codigo || '' } : {}),
+      produto_id: produtoId,
+      unidade_id: produto?.unidade_medida_id || '',
+      descricao: produto?.descricao || produto?.nome || '',
+      unidade_sigla: unidade?.sigla || '',
     } : item) }));
     setDirty(true);
   };
@@ -172,6 +199,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     catch { return { subtotal: '0', desconto: '0', total: '0' }; }
   }, [form.itens]);
   const save = async () => {
+    if (mastersQuery.isError) { toast.error(errorMessage(mastersQuery.error)); return; }
+    if (proposalMode) { toast.error('Proposta visual: gravação desabilitada.'); return; }
     if (!canUseOrcamentoAction(hasPermission, editing ? 'editar' : 'criar', editing?.status)) {
       toast.error('Seu perfil não possui permissão para esta ação.'); return;
     }
@@ -188,6 +217,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     finally { endAction(ticket); }
   };
   const showDetail = async (row) => {
+    if (proposalMode) return;
     const request = ++detailRequest.current;
     const opened = { ...renderedScope.current, token: activeScope()?.token };
     try { const detail = await api.get(row.id); if (request === detailRequest.current && sameOrcamentoScope(opened, renderedScope.current, activeScope())) { setSelected(detail); setDetailOpen(true); } }
@@ -196,6 +226,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const initialToken = activeScope()?.token;
   useEffect(() => { const active = activeScope(); if (!contextReady || !canView || !isCanonicalComercialId(initialSelectedId) || !active?.token || !sameOrcamentoScope({ ...renderedScope.current, token: active.token }, renderedScope.current, active)) return; const marker = JSON.stringify([groupId, empresaId, actorId, initialSelectedId, active.token, reopenRequestId]); if (initialOpened.current === marker) return; initialOpened.current = marker; void showDetail({ id: initialSelectedId }); }, [initialSelectedId, groupId, empresaId, actorId, initialToken, reopenRequestId, canView, contextReady]);
   const performCancel = async (row) => {
+    if (proposalMode) return;
     if (!row) return;
     if (!canCancel(row)) { toast.error('Seu perfil não possui permissão para esta ação.'); return; }
     const ticket = beginAction(cancelScope.current);
@@ -215,6 +246,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setPendingCancel(row);
   };
 const convertToPedido = async () => {
+    if (proposalMode) return;
     if (!pendingConversion) return;
     if (!hasPermission('Comercial', 'pedido', 'converter-pedido')) {
       toast.error('Seu perfil não possui permissão para esta ação.'); return;
@@ -245,13 +277,14 @@ const convertToPedido = async () => {
   };
 
   if (!canView) return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4" /><AlertDescription>Acesso negado aos Orçamentos.</AlertDescription></Alert></div>;
-  const rows = listQuery.data?.data || [];
+  const rows = proposalMode ? [] : listQuery.data?.data || [];
   const meta = listQuery.data?.meta || { total: 0 };
   return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar">
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
       <div><h2 className="text-xl font-semibold">Orçamentos</h2><p className="text-sm text-slate-500">Propostas comerciais da empresa ativa</p></div>
       {canCreate && <Button onClick={openCreate} disabled={!contextReady} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
     </div>
+    {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos.</AlertDescription></Alert>}
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }}>
       <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
@@ -266,15 +299,38 @@ const convertToPedido = async () => {
     </div>}
     <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={listQuery.isFetching} />
 
-    <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>Totais e preço unitário são conferidos pelo servidor ({ORCAMENTO_PERSISTENCE_GAPS.preco_unitario_ui}). Tabela de preço persiste no cabeçalho e alimenta o snapshot.</DialogDescription></DialogHeader>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2 space-y-2"><Label htmlFor="orc-cliente-busca">Buscar cliente (código ou nome)</Label><Input id="orc-cliente-busca" value={clienteQuery} maxLength={80} placeholder="Digite código ou razão social" onChange={(e) => setClienteQuery(e.target.value)} data-action="orcamento-busca-cliente" /><Label htmlFor="orc-cliente">Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={(v) => changeForm('cliente_empresa_id', v)}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{clienteOptions.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)}><SelectTrigger id="orc-condicao"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.codigo ? `${item.codigo} — ` : ''}{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-tabela">Tabela de preço</Label><Select value={form.tabela_preco_id || 'NENHUMA'} onValueChange={(v) => changeForm('tabela_preco_id', v === 'NENHUMA' ? '' : v)}><SelectTrigger id="orc-tabela" data-action="orcamento-tabela-preco"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Não informada</SelectItem>{(masters.tabelas || []).filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.codigo ? `${item.codigo} — ` : ''}{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} /></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
-      <div className="space-y-2"><div className="flex flex-wrap items-end justify-between gap-2"><h3 className="font-semibold">Itens</h3><div className="flex flex-wrap gap-2 items-end"><div><Label htmlFor="orc-produto-busca" className="sr-only">Buscar produto</Label><Input id="orc-produto-busca" value={produtoQuery} maxLength={80} placeholder="Filtrar produto por código" onChange={(e) => setProdutoQuery(e.target.value)} data-action="orcamento-busca-produto" className="w-56" /></div><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={(v) => selectProduct(index, v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{produtoOptions.map((p) => <SelectItem key={p.id} value={p.id}>{produtoPickerLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly title={ORCAMENTO_PERSISTENCE_GAPS.unidade_alternativa} /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} title="Preview local; servidor aplica tabela autorizada" /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
+    <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className={proposalMode ? 'w-[96vw] max-w-7xl max-h-[92vh] flex flex-col overflow-hidden border-sky-200 bg-sky-50' : 'w-[96vw] max-w-6xl max-h-[92vh] overflow-auto'}><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>{proposalMode ? 'Escolha cliente e produtos, ajuste quantidades e navegue pelo contexto sem perder o rascunho.' : <>Totais e preço unitário são conferidos pelo servidor ({ORCAMENTO_PERSISTENCE_GAPS.preco_unitario_ui}). Tabela de preço persiste no cabeçalho e alimenta o snapshot.</>}</DialogDescription></DialogHeader>
+      {proposalMode && <p className="text-sm font-medium text-sky-900">PRÉVIA SINTÉTICA · aprovação visual pendente · sem gravação</p>}
+      {!proposalMode && mastersQuery.isError && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{errorMessage(mastersQuery.error)}</AlertDescription></Alert>}
+      <div className={proposalMode ? 'grid xl:grid-cols-[minmax(0,1fr)_20rem] gap-4 overflow-auto min-h-0' : 'contents'}>
+      <div className={proposalMode ? 'rounded-xl bg-white border p-4 space-y-4 min-w-0' : 'contents'}>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2 space-y-2"><Label htmlFor="orc-cliente-busca">Buscar cliente (código ou nome)</Label><Input id="orc-cliente-busca" value={clienteQuery} maxLength={80} placeholder="Digite código ou razão social" onChange={(e) => setClienteQuery(e.target.value)} data-action="orcamento-busca-cliente" /><Label htmlFor="orc-cliente">Cliente</Label><Select data-action="orcamento-cliente" value={form.cliente_empresa_id} onValueChange={(v) => changeForm('cliente_empresa_id', v)}><SelectTrigger id="orc-cliente"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{clienteOptions.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-condicao">Condição de pagamento</Label><Select value={form.condicao_pagamento_id} onValueChange={(v) => changeForm('condicao_pagamento_id', v)}><SelectTrigger id="orc-condicao"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{masters.condicoes.filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.codigo ? `${item.codigo} — ` : ''}{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-tabela">Tabela de preço</Label><Select value={form.tabela_preco_id || 'NENHUMA'} onValueChange={(v) => changeForm('tabela_preco_id', v === 'NENHUMA' ? '' : v)}><SelectTrigger id="orc-tabela" data-action="orcamento-tabela-preco"><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Não informada</SelectItem>{(masters.tabelas || []).filter((item) => item.ativo !== false).map((item) => <SelectItem key={item.id} value={item.id}>{item.codigo ? `${item.codigo} — ` : ''}{item.nome || item.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label htmlFor="orc-validade">Validade</Label><Input id="orc-validade" type="date" value={form.validade_em} onChange={(e) => changeForm('validade_em', e.target.value)} /></div><div className="md:col-span-4"><Label htmlFor="orc-observacoes">Observações</Label><Textarea id="orc-observacoes" value={form.observacoes} onChange={(e) => changeForm('observacoes', e.target.value)} /></div></div>
+      <div className="space-y-2"><div className="flex flex-wrap items-end justify-between gap-2"><h3 className="font-semibold">Itens</h3><div className="flex flex-wrap gap-2 items-end"><div><Label htmlFor="orc-produto-busca" className="sr-only">Buscar produto</Label><Input id="orc-produto-busca" value={produtoQuery} maxLength={80} placeholder="Filtrar produto por código" onChange={(e) => setProdutoQuery(e.target.value)} data-action="orcamento-busca-produto" className="w-56" /></div><Button type="button" variant="outline" size="sm" onClick={() => changeForm('itens', [...form.itens, emptyItem()])}><Plus className="w-4 h-4 mr-1" />Item</Button></div></div>{form.itens.map((item, index) => { let itemTotals = { subtotal: '0', total: '0' }; try { itemTotals = calculateItem(item); } catch { itemTotals = { subtotal: '0', total: '0' }; } return <div key={index} className={proposalMode ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 border rounded-md p-3" : "grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"}><div className={proposalMode ? "sm:col-span-2" : "md:col-span-3"}><Label>Produto</Label><Select data-action="orcamento-produto" value={item.produto_id} onValueChange={(v) => selectProduct(index, v)}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{produtoOptions.map((p) => <SelectItem key={p.id} value={p.id}>{produtoPickerLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className={proposalMode ? "sm:col-span-2" : "md:col-span-3"}><Label>Descrição</Label><Input value={item.descricao} onChange={(e) => changeItem(index, 'descricao', e.target.value)} /></div><div><Label>Unidade</Label><Input value={item.unidade_sigla} readOnly title={ORCAMENTO_PERSISTENCE_GAPS.unidade_alternativa} /></div><div><Label>Quantidade</Label><Input inputMode="decimal" value={item.quantidade} onChange={(e) => changeItem(index, 'quantidade', e.target.value)} /></div><div><Label>Preço</Label><Input inputMode="decimal" value={item.preco_unitario} onChange={(e) => changeItem(index, 'preco_unitario', e.target.value)} title="Preview local; servidor aplica tabela autorizada" /></div><div><Label>Desconto</Label><Input inputMode="decimal" value={item.desconto} onChange={(e) => changeItem(index, 'desconto', e.target.value)} /></div><div><Label>Total</Label><div className="h-10 flex items-center font-medium">{money(itemTotals.total)}</div></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" title="Remover item" disabled={form.itens.length === 1} onClick={() => changeForm('itens', form.itens.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></Button></div></div>; })}</div>
       <div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div>
-      <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={submitting || mastersQuery.isLoading}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
+      </div>
+      {proposalMode && (() => {
+        const link = masters.clientesEmpresa.find((item) => item.id === form.cliente_empresa_id);
+        const clienteRow = link ? clientesById.get(link.cliente_id) : null;
+        return (
+          <OrcamentoProposalAside
+            cliente={form.cliente_empresa_id ? clienteLabel(form.cliente_empresa_id) : ''}
+            clienteCodigo={clienteRow?.codigo || link?.codigo || ''}
+            clienteIdTecnico={clienteRow?.id || ''}
+            itens={form.itens}
+            totals={totals}
+            condicao={form.condicao_pagamento_id ? condicaoLabel(form.condicao_pagamento_id) : ''}
+            tabela={masters.tabelas.find((item) => item.id === form.tabela_preco_id)?.nome}
+            historicoIlustrativo={proposalMasters.historicoIlustrativo || []}
+            formasPagamentoIlustrativas={proposalMasters.formasPagamentoIlustrativas || []}
+          />
+        );
+      })()}
+      </div>
+      <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
     </DialogContent></Dialog>
 
-    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
-    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) setPendingConversion(null); }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setPendingConversion(null)} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting}>{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
+    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) setPendingConversion(null); }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-md"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div></div><DialogFooter><Button variant="outline" onClick={() => setPendingConversion(null)} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting}>{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
       open={Boolean(pendingCancel)}
       onOpenChange={(open) => { if (!open) setPendingCancel(null); }}
       onConfirm={() => { const row = pendingCancel; setPendingCancel(null); void performCancel(row); }}

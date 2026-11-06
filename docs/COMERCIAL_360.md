@@ -1,5 +1,17 @@
 # Comercial 360
 
+## Decisao vigente do proprietario (2026-11-05)
+
+Orcamentos existente evoluira para Central de Vendas360, sem modulo paralelo.
+Desenho ainda pendente: preservar implementacao/layout atuais ate aprovacao.
+Orcamento e Pedido permanecem registros distintos e vinculados; nao unir seus
+estados, persistencias ou efeitos. Mapa dirigido de integracoes, dependencias de
+Fornecedor/Produto e limites das provas foi reconciliado no programa existente
+`PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md`, secao de05/11.
+As lacunas historicas do Lote A abaixo nao descrevem ausencia atual de API:
+orcamentoService/pedidoService e rotas canonicas JA existem. Nao reimplementa-las.
+API/Auth/browser com os100clientes HML ainda exigem a prova registrada no HANDOFF.
+
 ## Decisao arquitetural
 
 Evoluir `src/pages/Comercial.jsx` e os contratos backend existentes. Nao criar modulo paralelo. Cadastros Gerais permanece fonte mestre: Cliente/ClienteEmpresa, Produto, Unidade, TabelaPreco e CondicaoPagamento. Toda operacao comercial exige `groupId`, `empresaId`, ator, RBAC backend fail-closed e auditoria transacional.
@@ -59,7 +71,7 @@ E: frontend, integracao e E2E.
 
 Criar, editar, listar, obter, inativar/restaurar, conversao idempotente, Grupo/Empresa cruzados bloqueados, ator sem permissao bloqueado, desconto acima da alcada, calculo server-side, auditoria e concorrencia do codigo. Validar pagina??o e filtros quando a listagem existir.
 
-## Diagnostico do Lote A
+## Historico - diagnostico inicial do Lote A, superado pela implementacao
 
 A busca focal em `server/src`, migrations e testes confirmou ausencia de contrato backend, tabela ou rota de Pedido/Orcamento. `server/src/api/router.ts` declara que ambos nao estao implementados; migrations 013/014 tambem os excluem explicitamente. Portanto o Lote A devera introduzir somente os agregados canonicos, em migration aditiva e branch propria deste lote, reutilizando ClienteEmpresa, Produto, TabelaPreco, CondicaoPagamento, sequencia, TenantGuard, RBAC e audit existentes. Nenhuma tela paralela sera criada.
 

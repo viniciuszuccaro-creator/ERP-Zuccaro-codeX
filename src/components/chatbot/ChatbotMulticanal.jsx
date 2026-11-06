@@ -86,7 +86,7 @@ export default function ChatbotMulticanal() {
   });
 
   const toggleCanalMutation = useMutation({
-    mutationFn: async ({ canalId, ativo }) => {
+    mutationFn: async (/** @type {{canalId: string, ativo: boolean}} */ { canalId, ativo }) => {
       if (!contextoValido) {
         throw new Error('Contexto de grupo ou empresa obrigatorio para alterar canal.');
       }

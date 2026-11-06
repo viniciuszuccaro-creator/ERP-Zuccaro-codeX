@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -85,26 +86,19 @@ export default function EmpresaForm({
   const permissaoCertificado = "Cadastros.Empresa.Certificado.editar";
   const podeEditarCertificado = podeSalvar && hasPermissionKey(permissaoCertificado);
   const saveBlocked = Boolean(isLoadingRecord || loadIncomplete);
-  const [formData, setFormData] = useState(() => mergeEmpresaFormData(dadosIniciais));
+  const [formData, setFormData] = useCadastroRecordState(mergeEmpresaFormData(dadosIniciais), JSON.stringify([
+    dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null,
+    dadosIniciais?.razao_social, dadosIniciais?.cnpj, dadosIniciais?.nome_fantasia,
+    grupoAtual?.id ?? null, empresaAtual?.id ?? null,
+  ]));
 
   const [alertaCertificado, setAlertaCertificado] = useState(null);
-
-  useEffect(() => {
-    if (!dadosIniciais) return;
-    setFormData(mergeEmpresaFormData(dadosIniciais));
-  }, [
-    dadosIniciais?.id,
-    dadosIniciais?.updated_date,
-    dadosIniciais?.razao_social,
-    dadosIniciais?.cnpj,
-    dadosIniciais?.nome_fantasia,
-  ]);
 
   useEffect(() => {
     if (formData.certificado_digital?.data_validade) {
       const dataValidade = new Date(formData.certificado_digital.data_validade);
       const hoje = new Date();
-      const diasRestantes = Math.floor((dataValidade - hoje) / (1000 * 60 * 60 * 24));
+      const diasRestantes = Math.floor((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
 
       if (diasRestantes <= 30 && diasRestantes > 0) {
         setAlertaCertificado({
@@ -119,6 +113,8 @@ export default function EmpresaForm({
       } else {
         setAlertaCertificado(null);
       }
+    } else {
+      setAlertaCertificado(null);
     }
   }, [formData.certificado_digital?.data_validade]);
 

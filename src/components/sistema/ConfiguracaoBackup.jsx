@@ -106,7 +106,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   }, [config]);
 
   const salvarMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {Record<string, unknown>} */ data) => {
       if (!grupoAtivoId) throw new Error('Selecione o grupo para configurar backup/virada.');
       const me = await base44.auth.me();
       const stamped = stampViradaChecklistOnWrite({

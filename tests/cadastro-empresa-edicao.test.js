@@ -237,7 +237,11 @@ test('perfil administrativo explicito salva e reabre Empresa sintética sem perd
 
 test("visualizador V24: gate Organizacional no data-permission e GrupoEmpresarial self-id", async () => {
   const viewer = await readFile(new URL("../src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx", import.meta.url), "utf8");
-  assert.match(viewer, /permSection = isTenantMasterEntity\(ENTITY\) \? "Organizacional"/);
+  assert.match(viewer, /getCadastroEntityPermissionKey\(ENTITY, action\)/);
+  const { getCadastroEntityPermissionKey } = await import('../src/components/cadastros/cadastroEditLoadPolicy.js');
+  assert.equal(getCadastroEntityPermissionKey('Empresa', 'criar'), 'Cadastros.Organizacional.criar');
+  assert.equal(getCadastroEntityPermissionKey('GrupoEmpresarial', 'visualizar'), 'Cadastros.Organizacional.visualizar');
+  assert.equal(getCadastroEntityPermissionKey('PerfilAcesso', 'editar'), 'Sistema.Controle de Acesso.editar');
   assert.match(viewer, /cadastroPerm\("criar"\)/);
   assert.match(viewer, /cadastroPerm\("visualizar"\)/);
   assert.match(viewer, /extraGroupOr: grupoSelfOr/);

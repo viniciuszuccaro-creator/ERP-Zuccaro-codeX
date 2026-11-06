@@ -9,6 +9,10 @@ import { toast } from 'sonner';
  * Busca CEP com auto-completar endereço
  * V12.0 - Com integração ViaCEP
  */
+/** @param {{onEnderecoEncontrado: (endereco: {cep: string, logradouro: string, bairro: string,
+ * cidade: string, estado: string, complemento: string, numero: string,
+ * latitude: number | null, longitude: number | null, mapa_url: string}) => void,
+ * enderecoAtual?: {cep?: string}, label?: string}} props */
 export default function BuscaCEP({ onEnderecoEncontrado, enderecoAtual, label = "Buscar por CEP" }) {
   const [cep, setCep] = useState(enderecoAtual?.cep || '');
   const [buscando, setBuscando] = useState(false);
@@ -34,12 +38,29 @@ export default function BuscaCEP({ onEnderecoEncontrado, enderecoAtual, label = 
     try {
       // Buscar na API ViaCEP (gratuita)
       const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      /** @type {unknown} */
       const data = await response.json();
 
-      if (data.erro) {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        throw new Error('Resposta de CEP invalida');
+      }
+
+      if ('erro' in data && data.erro) {
         toast.error('CEP não encontrado');
         setBuscando(false);
         return;
+      }
+
+      if (!('cep' in data) || typeof data.cep !== 'string' ||
+          !('logradouro' in data) || typeof data.logradouro !== 'string' ||
+          !('bairro' in data) || typeof data.bairro !== 'string' ||
+          !('localidade' in data) || typeof data.localidade !== 'string' ||
+          !('uf' in data) || typeof data.uf !== 'string') {
+        throw new Error('Resposta de CEP invalida');
+      }
+      const complemento = 'complemento' in data ? data.complemento : undefined;
+      if (complemento != null && typeof complemento !== 'string') {
+        throw new Error('Resposta de CEP invalida');
       }
 
       // Buscar coordenadas GPS via IA
@@ -53,7 +74,7 @@ export default function BuscaCEP({ onEnderecoEncontrado, enderecoAtual, label = 
         bairro: data.bairro,
         cidade: data.localidade,
         estado: data.uf,
-        complemento: data.complemento || '',
+        complemento: typeof complemento === 'string' ? complemento : '',
         numero: '',
         latitude: coordenadas?.latitude || null,
         longitude: coordenadas?.longitude || null,

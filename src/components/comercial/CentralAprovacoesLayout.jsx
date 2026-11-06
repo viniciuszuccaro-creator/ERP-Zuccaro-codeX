@@ -46,9 +46,9 @@ export function AprovacoesPlaceholder({ tipo }) {
   const Icon = limite ? DollarSign : AlertCircle;
   return (
     <Card className="mt-4 border-0 shadow-md">
-      <CardHeader className={limite ? "border-b bg-purple-50" : "border-b bg-red-50"}>
+      <CardHeader className={limite ? "border-b bg-sky-50" : "border-b bg-red-50"}>
         <CardTitle className="flex items-center gap-2">
-          <Icon className={limite ? "h-5 w-5 text-purple-600" : "h-5 w-5 text-red-600"} />
+          <Icon className={limite ? "h-5 w-5 text-sky-600" : "h-5 w-5 text-red-600"} />
           {limite ? "Aprovações de Limite de Crédito" : "Aprovações de Duplicatas Vencidas"}
         </CardTitle>
       </CardHeader>

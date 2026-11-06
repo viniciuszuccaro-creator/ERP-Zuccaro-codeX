@@ -18,7 +18,7 @@ export default function ArmadoPadraoItems({ itens, onConsolidar, onGerarRevenda,
           <CardTitle className="text-base flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
             <span>Peças Adicionadas ({itens.length})</span>
             {itens.length > 0 && <div className="flex flex-wrap gap-2">
-              <Button onClick={onConsolidar} variant="outline" size="sm" className="border-purple-300 text-purple-600">
+              <Button onClick={onConsolidar} variant="outline" size="sm" className="border-sky-300 text-sky-600">
                 <Layers className="w-4 h-4 mr-2" /> Agrupar por Etapa
               </Button>
               <Button onClick={onGerarRevenda} variant="outline" size="sm">
@@ -37,7 +37,7 @@ export default function ArmadoPadraoItems({ itens, onConsolidar, onGerarRevenda,
               <TableBody>{itens.map((peca, index) => (
                 <TableRow key={`${peca.identificador || 'peca'}-${index}`}>
                   <TableCell className="font-mono text-xs">{peca.identificador}</TableCell>
-                  <TableCell>{peca.etapa_obra_nome ? <Badge className="bg-purple-100 text-purple-700">{peca.etapa_obra_nome}</Badge> : <span className="text-xs text-slate-400">-</span>}</TableCell>
+                  <TableCell>{peca.etapa_obra_nome ? <Badge className="bg-sky-100 text-sky-700">{peca.etapa_obra_nome}</Badge> : <span className="text-xs text-slate-400">-</span>}</TableCell>
                   <TableCell className="max-w-md"><p className="text-sm">{peca.descricao_automatica}</p></TableCell>
                   <TableCell>{peca.quantidade}</TableCell>
                   <TableCell className="font-semibold">{peca.peso_total_kg?.toFixed(2)} kg</TableCell>

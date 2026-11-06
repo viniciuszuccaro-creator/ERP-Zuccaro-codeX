@@ -1,0 +1,95 @@
+{
+  "base": "e36231b3a7e546aa9fd2529abb8d5edb61d8189c",
+  "cases": [
+    {
+      "path": "server/tests/a1-consolidacao.test.ts",
+      "beforeSha256": "0e1154dd331889ca8f644986f9eb39242c0e829a8f7e776ed8e3774ea307531b",
+      "references": 2
+    },
+    {
+      "path": "server/tests/bulk-consolidacao.test.ts",
+      "beforeSha256": "5153681274744d1e6c803a6b0fd1732e0e5727e1550d1a0e176ef23e31b67070",
+      "references": 2
+    },
+    {
+      "path": "server/tests/financial-consolidacao.test.ts",
+      "beforeSha256": "957314ee21abed164619cb09fc8c5296429a025b80cd531e147a22433d5eec63",
+      "references": 1
+    },
+    {
+      "path": "server/tests/infra-consolidacao.test.ts",
+      "beforeSha256": "600f8044059f1af3ddeb07679bbc0ae697293c3f3863315ad64db77a5d7208e4",
+      "references": 3
+    },
+    {
+      "path": "tests/cursor-cadastros-reopen-consolidacao.test.js",
+      "beforeSha256": "a8edd3fafe08e3afd60dcb9ea26c8e812abf27fe1384a9f63d07c3e65f6bae6f",
+      "references": 2
+    },
+    {
+      "path": "tests/cursor-callback-record-state.test.js",
+      "beforeSha256": "62a49942ff2912414a3106d4e5d4808d48d97a80bd9f8313acfe7e507b5f1848",
+      "references": 5
+    },
+    {
+      "path": "tests/cursor-identidade-consolidacao.test.js",
+      "beforeSha256": "9f89580a29f3d0a10304d1945d89be80c54f9be374f0d2a5b7d9450c999e3efe",
+      "references": 1
+    },
+    {
+      "path": "tests/cursor-residual-independent.test.js",
+      "beforeSha256": "f6265528befd2247d6f5ba2b8fc5ebd9a87998fd04ca5d3020809aea0bf42f4c",
+      "references": 2
+    },
+    {
+      "path": "tests/cursor-security-enum-contracts.test.js",
+      "beforeSha256": "621324084c366b5e98dafda3c150763caa80b06ba4726b183b0692e315f716d6",
+      "references": 1
+    },
+    {
+      "path": "tests/data-table-optional-props.test.js",
+      "beforeSha256": "c872d779a1372973f0b7f3637af181f944c6b492313856936dce87881cf2b368",
+      "references": 1
+    },
+    {
+      "path": "tests/dto-form-optional-types.test.js",
+      "beforeSha256": "cc1ae8f709957b6a2d294c5501ee43fb44a8d8a9b204b32ae712d9217cce9d33",
+      "references": 1
+    },
+    {
+      "path": "tests/guard-ofx-a1-consolidacao.test.js",
+      "beforeSha256": "a285f80d8f59aa8c898998b4e1030c6f782e257baa78cfa73a5d8aecc42601b3",
+      "references": 1
+    },
+    {
+      "path": "tests/guard-session-http-ia-consolidacao.test.js",
+      "beforeSha256": "917bcd9da68f88f1f2e784b46b4e4456e14b1c731170c6babe781dd6bdc0eced",
+      "references": 1
+    },
+    {
+      "path": "tests/legado-importador-consolidacao.test.js",
+      "beforeSha256": "134100baac5466b23eb6ee064408666db12954d91fc6fda8eb19d4247a9ddc88",
+      "references": 2
+    },
+    {
+      "path": "tests/map-coordinate-tuple-contract.test.js",
+      "beforeSha256": "ec5151545e37568a307b3a7d0460d72b0dc35756818492c5226477d20fabe38e",
+      "references": 2
+    },
+    {
+      "path": "tests/perfil-pedido-contract-reconciliation.test.js",
+      "beforeSha256": "7c4011e6dcb2b4b9d341a89e49556556c1d48a4e1a25e259af0e049ba1cab957",
+      "references": 2
+    },
+    {
+      "path": "tests/shared-controls-batch-types.test.js",
+      "beforeSha256": "fe3140a38884ed7cce5f988a77744978197888644faf9c38a2d615b88ee6c2bd",
+      "references": 1
+    },
+    {
+      "path": "tests/shared-ui-types.test.js",
+      "beforeSha256": "c82fa1e890ab33912ff55fdae45f3084e942e349739026beaf98221210977ef9",
+      "references": 1
+    }
+  ]
+}

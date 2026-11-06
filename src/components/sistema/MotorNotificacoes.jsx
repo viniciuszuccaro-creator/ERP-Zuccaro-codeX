@@ -374,7 +374,7 @@ export async function verificarNotificacoesAgendadas() {
   
   for (const titulo of titulosVencendo) {
     const dataVencimento = new Date(titulo.data_vencimento);
-    const diasRestantes = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));
+    const diasRestantes = Math.ceil((dataVencimento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diasRestantes === 3) {
       // Disparar notificação de vencimento

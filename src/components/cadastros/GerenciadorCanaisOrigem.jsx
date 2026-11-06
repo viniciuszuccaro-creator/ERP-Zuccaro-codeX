@@ -141,11 +141,11 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Automáticos</p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-sky-600">
                   {parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length}
                 </p>
               </div>
-              <Bolt className="w-8 h-8 text-purple-600 opacity-20" />
+              <Bolt className="w-8 h-8 text-sky-600 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -291,10 +291,10 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
       </div>
 
       {/* Insights IA sobre Configuração */}
-      <Card className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+      <Card className="mt-6 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Bolt className="w-5 h-5 text-purple-600" />
+            <Bolt className="w-5 h-5 text-sky-600" />
             🤖 Insights Inteligentes de Configuração
           </CardTitle>
         </CardHeader>

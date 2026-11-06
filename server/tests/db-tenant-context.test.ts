@@ -39,6 +39,40 @@ test('Tenant context: bootstrap raw, scoped queries isolated and immutable', asy
   assert.equal(new Set(configs.map(e => e.id)).size, 3);
   await db.query('AFTER'); assert.equal(events.at(-1)?.id, 0);
 });
+test('Tenant context: nested binding cannot revive an expired outer HTTP lifetime', async () => {
+  const { db, events } = fixture(); let alive = true;
+  await db.withTenantContext!(A, async () => {
+    alive = false;
+    await assert.rejects(db.query('EXPIRED_OUTER'), /TENANT_CONTEXT_EXPIRED/);
+    assert.throws(() => db.withTenantContext!(A, () => db.query('REVIVED_NESTED')), /TENANT_CONTEXT_EXPIRED/);
+  }, () => alive);
+  assert.equal(events.length, 0);
+});
+
+test('Tenant context: nested binding refuses group/company changes before a transaction starts', async () => {
+  const { db, events } = fixture();
+  await db.withTenantContext!(A, async () => {
+    for (const scope of [B, { ...A, empresaId: B.empresaId }, { ...B, empresaId: A.empresaId }]) {
+      assert.throws(() => db.withTenantContext!(scope, () => db.query('WRONG_TENANT')), /TENANT_CONTEXT_MISMATCH/);
+    }
+    assert.equal(events.length, 0);
+    await db.withTenantContext!(A, () => db.query('SAME_TENANT'));
+  });
+  assert.deepEqual(events.find(item => item.sql.includes('set_config'))?.params, [A.groupId, A.empresaId]);
+  assert.equal(events.filter(item => item.sql === 'SAME_TENANT').length, 1);
+});
+
+test('Tenant context: nested lifetime inherits later outer expiry and can only become stricter', async () => {
+  for (const expire of ['outer', 'inner']) {
+    const { db, events } = fixture(); let outerAlive = true, innerAlive = true;
+    await db.withTenantContext!(A, () => db.withTenantContext!(A, async () => {
+      if (expire === 'outer') outerAlive = false; else innerAlive = false;
+      await assert.rejects(db.query('LATE_NESTED'), /TENANT_CONTEXT_EXPIRED/);
+    }, () => innerAlive), () => outerAlive);
+    assert.equal(events.length, 0);
+  }
+});
+
 test('Tenant context: nested transaction shares executor, caught failure still rolls back', async () => {
   const { db, events, releases } = fixture();
   await assert.rejects(db.withTenantContext!(A, () => db.withTransaction(async outer => {

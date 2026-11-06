@@ -39,7 +39,7 @@ export default function ControleLotesValidade({ empresaId }) {
       produto.lotes.forEach(lote => {
         const hoje = new Date();
         const dataValidade = lote.data_validade ? new Date(lote.data_validade) : null;
-        const diasRestantes = dataValidade ? Math.floor((dataValidade - hoje) / (1000 * 60 * 60 * 24)) : null;
+        const diasRestantes = dataValidade ? Math.floor((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)) : null;
         
         let alerta = "ok";
         if (diasRestantes !== null) {

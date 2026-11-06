@@ -315,7 +315,7 @@ export default function RelatoriosProducao({ ops = [] }) {
               R$ {custoReal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </p>
             <p className="text-xs text-purple-600">
-              {variacaoCusto > 0 ? '+' : ''}{variacaoCusto}% vs previsto
+              {Number(variacaoCusto) > 0 ? '+' : ''}{variacaoCusto}% vs previsto
             </p>
           </CardContent>
         </Card>
@@ -421,7 +421,7 @@ export default function RelatoriosProducao({ ops = [] }) {
                           {(op.tempo / 60).toFixed(1)}h
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge className={parseFloat(taxaRefugo) > 5 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
+                          <Badge className={parseFloat(String(taxaRefugo)) > 5 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
                             {op.refugo.toFixed(1)} kg ({taxaRefugo}%)
                           </Badge>
                         </TableCell>
@@ -487,16 +487,16 @@ export default function RelatoriosProducao({ ops = [] }) {
                   <div className="h-px bg-slate-300"></div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-900 font-semibold">Variação:</span>
-                    <span className={`font-bold text-xl ${parseFloat(variacaoCusto) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {parseFloat(variacaoCusto) > 0 ? '+' : ''}{variacaoCusto}%
+                    <span className={`font-bold text-xl ${parseFloat(String(variacaoCusto)) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {parseFloat(String(variacaoCusto)) > 0 ? '+' : ''}{variacaoCusto}%
                     </span>
                   </div>
 
-                  {parseFloat(variacaoCusto) > 10 && (
+                  {parseFloat(String(variacaoCusto)) > 10 && (
                     <Alert className="border-red-200 bg-red-50 mt-4">
                       <AlertTriangle className="h-5 w-5 text-red-600" />
                       <AlertDescription>
-                        <strong>Atenção:</strong> Custo real {parseFloat(variacaoCusto)}% acima do previsto.
+                        <strong>Atenção:</strong> Custo real {parseFloat(String(variacaoCusto))}% acima do previsto.
                         Revisar perdas e tempos de produção.
                       </AlertDescription>
                     </Alert>

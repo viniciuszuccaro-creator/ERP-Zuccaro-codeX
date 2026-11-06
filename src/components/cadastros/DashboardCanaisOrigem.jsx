@@ -270,11 +270,11 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-600">Valor Total</p>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-2xl font-bold text-sky-600">
                     R$ {(totalGeralValor / 1000).toFixed(0)}k
                   </p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-purple-600 opacity-20" />
+                <TrendingUp className="w-8 h-8 text-sky-600 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -369,7 +369,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
                           </div>
                           <div>
                             <p className="text-xs text-slate-600">Conversão</p>
-                            <p className="text-lg font-bold text-purple-600">
+                            <p className="text-lg font-bold text-sky-600">
                               {metrica.taxaConversao.toFixed(0)}%
                             </p>
                           </div>
@@ -498,7 +498,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" tick={{ fontSize: 12 }} />
                   <YAxis dataKey="canal" type="category" width={100} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(value) => `R$ ${value.toFixed(2)}`} />
+                  <Tooltip formatter={(value) => `R$ ${typeof value === 'number' && Number.isFinite(value) ? value.toFixed(2) : '-'}`} />
                   <Bar dataKey="ticketMedio" fill="#a855f7" radius={[0, 8, 8, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -507,10 +507,10 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
         </div>
 
         {/* Insights IA */}
-        <Card className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+        <Card className="mt-6 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bolt className="w-5 h-5 text-purple-600" />
+              <Bolt className="w-5 h-5 text-sky-600" />
               💡 Insights Inteligentes
             </CardTitle>
           </CardHeader>

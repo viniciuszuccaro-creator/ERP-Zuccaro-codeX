@@ -92,7 +92,7 @@ export default function IAReposicao({ empresaId: empresaIdProp }) {
   });
 
   const gerarSolicitacaoMutation = useMutation({
-    mutationFn: async (sugestao) => {
+    mutationFn: async (/** @type {Record<string, unknown> & {produto_id: unknown, produto_descricao: unknown, quantidade_sugerida: number, motivo: string, consumo_medio_diario: number, consumo_projetado_30d: number, criticidade: string, empresa_id?: unknown}} */ sugestao) => {
       assertForecastUiContext({ groupId, empresaId, scopeType });
       if (!podeSolicitar) throw new Error('Sem permissao para gerar solicitacao de compra.');
       if (!requireIaHumanConfirm(

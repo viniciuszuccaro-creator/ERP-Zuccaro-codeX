@@ -41,10 +41,10 @@ export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
     const entrada = new Date(`2000-01-01T${formData.entrada_manha}`);
     const saida = new Date(`2000-01-01T${formData.saida_tarde}`);
     const almoco = formData.saida_almoco && formData.retorno_almoco 
-      ? (new Date(`2000-01-01T${formData.retorno_almoco}`) - new Date(`2000-01-01T${formData.saida_almoco}`)) / (1000 * 60 * 60)
+      ? (new Date(`2000-01-01T${formData.retorno_almoco}`).getTime() - new Date(`2000-01-01T${formData.saida_almoco}`).getTime()) / (1000 * 60 * 60)
       : 0;
     
-    const horasTotais = (saida - entrada) / (1000 * 60 * 60) - almoco;
+    const horasTotais = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60) - almoco;
     const horasExtras = Math.max(0, horasTotais - 8);
     
     return { horas: horasTotais, extras: horasExtras };

@@ -69,7 +69,7 @@ export default function EnvioMensagemAutomatica({ entrega, tipo = "saida_entrega
   };
 
   const enviarMensagemMutation = useMutation({
-    mutationFn: async (mensagemOriginal) => {
+    mutationFn: async (/** @type {unknown} */ mensagemOriginal) => {
       const mensagem = sanitizeText(mensagemOriginal);
       const telefone = entrega?.contato_entrega?.whatsapp || entrega?.contato_entrega?.telefone;
 

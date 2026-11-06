@@ -53,7 +53,7 @@ test('pedido of another customer is stripped from portal reads', () => {
   assert.deepEqual(records.map((item) => item.id), ['p1']);
 });
 
-test('segunda via e pix do portal sao escopados e idempotentes', async () => {
+test('segunda via preserva dados existentes, escopo e replay sem fabricar artefatos bancarios', async () => {
   const {
     buildPixCopiaColaPortal,
     buildSegundaViaPortal,
@@ -75,14 +75,18 @@ test('segunda via e pix do portal sao escopados e idempotentes', async () => {
     /nao pertence/,
   );
 
-  const first = buildSegundaViaPortal({ titulo, cliente });
+  assert.throws(() => buildSegundaViaPortal({ titulo, cliente }), /Segunda via indisponivel/);
+  const existente = { ...titulo, pix_copia_cola: 'synthetic-provider-pix', linha_digitavel: 'synthetic-provider-line', url_boleto_pdf: 'https://synthetic.invalid/boleto.pdf' };
+  const first = buildSegundaViaPortal({ titulo: existente, cliente });
   assert.equal(first.reuse, false);
-  assert.ok(first.record.pix_copia_cola.includes('BR.GOV.BCB.PIX'));
+  assert.equal(first.record.pix_copia_cola, existente.pix_copia_cola);
+  assert.equal(first.record.linha_digitavel, existente.linha_digitavel);
+  assert.equal(first.record.url_boleto_pdf, existente.url_boleto_pdf);
   assert.equal(first.record.visivel_no_portal, true);
 
   const retry = buildSegundaViaPortal({ titulo: first.record, cliente });
   assert.equal(retry.reuse, true);
-  assert.equal(buildPixCopiaColaPortal(titulo, cliente), first.record.pix_copia_cola);
+  assert.notEqual(buildPixCopiaColaPortal(titulo, cliente), first.record.pix_copia_cola);
 
   const saldo = calcularSaldoPortal([
     titulo,

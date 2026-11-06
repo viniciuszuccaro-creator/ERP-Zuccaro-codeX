@@ -106,7 +106,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Repeat className="w-5 h-5 text-purple-600" />
+              <Repeat className="w-5 h-5 text-sky-600" />
               Despesas Recorrentes
             </CardTitle>
             <div className="flex gap-2">

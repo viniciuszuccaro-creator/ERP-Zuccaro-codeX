@@ -426,8 +426,8 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="motorista-select">Motorista *</Label>
-                <Select value={motoristaSelecionado} onValueChange={setMotoristaSelecionado} id="motorista-select">
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <Select value={motoristaSelecionado} onValueChange={setMotoristaSelecionado}>
+                  <SelectTrigger id="motorista-select"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {motoristas?.map(m => (
                       <SelectItem key={m.id} value={m.id}>
@@ -440,8 +440,8 @@ export default function RoteirizacaoMapa({ entregas = [], motoristas = [], veicu
 
               <div>
                 <Label htmlFor="veiculo-select">Veículo *</Label>
-                <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado} id="veiculo-select">
-                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                <Select value={veiculoSelecionado} onValueChange={setVeiculoSelecionado}>
+                  <SelectTrigger id="veiculo-select"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
                     {veiculos?.map(v => (
                       <SelectItem key={v.id} value={v.id}>

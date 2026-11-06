@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +23,13 @@ import usePermissions from "@/components/lib/usePermissions";
  * @param {boolean} windowMode - Se está em modo janela
  */
 export default function ParametroOrigemPedidoForm({ 
-  parametro = null, 
+  parametro: parametroProp = null,
+  item = undefined, data = undefined, initialData = undefined, defaultValues = undefined,
   onSuccess, 
   onCancel,
   windowMode = false 
 }) {
+  const parametro = parametroProp || item || data || initialData || defaultValues || null;
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
   const { canCreate, canEdit } = usePermissions();
@@ -37,7 +40,7 @@ export default function ParametroOrigemPedidoForm({
     ? (canEdit("Cadastros", "ParametroOrigemPedido") || canEdit("Cadastros", "Canais de Origem") || canEdit("Cadastros", null))
     : (canCreate("Cadastros", "ParametroOrigemPedido") || canCreate("Cadastros", "Canais de Origem") || canCreate("Cadastros", null));
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useCadastroRecordState({
     nome: parametro?.nome || '',
     canal: parametro?.canal || 'ERP',
     tipo_criacao: parametro?.tipo_criacao || 'Manual',
@@ -51,7 +54,7 @@ export default function ParametroOrigemPedidoForm({
     cor_badge: parametro?.cor_badge || 'blue',
     empresa_id: parametro?.empresa_id || empresaAtual?.id || '',
     group_id: parametro?.group_id || groupId || '',
-  });
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, groupId, empresaAtual?.id ?? null]));
 
   const mutation = useMutation({
     mutationFn: (data) => {
@@ -202,7 +205,7 @@ export default function ParametroOrigemPedidoForm({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Zap className="w-5 h-5 text-purple-600" />
+              <Zap className="w-5 h-5 text-sky-600" />
               Mapeamento de Origem
             </CardTitle>
           </CardHeader>

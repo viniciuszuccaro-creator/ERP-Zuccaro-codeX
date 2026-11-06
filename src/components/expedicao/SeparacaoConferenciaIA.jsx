@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { validarRotaPickingIA } from '@/components/lib/iaResponsePolicy';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode =
   const [codigoBarras, setCodigoBarras] = useState("");
   const [entregaSelecionadaId, setEntregaSelecionadaId] = useState("");
   const [cronometro, setCronometro] = useState({ ativo: true, segundos: 0 });
+  /** @type {[{itensPorHora: number | string, acuracia: number | string}, React.Dispatch<React.SetStateAction<{itensPorHora: number | string, acuracia: number | string}>>]} */
   const [desempenho, setDesempenho] = useState({ itensPorHora: 0, acuracia: 100 });
   const [pedidoSelecionadoId, setPedidoSelecionadoId] = useState(pedidoId || "");
   const activePedidoId = pedidoId || pedidoSelecionadoId || null;
@@ -213,7 +215,7 @@ Identifique divergencias e sugira acoes operacionais:
   });
 
   const otimizarRotaMutation = useMutation({
-    mutationFn: async (itens) => {
+    mutationFn: async (/** @type {Array<{produto_descricao?: unknown, descricao?: unknown, localizacao?: unknown}>} */ itens) => {
       if (!contextoValido || !canUseSeparacaoIA) {
         await auditarSeparacaoIA({
           acao: "SeparacaoConferenciaIA.rota_bloqueada",
@@ -224,7 +226,7 @@ Identifique divergencias e sugira acoes operacionais:
         throw new Error("Contexto e permissao sao obrigatorios para otimizar rota.");
       }
 
-      return await base44.integrations.Core.InvokeLLM({
+      return validarRotaPickingIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Otimize a rota de picking para separacao de ${itens.length} itens.
 
 Itens: ${JSON.stringify(itens.map(i => ({
@@ -252,7 +254,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
             tempo_estimado_min: { type: "number" }
           }
         }
-      });
+      }), itens.map(i => ({ produto: sanitizeText(i.produto_descricao || i.descricao), localizacao: sanitizeText(i.localizacao || "Nao definida") })));
     },
     onSuccess: (resultado) => auditarSeparacaoIA({
       acao: "SeparacaoConferenciaIA.otimizar_rota",
@@ -607,12 +609,12 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
   return (
     <div className={containerClass} data-permission="Expedicao.Separacao.editar" data-context-required="true">
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
-        <Card className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+        <Card className="bg-gradient-to-r from-sky-600 to-sky-700 text-white">
           <CardHeader>
             <div className="flex items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-2xl">Separacao e Conferencia IA</CardTitle>
-                <CardDescription className="text-purple-100">
+                <CardDescription className="text-sky-100">
                   Pedido: {pedido?.numero_pedido || "-"} - Cliente: {pedido?.cliente_nome || "-"}
                 </CardDescription>
               </div>
@@ -748,7 +750,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
               />
               <Button
                 onClick={handleScanCodigoBarras}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-sky-600 hover:bg-sky-700"
                 disabled={!codigoBarras || validarIAMutation.isPending}
                 data-action="SeparacaoConferenciaIA.scan"
                 data-permission="Expedicao.Separacao.editar"
@@ -778,7 +780,7 @@ Gere uma rota otimizada considerando menor distancia, agrupamento por area/corre
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-purple-600" />
+                <MapPin className="w-5 h-5 text-sky-600" />
                 Rota Otimizada por IA
               </CardTitle>
             </CardHeader>

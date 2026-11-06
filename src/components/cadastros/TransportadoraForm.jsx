@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import useCadastroRecordState from './useCadastroRecordState';
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,7 +30,7 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
   const podeEditar = canEdit("Cadastros", "Transportadora") || canEdit("Cadastros", null);
   const podeExcluir = canDelete("Cadastros", "Transportadora") || canDelete("Cadastros", null);
   
-  const [formData, setFormData] = useState(transportadora || {
+  const [formData, setFormData] = useCadastroRecordState(transportadora || {
     razao_social: '',
     nome_fantasia: '',
     cnpj: '',
@@ -47,18 +48,12 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
     valor_frete_minimo: 0,
     status: 'Ativo',
     observacoes: ''
-  });
+  }, JSON.stringify([transportadora?.id ?? null, transportadora?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null]));
 
   const schema = z.object({
     razao_social: z.string().min(1, 'Razão Social é obrigatória'),
     cnpj: z.string().min(11, 'CNPJ é obrigatório')
   });
-
-  useEffect(() => {
-    if (transportadora?.id) {
-      setFormData({ ...transportadora });
-    }
-  }, [transportadora?.id]);
 
   const handleSubmit = async () => {
     if (!contextoValido) {
