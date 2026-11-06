@@ -1,3 +1,18 @@
+## CURSOR — #542 AcoesRapidas CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- Tip `3c6c855bb` **CI SUCCESS** 9/9. Multi-ator + novoPedido fail-closed + teste congelado alinhado.
+- Sem FF #401 (`b888b2c00`). Homolog BLOCKED. Sem merge/deploy/VPS.
+
+## CURSOR — #542 tip CI freeze queryKey (2026-11-06 America/Sao_Paulo)
+- Tip pós-`f9bcaf9e1`: teste `comercial-clientes-tab-v24` atualizado para cache multi-ator (#542).
+- Sem alterar runtime AcoesRapidas além do tip funcional. Homolog BLOCKED. Sem FF #401.
+
+## CURSOR — #542 AcoesRapidas fix ator/sessão (2026-11-06 America/Sao_Paulo)
+- queryKey multi-ator; novoPedido bloqueia loading/erro/stale. Homolog BLOCKED.
+
+## CURSOR — #542 AcoesRapidasGlobal CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `c15bf427c` **CI SUCCESS** 6/6. Cliente filterInContext; Evento via user RBAC.
+- **#522–#542** multiempresa verde. FF #401 aguarda Codex. Homolog BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

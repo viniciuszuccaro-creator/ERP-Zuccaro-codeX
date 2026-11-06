@@ -1,3 +1,45 @@
+## CURSOR — #542 AcoesRapidas multi-ator CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#542](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/542) |
+| **Tip** | **`3c6c855bb`** · **CI SUCCESS** 9/9 |
+| **Delta** | cache group/empresa/ator/sessão; `resolveClientesParaNovoPedido`; freeze `comercial-clientes-tab-v24` |
+| **Candidata #401** | `b888b2c00` — **não** FF até aceite Codex dos negativos |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** parecer Codex #542; CI #544/#545; composição só após aceite.
+
+## CURSOR — #542 tip CI: alinhar teste congelado multi-ator (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#542](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/542) |
+| **Tip prévio** | `f9bcaf9e1` — frontend FAIL: `comercial-clientes-tab-v24` exigia `queryKey: ['clientes', empresaAtual?.id` |
+| **Fix** | Assert canônico `buildAcoesRapidasClientesQueryKey` + `resolveClientesParaNovoPedido` + STALE |
+| **Testes** | clientes-tab-v24 + ui-acoes-rapidas **13 PASS** |
+| **Candidata #401** | `b888b2c00` — não incorporar até CI verde + aceite Codex |
+| Homolog | BLOCKED |
+
+## CURSOR — #542 AcoesRapidas ator/sessão + fail-closed novoPedido (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | queryKey sem ator/sessão; novoPedido reutilizava clientes de outro ator |
+| **Correção** | keys multi-ator; STALE_SCOPE; resolveClientesParaNovoPedido; isHttpBackendMode |
+| **Negativos** | atorA→B mesmo G/E; loading; stale; EmpresaB chave separada |
+| **Homolog 100** | BLOCKED · FF #401 aguarda Codex |
+
+## CURSOR — #542 AcoesRapidasGlobal CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| PR | Tip | Estado |
+|----|-----|--------|
+| **#522–#542** | multiempresa | **CI SUCCESS** |
+| #542 AcoesRapidas Cliente | `c15bf427c` | **CI SUCCESS** 6/6 (lint fix) |
+| **Base** | #401 `b888b2c00` | FF aguarda Codex |
+| **Homolog 100** | BLOCKED | |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
