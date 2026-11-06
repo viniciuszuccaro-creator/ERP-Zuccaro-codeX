@@ -1,3 +1,12 @@
+## CURSOR — #584 PainelGovernanca CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #584 `965f14c3b` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#584 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #584 PainelGovernanca CI fix consumer-window (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

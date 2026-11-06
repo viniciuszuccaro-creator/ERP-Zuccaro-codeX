@@ -1,3 +1,6 @@
+## CURSOR — #584 PainelGovernanca CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #584 tip `965f14c3b` CI **SUCCESS 6/6**. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — #584 PainelGovernanca CI fix (2026-11-05 America/Sao_Paulo)
 - Remainder consumer-window stage60. Homolog BLOCKED.
 
