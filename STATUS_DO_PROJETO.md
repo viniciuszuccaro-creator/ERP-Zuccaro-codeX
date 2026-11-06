@@ -1,3 +1,13 @@
+## CURSOR — useRealtimeData escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/lib-realtime-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filterInContext em KPIs/Pedidos/Entregas/Notif/GPS/OP/Subscription; sem fallback unscoped; KPI ≠ 0 |
+| **Testes** | `lib-realtime-scope` + `dashboard-kpi-policy` PASS |
+| **Fila** | #566–#578 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
