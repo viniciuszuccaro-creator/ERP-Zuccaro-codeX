@@ -1,3 +1,72 @@
+## CURSOR — #544 origem KPI/export CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#544](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/544) |
+| **Tip** | **`b3b450539`** · **CI SUCCESS** 12/12 |
+| **Delta** | KPI Pedido agregado ≠ zero; export só ready; STALE G/E; flake Date no print congelado |
+| **Trilho #542/#544/#545** | CI verde nos três tips funcionais — **não** FF #401 até aceite Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** parecer Codex nos negativos #542+#544+#545; só então composição seletiva na candidata `b888b2c00`.
+
+## CURSOR — #544 tip flake print Date (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#544](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/544) |
+| **CI tip anterior** | `ac9a15560` frontend FAIL — `consumer-window-contracts` Pedido print HTML `Documento gerado em` 1s drift |
+| **Causa** | teste compara current vs remainder com `new Date()` real entre duas corridas |
+| **Fix** | congela `Date` no subteste de sucesso (sem alterar exportacaoPDF) |
+| **Homolog** | BLOCKED · sem FF #401 |
+
+## CURSOR — #544 tip STALE grupo/empresa + inventário fila (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#544](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/544) |
+| **Tip** | (este commit) — STALE inclui groupId/empresaId; KPI Pedido agregado; export só ready |
+| **#542** | tip `3c6c855bb` — freeze queryKey alinhado; CI em curso |
+| **#545** | tip `a8b8437ce`/`35b6f43e2` — KPI auxiliar + stats binding; CI em curso |
+| **#401** | `b888b2c00` — **não** FF #542/#544/#545 enquanto negativos/CI abertos |
+| **#589/#590** | tips CI sem fail de job (Bugbot NEUTRAL) — RelatorioQualidade / ControleAcessoLogistica |
+| Homolog | BLOCKED |
+
+### Inventário pacotes #542–#588 (estado na publicação; ≠ integrado na candidata)
+
+| Faixa | Tema | Notas |
+|-------|------|-------|
+| #542–#545 | AcoesRapidas / origem KPI / fechamento | **prioridade** — corrigir antes de FF |
+| #543,#546–#565 | Comercial filterInContext mecanico | revisado na origem; integrar só após aceite Codex + sem overlap com #542–#545 |
+| #549 | provas consumidor #544 | depende tip #544 |
+| #566–#574 | Financeiro/expedição/cadastros painéis | escopo InContext; não unificar contrato User/Audit |
+| #575–#576 | Assinatura | updateInContext |
+| #577–#581 | LiveMap / painéis cadastro | |
+| #582–#588 | Timeline / notif / governança / audit / users / segurança / acessos | **preservar contratos próprios** (User/Perfil/Audit ≠ empresa_id universal); sem fallback global |
+| #589–#590 | Qualidade / logística acesso | CI tip verde residual |
+
+**Próximo:** CI #542/#544/#545 → parecer Codex → só então composição seletiva na #401. Restauração visual/registros/Central360 mapa: após trilho crítico.
+
+## CURSOR — #544 Param/Canais KPI Pedido pendente ≠ zero (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | KPI/export usavam só estado de parâmetros; Pedido pendente virava 0 |
+| **Correção** | `resolveParametrosOrigemMetricasKpiState`; export disabled; isHttpBackendMode |
+| **Homolog 100** | BLOCKED · FF #401 aguarda Codex |
+
+## CURSOR — #544 ParamOrigem cache/KPI CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#544](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/544) ← #511 |
+| **Tip** | **`ebadfcad5`** · **CI SUCCESS** 6/6 |
+| **Achados** | zero-em-carga · métrica≠0 · cache ator/sessão/Grupo/Empresa · STALE_SCOPE |
+| **Paralelos** | #543/#545 verdes · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge/deploy · VPS · seed |
+
 ## CURSOR — ParametrosOrigem uniqueKey CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

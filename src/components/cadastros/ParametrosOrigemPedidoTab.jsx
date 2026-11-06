@@ -12,6 +12,14 @@ import GerenciadorCanaisOrigem from "./GerenciadorCanaisOrigem";
 import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { isHttpBackendMode } from "@/api/base44Client";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildParametrosOrigemQueryKey,
+  isParametrosOrigemScopeCurrent,
+  resolveParametrosOrigemKpiState,
+} from "./parametrosOrigemScope";
 import {
   Plus,
   Search,
@@ -25,6 +33,19 @@ import {
   List
 } from "lucide-react";
 
+/** HTTP: sessão ERP. Legado/remoto: user.id — sem limpar token Base44 órfão. */
+function readOrigemActorAndSession(user) {
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    const actorId = (typeof session?.actorId === 'string' && session.actorId.trim())
+      || (typeof user?.id === 'string' && user.id.trim())
+      || null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  }
+  const actorId = typeof user?.id === 'string' && user.id.trim() ? user.id.trim() : null;
+  return { actorId, sessionKey: actorId ? `legacy-actor:${actorId}` : null };
+}
+
 /**
  * V21.6 - Tab COMPLETA para gerenciar origens de pedidos
  * Lista canais + Dashboard de performance
@@ -34,16 +55,18 @@ export default function ParametrosOrigemPedidoTab() {
   const [busca, setBusca] = useState('');
   const [abaAtiva, setAbaAtiva] = useState('canais');
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
-  const { canCreate, canEdit, hasPermission } = usePermissions();
+  const { canCreate, canEdit, hasPermission, user } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const contextKey = empresaId || groupId || 'sem-contexto';
-  const contextoValido = contextKey !== 'sem-contexto';
+  const { actorId, sessionKey } = readOrigemActorAndSession(user);
+  const contextoValido = Boolean(groupId || empresaId);
   const podeVer = hasPermission('Cadastros', 'ParametroOrigemPedido', 'visualizar')
     || hasPermission('Cadastros', 'Canais de Origem', 'visualizar')
     || hasPermission('Cadastros', null, 'visualizar');
   const podeCriar = canCreate('Cadastros', 'ParametroOrigemPedido') || canCreate('Cadastros', 'Canais de Origem') || canCreate('Cadastros', null);
   const podeEditar = canEdit('Cadastros', 'ParametroOrigemPedido') || canEdit('Cadastros', 'Canais de Origem') || canEdit('Cadastros', null);
+  const origemQueryKey = buildParametrosOrigemQueryKey({ groupId, empresaId, actorId, sessionKey });
+  const scopeExpected = { actorId, sessionKey, groupId, empresaId };
 
   const {
     data: parametros,
@@ -52,13 +75,32 @@ export default function ParametrosOrigemPedidoTab() {
     error,
     isFetching,
   } = useQuery({
-    queryKey: ['parametros-origem-pedido', contextKey],
-    queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'canal', 500),
-    enabled: contextoValido && podeVer,
+    queryKey: origemQueryKey,
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ParametroOrigemPedido', {}, 'canal', 500);
+      if (signal?.aborted) {
+        const err = new Error('PARAM_ORIGEM_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, { ...readOrigemActorAndSession(user), groupId, empresaId })) {
+        throw new Error('PARAM_ORIGEM_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido && podeVer && Boolean(actorId),
   });
 
   const lista = Array.isArray(parametros) ? parametros : [];
-  const contagemIndisponivel = !contextoValido || !podeVer || isLoading || isError || (isFetching && parametros === undefined);
+  const kpiState = resolveParametrosOrigemKpiState({
+    contextoValido,
+    podeVer,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: parametros !== undefined,
+  });
+  const contagemIndisponivel = kpiState !== 'ready';
   const parametrosFiltrados = lista.filter(p =>
     p.nome?.toLowerCase().includes(busca.toLowerCase()) ||
     p.canal?.toLowerCase().includes(busca.toLowerCase())
@@ -105,10 +147,9 @@ export default function ParametrosOrigemPedidoTab() {
     : lista.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length;
   const totalCanais = contagemIndisponivel ? null : lista.length;
   const kpiLabel = (value) => {
-    if (!contextoValido) return '—';
-    if (!podeVer) return '—';
-    if (isError) return 'Erro';
-    if (isLoading || (isFetching && parametros === undefined)) return '…';
+    if (kpiState === 'unavailable') return '—';
+    if (kpiState === 'error') return 'Erro';
+    if (kpiState === 'loading') return '…';
     return value;
   };
 

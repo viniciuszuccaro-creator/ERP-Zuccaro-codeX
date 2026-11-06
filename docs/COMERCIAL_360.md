@@ -73,3 +73,35 @@ A busca focal em `server/src`, migrations e testes confirmou ausencia de contrat
 - Experiencia: listagem paginada pela `meta` da API, loading/vazio/erro recuperavel, formulario unico de criacao/edicao, detalhe, confirmacao de cancelamento preservando registro, bloqueio de duplo envio e aviso ao abandonar alteracoes.
 - Precisao: quantidade, preco e desconto sao calculados em micros com `BigInt`; tenant, numero, status e totais nunca entram no payload do navegador.
 - Limites: Pedido continua nao implementado. Erros HTTP sao apresentados com mensagens seguras; mapeamento 422 por campo permanece melhoria posterior caso o backend passe a retornar caminhos estruturados.
+
+## Mapa preparatório — Central de Vendas 360 (2026-11-06)
+
+Orçamentos será “Central de Vendas 360”. **Layout amplo aguarda aprovação de desenho.** Contratos/correções independentes (#542–#545 e fila) avançam sem refazer a tela agora.
+
+### Composição alvo (reuso — sem tela paralela)
+
+| Zona | Papel | Estruturas existentes a reutilizar |
+|------|-------|--------------------------------------|
+| Centro | orçamento/itens, preços, unidades, descontos, estoque, totais | `OrcamentosTab`, `PedidoFormCompleto`/`PedidoItensEditor`, `SeletorUnidadeComConversao`, `DescontosItemPedido`, `ValidadorEstoquePedido`, `PedidoResumoTotal`, `orcamentoUiPolicy` |
+| Contexto | Grupo/Empresa, cliente, vendedor, canal, situação | `useContextoVisual`, `WizardEtapa1Cliente`, `BadgeOrigemPedido`, launchpad `Comercial.jsx` |
+| Atalhos | GoTo, atendimento, chatbot, site, e-commerce, marketplaces | `AcoesRapidasGlobal`, Hub/Chatbot existentes, `OrcamentoSite` (canal — não mestre) |
+| Painéis | histórico, crédito, entregas/mapa, produção, NF, boleto/Pix, docs | `CentralCliente360Panel`, `HistoricoProdutosCliente`, `LimiteCreditoWidget`/`ValidacaoCredito`, `PainelEntregasPedido`, produção/expedição existentes, financeiro boleto |
+| Rodapé | Incluir item, Salvar, Avançar, Voltar | rodapés de `PedidoFormCompleto` / wizard — mesma sessão/rascunho |
+
+### Fluxo a preservar
+abertos/orçamentos → verificações → fechados → produção, entrega ou retirada (itens mistos). Um atendimento; sem empilhar modais nem duplicar cadastros.
+
+### Integrações (classificação)
+
+| Integração | Estado |
+|------------|--------|
+| Cadastros mestres (cliente/produto/tabela/condição) | existente |
+| Estoque / OP / expedição | parcial (componentes + pacotes InContext) |
+| Crédito / CR / caixa | parcial |
+| Chatbot / site / marketplace → rascunho humano | futura / canal consumidor |
+| Bots respeitam preço/estoque/crédito/RBAC/aprovação | contrato a amarrar; exceções → atendimento |
+
+### Próximo executável
+1. Fechar CI+aceite #542/#544/#545 (sem FF #401 enquanto negativos falharem).
+2. Composição controlada na candidata #401 (`b888b2c00`) dos pacotes aceitos.
+3. Desenho visual da Central — só após aprovação; até lá só contratos/correções.
