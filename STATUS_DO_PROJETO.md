@@ -1,3 +1,13 @@
+## CURSOR — PainelDinamicoFornecedor escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cadastros-painel-fornecedor-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filterInContext OrdemCompra; KPI ≠ R$0; STALE_SCOPE |
+| **Testes** | `cadastros-painel-fornecedor-scope` **2 PASS** |
+| **Fila** | #566–#579 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

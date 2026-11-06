@@ -15,24 +15,69 @@ import {
   Star
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  resolvePainelFornecedorKpiState,
+  isPainelFornecedorScopeCurrent,
+  sumPainelFornecedorTotalCompras,
+} from "./painelDinamicoFornecedorScope";
 
 /**
  * V21.1.2 - WINDOW MODE READY
+ * OrdemCompra via filterInContext; KPI loading/erro ≠ R$ 0.
  */
 export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, windowMode = false }) {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const painelAberto = Boolean(isOpen || windowMode);
+  const fornecedorId = fornecedor?.id || null;
+  const sessionSnapshot = readErpHttpSession();
+  const actorId = typeof sessionSnapshot?.actorId === "string" && sessionSnapshot.actorId.trim()
+    ? sessionSnapshot.actorId.trim()
+    : null;
+  const sessionKey = central360SessionKey(sessionSnapshot?.token);
+  const scopeExpected = { actorId, sessionKey };
+  const readActorAndSession = () => {
+    const session = readErpHttpSession();
+    const nextActor = typeof session?.actorId === "string" && session.actorId.trim()
+      ? session.actorId.trim()
+      : null;
+    return { actorId: nextActor, sessionKey: central360SessionKey(session?.token) };
+  };
 
-  const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordens-compra-fornecedor', fornecedor?.id],
-    queryFn: () => base44.entities.OrdemCompra.filter({ fornecedor_id: fornecedor.id }, '-data_solicitacao'),
-    enabled: !!fornecedor?.id,
+  const ordensQuery = useQuery({
+    queryKey: ['ordens-compra-fornecedor', fornecedorId, groupId, empresaId, actorId, sessionKey],
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('OrdemCompra', { fornecedor_id: fornecedorId }, '-data_solicitacao');
+      if (signal?.aborted) {
+        const err = new Error('PAINEL_FORNECEDOR_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isPainelFornecedorScopeCurrent(scopeExpected, readActorAndSession())) {
+        throw new Error('PAINEL_FORNECEDOR_ORDENS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: Boolean(fornecedorId) && painelAberto && contextoValido,
   });
+
+  const ordensKpi = resolvePainelFornecedorKpiState({
+    painelAberto, contextoValido, fornecedorId,
+    isLoading: ordensQuery.isLoading, isError: ordensQuery.isError,
+    isFetching: ordensQuery.isFetching, dataDefined: ordensQuery.data !== undefined,
+  });
+  const ordensCompra = ordensKpi === 'ready' && Array.isArray(ordensQuery.data) ? ordensQuery.data : [];
 
   const podeEditar = hasPermission('cadastros', 'editar');
 
@@ -43,12 +88,9 @@ export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, 
 
   if (!fornecedor) return null;
 
-  const totalCompras = ordensCompra
-    .filter(o => o.status !== 'Cancelada')
-    .reduce((sum, o) => sum + (o.valor_total || 0), 0);
+  const totalCompras = ordensKpi === 'ready' ? sumPainelFornecedorTotalCompras(ordensCompra) : null;
 
   const notaMedia = fornecedor.nota_media || 0;
-
   const content = (
     <>
       <div className="border-b pb-4 mb-6">
@@ -180,12 +222,25 @@ export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, 
                 Estatísticas
               </p>
               <div className="space-y-1 pl-6 text-sm">
+                {ordensKpi === 'loading' && (
+                  <p className="text-slate-500 animate-pulse">Carregando estatísticas…</p>
+                )}
+                {ordensKpi === 'error' && (
+                  <p className="text-red-600">Erro ≠ R$ 0 / 0 ordens</p>
+                )}
+                {ordensKpi === 'unavailable' && (
+                  <p className="text-amber-700">Contexto necessário</p>
+                )}
+                {ordensKpi === 'ready' && (
+                  <>
                 <p className="text-slate-600">
                   <span className="font-medium">Ordens de Compra:</span> {ordensCompra.length}
                 </p>
                 <p className="text-slate-600">
-                  <span className="font-medium">Total Compras:</span> R$ {totalCompras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  <span className="font-medium">Total Compras:</span> R$ {(totalCompras || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
+                  </>
+                )}
                 {fornecedor.quantidade_compras > 0 && (
                   <p className="text-slate-600">
                     <span className="font-medium">Histórico Total:</span> {fornecedor.quantidade_compras} compras
@@ -202,7 +257,16 @@ export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, 
               Histórico de Compras
             </h3>
             <div className="max-h-[440px] overflow-y-auto pr-2">
-              {ordensCompra.length > 0 ? (
+              {ordensKpi === 'loading' && (
+                <p className="text-sm text-slate-500 animate-pulse py-6 text-center">Carregando ordens…</p>
+              )}
+              {ordensKpi === 'error' && (
+                <p className="text-sm text-red-600 py-6 text-center">Erro ≠ histórico vazio</p>
+              )}
+              {ordensKpi === 'unavailable' && (
+                <p className="text-sm text-amber-700 py-6 text-center">Contexto necessário</p>
+              )}
+              {ordensKpi === 'ready' && ordensCompra.length > 0 && (
                 <div className="space-y-2">
                   {ordensCompra.slice(0, 10).map((ordem) => (
                     <div key={ordem.id} className="p-3 bg-slate-50 rounded-lg text-sm">
@@ -231,7 +295,8 @@ export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, 
                     </div>
                   ))}
                 </div>
-              ) : (
+              )}
+              {ordensKpi === 'ready' && ordensCompra.length === 0 && (
                 <div className="text-center py-8 text-slate-500">
                   <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">Nenhuma ordem de compra registrada</p>
