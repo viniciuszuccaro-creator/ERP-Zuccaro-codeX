@@ -18,11 +18,13 @@ test('guard HTTP revalida Bearer/perfil; owner em grupo/A/A2, filial isolada e r
   const config = loadConfig({ NODE_ENV: 'test', ERP_ENV: 'dev', REQUIRE_DATABASE: 'false', ERP_AUTH_MODE: 'supabase_user', SUPABASE_URL: 'https://auth.synthetic.test', SUPABASE_ANON_KEY: 'synthetic' });
   let permissions: any = OWNER_ERP_PERMISSION_TREE;
   let company: string | null = null;
+  let role = 'admin';
+  let profileActive = true;
   const db = {
     async query(sql: string, values: any[]) {
       if (sql.includes('FROM profiles')) {
         assert.equal(values[0], AUTH_OWNER);
-        return { rows: [{ id: OWNER_ID, group_id: SEED_IDS.groupA, empresa_id: company, empresa_id_raw: company, role: company ? 'user' : 'admin', full_name: 'Synthetic Owner', permissoes: permissions, group_name: 'Synthetic Group' }] };
+        return { rows: profileActive ? [{ id: OWNER_ID, group_id: SEED_IDS.groupA, empresa_id: company, empresa_id_raw: company, role: company ? 'user' : role, full_name: 'Synthetic Owner', permissoes: permissions, group_name: 'Synthetic Group' }] : [] };
       }
       if (sql.includes('FROM empresas')) return { rows: [SEED_IDS.empresaA, SEED_IDS.empresaA2].filter(id => !company || id === company).map(id => ({ id, group_id: SEED_IDS.groupA, razao_social: 'Synthetic Company', nome_fantasia: null, cnpj: '12345678000199', status: 'Ativa' })) };
       throw new Error('Unexpected SQL');
@@ -78,6 +80,31 @@ test('guard HTTP revalida Bearer/perfil; owner em grupo/A/A2, filial isolada e r
     await allows({ empresa_id: company }, false);
     permissions = { '*': ['visualizar'], Comercial: { '*': ['visualizar'] } };
     await allows({ empresa_id: company }, false);
+    // Owner decision: a Group profile uses explicit grants, not an admin promotion.
+    role = 'user';
+    company = null;
+    permissions = { Cadastros: { cliente: ['visualizar', 'editar'] } };
+    const clientGuard = { module: 'Cadastros', section: 'cliente', scope_type: 'group' };
+    await allows(clientGuard, true);
+    await allows({ ...clientGuard, action: 'editar' }, true);
+    for (const action of ['criar', 'importar', 'exportar', 'inativar']) {
+      await allows({ ...clientGuard, action }, false);
+    }
+    await allows({ ...clientGuard, group_id: SEED_IDS.groupB }, false);
+    await allows({ ...clientGuard, profile_id: COMMON_ID }, false);
+    await allows({ ...clientGuard, empresa_id: SEED_IDS.empresaA }, false);
+    await allows({ ...clientGuard, scope_type: 'company' }, false);
+    await allows({ ...clientGuard, scope_type: 'company', empresa_id: SEED_IDS.empresaA }, true);
+    await allows({ ...clientGuard, scope_type: 'company', empresa_id: SEED_IDS.empresaB }, false);
+    permissions = {};
+    await allows(clientGuard, false);
+    permissions = { Cadastros: { cliente: ['visualizar'] } };
+    assert.equal((await check(clientGuard, 'expired')).status, 401);
+    company = SEED_IDS.empresaA;
+    await allows(clientGuard, false);
+    company = null;
+    profileActive = false;
+    assert.equal((await check(clientGuard)).status, 403);
   } finally {
     globalThis.fetch = nativeFetch;
     await new Promise<void>((resolve, reject) => server.close(e => e ? reject(e) : resolve()));
@@ -92,6 +119,11 @@ test('guard exige contexto coerente e reconhece vocabulário explícito existent
   assert.equal(resolveSessionEntityGuard([profile], { ...guard, empresa_id: SEED_IDS.empresaA, scope_type: 'group' }), false);
   assert.throws(() => resolveSessionEntityGuard([profile], { ...guard, group_id: undefined }));
   profile.role = 'user';
+  assert.equal(resolveSessionEntityGuard([profile], guard), true, 'explicit Group permission does not require admin');
+  profile.permissoes = {};
+  assert.equal(resolveSessionEntityGuard([profile], guard), false);
+  profile.permissoes = OWNER_ERP_PERMISSION_TREE;
+  profile.empresaId = SEED_IDS.empresaA;
   assert.equal(resolveSessionEntityGuard([profile], guard), false);
 });
 

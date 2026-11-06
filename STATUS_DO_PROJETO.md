@@ -1,4 +1,30 @@
-## Continuidade vigente - Fornecedor validado no Linux e composicao revisada (2026-11-06)
+## Continuidade vigente - permissao explicita do proprio Grupo (2026-11-06)
+
+Fornecedor ja publicado9b5de2bc9cdbe65f62f74311a8bcc911183dd87e, push conferido;
+CI6444 terminal SUCCESS. Reserva6683858625: authSessionService.ts
+e auth-session-http-exact.test.ts, sem editar branch Cursor. Decisao especifica
+do proprietario permite perfil vinculado ao proprio Grupo, empresa_idNULL e
+permissao explicita da entidade/acao, sem exigir admin. Guard advisory existente
+reconciliado; RBAC/RLS de dominio, identidade Auth e permissoes NAO ampliados.
+HTTP real local com Auth/DB sinteticos: antes2FAIL/2PASS, depois12PASS0FAIL0SKIP
+nos3arquivos Auth/session/data. Positivos Grupo/user e Empresa autorizada;
+negativos outro Grupo/perfil/Empresa, escopo incoerente, acao nao concedida,
+revogacao imediata, token expirado e perfil retirado. Alteracao da expectativa
+antiga admin-only justificada pela decisao, nao por mascaramento de baseline.
+Backend completo598tests:560PASS0FAIL38SKIP,223200.2446ms; sem DATABASE_URL real.
+Audit/lint/typecheck/build backend PASS; aviso lint preexistente mantido.
+Raiz2419PASS e frontend/typecheck/build inalterados reutilizados do snapshot
+Fornecedor: nenhum arquivo frontend/root nem contrato POSIX mudou neste lote.
+Nao chamar isso de login HML, PG real ou clientes reais visiveis no navegador.
+
+Proximo gate concreto: endpoint real Auth com TLS valido e preflight fisico
+API/Auth/Data na HML. Proposta minima de roteamento/reversao, NAO aplicada,
+em OPERACAO_DEV_VPS. HML100, backups, historicos e operacao VPS intactos.
+Composicao4010c4a85c6 passou11contraprovas montadas (parecer6683772341), CI do
+conjunto ainda nao retornou pelo conector; pedir ao escritor Cursor a prova do
+SHA composto, sem reabrir achados individuais encerrados ou presumir deploy.
+
+## Historico - Fornecedor validado no Linux e composicao revisada (2026-11-06)
 
 Base bfb4416c/CI6439 SUCCESS. Mesmo Codespace recuperado pelo controle suportado;
 checkout b5cb34e1 e .vscode nao rastreado preservados, sem pull/rebuild/novo ambiente.
@@ -10,7 +36,7 @@ raiz COMPLETA Linux2419PASS0FAIL0SKIP, ROOT_FULL_EXIT=0,283483.600734ms.
 Backend Windows560PASS0FAIL38SKIP/598 e audit/lint/typechecks/builds anteriores
 reutilizados porque codigo/dependencias nao mudaram. Skips nao aprovam PG real;
 avisos antigos de lint/chunks preservados. Nao e prova Fornecedor HTTP/HML.
-Correcao funcional pronta para commit/push nesta branch, sem merge/deploy/carga.
+Correcao funcional publicada depois em9b5de2bc nesta branch, sem merge/deploy/carga.
 
 401 avancou para0c4a85c6 (runtime4f76d3de3), com542/544/545 incorporadas.
 Arquivos e auxiliares desses ports iguais aos runtimes revisados; backend nao

@@ -1,4 +1,37 @@
-## Continuidade vigente - gate Linux fechado e publicacao Fornecedor (2026-11-06)
+## Continuidade vigente - Grupo granular implementado, HML ainda sem READY (2026-11-06)
+
+Fornecedor publicado9b5de2bc9cdbe65f62f74311a8bcc911183dd87e; remoto conferido,
+CI6444 terminal SUCCESS. Recebimento do validador Linux deixou de ser
+bloqueio: POSIX12PASS, Fornecedor10PASS, raiz2419PASS0FAIL0SKIP no snapshot exato.
+Recibo421/6683935656. Nao repetir transporte, instalacao, carga100 ou restore.
+
+Decisao recebida06/11: perfil de Grupo + permissao explicita pode acessar seu
+proprio Grupo sem admin. Reserva6683858625. Lote seguinte modifica APENAS o guard
+advisory resolveSessionEntityGuard e teste HTTP existente: remove exigencia de
+role admin, conserva profileId/groupId exatos, perfil empresarial nao acessa Grupo,
+scope_type coerente, Empresa autorizada e permissionViewAllows por entidade/acao.
+Nenhuma concessao/role/policy alterada; mutacoes continuam nos guards de dominio.
+Testes novos antes2FAIL/2PASS, depois12PASS0FAIL0SKIP em auth-session-http-exact,
+auth-session-password e auth-data-connection. HTTP local real com fronteiras
+Auth/DB sinteticas; nao e sessao HML/PG real. Negativos de revogacao/token expirado,
+perfil removido, outro Grupo/Empresa/perfil e acoes nao concedidas preservados.
+Backend completo560PASS0FAIL38SKIP/598; audit/lint/typecheck/build backend PASS.
+Root2419PASS e frontend checks do lote anterior reutilizados por delta somente
+backend, sem mudar fonte/consumidores root. Avisos antigos mantidos.
+
+4010c4a85c6/runtime4f76d3de3:11PASS montados no composto, arquivos/helpers dos
+ports iguais aos runtimes542/544/545; parecer6683772341. Nenhum workflow retornou
+para esses dois SHAs pelo conector, nao afirmar CI propria aprovada por ancestrais.
+Cursor segue escritor; Fornecedor informado em6683936178, sem port presumido.
+
+Rota Auth segue bloqueio concreto, nao falta de carga100: host declarado nao
+existe no Caddy e handshake local falha35; gateway existente127.0.0.1:8000 devolve
+401 sem credencial. Proposta minima HTTPS e reversao no procedimento existente,
+sem aplicacao. Preflight por socket ainda exige identidade fisica; nao comparar
+NULL=NULL, promover perfil ou usar fallback operacional. Clientes reais ainda
+NAO demonstrados em URL HML. Nenhum dado real/credencial entrou neste commit.
+
+## Historico - gate Linux fechado e publicacao Fornecedor (2026-11-06)
 
 Base bfb4416c/CI6439 SUCCESS; somente2blobs funcionais preservados97f2fcf3 e
 e079ae2e. Chrome/terminal do Codespace existente recuperados; checkout antigo

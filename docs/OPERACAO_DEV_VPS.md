@@ -22,10 +22,36 @@ Decisao do proprietario06/11: perfil de Grupo (empresa_id NULL) pode acessar a
 visao do proprio Grupo pela permissao explicita da entidade/acao sem ser admin.
 Reconciliar resolveSessionEntityGuard existente com o guard de dominio; manter
 negativas de outro Grupo/perfil empresarial/permissao ausente/revogacao/sessao
-antiga. Nao autoriza novos grants ou mudancas VPS. Proposta historica abaixo
-deixa de ser uma decisao pendente; implementacao/testes ainda precisam fechar.
+antiga. Nao autoriza novos grants ou mudancas VPS. Implementacao local no guard
+canonico e testes HTTP existentes: antes2FAIL, depois12PASS0FAIL0SKIP focados;
+backend560PASS0FAIL38SKIP. Fronteiras Auth/DB sinteticas, sem afirmar login HML.
+Proposta historica abaixo deixa de ser decisao pendente; codigo ainda precisa
+de publicacao/CI e incorporacao controlada, nao esta implantado na VPS.
 Preflight de pools por socket continua separado: NULL=NULL nao comprova destino.
 HML100, backup/restauracao e historicos preservados; sem API HML READY/URL real.
+
+### Proposta minima revisavel de canal Auth - NAO AUTORIZADA/APLICADA
+
+Gateway Auth EXISTENTE em127.0.0.1:8000 retorna401 para GET/auth/v1/user sem
+credencial; nao basta para provar sessao. Caddy2.11.4, arquivo atual253bytes,
+modo640 root:caddy, SHA256246c2111061f092b597fa368018ca91f54f4ff5261115105d36a55f51bd3386c.
+Proposta: no host HTTPS API DEV ja existente, encaminhar SOMENTE GET/auth/v1/user
+e POST/auth/v1/token ao gateway existente, preservando paths/query e validacao
+apikey/Bearer pelo Kong/Auth; demais paths continuam no upstream API3080.
+Esses dois contratos atendem verificacao e login/renovacao do provedor existente;
+nao expor signup/admin, Studio, banco, porta nova ou segredo no proxy.
+
+E uma nova superficie publica de autenticacao no mesmo443: exige aprovacao
+especifica e revisao de limites/rate-limit/provedor antes de aplicar. Nao executar
+por inferencia da permissao granular de Grupo nem da autorizacao HML isolada.
+Janela proposta5min, sem substituir API/web; precondicoes: bytes atuais conferidos,
+copia privada reversivel, candidato caddy validate aprovado, ausencia de segredo,
+API/web anteriores saudaveis e procedimento de reload existente confirmado.
+Abortar por TLS invalido, rota inesperada, falha do login/provedor, ampliacao de
+paths ou regressao API/web. Reversao: restaurar bytes/proprietario/modo anteriores,
+validar/recarregar config pelo procedimento aprovado, conferir fingerprint e
+health anteriores; nenhum dado/role/grant/schema muda. Preparacao, nao deploy.
+Depois usar essa origem HTTPS no processo HML privado, nunca AuthDB operacional.
 
 ## Historico - console HTML acessivel, backend desconectado (2026-11-05)
 
