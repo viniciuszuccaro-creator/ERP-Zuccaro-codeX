@@ -1,19 +1,37 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, CheckCircle, XCircle, AlertTriangle, TrendingUp } from "lucide-react";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { Download, CheckCircle, XCircle, TrendingUp } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  resolveRelatorioQualidadeKpiState,
+  isRelatorioQualidadeScopeCurrent,
+  buildRelatorioQualidadeQueryKey,
+  filterInspecoesPorPeriodo,
+  buildRelatorioQualidadeKpis,
+} from "./relatorioQualidadeScope";
+
+function readRelatorioQualidadeActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
 
 /**
- * Relatório de Qualidade
+ * InspecaoQualidade via filterInContext; KPI 0 ≠ ready em loading/erro.
  */
-export default function RelatorioQualidade({ empresaId }) {
+export default function RelatorioQualidade({ empresaId: empresaIdProp }) {
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const [periodoInicio, setPeriodoInicio] = useState(
     new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]
   );
@@ -21,27 +39,50 @@ export default function RelatorioQualidade({ empresaId }) {
     new Date().toISOString().split('T')[0]
   );
 
-  const { data: inspecoes = [] } = useQuery({
-    queryKey: ['inspecoes', empresaId, periodoInicio, periodoFim],
-    queryFn: async () => {
-      const todas = await base44.entities.InspecaoQualidade.list('-created_date');
-      return todas.filter(i => {
-        const dataInsp = i.data_inspecao || i.created_date;
-        return dataInsp >= periodoInicio && dataInsp <= periodoFim;
-      });
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaIdProp
+    || (contexto === 'grupo' ? null : (empresaAtual?.id || null));
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey } = readRelatorioQualidadeActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
+
+  const inspecoesQuery = useQuery({
+    queryKey: buildRelatorioQualidadeQueryKey({
+      groupId, empresaId, actorId, sessionKey, periodoInicio, periodoFim,
+    }),
+    queryFn: async ({ signal }) => {
+      const todas = await filterInContext('InspecaoQualidade', {}, '-created_date', 2000);
+      if (signal?.aborted) {
+        const err = new Error('RELATORIO_QUALIDADE_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isRelatorioQualidadeScopeCurrent(scopeExpected, readRelatorioQualidadeActorAndSession())) {
+        throw new Error('RELATORIO_QUALIDADE_STALE_SCOPE');
+      }
+      return filterInspecoesPorPeriodo(todas, periodoInicio, periodoFim);
     },
+    enabled: contextoValido,
   });
 
-  // KPIs
-  const totalInspecoes = inspecoes.length;
-  const aprovadas = inspecoes.filter(i => i.resultado === "Aprovado").length;
-  const reprovadas = inspecoes.filter(i => i.resultado === "Reprovado").length;
-  const revisar = inspecoes.filter(i => i.resultado === "Revisar").length;
-  const taxaAprovacao = totalInspecoes > 0 ? ((aprovadas / totalInspecoes) * 100).toFixed(1) : 0;
-
-  const tempoMedio = inspecoes.length > 0
-    ? inspecoes.reduce((sum, i) => sum + (i.tempo_inspecao_min || 0), 0) / inspecoes.length
-    : 0;
+  const kpiState = resolveRelatorioQualidadeKpiState({
+    contextoValido,
+    isLoading: inspecoesQuery.isLoading,
+    isError: inspecoesQuery.isError,
+    isFetching: inspecoesQuery.isFetching,
+    dataDefined: inspecoesQuery.data !== undefined,
+  });
+  const ready = kpiState === 'ready';
+  const inspecoes = ready && Array.isArray(inspecoesQuery.data) ? inspecoesQuery.data : [];
+  const {
+    totalInspecoes,
+    aprovadas,
+    reprovadas,
+    revisar,
+    taxaAprovacao,
+    tempoMedio,
+  } = buildRelatorioQualidadeKpis(inspecoes);
+  const kpiIndisponivel = !ready;
 
   // Por resultado
   const dadosResultado = [
@@ -83,6 +124,7 @@ export default function RelatorioQualidade({ empresaId }) {
     .sort((a, b) => b.total - a.total);
 
   const exportarExcel = () => {
+    if (kpiIndisponivel) return;
     const csv = [
       ['Relatório de Qualidade'],
       ['Período', `${periodoInicio} a ${periodoFim}`],
@@ -106,12 +148,19 @@ export default function RelatorioQualidade({ empresaId }) {
     link.click();
   };
 
+  const kpiText = (value) => (kpiIndisponivel ? '…' : value);
+
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6">
+      {!contextoValido && (
+        <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Selecione um grupo ou empresa para carregar o relatório de qualidade no escopo correto.
+        </div>
+      )}
       {/* Filtros */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
-          <div className="flex gap-4 items-end">
+          <div className="flex gap-4 items-end flex-wrap">
             <div>
               <Label className="text-xs">Período Inicial</Label>
               <Input
@@ -128,7 +177,7 @@ export default function RelatorioQualidade({ empresaId }) {
                 onChange={(e) => setPeriodoFim(e.target.value)}
               />
             </div>
-            <Button variant="outline" onClick={exportarExcel}>
+            <Button variant="outline" onClick={exportarExcel} disabled={kpiIndisponivel}>
               <Download className="w-4 h-4 mr-2" />
               Excel
             </Button>
@@ -141,7 +190,7 @@ export default function RelatorioQualidade({ empresaId }) {
         <Card className="border-0 shadow-md">
           <CardContent className="p-4">
             <p className="text-xs text-slate-600">Total</p>
-            <p className="text-2xl font-bold">{totalInspecoes}</p>
+            <p className="text-2xl font-bold">{kpiText(totalInspecoes)}</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-md bg-green-50">
@@ -149,8 +198,8 @@ export default function RelatorioQualidade({ empresaId }) {
             <div className="flex justify-between">
               <div>
                 <p className="text-xs text-green-700">Aprovadas</p>
-                <p className="text-2xl font-bold text-green-900">{aprovadas}</p>
-                <p className="text-xs text-green-600 mt-1">{taxaAprovacao}%</p>
+                <p className="text-2xl font-bold text-green-900">{kpiText(aprovadas)}</p>
+                <p className="text-xs text-green-600 mt-1">{kpiIndisponivel ? '…' : `${taxaAprovacao}%`}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
@@ -161,7 +210,7 @@ export default function RelatorioQualidade({ empresaId }) {
             <div className="flex justify-between">
               <div>
                 <p className="text-xs text-red-700">Reprovadas</p>
-                <p className="text-2xl font-bold text-red-900">{reprovadas}</p>
+                <p className="text-2xl font-bold text-red-900">{kpiText(reprovadas)}</p>
               </div>
               <XCircle className="w-8 h-8 text-red-500" />
             </div>
@@ -170,11 +219,19 @@ export default function RelatorioQualidade({ empresaId }) {
         <Card className="border-0 shadow-md bg-blue-50">
           <CardContent className="p-4">
             <p className="text-xs text-blue-700">Tempo Médio</p>
-            <p className="text-2xl font-bold text-blue-900">{tempoMedio.toFixed(0)} min</p>
+            <p className="text-2xl font-bold text-blue-900">
+              {kpiIndisponivel ? '…' : `${tempoMedio.toFixed(0)} min`}
+            </p>
           </CardContent>
         </Card>
       </div>
 
+      {kpiIndisponivel ? (
+        <div className="text-sm text-slate-500 p-4">
+          {kpiState === 'loading' ? 'Carregando inspeções…' : kpiState === 'error' ? 'Erro ao carregar inspeções.' : 'Contexto indisponível.'}
+        </div>
+      ) : (
+        <>
       {/* Gráficos */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Pizza Resultados */}
@@ -269,6 +326,8 @@ export default function RelatorioQualidade({ empresaId }) {
           )}
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }

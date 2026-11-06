@@ -1,3 +1,12 @@
+## CURSOR — #589 RelatorioQualidade InContext (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | InspecaoQualidade.list → filterInContext; KPI fail-closed |
+| **Branch** | `cursor/qualidade-relatorio-scope-392b` |
+| **Base** | tip #401 |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
