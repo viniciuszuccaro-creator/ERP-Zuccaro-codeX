@@ -1,3 +1,16 @@
+## CURSOR — #589 RelatorioQualidade CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#589](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/589) |
+| **Tip** | **`93a647a05`** · **CI SUCCESS** 9/9 |
+| **Delta** | RelatorioQualidade via filterInContext fail-closed |
+| **Candidata #401** | `b888b2c00` — sem FF automático; aguarda aceite Codex / composição |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** CI #542/#544/#545 (prioridade); inventário admin/audit preservar contratos próprios.
+
 ## CURSOR — #589 RelatorioQualidade InContext (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

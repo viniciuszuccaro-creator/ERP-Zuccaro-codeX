@@ -1,3 +1,7 @@
+## CURSOR — #589 RelatorioQualidade CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- Tip `93a647a05` **CI SUCCESS** 9/9. filterInContext fail-closed.
+- Sem FF #401 (`b888b2c00`). Homolog BLOCKED. Sem merge/deploy/VPS.
+
 ## CURSOR — RelatorioQualidade InContext (2026-11-06 America/Sao_Paulo)
 - filterInContext; STALE_SCOPE; KPI 0 ≠ ready. Homolog BLOCKED.
 
