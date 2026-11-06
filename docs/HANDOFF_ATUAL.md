@@ -1,3 +1,7 @@
+## CURSOR — #581 PainelDinamicoColaborador CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- #581 tip `cc289325b` CI **SUCCESS 6/6**.
+- #582/#583 CI fix pushed. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — PainelDinamicoColaborador escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/cadastros-painel-colaborador-scope-392b` ← #401.
 - filterInContext Ponto/Ferias/OP; KPI ≠ lista vazia. Testes 2 PASS.

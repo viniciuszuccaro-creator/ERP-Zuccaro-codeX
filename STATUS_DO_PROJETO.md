@@ -1,3 +1,12 @@
+## CURSOR — #581 PainelDinamicoColaborador CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #581 `cc289325b` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579/#580 SUCCESS · #582/#583 fix em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — PainelDinamicoColaborador escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
