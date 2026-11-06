@@ -1,3 +1,7 @@
+## CURSOR — #545 fechamento CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- Tip `6c6827bed` **CI SUCCESS** 12/12. KPI auxiliar ≠ zero; stats binding; lint banner corrigido.
+- Sem FF #401 (`b888b2c00`). Homolog BLOCKED. Sem merge/deploy/VPS.
+
 ## CURSOR — #545 lint fix kpiState error banner (2026-11-06 America/Sao_Paulo)
 - CI `35b6f43e2` FAIL: `mastersFechamentoIndisponiveis` no-undef. Banner → `kpiState === 'error'`.
 - Sem FF #401. Homolog BLOCKED.

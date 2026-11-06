@@ -1,3 +1,16 @@
+## CURSOR — #545 fechamento KPI agregado CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#545](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/545) |
+| **Tip** | **`6c6827bed`** · **CI SUCCESS** 12/12 |
+| **Delta** | `resolveFechamentoDashboardKpiState`; stats cancel+scopeLiveRef; keys raiz+fechamento; banner `kpiState === 'error'` |
+| **Candidata #401** | `b888b2c00` — **não** FF até aceite Codex dos negativos |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** parecer Codex #545; CI #544; composição só após aceite #542+#544+#545.
+
 ## CURSOR — #545 tip lint fix mastersFechamentoIndisponiveis (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
