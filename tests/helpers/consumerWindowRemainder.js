@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {portalBankSourceRemainder} from './portalBankSourceRemainder.js';
+import {painelGovernancaScopeRemainder} from './painelGovernancaScopeRemainder.js';
 
 export const consumerWindowHunks = {
   'src/components/sistema/ConfigCenter.jsx': [
@@ -30,6 +31,7 @@ export const consumerWindowHunks = {
   ],
 };
 export function consumerWindowRemainder(file, text) {
+  text = painelGovernancaScopeRemainder(file, text);
   const hunks = consumerWindowHunks[file];
   if (!hunks) return text;
   let source=portalBankSourceRemainder(file,text).replace(/\r\n/g,'\n');

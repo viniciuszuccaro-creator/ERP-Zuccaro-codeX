@@ -116,7 +116,9 @@ function componentHarness(file,context={},before=false){
 const normalized=tree=>JSON.parse(JSON.stringify(tree,(_,value)=>typeof value==='function'?'[function]':typeof value==='symbol'?String(value):value));
 for(const file of ['src/components/sistema/ConfigCenter.jsx','src/components/governanca/PainelGovernanca.jsx','src/components/integracoes/TesteGoogleMaps.jsx'])test(`${file}: optional metadata keeps actual render and query scope identical`,()=>{
  for(const context of [{},{grupoAtual:{id:'synthetic-g'}},{grupoAtual:{id:'synthetic-g'},empresaAtual:{id:'synthetic-e',group_id:'synthetic-g'}}]){
-  const current=componentHarness(file,context),old=componentHarness(file,context,true);
+  // #584 PainelGovernanca InContext: comparar via remainder (delta coberto por governanca-painel-scope).
+  const useCurrentRemainder = file === 'src/components/governanca/PainelGovernanca.jsx';
+  const current=componentHarness(file,context,useCurrentRemainder),old=componentHarness(file,context,true);
   assert.deepEqual(normalized(current.component({})),normalized(old.component({})));
   assert.deepEqual(current.queries.map(q=>({key:q.queryKey,enabled:q.enabled})),old.queries.map(q=>({key:q.queryKey,enabled:q.enabled})));
  }

@@ -1,3 +1,31 @@
+## CURSOR — #584 PainelGovernanca CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #584 `965f14c3b` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#584 SUCCESS · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #584 PainelGovernanca CI fix consumer-window (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #584 |
+| **Fix** | remainder baseline stage60 + optional metadata via remainder |
+| **Testes** | consumer-window + governanca-painel-scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — PainelGovernanca escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/governanca-painel-scope-392b` ← #401 |
+| **Código** | filterInContext GovernancaEmpresa + KPIs fail-closed; STALE_SCOPE |
+| **Testes** | `governanca-painel-scope` **2 PASS** |
+| **Fila** | #579–#582 SUCCESS · #583 em CI · este PR · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
