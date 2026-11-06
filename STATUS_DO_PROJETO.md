@@ -11,7 +11,8 @@
 | **Homolog** | BLOCKED dados reais |
 | Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
 
-**Próximo:** CI tip · Codex HML seletor · próximo desconectado matriz.
+**CI note:** tip Chatbot `c9ef540cd` frontend FAIL — hash `queue-tag-command-types` ChatbotAtendimento; corrigido no tip seguinte.
+**Próximo:** CI HEAD · Codex HML seletor · próximo desconectado matriz.
 
 ## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
 
