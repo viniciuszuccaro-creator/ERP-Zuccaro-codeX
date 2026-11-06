@@ -12,6 +12,7 @@ import GerenciadorCanaisOrigem from "./GerenciadorCanaisOrigem";
 import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { isHttpBackendMode } from "@/api/base44Client";
 import { readErpHttpSession } from "@/api/erpHttpSession";
 import { central360SessionKey } from "@/api/httpApiClient";
 import {
@@ -32,13 +33,17 @@ import {
   List
 } from "lucide-react";
 
-function readOrigemActorAndSession() {
-  const session = readErpHttpSession();
-  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
-  return {
-    actorId: actorId || null,
-    sessionKey: central360SessionKey(session?.token),
-  };
+/** HTTP: sessão ERP. Legado/remoto: user.id — sem limpar token Base44 órfão. */
+function readOrigemActorAndSession(user) {
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    const actorId = (typeof session?.actorId === 'string' && session.actorId.trim())
+      || (typeof user?.id === 'string' && user.id.trim())
+      || null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  }
+  const actorId = typeof user?.id === 'string' && user.id.trim() ? user.id.trim() : null;
+  return { actorId, sessionKey: actorId ? `legacy-actor:${actorId}` : null };
 }
 
 /**
@@ -50,10 +55,10 @@ export default function ParametrosOrigemPedidoTab() {
   const [busca, setBusca] = useState('');
   const [abaAtiva, setAbaAtiva] = useState('canais');
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
-  const { canCreate, canEdit, hasPermission } = usePermissions();
+  const { canCreate, canEdit, hasPermission, user } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const { actorId, sessionKey } = readOrigemActorAndSession();
+  const { actorId, sessionKey } = readOrigemActorAndSession(user);
   const contextoValido = Boolean(groupId || empresaId);
   const podeVer = hasPermission('Cadastros', 'ParametroOrigemPedido', 'visualizar')
     || hasPermission('Cadastros', 'Canais de Origem', 'visualizar')
@@ -78,12 +83,12 @@ export default function ParametrosOrigemPedidoTab() {
         err.name = 'AbortError';
         throw err;
       }
-      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession())) {
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession(user))) {
         throw new Error('PARAM_ORIGEM_STALE_SCOPE');
       }
       return rows;
     },
-    enabled: contextoValido && podeVer,
+    enabled: contextoValido && podeVer && Boolean(actorId),
   });
 
   const lista = Array.isArray(parametros) ? parametros : [];

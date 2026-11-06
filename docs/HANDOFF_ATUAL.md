@@ -1,3 +1,6 @@
+## CURSOR — #544 fix KPI Pedido agregado (2026-11-06 America/Sao_Paulo)
+- Pedido pendente/erro ≠ zero em card/export/insight. Homolog BLOCKED.
+
 ## CURSOR — #544 ParamOrigem cache CI SUCCESS (2026-11-05 America/Sao_Paulo)
 - Tip `ebadfcad5` **CI SUCCESS** 6/6. Cache ator/sessão; KPI≠zero; STALE_SCOPE.
 - #543/#545 verdes. FF #401 aguarda Codex. Homolog BLOCKED.

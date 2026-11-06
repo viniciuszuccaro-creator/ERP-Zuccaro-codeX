@@ -25,7 +25,7 @@ export function isParametrosOrigemScopeCurrent(expected, live) {
 }
 
 /**
- * KPI: pedidos/contagens pendentes ou em falha nunca viram zero.
+ * KPI de parâmetros (lista de canais): pendente/erro nunca vira zero.
  * @param {object} [input]
  * @returns {'unavailable'|'loading'|'error'|'ready'}
  */
@@ -40,4 +40,35 @@ export function resolveParametrosOrigemKpiState(input) {
   if (isError) return 'error';
   if (isLoading || (isFetching && !dataDefined)) return 'loading';
   return 'ready';
+}
+
+/**
+ * KPI agregado de métricas de Pedido (#544): só ready quando parâmetros E pedidos
+ * estão válidos. Pedido pendente/erro ≠ zero em card/export/insight.
+ * @param {object} [input]
+ * @returns {'unavailable'|'loading'|'error'|'ready'}
+ */
+export function resolveParametrosOrigemMetricasKpiState(input) {
+  const paramsState = resolveParametrosOrigemKpiState({
+    contextoValido: input?.contextoValido,
+    podeVer: input?.podeVer,
+    isLoading: input?.isLoading,
+    isError: input?.isError,
+    isFetching: input?.isFetching,
+    dataDefined: input?.dataDefined,
+  });
+  if (paramsState !== 'ready') return paramsState;
+
+  const pedidosIsError = Boolean(input?.pedidosIsError);
+  const pedidosIsLoading = Boolean(input?.pedidosIsLoading);
+  const pedidosIsFetching = Boolean(input?.pedidosIsFetching);
+  const pedidosDataDefined = Boolean(input?.pedidosDataDefined);
+  if (pedidosIsError) return 'error';
+  if (pedidosIsLoading || (pedidosIsFetching && !pedidosDataDefined)) return 'loading';
+  return 'ready';
+}
+
+/** Export/insight só quando métricas de Pedido estão ready. */
+export function canExportParametrosOrigemMetricas(metricasKpiState) {
+  return metricasKpiState === 'ready';
 }

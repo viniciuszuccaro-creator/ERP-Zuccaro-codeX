@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import usePermissions from "@/components/lib/usePermissions";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import { isHttpBackendMode } from "@/api/base44Client";
 import { readErpHttpSession } from "@/api/erpHttpSession";
 import { central360SessionKey } from "@/api/httpApiClient";
 import {
@@ -13,6 +14,8 @@ import {
   buildPedidosUltimosOrigemQueryKey,
   isParametrosOrigemScopeCurrent,
   resolveParametrosOrigemKpiState,
+  resolveParametrosOrigemMetricasKpiState,
+  canExportParametrosOrigemMetricas,
 } from "./parametrosOrigemScope";
 import { 
   Activity, 
@@ -26,13 +29,17 @@ import {
 import { toast } from "sonner";
 import ExportButton from "@/components/ExportButton";
 
-function readOrigemActorAndSession() {
-  const session = readErpHttpSession();
-  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
-  return {
-    actorId: actorId || null,
-    sessionKey: central360SessionKey(session?.token),
-  };
+/** HTTP: sessão ERP. Legado/remoto: user.id — sem limpar token Base44 órfão. */
+function readOrigemActorAndSession(user) {
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    const actorId = (typeof session?.actorId === 'string' && session.actorId.trim())
+      || (typeof user?.id === 'string' && user.id.trim())
+      || null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  }
+  const actorId = typeof user?.id === 'string' && user.id.trim() ? user.id.trim() : null;
+  return { actorId, sessionKey: actorId ? `legacy-actor:${actorId}` : null };
 }
 
 /**
@@ -45,7 +52,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
   const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
-  const { actorId, sessionKey } = readOrigemActorAndSession();
+  const { actorId, sessionKey } = readOrigemActorAndSession(user);
   const contextoValido = Boolean(groupId || empresaId);
   const podeVer = hasPermission('Cadastros', 'ParametroOrigemPedido', 'visualizar')
     || hasPermission('Cadastros', 'Canais de Origem', 'visualizar')
@@ -74,17 +81,19 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
         err.name = 'AbortError';
         throw err;
       }
-      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession())) {
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession(user))) {
         throw new Error('PARAM_ORIGEM_STALE_SCOPE');
       }
       return rows;
     },
-    enabled: contextoValido && podeVer,
+    enabled: contextoValido && podeVer && Boolean(actorId),
   });
 
   const {
     data: pedidos,
     isError: isErrorPedidos,
+    isLoading: isLoadingPedidos,
+    isFetching: isFetchingPedidos,
   } = useQuery({
     queryKey: pedidosQueryKey,
     queryFn: async ({ signal }) => {
@@ -99,16 +108,15 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
         err.name = 'AbortError';
         throw err;
       }
-      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession())) {
+      if (!isParametrosOrigemScopeCurrent(scopeExpected, readOrigemActorAndSession(user))) {
         throw new Error('PARAM_ORIGEM_PEDIDOS_STALE_SCOPE');
       }
       return rows;
     },
-    enabled: contextoValido && podeVer,
+    enabled: contextoValido && podeVer && Boolean(actorId),
   });
 
   const lista = Array.isArray(parametros) ? parametros : [];
-  const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
   const kpiState = resolveParametrosOrigemKpiState({
     contextoValido,
     podeVer,
@@ -117,7 +125,22 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
     isFetching,
     dataDefined: parametros !== undefined,
   });
+  const metricasKpiState = resolveParametrosOrigemMetricasKpiState({
+    contextoValido,
+    podeVer,
+    isLoading,
+    isError,
+    isFetching,
+    dataDefined: parametros !== undefined,
+    pedidosIsError: isErrorPedidos,
+    pedidosIsLoading: isLoadingPedidos,
+    pedidosIsFetching: isFetchingPedidos,
+    pedidosDataDefined: pedidos !== undefined,
+  });
+  const listaPedidos = metricasKpiState === 'ready' && Array.isArray(pedidos) ? pedidos : [];
   const contagemIndisponivel = kpiState !== 'ready';
+  const metricasIndisponivel = metricasKpiState !== 'ready';
+  const podeExportarMetricas = canExportParametrosOrigemMetricas(metricasKpiState);
 
   const toggleAtivo = useMutation({
     mutationFn: async ({ id, ativo }) => {
@@ -213,7 +236,9 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
   }
 
   const canaisAtivos = lista.filter(p => p.ativo);
-  const kpiLabel = (value) => (contagemIndisponivel || isErrorPedidos ? '—' : value);
+  const kpiLabel = (value) => (contagemIndisponivel ? '—' : value);
+  const kpiPedidosLabel = (value) => (metricasIndisponivel ? '—' : value);
+  const metricasLabel = (value) => (metricasIndisponivel ? '—' : value);
 
   return (
     <div className={containerClass}>
@@ -263,7 +288,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-slate-600">Pedidos (últimos 200)</p>
-                <p className="text-2xl font-bold text-orange-600" data-testid="gerenciador-origem-kpi-pedidos">{kpiLabel(listaPedidos.length)}</p>
+                <p className="text-2xl font-bold text-orange-600" data-testid="gerenciador-origem-kpi-pedidos">{kpiPedidosLabel(listaPedidos.length)}</p>
               </div>
               <Activity className="w-8 h-8 text-orange-600 opacity-20" />
             </div>
@@ -289,9 +314,13 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             Canais Configurados
           </h3>
           <ExportButton
-            data={lista.map(p => ({ ...calcularMetricas(p), canal: p.canal, nome: p.nome, ativo: p.ativo }))}
+            data={podeExportarMetricas
+              ? lista.map(p => ({ ...calcularMetricas(p), canal: p.canal, nome: p.nome, ativo: p.ativo }))
+              : []}
             filename="canais-origem-status"
             className="bg-green-600 hover:bg-green-700"
+            disabled={!podeExportarMetricas}
+            title={podeExportarMetricas ? undefined : 'Aguarde pedidos válidos antes de exportar (pendência/erro ≠ zero).'}
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar Status
@@ -345,7 +374,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
                             </Badge>
                           )}
 
-                          {temAtividade && (
+                          {!metricasIndisponivel && temAtividade && (
                             <Badge className="bg-green-600 text-white text-xs">
                               <Activity className="w-3 h-3 mr-1" />
                               {metricas.ultimos7dias} pedidos (7d)
@@ -359,12 +388,12 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
                     <div className="hidden md:flex gap-6 text-center">
                       <div>
                         <p className="text-xs text-slate-600">Total</p>
-                        <p className="text-lg font-bold text-blue-600">{metricas.totalPedidos}</p>
+                        <p className="text-lg font-bold text-blue-600">{metricasLabel(metricas.totalPedidos)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-slate-600">Valor</p>
                         <p className="text-lg font-bold text-green-600">
-                          R$ {(metricas.valorTotal / 1000).toFixed(0)}k
+                          {metricasIndisponivel ? '—' : `R$ ${(metricas.valorTotal / 1000).toFixed(0)}k`}
                         </p>
                       </div>
                     </div>
@@ -411,8 +440,19 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
           {(() => {
             const insights = [];
 
-            // Insight: Canais sem atividade
-            const canaisSemAtividade = lista.filter(p => {
+            if (metricasIndisponivel) {
+              insights.push({
+                tipo: 'info',
+                texto: metricasKpiState === 'loading'
+                  ? 'Métricas de pedidos ainda carregando — insights de volume não são zero.'
+                  : metricasKpiState === 'error'
+                    ? 'Falha ao carregar pedidos — insights de volume indisponíveis (≠ zero).'
+                    : 'Contexto de pedidos indisponível para insights de volume.',
+              });
+            }
+
+            // Insight: Canais sem atividade (só com Pedido ready)
+            const canaisSemAtividade = metricasIndisponivel ? [] : lista.filter(p => {
               const metricas = calcularMetricas(p);
               return p.ativo && metricas.ultimos7dias === 0;
             });
@@ -425,7 +465,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             }
 
             // Insight: Potencial de automação
-            const canaisManuaisComVolume = lista.filter(p => {
+            const canaisManuaisComVolume = metricasIndisponivel ? [] : lista.filter(p => {
               const metricas = calcularMetricas(p);
               return p.tipo_criacao === 'Manual' && metricas.totalPedidos > 10;
             });

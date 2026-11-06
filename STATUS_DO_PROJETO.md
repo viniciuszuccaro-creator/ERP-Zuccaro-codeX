@@ -1,3 +1,11 @@
+## CURSOR — #544 Param/Canais KPI Pedido pendente ≠ zero (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Causa** | KPI/export usavam só estado de parâmetros; Pedido pendente virava 0 |
+| **Correção** | `resolveParametrosOrigemMetricasKpiState`; export disabled; isHttpBackendMode |
+| **Homolog 100** | BLOCKED · FF #401 aguarda Codex |
+
 ## CURSOR — #544 ParamOrigem cache/KPI CI SUCCESS (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

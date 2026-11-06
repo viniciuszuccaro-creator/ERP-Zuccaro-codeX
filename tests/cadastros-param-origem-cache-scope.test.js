@@ -5,7 +5,10 @@ import {
   buildPedidosUltimosOrigemQueryKey,
   isParametrosOrigemScopeCurrent,
   resolveParametrosOrigemKpiState,
+  resolveParametrosOrigemMetricasKpiState,
+  canExportParametrosOrigemMetricas,
 } from '../src/components/cadastros/parametrosOrigemScope.js';
+import { readFileSync } from 'node:fs';
 
 // Helpers puros — sem @/ — para prova de cache/KPI/late fora do React.
 
@@ -105,4 +108,65 @@ test('resposta tardia: troca de ator/sessão invalida escopo corrente', () => {
     isParametrosOrigemScopeCurrent(expected, { actorId: 'a1', sessionKey: 's2' }),
     false,
   );
+});
+
+test('#544 KPI agregado: Pedido pendente/erro ≠ zero; export só ready; vazio comprovado = ready', () => {
+  const base = {
+    contextoValido: true,
+    podeVer: true,
+    isLoading: false,
+    isError: false,
+    isFetching: false,
+    dataDefined: true,
+  };
+  // Parâmetros ready + Pedido loading → metricas loading (não zero)
+  assert.equal(resolveParametrosOrigemMetricasKpiState({
+    ...base,
+    pedidosIsLoading: true,
+    pedidosIsError: false,
+    pedidosIsFetching: true,
+    pedidosDataDefined: false,
+  }), 'loading');
+  assert.equal(canExportParametrosOrigemMetricas('loading'), false);
+
+  // Pedido erro → metricas error (export bloqueado; ≠ zero)
+  assert.equal(resolveParametrosOrigemMetricasKpiState({
+    ...base,
+    pedidosIsLoading: false,
+    pedidosIsError: true,
+    pedidosIsFetching: false,
+    pedidosDataDefined: false,
+  }), 'error');
+  assert.equal(canExportParametrosOrigemMetricas('error'), false);
+
+  // Ambos ready (lista vazia comprovada continua ready → zero legítimo)
+  assert.equal(resolveParametrosOrigemMetricasKpiState({
+    ...base,
+    pedidosIsLoading: false,
+    pedidosIsError: false,
+    pedidosIsFetching: false,
+    pedidosDataDefined: true,
+  }), 'ready');
+  assert.equal(canExportParametrosOrigemMetricas('ready'), true);
+
+  // Parâmetros ainda loading → agregada loading mesmo com pedidos ready
+  assert.equal(resolveParametrosOrigemMetricasKpiState({
+    ...base,
+    isLoading: true,
+    dataDefined: false,
+    pedidosIsLoading: false,
+    pedidosIsError: false,
+    pedidosIsFetching: false,
+    pedidosDataDefined: true,
+  }), 'loading');
+});
+
+test('#544 GerenciadorCanaisOrigem: isHttpBackendMode + metricas KPI + export disabled', () => {
+  const src = readFileSync('src/components/cadastros/GerenciadorCanaisOrigem.jsx', 'utf8');
+  assert.match(src, /isHttpBackendMode/);
+  assert.match(src, /resolveParametrosOrigemMetricasKpiState/);
+  assert.match(src, /canExportParametrosOrigemMetricas/);
+  assert.match(src, /disabled=\{!podeExportarMetricas\}/);
+  assert.match(src, /kpiPedidosLabel/);
+  assert.doesNotMatch(src, /function readOrigemActorAndSession\(\)\s*\{\s*const session = readErpHttpSession\(\)/);
 });
