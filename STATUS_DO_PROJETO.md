@@ -1,4 +1,56 @@
-## Continuidade vigente - revisao montada544-547 e console sem shell (2026-11-05)
+## Continuidade vigente - Fornecedor corrigido em WIP; gate Linux (2026-11-06)
+
+Base publicada34233b121cc/CI6204 SUCCESS e401b888 reconferidas. Durante o lote
+chegaram correcoes542e808598e/CI6433SUCCESS,5440a43dcd6/CI6437emexecucao e
+545ffcb08d8/CI6435SUCCESS. Reteste afetado REAL montado:4+5+2=11PASS0FAIL0SKIP;
+pareceres6682306934/7311/7659 encerram os defeitos anteriores nesse alcance.
+Controles antigos no MESMO driver continuam2FAIL542/3FAIL544. Novo driver limpa
+openWindow anterior e aceita desconhecido sem impor glifo; nao enfraquece teste.
+544/545 HEADs novos so documentais sobre o runtime testado, comprovados por diff.
+Date congelado544 preserva assertions integrais e restore finally, sem mudar PDF.
+Nao e prova HTTP/PG/HML ou composicao401; CI propria e negativos do conjunto pendem.
+Reserva6681724732 somente FornecedorService/teste, desktop inicialmente limpo.
+
+Defeito reproduzido: objeto RequestContext do chamador mudava ator/Grupo/requestId
+durante await do RBAC.3novos negativos com PostgresRbacGuard REAL e PGlite falharam
+antes (6PASS/4FAIL incluindo parent); copia Object.freeze no inicio de importar,
+get e softDelete, mesmo padrao Pedido. Depois10PASS/0FAIL/0SKIP, mantendo todas
+as assertions anteriores, registros inativos e auditoria sem mudanca indevida.
+Nao e prova PostgreSQL remoto/HTTP/HML, nao adiciona rota/importador ou permissao.
+
+Fechamento Windows: backend598tests/560PASS/0FAIL/38SKIP, sem DATABASE_URL real;
+raiz2419tests/2415PASS/4FAIL/0SKIP. Dois fails eram alias Windows Store de Python;
+Python3 real BUNDLED configurado so no processo, sem instalar/config global:
+recheck23tests/22PASS/1FAIL resolve CSV/provision, mantem fail de permissoes POSIX.
+Outro fail raiz e process.getuid inexistente no Windows. Nao enfraquecer essas
+guardas;12PASS Linux antigo nao valida o snapshot novo automaticamente.
+Audit PASS; lint PASS com1warning antigo EntregasListagem; typecheck raiz/server
+PASS; build raiz/server PASS, warning antigo chunks>500k; diff-check PASS.
+
+SEM COMMIT/PUSH FUNCIONAL enquanto gate restante falha. Patch publico sanitizado
+de VALIDACAO em421/6682058561, nao implementacao integrada: base33b121cc,
+4204bytes/SHA256f6584735ec1b8582acf1e9ddc139f810185fcb023c4a8f4b87ea2b561d7d08ff.
+Blobs: servico97f2fcf3b70a702ed7ceef7da45a47ecbe4ea7ad;
+testee079ae2e104dafb23d1c2ade66669944840a428b. Manifesto/patch/logs privados fora
+do checkout; transporte Base64 exato no recibo, pois diff Markdown nao fixa bytes.
+Pedido ao executor Linux existente nao comprova recebimento/execucao; sem ambiente
+novo, contorno de rede ou uso da VPS como laboratorio. WIP estacionado/preservado.
+
+Console VPS RECUPEROU shell real em06/11: hostname conferido, listeners22/443/8000,
+UFW ativo permite22/80/443 v4/v6;443 e caddy (nginx inativo), ssh ativo e API/Auth
+saudaveis. Somente leitura, sem restart/DDL/grant/dado real. Leitura de metadados
+Caddy enviada, resultado NAO observado antes da queda de controle. Nao repetir
+como se tivesse comprovado rota externa/AuthHML. Chrome apos reset lista Codespace,
+mas claim/getTab retornam Debugger unattached; reconexao suportada sem sucesso.
+Depois do aviso do proprietario, aba sintetica NOVA abriu pelo controle suportado:
+Chrome funciona. Nova ABA no MESMO Codespace (nao outro ambiente) tambem controlavel,
+mas terminal sem prompt/resposta pwd; logs reais: WebSocket channel request timed
+out e ExtensionHost socketFactory.connect failed/timed out. Nao pedir novamente
+para abrir Codespace ou reinstalar extensao. Aba original mantida intacta, sem
+restart/rebuild; bloqueio atual e conexao remota VSCode, nao Chrome genericamente.
+HML100 intacta; namespace/Auth/Data/visaoGrupo/URL real permanecem gates separados.
+
+## Historico - revisao montada544-547 e console sem shell (2026-11-05)
 
 Base342c96908f8/CI6160 terminal SUCCESS;401b888 inalterada. Desktop limpo e sem
 index.lock antes do lote. Nenhum arquivo Cursor/candidata ou dado HML editado.

@@ -1,4 +1,64 @@
-## Continuidade vigente - provas montadas e fila finita de composicao (2026-11-05)
+## Continuidade vigente - patch Fornecedor e validacao pendente (2026-11-06)
+
+Base33b121cc/CI6204 SUCCESS;401b888 preservada. Reserva6681724732.
+CORRECOES RECEBIDAS DURANTE O LOTE:542e808598e/CI6433SUCCESS (runtime3c6c855b);
+5440a43dcd6/CI6437aindaemexecucao (runtimeb3b45053);
+545ffcb08d8/CI6435SUCCESS (runtime6c6827be). Diff HEAD/runtime somente docs.
+Retestes afetados reais MONTADOS:5424PASS,5445PASS,5452PASS =11PASS0FAIL0SKIP,
+fronteiras sinteticas, sem alegar HTTP/PG. Controles antigos com MESMO driver ainda
+falham5422casos/5443casos. Ajuste justo do driver: limpar ultimo openWindow antes
+do clique bloqueado; desconhecido nao obriga glifo/null especificos; zero numerico
+continua rejeitado e agora inclui nao abrirPedido enquanto pending. Assertions
+de consumer-window-contracts preservadas no fixDate544, finally restaura relogio.
+Pareceres6682306934/6682307311/6682307659 encerram os achados antigos no alcance;
+nao manter bloqueio ancestral. Composicao ainda requer CI terminal544 e prova do
+conjunto/rascunho/contexto; nao inferir port executado. Recibo novo no JSON existente.
+Nenhuma branch Cursor alterada e nenhum port automatico. Central360 segue no
+Orcamentos existente, desenho pendente. Dados reais/carga100/backups intactos.
+
+WIP funcional em2arquivos: fornecedorService.ts captura Object.freeze({...ctx})
+antes do primeiro await nos3metodos; fornecedor-import.test.ts acrescenta3negativos
+ao teste existente, sem remover/modificar assertions antigas. RBAC real + fixture
+PGlite, mutacao do objeto do chamador apos authorize: antes3subtests falhavam,
+depois10PASS0FAIL0SKIP. Registro inativo, codigo, auditoria e dados preservados.
+Isso NAO comprova rota HTTP, PostgreSQL real ou carga de fornecedores HML.
+
+Comandos: node --import tsx --test tests/fornecedor-import.test.ts; npm test
+server com --test-concurrency=2; raiz npm test -- --test-concurrency=2 tests/**/*.test.js;
+npm run audit:baseline/lint/typecheck/build e typecheck/build server; diff-check.
+Backend560PASS0FAIL38SKIP/598; raizWindows2415PASS4FAIL0SKIP/2419. Python3 real
+via TEST_PYTHON_EXECUTABLE resolveu2fails sem instalar nada: recheck22PASS1FAIL/23.
+Restam os contratos POSIX permissoes privadas e getuid, nao declarar aprovado no
+Windows nem reutilizar12PASS antigo como prova deste novo snapshot. Typechecks,
+builds, audit/diff PASS;1warning lint antigo e warning chunks>500k preservados.
+
+WIP NAO commitado/enviado enquanto faltar gate Linux. Artefato PUBLICO sanitizado
+em421/6682058561 (nao inbox privada, nao implementacao publicada): patch4204bytes,
+SHA256f6584735ec1b8582acf1e9ddc139f810185fcb023c4a8f4b87ea2b561d7d08ff,
+base33b121cc8677af613d0741dc7019a213208aba9f. Blobs esperados servico97f2fcf3/
+testee079ae2e; manifesto completo e transporte Base64 exato no recibo. Copia privada
+inspection-code-only/fornecedor-context-20261106.patch e -manifest.json; logs
+supplier-context-20261106-* fora do checkout. Nao aplicar duas vezes nem substituir
+checkout alheio; validador existente deve conferir pins/base/blobs antes dos checks.
+Pedido publicado nao prova recebimento. Proximo: recuperar controle da aba ou
+receber recibo do validador Linux suportado; so entao commit/push funcional e CI.
+
+Rede avancou: shell administrativo real voltou; ss confirmou22/443/8000,
+UFW permite22/80/443 v4/v6, caddy443, ssh ativo, API/Auth containers saudaveis.
+Sem mudar servico, firewall, chave, grants, schema ou dados. Metadados Caddy
+solicitados, resultado nao capturado antes de timeout/reset do controle: nao
+alegar roteamento/API HML provados. Codespace checkout b5cb34e1/.vscode novo,
+sem escritor correspondente observado no inicio, preservados sem sincronizar.
+Depois getTab/claim retornaram Debugger unattached apesar da aba listada. Com
+confirmacao do proprietario, recuperacao SUPORTADA por nova aba sintetica funcionou;
+nova ABA para MESMO URL Codespace tambem controlavel, original nao fechada e nenhum
+novo ambiente/restart/rebuild. Terminal novo apenas recebeu pwd, sem prompt/retorno;
+dev.logs reais mostram WebSocket channel request timed out e ExtensionHost
+socketFactory.connect failed/timed out. Esse e o bloqueio vigente, NAO falta de
+Chrome/autoridade ou Codespace que precisa ser aberto. Nao repetir instalacao.
+SEM URL real homologada; HML100 nao recarregada. Perfil user nao promovido.
+
+## Historico - provas montadas e fila finita de composicao (2026-11-05)
 
 342c96908f8/CI6160 SUCCESS e401b888 reconferidos. Sem sincronizar checkout remoto,
 alterar branch Cursor ou integrar pacote automaticamente. Desktop limpo antes do

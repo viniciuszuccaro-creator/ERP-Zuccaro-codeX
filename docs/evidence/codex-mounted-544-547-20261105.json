@@ -16,5 +16,21 @@
   "mountedTotals": { "pass": 12, "fail": 6, "skip": 0 },
   "preservation": { "pr": 547, "checks": 3, "pass": 3, "fail": 0, "skip": 0, "scope": "Actual portalIdentityRemainder bundled with its real imported guard chain", "controls": ["Entire peeled source equals candidate401 source", "Changed showLock rejected", "Appended outside-scope change rejected"], "originalFileSha256": "8f81dad783a568024e0dff277da17f9bdfaa8a6396cbe3217ee7fb2abb1ede33", "review": 6668311865 },
   "cleanup": "First manual-driver runs emitted complete reports but waited on HTTP connections. Existing private driver now closes only its own connections. Original origem/quick processes exited 0; badge cleanup process was stopped after its complete report (exit1), not classified as functional failure or clean process PASS. Later aplicador/dashboard exited0. No review-driver node process remained at closing.",
-  "limitations": ["No production code edited", "No Cursor branch edited", "No automatic candidate integration", "No HML load or restore repeated", "No complete product homologation inferred from CI"]
+  "limitations": ["No production code edited in the 2026-11-05 review", "No Cursor branch edited", "No automatic candidate integration", "No HML load or restore repeated", "No complete product homologation inferred from CI"],
+  "followUp20261106": {
+    "driverSha256": "4e4dc7543e5c892f7d407f4dafa5cd254cbc7e70a320d7efcaf4c62a6fac9bee",
+    "driverChanges": ["Reset prior openWindow observation before actor B click", "Require no order opening while pending", "Accept valid unknown markers or absent export instead of requiring a specific glyph/null; proven zero still rejected", "Synthetic HTTP-mode boundary matches newly imported isHttpBackendMode"],
+    "mounted": [
+      { "pr": 542, "head": "e808598e92b815569eee4941dbd49d0810d6215c", "runtimeEquivalent": "3c6c855bb3a6a63e57bc233855848bc32823092f", "pass": 4, "fail": 0, "skip": 0, "ci": 6433, "ciConclusion": "SUCCESS", "review": 6682306934 },
+      { "pr": 544, "head": "0a43dcd618576a2f0a7f862572c41bc60f7f3d3d", "runtimeTested": "b3b45053905bcdc47fda418552fd80a6f3e3b193", "headDelta": "Only STATUS and HANDOFF", "pass": 5, "fail": 0, "skip": 0, "ci": 6437, "ciConclusion": "IN_PROGRESS_AT_LAST_READ", "review": 6682307311 },
+      { "pr": 545, "head": "ffcb08d836e25535db8f02216c9d036fff2d684d", "runtimeTested": "6c6827bedc3f4c7d21c651c662bb226d54467ced", "headDelta": "Only STATUS and HANDOFF", "pass": 2, "fail": 0, "skip": 0, "ci": 6435, "ciConclusion": "SUCCESS", "review": 6682307659 }
+    ],
+    "totals": { "pass": 11, "fail": 0, "skip": 0 },
+    "sameDriverNegativeControls": [
+      { "pr": 542, "oldSha": "6516d5ed4ac4ee05795905594102615ec6c2f7ff", "pass": 2, "fail": 2 },
+      { "pr": 544, "oldSha": "0297b1d24349f7d3edbe9b965e05894287c779e3", "pass": 2, "fail": 3 }
+    ],
+    "scope": "Same real mounted target/ReactDOM/QueryClient with synthetic boundaries as original review; no HTTP/PostgreSQL/HML or candidate401 integration inferred",
+    "clockReview544": "Fixed Date only in test, integral assertions retained and real Date restored in finally; PDF producer unchanged"
+  }
 }
