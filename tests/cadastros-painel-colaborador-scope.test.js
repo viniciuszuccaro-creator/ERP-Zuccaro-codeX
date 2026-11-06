@@ -13,7 +13,11 @@ test('PainelDinamicoColaborador usa filterInContext sem entities unscoped', () =
   assert.match(src, /filterInContext\(\s*'Ferias'/);
   assert.match(src, /filterInContext\(\s*'OrdemProducao'/);
   assert.match(src, /PAINEL_COLABORADOR_PONTO_STALE_SCOPE/);
-  assert.match(src, /Erro ≠ lista vazia/);
+  assert.match(src, /painelColaboradorKpiLabel/);
+  assert.match(
+    readFileSync('src/components/cadastros/painelDinamicoColaboradorScope.js', 'utf8'),
+    /Erro ≠ lista vazia/,
+  );
   assert.doesNotMatch(src, /entities\.Ponto\.filter\(/);
   assert.doesNotMatch(src, /entities\.Ferias\.filter\(/);
   assert.doesNotMatch(src, /entities\.OrdemProducao\.filter\(/);
