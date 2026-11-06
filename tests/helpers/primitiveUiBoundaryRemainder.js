@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { monitoramentoCanaisScopeRemainder } from './monitoramentoCanaisScopeRemainder.js';
 
 const component = name => `src/components/${name}.jsx`;
 export const primitiveUiEdits = {
@@ -82,6 +83,9 @@ export const reportRecoveryEdits = [
 ];
 
 export function primitiveUiBoundaryRemainder(file, source) {
+  if (file === 'src/components/comercial/MonitoramentoCanaisRealtime.jsx') {
+    source = monitoramentoCanaisScopeRemainder(source);
+  }
   if (file === 'src/pages/Relatorios.jsx') for (const [after,before] of reportRecoveryEdits) {
     assert.equal(source.split(after).length-1,1,'Exact authorized #348 recovery hunk');
     source=source.replace(after,before);

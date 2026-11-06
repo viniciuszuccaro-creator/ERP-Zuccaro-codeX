@@ -1,3 +1,7 @@
+## CURSOR — #401 remainder Monitoramento (2026-11-06 America/Sao_Paulo)
+- CI composto FAIL: stage44/date-arithmetic em MonitoramentoCanaisRealtime.
+- Remainder autorizado + fixture stage44; testes #545 intactos. Sem FF fraco. Homolog BLOCKED.
+
 ## CURSOR — fila #580–#590 (2026-11-06 America/Sao_Paulo)
 - Todas CI SUCCESS na origem; **não** integradas no composto #401 `4f76d3de3`.
 - #580 Fornecedor: WIP reservado — não editar. Admin/audit/users: contratos próprios, sem fallback global.

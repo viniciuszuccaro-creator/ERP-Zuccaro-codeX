@@ -1,3 +1,12 @@
+## CURSOR — #401 composto: remainder Monitoramento stage44 (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **CI tip** | `4f76d3de3`/`0c4a85c67` frontend FAIL — 2 testes congelados MonitoramentoCanaisRealtime |
+| **Causa** | path-checkout #545 alterou o corpo; hashes stage44/date-arithmetic |
+| **Fix** | `monitoramentoCanaisScopeRemainder` reverte delta autorizado; comportamento scoped permanece nos testes #545 |
+| **Homolog** | BLOCKED |
+
 ## CURSOR — fila #580–#590 classificada (2026-11-06 America/Sao_Paulo)
 
 | PR | Tip | CI | Integração #401 |
