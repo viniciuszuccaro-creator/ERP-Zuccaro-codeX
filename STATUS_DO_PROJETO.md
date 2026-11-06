@@ -1,3 +1,20 @@
+## CURSOR — #401 P1 + #518 + recuperação fechamento (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#401](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/401) |
+| **P1 6684093828** | tip `730d41398` — igualdade tip autorizado → STAGE44; vulnerable ACEITA append / fixed REJEITA |
+| **#518 Grupo** | path-checkout `GrupoEmpresarialForm` + testes — Empresa via `filterInContext` (erro ≠ zero) |
+| **Recuperação** | `WidgetFechamentoPedidos` remontado no `Dashboard` (RBAC Comercial); página vazia `DashboardFechamentoPedidos` → wrapper + rota `pages.config` |
+| **Fornecedor** | #467 sky CI SUCCESS na origem · **não** path-checkout — WIP Fornecedor reservado |
+| **Banco #462** | base ≠ #401 (`usuario-grupo-centro`) — coordenar rebase/aceite antes de port |
+| **Visual** | `Cadastros.jsx` já tem cores por categoria (blue/purple/green/orange/indigo/cyan); `CadastrosPageLayout` slate órfão — não canônico, não apagar |
+| **Registros** | sem alegar apagamento; filtros/contexto/API vs fixtures; dados reais fora do GitHub |
+| **Homolog 100** | BLOCKED |
+| Fora | merge main · deploy · VPS · seed · path-checkout mecânico #580–#590 |
+
+**Próximo:** CI própria deste tip · parecer Codex P1 · liberar WIP Fornecedor/#467 · Banco/#462 após base alinhada.
+
 ## CURSOR — #401 P1 remainder Monitoramento 6684093828 (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

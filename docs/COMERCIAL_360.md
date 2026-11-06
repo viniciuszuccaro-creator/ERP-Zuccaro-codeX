@@ -102,6 +102,6 @@ abertos/orçamentos → verificações → fechados → produção, entrega ou r
 | Bots respeitam preço/estoque/crédito/RBAC/aprovação | contrato a amarrar; exceções → atendimento |
 
 ### Próximo executável
-1. Fechar CI+aceite #542/#544/#545 (sem FF #401 enquanto negativos falharem).
-2. Composição controlada na candidata #401 (`b888b2c00`) dos pacotes aceitos.
+1. ~~Fechar CI+aceite #542/#544/#545~~ → compostos em #401 (`4f76d3de3` / CI `d44ad52cb`); P1 remainder 6684093828 em tip `730d41398`+.
+2. CI própria do tip composto atual; parecer Codex do P1; ports #467/#462 só com WIP/base liberados.
 3. Desenho visual da Central — só após aprovação; até lá só contratos/correções.

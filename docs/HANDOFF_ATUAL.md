@@ -1,3 +1,9 @@
+## CURSOR — #401 P1 + #518 + recuperação fechamento (2026-11-06 America/Sao_Paulo)
+- P1 `730d41398` + path-checkout #518 GrupoEmpresarial InContext + WidgetFechamento no Dashboard / página wrapper.
+- Fornecedor #467 NÃO integrado (WIP). Banco #462 base desalinhada. Homolog BLOCKED.
+- Visual Cadastros: cores por bloco já em `Cadastros.jsx`; PageLayout slate órfão ≠ canônico.
+- Sem merge/deploy/VPS/dados reais.
+
 ## CURSOR — #401 P1 remainder 6684093828 (2026-11-06 America/Sao_Paulo)
 - Parecer Codex: STAGE44 full-swap escondia append fora do escopo.
 - Fix: igualdade exacta tip autorizado → STAGE44; vulnerable export só para contraprova.

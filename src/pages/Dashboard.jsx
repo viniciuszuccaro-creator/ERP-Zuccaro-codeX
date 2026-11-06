@@ -71,6 +71,7 @@ import AdvancedAnalysisSection from "@/components/dashboard/AdvancedAnalysisSect
 import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGrid";
 import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
+const WidgetFechamentoPedidos = React.lazy(() => import("@/components/comercial/WidgetFechamentoPedidos"));
 import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
@@ -1032,6 +1033,15 @@ export default function Dashboard() {
             count={produtosBaixoEstoque}
             onNavigate={() => handleDrillDown(createPageUrl("Estoque"))}
           />
+          )}
+
+          {/* Fechamento de pedidos — recurso existente reconectado ao Dashboard */}
+          {canSeeComercial && (
+            <ErrorBoundary fallback={<div className="text-sm text-slate-500 p-3">Widget de fechamento indisponível.</div>}>
+              <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+                <WidgetFechamentoPedidos empresaId={empresaAtual?.id || null} />
+              </Suspense>
+            </ErrorBoundary>
           )}
 
           {/* Gráficos + Top Produtos (redimensionável) */}

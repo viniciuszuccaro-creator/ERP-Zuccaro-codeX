@@ -58,6 +58,7 @@ import ConfiguracoesUsuario from './pages/ConfiguracoesUsuario';
 import Contratos from './pages/Contratos';
 import Dashboard from './pages/Dashboard';
 import DashboardCorporativo from './pages/DashboardCorporativo';
+import DashboardFechamentoPedidos from './pages/DashboardFechamentoPedidos';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Empresas from './pages/Empresas';
 import EntregasMobile from './pages/EntregasMobile';
@@ -89,6 +90,7 @@ export const PAGES = {
     "Contratos": Contratos,
     "Dashboard": Dashboard,
     "DashboardCorporativo": DashboardCorporativo,
+    "DashboardFechamentoPedidos": DashboardFechamentoPedidos,
     "DemoMultitarefas": DemoMultitarefas,
     "Empresas": Empresas,
     "EntregasMobile": EntregasMobile,
