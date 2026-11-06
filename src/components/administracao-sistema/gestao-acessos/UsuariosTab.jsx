@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +15,27 @@ import { Search, UserCog, Mail, Shield, Building2 } from "lucide-react";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
+import {
+  resolveUsuariosTabKpiState,
+  isUsuariosTabScopeCurrent,
+  buildUsuariosTabUsersQueryKey,
+  buildUsuariosTabPerfisQueryKey,
+  buildUsuariosTabEmpresasQueryKey,
+  usuarioNoEscopoUsuariosTab,
+  registroNoEscopoUsuariosTab,
+} from "./usuariosTabScope";
 
+function readUsuariosTabActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
+
+/**
+ * User/Perfil/Empresa via filterInContext; lista vazia ≠ ready em loading/erro.
+ */
 export default function UsuariosTab() {
   const { contexto, filterInContext, createInContext, empresaAtual, grupoAtual, empresasDoGrupo = [] } = useContextoVisual();
   const { user } = useUser();
@@ -24,18 +46,19 @@ export default function UsuariosTab() {
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [roleFilter, setRoleFilter] = useState("todos");
-  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem("group_atual_id"); } catch { return null; }
-  })();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "grupo" ? null : (empresaAtual?.id || null);
   const contextoValido = contexto === "grupo"
-    ? Boolean(grupoAtivoId)
-    : Boolean(grupoAtivoId && empresaAtual?.id);
-  const scopeKey = contextoValido
-    ? (contexto === "grupo" ? grupoAtivoId : empresaAtual?.id)
-    : "sem-contexto";
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
+    ? Boolean(groupId)
+    : Boolean(groupId && empresaId);
+  const { actorId, sessionKey } = readUsuariosTabActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
+  const escopoOpts = {
+    contexto,
+    grupoAtivoId: groupId,
+    empresaAtivaId: empresaId,
+    empresasDoGrupo,
+  };
   const sanitizeEmail = (value) => String(value || "")
     .replace(/[<>"'`;\\]/g, "")
     .replace(/\s+/g, "")
@@ -45,35 +68,20 @@ export default function UsuariosTab() {
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
   const dadosContextoConvite = (extras = {}) => ({
     contexto,
-    group_id: grupoAtivoId || null,
-    empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
+    group_id: groupId || null,
+    empresa_id: empresaId,
     contexto_valido: contextoValido,
     empresas_grupo_ids: contexto === "grupo" ? empresasDoGrupo.map((empresa) => empresa.id).filter(Boolean) : [],
     ...extras
   });
-  const registroNoEscopo = (registro) => {
-    const empresasVinculadas = normalizeEmpresaIds(registro.empresas_vinculadas || registro.empresas || registro.empresas_ids);
-    const registroGroupId = registro.group_id || registro.grupo_id || registro.groupId || registro.grupoId;
-    const registroEmpresaId = registro.empresa_id || registro.empresaId || registro.empresa_atual_id;
-    const temMarcadorEscopo = Boolean(registroGroupId || registroEmpresaId || empresasVinculadas.length);
-
-    if (!temMarcadorEscopo) return false;
-    if (contexto === "grupo") {
-      const empresasIds = empresasDoGrupo.map((e) => e.id);
-      return registroGroupId === grupoAtivoId || empresasVinculadas.some((id) => empresasIds.includes(id));
-    }
-    return registroGroupId === grupoAtivoId
-      || registroEmpresaId === empresaAtual?.id
-      || empresasVinculadas.includes(empresaAtual?.id);
-  };
 
   const auditarUsuario = async ({ acao, descricao, dadosNovos, sucesso = true }) => {
     try {
       await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || "Usuario local",
         usuario_id: user?.id || null,
-        empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
-        group_id: grupoAtivoId || null,
+        empresa_id: empresaId,
+        group_id: groupId || null,
         acao,
         modulo: "Controle de Acesso",
         entidade: "User",
@@ -87,49 +95,68 @@ export default function UsuariosTab() {
     }
   };
 
-  const usuarioNoEscopo = (u) => {
-    const empresasVinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
-    const temMarcadorEscopo = Boolean(
-      u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || empresasVinculadas.length
-    );
-    if (!temMarcadorEscopo) return true;
-    if (contexto === "grupo") {
-      const empresasIds = empresasDoGrupo.map((e) => e.id);
-      return u.group_id === grupoAtivoId
-        || u.grupo_id === grupoAtivoId
-        || u.grupo_atual_id === grupoAtivoId
-        || empresasVinculadas.some((id) => empresasIds.includes(id));
-    }
-    return u.empresa_id === empresaAtual?.id
-      || u.empresa_atual_id === empresaAtual?.id
-      || empresasVinculadas.includes(empresaAtual?.id);
-  };
-
-  const { data: usuarios = [], isLoading: loadingUsers } = useQuery({
-    queryKey: ["usuarios-gestao", scopeKey],
-    queryFn: async () => {
-      const rows = await base44.entities.User.list();
-      return rows.filter(usuarioNoEscopo);
+  const usuariosQuery = useQuery({
+    queryKey: buildUsuariosTabUsersQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('User', {}, 'full_name', 500);
+      if (signal?.aborted) {
+        const err = new Error('USUARIOS_TAB_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isUsuariosTabScopeCurrent(scopeExpected, readUsuariosTabActorAndSession())) {
+        throw new Error('USUARIOS_TAB_STALE_SCOPE');
+      }
+      return (Array.isArray(rows) ? rows : []).filter((u) => usuarioNoEscopoUsuariosTab(u, escopoOpts));
     },
     enabled: contextoValido,
   });
 
-  const { data: perfis = [] } = useQuery({
-    queryKey: ["perfis-acesso-tab", scopeKey],
-    queryFn: async () => {
-      const scoped = contextoValido ? await filterInContext("PerfilAcesso", {}, "-updated_date", 500) : [];
-      if (scoped.length) return scoped;
-      const rows = await base44.entities.PerfilAcesso.list("-updated_date", 500);
-      return rows.filter(registroNoEscopo);
+  const perfisQuery = useQuery({
+    queryKey: buildUsuariosTabPerfisQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const scoped = await filterInContext("PerfilAcesso", {}, "-updated_date", 500);
+      if (signal?.aborted) {
+        const err = new Error('USUARIOS_TAB_PERFIS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isUsuariosTabScopeCurrent(scopeExpected, readUsuariosTabActorAndSession())) {
+        throw new Error('USUARIOS_TAB_STALE_SCOPE');
+      }
+      return (Array.isArray(scoped) ? scoped : []).filter((r) => registroNoEscopoUsuariosTab(r, escopoOpts));
     },
-    enabled: true,
-  });
-
-  const { data: empresas = [] } = useQuery({
-    queryKey: ["empresas-gestao", scopeKey],
-    queryFn: () => filterInContext("Empresa", {}, "nome_fantasia", 500),
     enabled: contextoValido,
   });
+
+  const empresasQuery = useQuery({
+    queryKey: buildUsuariosTabEmpresasQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext("Empresa", {}, "nome_fantasia", 500);
+      if (signal?.aborted) {
+        const err = new Error('USUARIOS_TAB_EMPRESAS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isUsuariosTabScopeCurrent(scopeExpected, readUsuariosTabActorAndSession())) {
+        throw new Error('USUARIOS_TAB_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
+  });
+
+  const kpiState = resolveUsuariosTabKpiState({
+    contextoValido,
+    isLoading: usuariosQuery.isLoading,
+    isError: usuariosQuery.isError,
+    isFetching: usuariosQuery.isFetching,
+    dataDefined: usuariosQuery.data !== undefined,
+  });
+  const usuarios = kpiState === 'ready' && Array.isArray(usuariosQuery.data) ? usuariosQuery.data : [];
+  const perfis = Array.isArray(perfisQuery.data) ? perfisQuery.data : [];
+  const empresas = Array.isArray(empresasQuery.data) ? empresasQuery.data : [];
+  const listaIndisponivel = kpiState !== 'ready';
 
   const handleInvite = async () => {
     if (!podeConvidar) {
@@ -171,11 +198,11 @@ export default function UsuariosTab() {
       await base44.functions.invoke("adminInviteUser", {
         email,
         role: "user",
-        group_id: grupoAtivoId,
-        empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
+        group_id: groupId,
+        empresa_id: empresaId,
       });
       toast.success("Convite enviado com sucesso.");
-      qc.invalidateQueries({ queryKey: ["usuarios-gestao", scopeKey] });
+      qc.invalidateQueries({ queryKey: ["usuarios-gestao"] });
     } catch (e) {
       await auditarUsuario({
         acao: "Falha no convite",
@@ -225,8 +252,10 @@ export default function UsuariosTab() {
         )}
       </div>
 
-      {loadingUsers ? (
-        <div className="text-sm text-slate-500 p-4">Carregando...</div>
+      {listaIndisponivel ? (
+        <div className="text-sm text-slate-500 p-4">
+          {kpiState === 'loading' ? 'Carregando...' : kpiState === 'error' ? 'Erro ao carregar usuarios.' : 'Contexto indisponivel.'}
+        </div>
       ) : (
         <div className="grid gap-2 min-h-0">
           {filtered.length === 0 && (
@@ -274,7 +303,7 @@ export default function UsuariosTab() {
               empresas={empresas}
               canEdit={podeEditarUsuarios}
               onClose={() => setSelectedUser(null)}
-              onSuccess={() => { setSelectedUser(null); qc.invalidateQueries({ queryKey: ["usuarios-gestao", scopeKey] }); }}
+              onSuccess={() => { setSelectedUser(null); qc.invalidateQueries({ queryKey: ["usuarios-gestao"] }); }}
             />
           </DialogContent>
         </Dialog>
