@@ -1,3 +1,12 @@
+## CURSOR — #579 useRealtimeData CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #579 `e2120ca98` — frontend + backend + compose **SUCCESS** |
+| **Código** | filterInContext realtime hooks; sem fallback; KPI ≠ 0 |
+| **Fila** | #566–#579 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
 ## CURSOR — useRealtimeData escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

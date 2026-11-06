@@ -1,3 +1,6 @@
+## CURSOR — #579 useRealtimeData CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `e2120ca98` SUCCESS. Lote #566–#579 verde. Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — useRealtimeData escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/lib-realtime-scope-392b` ← #401.
 - filterInContext em hooks realtime; sem fallback unscoped; STALE_SCOPE.
