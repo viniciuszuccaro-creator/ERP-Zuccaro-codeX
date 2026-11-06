@@ -83,16 +83,15 @@ export default function NotificationCenter() {
   const contagemIndisponivel = kpiState !== 'ready';
   const naoLidas = notificacoes.filter((n) => !n.lida);
   const badgeCount = contagemIndisponivel ? null : countNotificacoesNaoLidas(notificacoes);
-  const invalidateNotificacoes = () => {
-    queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
-  };
 
   const marcarComoLidaMutation = useMutation({
     mutationFn: (/** @type {string} */ id) => updateInContext('Notificacao', id, {
       lida: true,
       data_leitura: new Date().toISOString(),
     }),
-    onSuccess: invalidateNotificacoes,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
+    },
   });
 
   const marcarTodasComoLidasMutation = useMutation({
@@ -105,12 +104,16 @@ export default function NotificationCenter() {
       );
       return Promise.all(promises);
     },
-    onSuccess: invalidateNotificacoes,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
+    },
   });
 
   const arquivarMutation = useMutation({
     mutationFn: (/** @type {string} */ id) => updateInContext('Notificacao', id, { arquivada: true }),
-    onSuccess: invalidateNotificacoes,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notificacoes'] });
+    },
   });
 
   const getIconByType = (tipo) => {

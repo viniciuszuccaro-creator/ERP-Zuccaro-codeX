@@ -1,3 +1,7 @@
+## CURSOR — #583 NotificationCenter CI fix (2026-11-05 America/Sao_Paulo)
+- Restaurou 3 invalidateQueries; remainder baseline approval; hash shared-query.
+- Homolog BLOCKED. FF #401 aguarda Codex.
+
 ## CURSOR — NotificationCenter escopo (2026-11-05 America/Sao_Paulo)
 - Branch `cursor/ui-notification-center-scope-392b` ← #401.
 - filter/update InContext Notificacao; badge KPI ≠ 0. Testes 2 PASS.

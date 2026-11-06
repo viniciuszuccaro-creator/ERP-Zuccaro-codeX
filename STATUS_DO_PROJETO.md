@@ -1,3 +1,12 @@
+## CURSOR — #583 NotificationCenter CI fix contracts (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #583 `cursor/ui-notification-center-scope-392b` |
+| **Fix** | 3× invalidateQueries; remainder approval; hash shared-query InContext |
+| **Testes** | shared-query + approval + ui-notification-center-scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — NotificationCenter escopo (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |
