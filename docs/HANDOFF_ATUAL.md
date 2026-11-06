@@ -1,3 +1,8 @@
+## CURSOR — #544 origem CI SUCCESS + trilho 542/544/545 (2026-11-06 America/Sao_Paulo)
+- Tip `b3b450539` **CI SUCCESS** 12/12. KPI/export Pedido fail-closed; STALE G/E; flake Date corrigido.
+- #542 `3c6c855bb` e #545 `6c6827bed` também CI SUCCESS. **Sem FF** #401 (`b888b2c00`) até aceite Codex.
+- Homolog BLOCKED. Sem merge/deploy/VPS.
+
 ## CURSOR — #544 flake Date no Pedido print (2026-11-06 America/Sao_Paulo)
 - CI `ac9a15560` FAIL: timestamp `Documento gerado em` entre current/old. Date congelada no teste.
 - Runtime origem (#544) intacto. Sem FF #401. Homolog BLOCKED.

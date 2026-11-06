@@ -1,3 +1,16 @@
+## CURSOR — #544 origem KPI/export CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#544](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/544) |
+| **Tip** | **`b3b450539`** · **CI SUCCESS** 12/12 |
+| **Delta** | KPI Pedido agregado ≠ zero; export só ready; STALE G/E; flake Date no print congelado |
+| **Trilho #542/#544/#545** | CI verde nos três tips funcionais — **não** FF #401 até aceite Codex |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** parecer Codex nos negativos #542+#544+#545; só então composição seletiva na candidata `b888b2c00`.
+
 ## CURSOR — #544 tip flake print Date (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
