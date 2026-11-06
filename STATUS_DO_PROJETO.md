@@ -1,3 +1,12 @@
+## CURSOR — #583 NotificationCenter frozen-SHA fix (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #583 |
+| **Fix** | shared-query via `notificationCenterScopeRemainder` — hash congelado preservado |
+| **Testes** | shared-query + approval + runtime-proof + scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — #583 NotificationCenter CI fix contracts (2026-11-05 America/Sao_Paulo)
 
 | Campo | Valor |

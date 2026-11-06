@@ -1,3 +1,6 @@
+## CURSOR — #583 NotificationCenter frozen-SHA fix (2026-11-05 America/Sao_Paulo)
+- Remainder no shared-query preserva SHA congelado tip d312fbcd. Homolog BLOCKED.
+
 ## CURSOR — #583 NotificationCenter CI fix (2026-11-05 America/Sao_Paulo)
 - Restaurou 3 invalidateQueries; remainder baseline approval; hash shared-query.
 - Homolog BLOCKED. FF #401 aguarda Codex.
