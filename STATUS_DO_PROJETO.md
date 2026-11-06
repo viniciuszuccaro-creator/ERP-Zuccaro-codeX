@@ -1,4 +1,33 @@
-## Continuidade vigente - fonte Base44 preservada; Setor RBAC em WIP (2026-11-06)
+## Continuidade vigente - Setor RBAC validado no snapshot Linux (2026-11-06)
+
+ControleChrome recuperado na mesma aba750, sem reinicio/rebuild. Codespace
+canonico continua b5cb34e1 com apenas??.vscode/, sem sincronizacao. Processo
+copilot-runtime sem filhos/descritores de escrita no checkout; nao interrompido.
+HML anterior comprovada STOPPED, PID morto/lock e socket ausentes, sem recarga100.
+
+Snapshot7 a909abcb conferido antes/depois, base3b4c856b, doislockfiles iguais as
+dependencias existentes,0instalacoes. Suite raiz Linux COMPLETA2424PASS0FAIL0SKIP,
+exit0,327694ms, Nodev24.21.0; timeout6min anterior preservado. Recibo privado
+setor-a909abcb-result.private.json e logs0600. Nenhum dado real no ensaio.
+Demais checks do MESMO codigo reutilizados abaixo: backend573PASS0FAIL38SKIP,
+focados13/35/5PASS, audit/lint/typechecks/buildserver/diff-check PASS. Buildweb
+inalterado reutilizado. Publicacao funcional deste lote inclui os7arquivos;
+nao chamar CI documental6475/6476 de CI desse codigo. CI propria por SHA no PR.
+
+FonteBase44: UnidadeMedida tambem exportada/verificada,14IDs distintos/3857bytes.
+TresCSV privados total711990bytes. Produto871 campos unidade_medida/principal/
+estoque/venda coincidem por siglaEXATA com o cadastro nativo; unidade_compra
+ausente871. Isso NAO aprova fatores, equivalenciaPC/UN ou carga. Lixeira de
+GrupoProduto respondeu200/arrayvazio; nao prova ausencia em backups/fora30dias.
+Marca teve consultas429; export nao confirmado, nao insistir nem inventarvazio.
+Recibos privados preservados. Nenhum registro restaurado no ERP atual.
+
+Proximo: CI/revisao/portSetor na candidata pelo Cursor, depois correcao granular
+UIGrupo6690425383 e listagem/detalhes reais. Parecer4016691042172 permanece
+separado; sem resposta/port novo comprovados. SQLSTATE originalHML ainda pendente,
+nao afirmar que todos500 foram resolvidos por RBAC. Sem DDL/grants/carga/deploy.
+
+## Historico - fonte Base44 preservada; Setor RBAC em WIP (2026-11-06)
 
 3423b4c856b/CI6464-6465 e4015d9a7e37/CI6461 reconferidos; sem port novo
 observado. Cursor segue escritor da candidata/UI. Pedido de correcao granular

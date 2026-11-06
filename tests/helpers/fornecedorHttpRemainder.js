@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { setorRbacRemainder } from './setorRbacRemainder.js';
 
 const entries = {
   'tests/legado-importador-consolidacao.test.js': {
@@ -29,6 +30,7 @@ const entries = {
 
 /** Remove only this opt-in wiring; verify every byte of the previous source. */
 export function fornecedorHttpRemainder(file, text) {
+  text = setorRbacRemainder(file, text);
   const entry = entries[file];
   if (!entry) return text;
   let source = text.replace(/\r\n/g, '\n');

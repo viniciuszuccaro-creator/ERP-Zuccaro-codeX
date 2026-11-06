@@ -152,6 +152,7 @@ export function createApp(options: CreateAppOptions) {
   });
   const setorService = new TenantCrudService(setorRepo, auditRepo, tenantGuard, {
     entityName: 'SetorAtividade',
+    authorization: { guard: rbacGuard, moduleName: 'Cadastros', section: 'setor_atividade' },
     notFoundCode: 'SETOR_NOT_FOUND',
     createSchema: setorCreateSchema,
     updateSchema: setorUpdateSchema,

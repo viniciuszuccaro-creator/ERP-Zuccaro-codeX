@@ -1,5 +1,19 @@
 # Matriz recuperação — privado × DB × API × UI
 
+## Delta adicional comprovado (2026-11-06) — auxiliares nativos
+
+UnidadeMedida:14linhas/14IDs, CSV3857bytes preservado/copiaSHA256 igual.
+TresCSV total711990bytes em privado. Comparacao ordinal EXATA por sigla contra
+os871produtos: unidade_medida/principal/estoque/venda presentes e encontradas
+no cadastro nativo; unidade_compra ausente871. Nenhum fator/equivalencia aprovada.
+PC/UN nao fundidas; CX nao recebe conteudo presumido. Sem restauracao no destino.
+
+Lixeira nativaGrupoProduto: GET200/array0 observado, sem restaurar/excluir.
+Nao prova ausencia em backups ou alem da retencao30dias;817refs nao resolvidas
+e54ausentes continuam pendentes. Marca: leituras200 e429; CSV nao confirmado,
+nao chamar exportacao/recuperacao concluida nem contornar limite. O conectorMCP
+e a sessao web continuam capacidades separadas; nenhuma mudanca de plano.
+
 ## Delta comprovado (2026-11-06) — fonte ERP novo, nao legado
 
 Base44 navegador autenticado no appERP Integra/conta proprietaria/Grupo CPA.

@@ -1,4 +1,42 @@
-## Continuidade vigente - Base44 disponivel; WIP Setor aguardando Linux (2026-11-06)
+## Continuidade vigente - snapshot Setor completo validado (2026-11-06)
+
+ReconexaoChrome comprovada, mesmaaba750/Codespace, sem reinicio/rebuild/custo
+novo. Checkout canonico b5cb34e1/??.vscode/ preservado; nao fazerpull58commits
+sobre ele. copilot-runtime823 semfilhos/FDs de escrita no checkout observado,
+nao interrompido. HML terminou STOPPED, PID encerrado, lock/socket liberados.
+Nao reabrir/carrecar100 apenas para repetir provas.
+
+Artefato421/6690965286 recuperado via gh autenticado existente; base3b4c856b,
+patcha909abcbc2f37f10e0fe711ace0008741d2b221406ccafa9b92fa128902e7e40.
+Sete hashes conferidos ANTES e DEPOIS; package-lock raiz/server iguais ao
+executor existente. Snapshot somente de teste em validation-fornecedor-20261106/
+snapshot-a909abcb, nao clone/candidata/desenvolvimento paralelo. Nao sobrescreveu
+snapshot anterior590f nem checkout canonico. Nenhum dado privado copiado.
+Comando existente: timeout --signal=TERM --kill-after=20s 6m node scripts/run-tests.mjs.
+Resultado FINAL:2424PASS0FAIL0SKIP/exit0,327694.010165ms, Nodev24.21.0.
+PID4730 terminado. Recibo setor-a909abcb-result.private.json0600, log/exit
+preservados. Backend611tests573PASS0FAIL38SKIP e demaischecks abaixo reutilizados
+pois MESMOS7blobs. Nao repetir POSIX/WSL/fullsuites sem delta. Publicar o codigo
+deste lote na342, conferir CI propria e solicitar port ao Cursor, sem integrar
+ou habilitar flag/grants. Publicacao do artefato nao era publicacao funcional.
+
+Auxiliares fonteERPnovo: UnidadeMedida_export.original.csv preservada,14IDs,
+3857bytes/SHA256 copia=origem. Soma3CSV711990bytes, ACLprivada foraGit/build.
+SiglaEXATA fonte-fonte confere campos unidade_medida/principal/estoque/venda
+dos871produtos; compraausente871. Nao representa conversao aprovada ou unidade
+do destino homologada. GrupoProduto/trash respondeuHTTP200/array0, nao prova
+ausencia global em backups/apos30dias. Marca: consultasHTTP429 observadas,
+CSV final nao recebido/conferido, nao retry vazio ou contorno de rate-limit.
+Nenhuma restauracao de registros no destino atual;817refsclasse continuam
+nao resolvidas e54ausentes. Evidencias detalhadas privadas, sem nomes aqui.
+
+Falta UIGrupo granular pelo Cursor (6690425383 sem recebimento comprovado),
+parecer401/6691042172, port/revisao/checks do codigo composto, nomes/detalhes,
+e gates operacionais. Causa SQLSTATE originalSetorHML ainda nao coletada; patch
+nega falta de permissao ANTES do SQL, nao converte falhaSQL autorizada em403.
+Nao ampliargrants/promoveruser ou liberar carga/deploy pela CI.
+
+## Historico - Base44 disponivel; WIP Setor aguardando Linux (2026-11-06)
 
 HEADs reconferidos3423b4c856b (CI6464/6465 SUCCESS),4015d9a7e37
 (CI6461 SUCCESS). Desktop limpo no inicio; nenhum processo identificado usando
