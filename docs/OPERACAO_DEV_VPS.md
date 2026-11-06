@@ -1,6 +1,24 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - shell e roteamento observados, Auth HML nao homologado (2026-11-06)
+## Estado vigente - Auth configurado e bootstrap privado ensaiado (2026-11-06)
+
+As rotas GET/auth/v1/user e POST/auth/v1/token ja foram aplicadas no HTTPS
+existente conforme gate especifico e recibos no HANDOFF. O bloqueio historico
+de roteamento abaixo NAO e vigente. Provedor self-hosted srv1982741, GoTrue
+v2.189.0 e gateway existente; anon conferida em memoria contra API e gateway.
+Somente config anon existente foi transferida pelo SSH dedicado para
+/home/codespace/erp-legado-privado-20261023/hml344-cpa-20261104/auth-provider.private.json
+em0600, diretorio0700; nao publicar conteudo, copiar bearer ou gerar chaves.
+
+Bootstrap privado pin6f1cc7d4: API50b60e46/webb888b2c0, namespace HML existente,
+preflight fisico/pool unico/NOSUPER/NOBYPASS PASS. Web e proveniencia200,
+sem sessao401, arquivo privado403. SIGTERM real corrigido e comprovado com
+lock/socket liberados e PG restituido parado; janela limitada reaberta, porta
+5173 PRIVATE conferida na interface. Nao e homologacao Auth/cliente/browser.
+Permissoes residuais da role continuam documentadas; nao e leitor estrito.
+Sem carga100, DDL/grants, deploy ERP ou novas credenciais nesta etapa.
+
+## Historico - shell e roteamento observados, Auth HML nao homologado (2026-11-06)
 
 Mesmo hPanel/VPS srv1982741, Console da Web autenticado e shell real conferidos.
 Inspecao somente leitura caddy adapt, emitindo apenas host/upstream: API DEV

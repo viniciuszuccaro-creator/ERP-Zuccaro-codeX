@@ -1,4 +1,40 @@
-## Continuidade vigente - rotas Auth autorizadas aplicadas (2026-11-06)
+## Continuidade vigente - adapter Fornecedor e Auth HML configurado (2026-11-06)
+
+Lote da reserva342/6688424027 fechado no snapshot de9 arquivos, manifesto em
+421/6688762059 (patch590f178bf70c90efb4386f7a461ea3511b3ea8dbd194d3ed249bb9e9bf206b13).
+Fornecedor HTTP opt-in/defaultOFF, DB obrigatorio, Auth real exigido; reutiliza
+service/repository existentes para importar/ler/reverter, sem CRUD paralelo.
+Positivos/replay concorrente, escopo/RBAC/revogacao, CAS e falha de auditoria
+sem escrita parcial:7PASS. Guardas integrais/contexto56PASS. Backend completo
+568PASS0FAIL38SKIP; raiz Linux snapshot exato2422PASS0FAIL0SKIP/exit0.
+Audit/lint/typecheck/build raiz+server PASS; diff-check PASS. Dependencias e
+locks conferidos, sem nova instalacao. Nao contar SKIP como PG real validado.
+Artefatos do ensaio ficam privados; teste externo nao transfere autoria.
+
+Autorizacao posterior executada: somente anon existente self-hosted, comparada
+em memoria entre API e gateway, claims anon/issuer supabase, endpoint aprovado.
+Config privada auth-provider.private.json criada sem sobrescrita,0600/root0700,
+SSH dedicado exit0 e readback identico. Sem service_role/JWT_SECRET/senha/bearer
+em logs/GitHub. Anon sem sessao retorna403 bad_jwt/missing sub tanto no gateway
+como HTTPS; isso NAO e sessao de usuario aceita.
+
+Bootstrap privado (344/6689846342, codigo sanitizado pin6f1cc7d4) usa API50b60e46
+e webb888b2c0, nao a composicao Cursor atual. Namespace HML fisico e pool unico
+comprovados; web/proveniencia200, API sem bearer401, arquivo privado403. Vite
+fora de middleware encerrava antes da limpeza; tentativa propria recuperada
+com evidencias arquivadas. Middleware+servidor proprio corrigiram: SIGTERM real
+STOPPED, PID encerrado, lock/socket removidos, PG restituido parado. Revisao
+independente e simulacao de sinais nao substituem essa prova real, agora PASS.
+Janela20min privada reaberta, sem recarga100. Sessao real/API/perfil/Grupo e
+clientes reais na interface ainda pendentes; banner/HTTP200 nao homologam UI.
+Nao copiar bearer DEV ou promover user; login existente pelo proprio usuario.
+
+Revisao401/6688337342: antiga guarda encerrada com contraprova integral;
+novo P1 estatico de mapeamento Comercial de DashboardFechamentoPedidos ainda
+separado. Cursor exclusivo na composicao; solicitar port/revisao apos publicar
+SHA/CI deste lote, sem copiar branches inteiras. Nao repetir cargas/backups.
+
+## Historico - rotas Auth autorizadas aplicadas (2026-11-06)
 
 Autorizacao especifica do proprietario executada: SOMENTE GET /auth/v1/user e
 POST /auth/v1/token no HTTPS API DEV existente, para gateway local existente8000.

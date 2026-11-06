@@ -1,4 +1,36 @@
-## Continuidade vigente - encaminhamento Auth concluido (2026-11-06)
+## Continuidade vigente - Fornecedor HTTP validado e bootstrap HML (2026-11-06)
+
+Reserva342/6688424027: adapter HTTP opt-in reutiliza FornecedorService e
+PostgresFornecedorRepository, sem cadastro/importador paralelo. Importacao,
+leitura exata e reversao CAS exigem Auth verificado, escopo e RBAC canonicos;
+ENABLE_FORNECEDOR_HTTP permanece false por padrao. Sem CRUD generico nem
+troca do proprietario do formulario. Auditoria atomica, replay e rollback
+testados; nenhum flag, SQL, grant ou carga foi aplicado na VPS/HML.
+
+Snapshot9 arquivos pin590f178b conferido antes dos testes Linux e novamente
+antes da publicacao. Raiz2422PASS/0FAIL/0SKIP (Linux,350521.886ms); backend
+568PASS/0FAIL/38SKIP,606tests. Focados Fornecedor7PASS e preservacao/contexto
+56PASS; audit/lint/typechecks/builds raiz+server e diff-check PASS. Os38SKIP
+nao comprovam PostgreSQL real. PGlite/HTTP sintetico nao equivale a browser.
+Avisos lint/Browserslist/chunks anteriores preservados, sem supressoes.
+
+Anon EXISTENTE do Auth self-hosted conferida contra gateway e API, sem revelar
+valor. Transferida pelo SSH dedicado existente, destino privado0600/root0700,
+readback PASS; nenhuma chave gerada/rotacionada. Bootstrap privado pin6f1cc7d4:
+API50b60e46 + webb888b2c0, pool Auth/Data unico, schema HML e NOSUPER/NOBYPASS
+conferidos fisicamente. HTTP local web/proveniencia200, sem sessao401, arquivo
+privado403. SIGTERM real PASS apos corrigir encerramento Vite: lock/socket
+liberados e PG privado restituido parado. Nao repetir HML100/replay/restore.
+Janela privada limitada reaberta; sessao real, perfil/Grupo e nomes no navegador
+ainda NAO comprovados. HTTP externo alcanavel nao equivale a interface pronta.
+
+401: P1 remainder6684093828 encerrado por contraprova integral atual; novo P1
+DashboardFechamentoPedidos sem mapeamento Comercial no Layout publicado em
+401/6688337342. Revisao estatica, nao alegar vazamento backend. Cursor segue
+escritor da composicao. Proximo: login real HML e revisao/port deste adapter
+apos SHA/CI, sem merge/deploy/carga operacional por inferencia.
+
+## Historico - encaminhamento Auth concluido (2026-11-06)
 
 Gate especifico aprovado pelo proprietario aplicado: GET/auth/v1/user e
 POST/auth/v1/token no HTTPS existente, gateway8000 existente. Backup privado,

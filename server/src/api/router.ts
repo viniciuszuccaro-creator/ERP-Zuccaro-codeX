@@ -15,6 +15,8 @@ import type { CondicaoPagamentoService } from '../services/condicaoPagamentoServ
 import type { OrcamentoService } from '../services/orcamentoService.js';
 import type { OportunidadeService } from '../services/oportunidadeService.js';
 import { mountOportunidadeRoutes } from './oportunidadeRoutes.js';
+import { mountFornecedorRoutes } from './fornecedorRoutes.js';
+import type { FornecedorService } from '../services/fornecedorService.js';
 import type { PedidoService } from '../services/pedidoService.js';
 import type { ExpedicaoService } from '../services/expedicaoService.js';
 import type { MarcaService } from '../services/marcaService.js';
@@ -49,6 +51,7 @@ export type ApiDeps = {
   pedidoService: PedidoService;
   expedicaoService: ExpedicaoService;
   oportunidadeService?: OportunidadeService | null;
+  fornecedorService?: FornecedorService | null;
 };
 
 function ctxFromReq(req: Request) {
@@ -1451,6 +1454,7 @@ export function createApiRouter(deps: ApiDeps) {
   mountPedidoRoutes(router, deps.pedidoService);
   mountExpedicaoRoutes(router, deps.expedicaoService);
   mountOportunidadeRoutes(router,deps.oportunidadeService,ctxFromReq);
+  mountFornecedorRoutes(router, deps.fornecedorService, ctxFromReq);
 
   return router;
 }
