@@ -1,3 +1,31 @@
+## CURSOR — #579 useRealtimeData CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #579 `1bbaabe82` (docs) · código `e2120ca98` |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #580 Fornecedor SUCCESS · #581–#583 em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #579 useRealtimeData CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #579 `e2120ca98` — frontend + backend + compose **SUCCESS** |
+| **Código** | filterInContext realtime hooks; sem fallback; KPI ≠ 0 |
+| **Fila** | #566–#579 SUCCESS · FF #401 aguarda Codex · Homolog BLOCKED |
+| Fora | merge/deploy · VPS · seed · PR ≠ candidata |
+
+## CURSOR — useRealtimeData escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/lib-realtime-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filterInContext em KPIs/Pedidos/Entregas/Notif/GPS/OP/Subscription; sem fallback unscoped; KPI ≠ 0 |
+| **Testes** | `lib-realtime-scope` + `dashboard-kpi-policy` PASS |
+| **Fila** | #566–#578 SUCCESS · este PR em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

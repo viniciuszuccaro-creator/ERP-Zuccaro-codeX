@@ -4,14 +4,29 @@
  */
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useEffect, useState } from 'react';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
 import { useContextoVisual } from './useContextoVisual';
 import {
   buildDashboardQueryKey,
   computeRealtimeKpisFromStores,
   DASHBOARD_REALTIME_LIMIT,
 } from './dashboardKpiPolicy';
+import {
+  isRealtimeScopeCurrent,
+  assertRealtimeContext,
+  filterActiveRealtimeEntregas,
+  pickRealtimeFirstRow,
+} from './realtimeDataScope';
+
+function readRealtimeActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
 
 /** @typedef {{ hoje: number, valorHoje: number, aguardandoAprovacao: number, emProducao: number, amostraLimitada?: boolean }} RealtimePedidosKpi */
 /** @typedef {{ vencendoHoje: number, valorHoje: number, atrasados: number, recebidosHoje: number, amostraLimitada?: boolean }} RealtimeFinanceiroKpi */
@@ -104,42 +119,35 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
  * Hook para KPIs em tempo real
  */
 export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, enabled = true, userId = null) {
-  /** @type {RealtimeKpis} */
-  const defaultKPIs = {
-    pedidos: { hoje: 0, valorHoje: 0, aguardandoAprovacao: 0, emProducao: 0 },
-    financeiro: { vencendoHoje: 0, valorHoje: 0, atrasados: 0, recebidosHoje: 0 },
-    producao: { opsEmAndamento: 0, percentualMedio: 0, opsAtrasadas: 0, opsFinalizadasHoje: 0 },
-    expedicao: { entregasHoje: 0, pendentes: 0, realizadas: 0, emRota: 0 },
-    ultimaAtualizacao: null,
-  };
   const { filterInContext } = useContextoVisual();
+  const sessionScope = readRealtimeActorAndSession();
   return useRealtimeData(
-    buildDashboardQueryKey({
-      prefix: 'kpis-realtime',
-      userId,
-      groupId,
-      empresaId,
-      scopeType: empresaId ? 'empresa' : 'grupo',
-    }),
+    [
+      ...buildDashboardQueryKey({
+        prefix: 'kpis-realtime',
+        userId,
+        groupId,
+        empresaId,
+        scopeType: empresaId ? 'empresa' : 'grupo',
+      }),
+      sessionScope.actorId,
+      sessionScope.sessionKey,
+    ],
     async () => {
-      if (!empresaId && !groupId) {
-        throw new Error('Contexto de grupo ou empresa obrigatorio para KPIs.');
-      }
+      assertRealtimeContext(groupId, empresaId);
+      const scopeExpected = readRealtimeActorAndSession();
       const limit = DASHBOARD_REALTIME_LIMIT;
-      const getByContext = async (entity, order) => {
-        if (typeof filterInContext === 'function') {
-          return filterInContext(entity, {}, order, limit);
-        }
-        if (empresaId) return base44.entities[entity].filter({ empresa_id: empresaId }, order, limit);
-        if (groupId) return base44.entities[entity].filter({ group_id: groupId }, order, limit);
-        return [];
-      };
+      const getByContext = async (entity, order) => filterInContext(entity, {}, order, limit);
       const results = await Promise.allSettled([
         getByContext('Pedido', '-created_date'),
         getByContext('ContaReceber', '-data_vencimento'),
         getByContext('OrdemProducao', '-data_emissao'),
         getByContext('Entrega', '-created_date'),
       ]);
+
+      if (!isRealtimeScopeCurrent(scopeExpected, readRealtimeActorAndSession())) {
+        throw new Error('REALTIME_KPI_STALE_SCOPE');
+      }
 
       const rejectedCount = results.filter(r => r.status === 'rejected').length;
       if (rejectedCount >= 2) {
@@ -156,7 +164,8 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, en
 
       return computeRealtimeKpisFromStores({ pedidos, contas, ops, entregas });
     },
-    { refetchInterval: intervalo, enabled: enabled && Boolean(empresaId || groupId), initialData: defaultKPIs, retry: false }
+    // Sem initialData zerado: loading/erro ≠ KPI 0 (fail-closed).
+    { refetchInterval: intervalo, enabled: enabled && Boolean(empresaId || groupId), retry: false }
   );
 }
 
@@ -164,33 +173,36 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null, en
  * Hook para Status de Pedidos em tempo real
  */
 export function useRealtimePedidos(empresaId, limite = 10, groupId = null, enabled = true, userId = null) {
+  const { filterInContext } = useContextoVisual();
+  const sessionScope = readRealtimeActorAndSession();
   return useRealtimeData(
-    buildDashboardQueryKey({
-      prefix: 'pedidos-realtime',
-      userId,
-      groupId,
-      empresaId,
-      scopeType: empresaId ? 'empresa' : 'grupo',
-    }),
-    () => (
-      empresaId
-        ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', limite)
-        : groupId
-          ? base44.entities.Pedido.filter({ group_id: groupId }, '-created_date', limite)
-          : Promise.resolve([])
-    ),
+    [
+      ...buildDashboardQueryKey({
+        prefix: 'pedidos-realtime',
+        userId,
+        groupId,
+        empresaId,
+        scopeType: empresaId ? 'empresa' : 'grupo',
+      }),
+      sessionScope.actorId,
+      sessionScope.sessionKey,
+    ],
+    async () => {
+      assertRealtimeContext(groupId, empresaId);
+      const scopeExpected = readRealtimeActorAndSession();
+      const rows = await filterInContext('Pedido', {}, '-created_date', limite);
+      if (!isRealtimeScopeCurrent(scopeExpected, readRealtimeActorAndSession())) {
+        throw new Error('REALTIME_PEDIDOS_STALE_SCOPE');
+      }
+      return rows;
+    },
     { 
       refetchInterval: 30000,
       enabled: enabled && Boolean(empresaId || groupId),
-      initialData: [],
       retry: false,
       onUpdate: (novos, anteriores) => {
-        // Detectar novos pedidos
-        const novosPedidosIds = novos.map(p => p.id);
-        const anterioresIds = anteriores.map(p => p.id);
-        
-        const pedidosAdicionados = novos.filter(p => !anterioresIds.includes(p.id));
-        
+        const anterioresIds = (anteriores || []).map(p => p.id);
+        const pedidosAdicionados = (novos || []).filter(p => !anterioresIds.includes(p.id));
         if (pedidosAdicionados.length > 0) {
           console.log('📦 Novos pedidos detectados:', pedidosAdicionados.length);
         }
@@ -203,26 +215,30 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null, enabl
  * Hook para Entregas em tempo real
  */
 export function useRealtimeEntregas(empresaId, groupId = null, enabled = true, userId = null) {
+  const { filterInContext } = useContextoVisual();
+  const sessionScope = readRealtimeActorAndSession();
   return useRealtimeData(
-    buildDashboardQueryKey({
-      prefix: 'entregas-realtime',
-      userId,
-      groupId,
-      empresaId,
-      scopeType: empresaId ? 'empresa' : 'grupo',
-    }),
+    [
+      ...buildDashboardQueryKey({
+        prefix: 'entregas-realtime',
+        userId,
+        groupId,
+        empresaId,
+        scopeType: empresaId ? 'empresa' : 'grupo',
+      }),
+      sessionScope.actorId,
+      sessionScope.sessionKey,
+    ],
     async () => {
-      const entregas = await (
-        empresaId
-          ? base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 20)
-          : groupId
-            ? base44.entities.Entrega.filter({ group_id: groupId }, '-created_date', 20)
-            : Promise.resolve([])
-      );
-      
-      return entregas.filter(e => !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status));
+      assertRealtimeContext(groupId, empresaId);
+      const scopeExpected = readRealtimeActorAndSession();
+      const entregas = await filterInContext('Entrega', {}, '-created_date', 20);
+      if (!isRealtimeScopeCurrent(scopeExpected, readRealtimeActorAndSession())) {
+        throw new Error('REALTIME_ENTREGAS_STALE_SCOPE');
+      }
+      return filterActiveRealtimeEntregas(entregas);
     },
-    { refetchInterval: 35000, enabled: enabled && Boolean(empresaId || groupId), initialData: [], retry: false }
+    { refetchInterval: 35000, enabled: enabled && Boolean(empresaId || groupId), retry: false }
     );
 }
 
@@ -230,17 +246,25 @@ export function useRealtimeEntregas(empresaId, groupId = null, enabled = true, u
  * Hook para Notificações em tempo real
  */
 export function useRealtimeNotificacoes(usuarioId) {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const sessionScope = readRealtimeActorAndSession();
   return useRealtimeData(
-    ['notificacoes-realtime', usuarioId],
+    ['notificacoes-realtime', usuarioId, groupId, empresaId, sessionScope.actorId, sessionScope.sessionKey],
     async () => {
-      const notifs = await base44.entities.Notificacao.filter({
+      assertRealtimeContext(groupId, empresaId);
+      const scopeExpected = readRealtimeActorAndSession();
+      const notifs = await filterInContext('Notificacao', {
         destinatario_id: usuarioId,
         lida: false
       }, '-created_date', 50);
-      
+      if (!isRealtimeScopeCurrent(scopeExpected, readRealtimeActorAndSession())) {
+        throw new Error('REALTIME_NOTIFICACOES_STALE_SCOPE');
+      }
       return notifs;
     },
-    { refetchInterval: 5000 }
+    { refetchInterval: 5000, enabled: Boolean(usuarioId) && Boolean(groupId || empresaId) }
   );
 }
 
@@ -248,18 +272,26 @@ export function useRealtimeNotificacoes(usuarioId) {
  * Hook para Posições GPS em tempo real
  */
 export function useRealtimeGPS(romaneioId) {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const sessionScope = readRealtimeActorAndSession();
   return useRealtimeData(
-    ['gps-realtime', romaneioId],
+    ['gps-realtime', romaneioId, groupId, empresaId, sessionScope.actorId, sessionScope.sessionKey],
     async () => {
-      const posicoes = await base44.entities.PosicaoVeiculo.filter({
+      assertRealtimeContext(groupId, empresaId);
+      const scopeExpected = readRealtimeActorAndSession();
+      const posicoes = await filterInContext('PosicaoVeiculo', {
         romaneio_id: romaneioId
       }, '-data_hora', 1);
-      
-      return posicoes[0] || null;
+      if (!isRealtimeScopeCurrent(scopeExpected, readRealtimeActorAndSession())) {
+        throw new Error('REALTIME_GPS_STALE_SCOPE');
+      }
+      return pickRealtimeFirstRow(posicoes);
     },
     { 
       refetchInterval: 15000, // 15 segundos para GPS
-      enabled: !!romaneioId
+      enabled: Boolean(romaneioId) && Boolean(groupId || empresaId)
     }
   );
 }
@@ -268,15 +300,24 @@ export function useRealtimeGPS(romaneioId) {
  * Hook para Apontamentos de Produção em tempo real
  */
 export function useRealtimeApontamentos(opId) {
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const sessionScope = readRealtimeActorAndSession();
   return useRealtimeData(
-    ['apontamentos-realtime', opId],
+    ['apontamentos-realtime', opId, groupId, empresaId, sessionScope.actorId, sessionScope.sessionKey],
     async () => {
-      const op = await base44.entities.OrdemProducao.filter({ id: opId });
-      return op[0] || null;
+      assertRealtimeContext(groupId, empresaId);
+      const scopeExpected = readRealtimeActorAndSession();
+      const op = await filterInContext('OrdemProducao', { id: opId }, undefined, 1);
+      if (!isRealtimeScopeCurrent(scopeExpected, readRealtimeActorAndSession())) {
+        throw new Error('REALTIME_APONTAMENTOS_STALE_SCOPE');
+      }
+      return pickRealtimeFirstRow(op);
     },
     { 
       refetchInterval: 10000,
-      enabled: !!opId
+      enabled: Boolean(opId) && Boolean(groupId || empresaId)
     }
   );
 }
@@ -286,14 +327,23 @@ export function useRealtimeApontamentos(opId) {
  */
 export function useSubscription(entityName, filters = {}, options = {}) {
   const { refetchInterval = 5000, enabled = true } = options;
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const sessionScope = readRealtimeActorAndSession();
 
   return useRealtimeData(
-    ['subscription', entityName, JSON.stringify(filters)],
+    ['subscription', entityName, JSON.stringify(filters), groupId, empresaId, sessionScope.actorId, sessionScope.sessionKey],
     async () => {
-      const data = await base44.entities[entityName].filter(filters);
+      assertRealtimeContext(groupId, empresaId);
+      const scopeExpected = readRealtimeActorAndSession();
+      const data = await filterInContext(entityName, filters);
+      if (!isRealtimeScopeCurrent(scopeExpected, readRealtimeActorAndSession())) {
+        throw new Error('REALTIME_SUBSCRIPTION_STALE_SCOPE');
+      }
       return data;
     },
-    { refetchInterval, enabled }
+    { refetchInterval, enabled: enabled && Boolean(groupId || empresaId) }
   );
 }
 
