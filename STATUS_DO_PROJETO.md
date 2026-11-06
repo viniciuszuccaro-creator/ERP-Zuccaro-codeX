@@ -1,3 +1,25 @@
+## CURSOR — #590 ControleAcessoLogistica CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#590](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/590) |
+| **Tip** | **`eecf644f9`** · **CI SUCCESS** 9/9 |
+| **Delta** | ControleAcessoLogistica via getInContext fail-closed |
+| **Candidata #401** | `b888b2c00` — sem FF automático; aguarda aceite Codex / composição |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** CI #542/#544/#545 (prioridade); não assumir modelo empresa_id universal em admin/audit.
+
+## CURSOR — #590 ControleAcessoLogistica InContext (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Objetivo** | auth.me + Perfil.filter → useUser + getInContext; fail-closed |
+| **Branch** | `cursor/logistica-controle-acesso-scope-392b` |
+| **Base** | tip #401 |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
