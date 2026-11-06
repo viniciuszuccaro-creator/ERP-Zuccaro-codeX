@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch** | `cursor/hml-grupo-erro-fornecedor-392b` (base #401 `5d9a7e37c`) |
+| **Branch / SHA** | `cursor/hml-grupo-erro-fornecedor-392b` · **`b1c7ed6b5`** (base #401 `5d9a7e37c`) |
 | **Coord** | 6690425383 · sessão HML user/`empresa_id` NULL/Grupo CPA · API clientes total100 |
 | **Grupo UI** | `erpHttpSession` switch/buildUser/login/refresh: `pode_operar_em_grupo` por `profileEmpresaId` null — **sem** exigir admin; **sem** liberar grupos alheios |
 | **Erro isolado** | Expedição KPI erro≠0; Cadastros `SetorAtividade` 500 → PARTIAL com `partialCounts` (bloco afetado "—", demais válidos) |
