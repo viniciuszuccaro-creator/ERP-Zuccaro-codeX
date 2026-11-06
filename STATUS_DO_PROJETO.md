@@ -1,3 +1,13 @@
+## CURSOR — NotificationCenter escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/ui-notification-center-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filter/update InContext Notificacao; badge KPI ≠ 0; STALE_SCOPE; sem auth.me |
+| **Testes** | `ui-notification-center-scope` **2 PASS** |
+| **Fila** | #580–#582 em CI · este PR · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
