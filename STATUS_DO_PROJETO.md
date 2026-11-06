@@ -1,3 +1,14 @@
+## CURSOR — #542 tip CI: alinhar teste congelado multi-ator (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#542](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/542) |
+| **Tip prévio** | `f9bcaf9e1` — frontend FAIL: `comercial-clientes-tab-v24` exigia `queryKey: ['clientes', empresaAtual?.id` |
+| **Fix** | Assert canônico `buildAcoesRapidasClientesQueryKey` + `resolveClientesParaNovoPedido` + STALE |
+| **Testes** | clientes-tab-v24 + ui-acoes-rapidas **13 PASS** |
+| **Candidata #401** | `b888b2c00` — não incorporar até CI verde + aceite Codex |
+| Homolog | BLOCKED |
+
 ## CURSOR — #542 AcoesRapidas ator/sessão + fail-closed novoPedido (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

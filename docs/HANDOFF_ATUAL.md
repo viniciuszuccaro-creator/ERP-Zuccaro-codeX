@@ -1,3 +1,7 @@
+## CURSOR — #542 tip CI freeze queryKey (2026-11-06 America/Sao_Paulo)
+- Tip pós-`f9bcaf9e1`: teste `comercial-clientes-tab-v24` atualizado para cache multi-ator (#542).
+- Sem alterar runtime AcoesRapidas além do tip funcional. Homolog BLOCKED. Sem FF #401.
+
 ## CURSOR — #542 AcoesRapidas fix ator/sessão (2026-11-06 America/Sao_Paulo)
 - queryKey multi-ator; novoPedido bloqueia loading/erro/stale. Homolog BLOCKED.
 
