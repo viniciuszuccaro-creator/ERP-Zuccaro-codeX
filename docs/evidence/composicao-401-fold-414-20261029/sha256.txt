@@ -1,0 +1,2 @@
+f088fb0d4d8e027f900ba9cfaa87e4f746d04e29f84e543c42554cb12da34ebf  /tmp/pkgA-delta-401/code.diff
+08b073c5193082487958858cbee86bacbd8a8ade7113a16e244db49528e17942  /tmp/pkgA-delta-401/stat.txt

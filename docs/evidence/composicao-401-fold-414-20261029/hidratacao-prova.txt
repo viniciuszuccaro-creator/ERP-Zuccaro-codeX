@@ -1,0 +1,76 @@
+{
+  "pass": 14,
+  "fail": 0,
+  "results": [
+    {
+      "name": "failure-only-404-avanca-21",
+      "pass": true,
+      "detail": "[\"id-21\",\"id-22\",\"id-23\",\"id-24\",\"id-25\"]"
+    },
+    {
+      "name": "parcial-attempted-20",
+      "pass": true,
+      "detail": "n=20"
+    },
+    {
+      "name": "parcial-failures-10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "parcial-success-10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "parcial-fila-avanca-id21",
+      "pass": true,
+      "detail": "[\"id-21\",\"id-22\",\"id-23\"]"
+    },
+    {
+      "name": "sem-requestedIds-vazio",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "settlement-key-err-ok",
+      "pass": true,
+      "detail": "err:a,ok:b"
+    },
+    {
+      "name": "contexto-reset-limpo",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "orc-settlement-indice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "ped-settlement-indice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "orc-print-clienteLabel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "orc-share-clienteLabel",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "orc-catalog-independente",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "sem-N5-list",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}
