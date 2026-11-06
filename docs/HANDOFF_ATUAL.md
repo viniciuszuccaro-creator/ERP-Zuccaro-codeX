@@ -1,3 +1,7 @@
+## CURSOR — fila #580–#590 (2026-11-06 America/Sao_Paulo)
+- Todas CI SUCCESS na origem; **não** integradas no composto #401 `4f76d3de3`.
+- #580 Fornecedor: WIP reservado — não editar. Admin/audit/users: contratos próprios, sem fallback global.
+
 ## CURSOR — #401 composição #542+#544+#545 (2026-11-06 America/Sao_Paulo)
 - Base `b888b2c00` confirmada. Path-checkout dos tips `3c6c855bb` / `b3b450539` / `6c6827bed` (CI SUCCESS; Codex 11 montados).
 - #544/#545 sem ancestral comum com #401 → sem FF cego. Fornecedor WIP intocado.

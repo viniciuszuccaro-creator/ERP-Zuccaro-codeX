@@ -1,3 +1,22 @@
+## CURSOR — fila #580–#590 classificada (2026-11-06 America/Sao_Paulo)
+
+| PR | Tip | CI | Integração #401 |
+|----|-----|----|-----------------|
+| #580 Fornecedor painel | `21bce7ffc` | SUCCESS | **não** — WIP Fornecedor reservado |
+| #581 Colaborador painel | `fc810453f` | SUCCESS | não nesta composição |
+| #582 Timeline | `ce50057ca` | SUCCESS | não — contrato próprio |
+| #583 NotificationCenter | `9e5b75087` | SUCCESS | não — escopo notificação |
+| #584 Governança | `2bdf88cb0` | SUCCESS | não |
+| #585 AuditTrail | `00fef4359` | SUCCESS | não — User/Audit ≠ empresa_id |
+| #586 UsuariosTab | `ba016ea6f` | SUCCESS | não — User/Perfil |
+| #587 SegurancaDashboard | `1bc39ad25` | SUCCESS | não — sem fallback global |
+| #588 GestaoAcessos | `12e76937c` | SUCCESS | não |
+| #589 Qualidade | `278b665a8` | SUCCESS | não |
+| #590 Logística acesso | `458140f14` | SUCCESS | não |
+
+**Estado:** publicada + CI verde = **corrigida na origem**; **não** = revisada/integrada/validada na candidata.
+**Próximo após CI do composto `4f76d3de3`:** parecer/dependências antes de qualquer path-checkout adicional. Sem novos pacotes mecânicos.
+
 ## CURSOR — #401 composição #542+#544+#545 (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
