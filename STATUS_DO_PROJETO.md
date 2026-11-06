@@ -1,3 +1,31 @@
+## CURSOR — #582 TimelineCliente CI SUCCESS (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR / tip** | #582 `a836a30da` (código+remainder) |
+| **CI** | **SUCCESS 6/6** |
+| **Fila** | #579–#582 SUCCESS · #583 tip `99c8fc66f` em CI · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — #582 TimelineCliente CI fix date-arithmetic (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | #582 tip fix |
+| **Fix** | remainder baseline date-arithmetic-stage21; getTime canônico no JSX |
+| **Testes** | date-arithmetic Timeline + cliente-timeline-scope **PASS** |
+| **Homolog 100** | BLOCKED |
+
+## CURSOR — TimelineCliente escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cliente-timeline-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filterInContext HistoricoCliente + createInContext; Resumo KPI ≠ 0; STALE_SCOPE |
+| **Testes** | `cliente-timeline-scope` **2 PASS** |
+| **Fila** | #580/#581 Painéis em CI · este PR · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |
