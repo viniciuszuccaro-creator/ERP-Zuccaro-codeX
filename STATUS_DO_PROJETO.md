@@ -1,4 +1,40 @@
-## Continuidade vigente - Setor RBAC validado no snapshot Linux (2026-11-06)
+## Continuidade vigente - revisao591 e diagnostico HML comprovados (2026-11-06)
+
+Setor publicado221b6822, CI6479/6480 SUCCESS; nao repetir Linux2424PASS ou
+backend573PASS/38SKIP sem delta. Desktop limpo antes deste lote documental.
+Cursor segue escritor da candidata/UI. Preparacao5913fc45c32 encontrada,
+CI6481/6482 SUCCESS; nao manter a espera antiga por inexistencia de correcao.
+Parecer por SHA em591/6694327032: faltam ports f51376fa (pool/preflight),
+2f588154 (guardGrupo granular) e9b5de2bc (snapshotFornecedor). Contraprovas
+nos blobs reais com ports sinteticos confirmaram os tres; crossGrupo negado.
+Nao equivalem a HTTP/PostgreSQL/browser. Novos residuos: upsertConfig ainda
+despacha persistencia local em HTTP (estatico); total parcial confirmado e
+fatia vazia sem sondagens individuais (reproduzidos em memoria). Mapping
+Comercial e protecao Integracoes fechados no alcance estatico. Sem port aqui.
+
+HML: probe fisico READ ONLY/ROLLBACK, consulta canonica LIMIT0, businessRows0,
+comprovou42P01: setores_atividade ausente no schema HML e presente em public.
+Sem fallback, DDL ou grants. Numero SQLSTATE do log original nao existia;
+42P01 e reproducao atual equivalente, nao retroatribuir ao log. Principal
+NOSUPER/NOBYPASS nao significa leitor global estrito. PG devolvido STOPPED,
+PID/lock/socket encerrados; API/web nao iniciadas. Nao recarregar a coorte100.
+
+Base44: tresCSV privados871/91/14,711990bytes, hashes preservados.817refs de
+classe =100IDs nativos,0matches exatos nos91Grupos;54refs ausentes. Nenhum
+crosswalk nesses exports. Datas sugerem populacoes distintas, nao equivalencia
+ou exclusao comprovada. Necessaria fonte historica dos100IDs ou crosswalk
+autoritativo auditado, nunca similaridade de nome. Plano privado reutiliza
+projectAssistedLegacyReview:870REVIEW_REQUIRED/1HISTORY_ONLY,0elegiveis,
+destino UNKNOWN_NOT_COMPARED871,0gravações mestre. Reuso do artefato conferido;
+nao chamar isso de idempotencia de carga/restauracao. Unidades por sigla exata
+nao autorizam conversoes ou mapeamento do destino. Dados foraGit/build/CI.
+
+Proximo executavel: Cursor corrige591 pelos hunks/testes; Codex revisa novoSHA
+antes de API/web no MESMO SHA e login/listagem/detalhes reais. Bootstrap privado
+catalog8ac9773c preservado, recibo privado0600. Sem misturar API antiga/webnova,
+promoveruser, restaurar registros por seed ou liberar operacao pela CI.
+
+## Historico - Setor RBAC validado no snapshot Linux (2026-11-06)
 
 ControleChrome recuperado na mesma aba750, sem reinicio/rebuild. Codespace
 canonico continua b5cb34e1 com apenas??.vscode/, sem sincronizacao. Processo

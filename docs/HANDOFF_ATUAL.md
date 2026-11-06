@@ -1,4 +1,39 @@
-## Continuidade vigente - snapshot Setor completo validado (2026-11-06)
+## Continuidade vigente -591 revisada; HML e fontes privadas (2026-11-06)
+
+Publicado Setor221b6822/CI6479-6480 SUCCESS; Linux2424PASS e backend573PASS/
+38SKIP preservados. Nao repetir publicacao/validacao sem delta. Cursor e unico
+escritor da preparacao/candidata.591HEAD3fc45c32/CI6481-6482 SUCCESS revisado,
+parecer591/6694327032 complementa6694210811. Faltam f51376fa pool/preflight,
+2f588154 guardGrupo e9b5de2bc snapshotFornecedor. Blobs reais com ports
+sinteticos reproduzem negacaoGrupo permitida na UI, socket identico rejeitado
+e contextoFornecedor mutavel apos await. CrossGrupo negado;0businessWrites.
+Nao sao provaHTTP/PG/browser. Revisao independente: P1 despacho upsertConfig
+local emHTTP (estatico); P2 total parcial confirmado e fatia incompleta sem
+sondagens (memoria). MappingComercial/ProtectedSection Integracoes corrigidos
+estaticamente. Proximo: hunks minimos Cursor, testes/delta, revisao por SHA.
+
+Diagnostico auxiliar concluido sem DDL: bootstrap privado --catalog-only,
+preflight fisico, READ ONLY/SAVEPOINT/ROLLBACK, LIMIT0 no contrato canonico.
+42P01 reproduzido: setores_atividade ausenteHML/presentepublic, sem fallback,
+0linhas negocio. Log original so continha mensagem, nao SQLSTATE numerico.
+Artefato344/6689846342 atualizado (codigo somente), hash8ac9773c; recibo
+setor-catalog-20261106.private.json0600. PG/API/HML STOPPED, sem lock/socket,
+sem recarga100 ou alteracao operacional. Nao usar public para contornar schema.
+
+FonteBase44: hashes tresCSV inalterados.817refs apontam100IDs sem match nos
+91Grupos;54ausentes. Crosswalk nao encontrado nesses tresexports, nao ausencia
+global. Fonte historica/crosswalk autoritativo ainda necessario. Plano privado
+source-review.plan.private.json via politica EXISTENTE:870revisao/1historico,
+0elegiveis, destino desconhecido871,0masterWrites; reuso do artefato testado,
+nao carga/idempotencia de banco/reversao. Nao ligar classes por nome ou criar
+estoque/preco/fiscal. Originais privados preservados, sem novo download.
+
+HML real UI ainda nao homologada. Corrigir composicao antes de iniciar par
+API/web do MESMO SHA; nao misturar50API/3fcweb. Login real anterior prova so
+sessao/contrato no alcance registrado. Lista/detalhes/reabertura/proprietario
+ainda exigem demonstracao. Gates operacionais anteriores preservados.
+
+## Historico - snapshot Setor completo validado (2026-11-06)
 
 ReconexaoChrome comprovada, mesmaaba750/Codespace, sem reinicio/rebuild/custo
 novo. Checkout canonico b5cb34e1/??.vscode/ preservado; nao fazerpull58commits
