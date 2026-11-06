@@ -1,3 +1,13 @@
+## CURSOR — TimelineCliente escopo (2026-11-05 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/cliente-timeline-scope-392b` ← #401 `b888b2c00` |
+| **Código** | filterInContext HistoricoCliente + createInContext; Resumo KPI ≠ 0; STALE_SCOPE |
+| **Testes** | `cliente-timeline-scope` **2 PASS** |
+| **Fila** | #580/#581 Painéis em CI · este PR · FF #401 aguarda Codex |
+| **Homolog 100** | BLOCKED |
+
 ## CURSOR — VIGENTE (#401 fila canônica) (2026-11-02 America/Sao_Paulo)
 
 | Distinção | SHA / estado |

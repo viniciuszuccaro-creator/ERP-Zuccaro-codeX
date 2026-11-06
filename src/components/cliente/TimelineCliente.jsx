@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +26,25 @@ import {
   Package
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildTimelineClienteQueryKey,
+  isTimelineClienteScopeCurrent,
+  resolveTimelineClienteKpiState,
+  countTimelineEventosPorModuloTipo,
+  countTimelineComunicacoes,
+  diasDesdeUltimoEvento,
+} from "./timelineClienteScope";
+
+function readTimelineActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
 
 const moduloConfig = {
   "Cadastro": { icon: User, color: "text-slate-600", bg: "bg-slate-100" },
@@ -64,19 +82,44 @@ export default function TimelineCliente({ clienteId, limitarModulo = null, limit
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [busca, setBusca] = useState("");
   const [limite, setLimite] = useState(20);
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey } = readTimelineActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
 
-  const { data: eventos = [], isLoading } = useQuery({
-    queryKey: ['historico-cliente', clienteId, limite],
-    queryFn: async () => {
-      let query = { cliente_id: clienteId };
+  const eventosQuery = useQuery({
+    queryKey: buildTimelineClienteQueryKey('historico-cliente', {
+      clienteId, limite, limitarModulo, limitarReferencia, groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const query = { cliente_id: clienteId };
       if (limitarModulo) query.modulo_origem = limitarModulo;
       if (limitarReferencia) query.referencia_id = limitarReferencia;
-      
-      const result = await base44.entities.HistoricoCliente.filter(query, '-data_evento', limite);
-      return result;
+      const rows = await filterInContext('HistoricoCliente', query, '-data_evento', limite);
+      if (signal?.aborted) {
+        const err = new Error('TIMELINE_CLIENTE_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isTimelineClienteScopeCurrent(scopeExpected, readTimelineActorAndSession())) {
+        throw new Error('TIMELINE_CLIENTE_STALE_SCOPE');
+      }
+      return rows;
     },
-    enabled: !!clienteId
+    enabled: Boolean(clienteId) && contextoValido,
   });
+
+  const kpiState = resolveTimelineClienteKpiState({
+    contextoValido,
+    clienteId,
+    isLoading: eventosQuery.isLoading,
+    isError: eventosQuery.isError,
+    isFetching: eventosQuery.isFetching,
+    dataDefined: eventosQuery.data !== undefined,
+  });
+  const eventos = kpiState === 'ready' && Array.isArray(eventosQuery.data) ? eventosQuery.data : [];
 
   const eventosFiltrados = eventos.filter(evento => {
     const matchModulo = filtroModulo === "todos" || evento.modulo_origem === filtroModulo;
@@ -89,10 +132,26 @@ export default function TimelineCliente({ clienteId, limitarModulo = null, limit
     return matchModulo && matchTipo && matchBusca;
   });
 
-  if (isLoading) {
+  if (kpiState === 'unavailable') {
+    return (
+      <div className="text-center py-12 text-amber-800 bg-amber-50 rounded-lg border border-amber-200 text-sm">
+        Selecione grupo ou empresa para listar a timeline do cliente.
+      </div>
+    );
+  }
+
+  if (kpiState === 'loading') {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (kpiState === 'error') {
+    return (
+      <div className="text-center py-12 text-red-800 bg-red-50 rounded-lg border border-red-200 text-sm">
+        Não foi possível carregar a timeline (erro ≠ zero eventos).
       </div>
     );
   }
@@ -313,49 +372,87 @@ export default function TimelineCliente({ clienteId, limitarModulo = null, limit
 }
 
 /**
- * Hook para registrar evento no histórico do cliente
+ * Hook para registrar evento no histórico do cliente (createInContext).
  */
 export function useRegistrarEvento() {
+  const { createInContext } = useContextoVisual();
   return async (evento) => {
-    try {
-      await base44.entities.HistoricoCliente.create({
-        ...evento,
-        data_evento: evento.data_evento || new Date().toISOString()
-      });
-    } catch (error) {
-      console.error("Erro ao registrar evento no histórico:", error);
-    }
+    await createInContext('HistoricoCliente', {
+      ...evento,
+      data_evento: evento.data_evento || new Date().toISOString(),
+    });
   };
 }
 
 /**
  * Componente para resumo rápido do histórico
+ * KPI loading/erro ≠ zeros.
  */
 export function ResumoHistorico({ clienteId }) {
-  const { data: eventos = [] } = useQuery({
-    queryKey: ['historico-resumo', clienteId],
-    queryFn: () => base44.entities.HistoricoCliente.filter({ cliente_id: clienteId }, '-data_evento', 50),
-    enabled: !!clienteId
+  const { filterInContext, empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "empresa" ? empresaAtual?.id : null;
+  const contextoValido = Boolean(groupId || empresaId);
+  const { actorId, sessionKey } = readTimelineActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
+
+  const resumoQuery = useQuery({
+    queryKey: buildTimelineClienteQueryKey('historico-resumo', {
+      clienteId, limite: 50, groupId, empresaId, actorId, sessionKey,
+    }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('HistoricoCliente', { cliente_id: clienteId }, '-data_evento', 50);
+      if (signal?.aborted) {
+        const err = new Error('TIMELINE_RESUMO_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isTimelineClienteScopeCurrent(scopeExpected, readTimelineActorAndSession())) {
+        throw new Error('TIMELINE_RESUMO_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: Boolean(clienteId) && contextoValido,
   });
 
-  const totalPedidos = eventos.filter(e => e.modulo_origem === "Comercial" && e.tipo_evento === "Criacao").length;
-  const totalEntregas = eventos.filter(e => e.modulo_origem === "Expedicao" && e.tipo_evento === "Entrega").length;
-  const totalPagamentos = eventos.filter(e => e.modulo_origem === "Financeiro" && e.tipo_evento === "Pagamento").length;
-  const totalComunicacoes = eventos.filter(e => e.whatsapp_envio || e.email_envio).length;
+  const kpiState = resolveTimelineClienteKpiState({
+    contextoValido,
+    clienteId,
+    isLoading: resumoQuery.isLoading,
+    isError: resumoQuery.isError,
+    isFetching: resumoQuery.isFetching,
+    dataDefined: resumoQuery.data !== undefined,
+  });
+  const eventos = kpiState === 'ready' && Array.isArray(resumoQuery.data) ? resumoQuery.data : [];
+  const contagemIndisponivel = kpiState !== 'ready';
+
+  const totalPedidos = contagemIndisponivel ? null : countTimelineEventosPorModuloTipo(eventos, "Comercial", "Criacao");
+  const totalEntregas = contagemIndisponivel ? null : countTimelineEventosPorModuloTipo(eventos, "Expedicao", "Entrega");
+  const totalPagamentos = contagemIndisponivel ? null : countTimelineEventosPorModuloTipo(eventos, "Financeiro", "Pagamento");
+  const totalComunicacoes = contagemIndisponivel ? null : countTimelineComunicacoes(eventos);
 
   const ultimoEvento = eventos[0];
-  const diasDesdeUltimo = ultimoEvento 
-    ? Math.floor((new Date().getTime() - new Date(ultimoEvento.data_evento).getTime()) / (1000 * 60 * 60 * 24))
-    : null;
+  const diasDesdeUltimo = contagemIndisponivel ? null : diasDesdeUltimoEvento(eventos);
+  const fmt = (n) => (n === null ? '…' : String(n));
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {kpiState === 'error' && (
+        <div className="col-span-2 md:col-span-4 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg p-3">
+          Erro ao carregar resumo (erro ≠ zeros).
+        </div>
+      )}
+      {kpiState === 'unavailable' && (
+        <div className="col-span-2 md:col-span-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+          Selecione grupo ou empresa para o resumo do histórico.
+        </div>
+      )}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-600">Pedidos</p>
-              <p className="text-2xl font-bold text-blue-600">{totalPedidos}</p>
+              <p className="text-2xl font-bold text-blue-600">{fmt(totalPedidos)}</p>
             </div>
             <ShoppingBag className="w-8 h-8 text-blue-300" />
           </div>
@@ -367,7 +464,7 @@ export function ResumoHistorico({ clienteId }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-600">Entregas</p>
-              <p className="text-2xl font-bold text-green-600">{totalEntregas}</p>
+              <p className="text-2xl font-bold text-green-600">{fmt(totalEntregas)}</p>
             </div>
             <Truck className="w-8 h-8 text-green-300" />
           </div>
@@ -379,7 +476,7 @@ export function ResumoHistorico({ clienteId }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-600">Pagamentos</p>
-              <p className="text-2xl font-bold text-purple-600">{totalPagamentos}</p>
+              <p className="text-2xl font-bold text-purple-600">{fmt(totalPagamentos)}</p>
             </div>
             <DollarSign className="w-8 h-8 text-purple-300" />
           </div>
@@ -391,7 +488,7 @@ export function ResumoHistorico({ clienteId }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-slate-600">Comunicações</p>
-              <p className="text-2xl font-bold text-cyan-600">{totalComunicacoes}</p>
+              <p className="text-2xl font-bold text-cyan-600">{fmt(totalComunicacoes)}</p>
             </div>
             <MessageSquare className="w-8 h-8 text-cyan-300" />
           </div>
@@ -407,7 +504,7 @@ export function ResumoHistorico({ clienteId }) {
                 <p className="text-sm font-medium text-slate-700">
                   Última interação há <strong>{diasDesdeUltimo}</strong> dia(s)
                 </p>
-                <p className="text-xs text-slate-500">{ultimoEvento.titulo_evento}</p>
+                <p className="text-xs text-slate-500">{ultimoEvento?.titulo_evento}</p>
               </div>
             </div>
           </CardContent>
