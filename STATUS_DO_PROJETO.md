@@ -1,4 +1,20 @@
-## Continuidade vigente - pool explicito e novo P1 da composicao (2026-11-06)
+## Continuidade vigente - encaminhamento Auth concluido (2026-11-06)
+
+Gate especifico aprovado pelo proprietario aplicado: GET/auth/v1/user e
+POST/auth/v1/token no HTTPS existente, gateway8000 existente. Backup privado,
+caddy validate e reload PASS. Executor protegido PASS/exit0,4positivos,
+12negativos, TLS valido; API health/web preservados, Caddy ativo. Janela0.773s.
+Timer reversao temporario encerrado/inativo/not-found. Nenhum SQL/grant/porta
+nova/deploy ERP. Pins e primeira tentativa bloqueada registrados no HANDOFF.
+Configuracao aplicada SHA256 d34ec046512d4bd3f4ebcb7d64596a8a5a06ea3b8898dcd8a9fee6fa2bde32c2.
+Ainda falta sessao real aceita pela API HML, perfil/contexto e nomes reais no
+navegador; encaminhamento nao equivale a homologacao. Proximo item: bootstrap
+Auth/Data no namespace HML usando pool publicado e provedor real, sem fallback.
+HML100/historicos/backups preservados. P1 atual da guarda401 permanece separado.
+Lote documental: diff-check; provas de aplicacao existentes reutilizadas sem
+repetir suites ERP inalteradas. Validacao propria de Caddy/executor acima.
+
+## Historico - pool explicito e novo P1 da composicao (2026-11-06)
 
 Fornecedor9b5de2bc/CI6444 SUCCESS e Grupo granular2f588154/CI6448 SUCCESS publicados.
 Pool f51376fa46d725cdbaaf9197611b564eb859ef44/CI6450 terminal SUCCESS.

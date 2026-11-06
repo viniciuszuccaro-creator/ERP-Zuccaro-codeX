@@ -1003,3 +1003,17 @@ Evidência mínima após promoção: SHA da label + image ID de API e SPA iguais
 - VPS atualizada para esse SHA; AUDIT, identidade efetiva do banco, backup custom e canário API/SPA aprovados. APPLY abortou no provisionamento: `permission denied for function pg_read_file`, transação revertida, nenhuma promoção. Oficiais preservados; canário antigo exclusivamente localhost3086 parado reversivelmente com container/imagem preservados. Backups privados preservados.
 - Correção candidata em branch própria: JSON por COPY do cliente psql tanto na concessão quanto no restore seletivo, sem conceder leitura de arquivos do servidor nem elevar o usuário PostgreSQL. Preserva locks, validação de tenant, auditoria, transação e decisões do proprietário. Teste PostgreSQL CI com NOSUPERUSER/NOBYPASSRLS verifica leitura negada e COPY bem-sucedido, inclusive aspas/barra/acentos e comando real do restore.
 - Ainda requer CI do novo HEAD e revisão independente Cursor antes de merge/APPLY. Não declarar acesso/deploy concluído. Login real, duas empresas e Comercial/Configurações continuam pendentes; canais OFF. Nenhuma migration ou dado real publicado.
+## Estado vigente das rotas Auth - 2026-11-06
+
+Proposta anterior aprovada especificamente e executada: somente GET/auth/v1/user
+e POST/auth/v1/token para gateway8000 no HTTPS API existente. Restricao inclui
+URI original literal, evitando alias por case/escape/normalizacao. Demais rotas
+preservadas. validate/reload PASS,4positivos/12negativos, TLS valido, health/web
+preservados. Caddy ativo, protecao temporaria de rollback encerrada. Backup e
+executor/recibos privados: /root/erp-private/auth-hml-route-344-20261106.
+Pins/resultado detalhados no topo do HANDOFF existente. Nao reexecutar apply:
+ele rejeita recibo anterior e config diferente do baseline. Reversao exige
+procedimento privado validado, nunca sobrescrita cega de config posterior.
+Encaminhamento nao comprova sessao real/API HML READY ou navegador. Nao autoriza
+novos endpoints, grants, carga operacional ou deploy ERP. Cabecalhos anteriores
+que dizem rota aguardando aprovacao sao historicos, superados por este recibo.

@@ -1,4 +1,25 @@
-## Continuidade vigente - preflight PG real comprovado, Auth/browser pendentes (2026-11-06)
+## Continuidade vigente - rotas Auth autorizadas aplicadas (2026-11-06)
+
+Autorizacao especifica do proprietario executada: SOMENTE GET /auth/v1/user e
+POST /auth/v1/token no HTTPS API DEV existente, para gateway local existente8000.
+Query preservada; demais metodos/paths continuam na API3080. Sem signup/admin,
+porta nova, grants, SQL ou deploy ERP. Caddy validate PASS; reload, nao restart.
+Backup privado e metadados preservados. Config anterior SHA256
+246c2111061f092b597fa368018ca91f54f4ff5261115105d36a55f51bd3386c;
+config aplicada d34ec046512d4bd3f4ebcb7d64596a8a5a06ea3b8898dcd8a9fee6fa2bde32c2.
+Executor privado pin6849959c4071ebd08b07d23dc86c106ca059f2874a479e3be785b6cc545e4f42:
+PASS, exit0,4positivos/12negativos, TLS valido, health API/web preservados,
+janela0.773s. Caddy ativo; timer temporario rollback inativo/not-found ao final.
+Primeira tentativa bloqueou ANTES da alteracao: gateway Envoy retorna401 texto,
+nao JSON. Contrato corrigido para bytes exatos observados, sem aceitar401 generico.
+Destino GoTrue v2.189.0 confirmado usando anon existente somente em memoria VPS.
+10testes do executor sob Python -O PASS; nao substituem ensaio Auth/API/browser.
+Recibos e rollback privados em /root/erp-private/auth-hml-route-344-20261106.
+Proximo: provar sessao real/API HML e interface no MESMO namespace; ainda NAO
+READY, login HML validado ou clientes reais visiveis. Nao repetir carga100.
+P1 independente da composicao401/6684093828 permanece aguardando delta Cursor.
+
+## Historico - preflight PG real comprovado, Auth/browser pendentes (2026-11-06)
 
 Tres commits funcionais publicados e CIs terminais:9b5de2bc/6444SUCCESS,
 2f588154/6448SUCCESS,f51376fa/6450SUCCESS. Checkout desktop limpo apos publicacao;
