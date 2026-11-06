@@ -2,16 +2,17 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Branch / tip / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · tip **`60096f050`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 9/9** (fix `b1c7ed6b5`, base #401) |
+| **Branch / tip / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · tip **`b10fe6510`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 9/9** em `60096f050` (fix `b1c7ed6b5`) |
 | **Coord** | 6690425383 · sessão HML user/`empresa_id` NULL/Grupo CPA · API clientes total100 |
 | **Grupo UI** | `erpHttpSession` switch/buildUser/login/refresh: `pode_operar_em_grupo` por `profileEmpresaId` null — **sem** exigir admin; **sem** liberar grupos alheios |
 | **Erro isolado** | Expedição KPI erro≠0; Cadastros `SetorAtividade` 500 → PARTIAL com `partialCounts` (bloco afetado "—", demais válidos) |
 | **Fornecedor** | Port adapter Codex `6b81004fc` (rotas/importar/reverter opt-in `ENABLE_FORNECEDOR_HTTP` default OFF) — reserva liberada |
-| **Banco #462** | cadastro mestre ≠ infra DB — rebase ainda pendente |
-| **Homolog** | BLOCKED dados reais; SHA deste lote para Codex validar nomes HML |
+| **Banco #462** | aceite no tip: `boundId`+sky+**ID técnico** (sem path-checkout que regrediria reopen); cadastro mestre ≠ infra DB |
+| **Recuperação** | `Home.jsx` placeholder → `Dashboard` canônico (como Integracoes→Index) |
+| **Homolog** | BLOCKED dados reais; tip `60096f050` CI OK para Codex validar nomes HML |
 | Fora | merge main · deploy · VPS · flag por inferência · promover user |
 
-**Próximo:** Codex validar seletor Grupo HML no tip `60096f050` · rebase Banco #462 · próximo desconectado matriz.
+**Próximo:** Codex validar seletor Grupo HML · CI deste append · próximo desconectado matriz.
 
 ## CURSOR — #401 Integrações + pacote Codex CI SUCCESS (2026-11-06 America/Sao_Paulo)
 

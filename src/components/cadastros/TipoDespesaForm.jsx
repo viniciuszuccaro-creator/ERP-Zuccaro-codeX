@@ -182,7 +182,16 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
       <div className="w-full h-full flex flex-col">
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
           <Receipt className="w-6 h-6 text-sky-600" />
-          <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}</h2>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              {tipoDespesaBoundId ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}
+            </h2>
+            {tipoDespesaBoundId ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(tipoDespesaBoundId)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
       </div>

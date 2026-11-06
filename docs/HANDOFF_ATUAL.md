@@ -1,10 +1,9 @@
 ## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
-- Branch `cursor/hml-grupo-erro-fornecedor-392b` tip **`60096f050`** · PR #591 · **CI SUCCESS 9/9** (fix `b1c7ed6b5`) sobre #401. Coord 6690425383.
-- UI Grupo: `erpHttpSession` deixa de exigir `role===admin` para visão Grupo quando `profileEmpresaId` null (autorização explícita do próprio grupo). Negativa cross-grupo/empresa preservada.
-- Contagens: auxiliar SetorAtividade 500 isolado (`READ_COUNT_PARTIAL` + `partialCounts`); Expedição KPI erro≠zero (`—`).
-- Fornecedor HTTP: port de `6b81004fc` (importar/ler/reverter, flag OFF). Sem CRUD paralelo / sem ativar flag.
-- Banco #462 e Homolog HML ainda BLOCKED. Entregar SHA ao Codex para validar nomes reais na HML.
-- Sem merge/deploy/VPS/dados reais no GitHub.
+- Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · **CI SUCCESS 9/9** no tip `60096f050` (fix `b1c7ed6b5`). Coord 6690425383.
+- UI Grupo: `erpHttpSession` deixa de exigir `role===admin` para visão Grupo quando `profileEmpresaId` null. Negativa cross-tenant preservada.
+- Contagens: SetorAtividade 500 isolado (`READ_COUNT_PARTIAL` + `partialCounts`); Expedição KPI erro≠zero.
+- Fornecedor HTTP: port `6b81004fc` (flag OFF). Banco #462: aceite por `boundId`+sky+ID técnico (sem regressão path-checkout).
+- Recuperação: `Home` → `Dashboard` canônico. Homolog HML BLOCKED. Sem merge/deploy/VPS/dados reais.
 
 ## CURSOR — #401 tip `76cd4e299` CI SUCCESS (2026-11-06 America/Sao_Paulo)
 - **CI SUCCESS 3/3** em `76cd4e299`: Integrações reconnect + `initialTab={null}` (typecheck).

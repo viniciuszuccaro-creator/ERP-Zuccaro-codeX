@@ -1,12 +1,14 @@
-// Placeholder file, this should be overridden by the generated code
+/**
+ * Entrada `/Home` (placeholder gerado).
+ * Causa: arquivo só com ProtectedSection vazia — rota órfã do Dashboard canônico.
+ * Recuperação: reusa `Dashboard` (mainPage + menu), sem shell paralelo.
+ */
+import Dashboard from './Dashboard';
 
-import ProtectedSection from "@/components/security/ProtectedSection";
-
-export default function Home() {
-
+export default function Home(props) {
   return (
-    <ProtectedSection module="Home" action="visualizar">
-      <div className="w-full h-full" />
-    </ProtectedSection>
+    <div className="w-full h-full">
+      <Dashboard {...props} />
+    </div>
   );
 }
