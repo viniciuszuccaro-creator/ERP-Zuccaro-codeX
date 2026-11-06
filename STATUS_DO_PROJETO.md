@@ -1,3 +1,18 @@
+## CURSOR — HML Grupo UI + erro isolado + Fornecedor HTTP (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/hml-grupo-erro-fornecedor-392b` (base #401 `5d9a7e37c`) |
+| **Coord** | 6690425383 · sessão HML user/`empresa_id` NULL/Grupo CPA · API clientes total100 |
+| **Grupo UI** | `erpHttpSession` switch/buildUser/login/refresh: `pode_operar_em_grupo` por `profileEmpresaId` null — **sem** exigir admin; **sem** liberar grupos alheios |
+| **Erro isolado** | Expedição KPI erro≠0; Cadastros `SetorAtividade` 500 → PARTIAL com `partialCounts` (bloco afetado "—", demais válidos) |
+| **Fornecedor** | Port adapter Codex `6b81004fc` (rotas/importar/reverter opt-in `ENABLE_FORNECEDOR_HTTP` default OFF) — reserva liberada |
+| **Banco #462** | cadastro mestre ≠ infra DB — rebase ainda pendente |
+| **Homolog** | BLOCKED dados reais; SHA deste lote para Codex validar nomes HML |
+| Fora | merge main · deploy · VPS · flag por inferência · promover user |
+
+**Próximo:** CI deste tip · Codex validar seletor Grupo HML · rebase Banco #462 · próximo desconectado matriz.
+
 ## CURSOR — #401 Integrações + pacote Codex CI SUCCESS (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

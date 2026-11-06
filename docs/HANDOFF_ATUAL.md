@@ -1,3 +1,11 @@
+## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
+- Branch `cursor/hml-grupo-erro-fornecedor-392b` sobre #401 `5d9a7e37c`. Coord 6690425383.
+- UI Grupo: `erpHttpSession` deixa de exigir `role===admin` para visão Grupo quando `profileEmpresaId` null (autorização explícita do próprio grupo). Negativa cross-grupo/empresa preservada.
+- Contagens: auxiliar SetorAtividade 500 isolado (`READ_COUNT_PARTIAL` + `partialCounts`); Expedição KPI erro≠zero (`—`).
+- Fornecedor HTTP: port de `6b81004fc` (importar/ler/reverter, flag OFF). Sem CRUD paralelo / sem ativar flag.
+- Banco #462 e Homolog HML ainda BLOCKED. Entregar SHA ao Codex para validar nomes reais na HML.
+- Sem merge/deploy/VPS/dados reais no GitHub.
+
 ## CURSOR — #401 tip `76cd4e299` CI SUCCESS (2026-11-06 America/Sao_Paulo)
 - **CI SUCCESS 3/3** em `76cd4e299`: Integrações reconnect + `initialTab={null}` (typecheck).
 - Base `912bc7b0f` P1/Dashboard. Pacote Codex: `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt`.
