@@ -28,6 +28,16 @@ test('recuperação: rota registrada em pages.config', () => {
   assert.match(pagesConfig, /"DashboardFechamentoPedidos": DashboardFechamentoPedidos/);
 });
 
+test('parecer 6691042172: Layout mapeia DashboardFechamentoPedidos → Comercial', () => {
+  const layout = readFileSync('src/Layout.jsx', 'utf8');
+  assert.match(layout, /DashboardFechamentoPedidos:\s*'Comercial'/);
+  // Não deve cair no default Sistema por omissão do mapeamento.
+  assert.doesNotMatch(
+    layout,
+    /pageToModule[\s\S]*?DashboardFechamentoPedidos:\s*'Sistema'/,
+  );
+});
+
 test('widget preserva openWindow para o dashboard completo', () => {
   assert.match(widget, /openWindow\(\s*DashboardFechamentoPedidos/);
 });

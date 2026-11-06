@@ -90,6 +90,8 @@ function LayoutContent({ children, currentPageName }) {
   const pageToModule = {
     CRM: 'CRM',
     Comercial: 'Comercial',
+    // Fechamento de pedidos é superfície Comercial (não cair em Sistema por omissão).
+    DashboardFechamentoPedidos: 'Comercial',
     Estoque: 'Estoque',
     Compras: 'Compras',
     Financeiro: 'Financeiro',
@@ -105,6 +107,12 @@ function LayoutContent({ children, currentPageName }) {
     Cadastros: 'Cadastros',
     Contratos: 'Contratos',
     AdministracaoSistema: 'Sistema',
+    // Rota direta /Integracoes — mesmo módulo da aba Admin (proteção granular na página).
+    Integracoes: 'Sistema',
+    HubAtendimento: 'CRM',
+    PortalCliente: 'Portal',
+    OrcamentoSite: 'Comercial',
+    EntregasMobile: 'Expedição',
   };
   const moduleName = pageToModule?.[currentPageName] || 'Sistema';
               // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado

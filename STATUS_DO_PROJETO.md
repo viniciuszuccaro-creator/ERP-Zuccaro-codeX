@@ -1,3 +1,20 @@
+## CURSOR — parecer 6691042172 + Setor RBAC + HML (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Coord** | 6690425383 (Grupo HML) · parecer **6691042172** (Layout/Integracoes/upsertConfig) |
+| **Grupo UI** | já em tip CI `bdb912541` — `profileEmpresaId` null; sem admin-only |
+| **Layout** | `pageToModule.DashboardFechamentoPedidos='Comercial'`; `Integracoes='Sistema'` |
+| **Integracoes rota** | `ProtectedSection` Sistema/Integracoes/visualizar |
+| **upsertConfig** | HTTP/remote: falha ≠ fallback entity local; local explícito preservado (`configPersistPolicy`) |
+| **Setor RBAC** | port Codex `221b6822a` — `TenantCrudService` + authorization setor_atividade |
+| **Fornecedor / Banco** | HTTP flag OFF · #462 aceite boundId+ID técnico |
+| **Homolog** | BLOCKED dados reais — tip CI para Codex validar nomes HML |
+| Fora | merge · deploy · VPS · refazer P1 remainder · dados reais GitHub |
+
+**Próximo:** CI deste tip · Codex HML seletor · próximo desconectado matriz.
+
 ## CURSOR — HML Grupo UI + erro isolado + Fornecedor HTTP (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
