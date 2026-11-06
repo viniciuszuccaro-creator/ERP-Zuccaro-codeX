@@ -64,10 +64,12 @@ export function normalizeCadastrosCounts(raw, entities = ALL_ENTITIES) {
     full[e] = v;
   }
   if (missing.length) {
-    /** @type {Error & { code?: string, missing?: string[] }} */
+    /** @type {Error & { code?: string, missing?: string[], partialCounts?: Record<string, number> }} */
     const err = new Error('READ_COUNT_PARTIAL');
     err.code = 'READ_COUNT_PARTIAL';
     err.missing = missing;
+    // Contagens válidas isoladas — consumidor pode exibir o que respondeu sem inventar 0 no restante.
+    err.partialCounts = full;
     throw err;
   }
   return full;
@@ -102,15 +104,31 @@ export async function fetchCadastrosAllCounts({
     filter: buildCadastrosAllCountsFilter(entityName, empresaId, groupId, empresasDoGrupo),
   }));
 
+  /** @type {Record<string, unknown>} */
+  const result = {};
+  /** @type {string[]|null} */
+  let missingAfterAggregate = null;
+
   try {
     const res = await invoke('countEntities', { entities: batch });
     const raw = /** @type {Record<string, unknown>} */ (res?.data?.counts || res?.data || {});
     if (raw && typeof raw === 'object' && Object.keys(raw).length > 0) {
-      return normalizeCadastrosCounts(raw, entities);
+      try {
+        return normalizeCadastrosCounts(raw, entities);
+      } catch (partialError) {
+        const partial = /** @type {{ code?: string, message?: string, partialCounts?: Record<string, number>, missing?: string[] }} */ (partialError);
+        if (partial?.code === 'READ_COUNT_PARTIAL' || partial?.message === 'READ_COUNT_PARTIAL') {
+          // Preserva o que já respondeu; tenta preencher só o que faltou (ex.: SetorAtividade 500).
+          Object.assign(result, partial.partialCounts || {});
+          missingAfterAggregate = Array.isArray(partial.missing) ? partial.missing : null;
+        } else {
+          throw partialError;
+        }
+      }
     }
   } catch (error) {
-    const partial = /** @type {{ code?: string, message?: string }|null|undefined} */ (error);
-    if (partial?.code === 'READ_COUNT_PARTIAL' || partial?.message === 'READ_COUNT_PARTIAL') {
+    const maybePartial = /** @type {{ code?: string, message?: string }|null|undefined} */ (error);
+    if (maybePartial?.code === 'READ_COUNT_PARTIAL' || maybePartial?.message === 'READ_COUNT_PARTIAL') {
       throw error;
     }
     if (typeof console !== 'undefined') {
@@ -118,18 +136,51 @@ export async function fetchCadastrosAllCounts({
     }
   }
 
-  /** @type {Record<string, unknown>} */
-  const result = {};
+  const pending = missingAfterAggregate
+    ? batch.filter((row) => missingAfterAggregate.includes(row.entityName))
+    : batch;
+
+  /** Auxiliar 500/negativa não envenena o lote: tenta fatia, depois entidade a entidade. */
   const BATCH = 8;
-  for (let i = 0; i < batch.length; i += BATCH) {
-    const slice = batch.slice(i, i + BATCH);
+  for (let i = 0; i < pending.length; i += BATCH) {
+    const slice = pending.slice(i, i + BATCH);
     if (i > 0) await new Promise((r) => setTimeout(r, 0));
-    const res = await invoke('countEntities', { entities: slice });
-    const raw = res?.data?.counts || res?.data || {};
-    if (!raw || typeof raw !== 'object') {
-      throw new Error('READ_COUNT_UNAVAILABLE');
+    try {
+      const res = await invoke('countEntities', { entities: slice });
+      const raw = res?.data?.counts || res?.data || {};
+      if (raw && typeof raw === 'object') {
+        Object.assign(result, /** @type {Record<string, unknown>} */ (raw));
+        continue;
+      }
+    } catch (sliceError) {
+      if (typeof console !== 'undefined') {
+        console.warn('[cadastrosAllCountsCore] Fatia auxiliar indisponivel; isolando entidades', sliceError);
+      }
     }
-    Object.assign(result, /** @type {Record<string, unknown>} */ (raw));
+    for (const row of slice) {
+      try {
+        const one = await invoke('countEntities', {
+          entities: [{ entityName: row.entityName, filter: row.filter }],
+        });
+        const rawOne = one?.data?.counts || one?.data || {};
+        if (rawOne && typeof rawOne === 'object' && Object.prototype.hasOwnProperty.call(rawOne, row.entityName)) {
+          result[row.entityName] = /** @type {Record<string, unknown>} */ (rawOne)[row.entityName];
+          continue;
+        }
+        // Formato single: { count: n }
+        const n = one?.data?.count;
+        if (isValidCountValue(n)) {
+          result[row.entityName] = n;
+        }
+      } catch (entityError) {
+        if (typeof console !== 'undefined') {
+          console.warn('[cadastrosAllCountsCore] Contagem auxiliar isolada falhou', row.entityName, entityError);
+        }
+      }
+    }
+  }
+  if (Object.keys(result).length === 0) {
+    throw new Error('READ_COUNT_UNAVAILABLE');
   }
   return normalizeCadastrosCounts(result, entities);
 }

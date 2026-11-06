@@ -150,23 +150,50 @@ test('valores inválidos não viram total (null/false/\'\'/-1/1.5/overflow)', ()
   });
 });
 
-test('parcial no batch agregada não vira total (fetch rejeita)', async () => {
+test('parcial no batch agregada tenta isolar e completar o que faltou', async () => {
   let calls = 0;
   const invoke = async () => {
     calls += 1;
     if (calls === 1) return { data: { counts: { Produto: 3 } } }; // Marca ausente
     return { data: { counts: { Produto: 3, Marca: 1 } } };
   };
-  // Primeiro retorno parcial → normalize lança → catch do agregada repropaga PARTIAL
+  const counts = await fetchCadastrosAllCounts({
+    invoke,
+    empresaId: 'emp-synth-cpa',
+    groupId: 'grp-synth-001',
+    empresasDoGrupo: [{ id: 'emp-synth-cpa' }],
+    entities: ['Produto', 'Marca'],
+  });
+  assert.deepEqual(counts, { Produto: 3, Marca: 1 });
+  assert.ok(calls >= 2, 'deve tentar completar entidade ausente');
+});
+
+test('auxiliar que falha isolada não inventa 0 e preserva contagens válidas (PARTIAL)', async () => {
+  const invoke = async (_name, body) => {
+    const entities = body?.entities || [];
+    if (entities.length > 1) {
+      // Agregado: omite SetorAtividade
+      return { data: { counts: { Produto: 4, Marca: 2 } } };
+    }
+    const name = entities[0]?.entityName;
+    if (name === 'SetorAtividade') {
+      throw new Error('SetorAtividade 500');
+    }
+    return { data: { counts: { [name]: name === 'Produto' ? 4 : 2 } } };
+  };
   await assert.rejects(
     () => fetchCadastrosAllCounts({
       invoke,
       empresaId: 'emp-synth-cpa',
       groupId: 'grp-synth-001',
       empresasDoGrupo: [{ id: 'emp-synth-cpa' }],
-      entities: ['Produto', 'Marca'],
+      entities: ['Produto', 'Marca', 'SetorAtividade'],
     }),
-    /READ_COUNT_PARTIAL/,
+    (err) => err?.code === 'READ_COUNT_PARTIAL'
+      && err.missing?.includes('SetorAtividade')
+      && err.partialCounts?.Produto === 4
+      && err.partialCounts?.Marca === 2
+      && !Object.prototype.hasOwnProperty.call(err.partialCounts, 'SetorAtividade'),
   );
 });
 

@@ -13,7 +13,8 @@ for(const [file,hash] of [
   [policy,'205bfcc4ae90b8a0665f8e1896b6e33812e2c5e5c39dd7f0dc0e320cf4c18d51'],
   [tags,'8f84f0cbf472b810e769dc3ec1cf7d4a50f3591016f8ed6703ccb561441e6b46'],
   [queue,'4273dc5de415d4f5ca704329853b051da2b6b4cebd86708f495c0f36f99e2e6a'],
-  [chat,'02a2f24dfdf119960e5ef8aed2f5932c67b155eb4dfe6de00b41e6c27444a959'],
+  // Hash atualizado: ProtectedSection CRM/Atendimento no export default (recuperação menu).
+  [chat,'b7ba9be65de5705690bd8e6a7d9ef2b79a6a6d159dc8b840c8aa89bb66532c50'],
 ])test(`${file}: full executable runtime unchanged by annotations`,()=>{
   const output=ts.transpileModule(readBoundaryRemainder(file,fs.readFileSync(file,'utf8')),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(output).digest('hex'),hash);

@@ -119,12 +119,25 @@ export function useEntityCounts(entities = []) {
         console.warn('[useEntityCounts] Contagem agregada indisponivel', error);
       }
 
-      // Fallback sequencial: falha propaga (erro ≠ vazio); nunca misturar parcial com total
+      // Fallback sequencial isolado: falha de uma entidade não zera as demais.
       const result = {};
+      const missing = [];
       for (let i = 0; i < batchPayload.length; i++) {
         const { entityName, filter } = batchPayload[i];
-        result[entityName] = await countSingle(entityName, filter);
+        try {
+          result[entityName] = await countSingle(entityName, filter);
+        } catch (entityError) {
+          console.warn('[useEntityCounts] Contagem auxiliar isolada falhou', entityName, entityError);
+          missing.push(entityName);
+        }
         if (i < batchPayload.length - 1) await new Promise(r => setTimeout(r, 200));
+      }
+      if (Object.keys(result).length === 0) {
+        throw new Error('READ_COUNT_UNAVAILABLE');
+      }
+      if (missing.length) {
+        console.warn('[useEntityCounts] Contagem parcial descartada (≠ total)', { missing });
+        // Retorna só o que respondeu — consumidor usa ausência ≠ 0.
       }
       return result;
     },

@@ -1,3 +1,66 @@
+## CURSOR — recuperação + unificação Empresas + C360 prep (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / HEAD / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · **`b16b4865a`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 3/3** (push+PR) |
+| **Tips verdes** | parecer **`3fc45c320`** · hash **`a670`** · 404 **`e792`** · docs **`792e`** · Expedição mapa/config **`b16b4865a`** |
+| **Coord / parecer** | 6690425383 · 6691042172 fechado |
+| **Recuperação** | Chatbot menu; SeparacaoConferencia keep both; Fechamento Comercial+rota; ConfiguracoesUsuario ≠ Sistema; 404 aliases |
+| **Unificação** | Empresas×Cadastros: EmpresaForm canônico; KPIs preservados + banner |
+| **C360 prep** | evidence slots Orçamentos — sem redesign |
+| **Homolog** | BLOCKED dados reais — Codex validar seletor no tip **`792e265f1`** / **`e7926b4a2`** |
+| Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
+
+**CI note:** `c9ef`/`c6ba8` FAIL = hash Chatbot (fix `a670`); flake legado runtime04 ocasional em PR — push verde prevalece.
+**Append:** Expedição — `MapaRoteirizacaoIA` + `ConfigFinanceiroLogistica` reconectados · tip **`b16b4865a`** **CI SUCCESS 3/3**.
+**Próximo:** Codex HML seletor · próximo desconectado matriz.
+
+## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tips** | parecer **`3fc45c320`** CI SUCCESS 9/9 · Chatbot menu · Separação clássica + Fechamento hub |
+| **Coord / parecer** | 6690425383 · 6691042172 fechado |
+| **Recuperação** | ChatbotAtendimento no menu (Hub keep both); SeparacaoConferencia no launchpad Expedição; Fechamento no Comercial + ProtectedSection rota; ConfiguracoesUsuario ≠ falso bloqueio Sistema |
+| **Homolog** | BLOCKED dados reais — Codex validar seletor no tip CI verde |
+| Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
+
+**Próximo:** CI deste tip · Codex HML · C360 prep sem redesign · próximo desconectado matriz.
+
+## CURSOR — parecer 6691042172 + Setor RBAC + HML (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / tip / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · tip **`3fc45c320`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 9/9** |
+| **Coord** | 6690425383 (Grupo HML) · parecer **6691042172** (Layout/Integracoes/upsertConfig) |
+| **Grupo UI** | tip CI `bdb912541` — `profileEmpresaId` null; sem admin-only |
+| **Layout** | `pageToModule.DashboardFechamentoPedidos='Comercial'`; `Integracoes='Sistema'` |
+| **Integracoes rota** | `ProtectedSection` Sistema/Integracoes/visualizar |
+| **upsertConfig** | HTTP/remote: falha ≠ fallback entity local; local explícito preservado (`configPersistPolicy`) |
+| **Setor RBAC** | port Codex `221b6822a` — `TenantCrudService` + authorization setor_atividade |
+| **Fornecedor / Banco** | HTTP flag OFF · #462 aceite boundId+ID técnico |
+| **Homolog** | BLOCKED dados reais — tip **`3fc45c320`** CI OK para Codex validar nomes HML |
+| Fora | merge · deploy · VPS · refazer P1 remainder · dados reais GitHub |
+
+**Próximo:** Codex HML seletor no tip `3fc45c320` · ChatbotAtendimento menu reconectado neste append · C360 prep sem redesign.
+
+## CURSOR — HML Grupo UI + erro isolado + Fornecedor HTTP (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / tip / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · tip **`bdb912541`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 9/9** (fix `b1c7ed6b5` + Home/Banco) |
+| **Coord** | 6690425383 · sessão HML user/`empresa_id` NULL/Grupo CPA · API clientes total100 |
+| **Grupo UI** | `erpHttpSession` switch/buildUser/login/refresh: `pode_operar_em_grupo` por `profileEmpresaId` null — **sem** exigir admin; **sem** liberar grupos alheios |
+| **Erro isolado** | Expedição KPI erro≠0; Cadastros `SetorAtividade` 500 → PARTIAL com `partialCounts` (bloco afetado "—", demais válidos) |
+| **Fornecedor** | Port adapter Codex `6b81004fc` (rotas/importar/reverter opt-in `ENABLE_FORNECEDOR_HTTP` default OFF) — reserva liberada |
+| **Banco #462** | aceite no tip: `boundId`+sky+**ID técnico** (sem path-checkout que regrediria reopen); cadastro mestre ≠ infra DB |
+| **Recuperação** | `Home.jsx` placeholder → `Dashboard` canônico (como Integracoes→Index) |
+| **Homolog** | BLOCKED dados reais; tip `60096f050` CI OK para Codex validar nomes HML |
+| Fora | merge main · deploy · VPS · flag por inferência · promover user |
+
+**Próximo:** Codex validar seletor Grupo HML no tip `bdb912541` · próximo desconectado matriz.
+
 ## CURSOR — #401 Integrações + pacote Codex CI SUCCESS (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

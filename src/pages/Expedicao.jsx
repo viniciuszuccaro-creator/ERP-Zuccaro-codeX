@@ -66,112 +66,106 @@ export default function Expedicao() {
   const [comprovanteOpen, setComprovanteOpen] = React.useState(false);
   const [ocorrenciaOpen, setOcorrenciaOpen] = React.useState(false);
 
-  const { data: entregas = [] } = useQuery({
+  // Erro/negativa ≠ lista vazia nem KPI 0. Auxiliares isolados: falha de um não zera o restante.
+  const { data: entregas, isError: isErrorEntregas, isLoading: isLoadingEntregas } = useQuery({
     queryKey: ['entregas', contextKey],
-    queryFn: async () => {
-      try {
-        return await filtrarPorContexto('Entrega', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar entregas:', err);
-        return [];
-      }
-    },
+    queryFn: () => filtrarPorContexto('Entrega', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 2,
     enabled: canSeeExpedicao && contextoValido
   });
 
-  const { data: totalEntregas = 0 } = useQuery({
+  // Contagem auxiliar isolada — falha aqui não zera KPIs de status nem lista.
+  useQuery({
     queryKey: ['entregas-count', contextKey],
     queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Entrega',
-          filter: getFiltroContexto('empresa_id', true)
-        });
-        return response.data?.count || entregas.length;
-      } catch {
-        return entregas.length;
+      const response = await base44.functions.invoke('countEntities', {
+        entityName: 'Entrega',
+        filter: getFiltroContexto('empresa_id', true)
+      });
+      const n = response.data?.count;
+      if (typeof n !== 'number' || !Number.isSafeInteger(n) || n < 0) {
+        throw new Error('READ_COUNT_UNAVAILABLE');
       }
+      return n;
     },
     staleTime: 60000,
     retry: 1,
     enabled: canSeeExpedicao && contextoValido
   });
 
-  const { data: clientes = [] } = useQuery({
+  const { data: clientes } = useQuery({
     queryKey: ['clientes', contextKey],
-    queryFn: async () => {
-      try {
-        return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar clientes:', err);
-        return [];
-      }
-    },
+    queryFn: () => filtrarPorContexto('Cliente', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 1,
     enabled: canSeeExpedicao && contextoValido
   });
 
-  const { data: pedidos = [] } = useQuery({
+  const { data: pedidos } = useQuery({
     queryKey: ['pedidos', contextKey],
-    queryFn: async () => {
-      try {
-        return await filtrarPorContexto('Pedido', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar pedidos:', err);
-        return [];
-      }
-    },
+    queryFn: () => filtrarPorContexto('Pedido', {}, '-created_date', 100),
     staleTime: 30000,
     retry: 1,
     enabled: canSeeExpedicao && contextoValido
   });
 
-  const { data: romaneios = [] } = useQuery({
+  // Romaneios/rotas: consumidores próprios nas janelas; falha isolada (sem default []).
+  useQuery({
     queryKey: ['romaneios', contextKey],
-    queryFn: async () => {
-      try {
-        return await filtrarPorContexto('Romaneio', {}, '-created_date', 50);
-      } catch (err) {
-        console.error('Erro ao buscar romaneios:', err);
-        return [];
-      }
-    },
+    queryFn: () => filtrarPorContexto('Romaneio', {}, '-created_date', 50),
     staleTime: 30000,
     retry: 1,
     enabled: canSeeExpedicao && contextoValido
   });
 
-  const { data: rotas = [] } = useQuery({
+  useQuery({
     queryKey: ['rotas', contextKey],
-    queryFn: async () => {
-      try {
-        return await filtrarPorContexto('Rota', {}, '-created_date', 50);
-      } catch (err) {
-        console.error('Erro ao buscar rotas:', err);
-        return [];
-      }
-    },
+    queryFn: () => filtrarPorContexto('Rota', {}, '-created_date', 50),
     staleTime: 30000,
     retry: 1,
     enabled: canSeeExpedicao && contextoValido
   });
 
-  // Dados já vêm filtrados do servidor
-  const entregasFiltradas = entregas;
-  const { data: entregasRealtime, hasChanges } = useRealtimeEntregas(empresaAtual?.id);
+  const entregasFiltradas = Array.isArray(entregas) ? entregas : [];
+  const clientesLista = Array.isArray(clientes) ? clientes : [];
+  const pedidosLista = Array.isArray(pedidos) ? pedidos : [];
+  // Erro de listagem ≠ loading; loading não inventa zero confirmado.
+  const kpisUnavailable = Boolean(isErrorEntregas);
+  useRealtimeEntregas(empresaAtual?.id);
 
-  const statusCounts = {
-    total: entregasFiltradas.length,
-    aguardando: entregasFiltradas.filter(e => e.status === "Aguardando Separação").length,
-    separacao: entregasFiltradas.filter(e => e.status === "Em Separação").length,
-    pronto: entregasFiltradas.filter(e => e.status === "Pronto para Expedir").length,
-    transito: entregasFiltradas.filter(e => e.status === "Em Trânsito" || e.status === "Saiu para Entrega").length,
-    entregue: entregasFiltradas.filter(e => e.status === "Entregue").length,
-    frustrada: entregasFiltradas.filter(e => e.status === "Entrega Frustrada").length,
-  };
+  const statusCounts = kpisUnavailable
+    ? {
+      total: null,
+      aguardando: null,
+      separacao: null,
+      pronto: null,
+      transito: null,
+      entregue: null,
+      frustrada: null,
+      unavailable: true,
+    }
+    : isLoadingEntregas && !Array.isArray(entregas)
+      ? {
+        total: null,
+        aguardando: null,
+        separacao: null,
+        pronto: null,
+        transito: null,
+        entregue: null,
+        frustrada: null,
+        unavailable: true,
+      }
+      : {
+        total: entregasFiltradas.length,
+        aguardando: entregasFiltradas.filter(e => e.status === "Aguardando Separação").length,
+        separacao: entregasFiltradas.filter(e => e.status === "Em Separação").length,
+        pronto: entregasFiltradas.filter(e => e.status === "Pronto para Expedir").length,
+        transito: entregasFiltradas.filter(e => e.status === "Em Trânsito" || e.status === "Saiu para Entrega").length,
+        entregue: entregasFiltradas.filter(e => e.status === "Entregue").length,
+        frustrada: entregasFiltradas.filter(e => e.status === "Entrega Frustrada").length,
+        unavailable: false,
+      };
 
   if (loadingPermissions) {
     return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
@@ -187,7 +181,7 @@ export default function Expedicao() {
       windowTitle: '🚚 Entregas',
       width: 1600,
       height: 900,
-      props: { entregas: entregasFiltradas, clientes, pedidos, empresasDoGrupo, estaNoGrupo }
+      props: { entregas: entregasFiltradas, clientes: clientesLista, pedidos: pedidosLista, empresasDoGrupo, estaNoGrupo }
     },
     {
       title: 'Separação',
@@ -196,6 +190,18 @@ export default function Expedicao() {
       color: 'blue',
       component: SeparacaoConferenciaIA,
       windowTitle: '📦 Separação IA',
+      width: 1400,
+      height: 850,
+    },
+    // Matriz keep both curto: clássica permanece disponível (não só a variante IA).
+    {
+      title: 'Separação Conferência',
+      sectionKey: 'Separação',
+      description: 'Conferência operacional',
+      icon: Package,
+      color: 'blue',
+      component: SeparacaoConferencia,
+      windowTitle: '📦 Separação Conferência',
       width: 1400,
       height: 850,
     },
@@ -211,7 +217,7 @@ export default function Expedicao() {
       // Só pré-seleciona pedidos com empresa_id + status elegível (policy).
       // Órfãos só com group_id bloqueavam effectiveEmpresaId em visão grupo.
       props: {
-        pedidosSelecionados: pedidos.filter((p) => (
+        pedidosSelecionados: pedidosLista.filter((p) => (
           Boolean(p?.empresa_id) && isPedidoStatusElegivelRomaneio(p?.status)
         )),
       },
@@ -236,6 +242,23 @@ export default function Expedicao() {
       windowTitle: '🤖 Roteirização IA',
       width: 1400,
       height: 800,
+    },
+    // Canônico existente desconectado do launchpad (lazy import órfão).
+    {
+      title: 'Mapa Roteirização IA',
+      sectionKey: 'Roteirizacao',
+      description: 'Mapa com otimização IA',
+      icon: Map,
+      color: 'blue',
+      component: MapaRoteirizacaoIA,
+      windowTitle: '🗺️ Mapa Roteirização IA',
+      width: 1400,
+      height: 850,
+      props: {
+        pedidosSelecionados: pedidosLista.filter((p) => (
+          Boolean(p?.empresa_id) && isPedidoStatusElegivelRomaneio(p?.status)
+        )),
+      },
     },
     {
       title: 'Métricas Realtime',
@@ -277,6 +300,18 @@ export default function Expedicao() {
       windowTitle: '💸 Financeiro Logístico',
       width: 1300,
       height: 800,
+      props: { empresaId: empresaAtual?.id }
+    },
+    {
+      title: 'Config Financeiro Logística',
+      sectionKey: 'Financeiro Logistica',
+      description: 'Parâmetros financeiros',
+      icon: Settings,
+      color: 'blue',
+      component: ConfigFinanceiroLogistica,
+      windowTitle: '⚙️ Config Financeiro Logística',
+      width: 1200,
+      height: 700,
       props: { empresaId: empresaAtual?.id }
     },
     {
@@ -395,8 +430,8 @@ export default function Expedicao() {
       openWindow(
         FormularioEntrega,
         {
-          clientes,
-          pedidos,
+          clientes: clientesLista,
+          pedidos: pedidosLista,
           empresasDoGrupo,
           estaNoGrupo,
           windowMode: true,
@@ -463,6 +498,11 @@ export default function Expedicao() {
       <ModuleLayout title="Expedição e Logística" subtitle="Entregas, romaneios e rotas" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={handlePrimaryAction} data-permission="Expedicao.Entregas.criar" data-action="Expedicao.nova_entrega">Nova Entrega</Button></div>}>
         <ModuleKPIs>
           <KPIsExpedicao statusCounts={statusCounts} />
+          {kpisUnavailable && (
+            <Badge className="bg-amber-100 text-amber-900 px-3 py-1.5" data-kpis-error="true" role="status">
+              KPIs de entrega indisponíveis — não é zero confirmado
+            </Badge>
+          )}
           {estaNoGrupo && (
             <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5">
               <Building2 className="w-3 h-3 mr-2" /> Visão Consolidada do Grupo
@@ -481,7 +521,7 @@ export default function Expedicao() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           {entregaSelecionada && (
             <NotificadorAutomaticoEntrega
-              pedido={pedidos.find(p => p.id === entregaSelecionada.pedido_id)}
+              pedido={pedidosLista.find(p => p.id === entregaSelecionada.pedido_id)}
               entrega={entregaSelecionada}
               onClose={() => setNotificadorOpen(false)}
             />
@@ -493,7 +533,7 @@ export default function Expedicao() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           {entregaSelecionada && (
             <ComprovanteEntregaDigital
-              pedido={pedidos.find(p => p.id === entregaSelecionada.pedido_id)}
+              pedido={pedidosLista.find(p => p.id === entregaSelecionada.pedido_id)}
               entrega={entregaSelecionada}
               onSuccess={() => setComprovanteOpen(false)}
             />
@@ -505,7 +545,7 @@ export default function Expedicao() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           {entregaSelecionada && (
             <RegistroOcorrenciaLogistica
-              pedido={pedidos.find(p => p.id === entregaSelecionada.pedido_id)}
+              pedido={pedidosLista.find(p => p.id === entregaSelecionada.pedido_id)}
               entrega={entregaSelecionada}
               onClose={() => setOcorrenciaOpen(false)}
             />

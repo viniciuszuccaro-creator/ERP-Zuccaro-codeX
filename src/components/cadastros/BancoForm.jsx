@@ -301,14 +301,21 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 flex items-center gap-3 p-4 -mx-6 -mt-6 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-sky-50 to-sky-100">
           <Landmark className="w-6 h-6 text-sky-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {dadosIniciais ? 'Editar Banco' : 'Novo Banco'}
-          </h2>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              {bancoBoundId ? 'Editar Banco' : 'Novo Banco'}
+            </h2>
+            {bancoBoundId ? (
+              <p className="text-xs text-slate-500">
+                ID técnico: <span className="font-mono">{String(bancoBoundId)}</span>
+              </p>
+            ) : null}
+          </div>
         </div>
-        {formContent}
+        <div className="flex-1 overflow-auto p-6 bg-white">{formContent}</div>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, ShoppingCart, FileText, ClipboardList, TrendingUp, ShieldCheck, Truck, Package, AlertCircle } from "lucide-react";
+import { Users, ShoppingCart, FileText, ClipboardList, TrendingUp, ShieldCheck, Truck, Package, AlertCircle, LayoutDashboard } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -33,6 +33,7 @@ const CentralAprovacoesManager = React.lazy(() => import("../components/comercia
 const PedidosEntregaTab = React.lazy(() => import("../components/comercial/PedidosEntregaTab"));
 const PedidosRetiradaTab = React.lazy(() => import("../components/comercial/PedidosRetiradaTab"));
 const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comercial/MonitoramentoCanaisRealtime"));
+const DashboardFechamentoPedidos = React.lazy(() => import("@/components/comercial/DashboardFechamentoPedidos"));
 
 const reportComercialRealtimeFailure = (operation, error, context = {}) => {
   console.error('[Comercial] ' + operation, {
@@ -441,6 +442,18 @@ function ComercialContent() {
       width: 1300,
       height: 750,
       props: { autoRefresh: true }
+    },
+    {
+      title: 'Fechamento',
+      sectionKey: 'Fechamento',
+      description: 'Dashboard de fechamento',
+      icon: LayoutDashboard,
+      color: 'blue',
+      component: DashboardFechamentoPedidos,
+      windowTitle: 'Dashboard de Fechamento',
+      width: 1400,
+      height: 850,
+      props: { empresaId }
     }
   ];
 

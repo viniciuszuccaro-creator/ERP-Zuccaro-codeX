@@ -1,3 +1,17 @@
+## CURSOR — recuperação + Empresas unify + C360 prep (2026-11-06 America/Sao_Paulo)
+- PR #591 HEAD **`b16b4865a`** · **CI SUCCESS 3/3** (push+PR).
+- Coord **6690425383**; parecer **6691042172** fechado; tip parecer **`3fc45c320`** SUCCESS.
+- Recuperação: Chatbot; Separacao keep both; Fechamento hub; ConfiguracoesUsuario; 404; MapaRoteirizacaoIA + ConfigFinanceiroLogistica.
+- Unificação Empresas×Cadastros + C360 prep (evidence, sem redesign).
+- Homolog BLOCKED. Sem merge/deploy/VPS.
+
+## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
+- Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip **`bdb912541`** · **CI SUCCESS 9/9**. Coord 6690425383.
+- UI Grupo: `erpHttpSession` deixa de exigir `role===admin` para visão Grupo quando `profileEmpresaId` null. Negativa cross-tenant preservada.
+- Contagens: SetorAtividade 500 isolado (`READ_COUNT_PARTIAL` + `partialCounts`); Expedição KPI erro≠zero.
+- Fornecedor HTTP: port `6b81004fc` (flag OFF). Banco #462: aceite por `boundId`+sky+ID técnico (sem regressão path-checkout).
+- Recuperação: `Home` → `Dashboard` canônico. Homolog HML BLOCKED. Sem merge/deploy/VPS/dados reais.
+
 ## CURSOR — #401 tip `76cd4e299` CI SUCCESS (2026-11-06 America/Sao_Paulo)
 - **CI SUCCESS 3/3** em `76cd4e299`: Integrações reconnect + `initialTab={null}` (typecheck).
 - Base `912bc7b0f` P1/Dashboard. Pacote Codex: `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt`.

@@ -228,7 +228,9 @@ export function switchErpHttpSessionEmpresa(input) {
   if (empresaId && !isUuid(empresaId)) {
     throw new Error('empresaId inválido na troca de contexto');
   }
-  if (!empresaId && (current.profileEmpresaId || current.role !== 'admin')) {
+  // Visão Grupo: só perfis com empresa_id NULL no servidor (autorização explícita
+  // do próprio grupo). Não exige role admin — e não libera grupos alheios.
+  if (!empresaId && current.profileEmpresaId) {
     throw new Error('Perfil sem autorização para operar no Grupo');
   }
   // Só permite empresa listada pelo servidor na sessão (anti-fabricação no browser).
@@ -321,7 +323,9 @@ export function buildHttpSessionUser(session) {
     grupo_padrao_id: groupId,
     empresa_atual_id: empresaAtual,
     empresa_padrao_id: empresaAtual,
-    pode_operar_em_grupo: isAdmin && !session.profileEmpresaId,
+    // empresa_id NULL no perfil = autorização explícita do servidor para o próprio Grupo.
+    // Não promover user a admin nem conceder grupos fora da sessão.
+    pode_operar_em_grupo: !session.profileEmpresaId,
     pode_ver_todas_empresas: isAdmin || empresasVinculadas.length > 1,
     empresas_vinculadas: empresasVinculadas,
     grupos_vinculados: [{ grupo_id: groupId, ativo: true }],
@@ -460,7 +464,8 @@ export async function loginErpHttpSession(input) {
     groupName,
     empresas,
     profileEmpresaId: profile.empresa_id || null,
-    scopeType: !profile.empresa_id && role === 'admin' ? 'grupo' : 'empresa',
+    // Perfil de Grupo (empresa_id null) inicia em visão consolidada — user ou admin.
+    scopeType: !profile.empresa_id ? 'grupo' : 'empresa',
     expiresIn,
   };
   const expiresAt = new Date(Date.now() + Math.floor(expiresIn) * 1000).toISOString();
@@ -618,7 +623,8 @@ export async function refreshErpHttpSessionFromServer(input = {}) {
     preferredEmpresaId: sameGroupAsPreference ? rawPreferred : null,
   });
   // Se o servidor listou empresas e a preferência/perfil não bate, usa a primeira autorizada.
-  const groupView = !profile.empresa_id && role === 'admin' && active.scopeType === 'grupo';
+  // Restaura visão Grupo quando o perfil é de grupo e a sessão ativa já está em grupo.
+  const groupView = !profile.empresa_id && active.scopeType === 'grupo';
   if (groupView) empresaId = null;
   if (!groupView && !empresaId && empresas.length > 0) {
     empresaId = String(empresas[0].id);
