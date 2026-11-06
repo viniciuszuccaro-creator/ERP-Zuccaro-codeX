@@ -11,8 +11,12 @@
 | **Homolog** | BLOCKED dados reais |
 | Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
 
-**CI note:** tips `c9ef540cd`/`c6ba8fcc7` frontend FAIL — único `not ok` hash ChatbotAtendimento; fix **`a670ec7cc`**; HEAD **`e7926b4a2`** CI em curso.
-**Próximo:** CI HEAD SUCCESS · Codex HML seletor · próximo desconectado matriz.
+**CI:**
+- tips `c9ef`/`c6ba8` FAIL = hash Chatbot → fix **`a670ec7cc`** push **CI SUCCESS 3/3**
+- **`e7926b4a2`** (404) push **CI SUCCESS 3/3**
+- PR run `e792` flake backend postgres `LEGACY_RECONCILIATION_REQUIRED` (runtime04 legado) — fora do diff HML; push verde
+- HEAD docs **`0d51ab30a`** CI em curso
+**Próximo:** CI HEAD · Codex HML seletor no tip verde · próximo desconectado matriz.
 
 ## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
 
