@@ -1,3 +1,23 @@
+## CURSOR — #545 fechamento CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- Tip `6c6827bed` **CI SUCCESS** 12/12. KPI auxiliar ≠ zero; stats binding; lint banner corrigido.
+- Sem FF #401 (`b888b2c00`). Homolog BLOCKED. Sem merge/deploy/VPS.
+
+## CURSOR — #545 lint fix kpiState error banner (2026-11-06 America/Sao_Paulo)
+- CI `35b6f43e2` FAIL: `mastersFechamentoIndisponiveis` no-undef. Banner → `kpiState === 'error'`.
+- Sem FF #401. Homolog BLOCKED.
+
+## CURSOR — #545 tip KPI agregado + stats stale (2026-11-06 America/Sao_Paulo)
+- Tip `a8b8437ce` em `cursor/comercial-fechamento-cache-392b` (#545).
+- Causa: KPI só via Pedido; auxiliares pendentes viravam 0; stats IA sem cancel/binding; keys `*-fechamento` fora de invalidateQueries(['pedidos']).
+- Fix: `resolveFechamentoDashboardKpiState`; cancel+scopeLiveRef; namespaces raiz `pedidos|movimentacoes|contas-receber|entregas` + extra.
+- Negativos montados 12 PASS. **Não** FF em #401 (`b888b2c00`) até CI+aceite.
+- Em paralelo: #542 tip `f9bcaf9e1` CI FAIL (teste congelado `queryKey: ['clientes', empresaAtual?.id`); #544 tip `eca0cc9f4` CI em curso.
+- Homolog 100 BLOCKED. Sem merge/deploy/VPS.
+
+## CURSOR — #545 fechamento cache CI SUCCESS (2026-11-05 America/Sao_Paulo)
+- Tip `9f3fe0100` **CI SUCCESS** 6/6. #536–#539 cache ator/sessão; KPI≠zero; STALE_SCOPE.
+- Overlap #536–#539. FF #401 aguarda Codex. Homolog BLOCKED.
+
 ## CURSOR — #401 composto recebido e publicado (2026-10-31 America/Sao_Paulo)
 - Recebido coordenação Codex: aceite #446/`900a3fcc`/6545437006; port #453/`cda612`/6545449667; #454/`b4d8`/6545487624; ação #401/6547965046.
 - Incorporação **FF-only** na MESMA branch #401 `cursor/composicao-397-342-prep-392b` até tip `80d1393ee` (inclui pedido-detail espelho #454, CI SUCCESS prévia).

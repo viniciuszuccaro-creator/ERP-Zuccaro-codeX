@@ -1,28 +1,59 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Package, AlertCircle } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildFechamentoQueryKey,
+  isFechamentoScopeCurrent,
+} from "@/components/comercial/fechamentoCacheScope";
+
+function readFechamentoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 export default function BitolasDisponiveis({ value, onChange, label = "Bitola", tipo = "aco" }) {
-  // Buscar produtos que são bitolas (do estoque)
-  const { data: produtos = [], isLoading } = useQuery({
-    queryKey: ['produtos-bitolas'],
-    queryFn: async () => {
-      const allProdutos = await base44.entities.Produto.list();
-      
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = empresaAtual?.id || null;
+  const { actorId, sessionKey } = readFechamentoActorAndSession();
+  const contextoValido = Boolean(groupId || empresaId);
+  const scopeExpected = { actorId, sessionKey };
+
+  // Escopo multiempresa: Produto via filterInContext (não list unscoped).
+  // Cache: Grupo+Empresa+ator+sessão+tipo.
+  const { data: produtos = [], isLoading, isError: isErrorBitolas } = useQuery({
+    queryKey: buildFechamentoQueryKey('produtos-bitolas', { groupId, empresaId, actorId, sessionKey, extra: tipo }),
+    queryFn: async ({ signal }) => {
+      const allProdutos = await filterInContext('Produto', { status: 'Ativo' }, 'descricao', 500);
+      if (signal?.aborted) {
+        const err = new Error('BITOLAS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isFechamentoScopeCurrent(scopeExpected, readFechamentoActorAndSession())) {
+        throw new Error('BITOLAS_STALE_SCOPE');
+      }
+
       // Filtrar apenas bitolas ativas
       // Critério: grupo = "Bitola" ou "Aço" ou "Ferro" E status = "Ativo"
       return allProdutos.filter(p => {
-        const grupoMatch = p.grupo && 
-          (p.grupo.toLowerCase().includes('bitola') || 
+        const grupoMatch = p.grupo &&
+          (p.grupo.toLowerCase().includes('bitola') ||
            p.grupo.toLowerCase().includes('aço') ||
            p.grupo.toLowerCase().includes('aco') ||
            p.grupo.toLowerCase().includes('ferro'));
-        
+
         const statusAtivo = p.status === 'Ativo';
-        
+
         // Filtrar por tipo se necessário
         let tipoMatch = true;
         if (tipo === 'aco') {
@@ -45,10 +76,11 @@ export default function BitolasDisponiveis({ value, onChange, label = "Bitola", 
             p.descricao.includes('6.3')
           );
         }
-        
+
         return grupoMatch && statusAtivo && tipoMatch;
       });
     },
+    enabled: contextoValido,
     staleTime: 60000, // Cache de 1 minuto
   });
 
@@ -58,6 +90,22 @@ export default function BitolasDisponiveis({ value, onChange, label = "Bitola", 
     const bitolaB = parseFloat(b.descricao?.match(/(\d+\.\d+)/)?.[0] || 0);
     return bitolaA - bitolaB;
   });
+
+  if (!contextoValido) {
+    return (
+      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+        Selecione grupo ou empresa para listar bitolas.
+      </div>
+    );
+  }
+
+  if (isErrorBitolas) {
+    return (
+      <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">
+        Bitolas indisponíveis (erro de carga ≠ zero).
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

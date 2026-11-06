@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Activity, TrendingUp, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
+import {
+  buildFechamentoQueryKey,
+  isFechamentoScopeCurrent,
+  resolveFechamentoKpiState,
+} from "@/components/comercial/fechamentoCacheScope";
+
+function readFechamentoActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === 'string' ? session.actorId.trim() : '';
+  return {
+    actorId: actorId || null,
+    sessionKey: central360SessionKey(session?.token),
+  };
+}
 
 /**
  * V21.6 - Monitoramento em Tempo Real de Pedidos por Canal
@@ -13,26 +29,77 @@ import { motion, AnimatePresence } from "framer-motion";
  */
 export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = true }) {
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(new Date());
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaCtx = empresaId || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readFechamentoActorAndSession();
+  const contextoValido = Boolean(groupId || empresaCtx);
+  const scopeExpected = { actorId, sessionKey };
+  const scopeKeyArgs = { groupId, empresaId: empresaCtx, actorId, sessionKey };
 
-  // Buscar pedidos em tempo real
-  const { data: pedidos = [], refetch } = useQuery({
-    queryKey: ['pedidos-realtime', empresaId],
-    queryFn: () => {
-      if (empresaId) {
-        return base44.entities.Pedido.filter({ empresa_id: empresaId });
+  // Escopo multiempresa: Pedido e ParametroOrigemPedido via filterInContext (sem list unscoped).
+  // Sem initialData vazio — loading ≠ zero. Cache ator/sessão/Grupo/Empresa.
+  const {
+    data: pedidos,
+    refetch,
+    isLoading: isLoadingPedidosCanal,
+    isError: isErrorPedidosCanal,
+    isFetching: isFetchingPedidosCanal,
+  } = useQuery({
+    queryKey: buildFechamentoQueryKey('pedidos-realtime', scopeKeyArgs),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext(
+        'Pedido',
+        empresaCtx ? { empresa_id: empresaCtx } : {},
+        '-created_date',
+        100
+      );
+      if (signal?.aborted) {
+        const err = new Error('CANAIS_PEDIDOS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
       }
-      return base44.entities.Pedido.list('-created_date', 100);
+      if (!isFechamentoScopeCurrent(scopeExpected, readFechamentoActorAndSession())) {
+        throw new Error('CANAIS_PEDIDOS_STALE_SCOPE');
+      }
+      return rows;
     },
-    initialData: [],
+    enabled: contextoValido,
     refetchInterval: autoRefresh ? 30000 : false // 30 segundos
   });
 
   // Buscar parâmetros
-  const { data: parametros = [] } = useQuery({
-    queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: []
+  const {
+    data: parametros,
+    isError: isErrorParamsCanal,
+  } = useQuery({
+    queryKey: buildFechamentoQueryKey('parametros-origem-pedido', scopeKeyArgs),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('ParametroOrigemPedido', {}, 'nome', 200);
+      if (signal?.aborted) {
+        const err = new Error('CANAIS_PARAMS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isFechamentoScopeCurrent(scopeExpected, readFechamentoActorAndSession())) {
+        throw new Error('CANAIS_PARAMS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: contextoValido,
   });
+
+  const mastersCanalIndisponiveis = isErrorPedidosCanal || isErrorParamsCanal;
+  const kpiState = resolveFechamentoKpiState({
+    contextoValido,
+    isLoading: isLoadingPedidosCanal,
+    isError: mastersCanalIndisponiveis,
+    isFetching: isFetchingPedidosCanal,
+    dataDefined: pedidos !== undefined,
+  });
+  const contagemIndisponivel = kpiState !== 'ready';
+  const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
+  const listaParametros = Array.isArray(parametros) ? parametros : [];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -45,13 +112,13 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
   const agora = new Date();
   const ultimos30min = new Date(agora.getTime() - 30 * 60 * 1000);
 
-  const pedidosRecentes = pedidos.filter((p) => {
+  const pedidosRecentes = contagemIndisponivel ? [] : listaPedidos.filter((p) => {
     const dataPedido = new Date(p.created_date || p.data_pedido);
     return dataPedido >= ultimos30min;
   });
 
   // Agrupar por canal
-  const porCanal = parametros.map((param) => {
+  const porCanal = contagemIndisponivel ? [] : listaParametros.map((param) => {
     const origemMap = {
       'ERP': 'Manual',
       'Site': 'Site',
@@ -93,6 +160,16 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
 
   const tempoDesdeUltimaAtualizacao = Math.floor((agora.getTime() - ultimaAtualizacao.getTime()) / 1000);
 
+  if (!contextoValido) {
+    return (
+      <Card className="border-amber-300 bg-amber-50">
+        <CardContent className="p-4 text-sm text-amber-900">
+          Selecione grupo ou empresa para monitorar canais.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-cyan-300 bg-gradient-to-r from-cyan-50 to-blue-50">
       <CardHeader className="px-6 flex flex-col space-y-1.5">
@@ -113,6 +190,9 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
         </div>
       </CardHeader>
       <CardContent>
+        {mastersCanalIndisponiveis && (
+          <p className="text-xs text-slate-500 mb-2">Canais indisponíveis (erro de carga ≠ zero).</p>
+        )}
         
         {/* Resumo Últimos 30min */}
         <div className="bg-white/60 mb-1 px-3 rounded-lg flex items-center gap-4 border border-cyan-200">
@@ -121,9 +201,9 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
             <div>
               <p className="text-xs text-slate-600">Últimos 30 minutos</p>
               <p className="text-2xl font-bold text-cyan-600">
-                {pedidosRecentes.length}
+                {contagemIndisponivel ? (kpiState === 'loading' ? '…' : kpiState === 'error' ? 'Erro' : '—') : pedidosRecentes.length}
               </p>
-              <p className="text-xs text-slate-500">pedidos recebidos</p>
+              <p className="text-xs text-slate-500">{contagemIndisponivel ? 'contagens ≠ zero' : 'pedidos recebidos'}</p>
             </div>
           </div>
           

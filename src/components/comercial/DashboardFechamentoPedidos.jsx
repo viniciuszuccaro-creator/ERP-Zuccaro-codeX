@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -20,6 +19,28 @@ import {
   Sparkles
 } from 'lucide-react';
 import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import { readErpHttpSession } from '@/api/erpHttpSession';
+import { central360SessionKey } from '@/api/httpApiClient';
+import { isHttpBackendMode } from '@/api/base44Client';
+import {
+  buildFechamentoQueryKey,
+  isFechamentoScopeCurrent,
+  resolveFechamentoDashboardKpiState,
+} from '@/components/comercial/fechamentoCacheScope';
+
+/** HTTP: sessão ERP. Legado/remoto: sem limpar token Base44 órfão. */
+function readFechamentoActorAndSession(userId = null) {
+  if (isHttpBackendMode) {
+    const session = readErpHttpSession();
+    const actorId = (typeof session?.actorId === 'string' && session.actorId.trim())
+      || (typeof userId === 'string' && userId.trim())
+      || null;
+    return { actorId, sessionKey: central360SessionKey(session?.token) };
+  }
+  const actorId = typeof userId === 'string' && userId.trim() ? userId.trim() : null;
+  return { actorId, sessionKey: actorId ? `legacy-actor:${actorId}` : null };
+}
 
 /**
  * V21.6 - DASHBOARD DE FECHAMENTO AUTOMÁTICO
@@ -33,51 +54,115 @@ import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
 export default function DashboardFechamentoPedidos({ windowMode = false, empresaId = null }) {
   // V21.6: Multi-empresa + IA Analytics
   const [estatisticasIA, setEstatisticasIA] = React.useState(null);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaCtx = empresaId || empresaAtual?.id || null;
+  const { actorId, sessionKey } = readFechamentoActorAndSession();
+  const contextoValido = Boolean(groupId || empresaCtx);
+  const scopeCriteria = empresaCtx ? { empresa_id: empresaCtx } : {};
+  const scopeExpected = { actorId, sessionKey };
+  const scopeKeyArgs = { groupId, empresaId: empresaCtx, actorId, sessionKey };
 
-  // Carregar estatísticas via IA
+  // Estatísticas IA — limpa na troca de Empresa/ator; cancela resposta tardia (#545).
+  const scopeLiveRef = React.useRef({ actorId, sessionKey, groupId, empresaId: empresaCtx });
+  scopeLiveRef.current = { actorId, sessionKey, groupId, empresaId: empresaCtx };
+
   React.useEffect(() => {
-    obterEstatisticasAutomacao(empresaId, 7).then(stats => {
+    setEstatisticasIA(null);
+    if (!contextoValido) return undefined;
+    let cancelled = false;
+    const generation = { actorId, sessionKey, groupId, empresaId: empresaCtx };
+    obterEstatisticasAutomacao(empresaCtx, 7).then((stats) => {
+      if (cancelled) return;
+      const liveSession = readFechamentoActorAndSession();
+      const live = {
+        actorId: liveSession.actorId,
+        sessionKey: liveSession.sessionKey,
+        groupId: scopeLiveRef.current.groupId,
+        empresaId: scopeLiveRef.current.empresaId,
+      };
+      if (!isFechamentoScopeCurrent(generation, live)) return;
       setEstatisticasIA(stats);
+    }).catch(() => {
+      if (!cancelled) setEstatisticasIA(null);
     });
-  }, [empresaId]);
+    return () => { cancelled = true; };
+  }, [empresaCtx, contextoValido, groupId, actorId, sessionKey]);
+
+  const fetchScoped = async (entity, signal, staleCode) => {
+    const rows = await filterInContext(entity, scopeCriteria, '-created_date', 100);
+    if (signal?.aborted) {
+      const err = new Error(`${staleCode}_ABORTED`);
+      err.name = 'AbortError';
+      throw err;
+    }
+    const live = {
+      ...readFechamentoActorAndSession(),
+      groupId,
+      empresaId: empresaCtx,
+    };
+    if (!isFechamentoScopeCurrent({ ...scopeExpected, groupId, empresaId: empresaCtx }, live)) {
+      throw new Error(`${staleCode}_STALE_SCOPE`);
+    }
+    return rows;
+  };
   
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaId],
-    queryFn: () => empresaId 
-      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.Pedido.list('-created_date', 100),
-    initialData: [],
+  // Namespaces raiz preservam invalidateQueries(['pedidos'|'movimentacoes'|…]) dos mutadores.
+  const { data: pedidos, isLoading: isLoadingPedidos, isError: isErrorPedidosFech, isFetching: isFetchingPedidos } = useQuery({
+    queryKey: buildFechamentoQueryKey('pedidos', { ...scopeKeyArgs, extra: 'fechamento' }),
+    queryFn: ({ signal }) => fetchScoped('Pedido', signal, 'FECHAMENTO_PEDIDOS'),
+    enabled: contextoValido,
   });
 
-  const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.MovimentacaoEstoque.list('-created_date', 100),
-    initialData: [],
+  const { data: movimentacoes, isLoading: isLoadingMov, isError: isErrorMovFech, isFetching: isFetchingMov } = useQuery({
+    queryKey: buildFechamentoQueryKey('movimentacoes', { ...scopeKeyArgs, extra: 'fechamento' }),
+    queryFn: ({ signal }) => fetchScoped('MovimentacaoEstoque', signal, 'FECHAMENTO_MOV'),
+    enabled: contextoValido,
   });
 
-  const { data: contas = [] } = useQuery({
-    queryKey: ['contas-receber', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.ContaReceber.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.ContaReceber.list('-created_date', 100),
-    initialData: [],
+  const { data: contas, isLoading: isLoadingContas, isError: isErrorContasFech, isFetching: isFetchingContas } = useQuery({
+    queryKey: buildFechamentoQueryKey('contas-receber', { ...scopeKeyArgs, extra: 'fechamento' }),
+    queryFn: ({ signal }) => fetchScoped('ContaReceber', signal, 'FECHAMENTO_CR'),
+    enabled: contextoValido,
   });
 
-  const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas', empresaId],
-    queryFn: () => empresaId
-      ? base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 100)
-      : base44.entities.Entrega.list('-created_date', 100),
-    initialData: [],
+  const { data: entregas, isLoading: isLoadingEntregas, isError: isErrorEntregasFech, isFetching: isFetchingEntregas } = useQuery({
+    queryKey: buildFechamentoQueryKey('entregas', { ...scopeKeyArgs, extra: 'fechamento' }),
+    queryFn: ({ signal }) => fetchScoped('Entrega', signal, 'FECHAMENTO_ENTREGAS'),
+    enabled: contextoValido,
   });
+
+  // #545: Pedido ready + auxiliar pendente ≠ Itens Baixados/Contas/Entregas 0.
+  const kpiState = resolveFechamentoDashboardKpiState({
+    contextoValido,
+    pedidosIsLoading: isLoadingPedidos,
+    pedidosIsError: isErrorPedidosFech,
+    pedidosIsFetching: isFetchingPedidos,
+    pedidosDataDefined: pedidos !== undefined,
+    movIsLoading: isLoadingMov,
+    movIsError: isErrorMovFech,
+    movIsFetching: isFetchingMov,
+    movDataDefined: movimentacoes !== undefined,
+    contasIsLoading: isLoadingContas,
+    contasIsError: isErrorContasFech,
+    contasIsFetching: isFetchingContas,
+    contasDataDefined: contas !== undefined,
+    entregasIsLoading: isLoadingEntregas,
+    entregasIsError: isErrorEntregasFech,
+    entregasIsFetching: isFetchingEntregas,
+    entregasDataDefined: entregas !== undefined,
+  });
+  const contagemIndisponivel = kpiState !== 'ready';
+  const listaPedidos = kpiState === 'ready' && Array.isArray(pedidos) ? pedidos : [];
+  const listaMov = kpiState === 'ready' && Array.isArray(movimentacoes) ? movimentacoes : [];
+  const listaContas = kpiState === 'ready' && Array.isArray(contas) ? contas : [];
+  const listaEntregas = kpiState === 'ready' && Array.isArray(entregas) ? entregas : [];
 
   // Análise de pedidos fechados nos últimos 7 dias
   const dataLimite = new Date();
   dataLimite.setDate(dataLimite.getDate() - 7);
 
-  const pedidosRecentes = pedidos.filter(p => {
+  const pedidosRecentes = contagemIndisponivel ? [] : listaPedidos.filter(p => {
     const dataPedido = new Date(p.created_date);
     return dataPedido >= dataLimite;
   });
@@ -92,61 +177,70 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
     p.observacoes_internas?.includes('[AUTOMAÇÃO')
   );
 
-  const taxaAutomacao = pedidosFechados.length > 0 
-    ? (pedidosComAutomacao.length / pedidosFechados.length) * 100 
-    : 0;
+  const taxaAutomacao = contagemIndisponivel
+    ? null
+    : (pedidosFechados.length > 0
+      ? (pedidosComAutomacao.length / pedidosFechados.length) * 100
+      : 0);
 
   // Movimentações automáticas
-  const movimentacoesAutomaticas = movimentacoes.filter(m => 
+  const movimentacoesAutomaticas = contagemIndisponivel ? [] : listaMov.filter(m => 
     m.responsavel === 'Sistema Automático' && 
     new Date(m.created_date) >= dataLimite
   );
 
   // Contas geradas automaticamente
-  const contasAutomaticas = contas.filter(c => 
+  const contasAutomaticas = contagemIndisponivel ? [] : listaContas.filter(c => 
     c.origem_tipo === 'pedido' && 
     new Date(c.created_date) >= dataLimite
   );
 
   // Entregas criadas automaticamente
-  const entregasAutomaticas = entregas.filter(e => 
+  const entregasAutomaticas = contagemIndisponivel ? [] : listaEntregas.filter(e => 
     new Date(e.created_date) >= dataLimite
   );
+
+  const kpiLabel = (value) => {
+    if (kpiState === 'unavailable') return '—';
+    if (kpiState === 'error') return 'Erro';
+    if (kpiState === 'loading') return '…';
+    return value;
+  };
 
   const metricas = [
     {
       label: 'Pedidos Fechados (7d)',
-      valor: pedidosFechados.length,
-      total: pedidosRecentes.length,
+      valor: contagemIndisponivel ? null : pedidosFechados.length,
+      total: contagemIndisponivel ? null : pedidosRecentes.length,
       icon: ShoppingCart,
       cor: 'blue',
-      percentual: pedidosRecentes.length > 0 ? (pedidosFechados.length / pedidosRecentes.length) * 100 : 0
+      percentual: contagemIndisponivel ? null : (pedidosRecentes.length > 0 ? (pedidosFechados.length / pedidosRecentes.length) * 100 : 0)
     },
     {
       label: 'Taxa Automação',
-      valor: pedidosComAutomacao.length,
-      total: pedidosFechados.length,
+      valor: contagemIndisponivel ? null : pedidosComAutomacao.length,
+      total: contagemIndisponivel ? null : pedidosFechados.length,
       icon: Zap,
       cor: 'purple',
       percentual: taxaAutomacao
     },
     {
       label: 'Itens Baixados',
-      valor: movimentacoesAutomaticas.length,
+      valor: contagemIndisponivel ? null : movimentacoesAutomaticas.length,
       icon: Package,
       cor: 'green',
       badge: 'AUTO'
     },
     {
       label: 'Contas Geradas',
-      valor: contasAutomaticas.length,
+      valor: contagemIndisponivel ? null : contasAutomaticas.length,
       icon: DollarSign,
       cor: 'orange',
       badge: 'AUTO'
     },
     {
       label: 'Entregas Criadas',
-      valor: entregasAutomaticas.length,
+      valor: contagemIndisponivel ? null : entregasAutomaticas.length,
       icon: Truck,
       cor: 'indigo',
       badge: 'AUTO'
@@ -154,7 +248,7 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
   ];
 
   // Pedidos prontos para fechar
-  const pedidosProntosFechar = pedidos.filter(p => 
+  const pedidosProntosFechar = contagemIndisponivel ? [] : listaPedidos.filter(p => 
     p.status === 'Rascunho' && 
     (p.itens_revenda?.length > 0 || p.itens_armado_padrao?.length > 0)
   );
@@ -176,8 +270,23 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
     <div className={containerClass}>{children}</div>
   );
 
+  if (!contextoValido) {
+    return (
+      <Wrapper>
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Selecione grupo ou empresa para ver o fechamento.
+          </CardContent>
+        </Card>
+      </Wrapper>
+    );
+  }
+
   return (
     <Wrapper>
+      {kpiState === 'error' && (
+        <p className="text-xs text-slate-500 mb-2">Indicadores indisponíveis (erro de carga ≠ zero).</p>
+      )}
       
       {/* Header com IA Analytics */}
       <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
@@ -239,9 +348,9 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
                     <Badge className="text-xs bg-green-600 text-white">{metrica.badge}</Badge>
                   )}
                 </div>
-                <p className="text-2xl font-bold">{metrica.valor}</p>
+                <p className="text-2xl font-bold">{kpiLabel(metrica.valor)}</p>
                 <p className="text-xs text-slate-600">{metrica.label}</p>
-                {metrica.total !== undefined && (
+                {metrica.total != null && metrica.percentual != null && (
                   <div className="mt-2">
                     <Progress value={metrica.percentual} className="h-1" />
                     <p className="text-xs text-slate-500 mt-1">
@@ -344,10 +453,12 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
                 <p className="font-semibold text-green-900">Taxa de Sucesso</p>
               </div>
               <p className="text-3xl font-bold text-green-600">
-                {taxaAutomacao.toFixed(0)}%
+                {kpiLabel(taxaAutomacao == null ? null : `${taxaAutomacao.toFixed(0)}%`)}
               </p>
               <p className="text-xs text-green-700 mt-1">
-                {pedidosComAutomacao.length} de {pedidosFechados.length} pedidos
+                {contagemIndisponivel
+                  ? 'contagens indisponíveis ≠ zero'
+                  : `${pedidosComAutomacao.length} de ${pedidosFechados.length} pedidos`}
               </p>
             </div>
 
