@@ -1,18 +1,41 @@
-import React, { useState } from "react";
+import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
 import RelatorioPermissoes from "@/components/sistema/RelatorioPermissoes";
-import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
+import { readErpHttpSession } from "@/api/erpHttpSession";
+import { central360SessionKey } from "@/api/httpApiClient";
 import { useQuery } from "@tanstack/react-query";
 import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
 import UsuariosTab from "@/components/administracao-sistema/gestao-acessos/UsuariosTab";
 import { Shield, Users, BarChart3, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  resolveGestaoAcessosKpiState,
+  isGestaoAcessosScopeCurrent,
+  buildGestaoAcessosPerfisQueryKey,
+  buildGestaoAcessosUsersQueryKey,
+  buildGestaoAcessosEmpresasQueryKey,
+  registroNoEscopoGestaoAcessos,
+  usuarioNoEscopoGestaoAcessos,
+  countUsuariosSemPerfilGestaoAcessos,
+  countPerfisAtivosGestaoAcessos,
+} from "./gestaoAcessosIndexScope";
 
+function readGestaoAcessosActorAndSession() {
+  const session = readErpHttpSession();
+  const actorId = typeof session?.actorId === "string" && session.actorId.trim()
+    ? session.actorId.trim()
+    : null;
+  return { actorId, sessionKey: central360SessionKey(session?.token) };
+}
+
+/**
+ * User/Perfil/Empresa via filterInContext; KPI 0 ≠ ready em loading/erro.
+ */
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
   const podeVer = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'visualizar');
@@ -20,32 +43,22 @@ export default function GestaoAcessosIndex() {
   const { user } = useUser();
   const [tab, setTab] = React.useState('perfis');
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const scopeKey = contexto === 'grupo' ? (groupId || 'sem-grupo') : (empresaAtual?.id || groupId || 'sem-contexto');
-  const contextoValido = contexto === 'grupo' ? Boolean(groupId) : Boolean(groupId && empresaAtual?.id);
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
-  const registroNoEscopo = (registro) => {
-    const empresasVinculadas = normalizeEmpresaIds(registro.empresas_vinculadas || registro.empresas || registro.empresas_ids);
-    const registroGroupId = registro.group_id || registro.grupo_id || registro.groupId || registro.grupoId;
-    const registroEmpresaId = registro.empresa_id || registro.empresaId || registro.empresa_atual_id;
-    const temMarcadorEscopo = Boolean(registroGroupId || registroEmpresaId || empresasVinculadas.length);
-
-    if (!temMarcadorEscopo) return false;
-    if (contexto === 'grupo') {
-      const empresasIds = empresasDoGrupo.map((e) => e.id);
-      return registroGroupId === groupId || empresasVinculadas.some((id) => empresasIds.includes(id));
-    }
-    return registroGroupId === groupId
-      || registroEmpresaId === empresaAtual?.id
-      || empresasVinculadas.includes(empresaAtual?.id);
+  const empresaId = contexto === 'grupo' ? null : (empresaAtual?.id || null);
+  const contextoValido = contexto === 'grupo' ? Boolean(groupId) : Boolean(groupId && empresaId);
+  const { actorId, sessionKey } = readGestaoAcessosActorAndSession();
+  const scopeExpected = { actorId, sessionKey };
+  const escopoOpts = {
+    contexto,
+    grupoAtivoId: groupId,
+    empresaAtivaId: empresaId,
+    empresasDoGrupo,
   };
 
   const getDadosContexto = () => ({
     contexto: contexto || 'sem-contexto',
     contexto_valido: contextoValido,
     group_id: groupId,
-    empresa_id: empresaAtual?.id || null,
+    empresa_id: empresaId,
     empresas_grupo: empresasDoGrupo.length,
     permissao: 'Sistema.Controle de Acesso.visualizar',
     pode_visualizar: podeVer,
@@ -56,7 +69,7 @@ export default function GestaoAcessosIndex() {
       await createInContext('AuditLog', {
         usuario: user?.full_name || user?.email || 'Usuario',
         usuario_id: user?.id || null,
-        empresa_id: empresaAtual?.id || null,
+        empresa_id: empresaId,
         group_id: groupId,
         empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
         acao,
@@ -84,7 +97,7 @@ export default function GestaoAcessosIndex() {
       dadosNovos: { motivo: 'permissao_negada' },
       sucesso: false,
     });
-  }, [podeVer, groupId, empresaAtual?.id]);
+  }, [podeVer, groupId, empresaId]);
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -101,60 +114,47 @@ export default function GestaoAcessosIndex() {
     });
   };
 
-  // Hooks SEMPRE antes de qualquer return condicional
-  const { data: perfis = [] } = useQuery({
-    queryKey: ['perfis-acesso', scopeKey],
-    queryFn: async () => {
+  const perfisQuery = useQuery({
+    queryKey: buildGestaoAcessosPerfisQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
       const scoped = await filterInContext('PerfilAcesso', {}, '-updated_date', 500);
-      if (scoped.length) return scoped;
-      const rows = await base44.entities.PerfilAcesso.list('-updated_date', 500);
-      const filtrados = rows.filter(registroNoEscopo);
-      void auditarGestaoAcessos({
-        acao: 'Fallback consulta perfis RBAC',
-        descricao: 'Consulta de perfis usou fallback direto e filtragem de escopo no cliente.',
-        dadosNovos: {
-          total_bruto: rows.length,
-          total_no_escopo: filtrados.length,
-          motivo: 'filterInContext_sem_resultado',
-        },
-        sucesso: true,
-        tipo: 'seguranca',
-      });
-      return filtrados;
+      if (signal?.aborted) {
+        const err = new Error('GESTAO_ACESSOS_PERFIS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isGestaoAcessosScopeCurrent(scopeExpected, readGestaoAcessosActorAndSession())) {
+        throw new Error('GESTAO_ACESSOS_STALE_SCOPE');
+      }
+      return (Array.isArray(scoped) ? scoped : []).filter((r) => registroNoEscopoGestaoAcessos(r, escopoOpts));
     },
-    enabled: podeVer,
+    enabled: podeVer && contextoValido,
   });
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios', scopeKey],
-    queryFn: async () => {
-      const rows = await base44.entities.User.list();
+
+  const usuariosQuery = useQuery({
+    queryKey: buildGestaoAcessosUsersQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('User', {}, 'full_name', 500);
+      if (signal?.aborted) {
+        const err = new Error('GESTAO_ACESSOS_USERS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isGestaoAcessosScopeCurrent(scopeExpected, readGestaoAcessosActorAndSession())) {
+        throw new Error('GESTAO_ACESSOS_STALE_SCOPE');
+      }
       let usuariosSemMarcadorEscopo = 0;
-      const filtrados = rows.filter((u) => {
-        const empresasVinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
-        const temMarcadorEscopo = Boolean(
-          u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || empresasVinculadas.length
-        );
-        if (!temMarcadorEscopo) {
-          usuariosSemMarcadorEscopo += 1;
-          return true;
-        }
-        if (contexto === 'grupo') {
-          const empresasIds = empresasDoGrupo.map((e) => e.id);
-          return u.group_id === groupId
-            || u.grupo_id === groupId
-            || u.grupo_atual_id === groupId
-            || empresasVinculadas.some((id) => empresasIds.includes(id));
-        }
-        return u.empresa_id === empresaAtual?.id
-          || u.empresa_atual_id === empresaAtual?.id
-          || empresasVinculadas.includes(empresaAtual?.id);
+      const filtrados = (Array.isArray(rows) ? rows : []).filter((u) => {
+        const { inclui, semMarcador } = usuarioNoEscopoGestaoAcessos(u, escopoOpts);
+        if (semMarcador) usuariosSemMarcadorEscopo += 1;
+        return inclui;
       });
       if (usuariosSemMarcadorEscopo > 0) {
         void auditarGestaoAcessos({
           acao: 'Alerta usuarios sem escopo',
           descricao: 'Consulta de usuarios encontrou registros sem marcador multiempresa explicito. Fluxo preservado para revisao gradual.',
           dadosNovos: {
-            total_bruto: rows.length,
+            total_bruto: Array.isArray(rows) ? rows.length : 0,
             total_no_escopo: filtrados.length,
             usuarios_sem_marcador_escopo: usuariosSemMarcadorEscopo,
           },
@@ -164,53 +164,83 @@ export default function GestaoAcessosIndex() {
       }
       return filtrados;
     },
-    enabled: podeVer && scopeKey !== 'sem-contexto',
+    enabled: podeVer && contextoValido,
   });
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-ga', scopeKey],
-    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
-    enabled: podeVer && !!scopeKey,
+
+  const empresasQuery = useQuery({
+    queryKey: buildGestaoAcessosEmpresasQueryKey({ groupId, empresaId, actorId, sessionKey }),
+    queryFn: async ({ signal }) => {
+      const rows = await filterInContext('Empresa', {}, 'nome_fantasia', 500);
+      if (signal?.aborted) {
+        const err = new Error('GESTAO_ACESSOS_EMPRESAS_ABORTED');
+        err.name = 'AbortError';
+        throw err;
+      }
+      if (!isGestaoAcessosScopeCurrent(scopeExpected, readGestaoAcessosActorAndSession())) {
+        throw new Error('GESTAO_ACESSOS_STALE_SCOPE');
+      }
+      return rows;
+    },
+    enabled: podeVer && contextoValido,
   });
+
+  const kpiState = resolveGestaoAcessosKpiState({
+    canView: podeVer,
+    contextoValido,
+    isLoading: usuariosQuery.isLoading || perfisQuery.isLoading,
+    isError: usuariosQuery.isError || perfisQuery.isError,
+    isFetching: usuariosQuery.isFetching || perfisQuery.isFetching,
+    dataDefined: usuariosQuery.data !== undefined && perfisQuery.data !== undefined,
+  });
+  const ready = kpiState === 'ready';
+  const usuarios = ready && Array.isArray(usuariosQuery.data) ? usuariosQuery.data : [];
+  const perfis = ready && Array.isArray(perfisQuery.data) ? perfisQuery.data : [];
+  const empresas = Array.isArray(empresasQuery.data) ? empresasQuery.data : [];
 
   if (!podeVer) {
     return (
       <div className="p-6 flex flex-col items-center gap-3 text-center">
         <AlertTriangle className="w-10 h-10 text-amber-500" />
         <p className="font-semibold text-slate-800">Acesso Restrito</p>
-        <p className="text-sm text-slate-500">VocÃª nÃ£o tem permissÃ£o para acessar a GestÃ£o de Acessos.</p>
+        <p className="text-sm text-slate-500">Voce nao tem permissao para acessar a Gestao de Acessos.</p>
       </div>
     );
   }
 
-  // EstatÃ­sticas rÃ¡pidas para o banner de status do RBAC
   const usuariosNoEscopo = usuarios;
-  const usuariosSemPerfil = usuariosNoEscopo.filter(u => !u.perfil_acesso_id && u.role !== 'admin').length;
-  const perfisAtivos = perfis.filter(p => p.ativo !== false).length;
+  const usuariosSemPerfil = countUsuariosSemPerfilGestaoAcessos(usuariosNoEscopo);
+  const perfisAtivos = countPerfisAtivosGestaoAcessos(perfis);
+  const kpiIndisponivel = !ready;
 
   return (
     <div className="w-full h-full flex flex-col gap-3 min-h-0 overflow-hidden">
-      {/* Banner RBAC com estatÃ­sticas */}
       <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-3 flex items-center gap-3">
             <Shield className="w-8 h-8 text-blue-600 flex-shrink-0" />
             <div>
               <p className="text-xs text-blue-600 font-medium">RBAC Ativo</p>
-              <p className="text-lg font-bold text-blue-900">{perfisAtivos} perfil(is)</p>
+              <p className="text-lg font-bold text-blue-900">
+                {kpiIndisponivel ? '…' : `${perfisAtivos} perfil(is)`}
+              </p>
             </div>
           </CardContent>
         </Card>
-        <Card className={usuariosSemPerfil > 0 ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'}>
+        <Card className={!kpiIndisponivel && usuariosSemPerfil > 0 ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'}>
           <CardContent className="p-3 flex items-center gap-3">
-            {usuariosSemPerfil > 0
+            {!kpiIndisponivel && usuariosSemPerfil > 0
               ? <AlertTriangle className="w-8 h-8 text-amber-600 flex-shrink-0" />
               : <CheckCircle2 className="w-8 h-8 text-green-600 flex-shrink-0" />}
             <div>
-              <p className={`text-xs font-medium ${usuariosSemPerfil > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                {usuariosSemPerfil > 0 ? 'Sem perfil atribuÃ­do' : 'Todos com perfil'}
+              <p className={`text-xs font-medium ${!kpiIndisponivel && usuariosSemPerfil > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                {kpiIndisponivel
+                  ? (kpiState === 'loading' ? 'Carregando…' : kpiState === 'error' ? 'Erro' : 'Contexto')
+                  : (usuariosSemPerfil > 0 ? 'Sem perfil atribuido' : 'Todos com perfil')}
               </p>
-              <p className={`text-lg font-bold ${usuariosSemPerfil > 0 ? 'text-amber-900' : 'text-green-900'}`}>
-                {usuariosSemPerfil > 0 ? `${usuariosSemPerfil} usuÃ¡rio(s)` : `${usuariosNoEscopo.length} usuÃ¡rio(s)`}
+              <p className={`text-lg font-bold ${!kpiIndisponivel && usuariosSemPerfil > 0 ? 'text-amber-900' : 'text-green-900'}`}>
+                {kpiIndisponivel
+                  ? '…'
+                  : (usuariosSemPerfil > 0 ? `${usuariosSemPerfil} usuario(s)` : `${usuariosNoEscopo.length} usuario(s)`)}
               </p>
             </div>
           </CardContent>
@@ -219,31 +249,31 @@ export default function GestaoAcessosIndex() {
           <CardContent className="p-3 flex items-center gap-3">
             <Users className="w-8 h-8 text-slate-600 flex-shrink-0" />
             <div>
-              <p className="text-xs text-slate-600 font-medium">Total de UsuÃ¡rios</p>
-              <p className="text-lg font-bold text-slate-900">{usuariosNoEscopo.length}</p>
+              <p className="text-xs text-slate-600 font-medium">Total de Usuarios</p>
+              <p className="text-lg font-bold text-slate-900">
+                {kpiIndisponivel ? '…' : usuariosNoEscopo.length}
+              </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Aviso se hÃ¡ usuÃ¡rios sem perfil */}
-      {usuariosSemPerfil > 0 && (
+      {!kpiIndisponivel && usuariosSemPerfil > 0 && (
         <div className="flex items-start gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 w-full">
           <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-600 mt-0.5" />
           <span>
-            <strong>{usuariosSemPerfil} usuÃ¡rio(s)</strong> sem perfil RBAC atribuÃ­do.
-            Acesse a aba <strong>UsuÃ¡rios</strong> para corrigir.
+            <strong>{usuariosSemPerfil} usuario(s)</strong> sem perfil RBAC atribuido.
+            Acesse a aba <strong>Usuarios</strong> para corrigir.
           </span>
         </div>
       )}
 
-      {/* Info RBAC */}
        <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 w-full">
          <Shield className="w-4 h-4 flex-shrink-0 text-blue-600 mt-0.5" />
          <span className="leading-relaxed break-words min-w-0 flex-1">
-           <strong>RBAC granular + multiempresa</strong> â€” Perfis controlam acesso por mÃ³dulo, seÃ§Ã£o e aÃ§Ã£o. 
-           PermissÃµes propagam automaticamente entre grupo â†” empresas. 
-           Admins tÃªm acesso total. Atribua perfis na aba <em>UsuÃ¡rios</em>.
+           <strong>RBAC granular + multiempresa</strong> — Perfis controlam acesso por modulo, secao e acao.
+           Permissoes propagam automaticamente entre grupo ↔ empresas.
+           Admins tem acesso total. Atribua perfis na aba <em>Usuarios</em>.
            Verifique conflitos SoD na aba correspondente.
          </span>
        </div>
@@ -254,12 +284,12 @@ export default function GestaoAcessosIndex() {
             <TabsTrigger value="perfis" data-action="RBAC.tab.perfis" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Shield className="w-3.5 h-3.5 mr-1" />
               Perfis RBAC
-              <Badge className="ml-1.5 text-[9px] bg-blue-100 text-blue-700 px-1">{perfisAtivos}</Badge>
+              <Badge className="ml-1.5 text-[9px] bg-blue-100 text-blue-700 px-1">{kpiIndisponivel ? '…' : perfisAtivos}</Badge>
             </TabsTrigger>
             <TabsTrigger value="usuarios" data-action="RBAC.tab.usuarios" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Users className="w-3.5 h-3.5 mr-1" />
               Usuarios
-              {usuariosSemPerfil > 0 && (
+              {!kpiIndisponivel && usuariosSemPerfil > 0 && (
                 <Badge className="ml-1.5 text-[9px] bg-amber-100 text-amber-700 px-1">{usuariosSemPerfil} pendentes</Badge>
               )}
             </TabsTrigger>
@@ -269,7 +299,7 @@ export default function GestaoAcessosIndex() {
             </TabsTrigger>
             <TabsTrigger value="relatorios" data-action="RBAC.tab.relatorios" data-permission="Sistema.Controle de Acesso.visualizar" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-3.5 h-3.5 mr-1" />
-              RelatÃ³rios
+              Relatorios
             </TabsTrigger>
           </TabsList>
         </div>
@@ -301,4 +331,3 @@ export default function GestaoAcessosIndex() {
     </div>
   );
 }
-
