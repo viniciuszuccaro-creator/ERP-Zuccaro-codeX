@@ -1,3 +1,16 @@
+## CURSOR — #542 AcoesRapidas multi-ator CI SUCCESS (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **PR** | [#542](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/542) |
+| **Tip** | **`3c6c855bb`** · **CI SUCCESS** 9/9 |
+| **Delta** | cache group/empresa/ator/sessão; `resolveClientesParaNovoPedido`; freeze `comercial-clientes-tab-v24` |
+| **Candidata #401** | `b888b2c00` — **não** FF até aceite Codex dos negativos |
+| **Homolog 100** | BLOCKED |
+| Fora | merge · deploy · VPS · seed |
+
+**Próximo:** parecer Codex #542; CI #544/#545; composição só após aceite.
+
 ## CURSOR — #542 tip CI: alinhar teste congelado multi-ator (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

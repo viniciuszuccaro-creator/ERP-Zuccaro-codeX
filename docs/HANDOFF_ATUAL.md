@@ -1,3 +1,7 @@
+## CURSOR — #542 AcoesRapidas CI SUCCESS (2026-11-06 America/Sao_Paulo)
+- Tip `3c6c855bb` **CI SUCCESS** 9/9. Multi-ator + novoPedido fail-closed + teste congelado alinhado.
+- Sem FF #401 (`b888b2c00`). Homolog BLOCKED. Sem merge/deploy/VPS.
+
 ## CURSOR — #542 tip CI freeze queryKey (2026-11-06 America/Sao_Paulo)
 - Tip pós-`f9bcaf9e1`: teste `comercial-clientes-tab-v24` atualizado para cache multi-ator (#542).
 - Sem alterar runtime AcoesRapidas além do tip funcional. Homolog BLOCKED. Sem FF #401.
