@@ -11,7 +11,7 @@ import IntegracoesIndex from '@/components/administracao-sistema/IntegracoesInde
 export default function IntegracoesPage() {
   return (
     <div className="w-full h-full p-4 md:p-6">
-      <IntegracoesIndex />
+      <IntegracoesIndex initialTab={null} />
     </div>
   );
 }
