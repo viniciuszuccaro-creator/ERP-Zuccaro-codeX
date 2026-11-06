@@ -108,6 +108,8 @@ function LayoutContent({ children, currentPageName }) {
     Relatorios: 'Relatórios',
     Agenda: 'Agenda',
     Cadastros: 'Cadastros',
+    // Visão operacional de empresas; mestre canônico permanece em Cadastros.
+    Empresas: 'Cadastros',
     Contratos: 'Contratos',
     AdministracaoSistema: 'Sistema',
     // Rota direta /Integracoes — mesmo módulo da aba Admin (proteção granular na página).

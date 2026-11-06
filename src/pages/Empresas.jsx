@@ -1,13 +1,16 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Building2, 
   Plus, 
@@ -214,7 +217,13 @@ export default function Empresas() {
   const filiais = empresas.filter(e => e.tipo === 'Filial').length;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="w-full h-full p-6 lg:p-8 space-y-6">
+      <Alert className="border-sky-200 bg-sky-50" data-unify="empresas-cadastros-canonico">
+        <AlertDescription className="text-sm text-sky-950">
+          Cadastro mestre canônico: <Link className="underline font-medium" to={createPageUrl('Cadastros')}>Cadastros Gerais → Organizacional → Empresas</Link>
+          {' '}(EmpresaForm). Esta tela preserva a visão operacional/KPIs; não é um segundo cadastro paralelo.
+        </AlertDescription>
+      </Alert>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">

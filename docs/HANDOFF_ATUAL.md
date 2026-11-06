@@ -1,8 +1,9 @@
-## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
-- PR #591 · tip parecer **`3fc45c320`** CI SUCCESS 9/9 · appends Chatbot/Separação/Fechamento.
+## CURSOR — recuperação + Empresas unify + C360 prep (2026-11-06 America/Sao_Paulo)
+- PR #591 · tip parecer **`3fc45c320`** CI SUCCESS 9/9 · appends Chatbot/Separação/Fechamento/Empresas.
 - Coord **6690425383**; parecer **6691042172** fechado.
-- Recuperação: ChatbotAtendimento menu; SeparacaoConferencia (keep both IA); Fechamento no Comercial + rota ProtectedSection; ConfiguracoesUsuario sem falso audit Sistema.
-- Homolog BLOCKED. Sem merge/deploy/VPS/redesign C360.
+- Recuperação: Chatbot menu; Separacao keep both; Fechamento hub+rota; ConfiguracoesUsuario ≠ Sistema.
+- Unificação: Empresas×Cadastros (EmpresaForm canônico; KPIs preservados).
+- C360 prep: evidence slots Orçamentos sem redesign. Homolog BLOCKED. Sem merge/deploy/VPS.
 
 ## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
 - Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip **`bdb912541`** · **CI SUCCESS 9/9**. Coord 6690425383.

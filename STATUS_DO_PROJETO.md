@@ -1,3 +1,18 @@
+## CURSOR — recuperação + unificação Empresas + C360 prep (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tips** | parecer **`3fc45c320`** CI SUCCESS 9/9 · Chatbot · Separação/Fechamento · Empresas unify |
+| **Coord / parecer** | 6690425383 · 6691042172 fechado |
+| **Recuperação** | Chatbot menu; SeparacaoConferencia keep both; Fechamento Comercial+rota; ConfiguracoesUsuario ≠ Sistema |
+| **Unificação** | Empresas×Cadastros: canônico EmpresaForm; KPIs Empresas preservados + banner |
+| **C360 prep** | `docs/evidence/comercial360-prep-slots-orcamentos-20261106.txt` — slots mapeados sem redesign |
+| **Homolog** | BLOCKED dados reais |
+| Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
+
+**Próximo:** CI tip · Codex HML seletor · próximo desconectado matriz.
+
 ## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
