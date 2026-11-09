@@ -16,7 +16,9 @@ test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito cola
     '        ? {}',
     '        : { locais_entrega: record.locais_entrega || [] }),',
   ].join('\n');
-  for (const hunk of [payload, mapper, locaisPayload, locaisMapper]) {
+  const docsPayload = '    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),';
+  const docsMapper = '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),';
+  for (const hunk of [payload, mapper, locaisPayload, locaisMapper, docsPayload, docsMapper]) {
     assert.equal(source.split(hunk).length - 1, 1);
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, '')));
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, hunk + '\n' + hunk)));
@@ -26,6 +28,8 @@ test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito cola
     [mapper, 'record', 'contatos'],
     [locaisPayload, 'data', 'locais_entrega'],
     [locaisMapper, 'record', 'locais_entrega'],
+    [docsPayload, 'data', 'documentos'],
+    [docsMapper, 'record', 'documentos'],
   ]) {
     const forged = hunk.replace(
       `${variable}.${field} ===`,
@@ -67,18 +71,19 @@ function once(source, current, previous) {
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
   source = once(source,
-    '      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined) && (\n'
+    '      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined || formData.documentos === undefined) && (\n'
     + '        <div\n'
     + '          className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"\n'
     + '          data-pendencia="cliente-parcial"\n'
     + '          role="status"\n'
     + '        >\n'
-    + '          {formData.contatos === undefined && formData.locais_entrega === undefined\n'
-    + '            ? "Contatos e endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia esses campos (sem apagar a fonte)."\n'
-    + '            : formData.contatos === undefined\n'
-    + '              ? "Contatos ainda não recuperados nesta carga — o salvamento não envia este campo."\n'
-    + '              : "Endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia este campo."}\n'
-    + '          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral.\n'
+    + '          {[\n'
+    + '            formData.contatos === undefined ? "contatos" : null,\n'
+    + '            formData.locais_entrega === undefined ? "endereços de entrega/cobrança" : null,\n'
+    + '            formData.documentos === undefined ? "documentos" : null,\n'
+    + '          ].filter(Boolean).join(", ")\n'
+    + '            + " ainda não recuperados nesta carga — o salvamento omite esses campos (sem apagar a fonte)."}\n'
+    + '          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral. Celular ≠ WhatsApp.\n'
     + '        </div>\n'
     + '      )}\n'
     + '\n'
@@ -143,11 +148,15 @@ function clienteContactPresenceRemainder(source) {
     + '            : [],\n'
     + '        }),',
     '    locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],');
-  return once(source,
+  source = once(source,
     '      ...(record.locais_entrega === undefined\n'
     + '        ? {}\n'
     + '        : { locais_entrega: record.locais_entrega || [] }),',
     '      locais_entrega: record.locais_entrega || [],');
+  source = once(source, '    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),',
+    '    documentos: sanitizeDocumentos(data.documentos),');
+  return once(source, '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),',
+    '      documentos: record.documentos || [],');
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).

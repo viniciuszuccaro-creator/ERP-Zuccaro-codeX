@@ -277,7 +277,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
       observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)
     },
-    documentos: sanitizeDocumentos(data.documentos),
+    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),
     empresa_id: data.empresa_id || empresaAtual?.id,
     group_id: data.group_id || groupId
   });
@@ -422,7 +422,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         isento_ipi: false,
         isento_icms: false,
       },
-      documentos: record.documentos || [],
+      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),
     }),
   });
 
@@ -705,18 +705,19 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           </div>
       </div>
 
-      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined) && (
+      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined || formData.documentos === undefined) && (
         <div
           className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"
           data-pendencia="cliente-parcial"
           role="status"
         >
-          {formData.contatos === undefined && formData.locais_entrega === undefined
-            ? "Contatos e endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia esses campos (sem apagar a fonte)."
-            : formData.contatos === undefined
-              ? "Contatos ainda não recuperados nesta carga — o salvamento não envia este campo."
-              : "Endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia este campo."}
-          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral.
+          {[
+            formData.contatos === undefined ? "contatos" : null,
+            formData.locais_entrega === undefined ? "endereços de entrega/cobrança" : null,
+            formData.documentos === undefined ? "documentos" : null,
+          ].filter(Boolean).join(", ")
+            + " ainda não recuperados nesta carga — o salvamento omite esses campos (sem apagar a fonte)."}
+          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral. Celular ≠ WhatsApp.
         </div>
       )}
 

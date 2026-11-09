@@ -1,9 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import React, { useMemo, useRef, useState } from "react";
+import { base44, isHttpExpedicaoMode } from "@/api/base44Client";
+import { httpApiClient } from "@/api/httpApiClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   MapPin, 
   Navigation, 
@@ -12,13 +15,18 @@ import {
   Route,
   Zap,
   Download,
-  Eye
+  Eye,
+  Save
 } from "lucide-react";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
-import { otimizarRotaAvancada, resolveCoordenadas } from "@/components/lib/roteirizacaoPolicy";
+import { buildRotaRecord, otimizarRotaAvancada, resolveCoordenadas } from "@/components/lib/roteirizacaoPolicy";
+import { planEntregasFromPedidosParaRomaneio } from "@/components/lib/expedicaoFluxoOperacionalPolicy";
+
+const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").replace(/javascript:/gi, "").trim();
+const sanitizePlaca = (value) => sanitizeText(value).toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 8);
 
 /**
  * 🗺️ MAPA DE ROTEIRIZAÇÃO COM IA V21.5
@@ -27,7 +35,13 @@ import { otimizarRotaAvancada, resolveCoordenadas } from "@/components/lib/rotei
 export default function MapaRoteirizacaoIA({ pedidosSelecionados = [], windowMode = false }) {
   const [rotaOtimizada, setRotaOtimizada] = useState(null);
   const [otimizando, setOtimizando] = useState(false);
-  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const [persistindo, setPersistindo] = useState(false);
+  const [motorista, setMotorista] = useState("");
+  const [veiculo, setVeiculo] = useState("");
+  const [placa, setPlaca] = useState("");
+  const persistLockRef = useRef(false);
+  const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const { user } = useUser();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
@@ -37,6 +51,11 @@ export default function MapaRoteirizacaoIA({ pedidosSelecionados = [], windowMod
     || hasPermission("Expedicao", "Rotas", "visualizar")
     || hasPermission("Expedicao", "Rotas", "ver")
     || hasPermission("Logistica", "Roteirizacao", "visualizar");
+  const canCreateRomaneio =
+    hasPermission("Expedicao", "Romaneio", "criar")
+    || hasPermission("Expedicao", "Romaneios", "criar")
+    || hasPermission("Expedicao", "Entregas", "editar")
+    || hasPermission("Logistica", "Romaneios", "criar");
 
   const auditMapa = async ({ acao, sucesso = true, motivo = null, detalhes = {} }) => {
     await base44.entities.AuditLog.create({
@@ -195,6 +214,207 @@ Retorne a rota otimizada com:
     window.open(url, '_blank');
   };
 
+  /**
+   * Persistência canônica: HTTP → criarRomaneio BFF (sem fallback local silencioso);
+   * modo local → Rota + Romaneio + stamp Entrega (owners existentes).
+   */
+  const persistirRotaRomaneio = async () => {
+    if (persistLockRef.current || persistindo) return;
+    if (!contextoValido || !canCreateRomaneio) {
+      toast.error("Contexto (grupo+empresa) e permissão de romaneio são obrigatórios.");
+      try {
+        await auditMapa({
+          acao: "MapaRoteirizacaoIA.persistir.bloqueado",
+          sucesso: false,
+          motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada",
+        });
+      } catch (e) { console.error(e); }
+      return;
+    }
+    if (!rotaOtimizada?.sequencia_pedidos?.length) {
+      toast.error("Otimize a rota antes de persistir.");
+      return;
+    }
+    const motoristaSanitizado = sanitizeText(motorista);
+    const veiculoSanitizado = sanitizeText(veiculo);
+    const placaSanitizada = sanitizePlaca(placa);
+    if (!motoristaSanitizado || !veiculoSanitizado || !placaSanitizada) {
+      toast.error("Informe motorista, veículo e placa antes de persistir.");
+      return;
+    }
+    if (!window.confirm("Confirmar persistência da rota/romaneio na sequência otimizada?")) {
+      try {
+        await auditMapa({ acao: "MapaRoteirizacaoIA.persistir.cancelado", sucesso: false, motivo: "confirmacao_cancelada" });
+      } catch (e) { console.error(e); }
+      return;
+    }
+
+    persistLockRef.current = true;
+    setPersistindo(true);
+    try {
+      const pedidosOrdenados = rotaOtimizada.sequencia_pedidos
+        .map((id) => pedidosRoteirizaveis.find((p) => p.id === id))
+        .filter(Boolean);
+      if (!pedidosOrdenados.length) {
+        throw new Error("Sequência otimizada sem pedidos válidos no contexto.");
+      }
+      const selectedIds = pedidosOrdenados.map((p) => p.id);
+      const entregasExistentes = await filterInContext("Entrega", {}, "-created_date", 500);
+
+      if (isHttpExpedicaoMode) {
+        // Fail-closed HTTP: só IDs de entrega já existentes — sem createInContext local silencioso.
+        const byPedido = new Map();
+        for (const e of (Array.isArray(entregasExistentes) ? entregasExistentes : [])) {
+          if (e?.pedido_id && e?.id && !byPedido.has(String(e.pedido_id))) {
+            byPedido.set(String(e.pedido_id), e);
+          }
+        }
+        const entregasIds = [];
+        const faltando = [];
+        for (const pedido of pedidosOrdenados) {
+          const entrega = byPedido.get(String(pedido.id));
+          if (entrega) entregasIds.push(entrega.id);
+          else faltando.push(pedido.numero_pedido || pedido.id);
+        }
+        if (faltando.length || entregasIds.length !== pedidosOrdenados.length) {
+          await auditMapa({
+            acao: "MapaRoteirizacaoIA.persistir.bloqueado",
+            sucesso: false,
+            motivo: "entregas_ausentes_http",
+            detalhes: { faltando, persistencia: "http_obrigatorio" },
+          });
+          throw new Error(
+            "Modo HTTP: entregas dos pedidos ainda não existem no BFF. Gere/associe entregas pelo fluxo IntegracaoRomaneio antes de persistir (sem fallback local).",
+          );
+        }
+        const result = await httpApiClient.expedicao.criarRomaneio({
+          confirmed: true,
+          motorista_nome: motoristaSanitizado,
+          veiculo: veiculoSanitizado,
+          placa: placaSanitizada,
+          entregas_ids: entregasIds,
+          despachar: false,
+          idempotency_key: `mapa-ia:${empresaId}:${entregasIds.join(",")}`,
+        });
+        const romaneioHttp = result?.romaneio || result;
+        await auditMapa({
+          acao: "MapaRoteirizacaoIA.persistir",
+          detalhes: {
+            romaneio_id: romaneioHttp?.id,
+            entregas: entregasIds.length,
+            persistencia: "http_canonica",
+          },
+        });
+        queryClient.invalidateQueries({ queryKey: ["romaneios"] });
+        queryClient.invalidateQueries({ queryKey: ["entregas"] });
+        toast.success("Romaneio persistido via BFF (HTTP canônico).");
+        return;
+      }
+
+      // Modo local: Rota + Romaneio + Entregas (owners RoteirizacaoMapa / IntegracaoRomaneio).
+      const plano = planEntregasFromPedidosParaRomaneio({
+        pedidos: pedidosOrdenados,
+        entregasExistentes,
+        empresaId,
+        groupId,
+        selectedIds,
+      });
+      const entregasDisponiveis = [...(Array.isArray(entregasExistentes) ? entregasExistentes : [])];
+      const createdEntregas = [];
+      for (const seed of plano.creates) {
+        const criada = await createInContext("Entrega", seed);
+        createdEntregas.push(criada);
+        entregasDisponiveis.push(criada);
+      }
+      const entregasParaRota = [...plano.reuses, ...createdEntregas];
+      if (!entregasParaRota.length) {
+        throw new Error("Não foi possível resolver entregas para a sequência.");
+      }
+      const pontos = selectedIds.map((pedidoId, index) => {
+        const entrega = entregasParaRota.find((e) => String(e.pedido_id) === String(pedidoId))
+          || entregasDisponiveis.find((e) => String(e.pedido_id) === String(pedidoId));
+        return entrega
+          ? { ...entrega, sequencia: index + 1, ordem_sequencia: index + 1 }
+          : null;
+      }).filter(Boolean);
+      if (pontos.length !== selectedIds.length) {
+        throw new Error("Sequência incompleta após resolver entregas.");
+      }
+      const otimizacao = {
+        pontos,
+        distancia_total_km: rotaOtimizada.distancia_total_estimada_km,
+        tempo_estimado_minutos: rotaOtimizada.tempo_total_estimado_min,
+        algoritmo: "MapaRoteirizacaoIA",
+      };
+      const rotaPayload = buildRotaRecord({
+        otimizacao,
+        motorista: { nome_completo: motoristaSanitizado },
+        veiculo: { descricao: veiculoSanitizado, placa: placaSanitizada },
+        empresaId,
+        groupId,
+        dataRota: new Date().toISOString().split("T")[0],
+        usuario: user?.full_name || user?.email || "Sistema",
+      });
+      const rota = await createInContext("Rota", rotaPayload);
+      const romaneio = await createInContext("Romaneio", {
+        empresa_id: empresaId,
+        group_id: groupId,
+        grupo_id: groupId,
+        data_romaneio: new Date().toISOString().split("T")[0],
+        motorista: motoristaSanitizado,
+        veiculo: veiculoSanitizado,
+        placa: placaSanitizada,
+        rota_id: rota.id,
+        entregas_ids: pontos.map((p) => p.id),
+        quantidade_entregas: pontos.length,
+        distancia_total_km: rotaOtimizada.distancia_total_estimada_km,
+        tempo_previsto_minutos: rotaOtimizada.tempo_total_estimado_min,
+        status: "Aberto",
+        criado_por: user?.full_name || user?.email || "Sistema",
+      });
+      for (const ponto of pontos) {
+        await updateInContext("Entrega", ponto.id, {
+          group_id: groupId,
+          grupo_id: groupId,
+          empresa_id: empresaId || ponto.empresa_id,
+          rota_id: rota.id,
+          romaneio_id: romaneio.id,
+          motorista: motoristaSanitizado,
+          veiculo: veiculoSanitizado,
+          placa: placaSanitizada,
+          sequencia_rota: ponto.sequencia,
+          status: "Pronto para Expedir",
+        });
+      }
+      await auditMapa({
+        acao: "MapaRoteirizacaoIA.persistir",
+        detalhes: {
+          rota_id: rota.id,
+          romaneio_id: romaneio.id,
+          entregas: pontos.length,
+          persistencia: "spa_local",
+        },
+      });
+      queryClient.invalidateQueries({ queryKey: ["entregas"] });
+      queryClient.invalidateQueries({ queryKey: ["rotas"] });
+      queryClient.invalidateQueries({ queryKey: ["romaneios"] });
+      toast.success("Rota e romaneio persistidos (modo local).");
+    } catch (error) {
+      try {
+        await auditMapa({
+          acao: "MapaRoteirizacaoIA.persistir.erro",
+          sucesso: false,
+          motivo: error?.message || "erro",
+          detalhes: { persistencia: isHttpExpedicaoMode ? "http_obrigatorio" : "spa_local" },
+        });
+      } catch (auditError) { console.error(auditError); }
+      toast.error(error?.message || "Falha ao persistir rota/romaneio.");
+    } finally {
+      persistLockRef.current = false;
+      setPersistindo(false);
+    }
+  };
+
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
@@ -319,6 +539,63 @@ Retorne a rota otimizada com:
                       );
                     })}
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Persistência canônica */}
+              <Card className="border-slate-200" data-persistencia={isHttpExpedicaoMode ? "http" : "local"}>
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-sm font-medium text-slate-800">
+                    Persistir rota / romaneio
+                    {isHttpExpedicaoMode ? " (HTTP BFF — sem fallback local)" : " (SPA local)"}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label htmlFor="mapa-ia-motorista">Motorista</Label>
+                      <Input
+                        id="mapa-ia-motorista"
+                        value={motorista}
+                        onChange={(e) => setMotorista(e.target.value)}
+                        placeholder="Nome"
+                        disabled={persistindo || !canCreateRomaneio}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="mapa-ia-veiculo">Veículo</Label>
+                      <Input
+                        id="mapa-ia-veiculo"
+                        value={veiculo}
+                        onChange={(e) => setVeiculo(e.target.value)}
+                        placeholder="Descrição"
+                        disabled={persistindo || !canCreateRomaneio}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="mapa-ia-placa">Placa</Label>
+                      <Input
+                        id="mapa-ia-placa"
+                        value={placa}
+                        onChange={(e) => setPlaca(e.target.value)}
+                        placeholder="ABC1D23"
+                        disabled={persistindo || !canCreateRomaneio}
+                      />
+                    </div>
+                  </div>
+                  {!canCreateRomaneio && (
+                    <p className="text-xs text-amber-800">Sem permissão para criar romaneio.</p>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={persistirRotaRomaneio}
+                    disabled={persistindo || !contextoValido || !canCreateRomaneio}
+                    className="w-full bg-sky-600 hover:bg-sky-700"
+                    data-action="MapaRoteirizacaoIA.persistir"
+                    data-permission="Expedicao.Romaneios.criar"
+                    data-context-required="true"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {persistindo ? "Persistindo…" : "Salvar rota / gerar romaneio"}
+                  </Button>
                 </CardContent>
               </Card>
 

@@ -1,3 +1,20 @@
+## CURSOR — #591 Mapa persist + Funil peels + piloto contrato (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `f2c0b68e` (CI frontend FAIL Funil remainder) → este lote corrige peels + Mapa |
+| **HML congelado** | **`0afd378f284`** — Codex coorte100; **não** trocar mid-teste |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **MapaRoteirizacaoIA** | Persist HTTP `criarRomaneio` fail-closed (sem create Entrega local); local Rota+Romaneio |
+| **Funil peels** | `funilAvancadoScopeEdits` + CRLF-aware em `primitiveUiBoundaryRemainder` |
+| **Form Cliente** | omit documentos/contatos/locais se undefined; zeros via sanitizeCode string |
+| **Piloto Codex** | `docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt` (flags, sem secrets) |
+| **Matriz** | próximo: cadastros param residual → C360 orçamentos (sem paralelo) |
+| Fora | merge · deploy VPS · dados reais · recreate clientes · troca freeze |
+
+**Próximo:** CI deste tip SUCCESS · aceite HML privado Codex · cadastros residual · port #401 pós-aceite.
+
 ## CURSOR — #591 HTTP fail-closed + Funil RBAC + titleToModule (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -22,15 +22,21 @@ test('V24 Cliente: banner e empty distinguem fonte local / piloto off / erro', (
   assert.match(src, /!clienteHttpSemPiloto/);
 });
 
-test('CadastroClienteCompleto: locais_entrega omitido quando ausente (não wipe)', () => {
+test('CadastroClienteCompleto: locais/contatos/documentos omitidos quando ausentes (não wipe)', () => {
   const src = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   assert.match(src, /data\.locais_entrega === undefined/);
   assert.match(src, /record\.locais_entrega === undefined/);
+  assert.match(src, /data\.contatos === undefined/);
+  assert.match(src, /data\.documentos === undefined/);
+  assert.match(src, /record\.documentos === undefined/);
   assert.match(src, /data-pendencia="cliente-parcial"/);
   assert.doesNotMatch(
     src,
     /locais_entrega: Array\.isArray\(data\.locais_entrega\) \? data\.locais_entrega\.slice\(0, 50\)\.map\(sanitizeEndereco\) : \[\],\n    condicao_comercial/,
   );
+  // CPF/CNPJ/CEP: sanitizeCode preserva dígitos como string (zeros à esquerda)
+  assert.match(src, /const sanitizeCode = \(value, max = 80\) => String\(value \?\? ""\)/);
+  assert.doesNotMatch(src, /Number\(data\.cpf\)|parseInt\(data\.cpf|Number\(data\.cnpj\)|Number\(.*\.cep/);
 });
 
 test('useCadastrosAllCounts: sem contexto → missing ALL (não 0 fabricado)', () => {

@@ -177,6 +177,9 @@ test('mapa e cliente usam a policy do roteirizador', async () => {
   assert.match(ia, /motoristaSelecionado/);
   assert.match(mapaIa, /filterInContext/);
   assert.match(mapaIa, /otimizarRotaAvancada/);
+  assert.match(mapaIa, /buildRotaRecord/);
+  assert.match(mapaIa, /criarRomaneio/);
+  assert.match(mapaIa, /isHttpExpedicaoMode/);
   assert.match(client, /applyRoteirizacaoCreate/);
   assert.match(client, /RoteirizacaoInteligente: \{ module: 'Expedicao'/);
   assert.match(master, /prefix: 'ROT-'/);

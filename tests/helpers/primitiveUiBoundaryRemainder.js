@@ -99,6 +99,14 @@ export const separacaoAceiteRecoveryEdits = [
   ]
 ];
 
+/** #591 — Funil Avançado queryKey com groupId/escopo (paridade Funil IA). */
+const funilAvancadoScopeEdits = [
+  [
+    "  const groupId = empresaAtual?.group_id || empresaAtual?.grupo_id || null;\n  const { data: oportunidades = [] } = useQuery({\n    queryKey: ['oportunidades', groupId, empresaAtual?.id, estaNoGrupo ? 'grupo' : 'empresa'],\n    queryFn: () => filtrarPorContexto('Oportunidade', {}, '-created_date', 200),\n    enabled: contextoPronto,\n  });\n",
+    "  const { data: oportunidades = [] } = useQuery({\n    queryKey: ['oportunidades', empresaAtual?.id],\n    queryFn: () => filtrarPorContexto('Oportunidade', {}, '-created_date', 200),\n    enabled: contextoPronto,\n  });\n",
+  ],
+];
+
 export function primitiveUiBoundaryRemainder(file, source) {
   if (file === 'src/components/comercial/MonitoramentoCanaisRealtime.jsx') {
     source = monitoramentoCanaisScopeRemainder(source);
@@ -110,6 +118,16 @@ export function primitiveUiBoundaryRemainder(file, source) {
   if (file === 'src/components/expedicao/SeparacaoConferencia.jsx') for (const [after,before] of separacaoAceiteRecoveryEdits) {
     assert.equal(source.split(after).length-1,1,'Exact authorized #591 separacao aceite hunk');
     source=source.replace(after,before);
+  }
+  if (file === 'src/components/crm/FunilVendasAvancado.jsx') {
+    // runtimeProofSource canônica CRLF; peels usam \n.
+    const hadCrlf = source.includes('\r\n');
+    let next = source.replace(/\r\n/g, '\n');
+    for (const [after, before] of funilAvancadoScopeEdits) {
+      assert.equal(next.split(after).length - 1, 1, 'Exact authorized #591 funil avancado scope hunk');
+      next = next.replace(after, before);
+    }
+    source = hadCrlf ? next.replace(/\n/g, '\r\n') : next;
   }
   const edits = primitiveUiEdits[file]; if (!edits) return source;
   for (const [after, before, count] of edits) {
