@@ -1,4 +1,44 @@
-## Continuidade vigente - coorte conservada e perda escalar corrigida (2026-11-09)
+## Continuidade vigente - HML retomada e completude ainda parcial (2026-11-09)
+
+Proprietario confirmou os100clientes na HML privada15173. API/web servidas no
+mesmo2e2ccfebe6273c2e856f0a8881599f9c1d1fcb40; codigo funcional Codex publicado
+5ef66b55/CI6539-6540SUCCESS. Publicacao591de3fe267 nao significa troca da
+versao servida. Nao repetir carga/selecionar coorte ou atribuir CI antiga ao tip.
+
+Parada SIGTERM apenas do bootstrap proprio5393: APP_STOPPED_RECORDS_PRESERVED,
+100linhas/100identidades e fingerprint integral antes/depois iguais. Reinicio
+proprio13177 validou de novo100/100 e mesmos campos; marcador HTTP200, mesma
+origem FINAL100, sem seed/importacao/restore. Sessao exige novo login depois do
+reinicio; nao e perda de clientes nem autorizacao para copiar token. Inspecao UI
+confirmou Grupo CPA, duas empresas e contagem100, mas Abrir Clientes estava
+desabilitado com Grupo selecionado no2e servido. Coordenacao591/6742739783;
+nao promover admin nem remover isolamento para contornar.
+
+CORRECAO de qualificacao anterior: bindPG em/home esta sobreoverlay/, nao e
+prova de volume duravel contra rebuild. /workspaces eext4. Checkpoint frio
+privado fora do checkout,0700/0600,2TAR/355694592bytes com SHA256 e estrutura
+reconferidos, preserva PG parado + configuracao/recibos/FINAL; nao inclui Git ou
+node_modules. Restore DESTE checkpoint ainda nao executado. Restore logico
+anterior135978bytes/15tabelas continua prova separada. Remapear armazenamento
+PG vivo para/workspaces exige decisao especifica antes de substituir container;
+nao executado. Procedimento vigente em docs/OPERACAO_DEV_VPS.md, nao outro plano.
+
+Completude: matriz privada28campos, backup original/API/formulario ainda com
+etapas desconhecidas por campo.20IE presentes noFINAL/20validas/0no banco;
+plano v2 com20patches, IDs/codigos/procedencia e fingerprint por registro,
+READ ONLY/ROLLBACK,0escritas. Plano inicial com0propostas e driver invalido para
+liberacao; v2 e a referencia. Aplicacao exige CAS canonico sob lock, auditoria
+transacional, replay/reversao e baseline de conservacao versionada, nao update
+direto nem nova importacao. Cinco tabelas auxiliares identificadas no catalogo
+original; dados/joins nativos ainda nao conferidos. Celular nao implica WhatsApp;
+endereco cadastral nao implica entrega/cobranca. Cadastro completo NAO declarado.
+
+Proximos gates finitos: armazenamento duravel aprovado -> acesso UI no Grupo ->
+contrato canonico de enriquecimento/auxiliares -> matriz fonte/banco/API/form ->
+aceite -> pacote VPS separado. Sem DDL/grants/carga/deploy operacional. Reserva
+Codex somente docs342 e artefatos privados; Cursor segue dono da UI/composicao.
+
+## Historico - coorte conservada e perda escalar corrigida (2026-11-09)
 
 Mesma FINAL100 e pins confrontados aos recibos; consulta privada por Grupo,
 lote e100codigos confirmou100ativos/100identidades correspondentes no banco

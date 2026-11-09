@@ -1,4 +1,50 @@
-## Continuidade vigente - validacao WIP e conservacao real (2026-11-09)
+## Continuidade vigente - persistencia, retomada e cadastro completo (2026-11-09)
+
+Decisao do proprietario: mesmos100clientes confirmados na15173; preservar fluxo
+GitHub -> Codespace/banco privado -> aceite -> VPS mediante gate especifico.
+Nao recarregar, nao reescolher FINAL, nao usar sementes como recuperacao.
+Codex3425ef66b55/CI6539-6540SUCCESS publicado. API/web efetivas2e2ccfeb,
+nao novoHEAD591de3fe267; composicao/UI seguem Cursor.
+
+Ensaio proprio: SIGTERM5393 -> encerramento limpo,100linhas/100identidades e
+fingerprint de todos os campos iguais; PG parado/lock/socket liberados.
+Checkpoint frio criado fora do Git noext4/workspaces e reconferido por SHA256 e
+estrutura dos2TAR,355694592bytes. Reinicio13177 do MESMO bootstrap d072b55c,
+preflight fisico/banco/schema e fingerprint iguais, HTTP200, sem importar ou
+restaurar. Sessao nao sobrevive ao reinicio da API: novo login requerido, sem
+copiar credenciais/tokens. Recibos app-lifecycle-* privados mantidos.
+
+Nao manter a afirmacao anterior de bind persistente como prova contra rebuild:
+origem atual do PG/socket e/home sobreoverlay/. /workspaces eext4, checkpoint
+0700/0600 em/workspaces/.erp-private-344/checkpoint-20261109T143855Z.
+Esse checkpoint nao teve restore proprio; backup/restauracao logica anterior
+continua prova distinta e reutilizada. Solucao minima preparada: remapear APENAS
+o container PG privado para pgdata nesse volume, sem segundo ERP ou recurso pago,
+preservando imagem/networknone/0ports/papeis/IDs e retorno pelo antigo parado.
+Pergunta especifica ao proprietario pendente; nada substituido por inferencia.
+
+UI real: sessao aceita, Grupo CPA e empresas existentes no seletor,100 no bloco.
+No2e servido, Abrir Clientes desabilitado e aviso de contexto ausente apesar do
+Grupo selecionado. Parecer591/6742739783 distingue isso do tip novo. Auxiliares
+Setor/GrupoProduto/Marca/Unidade indisponiveis nao tratados como zero. Sem ajuste
+de RBAC ou fallbackpublic para fazer tela passar; detalhes/campos ainda pendentes.
+
+Completude privada: client-completeness-matrix-20261109.private.json(28campos),
+cinco tabelas auxiliares no catalogo da origem, sem alegar leitura de seus dados
+ou joins comprovados. IE20noFINAL/20validas/0banco. Plano privado v2 tem20patches
+com IDs/codigos/origem e fingerprint bruto anterior;0escritas/ROLLBACK. Plano
+inicial0propostas nao serve para liberar aplicacao. Revalidar snapshot canonico
+sob lock e CAS, auditoria/replay/reversao e baseline versionada antes de aplicar.
+Nao confundir fingerprint do plano com CAS operacional ja implementado.
+Fonte original de contatos/telefones/enderecos ainda exige canal de leitura das
+tabelas auxiliares e chaves nativas; ausencia noCSV nao e ausencia global.
+
+Proxima acao executavel: fechar canal UI do Grupo com Cursor e mecanismo
+canonico de enriquecimento enquanto aguarda decisao de armazenamento. Depois
+conferir fonte -> HML -> API -> formulario e reabertura, sem alterar historicos.
+VPS, carga operacional, grants/DDL e deploy permanecem gates separados.
+
+## Historico - validacao WIP e conservacao real (2026-11-09)
 
 RetomadaDesktop b2d07dc3,2arquivosWIP preservados a5b1fb9b/cb662fbe, semoutro
 escritor local identificado. ReservaCodex342/6740236867 para mapper/teste;

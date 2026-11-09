@@ -1,6 +1,94 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - conservar a mesma HML e validar o delta (2026-11-09)
+## Estado vigente - HML15173, armazenamento e retomada (2026-11-09)
+
+URL privada existente:
+https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/
+
+API e frontend:2e2ccfebe6273c2e856f0a8881599f9c1d1fcb40. Namespace privado
+existente hml344_restore_20261104/hml344_cpa_20261104; Auth real existente,
+pool compartilhado Auth/Data, search_path HML,pg_catalog,pg_temp e preflight
+fisico NOSUPER/NOBYPASS antes de READY. Isso nao qualifica o principal como
+leitor estrito. Clientes sao da MESMA FINAL100; demais entidades nao homologadas.
+Proprietario confirmou100; nao declarar todos os campos conferidos por contagem.
+
+### Armazenamento comprovado e limites
+
+PG privado e15c2c2d23d0, imagem fixada/rede none/0portas, data e socket por bind
+privado0700. `findmnt -T` mostrouoverlay/ na origem/home: sobreviver a stop/start
+nao prova conservacao contra rebuild. /workspaces eext4, cerca10GB disponiveis
+antes do checkpoint. Nao excluir/recriar Codespace ou container para testar.
+
+Checkpoint privado frio em/workspaces/.erp-private-344/checkpoint-20261109T143855Z,
+fora do checkout/build: postgres-data.tar + hml-control.tar,355694592bytes,
+manifest.private.json com SHA256 reconferidos e `tar -tf` completo sem erro.
+Diretorios0700/arquivos0600; controle contem configuracao privada existente,
+receipts e FINAL, nao Git/node_modules. Nunca anexar esses arquivos ao GitHub.
+Esse checkpoint ainda NAO foi restaurado; nao atribuir a ele a prova anterior
+de backup/restauracao logica135978bytes/15tabelas. Remapeamento do PG vivo para
+oext4 exige aprovacao especifica e revisao antes de substituir o container;
+atual container/dados originais preservados. Backup no volume nao torna o bind
+ativooverlay automaticamente duravel nem garante conservacao apos exclusao.
+
+### Retomada reproduzivel da mesma aplicacao
+
+1. Conferir processos/reservas e o estado privado, sem imprimir conteudo de Auth,
+   senha ou token. Nao remover writer.lock/api.sock para forcar partida. Sem
+   escritor, confirmar isolamento do container e manifesto/FINAL nos pins atuais.
+2. Usar o bootstrap EXISTENTE privado abaixo, SHA256
+   d072b55ce9114b9d9f72342b372eb75f5cf25870bdd4a2b1a011e1f19b4b67dc.
+   Codigo sanitizado esta em344/6689846342; conferir hash antes de executar.
+   Nao usar o modo normal historico API50/webb888, nem misturar versoes.
+
+```sh
+node --import /workspaces/ERP-Zuccaro-codeX/server/node_modules/tsx/dist/loader.mjs \
+  /home/codespace/erp-legado-privado-20261023/hml344-cpa-20261104/api-bootstrap.private.mjs \
+  --hml-current
+```
+
+3. O bootstrap confere fonte/recibos e100identidades/fingerprint antes de READY;
+   usa archives API/web do mesmo SHA e dependencias existentes, nao o WIP do
+   checkout. Deve falhar se pins/lockfiles/arquivos divergirem. Nao sincronizar
+   checkout alheio para contornar. Reconstruir runtime perdido somente do SHA
+   oficial com procedimento revisado, nunca de seed ou nova selecao da coorte.
+4. Conferir15173 Private no painel Portas e marcador `/__erp_hml` externo, nao
+   apenas localhost. GET sessao sem login401 e POST corpo vazio422 foram
+   comprovados; isso NAO e login real. Proprietario entra pela propria aba.
+   Sessao requer novo login apos reiniciar API; nao copiar bearer entre ambientes.
+5. Janela atual do bootstrap:20minutos, com expiresAt privado e parada automatica.
+   Para parar antes, conferir PID e cmdline EXATOS do bootstrap proprio no estado
+   privado, enviar SIGTERM somente a ele e aguardar lifecycle
+   APP_STOPPED_RECORDS_PRESERVED. Nao matar PG/servicos/terminal de outro executor.
+   O bootstrap restitui PG ao estado inicial e libera apenas locks/socket proprios.
+6. Comparar lifecycle anterior/depois e nova partida:100linhas/100identidades e
+   fingerprint de todos os campos iguais. Ensaio5393->13177 passou, sem seed,
+   importacao ou restore. A API voltouHTTP200; novo login e campos UI sao provas
+   separadas. Disponibilidade e temporaria, nao24h/agendamento permanente.
+
+### Cadastro completo e enriquecimento
+
+Matriz privada28campos distingue backup original ainda nao lido por registro,
+FINAL extraido, payload, banco, API e formulario; desconhecido permaneceNULL,
+nao zero/ausente. Fonte/resumo nao substituem auxiliares. Catalogo documentado
+identifica5tabelas de contatos/telefones; conteudo e chaves nativas ainda devem
+ser conferidos pelo canal autorizado, sem inferir joins por nomes semelhantes.
+
+IE:20presentes noFINAL,20aceitas por clienteUpdateSchema,0persistidas; omissao
+do mapper corrigida em5ef66b55, mas banco nao enriquecido. Plano privado
+ie20-enrichment-plan-v2-20261109.private.json prepara20patches vinculados a
+ID/codigo/procedencia/snapshot,0escritas. Aplicar somente apos CAS canonico sob
+lock, auditoria transacional, idempotencia/reversao ensaiadas e revisao. Preservar
+baseline original e criar versao de conservacao auditada apos enriquecimento;
+nao sobrescrever fingerprints para esconder alteracao nem reimportar100.
+
+Locais/documentos/contatos ricos precisam contrato HTTP canonico; campos omitidos
+nao podem apagar valores. UI Grupo ainda bloqueia Abrir Clientes no2e servido,
+coordenado com Cursor; nao resolver promovendo admin ou ampliando tenant.
+Base44/produtos/fornecedores seguem matrizes existentes, sem equivalencias por nome
+ou fiscal/saldos atribuidos a empresa por palpite. Deploy/carga operacional continuam
+dependentes de versao revisada, destino, backup, reconciliacao, retorno e aprovacao.
+
+## Historico - conservar a mesma HML e validar o delta (2026-11-09)
 
 O banco privado existente conserva a mesmaFINAL100:100ativos/100identidades
 conferidos por Grupo/lote/codigos emREADONLY/ROLLBACK. Nao recarregar/restaurar
