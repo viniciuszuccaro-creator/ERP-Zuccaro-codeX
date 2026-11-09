@@ -313,12 +313,99 @@ export function hydrateClienteHttpRowForUi(row) {
     if (blank(record.cpf) && digits.length === 11) record.cpf = doc;
     if (blank(record.cnpj) && digits.length === 14) record.cnpj = doc;
   }
+  // PF/PJ: não inventa nome; só preenche tipo ausente a partir do documento canônico.
+  if (blank(record.tipo) && digits && !/^0+$/.test(digits)) {
+    if (digits.length === 11) record.tipo = 'Pessoa Física';
+    else if (digits.length === 14) record.tipo = 'Pessoa Jurídica';
+  } else if (!blank(record.tipo)) {
+    const normalized = normalizeTipo(record.tipo);
+    if (normalized) record.tipo = normalized;
+  }
   return record;
 }
 
 /**
+ * Projeta linha canônica `cliente_locais` → shape do GerenciarEnderecosClienteForm.
+ * ENTREGA/COBRANÇA preservados; demais finalidades viram rótulo sem presumir entrega=cadastral.
+ * @param {Record<string, unknown>} local
+ * @returns {Record<string, unknown>}
+ */
+export function mapClienteLocalToUiEndereco(local) {
+  const row = local && typeof local === 'object' ? local : {};
+  const fins = Array.isArray(row.finalidades) ? row.finalidades : [];
+  const codes = fins
+    .map((f) => String(/** @type {{ finalidade?: unknown }} */ (f)?.finalidade || '').toUpperCase())
+    .filter(Boolean);
+  let tipo_endereco = 'Entrega';
+  if (codes.includes('COBRANCA')) tipo_endereco = 'Cobrança';
+  else if (codes.includes('ENTREGA')) tipo_endereco = 'Entrega';
+  else if (codes.includes('CADASTRAL') || codes.includes('FISCAL')) tipo_endereco = 'Entrega';
+  return {
+    id: row.id,
+    apelido: row.nome || '',
+    tipo_endereco,
+    cep: row.cep || '',
+    logradouro: row.logradouro || '',
+    numero: row.numero || '',
+    complemento: row.complemento || '',
+    bairro: row.bairro || '',
+    cidade: row.cidade || '',
+    estado: row.uf || row.estado || '',
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
+    observacoes: row.referencia || '',
+    principal: fins.some((f) => /** @type {{ principal?: unknown }} */ (f)?.principal === true),
+    _fonte: 'cliente_locais',
+    _finalidades: codes,
+  };
+}
+
+/**
+ * Parecer 6746649125 — valor significativo em campo rico fora do MASTER
+ * não pode ser descartado em silêncio por ALLOWED_KEYS.
+ * @param {unknown} value
+ */
+function isMeaningfulScalar(value) {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim() !== '';
+  if (typeof value === 'number') return Number.isFinite(value) && value !== 0;
+  if (typeof value === 'boolean') return true;
+  return false;
+}
+
+/**
+ * @param {unknown} endereco
+ */
+export function isMeaningfulEndereco(endereco) {
+  if (!endereco || typeof endereco !== 'object' || Array.isArray(endereco)) return false;
+  const row = /** @type {Record<string, unknown>} */ (endereco);
+  return ['cep', 'logradouro', 'numero', 'bairro', 'cidade', 'estado', 'uf', 'complemento']
+    .some((key) => isMeaningfulScalar(row[key]));
+}
+
+/**
+ * @param {unknown} condicao
+ */
+function isMeaningfulCondicaoComercial(condicao) {
+  if (!condicao || typeof condicao !== 'object' || Array.isArray(condicao)) return false;
+  const row = /** @type {Record<string, unknown>} */ (condicao);
+  if (isMeaningfulScalar(row.tabela_preco_id) || isMeaningfulScalar(row.forma_pagamento_padrao_id)) {
+    return true;
+  }
+  const desconto = Number(row.percentual_desconto);
+  const limite = Number(row.limite_credito);
+  const usado = Number(row.limite_credito_utilizado);
+  if (Number.isFinite(desconto) && desconto !== 0) return true;
+  if (Number.isFinite(limite) && limite !== 0) return true;
+  if (Number.isFinite(usado) && usado !== 0) return true;
+  const pag = String(row.condicao_pagamento ?? '').trim();
+  if (pag && pag !== 'À Vista' && pag !== 'A Vista') return true;
+  return false;
+}
+
+/**
  * Rich fields present with values would be silently dropped by ALLOWED_KEYS.
- * Empty/undefined = nothing to lose (omit). Non-empty = fail closed.
+ * Empty/undefined/default = nothing to lose (omit). Non-empty = fail closed.
  * @param {Record<string, unknown>} src
  */
 export function assertClienteHttpRichFieldsWritable(src) {
@@ -330,17 +417,43 @@ export function assertClienteHttpRichFieldsWritable(src) {
   if (Array.isArray(src.documentos) && src.documentos.length > 0) {
     unsupported.push('documentos');
   }
+  if (isMeaningfulEndereco(src.endereco_principal)) {
+    unsupported.push('endereco_principal');
+  }
+  if (isMeaningfulCondicaoComercial(src.condicao_comercial)) {
+    unsupported.push('condicao_comercial');
+  }
+  // configuracao_fiscal: só bloqueia se observações fiscais ou IDs extras significativos
+  // além dos defaults do formulário — defaults puros não contam como perda.
+  if (src.configuracao_fiscal && typeof src.configuracao_fiscal === 'object') {
+    const fiscal = /** @type {Record<string, unknown>} */ (src.configuracao_fiscal);
+    if (isMeaningfulScalar(fiscal.observacoes_fiscais)) {
+      unsupported.push('configuracao_fiscal');
+    }
+  }
+  for (const key of [
+    'vendedor_responsavel_id',
+    'vendedor_responsavel',
+    'indicador_id',
+    'regiao_atendimento_id',
+    'regiao_atendimento',
+    'rg',
+  ]) {
+    if (isMeaningfulScalar(src[key])) unsupported.push(key);
+  }
   if (unsupported.length === 0) return;
+  const unique = [...new Set(unsupported)];
   const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
     new Error(
-      `Contrato HTTP Cliente ainda não persiste: ${unsupported.join(', ')}. `
-        + 'Coordene evolução BFF (cliente_locais / documentos) — sem storage paralelo.',
+      `Contrato HTTP Cliente ainda não persiste: ${unique.join(', ')}. `
+        + 'Valores originais preservados no rascunho — sem descarte silencioso. '
+        + 'Coordene BFF (cliente_locais / documentos / vínculos) — sem storage paralelo.',
     )
   );
   error.name = 'ClienteHttpUnsupportedFieldsError';
   error.code = CLIENTE_HTTP_UNSUPPORTED_FIELDS;
   error.status = 422;
-  error.fields = unsupported;
+  error.fields = unique;
   throw error;
 }
 
@@ -368,12 +481,41 @@ export function toClienteMasterHttpPayload(raw) {
     delete out.cpf_cnpj;
   }
 
-  const tipo = normalizeTipo(out.tipo ?? src.tipo);
-  if (tipo) out.tipo = tipo;
-  else delete out.tipo;
+  const tipoRaw = out.tipo ?? src.tipo;
+  if (tipoRaw != null && String(tipoRaw).trim() !== '') {
+    const tipo = normalizeTipo(tipoRaw);
+    if (!tipo) {
+      const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+        new Error(
+          'Tipo de pessoa inválido no payload HTTP Cliente. '
+            + 'Valor original preservado no rascunho — sem descarte silencioso.',
+        )
+      );
+      error.name = 'ClienteHttpUnsupportedFieldsError';
+      error.code = CLIENTE_HTTP_UNSUPPORTED_FIELDS;
+      error.status = 422;
+      error.fields = ['tipo'];
+      throw error;
+    }
+    out.tipo = tipo;
+  } else {
+    delete out.tipo;
+  }
 
-  if (out.origem != null && !CLIENTE_ORIGENS.has(String(out.origem))) {
-    delete out.origem;
+  if (out.origem != null && String(out.origem).trim() !== '') {
+    if (!CLIENTE_ORIGENS.has(String(out.origem))) {
+      const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+        new Error(
+          'Origem inválida no payload HTTP Cliente. '
+            + 'Valor original preservado no rascunho — sem descarte silencioso.',
+        )
+      );
+      error.name = 'ClienteHttpUnsupportedFieldsError';
+      error.code = CLIENTE_HTTP_UNSUPPORTED_FIELDS;
+      error.status = 422;
+      error.fields = ['origem'];
+      throw error;
+    }
   }
 
   if (typeof out.email === 'string' && out.email.trim() === '') {

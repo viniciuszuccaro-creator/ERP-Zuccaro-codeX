@@ -1,3 +1,19 @@
+## CURSOR — #591 parecer 6746649125 descarte + locais read (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip verde** | peels **`89eabf78`** · **CI SUCCESS** |
+| **Tip / CI** | tip deste push — aguarda CI |
+| **Parecer** | **6746649125** recebido — fail-closed vs descarte silencioso |
+| **Documento UI** | hydrate cpf/cnpj/tipo; grade cols; ~100 HML sem reimport |
+| **Locais** | read `cliente_locais` canônico; write MASTER ainda UNSUPPORTED |
+| **Freeze** | **`0afd378f284`** até acordo Codex tip API+web |
+| **Pack** | `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt` |
+| Fora | storage paralelo · wipe · recreate · VPS · PII |
+
+**Próximo:** CI tip · Codex aceite :15173 · write `/locais` coordenado · C360 Orçamentos.
+
 ## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

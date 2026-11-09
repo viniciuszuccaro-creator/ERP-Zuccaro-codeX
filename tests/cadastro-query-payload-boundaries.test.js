@@ -70,6 +70,9 @@ function once(source, current, previous) {
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  source = once(source,
+    "import { mapClienteLocalToUiEndereco } from \"@/api/clienteHttpPayload\";\n",
+    '');
   // #591: mapToForm com espelho documento→cpf/cnpj → forma omit anterior.
   source = once(source,
     '    mapToForm: (record) => {\n'
@@ -186,6 +189,41 @@ function clienteContactPresenceRemainder(source) {
     + '    return seeded;\n'
     + '  })();\n'
     + '\n'
+    + '  /** Locais canônicos BFF — leitura; save MASTER ainda omit/fail-closed até write via /locais. */\n'
+    + '  const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));\n'
+    + '  useEffect(() => {\n'
+    + '    const id = clienteBoundId || cliente?.id || null;\n'
+    + '    if (!id || !isHttpBackendMode) {\n'
+    + '      setLocaisHttpView(undefined);\n'
+    + '      return undefined;\n'
+    + '    }\n'
+    + '    let cancelled = false;\n'
+    + '    const session = readErpHttpSession();\n'
+    + '    if (!session?.token || !session?.groupId) {\n'
+    + '      setLocaisHttpView(undefined);\n'
+    + '      return undefined;\n'
+    + '    }\n'
+    + '    (async () => {\n'
+    + '      try {\n'
+    + '        const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });\n'
+    + '        const rows = await api.clientes.listLocais(id, { limit: 50, ativo: true });\n'
+    + '        if (cancelled) return;\n'
+    + '        setLocaisHttpView(\n'
+    + '          (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(\n'
+    + '            /** @type {Record<string, unknown>} */ (row),\n'
+    + '          )),\n'
+    + '        );\n'
+    + '      } catch {\n'
+    + '        if (!cancelled) setLocaisHttpView(undefined);\n'
+    + '      }\n'
+    + '    })();\n'
+    + '    return () => { cancelled = true; };\n'
+    + '  }, [clienteBoundId, cliente?.id]);\n'
+    + '\n'
+    + '  const locaisViewForUi = Array.isArray(formData.locais_entrega)\n'
+    + '    ? formData.locais_entrega\n'
+    + '    : (Array.isArray(locaisHttpView) ? locaisHttpView : []);\n'
+    + '\n'
     + '  const applyContatosDraft = (novosContatos) => {\n'
     + '    setFormData((prev) => ({ ...prev, contatos: novosContatos }));\n'
     + '  };\n'
@@ -221,8 +259,15 @@ function clienteContactPresenceRemainder(source) {
     + '            </TabsContent>\n');
   source = once(source,
     '            <TabsContent value="enderecos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
+    + '              {formData.locais_entrega === undefined && Array.isArray(locaisHttpView) && locaisHttpView.length > 0 && (\n'
+    + '                <p className="mb-2 text-xs text-slate-600" data-fonte="cliente-locais-http" role="status">\n'
+    + '                  Endereços lidos de cliente_locais (canônico). Editar assume o rascunho;\n'
+    + '                  salvamento MASTER com locais_entrega não vazios permanece fail-closed até write via /locais.\n'
+    + '                  Entrega ≠ cadastral.\n'
+    + '                </p>\n'
+    + '              )}\n'
     + '              <GerenciarEnderecosClienteForm\n'
-    + '                enderecos={formData.locais_entrega || []}\n'
+    + '                enderecos={locaisViewForUi}\n'
     + '                onChange={applyEnderecosDraft}\n'
     + '                commitMode="draft"\n'
     + '                assertScopeCurrent={assertFormScopeCurrent}\n'

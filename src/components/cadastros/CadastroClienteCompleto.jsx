@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, Suspense } from "react";
 import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { createHttpApiClient } from "@/api/httpApiClient";
 import { readErpHttpSession } from "@/api/erpHttpSession";
+import { mapClienteLocalToUiEndereco } from "@/api/clienteHttpPayload";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -554,6 +555,41 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     push("Celular", formData.celular);
     return seeded;
   })();
+
+  /** Locais canônicos BFF — leitura; save MASTER ainda omit/fail-closed até write via /locais. */
+  const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));
+  useEffect(() => {
+    const id = clienteBoundId || cliente?.id || null;
+    if (!id || !isHttpBackendMode) {
+      setLocaisHttpView(undefined);
+      return undefined;
+    }
+    let cancelled = false;
+    const session = readErpHttpSession();
+    if (!session?.token || !session?.groupId) {
+      setLocaisHttpView(undefined);
+      return undefined;
+    }
+    (async () => {
+      try {
+        const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
+        const rows = await api.clientes.listLocais(id, { limit: 50, ativo: true });
+        if (cancelled) return;
+        setLocaisHttpView(
+          (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+            /** @type {Record<string, unknown>} */ (row),
+          )),
+        );
+      } catch {
+        if (!cancelled) setLocaisHttpView(undefined);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clienteBoundId, cliente?.id]);
+
+  const locaisViewForUi = Array.isArray(formData.locais_entrega)
+    ? formData.locais_entrega
+    : (Array.isArray(locaisHttpView) ? locaisHttpView : []);
 
   const applyContatosDraft = (novosContatos) => {
     setFormData((prev) => ({ ...prev, contatos: novosContatos }));
@@ -1266,8 +1302,15 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </TabsContent>
 
             <TabsContent value="enderecos" className="m-0 mt-4" data-cadastro-commit="draft">
+              {formData.locais_entrega === undefined && Array.isArray(locaisHttpView) && locaisHttpView.length > 0 && (
+                <p className="mb-2 text-xs text-slate-600" data-fonte="cliente-locais-http" role="status">
+                  Endereços lidos de cliente_locais (canônico). Editar assume o rascunho;
+                  salvamento MASTER com locais_entrega não vazios permanece fail-closed até write via /locais.
+                  Entrega ≠ cadastral.
+                </p>
+              )}
               <GerenciarEnderecosClienteForm
-                enderecos={formData.locais_entrega || []}
+                enderecos={locaisViewForUi}
                 onChange={applyEnderecosDraft}
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}

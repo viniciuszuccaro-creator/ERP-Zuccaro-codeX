@@ -576,9 +576,34 @@ test('HTTP rejected Bearer never falls back to local data or leaks token in erro
   assert.equal(calls, 1);
 });
 
-test('Cliente HTTP update strips commercial/extra form fields to master-data allowlist', async () => {
-  let body = null;
+test('Cliente HTTP update: campos ricos significativos fail-closed; MASTER allowlist sem extras', async () => {
+  let fetches = 0;
   const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async () => {
+      fetches += 1;
+      return new Response(JSON.stringify({ data: { id: 'cli-1' } }), { status: 200 });
+    },
+  });
+  // Parecer 6746649125: não descartar endereço/condição/vínculos em silêncio.
+  await assert.rejects(
+    () => client.entities.Cliente.update('cli-1', {
+      tipo: 'Pessoa Juridica',
+      razao_social: 'CLIENTE DEV SINTETICO PJ A LTDA',
+      cnpj: '11222333000181',
+      vendedor_responsavel: 'X',
+      condicao_comercial: { limite_credito: 999 },
+      endereco_principal: { cidade: 'SP' },
+      contatos: [{ tipo: 'email', valor: 'a@b.c' }],
+      status: 'Ativo',
+    }),
+    (err) => err?.code === 'CLIENTE_HTTP_UNSUPPORTED_FIELDS',
+  );
+  assert.equal(fetches, 0);
+
+  let body = null;
+  const okClient = createHttpApiClient({
     baseUrl: 'https://erp.synthetic.test',
     getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
     fetchImpl: async (_url, init) => {
@@ -588,7 +613,7 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
       }), { status: 200, headers: { 'content-type': 'application/json' } });
     },
   });
-  const updated = await client.entities.Cliente.update('cli-1', {
+  const updated = await okClient.entities.Cliente.update('cli-1', {
     id: 'cli-1',
     group_id: 'grupo-sintetico',
     empresa_id: 'empresa-sintetica',
@@ -596,10 +621,6 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
     razao_social: 'CLIENTE DEV SINTETICO PJ A LTDA',
     nome_fantasia: 'MARKER-OK',
     cnpj: '11222333000181',
-    vendedor_responsavel: 'X',
-    vendedor_responsavel_id: 'y',
-    condicao_comercial: { limite_credito: 999 },
-    endereco_principal: { cidade: 'SP' },
     contatos: [{ tipo: 'email', valor: 'a@b.c' }],
     status: 'Ativo',
   });
@@ -607,9 +628,6 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
   assert.equal(body.nome_fantasia, 'MARKER-OK');
   assert.equal(body.documento, '11222333000181');
   assert.equal(body.tipo, 'Pessoa Jurídica');
-  assert.equal(body.vendedor_responsavel, undefined);
-  assert.equal(body.condicao_comercial, undefined);
-  assert.equal(body.endereco_principal, undefined);
   assert.equal(body.group_id, undefined);
   assert.equal(body.id, undefined);
   assert.equal(body.contatos, undefined);

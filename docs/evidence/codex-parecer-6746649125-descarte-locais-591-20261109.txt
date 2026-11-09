@@ -1,0 +1,40 @@
+#591 — Parecer 6746649125 (recebido) + locais canônicos + documento UI
+America/Sao_Paulo 2026-11-09 · sem PII
+
+RECEBIMENTO
+- Parecer Codex/coord 6746649125: formatos inválidos / campos ricos não podem
+  desaparecer em silêncio no payload HTTP Cliente.
+- Tip peels lista/Completo: 89eabf78 CI SUCCESS (frontend peels).
+- Freeze HML: 0afd378f284 — tip API+web só com acordo; ~100 clientes já na :15173.
+
+DESCARTE SILENCIOSO → FAIL-CLOSED (clienteHttpPayload)
+- endereco_principal significativo → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+- condicao_comercial significativa (limite/desconto/ids) → idem
+- vendedor/indicador/região/rg com valor → idem
+- locais_entrega[] / documentos[] não vazios → idem (já existia)
+- tipo inválido / origem fora do enum → erro (não delete silencioso)
+- Defaults vazios do Completo NÃO bloqueiam MASTER (só valor significativo)
+- Mensagem: valores preservados no rascunho; sem storage paralelo
+
+DOCUMENTO / IDENTIFICAÇÃO (projeção, sem reimport)
+- Codex confirmou documento persistido nos ~100
+- hydrateClienteHttpRowForUi: documento→cpf/cnpj (zeros); tipo PF/PJ se ausente
+- Grade Bloco1/ClientesTab + V24 variants; Completo mapToForm
+- Não inventa nome genérico; razao_social/nome_fantasia preservados do MASTER
+
+CONTRATO LOCAIS (completar, não só bloquear)
+- Proprietário canônico BFF: GET/POST/PATCH /api/v1/clientes/:id/locais
+  (clienteLocalService + cliente_locais) — já no server
+- UI: Completo lê listLocais → locaisViewForUi (entrega≠cadastral; COBRANÇA tipado)
+- Write via MASTER com locais_entrega ainda UNSUPPORTED até write HTTP /locais
+  (próximo coordenado com Codex; reutilizar GerenciarEnderecosClienteForm)
+- Sem ContatoClienteV2 / storage paralelo
+
+TESTES
+- cliente-http-descarte-silencioso-591
+- cadastro-query-payload-boundaries (peels Completo)
+- http-api-client (fail-closed allowlist)
+- typecheck
+
+FORA
+merge · deploy VPS · dados reais no GitHub · recreate clientes · enfraquecer validação

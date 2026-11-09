@@ -1,3 +1,11 @@
+## CURSOR — #591 parecer 6746649125 + locais read + doc UI (2026-11-09 America/Sao_Paulo)
+- Recebido parecer **6746649125**: descarte silencioso de campos ricos/invalidos = defeito.
+- Tip peels `89eabf78` **CI SUCCESS**; tip deste lote (descarte+locais) em push.
+- Fail-closed: `endereco_principal`/`condicao`/`vínculos` significativos; `tipo`/`origem` inválidos — sem delete silencioso; rascunho preservado.
+- Leitura canônica `GET /clientes/:id/locais` → Completo `locaisViewForUi` (entrega≠cadastral); write MASTER com locais_entrega continua UNSUPPORTED até write via `/locais` (Codex BFF).
+- Documento: hydrate → cpf/cnpj/tipo PF-PJ; zeros; grade cols. Freeze HML **`0afd378f284`** até acordo tip API+web.
+- Pack: `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt`. Sem storage paralelo/VPS/PII.
+
 ## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
 - Owner confirmou **~100 clientes** HML **:15173**; grade Cadastros parecia só nomes.
 - Causa UI: colunas `cnpj`/`cpf` sem `documento` HTTP; e-mail/fone ausentes na grade; Contatos `|| []` escondia escalares.

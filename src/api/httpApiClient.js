@@ -852,6 +852,37 @@ SeparacaoConferencia: {
       });
     },
     /**
+     * Lista canônica de locais do cliente (BFF `/clientes/:id/locais`).
+     * Leitura para Completo/Cadastros — sem storage paralelo; escrita MASTER continua fail-closed.
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, ativo?: boolean, signal?: AbortSignal }} [options]
+     */
+    async listLocais(clienteId, { limit = 50, offset = 0, ativo, signal } = {}) {
+      const id = String(clienteId ?? '').trim();
+      if (!id) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId obrigatório para listLocais')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {
+        query: {
+          limit,
+          offset,
+          ...(ativo === undefined ? {} : { ativo: ativo ? 'true' : 'false' }),
+          order_by: 'nome',
+        },
+        signal,
+        unwrap: false,
+      });
+      const rows = page && typeof page === 'object' && Array.isArray(/** @type {{ data?: unknown }} */ (page).data)
+        ? /** @type {{ data: unknown[] }} */ (page).data
+        : [];
+      return rows;
+    },
+    /**
      * Sugestão de vínculo por documento no Grupo (sem mescla).
      * @param {{ documento?: string, signal?: AbortSignal }} [input]
      */
