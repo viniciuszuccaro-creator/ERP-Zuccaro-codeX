@@ -1,0 +1,37 @@
+CODEx / CURSOR — fluxo combinado (GitHub → Codespace HML → aceite → VPS)
+=======================================================================
+America/Sao_Paulo 2026-11-09
+
+FREEZE / WIP
+- Snapshot HML ensaio: 0afd378f284 (NAO trocar mid-teste sem acordo Codex)
+- Publicacao #591 tip atual: ver STATUS / HEAD da branch
+- #401 integrar: 5d9a7e37 — publicar ≠ integrar
+- Sem recreate clientes, fixtures, rename sinteticos, alteracao de banco/infra privada
+
+FRONTEND → API (Cliente)
+- Modo HTTP + piloto OFF: NAO cai em store local (query disabled + estado
+  data-fonte-estado=http-piloto-cliente-off). Distinto de erro-api, sem-permissao,
+  lista-vazia, busca-vazia, contexto ausente.
+- Piloto ON: VITE_ERP_BACKEND=http + VITE_ERP_HTTP_CLIENTE(_360)=true + sessao
+  groupId/empresaId autorizados (Grupo CPA conforme servidor; negativas cross-tenant).
+
+FORM CANONICO
+- CadastroClienteCompleto: abas + contatos/enderecos multi; omit-if-undefined;
+  pendencia cliente-parcial; WhatsApp so se tipo escolhido (nao default celular).
+
+ACEITE REAL
+- Apos Codex disponibilizar HML: mesmo SHA API+web; listagem/busca/paginacao/
+  detalhes; preservacao; retomada. Testes sinteticos ≠ aceite dos ~100.
+- Comparacao privada; sem PII no GitHub.
+
+RECUPERACOES INDEPENDENTES NESTE LOTE
+- CRM Funil×3: RBAC sectionKey oportunidades + invalidate/toast no mover;
+  Funil Avancado queryKey com groupId
+- Layout titleToModule: Chatbot/Hub + Cadastros/Expedicao/Producao/Contratos/Sistema
+
+PROXIMO MATRIZ
+- MapaRoteirizacaoIA persistencia rota/romaneio (owners existentes)
+- Param forms residual (fora branches reservadas)
+
+FORA
+merge, deploy operacional VPS sem aprovacao, dados reais no repo, cobranca extra

@@ -1,3 +1,19 @@
+## CURSOR — #591 HTTP fail-closed + Funil RBAC + titleToModule (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HML congelado** | **`0afd378f284`** — Codex reconcilia coorte100; **não** trocar mid-teste |
+| **#401** | `5d9a7e37` — publicar ≠ integrar; VPS só após aceite proprietário |
+| **HTTP→API** | Cliente sem piloto: query off + `data-fonte-estado` (≠ lista vazia / erro / permissão) |
+| **CRM Funil×3** | RBAC `oportunidades` no launchpad; mover invalidates+toast; Avançado queryKey escopo |
+| **Nav** | `titleToModule` Chatbot/Hub + Cadastros/Expedição/Produção/Contratos/Sistema |
+| **Form Cliente** | canônico omit-if-unknown (lote anterior); aceite real pendente HML Codex |
+| **Coord** | `docs/evidence/codex-coord-fluxo-hml-591-20261109.txt` |
+| Fora | merge · deploy VPS · dados reais · recreate clientes · troca freeze |
+
+**Próximo:** CI deste tip · aceite HML privado com Codex · MapaRoteirizacaoIA persist · port #401 pós-aceite.
+
 ## CURSOR — #591 clientes UI fonte + preservação (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

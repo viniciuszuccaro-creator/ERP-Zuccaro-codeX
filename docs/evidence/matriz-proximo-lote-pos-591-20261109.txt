@@ -13,14 +13,14 @@ Já fechado neste tip (aceitação profunda)
 - ConfiguracoesUsuario: onError toast
 - Clientes UI: fonte local≠API distinguida; CadastroClienteCompleto omit-if-unknown;
   HML freeze 0afd378f preservado; aceite real privado pendente Codex
+- HTTP Cliente sem piloto: sem fallback local (estados distintos)
+- CRM Funil×3: RBAC sectionKey + invalidate/toast mover; Avancado queryKey escopo
+- Chatbot/Hub (+ Cadastros/Expedição/Produção…) titleToModule fail-closed
 
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
-1. CRM Funil×3 — já no launchpad CRM (FunilVisual / Inteligente / Avançado);
-   validar persistência HTTP + RBAC por funil (não duplicar).
-2. MapaRoteirizacaoIA — persistência de rota/romaneio (hoje só in-memory+audit);
+1. MapaRoteirizacaoIA — persistência de rota/romaneio (hoje só in-memory+audit);
    reutilizar IntegracaoRomaneio / RoteirizacaoMapa owners.
-3. Chatbot nav titleToModule — menu fail-closed quando módulo sem permissão.
-4. Cadastros param forms residual sky/reopen — só fora branches reservadas.
+2. Cadastros param forms residual sky/reopen — só fora branches reservadas.
 
 Não iniciar
 - Documentacao / EmpresaOnboarding / OAuthConsent (classe C)

@@ -1282,12 +1282,19 @@ function LayoutContent({ children, currentPageName }) {
 
   const titleToModule = {
     "CRM - Relacionamento": "CRM",
+    "Hub de Atendimento": "CRM",
+    "Chatbot de Atendimento": "CRM",
+    "Cadastros Gerais": "Cadastros",
     "Comercial e Vendas": "Comercial",
     "Estoque e Almoxarifado": "Estoque",
     "Compras e Suprimentos": "Compras",
+    "Expedição e Logística": "Expedição",
+    "Produção e Manufatura": "Produção",
     "Financeiro e Contábil": "Financeiro",
     "Fiscal e Tributário": "Fiscal",
     "Recursos Humanos": "RH",
+    "Gestão de Contratos": "Contratos",
+    "Administração do Sistema": "Sistema",
   };
 
   const itemsFiltrados = navigationItems.filter(item => {

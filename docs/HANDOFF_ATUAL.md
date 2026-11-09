@@ -1,5 +1,12 @@
+## CURSOR — #591 HTTP fail-closed + Funil + titleToModule (2026-11-09 America/Sao_Paulo)
+- HML **congelado `0afd378f284`** (Codex coorte100); tip publicação em CI neste push.
+- Cliente HTTP sem piloto: **sem** fallback local; estados `http-piloto-cliente-off` / erro / permissão / vazia.
+- CRM Funil×3: RBAC `sectionKey` + invalidate/toast; Funil Avançado queryKey com groupId.
+- Layout `titleToModule`: Chatbot/Hub + Cadastros/Expedição/Produção/Contratos/Sistema.
+- Coord fluxo: `docs/evidence/codex-coord-fluxo-hml-591-20261109.txt`. Aceite real pendente HML. Sem VPS/dados reais.
+
 ## CURSOR — #591 clientes UI fonte + preservação (2026-11-09 America/Sao_Paulo)
-- Tip publicação CI **`05b3b711`** SUCCESS; HML ensaio **congelado `0afd378f284`** (não trocar mid-teste).
+- Tip publicação CI **`32796b6a`** SUCCESS; HML ensaio **congelado `0afd378f284`** (não trocar mid-teste).
 - Causa UI vazia vs contagem API: sem `VITE_ERP_HTTP_CLIENTE(_360)` em modo http → store local ≠ BFF.
 - V24: banner `data-fonte-dados` + empty/erro/contexto distintos.
 - `CadastroClienteCompleto`: omit `locais_entrega`/`contatos` se undefined; pendência `cliente-parcial`.

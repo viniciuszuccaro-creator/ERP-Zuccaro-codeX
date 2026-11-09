@@ -292,12 +292,14 @@ export default function VisualizadorUniversalEntidadeV24({
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
   // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
   const contextoValido = !!(empresaId || groupId);
-  /** Cliente: API HML só alimenta a lista com piloto HTTP ligado; senão store local ≠ contagem API. */
-  const clienteFonteLocal =
-    ENTITY === "Cliente"
-    && (isLocalOnlyMode || (isHttpBackendMode && !isHttpClienteListMode));
-  const clientePilotoHttpOff =
+  /** Cliente: em HTTP, sem piloto ≠ fallback local silencioso (sucesso fictício). */
+  const clienteHttpSemPiloto =
     ENTITY === "Cliente" && isHttpBackendMode && !isHttpClienteListMode;
+  /** Modo local puro: store local explícito (≠ HML). */
+  const clienteFonteLocalOnly =
+    ENTITY === "Cliente" && isLocalOnlyMode;
+  const clienteFonteLocal = clienteHttpSemPiloto || clienteFonteLocalOnly;
+  const clientePilotoHttpOff = clienteHttpSemPiloto;
   const permCheckers = { hasPermission, canCreate, canEdit, canDelete, isLoading: permissionsLoading };
   const canViewCadastro = hasCadastroEntityPermission(ENTITY, "visualizar", permCheckers);
   const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
@@ -521,7 +523,8 @@ export default function VisualizadorUniversalEntidadeV24({
     placeholderData: function(prev, previousQuery) {
       return getScopedCadastroPlaceholder(prev, previousQuery?.queryKey, queryKey);
     },
-    enabled: !!ENTITY && contextoValido && canViewCadastro,
+    // HTTP + Cliente sem piloto: não consultar store local (evita lista vazia como “sucesso”).
+    enabled: !!ENTITY && contextoValido && canViewCadastro && !clienteHttpSemPiloto,
   });
 
   // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão
@@ -1027,9 +1030,32 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       );
     }
+    if (clienteHttpSemPiloto) {
+      return (
+        <div
+          className="flex flex-col items-center justify-center h-40 text-amber-800 gap-2 px-4"
+          data-fonte-estado="http-piloto-cliente-off"
+          role="status"
+        >
+          <AlertCircle className="w-7 h-7 text-amber-600" />
+          <span className="text-sm text-center font-medium">Fonte BFF indisponível para Cliente</span>
+          <span className="text-xs text-center text-amber-700">
+            Modo HTTP ativo, mas o piloto Cliente está desligado. A lista local/sintética não é usada — isto não é lista vazia nem erro de rede.
+          </span>
+        </div>
+      );
+    }
+    if (!canViewCadastro) {
+      return (
+        <div className="flex flex-col items-center justify-center h-40 text-slate-500 gap-2" data-fonte-estado="sem-permissao" role="status">
+          <AlertCircle className="w-7 h-7" />
+          <span className="text-sm text-center">Sem permissão para visualizar este cadastro.</span>
+        </div>
+      );
+    }
     if (isError && items.length === 0 && !isFetching) {
       return (
-        <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2">
+        <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2" data-fonte-estado="erro-api">
           <AlertCircle className="w-7 h-7" />
           <span className="text-sm">Erro ao carregar dados.</span>
           <button
@@ -1045,13 +1071,14 @@ export default function VisualizadorUniversalEntidadeV24({
       let emptyMsg = debouncedSearch
         ? "Nenhum resultado para \"" + debouncedSearch + "\""
         : "Nenhum registro de " + TITULO;
-      if (!debouncedSearch && clientePilotoHttpOff) {
-        emptyMsg = "Lista local vazia — piloto HTTP Cliente desligado. Contagem da API não alimenta esta tela.";
-      } else if (!debouncedSearch && clienteFonteLocal && isLocalOnlyMode) {
+      if (!debouncedSearch && clienteFonteLocalOnly) {
         emptyMsg = "Modo local — store local vazio. Não é a listagem da API HML.";
       }
       return (
-        <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
+        <div
+          className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2"
+          data-fonte-estado={debouncedSearch ? "busca-vazia" : "lista-vazia"}
+        >
           <Search className="w-7 h-7 opacity-30" />
           <span className="text-sm text-center px-4">{emptyMsg}</span>
         </div>
@@ -1306,15 +1333,22 @@ export default function VisualizadorUniversalEntidadeV24({
           Selecione um grupo ou empresa para carregar, criar ou editar este cadastro no escopo correto.
         </div>
       )}
-      {contextoValido && clienteFonteLocal && (
+      {contextoValido && clienteHttpSemPiloto && (
         <div
-          className="bg-sky-50 border border-sky-200 rounded-sm px-3 py-2 text-xs text-sky-900 shrink-0"
-          data-fonte-dados={clientePilotoHttpOff ? "local-piloto-cliente-off" : "local-only"}
+          className="bg-amber-50 border border-amber-300 rounded-sm px-3 py-2 text-xs text-amber-950 shrink-0"
+          data-fonte-dados="http-piloto-cliente-off"
           data-erp-backend={erpBackendMode}
         >
-          {clientePilotoHttpOff
-            ? "Fonte desta lista: store local (piloto HTTP Cliente desligado). Contagem da API ≠ registros desta tela."
-            : "Fonte desta lista: modo local. Contagem/API HML não alimenta este grid."}
+          Modo HTTP: piloto Cliente desligado — sem fallback local/sintético. Contagem da API ≠ aceite desta tela até ligar o piloto e a sessão autorizada.
+        </div>
+      )}
+      {contextoValido && clienteFonteLocalOnly && (
+        <div
+          className="bg-sky-50 border border-sky-200 rounded-sm px-3 py-2 text-xs text-sky-900 shrink-0"
+          data-fonte-dados="local-only"
+          data-erp-backend={erpBackendMode}
+        >
+          Fonte desta lista: modo local. Contagem/API HML não alimenta este grid.
         </div>
       )}
 

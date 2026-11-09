@@ -13,12 +13,13 @@ const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 test('V24 Cliente: banner e empty distinguem fonte local / piloto off / erro', () => {
   const src = read('src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx');
   assert.match(src, /isHttpClienteListMode/);
-  assert.match(src, /clienteFonteLocal/);
-  assert.match(src, /clientePilotoHttpOff/);
-  assert.match(src, /data-fonte-dados/);
-  assert.match(src, /piloto HTTP Cliente desligado/);
+  assert.match(src, /clienteHttpSemPiloto/);
+  assert.match(src, /clienteFonteLocalOnly/);
+  assert.match(src, /data-fonte-dados="http-piloto-cliente-off"/);
+  assert.match(src, /data-fonte-estado="erro-api"/);
   assert.match(src, /Erro ao carregar dados/);
   assert.match(src, /Modo local — store local vazio/);
+  assert.match(src, /!clienteHttpSemPiloto/);
 });
 
 test('CadastroClienteCompleto: locais_entrega omitido quando ausente (não wipe)', () => {
