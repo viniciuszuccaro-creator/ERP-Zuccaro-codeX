@@ -1,9 +1,9 @@
 ## CURSOR — #591 locais parcial + aceite :15173 + C360 etapas (2026-11-09 America/Sao_Paulo)
-- Tip base **`d1b08f96`** CI SUCCESS; reforço: `CLIENTE_LOCAIS_SYNC_PARTIAL`, draft undefined→skip, toast parcial≠sucesso.
-- Pack aceite Codex: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` (checklist :15173; freeze `0afd378f284` só com acordo).
-- Contatos/docs: overflow/UNSUPPORTED no MASTER; BFF canônico com Codex — **sem ContatoClienteV2**.
-- C360: Aside Voltar/Avançar entre painéis; rascunho do editor preservado; sem central paralela.
-- Sem merge/VPS/PII.
+- Tip **`898d8c32`** · **CI SUCCESS** push+PR 3/3 (parcial + typecheck + aceite + C360).
+- `CLIENTE_LOCAIS_SYNC_PARTIAL`; draft undefined→skip; baseline null≠delete; toast parcial≠sucesso.
+- Pack aceite Codex: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` — freeze `0afd378f284` só com acordo no tip.
+- Contatos/docs: overflow/UNSUPPORTED no MASTER; BFF com Codex — **sem ContatoClienteV2**.
+- C360: Aside Voltar/Avançar; rascunho preservado; sem central paralela. Sem merge/VPS/PII.
 
 ## CURSOR — #591 write `/locais` + peels CI SUCCESS (2026-11-09 America/Sao_Paulo)
 - Tip **`d1b08f96`** · **CI SUCCESS** push+PR 3/3 (peels `14005f39` + write + RBAC assert).
