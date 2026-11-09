@@ -3,8 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Tip peels CI** | **`14005f39`** · **CI SUCCESS** push 3/3 |
-| **Tip write** | HEAD deste lote — Completo sync via `cliente_locais` |
+| **Tip / CI** | **`d1b08f96`** · **CI SUCCESS** push+PR 3/3 |
+| **Base peels** | **`14005f39`** peels/stub · write `4da219d5` · RBAC fix tip |
 | **Parecer** | **6746649125** — fail-closed extras (horário/contato) sem drop |
 | **Contrato** | read+write `/api/v1/clientes/:id/locais`; MASTER sem `locais_entrega` |
 | **Preservação** | baseline null (carga falhou) → sem soft-delete; undefined draft → sem sync |
@@ -13,7 +13,7 @@
 | **Pack** | `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt` |
 | Fora | storage paralelo · ContatoClienteV2 · merge/VPS · PII |
 
-**Próximo:** CI tip write · Codex aceite :15173 mesmo SHA · contatos ricos / documentos · C360 Orçamentos.
+**Próximo:** Codex aceite :15173 no tip `d1b08f96` · contatos ricos / documentos · C360 Orçamentos (sem redesign).
 
 ## CURSOR — #591 parecer 6746649125 descarte + locais read (2026-11-09 America/Sao_Paulo)
 

@@ -1,10 +1,10 @@
 ## CURSOR — #591 write `/locais` + peels CI SUCCESS (2026-11-09 America/Sao_Paulo)
-- Tip peels **`14005f39`** · **CI SUCCESS** push 3/3 (listLocais peel + stub Completo).
+- Tip **`d1b08f96`** · **CI SUCCESS** push+PR 3/3 (peels `14005f39` + write + RBAC assert).
 - Write canônico: Completo salva MASTER sem `locais_entrega`; sync `POST/PATCH/DELETE/finalidades` em `/clientes/:id/locais`.
 - `syncClienteLocaisViaHttp`: create/update; soft-delete só com baseline carregado; carga falhou → sem wipe; extras horário/contato → fail-closed.
 - Base44 MCP `Base` acessível (shape Contatos[] / locais_entrega ricos) — sem PII no GitHub.
 - Freeze HML **`0afd378f284`** até acordo tip API+web. Pack parecer **6746649125** atualizado.
-- Pendente: contatos ricos / documentos; C360 Orçamentos; aceite Codex :15173.
+- Pendente: contatos ricos / documentos; C360 Orçamentos (sem redesign); aceite Codex :15173 no tip.
 
 ## CURSOR — #591 parecer 6746649125 + locais read + doc UI (2026-11-09 America/Sao_Paulo)
 - Recebido parecer **6746649125**: descarte silencioso de campos ricos/invalidos = defeito.
