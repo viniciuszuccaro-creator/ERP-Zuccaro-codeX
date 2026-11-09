@@ -305,10 +305,13 @@ export function assertClienteHttpRichFieldsWritable(src) {
     unsupported.push('documentos');
   }
   if (unsupported.length === 0) return;
-  const error = new Error(
-    `Contrato HTTP Cliente ainda não persiste: ${unsupported.join(', ')}. `
-      + 'Coordene evolução BFF (cliente_locais / documentos) — sem storage paralelo.',
+  const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+    new Error(
+      `Contrato HTTP Cliente ainda não persiste: ${unsupported.join(', ')}. `
+        + 'Coordene evolução BFF (cliente_locais / documentos) — sem storage paralelo.',
+    )
   );
+  error.name = 'ClienteHttpUnsupportedFieldsError';
   error.code = CLIENTE_HTTP_UNSUPPORTED_FIELDS;
   error.status = 422;
   error.fields = unsupported;
