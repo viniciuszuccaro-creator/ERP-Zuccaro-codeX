@@ -1,3 +1,10 @@
+## CURSOR — #591 tip `0afd378f` CI SUCCESS (2026-11-09 America/Sao_Paulo)
+- PR #591 · tip **`0afd378f284`** · **CI SUCCESS** push+PR (`erp-runtime-ci`).
+- Achados **6694327032** fechados: ports f51376fa / 2f588154 / 9b5de2bc; upsertConfig HTTP fail-closed; parcial≠0; pin remainder stage81.
+- SHA composto para Codex HML: **`0afd378f284d8693b859477fa532b54a2367527f`** (API+web mesma versão).
+- Publicação #591 ≠ integração #401 (`5d9a7e37`). Homolog BLOCKED até aceite Codex com dados reais.
+- Sem merge/deploy/VPS.
+
 ## CURSOR — #591 achados 6694327032 fechados (2026-11-09 America/Sao_Paulo)
 - Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip a publicar (pós-c80cf05c).
 - Ports: pool/preflight **f51376fa**; Grupo granular **2f588154**; Fornecedor freeze **9b5de2bc**.

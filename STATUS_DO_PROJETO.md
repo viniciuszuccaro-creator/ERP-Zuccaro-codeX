@@ -1,3 +1,17 @@
+## CURSOR — #591 CI SUCCESS tip `0afd378f` (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / HEAD / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · **`0afd378f284`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS** push+PR |
+| **SHA Codex HML** | **`0afd378f284d8693b859477fa532b54a2367527f`** — montar API+web nesta tip |
+| **Achados 6694327032** | ports f51376fa / 2f588154 / 9b5de2bc · upsertConfig HTTP · parcial≠0 · remainder stage81 |
+| **Candidata #401** | tip **`5d9a7e37`** — publicação #591 ≠ integração #401 |
+| **Recuperação** | Home/Dashboard; Chatbot; Separação clássica+IA; Fechamento; ConfiguracoesUsuario; 404; MapaRoteirizacaoIA; ConfigFinanceiroLogistica |
+| **Homolog** | BLOCKED dados reais — fixtures/testes montados ≠ aceite HML |
+| Fora | merge · deploy · VPS · dados reais GitHub · port cego #591→#401 |
+
+**Próximo:** Codex HML no SHA composto · port seletivo #591→#401 só após aceite · próximo desconectado matriz (sem fila mecânica).
+
 ## CURSOR — #591 achados revisão 6694327032 (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |
