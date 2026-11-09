@@ -1,4 +1,22 @@
-## Continuidade vigente - armazenamento HML remapeado e retomada comprovada (2026-11-09)
+## Continuidade vigente - conexoes recuperadas parcialmente (2026-11-09)
+
+Config TOML valido; clone desktop canonico limpo no7e5cbefc e remoto igual.
+GitHub autenticado/leitura/escrita comprovados. Chrome controla editor/HML,
+mas shell remoto nao entrega prompt/saida e marcador HTTP novo15173 falhou.
+Uma recarga apenas da janela VS Code nao resolveu; nao reiniciar Codespace/PG
+por tentativa. DOM com100 nao confirma disponibilidade atual. Banco e carga
+nao foram alterados; persistencia historica abaixo nao foi reensaiada.
+
+Tip591063a89b2 revisado no modulo real JS:3assertsPASS; dois formatos invalidos
+de campos ricos descartados silenciosamente. Parecer591/6746649125 ao Cursor,
+sem edicao da branch dele; nao confundir com React/HTTP/PG. Documento100 ja
+persistido e lacuna de projecao UI distinta; IE20 aguarda CAS/auditoria/reversao.
+Prioridade segue cadastro completo e dados auxiliares comprovados, sem recarga.
+Proximo passo exato no topo do HANDOFF; sem mudanca operacional ou novos grants.
+Lote exclusivamente documental: git diff --check; suites runtime inalteradas
+reutilizadas, sem nova alegacao de CI funcional ou homologacao completa.
+
+## Historico imediato - armazenamento HML remapeado e retomada comprovada (2026-11-09)
 
 Aprovacao especifica do proprietario executada: PG privado substituido somente
 como container de apoio, mesma imagemID/configuracao, rede none/0ports/readonly,

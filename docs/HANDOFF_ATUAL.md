@@ -1,4 +1,31 @@
-## Continuidade vigente - HML noext4 e prova real de retomada (2026-11-09)
+## Retomada apos recuperacao do config (2026-11-09)
+
+Config TOML sintaticamente valido, sem alteracao de valores ou autenticacoes.
+Clone desktop canonico limpo, local/remoto7e5cbefc antes deste checkpoint.
+GitHub autenticado como viniciuszuccaro-creator, leitura e escrita comprovadas.
+Chrome controla as abas corretas; isso NAO comprova shell remoto ou HML ativa.
+Editor sem prompt/saida, inclusive em shell de inspecao; log Pty Host vazio.
+Uma unica recarga da janela VS Code, sem restart do Codespace/PG, nao resolveu.
+Nova navegacao ao marcador /__erp_hml da15173 falhou com
+net::ERR_HTTP_RESPONSE_CODE_FAILURE. DOM anterior com100 nao prova HTTP atual.
+Nenhum comando remoto teve resultado confirmado; nenhum restart/carga/save.
+
+Revisao independente executavel: modulo real clienteHttpPayload no tip591
+063a89b23ee9648235d58b39e413492668aed7f7, blob02aefd2a9f5f039915763a8f722e494fe33fc719.
+3asserts NodePASS: arrays ricos nao vazios bloqueados, zeros preservados.
+Contraprova nova: locais_entrega objeto nao vazio/documentos string nao vazia
+sao descartados sem rejeicao. Parecer591/6746649125, Cursor dono da correcao;
+nao e teste React/HTTP/PG, nem atribuicao do defeito visual2e ao tip063.
+
+Cadastro completo continua prioridade: documento100 ja comprovado no banco,
+mas projecao UI deve ser conferida; IE20 tem plano privado e mapper corrigido,
+nao enriquecimento aplicado. Contatos/endereco auxiliares exigem dados e joins
+nativos, nao inferir ausencia pelo CSV resumido. Nenhum dado real publicado.
+Proxima acao: recuperar shell do MESMO Codespace, conferir processos/locks e
+ultimo lifecycle privado, bindingext4 e fonteFINAL; somente entao retomar o
+bootstrap --hml-current existente, sem nova carga. Preservar provas abaixo.
+
+## Historico imediato - HML noext4 e prova real de retomada (2026-11-09)
 
 Decisao de remapeamento foi AUTORIZADA e executada, nao permanece pergunta.
 Mesmo Codespace/namespace hml344_restore_20261104/hml344_cpa_20261104; API/web
