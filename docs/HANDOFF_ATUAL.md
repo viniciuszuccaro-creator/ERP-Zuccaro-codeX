@@ -1,7 +1,7 @@
 ## CURSOR — #591 Mapa persist + Funil peels + piloto contrato (2026-11-09 America/Sao_Paulo)
-- HML **congelado `0afd378f284`**; tip publicação corrige CI `f2c0b68e` (Funil remainder) + Mapa persist.
+- Tip **`9c29a392`** · **CI SUCCESS** push+PR. HML **congelado `0afd378f284`**.
 - MapaRoteirizacaoIA: HTTP `criarRomaneio` fail-closed (entregas ausentes → erro, sem create local); local Rota+Romaneio+stamp.
-- Funil peels: `funilAvancadoScopeEdits` CRLF-aware.
+- Funil peels: `funilAvancadoScopeEdits` CRLF-aware (fecha FAIL `f2c0b68e`).
 - Cliente: omit documentos/contatos/locais se undefined; pack piloto `docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt`.
 - Matriz próximo: cadastros param residual → C360 orçamentos. Sem VPS/dados reais/merge.
 
