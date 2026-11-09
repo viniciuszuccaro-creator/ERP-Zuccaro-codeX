@@ -3,7 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Base tip verde** | **`2e2ccfeb`** CI SUCCESS (docs) / código **`9c29a392`** CI SUCCESS |
+| **Tip / CI** | **`a287c80f`** · **CI SUCCESS** push+PR (`erp-runtime-ci` 3/3) |
+| **Base tip verde** | **`2e2ccfeb`** / **`9c29a392`** CI SUCCESS |
 | **HML congelado** | **`0afd378f284`** — passagem para HEAD só com acordo Codex |
 | **#401** | `5d9a7e37` — publicar ≠ integrar |
 | **Cliente** | escalar `celular` → tipo **Celular** (não WhatsApp); omit docs/contatos/locais |
