@@ -3,7 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Base tip verdes** | locais **`77f11b28`** CI SUCCESS · docs `9e2d6e45` |
+| **Tip / CI** | **`10a1dd8e`** · **CI SUCCESS** push+PR |
+| **Base tip verdes** | locais **`77f11b28`** CI SUCCESS |
 | **C360** | Voltar/Avançar = `goPanelByDelta` (teclado+clique; sem save/convert); `PROPOSTA_CAPACIDADES` |
 | **Contatos/docs** | pack Codex owners ContatoB2B + GerenciarContatos; MASTER fail-closed ≠ conclusão |
 | **Packs** | `c360-capacidades-atalhos-591` · `codex-contrato-contatos-documentos-591` |

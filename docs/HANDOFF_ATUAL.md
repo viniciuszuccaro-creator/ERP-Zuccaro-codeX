@@ -1,7 +1,7 @@
 ## CURSOR — #591 C360 capacidades + contrato contatos/docs (2026-11-09 America/Sao_Paulo)
-- Base tip **`77f11b28`** CI SUCCESS (locais). C360: `goPanelByDelta` + teclado; `PROPOSTA_CAPACIDADES`
-  (existente/parcial/futuro) sem central paralela. Contatos/docs: pack owners ContatoB2B +
-  GerenciarContatos — 422 MASTER ≠ conclusão; decisão BFF com Codex.
+- Tip **`10a1dd8e`** · **CI SUCCESS** push+PR. Base locais **`77f11b28`** CI SUCCESS.
+- C360: `goPanelByDelta` + teclado; `PROPOSTA_CAPACIDADES` (existente/parcial/futuro).
+- Contatos/docs: pack ContatoB2B + GerenciarContatos — 422 MASTER ≠ conclusão; BFF com Codex.
 - Packs: `c360-capacidades-atalhos-591` · `codex-contrato-contatos-documentos-591`.
 - Freeze `0afd378f284` até acordo no tip `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
 

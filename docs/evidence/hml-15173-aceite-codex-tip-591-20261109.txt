@@ -4,9 +4,9 @@ America/Sao_Paulo 2026-11-09
 SNAPSHOT EXATO (API+web mesma versão após CI tip)
 - Branch: cursor/hml-grupo-erro-fornecedor-392b
 - PR: #591
-- Tip homologação: 77f11b28a7502b11b3511a528011d1c0e971a6d3 · CI SUCCESS push+PR
-- Base: 898d8c32… / bde45554… · CI SUCCESS
-- Freeze antigo: 0afd378f284 — trocar só com acordo Codex no tip 77f11b28
+- Tip homologação locais: 77f11b28a7502b11b3511a528011d1c0e971a6d3 · CI SUCCESS
+- Tip C360/contrato contatos: 10a1dd8eb5dd996b6be0bc7933821f9dcf9e03af · CI SUCCESS
+- Freeze antigo: 0afd378f284 — trocar só com acordo Codex no tip 77f11b28 (+10a1dd8e se C360)
 
 DELTAS vs freeze (resumo)
 1. Projeção documento→cpf/cnpj/tipo PF-PJ; zeros; grade cols email/fone/celular
