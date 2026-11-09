@@ -8,6 +8,7 @@ import { useWindow } from '@/components/lib/useWindow';
 import DashboardFechamentoPedidos from './DashboardFechamentoPedidos';
 import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { central360SessionKey } from '@/api/httpApiClient';
 import { isHttpBackendMode } from '@/api/base44Client';
@@ -37,6 +38,9 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
   const { openWindow } = useWindow();
   const [estatisticasIA, setEstatisticasIA] = useState(null);
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const canOpenFechamento = hasPermission('Comercial', 'Fechamento', 'visualizar')
+    || hasPermission('Comercial', 'Pedidos', 'visualizar');
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaCtx = empresaId || empresaAtual?.id || null;
   const { actorId, sessionKey } = readFechamentoActorAndSession();
@@ -247,15 +251,20 @@ export default function WidgetFechamentoPedidos({ empresaId = null }) {
 
         {/* Ação */}
         <Button
-          onClick={() => openWindow(
-            DashboardFechamentoPedidos,
-            { windowMode: true, empresaId },
-            {
-              title: '📊 Dashboard de Fechamento Automático',
-              width: 1200,
-              height: 700
-            }
-          )}
+          disabled={!canOpenFechamento}
+          data-permission="Comercial.Fechamento.visualizar"
+          onClick={() => {
+            if (!canOpenFechamento) return;
+            openWindow(
+              DashboardFechamentoPedidos,
+              { windowMode: true, empresaId },
+              {
+                title: '📊 Dashboard de Fechamento Automático',
+                width: 1200,
+                height: 700
+              }
+            );
+          }}
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           size="sm"
         >

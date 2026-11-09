@@ -8,9 +8,15 @@ Motivo keep both curto
 - Empresas.jsx traz visão operacional/consolidada com KPIs; apagar perderia capacidade útil.
 - Banner + pageToModule='Cadastros' orientam navegação sem segundo mestre silencioso.
 
+Atualização 2026-11-09 — salvamento único
+- Dialog Nova/Editar em Empresas.jsx passou a montar EmpresaForm canônico
+  (data-unify=empresas-form-canonico). FormWrapper/schema paralelo removidos.
+- KPIs + listagem + visualização read-only preservados.
+- createInContext/updateInContext únicos via handleEmpresaFormSubmit.
+
 Não feito
 - Redirect destrutivo Home-style (apagaria KPIs).
-- Merge de formulários nesta rodada.
-- Dados reais / deploy.
+- Dados reais / deploy / integração cega #401.
 
 Teste: tests/unificacao-empresas-cadastros.test.js
+

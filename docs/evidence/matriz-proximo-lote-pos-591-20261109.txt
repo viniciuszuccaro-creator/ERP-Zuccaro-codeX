@@ -1,0 +1,32 @@
+Próximo lote concreto pós-#591 (sem inventário genérico)
+=======================================================
+America/Sao_Paulo 2026-11-09
+Base: recuperacao-erp-integra-capacidades-20261029 + prioridades-20261026
+Publicação #591 ≠ integração #401. Homolog HML tip congelado: 0afd378f.
+
+Já fechado neste tip (aceitação profunda)
+- Separação clássica: seletor de entregas no launchpad (não tela vazia)
+- Separação IA: keep both (já no launchpad)
+- ConfigFinanceiroLogistica: grupo AND empresa
+- Empresas×Cadastros: EmpresaForm canônico no CRUD da página Empresas
+- Widget Fechamento: gate de permissão
+- ConfiguracoesUsuario: onError toast
+
+Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
+1. CRM Funil×3 — já no launchpad CRM (FunilVisual / Inteligente / Avançado);
+   validar persistência HTTP + RBAC por funil (não duplicar).
+2. MapaRoteirizacaoIA — persistência de rota/romaneio (hoje só in-memory+audit);
+   reutilizar IntegracaoRomaneio / RoteirizacaoMapa owners.
+3. Chatbot nav titleToModule — menu fail-closed quando módulo sem permissão.
+4. Cadastros param forms residual sky/reopen — só fora branches reservadas.
+
+Não iniciar
+- Documentacao / EmpresaOnboarding / OAuthConsent (classe C)
+- Seed de registros reais / contagens fabricadas
+- Port cego #591→#401 antes do aceite HML
+- Redesign C360 amplo
+
+Integração seletiva #401
+- Após aceite Codex no SHA 0afd378f (ou tip coordenado sucessor)
+- Port hunks: auth Grupo, counts parcial, upsertConfig HTTP, recoveries
+- Preservar WIP Fornecedor/reservas; um escritor por checkout

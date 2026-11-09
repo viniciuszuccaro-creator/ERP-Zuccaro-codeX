@@ -22,6 +22,14 @@ test('unificação: página Empresas aponta para Cadastros canônico sem remoç�
   assert.match(empresas, /w-full h-full/);
 });
 
+test('unificação: CRUD Empresas usa EmpresaForm canônico (sem FormWrapper paralelo)', () => {
+  assert.match(empresas, /import EmpresaForm from "@\/components\/cadastros\/EmpresaForm"/);
+  assert.match(empresas, /data-unify="empresas-form-canonico"/);
+  assert.match(empresas, /<EmpresaForm/);
+  assert.doesNotMatch(empresas, /FormWrapper/);
+  assert.doesNotMatch(empresas, /empresaSchema/);
+});
+
 test('unificação: Layout mapeia Empresas → módulo Cadastros', () => {
   assert.match(layout, /Empresas:\s*'Cadastros'/);
 });

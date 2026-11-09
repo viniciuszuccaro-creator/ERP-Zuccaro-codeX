@@ -22,7 +22,8 @@ export default function ConfigFinanceiroLogistica({ empresaId, groupId: groupIdP
 
   const effectiveEmpresaId = empresaId || empresaAtual?.id || null;
   const effectiveGroupId = groupIdProp || grupoAtual?.id || empresaAtual?.group_id || null;
-  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);
+  // Fail-closed multiempresa: config financeira exige grupo e empresa (não OR).
+  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);
   const canEditConfig = hasPermission("Expedicao", "Financeiro Logistica", "editar") || hasPermission("Financeiro", "Configuracao", "editar");
   const cfgKey = React.useMemo(() => effectiveEmpresaId ? `log_finance_cfg_${effectiveEmpresaId}` : `log_finance_cfg_${effectiveGroupId || "sem_contexto"}`, [effectiveEmpresaId, effectiveGroupId]);
 
@@ -138,7 +139,7 @@ export default function ConfigFinanceiroLogistica({ empresaId, groupId: groupIdP
       <CardContent className="grid gap-3">
         {(!contextoValido || !canEditConfig) && (
           <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
-            {!contextoValido ? "Selecione grupo/empresa para configurar financeiro logistico." : "Seu perfil nao tem permissao para alterar esta configuracao."}
+            {!contextoValido ? "Selecione Grupo e Empresa (ambos) para configurar financeiro logistico." : "Seu perfil nao tem permissao para alterar esta configuracao."}
           </div>
         )}
         <div className="grid md:grid-cols-2 gap-3">

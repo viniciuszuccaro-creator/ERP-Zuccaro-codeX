@@ -1,3 +1,10 @@
+## CURSOR — #591 aceite gaps + EmpresasForm + parecer pack (2026-11-09 America/Sao_Paulo)
+- HML **congelado** para Codex: **`0afd378f284`** (não mudar snapshot no meio do teste).
+- Tip docs CI: **`0385c2d2`**. Delta aceite (este lote): Separação seletor; ConfigFin AND; Empresas→EmpresaForm; Fechamento perm; ConfigUsuario onError.
+- Parecer **6694327032** pack: `docs/evidence/codex-parecer-6694327032-pack-591-20261109.txt` (snapshot+diff+testes).
+- Unificação Empresas: salvamento único via EmpresaForm (`data-unify=empresas-form-canonico`).
+- #401 `5d9a7e37` — publicação ≠ integração. Sem merge/deploy/VPS/dados reais.
+
 ## CURSOR — #591 tip `0afd378f` CI SUCCESS (2026-11-09 America/Sao_Paulo)
 - PR #591 · tip **`0afd378f284`** · **CI SUCCESS** push+PR (`erp-runtime-ci`).
 - Achados **6694327032** fechados: ports f51376fa / 2f588154 / 9b5de2bc; upsertConfig HTTP fail-closed; parcial≠0; pin remainder stage81.

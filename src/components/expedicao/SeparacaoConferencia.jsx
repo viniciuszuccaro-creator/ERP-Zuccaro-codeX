@@ -30,7 +30,15 @@ import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode com
 /**
  * Separação e Conferência de Itens (Picking) para Entregas
  */
-export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onClose, windowMode = false }) {
+export default function SeparacaoConferencia({
+  entregaId: entregaIdProp,
+  pedido,
+  empresaId,
+  onClose,
+  windowMode = false,
+  entregasCandidatas = [],
+  pedidosCandidatos = [],
+}) {
   const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -45,6 +53,8 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
     hasPermission("Expedicao", "Separacao", "editar");
 
   const [activeTab, setActiveTab] = useState("scanner");
+  const [entregaIdSelecionada, setEntregaIdSelecionada] = useState(entregaIdProp || "");
+  const entregaId = entregaIdProp || entregaIdSelecionada || null;
   
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
@@ -456,7 +466,53 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
   }
 
   if (!dadosParaSeparacao) {
-    return <p className="text-gray-500">Nenhum dado encontrado.</p>;
+    const candidatas = Array.isArray(entregasCandidatas) ? entregasCandidatas.filter((e) => e?.id) : [];
+    return (
+      <div className={containerClass} data-permission="Expedicao.Separacao.criar" data-context-required="true">
+        <div className={windowMode ? "p-6 space-y-4" : "space-y-4"}>
+          <p className="text-slate-700 font-medium">Selecione uma entrega para conferência</p>
+          <p className="text-sm text-slate-500">
+            O atalho do launchpad não envia entrega pré-selecionada; escolha abaixo ou abra pela listagem de entregas.
+          </p>
+          {!contextoBaseValido && (
+            <p className="text-amber-700 text-sm">Selecione Grupo e Empresa antes de conferir.</p>
+          )}
+          {!canConcluirSeparacao && (
+            <p className="text-red-600 text-sm">Sem permissão para Separação/Conferência.</p>
+          )}
+          {candidatas.length === 0 ? (
+            <p className="text-gray-500">Nenhuma entrega candidata no contexto atual.</p>
+          ) : (
+            <div className="space-y-2 max-h-[60vh] overflow-auto">
+              {candidatas.map((e) => {
+                const pedidoRel = (Array.isArray(pedidosCandidatos) ? pedidosCandidatos : [])
+                  .find((p) => p?.id && (p.id === e.pedido_id || p.id === e.pedidoId));
+                const label = e.numero_entrega || e.numero_pedido || e.id;
+                return (
+                  <Button
+                    key={e.id}
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start"
+                    disabled={!contextoBaseValido || !canConcluirSeparacao}
+                    data-action="separacao-selecionar-entrega"
+                    onClick={() => setEntregaIdSelecionada(e.id)}
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    {label}
+                    {pedidoRel?.cliente_nome ? ` · ${pedidoRel.cliente_nome}` : ""}
+                    {e.status ? ` · ${e.status}` : ""}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+          {onClose && (
+            <Button type="button" variant="ghost" onClick={onClose}>Fechar</Button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   const containerClass2 = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";

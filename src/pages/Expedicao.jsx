@@ -194,6 +194,7 @@ export default function Expedicao() {
       height: 850,
     },
     // Matriz keep both curto: clássica permanece disponível (não só a variante IA).
+    // Sem entregaId pré-selecionado: componente lista candidatas (não tela vazia).
     {
       title: 'Separação Conferência',
       sectionKey: 'Separação',
@@ -204,6 +205,11 @@ export default function Expedicao() {
       windowTitle: '📦 Separação Conferência',
       width: 1400,
       height: 850,
+      props: {
+        empresaId: empresaAtual?.id,
+        entregasCandidatas: entregasFiltradas,
+        pedidosCandidatos: pedidosLista,
+      },
     },
     {
       title: 'Romaneios',

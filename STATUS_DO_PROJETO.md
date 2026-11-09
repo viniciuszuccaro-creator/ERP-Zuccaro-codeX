@@ -1,3 +1,16 @@
+## CURSOR — #591 aceite gaps + unificação EmpresaForm (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HML congelado** | **`0afd378f284`** — Codex não troca snapshot no meio do teste |
+| **Parecer pack** | `docs/evidence/codex-parecer-6694327032-pack-591-20261109.txt` |
+| **Aceite gaps** | Separação seletor · ConfigFin AND · Widget Fechamento perm · ConfigUsuario onError |
+| **Unificação** | Empresas CRUD → `EmpresaForm` canônico (KPIs preservados) |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **Próximo matriz** | `docs/evidence/matriz-proximo-lote-pos-591-20261109.txt` (Funil RBAC → rota persist → Chatbot titleToModule) |
+| Fora | merge · deploy · VPS · dados reais · port cego |
+
 ## CURSOR — #591 CI SUCCESS tip `0afd378f` (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |
