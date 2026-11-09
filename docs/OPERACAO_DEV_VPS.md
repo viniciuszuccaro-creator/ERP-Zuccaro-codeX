@@ -1,6 +1,89 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - HML15173, armazenamento e retomada (2026-11-09)
+## Estado vigente - HML15173 remapeada para volume persistente (2026-11-09)
+
+URL privada existente:
+https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/cadastros
+
+API/web2e2ccfebe6273c2e856f0a8881599f9c1d1fcb40, Auth real existente, banco
+hml344_restore_20261104/schemahml344_cpa_20261104, mesma FINAL100/IDs. Nao e
+deploy VPS, importacao nova ou aceite de todos os campos. Copia antiga permanece
+PARADA; dados/socket ativos estao noext4/workspaces/.erp-private-344/pgdata e/socket.
+O remapeamento aprovado esta CONCLUIDO, nao repetir --apply nem reativar o antigo.
+
+### Procedimento ativo e limites
+
+- Bootstrap privado existente usa hml-storage-binding.private.json0600, schema
+  estrito/UID/root0700/semSymlink e descriptor identico. Resolve uma identidade
+  unica para preflight, conexao e cleanup; guard canonico de isolamento nao foi
+  enfraquecido. API/Data/Auth no mesmo namespace/pool, NOSUPER/NOBYPASS.
+- Codigo sanitizado344/6689846342, SHA256
+  ef65c4926273711c3b8bf76be42bafdc4b656092641c995c9757b73dbe69088e.
+  Com binding, modo app sem --hml-current e BLOQUEADO. Usar somente:
+
+```sh
+node --import /workspaces/ERP-Zuccaro-codeX/server/node_modules/tsx/dist/loader.mjs \
+  /home/codespace/erp-legado-privado-20261023/hml344-cpa-20261104/api-bootstrap.private.mjs \
+  --hml-current
+```
+
+- Antes: conferir processos/locks/pins e estado; nunca apagar lock para iniciar.
+  HTTP externo `/__erp_hml`, porta15173 Private e API/web mesmoSHA devem conferir.
+  Identidade,100IDs e fingerprint integral sao validados ANTES do listener.
+  Janela20min com expiresAt; parar somente PID/cmdline proprios porSIGTERM.
+  A janela observada PID36147 terminava15:48:01.423Z(12h48Brasilia), nao prazo
+  permanente. Nova janela exige conferir estado, nao nova carga.
+- Depois: lifecycle APP_STOPPED_RECORDS_PRESERVED, mesmo100/fingerprint e PG
+  devolvido ao estado inicial. Stop/start PG/API noext4 passou. Sessao pode exigir
+  login, mas nesta ultima retomada GETsession200 foi aceito sem copiar token;
+  nao instruir relogin indiscriminado. Ao cabecalho selecionarGrupo mas conteudo
+  pedir contexto, reaplicar o proprioGrupo no seletor canonico, sem mudar RBAC.
+- Navegador:100total,2paginas20+20distintas/0overlap e buscaHTTP200/1resultado
+  esperado comprovados; busca limpa ao fim. Detalhes/edicao sem Save mostraram
+  lacunas CNPJ/nomePJ na amostra2e. Nao salvar para experimentar ou preencher
+  campo ausente por palpite. Cadastro completo continua gate separado.
+
+### Conservacao e recuperacao privada
+
+PG original e15c2c2d23d0 parado; substituto94c7cf0723b1 conserva imagemID LOCAL
+fixada, nao digest de registry inventado. Config efetiva comparada, sem portas,
+networknone, rootreadonly; somente label de correlacao nova. Checkpoint frio
+355694592bytes foi extraido com traversal/links/special/duplicados bloqueados,
+SHA256 por arquivo e clusteridentity iguais; banco/API confirmaram os mesmos100.
+Isso e recuperacao fria efetiva, distinta do restore logico135978bytes anterior.
+
+Noext4, fora do checkout,0700/0600:
+- checkpoint-20261109T143855Z/{postgres-data.tar,hml-control.tar,manifest.private.json};
+- pgdata/socket ativos, postgres-private.env/isolation-private.json privados;
+- postgres-image.private.tar e hml-control-ext4.private.tar:2TAR/175587328bytes,
+  SHA256/estrutura conferidos em recovery-manifest.private.json;
+- bootstrap/binding e recibos hml-storage-proof/storage-relocation preservados.
+
+Nao publicar esses arquivos, carregar imagem com dados ou sobrepor configuracao
+privada existente. Imagem arquivada e somente a imagem vendor existente, nao
+commit do container com clientes. Rebuild completo do Codespace NAO foi testado.
+Se perder somente caches/controle, preservar pgdata e manifestos: conferir hashes,
+restaurar APENAS controle privado nos caminhos originais apos confronto, recuperar
+imagem fixa do arquivo quando necessario e runtime do SHA oficial pelo procedimento
+do bootstrap. Conferir mesma identidade/mounts antes de iniciar; nao pg_init/seed.
+Exclusao do Codespace nao e coberta como disponibilidade garantida desse volume.
+
+Helper de manutencao apenas para leitura/recovery coordenada:344/6743376734,
+SHA256f30ef492299e87f884e1cd9eed86282defdc62e7df08c15746c0b1ce102899ea.
+Qualquer falha retinha writer.lock/REQUIRES_INSPECTION; foi comprovada falha por
+passwordnaofornecida, resolvida dentro da configuracao existente do container,
+sem segredoemargv/trust/grants. --resume-after-inspection foi executado e terminou;
+nao repetir.14binding/6TAR/7main-resume sinteticos e revisao estaticafavoravel sao
+provas distintas do cluster/100 reais. Retorno ao antigo exige parar/verificar
+novo porID e retirar binding de forma reversivel; apos escrita aceita no novo,
+reconciliar primeiro, nunca perder dados trocando automaticamente para snapshot.
+
+Importadores historicos ainda precisam resolver o binding ativo; ficam suspensos,
+nao apontar ao socket antigo. Proximos dados: planoIE20 CAS/auditoria/replay/
+reversao e auxiliares por chaves nativas, sem nova coorte. Fonte/cadastro completo,
+fornecedores/produtos e Base44 continuam pela matriz existente. Gates VPS intactos.
+
+## Historico - HML15173, armazenamento e retomada (2026-11-09)
 
 URL privada existente:
 https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/

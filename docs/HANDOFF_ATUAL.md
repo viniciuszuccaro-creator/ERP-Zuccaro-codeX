@@ -1,4 +1,55 @@
-## Continuidade vigente - persistencia, retomada e cadastro completo (2026-11-09)
+## Continuidade vigente - HML noext4 e prova real de retomada (2026-11-09)
+
+Decisao de remapeamento foi AUTORIZADA e executada, nao permanece pergunta.
+Mesmo Codespace/namespace hml344_restore_20261104/hml344_cpa_20261104; API/web
+2e2ccfeb. Diretorio ativo/workspaces/.erp-private-344/pgdata e/socket emext4.
+PG antigo e15c2c2d23d0 PARADO, substituto94c7cf0723b1, mesma imagemID e matriz
+de configuracao/permissoes; unica label extra e correlacao da manutencao.
+Sem portas/rede, sem criacao Auth, schema/grants/negocio ou recurso pago.
+
+Prova nova, nao repeticao de importacao: checkpoint frio de355694592bytes,
+extracao segura e bytes de cada arquivo conferidos; identidade do cluster igual.
+Bootstrap confirmou fisicamente schema/role NOSUPER/NOBYPASS e mesmos100IDs/
+campos. Stop/start adicional do proprio PG/API noext4 conservou100/100; nenhum
+seed/load/restore logico de clientes. Historicos preservados. Rebuild completo
+do Codespace nao ensaiado; nao interromper outros processos para provar isso.
+
+Falhas de manutencao tratadas como gates reais: P1 independentes de rollback/
+timeout/sinal/defaultapp corrigidos ANTES da troca. Falha da consulta metadata
+exit2 por passwordnaofornecida reteve lock/original/substitutoPARADOS. Causa
+comprovada em stderr privado; nao erro de senha do proprietario. Resume restrito
+usou apenas variaveis existentes dentro do container, nao senhaemargv/novoSQLgrant.
+Lock validado por inode/UID/semSymlink, estreitado porFD para0600.14binding,
+6TAR e7main/resume com Docker/FSsinteticosPASS; parecer independente favoravel
+ao delta, distinto da prova realPG executada depois. Artefatos sanitizados344/
+6689846342(bootstrapef65c492) e6743376734(helperf30ef492), pins completos no
+procedimento existente. Nao repetir --apply: agora o binding esta ativo.
+
+Prova navegador aposultima retomada: auth/session200 e clientes200, sem ler
+headers/tokens; Grupo CPA e empresas originais. Reaplicar o MESMOGrupo pelo
+seletor resolveu contexto visual inicial; Abrir deixou de ser bloqueio.
+Listagem100/20porpagina, segunda pagina20distintos/0overlap; buscaHTTP200 com
+1registroesperado, depoislimpa. EditorPJ aberto e fechado sem Save: codigo/ID/
+razao/fantasia aparecem; nomegenerico/CNPJ faltam na amostra. Conferir projecao
+documento->cpf/cnpj/mapToForm no tipCursor, sem inferir dado perdido. Recibos
+591/6743223860 e6744211113; de3fe267 teve6contraprovasJS PASS, naoReactmontado.
+
+Recibos privados hml-storage-proof-20261109 e storage-relocation-20261109,
+recovery-manifest noext4. Bundle adicional imagem/controle2TAR175587328bytes,
+SHA256/estrutura conferidos, inclui bootstrap/binding/config existentes foraGit.
+Guardar original PARADO; apos qualquer escrita aceita no novo, retorno ao antigo
+exige reconciliacao, nao rollbackautomatico que perderia mudancas.
+
+Bloqueios especificos restantes: resolver binding ativo nos importadores antes
+de novos ensaios fornecedores/produtos; CAS/auditoria/replay/reversao para aplicar
+planoIE20; dados/joins auxiliares da fonte e projecoes API/UI de cadastro completo.
+Matriz28campos preserva desconhecidoNULL, nao ausencia global/zero. Base44 continua
+frente distinta por IDs/crosswalk, sem consulta recusada repetida ou matchingnominal.
+Sem migracao/deploy operacional. ReservaCodexdocs sera liberada no recibo final;
+Cursor permanece dono UI/composicao. CI6547-6548SUCCESS refere-se a7261bb04,
+nao atribuir ao fechamento posterior ou ao runtime2e por inferencia.
+
+## Historico - persistencia, retomada e cadastro completo (2026-11-09)
 
 Decisao do proprietario: mesmos100clientes confirmados na15173; preservar fluxo
 GitHub -> Codespace/banco privado -> aceite -> VPS mediante gate especifico.

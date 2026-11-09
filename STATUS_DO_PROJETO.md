@@ -1,4 +1,44 @@
-## Continuidade vigente - HML retomada e completude ainda parcial (2026-11-09)
+## Continuidade vigente - armazenamento HML remapeado e retomada comprovada (2026-11-09)
+
+Aprovacao especifica do proprietario executada: PG privado substituido somente
+como container de apoio, mesma imagemID/configuracao, rede none/0ports/readonly,
+sem mudar papeis/schema/dados. PGdata e socket agora em/workspaces/.erp-private-344
+sobreext4; antigo e15c2c2d23d0 permanece PARADO para retorno, novo94c7cf0723b1.
+Checkpoint frio355694592bytes teve extracao integral conferida por SHA256 de
+cada arquivo; clusteridentity igual e100IDs/fingerprint de campos iguais apos
+partida. Parada/inicio do PG/API NOVOS noext4 repetiu100/100 sem seed/carga.
+Reconstrucao completa/rebuild do Codespace NAO foi ensaiada.
+
+Gates de seguranca aplicados antes da troca: revisao independente encerrouP1
+de interrupcao/resultado incerto;14binding+6TAR+7main/resume sinteticosPASS.
+Falha real psql exit2 por senha NAO fornecida reteve lock e ambosPG parados;
+resolvida com configuracao existente DENTRO do container, sem senha emargv,
+grants/trust/rotacao. Lock de manutencao estreitado pelo mesmoFD para0600;
+sete fixtures finaisPASS, sem flexibilizar assercoes. Novo bootstrapef65c492 e
+helperf30ef492 publicados como codigo sanitizado344/6689846342 e6743376734.
+
+API/web continuam2e2ccfeb, mesma HML/FINAL100. Sessao200 e clientes200 observados
+no navegador aposretomada sem capturar tokens; a ultima sessao foi aceita, nao
+generalizar exigencia de login a todo restart. Grupo CPA/empresas preservados.
+Selecionar o proprio Grupo no seletor resolveu o contexto visual inicial; Abrir
+NAO e bloqueio persistente. Listagem100total,2paginas20+20/0sobreposicao,
+buscaHTTP200 com1resultado esperado, depoislimpa. Sem Save real. Na amostraPJ,
+formulario ainda omite documento CNPJ/nome generico apesar de razao/fantasia/ID
+carregados: parecer591/6743223860; verificar tip, nao atribuir2e ao novoHEAD.
+
+Recuperacao privada: PGdata vivo + checkpoint frio + imagem/controle, com
+recovery-manifest.private.json0600. Bundle adicional2TAR/175587328bytes com
+SHA256/estrutura conferidos; nao backup publico/imagem com dados. Procedimento
+em OPERACAO_DEV_VPS. Importadores historicos ficam suspensos ate resolverem o
+binding ATIVO; nao conectar copia antiga nem rodar --apply novamente.
+
+B continua parcial: matriz28campos, IE20validas/0persistidas/plano20pendente de
+CAS/auditoria/replay/reversao canonicos; dados e joins das5tabelas auxiliares ainda
+nao lidos. Nao chamar metadata, contagem ou tela de cadastro completo. Sem carga
+operacional/DDL/grants/deployVPS.7261bb04/CI6547-6548SUCCESS e checkpoint anterior;
+fechamento deste delta documental exige diff-check e CI do novoSHA separado.
+
+## Historico - HML retomada e completude ainda parcial (2026-11-09)
 
 Proprietario confirmou os100clientes na HML privada15173. API/web servidas no
 mesmo2e2ccfebe6273c2e856f0a8881599f9c1d1fcb40; codigo funcional Codex publicado
