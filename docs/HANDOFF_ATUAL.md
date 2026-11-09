@@ -1,4 +1,28 @@
-## Continuidade vigente - Linux recuperado e lifecycle IE validado (2026-11-09)
+## Continuidade vigente - integridade atual e leitura auxiliar (2026-11-09)
+
+Backup centralizado revalidado em leitura em 09/11, 20:25-20:27 UTC:
+2836/2836 arquivos, 48359509373 bytes, caminho/tamanho/SHA256; zero faltantes,
+divergentes, ilegíveis ou extras. Objetos criptografados:50/50,3072559784bytes,
+tambem integros. Recibos detalhados privados; nenhum restore/transferencia/chmod.
+Conjunto selecionado completo NAO significa HD integral:5 instaladores/midias,
+1475316551bytes, excluidos e preservados. Inventario original1857/21102245906
+integralmente contemplado; metadados atuais iguais, sem novo hash integral do HD.
+
+Par local TID_EXETPS em 02_SQL_WORK/MDFSQL teve ambos SHA256 novamente iguais
+ao manifesto aprovado. Instancia ERPZLEGACY permanece PARADA. Leitura DATA e
+ERRORLOG foi NEGADA ao executor; registro do master indica apenas banco sistema,
+nao comprova vinculo fisico dos bancos de usuario. Nao iniciar por suposicao,
+alterar ACL nem anexar original. Falta evidencia administrativa dos caminhos
+fisicos vinculados e separacao da copia de trabalho antes da leitura auxiliar.
+Catalogo identifica cinco tabelas; contatos/telefones/joins ainda nao recuperados.
+
+HEAD remoto342 e desktop478d8058 iguais, checkout limpo antes deste registro.
+591 reconferida por fetch somente de objetos: bde45554, SEM delta desde parecer
+6748871085; nao repetir ensaios intactos nem anunciar atomicidade de varias
+requests. IE20 segue NAO aplicado; baseline versionado/binding continuam gates.
+HML nao foi iniciada, fonte100 nao foi reimportada e branchCursor nao foi editada.
+
+## Historico imediato - Linux recuperado e lifecycle IE validado (2026-11-09)
 
 Terminal do MESMO Codespace recuperado sem restart/rebuild. Checkout permanece
 b5cb34e1, branchconsolidacao e.vscode nao rastreado preservados; nenhum pull/reset.

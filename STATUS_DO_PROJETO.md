@@ -1,4 +1,19 @@
-## Continuidade vigente - lifecycle IE validado em Linux, dados nao alterados (2026-11-09)
+## Continuidade vigente - backup integralmente verificado; auxiliares bloqueados (2026-11-09)
+
+Verificacao atual em leitura:2836arquivos/48359509373bytes, SHA256 completo,
+zero faltantes/divergentes/ilegiveis/extras;50objetos cifrados tambem integros.
+Conjunto selecionado completo, nao HD integral;5instaladores excluidos preservados.
+Inventario original1857 integralmente contemplado; sem novo inventario do HD.
+MDF/LDF TID_EXETPS da copia local tambem conferidos por SHA256. Instancia parada:
+DATA/ERRORLOG inacessiveis ao executor impedem provar os caminhos anexados;
+nenhum inicio/attach/ACL alterado. Cinco tabelas auxiliares ainda sem leitura.
+591 segue bde45554 sem delta; parecer6748871085 preservado, sem novos testes
+identicos. IE20 nao aplicado/HML nao iniciada/100clientes nao recarregados.
+Proxima acao: obter evidencia administrativa do vinculo fisico da copia SQL,
+sem apontar ao original; correcoes de locais dependem do novo SHA do Cursor.
+Este lote apenas registra provas reais:git diff --check, sem runtime alterado.
+
+## Historico imediato - lifecycle IE validado em Linux, dados nao alterados (2026-11-09)
 
 Canal do mesmo Codespace recuperado, checkout/WIP antigos preservados, sem
 restart/rebuild/pull. HML15173 sem listener, PGparados e ultimo checkpoint
