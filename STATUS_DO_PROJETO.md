@@ -3,6 +3,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`0df103e2`** (código `284f2428` + types) · **CI SUCCESS** push+PR 3/3 |
 | **HML owner** | **~100 clientes** confirmados na porta **15173** (Codespace; Codex persiste) |
 | **Freeze** | **`0afd378f284`** até acordo; tip publicação = HEAD #591 |
 | **Vite / preview** | allowedHosts 5173+15173; `/__erp_preview` → sha + previewPorts |
@@ -11,7 +12,7 @@
 | **#401** | `5d9a7e37` — publicar ≠ integrar |
 | Fora | recreate clientes · PII GitHub · ContatoClienteV2 · merge/VPS operacional |
 
-**Próximo:** CI deste tip · Codex confere campos reais na :15173 (mesmo SHA) · param residual / C360 painéis com OK visual.
+**Próximo:** Codex confere campos reais na :15173 (mesmo SHA tip) · param residual / C360 painéis com OK visual.
 
 ## CURSOR — #591 celular≠WhatsApp + lacunas HTTP + C360 prep (2026-11-09 America/Sao_Paulo)
 

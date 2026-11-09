@@ -1,5 +1,5 @@
 ## CURSOR — #591 HML :15173 + fail-closed rich fields + retomada (2026-11-09 America/Sao_Paulo)
-- Owner confirmou **~100 clientes** na HML Codespace **porta 15173** (dados privados; Codex persiste).
+- Tip **`0df103e2`** · **CI SUCCESS** push+PR. Owner: **~100 clientes** HML **:15173** (Codex).
 - Vite: `allowedHosts` 5173+**15173**; `/__erp_preview` com `previewPorts` + purpose `private-hml-preview`.
 - HTTP Cliente: `locais_entrega`/`documentos` não vazios → `CLIENTE_HTTP_UNSUPPORTED_FIELDS` (sem drop silencioso).
 - Retomada: `docs/evidence/hml-15173-retomada-acesso-591-20261109.txt` — mesmo SHA API+web, sem seed.
