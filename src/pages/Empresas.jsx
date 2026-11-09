@@ -45,7 +45,7 @@ export default function Empresas() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => createInContext('Empresa', data, 'group_id'),
+    mutationFn: (/** @type {Record<string, unknown>} */ data) => createInContext('Empresa', data, 'group_id'),
     onSuccess: () => {
       invalidateEmpresasQueries();
       setIsDialogOpen(false);
@@ -58,7 +58,9 @@ export default function Empresas() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => updateInContext('Empresa', id, data, 'group_id'),
+    mutationFn: (/** @type {{ id: string, data: Record<string, unknown> }} */ { id, data }) => (
+      updateInContext('Empresa', id, data, 'group_id')
+    ),
     onSuccess: () => {
       invalidateEmpresasQueries();
       setIsDialogOpen(false);
@@ -75,6 +77,7 @@ export default function Empresas() {
     setIsDialogOpen(true);
   };
 
+  /** @param {Record<string, unknown>} payload */
   const handleEmpresaFormSubmit = (payload) => {
     const groupId = payload?.group_id
       || payload?.grupo_id
@@ -219,7 +222,11 @@ export default function Empresas() {
             </DialogHeader>
             <EmpresaForm
               key={editingEmpresa?.id || 'nova-empresa'}
-              empresa={editingEmpresa || undefined}
+              empresa={editingEmpresa || null}
+              item={null}
+              data={null}
+              initialData={null}
+              defaultValues={null}
               isSubmitting={createMutation.isPending || updateMutation.isPending}
               onSubmit={handleEmpresaFormSubmit}
             />
