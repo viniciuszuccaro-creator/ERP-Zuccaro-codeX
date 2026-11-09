@@ -3,6 +3,16 @@ import {backupCapabilityRemainder} from './backupCapabilityRemainder.js';
 import {financialFileCommandRemainder} from './financialFileCommandRemainder.js';
 
 export const commandAuditHunks={
+ 'src/components/expedicao/financeiro/ConfigFinanceiroLogistica.jsx':[
+  [
+    "  const effectiveEmpresaId = empresaId || empresaAtual?.id || null;\n  const effectiveGroupId = groupIdProp || grupoAtual?.id || empresaAtual?.group_id || null;\n  // Fail-closed multiempresa: config financeira exige grupo e empresa (não OR).\n  const contextoValido = Boolean(effectiveGroupId && effectiveEmpresaId);",
+    "  const effectiveEmpresaId = empresaId || empresaAtual?.id || null;\n  const effectiveGroupId = groupIdProp || grupoAtual?.id || empresaAtual?.group_id || null;\n  const contextoValido = Boolean(effectiveGroupId || effectiveEmpresaId);",
+  ],
+  [
+    "{!contextoValido ? \"Selecione Grupo e Empresa (ambos) para configurar financeiro logistico.\" : \"Seu perfil nao tem permissao para alterar esta configuracao.\"}",
+    "{!contextoValido ? \"Selecione grupo/empresa para configurar financeiro logistico.\" : \"Seu perfil nao tem permissao para alterar esta configuracao.\"}",
+  ]
+ ],
  'src/components/estoque/RequisicoesAlmoxarifadoTab.jsx':[
   ["  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;","  const { empresaAtual, grupoAtual, contexto, createInContext, updateInContext } = useContextoVisual();"],
   ["  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id)\n    && typeof groupId === 'string' && groupId.trim().length > 0\n    && [grupoAtual?.id, empresaAtual?.group_id, empresaAtual?.grupo_id]\n      .filter(value => value != null).every(value => value === groupId);","  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);"],
