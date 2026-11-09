@@ -1,4 +1,103 @@
-## Retomada apos recuperacao do config (2026-11-09)
+## Continuidade vigente - Linux recuperado e lifecycle IE validado (2026-11-09)
+
+Terminal do MESMO Codespace recuperado sem restart/rebuild. Checkout permanece
+b5cb34e1, branchconsolidacao e.vscode nao rastreado preservados; nenhum pull/reset.
+Sem listener15173, ambosPG privados PARADOS, writer.lock ausente, ultimo lifecycle
+APP_STOPPED_RECORDS_PRESERVED/businessWrites0; bootstrapef65 conferido. Nenhuma
+carga100, remapeamento ou ensaio de persistencia repetido. HML nao foi iniciada.
+
+Patch IE20 exato421/6747908307 validado em snapshot detached temporario da base
+9ae868ce, mesmo objectstore/indice separado, sem clone/branch/candidata concorrente.
+Lockfiles root/server iguais aos das dependencias existentes; sem npm install.
+Blobs lifecycle4ad29a54f9101b3bf3d26f70296034e0bd3592ca e
+teste f9029130685b74e2bde38b586d26d9559f255001 conferidos antes/depois.
+Nove checksPASS: audit, raiz2426PASS/0FAIL/0SKIP, lint, typecheck, build,
+backend592PASS/0FAIL/26SKIP, server:typecheck/server:build e diffcheck.
+LinuxNode24.21/Python3.14.2; Windows580PASS/38SKIP permanece prova distinta.
+TS2742 inicial em bankHttpBoundary foi reproduzido na BASE sob mesmo symlink.
+Somente layout do snapshot corrigido:73MB dos mesmos pacotes server copiados
+fisicamente apos folga40GB, sem mudar flags/config/baseline/codigo. Repetidos
+apenas typecheck/build do servidor, ambosPASS; suites aprovadas reutilizadas.
+Recibo privado results.json prefixoSHA25645467e70, artefato/provas preservados.
+Publicar o lifecycle NAO aplica IE20 nem atualiza automaticamente HML/composicao.
+
+Plano privado v2 reencontrado:20propostas/20pendentes; gates de CAS, auditoria,
+replay, reversao, revisao e baseline versionado. Bootstrap compara hash integral
+anterior; enriquecer sem baseline/journal versionados bloquearia a retomada.
+Nao sobrescrever recibo antigo para esconder mudanca, nem usar UPDATE direto.
+Proximo de dados: vincular plano/fonte/ator/namespace e ensaiar baseline/reversao
+antes da aplicacao autorizada HML; nada operacional foi alterado.
+
+59194d49ab3/CI6572 terminalSUCCESS revisada no codigo real. Escrita de locais
+NAO aprovada: defaults inventam S/N/Centro/BRASIL/ENTREGA; roundtrip substitui
+CADASTRAL+FISCAL por ENTREGA; multiplas requests deixam gravacao parcial e
+reemitem POST apos falha sem reconciliar ID. As3criadas da contraprova sao
+adapter sintetico, nao duplicidadePG comprovada (dedupe real pode rejeitar).
+Helper trunca51 e remove51mesmo presente; envelope invalido vira[], meta parcial
+e descartada, ator pode mudar entre requests; limpeza explicita omitida e GPS
+viraMANUAL. Pareceres6748365086/6748476767/6748658522, sem editar branchCursor.
+Provas JS/modulo e request real com fetch sintetico, NAO Reactmontado/rede/PG.
+Servico/repositorioLocal/RBAC sao os mesmos blobs do backend ja ensaiado;
+transacao por endpoint NAO torna MASTER+locais+finalidades atomicos como lote.
+Coordenar novo par API/web com Cursor APOS correcao/aceite e checkpoint encerrado;
+freeze ancestral nao comprova correcoes atuais. Nenhuma URL funcional anunciada.
+
+Base44 voltou acessivel: app existente ERP Integra/150schemas, sem sandbox ou
+builder. IDs nativos dos871produtos:100referencias consultadas,0matches; controle
+com ID do export91grupos retornou1. Ausencia global/historica NAO comprovada;
+crosswalk autoritativo continua pendente, sem matching por nome ou escrita.
+Recibo private native-classification-access-20261109 foraGit;14unidades intactas.
+Auxiliares legado: artefatos conferidos trazem catalogos de tabelas/colunas,
+nao dados/FKs nativos. Instancia local ERPZLEGACY existente PARADA; sqlcmd existe,
+mas leitura dos parametros de arquivos foi NEGADA pelo registro. Nao iniciar
+sem comprovar copia de trabalho/caminhos fora original. Nao concluir ausencia
+global de fonte nem repetir transferencia integral. Falta canal leitor da copia
+restaurada ou export auxiliar com joins/procedencia verificados.
+
+## Historico imediato - lote IE20 em validacao, nao aplicado (2026-11-09)
+
+Base desktop9ae868ce, WIP restrito no lifecycle existente
+server/src/services/clienteLegacyNameCorrection.ts e teste sintetico dedicado
+server/tests/cliente-legacy-registration.test.ts. Sem outro importador/storage,
+endpoint ou mudanca na interface ClienteService. Preenche SOMENTE IE ausente;
+exige Grupo/ator fixos, editar+importar, identidade/codigo/lote/procedencia,
+snapshot FOR UPDATE e fingerprint. Auditoria na mesma transacao, replay exato
+e reversao auditada; edicao interveniente bloqueia reversao. Demais campos,
+IDs/codigos/status/historicos preservados. Plano privado IE20 NAO aplicado.
+
+15testes focados SQLsinteticos/7do lifecycle e8bulk PASS;49contraprovas das
+guardas PASS sem mudar pins. Delegacao inicial no ClienteService foi retirada
+por expandir superficie congelada; arquivo voltou byte a byte a base.
+Revisao independente estatica sem achados, distinta de concorrencia realPG e
+validacao dos bytes da fonte. Typecheck/build backend e build/lint/typecheck/
+audit raiz PASS; lint1warning preexistente. CSV com Python existente10PASS.
+Primeira raiz interrompida apos falhas: NAO PASS. Nao confundir guardas iniciais
+ja corrigidas, POSIX historicos, aliasPython e timeout de subprocesso financeiro
+durante concorrencia com regressao comprovada do lifecycle. Nao elevar timeout.
+Backend completo final sequencial:618testes,580PASS/0FAIL/38SKIP (nao reduzir
+ou interpretar osSKIP comoPG real). Fechamento completo pendente: snapshot
+Linux exato; nao e reabertura dos dois checks POSIX historicos.
+
+Artefato PUBLICO sanitizado421/6747908307, somente patch2arquivos/pins, nao
+publicacao funcional ou aceite. Patch privado local ie20-canonical-lifecycle-
+20261109.patch, SHA256780ace194754edca4f94b312a8b05df94ca088b9570f685e5318dfb9f532b2cc.
+Blobs: lifecycle4ad29a54f9101b3bf3d26f70296034e0bd3592ca;
+teste f9029130685b74e2bde38b586d26d9559f255001. Solicitar validacao ao executor
+existente nao comprova recebimento; sem contornar politica GitHub/npm.
+
+Cursor591 atual89eabf78: helper real PF/PJ com zeros/nome/razao/fantasia2PASS.
+Alias documento->cpf/cnpj aprovado APENAS nesse helper, nao formulario/HML.
+Shapes ricos invalidos ainda descartados: contraprova atual591/6747739206.
+ClienteLocal ja possui servico/repositorio/HTTP /api/v1/clientes/:clienteId/locais;
+numero/pais/finalidade exigem fonte, nao inventar para satisfazer schema.
+
+Canal Chrome responde, editor continua carregando sem shell: nao repetir reload
+nem concluir perda de dados. Nenhuma carga100/PGrestart/storage remap/VPS.
+Proximo: validar estes blobs no Linux existente, obter
+recibo/revisao e somente entao publicar codigo. Recuperar shell e fonte/locks/
+namespace HML antes de qualquer aplicacao IE20 ou leitura auxiliar privada.
+
+## Historico imediato - retomada apos recuperacao do config (2026-11-09)
 
 Config TOML sintaticamente valido, sem alteracao de valores ou autenticacoes.
 Clone desktop canonico limpo, local/remoto7e5cbefc antes deste checkpoint.

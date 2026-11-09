@@ -1,4 +1,46 @@
-## Continuidade vigente - conexoes recuperadas parcialmente (2026-11-09)
+## Continuidade vigente - lifecycle IE validado em Linux, dados nao alterados (2026-11-09)
+
+Canal do mesmo Codespace recuperado, checkout/WIP antigos preservados, sem
+restart/rebuild/pull. HML15173 sem listener, PGparados e ultimo checkpoint
+encerrado com preservacao; sem nova carga100 ou remapeamento.
+Lifecycle IE20 passou9checks no snapshot exato base9ae+patch421/6747908307:
+raiz2426PASS/0FAIL/0SKIP, backend592PASS/0FAIL/26SKIP, audit/lint/typecheck/build
+root e typecheck/build backend/diffPASS. TS2742 foi reproduzido na base e
+resolvido SO por copia fisica dos mesmos pacotes de dependencia no snapshot,
+sem flags/config/pins/codigo alterados; somente2checks repetidos. Blobs intactos.
+Publicacao funcional deste lote e distinta de IE20 aplicado:20pendentes no
+plano v2, exigem binding/fonte/ator/namespace e baseline versionado para nao
+invalidar o preflight de preservacao. SHA remoto/CI no recibo daPR342.
+
+59194d49ab3/CI6572SUCCESS: novos P1 de fidelidade/atomicidade/contexto de locais,
+reproduzidos e enviados ao Cursor; nao liberar escrita ou trocar snapshotHML
+por inferencia. Detalhes/alcance das provas no topo HANDOFF. Endpoints individuais
+transacionais nao comprovam lote atomico; sem prova Reactmontado/HTTPPG nova.
+Base44 leitura restaurada:150schemas;100IDs de classe referenciados pelos871
+produtos consultados sem match, controle de ID do export91grupos1match. Sem
+equivalencia por nome, recuperacao declarada ou promocao de estoque/preco/fiscal.
+Auxiliares: fonte SQL localERPZLEGACY PARADA; parametros MDF/LDF sem acesso ao
+registro. Nao iniciar antes de comprovar copia privada fora original. Campos
+reais de contato/endereco permanecem pendentes, nao substituidos por defaults.
+
+## Historico imediato - IE20 implementado em WIP, nao aplicado (2026-11-09)
+
+Lifecycle canonico existente ampliado somente para IE ausente, com rowlock/CAS,
+identidade/procedencia, RBAC editar+importar, auditoria atomica/replay/reversao.
+Sem endpoint, schema, grants, novo importador ou alteracao no ClienteService.
+7testes lifecycle e8bulkPASS;49contraprovas preservacaoPASS, nenhum pin trocado.
+Typecheck/build backend e audit/lint/typecheck/build raiz PASS; lint1warning.
+Revisao estatica independente sem achados; PGduasconexoes/fonte real nao provados.
+Fechamento completo pendente, nao commitar como funcional: primeira raiz
+interrompida apos falhas; guardas da delegacao removida ja revalidadas, CSV com
+Python existente10PASS, POSIX historicos nao reabertos como novo bloqueio.
+Backend final sequencial580PASS/0FAIL/38SKIP; snapshot Linux exato solicitado pelo artefato
+PUBLICO sanitizado421/6747908307. Base9ae868ce; pins e retomada no HANDOFF.
+Dados reais/IE20/100clientes intactos, sem nova carga. Editor remoto sem shell.
+Cursor59189eabf78: alias CPF/CNPJ2PASS no helper real; formatos ricos invalidos
+ainda perdem campo, parecer591/6747739206. Nao generalizar para React/HML atual.
+
+## Historico imediato - conexoes recuperadas parcialmente (2026-11-09)
 
 Config TOML valido; clone desktop canonico limpo no7e5cbefc e remoto igual.
 GitHub autenticado/leitura/escrita comprovados. Chrome controla editor/HML,

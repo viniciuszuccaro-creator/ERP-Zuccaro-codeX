@@ -104,3 +104,87 @@ export async function correctInactiveLegacyName(deps: { repo: ClienteRepository;
     return { id: command.id, fingerprint: legacyNameFingerprint(after), reused: false, active: false };
   });
 }
+
+const registrationCommand = z.discriminatedUnion('mode', [
+  z.object({ ...fields, mode: z.literal('apply'), inscricaoEstadual: z.string().min(1).max(40)
+    .refine(v => v === v.trim()), sourceProof: proof }).strict(),
+  z.object({ ...fields, mode: z.literal('reverse'), originalOperationId: z.string().uuid() }).strict(),
+]);
+const registrationReceipt = z.object({ kind: z.literal('legacy_state_registration_enrichment'),
+  operationId: z.string().uuid(), commandHash: hashSchema, mode: z.enum(['apply', 'reverse']),
+  inscricaoEstadual: z.string().nullable(), fingerprint: hashSchema, sourceProof: proof }).strict();
+
+/** Restricted enrichment in the existing canonical lifecycle; no route, load or implicit clearing. */
+export async function enrichLegacyStateRegistration(
+  deps: { repo: ClienteRepository; audit: AuditRepository; rbac: RbacGuard }, ctx: RequestContext, input: unknown,
+) {
+  ctx = { ...ctx };
+  const parsed = registrationCommand.safeParse(input);
+  if (!z.string().uuid().safeParse(ctx.groupId).success || !z.string().uuid().safeParse(ctx.actorId).success
+    || ctx.empresaId || ctx.scopeType === 'empresa') {
+    throw new AppError(403, 'LEGACY_GROUP_SCOPE_REQUIRED', 'Explicit Group actor required');
+  }
+  const authorize = async (q?: DbQueryExecutor) => {
+    for (const action of ['editar', 'importar'] as const) {
+      await deps.rbac.assertAllowed(ctx, 'Cadastros', 'cliente', action, { allowGlobalWildcard: false, executor: q });
+    }
+  };
+  await authorize();
+  if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid registration enrichment command');
+  const command = parsed.data, commandHash = legacyNameFingerprint({ group: ctx.groupId, actor: ctx.actorId, command });
+  const mismatch = () => new AppError(409, 'LEGACY_ENRICHMENT_CONFLICT', 'Matching source and unchanged snapshot required');
+  return deps.repo.withTransaction(async q => {
+    if (!q || !deps.repo.getBulkSnapshot) throw new AppError(503, 'BULK_SQL_REQUIRED', 'Canonical locked SQL snapshot required');
+    await authorize(q);
+    const scope = { groupId: ctx.groupId, empresaId: null };
+    const before = await deps.repo.getBulkSnapshot(scope, command.id, q);
+    if (!before || before.group_id !== ctx.groupId || before.empresa_id != null || before.origem !== 'MIGRACAO'
+      || before.source_system !== command.sourceSystem || before.codigo_legado !== command.legacyCode
+      || before.migration_batch !== command.batch) throw mismatch();
+    const history = (await deps.audit.listByEntity('Cliente', command.id, q))
+      .filter(e => e.groupId === ctx.groupId && e.empresaId == null && e.action === 'update');
+    const receipts = history.filter(e => {
+      const r = registrationReceipt.safeParse(e.afterData);
+      return r.success && r.data.operationId === command.operationId;
+    });
+    if (receipts.length > 1) throw mismatch();
+    if (receipts.length === 1) {
+      const r = registrationReceipt.parse(receipts[0].afterData);
+      if (r.commandHash !== commandHash || r.fingerprint !== legacyNameFingerprint(before)) throw mismatch();
+      await authorize(q);
+      return { id: command.id, fingerprint: r.fingerprint, reused: true };
+    }
+    if (legacyNameFingerprint(before) !== command.expectedFingerprint) throw mismatch();
+    let target: string | null;
+    let sourceProof: z.infer<typeof proof>;
+    if (command.mode === 'apply') {
+      if (before.inscricao_estadual !== null && before.inscricao_estadual !== '') throw mismatch();
+      target = command.inscricaoEstadual;
+      sourceProof = command.sourceProof;
+    } else {
+      const originals = history.filter(e => {
+        const r = registrationReceipt.safeParse(e.afterData);
+        return r.success && r.data.mode === 'apply' && r.data.operationId === command.originalOperationId;
+      });
+      if (originals.length !== 1) throw mismatch();
+      const original = registrationReceipt.parse(originals[0].afterData);
+      const originalBefore = registrationReceipt.safeParse(originals[0].beforeData);
+      if (!originalBefore.success || original.fingerprint !== command.expectedFingerprint
+        || original.inscricaoEstadual !== before.inscricao_estadual) throw mismatch();
+      target = originalBefore.data.inscricaoEstadual;
+      sourceProof = original.sourceProof;
+    }
+    await deps.repo.update(scope, command.id, { inscricao_estadual: target }, q);
+    const after = await deps.repo.getBulkSnapshot(scope, command.id, q);
+    if (!after || !isDeepStrictEqual(after, { ...before, inscricao_estadual: target, updated_at: after.updated_at })) {
+      throw new AppError(409, 'LEGACY_ENRICHMENT_MISMATCH', 'Unexpected canonical enrichment change');
+    }
+    const common = { kind: 'legacy_state_registration_enrichment', operationId: command.operationId,
+      commandHash, mode: command.mode, sourceProof };
+    await deps.audit.append({ ...ctx, empresaId: null, entity: 'Cliente', entityId: command.id, action: 'update',
+      beforeData: { ...common, inscricaoEstadual: before.inscricao_estadual, fingerprint: command.expectedFingerprint },
+      afterData: { ...common, inscricaoEstadual: target, fingerprint: legacyNameFingerprint(after) } }, q);
+    await authorize(q);
+    return { id: command.id, fingerprint: legacyNameFingerprint(after), reused: false };
+  });
+}
