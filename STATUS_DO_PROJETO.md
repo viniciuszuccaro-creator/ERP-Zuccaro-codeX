@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Tip publicação** | **`fe849e1f`** (base CI SUCCESS `05b3b711`) — CI em execução neste push |
+| **Tip publicação** | **`32796b6a`** (fonte `fe849e1f` + pins) — **CI SUCCESS** push+PR (`erp-runtime-ci`) |
 | **HML congelado (ensaio)** | **`0afd378f284`** — **não** trocar mid-teste; publicação tip ≠ snapshot HML |
 | **#401** | `5d9a7e37` — publicar ≠ integrar |
 | **Origem lista Cliente** | Banner `data-fonte-dados` + empty distinto; piloto `VITE_ERP_HTTP_CLIENTE(_360)` + modo http; contagem API ≠ aceite UI |
