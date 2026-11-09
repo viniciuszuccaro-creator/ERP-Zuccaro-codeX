@@ -320,7 +320,8 @@ function clienteContactPresenceRemainder(source) {
   source = once(source,
     '    onError: (error) => {\n'
     + '      const sameScope = isFormScopeCurrent();\n'
-    + '      const partial = error?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;\n'
+    + '      const err = /** @type {Error & { code?: string }} */ (error);\n'
+    + '      const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;\n'
     + '      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida e força reabertura.\n'
     + '      if (partial) {\n'
     + '        queryClient.invalidateQueries({ queryKey: [\'clientes\'] });\n'
@@ -330,7 +331,7 @@ function clienteContactPresenceRemainder(source) {
     + '          ? "Contexto alterado"\n'
     + '          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),\n'
     + '        description: sameScope\n'
-    + '          ? (error?.message || String(error))\n'
+    + '          ? (err?.message || String(error))\n'
     + '          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",\n'
     + '        variant: "destructive"\n'
     + '      });\n'

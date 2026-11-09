@@ -525,7 +525,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     },
     onError: (error) => {
       const sameScope = isFormScopeCurrent();
-      const partial = error?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
+      const err = /** @type {Error & { code?: string }} */ (error);
+      const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
       // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida e força reabertura.
       if (partial) {
         queryClient.invalidateQueries({ queryKey: ['clientes'] });
@@ -535,7 +536,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           ? "Contexto alterado"
           : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),
         description: sameScope
-          ? (error?.message || String(error))
+          ? (err?.message || String(error))
           : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
