@@ -5,12 +5,15 @@ PR #591 · tip publicação ≠ HML freeze `0afd378f284`
 Sem PII, tokens, URLs secretas ou dados reais neste pack.
 
 PASSAGEM DE SNAPSHOT (coordenar com Codex)
+- Owner confirmou ~100 clientes na HML Codespace porta **15173** (privado).
 - Freeze ensaio coorte100: 0afd378f284 — manter até fechar comparação privada
   OU acordar troca explícita para tip com correções de UI/fonte.
-- Tip publicação com correções a homologar (fonte + omit + Mapa + peels):
-  ver HEAD da branch #591 (STATUS). Publicar tip ≠ integrar #401 (`5d9a7e37`).
+- Tip publicação com correções a homologar: HEAD da branch #591 (STATUS).
+  Publicar tip ≠ integrar #401 (`5d9a7e37`).
 - Aceite UI dos ~100 exige API+web no MESMO SHA e piloto ON.
+  Conferir SPA: GET /__erp_preview (sha + previewPorts [5173,15173]).
   Sem piloto: UI mostra estado http-piloto-cliente-off (não “resolve” ausência).
+- Retomada: docs/evidence/hml-15173-retomada-acesso-591-20261109.txt
 
 PROBLEMA RESOLVIDO NA UI (tip atual)
 - Sem piloto Cliente em modo HTTP: a listagem NÃO cai no store local vazio
@@ -42,10 +45,13 @@ LACUNAS DO CONTRATO HTTP MASTER (não contornar com storage paralelo)
   só projeta para escalares se fidelidade ok; senão CONTATOS_SCALAR_OVERFLOW.
   NÃO hidratar contatos[] a partir de escalares como lista completa.
 - locais_entrega[] / endereços multi entrega-cobrança: AUSENTES do payload HTTP
-  MASTER atual — UI omite se undefined (sem wipe). Backend precisa contrato
-  (ex.: cliente_locais) antes do aceite “endereços preservados via HTTP”.
-- documentos[]: idem — omit-if-undefined no Completo; sem coluna/tabela HTTP
-  ainda → não inventar ContatoClienteV2 / DocumentosCliente paralelo.
+  MASTER atual — UI omite se undefined (sem wipe). Array não vazio no save HTTP
+  → 422 CLIENTE_HTTP_UNSUPPORTED_FIELDS (fail-closed, sem drop silencioso).
+  Backend: cliente_locais (ou equivalente) antes do aceite “endereços via HTTP”.
+- documentos[]: idem — omit-if-undefined; não vazio → mesmo 422.
+  Não inventar ContatoClienteV2 / DocumentosCliente paralelo.
+- endereco_principal / condicao_comercial / configuracao_fiscal: ainda fora de
+  ALLOWED_KEYS HTTP — coordenar evolução BFF; não fingir persistência completa.
 - Celular escalar ≠ WhatsApp: resumo/seed usam tipo Celular; WhatsApp só se
   escolhido no canônico GerenciarContatosClienteForm.
 - CPF/CNPJ/CEP: strings (sanitizeCode); zeros à esquerda preservados.

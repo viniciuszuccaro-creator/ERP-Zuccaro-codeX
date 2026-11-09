@@ -94,9 +94,12 @@ test('HTTP Cliente MASTER: lacunas explícitas (sem storage paralelo)', () => {
   const payload = read('src/api/clienteHttpPayload.js');
   assert.match(payload, /ALLOWED_KEYS/);
   assert.match(payload, /CONTATOS_SCALAR_OVERFLOW/);
+  assert.match(payload, /CLIENTE_HTTP_UNSUPPORTED_FIELDS/);
+  assert.match(payload, /assertClienteHttpRichFieldsWritable/);
   assert.match(payload, /NÃO injeta `contatos` fabricados/);
-  assert.doesNotMatch(payload, /'locais_entrega'/);
-  assert.doesNotMatch(payload, /'documentos'/);
+  // ALLOWED_KEYS não lista locais/documentos (fail-closed se não vazios)
+  assert.doesNotMatch(payload, /ALLOWED_KEYS = \[[^\]]*'locais_entrega'/s);
+  assert.doesNotMatch(payload, /ALLOWED_KEYS = \[[^\]]*'documentos'/s);
   assert.match(payload, /tipo: 'Celular'/);
   assert.doesNotMatch(payload, /tipo: 'WhatsApp', valor: celular/);
 });

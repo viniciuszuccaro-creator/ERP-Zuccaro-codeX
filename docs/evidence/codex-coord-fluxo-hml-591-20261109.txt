@@ -3,9 +3,11 @@ CODEx / CURSOR — fluxo combinado (GitHub → Codespace HML → aceite → VPS)
 America/Sao_Paulo 2026-11-09 (retomada tip 2e2ccfeb+)
 
 FREEZE / WIP
+- Owner: ~100 clientes reais confirmados na HML Codespace **:15173** (privado).
 - Snapshot HML ensaio: 0afd378f284 (NAO trocar mid-teste sem acordo Codex)
 - Passagem acordada: quando coorte100 fechar OU Codex pedir tip com correções
-  de fonte/omit/Mapa — montar API+web no HEAD #591 (STATUS) no mesmo SHA.
+  — montar API+web no HEAD #591 (STATUS) no mesmo SHA; conferir /__erp_preview.
+- Retomada sem seed: docs/evidence/hml-15173-retomada-acesso-591-20261109.txt
 - Publicacao #591 tip atual: ver STATUS / HEAD da branch
 - #401 integrar: 5d9a7e37 — publicar ≠ integrar
 - Sem recreate clientes, fixtures, rename sinteticos, alteracao de banco/infra privada

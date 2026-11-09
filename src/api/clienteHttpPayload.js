@@ -45,6 +45,12 @@ const ALLOWED_KEYS = [
 /** Código estável: array UI não cabe nos escalares MASTER sem perda. */
 export const CONTATOS_SCALAR_OVERFLOW = 'CONTATOS_SCALAR_OVERFLOW';
 
+/**
+ * Código estável: campos ricos da UI (locais/documentos) ainda sem contrato HTTP MASTER.
+ * Falha fechada — não descartar em silêncio nem inventar storage paralelo.
+ */
+export const CLIENTE_HTTP_UNSUPPORTED_FIELDS = 'CLIENTE_HTTP_UNSUPPORTED_FIELDS';
+
 function pickDoc(src) {
   const raw = src.documento ?? src.cpf_cnpj ?? src.cnpj ?? src.cpf ?? '';
   const text = String(raw ?? '').trim();
@@ -285,11 +291,37 @@ export function withHydratedContatos(row) {
 }
 
 /**
+ * Rich fields present with values would be silently dropped by ALLOWED_KEYS.
+ * Empty/undefined = nothing to lose (omit). Non-empty = fail closed.
+ * @param {Record<string, unknown>} src
+ */
+export function assertClienteHttpRichFieldsWritable(src) {
+  /** @type {string[]} */
+  const unsupported = [];
+  if (Array.isArray(src.locais_entrega) && src.locais_entrega.length > 0) {
+    unsupported.push('locais_entrega');
+  }
+  if (Array.isArray(src.documentos) && src.documentos.length > 0) {
+    unsupported.push('documentos');
+  }
+  if (unsupported.length === 0) return;
+  const error = new Error(
+    `Contrato HTTP Cliente ainda não persiste: ${unsupported.join(', ')}. `
+      + 'Coordene evolução BFF (cliente_locais / documentos) — sem storage paralelo.',
+  );
+  error.code = CLIENTE_HTTP_UNSUPPORTED_FIELDS;
+  error.status = 422;
+  error.fields = unsupported;
+  throw error;
+}
+
+/**
  * @param {Record<string, unknown>|null|undefined} raw
  * @returns {Record<string, unknown>}
  */
 export function toClienteMasterHttpPayload(raw) {
   const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  assertClienteHttpRichFieldsWritable(src);
   /** @type {Record<string, unknown>} */
   const out = {};
   for (const key of ALLOWED_KEYS) {

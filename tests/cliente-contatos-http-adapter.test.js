@@ -11,9 +11,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   CONTATOS_SCALAR_OVERFLOW,
+  CLIENTE_HTTP_UNSUPPORTED_FIELDS,
   assessContatosScalarFidelity,
   applyContatosProjection,
   createContatosScalarOverflowError,
+  assertClienteHttpRichFieldsWritable,
   scalarContactSummary,
   toClienteMasterHttpPayload,
   withHydratedContatos,
@@ -58,6 +60,25 @@ test('form real: lista explicita divergente e metadata continuam bloqueadas', ()
     assert.equal(Object.hasOwn(draft, 'contatos'), true);
     assert.throws(() => toClienteMasterHttpPayload(buildPayload(draft)), error => error.code === CONTATOS_SCALAR_OVERFLOW);
   }
+});
+
+test('HTTP MASTER: locais_entrega/documentos não vazios falham fechados (sem drop silencioso)', () => {
+  assert.doesNotThrow(() => assertClienteHttpRichFieldsWritable({}));
+  assert.doesNotThrow(() => assertClienteHttpRichFieldsWritable({ locais_entrega: [], documentos: [] }));
+  assert.throws(
+    () => toClienteMasterHttpPayload({
+      nome: 'Sintético',
+      locais_entrega: [{ cep: '01310100', logradouro: 'Av Teste', tipo: 'Entrega' }],
+    }),
+    (error) => error.code === CLIENTE_HTTP_UNSUPPORTED_FIELDS && error.fields.includes('locais_entrega'),
+  );
+  assert.throws(
+    () => toClienteMasterHttpPayload({
+      nome: 'Sintético',
+      documentos: [{ nome: 'contrato.pdf', tipo: 'Contrato' }],
+    }),
+    (error) => error.code === CLIENTE_HTTP_UNSUPPORTED_FIELDS && error.fields.includes('documentos'),
+  );
 });
 import { createHttpApiClient } from '../src/api/httpApiClient.js';
 

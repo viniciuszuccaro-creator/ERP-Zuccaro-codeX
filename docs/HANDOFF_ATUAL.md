@@ -1,3 +1,10 @@
+## CURSOR — #591 HML :15173 + fail-closed rich fields + retomada (2026-11-09 America/Sao_Paulo)
+- Owner confirmou **~100 clientes** na HML Codespace **porta 15173** (dados privados; Codex persiste).
+- Vite: `allowedHosts` 5173+**15173**; `/__erp_preview` com `previewPorts` + purpose `private-hml-preview`.
+- HTTP Cliente: `locais_entrega`/`documentos` não vazios → `CLIENTE_HTTP_UNSUPPORTED_FIELDS` (sem drop silencioso).
+- Retomada: `docs/evidence/hml-15173-retomada-acesso-591-20261109.txt` — mesmo SHA API+web, sem seed.
+- Freeze `0afd378f284` só troca com acordo Codex. #401 `5d9a7e37` publicar≠integrar. Sem VPS/PII no GitHub.
+
 ## CURSOR — #591 celular≠WhatsApp + lacunas HTTP + C360 prep (2026-11-09 America/Sao_Paulo)
 - Tip **`a287c80f`** · **CI SUCCESS** push+PR. HML freeze **`0afd378f284`** — passagem só com acordo Codex.
 - Celular escalar → tipo **Celular** (não WhatsApp automático) em payload + PainelDinamicoCliente.

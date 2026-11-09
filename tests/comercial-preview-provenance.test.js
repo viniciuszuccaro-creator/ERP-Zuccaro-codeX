@@ -14,17 +14,23 @@ function load(name='synthetic-codespace',fail=false) {
   }});
   return exports.default;
 }
-test('347 actual Vite config allows only the exact private Codespace hostname',()=>{
-  const config=load();assert.deepEqual([...config.server.allowedHosts],['synthetic-codespace-5173.app.github.dev']);
+test('347 actual Vite config allows only the exact private Codespace hostnames (5173+15173 HML)',()=>{
+  const config=load();
+  assert.deepEqual([...config.server.allowedHosts],[
+    'synthetic-codespace-5173.app.github.dev',
+    'synthetic-codespace-15173.app.github.dev',
+  ]);
   assert.deepEqual([...load('evil.example/../').server.allowedHosts],[]);
 });
-test('347 DEV provenance exposes only SHA/branch/dirty status, never file names or process environment',()=>{
+test('347 DEV provenance exposes only SHA/branch/dirty/ports, never file names or process environment',()=>{
   const plugin=load().plugins.find(p=>p.name==='erp-private-preview-provenance');let handler;
   plugin.configureServer({middlewares:{use:(url,fn)=>{assert.equal(url,'/__erp_preview');handler=fn;}}});
   const headers={};let body;
   handler({}, {setHeader:(name,value)=>{headers[name]=value;},end:value=>{body=JSON.parse(value);}});
   assert.equal(body.sha,'a'.repeat(40));assert.equal(body.dirty,false);assert.equal(headers['Cache-Control'],'no-store');
-  assert.deepEqual(Object.keys(body).sort(),['branch','dirty','purpose','sha']);
+  assert.equal(body.purpose,'private-hml-preview');
+  assert.deepEqual(body.previewPorts,[5173,15173]);
+  assert.deepEqual(Object.keys(body).sort(),['branch','dirty','previewPorts','purpose','sha']);
 });
 test('347 DEV provenance fails closed and does not reveal Git/process errors',()=>{
   const plugin=load('synthetic-codespace',true).plugins.find(p=>p.name==='erp-private-preview-provenance');let handler;

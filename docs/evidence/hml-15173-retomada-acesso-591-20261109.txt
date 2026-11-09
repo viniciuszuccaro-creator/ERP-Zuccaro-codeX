@@ -1,0 +1,39 @@
+HML Codespace :15173 — acesso reproduzível (sem secrets / sem PII)
+=================================================================
+America/Sao_Paulo 2026-11-09 · PR #591
+Owner confirmou ~100 clientes reais visíveis na HML pela porta 15173.
+Comparação de campos/valores permanece privada (Codex). Sem dados reais no GitHub.
+
+FLUXO CANÔNICO
+código GitHub → homologação privada Codespace (HML) → aceite → VPS controlada
+Publicação #591 ≠ integração #401 (`5d9a7e37`). Sem deploy operacional neste lote.
+
+VERSÃO (coordenar com Codex — não trocar mid-teste)
+- Tip publicação GitHub (correções UI/fonte/omit/Mapa): HEAD da branch #591 (STATUS).
+- Freeze ensaio coorte100 anterior: 0afd378f284 — só abandonar com acordo explícito.
+- API + frontend no MESMO SHA registrado para o Codespace HML.
+- Conferir proveniência SPA: GET /__erp_preview
+  → { sha, branch, dirty, purpose: private-hml-preview, previewPorts: [5173,15173] }
+- Vite allowedHosts: `*-5173.app.github.dev` e `*-15173.app.github.dev` (CODESPACE_NAME).
+
+DESTINO HTTP (nomes de flags — valores no canal privado HML)
+1) VITE_ERP_BACKEND=http
+2) VITE_ERP_HTTP_CLIENTE=true OU VITE_ERP_HTTP_CLIENTE_360=true
+3) VITE_ERP_API_BASE_URL ou VITE_ERP_API_SAME_ORIGIN=true (mesmo origin / BFF HML)
+4) Sessão groupId+empresaId (Grupo CPA) + RBAC Cadastros/Cliente
+5) Sem piloto: UI estado http-piloto-cliente-off (≠ lista vazia / erro / sem permissão)
+
+RETOMADA APÓS PARADA/INÍCIO
+1) Subir a mesma composição API+web no SHA registrado (sem seed / sem carga nova).
+2) Reaplicar flags de piloto HTTP Cliente no build/env do Codespace.
+3) Abrir preview Private na porta 15173 (ou 5173 DEV); conferir /__erp_preview.sha.
+4) Login + contexto Grupo/Empresa → Cadastros/Cliente: listagem dos mesmos registros.
+5) Aceite de campos: listagem/busca/paginação/detalhe ≠ “campo desenhado na tela”.
+
+LACUNAS BFF (Codex — sem storage paralelo no front)
+- HTTP MASTER: escalares; locais_entrega/documentos não vazios → 422
+  CLIENTE_HTTP_UNSUPPORTED_FIELDS (fail-closed).
+- Evolução: cliente_locais / documentos / contatos[] jsonb ou tabela filha.
+
+FORA
+recreate clientes · fixtures como importação · PII no GitHub · merge/VPS sem aceite
