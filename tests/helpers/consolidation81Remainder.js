@@ -6,6 +6,11 @@ export const consolidation81Hunks={
     "hash": "5f36584a17fce4cfe46b1298942caae2575dd7866e77ff0a20d9c8daa4e16b6b",
     "hunks": [
       [
+        // Achado 6694327032 / #591: HTTP não grava upsertConfig no store local.
+        "        }\n        // Parecer 6694327032: em HTTP, upsertConfig não pode gravar no store local\n        // e fingir sucesso remoto. Modo local explícito permanece em resolveBase44Client.\n        if (name === 'upsertConfig') {\n          throw Object.assign(new Error('UPSERT_CONFIG_HTTP_UNAVAILABLE'), {\n            code: 'UPSERT_CONFIG_HTTP_UNAVAILABLE',\n            status: 503,\n          });\n        }\n        return localBase44.functions.invoke(name, payload);",
+        "        }\n        return localBase44.functions.invoke(name, payload);"
+      ],
+      [
         "} from './localAuthSessionPolicy.js';\nimport { createHttpApiClient } from './httpApiClient.js';\nimport { HTTP_CONTEXT_CHANGED } from './erpHttpSession.js';\nimport { runLocalEntityReadFunction, notifyEntityApiAccess } from './localEntityReadApi.js';\nimport {\n  countEntitiesTouchesHttpPilot,\n  runHttpPilotAwareCountEntities,",
         "} from './localAuthSessionPolicy.js';\nimport { createHttpApiClient } from './httpApiClient.js';\nimport { HTTP_CONTEXT_CHANGED } from './erpHttpSession.js';\nimport { runLocalEntityReadFunction } from './localEntityReadApi.js';\nimport {\n  countEntitiesTouchesHttpPilot,\n  runHttpPilotAwareCountEntities,"
       ],
