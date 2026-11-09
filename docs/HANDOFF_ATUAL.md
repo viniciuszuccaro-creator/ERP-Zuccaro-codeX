@@ -1,3 +1,11 @@
+## CURSOR — #591 clientes UI fonte + preservação (2026-11-09 America/Sao_Paulo)
+- Tip publicação CI **`05b3b711`** SUCCESS; HML ensaio **congelado `0afd378f284`** (não trocar mid-teste).
+- Causa UI vazia vs contagem API: sem `VITE_ERP_HTTP_CLIENTE(_360)` em modo http → store local ≠ BFF.
+- V24: banner `data-fonte-dados` + empty/erro/contexto distintos.
+- `CadastroClienteCompleto`: omit `locais_entrega`/`contatos` se undefined; pendência `cliente-parcial`.
+- Pack: `docs/evidence/codex-clientes-fonte-ui-591-20261109.txt`. Aceite real/privado com Codex. Sem dados reais no GitHub.
+- #401 `5d9a7e37` — publicar ≠ integrar. Sem merge/deploy/VPS.
+
 ## CURSOR — #591 aceite gaps + EmpresasForm + parecer pack (2026-11-09 America/Sao_Paulo)
 - HML **congelado** para Codex: **`0afd378f284`** (não mudar snapshot no meio do teste).
 - Tip docs CI: **`0385c2d2`**. Delta aceite (este lote): Separação seletor; ConfigFin AND; Empresas→EmpresaForm; Fechamento perm; ConfigUsuario onError.

@@ -1,0 +1,39 @@
+CODEx / CURSOR — Clientes reais na UI (#591)
+============================================
+America/Sao_Paulo 2026-11-09
+
+VERSOES (distinguir)
+- Publicacao tip #591 (codigo + CI): 05b3b711 (CI SUCCESS push+PR) + tip deste lote (apos fonte/preservacao).
+- HML congelado para ensaio em andamento: 0afd378f284d8693b859477fa532b54a2367527f
+  NAO trocar snapshot no meio do teste Codex.
+- Integracao #401 candidata: 5d9a7e37 — publicar ≠ integrar.
+
+CAUSA PROVAVEL (UI vazia vs ~100 na API)
+- Listagem Cadastros/Cliente no Visualizador V24 usa base44.entities.Cliente.
+- Em VITE_ERP_BACKEND=http, Cliente so vai ao BFF se VITE_ERP_HTTP_CLIENTE=true
+  OU VITE_ERP_HTTP_CLIENTE_360=true (isHttpClienteListEnabled).
+- Sem flag: store local (vazio) — contagem da API ≠ grid.
+- Modo local puro: mesma distincao (store local ≠ HML).
+- Sem grupo/empresa: contexto ausente (banner amber) ≠ lista vazia por busca.
+- Erro de API: banner vermelho "Erro ao carregar dados" ≠ empty slate.
+
+ACEITE UI (mesma versao API+web)
+1) Banner data-fonte-dados=local-piloto-cliente-off | local-only quando aplicavel.
+2) Com piloto ON + contexto Grupo/Empresa: listagem/busca/paginacao dos clientes do escopo.
+3) CadastroClienteCompleto: abas dados/contatos/enderecos/financeiro/fiscal/historico/anexos.
+4) Contatos multiplos (tipo Telefone padrao; WhatsApp so se escolhido).
+5) Enderecos multiplos (Entrega/Cobranca/Matriz/Obra/Outro) + endereco_principal cadastral.
+6) locais_entrega/contatos omit-if-undefined no payload (nao wipe).
+7) Pendencia data-pendencia=cliente-parcial quando campo nao recuperado.
+8) Reabertura/troca cliente/escopo sem contaminacao (useCadastroReopenOnIdentity).
+
+PRIVADO
+Comparacao dos ~100 registros reais: canal privado Codex. Sem PII/CNPJ/nomes
+em GitHub, CI, screenshots publicos ou testes.
+
+CODESPACE / HML (sem credenciais neste pack)
+- Backend http + flag Cliente + sessao com groupId/empresaId autorizados.
+- Contagem API sozinha NUNCA e aceite da interface.
+
+FORA
+merge, deploy, VPS, troca de 0afd378f mid-ensaio, dados reais no repo.

@@ -1,13 +1,36 @@
-test('Cliente contatos: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
+test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const payload = '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),';
   const mapper = '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),';
-  for (const hunk of [payload, mapper]) {
+  const locaisPayload = [
+    '    ...(data.locais_entrega === undefined',
+    '      ? {}',
+    '      : {',
+    '          locais_entrega: Array.isArray(data.locais_entrega)',
+    '            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)',
+    '            : [],',
+    '        }),',
+  ].join('\n');
+  const locaisMapper = [
+    '      ...(record.locais_entrega === undefined',
+    '        ? {}',
+    '        : { locais_entrega: record.locais_entrega || [] }),',
+  ].join('\n');
+  for (const hunk of [payload, mapper, locaisPayload, locaisMapper]) {
     assert.equal(source.split(hunk).length - 1, 1);
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, '')));
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, hunk + '\n' + hunk)));
-    const variable = hunk === payload ? 'data' : 'record';
-    const forged = hunk.replace(variable + '.contatos ===', `Object.assign(${variable},{nome:'FORGED'}).contatos ===`);
+  }
+  for (const [hunk, variable, field] of [
+    [payload, 'data', 'contatos'],
+    [mapper, 'record', 'contatos'],
+    [locaisPayload, 'data', 'locais_entrega'],
+    [locaisMapper, 'record', 'locais_entrega'],
+  ]) {
+    const forged = hunk.replace(
+      `${variable}.${field} ===`,
+      `Object.assign(${variable},{nome:'FORGED'}).${field} ===`,
+    );
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, forged)));
   }
 });
@@ -43,6 +66,24 @@ function once(source, current, previous) {
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  source = once(source,
+    '      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined) && (\n'
+    + '        <div\n'
+    + '          className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"\n'
+    + '          data-pendencia="cliente-parcial"\n'
+    + '          role="status"\n'
+    + '        >\n'
+    + '          {formData.contatos === undefined && formData.locais_entrega === undefined\n'
+    + '            ? "Contatos e endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia esses campos (sem apagar a fonte)."\n'
+    + '            : formData.contatos === undefined\n'
+    + '              ? "Contatos ainda não recuperados nesta carga — o salvamento não envia este campo."\n'
+    + '              : "Endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia este campo."}\n'
+    + '          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral.\n'
+    + '        </div>\n'
+    + '      )}\n'
+    + '\n'
+    + '      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">\n',
+    '      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">\n');
   source = once(source,
     '  /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */\n'
     + '  const applyContatosDraft = (novosContatos) => {\n'
@@ -91,8 +132,22 @@ function clienteContactPresenceRemainder(source) {
     + '            </TabsContent>\n');
   source = once(source, '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),',
     '    contatos: sanitizeContatos(data.contatos),');
-  return once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
+  source = once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
     '      contatos: record.contatos || [],');
+  source = once(source,
+    '    ...(data.locais_entrega === undefined\n'
+    + '      ? {}\n'
+    + '      : {\n'
+    + '          locais_entrega: Array.isArray(data.locais_entrega)\n'
+    + '            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)\n'
+    + '            : [],\n'
+    + '        }),',
+    '    locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],');
+  return once(source,
+    '      ...(record.locais_entrega === undefined\n'
+    + '        ? {}\n'
+    + '        : { locais_entrega: record.locais_entrega || [] }),',
+    '      locais_entrega: record.locais_entrega || [],');
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).

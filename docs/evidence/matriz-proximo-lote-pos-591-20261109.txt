@@ -11,6 +11,8 @@ Já fechado neste tip (aceitação profunda)
 - Empresas×Cadastros: EmpresaForm canônico no CRUD da página Empresas
 - Widget Fechamento: gate de permissão
 - ConfiguracoesUsuario: onError toast
+- Clientes UI: fonte local≠API distinguida; CadastroClienteCompleto omit-if-unknown;
+  HML freeze 0afd378f preservado; aceite real privado pendente Codex
 
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
 1. CRM Funil×3 — já no launchpad CRM (FunilVisual / Inteligente / Avançado);

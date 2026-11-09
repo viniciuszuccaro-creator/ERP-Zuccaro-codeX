@@ -14,6 +14,108 @@ function peelOnce(source, after, before, label) {
 export function scopeListCacheRemainder(source) {
   let result = source.replace(/\r\n/g, '\n');
 
+  // #591 — origem lista Cliente (fonte local ≠ contagem API); peel → golden e36231b3.
+  result = peelOnce(
+    result,
+    `import {
+  base44,
+  erpBackendMode,
+  isHttpBackendMode,
+  isHttpClienteListMode,
+  isLocalOnlyMode,
+} from "@/api/base44Client";
+`,
+    `import { base44 } from "@/api/base44Client";
+`,
+    'visualizer cliente fonte import',
+  );
+
+  result = peelOnce(
+    result,
+    `  // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
+  const contextoValido = !!(empresaId || groupId);
+  /** Cliente: API HML só alimenta a lista com piloto HTTP ligado; senão store local ≠ contagem API. */
+  const clienteFonteLocal =
+    ENTITY === "Cliente"
+    && (isLocalOnlyMode || (isHttpBackendMode && !isHttpClienteListMode));
+  const clientePilotoHttpOff =
+    ENTITY === "Cliente" && isHttpBackendMode && !isHttpClienteListMode;
+  const permCheckers = { hasPermission, canCreate, canEdit, canDelete, isLoading: permissionsLoading };
+`,
+    `  // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
+  const contextoValido = !!(empresaId || groupId);
+  const permCheckers = { hasPermission, canCreate, canEdit, canDelete, isLoading: permissionsLoading };
+`,
+    'visualizer cliente fonte flags',
+  );
+
+  result = peelOnce(
+    result,
+    `    if (items.length === 0 && !isFetching) {
+      let emptyMsg = debouncedSearch
+        ? "Nenhum resultado para \\"" + debouncedSearch + "\\""
+        : "Nenhum registro de " + TITULO;
+      if (!debouncedSearch && clientePilotoHttpOff) {
+        emptyMsg = "Lista local vazia — piloto HTTP Cliente desligado. Contagem da API não alimenta esta tela.";
+      } else if (!debouncedSearch && clienteFonteLocal && isLocalOnlyMode) {
+        emptyMsg = "Modo local — store local vazio. Não é a listagem da API HML.";
+      }
+      return (
+        <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
+          <Search className="w-7 h-7 opacity-30" />
+          <span className="text-sm text-center px-4">{emptyMsg}</span>
+        </div>
+      );
+    }
+`,
+    `    if (items.length === 0 && !isFetching) {
+      return (
+        <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
+          <Search className="w-7 h-7 opacity-30" />
+          <span className="text-sm">
+            {debouncedSearch
+              ? "Nenhum resultado para \\"" + debouncedSearch + "\\""
+              : "Nenhum registro de " + TITULO}
+          </span>
+        </div>
+      );
+    }
+`,
+    'visualizer cliente empty fonte',
+  );
+
+  result = peelOnce(
+    result,
+    `      {!contextoValido && (
+        <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-xs text-amber-800 shrink-0">
+          Selecione um grupo ou empresa para carregar, criar ou editar este cadastro no escopo correto.
+        </div>
+      )}
+      {contextoValido && clienteFonteLocal && (
+        <div
+          className="bg-sky-50 border border-sky-200 rounded-sm px-3 py-2 text-xs text-sky-900 shrink-0"
+          data-fonte-dados={clientePilotoHttpOff ? "local-piloto-cliente-off" : "local-only"}
+          data-erp-backend={erpBackendMode}
+        >
+          {clientePilotoHttpOff
+            ? "Fonte desta lista: store local (piloto HTTP Cliente desligado). Contagem da API ≠ registros desta tela."
+            : "Fonte desta lista: modo local. Contagem/API HML não alimenta este grid."}
+        </div>
+      )}
+
+      {/* Banner cross-page */}
+`,
+    `      {!contextoValido && (
+        <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-xs text-amber-800 shrink-0">
+          Selecione um grupo ou empresa para carregar, criar ou editar este cadastro no escopo correto.
+        </div>
+      )}
+
+      {/* Banner cross-page */}
+`,
+    'visualizer cliente fonte banner',
+  );
+
   result = peelOnce(
     result,
     `  // Contagem — erro ≠ zero; loading ≠ 0: total desconhecido até number validado (Codex P1 a9948387).

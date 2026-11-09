@@ -17,7 +17,6 @@ import {
   BLOCOS_ENTITIES,
   ALL_ENTITIES,
   buildCadastrosAllCountsFilter,
-  emptyCadastrosCounts,
   fetchCadastrosAllCounts as fetchCountsCore,
 } from "./cadastrosAllCountsCore.js";
 
@@ -57,7 +56,11 @@ export default function useCadastrosAllCounts() {
     queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds, actorId, sessionKey],
     queryFn: async () => {
       if (!contextoValido) {
-        return /** @type {CadastrosCountsPayload} */ ({ counts: emptyCadastrosCounts(), missing: [] });
+        // Sem grupo/empresa: indisponível (—), nunca fabricar 0 como total confirmado.
+        return /** @type {CadastrosCountsPayload} */ ({
+          counts: {},
+          missing: ALL_ENTITIES.slice(),
+        });
       }
       try {
         const counts = await fetchCountsCore({

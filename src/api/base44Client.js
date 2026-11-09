@@ -14,6 +14,7 @@ import {
 } from './httpPilotCountBridge.js';
 import {
   HTTP_PILOT_ENTITIES,
+  isHttpClienteListEnabled,
   isHttpExpedicaoEnabled as expedicaoFlag,
   resolveErpApiBaseUrl,
   resolveErpBackendMode,
@@ -38,6 +39,10 @@ export const isHttpExpedicaoEnabled = expedicaoFlag(import.meta.env);
 export const isHttpExpedicaoMode = isHttpExpedicaoEnabled;
 export const isHttpProdutoEnabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_PRODUTO === 'true';
 export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';
+/** Listagem Cliente via BFF (CLIENTE_360 ou CLIENTE). Sem flag: store local ≠ API. */
+export { isHttpClienteListEnabled };
+/** @type {boolean} */
+export const isHttpClienteListMode = isHttpClienteListEnabled(import.meta.env);
 /**
  * Contrato do produtor local/API key; nao representa uma sessao HTTP autenticada.
  * @typedef {Pick<import('@base44/sdk').User,

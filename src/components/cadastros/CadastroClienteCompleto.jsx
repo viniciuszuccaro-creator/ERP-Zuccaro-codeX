@@ -250,7 +250,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     observacoes: sanitizeText(data.observacoes, 2000),
     endereco_principal: sanitizeEndereco(data.endereco_principal),
     ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),
-    locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],
+    ...(data.locais_entrega === undefined
+      ? {}
+      : {
+          locais_entrega: Array.isArray(data.locais_entrega)
+            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)
+            : [],
+        }),
     condicao_comercial: {
       ...(data.condicao_comercial || {}),
       tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
@@ -396,7 +402,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     mapToForm: (record) => ({
       ...record,
       ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),
-      locais_entrega: record.locais_entrega || [],
+      ...(record.locais_entrega === undefined
+        ? {}
+        : { locais_entrega: record.locais_entrega || [] }),
       condicao_comercial: record.condicao_comercial || {
         tabela_preco_id: "",
         forma_pagamento_padrao_id: "",
@@ -696,6 +704,21 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </div>
           </div>
       </div>
+
+      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined) && (
+        <div
+          className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"
+          data-pendencia="cliente-parcial"
+          role="status"
+        >
+          {formData.contatos === undefined && formData.locais_entrega === undefined
+            ? "Contatos e endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia esses campos (sem apagar a fonte)."
+            : formData.contatos === undefined
+              ? "Contatos ainda não recuperados nesta carga — o salvamento não envia este campo."
+              : "Endereços de entrega/cobrança ainda não recuperados nesta carga — o salvamento não envia este campo."}
+          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral.
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="grid w-full grid-cols-7 flex-shrink-0 px-6 bg-slate-50">

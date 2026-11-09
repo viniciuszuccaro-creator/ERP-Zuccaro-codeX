@@ -1,3 +1,20 @@
+## CURSOR — #591 clientes UI fonte + preservação (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip publicação (pré-lote)** | **`05b3b711`** — CI SUCCESS push+PR (`erp-runtime-ci`) |
+| **HML congelado (ensaio)** | **`0afd378f284`** — **não** trocar mid-teste; publicação tip ≠ snapshot HML |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **Origem lista Cliente** | Banner `data-fonte-dados` + empty distinto; piloto `VITE_ERP_HTTP_CLIENTE(_360)` + modo http; contagem API ≠ aceite UI |
+| **Form completo** | `CadastroClienteCompleto` canônico; contatos/endereços multi; WhatsApp não default; entrega ≠ cadastral |
+| **Preservação** | `locais_entrega`/`contatos` omit-if-undefined; `data-pendencia=cliente-parcial`; sem contexto → counts missing (não 0) |
+| **Pack Codex** | `docs/evidence/codex-clientes-fonte-ui-591-20261109.txt` |
+| **Testes** | `cliente-fonte-lista-preservacao-591` + payload boundaries + http piloto + consolidacao V24 PASS |
+| Fora | merge · deploy · VPS · dados reais GitHub · troca `0afd378f` |
+
+**Próximo:** tip CI deste commit · Codex aceite UI no HML congelado (privado) · port #591→#401 só após aceite · matriz Funil/Mapa/Chatbot.
+
 ## CURSOR — #591 aceite gaps + unificação EmpresaForm (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

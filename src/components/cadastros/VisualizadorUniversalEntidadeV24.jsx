@@ -7,7 +7,13 @@
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import {
+  base44,
+  erpBackendMode,
+  isHttpBackendMode,
+  isHttpClienteListMode,
+  isLocalOnlyMode,
+} from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts from "@/components/lib/useEntityCounts";
@@ -286,6 +292,12 @@ export default function VisualizadorUniversalEntidadeV24({
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
   // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
   const contextoValido = !!(empresaId || groupId);
+  /** Cliente: API HML só alimenta a lista com piloto HTTP ligado; senão store local ≠ contagem API. */
+  const clienteFonteLocal =
+    ENTITY === "Cliente"
+    && (isLocalOnlyMode || (isHttpBackendMode && !isHttpClienteListMode));
+  const clientePilotoHttpOff =
+    ENTITY === "Cliente" && isHttpBackendMode && !isHttpClienteListMode;
   const permCheckers = { hasPermission, canCreate, canEdit, canDelete, isLoading: permissionsLoading };
   const canViewCadastro = hasCadastroEntityPermission(ENTITY, "visualizar", permCheckers);
   const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
@@ -1030,14 +1042,18 @@ export default function VisualizadorUniversalEntidadeV24({
       );
     }
     if (items.length === 0 && !isFetching) {
+      let emptyMsg = debouncedSearch
+        ? "Nenhum resultado para \"" + debouncedSearch + "\""
+        : "Nenhum registro de " + TITULO;
+      if (!debouncedSearch && clientePilotoHttpOff) {
+        emptyMsg = "Lista local vazia — piloto HTTP Cliente desligado. Contagem da API não alimenta esta tela.";
+      } else if (!debouncedSearch && clienteFonteLocal && isLocalOnlyMode) {
+        emptyMsg = "Modo local — store local vazio. Não é a listagem da API HML.";
+      }
       return (
         <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
           <Search className="w-7 h-7 opacity-30" />
-          <span className="text-sm">
-            {debouncedSearch
-              ? "Nenhum resultado para \"" + debouncedSearch + "\""
-              : "Nenhum registro de " + TITULO}
-          </span>
+          <span className="text-sm text-center px-4">{emptyMsg}</span>
         </div>
       );
     }
@@ -1288,6 +1304,17 @@ export default function VisualizadorUniversalEntidadeV24({
       {!contextoValido && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-xs text-amber-800 shrink-0">
           Selecione um grupo ou empresa para carregar, criar ou editar este cadastro no escopo correto.
+        </div>
+      )}
+      {contextoValido && clienteFonteLocal && (
+        <div
+          className="bg-sky-50 border border-sky-200 rounded-sm px-3 py-2 text-xs text-sky-900 shrink-0"
+          data-fonte-dados={clientePilotoHttpOff ? "local-piloto-cliente-off" : "local-only"}
+          data-erp-backend={erpBackendMode}
+        >
+          {clientePilotoHttpOff
+            ? "Fonte desta lista: store local (piloto HTTP Cliente desligado). Contagem da API ≠ registros desta tela."
+            : "Fonte desta lista: modo local. Contagem/API HML não alimenta este grid."}
         </div>
       )}
 

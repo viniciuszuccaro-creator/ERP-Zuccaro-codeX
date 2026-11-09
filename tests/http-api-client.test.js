@@ -222,8 +222,24 @@ test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do f
 test('Cliente entra no piloto HTTP somente com flag CLIENTE autorizada', () => {
   assert.equal(resolveHttpPilotEntities({}).includes('Cliente'), false);
   assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'false' }).includes('Cliente'), false);
-  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'), true);
-  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE: 'true' }).includes('Cliente'), true);
+  // Flag sozinha em modo local NÃO liga piloto (store local ≠ API).
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'), false);
+  assert.equal(
+    resolveHttpPilotEntities({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'),
+    true,
+  );
+  assert.equal(
+    resolveHttpPilotEntities({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE: 'true' }).includes('Cliente'),
+    true,
+  );
+});
+
+test('isHttpClienteListEnabled exige modo http + flag CLIENTE', async () => {
+  const { isHttpClienteListEnabled } = await import('../src/api/runtimeBackend.js');
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'local', VITE_ERP_HTTP_CLIENTE: 'true' }), false);
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'http' }), false);
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE: 'true' }), true);
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE_360: 'true' }), true);
 });
 
 
