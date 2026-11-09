@@ -4,7 +4,7 @@
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Base tip verde** | peels **`89eabf78`** · **CI SUCCESS** |
-| **Tip / CI** | tip deste push — aguarda CI |
+| **Tip / CI** | **`bf678ebe`** — aguarda CI |
 | **Parecer** | **6746649125** recebido — fail-closed vs descarte silencioso |
 | **Documento UI** | hydrate cpf/cnpj/tipo; grade cols; ~100 HML sem reimport |
 | **Locais** | read `cliente_locais` canônico; write MASTER ainda UNSUPPORTED |
