@@ -883,6 +883,109 @@ SeparacaoConferencia: {
       return rows;
     },
     /**
+     * Cria local canônico (POST `/clientes/:id/locais`) — sem storage paralelo.
+     * @param {string} clienteId
+     * @param {Record<string, unknown>} body
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async createLocal(clienteId, body, { signal } = {}) {
+      const id = String(clienteId ?? '').trim();
+      if (!id) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId obrigatório para createLocal')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {
+        method: 'POST',
+        body,
+        signal,
+        unwrap: false,
+      });
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
+    },
+    /**
+     * Atualiza local canônico (PATCH `/clientes/:id/locais/:localId`).
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {Record<string, unknown>} body
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async updateLocal(clienteId, localId, body, { signal } = {}) {
+      const cid = String(clienteId ?? '').trim();
+      const lid = String(localId ?? '').trim();
+      if (!cid || !lid) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId/localId obrigatórios para updateLocal')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(
+        `/api/v1/clientes/${encodeURIComponent(cid)}/locais/${encodeURIComponent(lid)}`,
+        { method: 'PATCH', body, signal, unwrap: false },
+      );
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
+    },
+    /**
+     * Soft-delete local canônico (DELETE `/clientes/:id/locais/:localId`).
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async softDeleteLocal(clienteId, localId, { signal } = {}) {
+      const cid = String(clienteId ?? '').trim();
+      const lid = String(localId ?? '').trim();
+      if (!cid || !lid) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId/localId obrigatórios para softDeleteLocal')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(
+        `/api/v1/clientes/${encodeURIComponent(cid)}/locais/${encodeURIComponent(lid)}`,
+        { method: 'DELETE', signal, unwrap: false },
+      );
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
+    },
+    /**
+     * Substitui finalidades do local (PUT `.../finalidades`).
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {unknown} finalidades
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async setFinalidades(clienteId, localId, finalidades, { signal } = {}) {
+      const cid = String(clienteId ?? '').trim();
+      const lid = String(localId ?? '').trim();
+      if (!cid || !lid) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId/localId obrigatórios para setFinalidades')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(
+        `/api/v1/clientes/${encodeURIComponent(cid)}/locais/${encodeURIComponent(lid)}/finalidades`,
+        { method: 'PUT', body: { finalidades }, signal, unwrap: false },
+      );
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
+    },
+    /**
      * Sugestão de vínculo por documento no Grupo (sem mescla).
      * @param {{ documento?: string, signal?: AbortSignal }} [input]
      */

@@ -22,19 +22,26 @@ DOCUMENTO / IDENTIFICAÇÃO (projeção, sem reimport)
 - Grade Bloco1/ClientesTab + V24 variants; Completo mapToForm
 - Não inventa nome genérico; razao_social/nome_fantasia preservados do MASTER
 
-CONTRATO LOCAIS (completar, não só bloquear)
-- Proprietário canônico BFF: GET/POST/PATCH /api/v1/clientes/:id/locais
-  (clienteLocalService + cliente_locais) — já no server
-- UI: Completo lê listLocais → locaisViewForUi (entrega≠cadastral; COBRANÇA tipado)
-- Write via MASTER com locais_entrega ainda UNSUPPORTED até write HTTP /locais
-  (próximo coordenado com Codex; reutilizar GerenciarEnderecosClienteForm)
+CONTRATO LOCAIS (completar, não só bloquear) — FECHADO NESTE TIP
+- Proprietário canônico BFF: GET/POST/PATCH/DELETE + finalidades
+  /api/v1/clientes/:id/locais (clienteLocalService) — reutilizado
+- UI Completo: listLocais → locaisViewForUi; Salvar → syncClienteLocaisViaHttp
+  (MASTER sem locais_entrega; entrega≠cadastral)
+- Soft-delete só com baseline carregado; carga falhou → null baseline → sem wipe
+- Extras UI (horário/contato/mapa) significativos → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+  (sem drop; extensão BFF futura)
 - Sem ContatoClienteV2 / storage paralelo
 
+BASE44 (MCP Base acessível neste ambiente)
+- Shape confirmado: Contatos[] ricos; locais_entrega com horário/contato
+- Sem PII commitado; recuperação visual/campos via contrato, não dump
+
 TESTES
+- cliente-locais-sync-http-591
 - cliente-http-descarte-silencioso-591
-- cadastro-query-payload-boundaries (peels Completo)
-- http-api-client (fail-closed allowlist)
-- typecheck
+- cadastro-query-payload-boundaries (peels Completo + mutationFn)
+- http-api-client / financial peels
+- tip peels **14005f39** CI SUCCESS
 
 FORA
 merge · deploy VPS · dados reais no GitHub · recreate clientes · enfraquecer validação

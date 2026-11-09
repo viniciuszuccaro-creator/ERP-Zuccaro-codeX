@@ -1,9 +1,16 @@
+## CURSOR — #591 write `/locais` + peels CI SUCCESS (2026-11-09 America/Sao_Paulo)
+- Tip peels **`14005f39`** · **CI SUCCESS** push 3/3 (listLocais peel + stub Completo).
+- Write canônico: Completo salva MASTER sem `locais_entrega`; sync `POST/PATCH/DELETE/finalidades` em `/clientes/:id/locais`.
+- `syncClienteLocaisViaHttp`: create/update; soft-delete só com baseline carregado; carga falhou → sem wipe; extras horário/contato → fail-closed.
+- Base44 MCP `Base` acessível (shape Contatos[] / locais_entrega ricos) — sem PII no GitHub.
+- Freeze HML **`0afd378f284`** até acordo tip API+web. Pack parecer **6746649125** atualizado.
+- Pendente: contatos ricos / documentos; C360 Orçamentos; aceite Codex :15173.
+
 ## CURSOR — #591 parecer 6746649125 + locais read + doc UI (2026-11-09 America/Sao_Paulo)
 - Recebido parecer **6746649125**: descarte silencioso de campos ricos/invalidos = defeito.
-- Tip peels `89eabf78` **CI SUCCESS**; tip deste lote (descarte+locais) em push.
+- Tip peels `89eabf78` / fix **`14005f39`** **CI SUCCESS**.
 - Fail-closed: `endereco_principal`/`condicao`/`vínculos` significativos; `tipo`/`origem` inválidos — sem delete silencioso; rascunho preservado.
-- Leitura canônica `GET /clientes/:id/locais` → Completo `locaisViewForUi` (entrega≠cadastral); write MASTER com locais_entrega continua UNSUPPORTED até write via `/locais` (Codex BFF).
-- Documento: hydrate → cpf/cnpj/tipo PF-PJ; zeros; grade cols. Freeze HML **`0afd378f284`** até acordo tip API+web.
+- Leitura+escrita canônica `cliente_locais` (não MASTER). Documento hydrate PF-PJ/zeros.
 - Pack: `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt`. Sem storage paralelo/VPS/PII.
 
 ## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)

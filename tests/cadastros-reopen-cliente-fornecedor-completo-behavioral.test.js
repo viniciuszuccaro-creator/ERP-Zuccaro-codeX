@@ -216,6 +216,7 @@ async function mountCompleto(relPath, {
         cidade: row?.cidade || '',
         estado: row?.uf || '',
       }),
+      syncClienteLocaisViaHttp: async () => undefined,
     },
     '@/api/localCadastroMasterPolicy': {
       normalizeFornecedorCadastro: (payload) => ({ ...payload, normalized: true }),

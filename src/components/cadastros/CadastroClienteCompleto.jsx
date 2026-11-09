@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef, Suspense } from "react";
 import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { createHttpApiClient } from "@/api/httpApiClient";
 import { readErpHttpSession } from "@/api/erpHttpSession";
-import { mapClienteLocalToUiEndereco } from "@/api/clienteHttpPayload";
+import {
+  mapClienteLocalToUiEndereco,
+  syncClienteLocaisViaHttp,
+} from "@/api/clienteHttpPayload";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -452,16 +455,64 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       }
 
       const payload = buildPayload(data);
+      // Write canônico: locais via /clientes/:id/locais — não empurrar no MASTER.
+      const locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
+        ? payload.locais_entrega
+        : undefined;
+      if (isHttpBackendMode && locaisDraft !== undefined) {
+        delete payload.locais_entrega;
+      }
 
       // Identidade do rascunho (boundId), não props — evita salvar A em B após reject switch.
       const targetId = clienteBoundId || formData?.id || null;
+      let saved;
       if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
-        return updateInContext('Cliente', targetId, payload);
+        saved = await updateInContext('Cliente', targetId, payload);
+      } else {
+        if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
+        saved = await createInContext('Cliente', payload);
       }
 
-      if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
-      return createInContext('Cliente', payload);
+      if (isHttpBackendMode && locaisDraft !== undefined) {
+        assertFormScopeCurrent();
+        const clienteId = String(
+          (saved && typeof saved === 'object' && /** @type {{ id?: unknown }} */ (saved).id)
+            || targetId
+            || '',
+        ).trim();
+        if (!clienteId) {
+          throw new Error(
+            'Cliente MASTER gravado, mas id ausente para sincronizar endereços canônicos. '
+              + 'Rascunho de locais preservado — reabra e salve novamente.',
+          );
+        }
+        const session = readErpHttpSession();
+        if (!session?.token || !session?.groupId) {
+          throw new Error(
+            'Sessão HTTP indisponível após salvar MASTER — endereços não sincronizados. '
+              + 'Erro remoto ≠ sucesso local; reabra o cadastro.',
+          );
+        }
+        const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
+        // baselineIds null se carga falhou: campo não carregado não apaga persistido.
+        const baselineView = locaisHttpBaselineRef.current;
+        const baselineIds = Array.isArray(baselineView)
+          ? baselineView
+            .map((row) => (row && typeof row === 'object'
+              ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+              : ''))
+            .filter(Boolean)
+          : null;
+        await syncClienteLocaisViaHttp({
+          clienteId,
+          draft: locaisDraft,
+          baselineIds,
+          api: api.clientes,
+        });
+      }
+
+      return saved;
     },
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
@@ -556,18 +607,22 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     return seeded;
   })();
 
-  /** Locais canônicos BFF — leitura; save MASTER ainda omit/fail-closed até write via /locais. */
+  /** Locais canônicos BFF — leitura; write via `/locais` no save (não MASTER). */
   const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));
+  /** Baseline lido para soft-delete só quando a carga HTTP concluiu (ref evita stale no mutate). */
+  const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
   useEffect(() => {
     const id = clienteBoundId || cliente?.id || null;
     if (!id || !isHttpBackendMode) {
       setLocaisHttpView(undefined);
+      locaisHttpBaselineRef.current = undefined;
       return undefined;
     }
     let cancelled = false;
     const session = readErpHttpSession();
     if (!session?.token || !session?.groupId) {
       setLocaisHttpView(undefined);
+      locaisHttpBaselineRef.current = undefined;
       return undefined;
     }
     (async () => {
@@ -575,13 +630,17 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
         const rows = await api.clientes.listLocais(id, { limit: 50, ativo: true });
         if (cancelled) return;
-        setLocaisHttpView(
-          (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
-            /** @type {Record<string, unknown>} */ (row),
-          )),
-        );
+        const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+          /** @type {Record<string, unknown>} */ (row),
+        ));
+        setLocaisHttpView(mapped);
+        locaisHttpBaselineRef.current = mapped;
       } catch {
-        if (!cancelled) setLocaisHttpView(undefined);
+        if (!cancelled) {
+          setLocaisHttpView(undefined);
+          // Carga falhou: não autoriza remoção por omissão.
+          locaisHttpBaselineRef.current = null;
+        }
       }
     })();
     return () => { cancelled = true; };
@@ -1305,8 +1364,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               {formData.locais_entrega === undefined && Array.isArray(locaisHttpView) && locaisHttpView.length > 0 && (
                 <p className="mb-2 text-xs text-slate-600" data-fonte="cliente-locais-http" role="status">
                   Endereços lidos de cliente_locais (canônico). Editar assume o rascunho;
-                  salvamento MASTER com locais_entrega não vazios permanece fail-closed até write via /locais.
-                  Entrega ≠ cadastral.
+                  ao Salvar, grava via `/locais` (não no MASTER). Entrega ≠ cadastral.
                 </p>
               )}
               <GerenciarEnderecosClienteForm

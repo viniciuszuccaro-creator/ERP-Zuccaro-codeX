@@ -360,6 +360,220 @@ export function mapClienteLocalToUiEndereco(local) {
   };
 }
 
+/** Campos do formulário de endereço que o BFF `cliente_locais` ainda não persiste. */
+const CLIENTE_LOCAL_UI_EXTRAS = [
+  'horario_inicio',
+  'horario_fim',
+  'contato_nome',
+  'contato_telefone',
+  'tipo_descarga',
+  'janela_entrega_preferencial',
+  'mapa_url',
+];
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export function isClienteLocalCanonicalId(value) {
+  return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+/**
+ * Mapeia tipo_endereco da UI → finalidade canônica (entrega ≠ cadastral).
+ * @param {unknown} tipoEndereco
+ * @returns {'CADASTRAL'|'FISCAL'|'COBRANCA'|'ENTREGA'|'CORRESPONDENCIA'|'OUTRO'}
+ */
+export function mapTipoEnderecoToFinalidade(tipoEndereco) {
+  const raw = String(tipoEndereco ?? '').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (raw === 'cobranca') return 'COBRANCA';
+  if (raw === 'cadastral') return 'CADASTRAL';
+  if (raw === 'fiscal') return 'FISCAL';
+  if (raw === 'correspondencia') return 'CORRESPONDENCIA';
+  if (raw === 'outro') return 'OUTRO';
+  return 'ENTREGA';
+}
+
+/**
+ * Extras logísticos significativos ainda sem coluna BFF → fail-closed (sem drop).
+ * @param {Record<string, unknown>} row
+ */
+export function assertClienteLocalUiExtrasWritable(row) {
+  /** @type {string[]} */
+  const unsupported = [];
+  for (const key of CLIENTE_LOCAL_UI_EXTRAS) {
+    if (isMeaningfulScalar(row[key])) unsupported.push(key);
+  }
+  if (unsupported.length === 0) return;
+  const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+    new Error(
+      `Contrato HTTP cliente_locais ainda não persiste: ${unsupported.join(', ')}. `
+        + 'Valores originais preservados no rascunho — sem descarte silencioso. '
+        + 'Coordene extensão BFF — sem storage paralelo.',
+    )
+  );
+  error.name = 'ClienteHttpUnsupportedFieldsError';
+  error.code = CLIENTE_HTTP_UNSUPPORTED_FIELDS;
+  error.status = 422;
+  error.fields = unsupported;
+  throw error;
+}
+
+/**
+ * UI GerenciarEnderecos → body POST `/clientes/:id/locais`.
+ * @param {unknown} endereco
+ * @returns {Record<string, unknown>}
+ */
+export function mapUiEnderecoToClienteLocalCreate(endereco) {
+  const row = endereco && typeof endereco === 'object' && !Array.isArray(endereco)
+    ? /** @type {Record<string, unknown>} */ (endereco)
+    : {};
+  assertClienteLocalUiExtrasWritable(row);
+  if (!isMeaningfulEndereco(row)) {
+    const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+      new Error(
+        'Endereço incompleto para cliente_locais (CEP/logradouro/cidade). '
+          + 'Rascunho preservado — sem gravação parcial silenciosa.',
+      )
+    );
+    error.name = 'ClienteLocalValidationError';
+    error.code = 'VALIDATION_ERROR';
+    error.status = 422;
+    error.fields = ['locais_entrega'];
+    throw error;
+  }
+  const cepDigits = String(row.cep ?? '').replace(/\D/g, '');
+  if (cepDigits.length !== 8) {
+    const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+      new Error('CEP inválido para cliente_locais (8 dígitos). Rascunho preservado.')
+    );
+    error.name = 'ClienteLocalValidationError';
+    error.code = 'VALIDATION_ERROR';
+    error.status = 422;
+    error.fields = ['cep'];
+    throw error;
+  }
+  const uf = String(row.uf || row.estado || '').trim().toUpperCase().slice(0, 2);
+  if (uf.length !== 2) {
+    const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+      new Error('UF inválida para cliente_locais. Rascunho preservado.')
+    );
+    error.name = 'ClienteLocalValidationError';
+    error.code = 'VALIDATION_ERROR';
+    error.status = 422;
+    error.fields = ['uf'];
+    throw error;
+  }
+  const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
+  const nome = String(row.apelido || row.nome || row.logradouro || 'Endereço').trim().slice(0, 160)
+    || 'Endereço';
+  /** @type {Record<string, unknown>} */
+  const body = {
+    nome,
+    cep: cepDigits,
+    logradouro: String(row.logradouro ?? '').trim().slice(0, 220),
+    numero: String(row.numero ?? 'S/N').trim().slice(0, 40) || 'S/N',
+    bairro: String(row.bairro ?? '').trim().slice(0, 160) || 'Centro',
+    cidade: String(row.cidade ?? '').trim().slice(0, 160),
+    uf,
+    pais: 'BRASIL',
+    origem: 'ERP',
+    finalidades: [{ finalidade, principal: row.principal === true }],
+  };
+  const complemento = String(row.complemento ?? '').trim();
+  if (complemento) body.complemento = complemento.slice(0, 160);
+  const referencia = String(row.observacoes ?? row.referencia ?? '').trim();
+  if (referencia) body.referencia = referencia.slice(0, 500);
+  const lat = row.latitude == null || row.latitude === '' ? null : Number(row.latitude);
+  const lng = row.longitude == null || row.longitude === '' ? null : Number(row.longitude);
+  if (lat != null && Number.isFinite(lat) && lng != null && Number.isFinite(lng)) {
+    body.latitude = lat;
+    body.longitude = lng;
+    body.coordinate_source = 'MANUAL';
+  }
+  return body;
+}
+
+/**
+ * UI → PATCH body (sem finalidades; use setFinalidades à parte quando necessário).
+ * @param {unknown} endereco
+ * @returns {Record<string, unknown>}
+ */
+export function mapUiEnderecoToClienteLocalUpdate(endereco) {
+  const created = mapUiEnderecoToClienteLocalCreate(endereco);
+  const {
+    finalidades: _finalidades,
+    origem: _origem,
+    pais: _pais,
+    ...update
+  } = created;
+  return update;
+}
+
+/**
+ * Sincroniza rascunho UI com BFF `/locais` canônico.
+ * - `baselineIds === null/undefined`: carga prévia ausente/falhou → NÃO soft-delete
+ *   (campo não carregado não apaga persistido).
+ * - `baselineIds` array: ids canônicos lidos; ausentes no draft = remoção explícita.
+ * @param {{
+ *   clienteId: string,
+ *   draft: unknown,
+ *   baselineIds?: string[]|null,
+ *   api: {
+ *     createLocal: (clienteId: string, body: unknown) => Promise<unknown>,
+ *     updateLocal: (clienteId: string, localId: string, body: unknown) => Promise<unknown>,
+ *     softDeleteLocal: (clienteId: string, localId: string) => Promise<unknown>,
+ *     setFinalidades: (clienteId: string, localId: string, finalidades: unknown) => Promise<unknown>,
+ *   },
+ * }} input
+ */
+export async function syncClienteLocaisViaHttp({ clienteId, draft, baselineIds, api }) {
+  const id = String(clienteId ?? '').trim();
+  if (!id) {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error('clienteId obrigatório para sync cliente_locais')
+    );
+    error.code = 'VALIDATION_ERROR';
+    error.status = 422;
+    throw error;
+  }
+  if (!Array.isArray(draft)) {
+    const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+      new Error('locais_entrega deve ser array no sync canônico. Rascunho preservado.')
+    );
+    error.code = 'VALIDATION_ERROR';
+    error.status = 422;
+    error.fields = ['locais_entrega'];
+    throw error;
+  }
+  const keptIds = new Set();
+  for (const item of draft.slice(0, 50)) {
+    const row = item && typeof item === 'object' ? /** @type {Record<string, unknown>} */ (item) : {};
+    const localId = isClienteLocalCanonicalId(row.id) ? String(row.id).trim() : '';
+    if (localId) {
+      const patch = mapUiEnderecoToClienteLocalUpdate(row);
+      await api.updateLocal(id, localId, patch);
+      const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
+      await api.setFinalidades(id, localId, [
+        { finalidade, principal: row.principal === true },
+      ]);
+      keptIds.add(localId);
+    } else {
+      await api.createLocal(id, mapUiEnderecoToClienteLocalCreate(row));
+    }
+  }
+  if (Array.isArray(baselineIds)) {
+    for (const baselineId of baselineIds) {
+      const bid = String(baselineId ?? '').trim();
+      if (!isClienteLocalCanonicalId(bid) || keptIds.has(bid)) continue;
+      await api.softDeleteLocal(id, bid);
+    }
+  }
+}
+
 /**
  * Parecer 6746649125 — valor significativo em campo rico fora do MASTER
  * não pode ser descartado em silêncio por ALLOWED_KEYS.

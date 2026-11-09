@@ -1,18 +1,35 @@
+## CURSOR — #591 write `/locais` canônico + peels CI (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip peels CI** | **`14005f39`** · **CI SUCCESS** push 3/3 |
+| **Tip write** | HEAD deste lote — Completo sync via `cliente_locais` |
+| **Parecer** | **6746649125** — fail-closed extras (horário/contato) sem drop |
+| **Contrato** | read+write `/api/v1/clientes/:id/locais`; MASTER sem `locais_entrega` |
+| **Preservação** | baseline null (carga falhou) → sem soft-delete; undefined draft → sem sync |
+| **Freeze** | **`0afd378f284`** até acordo Codex tip API+web |
+| **Base44** | MCP `Base` acessível — shape Contatos/locais_entrega confirmado (sem PII no Git) |
+| **Pack** | `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt` |
+| Fora | storage paralelo · ContatoClienteV2 · merge/VPS · PII |
+
+**Próximo:** CI tip write · Codex aceite :15173 mesmo SHA · contatos ricos / documentos · C360 Orçamentos.
+
 ## CURSOR — #591 parecer 6746649125 descarte + locais read (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Base tip verde** | peels **`89eabf78`** · **CI SUCCESS** |
-| **Tip / CI** | **`bf678ebe`** — aguarda CI |
+| **Tip peels fix** | **`14005f39`** · **CI SUCCESS** |
 | **Parecer** | **6746649125** recebido — fail-closed vs descarte silencioso |
 | **Documento UI** | hydrate cpf/cnpj/tipo; grade cols; ~100 HML sem reimport |
-| **Locais** | read `cliente_locais` canônico; write MASTER ainda UNSUPPORTED |
+| **Locais** | read+write `cliente_locais` canônico (tip write) |
 | **Freeze** | **`0afd378f284`** até acordo Codex tip API+web |
 | **Pack** | `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt` |
 | Fora | storage paralelo · wipe · recreate · VPS · PII |
 
-**Próximo:** CI tip · Codex aceite :15173 · write `/locais` coordenado · C360 Orçamentos.
+**Próximo:** CI tip write · Codex aceite :15173 · contatos/documentos · C360 Orçamentos.
 
 ## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
 
