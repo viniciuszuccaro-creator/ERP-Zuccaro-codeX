@@ -1,4 +1,47 @@
-## Continuidade vigente - revisao591 e diagnostico HML comprovados (2026-11-06)
+## Continuidade vigente - coorte conservada e perda escalar corrigida (2026-11-09)
+
+Mesma FINAL100 e pins confrontados aos recibos; consulta privada por Grupo,
+lote e100codigos confirmou100ativos/100identidades correspondentes no banco
+hml344_restore_20261104/schema hml344_cpa_20261104. READ ONLY/ROLLBACK,
+0businessWrites nesta consulta NAO desfazem100inseridos/replay100/0novos do
+recibo de carga. Reversao100 historica foi ensaiada comROLLBACK, mantendoativos;
+historicos anteriores inativos preservados. PG networknone/0portas/bindprivado
+persistente, devolvidoSTOPPED/lock e socket ausentes. Sem recarga/restore.
+Recibos client-persistence-20261109 e hml100-continuity-history-20261109 privados
+0600: datas/executor ausentes nao foram inferidos do mtime. API/UI reais ainda
+nao observadas nesta rodada; parada/inicio da aplicacao continua gate separado.
+
+Matriz parcial fonteFINAL/payload/banco: nomePF77/77/77, razaoPJ23 no payload e
+banco, fantasia100/100/100, documento100payload/banco, email5/5/5. Inscricao
+estadual20nafonte/0payload/0banco: omissao do mapeador existente identificada.
+Correcao em pilot-functional-policy preserva escalares explicitamente presentes
+e aceitos pelo schema canonico; vazio omitido, invalido gera pendencia porcampo
+sem bloquear mestres independentes. Nao alteraFINAL/coorte/pins ou banco atual.
+Enriquecimento dos20 ainda exige preflight/CAS/auditoria/reversao no mesmo lote.
+Endereco cadastral tem componentes em100registros da extracao, nao numero/pais;
+sem copiar para entrega/cobranca. Telefone/celular/WhatsApp ausentes no recorte
+resumido NAO provam ausencia no backup: auxiliares originais ainda pendentes.
+Nao declarar cadastro completo ou restauracao de dados por contagem/tela.
+
+5912e2ccfeb/CI6535-6536SUCCESS revisada no delta: tresports backend e residuos
+antigos contagens/upsert fechados no alcance registrado. Seis contraprovas
+helperFunil preservamgoldens e rejeitam mudancas foraescopo; nao saoReact/PG.
+Pareceres6740133176/6740157638 distinguem P1createClienteHTTPoff->local e
+locais_entrega nao transportados. Cursor unico escritor da candidata/UI.
+Tela5173 aberta eSINTETICA (bannerexplicito/EmpresaDEV A/2clientes), naoHMLCPA;
+harness5788 preservado. Nao trocar snapshot0afd durante teste ativo nem servir
+dadosreais em portaPublic. HML real requer parAPI/webmesmoSHA e janelaPrivate.
+
+WIP2blobs a5b1fb9b/cb662fbe:6focados+5schemaZodreal PASS; audit/typecheck/build
+PASS, lintPASS/1warning preexistente. Controle recuperado: logsLinux inexistentes
+e blobsantigos comprovados antes de aplicar6740261877 no snapshotPROPRIO ocioso;
+2150sources/configs conferidos byteabyte contra baseb2d07dc3,2hashesnovos iguais
+aoDesktop. SuiteLinux FINAL2426PASS/0FAIL/0SKIP/exit0,346032.873605ms,
+Nodev24.21.0/Linux;2hashes reconferidos DEPOIS e nenhumrun-tests ativo.
+Recibo enrichment-scalar-20261109.result.private.json0600. Sem dado real no teste.
+Nao interferiu checkoutCodespaceb5cb/.vscode, Cursor,0afd ou dadosHML.
+
+## Historico - revisao591 e diagnostico HML comprovados (2026-11-06)
 
 Setor publicado221b6822, CI6479/6480 SUCCESS; nao repetir Linux2424PASS ou
 backend573PASS/38SKIP sem delta. Desktop limpo antes deste lote documental.

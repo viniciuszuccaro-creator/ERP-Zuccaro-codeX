@@ -1,6 +1,39 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
-## Estado vigente - sessao real aceita; UI Grupo pendente (2026-11-06)
+## Estado vigente - conservar a mesma HML e validar o delta (2026-11-09)
+
+O banco privado existente conserva a mesmaFINAL100:100ativos/100identidades
+conferidos por Grupo/lote/codigos emREADONLY/ROLLBACK. Nao recarregar/restaurar
+para retomar. PostgreSQL usa bindprivado persistente, networknone/0ports;
+STOPPED significa processo parado, nao exclusao do armazenamento. Recibos
+hml100-result/recovery e client-persistence-20261109 ficam0600 no diretorio
+hml344-cpa-20261104 ja documentado. Conferir identidade/pins/estado e locks
+antes de iniciar; nao usar outro banco/schema ou fallbackpublic.
+
+Bootstrap privado existente recebeu modo --history-only (artefato de codigo
+344/6689846342, SHA256f7477a00938754d776c6ceb1273811cabc0f86ad4207c20af6202e04278ebf93).
+Verifica FINALbytes/recibo, identidade fisica/NOSUPER/NOBYPASS, consulta exata
+com100chaves eLIMIT101, comparaidentidades/campos, fazROLLBACK e devolvePGao
+estadoinicial. Cinco casos sinteticos e execucao real100/100PASS. Nao inicia
+API/web. Se recibo ja existe, conferir/reutilizar; nao repetir o comando apenas
+para gerar outra prova. API50/webb888 no modo normal sao HISTORICOS: nao
+iniciar esse par para alegar que591 nova foi homologada.
+
+Retomada da aplicacao exige checkpoint anterior encerrado, nenhum outro
+escritor/processo no runtime e parAPI+webMESMOSHA revisado. Porta5173 atual e
+harness SINTETICO5788, Public; nao eHMLCPA e nao deve receber dadosreais.
+Usar janelaPrivate existente/coordenada, sem parar processo alheio ou criar
+recurso pago. Conferir preflightfisico/search_path/Authreal e fonte por API e
+formulario, depois parar/iniciar somenteapp e comparar os mesmos registros.
+Essa prova de retomadaAPP e distinta da conservacaoPG ja comprovada.
+
+IE20fonte/0payload/0banco identifica lacuna do mapper, naoautoriza alterar os
+clientes carregados. Correcao de planejamento preserva campos escalares
+canonicos validos; enriquecer mesma100 somente com snapshotantes/CAS, revisao,
+auditoria, reexecucao e reversao. Enderecos/contatos auxiliares exigem fonte e
+adaptercanonico; nao inventar numero,pais,WhatsApp,finalidade ou relacao fiscal.
+
+## Historico - sessao real aceita; UI Grupo pendente (2026-11-06)
 
 Login real HML conferido pelo navegador apos acao do proprietario: auth/session
 200, perfiluser/empresa_idNULL, Grupo e2empresas aprovadas; clientes200 com

@@ -1,4 +1,48 @@
-## Continuidade vigente -591 revisada; HML e fontes privadas (2026-11-06)
+## Continuidade vigente - validacao WIP e conservacao real (2026-11-09)
+
+RetomadaDesktop b2d07dc3,2arquivosWIP preservados a5b1fb9b/cb662fbe, semoutro
+escritor local identificado. ReservaCodex342/6740236867 para mapper/teste;
+Cursor segue dono da591/composicao/UI. Nao reabrir transporte/POSIX antigos.
+ControleChrome retomado naaba945: antes de repetir, logs/exitLinux inexistentes,
+blobsbaseb0a043f0/50589424 e nenhumrun-tests ativo comprovados. Agora2150
+sources/configs nao-docs do snapshotproprio a909 conferidos contraarchiveb2,
+2hunks6740261877 aplicados e hashes iguais aoWIP. Suite FINAL2426PASS/0FAIL/
+0SKIP/exit0,346032.873605ms, Nodev24.21.0/Linux.2hashes iguais DEPOIS,
+nenhumrun-tests ativo. Recibo enrichment-scalar-20261109.result.private.json
+0600/log/exit preservados; inicio421/6740732978.6focados+5schemaZodPASS;
+audit/lint/typecheck/build/diff-checkPASS, lint1warningpreexistente. Backend
+sem delta,573PASS/38SKIP reutilizados; limitesSKIP preservados, nao totalSQL.
+
+Coorte: FINALbytes/cohortpins iguais ao reciboHML100; nova consulta exata por
+Grupo/lote/codigos emREADONLY/ROLLBACK confirmou100ativos/100identidades.
+Mesmodbhml344_restore_20261104/schemahml344_cpa_20261104; bindprivado/rede
+none/0ports. PG restituidoSTOPPED/sem lock/socket,0recargas ourestores.
+Recibos privados: client-persistence-20261109.private.json e
+hml100-continuity-history-20261109.private.json. Historico de carga100/replay100/
+0novos/reversaoensaiadaemROLLBACK NAO contradizbusinessWrites0 deconsulta.
+Data/executor que nao constam no recibo continuamdesconhecidos;mtime separado.
+
+Completude parcial: nomesPF77/razoesPJ23/fantasia100/documento100/email5
+conservados no payload/banco.20IEpresentes nafonte foram omitidas pelo mapper.
+Correcao preserva nome_social/inscricoes/telefone/celular/observacoes quando
+explicitamente presentes e validos, sem default/vazio apagando valores; campo
+invalido fica pendente, mestreindependentecontinua. FINAL100/pins nao regenerados
+e nenhum enriquecimento aplicado. Fonteenderecocadastral100comnumero/pais
+naocomprovados; entregacobrancanaoinferidas. Tabelasauxiliares dobackup ainda
+precisamconfronto:ausencia de telefone noCSVnaoprovaausencia global. API/UI da
+matriz marcadasNOT_OBSERVED; nao declarar cadastrocompleto ou E2E.
+
+5912e2ccfeb/CI6535-6536SUCCESS, nao f2CI6532FAIL. Backendports conferidos;
+Funilpeel6contraprovasPASS/goldenspreservados, semReact/browser/PG. NovoP1
+ClientecreateHTTPoff ainda podealcancarlocal e locais_entrega editados nao
+transportados:parecer6740157638, naoaprovargenericamente pelaCI. Cursor dono.
+UI5173aberta =harness5788sintetico/2clientes/EmpresaDEVA, naoHMLreal. Nao
+interromper processo alheio nem publicar dadosreais nessa portaPublic. Proxima
+janelaHML:encerrarcheckpoint0afd ocioso/coordenar parAPI+webmesmoSHA revisado,
+portaPrivate/loginreal,listagem/detalhes/paginacao/reabertura e restartapp.
+Sem adminpromovido,novoAuth,fallbackpublic,DDL/grants/carga/deployoperacional.
+
+## Historico -591 revisada; HML e fontes privadas (2026-11-06)
 
 Publicado Setor221b6822/CI6479-6480 SUCCESS; Linux2424PASS e backend573PASS/
 38SKIP preservados. Nao repetir publicacao/validacao sem delta. Cursor e unico
