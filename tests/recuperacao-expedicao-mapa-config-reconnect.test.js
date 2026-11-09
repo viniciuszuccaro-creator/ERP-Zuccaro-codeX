@@ -34,7 +34,12 @@ test('MapaRoteirizacaoIA: persistência HTTP fail-closed + local canônico', () 
     mapaIa.indexOf('// Modo local:'),
   );
   assert.doesNotMatch(httpBlock, /createInContext\("Entrega"/);
+  assert.doesNotMatch(httpBlock, /createInContext\("Rota"/);
   assert.match(httpBlock, /criarRomaneio/);
+  assert.match(httpBlock, /invalidateQueries\(\{ queryKey: \["romaneios"\] \}\)/);
+  // POST criarRomaneio ≠ roteirização completa: reabertura/vínculo via owners
+  // IntegracaoRomaneio / listagem romaneios — não estado in-memory do mapa.
+  assert.match(mapaIa, /IntegracaoRomaneio/);
 });
 
 test('recuperação: ConfigFinanceiroLogistica no launchpad Expedição', () => {

@@ -2,7 +2,8 @@ Próximo lote concreto pós-#591 (sem inventário genérico)
 =======================================================
 America/Sao_Paulo 2026-11-09
 Base: recuperacao-erp-integra-capacidades-20261029 + prioridades-20261026
-Publicação #591 ≠ integração #401. Homolog HML tip congelado: 0afd378f.
+Publicação #591 ≠ integração #401. Homolog HML tip congelado: 0afd378f
+(passagem para HEAD com correções = acordo Codex explícito).
 
 Já fechado neste tip (aceitação profunda)
 - Separação clássica: seletor de entregas no launchpad (não tela vazia)
@@ -11,19 +12,22 @@ Já fechado neste tip (aceitação profunda)
 - Empresas×Cadastros: EmpresaForm canônico no CRUD da página Empresas
 - Widget Fechamento: gate de permissão
 - ConfiguracoesUsuario: onError toast
-- Clientes UI: fonte local≠API distinguida; CadastroClienteCompleto omit-if-unknown
-  (contatos/locais/documentos); HML freeze 0afd378f preservado
+- Clientes UI: fonte local≠API; Completo omit contatos/locais/documentos;
+  celular escalar ≠ WhatsApp; HML freeze 0afd378f preservado
 - HTTP Cliente sem piloto: sem fallback local (estados distintos)
-- CRM Funil×3: RBAC sectionKey + invalidate/toast mover; Avancado queryKey escopo
-- Chatbot/Hub (+ Cadastros/Expedição/Produção…) titleToModule fail-closed
-- MapaRoteirizacaoIA: persistência canônica
-  HTTP → criarRomaneio BFF (fail-closed se entregas ausentes; sem create local)
-  local → Rota + Romaneio + stamp Entrega (owners IntegracaoRomaneio/RoteirizacaoMapa)
+- CRM Funil×3: RBAC + invalidate/toast; Avancado queryKey escopo
+- Chatbot/Hub titleToModule fail-closed
+- MapaRoteirizacaoIA: HTTP criarRomaneio fail-closed; local Rota+Romaneio;
+  contrato: POST ≠ reopen completo (IntegracaoRomaneio)
+
+Lacunas documentadas p/ Codex (sem storage paralelo)
+- HTTP MASTER sem locais_entrega[] / documentos[] / contatos[] ricos
+- Aceite “campos reais preservados” exige evolução BFF ou Base44 transporte
 
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
 1. Cadastros param forms residual sky/reopen — só fora branches reservadas
-2. Central Vendas360: evoluir Orçamentos no centro (sem paralelizar);
-   painéis cliente/histórico/crédito/estoque/entregas — redesign só com OK visual
+2. Central Vendas360: evoluir OrcamentosTab (centro) + painéis existentes
+   (CentralCliente360Panel / proposal aside) — sem OrçamentosV2; redesign só com OK
 3. Fechar aceites das telas já recuperadas antes de abrir fila mecânica nova
 
 Não iniciar
@@ -31,10 +35,11 @@ Não iniciar
 - Seed de registros reais / contagens fabricadas
 - Port cego #591→#401 antes do aceite HML
 - Redesign C360 amplo sem aprovação
+- ContatoClienteV2 / DocumentosCliente paralelo
 
 Integração seletiva #401
 - Após aceite Codex no SHA 0afd378f (ou tip coordenado sucessor)
 - Port hunks: auth Grupo, counts parcial, upsertConfig HTTP, recoveries
 - Preservar WIP Fornecedor/reservas; um escritor por checkout
 
-Pack piloto Cliente (Codex HML): docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt
+Pack piloto: docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt

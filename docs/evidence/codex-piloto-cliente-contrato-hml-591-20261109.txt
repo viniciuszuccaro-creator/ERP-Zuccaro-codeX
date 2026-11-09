@@ -1,8 +1,16 @@
 CODEx — Contrato piloto HTTP Cliente (HML) — sem valores/secrets
 ================================================================
-America/Sao_Paulo 2026-11-09
+America/Sao_Paulo 2026-11-09 (atualizado tip pós-2e2ccfeb)
 PR #591 · tip publicação ≠ HML freeze `0afd378f284`
 Sem PII, tokens, URLs secretas ou dados reais neste pack.
+
+PASSAGEM DE SNAPSHOT (coordenar com Codex)
+- Freeze ensaio coorte100: 0afd378f284 — manter até fechar comparação privada
+  OU acordar troca explícita para tip com correções de UI/fonte.
+- Tip publicação com correções a homologar (fonte + omit + Mapa + peels):
+  ver HEAD da branch #591 (STATUS). Publicar tip ≠ integrar #401 (`5d9a7e37`).
+- Aceite UI dos ~100 exige API+web no MESMO SHA e piloto ON.
+  Sem piloto: UI mostra estado http-piloto-cliente-off (não “resolve” ausência).
 
 PROBLEMA RESOLVIDO NA UI (tip atual)
 - Sem piloto Cliente em modo HTTP: a listagem NÃO cai no store local vazio
@@ -23,22 +31,42 @@ FLAGS / CONTRATO (nomes apenas — valores ficam no canal privado HML)
    → isHttpClienteListEnabled / isHttpClienteListMode
 3) Sessão autenticada com groupId + empresaId (ou visão Grupo autorizada)
 4) RBAC Cadastros/Cliente visualizar
-5) BFF Cliente list/count no mesmo SHA da web (API+frontend alinhados)
+5) BFF Cliente list/count/get no mesmo SHA da web (API+frontend alinhados)
 6) Opcional paralelo: demais pilotos de entidade só se a matriz HML exigir
    (não ligar flags em massa sem aceite)
+
+LACUNAS DO CONTRATO HTTP MASTER (não contornar com storage paralelo)
+- Persistência canônica BFF: escalares email / telefone / celular (+ documento,
+  nome, IE/IM, origem, observações…). Ver ALLOWED_KEYS em clienteHttpPayload.js.
+- contatos[] UI rico (nome/obs/id/ordem/múltiplos/WhatsApp tipado):
+  só projeta para escalares se fidelidade ok; senão CONTATOS_SCALAR_OVERFLOW.
+  NÃO hidratar contatos[] a partir de escalares como lista completa.
+- locais_entrega[] / endereços multi entrega-cobrança: AUSENTES do payload HTTP
+  MASTER atual — UI omite se undefined (sem wipe). Backend precisa contrato
+  (ex.: cliente_locais) antes do aceite “endereços preservados via HTTP”.
+- documentos[]: idem — omit-if-undefined no Completo; sem coluna/tabela HTTP
+  ainda → não inventar ContatoClienteV2 / DocumentosCliente paralelo.
+- Celular escalar ≠ WhatsApp: resumo/seed usam tipo Celular; WhatsApp só se
+  escolhido no canônico GerenciarContatosClienteForm.
+- CPF/CNPJ/CEP: strings (sanitizeCode); zeros à esquerda preservados.
 
 ACEITE UI (mesma versão API+frontend)
 - Listagem, busca, paginação e detalhe dos registros do escopo
 - Campos disponíveis na fonte preservados (não só nome/contador100)
 - CadastroClienteCompleto: contatos / locais_entrega / documentos
   omit-if-undefined (sem wipe); celular≠WhatsApp; entrega≠cadastral
-- CPF/CNPJ/CEP/códigos: string com zeros à esquerda
+- Comparar valores reais com Codex no canal privado (form ter campo ≠ import ok)
+
+MAPA (relacionado)
+- MapaRoteirizacaoIA HTTP: POST criarRomaneio fail-closed (entregas pré-existentes).
+- POST ≠ roteirização completa: reabertura/vínculo via IntegracaoRomaneio /
+  listagem romaneios; modo local só quando isHttpExpedicaoMode=false.
 
 PRIVADO (Codex)
 - Reconciliar coorte100 × base persistente fora do GitHub
-- Comparar campos reais no canal privado; testes públicos = sintéticos
-- HML freeze ensaio: 0afd378f284 — NÃO trocar snapshot mid-teste
-  sem coordenar (tip publicação pode avançar em paralelo)
+- Comparação real privada; testes públicos = sintéticos
+- HML freeze: 0afd378f284 até acordo de passagem
 
 FORA
 merge · deploy VPS · secrets no GitHub · recreate clientes · fallback sintético
+· storage paralelo para contornar lacuna backend

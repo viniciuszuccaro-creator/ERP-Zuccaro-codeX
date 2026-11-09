@@ -1,3 +1,10 @@
+## CURSOR — #591 celular≠WhatsApp + lacunas HTTP + C360 prep (2026-11-09 America/Sao_Paulo)
+- Base verde **`2e2ccfeb`/`9c29a392`**. HML freeze **`0afd378f284`** — passagem de snapshot só com acordo Codex.
+- Celular escalar → tipo **Celular** (não WhatsApp automático) em payload + PainelDinamicoCliente.
+- Pack piloto atualizado: lacunas HTTP MASTER (`locais_entrega`/`documentos`/`contatos[]` ricos) — sem storage paralelo.
+- Mapa: POST ≠ reopen completo. C360 prep: OrcamentosTab + Aside + CentralCliente360Panel (sem paralelo).
+- Sem VPS/dados reais/merge/#401.
+
 ## CURSOR — #591 Mapa persist + Funil peels + piloto contrato (2026-11-09 America/Sao_Paulo)
 - Tip **`9c29a392`** · **CI SUCCESS** push+PR. HML **congelado `0afd378f284`**.
 - MapaRoteirizacaoIA: HTTP `criarRomaneio` fail-closed (entregas ausentes → erro, sem create local); local Rota+Romaneio+stamp.

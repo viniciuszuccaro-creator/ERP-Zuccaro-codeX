@@ -241,7 +241,8 @@ export function scalarContactSummary(row) {
   const celular = typeof src.celular === 'string' ? src.celular.trim() : '';
   if (email) items.push({ canal: 'email', tipo: 'E-mail', valor: email });
   if (telefone) items.push({ canal: 'telefone', tipo: 'Telefone', valor: telefone });
-  if (celular) items.push({ canal: 'celular', tipo: 'WhatsApp', valor: celular });
+  // Celular escalar ≠ WhatsApp: WhatsApp só quando o tipo canônico for escolhido.
+  if (celular) items.push({ canal: 'celular', tipo: 'Celular', valor: celular });
   return {
     source: /** @type {const} */ ('scalars'),
     complete: false,

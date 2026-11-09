@@ -1,0 +1,28 @@
+Central Vendas360 — prep a partir de Orçamentos (sem paralelo)
+==============================================================
+America/Sao_Paulo 2026-11-09 · PR #591
+Publicação ≠ integração #401. Sem redesign amplo (OK visual pendente).
+
+CANÔNICO EXISTENTE (reutilizar)
+- src/pages/Comercial.jsx → OrcamentosTab (launchpad)
+- src/components/comercial/OrcamentosTab.jsx
+  - form/itens/salvar; proposalMode (gravação off) + rascunho
+  - OrcamentoProposalAside: painéis cliente/produtos/resumo/ações
+- src/components/comercial/CentralCliente360Panel.jsx
+  - read-model cliente; abre OrcamentosTab/PedidosTab via loadPanel
+- DetalhesCliente embute CentralCliente360Panel
+
+NÃO CRIAR
+- OrcamentosV2 / CentralVendas360Nova / dashboard paralelo
+- Integração futura (site/marketplace/NF) apresentada como funcional
+
+PRÓXIMO INCREMENTO (quando franquia visual)
+1. Operacional: reutilizar aside panels no modo real (não só proposalMode)
+   com dados HTTP canônicos + fail-closed
+2. Ações Incluir item / Salvar / Avançar / Voltar por etapa (já há Item+Salvar)
+3. GoTo atendimento/chatbot via titleToModule/owners existentes
+4. Crédito/estoque/entregas: consumir painéis/services já no repo
+
+BLOQUEIOS
+- Persistência ponta a ponta HML real: BLOCKED até aceite Codex
+- Redesign visual amplo: BLOCKED sem aprovação

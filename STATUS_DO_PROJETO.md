@@ -1,3 +1,20 @@
+## CURSOR — #591 celular≠WhatsApp + lacunas HTTP + C360 prep (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip verde** | **`2e2ccfeb`** CI SUCCESS (docs) / código **`9c29a392`** CI SUCCESS |
+| **HML congelado** | **`0afd378f284`** — passagem para HEAD só com acordo Codex |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **Cliente** | escalar `celular` → tipo **Celular** (não WhatsApp); omit docs/contatos/locais |
+| **Lacunas HTTP** | MASTER sem `locais_entrega`/`documentos`/`contatos[]` ricos — pack Codex atualizado |
+| **Mapa** | POST `criarRomaneio` ≠ reopen completo; owners IntegracaoRomaneio |
+| **C360 prep** | OrcamentosTab + ProposalAside + CentralCliente360Panel (sem paralelo) |
+| **Packs** | piloto + coord + `c360-orcamentos-centro-prep-591-20261109.txt` |
+| Fora | merge · VPS · dados reais · ContatoClienteV2 · redesign C360 · troca freeze |
+
+**Próximo:** CI deste tip · aceite HML privado · param residual fora reservas · C360 painéis operacionais com OK visual.
+
 ## CURSOR — #591 Mapa persist + Funil peels + piloto contrato (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

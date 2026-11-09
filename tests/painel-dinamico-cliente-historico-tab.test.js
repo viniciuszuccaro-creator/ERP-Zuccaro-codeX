@@ -62,7 +62,7 @@ test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo nÃ
       items: [
         { canal: 'email', tipo: 'E-mail', valor: 'keep@sintetico.dev' },
         { canal: 'telefone', tipo: 'Telefone', valor: '1133334444' },
-        { canal: 'celular', tipo: 'WhatsApp', valor: '11999998888' },
+        { canal: 'celular', tipo: 'Celular', valor: '11999998888' },
       ],
     },
   };
@@ -71,6 +71,9 @@ test('seedContatosPainelDraft / ensureContatosPreserveEscalars: telefone novo nÃ
   assert.equal(seeded.length, 3);
   assert.equal(seeded[0].valor, 'keep@sintetico.dev');
   assert.equal(seeded.every((c) => c.principal === false), true, 'escalar nÃ£o inventa principal');
+  const celularSeed = seeded.find((c) => String(c.valor).includes('11999998888'));
+  assert.equal(celularSeed?.tipo, 'Celular', 'celular escalar nÃ£o vira WhatsApp automÃ¡tico');
+  assert.notEqual(celularSeed?.tipo, 'WhatsApp');
   const onlyPhone = [{ tipo: 'Telefone', valor: '1155556666', nome: '', principal: true }];
   const merged = ensureContatosPreserveEscalars(onlyPhone, cliente);
   assert.equal(merged.some((c) => String(c.valor).includes('keep@sintetico.dev')), true);

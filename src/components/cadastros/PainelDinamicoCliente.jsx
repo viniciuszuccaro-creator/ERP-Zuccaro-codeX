@@ -107,7 +107,8 @@ function seedContatosPainelDraft(cliente) {
   };
   push("E-mail", cliente?.email);
   push("Telefone", cliente?.telefone);
-  push("WhatsApp", cliente?.celular);
+  // Campo celular do MASTER ≠ WhatsApp automático.
+  push("Celular", cliente?.celular);
   if (seeded.length > 0) return seeded;
   return Array.isArray(cliente?.contatos) ? cliente.contatos.map((row) => ({ ...row })) : [];
 }
@@ -162,7 +163,7 @@ function ensureContatosPreserveEscalars(lista, cliente) {
   };
   push("E-mail", cliente?.email, ["email", "e-mail"]);
   push("Telefone", cliente?.telefone, ["telefone", "fone", "phone"]);
-  push("WhatsApp", cliente?.celular, ["celular", "whatsapp", "whats"]);
+  push("Celular", cliente?.celular, ["celular", "whatsapp", "whats"]);
   return stripPrincipalQuandoMultiCanal(next, {
     scalarContract: usesContatosScalarHttpContract(cliente),
   });

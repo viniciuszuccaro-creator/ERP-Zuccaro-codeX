@@ -65,11 +65,38 @@ test('Formulário Cliente: abas contatos/endereços canônicas (não texto únic
   assert.match(src, /GerenciarEnderecosClienteForm/);
   assert.match(src, /value="contatos"/);
   assert.match(src, /value="enderecos"/);
+  assert.match(src, /value="anexos"/); // aba Documentos/anexos canônica
+  assert.match(src, /Upload de Documentos/);
   const contatos = read('src/components/cadastros/GerenciarContatosClienteForm.jsx');
   assert.match(contatos, /SelectItem value="Telefone"/);
+  assert.match(contatos, /SelectItem value="Celular"/);
   assert.match(contatos, /SelectItem value="WhatsApp"/);
   assert.match(contatos, /tipo: "Telefone"/);
+  assert.doesNotMatch(contatos, /tipo: "WhatsApp"/); // default ≠ WhatsApp
   const end = read('src/components/cadastros/GerenciarEnderecosClienteForm.jsx');
   assert.match(end, /SelectItem value="Entrega"/);
   assert.match(end, /SelectItem value="Cobrança"/);
+});
+
+test('sanitizeCode preserva zeros à esquerda (CPF/CNPJ/CEP sintéticos)', () => {
+  const src = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const match = src.match(
+    /const sanitizeCode = \(value, max = 80\) => ([^;]+);/,
+  );
+  assert.ok(match, 'sanitizeCode localizável');
+  const sanitizeCode = new Function('value', 'max', `return (${match[1]});`);
+  assert.equal(sanitizeCode('01234567890', 18), '01234567890');
+  assert.equal(sanitizeCode('00.000.000/0001-91', 24), '00.000.000/0001-91');
+  assert.equal(sanitizeCode('01310-100', 12), '01310-100');
+});
+
+test('HTTP Cliente MASTER: lacunas explícitas (sem storage paralelo)', () => {
+  const payload = read('src/api/clienteHttpPayload.js');
+  assert.match(payload, /ALLOWED_KEYS/);
+  assert.match(payload, /CONTATOS_SCALAR_OVERFLOW/);
+  assert.match(payload, /NÃO injeta `contatos` fabricados/);
+  assert.doesNotMatch(payload, /'locais_entrega'/);
+  assert.doesNotMatch(payload, /'documentos'/);
+  assert.match(payload, /tipo: 'Celular'/);
+  assert.doesNotMatch(payload, /tipo: 'WhatsApp', valor: celular/);
 });

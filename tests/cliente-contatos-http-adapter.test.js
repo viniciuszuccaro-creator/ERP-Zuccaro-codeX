@@ -211,6 +211,9 @@ test('resumo escalar: complete=false; NÃO vira contatos[] na hidratação', () 
   assert.equal(summary.source, 'scalars');
   assert.equal(summary.complete, false);
   assert.equal(summary.items.length, 3);
+  const celularItem = summary.items.find((i) => i.canal === 'celular');
+  assert.equal(celularItem?.tipo, 'Celular', 'celular escalar ≠ WhatsApp automático');
+  assert.notEqual(celularItem?.tipo, 'WhatsApp');
 
   const row = withHydratedContatos({
     id: 'cli-1',
