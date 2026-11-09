@@ -1,9 +1,8 @@
 ## CURSOR — #591 contraprova locais atomicidade + contexto (2026-11-09 America/Sao_Paulo)
-- Tip base **`898d8c32`/`bde45554`** CI SUCCESS. Contraprova Codex (94d49): preflight lote; scope freeze;
-  PARTIAL com ops+reconcileRequired; Completo reconcilia via listLocais (reexecução segura).
-- `CLIENTE_LOCAIS_BATCH_ATOMIC=false` — batch atômico BLOCKED até BFF. Pack:
-  `docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt`.
-- Aceite :15173 atualizado. C360 Voltar/Avançar = só setPanel. Sem ContatoClienteV2/merge/VPS/PII.
+- Tip **`77f11b28`** · **CI SUCCESS** push+PR. Contraprova Codex (94d49): preflight; scope freeze;
+  PARTIAL ops+reconcile via listLocais; `CLIENTE_LOCAIS_BATCH_ATOMIC=false` (batch BLOCKED BFF).
+- Packs: `codex-contraprova-locais-atomicidade-591` + aceite :15173. C360 Voltar=setPanel.
+- Sem ContatoClienteV2/merge/VPS/PII. Aceite HML no tip `77f11b28` com acordo freeze.
 
 ## CURSOR — #591 locais parcial + aceite :15173 + C360 etapas (2026-11-09 America/Sao_Paulo)
 - Tip **`898d8c32`** · **CI SUCCESS** push+PR 3/3 (parcial + typecheck + aceite + C360).
