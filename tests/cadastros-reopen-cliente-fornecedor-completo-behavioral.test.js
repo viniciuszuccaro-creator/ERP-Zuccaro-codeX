@@ -204,8 +204,19 @@ async function mountCompleto(relPath, {
       useQueryClient: () => ({ invalidateQueries() {} }),
     },
     '@/api/base44Client': { base44: { auth: { me: async () => null }, entities: {} }, isHttpBackendMode: false },
-    '@/api/httpApiClient': { createHttpApiClient: () => ({}) },
+    '@/api/httpApiClient': { createHttpApiClient: () => ({ clientes: { listLocais: async () => [] } }) },
     '@/api/erpHttpSession': { readErpHttpSession: () => null },
+    '@/api/clienteHttpPayload': {
+      mapClienteLocalToUiEndereco: (row) => ({
+        apelido: row?.nome || '',
+        tipo_endereco: 'Entrega',
+        cep: row?.cep || '',
+        logradouro: row?.logradouro || '',
+        numero: row?.numero || '',
+        cidade: row?.cidade || '',
+        estado: row?.uf || '',
+      }),
+    },
     '@/api/localCadastroMasterPolicy': {
       normalizeFornecedorCadastro: (payload) => ({ ...payload, normalized: true }),
     },
