@@ -1,7 +1,7 @@
 test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const payload = '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),';
-  const mapper = '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),';
+  const mapper = '        ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),';
   const locaisPayload = [
     '    ...(data.locais_entrega === undefined',
     '      ? {}',
@@ -12,12 +12,12 @@ test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito cola
     '        }),',
   ].join('\n');
   const locaisMapper = [
-    '      ...(record.locais_entrega === undefined',
-    '        ? {}',
-    '        : { locais_entrega: record.locais_entrega || [] }),',
+    '        ...(record.locais_entrega === undefined',
+    '          ? {}',
+    '          : { locais_entrega: record.locais_entrega || [] }),',
   ].join('\n');
   const docsPayload = '    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),';
-  const docsMapper = '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),';
+  const docsMapper = '        ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),';
   for (const hunk of [payload, mapper, locaisPayload, locaisMapper, docsPayload, docsMapper]) {
     assert.equal(source.split(hunk).length - 1, 1);
     assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, '')));
@@ -70,6 +70,74 @@ function once(source, current, previous) {
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  // #591: mapToForm com espelho documento→cpf/cnpj → forma omit anterior.
+  source = once(source,
+    '    mapToForm: (record) => {\n'
+    + '      // HTTP MASTER: documento unificado → cpf/cnpj da UI (zeros preservados; não inventa).\n'
+    + '      const blank = (v) => v === undefined || v === null || (typeof v === \'string\' && v.trim() === \'\');\n'
+    + '      const docRaw = record?.documento ?? record?.cpf_cnpj ?? \'\';\n'
+    + '      const doc = String(docRaw ?? \'\').trim();\n'
+    + '      const digits = doc.replace(/\\D/g, \'\');\n'
+    + '      let cpf = record?.cpf;\n'
+    + '      let cnpj = record?.cnpj;\n'
+    + '      if (digits && !/^0+$/.test(digits)) {\n'
+    + '        if (blank(cpf) && digits.length === 11) cpf = doc;\n'
+    + '        if (blank(cnpj) && digits.length === 14) cnpj = doc;\n'
+    + '      }\n'
+    + '      return {\n'
+    + '        ...record,\n'
+    + '        ...(cpf !== undefined ? { cpf } : {}),\n'
+    + '        ...(cnpj !== undefined ? { cnpj } : {}),\n'
+    + '        // Ausência ≠ [] : omitir evita wipe no save (contrato HTTP parcial).\n'
+    + '        ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),\n'
+    + '        ...(record.locais_entrega === undefined\n'
+    + '          ? {}\n'
+    + '          : { locais_entrega: record.locais_entrega || [] }),\n'
+    + '        condicao_comercial: record.condicao_comercial || {\n'
+    + '          tabela_preco_id: "",\n'
+    + '          forma_pagamento_padrao_id: "",\n'
+    + '          percentual_desconto: 0,\n'
+    + '          condicao_pagamento: "À Vista",\n'
+    + '          limite_credito: 0,\n'
+    + '          limite_credito_utilizado: 0,\n'
+    + '          situacao_credito: "OK",\n'
+    + '        },\n'
+    + '        configuracao_fiscal: record.configuracao_fiscal || {\n'
+    + '          regime_tributario: "Simples Nacional",\n'
+    + '          cfop_padrao_venda: "5102",\n'
+    + '          contribuinte_icms: true,\n'
+    + '          tipo_contribuinte: "1 - Contribuinte",\n'
+    + '          isento_ipi: false,\n'
+    + '          isento_icms: false,\n'
+    + '        },\n'
+    + '        ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),\n'
+    + '      };\n'
+    + '    },\n',
+    '    mapToForm: (record) => ({\n'
+    + '      ...record,\n'
+    + '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),\n'
+    + '      ...(record.locais_entrega === undefined\n'
+    + '        ? {}\n'
+    + '        : { locais_entrega: record.locais_entrega || [] }),\n'
+    + '      condicao_comercial: record.condicao_comercial || {\n'
+    + '        tabela_preco_id: "",\n'
+    + '        forma_pagamento_padrao_id: "",\n'
+    + '        percentual_desconto: 0,\n'
+    + '        condicao_pagamento: "À Vista",\n'
+    + '        limite_credito: 0,\n'
+    + '        limite_credito_utilizado: 0,\n'
+    + '        situacao_credito: "OK",\n'
+    + '      },\n'
+    + '      configuracao_fiscal: record.configuracao_fiscal || {\n'
+    + '        regime_tributario: "Simples Nacional",\n'
+    + '        cfop_padrao_venda: "5102",\n'
+    + '        contribuinte_icms: true,\n'
+    + '        tipo_contribuinte: "1 - Contribuinte",\n'
+    + '        isento_ipi: false,\n'
+    + '        isento_icms: false,\n'
+    + '      },\n'
+    + '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),\n'
+    + '    }),\n');
   source = once(source,
     '      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined || formData.documentos === undefined) && (\n'
     + '        <div\n'
@@ -91,6 +159,33 @@ function clienteContactPresenceRemainder(source) {
     '      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">\n');
   source = once(source,
     '  /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */\n'
+    + '  /**\n'
+    + '   * Exibição Contatos quando HTTP só trouxe escalares (sem contatos[]).\n'
+    + '   * NÃO grava em formData.contatos até o operador editar — omit-if-unknown no save.\n'
+    + '   * Celular ≠ WhatsApp automático (mesmo contrato do Painel).\n'
+    + '   */\n'
+    + '  const contatosViewForUi = (() => {\n'
+    + '    if (Array.isArray(formData.contatos)) return formData.contatos;\n'
+    + '    const items = formData.contatos_escalares?.items;\n'
+    + '    if (Array.isArray(items) && items.length > 0) {\n'
+    + '      return items.map((item) => ({\n'
+    + '        nome: "",\n'
+    + '        tipo: item.tipo || item.canal || "Telefone",\n'
+    + '        valor: item.valor || "",\n'
+    + '        principal: false,\n'
+    + '      }));\n'
+    + '    }\n'
+    + '    const seeded = [];\n'
+    + '    const push = (tipo, valor) => {\n'
+    + '      if (valor == null || String(valor).trim() === "") return;\n'
+    + '      seeded.push({ nome: "", tipo, valor: String(valor).trim(), principal: false });\n'
+    + '    };\n'
+    + '    push("E-mail", formData.email);\n'
+    + '    push("Telefone", formData.telefone);\n'
+    + '    push("Celular", formData.celular);\n'
+    + '    return seeded;\n'
+    + '  })();\n'
+    + '\n'
     + '  const applyContatosDraft = (novosContatos) => {\n'
     + '    setFormData((prev) => ({ ...prev, contatos: novosContatos }));\n'
     + '  };\n'
@@ -103,8 +198,14 @@ function clienteContactPresenceRemainder(source) {
     '  const handleSave = () => {\n');
   source = once(source,
     '            <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
+    + '              {formData.contatos === undefined && contatosViewForUi.length > 0 && (\n'
+    + '                <p className="mb-2 text-xs text-slate-600" data-fonte="contatos-escalares-http" role="status">\n'
+    + '                  Contatos escalares do MASTER (e-mail/telefone/celular). Editar assume a lista no rascunho;\n'
+    + '                  Celular não vira WhatsApp automaticamente.\n'
+    + '                </p>\n'
+    + '              )}\n'
     + '              <GerenciarContatosClienteForm\n'
-    + '                contatos={formData.contatos || []}\n'
+    + '                contatos={contatosViewForUi}\n'
     + '                onChange={applyContatosDraft}\n'
     + '                commitMode="draft"\n'
     + '                assertScopeCurrent={assertFormScopeCurrent}\n'
