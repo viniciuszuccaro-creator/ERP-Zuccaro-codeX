@@ -1,3 +1,20 @@
+## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | tip deste push (pós-`0df103e2`) — aguarda CI |
+| **HML owner** | **~100 clientes** :15173; grade parecia só nomes |
+| **Freeze** | **`0afd378f284`** — não trocar mid-teste; tip API+web com acordo Codex |
+| **Causa UI** | cols cnpj/cpf sem `documento`; Contatos `\|\| []` escondia escalares |
+| **Fix** | hydrateClienteHttpRowForUi; cols Bloco1/ClientesTab; V24 variants; Completo mapToForm + contatosViewForUi |
+| **Pack** | `docs/evidence/codex-cliente-campos-lista-completo-591-20261109.txt` |
+| **Base44** | Declined/needsAuth — recuperação via erp-integra-novo |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| Fora | wipe campos · storage paralelo · recreate · PII · merge/VPS |
+
+**Próximo:** CI tip · Codex aceite campos :15173 · param residual / C360 com OK visual.
+
 ## CURSOR — #591 HML :15173 + rich-fields fail-closed + retomada (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -19,6 +19,7 @@ import {
   scalarContactSummary,
   toClienteMasterHttpPayload,
   withHydratedContatos,
+  hydrateClienteHttpRowForUi,
 } from '../src/api/clienteHttpPayload.js';
 function actualClienteFormPayload() {
   const source = readFileSync(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
@@ -51,6 +52,36 @@ test('form real: ausencia de contatos HTTP nao vira intencao de apagar escalares
   assert.equal(wire.telefone, record.telefone);
   assert.equal(wire.nome_fantasia, 'SYNTHETIC EDIT');
   assert.equal(Object.hasOwn(record, 'contatos'), false);
+});
+
+test('form real: documento HTTP vira cnpj/cpf sem inventar contatos[]', () => {
+  const { mapToForm, buildPayload } = actualClienteFormPayload();
+  const pj = mapToForm({
+    id: 'cli-doc-pj',
+    tipo: 'Pessoa Jurídica',
+    documento: '11.222.333/0001-81',
+    email: 'pj@sintetico.dev',
+  });
+  assert.equal(pj.cnpj, '11.222.333/0001-81');
+  assert.equal(Object.hasOwn(pj, 'contatos'), false);
+  const pf = mapToForm({
+    id: 'cli-doc-pf',
+    tipo: 'Pessoa Física',
+    documento: '012.345.678-90',
+  });
+  assert.equal(pf.cpf, '012.345.678-90', 'zeros à esquerda');
+  const kept = mapToForm({
+    documento: '11.222.333/0001-81',
+    cnpj: '99.999.999/0001-91',
+  });
+  assert.equal(kept.cnpj, '99.999.999/0001-91');
+  const wire = toClienteMasterHttpPayload(buildPayload({
+    ...pj,
+    nome: 'SYNTHETIC PJ',
+    razao_social: 'SYNTHETIC PJ',
+  }));
+  assert.equal(wire.documento.replace(/\D/g, ''), '11222333000181');
+  assert.equal(wire.email, 'pj@sintetico.dev');
 });
 
 test('form real: lista explicita divergente e metadata continuam bloqueadas', () => {
@@ -385,6 +416,33 @@ test('HttpApiClient Cliente.get: contatos_escalares incompleto; sem contatos[] f
   assert.equal(row.contatos, undefined);
   assert.equal(row.contatos_escalares.complete, false);
   assert.equal(row.contatos_escalares.items.length, 2);
+});
+
+test('hydrateClienteHttpRowForUi: documento → cpf/cnpj sem inventar contatos[]', () => {
+  const pj = hydrateClienteHttpRowForUi({
+    id: 'cli-pj',
+    nome: 'Sintético PJ',
+    documento: '11.222.333/0001-81',
+    email: 'pj@sintetico.dev',
+    telefone: '1133334444',
+    celular: '11999998888',
+  });
+  assert.equal(pj.cnpj, '11.222.333/0001-81');
+  assert.equal(pj.cpf, undefined);
+  assert.equal(pj.contatos, undefined);
+  assert.equal(pj.contatos_escalares?.complete, false);
+  const pf = hydrateClienteHttpRowForUi({
+    id: 'cli-pf',
+    nome: 'Sintético PF',
+    documento: '012.345.678-90',
+  });
+  assert.equal(pf.cpf, '012.345.678-90', 'preserva zeros à esquerda');
+  assert.equal(pf.cnpj, undefined);
+  const kept = hydrateClienteHttpRowForUi({
+    documento: '11.222.333/0001-81',
+    cnpj: '99.999.999/0001-91',
+  });
+  assert.equal(kept.cnpj, '99.999.999/0001-91', 'não sobrescreve cnpj já presente');
 });
 
 test('createContatosScalarOverflowError expõe losses para UI/auditoria', () => {

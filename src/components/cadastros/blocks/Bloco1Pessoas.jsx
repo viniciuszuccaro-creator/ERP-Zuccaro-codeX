@@ -134,7 +134,8 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
   };
 
   const tiles = [
-    { k: 'Cliente',           t: 'Clientes',                    i: Users,         c: ['codigo','nome','razao_social','cnpj','status','tipo'],                        f: CadastroClienteCompleto },
+    // HTTP MASTER: documento/email/telefone/celular (cnpj/cpf espelhados na hidratação de leitura).
+    { k: 'Cliente',           t: 'Clientes',                    i: Users,         c: ['codigo','nome','razao_social','documento','cnpj','cpf','email','telefone','celular','status','tipo'], f: CadastroClienteCompleto },
     { k: 'Fornecedor',        t: 'Fornecedores',                i: Building2,     c: ['codigo','nome','razao_social','cpf_cnpj','cnpj','categoria','status_fornecedor'], f: CadastroFornecedorCompleto },
     { k: 'Transportadora',    t: 'Transportadoras',             i: Truck,         c: ['codigo','razao_social','nome_fantasia','cnpj','cidade','status'],              f: TransportadoraForm },
     { k: 'Colaborador',       t: 'Colaboradores',               i: User,          c: ['nome_completo','cargo','departamento','tipo_contrato','status'],      f: ColaboradorForm },

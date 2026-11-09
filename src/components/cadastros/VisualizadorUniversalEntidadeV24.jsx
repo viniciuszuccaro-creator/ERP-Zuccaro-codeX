@@ -168,6 +168,16 @@ function buildFieldVariants(field) {
   if (/^(nome|titulo|label|descricao)/i.test(String(field || ''))) {
     variants = variants.concat(['nome', 'descricao', 'titulo']);
   }
+  // HTTP MASTER Cliente: documento unificado ↔ colunas cpf/cnpj da grade.
+  if (/^(cpf|cnpj|cpf_cnpj|documento)$/i.test(String(field || ''))) {
+    variants = variants.concat(['documento', 'cpf_cnpj', 'cnpj', 'cpf']);
+  }
+  if (/^(telefone|fone|celular|whatsapp)$/i.test(String(field || ''))) {
+    variants = variants.concat(['telefone', 'celular']);
+  }
+  if (/^(email|e_mail)$/i.test(String(field || ''))) {
+    variants = variants.concat(['email']);
+  }
   return variants;
 }
 
@@ -319,6 +329,15 @@ export default function VisualizadorUniversalEntidadeV24({
       nome_condicao: "Nome da condição",
       forma_pagamento: "Forma de pagamento",
       ativo: "Ativo",
+      documento: "CPF/CNPJ",
+      cpf: "CPF",
+      cnpj: "CNPJ",
+      email: "E-mail",
+      telefone: "Telefone",
+      celular: "Celular",
+      razao_social: "Razão social",
+      tipo: "Tipo",
+      status: "Status",
     };
     if (_camposPrincipais.length > 0) {
       return _camposPrincipais.map(function(c) {

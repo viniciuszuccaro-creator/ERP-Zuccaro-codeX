@@ -1,3 +1,11 @@
+## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
+- Owner confirmou **~100 clientes** HML **:15173**; grade Cadastros parecia só nomes.
+- Causa UI: colunas `cnpj`/`cpf` sem `documento` HTTP; e-mail/fone ausentes na grade; Contatos `|| []` escondia escalares.
+- Fix tip (este push): `hydrateClienteHttpRowForUi` (documento→cpf/cnpj); Bloco1/ClientesTab cols documento+email+telefone+celular; V24 variants/labels; Completo mapToForm espelha documento; `contatosViewForUi` (escalares sem wipe / Celular≠WhatsApp).
+- Freeze HML **`0afd378f284`** — **não trocar snapshot mid-teste**; tip API+web só após acordo Codex.
+- Base44 MCP: owner Declined / needsAuth — recuperação via `erp-integra-novo` sem Base44 neste lote.
+- Codex: conferir base persistente + backup campos; aceite privado em :15173 após tip CI. Sem VPS/PII/fixtures/recreate.
+
 ## CURSOR — #591 HML :15173 + fail-closed rich fields + retomada (2026-11-09 America/Sao_Paulo)
 - Tip **`0df103e2`** · **CI SUCCESS** push+PR. Owner: **~100 clientes** HML **:15173** (Codex).
 - Vite: `allowedHosts` 5173+**15173**; `/__erp_preview` com `previewPorts` + purpose `private-hml-preview`.

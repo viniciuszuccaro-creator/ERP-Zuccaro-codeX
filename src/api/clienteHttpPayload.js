@@ -291,6 +291,32 @@ export function withHydratedContatos(row) {
 }
 
 /**
+ * Adaptação de leitura HTTP → UI Cadastros/Completo.
+ * MASTER usa `documento` unificado; a grade/form esperam `cpf`/`cnpj` (string, zeros).
+ * Não inventa contatos[] nem endereços — só espelha documento quando cpf/cnpj ausentes.
+ *
+ * @param {unknown} row
+ * @returns {unknown}
+ */
+export function hydrateClienteHttpRowForUi(row) {
+  const withContacts = withHydratedContatos(row);
+  if (!withContacts || typeof withContacts !== 'object' || Array.isArray(withContacts)) {
+    return withContacts;
+  }
+  /** @type {Record<string, unknown>} */
+  const record = { .../** @type {Record<string, unknown>} */ (withContacts) };
+  const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+  const docRaw = record.documento ?? record.cpf_cnpj ?? '';
+  const doc = String(docRaw ?? '').trim();
+  const digits = doc.replace(/\D/g, '');
+  if (digits && !/^0+$/.test(digits)) {
+    if (blank(record.cpf) && digits.length === 11) record.cpf = doc;
+    if (blank(record.cnpj) && digits.length === 14) record.cnpj = doc;
+  }
+  return record;
+}
+
+/**
  * Rich fields present with values would be silently dropped by ALLOWED_KEYS.
  * Empty/undefined = nothing to lose (omit). Non-empty = fail closed.
  * @param {Record<string, unknown>} src

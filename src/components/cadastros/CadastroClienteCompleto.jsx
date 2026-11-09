@@ -399,31 +399,47 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       empresa_id: empresaAtual?.id,
       group_id: groupId,
     },
-    mapToForm: (record) => ({
-      ...record,
-      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),
-      ...(record.locais_entrega === undefined
-        ? {}
-        : { locais_entrega: record.locais_entrega || [] }),
-      condicao_comercial: record.condicao_comercial || {
-        tabela_preco_id: "",
-        forma_pagamento_padrao_id: "",
-        percentual_desconto: 0,
-        condicao_pagamento: "À Vista",
-        limite_credito: 0,
-        limite_credito_utilizado: 0,
-        situacao_credito: "OK",
-      },
-      configuracao_fiscal: record.configuracao_fiscal || {
-        regime_tributario: "Simples Nacional",
-        cfop_padrao_venda: "5102",
-        contribuinte_icms: true,
-        tipo_contribuinte: "1 - Contribuinte",
-        isento_ipi: false,
-        isento_icms: false,
-      },
-      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),
-    }),
+    mapToForm: (record) => {
+      // HTTP MASTER: documento unificado → cpf/cnpj da UI (zeros preservados; não inventa).
+      const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+      const docRaw = record?.documento ?? record?.cpf_cnpj ?? '';
+      const doc = String(docRaw ?? '').trim();
+      const digits = doc.replace(/\D/g, '');
+      let cpf = record?.cpf;
+      let cnpj = record?.cnpj;
+      if (digits && !/^0+$/.test(digits)) {
+        if (blank(cpf) && digits.length === 11) cpf = doc;
+        if (blank(cnpj) && digits.length === 14) cnpj = doc;
+      }
+      return {
+        ...record,
+        ...(cpf !== undefined ? { cpf } : {}),
+        ...(cnpj !== undefined ? { cnpj } : {}),
+        // Ausência ≠ [] : omitir evita wipe no save (contrato HTTP parcial).
+        ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),
+        ...(record.locais_entrega === undefined
+          ? {}
+          : { locais_entrega: record.locais_entrega || [] }),
+        condicao_comercial: record.condicao_comercial || {
+          tabela_preco_id: "",
+          forma_pagamento_padrao_id: "",
+          percentual_desconto: 0,
+          condicao_pagamento: "À Vista",
+          limite_credito: 0,
+          limite_credito_utilizado: 0,
+          situacao_credito: "OK",
+        },
+        configuracao_fiscal: record.configuracao_fiscal || {
+          regime_tributario: "Simples Nacional",
+          cfop_padrao_venda: "5102",
+          contribuinte_icms: true,
+          tipo_contribuinte: "1 - Contribuinte",
+          isento_ipi: false,
+          isento_icms: false,
+        },
+        ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),
+      };
+    },
   });
 
   const saveMutation = useMutation({
@@ -512,6 +528,33 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */
+  /**
+   * Exibição Contatos quando HTTP só trouxe escalares (sem contatos[]).
+   * NÃO grava em formData.contatos até o operador editar — omit-if-unknown no save.
+   * Celular ≠ WhatsApp automático (mesmo contrato do Painel).
+   */
+  const contatosViewForUi = (() => {
+    if (Array.isArray(formData.contatos)) return formData.contatos;
+    const items = formData.contatos_escalares?.items;
+    if (Array.isArray(items) && items.length > 0) {
+      return items.map((item) => ({
+        nome: "",
+        tipo: item.tipo || item.canal || "Telefone",
+        valor: item.valor || "",
+        principal: false,
+      }));
+    }
+    const seeded = [];
+    const push = (tipo, valor) => {
+      if (valor == null || String(valor).trim() === "") return;
+      seeded.push({ nome: "", tipo, valor: String(valor).trim(), principal: false });
+    };
+    push("E-mail", formData.email);
+    push("Telefone", formData.telefone);
+    push("Celular", formData.celular);
+    return seeded;
+  })();
+
   const applyContatosDraft = (novosContatos) => {
     setFormData((prev) => ({ ...prev, contatos: novosContatos }));
   };
@@ -1207,8 +1250,14 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </TabsContent>
 
             <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">
+              {formData.contatos === undefined && contatosViewForUi.length > 0 && (
+                <p className="mb-2 text-xs text-slate-600" data-fonte="contatos-escalares-http" role="status">
+                  Contatos escalares do MASTER (e-mail/telefone/celular). Editar assume a lista no rascunho;
+                  Celular não vira WhatsApp automaticamente.
+                </p>
+              )}
               <GerenciarContatosClienteForm
-                contatos={formData.contatos || []}
+                contatos={contatosViewForUi}
                 onChange={applyContatosDraft}
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
