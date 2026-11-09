@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Tip / CI** | tip deste push (pós-`0df103e2`) — aguarda CI |
+| **Tip / CI** | **`781a6fa9`** — aguarda CI push+PR |
 | **HML owner** | **~100 clientes** :15173; grade parecia só nomes |
 | **Freeze** | **`0afd378f284`** — não trocar mid-teste; tip API+web com acordo Codex |
 | **Causa UI** | cols cnpj/cpf sem `documento`; Contatos `\|\| []` escondia escalares |
