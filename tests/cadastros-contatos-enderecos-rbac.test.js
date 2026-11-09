@@ -131,9 +131,12 @@ test('CadastroClienteCompleto: saveMutation exige podeEditar e passa assertScope
   const text = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const start = text.indexOf('mutationFn: async (data) => {');
   assert.ok(start > 0, 'saveMutation.mutationFn deve existir');
-  const slice = text.slice(start, start + 900);
+  const end = text.indexOf('onSuccess:', start);
+  const slice = text.slice(start, end > start ? end : start + 6000);
   assert.match(slice, /if \(!podeEditar\) throw new Error\("Seu perfil nao permite editar clientes\."\);/);
-  assert.match(slice, /return updateInContext\('Cliente'/);
+  // Write canônico: MASTER via updateInContext; locais via syncClienteLocaisViaHttp.
+  assert.match(slice, /(?:return |saved = await )updateInContext\('Cliente'/);
+  assert.match(slice, /syncClienteLocaisViaHttp/);
   assert.match(text, /assertScopeCurrent=\{assertFormScopeCurrent\}/);
 });
 
