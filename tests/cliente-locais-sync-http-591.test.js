@@ -9,6 +9,7 @@ import {
   syncClienteLocaisViaHttp,
   assertClienteLocalUiExtrasWritable,
   CLIENTE_HTTP_UNSUPPORTED_FIELDS,
+  CLIENTE_LOCAIS_SYNC_PARTIAL,
 } from '../src/api/clienteHttpPayload.js';
 
 const baseEndereco = {
@@ -89,6 +90,16 @@ test('sync: create + update + soft-delete só com baseline carregado', async () 
     'create:cli-1:Novo',
     `delete:${dropId}`,
   ]);
+  const summary = await syncClienteLocaisViaHttp({
+    clienteId: 'cli-1',
+    draft: [{ ...baseEndereco, id: keepId, apelido: 'Keep' }],
+    baselineIds: [keepId],
+    api,
+  });
+  assert.equal(summary.updated, 1);
+  assert.equal(summary.created, 0);
+  assert.equal(summary.deleted, 0);
+  assert.equal(summary.skipped, false);
 });
 
 test('sync: baseline null (carga falhou) → não soft-delete', async () => {
@@ -122,5 +133,50 @@ test('sync: draft incompleto → erro (rascunho preservado)', async () => {
       },
     }),
     (err) => err?.code === 'VALIDATION_ERROR',
+  );
+});
+
+test('sync: draft undefined → skip (omissão ≠ lista vazia)', async () => {
+  /** @type {string[]} */
+  const ops = [];
+  const result = await syncClienteLocaisViaHttp({
+    clienteId: 'cli-1',
+    draft: undefined,
+    baselineIds: ['aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'],
+    api: {
+      createLocal: async () => { ops.push('create'); return {}; },
+      updateLocal: async () => { ops.push('update'); return {}; },
+      softDeleteLocal: async () => { ops.push('delete'); return {}; },
+      setFinalidades: async () => { ops.push('fins'); return {}; },
+    },
+  });
+  assert.deepEqual(ops, []);
+  assert.equal(result.skipped, true);
+});
+
+test('sync: falha intermediária → CLIENTE_LOCAIS_SYNC_PARTIAL (≠ sucesso integral)', async () => {
+  let creates = 0;
+  await assert.rejects(
+    () => syncClienteLocaisViaHttp({
+      clienteId: 'cli-1',
+      draft: [
+        { ...baseEndereco, apelido: 'A' },
+        { ...baseEndereco, apelido: 'B' },
+      ],
+      baselineIds: [],
+      api: {
+        createLocal: async () => {
+          creates += 1;
+          if (creates > 1) throw new Error('remoto 500');
+          return { id: 'n1' };
+        },
+        updateLocal: async () => {},
+        softDeleteLocal: async () => {},
+        setFinalidades: async () => {},
+      },
+    }),
+    (err) => err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL
+      && err.summary?.created === 1
+      && /Não é gravação integral/i.test(err.message),
   );
 });

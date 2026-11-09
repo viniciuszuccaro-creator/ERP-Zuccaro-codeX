@@ -5,6 +5,7 @@ import { readErpHttpSession } from "@/api/erpHttpSession";
 import {
   mapClienteLocalToUiEndereco,
   syncClienteLocaisViaHttp,
+  CLIENTE_LOCAIS_SYNC_PARTIAL,
 } from "@/api/clienteHttpPayload";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -524,9 +525,18 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     },
     onError: (error) => {
       const sameScope = isFormScopeCurrent();
+      const partial = error?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
+      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida e força reabertura.
+      if (partial) {
+        queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      }
       toast({
-        title: sameScope ? "❌ Erro ao salvar cliente" : "Contexto alterado",
-        description: sameScope ? (error?.message || String(error)) : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
+        title: !sameScope
+          ? "Contexto alterado"
+          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),
+        description: sameScope
+          ? (error?.message || String(error))
+          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
     }

@@ -513,11 +513,16 @@ export function mapUiEnderecoToClienteLocalUpdate(endereco) {
   return update;
 }
 
+/** Sync `/locais` interrompido após operações parciais — não declarar gravação integral. */
+export const CLIENTE_LOCAIS_SYNC_PARTIAL = 'CLIENTE_LOCAIS_SYNC_PARTIAL';
+
 /**
  * Sincroniza rascunho UI com BFF `/locais` canônico.
+ * - `draft === undefined`: omissão — NÃO sincroniza (não vira lista vazia).
  * - `baselineIds === null/undefined`: carga prévia ausente/falhou → NÃO soft-delete
  *   (campo não carregado não apaga persistido).
  * - `baselineIds` array: ids canônicos lidos; ausentes no draft = remoção explícita.
+ * - Falha no meio: lança `CLIENTE_LOCAIS_SYNC_PARTIAL` com contadores (≠ sucesso integral).
  * @param {{
  *   clienteId: string,
  *   draft: unknown,
@@ -529,8 +534,13 @@ export function mapUiEnderecoToClienteLocalUpdate(endereco) {
  *     setFinalidades: (clienteId: string, localId: string, finalidades: unknown) => Promise<unknown>,
  *   },
  * }} input
+ * @returns {Promise<{ created: number, updated: number, deleted: number, skipped: boolean }>}
  */
 export async function syncClienteLocaisViaHttp({ clienteId, draft, baselineIds, api }) {
+  // Omissão ≠ remoção: rascunho undefined não sincroniza lista vazia.
+  if (draft === undefined) {
+    return { created: 0, updated: 0, deleted: 0, skipped: true };
+  }
   const id = String(clienteId ?? '').trim();
   if (!id) {
     const error = /** @type {Error & { code: string, status: number }} */ (
@@ -549,29 +559,78 @@ export async function syncClienteLocaisViaHttp({ clienteId, draft, baselineIds, 
     error.fields = ['locais_entrega'];
     throw error;
   }
+  /** @type {{ created: number, updated: number, deleted: number, skipped: boolean }} */
+  const summary = { created: 0, updated: 0, deleted: 0, skipped: false };
   const keptIds = new Set();
+  /**
+   * @param {unknown} cause
+   * @param {string} op
+   */
+  const failPartial = (cause, op) => {
+    // Validação/unsupported pré-API: preservar código original (não mascarar como parcial).
+    if (cause && typeof cause === 'object' && 'code' in cause) {
+      const code = /** @type {{ code?: string }} */ (cause).code;
+      if (code === 'VALIDATION_ERROR' || code === CLIENTE_HTTP_UNSUPPORTED_FIELDS) {
+        throw cause;
+      }
+    }
+    const causeMsg = cause instanceof Error ? cause.message : String(cause ?? 'erro');
+    const error = /** @type {Error & {
+      code: string,
+      status: number,
+      fields: string[],
+      summary: typeof summary,
+      cause?: unknown,
+    }} */ (
+      new Error(
+        `Sincronização de endereços interrompida em ${op} `
+          + `(criados=${summary.created}, atualizados=${summary.updated}, removidos=${summary.deleted}). `
+          + 'Não é gravação integral — reabra e confira. '
+          + causeMsg,
+      )
+    );
+    error.name = 'ClienteLocaisSyncPartialError';
+    error.code = CLIENTE_LOCAIS_SYNC_PARTIAL;
+    error.status = 409;
+    error.fields = ['locais_entrega'];
+    error.summary = { ...summary };
+    error.cause = cause;
+    throw error;
+  };
   for (const item of draft.slice(0, 50)) {
     const row = item && typeof item === 'object' ? /** @type {Record<string, unknown>} */ (item) : {};
     const localId = isClienteLocalCanonicalId(row.id) ? String(row.id).trim() : '';
-    if (localId) {
-      const patch = mapUiEnderecoToClienteLocalUpdate(row);
-      await api.updateLocal(id, localId, patch);
-      const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
-      await api.setFinalidades(id, localId, [
-        { finalidade, principal: row.principal === true },
-      ]);
-      keptIds.add(localId);
-    } else {
-      await api.createLocal(id, mapUiEnderecoToClienteLocalCreate(row));
+    try {
+      if (localId) {
+        const patch = mapUiEnderecoToClienteLocalUpdate(row);
+        await api.updateLocal(id, localId, patch);
+        const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
+        await api.setFinalidades(id, localId, [
+          { finalidade, principal: row.principal === true },
+        ]);
+        keptIds.add(localId);
+        summary.updated += 1;
+      } else {
+        await api.createLocal(id, mapUiEnderecoToClienteLocalCreate(row));
+        summary.created += 1;
+      }
+    } catch (cause) {
+      failPartial(cause, localId ? `update:${localId}` : 'create');
     }
   }
   if (Array.isArray(baselineIds)) {
     for (const baselineId of baselineIds) {
       const bid = String(baselineId ?? '').trim();
       if (!isClienteLocalCanonicalId(bid) || keptIds.has(bid)) continue;
-      await api.softDeleteLocal(id, bid);
+      try {
+        await api.softDeleteLocal(id, bid);
+        summary.deleted += 1;
+      } catch (cause) {
+        failPartial(cause, `delete:${bid}`);
+      }
     }
   }
+  return summary;
 }
 
 /**

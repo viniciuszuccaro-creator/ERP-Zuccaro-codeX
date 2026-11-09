@@ -74,6 +74,7 @@ function clienteContactPresenceRemainder(source) {
     'import {\n'
     + '  mapClienteLocalToUiEndereco,\n'
     + '  syncClienteLocaisViaHttp,\n'
+    + '  CLIENTE_LOCAIS_SYNC_PARTIAL,\n'
     + '} from "@/api/clienteHttpPayload";\n',
     '');
   // #591: mapToForm com espelho documento→cpf/cnpj → forma omit anterior.
@@ -314,8 +315,34 @@ function clienteContactPresenceRemainder(source) {
     + '        return updateInContext(\'Cliente\', targetId, payload);\n'
     + '      }\n'
     + '\n'
-    + '      if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");\n'
+    +     '      if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");\n'
     + '      return createInContext(\'Cliente\', payload);\n');
+  source = once(source,
+    '    onError: (error) => {\n'
+    + '      const sameScope = isFormScopeCurrent();\n'
+    + '      const partial = error?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;\n'
+    + '      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida e força reabertura.\n'
+    + '      if (partial) {\n'
+    + '        queryClient.invalidateQueries({ queryKey: [\'clientes\'] });\n'
+    + '      }\n'
+    + '      toast({\n'
+    + '        title: !sameScope\n'
+    + '          ? "Contexto alterado"\n'
+    + '          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),\n'
+    + '        description: sameScope\n'
+    + '          ? (error?.message || String(error))\n'
+    + '          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",\n'
+    + '        variant: "destructive"\n'
+    + '      });\n'
+    + '    }\n',
+    '    onError: (error) => {\n'
+    + '      const sameScope = isFormScopeCurrent();\n'
+    + '      toast({\n'
+    + '        title: sameScope ? "❌ Erro ao salvar cliente" : "Contexto alterado",\n'
+    + '        description: sameScope ? (error?.message || String(error)) : "A operação anterior falhou. Reabra o cadastro no contexto atual.",\n'
+    + '        variant: "destructive"\n'
+    + '      });\n'
+    + '    }\n');
   source = once(source,
     '            <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
     + '              {formData.contatos === undefined && contatosViewForUi.length > 0 && (\n'

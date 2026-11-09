@@ -36,12 +36,20 @@ BASE44 (MCP Base acessível neste ambiente)
 - Shape confirmado: Contatos[] ricos; locais_entrega com horário/contato
 - Sem PII commitado; recuperação visual/campos via contrato, não dump
 
+CONTATOS RICOS / DOCUMENTOS (próximo com Codex — sem ContatoClienteV2)
+- MASTER HTTP: escalares email/telefone/celular; Celular≠WhatsApp
+- contatos[] com nome/obs/múltiplos → CONTATOS_SCALAR_OVERFLOW (fail-closed)
+- documentos[] não vazios → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+- Proprietário canônico proposto: coluna jsonb ou tabela filha no BFF
+  (docs/evidence/contatos-fidelidade-353-*) — Cursor não inventa storage paralelo
+- Aceite pack: docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt
+
 TESTES
-- cliente-locais-sync-http-591
+- cliente-locais-sync-http-591 (omit/partial/baseline)
 - cliente-http-descarte-silencioso-591
 - cadastro-query-payload-boundaries (peels Completo + mutationFn)
 - http-api-client / financial peels
-- tip peels **14005f39** CI SUCCESS
+- tip **d1b08f96** CI SUCCESS; peels **14005f39**
 
 FORA
-merge · deploy VPS · dados reais no GitHub · recreate clientes · enfraquecer validação
+merge · deploy VPS · dados reais no GitHub · recreate clientes · enfraquecer validação · ContatoClienteV2

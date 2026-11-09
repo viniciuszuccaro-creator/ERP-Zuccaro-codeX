@@ -1,3 +1,18 @@
+## CURSOR — #591 locais parcial + aceite :15173 + C360 Voltar/Avançar (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip base verde** | **`d1b08f96`** · **CI SUCCESS** push+PR; docs `94d49ab3` |
+| **Locais** | omit≠vazio; baseline null≠delete; `CLIENTE_LOCAIS_SYNC_PARTIAL` ≠ sucesso |
+| **Aceite pack** | `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` |
+| **Contatos/docs** | fail-closed MASTER; BFF jsonb/tabela com Codex — sem ContatoClienteV2 |
+| **C360** | OrcamentoProposalAside Voltar/Avançar (rascunho preservado; sem paralelo) |
+| **Freeze** | **`0afd378f284`** até acordo tip API+web |
+| Fora | storage paralelo · redesign C360 · merge/VPS · PII |
+
+**Próximo:** CI deste tip · Codex aceite :15173 no tip verde · contatos ricos BFF · painéis C360 operacionais com OK visual.
+
 ## CURSOR — #591 write `/locais` canônico + peels CI (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

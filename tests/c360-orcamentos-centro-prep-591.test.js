@@ -23,6 +23,14 @@ test('OrcamentosTab: proposal aside + rascunho; salvar bloqueado em proposalMode
   assert.match(src, /Incluir item|Item<\/Button>|<Plus/);
 });
 
+test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do editor', () => {
+  const src = read('src/components/comercial/OrcamentoProposalAside.jsx');
+  assert.match(src, /data-action="proposta-voltar"/);
+  assert.match(src, /data-action="proposta-avancar"/);
+  assert.match(src, /Rascunho do editor permanece ao navegar/);
+  assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
+});
+
 test('CentralCliente360Panel: reabre OrcamentosTab existente (não paralela)', () => {
   const src = read('src/components/comercial/CentralCliente360Panel.jsx');
   assert.match(src, /OrcamentosTab/);

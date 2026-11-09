@@ -1,0 +1,36 @@
+#591 — Pack aceite HML :15173 para Codex (sem PII)
+America/Sao_Paulo 2026-11-09
+
+SNAPSHOT EXATO (API+web mesma versão após CI tip)
+- Branch: cursor/hml-grupo-erro-fornecedor-392b
+- PR: #591
+- Tip código (write+RBAC): d1b08f96bd2b61792d2505f6ba4a832f40fd3840
+- Tip docs status: 94d49ab3… (CI docs em curso; tip funcional d1b08f96 já SUCCESS push+PR)
+- Freeze antigo: 0afd378f284 — trocar só com acordo Codex + tip verde
+
+DELTAS vs freeze (resumo)
+1. Projeção documento→cpf/cnpj/tipo PF-PJ; zeros; grade cols email/fone/celular
+2. Parecer 6746649125: fail-closed rich fields / tipo / origem (sem descarte silencioso)
+3. Locais canônicos: GET + write POST/PATCH/DELETE/finalidades /clientes/:id/locais
+4. syncClienteLocaisViaHttp: baseline null≠delete; draft undefined≠lista vazia;
+   falha parcial → CLIENTE_LOCAIS_SYNC_PARTIAL (≠ sucesso integral)
+5. Celular escalar ≠ WhatsApp automático
+6. Contatos ricos / documentos: ainda fail-closed no MASTER (sem ContatoClienteV2)
+
+CHECKLIST ACEITE PRIVADO (:15173)
+[ ] Listagem: documento/email/telefone/celular visíveis (não só nome)
+[ ] Detalhe PF: CPF com zeros; nome; sem inventar razão social
+[ ] Detalhe PJ: CNPJ; razão social; fantasia
+[ ] Aba Contatos: escalares sem wipe; Celular≠WhatsApp; ricos → pendência explícita
+[ ] Aba Endereços: leitura cliente_locais; editar+salvar sync /locais; reabrir
+[ ] Soft-delete só após carga OK; falha de leitura não apaga
+[ ] Erro remoto / sync parcial ≠ toast de sucesso
+[ ] Troca cliente/contexto / resposta tardia / duplo clique
+
+COORD FREEZE→TIP
+- Codex confirma checklist no tip d1b08f96 (ou HEAD CI SUCCESS acordado)
+- Só então: mesmo SHA API+web na :15173; sair do freeze 0afd378f284
+- Publicação #591 ≠ integração #401
+
+FORA
+dados reais no GitHub · screenshots com PII · recreate · ContatoClienteV2 · merge/VPS

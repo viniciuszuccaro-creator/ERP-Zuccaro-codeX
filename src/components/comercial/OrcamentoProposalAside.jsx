@@ -23,6 +23,7 @@ export default function OrcamentoProposalAside({
   formasPagamentoIlustrativas = [],
 }) {
   const [panel, setPanel] = useState('cliente');
+  const panelIndex = Math.max(0, TABS.findIndex(([key]) => key === panel));
   const itensComProduto = itens.filter((item) => item.produto_id);
 
   return (
@@ -176,6 +177,32 @@ export default function OrcamentoProposalAside({
           </div>
         </section>
       )}
+
+      <div className="flex flex-wrap gap-2 pt-1 border-t border-sky-100">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="bg-white border-sky-200"
+          disabled={panelIndex <= 0}
+          data-action="proposta-voltar"
+          onClick={() => setPanel(TABS[Math.max(0, panelIndex - 1)][0])}
+        >
+          Voltar
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="bg-white border-sky-200"
+          disabled={panelIndex >= TABS.length - 1}
+          data-action="proposta-avancar"
+          onClick={() => setPanel(TABS[Math.min(TABS.length - 1, panelIndex + 1)][0])}
+        >
+          Avançar
+        </Button>
+        <p className="text-xs text-slate-500 self-center">Rascunho do editor permanece ao navegar.</p>
+      </div>
     </aside>
   );
 }

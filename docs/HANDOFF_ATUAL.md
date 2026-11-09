@@ -1,10 +1,14 @@
+## CURSOR — #591 locais parcial + aceite :15173 + C360 etapas (2026-11-09 America/Sao_Paulo)
+- Tip base **`d1b08f96`** CI SUCCESS; reforço: `CLIENTE_LOCAIS_SYNC_PARTIAL`, draft undefined→skip, toast parcial≠sucesso.
+- Pack aceite Codex: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` (checklist :15173; freeze `0afd378f284` só com acordo).
+- Contatos/docs: overflow/UNSUPPORTED no MASTER; BFF canônico com Codex — **sem ContatoClienteV2**.
+- C360: Aside Voltar/Avançar entre painéis; rascunho do editor preservado; sem central paralela.
+- Sem merge/VPS/PII.
+
 ## CURSOR — #591 write `/locais` + peels CI SUCCESS (2026-11-09 America/Sao_Paulo)
 - Tip **`d1b08f96`** · **CI SUCCESS** push+PR 3/3 (peels `14005f39` + write + RBAC assert).
-- Write canônico: Completo salva MASTER sem `locais_entrega`; sync `POST/PATCH/DELETE/finalidades` em `/clientes/:id/locais`.
-- `syncClienteLocaisViaHttp`: create/update; soft-delete só com baseline carregado; carga falhou → sem wipe; extras horário/contato → fail-closed.
-- Base44 MCP `Base` acessível (shape Contatos[] / locais_entrega ricos) — sem PII no GitHub.
-- Freeze HML **`0afd378f284`** até acordo tip API+web. Pack parecer **6746649125** atualizado.
-- Pendente: contatos ricos / documentos; C360 Orçamentos (sem redesign); aceite Codex :15173 no tip.
+- Write canônico `/clientes/:id/locais`; baseline null≠delete; extras fail-closed.
+- Base44 MCP `Base` acessível — sem PII. Freeze **`0afd378f284`**.
 
 ## CURSOR — #591 parecer 6746649125 + locais read + doc UI (2026-11-09 America/Sao_Paulo)
 - Recebido parecer **6746649125**: descarte silencioso de campos ricos/invalidos = defeito.
