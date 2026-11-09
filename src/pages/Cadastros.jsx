@@ -354,7 +354,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco1Pessoas allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
+                <Bloco1Pessoas allCounts={allCounts} missingCounts={countsMissing} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -370,7 +370,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco2Produtos allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
+                <Bloco2Produtos allCounts={allCounts} missingCounts={countsMissing} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -386,7 +386,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco3Financeiro allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
+                <Bloco3Financeiro allCounts={allCounts} missingCounts={countsMissing} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -402,7 +402,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco4Logistica allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
+                <Bloco4Logistica allCounts={allCounts} missingCounts={countsMissing} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -418,7 +418,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco5Organizacional allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
+                <Bloco5Organizacional allCounts={allCounts} missingCounts={countsMissing} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -434,7 +434,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco6Tecnologia allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
+                <Bloco6Tecnologia allCounts={allCounts} missingCounts={countsMissing} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
           </Accordion>

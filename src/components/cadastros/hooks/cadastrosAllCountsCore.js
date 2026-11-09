@@ -145,12 +145,30 @@ export async function fetchCadastrosAllCounts({
   for (let i = 0; i < pending.length; i += BATCH) {
     const slice = pending.slice(i, i + BATCH);
     if (i > 0) await new Promise((r) => setTimeout(r, 0));
+    let sliceComplete = false;
     try {
       const res = await invoke('countEntities', { entities: slice });
       const raw = res?.data?.counts || res?.data || {};
-      if (raw && typeof raw === 'object') {
-        Object.assign(result, /** @type {Record<string, unknown>} */ (raw));
-        continue;
+      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+        // counts:{} ou chaves omitidas NÃO contam como fatia completa — isola ausentes.
+        sliceComplete = slice.every((row) => (
+          Object.prototype.hasOwnProperty.call(raw, row.entityName)
+          && isValidCountValue(/** @type {Record<string, unknown>} */ (raw)[row.entityName])
+        ));
+        if (sliceComplete) {
+          for (const row of slice) {
+            result[row.entityName] = /** @type {Record<string, unknown>} */ (raw)[row.entityName];
+          }
+          continue;
+        }
+        for (const row of slice) {
+          if (
+            Object.prototype.hasOwnProperty.call(raw, row.entityName)
+            && isValidCountValue(/** @type {Record<string, unknown>} */ (raw)[row.entityName])
+          ) {
+            result[row.entityName] = /** @type {Record<string, unknown>} */ (raw)[row.entityName];
+          }
+        }
       }
     } catch (sliceError) {
       if (typeof console !== 'undefined') {
@@ -158,14 +176,20 @@ export async function fetchCadastrosAllCounts({
       }
     }
     for (const row of slice) {
+      if (Object.prototype.hasOwnProperty.call(result, row.entityName) && isValidCountValue(result[row.entityName])) {
+        continue;
+      }
       try {
         const one = await invoke('countEntities', {
           entities: [{ entityName: row.entityName, filter: row.filter }],
         });
         const rawOne = one?.data?.counts || one?.data || {};
         if (rawOne && typeof rawOne === 'object' && Object.prototype.hasOwnProperty.call(rawOne, row.entityName)) {
-          result[row.entityName] = /** @type {Record<string, unknown>} */ (rawOne)[row.entityName];
-          continue;
+          const v = /** @type {Record<string, unknown>} */ (rawOne)[row.entityName];
+          if (isValidCountValue(v)) {
+            result[row.entityName] = v;
+            continue;
+          }
         }
         // Formato single: { count: n }
         const n = one?.data?.count;

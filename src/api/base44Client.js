@@ -244,6 +244,14 @@ function createHttpHybridClient() {
             });
           }
         }
+        // Parecer 6694327032: em HTTP, upsertConfig não pode gravar no store local
+        // e fingir sucesso remoto. Modo local explícito permanece em resolveBase44Client.
+        if (name === 'upsertConfig') {
+          throw Object.assign(new Error('UPSERT_CONFIG_HTTP_UNAVAILABLE'), {
+            code: 'UPSERT_CONFIG_HTTP_UNAVAILABLE',
+            status: 503,
+          });
+        }
         return localBase44.functions.invoke(name, payload);
       },
     },

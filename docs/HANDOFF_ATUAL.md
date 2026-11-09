@@ -1,3 +1,12 @@
+## CURSOR — #591 achados 6694327032 fechados (2026-11-09 America/Sao_Paulo)
+- Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip a publicar (pós-c80cf05c).
+- Ports: pool/preflight **f51376fa**; Grupo granular **2f588154**; Fornecedor freeze **9b5de2bc**.
+- HTTP: `upsertConfig` → `UPSERT_CONFIG_HTTP_UNAVAILABLE` (sem local silencioso).
+- Contagens: parcial/`missing` → badge "—"; `total` null + `countsUnavailable`; fatia `counts:{}` não marca complete.
+- Testes: `hml-591-review-findings` + `count-layout-prop-types` + server suite auth/fornecedor PASS.
+- Publicação #591 ≠ integração #401 (`5d9a7e37`). Homolog HML BLOCKED (sem dados reais / mesmo SHA API+web Codex).
+- Sem merge/deploy/VPS.
+
 ## CURSOR — recuperação + Empresas unify + C360 prep (2026-11-06 America/Sao_Paulo)
 - PR #591 HEAD **`b16b4865a`** · **CI SUCCESS 3/3** (push+PR).
 - Coord **6690425383**; parecer **6691042172** fechado; tip parecer **`3fc45c320`** SUCCESS.

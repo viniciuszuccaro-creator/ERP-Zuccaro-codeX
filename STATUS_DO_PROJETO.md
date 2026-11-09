@@ -1,3 +1,18 @@
+## CURSOR — #591 achados revisão 6694327032 (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip verde** | **`c80cf05c`** CI SUCCESS 3/3 (pré-achados) |
+| **Delta** | ports **f51376fa** / **2f588154** / **9b5de2bc** + upsertConfig HTTP fail-closed + parcial≠confirmado |
+| **Candidata #401** | tip **`5d9a7e37`** — publicação #591 ≠ integração #401 |
+| **Testes locais** | `hml-591-review-findings` PASS · `count-layout-prop-types` PASS · server suite auth/fornecedor PASS |
+| **Recuperação (estático)** | Home/Dashboard; Chatbot; Separação clássica+IA; Fechamento; ConfiguracoesUsuario; 404 aliases; MapaRoteirizacaoIA; ConfigFinanceiroLogistica |
+| **Homolog** | BLOCKED — Codex deve montar API+web no **mesmo SHA** deste tip; fixtures ≠ homolog real |
+| Fora | merge · deploy · VPS · dados reais GitHub · integração cega na #401 |
+
+**Próximo:** CI deste tip · aceite Codex HML no SHA composto · só então port seletivo #591→#401.
+
 ## CURSOR — recuperação + unificação Empresas + C360 prep (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |
