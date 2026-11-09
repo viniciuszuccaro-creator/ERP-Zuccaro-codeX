@@ -24,11 +24,15 @@ Lacunas documentadas p/ Codex (sem storage paralelo)
 - HTTP MASTER sem locais_entrega[] / documentos[] / contatos[] ricos
 - Aceite “campos reais preservados” exige evolução BFF ou Base44 transporte
 
+Homolog tip coordenado: 77f11b28 (CI SUCCESS) — freeze 0afd378f até acordo Codex
+Contatos/docs: pack docs/evidence/codex-contrato-contatos-documentos-591-20261109.txt
+C360: capacidades no aside (existente/parcial/futuro) sem central paralela
+
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
 1. Cadastros param forms residual sky/reopen — só fora branches reservadas
-2. Central Vendas360: evoluir OrcamentosTab (centro) + painéis existentes
-   (CentralCliente360Panel / proposal aside) — sem OrçamentosV2; redesign só com OK
-3. Fechar aceites das telas já recuperadas antes de abrir fila mecânica nova
+2. Central Vendas360: wire operacional dos painéis (fora proposalMode) após OK visual
+3. Fechar aceites das telas já recuperadas + BFF contatos/docs conforme pack
+4. Batch locais atômico opcional (CLIENTE_LOCAIS_BATCH_ATOMIC=false hoje)
 
 Não iniciar
 - Documentacao / EmpresaOnboarding / OAuthConsent (classe C)

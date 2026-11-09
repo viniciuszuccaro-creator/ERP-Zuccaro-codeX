@@ -10,6 +10,30 @@ const TABS = [
   ['acoes', 'Ações próximas'],
 ];
 
+/**
+ * Capacidade dos atalhos/painéis — reutiliza owners existentes; sem central paralela.
+ * existente = serviço/owner no repo; parcial = UI ou HTTP incompleto; futuro = planejado.
+ */
+export const PROPOSTA_CAPACIDADES = [
+  { key: 'cliente-historico', label: 'Cliente / histórico', capacidade: 'parcial', owner: 'CentralCliente360Panel + HistoricoCliente' },
+  { key: 'credito-financeiro', label: 'Crédito / financeiro', capacidade: 'parcial', owner: 'validação crédito pedido + ContasReceber' },
+  { key: 'estoque', label: 'Estoque', capacidade: 'parcial', owner: 'ValidadorEstoquePedido' },
+  { key: 'producao', label: 'Produção', capacidade: 'parcial', owner: 'GerarOpModal / OrdemProducao' },
+  { key: 'entregas-mapa', label: 'Entregas / mapa', capacidade: 'parcial', owner: 'PedidosEntregaTab + MapaRoteirizacaoIA' },
+  { key: 'nota', label: 'Nota fiscal', capacidade: 'futuro', owner: 'Fiscal (emissão só na empresa)' },
+  { key: 'cobranca', label: 'Cobrança', capacidade: 'parcial', owner: 'GerarCobrancaModal / ConfiguracaoCobranca' },
+  { key: 'goto-atendimento', label: 'GoTo Hub Atendimento', capacidade: 'existente', owner: 'Layout titleToModule → HubAtendimento' },
+  { key: 'chatbot', label: 'Chatbot', capacidade: 'existente', owner: 'Layout titleToModule → ChatbotAtendimento' },
+  { key: 'site-ecommerce', label: 'Site / e-commerce', capacidade: 'futuro', owner: 'site próprio integrado (não paralelo)' },
+  { key: 'marketplaces', label: 'Marketplaces', capacidade: 'parcial', owner: 'ConfiguracaoIntegracaoMarketplace' },
+];
+
+const CAPACIDADE_LABEL = {
+  existente: 'Existente',
+  parcial: 'Parcial',
+  futuro: 'Futuro',
+};
+
 /** Composição visual do editor existente. O rascunho continua no OrcamentosTab. */
 export default function OrcamentoProposalAside({
   cliente,
@@ -25,6 +49,15 @@ export default function OrcamentoProposalAside({
   const [panel, setPanel] = useState('cliente');
   const panelIndex = Math.max(0, TABS.findIndex(([key]) => key === panel));
   const itensComProduto = itens.filter((item) => item.produto_id);
+
+  /** Atualização funcional — clique/teclado repetido não usa índice stale. */
+  const goPanelByDelta = (delta) => {
+    setPanel((current) => {
+      const idx = Math.max(0, TABS.findIndex(([key]) => key === current));
+      const next = Math.max(0, Math.min(TABS.length - 1, idx + delta));
+      return TABS[next][0];
+    });
+  };
 
   return (
     <aside
@@ -154,6 +187,7 @@ export default function OrcamentoProposalAside({
           <h3 className="font-semibold text-sky-950">Ações próximas</h3>
           <p className="text-xs text-slate-600">
             Botões visíveis apenas para layout. Operações reais seguem Orçamento/Pedido canônicos após aprovação visual.
+            Sem conversão, fechamento ou efeitos externos nesta prévia.
           </p>
           <div className="flex flex-col gap-2">
             {[
@@ -175,10 +209,58 @@ export default function OrcamentoProposalAside({
               </Button>
             ))}
           </div>
+          <div className="rounded-lg bg-white border border-sky-100 p-3 space-y-2" data-block="proposta-capacidades">
+            <h4 className="font-medium text-sm">Painéis e atalhos (capacidade)</h4>
+            <p className="text-xs text-slate-600">
+              Indicam owners já no ERP — sem abrir modal empilhado nem central paralela.
+            </p>
+            <ul className="space-y-2">
+              {PROPOSTA_CAPACIDADES.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex flex-wrap items-center justify-between gap-2 text-sm border-b border-slate-100 pb-2 last:border-0"
+                  data-capacidade={item.capacidade}
+                  data-capacidade-key={item.key}
+                >
+                  <span className="min-w-0">
+                    <span className="font-medium text-slate-800">{item.label}</span>
+                    <span className="block text-[11px] text-slate-500 truncate" title={item.owner}>
+                      {item.owner}
+                    </span>
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={
+                      item.capacidade === 'existente'
+                        ? 'border-emerald-300 text-emerald-800 bg-emerald-50'
+                        : item.capacidade === 'parcial'
+                          ? 'border-amber-300 text-amber-900 bg-amber-50'
+                          : 'border-slate-300 text-slate-700 bg-slate-50'
+                    }
+                  >
+                    {CAPACIDADE_LABEL[item.capacidade] || item.capacidade}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
       )}
 
-      <div className="flex flex-wrap gap-2 pt-1 border-t border-sky-100">
+      <div
+        className="flex flex-wrap gap-2 pt-1 border-t border-sky-100"
+        role="group"
+        aria-label="Navegação de painéis da proposta"
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            goPanelByDelta(-1);
+          } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            goPanelByDelta(1);
+          }
+        }}
+      >
         <Button
           type="button"
           size="sm"
@@ -186,7 +268,8 @@ export default function OrcamentoProposalAside({
           className="bg-white border-sky-200"
           disabled={panelIndex <= 0}
           data-action="proposta-voltar"
-          onClick={() => setPanel(TABS[Math.max(0, panelIndex - 1)][0])}
+          aria-keyshortcuts="ArrowLeft"
+          onClick={() => goPanelByDelta(-1)}
         >
           Voltar
         </Button>
@@ -197,7 +280,8 @@ export default function OrcamentoProposalAside({
           className="bg-white border-sky-200"
           disabled={panelIndex >= TABS.length - 1}
           data-action="proposta-avancar"
-          onClick={() => setPanel(TABS[Math.min(TABS.length - 1, panelIndex + 1)][0])}
+          aria-keyshortcuts="ArrowRight"
+          onClick={() => goPanelByDelta(1)}
         >
           Avançar
         </Button>

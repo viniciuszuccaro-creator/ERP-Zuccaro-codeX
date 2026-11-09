@@ -33,9 +33,22 @@ test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do 
   const voltarIdx = src.indexOf('data-action="proposta-voltar"');
   const avancarIdx = src.indexOf('data-action="proposta-avancar"');
   assert.ok(voltarIdx > 0 && avancarIdx > 0);
-  const navSlice = src.slice(Math.min(voltarIdx, avancarIdx) - 80, Math.max(voltarIdx, avancarIdx) + 220);
-  assert.match(navSlice, /setPanel\(TABS/);
+  const navSlice = src.slice(Math.min(voltarIdx, avancarIdx) - 120, Math.max(voltarIdx, avancarIdx) + 280);
+  assert.match(navSlice, /goPanelByDelta\(/);
+  assert.match(src, /ArrowLeft|ArrowRight/);
+  assert.match(src, /setPanel\(\(current\)/);
   assert.doesNotMatch(navSlice, /save\(|convert|criarPedido|fetch\(|mutate\(/i);
+});
+
+test('OrcamentoProposalAside: capacidades existente/parcial/futuro sem owners paralelos', () => {
+  const src = read('src/components/comercial/OrcamentoProposalAside.jsx');
+  assert.match(src, /PROPOSTA_CAPACIDADES/);
+  assert.match(src, /data-capacidade=/);
+  assert.match(src, /data-block="proposta-capacidades"/);
+  assert.match(src, /CentralCliente360Panel/);
+  assert.match(src, /ValidadorEstoquePedido/);
+  assert.match(src, /titleToModule/);
+  assert.doesNotMatch(src, /ContatoClienteV2|CentralVendas360Nova|OrcamentosV2/);
 });
 
 test('CentralCliente360Panel: reabre OrcamentosTab existente (não paralela)', () => {

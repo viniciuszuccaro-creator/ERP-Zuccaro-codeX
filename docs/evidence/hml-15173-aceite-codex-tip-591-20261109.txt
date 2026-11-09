@@ -14,8 +14,10 @@ DELTAS vs freeze (resumo)
 3. Locais: GET+write /clientes/:id/locais; preflight; scope freeze; PARTIAL+reconcile
 4. CLIENTE_LOCAIS_BATCH_ATOMIC=false (explícito); batch atômico = BLOCKED BFF
 5. Celular ≠ WhatsApp; cadastral ≠ entrega automática
-6. Contatos/docs: fail-closed MASTER; BFF canônico com Codex — sem ContatoClienteV2
-7. Contraprova: docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt
+6. Contatos/docs: fail-closed MASTER ≠ conclusão; pack
+   docs/evidence/codex-contrato-contatos-documentos-591-20261109.txt (ContatoB2B + GerenciarContatos)
+7. Contraprova locais: docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt
+8. C360: Voltar/Avançar + capacidades — docs/evidence/c360-capacidades-atalhos-591-20261109.txt
 
 CHECKLIST ACEITE PRIVADO (:15173)
 [ ] Listagem: documento/email/telefone/celular visíveis (não só nome)

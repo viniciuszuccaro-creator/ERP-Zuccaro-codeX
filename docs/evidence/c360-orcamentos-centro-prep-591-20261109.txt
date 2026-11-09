@@ -16,13 +16,16 @@ NÃO CRIAR
 - OrcamentosV2 / CentralVendas360Nova / dashboard paralelo
 - Integração futura (site/marketplace/NF) apresentada como funcional
 
-PRÓXIMO INCREMENTO (quando franquia visual)
-1. Operacional: reutilizar aside panels no modo real (não só proposalMode)
-   com dados HTTP canônicos + fail-closed
-2. Ações Incluir item / Salvar / Avançar / Voltar por etapa (já há Item+Salvar)
-3. GoTo atendimento/chatbot via titleToModule/owners existentes
-4. Crédito/estoque/entregas: consumir painéis/services já no repo
+INCREMENTO (tip capacidades)
+1. Voltar/Avançar = goPanel only; teclado ArrowLeft/Right; sem save/convert
+2. PROPOSTA_CAPACIDADES no painel Ações: existente/parcial/futuro + owners
+   (Hub/Chatbot existentes; crédito/estoque/entregas parciais; NF/site futuros)
+3. Pack: docs/evidence/c360-capacidades-atalhos-591-20261109.txt
+
+PRÓXIMO (quando franquia visual / pós-aceite HML)
+- Wire operacional aside no modo real (não só proposalMode) fail-closed
+- Consumir CentralCliente360Panel / ValidadorEstoque / entrega/mapa nos painéis
 
 BLOQUEIOS
-- Persistência ponta a ponta HML real: BLOCKED até aceite Codex
+- Persistência ponta a ponta HML real: BLOCKED até aceite Codex no tip 77f11b28
 - Redesign visual amplo: BLOCKED sem aprovação

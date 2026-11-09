@@ -1,3 +1,18 @@
+## CURSOR — #591 C360 capacidades + contrato contatos/docs (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip verdes** | locais **`77f11b28`** CI SUCCESS · docs `9e2d6e45` |
+| **C360** | Voltar/Avançar = `goPanelByDelta` (teclado+clique; sem save/convert); `PROPOSTA_CAPACIDADES` |
+| **Contatos/docs** | pack Codex owners ContatoB2B + GerenciarContatos; MASTER fail-closed ≠ conclusão |
+| **Packs** | `c360-capacidades-atalhos-591` · `codex-contrato-contatos-documentos-591` |
+| **Testes** | c360-prep + proposal-aside **8 PASS** |
+| **Freeze** | **`0afd378f284`** até acordo no tip **`77f11b28`** |
+| Fora | ContatoClienteV2 · central paralela · merge/VPS · PII |
+
+**Próximo:** Codex aceite :15173 no `77f11b28` + decisão BFF contatos/docs · wire C360 operacional pós-OK visual.
+
 ## CURSOR — #591 contraprova locais atomicidade/contexto (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

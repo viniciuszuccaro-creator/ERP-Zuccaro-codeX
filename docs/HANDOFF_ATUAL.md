@@ -1,3 +1,10 @@
+## CURSOR — #591 C360 capacidades + contrato contatos/docs (2026-11-09 America/Sao_Paulo)
+- Base tip **`77f11b28`** CI SUCCESS (locais). C360: `goPanelByDelta` + teclado; `PROPOSTA_CAPACIDADES`
+  (existente/parcial/futuro) sem central paralela. Contatos/docs: pack owners ContatoB2B +
+  GerenciarContatos — 422 MASTER ≠ conclusão; decisão BFF com Codex.
+- Packs: `c360-capacidades-atalhos-591` · `codex-contrato-contatos-documentos-591`.
+- Freeze `0afd378f284` até acordo no tip `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 contraprova locais atomicidade + contexto (2026-11-09 America/Sao_Paulo)
 - Tip **`77f11b28`** · **CI SUCCESS** push+PR. Contraprova Codex (94d49): preflight; scope freeze;
   PARTIAL ops+reconcile via listLocais; `CLIENTE_LOCAIS_BATCH_ATOMIC=false` (batch BLOCKED BFF).
