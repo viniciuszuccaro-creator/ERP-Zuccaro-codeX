@@ -4,18 +4,18 @@ America/Sao_Paulo 2026-11-09
 SNAPSHOT EXATO (API+web mesma versão após CI tip)
 - Branch: cursor/hml-grupo-erro-fornecedor-392b
 - PR: #591
-- Tip homologação: 898d8c32fa6f572252f65db4b5cb2e4de51cbc4d · CI SUCCESS push+PR
-- Base write: d1b08f96… · docs 94d49ab3… (também SUCCESS)
-- Freeze antigo: 0afd378f284 — trocar só com acordo Codex no tip 898d8c32
+- Tip base verde: 898d8c32… · CI SUCCESS; docs tip bde45554… · CI SUCCESS
+- Tip contraprova atomicidade/contexto: HEAD deste lote (aguardar CI)
+- Freeze antigo: 0afd378f284 — trocar só com acordo Codex no tip CI SUCCESS
 
 DELTAS vs freeze (resumo)
 1. Projeção documento→cpf/cnpj/tipo PF-PJ; zeros; grade cols email/fone/celular
-2. Parecer 6746649125: fail-closed rich fields / tipo / origem (sem descarte silencioso)
-3. Locais canônicos: GET + write POST/PATCH/DELETE/finalidades /clientes/:id/locais
-4. syncClienteLocaisViaHttp: baseline null≠delete; draft undefined≠lista vazia;
-   falha parcial → CLIENTE_LOCAIS_SYNC_PARTIAL (≠ sucesso integral)
-5. Celular escalar ≠ WhatsApp automático
-6. Contatos ricos / documentos: ainda fail-closed no MASTER (sem ContatoClienteV2)
+2. Parecer 6746649125: fail-closed rich fields / tipo / origem
+3. Locais: GET+write /clientes/:id/locais; preflight; scope freeze; PARTIAL+reconcile
+4. CLIENTE_LOCAIS_BATCH_ATOMIC=false (explícito); batch atômico = BLOCKED BFF
+5. Celular ≠ WhatsApp; cadastral ≠ entrega automática
+6. Contatos/docs: fail-closed MASTER; BFF canônico com Codex — sem ContatoClienteV2
+7. Contraprova: docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt
 
 CHECKLIST ACEITE PRIVADO (:15173)
 [ ] Listagem: documento/email/telefone/celular visíveis (não só nome)

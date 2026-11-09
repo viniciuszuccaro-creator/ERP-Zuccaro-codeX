@@ -517,16 +517,33 @@ export function mapUiEnderecoToClienteLocalUpdate(endereco) {
 export const CLIENTE_LOCAIS_SYNC_PARTIAL = 'CLIENTE_LOCAIS_SYNC_PARTIAL';
 
 /**
+ * Contrato explícito: o BFF atual transmite 1 local por request (create/update/delete
+ * cada um em transação própria). Lote multi-local NÃO é atômico no servidor até
+ * existir endpoint batch canônico. Este sync:
+ * 1) pré-valida o lote inteiro (zero writes se inválido);
+ * 2) congela clienteId + assertScope entre awaits;
+ * 3) em falha remota: relatório preciso + reconcileRequired (reexecução idempotente).
+ */
+export const CLIENTE_LOCAIS_BATCH_ATOMIC = false;
+
+/**
+ * @typedef {{ created: number, updated: number, deleted: number, skipped: boolean,
+ *   ops: Array<{ op: string, localId?: string, nome?: string }>,
+ *   reconcileRequired: boolean,
+ *   batchAtomic: boolean }} ClienteLocaisSyncSummary
+ */
+
+/**
  * Sincroniza rascunho UI com BFF `/locais` canônico.
  * - `draft === undefined`: omissão — NÃO sincroniza (não vira lista vazia).
- * - `baselineIds === null/undefined`: carga prévia ausente/falhou → NÃO soft-delete
- *   (campo não carregado não apaga persistido).
+ * - `baselineIds === null/undefined`: carga prévia ausente/falhou → NÃO soft-delete.
  * - `baselineIds` array: ids canônicos lidos; ausentes no draft = remoção explícita.
- * - Falha no meio: lança `CLIENTE_LOCAIS_SYNC_PARTIAL` com contadores (≠ sucesso integral).
+ * - `assertScope`: chamado antes de cada await (Grupo/Empresa/sessão/cliente).
  * @param {{
  *   clienteId: string,
  *   draft: unknown,
  *   baselineIds?: string[]|null,
+ *   assertScope?: () => void,
  *   api: {
  *     createLocal: (clienteId: string, body: unknown) => Promise<unknown>,
  *     updateLocal: (clienteId: string, localId: string, body: unknown) => Promise<unknown>,
@@ -534,12 +551,17 @@ export const CLIENTE_LOCAIS_SYNC_PARTIAL = 'CLIENTE_LOCAIS_SYNC_PARTIAL';
  *     setFinalidades: (clienteId: string, localId: string, finalidades: unknown) => Promise<unknown>,
  *   },
  * }} input
- * @returns {Promise<{ created: number, updated: number, deleted: number, skipped: boolean }>}
+ * @returns {Promise<ClienteLocaisSyncSummary>}
  */
-export async function syncClienteLocaisViaHttp({ clienteId, draft, baselineIds, api }) {
+export async function syncClienteLocaisViaHttp({
+  clienteId, draft, baselineIds, assertScope, api,
+}) {
   // Omissão ≠ remoção: rascunho undefined não sincroniza lista vazia.
   if (draft === undefined) {
-    return { created: 0, updated: 0, deleted: 0, skipped: true };
+    return {
+      created: 0, updated: 0, deleted: 0, skipped: true,
+      ops: [], reconcileRequired: false, batchAtomic: CLIENTE_LOCAIS_BATCH_ATOMIC,
+    };
   }
   const id = String(clienteId ?? '').trim();
   if (!id) {
@@ -559,33 +581,88 @@ export async function syncClienteLocaisViaHttp({ clienteId, draft, baselineIds, 
     error.fields = ['locais_entrega'];
     throw error;
   }
-  /** @type {{ created: number, updated: number, deleted: number, skipped: boolean }} */
-  const summary = { created: 0, updated: 0, deleted: 0, skipped: false };
+
+  const frozenClienteId = id;
+  const guard = () => {
+    if (typeof assertScope === 'function') assertScope();
+    if (String(clienteId ?? '').trim() !== frozenClienteId) {
+      const error = /** @type {Error & { code: string, status: number }} */ (
+        new Error('clienteId mudou durante sync de locais — operação abortada.')
+      );
+      error.code = 'CONTEXT_CHANGED';
+      error.status = 409;
+      throw error;
+    }
+  };
+
+  /** @type {Array<{ kind: 'update'|'create', localId: string, body: Record<string, unknown>, fins: unknown, nome: string }>} */
+  const planned = [];
+  for (const item of draft.slice(0, 50)) {
+    const row = item && typeof item === 'object' ? /** @type {Record<string, unknown>} */ (item) : {};
+    const localId = isClienteLocalCanonicalId(row.id) ? String(row.id).trim() : '';
+    // Pré-validação do lote inteiro — nenhum write se algum item for inválido/extras.
+    if (localId) {
+      const body = mapUiEnderecoToClienteLocalUpdate(row);
+      const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
+      planned.push({
+        kind: 'update',
+        localId,
+        body,
+        fins: [{ finalidade, principal: row.principal === true }],
+        nome: String(body.nome || row.apelido || localId),
+      });
+    } else {
+      const body = mapUiEnderecoToClienteLocalCreate(row);
+      planned.push({
+        kind: 'create',
+        localId: '',
+        body,
+        fins: body.finalidades,
+        nome: String(body.nome || 'Endereço'),
+      });
+    }
+  }
+
+  /** @type {ClienteLocaisSyncSummary} */
+  const summary = {
+    created: 0,
+    updated: 0,
+    deleted: 0,
+    skipped: false,
+    ops: [],
+    reconcileRequired: false,
+    batchAtomic: CLIENTE_LOCAIS_BATCH_ATOMIC,
+  };
   const keptIds = new Set();
+
   /**
    * @param {unknown} cause
    * @param {string} op
    */
   const failPartial = (cause, op) => {
-    // Validação/unsupported pré-API: preservar código original (não mascarar como parcial).
     if (cause && typeof cause === 'object' && 'code' in cause) {
       const code = /** @type {{ code?: string }} */ (cause).code;
-      if (code === 'VALIDATION_ERROR' || code === CLIENTE_HTTP_UNSUPPORTED_FIELDS) {
+      if (
+        code === 'VALIDATION_ERROR'
+        || code === CLIENTE_HTTP_UNSUPPORTED_FIELDS
+        || code === 'CONTEXT_CHANGED'
+      ) {
         throw cause;
       }
     }
+    summary.reconcileRequired = true;
     const causeMsg = cause instanceof Error ? cause.message : String(cause ?? 'erro');
     const error = /** @type {Error & {
       code: string,
       status: number,
       fields: string[],
-      summary: typeof summary,
+      summary: ClienteLocaisSyncSummary,
       cause?: unknown,
     }} */ (
       new Error(
         `Sincronização de endereços interrompida em ${op} `
           + `(criados=${summary.created}, atualizados=${summary.updated}, removidos=${summary.deleted}). `
-          + 'Não é gravação integral — reabra e confira. '
+          + 'Não é gravação integral nem lote atômico BFF — reconcilie via listLocais e reexecute. '
           + causeMsg,
       )
     );
@@ -593,38 +670,53 @@ export async function syncClienteLocaisViaHttp({ clienteId, draft, baselineIds, 
     error.code = CLIENTE_LOCAIS_SYNC_PARTIAL;
     error.status = 409;
     error.fields = ['locais_entrega'];
-    error.summary = { ...summary };
+    error.summary = {
+      ...summary,
+      ops: summary.ops.slice(),
+      reconcileRequired: true,
+    };
     error.cause = cause;
     throw error;
   };
-  for (const item of draft.slice(0, 50)) {
-    const row = item && typeof item === 'object' ? /** @type {Record<string, unknown>} */ (item) : {};
-    const localId = isClienteLocalCanonicalId(row.id) ? String(row.id).trim() : '';
+
+  for (const step of planned) {
     try {
-      if (localId) {
-        const patch = mapUiEnderecoToClienteLocalUpdate(row);
-        await api.updateLocal(id, localId, patch);
-        const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
-        await api.setFinalidades(id, localId, [
-          { finalidade, principal: row.principal === true },
-        ]);
-        keptIds.add(localId);
+      guard();
+      if (step.kind === 'update') {
+        await api.updateLocal(frozenClienteId, step.localId, step.body);
+        guard();
+        await api.setFinalidades(frozenClienteId, step.localId, step.fins);
+        keptIds.add(step.localId);
         summary.updated += 1;
+        summary.ops.push({ op: 'update', localId: step.localId, nome: step.nome });
       } else {
-        await api.createLocal(id, mapUiEnderecoToClienteLocalCreate(row));
+        const created = await api.createLocal(frozenClienteId, step.body);
+        const createdId = created && typeof created === 'object'
+          && isClienteLocalCanonicalId(/** @type {{ id?: unknown }} */ (created).id)
+          ? String(/** @type {{ id: string }} */ (created).id).trim()
+          : '';
+        if (createdId) keptIds.add(createdId);
         summary.created += 1;
+        summary.ops.push({
+          op: 'create',
+          ...(createdId ? { localId: createdId } : {}),
+          nome: step.nome,
+        });
       }
     } catch (cause) {
-      failPartial(cause, localId ? `update:${localId}` : 'create');
+      failPartial(cause, step.kind === 'update' ? `update:${step.localId}` : `create:${step.nome}`);
     }
   }
+
   if (Array.isArray(baselineIds)) {
     for (const baselineId of baselineIds) {
       const bid = String(baselineId ?? '').trim();
       if (!isClienteLocalCanonicalId(bid) || keptIds.has(bid)) continue;
       try {
-        await api.softDeleteLocal(id, bid);
+        guard();
+        await api.softDeleteLocal(frozenClienteId, bid);
         summary.deleted += 1;
+        summary.ops.push({ op: 'delete', localId: bid });
       } catch (cause) {
         failPartial(cause, `delete:${bid}`);
       }

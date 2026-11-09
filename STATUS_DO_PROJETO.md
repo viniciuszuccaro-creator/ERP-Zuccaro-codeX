@@ -1,3 +1,19 @@
+## CURSOR — #591 contraprova locais atomicidade/contexto (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip verde** | **`898d8c32`** / docs **`bde45554`** · **CI SUCCESS** |
+| **Tip** | HEAD — preflight + scope freeze + reconcile PARTIAL |
+| **Atomicidade** | `CLIENTE_LOCAIS_BATCH_ATOMIC=false`; batch atômico = BLOCKED BFF |
+| **Contraprova** | `docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt` |
+| **Aceite** | `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` |
+| **C360** | Voltar/Avançar só `setPanel` (sem save/convert) |
+| **Freeze** | **`0afd378f284`** até acordo no tip CI SUCCESS |
+| Fora | ContatoClienteV2 · toast sem reconciliar · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex aceite :15173 · batch locais / contatos BFF · painéis C360 com OK visual.
+
 ## CURSOR — #591 locais parcial + aceite :15173 + C360 Voltar/Avançar (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

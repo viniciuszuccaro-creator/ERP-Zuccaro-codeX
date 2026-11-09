@@ -29,6 +29,13 @@ test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do 
   assert.match(src, /data-action="proposta-avancar"/);
   assert.match(src, /Rascunho do editor permanece ao navegar/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
+  // Voltar/Avançar só muda painel — sem save/convert/efeitos externos.
+  const voltarIdx = src.indexOf('data-action="proposta-voltar"');
+  const avancarIdx = src.indexOf('data-action="proposta-avancar"');
+  assert.ok(voltarIdx > 0 && avancarIdx > 0);
+  const navSlice = src.slice(Math.min(voltarIdx, avancarIdx) - 80, Math.max(voltarIdx, avancarIdx) + 220);
+  assert.match(navSlice, /setPanel\(TABS/);
+  assert.doesNotMatch(navSlice, /save\(|convert|criarPedido|fetch\(|mutate\(/i);
 });
 
 test('CentralCliente360Panel: reabre OrcamentosTab existente (não paralela)', () => {

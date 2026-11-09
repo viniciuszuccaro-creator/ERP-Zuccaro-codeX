@@ -488,13 +488,37 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               + 'Rascunho de locais preservado — reabra e salve novamente.',
           );
         }
-        const session = readErpHttpSession();
-        if (!session?.token || !session?.groupId) {
+        const sessionBefore = readErpHttpSession();
+        if (!sessionBefore?.token || !sessionBefore?.groupId) {
           throw new Error(
             'Sessão HTTP indisponível após salvar MASTER — endereços não sincronizados. '
               + 'Erro remoto ≠ sucesso local; reabra o cadastro.',
           );
         }
+        const frozenScope = Object.freeze({
+          token: String(sessionBefore.token || ''),
+          groupId: String(sessionBefore.groupId || ''),
+          empresaId: String(sessionBefore.empresaId || ''),
+          actorId: String(sessionBefore.actorId || ''),
+          clienteId,
+        });
+        const assertLocaisScope = () => {
+          assertFormScopeCurrent();
+          const now = /** @type {Record<string, unknown>} */ (readErpHttpSession() || {});
+          if (
+            String(now.token || '') !== frozenScope.token
+            || String(now.groupId || '') !== frozenScope.groupId
+            || String(now.empresaId || '') !== frozenScope.empresaId
+            || String(now.actorId || '') !== frozenScope.actorId
+          ) {
+            const err = /** @type {Error & { code: string, status: number }} */ (
+              new Error('Contexto/sessão mudou durante sync de endereços. Reabra o cadastro.')
+            );
+            err.code = 'CONTEXT_CHANGED';
+            err.status = 409;
+            throw err;
+          }
+        };
         const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
         // baselineIds null se carga falhou: campo não carregado não apaga persistido.
         const baselineView = locaisHttpBaselineRef.current;
@@ -505,12 +529,35 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               : ''))
             .filter(Boolean)
           : null;
-        await syncClienteLocaisViaHttp({
-          clienteId,
-          draft: locaisDraft,
-          baselineIds,
-          api: api.clientes,
-        });
+        try {
+          await syncClienteLocaisViaHttp({
+            clienteId: frozenScope.clienteId,
+            draft: locaisDraft,
+            baselineIds,
+            assertScope: assertLocaisScope,
+            api: api.clientes,
+          });
+        } catch (syncErr) {
+          const code = /** @type {Error & { code?: string }} */ (syncErr)?.code;
+          if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
+            // Estado real: reconcilia baseline/rascunho com listLocais (reexecução segura).
+            try {
+              assertLocaisScope();
+              const rows = await api.clientes.listLocais(frozenScope.clienteId, {
+                limit: 50, ativo: true,
+              });
+              const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+                /** @type {Record<string, unknown>} */ (row),
+              ));
+              setLocaisHttpView(mapped);
+              locaisHttpBaselineRef.current = mapped;
+              setFormData((prev) => ({ ...prev, locais_entrega: mapped }));
+            } catch {
+              locaisHttpBaselineRef.current = null;
+            }
+          }
+          throw syncErr;
+        }
       }
 
       return saved;
@@ -525,9 +572,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     },
     onError: (error) => {
       const sameScope = isFormScopeCurrent();
-      const err = /** @type {Error & { code?: string }} */ (error);
+      const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);
       const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
-      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida e força reabertura.
+      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.
       if (partial) {
         queryClient.invalidateQueries({ queryKey: ['clientes'] });
       }

@@ -1,9 +1,14 @@
+## CURSOR — #591 contraprova locais atomicidade + contexto (2026-11-09 America/Sao_Paulo)
+- Tip base **`898d8c32`/`bde45554`** CI SUCCESS. Contraprova Codex (94d49): preflight lote; scope freeze;
+  PARTIAL com ops+reconcileRequired; Completo reconcilia via listLocais (reexecução segura).
+- `CLIENTE_LOCAIS_BATCH_ATOMIC=false` — batch atômico BLOCKED até BFF. Pack:
+  `docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt`.
+- Aceite :15173 atualizado. C360 Voltar/Avançar = só setPanel. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 locais parcial + aceite :15173 + C360 etapas (2026-11-09 America/Sao_Paulo)
 - Tip **`898d8c32`** · **CI SUCCESS** push+PR 3/3 (parcial + typecheck + aceite + C360).
-- `CLIENTE_LOCAIS_SYNC_PARTIAL`; draft undefined→skip; baseline null≠delete; toast parcial≠sucesso.
-- Pack aceite Codex: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` — freeze `0afd378f284` só com acordo no tip.
-- Contatos/docs: overflow/UNSUPPORTED no MASTER; BFF com Codex — **sem ContatoClienteV2**.
-- C360: Aside Voltar/Avançar; rascunho preservado; sem central paralela. Sem merge/VPS/PII.
+- Pack aceite: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt`. Freeze `0afd378f284`.
+- Contatos/docs fail-closed MASTER; C360 Aside Voltar/Avançar. Sem ContatoClienteV2.
 
 ## CURSOR — #591 write `/locais` + peels CI SUCCESS (2026-11-09 America/Sao_Paulo)
 - Tip **`d1b08f96`** · **CI SUCCESS** push+PR 3/3 (peels `14005f39` + write + RBAC assert).
