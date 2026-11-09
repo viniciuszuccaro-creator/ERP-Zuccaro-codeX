@@ -17,6 +17,15 @@ export const consolidation81Hunks={
       [
         "  const entities = new Proxy(localBase44.entities || {}, {\n    get(target, prop, receiver) {\n      if (typeof prop === 'string' && pilotSet.has(prop)) {\n        if (http.entities[prop]) return notifyEntityApiAccess(entities, prop, http.entities[prop], 'http');\n      }\n      const api = Reflect.get(target, prop, receiver);\n      return typeof prop === 'string' ? notifyEntityApiAccess(entities, prop, api) : api;\n    },\n  });\n",
         "  const entities = new Proxy(localBase44.entities || {}, {\n    get(target, prop, receiver) {\n      if (typeof prop === 'string' && pilotSet.has(prop)) {\n        if (http.entities[prop]) return http.entities[prop];\n      }\n      return Reflect.get(target, prop, receiver);\n    },\n  });\n"
+      ],
+      [
+        // #591: listagem Cliente via BFF (fonte local ≠ contagem API).
+        "import {\n  HTTP_PILOT_ENTITIES,\n  isHttpClienteListEnabled,\n  isHttpExpedicaoEnabled as expedicaoFlag,\n  resolveErpApiBaseUrl,\n  resolveErpBackendMode,\n  resolveHttpPilotEntities,\n} from './runtimeBackend.js';",
+        "import {\n  HTTP_PILOT_ENTITIES,\n  isHttpExpedicaoEnabled as expedicaoFlag,\n  resolveErpApiBaseUrl,\n  resolveErpBackendMode,\n  resolveHttpPilotEntities,\n} from './runtimeBackend.js';"
+      ],
+      [
+        "export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';\n/** Listagem Cliente via BFF (CLIENTE_360 ou CLIENTE). Sem flag: store local ≠ API. */\nexport { isHttpClienteListEnabled };\n/** @type {boolean} */\nexport const isHttpClienteListMode = isHttpClienteListEnabled(import.meta.env);\n",
+        "export const isHttpCliente360Enabled = isHttpBackendMode && import.meta.env.VITE_ERP_HTTP_CLIENTE_360 === 'true';\n"
       ]
     ]
   },
