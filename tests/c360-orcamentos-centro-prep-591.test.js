@@ -68,6 +68,9 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /\(!proposalMode \|\| proposalStage === 'lista'\)/);
   assert.match(src, /proposta-filtros-lista/);
   assert.match(src, /proposta-sem-paginacao/);
+  assert.match(src, /proposalListaRows/);
+  assert.match(src, /appliedFilters\.search/);
+  assert.match(src, /appliedFilters\.status/);
   assert.match(src, /!proposalMode && \(/);
   assert.match(src, /proposta-edicao-placeholder/);
   assert.match(src, /proposta-subtitulo-etapa/);

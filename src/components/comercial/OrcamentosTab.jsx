@@ -438,11 +438,25 @@ const convertToPedido = async () => {
   };
 
   if (!canView) return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4" /><AlertDescription>Acesso negado aos Orçamentos.</AlertDescription></Alert></div>;
+  // Proposta: filtros só na etapa A — aplicam à lista sintética (sem HTTP).
+  const proposalListaRows = (() => {
+    if (!proposalMode || proposalStage !== 'lista') return [];
+    let list = Array.isArray(proposalMasters.negociacoes) ? proposalMasters.negociacoes : [];
+    const search = String(appliedFilters.search || '').trim().toLowerCase();
+    if (search) {
+      list = list.filter((row) => String(row.numero || '').toLowerCase().includes(search)
+        || String(row.status || '').toLowerCase().includes(search));
+    }
+    if (appliedFilters.status && appliedFilters.status !== 'TODOS') {
+      list = list.filter((row) => row.status === appliedFilters.status);
+    }
+    return list;
+  })();
   const rows = proposalMode
-    ? (proposalStage === 'lista' ? (proposalMasters.negociacoes || []) : [])
+    ? proposalListaRows
     : listQuery.data?.data || [];
   const meta = proposalMode
-    ? { total: (proposalMasters.negociacoes || []).length }
+    ? { total: proposalListaRows.length, dataBlock: 'proposta-lista-filtrada' }
     : (listQuery.data?.meta || { total: 0 });
   const proposalAcomp = proposalMasters.acompanhamentoPedido ?? {
     numero_pedido: '',
