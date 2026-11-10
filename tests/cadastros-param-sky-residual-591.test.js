@@ -30,3 +30,18 @@ test('reservas WIP não foram editadas neste lote', () => {
     assert.doesNotMatch(src, /data-cadastro-visual="sky-param-/);
   }
 });
+
+test('UsuarioForm: windowMode sky chrome (fora reservas)', () => {
+  const src = read('src/components/cadastros/UsuarioForm.jsx');
+  assert.match(src, /from-sky-50 to-sky-100/);
+  assert.match(src, /data-cadastro-visual="sky-usuario"/);
+  assert.match(src, /bg-sky-600 hover:bg-sky-700/);
+});
+
+test('CadastroFiscalForm: windowMode sky chrome; categoria IA purple preservada', () => {
+  const src = read('src/components/cadastros/CadastroFiscalForm.jsx');
+  assert.match(src, /from-sky-50 to-sky-100/);
+  assert.match(src, /data-cadastro-visual="sky-cadastro-fiscal"/);
+  assert.match(src, /bg-sky-600 hover:bg-sky-700/);
+  assert.match(src, /border-purple-200 bg-purple-50/);
+});

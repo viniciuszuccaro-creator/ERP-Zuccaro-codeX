@@ -1,7 +1,9 @@
 #591 — DECISÃO TÉCNICA Contatos (a)/(b)/(c) — fechar sem rodada genérica
 America/Sao_Paulo 2026-11-10 · sem PII
-Tip docs: a4a53dd2 CI SUCCESS · tip código base 13dde4a5 CI SUCCESS
+Tip decisão: 2e90587f CI SUCCESS · tip docs a4a53dd2 · tip código base 13dde4a5
 Homolog locais: 77f11b28 · Freeze HML: 0afd378f284
+Reconfirm Base 2026-11-10: docs/evidence/codex-contatob2b-fk-reconfirm-591-20261110.txt
+  (cliente_id/empresa_id ainda ausentes → (b) bloqueada)
 
 PEDIDO AO CODEX
 Escolher UMA representação abaixo e publicar contrato BFF (endpoints + schema).

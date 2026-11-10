@@ -1,0 +1,24 @@
+#591 — ContatoB2B FK reconfirm (sem PII)
+America/Sao_Paulo 2026-11-10
+Tip base decisão: 2e90587f · CI SUCCESS
+
+AMOSTRA Base MCP query_contatob2b (fields solicitados):
+  id, cliente_id, group_id, empresa_id, nome_contato, whatsapp, telefone, email
+RESULTADO (3 registros):
+  - group_id presente
+  - cliente_id AUSENTE nos fields retornados
+  - empresa_id AUSENTE nos fields retornados
+  - whatsapp presente (campo próprio ≠ telefone/celular Cliente)
+
+DECISÃO VIGENTE
+Alternativa (b) ContatoB2B no CadastroClienteCompleto permanece BLOQUEADA
+até BFF/schema comprovar FK cliente_id + group_id/empresa_id do tenant.
+
+OVERLAP (não apagar)
+- GerenciarContatosClienteForm = canais do Cliente (jsonb/escalares) — alternativa (a)
+- ContatoB2BForm = pessoa B2B em Cadastros.pessoas — alternativa (b) após FK
+- Anexos documentos[] ≠ CPF/CNPJ MASTER ≠ ModeloDocumento — alternativa (c)
+Consolidar pela canônica escolhida pelo Codex; preservar IDs/vínculos/histórico.
+
+FORA
+ContatoClienteV2 · storage paralelo · merge silencioso · PII no GitHub

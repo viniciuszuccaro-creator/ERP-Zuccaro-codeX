@@ -1,6 +1,13 @@
+## CURSOR — #591 CI 2e90587f + sky Usuario/Fiscal + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
+- Tip decisão **`2e90587f`** · **CI SUCCESS** 9/9 (ref PR591a4a53dd2/CI6594SUCCESS).
+- ContatoB2B Base reconfirm: sem `cliente_id`/`empresa_id` → (b) ainda bloqueada no Completo.
+- Sky: UsuarioForm + CadastroFiscalForm (IA purple preservada). Reservas ApiExterna/
+  Roteirizacao/ChatbotCanal intocadas. C360 chatbot owner: exceção→humano.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)
-- Base tip **`a4a53dd2`** CI SUCCESS. Pack decisão: `codex-decisao-contatos-abc-591-20261110.txt`
-  (a jsonb / b ContatoB2B com FK / c anexos) — amostra Base sem cliente_id comprovado → (b) bloqueada.
+- Tip **`2e90587f`** · **CI SUCCESS**. Pack: `codex-decisao-contatos-abc-591-20261110.txt`
+  (a jsonb / b ContatoB2B com FK / c anexos) — amostra Base sem cliente_id → (b) bloqueada.
 - Completo: banners limitação HTTP contatos/anexos. Locais: CADASTRAL/FISCAL ≠ Entrega.
 - JobAgendado sky. Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
 

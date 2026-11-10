@@ -148,15 +148,15 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
         />
       </div>
 
-      <Alert className="border-blue-200 bg-blue-50">
-        <Shield className="w-4 h-4" />
+      <Alert className="border-sky-200 bg-sky-50">
+        <Shield className="w-4 h-4 text-sky-700" />
         <AlertDescription className="text-sm">
           Um e-mail de convite sera enviado automaticamente
         </AlertDescription>
       </Alert>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Usuario.salvar" data-action="salvar-usuario" data-sensitive>
+        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Usuario.salvar" data-action="salvar-usuario" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Convidar Usuario'}
         </Button>
@@ -166,10 +166,10 @@ export default function UsuarioForm({ usuario, item, data, initialData, defaultV
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
-        <div className="mb-4 pb-4 border-b">
+      <div className="w-full h-full overflow-auto bg-white p-6" data-cadastro-visual="sky-usuario">
+        <div className="mb-4 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <User className="w-5 h-5 text-blue-600" />
+            <User className="w-5 h-5 text-sky-700" />
             {dadosIniciais ? 'Editar Usuario' : 'Convidar Usuario'}
           </h2>
         </div>

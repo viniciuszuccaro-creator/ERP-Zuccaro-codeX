@@ -1,0 +1,18 @@
+#591 — Sky residual Usuario + CadastroFiscal (fora reservas)
+America/Sao_Paulo 2026-11-10
+
+Chrome windowMode from-sky-50 to-sky-100 + botão sky:
+- UsuarioForm (data-cadastro-visual=sky-usuario)
+- CadastroFiscalForm (data-cadastro-visual=sky-cadastro-fiscal)
+
+Preservado:
+- Alert convite Usuario → sky (contraste)
+- Alert IA DIFAL CadastroFiscal → purple (cor de categoria/domínio)
+
+NÃO tocados (reservas WIP):
+- ApiExternaForm
+- ParametroRoteirizacaoForm
+- ChatbotCanalForm
+
+Referência: ContatoB2BForm / ParametroPortalClienteForm.
+Sem redesign amplo / sem substituir ERP.

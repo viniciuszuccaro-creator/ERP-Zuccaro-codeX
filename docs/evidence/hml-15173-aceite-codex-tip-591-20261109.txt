@@ -9,12 +9,14 @@ SNAPSHOT EXATO (API+web mesma versão após CI tip)
 - Docs tip referência: 6572b9ae1d7603f5e19d67a3dd9e530d0da86feb · CI SUCCESS (PR591)
 - Tip HEAD código: 13dde4a539be899a2ba07284096596acd0dc3764 · CI SUCCESS
 - Docs tip referência: a4a53dd2804812e252a1002756b8d5b93397d724 · CI SUCCESS
-- Tip decisão contatos/cadastral (este push): HEAD — aguardar CI
+- Tip decisão contatos/cadastral: 2e90587f08d426f175dc8f8ad949be735c4daf3b · CI SUCCESS (9/9)
+- Tip sky Usuario/Fiscal + FK reconfirm (este push): HEAD — aguardar CI
 - Freeze antigo: 0afd378f284 — trocar só com acordo Codex no tip 77f11b28 (API+web mesmo SHA)
 - Pedido batch atômico: docs/evidence/codex-locais-batch-atomico-pedido-591-20261110.txt
 - Contatos tenant: docs/evidence/codex-contrato-contatos-tenant-591-20261110.txt
 - Decisão a/b/c: docs/evidence/codex-decisao-contatos-abc-591-20261110.txt
-  (ContatoB2B sem vínculo cliente comprovado na amostra → não reutilizar no Completo ainda)
+- FK reconfirm ContatoB2B: docs/evidence/codex-contatob2b-fk-reconfirm-591-20261110.txt
+  (amostra Base ainda sem cliente_id/empresa_id → (b) bloqueada)
 
 DELTAS vs freeze (resumo)
 1. Projeção documento→cpf/cnpj/tipo PF-PJ; zeros; grade cols email/fone/celular

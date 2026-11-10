@@ -25,16 +25,17 @@ Lacunas documentadas p/ Codex (sem storage paralelo)
 - Aceite “campos reais preservados” exige evolução BFF ou Base44 transporte
 
 Homolog tip coordenado: 77f11b28 (CI SUCCESS) — freeze 0afd378f até acordo Codex
-Docs tip: 6572b9ae CI SUCCESS. Contatos/docs packs 20261109+20261110.
+Decisão contatos tip: 2e90587f CI SUCCESS. Contatos/docs packs 20261109+20261110.
+FK ContatoB2B reconfirm 20261110: (b) ainda bloqueada (sem cliente_id/empresa_id).
 C360: capacidades + data-integracao-pronta=false (sem falso pronto)
-Sky params residual (Portal/Caixa/Conciliação/NFe/Origem) — reservas ApiExterna/
-Roteirizacao/ChatbotCanal intocadas
+Sky: params Portal/Caixa/Conciliação/NFe/Origem + JobAgendado + Usuario + CadastroFiscal
+Reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas
 
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
-1. Wire Completo ContatoB2B leitura após decisão Codex (a)/(b)
+1. Wire Completo após decisão Codex (a) jsonb OU (b) ContatoB2B com FK comprovada
 2. Central Vendas360: wire operacional dos painéis (fora proposalMode) após OK visual
-3. Fechar aceites das telas já recuperadas + BFF contatos/docs/batch locais
-4. Sky residual restante (CadastroFiscal/Usuario/…) fora WIP
+3. Fechar aceites :15173 no tip 77f11b28 + BFF contatos/docs/batch locais
+4. Sky residual restante fora WIP (TabelaFiscal header se necessário)
 
 Não iniciar
 - Documentacao / EmpresaOnboarding / OAuthConsent (classe C)

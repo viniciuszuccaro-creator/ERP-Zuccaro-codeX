@@ -1442,8 +1442,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   role="status"
                 >
                   Limitação HTTP MASTER: canais ricos (`contatos[]`) e ContatoB2B no Completo aguardam
-                  decisão BFF (pack Codex). Escalares e-mail/telefone/celular preservados; Celular ≠ WhatsApp.
-                  Sem ContatoClienteV2. Editar a lista assume rascunho — não apaga a fonte se omitido no save.
+                  decisão BFF (pack a/b/c). ContatoB2B: amostra Base sem cliente_id/empresa_id → (b) bloqueada
+                  até FK+tenant comprovados. Escalares preservados; Celular ≠ WhatsApp. Sem ContatoClienteV2.
+                  Editar a lista assume rascunho — não apaga a fonte se omitido no save.
                 </p>
               )}
               {formData.contatos === undefined && contatosViewForUi.length > 0 && (

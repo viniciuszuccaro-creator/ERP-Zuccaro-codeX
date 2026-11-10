@@ -9,10 +9,12 @@ const completo = fs.readFileSync('src/components/cadastros/CadastroClienteComple
 const enderecos = fs.readFileSync('src/components/cadastros/GerenciarEnderecosClienteForm.jsx', 'utf8');
 const hydrate = fs.readFileSync('src/api/clienteHttpPayload.js', 'utf8');
 
-test('Completo: banner limitação contatos ricos + proíbe ContatoClienteV2', () => {
+test('Completo: banner limitação contatos ricos + ContatoB2B (b) bloqueada + proíbe ContatoClienteV2', () => {
   assert.match(completo, /data-fonte="contatos-limitacao-http"/);
   assert.match(completo, /data-pendencia="contatos-ricos-bff"/);
   assert.match(completo, /Celular ≠ WhatsApp/);
+  assert.match(completo, /\(b\) bloqueada/);
+  assert.match(completo, /cliente_id\/empresa_id/);
   assert.match(completo, /Sem ContatoClienteV2/);
   assert.doesNotMatch(completo, /function ContatoClienteV2|import ContatoClienteV2/);
 });

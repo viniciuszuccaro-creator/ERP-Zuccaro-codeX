@@ -23,7 +23,7 @@ export const PROPOSTA_CAPACIDADES = [
   { key: 'nota', label: 'Nota fiscal', capacidade: 'futuro', owner: 'Fiscal (emissão só na empresa)' },
   { key: 'cobranca', label: 'Cobrança', capacidade: 'parcial', owner: 'GerarCobrancaModal / ConfiguracaoCobranca' },
   { key: 'goto-atendimento', label: 'GoTo Hub Atendimento', capacidade: 'existente', owner: 'Layout titleToModule → HubAtendimento' },
-  { key: 'chatbot', label: 'Chatbot', capacidade: 'existente', owner: 'Layout titleToModule → ChatbotAtendimento' },
+  { key: 'chatbot', label: 'Chatbot', capacidade: 'existente', owner: 'ChatbotAtendimento (regras; exceção → humano)' },
   { key: 'site-ecommerce', label: 'Site / e-commerce', capacidade: 'futuro', owner: 'site próprio integrado (não paralelo)' },
   { key: 'marketplaces', label: 'Marketplaces', capacidade: 'parcial', owner: 'ConfiguracaoIntegracaoMarketplace' },
 ];
