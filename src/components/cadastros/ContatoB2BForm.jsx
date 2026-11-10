@@ -181,10 +181,10 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
         data-pendencia="contatob2b-fk-ausente"
         data-regra="contatob2b-completo-bloqueado"
       >
-        <AlertDescription className="text-xs leading-relaxed">
-          Base ContatoB2B ainda sem FK canônica <code>cliente_id</code>/<code>empresa_id</code> —
-          wire CadastroClienteCompleto <strong>(b) bloqueada</strong>. Sem ContatoClienteV2 / storage paralelo.
-          WhatsApp permanece campo próprio (não copia telefone/celular).
+        <AlertDescription className="text-xs leading-relaxed" data-evidence="contato-b2b-mcp-20261110e">
+          Base ContatoB2B ainda sem FK canônica <code>cliente_id</code>/<code>empresa_id</code>
+          (MCP probe <strong>20261110e</strong>) — wire CadastroClienteCompleto <strong>(b) bloqueada</strong>.
+          Sem ContatoClienteV2 / storage paralelo. WhatsApp permanece campo próprio (não copia telefone/celular).
         </AlertDescription>
       </Alert>
       <div>

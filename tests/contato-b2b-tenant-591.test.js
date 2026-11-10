@@ -30,6 +30,8 @@ test('ContatoB2B: WhatsApp campo próprio (não copia telefone)', () => {
 test('ContatoB2B: banner FK ausente — Completo (b) bloqueada sem wire paralelo', () => {
   assert.match(src, /data-pendencia="contatob2b-fk-ausente"/);
   assert.match(src, /data-regra="contatob2b-completo-bloqueado"/);
+  assert.match(src, /data-evidence="contato-b2b-mcp-20261110e"/);
+  assert.match(src, /20261110e/);
   assert.match(src, /\(b\) bloqueada/);
   assert.match(src, /cliente_id/);
   assert.match(src, /empresa_id/);
