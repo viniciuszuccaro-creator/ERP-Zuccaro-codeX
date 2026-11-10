@@ -28,8 +28,8 @@ Homolog tip coordenado: 77f11b28 (CI SUCCESS) — freeze 0afd378f até acordo Co
 Decisão contatos tip: 2e90587f CI SUCCESS. Contatos/docs packs 20261109+20261110.
 FK ContatoB2B reconfirm 20261110: (b) ainda bloqueada (sem cliente_id/empresa_id).
 C360: capacidades + data-integracao-pronta=false (sem falso pronto)
-Sky: params Portal/Caixa/Conciliação/NFe/Origem + JobAgendado + Usuario
-CadastroFiscal: ID-only coorte — sky estrutural adiado (sem mascarar baseline)
+Sky: params Portal/Caixa/Conciliação/NFe/Origem + JobAgendado
+Usuario/Fiscal sky: adiado (CANAL consolidacao 53ed9f42 + ID-only e36231b3)
 Reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas
 
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)

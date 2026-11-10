@@ -1,20 +1,21 @@
-#591 — Sky residual Usuario (fora reservas); Fiscal ID-only preservado
+#591 — Sky Usuario/Fiscal adiado (CANAL + ID-only)
 America/Sao_Paulo 2026-11-10
 
-Chrome windowMode from-sky-50 to-sky-100 + botão sky:
-- UsuarioForm (data-cadastro-visual=sky-usuario) — delta autorizado no
-  cursor-identidade-consolidacao (golden e36231b3 + peels sky)
+Tentativa tip bfe3e25d/2d0bff6e:
+- UsuarioForm sky + peels em cursor-identidade-consolidacao.test.js
+- CadastroFiscalForm windowMode sky
 
-CadastroFiscalForm:
-- permanece coorte ID-only (sem windowMode/sky estrutural neste tip)
-- Alert IA DIFAL purple preservado
-- Motivo: teste ID-only pin e36231b3 — sky estrutural exigiria peels amplos;
-  adiado sem mascarar baseline
+CI FAIL:
+- CadastroFiscal: coorte ID-only e36231b3
+- Usuario peels no teste consolidacao: CANAL pin hash 53ed9f42
+  (tests/helpers/consolidation81Remainder.js) — alteração do arquivo
+  de teste sem hunk registrado → FAIL publication/CANAL
 
-NÃO tocados (reservas WIP):
-- ApiExternaForm
-- ParametroRoteirizacaoForm
-- ChatbotCanalForm
+Decisão deste tip:
+- Reverter UsuarioForm e CadastroFiscalForm ao tip verde 2e90587f
+- Reverter cursor-identidade-consolidacao.test.js (sem tocar CANAL)
+- Manter Completo banner ContatoB2B (b) bloqueada + peels boundaries
+- Sky residual já fechado: params Portal/Caixa/Conciliação/NFe/Origem + JobAgendado
+- Usuario/Fiscal sky = lote futuro com hunk CANAL explícito aprovado
 
-Referência: ContatoB2BForm / ParametroPortalClienteForm.
-Sem redesign amplo / sem substituir ERP.
+Reservas WIP intocadas: ApiExterna / ParametroRoteirizacao / ChatbotCanal

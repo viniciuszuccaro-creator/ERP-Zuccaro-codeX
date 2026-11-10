@@ -101,34 +101,6 @@ test('remaining ID-only additions retain every existing handler context permissi
           expected = expected.replace(before, after);
         }
       }
-      if (name === 'Usuario') {
-        // #591 sky residual (fora reservas): chrome windowMode + botão; sem mudar handlers/campos.
-        for (const [before, after] of [
-          [
-            '      <Alert className="border-blue-200 bg-blue-50">\n'
-            + '        <Shield className="w-4 h-4" />\n',
-            '      <Alert className="border-sky-200 bg-sky-50">\n'
-            + '        <Shield className="w-4 h-4 text-sky-700" />\n',
-          ],
-          [
-            '        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Usuario.salvar" data-action="salvar-usuario" data-sensitive>\n',
-            '        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Sistema.Usuario.salvar" data-action="salvar-usuario" data-sensitive>\n',
-          ],
-          [
-            '      <div className="w-full h-full overflow-auto bg-white p-6">\n'
-            + '        <div className="mb-4 pb-4 border-b">\n'
-            + '          <h2 className="text-xl font-bold flex items-center gap-2">\n'
-            + '            <User className="w-5 h-5 text-blue-600" />\n',
-            '      <div className="w-full h-full overflow-auto bg-white p-6" data-cadastro-visual="sky-usuario">\n'
-            + '        <div className="mb-4 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">\n'
-            + '          <h2 className="text-xl font-bold flex items-center gap-2">\n'
-            + '            <User className="w-5 h-5 text-sky-700" />\n',
-          ],
-        ]) {
-          assert.equal(expected.split(before).length, 2, `Usuario expected hunk missing: ${before.slice(0, 60)}`);
-          expected = expected.replace(before, after);
-        }
-      }
       if (name === 'GrupoEmpresarial') {
         // Delta autorizado: Empresa via filterInContext (sem list unscoped).
         for (const [before, after] of [

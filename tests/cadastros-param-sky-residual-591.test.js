@@ -31,16 +31,11 @@ test('reservas WIP não foram editadas neste lote', () => {
   }
 });
 
-test('UsuarioForm: windowMode sky chrome (fora reservas)', () => {
-  const src = read('src/components/cadastros/UsuarioForm.jsx');
-  assert.match(src, /from-sky-50 to-sky-100/);
-  assert.match(src, /data-cadastro-visual="sky-usuario"/);
-  assert.match(src, /bg-sky-600 hover:bg-sky-700/);
-});
-
-test('CadastroFiscalForm: permanece ID-only coorte (sem sky estrutural neste tip)', () => {
-  const src = read('src/components/cadastros/CadastroFiscalForm.jsx');
-  assert.doesNotMatch(src, /data-cadastro-visual="sky-cadastro-fiscal"/);
-  assert.doesNotMatch(src, /windowMode/);
-  assert.match(src, /border-purple-200 bg-purple-50/);
+test('UsuarioForm/CadastroFiscalForm: sem sky estrutural neste tip (CANAL/ID-only)', () => {
+  const usuario = read('src/components/cadastros/UsuarioForm.jsx');
+  const fiscal = read('src/components/cadastros/CadastroFiscalForm.jsx');
+  assert.doesNotMatch(usuario, /data-cadastro-visual="sky-usuario"/);
+  assert.doesNotMatch(fiscal, /data-cadastro-visual="sky-cadastro-fiscal"/);
+  assert.doesNotMatch(fiscal, /windowMode/);
+  assert.match(fiscal, /border-purple-200 bg-purple-50/);
 });

@@ -1,7 +1,12 @@
+## CURSOR — #591 CI FAIL 2d0bff6e → reverte Usuario/CANAL; Completo (b) (2026-11-10 America/Sao_Paulo)
+- `2d0bff6e` FAIL: peels Usuario em `cursor-identidade-consolidacao` quebram CANAL `53ed9f42`.
+- Reverte UsuarioForm + consolidacao ao `2e90587f`. Fiscal já revertido.
+- Mantém Completo banner ContatoB2B (b) + peels boundaries. Sky Usuario/Fiscal = futuro c/ hunk CANAL.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 CI peels pós-bfe3e25d (Completo + Usuario sky) (2026-11-10 America/Sao_Paulo)
 - Tip **`bfe3e25d`** frontend FAIL: peels Completo banner FK + CadastroFiscal ID-only.
-- Correção: peel banner ContatoB2B (b); Usuario sky autorizado em consolidacao;
-  Fiscal **revertido** (coorte e36231b3). Tip decisão `2e90587f` SUCCESS permanece.
+- `2d0bff6e` tentou Usuario sky — FAIL CANAL. Superado pelo bloco acima.
 - Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
 
 ## CURSOR — #591 CI 2e90587f + sky Usuario + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
