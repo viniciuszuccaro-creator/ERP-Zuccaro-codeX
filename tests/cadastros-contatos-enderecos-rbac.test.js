@@ -186,6 +186,7 @@ test('UI enderecos: mudança de Grupo/sessão bloqueia excluir no componente rea
 test('salvar contato principal: botão gated + algoritmo real limpa duplicidade', async () => {
   const source = await readFile(new URL('../src/components/cadastros/GerenciarContatosClienteForm.jsx', import.meta.url), 'utf8');
   assert.match(source, /data-action="Cadastros\.Cliente\.contato\.salvar"/);
+  assert.match(source, /disabled=\{bloqueado \|\| !podeEditar\}/);
   assert.match(source, /if \(novoContato\.principal\)/);
   assert.match(source, /cont\.principal = false/);
 

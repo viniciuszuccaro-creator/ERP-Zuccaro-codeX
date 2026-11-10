@@ -373,12 +373,12 @@ export default function GerenciarContatosClienteForm({
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }}>
+              <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }} disabled={bloqueado}>
                 Cancelar
               </Button>
               <Button
                 onClick={handleSalvarContato}
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
                 data-permission="Cadastros.Cliente.editar"
                 data-action="Cadastros.Cliente.contato.salvar"
               >

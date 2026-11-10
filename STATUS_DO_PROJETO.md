@@ -1,3 +1,15 @@
+## CURSOR — #591 Contatos Salvar gated por persistBusy (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | botão Salvar dialog: `disabled={bloqueado \|\| !podeEditar}` (paridade Endereços) |
+| **Base tip** | **`e6a31225`** · **CI SUCCESS** |
+| Fora | ContatoClienteV2 · ContatoB2B wire · Completo peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 C360 subtítulo por etapa + pack aceite HML (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
