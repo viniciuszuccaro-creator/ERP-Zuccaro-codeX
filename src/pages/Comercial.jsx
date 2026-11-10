@@ -464,6 +464,15 @@ function ComercialContent() {
       : canViewComercial(m.sectionKey || m.title));
 
    const handleModuleClick = (module) => {
+    // Proposta visual: só Orçamentos (editor sintético). Demais seções = operacional.
+    if (propostaIntegrada) {
+      const isOrcamentos = /or[cç]amento/i.test(String(module.title || ''))
+        || /or[cç]amento/i.test(String(module.sectionKey || ''));
+      if (!isOrcamentos) {
+        toast.error('Proposta visual — abra apenas Orçamentos (sem módulos operacionais).');
+        return;
+      }
+    }
     const allowed = module.exactPermission
       ? hasPermission('Comercial', module.sectionKey, 'visualizar')
       : canViewComercial(module.sectionKey || module.title);
@@ -476,7 +485,7 @@ function ComercialContent() {
       auditComercial('comercial_modulo_aberto', { modulo: module.title, sectionKey: module.sectionKey || module.title, entidade: 'Secao', descricao: `Abrir secao: ${module.title}` }, true);
       openWindow(
         module.component,
-        { ...(module.props || {}), windowMode: true },
+        { ...(module.props || {}), windowMode: true, ...(propostaIntegrada ? { proposalMode: true } : {}) },
         {
           title: module.windowTitle,
           width: module.width,

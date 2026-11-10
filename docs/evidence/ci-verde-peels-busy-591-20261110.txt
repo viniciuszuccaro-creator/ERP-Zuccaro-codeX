@@ -1,0 +1,18 @@
+#591 — CI SUCCESS peels Produto + busy dialog
+America/Sao_Paulo 2026-11-10 · sem PII
+
+VERDE
+- e6a31225 — atalhos C + FK reconfirm
+- dc48c9ff — filtros C + consumidores prontos
+- 52aed2c4 — banner Produto revertido; peels pin d312fbcd intacto
+- a92d7bd4 — dialog Contatos/Endereços busy ESC/overlay
+
+FAIL INTERMEDIÁRIO (superado)
+- 0cee5367 / 288947e4 — peels / runtime-proof
+- ba53dc05 — testes 347 "Novo orçamento" → fix a51f162d
+  (data-action=proposta-nova-negociacao)
+
+PACKS
+- recuperacao-produto-foto-banner-adiado-591
+- hml-aceite-cursor-pronto-codex-591
+- codex-contatob2b-fk-reconfirm-591-20261110b
