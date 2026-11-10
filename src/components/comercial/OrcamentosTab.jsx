@@ -543,7 +543,14 @@ const convertToPedido = async () => {
           <p className="text-xs text-slate-600">Indicam capacidade do owner — desabilitados nesta prévia (não disparam integração).</p>
           <ul className="space-y-2">
             {PROPOSTA_CAPACIDADES.filter((item) => ['goto-atendimento', 'chatbot', 'site-ecommerce', 'marketplaces'].includes(item.key)).map((item) => (
-              <li key={item.key} className="flex flex-wrap items-center justify-between gap-2 text-sm" data-capacidade={item.capacidade} data-capacidade-key={item.key} data-integracao-pronta="false">
+              <li
+                key={item.key}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+                data-capacidade={item.capacidade}
+                data-capacidade-key={item.key}
+                data-integracao-pronta={item.capacidade === 'existente' ? 'owner-only' : 'false'}
+                title="Indicador de capacidade — sem disparo de integração nesta prévia"
+              >
                 <span className="min-w-0">
                   <span className="font-medium text-slate-800">{item.label}</span>
                   <span className="block text-[11px] text-slate-500 truncate" title={item.owner}>{item.owner}</span>

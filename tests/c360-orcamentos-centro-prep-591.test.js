@@ -37,7 +37,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /Avançar não salva\/converte/);
   assert.match(src, /PROPOSTA_CAPACIDADES/);
   assert.match(src, /data-block="proposta-atalhos-capacidade"/);
-  assert.match(src, /data-integracao-pronta="false"/);
+  assert.match(src, /data-integracao-pronta=\{item\.capacidade === 'existente' \? 'owner-only' : 'false'\}/);
+  assert.match(src, /data-integracao-pronta="false"|owner-only/);
   assert.match(src, /goto-atendimento|chatbot/);
   // Proposta: filtros só na etapa A (lista) — B/C sem misturar lista HTTP.
   assert.match(src, /\(!proposalMode \|\| proposalStage === 'lista'\)/);
