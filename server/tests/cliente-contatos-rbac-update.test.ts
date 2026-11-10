@@ -7,13 +7,12 @@ import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
 
 /**
- * Contatos/endereços do Cliente na UI local passam por updateInContext + podeEditar.
- * O schema HTTP de Cliente é .strict() e NÃO aceita `contatos`/`locais_entrega`.
+ * Contatos[] jsonb MASTER + CAS (expectedVersion) / RBAC.
  *
  * Camadas cobertas neste arquivo:
  * - serviço: PERMISSION_DENIED no update sem editar
  * - HTTP PATCH /api/v1/clientes/:id: 403 real + sem mutação persistida (GET)
- * - HTTP: payload com `contatos` → VALIDATION_ERROR (não bypassa RBAC)
+ * - HTTP: contatos sem CAS → VALIDATION_ERROR; com CAS → persiste e reabre
  *
  * Esconder botão na UI não basta; este arquivo prova bloqueio de mutação.
  */
@@ -120,7 +119,7 @@ test('serviço: viewer sem editar recebe PERMISSION_DENIED no update (sessão/RB
   assert.notEqual(reloaded?.observacoes, 'tentativa sem editar');
 });
 
-test('serviço: payload com contatos[] jsonb é aceito (decisão a); RBAC de edição permanece', async () => {
+test('serviço: contatos sem CAS são rejeitados (não bypassa RBAC)', async () => {
   const runtime = fixture();
   const created = await runtime.clienteService.create(ctx(ACTOR_EDIT, 'c2'), {
     tipo: 'Pessoa Jurídica',
@@ -130,12 +129,58 @@ test('serviço: payload com contatos[] jsonb é aceito (decisão a); RBAC de edi
     telefone: '11987654322',
   });
   assert.ok(created?.id);
-  const updated = await runtime.clienteService.update(ctx(ACTOR_EDIT, 'u2'), created.id, {
-    contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
+  await assert.rejects(
+    () => runtime.clienteService.update(ctx(ACTOR_EDIT, 'u2'), created.id, {
+      contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
+    }),
+    (err: any) => err?.statusCode === 400 && err?.code === 'VALIDATION_ERROR',
+  );
+});
+
+test('HTTP MASTER: GET fornece CAS; PATCH persiste canais e rejeita token stale/viewer', async () => {
+  const runtime = fixture();
+  const created = await http(runtime.app, '/api/v1/clientes', {
+    method: 'POST',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ tipo: 'Pessoa Física', documento: '529.982.247-25', nome: 'SYNTHETIC rich contacts' }),
   });
-  assert.ok(Array.isArray(updated?.contatos));
-  assert.equal(updated?.contatos?.[0]?.tipo, 'Telefone');
-  assert.equal(updated?.contatos?.[0]?.valor, '11');
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const url = `/api/v1/clientes/${created.body.data.id}`;
+  const initial = await http(runtime.app, url, { headers: headers(ACTOR_EDIT) });
+  assert.equal(initial.body.data.contatos, null);
+  const expectedVersion = initial.body.data.contatos_version;
+  assert.match(expectedVersion, /^[a-f0-9]{64}$/);
+  const contatos = [{ id: 'native-001', tipo: 'Telefone', valor: '001122', ramal: '0007', nome: 'SYNTHETIC' }];
+  const denied = await http(runtime.app, url, {
+    method: 'PATCH',
+    headers: headers(ACTOR_VIEW),
+    body: JSON.stringify({ expectedVersion, contatos }),
+  });
+  assert.equal(denied.status, 403);
+  const changed = await http(runtime.app, url, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion, contatos }),
+  });
+  assert.equal(changed.status, 200, JSON.stringify(changed.body));
+  assert.deepEqual(changed.body.data.contatos, contatos);
+  const stale = await http(runtime.app, url, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion, contatos: [] }),
+  });
+  assert.equal(stale.status, 409);
+  assert.equal(stale.body.error.code, 'CLIENTE_CONTATOS_VERSION_CONFLICT');
+  const reopened = await http(runtime.app, url, { headers: headers(ACTOR_EDIT) });
+  assert.deepEqual(reopened.body.data.contatos, contatos);
+  assert.equal(reopened.body.data.contatos_version, changed.body.data.contatos_version);
+  const cleared = await http(runtime.app, url, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion: reopened.body.data.contatos_version, contatos: [] }),
+  });
+  assert.equal(cleared.status, 200);
+  assert.deepEqual(cleared.body.data.contatos, []);
 });
 
 test('HTTP PATCH: viewer recebe 403 e não persiste mutação (GET inalterado)', async () => {
@@ -172,7 +217,7 @@ test('HTTP PATCH: viewer recebe 403 e não persiste mutação (GET inalterado)',
   assert.equal(got.body.data.observacoes, 'original-safe');
 });
 
-test('HTTP PATCH: editor autorizado muta; contatos[] jsonb persiste e reabre', async () => {
+test('HTTP PATCH: editor autorizado muta escalares; omissão de contatos preserva lista', async () => {
   const runtime = fixture();
   const created = await http(runtime.app, '/api/v1/clientes', {
     method: 'POST',
@@ -188,6 +233,19 @@ test('HTTP PATCH: editor autorizado muta; contatos[] jsonb persiste e reabre', a
   });
   assert.equal(created.status, 201, JSON.stringify(created.body));
   const id = created.body.data.id;
+  const version = created.body.data.contatos_version;
+  assert.match(version, /^[a-f0-9]{64}$/);
+
+  const seeded = await http(runtime.app, `/api/v1/clientes/${id}`, {
+    method: 'PATCH',
+    headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({
+      expectedVersion: version,
+      contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
+    }),
+  });
+  assert.equal(seeded.status, 200, JSON.stringify(seeded.body));
+  assert.equal(seeded.body.data.contatos?.[0]?.valor, '11');
 
   const ok = await http(runtime.app, `/api/v1/clientes/${id}`, {
     method: 'PATCH',
@@ -196,24 +254,13 @@ test('HTTP PATCH: editor autorizado muta; contatos[] jsonb persiste e reabre', a
   });
   assert.equal(ok.status, 200, JSON.stringify(ok.body));
   assert.equal(ok.body.data.observacoes, 'depois-autorizado');
-
-  const withContatos = await http(runtime.app, `/api/v1/clientes/${id}`, {
-    method: 'PATCH',
-    headers: headers(ACTOR_EDIT),
-    body: JSON.stringify({
-      observacoes: 'com-contatos',
-      contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
-    }),
-  });
-  assert.equal(withContatos.status, 200, JSON.stringify(withContatos.body));
-  assert.equal(withContatos.body.data.observacoes, 'com-contatos');
-  assert.equal(withContatos.body.data.contatos?.[0]?.valor, '11');
+  assert.equal(ok.body.data.contatos?.[0]?.valor, '11', 'omissão não limpa contatos');
 
   const got = await http(runtime.app, `/api/v1/clientes/${id}`, {
     method: 'GET',
     headers: headers(ACTOR_EDIT),
   });
-  assert.equal(got.body.data.observacoes, 'com-contatos');
+  assert.equal(got.body.data.observacoes, 'depois-autorizado');
   assert.equal(got.body.data.contatos?.[0]?.tipo, 'Telefone');
 });
 

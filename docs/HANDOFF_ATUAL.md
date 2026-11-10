@@ -1,3 +1,10 @@
+## CURSOR — #591 CAS/preservação contatos (pareceres 6778237293/6778347806) (2026-11-10 America/Sao_Paulo)
+- RECEBIDO + delta: CAS `expectedVersion`/`contatos_version` (Codex `29726d3d`); sem truncamento (200/2000); omit≠[]; null≠[]; guardas id/principal/B2B.
+- Paths: `clienteContatos.ts`, types/repo/service, Completo + `clienteHttpPayload`, schema-candidate NULL, peels/tests.
+- Evidence: `docs/evidence/codex-parecer-6778237293-cas-preservacao-591-20261110.txt`. Layout v6 `82b15566` intacto.
+- **Não** atualizar HML/:15173 até tip+CI deste delta; sem ContatoClienteV2 / migration 046 numerada / PII.
+- **Próximo:** CI → freeze API+web mesmo SHA → aceite :15173; v6 prefs/screenshots.
+
 ## CURSOR — #591 CI SUCCESS 82b15566 layout v6 Central (2026-11-10 America/Sao_Paulo)
 - Tip **`82b15566`** CI SUCCESS (12/12). Decisão 10/11: **Pedidos → Central de Vendas360°**; tile Orçamentos removido.
 - Shell no launchpad; `PedidosTab` peel/`PedidoCanonicoPanel` preservados p/ deep-link.

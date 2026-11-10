@@ -34,6 +34,7 @@ const ALLOWED_KEYS = [
   'telefone',
   'celular',
   'contatos',
+  'expectedVersion',
   'status',
   'origem',
   'codigo_legado',
@@ -46,8 +47,14 @@ const ALLOWED_KEYS = [
 /** Canais canônicos do formulário Completo / GerenciarContatos (sem inventar WhatsApp). */
 export const CONTATO_CANAIS_CANONICOS = Object.freeze(['Telefone', 'Celular', 'WhatsApp', 'E-mail']);
 
-/** Limite canônico de itens em contatos[]. */
-export const CONTATOS_MAX_ITEMS = 50;
+/** Limite canônico de itens em contatos[] — contrato Codex 29726d3d (rejeitar, não truncar). */
+export const CONTATOS_MAX_ITEMS = 200;
+export const CONTATO_OBS_MAX = 2000;
+export const CONTATO_NOME_MAX = 180;
+export const CONTATO_VALOR_MAX = 180;
+export const CONTATO_CARGO_MAX = 120;
+export const CONTATO_DEPTO_MAX = 120;
+export const CONTATO_RAMAL_MAX = 40;
 
 /** Código estável (legado): array UI não cabia nos escalares MASTER sem perda. */
 export const CONTATOS_SCALAR_OVERFLOW = 'CONTATOS_SCALAR_OVERFLOW';
@@ -107,17 +114,31 @@ function normalizeContatoTipo(tipo) {
 /**
  * @param {unknown} value
  * @param {number} max
+ * @param {string} field
  */
-function sanitizeContatoText(value, max) {
-  if (value == null) return value === null ? null : undefined;
+function sanitizeContatoTextStrict(value, max, field) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
   const text = String(value).replace(/\s+/g, ' ').trim();
   if (!text) return '';
-  return text.slice(0, max);
+  if (text.length > max) {
+    const error = /** @type {Error & { code: string, status: number, field: string }} */ (
+      new Error(
+        `Contato.${field} excede ${max} caracteres — rejeitado sem truncamento silencioso.`,
+      )
+    );
+    error.name = 'ContatosValidationError';
+    error.code = 'CLIENTE_CONTATOS_VALIDATION';
+    error.status = 422;
+    error.field = field;
+    throw error;
+  }
+  return text;
 }
 
 /**
- * Sanitiza contatos[] para o fio HTTP/jsonb — preserva procedência e campos
- * desconhecidos (spread); limita itens; não inventa WhatsApp a partir de celular.
+ * Sanitiza contatos[] para o fio HTTP/jsonb — preserva procedência/flags/null;
+ * rejeita acima do limite (200 / obs 2000); não inventa WhatsApp a partir de celular.
  * Canais inválidos permanecem no array (quarentena) para não apagar na omissão.
  *
  * @param {unknown} contatos
@@ -130,28 +151,81 @@ export function sanitizeContatosForHttp(contatos) {
     );
     throw error;
   }
-  return contatos.slice(0, CONTATOS_MAX_ITEMS).map((raw) => {
+  if (contatos.length > CONTATOS_MAX_ITEMS) {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error(
+        `Contatos[] excede ${CONTATOS_MAX_ITEMS} itens — rejeitado sem truncamento silencioso.`,
+      )
+    );
+    error.name = 'ContatosValidationError';
+    error.code = 'CLIENTE_CONTATOS_VALIDATION';
+    error.status = 422;
+    throw error;
+  }
+  const ids = new Set();
+  let principals = 0;
+  return contatos.map((raw) => {
     const base = raw && typeof raw === 'object' && !Array.isArray(raw)
       ? { .../** @type {Record<string, unknown>} */ (raw) }
       : {};
-    const tipo = sanitizeContatoText(base.tipo, 60) || '';
-    const valor = sanitizeContatoText(base.valor, 180);
-    const nome = sanitizeContatoText(base.nome, 180);
-    const cargo = sanitizeContatoText(base.cargo, 120);
-    const observacao = sanitizeContatoText(
+    const tipo = sanitizeContatoTextStrict(base.tipo, 60, 'tipo') || '';
+    const valor = sanitizeContatoTextStrict(base.valor, CONTATO_VALOR_MAX, 'valor');
+    const nome = sanitizeContatoTextStrict(base.nome, CONTATO_NOME_MAX, 'nome');
+    const cargo = sanitizeContatoTextStrict(base.cargo, CONTATO_CARGO_MAX, 'cargo');
+    const departamento = sanitizeContatoTextStrict(base.departamento, CONTATO_DEPTO_MAX, 'departamento');
+    const ramal = sanitizeContatoTextStrict(base.ramal, CONTATO_RAMAL_MAX, 'ramal');
+    const observacao = sanitizeContatoTextStrict(
       base.observacao !== undefined ? base.observacao : base.obs,
-      500,
+      CONTATO_OBS_MAX,
+      'observacao',
     );
     /** @type {Record<string, unknown>} */
     const out = { ...base, tipo };
     if (valor !== undefined) out.valor = valor;
     if (nome !== undefined) out.nome = nome;
     if (cargo !== undefined) out.cargo = cargo;
+    if (departamento !== undefined) out.departamento = departamento;
+    if (ramal !== undefined) out.ramal = ramal;
     if (observacao !== undefined) {
       out.observacao = observacao;
       if ('obs' in out && out.obs !== observacao) delete out.obs;
     }
+    // principal/ativo ausentes permanecem ausentes (não fabricar false).
     if (base.principal !== undefined) out.principal = base.principal === true;
+    if (base.ativo !== undefined) out.ativo = base.ativo === true;
+    if (base.id != null && String(base.id).trim() !== '') {
+      const id = String(base.id);
+      if (ids.has(id)) {
+        const error = /** @type {Error & { code: string, status: number }} */ (
+          new Error('Contatos[] com id duplicado — rejeitado.')
+        );
+        error.name = 'ContatosValidationError';
+        error.code = 'CLIENTE_CONTATOS_VALIDATION';
+        error.status = 422;
+        throw error;
+      }
+      ids.add(id);
+      out.id = id;
+    }
+    if (out.principal === true) principals += 1;
+    if (principals > 1) {
+      const error = /** @type {Error & { code: string, status: number }} */ (
+        new Error('Contatos[] com múltiplos principais — rejeitado.')
+      );
+      error.name = 'ContatosValidationError';
+      error.code = 'CLIENTE_CONTATOS_VALIDATION';
+      error.status = 422;
+      throw error;
+    }
+    if (base.contato_b2b_id != null && String(base.contato_b2b_id).trim() !== '') {
+      const error = /** @type {Error & { code: string, status: number }} */ (
+        new Error('contato_b2b_id sem resolução canônica comprovada — rejeitado.')
+      );
+      error.name = 'ContatosValidationError';
+      error.code = 'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED';
+      error.status = 409;
+      throw error;
+    }
     return out;
   });
 }
@@ -328,6 +402,22 @@ export function applyContatosProjection(src, out) {
 
   const sanitized = sanitizeContatosForHttp(contatos);
   out.contatos = sanitized;
+
+  // CAS: contatos_version (leitura) → expectedVersion (escrita). Omissão ≠ limpar.
+  const version = src.expectedVersion ?? src.contatos_version;
+  if (version == null || String(version).trim() === '') {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error(
+        'expectedVersion/contatos_version obrigatório ao substituir contatos[] — snapshot completo inalterado.',
+      )
+    );
+    error.name = 'ContatosValidationError';
+    error.code = 'CLIENTE_CONTATOS_VERSION_REQUIRED';
+    error.status = 422;
+    throw error;
+  }
+  out.expectedVersion = String(version).trim();
+  delete out.contatos_version;
 
   const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
   /** @type {Record<'email'|'telefone'|'celular', string[]>} */

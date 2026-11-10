@@ -23,6 +23,9 @@ import {
   partitionContatosByCanal,
   isContatoCanalCanonico,
 } from '../src/api/clienteHttpPayload.js';
+
+const CAS_VERSION = 'a'.repeat(64);
+
 function actualClienteFormPayload() {
   const source = readFileSync(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const tree = ts.createSourceFile('form.jsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
@@ -89,11 +92,18 @@ test('form real: documento HTTP vira cnpj/cpf sem inventar contatos[]', () => {
 test('form real: lista explicita e metadata passam em contatos[] (não overflow escalar)', () => {
   const { buildPayload, mapToForm } = actualClienteFormPayload();
   for (const contatos of [[], [{ tipo: 'Telefone', valor: '', observacao: 'preservar', nome: 'Compras' }]]) {
-    const draft = mapToForm({ id: 'synthetic-client', email: 'kept@example.test', contatos });
+    const draft = mapToForm({
+      id: 'synthetic-client',
+      email: 'kept@example.test',
+      contatos,
+      contatos_version: CAS_VERSION,
+    });
     assert.equal(Object.hasOwn(draft, 'contatos'), true);
+    assert.equal(draft.expectedVersion, CAS_VERSION);
     const wire = toClienteMasterHttpPayload(buildPayload(draft));
     assert.ok(Array.isArray(wire.contatos));
     assert.equal(wire.contatos.length, contatos.length);
+    assert.equal(wire.expectedVersion, CAS_VERSION);
     if (contatos.length) {
       assert.equal(wire.contatos[0].observacao, 'preservar');
       assert.equal(wire.contatos[0].nome, 'Compras');
@@ -132,6 +142,7 @@ test('contatos[] canônico: WhatsApp ≠ celular; escala espelha email/telefone/
       { tipo: 'WhatsApp', valor: '11999998888', principal: false },
       { tipo: 'Celular', valor: '11977776666', principal: false },
     ],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(payload.email, 'fiscal@sintetico.dev');
   assert.equal(payload.telefone, '1133334444');
@@ -156,6 +167,7 @@ test('diagnóstico escalar: principal entre canais; jsonb MASTER aceita a lista'
       { tipo: 'E-mail', valor: 'fiscal@sintetico.dev', principal: false },
       { tipo: 'Telefone', valor: '1133334444', principal: true },
     ],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(wire.contatos.length, 2);
   assert.equal(wire.email, 'fiscal@sintetico.dev');
@@ -200,6 +212,7 @@ test('múltiplos e-mails: diagnóstico escalar falha; jsonb MASTER preserva ambo
       { tipo: 'E-mail', valor: 'a@sintetico.dev' },
       { tipo: 'E-mail', valor: 'b@sintetico.dev', principal: true },
     ],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(wire.contatos.length, 2);
   assert.equal(wire.email, 'a@sintetico.dev', 'espelho: primeiro e-mail');
@@ -240,6 +253,7 @@ test('espelho: escalar explícito não é sobrescrito pelo array (omit wipe)', (
   const out = { email: 'keep@sintetico.dev' };
   applyContatosProjection({
     contatos: [{ tipo: 'E-mail', valor: 'other@sintetico.dev', principal: true }],
+    contatos_version: CAS_VERSION,
   }, out);
   assert.equal(out.email, 'keep@sintetico.dev');
   assert.equal(out.contatos[0].valor, 'other@sintetico.dev');
@@ -251,6 +265,7 @@ test('fidelidade: esvaziar canal (array sem telefone) limpa telefone=null quando
     documento: '529.982.247-25',
     nome: 'PF Contatos',
     contatos: [{ tipo: 'E-mail', valor: 'pf@sintetico.dev', principal: true }],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(payload.email, 'pf@sintetico.dev');
   assert.equal(payload.telefone, null);
@@ -324,6 +339,7 @@ test('HttpApiClient Cliente.update: múltiplos e-mails enviam contatos[] (jsonb)
       { tipo: 'E-mail', valor: 'a@sintetico.dev' },
       { tipo: 'E-mail', valor: 'b@sintetico.dev' },
     ],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(fetches, 1);
   assert.equal(body.contatos.length, 2);
@@ -358,6 +374,7 @@ test('HttpApiClient Cliente.update: envia contatos[] + escalares; GET sem array 
       { tipo: 'E-mail', valor: 'a@b.c', principal: false },
       { tipo: 'Telefone', valor: '1133334444', principal: false },
     ],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(body.contatos.length, 2);
   assert.equal(body.email, 'a@b.c');
@@ -387,6 +404,7 @@ test('HttpApiClient Cliente.update: principal entre canais grava contatos[]', as
       { tipo: 'E-mail', valor: 'a@sintetico.dev', principal: false },
       { tipo: 'Telefone', valor: '1133334444', principal: true },
     ],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(fetches, 1);
   assert.equal(body.contatos.length, 2);
@@ -412,6 +430,7 @@ test('HttpApiClient Cliente.update: metadata sem valor preservada em contatos[]'
     contatos: [
       { tipo: 'Telefone', valor: '', nome: 'Compras', principal: false },
     ],
+    contatos_version: CAS_VERSION,
   });
   assert.equal(fetches, 1);
   assert.equal(body.contatos[0].nome, 'Compras');
@@ -478,6 +497,7 @@ test('HTTP erro ≠ sucesso local: falha 500 não muta rascunho do caller', asyn
       { tipo: 'E-mail', valor: 'a@sintetico.dev', principal: false },
       { tipo: 'Telefone', valor: '1133334444', principal: true, nome: 'Compras' },
     ],
+    contatos_version: CAS_VERSION,
   };
   const snapshot = JSON.stringify(draft);
   let fetches = 0;

@@ -1,0 +1,43 @@
+# Pareceres 6778237293 / 6778347806 — RECEBIDO + delta CAS/preservação (#591)
+
+Data: 2026-11-10 America/Sao_Paulo
+Branch: cursor/hml-grupo-erro-fornecedor-392b
+Contrato Codex: 29726d3d (CAS expectedVersion ↔ contatos_version)
+
+## Achados fechados neste delta (sintético; sem PII/HML)
+
+1. CAS: adapter/types/service exigem expectedVersion ao substituir contatos[]; GET devolve contatos_version.
+2. Truncamento: 51 itens e obs 900 aceitos; 201 / obs 2001 rejeitados — sem slice silencioso (200/2000).
+3. Mapper PG: null permanece null; omissão de contatos não regrava coluna; storage inválido falha fechado.
+4. Guardas: ids duplicados, multi-principal e contato_b2b_id não comprovado rejeitados; principal/null ausentes preservados.
+5. Completo: sanitizeContatos + mapToForm/buildPayload alinhados (omit≠[]; null≠[]; CAS tip).
+
+## Paths
+
+- server/src/services/clienteContatos.ts (novo — extração Codex)
+- server/src/repositories/clienteTypes.ts
+- server/src/repositories/postgresClienteRepository.ts
+- server/src/repositories/inMemoryClienteRepository.ts
+- server/src/services/clienteService.ts
+- server/schema-candidates/cliente_contatos_null_cas.sql (NULL≠[]; peels 046–049 reservados)
+- src/api/clienteHttpPayload.js
+- src/components/cadastros/CadastroClienteCompleto.jsx
+- server/tests/cliente-contatos-rbac-update.test.ts
+- tests/cliente-contatos-cas-preservacao-591.test.js
+- tests/cliente-contatos-http-adapter.test.js
+- tests/cadastro-query-payload-boundaries.test.js
+
+## Contraprovas
+
+- node --test tests/cliente-contatos-cas-preservacao-591.test.js → 6/6 PASS
+- node --test tests/cliente-contatos-http-adapter.test.js → 33/33 PASS
+- node --test tests/cadastro-query-payload-boundaries.test.js → 14/14 PASS
+- tsx --test server/tests/cliente-contatos-rbac-update.test.ts → 7/7 PASS
+- tsc -p server/tsconfig.json --noEmit → limpo (símbolos CAS)
+
+## Não feito neste lote
+
+- Aceite :15173 / HML update (aguardar tip+CI deste delta)
+- Screenshots v6 / preferências coluna
+- Migration numerada 046 (reservada peels financeiros) — candidate apenas
+- Port cego #401 / ContatoClienteV2 / PII

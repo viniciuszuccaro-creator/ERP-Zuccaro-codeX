@@ -1,7 +1,27 @@
 test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
-  const payload = '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),';
-  const mapper = '        ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),';
+  const payload = [
+    '    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.',
+    '    ...(data.contatos === undefined || data.contatos === null',
+    '      ? {}',
+    '      : {',
+    '          contatos: sanitizeContatos(data.contatos),',
+    '          ...(data.expectedVersion !== undefined',
+    '            ? { expectedVersion: data.expectedVersion }',
+    '            : (data.contatos_version !== undefined',
+    '              ? { expectedVersion: data.contatos_version }',
+    '              : {})),',
+    '        }),',
+  ].join('\n');
+  const mapper = [
+    '        // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.',
+    '        ...(record.contatos === undefined || record.contatos === null',
+    '          ? {}',
+    '          : { contatos: record.contatos }),',
+    '        ...(record.contatos_version !== undefined',
+    '          ? { contatos_version: record.contatos_version, expectedVersion: record.contatos_version }',
+    '          : {}),',
+  ].join('\n');
   const locaisPayload = [
     '    ...(data.locais_entrega === undefined',
     '      ? {}',
@@ -79,18 +99,77 @@ function clienteContactPresenceRemainder(source) {
     + '  partitionContatosByCanal,\n'
     + '} from "@/api/clienteHttpPayload";\n',
     '');
-  // #591 contatos[]: sanitize preserva nome/cargo/obs → forma mínima anterior.
+  // #591 CAS: sanitize rejeita truncamento → forma mínima anterior.
   source = once(source,
-    '/** Preserva procedência/campos desconhecidos; limites canônicos; sem inferir WhatsApp. */\n'
-    + 'const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({\n'
-    + '  ...contato,\n'
-    + '  nome: sanitizeText(contato?.nome, 180),\n'
-    + '  cargo: sanitizeText(contato?.cargo, 120),\n'
-    + '  tipo: sanitizeText(contato?.tipo, 60),\n'
-    + '  valor: sanitizeText(contato?.valor, 180),\n'
-    + '  observacao: sanitizeText(contato?.observacao ?? contato?.obs, 500),\n'
-    + '  principal: sanitizeBoolean(contato?.principal)\n'
-    + '})) : [];\n',
+    '/** Preserva procedência/flags/null; rejeita acima do limite (200/2000) — sem truncar. */\n' +
+    'const assertContatoLen = (value, max, field) => {\n' +
+    '  if (value == null) return value;\n' +
+    '  const text = String(value);\n' +
+    '  if (text.length > max) {\n' +
+    '    const err = new Error(`Contato.${field} excede ${max} — rejeitado sem truncamento.`);\n' +
+    '    err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
+    '    err.status = 422;\n' +
+    '    throw err;\n' +
+    '  }\n' +
+    '  return text;\n' +
+    '};\n' +
+    'const sanitizeContatos = (contatos) => {\n' +
+    '  if (!Array.isArray(contatos)) {\n' +
+    '    const err = new Error(\'contatos deve ser array — rejeitado sem converter em [].\');\n' +
+    '    err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
+    '    err.status = 422;\n' +
+    '    throw err;\n' +
+    '  }\n' +
+    '  if (contatos.length > 200) {\n' +
+    '    const err = new Error(\'Contatos[] excede 200 itens — rejeitado sem truncamento.\');\n' +
+    '    err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
+    '    err.status = 422;\n' +
+    '    throw err;\n' +
+    '  }\n' +
+    '  const ids = new Set();\n' +
+    '  let principals = 0;\n' +
+    '  return contatos.map((contato) => {\n' +
+    '    const obsRaw = contato?.observacao !== undefined ? contato.observacao : contato?.obs;\n' +
+    '    const observacao = obsRaw === undefined ? undefined : (obsRaw === null ? null : assertContatoLen(sanitizeText(obsRaw, 2000), 2000, \'observacao\'));\n' +
+    '    const out = {\n' +
+    '      ...contato,\n' +
+    '      nome: contato?.nome === undefined ? undefined : (contato.nome === null ? null : assertContatoLen(sanitizeText(contato.nome, 180), 180, \'nome\')),\n' +
+    '      cargo: contato?.cargo === undefined ? undefined : (contato.cargo === null ? null : assertContatoLen(sanitizeText(contato.cargo, 120), 120, \'cargo\')),\n' +
+    '      departamento: contato?.departamento === undefined ? undefined : (contato.departamento === null ? null : assertContatoLen(sanitizeText(contato.departamento, 120), 120, \'departamento\')),\n' +
+    '      tipo: assertContatoLen(sanitizeText(contato?.tipo, 60), 60, \'tipo\'),\n' +
+    '      valor: contato?.valor === undefined ? undefined : (contato.valor === null ? null : assertContatoLen(sanitizeText(contato.valor, 180), 180, \'valor\')),\n' +
+    '      ramal: contato?.ramal === undefined ? undefined : (contato.ramal === null ? null : assertContatoLen(sanitizeText(contato.ramal, 40), 40, \'ramal\')),\n' +
+    '      ...(observacao !== undefined ? { observacao } : {}),\n' +
+    '    };\n' +
+    '    if (contato?.principal !== undefined) out.principal = contato.principal === true;\n' +
+    '    if (contato?.ativo !== undefined) out.ativo = contato.ativo === true;\n' +
+    '    if (contato?.id != null && String(contato.id).trim() !== \'\') {\n' +
+    '      const id = String(contato.id);\n' +
+    '      if (ids.has(id)) {\n' +
+    '        const err = new Error(\'Contatos[] com id duplicado — rejeitado.\');\n' +
+    '        err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
+    '        err.status = 422;\n' +
+    '        throw err;\n' +
+    '      }\n' +
+    '      ids.add(id);\n' +
+    '      out.id = id;\n' +
+    '    }\n' +
+    '    if (out.principal === true) principals += 1;\n' +
+    '    if (principals > 1) {\n' +
+    '      const err = new Error(\'Contatos[] com múltiplos principais — rejeitado.\');\n' +
+    '      err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
+    '      err.status = 422;\n' +
+    '      throw err;\n' +
+    '    }\n' +
+    '    if (contato?.contato_b2b_id != null && String(contato.contato_b2b_id).trim() !== \'\') {\n' +
+    '      const err = new Error(\'contato_b2b_id sem resolução canônica — rejeitado.\');\n' +
+    '      err.code = \'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED\';\n' +
+    '      err.status = 409;\n' +
+    '      throw err;\n' +
+    '    }\n' +
+    '    return out;\n' +
+    '  });\n' +
+    '};\n',
     'const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({\n'
     + '  ...contato,\n'
     + '  tipo: sanitizeText(contato?.tipo, 60),\n'
@@ -115,8 +194,13 @@ function clienteContactPresenceRemainder(source) {
     + '        ...record,\n'
     + '        ...(cpf !== undefined ? { cpf } : {}),\n'
     + '        ...(cnpj !== undefined ? { cnpj } : {}),\n'
-    + '        // Ausência ≠ [] : omitir evita wipe no save (contrato HTTP parcial).\n'
-    + '        ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),\n'
+    + '        // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.\n'
+    + '        ...(record.contatos === undefined || record.contatos === null\n'
+    + '          ? {}\n'
+    + '          : { contatos: record.contatos }),\n'
+    + '        ...(record.contatos_version !== undefined\n'
+    + '          ? { contatos_version: record.contatos_version, expectedVersion: record.contatos_version }\n'
+    + '          : {}),\n'
     + '        ...(record.locais_entrega === undefined\n'
     + '          ? {}\n'
     + '          : { locais_entrega: record.locais_entrega || [] }),\n'
@@ -386,8 +470,20 @@ function clienteContactPresenceRemainder(source) {
     + '                assertScopeCurrent={assertFormScopeCurrent}\n'
     + '              />\n'
     + '            </TabsContent>\n');
-  source = once(source, '    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),',
+  source = once(source,
+    '    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.\n'
+    + '    ...(data.contatos === undefined || data.contatos === null\n'
+    + '      ? {}\n'
+    + '      : {\n'
+    + '          contatos: sanitizeContatos(data.contatos),\n'
+    + '          ...(data.expectedVersion !== undefined\n'
+    + '            ? { expectedVersion: data.expectedVersion }\n'
+    + '            : (data.contatos_version !== undefined\n'
+    + '              ? { expectedVersion: data.contatos_version }\n'
+    + '              : {})),\n'
+    + '        }),',
     '    contatos: sanitizeContatos(data.contatos),');
+  // mapToForm já foi peeleado à forma mínima; peel residual do omit→atributo.
   source = once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
     '      contatos: record.contatos || [],');
   source = once(source,

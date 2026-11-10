@@ -33,19 +33,61 @@ const baseCreate = {
   ativo: z.boolean().optional().default(true),
 };
 
-/** Item de contatos[] MASTER (jsonb). passthrough preserva campos desconhecidos. */
-export const clienteContatoItemSchema = z.object({
-  nome: z.string().trim().max(180).optional().nullable(),
-  cargo: z.string().trim().max(120).optional().nullable(),
-  tipo: z.string().trim().min(1).max(60),
-  valor: z.string().trim().max(180).optional().nullable(),
+/** Canais ricos do MASTER — contrato Codex 29726d3d (sem ContatoClienteV2). */
+export const CLIENTE_CONTATO_TIPOS = ['Telefone', 'Celular', 'WhatsApp', 'E-mail'] as const;
+const contactText = (max: number, min = 0) => z.string().min(min).max(max)
+  .refine((value) => !/[\u0000-\u001f\u007f<>]/.test(value), 'invalid_contact_text');
+export const clienteContatoSchema = z.object({
+  id: contactText(120, 1).optional(),
+  tipo: z.enum(CLIENTE_CONTATO_TIPOS),
+  nome: contactText(180).nullable().optional(),
+  cargo: contactText(120).nullable().optional(),
+  departamento: contactText(120).nullable().optional(),
+  valor: contactText(180).nullable().optional(),
+  ramal: contactText(40).nullable().optional(),
   principal: z.boolean().optional(),
-  observacao: z.string().trim().max(500).optional().nullable(),
-  id: z.union([z.string().trim().max(120), z.number()]).optional().nullable(),
-  ordem: z.union([z.number(), z.string().trim().max(40)]).optional().nullable(),
-}).passthrough();
+  ativo: z.boolean().optional(),
+  origem: z.enum(CLIENTE_ORIGENS).optional(),
+  observacao: contactText(2000).nullable().optional(),
+  contato_b2b_id: contactText(120, 1).nullable().optional(),
+  legacy_id: contactText(120, 1).nullable().optional(),
+  codigo_legado: contactText(80, 1).nullable().optional(),
+  source_system: contactText(80, 1).nullable().optional(),
+  migration_batch: z.string().uuid().nullable().optional(),
+}).strict().superRefine((contact, ctx) => {
+  if (contact.tipo === 'E-mail' && contact.valor && !z.string().email().safeParse(contact.valor).success) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['valor'], message: 'invalid_contact_email' });
+  }
+  if (!contact.valor && !contact.nome && !contact.cargo && !contact.observacao
+      && !contact.legacy_id && !contact.id) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'empty_contact' });
+  }
+});
 
-export const clienteContatosSchema = z.array(clienteContatoItemSchema).max(50);
+export const clienteContatosReplaceSchema = z.object({
+  expectedVersion: z.string().regex(/^[a-f0-9]{64}$/),
+  contatos: z.array(clienteContatoSchema).max(200).optional(),
+}).strict().superRefine((command, ctx) => {
+  const ids = new Set<string>();
+  let principals = 0;
+  command.contatos?.forEach((contact, index) => {
+    if (contact.id && ids.has(contact.id)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contatos', index, 'id'], message: 'duplicate_contact_identity' });
+    }
+    if (contact.id) ids.add(contact.id);
+    if (contact.principal) principals += 1;
+  });
+  if (principals > 1) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contatos'], message: 'conflicting_principal_contacts' });
+  }
+});
+export type ClienteContato = z.infer<typeof clienteContatoSchema>;
+/** Alias legado dos peels — mesmo shape canônico. */
+export type ClienteContatoItem = ClienteContato;
+export const clienteContatoItemSchema = clienteContatoSchema;
+export const clienteContatosSchema = z.array(clienteContatoSchema).max(200);
+export const CLIENTE_CONTATOS_MAX = 200;
+export const CLIENTE_CONTATO_OBS_MAX = 2000;
 
 export const clienteCreateSchema = z.object({
   ...baseCreate,
@@ -61,7 +103,7 @@ export const clienteCreateSchema = z.object({
   email: z.string().trim().email().max(180).optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
   telefone: z.string().trim().max(40).optional().nullable(),
   celular: z.string().trim().max(40).optional().nullable(),
-  contatos: clienteContatosSchema.optional(),
+  // POST sem contatos ricos — substituição só via PATCH + CAS (contrato Codex).
   status: z.string().trim().max(40).optional().default('Ativo'),
   origem: z.enum(CLIENTE_ORIGENS).optional().default('ERP'),
   /** Código de registro (importação); novos sem código usam reserva concorrente. */
@@ -110,7 +152,8 @@ export const clienteUpdateSchema = z.object({
   email: z.string().trim().email().max(180).optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
   telefone: z.string().trim().max(40).optional().nullable(),
   celular: z.string().trim().max(40).optional().nullable(),
-  contatos: clienteContatosSchema.optional(),
+  contatos: clienteContatosReplaceSchema.innerType().shape.contatos,
+  expectedVersion: clienteContatosReplaceSchema.innerType().shape.expectedVersion.optional(),
   status: z.string().trim().max(40).optional(),
   origem: z.enum(CLIENTE_ORIGENS).optional(),
   codigo_legado: z.string().trim().min(1).max(80).optional().nullable(),
@@ -118,13 +161,28 @@ export const clienteUpdateSchema = z.object({
   source_system: z.string().trim().min(1).max(80).optional().nullable(),
   migration_batch: z.string().trim().max(80).optional().nullable(),
   observacoes: z.string().trim().max(2000).optional().nullable(),
-}).strict();
+}).strict().superRefine((command, ctx) => {
+  if (command.contatos !== undefined) {
+    const result = clienteContatosReplaceSchema.safeParse({
+      contatos: command.contatos,
+      expectedVersion: command.expectedVersion,
+    });
+    if (!result.success) result.error.issues.forEach((issue) => ctx.addIssue(issue));
+  }
+});
 
 export type ClienteCreate = z.infer<typeof clienteCreateSchema>;
-export type ClienteUpdate = z.infer<typeof clienteUpdateSchema>;
-export type ClienteContatoItem = z.infer<typeof clienteContatoItemSchema>;
+/** NULL é evidência interna de restauração — não comando público de substituição. */
+export type ClienteUpdate = Omit<z.infer<typeof clienteUpdateSchema>, 'contatos' | 'expectedVersion'> & {
+  contatos?: ClienteContato[] | null;
+  expectedVersion?: string;
+};
 
 export type Cliente = {
+  /** undefined = coluna ausente; null = SQL NULL; [] = limpeza explícita. */
+  contatos?: ClienteContato[] | null;
+  /** CAS tip — só na resposta HTTP. */
+  contatos_version?: string;
   id: string;
   group_id: string;
   empresa_id: string | null;
@@ -141,7 +199,6 @@ export type Cliente = {
   email: string | null;
   telefone: string | null;
   celular: string | null;
-  contatos: ClienteContatoItem[];
   status: string;
   origem: string;
   codigo_legado: string | null;

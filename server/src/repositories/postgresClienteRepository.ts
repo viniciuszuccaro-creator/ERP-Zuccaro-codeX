@@ -18,25 +18,22 @@ import type {
 } from './inMemoryClienteRepository.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 import { clienteBulkSnapshotSchema } from '../services/clienteBulkLifecycle.js';
-import { clienteOperacaoLinksSchema } from './clienteTypes.js';
+import { clienteOperacaoLinksSchema, clienteContatosReplaceSchema } from './clienteTypes.js';
 import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';
-import type { ClienteContatoItem } from './clienteTypes.js';
-
-function mapContatos(value: unknown): ClienteContatoItem[] {
-  if (value == null) return [];
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value) as unknown;
-      return Array.isArray(parsed) ? parsed as ClienteContatoItem[] : [];
-    } catch {
-      return [];
-    }
-  }
-  return Array.isArray(value) ? value as ClienteContatoItem[] : [];
-}
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
+    // Coluna ausente ≠ []; NULL permanece NULL; storage inválido falha fechado.
+    ...(Object.hasOwn(row, 'contatos')
+      ? {
+          contatos: row.contatos === null
+            ? null
+            : clienteContatosReplaceSchema.parse({
+              contatos: row.contatos,
+              expectedVersion: '0'.repeat(64),
+            }).contatos,
+        }
+      : {}),
     id: String(row.id),
     group_id: String(row.group_id),
     empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
@@ -53,7 +50,6 @@ function mapCliente(row: Record<string, unknown>): Cliente {
     email: row.email == null ? null : String(row.email),
     telefone: row.telefone == null ? null : String(row.telefone),
     celular: row.celular == null ? null : String(row.celular),
-    contatos: mapContatos(row.contatos),
     status: String(row.status ?? 'Ativo'),
     origem: String(row.origem ?? 'ERP'),
     codigo_legado: row.codigo_legado == null ? null : String(row.codigo_legado),
@@ -65,7 +61,9 @@ function mapCliente(row: Record<string, unknown>): Cliente {
     created_by: row.created_by == null ? null : String(row.created_by),
     updated_by: row.updated_by == null ? null : String(row.updated_by),
     created_at: String(row.created_at),
-    updated_at: String(row.updated_at),
+    updated_at: String(row.contatos === undefined
+      ? row.updated_at
+      : row.cliente_updated_at_canonical ?? row.updated_at),
   };
 }
 
@@ -273,7 +271,8 @@ export class PostgresClienteRepository implements ClienteRepository {
   async getById(scope: Scope, id: string,executor?:DbQueryExecutor,options?:{forUpdate?:boolean}): Promise<Cliente | null> {
     if(options?.forUpdate&&!executor)throw new Error('CLIENTE_ROW_LOCK_REQUIRES_TRANSACTION');
     const result = await (executor??this.db).query(
-      `SELECT * FROM clientes WHERE group_id = $1 AND id = $2${options?.forUpdate?' FOR UPDATE':''}`,
+      `SELECT c.*, to_char(c.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical
+       FROM clientes c WHERE group_id = $1 AND id = $2${options?.forUpdate?' FOR UPDATE':''}`,
       [scope.groupId, id],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
@@ -323,12 +322,12 @@ export class PostgresClienteRepository implements ClienteRepository {
         `INSERT INTO clientes (
           group_id, empresa_id, codigo, tipo, documento, documento_normalizado,
           nome, razao_social, nome_fantasia, nome_social,
-          inscricao_estadual, inscricao_municipal, email, telefone, celular, contatos,
+          inscricao_estadual, inscricao_municipal, email, telefone, celular,
           status, origem, codigo_legado, legacy_id, source_system, migration_batch,
           observacoes, ativo, created_by, updated_by
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17,$18,$19,$20,$21,$22,$23,$24,$25,$25
-        ) RETURNING *`,
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24
+        ) RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical`,
         [
           scope.groupId,
           empresaId,
@@ -345,7 +344,6 @@ export class PostgresClienteRepository implements ClienteRepository {
           data.email ?? null,
           data.telefone ?? null,
           data.celular ?? null,
-          JSON.stringify(data.contatos ?? []),
           data.status ?? 'Ativo',
           data.origem ?? 'ERP',
           data.codigo_legado ?? null,
@@ -377,6 +375,9 @@ export class PostgresClienteRepository implements ClienteRepository {
     if(!executor)return this.db.withTransaction(q=>this.update(scope,id,data,q));
     const current = await this.getById(scope, id,executor,{forUpdate:true});
     if (!current) return null;
+    if (data.contatos !== undefined && current.contatos === undefined) {
+      throw new AppError(503, 'CLIENTE_CONTATOS_STORAGE_REQUIRED', 'Reviewed contacts schema required');
+    }
     const rawDoc = data.documento !== undefined || data.cpf_cnpj !== undefined
       ? (data.documento ?? data.cpf_cnpj ?? '')
       : undefined;
@@ -399,7 +400,6 @@ export class PostgresClienteRepository implements ClienteRepository {
       email: data.email === undefined ? current.email : data.email,
       telefone: data.telefone === undefined ? current.telefone : data.telefone,
       celular: data.celular === undefined ? current.celular : data.celular,
-      contatos: data.contatos === undefined ? current.contatos : data.contatos,
       status: data.status ?? current.status,
       origem: data.origem ?? current.origem,
       codigo_legado: data.codigo_legado === undefined ? current.codigo_legado : data.codigo_legado,
@@ -410,23 +410,24 @@ export class PostgresClienteRepository implements ClienteRepository {
       ativo: data.ativo === undefined ? current.ativo : data.ativo,
     };
 
+    // Omissão de contatos não regrava a coluna; NULL ≠ []; [] = limpeza explícita.
     const result = await executor.query(
       `UPDATE clientes SET
         empresa_id=$1, tipo=$2, documento=$3, documento_normalizado=$4,
         nome=$5, razao_social=$6, nome_fantasia=$7, nome_social=$8,
         inscricao_estadual=$9, inscricao_municipal=$10, email=$11, telefone=$12, celular=$13,
-        contatos=$14::jsonb, status=$15, origem=$16, codigo_legado=$17, legacy_id=$18, source_system=$19,
-        migration_batch=$20, observacoes=$21, ativo=$22
-       WHERE group_id=$23 AND id=$24
-       RETURNING *`,
+        status=$14, origem=$15, codigo_legado=$16, legacy_id=$17, source_system=$18,
+        migration_batch=$19, observacoes=$20, ativo=$21${data.contatos === undefined ? '' : ', contatos=$24::jsonb'}
+       WHERE group_id=$22 AND id=$23
+       RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical`,
       [
         next.empresa_id, next.tipo, next.documento, next.documento_normalizado,
         next.nome, next.razao_social, next.nome_fantasia, next.nome_social,
         next.inscricao_estadual, next.inscricao_municipal, next.email, next.telefone, next.celular,
-        JSON.stringify(next.contatos ?? []),
         next.status, next.origem, next.codigo_legado, next.legacy_id, next.source_system,
         next.migration_batch, next.observacoes, next.ativo,
         scope.groupId, id,
+        ...(data.contatos === undefined ? [] : [data.contatos === null ? null : JSON.stringify(data.contatos)]),
       ],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;

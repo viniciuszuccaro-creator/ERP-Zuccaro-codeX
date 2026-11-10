@@ -60,7 +60,7 @@ export async function setupEntryFixture(exec: (sql: string) => Promise<unknown>,
   const dir = new URL('../../migrations/', import.meta.url);
   const names = (await readdir(dir)).filter(name => /^\d{3}_.*\.sql$/.test(name)).sort();
   const baseline = [...Array.from({ length: 24 }, (_, i) => String(i + 1).padStart(3, '0')), '038', '039'];
-  // 045: Cliente MASTER contatos[] jsonb (decisão a / #591).
+  // 045: Cliente MASTER contatos[] jsonb (decisão a / #591). NULL≠[] via schema-candidate.
   const deltas = ['041', '042', '044', '045']; // Product/company, Auth bootstrap, Pedido insert, contatos jsonb.
   for (const prefix of [...baseline, ...deltas]) {
     if (prefix === '041') {
@@ -74,6 +74,7 @@ export async function setupEntryFixture(exec: (sql: string) => Promise<unknown>,
     if (matches.length !== 1) throw new Error('ENTRY_FIXTURE_MIGRATION_IDENTITY');
     await exec((await readFile(new URL(matches[0], dir), 'utf8')).replace('CREATE EXTENSION IF NOT EXISTS pgcrypto;', ''));
   }
+  await exec(await readFile(new URL('../../schema-candidates/cliente_contatos_null_cas.sql', import.meta.url), 'utf8'));
   await exec(await readFile(new URL('../../schema-candidates/pedido_idempotency_pair.sql', import.meta.url), 'utf8'));
   await exec(await readFile(new URL('../../schema-candidates/fornecedor_master.sql', import.meta.url), 'utf8'));
   await exec(await readFile(new URL('../../scripts/seed-dev-synthetic.sql', import.meta.url), 'utf8'));

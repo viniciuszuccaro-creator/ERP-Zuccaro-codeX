@@ -138,7 +138,7 @@ function buildCliente(
     email: data.email ?? null,
     telefone: data.telefone ?? null,
     celular: data.celular ?? null,
-    contatos: Array.isArray(data.contatos) ? data.contatos : [],
+    contatos: null,
     status: data.status ?? 'Ativo',
     origem: data.origem ?? 'ERP',
     codigo_legado: data.codigo_legado ?? null,
@@ -254,7 +254,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
   async getById(scope: Scope, id: string,_executor?:DbQueryExecutor,_options?:{forUpdate?:boolean}): Promise<Cliente | null> {
     const row = this.rows.get(id);
     if (!row || row.group_id !== scope.groupId) return null;
-    return row;
+    return structuredClone(row);
   }
 
   async findByDocumento(groupId: string, documentoNormalizado: string,_executor?:DbQueryExecutor): Promise<Cliente | null> {
@@ -323,9 +323,11 @@ export class InMemoryClienteRepository implements ClienteRepository {
     const next: Cliente = {
       ...current,
       ...Object.fromEntries(
-        Object.entries(data).filter(([k]) => k !== 'cpf_cnpj' && k !== 'documento'),
+        Object.entries(data)
+          .filter(([k, v]) => k !== 'cpf_cnpj' && k !== 'documento' && k !== 'expectedVersion' && v !== undefined)
+          .map(([k, v]) => [k, structuredClone(v)]),
       ),
-      updated_at: nowIso(),
+      updated_at: new Date(Math.max(Date.now(), Date.parse(current.updated_at) + 1)).toISOString(),
     } as Cliente;
     if (data.documento !== undefined || data.cpf_cnpj !== undefined) {
       const raw = data.documento ?? data.cpf_cnpj ?? '';
@@ -338,7 +340,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
       throw new Error('unique constraint clientes_legacy_identity_uidx');
     }
     this.rows.set(id, next);
-    return next;
+    return structuredClone(next);
   }
 
   softDelete(scope: Scope, id: string,executor?:DbQueryExecutor) {

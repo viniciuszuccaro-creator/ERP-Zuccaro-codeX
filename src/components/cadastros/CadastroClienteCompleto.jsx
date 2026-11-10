@@ -75,16 +75,75 @@ const sanitizeEndereco = (endereco = {}) => ({
   longitude: endereco.longitude === null || endereco.longitude === undefined ? null : toNumber(endereco.longitude, null),
   mapa_url: sanitizeText(endereco.mapa_url, 300)
 });
-/** Preserva procedência/campos desconhecidos; limites canônicos; sem inferir WhatsApp. */
-const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({
-  ...contato,
-  nome: sanitizeText(contato?.nome, 180),
-  cargo: sanitizeText(contato?.cargo, 120),
-  tipo: sanitizeText(contato?.tipo, 60),
-  valor: sanitizeText(contato?.valor, 180),
-  observacao: sanitizeText(contato?.observacao ?? contato?.obs, 500),
-  principal: sanitizeBoolean(contato?.principal)
-})) : [];
+/** Preserva procedência/flags/null; rejeita acima do limite (200/2000) — sem truncar. */
+const assertContatoLen = (value, max, field) => {
+  if (value == null) return value;
+  const text = String(value);
+  if (text.length > max) {
+    const err = new Error(`Contato.${field} excede ${max} — rejeitado sem truncamento.`);
+    err.code = 'CLIENTE_CONTATOS_VALIDATION';
+    err.status = 422;
+    throw err;
+  }
+  return text;
+};
+const sanitizeContatos = (contatos) => {
+  if (!Array.isArray(contatos)) {
+    const err = new Error('contatos deve ser array — rejeitado sem converter em [].');
+    err.code = 'CLIENTE_CONTATOS_VALIDATION';
+    err.status = 422;
+    throw err;
+  }
+  if (contatos.length > 200) {
+    const err = new Error('Contatos[] excede 200 itens — rejeitado sem truncamento.');
+    err.code = 'CLIENTE_CONTATOS_VALIDATION';
+    err.status = 422;
+    throw err;
+  }
+  const ids = new Set();
+  let principals = 0;
+  return contatos.map((contato) => {
+    const obsRaw = contato?.observacao !== undefined ? contato.observacao : contato?.obs;
+    const observacao = obsRaw === undefined ? undefined : (obsRaw === null ? null : assertContatoLen(sanitizeText(obsRaw, 2000), 2000, 'observacao'));
+    const out = {
+      ...contato,
+      nome: contato?.nome === undefined ? undefined : (contato.nome === null ? null : assertContatoLen(sanitizeText(contato.nome, 180), 180, 'nome')),
+      cargo: contato?.cargo === undefined ? undefined : (contato.cargo === null ? null : assertContatoLen(sanitizeText(contato.cargo, 120), 120, 'cargo')),
+      departamento: contato?.departamento === undefined ? undefined : (contato.departamento === null ? null : assertContatoLen(sanitizeText(contato.departamento, 120), 120, 'departamento')),
+      tipo: assertContatoLen(sanitizeText(contato?.tipo, 60), 60, 'tipo'),
+      valor: contato?.valor === undefined ? undefined : (contato.valor === null ? null : assertContatoLen(sanitizeText(contato.valor, 180), 180, 'valor')),
+      ramal: contato?.ramal === undefined ? undefined : (contato.ramal === null ? null : assertContatoLen(sanitizeText(contato.ramal, 40), 40, 'ramal')),
+      ...(observacao !== undefined ? { observacao } : {}),
+    };
+    if (contato?.principal !== undefined) out.principal = contato.principal === true;
+    if (contato?.ativo !== undefined) out.ativo = contato.ativo === true;
+    if (contato?.id != null && String(contato.id).trim() !== '') {
+      const id = String(contato.id);
+      if (ids.has(id)) {
+        const err = new Error('Contatos[] com id duplicado — rejeitado.');
+        err.code = 'CLIENTE_CONTATOS_VALIDATION';
+        err.status = 422;
+        throw err;
+      }
+      ids.add(id);
+      out.id = id;
+    }
+    if (out.principal === true) principals += 1;
+    if (principals > 1) {
+      const err = new Error('Contatos[] com múltiplos principais — rejeitado.');
+      err.code = 'CLIENTE_CONTATOS_VALIDATION';
+      err.status = 422;
+      throw err;
+    }
+    if (contato?.contato_b2b_id != null && String(contato.contato_b2b_id).trim() !== '') {
+      const err = new Error('contato_b2b_id sem resolução canônica — rejeitado.');
+      err.code = 'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED';
+      err.status = 409;
+      throw err;
+    }
+    return out;
+  });
+};
 const sanitizeDocumentos = (documentos) => Array.isArray(documentos) ? documentos.slice(0, 100).map((doc) => ({
   ...doc,
   nome_arquivo: sanitizeText(doc?.nome_arquivo, 180),
@@ -260,7 +319,17 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     motivo_inatividade: sanitizeText(data.motivo_inatividade, 500),
     observacoes: sanitizeText(data.observacoes, 2000),
     endereco_principal: sanitizeEndereco(data.endereco_principal),
-    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),
+    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.
+    ...(data.contatos === undefined || data.contatos === null
+      ? {}
+      : {
+          contatos: sanitizeContatos(data.contatos),
+          ...(data.expectedVersion !== undefined
+            ? { expectedVersion: data.expectedVersion }
+            : (data.contatos_version !== undefined
+              ? { expectedVersion: data.contatos_version }
+              : {})),
+        }),
     ...(data.locais_entrega === undefined
       ? {}
       : {
@@ -426,8 +495,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         ...record,
         ...(cpf !== undefined ? { cpf } : {}),
         ...(cnpj !== undefined ? { cnpj } : {}),
-        // Ausência ≠ [] : omitir evita wipe no save (contrato HTTP parcial).
-        ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),
+        // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.
+        ...(record.contatos === undefined || record.contatos === null
+          ? {}
+          : { contatos: record.contatos }),
+        ...(record.contatos_version !== undefined
+          ? { contatos_version: record.contatos_version, expectedVersion: record.contatos_version }
+          : {}),
         ...(record.locais_entrega === undefined
           ? {}
           : { locais_entrega: record.locais_entrega || [] }),

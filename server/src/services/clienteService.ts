@@ -4,6 +4,11 @@ import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';
 import { restoreClienteBulkSnapshot } from './clienteBulkLifecycle.js';
 import { correctInactiveLegacyName } from './clienteLegacyNameCorrection.js';
+import {
+  assertClienteContatosVersion,
+  assertContactReferences,
+  withClienteContatosVersion,
+} from './clienteContatos.js';
 import { exportClientes } from './clienteExport.js';
 import type { AppliedBulkItem } from './cadastroBulkPolicy.js';
 import { AppError } from '../api/errors.js';
@@ -125,7 +130,7 @@ export class ClienteService {
     if (!row || row.ativo === false) {
       throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
     }
-    return row;
+    return withClienteContatosVersion(ctx, row);
   }
 
   /**
@@ -271,7 +276,7 @@ export class ClienteService {
           }
           await this.empresaOperations.auditCreatedLink(ctx, link, executor);
         }
-        return created;
+        return withClienteContatosVersion(ctx, created);
       });
     } catch (error) {
       await this.handleCreateConflict(ctx, error, docNorm, parsed.data.tipo);
@@ -325,6 +330,11 @@ export class ClienteService {
       if (!before || before.ativo === false) {
         throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
       }
+      if (parsed.data.contatos !== undefined) {
+        assertClienteContatosVersion(ctx, before, parsed.data.expectedVersion);
+        assertContactReferences(parsed.data.contatos);
+        await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, executor);
+      }
       if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)
         .some(field => parsed.data[field] !== undefined && parsed.data[field] !== before[field])) {
         throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported provenance is immutable');
@@ -344,7 +354,8 @@ export class ClienteService {
 
       let updated: Cliente | null;
       try {
-        updated = await this.repo.update(scope, id, parsed.data,executor);
+        const { expectedVersion: _version, ...fields } = parsed.data;
+        updated = await this.repo.update(scope, id, fields,executor);
       } catch (error) {
         this.rethrowConflict(error);
         throw error;
@@ -363,7 +374,8 @@ export class ClienteService {
         requestId: ctx.requestId,
         ipAddress: ctx.ipAddress,
       },executor);
-      return updated;
+      await this.assertPermission(ctx, 'editar', executor);
+      return withClienteContatosVersion(ctx, updated);
     });
   }
 

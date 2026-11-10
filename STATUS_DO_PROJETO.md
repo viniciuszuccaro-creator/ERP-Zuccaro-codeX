@@ -1,3 +1,19 @@
+## CURSOR — #591 CAS/preservação contatos (pareceres 6778237293/6778347806) (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | RECEBIDO pareceres CAS · port contrato Codex `29726d3d` · sem truncamento · omit≠[] · null≠[] |
+| **CAS** | `contatos_version` (GET) ↔ `expectedVersion` (PATCH); conflito 409; schema ausente 503 |
+| **Limites** | 200 contatos / obs 2000 — rejeitar acima; não slice |
+| **Reuso** | `clienteContatos.ts` + types/repo/service + Completo/`clienteHttpPayload` |
+| **Evidence** | `docs/evidence/codex-parecer-6778237293-cas-preservacao-591-20261110.txt` |
+| **Testes** | CAS 6 PASS · adapter 33 PASS · peels 14 PASS · RBAC/CAS 7 PASS · tsc server limpo |
+| **Estados** | tip em publicação · layout v6 `82b15566` preservado · aceite :15173 após CI deste tip |
+| Fora | ContatoClienteV2 · migration 046 numerada (peels) · merge/VPS · PII · HML sem tip revisado |
+
+**Próximo:** CI tip · ACK Codex · freeze API+web mesmo SHA p/ :15173 · v6 prefs/screenshots · #401 pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS 82b15566 layout v6 Central (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
