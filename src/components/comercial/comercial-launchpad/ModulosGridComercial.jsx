@@ -17,8 +17,13 @@ export default function ModulosGridComercial({ modules, onModuleClick, proposalM
             return (
               <div
                 key={idx}
-                className={blockedByProposal ? 'opacity-40 grayscale relative' : undefined}
+                className={
+                  blockedByProposal
+                    ? 'opacity-40 grayscale relative cursor-not-allowed'
+                    : undefined
+                }
                 data-proposta-card={blockedByProposal ? 'bloqueado' : undefined}
+                aria-disabled={blockedByProposal || undefined}
                 title={
                   blockedByProposal
                     ? 'Proposta visual — abra apenas Orçamentos (sem módulos operacionais).'

@@ -1,3 +1,8 @@
+## CURSOR — #591 ContatoB2B fail-closed empresa + grid aria (2026-11-10 America/Sao_Paulo)
+- ContatoB2B: exige `group_id`; `empresa_id` no escopo empresa (toast). Sem Completo.
+- Grid proposta: `cursor-not-allowed` + `aria-disabled`. Verde peels **`c8d7c134`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
 ## CURSOR — #591 proposta-acao slug + peels Completo fix (2026-11-10 America/Sao_Paulo)
 - Aside: `proposta-acao-{slug}` (salvar-orcamento…). `88b9` FAIL = Completo herdado de `e09f`.
 - Fix peels Completo: **`c8d7c134`**. Verde **`77edc2ea`** · **`516497af`** · **`75aa36c1`**.

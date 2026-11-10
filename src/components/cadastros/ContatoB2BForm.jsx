@@ -146,6 +146,15 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
       toast.error("Selecione um cliente do grupo/empresa ativos. Contato B2B não aceita cliente fora do tenant.");
       return;
     }
+    // Fail-closed multiempresa: group_id sempre; empresa_id obrigatória no escopo empresa.
+    if (!payload.group_id) {
+      toast.error("Grupo do contexto obrigatório para Contato B2B.");
+      return;
+    }
+    if (contexto === "empresa" && !payload.empresa_id) {
+      toast.error("Empresa do contexto obrigatória para Contato B2B.");
+      return;
+    }
     // WhatsApp é campo próprio — não copiar telefone/celular automaticamente.
     if (!payload.whatsapp) {
       payload.whatsapp = "";

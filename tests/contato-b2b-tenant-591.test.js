@@ -13,6 +13,10 @@ test('ContatoB2B: rejeita cliente_id fora do filterInContext', () => {
   assert.match(src, /fora do tenant/);
   assert.match(src, /toast\.error/);
   assert.doesNotMatch(src, /\balert\(/);
+  // Fail-closed: group_id sempre; empresa_id no escopo empresa.
+  assert.match(src, /Grupo do contexto obrigatório/);
+  assert.match(src, /Empresa do contexto obrigatória/);
+  assert.match(src, /contexto === ["']empresa["'] && !payload\.empresa_id/);
 });
 
 test('ContatoB2B: WhatsApp campo próprio (não copia telefone)', () => {
