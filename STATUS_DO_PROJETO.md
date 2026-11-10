@@ -1,19 +1,34 @@
+## CURSOR — #591 CI 84325aac + C360 etapas A/B/C + pedido Codex (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`84325aac`** · **CI SUCCESS** 9/9 (ref PR5912e90587f/CI6596) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | pedido objetivo (a)/(b)/(c); (b) bloqueada sem FK; sem ContatoClienteV2 |
+| **Completo** | consumidores prontos; negativo sem ContatoB2B/wire paralelo |
+| **C360** | proposta `?proposta=comercial360` etapas A lista / B edição / C acompanhamento |
+| **Packs** | `codex-pedido-decisao-objetiva-contatos-591` · `c360-proposta-etapas-abc-591` |
+| Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII · redesign operacional |
+
+**Próximo:** CI deste tip · Codex decide (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+
 ## CURSOR — #591 CI 2e90587f + sky Usuario/Fiscal + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Tip decisão / CI** | **`2e90587f`** · **CI SUCCESS** 9/9 (ref PR591a4a53dd2) |
+| **Tip limpo** | **`84325aac`** · **CI SUCCESS** (reverte Usuario/CANAL; Completo (b)) |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
 | **Contatos** | (b) ContatoB2B ainda **bloqueada** (Base sem cliente_id/empresa_id) |
 | **Completo** | banner cita FK ausente; Celular≠WhatsApp; sem ContatoClienteV2 |
 | **Visual** | Usuario/Fiscal sky **adiado** (CANAL 53ed9f42 + ID-only); params+JobAgendado ok |
 | **C360** | chatbot owner: regras + exceção→humano |
-| **CI** | `bfe3e25d`/`2d0bff6e` frontend FAIL → tip reverte Usuario/consolidacao; mantém Completo (b) |
 | **Packs** | `codex-contatob2b-fk-reconfirm-591` · `recuperacao-sky-usuario-fiscal-591` |
 | Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII · reservas WIP |
 
-**Próximo:** CI tip limpo · Codex fecha (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+**Próximo:** Codex fecha (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
 
 ## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)
 

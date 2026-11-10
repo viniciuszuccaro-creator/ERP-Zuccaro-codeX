@@ -19,6 +19,13 @@ test('Completo: banner limitação contatos ricos + ContatoB2B (b) bloqueada + p
   assert.doesNotMatch(completo, /function ContatoClienteV2|import ContatoClienteV2/);
 });
 
+test('Completo: negativo — não presume ContatoB2B equivalente nem storage paralelo', () => {
+  assert.doesNotMatch(completo, /entities\.ContatoB2B|from ['"].*ContatoB2B/);
+  assert.doesNotMatch(completo, /function ContatoClienteV2|import ContatoClienteV2|documentosClienteParalelo|contatosStorageLocal/);
+  assert.match(completo, /GerenciarContatosClienteForm/);
+  assert.match(completo, /omitido no save|rascunho/);
+});
+
 test('Completo: anexos distinguem identificação MASTER de documentos[]', () => {
   assert.match(completo, /data-fonte="documentos-limitacao-http"/);
   assert.match(completo, /Documento de identificação/);

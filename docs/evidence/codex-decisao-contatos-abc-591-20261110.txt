@@ -1,14 +1,18 @@
 #591 — DECISÃO TÉCNICA Contatos (a)/(b)/(c) — fechar sem rodada genérica
 America/Sao_Paulo 2026-11-10 · sem PII
-Tip decisão: 2e90587f CI SUCCESS · tip docs a4a53dd2 · tip código base 13dde4a5
+Tip decisão: 2e90587f CI SUCCESS · tip limpo HEAD 84325aac CI SUCCESS
+Tip docs a4a53dd2 · tip código base 13dde4a5
 Homolog locais: 77f11b28 · Freeze HML: 0afd378f284
 Reconfirm Base 2026-11-10: docs/evidence/codex-contatob2b-fk-reconfirm-591-20261110.txt
   (cliente_id/empresa_id ainda ausentes → (b) bloqueada)
+Pedido objetivo (1 página): docs/evidence/codex-pedido-decisao-objetiva-contatos-591-20261110.txt
 
 PEDIDO AO CODEX
 Escolher UMA representação abaixo e publicar contrato BFF (endpoints + schema).
+Responder com decisão objetiva — sem nova rodada genérica.
 Cursor integra no CadastroClienteCompleto assim que o contrato existir.
 Não criar ContatoClienteV2 / storage paralelo.
+Não conectar ContatoB2B ao Completo sem prova FK.
 
 ────────────────────────────────────────
 ALTERNATIVA (a) — contatos[] jsonb no Cliente MASTER

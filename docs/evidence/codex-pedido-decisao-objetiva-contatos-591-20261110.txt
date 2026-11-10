@@ -1,0 +1,29 @@
+#591 — PEDIDO OBJETIVO AO CODEX: decidir (a)/(b)/(c) agora
+America/Sao_Paulo 2026-11-10 · sem PII
+Tip CI limpo: 84325aacc4a94545221d24c8b5250f31c7082d3d · SUCCESS
+Tip decisão pack: 2e90587f · SUCCESS · docs/evidence/codex-decisao-contatos-abc-591-20261110.txt
+FK reconfirm: docs/evidence/codex-contatob2b-fk-reconfirm-591-20261110.txt
+Homolog tip: 77f11b28 · Freeze: 0afd378f284
+
+NÃO repetir investigação genérica. Responder com UMA linha de decisão + contrato.
+
+DECISÃO REQUERIDA (marque uma)
+[ ] (a) contatos[] jsonb no Cliente MASTER — endpoints ALLOWED_KEYS + omit/[]
+[ ] (b) ContatoB2B por cliente_id — SOMENTE se FK cliente_id+group_id+empresa_id
+       comprovada no schema/BFF (amostra Base atual: AUSENTE → (b) bloqueada)
+[ ] (c) anexos documentos[] separado de CPF/CNPJ (pode combinar com a ou b)
+
+ENTREGÁVEL MÍNIMO DO CODEX
+1. Alternativa escolhida (a|b|c)
+2. Schema + endpoints (path, method, campos, omit-if-undefined, []=remoção)
+3. Escopo groupId+empresaId + RBAC keys
+4. Se (b): prova FK (migration/column list) — sem prova, Cursor NÃO integra Completo
+
+CURSOR JÁ PREPARADO (sem storage paralelo / sem ContatoClienteV2)
+- Completo: draft GerenciarContatos; banner limitação; Celular≠WhatsApp
+- hydrate documento→cpf/cnpj zeros; cadastral/fiscal ≠ entrega
+- locais: BATCH_ATOMIC=false; partial ≠ sucesso integral
+Integração Completo inicia no tip CI SUCCESS após o contrato acima.
+
+FORA
+ContatoClienteV2 · merge silencioso · VPS · PII · fixture como aceite HML

@@ -97,6 +97,8 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [appliedFilters, setAppliedFilters] = useState({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' });
   const [clienteQuery, setClienteQuery] = useState('');
   const [produtoQuery, setProdutoQuery] = useState('');
+  /** Proposta visual: A lista → B edição → C acompanhamento (sintético; sem save/convert). */
+  const [proposalStage, setProposalStage] = useState('lista');
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
@@ -268,7 +270,7 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     [masters.produtos, produtoQuery],
   );
 
-  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
+  useEffect(() => { actionGate.current.invalidate(); formScope.current = null; cancelScope.current = null; conversionScope.current = null; setSubmitting(false); setPage(1); setSelected(null); setDetailOpen(false); setFormOpen(false); setPendingCancel(null); setPendingConversion(null); setProposalStage('lista'); setFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); setAppliedFilters({ search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }); }, [groupId, empresaId, actorId, sessionIdentity, proposalMode]);
   useEffect(() => {
     const warn = (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', warn);
@@ -278,6 +280,12 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const closeForm = () => {
     if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
     setFormOpen(false); setDirty(false); setEditing(null);
+    if (proposalMode) setProposalStage('lista');
+  };
+  /** Volta à lista sem descartar rascunho (Voltar de etapa ≠ desfazer negócio). */
+  const proposalBackToLista = () => {
+    setFormOpen(false);
+    setProposalStage('lista');
   };
   const openCreate = () => {
     // Clique duplo / segundo "Novo" não abre outro fluxo nem zera rascunho já em criação.
@@ -287,20 +295,22 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setForm(emptyForm());
     setDirty(false);
     setFormOpen(true);
+    if (proposalMode) setProposalStage('edicao');
   };
   const openEdit = (row) => {
-    if (!canEdit(row)) return;
+    if (!proposalMode && !canEdit(row)) return;
     formScope.current = renderedScope.current;
     setEditing(row);
     setForm({
       cliente_empresa_id: row.cliente_empresa_id,
-      condicao_pagamento_id: row.condicao_pagamento_id,
-      tabela_preco_id: row.tabela_preco_id || '',
+      condicao_pagamento_id: row.condicao_pagamento_id || (proposalMode ? 'preview-condicao' : ''),
+      tabela_preco_id: row.tabela_preco_id || (proposalMode ? 'preview-tabela' : ''),
       validade_em: String(row.validade_em || '').slice(0, 10),
       observacoes: row.observacoes || '',
-      itens: row.itens.map((item) => ({ produto_id: item.produto_id, unidade_id: item.unidade_id, descricao: item.descricao, unidade_sigla: item.unidade_sigla, quantidade: item.quantidade, preco_unitario: item.preco_unitario, desconto: item.desconto })),
+      itens: (row.itens || []).map((item) => ({ produto_id: item.produto_id, unidade_id: item.unidade_id || (proposalMode ? 'preview-unidade' : ''), descricao: item.descricao, unidade_sigla: item.unidade_sigla, quantidade: item.quantidade, preco_unitario: item.preco_unitario, desconto: item.desconto })),
     });
     setDirty(false); setDetailOpen(false); setFormOpen(true);
+    if (proposalMode) setProposalStage('edicao');
   };
   const changeForm = (key, value) => { setForm((current) => ({ ...current, [key]: value })); setDirty(true); };
   const changeItem = (index, key, value) => {
@@ -424,14 +434,55 @@ const convertToPedido = async () => {
   };
 
   if (!canView) return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4" /><AlertDescription>Acesso negado aos Orçamentos.</AlertDescription></Alert></div>;
-  const rows = proposalMode ? [] : listQuery.data?.data || [];
-  const meta = listQuery.data?.meta || { total: 0 };
-  return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar">
+  const rows = proposalMode
+    ? (proposalStage === 'lista' ? (proposalMasters.negociacoes || []) : [])
+    : listQuery.data?.data || [];
+  const meta = proposalMode
+    ? { total: (proposalMasters.negociacoes || []).length }
+    : (listQuery.data?.meta || { total: 0 });
+  const proposalAcomp = proposalMasters.acompanhamentoPedido || {};
+  return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined}>
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
       <div><h2 className="text-xl font-semibold">Orçamentos</h2><p className="text-sm text-slate-500">Propostas comerciais da empresa ativa</p></div>
-      {canCreate && <Button onClick={openCreate} disabled={!contextReady} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
+      {canCreate && <Button onClick={openCreate} disabled={!contextReady || (proposalMode && proposalStage === 'acompanhamento')} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
     </div>
-    {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos.</AlertDescription></Alert>}
+    {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos. URL: <code>?proposta=comercial360</code>.</AlertDescription></Alert>}
+    {proposalMode && (
+      <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Etapas da proposta visual" data-block="proposta-etapas">
+        {[
+          ['lista', 'A · Negociações'],
+          ['edicao', 'B · Orçamento'],
+          ['acompanhamento', 'C · Acompanhamento'],
+        ].map(([key, label]) => (
+          <Button
+            key={key}
+            type="button"
+            size="sm"
+            variant="outline"
+            className={proposalStage === key ? 'bg-sky-700 text-white border-sky-700 hover:bg-sky-800 hover:text-white' : 'bg-white border-sky-200'}
+            aria-pressed={proposalStage === key}
+            data-action={`proposta-etapa-${key}`}
+            onClick={() => {
+              if (key === 'lista') {
+                proposalBackToLista();
+                return;
+              }
+              if (key === 'edicao') {
+                setProposalStage('edicao');
+                if (!formOpen) setFormOpen(true);
+                return;
+              }
+              // C: ilustrativo — não salva nem converte.
+              setFormOpen(false);
+              setProposalStage('acompanhamento');
+            }}
+          >
+            {label}
+          </Button>
+        ))}
+        <p className="text-xs text-slate-500 self-center">Voltar não desfaz o rascunho · Avançar não salva/converte.</p>
+      </div>
+    )}
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}
     {Object.keys(clienteHydrationFailures).length > 0 && (
       <Alert className="mb-3" data-testid="orcamento-cliente-hydration-failures" role="status" aria-live="polite">
@@ -449,11 +500,31 @@ const convertToPedido = async () => {
       <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
       <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
     </form>
-    {listQuery.isLoading ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : listQuery.isError ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>Nenhum orçamento encontrado para os filtros desta empresa.</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md">
+    {proposalMode && proposalStage === 'acompanhamento' ? (
+      <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md p-4 space-y-3" data-block="proposta-acompanhamento" aria-label="Acompanhamento ilustrativo do pedido">
+        <h3 className="font-semibold text-sky-950">C · Aprovação / fechamento (ilustrativo)</h3>
+        <p className="text-sm text-slate-600">Não é pedido real. Capacidades abaixo reutilizam owners existentes — sem botão fictício como integração pronta.</p>
+        <dl className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div><dt className="text-slate-500">Pedido sintético</dt><dd className="font-mono">{proposalAcomp.numero_pedido}</dd></div>
+          <div><dt className="text-slate-500">Status</dt><dd>{proposalAcomp.status}</dd></div>
+          <div><dt className="text-slate-500">Origem orçamento</dt><dd className="font-mono">{proposalAcomp.origem_orcamento}</dd></div>
+          <div><dt className="text-slate-500">Crédito / financeiro</dt><dd data-capacidade="parcial">{proposalAcomp.credito}</dd></div>
+          <div><dt className="text-slate-500">Estoque</dt><dd data-capacidade="parcial">{proposalAcomp.estoque}</dd></div>
+          <div><dt className="text-slate-500">Produção</dt><dd data-capacidade="parcial">{proposalAcomp.producao}</dd></div>
+          <div><dt className="text-slate-500">Entregas / mapa</dt><dd data-capacidade="parcial">{proposalAcomp.entrega}</dd></div>
+          <div><dt className="text-slate-500">Nota fiscal</dt><dd data-capacidade="futuro">{proposalAcomp.nota}</dd></div>
+          <div><dt className="text-slate-500">Cobrança</dt><dd data-capacidade="parcial">{proposalAcomp.cobranca}</dd></div>
+        </dl>
+        <div className="flex flex-wrap gap-2 pt-2">
+          <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-voltar-edicao" onClick={() => { setProposalStage('edicao'); setFormOpen(true); }}>Voltar ao orçamento</Button>
+          <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-lista" onClick={proposalBackToLista}>Voltar às negociações</Button>
+        </div>
+      </div>
+    ) : (!proposalMode && listQuery.isLoading) ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : (!proposalMode && listQuery.isError) ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>{proposalMode ? 'Nenhuma negociação sintética nesta etapa.' : 'Nenhum orçamento encontrado para os filtros desta empresa.'}</p></div> : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={proposalMode ? 'proposta-negociacoes' : undefined}>
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
-      <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'}</Badge></TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>{canEdit(row) && <Button size="icon" variant="ghost" title="Editar" onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
+      <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{proposalMode ? 'Sintético' : (row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado')}</Badge></TableCell><TableCell><div className="flex justify-end gap-1">{!proposalMode && <Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>}{(proposalMode || canEdit(row)) && <Button size="icon" variant="ghost" title={proposalMode ? 'Abrir orçamento sintético' : 'Editar'} data-action={proposalMode ? 'proposta-selecionar-negociacao' : undefined} onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{!proposalMode && canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
     </div>}
-    <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={listQuery.isFetching} />
+    {!(proposalMode && proposalStage === 'acompanhamento') && <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={proposalMode ? false : listQuery.isFetching} />}
 
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className={proposalMode ? 'w-[96vw] max-w-7xl max-h-[92vh] flex flex-col overflow-hidden border-sky-200 bg-sky-50' : 'w-[96vw] max-w-6xl max-h-[92vh] overflow-auto'}><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>{proposalMode ? 'Escolha cliente e produtos, ajuste quantidades e navegue pelo contexto sem perder o rascunho.' : <>Totais e preço unitário são conferidos pelo servidor ({ORCAMENTO_PERSISTENCE_GAPS.preco_unitario_ui}). Tabela de preço persiste no cabeçalho e alimenta o snapshot.</>}</DialogDescription></DialogHeader>
       {proposalMode && <p className="text-sm font-medium text-sky-900">PRÉVIA SINTÉTICA · aprovação visual pendente · sem gravação</p>}
@@ -482,7 +553,16 @@ const convertToPedido = async () => {
         );
       })()}
       </div>
-      <DialogFooter><Button variant="outline" onClick={closeForm}>Fechar</Button><Button onClick={save} disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button></DialogFooter>
+      <DialogFooter className="flex flex-wrap gap-2">
+        {proposalMode && (
+          <>
+            <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-voltar-lista" onClick={proposalBackToLista}>Voltar</Button>
+            <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-avancar-acompanhamento" onClick={() => { setFormOpen(false); setProposalStage('acompanhamento'); }}>Avançar</Button>
+          </>
+        )}
+        <Button variant="outline" onClick={closeForm}>Fechar</Button>
+        <Button onClick={save} disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError} title={proposalMode ? 'Gravação desabilitada na proposta visual' : undefined}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button>
+      </DialogFooter>
     </DialogContent></Dialog>
 
     <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div data-action="orcamento-detalhe-tabela-preco"><span className="text-slate-500">Tabela de preço</span><p>{tabelaLabel(selected.tabela_preco_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setConversionStockOk(true); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>

@@ -1,7 +1,12 @@
+## CURSOR — #591 CI 84325aac + C360 A/B/C + pedido Codex contatos (2026-11-10 America/Sao_Paulo)
+- Tip **`84325aac`** · **CI SUCCESS** 9/9. Pedido objetivo: `codex-pedido-decisao-objetiva-contatos-591`.
+- ContatoB2B sem FK → não conectar Completo. Negativo: sem ContatoB2B/ContatoClienteV2.
+- C360 proposta: etapas A/B/C em OrcamentosTab (`?proposta=comercial360`); sem paralelo.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 CI FAIL 2d0bff6e → reverte Usuario/CANAL; Completo (b) (2026-11-10 America/Sao_Paulo)
-- `2d0bff6e` FAIL: peels Usuario em `cursor-identidade-consolidacao` quebram CANAL `53ed9f42`.
-- Reverte UsuarioForm + consolidacao ao `2e90587f`. Fiscal já revertido.
-- Mantém Completo banner ContatoB2B (b) + peels boundaries. Sky Usuario/Fiscal = futuro c/ hunk CANAL.
+- Tip **`84325aac`** · **CI SUCCESS** (reverte Usuario/consolidacao; Completo (b) mantido).
+- `2d0bff6e` FAIL CANAL `53ed9f42`. Sky Usuario/Fiscal = futuro c/ hunk CANAL.
 - Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
 
 ## CURSOR — #591 CI peels pós-bfe3e25d (Completo + Usuario sky) (2026-11-10 America/Sao_Paulo)

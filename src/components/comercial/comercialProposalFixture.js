@@ -64,5 +64,66 @@ export function createComercialProposalFixture() {
       { id: 'preview-pag-1', codigo: '001', nome: 'À vista ilustrativo' },
       { id: 'preview-pag-2', codigo: '002', nome: 'Boleto ilustrativo' },
     ],
+    // Etapa A — lista sintética de negociações (não é GET operacional).
+    negociacoes: [
+      {
+        id: 'preview-orc-1',
+        numero: 'ORC-SINT-001',
+        cliente_empresa_id: 'preview-vinculo',
+        created_at: '2026-10-01T12:00:00.000Z',
+        validade_em: '2026-10-15',
+        status: 'EM_ABERTO',
+        subtotal: '100.00',
+        desconto: '0.00',
+        total: '100.00',
+        itens: [
+          {
+            id: 'preview-item-1',
+            produto_id: 'preview-produto',
+            descricao: 'Produto SINTÉTICO da proposta',
+            unidade_sigla: 'UN',
+            quantidade: '10',
+            preco_unitario: '10.00',
+            desconto: '0',
+            total: '100.00',
+          },
+        ],
+      },
+      {
+        id: 'preview-orc-2',
+        numero: 'ORC-SINT-002',
+        cliente_empresa_id: 'preview-vinculo',
+        created_at: '2026-09-20T12:00:00.000Z',
+        validade_em: '2026-09-30',
+        status: 'EM_ABERTO',
+        subtotal: '50.00',
+        desconto: '5.00',
+        total: '45.00',
+        itens: [
+          {
+            id: 'preview-item-2',
+            produto_id: 'preview-produto',
+            descricao: 'Produto SINTÉTICO da proposta',
+            unidade_sigla: 'UN',
+            quantidade: '5',
+            preco_unitario: '10.00',
+            desconto: '5',
+            total: '45.00',
+          },
+        ],
+      },
+    ],
+    // Etapa C — acompanhamento ilustrativo (não é pedido real / sem convert).
+    acompanhamentoPedido: {
+      numero_pedido: 'PED-SINT-001',
+      status: 'Ilustrativo — não gravado',
+      origem_orcamento: 'ORC-SINT-001',
+      credito: 'Parcial (owner: validação crédito pedido)',
+      estoque: 'Parcial (owner: ValidadorEstoquePedido)',
+      producao: 'Parcial (owner: GerarOpModal)',
+      entrega: 'Parcial (owner: PedidosEntregaTab + MapaRoteirizacaoIA)',
+      nota: 'Futuro (emissão só na empresa)',
+      cobranca: 'Parcial (owner: GerarCobrancaModal)',
+    },
   };
 }

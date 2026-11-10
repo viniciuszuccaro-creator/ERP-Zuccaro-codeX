@@ -23,6 +23,36 @@ test('OrcamentosTab: proposal aside + rascunho; salvar bloqueado em proposalMode
   assert.match(src, /Incluir item|Item<\/Button>|<Plus/);
 });
 
+test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implícito', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  assert.match(src, /data-block="proposta-etapas"/);
+  assert.match(src, /data-action=\{`proposta-etapa-\$\{key\}`\}/);
+  assert.match(src, /\['lista', 'A · Negociações'\]/);
+  assert.match(src, /\['edicao', 'B · Orçamento'\]/);
+  assert.match(src, /\['acompanhamento', 'C · Acompanhamento'\]/);
+  assert.match(src, /proposta-negociacoes/);
+  assert.match(src, /data-block="proposta-acompanhamento"/);
+  assert.match(src, /proposalBackToLista/);
+  assert.match(src, /Voltar não desfaz o rascunho/);
+  assert.match(src, /Avançar não salva\/converte/);
+  // Avançar etapa só muda stage — sem save/convert.
+  const avancarIdx = src.indexOf('data-action="proposta-etapa-avancar-acompanhamento"');
+  assert.ok(avancarIdx > 0);
+  const slice = src.slice(avancarIdx, avancarIdx + 220);
+  assert.match(slice, /setProposalStage\('acompanhamento'\)/);
+  assert.doesNotMatch(slice, /save\(|convertToPedido|criarPedido|mutate\(/i);
+  assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
+});
+
+test('comercialProposalFixture: negociacoes + acompanhamento sintéticos (sem IDs operacionais reservados)', () => {
+  const src = read('src/components/comercial/comercialProposalFixture.js');
+  assert.match(src, /negociacoes:/);
+  assert.match(src, /acompanhamentoPedido:/);
+  assert.match(src, /ORC-SINT-/);
+  assert.match(src, /PED-SINT-/);
+  assert.match(src, /Não são cadastros/);
+});
+
 test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do editor', () => {
   const src = read('src/components/comercial/OrcamentoProposalAside.jsx');
   assert.match(src, /data-action="proposta-voltar"/);
