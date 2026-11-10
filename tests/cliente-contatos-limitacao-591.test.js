@@ -46,6 +46,9 @@ test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
   assert.match(enderecos, /Cadastral\/Fiscal ≠ Entrega/);
   // Sem duplicata de opção Outro no select.
   assert.equal((enderecos.match(/SelectItem value="Outro"/g) || []).length, 1);
+  // Cancelar/Salvar respeitam persistBusy (paridade Contatos).
+  assert.match(enderecos, /disabled=\{bloqueado\}/);
+  assert.match(enderecos, /disabled=\{bloqueado \|\| !podeEditar\}/);
 });
 
 test('hydrate: documento→cpf/cnpj preserva string (zeros); tipo PF/PJ', () => {
