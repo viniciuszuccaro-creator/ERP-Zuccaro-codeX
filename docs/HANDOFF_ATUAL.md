@@ -1,3 +1,8 @@
+## CURSOR — #591 proposta limpar+aria-current (2026-11-10 America/Sao_Paulo)
+- Proposta A: limpar filtros na contagem; `aria-current=step`; placeholder nº/cliente.
+- Verde **`23ac22f9`** · **`90b8fb7d`**. ContatoB2B MCP sem FK — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
 ## CURSOR — #591 proposta cliente/contagem + CI 23ac/90b8 (2026-11-10 America/Sao_Paulo)
 - Proposta A: filtro cliente + busca por label + `proposta-lista-contagem`.
 - Verde **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`**. ContatoB2B MCP sem FK — (b) bloqueada.

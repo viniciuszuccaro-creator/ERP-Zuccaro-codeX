@@ -532,6 +532,7 @@ const convertToPedido = async () => {
             variant="outline"
             className={proposalStage === key ? 'bg-sky-700 text-white border-sky-700 hover:bg-sky-800 hover:text-white' : 'bg-white border-sky-200'}
             aria-pressed={proposalStage === key}
+            aria-current={proposalStage === key ? 'step' : undefined}
             data-action={`proposta-etapa-${key}`}
             onClick={() => {
               if (key === 'lista') {
@@ -566,7 +567,7 @@ const convertToPedido = async () => {
     )}
     {(!proposalMode || proposalStage === 'lista') && (
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }} data-block={proposalMode ? 'proposta-filtros-lista' : undefined}>
-      <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">Pesquisar número</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder="Pesquisar número" onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
+      <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">{proposalMode ? 'Pesquisar número ou cliente' : 'Pesquisar número'}</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder={proposalMode ? 'Pesquisar número ou cliente' : 'Pesquisar número'} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
       <Select value={filters.status} onValueChange={(value) => setFilters((current) => ({ ...current, status: value }))}><SelectTrigger aria-label="Filtrar status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem><SelectItem value="EM_ABERTO">Em aberto</SelectItem><SelectItem value="CANCELADO">Cancelado</SelectItem></SelectContent></Select>
       <Select value={filters.clienteEmpresaId} onValueChange={(value) => setFilters((current) => ({ ...current, clienteEmpresaId: value }))}><SelectTrigger aria-label="Filtrar cliente"><SelectValue placeholder="Todos os clientes" /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select>
       <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
@@ -665,15 +666,34 @@ const convertToPedido = async () => {
         <p className="text-xs text-slate-500" data-block="proposta-sem-paginacao" role="note">
           Prévia sintética — sem paginação de API (lista ilustrativa completa nesta etapa).
         </p>
-        <p
-          className="text-xs text-slate-600"
-          data-block="proposta-lista-contagem"
-          aria-live="polite"
-        >
-          {proposalFiltrosAtivos
-            ? `${proposalListaRows.length} de ${proposalNegociacoesAll.length} negociação(ões) sintética(s) após filtros.`
-            : `${proposalListaRows.length} negociação(ões) sintética(s) nesta etapa.`}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p
+            className="text-xs text-slate-600"
+            data-block="proposta-lista-contagem"
+            aria-live="polite"
+          >
+            {proposalFiltrosAtivos
+              ? `${proposalListaRows.length} de ${proposalNegociacoesAll.length} negociação(ões) sintética(s) após filtros.`
+              : `${proposalListaRows.length} negociação(ões) sintética(s) nesta etapa.`}
+          </p>
+          {proposalFiltrosAtivos && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-xs text-sky-900"
+              data-action="proposta-limpar-filtros"
+              onClick={() => {
+                const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' };
+                setFilters(clean);
+                setAppliedFilters(clean);
+                setPage(1);
+              }}
+            >
+              Limpar filtros
+            </Button>
+          )}
+        </div>
       </div>
     )}
 
