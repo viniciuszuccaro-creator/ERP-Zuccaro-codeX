@@ -302,7 +302,10 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
     setForm(emptyForm());
     setDirty(false);
     setFormOpen(true);
-    if (proposalMode) setProposalStage('edicao');
+    if (proposalMode) {
+      setProposalStage('edicao');
+      toast.message('Negociação sintética — sem gravação nem reserva de código operacional.');
+    }
   };
   const openEdit = (row) => {
     if (!proposalMode && !canEdit(row)) return;
@@ -620,7 +623,27 @@ const convertToPedido = async () => {
           }}
         />
       </div>
-      <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
+      <div className="flex gap-2">
+        <Button type="submit" variant="outline" className="flex-1" data-action={proposalMode ? 'proposta-filtrar' : undefined}>
+          <Search className="w-4 h-4 mr-2" />
+          {proposalMode ? 'Aplicar' : 'Filtrar'}
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          title="Limpar filtros"
+          data-action={proposalMode ? 'proposta-limpar-filtros' : undefined}
+          onClick={() => {
+            const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' };
+            setFilters(clean);
+            setAppliedFilters(clean);
+            setPage(1);
+          }}
+        >
+          <RefreshCw className="w-4 h-4" />
+        </Button>
+      </div>
     </form>
     )}
     {proposalMode && proposalStage === 'acompanhamento' ? (
