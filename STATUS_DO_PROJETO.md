@@ -1,3 +1,17 @@
+## CURSOR — #591 proposta title disabledReason + FK reconfirm (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | LaunchpadCard `disabled` + `disabledReason` (tooltip); grid `proposta-modulo-bloqueado` |
+| **FK ContatoB2B** | reconfirm **20261110c** — só `group_id` · **(b) bloqueada** |
+| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · **CI SUCCESS** |
+| **CI tip** | `31b66b6e` / `c3acbb70` — em acompanhamento |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 proposta dim cards + CI a51f (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

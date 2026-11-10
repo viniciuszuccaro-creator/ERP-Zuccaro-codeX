@@ -1,3 +1,8 @@
+## CURSOR — #591 proposta disabledReason + FK 20261110c (2026-11-10 America/Sao_Paulo)
+- Verde: **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. Tip código dim cards `31b66b6e` + tooltip `disabledReason`.
+- ContatoB2B MCP: só `group_id` → (b) bloqueada (evidence 20261110c). Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 proposta LaunchpadCard disabled + CI a51f (2026-11-10 America/Sao_Paulo)
 - Verde: **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347).
 - Lote: grid proposta dim cards (`proposta-modulo-bloqueado`); KPIs sintéticos; Pedido/externo off.

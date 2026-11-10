@@ -20,7 +20,7 @@ const COLOR_CLASSES = Object.freeze({
 /** @param {{title: React.ReactNode, description: React.ReactNode, icon: React.ElementType,
  * onClick?: (event: React.MouseEvent | React.KeyboardEvent) => void, color?: string,
  * badge?: React.ReactNode, badgeVariant?: string, dataPermission?: string, dataAction?: string,
- * disabled?: boolean}} props */
+ * disabled?: boolean, disabledReason?: string}} props */
 export default function LaunchpadCard({
   title,
   description,
@@ -32,15 +32,20 @@ export default function LaunchpadCard({
   dataPermission,
   dataAction,
   disabled = false,
+  disabledReason,
 }) {
   void badgeVariant;
   const gradient = COLOR_CLASSES[color] || COLOR_CLASSES.blue;
+  const blockedTitle = disabled
+    ? (disabledReason || 'Ação desabilitada neste contexto')
+    : undefined;
 
   return (
     <Card
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled || undefined}
+      title={blockedTitle}
       onClick={(e) => {
         e.stopPropagation();
         if (disabled) return;

@@ -34,6 +34,11 @@ export default function ModulosGridComercial({ modules, onModuleClick, proposalM
                     : `Comercial.${module.sectionKey || module.title}.abrir`
                 }
                 disabled={blockedByProposal}
+                disabledReason={
+                  blockedByProposal
+                    ? 'Proposta visual — abra apenas Orçamentos (sem módulos operacionais).'
+                    : undefined
+                }
               />
             );
           })}

@@ -30,7 +30,9 @@ test('ModulosGridComercial: proposta desabilita cards não-Orçamentos (Launchpa
   assert.match(grid, /data-proposta-grid=\{proposalMode \? 'comercial360'/);
   assert.match(grid, /proposta-modulo-bloqueado/);
   assert.match(grid, /disabled=\{blockedByProposal\}/);
+  assert.match(grid, /disabledReason=/);
   assert.match(card, /disabled = false/);
+  assert.match(card, /disabledReason/);
   assert.match(card, /data-launchpad-disabled=\{disabled \? 'true'/);
   assert.match(card, /if \(disabled\) return;/);
 });
