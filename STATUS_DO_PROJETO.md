@@ -1,3 +1,17 @@
+## CURSOR — #591 C360 rótulo sintético + a11y etapa (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`ba53dc05`** — Nova negociação sintética + aria-live subtítulo |
+| **Fix peels** | **`52aed2c4`** — banner Produto adiado (pin d312fbcd) |
+| **Busy dialog** | Contatos/Endereços: ESC/overlay sob bloqueado |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 dialog Contatos/Endereços não fecha sob busy (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

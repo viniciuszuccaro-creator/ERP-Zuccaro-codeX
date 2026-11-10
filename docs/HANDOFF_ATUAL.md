@@ -1,3 +1,9 @@
+## CURSOR — #591 C360 rótulo sintético + a11y + peels revert (2026-11-10 America/Sao_Paulo)
+- HEAD **`ba53dc05`**: proposta — Nova negociação sintética + aria-live etapa.
+- **`52aed2c4`**: banner Produto adiado (pin peels). Dialog busy ESC/overlay ok.
+- Verde: `e6a31225`+`dc48c9ff`. ContatoB2B sem FK → (b) bloqueada.
+- Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 dialog busy ESC/overlay + Produto banner adiado (2026-11-10 America/Sao_Paulo)
 - Contatos/Endereços: dialog não fecha sob `bloqueado` (ESC/overlay).
 - Produto banner adiado (pin peels d312fbcd); toast+disabled HTTP ok.
