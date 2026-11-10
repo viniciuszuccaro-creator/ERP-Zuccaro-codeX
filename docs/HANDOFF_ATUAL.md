@@ -1,3 +1,10 @@
+## CURSOR — #591 soft-landing C360 + docs fail-closed (2026-11-10 America/Sao_Paulo)
+- Tip **`ba21a342`** / docs **`f9b11cf6`** CI SUCCESS. Contatos[] (a) integrado.
+- Completo HTTP: `documentos[]` não vazio → 422 antes do MASTER; vazio/omit não envia.
+- C360 soft-landing: pausa micro-toasts; proposalMode não contamina ERP; evidence pack.
+- Aceite :15173: alinhar API+web a ba21a342. Documentos[] (c) BLOCKED BFF.
+- Sem ContatoClienteV2 · DocumentosCliente paralelo · redesign · merge/VPS · PII.
+
 ## CURSOR — #591 CI SUCCESS ba21a342 contatos[] (2026-11-10 America/Sao_Paulo)
 - Tip **`ba21a342`** CI SUCCESS (9/9). Decisão **(a)** contatos[] jsonb MASTER integrada.
 - Wire Completo/HTTP/PG + peels publication + entry fixture `045`.

@@ -50,3 +50,11 @@ PEDIDO AO CODEX
 
 FORA
 ContatoClienteV2 · DocumentosCliente paralelo · merge · VPS · PII no GitHub
+
+ATUALIZAÇÃO 2026-11-10 — decisão (a) aplicada; (c) permanece
+- (a) contatos[] jsonb MASTER: tip ba21a342 CI SUCCESS — Completo/HTTP/PG.
+- ContatoB2B FK (b): NÃO destrava; não usado no Completo.
+- (c) documentos[] anexos: ainda BLOCKED. Completo HTTP fail-closed antes do MASTER
+  (CLIENTE_HTTP_UNSUPPORTED_FIELDS / fields=['documentos']); omit/[] não envia.
+- Sem DocumentosClienteV2 / storage paralelo.
+- Aceite :15173 no tip ba21a342; batch locais atômico ainda opcional (BATCH_ATOMIC=false).

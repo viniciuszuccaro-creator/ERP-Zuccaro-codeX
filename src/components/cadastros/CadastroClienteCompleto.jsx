@@ -469,6 +469,26 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (isHttpBackendMode && locaisDraft !== undefined) {
         delete payload.locais_entrega;
       }
+      // Anexos documentos[] ≠ CPF/CNPJ MASTER ≠ ModeloDocumento — sem DocumentosCliente paralelo.
+      // Não vazio: fail-closed antes do MASTER (erro HTTP ≠ sucesso local). Vazio/omit: não envia.
+      if (isHttpBackendMode) {
+        const docsDraft = Object.prototype.hasOwnProperty.call(payload, 'documentos')
+          ? payload.documentos
+          : undefined;
+        if (Array.isArray(docsDraft) && docsDraft.length > 0) {
+          const err = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+            new Error(
+              'Anexos documentos[] ainda sem contrato BFF. Rascunho preservado — '
+                + 'CPF/CNPJ e demais campos MASTER não foram enviados neste save.',
+            )
+          );
+          err.code = 'CLIENTE_HTTP_UNSUPPORTED_FIELDS';
+          err.status = 422;
+          err.fields = ['documentos'];
+          throw err;
+        }
+        delete payload.documentos;
+      }
 
       // Identidade do rascunho (boundId), não props — evita salvar A em B após reject switch.
       const targetId = clienteBoundId || formData?.id || null;

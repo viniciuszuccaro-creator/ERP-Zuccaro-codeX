@@ -1,3 +1,18 @@
+## CURSOR — #591 soft-landing C360 + docs fail-closed + aceite tip (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CI** | **`ba21a342`** SUCCESS · docs **`f9b11cf6`** SUCCESS |
+| **Lote** | Soft-landing C360 (pausa microajustes) · Completo HTTP `documentos[]` fail-closed antes MASTER · pack aceite tip |
+| **Estados** | publicado+CI · revisado tip · aceite :15173 pendente · não implantado |
+| **Documentos[]** | BLOCKED BFF (c) — sem DocumentosCliente paralelo; omit/[] ok; não vazio 422 |
+| **C360** | proposalMode isolado do ERP normal; Voltar/Avançar sem save implícito |
+| **Evidence** | `docs/evidence/c360-soft-landing-591-20261110.txt` · aceite checkpoint 10d |
+| Fora | ContatoClienteV2 · redesign C360 · merge/VPS · PII |
+
+**Próximo:** aceite :15173 no tip `ba21a342` (Codex) · contrato BFF documentos[] · composição seletiva pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS ba21a342 contatos[] MASTER (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

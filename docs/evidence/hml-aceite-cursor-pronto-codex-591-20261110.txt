@@ -58,3 +58,13 @@ ATUALIZAÇÃO 2026-11-10c — CI SUCCESS ba21a342
 - Pedido Codex aceite :15173: usar ba21a342 (ou sucessor acordado) como tip API+web
   — não misturar freeze 0afd378f284 com funcionalidade contatos[] posterior sem acordo.
 - Contatos[] MASTER (a) comprovado em CI; locais sync ok; documentos[] ainda BFF.
+
+CHECKPOINT 2026-11-10d — tip revisado pronto p/ :15173
+- Tip funcional CI SUCCESS: ba21a342 (9/9)
+- Tip docs: f9b11cf6 (CI SUCCESS)
+- Homolog legado 77f11b28 / freeze 0afd378f284: NÃO misturar com contatos[] sem acordo
+- Pedido Codex: aceitar contatos reais nos detalhes/reabertura no tip ba21a342
+  · 331 canais = agregados ≠ 331 clientes · 99 prontos / 1 parcial
+  · comparações privadas · sem reimportação p/ CPF/CNPJ/nome já persistidos
+- Documentos[] (c): ainda BLOCKED BFF — Completo fail-closed antes do MASTER
+- C360: soft-landing documentado (c360-soft-landing-591-20261110.txt)

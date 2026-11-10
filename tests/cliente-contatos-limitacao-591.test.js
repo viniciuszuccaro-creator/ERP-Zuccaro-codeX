@@ -59,6 +59,10 @@ test('Completo: anexos distinguem identificação MASTER de documentos[]', () =>
   assert.match(completo, /data-fonte="documentos-limitacao-http"/);
   assert.match(completo, /Documento de identificação/);
   assert.match(completo, /ModeloDocumento/);
+  // HTTP: documentos[] não vazio fail-closed antes do MASTER; vazio/omit não envia.
+  assert.match(completo, /Anexos documentos\[\] ainda sem contrato BFF/);
+  assert.match(completo, /err\.fields = \['documentos'\]/);
+  assert.match(completo, /delete payload\.documentos/);
 });
 
 test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
