@@ -1,3 +1,17 @@
+## CURSOR — #591 proposta sem paginação HTTP + toast B2B (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Proposta: `proposta-sem-paginacao`; ContatoB2B toast; Completo regras Outro único/BATCH_ATOMIC |
+| **CI verde** | **`75aa36c1`** · **`3b5132de`** |
+| **CI tip** | `77edc2ea` / `516497af` / `e09f882b` — em acompanhamento |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto/LaunchpadCard peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · CI tip.
+
 ## CURSOR — #591 ContatoB2B toast + Completo regras locais (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
