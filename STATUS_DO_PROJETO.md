@@ -1,4 +1,23 @@
-## Continuidade vigente - extracao auxiliar concluida sem carga HML (2026-11-10)
+## Continuidade vigente - vinculos nativos100 e contatos canonicos candidatos (2026-11-10)
+
+Mesma fonte FINAL, sem recarga:100pais/100identidades conferidas,0quarentenas,
+232linhas auxiliares com PKs/documentos/34valores e hashes verificados. Contrato
+nativo CODIGOCLIENTE->codigo_legado comprovado; nao alegar FK ou associar por nome.
+READY/hash conferidos e leitor restaurado PARADO. Recibos reais somente privados.
+
+Lote de codigo: contatos no mestre existente, CAS/lock/RBAC/auditoria; enriquecimento
+legado apenas aditivo e reversivel. Mapper conserva baseline/manual e quarentena
+divergencias. Sem cadastro/importador paralelo.13persistencia+27mapper PASS;
+guardas99root+8bulk e27focados apos ajuste PASS. Builds/typechecks aprovados no
+alcance registrado no HANDOFF; Linux completo pendente, suite interrompida nao PASS.
+Publicacao de validacao draft autorizada; CI nova nao equivale a HML aplicada.
+
+HMLwrites0: recuperar configuracao/principal documentados, comprovar schema,
+baseline e backup antes de executar. SQL candidato nullable/CHECK nao aplicado.
+Numeros/pais/finalidades e WhatsApp nao inferidos. Proximo item unico: canal e
+gate do enriquecimento da mesma100; Cursor permanece escritor UI/composicao.
+
+## Historico imediato - extracao auxiliar concluida sem carga HML (2026-11-10)
 
 Leitor isolado executado no Codespace existente apos aceite EULA. Master limpo,
 READ_ONLY, rede none/zero portas/sem mounts dos originais; somente volume privado.

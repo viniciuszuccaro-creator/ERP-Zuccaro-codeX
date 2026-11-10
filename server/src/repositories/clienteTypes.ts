@@ -7,9 +7,7 @@ export const CLIENTE_ORIGENS = [
   'MARKETPLACE', 'APP', 'API',
 ] as const;
 
-/** Rich channel contract for the existing Cliente.contatos field, not a person registry.
- * Not accepted by MASTER writes until PostgreSQL storage and CAS are enabled together.
- */
+/** Rich channels of the existing master; not a parallel person registry. */
 export const CLIENTE_CONTATO_TIPOS = ['Telefone', 'Celular', 'WhatsApp', 'E-mail'] as const;
 const contactText = (max: number, min = 0) => z.string().min(min).max(max)
   .refine(value => !/[\u0000-\u001f\u007f<>]/.test(value), 'invalid_contact_text');
@@ -132,6 +130,8 @@ export const clienteCreateSchema = z.object({
 });
 
 export const clienteUpdateSchema = z.object({
+  contatos: clienteContatosReplaceSchema.innerType().shape.contatos,
+  expectedVersion: clienteContatosReplaceSchema.innerType().shape.expectedVersion.optional(),
   empresa_id: z.string().uuid().optional().nullable(),
   ativo: z.boolean().optional(),
   tipo: z.enum(CLIENTE_TIPOS).optional(),
@@ -153,12 +153,23 @@ export const clienteUpdateSchema = z.object({
   source_system: z.string().trim().min(1).max(80).optional().nullable(),
   migration_batch: z.string().trim().max(80).optional().nullable(),
   observacoes: z.string().trim().max(2000).optional().nullable(),
-}).strict();
+}).strict().superRefine((command, ctx) => {
+  if (command.contatos !== undefined) {
+    const result = clienteContatosReplaceSchema.safeParse({
+      contatos: command.contatos, expectedVersion: command.expectedVersion,
+    });
+    if (!result.success) result.error.issues.forEach(issue => ctx.addIssue(issue));
+  }
+});
 
 export type ClienteCreate = z.infer<typeof clienteCreateSchema>;
-export type ClienteUpdate = z.infer<typeof clienteUpdateSchema>;
+// NULL is internal restoration evidence, not a public replacement command.
+export type ClienteUpdate = Omit<z.infer<typeof clienteUpdateSchema>, 'contatos' | 'expectedVersion'> & {
+  contatos?: ClienteContato[] | null;
+};
 
 export type Cliente = {
+  contatos?: ClienteContato[] | null;
   id: string;
   group_id: string;
   empresa_id: string | null;

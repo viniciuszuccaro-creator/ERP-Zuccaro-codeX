@@ -3,7 +3,8 @@ import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';
 import { restoreClienteBulkSnapshot } from './clienteBulkLifecycle.js';
-import { correctInactiveLegacyName } from './clienteLegacyNameCorrection.js';
+import { correctInactiveLegacyName, enrichLegacyContacts } from './clienteLegacyNameCorrection.js';
+import { assertClienteContatosVersion, assertContactReferences, withClienteContatosVersion } from './clienteContatos.js';
 import { exportClientes } from './clienteExport.js';
 import type { AppliedBulkItem } from './cadastroBulkPolicy.js';
 import { AppError } from '../api/errors.js';
@@ -117,7 +118,12 @@ export class ClienteService {
     return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
   }
 
+  enrichLegacyContacts(ctx: RequestContext, input: unknown) {
+    return enrichLegacyContacts({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
+  }
+
   async get(ctx: RequestContext, id: string) {
+    ctx = { ...ctx };
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
@@ -125,7 +131,8 @@ export class ClienteService {
     if (!row || row.ativo === false) {
       throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
     }
-    return row;
+    await this.assertPermission(ctx, 'visualizar');
+    return withClienteContatosVersion(ctx, row);
   }
 
   /**
@@ -280,10 +287,11 @@ export class ClienteService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
+    ctx = { ...ctx };
+    const parsed = clienteUpdateSchema.safeParse(payload);
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'editar');
     this.rejectForbiddenFields(payload);
-    const parsed = clienteUpdateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
     }
@@ -325,6 +333,11 @@ export class ClienteService {
       if (!before || before.ativo === false) {
         throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
       }
+      if (parsed.data.contatos !== undefined) {
+        assertClienteContatosVersion(ctx, before, parsed.data.expectedVersion);
+        assertContactReferences(parsed.data.contatos);
+        await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, executor);
+      }
       if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)
         .some(field => parsed.data[field] !== undefined && parsed.data[field] !== before[field])) {
         throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Imported provenance is immutable');
@@ -344,7 +357,8 @@ export class ClienteService {
 
       let updated: Cliente | null;
       try {
-        updated = await this.repo.update(scope, id, parsed.data,executor);
+        const { expectedVersion: _version, ...fields } = parsed.data;
+        updated = await this.repo.update(scope, id, fields,executor);
       } catch (error) {
         this.rethrowConflict(error);
         throw error;
@@ -363,7 +377,8 @@ export class ClienteService {
         requestId: ctx.requestId,
         ipAddress: ctx.ipAddress,
       },executor);
-      return updated;
+      await this.assertPermission(ctx, 'editar', executor);
+      return withClienteContatosVersion(ctx, updated);
     });
   }
 

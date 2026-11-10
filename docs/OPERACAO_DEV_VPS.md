@@ -160,7 +160,7 @@ exata do vinculo Cliente/Grupo antes de persistir, nunca validacao pela primeira
 pagina de um seletor. Sem ContatoClienteV2 ou novo cadastro.
 
 `clienteContatoSchema` e `clienteContatosReplaceSchema`, no arquivo de tipos
-canonico existente, definem formato TESTAVEL, nao endpoint habilitado. Tipos
+canonico existente, definem o formato usado pelo GET/PATCH do mestre. Tipos
 Telefone/Celular/WhatsApp/E-mail permanecem distintos; nome/cargo/ramal/observacao,
 IDs/codigos/procedencia/status preservados; contato so com metadata e representavel.
 Sem valor/preferencia/status default; desconhecido nao e descartado. Extras ou
@@ -174,13 +174,40 @@ automatica. Exemplo somente sintetico:
 
 Omissao de contatos nao remove; lista vazia e remocao explicita, dependente de
 baseline completo/CAS e autorizacao. Limite200 rejeita excesso, sem truncar.
-Formato com expectedVersion NAO comprova CAS/RBAC/auditoria executados: a escrita
-MASTER ainda rejeita contatos/documentos ricos ate persistencia e transacao serem
-habilitadas conjuntamente. Delta candidato de armazenamento e coluna nullable
+O GET devolve contatos_version somente se o armazenamento existir; ausencia da
+coluna nao equivale a lista vazia. PATCH de contatos exige expectedVersion,
+rowlock, contexto capturado e nova autorizacao dentro da transacao; auditoria
+usa o mesmo executor. POST de mestre continua sem contatos ricos. Referencia
+B2B ainda e bloqueada sem resolucao canonica, sem FK ou cadastro paralelo.
+Delta candidato de armazenamento e coluna nullable
 `clientes.contatos jsonb`, sem default[] (NULL conserva desconhecido), com CHECK
 de array e limite; SQL/role/grants/HML NAO aplicados. Reutilizar rowlock,
 sanitizeClienteAudit, RBAC Cliente e contexto do servico; nao escrever JSONB
-diretamente. Documentos CPF/CNPJ/inscricoes sao do mestre; documentos adicionais
+diretamente. A candidata nao integra o migrador automatico; antes de aplica-la
+exigir identidade/schema/principal, backup, revisao e gate especifico da HML.
+O enriquecimento usa ClienteService.enrichLegacyContacts e os receipts existentes
+do lifecycle legado: sourceProof NDJSON com hashes, fingerprint integral, lock,
+editar+importar e auditoria atomica. Apply apenas acrescenta IDs novos depois do
+baseline integral inalterado; nao apaga, reordena nem reescreve contatos manuais.
+Repeticao do mesmo comando reutiliza receipt sem nova escrita; reverse exige
+snapshot atual identico ao after original e restaura inclusive NULL. Comando
+novo sem acrescimos deve ser classificado no-op pelo orquestrador, nao enviado
+como novo apply. Revogacao concorrente real no instante do commit nao e provada
+por guard sintetico que lanca erro; manter esse alcance separado.
+
+O mapper puro no arquivo existente mapear-registro-sintetico.mjs exige baseline
+completo, identidade nativa tipada e validador canonico. CODIGOCLIENTE corresponde
+ao codigo_legado pelo contrato de extracao privado aprovado; CodigoSistemaAntigo
+nao substitui essa chave. Provar PKs, documento e valores completos da mesma100
+contra o exemplar congelado antes de usar o mapper. Nao alegar FK inexistente.
+Preserva PK+campo na identidade do canal, nao mescla valores iguais de linhas
+diferentes; conflitos com valor/manual vao para quarentena sem sobrescrita.
+TELEFCLIENTE nao prova celular/WhatsApp. Campos invalidos nao apagam irmaos validos;
+mais de200 canais bloqueiam somente o cliente, sem truncar. Endereco sem numero,
+pais ou finalidade comprovados nao deve passar pelo contrato completo de Locais
+com defaults; preservar proposta e motivo privados para revisao.
+
+Documentos CPF/CNPJ/inscricoes sao do mestre; documentos adicionais
 e anexos exigem metadados/storage privado existentes, nao cabem em contatos.
 
 Leitura SQL: captura administrativa de09:59:10Z confirma instancia parada,

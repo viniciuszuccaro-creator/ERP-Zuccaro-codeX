@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { resolveProdutoTipoImportacao } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.
@@ -380,6 +381,91 @@ export const catalogarProdutoClasseUnidadeLegado = (rows = [], opts = {}) => {
     quantidade_sem_mapa: grupos.filter((g) => !g.mapeamento_comprovado).reduce((n, g) => n + g.quantidade, 0),
     grupos, importado_operacional: false };
 };
+/** Pure proposal only. The private collector owns document/crosswalk/full-row SHA/cohort proof.
+ * nativeKey is the original string or safe integer CODIGOCLIENTE (never a normalized alias).
+ * validateContact must delegate to the canonical clienteContatoSchema.safeParse.
+ */
+export const mapLegadoClienteContatos = (verifiedRecord, { batchUUID, validateContact } = {}) => {
+  if (typeof validateContact !== 'function') throw new Error('CONTACT_VALIDATOR_REQUIRED');
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuid.test(batchUUID || '')) throw new Error('CONTACT_BATCH_UUID_REQUIRED');
+  const { nativeParent, contacts34, sourceSystem, nativeKey, canonical } = verifiedRecord || {};
+  const scalar = v => (typeof v === 'string' && v.length > 0) || (typeof v === 'number' && Number.isSafeInteger(v));
+  const typed = v => [typeof v, v];
+  if (!nativeParent || !Array.isArray(contacts34) || !scalar(nativeKey)
+    || typeof nativeParent.CODIGOCLIENTE !== typeof nativeKey || nativeParent.CODIGOCLIENTE !== nativeKey
+    || !canonical || !uuid.test(canonical.id || '') || !uuid.test(canonical.group_id || '')
+    || canonical.empresa_id !== null || typeof sourceSystem !== 'string' || !sourceSystem
+    || canonical.source_system !== sourceSystem || canonical.codigo_legado !== String(nativeKey)) {
+    throw new Error('CONTACT_NATIVE_CANONICAL_BINDING_REQUIRED');
+  }
+  if (!Object.hasOwn(canonical, 'contatos') || (canonical.contatos !== null && !Array.isArray(canonical.contatos))) {
+    throw new Error('CONTACT_COMPLETE_BASELINE_REQUIRED');
+  }
+  const valid = value => validateContact(structuredClone(value))?.success === true;
+  const existing = structuredClone(canonical.contatos || []);
+  if (existing.some(c => !valid(c)) || existing.filter(c => c.principal === true).length > 1
+    || new Set(existing.filter(c => c.id).map(c => c.id)).size !== existing.filter(c => c.id).length) {
+    throw new Error('CONTACT_CANONICAL_BASELINE_INVALID');
+  }
+  const quarentena = [], reasons = new Set(), seen = new Set(), proposed = new Map(), provenance = [];
+  const quarantine = (table, pk, field, reason) => {
+    if (!quarentena.some(q => q.table === table && JSON.stringify(q.pk) === JSON.stringify(pk) && q.field === field && q.reason === reason)) {
+      quarentena.push({ table, pk: structuredClone(pk), field, reason });
+    }
+  };
+  const add = (row, table, pk, field, tipo, metadata = false) => {
+    const value = row[field];
+    if (value === undefined || value === null || value === '') return;
+    const nativeIdentity = JSON.stringify(pk.map(typed));
+    const id = createHash('sha256').update(JSON.stringify([sourceSystem, table, pk.map(typed), field])).digest('hex');
+    const prior = existing.find(c => c.id === id);
+    if (prior && (prior.source_system !== sourceSystem || prior.legacy_id !== nativeIdentity
+      || prior.codigo_legado !== String(nativeKey) || prior.tipo !== tipo)) {
+      reasons.add('CONTACT_IDENTITY_CONFLICT'); return;
+    }
+    // No defaults for preference/status/type, and no merging by equal phone/email value.
+    const candidate = { ...(prior || {}), id, tipo, valor: value, legacy_id: nativeIdentity,
+      codigo_legado: String(nativeKey), source_system: sourceSystem, migration_batch: batchUUID };
+    if (typeof value !== 'string' || !value.trim() || !valid(candidate)) {
+      quarantine(table, pk, field, 'CONTACT_CHANNEL_INVALID'); return;
+    }
+    if (metadata) for (const [nativeField, target] of [['NOMECONTATO', 'nome'], ['CARGOSETOR', 'cargo']]) {
+      if (row[nativeField] === undefined || row[nativeField] === null || row[nativeField] === '') continue;
+      const enriched = { ...candidate, [target]: row[nativeField] };
+      if (valid(enriched)) candidate[target] = row[nativeField];
+      else quarantine(table, pk, nativeField, 'CONTACT_METADATA_INVALID');
+    }
+    if (prior && !isDeepStrictEqual(candidate, prior)) quarantine(table, pk, field, 'CONTACT_EXISTING_CHANNEL_CONFLICT');
+    proposed.set(id, prior || candidate);
+    provenance.push({ id, table, pk: structuredClone(pk), field });
+  };
+  for (const row of contacts34) {
+    if (!row || typeof row.CODIGOCLIENTE !== typeof nativeKey || row.CODIGOCLIENTE !== nativeKey || !scalar(row.SEQUENCIA)) {
+      reasons.add('CONTACT_NATIVE_PK_MISMATCH'); continue;
+    }
+    const pk = [row.CODIGOCLIENTE, row.SEQUENCIA], identity = JSON.stringify(pk.map(typed));
+    if (seen.has(identity)) { reasons.add('CONTACT_NATIVE_PK_DUPLICATE'); continue; }
+    seen.add(identity);
+    const before = proposed.size;
+    add(row, 'ClientesTelefones', pk, 'TELEFCLIENTE', 'Telefone', true);
+    add(row, 'ClientesTelefones', pk, 'EMAIL', 'E-mail', true);
+    if (proposed.size === before) for (const field of ['NOMECONTATO', 'CARGOSETOR']) {
+      if (row[field] !== undefined && row[field] !== null && row[field] !== '') quarantine('ClientesTelefones', pk, field, 'CONTACT_WITHOUT_VALID_CHANNEL');
+    }
+  }
+  add(nativeParent, 'Clientes', [nativeKey], 'EMAIL', 'E-mail');
+  const additions = [...proposed.values()].filter(c => !existing.some(e => e.id === c.id))
+    .sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const contatos = existing.map(c => proposed.get(c.id) || c).concat(additions);
+  if (contatos.length > 200) reasons.add('CONTACT_LIMIT_EXCEEDED');
+  if (!proposed.size) reasons.add('CONTACT_NO_VALID_SOURCE_CHANNEL');
+  const pending = reasons.size > 0;
+  return { status: pending ? 'pending' : quarentena.length ? 'partial' : 'ready',
+    ...(pending ? {} : { contatos }), proposedCount: contatos.length,
+    reasons: [...reasons].sort(), quarentena, provenance, operationalImport: false };
+};
+
 if (process.argv[1] && process.argv[1].includes('mapear-registro-sintetico')) {
   const sampleRows = [
     {

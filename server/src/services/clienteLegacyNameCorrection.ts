@@ -6,6 +6,8 @@ import type { AuditRepository, RequestContext } from '../audit/types.js';
 import type { RbacGuard, RbacAction } from '../db/rbacGuard.js';
 import type { DbQueryExecutor } from '../db/client.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
+import { clienteContatosReplaceSchema } from '../repositories/clienteTypes.js';
+import { canonicalClienteJson, assertContactReferences } from './clienteContatos.js';
 
 const hashSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const fields = { id: z.string().uuid(), operationId: z.string().uuid(), expectedFingerprint: hashSchema,
@@ -186,5 +188,111 @@ export async function enrichLegacyStateRegistration(
       afterData: { ...common, inscricaoEstadual: target, fingerprint: legacyNameFingerprint(after) } }, q);
     await authorize(q);
     return { id: command.id, fingerprint: legacyNameFingerprint(after), reused: false };
+  });
+}
+
+const ndjsonProof = z.object({ fileSha256: hashSchema, rowSha256: hashSchema,
+  parser: z.literal('ndjson-v1') }).strict();
+const contactsCommand = z.discriminatedUnion('mode', [
+  z.object({ ...fields, mode: z.literal('apply'),
+    contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap(), sourceProof: ndjsonProof }).strict(),
+  z.object({ ...fields, mode: z.literal('reverse'), originalOperationId: z.string().uuid() }).strict(),
+]);
+const contactsReceipt = z.object({ kind: z.literal('legacy_contacts_enrichment'),
+  operationId: z.string().uuid(), commandHash: hashSchema, mode: z.enum(['apply', 'reverse']),
+  fingerprint: hashSchema, sourceProof: ndjsonProof,
+  snapshot: z.object({ contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap().nullable() }).passthrough(),
+}).strict();
+
+export const legacyContactsFingerprint = (snapshot: unknown) =>
+  createHash('sha256').update(canonicalClienteJson(snapshot)).digest('hex');
+
+/** Same legacy receipt lifecycle, raw locked snapshots and audit transaction; no importer or SQL writes here. */
+export async function enrichLegacyContacts(
+  deps: { repo: ClienteRepository; audit: AuditRepository; rbac: RbacGuard }, ctx: RequestContext, input: unknown,
+) {
+  ctx = { ...ctx };
+  const parsed = contactsCommand.safeParse(input);
+  if (!z.string().uuid().safeParse(ctx.groupId).success || !z.string().uuid().safeParse(ctx.actorId).success
+    || ctx.empresaId || ctx.scopeType === 'empresa') {
+    throw new AppError(403, 'LEGACY_GROUP_SCOPE_REQUIRED', 'Explicit Group actor required');
+  }
+  const authorize = async (q?: DbQueryExecutor) => {
+    for (const action of ['editar', 'importar'] as const) {
+      await deps.rbac.assertAllowed(ctx, 'Cadastros', 'cliente', action, { allowGlobalWildcard: false, executor: q });
+    }
+  };
+  await authorize();
+  if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid contacts enrichment command');
+  const command = parsed.data;
+  if (command.mode === 'apply') {
+    const validated = clienteContatosReplaceSchema.safeParse({ contatos: command.contatos, expectedVersion: command.expectedFingerprint });
+    if (!validated.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid contacts replacement');
+    assertContactReferences(command.contatos);
+  }
+  const commandHash = legacyContactsFingerprint({ group: ctx.groupId, actor: ctx.actorId, command });
+  const mismatch = () => new AppError(409, 'LEGACY_ENRICHMENT_CONFLICT', 'Matching source and unchanged snapshot required');
+  return deps.repo.withTransaction(async q => {
+    if (!q || !deps.repo.getBulkSnapshot) throw new AppError(503, 'BULK_SQL_REQUIRED', 'Canonical locked SQL snapshot required');
+    await authorize(q);
+    const scope = { groupId: ctx.groupId, empresaId: null };
+    const before = await deps.repo.getBulkSnapshot(scope, command.id, q);
+    if (!before || before.group_id !== ctx.groupId || before.empresa_id != null || before.origem !== 'MIGRACAO'
+      || before.source_system !== command.sourceSystem || before.codigo_legado !== command.legacyCode
+      || before.migration_batch !== command.batch) throw mismatch();
+    if (!Object.hasOwn(before, 'contatos')) throw new AppError(503, 'CLIENTE_CONTATOS_STORAGE_REQUIRED', 'Reviewed contacts schema required');
+    const history = (await deps.audit.listByEntity('Cliente', command.id, q))
+      .filter(e => e.groupId === ctx.groupId && e.empresaId == null && e.action === 'update');
+    const receipts = history.filter(e => {
+      const r = contactsReceipt.safeParse(e.afterData);
+      return r.success && r.data.operationId === command.operationId;
+    });
+    if (receipts.length > 1) throw mismatch();
+    if (receipts.length === 1) {
+      const receipt = contactsReceipt.parse(receipts[0].afterData);
+      if (receipt.commandHash !== commandHash || receipt.fingerprint !== legacyContactsFingerprint(before)
+        || !isDeepStrictEqual(receipt.snapshot, before)) throw mismatch();
+      await authorize(q);
+      return { id: command.id, fingerprint: receipt.fingerprint, reused: true };
+    }
+    if (legacyContactsFingerprint(before) !== command.expectedFingerprint) throw mismatch();
+    let target;
+    let sourceProof: z.infer<typeof ndjsonProof>;
+    if (command.mode === 'apply') {
+      const baseline = before.contatos === null ? [] : before.contatos;
+      // Enrichment appends only: preserve the complete ordered baseline, including manual metadata.
+      if (!Array.isArray(baseline) || command.contatos.length <= baseline.length
+        || !isDeepStrictEqual(command.contatos.slice(0, baseline.length), baseline)) throw mismatch();
+      const existingIds = new Set(baseline.map(contact => contact.id));
+      if (command.contatos.slice(baseline.length).some(contact => !contact.id || existingIds.has(contact.id))) throw mismatch();
+      target = command.contatos;
+      sourceProof = command.sourceProof;
+    }
+    else {
+      const originals = history.filter(e => {
+        const r = contactsReceipt.safeParse(e.afterData);
+        return r.success && r.data.mode === 'apply' && r.data.operationId === command.originalOperationId;
+      });
+      if (originals.length !== 1) throw mismatch();
+      const original = contactsReceipt.parse(originals[0].afterData);
+      const originalBefore = contactsReceipt.safeParse(originals[0].beforeData);
+      if (!originalBefore.success || original.fingerprint !== command.expectedFingerprint
+        || !isDeepStrictEqual(original.snapshot, before)
+        || originalBefore.data.fingerprint !== legacyContactsFingerprint(originalBefore.data.snapshot)) throw mismatch();
+      target = originalBefore.data.snapshot.contatos;
+      sourceProof = original.sourceProof;
+    }
+    await deps.repo.update(scope, command.id, { contatos: target }, q);
+    const after = await deps.repo.getBulkSnapshot(scope, command.id, q);
+    if (!after || !isDeepStrictEqual(after, { ...before, contatos: target, updated_at: after.updated_at })) {
+      throw new AppError(409, 'LEGACY_ENRICHMENT_MISMATCH', 'Unexpected canonical contacts enrichment change');
+    }
+    const common = { kind: 'legacy_contacts_enrichment', operationId: command.operationId, commandHash,
+      mode: command.mode, sourceProof };
+    await deps.audit.append({ ...ctx, empresaId: null, entity: 'Cliente', entityId: command.id, action: 'update',
+      beforeData: { ...common, snapshot: before, fingerprint: legacyContactsFingerprint(before) },
+      afterData: { ...common, snapshot: after, fingerprint: legacyContactsFingerprint(after) } }, q);
+    await authorize(q);
+    return { id: command.id, fingerprint: legacyContactsFingerprint(after), reused: false };
   });
 }

@@ -1,4 +1,48 @@
-## Continuidade vigente - cinco auxiliares extraidas e leitor parado (2026-11-10)
+## Continuidade vigente - vinculos da mesma100 comprovados; contatos em validacao (2026-11-10)
+
+Prova privada COMPLETE_100:100pais nativos/100identidades verificadas/0quarentenas,
+232linhas de ClientesTelefones. Contrato de extracao aprovado liga CODIGOCLIENTE
+a codigo_legado, distinto de CodigoSistemaAntigo. PKs/tipos atuais, documentos,
+conjunto de chaves e TODOS os34valores por linha conferidos contra a extracao
+pinada. Nao se alega FK: nao ha FK declarada nesse recorte.434linhas orfas na
+fonte global permanecem sem associacao; nao pertencem automaticamente a coorte.
+Recibo READY teve SHA256 conferido e leitor realmente restaurado PARADO.
+
+Artefatos reais: /workspaces/.erp-private-344/enrichment-20261110/attempt02.
+Reutilizar native-binding.private.json SOMENTE com hash igual ao marcador
+native-binding-ready.private.json, status COMPLETE_100 e readerRestored=true.
+Primeira tentativa falhou ao abrir o banco; diagnostico separado comprovou
+recuperacao em curso e conexao posterior. Driver passou a exigir conexao no
+banco READ_ONLY, alem de sys.databases ONLINE. Nao repetir attach/copia/export.
+
+Codigo candidato reutiliza MASTER Cliente, repo, mapper e lifecycle legado.
+GET/PATCH ricos com CAS; NULL/omissao/[] distintos; apply legado apenas ADITIVO,
+preservando baseline integral e correcoes manuais. Replay/reverse/auditoria
+transacionais. Duas contraprovas encontraram e corrigiram remocao de baseline
+e sobrescrita manual pelo mapper.13testes de persistencia e27mapper PASS.
+Guardas:99root+8bulk PASS e27focados apos ajuste final; peel exato contra0bb7313c
+preserva goldens ancestrais e rejeita mutacao/omissao/repeticao/bytes externos.
+Typecheck backend/build backend/build web PASS; lint0erros/1warning preexistente.
+Fechamento completo Linux ainda PENDENTE, nao usar contagens de suite interrompida.
+Tentativa Windows encontrou Python indisponivel e process.getuid ausente, alem
+de teste shell ainda ativo; somente processos dos proprios checks interrompidos.
+Autorizacao vigente permite commit de VALIDACAO na mesma342 draft para CI Ubuntu;
+isso NAO homologa dados/HML, nao autoriza merge/deploy/DDL/grants/carga operacional.
+
+HMLwrites deste lote0;100clientes/IE20/historicos preservados. Coluna nullable
+contatos e CHECK<=200 permanecem em server/schema-candidates/cliente_contatos.sql,
+fora do migrador e NAO aplicados. Preflight por senha inicial do container foi
+recusado, sem consulta executada. Bootstrap consultado referencia current-piloto
+e state funcional ausentes; localizar SOMENTE o ponto de retomada documentado da
+mesma HML, sem gerar chave/senha nem buscar credenciais gerais. Validar principal,
+perfil/Grupo/schema/baseline e backup antes de qualquer escrita. Nao assumir
+contatos:null se a coluna ou snapshot completo ainda nao foram comprovados.
+Enderecos sem numero/pais/finalidade comprovados ficam pendentes; nao inferir
+WhatsApp de telefone. Cursor segue escritor UI/composicao; coordenacao591/6769466645
+publicada, recebimento nao comprovado. Proximo: recuperar canal HML, aplicar
+somente delta revisado autorizado e propostas aditivas elegiveis, replay/reversao.
+
+## Historico imediato - cinco auxiliares extraidas e leitor parado (2026-11-10)
 
 Aceite EULA Developer recebido e aplicado somente ao leitor privado no MESMO
 Codespace. Fonte: par de trabalho verificado da copia centralizada, sem repetir

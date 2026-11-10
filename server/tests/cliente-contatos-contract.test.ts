@@ -45,7 +45,11 @@ test('ambiguous identities/preferences are rejected without merging records', ()
   assert.equal(clienteContatosReplaceSchema.safeParse({ expectedVersion,
     contatos: [{ ...contact, principal: false }, { ...contact, id: 'other-native-id', principal: false }] }).success, true);
 });
-test('MASTER still fails closed: contract validation is not enabled PostgreSQL persistence', () => {
+test('MASTER contacts require CAS; documents and public NULL replacement remain rejected', () => {
   assert.equal(clienteUpdateSchema.safeParse({ contatos: [] }).success, false);
+  assert.equal(clienteUpdateSchema.safeParse({ expectedVersion, contatos: [] }).success, true);
+  assert.equal(clienteUpdateSchema.safeParse({ expectedVersion, contatos: null }).success, false);
+  assert.equal(clienteUpdateSchema.safeParse({ expectedVersion, contatos: Array.from({ length: 201 }, (_, i) =>
+    ({ id: String(i), tipo: 'Telefone', valor: '0001' })) }).success, false);
   assert.equal(clienteUpdateSchema.safeParse({ documentos: [] }).success, false);
 });

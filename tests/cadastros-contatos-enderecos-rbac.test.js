@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
-import { transformSync } from 'esbuild';
+import { transformSync, buildSync } from 'esbuild';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
@@ -245,17 +246,40 @@ test('UI contatos: salvar com contexto capturado — resposta tardia não muta a
   assert.ok(capturedScopes.includes('stale'), 'assertScope captura contexto no momento do salvar');
 });
 
-test('contrato HTTP: BFF .strict rejeita contatos crus; adapter projeta para email/telefone/celular', async () => {
+test('contrato HTTP: BFF update exige CAS para contatos; POST e adapter permanecem escalares', async () => {
   const types = await readFile(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url), 'utf8');
   const service = await readFile(new URL('../server/src/services/clienteService.ts', import.meta.url), 'utf8');
   const ui = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const adapter = await readFile(new URL('../src/api/clienteHttpPayload.js', import.meta.url), 'utf8');
   // Frontend inclui contatos no payload local.
   assert.match(ui, /contatos: sanitizeContatos\(data\.contatos\)/);
-  // Backend: update schema strict e sem campo contatos — proteção UI não é autorização.
+  // Reviewed JSONB storage enables replacement only with CAS; POST is unchanged.
   assert.match(types, /clienteUpdateSchema/);
-  assert.doesNotMatch(types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 1200), /\bcontatos\b/);
+  const compiled = buildSync({ entryPoints: [fileURLToPath(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url))],
+    bundle: true, platform: 'node', format: 'cjs', write: false }).outputFiles[0].text;
+  const schemaModule = { exports: {} };
+  runInNewContext(compiled, { module: schemaModule, exports: schemaModule.exports, require });
+  const { clienteUpdateSchema, clienteCreateSchema } = schemaModule.exports;
+  const channel = { id: 'synthetic-contact', tipo: 'Telefone', valor: '001122' };
+  const version = 'a'.repeat(64);
+  assert.equal(clienteUpdateSchema.safeParse({ contatos: [channel], expectedVersion: version }).success, true);
+  assert.equal(clienteUpdateSchema.safeParse({ contatos: [], expectedVersion: version }).success, true);
+  assert.equal(clienteUpdateSchema.safeParse({ nome: 'SYNTHETIC' }).success, true);
+  for (const command of [
+    { contatos: [channel] }, { contatos: [] }, { contatos: [channel], expectedVersion: 'invalid' },
+    { contatos: null, expectedVersion: version }, { contatos: [channel, channel], expectedVersion: version },
+    { contatos: [{ ...channel, unknown: true }], expectedVersion: version },
+    { contatos: [{ ...channel, principal: true }, { ...channel, id: 'other', principal: true }], expectedVersion: version },
+    { contatos: [channel], expectedVersion: version, unknown: true },
+    { contatos: Array.from({ length: 201 }, (_, i) => ({ ...channel, id: String(i) })), expectedVersion: version },
+  ]) assert.equal(clienteUpdateSchema.safeParse(command).success, false, JSON.stringify(command));
+  const create = { tipo: schemaModule.exports.CLIENTE_TIPOS[0], nome: 'SYNTHETIC', documento: '52998224725' };
+  assert.equal(clienteCreateSchema.safeParse(create).success, true);
+  assert.equal(clienteCreateSchema.safeParse({ ...create, contatos: [channel] }).success, false);
+  assert.equal(clienteCreateSchema.safeParse({ ...create, expectedVersion: version }).success, false);
   assert.match(service, /clienteUpdateSchema\.safeParse/);
+  assert.match(service, /assertClienteContatosVersion\(ctx, before, parsed\.data\.expectedVersion\)/);
+  assert.match(service, /getById\(scope, id,executor,\{forUpdate:true\}\)/);
   // Adapter no contrato MASTER existente: projeta contatos[] → escalares; nunca envia contatos no wire.
   assert.match(adapter, /applyContatosProjection/);
   assert.match(adapter, /hydrateContatosFromScalars/);
