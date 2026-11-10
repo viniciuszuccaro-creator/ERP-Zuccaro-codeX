@@ -1,3 +1,9 @@
+## CURSOR — #591 C360 painel 1/N + peels Produto adiado (2026-11-10 America/Sao_Paulo)
+- HEAD **`34cdc182`**: `proposta-painel-indice` 1/N; rótulo sintético; aria-live.
+- **`52aed2c4`**: banner Produto adiado (pin peels d312fbcd). Dialog busy ok.
+- Verde: `e6a31225`+`dc48c9ff`. ContatoB2B sem FK → (b) bloqueada.
+- Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 C360 rótulo sintético + a11y + peels revert (2026-11-10 America/Sao_Paulo)
 - HEAD **`ba53dc05`**: proposta — Nova negociação sintética + aria-live etapa.
 - **`52aed2c4`**: banner Produto adiado (pin peels). Dialog busy ESC/overlay ok.
