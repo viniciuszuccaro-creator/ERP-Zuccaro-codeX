@@ -30,6 +30,13 @@ NEGATIVOS
 - Sem PII em GitHub/CI
 - Sem redesign operacional C360 sem OK visual
 
+ATUALIZAÇÃO 2026-11-10 (America/Sao_Paulo)
+- Verde CI: e6a31225 · dc48c9ff
+- Produto banner visual: ADIADO (peels pin d312fbcd) — toast+disabled HTTP ok
+- Dialog Contatos/Endereços: persistBusy + ESC/overlay
+- ContatoB2B UI WhatsApp≠telefone; FK reconfirm 20261110b ainda sem cliente_id
+- C360: filtros só A; owner-only atalhos; rótulo sintético; aria-live etapa
+
 CURSOR AGUARDA
 - Decisão objetiva (a)/(b)/(c) + contrato
 - Aceite :15173 no tip homolog

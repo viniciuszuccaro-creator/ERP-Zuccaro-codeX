@@ -276,6 +276,13 @@ export default function OrcamentoProposalAside({
         >
           Voltar
         </Button>
+        <span
+          className="text-xs font-medium text-sky-900 self-center tabular-nums"
+          data-block="proposta-painel-indice"
+          aria-live="polite"
+        >
+          {panelIndex + 1}/{TABS.length}
+        </span>
         <Button
           type="button"
           size="sm"

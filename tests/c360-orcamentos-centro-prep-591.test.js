@@ -72,6 +72,7 @@ test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do 
   assert.match(src, /data-action="proposta-voltar"/);
   assert.match(src, /data-action="proposta-avancar"/);
   assert.match(src, /Rascunho do editor permanece ao navegar/);
+  assert.match(src, /data-block="proposta-painel-indice"/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
   // Voltar/Avançar só muda painel — sem save/convert/efeitos externos.
   const voltarIdx = src.indexOf('data-action="proposta-voltar"');
