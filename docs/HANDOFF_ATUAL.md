@@ -1,3 +1,8 @@
+## CURSOR — #591 CI de85 + filtros auto proposta (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`de8511eb`**. Proposta A: status/cliente aplicam na seleção; C: `proposta-acompanhamento-rascunho`.
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
 ## CURSOR — #591 CI b9d9 + rascunho preservado (2026-11-10 America/Sao_Paulo)
 - CI SUCCESS **`b9d9a180`**. Voltar à lista: toast + `proposta-rascunho-preservado` se dirty.
 - ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.

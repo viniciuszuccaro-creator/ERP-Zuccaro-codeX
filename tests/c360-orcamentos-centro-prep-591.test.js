@@ -89,6 +89,9 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /proposta-lista-vazia/);
   assert.match(src, /proposta-limpar-filtros/);
   assert.match(src, /proposta-lista-contagem/);
+  assert.match(src, /proposta-filtro-status/);
+  assert.match(src, /proposta-filtro-cliente/);
+  assert.match(src, /proposta-acompanhamento-rascunho/);
   assert.match(src, /aria-current=\{proposalStage === key \? 'step'/);
   assert.match(src, /Pesquisar número ou cliente/);
   assert.match(src, /Nenhuma negociação sintética para os filtros atuais/);

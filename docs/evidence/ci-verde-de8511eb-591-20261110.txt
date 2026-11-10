@@ -1,0 +1,9 @@
+# CI verde — tip rascunho preservado (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: de8511eb
+- workflow: erp-runtime-ci
+- run: 42864266994
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: toast + proposta-rascunho-preservado ao Voltar com dirty
+- peels: sem alteração Completo / Produto / LaunchpadCard
