@@ -19,6 +19,10 @@ test('Comercial launchpad: OrcamentosTab canônico (sem OrcamentosV2)', () => {
   assert.match(src, /proposalMode: true/);
   assert.match(src, /proposta-kpis-sinteticos/);
   assert.match(src, /KPIs operacionais ocultos/);
+  assert.match(src, /proposta-kpis-shell/);
+  assert.match(src, /proposta-fluxo-hint/);
+  assert.match(src, /proposta-acoes-topo/);
+  assert.match(src, /aria-disabled=\{propostaIntegrada/);
   assert.match(src, /ModulosGridComercial[\s\S]*proposalMode=\{propostaIntegrada\}/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova|OrcamentosNovo/);
 });
@@ -139,6 +143,7 @@ test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do 
   assert.match(src, /data-block="proposta-conteudo-resumo"/);
   assert.match(src, /data-block="proposta-conteudo-acoes"/);
   assert.match(src, /proposta-painel-produtos-contagem/);
+  assert.match(src, /proposta-produtos-vazio/);
   assert.match(src, /aria-current=\{panel === key \? 'true'/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
   // Voltar/Avançar só muda painel — sem save/convert/efeitos externos.

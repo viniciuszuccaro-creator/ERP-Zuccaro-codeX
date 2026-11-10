@@ -1,0 +1,9 @@
+# CI verde — tip fixture 2º cliente + CANCELADO (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: e682df34
+- workflow: erp-runtime-ci
+- run: 42860436186
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: preview-vinculo-2 + ORC-SINT-003 CANCELADO (filtros A)
+- peels: sem alteração Completo / Produto / LaunchpadCard

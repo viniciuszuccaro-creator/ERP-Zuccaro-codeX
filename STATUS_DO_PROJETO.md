@@ -1,3 +1,16 @@
+## CURSOR — #591 CI 3718/e682 verde + shell KPIs hint (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI **`3718fb01`**/**`e682df34`**; shell `proposta-fluxo-hint` + `proposta-acoes-topo` |
+| **CI verde** | **`e682df34`** · **`3718fb01`** · **`cf403835`** · **`c1f8ed98`** · **`a35adcbc`** · **`55e2b943`** · **`df3f8c0e`** · **`ef35643c`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
 ## CURSOR — #591 fixture 2º cliente + CANCELADO sintético (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,3 +1,8 @@
+## CURSOR — #591 CI 3718/e682 + shell fluxo hint (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`e682df34`** · **`3718fb01`**. Shell: `proposta-fluxo-hint` + ações topo aria-disabled.
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
 ## CURSOR — #591 fixture 2º cliente + CANCELADO (2026-11-10 America/Sao_Paulo)
 - Fixture sintética: 2º vínculo + ORC-SINT-003 CANCELADO para demo de filtros A.
 - CI verde lote anterior df3f→cf403. ContatoB2B MCP **20261110e** — (b) bloqueada.

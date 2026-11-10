@@ -1,0 +1,9 @@
+# CI verde — tip aside painéis + evidence lote (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: 3718fb01
+- workflow: erp-runtime-ci
+- run: 42860304401
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: proposta-conteudo-* + contagem produtos; evidence CI df3f→cf403
+- peels: sem alteração Completo / Produto / LaunchpadCard

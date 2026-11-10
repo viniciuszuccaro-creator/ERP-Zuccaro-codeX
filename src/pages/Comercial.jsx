@@ -503,13 +503,14 @@ function ComercialContent() {
       <ModuleLayout
               title="Comercial e Vendas"
               subtitle={propostaIntegrada ? "Proposta visual Comercial360: Orçamentos A lista → B edição → C acompanhamento (sintético, sem gravação)." : "Vendas, clientes e canais"}
-              actions={<div className="flex items-center gap-2">
+              actions={<div className="flex items-center gap-2" data-block={propostaIntegrada ? 'proposta-acoes-topo' : undefined}>
                 <ProtectedSection module="Comercial" section="Pedidos" action="criar">
                   <Button
                     data-permission="Comercial.Pedidos.criar"
                     data-sensitive
                     data-action={propostaIntegrada ? 'proposta-pedido-bloqueado' : undefined}
                     disabled={propostaIntegrada}
+                    aria-disabled={propostaIntegrada || undefined}
                     title={propostaIntegrada ? 'Proposta visual — sem criar pedido operacional' : undefined}
                     onClick={handleCreateNewPedido}
                     className="bg-indigo-600 hover:bg-indigo-700"
@@ -521,6 +522,7 @@ function ComercialContent() {
                     variant="outline"
                     data-action={propostaIntegrada ? 'proposta-externo-bloqueado' : undefined}
                     disabled={propostaIntegrada}
+                    aria-disabled={propostaIntegrada || undefined}
                     title={propostaIntegrada ? 'Proposta visual — validação externa desabilitada' : undefined}
                     onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
                   >Validar Pedido Externo</Button>
@@ -529,6 +531,7 @@ function ComercialContent() {
             >
               <ModuleKPIs>
                 {propostaIntegrada ? (
+                  <div className="flex flex-wrap items-center gap-2" data-block="proposta-kpis-shell">
                   <Badge
                     className="bg-sky-100 text-sky-900 px-3 py-2 text-sm font-medium"
                     data-block="proposta-kpis-sinteticos"
@@ -536,6 +539,10 @@ function ComercialContent() {
                   >
                     Proposta visual — KPIs operacionais ocultos (sem consulta de totais reais)
                   </Badge>
+                  <p className="text-xs text-slate-600" data-block="proposta-fluxo-hint" role="note">
+                    Entrada liberada: Orçamentos · A lista → B edição → C acompanhamento · <code>?proposta=comercial360</code>
+                  </p>
+                  </div>
                 ) : (
                   <>
                     <KPIsComercial

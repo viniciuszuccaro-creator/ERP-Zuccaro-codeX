@@ -157,7 +157,11 @@ export default function OrcamentoProposalAside({
               <p className="text-xs text-slate-500">Sem consulta ou reserva de estoque real.</p>
             </div>
           ))}
-          {itensComProduto.length === 0 && <p className="text-sm text-slate-600">Selecione um produto no editor.</p>}
+          {itensComProduto.length === 0 && (
+            <p className="text-sm text-slate-600" data-block="proposta-produtos-vazio" role="status">
+              Selecione um produto no editor.
+            </p>
+          )}
         </section>
       )}
 
