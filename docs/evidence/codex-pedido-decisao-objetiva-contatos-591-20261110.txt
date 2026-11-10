@@ -25,6 +25,7 @@ CURSOR JÁ PREPARADO (sem storage paralelo / sem ContatoClienteV2)
 - locais: BATCH_ATOMIC=false; partial ≠ sucesso integral
 - Ordem de integração pós-decisão:
   docs/evidence/codex-consumidores-prontos-contatos-591-20261110.txt
+- FK ContatoB2B reconfirm 20261110b: ainda sem cliente_id/empresa_id na amostra Base
 Integração Completo inicia no tip CI SUCCESS após o contrato acima.
 
 FORA

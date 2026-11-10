@@ -1,0 +1,20 @@
+#591 — ContatoB2B FK reconfirm (amostra Base MCP) — tip Cursor WIP
+America/Sao_Paulo 2026-11-10 · sem PII
+
+QUERY
+- Base query_contatob2b limit=1 fields=[id,cliente_id,empresa_id,group_id,groupId,empresaId,clienteId,whatsapp,telefone]
+
+RESULTADO (sanitizado)
+- Presente: id, group_id
+- Ausente na amostra: cliente_id, empresa_id, groupId, empresaId, clienteId
+- whatsapp/telefone: campos existem no schema (valores omitidos aqui)
+
+CONCLUSÃO
+- (b) ContatoB2B no Completo permanece BLOQUEADA
+- Sem wire ContatoB2B→Completo até BFF comprovar FK cliente_id+group_id+empresa_id
+- UI ContatoB2B: data-regra=whatsapp-campo-proprio (sem auto-cópia telefone)
+
+REF
+- Pedido objetivo: codex-pedido-decisao-objetiva-contatos-591
+- Consumidores prontos: codex-consumidores-prontos-contatos-591
+- Aceite HML: hml-aceite-cursor-pronto-codex-591 (tip 77f11b28 / freeze 0afd378f284)

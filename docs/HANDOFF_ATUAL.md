@@ -1,3 +1,8 @@
+## CURSOR — #591 ContatoB2B FK reconfirm 20261110b (2026-11-10 America/Sao_Paulo)
+- Base MCP: ContatoB2B tem `group_id`; **sem** `cliente_id`/`empresa_id` → (b) bloqueada.
+- Pack: `codex-contatob2b-fk-reconfirm-591-20261110b`. UI WhatsApp campo próprio.
+- Sem ContatoClienteV2/wire Completo/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 ContatoB2B WhatsApp UI + Endereços Cancelar busy (2026-11-10 America/Sao_Paulo)
 - ContatoB2BForm: `data-regra=whatsapp-campo-proprio` (sem auto-cópia). Sem wire Completo.
 - Endereços: Cancelar gated por persistBusy. Tip **`e6a31225`** CI SUCCESS.
