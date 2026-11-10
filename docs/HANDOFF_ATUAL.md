@@ -1,3 +1,8 @@
+## CURSOR — #591 grid Orçamentos liberado (2026-11-10 America/Sao_Paulo)
+- Grid proposta: card Orçamentos `liberado` + ring; bloqueados dim. LaunchpadCard intacto.
+- Verde **`23ac22f9`** · **`90b8fb7d`**. ContatoB2B MCP sem FK — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
 ## CURSOR — #591 proposta limpar+aria-current (2026-11-10 America/Sao_Paulo)
 - Proposta A: limpar filtros na contagem; `aria-current=step`; placeholder nº/cliente.
 - Verde **`23ac22f9`** · **`90b8fb7d`**. ContatoB2B MCP sem FK — (b) bloqueada.

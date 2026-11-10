@@ -29,10 +29,13 @@ test('ModulosGridComercial: proposta dim cards não-Orçamentos sem tocar Launch
   assert.match(grid, /proposalMode = false/);
   assert.match(grid, /data-proposta-grid=\{proposalMode \? 'comercial360'/);
   assert.match(grid, /proposta-modulo-bloqueado/);
-  assert.match(grid, /data-proposta-card=\{blockedByProposal \? 'bloqueado'/);
+  assert.match(grid, /liberatedByProposal/);
+  assert.match(grid, /bloqueado.*liberado|liberado.*bloqueado|'bloqueado'|'liberado'/);
+  assert.match(grid, /data-proposta-card=\{/);
   assert.match(grid, /onClickCapture=\{blockedByProposal/);
   assert.match(grid, /cursor-not-allowed/);
   assert.match(grid, /aria-disabled=\{blockedByProposal/);
+  assert.match(grid, /ring-sky-400/);
   // peels stage56: LaunchpadCard permanece sem prop disabled (hash pin).
   assert.doesNotMatch(card, /\bdisabled\b/);
   assert.doesNotMatch(grid, /disabled=\{blockedByProposal\}/);

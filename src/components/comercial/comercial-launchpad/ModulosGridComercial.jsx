@@ -14,20 +14,27 @@ export default function ModulosGridComercial({ modules, onModuleClick, proposalM
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {modules.map((module, idx) => {
             const blockedByProposal = proposalMode && !isOrcamentosModule(module);
+            const liberatedByProposal = proposalMode && isOrcamentosModule(module);
             return (
               <div
                 key={idx}
                 className={
                   blockedByProposal
                     ? 'opacity-40 grayscale relative cursor-not-allowed'
-                    : undefined
+                    : liberatedByProposal
+                      ? 'relative ring-2 ring-sky-400 rounded-md'
+                      : undefined
                 }
-                data-proposta-card={blockedByProposal ? 'bloqueado' : undefined}
+                data-proposta-card={
+                  blockedByProposal ? 'bloqueado' : liberatedByProposal ? 'liberado' : undefined
+                }
                 aria-disabled={blockedByProposal || undefined}
                 title={
                   blockedByProposal
                     ? 'Proposta visual — abra apenas Orçamentos (sem módulos operacionais).'
-                    : undefined
+                    : liberatedByProposal
+                      ? 'Proposta visual — Orçamentos sintéticos (única entrada liberada).'
+                      : undefined
                 }
                 onClickCapture={blockedByProposal ? (e) => {
                   e.preventDefault();
