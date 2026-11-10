@@ -1,3 +1,15 @@
+## CURSOR — #591 C360 subtítulo por etapa + pack aceite HML (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **C360** | título/subtítulo por etapa A/B/C (`proposta-subtitulo-etapa`) |
+| **Pack** | `hml-aceite-cursor-pronto-codex-591` — checklist p/ :15173 |
+| Fora | ContatoClienteV2 · ContatoB2B wire · merge/VPS · PII · redesign operacional |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) + aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 Cadastral/Fiscal≠Entrega UI + Outro único (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

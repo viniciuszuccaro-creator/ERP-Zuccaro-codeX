@@ -453,7 +453,18 @@ const convertToPedido = async () => {
   };
   return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined}>
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-      <div><h2 className="text-xl font-semibold">Orçamentos</h2><p className="text-sm text-slate-500">Propostas comerciais da empresa ativa</p></div>
+      <div>
+        <h2 className="text-xl font-semibold">{proposalMode ? 'Proposta Comercial 360' : 'Orçamentos'}</h2>
+        <p className="text-sm text-slate-500" data-block={proposalMode ? 'proposta-subtitulo-etapa' : undefined}>
+          {proposalMode
+            ? (proposalStage === 'lista'
+              ? 'A · Negociações sintéticas — sem consulta HTTP operacional'
+              : proposalStage === 'edicao'
+                ? 'B · Edição sintética — Voltar não desfaz o rascunho'
+                : 'C · Acompanhamento ilustrativo — Avançar não salva nem converte')
+            : 'Propostas comerciais da empresa ativa'}
+        </p>
+      </div>
       {canCreate && <Button onClick={openCreate} disabled={!contextReady || (proposalMode && proposalStage === 'acompanhamento')} data-permission="Comercial.orcamento.criar"><FilePlus2 className="w-4 h-4 mr-2" />Novo orçamento</Button>}
     </div>
     {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos. URL: <code>?proposta=comercial360</code>.</AlertDescription></Alert>}

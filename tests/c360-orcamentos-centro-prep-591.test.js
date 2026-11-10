@@ -43,6 +43,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /\(!proposalMode \|\| proposalStage === 'lista'\)/);
   assert.match(src, /proposta-filtros-lista/);
   assert.match(src, /proposta-edicao-placeholder/);
+  assert.match(src, /proposta-subtitulo-etapa/);
+  assert.match(src, /Proposta Comercial 360/);
   // Avançar etapa só muda stage — sem save/convert.
   const avancarIdx = src.indexOf('data-action="proposta-etapa-avancar-acompanhamento"');
   assert.ok(avancarIdx > 0);

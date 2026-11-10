@@ -1,0 +1,36 @@
+#591 — Cursor pronto p/ aceite HML Codex (:15173) — tip congelado
+America/Sao_Paulo 2026-11-10 · sem PII
+
+HOMOLOG TIP (não alterar sem acordo Codex)
+- Tip HML coordenado: 77f11b28 (CI SUCCESS)
+- Freeze: 0afd378f284 até tip API+web acordado
+
+O QUE CURSOR JÁ ENTREGOU NA #591 (UI/contrato consumidor)
+- Completo: banners contatos/anexos; (b) ContatoB2B bloqueada sem FK;
+  Celular≠WhatsApp; omit-if-undefined; locais BATCH_ATOMIC=false ≠ toast integral;
+  Cadastral/Fiscal ≠ Entrega (UI + regra)
+- GerenciarContatos: data-regra=celular-nao-whatsapp
+- GerenciarEnderecos: data-regra=cadastral-fiscal-nao-entrega; Outro único
+- Produto V22: banner produto-foto-storage-http (Storage oficial)
+- C360: ?proposta=comercial360 A/B/C; filtros só A; atalhos C
+  data-integracao-pronta=false; Voltar≠discard; Avançar≠save
+- Packs Codex: decisão a/b/c · pedido objetivo · consumidores prontos ·
+  locais batch · FK ContatoB2B reconfirm (ainda ausente)
+
+PEDIDO AO CODEX PARA ACEITE :15173
+1. Rodar aceite no tip 77f11b28 (ou sucessor acordado) — não no tip Cursor WIP
+2. Decidir (a) jsonb / (b) ContatoB2B+FK / (c) anexos e publicar contrato BFF
+3. Batch locais atômico se BATCH_ATOMIC=false for inaceitável em HML
+4. Liberar tip composto API+web se freeze 0afd378f284 for atualizado
+
+NEGATIVOS
+- Sem ContatoClienteV2 / storage paralelo
+- Sem ContatoB2B no Completo sem FK
+- Sem merge/VPS/port cego #591→#401
+- Sem PII em GitHub/CI
+- Sem redesign operacional C360 sem OK visual
+
+CURSOR AGUARDA
+- Decisão objetiva (a)/(b)/(c) + contrato
+- Aceite :15173 no tip homolog
+Wire Completo inicia no tip CI SUCCESS pós-contrato.
