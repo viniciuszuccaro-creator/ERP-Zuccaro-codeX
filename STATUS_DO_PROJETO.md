@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **HEAD** | **`34cdc182`** — índice painel `proposta-painel-indice` + pack aceite HML |
+| **HEAD** | **`e5ffda98`** — `data-proposta=comercial360` + painel 1/N + pack aceite HML |
 | **Fix peels** | **`52aed2c4`** — banner Produto adiado (pin d312fbcd); CI em curso |
 | **Busy dialog** | Contatos/Endereços: ESC/overlay + fields sob bloqueado |
 | **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
