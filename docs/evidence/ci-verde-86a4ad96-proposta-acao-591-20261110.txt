@@ -1,0 +1,14 @@
+#591 — CI SUCCESS tip 86a4ad96 (proposta-acao slug)
+America/Sao_Paulo 2026-11-10 · sem PII
+
+VERDE CONFIRMADO
+- 86a4ad96 — proposta-acao-{slug} no OrcamentoProposalAside
+- c8d7c134 — peels Completo restaurado
+- a8305828 / 08452904 — docs
+
+IN_PROGRESS (último check)
+- 23ac22f9 — ContatoB2B fail-closed
+- 90b8fb7d — proposalListaRows filtros
+
+Homolog: 77f11b28 · freeze 0afd378f284
+ContatoB2B: (b) bloqueada

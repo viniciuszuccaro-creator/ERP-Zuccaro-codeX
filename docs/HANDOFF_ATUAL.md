@@ -1,3 +1,8 @@
+## CURSOR — #591 proposta filtros + empty + CI 86a4 (2026-11-10 America/Sao_Paulo)
+- Proposta A: validade + empty `proposta-lista-vazia` / limpar filtros. Verde **`86a4ad96`** · **`c8d7c134`**.
+- ContatoB2B fail-closed group/empresa. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
 ## CURSOR — #591 ContatoB2B fail-closed empresa + grid aria (2026-11-10 America/Sao_Paulo)
 - ContatoB2B: exige `group_id`; `empresa_id` no escopo empresa (toast). Sem Completo.
 - Grid proposta: `cursor-not-allowed` + `aria-disabled`. Verde peels **`c8d7c134`**.

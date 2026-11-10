@@ -1,3 +1,17 @@
+## CURSOR — #591 proposta vazia filtrada + CI 86a4 (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Proposta A: filtros search/status/validade + empty `proposta-lista-vazia` / `proposta-limpar-filtros` |
+| **CI verde** | **`86a4ad96`** · **`c8d7c134`** · **`a8305828`** · **`75aa36c1`** · **`3b5132de`** · **CI SUCCESS** |
+| **CI tip** | `23ac22f9` / `90b8fb7d` — em acompanhamento |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
 ## CURSOR — #591 proposta lista filtrada sintética + B2B fail-closed (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

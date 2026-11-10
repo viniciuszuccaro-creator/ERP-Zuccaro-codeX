@@ -439,9 +439,16 @@ const convertToPedido = async () => {
 
   if (!canView) return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4" /><AlertDescription>Acesso negado aos Orçamentos.</AlertDescription></Alert></div>;
   // Proposta: filtros só na etapa A — aplicam à lista sintética (sem HTTP).
+  const proposalNegociacoesAll = Array.isArray(proposalMasters.negociacoes) ? proposalMasters.negociacoes : [];
+  const proposalFiltrosAtivos = Boolean(
+    String(appliedFilters.search || '').trim()
+    || (appliedFilters.status && appliedFilters.status !== 'TODOS')
+    || appliedFilters.validadeDe
+    || appliedFilters.validadeAte
+  );
   const proposalListaRows = (() => {
     if (!proposalMode || proposalStage !== 'lista') return [];
-    let list = Array.isArray(proposalMasters.negociacoes) ? proposalMasters.negociacoes : [];
+    let list = proposalNegociacoesAll;
     const search = String(appliedFilters.search || '').trim().toLowerCase();
     if (search) {
       list = list.filter((row) => String(row.numero || '').toLowerCase().includes(search)
@@ -449,6 +456,12 @@ const convertToPedido = async () => {
     }
     if (appliedFilters.status && appliedFilters.status !== 'TODOS') {
       list = list.filter((row) => row.status === appliedFilters.status);
+    }
+    if (appliedFilters.validadeDe) {
+      list = list.filter((row) => String(row.validade_em || '') >= appliedFilters.validadeDe);
+    }
+    if (appliedFilters.validadeAte) {
+      list = list.filter((row) => String(row.validade_em || '') <= appliedFilters.validadeAte);
     }
     return list;
   })();
@@ -608,7 +621,26 @@ const convertToPedido = async () => {
           <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-lista" onClick={proposalBackToLista}>Voltar às negociações</Button>
         </div>
       </div>
-    ) : (!proposalMode && listQuery.isLoading) ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : (!proposalMode && listQuery.isError) ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? (proposalMode && proposalStage === 'edicao' ? <div className="flex-1 min-h-0" data-block="proposta-edicao-placeholder" aria-hidden="true" /> : <div className="flex-1 flex flex-col items-center justify-center text-slate-500"><FilePlus2 className="w-10 h-10 mb-2" /><p>{proposalMode ? 'Nenhuma negociação sintética nesta etapa.' : 'Nenhum orçamento encontrado para os filtros desta empresa.'}</p></div>) : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={proposalMode ? 'proposta-negociacoes' : undefined}>
+    ) : (!proposalMode && listQuery.isLoading) ? <div className="flex-1 flex items-center justify-center">Carregando orçamentos...</div> : (!proposalMode && listQuery.isError) ? <div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{errorMessage(listQuery.error)}</p><Button variant="outline" onClick={() => listQuery.refetch()}><RefreshCw className="w-4 h-4 mr-2" />Tentar novamente</Button></div> : rows.length === 0 ? (proposalMode && proposalStage === 'edicao' ? <div className="flex-1 min-h-0" data-block="proposta-edicao-placeholder" aria-hidden="true" /> : <div className="flex-1 flex flex-col items-center justify-center text-slate-500" data-block={proposalMode ? 'proposta-lista-vazia' : undefined}><FilePlus2 className="w-10 h-10 mb-2" /><p>{proposalMode
+      ? (proposalFiltrosAtivos && proposalNegociacoesAll.length > 0
+        ? 'Nenhuma negociação sintética para os filtros atuais.'
+        : 'Nenhuma negociação sintética nesta etapa.')
+      : 'Nenhum orçamento encontrado para os filtros desta empresa.'}</p>{proposalMode && proposalFiltrosAtivos && proposalNegociacoesAll.length > 0 && (
+      <Button
+        type="button"
+        variant="outline"
+        className="mt-3 border-sky-200"
+        data-action="proposta-limpar-filtros"
+        onClick={() => {
+          const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' };
+          setFilters(clean);
+          setAppliedFilters(clean);
+          setPage(1);
+        }}
+      >
+        Limpar filtros da prévia
+      </Button>
+    )}</div>) : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={proposalMode ? 'proposta-negociacoes' : undefined}>
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{proposalMode ? 'Sintético' : (row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado')}</Badge></TableCell><TableCell><div className="flex justify-end gap-1">{!proposalMode && <Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>}{(proposalMode || canEdit(row)) && <Button size="icon" variant="ghost" title={proposalMode ? 'Abrir orçamento sintético' : 'Editar'} data-action={proposalMode ? 'proposta-selecionar-negociacao' : undefined} onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{!proposalMode && canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
     </div>}
