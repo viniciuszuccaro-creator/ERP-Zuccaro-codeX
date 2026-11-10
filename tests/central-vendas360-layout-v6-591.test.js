@@ -10,9 +10,12 @@ import {
   CENTRAL_VENDAS360_DEFAULT_SITUACAO,
   CENTRAL_VENDAS360_SITUACOES,
   CENTRAL_VENDAS360_TITLE,
+  centralColumnPrefsStorageKey,
   isCentralVendas360Module,
   partitionCentralItens,
+  readCentralColumnHiddenKeys,
   sumCentralPesoKg,
+  writeCentralColumnHiddenKeys,
 } from '../src/components/comercial/centralVendas360Layout.js';
 
 const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
@@ -103,6 +106,38 @@ test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravaçã
   assert.match(src, /onDoubleClick/);
   assert.match(src, /notifyCentralSelect/);
   assert.match(src, /Validade do orçamento \(≠ prazo de entrega\)/);
+  assert.match(src, /central360-prefs-colunas/);
+  assert.match(src, /writeCentralColumnHiddenKeys/);
+  assert.match(src, /readCentralColumnHiddenKeys/);
+});
+
+test('preferências de colunas: escopo usuário+grupo+empresa; sem cruzar contexto', () => {
+  assert.equal(centralColumnPrefsStorageKey({}), null);
+  assert.equal(centralColumnPrefsStorageKey({ actorId: 'a', groupId: 'g' }), null);
+  const keyA = centralColumnPrefsStorageKey({ actorId: 'actor-a', groupId: 'grp-1', empresaId: 'emp-1' });
+  const keyB = centralColumnPrefsStorageKey({ actorId: 'actor-b', groupId: 'grp-1', empresaId: 'emp-1' });
+  const keyC = centralColumnPrefsStorageKey({ actorId: 'actor-a', groupId: 'grp-1', empresaId: 'emp-2' });
+  assert.ok(keyA && keyB && keyC);
+  assert.notEqual(keyA, keyB);
+  assert.notEqual(keyA, keyC);
+
+  /** @type {Map<string, string>} */
+  const mem = new Map();
+  const storage = {
+    getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+    setItem: (k, v) => { mem.set(k, String(v)); },
+  };
+  assert.equal(writeCentralColumnHiddenKeys({ actorId: 'actor-a', groupId: 'grp-1', empresaId: 'emp-1' }, ['origem', 'numero', 'hack'], storage), true);
+  assert.deepEqual(
+    readCentralColumnHiddenKeys({ actorId: 'actor-a', groupId: 'grp-1', empresaId: 'emp-1' }, storage),
+    ['origem'],
+  );
+  // Outro usuário/empresa não lê as prefs.
+  assert.deepEqual(
+    readCentralColumnHiddenKeys({ actorId: 'actor-b', groupId: 'grp-1', empresaId: 'emp-1' }, storage),
+    [],
+  );
+  assert.equal(writeCentralColumnHiddenKeys({ actorId: 'x' }, ['origem'], storage), false);
 });
 
 test('ModulosGridComercial: proposta libera Central (não só título Orçamentos)', () => {

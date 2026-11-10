@@ -4,6 +4,10 @@ America/Sao_Paulo 2026-11-09
 SNAPSHOT EXATO (API+web mesma versão após CI tip)
 - Branch: cursor/hml-grupo-erro-fornecedor-392b
 - PR: #591
+- Tip freeze CAS/preservação (pareceres 6778237293/6778347806): **c348d4d31e0a470ccc9e3e592080df3ec9c3c157** · CI SUCCESS 9/9 (run 42905250250)
+  - Inclui: expectedVersion↔contatos_version · omit≠[] · null≠[] · sem truncamento · peels/typecheck
+  - Layout v6: `82b15566` no mesmo branch
+  - Publicação privada :15173 = mesmo SHA API+web; sem deploy operacional automático neste agente
 - Tip homologação locais: 77f11b28a7502b11b3511a528011d1c0e971a6d3 · CI SUCCESS
 - Tip C360/contrato contatos: 10a1dd8eb5dd996b6be0bc7933821f9dcf9e03af · CI SUCCESS
 - Docs tip referência: 6572b9ae1d7603f5e19d67a3dd9e530d0da86feb · CI SUCCESS (PR591)
@@ -36,16 +40,17 @@ CHECKLIST ACEITE PRIVADO (:15173)
 [ ] Listagem: documento/email/telefone/celular visíveis (não só nome)
 [ ] Detalhe PF: CPF com zeros; nome; sem inventar razão social
 [ ] Detalhe PJ: CNPJ; razão social; fantasia
-[ ] Aba Contatos: escalares sem wipe; Celular≠WhatsApp; ricos → pendência explícita
+[ ] Aba Contatos: contatos[] MASTER + CAS (expectedVersion); Celular≠WhatsApp; omissão≠[]; null≠[]
+[ ] Contatos: concorrência 409; carga parcial; troca contexto; reabertura
 [ ] Aba Endereços: leitura cliente_locais; editar+salvar sync /locais; reabrir
 [ ] Soft-delete só após carga OK; falha de leitura não apaga
 [ ] Erro remoto / sync parcial ≠ toast de sucesso
 [ ] Troca cliente/contexto / resposta tardia / duplo clique
 
 COORD FREEZE→TIP
-- Codex confirma checklist no tip d1b08f96 (ou HEAD CI SUCCESS acordado)
-- Só então: mesmo SHA API+web na :15173; sair do freeze 0afd378f284
-- Publicação #591 ≠ integração #401
+- Tip freeze candidato: **c348d4d3** (CI SUCCESS) — API+web mesmo SHA
+- Sair do freeze antigo `0afd378f284` só com acordo Codex neste tip
+- Publicação #591 ≠ integração #401 · sem PII no GitHub
 
 FORA
 dados reais no GitHub · screenshots com PII · recreate · ContatoClienteV2 · merge/VPS

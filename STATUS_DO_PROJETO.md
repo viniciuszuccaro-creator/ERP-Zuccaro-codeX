@@ -1,3 +1,16 @@
+## CURSOR — #591 CI SUCCESS c348d4d3 + prefs colunas Central (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CAS** | **`c348d4d3`** CI SUCCESS 9/9 (run 42905250250) — freeze candidato API+web |
+| **Lote** | Docs freeze :15173 · prefs colunas Central escopo actor+grupo+empresa |
+| **Reuso** | `centralVendas360Layout` + `OrcamentosTab` centralLayout |
+| **Estados** | CAS fechado em tip · prefs colunas · screenshots/v6 ABERTO parciais · :15173 publicação privada |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 |
+
+**Próximo:** publicar :15173 no tip freeze (acordo) · screenshots privados · ações ABERTO restantes · #401 pós-aceite.
+
 ## CURSOR — #591 CI typecheck Contatos Error.code (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

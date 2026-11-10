@@ -35,9 +35,16 @@ Contrato Codex: 29726d3d (CAS expectedVersion ↔ contatos_version)
 - tsx --test server/tests/cliente-contatos-rbac-update.test.ts → 7/7 PASS
 - tsc -p server/tsconfig.json --noEmit → limpo (símbolos CAS)
 
+## Tip CI SUCCESS (freeze candidato API+web)
+
+- Tip: **`c348d4d31e0a470ccc9e3e592080df3ec9c3c157`**
+- CI: SUCCESS 9/9 · run https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/42905250250
+- Delta: CAS + peels + teste HTTP CAS + typecheck Completo tipado
+- Layout v6 base: `82b15566` preservado
+
 ## Não feito neste lote
 
-- Aceite :15173 / HML update (aguardar tip+CI deste delta)
-- Screenshots v6 / preferências coluna
+- Servir :15173 com tip freeze (sem deploy operacional neste agente; coordenar publicação privada)
+- Screenshots v6 com PII
 - Migration numerada 046 (reservada peels financeiros) — candidate apenas
 - Port cego #401 / ContatoClienteV2 / PII

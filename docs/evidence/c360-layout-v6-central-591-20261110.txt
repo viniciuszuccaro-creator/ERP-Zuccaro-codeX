@@ -28,10 +28,10 @@ NÃO CRIADO
 
 PENDENTE / BLOQUEADO
 - Aceite visual screenshots privados vs v6 (dois monitores)
-- Aceite :15173 contatos[] (Codex tip ba21a342)
+- Servir :15173 no tip freeze **`c348d4d3`** (API+web; sem deploy operacional automático)
 - documentos[] BFF
 - Integração seletiva #401 só pós-aceite
-- Preferências de coluna por usuário (ERPDataTable) — próximo lote
+- Ações ABERTO Imprimir/Enviar/Fechar/Mais Ações — parciais (Novo Orçamento OK); sem botão decorativo como integração
 - Contadores reais Bot/Aprovações — só quando API oficial existir (faixa abre janelas owners)
 
 CHECKLIST DOC
@@ -40,9 +40,11 @@ CHECKLIST DOC
 | Nav Central / sem Orçamento separado | implementado |
 | Shell v6 chrome + situações | implementado |
 | Tabela 12 col orçamentos | implementado (campos ausentes = —) |
+| Prefs colunas por usuário/grupo/empresa | implementado (localStorage escopado; fail-closed) |
 | Grades simultâneas | implementado |
 | Cliente360 lateral | implementado (token sessão) |
 | Clique simples/duplo | implementado |
 | Aceite visual privado | pendente |
-| CI tip **`82b15566`** | SUCCESS 12/12 (peel+harness+typecheck corrigidos) |
-| Aceite :15173 | bloqueado (Codex) |
+| CI tip layout **`82b15566`** | SUCCESS |
+| CI tip CAS freeze **`c348d4d3`** | SUCCESS 9/9 |
+| Aceite :15173 | freeze candidato c348d4d3 — publicação privada coordenada |

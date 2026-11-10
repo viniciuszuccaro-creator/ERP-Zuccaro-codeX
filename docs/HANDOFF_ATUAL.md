@@ -1,3 +1,10 @@
+## CURSOR — #591 CI SUCCESS c348d4d3 + prefs colunas Central (2026-11-10 America/Sao_Paulo)
+- Tip **`c348d4d3`** CI SUCCESS 9/9 — freeze candidato API+web p/ :15173 (pareceres CAS fechados).
+- Prefs colunas Central: storage `central360.cols.v6:actor:group:empresa` — fail-closed sem escopo.
+- Evidence: CAS pack + `hml-15173-aceite` + `c360-layout-v6` atualizados.
+- Sem deploy operacional automático / PII / #401. Ações ABERTO (Imprimir/Fechar/Mais) ainda parciais.
+- **Próximo:** publicação privada :15173 no tip · screenshots · ABERTO restante · #401 pós-aceite.
+
 ## CURSOR — #591 CI typecheck Contatos Error.code (2026-11-10 America/Sao_Paulo)
 - Tip `8f23094c` typecheck FAIL: `err.code/status` em Completo sem cast.
 - Fix: helper `contatosValidationError` tipado + peel Completo; typecheck/boundaries PASS.

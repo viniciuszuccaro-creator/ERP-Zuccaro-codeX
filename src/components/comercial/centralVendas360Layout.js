@@ -93,3 +93,58 @@ export function resolveCentralPrazoLabel(row, kind) {
 export function situacaoById(id) {
   return CENTRAL_VENDAS360_SITUACOES.find((s) => s.id === id) || CENTRAL_VENDAS360_SITUACOES[0];
 }
+
+/**
+ * Preferências de colunas da grade Central — escopo obrigatório usuário+grupo+empresa.
+ * Sem actor/group/empresa: fail-closed (sem ler/gravar storage compartilhado).
+ * @param {{ actorId?: string, groupId?: string, empresaId?: string } | null | undefined} scope
+ */
+export function centralColumnPrefsStorageKey(scope) {
+  const actor = String(scope?.actorId || '').trim();
+  const group = String(scope?.groupId || '').trim();
+  const empresa = String(scope?.empresaId || '').trim();
+  if (!actor || !group || !empresa) return null;
+  return `central360.cols.v6:${actor}:${group}:${empresa}`;
+}
+
+/**
+ * @param {{ actorId?: string, groupId?: string, empresaId?: string } | null | undefined} scope
+ * @param {{ getItem?: (key: string) => string | null }} [storage]
+ * @returns {string[]|null} hidden keys ou null se storage indisponível/inválido
+ */
+export function readCentralColumnHiddenKeys(scope, storage = globalThis.localStorage) {
+  const key = centralColumnPrefsStorageKey(scope);
+  if (!key || !storage?.getItem) return null;
+  try {
+    const raw = storage.getItem(key);
+    if (raw == null || raw === '') return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return null;
+    const allowed = new Set(CENTRAL_VENDAS360_COLUMNS.map((c) => c.key));
+    return parsed.filter((k) => typeof k === 'string' && allowed.has(k));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persiste hidden keys; retorna false se escopo incompleto ou storage falhou.
+ * @param {{ actorId?: string, groupId?: string, empresaId?: string } | null | undefined} scope
+ * @param {unknown} hiddenKeys
+ * @param {{ setItem?: (key: string, value: string) => void }} [storage]
+ */
+export function writeCentralColumnHiddenKeys(scope, hiddenKeys, storage = globalThis.localStorage) {
+  const key = centralColumnPrefsStorageKey(scope);
+  if (!key || !storage?.setItem) return false;
+  const allowed = new Set(CENTRAL_VENDAS360_COLUMNS.map((c) => c.key));
+  const clean = [...new Set((Array.isArray(hiddenKeys) ? hiddenKeys : [])
+    .filter((k) => typeof k === 'string' && allowed.has(k)))];
+  // Nunca esconder todas as colunas — mantém ao menos numero.
+  const safe = clean.filter((k) => k !== 'numero');
+  try {
+    storage.setItem(key, JSON.stringify(safe));
+    return true;
+  } catch {
+    return false;
+  }
+}
