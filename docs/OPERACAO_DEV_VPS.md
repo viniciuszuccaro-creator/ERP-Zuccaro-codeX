@@ -152,6 +152,15 @@ node --import /workspaces/ERP-Zuccaro-codeX/server/node_modules/tsx/dist/loader.
 
 #### Contrato de contatos e leitura auxiliar - 2026-11-10
 
+Nao confundir representacao com armazenamento: o proprietario confirmou o
+campo de contato existente no ERP novo. CadastroClienteCompleto e o gerenciador
+ja consomem contatos[]; clienteHttpPayload limita o transporte escalar e recusa
+perdas de multiplicidade/metadata. A leitura atual dos metadados da HML mostrou
+email/telefone/celular no mestre, sem contatos ou outro nome contato no schema.
+Persistir esse MESMO contrato nao autoriza criar outro cadastro. A resposta do
+proprietario sobre o campo existente NAO aprova DDL; candidata continua retida.
+Codigo29726d3d/CI6692SUCCESS nao equivale a schema aplicado ou dados enriquecidos.
+
 Decisao de representacao: canais ricos continuam em `Cliente.contatos`, ja
 consumido por GerenciarContatosCliente/Form. ContatoB2B continua pessoa comercial,
 cargo e preferencias; nao substituir/mesclar pessoas por nome, nem copiar suas

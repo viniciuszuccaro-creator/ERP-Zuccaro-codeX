@@ -1,4 +1,22 @@
-## Continuidade vigente - vinculos nativos100 e contatos canonicos candidatos (2026-11-10)
+## Continuidade vigente - codigo29726d3d/CI6692SUCCESS, HML sem nova escrita (2026-11-10)
+
+CI Ubuntu final3/3jobs aprovada no mesmo SHA funcional remoto; nao repetir POSIX,
+transporte/publicacao ou usar suite Windows interrompida como PASS. Coorte fonte
+100validada e confrontada na HML:100IDs/matches unicos codigo/documento/procedencia,
+0ausentes/ambiguos, READ ONLY/ROLLBACK com contexto app.group_id exigido pela RLS.
+Role efetiva sem super/BYPASS, sessao administrativa residual NAO leitor estrito.
+
+232linhas nativas contem230telefones/97emails/210nomes/3cargos; mestre nativo
+55emails/100enderecos principais. Dados continuam privados; nao inferir validade,
+WhatsApp ou endereco completo.5emails escalares existentes na HML preservados.
+Proprietario apontou corretamente contato ja existente no ERP novo: formulario
+contatos[] existe, mas HML PostgreSQL tem apenas email/telefone/celular neste
+contrato. Nao criar cadastro paralelo. DDL candidata pendente de decisao
+especifica, resposta do dono nao e aprovacao; nenhum enriquecimento aplicado.
+Proximo: concluir espelhamento do mesmo contrato e gate de persistencia HML,
+depois apply/replay/reversao canonicos. Nao reimportar os100 nem alterar originais.
+
+## Historico imediato - vinculos nativos100 e contatos canonicos candidatos (2026-11-10)
 
 Mesma fonte FINAL, sem recarga:100pais/100identidades conferidas,0quarentenas,
 232linhas auxiliares com PKs/documentos/34valores e hashes verificados. Contrato

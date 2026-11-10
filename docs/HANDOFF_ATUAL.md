@@ -1,4 +1,41 @@
-## Continuidade vigente - vinculos da mesma100 comprovados; contatos em validacao (2026-11-10)
+## Continuidade vigente -29726d3d/CI6692verde; persistencia HML aguardando decisao (2026-11-10)
+
+Codigo funcional29726d3d1bc0d36c5bff746ec72ab028101647de confirmado remoto,
+CI6692 SUCCESS/3jobs (frontend/backend/composicao). O fechamento Ubuntu do
+snapshot publicado passou; as tentativas Windows interrompidas abaixo nao sao
+PASS nem novos bloqueios POSIX. Nao repetir transporte, suites ou carga100.
+
+Confronto HML READ ONLY/ROLLBACK concluido:100linhas/100IDs/100matches unicos de
+codigo+documento+source_system,0ausentes/0ambiguos. Mesma HML/Grupo aprovados,
+perfil ativo com visualizar/editar/importar segundo guard canonico. Role efetiva
+sem superuser/BYPASSRLS, mas session_user administrativo via SET LOCAL ROLE:
+risco residual explicito, NAO leitor estrito. Politica exige app.group_id; sem
+essa configuracao retornou0 (negativa de contexto, nao destino vazio). O lote
+da execucao hml100-result.batchId nao e migration_batch do registro; nao alterar
+procedencia para fazer o filtro coincidir. Baseline correto permanece privado.
+
+Matriz agregada da mesma100:232linhas auxiliares;230telefones/97emails/210nomes/
+3cargos preenchidos,55emails no mestre nativo; nao sao canais unicos ou todos
+validados. HML conserva5emails escalares,0telefone/0celular preenchidos.100tem
+ENDERECO nativo,0ENDERECOCOBRANCA preenchido; numero/pais/finalidade sem prova
+nao serao inventados. API/formulario destes canais ainda nao homologados.
+
+Proprietario confirmou que o ERP NOVO ja possui contato. A resposta NAO foi
+tomada como aprovacao de DDL. Distincao comprovada: formulario ja usa contatos[],
+adapter clienteHttpPayload projeta apenas escalares com bloqueio de perda; no
+schema HML consultado existem email/telefone/celular, nao contatos ou tabela/
+coluna equivalente contendo contato no nome. A proposta e persistir O MESMO
+campo canonico existente, nunca outro cadastro/UI. SQL candidato continua NAO
+aplicado e depende de decisao especifica apos essa conciliacao do contrato.
+Catalogo completo de tabelas/colunas JSON/FKs da HML tambem foi conferido em
+leitura; os JSON existentes sao eventos, auditoria, permissoes e certificacoes
+de Marca, nao armazenamento alternativo do cadastro de contatos. ClienteLocal
+tem vinculo proprio de endereco; nao inventar um local para guardar contato.
+Isso nao afirma inexistencia de campo/entidade em Base44 ou em outro destino.
+Nao prometer enriquecimento concluido: HMLwrites0, originais/operacional intactos.
+Coordenacao Cursor591/6770460612 enviada com SHA/CI; recebimento nao comprovado.
+
+## Historico imediato - vinculos da mesma100 comprovados; contatos em validacao (2026-11-10)
 
 Prova privada COMPLETE_100:100pais nativos/100identidades verificadas/0quarentenas,
 232linhas de ClientesTelefones. Contrato de extracao aprovado liga CODIGOCLIENTE
