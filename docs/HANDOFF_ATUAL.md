@@ -1,7 +1,13 @@
+## CURSOR — #591 fix 347 proposta-nova-negociacao + peels verde (2026-11-10 America/Sao_Paulo)
+- **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS** (peels Produto + dialog busy).
+- Tip `ba53dc05` FAIL 347: harness atualizado p/ `data-action=proposta-nova-negociacao`.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 C360 painel 1/N + peels Produto adiado (2026-11-10 America/Sao_Paulo)
 - HEAD **`ff3243ac`**: shell `data-proposta` + Novo Pedido/externo bloqueados na proposta.
 - **`52aed2c4`**: banner Produto adiado (pin peels d312fbcd). Dialog busy ok.
-- Verde: `e6a31225`+`dc48c9ff`. ContatoB2B sem FK → (b) bloqueada.
+- Verde: `e6a31225`+`dc48c9ff`+`a92d7bd4`. ContatoB2B sem FK → (b) bloqueada.
 - Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
 
 ## CURSOR — #591 C360 rótulo sintético + a11y + peels revert (2026-11-10 America/Sao_Paulo)

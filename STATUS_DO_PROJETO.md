@@ -1,16 +1,29 @@
+## CURSOR — #591 fix 347 data-action nova negociação (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `ba53dc05` FAIL: testes 347 buscavam botão "Novo orçamento" |
+| **Fix** | harness usa `data-action=proposta-nova-negociacao` |
+| **Verde** | **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS** (peels + busy dialog) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 C360 painel 1/N + peels Produto adiado (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **HEAD** | **`ff3243ac`** — `data-proposta` + bloqueio Novo Pedido/externo na proposta |
-| **Fix peels** | **`52aed2c4`** — banner Produto adiado (pin d312fbcd); CI em curso |
+| **Fix peels** | **`52aed2c4`** · **CI SUCCESS** — banner Produto adiado (pin d312fbcd) |
 | **Busy dialog** | Contatos/Endereços: ESC/overlay + fields sob bloqueado |
-| **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** + **`a92d7bd4`** · **CI SUCCESS** |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
 | Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
 
-**Próximo:** CI tip `52aed2c4`+ · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
 
 ## CURSOR — #591 dialog Contatos/Endereços não fecha sob busy (2026-11-10 America/Sao_Paulo)
 

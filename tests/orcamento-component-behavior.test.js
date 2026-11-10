@@ -232,7 +232,8 @@ test('346 quote query keys separate actor and session without embedding credenti
 test('347 proposta no editor real usa somente memória e bloqueia gravação mesmo pelo callback', async () => {
   const h=await mount();h.setProps({...cpa,proposalMode:true});h.render();h.render();
   assert.ok(h.queries.every(key=>!JSON.stringify(key).includes('synthetic-session')));
-  h.button('Novo orçamento').props.onClick();h.render();
+  // #591: rótulo sintético — aciona via data-action (não "Novo orçamento" operacional).
+  h.find(n=>n.type==='Button'&&n.props['data-action']==='proposta-nova-negociacao').props.onClick();h.render();
   h.find(n=>n.type==='Select'&&n.props['data-action']==='orcamento-cliente').props.onValueChange('preview-vinculo');h.render();
   h.find(n=>n.type==='Select'&&n.props['data-action']==='orcamento-produto').props.onValueChange('preview-produto');h.render();
   const aside=h.find(n=>n.type==='OrcamentoProposalAside');
@@ -251,11 +252,12 @@ test('347 clique duplo em Novo orçamento não zera rascunho já aberto', async 
   h.setProps({ ...cpa, proposalMode: true });
   h.render();
   h.render();
-  h.button('Novo orçamento').props.onClick();
+  const nova = () => h.find((n) => n.type === 'Button' && n.props['data-action'] === 'proposta-nova-negociacao');
+  nova().props.onClick();
   h.render();
   h.find((n) => n.type === 'Select' && n.props['data-action'] === 'orcamento-cliente').props.onValueChange('preview-vinculo');
   h.render();
-  h.button('Novo orçamento').props.onClick();
+  nova().props.onClick();
   h.render();
   const aside = h.find((n) => n.type === 'OrcamentoProposalAside');
   assert.ok(aside.props.cliente.includes('SINTÉTICO'));
