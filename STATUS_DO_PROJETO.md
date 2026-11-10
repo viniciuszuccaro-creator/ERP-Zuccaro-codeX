@@ -1,4 +1,28 @@
-## Continuidade vigente - codigo29726d3d/CI6692SUCCESS, HML sem nova escrita (2026-11-10)
+## Continuidade vigente - HML recuperada; contatos100 aplicados e reversao comprovada (2026-11-10)
+
+Runtime29726d3d/CI6692SUCCESS3jobs, sem novo delta runtime. Gates especificos de
+recuperacao do apoio PG e coluna canonica contatos autorizados e executados.
+RWLayer nil/imagem ausente resolvidos com imagem privada pinada e mesmos binds;
+copia fria349552640bytes SHA256/tar-compare, antigo PARADO preservado, nenhuma
+porta/rede externa ou novo grant. Identidade fisica e100linhas integrais conferidas.
+
+Somente HML: contatos JSONB nullable/CHECK<=200, sem default/backfill; backup e
+revisao previos, CAS/locks/catalogo no COMMIT. Apply/replay/reverse/final_apply/
+final_replay canonicos PASS:100clientes/100IDs preservados,331canais
+(230telefones/101emails),99ready/1partial/1canal invalido em quarentena,
+300auditorias; replays sem incremento,0novo cliente,5emails escalares conservados.
+Origem deste recorte:5emails no mestre (corrige55 registrado antes),232linhas
+auxiliares/97emails/230telefones/210nomes/3cargos. Nao inferir WhatsApp ou finalidade.
+
+Backup final812040bytes SHA256/TOC verificado; nao novo restore desse arquivo.
+Reversao do enriquecimento executada e estado final reaplicado. Recibos e dados
+privados, apoio parado ocioso, conexoes fechadas e reserva liberada. Originais e
+operacional intactos; Cursor nao editado. Proxima acao: integrar UI/CAS do mesmo
+contatos[] com Cursor591/6773254795, depois API/web mesmoSHA e prova na15173.
+Banco enriquecido NAO significa formulario homologado ou cadastro completo.
+Enderecos100em texto ainda requerem campos/joins/finalidades comprovados.
+
+## Historico imediato - codigo29726d3d/CI6692SUCCESS, HML sem nova escrita naquele checkpoint (2026-11-10)
 
 CI Ubuntu final3/3jobs aprovada no mesmo SHA funcional remoto; nao repetir POSIX,
 transporte/publicacao ou usar suite Windows interrompida como PASS. Coorte fonte

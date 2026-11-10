@@ -1,4 +1,55 @@
-## Continuidade vigente -29726d3d/CI6692verde; persistencia HML aguardando decisao (2026-11-10)
+## Continuidade vigente - HML recuperada e contatos da mesma100 enriquecidos (2026-11-10)
+
+Autorizacoes especificas recebidas: persistir o MESMO Cliente.contatos[] na HML
+nullable/CHECK array<=200, e recuperar somente seu container PG de apoio apos
+copia fria. Ambas executadas; nao repetir pedido, carga100 ou remapeamento.
+Runtime canonico29726d3d/CI6692SUCCESS3jobs reutilizado, sem novo codigo runtime.
+
+Falha fisica observada: RWLayer unexpectedly nil, exit255/OOMKilled=false; imagem
+tambem ausente do cache. Recuperada do arquivo privado de imagem ja existente,
+com SHA256 e image ID conferidos, sem download/troca de versao. Copia fria PGdata
+349552640bytes, SHA256/tar-compare verificados. Container anterior preservado
+PARADO; substituto com mesma imagem, credenciais, binds persistentes, Config e
+HostConfig (somente normalizacao Docker OomKillDisable null->false), rede none,
+zero portas. systemIdentifier pinado no pg_control frio e comparado pelo SQL;
+100linhas integrais iguais ao baseline antes de qualquer DDL.
+
+Backup logico anterior SHA256/TOC e revisao precederam a alteracao somente do
+schema HML. Coluna contatos JSONB nullable e CHECK aplicados, sem default/backfill,
+novos grants/roles ou alteracao operacional. Locks/CAS de dados/catalogo antes
+do COMMIT, preservacao integral100; primeira tentativa do driver abortou por
+colisao de alias PL/pgSQL, rollback/ausencia de coluna/catalogo comprovados antes
+de corrigir o driver e reutilizar o MESMO backup. Nao enfraquecidas as guardas.
+
+Servico canonico enrichLegacyContacts executado:100elegiveis,99ready/1partial,
+331canais finais (230Telefone/101E-mail),1canal invalido em quarentena privada.
+APPLY, REPLAY, REVERSE, FINAL_APPLY e FINAL_REPLAY PASS. Reversao restaurou NULL
+e demais campos; final reaplicado, replays sem nova escrita/auditoria.300eventos
+de auditoria adicionados,100IDs/codigos/procedencia conservados,0novo cliente,
+5emails escalares preservados. Nada foi inferido como WhatsApp/principal/ativo.
+Correcao da matriz anterior: neste recorte nativo100 ha5emails no mestre, nao55;
+97emails nas232linhas auxiliares,230telefones/210nomes/3cargos. Contagens de origem
+e canais persistidos sao unidades distintas; nomes/cargos acompanham os canais
+comprovados.100ENDERECO nativos ainda nao equivalem a100locais completos.
+
+Backup FINAL do novo estado:812040bytes, SHA256/TOC verificados. Este arquivo nao
+foi restaurado novamente; ensaio anterior de recuperacao e reversao canonica
+reutilizados, sem confundir com prova de restore desse dump. Dados/journals/
+manifestos somente em /workspaces/.erp-private-344/enrichment-20261110;
+execution-closed.private.json e enrichment-final-summary.private.json sao os
+checkpoints finais. contact-worker-29726d3d/completion.private.json registra as
+fases; NAO repetir APPLY para reproduzir relatorio. writer.lock proprio liberado
+com arquivo privado conservado, conexoes fechadas e PG de apoio PARADO ocioso.
+
+Proximo: Cursor portar/revisar mesmo contatos[] rico + CAS/contatos_version,
+preservando multiplos, RBAC/contexto e campos nao carregados; depois API/web
+mesmo SHA e prova fonte->API->tela/reabertura. Coordenacao591/6773254795 publicada,
+recebimento nao comprovado. Nao ha nova prova/browser nem URL ativa declarada.
+Enderecos continuam pendentes de campos/joins/finalidades comprovados, sem numero,
+pais ou finalidade ficticios. Nenhum original, banco operacional ou branch Cursor
+alterado. A sessao administrativa residual continua NAO leitor estrito.
+
+## Historico imediato -29726d3d/CI6692verde; gate ainda pendente naquele checkpoint (2026-11-10)
 
 Codigo funcional29726d3d1bc0d36c5bff746ec72ab028101647de confirmado remoto,
 CI6692 SUCCESS/3jobs (frontend/backend/composicao). O fechamento Ubuntu do

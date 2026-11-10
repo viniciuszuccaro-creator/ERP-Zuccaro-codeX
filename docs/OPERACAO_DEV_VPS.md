@@ -1,5 +1,32 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Delta vigente - recuperacao do apoio e contatos HML concluida (2026-11-10)
+
+- Gate do proprietario executado SOMENTE na HML existente. Apoio PG recuperado
+  com imagem pinada restaurada do arquivo privado existente, mesmos dados/binds,
+  Config/HostConfig, rede none/zero portas; antigo RWLayer defeituoso PARADO
+  conservado. Normalizacao Docker OomKillDisable null->false nao amplia acesso.
+  Pin fisico pg_control frio/SQL e baseline integral100 conferidos antes de DDL.
+- Coluna canonica clientes.contatos JSONB nullable/CHECK array<=200 aplicada no
+  schema hml344_cpa_20261104 apos backup/revisao; nenhum grant, role, default ou
+  backfill. Nao executar migrador geral nem repetir esse ALTER. Runtime do lote
+  29726d3d/CI6692SUCCESS, distinto do snapshot anterior da interface abaixo.
+- Canonico apply/replay/reverse/final_apply/final_replay PASS:100clientes
+  conservados,331canais finais,1canal em quarentena,300auditorias. Backup final
+  812040bytes SHA256/TOC; nao se alega novo restore desse dump. Copia fria anterior
+  349552640bytes SHA256/tar-compare tambem preservada. Originais/operacional intactos.
+- Retomada: ler enrichment-20261110/execution-closed.private.json,
+  container-recovery-verified.private.json, final-backup-verified.private.json e
+  contact-worker-29726d3d/completion.private.json sob /workspaces/.erp-private-344.
+  Usar o nome logico do apoio ativo indicado no recibo; NAO iniciar o container
+  antigo preservado nem reimportar100. Dados persistentes continuam no mesmo
+  pgdata/socket. Apoio final PARADO ocioso, sem listener15173 e reserva liberada.
+- Antes de servir: coordenar snapshot API/web revisado com Cursor e reconfirmar
+  bootstrap, mesma identidade fisica/namespace/Auth real e CAS de contatos ricos.
+  Nao alterar guard fisico, usar fallback ou servir codigo antigo como prova do
+  campo novo. Sem URL funcional anunciada neste lote. Prova fonte->API->interface
+  e enderecos completos continuam pendentes, nao sao substituidos pelo PG.
+
 ## Estado vigente - HML15173 remapeada para volume persistente (2026-11-09)
 
 URL privada existente:
