@@ -300,14 +300,14 @@ export default function GerenciarContatosClienteForm({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4" data-block="contato-dialog-fields">
             <div>
               <Label>Nome do Contato</Label>
               <Input
                 value={novoContato.nome}
                 onChange={(e) => setNovoContato({ ...novoContato, nome: e.target.value })}
                 placeholder="Ex: João Silva"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -317,7 +317,7 @@ export default function GerenciarContatosClienteForm({
                 value={novoContato.cargo}
                 onChange={(e) => setNovoContato({ ...novoContato, cargo: e.target.value })}
                 placeholder="Ex: Gerente de Compras"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -326,7 +326,7 @@ export default function GerenciarContatosClienteForm({
               <Select
                 value={novoContato.tipo || "Telefone"}
                 onValueChange={(v) => setNovoContato({ ...novoContato, tipo: v })}
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent className="z-[10000]">
@@ -347,7 +347,7 @@ export default function GerenciarContatosClienteForm({
                 value={novoContato.valor}
                 onChange={(e) => setNovoContato({ ...novoContato, valor: e.target.value })}
                 placeholder={novoContato.tipo === 'E-mail' ? 'email@exemplo.com' : '(11) 99999-9999'}
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -357,7 +357,7 @@ export default function GerenciarContatosClienteForm({
                 value={novoContato.observacao}
                 onChange={(e) => setNovoContato({ ...novoContato, observacao: e.target.value })}
                 placeholder="Ex: Ligar somente após 14h"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -367,7 +367,7 @@ export default function GerenciarContatosClienteForm({
                 checked={novoContato.principal}
                 onChange={(e) => setNovoContato({ ...novoContato, principal: e.target.checked })}
                 className="w-4 h-4"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
               <Label className="cursor-pointer font-normal">Marcar como contato principal</Label>
             </div>

@@ -31,6 +31,9 @@ test('GerenciarContatos: UI declara Celular ≠ WhatsApp (sem conversão automá
   assert.match(contatosForm, /data-regra="celular-nao-whatsapp"/);
   assert.match(contatosForm, /Celular ≠ WhatsApp/);
   assert.match(contatosForm, /não há conversão automática/);
+  assert.match(contatosForm, /data-block="contato-dialog-fields"/);
+  // Campos do dialog também respeitam persistBusy (não só Salvar).
+  assert.match(contatosForm, /disabled=\{bloqueado \|\| !podeEditar\}/);
 });
 
 test('Completo: anexos distinguem identificação MASTER de documentos[]', () => {
