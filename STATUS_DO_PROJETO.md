@@ -4,8 +4,8 @@
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Lote** | Aside: `proposta-acao-{slug}` estável; Completo peels restaurado (`c8d7c134`); `88b9` FAIL = Completo herdado |
-| **CI verde** | **`77edc2ea`** · **`516497af`** · **`75aa36c1`** · **`3b5132de`** |
-| **CI tip** | `c8d7c134` — em acompanhamento |
+| **CI verde** | **`c8d7c134`** · **`77edc2ea`** · **`516497af`** · **`75aa36c1`** · **`3b5132de`** · **CI SUCCESS** |
+| **CI tip** | `86a4ad96` (proposta-acao slug) — em acompanhamento |
 | **FK ContatoB2B** | **20261110d** — (b) bloqueada |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
 | Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
