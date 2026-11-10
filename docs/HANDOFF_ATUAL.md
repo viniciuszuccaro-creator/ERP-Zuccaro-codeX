@@ -1,5 +1,11 @@
+## CURSOR — #591 produto foto banner HTTP + C360 filtros só A (2026-11-10 America/Sao_Paulo)
+- Tip **`e6a31225`** · **CI SUCCESS**. Produto V22: banner `produto-foto-storage-http`.
+- C360: filtros só etapa A (`lista`). Pack consumidores prontos vigente.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 C360 etapa C filtros + consumidores prontos (2026-11-10 America/Sao_Paulo)
-- Etapa C: filtros operacionais ocultos (`proposta-filtros-lista` só A/B).
+- Etapa C: filtros operacionais ocultos (`proposta-filtros-lista` só A).
 - Pack Codex: `codex-consumidores-prontos-contatos-591` — ordem (a)/(b)/(c) pós-decisão.
 - ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
 - Freeze `0afd378f284`. Homolog `77f11b28`.

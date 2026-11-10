@@ -1,11 +1,25 @@
+## CURSOR — #591 produto foto banner + C360 filtros só A (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | **`e6a31225`** · **CI SUCCESS** · tip filtros **`dc48c9ff`** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Produto** | banner HTTP Storage (`produto-foto-storage-http`) — botões disabled |
+| **C360** | filtros só etapa A (`lista`); B/C sem filtros operacionais |
+| **Contatos** | consumidores prontos; (b) bloqueada sem FK |
+| Fora | ContatoClienteV2 · ContatoB2B wire · merge/VPS · PII · CANAL sky |
+
+**Próximo:** CI tip · Codex decide (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 C360 etapa C filtros + consumidores prontos (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Base tip** | **`e6a31225`** (atalhos C + FK reconfirm) · CI deste tip a registrar |
+| **Base tip** | **`e6a31225`** · **CI SUCCESS** · tip **`dc48c9ff`** filtros C |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
-| **C360** | etapa C: filtros lista ocultos (`proposta-filtros-lista` só A/B) |
+| **C360** | etapa C: filtros lista ocultos (`proposta-filtros-lista` só A) |
 | **Contatos** | pack consumidores prontos pós-decisão (a)/(b)/(c) — sem ContatoB2B wire |
 | **Packs** | `codex-consumidores-prontos-contatos-591` · pedido objetivo atualizado |
 | Fora | ContatoClienteV2 · ContatoB2B sem FK · merge/VPS · PII · CANAL sky |

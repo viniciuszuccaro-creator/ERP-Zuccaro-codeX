@@ -39,8 +39,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /data-block="proposta-atalhos-capacidade"/);
   assert.match(src, /data-integracao-pronta="false"/);
   assert.match(src, /goto-atendimento|chatbot/);
-  // Etapa C: filtros operacionais ocultos (não misturar lista HTTP com acompanhamento).
-  assert.match(src, /!\(proposalMode && proposalStage === 'acompanhamento'\)/);
+  // Proposta: filtros só na etapa A (lista) — B/C sem misturar lista HTTP.
+  assert.match(src, /\(!proposalMode \|\| proposalStage === 'lista'\)/);
   assert.match(src, /proposta-filtros-lista/);
   // Avançar etapa só muda stage — sem save/convert.
   const avancarIdx = src.indexOf('data-action="proposta-etapa-avancar-acompanhamento"');
