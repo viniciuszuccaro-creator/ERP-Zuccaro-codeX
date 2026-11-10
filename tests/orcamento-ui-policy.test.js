@@ -72,8 +72,12 @@ test('politica visual exige permissao exata e estado editavel', () => {
 test('Comercial integra orcamentos sem persistencia Base44 paralela', async () => {
   const page = await readFile(new URL('../src/pages/Comercial.jsx', import.meta.url), 'utf8');
   const tab = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  const shell = await readFile(new URL('../src/components/comercial/CentralVendas360Shell.jsx', import.meta.url), 'utf8');
   const meta = await readFile(new URL('../server/src/api/router.ts', import.meta.url), 'utf8');
-  assert.match(page, /sectionKey: 'orcamento'[\s\S]*exactPermission: true/);
+  // Orçamentos vivem na Central (accessKeys pedido+orcamento); sem tile separado.
+  assert.match(page, /accessKeys: \['pedido', 'orcamento'\]/);
+  assert.match(page, /title: 'Central de Vendas360°'/);
+  assert.match(shell, /OrcamentosTab/);
   assert.match(tab, /createHttpApiClient[\s\S]*\.orcamentos/);
   assert.match(tab, /\['orcamentos-http', groupId, empresaId/);
   assert.doesNotMatch(tab, /base44\.entities\.Orcamento/);

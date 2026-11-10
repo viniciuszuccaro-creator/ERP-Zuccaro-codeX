@@ -44,11 +44,12 @@ import usePersistedSort from "@/components/lib/usePersistedSort";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import useBackendPagination from "@/components/lib/useBackendPagination";
 import { ProtectedAction } from "@/components/ProtectedAction";
-import PedidoCanonicoPanel from "./PedidoCanonicoPanel";
 import { isPedidoLegacyProducaoSobMedida, matchesPedidoLegacyStatusFilter, pedidoLegacyStatusLabel } from './pedidoUiPolicy';
+import CentralVendas360Shell from './CentralVendas360Shell';
 
 export default function PedidosTab(props) {
-  if (props.canonicalHttp) return <PedidoCanonicoPanel {...props} />;
+  // Launchpad «Central de Vendas360°» (antes Pedidos): shell v6 sobre orçamentos + pedidos canônicos.
+  if (props.canonicalHttp) return <CentralVendas360Shell {...props} />;
   return <PedidosOperacaoLegada {...props} />;
 }
 

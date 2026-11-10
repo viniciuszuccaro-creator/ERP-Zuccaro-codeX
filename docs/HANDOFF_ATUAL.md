@@ -1,3 +1,9 @@
+## CURSOR — #591 layout v6 Central Vendas360° (2026-11-10 America/Sao_Paulo)
+- Decisão 10/11 (anexo+imagem v6): **Pedidos → Central de Vendas360°**; tile Orçamentos removido; conteúdo na Central.
+- Shell: `CentralVendas360Shell` + `centralVendas360Layout.js` sobre OrcamentosTab/PedidoCanonicoPanel/Cliente360.
+- Contatos[] (a) intacto; aceite :15173 continua no tip `ba21a342`. #401 só pós-aceite.
+- Sem CentralVendas360Nova · ContatoClienteV2 · merge/VPS · PII.
+
 ## CURSOR — #591 CI SUCCESS 21fa888a (2026-11-10 America/Sao_Paulo)
 - Tip **`21fa888a`** CI SUCCESS (peel Completo documentos[]). Funcional **`ba21a342`** SUCCESS.
 - Contatos[] (a) · soft-landing C360 · docs[] fail-closed HTTP · locais sync.

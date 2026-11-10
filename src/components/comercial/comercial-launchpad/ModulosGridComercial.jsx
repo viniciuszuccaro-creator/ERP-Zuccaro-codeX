@@ -1,11 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import LaunchpadCard from '../../financeiro/LaunchpadCard';
-
-function isOrcamentosModule(module) {
-  return /or[cç]amento/i.test(String(module?.title || ''))
-    || /or[cç]amento/i.test(String(module?.sectionKey || ''));
-}
+import { isCentralVendas360Module } from '../centralVendas360Layout';
 
 export default function ModulosGridComercial({ modules, onModuleClick, proposalMode = false }) {
   return (
@@ -13,8 +9,8 @@ export default function ModulosGridComercial({ modules, onModuleClick, proposalM
       <CardContent className="p-2">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {modules.map((module, idx) => {
-            const blockedByProposal = proposalMode && !isOrcamentosModule(module);
-            const liberatedByProposal = proposalMode && isOrcamentosModule(module);
+            const liberatedByProposal = proposalMode && isCentralVendas360Module(module);
+            const blockedByProposal = proposalMode && !liberatedByProposal;
             return (
               <div
                 key={idx}
@@ -31,9 +27,9 @@ export default function ModulosGridComercial({ modules, onModuleClick, proposalM
                 aria-disabled={blockedByProposal || undefined}
                 title={
                   blockedByProposal
-                    ? 'Proposta visual — abra apenas Orçamentos (sem módulos operacionais).'
+                    ? 'Proposta visual — abra apenas a Central de Vendas360° (orçamentos sintéticos).'
                     : liberatedByProposal
-                      ? 'Proposta visual — Orçamentos sintéticos (única entrada liberada).'
+                      ? 'Proposta visual — Central de Vendas360° (orçamentos sintéticos).'
                       : undefined
                 }
                 onClickCapture={blockedByProposal ? (e) => {
@@ -53,7 +49,7 @@ export default function ModulosGridComercial({ modules, onModuleClick, proposalM
                   title={module.title}
                   description={
                     blockedByProposal
-                      ? 'Proposta visual — só Orçamentos (sem módulos operacionais).'
+                      ? 'Proposta visual — só Central de Vendas360° (sem módulos operacionais).'
                       : module.description
                   }
                   icon={module.icon}

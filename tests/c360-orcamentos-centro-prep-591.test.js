@@ -7,15 +7,16 @@ import fs from 'node:fs';
 
 const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 
-test('Comercial launchpad: OrcamentosTab canônico (sem OrcamentosV2)', () => {
+test('Comercial launchpad: Central de Vendas360° hospeda Orcamentos (sem OrcamentosV2)', () => {
   const src = read('src/pages/Comercial.jsx');
-  assert.match(src, /const OrcamentosTab = React\.lazy/);
-  assert.match(src, /component:\s*OrcamentosTab/);
+  // Decisão 10/11: tile Orçamentos retirado; OrcamentosTab embutido na Central via PedidosTab/shell.
+  assert.match(src, /title: 'Central de Vendas360°'/);
+  assert.match(src, /OrcamentosTab permanece canônico embutido/);
   assert.match(src, /data-proposta=\{propostaIntegrada \? 'comercial360'/);
-  assert.match(src, /proposalMode:propostaIntegrada/);
+  assert.match(src, /proposalMode: propostaIntegrada/);
   assert.match(src, /proposta-pedido-bloqueado/);
   assert.match(src, /disabled=\{propostaIntegrada\}/);
-  assert.match(src, /Proposta visual — abra apenas Orçamentos/);
+  assert.match(src, /Proposta visual — abra apenas a Central de Vendas360°/);
   assert.match(src, /proposalMode: true/);
   assert.match(src, /proposta-kpis-sinteticos/);
   assert.match(src, /KPIs operacionais ocultos/);
@@ -25,6 +26,7 @@ test('Comercial launchpad: OrcamentosTab canônico (sem OrcamentosV2)', () => {
   assert.match(src, /aria-disabled=\{propostaIntegrada/);
   assert.match(src, /ModulosGridComercial[\s\S]*proposalMode=\{propostaIntegrada\}/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova|OrcamentosNovo/);
+  assert.doesNotMatch(src, /title: 'Orçamentos'/);
 });
 
 test('ModulosGridComercial: proposta dim cards não-Orçamentos sem tocar LaunchpadCard peels', () => {

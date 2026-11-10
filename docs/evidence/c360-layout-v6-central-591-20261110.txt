@@ -1,0 +1,48 @@
+Central de Vendas360° — layout versão 6 (decisão 10/11)
+=======================================================
+America/Sao_Paulo 2026-11-10 · PR #591 · branch cursor/hml-grupo-erro-fornecedor-392b
+
+ANEXOS
+- ERP_ZUCCARO_COMERCIAL_360.docx (texto + Figura 1 / image1.png = versão 6)
+- Artefato: /opt/cursor/artifacts/c360-versao6-aprovada.png
+
+DECISÃO (substitui soft-landing “aguardar desenho”)
+- Pedidos → Central de Vendas360°
+- Tile Orçamentos retirado do launchpad
+- Orçamentos/pedidos/histórico dentro da Central (sem paralelo)
+- Azul/branco v6: cabeçalho, faixa, situações, 12 colunas, grades dual, Cliente360
+
+ARQUIVOS
+- src/components/comercial/centralVendas360Layout.js (contrato puro)
+- src/components/comercial/CentralVendas360Shell.jsx (composição)
+- src/components/comercial/PedidosTab.jsx (canonicalHttp → shell)
+- src/components/comercial/OrcamentosTab.jsx (centralLayout + 12 colunas)
+- src/components/comercial/PedidoCanonicoPanel.jsx (centralLayout / seleção)
+- src/pages/Comercial.jsx (nav)
+- src/components/comercial/comercial-launchpad/ModulosGridComercial.jsx
+- docs/COMERCIAL_360.md
+- tests/central-vendas360-layout-v6-591.test.js
+
+NÃO CRIADO
+- CentralVendas360Nova / OrcamentosV2 / chatbot/financeiro paralelo
+
+PENDENTE / BLOQUEADO
+- Aceite visual screenshots privados vs v6 (dois monitores)
+- Aceite :15173 contatos[] (Codex tip ba21a342)
+- documentos[] BFF
+- Integração seletiva #401 só pós-aceite
+- Preferências de coluna por usuário (ERPDataTable) — próximo lote
+- Contadores reais Bot/Aprovações — só quando API oficial existir (faixa abre janelas owners)
+
+CHECKLIST DOC
+| Item | Estado |
+|------|--------|
+| Nav Central / sem Orçamento separado | implementado |
+| Shell v6 chrome + situações | implementado |
+| Tabela 12 col orçamentos | implementado (campos ausentes = —) |
+| Grades simultâneas | implementado |
+| Cliente360 lateral | implementado (token sessão) |
+| Clique simples/duplo | implementado |
+| Aceite visual privado | pendente |
+| CI tip deste lote | pendente push |
+| Aceite :15173 | bloqueado (Codex) |

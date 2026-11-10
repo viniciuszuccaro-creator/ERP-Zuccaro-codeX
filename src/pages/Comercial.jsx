@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, ShoppingCart, FileText, ClipboardList, TrendingUp, ShieldCheck, Truck, Package, AlertCircle, LayoutDashboard } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, ShieldCheck, Truck, Package, AlertCircle, LayoutDashboard } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -25,7 +25,7 @@ import useComercialDerivedData from "@/components/comercial/hooks/useComercialDe
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
 const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
-const OrcamentosTab = React.lazy(() => import("../components/comercial/OrcamentosTab"));
+// OrcamentosTab permanece canônico embutido na Central (PedidosTab → CentralVendas360Shell); sem tile separado.
 const ComissoesTab = React.lazy(() => import("../components/comercial/ComissoesTab"));
 const NotasFiscaisTab = React.lazy(() => import("../components/comercial/NotasFiscaisTab"));
 const TabelasPrecoTab = React.lazy(() => import("../components/comercial/TabelasPrecoTab"));
@@ -338,30 +338,30 @@ function ComercialContent() {
       props: { clientes, isLoading: false }
     },
     {
-      title: 'Orçamentos',
-      sectionKey: 'orcamento',
-      exactPermission: true,
-      description: 'Propostas comerciais',
-      icon: ClipboardList,
-      color: 'blue',
-      component: OrcamentosTab,
-      windowTitle: 'Orçamentos',
-      width: 1500,
-      height: 850,
-      props: { groupId, empresaId, actorId: user?.id, actorEmail: user?.email, empresaAtual, hasPermission, filterInContext, proposalMode:propostaIntegrada }
-    },
-    {
-      title: 'Pedidos',
+      // Decisão 10/11: Pedidos → Central de Vendas360°; Orçamentos deixa de ser tile separado
+      // (orçamentos/pedidos/histórico permanecem dentro da Central — OrcamentosTab embutido).
+      title: 'Central de Vendas360°',
       sectionKey: 'pedido',
-      exactPermission: true,
-      description: 'Orçamentos e vendas',
+      accessKeys: ['pedido', 'orcamento'],
+      description: 'Orçamentos, pedidos e Cliente360',
       icon: ShoppingCart,
       color: 'blue',
       component: PedidosTab,
-      windowTitle: ' Pedidos',
-      width: 1500,
-      height: 850,
-      props: { canonicalHttp: true, groupId, empresaId, actorId: user?.id, actorEmail: user?.email, hasPermission, filterInContext, empresas, empresaAtual }
+      windowTitle: 'Central de Vendas360°',
+      width: 1600,
+      height: 900,
+      props: {
+        canonicalHttp: true,
+        groupId,
+        empresaId,
+        actorId: user?.id,
+        actorEmail: user?.email,
+        hasPermission,
+        filterInContext,
+        empresas,
+        empresaAtual,
+        proposalMode: propostaIntegrada,
+      }
     },
     {
       title: 'Logística Entrega',
@@ -459,23 +459,31 @@ function ComercialContent() {
 
   const allowedModules = modules
     .map((m) => ({ ...m, permissionKey: `Comercial.${m.sectionKey || m.title}.visualizar` }))
-    .filter((m) => m.exactPermission
-      ? hasPermission('Comercial', m.sectionKey, 'visualizar')
-      : canViewComercial(m.sectionKey || m.title));
+    .filter((m) => {
+      if (Array.isArray(m.accessKeys) && m.accessKeys.length) {
+        return m.accessKeys.some((key) => hasPermission('Comercial', key, 'visualizar') || canViewComercial(key));
+      }
+      return m.exactPermission
+        ? hasPermission('Comercial', m.sectionKey, 'visualizar')
+        : canViewComercial(m.sectionKey || m.title);
+    });
 
    const handleModuleClick = (module) => {
-    // Proposta visual: só Orçamentos (editor sintético). Demais seções = operacional.
+    // Proposta visual: só Central de Vendas360° (hospeda orçamentos sintéticos). Demais = operacional.
     if (propostaIntegrada) {
-      const isOrcamentos = /or[cç]amento/i.test(String(module.title || ''))
+      const isCentral = /central\s*de\s*vendas|vendas360/i.test(String(module.title || ''))
+        || /or[cç]amento/i.test(String(module.title || ''))
         || /or[cç]amento/i.test(String(module.sectionKey || ''));
-      if (!isOrcamentos) {
-        toast.error('Proposta visual — abra apenas Orçamentos (sem módulos operacionais).');
+      if (!isCentral) {
+        toast.error('Proposta visual — abra apenas a Central de Vendas360° (orçamentos sintéticos).');
         return;
       }
     }
-    const allowed = module.exactPermission
-      ? hasPermission('Comercial', module.sectionKey, 'visualizar')
-      : canViewComercial(module.sectionKey || module.title);
+    const allowed = Array.isArray(module.accessKeys) && module.accessKeys.length
+      ? module.accessKeys.some((key) => hasPermission('Comercial', key, 'visualizar') || canViewComercial(key))
+      : (module.exactPermission
+        ? hasPermission('Comercial', module.sectionKey, 'visualizar')
+        : canViewComercial(module.sectionKey || module.title));
     if (!allowed) {
       auditComercial('comercial_modulo_bloqueado', { modulo: module.title, sectionKey: module.sectionKey || module.title, motivo: 'permissao_negada' }, false);
       toast.error('Sem permissao para visualizar esta area do Comercial.');
@@ -502,7 +510,7 @@ function ComercialContent() {
       <div className="w-full h-full" data-proposta={propostaIntegrada ? 'comercial360' : undefined}>
       <ModuleLayout
               title="Comercial e Vendas"
-              subtitle={propostaIntegrada ? "Proposta visual Comercial360: Orçamentos A lista → B edição → C acompanhamento (sintético, sem gravação)." : "Vendas, clientes e canais"}
+              subtitle={propostaIntegrada ? "Proposta visual Comercial360: Central de Vendas360° · Orçamentos A lista → B edição → C acompanhamento (sintético, sem gravação)." : "Vendas, clientes e canais"}
               actions={<div className="flex items-center gap-2" data-block={propostaIntegrada ? 'proposta-acoes-topo' : undefined}>
                 <ProtectedSection module="Comercial" section="Pedidos" action="criar">
                   <Button
@@ -540,7 +548,7 @@ function ComercialContent() {
                     Proposta visual — KPIs operacionais ocultos (sem consulta de totais reais)
                   </Badge>
                   <p className="text-xs text-slate-600" data-block="proposta-fluxo-hint" role="note">
-                    Entrada liberada: Orçamentos · A lista → B edição → C acompanhamento · <code>?proposta=comercial360</code>
+                    Entrada liberada: Central de Vendas360° (orçamentos) · A lista → B edição → C acompanhamento · <code>?proposta=comercial360</code>
                   </p>
                   </div>
                 ) : (

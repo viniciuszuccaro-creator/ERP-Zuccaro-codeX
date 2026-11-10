@@ -36,6 +36,7 @@ import {
 import { gerarPDFOrcamento } from '@/components/lib/exportacaoPDF';
 import { isCanonicalComercialId } from './centralCliente360Navigation';
 import ValidadorEstoquePedido, { conversionStockOkFromAvailability } from './ValidadorEstoquePedido';
+import { CENTRAL_VENDAS360_COLUMNS, sumCentralPesoKg } from './centralVendas360Layout';
 
 const emptyItem = () => ({ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' });
 const emptyForm = () => ({ cliente_empresa_id: '', condicao_pagamento_id: '', tabela_preco_id: '', validade_em: '', observacoes: '', itens: [emptyItem()] });
@@ -58,7 +59,28 @@ const errorMessage = (error) => {
 // Cache generations never contain credentials and are unique across remounts.
 let orcamentoSessionSequence = 0;
 
-export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail, sessionToken, empresaAtual, hasPermission, filterInContext, windowMode = false, initialSelectedId = null, reopenRequestId = null, initialCreateClienteEmpresaId = null, createRequestId = null, proposalMode = false }) {
+export default function OrcamentosTab({
+  groupId,
+  empresaId,
+  actorId,
+  actorEmail,
+  sessionToken,
+  empresaAtual,
+  hasPermission,
+  filterInContext,
+  windowMode = false,
+  initialSelectedId = null,
+  reopenRequestId = null,
+  initialCreateClienteEmpresaId = null,
+  createRequestId = null,
+  proposalMode = false,
+  /** Embutido na Central de Vendas360° (versão 6) — sem chrome duplicado. */
+  centralLayout = false,
+  centralSituacao = null,
+  centralSearch = '',
+  onCentralSelect = null,
+  selectedCentralId = null,
+}) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -99,6 +121,27 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const [produtoQuery, setProdutoQuery] = useState('');
   /** Proposta visual: A lista → B edição → C acompanhamento (sintético; sem save/convert). */
   const [proposalStage, setProposalStage] = useState('lista');
+  // Pesquisa universal da Central → filtros da listagem (sem gravação).
+  useEffect(() => {
+    if (!centralLayout) return undefined;
+    const nextSearch = String(centralSearch || '').slice(0, 80);
+    setFilters((prev) => (prev.search === nextSearch ? prev : { ...prev, search: nextSearch }));
+    setAppliedFilters((prev) => (prev.search === nextSearch ? prev : { ...prev, search: nextSearch }));
+    setPage(1);
+    return undefined;
+  }, [centralLayout, centralSearch]);
+  useEffect(() => {
+    if (!centralLayout) return undefined;
+    if (centralSituacao === 'VENCIDOS') {
+      const today = new Date().toISOString().slice(0, 10);
+      setFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: today }));
+      setAppliedFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: today }));
+    } else if (centralSituacao === 'ORCAMENTOS_ABERTOS' || !centralSituacao) {
+      setFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
+      setAppliedFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
+    }
+    return undefined;
+  }, [centralLayout, centralSituacao]);
   const canView = canUseOrcamentoAction(hasPermission, 'visualizar');
   const canCreate = canUseOrcamentoAction(hasPermission, 'criar');
   const canEdit = (row) => canUseOrcamentoAction(hasPermission, 'editar', row?.status);
@@ -493,7 +536,14 @@ const convertToPedido = async () => {
     nota: '',
     cobranca: '',
   };
-  return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined}>
+  const notifyCentralSelect = (row) => {
+    if (typeof onCentralSelect !== 'function') return;
+    const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
+    onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null });
+  };
+
+  return <div className={`w-full h-full flex flex-col ${centralLayout ? 'bg-transparent p-0' : `bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined} data-central-layout={centralLayout ? 'versao6' : undefined}>
+    {!centralLayout && (
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
       <div>
         <h2 className="text-xl font-semibold">{proposalMode ? 'Proposta Comercial 360' : 'Orçamentos'}</h2>
@@ -523,6 +573,21 @@ const convertToPedido = async () => {
         </Button>
       )}
     </div>
+    )}
+    {centralLayout && canCreate && (
+      <div className="flex justify-end mb-2">
+        <Button
+          onClick={openCreate}
+          disabled={!contextReady || (proposalMode && proposalStage === 'acompanhamento')}
+          data-permission="Comercial.orcamento.criar"
+          data-action={proposalMode ? 'proposta-nova-negociacao' : 'central360-novo-orcamento'}
+          className="bg-sky-700 hover:bg-sky-800"
+        >
+          <FilePlus2 className="w-4 h-4 mr-2" />
+          {proposalMode ? 'Nova negociação sintética' : 'Novo Orçamento'}
+        </Button>
+      </div>
+    )}
     {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos. URL: <code>?proposta=comercial360</code>.</AlertDescription></Alert>}
     {proposalMode && (
       <div className="mb-3 flex flex-wrap items-center gap-2" role="group" aria-label="Etapas da proposta visual" data-block="proposta-etapas">
@@ -723,9 +788,59 @@ const convertToPedido = async () => {
       >
         Limpar filtros da prévia
       </Button>
-    )}</div>) : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={proposalMode ? 'proposta-negociacoes' : undefined}>
+    )}</div>) : <div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={proposalMode ? 'proposta-negociacoes' : (centralLayout ? 'central360-tabela-12' : undefined)}>
+      {centralLayout ? (
+        <Table data-testid="central360-orcamentos-12col">
+          <TableHeader className="sticky top-0 bg-white z-10">
+            <TableRow>
+              {CENTRAL_VENDAS360_COLUMNS.map((col) => (
+                <TableHead key={col.key} className={`text-xs whitespace-nowrap ${col.sticky ? 'sticky left-0 bg-white z-[11]' : ''}`}>
+                  {col.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => {
+              const link = masters.clientesEmpresa.find((item) => item.id === row.cliente_empresa_id);
+              const cliente = clientesById.get(link?.cliente_id);
+              const peso = sumCentralPesoKg(row.itens);
+              const selectedRow = selectedCentralId === row.id;
+              return (
+                <TableRow
+                  key={row.id}
+                  data-selected={selectedRow ? 'true' : undefined}
+                  className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
+                  onClick={() => { setSelected(row); notifyCentralSelect(row); }}
+                  onDoubleClick={() => { if (proposalMode || canEdit(row)) openEdit(row); }}
+                >
+                  <TableCell className="font-mono text-xs sticky left-0 bg-inherit">{row.numero || '—'}</TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">{date(row.created_at || row.data)}</TableCell>
+                  <TableCell className="font-mono text-xs">{cliente?.codigo || link?.codigo_cliente || '—'}</TableCell>
+                  <TableCell className="text-xs sticky left-0 bg-inherit">{clienteLabel(row.cliente_empresa_id)}</TableCell>
+                  <TableCell className="text-xs">{row.origem || row.canal || '—'}</TableCell>
+                  <TableCell className="text-xs">{row.vendedor_nome || row.nome_vendedor || '—'}</TableCell>
+                  <TableCell className="text-xs">{peso == null ? '—' : `${peso}`}</TableCell>
+                  <TableCell className="text-xs text-right font-semibold whitespace-nowrap">{money(row.total)}</TableCell>
+                  <TableCell className="text-xs">{row.cidade || cliente?.cidade || '—'}</TableCell>
+                  <TableCell className="text-xs">{condicaoLabel(row.condicao_pagamento_id)}</TableCell>
+                  <TableCell className="text-xs">
+                    <Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>
+                      {proposalMode ? 'Sintético' : (row.status === 'EM_ABERTO' ? 'Aberto' : (row.status === 'CANCELADO' ? 'Cancelado' : row.status))}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs whitespace-nowrap" title="Validade do orçamento (≠ prazo de entrega)">
+                    {date(row.validade_em)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      ) : (
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{proposalMode ? 'Sintético' : (row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado')}</Badge></TableCell><TableCell><div className="flex justify-end gap-1">{!proposalMode && <Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>}{(proposalMode || canEdit(row)) && <Button size="icon" variant="ghost" title={proposalMode ? 'Abrir orçamento sintético' : 'Editar'} data-action={proposalMode ? 'proposta-selecionar-negociacao' : undefined} onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{!proposalMode && canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
+      )}
     </div>}
     {/* Proposta sintética: lista curta — sem paginação operacional HTTP. */}
     {!proposalMode && (

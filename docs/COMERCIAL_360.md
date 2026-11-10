@@ -76,7 +76,18 @@ A busca focal em `server/src`, migrations e testes confirmou ausencia de contrat
 
 ## Mapa preparatório — Central de Vendas 360 (2026-11-06)
 
-Orçamentos será “Central de Vendas 360”. **Layout amplo aguarda aprovação de desenho.** Contratos/correções independentes (#542–#545 e fila) avançam sem refazer a tela agora.
+## Decisão 10/11/2026 — Layout versão 6 aprovado (anexo + imagem)
+
+**Substitui** a orientação anterior de “aguardar desenho” / soft-landing só em proposalMode.
+
+- Launchpad: **Pedidos → Central de Vendas360°**; entrada separada **Orçamento** retirada.
+- Orçamentos, pedidos, regras, serviços, registros e histórico permanecem **dentro** da Central (`OrcamentosTab` + `PedidoCanonicoPanel` + `CentralCliente360Panel`).
+- Sem central paralela (`CentralVendas360Nova` / `OrcamentosV2` proibidos).
+- Estrutura azul/branca versão 6: cabeçalho, faixa compacta, situações (início = Orçamentos em Aberto), tabela 12 colunas, grades simultâneas Corte/Revenda, Cliente360 lateral.
+- Hierarquia: Regra-Mãe atualizada → decisões 10/11 → ORDEM2 → imagem ilustrativa.
+- Contatos[] MASTER (a) permanece; aceite :15173 e composição #401 só pós-homolog.
+
+Orçamentos/Pedidos existentes foram **reorganizados** na Central (não reescritos como módulo novo).
 
 ### Composição alvo (reuso — sem tela paralela)
 
