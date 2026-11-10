@@ -384,12 +384,14 @@ export default function GerenciarEnderecosClienteForm({
                     <SelectItem value="Cadastral">Cadastral</SelectItem>
                     <SelectItem value="Fiscal">Fiscal</SelectItem>
                     <SelectItem value="Correspondência">Correspondência</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
                     <SelectItem value="Matriz">Matriz</SelectItem>
                     <SelectItem value="Obra">Obra</SelectItem>
                     <SelectItem value="Outro">Outro</SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="mt-1 text-[11px] text-slate-500" data-regra="cadastral-fiscal-nao-entrega" role="note">
+                  Cadastral/Fiscal ≠ Entrega operacional — escolha o tipo certo; não misture no sync de locais.
+                </p>
               </div>
             </div>
 

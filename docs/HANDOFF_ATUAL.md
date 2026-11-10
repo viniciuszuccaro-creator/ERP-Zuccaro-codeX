@@ -1,3 +1,9 @@
+## CURSOR — #591 Cadastral/Fiscal≠Entrega UI (2026-11-10 America/Sao_Paulo)
+- GerenciarEnderecos: `data-regra=cadastral-fiscal-nao-entrega`; Outro único no select.
+- Contatos Celular≠WhatsApp + C360 B placeholder vigentes.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 Celular≠WhatsApp UI + C360 B placeholder (2026-11-10 America/Sao_Paulo)
 - GerenciarContatos: `data-regra=celular-nao-whatsapp` (sem auto-conversão).
 - C360 etapa B: placeholder silencioso (`proposta-edicao-placeholder`).

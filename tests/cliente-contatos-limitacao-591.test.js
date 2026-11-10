@@ -42,6 +42,10 @@ test('Completo: anexos distinguem identificação MASTER de documentos[]', () =>
 test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
   assert.match(enderecos, /SelectItem value="Cadastral"/);
   assert.match(enderecos, /SelectItem value="Fiscal"/);
+  assert.match(enderecos, /data-regra="cadastral-fiscal-nao-entrega"/);
+  assert.match(enderecos, /Cadastral\/Fiscal ≠ Entrega/);
+  // Sem duplicata de opção Outro no select.
+  assert.equal((enderecos.match(/SelectItem value="Outro"/g) || []).length, 1);
 });
 
 test('hydrate: documento→cpf/cnpj preserva string (zeros); tipo PF/PJ', () => {
