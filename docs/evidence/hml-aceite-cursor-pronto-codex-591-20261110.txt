@@ -52,3 +52,9 @@ ATUALIZAÇÃO 2026-11-10b (America/Sao_Paulo) — contatos[] MASTER (a) aplicado
 - Locais: sync /clientes/:id/locais já no Completo; BATCH_ATOMIC=false.
 - Documentos[]: ainda pendente contrato BFF (unsupported fail-closed).
 - ContatoB2B FK: NÃO destrava; sem ContatoClienteV2.
+
+ATUALIZAÇÃO 2026-11-10c — CI SUCCESS ba21a342
+- Tip Cursor revisado e verde: ba21a342
+- Pedido Codex aceite :15173: usar ba21a342 (ou sucessor acordado) como tip API+web
+  — não misturar freeze 0afd378f284 com funcionalidade contatos[] posterior sem acordo.
+- Contatos[] MASTER (a) comprovado em CI; locais sync ok; documentos[] ainda BFF.

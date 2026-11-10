@@ -32,3 +32,8 @@ Aceite :15173
 - Homolog tip coordenado 77f11b28 / freeze 0afd378f284 até API+web no mesmo SHA.
 - 331 canais = agregados (≠ 331 clientes); distinguir 99 prontos / 1 parcial.
 - Comparações reais privadas; sem PII no GitHub.
+
+CI SUCCESS
+- Tip ba21a342 (America/Sao_Paulo 2026-11-10): 9/9 erp-runtime-ci
+  push 42880318139 · PR 42880331779
+- Pronto p/ aceite :15173 com API+web no mesmo SHA revisado (ba21a342).

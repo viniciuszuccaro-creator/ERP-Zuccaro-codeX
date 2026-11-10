@@ -1,3 +1,17 @@
+## CURSOR — #591 CI SUCCESS ba21a342 contatos[] MASTER (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CI** | **`ba21a342`** SUCCESS (push 42880318139 · PR 42880331779) |
+| **Lote** | contatos[] jsonb MASTER (a) + peels/mock/rbac/045 + publication + PG fixture |
+| **Contrato** | omit≠limpar · [] limpa · WhatsApp≠celular · quarentena≠válido · Sem ContatoClienteV2 |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` — alinhar API+web a **`ba21a342`** p/ aceite :15173 |
+| **Pendências** | aceite :15173 (privado) · documentos[] BFF · soft-landing C360 · batch locais atômico (Codex) |
+| Fora | ContatoClienteV2 · ContatoB2B→Completo · merge/VPS · PII · redesign C360 |
+
+**Próximo:** aceite real :15173 no tip alinhado · docs BFF · soft-landing Central360 (sem micro-toasts).
+
 ## CURSOR — #591 CI-fix publication+PG fixture contatos (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

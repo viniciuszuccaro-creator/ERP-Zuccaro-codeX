@@ -1,3 +1,11 @@
+## CURSOR — #591 CI SUCCESS ba21a342 contatos[] (2026-11-10 America/Sao_Paulo)
+- Tip **`ba21a342`** CI SUCCESS (9/9). Decisão **(a)** contatos[] jsonb MASTER integrada.
+- Wire Completo/HTTP/PG + peels publication + entry fixture `045`.
+- Aceite :15173: alinhar API+web a **`ba21a342`** (não misturar freeze `0afd378f284` sem acordo).
+- 331 canais = agregados ≠ 331 clientes; 99 prontos / 1 parcial; comparações privadas.
+- Pendente: documentos[] BFF · batch locais atômico · soft-landing C360.
+- Sem ContatoClienteV2 · merge/VPS · PII · redesign C360.
+
 ## CURSOR — #591 CI-fix publication+PG fixture contatos (2026-11-10 America/Sao_Paulo)
 - Tip **`5e109b2a`** FAIL: publication infra hash; legado refs; PG entry `column contatos does not exist`.
 - Fix: peels infra 34/045 · 2ª ref e362 no legado · `crmFixture` deltas `045` + GRANT UPDATE contatos.
