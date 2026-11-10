@@ -72,6 +72,7 @@ async function mount() {
     }) },
     './comercialProposalFixture':proposalFixture,'./OrcamentoProposalAside':{__esModule:true,default:'OrcamentoProposalAside'},
     './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido'},
+    './centralVendas360Layout': await import('../src/components/comercial/centralVendas360Layout.js'),
     './orcamentoUiPolicy': policy, './pedidoUiPolicy': pedidoPolicy, './comercialMasterPicker': picker,
     './centralCliente360Navigation': navigation,
     sonner: { toast: Object.fromEntries(['error', 'success', 'message', 'info'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },

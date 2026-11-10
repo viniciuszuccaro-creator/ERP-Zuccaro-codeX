@@ -24,8 +24,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import useComercialDerivedData from "@/components/comercial/hooks/useComercialDerivedData";
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
-const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
-// OrcamentosTab permanece canônico embutido na Central (PedidosTab → CentralVendas360Shell); sem tile separado.
+// PedidosTab permanece para deep-link (CentralCliente360 → PedidoCanonicoPanel); launchpad usa o shell v6.
+const CentralVendas360Shell = React.lazy(() => import("../components/comercial/CentralVendas360Shell"));
 const ComissoesTab = React.lazy(() => import("../components/comercial/ComissoesTab"));
 const NotasFiscaisTab = React.lazy(() => import("../components/comercial/NotasFiscaisTab"));
 const TabelasPrecoTab = React.lazy(() => import("../components/comercial/TabelasPrecoTab"));
@@ -339,14 +339,14 @@ function ComercialContent() {
     },
     {
       // Decisão 10/11: Pedidos → Central de Vendas360°; Orçamentos deixa de ser tile separado
-      // (orçamentos/pedidos/histórico permanecem dentro da Central — OrcamentosTab embutido).
+      // (orçamentos/pedidos/histórico na Central). PedidosTab/PedidoCanonicoPanel intactos p/ deep-link.
       title: 'Central de Vendas360°',
       sectionKey: 'pedido',
       accessKeys: ['pedido', 'orcamento'],
       description: 'Orçamentos, pedidos e Cliente360',
       icon: ShoppingCart,
       color: 'blue',
-      component: PedidosTab,
+      component: CentralVendas360Shell,
       windowTitle: 'Central de Vendas360°',
       width: 1600,
       height: 900,

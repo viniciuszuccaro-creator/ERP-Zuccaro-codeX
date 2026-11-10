@@ -65,14 +65,16 @@ test('Comercial: Pedidos vira Central; tile Orçamentos retirado; sem paralelo',
   assert.doesNotMatch(src, /title: 'Orçamentos'/);
   assert.doesNotMatch(src, /title: 'Pedidos'/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova|OrcamentosNovo/);
-  assert.match(src, /OrcamentosTab permanece canônico embutido/);
+  assert.match(src, /component: CentralVendas360Shell/);
 });
 
-test('PedidosTab: canonicalHttp monta CentralVendas360Shell (não painel solto)', () => {
-  const src = read('src/components/comercial/PedidosTab.jsx');
-  assert.match(src, /CentralVendas360Shell/);
-  assert.match(src, /canonicalHttp\) return <CentralVendas360Shell/);
-  assert.doesNotMatch(src, /canonicalHttp\) return <PedidoCanonicoPanel/);
+test('Comercial launchpad monta CentralVendas360Shell; PedidosTab HTTP permanece PedidoCanonicoPanel', () => {
+  const comercial = read('src/pages/Comercial.jsx');
+  const tab = read('src/components/comercial/PedidosTab.jsx');
+  assert.match(comercial, /CentralVendas360Shell/);
+  assert.match(comercial, /component: CentralVendas360Shell/);
+  assert.match(tab, /canonicalHttp\) return <PedidoCanonicoPanel/);
+  assert.doesNotMatch(tab, /CentralVendas360Shell/);
 });
 
 test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () => {

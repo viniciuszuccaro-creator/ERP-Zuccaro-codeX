@@ -44,5 +44,5 @@ CHECKLIST DOC
 | Cliente360 lateral | implementado (token sessão) |
 | Clique simples/duplo | implementado |
 | Aceite visual privado | pendente |
-| CI tip deste lote | pendente push |
+| CI tip 5176c590/087d647c | FAIL frontend (PedidosTab peel + harness layout import) — corrigido: shell no Comercial; PedidosTab peel restaurado; harness allowlist |
 | Aceite :15173 | bloqueado (Codex) |

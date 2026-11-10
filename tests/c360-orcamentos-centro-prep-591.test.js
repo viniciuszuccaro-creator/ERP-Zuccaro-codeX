@@ -9,9 +9,9 @@ const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
 
 test('Comercial launchpad: Central de Vendas360° hospeda Orcamentos (sem OrcamentosV2)', () => {
   const src = read('src/pages/Comercial.jsx');
-  // Decisão 10/11: tile Orçamentos retirado; OrcamentosTab embutido na Central via PedidosTab/shell.
+  // Decisão 10/11: tile Orçamentos retirado; OrcamentosTab embutido na Central via shell no launchpad.
   assert.match(src, /title: 'Central de Vendas360°'/);
-  assert.match(src, /OrcamentosTab permanece canônico embutido/);
+  assert.match(src, /component: CentralVendas360Shell/);
   assert.match(src, /data-proposta=\{propostaIntegrada \? 'comercial360'/);
   assert.match(src, /proposalMode: propostaIntegrada/);
   assert.match(src, /proposta-pedido-bloqueado/);
