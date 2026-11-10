@@ -43,3 +43,12 @@ CURSOR AGUARDA
 - Decisão objetiva (a)/(b)/(c) + contrato
 - Aceite :15173 no tip homolog
 Wire Completo inicia no tip CI SUCCESS pós-contrato.
+
+ATUALIZAÇÃO 2026-11-10b (America/Sao_Paulo) — contatos[] MASTER (a) aplicado
+- Decisão (a) integrada no tip Cursor fa17c5c8 (feat cc7c71f5 + CI-fix).
+- Pedido Codex #2 (decidir a/b/c) → SUPERADO: (a) contatos[] jsonb.
+- Aceite :15173: alinhar API+web ao tip revisado pós-CI verde fa17c5c8
+  (não misturar freeze 0afd378f284 com funcionalidade posterior sem acordo).
+- Locais: sync /clientes/:id/locais já no Completo; BATCH_ATOMIC=false.
+- Documentos[]: ainda pendente contrato BFF (unsupported fail-closed).
+- ContatoB2B FK: NÃO destrava; sem ContatoClienteV2.

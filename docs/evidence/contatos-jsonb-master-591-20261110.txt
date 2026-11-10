@@ -17,3 +17,18 @@ Wire
   postgres/inMemory repos persistem contatos.
 
 Testes: cliente-contatos-http-adapter, limitacao-591, peels boundaries, rbac, fonte-lista.
+
+CI tip feat
+- cc7c71f5 FAIL (42875552348): mock Completo sem partitionContatosByCanal;
+  peels postgres counterproof; rbac ainda reject; catálogo 33→34; legado SHA.
+
+CI tip fix
+- fa17c5c8: peels mapContatos≠import · fornecedorHttpRemainder tip cc7c71f5 ·
+  mock partitionContatosByCanal · rbac/http-api jsonb · infra/runtime01 045.
+- Locais sync HTTP: 12/12 PASS (omit≠[] · PARTIAL · CONTEXT_CHANGED).
+- Documentos[]: ainda CLIENTE_HTTP_UNSUPPORTED_FIELDS (sem storage paralelo).
+
+Aceite :15173
+- Homolog tip coordenado 77f11b28 / freeze 0afd378f284 até API+web no mesmo SHA.
+- 331 canais = agregados (≠ 331 clientes); distinguir 99 prontos / 1 parcial.
+- Comparações reais privadas; sem PII no GitHub.
