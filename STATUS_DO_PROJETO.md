@@ -1,3 +1,16 @@
+## CURSOR — #591 Outro único endereços + proposta-salvar (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | `GerenciarEnderecosClienteForm`: `data-regra=outro-unico` (select disabled + toast save); OrcamentosTab `proposta-salvar-bloqueado` |
+| **CI verde** | **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** |
+| **FK ContatoB2B** | **20261110c** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto/LaunchpadCard peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · CI tip deste lote.
+
 ## CURSOR — #591 CI 3b5132de SUCCESS peels grid (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

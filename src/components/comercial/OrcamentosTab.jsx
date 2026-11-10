@@ -631,7 +631,12 @@ const convertToPedido = async () => {
           </>
         )}
         <Button variant="outline" onClick={closeForm}>Fechar</Button>
-        <Button onClick={save} disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError} title={proposalMode ? 'Gravação desabilitada na proposta visual' : undefined}>{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button>
+        <Button
+          onClick={save}
+          disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError}
+          title={proposalMode ? 'Gravação desabilitada na proposta visual' : undefined}
+          data-action={proposalMode ? 'proposta-salvar-bloqueado' : 'orcamento-salvar'}
+        >{submitting ? 'Salvando...' : 'Salvar orçamento'}</Button>
       </DialogFooter>
     </DialogContent></Dialog>
 

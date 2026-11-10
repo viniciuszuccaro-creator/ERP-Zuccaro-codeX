@@ -51,6 +51,11 @@ test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
   assert.match(enderecos, /Cadastral\/Fiscal ≠ Entrega/);
   // Sem duplicata de opção Outro no select.
   assert.equal((enderecos.match(/SelectItem value="Outro"/g) || []).length, 1);
+  // Outro único: UI + save fail-closed (não segundo Outro).
+  assert.match(enderecos, /data-regra="outro-unico"/);
+  assert.match(enderecos, /Tipo Outro é único por cliente/);
+  assert.match(enderecos, /Já existe um endereço do tipo Outro/);
+  assert.match(enderecos, /idx !== enderecoEditando/);
   // Cancelar/Salvar respeitam persistBusy (paridade Contatos).
   assert.match(enderecos, /disabled=\{bloqueado\}/);
   assert.match(enderecos, /disabled=\{bloqueado \|\| !podeEditar\}/);

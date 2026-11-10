@@ -142,6 +142,18 @@ export default function GerenciarEnderecosClienteForm({
       return;
     }
 
+    // Tipo Outro é único por cliente (evidência HML #591) — editar o existente ou escolher outro tipo.
+    const tipoAtual = String(novoEndereco.tipo_endereco || "");
+    if (tipoAtual === "Outro") {
+      const outroDuplicado = enderecos.some(
+        (end, idx) => String(end?.tipo_endereco || "") === "Outro" && idx !== enderecoEditando
+      );
+      if (outroDuplicado) {
+        toast.error("Já existe um endereço do tipo Outro. Edite o existente ou escolha outro tipo.");
+        return;
+      }
+    }
+
     // Gerar URL do Google Maps se tiver coordenadas ou CEP
     let mapaUrl = novoEndereco.mapa_url;
     if (!mapaUrl) {
@@ -388,7 +400,7 @@ export default function GerenciarEnderecosClienteForm({
                   value={novoEndereco.tipo_endereco || "Entrega"}
                   onValueChange={(value) => setNovoEndereco({ ...novoEndereco, tipo_endereco: value })}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger data-action="endereco-tipo"><SelectValue /></SelectTrigger>
                   <SelectContent className="z-[10000]">
                     <SelectItem value="Entrega">Entrega</SelectItem>
                     <SelectItem value="Cobrança">Cobrança</SelectItem>
@@ -397,11 +409,16 @@ export default function GerenciarEnderecosClienteForm({
                     <SelectItem value="Correspondência">Correspondência</SelectItem>
                     <SelectItem value="Matriz">Matriz</SelectItem>
                     <SelectItem value="Obra">Obra</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
+                    <SelectItem value="Outro" disabled={enderecos.some((end, idx) => String(end?.tipo_endereco || "") === "Outro" && idx !== enderecoEditando)}>
+                      Outro
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="mt-1 text-[11px] text-slate-500" data-regra="cadastral-fiscal-nao-entrega" role="note">
                   Cadastral/Fiscal ≠ Entrega operacional — escolha o tipo certo; não misture no sync de locais.
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500" data-regra="outro-unico" role="note">
+                  Tipo Outro é único por cliente — no máximo um registro; edite o existente se precisar.
                 </p>
               </div>
             </div>

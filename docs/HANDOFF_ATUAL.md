@@ -1,3 +1,8 @@
+## CURSOR — #591 Outro único + proposta-salvar (2026-11-10 America/Sao_Paulo)
+- Endereços: `outro-unico` (select+save). Proposta: `proposta-salvar-bloqueado`.
+- Verde base **`3b5132de`**. ContatoB2B (b) bloqueada. Sem ContatoClienteV2/peels LaunchpadCard-Produto.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 CI 3b5132de SUCCESS peels grid (2026-11-10 America/Sao_Paulo)
 - **`3b5132de` CI SUCCESS** — LaunchpadCard peels OK; bloqueio proposta no grid.
 - Verde: **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. ContatoB2B (b) bloqueada.
