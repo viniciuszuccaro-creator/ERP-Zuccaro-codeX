@@ -31,11 +31,13 @@ NEGATIVOS
 - Sem redesign operacional C360 sem OK visual
 
 ATUALIZAÇÃO 2026-11-10 (America/Sao_Paulo)
-- Verde CI: e6a31225 · dc48c9ff
+- Verde CI: e6a31225 · dc48c9ff · 3b5132de (peels LaunchpadCard)
 - Produto banner visual: ADIADO (peels pin d312fbcd) — toast+disabled HTTP ok
 - Dialog Contatos/Endereços: persistBusy + ESC/overlay
-- ContatoB2B UI WhatsApp≠telefone; FK reconfirm 20261110b ainda sem cliente_id
-- C360: filtros só A; owner-only atalhos; rótulo sintético; aria-live etapa
+- ContatoB2B UI WhatsApp≠telefone; banner FK ausente; reconfirm 20261110d sem cliente_id
+- Endereços: Outro único enforçado (select+save) — data-regra=outro-unico
+- C360: filtros só A; owner-only atalhos; rótulo sintético; aria-live etapa;
+  proposta-salvar-bloqueado; proposta-fechar / confirm rascunho sintético
 
 CURSOR AGUARDA
 - Decisão objetiva (a)/(b)/(c) + contrato

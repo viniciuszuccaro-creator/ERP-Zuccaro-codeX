@@ -278,7 +278,11 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   }, [dirty]);
 
   const closeForm = () => {
-    if (dirty && !window.confirm('Descartar as alterações deste orçamento?')) return;
+    if (dirty && !window.confirm(
+      proposalMode
+        ? 'Descartar o rascunho sintético desta proposta visual?'
+        : 'Descartar as alterações deste orçamento?'
+    )) return;
     setFormOpen(false); setDirty(false); setEditing(null);
     if (proposalMode) setProposalStage('lista');
   };
@@ -630,7 +634,11 @@ const convertToPedido = async () => {
             <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-avancar-acompanhamento" onClick={() => { setFormOpen(false); setProposalStage('acompanhamento'); }}>Avançar</Button>
           </>
         )}
-        <Button variant="outline" onClick={closeForm}>Fechar</Button>
+        <Button
+          variant="outline"
+          onClick={closeForm}
+          data-action={proposalMode ? 'proposta-fechar' : 'orcamento-fechar'}
+        >Fechar</Button>
         <Button
           onClick={save}
           disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError}

@@ -72,6 +72,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /proposta-nova-negociacao/);
   assert.match(src, /Nova negociação sintética/);
   assert.match(src, /proposta-salvar-bloqueado/);
+  assert.match(src, /proposta-fechar/);
+  assert.match(src, /Descartar o rascunho sintético desta proposta visual/);
   // Avançar etapa só muda stage — sem save/convert.
   const avancarIdx = src.indexOf('data-action="proposta-etapa-avancar-acompanhamento"');
   assert.ok(avancarIdx > 0);
