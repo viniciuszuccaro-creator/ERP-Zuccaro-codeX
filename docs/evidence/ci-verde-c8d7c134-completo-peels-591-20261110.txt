@@ -1,0 +1,14 @@
+#591 — CI SUCCESS tip c8d7c134 (peels Completo restaurado)
+America/Sao_Paulo 2026-11-10 · sem PII
+
+VERDE CONFIRMADO
+- c8d7c134 — CadastroClienteCompleto stage48 OK (tip 516497af)
+- 77edc2ea · 516497af · 75aa36c1 · 3b5132de
+
+FAIL SUPERADO
+- e09f882b / 88b9b242 — peels Completo (hunk contatos/locais)
+
+IN_PROGRESS
+- 86a4ad96 — proposta-acao slug
+
+Homolog: 77f11b28 · freeze 0afd378f284
