@@ -1,3 +1,9 @@
+## CURSOR — #591 CI SUCCESS 21fa888a (2026-11-10 America/Sao_Paulo)
+- Tip **`21fa888a`** CI SUCCESS (peel Completo documentos[]). Funcional **`ba21a342`** SUCCESS.
+- Contatos[] (a) · soft-landing C360 · docs[] fail-closed HTTP · locais sync.
+- Aceite :15173: alinhar API+web a ba21a342. #401 integração só pós-aceite.
+- Sem ContatoClienteV2 · port cego · redesign · merge/VPS · PII.
+
 ## CURSOR — #591 soft-landing C360 + docs fail-closed (2026-11-10 America/Sao_Paulo)
 - Tip **`ba21a342`** / docs **`f9b11cf6`** CI SUCCESS. Contatos[] (a) integrado.
 - Completo HTTP: `documentos[]` não vazio → 422 antes do MASTER; vazio/omit não envia.

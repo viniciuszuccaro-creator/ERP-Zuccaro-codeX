@@ -1,3 +1,16 @@
+## CURSOR — #591 CI SUCCESS 21fa888a peel docs + soft-landing (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CI** | **`21fa888a`** SUCCESS (push 42885797554) · funcional **`ba21a342`** SUCCESS |
+| **Lote** | Soft-landing C360 · documentos[] fail-closed · peel Completo |
+| **Estados** | publicado+CI · revisado · aceite :15173 pendente · não integrado #401 · não implantado |
+| **Pendências** | aceite :15173 (Codex tip ba21a342) · BFF documentos[] · batch locais · port seletivo #401 |
+| Fora | ContatoClienteV2 · redesign · merge/VPS · PII · port cego |
+
+**Próximo:** aceite HML :15173 no tip `ba21a342` · contrato BFF docs · composição seletiva.
+
 ## CURSOR — #591 CI-fix peels Completo documentos[] (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -60,3 +60,29 @@ Integração seletiva #401
 - Preservar WIP Fornecedor/reservas; um escritor por checkout
 
 Pack piloto: docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt
+
+
+ATUALIZAÇÃO 2026-11-10e — tip ba21a342 / peel 21fa888a
+=======================================================
+Fechado
+- (a) contatos[] jsonb MASTER: Completo/HTTP/PG + CI ba21a342 SUCCESS
+- Soft-landing C360 (pausa microajustes); proposalMode isolado
+- Completo HTTP documentos[] fail-closed antes MASTER (sem paralelo)
+- Locais sync canônico; BATCH_ATOMIC=false permanece
+
+Estados #591
+- Publicado + CI tip: ba21a342 (funcional) / 21fa888a (peel docs)
+- Revisado tip: sim (CI)
+- Aceite HML :15173: pendente Codex — alinhar API+web a ba21a342
+  (não misturar freeze 0afd378f284 sem acordo)
+- Integrado na candidata #401: NÃO — só após aceite
+- Implantado/VPS: NÃO
+
+Próximo funcional (ordem)
+1. Aceite :15173 privado no tip ba21a342 (contatos reais detalhes/reabertura)
+2. Contrato BFF documentos[] (c) — sem DocumentosClienteV2
+3. Batch locais atômico se HML exigir (hoje PARTIAL ok)
+4. Integração seletiva #401 pós-aceite (preservar WIP/reservas)
+
+Não iniciar
+- Port cego #591→#401 · redesign C360 · ContatoClienteV2 · PII/GitHub · merge/VPS
