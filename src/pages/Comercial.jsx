@@ -496,12 +496,23 @@ function ComercialContent() {
               subtitle={propostaIntegrada ? "Proposta visual Comercial360: Orçamentos A lista → B edição → C acompanhamento (sintético, sem gravação)." : "Vendas, clientes e canais"}
               actions={<div className="flex items-center gap-2">
                 <ProtectedSection module="Comercial" section="Pedidos" action="criar">
-                  <Button data-permission="Comercial.Pedidos.criar" data-sensitive onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
+                  <Button
+                    data-permission="Comercial.Pedidos.criar"
+                    data-sensitive
+                    data-action={propostaIntegrada ? 'proposta-pedido-bloqueado' : undefined}
+                    disabled={propostaIntegrada}
+                    title={propostaIntegrada ? 'Proposta visual — sem criar pedido operacional' : undefined}
+                    onClick={handleCreateNewPedido}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >Novo Pedido</Button>
                 </ProtectedSection>
                 <ProtectedSection module="Comercial" section="Pedidos" action="visualizar">
                   <Button
                     data-permission="Comercial.Pedidos.visualizar"
                     variant="outline"
+                    data-action={propostaIntegrada ? 'proposta-externo-bloqueado' : undefined}
+                    disabled={propostaIntegrada}
+                    title={propostaIntegrada ? 'Proposta visual — validação externa desabilitada' : undefined}
                     onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
                   >Validar Pedido Externo</Button>
                 </ProtectedSection>
