@@ -534,6 +534,7 @@ const convertToPedido = async () => {
             aria-pressed={proposalStage === key}
             aria-current={proposalStage === key ? 'step' : undefined}
             data-action={`proposta-etapa-${key}`}
+            data-proposta-rascunho={key === 'edicao' && dirty ? 'sujo' : undefined}
             onClick={() => {
               if (key === 'lista') {
                 proposalBackToLista();
@@ -550,6 +551,11 @@ const convertToPedido = async () => {
             }}
           >
             {label}
+            {key === 'edicao' && dirty ? (
+              <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide" data-block="proposta-rascunho-sujo" aria-label="Rascunho sintético alterado">
+                · rascunho
+              </span>
+            ) : null}
           </Button>
         ))}
         <p className="text-xs text-slate-500 self-center">Voltar não desfaz o rascunho · Avançar não salva/converte.</p>

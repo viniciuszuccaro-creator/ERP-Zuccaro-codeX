@@ -54,6 +54,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   const src = read('src/components/comercial/OrcamentosTab.jsx');
   assert.match(src, /data-block="proposta-etapas"/);
   assert.match(src, /data-action=\{`proposta-etapa-\$\{key\}`\}/);
+  assert.match(src, /data-proposta-rascunho=\{key === 'edicao' && dirty \? 'sujo'/);
+  assert.match(src, /proposta-rascunho-sujo/);
   assert.match(src, /\['lista', 'A · Negociações'\]/);
   assert.match(src, /\['edicao', 'B · Orçamento'\]/);
   assert.match(src, /\['acompanhamento', 'C · Acompanhamento'\]/);
