@@ -7,12 +7,13 @@
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
 | **Contatos** | (b) ContatoB2B ainda **bloqueada** (Base sem cliente_id/empresa_id) |
 | **Completo** | banner cita FK ausente; Celular≠WhatsApp; sem ContatoClienteV2 |
-| **Visual** | UsuarioForm + CadastroFiscalForm sky; IA DIFAL purple preservada |
+| **Visual** | UsuarioForm sky (peels ID-only); CadastroFiscal **sem** sky estrutural (coorte e36231b3) |
 | **C360** | chatbot owner: regras + exceção→humano |
+| **CI** | tip `bfe3e25d` frontend FAIL (Completo peel + Fiscal ID-only) → tip correção peels |
 | **Packs** | `codex-contatob2b-fk-reconfirm-591` · `recuperacao-sky-usuario-fiscal-591` |
 | Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII · reservas WIP |
 
-**Próximo:** CI deste tip · Codex fecha (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+**Próximo:** CI tip peels · Codex fecha (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
 
 ## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)
 

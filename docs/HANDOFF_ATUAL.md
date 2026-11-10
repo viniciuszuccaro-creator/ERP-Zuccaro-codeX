@@ -1,8 +1,14 @@
-## CURSOR — #591 CI 2e90587f + sky Usuario/Fiscal + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
+## CURSOR — #591 CI peels pós-bfe3e25d (Completo + Usuario sky) (2026-11-10 America/Sao_Paulo)
+- Tip **`bfe3e25d`** frontend FAIL: peels Completo banner FK + CadastroFiscal ID-only.
+- Correção: peel banner ContatoB2B (b); Usuario sky autorizado em consolidacao;
+  Fiscal **revertido** (coorte e36231b3). Tip decisão `2e90587f` SUCCESS permanece.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 CI 2e90587f + sky Usuario + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
 - Tip decisão **`2e90587f`** · **CI SUCCESS** 9/9 (ref PR591a4a53dd2/CI6594SUCCESS).
 - ContatoB2B Base reconfirm: sem `cliente_id`/`empresa_id` → (b) ainda bloqueada no Completo.
-- Sky: UsuarioForm + CadastroFiscalForm (IA purple preservada). Reservas ApiExterna/
-  Roteirizacao/ChatbotCanal intocadas. C360 chatbot owner: exceção→humano.
+- Sky: UsuarioForm (Fiscal adiado — ID-only). Reservas ApiExterna/Roteirizacao/ChatbotCanal
+  intocadas. C360 chatbot owner: exceção→humano.
 - Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
 
 ## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)

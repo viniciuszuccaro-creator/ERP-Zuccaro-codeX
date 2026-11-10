@@ -15,7 +15,7 @@ const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, 
 const sanitizeCode = (value) => String(value ?? "").replace(/[^0-9A-Za-z./-]/g, "").slice(0, 32).trim().toUpperCase();
 const toPercent = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 
-export default function CadastroFiscalForm({ cadastroFiscal, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+export default function CadastroFiscalForm({ cadastroFiscal, item, data, initialData, defaultValues, onSubmit, isSubmitting }) {
   const dadosIniciais = item || data || initialData || defaultValues || cadastroFiscal;
   const { canCreate, canEdit } = usePermissions();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
@@ -60,7 +60,7 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
     onSubmit(payload);
   };
 
-  const formContent = (
+  return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <CadastroCodigoRegistroField
         idOnly
@@ -144,7 +144,6 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
         />
       </div>
 
-      {/* Categoria fiscal/IA: cor de domínio preservada (não chrome sky). */}
       <Alert className="border-purple-200 bg-purple-50">
         <FileText className="w-4 h-4" />
         <AlertDescription className="text-sm">
@@ -153,27 +152,11 @@ export default function CadastroFiscalForm({ cadastroFiscal, item, data, initial
       </Alert>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.CadastroFiscal.salvar" data-action="salvar-cadastro-fiscal" data-sensitive>
+        <Button type="submit" disabled={isSubmitting || !contextoValido || !podeSalvar} data-permission="Cadastros.CadastroFiscal.salvar" data-action="salvar-cadastro-fiscal" data-sensitive>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Criar Cadastro Fiscal'}
         </Button>
       </div>
     </form>
   );
-
-  if (windowMode) {
-    return (
-      <div className="w-full h-full overflow-auto bg-white p-6" data-cadastro-visual="sky-cadastro-fiscal">
-        <div className="mb-4 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 -mx-6 px-6 py-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <FileText className="w-5 h-5 text-sky-700" />
-            {dadosIniciais?.id ? 'Editar Cadastro Fiscal' : 'Novo Cadastro Fiscal'}
-          </h2>
-        </div>
-        {formContent}
-      </div>
-    );
-  }
-
-  return formContent;
 }

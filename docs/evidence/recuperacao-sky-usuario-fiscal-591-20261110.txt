@@ -1,13 +1,15 @@
-#591 — Sky residual Usuario + CadastroFiscal (fora reservas)
+#591 — Sky residual Usuario (fora reservas); Fiscal ID-only preservado
 America/Sao_Paulo 2026-11-10
 
 Chrome windowMode from-sky-50 to-sky-100 + botão sky:
-- UsuarioForm (data-cadastro-visual=sky-usuario)
-- CadastroFiscalForm (data-cadastro-visual=sky-cadastro-fiscal)
+- UsuarioForm (data-cadastro-visual=sky-usuario) — delta autorizado no
+  cursor-identidade-consolidacao (golden e36231b3 + peels sky)
 
-Preservado:
-- Alert convite Usuario → sky (contraste)
-- Alert IA DIFAL CadastroFiscal → purple (cor de categoria/domínio)
+CadastroFiscalForm:
+- permanece coorte ID-only (sem windowMode/sky estrutural neste tip)
+- Alert IA DIFAL purple preservado
+- Motivo: teste ID-only pin e36231b3 — sky estrutural exigiria peels amplos;
+  adiado sem mascarar baseline
 
 NÃO tocados (reservas WIP):
 - ApiExternaForm

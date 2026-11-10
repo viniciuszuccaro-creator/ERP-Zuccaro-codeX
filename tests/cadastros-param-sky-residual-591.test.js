@@ -38,10 +38,9 @@ test('UsuarioForm: windowMode sky chrome (fora reservas)', () => {
   assert.match(src, /bg-sky-600 hover:bg-sky-700/);
 });
 
-test('CadastroFiscalForm: windowMode sky chrome; categoria IA purple preservada', () => {
+test('CadastroFiscalForm: permanece ID-only coorte (sem sky estrutural neste tip)', () => {
   const src = read('src/components/cadastros/CadastroFiscalForm.jsx');
-  assert.match(src, /from-sky-50 to-sky-100/);
-  assert.match(src, /data-cadastro-visual="sky-cadastro-fiscal"/);
-  assert.match(src, /bg-sky-600 hover:bg-sky-700/);
+  assert.doesNotMatch(src, /data-cadastro-visual="sky-cadastro-fiscal"/);
+  assert.doesNotMatch(src, /windowMode/);
   assert.match(src, /border-purple-200 bg-purple-50/);
 });
