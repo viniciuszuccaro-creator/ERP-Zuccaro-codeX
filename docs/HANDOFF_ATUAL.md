@@ -1,3 +1,9 @@
+## CURSOR — #591 CI frontend CAS expectedVersion (2026-11-10 America/Sao_Paulo)
+- Tip `a59e1eda` peels OK; frontend 1 FAIL: update MASTER com `contatos[]` sem `contatos_version`.
+- Fix teste: `contatos_version`→`expectedVersion` no body; peels/RBAC intactos.
+- **Não** HML/:15173 até SUCCESS. Layout v6 `82b15566` intacto.
+- **Próximo:** CI SUCCESS → freeze API+web :15173; v6 prefs/screenshots; #401 pós-aceite.
+
 ## CURSOR — #591 CI peels CAS tip fc1f870d (2026-11-10 America/Sao_Paulo)
 - CI tip `fc1f870d` falhou: peels inMemory/postgres (after fora do tip) + assert RBAC ainda em `clienteContatosSchema`.
 - Fix: peels `current→golden` (counterproof 14 PASS); RBAC exige `clienteContatosReplaceSchema`+`expectedVersion`.

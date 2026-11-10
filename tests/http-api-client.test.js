@@ -613,6 +613,7 @@ test('Cliente HTTP update: campos ricos significativos fail-closed; MASTER allow
       }), { status: 200, headers: { 'content-type': 'application/json' } });
     },
   });
+  const contatosVersion = 'a'.repeat(64);
   const updated = await okClient.entities.Cliente.update('cli-1', {
     id: 'cli-1',
     group_id: 'grupo-sintetico',
@@ -622,6 +623,8 @@ test('Cliente HTTP update: campos ricos significativos fail-closed; MASTER allow
     nome_fantasia: 'MARKER-OK',
     cnpj: '11222333000181',
     contatos: [{ tipo: 'email', valor: 'a@b.c' }],
+    // CAS: substituir contatos[] exige expectedVersion (ou contatos_version do GET).
+    contatos_version: contatosVersion,
     status: 'Ativo',
   });
   assert.equal(updated.nome_fantasia, 'MARKER-OK');
@@ -630,11 +633,13 @@ test('Cliente HTTP update: campos ricos significativos fail-closed; MASTER allow
   assert.equal(body.tipo, 'Pessoa Jurídica');
   assert.equal(body.group_id, undefined);
   assert.equal(body.id, undefined);
-  // Decisão a: contatos[] jsonb no MASTER + espelho escalar.
+  // Decisão a: contatos[] jsonb no MASTER + espelho escalar + CAS.
   assert.ok(Array.isArray(body.contatos));
   assert.equal(body.contatos.length, 1);
   assert.equal(body.contatos[0].valor, 'a@b.c');
   assert.equal(body.email, 'a@b.c');
+  assert.equal(body.expectedVersion, contatosVersion);
+  assert.equal(body.contatos_version, undefined);
 });
 
 test('Cliente filter: status Ativo não vira ativo=false; retorna sempre array', async () => {
