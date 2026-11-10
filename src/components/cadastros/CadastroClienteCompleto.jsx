@@ -1434,6 +1434,18 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </TabsContent>
 
             <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">
+              {isHttpBackendMode && (
+                <p
+                  className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                  data-fonte="contatos-limitacao-http"
+                  data-pendencia="contatos-ricos-bff"
+                  role="status"
+                >
+                  Limitação HTTP MASTER: canais ricos (`contatos[]`) e ContatoB2B no Completo aguardam
+                  decisão BFF (pack Codex). Escalares e-mail/telefone/celular preservados; Celular ≠ WhatsApp.
+                  Sem ContatoClienteV2. Editar a lista assume rascunho — não apaga a fonte se omitido no save.
+                </p>
+              )}
               {formData.contatos === undefined && contatosViewForUi.length > 0 && (
                 <p className="mb-2 text-xs text-slate-600" data-fonte="contatos-escalares-http" role="status">
                   Contatos escalares do MASTER (e-mail/telefone/celular). Editar assume a lista no rascunho;
@@ -1824,13 +1836,25 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </TabsContent>
 
             <TabsContent value="anexos" className="space-y-6 m-0 mt-4">
+              {isHttpBackendMode && (
+                <p
+                  className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                  data-fonte="documentos-limitacao-http"
+                  data-pendencia="documentos-anexos-bff"
+                  role="status"
+                >
+                  Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.
+                  Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER
+                  fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.
+                </p>
+              )}
               <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
                 <Paperclip className="w-12 h-12 mx-auto mb-4 text-slate-400" />
                 <p className="text-slate-600 mb-2">Upload de Documentos</p>
                 <p className="text-sm text-slate-500 mb-4">
                   Arraste arquivos ou clique para fazer upload
                 </p>
-                <Button variant="outline">
+                <Button variant="outline" disabled={isHttpBackendMode} title={isHttpBackendMode ? 'Anexos HTTP aguardam BFF' : undefined}>
                   Selecionar Arquivos
                 </Button>
               </div>

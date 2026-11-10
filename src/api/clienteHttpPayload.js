@@ -336,10 +336,15 @@ export function mapClienteLocalToUiEndereco(local) {
   const codes = fins
     .map((f) => String(/** @type {{ finalidade?: unknown }} */ (f)?.finalidade || '').toUpperCase())
     .filter(Boolean);
+  // Cadastral/Fiscal ≠ Entrega — não reescrever finalidade cadastral como entrega.
   let tipo_endereco = 'Entrega';
   if (codes.includes('COBRANCA')) tipo_endereco = 'Cobrança';
   else if (codes.includes('ENTREGA')) tipo_endereco = 'Entrega';
-  else if (codes.includes('CADASTRAL') || codes.includes('FISCAL')) tipo_endereco = 'Entrega';
+  else if (codes.includes('CADASTRAL')) tipo_endereco = 'Cadastral';
+  else if (codes.includes('FISCAL')) tipo_endereco = 'Fiscal';
+  else if (codes.includes('CORRESPONDENCIA')) tipo_endereco = 'Correspondência';
+  else if (codes.includes('OUTRO')) tipo_endereco = 'Outro';
+  else if (codes.length > 0) tipo_endereco = 'Outro';
   return {
     id: row.id,
     apelido: row.nome || '',

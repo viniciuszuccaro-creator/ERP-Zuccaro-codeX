@@ -381,6 +381,10 @@ export default function GerenciarEnderecosClienteForm({
                   <SelectContent className="z-[10000]">
                     <SelectItem value="Entrega">Entrega</SelectItem>
                     <SelectItem value="Cobrança">Cobrança</SelectItem>
+                    <SelectItem value="Cadastral">Cadastral</SelectItem>
+                    <SelectItem value="Fiscal">Fiscal</SelectItem>
+                    <SelectItem value="Correspondência">Correspondência</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
                     <SelectItem value="Matriz">Matriz</SelectItem>
                     <SelectItem value="Obra">Obra</SelectItem>
                     <SelectItem value="Outro">Outro</SelectItem>

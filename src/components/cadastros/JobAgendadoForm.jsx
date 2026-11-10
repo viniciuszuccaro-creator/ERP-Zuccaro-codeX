@@ -223,10 +223,10 @@ export default function JobAgendadoForm({
 
   if (windowMode) {
     return (
-      <div className="w-full h-full overflow-auto bg-white p-6">
+      <div className="w-full h-full overflow-auto bg-white p-6" data-cadastro-visual="sky-job-agendado">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-sky-100">
-            <Clock className="w-8 h-8 text-sky-600" />
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 rounded-t-lg px-3 -mx-1">
+            <Clock className="w-8 h-8 text-sky-700" />
             <h2 className="text-2xl font-bold text-slate-900">
               {jobBoundId ? 'Editar Job Agendado' : 'Novo Job Agendado'}
             </h2>

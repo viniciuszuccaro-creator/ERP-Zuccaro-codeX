@@ -287,6 +287,18 @@ function clienteContactPresenceRemainder(source) {
     + '    }\n');
   source = once(source,
     '            <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">\n'
+    + '              {isHttpBackendMode && (\n'
+    + '                <p\n'
+    + '                  className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"\n'
+    + '                  data-fonte="contatos-limitacao-http"\n'
+    + '                  data-pendencia="contatos-ricos-bff"\n'
+    + '                  role="status"\n'
+    + '                >\n'
+    + '                  Limitação HTTP MASTER: canais ricos (`contatos[]`) e ContatoB2B no Completo aguardam\n'
+    + '                  decisão BFF (pack Codex). Escalares e-mail/telefone/celular preservados; Celular ≠ WhatsApp.\n'
+    + '                  Sem ContatoClienteV2. Editar a lista assume rascunho — não apaga a fonte se omitido no save.\n'
+    + '                </p>\n'
+    + '              )}\n'
     + '              {formData.contatos === undefined && contatosViewForUi.length > 0 && (\n'
     + '                <p className="mb-2 text-xs text-slate-600" data-fonte="contatos-escalares-http" role="status">\n'
     + '                  Contatos escalares do MASTER (e-mail/telefone/celular). Editar assume a lista no rascunho;\n'
@@ -357,7 +369,7 @@ function clienteContactPresenceRemainder(source) {
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'b6318902e502566caa2a36313d293642a4cca811d967763ddd19c00cbdf6e235'], // #591 toast BATCH_ATOMIC≠integral + sync summary ref
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'ca11c17b05ad058b0b490214694da82c2c9aa73ba978732ab4fa7905a43412a3'], // #591 limitação contatos HTTP + cadastral≠entrega
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];

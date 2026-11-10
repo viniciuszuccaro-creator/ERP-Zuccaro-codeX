@@ -1,3 +1,19 @@
+## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | **`a4a53dd2`** / código **`13dde4a5`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | pack decisão a/b/c; ContatoB2B vínculo **não** comprovado na amostra Base |
+| **Completo** | banners limitação HTTP contatos/anexos; Celular≠WhatsApp |
+| **Locais** | CADASTRAL/FISCAL ≠ Entrega na UI |
+| **Visual** | JobAgendado sky chrome |
+| **Pack** | `docs/evidence/codex-decisao-contatos-abc-591-20261110.txt` |
+| Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII |
+
+**Próximo:** CI deste tip · Codex fecha (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+
 ## CURSOR — #591 locais≠integral + ContatoB2B tenant + sky params (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

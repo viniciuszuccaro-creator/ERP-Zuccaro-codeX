@@ -1,3 +1,9 @@
+## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)
+- Base tip **`a4a53dd2`** CI SUCCESS. Pack decisão: `codex-decisao-contatos-abc-591-20261110.txt`
+  (a jsonb / b ContatoB2B com FK / c anexos) — amostra Base sem cliente_id comprovado → (b) bloqueada.
+- Completo: banners limitação HTTP contatos/anexos. Locais: CADASTRAL/FISCAL ≠ Entrega.
+- JobAgendado sky. Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 locais≠integral + ContatoB2B tenant + sky params (2026-11-10 America/Sao_Paulo)
 - Tip **`13dde4a5`** · **CI SUCCESS** push+PR 9/9. Docs base **`6572b9ae`**. Homolog **`77f11b28`**.
 - Toast Completo: BATCH_ATOMIC=false → não declara salvamento integral; pedido BFF

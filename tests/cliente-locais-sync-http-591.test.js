@@ -36,6 +36,28 @@ test('mapTipoEnderecoToFinalidade: entrega ≠ cadastral ≠ cobrança', () => {
   assert.equal(mapTipoEnderecoToFinalidade('Fiscal'), 'FISCAL');
 });
 
+test('mapClienteLocalToUiEndereco: CADASTRAL/FISCAL não viram Entrega', async () => {
+  const { mapClienteLocalToUiEndereco } = await import('../src/api/clienteHttpPayload.js');
+  assert.equal(
+    mapClienteLocalToUiEndereco({
+      id: uuidA, nome: 'Matriz', finalidades: [{ finalidade: 'CADASTRAL', principal: true }],
+    }).tipo_endereco,
+    'Cadastral',
+  );
+  assert.equal(
+    mapClienteLocalToUiEndereco({
+      id: uuidB, nome: 'Fiscal', finalidades: [{ finalidade: 'FISCAL' }],
+    }).tipo_endereco,
+    'Fiscal',
+  );
+  assert.equal(
+    mapClienteLocalToUiEndereco({
+      id: uuidDrop, nome: 'Obra', finalidades: [{ finalidade: 'ENTREGA' }],
+    }).tipo_endereco,
+    'Entrega',
+  );
+});
+
 test('mapUiEnderecoToClienteLocalCreate: payload BFF + zeros CEP', () => {
   const body = mapUiEnderecoToClienteLocalCreate({ ...baseEndereco, cep: '01310-100' });
   assert.equal(body.cep, '01310100');
