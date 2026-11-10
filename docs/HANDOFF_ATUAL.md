@@ -1,5 +1,5 @@
 ## CURSOR — #591 C360 painel 1/N + peels Produto adiado (2026-11-10 America/Sao_Paulo)
-- HEAD **`e5ffda98`**: shell `data-proposta=comercial360`; painel 1/N; rótulo sintético.
+- HEAD **`ff3243ac`**: shell `data-proposta` + Novo Pedido/externo bloqueados na proposta.
 - **`52aed2c4`**: banner Produto adiado (pin peels d312fbcd). Dialog busy ok.
 - Verde: `e6a31225`+`dc48c9ff`. ContatoB2B sem FK → (b) bloqueada.
 - Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
