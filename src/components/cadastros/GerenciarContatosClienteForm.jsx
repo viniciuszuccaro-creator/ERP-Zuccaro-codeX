@@ -336,6 +336,9 @@ export default function GerenciarContatosClienteForm({
                   <SelectItem value="E-mail">E-mail</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-[11px] text-slate-500" data-regra="celular-nao-whatsapp" role="note">
+                Celular ≠ WhatsApp — escolha o tipo explicitamente; não há conversão automática.
+              </p>
             </div>
 
             <div>

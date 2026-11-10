@@ -33,6 +33,9 @@ Usuario/Fiscal sky: adiado (CANAL consolidacao 53ed9f42 + ID-only e36231b3)
 Reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas
 
 C360 proposta A/B/C publicada tip 9ffae37b CI SUCCESS (`?proposta=comercial360`).
+Atalhos etapa C + filtros só A: e6a31225 CI SUCCESS → 0cee5367.
+Consumidores prontos: docs/evidence/codex-consumidores-prontos-contatos-591-20261110.txt
+Produto foto HTTP banner: data-pendencia=produto-foto-storage-http
 
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
 1. Wire Completo após decisão Codex (a) jsonb OU (b) ContatoB2B com FK comprovada

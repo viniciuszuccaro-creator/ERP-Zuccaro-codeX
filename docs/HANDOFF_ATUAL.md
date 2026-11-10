@@ -1,3 +1,9 @@
+## CURSOR — #591 Celular≠WhatsApp UI + C360 B placeholder (2026-11-10 America/Sao_Paulo)
+- GerenciarContatos: `data-regra=celular-nao-whatsapp` (sem auto-conversão).
+- C360 etapa B: placeholder silencioso (`proposta-edicao-placeholder`).
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 produto foto banner HTTP + C360 filtros só A (2026-11-10 America/Sao_Paulo)
 - Tip **`e6a31225`** · **CI SUCCESS**. Produto V22: banner `produto-foto-storage-http`.
 - C360: filtros só etapa A (`lista`). Pack consumidores prontos vigente.

@@ -1,3 +1,16 @@
+## CURSOR — #591 Celular≠WhatsApp UI + C360 B placeholder (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base** | **`e6a31225`** CI SUCCESS · tip produto **`0cee5367`** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | GerenciarContatos: `data-regra=celular-nao-whatsapp` |
+| **C360** | etapa B: placeholder sem empty-state ruidoso |
+| Fora | ContatoClienteV2 · ContatoB2B wire · Completo peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 produto foto banner + C360 filtros só A (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

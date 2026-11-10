@@ -7,6 +7,7 @@ import fs from 'node:fs';
 
 const completo = fs.readFileSync('src/components/cadastros/CadastroClienteCompleto.jsx', 'utf8');
 const enderecos = fs.readFileSync('src/components/cadastros/GerenciarEnderecosClienteForm.jsx', 'utf8');
+const contatosForm = fs.readFileSync('src/components/cadastros/GerenciarContatosClienteForm.jsx', 'utf8');
 const hydrate = fs.readFileSync('src/api/clienteHttpPayload.js', 'utf8');
 
 test('Completo: banner limitação contatos ricos + ContatoB2B (b) bloqueada + proíbe ContatoClienteV2', () => {
@@ -24,6 +25,12 @@ test('Completo: negativo — não presume ContatoB2B equivalente nem storage par
   assert.doesNotMatch(completo, /function ContatoClienteV2|import ContatoClienteV2|documentosClienteParalelo|contatosStorageLocal/);
   assert.match(completo, /GerenciarContatosClienteForm/);
   assert.match(completo, /omitido no save|rascunho/);
+});
+
+test('GerenciarContatos: UI declara Celular ≠ WhatsApp (sem conversão automática)', () => {
+  assert.match(contatosForm, /data-regra="celular-nao-whatsapp"/);
+  assert.match(contatosForm, /Celular ≠ WhatsApp/);
+  assert.match(contatosForm, /não há conversão automática/);
 });
 
 test('Completo: anexos distinguem identificação MASTER de documentos[]', () => {
