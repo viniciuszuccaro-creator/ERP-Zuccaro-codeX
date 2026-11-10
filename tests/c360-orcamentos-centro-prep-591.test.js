@@ -65,6 +65,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   // Proposta: filtros só na etapa A (lista) — B/C sem misturar lista HTTP.
   assert.match(src, /\(!proposalMode \|\| proposalStage === 'lista'\)/);
   assert.match(src, /proposta-filtros-lista/);
+  assert.match(src, /proposta-sem-paginacao/);
+  assert.match(src, /!proposalMode && \(/);
   assert.match(src, /proposta-edicao-placeholder/);
   assert.match(src, /proposta-subtitulo-etapa/);
   assert.match(src, /Proposta Comercial 360/);

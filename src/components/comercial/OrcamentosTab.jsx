@@ -598,7 +598,22 @@ const convertToPedido = async () => {
       <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Criado</TableHead><TableHead>Validade</TableHead><TableHead>Itens</TableHead><TableHead className="text-right">Subtotal</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((row) => <TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clienteLabel(row.cliente_empresa_id)}</TableCell><TableCell>{date(row.created_at)}</TableCell><TableCell>{date(row.validade_em)}</TableCell><TableCell>{row.itens?.length || 0}</TableCell><TableCell className="text-right">{money(row.subtotal)}</TableCell><TableCell className="text-right">{money(row.desconto)}</TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><Badge variant={row.status === 'EM_ABERTO' ? 'default' : 'secondary'}>{proposalMode ? 'Sintético' : (row.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado')}</Badge></TableCell><TableCell><div className="flex justify-end gap-1">{!proposalMode && <Button size="icon" variant="ghost" title="Visualizar" onClick={() => showDetail(row)}><Eye className="w-4 h-4" /></Button>}{(proposalMode || canEdit(row)) && <Button size="icon" variant="ghost" title={proposalMode ? 'Abrir orçamento sintético' : 'Editar'} data-action={proposalMode ? 'proposta-selecionar-negociacao' : undefined} onClick={() => openEdit(row)}><Pencil className="w-4 h-4" /></Button>}{!proposalMode && canCancel(row) && <Button size="icon" variant="ghost" title="Cancelar" onClick={() => cancel(row)}><XCircle className="w-4 h-4" /></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
     </div>}
-    {(!proposalMode || proposalStage === 'lista') && <PaginationControls currentPage={page} totalItems={meta.total || 0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={proposalMode ? false : listQuery.isFetching} />}
+    {/* Proposta sintética: lista curta — sem paginação operacional HTTP. */}
+    {!proposalMode && (
+      <PaginationControls
+        currentPage={page}
+        totalItems={meta.total || 0}
+        itemsPerPage={pageSize}
+        onPageChange={setPage}
+        onItemsPerPageChange={setPageSize}
+        isLoading={listQuery.isFetching}
+      />
+    )}
+    {proposalMode && proposalStage === 'lista' && (
+      <p className="text-xs text-slate-500 mb-2" data-block="proposta-sem-paginacao" role="note">
+        Prévia sintética — sem paginação de API (lista ilustrativa completa nesta etapa).
+      </p>
+    )}
 
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className={proposalMode ? 'w-[96vw] max-w-7xl max-h-[92vh] flex flex-col overflow-hidden border-sky-200 bg-sky-50' : 'w-[96vw] max-w-6xl max-h-[92vh] overflow-auto'}><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>{proposalMode ? 'Escolha cliente e produtos, ajuste quantidades e navegue pelo contexto sem perder o rascunho.' : <>Totais e preço unitário são conferidos pelo servidor ({ORCAMENTO_PERSISTENCE_GAPS.preco_unitario_ui}). Tabela de preço persiste no cabeçalho e alimenta o snapshot.</>}</DialogDescription></DialogHeader>
       {proposalMode && <p className="text-sm font-medium text-sky-900">PRÉVIA SINTÉTICA · aprovação visual pendente · sem gravação</p>}
