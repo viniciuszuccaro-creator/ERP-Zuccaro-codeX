@@ -17,6 +17,8 @@ test('Comercial launchpad: OrcamentosTab canônico (sem OrcamentosV2)', () => {
   assert.match(src, /disabled=\{propostaIntegrada\}/);
   assert.match(src, /Proposta visual — abra apenas Orçamentos/);
   assert.match(src, /proposalMode: true/);
+  assert.match(src, /proposta-kpis-sinteticos/);
+  assert.match(src, /KPIs operacionais ocultos/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova|OrcamentosNovo/);
 });
 

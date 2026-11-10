@@ -528,18 +528,30 @@ function ComercialContent() {
               </div>}
             >
               <ModuleKPIs>
-                <KPIsComercial
-                  totalClientes={clientesFiltrados.length}
-                  clientesAtivos={clientesAtivos}
-                  totalPedidos={pedidosFiltrados.length}
-                  totalVendas={totalVendas}
-                  ticketMedio={ticketMedio}
-                />
-                {pedidosExternosPendentes > 0 && (
-                  <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
-                    <AlertCircle className="w-3 h-3 mr-2" />
-                    {pedidosExternosPendentes} pedido(s) externo(s) a validar
+                {propostaIntegrada ? (
+                  <Badge
+                    className="bg-sky-100 text-sky-900 px-3 py-2 text-sm font-medium"
+                    data-block="proposta-kpis-sinteticos"
+                    role="status"
+                  >
+                    Proposta visual — KPIs operacionais ocultos (sem consulta de totais reais)
                   </Badge>
+                ) : (
+                  <>
+                    <KPIsComercial
+                      totalClientes={clientesFiltrados.length}
+                      clientesAtivos={clientesAtivos}
+                      totalPedidos={pedidosFiltrados.length}
+                      totalVendas={totalVendas}
+                      ticketMedio={ticketMedio}
+                    />
+                    {pedidosExternosPendentes > 0 && (
+                      <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
+                        <AlertCircle className="w-3 h-3 mr-2" />
+                        {pedidosExternosPendentes} pedido(s) externo(s) a validar
+                      </Badge>
+                    )}
+                  </>
                 )}
               </ModuleKPIs>
               <ModuleContent>
