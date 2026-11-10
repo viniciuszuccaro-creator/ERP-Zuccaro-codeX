@@ -490,6 +490,7 @@ function ComercialContent() {
   return (
     <ProtectedSection module="Comercial" action="visualizar">
     <ErrorBoundary>
+      <div className="w-full h-full" data-proposta={propostaIntegrada ? 'comercial360' : undefined}>
       <ModuleLayout
               title="Comercial e Vendas"
               subtitle={propostaIntegrada ? "Proposta visual Comercial360: Orçamentos A lista → B edição → C acompanhamento (sintético, sem gravação)." : "Vendas, clientes e canais"}
@@ -527,6 +528,7 @@ function ComercialContent() {
                 />
               </ModuleContent>
             </ModuleLayout>
+      </div>
     </ErrorBoundary>
     </ProtectedSection>
   );
