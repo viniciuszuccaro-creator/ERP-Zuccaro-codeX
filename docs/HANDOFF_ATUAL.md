@@ -1,3 +1,8 @@
+## CURSOR — #591 ContatoB2B MCP 20261110e + rascunho sujo (2026-11-10 America/Sao_Paulo)
+- Evidence: ContatoB2B MCP sem `cliente_id`/`empresa_id` — (b) bloqueada (**20261110e**).
+- Etapa B: `proposta-rascunho-sujo`. Grid Orçamentos `liberado`. Verde **`23ac`/`90b8`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
 ## CURSOR — #591 proposta rascunho sujo + grid liberado (2026-11-10 America/Sao_Paulo)
 - Etapa B: `proposta-rascunho-sujo` quando dirty. Grid Orçamentos `liberado` + ring.
 - Verde **`23ac22f9`** · **`90b8fb7d`**. ContatoB2B MCP sem FK — (b) bloqueada.
