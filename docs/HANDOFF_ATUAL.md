@@ -1,3 +1,8 @@
+## CURSOR — #591 CI fix peels Produto foto banner (2026-11-10 America/Sao_Paulo)
+- FAIL `0cee5367`/`80e581e3`: peels ProdutoFormV22 stage46/v5 após banner Storage.
+- Fix: hashes ia `db8787c4…` + v5 `448a0561…` (banner mantido; sem ContatoClienteV2).
+- Freeze `0afd378f284`. Homolog `77f11b28`. Tip verde base `e6a31225`.
+
 ## CURSOR — #591 ContatoB2B FK reconfirm 20261110b (2026-11-10 America/Sao_Paulo)
 - Base MCP: ContatoB2B tem `group_id`; **sem** `cliente_id`/`empresa_id` → (b) bloqueada.
 - Pack: `codex-contatob2b-fk-reconfirm-591-20261110b`. UI WhatsApp campo próprio.

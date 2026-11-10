@@ -7,7 +7,8 @@ import * as policies from '../src/components/lib/iaResponsePolicy.js';
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 
 const entries = {
-  product:['cadastros/ProdutoFormV22_Completo','c26ca71d17bf6867e58d364e0736df4e23ccf6701ed20a05dd798ff5ab94af3c','analisarDescricaoIA'],
+  // #591: banner HTTP Storage (produto-foto-storage-http) — peels IA stage46 recalculado
+  product:['cadastros/ProdutoFormV22_Completo','db8787c4611785c2bf7c9da676c92055dc1fe6a32b107f5604b1006a503a280a','analisarDescricaoIA'],
   crm:['crm/FunilComercialInteligente','46605320887ab58b62dff04ea67ddb271e1147efef488a2bef902786fe89bf19','priorizarIAMutation'],
   production:['producao/FormularioOrdemProducao','48e3a21004e5ca4d9c91f509681193247fc617d31d94050225bbecbfd1da678b','handleGerarIA'],
   purchase:['compras/SolicitacoesCompraTab','aebd4dfc9c1fd5aaa78de56cba53cb10510cfe30c21d185e85d2defe25204b1a','sugerirComprasIA'],

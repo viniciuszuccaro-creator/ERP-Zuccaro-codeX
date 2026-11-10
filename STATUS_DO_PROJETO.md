@@ -1,3 +1,16 @@
+## CURSOR — #591 CI fix peels Produto foto banner (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `0cee5367`/`80e581e3` frontend FAIL — peels stage46/v5 ProdutoFormV22 |
+| **Fix** | hashes recalculados: ia `db8787c4…` · v5 `448a0561…` (banner Storage mantido) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Base tip verde** | **`e6a31225`** · **CI SUCCESS** |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · merge/VPS · PII · CANAL sky |
+
+**Próximo:** CI tip fix · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 ContatoB2B FK reconfirm 20261110b (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

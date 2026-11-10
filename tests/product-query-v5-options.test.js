@@ -8,7 +8,8 @@ import {QueryClient,QueryObserver,keepPreviousData} from '@tanstack/react-query'
 import {iaResponseValidationRemainder} from './helpers/iaResponseValidationRemainder.js';
 
 const cases=[
-  {file:'src/components/cadastros/ProdutoFormV22_Completo.jsx',count:5,hash:'67a27312ee2786c0576e0a330e81025ff85562b8bb6c9c30bd7079d5e30a0520'},
+  // #591: banner HTTP Storage — remainder v5 peels recalculado (mesmo count useQuery)
+  {file:'src/components/cadastros/ProdutoFormV22_Completo.jsx',count:5,hash:'448a0561a5c16ba3cd7bce559b8ab950128fcd24040a481653efcf21d214bfb3'},
   {file:'src/components/estoque/ProdutosTab.jsx',count:4,hash:'cd8dd5ebcac1f1558ef3b2e27f86e26748e0ede0e486cd222139aae8babd59f4'},
 ];
 function queries(file){
