@@ -47,15 +47,25 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
     });
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+  const containerClass = windowMode
+    ? "w-full h-full overflow-auto bg-white p-6"
+    : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-cadastro-visual="sky-param-conciliacao">
+      {windowMode && (
+        <div className="mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 rounded-t-lg px-3 -mx-1">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900">
+            <Landmark className="w-6 h-6 text-sky-700" />
+            {parametro?.id ? "Editar Conciliação Bancária" : "Parâmetros de Conciliação Bancária"}
+          </h2>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
+        <Card className="border-sky-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-cyan-600" />
+              <Landmark className="w-5 h-5 text-sky-700" />
               Parâmetros de Conciliação Bancária
             </CardTitle>
           </CardHeader>
@@ -152,7 +162,7 @@ export default function ParametroConciliacaoBancariaForm({ parametro, onSubmit, 
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroConciliacaoBancaria.salvar" data-action="salvar-parametros-conciliacao-bancaria" data-sensitive>
+          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroConciliacaoBancaria.salvar" data-action="salvar-parametros-conciliacao-bancaria" data-sensitive>
             <Save className="w-4 h-4 mr-2" />
             Salvar Parâmetros
           </Button>

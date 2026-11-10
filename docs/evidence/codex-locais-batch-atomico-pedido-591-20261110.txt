@@ -1,0 +1,32 @@
+#591 — Pedido Codex: contrato transacional de locais (BATCH_ATOMIC)
+America/Sao_Paulo 2026-11-10 · sem PII
+
+ESTADO ATUAL (não é aceite de salvamento integral)
+- CLIENTE_LOCAIS_BATCH_ATOMIC = false
+- 1 create/update/delete por request; cada um em transação própria no BFF
+- Preflight do lote; scope freeze; PARTIAL + reconcile via listLocais
+- UI tip HEAD: toast de sucesso NÃO declara salvamento integral quando
+  batchAtomic=false e houve sync de endereços
+
+LIMITAÇÃO ≠ ACEITE
+- Sync completo de N locais sem falha ainda NÃO prova atomicidade
+- Não apresentar sequência multi-request como operação atômica
+
+PEDIDO BFF CANÔNICO (Codex)
+Endpoint sugerido (nome final a cargo do BFF):
+  POST /api/v1/clientes/:id/locais/sync
+Contrato mínimo:
+  - body: { creates[], updates[], deletes[] } pré-validado
+  - uma transação: commit all ou rollback all
+  - resposta: ops aplicadas + ids canônicos
+  - 409 CONTEXT / VALIDATION / concurrency
+  - auditoria: groupId, empresaId, actor, before/after
+
+Após disponibilidade:
+  - Cursor seta CLIENTE_LOCAIS_BATCH_ATOMIC=true e usa o endpoint
+  - Testes: falha intermediária → rollback; concorrência; contexto trocado;
+    reexecução; auditoria; reabertura
+  - Sem storage paralelo / sem contornar em modo local
+
+Tip base contraprova: 77f11b28 · docs tip 6572b9ae CI SUCCESS
+Freeze HML: 0afd378f284 até acordo no tip de homologação

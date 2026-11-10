@@ -1,3 +1,19 @@
+## CURSOR — #591 locais≠integral + ContatoB2B tenant + sky params (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base docs tip** | **`6572b9ae`** · **CI SUCCESS** (ref PR591) |
+| **Homolog locais** | **`77f11b28`** CI SUCCESS — freeze `0afd378f284` até acordo |
+| **Locais** | toast sem salvamento integral se `BATCH_ATOMIC=false`; pedido BFF sync atômico |
+| **Contatos** | ContatoB2B exige cliente do tenant; WhatsApp≠auto; decisão (a)/(b) Codex |
+| **Visual** | sky Portal/Caixa/Conciliação/NFe/Origem — reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas |
+| **C360** | capacidades + `data-integracao-pronta=false` (sem falso pronto) |
+| **Testes** | peels+locais+contatos+sky+c360 **58 PASS** |
+| Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII |
+
+**Próximo:** CI deste tip · Codex aceite :15173 no `77f11b28` · batch locais BFF · wire ContatoB2B no Completo após decisão.
+
 ## CURSOR — #591 C360 capacidades + contrato contatos/docs (2026-11-09 America/Sao_Paulo)
 
 | Campo | Valor |

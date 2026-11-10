@@ -221,6 +221,9 @@ export default function OrcamentoProposalAside({
                   className="flex flex-wrap items-center justify-between gap-2 text-sm border-b border-slate-100 pb-2 last:border-0"
                   data-capacidade={item.capacidade}
                   data-capacidade-key={item.key}
+                  data-integracao-pronta={item.capacidade === 'existente' ? 'owner-only' : 'false'}
+                  aria-disabled="true"
+                  title="Indicador de capacidade — sem disparo de integração nesta prévia"
                 >
                   <span className="min-w-0">
                     <span className="font-medium text-slate-800">{item.label}</span>

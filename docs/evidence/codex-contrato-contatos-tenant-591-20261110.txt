@@ -1,0 +1,21 @@
+#591 — Contatos ContatoB2B × Cliente × tenant (prep wire)
+America/Sao_Paulo 2026-11-10 · sem PII
+Pack base: codex-contrato-contatos-documentos-591-20261109.txt
+
+CORRESPONDÊNCIA TENANT (implementado neste tip)
+- ContatoB2BForm: cliente_id só aceito se estiver na lista filterInContext(Cliente)
+  do grupo/empresa ativos — rejeita cliente fora do tenant antes de onSubmit
+- whatsapp permanece campo próprio (não copia telefone/celular)
+- group_id / empresa_id continuam do contexto visual
+
+REPRESENTAÇÃO (decisão Codex ainda aberta)
+(a) contatos[] jsonb no Cliente MASTER + sync documentado
+(b) ContatoB2B como fonte rica; Completo lista por cliente_id
+(c) documentos: storage canônico separado (≠ ModeloDocumento)
+
+Até decisão: MASTER fail-closed para contatos[]/documentos[] ricos ≠ conclusão.
+Sem ContatoClienteV2 / DocumentosCliente paralelo.
+
+Base MCP ContatoB2B: campos id, cliente_id, empresa_id, group_id, ativo,
+principal, nome_contato, email, telefone, whatsapp, preferencias_comunicacao
+(valores reais só no canal privado).

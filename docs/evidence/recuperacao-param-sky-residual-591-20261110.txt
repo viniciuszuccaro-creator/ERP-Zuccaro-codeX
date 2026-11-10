@@ -1,0 +1,17 @@
+#591 — Recuperação visual sky params (fora branches reservadas)
+America/Sao_Paulo 2026-11-10
+
+Restaurado windowMode sky (from-sky-50 to-sky-100) + botão sky onde cabia:
+- ParametroPortalClienteForm
+- ParametroCaixaDiarioForm
+- ParametroConciliacaoBancariaForm
+- ParametroRecebimentoNFeForm
+- ParametroOrigemPedidoForm
+
+NÃO tocados (reservas WIP):
+- ApiExternaForm (cursor/cadastros-apiexterna-*)
+- ParametroRoteirizacaoForm (cursor/cadastros-parametro-roteirizacao-*)
+- ChatbotCanalForm (cursor/cadastros-chatbotcanal-*)
+
+Referência visual: ContatoB2BForm / EventoNotificacaoForm (componente servido).
+Sem redesign amplo; categorias/cores de ícone de domínio preservadas onde úteis.

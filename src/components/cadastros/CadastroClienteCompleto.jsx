@@ -530,14 +530,17 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             .filter(Boolean)
           : null;
         try {
-          await syncClienteLocaisViaHttp({
+          const locaisSummary = await syncClienteLocaisViaHttp({
             clienteId: frozenScope.clienteId,
             draft: locaisDraft,
             baselineIds,
             assertScope: assertLocaisScope,
             api: api.clientes,
           });
+          // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
+          lastLocaisSyncSummaryRef.current = locaisSummary;
         } catch (syncErr) {
+          lastLocaisSyncSummaryRef.current = null;
           const code = /** @type {Error & { code?: string }} */ (syncErr)?.code;
           if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
             // Estado real: reconcilia baseline/rascunho com listLocais (reexecução segura).
@@ -565,7 +568,27 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      toast({ title: `✅ Cliente ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      const locaisSummary = lastLocaisSyncSummaryRef.current;
+      lastLocaisSyncSummaryRef.current = null;
+      const verb = formData?.id ? 'atualizado' : 'criado';
+      if (
+        locaisSummary
+        && locaisSummary.skipped !== true
+        && locaisSummary.batchAtomic === false
+      ) {
+        const ops = Number(locaisSummary.created || 0)
+          + Number(locaisSummary.updated || 0)
+          + Number(locaisSummary.deleted || 0);
+        // BATCH_ATOMIC=false = limitação BFF — não declarar salvamento integral/atômico.
+        toast({
+          title: `Cliente ${verb}`,
+          description: ops > 0
+            ? `Endereços sincronizados em ${ops} operação(ões). Lote não atômico no BFF (BATCH_ATOMIC=false) — não é salvamento integral.`
+            : 'Cliente gravado. Sync de endereços sem operações (lote não atômico no BFF).',
+        });
+      } else {
+        toast({ title: `✅ Cliente ${verb} com sucesso!` });
+      }
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
@@ -669,6 +692,14 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));
   /** Baseline lido para soft-delete só quando a carga HTTP concluiu (ref evita stale no mutate). */
   const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
+  /** Último summary de sync `/locais` — BATCH_ATOMIC=false nunca vira toast de salvamento integral. */
+  const lastLocaisSyncSummaryRef = useRef(/** @type {{
+    skipped?: boolean,
+    batchAtomic?: boolean,
+    created?: number,
+    updated?: number,
+    deleted?: number,
+  }|null} */ (null));
   useEffect(() => {
     const id = clienteBoundId || cliente?.id || null;
     if (!id || !isHttpBackendMode) {

@@ -1,3 +1,12 @@
+## CURSOR — #591 locais≠integral + ContatoB2B tenant + sky params (2026-11-10 America/Sao_Paulo)
+- Docs tip **`6572b9ae`** CI SUCCESS. Homolog locais **`77f11b28`**. Freeze `0afd378f284`.
+- Toast Completo: BATCH_ATOMIC=false → não declara salvamento integral; pedido BFF
+  `codex-locais-batch-atomico-pedido-591-20261110.txt`.
+- ContatoB2B: cliente só do tenant; WhatsApp campo próprio; pack tenant 20261110.
+- Sky residual: Portal/Caixa/Conciliação/NFe/Origem — reservas ApiExterna/Roteirizacao/
+  ChatbotCanal intocadas. C360: data-integracao-pronta=false.
+- Sem ContatoClienteV2/merge/VPS/PII. Aceite :15173 no tip `77f11b28` com Codex.
+
 ## CURSOR — #591 C360 capacidades + contrato contatos/docs (2026-11-09 America/Sao_Paulo)
 - Tip **`10a1dd8e`** · **CI SUCCESS** push+PR. Base locais **`77f11b28`** CI SUCCESS.
 - C360: `goPanelByDelta` + teclado; `PROPOSTA_CAPACIDADES` (existente/parcial/futuro).

@@ -137,6 +137,17 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
       alert("Preencha os campos obrigatorios");
       return;
     }
+    // Correspondência Cliente×tenant: só aceita cliente_id presente no filtro do contexto.
+    const clienteOk = Boolean(payload.cliente_id)
+      && clientes.some((c) => String(c?.id || '') === String(payload.cliente_id));
+    if (!clienteOk) {
+      alert("Selecione um cliente do grupo/empresa ativos. Contato B2B não aceita cliente fora do tenant.");
+      return;
+    }
+    // WhatsApp é campo próprio — não copiar telefone/celular automaticamente.
+    if (!payload.whatsapp) {
+      payload.whatsapp = "";
+    }
 
     if (onSubmit) {
       onSubmit(payload);
