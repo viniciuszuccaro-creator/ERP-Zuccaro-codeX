@@ -1,3 +1,8 @@
+## CURSOR — #591 proposta-acao slug + peels Completo fix (2026-11-10 America/Sao_Paulo)
+- Aside: `proposta-acao-{slug}` (salvar-orcamento…). `88b9` FAIL = Completo herdado de `e09f`.
+- Fix peels Completo: **`c8d7c134`**. Verde **`77edc2ea`** · **`516497af`** · **`75aa36c1`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
 ## CURSOR — #591 fix peels Completo e09f (2026-11-10 America/Sao_Paulo)
 - FAIL `e09f882b` stage48 Completo → restaurado tip `516497af`.
 - Mantidos: ContatoB2B toast · Outro único no form · proposta-sem-paginacao.

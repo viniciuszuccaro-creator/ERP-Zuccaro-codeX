@@ -98,6 +98,13 @@ test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do 
   const src = read('src/components/comercial/OrcamentoProposalAside.jsx');
   assert.match(src, /data-action="proposta-voltar"/);
   assert.match(src, /data-action="proposta-avancar"/);
+  // Ações stub: slug estável (sem espaços) + sempre disabled.
+  assert.match(src, /data-action=\{`proposta-acao-\$\{slug\}`\}/);
+  assert.match(src, /'salvar-orcamento'/);
+  assert.match(src, /'converter-pedido'/);
+  assert.match(src, /'reservar-estoque'/);
+  assert.match(src, /'enviar-whatsapp'/);
+  assert.doesNotMatch(src, /proposta-acao-\$\{label\}|proposta-acao-Salvar/);
   assert.match(src, /Rascunho do editor permanece ao navegar/);
   assert.match(src, /data-block="proposta-painel-indice"/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);

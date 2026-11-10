@@ -191,19 +191,20 @@ export default function OrcamentoProposalAside({
           </p>
           <div className="flex flex-col gap-2">
             {[
-              ['Salvar orçamento', 'Gravação bloqueada na prévia sintética'],
-              ['Converter em pedido', 'Conversão canônica desabilitada na prévia'],
-              ['Reservar estoque', 'Sem reserva real nesta demonstração'],
-              ['Enviar WhatsApp', 'Compartilhamento operacional fora da prévia'],
-            ].map(([label, reason]) => (
+              ['Salvar orçamento', 'Gravação bloqueada na prévia sintética', 'salvar-orcamento'],
+              ['Converter em pedido', 'Conversão canônica desabilitada na prévia', 'converter-pedido'],
+              ['Reservar estoque', 'Sem reserva real nesta demonstração', 'reservar-estoque'],
+              ['Enviar WhatsApp', 'Compartilhamento operacional fora da prévia', 'enviar-whatsapp'],
+            ].map(([label, reason, slug]) => (
               <Button
-                key={label}
+                key={slug}
                 type="button"
                 variant="outline"
                 disabled
                 className="justify-start border-sky-200 bg-white text-slate-700"
                 title={reason}
-                data-action={`proposta-acao-${label}`}
+                data-action={`proposta-acao-${slug}`}
+                aria-disabled="true"
               >
                 {label}
               </Button>
