@@ -1,4 +1,60 @@
-## Continuidade vigente - IE20 finalizada; revisar port rico antes da15173 (2026-11-10)
+## Continuidade vigente - fonte117Obras extraida; fechar preservacao antes da15173 (2026-11-10)
+
+Coorte FINAL100 e baseline pos-IE preservados. NAO repetir carga, contatos331,
+IE20, remapeamento ou backups intactos. Novo trabalho foi leitura nativa limitada:
+100pais/documentos conferidos,0filhos internacionais,117ClientesObras/100clientes.
+Preservados CODIGOCLIENTE/ITEM/SEQUENCIA, campos originais e hashes privados.
+Chaves unicas/metadados e igualdade nativa conferidos, sem alegar FK imposta:
+contagem declarada0 nos pares consultados.31tabelas somente catalogadas por nomes
+de endereco/local/obra; nenhum acesso indiscriminado aos seus dados.
+
+117ENDERECO/cidade/bairro/UF/CEP/referencia;29CONTATO em texto. Nenhum telefone,
+email ou complemento de recebedor preenchido nesse recorte.1CEP com formato
+invalido. Nao decompor numero ou inferir pais/finalidade/status, nem misturar
+recipient com mestre. Plano117pendentes/0aplicadas: sourceText e original integral
+conservados; canonicalReady0 por campos/semantica/reconciliacao ainda pendentes.
+
+Leitura HML READ ONLY/ROLLBACK: fisico/schemaOID/role/perfil conferidos;100IDs,
+codigos/procedencia/documentos/status/IE20/331contatos iguais ao subconjunto
+conservado pos-IE.0locais VISIVEIS, nao destino global vazio. Sem novo JWT/HTTP/UI
+testado. Sessao administrativa residual nao e leitor estrito; sem novos grants.
+
+Retomada privada sob /workspaces/.erp-private-344/address-native-20261110-followup:
+attempt02/address-native-cohort.private.json (internacional0/metadados31),
+attempt03/address-native-cohort.private.json (Obras117),
+address-enrichment-plan.private.json, completeness-source-hml-api-form.private.json,
+hml-address-current.private.json e execution-closed.private.json. Ambos apoios
+PARADOS e writer.lock liberado. Primeira leitura falhou; nao reapresentar como
+PASS nem rerodar consultas encerradas. Wrappers sanitizados342/6779772012,
+b37de840/1c521b07, nao importadores ou parte do build.
+
+591 revisada ate6b3c84c2: testes/peels e tipagem/preferencias posteriores, mas
+service/adapter identicos ao fc1 e3hunks UI equivalentes em comportamento.
+Foram corrigidas
+guardas ricas/limites/metadata/CAS no adapter (probes sinteticos), mas continuam
+3residuos de UI: corte2001->2000, NULL enviado em edicao escalar e POST exigindo
+CAS. Regressao adicional de preservacao: get/update sem capturas/reautorizacao/
+parse pre-await e delegacao enrichLegacyContacts removida frente29726. Repor
+hunks exatos, preservar comercial e contraprovas; nao atualizar pins cegamente.
+Pareceres6779554174/6779707769; servico/PG concorrente e browser ainda pendentes.
+
+Base44 MCP atual acessivel: app ERP Integra confirmado e4schemas dirigidos lidos,
+sem sandbox/builder/alteracao ou query de registros. Recibo de metadados privado
+base44-4schemas-access-20261110.private.json no executor desktop. GrupoProduto e
+UnidadeMedida possuem codigo/escopo; Produto referencia grupo_produto_id. Isso nao
+prova correspondencia historica dos exports871/91/14, nem aprova fator/conversao
+ou associacao por nome/codigo isolado. Recuperacao ERP novo continua distinta;
+nao declarar registros recuperados pela leitura de schema.
+
+Bootstrap api-bootstrap-next privado e candidato NAO ATIVADO; sourceef65,
+SHAe08895df, guards novos de baseline pos-IE e fisico, mesmoHML/15173/20min/Auth
+real. Nenhum archive/build fc foi produzido ou servido. Proximo gate e corrigir
+e revisar o runtime atual/CI; nao usar freeze antigo como desculpa nem servir
+codigo com perda conhecida. Cursor e escritor UI/composicao, Codex nao editou
+sua branch. Sem operacional/DDL/grants/merge/deploy.117enderecos aguardam prova
+semantica/componentes e destino antes de qualquer enriquecimento canonico.
+
+## Historico imediato - IE20 finalizada; revisar port rico antes da15173 (2026-11-10)
 
 Nao repetir carga100, contatos331, remapeamento, POSIX ou importacao. Mesmo
 runtime29726d3d/CI6692, sem nova alteracao de codigo de aplicacao neste lote.

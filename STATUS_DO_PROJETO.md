@@ -1,4 +1,54 @@
-## Continuidade vigente - IE20 concluida na HML; aceite do port rico bloqueado por contraprovas (2026-11-10)
+## Continuidade vigente -117registros nativos de obras recuperados; port rico ainda sob correcao (2026-11-10)
+
+Sem recarga100, replay de contatos/IE, DDL ou escrita de negocio neste lote.
+Recorte nativo limitado aos mesmos100: pais/CPF-CGC conferidos,0linhas na tabela
+internacional e117registros ClientesObras, com chaves nativas/unicidade conservadas.
+Contagem FK declarada0 APENAS nos pares consultados, nao ausencia global de relacoes.
+Catalogo dirigido ampliado somente por metadados:31tabelas candidatas, sem ler seus
+dados indiscriminadamente. Leitores privados existentes, READ_ONLY/ROLLBACK,
+imagem/volume/caminhos/rede none/zero portas conferidos; sem tocar originais.
+
+Nos117registros:117textos de endereco/cidade/bairro/UF/CEP/referencia,29contatos
+em texto;0complementos/telefones/emails de recebedor preenchidos.1CEP com formato
+invalido. Numero/pais/finalidade nao comprovados:117propostas privadas PENDENTES,
+0locais criados e0enderecos completos declarados. Nao converter Obra em Entrega
+ou contato de recebedor em contato mestre por suposicao. Fonte original preservada.
+
+Leitura fisica HML confirmou banco/schema/principal/perfil e os mesmos100IDs,
+codigos/procedencia/documentos/status/20IE/331canais contra baseline pos-IE.
+Locais:0visiveis ao principal nesse recorte, NAO prova de ausencia global.
+Sessao administrativa residual continua NAO leitor estrito; nao houve prova
+nova de sessao HTTP/browser. Plano/matriz/recibos em address-native-20261110-followup
+privado. PG/leitor SQL parados e reserva liberada; nenhum backup repetido.
+
+Codigo sanitizado dos dois wrappers publicado em342/6779772012, hashes b37de840
+e1c521b07; node--check/revisao independente e leituras reais acima. Nao importer
+ou codigo de build. Primeira consulta falhou sem detalhe SQL capturado; tentativa
+seguinte passou com captura completa, nao classificar a primeira como PASS.
+
+PR591 revisada ate6b3c84c2. Guardas200/201, IDs/principais/B2B/metadata e CAS do
+adapter corrigidos no alcance sintetico;12probes reproduzidos, incluindo3residuos:
+UI corta2001->2000, NULL carregado nao e omitido, POSTnovo exige versao CAS.
+Backend get/update perderam captura/reautorizacao/parse antes de await e delegacao
+enrichLegacyContacts frente29726; service/adapter identicos ao fc1, apesar dos
+peels novos. Delta UI6b3 de tipagem e preferencias nao corrigiu os3residuos.
+Pareceres591/6779554174 e6779707769; nao trocar pins para esconder a perda.
+CAS transacional apenas inspecionado, nao homologado HTTP/PostgreSQL concorrente.
+1partial/quarentena da fonte nao tem projecao API/UI comprovada.
+
+Base44: canal MCP autenticado confirmou app ERP Integra e4schemas especificos
+(Cliente/Produto/GrupoProduto/UnidadeMedida), sem sandbox/builder/escrita ou leitura
+de registros. Relacoes de grupo/unidade e cadastro rico documentadas; isto NAO
+recupera registros nem resolve crosswalk historico. Nao repetir os100IDs sem match
+ja consultados, mapear por nome ou tratar descricao de unidade como fator aprovado.
+
+Bootstrap seguinte apenas PREPARADO de fonte ef65, nao ativado nem snapshot/build
+produzido: depende da correcao/revisao/CI do par unico.15173 nao anunciada ativa.
+Proximo: restaurar protecoes e corrigir3residuos com Cursor; depois snapshot e
+prova privada. Enderecos dependem de semantica Obras e componentes comprovados,
+sem defaults ficticios. Carga operacional, merge e deploy continuam gates.
+
+## Historico imediato - IE20 concluida na HML; aceite do port rico bloqueado por contraprovas (2026-11-10)
 
 Mesmo runtime canonico29726d3d/CI6692 reutilizado, sem novo delta de aplicacao.
 IE20 executada exclusivamente na HML existente por enrichLegacyStateRegistration:
