@@ -3,7 +3,8 @@
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **C360** | proposta: só Orçamentos no grid; demais módulos toast-bloqueados |
+| **HEAD** | **`b28fedaf`** — KPIs ocultos na proposta; grid só Orçamentos; fix 347 |
+| **C360** | proposta: só Orçamentos no grid; KPIs sintéticos; módulos toast-bloqueados |
 | **Fix 347** | harness `proposta-nova-negociacao` |
 | **Verde** | **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS** |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` |

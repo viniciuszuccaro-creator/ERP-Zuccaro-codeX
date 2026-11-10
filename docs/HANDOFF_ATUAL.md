@@ -1,6 +1,6 @@
 ## CURSOR — #591 proposta só Orçamentos + fix 347 + peels verde (2026-11-10 America/Sao_Paulo)
 - **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS**. Fix 347: `proposta-nova-negociacao`.
-- Proposta: grid bloqueia módulos ≠ Orçamentos; passa `proposalMode` ao abrir.
+- Proposta: grid só Orçamentos; KPIs operacionais ocultos (`proposta-kpis-sinteticos`).
 - ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
 - Freeze `0afd378f284`. Homolog `77f11b28`.
 
