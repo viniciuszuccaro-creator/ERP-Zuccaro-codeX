@@ -1,4 +1,59 @@
-## Continuidade vigente - HML recuperada e contatos da mesma100 enriquecidos (2026-11-10)
+## Continuidade vigente - IE20 finalizada; revisar port rico antes da15173 (2026-11-10)
+
+Nao repetir carga100, contatos331, remapeamento, POSIX ou importacao. Mesmo
+runtime29726d3d/CI6692, sem nova alteracao de codigo de aplicacao neste lote.
+IE20 pela rotina canonica enrichLegacyStateRegistration, CAS/lock/RBAC/auditoria:
+PLAN/APPLY/REPLAY/REVERSE/FINAL_APPLY/FINAL_REPLAY PASS.20preenchidas,100IDs e
+331canais preservados;60auditorias novas e replays sem incremento. Reversao
+restaurou baseline; final reaplicado. Nenhuma escrita operacional/original.
+
+Retomada privada: ie20-address-20261110/ie20-journal/completion.private.json,
+conservation-baseline-after-ie20.private.json, baseline-chain.private.json e
+final-backup-after-ie20.private.json sob /workspaces/.erp-private-344. Backup
+345276bytes do schema HML SHA256/TOC; recuperacao anterior reutilizada, nao novo
+restore desse dump. Apoio PG parado; nao iniciar containers antigos preservados.
+Nova baseline encadeada: fingerprints anteriores de contatos nao sao replayaveis
+apos IE20; conservar seus recibos historicos sem sobrescreve-los.
+
+Causa do PLAN inicial bloqueado: hash declarado de staging confundido com CSV,
+alem de ordem de chaves JSON distinta do CSV. Corrigida somente a classificacao
+dos pins, mantendo igualdade integral100,100hashes de linha e bytes/tamanho CSV;
+staging pinado pelo FINAL, sem alegar nova verificacao dos bytes do staging.
+Driver privado688e3708 revisado por outro executor antes da escrita.
+
+Catalogo de enderecos dirigido consultado na copia SQL READ_ONLY:6tabelas e
+252colunas. Mensagem USE quebrou o parser; JSON exato ja devolvido recuperado do
+diagnostico privado/hash, sem repetir SQL. address-native-catalog.private.json
+preserva origem dessa recuperacao; FK omitida significa NAO COMPROVADA. Nao
+alegar novo dado de endereco, ausencia global ou vinculo inferido. Leitor
+originalmente parado retomado e parado ao fim; volume local exato/sem host-bind,
+rede none/zero portas e fonte READ_ONLY conferidos. Ambos apoios parados e
+writer.lock proprio liberado em execution-closed.private.json. Proxima leitura:
+provar chaves/joins das tabelas candidatas contra a mesma100 antes de extrair
+enderecos; preservar pais/numero/finalidade ausentes e texto original.
+
+Cursor591 atual bd7f2f06/CI6757SUCCESS tem contatos[] rico, mas revisao
+6778237293 reproduziu CAS ausente/truncamento/null->[]/guardas incompletas.
+Provas sinteticas adapter/schema/sanitizador/mapper, NAO React montado/HTTP/PG
+ou browser do port. Preservar positivos e corrigir pelo contrato29726d3d;
+Cinco blobs e probes reproduzidos tambem pelo executor principal; complemento
+591/6778347806 aponta sanitizador UI real CadastroClienteCompleto.jsx:79.
+nao reutilizar parecer de ausencia do9c2966 nem CI como aceite. Cursor e escritor
+UI/composicao; Codex nao editou sua branch. Antes15173: revisao do novo SHA,
+par API/web coerente, identidade fisica/namespace/Auth real e sessao do dono.
+
+Nova decisao10/11 substitui orientacao05/11: Central de Vendas360 ocupa Pedidos,
+sem entrada separada Orcamento no menu e sem apagar servicos/registros/historicos.
+Versao6 e texto reconciliados em COMERCIAL_360.md e programa existente.
+Coordenacao591/6778157606; publicacao nao comprova ACK. Nao criar outra candidata.
+HEAD401 atual5d9a7e37 reconferido, tip documental sobre76cd4e299; nao atribuir a
+ele automaticamente aceite da candidata ancestral ou do rich port591.
+
+Proxima acao executavel: revisar correcoes ricas/CAS por SHA e liberar snapshot
+unico15173; enderecos dependem de dados/joins nativos sem inferencias. Dados e
+recibos detalhados privados. Operacional, grants, deploy e merge continuam gates.
+
+## Historico imediato - HML recuperada e contatos da mesma100 enriquecidos (2026-11-10)
 
 Autorizacoes especificas recebidas: persistir o MESMO Cliente.contatos[] na HML
 nullable/CHECK array<=200, e recuperar somente seu container PG de apoio apos

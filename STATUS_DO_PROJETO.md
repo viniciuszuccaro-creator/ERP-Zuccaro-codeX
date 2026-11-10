@@ -1,4 +1,50 @@
-## Continuidade vigente - HML recuperada; contatos100 aplicados e reversao comprovada (2026-11-10)
+## Continuidade vigente - IE20 concluida na HML; aceite do port rico bloqueado por contraprovas (2026-11-10)
+
+Mesmo runtime canonico29726d3d/CI6692 reutilizado, sem novo delta de aplicacao.
+IE20 executada exclusivamente na HML existente por enrichLegacyStateRegistration:
+PLAN/APPLY/REPLAY/REVERSE/FINAL_APPLY/FINAL_REPLAY PASS,20inscricoes preenchidas,
+100IDs/clientes e331canais conservados;60eventos novos de auditoria, replays sem
+incremento. Reversao restaurou os valores anteriores; estado final reaplicado.
+Nenhum novo cliente, grant, DDL, original ou banco operacional alterado.
+
+Preflight corrigido sem enfraquecer guardas: fileSha256 do detalhe identifica o
+staging congelado, NAO os bytes CSV; ordem de chaves do JSON FINAL nao equivale
+a ordem das colunas CSV. Conferidos separadamente100valores integrais,100rowSHA,
+bytes/tamanho do CSV, pin do staging no FINAL e pin JSON antigo. Driver privado
+688e3708 revisado independentemente; planos antigos/erros preservados. Baseline
+novo encadeado apos IE; NAO repetir comandos de contatos com fingerprints antigos.
+Backup do schema HML345276bytes, SHA256/TOC verificados; nao novo restore desse
+arquivo. Apoio PG parado apos conexoes fechadas. Recibos somente privados.
+
+Catalogo nativo dirigido:6tabelas/252colunas, copia SQL READ_ONLY, caminhos
+isolados, rede none/zero portas, volume local sem bind de originais. Driver
+inicial falhou ao parsear a mensagem USE; JSON ja retornado recuperado do
+diagnostico exato/hash sem repetir SQL. Resultado FK omitido continua NAO
+COMPROVADO, nao equivale a ausencia de vinculos.0novas linhas de endereco
+extraidas/gravadas. Leitor SQL parado e reserva propria liberada. Proximo recorte
+deve provar chaves/joins e semantica antes de extrair os componentes da mesma100.
+
+PR591 bd7f2f06/CI6757SUCCESS: port rico existe, superando parecer ancestral de
+ausencia. Contraprovas sinteticas em memoria encontraram CAS ausente, truncamento
+51->50 e900->500, null/ausente->[] no mapper PG e guardas ricas incompletas.
+Parecer591/6778237293; Cursor continua escritor e deve reutilizar contrato/CAS
+29726d3d. Nao atualizar15173 com par API/web incompativel. Banco enriquecido nao
+comprova formulario homologado; nenhuma URL ativa ou novo aceite browser alegado.
+Cinco blobs/probes sinteticas reproduzidos pelo revisor e pelo executor principal;
+positivos de hidratacao rica e omissao conservados. Complemento591/6778347806.
+HEAD401 reconferido5d9a7e37, tip documental sobre pacote76cd4e299: isto nao e
+nova aprovacao do conjunto nem autorizacao de integra-lo/deployar.
+
+Decisao Comercial10/11 reconciliada em COMERCIAL_360 e programa existente:
+Central ocupa Pedidos, nao Orcamentos; preservar entidades e acessos por
+compatibilidade. Versao6 azul/branca, duas grades simultaneas; texto prevalece
+sobre imagem. Coordenacao591/6778157606 publicada; ACK nao presumido.
+
+Proximo: corrigir/revisar CAS e preservacao do port rico por SHA; snapshot unico
+API/web e prova real15173. Enderecos ainda exigem campos/joins/finalidades nativos;
+nao inferir numero/pais/entrega nem chamar textos de locais completos.
+
+## Historico imediato - HML recuperada; contatos100 aplicados e reversao comprovada (2026-11-10)
 
 Runtime29726d3d/CI6692SUCCESS3jobs, sem novo delta runtime. Gates especificos de
 recuperacao do apoio PG e coluna canonica contatos autorizados e executados.

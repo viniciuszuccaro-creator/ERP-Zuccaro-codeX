@@ -1,5 +1,27 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Delta vigente - IE20 HML finalizada e port rico sob revisao (2026-11-10)
+
+- Mesma100/331contatos preservados; IE20 preenchida pelo lifecycle canonico
+  enrichLegacyStateRegistration, com CAS/lock/RBAC e auditoria transacional.
+  Apply/replay/reverse/final_apply/final_replay PASS;60auditorias novas e replays
+  sem escrita. Nao repetir importacao/enriquecimento de contatos ou DDL.
+- Retomada privada em ie20-address-20261110 sob /workspaces/.erp-private-344:
+  execution-closed, baseline-chain, conservation-baseline-after-ie20,
+  ie20-journal/completion e final-backup-after-ie20, todos private.json.
+  Backup345276bytes do schema HML SHA256/TOC; nao novo restore desse arquivo.
+  Fingerprints antigos de contatos permanecem historicos, nao replayar apos IE.
+- Apoio PG e leitor SQL parados, reserva liberada; nao iniciar containers antigos.
+  Catalogo dirigido6tabelas/252colunas recuperado do diagnostico exato do parser
+  sem repetir consulta. FK omitida permanece desconhecida; nenhuma escrita de
+  endereco. Provar joins e finalidade antes de transformar a mesma100.
+- Antes15173, corrigir/revisar CAS e preservacao do port591/bd7f2f06 e servir
+  API/web do mesmo SHA revisado com Auth real/preflight fisico. Pareceres
+  6778237293/6778347806 nao sao prova de navegador. Nao usar fallback operacional,
+  ampliar grants ou chamar sessao administrativa residual de leitor estrito.
+- Central360 ocupa Pedidos pela decisao10/11; implementacao visual e composicao
+  continuam com Cursor. CI/documentacao nao liberam merge, deploy ou carga real.
+
 ## Delta vigente - recuperacao do apoio e contatos HML concluida (2026-11-10)
 
 - Gate do proprietario executado SOMENTE na HML existente. Apoio PG recuperado

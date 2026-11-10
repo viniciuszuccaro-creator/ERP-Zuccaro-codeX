@@ -1,9 +1,17 @@
 # Comercial 360
 
-## Decisao vigente do proprietario (2026-11-05)
+## Decisao vigente do proprietario (2026-11-10)
 
-Orcamentos existente evoluira para Central de Vendas360, sem modulo paralelo.
-Desenho ainda pendente: preservar implementacao/layout atuais ate aprovacao.
+A Central de Vendas360 ocupa o acesso atual Pedidos. Retirar somente a entrada
+separada Orcamento do menu, preservando registros, servicos, historicos e acessos
+anteriores por redirecionamento quando necessario. Esta decisao substitui a de
+05/11 sobre ocupar Orcamentos; nao criar outra central ou candidata.
+Referencia aprovada: documento Comercial360, revisao consolidada10/11, versao6.
+Hierarquia: Regra-Mae atualizada > decisoes especificas10/11 > ORDEM2 > imagem.
+Preservar identidade azul/branca, proporcoes, duas grades simultaneas e Cliente360
+retratil/destacavel; nao adicionar paineis permanentes. O texto de12colunas e
+Fechar Orcamento em Aberto prevalece sobre a imagem ilustrativa desatualizada.
+Cursor permanece escritor da interface/composicao; Codex revisa backend/legado.
 Orcamento e Pedido permanecem registros distintos e vinculados; nao unir seus
 estados, persistencias ou efeitos. Mapa dirigido de integracoes, dependencias de
 Fornecedor/Produto e limites das provas foi reconciliado no programa existente
@@ -35,7 +43,13 @@ Duplicidades a evitar: `CriarPedidoChat`, `OrcamentoSite`, `PedidosCliente` e co
 
 `Em aberto -> Aguardando aprovacao -> Aprovado -> Reserva/Separacao -> Producao (quando aplicavel) -> Pronto para retirada ou entrega -> Expedicao -> Faturamento parcial/total -> Finalizado`.
 
-Cancelamento e restauracao sao auditados; nao usar estado `Fechado`. Tipo de NF pertence ao faturamento, nao ao Pedido.
+Cancelamento e restauracao sao auditados. A decisao10/11 exige o fluxo de negocio
+ABERTO -> verificacoes/aprovacoes -> FECHADO -> PRODUCAO/ENTREGA/RETIRA. Mapear os
+estados canonicos existentes antes de alterar enums ou persistencia; o fluxo
+historico acima nao autoriza ignorar essa decisao nem criar estado paralelo.
+Ajustar Pedido somente em Producao/Entrega/Retira, sujeito a travas e revalidacao
+de endereco, condicao, destino e tipo de NF antes da emissao; a identidade fiscal
+e a emissao continuam no dominio Fiscal da empresa juridica, nunca do Grupo.
 
 ## Matriz RBAC minima
 

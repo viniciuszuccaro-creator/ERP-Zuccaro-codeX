@@ -1,8 +1,13 @@
-## Decisao vigente - Central de Vendas360 no Orcamentos existente (2026-11-05)
+## Decisao vigente - Central de Vendas360 no acesso Pedidos (2026-11-10)
 
-Decisao expressa do proprietario: o submodulo Orcamentos evoluira para Central
-de Vendas360. O desenho ainda esta em definicao; NAO aplicar reorganizacao visual
-ampla, renomear rotas ou criar outra central/tela/importador. Preservar Orcamento
+Decisao expressa10/11 substitui a orientacao05/11: Central de Vendas360 ocupa
+o acesso Pedidos; retirar a entrada separada Orcamento do menu, nao os registros,
+servicos ou historicos. Layout versao6 aprovado azul/branco, duas grades simultaneas,
+Cliente360 retratil/destacavel e12colunas; texto prevalece sobre imagem. Requisitos
+e mapa reutilizado em COMERCIAL_360.md; nao criar outro manual/central/importador.
+Compatibilidade dos acessos anteriores por redirecionamento quando necessario.
+Cursor e escritor da interface/composicao; Codex responde por legado/backend e
+revisao independente. Preservar Orcamento
 e Pedido como agregados distintos, vinculados por conversao canonica idempotente.
 Entrada em uso e gates do PLANO_GO_LIVE continuam prioritarios; omnicanal completo
 nao e requisito implicito para liberar o nucleo. GitHub oficial, desktop existente
