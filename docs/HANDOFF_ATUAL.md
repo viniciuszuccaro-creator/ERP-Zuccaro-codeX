@@ -1,3 +1,9 @@
+## CURSOR — #591 C360 atalhos owner-only + peels Produto (2026-11-10 America/Sao_Paulo)
+- Tip **`288947e4`**: peels ProdutoFormV22 (ia/v5) após banner Storage.
+- Tip **`1d41562c`**: atalhos etapa C existente=`owner-only` (paridade Aside).
+- Base verde **`e6a31225`**. Freeze `0afd378f284`. Homolog `77f11b28`.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 CI fix peels Produto foto banner (2026-11-10 America/Sao_Paulo)
 - FAIL `0cee5367`/`80e581e3`: peels ProdutoFormV22 stage46/v5 após banner Storage.
 - Fix: hashes ia `db8787c4…` + v5 `448a0561…` (banner mantido; sem ContatoClienteV2).
