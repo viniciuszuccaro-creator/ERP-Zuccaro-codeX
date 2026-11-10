@@ -1,3 +1,9 @@
+## CURSOR — #591 C360 etapa C filtros + consumidores prontos (2026-11-10 America/Sao_Paulo)
+- Etapa C: filtros operacionais ocultos (`proposta-filtros-lista` só A/B).
+- Pack Codex: `codex-consumidores-prontos-contatos-591` — ordem (a)/(b)/(c) pós-decisão.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 C360 atalhos C + FK ContatoB2B reconfirm (2026-11-10 America/Sao_Paulo)
 - Base **`9ffae37b`/`b39e50ef`** CI SUCCESS. Etapa C: PROPOSTA_CAPACIDADES GoTo/Hub/Chatbot
   com `data-integracao-pronta=false` (sem disparo). Subtitle Comercial A→B→C.

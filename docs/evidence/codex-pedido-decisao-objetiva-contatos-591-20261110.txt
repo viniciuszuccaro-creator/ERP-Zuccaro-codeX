@@ -23,6 +23,8 @@ CURSOR JÁ PREPARADO (sem storage paralelo / sem ContatoClienteV2)
 - Completo: draft GerenciarContatos; banner limitação; Celular≠WhatsApp
 - hydrate documento→cpf/cnpj zeros; cadastral/fiscal ≠ entrega
 - locais: BATCH_ATOMIC=false; partial ≠ sucesso integral
+- Ordem de integração pós-decisão:
+  docs/evidence/codex-consumidores-prontos-contatos-591-20261110.txt
 Integração Completo inicia no tip CI SUCCESS após o contrato acima.
 
 FORA
