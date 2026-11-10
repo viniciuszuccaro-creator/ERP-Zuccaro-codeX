@@ -1,4 +1,17 @@
-## Continuidade vigente - CI Linux de locais encerrada (2026-11-10)
+## Continuidade vigente - CI6604 verde e concorrencia PG comprovada (2026-11-10)
+
+Codigoe4802061 remoto,CI6604SUCCESS/3jobs. Lote locais: prova realPostgres
+1PASS/0SKIP,2conexoes bloqueadas/umCASvencedor e rollback na falha de auditoria.
+PGlite9PASS e contrato contatos6PASS permanecem provas distintas. Contatos ricos
+ainda NAO persistidos/habilitados no MASTER; schema e gates explicitos no
+procedimento existente. Revisao/port coordenados com Cursor sem tocar sua branch.
+Linux desbloqueado via CI existente, sem Chrome/instalacao/nova candidata.
+SQL: preparo administrativo de copia privada do catalogo e consulta restrita
+PK/FK prontos; ainda sem partida/leitura das5auxiliares. T3608 nao substitui
+isolamento de arquivos. IE20/100clientes/HML/VPS nao alterados. Proxima acao:
+receber catalogo privado, fechar isolamento e revisar port/API+web antes de HML.
+
+## Historico imediato - CI Linux de locais encerrada (2026-11-10)
 
 63ca3eff remoto/CI6600SUCCESS,3jobs; raiz2427PASS/0FAIL/0SKIP. Bloqueio Linux
 resolvido pelo workflow existente, sem Chrome ou instalar ambiente. Locais

@@ -1,4 +1,36 @@
-## Continuidade vigente - locais publicado com CI Linux verde (2026-11-10)
+## Continuidade vigente - locais e contatos validados fora do Chrome (2026-11-10)
+
+Codigo atual e4802061d1f3a6f4bb47361ef4f1c0b0a5b2d2b5, CI6604 terminalSUCCESS
+em3jobs. Prova NOVA PostgreSQL real do lote passou no runner existente:
+POSTGRES_E2E_CLIENTE_LOCAL_BATCH_TOTAL_TESTS=1,1PASS/0FAIL/0SKIP. Duas conexoes
+aguardaram o lock do cliente, umCAS venceu/outro409; falha de auditoria rollbacka
+dados. Fixture sintetica administrativa/RBAC em memoria: NAO prova principal
+minimo HML, navegador ou preservacao MASTER+locais no mesmo lote.
+Contrato contatos6sinteticosPASS, nao habilita coluna/persistencia rica. Campos
+e gates estao na secao Cadastro completo de OPERACAO_DEV_VPS. Parecer/contrato
+enviado ao Cursor591/6765474295 e6765570931, sem presumir recebimento. Escrita
+ativa encerrada, checkout sem WIP de codigo; nao alterar branch/composicao Cursor.
+
+Canal Linux comprovado: workflow Ubuntu EXISTENTE da342; autorizacao explicita
+do proprietario permite commits de validacao na PRdraft antes do fechamento
+Linux. Nao autoriza merge/deploy/DDL/grants/carga nem torna HML homologada.
+Sem instalarCLI/WSL, outra candidata, acesso Chrome ou recurso pago.
+
+Legado: preparacao administrativa -PrepareCatalogCopy entregue (somente copia
+master/mastlog para privadoC, hashes e conservacao, sem iniciarSQL/alterarACL).
+Recibo agregado ainda aguardado. Consulta privada preparada, NAO executada,
+legacy-auxiliary-contract-readonly-20261110.sql: somente catalogo de colunas,
+PKs e FKs das5tabelas+Clientes; exige identidade, readonly e copia privada,
+ROLLBACK. Nao pressupoe joins por nomes, nem le dados antes do gate fisico.
+Microsoft documenta queT3608 pode abrir outros bancos/tempdb por acesso; nao
+usar como unica barreira de isolamento. Instancia seguePARADA e5auxiliares
+sem conteudo recuperado. Fonte100/IE20/HML/VPS originais intocados.
+
+Proximo: Cursor revisar/portar contrato aprovado preservando finalidades e
+metadata; liberar persistencia rica apenas com schema/CAS/RBAC/auditoria juntos;
+fechar isolamento do leitor SQL a partir do catalogo privado antes de partida.
+
+## Historico imediato - locais publicado com CI Linux verde (2026-11-10)
 
 63ca3eff4573fb7e57861efddeb19019eba7e57f remoto confirmado. CI6600 terminal
 SUCCESS/3jobs; raiz Linux2427PASS/0FAIL/0SKIP. Validacao executada pelo workflow
