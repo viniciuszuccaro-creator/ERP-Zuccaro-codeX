@@ -120,7 +120,7 @@ test('serviço: viewer sem editar recebe PERMISSION_DENIED no update (sessão/RB
   assert.notEqual(reloaded?.observacoes, 'tentativa sem editar');
 });
 
-test('serviço: payload com contatos é rejeitado pelo schema strict (não bypassa RBAC)', async () => {
+test('serviço: payload com contatos[] jsonb é aceito (decisão a); RBAC de edição permanece', async () => {
   const runtime = fixture();
   const created = await runtime.clienteService.create(ctx(ACTOR_EDIT, 'c2'), {
     tipo: 'Pessoa Jurídica',
@@ -130,12 +130,12 @@ test('serviço: payload com contatos é rejeitado pelo schema strict (não bypas
     telefone: '11987654322',
   });
   assert.ok(created?.id);
-  await assert.rejects(
-    () => runtime.clienteService.update(ctx(ACTOR_EDIT, 'u2'), created.id, {
-      contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
-    }),
-    (err: any) => err?.statusCode === 400 && err?.code === 'VALIDATION_ERROR',
-  );
+  const updated = await runtime.clienteService.update(ctx(ACTOR_EDIT, 'u2'), created.id, {
+    contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
+  });
+  assert.ok(Array.isArray(updated?.contatos));
+  assert.equal(updated?.contatos?.[0]?.tipo, 'Telefone');
+  assert.equal(updated?.contatos?.[0]?.valor, '11');
 });
 
 test('HTTP PATCH: viewer recebe 403 e não persiste mutação (GET inalterado)', async () => {
@@ -172,7 +172,7 @@ test('HTTP PATCH: viewer recebe 403 e não persiste mutação (GET inalterado)',
   assert.equal(got.body.data.observacoes, 'original-safe');
 });
 
-test('HTTP PATCH: editor autorizado muta; payload com contatos continua 400', async () => {
+test('HTTP PATCH: editor autorizado muta; contatos[] jsonb persiste e reabre', async () => {
   const runtime = fixture();
   const created = await http(runtime.app, '/api/v1/clientes', {
     method: 'POST',
@@ -205,14 +205,16 @@ test('HTTP PATCH: editor autorizado muta; payload com contatos continua 400', as
       contatos: [{ nome: 'X', tipo: 'Telefone', valor: '11', principal: true }],
     }),
   });
-  assert.equal(withContatos.status, 400);
-  assert.equal(withContatos.body?.error?.code, 'VALIDATION_ERROR');
+  assert.equal(withContatos.status, 200, JSON.stringify(withContatos.body));
+  assert.equal(withContatos.body.data.observacoes, 'com-contatos');
+  assert.equal(withContatos.body.data.contatos?.[0]?.valor, '11');
 
   const got = await http(runtime.app, `/api/v1/clientes/${id}`, {
     method: 'GET',
     headers: headers(ACTOR_EDIT),
   });
-  assert.equal(got.body.data.observacoes, 'depois-autorizado');
+  assert.equal(got.body.data.observacoes, 'com-contatos');
+  assert.equal(got.body.data.contatos?.[0]?.tipo, 'Telefone');
 });
 
 test('HTTP: adicionar/editar/remover contatos via escalares + reabertura (contrato MASTER)', async () => {

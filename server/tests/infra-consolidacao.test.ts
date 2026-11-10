@@ -33,17 +33,17 @@ test('Infra: granular action union preserves remote actions without granting pri
 
 test('Infra: migration catalogue retains the complete remote set without adopting pending packages', () => {
   const files = listMigrationFiles();
-  assert.equal(files.length, 33);
+  assert.equal(files.length, 34);
   assert.equal(new Set(files).size, files.length);
   assert.deepEqual(files, [...files].sort());
-  assert.deepEqual(files.slice(-9), [
+  assert.deepEqual(files.slice(-10), [
     '036_expedicao_entregas_romaneios.sql', '037_expedicao_estoque_movimentos.sql',
     '038_cadastros_codigo_registro.sql', '039_orcamentos_tabela_preco.sql',
     '040_crm_oportunidades.sql', '041_produto_empresas_operacao.sql',
     '042_auth_bootstrap_select.sql', '043_legado_identidade_compartilhada.sql',
-    '044_pedidos_idempotencia_direta.sql',
+    '044_pedidos_idempotencia_direta.sql', '045_clientes_contatos_jsonb.sql',
   ]);
-  assert.equal(files.some(file => /^(045|046|047|048|049)_/.test(file)), false);
+  assert.equal(files.some(file => /^(046|047|048|049)_/.test(file)), false);
 });
 
 // Only SELECT expressions execute in this in-memory adapter; no migrations or DDL.

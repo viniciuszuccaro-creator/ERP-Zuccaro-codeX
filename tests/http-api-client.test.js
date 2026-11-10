@@ -630,7 +630,10 @@ test('Cliente HTTP update: campos ricos significativos fail-closed; MASTER allow
   assert.equal(body.tipo, 'Pessoa Jurídica');
   assert.equal(body.group_id, undefined);
   assert.equal(body.id, undefined);
-  assert.equal(body.contatos, undefined);
+  // Decisão a: contatos[] jsonb no MASTER + espelho escalar.
+  assert.ok(Array.isArray(body.contatos));
+  assert.equal(body.contatos.length, 1);
+  assert.equal(body.contatos[0].valor, 'a@b.c');
   assert.equal(body.email, 'a@b.c');
 });
 

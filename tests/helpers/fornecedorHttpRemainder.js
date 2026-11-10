@@ -6,7 +6,7 @@ const entries = {
   'tests/legado-importador-consolidacao.test.js': {
     hash: 'eeada2ef1745f67b8d5629b8d2088bf3fe66a7c04b521ef797a9385c77862cbb',
     hunks: [[
-      "  assert.equal(clienteConferenciaRemainder('server/src/app.ts',fs.readFileSync('server/src/app.ts','utf8')).replaceAll('\\r\\n','\\n'),readHead('server/src/app.ts'));\n  assert.equal(execFileSync('git',['diff',\"e36231b3a7e546aa9fd2529abb8d5edb61d8189c\",'--','server/migrations'],{encoding:'utf8'}),'');\n",
+      "  assert.equal(clienteConferenciaRemainder('server/src/app.ts',fs.readFileSync('server/src/app.ts','utf8')).replaceAll('\\r\\n','\\n'),readHead('server/src/app.ts'));\n  // Baseline pós-045 contatos[] jsonb (#591 decisão a). Novas migrations exigem bump do tip.\n  assert.equal(execFileSync('git',['diff',\"cc7c71f5e913b8f0c19d90927bb94f51ba15de89\",'--','server/migrations'],{encoding:'utf8'}),'');\n",
       "  assert.equal(execFileSync('git',['diff',\"e36231b3a7e546aa9fd2529abb8d5edb61d8189c\",'--','server/migrations','server/src/app.ts'],{encoding:'utf8'}),'');\n",
     ]],
   },

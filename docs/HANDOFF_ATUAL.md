@@ -1,7 +1,13 @@
+## CURSOR — #591 CI-fix peels/mock/045 contatos[] (2026-11-10 America/Sao_Paulo)
+- Tip **`cc7c71f5`** FAIL (frontend Completo mock sem `partitionContatosByCanal`; backend rbac ainda reject; peels postgres counterproof; catálogo 33→34/`045`; legado SHA).
+- Fix: peels `mapContatos`≠import fold+ClienteContatoItem · `fornecedorHttpRemainder` tip `cc7c71f5` · mock Completo · rbac/http-api jsonb · infra/runtime01.
+- Pack **(a)** permanece. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente alinhamento SHA.
+- Sem ContatoClienteV2 · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360.
+
 ## CURSOR — #591 contatos[] MASTER (a) Completo/HTTP/PG (2026-11-10 America/Sao_Paulo)
 - Pack a/b/c **encerrado**: decisão **(a)** `contatos[]` jsonb no Cliente MASTER. ContatoB2B FK **não** destrava.
 - Wire: `clienteHttpPayload` (ALLOWED+sanitize+espelho; WhatsApp≠celular) · Completo (banner jsonb + quarentena) · migration `045` · schema/repo.
-- CI consultados: **`9c2966a9`** · **`199cc570`**. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente.
+- CI consultados: **`9c2966a9`** · **`199cc570`**. Tip feat **`cc7c71f5`** FAIL→fix neste lote. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente.
 - Sem ContatoClienteV2 · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360.
 
 ## CURSOR — #591 fix mock toast.message 347 (2026-11-10 America/Sao_Paulo)

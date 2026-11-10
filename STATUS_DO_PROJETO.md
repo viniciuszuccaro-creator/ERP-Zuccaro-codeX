@@ -1,3 +1,17 @@
+## CURSOR — #591 CI-fix contatos[] peels/mock/045 (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Tip `cc7c71f5` FAIL → peels counterproof + mock `partitionContatosByCanal` + RBAC jsonb + catálogo `045` |
+| **Causa** | Peels postgres `after` fora do source atual; harness Completo sem partition; testes ainda esperavam reject de contatos; legado SHA/migrations |
+| **Fix** | `consolidation81Remainder` (mapContatos≠import) · `fornecedorHttpRemainder` tip `cc7c71f5` · mock Completo · rbac/http-api aceitam jsonb · infra/runtime01 `045` |
+| **CI tip anterior** | **`cc7c71f5`** FAIL (42875552348) — este lote corrige |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` (aceite :15173 pendente alinhamento SHA) |
+| Fora | ContatoClienteV2 · ContatoB2B→Completo · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360 |
+
+**Próximo:** CI tip deste fix · aceite real :15173 (contatos/reabertura) · locais/docs · soft-landing C360.
+
 ## CURSOR — #591 contatos[] MASTER (decisão a) Completo/HTTP/PG (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -6,12 +20,12 @@
 | **Lote** | Integração `contatos[]` jsonb no cadastro mestre (pack a/b/c **encerrado** em a) |
 | **Contrato** | omit ≠ limpar · `[]` limpa · WhatsApp ≠ celular · quarentena ≠ válido · Sem ContatoClienteV2 |
 | **Wire** | `clienteHttpPayload` ALLOWED+sanitize · Completo read/save · migration `045` · schema/repo BFF |
-| **CI base** | **`9c2966a9`** SUCCESS · **`199cc570`** SUCCESS (consultados) |
+| **CI base** | **`9c2966a9`** SUCCESS · **`199cc570`** SUCCESS (consultados) · tip feat **`cc7c71f5`** FAIL→fix neste lote |
 | **Evidence** | `docs/evidence/contatos-jsonb-master-591-20261110.txt` |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` (aceite :15173 pendente alinhamento SHA) |
 | Fora | ContatoClienteV2 · ContatoB2B→Completo · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360 |
 
-**Próximo:** CI tip deste lote · aceite real :15173 (contatos/reabertura) · locais/docs · soft-landing C360.
+**Próximo:** CI tip do fix peels/mock · aceite real :15173 (contatos/reabertura) · locais/docs · soft-landing C360.
 
 ## CURSOR — #591 fix toast.message mock 347 + CI f6e0 FAIL (2026-11-10 America/Sao_Paulo)
 

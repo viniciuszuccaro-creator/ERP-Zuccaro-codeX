@@ -218,6 +218,20 @@ async function mountCompleto(relPath, {
       }),
       syncClienteLocaisViaHttp: async () => ({ created: 0, updated: 0, deleted: 0, skipped: true }),
       CLIENTE_LOCAIS_SYNC_PARTIAL: 'CLIENTE_LOCAIS_SYNC_PARTIAL',
+      isContatoCanalCanonico: (tipo) => ['Telefone', 'Celular', 'WhatsApp', 'E-mail'].includes(String(tipo || '').trim()),
+      partitionContatosByCanal: (contatos) => {
+        const validos = [];
+        const quarentena = [];
+        if (!Array.isArray(contatos)) return { validos, quarentena };
+        for (const row of contatos) {
+          if (row && ['Telefone', 'Celular', 'WhatsApp', 'E-mail'].includes(String(row.tipo || '').trim())) {
+            validos.push(row);
+          } else if (row) {
+            quarentena.push(row);
+          }
+        }
+        return { validos, quarentena };
+      },
     },
     '@/api/localCadastroMasterPolicy': {
       normalizeFornecedorCadastro: (payload) => ({ ...payload, normalized: true }),
