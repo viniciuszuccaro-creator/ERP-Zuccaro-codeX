@@ -1,7 +1,7 @@
 ## CURSOR — #591 locais≠integral + ContatoB2B tenant + sky params (2026-11-10 America/Sao_Paulo)
-- Docs tip **`6572b9ae`** CI SUCCESS. Homolog locais **`77f11b28`**. Freeze `0afd378f284`.
+- Tip **`13dde4a5`** · **CI SUCCESS** push+PR 9/9. Docs base **`6572b9ae`**. Homolog **`77f11b28`**.
 - Toast Completo: BATCH_ATOMIC=false → não declara salvamento integral; pedido BFF
-  `codex-locais-batch-atomico-pedido-591-20261110.txt`.
+  `codex-locais-batch-atomico-pedido-591-20261110.txt`. Freeze `0afd378f284`.
 - ContatoB2B: cliente só do tenant; WhatsApp campo próprio; pack tenant 20261110.
 - Sky residual: Portal/Caixa/Conciliação/NFe/Origem — reservas ApiExterna/Roteirizacao/
   ChatbotCanal intocadas. C360: data-integracao-pronta=false.
