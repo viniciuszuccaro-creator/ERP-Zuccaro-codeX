@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
@@ -165,6 +166,17 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
         entityId={contatoBoundId}
         action="id-tecnico-contato-b2b"
       />
+      <Alert
+        className="border-amber-200 bg-amber-50 text-amber-950"
+        data-pendencia="contatob2b-fk-ausente"
+        data-regra="contatob2b-completo-bloqueado"
+      >
+        <AlertDescription className="text-xs leading-relaxed">
+          Base ContatoB2B ainda sem FK canônica <code>cliente_id</code>/<code>empresa_id</code> —
+          wire CadastroClienteCompleto <strong>(b) bloqueada</strong>. Sem ContatoClienteV2 / storage paralelo.
+          WhatsApp permanece campo próprio (não copia telefone/celular).
+        </AlertDescription>
+      </Alert>
       <div>
         <Label>Cliente *</Label>
         <Select value={formData.cliente_id} onValueChange={(v) => setFormData({ ...formData, cliente_id: v })} disabled={!contextoValido || !podeSalvar}>

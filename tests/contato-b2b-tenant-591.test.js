@@ -18,7 +18,17 @@ test('ContatoB2B: WhatsApp campo próprio (não copia telefone)', () => {
   assert.match(src, /campo próprio/);
   assert.match(src, /data-regra="whatsapp-campo-proprio"/);
   assert.doesNotMatch(src, /whatsapp:\s*payload\.telefone|whatsapp:\s*formData\.telefone/);
-  assert.doesNotMatch(src, /ContatoClienteV2/);
+  assert.doesNotMatch(src, /function ContatoClienteV2|import ContatoClienteV2/);
+});
+
+test('ContatoB2B: banner FK ausente — Completo (b) bloqueada sem wire paralelo', () => {
+  assert.match(src, /data-pendencia="contatob2b-fk-ausente"/);
+  assert.match(src, /data-regra="contatob2b-completo-bloqueado"/);
+  assert.match(src, /\(b\) bloqueada/);
+  assert.match(src, /cliente_id/);
+  assert.match(src, /empresa_id/);
+  assert.match(src, /Sem ContatoClienteV2/);
+  assert.doesNotMatch(src, /function ContatoClienteV2|import ContatoClienteV2|contatosStorageLocal/);
 });
 
 test('Completo: toast não declara salvamento integral com BATCH_ATOMIC=false', () => {

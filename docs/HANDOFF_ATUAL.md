@@ -1,3 +1,8 @@
+## CURSOR — #591 ContatoB2B banner FK 20261110d + Outro único (2026-11-10 America/Sao_Paulo)
+- ContatoB2BForm: `contatob2b-fk-ausente` (b bloqueada; sem Completo). FK MCP só `group_id`.
+- Endereços `outro-unico` · proposta `proposta-salvar-bloqueado`. Verde base **`3b5132de`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/peels LaunchpadCard-Produto.
+
 ## CURSOR — #591 Outro único + proposta-salvar (2026-11-10 America/Sao_Paulo)
 - Endereços: `outro-unico` (select+save). Proposta: `proposta-salvar-bloqueado`.
 - Verde base **`3b5132de`**. ContatoB2B (b) bloqueada. Sem ContatoClienteV2/peels LaunchpadCard-Produto.

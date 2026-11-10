@@ -83,6 +83,7 @@ async function mountForm(relPath, { initial }) {
       SelectTrigger: 'SelectTrigger', SelectValue: 'SelectValue',
     },
     '@/components/ui/switch': { Switch: 'Switch' },
+    '@/components/ui/alert': { Alert: 'Alert', AlertDescription: 'AlertDescription' },
     '@/components/lib/usePermissions': {
       __esModule: true,
       default: () => ({ canCreate: () => true, canEdit: () => true }),
