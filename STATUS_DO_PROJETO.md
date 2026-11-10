@@ -4,7 +4,7 @@
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Lote** | Decisão 10/11: Pedidos→**Central de Vendas360°**; tile Orçamentos retirado; shell v6 (faixa, situações, 12 col, grades dual, Cliente360) |
-| **Base CI** | tip docs **`bd7f2f06`** SUCCESS · funcional **`ba21a342`** SUCCESS |
+| **Tip layout** | **`5176c590`** (CI em curso) · base docs **`bd7f2f06`** SUCCESS · funcional **`ba21a342`** SUCCESS |
 | **Reuso** | `OrcamentosTab` + `PedidoCanonicoPanel` + `CentralCliente360Panel` (sem paralelo) |
 | **Evidence** | `docs/evidence/c360-layout-v6-central-591-20261110.txt` · artifact `c360-versao6-aprovada.png` |
 | **Estados** | layout implementado · aceite visual privado pendente · aceite :15173 pendente · não integrado #401 |
