@@ -1,0 +1,19 @@
+Contatos[] MASTER (decisão a) — integração Completo/HTTP/PG (#591)
+=================================================================
+Data: 2026-11-10 America/Sao_Paulo
+Coordenação: 591 / 6773254795
+Referência Codex citada: 3427b141d47 (SHA não resolvido no remoto; contrato alinhado a Base Cliente.contatos[])
+Base PR591 consultada: 199cc570 / CI SUCCESS; tip anterior 9c2966a9 SUCCESS
+
+Decisão
+- Pack a/b/c superado: (a) contatos[] jsonb no cadastro mestre Cliente.
+- ContatoB2B FK NÃO destrava este fluxo; sem ContatoClienteV2 / storage paralelo.
+
+Wire
+- clienteHttpPayload: ALLOWED_KEYS inclui contatos; sanitizeContatosForHttp;
+  applyContatosProjection grava contatos[] + espelho escalar; WhatsApp ≠ celular.
+- Completo: banner contatos-jsonb-http; quarentena de canal inválido; omit≠limpar.
+- BFF: clienteContatosSchema + migration 045_clientes_contatos_jsonb.sql;
+  postgres/inMemory repos persistem contatos.
+
+Testes: cliente-contatos-http-adapter, limitacao-591, peels boundaries, rbac, fonte-lista.

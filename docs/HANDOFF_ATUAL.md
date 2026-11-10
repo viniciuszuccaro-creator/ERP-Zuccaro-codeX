@@ -1,6 +1,12 @@
+## CURSOR — #591 contatos[] MASTER (a) Completo/HTTP/PG (2026-11-10 America/Sao_Paulo)
+- Pack a/b/c **encerrado**: decisão **(a)** `contatos[]` jsonb no Cliente MASTER. ContatoB2B FK **não** destrava.
+- Wire: `clienteHttpPayload` (ALLOWED+sanitize+espelho; WhatsApp≠celular) · Completo (banner jsonb + quarentena) · migration `045` · schema/repo.
+- CI consultados: **`9c2966a9`** · **`199cc570`**. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente.
+- Sem ContatoClienteV2 · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360.
+
 ## CURSOR — #591 fix mock toast.message 347 (2026-11-10 America/Sao_Paulo)
 - Tip `8f7e8bbf` FAIL frontend: harness sem `toast.message`. Mock ampliado (error/success/message/info).
-- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- ContatoB2B MCP **20261110e** — (b) não destrava contatos[] (fluxo a). Freeze `0afd378f284`. Homolog `77f11b28`.
 - Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
 
 ## CURSOR — #591 CI f6e0 + Aplicar sintética (2026-11-10 America/Sao_Paulo)

@@ -1,14 +1,14 @@
 /**
  * Payload Cliente MASTER para o BFF HTTP.
- * Contrato canônico HTTP/PG: email / telefone / celular (escalares).
- * `contatos[]` (Base44/UI) NÃO cabe 1:1 nesse contrato — nome, observação,
- * ordem, ids e múltiplos do mesmo tipo seriam perdidos se projetássemos
- * em silêncio. Este módulo:
- *  - avalia fidelidade antes de projetar;
- *  - recusa projeção lossy (CONTATOS_SCALAR_OVERFLOW);
- *  - NÃO hidrata `contatos` a partir de escalares como se fosse a lista completa.
- * Evolução mínima proposta (gate separado): coluna jsonb `contatos` em clientes
- * ou tabela filha — ver docs/evidence/contatos-fidelidade-353-*.txt.
+ * Contrato canônico (decisão a — pack Contatos): `contatos[]` jsonb no MASTER
+ * + escalares email/telefone/celular espelhados best-effort.
+ *  - omitir chave `contatos` ≠ limpar (campo não carregado não apaga);
+ *  - `contatos: []` = limpeza explícita;
+ *  - WhatsApp ≠ Celular (nunca projetar WhatsApp → celular);
+ *  - canal inválido fica em quarentena (não conta como contato válido na UI);
+ *  - NÃO hidrata `contatos[]` a partir de escalares como lista completa;
+ *  - Sem ContatoClienteV2 / storage paralelo; ContatoB2B FK não destrava este fluxo.
+ * assessContatosScalarFidelity permanece diagnóstico (legado / auditoria).
  */
 
 const CLIENTE_ORIGENS = new Set([
@@ -33,6 +33,7 @@ const ALLOWED_KEYS = [
   'email',
   'telefone',
   'celular',
+  'contatos',
   'status',
   'origem',
   'codigo_legado',
@@ -42,8 +43,22 @@ const ALLOWED_KEYS = [
   'observacoes',
 ];
 
-/** Código estável: array UI não cabe nos escalares MASTER sem perda. */
+/** Canais canônicos do formulário Completo / GerenciarContatos (sem inventar WhatsApp). */
+export const CONTATO_CANAIS_CANONICOS = Object.freeze(['Telefone', 'Celular', 'WhatsApp', 'E-mail']);
+
+/** Limite canônico de itens em contatos[]. */
+export const CONTATOS_MAX_ITEMS = 50;
+
+/** Código estável (legado): array UI não cabia nos escalares MASTER sem perda. */
 export const CONTATOS_SCALAR_OVERFLOW = 'CONTATOS_SCALAR_OVERFLOW';
+
+/**
+ * @param {unknown} tipo
+ * @returns {boolean}
+ */
+export function isContatoCanalCanonico(tipo) {
+  return CONTATO_CANAIS_CANONICOS.includes(String(tipo ?? '').trim());
+}
 
 /**
  * Código estável: campos ricos da UI (locais/documentos) ainda sem contrato HTTP MASTER.
@@ -69,6 +84,12 @@ function normalizeTipo(value) {
   return undefined;
 }
 
+/**
+ * Normaliza tipo de contato para canal de projeção escalar.
+ * WhatsApp é canal próprio — NUNCA mapeia para celular (Celular ≠ WhatsApp).
+ * @param {unknown} tipo
+ * @returns {''|'email'|'telefone'|'celular'|'whatsapp'}
+ */
 function normalizeContatoTipo(tipo) {
   const compact = String(tipo ?? '')
     .normalize('NFD')
@@ -77,10 +98,85 @@ function normalizeContatoTipo(tipo) {
     .toLowerCase();
   if (!compact) return '';
   if (compact.includes('mail') || compact === 'e-mail' || compact === 'email') return 'email';
-  if (compact.includes('whats')) return 'celular';
+  if (compact.includes('whats')) return 'whatsapp';
   if (compact.includes('celul') || compact.includes('mobile')) return 'celular';
   if (compact.includes('telef') || compact.includes('fone') || compact === 'tel') return 'telefone';
   return '';
+}
+
+/**
+ * @param {unknown} value
+ * @param {number} max
+ */
+function sanitizeContatoText(value, max) {
+  if (value == null) return value === null ? null : undefined;
+  const text = String(value).replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  return text.slice(0, max);
+}
+
+/**
+ * Sanitiza contatos[] para o fio HTTP/jsonb — preserva procedência e campos
+ * desconhecidos (spread); limita itens; não inventa WhatsApp a partir de celular.
+ * Canais inválidos permanecem no array (quarentena) para não apagar na omissão.
+ *
+ * @param {unknown} contatos
+ * @returns {Record<string, unknown>[]}
+ */
+export function sanitizeContatosForHttp(contatos) {
+  if (!Array.isArray(contatos)) {
+    const error = /** @type {Error & { code: string, losses: string[], status: number }} */ (
+      createContatosScalarOverflowError(['contatos_nao_array'])
+    );
+    throw error;
+  }
+  return contatos.slice(0, CONTATOS_MAX_ITEMS).map((raw) => {
+    const base = raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? { .../** @type {Record<string, unknown>} */ (raw) }
+      : {};
+    const tipo = sanitizeContatoText(base.tipo, 60) || '';
+    const valor = sanitizeContatoText(base.valor, 180);
+    const nome = sanitizeContatoText(base.nome, 180);
+    const cargo = sanitizeContatoText(base.cargo, 120);
+    const observacao = sanitizeContatoText(
+      base.observacao !== undefined ? base.observacao : base.obs,
+      500,
+    );
+    /** @type {Record<string, unknown>} */
+    const out = { ...base, tipo };
+    if (valor !== undefined) out.valor = valor;
+    if (nome !== undefined) out.nome = nome;
+    if (cargo !== undefined) out.cargo = cargo;
+    if (observacao !== undefined) {
+      out.observacao = observacao;
+      if ('obs' in out && out.obs !== observacao) delete out.obs;
+    }
+    if (base.principal !== undefined) out.principal = base.principal === true;
+    return out;
+  });
+}
+
+/**
+ * Separa contatos válidos (canais canônicos) dos em quarentena (tipo inválido).
+ * @param {unknown} contatos
+ * @returns {{ validos: Record<string, unknown>[], quarentena: Record<string, unknown>[] }}
+ */
+export function partitionContatosByCanal(contatos) {
+  /** @type {Record<string, unknown>[]} */
+  const validos = [];
+  /** @type {Record<string, unknown>[]} */
+  const quarentena = [];
+  if (!Array.isArray(contatos)) return { validos, quarentena };
+  for (const raw of contatos) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      quarentena.push(/** @type {Record<string, unknown>} */ ({ tipo: '', valor: '', _invalid: true }));
+      continue;
+    }
+    const row = /** @type {Record<string, unknown>} */ (raw);
+    if (isContatoCanalCanonico(row.tipo)) validos.push(row);
+    else quarentena.push(row);
+  }
+  return { validos, quarentena };
 }
 
 /**
@@ -132,6 +228,16 @@ export function assessContatosScalarFidelity(contatos, scalars = {}) {
     if (!valor) {
       if (hasMeta) losses.push(`metadata_sem_valor:${index}`);
       if (isPrincipal) losses.push(`principal_sem_valor:${index}`);
+      return;
+    }
+
+    // WhatsApp é canal próprio (≠ celular): não cabe nos escalares MASTER.
+    if (channel === 'whatsapp') {
+      losses.push(`whatsapp_nao_escalar:${index}`);
+      if (nome) losses.push(`nome_perdido:${index}`);
+      if (observacao) losses.push(`observacao_perdida:${index}`);
+      if (hasId) losses.push(`id_perdido:${index}`);
+      if (hasOrdem) losses.push(`ordem_perdida:${index}`);
       return;
     }
 
@@ -208,8 +314,9 @@ export function createContatosScalarOverflowError(losses) {
 }
 
 /**
- * Projeta contatos[] → escalares SOMENTE quando a avaliação de fidelidade ok.
- * Caso contrário lança CONTATOS_SCALAR_OVERFLOW (não descarta em silêncio).
+ * Grava `contatos[]` canônico no payload HTTP e espelha escalares best-effort.
+ * Omitir a chave = não tocar; `[]` = limpar; WhatsApp nunca preenche celular.
+ * Não lança CONTATOS_SCALAR_OVERFLOW no caminho jsonb (decisão a).
  *
  * @param {Record<string, unknown>} src
  * @param {Record<string, unknown>} out
@@ -219,19 +326,23 @@ export function applyContatosProjection(src, out) {
   const contatos = src.contatos;
   if (contatos == null) return;
 
-  const assessment = assessContatosScalarFidelity(contatos, {
-    email: out.email,
-    telefone: out.telefone,
-    celular: out.celular,
-  });
-  if (!assessment.ok) {
-    throw createContatosScalarOverflowError(assessment.losses);
-  }
+  const sanitized = sanitizeContatosForHttp(contatos);
+  out.contatos = sanitized;
 
   const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
-  if (assessment.channels.email !== undefined && blank(out.email)) out.email = assessment.channels.email;
-  if (assessment.channels.telefone !== undefined && blank(out.telefone)) out.telefone = assessment.channels.telefone;
-  if (assessment.channels.celular !== undefined && blank(out.celular)) out.celular = assessment.channels.celular;
+  /** @type {Record<'email'|'telefone'|'celular', string[]>} */
+  const byChannel = { email: [], telefone: [], celular: [] };
+  for (const raw of sanitized) {
+    const channel = normalizeContatoTipo(raw.tipo);
+    if (channel !== 'email' && channel !== 'telefone' && channel !== 'celular') continue;
+    const valor = String(raw.valor ?? '').trim();
+    if (!valor) continue;
+    byChannel[channel].push(valor);
+  }
+  for (const key of /** @type {const} */ (['email', 'telefone', 'celular'])) {
+    if (!blank(out[key])) continue;
+    out[key] = byChannel[key].length > 0 ? byChannel[key][0] : null;
+  }
 }
 
 /**

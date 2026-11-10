@@ -138,6 +138,7 @@ function buildCliente(
     email: data.email ?? null,
     telefone: data.telefone ?? null,
     celular: data.celular ?? null,
+    contatos: Array.isArray(data.contatos) ? data.contatos : [],
     status: data.status ?? 'Ativo',
     origem: data.origem ?? 'ERP',
     codigo_legado: data.codigo_legado ?? null,

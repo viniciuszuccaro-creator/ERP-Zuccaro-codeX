@@ -97,6 +97,7 @@ test('sanitizeCode preserva zeros à esquerda (CPF/CNPJ/CEP sintéticos)', () =>
 test('HTTP Cliente MASTER: lacunas explícitas (sem storage paralelo)', () => {
   const payload = read('src/api/clienteHttpPayload.js');
   assert.match(payload, /ALLOWED_KEYS/);
+  assert.match(payload, /'contatos'/);
   assert.match(payload, /CONTATOS_SCALAR_OVERFLOW/);
   assert.match(payload, /CLIENTE_HTTP_UNSUPPORTED_FIELDS/);
   assert.match(payload, /assertClienteHttpRichFieldsWritable/);
@@ -106,4 +107,5 @@ test('HTTP Cliente MASTER: lacunas explícitas (sem storage paralelo)', () => {
   assert.doesNotMatch(payload, /ALLOWED_KEYS = \[[^\]]*'documentos'/s);
   assert.match(payload, /tipo: 'Celular'/);
   assert.doesNotMatch(payload, /tipo: 'WhatsApp', valor: celular/);
+  assert.match(payload, /return 'whatsapp'/);
 });

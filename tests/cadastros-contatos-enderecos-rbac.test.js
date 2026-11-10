@@ -249,18 +249,24 @@ test('UI contatos: salvar com contexto capturado — resposta tardia não muta a
   assert.ok(capturedScopes.includes('stale'), 'assertScope captura contexto no momento do salvar');
 });
 
-test('contrato HTTP: BFF .strict rejeita contatos crus; adapter projeta para email/telefone/celular', async () => {
+test('contrato HTTP: BFF aceita contatos[] jsonb; adapter espelha escalares (WhatsApp≠celular)', async () => {
   const types = await readFile(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url), 'utf8');
   const service = await readFile(new URL('../server/src/services/clienteService.ts', import.meta.url), 'utf8');
   const ui = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const adapter = await readFile(new URL('../src/api/clienteHttpPayload.js', import.meta.url), 'utf8');
-  // Frontend inclui contatos no payload local.
+  // Frontend inclui contatos no payload local (omit-if-undefined).
   assert.match(ui, /contatos: sanitizeContatos\(data\.contatos\)/);
-  // Backend: update schema strict e sem campo contatos — proteção UI não é autorização.
+  // Backend: update schema strict COM contatos[] (decisão a / jsonb MASTER).
   assert.match(types, /clienteUpdateSchema/);
-  assert.doesNotMatch(types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 1200), /\bcontatos\b/);
+  assert.match(types, /clienteContatosSchema/);
+  assert.match(
+    types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 1600),
+    /\bcontatos:\s*clienteContatosSchema/,
+  );
   assert.match(service, /clienteUpdateSchema\.safeParse/);
-  // Adapter no contrato MASTER existente: projeta contatos[] → escalares; nunca envia contatos no wire.
+  // Adapter: grava contatos[] + espelho escalar; WhatsApp ≠ celular.
   assert.match(adapter, /applyContatosProjection/);
+  assert.match(adapter, /sanitizeContatosForHttp/);
+  assert.match(adapter, /return 'whatsapp'/);
   assert.match(adapter, /hydrateContatosFromScalars/);
 });

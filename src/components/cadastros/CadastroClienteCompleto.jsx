@@ -6,6 +6,8 @@ import {
   mapClienteLocalToUiEndereco,
   syncClienteLocaisViaHttp,
   CLIENTE_LOCAIS_SYNC_PARTIAL,
+  isContatoCanalCanonico,
+  partitionContatosByCanal,
 } from "@/api/clienteHttpPayload";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -73,10 +75,14 @@ const sanitizeEndereco = (endereco = {}) => ({
   longitude: endereco.longitude === null || endereco.longitude === undefined ? null : toNumber(endereco.longitude, null),
   mapa_url: sanitizeText(endereco.mapa_url, 300)
 });
+/** Preserva procedência/campos desconhecidos; limites canônicos; sem inferir WhatsApp. */
 const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({
   ...contato,
+  nome: sanitizeText(contato?.nome, 180),
+  cargo: sanitizeText(contato?.cargo, 120),
   tipo: sanitizeText(contato?.tipo, 60),
   valor: sanitizeText(contato?.valor, 180),
+  observacao: sanitizeText(contato?.observacao ?? contato?.obs, 500),
   principal: sanitizeBoolean(contato?.principal)
 })) : [];
 const sanitizeDocumentos = (documentos) => Array.isArray(documentos) ? documentos.slice(0, 100).map((doc) => ({
@@ -662,20 +668,27 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */
   /**
-   * Exibição Contatos quando HTTP só trouxe escalares (sem contatos[]).
-   * NÃO grava em formData.contatos até o operador editar — omit-if-unknown no save.
+   * Exibição Contatos: canais canônicos apenas (quarentena ≠ contato válido).
+   * Sem contatos[] no transporte: resumo escalar (≠ lista completa); omit-if-unknown no save.
    * Celular ≠ WhatsApp automático (mesmo contrato do Painel).
    */
+  const contatosQuarentena = Array.isArray(formData.contatos)
+    ? partitionContatosByCanal(formData.contatos).quarentena
+    : [];
   const contatosViewForUi = (() => {
-    if (Array.isArray(formData.contatos)) return formData.contatos;
+    if (Array.isArray(formData.contatos)) {
+      return formData.contatos.filter((c) => isContatoCanalCanonico(c?.tipo));
+    }
     const items = formData.contatos_escalares?.items;
     if (Array.isArray(items) && items.length > 0) {
-      return items.map((item) => ({
-        nome: "",
-        tipo: item.tipo || item.canal || "Telefone",
-        valor: item.valor || "",
-        principal: false,
-      }));
+      return items
+        .map((item) => ({
+          nome: "",
+          tipo: item.tipo || item.canal || "Telefone",
+          valor: item.valor || "",
+          principal: false,
+        }))
+        .filter((c) => isContatoCanalCanonico(c.tipo));
     }
     const seeded = [];
     const push = (tipo, valor) => {
@@ -740,7 +753,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     : (Array.isArray(locaisHttpView) ? locaisHttpView : []);
 
   const applyContatosDraft = (novosContatos) => {
-    setFormData((prev) => ({ ...prev, contatos: novosContatos }));
+    setFormData((prev) => {
+      const quarantine = Array.isArray(prev.contatos)
+        ? partitionContatosByCanal(prev.contatos).quarentena
+        : [];
+      const validos = Array.isArray(novosContatos) ? novosContatos : [];
+      return { ...prev, contatos: [...validos, ...quarantine] };
+    });
   };
   const applyEnderecosDraft = (novosEnderecos) => {
     setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
@@ -1436,21 +1455,30 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">
               {isHttpBackendMode && (
                 <p
-                  className="mb-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
-                  data-fonte="contatos-limitacao-http"
-                  data-pendencia="contatos-ricos-bff"
+                  className="mb-2 text-xs text-sky-900 bg-sky-50 border border-sky-200 rounded px-2 py-1.5"
+                  data-fonte="contatos-jsonb-http"
+                  data-contrato="contatos-array-master"
                   role="status"
                 >
-                  Limitação HTTP MASTER: canais ricos (`contatos[]`) e ContatoB2B no Completo aguardam
-                  decisão BFF (pack a/b/c). ContatoB2B: amostra Base sem cliente_id/empresa_id → (b) bloqueada
-                  até FK+tenant comprovados. Escalares preservados; Celular ≠ WhatsApp. Sem ContatoClienteV2.
-                  Editar a lista assume rascunho — não apaga a fonte se omitido no save.
+                  Contrato MASTER `contatos[]` (decisão a): leitura/gravação no cadastro canônico.
+                  Escalares espelhados best-effort; Celular ≠ WhatsApp. Sem ContatoClienteV2; ContatoB2B FK
+                  não destrava este fluxo. Omitir no save ≠ limpar; `[]` limpa. Salvar não duplica canais.
                 </p>
               )}
               {formData.contatos === undefined && contatosViewForUi.length > 0 && (
                 <p className="mb-2 text-xs text-slate-600" data-fonte="contatos-escalares-http" role="status">
                   Contatos escalares do MASTER (e-mail/telefone/celular). Editar assume a lista no rascunho;
                   Celular não vira WhatsApp automaticamente.
+                </p>
+              )}
+              {contatosQuarentena.length > 0 && (
+                <p
+                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                  data-fonte="contatos-quarentena"
+                  role="status"
+                >
+                  {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,
+                  não exibidos como contato válido.
                 </p>
               )}
               <GerenciarContatosClienteForm

@@ -33,6 +33,20 @@ const baseCreate = {
   ativo: z.boolean().optional().default(true),
 };
 
+/** Item de contatos[] MASTER (jsonb). passthrough preserva campos desconhecidos. */
+export const clienteContatoItemSchema = z.object({
+  nome: z.string().trim().max(180).optional().nullable(),
+  cargo: z.string().trim().max(120).optional().nullable(),
+  tipo: z.string().trim().min(1).max(60),
+  valor: z.string().trim().max(180).optional().nullable(),
+  principal: z.boolean().optional(),
+  observacao: z.string().trim().max(500).optional().nullable(),
+  id: z.union([z.string().trim().max(120), z.number()]).optional().nullable(),
+  ordem: z.union([z.number(), z.string().trim().max(40)]).optional().nullable(),
+}).passthrough();
+
+export const clienteContatosSchema = z.array(clienteContatoItemSchema).max(50);
+
 export const clienteCreateSchema = z.object({
   ...baseCreate,
   tipo: z.enum(CLIENTE_TIPOS),
@@ -47,6 +61,7 @@ export const clienteCreateSchema = z.object({
   email: z.string().trim().email().max(180).optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
   telefone: z.string().trim().max(40).optional().nullable(),
   celular: z.string().trim().max(40).optional().nullable(),
+  contatos: clienteContatosSchema.optional(),
   status: z.string().trim().max(40).optional().default('Ativo'),
   origem: z.enum(CLIENTE_ORIGENS).optional().default('ERP'),
   /** Código de registro (importação); novos sem código usam reserva concorrente. */
@@ -95,6 +110,7 @@ export const clienteUpdateSchema = z.object({
   email: z.string().trim().email().max(180).optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
   telefone: z.string().trim().max(40).optional().nullable(),
   celular: z.string().trim().max(40).optional().nullable(),
+  contatos: clienteContatosSchema.optional(),
   status: z.string().trim().max(40).optional(),
   origem: z.enum(CLIENTE_ORIGENS).optional(),
   codigo_legado: z.string().trim().min(1).max(80).optional().nullable(),
@@ -106,6 +122,7 @@ export const clienteUpdateSchema = z.object({
 
 export type ClienteCreate = z.infer<typeof clienteCreateSchema>;
 export type ClienteUpdate = z.infer<typeof clienteUpdateSchema>;
+export type ClienteContatoItem = z.infer<typeof clienteContatoItemSchema>;
 
 export type Cliente = {
   id: string;
@@ -124,6 +141,7 @@ export type Cliente = {
   email: string | null;
   telefone: string | null;
   celular: string | null;
+  contatos: ClienteContatoItem[];
   status: string;
   origem: string;
   codigo_legado: string | null;

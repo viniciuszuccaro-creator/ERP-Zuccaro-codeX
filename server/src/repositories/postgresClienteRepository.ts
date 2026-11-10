@@ -20,6 +20,20 @@ import { reserveEntityCodigo } from './reserveEntityCodigo.js';
 import { clienteBulkSnapshotSchema } from '../services/clienteBulkLifecycle.js';
 import { clienteOperacaoLinksSchema } from './clienteTypes.js';
 import { foldSearchText, sqlFoldAccentExpr } from '../domain/searchTextNormalize.js';
+import type { ClienteContatoItem } from './clienteTypes.js';
+
+function mapContatos(value: unknown): ClienteContatoItem[] {
+  if (value == null) return [];
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return Array.isArray(parsed) ? parsed as ClienteContatoItem[] : [];
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(value) ? value as ClienteContatoItem[] : [];
+}
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
@@ -39,6 +53,7 @@ function mapCliente(row: Record<string, unknown>): Cliente {
     email: row.email == null ? null : String(row.email),
     telefone: row.telefone == null ? null : String(row.telefone),
     celular: row.celular == null ? null : String(row.celular),
+    contatos: mapContatos(row.contatos),
     status: String(row.status ?? 'Ativo'),
     origem: String(row.origem ?? 'ERP'),
     codigo_legado: row.codigo_legado == null ? null : String(row.codigo_legado),
@@ -308,11 +323,11 @@ export class PostgresClienteRepository implements ClienteRepository {
         `INSERT INTO clientes (
           group_id, empresa_id, codigo, tipo, documento, documento_normalizado,
           nome, razao_social, nome_fantasia, nome_social,
-          inscricao_estadual, inscricao_municipal, email, telefone, celular,
+          inscricao_estadual, inscricao_municipal, email, telefone, celular, contatos,
           status, origem, codigo_legado, legacy_id, source_system, migration_batch,
           observacoes, ativo, created_by, updated_by
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17,$18,$19,$20,$21,$22,$23,$24,$25,$25
         ) RETURNING *`,
         [
           scope.groupId,
@@ -330,6 +345,7 @@ export class PostgresClienteRepository implements ClienteRepository {
           data.email ?? null,
           data.telefone ?? null,
           data.celular ?? null,
+          JSON.stringify(data.contatos ?? []),
           data.status ?? 'Ativo',
           data.origem ?? 'ERP',
           data.codigo_legado ?? null,
@@ -383,6 +399,7 @@ export class PostgresClienteRepository implements ClienteRepository {
       email: data.email === undefined ? current.email : data.email,
       telefone: data.telefone === undefined ? current.telefone : data.telefone,
       celular: data.celular === undefined ? current.celular : data.celular,
+      contatos: data.contatos === undefined ? current.contatos : data.contatos,
       status: data.status ?? current.status,
       origem: data.origem ?? current.origem,
       codigo_legado: data.codigo_legado === undefined ? current.codigo_legado : data.codigo_legado,
@@ -398,14 +415,15 @@ export class PostgresClienteRepository implements ClienteRepository {
         empresa_id=$1, tipo=$2, documento=$3, documento_normalizado=$4,
         nome=$5, razao_social=$6, nome_fantasia=$7, nome_social=$8,
         inscricao_estadual=$9, inscricao_municipal=$10, email=$11, telefone=$12, celular=$13,
-        status=$14, origem=$15, codigo_legado=$16, legacy_id=$17, source_system=$18,
-        migration_batch=$19, observacoes=$20, ativo=$21
-       WHERE group_id=$22 AND id=$23
+        contatos=$14::jsonb, status=$15, origem=$16, codigo_legado=$17, legacy_id=$18, source_system=$19,
+        migration_batch=$20, observacoes=$21, ativo=$22
+       WHERE group_id=$23 AND id=$24
        RETURNING *`,
       [
         next.empresa_id, next.tipo, next.documento, next.documento_normalizado,
         next.nome, next.razao_social, next.nome_fantasia, next.nome_social,
         next.inscricao_estadual, next.inscricao_municipal, next.email, next.telefone, next.celular,
+        JSON.stringify(next.contatos ?? []),
         next.status, next.origem, next.codigo_legado, next.legacy_id, next.source_system,
         next.migration_batch, next.observacoes, next.ativo,
         scope.groupId, id,

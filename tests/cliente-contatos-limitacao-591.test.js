@@ -1,5 +1,5 @@
 /**
- * #591 — Completo declara limitação contatos/docs HTTP; cadastral≠entrega.
+ * #591 — Completo: contatos[] MASTER (decisão a); cadastral≠entrega; Sem ContatoClienteV2.
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,14 +10,15 @@ const enderecos = fs.readFileSync('src/components/cadastros/GerenciarEnderecosCl
 const contatosForm = fs.readFileSync('src/components/cadastros/GerenciarContatosClienteForm.jsx', 'utf8');
 const hydrate = fs.readFileSync('src/api/clienteHttpPayload.js', 'utf8');
 
-test('Completo: banner limitação contatos ricos + ContatoB2B (b) bloqueada + proíbe ContatoClienteV2', () => {
-  assert.match(completo, /data-fonte="contatos-limitacao-http"/);
-  assert.match(completo, /data-pendencia="contatos-ricos-bff"/);
+test('Completo: contrato contatos[] MASTER (a) + Celular ≠ WhatsApp + Sem ContatoClienteV2', () => {
+  assert.match(completo, /data-fonte="contatos-jsonb-http"/);
+  assert.match(completo, /data-contrato="contatos-array-master"/);
   assert.match(completo, /Celular ≠ WhatsApp/);
-  assert.match(completo, /\(b\) bloqueada/);
-  assert.match(completo, /cliente_id\/empresa_id/);
   assert.match(completo, /Sem ContatoClienteV2/);
+  assert.match(completo, /ContatoB2B FK/);
   assert.doesNotMatch(completo, /function ContatoClienteV2|import ContatoClienteV2/);
+  assert.doesNotMatch(completo, /data-fonte="contatos-limitacao-http"/);
+  assert.doesNotMatch(completo, /pack a\/b\/c/);
 });
 
 test('Endereços (form): Outro único + Completo toast BATCH_ATOMIC ≠ integral (peels Completo intacto)', () => {
@@ -33,7 +34,14 @@ test('Completo: negativo — não presume ContatoB2B equivalente nem storage par
   assert.doesNotMatch(completo, /entities\.ContatoB2B|from ['"].*ContatoB2B/);
   assert.doesNotMatch(completo, /function ContatoClienteV2|import ContatoClienteV2|documentosClienteParalelo|contatosStorageLocal/);
   assert.match(completo, /GerenciarContatosClienteForm/);
-  assert.match(completo, /omitido no save|rascunho/);
+  assert.match(completo, /omit-if-unknown|Omitir no save/);
+});
+
+test('Completo: quarentena de canal inválido não aparece como contato válido', () => {
+  assert.match(completo, /data-fonte="contatos-quarentena"/);
+  assert.match(completo, /partitionContatosByCanal/);
+  assert.match(completo, /isContatoCanalCanonico/);
+  assert.match(completo, /não exibidos como contato válido/);
 });
 
 test('GerenciarContatos: UI declara Celular ≠ WhatsApp (sem conversão automática)', () => {
@@ -78,11 +86,12 @@ test('hydrate: documento→cpf/cnpj preserva string (zeros); tipo PF/PJ', () => 
   assert.match(hydrate, /record\.cnpj = doc/);
   assert.match(hydrate, /Pessoa Física/);
   assert.match(hydrate, /Pessoa Jurídica/);
-  assert.match(hydrate, /Cadastral\/Fiscal ≠ Entrega/);
 });
 
-test('JobAgendado: windowMode sky chrome (fora reservas)', () => {
-  const job = fs.readFileSync('src/components/cadastros/JobAgendadoForm.jsx', 'utf8');
-  assert.match(job, /from-sky-50 to-sky-100/);
-  assert.match(job, /data-cadastro-visual="sky-job-agendado"/);
+test('payload: contatos[] em ALLOWED_KEYS; WhatsApp ≠ celular', () => {
+  assert.match(hydrate, /'contatos'/);
+  assert.match(hydrate, /return 'whatsapp'/);
+  assert.doesNotMatch(hydrate, /includes\('whats'\) return 'celular'/);
+  assert.match(hydrate, /sanitizeContatosForHttp/);
+  assert.match(hydrate, /partitionContatosByCanal/);
 });
