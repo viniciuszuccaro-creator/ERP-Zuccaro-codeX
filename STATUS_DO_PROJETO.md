@@ -1,4 +1,28 @@
-## Continuidade vigente - backup integralmente verificado; auxiliares bloqueados (2026-11-09)
+## Continuidade vigente - publicacao para validacao Linux autorizada (2026-11-10)
+
+Autorizacao especifica do proprietario: publicar snapshot sanitizado de locais
+na PR342 draft para CI Ubuntu existente antes do fechamento Linux. Nao e aceite
+HML/merge/deploy/DDL/grants/carga. Nove blobs conferidos contra artefato421;
+acompanhar CI do novoSHA. Dados100/IE20/historicos e VPS intocados.
+
+## Historico imediato - atomicidade locais implementada em WIP (2026-11-10)
+
+Contrato canonico snapshot/sync reutiliza CRUD, lock/CAS, contexto imutavel,
+RBAC e auditoria no mesmo executor; ate50operacoes/200locais, sem delete inferido.
+PGlite9PASS/backend inicial587PASS/38SKIP; demais checks compilacao/lint/build
+PASS. Guardas53PASS/afetados45PASS apos peel exato, pins historicos preservados.
+Raiz inicial2412PASS/14FAIL; negativas alteradas revalidadas, fechamento Linux
+do snapshot exato ainda pendente (sem reabrir desbloqueios POSIX historicos).
+Artefato sanitizado421/6764180902,9arquivos/arvore369ccbdb,patchSHA256ea1e6402...
+NAO commit funcional/CI nova/HTTPPG/navegador. Base publicada continua cbafa81b.
+Cursor5916572b9ae coordenado, sem edicao da branch dele ou troca de snapshotHML.
+SQL copia integra mas vinculo fisico pendente: script administrativo somente
+leitura preparado; servico nao iniciado/ACL intacta. IE20/auxiliares/HML pendentes
+nos gates especificos;100clientes/backup/historicos preservados sem nova carga.
+Proximo: receber validacao Linux por hash e fechar revisao antes de commit/push;
+comprovar catalogo SQL antes da leitura das cinco tabelas. Detalhes no HANDOFF.
+
+## Historico imediato - backup integralmente verificado; auxiliares bloqueados (2026-11-09)
 
 Verificacao atual em leitura:2836arquivos/48359509373bytes, SHA256 completo,
 zero faltantes/divergentes/ilegiveis/extras;50objetos cifrados tambem integros.

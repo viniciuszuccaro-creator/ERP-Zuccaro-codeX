@@ -1,4 +1,68 @@
-## Continuidade vigente - integridade atual e leitura auxiliar (2026-11-09)
+## Continuidade vigente - snapshot locais autorizado para CI Linux (2026-11-10)
+
+Proprietario autorizou explicitamente commit de VALIDACAO do snapshot sanitizado
+na propria PR342 draft, antes do fechamento Linux, para CI Ubuntu existente.
+Esta excecao cobre publicacao para validacao; NAO homologacao, merge, deploy,
+DDL/grants/carga ou nova candidata. Fonte publica somente codigo sanitizado.
+Nove blobs do artefato421/6764180902 permanecem exatos; documentos acompanham
+como checkpoint. Publicar e aguardar resultado da CI do novoSHA, sem repetir
+transporte/instalacao/POSIX historicos ou alterar VPS para testar.
+
+## Historico imediato - lote atomico de locais em WIP (2026-11-10)
+
+Base desktop/remoto342 cbafa81b, branchconsolidacao. Cursor5916572b9ae conferido;
+delta admite partial/reconciliacao, NAO atomicidade. Reserva/contrato coordenados
+em591/6763872297 e6764031973; artefato publico SANITIZADO421/6764180902, pedido
+de validacao/revisao591/6764190353. Publicacao NAO comprova recebimento.
+
+Conferencia final:591 avancou a a4a53dd2, CI6594 observada EM_ANDAMENTO.
+Delta lido: toast diferencia nao-atomicidade; mapper HTTP sem alteracao vs6572.
+ContatoB2B limita validacao a lista500 e queryKey sem ator/sessao: pontos para
+contraprova montada/exata, NAO vazamento reproduzido. Voltar/Avancar no delta
+somente setPanel, sem efeito de negocio. Parecer591/6764246763; nao confundir
+inspecao estatica com aceite React/HTTPPG nem CI anterior com SHA novo.
+
+WIP9arquivos: ClienteLocalService/repo/tipos existentes reutilizados, helper
+clienteLocalBatch extraido para coordenar CRUD existente sem novo cadastro ou
+storage. GET locais/snapshot: estado completo ate200; POST locais/sync: versao
+e ate50operacoes explicitas create/update/purposes/inactivate. Nao infere delete
+por omissao. Lock do cliente/CAS inclui Grupo/Empresa/ator/estado, contexto
+capturado, mesmo executor e auditoria transacional. Memoria rejeita sync atomico.
+Versao antiga409 sem duplicar; NAO e replay de resposta armazenada. Lote MASTER
+e locais juntos NAO cobertos. Sem DDL/grants/HML/operacional alterados.
+
+PGlite9PASS: commit conjunto, falha intermediaria/auditoria com rollback,
+dois saves do mesmoCAS/umvencedor, create repetido sem duplicar, finalidades,
+inativacao/restauracao, contexto fixo e negativas. NAO HTTP/React/navegador,
+nem contencao entre duas conexoes PostgreSQL reais. Backend completo inicial
+587PASS/38SKIP; novos casos finais reexecutados9PASS. Audit/lint/typecheck/build
+root e typecheck/build server PASS; lint1warning anterior. Guardas53PASS e
+afetados45PASS, preservando pins: peel exato das novas rotas compara TODO router
+anterior14be285c..., com contraprovas de remocao/duplicacao/mutacao dentro/fora.
+Raiz inicial2412PASS/14FAIL: rotas ainda nao registradas na guarda e prerequisitos
+Python/POSIX. Guardas corrigidas/revalidadas; CSV passou com Python real existente.
+Filesystem/review dependem semantica POSIX; nao enfraquecer teste ou instalarWSL.
+Owner-provision14PASS no runner suportado com TEST_PYTHON_EXECUTABLE existente;
+a tentativa direta anterior sem o PATH GitBash do runner NAO era prova valida.
+Fechamento Linux do snapshot exato pendente; nao commitar WIP como aprovado.
+
+Artefato: basecbafa81b/arvore369ccbdbb3e2e12001b074927bd319fbc8b26dd1,
+patch28876bytes/SHA256ea1e640207edc1e2c8ca04b267f4ae6d06d7389ef5fe4847c0537888a4967a64.
+Manifesto9blobs e patch privados inspection-code-only/cliente-local-batch-20261110.*;
+arvore identifica snapshot de codigo ANTES deste checkpoint documental.
+Chrome seleciona mesmo Codespace mas screenshot CDP expirou e leitura acessivel
+nao comprovou prompt/saida; nenhum comando remoto ou restart foi enviado.
+Nao alterar checkout alheio; validar em mecanismo isolado existente com hashes.
+
+SQL: instancia permanece parada; nenhum console administrativo aberto. Script
+privado inspect-erpzlegacy-binding-readonly.ps1 preparado/sintaxePASS: so le
+registro/logs e consulta sys.master_files APENAS se servico ja estiver rodando.
+Nao inicia servico/attach/ACL. Evidencia historica de log nao prova catalogo atual.
+Pedido administrativo exato apresentado; auxiliares ainda sem dados extraidos.
+IE20 nao aplicado: faltam binding/fonte/ator e baseline versionado conferidos;
+nenhuma carga100, transferencia ou revalidacao integral do backup repetida.
+
+## Historico imediato - integridade atual e leitura auxiliar (2026-11-09)
 
 Backup centralizado revalidado em leitura em 09/11, 20:25-20:27 UTC:
 2836/2836 arquivos, 48359509373 bytes, caminho/tamanho/SHA256; zero faltantes,
