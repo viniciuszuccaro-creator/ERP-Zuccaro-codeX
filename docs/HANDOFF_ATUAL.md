@@ -1,4 +1,62 @@
-## Continuidade vigente - leitor auxiliar no Codespace existente (2026-11-10)
+## Continuidade vigente - cinco auxiliares extraidas e leitor parado (2026-11-10)
+
+Aceite EULA Developer recebido e aplicado somente ao leitor privado no MESMO
+Codespace. Fonte: par de trabalho verificado da copia centralizada, sem repetir
+copia do catalogo/backup integral. Transporte limitado177386888bytes;2arquivos
+descomprimidos1022492672bytes, ambos SHA256 iguais aos pins privados aprovados.
+
+SQL2025 oficial fixado pelo digest de registry
+mcr.microsoft.com/mssql/server@sha256:245f6b1c8903edae52cb20fa31419cefcde1a49938bb8c3447099011fc871ca3.
+Master LIMPO da imagem, usuario mssql, rootfs readonly, rede none, zero portas,
+um volume local privado; sem host/home/checkout/backup/socket montados. DropALL
+mais SOMENTE NET_BIND_SERVICE: file capability do executavel oficial exigiu
+esse bounding set; PID1 CapEff0/CapBnd0x400/NoNewPrivs1 conferidos. Primeira
+tentativa exit126 conservada PARADA; sem SYS_PTRACE/root/privileged. Docker
+normaliza o nome para CAP_NET_BIND_SERVICE; guarda exata corrigida, nao retirada.
+
+Hashes internos e DBCC filelist comprovaram somente MDF/LDF esperados ANTES
+do attach. Recovery/attach escreve apenas NA COPIA do volume, nao no original.
+Banco identificado ONLINE/READ_ONLY, caminhos fisicos privados conferidos.
+Metadados6tabelas:258colunas/30colunas de chaves unicas/0colunasFK neste recorte.
+Consultas somente leitura com ROLLBACK. FOR JSON sem linhas retornou vazio no
+sqlcmd instalado; parser falhou fechado. Metadados foram obtidos em envelope
+com contagens explicitas; exportacao vazia exige COUNT_BIG=0, nao aceita vazio
+desconhecido. Preservados nomes de campos, NULL, textos, IDs, datas sem fuso
+inventado, decimais e floats textuais, money com4casas e binarios em hex.
+
+Extracao bruta conferida por contagem/numero de campos/tamanho/SHA256:
+- AuditoriaContatosClientes:4805linhas/2168128bytes/15campos.
+- ClientesContatosDiarios:39/97000bytes/21campos.
+- ClientesOportunidadesContatos:0/0bytes/17campos.
+- ClientesOportunidadesTelefones:0/0bytes/15campos.
+- ClientesTelefones:48568/33016857bytes/34campos.
+TOTAL53412linhas/35281985bytes/5arquivos integros. Nos telefones, preenchidos:
+TELEFCLIENTE48245, EMAIL11412, NOMECONTATO46650, CARGOSETOR1542, LOCALIDADE0.
+Nao sao contagens de clientes unicos nem prova de WhatsApp/endereco/finalidade.
+
+Artefatos reais e receipts ficam SOMENTE em
+/workspaces/.erp-private-344/aux-reader-20261110/netbind-attempt,
+diretorio700/arquivos600, fora Git/build/CI. completion.private.json confirma
+RAW_AUXILIARY_EXTRACTION_ONLY,5hashes, referencias inalteradas e STOP real.
+queries.private.json conserva SQL exato, metadata.private.json conserva tipos,
+PKs/indices e FK; extraction.private.json identifica cada arquivo. Nao repetir
+stage/boot/copy/attach/export para reproduzir recibo; consumir estes artefatos.
+Controlador privado tem patches preservados para nome canonical da capability
+e vazio com count0; nao rerodar seu metadata antigo sem envelope de contagens.
+
+Proximo: recuperar contrato NATIVO dos vinculos antes de enriquecer a mesma100.
+Clientes tem PK CODIGOCLIENTE, distinto do codigo externo; nao associar por nome
+parecido ou trocar IDs. Zero FK declarada e zero consumidor encontrado em
+sys.sql_expression_dependencies neste recorte NAO provam ausencia global de
+contrato no aplicativo. Preservar pendencia, buscar somente fonte tecnica
+autoritativa relacionada. Enderecos estruturados continuam no confronto da
+fonte principal/auxiliares documentados; LOCALIDADE nao e endereco completo.
+Nao interpretar TIPO/celular como WhatsApp. Coordenar persistencia rica com
+Cursor pelos contratos existentes, sem habilitar campos bloqueados por atalho.
+HMLwrites0,100clientes/IE20/historicos/VPS operacional intocados. Servico Windows
+segue PARADO; originais nao anexados, ACL/firewall/chaves nao alterados.
+
+## Historico imediato - leitor auxiliar no Codespace existente (2026-11-10)
 
 Recibo administrativo do catalogo RECEBIDO:2arquivos/8650752bytes, SHA256
 conferido contra as copias privadas, sem repetir a copia. Instancia Windows

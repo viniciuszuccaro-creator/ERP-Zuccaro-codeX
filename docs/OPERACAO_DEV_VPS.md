@@ -192,9 +192,14 @@ SHA256 e conservacao de origem, sem iniciar motor ou alterar permissoes. Script
   hashes conferidos; NAO repetir a copia. Partida Windows bloqueada. Alternativa
   revisada no mesmo Codespace: imagem oficial SQL2025 com master limpo, somente
   copia de trabalho em container sem rede/portas/mounts dos originais; aceite
-  EULA explicito ainda pendente. Fixar digest, reconferir capacidade e filelist
+  EULA explicito RECEBIDO. Extracao posterior concluida no mesmo Codespace:
+ 5arquivos/53412linhas/35281985bytes conferidos, leitor encerrado e referencia
+  privada conservada; recibo RAW no HANDOFF vigente. Sem enriquecer HML ainda.
+  O executavel exigiu somente NET_BIND_SERVICE no bounding set, mantendo
+  dropALL/NoNewPrivs/none/zero portas; nao adicionar outras capabilities.
+  Fixar digest, reconferir capacidade e filelist
   completo antes de attach; sem rebuild/reparo. Attach modifica apenas a copia;
-  READ_ONLY/PK/FK precedem extracao. Nao e recuperacao de contatos concluida.
+  READ_ONLY/PK/FK precedem extracao. RAW nao e cadastro enriquecido/homologado.
 Retorno: instancia continua parada, originais intactos, copias conservadas.
 
 Nao iniciar somente com T3608 e chamar isso de isolamento: a documentacao Microsoft

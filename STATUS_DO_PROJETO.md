@@ -1,4 +1,23 @@
-## Continuidade vigente - isolamento auxiliar preparado, aceite EULA pendente (2026-11-10)
+## Continuidade vigente - extracao auxiliar concluida sem carga HML (2026-11-10)
+
+Leitor isolado executado no Codespace existente apos aceite EULA. Master limpo,
+READ_ONLY, rede none/zero portas/sem mounts dos originais; somente volume privado.
+Motor nao-root, NoNewPrivs1, dropALL+NET_BIND_SERVICE especifico do binario.
+DBCC filelist2/2 e hashes internos antes do attach; referencia privada inalterada
+ao encerrar. Servico Windows segue PARADO e ambos leitores privados PARADOS.
+
+5arquivos/53412linhas/35281985bytes com contagens/campos/SHA256 conferidos:
+auditoria4805, diarios39, oportunidades contatos0/telefones0, telefones48568.
+Campos preenchidos nos telefones: telefone48245, email11412, nome46650,
+cargo1542. Nao sao clientes unicos nem WhatsApp identificado. Dados/receipts
+privados fora Git/build/CI; leitura ROLLBACK, HMLwrites0, sem nova carga100.
+Metadados nativos258colunas/30colunas de chaves/0FK no recorte; vinculo nativo
+ao mestre ainda exige contrato autoritativo. Proxima acao: mapear/enriquecer
+mesmos clientes pelo existente, preservando origem e pendencias de endereco;
+nao inferir relacionamento/finalidade nem declarar cadastro completo.
+Codigo de aplicacao e4802061/CI6604 preservado; este recibo nao e nova CI runtime.
+
+## Historico imediato - isolamento auxiliar preparado, aceite EULA pendente (2026-11-10)
 
 Catalogo privado confirmado:2arquivos/8650752bytes/SHA256, sem recopia.
 Leitor Windows bloqueado por isolamento incompleto; servico segue PARADO.
