@@ -1,3 +1,9 @@
+## CURSOR — #591 CI peels CAS tip fc1f870d (2026-11-10 America/Sao_Paulo)
+- CI tip `fc1f870d` falhou: peels inMemory/postgres (after fora do tip) + assert RBAC ainda em `clienteContatosSchema`.
+- Fix: peels `current→golden` (counterproof 14 PASS); RBAC exige `clienteContatosReplaceSchema`+`expectedVersion`.
+- **Não** HML/:15173 até SUCCESS deste tip. Layout v6 `82b15566` intacto.
+- **Próximo:** CI SUCCESS → freeze API+web :15173; v6 prefs/screenshots; #401 pós-aceite.
+
 ## CURSOR — #591 CAS/preservação contatos (pareceres 6778237293/6778347806) (2026-11-10 America/Sao_Paulo)
 - RECEBIDO + delta: CAS `expectedVersion`/`contatos_version` (Codex `29726d3d`); sem truncamento (200/2000); omit≠[]; null≠[]; guardas id/principal/B2B.
 - Paths: `clienteContatos.ts`, types/repo/service, Completo + `clienteHttpPayload`, schema-candidate NULL, peels/tests.

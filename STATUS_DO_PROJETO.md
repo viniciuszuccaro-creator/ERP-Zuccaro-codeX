@@ -1,3 +1,16 @@
+## CURSOR — #591 CI peels CAS tip fc1f870d (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `fc1f870d` (CAS/preservação) falhou peels/assert contrato ReplaceSchema |
+| **Lote** | Peels `current→golden` inMemory/postgres + CAS peels service; RBAC assert `clienteContatosReplaceSchema`+`expectedVersion` |
+| **Testes** | publication-channel 14 PASS · RBAC/CAS PASS · remainder hashes intactos |
+| **Estados** | tip CI em republicação · layout v6 `82b15566` · HML/:15173 só após SUCCESS |
+| Fora | ContatoClienteV2 · port cego #401 · merge/VPS · PII |
+
+**Próximo:** CI SUCCESS deste tip · freeze API+web :15173 · v6 prefs/screenshots · #401 pós-aceite.
+
 ## CURSOR — #591 CAS/preservação contatos (pareceres 6778237293/6778347806) (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -9,7 +22,7 @@
 | **Reuso** | `clienteContatos.ts` + types/repo/service + Completo/`clienteHttpPayload` |
 | **Evidence** | `docs/evidence/codex-parecer-6778237293-cas-preservacao-591-20261110.txt` |
 | **Testes** | CAS 6 PASS · adapter 33 PASS · peels 14 PASS · RBAC/CAS 7 PASS · tsc server limpo |
-| **Estados** | tip em publicação · layout v6 `82b15566` preservado · aceite :15173 após CI deste tip |
+| **Estados** | tip `fc1f870d` + peels CI · layout v6 `82b15566` preservado · aceite :15173 após CI |
 | Fora | ContatoClienteV2 · migration 046 numerada (peels) · merge/VPS · PII · HML sem tip revisado |
 
 **Próximo:** CI tip · ACK Codex · freeze API+web mesmo SHA p/ :15173 · v6 prefs/screenshots · #401 pós-aceite.

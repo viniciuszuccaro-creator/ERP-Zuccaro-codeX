@@ -256,12 +256,17 @@ test('contrato HTTP: BFF aceita contatos[] jsonb; adapter espelha escalares (Wha
   const adapter = await readFile(new URL('../src/api/clienteHttpPayload.js', import.meta.url), 'utf8');
   // Frontend inclui contatos no payload local (omit-if-undefined).
   assert.match(ui, /contatos: sanitizeContatos\(data\.contatos\)/);
-  // Backend: update schema strict COM contatos[] (decisão a / jsonb MASTER).
+  // Backend: update schema strict COM contatos[] + CAS expectedVersion (decisão a / jsonb MASTER).
   assert.match(types, /clienteUpdateSchema/);
+  assert.match(types, /clienteContatosReplaceSchema/);
   assert.match(types, /clienteContatosSchema/);
   assert.match(
-    types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 1600),
-    /\bcontatos:\s*clienteContatosSchema/,
+    types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 2000),
+    /\bcontatos:\s*clienteContatosReplaceSchema/,
+  );
+  assert.match(
+    types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 2000),
+    /\bexpectedVersion:\s*clienteContatosReplaceSchema/,
   );
   assert.match(service, /clienteUpdateSchema\.safeParse/);
   // Adapter: grava contatos[] + espelho escalar; WhatsApp ≠ celular.
