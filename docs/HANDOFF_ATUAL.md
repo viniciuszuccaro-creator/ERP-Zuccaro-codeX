@@ -1,3 +1,8 @@
+## CURSOR — #591 CI 5790 + search blur (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`5790c783`**. Proposta A: busca aplica no blur (`proposta-filtro-search`).
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
 ## CURSOR — #591 CI 199c + validade auto (2026-11-10 America/Sao_Paulo)
 - CI SUCCESS **`199cc570`**. Proposta A: validade De/Até auto-apply (`proposta-filtro-validade-*`).
 - ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.

@@ -1,0 +1,9 @@
+# CI verde — tip validade auto proposta (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: 5790c783
+- workflow: erp-runtime-ci
+- run: 42867920308
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: proposta-filtro-validade-de/ate auto-apply
+- peels: sem alteração Completo / Produto / LaunchpadCard

@@ -585,7 +585,7 @@ const convertToPedido = async () => {
     )}
     {(!proposalMode || proposalStage === 'lista') && (
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedFilters(filters); }} data-block={proposalMode ? 'proposta-filtros-lista' : undefined}>
-      <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">{proposalMode ? 'Pesquisar número ou cliente' : 'Pesquisar número'}</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder={proposalMode ? 'Pesquisar número ou cliente' : 'Pesquisar número'} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} /></div>
+      <div className="md:col-span-2"><Label htmlFor="orc-search" className="sr-only">{proposalMode ? 'Pesquisar número ou cliente' : 'Pesquisar número'}</Label><Input id="orc-search" value={filters.search} maxLength={80} placeholder={proposalMode ? 'Pesquisar número ou cliente' : 'Pesquisar número'} data-action={proposalMode ? 'proposta-filtro-search' : undefined} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} onBlur={() => { if (proposalMode) { setAppliedFilters(filters); setPage(1); } }} /></div>
       <Select value={filters.status} onValueChange={(value) => {
         const next = { ...filters, status: value };
         setFilters(next);

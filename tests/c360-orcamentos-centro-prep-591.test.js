@@ -93,6 +93,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /proposta-filtro-cliente/);
   assert.match(src, /proposta-filtro-validade-de/);
   assert.match(src, /proposta-filtro-validade-ate/);
+  assert.match(src, /proposta-filtro-search/);
+  assert.match(src, /onBlur=\{\(\) => \{ if \(proposalMode\)/);
   assert.match(src, /proposta-acompanhamento-rascunho/);
   assert.match(src, /aria-current=\{proposalStage === key \? 'step'/);
   assert.match(src, /Pesquisar número ou cliente/);
