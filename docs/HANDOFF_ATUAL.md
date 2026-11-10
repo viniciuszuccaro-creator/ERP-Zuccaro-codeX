@@ -1,4 +1,33 @@
-## Continuidade vigente - locais e contatos validados fora do Chrome (2026-11-10)
+## Continuidade vigente - leitor auxiliar no Codespace existente (2026-11-10)
+
+Recibo administrativo do catalogo RECEBIDO:2arquivos/8650752bytes, SHA256
+conferido contra as copias privadas, sem repetir a copia. Instancia Windows
+continua PARADA. Rascunho de partida Windows BLOQUEADO explicitamente: flags
+de recuperacao nao confinam caminhos desconhecidos. Nenhum SQL iniciado.
+
+Chrome recuperado pelo canal suportado. Mesmo Codespace potential-xylophone,
+checkout b5cb34e1 e .vscode nao rastreado preservados, sem pull/reset/edicao.
+Docker disponivel, nenhum container ativo na inspecao. Imagem Microsoft
+mcr.microsoft.com/mssql/server:2025-latest baixada com exit0; nao iniciada.
+Digest deve ser capturado no recibo privado e fixado antes da partida; espaco
+e memoria devem ser reconferidos APOS download e antes de materializar dados.
+
+Alternativa revisada: master LIMPO da imagem, rede none/zero portas, usuario
+nao-root, sem mounts de host/home/checkout/backup/socket. Somente copia de
+trabalho privada do par verificado; conferir hash interno e filelist completo
+antes do attach, sem rebuild de log/reparo. Attach pode escrever NA COPIA
+antes de READ_ONLY. Nao usar master Windows nem alegar isolamento contra root
+do host. Falha de isolamento/capacidade nao autoriza relaxar controles.
+
+Gate concreto: aceite explicito EULA da edicao Developer solicitado ao
+proprietario. Ainda sem container, transferencia do par ou extracao auxiliar.
+SSH administrativo existente confirmou a copia centralizada, somente leitura;
+nao usar VPS operacional como laboratorio. Apos aceite: registrar digest,
+preflight, transportar somente par necessario pelo canal privado existente,
+validar isolamento, filelist, READ_ONLY e PK/FK antes de recuperar5tabelas.
+Nao inferir joins/WhatsApp/finalidades. Fonte100/IE20/HML/originais intocados.
+
+## Historico imediato - locais e contatos validados fora do Chrome (2026-11-10)
 
 Codigo atual e4802061d1f3a6f4bb47361ef4f1c0b0a5b2d2b5, CI6604 terminalSUCCESS
 em3jobs. Prova NOVA PostgreSQL real do lote passou no runner existente:

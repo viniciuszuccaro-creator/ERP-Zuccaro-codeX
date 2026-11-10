@@ -1,4 +1,18 @@
-## Continuidade vigente - CI6604 verde e concorrencia PG comprovada (2026-11-10)
+## Continuidade vigente - isolamento auxiliar preparado, aceite EULA pendente (2026-11-10)
+
+Catalogo privado confirmado:2arquivos/8650752bytes/SHA256, sem recopia.
+Leitor Windows bloqueado por isolamento incompleto; servico segue PARADO.
+Canal Chrome do mesmo Codespace recuperado; checkout/WIP preservados. Imagem
+oficial SQL2025 baixada, exit0, sem partida/container/transferencia de dados.
+Alternativa revisada: clean master em container none/sem portas ou mounts
+dos originais; somente copia de trabalho verificada, filelist antes de attach,
+READ_ONLY e metadados PK/FK antes dos dados. Nao e extracao concluida.
+Proxima acao depende somente do aceite explicito EULA solicitado; depois
+fixar digest e reconferir capacidade/isolamento. Nenhuma mudanca operacional,
+carga100, IE20, grant, firewall ou copia do catalogo executada.
+Codigo e4802061/CI6604 preservado, sem novos testes de runtime neste recibo.
+
+## Historico imediato - CI6604 verde e concorrencia PG comprovada (2026-11-10)
 
 Codigoe4802061 remoto,CI6604SUCCESS/3jobs. Lote locais: prova realPostgres
 1PASS/0SKIP,2conexoes bloqueadas/umCASvencedor e rollback na falha de auditoria.

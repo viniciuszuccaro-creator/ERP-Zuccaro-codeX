@@ -188,7 +188,13 @@ master/mastlog/ERRORLOG em C: e nenhum caminho usuario nos logs encontrados;
 NAO comprova catalogo atual. Preparacao privada `-PrepareCatalogCopy` copia
 somente master/mastlog para pasta privada nova em C:, com espaco/ACL existentes,
 SHA256 e conservacao de origem, sem iniciar motor ou alterar permissoes. Script
-privado tem sintaxe validada, mas copia ainda depende de execucao administrativa.
+  privado tem sintaxe validada. Recibo posterior confirmado:2arquivos/8650752bytes,
+  hashes conferidos; NAO repetir a copia. Partida Windows bloqueada. Alternativa
+  revisada no mesmo Codespace: imagem oficial SQL2025 com master limpo, somente
+  copia de trabalho em container sem rede/portas/mounts dos originais; aceite
+  EULA explicito ainda pendente. Fixar digest, reconferir capacidade e filelist
+  completo antes de attach; sem rebuild/reparo. Attach modifica apenas a copia;
+  READ_ONLY/PK/FK precedem extracao. Nao e recuperacao de contatos concluida.
 Retorno: instancia continua parada, originais intactos, copias conservadas.
 
 Nao iniciar somente com T3608 e chamar isso de isolamento: a documentacao Microsoft
