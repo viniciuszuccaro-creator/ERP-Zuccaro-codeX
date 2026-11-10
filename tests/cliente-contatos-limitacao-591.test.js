@@ -52,6 +52,7 @@ test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
   // Cancelar/Salvar respeitam persistBusy (paridade Contatos).
   assert.match(enderecos, /disabled=\{bloqueado\}/);
   assert.match(enderecos, /disabled=\{bloqueado \|\| !podeEditar\}/);
+  assert.match(enderecos, /data-block="endereco-dialog-fields"/);
 });
 
 test('hydrate: documento→cpf/cnpj preserva string (zeros); tipo PF/PJ', () => {

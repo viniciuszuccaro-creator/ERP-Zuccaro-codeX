@@ -360,7 +360,11 @@ export default function GerenciarEnderecosClienteForm({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <fieldset
+            disabled={bloqueado || !podeEditar}
+            className="space-y-4 border-0 p-0 m-0 min-w-0 disabled:opacity-70"
+            data-block="endereco-dialog-fields"
+          >
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Apelido do Endereço *</Label>
@@ -556,6 +560,7 @@ export default function GerenciarEnderecosClienteForm({
               />
               <Label className="cursor-pointer font-normal">Marcar como endereço principal</Label>
             </div>
+          </fieldset>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }} disabled={bloqueado}>
@@ -571,7 +576,6 @@ export default function GerenciarEnderecosClienteForm({
                 Salvar
               </Button>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
