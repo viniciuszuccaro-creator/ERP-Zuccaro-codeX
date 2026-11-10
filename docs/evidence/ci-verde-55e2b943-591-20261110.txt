@@ -1,0 +1,11 @@
+# CI verde — tip 55e2b943 (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: 55e2b943
+- workflow: erp-runtime-ci
+- run: 42858249604
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: grid Orçamentos liberado (Launchpad intacto)
+- peels: sem alteração Completo / Produto / LaunchpadCard
+- Contatos (a)/(b)/(c): Codex; MCP 20261110e sem FK
+- homolog: 77f11b28 / freeze 0afd378f284

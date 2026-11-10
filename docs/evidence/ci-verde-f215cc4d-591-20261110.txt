@@ -1,0 +1,11 @@
+# CI verde — tip f215cc4d (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: f215cc4d
+- workflow: erp-runtime-ci
+- run: 42858125920
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: limpar filtros na contagem + aria-current
+- peels: sem alteração Completo / Produto / LaunchpadCard
+- Contatos (a)/(b)/(c): Codex; MCP 20261110e sem FK
+- homolog: 77f11b28 / freeze 0afd378f284

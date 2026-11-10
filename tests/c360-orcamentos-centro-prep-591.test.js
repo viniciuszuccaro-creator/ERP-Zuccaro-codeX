@@ -127,6 +127,13 @@ test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do 
   assert.doesNotMatch(src, /proposta-acao-\$\{label\}|proposta-acao-Salvar/);
   assert.match(src, /Rascunho do editor permanece ao navegar/);
   assert.match(src, /data-block="proposta-painel-indice"/);
+  assert.match(src, /data-block="proposta-paineis-nav"/);
+  assert.match(src, /data-block="proposta-conteudo-cliente"/);
+  assert.match(src, /data-block="proposta-conteudo-produtos"/);
+  assert.match(src, /data-block="proposta-conteudo-resumo"/);
+  assert.match(src, /data-block="proposta-conteudo-acoes"/);
+  assert.match(src, /proposta-painel-produtos-contagem/);
+  assert.match(src, /aria-current=\{panel === key \? 'true'/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
   // Voltar/Avançar só muda painel — sem save/convert/efeitos externos.
   const voltarIdx = src.indexOf('data-action="proposta-voltar"');

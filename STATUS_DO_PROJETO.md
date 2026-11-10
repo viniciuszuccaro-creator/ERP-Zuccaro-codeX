@@ -1,3 +1,16 @@
+## CURSOR — #591 CI lote df3f→cf403 verde + aside painéis (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI SUCCESS tips df3f…cf403; aside `proposta-conteudo-*` + contagem produtos |
+| **CI verde** | **`cf403835`** · **`c1f8ed98`** · **`8594719e`** · **`a35adcbc`** · **`55e2b943`** · **`f215cc4d`** · **`df3f8c0e`** · **`ef35643c`** · **`90b8fb7d`** · **`23ac22f9`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · CI tip deste lote.
+
 ## CURSOR — #591 ContatoB2B banner evidence 20261110e (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,0 +1,11 @@
+# CI verde — tip cf403835 (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: cf403835
+- workflow: erp-runtime-ci
+- run: 42859362498
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: docs CI verde ef356
+- peels: sem alteração Completo / Produto / LaunchpadCard
+- Contatos (a)/(b)/(c): Codex; MCP 20261110e sem FK
+- homolog: 77f11b28 / freeze 0afd378f284
