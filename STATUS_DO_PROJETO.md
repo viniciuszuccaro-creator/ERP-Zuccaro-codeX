@@ -1,3 +1,14 @@
+## CURSOR — #591 CI-fix peels Completo documentos[] (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip anterior** | `0db3df61` frontend FAIL — `clienteContactPresenceRemainder` hunk desatualizado |
+| **Fix** | Peel `cadastro-query-payload-boundaries` inclui gate HTTP documentos[] |
+| **Base CI** | **`ba21a342`** SUCCESS (contatos[]) |
+| Fora | ContatoClienteV2 · redesign · merge/VPS · PII |
+
+**Próximo:** CI tip deste fix · aceite :15173 · composição seletiva pós-aceite.
+
 ## CURSOR — #591 soft-landing C360 + docs fail-closed + aceite tip (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
