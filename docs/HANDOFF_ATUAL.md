@@ -1,7 +1,12 @@
+## CURSOR — #591 C360 A/B/C tip 9ffae37b CI SUCCESS (2026-11-10 America/Sao_Paulo)
+- Tip **`9ffae37b`** · **CI SUCCESS** 9/9 (typecheck `proposalAcomp` + etapas A/B/C).
+- Pedido Codex objetivo: `codex-pedido-decisao-objetiva-contatos-591` — (b) sem FK = bloqueada.
+- C360: `?proposta=comercial360` A lista / B edição / C acompanhamento; sem paralelo.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 CI 84325aac + C360 A/B/C + pedido Codex contatos (2026-11-10 America/Sao_Paulo)
-- Tip **`84325aac`** · **CI SUCCESS** 9/9. Pedido objetivo: `codex-pedido-decisao-objetiva-contatos-591`.
+- Tip **`84325aac`** · **CI SUCCESS** 9/9. Base limpa antes do tip C360 `9ffae37b`.
 - ContatoB2B sem FK → não conectar Completo. Negativo: sem ContatoB2B/ContatoClienteV2.
-- C360 proposta: etapas A/B/C em OrcamentosTab (`?proposta=comercial360`); sem paralelo.
 - Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
 
 ## CURSOR — #591 CI FAIL 2d0bff6e → reverte Usuario/CANAL; Completo (b) (2026-11-10 America/Sao_Paulo)

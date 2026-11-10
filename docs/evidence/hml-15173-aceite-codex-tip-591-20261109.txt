@@ -11,9 +11,10 @@ SNAPSHOT EXATO (API+web mesma versão após CI tip)
 - Docs tip referência: a4a53dd2804812e252a1002756b8d5b93397d724 · CI SUCCESS
 - Tip decisão contatos/cadastral: 2e90587f08d426f175dc8f8ad949be735c4daf3b · CI SUCCESS (9/9)
 - Tip limpo CANAL/Completo (b): 84325aacc4a94545221d24c8b5250f31c7082d3d · CI SUCCESS (9/9)
-- Tip C360 A/B/C + pedido Codex (este push): HEAD — aguardar CI
+- Tip C360 A/B/C + typecheck: 9ffae37bf6a8516918df79b4d43a60891c88b49e · CI SUCCESS (9/9)
 - Freeze antigo: 0afd378f284 — trocar só com acordo Codex no tip 77f11b28 (API+web mesmo SHA)
 - Pedido objetivo contatos: docs/evidence/codex-pedido-decisao-objetiva-contatos-591-20261110.txt
+- C360 proposta: docs/evidence/c360-proposta-etapas-abc-591-20261110.txt (`?proposta=comercial360`)
 - Pedido batch atômico: docs/evidence/codex-locais-batch-atomico-pedido-591-20261110.txt
 - Contatos tenant: docs/evidence/codex-contrato-contatos-tenant-591-20261110.txt
 - Decisão a/b/c: docs/evidence/codex-decisao-contatos-abc-591-20261110.txt

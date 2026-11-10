@@ -1,17 +1,18 @@
-## CURSOR — #591 CI 84325aac + C360 etapas A/B/C + pedido Codex (2026-11-10 America/Sao_Paulo)
+## CURSOR — #591 C360 A/B/C tip 9ffae37b CI SUCCESS (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Tip / CI** | **`84325aac`** · **CI SUCCESS** 9/9 (ref PR5912e90587f/CI6596) |
+| **Tip / CI** | **`9ffae37b`** · **CI SUCCESS** 9/9 (C360 A/B/C + typecheck fix) |
+| **Base limpa** | **`84325aac`** · **CI SUCCESS** · decisão pack **`2e90587f`** SUCCESS |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
 | **Contatos** | pedido objetivo (a)/(b)/(c); (b) bloqueada sem FK; sem ContatoClienteV2 |
 | **Completo** | consumidores prontos; negativo sem ContatoB2B/wire paralelo |
-| **C360** | proposta `?proposta=comercial360` etapas A lista / B edição / C acompanhamento |
+| **C360** | `?proposta=comercial360` A/B/C; Voltar≠desfazer; Avançar≠save |
 | **Packs** | `codex-pedido-decisao-objetiva-contatos-591` · `c360-proposta-etapas-abc-591` |
 | Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII · redesign operacional |
 
-**Próximo:** CI deste tip · Codex decide (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+**Próximo:** Codex decide (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF · wire Completo pós-contrato.
 
 ## CURSOR — #591 CI 2e90587f + sky Usuario/Fiscal + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
 

@@ -32,11 +32,13 @@ Sky: params Portal/Caixa/Conciliação/NFe/Origem + JobAgendado
 Usuario/Fiscal sky: adiado (CANAL consolidacao 53ed9f42 + ID-only e36231b3)
 Reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas
 
+C360 proposta A/B/C publicada tip 9ffae37b CI SUCCESS (`?proposta=comercial360`).
+
 Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
 1. Wire Completo após decisão Codex (a) jsonb OU (b) ContatoB2B com FK comprovada
 2. Central Vendas360: wire operacional dos painéis (fora proposalMode) após OK visual
 3. Fechar aceites :15173 no tip 77f11b28 + BFF contatos/docs/batch locais
-4. Sky residual restante fora WIP (TabelaFiscal header se necessário)
+4. Sky Usuario/Fiscal só com hunk CANAL explícito (53ed9f42)
 
 Não iniciar
 - Documentacao / EmpresaOnboarding / OAuthConsent (classe C)
