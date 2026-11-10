@@ -1,4 +1,4 @@
-import OrcamentoProposalAside from './OrcamentoProposalAside';
+import OrcamentoProposalAside, { PROPOSTA_CAPACIDADES } from './OrcamentoProposalAside';
 import { createComercialProposalFixture } from './comercialProposalFixture';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -525,6 +525,32 @@ const convertToPedido = async () => {
           <div><dt className="text-slate-500">Nota fiscal</dt><dd data-capacidade="futuro">{proposalAcomp.nota}</dd></div>
           <div><dt className="text-slate-500">Cobrança</dt><dd data-capacidade="parcial">{proposalAcomp.cobranca}</dd></div>
         </dl>
+        <div className="rounded-lg border border-sky-100 bg-sky-50/60 p-3 space-y-2" data-block="proposta-atalhos-capacidade">
+          <h4 className="text-sm font-medium text-sky-950">Atalhos GoTo / atendimento / canais</h4>
+          <p className="text-xs text-slate-600">Indicam capacidade do owner — desabilitados nesta prévia (não disparam integração).</p>
+          <ul className="space-y-2">
+            {PROPOSTA_CAPACIDADES.filter((item) => ['goto-atendimento', 'chatbot', 'site-ecommerce', 'marketplaces'].includes(item.key)).map((item) => (
+              <li key={item.key} className="flex flex-wrap items-center justify-between gap-2 text-sm" data-capacidade={item.capacidade} data-capacidade-key={item.key} data-integracao-pronta="false">
+                <span className="min-w-0">
+                  <span className="font-medium text-slate-800">{item.label}</span>
+                  <span className="block text-[11px] text-slate-500 truncate" title={item.owner}>{item.owner}</span>
+                </span>
+                <Badge
+                  variant="outline"
+                  className={
+                    item.capacidade === 'existente'
+                      ? 'border-emerald-300 text-emerald-800 bg-emerald-50'
+                      : item.capacidade === 'parcial'
+                        ? 'border-amber-300 text-amber-900 bg-amber-50'
+                        : 'border-slate-300 text-slate-700 bg-slate-50'
+                  }
+                >
+                  {item.capacidade === 'existente' ? 'Existente' : item.capacidade === 'parcial' ? 'Parcial' : 'Futuro'}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
         <div className="flex flex-wrap gap-2 pt-2">
           <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-voltar-edicao" onClick={() => { setProposalStage('edicao'); setFormOpen(true); }}>Voltar ao orçamento</Button>
           <Button type="button" variant="outline" className="border-sky-200" data-action="proposta-etapa-lista" onClick={proposalBackToLista}>Voltar às negociações</Button>

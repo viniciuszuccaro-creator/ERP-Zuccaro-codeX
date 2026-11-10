@@ -35,6 +35,10 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /proposalBackToLista/);
   assert.match(src, /Voltar não desfaz o rascunho/);
   assert.match(src, /Avançar não salva\/converte/);
+  assert.match(src, /PROPOSTA_CAPACIDADES/);
+  assert.match(src, /data-block="proposta-atalhos-capacidade"/);
+  assert.match(src, /data-integracao-pronta="false"/);
+  assert.match(src, /goto-atendimento|chatbot/);
   // Avançar etapa só muda stage — sem save/convert.
   const avancarIdx = src.indexOf('data-action="proposta-etapa-avancar-acompanhamento"');
   assert.ok(avancarIdx > 0);

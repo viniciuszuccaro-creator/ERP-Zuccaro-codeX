@@ -492,7 +492,7 @@ function ComercialContent() {
     <ErrorBoundary>
       <ModuleLayout
               title="Comercial e Vendas"
-              subtitle={propostaIntegrada ? "Proposta visual: abra Orçamentos → Novo orçamento. Demonstração sintética, sem gravação." : "Vendas, clientes e canais"}
+              subtitle={propostaIntegrada ? "Proposta visual Comercial360: Orçamentos A lista → B edição → C acompanhamento (sintético, sem gravação)." : "Vendas, clientes e canais"}
               actions={<div className="flex items-center gap-2">
                 <ProtectedSection module="Comercial" section="Pedidos" action="criar">
                   <Button data-permission="Comercial.Pedidos.criar" data-sensitive onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>

@@ -1,3 +1,9 @@
+## CURSOR — #591 C360 atalhos C + FK ContatoB2B reconfirm (2026-11-10 America/Sao_Paulo)
+- Base **`9ffae37b`/`b39e50ef`** CI SUCCESS. Etapa C: PROPOSTA_CAPACIDADES GoTo/Hub/Chatbot
+  com `data-integracao-pronta=false` (sem disparo). Subtitle Comercial A→B→C.
+- ContatoB2B MCP: ainda sem cliente_id/empresa_id → (b) bloqueada. Pedido Codex vigente.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
 ## CURSOR — #591 C360 A/B/C tip 9ffae37b CI SUCCESS (2026-11-10 America/Sao_Paulo)
 - Tip **`9ffae37b`** · **CI SUCCESS** 9/9 (typecheck `proposalAcomp` + etapas A/B/C).
 - Pedido Codex objetivo: `codex-pedido-decisao-objetiva-contatos-591` — (b) sem FK = bloqueada.

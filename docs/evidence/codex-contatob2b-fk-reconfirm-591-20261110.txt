@@ -1,6 +1,9 @@
 #591 — ContatoB2B FK reconfirm (sem PII)
 America/Sao_Paulo 2026-11-10
 Tip base decisão: 2e90587f · CI SUCCESS
+Reconfirm 10:14 America/Sao_Paulo (tip docs b39e50ef CI SUCCESS):
+  fields id,cliente_id,empresa_id,group_id,nome_contato → só id+group_id
+  cliente_id/empresa_id ainda AUSENTES → (b) permanece bloqueada
 
 AMOSTRA Base MCP query_contatob2b (fields solicitados):
   id, cliente_id, group_id, empresa_id, nome_contato, whatsapp, telefone, email

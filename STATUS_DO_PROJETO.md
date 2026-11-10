@@ -1,10 +1,25 @@
+## CURSOR — #591 C360 atalhos etapa C + FK reconfirm (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | **`9ffae37b`** / docs **`b39e50ef`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | FK ContatoB2B reconfirm: ainda sem cliente_id/empresa_id → (b) bloqueada |
+| **C360** | etapa C: atalhos GoTo/Hub/Chatbot/site/marketplace (`data-integracao-pronta=false`) |
+| **Subtitle** | Comercial proposta A→B→C |
+| **Packs** | `c360-proposta-etapas-abc-591` · `codex-contatob2b-fk-reconfirm-591` |
+| Fora | ContatoClienteV2 · wire ContatoB2B · merge/VPS · PII · redesign operacional |
+
+**Próximo:** CI deste tip · Codex decide (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+
 ## CURSOR — #591 C360 A/B/C tip 9ffae37b CI SUCCESS (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Tip / CI** | **`9ffae37b`** · **CI SUCCESS** 9/9 (C360 A/B/C + typecheck fix) |
-| **Base limpa** | **`84325aac`** · **CI SUCCESS** · decisão pack **`2e90587f`** SUCCESS |
+| **Docs tip** | **`b39e50ef`** · **CI SUCCESS** |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
 | **Contatos** | pedido objetivo (a)/(b)/(c); (b) bloqueada sem FK; sem ContatoClienteV2 |
 | **Completo** | consumidores prontos; negativo sem ContatoB2B/wire paralelo |
