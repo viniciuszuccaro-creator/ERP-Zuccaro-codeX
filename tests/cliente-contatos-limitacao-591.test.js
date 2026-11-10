@@ -16,17 +16,17 @@ test('Completo: banner limitação contatos ricos + ContatoB2B (b) bloqueada + p
   assert.match(completo, /Celular ≠ WhatsApp/);
   assert.match(completo, /\(b\) bloqueada/);
   assert.match(completo, /cliente_id\/empresa_id/);
-  assert.match(completo, /20261110d/);
   assert.match(completo, /Sem ContatoClienteV2/);
   assert.doesNotMatch(completo, /function ContatoClienteV2|import ContatoClienteV2/);
 });
 
-test('Completo: aba endereços declara Outro único + BATCH_ATOMIC ≠ integral', () => {
-  assert.match(completo, /data-fonte="cliente-locais-regras-ui"/);
-  assert.match(completo, /data-regra="outro-unico"/);
-  assert.match(completo, /Outro único/);
+test('Endereços (form): Outro único + Completo toast BATCH_ATOMIC ≠ integral (peels Completo intacto)', () => {
+  // Regras UI Outro único vivem no form (não no Completo peels stage48).
+  assert.match(enderecos, /data-regra="outro-unico"/);
+  assert.match(enderecos, /Tipo Outro é único por cliente/);
   assert.match(completo, /BATCH_ATOMIC=false/);
-  assert.match(completo, /salvamento integral/);
+  assert.match(completo, /não é salvamento integral/);
+  assert.doesNotMatch(completo, /data-fonte="cliente-locais-regras-ui"/);
 });
 
 test('Completo: negativo — não presume ContatoB2B equivalente nem storage paralelo', () => {

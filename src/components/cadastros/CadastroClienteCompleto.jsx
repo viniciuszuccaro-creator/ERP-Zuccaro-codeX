@@ -1442,7 +1442,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   role="status"
                 >
                   Limitação HTTP MASTER: canais ricos (`contatos[]`) e ContatoB2B no Completo aguardam
-                  decisão BFF (pack a/b/c). ContatoB2B: reconfirm Base 20261110d sem cliente_id/empresa_id → (b) bloqueada
+                  decisão BFF (pack a/b/c). ContatoB2B: amostra Base sem cliente_id/empresa_id → (b) bloqueada
                   até FK+tenant comprovados. Escalares preservados; Celular ≠ WhatsApp. Sem ContatoClienteV2.
                   Editar a lista assume rascunho — não apaga a fonte se omitido no save.
                 </p>
@@ -1466,19 +1466,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               {formData.locais_entrega === undefined && Array.isArray(locaisHttpView) && locaisHttpView.length > 0 && (
                 <p className="mb-2 text-xs text-slate-600" data-fonte="cliente-locais-http" role="status">
                   Endereços lidos de cliente_locais (canônico). Editar assume o rascunho;
-                  ao Salvar, grava via `/locais` (não no MASTER). Cadastral/Fiscal ≠ Entrega;
-                  tipo Outro é único na UI.
-                </p>
-              )}
-              {isHttpBackendMode && (
-                <p
-                  className="mb-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded px-2 py-1.5"
-                  data-fonte="cliente-locais-regras-ui"
-                  data-regra="outro-unico"
-                  role="note"
-                >
-                  Regras UI: Cadastral/Fiscal ≠ Entrega operacional · Outro único por cliente ·
-                  BATCH_ATOMIC=false ≠ toast de salvamento integral.
+                  ao Salvar, grava via `/locais` (não no MASTER). Entrega ≠ cadastral.
                 </p>
               )}
               <GerenciarEnderecosClienteForm

@@ -1,0 +1,21 @@
+#591 — CI FAIL e09f882b peels CadastroClienteCompleto → restore
+America/Sao_Paulo 2026-11-10 · sem PII
+
+FAIL
+- tip e09f882b frontend: cadastro-query-payload-boundaries
+  - Cliente contatos: remainder / exact integration hunk 0!==1
+  - CadastroClienteCompleto stage48 retained… (mesmo hunk)
+
+CAUSA
+- Banner Completo alterado (20261110d + cliente-locais-regras-ui)
+  fora do hunk peels autorizado stage48.
+
+FIX
+- Restaurar CadastroClienteCompleto.jsx ao tip 516497af (peels OK)
+- Manter ContatoB2B toast.error + Outro único no GerenciarEnderecosClienteForm
+- Testes limitação apontam Outro único no form, não no Completo peels
+
+VERDE PRESERVADO
+- 77edc2ea · 516497af · 75aa36c1 · 3b5132de
+
+Homolog: 77f11b28 · freeze 0afd378f284

@@ -1,3 +1,18 @@
+## CURSOR — #591 fix peels Completo e09f + proposta-sem-paginacao (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `e09f882b` FAIL stage48 Completo (hunk contatos/locais) |
+| **Fix** | Completo restaurado `516497af`; toast ContatoB2B + Outro único no form mantidos |
+| **CI verde** | **`77edc2ea`** · **`516497af`** · **`75aa36c1`** · **`3b5132de`** |
+| **C360** | `proposta-sem-paginacao` · fechar/salvar bloqueados |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip deste fix · Codex (a)/(b)/(c) · aceite :15173.
+
 ## CURSOR — #591 proposta sem paginação HTTP + toast B2B (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,3 +1,9 @@
+## CURSOR — #591 fix peels Completo e09f (2026-11-10 America/Sao_Paulo)
+- FAIL `e09f882b` stage48 Completo → restaurado tip `516497af`.
+- Mantidos: ContatoB2B toast · Outro único no form · proposta-sem-paginacao.
+- Verde **`77edc2ea`** · **`516497af`** · **`75aa36c1`**. Sem peels Completo/Produto/LaunchpadCard.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 ContatoB2B toast + Completo locais UI (2026-11-10 America/Sao_Paulo)
 - ContatoB2B: validação via `toast.error` (sem `alert`); banner FK + Completo 20261110d.
 - Completo aba endereços: `cliente-locais-regras-ui` (Outro único / BATCH_ATOMIC).
