@@ -1,0 +1,20 @@
+#591 — Banner visual Produto foto HTTP ADIADO (peels pin)
+America/Sao_Paulo 2026-11-10 · sem PII
+
+TENTATIVA
+- Banner data-pendencia=produto-foto-storage-http em ProdutoFormV22
+- Tip 0cee5367 FAIL peels stage46/v5
+- Tip 288947e4 recalculou hashes → FAIL runtime-proof-source
+  (product-query-v5 SHA pin no commit publicado d312fbcd)
+
+DECISÃO
+- Reverter banner; manter disabled={isHttpBackendMode} + toast no upload/IA
+- Não alterar hashes congelados em product-query-v5-options /
+  ia-grounded-batch-contracts / runtime-proof-source
+- Banner visual = lote futuro com hunk peels + atualização do pin publicado
+  (ou peel autorizado no remainder) — não mascarar baseline
+
+JÁ COBERTO SEM BANNER
+- handleUploadFoto / gerarImagemIA: early return HTTP + toast
+- input/button disabled em isHttpBackendMode
+- produto-pim-ui.test.js asserções disabled+toast path

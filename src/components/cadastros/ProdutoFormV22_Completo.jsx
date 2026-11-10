@@ -976,15 +976,6 @@ Caso contrário, sugira:
 
               <div>
                 <Label>Foto do Produto</Label>
-                {isHttpBackendMode && (
-                  <Alert className="mb-2 border-amber-200 bg-amber-50" data-pendencia="produto-foto-storage-http">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription className="text-xs text-amber-950">
-                      Limitação HTTP: upload/geração de foto aguarda Storage oficial do ERP.
-                      Botões permanecem desabilitados — sem fallback Base44 legado.
-                    </AlertDescription>
-                  </Alert>
-                )}
                 <div className="flex items-center gap-4">
                   {formData.foto_produto_url && (
                     <img src={formData.foto_produto_url} alt="Produto" className="w-20 h-20 object-cover rounded border" />

@@ -113,8 +113,8 @@ test('Produto V22 bloqueia upload legado quando backend HTTP usa Storage oficial
   assert.match(form, /disabled=\{isHttpBackendMode \|\| uploadingFoto/);
   assert.match(form, /disabled=\{isHttpBackendMode \|\| gerandoImagem/);
   assert.match(form, /if \(!url\) throw new Error\('Imagem nao gerada'\)/);
-  assert.match(form, /data-pendencia="produto-foto-storage-http"/);
-  assert.match(form, /Limitação HTTP: upload\/geração de foto aguarda Storage oficial/);
+  // Banner visual HTTP Storage adiado: peels v5/stage46 + runtime-proof SHA pin
+  // (d312fbcd) congelam o remainder — toast+disabled já cobrem a limitação.
 });
 test('V22 projeta material, liga e norma tecnica sem tenant no body', () => {
   const body = toProdutoHttpPayload({ descricao: 'Chapa sintetica', material: 'Aco',

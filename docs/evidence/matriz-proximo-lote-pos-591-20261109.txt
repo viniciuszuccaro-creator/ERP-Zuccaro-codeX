@@ -34,8 +34,9 @@ Reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas
 
 C360 proposta A/B/C publicada tip 9ffae37b CI SUCCESS (`?proposta=comercial360`).
 Atalhos etapa C + filtros só A: e6a31225 CI SUCCESS → dc48c9ff CI SUCCESS.
-Produto foto banner + peels fix: 0cee5367 FAIL peels → 288947e4 (hashes ia/v5).
-Busy dialog Contatos/Endereços: 8651ddc6 / bb265744. HEAD tip ~cf47d98c.
+Produto foto banner: ADIADO (0cee FAIL peels; 288947 FAIL runtime-proof pin) —
+  toast+disabled HTTP mantidos; pack recuperacao-produto-foto-banner-adiado.
+Busy dialog Contatos/Endereços: 8651ddc6 / bb265744.
 Consumidores prontos: docs/evidence/codex-consumidores-prontos-contatos-591-20261110.txt
 FK ContatoB2B reconfirm 20261110b: sem cliente_id/empresa_id → (b) bloqueada
 Aceite HML pack: docs/evidence/hml-aceite-cursor-pronto-codex-591-20261110.txt

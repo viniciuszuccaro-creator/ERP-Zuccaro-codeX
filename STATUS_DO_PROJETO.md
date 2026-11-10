@@ -1,3 +1,17 @@
+## CURSOR — #591 Produto foto banner adiado (peels pin) (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | `288947e4` FAIL `runtime-proof-source` — SHA pin `product-query-v5` (d312fbcd) |
+| **Fix** | reverte banner Produto; restaura hashes peels; toast+disabled HTTP mantidos |
+| **Pack** | `recuperacao-produto-foto-banner-adiado-591` |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · merge/VPS · PII · mascarar pin |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 Contatos/Endereços busy dialog + peels Produto (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
