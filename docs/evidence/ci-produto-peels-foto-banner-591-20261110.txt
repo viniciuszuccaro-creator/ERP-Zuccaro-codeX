@@ -1,0 +1,19 @@
+#591 — CI peels ProdutoFormV22 após banner HTTP Storage
+America/Sao_Paulo 2026-11-10 · sem PII
+
+FALHA
+- Tips `0cee5367` / `80e581e3`: frontend FAIL 2 testes
+  - ia-grounded-batch-contracts: product stage46 remainder
+  - product-query-v5-options: ProdutoFormV22 remaining runtime frozen
+
+CAUSA
+- Banner `data-pendencia=produto-foto-storage-http` alterou remainder peels
+  (não afrouxou count useQuery=5).
+
+FIX tip `288947e4`
+- ia hash: db8787c4611785c2bf7c9da676c92055dc1fe6a32b107f5604b1006a503a280a
+- v5 hash: 448a0561a5c16ba3cd7bce559b8ab950128fcd24040a481653efcf21d214bfb3
+- Banner mantido (botões disabled + toast HTTP intactos)
+
+VERDE ANTERIOR
+- `e6a31225` CI SUCCESS · `dc48c9ff` CI SUCCESS (pré-banner)

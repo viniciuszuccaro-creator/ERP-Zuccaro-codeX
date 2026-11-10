@@ -6,10 +6,10 @@
 | **Tip peels** | **`288947e4`** — hashes ProdutoFormV22 (ia/v5) após banner Storage |
 | **Tip C360** | **`1d41562c`** — atalhos C: existente=`owner-only` (paridade Aside) |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
-| **Base verde** | **`e6a31225`** · **CI SUCCESS** |
+| **Base verde** | **`e6a31225`** · **CI SUCCESS** · tip filtros **`dc48c9ff`** · **CI SUCCESS** |
 | Fora | ContatoClienteV2 · ContatoB2B Completo · merge/VPS · PII |
 
-**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+**Próximo:** CI tip peels `288947e4`+ · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
 
 ## CURSOR — #591 CI fix peels Produto foto banner (2026-11-10 America/Sao_Paulo)
 
