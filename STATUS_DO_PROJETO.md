@@ -1,3 +1,16 @@
+## CURSOR — #591 CI typecheck Contatos Error.code (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `8f23094c` testes OK; typecheck FAIL `Error.code/status` em Completo |
+| **Lote** | `contatosValidationError` tipado + peel Completo atualizado |
+| **Testes** | typecheck PASS · boundaries 14 · http/CAS/RBAC 61 PASS |
+| **Estados** | tip CI em republicação · HML/:15173 só após SUCCESS · layout v6 `82b15566` |
+| Fora | ContatoClienteV2 · port cego #401 · merge/VPS · PII |
+
+**Próximo:** CI SUCCESS · freeze API+web :15173 · v6 prefs/screenshots · #401 pós-aceite.
+
 ## CURSOR — #591 CI frontend CAS expectedVersion (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -6,7 +19,7 @@
 | **Base tip** | `a59e1eda` peels OK; frontend 1 FAIL (`http-api-client` sucesso sem CAS) |
 | **Lote** | Update MASTER com `contatos[]` exige `contatos_version`→`expectedVersion` no teste |
 | **Testes** | `http-api-client` 37 PASS · peels/RBAC intactos |
-| **Estados** | tip CI em republicação · HML/:15173 só após SUCCESS · layout v6 `82b15566` |
+| **Estados** | tip `8f23094c` + typecheck follow-up · layout v6 `82b15566` |
 | Fora | ContatoClienteV2 · port cego #401 · merge/VPS · PII |
 
 **Próximo:** CI SUCCESS · freeze API+web :15173 · v6 prefs/screenshots · #401 pós-aceite.

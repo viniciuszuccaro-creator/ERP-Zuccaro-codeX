@@ -1,3 +1,9 @@
+## CURSOR — #591 CI typecheck Contatos Error.code (2026-11-10 America/Sao_Paulo)
+- Tip `8f23094c` typecheck FAIL: `err.code/status` em Completo sem cast.
+- Fix: helper `contatosValidationError` tipado + peel Completo; typecheck/boundaries PASS.
+- **Não** HML/:15173 até SUCCESS. Layout v6 `82b15566` intacto.
+- **Próximo:** CI SUCCESS → freeze API+web :15173; v6 prefs/screenshots; #401 pós-aceite.
+
 ## CURSOR — #591 CI frontend CAS expectedVersion (2026-11-10 America/Sao_Paulo)
 - Tip `a59e1eda` peels OK; frontend 1 FAIL: update MASTER com `contatos[]` sem `contatos_version`.
 - Fix teste: `contatos_version`→`expectedVersion` no body; peels/RBAC intactos.

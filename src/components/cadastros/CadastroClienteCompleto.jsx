@@ -76,29 +76,36 @@ const sanitizeEndereco = (endereco = {}) => ({
   mapa_url: sanitizeText(endereco.mapa_url, 300)
 });
 /** Preserva procedência/flags/null; rejeita acima do limite (200/2000) — sem truncar. */
+/** @param {string} message @param {string} code @param {number} [status] */
+const contatosValidationError = (message, code, status = 422) => {
+  const err = /** @type {Error & { code: string, status: number }} */ (new Error(message));
+  err.code = code;
+  err.status = status;
+  return err;
+};
 const assertContatoLen = (value, max, field) => {
   if (value == null) return value;
   const text = String(value);
   if (text.length > max) {
-    const err = new Error(`Contato.${field} excede ${max} — rejeitado sem truncamento.`);
-    err.code = 'CLIENTE_CONTATOS_VALIDATION';
-    err.status = 422;
-    throw err;
+    throw contatosValidationError(
+      `Contato.${field} excede ${max} — rejeitado sem truncamento.`,
+      'CLIENTE_CONTATOS_VALIDATION',
+    );
   }
   return text;
 };
 const sanitizeContatos = (contatos) => {
   if (!Array.isArray(contatos)) {
-    const err = new Error('contatos deve ser array — rejeitado sem converter em [].');
-    err.code = 'CLIENTE_CONTATOS_VALIDATION';
-    err.status = 422;
-    throw err;
+    throw contatosValidationError(
+      'contatos deve ser array — rejeitado sem converter em [].',
+      'CLIENTE_CONTATOS_VALIDATION',
+    );
   }
   if (contatos.length > 200) {
-    const err = new Error('Contatos[] excede 200 itens — rejeitado sem truncamento.');
-    err.code = 'CLIENTE_CONTATOS_VALIDATION';
-    err.status = 422;
-    throw err;
+    throw contatosValidationError(
+      'Contatos[] excede 200 itens — rejeitado sem truncamento.',
+      'CLIENTE_CONTATOS_VALIDATION',
+    );
   }
   const ids = new Set();
   let principals = 0;
@@ -120,26 +127,21 @@ const sanitizeContatos = (contatos) => {
     if (contato?.id != null && String(contato.id).trim() !== '') {
       const id = String(contato.id);
       if (ids.has(id)) {
-        const err = new Error('Contatos[] com id duplicado — rejeitado.');
-        err.code = 'CLIENTE_CONTATOS_VALIDATION';
-        err.status = 422;
-        throw err;
+        throw contatosValidationError('Contatos[] com id duplicado — rejeitado.', 'CLIENTE_CONTATOS_VALIDATION');
       }
       ids.add(id);
       out.id = id;
     }
     if (out.principal === true) principals += 1;
     if (principals > 1) {
-      const err = new Error('Contatos[] com múltiplos principais — rejeitado.');
-      err.code = 'CLIENTE_CONTATOS_VALIDATION';
-      err.status = 422;
-      throw err;
+      throw contatosValidationError('Contatos[] com múltiplos principais — rejeitado.', 'CLIENTE_CONTATOS_VALIDATION');
     }
     if (contato?.contato_b2b_id != null && String(contato.contato_b2b_id).trim() !== '') {
-      const err = new Error('contato_b2b_id sem resolução canônica — rejeitado.');
-      err.code = 'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED';
-      err.status = 409;
-      throw err;
+      throw contatosValidationError(
+        'contato_b2b_id sem resolução canônica — rejeitado.',
+        'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED',
+        409,
+      );
     }
     return out;
   });

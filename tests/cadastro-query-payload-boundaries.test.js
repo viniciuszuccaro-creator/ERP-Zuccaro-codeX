@@ -101,81 +101,8 @@ function clienteContactPresenceRemainder(source) {
     '');
   // #591 CAS: sanitize rejeita truncamento → forma mínima anterior.
   source = once(source,
-    '/** Preserva procedência/flags/null; rejeita acima do limite (200/2000) — sem truncar. */\n' +
-    'const assertContatoLen = (value, max, field) => {\n' +
-    '  if (value == null) return value;\n' +
-    '  const text = String(value);\n' +
-    '  if (text.length > max) {\n' +
-    '    const err = new Error(`Contato.${field} excede ${max} — rejeitado sem truncamento.`);\n' +
-    '    err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
-    '    err.status = 422;\n' +
-    '    throw err;\n' +
-    '  }\n' +
-    '  return text;\n' +
-    '};\n' +
-    'const sanitizeContatos = (contatos) => {\n' +
-    '  if (!Array.isArray(contatos)) {\n' +
-    '    const err = new Error(\'contatos deve ser array — rejeitado sem converter em [].\');\n' +
-    '    err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
-    '    err.status = 422;\n' +
-    '    throw err;\n' +
-    '  }\n' +
-    '  if (contatos.length > 200) {\n' +
-    '    const err = new Error(\'Contatos[] excede 200 itens — rejeitado sem truncamento.\');\n' +
-    '    err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
-    '    err.status = 422;\n' +
-    '    throw err;\n' +
-    '  }\n' +
-    '  const ids = new Set();\n' +
-    '  let principals = 0;\n' +
-    '  return contatos.map((contato) => {\n' +
-    '    const obsRaw = contato?.observacao !== undefined ? contato.observacao : contato?.obs;\n' +
-    '    const observacao = obsRaw === undefined ? undefined : (obsRaw === null ? null : assertContatoLen(sanitizeText(obsRaw, 2000), 2000, \'observacao\'));\n' +
-    '    const out = {\n' +
-    '      ...contato,\n' +
-    '      nome: contato?.nome === undefined ? undefined : (contato.nome === null ? null : assertContatoLen(sanitizeText(contato.nome, 180), 180, \'nome\')),\n' +
-    '      cargo: contato?.cargo === undefined ? undefined : (contato.cargo === null ? null : assertContatoLen(sanitizeText(contato.cargo, 120), 120, \'cargo\')),\n' +
-    '      departamento: contato?.departamento === undefined ? undefined : (contato.departamento === null ? null : assertContatoLen(sanitizeText(contato.departamento, 120), 120, \'departamento\')),\n' +
-    '      tipo: assertContatoLen(sanitizeText(contato?.tipo, 60), 60, \'tipo\'),\n' +
-    '      valor: contato?.valor === undefined ? undefined : (contato.valor === null ? null : assertContatoLen(sanitizeText(contato.valor, 180), 180, \'valor\')),\n' +
-    '      ramal: contato?.ramal === undefined ? undefined : (contato.ramal === null ? null : assertContatoLen(sanitizeText(contato.ramal, 40), 40, \'ramal\')),\n' +
-    '      ...(observacao !== undefined ? { observacao } : {}),\n' +
-    '    };\n' +
-    '    if (contato?.principal !== undefined) out.principal = contato.principal === true;\n' +
-    '    if (contato?.ativo !== undefined) out.ativo = contato.ativo === true;\n' +
-    '    if (contato?.id != null && String(contato.id).trim() !== \'\') {\n' +
-    '      const id = String(contato.id);\n' +
-    '      if (ids.has(id)) {\n' +
-    '        const err = new Error(\'Contatos[] com id duplicado — rejeitado.\');\n' +
-    '        err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
-    '        err.status = 422;\n' +
-    '        throw err;\n' +
-    '      }\n' +
-    '      ids.add(id);\n' +
-    '      out.id = id;\n' +
-    '    }\n' +
-    '    if (out.principal === true) principals += 1;\n' +
-    '    if (principals > 1) {\n' +
-    '      const err = new Error(\'Contatos[] com múltiplos principais — rejeitado.\');\n' +
-    '      err.code = \'CLIENTE_CONTATOS_VALIDATION\';\n' +
-    '      err.status = 422;\n' +
-    '      throw err;\n' +
-    '    }\n' +
-    '    if (contato?.contato_b2b_id != null && String(contato.contato_b2b_id).trim() !== \'\') {\n' +
-    '      const err = new Error(\'contato_b2b_id sem resolução canônica — rejeitado.\');\n' +
-    '      err.code = \'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED\';\n' +
-    '      err.status = 409;\n' +
-    '      throw err;\n' +
-    '    }\n' +
-    '    return out;\n' +
-    '  });\n' +
-    '};\n',
-    'const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({\n'
-    + '  ...contato,\n'
-    + '  tipo: sanitizeText(contato?.tipo, 60),\n'
-    + '  valor: sanitizeText(contato?.valor, 180),\n'
-    + '  principal: sanitizeBoolean(contato?.principal)\n'
-    + '})) : [];\n');
+    "/** Preserva procedência/flags/null; rejeita acima do limite (200/2000) — sem truncar. */\n/** @param {string} message @param {string} code @param {number} [status] */\nconst contatosValidationError = (message, code, status = 422) => {\n  const err = /** @type {Error & { code: string, status: number }} */ (new Error(message));\n  err.code = code;\n  err.status = status;\n  return err;\n};\nconst assertContatoLen = (value, max, field) => {\n  if (value == null) return value;\n  const text = String(value);\n  if (text.length > max) {\n    throw contatosValidationError(\n      `Contato.${field} excede ${max} — rejeitado sem truncamento.`,\n      'CLIENTE_CONTATOS_VALIDATION',\n    );\n  }\n  return text;\n};\nconst sanitizeContatos = (contatos) => {\n  if (!Array.isArray(contatos)) {\n    throw contatosValidationError(\n      'contatos deve ser array — rejeitado sem converter em [].',\n      'CLIENTE_CONTATOS_VALIDATION',\n    );\n  }\n  if (contatos.length > 200) {\n    throw contatosValidationError(\n      'Contatos[] excede 200 itens — rejeitado sem truncamento.',\n      'CLIENTE_CONTATOS_VALIDATION',\n    );\n  }\n  const ids = new Set();\n  let principals = 0;\n  return contatos.map((contato) => {\n    const obsRaw = contato?.observacao !== undefined ? contato.observacao : contato?.obs;\n    const observacao = obsRaw === undefined ? undefined : (obsRaw === null ? null : assertContatoLen(sanitizeText(obsRaw, 2000), 2000, 'observacao'));\n    const out = {\n      ...contato,\n      nome: contato?.nome === undefined ? undefined : (contato.nome === null ? null : assertContatoLen(sanitizeText(contato.nome, 180), 180, 'nome')),\n      cargo: contato?.cargo === undefined ? undefined : (contato.cargo === null ? null : assertContatoLen(sanitizeText(contato.cargo, 120), 120, 'cargo')),\n      departamento: contato?.departamento === undefined ? undefined : (contato.departamento === null ? null : assertContatoLen(sanitizeText(contato.departamento, 120), 120, 'departamento')),\n      tipo: assertContatoLen(sanitizeText(contato?.tipo, 60), 60, 'tipo'),\n      valor: contato?.valor === undefined ? undefined : (contato.valor === null ? null : assertContatoLen(sanitizeText(contato.valor, 180), 180, 'valor')),\n      ramal: contato?.ramal === undefined ? undefined : (contato.ramal === null ? null : assertContatoLen(sanitizeText(contato.ramal, 40), 40, 'ramal')),\n      ...(observacao !== undefined ? { observacao } : {}),\n    };\n    if (contato?.principal !== undefined) out.principal = contato.principal === true;\n    if (contato?.ativo !== undefined) out.ativo = contato.ativo === true;\n    if (contato?.id != null && String(contato.id).trim() !== '') {\n      const id = String(contato.id);\n      if (ids.has(id)) {\n        throw contatosValidationError('Contatos[] com id duplicado — rejeitado.', 'CLIENTE_CONTATOS_VALIDATION');\n      }\n      ids.add(id);\n      out.id = id;\n    }\n    if (out.principal === true) principals += 1;\n    if (principals > 1) {\n      throw contatosValidationError('Contatos[] com múltiplos principais — rejeitado.', 'CLIENTE_CONTATOS_VALIDATION');\n    }\n    if (contato?.contato_b2b_id != null && String(contato.contato_b2b_id).trim() !== '') {\n      throw contatosValidationError(\n        'contato_b2b_id sem resolução canônica — rejeitado.',\n        'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED',\n        409,\n      );\n    }\n    return out;\n  });\n};\n",
+    "const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({\n  ...contato,\n  tipo: sanitizeText(contato?.tipo, 60),\n  valor: sanitizeText(contato?.valor, 180),\n  principal: sanitizeBoolean(contato?.principal)\n})) : [];\n");
   // #591: mapToForm com espelho documento→cpf/cnpj → forma omit anterior.
   source = once(source,
     '    mapToForm: (record) => {\n'
