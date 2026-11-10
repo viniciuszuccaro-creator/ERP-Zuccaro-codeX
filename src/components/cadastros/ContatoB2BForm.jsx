@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -125,24 +126,24 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!podeSalvar) {
-      alert(contatoBoundId ? "Sem permissao para editar contato B2B." : "Sem permissao para criar contato B2B.");
+      toast.error(contatoBoundId ? "Sem permissão para editar contato B2B." : "Sem permissão para criar contato B2B.");
       return;
     }
     if (!contextoValido) {
-      alert("Selecione um grupo ou empresa antes de salvar o contato.");
+      toast.error("Selecione um grupo ou empresa antes de salvar o contato.");
       return;
     }
 
     const payload = buildPayload();
     if (!payload.nome_contato || !payload.email) {
-      alert("Preencha os campos obrigatorios");
+      toast.error("Preencha os campos obrigatórios.");
       return;
     }
     // Correspondência Cliente×tenant: só aceita cliente_id presente no filtro do contexto.
     const clienteOk = Boolean(payload.cliente_id)
       && clientes.some((c) => String(c?.id || '') === String(payload.cliente_id));
     if (!clienteOk) {
-      alert("Selecione um cliente do grupo/empresa ativos. Contato B2B não aceita cliente fora do tenant.");
+      toast.error("Selecione um cliente do grupo/empresa ativos. Contato B2B não aceita cliente fora do tenant.");
       return;
     }
     // WhatsApp é campo próprio — não copiar telefone/celular automaticamente.

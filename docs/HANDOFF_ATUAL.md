@@ -1,3 +1,8 @@
+## CURSOR — #591 ContatoB2B toast + Completo locais UI (2026-11-10 America/Sao_Paulo)
+- ContatoB2B: validação via `toast.error` (sem `alert`); banner FK + Completo 20261110d.
+- Completo aba endereços: `cliente-locais-regras-ui` (Outro único / BATCH_ATOMIC).
+- Verde **`75aa36c1`** · **`3b5132de`**. Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 ContatoB2B banner FK 20261110d + Outro único (2026-11-10 America/Sao_Paulo)
 - ContatoB2BForm: `contatob2b-fk-ausente` (b bloqueada; sem Completo). FK MCP só `group_id`.
 - Endereços `outro-unico` · proposta `proposta-salvar-bloqueado`. Verde base **`3b5132de`**.
