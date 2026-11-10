@@ -4,7 +4,7 @@
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Lote** | Banner ContatoB2B referencia MCP **20261110e**; (b) bloqueada |
-| **CI verde** | **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
+| **CI verde** | **`ef35643c`** · **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
 | **FK ContatoB2B** | **20261110e** — (b) bloqueada |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
 | Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
