@@ -112,6 +112,12 @@ test('comercialProposalFixture: negociacoes + acompanhamento sintéticos (sem ID
   assert.match(src, /ORC-SINT-/);
   assert.match(src, /PED-SINT-/);
   assert.match(src, /Não são cadastros/);
+  // Filtros A: ≥2 clientes + status CANCELADO sintético (sem cadastro real).
+  assert.match(src, /preview-vinculo-2/);
+  assert.match(src, /preview-cliente-2/);
+  assert.match(src, /ORC-SINT-003/);
+  assert.match(src, /status: 'CANCELADO'/);
+  assert.doesNotMatch(src, /entities\.|base44\.|fetch\(|localStorage/);
 });
 
 test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do editor', () => {

@@ -1,3 +1,8 @@
+## CURSOR — #591 fixture 2º cliente + CANCELADO (2026-11-10 America/Sao_Paulo)
+- Fixture sintética: 2º vínculo + ORC-SINT-003 CANCELADO para demo de filtros A.
+- CI verde lote anterior df3f→cf403. ContatoB2B MCP **20261110e** — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
 ## CURSOR — #591 CI df3f→cf403 verde + aside painéis (2026-11-10 America/Sao_Paulo)
 - CI SUCCESS: `cf403` · `c1f8` · `8594` · `a35a` · `55e2` · `f215` · `df3f` · `ef356` · `90b8` · `23ac`.
 - Aside: `proposta-conteudo-*` + contagem produtos. ContatoB2B MCP **20261110e** — (b) bloqueada.
