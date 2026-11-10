@@ -222,6 +222,9 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
           <Input value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} disabled={!podeSalvar} data-permission="Cadastros.ContatoB2B.editar" data-action="Cadastros.ContatoB2B.whatsapp" data-sensitive />
         </div>
       </div>
+      <p className="text-[11px] text-slate-500 -mt-2" data-regra="whatsapp-campo-proprio" role="note">
+        WhatsApp é campo próprio — não copia telefone/celular automaticamente.
+      </p>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
         <Label>Contato Principal</Label>

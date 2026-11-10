@@ -1,3 +1,9 @@
+## CURSOR — #591 ContatoB2B WhatsApp UI + Endereços Cancelar busy (2026-11-10 America/Sao_Paulo)
+- ContatoB2BForm: `data-regra=whatsapp-campo-proprio` (sem auto-cópia). Sem wire Completo.
+- Endereços: Cancelar gated por persistBusy. Tip **`e6a31225`** CI SUCCESS.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 Contatos Salvar gated persistBusy (2026-11-10 America/Sao_Paulo)
 - GerenciarContatos: Salvar dialog `disabled={bloqueado || !podeEditar}` (paridade Endereços).
 - Tip **`e6a31225`** CI SUCCESS. Pack aceite HML vigente.
