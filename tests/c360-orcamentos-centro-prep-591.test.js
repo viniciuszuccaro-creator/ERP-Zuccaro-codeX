@@ -19,7 +19,20 @@ test('Comercial launchpad: OrcamentosTab canônico (sem OrcamentosV2)', () => {
   assert.match(src, /proposalMode: true/);
   assert.match(src, /proposta-kpis-sinteticos/);
   assert.match(src, /KPIs operacionais ocultos/);
+  assert.match(src, /ModulosGridComercial[\s\S]*proposalMode=\{propostaIntegrada\}/);
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova|OrcamentosNovo/);
+});
+
+test('ModulosGridComercial: proposta desabilita cards não-Orçamentos (LaunchpadCard disabled)', () => {
+  const grid = read('src/components/comercial/comercial-launchpad/ModulosGridComercial.jsx');
+  const card = read('src/components/financeiro/LaunchpadCard.jsx');
+  assert.match(grid, /proposalMode = false/);
+  assert.match(grid, /data-proposta-grid=\{proposalMode \? 'comercial360'/);
+  assert.match(grid, /proposta-modulo-bloqueado/);
+  assert.match(grid, /disabled=\{blockedByProposal\}/);
+  assert.match(card, /disabled = false/);
+  assert.match(card, /data-launchpad-disabled=\{disabled \? 'true'/);
+  assert.match(card, /if \(disabled\) return;/);
 });
 
 test('OrcamentosTab: proposal aside + rascunho; salvar bloqueado em proposalMode', () => {

@@ -19,7 +19,8 @@ const COLOR_CLASSES = Object.freeze({
 
 /** @param {{title: React.ReactNode, description: React.ReactNode, icon: React.ElementType,
  * onClick?: (event: React.MouseEvent | React.KeyboardEvent) => void, color?: string,
- * badge?: React.ReactNode, badgeVariant?: string, dataPermission?: string, dataAction?: string}} props */
+ * badge?: React.ReactNode, badgeVariant?: string, dataPermission?: string, dataAction?: string,
+ * disabled?: boolean}} props */
 export default function LaunchpadCard({
   title,
   description,
@@ -29,7 +30,8 @@ export default function LaunchpadCard({
   badge,
   badgeVariant = 'default',
   dataPermission,
-  dataAction
+  dataAction,
+  disabled = false,
 }) {
   void badgeVariant;
   const gradient = COLOR_CLASSES[color] || COLOR_CLASSES.blue;
@@ -37,12 +39,15 @@ export default function LaunchpadCard({
   return (
     <Card
       role="button"
-      tabIndex={0}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled || undefined}
       onClick={(e) => {
         e.stopPropagation();
+        if (disabled) return;
         onClick?.(e);
       }}
       onKeyDown={(e) => {
+        if (disabled) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();
@@ -52,14 +57,14 @@ export default function LaunchpadCard({
       data-permission={dataPermission}
       data-action={dataAction}
       data-launchpad-color={COLOR_CLASSES[color] ? color : 'blue'}
+      data-launchpad-disabled={disabled ? 'true' : undefined}
       className={`
         w-full min-w-0 min-h-[140px] 
-        cursor-pointer 
+        ${disabled ? 'cursor-not-allowed opacity-40 grayscale hover:shadow-none' : 'cursor-pointer hover:shadow-xl'}
         border-0 
         bg-gradient-to-br ${gradient} 
         text-white
         transition-shadow duration-200
-        hover:shadow-xl
         relative
         overflow-hidden
         isolate

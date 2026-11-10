@@ -556,7 +556,7 @@ function ComercialContent() {
               </ModuleKPIs>
               <ModuleContent>
                 <ModuleTabs
-                  listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} />}
+                  listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} proposalMode={propostaIntegrada} />}
                 />
               </ModuleContent>
             </ModuleLayout>

@@ -1,3 +1,15 @@
+## CURSOR — #591 proposta LaunchpadCard disabled + CI a51f (2026-11-10 America/Sao_Paulo)
+- Verde: **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347).
+- Lote: grid proposta dim cards (`proposta-modulo-bloqueado`); KPIs sintéticos; Pedido/externo off.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 CI a51f SUCCESS + proposta KPIs/módulos (2026-11-10 America/Sao_Paulo)
+- Verde: **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347).
+- HEAD **`7d24f0f1`**: docs; tip `b28fedaf` KPIs ocultos; `ae0773f4` grid só Orçamentos.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 proposta só Orçamentos + fix 347 + peels verde (2026-11-10 America/Sao_Paulo)
 - **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS**. Fix 347: `proposta-nova-negociacao`.
 - Proposta: grid só Orçamentos; KPIs operacionais ocultos (`proposta-kpis-sinteticos`).

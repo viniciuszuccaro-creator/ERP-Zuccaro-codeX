@@ -1,0 +1,26 @@
+#591 — proposta visual: LaunchpadCard disabled nos módulos não-Orçamentos
+America/Sao_Paulo 2026-11-10 · sem PII
+
+ALTERAÇÃO (existente)
+- LaunchpadCard: prop opcional disabled (aria-disabled, tabIndex -1, sem onClick)
+- ModulosGridComercial: proposalMode → cards fora de Orçamentos com
+  data-action=proposta-modulo-bloqueado + badge Proposta + descrição sintética
+- Comercial.jsx: passa proposalMode={propostaIntegrada} ao grid
+- handleModuleClick toast permanece (fail-closed se clique programático)
+
+TESTES FOCADOS OK
+- c360-orcamentos-centro-prep-591
+- expedicao-launchpad-openwindow-contract (regex onClick + disabled)
+- financeiro-navegacao-inventory
+- comercial-azul-padrao-visual
+
+CI CONFIRMADO
+- a51f162d SUCCESS (fix 347)
+- 52aed2c4 / a92d7bd4 SUCCESS (peels + busy)
+
+FORA DE ESCOPO
+- ContatoB2B Completo / ContatoClienteV2
+- Produto peels / banner Storage
+- merge / VPS / PII
+
+Homolog: 77f11b28 · freeze 0afd378f284

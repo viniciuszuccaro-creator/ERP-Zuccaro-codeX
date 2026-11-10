@@ -24,8 +24,9 @@ test('Expedicao launchpad: card clique → handleModuleClick → openWindow', as
   assert.match(expedicao, /isPedidoStatusElegivelRomaneio/);
   assert.match(grid, /onClick=\{\(\) => onModuleClick\(module\)\}/);
   assert.match(card, /onClick=\{\(e\) =>/);
-  assert.match(card, /e\.stopPropagation\(\);\s*onClick\?\.\(e\);/);
+  assert.match(card, /e\.stopPropagation\(\);\s*(?:if \(disabled\) return;\s*)?onClick\?\.\(e\);/);
   assert.match(card, /data-action=\{dataAction\}/);
+  assert.match(card, /disabled = false/);
   assert.match(shell, /<WindowRenderer\s*\/>/);
   assert.match(renderer, /windows\.map/);
   assert.match(modal, /data-testid="erp-window"/);

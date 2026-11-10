@@ -1,3 +1,32 @@
+## CURSOR — #591 proposta dim cards + CI a51f (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | LaunchpadCard `disabled` + grid proposta `proposta-modulo-bloqueado` (só Orçamentos ativo) |
+| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347) · **CI SUCCESS** |
+| **CI tip** | `ae0773f4` / `b28fedaf` / `7d24f0f1` — in_progress no último check |
+| **C360** | proposta: cards operacionais dim + toast; KPIs sintéticos; Pedido/externo off |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Pack** | `ci-verde-a51f-347-591` · `proposta-launchpad-disabled-591` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 CI a51f SUCCESS + proposta KPIs/módulos (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`7d24f0f1`** — docs; código tip **`b28fedaf`** (KPIs) / **`ae0773f4`** (módulos) |
+| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347) · **CI SUCCESS** |
+| **C360** | proposta: só Orçamentos; KPIs sintéticos; Novo Pedido/externo off |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Pack** | `ci-verde-a51f-347-591` · `ci-verde-peels-busy-591` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip `ae0773f4`+ · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 proposta bloqueia módulos + fix 347 (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
@@ -5,8 +34,8 @@
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **HEAD** | **`b28fedaf`** — KPIs ocultos na proposta; grid só Orçamentos; fix 347 |
 | **C360** | proposta: só Orçamentos no grid; KPIs sintéticos; módulos toast-bloqueados |
-| **Fix 347** | harness `proposta-nova-negociacao` |
-| **Verde** | **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS** |
+| **Fix 347** | harness `proposta-nova-negociacao` · tip **`a51f162d` CI SUCCESS** |
+| **Verde** | **`52aed2c4`** + **`a92d7bd4`** + **`a51f162d`** · **CI SUCCESS** |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
 | Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
 
