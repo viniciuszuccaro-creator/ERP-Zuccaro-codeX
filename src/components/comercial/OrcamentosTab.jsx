@@ -440,7 +440,17 @@ const convertToPedido = async () => {
   const meta = proposalMode
     ? { total: (proposalMasters.negociacoes || []).length }
     : (listQuery.data?.meta || { total: 0 });
-  const proposalAcomp = proposalMasters.acompanhamentoPedido || {};
+  const proposalAcomp = proposalMasters.acompanhamentoPedido ?? {
+    numero_pedido: '',
+    status: '',
+    origem_orcamento: '',
+    credito: '',
+    estoque: '',
+    producao: '',
+    entrega: '',
+    nota: '',
+    cobranca: '',
+  };
   return <div className={`w-full h-full flex flex-col bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined}>
     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
       <div><h2 className="text-xl font-semibold">Orçamentos</h2><p className="text-sm text-slate-500">Propostas comerciais da empresa ativa</p></div>
