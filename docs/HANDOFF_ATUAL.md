@@ -1,3 +1,9 @@
+## CURSOR — #591 CI-fix publication+PG fixture contatos (2026-11-10 America/Sao_Paulo)
+- Tip **`5e109b2a`** FAIL: publication infra hash; legado refs; PG entry `column contatos does not exist`.
+- Fix: peels infra 34/045 · 2ª ref e362 no legado · `crmFixture` deltas `045` + GRANT UPDATE contatos.
+- Pack **(a)** permanece. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente.
+- Sem ContatoClienteV2 · merge/VPS · PII · redesign C360.
+
 ## CURSOR — #591 CI-fix peels/mock/045 contatos[] (2026-11-10 America/Sao_Paulo)
 - Tip **`cc7c71f5`** FAIL (frontend Completo mock sem `partitionContatosByCanal`; backend rbac ainda reject; peels postgres counterproof; catálogo 33→34/`045`; legado SHA).
 - Fix: peels `mapContatos`≠import fold+ClienteContatoItem · `fornecedorHttpRemainder` tip `cc7c71f5` · mock Completo · rbac/http-api jsonb · infra/runtime01.

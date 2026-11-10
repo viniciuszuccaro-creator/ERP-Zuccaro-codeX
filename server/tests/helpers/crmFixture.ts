@@ -60,7 +60,8 @@ export async function setupEntryFixture(exec: (sql: string) => Promise<unknown>,
   const dir = new URL('../../migrations/', import.meta.url);
   const names = (await readdir(dir)).filter(name => /^\d{3}_.*\.sql$/.test(name)).sort();
   const baseline = [...Array.from({ length: 24 }, (_, i) => String(i + 1).padStart(3, '0')), '038', '039'];
-  const deltas = ['041', '042', '044']; // Product/company operation, verified Auth bootstrap and Pedido insert.
+  // 045: Cliente MASTER contatos[] jsonb (decisão a / #591).
+  const deltas = ['041', '042', '044', '045']; // Product/company, Auth bootstrap, Pedido insert, contatos jsonb.
   for (const prefix of [...baseline, ...deltas]) {
     if (prefix === '041') {
       const source = await readFile(new URL('040_crm_oportunidades.sql', dir), 'utf8');
@@ -115,7 +116,7 @@ export async function setupEntryFixture(exec: (sql: string) => Promise<unknown>,
     -- Canonical update replaces scoped item rows atomically; never grants master deletion.
     GRANT DELETE ON orcamento_itens,pedido_itens TO ${role};
     -- Existing Cliente repository updates this exact allowlist, retaining codigo and identity.
-    GRANT UPDATE(empresa_id,tipo,documento,documento_normalizado,nome,razao_social,nome_fantasia,nome_social,inscricao_estadual,inscricao_municipal,email,telefone,celular,status,origem,codigo_legado,legacy_id,source_system,migration_batch,observacoes,ativo) ON clientes TO ${role};
+    GRANT UPDATE(empresa_id,tipo,documento,documento_normalizado,nome,razao_social,nome_fantasia,nome_social,inscricao_estadual,inscricao_municipal,email,telefone,celular,contatos,status,origem,codigo_legado,legacy_id,source_system,migration_batch,observacoes,ativo) ON clientes TO ${role};
     GRANT UPDATE(next_value,updated_at) ON entity_code_sequences TO ${role};
     GRANT UPDATE(ativo,status,revision,updated_by,updated_at) ON fornecedores TO ${role};
     GRANT EXECUTE ON FUNCTION reserve_entity_codigo(uuid,text,integer) TO ${role};`);

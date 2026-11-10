@@ -1,3 +1,16 @@
+## CURSOR — #591 CI-fix publication+PG fixture contatos (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Tip `5e109b2a` FAIL → publication peels infra/legado + entry fixture `045` + GRANT contatos |
+| **Causa** | publication hash infra; legado refs 1≠2; PG entry `column contatos does not exist` |
+| **Fix** | `fornecedorHttpRemainder` peels 34/045 · 2ª ref e362 no legado · `crmFixture` deltas+UPDATE contatos |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · merge/VPS · PII · redesign C360 |
+
+**Próximo:** CI tip deste fix · aceite :15173 · docs BFF · soft-landing C360.
+
 ## CURSOR — #591 CI-fix contatos[] peels/mock/045 (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
