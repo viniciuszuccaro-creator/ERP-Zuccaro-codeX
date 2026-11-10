@@ -1,0 +1,9 @@
+# CI verde — tip shell fluxo hint (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: b9d9a180
+- workflow: erp-runtime-ci
+- run: 42862356524
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: proposta-fluxo-hint + proposta-acoes-topo + evidence 3718/e682
+- peels: sem alteração Completo / Produto / LaunchpadCard

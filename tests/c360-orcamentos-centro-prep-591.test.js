@@ -60,6 +60,8 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /data-action=\{`proposta-etapa-\$\{key\}`\}/);
   assert.match(src, /data-proposta-rascunho=\{key === 'edicao' && dirty \? 'sujo'/);
   assert.match(src, /proposta-rascunho-sujo/);
+  assert.match(src, /proposta-rascunho-preservado/);
+  assert.match(src, /Rascunho sintético preservado/);
   assert.match(src, /\['lista', 'A · Negociações'\]/);
   assert.match(src, /\['edicao', 'B · Orçamento'\]/);
   assert.match(src, /\['acompanhamento', 'C · Acompanhamento'\]/);

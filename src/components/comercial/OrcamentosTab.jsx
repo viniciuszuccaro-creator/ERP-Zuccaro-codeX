@@ -290,6 +290,9 @@ export default function OrcamentosTab({ groupId, empresaId, actorId, actorEmail,
   const proposalBackToLista = () => {
     setFormOpen(false);
     setProposalStage('lista');
+    if (dirty) {
+      toast.message('Rascunho sintético preservado — reabra a etapa B para continuar.');
+    }
   };
   const openCreate = () => {
     // Clique duplo / segundo "Novo" não abre outro fluxo nem zera rascunho já em criação.
@@ -559,6 +562,15 @@ const convertToPedido = async () => {
           </Button>
         ))}
         <p className="text-xs text-slate-500 self-center">Voltar não desfaz o rascunho · Avançar não salva/converte.</p>
+        {dirty ? (
+          <p
+            className="text-xs text-sky-900 self-center"
+            data-block="proposta-rascunho-preservado"
+            role="status"
+          >
+            Há rascunho sintético em memória (não gravado).
+          </p>
+        ) : null}
       </div>
     )}
     {!contextReady && <Alert><AlertCircle className="h-4 w-4" /><AlertDescription>Selecione uma empresa e entre com um usuário válido.</AlertDescription></Alert>}

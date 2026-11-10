@@ -1,3 +1,8 @@
+## CURSOR — #591 CI b9d9 + rascunho preservado (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`b9d9a180`**. Voltar à lista: toast + `proposta-rascunho-preservado` se dirty.
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
 ## CURSOR — #591 CI 3718/e682 + shell fluxo hint (2026-11-10 America/Sao_Paulo)
 - CI SUCCESS **`e682df34`** · **`3718fb01`**. Shell: `proposta-fluxo-hint` + ações topo aria-disabled.
 - ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
