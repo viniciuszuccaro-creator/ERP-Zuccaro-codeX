@@ -1,3 +1,18 @@
+## CURSOR — #591 CI 3b5132de SUCCESS peels grid (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`3b5132de`** — peels LaunchpadCard OK; dim proposta no grid · **CI SUCCESS** |
+| **CI verde** | **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · **`52aed2c4`** · **`a92d7bd4`** |
+| **C360** | proposta: wrapper `data-proposta-card` + toast; KPIs sintéticos; Pedido/externo off |
+| **FK ContatoB2B** | **20261110c** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Pack** | `ci-verde-3b5132de-peels-grid-591` · `ci-fix-peels-launchpad-591` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · lote independente sem peels LaunchpadCard/Produto.
+
 ## CURSOR — #591 fix peels LaunchpadCard (wrapper grid) (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

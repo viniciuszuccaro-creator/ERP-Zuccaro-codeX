@@ -1,3 +1,8 @@
+## CURSOR — #591 CI 3b5132de SUCCESS peels grid (2026-11-10 America/Sao_Paulo)
+- **`3b5132de` CI SUCCESS** — LaunchpadCard peels OK; bloqueio proposta no grid.
+- Verde: **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. ContatoB2B (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 fix peels LaunchpadCard → wrapper grid (2026-11-10 America/Sao_Paulo)
 - FAIL peels `LaunchpadCard` (stage56) nos tips `31b66b6e`+.
 - Fix: card peels restaurado; dim/bloqueio só em `ModulosGridComercial` (`onClickCapture`).
