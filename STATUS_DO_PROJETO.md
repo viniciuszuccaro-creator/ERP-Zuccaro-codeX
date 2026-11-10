@@ -4,8 +4,8 @@
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
 | **Lote** | LaunchpadCard `disabled` + grid proposta `proposta-modulo-bloqueado` (só Orçamentos ativo) |
-| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347) · **CI SUCCESS** |
-| **CI tip** | `ae0773f4` / `b28fedaf` / `7d24f0f1` — in_progress no último check |
+| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · **CI SUCCESS** |
+| **CI tip** | `7d24f0f1` / **`31b66b6e`** (dim cards) — in_progress |
 | **C360** | proposta: cards operacionais dim + toast; KPIs sintéticos; Pedido/externo off |
 | **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
 | **Pack** | `ci-verde-a51f-347-591` · `proposta-launchpad-disabled-591` |
