@@ -15,31 +15,47 @@ export default function ModulosGridComercial({ modules, onModuleClick, proposalM
           {modules.map((module, idx) => {
             const blockedByProposal = proposalMode && !isOrcamentosModule(module);
             return (
-              <LaunchpadCard
+              <div
                 key={idx}
-                title={module.title}
-                description={
-                  blockedByProposal
-                    ? 'Proposta visual — só Orçamentos (sem módulos operacionais).'
-                    : module.description
-                }
-                icon={module.icon}
-                onClick={() => onModuleClick(module)}
-                color={module.color}
-                badge={blockedByProposal ? 'Proposta' : module.badge}
-                dataPermission={module.permissionKey}
-                dataAction={
-                  blockedByProposal
-                    ? 'proposta-modulo-bloqueado'
-                    : `Comercial.${module.sectionKey || module.title}.abrir`
-                }
-                disabled={blockedByProposal}
-                disabledReason={
+                className={blockedByProposal ? 'opacity-40 grayscale relative' : undefined}
+                data-proposta-card={blockedByProposal ? 'bloqueado' : undefined}
+                title={
                   blockedByProposal
                     ? 'Proposta visual — abra apenas Orçamentos (sem módulos operacionais).'
                     : undefined
                 }
-              />
+                onClickCapture={blockedByProposal ? (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onModuleClick(module);
+                } : undefined}
+                onKeyDownCapture={blockedByProposal ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onModuleClick(module);
+                  }
+                } : undefined}
+              >
+                <LaunchpadCard
+                  title={module.title}
+                  description={
+                    blockedByProposal
+                      ? 'Proposta visual — só Orçamentos (sem módulos operacionais).'
+                      : module.description
+                  }
+                  icon={module.icon}
+                  onClick={() => onModuleClick(module)}
+                  color={module.color}
+                  badge={blockedByProposal ? 'Proposta' : module.badge}
+                  dataPermission={module.permissionKey}
+                  dataAction={
+                    blockedByProposal
+                      ? 'proposta-modulo-bloqueado'
+                      : `Comercial.${module.sectionKey || module.title}.abrir`
+                  }
+                />
+              </div>
             );
           })}
         </div>

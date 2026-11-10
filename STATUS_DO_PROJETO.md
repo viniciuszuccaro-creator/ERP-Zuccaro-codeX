@@ -1,3 +1,17 @@
+## CURSOR — #591 fix peels LaunchpadCard (wrapper grid) (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `31b66b6e`+ FAIL peels stage56 `LaunchpadCard.jsx` |
+| **Fix** | restaurar LaunchpadCard pin; dim/bloqueio só em `ModulosGridComercial` (`onClickCapture` + `data-proposta-card`) |
+| **CI verde** | **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · peels pin `4003fb06…` |
+| **FK ContatoB2B** | **20261110c** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 proposta title disabledReason + FK reconfirm (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -1,3 +1,9 @@
+## CURSOR — #591 fix peels LaunchpadCard → wrapper grid (2026-11-10 America/Sao_Paulo)
+- FAIL peels `LaunchpadCard` (stage56) nos tips `31b66b6e`+.
+- Fix: card peels restaurado; dim/bloqueio só em `ModulosGridComercial` (`onClickCapture`).
+- Verde base: **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. ContatoB2B (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 proposta disabledReason + FK 20261110c (2026-11-10 America/Sao_Paulo)
 - Verde: **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. Tip código dim cards `31b66b6e` + tooltip `disabledReason`.
 - ContatoB2B MCP: só `group_id` → (b) bloqueada (evidence 20261110c). Sem ContatoClienteV2/merge/VPS/PII.

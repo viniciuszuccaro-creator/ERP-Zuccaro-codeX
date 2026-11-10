@@ -23,18 +23,17 @@ test('Comercial launchpad: OrcamentosTab canônico (sem OrcamentosV2)', () => {
   assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova|OrcamentosNovo/);
 });
 
-test('ModulosGridComercial: proposta desabilita cards não-Orçamentos (LaunchpadCard disabled)', () => {
+test('ModulosGridComercial: proposta dim cards não-Orçamentos sem tocar LaunchpadCard peels', () => {
   const grid = read('src/components/comercial/comercial-launchpad/ModulosGridComercial.jsx');
   const card = read('src/components/financeiro/LaunchpadCard.jsx');
   assert.match(grid, /proposalMode = false/);
   assert.match(grid, /data-proposta-grid=\{proposalMode \? 'comercial360'/);
   assert.match(grid, /proposta-modulo-bloqueado/);
-  assert.match(grid, /disabled=\{blockedByProposal\}/);
-  assert.match(grid, /disabledReason=/);
-  assert.match(card, /disabled = false/);
-  assert.match(card, /disabledReason/);
-  assert.match(card, /data-launchpad-disabled=\{disabled \? 'true'/);
-  assert.match(card, /if \(disabled\) return;/);
+  assert.match(grid, /data-proposta-card=\{blockedByProposal \? 'bloqueado'/);
+  assert.match(grid, /onClickCapture=\{blockedByProposal/);
+  // peels stage56: LaunchpadCard permanece sem prop disabled (hash pin).
+  assert.doesNotMatch(card, /\bdisabled\b/);
+  assert.doesNotMatch(grid, /disabled=\{blockedByProposal\}/);
 });
 
 test('OrcamentosTab: proposal aside + rascunho; salvar bloqueado em proposalMode', () => {
