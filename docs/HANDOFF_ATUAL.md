@@ -1,3 +1,8 @@
+## CURSOR — #591 CI 199c + validade auto (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`199cc570`**. Proposta A: validade De/Até auto-apply (`proposta-filtro-validade-*`).
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
 ## CURSOR — #591 CI de85 + filtros auto proposta (2026-11-10 America/Sao_Paulo)
 - CI SUCCESS **`de8511eb`**. Proposta A: status/cliente aplicam na seleção; C: `proposta-acompanhamento-rascunho`.
 - ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.

@@ -596,7 +596,30 @@ const convertToPedido = async () => {
         setFilters(next);
         if (proposalMode) { setAppliedFilters(next); setPage(1); }
       }}><SelectTrigger aria-label="Filtrar cliente" data-action={proposalMode ? 'proposta-filtro-cliente' : undefined}><SelectValue placeholder="Todos os clientes" /></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map((item) => <SelectItem key={item.id} value={item.id}>{clienteLabel(item.id)}</SelectItem>)}</SelectContent></Select>
-      <div className="grid grid-cols-2 gap-2"><Input aria-label="Validade inicial" type="date" value={filters.validadeDe} onChange={(event) => setFilters((current) => ({ ...current, validadeDe: event.target.value }))} /><Input aria-label="Validade final" type="date" value={filters.validadeAte} onChange={(event) => setFilters((current) => ({ ...current, validadeAte: event.target.value }))} /></div>
+      <div className="grid grid-cols-2 gap-2">
+        <Input
+          aria-label="Validade inicial"
+          type="date"
+          value={filters.validadeDe}
+          data-action={proposalMode ? 'proposta-filtro-validade-de' : undefined}
+          onChange={(event) => {
+            const next = { ...filters, validadeDe: event.target.value };
+            setFilters(next);
+            if (proposalMode) { setAppliedFilters(next); setPage(1); }
+          }}
+        />
+        <Input
+          aria-label="Validade final"
+          type="date"
+          value={filters.validadeAte}
+          data-action={proposalMode ? 'proposta-filtro-validade-ate' : undefined}
+          onChange={(event) => {
+            const next = { ...filters, validadeAte: event.target.value };
+            setFilters(next);
+            if (proposalMode) { setAppliedFilters(next); setPage(1); }
+          }}
+        />
+      </div>
       <div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2" />Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={() => { const clean = { search: '', status: 'TODOS', clienteEmpresaId: 'TODOS', validadeDe: '', validadeAte: '' }; setFilters(clean); setAppliedFilters(clean); setPage(1); }}><RefreshCw className="w-4 h-4" /></Button></div>
     </form>
     )}

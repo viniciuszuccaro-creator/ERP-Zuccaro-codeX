@@ -1,0 +1,9 @@
+# CI verde — tip filtros auto proposta (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: 199cc570
+- workflow: erp-runtime-ci
+- run: 42866127262
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: proposta-filtro-status/cliente auto-apply + proposta-acompanhamento-rascunho
+- peels: sem alteração Completo / Produto / LaunchpadCard
