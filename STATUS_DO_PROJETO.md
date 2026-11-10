@@ -1,4 +1,16 @@
-## Continuidade vigente - publicacao para validacao Linux autorizada (2026-11-10)
+## Continuidade vigente - CI Linux de locais encerrada (2026-11-10)
+
+63ca3eff remoto/CI6600SUCCESS,3jobs; raiz2427PASS/0FAIL/0SKIP. Bloqueio Linux
+resolvido pelo workflow existente, sem Chrome ou instalar ambiente. Locais
+disponivel para revisao porSHA, ainda nao integrado/HML/navegador homologados.
+Delta seguinte: contrato canais Cliente.contatos preserva metadata e omissao,
+sem nova entidade ou escrita habilitada;6sinteticosPASS. Prova2conexoesPG do lote
+incluida no runner existente, pendenteCI; focoWindows15PASS/1SKIP (naoPGreal).
+SQL imagem recebida: parado/sem vinculo usuario provado. Preparacao privada da
+copia master/mastlog sem partida entregue; partida exige isolamento de todos
+caminhos, nao apenasT3608. IE20/100clientes/backup/VPS intocados.
+
+## Historico imediato - publicacao para validacao Linux autorizada (2026-11-10)
 
 Autorizacao especifica do proprietario: publicar snapshot sanitizado de locais
 na PR342 draft para CI Ubuntu existente antes do fechamento Linux. Nao e aceite

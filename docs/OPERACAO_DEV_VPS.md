@@ -150,6 +150,55 @@ node --import /workspaces/ERP-Zuccaro-codeX/server/node_modules/tsx/dist/loader.
 
 ### Cadastro completo e enriquecimento
 
+#### Contrato de contatos e leitura auxiliar - 2026-11-10
+
+Decisao de representacao: canais ricos continuam em `Cliente.contatos`, ja
+consumido por GerenciarContatosCliente/Form. ContatoB2B continua pessoa comercial,
+cargo e preferencias; nao substituir/mesclar pessoas por nome, nem copiar suas
+preferencias para um canal. Referencia opcional `contato_b2b_id` exige resolucao
+exata do vinculo Cliente/Grupo antes de persistir, nunca validacao pela primeira
+pagina de um seletor. Sem ContatoClienteV2 ou novo cadastro.
+
+`clienteContatoSchema` e `clienteContatosReplaceSchema`, no arquivo de tipos
+canonico existente, definem formato TESTAVEL, nao endpoint habilitado. Tipos
+Telefone/Celular/WhatsApp/E-mail permanecem distintos; nome/cargo/ramal/observacao,
+IDs/codigos/procedencia/status preservados; contato so com metadata e representavel.
+Sem valor/preferencia/status default; desconhecido nao e descartado. Extras ou
+preferencias B2B no canal sao rejeitados explicitamente, nao removidos. Um principal
+global preserva o contrato atual do editor; conflitos exigem revisao, nao democao
+automatica. Exemplo somente sintetico:
+
+```json
+{"expectedVersion":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","contatos":[{"id":"synthetic-native-001","tipo":"Telefone","valor":"00112233","ramal":"0007","nome":"SINTETICO","principal":true,"legacy_id":"00001","source_system":"SYNTHETIC"}]}
+```
+
+Omissao de contatos nao remove; lista vazia e remocao explicita, dependente de
+baseline completo/CAS e autorizacao. Limite200 rejeita excesso, sem truncar.
+Formato com expectedVersion NAO comprova CAS/RBAC/auditoria executados: a escrita
+MASTER ainda rejeita contatos/documentos ricos ate persistencia e transacao serem
+habilitadas conjuntamente. Delta candidato de armazenamento e coluna nullable
+`clientes.contatos jsonb`, sem default[] (NULL conserva desconhecido), com CHECK
+de array e limite; SQL/role/grants/HML NAO aplicados. Reutilizar rowlock,
+sanitizeClienteAudit, RBAC Cliente e contexto do servico; nao escrever JSONB
+diretamente. Documentos CPF/CNPJ/inscricoes sao do mestre; documentos adicionais
+e anexos exigem metadados/storage privado existentes, nao cabem em contatos.
+
+Leitura SQL: captura administrativa de09:59:10Z confirma instancia parada,
+master/mastlog/ERRORLOG em C: e nenhum caminho usuario nos logs encontrados;
+NAO comprova catalogo atual. Preparacao privada `-PrepareCatalogCopy` copia
+somente master/mastlog para pasta privada nova em C:, com espaco/ACL existentes,
+SHA256 e conservacao de origem, sem iniciar motor ou alterar permissoes. Script
+privado tem sintaxe validada, mas copia ainda depende de execucao administrativa.
+Retorno: instancia continua parada, originais intactos, copias conservadas.
+
+Nao iniciar somente com T3608 e chamar isso de isolamento: a documentacao Microsoft
+explica que acesso pode iniciar outros bancos e criar tempdb. Antes de abrir a
+copia, revisar isolamento de TODOS os caminhos de sistema, protocolos e execucao
+de startup procedures; copiar os arquivos de usuario necessarios somente para
+trabalho privado separado do HD, nunca abrir o original. Gate de partida nao
+foi exercido. Fonte: https://learn.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-traceon-trace-flags-transact-sql?view=sql-server-ver17#tf3608
+
+
 Matriz privada28campos distingue backup original ainda nao lido por registro,
 FINAL extraido, payload, banco, API e formulario; desconhecido permaneceNULL,
 nao zero/ausente. Fonte/resumo nao substituem auxiliares. Catalogo documentado

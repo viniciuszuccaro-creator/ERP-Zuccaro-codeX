@@ -6,6 +6,57 @@ export const CLIENTE_ORIGENS = [
   'ERP', 'MIGRACAO', 'SITE_CPA', 'B2B', 'PORTAL', 'CHATBOT', 'WHATSAPP',
   'MARKETPLACE', 'APP', 'API',
 ] as const;
+
+/** Rich channel contract for the existing Cliente.contatos field, not a person registry.
+ * Not accepted by MASTER writes until PostgreSQL storage and CAS are enabled together.
+ */
+export const CLIENTE_CONTATO_TIPOS = ['Telefone', 'Celular', 'WhatsApp', 'E-mail'] as const;
+const contactText = (max: number, min = 0) => z.string().min(min).max(max)
+  .refine(value => !/[\u0000-\u001f\u007f<>]/.test(value), 'invalid_contact_text');
+export const clienteContatoSchema = z.object({
+  id: contactText(120, 1).optional(),
+  tipo: z.enum(CLIENTE_CONTATO_TIPOS),
+  nome: contactText(180).nullable().optional(),
+  cargo: contactText(120).nullable().optional(),
+  departamento: contactText(120).nullable().optional(),
+  valor: contactText(180).nullable().optional(),
+  ramal: contactText(40).nullable().optional(),
+  principal: z.boolean().optional(),
+  ativo: z.boolean().optional(),
+  origem: z.enum(CLIENTE_ORIGENS).optional(),
+  observacao: contactText(2000).nullable().optional(),
+  contato_b2b_id: contactText(120, 1).nullable().optional(),
+  legacy_id: contactText(120, 1).nullable().optional(),
+  codigo_legado: contactText(80, 1).nullable().optional(),
+  source_system: contactText(80, 1).nullable().optional(),
+  migration_batch: z.string().uuid().nullable().optional(),
+}).strict().superRefine((contact, ctx) => {
+  if (contact.tipo === 'E-mail' && contact.valor && !z.string().email().safeParse(contact.valor).success) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['valor'], message: 'invalid_contact_email' });
+  }
+  // Metadata-only contacts remain representable; never manufacture a channel value.
+  if (!contact.valor && !contact.nome && !contact.cargo && !contact.observacao
+      && !contact.legacy_id && !contact.id) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'empty_contact' });
+  }
+});
+
+export const clienteContatosReplaceSchema = z.object({
+  expectedVersion: z.string().regex(/^[a-f0-9]{64}$/),
+  contatos: z.array(clienteContatoSchema).max(200).optional(),
+}).strict().superRefine((command, ctx) => {
+  const ids = new Set<string>();
+  let principals = 0;
+  command.contatos?.forEach((contact, index) => {
+    if (contact.id && ids.has(contact.id)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contatos', index, 'id'], message: 'duplicate_contact_identity' });
+    }
+    if (contact.id) ids.add(contact.id);
+    if (contact.principal) principals++;
+  });
+  if (principals > 1) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contatos'], message: 'conflicting_principal_contacts' });
+});
+export type ClienteContato = z.infer<typeof clienteContatoSchema>;
 export const CLIENTE_EMPRESA_SITUACOES = ['PROSPECT', 'ATIVO', 'INATIVO'] as const;
 
 /** Chaves RBAC canônicas; operações existentes são aplicadas por ClienteService. */

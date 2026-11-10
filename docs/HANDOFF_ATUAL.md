@@ -1,4 +1,26 @@
-## Continuidade vigente - snapshot locais autorizado para CI Linux (2026-11-10)
+## Continuidade vigente - locais publicado com CI Linux verde (2026-11-10)
+
+63ca3eff4573fb7e57861efddeb19019eba7e57f remoto confirmado. CI6600 terminal
+SUCCESS/3jobs; raiz Linux2427PASS/0FAIL/0SKIP. Validacao executada pelo workflow
+Ubuntu EXISTENTE, sem Chrome, nova candidata, cobranca ou mudanca de workflow.
+Nao e aceite navegador/HML ou prova nova de2conexoes do lote. Artefato9blobs
+conferido antes do commit, transporte/POSIX historicos nao reabertos.
+
+Proximo delta: contrato de canais no Cliente.contatos existente (6sinteticosPASS),
+sem habilitar escrita MASTER/DDL; pessoas/preferencias ContatoB2B distintas.
+Prova real do lote entre2conexoes adicionada ao runner Postgres existente,
+apenas fixture sintetica allowlist local; role/admin da fixture nao e principal
+HML homologado. Windows15PASS/1SKIP nas suites focadas, com PG real pendenteCI.
+Novo lote seguira autorizacao de commit de validacao na mesma342 draft.
+
+SQL: imagem administrativa ja recebida, tarefa de leitura atendida. Instancia
+parada; logs nao provam arquivos de usuario. Preparacao de copia do catalogo
+privado sem iniciar motor entregue como unica acao administrativa -PrepareCatalogCopy;
+nao repetir diagnostico anterior. T3608 nao e isolamento completo (tempdb/outros
+bancos podem abrir por acesso), portanto partida bloqueada ate revisao dos
+caminhos/protocolos. Sem alteracao ACL/original/HD/VPS ou nova carga100.
+
+## Historico imediato - snapshot locais autorizado para CI Linux (2026-11-10)
 
 Proprietario autorizou explicitamente commit de VALIDACAO do snapshot sanitizado
 na propria PR342 draft, antes do fechamento Linux, para CI Ubuntu existente.
