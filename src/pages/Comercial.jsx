@@ -463,7 +463,8 @@ function ComercialContent() {
       if (Array.isArray(m.accessKeys) && m.accessKeys.length) {
         return m.accessKeys.some((key) => hasPermission('Comercial', key, 'visualizar') || canViewComercial(key));
       }
-      return m.exactPermission
+      const exact = Boolean(/** @type {{exactPermission?: boolean}} */ (m).exactPermission);
+      return exact
         ? hasPermission('Comercial', m.sectionKey, 'visualizar')
         : canViewComercial(m.sectionKey || m.title);
     });
@@ -479,9 +480,10 @@ function ComercialContent() {
         return;
       }
     }
+    const exact = Boolean(/** @type {{exactPermission?: boolean}} */ (module).exactPermission);
     const allowed = Array.isArray(module.accessKeys) && module.accessKeys.length
       ? module.accessKeys.some((key) => hasPermission('Comercial', key, 'visualizar') || canViewComercial(key))
-      : (module.exactPermission
+      : (exact
         ? hasPermission('Comercial', module.sectionKey, 'visualizar')
         : canViewComercial(module.sectionKey || module.title));
     if (!allowed) {

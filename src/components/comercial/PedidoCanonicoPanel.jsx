@@ -63,7 +63,7 @@ const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date
 const message = (error) => explainPedidoPersistenceError(error)
   || (error?.status===403?'Seu perfil não possui permissão para esta ação.':error?.status===404?'Pedido não encontrado neste contexto.':error?.status===409?'O estado atual não permite esta ação.':error?.body?.error?.message||error?.message||'Não foi possível concluir a operação.');
 
-export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null, centralLayout=false, centralSituacao=null, centralSearch='', onCentralSelect=null, selectedCentralId=null }) {
+export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken=undefined, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null, centralLayout=false, centralSituacao=null, centralSearch='', onCentralSelect=null, selectedCentralId=null }) {
   const queryClient=useQueryClient();
   const detailGate=useRef(createPedidoDetailGate());
   const initialOpened=useRef(null);

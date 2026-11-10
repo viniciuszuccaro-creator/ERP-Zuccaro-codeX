@@ -217,6 +217,7 @@ export default function CentralVendas360Shell({
             empresaId={empresaId}
             actorId={actorId}
             actorEmail={actorEmail}
+            sessionToken={rest.sessionToken}
             empresaAtual={empresaAtual}
             hasPermission={hasPermission}
             filterInContext={filterInContext}
@@ -227,7 +228,6 @@ export default function CentralVendas360Shell({
             centralSearch={universalSearch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selected?.id || null}
-            {...rest}
           />
         ) : (
           <PedidoCanonicoPanel
@@ -235,18 +235,16 @@ export default function CentralVendas360Shell({
             empresaId={empresaId}
             actorId={actorId}
             actorEmail={actorEmail}
+            sessionToken={rest.sessionToken}
             hasPermission={hasPermission}
             filterInContext={filterInContext}
-            empresas={empresas}
             empresaAtual={empresaAtual}
             windowMode={windowMode}
-            canonicalHttp={canonicalHttp}
             centralLayout
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selected?.id || null}
-            {...rest}
           />
         )}
       </Suspense>
@@ -430,7 +428,7 @@ export default function CentralVendas360Shell({
   );
 }
 
-function FaixaTile({ icon: Icon, label, badge, onClick, action, disabled }) {
+function FaixaTile({ icon: Icon, label, badge = null, onClick, action, disabled = false }) {
   return (
     <button
       type="button"

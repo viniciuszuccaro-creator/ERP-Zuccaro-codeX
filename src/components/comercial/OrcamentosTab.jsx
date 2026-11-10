@@ -64,7 +64,7 @@ export default function OrcamentosTab({
   empresaId,
   actorId,
   actorEmail,
-  sessionToken,
+  sessionToken = undefined,
   empresaAtual,
   hasPermission,
   filterInContext,
