@@ -443,6 +443,7 @@ const convertToPedido = async () => {
   const proposalFiltrosAtivos = Boolean(
     String(appliedFilters.search || '').trim()
     || (appliedFilters.status && appliedFilters.status !== 'TODOS')
+    || (appliedFilters.clienteEmpresaId && appliedFilters.clienteEmpresaId !== 'TODOS')
     || appliedFilters.validadeDe
     || appliedFilters.validadeAte
   );
@@ -452,10 +453,14 @@ const convertToPedido = async () => {
     const search = String(appliedFilters.search || '').trim().toLowerCase();
     if (search) {
       list = list.filter((row) => String(row.numero || '').toLowerCase().includes(search)
-        || String(row.status || '').toLowerCase().includes(search));
+        || String(row.status || '').toLowerCase().includes(search)
+        || String(clienteLabel(row.cliente_empresa_id) || '').toLowerCase().includes(search));
     }
     if (appliedFilters.status && appliedFilters.status !== 'TODOS') {
       list = list.filter((row) => row.status === appliedFilters.status);
+    }
+    if (appliedFilters.clienteEmpresaId && appliedFilters.clienteEmpresaId !== 'TODOS') {
+      list = list.filter((row) => row.cliente_empresa_id === appliedFilters.clienteEmpresaId);
     }
     if (appliedFilters.validadeDe) {
       list = list.filter((row) => String(row.validade_em || '') >= appliedFilters.validadeDe);
@@ -656,9 +661,20 @@ const convertToPedido = async () => {
       />
     )}
     {proposalMode && proposalStage === 'lista' && (
-      <p className="text-xs text-slate-500 mb-2" data-block="proposta-sem-paginacao" role="note">
-        Prévia sintética — sem paginação de API (lista ilustrativa completa nesta etapa).
-      </p>
+      <div className="mb-2 space-y-1">
+        <p className="text-xs text-slate-500" data-block="proposta-sem-paginacao" role="note">
+          Prévia sintética — sem paginação de API (lista ilustrativa completa nesta etapa).
+        </p>
+        <p
+          className="text-xs text-slate-600"
+          data-block="proposta-lista-contagem"
+          aria-live="polite"
+        >
+          {proposalFiltrosAtivos
+            ? `${proposalListaRows.length} de ${proposalNegociacoesAll.length} negociação(ões) sintética(s) após filtros.`
+            : `${proposalListaRows.length} negociação(ões) sintética(s) nesta etapa.`}
+        </p>
+      </div>
     )}
 
     <Dialog open={formOpen} onOpenChange={(open) => { if (!open) closeForm(); }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className={proposalMode ? 'w-[96vw] max-w-7xl max-h-[92vh] flex flex-col overflow-hidden border-sky-200 bg-sky-50' : 'w-[96vw] max-w-6xl max-h-[92vh] overflow-auto'}><DialogHeader><DialogTitle>{editing ? `Editar orçamento ${editing.numero}` : 'Novo orçamento'}</DialogTitle><DialogDescription>{proposalMode ? 'Escolha cliente e produtos, ajuste quantidades e navegue pelo contexto sem perder o rascunho.' : <>Totais e preço unitário são conferidos pelo servidor ({ORCAMENTO_PERSISTENCE_GAPS.preco_unitario_ui}). Tabela de preço persiste no cabeçalho e alimenta o snapshot.</>}</DialogDescription></DialogHeader>

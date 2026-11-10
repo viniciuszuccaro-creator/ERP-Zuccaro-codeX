@@ -71,10 +71,13 @@ test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implíci
   assert.match(src, /proposalListaRows/);
   assert.match(src, /appliedFilters\.search/);
   assert.match(src, /appliedFilters\.status/);
+  assert.match(src, /appliedFilters\.clienteEmpresaId/);
   assert.match(src, /appliedFilters\.validadeDe/);
   assert.match(src, /appliedFilters\.validadeAte/);
+  assert.match(src, /clienteLabel\(row\.cliente_empresa_id\)/);
   assert.match(src, /proposta-lista-vazia/);
   assert.match(src, /proposta-limpar-filtros/);
+  assert.match(src, /proposta-lista-contagem/);
   assert.match(src, /Nenhuma negociação sintética para os filtros atuais/);
   assert.match(src, /!proposalMode && \(/);
   assert.match(src, /proposta-edicao-placeholder/);

@@ -1,0 +1,9 @@
+# CI verde — tip proposta lista filtrada sintética (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: 90b8fb7d51b5a149aa7263ce5946d3a45380efcf
+- workflow: erp-runtime-ci
+- run: 42856921796
+- conclusion: success (2026-11-10 ~13:40 America/Sao_Paulo; createdAt UTC 16:40:33Z)
+- lote: proposalListaRows filtra sintéticos por search/status
+- peels: sem alteração Completo / Produto / LaunchpadCard

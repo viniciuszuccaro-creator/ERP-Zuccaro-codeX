@@ -1,0 +1,11 @@
+# CI verde — tip ContatoB2B fail-closed group/empresa (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: 23ac22f9a79840800422309877d4b13fe71ac8b9
+- workflow: erp-runtime-ci
+- run: 42856762080
+- conclusion: success (2026-11-10 ~13:39 America/Sao_Paulo; createdAt UTC 16:39:38Z)
+- lote: ContatoB2B UI fail-closed exige group_id; empresa_id no escopo empresa (toast)
+- peels: sem alteração Completo / Produto / LaunchpadCard
+- Contatos (a)/(b)/(c): ainda Codex; MCP ContatoB2B sem cliente_id/empresa_id
+- homolog tip freeze: 77f11b28 / 0afd378f284
