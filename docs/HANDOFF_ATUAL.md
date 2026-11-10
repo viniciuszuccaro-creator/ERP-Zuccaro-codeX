@@ -1,3 +1,9 @@
+## CURSOR — #591 dialog busy ESC/overlay + Produto banner adiado (2026-11-10 America/Sao_Paulo)
+- Contatos/Endereços: dialog não fecha sob `bloqueado` (ESC/overlay).
+- Produto banner adiado (pin peels d312fbcd); toast+disabled HTTP ok.
+- Verde: `e6a31225`+`dc48c9ff`. ContatoB2B sem FK → (b) bloqueada.
+- Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
 ## CURSOR — #591 Produto foto banner adiado (peels pin) (2026-11-10 America/Sao_Paulo)
 - `288947e4` FAIL runtime-proof-source (pin product-query-v5 @ d312fbcd).
 - Reverte banner; hashes peels restaurados; toast+disabled HTTP mantidos.

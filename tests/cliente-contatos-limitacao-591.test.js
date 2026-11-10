@@ -34,6 +34,8 @@ test('GerenciarContatos: UI declara Celular ≠ WhatsApp (sem conversão automá
   assert.match(contatosForm, /data-block="contato-dialog-fields"/);
   // Campos do dialog também respeitam persistBusy (não só Salvar).
   assert.match(contatosForm, /disabled=\{bloqueado \|\| !podeEditar\}/);
+  // Overlay/ESC não fecha dialog durante persistBusy.
+  assert.match(contatosForm, /if \(!open && bloqueado\) return/);
 });
 
 test('Completo: anexos distinguem identificação MASTER de documentos[]', () => {
@@ -53,6 +55,7 @@ test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
   assert.match(enderecos, /disabled=\{bloqueado\}/);
   assert.match(enderecos, /disabled=\{bloqueado \|\| !podeEditar\}/);
   assert.match(enderecos, /data-block="endereco-dialog-fields"/);
+  assert.match(enderecos, /if \(!open && bloqueado\) return/);
 });
 
 test('hydrate: documento→cpf/cnpj preserva string (zeros); tipo PF/PJ', () => {

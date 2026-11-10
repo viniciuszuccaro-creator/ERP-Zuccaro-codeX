@@ -292,7 +292,14 @@ export default function GerenciarContatosClienteForm({
         </div>
       )}
 
-      <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
+      <Dialog
+        open={dialogAberto}
+        onOpenChange={(open) => {
+          if (!open && bloqueado) return;
+          setDialogAberto(open);
+          if (!open) resetForm();
+        }}
+      >
         <DialogContent className="max-w-md z-[9999]">
           <DialogHeader>
             <DialogTitle>

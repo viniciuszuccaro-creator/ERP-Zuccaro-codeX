@@ -1,3 +1,16 @@
+## CURSOR — #591 dialog Contatos/Endereços não fecha sob busy (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Contatos/Endereços** | `onOpenChange`: `if (!open && bloqueado) return` (ESC/overlay) |
+| **Produto banner** | adiado (peels pin d312fbcd) — toast+disabled HTTP ok |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
 ## CURSOR — #591 Produto foto banner adiado (peels pin) (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
