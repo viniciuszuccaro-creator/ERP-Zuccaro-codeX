@@ -74,7 +74,7 @@ async function mount() {
     './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido'},
     './orcamentoUiPolicy': policy, './pedidoUiPolicy': pedidoPolicy, './comercialMasterPicker': picker,
     './centralCliente360Navigation': navigation,
-    sonner: { toast: Object.fromEntries(['error', 'success'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },
+    sonner: { toast: Object.fromEntries(['error', 'success', 'message', 'info'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },
     '@/components/lib/exportacaoPDF': { gerarPDFOrcamento: () => true },
   };
   const exports = {};

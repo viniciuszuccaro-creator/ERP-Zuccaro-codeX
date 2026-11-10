@@ -1,3 +1,8 @@
+## CURSOR — #591 fix mock toast.message 347 (2026-11-10 America/Sao_Paulo)
+- Tip `8f7e8bbf` FAIL frontend: harness sem `toast.message`. Mock ampliado (error/success/message/info).
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
 ## CURSOR — #591 CI f6e0 + Aplicar sintética (2026-11-10 America/Sao_Paulo)
 - CI SUCCESS **`f6e0a11a`**. Proposta A: botão Aplicar (`proposta-filtrar`); toast ao criar sintética.
 - ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.

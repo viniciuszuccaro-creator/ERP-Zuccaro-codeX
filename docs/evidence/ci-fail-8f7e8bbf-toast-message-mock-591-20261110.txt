@@ -1,0 +1,9 @@
+# CI FAIL — tip 8f7e8bbf frontend (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: 8f7e8bbf65ad18fc3adad5a45fd04bed7d81ec50
+- run: 42871604482
+- conclusion: failure (frontend)
+- cause: sonner_1.toast.message is not a function
+- tests: 347 proposta memória / 347 clique duplo Novo
+- fix: tests/orcamento-component-behavior.test.js mock inclui message/info

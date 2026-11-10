@@ -1,3 +1,17 @@
+## CURSOR — #591 fix toast.message mock 347 + CI f6e0 FAIL (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Mock sonner inclui `toast.message` — tip `8f7e8bbf` frontend FAIL 2 testes 347 |
+| **Causa** | `openCreate` usa `toast.message`; harness só mockava error/success |
+| **CI verde** | **`f6e0a11a`** · **`5790c783`** · **`199cc570`** · **`de8511eb`** · (aguardando tip fix) |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip fix · Codex (a)/(b)/(c) · aceite :15173.
+
 ## CURSOR — #591 CI f6e0 + Aplicar + toast nova sintética (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |
