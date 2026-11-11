@@ -1,4 +1,28 @@
-## Continuidade vigente - launcher e classificacao nativa sem escrita (2026-11-11)
+## Estado vigente - publicacao verde e protecao de parada HML (2026-11-11)
+
+0ea74eaf publicado342,CI6813/6814SUCCESS. Classificador existente preserva
+117referencias Obras sem inferir endereco;2grupos pendentes,0writes. Matriz
+privada100:documentos100/IE20/canais331 conservados; formulario completo nao
+homologado. Projecao documento8650 passou com fixture sintetica/zeros iniciais;
+isso nao explica por si a amostra real vazia nem substitui HTTP/browser.
+Linux audit/lint/typecheck/build PASS; arquivos historicos187/188PASS com GIT_DIR,
+residual financeiro encerrado5/5 com GIT_WORK_TREE da validacao explicito. Sem
+alterar testes, SQL ou pins. CI completa do codigo confirma sucesso do checkout.
+
+HML32692 encerrou em STOPPED_EMERGENCY_REQUIRES_INSPECTION; PID ausente e
+checkpoint final nao produzido. Nao forcar start/limpar lock. Full-row read-only
+apos emergencia comprova100/100 iguais ao baseline,0writes,ROLLBACK; nao houve
+perda/carga/restore. Causa da demora no close HTTP/Vite ainda nao demonstrada.
+P0 seguinte: ensaio/instrumentacao do close e recuperacao revisada dos proprios
+recursos. Atalho reutiliza controlador e permanece fail-closed nesse estado.
+Nao apresentar15173 atualmente disponivel. Banco privado/backup preservados.
+
+Revisao Cursor591/e3b32276 atualizada6796010811,CI terminalsuccess. Fechar->cancel
+encerrado; novoP1 associa documento antigo ao contexto novo apos await (tentativa
+API simulada, nao prova de escrita backend). Unidade e fontes continuam pendentes.
+Freeze8650 preservado; sem merge/deploy/DDL/grants/carga operacional.
+
+## Historico imediato - launcher e classificacao nativa sem escrita (2026-11-11)
 
 ENTREGUE:22ccb386/CI6807/6808SUCCESS; start/replay/status reais pelo GitHubCLI
 oficial. Atalho desktop Iniciar HML ERP reutiliza controlador com OAuth somente

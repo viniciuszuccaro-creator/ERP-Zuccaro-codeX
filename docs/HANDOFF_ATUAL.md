@@ -1,4 +1,33 @@
-## Continuidade vigente - launcher comprovado e Obras classificadas (2026-11-11)
+## Checkpoint vigente - codigo verde, parada HML requer inspecao (2026-11-11)
+
+Codigo0ea74eafc6ccd894342b83b2464a6b5994e90068 publicado na mesma342:
+CI6813/6814SUCCESS. Controller22ccb/CI6807/6808 tambem preservado. Nao repetir
+carga/limpeza/transporte. Plano117 classificado sem escrita; matriz privada100
+concluida no alcance fonte/banco, NAO aceite integral de formulario.
+Fechamento Linux do snapshot: audit/lint/typecheck/build PASS; reexecucao dos
+21arquivos dependentes de historico:187/188PASS com GIT_DIR; unico residual era
+git diff com worktree errado, nao DDL removido. Com GIT_WORK_TREE explicito da
+mesma validacao, arquivo financeiro5/5PASS. CI completa do codigo passou em
+checkout Git normal. Nao alterar testes/pins nem chamar primeira execucao verde.
+
+NOVO BLOQUEIO REAL: janela32692 atingiu fim e estado privado passou a
+STOPPED_EMERGENCY_REQUIRES_INSPECTION; processo nao existe, lifecycle permaneceu
+BEFORE_APP_START/0writes, sem checkpoint final. Codigo privado tem deadline de
+30s para encerrar recursos; nao ha evidencia suficiente da etapa que bloqueou.
+Nao atribuir a OOM, banco ou Chrome. Nao alterar estado/lock para forcar start.
+Conferencia apos emergencia READ ONLY/ROLLBACK:100linhas completas identicas
+ao baseline pos-IE, inclusive331canais/20IE. Recibo privado
+completeness-100-20261111/post-emergency-conservation.private.json; canal admin
+existente SET LOCAL ROLE, NAO prova de sessao Auth. Originais/operacional intactos.
+URL15173 nao deve ser anunciada como utilizavel nessa parada. Proximo P0:
+instrumentar/ensaiar fechamento dos recursos HTTP/Vite proprios e recuperar
+lease/socket apenas pelo procedimento revisado apos provas de conservacao.
+
+Revisao591/e3b32276 com CI terminal success, parecer6796010811. Antigo
+Fechar->cancel encerrado; novoP1 identidade apos await e residuos unidade/fontes
+reproduzidos. Nenhuma troca do freeze HML8650 nem edicao na branch Cursor.
+
+## Historico imediato - launcher comprovado e Obras classificadas (2026-11-11)
 
 Controlador22ccb386 publicado, CI6807/6808 SUCCESS. Ensaio real via-gh
 start/replay/status: HML_STARTED e HML_ALREADY_RUNNING, API/web8650fd4d,
