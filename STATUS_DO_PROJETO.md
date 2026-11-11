@@ -1,3 +1,15 @@
+## CURSOR — #591 Relatórios Representantes/Personalizado loading gate (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Lote** | Triggers Representantes/Personalizado fail-closed sob `permissionsLoading` (recuperação erp-integra, sem tela paralela) |
+| **Testes** | `relatorios-representantes-personalizado-rbac-591` · secure-report-behavior · peels Relatorios |
+| **Evidence** | `docs/evidence/cursor-relatorios-rep-pers-rbac-loading-591-20261111.txt` |
+| Fora | HML · grants inventados · Documentacao/OAuthConsent |
+
+**Próximo:** CI tip master-extras + este delta · ACK Codex storage · aceite :15173.
+
 ## CURSOR — #591 master extras Completo+Cliente360 (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

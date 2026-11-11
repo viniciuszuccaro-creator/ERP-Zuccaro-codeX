@@ -1,3 +1,7 @@
+## CURSOR — #591 Relatórios Representantes/Personalizado loading gate (2026-11-11 America/Sao_Paulo)
+- Triggers fail-closed sob `permissionsLoading` (recuperação erp-integra; sem tela paralela).
+- Empilha master-extras `bba0a6dd`. Sem HML. **Próximo:** CI · ACK Codex · aceite :15173.
+
 ## CURSOR — #591 master extras Completo+Cliente360 (2026-11-11 America/Sao_Paulo)
 - Consumo UI das extensões MASTER Codex: rg, caixa postal (nº/CEP/flag), inscrição produtor rural.
 - Completo: edição omit-aware + 503 STORAGE_REQUIRED explícito (schema antigo). Cliente360: estados absent/empty/present.
