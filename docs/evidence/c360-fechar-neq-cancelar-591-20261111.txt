@@ -24,6 +24,10 @@ TESTES
 - `tests/central-vendas360-layout-v6-591.test.js` · «Fechar ≠ Cancelar» PASS
 - peels: fecharFn não contém `cancel(row)`; exige `setPendingConversion` + `canConvert`
 
+CI
+- Tip peels **`ca9a88aa`** SUCCESS 9/9 (America/Sao_Paulo 2026-11-11).
+- Runtime Fechar≠Cancelar: `e71808a3`.
+
 ACEITE PENDENTE
 - Homologar conversão com API funcional no mesmo SHA web+API (CI ≠ homologação).
 - Freeze cadastro rico :15173 permanece `8650fd4d` (Codex).

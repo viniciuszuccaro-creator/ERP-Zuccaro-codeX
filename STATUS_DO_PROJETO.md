@@ -1,3 +1,17 @@
+## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip** | **`ca9a88aa`** CI SUCCESS 9/9 — peels + runtime Fechar≠Cancelar |
+| **Runtime** | `e71808a3` Fechar→converter · Cancelar separado · Fechar janela só UI |
+| **Freeze cadastro :15173** | **`8650fd4d`** (Codex) — tip UI não substitui aceite HML |
+| **Evidence** | `c360-fechar-neq-cancelar-591-20261111.txt` · canais/recuperação 20261111 |
+| **Estados** | CI verde · CI ≠ homologação · aceite :15173 / jornada API pendentes |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar · importação HML |
+
+**Próximo:** aceite :15173 com Codex no freeze `8650fd4d` · jornada com API no tip web+API alinhados · #401 pós-aceite.
+
 ## CURSOR — #591 Fechar≠Cancelar + matrizes canais/recuperação (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

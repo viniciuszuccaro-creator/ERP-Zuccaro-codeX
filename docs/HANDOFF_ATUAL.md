@@ -1,3 +1,9 @@
+## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+- Tip **`ca9a88aa`** CI SUCCESS 9/9 (runtime `e71808a3` + peels).
+- Fechar → converter-pedido; Cancelar separado; Fechar janela só UI.
+- Freeze :15173 **`8650fd4d`** intacto (Codex). CI ≠ homologação.
+- **Próximo:** aceite :15173 · jornada API · #401 pós-aceite.
+
 ## CURSOR — #591 Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
 - RECEBIDO: «Fechar (cancel)» estava errado em `de189e0d`.
 - Correção: Fechar Orçamento → `convertOrcamento` (validações + pedido no servidor); Cancelar separado; Fechar janela só UI.
