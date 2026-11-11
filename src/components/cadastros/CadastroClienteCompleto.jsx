@@ -1600,14 +1600,28 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 </p>
               )}
               {contatosQuarentena.length > 0 && (
-                <p
-                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                <div
+                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 space-y-1"
                   data-fonte="contatos-quarentena"
                   role="status"
                 >
-                  {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,
-                  não exibidos como contato válido.
-                </p>
+                  <p>
+                    {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,
+                    não confirmados como contato válido. Revisar/corrigir tipo canônico antes de tratar como válido.
+                  </p>
+                  <ul className="list-disc pl-4" data-quarentena-lista="contatos">
+                    {contatosQuarentena.slice(0, 20).map((row, idx) => {
+                      const tipo = String(row?.tipo ?? '').trim() || '(sem tipo)';
+                      const valor = String(row?.valor ?? '').trim() || '(sem valor)';
+                      const nome = String(row?.nome ?? '').trim();
+                      return (
+                        <li key={String(row?.id || `${tipo}-${valor}-${idx}`)}>
+                          {nome ? `${nome}: ` : ''}{tipo} — {valor}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               )}
               <GerenciarContatosClienteForm
                 contatos={contatosViewForUi}
