@@ -1,4 +1,48 @@
-## Estado vigente - ensaios REAIS500/1000 concluidos, sem cargaVPS (2026-11-11)
+## Estado vigente - contatos enriquecidos nos MESMOS1500 inativos (2026-11-11)
+
+10144c3b encerrou CI6877/6878SUCCESS. Sem repetir carga500/1000 ou reativar:
+os MESMOS1500 receberam3869 canais no PostgreSQL HML privado, pelo mapper
+mapLegadoClienteContatos e ClienteService.enrichLegacyContacts existentes.
+5arquivos auxiliares verificados por bytes/SHA/cardinalidade;3255linhas nativas
+ligadas por CODIGOCLIENTE/SEQUENCIA aos mesmosIDs/documentos. Historicos nao foram
+promovidos a contatos; nao houve inferencia de WhatsApp, preferencia ou status.
+1493ready/7partial;9campos em quarentena preservada, sem bloquear canais validos.
+
+Banco continua1600clientes:100originais integralmente iguais+1500INATIVOS.
+Contatos totais4200=331originais+3869novos. CAS/snapshot completo, locks/RBAC,
+auditoria transacional e replay canonicos;1504recibos/1500clientes, incluindo
+2reversoes amostrais exatas com replay e reaplicacao auditada.0novas escritas no
+replay;0outros campos alterados alem de contatos/updated_at. Sem DDL/grants/VPS.
+BackupsCUSTOM antes de cada enriquecimento com hash/listagem; recuperacao anterior
+reutilizada, NAO alegar restauracao destes novos arquivos. HMLAPP segueSTOPPED.
+
+Provas privadas: scale-validation-efbde32d/auxiliary-source-verified-20261111,
+contacts-{preflight,commands,result,final-check}.private.json; segundo lote em
+run1000. Raw, NDJSON, snapshots e journals fora do Git/build. Nao repetir aplicacao:
+rever recibos canonicos antes de qualquer retomada. Codigo executado efbde32d,
+sem alterar runtime nesta entrega. Nova contraprova mapper->servico/PGlite exige
+inatividade, baseline ordenado, replay sem auditoria extra e reversao integral.
+14testes focadosPASS; audit/lint/typecheck/frontendbuild/server-typecheck e
+diffcheckPASS (lint0erros/1aviso existente). RaizWindows2414PASS/5FAIL:2Python
+ausente,1getuid indisponivel,1provisionador exigePython real e1arquivoVPS
+interrompido apos307s de verificacao local ja falha. NAO contar como PASS nem
+falha funcional nova. Teste/guardas preservados; validacao Ubuntu da mesmaPRdraft
+usa a excecao de publicacao sanitizada ja autorizada, sem homologacao/merge/deploy.
+CI do novoSHA ainda pendente; recibo terminal deve acompanhar o fechamento.
+
+Cadastro NAO completo: RG/extensoes/endereco/Obras e vinculos comerciais seguem
+contratos/gates individuais. COMENTARIO/STRINGLIVRE6 continuam dispensados do mapa
+ativo, raw preservado.22895nativos/18458CSV/4437foraCSV nao indicam inatividade.
+VPS: console administrativo existente RECUPERADO; configuracao efetiva da API e
+SQL comprovaram banco postgres/schema public/principal postgres, sem superuser
+mas COM BYPASSRLS. READ ONLY/ROLLBACK concluido,0dados de negocio lidos/escritos.
+4tabelas-base presentes; clientes.contatos AUSENTE. Journal observa001-024/038/039;
+IDs nao provam SQL igual nem autorizam marcar036/037/040-044 aplicadas. ImageID
+local da API preservado no recibo privado, nao e digest de registry nem SHA app.
+Proximo gateVPS: delta minimo de schema/menor privilegio/reconciliacao atual e
+backup revisados antes da proposta unica de promocao. Nenhum grant/DDL/deploy.
+
+## Historico - ensaios REAIS500/1000 concluidos, sem cargaVPS (2026-11-11)
 
 Decisao do dono: COMENTARIO e STRINGLIVRE6 nao tinham uso. Ficam EXCLUIDOS do
 mapeamento ativo, nao vao para observacoes e nao bloqueiam a migracao. Valores

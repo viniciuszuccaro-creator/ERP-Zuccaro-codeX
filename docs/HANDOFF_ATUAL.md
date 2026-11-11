@@ -1,4 +1,50 @@
-## Adendo vigente -500/1000REAIS no mesmoHML,100preservados (2026-11-11)
+## Retomada vigente -3869canais aplicados,1500continuamINATIVOS (2026-11-11)
+
+10144c3b CI6877/6878SUCCESS. Reutilizados mapper/servico canonicosefbde32d,
+SEM nova carga:500receberam1325canais;1000receberam2544. MesmoPG/schemaCPA,
+1600mestres preservados;100originais integralmente iguais/331canais anteriores.
+Total4200canais.1500seguemINATIVOS; nao reativar/apagar/importar de novo.
+5auxiliares privados conferidos por SHA/bytes/linhas;3255linhasClientesTelefones
+com PK nativa CODIGOCLIENTE/SEQUENCIA, binding por IDs/documentos dos mesmos1500.
+Raw3243telefones/552emails/3232nomes/62cargos NAO sao contagens de canais validos:
+mapper resultou1493ready/7partial e9campos em quarentena privada. Sem WhatsApp
+inferido, historia transformada em contato ou metadados manuais sobrescritos.
+
+CAS/RBAC/lock/auditoria/replay existentes. Verificacao finalPG:1504recibos,
+1500IDs,2reversoes amostrais exatas/replay/reaplicacao;0escritas no replay,
+0alteracoes fora de contatos/updated_at e0escritasVPS. BackupsCUSTOM com hash/
+listagem; somente prova anterior de recuperacao reutilizada, nao novo restore.
+HMLAPP permaneceSTOPPED/15173PRIVATE, sem afirmar navegador atual homologado.
+
+Recibos privados em /workspaces/.erp-private-344/scale-validation-efbde32d:
+auxiliary-source-verified-20261111/{bindings,receipt}.private.json;
+contacts-{preflight,commands,result,final-check}.private.json, fonteNDJSON,
+backup/journal/reversao amostral. Segundo lote em run1000. Operador privado
+existente scale500-hml-operator ganhou modoscontact-preflight/enrich/check;
+nao rodar carga ou repetir enrich: comandos presentes exigem consultar recibos.
+
+Novo teste server/tests/cliente-contatos-persistence.test.ts monta mapper real
+com servico/repositorio/PGlite: preserva inativo/linha integral/baseline, replay,
+CAS e reversao.14PASS focados; audit/lint/typecheck/build/server-typecheck/
+diffcheckPASS. RaizWindows2414PASS/5FAIL:2Python ausente/1getuid/1Python real no
+provisionador e1arquivoVPS interrompido apos307s na execucao local ja falha.
+Nao declarar suitePASS, nao remover/enfraquecer testes. Publicacao sanitizada
+de validacao na mesmaPRdraft pela excecao ja autorizada; Ubuntu do novoSHA deve
+fechar antes do aceite tecnico.0autorizacoes operacionais inferidas dessaCI.
+UI/composicao permaneceCursor;591 e3b32276 sem novo delta nesta retomada.
+VPS: console existente recuperado sem novos acessos. Leitura da configuracao
+EFETIVA erp-api-dev e conexao SQL comprovaram postgres/public/principal postgres,
+rolsuperfalse/rolbypassrlstrue, READONLY/ROLLBACK,0linhas negocio/0writes. Nao e
+leitor estrito.4tabelas-base presentes; clientes.contatos AUSENTE. Journal001-024,
+038/039; primeira projecao por version/name/filename devolveuNULL, corrigida para
+id conforme contrato existente, sem inferir ausencia porNULL. IDs nao provam SQL
+igual. Recibo desktopprivado vps-effective-sql-target-20261111.private.json com
+clusterIdentifier e imageIDlocal (NAO digestregistry/SHA). Proximo gate e o delta
+minimo de schema/menor privilegio/reconciliacao atual/backup antes da proposta
+de promocao, nao mais "sem canalSQL". Sem novos grants/keys/DDL/deploy. RG/
+enderecos/Obras e referencias comerciais seguem contratos, sem defaults ficticios.
+
+## Historico -500/1000REAIS no mesmoHML,100preservados (2026-11-11)
 
 Dono encerrou a duvida COMENTARIO/STRINGLIVRE6: nao tinham uso. Excluir SOMENTE
 esses2 do mapeamento ativo, preservar raw/procedencia, nao copiar para observacoes

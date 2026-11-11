@@ -199,6 +199,49 @@ test('contacts canonical persistence, CAS and legacy receipts: isolated syntheti
       const richRestored = await snapshot(); assert.ok(richRestored);
       assert.deepEqual(richRestored, { ...current, updated_at: richRestored.updated_at });
     });
+    await t.test('native mapper enriches an inactive imported master without restoration or unrelated changes', async () => {
+      const original = await snapshot(); assert.ok(original);
+      await f.admin.query('UPDATE clientes SET ativo=false WHERE id=$1', [ID.clientePfA]);
+      const before = await snapshot(); assert.ok(before);
+      assert.equal(before.ativo, false);
+      const mapped = mapLegadoClienteContatos({
+        nativeParent: { CODIGOCLIENTE: 'SYNTHETIC-CONTACTS', EMAIL: null },
+        contacts34: [{ CODIGOCLIENTE: 'SYNTHETIC-CONTACTS', SEQUENCIA: 17,
+          TELEFCLIENTE: '0011223344', EMAIL: 'native@example.invalid',
+          NOMECONTATO: 'SYNTHETIC native contact', CARGOSETOR: 'Compras' }],
+        nativeKey: 'SYNTHETIC-CONTACTS', sourceSystem: 'SYNTHETIC', canonical: before,
+      }, { batchUUID: batch, validateContact: (contact: unknown) => clienteContatoSchema.safeParse(contact) });
+      assert.equal(mapped.status, 'ready'); assert.ok(mapped.contatos);
+      const baseline = before.contatos as typeof channels;
+      assert.deepEqual(mapped.contatos.slice(0, baseline.length), baseline);
+      const added = mapped.contatos.slice(baseline.length);
+      assert.equal(added.length, 2);
+      assert.deepEqual(added.map(c => c.tipo).sort(), ['E-mail', 'Telefone']);
+      assert.ok(added.every(c => c.nome === 'SYNTHETIC native contact' && c.cargo === 'Compras'
+        && c.principal === undefined && c.ativo === undefined));
+      const command = { mode: 'apply', id: ID.clientePfA, operationId: randomUUID(),
+        expectedFingerprint: legacyContactsFingerprint(before), sourceSystem: 'SYNTHETIC',
+        legacyCode: 'SYNTHETIC-CONTACTS', batch, contatos: mapped.contatos,
+        sourceProof: { fileSha256: 'a'.repeat(64), rowSha256: 'b'.repeat(64), parser: 'ndjson-v1' } };
+      const count = await audits();
+      const applied = await enrich(command);
+      const after = await snapshot(); assert.ok(after);
+      assert.deepEqual(after, { ...before, contatos: mapped.contatos, updated_at: after.updated_at });
+      assert.equal(after.ativo, false);
+      assert.equal((await enrich(command)).reused, true);
+      assert.deepEqual(await snapshot(), after); assert.equal(await audits(), count + 1);
+      await assert.rejects(enrich({ ...command, operationId: randomUUID() }), { code: 'LEGACY_ENRICHMENT_CONFLICT' });
+      assert.deepEqual(await snapshot(), after); assert.equal(await audits(), count + 1);
+      const reversal = { mode: 'reverse', id: command.id, operationId: randomUUID(),
+        originalOperationId: command.operationId, expectedFingerprint: applied.fingerprint,
+        sourceSystem: command.sourceSystem, legacyCode: command.legacyCode, batch };
+      await enrich(reversal);
+      const restored = await snapshot(); assert.ok(restored);
+      assert.deepEqual(restored, { ...before, updated_at: restored.updated_at });
+      assert.equal(restored.ativo, false);
+      assert.equal((await enrich(reversal)).reused, true); assert.equal(await audits(), count + 2);
+      await f.admin.query('UPDATE clientes SET ativo=$1 WHERE id=$2', [original.ativo, ID.clientePfA]);
+    });
     await t.test('legacy enrichment rejects clearing and manual rewrites; only new IDs append with exact reversal', async () => {
       const before = await snapshot(); assert.ok(before);
       const baseline = structuredClone(before.contatos) as typeof channels;
