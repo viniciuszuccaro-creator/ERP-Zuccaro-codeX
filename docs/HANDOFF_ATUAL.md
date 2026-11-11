@@ -3,11 +3,12 @@
 Reserva Codex342/6798695196 e6798742173; Cursor UI/composicao preservados.
 CI6827: diferenca de segundo no rodape PDF, nao perda de HTML. Relogio injetado
 somente no harness,20PASS incl. contraprova de timestamp diferente; sem enfraquecer
-comparacao integral ou hashes. Consumidor legado existente recebe wrapper de
-staging em lotes1..1000/default500: helper privado de checkpoints, ordem nativa,
+comparacao integral ou hashes. Helper staging-checkpoint chama o consumidor
+legado intacto: lotes1..1000/default500, checkpoints privados, ordem nativa,
 manifesto pinned/opcoes/run, fsync/hashchain/lock, replay sem reprocessar concluidos.
-32PASS mapper+guardas+checkpoint; ancestral preservado salvo dois hunks exatos,
-com negativos contra falta/duplicacao/mutacao. Nao e importadorPG paralelo.
+CI9d57 identificou guarda transitiva. Consumidor E teste de consolidacao agora
+iguais BYTE A BYTE a fa11aa1e, sem trocar pins/peels.70PASS mapper/checkpoint/
+fornecedor/HTTP e contraprovas ancestrais. Nao e importadorPG paralelo.
 Positivo de comprovados tambem cobre empresa_id undefined do mapper: recibo omite
 esse campo como JSON canonico, sem inventar empresa/null. Retomada passou.
 Nenhuma cargaPG/reversaoPG/velocidade de importacao comprovada por esses testes.

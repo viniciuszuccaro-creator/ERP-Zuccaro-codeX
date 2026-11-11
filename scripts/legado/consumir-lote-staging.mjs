@@ -25,13 +25,7 @@ import {
 } from './mapear-registro-sintetico.mjs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { processStagingBatches } from './staging-checkpoint.mjs';
 export { persistirEnderecoClienteGrupoLegado, criarRegistroEnderecoPilotoPostgres } from './persistencia-endereco-legado.mjs';
-
-// The helper isolates filesystem checkpoints from this existing mapper/consumer.
-export const consumirLotesStagingRetomavel = options => processStagingBatches({
-  ...options, consume: consumirLoteStagingLegado,
-});
 
 /** Ordem de dependencia minima para Produtos / Clientes / Fornecedores. */
 export const LEGADO_DEPENDENCIA_ORDEM = Object.freeze([

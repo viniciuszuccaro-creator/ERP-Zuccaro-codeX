@@ -5,8 +5,9 @@ Harness agora injeta o MESMO relogio nas duas implementacoes; comparacao integra
 HTML, timer e hashes anteriores preservados. Contraprova detecta segundo distinto.
 20 testes de consumidores PASS; nenhuma mudanca de produto para ocultar a falha.
 
-Consumidor staging existente ganhou entrada consumirLotesStagingRetomavel.
-Helper extraido porque o consumidor ja tem mais de500linhas; reutiliza mapper,
+Helper staging-checkpoint.mjs expoe consumirLotesStagingRetomavel, chamando o
+consumidor existente sem altera-lo. Consumidor protegido tem mais de500linhas;
+nao havia checkpoint equivalente; helper reutiliza mapper,
 classificacao e fingerprints existentes. Lotes1..1000(default500), ordem lexical
 pela chave nativa textual explicita, manifesto de selecao/opcoes/fonte/run,
 recibos privados fsync/hash encadeado e trava exclusiva. Retoma lotes concluidos;
@@ -15,8 +16,10 @@ que deixe lock/recibo incompleto exige inspecao: nao ha remocao forcada automati
 E STAGING, nao persistencia de negocio, importacaoPG, auditoria transacionalPG ou
 reversaoPG homologadas. SourceSha256 e pin informado pelo chamador; nao comprova
 sozinho derivacao dos rows. Nenhuma permissao operacional decorre desse manifesto.
-32 testes mapper/consolidacao/checkpoint PASS; peel de dois hunks EXATOS mantem
-todo o restante ancestral e contraprovas contra ausencia/duplicacao/mutacao.
+CI do9d57 revelou guarda transitiva do teste de consolidacao. Integracao ajustada
+sem mexer em pins/peels: consumidor E teste de consolidacao ficaram BYTE A BYTE
+iguais a fa11aa1e.70 testes mapper/checkpoint/fornecedor/HTTP PASS, incluindo
+contraprovas ancestrais de alteracao indevida. Nenhuma guarda enfraquecida.
 Caso positivo usa registros comprovados pelo mapper: empresa_id ausente continua
 omitido no JSON privado, nunca preenchido com null/empresa ficticia. Inputs JSON
 invalidos continuam rejeitados; nao confundir ausente de objeto com array invalido.

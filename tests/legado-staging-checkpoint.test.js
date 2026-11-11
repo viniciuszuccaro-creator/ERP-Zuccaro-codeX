@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { processStagingBatches } from '../scripts/legado/staging-checkpoint.mjs';
-import { consumirLotesStagingRetomavel } from '../scripts/legado/consumir-lote-staging.mjs';
+import { processStagingBatches, consumirLotesStagingRetomavel } from '../scripts/legado/staging-checkpoint.mjs';
 
 function fixture(t) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(),'erp-staging-test-'));
