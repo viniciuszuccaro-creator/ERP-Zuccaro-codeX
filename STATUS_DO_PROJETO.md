@@ -1,4 +1,26 @@
-## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+## Continuidade temporaria Codex da591 (2026-11-11)
+
+Transferencia explicita pelo proprietario por indisponibilidadeCursor. Branch
+codex/continuidade-591-20261111 parte exatamente de e3b32276 da591; nao altera
+branchesCursor, nao e outra candidata.4015d9a7e37 e3425d1fa0fc preservadas.
+Backend482fd666/87fe18bb e HML continuam na frente342: nao substituir por backend
+ancestral desta continuacaoUI. CodigoGit oficial; sem seed/carga/DDL/deploy.
+Primeiro pacote fecha3contraprovas atuais: contexto aposawait no fechamento,
+unidade historica sem equivalencia ePedidos403bloqueandoOrcamentos autorizados.
+Gate sincrono agora abrange detalhefast-path/await/consumo; contextoA-B-A invalida
+o ticket. Quantidade/unidade/preco originais conservados, sem conversao presumida.
+Fontes independentes por permissao;401interrompe, falha parcial aparece como
+indisponivel, fonte negada nao e consultada. Fechar!=Cancelar preservado.
+51testes focadosPASS, incluindo snapshot de permissao negada e guardas de layout.
+React/TanStack montados noSHAe3 antigo:5PASS/7FAIL,
+fronteiras sinteticas de transporte/UI/estoque, naoHTTP/PG/browserHML.
+Fechamento Linux e montagem do novo snapshot ainda pendentes antes do aceite.
+Proximo independente: capacidade granular de locais; adapter591 ainda preenche
+S/N/Centro/BRASIL sem fonte. Corrigir no existente, sem ampliar perfilHML.
+Decisao encerrada: mestreFISCAL, ObrasENTREGA multiplas, cobranca fora da migracao
+ativa/rawpreservado.1500ensaios inativos/4200contatos/extensoes nao recarregar.
+
+## Historico Cursor — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|

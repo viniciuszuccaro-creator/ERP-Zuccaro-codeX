@@ -1,4 +1,22 @@
-## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+## Retomada - Codex assume temporariamente a591 (2026-11-11)
+
+Ordem explicita do dono: Codex assume UI/composicao/Central enquantoCursor sem
+creditos. Nao aguardarACK. Clone interno limpo e nenhum escritor de projeto
+observado antes da troca rastreavel; branch codex/continuidade-591-20261111 baseada
+eme3b32276, sem editar Cursor. Base da591 e401, base401 e342: preservar cadeia.
+Esta continuacaoUI NAO contem automaticamente backend482/87fe da3425d1fa0fc;
+nao iniciar HML com backend antigo ou chamar isto de candidata integrada.
+Pacote: gate abrange await do detalhe inclusivefast-path antes da conversao;
+KG/quantidade/preco preservados; fontesPedidos/Orcamentos independentes por
+permissao com401failclosed e parcialexplicito.51focadosPASS; antesReactreal
+e3:5PASS/7FAIL com fronteiras sinteticas, nao provaHTTP/PG/HML.
+Validar snapshotLinux antespush; montagem doSHA novo depois. Proximo independente:
+RBACcliente_local e removerdefaults inventadosS/N/Centro/BRASIL noadapter591,
+preservando rascunho/dados ausentes/locais multiplos. Nao ampliar perfilHML.
+MestreFISCAL/ObrasENTREGA/cobrancadispensada definidos pelo dono; rawintacto.
+Referencias vigentes da migracao e recibos completos permanecem na3425d1fa0fc.
+
+## Historico Cursor — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
 - Tip **`ca9a88aa`** CI SUCCESS 9/9 (runtime `e71808a3` + peels).
 - Fechar → converter-pedido; Cancelar separado; Fechar janela só UI.
 - Freeze :15173 **`8650fd4d`** intacto (Codex). CI ≠ homologação.
