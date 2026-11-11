@@ -1,3 +1,14 @@
+## CURSOR — #591 CI SUCCESS tip master-extras + Relatórios RBAC (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | **`af13da12`** CI SUCCESS 9/9 · [run](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/43079031689) · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Empilha** | master extras Completo+Cliente360 · Relatórios loading gate · reopen mock · typecheck message |
+| **Estados** | Pareceres preservados · omit ≠ limpar · 503 STORAGE_REQUIRED explícito · Fechar≠Cancelar |
+| Fora | HML/SQL/1500 · ContasReceber BFF · SHA API+web aceite Codex |
+
+**Próximo:** ACK Codex storage revisado · aceite :15173 · ContasReceber quando contrato.
+
 ## CURSOR — #591 Relatórios Representantes/Personalizado loading gate (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

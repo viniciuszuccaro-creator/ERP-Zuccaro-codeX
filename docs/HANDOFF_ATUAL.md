@@ -1,3 +1,7 @@
+## CURSOR — #591 CI SUCCESS `af13da12` (2026-11-11 America/Sao_Paulo)
+- Tip PR#592 CI SUCCESS 9/9 — master extras Completo+Cliente360 + Relatórios loading gate.
+- Sem HML/1500. **Próximo:** ACK Codex storage · aceite :15173 · ContasReceber BFF.
+
 ## CURSOR — #591 Relatórios Representantes/Personalizado loading gate (2026-11-11 America/Sao_Paulo)
 - Triggers fail-closed sob `permissionsLoading` (recuperação erp-integra; sem tela paralela).
 - Empilha master-extras `bba0a6dd`. Sem HML. **Próximo:** CI · ACK Codex · aceite :15173.
