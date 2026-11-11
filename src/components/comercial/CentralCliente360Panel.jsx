@@ -24,6 +24,10 @@ import {
   classifyCentral360Financeiro,
 } from '@/components/comercial/centralCliente360Financeiro';
 import {
+  classifyClienteMasterExtras,
+  CLIENTE_MASTER_EXTRA_LABELS,
+} from '@/api/clienteMasterExtrasUi';
+import {
   canLoadCentralCliente360,
   central360SessionKey,
   createHttpApiClient,
@@ -466,6 +470,7 @@ export default function CentralCliente360Panel({
     forbidden: !canViewFinanceiro && !permissionsLoading,
     httpPending: true,
   });
+  const masterExtrasClassified = classifyClienteMasterExtras(contatosQuery.data, masterFlags);
 
   if (!isHttpCliente360Enabled) return null;
 
@@ -816,6 +821,27 @@ export default function CentralCliente360Panel({
         <p className="text-[10px] text-slate-400">
           CPF/CNPJ = Documento MASTER · RG/anexos ≠ ModeloDocumento · omit ≠ limpar.
         </p>
+        <div
+          className="border-t border-slate-100 pt-2 space-y-1"
+          data-block="central360-master-extras"
+          data-extras-present={masterExtrasClassified.present}
+        >
+          <p className="text-xs text-slate-500">{masterExtrasClassified.message}</p>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-1">
+            {Object.entries(masterExtrasClassified.fields).map(([key, field]) => (
+              <li key={key} data-campo={key} data-extra-estado={field.status} className="text-xs">
+                <span className="text-slate-500">{CLIENTE_MASTER_EXTRA_LABELS[key] || key}</span>
+                <p className="font-mono truncate">
+                  {field.status === 'present' ? (field.value || '—') : '—'}
+                </p>
+                <span className="text-[10px] text-slate-400">{field.status}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[10px] text-slate-400">
+            Extensões no mesmo Cliente · schema antigo pode omitir chaves · sem inventar defaults.
+          </p>
+        </div>
       </div>
 
       <div

@@ -112,16 +112,32 @@ test('buildPayload: valores carregados de IE/e-mail/nome_social preservados no f
   assert.equal(wire.origem, 'MIGRACAO');
 });
 
-test('RG significativo continua fail-closed no HTTP (ainda não incorporado no BFF)', () => {
+test('RG e extensões MASTER passam no ALLOWED_KEYS (schema antigo → 503 no BFF, não descarte silencioso)', () => {
   const { buildPayload } = actualClienteFormPayload();
   const ui = buildPayload({
     id: 'synthetic-cli-rg',
     nome: 'SYNTHETIC',
     tipo: 'Pessoa Física',
+    cpf: '529.982.247-25',
     rg: '12.345.678-9',
+    numero_caixa_postal: '00017',
+    cep_caixa_postal: '01234000',
+    caixa_postal_cobranca: '00091',
+    inscricao_produtor_rural: '001122',
   });
-  assert.throws(
-    () => toClienteMasterHttpPayload(ui),
-    (err) => err?.code === 'CLIENTE_HTTP_UNSUPPORTED_FIELDS' && Array.isArray(err.fields) && err.fields.includes('rg'),
-  );
+  const wire = toClienteMasterHttpPayload(ui);
+  assert.equal(wire.rg, '12.345.678-9');
+  assert.equal(wire.numero_caixa_postal, '00017');
+  assert.equal(wire.cep_caixa_postal, '01234000');
+  assert.equal(wire.caixa_postal_cobranca, '00091');
+  assert.equal(wire.inscricao_produtor_rural, '001122');
+  // Omissão ≠ limpar: sem hasOwn não entra no wire.
+  const omit = toClienteMasterHttpPayload(buildPayload({
+    id: 'synthetic-cli-omit',
+    nome: 'SYNTHETIC',
+    tipo: 'Pessoa Física',
+    cpf: '529.982.247-25',
+  }));
+  assert.equal(Object.prototype.hasOwnProperty.call(omit, 'rg'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(omit, 'numero_caixa_postal'), false);
 });

@@ -9,7 +9,9 @@
  *  - NÃO hidrata `contatos[]` a partir de escalares como lista completa;
  *  - Sem ContatoClienteV2 / storage paralelo; ContatoB2B FK não destrava este fluxo.
  * assessContatosScalarFidelity permanece diagnóstico (legado / auditoria).
+ * Extensões MASTER (rg/caixa postal/produtor): opcionais; schema antigo → 503.
  */
+import { pickClienteMasterExtrasForWrite } from './clienteMasterExtrasUi.js';
 
 const CLIENTE_ORIGENS = new Set([
   'ERP', 'MIGRACAO', 'SITE_CPA', 'B2B', 'PORTAL', 'CHATBOT', 'WHATSAPP',
@@ -42,6 +44,12 @@ const ALLOWED_KEYS = [
   'source_system',
   'migration_batch',
   'observacoes',
+  // Extensões MASTER (Codex): opcionais; schema antigo → 503 STORAGE_REQUIRED.
+  'rg',
+  'numero_caixa_postal',
+  'cep_caixa_postal',
+  'caixa_postal_cobranca',
+  'inscricao_produtor_rural',
 ];
 
 /** Canais canônicos do formulário Completo / GerenciarContatos (sem inventar WhatsApp). */
@@ -1070,7 +1078,6 @@ export function assertClienteHttpRichFieldsWritable(src) {
     'indicador_id',
     'regiao_atendimento_id',
     'regiao_atendimento',
-    'rg',
   ]) {
     if (isMeaningfulScalar(src[key])) unsupported.push(key);
   }
@@ -1098,10 +1105,15 @@ export function assertClienteHttpRichFieldsWritable(src) {
 export function toClienteMasterHttpPayload(raw, options = {}) {
   const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   assertClienteHttpRichFieldsWritable(src);
+  // Sanitiza extensões MASTER (omit ≠ limpar; blank → null; sem truncar).
+  const extras = pickClienteMasterExtrasForWrite(src);
   /** @type {Record<string, unknown>} */
   const out = {};
   for (const key of ALLOWED_KEYS) {
     if (src[key] !== undefined) out[key] = src[key];
+  }
+  for (const [key, value] of Object.entries(extras)) {
+    out[key] = value;
   }
   // contatos:null não é comando público — remove antes da projeção CAS.
   if (Object.prototype.hasOwnProperty.call(out, 'contatos') && out.contatos == null) {

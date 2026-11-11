@@ -1,3 +1,9 @@
+## CURSOR — #591 master extras Completo+Cliente360 (2026-11-11 America/Sao_Paulo)
+- Consumo UI das extensões MASTER Codex: rg, caixa postal (nº/CEP/flag), inscrição produtor rural.
+- Completo: edição omit-aware + 503 STORAGE_REQUIRED explícito (schema antigo). Cliente360: estados absent/empty/present.
+- Sem DDL/SQL HML por Cursor · sem ClienteV2 · omit ≠ limpar. Empilha `ff3cb09e`/`f42f51a1`.
+- Evidence `cursor-cliente-master-extras-ui-591-20261111.txt`. **Próximo:** CI tip · ACK Codex storage · aceite :15173.
+
 ## CURSOR — #591 CI SUCCESS `f42f51a1` (2026-11-11 America/Sao_Paulo)
 - Tip PR#592 CI SUCCESS 9/9 — entregas · WhatsApp classificado · caps locais · financeiro pending_bff.
 - Sem HML/1500. **Próximo:** ACK Codex BFF ContasReceber/RG · aceite :15173.

@@ -316,6 +316,7 @@ function clienteContactPresenceRemainder(source) {
     + '      const sameScope = isFormScopeCurrent();\n'
     + '      const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);\n'
     + '      const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;\n'
+    + '      const storageRequired = isClienteMasterStorageRequired(err);\n'
     + '      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.\n'
     + '      if (partial) {\n'
     + '        queryClient.invalidateQueries({ queryKey: [\'clientes\'] });\n'
@@ -323,9 +324,13 @@ function clienteContactPresenceRemainder(source) {
     + '      toast({\n'
     + '        title: !sameScope\n'
     + '          ? "Contexto alterado"\n'
-    + '          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),\n'
+    + '          : (storageRequired\n'
+    + '            ? "❌ Extensões MASTER sem storage revisado"\n'
+    + '            : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente")),\n'
     + '        description: sameScope\n'
-    + '          ? (err?.message || String(error))\n'
+    + '          ? (storageRequired\n'
+    + '            ? "Schema antigo ou colunas RG/caixa postal/produtor ainda não aplicadas. Rascunho preservado — omissão ≠ limpar; sem inventar sucesso."\n'
+    + '            : (err?.message || String(error)))\n'
     + '          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",\n'
     + '        variant: "destructive"\n'
     + '      });\n'
@@ -510,7 +515,7 @@ function clienteContactPresenceRemainder(source) {
   source = once(source, '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),',
     '      documentos: record.documentos || [],');
   // #591: estados documentos[] (não-carregado/vazio/presente) — peel para banner mínimo.
-  return once(source,
+  source = once(source,
     '                <p\n'
     + '                  className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"\n'
     + '                  data-fonte="documentos-limitacao-http"\n'
@@ -547,11 +552,94 @@ function clienteContactPresenceRemainder(source) {
     + '                  Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER\n'
     + '                  fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.\n'
     + '                </p>');
+  // #591: import storage-required extras MASTER.
+  source = once(source,
+    'import { isClienteMasterStorageRequired } from "@/api/clienteMasterExtrasUi";\n',
+    '');
+  // #591: ownCode extensões MASTER no buildPayload.
+  source = once(source,
+    "      ...ownCode('rg', 30),\n"
+    + "      ...ownCode('numero_caixa_postal', 40),\n"
+    + "      ...ownCode('cep_caixa_postal', 8),\n"
+    + "      ...ownCode('caixa_postal_cobranca', 40),\n"
+    + "      ...ownCode('inscricao_produtor_rural', 40),\n",
+    "      ...ownCode('rg', 30),\n");
+  // #591: banner RG master-extra + bloco UI extensões — peel para RG mínimo anterior.
+  source = once(source,
+    '                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-master-extra">\n'
+    + '                        RG no MASTER existente — omitir ≠ limpar; schema antigo responde 503 STORAGE_REQUIRED (sem default).\n'
+    + '                      </p>\n'
+    + '                    </div>\n'
+    + '                  </>\n'
+    + '                )}\n'
+    + '\n'
+    + '                <div className="col-span-2 pt-4 border-t space-y-3" data-block="cliente-master-extras">\n'
+    + '                  <h3 className="font-semibold">Extensões MASTER (caixa postal / produtor)</h3>\n'
+    + '                  <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5" role="status" data-fonte="cliente-master-extras-contrato">\n'
+    + '                    Contrato Codex no mesmo Cliente: numero_caixa_postal, cep_caixa_postal, caixa_postal_cobranca,\n'
+    + '                    inscricao_produtor_rural. Opcionais; omissão ≠ limpar. SQL candidato pode ainda não estar aplicado —\n'
+    + '                    escrita explícita com storage ausente → 503 CLIENTE_MASTER_STORAGE_REQUIRED (não inventar sucesso).\n'
+    + '                  </p>\n'
+    + '                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="numero_caixa_postal">Nº caixa postal</Label>\n'
+    + '                      <Input\n'
+    + '                        id="numero_caixa_postal"\n'
+    + '                        value={formData.numero_caixa_postal ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, numero_caixa_postal: e.target.value })}\n'
+    + '                        data-campo="numero_caixa_postal"\n'
+    + '                        data-persistencia={formData.numero_caixa_postal === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.numero_caixa_postal === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="cep_caixa_postal">CEP caixa postal</Label>\n'
+    + '                      <Input\n'
+    + '                        id="cep_caixa_postal"\n'
+    + '                        value={formData.cep_caixa_postal ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, cep_caixa_postal: e.target.value })}\n'
+    + '                        data-campo="cep_caixa_postal"\n'
+    + '                        data-persistencia={formData.cep_caixa_postal === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.cep_caixa_postal === undefined ? \'Não recuperado nesta carga\' : \'00000000\'}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="caixa_postal_cobranca">Caixa postal cobrança</Label>\n'
+    + '                      <Input\n'
+    + '                        id="caixa_postal_cobranca"\n'
+    + '                        value={formData.caixa_postal_cobranca ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, caixa_postal_cobranca: e.target.value })}\n'
+    + '                        data-campo="caixa_postal_cobranca"\n'
+    + '                        data-persistencia={formData.caixa_postal_cobranca === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.caixa_postal_cobranca === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="inscricao_produtor_rural">Inscrição produtor rural</Label>\n'
+    + '                      <Input\n'
+    + '                        id="inscricao_produtor_rural"\n'
+    + '                        value={formData.inscricao_produtor_rural ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, inscricao_produtor_rural: e.target.value })}\n'
+    + '                        data-campo="inscricao_produtor_rural"\n'
+    + '                        data-persistencia={formData.inscricao_produtor_rural === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.inscricao_produtor_rural === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                  </div>\n'
+    + '                </div>\n',
+    '                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-bff">\n'
+    + '                        RG com valor ainda exige contrato BFF — save HTTP fail-closed se preenchido; omitir ≠ limpar.\n'
+    + '                      </p>\n'
+    + '                    </div>\n'
+    + '                  </>\n'
+    + '                )}\n'
+    + '\n');
+  return source;
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'ac398f664ff95ccb1c3ca2a60ffe898cd6c6199c7d14dfe5ce353287ea25f9c2'], // #591 IE/IM/obs UI omit-aware + ownText
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', '7081e69a42906b89e8762dc652dc2faecacff9d10ec5dbf4a00a38d5c36db03e'], // #591 master extras peels (rg/caixa/produtor)
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];
