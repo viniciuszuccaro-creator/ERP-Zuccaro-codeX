@@ -1,5 +1,15 @@
 ## Retomada vigente - restante dos dados e Cliente-only (2026-11-11)
 
+NOVO significado confirmado pelo dono: mestre ENDERECO=FISCAL;
+ENDERECOCOBRANCA fora do mapa ativo (raw preservado, nao deletar preexistentes);
+ClientesObras=ENTREGA, varios por cliente, identidade nativa integral sem merge.
+Nao manter finalidade comercial como pergunta aberta nesses3tipos. Provas antigas
+imutaveis; aplicar decisao em nova revisao de propostas, sem mudar fonte/CAS.
+Numero/pais/CEP, escritaLocal/RBAC e reconciliacao continuam separados.
+Requisito adicional: latitude/longitude e anexo de mapa por local para roteirizador.
+ClienteLocal ja suporta coordenadas; links existentes nao comprovam anexo de arquivo
+ou consumo real pelo roteirizador. Cursor conduz UI/upload; Codex contratos/legado.
+
 87fe18bb9b4f2425579f83c1cb38162cb4ccfcbf CI6915/6916SUCCESS. TestePG real
 Cliente-only positivo/rejeicoes/conservacao executado: suite3PASS/0FAIL/0SKIP.
 Fechamento Linux concluido, nao mantergetuidWindows como bloqueio atual.

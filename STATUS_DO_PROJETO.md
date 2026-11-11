@@ -1,5 +1,18 @@
 ## Estado vigente - matriz restante e preparacao Cliente-only (2026-11-11)
 
+DECISAO COMERCIAL posterior do proprietario: ENDERECO do mestre e FISCAL
+(residencia PF/sede PJ); nao presumir tambem outras finalidades. ENDERECOCOBRANCA
+dispensado da migracao ativa; manter raw/procedencia, nao apagar eventual dado
+manual/preexistente. ClientesObras sao locais de ENTREGA, potencialmente varios
+por cliente: preservar CODIGOCLIENTE/ITEM/SEQUENCIA, sem fundir enderecos.
+Essa ambiguidade de finalidade foi encerrada; numero/pais/CEP/conflitos/RBAC
+continuam gates distintos. Nao reescrever provas antigas de finalidade pendente.
+Latitude/longitude ja existem no contrato/repositorios de ClienteLocal; interfaces
+existentes oferecem link de mapa. Isto NAO comprova upload/anexo persistido nem
+integracao homologada com roteirizador. Coordenar com Cursor no fluxo existente:
+coordenadas manuais com origem, mapa privado vinculado ao local e preservacao
+dos multiplos locais; sem geocodificar/inventar coordenadas ou contratar servico.
+
 Publicado87fe18bb9b4f2425579f83c1cb38162cb4ccfcbf, CI6915/6916SUCCESS.
 PG real do candidato Cliente-only executado na suite dirigida3PASS/0FAIL/0SKIP;
 revisao de endereco incompleto passa no Ubuntu. Sem aplicacao operacional.

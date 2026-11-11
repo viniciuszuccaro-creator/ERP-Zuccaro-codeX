@@ -2,6 +2,15 @@
 
 ## Promocao do Cliente - pacote ainda nao executavel (2026-11-11)
 
+Definicao comercial encerrada pelo dono: ENDERECOmestre -> finalidadeFISCAL;
+ClientesObras -> ENTREGA com identidade por local; cobranca excluida da migracao
+ativa, sem apagar fonte ou registros existentes. Esta definicao nao autoriza DDL,
+permissoes, carga ou deploy operacional. Campos obrigatorios nao comprovados
+seguem pendentes; nao usar pais/numero/latitude/longitude padrao para passar.
+Reutilizar ClienteLocal/coordenadas e verificar o mecanismo privado de upload
+para vincular mapa ao mesmo local, sem criar armazenamento paralelo;
+link de mapa, anexo de arquivo e roteirizacao sao capacidades/provas distintas.
+
 Codigo87fe18bb CI6915/6916SUCCESS; indiceCliente-only provado emPostgreSQL real,
 suite3PASS/0FAIL/0SKIP. Prova de teste nao autoriza DDL ou carga naVPS.
 
