@@ -133,7 +133,7 @@ export function classifyClienteMasterExtras(row, flags = {}) {
  * @param {unknown} error
  */
 export function isClienteMasterStorageRequired(error) {
-  const err = /** @type {{ code?: string, body?: { error?: { code?: string } }, status?: number }} */ (error || {});
+  const err = /** @type {{ code?: string, message?: string, body?: { error?: { code?: string } }, status?: number }} */ (error || {});
   const code = err.code || err.body?.error?.code || '';
   return code === CLIENTE_MASTER_STORAGE_REQUIRED || (err.status === 503 && /MASTER_STORAGE|master columns/i.test(String(err.message || '')));
 }
