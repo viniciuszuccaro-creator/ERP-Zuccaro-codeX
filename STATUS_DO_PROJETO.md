@@ -1,3 +1,17 @@
+## CURSOR — #591 Cliente360 IE/IM/obs no identity BFF→UI (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `91b112ac` / docs `1078bd01` |
+| **Lote** | `projectIdentity` + painel: IE/IM; observações gated por sensível (“Não autorizado”) |
+| **Testes** | `cliente-central360-identity-ie-591` · pagina-ui · read-boundary |
+| **Evidence** | `docs/evidence/cursor-cliente360-identity-ie-591-20261111.txt` |
+| **Estados** | Banco→API→UI · sem inventar valor · peels stage51 |
+| Fora | 14 nomes · HML · SHA API+web |
+
+**Próximo:** CI tip · ACK Codex nomes 14 + aceite :15173.
+
 ## CURSOR — #591 CI SUCCESS tip `91b112ac` IE/IM/obs UI (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

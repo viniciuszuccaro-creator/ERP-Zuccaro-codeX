@@ -1,0 +1,20 @@
+#591 — IE/IM/obs no identity Central360 (2026-11-11 America/Sao_Paulo)
+
+## Classificação
+- Disponível no banco (row Cliente) e oculto: IE/IM não estavam em
+  `ClienteCentral360Identity` / `projectIdentity` → painel não podia mostrar.
+- Observações: sensível — null sem `canViewSensitive` (= não autorizado ≠ limpar).
+
+## Correção
+- BFF: tipagem + projeção IE/IM/obs em `clienteCentral360Service`.
+- UI: painel identity rica exibe IE/IM; obs com “Não autorizado ao perfil”
+  quando PII mascarado.
+- Peels stage51 atualizados.
+
+## Testes
+tests/cliente-central360-identity-ie-591.test.js
+tests/central-cliente-360-pagina-ui.test.js
+tests/read-boundary-contracts.test.js
+
+## Fora
+14 nomes privados · HML · freeze 8650 ≠ prova automática · canais externos.

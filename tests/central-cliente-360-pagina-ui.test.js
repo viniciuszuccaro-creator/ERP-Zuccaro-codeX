@@ -84,7 +84,7 @@ test('CentralCliente360Panel: Carregar mais real sem slice(0,5) morto', async ()
   assert.match(source, /shouldUseCrmLegadoAdapter|status === 'skipped'/);
 });
 
-test('Cliente360 identity exibe fantasia/social/origem já retornados pela API (≠ só nome/documento)', async () => {
+test('Cliente360 identity exibe fantasia/social/origem/IE já retornados pela API (≠ só nome/documento)', async () => {
   const source = await readFile(
     new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url),
     'utf8',
@@ -94,9 +94,11 @@ test('Cliente360 identity exibe fantasia/social/origem já retornados pela API (
   assert.match(source, /data-campo="nome_social"/);
   assert.match(source, /data-campo="origem"/);
   assert.match(source, /data-campo="razao_social"/);
+  assert.match(source, /data-campo="inscricao_estadual"/);
+  assert.match(source, /data-campo="inscricao_municipal"/);
+  assert.match(source, /data-campo="observacoes"/);
+  assert.match(source, /Não autorizado ao perfil/);
   assert.match(source, /Celular ≠ WhatsApp/);
-  // IE/IM ainda não estão no contrato identity do BFF — não inventar na UI.
-  assert.doesNotMatch(source, /data-campo="inscricao_estadual"/);
 });
 
 test('Central 360 não apresenta valor monetário desconhecido como zero confirmado', async () => {

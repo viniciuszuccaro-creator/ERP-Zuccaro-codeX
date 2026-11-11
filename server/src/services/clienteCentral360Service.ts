@@ -56,6 +56,11 @@ export type ClienteCentral360Identity = {
   email: string | null;
   telefone: string | null;
   celular: string | null;
+  /** IE/IM já no row Cliente — expor na Central (≠ inventar; null = ausente). */
+  inscricao_estadual: string | null;
+  inscricao_municipal: string | null;
+  /** Observações: só com permissão sensível; senão null (= não autorizado ≠ limpar). */
+  observacoes: string | null;
   status: string;
   origem: string;
   ativo: boolean;
@@ -205,6 +210,9 @@ function projectIdentity(row: Cliente, canViewSensitive: boolean): ClienteCentra
     email: canViewSensitive ? row.email : maskEmail(row.email),
     telefone: canViewSensitive ? row.telefone : maskPhone(row.telefone),
     celular: canViewSensitive ? row.celular : maskPhone(row.celular),
+    inscricao_estadual: row.inscricao_estadual,
+    inscricao_municipal: row.inscricao_municipal,
+    observacoes: canViewSensitive ? row.observacoes : null,
     status: row.status,
     origem: row.origem,
     ativo: row.ativo,

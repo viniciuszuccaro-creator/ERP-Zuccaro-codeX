@@ -549,6 +549,8 @@ export default function CentralCliente360Panel({
           <div><span className="text-slate-500">Nome fantasia</span><p data-campo="nome_fantasia">{identity.nome_fantasia || '—'}</p></div>
           <div><span className="text-slate-500">Nome social</span><p data-campo="nome_social">{identity.nome_social || '—'}</p></div>
           <div><span className="text-slate-500">Documento</span><p data-campo="documento">{identity.documento || '—'}</p></div>
+          <div><span className="text-slate-500">IE</span><p data-campo="inscricao_estadual">{identity.inscricao_estadual || '—'}</p></div>
+          <div><span className="text-slate-500">IM</span><p data-campo="inscricao_municipal">{identity.inscricao_municipal || '—'}</p></div>
           <div><span className="text-slate-500">E-mail</span><p data-campo="email">{identity.email || '—'}</p></div>
           <div><span className="text-slate-500">Telefone</span><p data-campo="telefone">{identity.telefone || '—'}</p></div>
           <div>
@@ -561,6 +563,14 @@ export default function CentralCliente360Panel({
           <div>
             <span className="text-slate-500">Ativo</span>
             <p data-campo="ativo">{identity.ativo === true ? 'Sim' : identity.ativo === false ? 'Não' : '—'}</p>
+          </div>
+          <div className="md:col-span-3">
+            <span className="text-slate-500">Observações</span>
+            <p data-campo="observacoes" className="whitespace-pre-wrap break-words">
+              {meta.sensitiveFields === 'revealed'
+                ? (identity.observacoes || '—')
+                : 'Não autorizado ao perfil'}
+            </p>
           </div>
         </div>
       )}
