@@ -1,4 +1,59 @@
-## Estado vigente - escala do staging e fechamento CI6827 (2026-11-11)
+## Estado vigente - persistencia retomavel canonica em validacao (2026-11-11)
+
+Entrada existente staging-checkpoint agora expoe coordenacao PostgreSQL auxiliar
+staging-persistence. Nao cria endpoint, cadastro, mapper, repositorio, tabela ou
+principal: reutiliza selectFunctionalRows/persistirClienteGrupoLegado/ClienteService,
+PostgresClienteRepository, DbClient ALS e audit_logs. Arquivo auxiliar necessario
+para separar checkpoint filesystem da transacao canonica, sem tocar consumidor
+e guardas ancestrais. Nenhum arquivo UI/composicao Cursor editado;591e3 inalterada.
+
+Derivacao agora VERIFICADA: bytesCSV reais+SHA256+parsercsv-parse estrito/UTF8fatal
+->igualdade integral com rows do stagingJSON pinned->selecao/mapper canônicos
+->hash de cada linha/payload/manifesto. Backup original->exportCSV continua prova
+separada; nao confundir as duas. Campos nao mapeados ficam pendentes explicitamente,
+sem despejar historico em observacoes. Selecao estavel/limite e lote<=1000.
+
+Identidade fisica exige clusterIdentifier PG nao nulo, database/schema e OIDs,
+principal, Grupo/ator e manifesto imutaveis. Recibo de RUN e lote em audit_logs na
+MESMA transacao de criar+auditar; advisorylocks do RUN/lote (inclusive ausentes),
+RBAC antes/depois e consultas tenant canonicas. Replay le recibo DB, compara todas
+as postimagens proprias/compativeis e nao repete escrita. Manifesto nao pode mudar
+no meio do RUN, nem em lote ainda nao executado. Preexistentes/conflitos preservados,
+sem sobrescrever, fundir, restaurar inativos ou mudar codigo alheio.
+
+Reversao canonica inativa SOMENTE inseridos pelo lote, exige postimagem integral
+inalterada/procedencia e preserva campos; auditoria atomica/replay da reversao.
+PGlite: PASS com falha antes/durante transacao, auditoria, COMMIT->recibo externo,
+checkpoint, derivacao adulterada, alvo/manifesto divergente, revogacao, permissao,
+escopo, zeros de telefone, preexistentes, alteracao manual e reversao sem apagar.
+Isto NAO e prova PostgreSQL. Suite nova dedicada PG500/1000 SINTETICOS registrada
+no runner test:postgres existente; nao ha dados reais na CI. Aguardar resultado.
+
+Fechamento local:70raiz focadosPASS; backend612PASS/0FAIL/40SKIP (novo PG e antigos
+condicionais, nao aprovados por SKIP). Audit/lint/typecheck/build raiz e build/type
+backendPASS. Linux completo fecha na CI draft conforme excecao vigente, sem mudar
+assertions para obter verde. Sem carga real500/1000, schema/grants/deploy operacional.
+
+Reconciliacao de ESCOPO por chave: export18458/18458unicas, todas na copiaSQL22895;
+4437chaves nativas fora do export,0chaves export ausentes no nativo. Motivo do filtro
+AINDA desconhecido: nao chamar4437inativos. Export tem17471Ativo/950Prospect/37Inativo;
+isso nao significa17471aptos. Artefatos privados population-key-scope-20261111,
+leitor parado/readOnly/0writes; nao houve extracao integral de registros.
+
+14campos privados classificados:6componentes suportados candidatos (logradouro,
+bairro,cidade,UF,CEP cobranca e complemento), dependentes de join/finalidade/campos
+obrigatorios;4extensoes (caixaspostais e inscricao produtor rural);2historicos
+(HISTORICO/REGISTROCONSULTASERASA) sem entidade/vinculo comprovados;2ambiguos
+(COMENTARIO/STRINGLIVRE6). Nenhuma associacao/aplicacao automatica por nome.
+Recibo fourteen-field-contract-review.private.json junto do perfil agregado.
+RG e crosswalks vendedores/tabelas/regioes continuam pendentes por contrato/evidencia.
+
+Proximo: fechar PG500/1000 sintetico no SHA publicado; provar derivacao do export
+e selecionados500 no destino privado, joins auxiliares/contratos e backup antes
+de aplicar reais. Mesma100 preservada. VPS operacional: escrita continua proibida;
+nao pedir liberacao generica de um pacote/destino ainda nao fechado.
+
+## Historico imediato - escala do staging e fechamento CI6827 (2026-11-11)
 
 CI6827 falhou por comparar HTML integral em segundos diferentes (14:27:12/13).
 Harness agora injeta o MESMO relogio nas duas implementacoes; comparacao integral,

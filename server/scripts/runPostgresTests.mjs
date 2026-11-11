@@ -23,6 +23,7 @@ const suites = [
   ['TENANT_CONTEXT', 'tests/db-tenant-context-postgres.test.ts'],
   ['MARCA_ATOMICITY', 'tests/marca-atomicidade.test.ts'],
   ['CLIENTE_LOCAL_BATCH', 'tests/cliente-local-batch-postgres.test.ts'],
+  ['LEGACY_BATCH_PERSISTENCE', 'tests/legado-batch-persistence-postgres.test.ts'],
 ];
 let allPassed = true;
 for (const [label, suite] of suites) {

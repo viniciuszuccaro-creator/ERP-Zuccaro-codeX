@@ -1,4 +1,31 @@
-## Adendo vigente - staging retomavel e populacao alem do piloto (2026-11-11)
+## Adendo vigente - RUN/lote e persistencia canonica (2026-11-11)
+
+Reserva Codex342/6799502030; consumidor e guardas antigos/UI/composicao intactos.
+staging-checkpoint expoe auxiliar staging-persistence reutilizando o seletor,
+mapper e servicos/DbClient/auditoria existentes. Sem novo importador/repositorio/
+endpoint/tabela/grants. Verifica bytes CSV->parser estrito->rows JSON->payloads e
+manifesto, nao apenas hash informado. Prova backup->CSV ainda e separada.
+Alvo exige clusterIdentifier NAO NULL (socketsNULL nao provam igualdade), OIDs,
+banco/schema/principal, Grupo/ator. RUN e lote tem recibos audit_logs atomicos com
+criacao+auditoria; locks advisory e RBAC antes/depois. Replay apos COMMIT/perda de
+recibo consulta DB/postimagens; reversao inativa so inseridos proprios inalterados.
+Mudanca de manifesto entre lotes bloqueada, inclusive lote ainda nao executado.
+
+PGlite positivo/negativos PASS;70raizPASS; backend612PASS/0FAIL/40SKIP e checks
+restantesPASS. Suite PG500/1000 SINTETICA nova no runner test:postgres existente;
+CI do novo SHA PENDENTE. Nao chamar PGlite ou SKIP de PG/E2E nem carga real.
+CSV18458chaves unicas sao subconjunto exato de22895nativas;4437fora doCSV,
+0exportadasforaSQL. Nao ha prova do filtro/causa; export17471Ativo/950Prospect/
+37Inativo nao e populacao apta. Recibo privado population-key-scope-20261111;
+leitor parado,readonly/originais nao montados/0writes, sem nova coorte100.
+14campos:6componentes candidatos com contrato local mas binding faltante,
+4extensoes,2historicos e2significados desconhecidos. Matriz privada especifica,
+sem converterObra/caixapostal em entrega/numero, Serasa/historico em observacoes.
+RG/crosswalks comerciais permanecem por prova/contrato, sem DDL inferido.
+Proximo: CI PG500/1000 do snapshot; depois derivacao/fonte dos500reais e auxiliares,
+alvo/backup/rbac do mesmoHML antes da aplicacao. VPS operacional nao liberada.
+
+## Historico imediato - staging retomavel e populacao alem do piloto (2026-11-11)
 
 Reserva Codex342/6798695196 e6798742173; Cursor UI/composicao preservados.
 CI6827: diferenca de segundo no rodape PDF, nao perda de HTML. Relogio injetado

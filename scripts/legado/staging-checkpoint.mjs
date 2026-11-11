@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { consumirLoteStagingLegado } from './consumir-lote-staging.mjs';
+export { prepararPersistenciaClientesLegado, persistirLoteClientesLegado,
+  reverterLoteClientesLegado } from './staging-persistence.mjs';
 
 // Orchestration only: retain the protected mapper/consumer and all its existing callers.
 export const consumirLotesStagingRetomavel = options => processStagingBatches({
