@@ -25,12 +25,14 @@ test('ClientesTab Comercial: colunas alinhadas ao MASTER HTTP', () => {
   assert.match(src, /celular/);
 });
 
-test('V24: cpf/cnpj resolvem documento HTTP; labels CPF/CNPJ', () => {
+test('V24: cpf/cnpj resolvem documento HTTP; sem misturar CPF↔CNPJ nem Telefone↔Celular', () => {
   const src = read('src/components/cadastros/VisualizadorUniversalEntidadeV24.jsx');
-  assert.match(src, /cpf\|cnpj\|cpf_cnpj\|documento/);
   assert.match(src, /documento: "CPF\/CNPJ"/);
   assert.match(src, /variants\.concat\(\['documento'/);
-  assert.match(src, /telefone\|fone\|celular\|whatsapp/);
+  assert.match(src, /\^cpf\$\/i/);
+  assert.match(src, /\^cnpj\$\/i/);
+  assert.doesNotMatch(src, /telefone\|fone\|celular\|whatsapp/);
+  assert.match(src, /Telefone ≠ Celular ≠ WhatsApp/);
 });
 
 test('HTTP client hidrata UI a partir do MASTER', () => {
@@ -41,7 +43,7 @@ test('HTTP client hidrata UI a partir do MASTER', () => {
 
 test('Completo: mapToForm espelha documento; Contatos mostra escalares sem wipe', () => {
   const src = read('src/components/cadastros/CadastroClienteCompleto.jsx');
-  assert.match(src, /record\?\.documento \?\? record\?\.cpf_cnpj/);
+  assert.match(src, /documento_normalizado/);
   assert.match(src, /contatosViewForUi/);
   assert.match(src, /data-fonte="contatos-escalares-http"/);
 });

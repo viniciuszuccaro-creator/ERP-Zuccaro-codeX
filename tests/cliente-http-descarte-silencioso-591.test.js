@@ -80,6 +80,14 @@ test('hydrate: documento → cpf/cnpj + tipo; zeros preservados', () => {
   assert.equal(pj.tipo, 'Pessoa Jurídica');
   assert.equal(pj.razao_social, 'SYN LTDA');
   assert.equal(pj.nome_fantasia, 'SYN');
+  assert.equal(pj.nome, 'SYN LTDA', 'nome vazio espelha razão (sem inventar)');
+  const fromNorm = hydrateClienteHttpRowForUi({
+    tipo: 'juridica',
+    documento: null,
+    documento_normalizado: '11222333000181',
+  });
+  assert.equal(fromNorm.cnpj, '11222333000181');
+  assert.equal(fromNorm.tipo, 'Pessoa Jurídica');
 });
 
 test('mapClienteLocalToUiEndereco: COBRANÇA ≠ ENTREGA; sem WhatsApp', () => {

@@ -1,16 +1,29 @@
+## CURSOR — #591 parecer 6796010811 ctx/unidade/Pedidos403/CNPJ (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` (base `cursor/hml-grupo-erro-fornecedor-392b` · tip `e3b32276`) |
+| **Lote** | P1 captura+revalidação pós-await Fechar/loadDetail/convert; P1 unidade sem fator; P2 Pedidos403≠aborta Orçamentos; CNPJ/nome PJ + grade sem bleed |
+| **Testes focados** | orcamento-ui-policy · central-v6 · orcamento-component-behavior · cliente-contatos/http/lista · peels Completo/V24 — PASS |
+| **Evidence** | `docs/evidence/codex-parecer-6796010811-ctx-unidade-pedidos403-591-20261111.txt` |
+| **Estados** | Tentativa frontend fechada · **não** alegar escrita cruzada backend · freeze :15173 `8650fd4d` intacto · HML com Codex |
+| Fora | ContatoClienteV2 · deploy · PII · #401 · Desmembrar · processos HML enquanto STOPPED_EMERGENCY |
+
+**Próximo:** CI deste tip · ACK Codex · jornada API + Cliente360 fontes · snapshot API+web pós-recuperação HML.
+
 ## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Tip** | **`ca9a88aa`** CI SUCCESS 9/9 — peels + runtime Fechar≠Cancelar |
+| **Tip** | **`ca9a88aa`** / docs **`e3b32276`** CI SUCCESS — peels + runtime Fechar≠Cancelar |
 | **Runtime** | `e71808a3` Fechar→converter · Cancelar separado · Fechar janela só UI |
 | **Freeze cadastro :15173** | **`8650fd4d`** (Codex) — tip UI não substitui aceite HML |
 | **Evidence** | `c360-fechar-neq-cancelar-591-20261111.txt` · canais/recuperação 20261111 |
 | **Estados** | CI verde · CI ≠ homologação · aceite :15173 / jornada API pendentes |
 | Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar · importação HML |
 
-**Próximo:** aceite :15173 com Codex no freeze `8650fd4d` · jornada com API no tip web+API alinhados · #401 pós-aceite.
+**Próximo:** parecer 6796010811 (branch ctx) · aceite :15173 com Codex · jornada API · #401 pós-aceite.
 
 ## CURSOR — #591 Fechar≠Cancelar + matrizes canais/recuperação (2026-11-11 America/Sao_Paulo)
 

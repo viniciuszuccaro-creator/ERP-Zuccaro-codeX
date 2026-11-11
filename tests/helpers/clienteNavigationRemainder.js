@@ -29,16 +29,27 @@ export function clienteNavigationRemainder(source) {
       )}
 `, ''],
     // #591: documento/email/telefone variants + labels — peel back to golden e36231b3
+    // (sem misturar CPF↔CNPJ nem Telefone↔Celular; parecer Bugbot + cadastro rico)
     [
       "  if (/^(nome|titulo|label|descricao)/i.test(String(field || ''))) {\n"
       + "    variants = variants.concat(['nome', 'descricao', 'titulo']);\n"
       + "  }\n"
-      + "  // HTTP MASTER Cliente: documento unificado ↔ colunas cpf/cnpj da grade.\n"
-      + "  if (/^(cpf|cnpj|cpf_cnpj|documento)$/i.test(String(field || ''))) {\n"
+      + "  // HTTP MASTER Cliente: documento unificado → coluna específica (sem misturar CPF↔CNPJ).\n"
+      + "  const fieldKey = String(field || '');\n"
+      + "  if (/^cpf$/i.test(fieldKey)) {\n"
+      + "    variants = variants.concat(['documento', 'cpf_cnpj']);\n"
+      + "  } else if (/^cnpj$/i.test(fieldKey)) {\n"
+      + "    variants = variants.concat(['documento', 'cpf_cnpj']);\n"
+      + "  } else if (/^(cpf_cnpj|documento)$/i.test(fieldKey)) {\n"
       + "    variants = variants.concat(['documento', 'cpf_cnpj', 'cnpj', 'cpf']);\n"
       + "  }\n"
-      + "  if (/^(telefone|fone|celular|whatsapp)$/i.test(String(field || ''))) {\n"
-      + "    variants = variants.concat(['telefone', 'celular']);\n"
+      + "  // Telefone ≠ Celular ≠ WhatsApp — sem fallback cruzado que esconda ausência real.\n"
+      + "  if (/^(telefone|fone)$/i.test(fieldKey)) {\n"
+      + "    variants = variants.concat(['telefone', 'fone']);\n"
+      + "  } else if (/^celular$/i.test(fieldKey)) {\n"
+      + "    variants = variants.concat(['celular']);\n"
+      + "  } else if (/^whatsapp$/i.test(fieldKey)) {\n"
+      + "    variants = variants.concat(['whatsapp']);\n"
       + "  }\n"
       + "  if (/^(email|e_mail)$/i.test(String(field || ''))) {\n"
       + "    variants = variants.concat(['email']);\n"

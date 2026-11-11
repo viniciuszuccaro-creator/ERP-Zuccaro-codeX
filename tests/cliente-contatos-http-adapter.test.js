@@ -511,6 +511,27 @@ test('hydrateClienteHttpRowForUi: documento → cpf/cnpj sem inventar contatos[]
     cnpj: '99.999.999/0001-91',
   });
   assert.equal(kept.cnpj, '99.999.999/0001-91', 'não sobrescreve cnpj já presente');
+  // Amostra PJ: documento só em documento_normalizado + razão sem nome → UI não fica vazia.
+  const fromNorm = hydrateClienteHttpRowForUi({
+    tipo: 'Pessoa Jurídica',
+    documento: null,
+    documento_normalizado: '11222333000181',
+    razao_social: 'SYN PJ LTDA',
+    nome: '',
+  });
+  assert.equal(fromNorm.cnpj, '11222333000181');
+  assert.equal(fromNorm.nome, 'SYN PJ LTDA');
+});
+
+test('toClienteMasterHttpPayload: edição de CNPJ prevalece sobre documento residual do GET', () => {
+  const wire = toClienteMasterHttpPayload({
+    tipo: 'Pessoa Jurídica',
+    nome: 'SYN PJ',
+    razao_social: 'SYN PJ LTDA',
+    documento: '11.222.333/0001-81',
+    cnpj: '00.000.000/0001-91',
+  }, { mode: 'update' });
+  assert.equal(String(wire.documento).replace(/\D/g, ''), '00000000000191');
 });
 
 test('createContatosScalarOverflowError expõe losses para UI/auditoria', () => {

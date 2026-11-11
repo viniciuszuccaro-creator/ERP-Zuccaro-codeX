@@ -488,9 +488,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       group_id: groupId,
     },
     mapToForm: (record) => {
-      // HTTP MASTER: documento unificado → cpf/cnpj da UI (zeros preservados; não inventa).
+      // HTTP MASTER: documento(/_normalizado) → cpf/cnpj da UI (zeros preservados; não inventa).
       const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
-      const docRaw = record?.documento ?? record?.cpf_cnpj ?? '';
+      const docRaw = !blank(record?.documento)
+        ? record.documento
+        : (!blank(record?.cpf_cnpj)
+          ? record.cpf_cnpj
+          : (record?.documento_normalizado ?? ''));
       const doc = String(docRaw ?? '').trim();
       const digits = doc.replace(/\D/g, '');
       let cpf = record?.cpf;
@@ -499,10 +503,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         if (blank(cpf) && digits.length === 11) cpf = doc;
         if (blank(cnpj) && digits.length === 14) cnpj = doc;
       }
+      const nome = blank(record?.nome) && !blank(record?.razao_social)
+        ? String(record.razao_social).trim()
+        : record?.nome;
       return {
         ...record,
+        ...(nome !== undefined ? { nome } : {}),
         ...(cpf !== undefined ? { cpf } : {}),
         ...(cnpj !== undefined ? { cnpj } : {}),
+        // Alinha documento ao campo editável para pickDoc não reenviar residual antigo.
+        ...(!blank(cnpj) ? { documento: cnpj } : (!blank(cpf) ? { documento: cpf } : {})),
         // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.
         ...(record.contatos === undefined || record.contatos === null
           ? {}
