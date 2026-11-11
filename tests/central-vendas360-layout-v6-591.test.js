@@ -127,6 +127,19 @@ test('OrcamentosTab ABERTO: Imprimir/Enviar/Fechar/Mais sem fingir sucesso', () 
   assert.doesNotMatch(src, /desmembrar com sucesso|Desmembramento concluído/i);
 });
 
+test('Fechar Orçamento: diálogo oferece ENTREGA e RETIRADA (Produção/Entrega/Retira via pedido)', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  assert.match(src, /SelectItem value="ENTREGA">Entrega/);
+  assert.match(src, /SelectItem value="RETIRADA">Retirada/);
+  assert.match(src, /convertOrcamento/);
+  assert.match(src, /tipo_operacao/);
+  const layout = read('src/components/comercial/centralVendas360Layout.js');
+  assert.match(layout, /id: 'PRODUCAO'/);
+  assert.match(layout, /id: 'ENTREGA'/);
+  assert.match(layout, /id: 'RETIRA'/);
+  assert.match(layout, /tipoOperacao: 'RETIRADA'/);
+});
+
 test('Fechar Orçamento ≠ Cancelar: conversão backend, cancel separado', () => {
   const src = read('src/components/comercial/OrcamentosTab.jsx');
   // Fechar abre fluxo de conversão (não api.cancel).

@@ -1,3 +1,8 @@
+## CURSOR — #591 Cliente360 visualizar + Fechar ENTREGA/RETIRA (2026-11-11 America/Sao_Paulo)
+- `CentralCliente360Panel`: abrir cadastro com `Cliente.visualizar` (editar só no Completo).
+- Teste jornada: Fechar oferece ENTREGA/RETIRADA; situações PRODUCAO/ENTREGA/RETIRA no layout.
+- Empilhado sobre omit/volume `f61c7524` + RBAC locais `559c01c1` + 679601 `ea318931`.
+
 ## CURSOR — #591 omit crédito/fiscal + volume (2026-11-11 America/Sao_Paulo)
 - Completo: ausência `condicao_comercial`/`configuracao_fiscal` → omit no form/save (≠ inventar OK/Simples).
 - Banner parcial + `Desconhecido`; Celular≠WhatsApp; rastreio ALLOWED_KEYS em evidence.

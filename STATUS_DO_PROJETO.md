@@ -1,3 +1,16 @@
+## CURSOR — #591 Cliente360 visualizar≠editar + jornada Fechar (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | tip omit/volume `f61c7524` |
+| **Lote** | Abrir cadastro mestre na Central360 só com `Cliente.visualizar`; Fechar→ENTREGA/RETIRADA coberto por teste |
+| **Testes** | `central-cliente-cadastro-navigation` · `central-vendas360-layout-v6-591` |
+| **Estados** | Leitura autorizada não escondida · save ainda fail-closed no Completo |
+| Fora | HML · contadores faixa · provedores externos WhatsApp/e-mail |
+
+**Próximo:** CI tip · ACK Codex SHA HML · recuperação sky residual.
+
 ## CURSOR — #591 omit crédito/fiscal + volume sintético (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

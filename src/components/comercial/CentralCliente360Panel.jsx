@@ -243,9 +243,10 @@ export default function CentralCliente360Panel({
     actorId,
     token: sessionToken,
   }) && isCrmConversionScopeCurrent({groupId,empresaId,actorId,token:sessionToken},renderedScope.current,readErpHttpSession());
+  // Abrir cadastro mestre: visualizar basta. Editar/salvar permanece no Completo (fail-closed).
+  // Não exigir Cliente.editar aqui — evita esconder leitura autorizada.
   const cadastroAllowed = enabled && !permissionsLoading
-    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit })
-    && hasCadastroEntityPermission('Cliente', 'editar', { hasPermission, canEdit });
+    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit });
   const cadastroAllowedRef = useRef(false);
   cadastroAllowedRef.current = cadastroAllowed;
   const sessionKey = central360SessionKey(sessionToken);
