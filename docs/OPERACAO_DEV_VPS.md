@@ -1,5 +1,57 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Retomada comprovada por SSH oficial - HML15173 (2026-11-11)
+
+Mesmo Codespace, sem rebuild. GitHub CLI oficial portatil aprovado/autenticado
+no desktop, GH_CONFIG_DIR privado (nao publicar hosts.yml/token). Exigir alvo
+potential-xylophone-5gj7r9v9qqg637vxp, owner/repositorio e estadoAvailable antes
+de agir. Codigo checkout b5cb34e1/.vscode preservado; snapshot servido8650fd4d,
+API e web mesma versao revisada/CI6785/6786. Nao sincronizar destruindo WIP.
+
+1. Medir via gh codespace ssh: df-h/df-i, docker system df, du conhecidos.
+   Nesta execucao: disco92%,inodes26%;7caches antigos Copilot liberaram1.65GB.
+   Retidas2versoes recentes; sem referencias em processos; registry/manifests
+   conferidos. Depois do snapshot:87%,4276002816bytes livres. Nao repetir a limpeza
+   desses caminhos ja removidos nem inferir que outras pastas sao descartaveis.
+2. Apoio atual vem de container-recovery-verified.private.json.newContainerId.
+   Nao usar nomes/IDs aposentados nem docker prune: system df falha pelo antigo
+   container6c7e, preservado. Atual d02f iniciou/isolamento networknone/zeroportas.
+3. Se15173 ausente no gh codespace ports, registrar pelo comando suportado:
+
+```sh
+gh codespace ports forward 15173:15173 -c potential-xylophone-5gj7r9v9qqg637vxp
+# Apos listar15173, encerrar SOMENTE este helper. Nesta prova o registro persistiu.
+gh codespace ports visibility 15173:private -c potential-xylophone-5gj7r9v9qqg637vxp
+gh codespace ports -c potential-xylophone-5gj7r9v9qqg637vxp --json sourcePort,visibility,browseUrl
+```
+
+`visibility` antes de registrar retornou404; nao repetir esse passo isoladamente.
+CLI remoto nao esta autenticado. Nao copiar OAuth desktop para o Codespace:
+usar CLI desktop para tunel e SSH para invocar bootstrap privado existente.
+O controlador0ee98b5b continua validado, mas seu uso direto no remoto exige
+adaptacao a essa separacao; botao/autostart NAO entregues como prontos.
+
+Bootstrap implantado em hml344-cpa-20261104/api-bootstrap.private.mjs com backup
+anterior before-8650-20261111.private.mjs; nova fonte sanitizada344/6794991729,
+SHA256 d6cca771a328431ee015f8a1071099cbc42e2a5ad0a3d2400c81300756fe3516.
+Config hml-launch.private.json0600 contem reviewedSha/bootstrapSha256/pins.
+Para invocar pelo canal SSH, carregar SOMENTE os quatro pins permitidos dessa
+config e ERP344_REVIEWED_CI_SHA, mais CODESPACE_NAME do alvo previamente conferido,
+antes do comando node --import .../tsx/dist/loader.mjs api-bootstrap.private.mjs
+--hml-current. Sem essas variaveis o guard bloqueia: nao remover a validacao.
+O guard compara namespace/fisico/baseline integral ANTES de READY e autentica
+com provider real; sem fallback/seed/importacao/migration/restore/grants.
+
+URL EXTERNA PRIVATE testada com login real do dono:
+https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/cadastros
+Janela atual ate2026-11-11T11:54:08Z(08h54Brasilia).100clientes visiveis,
+paginas20+20distintas e formulario/3contatos na amostra;0Save.100/331/20IE
+conservados no preflight, cadastro completo nao aprovado. Ao fim verificar
+lifecycle APP_STOPPED_RECORDS_PRESERVED; nao parar PG enquanto janela estiver
+ativa. O operador iniciou PG antes do bootstrap: parar apoio ocioso exige
+conferir locks/processos, sem supor que o bootstrap o fechara automaticamente.
+Artefatos/recibos detalhados privados; sem promessa de24h ou alteracao na VPS.
+
 ## Retomada assistida e capacidade - controlador fino (2026-11-11)
 
 `scripts/legado/hml-control.mjs` coordena SOMENTE o bootstrap privado existente.

@@ -1,4 +1,55 @@
-## Continuidade vigente - recuperar capacidade e iniciar mesma HML (2026-11-11)
+## Continuidade vigente - SSH e HML15173 recuperados (2026-11-11)
+
+ENTREGUE REAL: OAuth GitHubCLI aprovado pelo proprietario; mesmo Codespace,
+owner/repositorio conferidos, Available,2cores/8GB/32GB. CLI oficial portatil
+v2.103.3 em C privado, asset SHA256 conferido, sem instalar noD/alterar Gitconfig.
+GH_CONFIG_DIR privado C:/Users/cpaba/ERP-Integracao-Privada/tools/gh-auth;
+executavel tools/gh-2.103.3/verified/bin/gh.exe. Nunca imprimir/copiar token.
+Controle Chrome voltou; canal SSH oficial funciona independentemente dele.
+
+DISCO:32G,28G usados,2.6Glivres/92%;inodes26%. Sete caches de pacotes Copilot
+antigos sem referencias de processos removidos, manifests+registry oficiais
+conferidos; retidas1.0.108/109,managed-settings,Playwright e todos dados/recibos.
+Liberados1650491392bytes por df antes/depois. Apos snapshot servido: filesystem
+33636024320bytes,usados27625267200,livres4276002816/87%. Nao houve prune/volume
+delete. docker system df falha por snapshot do container ANTIGO6c7e; preservado,
+nao e prova de falha do apoio ATUAL d02f, que iniciou em networknone/zeroportas.
+Painel autenticado: excedente Codespaces US$0/bloqueado, sem alteracao. Nao ha
+prova de franquia computacao esgotada; nao deduzir isso do orçamento0.
+
+HML REAL ATIVA nesta janela ate2026-11-11T11:54:08Z(08h54Brasilia):
+https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/cadastros
+API/web8650fd4d14a8f3f43ebdf5784f6dcb1df1933d89,CI6785/6786SUCCESS.
+Checkoutb5cb34e1 eWIP.vscode intactos; snapshot Git exato em
+/workspaces/.erp-private-344/hml-runtime-8650fd4d,sem.git/copia dehistorico.
+Locks Git iguais; diferenca observada no desktop era CRLF, nao dependencias.
+Copias npm recem-geradas retiradas; symlinks reutilizam modulos existentes.
+
+PRE-FLIGHT: backup pos-IE345276bytes/SHA256 valido,100IDs/codigos/procedencia
+e fingerprint integral pos-IE/331canais/20IE conferidos ANTES do listener;
+sem nova carga. Bootstrap atualizado com guards pos-IE e SHA revisado; antigo
+ef65 preservado. Fonte codigo sanitizado344/6794991729, bytes implantadosd6cca771.
+hml-launch.private.json0600 guarda pins, sem token/GitHub ou novos grants.
+Primeira partida SSH falhou por CODESPACE_NAME ausente ANTES do lock; segunda
+recebe identidade do alvo validado pela API/SSH oficial e iniciou. Nao ocultar
+a falha inicial. Logs/lifecycle privados no mesmoHML; businessWrites0.
+
+TUNEL: era ausente; visibility sozinho404. gh codespace ports forward15173:15173
+registrou porta PRIVATE; helper encerrado e registro continuou. Conferir sempre
+gh codespace ports. Externo chegou ao Auth real; login do dono aceito, GrupoCPA
+e duas empresas existentes vistas sem renomear. UI100,20+20codigos semoverlap,
+retorno pagina1 e abertura cadastro/aba3contatos, SEM Save. Cadastro completo
+NAO aprovado: enderecos/documentos ricos pendentes; lacunas visuais distinguem-se
+de dados persistidos.117Obras nao foram importadas. API/PG/browser nao sinteticos.
+
+PROXIMO: manter janela de teste, nao24h; conferir lifecycle de parada e mesmo
+fingerprint ao final. Apoio PG foi iniciado no preflight deste operador; bootstrap
+nao o considera iniciado por ele. Nao parar PG enquanto app/dono usa. Botao/task
+de retomada ainda precisa adequar controlador ao OAuth NO DESKTOP: gh remoto
+nao autenticado; nao copiar token para Codespace nem oferecer falso autostart.
+Procedimento suportado atualizado em OPERACAO_DEV_VPS. Cursor segue UI/composicao.
+
+## Historico imediato - recuperar capacidade e iniciar mesma HML (2026-11-11)
 
 Codigo publicado0ee98b5b2def8ab047573a047a6ea9b52027d7d9, CI6797/6798 SUCCESS.
 Controlador e6testes validados no Linux da CI; NAO instalacao/execucao no Codespace

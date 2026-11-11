@@ -1,4 +1,31 @@
-## Continuidade vigente - capacidade/retomada HML ainda sem canal remoto (2026-11-11)
+## Continuidade vigente - espaco liberado e HML real reaberta (2026-11-11)
+
+Conexao recuperada pelo GitHubCLI oficial/OAuth aprovado, mesmo Codespace
+2cores/8GB/32GB, sem novo ambiente/custo/maquina. Chrome tambem voltou.
+Disco92%/2.6Glivre ->87%/4276002816bytes livres apos preparo da versao.
+Removidos SOMENTE7pacotes antigos Copilot sem referencias; fonte/manifests
+conferidos,2recentes retidos. df registra1650491392bytes recuperados no cleanup.
+PGdata/backups/Playwright/recibos preservados. Docker system df continua falhando
+por snapshot de container ANTIGO, nao remover esse historico. Apoio atual opera.
+Orcamento excedente Codespaces US$0/bloqueio confirmado no painel, inalterado;
+nao foi comprovada franquia computacao esgotada.
+
+HML15173PRIVATE recuperada, API/web8650fd4d/CI6785/6786SUCCESS, Auth real/login
+do dono, GrupoCPA/empresas existentes. Marcador200; UI100clientes,2paginas20+20
+sem sobreposicao e abertura de cadastro/3contatos na amostra, sem salvar.
+Preflight compara100IDs/codigos/procedencia/fingerprint pos-IE/331canais/20IE;
+backup345276bytes SHA256 conferido. Nao recarregou coorte nem alterou operacional.
+Janela ate08h54Brasilia11/11, nao24h. Banco persistente/workspaces/.erp-private-344/pgdata.
+Detalhes privados permanecem privados; codigo bootstrap sanitizado344/6794991729.
+
+PENDENTE REAL: task/botao de partida via controlador com OAuth desktop (gh remoto
+sem auth; nao transmitir token); validar lifecycle ao encerrar janela; campos
+UI/documentos/enderecos ainda parciais;117Obras aguardam semantica. CI/contagem100
+nao provam cadastro completo. Sem importacao/DDL/grants/merge/deploy operacional.
+Checkout remoto b5cb34e1/.vscode preservado; servido snapshot oficial8650, nao
+checkout antigo. Referencia de retomada no OPERACAO_DEV_VPS, sem manual paralelo.
+
+## Historico imediato - capacidade/retomada HML ainda sem canal remoto (2026-11-11)
 
 Codigo0ee98b5b publicado, CI6797/6798 SUCCESS. Controlador validado, nao aplicado
 na HML; nao declarar espaco recuperado ou ERP acessivel. Reserva encerrada.
