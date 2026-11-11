@@ -1,5 +1,32 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Recuperacao revisada e parada normal (2026-11-11)
+
+Codigo eba68f2f/CI6819/6820SUCCESS. Iniciar HML ERP continua wrapper do mesmo
+controlador; pin privado atualizado para codigo revisado, sem policy de execucao
+ou instalacao alterada. Start/status/replay positivos; porta15173PRIVATE.
+O bootstrap usa helper de shutdown por SHA256, fecha Vite/HTTP concorrentemente,
+drena SOMENTE sockets aceitos por api/web proprios e registra fases sem dados.
+Falha/timeout nunca vira clean; deadline emergencial continua preservado.
+
+Estado emergencial nao autoriza apagar lock nem escrever STOPPED manualmente.
+Modo `--via-gh recover` e EXPLICITO e separado de start. Exige conservacao100
+pos-parada fresca READ ONLY/ROLLBACK igual a baseline APROVADA, hashes de todos
+os artefatos, PID ausente e socket/porta recusando conexao; plano0600 preparado
+pelo procedimento privado apos inspecao. Preserva state/lock/socket/recibos em
+recovery-* e usa in-progress para impedir start parcial. Nao inicia/importa dados.
+Se faltar prova, parar e conferir; nao criar recibo ficticio nem reutilizar stale.
+Reversao conserva bootstrap/config anteriores em lifecycle-backup-20261111;
+arquivos de recovery e dados persistentes nao devem ser limpos.
+
+Ensaio real: recuperar->start->stop com HTTP proprio aberto->checkpoint100/100
+igual/0writes->retomar, com parada1255ms. Negativa recover durante HML viva passou.
+API/web freeze8650; bootstrap de14e28f, patch sanitizado344/6797170363. Janela atual
+ate2026-11-11T13:54:08Z; login Auth real/GrupoCPA/listagem100 confirmados.
+Mesma amostra PJ: GET200/CNPJ14 igual banco->HTTP->campo e3contatos, semSave.
+Locais403 e acesso negado, nao vazio. Isto nao comprova todos os campos100
+nem disponibilidade24h. Nao tornar porta publica para resolver autenticacao.
+
 ## Retomada comprovada por SSH oficial - HML15173 (2026-11-11)
 
 Mesmo Codespace, sem rebuild. GitHub CLI oficial portatil aprovado/autenticado

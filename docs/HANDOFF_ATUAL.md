@@ -1,4 +1,48 @@
-## Lote vigente - fechamento proprio e recuperacao explicita em validacao (2026-11-11)
+## Checkpoint vigente - HML recuperada e fonte156 conferida (2026-11-11)
+
+Codigo eba68f2fecc4016adaf1c61e197b3966afae8cb3, CI6819/6820SUCCESS.
+Revisoes independentes favoraveis ao controlador e bootstrap privado de14e28f;
+patch de codigo sanitizado344/6797170363. Helper publico pinned e5bdebac,
+API/web freeze8650 intacto. Bootstrap/config anteriores conservados em backup
+privado lifecycle-backup-20261111; nenhuma carga/restore/DDL/grant/operacional.
+
+Recuperacao EXPLICITA pelo controlador concluida apos recibo fresco100fullrows
+READ ONLY/ROLLBACK. State/lock/socket anteriores ARQUIVADOS em recovery-*, sem
+apagamento ou forca de start. Entrypoint Linux positivo real passou; tentativa
+recover com HML viva foi negada. Start/status/replay preservaram mesma execucao.
+Parada controlada com conexao HTTP propria aberta:1255ms, STOPPED normal,
+APP_STOPPED_RECORDS_PRESERVED,100antes/depois/fingerprint integral igual/0writes.
+Retomada normal81598, janela ate2026-11-11T13:54:08Z(10h54Brasilia),15173PRIVATE.
+Externo/login Auth real e GrupoCPA confirmados pelo dono; listagem20/100,
+GET exato200 da MESMA amostra PJ e CNPJ14digitos iguais banco->HTTP->form apos
+carga,3contatos HTTP/UI. Sem Save. Nao e auditoria visual de todos os campos100.
+URL: https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/
+Atalho desktop Iniciar HML ERP atualizado para pin revisado; nao depende de carga.
+
+MESMA100 lida na copia SQL legada isolada READONLY pelo coletor existente:
+156colunas Clientes,76com algum valor(inclui zeros)/80vazias nesta coorte;
+34campos ClientesTelefones/232linhas. Leitor parado/networknone/zeroportas/originais
+nao montados. Matriz privada por cliente/campo conserva fonte/chave/transformacao/
+destino ou pendencia; nao presume ausencia global/contrato suportado.210nomes e
+3cargos nativos conferidos nos canais persistidos,326canais auxiliares coincidem,
+1canal nativo pendente preservado;5emails do mestre completam331 ja importados.
+Nao foram acrescentados dados aos100 neste lote. Vendedor/tabela/condicao/regiao
+continuam exigindo vinculo/crosswalk; campo NAO_USAR nao vira mapeamento automatico.
+117Obras preservadas sem finalidade/numero/pais inventados. CADASTRO COMPLETO NAO
+ACEITO. Artefatos: address-native-20261110-followup/client-fields-20261111 privado.
+
+Documento UI: parecer591/6797039935 no freeze8650; HTTP/list/get sinteticospassam,
+primeira montagem com props so documento falha. V24 normal faz refetch+remount;
+na amostra real atual o vazio nao persistiu apos carga. Atualizado591/6797509163;
+nao impor correcao da amostra sem defeito estavel. Locais GET403 PERMISSION_DENIED
+e indisponibilidade, NAO prova de endereco ausente; nao ampliar perfil por inferencia.
+Trilha privada current-ui-trace-20261111 em completeness-100-20261111. Cursor
+mantem UI/composicao; Codex nao editou sua branch.
+591 permanecee3b32276; parecer6796010811 mantido sem repetir contraprovas intactas.
+Proximo: mappings dos76campos com valor/auxiliares e autorizacao granular de
+leitura cliente_local quando aplicavel, sem promover financeiro ou inventar locais.
+
+## Historico - fechamento proprio e recuperacao explicita em validacao (2026-11-11)
 
 Controlador existente ganhou rastreio de conexoes proprias api/web e close
 concorrente com Vite, drenagem limitada e fases sanitizadas. Contraprova HTTP

@@ -1,4 +1,32 @@
-## Em validacao - encerramento e recuperacao inspecionada HML (2026-11-11)
+## Entregue - recuperacao HML e matriz nativa completa de Clientes (2026-11-11)
+
+Codigo eba68f2f, CI6819/6820SUCCESS;14contraprovasPASS, audit/lint/typecheck/build
+PASS e revisoes independentes favoraveis. Recuperacao Linux explicita arquivou
+artefatos antigos apos conservacao100/pins/PID/socket/porta; nao limpou lock por
+forca. Negativa com HML viva passou. Stop com HTTP proprio aberto concluiu1255ms,
+100fullrows iguais/0writes/checkpoint final. Retomada/status/replay sem duplicacao.
+API/web8650, bootstrap revisado de14e28f, patch344/6797170363, controles antigos
+guardados privadamente.15173PRIVATE/login Auth real/GrupoCPA/listagem20de100
+confirmados; mesmo PJ GET200/CNPJ14 iguais banco->HTTP->campo apos carga,
+3contatos HTTP/UI e0Save. Janela ate10h54Brasilia. Sem nova importacao ou VPS.
+
+Fonte privada MESMA100:156campos Clientes auditados;76com algum valor(inclui0),
+80vazios na coorte, nao ausencia global.34campos de232contatos auxiliares;
+210nomes/3cargos conferidos nos canais persistidos.326canais auxiliares iguais,
+1pendente preservado;331canais totais e20IE intactos. Coletor/SQLreadonly/reader
+isolado parado; nao tocou originais. Matriz privada por campo/chave/transformacao
+e destino/pendencia preparada, sem preencher lacunas ou promover dados financeiros.
+Campos sem crosswalk/contrato e117Obras continuam em revisao; cadastros100 ainda
+NAO completos/aceitos. Zero dados novos escritos nos clientes neste lote.
+
+Cursor591/e3 sem novo delta: documento com props cruas reproduz defeito inicial,
+mas HTTP/list/get hidratam e V24 refaz GET/remount; vazio NAO persistiu na amostra
+autenticada atual. Atualizado591/6797509163, sem edicao UI alheia. Locais403 nao
+vira endereco ausente; permissao granular e mappings nativos permanecem gates.
+Proximo P0: mappings156/auxiliares com associacoes/contratos comprovados;
+fornecedores/produtos conforme fila existente, sem alterar operacional.
+
+## Historico - encerramento e recuperacao inspecionada HML (2026-11-11)
 
 Mesmo controlador: close HTTP/Vite concorrente, sockets proprios rastreados,
 drain limitado e traces sanitizados.14testesPASS, incluindo HTTP/upgrade reais,
