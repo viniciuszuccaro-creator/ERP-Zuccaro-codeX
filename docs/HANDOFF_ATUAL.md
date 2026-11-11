@@ -1,3 +1,9 @@
+## CURSOR — #591 Contatos MASTER + volume 2k/5k (2026-11-11 America/Sao_Paulo)
+- Tip PR#592: Cliente360 lista contatos[] MASTER (cargo/canal/quarentena; ctx pós-await).
+- Volume sintético 2000/5000 (paginação server-side; sem teto silencioso).
+- Empilha sobre `739241da` locais incompleto · identity IE · omit Completo.
+- Sem HML. **Próximo:** CI · ACK Codex enriquecimento · aceite :15173.
+
 ## CURSOR — #591 CI SUCCESS `b36ea0ae` (2026-11-11 America/Sao_Paulo)
 - Tip peels+runtime PR#592 CI SUCCESS 9/9.
 - Empilha: locais RBAC · omit crédito/fiscal · volume · Cliente360 visualizar · Fechar ENTREGA/RETIRA · quarentena.

@@ -3,7 +3,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ConverterOportunidade from '@/components/crm/ConverterOportunidade';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { isCanonicalQuoteOpportunity, openCrmQuoteOrderWindow, isCrmConversionScopeCurrent } from '@/components/crm/crmFormSubmission';
-import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target, FilePlus2, Plus } from 'lucide-react';
+import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target, FilePlus2, Plus, Users } from 'lucide-react';
+import {
+  classifyCentral360Contatos,
+  labelContatoCanal,
+} from '@/components/comercial/centralCliente360Contatos';
 import {
   canLoadCentralCliente360,
   central360SessionKey,
@@ -335,6 +339,42 @@ export default function CentralCliente360Panel({
     setBlockLimits((prev) => growCentral360BlockLimit(prev, blockKey));
   };
 
+  // Contatos MASTER (GET Cliente via entities) — separado do central-360; omit ≠ limpar; ctx pós-await.
+  const canViewContatosMaster = enabled && !permissionsLoading
+    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit });
+  const contatosQuery = useQuery({
+    queryKey: ['cliente-central-360-contatos', groupId, empresaId, actorId, clienteId, sessionKey],
+    queryFn: async () => {
+      const openedScope = { groupId, empresaId, actorId, token: sessionToken };
+      const clienteEntity = httpApi.entities?.Cliente;
+      if (!clienteEntity || typeof clienteEntity.get !== 'function') {
+        throw Object.assign(new Error('Cliente HTTP MASTER indisponível para contatos.'), {
+          code: 'CLIENTE_HTTP_UNAVAILABLE',
+        });
+      }
+      const row = await clienteEntity.get(clienteId);
+      if (!isCrmConversionScopeCurrent(openedScope, renderedScope.current, readErpHttpSession())) {
+        throw Object.assign(new Error('Contexto alterado. Reabra a Central antes de consultar contatos.'), {
+          code: 'CONTEXT_CHANGED',
+        });
+      }
+      return row;
+    },
+    enabled: Boolean(canViewContatosMaster && clienteId && sessionToken),
+    retry: 1,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    placeholderData: undefined,
+  });
+  const contatosClassified = classifyCentral360Contatos(
+    contatosQuery.data,
+    {
+      forbidden: !canViewContatosMaster && !permissionsLoading,
+      loadError: Boolean(contatosQuery.isError),
+    },
+  );
+
   if (!isHttpCliente360Enabled) return null;
 
   if (!sessionToken) {
@@ -574,6 +614,56 @@ export default function CentralCliente360Panel({
           </div>
         </div>
       )}
+
+      <div
+        className="border rounded-md bg-white p-3 text-sm space-y-2"
+        data-block="central360-contatos-master"
+        data-contatos-status={contatosClassified.status}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium text-slate-800 flex items-center gap-2">
+            <Users className="h-4 w-4" /> Contatos
+          </h4>
+          <span className="text-xs text-slate-500">{contatosClassified.message}</span>
+        </div>
+        {contatosQuery.isLoading ? (
+          <p className="text-xs text-slate-500">Carregando contatos…</p>
+        ) : null}
+        {contatosClassified.status === 'ok' || contatosClassified.quarentena.length > 0 ? (
+          <ul className="space-y-1.5" data-fonte="contatos-jsonb-master">
+            {contatosClassified.validos.map((c, idx) => (
+              <li
+                key={String(c.id || `${c.tipo}-${c.valor}-${idx}`)}
+                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-slate-100 pb-1"
+                data-campo="contato-valido"
+              >
+                <Badge variant="outline">{labelContatoCanal(c.tipo)}</Badge>
+                <span className="font-mono text-xs">{String(c.valor || '—')}</span>
+                {c.nome ? <span className="text-slate-700">{String(c.nome)}</span> : null}
+                {c.cargo ? <span className="text-xs text-slate-500" data-campo="cargo">{String(c.cargo)}</span> : null}
+                {c.principal ? <Badge className="bg-sky-100 text-sky-800">Principal</Badge> : null}
+                {c.observacao ? (
+                  <span className="w-full text-xs italic text-slate-500" data-campo="contato-observacao">{String(c.observacao)}</span>
+                ) : null}
+              </li>
+            ))}
+            {contatosClassified.quarentena.map((c, idx) => (
+              <li
+                key={`q-${String(c.id || idx)}`}
+                className="flex flex-wrap items-baseline gap-x-2 text-amber-900"
+                data-campo="contato-quarentena"
+              >
+                <Badge variant="outline" className="border-amber-300">Quarentena</Badge>
+                <span className="text-xs">{labelContatoCanal(c.tipo)} · {String(c.valor || '—')}</span>
+                <span className="text-[10px] text-amber-700">canal inválido — não confundir com Celular/WhatsApp válido</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-slate-600" role="status">{contatosClassified.message}</p>
+        )}
+        <p className="text-[10px] text-slate-400">Celular ≠ WhatsApp · edição no Cadastro Completo (CAS contatos[]).</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <BlockCard

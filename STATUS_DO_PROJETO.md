@@ -1,3 +1,17 @@
+## CURSOR — #591 Contatos MASTER Central360 + volume 2k/5k (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `739241da` / docs `3fa0011c` |
+| **Lote** | Contatos MASTER no painel (cargo/canal/quarentena; ctx pós-await); volume sintético 2000/5000 |
+| **Testes** | `central-cliente360-contatos-master-591` · `cliente-volume-paginacao-591` · peels stage51 |
+| **Evidence** | `docs/evidence/cursor-cliente360-contatos-volume-591-20261111.txt` |
+| **Estados** | Pareceres preservados · omit ≠ limpar · Celular ≠ WhatsApp · sem ContatoClienteV2 |
+| Fora | HML · SHA API+web · 14 nomes · provedores externos · RG/docs BFF |
+
+**Próximo:** CI tip · ACK Codex enriquecimento contatos/endereços · aceite :15173.
+
 ## CURSOR — #591 CI SUCCESS tip `739241da` locais incompleto (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
