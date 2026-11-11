@@ -12,6 +12,7 @@ import {
   classifyCentral360Documentos,
   classifyCentral360Rg,
 } from '@/components/comercial/centralCliente360Documentos';
+import { classifyCentral360Vinculos } from '@/components/comercial/centralCliente360Vinculos';
 import {
   canLoadCentralCliente360,
   central360SessionKey,
@@ -401,6 +402,14 @@ export default function CentralCliente360Panel({
       quarentena: Array.isArray(raw?.quarentena) ? raw.quarentena : [],
     };
   })();
+  const vinculosClassified = (() => {
+    const raw = classifyCentral360Vinculos(contatosQuery.data, masterFlags);
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'Vínculos indisponíveis',
+      fields: Array.isArray(raw?.fields) ? raw.fields : [],
+    };
+  })();
 
   if (!isHttpCliente360Enabled) return null;
 
@@ -744,6 +753,35 @@ export default function CentralCliente360Panel({
         ) : null}
         <p className="text-[10px] text-slate-400">
           CPF/CNPJ = Documento MASTER · RG/anexos ≠ ModeloDocumento · omit ≠ limpar.
+        </p>
+      </div>
+
+      <div
+        className="border rounded-md bg-white p-3 text-sm space-y-2"
+        data-block="central360-vinculos-master"
+        data-vinculos-status={vinculosClassified.status}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium text-slate-800 flex items-center gap-2">
+            <HardHat className="h-4 w-4" /> Vínculos comerciais
+          </h4>
+          <span className="text-xs text-slate-500">{vinculosClassified.message}</span>
+        </div>
+        <ul className="grid grid-cols-1 md:grid-cols-3 gap-2" data-fonte="vinculos-master">
+          {vinculosClassified.fields.map((f) => (
+            <li key={f.key} data-campo={f.key} data-vinculo-estado={f.status}>
+              <span className="text-slate-500 text-xs">{f.label}</span>
+              <p className="text-xs font-mono truncate" title={f.text || f.value || undefined}>
+                {f.status === 'present_bff_pending'
+                  ? (f.text || f.value || '—')
+                  : '—'}
+              </p>
+              <p className="text-[10px] text-slate-400">{f.status}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[10px] text-slate-400">
+          Vendedor/indicador/região: leitura se recuperados · escrita HTTP fail-closed até BFF · omit ≠ limpar.
         </p>
       </div>
 

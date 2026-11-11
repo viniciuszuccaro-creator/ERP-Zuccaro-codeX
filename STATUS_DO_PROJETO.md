@@ -1,3 +1,15 @@
+## CURSOR — #591 Cliente360 vínculos comerciais (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Lote** | Vendedor/indicador/região na Central360 com estados; reusa GET MASTER |
+| **Testes** | `central-cliente360-vinculos-591` · peels · CRM fixture |
+| **Evidence** | `docs/evidence/cursor-cliente360-vinculos-591-20261111.txt` |
+| Fora | Persistência BFF vínculos · HML · CANAL sky Usuario/Fiscal |
+
+**Próximo:** CI tip · ACK Codex BFF enriquecimento · aceite :15173.
+
 ## CURSOR — #591 Cliente360 RG + documentos[] estados (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

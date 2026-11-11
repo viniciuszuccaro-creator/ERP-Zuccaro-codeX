@@ -1,3 +1,7 @@
+## CURSOR — #591 vínculos comerciais Central360 (2026-11-11 America/Sao_Paulo)
+- Tip PR#592: vendedor/indicador/região com estados (absent/BFF); GET MASTER compartilhada.
+- Empilha RG/docs + contatos. Sem HML. **Próximo:** CI · ACK Codex BFF · aceite :15173.
+
 ## CURSOR — #591 RG + documentos[] estados Central360 (2026-11-11 America/Sao_Paulo)
 - Tip PR#592: bloco RG/docs com estados (absent/BFF/quarentena); Completo `data-documentos-estado`.
 - Reusa GET MASTER contatos — sem storage DocumentosCliente paralelo.
