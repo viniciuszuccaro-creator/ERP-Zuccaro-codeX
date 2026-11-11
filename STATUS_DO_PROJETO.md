@@ -1,3 +1,18 @@
+## CURSOR — #591 ABERTO Central + pack :15173 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Freeze runtime** | **`8650fd4d`** CI SUCCESS 9/9 — pack :15173 |
+| **Lote** | Ações ABERTO reais (Imprimir/Enviar/Fechar/Duplicar/Itens anteriores); Desmembrar = limitação explícita |
+| **Reuso** | `OrcamentosTab` + `orcamentoUiPolicy` + cancel/print/share/HTTP list existentes |
+| **Testes** | `central-vendas360-layout-v6-591` + `orcamento-ui-policy` 20 PASS |
+| **Evidence** | `c360-layout-v6-central-591-20261110.txt` · pack :15173 |
+| **Estados** | ABERTO toolbar fechada sem fingir sucesso · tip ABERTO aguarda CI · screenshots/aceite :15173 pendentes |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar sem contrato |
+
+**Próximo:** CI SUCCESS deste tip · servir :15173 no freeze `8650fd4d` (ou tip ABERTO se UI exigida) · screenshots v6 · #401 pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS 8650fd4d + pack :15173 (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

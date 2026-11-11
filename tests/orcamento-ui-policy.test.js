@@ -5,6 +5,8 @@ import test from 'node:test';
 import {
   buildOrcamentoPayload,
   buildOrcamentoShareText,
+  mapOrcamentoRowToCreateDraft,
+  revalidateOrcamentoDraftAgainstMasters,
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
@@ -139,4 +141,44 @@ test('impressao de orcamento escapa campos livres e nao depende de credencial ex
   assert.match(source, /escapeDocumentText\(orcamento\.observacoes/);
   assert.match(source, /printWindow\.opener = null/);
   assert.doesNotMatch(source, /api[_-]?key|access[_-]?token|service[_-]?role/i);
+});
+
+test('duplicar: draft sem id/número; validade limpa; revalida mestres sem inventar preço', () => {
+  const draft = mapOrcamentoRowToCreateDraft({
+    id: 'orc-1',
+    numero: '00000099',
+    status: 'EM_ABERTO',
+    cliente_empresa_id: 'ce-1',
+    condicao_pagamento_id: 'cond-old',
+    tabela_preco_id: 'tab-1',
+    validade_em: '2027-05-01T12:00:00.000Z',
+    observacoes: 'obs',
+    itens: [{
+      id: 'item-1',
+      produto_id: 'prod-1',
+      unidade_id: 'un-1',
+      descricao: 'Antiga',
+      unidade_sigla: 'KG',
+      quantidade: '2',
+      preco_unitario: '10.5',
+      desconto: '0',
+    }],
+  });
+  assert.equal(draft.cliente_empresa_id, 'ce-1');
+  assert.equal(draft.validade_em, '');
+  assert.equal(draft.itens[0].produto_id, 'prod-1');
+  assert.equal(draft.itens[0].preco_unitario, '10.5');
+  assert.doesNotMatch(JSON.stringify(draft), /orc-1|00000099|EM_ABERTO|item-1/);
+
+  const checked = revalidateOrcamentoDraftAgainstMasters(draft, {
+    produtos: [{ id: 'prod-1', descricao: 'Atualizada', unidade_medida_id: 'un-2' }],
+    unidades: [{ id: 'un-2', sigla: 'UN' }],
+    condicoes: [{ id: 'cond-new' }],
+  });
+  assert.equal(checked.draft.itens[0].descricao, 'Atualizada');
+  assert.equal(checked.draft.itens[0].unidade_id, 'un-2');
+  assert.equal(checked.draft.itens[0].unidade_sigla, 'UN');
+  assert.equal(checked.draft.itens[0].preco_unitario, '10.5');
+  assert.equal(checked.warnings.condicaoAusente, true);
+  assert.deepEqual(checked.warnings.produtosAusentes, []);
 });

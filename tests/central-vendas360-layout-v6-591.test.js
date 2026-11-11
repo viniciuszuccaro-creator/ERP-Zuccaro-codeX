@@ -111,6 +111,22 @@ test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravaçã
   assert.match(src, /readCentralColumnHiddenKeys/);
 });
 
+test('OrcamentosTab ABERTO: Imprimir/Enviar/Fechar/Mais sem fingir sucesso', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  assert.match(src, /central360-novo-orcamento/);
+  assert.match(src, /data-action="central360-imprimir"/);
+  assert.match(src, /data-action="central360-enviar"/);
+  assert.match(src, /data-action="central360-fechar-orcamento"/);
+  assert.match(src, /data-action="central360-mais-acoes"/);
+  assert.match(src, /data-action="central360-duplicar"/);
+  assert.match(src, /data-action="central360-itens-anteriores"/);
+  assert.match(src, /data-action="central360-desmembrar"/);
+  assert.match(src, /mapOrcamentoRowToCreateDraft/);
+  assert.match(src, /revalidateOrcamentoDraftAgainstMasters/);
+  assert.match(src, /Desmembrar orçamento ainda não está disponível/);
+  assert.doesNotMatch(src, /desmembrar com sucesso|Desmembramento concluído/i);
+});
+
 test('preferências de colunas: escopo usuário+grupo+empresa; sem cruzar contexto', () => {
   assert.equal(centralColumnPrefsStorageKey({}), null);
   assert.equal(centralColumnPrefsStorageKey({ actorId: 'a', groupId: 'g' }), null);

@@ -1,0 +1,32 @@
+Central360 — ações ABERTO (#591)
+=================================
+America/Sao_Paulo 2026-11-11 · branch cursor/hml-grupo-erro-fornecedor-392b
+
+OBJETIVO
+Fechar toolbar ABERTO da versão 6 sem botão decorativo nem sucesso falso.
+
+IMPLEMENTADO (contratos existentes)
+| Ação | Contrato | Observação |
+|------|----------|------------|
+| Novo Orçamento | `openCreate` + POST orçamentos | já existia |
+| Imprimir | `gerarPDFOrcamento` após GET detalhe | exige seleção |
+| Enviar | `buildOrcamentoShareText` + clipboard | WhatsApp/e-mail = texto revisável; sem disparo automático |
+| Fechar Orçamento | `api.cancel` + ConfirmDialog | só EM_ABERTO + RBAC cancelar |
+| Duplicar | GET + `mapOrcamentoRowToCreateDraft` + revalidação mestres | rascunho sujo; não grava |
+| Incluir itens anteriores | list pedidos/orçamentos do cliente + merge itens | revalidar preços/estoque/condições |
+| Desmembrar | toast de limitação | sem contrato HTTP — não executa |
+
+ARQUIVOS
+- src/components/comercial/OrcamentosTab.jsx (toolbar central360-acoes-lista)
+- src/components/comercial/orcamentoUiPolicy.js (draft/revalidate helpers)
+- tests/central-vendas360-layout-v6-591.test.js
+- tests/orcamento-ui-policy.test.js
+
+NÃO FEITO / BLOQUEADO
+- Desmembrar operacional
+- Contadores oficiais Bot/Aprovações
+- Screenshots privados vs figura v6
+- Aceite :15173 (CI ≠ homologação; tip freeze runtime `8650fd4d`)
+
+TESTES FOCADOS
+node --test tests/central-vendas360-layout-v6-591.test.js tests/orcamento-ui-policy.test.js → 20 PASS

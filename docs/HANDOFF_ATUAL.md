@@ -1,3 +1,9 @@
+## CURSOR — #591 ABERTO Central (2026-11-11 America/Sao_Paulo)
+- Toolbar ABERTO: Novo · Imprimir · Enviar (texto) · Fechar (cancel) · Mais (Duplicar / Itens anteriores / Desmembrar=limitação).
+- Sem fingir sucesso; Desmembrar bloqueado sem contrato HTTP.
+- Freeze runtime cadastro :15173 permanece **`8650fd4d`**; tip ABERTO aguarda CI.
+- **Próximo:** CI deste tip · screenshots v6 privados · aceite :15173 com Codex · #401 pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS 8650fd4d + pack :15173 (2026-11-11 America/Sao_Paulo)
 - Tip freeze **`8650fd4d`** CI SUCCESS 9/9 (run 42999100236) — API+web mesmo SHA.
 - Resíduos pareceres fechados em `353cfa46` + peels Completo `8650fd4d`.

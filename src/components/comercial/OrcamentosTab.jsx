@@ -2,7 +2,7 @@ import OrcamentoProposalAside, { PROPOSTA_CAPACIDADES } from './OrcamentoProposa
 import { createComercialProposalFixture } from './comercialProposalFixture';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, Pencil, Plus, Printer, RefreshCw, Search, SlidersHorizontal, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, MoreHorizontal, Pencil, Plus, Printer, RefreshCw, Search, Send, SlidersHorizontal, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,12 +13,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, createOrcamentoActionGate, microsToDecimal, sameOrcamentoScope } from './orcamentoUiPolicy';
+import { buildOrcamentoPayload, buildOrcamentoShareText, calculateItem, calculateTotals, canUseOrcamentoAction, createOrcamentoActionGate, mapOrcamentoRowToCreateDraft, microsToDecimal, revalidateOrcamentoDraftAgainstMasters, sameOrcamentoScope } from './orcamentoUiPolicy';
 import { explainPedidoPersistenceError } from './pedidoUiPolicy';
 import {
   clienteEmpresaPickerLabel,
@@ -514,6 +514,194 @@ const convertToPedido = async () => {
       toast.error('Não foi possível copiar o texto. Use a visualização de impressão.');
     }
   };
+  const centralSelected = selected
+    || (selectedCentralId ? listRows.find((r) => r.id === selectedCentralId) : null);
+  const requireCentralSelection = (actionLabel) => {
+    if (!centralSelected?.id) {
+      toast.error(`Selecione um orçamento na grade antes de ${actionLabel}.`);
+      return null;
+    }
+    return centralSelected;
+  };
+  const applyDraftWarnings = (warnings) => {
+    if (warnings?.condicaoAusente) {
+      toast.message('Condição de pagamento do documento anterior não está disponível neste contexto — revise antes de salvar.');
+    }
+    if (warnings?.produtosAusentes?.length) {
+      toast.message(`${warnings.produtosAusentes.length} produto(s) do documento anterior não encontrado(s) nos mestres — revise os itens.`);
+    }
+  };
+  const duplicarOrcamentoCentral = async () => {
+    if (proposalMode) {
+      toast.message('Proposta visual: duplicação sintética não grava.');
+      return;
+    }
+    if (!canCreate) {
+      toast.error('Seu perfil não possui permissão para criar orçamento.');
+      return;
+    }
+    const row = requireCentralSelection('duplicar');
+    if (!row) return;
+    if (formOpen && dirty) {
+      toast.error('Há rascunho em edição. Salve ou feche antes de duplicar.');
+      return;
+    }
+    const ticket = beginAction(renderedScope.current);
+    if (!ticket) return;
+    try {
+      const detail = await api.get(row.id);
+      if (!actionCurrent(ticket)) return;
+      let draft = mapOrcamentoRowToCreateDraft(detail);
+      const checked = revalidateOrcamentoDraftAgainstMasters(draft, masters);
+      draft = checked.draft;
+      applyDraftWarnings(checked.warnings);
+      formScope.current = renderedScope.current;
+      setEditing(null);
+      setForm(draft);
+      setDirty(true);
+      setDetailOpen(false);
+      setFormOpen(true);
+      toast.message('Rascunho duplicado aberto — preços, estoque e condições devem ser revalidados antes de salvar. Nada foi gravado.');
+    } catch (error) {
+      if (actionCurrent(ticket)) toast.error(errorMessage(error));
+    } finally {
+      endAction(ticket);
+    }
+  };
+  const desmembrarOrcamentoCentral = () => {
+    toast.message('Desmembrar orçamento ainda não está disponível neste contrato HTTP — ação não executada (sem fingir sucesso).');
+  };
+  const incluirItensAnterioresCentral = async () => {
+    if (proposalMode) {
+      toast.message('Proposta visual: inclusão de itens anteriores desabilitada.');
+      return;
+    }
+    if (!canCreate && !canEdit(centralSelected)) {
+      toast.error('Seu perfil não possui permissão para alterar itens.');
+      return;
+    }
+    const clienteEmpresaId = formOpen
+      ? form.cliente_empresa_id
+      : centralSelected?.cliente_empresa_id;
+    if (!clienteEmpresaId) {
+      toast.error('Selecione um orçamento (ou abra um rascunho com cliente) para incluir itens anteriores.');
+      return;
+    }
+    const ticket = beginAction(renderedScope.current);
+    if (!ticket) return;
+    try {
+      const opened = { ...renderedScope.current };
+      const [pedidosRes, orcamentosRes] = await Promise.all([
+        pedidosApi.list({ limit: 5, offset: 0, clienteEmpresaId }),
+        api.list({ limit: 5, offset: 0, clienteEmpresaId }),
+      ]);
+      if (!actionCurrent(ticket) || !sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
+      const pedidos = Array.isArray(pedidosRes?.data) ? pedidosRes.data : (Array.isArray(pedidosRes) ? pedidosRes : []);
+      const orcs = Array.isArray(orcamentosRes?.data) ? orcamentosRes.data : (Array.isArray(orcamentosRes) ? orcamentosRes : []);
+      const excludeId = formOpen && editing?.id ? editing.id : centralSelected?.id;
+      const candidatos = [
+        ...pedidos.map((p) => ({ kind: 'pedido', row: p, at: p.created_at || p.updated_at || '' })),
+        ...orcs.filter((o) => o.id !== excludeId).map((o) => ({ kind: 'orcamento', row: o, at: o.created_at || o.updated_at || '' })),
+      ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+      if (candidatos.length === 0) {
+        toast.error('Não há pedido/orçamento anterior deste cliente neste contexto.');
+        return;
+      }
+      const chosen = candidatos[0];
+      let source = chosen.row;
+      if (chosen.kind === 'pedido' && source?.id) {
+        source = await pedidosApi.get(source.id);
+      } else if (chosen.kind === 'orcamento' && source?.id) {
+        source = await api.get(source.id);
+      }
+      if (!actionCurrent(ticket) || !sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
+      const mapped = mapOrcamentoRowToCreateDraft(source, { clearValidade: false });
+      const previousItens = mapped.itens.filter((item) => item.produto_id || item.descricao);
+      if (previousItens.length === 0) {
+        toast.error('O documento anterior não possui itens utilizáveis.');
+        return;
+      }
+      if (formOpen) {
+        const nextDraft = {
+          ...form,
+          itens: [...(form.itens || []).filter((item) => item.produto_id || item.descricao), ...previousItens],
+        };
+        const checked = revalidateOrcamentoDraftAgainstMasters(nextDraft, masters);
+        applyDraftWarnings(checked.warnings);
+        setForm(checked.draft);
+        setDirty(true);
+      } else {
+        if (!canCreate) {
+          toast.error('Seu perfil não possui permissão para criar orçamento.');
+          return;
+        }
+        let draft = {
+          ...mapped,
+          validade_em: '',
+          observacoes: '',
+          itens: previousItens,
+        };
+        const checked = revalidateOrcamentoDraftAgainstMasters(draft, masters);
+        draft = checked.draft;
+        applyDraftWarnings(checked.warnings);
+        formScope.current = renderedScope.current;
+        setEditing(null);
+        setForm(draft);
+        setDirty(true);
+        setDetailOpen(false);
+        setFormOpen(true);
+      }
+      toast.message(`Itens de ${chosen.kind === 'pedido' ? 'pedido' : 'orçamento'} anterior incluídos no rascunho — revalide preços, estoque e condições antes de salvar.`);
+    } catch (error) {
+      if (actionCurrent(ticket)) toast.error(errorMessage(error));
+    } finally {
+      endAction(ticket);
+    }
+  };
+  const loadCentralDetail = async (row) => {
+    if (proposalMode) return row;
+    if (Array.isArray(row?.itens) && row.itens.length > 0 && row.numero) return row;
+    const ticket = beginAction(renderedScope.current);
+    if (!ticket) return null;
+    try {
+      const detail = await api.get(row.id);
+      if (!actionCurrent(ticket)) return null;
+      setSelected(detail);
+      if (typeof onCentralSelect === 'function') {
+        const link = masters.clientesEmpresa.find((item) => item.id === detail?.cliente_empresa_id);
+        onCentralSelect(detail, { clienteId: link?.cliente_id || detail?.cliente_id || null });
+      }
+      return detail;
+    } catch (error) {
+      if (actionCurrent(ticket)) toast.error(errorMessage(error));
+      return null;
+    } finally {
+      endAction(ticket);
+    }
+  };
+  const imprimirCentral = async () => {
+    const row = requireCentralSelection('imprimir');
+    if (!row) return;
+    const detail = await loadCentralDetail(row);
+    if (detail) printOrcamento(detail);
+  };
+  const enviarCentral = async (channel) => {
+    const row = requireCentralSelection('enviar');
+    if (!row) return;
+    const detail = await loadCentralDetail(row);
+    if (detail) await prepareShare(detail, channel);
+  };
+  const fecharOrcamentoCentral = () => {
+    const row = requireCentralSelection('fechar');
+    if (!row) return;
+    if (!canCancel(row)) {
+      toast.error(row.status === 'EM_ABERTO'
+        ? 'Seu perfil não possui permissão para fechar este orçamento.'
+        : 'Somente orçamentos em aberto podem ser fechados.');
+      return;
+    }
+    cancel(row);
+  };
 
   if (!canView) return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4" /><AlertDescription>Acesso negado aos Orçamentos.</AlertDescription></Alert></div>;
   // Proposta: filtros só na etapa A — aplicam à lista sintética (sem HTTP).
@@ -604,7 +792,7 @@ const convertToPedido = async () => {
     </div>
     )}
     {centralLayout && (
-      <div className="flex justify-end gap-2 mb-2" data-block="central360-acoes-lista">
+      <div className="flex flex-wrap justify-end gap-2 mb-2" data-block="central360-acoes-lista" role="toolbar" aria-label="Ações ABERTO">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -646,6 +834,104 @@ const convertToPedido = async () => {
             {proposalMode ? 'Nova negociação sintética' : 'Novo Orçamento'}
           </Button>
         )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="border-sky-200"
+          disabled={!contextReady || submitting || !centralSelected}
+          onClick={imprimirCentral}
+          data-action="central360-imprimir"
+          title="Imprimir/PDF do orçamento selecionado"
+        >
+          <Printer className="w-4 h-4 mr-1" />
+          Imprimir
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-sky-200"
+              disabled={!contextReady || submitting || !centralSelected}
+              data-action="central360-enviar"
+              title="Preparar texto para envio (sem disparo automático)"
+            >
+              <Send className="w-4 h-4 mr-1" />
+              Enviar
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              data-action="central360-enviar-whatsapp"
+              onSelect={() => { void enviarCentral('WhatsApp'); }}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              WhatsApp (copiar texto)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-action="central360-enviar-email"
+              onSelect={() => { void enviarCentral('e-mail'); }}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              E-mail (copiar texto)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="border-sky-200"
+          disabled={!contextReady || submitting || !centralSelected || !canCancel(centralSelected)}
+          onClick={fecharOrcamentoCentral}
+          data-action="central360-fechar-orcamento"
+          data-permission="Comercial.orcamento.cancelar"
+          title="Fecha orçamento em aberto (cancelamento preservando registro)"
+        >
+          <XCircle className="w-4 h-4 mr-1" />
+          Fechar Orçamento
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="border-sky-200"
+              disabled={!contextReady || submitting}
+              data-action="central360-mais-acoes"
+              title="Mais ações sobre o orçamento selecionado"
+            >
+              <MoreHorizontal className="w-4 h-4 mr-1" />
+              Mais Ações
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuItem
+              data-action="central360-duplicar"
+              disabled={!canCreate || !centralSelected}
+              onSelect={() => { void duplicarOrcamentoCentral(); }}
+            >
+              Duplicar (rascunho — revalidar preços)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              data-action="central360-itens-anteriores"
+              disabled={!centralSelected && !formOpen}
+              onSelect={() => { void incluirItensAnterioresCentral(); }}
+            >
+              Incluir itens anteriores
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              data-action="central360-desmembrar"
+              onSelect={desmembrarOrcamentoCentral}
+            >
+              Desmembrar (não suportado)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     )}
     {proposalMode && <Alert className="mb-3 border-sky-200 bg-sky-50"><AlertDescription>Proposta visual sintética para aprovação. Não consulta nem grava cadastros, pedidos, estoque ou pagamentos. URL: <code>?proposta=comercial360</code>.</AlertDescription></Alert>}

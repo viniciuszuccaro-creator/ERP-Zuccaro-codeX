@@ -26,13 +26,18 @@ ARQUIVOS
 NÃO CRIADO
 - CentralVendas360Nova / OrcamentosV2 / chatbot/financeiro paralelo
 
+ABERTO (2026-11-11 America/Sao_Paulo)
+- Novo Orçamento · Imprimir (PDF) · Enviar (WhatsApp/e-mail = copiar texto revisável) · Fechar Orçamento (cancel HTTP + confirm)
+- Mais Ações: Duplicar (rascunho + revalidação mestres, sem gravar) · Incluir itens anteriores (pedido/orçamento HTTP do cliente) · Desmembrar = limitação explícita (sem fingir sucesso)
+- Helpers: `mapOrcamentoRowToCreateDraft` / `revalidateOrcamentoDraftAgainstMasters` em `orcamentoUiPolicy.js`
+
 PENDENTE / BLOQUEADO
 - Aceite visual screenshots privados vs v6 (dois monitores)
-- Servir :15173 no tip freeze **`8650fd4d`** (API+web; sem deploy operacional automático; pack atualizado 2026-11-11)
+- Servir :15173 no tip freeze **`8650fd4d`** runtime; tip ABERTO aguarda CI deste commit (API+web mesmo SHA)
 - documentos[] BFF
 - Integração seletiva #401 só pós-aceite
-- Ações ABERTO Imprimir/Enviar/Fechar/Mais Ações — parciais (Novo Orçamento OK); sem botão decorativo como integração
 - Contadores reais Bot/Aprovações — só quando API oficial existir (faixa abre janelas owners)
+- Desmembrar — futuro (sem contrato HTTP)
 
 CHECKLIST DOC
 | Item | Estado |
@@ -44,7 +49,9 @@ CHECKLIST DOC
 | Grades simultâneas | implementado |
 | Cliente360 lateral | implementado (token sessão) |
 | Clique simples/duplo | implementado |
+| ABERTO Novo/Imprimir/Enviar/Fechar/Duplicar/Itens anteriores | implementado (contratos existentes) |
+| ABERTO Desmembrar | bloqueado (limitação explícita) |
 | Aceite visual privado | pendente |
 | CI tip layout **`82b15566`** | SUCCESS |
-| CI tip CAS freeze **`c348d4d3`** | SUCCESS 9/9 |
-| Aceite :15173 | freeze candidato c348d4d3 — publicação privada coordenada |
+| CI tip CAS freeze **`c348d4d3`** / runtime **`8650fd4d`** | SUCCESS 9/9 |
+| Aceite :15173 | pack no tip `8650fd4d` — CI ≠ homologação |

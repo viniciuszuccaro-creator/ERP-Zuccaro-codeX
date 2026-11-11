@@ -62,7 +62,7 @@ COORD
 - Publicação #591 ≠ integração #401 · sem PII · sem ContatoClienteV2
 
 PENDENTE PÓS-ACEITE
-- Ações ABERTO: Imprimir/Enviar/Fechar/Mais (duplicar/desmembrar/itens anteriores)
+- Ações ABERTO: Imprimir/Enviar/Fechar/Duplicar/Itens anteriores implementados; Desmembrar = limitação explícita (ver c360-aberto-acoes-591-20261111.txt)
 - Screenshots privados v6
 - Integração seletiva candidata / #401 sem port cego
 - documentos[] BFF
