@@ -2,6 +2,16 @@
 
 ## Delta de enriquecimento e destino efetivo (2026-11-11)
 
+Codigo58c927e0 fechado na CI6897/6898SUCCESS, incluindoPG restrito de extensoes.
+Populacao original confrontada sem carga:4437fora doCSV sao4276Ativo/
+159Potencial/2Inativo pelos rotulos literais nativos, nao por frequencia/nome.
+4414sem documento estruturalmente valido;23com documento valido fora do export,
+mas22envolvidos em repeticao (8documentos distintos).0documentos desses23 estao
+no export; fila preservada para enriquecimento completo/duplicidades/target.
+Nao converter23 em aptos, nem4437 em inativos. Filtro causalCSV nao provado.
+Recibos privados population-status-20261111, leitorSQL copiado parado nofinally;
+zero originais/VPS/mestres alterados. Nao repetir esta consulta sem delta.
+
 Cliente existente:5extensoes opcionais no contrato backend e no ciclo canonico
 de enriquecimento. SQL candidato cliente_master_extras.sql fora do migrador;
 NAO aplicar por bootstrap/CI. Preflight privado1600:1316clientes/1317valores

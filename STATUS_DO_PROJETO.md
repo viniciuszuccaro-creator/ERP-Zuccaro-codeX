@@ -1,5 +1,26 @@
 ## Estado vigente - extensoes do mesmo Cliente e delta VPS (2026-11-11)
 
+Codigo58c927e0d157ad09b3e9506ad324d651cac7c70f publicado: CI6897/6898SUCCESS.
+RaizUbuntu2467PASS/0FAIL/0SKIP. RunnerPG existente2PASS/0FAIL/0SKIP inclui
+o NOVO teste master extensions com LOGIN restrito/concorrencia/CAS/replay/
+reversao; nao confundir comSKIP local ou prova browser.
+
+NOVA prova da populacao, sem reabrir pilotos:22895chaves iguais ao recibo anterior,
+18458exportadas e4437fora. Rotulos literais SITUACAO da fonte, apenas trim de
+padding:4276Ativo/159Potencial/2Inativo FORA do export. Logo4437nao sao inativos.
+4414sem documento estruturalmente valido;23com documento valido, NAO aptidao
+automatica:19Ativo/4Potencial,8documentos distintos e22registros envolvidos em
+repeticao dentro desses23. Nenhum desses documentos esta no export aprovado.
+Preservada fila adicional23 para campos completos/duplicidades/reconciliacao
+no destino, sem escolher/fundir identidades;1sem repeticao nesse recorte continua
+pendente de verificacoes. Causa exata do filtroCSV continua NAO provada.
+FonteSQL copiada emREAD_ONLY/ROLLBACK, sem rede/portas/originais; leitor iniciado
+somente para esta leitura NOVA e parado nofinally. Recibos privados em
+address-native-20261110-followup/population-status-20261111: source-status-rows,
+export-status-coverage,reader-final,document-overlap-review,outside-export-review-
+queue.private.json. Driver ESM corrigido antes de derivar o ultimo relatorio,
+sem reexecutarSQL.0novosmestres/contatos/reativacoes/DDL/escritasVPS.
+
 658d8cca CI6887/6888SUCCESS, fechamento confirmado; contatos NAO reaplicados.
 1600mestres/1500INATIVOS/4200canais e recibos1504 preservados. Nenhum dado novo,
 DDL, grant ou reativacao executados neste pacote; HMLAPP permaneceSTOPPED.
@@ -32,7 +53,7 @@ PGlite17PASS e raiz168PASS afetados, incluindo falha->correcao de3contraprovas
 de preservacao: camada exata nova, mesmos hashes ancestrais/comparacao integral,
 mutacoes reais rejeitadas por TODOS os entrypoints antigos. Novo testePG isolado
 no runner existente exige LOGIN NOSUPER/NOBYPASS, concorrencia/CAS/replay/reversao
-e conserva inativo. PG novo e suite Linux completa dependem da CI desteSHA;
+e conserva inativo. PG novo e suite Linux completa fechados na CI6897/6898;
 publicacao draft pela excecao de validacao ja autorizada, nao homologacao.
 Audit/lint/typecheck/build frontend e typecheck/build backendPASS; lint1aviso previo.
 

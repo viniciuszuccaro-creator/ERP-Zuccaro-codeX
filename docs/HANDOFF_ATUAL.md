@@ -1,5 +1,22 @@
 ## Retomada vigente -5extensoes prontas no codigo, DDL pendente (2026-11-11)
 
+FECHADO codigo58c927e0:CI6897/6898SUCCESS; raizUbuntu2467PASS/0FAIL/0SKIP,
+novo testePG de extensoes executado comLOGIN restrito/concorrencia/replay/
+reversao no runner existente (suite2PASS/0FAIL/0SKIP). Sem aceiteUI inferido.
+
+Populacao agora comprovada por rotulos LITERAIS nativos (trim de padding):
+4437foraCSV=4276Ativo+159Potencial+2Inativo.4414sem documento estruturalmente
+valido;23com documento valido=19Ativo+4Potencial, mas8documentos distintos e
+22registros com repeticao nesse grupo.0desses docs constam no export; nao unir
+nem descartar nativos. Fila23 preservada para fullcampos/duplicidade/target,
+0liberados;1sem repeticao tambem precisa contrato completo/reconciliacaoVPS.
+Causa do filtro original NAO demonstrada.22895chaves conferidas contra prova
+anterior; nao nova selecao100/inventario. CopiaSQL READONLY/ROLLBACK, source
+reader isolado/rede none iniciado e PARADO nofinally; originais intocados.
+Recibos privados em address-native-20261110-followup/population-status-20261111,
+em especial outside-export-review-queue e reader-final. Driver ESM corrigido
+somente no derivador de relatorio; nenhuma segunda consultaSQL por esse erro.
+
 658d8cca CI6887/6888SUCCESS; encerrar bloqueio documental antigo deCI. Nenhum
 contato/carga/reativacao repetidos:1600mestres/1500inativos/4200canais preservados.
 ReservaCodex342/6802272541: backend/schema/mapper/testes; UI/composicao continuam
@@ -25,8 +42,8 @@ PGlite17PASS/raiz168PASS;3contraprovas afetadas inicialmente falharam porque os
 hunks novos sobrepunham contexto antigo. Corrigida composicao das camadas exatas,
 SEM trocar hashes ancestrais, mantendo comparacao integral e contraprovas de
 mutacao/omissao/repeticao em todos entrypoints reais. NovoPG no runner existente
-com LOGIN restrito/concorrencia/replay/reversao; falta CI desteSHA, nao contar SKIP
-local comoPG. Audit/lint/types/buildPASS,1aviso lint existente. Ubuntu completo via
+com LOGIN restrito/concorrencia/replay/reversao fechado na CI6897/6898, nao contar
+SKIP local comoPG. Audit/lint/types/buildPASS,1aviso lint existente. Ubuntu via
 excecao draft existente; CI terminal deve constar no recibo de fechamento.
 
 VPS console restabelecido pelo dono apos Session expired. Leitura real de
