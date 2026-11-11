@@ -31,7 +31,13 @@ export function validateMarker(marker, sha) {
   assert.equal(marker.dataOrigin, 'real-clients-FINAL100-private-HML');
   assert.equal(marker.operationalDatabase, false);
   assert.equal(marker.authMode, 'supabase_user');
-  assert.ok(marker.physicalPreflight && typeof marker.physicalPreflight === 'object');
+  const physical = marker.physicalPreflight;
+  assert.ok(physical && typeof physical === 'object');
+  assert.equal(physical.database, 'hml344_restore_20261104');
+  assert.equal(physical.schema, 'hml344_cpa_20261104');
+  assert.match(physical.systemIdentifier, /^[0-9]+$/);
+  assert.match(physical.schemaOid, /^[0-9]+$/);
+  assert.ok(typeof physical.role === 'string' && physical.role.length > 0);
   return { sha, origin: marker.dataOrigin, url: publicUrl };
 }
 

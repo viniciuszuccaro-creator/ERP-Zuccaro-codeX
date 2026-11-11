@@ -13,7 +13,10 @@ const config = () => ({ reviewedSha: sha, bootstrapSha256: digest, pins: {
   ERP344_IE_COMPLETION_SHA256: digest, ERP344_PHYSICAL_BASELINE_SHA256: digest,
 } });
 const marker = () => ({ apiSha: sha, webSha: sha, dataOrigin: 'real-clients-FINAL100-private-HML',
-  operationalDatabase: false, authMode: 'supabase_user', physicalPreflight: { checked: true } });
+  operationalDatabase: false, authMode: 'supabase_user', physicalPreflight: {
+    database: 'hml344_restore_20261104', schema: 'hml344_cpa_20261104',
+    systemIdentifier: '1234567890', schemaOid: '1234', role: 'synthetic_hml_role',
+  } });
 
 test('startup lease excludes concurrent invocation, preserves another lease and releases only its own on failure', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hml-controller-synthetic-'));
@@ -66,6 +69,8 @@ test('HML controller rejects synthetic, mixed-version, operational and unproven 
   assert.equal(validateMarker(marker(), sha).sha, sha);
   for (const patch of [{ apiSha: 'c'.repeat(40) }, { webSha: 'c'.repeat(40) },
     { operationalDatabase: true }, { authMode: 'synthetic' }, { physicalPreflight: null },
+    { physicalPreflight: {} }, { physicalPreflight: { ...marker().physicalPreflight, database: 'operational' } },
+    { physicalPreflight: { ...marker().physicalPreflight, schema: 'public' } },
     { dataOrigin: 'synthetic' }]) {
     assert.throws(() => validateMarker({ ...marker(), ...patch }, sha));
   }
