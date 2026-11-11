@@ -345,26 +345,39 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)
             : [],
         }),
-    condicao_comercial: {
-      ...(data.condicao_comercial || {}),
-      tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
-      forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),
-      percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),
-      condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),
-      limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),
-      limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),
-      situacao_credito: sanitizeText(data.condicao_comercial?.situacao_credito || calcularSituacaoCredito(), 40)
-    },
-    configuracao_fiscal: {
-      ...(data.configuracao_fiscal || {}),
-      regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),
-      cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),
-      contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),
-      tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),
-      isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),
-      isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
-      observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)
-    },
+    // Campo não carregado: omitir (≠ limpar; ≠ inventar default comercial/fiscal).
+    ...(data.condicao_comercial === undefined || data.condicao_comercial === null
+      ? {}
+      : {
+          condicao_comercial: {
+            ...(data.condicao_comercial || {}),
+            tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
+            forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),
+            percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),
+            condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),
+            limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),
+            limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),
+            situacao_credito: sanitizeText(
+              data.condicao_comercial?.situacao_credito
+                || (typeof calcularSituacaoCredito === 'function' ? calcularSituacaoCredito() : 'OK'),
+              40,
+            ),
+          },
+        }),
+    ...(data.configuracao_fiscal === undefined || data.configuracao_fiscal === null
+      ? {}
+      : {
+          configuracao_fiscal: {
+            ...(data.configuracao_fiscal || {}),
+            regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),
+            cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),
+            contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),
+            tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),
+            isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),
+            isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
+            observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000),
+          },
+        }),
     ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),
     empresa_id: data.empresa_id || empresaAtual?.id,
     group_id: data.group_id || groupId
@@ -523,23 +536,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         ...(record.locais_entrega === undefined
           ? {}
           : { locais_entrega: record.locais_entrega || [] }),
-        condicao_comercial: record.condicao_comercial || {
-          tabela_preco_id: "",
-          forma_pagamento_padrao_id: "",
-          percentual_desconto: 0,
-          condicao_pagamento: "À Vista",
-          limite_credito: 0,
-          limite_credito_utilizado: 0,
-          situacao_credito: "OK",
-        },
-        configuracao_fiscal: record.configuracao_fiscal || {
-          regime_tributario: "Simples Nacional",
-          cfop_padrao_venda: "5102",
-          contribuinte_icms: true,
-          tipo_contribuinte: "1 - Contribuinte",
-          isento_ipi: false,
-          isento_icms: false,
-        },
+        // Ausência ≠ inventar "OK"/R$0/"Simples Nacional" (desconhecido ≠ confirmado).
+        ...(record.condicao_comercial === undefined || record.condicao_comercial === null
+          ? {}
+          : { condicao_comercial: record.condicao_comercial }),
+        ...(record.configuracao_fiscal === undefined || record.configuracao_fiscal === null
+          ? {}
+          : { configuracao_fiscal: record.configuracao_fiscal }),
         ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),
       };
     },
@@ -888,6 +891,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   const calcularSituacaoCredito = () => {
+    // Sem bloco comercial carregado: não fingir OK/R$0.
+    if (formData.condicao_comercial === undefined || formData.condicao_comercial === null) {
+      return 'Desconhecido';
+    }
     const limite = formData.condicao_comercial?.limite_credito || 0;
     const utilizado = formData.condicao_comercial?.limite_credito_utilizado || 0;
     const percentualUtilizado = limite > 0 ? (utilizado / limite) * 100 : 0;
@@ -922,10 +929,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           complemento: dados.endereco_completo?.complemento || prev.endereco_principal.complemento
         },
         configuracao_fiscal: {
-          ...prev.configuracao_fiscal,
+          ...(prev.configuracao_fiscal || {}),
           regime_tributario: dados.porte === 'MEI' ? 'MEI' :
                             ['ME', 'EPP'].includes(dados.porte) ? 'Simples Nacional' :
-                            prev.configuracao_fiscal.regime_tributario
+                            (prev.configuracao_fiscal?.regime_tributario || 'Simples Nacional'),
         }
       };
 
@@ -1063,7 +1070,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           </div>
       </div>
 
-      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined || formData.documentos === undefined) && (
+      {Boolean(cliente?.id) && (
+        formData.contatos === undefined
+        || formData.locais_entrega === undefined
+        || formData.documentos === undefined
+        || formData.condicao_comercial === undefined
+        || formData.configuracao_fiscal === undefined
+      ) && (
         <div
           className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"
           data-pendencia="cliente-parcial"
@@ -1073,9 +1086,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             formData.contatos === undefined ? "contatos" : null,
             formData.locais_entrega === undefined ? "endereços de entrega/cobrança" : null,
             formData.documentos === undefined ? "documentos" : null,
+            formData.condicao_comercial === undefined ? "condição comercial/crédito" : null,
+            formData.configuracao_fiscal === undefined ? "configuração fiscal" : null,
           ].filter(Boolean).join(", ")
             + " ainda não recuperados nesta carga — o salvamento omite esses campos (sem apagar a fonte)."}
           {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral. Celular ≠ WhatsApp.
+          {" "}Desconhecido ≠ confirmado (crédito/regime).
         </div>
       )}
 
@@ -1620,6 +1636,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
             <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">
               <Card className={`border-2 ${
+                calcularSituacaoCredito() === 'Desconhecido' ? 'border-amber-300 bg-amber-50' :
                 calcularSituacaoCredito() === 'OK' ? 'border-green-300 bg-green-50' :
                 calcularSituacaoCredito() === 'Alerta' ? 'border-orange-300 bg-orange-50' :
                 'border-red-300 bg-red-50'
@@ -1627,15 +1644,24 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <AlertCircle className={`w-6 h-6 ${
+                      calcularSituacaoCredito() === 'Desconhecido' ? 'text-amber-700' :
                       calcularSituacaoCredito() === 'OK' ? 'text-green-600' :
                       calcularSituacaoCredito() === 'Alerta' ? 'text-orange-600' :
                       'text-red-600'
                     }`} />
                     <div>
-                      <p className="font-semibold">Situação de Crédito: {calcularSituacaoCredito()}</p>
+                      <p className="font-semibold" data-credito-estado={calcularSituacaoCredito()}>
+                        Situação de Crédito: {calcularSituacaoCredito()}
+                      </p>
                       <p className="text-sm text-slate-600">
-                        Utilizado: R$ {(formData.condicao_comercial?.limite_credito_utilizado || 0).toLocaleString('pt-BR')}
-                        {' '}de R$ {(formData.condicao_comercial?.limite_credito || 0).toLocaleString('pt-BR')}
+                        {formData.condicao_comercial === undefined || formData.condicao_comercial === null
+                          ? 'Condição comercial ainda não recuperada nesta carga — sem inventar limite.'
+                          : (
+                            <>
+                              Utilizado: R$ {(formData.condicao_comercial?.limite_credito_utilizado || 0).toLocaleString('pt-BR')}
+                              {' '}de R$ {(formData.condicao_comercial?.limite_credito || 0).toLocaleString('pt-BR')}
+                            </>
+                          )}
                       </p>
                     </div>
                   </div>
@@ -1838,17 +1864,17 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 <div>
                   <Label htmlFor="regime_tributario">Regime Tributário</Label>
                   <Select
-                    value={formData.configuracao_fiscal?.regime_tributario || "Simples Nacional"}
+                    value={formData.configuracao_fiscal?.regime_tributario || undefined}
                     onValueChange={(value) => setFormData({
                       ...formData,
                       configuracao_fiscal: {
-                        ...formData.configuracao_fiscal,
+                        ...(formData.configuracao_fiscal || {}),
                         regime_tributario: value
                       }
                     })}
                   >
-                    <SelectTrigger id="regime_tributario">
-                      <SelectValue />
+                    <SelectTrigger id="regime_tributario" data-fiscal-carregado={formData.configuracao_fiscal === undefined ? 'nao' : 'sim'}>
+                      <SelectValue placeholder={formData.configuracao_fiscal === undefined ? 'Não recuperado nesta carga' : 'Selecione...'} />
                     </SelectTrigger>
                     <SelectContent className="z-[99999]">
                       <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>

@@ -1,3 +1,9 @@
+## CURSOR — #591 omit crédito/fiscal + volume (2026-11-11 America/Sao_Paulo)
+- Completo: ausência `condicao_comercial`/`configuracao_fiscal` → omit no form/save (≠ inventar OK/Simples).
+- Banner parcial + `Desconhecido`; Celular≠WhatsApp; rastreio ALLOWED_KEYS em evidence.
+- Volume: teste sintético 150 + V24 limit/skip 10–100. Tip RBAC locais `559c01c1` + 679601 `ea318931`.
+- Sem HML/import/PII. **Próximo:** CI · Cliente360 fontes · recuperação erp-integra.
+
 ## CURSOR — #591 cliente_local RBAC (6798362673) (2026-11-11 America/Sao_Paulo)
 - `GerenciarEnderecosClienteForm`: escrita só com `Cadastros.cliente_local.{criar,editar,inativar}`.
 - Cliente.editar + só visualizar → Adicionar/Editar/Excluir disabled (rascunho incluso).

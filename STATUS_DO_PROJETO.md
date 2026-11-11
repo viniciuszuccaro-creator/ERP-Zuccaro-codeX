@@ -1,3 +1,17 @@
+## CURSOR — #591 omit crédito/fiscal + volume sintético (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | tip `559c01c1` (cliente_local RBAC) · `ea318931` (6796010811) |
+| **Lote** | Reabertura sem inventar OK/Simples; save omite blocos não carregados; rastreio ALLOWED_KEYS; paginação sintética 150 |
+| **Testes** | `cliente-credito-fiscal-omit-591` · `cliente-volume-paginacao-591` + regressões contatos/RBAC |
+| **Evidence** | `docs/evidence/cursor-cliente-campos-rastreio-omit-591-20261111.txt` |
+| **Estados** | Desconhecido ≠ confirmado · volume UI preparado · sem HML/PII |
+| Fora | Persistência BFF 156/34 · importação · SHA HML combinado (Codex) |
+
+**Próximo:** CI deste tip · ACK Codex · Cliente360 fontes canônicas · lote recuperação erp-integra.
+
 ## CURSOR — #591 cliente_local RBAC visualizar≠escrita (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
