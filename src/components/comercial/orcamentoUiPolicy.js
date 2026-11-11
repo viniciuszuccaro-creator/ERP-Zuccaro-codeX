@@ -125,7 +125,9 @@ export function mapOrcamentoRowToCreateDraft(row, { clearValidade = true } = {})
 
 /**
  * Revalida itens contra mestres atuais (produto/unidade/condição).
- * Não inventa preço: se o produto existir, atualiza descrição/unidade; preço fica para revisão humana.
+ * Não inventa preço. Não troca unidade nem reinterpretar quantidade/peso sem fator
+ * de equivalência comprovado: preserva unidade do item; só preenche quando ausente
+ * com a unidade oficial do produto; divergência vira aviso (não swap silencioso).
  */
 export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
   const produtos = Array.isArray(masters.produtos) ? masters.produtos : [];
@@ -133,6 +135,7 @@ export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
   const condicoes = Array.isArray(masters.condicoes) ? masters.condicoes : [];
   const missingProducts = [];
   const missingUnits = [];
+  const divergentUnits = [];
   let condicaoOk = true;
   if (draft.condicao_pagamento_id) {
     condicaoOk = condicoes.some((c) => c.id === draft.condicao_pagamento_id);
@@ -140,13 +143,24 @@ export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
   const itens = (Array.isArray(draft.itens) ? draft.itens : []).map((item) => {
     const produto = produtos.find((p) => p.id === item.produto_id);
     if (item.produto_id && !produto) missingProducts.push(item.produto_id);
-    const unidadeId = produto?.unidade_medida_id || item.unidade_id || '';
+    const itemUnidadeId = String(item.unidade_id || '').trim();
+    const produtoUnidadeId = String(produto?.unidade_medida_id || '').trim();
+    let unidadeId = itemUnidadeId;
+    if (!unidadeId && produtoUnidadeId) {
+      unidadeId = produtoUnidadeId;
+    } else if (produto && itemUnidadeId && produtoUnidadeId && itemUnidadeId !== produtoUnidadeId) {
+      divergentUnits.push({
+        produto_id: item.produto_id,
+        item_unidade_id: itemUnidadeId,
+        produto_unidade_id: produtoUnidadeId,
+      });
+    }
     const unidade = unidades.find((u) => u.id === unidadeId);
     if (unidadeId && !unidade) missingUnits.push(unidadeId);
     if (!produto) return { ...item };
     return {
       ...item,
-      unidade_id: unidadeId,
+      unidade_id: unidadeId || item.unidade_id || '',
       descricao: produto.descricao || produto.nome || item.descricao || '',
       unidade_sigla: unidade?.sigla || item.unidade_sigla || '',
     };
@@ -157,6 +171,7 @@ export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
       condicaoAusente: Boolean(draft.condicao_pagamento_id) && !condicaoOk,
       produtosAusentes: [...new Set(missingProducts)],
       unidadesAusentes: [...new Set(missingUnits)],
+      unidadesDivergentes: divergentUnits,
     },
   };
 }

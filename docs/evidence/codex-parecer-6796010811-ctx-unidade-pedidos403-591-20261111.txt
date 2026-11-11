@@ -1,0 +1,61 @@
+# Parecer Codex 6796010811 — correções Cursor #591
+# Data: 2026-11-11 (America/Sao_Paulo)
+# Tip base revisado: e3b32276 (Fechar≠Cancelar CI SUCCESS)
+# Tip correção: ea318931 — CI SUCCESS 9/9 (runs 43028665978 / 43028625529)
+# Branch / PR: cursor/c360-parecer-ctx-unidade-cnpj-392b · #592 (stack #591)
+
+## Escopo
+Correções no existente (sem HML / sem ContatoClienteV2 / sem deploy operacional).
+Contraprova Codex: tentativa frontend pós-await ≠ escrita cruzada backend.
+
+## P1 — Troca de contexto após await (fecharOrcamentoCentral / loadCentralDetail)
+Causa: após `await loadCentralDetail`, `conversionScope.current = renderedScope.current`
+associava documento antigo a empresa/ator/sessão novos; fast path (itens em memória)
+retornava sem ticket/revalidação.
+
+Correção:
+- Captura `opened = { ...renderedScope, documentId }` ANTES do await.
+- `loadCentralDetail` revalida escopo + id; fast path também exige escopo estável.
+- `conversionScope` grava o `opened` original (não o rendered pós-troca).
+- `convertToPedido` exige `opened.documentId === pendingConversion.id` e sameScope.
+- Imprimir/Enviar descartam resposta tardia da mesma forma.
+
+Arquivos: `src/components/comercial/OrcamentosTab.jsx`
+Peels: `tests/central-vendas360-layout-v6-591.test.js`
+
+## P1 — Unidades sem fator (100KG→100UN)
+Causa: `revalidateOrcamentoDraftAgainstMasters` forçava `produto.unidade_medida_id`
+preservando quantidade/preço → reinterpretava KG como UN.
+
+Correção:
+- Preserva `item.unidade_id` quando presente.
+- Só preenche com unidade oficial do produto se item estava sem unidade.
+- Divergência → `warnings.unidadesDivergentes` (toast); sem swap silencioso.
+
+Arquivo: `src/components/comercial/orcamentoUiPolicy.js`
+Teste: `tests/orcamento-ui-policy.test.js`
+
+## P2 — Pedidos 403 não bloqueia Orçamentos
+Causa: `Promise.all([pedidosApi.list, api.list])` abortava tudo no 403 de Pedidos.
+
+Correção: consultas independentes; 403 Pedidos → aviso parcial + segue com Orçamentos;
+não amplia RBAC; erro de Orçamentos continua fatal para a ação.
+
+## Cadastro rico — CNPJ vazio / nome PJ / grade
+- `hydrateClienteHttpRowForUi`: fallback `documento_normalizado`; nome←razao_social.
+- `pickDoc`: cnpj/cpf editados prevalecem sobre `documento` residual do GET.
+- Completo `mapToForm`: mesmo espelho + alinha `documento` ao campo editável.
+- V24 `buildFieldVariants`: sem misturar CPF↔CNPJ nem Telefone↔Celular/WhatsApp.
+
+## Limitações explícitas
+- Sem prova HML nesta janela (Codex STOPPED_EMERGENCY).
+- Tentativa frontend corrigida; backend fail-closed permanece independente.
+- Desmembrar continua limitação explícita.
+- Jornada API completa (criar→fechar→Produção) e Cliente360 fontes: próximo lote.
+- Freeze :15173 `8650fd4d` intacto (CI ≠ homologação).
+
+## CI
+SUCCESS 9/9 no tip `ea318931` (America/Sao_Paulo 11/11/2026).
+
+## Próximo
+ACK Codex → jornada API + Cliente360 fontes → snapshot API+web pós-recuperação HML.

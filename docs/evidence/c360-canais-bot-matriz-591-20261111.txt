@@ -20,7 +20,7 @@ produção/entrega/retira → faturamento/cobrança → acompanhamento.
 | Fechar orçamento | implementação parcial→contrato real | converter-pedido HTTP | Delta Fechar≠Cancelar nesta entrega |
 | Cancelar orçamento | implementado (contrato) | `api.cancel` + confirm | Separado do Fechar |
 | Desmembrar | inexistente / bloqueado | toast limitação | Sem contrato HTTP |
-| Cliente360 lateral | implementação parcial | `CentralCliente360Panel` + cadastro mestre | Telefone ≠ WhatsApp; dados via API quando sessão ok |
+| Cliente360 lateral | implementação parcial | `CentralCliente360Panel` + cadastro mestre | Abrir cadastro com Cliente.visualizar; editar no Completo; Telefone ≠ WhatsApp |
 
 REGRAS DO BOT (contrato)
 - Pode: preparar resposta, consultar catálogo autorizado, encaminhar exceção.

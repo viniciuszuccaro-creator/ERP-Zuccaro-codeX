@@ -127,6 +127,19 @@ test('OrcamentosTab ABERTO: Imprimir/Enviar/Fechar/Mais sem fingir sucesso', () 
   assert.doesNotMatch(src, /desmembrar com sucesso|Desmembramento concluído/i);
 });
 
+test('Fechar Orçamento: diálogo oferece ENTREGA e RETIRADA (Produção/Entrega/Retira via pedido)', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  assert.match(src, /SelectItem value="ENTREGA">Entrega/);
+  assert.match(src, /SelectItem value="RETIRADA">Retirada/);
+  assert.match(src, /convertOrcamento/);
+  assert.match(src, /tipo_operacao/);
+  const layout = read('src/components/comercial/centralVendas360Layout.js');
+  assert.match(layout, /id: 'PRODUCAO'/);
+  assert.match(layout, /id: 'ENTREGA'/);
+  assert.match(layout, /id: 'RETIRA'/);
+  assert.match(layout, /tipoOperacao: 'RETIRADA'/);
+});
+
 test('Fechar Orçamento ≠ Cancelar: conversão backend, cancel separado', () => {
   const src = read('src/components/comercial/OrcamentosTab.jsx');
   // Fechar abre fluxo de conversão (não api.cancel).
@@ -143,6 +156,28 @@ test('Fechar Orçamento ≠ Cancelar: conversão backend, cancel separado', () =
   assert.doesNotMatch(fecharFn[0], /\bcancel\(row\)/);
   assert.match(fecharFn[0], /setPendingConversion/);
   assert.match(fecharFn[0], /canConvert/);
+  // Parecer 6796010811: captura identidade antes do await; conversionScope = opened (não rendered pós-troca).
+  assert.match(fecharFn[0], /documentId:\s*row\.id/);
+  assert.match(fecharFn[0], /conversionScope\.current\s*=\s*opened/);
+  assert.match(fecharFn[0], /sameOrcamentoScope\(opened/);
+  assert.doesNotMatch(fecharFn[0], /conversionScope\.current\s*=\s*renderedScope\.current/);
+});
+
+test('Parecer 6796010811: loadCentralDetail revalida escopo; Pedidos403 ≠ aborta Orçamentos', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  const loadFn = src.match(/const loadCentralDetail = async \(row[\s\S]*?\n  \};/);
+  assert.ok(loadFn, 'loadCentralDetail deve existir');
+  assert.match(loadFn[0], /documentId/);
+  assert.match(loadFn[0], /sameOrcamentoScope\(opened/);
+  assert.match(loadFn[0], /detail\.id !== opened\.documentId/);
+  // Fast path também exige escopo estável (não retorna row cego).
+  assert.match(loadFn[0], /fast/);
+  const itensFn = src.match(/const incluirItensAnterioresCentral = async \(\) => \{[\s\S]*?\n  \};/);
+  assert.ok(itensFn, 'incluirItensAnterioresCentral deve existir');
+  assert.doesNotMatch(itensFn[0], /Promise\.all\(\[\s*pedidosApi\.list/);
+  assert.match(itensFn[0], /pedidosDenied/);
+  assert.match(itensFn[0], /status === 403/);
+  assert.match(itensFn[0], /usando apenas orçamentos/);
 });
 
 test('preferências de colunas: escopo usuário+grupo+empresa; sem cruzar contexto', () => {

@@ -1,8 +1,79 @@
+## CURSOR — #591 CI SUCCESS `af13da12` (2026-11-11 America/Sao_Paulo)
+- Tip PR#592 CI SUCCESS 9/9 — master extras Completo+Cliente360 + Relatórios loading gate.
+- Sem HML/1500. **Próximo:** ACK Codex storage · aceite :15173 · ContasReceber BFF.
+
+## CURSOR — #591 Relatórios Representantes/Personalizado loading gate (2026-11-11 America/Sao_Paulo)
+- Triggers fail-closed sob `permissionsLoading` (recuperação erp-integra; sem tela paralela).
+- Empilha master-extras `bba0a6dd`. Sem HML. **Próximo:** CI · ACK Codex · aceite :15173.
+
+## CURSOR — #591 master extras Completo+Cliente360 (2026-11-11 America/Sao_Paulo)
+- Consumo UI das extensões MASTER Codex: rg, caixa postal (nº/CEP/flag), inscrição produtor rural.
+- Completo: edição omit-aware + 503 STORAGE_REQUIRED explícito (schema antigo). Cliente360: estados absent/empty/present.
+- Sem DDL/SQL HML por Cursor · sem ClienteV2 · omit ≠ limpar. Empilha `ff3cb09e`/`f42f51a1`.
+- Evidence `cursor-cliente-master-extras-ui-591-20261111.txt`. **Próximo:** CI tip · ACK Codex storage · aceite :15173.
+
+## CURSOR — #591 CI SUCCESS `f42f51a1` (2026-11-11 America/Sao_Paulo)
+- Tip PR#592 CI SUCCESS 9/9 — entregas · WhatsApp classificado · caps locais · financeiro pending_bff.
+- Sem HML/1500. **Próximo:** ACK Codex BFF ContasReceber/RG · aceite :15173.
+
+## CURSOR — #591 Entregas + WhatsApp + caps locais (2026-11-11 America/Sao_Paulo)
+- Tip PR#592: entregas canônicas Cliente360; WhatsApp classificado ≠ Celular; caps cliente_local probed.
+- Volume: documento com zeros iniciais. Empilha `c2cd0859`. Sem HML/1500.
+- **Próximo:** CI · ACK Codex BFF · aceite :15173 · financeiro Cliente360.
+
+## CURSOR — #591 CI SUCCESS `c2cd0859` (2026-11-11 America/Sao_Paulo)
+- Tip PR#592 CI SUCCESS 9/9 — vínculos + RG/docs + Contatos MASTER/volume.
+- Sem HML. **Próximo:** ACK Codex BFF · aceite :15173.
+
+## CURSOR — #591 vínculos comerciais Central360 (2026-11-11 America/Sao_Paulo)
+- Tip PR#592: vendedor/indicador/região com estados (absent/BFF); GET MASTER compartilhada.
+- Empilha RG/docs + contatos. Sem HML. **Próximo:** CI · ACK Codex BFF · aceite :15173.
+
+## CURSOR — #591 RG + documentos[] estados Central360 (2026-11-11 America/Sao_Paulo)
+- Tip PR#592: bloco RG/docs com estados (absent/BFF/quarentena); Completo `data-documentos-estado`.
+- Reusa GET MASTER contatos — sem storage DocumentosCliente paralelo.
+- Empilha contatos MASTER + volume. Sem HML. **Próximo:** CI · ACK Codex BFF · aceite :15173.
+
+## CURSOR — #591 Contatos MASTER + volume 2k/5k (2026-11-11 America/Sao_Paulo)
+- Tip PR#592: Cliente360 lista contatos[] MASTER (cargo/canal/quarentena; ctx pós-await).
+- Volume sintético 2000/5000 (paginação server-side; sem teto silencioso).
+- Empilha sobre `739241da` locais incompleto · identity IE · omit Completo.
+- Sem HML. **Próximo:** CI · ACK Codex enriquecimento · aceite :15173.
+
+## CURSOR — #591 CI SUCCESS `b36ea0ae` (2026-11-11 America/Sao_Paulo)
+- Tip peels+runtime PR#592 CI SUCCESS 9/9.
+- Empilha: locais RBAC · omit crédito/fiscal · volume · Cliente360 visualizar · Fechar ENTREGA/RETIRA · quarentena.
+- Sem HML. **Próximo:** ACK Codex SHA HML · aceite :15173.
+
+## CURSOR — #591 Cliente360 visualizar + Fechar ENTREGA/RETIRA (2026-11-11 America/Sao_Paulo)
+- `CentralCliente360Panel`: abrir cadastro com `Cliente.visualizar` (editar só no Completo).
+- Teste jornada: Fechar oferece ENTREGA/RETIRADA; situações PRODUCAO/ENTREGA/RETIRA no layout.
+- Empilhado sobre omit/volume `f61c7524` + RBAC locais `559c01c1` + 679601 `ea318931`.
+
+## CURSOR — #591 omit crédito/fiscal + volume (2026-11-11 America/Sao_Paulo)
+- Completo: ausência `condicao_comercial`/`configuracao_fiscal` → omit no form/save (≠ inventar OK/Simples).
+- Banner parcial + `Desconhecido`; Celular≠WhatsApp; rastreio ALLOWED_KEYS em evidence.
+- Volume: teste sintético 150 + V24 limit/skip 10–100. Tip RBAC locais `559c01c1` + 679601 `ea318931`.
+- Sem HML/import/PII. **Próximo:** CI · Cliente360 fontes · recuperação erp-integra.
+
+## CURSOR — #591 cliente_local RBAC (6798362673) (2026-11-11 America/Sao_Paulo)
+- `GerenciarEnderecosClienteForm`: escrita só com `Cadastros.cliente_local.{criar,editar,inativar}`.
+- Cliente.editar + só visualizar → Adicionar/Editar/Excluir disabled (rascunho incluso).
+- Evidence `codex-parecer-6798362673-cliente-local-rbac-591-20261111.txt`. Tip 679601 `ea318931` intacto.
+- Sem HML/grants neste lote. **Próximo:** CI · ACK · jornada API.
+
+## CURSOR — #591 CI SUCCESS parecer 6796010811 (2026-11-11 America/Sao_Paulo)
+- Tip **`ea318931`** CI SUCCESS 9/9 · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) (stack #591).
+- P1 ctx pós-await · P1 unidade sem fator · P2 Pedidos403 parcial · CNPJ/nome PJ + grade sem bleed.
+- Evidence `codex-parecer-6796010811-ctx-unidade-pedidos403-591-20261111.txt`. Tentativa frontend ≠ escrita cruzada backend.
+- Sem HML (Codex STOPPED_EMERGENCY). Freeze **`8650fd4d`** intacto. CI ≠ homologação.
+- **Próximo:** ACK Codex · jornada API/Cliente360 · snapshot pós-HML.
+
 ## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
-- Tip **`ca9a88aa`** CI SUCCESS 9/9 (runtime `e71808a3` + peels).
+- Tip **`ca9a88aa`** / docs **`e3b32276`** CI SUCCESS 9/9 (runtime `e71808a3` + peels).
 - Fechar → converter-pedido; Cancelar separado; Fechar janela só UI.
 - Freeze :15173 **`8650fd4d`** intacto (Codex). CI ≠ homologação.
-- **Próximo:** aceite :15173 · jornada API · #401 pós-aceite.
+- **Próximo:** parecer 6796010811 · aceite :15173 · jornada API · #401 pós-aceite.
 
 ## CURSOR — #591 Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
 - RECEBIDO: «Fechar (cancel)» estava errado em `de189e0d`.

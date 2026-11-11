@@ -1,0 +1,45 @@
+CURSOR — #591 Entregas + WhatsApp classificado + caps locais (2026-11-11 America/Sao_Paulo)
+==========================================================================================
+Branch tip: cursor/c360-parecer-ctx-unidade-cnpj-392b · PR #592
+Base tip verde: c2cd0859 / docs 599ba242 · Sem HML / sem reativar 1500 ensaio / sem PII.
+
+Lote funcional
+--------------
+1. Cliente360 entregas canônicas (`/api/v1/entregas?clienteId=`)
+   - estados: forbidden / unavailable / empty / ok / invalid
+   - ctx pós-await (CONTEXT_CHANGED)
+   - RBAC Expedicao.Entregas.visualizar (aliases) — Cliente.editar NÃO libera
+   - sem sucesso fictício de envio externo
+
+2. WhatsApp classificado
+   - `isWhatsAppClassificado` / `canalClassificacaoAttr`
+   - badge `data-campo="whatsapp-classificado"` só com tipo comprovado
+   - Celular ≠ WhatsApp (não promover)
+
+3. cliente_local caps (HML só visualizar)
+   - `data-cliente-local-caps="probed"` + data-cap-*
+   - `data-hml-cenario="cliente-local-somente-visualizar"`
+   - criar/editar/inativar continuam gated por cliente_local.*
+
+4. Volume
+   - documento com zeros iniciais: busca server-side preserva dígitos
+
+5. Financeiro soft-land
+   - bloco `central360-financeiro-cliente` com status pending_bff / forbidden
+   - sem inventar títulos/saldos até ContasReceber HTTP por cliente
+
+Preservado
+----------
+Pareceres ctx/unidade/Pedidos403/cliente_local/Fechar≠Cancelar
+Contatos/RG/docs/vínculos/volume · layout v6 · omit ≠ limpar
+
+Fora
+----
+HML · reativar 1500 · SHA API+web aceite · ContatoB2B FK · BFF RG/docs/ContasReceber write ·
+provedores WhatsApp/GoTo externos · CANAL sky Usuario/Fiscal
+
+Testes
+------
+tests/central-cliente360-entregas-whatsapp-591.test.js
+tests/cliente-volume-paginacao-591.test.js (zeros)
+tests/crm-conversao-consumer.test.js · peels stage51

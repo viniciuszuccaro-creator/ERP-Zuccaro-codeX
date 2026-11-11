@@ -1,0 +1,44 @@
+#591 — piloto-cobertura UI + omit escalares (2026-11-11 America/Sao_Paulo)
+
+## Objetivo
+Delta funcional (não só docs): superfície ALLOWED_KEYS além de nome/documento;
+omit ≠ wipe nos escalares não carregados; listas com fantasia/IE/origem.
+
+## Código
+- CadastroClienteCompleto.buildPayload: hasOwn/ownText/ownCode — IE, e-mail, telefone,
+  celular, nome_social, observações, origem/legado omitidos se não hidratados.
+- UI: nome_social, e-mail, telefone, celular, banner procedência (origem/código legado).
+- Celular ≠ WhatsApp (canal tipado só em Contatos[]).
+- ClientesTab + Bloco1Pessoas: colunas nome_fantasia, inscricao_estadual, origem.
+- V24 FIELD_LABELS: fantasia/social/IE/IM/origem.
+- Peels stage48 Completo + clienteNavigationRemainder atualizados.
+
+## Testes (local)
+node --test \
+  tests/cliente-campos-piloto-cobertura-591.test.js \
+  tests/cliente-credito-fiscal-omit-591.test.js \
+  tests/cliente-contatos-http-adapter.test.js \
+  tests/cadastro-query-payload-boundaries.test.js \
+  tests/cliente-fonte-lista-preservacao-591.test.js \
+  tests/cliente-lista-campos-http-591.test.js \
+  tests/cursor-identidade-consolidacao.test.js \
+  tests/cliente-360-visualizar-editar-591.test.js
+→ 70 pass / 0 fail
+
+## Classificação (sem inventar PII / sem nomes privados dos 14)
+- Ausente na origem: omit no form (hasOwn false) → omit no fio.
+- Ainda não incorporado (ex. RG significativo): fail-closed HTTP UNSUPPORTED_FIELDS.
+- Inválido/quarentena: Contatos[] (lote anterior).
+- No banco e oculto na UI: coberto nesta superfície para ALLOWED_KEYS listados.
+- Não autorizado: RBAC Cliente.visualizar ≠ editar / cliente_local.* (lotes anteriores).
+
+## Delta UI IE/IM/obs (após tip 432edac1)
+- Inputs Inscrição Estadual/Municipal e Observações: `?? ''` + placeholder
+  "Não recuperado nesta carga" quando `undefined` (omit ≠ limpar visual).
+- data-campo=inscricao_estadual|inscricao_municipal|observacoes.
+
+## Fora / Codex
+- Nomes exatos dos 14 campos privados fora piloto100 (tip ae4c6aa2).
+- Persistência BFF de rich ainda fora ALLOWED_KEYS; import HML; SHA API+web combinados.
+- Freeze 8650fd4d não prova este tip automaticamente.
+- IE no identity Central360 (projectIdentity) — coordenar com Codex.

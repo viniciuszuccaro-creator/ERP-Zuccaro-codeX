@@ -9,6 +9,7 @@ import {
   isContatoCanalCanonico,
   partitionContatosByCanal,
 } from "@/api/clienteHttpPayload";
+import { isClienteMasterStorageRequired } from "@/api/clienteMasterExtrasUi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -260,6 +261,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     tipo: "Pessoa Física",
     status: "Prospect",
     nome: "",
+    nome_social: "",
     razao_social: "",
     nome_fantasia: "",
     cpf: "",
@@ -267,6 +269,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     rg: "",
     inscricao_estadual: "",
     inscricao_municipal: "",
+    email: "",
+    telefone: "",
+    celular: "",
+    origem: "",
     regiao_atendimento: "Sudeste",
     endereco_principal: {
       cep: "",
@@ -307,68 +313,107 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     group_id: groupId
   });
 
-  const buildPayload = (data = formData) => ({
-    ...data,
-    tipo: sanitizeText(data.tipo || "Pessoa Fisica", 40),
-    status: sanitizeText(data.status || "Prospect", 40),
-    nome: sanitizeText(data.nome, 180),
-    razao_social: sanitizeText(data.razao_social, 180),
-    nome_fantasia: sanitizeText(data.nome_fantasia, 180),
-    cpf: sanitizeCode(data.cpf, 18),
-    cnpj: sanitizeCode(data.cnpj, 24),
-    rg: sanitizeCode(data.rg, 30),
-    inscricao_estadual: sanitizeCode(data.inscricao_estadual, 40),
-    inscricao_municipal: sanitizeCode(data.inscricao_municipal, 40),
-    regiao_atendimento: sanitizeText(data.regiao_atendimento, 120),
-    regiao_atendimento_id: sanitizeCode(data.regiao_atendimento_id, 120),
-    vendedor_responsavel: sanitizeText(data.vendedor_responsavel, 180),
-    vendedor_responsavel_id: sanitizeCode(data.vendedor_responsavel_id, 120),
-    indicador_id: sanitizeCode(data.indicador_id, 120),
-    motivo_inatividade: sanitizeText(data.motivo_inatividade, 500),
-    observacoes: sanitizeText(data.observacoes, 2000),
-    endereco_principal: sanitizeEndereco(data.endereco_principal),
-    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.
-    ...(data.contatos === undefined || data.contatos === null
-      ? {}
-      : {
-          contatos: sanitizeContatos(data.contatos),
-          ...(data.expectedVersion !== undefined
-            ? { expectedVersion: data.expectedVersion }
-            : (data.contatos_version !== undefined
-              ? { expectedVersion: data.contatos_version }
-              : {})),
-        }),
-    ...(data.locais_entrega === undefined
-      ? {}
-      : {
-          locais_entrega: Array.isArray(data.locais_entrega)
-            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)
-            : [],
-        }),
-    condicao_comercial: {
-      ...(data.condicao_comercial || {}),
-      tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
-      forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),
-      percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),
-      condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),
-      limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),
-      limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),
-      situacao_credito: sanitizeText(data.condicao_comercial?.situacao_credito || calcularSituacaoCredito(), 40)
-    },
-    configuracao_fiscal: {
-      ...(data.configuracao_fiscal || {}),
-      regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),
-      cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),
-      contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),
-      tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),
-      isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),
-      isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
-      observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)
-    },
-    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),
-    empresa_id: data.empresa_id || empresaAtual?.id,
-    group_id: data.group_id || groupId
-  });
+  const buildPayload = (data = formData) => {
+    // Omit ≠ limpar: campo não carregado (sem hasOwn) não vira "" no fio.
+    const has = (key) => Object.prototype.hasOwnProperty.call(data, key);
+    const ownText = (key, max) => (has(key) ? { [key]: sanitizeText(data[key], max) } : {});
+    const ownCode = (key, max) => (has(key) ? { [key]: sanitizeCode(data[key], max) } : {});
+    return {
+      ...data,
+      ...(has('tipo') || !data.id
+        ? { tipo: sanitizeText(data.tipo || 'Pessoa Fisica', 40) }
+        : {}),
+      ...(has('status') || !data.id
+        ? { status: sanitizeText(data.status || 'Prospect', 40) }
+        : {}),
+      ...ownText('nome', 180),
+      ...ownText('razao_social', 180),
+      ...ownText('nome_fantasia', 180),
+      ...ownText('nome_social', 180),
+      ...ownCode('cpf', 18),
+      ...ownCode('cnpj', 24),
+      ...ownCode('rg', 30),
+      ...ownCode('numero_caixa_postal', 40),
+      ...ownCode('cep_caixa_postal', 8),
+      ...ownCode('caixa_postal_cobranca', 40),
+      ...ownCode('inscricao_produtor_rural', 40),
+      ...ownCode('inscricao_estadual', 40),
+      ...ownCode('inscricao_municipal', 40),
+      ...ownText('email', 180),
+      ...ownText('telefone', 40),
+      ...ownText('celular', 40),
+      ...ownText('observacoes', 2000),
+      // origem/legado: só reenviar se carregados — procedência importada é imutável no BFF.
+      ...ownText('origem', 40),
+      ...(has('codigo_legado') ? { codigo_legado: sanitizeCode(data.codigo_legado, 120) } : {}),
+      ...(has('source_system') ? { source_system: sanitizeText(data.source_system, 80) } : {}),
+      ...(has('legacy_id') ? { legacy_id: sanitizeCode(data.legacy_id, 120) } : {}),
+      ...(has('migration_batch') ? { migration_batch: sanitizeText(data.migration_batch, 120) } : {}),
+      ...ownText('regiao_atendimento', 120),
+      ...ownCode('regiao_atendimento_id', 120),
+      ...ownText('vendedor_responsavel', 180),
+      ...ownCode('vendedor_responsavel_id', 120),
+      ...ownCode('indicador_id', 120),
+      ...ownText('motivo_inatividade', 500),
+      ...(has('endereco_principal')
+        ? { endereco_principal: sanitizeEndereco(data.endereco_principal) }
+        : {}),
+      // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.
+      ...(data.contatos === undefined || data.contatos === null
+        ? {}
+        : {
+            contatos: sanitizeContatos(data.contatos),
+            ...(data.expectedVersion !== undefined
+              ? { expectedVersion: data.expectedVersion }
+              : (data.contatos_version !== undefined
+                ? { expectedVersion: data.contatos_version }
+                : {})),
+          }),
+      ...(data.locais_entrega === undefined
+        ? {}
+        : {
+            locais_entrega: Array.isArray(data.locais_entrega)
+              ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)
+              : [],
+          }),
+      // Campo não carregado: omitir (≠ limpar; ≠ inventar default comercial/fiscal).
+      ...(data.condicao_comercial === undefined || data.condicao_comercial === null
+        ? {}
+        : {
+            condicao_comercial: {
+              ...(data.condicao_comercial || {}),
+              tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
+              forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),
+              percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),
+              condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),
+              limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),
+              limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),
+              situacao_credito: sanitizeText(
+                data.condicao_comercial?.situacao_credito
+                  || (typeof calcularSituacaoCredito === 'function' ? calcularSituacaoCredito() : 'OK'),
+                40,
+              ),
+            },
+          }),
+      ...(data.configuracao_fiscal === undefined || data.configuracao_fiscal === null
+        ? {}
+        : {
+            configuracao_fiscal: {
+              ...(data.configuracao_fiscal || {}),
+              regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),
+              cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),
+              contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),
+              tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),
+              isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),
+              isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
+              observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000),
+            },
+          }),
+      ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),
+      empresa_id: data.empresa_id || empresaAtual?.id,
+      group_id: data.group_id || groupId,
+    };
+  };
 
   const { data: tabelasPreco = [] } = useQuery({
     queryKey: ['tabelas-preco', contextKey],
@@ -441,6 +486,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       tipo: "Pessoa Física",
       status: "Prospect",
       nome: "",
+      nome_social: "",
       razao_social: "",
       nome_fantasia: "",
       cpf: "",
@@ -448,6 +494,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       rg: "",
       inscricao_estadual: "",
       inscricao_municipal: "",
+      email: "",
+      telefone: "",
+      celular: "",
+      origem: "",
       regiao_atendimento: "Sudeste",
       endereco_principal: {
         cep: "",
@@ -488,9 +538,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       group_id: groupId,
     },
     mapToForm: (record) => {
-      // HTTP MASTER: documento unificado → cpf/cnpj da UI (zeros preservados; não inventa).
+      // HTTP MASTER: documento(/_normalizado) → cpf/cnpj da UI (zeros preservados; não inventa).
       const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
-      const docRaw = record?.documento ?? record?.cpf_cnpj ?? '';
+      const docRaw = !blank(record?.documento)
+        ? record.documento
+        : (!blank(record?.cpf_cnpj)
+          ? record.cpf_cnpj
+          : (record?.documento_normalizado ?? ''));
       const doc = String(docRaw ?? '').trim();
       const digits = doc.replace(/\D/g, '');
       let cpf = record?.cpf;
@@ -499,10 +553,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         if (blank(cpf) && digits.length === 11) cpf = doc;
         if (blank(cnpj) && digits.length === 14) cnpj = doc;
       }
+      const nome = blank(record?.nome) && !blank(record?.razao_social)
+        ? String(record.razao_social).trim()
+        : record?.nome;
       return {
         ...record,
+        ...(nome !== undefined ? { nome } : {}),
         ...(cpf !== undefined ? { cpf } : {}),
         ...(cnpj !== undefined ? { cnpj } : {}),
+        // Alinha documento ao campo editável para pickDoc não reenviar residual antigo.
+        ...(!blank(cnpj) ? { documento: cnpj } : (!blank(cpf) ? { documento: cpf } : {})),
         // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.
         ...(record.contatos === undefined || record.contatos === null
           ? {}
@@ -513,23 +573,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         ...(record.locais_entrega === undefined
           ? {}
           : { locais_entrega: record.locais_entrega || [] }),
-        condicao_comercial: record.condicao_comercial || {
-          tabela_preco_id: "",
-          forma_pagamento_padrao_id: "",
-          percentual_desconto: 0,
-          condicao_pagamento: "À Vista",
-          limite_credito: 0,
-          limite_credito_utilizado: 0,
-          situacao_credito: "OK",
-        },
-        configuracao_fiscal: record.configuracao_fiscal || {
-          regime_tributario: "Simples Nacional",
-          cfop_padrao_venda: "5102",
-          contribuinte_icms: true,
-          tipo_contribuinte: "1 - Contribuinte",
-          isento_ipi: false,
-          isento_icms: false,
-        },
+        // Ausência ≠ inventar "OK"/R$0/"Simples Nacional" (desconhecido ≠ confirmado).
+        ...(record.condicao_comercial === undefined || record.condicao_comercial === null
+          ? {}
+          : { condicao_comercial: record.condicao_comercial }),
+        ...(record.configuracao_fiscal === undefined || record.configuracao_fiscal === null
+          ? {}
+          : { configuracao_fiscal: record.configuracao_fiscal }),
         ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),
       };
     },
@@ -705,6 +755,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       const sameScope = isFormScopeCurrent();
       const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);
       const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
+      const storageRequired = isClienteMasterStorageRequired(err);
       // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.
       if (partial) {
         queryClient.invalidateQueries({ queryKey: ['clientes'] });
@@ -712,9 +763,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       toast({
         title: !sameScope
           ? "Contexto alterado"
-          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),
+          : (storageRequired
+            ? "❌ Extensões MASTER sem storage revisado"
+            : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente")),
         description: sameScope
-          ? (err?.message || String(error))
+          ? (storageRequired
+            ? "Schema antigo ou colunas RG/caixa postal/produtor ainda não aplicadas. Rascunho preservado — omissão ≠ limpar; sem inventar sucesso."
+            : (err?.message || String(error)))
           : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
@@ -878,6 +933,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   const calcularSituacaoCredito = () => {
+    // Sem bloco comercial carregado: não fingir OK/R$0.
+    if (formData.condicao_comercial === undefined || formData.condicao_comercial === null) {
+      return 'Desconhecido';
+    }
     const limite = formData.condicao_comercial?.limite_credito || 0;
     const utilizado = formData.condicao_comercial?.limite_credito_utilizado || 0;
     const percentualUtilizado = limite > 0 ? (utilizado / limite) * 100 : 0;
@@ -912,10 +971,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           complemento: dados.endereco_completo?.complemento || prev.endereco_principal.complemento
         },
         configuracao_fiscal: {
-          ...prev.configuracao_fiscal,
+          ...(prev.configuracao_fiscal || {}),
           regime_tributario: dados.porte === 'MEI' ? 'MEI' :
                             ['ME', 'EPP'].includes(dados.porte) ? 'Simples Nacional' :
-                            prev.configuracao_fiscal.regime_tributario
+                            (prev.configuracao_fiscal?.regime_tributario || 'Simples Nacional'),
         }
       };
 
@@ -1053,7 +1112,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           </div>
       </div>
 
-      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined || formData.documentos === undefined) && (
+      {Boolean(cliente?.id) && (
+        formData.contatos === undefined
+        || formData.locais_entrega === undefined
+        || formData.documentos === undefined
+        || formData.condicao_comercial === undefined
+        || formData.configuracao_fiscal === undefined
+      ) && (
         <div
           className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"
           data-pendencia="cliente-parcial"
@@ -1063,9 +1128,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             formData.contatos === undefined ? "contatos" : null,
             formData.locais_entrega === undefined ? "endereços de entrega/cobrança" : null,
             formData.documentos === undefined ? "documentos" : null,
+            formData.condicao_comercial === undefined ? "condição comercial/crédito" : null,
+            formData.configuracao_fiscal === undefined ? "configuração fiscal" : null,
           ].filter(Boolean).join(", ")
             + " ainda não recuperados nesta carga — o salvamento omite esses campos (sem apagar a fonte)."}
           {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral. Celular ≠ WhatsApp.
+          {" "}Desconhecido ≠ confirmado (crédito/regime).
         </div>
       )}
 
@@ -1169,10 +1237,81 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   <Label htmlFor="nome">Nome / Razão Social *</Label>
                   <Input
                     id="nome"
-                    value={formData.nome}
+                    value={formData.nome ?? ''}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                     required
                   />
+                </div>
+
+                <div className="col-span-2">
+                  <Label htmlFor="nome_social">Nome social</Label>
+                  <Input
+                    id="nome_social"
+                    value={formData.nome_social ?? ''}
+                    onChange={(e) => setFormData({ ...formData, nome_social: e.target.value })}
+                    data-campo="nome_social"
+                    placeholder={formData.nome_social === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                </div>
+
+                {(formData.origem || formData.codigo_legado || formData.source_system) && (
+                  <div
+                    className="col-span-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                    data-fonte="cliente-procedencia"
+                    role="status"
+                  >
+                    <p>
+                      Procedência:
+                      {' '}
+                      <span data-campo="origem">{formData.origem || '—'}</span>
+                      {formData.codigo_legado ? (
+                        <>
+                          {' · '}código legado <span data-campo="codigo_legado">{String(formData.codigo_legado)}</span>
+                        </>
+                      ) : null}
+                      {formData.source_system ? (
+                        <>
+                          {' · '}fonte <span data-campo="source_system">{String(formData.source_system)}</span>
+                        </>
+                      ) : null}
+                    </p>
+                    <p className="mt-1 text-slate-500">
+                      Campos de procedência importada não são alteráveis aqui — omitir no save ≠ limpar.
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email ?? ''}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    data-campo="email"
+                    placeholder={formData.email === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    value={formData.telefone ?? ''}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    data-campo="telefone"
+                    placeholder={formData.telefone === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="celular">Celular</Label>
+                  <Input
+                    id="celular"
+                    value={formData.celular ?? ''}
+                    onChange={(e) => setFormData({ ...formData, celular: e.target.value })}
+                    data-campo="celular"
+                    placeholder={formData.celular === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Celular ≠ WhatsApp (canal tipado só em Contatos).</p>
                 </div>
 
                 {formData.tipo === "Pessoa Jurídica" && (
@@ -1226,8 +1365,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
                       <Input
                         id="inscricao_estadual"
-                        value={formData.inscricao_estadual}
+                        value={formData.inscricao_estadual ?? ''}
                         onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                        data-campo="inscricao_estadual"
+                        placeholder={formData.inscricao_estadual === undefined ? 'Não recuperado nesta carga' : undefined}
                       />
                     </div>
 
@@ -1235,8 +1376,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Label htmlFor="inscricao_municipal">Inscrição Municipal</Label>
                       <Input
                         id="inscricao_municipal"
-                        value={formData.inscricao_municipal}
+                        value={formData.inscricao_municipal ?? ''}
                         onChange={(e) => setFormData({ ...formData, inscricao_municipal: e.target.value })}
+                        data-campo="inscricao_municipal"
+                        placeholder={formData.inscricao_municipal === undefined ? 'Não recuperado nesta carga' : undefined}
                       />
                     </div>
                   </>
@@ -1277,15 +1420,76 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                     </div>
 
                     <div>
-                      <Label htmlFor="rg">RG</Label>
-                      <Input
+                  <Label htmlFor="rg">RG</Label>
+                  <Input
                         id="rg"
-                        value={formData.rg}
+                        value={formData.rg ?? ''}
                         onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
+                        data-campo="rg"
+                        data-persistencia={formData.rg === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.rg === undefined ? 'Não recuperado nesta carga' : undefined}
                       />
+                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-master-extra">
+                        RG no MASTER existente — omitir ≠ limpar; schema antigo responde 503 STORAGE_REQUIRED (sem default).
+                      </p>
                     </div>
                   </>
                 )}
+
+                <div className="col-span-2 pt-4 border-t space-y-3" data-block="cliente-master-extras">
+                  <h3 className="font-semibold">Extensões MASTER (caixa postal / produtor)</h3>
+                  <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5" role="status" data-fonte="cliente-master-extras-contrato">
+                    Contrato Codex no mesmo Cliente: numero_caixa_postal, cep_caixa_postal, caixa_postal_cobranca,
+                    inscricao_produtor_rural. Opcionais; omissão ≠ limpar. SQL candidato pode ainda não estar aplicado —
+                    escrita explícita com storage ausente → 503 CLIENTE_MASTER_STORAGE_REQUIRED (não inventar sucesso).
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="numero_caixa_postal">Nº caixa postal</Label>
+                      <Input
+                        id="numero_caixa_postal"
+                        value={formData.numero_caixa_postal ?? ''}
+                        onChange={(e) => setFormData({ ...formData, numero_caixa_postal: e.target.value })}
+                        data-campo="numero_caixa_postal"
+                        data-persistencia={formData.numero_caixa_postal === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.numero_caixa_postal === undefined ? 'Não recuperado nesta carga' : undefined}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cep_caixa_postal">CEP caixa postal</Label>
+                      <Input
+                        id="cep_caixa_postal"
+                        value={formData.cep_caixa_postal ?? ''}
+                        onChange={(e) => setFormData({ ...formData, cep_caixa_postal: e.target.value })}
+                        data-campo="cep_caixa_postal"
+                        data-persistencia={formData.cep_caixa_postal === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.cep_caixa_postal === undefined ? 'Não recuperado nesta carga' : '00000000'}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="caixa_postal_cobranca">Caixa postal cobrança</Label>
+                      <Input
+                        id="caixa_postal_cobranca"
+                        value={formData.caixa_postal_cobranca ?? ''}
+                        onChange={(e) => setFormData({ ...formData, caixa_postal_cobranca: e.target.value })}
+                        data-campo="caixa_postal_cobranca"
+                        data-persistencia={formData.caixa_postal_cobranca === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.caixa_postal_cobranca === undefined ? 'Não recuperado nesta carga' : undefined}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="inscricao_produtor_rural">Inscrição produtor rural</Label>
+                      <Input
+                        id="inscricao_produtor_rural"
+                        value={formData.inscricao_produtor_rural ?? ''}
+                        onChange={(e) => setFormData({ ...formData, inscricao_produtor_rural: e.target.value })}
+                        data-campo="inscricao_produtor_rural"
+                        data-persistencia={formData.inscricao_produtor_rural === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.inscricao_produtor_rural === undefined ? 'Não recuperado nesta carga' : undefined}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div className="col-span-2 pt-4 border-t">
                   <h3 className="font-semibold mb-3">Endereço Principal</h3>
@@ -1546,8 +1750,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   <Label htmlFor="observacoes">Observações Internas</Label>
                   <Textarea
                     id="observacoes"
-                    value={formData.observacoes}
+                    value={formData.observacoes ?? ''}
                     onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                    data-campo="observacoes"
+                    placeholder={formData.observacoes === undefined ? 'Não recuperado nesta carga — omitir ≠ limpar' : undefined}
                     rows={3}
                   />
                 </div>
@@ -1574,14 +1780,28 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 </p>
               )}
               {contatosQuarentena.length > 0 && (
-                <p
-                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                <div
+                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 space-y-1"
                   data-fonte="contatos-quarentena"
                   role="status"
                 >
-                  {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,
-                  não exibidos como contato válido.
-                </p>
+                  <p>
+                    {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,
+                    não confirmados como contato válido. Revisar/corrigir tipo canônico antes de tratar como válido.
+                  </p>
+                  <ul className="list-disc pl-4" data-quarentena-lista="contatos">
+                    {contatosQuarentena.slice(0, 20).map((row, idx) => {
+                      const tipo = String(row?.tipo ?? '').trim() || '(sem tipo)';
+                      const valor = String(row?.valor ?? '').trim() || '(sem valor)';
+                      const nome = String(row?.nome ?? '').trim();
+                      return (
+                        <li key={String(row?.id || `${tipo}-${valor}-${idx}`)}>
+                          {nome ? `${nome}: ` : ''}{tipo} — {valor}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               )}
               <GerenciarContatosClienteForm
                 contatos={contatosViewForUi}
@@ -1610,6 +1830,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
             <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">
               <Card className={`border-2 ${
+                calcularSituacaoCredito() === 'Desconhecido' ? 'border-amber-300 bg-amber-50' :
                 calcularSituacaoCredito() === 'OK' ? 'border-green-300 bg-green-50' :
                 calcularSituacaoCredito() === 'Alerta' ? 'border-orange-300 bg-orange-50' :
                 'border-red-300 bg-red-50'
@@ -1617,15 +1838,24 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <AlertCircle className={`w-6 h-6 ${
+                      calcularSituacaoCredito() === 'Desconhecido' ? 'text-amber-700' :
                       calcularSituacaoCredito() === 'OK' ? 'text-green-600' :
                       calcularSituacaoCredito() === 'Alerta' ? 'text-orange-600' :
                       'text-red-600'
                     }`} />
                     <div>
-                      <p className="font-semibold">Situação de Crédito: {calcularSituacaoCredito()}</p>
+                      <p className="font-semibold" data-credito-estado={calcularSituacaoCredito()}>
+                        Situação de Crédito: {calcularSituacaoCredito()}
+                      </p>
                       <p className="text-sm text-slate-600">
-                        Utilizado: R$ {(formData.condicao_comercial?.limite_credito_utilizado || 0).toLocaleString('pt-BR')}
-                        {' '}de R$ {(formData.condicao_comercial?.limite_credito || 0).toLocaleString('pt-BR')}
+                        {formData.condicao_comercial === undefined || formData.condicao_comercial === null
+                          ? 'Condição comercial ainda não recuperada nesta carga — sem inventar limite.'
+                          : (
+                            <>
+                              Utilizado: R$ {(formData.condicao_comercial?.limite_credito_utilizado || 0).toLocaleString('pt-BR')}
+                              {' '}de R$ {(formData.condicao_comercial?.limite_credito || 0).toLocaleString('pt-BR')}
+                            </>
+                          )}
                       </p>
                     </div>
                   </div>
@@ -1828,17 +2058,17 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 <div>
                   <Label htmlFor="regime_tributario">Regime Tributário</Label>
                   <Select
-                    value={formData.configuracao_fiscal?.regime_tributario || "Simples Nacional"}
+                    value={formData.configuracao_fiscal?.regime_tributario || undefined}
                     onValueChange={(value) => setFormData({
                       ...formData,
                       configuracao_fiscal: {
-                        ...formData.configuracao_fiscal,
+                        ...(formData.configuracao_fiscal || {}),
                         regime_tributario: value
                       }
                     })}
                   >
-                    <SelectTrigger id="regime_tributario">
-                      <SelectValue />
+                    <SelectTrigger id="regime_tributario" data-fiscal-carregado={formData.configuracao_fiscal === undefined ? 'nao' : 'sim'}>
+                      <SelectValue placeholder={formData.configuracao_fiscal === undefined ? 'Não recuperado nesta carga' : 'Selecione...'} />
                     </SelectTrigger>
                     <SelectContent className="z-[99999]">
                       <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
@@ -1972,11 +2202,27 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
                   data-fonte="documentos-limitacao-http"
                   data-pendencia="documentos-anexos-bff"
+                  data-documentos-estado={
+                    formData.documentos === undefined
+                      ? 'nao-carregado'
+                      : formData.documentos === null
+                        ? 'desconhecido'
+                        : Array.isArray(formData.documentos) && formData.documentos.length === 0
+                          ? 'vazio'
+                          : 'presente-bff-pendente'
+                  }
                   role="status"
                 >
                   Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.
                   Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER
                   fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.
+                  {formData.documentos === undefined
+                    ? ' Estado: não carregado nesta carga (omit ≠ limpar).'
+                    : formData.documentos === null
+                      ? ' Estado: desconhecido (null).'
+                      : Array.isArray(formData.documentos) && formData.documentos.length === 0
+                        ? ' Estado: vazio na origem.'
+                        : ' Estado: anexos no rascunho — save HTTP bloqueado até BFF.'}
                 </p>
               )}
               <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">

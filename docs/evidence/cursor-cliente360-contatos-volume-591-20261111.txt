@@ -1,0 +1,22 @@
+#591 — Contatos MASTER na Central360 + volume 2k/5k (2026-11-11 America/Sao_Paulo)
+
+## Estado prévio
+- Pareceres ctx/unidade/Pedidos403/cliente_local/Fechar≠Cancelar: preservados (tips PR592).
+- Contatos[] MASTER já no Completo/HTTP; painel Cliente360 não exibia cargo/canais/quarentena.
+- Volume só cobria 150.
+
+## Lote
+1) `centralCliente360Contatos.js` — classifica absent/empty/unknown/ok/quarentena/forbidden/unavailable.
+2) `CentralCliente360Panel` — GET `entities.Cliente` com captura de escopo pós-await;
+   lista válidos (cargo, canal, principal, obs) + quarentena; Celular ≠ WhatsApp.
+3) Volume sintético 2000 (20×100, sem teto silencioso) + 5000 (busca ≠ 1ª página).
+4) Peels stage51 (import/query/UI).
+
+## Não feito neste tip
+- HML / reativar 1500 ensaio / SHA API+web combinados (Codex).
+- ContatoB2B FK; documentos[] anexos BFF; RG contrato BFF (UI já fail-closed).
+- Provedores WhatsApp/GoTo/e-mail externos.
+
+## Testes
+central-cliente360-contatos-master-591 · cliente-volume-paginacao-591 · read-boundary · pagina-ui
+→ pass

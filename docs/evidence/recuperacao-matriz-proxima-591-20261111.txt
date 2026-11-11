@@ -28,7 +28,9 @@ Classificação de lacunas (não inventar registro):
 - D rota ausente documentada ≠ criar paralelo
 
 Próximo lote recuperação executável (Cursor, sem tocar reserva Codex HML):
-1. Fechar≠Cancelar (este tip) + CI
-2. Aceite :15173 coordenado com Codex no freeze `8650fd4d`
-3. Contadores faixa Central quando endpoint oficial
-4. Unificar consumidores orfãos já listados em recovery sky — um lote por vez
+1. Fechar≠Cancelar — feito (`e71808a3`/`e3b32276`)
+2. Pareceres ctx/unidade/Pedidos403 + cliente_local RBAC + omit crédito/fiscal — tip PR#592
+3. Aceite :15173 coordenado com Codex no freeze `8650fd4d` + SHA API+web
+4. Contadores faixa Central quando endpoint oficial
+5. Unificar consumidores orfãos já listados em recovery sky — um lote por vez
+6. Persistência BFF campos rich (156/34) — Codex contrato; UI já omite sem wipe

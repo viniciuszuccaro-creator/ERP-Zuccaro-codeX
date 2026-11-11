@@ -1,0 +1,14 @@
+#591 — Locais Central360: parcial ≠ completo (2026-11-11 America/Sao_Paulo)
+
+## Problema
+Projeção `projectLocal` só enviava cidade/UF; UI mostrava `cidade/uf` sem
+sinalizar `endereco_incompleto` já existente no row de locais.
+
+## Correção
+- BFF: tipagem + projeção de endereco_incompleto, logradouro, numero, bairro, cep;
+  quando incompleto, logradouro/número/bairro/cep vão null (não fingir completo).
+- UI: badge “Endereço incompleto” vs resumo; localidade cidade/UF separada.
+- Peels stage51.
+
+## Testes
+cliente-central360-identity-ie-591 · read-boundary · pagina-ui

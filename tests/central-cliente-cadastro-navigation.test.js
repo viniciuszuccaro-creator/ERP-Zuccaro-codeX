@@ -215,10 +215,14 @@ test('component wiring forwards technical ID and receipt to the existing editor,
   for (const prop of ['initialRecordId={initialClienteId}', 'navigationReceipt={navigationReceipt}', 'reopenRequestId={reopenRequestId}', 'componenteEdicao={CadastroClienteCompleto}']) assert.ok(tab.includes(prop));
   const central = read('src/components/comercial/CentralCliente360Panel.jsx');
   assert.ok(central.includes("hasCadastroEntityPermission('Cliente', 'visualizar'"));
-  assert.ok(central.includes("hasCadastroEntityPermission('Cliente', 'editar'"));
+  // Abrir cadastro: só visualizar. Editar/salvar continua no Completo (não exigir editar no gate de abertura).
+  assert.ok(central.includes('Abrir cadastro mestre: visualizar basta'));
+  assert.equal(central.includes("hasCadastroEntityPermission('Cliente', 'editar'"), false);
   assert.ok(central.includes('cadastroAllowedRef.current'));
   assert.ok(central.includes('central360-abrir-cadastro-cliente'));
   assert.ok(central.includes("import('@/components/comercial/ClientesTab')"));
+  const completo = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  assert.ok(/podeEditar|Cadastros\.Cliente\.editar/.test(completo));
 });
 
 test('Group view preserves its canonical scope instead of impersonating the Central target company', async () => {

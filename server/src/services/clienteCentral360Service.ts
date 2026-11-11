@@ -56,6 +56,11 @@ export type ClienteCentral360Identity = {
   email: string | null;
   telefone: string | null;
   celular: string | null;
+  /** IE/IM já no row Cliente — expor na Central (≠ inventar; null = ausente). */
+  inscricao_estadual: string | null;
+  inscricao_municipal: string | null;
+  /** Observações: só com permissão sensível; senão null (= não autorizado ≠ limpar). */
+  observacoes: string | null;
   status: string;
   origem: string;
   ativo: boolean;
@@ -116,6 +121,12 @@ export type ClienteCentral360LocalProjection = {
   cidade: string;
   uf: string;
   pais: string;
+  /** true = não apresentar como endereço completo (só localidade). */
+  endereco_incompleto: boolean;
+  logradouro: string | null;
+  numero: string | null;
+  bairro: string | null;
+  cep: string | null;
   ativo: boolean;
   origem: string;
   finalidades: Array<{ finalidade: string; principal: boolean; ativo: boolean }>;
@@ -205,6 +216,9 @@ function projectIdentity(row: Cliente, canViewSensitive: boolean): ClienteCentra
     email: canViewSensitive ? row.email : maskEmail(row.email),
     telefone: canViewSensitive ? row.telefone : maskPhone(row.telefone),
     celular: canViewSensitive ? row.celular : maskPhone(row.celular),
+    inscricao_estadual: row.inscricao_estadual,
+    inscricao_municipal: row.inscricao_municipal,
+    observacoes: canViewSensitive ? row.observacoes : null,
     status: row.status,
     origem: row.origem,
     ativo: row.ativo,
@@ -272,12 +286,18 @@ function projectLocal(row: {
   cidade: string;
   uf: string;
   pais: string;
+  endereco_incompleto?: boolean;
+  logradouro?: string | null;
+  numero?: string | null;
+  bairro?: string | null;
+  cep?: string | null;
   ativo: boolean;
   origem: string;
   created_at: string;
   updated_at: string;
   finalidades: Array<{ finalidade: string; principal: boolean; ativo: boolean }>;
 }): ClienteCentral360LocalProjection {
+  const incompleto = row.endereco_incompleto === true;
   return {
     id: row.id,
     cliente_id: row.cliente_id,
@@ -285,6 +305,12 @@ function projectLocal(row: {
     cidade: row.cidade,
     uf: row.uf,
     pais: row.pais,
+    endereco_incompleto: incompleto,
+    // Parcial ≠ completo: sem logradouro/número no fio quando incompleto.
+    logradouro: incompleto ? null : (row.logradouro ?? null),
+    numero: incompleto ? null : (row.numero ?? null),
+    bairro: incompleto ? null : (row.bairro ?? null),
+    cep: incompleto ? null : (row.cep ?? null),
     ativo: row.ativo,
     origem: row.origem,
     finalidades: row.finalidades

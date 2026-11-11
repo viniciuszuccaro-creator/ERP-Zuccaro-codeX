@@ -1,17 +1,17 @@
 test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const payload = [
-    '    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.',
-    '    ...(data.contatos === undefined || data.contatos === null',
-    '      ? {}',
-    '      : {',
-    '          contatos: sanitizeContatos(data.contatos),',
-    '          ...(data.expectedVersion !== undefined',
-    '            ? { expectedVersion: data.expectedVersion }',
-    '            : (data.contatos_version !== undefined',
-    '              ? { expectedVersion: data.contatos_version }',
-    '              : {})),',
-    '        }),',
+    '      // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.',
+    '      ...(data.contatos === undefined || data.contatos === null',
+    '        ? {}',
+    '        : {',
+    '            contatos: sanitizeContatos(data.contatos),',
+    '            ...(data.expectedVersion !== undefined',
+    '              ? { expectedVersion: data.expectedVersion }',
+    '              : (data.contatos_version !== undefined',
+    '                ? { expectedVersion: data.contatos_version }',
+    '                : {})),',
+    '          }),',
   ].join('\n');
   const mapper = [
     '        // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.',
@@ -23,20 +23,20 @@ test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito cola
     '          : {}),',
   ].join('\n');
   const locaisPayload = [
-    '    ...(data.locais_entrega === undefined',
-    '      ? {}',
-    '      : {',
-    '          locais_entrega: Array.isArray(data.locais_entrega)',
-    '            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)',
-    '            : [],',
-    '        }),',
+    '      ...(data.locais_entrega === undefined',
+    '        ? {}',
+    '        : {',
+    '            locais_entrega: Array.isArray(data.locais_entrega)',
+    '              ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)',
+    '              : [],',
+    '          }),',
   ].join('\n');
   const locaisMapper = [
     '        ...(record.locais_entrega === undefined',
     '          ? {}',
     '          : { locais_entrega: record.locais_entrega || [] }),',
   ].join('\n');
-  const docsPayload = '    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),';
+  const docsPayload = '      ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),';
   const docsMapper = '        ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),';
   for (const hunk of [payload, mapper, locaisPayload, locaisMapper, docsPayload, docsMapper]) {
     assert.equal(source.split(hunk).length - 1, 1);
@@ -62,9 +62,9 @@ test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito cola
 test('Cliente contatos: remainder mantem alteracao externa visivel ao hash integral', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const original = clienteContactPresenceRemainder(source);
-  const target = '    nome_fantasia: sanitizeText(data.nome_fantasia, 180),';
+  const target = "      ...ownText('nome_fantasia', 180),";
   assert.equal(source.split(target).length - 1, 1);
-  const forged = source.replace(target, "    nome_fantasia: 'FORGED',");
+  const forged = source.replace(target, "      ...ownText('FORGED_FANTASIA', 180),");
   assert.notEqual(createHash('sha256').update(clienteContactPresenceRemainder(forged)).digest('hex'),
     createHash('sha256').update(original).digest('hex'));
 });
@@ -106,9 +106,13 @@ function clienteContactPresenceRemainder(source) {
   // #591: mapToForm com espelho documento→cpf/cnpj → forma omit anterior.
   source = once(source,
     '    mapToForm: (record) => {\n'
-    + '      // HTTP MASTER: documento unificado → cpf/cnpj da UI (zeros preservados; não inventa).\n'
+    + '      // HTTP MASTER: documento(/_normalizado) → cpf/cnpj da UI (zeros preservados; não inventa).\n'
     + '      const blank = (v) => v === undefined || v === null || (typeof v === \'string\' && v.trim() === \'\');\n'
-    + '      const docRaw = record?.documento ?? record?.cpf_cnpj ?? \'\';\n'
+    + '      const docRaw = !blank(record?.documento)\n'
+    + '        ? record.documento\n'
+    + '        : (!blank(record?.cpf_cnpj)\n'
+    + '          ? record.cpf_cnpj\n'
+    + '          : (record?.documento_normalizado ?? \'\'));\n'
     + '      const doc = String(docRaw ?? \'\').trim();\n'
     + '      const digits = doc.replace(/\\D/g, \'\');\n'
     + '      let cpf = record?.cpf;\n'
@@ -117,10 +121,16 @@ function clienteContactPresenceRemainder(source) {
     + '        if (blank(cpf) && digits.length === 11) cpf = doc;\n'
     + '        if (blank(cnpj) && digits.length === 14) cnpj = doc;\n'
     + '      }\n'
+    + '      const nome = blank(record?.nome) && !blank(record?.razao_social)\n'
+    + '        ? String(record.razao_social).trim()\n'
+    + '        : record?.nome;\n'
     + '      return {\n'
     + '        ...record,\n'
+    + '        ...(nome !== undefined ? { nome } : {}),\n'
     + '        ...(cpf !== undefined ? { cpf } : {}),\n'
     + '        ...(cnpj !== undefined ? { cnpj } : {}),\n'
+    + '        // Alinha documento ao campo editável para pickDoc não reenviar residual antigo.\n'
+    + '        ...(!blank(cnpj) ? { documento: cnpj } : (!blank(cpf) ? { documento: cpf } : {})),\n'
     + '        // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.\n'
     + '        ...(record.contatos === undefined || record.contatos === null\n'
     + '          ? {}\n'
@@ -131,23 +141,13 @@ function clienteContactPresenceRemainder(source) {
     + '        ...(record.locais_entrega === undefined\n'
     + '          ? {}\n'
     + '          : { locais_entrega: record.locais_entrega || [] }),\n'
-    + '        condicao_comercial: record.condicao_comercial || {\n'
-    + '          tabela_preco_id: "",\n'
-    + '          forma_pagamento_padrao_id: "",\n'
-    + '          percentual_desconto: 0,\n'
-    + '          condicao_pagamento: "À Vista",\n'
-    + '          limite_credito: 0,\n'
-    + '          limite_credito_utilizado: 0,\n'
-    + '          situacao_credito: "OK",\n'
-    + '        },\n'
-    + '        configuracao_fiscal: record.configuracao_fiscal || {\n'
-    + '          regime_tributario: "Simples Nacional",\n'
-    + '          cfop_padrao_venda: "5102",\n'
-    + '          contribuinte_icms: true,\n'
-    + '          tipo_contribuinte: "1 - Contribuinte",\n'
-    + '          isento_ipi: false,\n'
-    + '          isento_icms: false,\n'
-    + '        },\n'
+    + '        // Ausência ≠ inventar "OK"/R$0/"Simples Nacional" (desconhecido ≠ confirmado).\n'
+    + '        ...(record.condicao_comercial === undefined || record.condicao_comercial === null\n'
+    + '          ? {}\n'
+    + '          : { condicao_comercial: record.condicao_comercial }),\n'
+    + '        ...(record.configuracao_fiscal === undefined || record.configuracao_fiscal === null\n'
+    + '          ? {}\n'
+    + '          : { configuracao_fiscal: record.configuracao_fiscal }),\n'
     + '        ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),\n'
     + '      };\n'
     + '    },\n',
@@ -177,7 +177,13 @@ function clienteContactPresenceRemainder(source) {
     + '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),\n'
     + '    }),\n');
   source = once(source,
-    '      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined || formData.documentos === undefined) && (\n'
+    '      {Boolean(cliente?.id) && (\n'
+    + '        formData.contatos === undefined\n'
+    + '        || formData.locais_entrega === undefined\n'
+    + '        || formData.documentos === undefined\n'
+    + '        || formData.condicao_comercial === undefined\n'
+    + '        || formData.configuracao_fiscal === undefined\n'
+    + '      ) && (\n'
     + '        <div\n'
     + '          className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"\n'
     + '          data-pendencia="cliente-parcial"\n'
@@ -187,9 +193,12 @@ function clienteContactPresenceRemainder(source) {
     + '            formData.contatos === undefined ? "contatos" : null,\n'
     + '            formData.locais_entrega === undefined ? "endereços de entrega/cobrança" : null,\n'
     + '            formData.documentos === undefined ? "documentos" : null,\n'
+    + '            formData.condicao_comercial === undefined ? "condição comercial/crédito" : null,\n'
+    + '            formData.configuracao_fiscal === undefined ? "configuração fiscal" : null,\n'
     + '          ].filter(Boolean).join(", ")\n'
     + '            + " ainda não recuperados nesta carga — o salvamento omite esses campos (sem apagar a fonte)."}\n'
     + '          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral. Celular ≠ WhatsApp.\n'
+    + '          {" "}Desconhecido ≠ confirmado (crédito/regime).\n'
     + '        </div>\n'
     + '      )}\n'
     + '\n'
@@ -307,6 +316,7 @@ function clienteContactPresenceRemainder(source) {
     + '      const sameScope = isFormScopeCurrent();\n'
     + '      const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);\n'
     + '      const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;\n'
+    + '      const storageRequired = isClienteMasterStorageRequired(err);\n'
     + '      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.\n'
     + '      if (partial) {\n'
     + '        queryClient.invalidateQueries({ queryKey: [\'clientes\'] });\n'
@@ -314,9 +324,13 @@ function clienteContactPresenceRemainder(source) {
     + '      toast({\n'
     + '        title: !sameScope\n'
     + '          ? "Contexto alterado"\n'
-    + '          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),\n'
+    + '          : (storageRequired\n'
+    + '            ? "❌ Extensões MASTER sem storage revisado"\n'
+    + '            : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente")),\n'
     + '        description: sameScope\n'
-    + '          ? (err?.message || String(error))\n'
+    + '          ? (storageRequired\n'
+    + '            ? "Schema antigo ou colunas RG/caixa postal/produtor ainda não aplicadas. Rascunho preservado — omissão ≠ limpar; sem inventar sucesso."\n'
+    + '            : (err?.message || String(error)))\n'
     + '          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",\n'
     + '        variant: "destructive"\n'
     + '      });\n'
@@ -350,14 +364,28 @@ function clienteContactPresenceRemainder(source) {
     + '                </p>\n'
     + '              )}\n'
     + '              {contatosQuarentena.length > 0 && (\n'
-    + '                <p\n'
-    + '                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"\n'
+    + '                <div\n'
+    + '                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 space-y-1"\n'
     + '                  data-fonte="contatos-quarentena"\n'
     + '                  role="status"\n'
     + '                >\n'
-    + '                  {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,\n'
-    + '                  não exibidos como contato válido.\n'
-    + '                </p>\n'
+    + '                  <p>\n'
+    + '                    {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,\n'
+    + '                    não confirmados como contato válido. Revisar/corrigir tipo canônico antes de tratar como válido.\n'
+    + '                  </p>\n'
+    + '                  <ul className="list-disc pl-4" data-quarentena-lista="contatos">\n'
+    + '                    {contatosQuarentena.slice(0, 20).map((row, idx) => {\n'
+    + '                      const tipo = String(row?.tipo ?? \'\').trim() || \'(sem tipo)\';\n'
+    + '                      const valor = String(row?.valor ?? \'\').trim() || \'(sem valor)\';\n'
+    + '                      const nome = String(row?.nome ?? \'\').trim();\n'
+    + '                      return (\n'
+    + '                        <li key={String(row?.id || `${tipo}-${valor}-${idx}`)}>\n'
+    + '                          {nome ? `${nome}: ` : \'\'}{tipo} — {valor}\n'
+    + '                        </li>\n'
+    + '                      );\n'
+    + '                    })}\n'
+    + '                  </ul>\n'
+    + '                </div>\n'
     + '              )}\n'
     + '              <GerenciarContatosClienteForm\n'
     + '                contatos={contatosViewForUi}\n'
@@ -398,44 +426,220 @@ function clienteContactPresenceRemainder(source) {
     + '              />\n'
     + '            </TabsContent>\n');
   source = once(source,
-    '    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.\n'
-    + '    ...(data.contatos === undefined || data.contatos === null\n'
-    + '      ? {}\n'
-    + '      : {\n'
-    + '          contatos: sanitizeContatos(data.contatos),\n'
-    + '          ...(data.expectedVersion !== undefined\n'
-    + '            ? { expectedVersion: data.expectedVersion }\n'
-    + '            : (data.contatos_version !== undefined\n'
-    + '              ? { expectedVersion: data.contatos_version }\n'
-    + '              : {})),\n'
-    + '        }),',
-    '    contatos: sanitizeContatos(data.contatos),');
+    '      // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.\n'
+    + '      ...(data.contatos === undefined || data.contatos === null\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            contatos: sanitizeContatos(data.contatos),\n'
+    + '            ...(data.expectedVersion !== undefined\n'
+    + '              ? { expectedVersion: data.expectedVersion }\n'
+    + '              : (data.contatos_version !== undefined\n'
+    + '                ? { expectedVersion: data.contatos_version }\n'
+    + '                : {})),\n'
+    + '          }),',
+    '      contatos: sanitizeContatos(data.contatos),');
   // mapToForm já foi peeleado à forma mínima; peel residual do omit→atributo.
   source = once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
     '      contatos: record.contatos || [],');
   source = once(source,
-    '    ...(data.locais_entrega === undefined\n'
-    + '      ? {}\n'
-    + '      : {\n'
-    + '          locais_entrega: Array.isArray(data.locais_entrega)\n'
-    + '            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)\n'
-    + '            : [],\n'
-    + '        }),',
-    '    locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],');
+    '      ...(data.locais_entrega === undefined\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            locais_entrega: Array.isArray(data.locais_entrega)\n'
+    + '              ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)\n'
+    + '              : [],\n'
+    + '          }),',
+    '      locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],');
+  // #591: omit crédito/fiscal não carregados → sempre enviar (forma anterior do Completo).
+  source = once(source,
+    '      // Campo não carregado: omitir (≠ limpar; ≠ inventar default comercial/fiscal).\n'
+    + '      ...(data.condicao_comercial === undefined || data.condicao_comercial === null\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            condicao_comercial: {\n'
+    + '              ...(data.condicao_comercial || {}),\n'
+    + '              tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),\n'
+    + '              forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),\n'
+    + '              percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),\n'
+    + '              condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),\n'
+    + '              limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),\n'
+    + '              limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),\n'
+    + '              situacao_credito: sanitizeText(\n'
+    + '                data.condicao_comercial?.situacao_credito\n'
+    + '                  || (typeof calcularSituacaoCredito === \'function\' ? calcularSituacaoCredito() : \'OK\'),\n'
+    + '                40,\n'
+    + '              ),\n'
+    + '            },\n'
+    + '          }),\n'
+    + '      ...(data.configuracao_fiscal === undefined || data.configuracao_fiscal === null\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            configuracao_fiscal: {\n'
+    + '              ...(data.configuracao_fiscal || {}),\n'
+    + '              regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),\n'
+    + '              cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),\n'
+    + '              contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),\n'
+    + '              tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),\n'
+    + '              isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),\n'
+    + '              isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),\n'
+    + '              observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000),\n'
+    + '            },\n'
+    + '          }),',
+    '      condicao_comercial: {\n'
+    + '        ...(data.condicao_comercial || {}),\n'
+    + '        tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),\n'
+    + '        forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),\n'
+    + '        percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),\n'
+    + '        condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),\n'
+    + '        limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),\n'
+    + '        limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),\n'
+    + '        situacao_credito: sanitizeText(data.condicao_comercial?.situacao_credito || calcularSituacaoCredito(), 40)\n'
+    + '      },\n'
+    + '      configuracao_fiscal: {\n'
+    + '        ...(data.configuracao_fiscal || {}),\n'
+    + '        regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),\n'
+    + '        cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),\n'
+    + '        contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),\n'
+    + '        tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),\n'
+    + '        isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),\n'
+    + '        isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),\n'
+    + '        observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)\n'
+    + '      },');
   source = once(source,
     '      ...(record.locais_entrega === undefined\n'
     + '        ? {}\n'
     + '        : { locais_entrega: record.locais_entrega || [] }),',
     '      locais_entrega: record.locais_entrega || [],');
-  source = once(source, '    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),',
-    '    documentos: sanitizeDocumentos(data.documentos),');
-  return once(source, '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),',
+  source = once(source, '      ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),',
+    '      documentos: sanitizeDocumentos(data.documentos),');
+  source = once(source, '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),',
     '      documentos: record.documentos || [],');
+  // #591: estados documentos[] (não-carregado/vazio/presente) — peel para banner mínimo.
+  source = once(source,
+    '                <p\n'
+    + '                  className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"\n'
+    + '                  data-fonte="documentos-limitacao-http"\n'
+    + '                  data-pendencia="documentos-anexos-bff"\n'
+    + '                  data-documentos-estado={\n'
+    + '                    formData.documentos === undefined\n'
+    + "                      ? 'nao-carregado'\n"
+    + '                      : formData.documentos === null\n'
+    + "                        ? 'desconhecido'\n"
+    + '                        : Array.isArray(formData.documentos) && formData.documentos.length === 0\n'
+    + "                          ? 'vazio'\n"
+    + "                          : 'presente-bff-pendente'\n"
+    + '                  }\n'
+    + '                  role="status"\n'
+    + '                >\n'
+    + '                  Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.\n'
+    + '                  Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER\n'
+    + '                  fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.\n'
+    + '                  {formData.documentos === undefined\n'
+    + "                    ? ' Estado: não carregado nesta carga (omit ≠ limpar).'\n"
+    + '                    : formData.documentos === null\n'
+    + "                      ? ' Estado: desconhecido (null).'\n"
+    + '                      : Array.isArray(formData.documentos) && formData.documentos.length === 0\n'
+    + "                        ? ' Estado: vazio na origem.'\n"
+    + "                        : ' Estado: anexos no rascunho — save HTTP bloqueado até BFF.'}\n"
+    + '                </p>',
+    '                <p\n'
+    + '                  className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"\n'
+    + '                  data-fonte="documentos-limitacao-http"\n'
+    + '                  data-pendencia="documentos-anexos-bff"\n'
+    + '                  role="status"\n'
+    + '                >\n'
+    + '                  Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.\n'
+    + '                  Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER\n'
+    + '                  fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.\n'
+    + '                </p>');
+  // #591: import storage-required extras MASTER.
+  source = once(source,
+    'import { isClienteMasterStorageRequired } from "@/api/clienteMasterExtrasUi";\n',
+    '');
+  // #591: ownCode extensões MASTER no buildPayload.
+  source = once(source,
+    "      ...ownCode('rg', 30),\n"
+    + "      ...ownCode('numero_caixa_postal', 40),\n"
+    + "      ...ownCode('cep_caixa_postal', 8),\n"
+    + "      ...ownCode('caixa_postal_cobranca', 40),\n"
+    + "      ...ownCode('inscricao_produtor_rural', 40),\n",
+    "      ...ownCode('rg', 30),\n");
+  // #591: banner RG master-extra + bloco UI extensões — peel para RG mínimo anterior.
+  source = once(source,
+    '                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-master-extra">\n'
+    + '                        RG no MASTER existente — omitir ≠ limpar; schema antigo responde 503 STORAGE_REQUIRED (sem default).\n'
+    + '                      </p>\n'
+    + '                    </div>\n'
+    + '                  </>\n'
+    + '                )}\n'
+    + '\n'
+    + '                <div className="col-span-2 pt-4 border-t space-y-3" data-block="cliente-master-extras">\n'
+    + '                  <h3 className="font-semibold">Extensões MASTER (caixa postal / produtor)</h3>\n'
+    + '                  <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5" role="status" data-fonte="cliente-master-extras-contrato">\n'
+    + '                    Contrato Codex no mesmo Cliente: numero_caixa_postal, cep_caixa_postal, caixa_postal_cobranca,\n'
+    + '                    inscricao_produtor_rural. Opcionais; omissão ≠ limpar. SQL candidato pode ainda não estar aplicado —\n'
+    + '                    escrita explícita com storage ausente → 503 CLIENTE_MASTER_STORAGE_REQUIRED (não inventar sucesso).\n'
+    + '                  </p>\n'
+    + '                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="numero_caixa_postal">Nº caixa postal</Label>\n'
+    + '                      <Input\n'
+    + '                        id="numero_caixa_postal"\n'
+    + '                        value={formData.numero_caixa_postal ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, numero_caixa_postal: e.target.value })}\n'
+    + '                        data-campo="numero_caixa_postal"\n'
+    + '                        data-persistencia={formData.numero_caixa_postal === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.numero_caixa_postal === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="cep_caixa_postal">CEP caixa postal</Label>\n'
+    + '                      <Input\n'
+    + '                        id="cep_caixa_postal"\n'
+    + '                        value={formData.cep_caixa_postal ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, cep_caixa_postal: e.target.value })}\n'
+    + '                        data-campo="cep_caixa_postal"\n'
+    + '                        data-persistencia={formData.cep_caixa_postal === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.cep_caixa_postal === undefined ? \'Não recuperado nesta carga\' : \'00000000\'}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="caixa_postal_cobranca">Caixa postal cobrança</Label>\n'
+    + '                      <Input\n'
+    + '                        id="caixa_postal_cobranca"\n'
+    + '                        value={formData.caixa_postal_cobranca ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, caixa_postal_cobranca: e.target.value })}\n'
+    + '                        data-campo="caixa_postal_cobranca"\n'
+    + '                        data-persistencia={formData.caixa_postal_cobranca === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.caixa_postal_cobranca === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="inscricao_produtor_rural">Inscrição produtor rural</Label>\n'
+    + '                      <Input\n'
+    + '                        id="inscricao_produtor_rural"\n'
+    + '                        value={formData.inscricao_produtor_rural ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({ ...formData, inscricao_produtor_rural: e.target.value })}\n'
+    + '                        data-campo="inscricao_produtor_rural"\n'
+    + '                        data-persistencia={formData.inscricao_produtor_rural === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.inscricao_produtor_rural === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                  </div>\n'
+    + '                </div>\n',
+    '                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-bff">\n'
+    + '                        RG com valor ainda exige contrato BFF — save HTTP fail-closed se preenchido; omitir ≠ limpar.\n'
+    + '                      </p>\n'
+    + '                    </div>\n'
+    + '                  </>\n'
+    + '                )}\n'
+    + '\n');
+  return source;
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'ca11c17b05ad058b0b490214694da82c2c9aa73ba978732ab4fa7905a43412a3'], // #591 contatos[] MASTER (a) + cadastral≠entrega
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', '7081e69a42906b89e8762dc652dc2faecacff9d10ec5dbf4a00a38d5c36db03e'], // #591 master extras peels (rg/caixa/produtor)
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];

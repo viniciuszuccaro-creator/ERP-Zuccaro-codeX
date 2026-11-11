@@ -84,6 +84,23 @@ test('CentralCliente360Panel: Carregar mais real sem slice(0,5) morto', async ()
   assert.match(source, /shouldUseCrmLegadoAdapter|status === 'skipped'/);
 });
 
+test('Cliente360 identity exibe fantasia/social/origem/IE já retornados pela API (≠ só nome/documento)', async () => {
+  const source = await readFile(
+    new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(source, /data-block="central360-identity-rica"/);
+  assert.match(source, /data-campo="nome_fantasia"/);
+  assert.match(source, /data-campo="nome_social"/);
+  assert.match(source, /data-campo="origem"/);
+  assert.match(source, /data-campo="razao_social"/);
+  assert.match(source, /data-campo="inscricao_estadual"/);
+  assert.match(source, /data-campo="inscricao_municipal"/);
+  assert.match(source, /data-campo="observacoes"/);
+  assert.match(source, /Não autorizado ao perfil/);
+  assert.match(source, /Celular ≠ WhatsApp/);
+});
+
 test('Central 360 não apresenta valor monetário desconhecido como zero confirmado', async () => {
   const source = await readFile(
     new URL('../src/components/comercial/CentralCliente360Panel.jsx', import.meta.url),

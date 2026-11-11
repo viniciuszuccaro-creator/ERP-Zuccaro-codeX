@@ -9,7 +9,9 @@
  *  - NÃO hidrata `contatos[]` a partir de escalares como lista completa;
  *  - Sem ContatoClienteV2 / storage paralelo; ContatoB2B FK não destrava este fluxo.
  * assessContatosScalarFidelity permanece diagnóstico (legado / auditoria).
+ * Extensões MASTER (rg/caixa postal/produtor): opcionais; schema antigo → 503.
  */
+import { pickClienteMasterExtrasForWrite } from './clienteMasterExtrasUi.js';
 
 const CLIENTE_ORIGENS = new Set([
   'ERP', 'MIGRACAO', 'SITE_CPA', 'B2B', 'PORTAL', 'CHATBOT', 'WHATSAPP',
@@ -42,6 +44,12 @@ const ALLOWED_KEYS = [
   'source_system',
   'migration_batch',
   'observacoes',
+  // Extensões MASTER (Codex): opcionais; schema antigo → 503 STORAGE_REQUIRED.
+  'rg',
+  'numero_caixa_postal',
+  'cep_caixa_postal',
+  'caixa_postal_cobranca',
+  'inscricao_produtor_rural',
 ];
 
 /** Canais canônicos do formulário Completo / GerenciarContatos (sem inventar WhatsApp). */
@@ -73,8 +81,35 @@ export function isContatoCanalCanonico(tipo) {
  */
 export const CLIENTE_HTTP_UNSUPPORTED_FIELDS = 'CLIENTE_HTTP_UNSUPPORTED_FIELDS';
 
+function blankDocField(value) {
+  return value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+}
+
+/**
+ * Documento canônico para escrita HTTP.
+ * Campos editáveis da UI (cnpj/cpf) têm precedência sobre `documento` residual do GET —
+ * senão edição de CNPJ/CPF é descartada e o valor antigo volta a ser enviado (Bugbot).
+ */
 function pickDoc(src) {
-  const raw = src.documento ?? src.cpf_cnpj ?? src.cnpj ?? src.cpf ?? '';
+  const tipo = normalizeTipo(src.tipo);
+  let raw = '';
+  if (tipo === 'Pessoa Jurídica') {
+    if (!blankDocField(src.cnpj)) raw = src.cnpj;
+    else if (!blankDocField(src.cpf_cnpj)) raw = src.cpf_cnpj;
+    else if (!blankDocField(src.documento)) raw = src.documento;
+    else if (!blankDocField(src.documento_normalizado)) raw = src.documento_normalizado;
+  } else if (tipo === 'Pessoa Física') {
+    if (!blankDocField(src.cpf)) raw = src.cpf;
+    else if (!blankDocField(src.cpf_cnpj)) raw = src.cpf_cnpj;
+    else if (!blankDocField(src.documento)) raw = src.documento;
+    else if (!blankDocField(src.documento_normalizado)) raw = src.documento_normalizado;
+  } else if (!blankDocField(src.cnpj)) {
+    raw = src.cnpj;
+  } else if (!blankDocField(src.cpf)) {
+    raw = src.cpf;
+  } else {
+    raw = src.documento ?? src.cpf_cnpj ?? src.documento_normalizado ?? '';
+  }
   const text = String(raw ?? '').trim();
   const digits = text.replace(/\D/g, '');
   if (!digits || /^0+$/.test(digits)) return null;
@@ -525,12 +560,25 @@ export function hydrateClienteHttpRowForUi(row) {
   /** @type {Record<string, unknown>} */
   const record = { .../** @type {Record<string, unknown>} */ (withContacts) };
   const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
-  const docRaw = record.documento ?? record.cpf_cnpj ?? '';
+  // Preferir documento exibido; normalizado só como fallback (zeros já no canônico).
+  const docRaw = !blank(record.documento)
+    ? record.documento
+    : (!blank(record.cpf_cnpj)
+      ? record.cpf_cnpj
+      : (record.documento_normalizado ?? ''));
   const doc = String(docRaw ?? '').trim();
   const digits = doc.replace(/\D/g, '');
   if (digits && !/^0+$/.test(digits)) {
     if (blank(record.cpf) && digits.length === 11) record.cpf = doc;
     if (blank(record.cnpj) && digits.length === 14) record.cnpj = doc;
+    // Tipado PJ/PF com documento canônico presente: não deixar input vazio se dígitos batem.
+    const tipoHint = normalizeTipo(record.tipo);
+    if (blank(record.cnpj) && tipoHint === 'Pessoa Jurídica' && digits.length === 14) {
+      record.cnpj = doc;
+    }
+    if (blank(record.cpf) && tipoHint === 'Pessoa Física' && digits.length === 11) {
+      record.cpf = doc;
+    }
   }
   // PF/PJ: não inventa nome; só preenche tipo ausente a partir do documento canônico.
   if (blank(record.tipo) && digits && !/^0+$/.test(digits)) {
@@ -539,6 +587,10 @@ export function hydrateClienteHttpRowForUi(row) {
   } else if (!blank(record.tipo)) {
     const normalized = normalizeTipo(record.tipo);
     if (normalized) record.tipo = normalized;
+  }
+  // Nome / Razão Social da UI: se `nome` veio vazio e razão existe, espelhar (sem inventar).
+  if (blank(record.nome) && !blank(record.razao_social)) {
+    record.nome = String(record.razao_social).trim();
   }
   return record;
 }
@@ -1026,7 +1078,6 @@ export function assertClienteHttpRichFieldsWritable(src) {
     'indicador_id',
     'regiao_atendimento_id',
     'regiao_atendimento',
-    'rg',
   ]) {
     if (isMeaningfulScalar(src[key])) unsupported.push(key);
   }
@@ -1054,10 +1105,15 @@ export function assertClienteHttpRichFieldsWritable(src) {
 export function toClienteMasterHttpPayload(raw, options = {}) {
   const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   assertClienteHttpRichFieldsWritable(src);
+  // Sanitiza extensões MASTER (omit ≠ limpar; blank → null; sem truncar).
+  const extras = pickClienteMasterExtrasForWrite(src);
   /** @type {Record<string, unknown>} */
   const out = {};
   for (const key of ALLOWED_KEYS) {
     if (src[key] !== undefined) out[key] = src[key];
+  }
+  for (const [key, value] of Object.entries(extras)) {
+    out[key] = value;
   }
   // contatos:null não é comando público — remove antes da projeção CAS.
   if (Object.prototype.hasOwnProperty.call(out, 'contatos') && out.contatos == null) {

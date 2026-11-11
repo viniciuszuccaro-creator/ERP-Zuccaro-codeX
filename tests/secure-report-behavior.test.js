@@ -146,9 +146,11 @@ test('353 Relatorios exportacao: grant/deny no trigger e conteúdo (não só dat
   assert.match(source,/data-action=\"Relatorios\.abrir_exportacao\"/);
   assert.match(source,/activeTab === 'exportacao' && canExportRelatorios && !permissionsLoading/);
   assert.match(source,/GeradorRelatorios/);
-  // Representantes/Personalizado já falham fechados via hasReportGrant (grant+conteúdo).
-  assert.match(source,/hasReportGrant\(perfilAcesso,'Comercial','Representantes','visualizar'\)/);
-  assert.match(source,/hasReportGrant\(perfilAcesso,'Relatorios','Personalizado','visualizar'\)/);
+  // Representantes/Personalizado: grant exato + fail-closed sob permissionsLoading (triggers+conteúdo).
+  assert.match(source,/!permissionsLoading && hasReportGrant\(perfilAcesso,'Comercial','Representantes','visualizar'\)/);
+  assert.match(source,/!permissionsLoading && hasReportGrant\(perfilAcesso,'Relatorios','Personalizado','visualizar'\)/);
+  assert.match(source,/data-permission=\"Comercial\.Representantes\.visualizar\"/);
+  assert.match(source,/data-permission=\"Relatorios\.Personalizado\.visualizar\"/);
 });
 test('353 Relatorios agendamento: canScheduleRelatorios no trigger e conteúdo',()=>{
   const source=fs.readFileSync('src/pages/Relatorios.jsx','utf8');

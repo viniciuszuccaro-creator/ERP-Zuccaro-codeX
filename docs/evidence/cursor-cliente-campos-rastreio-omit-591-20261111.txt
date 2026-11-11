@@ -1,0 +1,24 @@
+#591 — rastreio campos Cliente + omit crédito/fiscal (2026-11-11 America/Sao_Paulo)
+
+## Contrato (origem → banco → API → form → reabertura)
+- MASTER HTTP ALLOWED_KEYS (clienteHttpPayload): empresa_id, ativo, tipo, documento,
+  cpf_cnpj, nome, razao_social, nome_fantasia, nome_social, IE/IM, email, telefone,
+  celular, contatos[], expectedVersion, status, origem, legado/provenance, observacoes.
+- Contatos auxiliares: contatos[] jsonb (até 200) + espelho escalar best-effort;
+  quarentena de canal inválido; Celular ≠ WhatsApp.
+- Locais: /clientes/:id/locais (não no MASTER). UI GerenciarEnderecos + RBAC cliente_local.*.
+- Rich não persistidos no MASTER (fail-closed se significativos no save):
+  endereco_principal, condicao_comercial, configuracao_fiscal (obs), vendedor/indicador/região/rg, documentos[].
+
+## Correção deste lote
+- mapToForm NÃO inventa condicao_comercial/configuracao_fiscal quando ausentes.
+- buildPayload omite esses blocos se não carregados (≠ limpar; ≠ default "OK"/"Simples").
+- UI: Situação Desconhecido + banner parcial; regime sem fingir Simples Nacional.
+
+## Volume
+- Teste sintético 150 registros: páginas 100+50, total coerente, ordenação estável.
+- V24: PAGE_SIZES 10–100; entityListSorted limit/skip; sem inventar PII no GitHub.
+
+## Fora deste lote / Codex
+- Persistência BFF dos 156/34 campos ainda não no ALLOWED_KEYS.
+- Importação HML / grants / SHA API+web combinados.

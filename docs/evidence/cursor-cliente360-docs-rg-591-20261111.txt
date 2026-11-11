@@ -1,0 +1,45 @@
+CURSOR — #591 Cliente360 RG + documentos[] estados (2026-11-11 America/Sao_Paulo)
+================================================================================
+Branch tip: cursor/c360-parecer-ctx-unidade-cnpj-392b · PR #592
+Sem HML / sem PII / sem storage paralelo DocumentosCliente.
+
+Objetivo
+--------
+Alinhar contrato de enriquecimento na UI: apresentar RG e documentos[]
+recuperados com estados explícitos — sem declarar cadastro completo por
+nome/documento.
+
+Estados (classifyCentral360Rg / classifyCentral360Documentos)
+-------------------------------------------------------------
+- absent          → chave omitida na carga (omit ≠ limpar; pendente import/BFF)
+- unknown         → null (não comando de limpeza)
+- empty           → vazio confirmado na origem
+- invalid         → formato inválido / quarentena
+- forbidden       → sem permissão Cliente.visualizar
+- unavailable     → falha de carga / contexto
+- present_bff_pending → valor recuperado; escrita HTTP ainda fail-closed
+
+Wire
+----
+- Reutiliza GET MASTER da query contatos (entities.Cliente.get) — 1 request.
+- Bloco `data-block="central360-docs-rg-master"` na CentralCliente360Panel.
+- Completo anexos: `data-documentos-estado` (nao-carregado|desconhecido|vazio|presente-bff-pendente).
+- CPF/CNPJ permanece Documento MASTER; RG ≠ ModeloDocumento.
+
+Preservado
+----------
+Pareceres ctx/unidade/Pedidos403/cliente_local/Fechar≠Cancelar.
+Contatos MASTER + volume 2k/5k.
+omit ≠ limpar; Celular ≠ WhatsApp.
+
+Fora deste lote
+---------------
+Persistência BFF RG/documentos · ContatoB2B FK · HML · SHA API+web aceite ·
+provedores externos (WhatsApp/GoTo/marketplace).
+
+Testes
+------
+tests/central-cliente360-docs-rg-591.test.js
+tests/crm-conversao-consumer.test.js (fixture Documentos)
+tests/read-boundary-contracts.test.js (peels stage51)
+tests/cadastro-query-payload-boundaries.test.js (peel Completo anexos)

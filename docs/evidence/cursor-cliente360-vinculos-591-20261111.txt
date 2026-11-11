@@ -1,0 +1,26 @@
+CURSOR — #591 Vínculos comerciais Central360 (2026-11-11 America/Sao_Paulo)
+==========================================================================
+Branch tip: cursor/c360-parecer-ctx-unidade-cnpj-392b · PR #592
+Sem HML / sem inventar FK / sem cadastro paralelo.
+
+Campos
+------
+vendedor_responsavel(_id) · indicador_id · regiao_atendimento(_id)
+
+Estados (classifyCentral360Vinculos)
+------------------------------------
+absent | unknown | empty | forbidden | unavailable | present_bff_pending
+
+Wire
+----
+Mesma GET MASTER (contatosQuery) · bloco data-block=central360-vinculos-master
+Completo já tem selects; escrita HTTP continua em assertClienteHttpRichFieldsWritable.
+
+Recuperação / unificação
+------------------------
+Apresenta vínculos contratados no Completo que estavam invisíveis na Central360.
+Não cria entidade VínculoCliente; não amplia ALLOWED_KEYS.
+
+Testes
+------
+tests/central-cliente360-vinculos-591.test.js · peels stage51 · CRM fixture

@@ -172,13 +172,29 @@ test('duplicar: draft sem id/número; validade limpa; revalida mestres sem inven
 
   const checked = revalidateOrcamentoDraftAgainstMasters(draft, {
     produtos: [{ id: 'prod-1', descricao: 'Atualizada', unidade_medida_id: 'un-2' }],
-    unidades: [{ id: 'un-2', sigla: 'UN' }],
+    unidades: [{ id: 'un-1', sigla: 'KG' }, { id: 'un-2', sigla: 'UN' }],
     condicoes: [{ id: 'cond-new' }],
   });
   assert.equal(checked.draft.itens[0].descricao, 'Atualizada');
-  assert.equal(checked.draft.itens[0].unidade_id, 'un-2');
-  assert.equal(checked.draft.itens[0].unidade_sigla, 'UN');
+  // Parecer 6796010811/6795491695: NÃO trocar KG→UN sem fator; quantidade preservada.
+  assert.equal(checked.draft.itens[0].unidade_id, 'un-1');
+  assert.equal(checked.draft.itens[0].unidade_sigla, 'KG');
+  assert.equal(checked.draft.itens[0].quantidade, '2');
   assert.equal(checked.draft.itens[0].preco_unitario, '10.5');
   assert.equal(checked.warnings.condicaoAusente, true);
   assert.deepEqual(checked.warnings.produtosAusentes, []);
+  assert.equal(checked.warnings.unidadesDivergentes.length, 1);
+  assert.equal(checked.warnings.unidadesDivergentes[0].produto_unidade_id, 'un-2');
+
+  const blankUnit = revalidateOrcamentoDraftAgainstMasters({
+    ...draft,
+    itens: [{ ...draft.itens[0], unidade_id: '', unidade_sigla: '' }],
+  }, {
+    produtos: [{ id: 'prod-1', descricao: 'Atualizada', unidade_medida_id: 'un-2' }],
+    unidades: [{ id: 'un-2', sigla: 'UN' }],
+    condicoes: [{ id: 'cond-old' }],
+  });
+  assert.equal(blankUnit.draft.itens[0].unidade_id, 'un-2', 'só preenche unidade oficial quando item não tinha unidade');
+  assert.equal(blankUnit.draft.itens[0].unidade_sigla, 'UN');
+  assert.deepEqual(blankUnit.warnings.unidadesDivergentes, []);
 });

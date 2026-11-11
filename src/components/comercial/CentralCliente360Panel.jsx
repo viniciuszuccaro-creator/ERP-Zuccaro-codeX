@@ -3,7 +3,30 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ConverterOportunidade from '@/components/crm/ConverterOportunidade';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { isCanonicalQuoteOpportunity, openCrmQuoteOrderWindow, isCrmConversionScopeCurrent } from '@/components/crm/crmFormSubmission';
-import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target, FilePlus2, Plus } from 'lucide-react';
+import { AlertCircle, Building2, MapPin, FileText, ShoppingCart, HardHat, Target, FilePlus2, Plus, Users, Truck } from 'lucide-react';
+import {
+  canalClassificacaoAttr,
+  classifyCentral360Contatos,
+  isWhatsAppClassificado,
+  labelContatoCanal,
+} from '@/components/comercial/centralCliente360Contatos';
+import {
+  classifyCentral360Documentos,
+  classifyCentral360Rg,
+} from '@/components/comercial/centralCliente360Documentos';
+import { classifyCentral360Vinculos } from '@/components/comercial/centralCliente360Vinculos';
+import {
+  canViewCentral360Entregas,
+  classifyCentral360Entregas,
+} from '@/components/comercial/centralCliente360Entregas';
+import {
+  canViewCentral360Financeiro,
+  classifyCentral360Financeiro,
+} from '@/components/comercial/centralCliente360Financeiro';
+import {
+  classifyClienteMasterExtras,
+  CLIENTE_MASTER_EXTRA_LABELS,
+} from '@/api/clienteMasterExtrasUi';
 import {
   canLoadCentralCliente360,
   central360SessionKey,
@@ -243,9 +266,10 @@ export default function CentralCliente360Panel({
     actorId,
     token: sessionToken,
   }) && isCrmConversionScopeCurrent({groupId,empresaId,actorId,token:sessionToken},renderedScope.current,readErpHttpSession());
+  // Abrir cadastro mestre: visualizar basta. Editar/salvar permanece no Completo (fail-closed).
+  // Não exigir Cliente.editar aqui — evita esconder leitura autorizada.
   const cadastroAllowed = enabled && !permissionsLoading
-    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit })
-    && hasCadastroEntityPermission('Cliente', 'editar', { hasPermission, canEdit });
+    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit });
   const cadastroAllowedRef = useRef(false);
   cadastroAllowedRef.current = cadastroAllowed;
   const sessionKey = central360SessionKey(sessionToken);
@@ -333,6 +357,120 @@ export default function CentralCliente360Panel({
   const handleLoadMore = (blockKey) => {
     setBlockLimits((prev) => growCentral360BlockLimit(prev, blockKey));
   };
+
+  // Contatos MASTER (GET Cliente via entities) — separado do central-360; omit ≠ limpar; ctx pós-await.
+  const canViewContatosMaster = enabled && !permissionsLoading
+    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit });
+  const contatosQuery = useQuery({
+    queryKey: ['cliente-central-360-contatos', groupId, empresaId, actorId, clienteId, sessionKey],
+    queryFn: async () => {
+      const openedScope = { groupId, empresaId, actorId, token: sessionToken };
+      const clienteEntity = httpApi.entities?.Cliente;
+      if (!clienteEntity || typeof clienteEntity.get !== 'function') {
+        throw Object.assign(new Error('Cliente HTTP MASTER indisponível para contatos.'), {
+          code: 'CLIENTE_HTTP_UNAVAILABLE',
+        });
+      }
+      const row = await clienteEntity.get(clienteId);
+      if (!isCrmConversionScopeCurrent(openedScope, renderedScope.current, readErpHttpSession())) {
+        throw Object.assign(new Error('Contexto alterado. Reabra a Central antes de consultar contatos.'), {
+          code: 'CONTEXT_CHANGED',
+        });
+      }
+      return row;
+    },
+    enabled: Boolean(canViewContatosMaster && clienteId && sessionToken),
+    retry: 1,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    placeholderData: undefined,
+  });
+  const masterFlags = {
+    forbidden: !canViewContatosMaster && !permissionsLoading,
+    loadError: Boolean(contatosQuery.isError),
+  };
+  const contatosClassified = (() => {
+    const raw = classifyCentral360Contatos(contatosQuery.data, masterFlags);
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'Contatos indisponíveis',
+      validos: Array.isArray(raw?.validos) ? raw.validos : [],
+      quarentena: Array.isArray(raw?.quarentena) ? raw.quarentena : [],
+    };
+  })();
+  const rgClassified = (() => {
+    const raw = classifyCentral360Rg(contatosQuery.data, masterFlags);
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'RG indisponível',
+      value: raw?.value == null ? null : String(raw.value),
+    };
+  })();
+  const documentosClassified = (() => {
+    const raw = classifyCentral360Documentos(contatosQuery.data, masterFlags);
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'Documentos indisponíveis',
+      items: Array.isArray(raw?.items) ? raw.items : [],
+      quarentena: Array.isArray(raw?.quarentena) ? raw.quarentena : [],
+    };
+  })();
+  const vinculosClassified = (() => {
+    const raw = classifyCentral360Vinculos(contatosQuery.data, masterFlags);
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'Vínculos indisponíveis',
+      fields: Array.isArray(raw?.fields) ? raw.fields : [],
+    };
+  })();
+
+  // Entregas canônicas HTTP (≠ inventar contagem; RBAC Expedicao; ctx pós-await).
+  const canViewEntregas = enabled && !permissionsLoading && canViewCentral360Entregas(hasPermission);
+  const entregasQuery = useQuery({
+    queryKey: ['cliente-central-360-entregas', groupId, empresaId, actorId, clienteId, sessionKey],
+    queryFn: async () => {
+      const openedScope = { groupId, empresaId, actorId, token: sessionToken };
+      if (!httpApi.expedicao || typeof httpApi.expedicao.listEntregas !== 'function') {
+        throw Object.assign(new Error('API de entregas indisponível.'), { code: 'ENTREGAS_HTTP_UNAVAILABLE' });
+      }
+      const page = await httpApi.expedicao.listEntregas({
+        clienteId,
+        limit: 20,
+        offset: 0,
+      });
+      if (!isCrmConversionScopeCurrent(openedScope, renderedScope.current, readErpHttpSession())) {
+        throw Object.assign(new Error('Contexto alterado. Reabra a Central antes de consultar entregas.'), {
+          code: 'CONTEXT_CHANGED',
+        });
+      }
+      return page;
+    },
+    enabled: Boolean(canViewEntregas && clienteId && sessionToken),
+    retry: 1,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    placeholderData: undefined,
+  });
+  const entregasClassified = (() => {
+    const raw = classifyCentral360Entregas(entregasQuery.data, {
+      forbidden: !canViewEntregas && !permissionsLoading,
+      loadError: Boolean(entregasQuery.isError),
+    });
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'Entregas indisponíveis',
+      rows: Array.isArray(raw?.rows) ? raw.rows : [],
+      total: raw?.total == null ? null : raw.total,
+    };
+  })();
+  const canViewFinanceiro = enabled && !permissionsLoading && canViewCentral360Financeiro(hasPermission);
+  const financeiroClassified = classifyCentral360Financeiro({
+    forbidden: !canViewFinanceiro && !permissionsLoading,
+    httpPending: true,
+  });
+  const masterExtrasClassified = classifyClienteMasterExtras(contatosQuery.data, masterFlags);
 
   if (!isHttpCliente360Enabled) return null;
 
@@ -531,7 +669,10 @@ export default function CentralCliente360Panel({
       {cadastroOpenError && <div role="alert" className="text-sm text-red-700">{cadastroOpenError}</div>}
       {createOpenError && <div role="alert" className="text-sm text-red-700" data-testid="central360-create-open-error">{createOpenError}</div>}
       {identity && (
-        <div className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div
+          className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2"
+          data-block="central360-identity-rica"
+        >
           <div><span className="text-slate-500">Código</span><p className="font-mono" data-action="codigo-registro-central360">{identity.codigo ?? '—'}</p></div>
           <div>
             <span className="text-slate-500">ID técnico</span>
@@ -539,13 +680,198 @@ export default function CentralCliente360Panel({
               {identity.id || clienteId || '—'}
             </p>
           </div>
-          <div><span className="text-slate-500">Documento</span><p>{identity.documento || '—'}</p></div>
-          <div><span className="text-slate-500">E-mail</span><p>{identity.email || '—'}</p></div>
-          <div><span className="text-slate-500">Telefone</span><p>{identity.telefone || '—'}</p></div>
-          <div><span className="text-slate-500">Celular</span><p>{identity.celular || '—'}</p></div>
-          <div><span className="text-slate-500">Status</span><p>{identity.status}</p></div>
+          <div><span className="text-slate-500">Tipo</span><p data-campo="tipo">{identity.tipo || '—'}</p></div>
+          <div><span className="text-slate-500">Nome</span><p data-campo="nome">{identity.nome || '—'}</p></div>
+          <div><span className="text-slate-500">Razão social</span><p data-campo="razao_social">{identity.razao_social || '—'}</p></div>
+          <div><span className="text-slate-500">Nome fantasia</span><p data-campo="nome_fantasia">{identity.nome_fantasia || '—'}</p></div>
+          <div><span className="text-slate-500">Nome social</span><p data-campo="nome_social">{identity.nome_social || '—'}</p></div>
+          <div><span className="text-slate-500">Documento</span><p data-campo="documento">{identity.documento || '—'}</p></div>
+          <div><span className="text-slate-500">IE</span><p data-campo="inscricao_estadual">{identity.inscricao_estadual || '—'}</p></div>
+          <div><span className="text-slate-500">IM</span><p data-campo="inscricao_municipal">{identity.inscricao_municipal || '—'}</p></div>
+          <div><span className="text-slate-500">E-mail</span><p data-campo="email">{identity.email || '—'}</p></div>
+          <div><span className="text-slate-500">Telefone</span><p data-campo="telefone">{identity.telefone || '—'}</p></div>
+          <div>
+            <span className="text-slate-500">Celular</span>
+            <p data-campo="celular">{identity.celular || '—'}</p>
+            <p className="text-[10px] text-slate-400">Celular ≠ WhatsApp</p>
+          </div>
+          <div><span className="text-slate-500">Origem</span><p data-campo="origem">{identity.origem || '—'}</p></div>
+          <div><span className="text-slate-500">Status</span><p data-campo="status">{identity.status || '—'}</p></div>
+          <div>
+            <span className="text-slate-500">Ativo</span>
+            <p data-campo="ativo">{identity.ativo === true ? 'Sim' : identity.ativo === false ? 'Não' : '—'}</p>
+          </div>
+          <div className="md:col-span-3">
+            <span className="text-slate-500">Observações</span>
+            <p data-campo="observacoes" className="whitespace-pre-wrap break-words">
+              {meta.sensitiveFields === 'revealed'
+                ? (identity.observacoes || '—')
+                : 'Não autorizado ao perfil'}
+            </p>
+          </div>
         </div>
       )}
+
+      <div
+        className="border rounded-md bg-white p-3 text-sm space-y-2"
+        data-block="central360-contatos-master"
+        data-contatos-status={contatosClassified.status}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium text-slate-800 flex items-center gap-2">
+            <Users className="h-4 w-4" /> Contatos
+          </h4>
+          <span className="text-xs text-slate-500">{contatosClassified.message}</span>
+        </div>
+        {contatosQuery.isLoading ? (
+          <p className="text-xs text-slate-500">Carregando contatos…</p>
+        ) : null}
+        {contatosClassified.status === 'ok' || contatosClassified.quarentena.length > 0 ? (
+          <ul className="space-y-1.5" data-fonte="contatos-jsonb-master">
+            {contatosClassified.validos.map((c, idx) => (
+              <li
+                key={String(c.id || `${c.tipo}-${c.valor}-${idx}`)}
+                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-slate-100 pb-1"
+                data-campo="contato-valido"
+                data-canal={canalClassificacaoAttr(c.tipo)}
+              >
+                <Badge variant="outline">{labelContatoCanal(c.tipo)}</Badge>
+                {isWhatsAppClassificado(c.tipo) ? (
+                  <Badge className="bg-emerald-100 text-emerald-900" data-campo="whatsapp-classificado">
+                    WhatsApp classificado
+                  </Badge>
+                ) : null}
+                <span className="font-mono text-xs">{String(c.valor || '—')}</span>
+                {c.nome ? <span className="text-slate-700">{String(c.nome)}</span> : null}
+                {c.cargo ? <span className="text-xs text-slate-500" data-campo="cargo">{String(c.cargo)}</span> : null}
+                {c.principal ? <Badge className="bg-sky-100 text-sky-800">Principal</Badge> : null}
+                {c.observacao ? (
+                  <span className="w-full text-xs italic text-slate-500" data-campo="contato-observacao">{String(c.observacao)}</span>
+                ) : null}
+              </li>
+            ))}
+            {contatosClassified.quarentena.map((c, idx) => (
+              <li
+                key={`q-${String(c.id || idx)}`}
+                className="flex flex-wrap items-baseline gap-x-2 text-amber-900"
+                data-campo="contato-quarentena"
+              >
+                <Badge variant="outline" className="border-amber-300">Quarentena</Badge>
+                <span className="text-xs">{labelContatoCanal(c.tipo)} · {String(c.valor || '—')}</span>
+                <span className="text-[10px] text-amber-700">canal inválido — não confundir com Celular/WhatsApp válido</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-slate-600" role="status">{contatosClassified.message}</p>
+        )}
+        <p className="text-[10px] text-slate-400">Celular ≠ WhatsApp · edição no Cadastro Completo (CAS contatos[]).</p>
+      </div>
+
+      <div
+        className="border rounded-md bg-white p-3 text-sm space-y-2"
+        data-block="central360-docs-rg-master"
+        data-rg-status={rgClassified.status}
+        data-documentos-status={documentosClassified.status}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium text-slate-800 flex items-center gap-2">
+            <FileText className="h-4 w-4" /> RG e anexos
+          </h4>
+          <span className="text-xs text-slate-500">≠ cadastro completo só por nome/documento</span>
+        </div>
+        {contatosQuery.isLoading ? (
+          <p className="text-xs text-slate-500">Carregando RG/documentos…</p>
+        ) : null}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-fonte="rg-master">
+          <div>
+            <span className="text-slate-500 text-xs">RG</span>
+            <p data-campo="rg" data-rg-estado={rgClassified.status} className="font-mono text-xs">
+              {rgClassified.status === 'present_bff_pending' ? (rgClassified.value || '—') : '—'}
+            </p>
+            <p className="text-[10px] text-slate-500" role="status">{rgClassified.message}</p>
+          </div>
+          <div>
+            <span className="text-slate-500 text-xs">documentos[]</span>
+            <p className="text-[10px] text-slate-500" data-campo="documentos-estado" role="status">
+              {documentosClassified.message}
+            </p>
+          </div>
+        </div>
+        {documentosClassified.items.length > 0 ? (
+          <ul className="space-y-1" data-fonte="documentos-jsonb-master">
+            {documentosClassified.items.map((doc, idx) => (
+              <li
+                key={String(doc.id || doc.nome_arquivo || idx)}
+                className="flex flex-wrap items-baseline gap-x-2 border-b border-slate-100 pb-1"
+                data-campo="documento-anexo"
+              >
+                <Badge variant="outline">{String(doc.tipo || 'anexo')}</Badge>
+                <span className="text-xs">{String(doc.nome_arquivo || doc.nome || 'sem nome')}</span>
+                <span className="text-[10px] text-amber-700">leitura · escrita BFF pendente</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {documentosClassified.quarentena.length > 0 ? (
+          <p className="text-[10px] text-amber-800" data-campo="documentos-quarentena">
+            {documentosClassified.quarentena.length} item(ns) em quarentena (inválido/incompleto)
+          </p>
+        ) : null}
+        <p className="text-[10px] text-slate-400">
+          CPF/CNPJ = Documento MASTER · RG/anexos ≠ ModeloDocumento · omit ≠ limpar.
+        </p>
+        <div
+          className="border-t border-slate-100 pt-2 space-y-1"
+          data-block="central360-master-extras"
+          data-extras-present={masterExtrasClassified.present}
+        >
+          <p className="text-xs text-slate-500">{masterExtrasClassified.message}</p>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-1">
+            {Object.entries(masterExtrasClassified.fields).map(([key, field]) => (
+              <li key={key} data-campo={key} data-extra-estado={field.status} className="text-xs">
+                <span className="text-slate-500">{CLIENTE_MASTER_EXTRA_LABELS[key] || key}</span>
+                <p className="font-mono truncate">
+                  {field.status === 'present' ? (field.value || '—') : '—'}
+                </p>
+                <span className="text-[10px] text-slate-400">{field.status}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[10px] text-slate-400">
+            Extensões no mesmo Cliente · schema antigo pode omitir chaves · sem inventar defaults.
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="border rounded-md bg-white p-3 text-sm space-y-2"
+        data-block="central360-vinculos-master"
+        data-vinculos-status={vinculosClassified.status}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium text-slate-800 flex items-center gap-2">
+            <HardHat className="h-4 w-4" /> Vínculos comerciais
+          </h4>
+          <span className="text-xs text-slate-500">{vinculosClassified.message}</span>
+        </div>
+        <ul className="grid grid-cols-1 md:grid-cols-3 gap-2" data-fonte="vinculos-master">
+          {vinculosClassified.fields.map((f) => (
+            <li key={f.key} data-campo={f.key} data-vinculo-estado={f.status}>
+              <span className="text-slate-500 text-xs">{f.label}</span>
+              <p className="text-xs font-mono truncate" title={f.text || f.value || undefined}>
+                {f.status === 'present_bff_pending'
+                  ? (f.text || f.value || '—')
+                  : '—'}
+              </p>
+              <p className="text-[10px] text-slate-400">{f.status}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[10px] text-slate-400">
+          Vendedor/indicador/região: leitura se recuperados · escrita HTTP fail-closed até BFF · omit ≠ limpar.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <BlockCard
@@ -572,7 +898,20 @@ export default function CentralCliente360Panel({
           renderRow={(row) => (
             <>
               <span>{row.nome}</span>
-              <span className="text-xs text-slate-500">{row.cidade}/{row.uf}</span>
+              {row.endereco_incompleto ? (
+                <Badge variant="outline" data-campo="endereco_incompleto" title="Localidade disponível; não tratar como endereço completo">
+                  Endereço incompleto
+                </Badge>
+              ) : (
+                <span className="text-xs text-slate-600" data-campo="endereco_resumo">
+                  {[row.logradouro, row.numero].filter(Boolean).join(', ')
+                    || [row.bairro, row.cep].filter(Boolean).join(' · ')
+                    || 'Endereço sem logradouro'}
+                </span>
+              )}
+              <span className="text-xs text-slate-500" data-campo="localidade">
+                {[row.cidade, row.uf].filter(Boolean).join('/') || '—'}
+              </span>
             </>
           )}
         />
@@ -638,6 +977,68 @@ export default function CentralCliente360Panel({
           )}
         />
         {pedidoOpenError&&<p role="alert" className="text-sm text-red-700" data-testid="central360-pedido-open-error">{pedidoOpenError}</p>}
+        <div
+          className="border rounded-md bg-white p-3 text-sm space-y-2 md:col-span-2"
+          data-block="central360-entregas-cliente"
+          data-entregas-status={entregasClassified.status}
+          data-permission="Expedicao.Entregas.visualizar"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="font-medium text-slate-800 flex items-center gap-2">
+              <Truck className="h-4 w-4" /> Entregas do cliente
+            </h4>
+            <span className="text-xs text-slate-500">{entregasClassified.message}</span>
+          </div>
+          {entregasQuery.isLoading ? (
+            <p className="text-xs text-slate-500">Carregando entregas…</p>
+          ) : null}
+          {entregasClassified.status === 'ok' ? (
+            <ul className="space-y-1.5" data-fonte="entregas-http-canonico">
+              {entregasClassified.rows.map((row, idx) => (
+                <li
+                  key={String(row.id || idx)}
+                  className="flex flex-wrap items-baseline gap-x-2 border-b border-slate-100 pb-1"
+                  data-campo="entrega-row"
+                >
+                  <span className="font-mono text-xs" data-action="central360-entrega-id">
+                    {String(row.id || '—').slice(0, 8)}
+                  </span>
+                  {row.status ? <Badge variant="outline">{String(row.status)}</Badge> : null}
+                  {row.pedido_id || row.pedidoId ? (
+                    <span className="text-xs text-slate-600" data-campo="entrega-pedido">
+                      Pedido {String(row.pedido_id || row.pedidoId).slice(0, 8)}
+                    </span>
+                  ) : null}
+                  {row.cidade || row.uf ? (
+                    <span className="text-xs text-slate-500">
+                      {[row.cidade, row.uf].filter(Boolean).join('/')}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-slate-600" role="status">{entregasClassified.message}</p>
+          )}
+          <p className="text-[10px] text-slate-400">
+            Fonte canônica `/api/v1/entregas` · sem sucesso fictício · envio externo depende de config/autorização.
+          </p>
+        </div>
+        <div
+          className="border rounded-md bg-white p-3 text-sm space-y-2 md:col-span-2"
+          data-block="central360-financeiro-cliente"
+          data-financeiro-status={financeiroClassified.status}
+          data-permission="Financeiro.ContasReceber.visualizar"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="font-medium text-slate-800">Financeiro autorizado</h4>
+            <span className="text-xs text-slate-500">{financeiroClassified.status}</span>
+          </div>
+          <p className="text-xs text-slate-600" role="status">{financeiroClassified.message}</p>
+          <p className="text-[10px] text-slate-400">
+            Sem inventar títulos/saldos · cobrança/NF dependem de módulo Fiscal/Financeiro e autorização na empresa.
+          </p>
+        </div>
         {shouldUseCrmLegadoAdapter(blocks.crm) ? (
           <CrmLegadoAdapterBlock
             clienteId={clienteId}

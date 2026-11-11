@@ -1,0 +1,16 @@
+#591 — Relatórios Representantes/Personalizado fail-closed sob permissionsLoading
+America/Sao_Paulo 2026-11-11
+
+Recuperação (erp-integra prioridades): wiring RBAC das abas já existentes —
+não recriar DashboardRepresentantes / RelatorioPersonalizado.
+
+Mudança:
+  src/pages/Relatorios.jsx — triggers Representantes/Personalizado exigem
+  !permissionsLoading (igual ao conteúdo) + data-permission granulares.
+
+Testes:
+  relatorios-representantes-personalizado-rbac-591
+  secure-report-behavior (assert loading gate)
+  primitive-ui-boundary-contracts (peels Relatorios estáveis)
+
+Sem HML / sem inventar grant amplo / sem tela paralela.

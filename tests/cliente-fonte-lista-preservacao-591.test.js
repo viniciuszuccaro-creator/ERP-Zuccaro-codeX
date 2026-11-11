@@ -32,6 +32,8 @@ test('CadastroClienteCompleto: locais/contatos/documentos omitidos quando ausent
   assert.match(src, /data-pendencia="cliente-parcial"/);
   assert.match(src, /contatosViewForUi/);
   assert.match(src, /data-fonte="contatos-escalares-http"/);
+  assert.match(src, /data-fonte="contatos-quarentena"/);
+  assert.match(src, /data-quarentena-lista="contatos"/);
   assert.match(src, /push\("Celular", formData\.celular\)/);
   assert.doesNotMatch(src, /push\("WhatsApp", formData\.celular\)/);
   assert.doesNotMatch(

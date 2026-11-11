@@ -1,0 +1,33 @@
+#591 — consumo UI extensões MASTER Cliente (rg / caixa postal / produtor)
+America/Sao_Paulo 2026-11-11
+
+Contrato Codex (consolidacao-infra / tip referido):
+  rg, numero_caixa_postal, cep_caixa_postal, caixa_postal_cobranca, inscricao_produtor_rural
+  Opcionais; omissão ≠ limpar; schema antigo → 503 CLIENTE_MASTER_STORAGE_REQUIRED
+  Sem ClienteV2 / storage paralelo / DDL por Cursor
+
+UI / wire:
+  src/api/clienteMasterExtrasUi.js — classify / sanitize / pick write / STORAGE_REQUIRED
+  src/api/clienteHttpPayload.js — ALLOWED_KEYS + pickClienteMasterExtrasForWrite
+  CadastroClienteCompleto — bloco data-block=cliente-master-extras; nao-carregado; onError storage
+  CentralCliente360Panel — data-block=central360-master-extras; estados absent/empty/present/forbidden
+
+Peels:
+  Completo remainder hash 7081e69a… (extras peeled)
+  stage51 CentralCliente360Panel hash estável 2b45f3e4…
+
+Testes locais (pass):
+  cliente-master-extras-ui-591
+  cliente-campos-piloto-cobertura-591
+  cadastro-query-payload-boundaries
+  read-boundary-contracts
+  central-cliente360-docs-rg-591
+  crm-conversao-consumer
+  + contatos/vinculos/entregas/identity focados
+
+Fora deste lote:
+  aplicar SQL / DDL HML
+  reativar 1500 ensaio
+  ContasReceber BFF títulos
+  aceite SHA API+web coordenado Codex
+  inventar defaults para esconder schema antigo

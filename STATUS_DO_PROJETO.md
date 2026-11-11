@@ -1,16 +1,353 @@
+## CURSOR — #591 CI SUCCESS tip master-extras + Relatórios RBAC (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | **`af13da12`** CI SUCCESS 9/9 · [run](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/actions/runs/43079031689) · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Empilha** | master extras Completo+Cliente360 · Relatórios loading gate · reopen mock · typecheck message |
+| **Estados** | Pareceres preservados · omit ≠ limpar · 503 STORAGE_REQUIRED explícito · Fechar≠Cancelar |
+| Fora | HML/SQL/1500 · ContasReceber BFF · SHA API+web aceite Codex |
+
+**Próximo:** ACK Codex storage revisado · aceite :15173 · ContasReceber quando contrato.
+
+## CURSOR — #591 Relatórios Representantes/Personalizado loading gate (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Lote** | Triggers Representantes/Personalizado fail-closed sob `permissionsLoading` (recuperação erp-integra, sem tela paralela) |
+| **Testes** | `relatorios-representantes-personalizado-rbac-591` · secure-report-behavior · peels Relatorios |
+| **Evidence** | `docs/evidence/cursor-relatorios-rep-pers-rbac-loading-591-20261111.txt` |
+| Fora | HML · grants inventados · Documentacao/OAuthConsent |
+
+**Próximo:** CI tip master-extras + este delta · ACK Codex storage · aceite :15173.
+
+## CURSOR — #591 master extras Completo+Cliente360 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | docs tip `ff3cb09e` / runtime `f42f51a1` CI SUCCESS |
+| **Lote** | Consumo UI `rg`/`numero_caixa_postal`/`cep_caixa_postal`/`caixa_postal_cobranca`/`inscricao_produtor_rural` no Completo + Cliente360 |
+| **Contrato** | Codex MASTER extras · omit ≠ limpar · schema antigo → 503 `CLIENTE_MASTER_STORAGE_REQUIRED` (sem DDL Cursor) |
+| **Testes** | `cliente-master-extras-ui-591` · piloto · peels Completo/`2b45f3e4` stage51 · CRM fixture |
+| **Evidence** | `docs/evidence/cursor-cliente-master-extras-ui-591-20261111.txt` |
+| **Estados** | Pareceres preservados · Fechar≠Cancelar · absent≠vazio confirmado · sem ClienteV2 |
+| Fora | SQL HML · 1500 · ContasReceber BFF · SHA API+web · inventar defaults de schema |
+
+**Próximo:** CI tip · ACK Codex storage revisado · aceite :15173 · ContasReceber quando contrato.
+
+## CURSOR — #591 CI SUCCESS tip entregas/WhatsApp/financeiro (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | **`f42f51a1`** CI SUCCESS 9/9 · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Empilha** | entregas HTTP · WhatsApp classificado · caps locais · volume zeros · financeiro pending_bff · vínculos/RG/contatos |
+| **Estados** | Pareceres preservados · Fechar≠Cancelar · omit ≠ limpar · sem inventar títulos |
+| Fora | HML/1500 · SHA API+web · ContasReceber BFF · ContatoB2B FK · provedores externos |
+
+**Próximo:** ACK Codex BFF ContasReceber/RG · aceite :15173 coordenado.
+
+## CURSOR — #591 Entregas + WhatsApp classificado + caps locais (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS runtime `c2cd0859` / docs `599ba242` |
+| **Lote** | Entregas HTTP Cliente360 · WhatsApp classificado · caps `cliente_local` · volume doc zeros · financeiro soft-land pending_bff |
+| **Testes** | `central-cliente360-entregas-whatsapp-591` · volume · peels · CRM fixture · RBAC locais |
+| **Evidence** | `docs/evidence/cursor-cliente360-entregas-whatsapp-locais-591-20261111.txt` |
+| **Estados** | Pareceres preservados · Fechar≠Cancelar · omit ≠ limpar · sem inventar títulos/financeiro |
+| Fora | HML/1500 · SHA API+web · ContatoB2B FK · ContasReceber BFF por cliente · provedores externos |
+
+**Próximo:** CI tip · ACK Codex BFF ContasReceber/RG · aceite :15173.
+
+## CURSOR — #591 CI SUCCESS tip vínculos/docs/contatos (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | **`c2cd0859`** CI SUCCESS 9/9 · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Empilha** | vínculos · RG/docs estados · Contatos MASTER + volume · fixture CRM |
+| **Estados** | Pareceres preservados · omit ≠ limpar · BFF escrita fail-closed |
+| Fora | HML · SHA API+web aceite · ContatoB2B FK · provedores externos |
+
+**Próximo:** ACK Codex BFF enriquecimento · aceite :15173 coordenado.
+
+## CURSOR — #591 Cliente360 vínculos comerciais (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Lote** | Vendedor/indicador/região na Central360 com estados; reusa GET MASTER |
+| **Testes** | `central-cliente360-vinculos-591` · peels · CRM fixture |
+| **Evidence** | `docs/evidence/cursor-cliente360-vinculos-591-20261111.txt` |
+| Fora | Persistência BFF vínculos · HML · CANAL sky Usuario/Fiscal |
+
+**Próximo:** CI tip · ACK Codex BFF enriquecimento · aceite :15173.
+
+## CURSOR — #591 Cliente360 RG + documentos[] estados (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Lote** | RG + documentos[] na Central360 com estados (absent/empty/quarentena/forbidden/unavailable/present_bff_pending); Completo `data-documentos-estado` |
+| **Reuso** | Mesma GET MASTER contatos (`entities.Cliente.get`) — sem GET paralelo |
+| **Testes** | `central-cliente360-docs-rg-591` · peels Completo/stage51 · CRM fixture |
+| **Evidence** | `docs/evidence/cursor-cliente360-docs-rg-591-20261111.txt` |
+| **Estados** | Não declara cadastro completo por nome/documento · omit ≠ limpar · BFF escrita pendente |
+| Fora | Persistência BFF RG/docs · HML · ContatoB2B FK · provedores externos |
+
+**Próximo:** CI tip · ACK Codex enriquecimento · aceite :15173 · recuperação sky residual.
+
+## CURSOR — #591 CI-fix fixture Contatos MASTER (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Causa** | frontend FAIL `7fba8c13`: `crm-conversao-consumer` Proxy mock → `.quarentena.length` |
+| **Fix** | resolver real `centralCliente360Contatos` + `cadastroEditLoadPolicy`; classificar fail-safe |
+| **Testes** | `crm-conversao-consumer` · peels · contatos-master |
+| **Estados** | Runtime contatos/volume preservado |
+
+**Próximo:** CI tip peels/fix · ACK Codex.
+
+## CURSOR — #591 Contatos MASTER Central360 + volume 2k/5k (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `739241da` / docs `3fa0011c` |
+| **Lote** | Contatos MASTER no painel (cargo/canal/quarentena; ctx pós-await); volume sintético 2000/5000 |
+| **Testes** | `central-cliente360-contatos-master-591` · `cliente-volume-paginacao-591` · peels stage51 |
+| **Evidence** | `docs/evidence/cursor-cliente360-contatos-volume-591-20261111.txt` |
+| **Estados** | Pareceres preservados · omit ≠ limpar · Celular ≠ WhatsApp · sem ContatoClienteV2 |
+| Fora | HML · SHA API+web · 14 nomes · provedores externos · RG/docs BFF |
+
+**Próximo:** CI tip · ACK Codex enriquecimento contatos/endereços · aceite :15173.
+
+## CURSOR — #591 CI SUCCESS tip `739241da` locais incompleto (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`739241da`** locais parcial≠completo · identity IE `eae2c4df` · Completo omit `91b112ac`/`432edac1` |
+| **CI** | SUCCESS 9/9 |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática |
+| Fora | 14 nomes · SHA API+web · HML · canais externos |
+
+**Próximo:** ACK Codex nomes 14 + aceite :15173 · recuperação/canais independente.
+
+## CURSOR — #591 locais parcial≠completo Central360 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `eae2c4df` / docs `ed0f57d9` |
+| **Lote** | `projectLocal` + painel: `endereco_incompleto` / resumo; não fingir endereço completo |
+| **Testes** | identity-ie (+locais) · read-boundary |
+| **Evidence** | `docs/evidence/cursor-cliente360-local-incompleto-591-20261111.txt` |
+| Fora | 14 nomes · HML · canais externos |
+
+**Próximo:** CI tip · ACK Codex nomes 14 + aceite :15173.
+
+## CURSOR — #591 CI SUCCESS tip `eae2c4df` identity IE/IM/obs (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`eae2c4df`** IE/IM/obs no identity BFF→UI · peels · `91b112ac`/`3e5cbdf6`/`432edac1` |
+| **CI** | SUCCESS 9/9 |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática |
+| Fora | 14 nomes privados · SHA API+web · canais externos · HML |
+
+**Próximo:** ACK Codex nomes 14 + aceite :15173 · recuperação/canais independente.
+
+## CURSOR — #591 Cliente360 IE/IM/obs no identity BFF→UI (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `91b112ac` / docs `1078bd01` |
+| **Lote** | `projectIdentity` + painel: IE/IM; observações gated por sensível (“Não autorizado”) |
+| **Testes** | `cliente-central360-identity-ie-591` · pagina-ui · read-boundary |
+| **Evidence** | `docs/evidence/cursor-cliente360-identity-ie-591-20261111.txt` |
+| **Estados** | Banco→API→UI · sem inventar valor · peels stage51 |
+| Fora | 14 nomes · HML · SHA API+web |
+
+**Próximo:** CI tip · ACK Codex nomes 14 + aceite :15173.
+
+## CURSOR — #591 CI SUCCESS tip `91b112ac` IE/IM/obs UI (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`91b112ac`** Completo IE/IM/obs omit-aware · peels · runtime identity `95bfe2d7` · piloto `432edac1` |
+| **CI** | SUCCESS 9/9 |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática |
+| Fora | IE no identity BFF (Codex) · 14 nomes · SHA API+web · canais externos |
+
+**Próximo:** ACK Codex IE identity + nomes 14 + aceite :15173 · recuperação/canais independente.
+
+## CURSOR — #591 Completo IE/IM/obs omit-aware UI (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `3e5cbdf6` |
+| **Lote** | Inputs IE/IM/observações com `??` + placeholder “Não recuperado” (carga parcial ≠ limpar) |
+| **Testes** | `cliente-campos-piloto-cobertura-591` · peels Completo stage48 |
+| **Estados** | Continuação da matriz cadastro rico · peels hash atualizado |
+| Fora | IE no identity BFF · 14 nomes · HML |
+
+**Próximo:** CI tip · ACK Codex identity IE + nomes 14.
+
+## CURSOR — #591 CI SUCCESS tip `3e5cbdf6` identity+peels (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`3e5cbdf6`** peels stage51 · runtime identity `95bfe2d7` · piloto `432edac1` |
+| **CI** | SUCCESS 9/9 |
+| **Lotes** | omit escalares + lista · Cliente360 identity rica · peels CI-fix |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática |
+| Fora | IE no identity (Codex) · 14 nomes · SHA API+web · canais externos |
+
+**Próximo:** ACK Codex IE/nomes 14 + aceite :15173 · próximo lote recuperação/canais.
+
+## CURSOR — #591 CI-fix peels identity rica (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Causa** | frontend FAIL `3284170d`: stage51 `CentralCliente360Panel` hash fora do peel |
+| **Fix** | hunk aprovado em `readBoundaryRemainder` (identity rica → painel mínimo) |
+| **Testes** | `read-boundary-contracts` 24 pass |
+| **Estados** | Runtime `95bfe2d7` preservado · CI tip peels |
+
+**Próximo:** CI tip peels · ACK Codex IE identity + nomes 14.
+
+## CURSOR — #591 Cliente360 identity rica (API→UI) (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `432edac1` / docs `64d8fe11` |
+| **Lote** | Painel identity exibe fantasia/social/razão/origem/tipo/ativo já retornados por `projectIdentity` (ocultos na UI) |
+| **Testes** | `central-cliente-360-pagina-ui` · navigation · layout v6 |
+| **Evidence** | `docs/evidence/cursor-cliente360-identity-rica-591-20261111.txt` |
+| **Estados** | IE/IM ainda fora do contrato identity · Celular ≠ WhatsApp |
+| Fora | Estender BFF identity (Codex) · 14 nomes · HML · canais externos |
+
+**Próximo:** CI tip · ACK Codex IE no identity + nomes 14 · aceite :15173.
+
+## CURSOR — #591 CI SUCCESS tip `432edac1` piloto-cobertura (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`432edac1`** omit escalares + lista rica · peels stage48 |
+| **CI** | SUCCESS 9/9 |
+| **Lote** | Completo hasOwn/ownText; UI procedência/contato; listas fantasia/IE/origem |
+| **Evidence** | `docs/evidence/cursor-cliente-piloto-cobertura-omit-591-20261111.txt` |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática deste tip |
+| Fora | SHA API+web Codex · 14 nomes privados · BFF rich · canais externos |
+
+**Próximo:** ACK Codex nomes 14 + aceite :15173 · próximo lote recuperação/canais independente.
+
+## CURSOR — #591 piloto-cobertura omit escalares + lista rica (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | tip peels CI `b36ea0ae` / docs `01bea376` |
+| **Lote** | Completo `buildPayload` hasOwn/ownText (IE/e-mail/obs/nome_social/origem omit ≠ wipe); UI procedência + contato escalar; listas fantasia/IE/origem; V24 labels |
+| **Testes** | `cliente-campos-piloto-cobertura-591` + peels Completo/consolidacao · 70 pass |
+| **Evidence** | `docs/evidence/cursor-cliente-piloto-cobertura-omit-591-20261111.txt` |
+| **Estados** | Defeitos ctx/unidade/Pedidos403/cliente_local/Fechar≠Cancelar preservados · 14 nomes privados com Codex |
+| Fora | HML import · SHA API+web · BFF rich fora ALLOWED_KEYS · canais externos |
+
+**Próximo:** CI tip · ACK Codex nomes 14 + aceite :15173 · recuperação sky residual.
+
+## CURSOR — #591 CI SUCCESS tip `b36ea0ae` (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`b36ea0ae`** peels CI · runtime `163c9de8`/`ffbb938f`/`f61c7524`/`559c01c1` · 679601 `ea318931` |
+| **CI** | SUCCESS 9/9 |
+| **Lotes** | ctx/unidade/Pedidos403 · cliente_local RBAC · omit crédito/fiscal · volume 150 · Cliente360 visualizar · Fechar ENTREGA/RETIRA · quarentena revisável |
+| **Estados** | Tip verde · CI ≠ homologação HML · sem importação neste agente |
+| Fora | SHA API+web Codex · BFF 156/34 · contadores faixa · provedores externos |
+
+**Próximo:** ACK Codex · aceite :15173 com SHA API+web alinhados · recuperação sky residual.
+
+## CURSOR — #591 Cliente360 visualizar≠editar + jornada Fechar (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | tip omit/volume `f61c7524` |
+| **Lote** | Abrir cadastro mestre na Central360 só com `Cliente.visualizar`; Fechar→ENTREGA/RETIRADA coberto por teste |
+| **Testes** | `central-cliente-cadastro-navigation` · `central-vendas360-layout-v6-591` |
+| **Estados** | Leitura autorizada não escondida · save ainda fail-closed no Completo |
+| Fora | HML · contadores faixa · provedores externos WhatsApp/e-mail |
+
+**Próximo:** CI tip · ACK Codex SHA HML · recuperação sky residual.
+
+## CURSOR — #591 omit crédito/fiscal + volume sintético (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | tip `559c01c1` (cliente_local RBAC) · `ea318931` (6796010811) |
+| **Lote** | Reabertura sem inventar OK/Simples; save omite blocos não carregados; rastreio ALLOWED_KEYS; paginação sintética 150 |
+| **Testes** | `cliente-credito-fiscal-omit-591` · `cliente-volume-paginacao-591` + regressões contatos/RBAC |
+| **Evidence** | `docs/evidence/cursor-cliente-campos-rastreio-omit-591-20261111.txt` |
+| **Estados** | Desconhecido ≠ confirmado · volume UI preparado · sem HML/PII |
+| Fora | Persistência BFF 156/34 · importação · SHA HML combinado (Codex) |
+
+**Próximo:** CI deste tip · ACK Codex · Cliente360 fontes canônicas · lote recuperação erp-integra.
+
+## CURSOR — #591 cliente_local RBAC visualizar≠escrita (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base tip** | `ea318931` (6796010811 CI SUCCESS) |
+| **Lote** | Parecer **6798362673**: Endereços usam `Cadastros.cliente_local.{criar,editar,inativar}`; Cliente.editar não habilita Adicionar; banner só-leitura |
+| **Testes** | `cadastros-contatos-enderecos-rbac` 11 PASS · limitacao peels PASS |
+| **Evidence** | `docs/evidence/codex-parecer-6798362673-cliente-local-rbac-591-20261111.txt` |
+| **Estados** | UI alinhada ao grant HML visualizar-only · backend fail-closed intacto · sem ampliar perfil |
+| Fora | HML/importação (Codex) · jornada API Central · ContatoClienteV2 |
+
+**Próximo:** CI deste tip · ACK Codex · volume/jornada API · snapshot pós-HML.
+
+## CURSOR — #591 CI SUCCESS parecer 6796010811 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) (stack #591) |
+| **Tip** | **`ea318931`** CI SUCCESS 9/9 (runs 43028665978 / 43028625529) |
+| **Base** | tip Fechar≠Cancelar `e3b32276` / freeze :15173 `8650fd4d` |
+| **Lote** | P1 ctx pós-await · P1 unidade sem fator · P2 Pedidos403 parcial · CNPJ/nome PJ + grade sem bleed |
+| **Evidence** | `docs/evidence/codex-parecer-6796010811-ctx-unidade-pedidos403-591-20261111.txt` |
+| **Estados** | Parecer fechado no tip · tentativa frontend ≠ escrita cruzada backend · CI ≠ homologação HML |
+| Fora | ContatoClienteV2 · deploy · PII · #401 · Desmembrar · HML enquanto STOPPED_EMERGENCY |
+
+**Próximo:** ACK Codex · jornada API + Cliente360 fontes · snapshot API+web pós-recuperação HML.
+
 ## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
-| **Tip** | **`ca9a88aa`** CI SUCCESS 9/9 — peels + runtime Fechar≠Cancelar |
+| **Tip** | **`ca9a88aa`** / docs **`e3b32276`** CI SUCCESS — peels + runtime Fechar≠Cancelar |
 | **Runtime** | `e71808a3` Fechar→converter · Cancelar separado · Fechar janela só UI |
 | **Freeze cadastro :15173** | **`8650fd4d`** (Codex) — tip UI não substitui aceite HML |
 | **Evidence** | `c360-fechar-neq-cancelar-591-20261111.txt` · canais/recuperação 20261111 |
 | **Estados** | CI verde · CI ≠ homologação · aceite :15173 / jornada API pendentes |
 | Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar · importação HML |
 
-**Próximo:** aceite :15173 com Codex no freeze `8650fd4d` · jornada com API no tip web+API alinhados · #401 pós-aceite.
+**Próximo:** parecer 6796010811 (branch ctx) · aceite :15173 com Codex · jornada API · #401 pós-aceite.
 
 ## CURSOR — #591 Fechar≠Cancelar + matrizes canais/recuperação (2026-11-11 America/Sao_Paulo)
 
