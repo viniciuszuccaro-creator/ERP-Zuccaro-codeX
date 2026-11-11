@@ -24,3 +24,11 @@ test('Cliente360 painel exibe IE/IM/obs com classificação não autorizado', ()
   assert.match(panel, /data-campo="observacoes"/);
   assert.match(panel, /Não autorizado ao perfil/);
 });
+
+test('projectLocal e painel: endereço incompleto ≠ completo', () => {
+  assert.match(service, /endereco_incompleto: incompleto/);
+  assert.match(service, /logradouro: incompleto \? null/);
+  assert.match(panel, /data-campo="endereco_incompleto"/);
+  assert.match(panel, /Endereço incompleto/);
+  assert.match(panel, /data-campo="localidade"/);
+});

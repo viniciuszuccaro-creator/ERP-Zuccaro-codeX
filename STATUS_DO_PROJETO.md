@@ -1,3 +1,16 @@
+## CURSOR — #591 locais parcial≠completo Central360 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `eae2c4df` / docs `ed0f57d9` |
+| **Lote** | `projectLocal` + painel: `endereco_incompleto` / resumo; não fingir endereço completo |
+| **Testes** | identity-ie (+locais) · read-boundary |
+| **Evidence** | `docs/evidence/cursor-cliente360-local-incompleto-591-20261111.txt` |
+| Fora | 14 nomes · HML · canais externos |
+
+**Próximo:** CI tip · ACK Codex nomes 14 + aceite :15173.
+
 ## CURSOR — #591 CI SUCCESS tip `eae2c4df` identity IE/IM/obs (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

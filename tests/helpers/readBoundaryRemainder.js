@@ -93,6 +93,41 @@ export const readBoundaryHunks = {
       + '      )}',
       1,
     ],
+    // #591: locais — parcial ≠ completo (endereco_incompleto / resumo).
+    [
+      '          renderRow={(row) => (\n'
+      + '            <>\n'
+      + '              <span>{row.nome}</span>\n'
+      + '              {row.endereco_incompleto ? (\n'
+      + '                <Badge variant="outline" data-campo="endereco_incompleto" title="Localidade disponível; não tratar como endereço completo">\n'
+      + '                  Endereço incompleto\n'
+      + '                </Badge>\n'
+      + '              ) : (\n'
+      + '                <span className="text-xs text-slate-600" data-campo="endereco_resumo">\n'
+      + '                  {[row.logradouro, row.numero].filter(Boolean).join(\', \')\n'
+      + '                    || [row.bairro, row.cep].filter(Boolean).join(\' · \')\n'
+      + '                    || \'Endereço sem logradouro\'}\n'
+      + '                </span>\n'
+      + '              )}\n'
+      + '              <span className="text-xs text-slate-500" data-campo="localidade">\n'
+      + '                {[row.cidade, row.uf].filter(Boolean).join(\'/\') || \'—\'}\n'
+      + '              </span>\n'
+      + '            </>\n'
+      + '          )}\n'
+      + '        />\n'
+      + '        <BlockCard\n'
+      + '          title="Obras"',
+      '          renderRow={(row) => (\n'
+      + '            <>\n'
+      + '              <span>{row.nome}</span>\n'
+      + '              <span className="text-xs text-slate-500">{row.cidade}/{row.uf}</span>\n'
+      + '            </>\n'
+      + '          )}\n'
+      + '        />\n'
+      + '        <BlockCard\n'
+      + '          title="Obras"',
+      1,
+    ],
   ],
   'src/components/comercial/centralCliente360Pagination.js': [
     [' * @template {Record<string, number>} T\n * @param {T} limits', ' * @param {Record<string, number>} limits', 1],

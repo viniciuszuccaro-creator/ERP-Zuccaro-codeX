@@ -600,7 +600,20 @@ export default function CentralCliente360Panel({
           renderRow={(row) => (
             <>
               <span>{row.nome}</span>
-              <span className="text-xs text-slate-500">{row.cidade}/{row.uf}</span>
+              {row.endereco_incompleto ? (
+                <Badge variant="outline" data-campo="endereco_incompleto" title="Localidade disponível; não tratar como endereço completo">
+                  Endereço incompleto
+                </Badge>
+              ) : (
+                <span className="text-xs text-slate-600" data-campo="endereco_resumo">
+                  {[row.logradouro, row.numero].filter(Boolean).join(', ')
+                    || [row.bairro, row.cep].filter(Boolean).join(' · ')
+                    || 'Endereço sem logradouro'}
+                </span>
+              )}
+              <span className="text-xs text-slate-500" data-campo="localidade">
+                {[row.cidade, row.uf].filter(Boolean).join('/') || '—'}
+              </span>
             </>
           )}
         />
