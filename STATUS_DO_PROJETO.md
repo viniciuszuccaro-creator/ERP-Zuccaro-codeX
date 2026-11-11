@@ -1,3 +1,17 @@
+## CURSOR — #591 Fechar≠Cancelar + matrizes canais/recuperação (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base** | `3a559c1d` (docs visual) · ABERTO runtime `de189e0d` · freeze cadastro `8650fd4d` |
+| **Lote** | Semântica Fechar→converter-pedido; Cancelar separado; Fechar janela ≠ negócio; matrizes canais/recuperação |
+| **Testes** | `central-vendas360-layout-v6-591` 11 PASS (incl. Fechar≠Cancelar) |
+| **Evidence** | `c360-fechar-neq-cancelar-591-20261111.txt` · `c360-canais-bot-matriz-591-20261111.txt` · `recuperacao-matriz-proxima-591-20261111.txt` |
+| **Estados** | Fechar corrigido · tip aguarda CI · aceite :15173 Codex pendente · HML propriedade Codex |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar · importação HML |
+
+**Próximo:** CI deste tip · aceite :15173 com Codex no freeze `8650fd4d` · jornada com API · #401 pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS ABERTO + screenshots privados (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

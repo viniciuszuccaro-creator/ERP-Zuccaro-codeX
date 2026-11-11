@@ -2,7 +2,7 @@ import OrcamentoProposalAside, { PROPOSTA_CAPACIDADES } from './OrcamentoProposa
 import { createComercialProposalFixture } from './comercialProposalFixture';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, Eye, FilePlus2, Mail, MessageCircle, MoreHorizontal, Pencil, Plus, Printer, RefreshCw, Search, Send, SlidersHorizontal, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, FilePlus2, Mail, MessageCircle, MoreHorizontal, Pencil, Plus, Printer, RefreshCw, Search, Send, SlidersHorizontal, Trash2, XCircle } from 'lucide-react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { readErpHttpSession } from '@/api/erpHttpSession';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -691,13 +691,45 @@ const convertToPedido = async () => {
     const detail = await loadCentralDetail(row);
     if (detail) await prepareShare(detail, channel);
   };
-  const fecharOrcamentoCentral = () => {
+  /**
+   * Fechar Orçamento ≠ Cancelar.
+   * Fechar = validações + converter em pedido via backend (estoque/alçada no servidor).
+   * Cancelar permanece ação própria (api.cancel).
+   */
+  const fecharOrcamentoCentral = async () => {
+    if (proposalMode) {
+      toast.message('Proposta visual: fechamento comercial desabilitado (sem conversão).');
+      return;
+    }
     const row = requireCentralSelection('fechar');
+    if (!row) return;
+    if (row.status !== 'EM_ABERTO') {
+      toast.error('Somente orçamentos em aberto podem ser fechados.');
+      return;
+    }
+    if (!canConvert) {
+      toast.error('Seu perfil não possui permissão para fechar o orçamento (converter em pedido).');
+      return;
+    }
+    const detail = await loadCentralDetail(row);
+    if (!detail) return;
+    if (!Array.isArray(detail.itens) || detail.itens.length === 0) {
+      toast.error('Orçamento sem itens — não é possível fechar.');
+      return;
+    }
+    conversionScope.current = renderedScope.current;
+    setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' });
+    setConversionStockOk(true);
+    setPendingConversion(detail);
+    toast.message('Fechamento comercial: confirme operação, data e estoque. A conversão só grava após resposta do servidor — Cancelar é ação separada.');
+  };
+  const cancelarOrcamentoCentral = () => {
+    const row = requireCentralSelection('cancelar');
     if (!row) return;
     if (!canCancel(row)) {
       toast.error(row.status === 'EM_ABERTO'
-        ? 'Seu perfil não possui permissão para fechar este orçamento.'
-        : 'Somente orçamentos em aberto podem ser fechados.');
+        ? 'Seu perfil não possui permissão para cancelar este orçamento.'
+        : 'Somente orçamentos em aberto podem ser cancelados.');
       return;
     }
     cancel(row);
@@ -881,16 +913,15 @@ const convertToPedido = async () => {
         </DropdownMenu>
         <Button
           type="button"
-          variant="outline"
           size="sm"
-          className="border-sky-200"
-          disabled={!contextReady || submitting || !centralSelected || !canCancel(centralSelected)}
-          onClick={fecharOrcamentoCentral}
+          className="bg-sky-700 hover:bg-sky-800"
+          disabled={!contextReady || submitting || !centralSelected || centralSelected.status !== 'EM_ABERTO' || !canConvert}
+          onClick={() => { void fecharOrcamentoCentral(); }}
           data-action="central360-fechar-orcamento"
-          data-permission="Comercial.orcamento.cancelar"
-          title="Fecha orçamento em aberto (cancelamento preservando registro)"
+          data-permission="Comercial.pedido.converter-pedido"
+          title="Fechar orçamento: validações + converter em pedido no servidor (≠ Cancelar)"
         >
-          <XCircle className="w-4 h-4 mr-1" />
+          <CheckCircle2 className="w-4 h-4 mr-1" />
           Fechar Orçamento
         </Button>
         <DropdownMenu>
@@ -924,6 +955,14 @@ const convertToPedido = async () => {
               Incluir itens anteriores
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              data-action="central360-cancelar"
+              disabled={!centralSelected || !canCancel(centralSelected)}
+              onSelect={cancelarOrcamentoCentral}
+              className="text-rose-700 focus:text-rose-800"
+            >
+              Cancelar orçamento (≠ Fechar)
+            </DropdownMenuItem>
             <DropdownMenuItem
               data-action="central360-desmembrar"
               onSelect={desmembrarOrcamentoCentral}
@@ -1281,8 +1320,9 @@ const convertToPedido = async () => {
         <Button
           variant="outline"
           onClick={closeForm}
-          data-action={proposalMode ? 'proposta-fechar' : 'orcamento-fechar'}
-        >Fechar</Button>
+          data-action={proposalMode ? 'proposta-fechar-janela' : 'orcamento-fechar-janela'}
+          title="Fecha apenas a janela do formulário — não cancela nem fecha o orçamento comercialmente"
+        >Fechar janela</Button>
         <Button
           onClick={save}
           disabled={proposalMode || submitting || mastersQuery.isLoading || mastersQuery.isError}
@@ -1292,8 +1332,8 @@ const convertToPedido = async () => {
       </DialogFooter>
     </DialogContent></Dialog>
 
-    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div data-action="orcamento-detalhe-tabela-preco"><span className="text-slate-500">Tabela de preço</span><p>{tabelaLabel(selected.tabela_preco_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setConversionStockOk(true); setPendingConversion(selected); }}><FilePlus2 className="w-4 h-4 mr-2" />Converter em pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
-    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) { setPendingConversion(null); setConversionStockOk(true); } }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-lg max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Converter em pedido</DialogTitle><DialogDescription>O orçamento original será preservado e vinculado ao novo pedido.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div>{pendingConversion && <ValidadorEstoquePedido orcamento={pendingConversion} empresaId={empresaId} onAvailabilityChange={(state) => { setConversionStockOk(conversionStockOkFromAvailability(state)); }} />}</div><DialogFooter><Button variant="outline" onClick={() => { setPendingConversion(null); setConversionStockOk(true); }} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting || !conversionStockOk} data-action="orcamento-converter-pedido">{submitting ? 'Convertendo...' : 'Criar pedido'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
+    <Dialog open={detailOpen} onOpenChange={setDetailOpen}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-4xl max-h-[90vh] overflow-auto"><DialogHeader><DialogTitle>Orçamento {selected?.numero}</DialogTitle><DialogDescription>{selected?.status === 'EM_ABERTO' ? 'Em aberto' : 'Cancelado'} · validade {date(selected?.validade_em)}</DialogDescription></DialogHeader>{selected && <div className="space-y-4"><div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm"><div><span className="text-slate-500">Cliente</span><p>{clienteLabel(selected.cliente_empresa_id)}</p></div><div><span className="text-slate-500">Condição</span><p>{condicaoLabel(selected.condicao_pagamento_id)}</p></div><div data-action="orcamento-detalhe-tabela-preco"><span className="text-slate-500">Tabela de preço</span><p>{tabelaLabel(selected.tabela_preco_id)}</p></div><div><span className="text-slate-500">Criado</span><p>{date(selected.created_at)}</p></div><div><span className="text-slate-500">Atualizado</span><p>{date(selected.updated_at)}</p></div></div><p className="text-sm whitespace-pre-wrap">{selected.observacoes || 'Sem observações.'}</p><Table><TableHeader><TableRow><TableHead>Descrição</TableHead><TableHead>Un.</TableHead><TableHead className="text-right">Qtd.</TableHead><TableHead className="text-right">Preço</TableHead><TableHead className="text-right">Desconto</TableHead><TableHead className="text-right">Total</TableHead></TableRow></TableHeader><TableBody>{selected.itens.map((item) => <TableRow key={item.id}><TableCell>{item.descricao}</TableCell><TableCell>{item.unidade_sigla}</TableCell><TableCell className="text-right">{item.quantidade}</TableCell><TableCell className="text-right">{money(item.preco_unitario)}</TableCell><TableCell className="text-right">{money(item.desconto)}</TableCell><TableCell className="text-right">{money(item.total)}</TableCell></TableRow>)}</TableBody></Table><div className="flex justify-end gap-5"><span>Subtotal: <strong>{money(selected.subtotal)}</strong></span><span>Desconto: <strong>{money(selected.desconto)}</strong></span><span>Total: <strong>{money(selected.total)}</strong></span></div></div>}<DialogFooter className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => printOrcamento(selected)}><Printer className="w-4 h-4 mr-2" />Imprimir/PDF</Button><Button variant="outline" title="Preparar texto para WhatsApp" onClick={() => prepareShare(selected, 'WhatsApp')}><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</Button><Button variant="outline" title="Preparar texto para e-mail" onClick={() => prepareShare(selected, 'e-mail')}><Mail className="w-4 h-4 mr-2" />E-mail</Button>{canConvert && selected?.status === 'EM_ABERTO' && <Button data-action="orcamento-detalhe-fechar" onClick={() => { conversionScope.current = renderedScope.current; setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '' }); setConversionStockOk(true); setPendingConversion(selected); }}><CheckCircle2 className="w-4 h-4 mr-2" />Fechar → pedido</Button>}{canEdit(selected) && <Button variant="outline" onClick={() => openEdit(selected)}><Pencil className="w-4 h-4 mr-2" />Editar</Button>}{canCancel(selected) && <Button variant="destructive" data-action="orcamento-detalhe-cancelar" onClick={() => cancel(selected)} disabled={submitting}><XCircle className="w-4 h-4 mr-2" />Cancelar orçamento</Button>}</DialogFooter></DialogContent></Dialog>
+    <Dialog open={Boolean(pendingConversion)} onOpenChange={(open) => { if (!open && !submitting) { setPendingConversion(null); setConversionStockOk(true); } }}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="max-w-lg max-h-[90vh] overflow-auto" data-block="central360-fechar-conversao"><DialogHeader><DialogTitle>Fechar orçamento → pedido</DialogTitle><DialogDescription>Fechamento comercial via conversão no servidor (estoque/alçada/auditoria). Orçamento original preservado e vinculado. Cancelar é ação separada.</DialogDescription></DialogHeader><div className="space-y-3"><div><Label>Operação</Label><Select value={conversion.tipo_operacao} onValueChange={(value) => setConversion((current) => ({ ...current, tipo_operacao: value }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada pelo cliente</Label><Input type="date" value={conversion.data_entrega_solicitada} onChange={(event) => setConversion((current) => ({ ...current, data_entrega_solicitada: event.target.value }))} /></div>{pendingConversion && <ValidadorEstoquePedido orcamento={pendingConversion} empresaId={empresaId} onAvailabilityChange={(state) => { setConversionStockOk(conversionStockOkFromAvailability(state)); }} />}</div><DialogFooter><Button variant="outline" onClick={() => { setPendingConversion(null); setConversionStockOk(true); }} disabled={submitting}>Voltar</Button><Button onClick={convertToPedido} disabled={submitting || !conversionStockOk} data-action="orcamento-converter-pedido" data-permission="Comercial.pedido.converter-pedido">{submitting ? 'Fechando...' : 'Confirmar fechamento'}</Button></DialogFooter></DialogContent></Dialog>    <ConfirmDialog
       open={Boolean(pendingCancel)}
       onOpenChange={(open) => { if (!open) setPendingCancel(null); }}
       onConfirm={() => { const row = pendingCancel; setPendingCancel(null); void performCancel(row); }}

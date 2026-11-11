@@ -11,7 +11,8 @@ IMPLEMENTADO (contratos existentes)
 | Novo Orçamento | `openCreate` + POST orçamentos | já existia |
 | Imprimir | `gerarPDFOrcamento` após GET detalhe | exige seleção |
 | Enviar | `buildOrcamentoShareText` + clipboard | WhatsApp/e-mail = texto revisável; sem disparo automático |
-| Fechar Orçamento | `api.cancel` + ConfirmDialog | só EM_ABERTO + RBAC cancelar |
+| Fechar Orçamento | `convertOrcamento` + diálogo (≠ cancel) | CORRIGIDO 2026-11-11: validações + pedido no servidor |
+| Cancelar orçamento | `api.cancel` + ConfirmDialog | Mais Ações — separado do Fechar |
 | Duplicar | GET + `mapOrcamentoRowToCreateDraft` + revalidação mestres | rascunho sujo; não grava |
 | Incluir itens anteriores | list pedidos/orçamentos do cliente + merge itens | revalidar preços/estoque/condições |
 | Desmembrar | toast de limitação | sem contrato HTTP — não executa |

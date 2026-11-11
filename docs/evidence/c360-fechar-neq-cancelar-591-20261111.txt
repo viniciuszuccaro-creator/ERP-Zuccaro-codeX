@@ -1,0 +1,29 @@
+Central360 — Fechar Orçamento ≠ Cancelar (#591)
+================================================
+America/Sao_Paulo 2026-11-11 · branch cursor/hml-grupo-erro-fornecedor-392b
+
+DIAGNÓSTICO
+- Tip `de189e0d` mapeava incorretamente «Fechar Orçamento» → `api.cancel` (RBAC cancelar).
+- Isso contradiz o fluxo comercial: Fechar = validações + avançar (converter→pedido);
+  Cancelar = ação própria que preserva registro como CANCELADO.
+
+CORREÇÃO (código)
+- `fecharOrcamentoCentral` → GET detalhe → `setPendingConversion` → diálogo
+  «Fechar orçamento → pedido» → `pedidosApi.convertOrcamento` (backend:
+  estoque UI gate + alçada/desconto/auditoria no `pedidoService.convert`).
+- RBAC do botão: `Comercial.pedido.converter-pedido` (não cancelar).
+- Cancelar: item separado em Mais Ações (`central360-cancelar`) → ConfirmDialog → `api.cancel`.
+- Botão do formulário: «Fechar janela» (`orcamento-fechar-janela`) — só UI, sem negócio.
+
+NÃO FEITO COMO SUCESSO VISUAL
+- Sem mudança local de status para simular fechamento.
+- Confirmação só após resposta HTTP do converter-pedido.
+- Desmembrar continua limitação declarada.
+
+TESTES
+- `tests/central-vendas360-layout-v6-591.test.js` · «Fechar ≠ Cancelar» PASS
+- peels: fecharFn não contém `cancel(row)`; exige `setPendingConversion` + `canConvert`
+
+ACEITE PENDENTE
+- Homologar conversão com API funcional no mesmo SHA web+API (CI ≠ homologação).
+- Freeze cadastro rico :15173 permanece `8650fd4d` (Codex).

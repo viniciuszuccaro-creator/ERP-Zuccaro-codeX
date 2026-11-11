@@ -127,6 +127,24 @@ test('OrcamentosTab ABERTO: Imprimir/Enviar/Fechar/Mais sem fingir sucesso', () 
   assert.doesNotMatch(src, /desmembrar com sucesso|Desmembramento concluído/i);
 });
 
+test('Fechar Orçamento ≠ Cancelar: conversão backend, cancel separado', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  // Fechar abre fluxo de conversão (não api.cancel).
+  assert.match(src, /Fechar Orçamento ≠ Cancelar/);
+  assert.match(src, /setPendingConversion\(detail\)/);
+  assert.match(src, /data-permission="Comercial\.pedido\.converter-pedido"/);
+  assert.match(src, /data-block="central360-fechar-conversao"/);
+  assert.match(src, /data-action="central360-cancelar"/);
+  assert.match(src, /Cancelar orçamento \(≠ Fechar\)/);
+  assert.match(src, /orcamento-fechar-janela/);
+  // Regressão: botão Fechar Orçamento não pode chamar cancel(row) diretamente.
+  const fecharFn = src.match(/const fecharOrcamentoCentral = async \(\) => \{[\s\S]*?\n  \};/);
+  assert.ok(fecharFn, 'fecharOrcamentoCentral deve existir');
+  assert.doesNotMatch(fecharFn[0], /\bcancel\(row\)/);
+  assert.match(fecharFn[0], /setPendingConversion/);
+  assert.match(fecharFn[0], /canConvert/);
+});
+
 test('preferências de colunas: escopo usuário+grupo+empresa; sem cruzar contexto', () => {
   assert.equal(centralColumnPrefsStorageKey({}), null);
   assert.equal(centralColumnPrefsStorageKey({ actorId: 'a', groupId: 'g' }), null);

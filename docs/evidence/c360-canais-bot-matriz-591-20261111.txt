@@ -1,0 +1,33 @@
+Central360 / canais e bot — matriz objetiva (#591)
+==================================================
+America/Sao_Paulo 2026-11-11 · tip base `de189e0d` + delta Fechar≠Cancelar
+
+Jornada alvo: atendimento → cliente → orçamento → aprovação → pedido →
+produção/entrega/retira → faturamento/cobrança → acompanhamento.
+
+| Canal / capacidade | Estado | Evidência / contrato | Observação |
+|--------------------|--------|----------------------|------------|
+| Atendimento Unificado (Hub) | implementação parcial | `HubAtendimento` aberto pela faixa Central | RBAC do módulo dono; contadores oficiais futuros |
+| Bot / Chatbot | implementação parcial | `ChatbotAtendimento` / componentes chatbot | Exceções → atendimento; sem inventar preço/crédito |
+| WhatsApp envio | parcial (texto revisável) | `prepareShare` + clipboard | Não dispara provedor externo sem config |
+| E-mail envio | parcial (texto revisável) / depende config | clipboard + Hub | Botão E-mail no Cliente360 disabled até provedor |
+| GoTo | depende config externa | botão disabled na Central | Só com provedor conectado comprovado |
+| Site / e-commerce | parcial / canal consumidor | `OrcamentoSite` etc. | Não mestre de pedido |
+| Marketplaces | parcial | configs Cadastros / Financeiro omnichannel | Sem ativar sem autorização |
+| Faturamento / NF-e | parcial | módulo Fiscal + permissões emitir | Emissão só na empresa |
+| Cobrança / boleto | parcial | Financeiro / configs boletos | Não confundir com Fechar orçamento |
+| Imprimir/PDF orçamento | implementado e testado (UI) | `gerarPDFOrcamento` | Requer seleção + detalhe |
+| Fechar orçamento | implementação parcial→contrato real | converter-pedido HTTP | Delta Fechar≠Cancelar nesta entrega |
+| Cancelar orçamento | implementado (contrato) | `api.cancel` + confirm | Separado do Fechar |
+| Desmembrar | inexistente / bloqueado | toast limitação | Sem contrato HTTP |
+| Cliente360 lateral | implementação parcial | `CentralCliente360Panel` + cadastro mestre | Telefone ≠ WhatsApp; dados via API quando sessão ok |
+
+REGRAS DO BOT (contrato)
+- Pode: preparar resposta, consultar catálogo autorizado, encaminhar exceção.
+- Não pode: inventar preço, conceder crédito, ignorar aprovação, confirmar pagamento por imagem.
+- Mensagens externas só com configuração/autorização correspondente.
+
+PRÓXIMO LOTE CANAIS
+1. Contadores oficiais Bot/Aprovações quando API existir.
+2. Provedor WhatsApp/e-mail real sob config Cadastros Gerais.
+3. Aceite jornada completa com API no tip web+API alinhados.

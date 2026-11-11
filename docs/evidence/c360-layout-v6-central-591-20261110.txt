@@ -27,8 +27,9 @@ NÃO CRIADO
 - CentralVendas360Nova / OrcamentosV2 / chatbot/financeiro paralelo
 
 ABERTO (2026-11-11 America/Sao_Paulo)
-- Novo Orçamento · Imprimir (PDF) · Enviar (WhatsApp/e-mail = copiar texto revisável) · Fechar Orçamento (cancel HTTP + confirm)
-- Mais Ações: Duplicar (rascunho + revalidação mestres, sem gravar) · Incluir itens anteriores (pedido/orçamento HTTP do cliente) · Desmembrar = limitação explícita (sem fingir sucesso)
+- Novo Orçamento · Imprimir (PDF) · Enviar (WhatsApp/e-mail = copiar texto revisável)
+- Fechar Orçamento = converter→pedido no servidor (≠ Cancelar) — ver `c360-fechar-neq-cancelar-591-20261111.txt`
+- Mais Ações: Duplicar · Incluir itens anteriores · Cancelar (próprio) · Desmembrar = limitação explícita
 - Helpers: `mapOrcamentoRowToCreateDraft` / `revalidateOrcamentoDraftAgainstMasters` em `orcamentoUiPolicy.js`
 
 PENDENTE / BLOQUEADO

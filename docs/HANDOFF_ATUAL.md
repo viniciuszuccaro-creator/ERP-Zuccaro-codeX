@@ -1,3 +1,10 @@
+## CURSOR — #591 Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+- RECEBIDO: «Fechar (cancel)» estava errado em `de189e0d`.
+- Correção: Fechar Orçamento → `convertOrcamento` (validações + pedido no servidor); Cancelar separado; Fechar janela só UI.
+- Evidence: `c360-fechar-neq-cancelar-591-20261111.txt` · canais `c360-canais-bot-matriz-591-20261111.txt` · recovery `recuperacao-matriz-proxima-591-20261111.txt`.
+- Freeze cadastro :15173 **`8650fd4d`** (Codex/HML). Tip deste delta aguarda CI.
+- **Próximo:** CI · aceite :15173 coordenado · jornada API · #401 pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS ABERTO + visual privado (2026-11-11 America/Sao_Paulo)
 - Tip **`de189e0d`** CI SUCCESS — ABERTO toolbar (Novo/Imprimir/Enviar/Fechar/Duplicar/Itens; Desmembrar=limitação).
 - Screenshots privados: `/opt/cursor/artifacts/c360-v6-de189e0d/` · evidence `c360-visual-privado-de189e0d-20261111.txt`.
