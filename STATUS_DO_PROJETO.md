@@ -1,3 +1,17 @@
+## CURSOR — #591 Cliente360 RG + documentos[] estados (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Lote** | RG + documentos[] na Central360 com estados (absent/empty/quarentena/forbidden/unavailable/present_bff_pending); Completo `data-documentos-estado` |
+| **Reuso** | Mesma GET MASTER contatos (`entities.Cliente.get`) — sem GET paralelo |
+| **Testes** | `central-cliente360-docs-rg-591` · peels Completo/stage51 · CRM fixture |
+| **Evidence** | `docs/evidence/cursor-cliente360-docs-rg-591-20261111.txt` |
+| **Estados** | Não declara cadastro completo por nome/documento · omit ≠ limpar · BFF escrita pendente |
+| Fora | Persistência BFF RG/docs · HML · ContatoB2B FK · provedores externos |
+
+**Próximo:** CI tip · ACK Codex enriquecimento · aceite :15173 · recuperação sky residual.
+
 ## CURSOR — #591 CI-fix fixture Contatos MASTER (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

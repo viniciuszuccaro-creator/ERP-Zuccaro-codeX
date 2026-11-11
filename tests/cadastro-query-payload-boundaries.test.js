@@ -507,8 +507,46 @@ function clienteContactPresenceRemainder(source) {
     '      locais_entrega: record.locais_entrega || [],');
   source = once(source, '      ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),',
     '      documentos: sanitizeDocumentos(data.documentos),');
-  return once(source, '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),',
+  source = once(source, '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),',
     '      documentos: record.documentos || [],');
+  // #591: estados documentos[] (não-carregado/vazio/presente) — peel para banner mínimo.
+  return once(source,
+    '                <p\n'
+    + '                  className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"\n'
+    + '                  data-fonte="documentos-limitacao-http"\n'
+    + '                  data-pendencia="documentos-anexos-bff"\n'
+    + '                  data-documentos-estado={\n'
+    + '                    formData.documentos === undefined\n'
+    + "                      ? 'nao-carregado'\n"
+    + '                      : formData.documentos === null\n'
+    + "                        ? 'desconhecido'\n"
+    + '                        : Array.isArray(formData.documentos) && formData.documentos.length === 0\n'
+    + "                          ? 'vazio'\n"
+    + "                          : 'presente-bff-pendente'\n"
+    + '                  }\n'
+    + '                  role="status"\n'
+    + '                >\n'
+    + '                  Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.\n'
+    + '                  Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER\n'
+    + '                  fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.\n'
+    + '                  {formData.documentos === undefined\n'
+    + "                    ? ' Estado: não carregado nesta carga (omit ≠ limpar).'\n"
+    + '                    : formData.documentos === null\n'
+    + "                      ? ' Estado: desconhecido (null).'\n"
+    + '                      : Array.isArray(formData.documentos) && formData.documentos.length === 0\n'
+    + "                        ? ' Estado: vazio na origem.'\n"
+    + "                        : ' Estado: anexos no rascunho — save HTTP bloqueado até BFF.'}\n"
+    + '                </p>',
+    '                <p\n'
+    + '                  className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"\n'
+    + '                  data-fonte="documentos-limitacao-http"\n'
+    + '                  data-pendencia="documentos-anexos-bff"\n'
+    + '                  role="status"\n'
+    + '                >\n'
+    + '                  Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.\n'
+    + '                  Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER\n'
+    + '                  fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.\n'
+    + '                </p>');
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).

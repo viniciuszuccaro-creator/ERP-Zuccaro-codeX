@@ -2137,11 +2137,27 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
                   data-fonte="documentos-limitacao-http"
                   data-pendencia="documentos-anexos-bff"
+                  data-documentos-estado={
+                    formData.documentos === undefined
+                      ? 'nao-carregado'
+                      : formData.documentos === null
+                        ? 'desconhecido'
+                        : Array.isArray(formData.documentos) && formData.documentos.length === 0
+                          ? 'vazio'
+                          : 'presente-bff-pendente'
+                  }
                   role="status"
                 >
                   Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.
                   Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER
                   fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.
+                  {formData.documentos === undefined
+                    ? ' Estado: não carregado nesta carga (omit ≠ limpar).'
+                    : formData.documentos === null
+                      ? ' Estado: desconhecido (null).'
+                      : Array.isArray(formData.documentos) && formData.documentos.length === 0
+                        ? ' Estado: vazio na origem.'
+                        : ' Estado: anexos no rascunho — save HTTP bloqueado até BFF.'}
                 </p>
               )}
               <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">

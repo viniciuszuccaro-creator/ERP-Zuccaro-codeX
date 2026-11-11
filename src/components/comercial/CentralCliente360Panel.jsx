@@ -9,6 +9,10 @@ import {
   labelContatoCanal,
 } from '@/components/comercial/centralCliente360Contatos';
 import {
+  classifyCentral360Documentos,
+  classifyCentral360Rg,
+} from '@/components/comercial/centralCliente360Documentos';
+import {
   canLoadCentralCliente360,
   central360SessionKey,
   createHttpApiClient,
@@ -367,18 +371,33 @@ export default function CentralCliente360Panel({
     refetchOnMount: 'always',
     placeholderData: undefined,
   });
+  const masterFlags = {
+    forbidden: !canViewContatosMaster && !permissionsLoading,
+    loadError: Boolean(contatosQuery.isError),
+  };
   const contatosClassified = (() => {
-    const raw = classifyCentral360Contatos(
-      contatosQuery.data,
-      {
-        forbidden: !canViewContatosMaster && !permissionsLoading,
-        loadError: Boolean(contatosQuery.isError),
-      },
-    );
+    const raw = classifyCentral360Contatos(contatosQuery.data, masterFlags);
     return {
       status: raw?.status || 'unavailable',
       message: raw?.message || 'Contatos indisponíveis',
       validos: Array.isArray(raw?.validos) ? raw.validos : [],
+      quarentena: Array.isArray(raw?.quarentena) ? raw.quarentena : [],
+    };
+  })();
+  const rgClassified = (() => {
+    const raw = classifyCentral360Rg(contatosQuery.data, masterFlags);
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'RG indisponível',
+      value: raw?.value == null ? null : String(raw.value),
+    };
+  })();
+  const documentosClassified = (() => {
+    const raw = classifyCentral360Documentos(contatosQuery.data, masterFlags);
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'Documentos indisponíveis',
+      items: Array.isArray(raw?.items) ? raw.items : [],
       quarentena: Array.isArray(raw?.quarentena) ? raw.quarentena : [],
     };
   })();
@@ -671,6 +690,61 @@ export default function CentralCliente360Panel({
           <p className="text-xs text-slate-600" role="status">{contatosClassified.message}</p>
         )}
         <p className="text-[10px] text-slate-400">Celular ≠ WhatsApp · edição no Cadastro Completo (CAS contatos[]).</p>
+      </div>
+
+      <div
+        className="border rounded-md bg-white p-3 text-sm space-y-2"
+        data-block="central360-docs-rg-master"
+        data-rg-status={rgClassified.status}
+        data-documentos-status={documentosClassified.status}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium text-slate-800 flex items-center gap-2">
+            <FileText className="h-4 w-4" /> RG e anexos
+          </h4>
+          <span className="text-xs text-slate-500">≠ cadastro completo só por nome/documento</span>
+        </div>
+        {contatosQuery.isLoading ? (
+          <p className="text-xs text-slate-500">Carregando RG/documentos…</p>
+        ) : null}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-fonte="rg-master">
+          <div>
+            <span className="text-slate-500 text-xs">RG</span>
+            <p data-campo="rg" data-rg-estado={rgClassified.status} className="font-mono text-xs">
+              {rgClassified.status === 'present_bff_pending' ? (rgClassified.value || '—') : '—'}
+            </p>
+            <p className="text-[10px] text-slate-500" role="status">{rgClassified.message}</p>
+          </div>
+          <div>
+            <span className="text-slate-500 text-xs">documentos[]</span>
+            <p className="text-[10px] text-slate-500" data-campo="documentos-estado" role="status">
+              {documentosClassified.message}
+            </p>
+          </div>
+        </div>
+        {documentosClassified.items.length > 0 ? (
+          <ul className="space-y-1" data-fonte="documentos-jsonb-master">
+            {documentosClassified.items.map((doc, idx) => (
+              <li
+                key={String(doc.id || doc.nome_arquivo || idx)}
+                className="flex flex-wrap items-baseline gap-x-2 border-b border-slate-100 pb-1"
+                data-campo="documento-anexo"
+              >
+                <Badge variant="outline">{String(doc.tipo || 'anexo')}</Badge>
+                <span className="text-xs">{String(doc.nome_arquivo || doc.nome || 'sem nome')}</span>
+                <span className="text-[10px] text-amber-700">leitura · escrita BFF pendente</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {documentosClassified.quarentena.length > 0 ? (
+          <p className="text-[10px] text-amber-800" data-campo="documentos-quarentena">
+            {documentosClassified.quarentena.length} item(ns) em quarentena (inválido/incompleto)
+          </p>
+        ) : null}
+        <p className="text-[10px] text-slate-400">
+          CPF/CNPJ = Documento MASTER · RG/anexos ≠ ModeloDocumento · omit ≠ limpar.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

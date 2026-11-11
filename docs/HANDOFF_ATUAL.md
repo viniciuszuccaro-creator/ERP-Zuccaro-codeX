@@ -1,3 +1,8 @@
+## CURSOR — #591 RG + documentos[] estados Central360 (2026-11-11 America/Sao_Paulo)
+- Tip PR#592: bloco RG/docs com estados (absent/BFF/quarentena); Completo `data-documentos-estado`.
+- Reusa GET MASTER contatos — sem storage DocumentosCliente paralelo.
+- Empilha contatos MASTER + volume. Sem HML. **Próximo:** CI · ACK Codex BFF · aceite :15173.
+
 ## CURSOR — #591 Contatos MASTER + volume 2k/5k (2026-11-11 America/Sao_Paulo)
 - Tip PR#592: Cliente360 lista contatos[] MASTER (cargo/canal/quarentena; ctx pós-await).
 - Volume sintético 2000/5000 (paginação server-side; sem teto silencioso).
