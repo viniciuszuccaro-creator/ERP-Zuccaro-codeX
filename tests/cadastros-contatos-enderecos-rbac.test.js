@@ -9,7 +9,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 const require = createRequire(import.meta.url);
 
-async function loadForm(relativePath, { canEditCliente = true } = {}) {
+async function loadForm(relativePath, {
+  canEditCliente = true,
+  /** @type {{ visualizar?: boolean, criar?: boolean, editar?: boolean, inativar?: boolean }} */
+  clienteLocal = undefined,
+} = {}) {
   const source = await readFile(new URL(relativePath, import.meta.url), 'utf8');
   const code = transformSync(source, { loader: 'jsx', format: 'cjs', jsx: 'transform' }).code;
   const state = { errors: [], changes: [] };
@@ -44,6 +48,14 @@ async function loadForm(relativePath, { canEditCliente = true } = {}) {
       return originalCreate(type, props, ...children);
     },
   };
+  // Default: quem edita Cliente ainda NÃO ganha cliente_local (parecer 6798362673).
+  // Contatos continuam em Cliente.editar; endereços exigem cliente_local explícito.
+  const localPerms = {
+    visualizar: clienteLocal?.visualizar ?? true,
+    criar: clienteLocal?.criar ?? false,
+    editar: clienteLocal?.editar ?? false,
+    inativar: clienteLocal?.inativar ?? false,
+  };
   runInNewContext(code, {
     module,
     exports: module.exports,
@@ -57,6 +69,20 @@ async function loadForm(relativePath, { canEditCliente = true } = {}) {
             canEdit: (moduleName, section) => {
               if (moduleName !== 'Cadastros') return false;
               if (section === 'Cliente' || section == null) return canEditCliente;
+              return false;
+            },
+            canCreate: (moduleName, section) => {
+              if (moduleName !== 'Cadastros') return false;
+              if (section === 'Cliente' || section == null) return canEditCliente;
+              return false;
+            },
+            hasPermission: (moduleName, section, action = 'visualizar') => {
+              if (moduleName !== 'Cadastros') return false;
+              if (section === 'cliente_local') return Boolean(localPerms[action]);
+              if (section === 'Cliente' || section == null) {
+                if (action === 'editar' || action === 'criar') return canEditCliente;
+                if (action === 'visualizar') return true;
+              }
               return false;
             },
           }),
@@ -117,6 +143,7 @@ test('UI contatos: com permissão exclui e propaga onChange', async () => {
 test('UI enderecos: sem permissão não muta', async () => {
   const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
     canEditCliente: false,
+    clienteLocal: { visualizar: true, criar: false, editar: false, inativar: false },
   });
   const enderecos = [{ apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' }];
   render({ enderecos, onChange: (next) => state.changes.push(next) });
@@ -124,7 +151,44 @@ test('UI enderecos: sem permissão não muta', async () => {
   assert.ok(del?.disabled);
   del.onClick();
   assert.equal(state.changes.length, 0);
-  assert.ok(state.errors.some((e) => /permiss/i.test(e)));
+  assert.ok(state.errors.some((e) => /permiss|cliente_local/i.test(e)));
+});
+
+test('UI enderecos: Cliente.editar + só cliente_local.visualizar NÃO habilita Adicionar (6798362673)', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
+    canEditCliente: true,
+    clienteLocal: { visualizar: true, criar: false, editar: false, inativar: false },
+  });
+  render({
+    enderecos: [],
+    onChange: (next) => state.changes.push(next),
+  });
+  const add = buttons.filter((b) => String(b['data-action'] || '').includes('endereco.adicionar'));
+  assert.ok(add.length >= 1);
+  assert.ok(add.every((b) => b.disabled), 'Adicionar deve ficar disabled sem cliente_local.criar');
+  assert.ok(add.every((b) => String(b['data-permission'] || '').includes('cliente_local')));
+  add[0].onClick();
+  assert.equal(state.changes.length, 0);
+  assert.ok(state.errors.some((e) => /cliente_local\.criar/i.test(e)));
+});
+
+test('UI enderecos: cliente_local.criar/editar/inativar habilita ações granulares', async () => {
+  const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
+    canEditCliente: false,
+    clienteLocal: { visualizar: true, criar: true, editar: true, inativar: true },
+  });
+  const enderecos = [{ apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' }];
+  render({ enderecos, onChange: (next) => state.changes.push(next) });
+  const add = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.endereco.adicionar'
+    && String(b['data-permission'] || '') === 'Cadastros.cliente_local.criar');
+  const edit = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.endereco.editar');
+  const del = buttons.find((b) => String(b['data-action'] || '') === 'Cadastros.Cliente.endereco.excluir');
+  assert.equal(add?.disabled, false);
+  assert.equal(edit?.disabled, false);
+  assert.equal(del?.disabled, false);
+  del.onClick();
+  assert.equal(state.changes.length, 1);
+  assert.equal(state.changes[0].length, 0);
 });
 
 test('CadastroClienteCompleto: saveMutation exige podeEditar e passa assertScope aos gerenciadores', async () => {
@@ -165,6 +229,7 @@ test('UI contatos: mudança de Grupo/sessão bloqueia excluir no componente real
 test('UI enderecos: mudança de Grupo/sessão bloqueia excluir no componente real', async () => {
   const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
     canEditCliente: true,
+    clienteLocal: { visualizar: true, criar: true, editar: true, inativar: true },
   });
   const enderecos = [{ apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' }];
   let scopeAlive = true;

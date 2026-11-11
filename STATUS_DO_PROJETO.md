@@ -1,3 +1,17 @@
+## CURSOR — #591 cliente_local RBAC visualizar≠escrita (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base tip** | `ea318931` (6796010811 CI SUCCESS) |
+| **Lote** | Parecer **6798362673**: Endereços usam `Cadastros.cliente_local.{criar,editar,inativar}`; Cliente.editar não habilita Adicionar; banner só-leitura |
+| **Testes** | `cadastros-contatos-enderecos-rbac` 11 PASS · limitacao peels PASS |
+| **Evidence** | `docs/evidence/codex-parecer-6798362673-cliente-local-rbac-591-20261111.txt` |
+| **Estados** | UI alinhada ao grant HML visualizar-only · backend fail-closed intacto · sem ampliar perfil |
+| Fora | HML/importação (Codex) · jornada API Central · ContatoClienteV2 |
+
+**Próximo:** CI deste tip · ACK Codex · volume/jornada API · snapshot pós-HML.
+
 ## CURSOR — #591 CI SUCCESS parecer 6796010811 (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

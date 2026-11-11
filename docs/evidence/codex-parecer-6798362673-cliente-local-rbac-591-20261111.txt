@@ -1,0 +1,34 @@
+# Parecer Codex 6798362673 — Cadastros.cliente_local.visualizar ≠ escrita
+# Data: 2026-11-11 (America/Sao_Paulo)
+# Tip base: ea318931 (parecer 6796010811 CI SUCCESS) · delta neste lote
+
+## Cenário HML (Codex)
+Owner autorizou SOMENTE Cadastros.cliente_local.visualizar (Cliente.editar permanece).
+GET mestre 200 + GET locais 200. UI mostrava Adicionar Endereço habilitado via
+podeEditar = canEdit(Cadastros, Cliente). Backend continua separado — sem bypass
+comprovado; observação de UI.
+
+## Correção (existente GerenciarEnderecosClienteForm)
+- Escrita: hasPermission Cadastros.cliente_local {criar|editar|inativar}.
+- Cliente.editar NÃO habilita Adicionar/Editar/Excluir (nem em commitMode=draft).
+- data-permission canônico Cadastros.cliente_local.*.
+- Banner somente-leitura quando visualizar sem criar/editar/inativar.
+- Sem ampliar perfil/grants.
+
+## Testes
+tests/cadastros-contatos-enderecos-rbac.test.js
+  - Cliente.editar + só visualizar → Adicionar disabled + toast criar
+  - criar/editar/inativar granulares habilitam ações
+tests/cliente-contatos-limitacao-591.test.js — peels atualizados
+
+## Volume listagem (preparação >100)
+- V24: PAGE_SIZES 10/20/50/100 + paginação server-side + total separado (BFF Cliente limit≤200).
+- Sem limite oculto que omita cadastros; sem inventar registros reais no GitHub.
+
+## Ainda fora deste lote
+- Jornada API Central completa / Cliente360 fontes / canais externos
+- Importação HML / grants (Codex)
+- ContatoB2B / ContatoClienteV2
+
+## Relação 6796010811
+Tip ea318931 permanece: ctx pós-await, unidade sem fator, Pedidos403 parcial, CNPJ.

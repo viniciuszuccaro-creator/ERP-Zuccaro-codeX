@@ -20,6 +20,10 @@ import usePermissions from "@/components/lib/usePermissions";
  * Trava síncrona (ref) além de setSalvando: duplo clique antes do re-render
  * não dispara onChange duas vezes (Codex #432 — botão disabled ≠ gravação única).
  * commitMode "draft" = rascunho CadastroCompleto; "backend" = gravação do adaptador.
+ *
+ * RBAC canônico (parecer 6798362673 / HML): Cadastros.cliente_local.*
+ * visualizar ≠ criar/editar/inativar. Cliente.editar NÃO autoriza escrita de locais
+ * (nem em rascunho) — backend /locais exige cliente_local; não ampliar perfil na UI.
  */
 export default function GerenciarEnderecosClienteForm({
   enderecos = [],
@@ -28,8 +32,13 @@ export default function GerenciarEnderecosClienteForm({
   persistBusy = false,
   commitMode = "backend",
 }) {
-  const { canEdit } = usePermissions();
-  const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const { hasPermission } = usePermissions();
+  const podeVisualizarLocais = hasPermission("Cadastros", "cliente_local", "visualizar");
+  const podeCriarLocal = hasPermission("Cadastros", "cliente_local", "criar");
+  const podeEditarLocal = hasPermission("Cadastros", "cliente_local", "editar");
+  // Soft-delete canônico: inativar; excluir aceito como alias legado de UI.
+  const podeInativarLocal = hasPermission("Cadastros", "cliente_local", "inativar")
+    || hasPermission("Cadastros", "cliente_local", "excluir");
   const isDraftCommit = commitMode === "draft";
   const busyLabel = isDraftCommit
     ? "Aguarde a atualização do rascunho de endereços."
@@ -40,6 +49,10 @@ export default function GerenciarEnderecosClienteForm({
   const failDeleteLabel = isDraftCommit
     ? "Falha ao atualizar rascunho ao excluir endereço."
     : "Falha ao excluir endereço.";
+  const denyCreateMsg = "Sem permissão Cadastros.cliente_local.criar para incluir endereço.";
+  const denyEditMsg = "Sem permissão Cadastros.cliente_local.editar para alterar endereço.";
+  const denyDeleteMsg = "Sem permissão Cadastros.cliente_local.inativar para remover endereço.";
+  const viewOnly = podeVisualizarLocais && !podeCriarLocal && !podeEditarLocal && !podeInativarLocal;
   const assertScope = () => {
     if (typeof assertScopeCurrent !== "function") return;
     assertScopeCurrent();
@@ -108,8 +121,8 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   const abrirNovo = () => {
-    if (!podeEditar) {
-      toast.error("Sem permissão para editar endereços do cliente.");
+    if (!podeCriarLocal) {
+      toast.error(denyCreateMsg);
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -125,8 +138,9 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   const handleSalvarEndereco = async () => {
-    if (!podeEditar) {
-      toast.error("Sem permissão para editar endereços do cliente.");
+    const isEdit = enderecoEditando !== null;
+    if (isEdit ? !podeEditarLocal : !podeCriarLocal) {
+      toast.error(isEdit ? denyEditMsg : denyCreateMsg);
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -200,8 +214,8 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   const handleEditarEndereco = (index) => {
-    if (!podeEditar) {
-      toast.error("Sem permissão para editar endereços do cliente.");
+    if (!podeEditarLocal) {
+      toast.error(denyEditMsg);
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -218,8 +232,8 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   const handleExcluirEndereco = async (index) => {
-    if (!podeEditar) {
-      toast.error("Sem permissão para editar endereços do cliente.");
+    if (!podeInativarLocal) {
+      toast.error(denyDeleteMsg);
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -246,13 +260,33 @@ export default function GerenciarEnderecosClienteForm({
 
   return (
     <div className="space-y-4">
+      {viewOnly && (
+        <p
+          className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          role="status"
+          data-permission="Cadastros.cliente_local.visualizar"
+          data-rbac="cliente-local-somente-leitura"
+        >
+          Endereços em modo leitura (Cadastros.cliente_local.visualizar).
+          Criar/editar/inativar exigem permissões específicas — Cliente.editar não autoriza locais.
+        </p>
+      )}
+      {!podeVisualizarLocais && (
+        <p
+          className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+          role="status"
+          data-rbac="cliente-local-sem-visualizar"
+        >
+          Sem permissão Cadastros.cliente_local.visualizar para listar endereços neste contexto.
+        </p>
+      )}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Endereços de Entrega ({enderecos.length})</h3>
         <Button
           onClick={abrirNovo}
           size="sm"
-          disabled={bloqueado || !podeEditar}
-          data-permission="Cadastros.Cliente.editar"
+          disabled={bloqueado || !podeCriarLocal}
+          data-permission="Cadastros.cliente_local.criar"
           data-action="Cadastros.Cliente.endereco.adicionar"
           data-commit-mode={commitMode}
         >
@@ -324,8 +358,8 @@ export default function GerenciarEnderecosClienteForm({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditarEndereco(idx)}
-                    disabled={bloqueado || !podeEditar}
-                    data-permission="Cadastros.Cliente.editar"
+                    disabled={bloqueado || !podeEditarLocal}
+                    data-permission="Cadastros.cliente_local.editar"
                     data-action="Cadastros.Cliente.endereco.editar"
                   >
                     <Edit className="w-4 h-4 text-blue-600" />
@@ -334,8 +368,8 @@ export default function GerenciarEnderecosClienteForm({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleExcluirEndereco(idx)}
-                    disabled={bloqueado || !podeEditar}
-                    data-permission="Cadastros.Cliente.editar"
+                    disabled={bloqueado || !podeInativarLocal}
+                    data-permission="Cadastros.cliente_local.inativar"
                     data-action="Cadastros.Cliente.endereco.excluir"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
@@ -354,8 +388,8 @@ export default function GerenciarEnderecosClienteForm({
             variant="outline"
             size="sm"
             className="mt-3"
-            disabled={bloqueado || !podeEditar}
-            data-permission="Cadastros.Cliente.editar"
+            disabled={bloqueado || !podeCriarLocal}
+            data-permission="Cadastros.cliente_local.criar"
             data-action="Cadastros.Cliente.endereco.adicionar"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -380,7 +414,7 @@ export default function GerenciarEnderecosClienteForm({
           </DialogHeader>
 
           <fieldset
-            disabled={bloqueado || !podeEditar}
+            disabled={bloqueado || (enderecoEditando !== null ? !podeEditarLocal : !podeCriarLocal)}
             className="space-y-4 border-0 p-0 m-0 min-w-0 disabled:opacity-70"
             data-block="endereco-dialog-fields"
           >
@@ -592,8 +626,8 @@ export default function GerenciarEnderecosClienteForm({
               </Button>
               <Button
                 onClick={handleSalvarEndereco}
-                disabled={bloqueado || !podeEditar}
-                data-permission="Cadastros.Cliente.editar"
+                disabled={bloqueado || (enderecoEditando !== null ? !podeEditarLocal : !podeCriarLocal)}
+                data-permission={enderecoEditando !== null ? "Cadastros.cliente_local.editar" : "Cadastros.cliente_local.criar"}
                 data-action="Cadastros.Cliente.endereco.salvar"
               >
                 <Check className="w-4 h-4 mr-2" />

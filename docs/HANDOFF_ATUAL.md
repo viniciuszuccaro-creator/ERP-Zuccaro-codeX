@@ -1,3 +1,9 @@
+## CURSOR — #591 cliente_local RBAC (6798362673) (2026-11-11 America/Sao_Paulo)
+- `GerenciarEnderecosClienteForm`: escrita só com `Cadastros.cliente_local.{criar,editar,inativar}`.
+- Cliente.editar + só visualizar → Adicionar/Editar/Excluir disabled (rascunho incluso).
+- Evidence `codex-parecer-6798362673-cliente-local-rbac-591-20261111.txt`. Tip 679601 `ea318931` intacto.
+- Sem HML/grants neste lote. **Próximo:** CI · ACK · jornada API.
+
 ## CURSOR — #591 CI SUCCESS parecer 6796010811 (2026-11-11 America/Sao_Paulo)
 - Tip **`ea318931`** CI SUCCESS 9/9 · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) (stack #591).
 - P1 ctx pós-await · P1 unidade sem fator · P2 Pedidos403 parcial · CNPJ/nome PJ + grade sem bleed.

@@ -79,7 +79,11 @@ test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
   assert.match(enderecos, /idx !== enderecoEditando/);
   // Cancelar/Salvar respeitam persistBusy (paridade Contatos).
   assert.match(enderecos, /disabled=\{bloqueado\}/);
-  assert.match(enderecos, /disabled=\{bloqueado \|\| !podeEditar\}/);
+  // Parecer 6798362673: escrita via cliente_local.* — não Cliente.editar.
+  assert.match(enderecos, /hasPermission\("Cadastros", "cliente_local"/);
+  assert.match(enderecos, /data-permission="Cadastros\.cliente_local\.criar"/);
+  assert.match(enderecos, /data-permission="Cadastros\.cliente_local\.editar"/);
+  assert.match(enderecos, /disabled=\{bloqueado \|\| !podeCriarLocal\}/);
   assert.match(enderecos, /data-block="endereco-dialog-fields"/);
   assert.match(enderecos, /if \(!open && bloqueado\) return/);
 });
