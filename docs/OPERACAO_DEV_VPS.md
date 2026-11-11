@@ -8,8 +8,9 @@ grant SQL, Authuser novo, admin, DDL ou capacidade de escrever enderecos.
 Sem endpointwriteProfiles nesse BFF: artefato administrativo privado reutiliza
 profiles/audit_logs/executor existente; nao e novo controle de acesso.
 Backup/CAS/replay/auditoria/reversao ensaiados; fontes344/6797920338 e6798163177.
-Aplicacao privada auditada, HTTPpositivo ainda depende
-da nova sessao. Nao usar permissao aplicada como prova de endereco carregado.
+Aplicacao privada auditada. Sessao nova/browser confirmaram mestreGET200 e
+locaisGET200(antes403) na mesma amostra;0locais nesse clienteHML, semAdd/Save.
+Nao usar resposta vazia como ausencia global nem como importacao das117Obras.
 Reversao em local-read-gate-20261111 exige CAS e auditoria; nao executar SQL
 arquivado sem conferir bytes/pins/plano, nem repetir commit de resposta ambigua.
 

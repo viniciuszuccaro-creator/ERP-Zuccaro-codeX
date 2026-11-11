@@ -17,16 +17,25 @@ hml344-cpa-20261104/local-read-gate-20261111. Nao autoriza escrita de locais/Obr
 
 Janela81598 tambem expirou NORMAL:100fullrows iguais,checkpoint final/0writes.
 Retomada98849 ate2026-11-11T14:31:13Z(11h31Brasilia),API/web8650/15173PRIVATE.
-Nova janela exige login; dono solicitado a entrar. HTTPpositivo de locais apos
-concessao AINDA PENDENTE, nao confundir perfil aplicado com aceite endpoint.
+Dono entrou; prova browser->API real: mesma amostra mestreGET200 e locaisGET200
+(antes403),0locais nesse clienteHML/100clientes listados. Isto nao prova ausencia
+na origem nem importa117Obras. Nenhum Add/Save; dialogo fechado, pagina mantida.
+Recibo http-ui-acceptance.private.json junto do gate. UI ainda oferece inclusao
+como rascunho por Cliente.editar; observado mas NAO acionado. Coordenado com
+Cursor591/6798362673 para distinguir rascunho/persistencia e RBACcliente_local,
+sem afirmar bypass backend ou ampliar permissoes para ocultar discrepancia.
 Codigo app eba68f2f/CI6819/6820SUCCESS; checkpoint0424210a/CI6823/6824SUCCESS.
-Proximo: sessao real->GETlocais (sem escrita), matriz156/auxiliares e mappings
-comprovados; sem alterarVPS/DDL/grants ou promoverhistoricos/saldos.
+Proximo: contrato/persistencia RG e mappings156/auxiliares com provas; preparacao
+de schema separado do gateDDL, sem alterarVPS/grants ou promoverhistoricos/saldos.
 Referencias comerciais nativas da100:6codigos de vendedor,4tabelas de preco e
 9regioes; valores capturados antes conferem100/100 com leitura nativa completa.
 CONDICAOPAGTO tem zero nas100, nao condicao comercial aprovada. Nenhum vinculo
 canonico criado por nome/semelhanca. Plano privado commercial-reference-dependencies
 fica junto da matriz156; reutilizar para crosswalk, nao repetir extracao.
+Qualidade RG:77valores brutos,2zerados/75naozero,23vazios; nao chamar75validos sem
+validacao. Contrato backend/BD ainda nao suporta RG, embora UI tenha campo.
+DATANASCIMENTO e CONDICAOPAGTO zerados nas100: preservar como pendencia de
+interpretacao, nao fabricar datas/prazos. Fonte-placeholder-quality privado.
 
 ## Historico imediato - HML recuperada e fonte156 conferida (2026-11-11)
 
