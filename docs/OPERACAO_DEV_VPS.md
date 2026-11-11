@@ -1,5 +1,28 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## HML5extensoes concluida (2026-11-11)
+
+Codigo482fd666 CI6909/6910SUCCESS; SQL candidato aplicado SOMENTE em
+hml344_restore_20261104/hml344_cpa_20261104 pela autorizacao agrupada.
+1316clientes/1317valores,1600snapshots reconciliados,4200contatos e1500inativos
+preservados. APP parada, nenhum aceite de interface inferido.
+Procedimento existente reutilizado: identidadecluster/database/schema/OIDs por
+conexao; manifest/runtime/executor pinados; backup; lock exclusivo do operador;
+DDL+recibo na mesma transacao; baseline/CASnovos; ClienteService canonico;
+replay individual; reconciliacao integral; amostra reversao/reaplicacao.
+Artefatos privados em scale-validation-efbde32d/master-execution-482fd666:
+run/commands/result, fonte e recibos imutaveis. Nao publicar seus conteudos.
+Retomada exige ler recibos/lock e confirmar processo antes de executar qualquer
+comando; jamais apagar lease de outro escritor ou gerar novos operationIds.
+Reversao usa os comandos/operationIds e fingerprints revisados no fluxo existente;
+alteracao manual posterior bloqueia o registro, nao e sobrescrita. SemDROP
+automatico das colunas. Principal continua administrativo, nao leitor restrito.
+Nenhuma autorizacaoVPS, novosgrants, carga operacional ou deploy e inferida.
+Checkpointposlote: replay integral com hash de linhas/auditorias iguais;
+backupCUSTOM3099029bytes comSHA/lista verificados no mesmo cluster. Novo arquivo
+nao restaurado; prova anterior de recuperacao continua separada. Recibo privado
+checkpoint-after.private.json, sem dados identificaveis no GitHub.
+
 ## Delta de enriquecimento e destino efetivo (2026-11-11)
 
 Codigo58c927e0 fechado na CI6897/6898SUCCESS, incluindoPG restrito de extensoes.

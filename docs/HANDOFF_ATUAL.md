@@ -1,4 +1,24 @@
-## Retomada vigente - autorizacao agrupada e contatos omitidos (2026-11-11)
+## Retomada vigente -5extensoes concluidas na HML (2026-11-11)
+
+482fd666ba33251c813e72b1afaea1dcddbdf647 CI6909/6910SUCCESS. PG real de
+extensoes restritas/CAS/replay/rollback/reversao2PASS/0FAIL/0SKIP.
+Pacote agrupado autorizado EXECUTADO:5colunas nullable, CASposDDL,1316clientes/
+1317valores;1600snapshots completos reconciliados,4200contatos/1500inativos
+preservados. Replay individual e amostra reversao/reaplicacaoPASS.
+Recibo result.private.json em scale-validation-efbde32d/master-execution-482fd666.
+Nao repetir enriquecimento/cargas/contatos, nao pedir autorizacaojausada.
+Recibos antigos permanecem imutaveis; DDL nao e desfeito porDROP automatico.
+Revisao independente de agente somente leitura, nao Cursor;4guardas negativas
+sinteticasPASS; nao teste de queda. UI/composicao permanecem Cursor.
+Checkpointposlote concluido:1315RG+1numero+1CEP, outros2sem candidato. Replay do
+pacote inteiro manteve hashes integrais de dados E auditorias,0novas escritas.
+Novo backup3099029bytes SHA/CUSTOMlist verificados; sem novo restore, prova
+anterior reutilizada. checkpoint-after.private.json e dump privado persistidos.
+Locks proprios liberados. HMLAPPSTOPPED e sem aceitebrowser dos5campos.
+Proximo: coordenar projecao do mesmoCliente na candidata e seguir campos/relacoes liberados.
+VPS continua sem escrita/DDL/grants/deploy, depende de pacote especifico.
+
+## Retomada anterior - autorizacao agrupada e contatos omitidos (2026-11-11)
 
 Gate humano das5extensoes HML foi autorizado,1316clientes/1317valores; nao
 solicitar outra autorizacao generica. DDL e enriquecimento ainda NAO executados.

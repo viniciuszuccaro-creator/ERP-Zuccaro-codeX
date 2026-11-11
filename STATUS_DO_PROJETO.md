@@ -1,4 +1,29 @@
-## Delta vigente - preservar contatos omitidos no enriquecimento (2026-11-11)
+## Estado vigente - pacote5extensoes aplicado na HML (2026-11-11)
+
+Codigo482fd666ba33251c813e72b1afaea1dcddbdf647:CI6909/6910SUCCESS, todos3jobs.
+TestePG real de extensoes restritas/CAS/replay/rollback/reversao2PASS/0FAIL/0SKIP;
+nao confundir com41SKIP do backend local. Bundle22arquivos/imports relativos e
+manifest integral conferidos.4negativas sinteticas do executorPASS, semDBreal.
+Revisao independente de agente read-only fechou achados de identidade fisica,
+bytes revisados e retomada atomica; nao e parecerCursor nem teste de queda.
+
+Executado somente no banco/schemaHML autorizados:5colunas nullable semdefault,
+CAS novo aposDDL e1316clientes/1317valores via servico canonico existente.
+Reconciliacao integral1600rows;4200contatos e1500inativos preservados. Replay
+individual sem novas escritas; amostra revertida/reaplicada e replayPASS.
+Nenhum mestre novo/reativacao/grant/VPS. Recibos antigos intactos e continuam
+exigindo seus snapshots originais, nao ignoram os campos adicionados.
+Resultado privado master-execution-482fd666/result.private.json no mesmo
+scale-validation-efbde32d. AplicacaoHML continuaSTOPPED; nenhum aceiteUI inferido.
+Cadastro permanece parcial; demais campos/relacoes e projecaoUI sao separados.
+Checkpointposlote concluido:1315RG+1numero+1CEP de caixa postal;0candidatos nos
+outros2campos, sem inventar. Replay do pacote inteiro preservou hash de TODAS
+as linhas e auditorias (0novas escritas/0novas auditorias). Backupnovo3099029bytes,
+SHA/lista CUSTOM verificados, mesmo cluster pelo socket e caminho interno do dump.
+Este novo arquivo NAO foi restaurado; prova anterior de recuperacao reutilizada.
+checkpoint-after.private.json preserva detalhes; locks proprios liberados.
+
+## Delta anterior - preservar contatos omitidos no enriquecimento (2026-11-11)
 
 Autorizacao agrupada das5extensoes recebida: somenteHML,1316clientes/1317valores,
 condicionada a revisao/backup/revalidacao/CASnovo. Nao pedir novamente nem
