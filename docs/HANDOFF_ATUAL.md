@@ -1,3 +1,10 @@
+## CURSOR — #591 CI SUCCESS ABERTO + visual privado (2026-11-11 America/Sao_Paulo)
+- Tip **`de189e0d`** CI SUCCESS — ABERTO toolbar (Novo/Imprimir/Enviar/Fechar/Duplicar/Itens; Desmembrar=limitação).
+- Screenshots privados: `/opt/cursor/artifacts/c360-v6-de189e0d/` · evidence `c360-visual-privado-de189e0d-20261111.txt`.
+- Estrutura v6 validada (faixa/situações/ABERTO/grades/Cliente360); listagem HTTP neste preview sem API = parcial.
+- Freeze :15173 runtime **`8650fd4d`** intacto. CI ≠ homologação completa.
+- **Próximo:** aceite Codex :15173 · HML com API · #401 pós-aceite.
+
 ## CURSOR — #591 ABERTO Central (2026-11-11 America/Sao_Paulo)
 - Toolbar ABERTO: Novo · Imprimir · Enviar (texto) · Fechar (cancel) · Mais (Duplicar / Itens anteriores / Desmembrar=limitação).
 - Sem fingir sucesso; Desmembrar bloqueado sem contrato HTTP.

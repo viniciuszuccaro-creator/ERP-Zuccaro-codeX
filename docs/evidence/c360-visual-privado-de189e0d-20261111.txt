@@ -1,0 +1,39 @@
+Central360 — screenshots privados vs versão 6 (#591)
+=====================================================
+America/Sao_Paulo 2026-11-11 · tip servido **`de189e0d`** · freeze cadastro **`8650fd4d`**
+
+URL PRIVADA (ambiente agente)
+- `https://127.0.0.1:5173/?proposta=comercial360` (Vite HTTPS self-signed só local)
+- Provenance: tip `de189e0d` branch `cursor/hml-grupo-erro-fornecedor-392b`
+- CI tip ABERTO: SUCCESS (push run 43000781886)
+
+ARTEFATOS (privados — /opt/cursor/artifacts/c360-v6-de189e0d/)
+- c360-v6-central-open-de189e0d.png — shell aberto (1440×900)
+- c360-v6-aberto-toolbar-de189e0d.png — toolbar ABERTO
+- c360-v6-notebook-central-de189e0d.png — 1280×800
+- probe-central.json — hasCentralAttr/hasAbertoToolbar/hasFaixa/hasSituacoes/hasGrades/hasCliente360/has12col = true
+- Referência: /opt/cursor/artifacts/c360-versao6-aprovada.png
+
+COMPARAÇÃO ESTRUTURAL (não = fidelidade pixel)
+| Zona v6 | Servido de189e0d | Classificação |
+|---------|------------------|---------------|
+| Título Central de Vendas360° | presente | validado (estrutura) |
+| Faixa Atendimento/Bot/Entregas/Aprovações | presente | parcial (abre owners; contadores oficiais futuros) |
+| Situações (Aberto→…→Vencidos) | presente (Orçamentos em Aberto ativo) | validado |
+| Toolbar ABERTO Novo/Imprimir/Enviar/Fechar/Mais | presente | validado (UI); Imprimir/Enviar/Fechar disabled sem seleção |
+| Tabela 12 colunas | contrato no código; listagem HTTP falhou neste preview (API ausente) | parcial |
+| Grades Corte/Revenda | presentes (vazias sem seleção) | validado (estrutura) |
+| Cliente360 lateral | presente (aguarda seleção) | validado (estrutura) |
+| KPIs/cards topo da figura v6 | não no shell atual (fora do contrato v6 shell) | futuro / fora do escopo shell |
+| Fluxo do Pedido rodapé da figura | não no shell atual | futuro |
+| Dados reais / seleção preenchida | bloqueado neste preview (sem API HTTP) | bloqueado (preview) |
+
+DECLARAÇÕES
+- CI SUCCESS ≠ homologação visual completa.
+- Não declarar fidelidade só porque o shell existe: estrutura azul/branca + ABERTO confirmados; densidade/KPIs da mockup diferem por desenho aprovado de shell vs mockup rica.
+- Aceite :15173 continua no tip freeze runtime **`8650fd4d`** (API+web) com Codex; tip UI ABERTO **`de189e0d`** SUCCESS.
+
+PRÓXIMO
+- Aceite privado :15173 com Codex no freeze `8650fd4d`
+- Screenshots com API real / dois monitores quando HML autorizada
+- #401 pós-aceite

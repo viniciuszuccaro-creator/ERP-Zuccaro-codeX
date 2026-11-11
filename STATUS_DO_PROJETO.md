@@ -1,3 +1,17 @@
+## CURSOR — #591 CI SUCCESS ABERTO + screenshots privados (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip ABERTO** | **`de189e0d`** CI SUCCESS (push 43000781886 / PR 43000795425) |
+| **Freeze runtime :15173** | **`8650fd4d`** CI SUCCESS 9/9 — pack Codex intacto |
+| **Lote** | ABERTO toolbar + screenshots privados shell vs v6 (estrutura; não pixel-homolog) |
+| **Evidence** | `c360-aberto-acoes-591-20261111.txt` · `c360-visual-privado-de189e0d-20261111.txt` · artifacts `/opt/cursor/artifacts/c360-v6-de189e0d/` |
+| **Estados** | ABERTO UI validada · listagem HTTP neste preview sem API = parcial · aceite :15173 Codex pendente |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar |
+
+**Próximo:** aceite privado :15173 no freeze `8650fd4d` com Codex · HML visual com API · #401 pós-aceite.
+
 ## CURSOR — #591 ABERTO Central + pack :15173 (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

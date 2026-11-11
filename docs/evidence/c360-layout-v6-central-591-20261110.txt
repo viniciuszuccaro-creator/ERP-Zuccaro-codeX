@@ -51,7 +51,8 @@ CHECKLIST DOC
 | Clique simples/duplo | implementado |
 | ABERTO Novo/Imprimir/Enviar/Fechar/Duplicar/Itens anteriores | implementado (contratos existentes) |
 | ABERTO Desmembrar | bloqueado (limitação explícita) |
-| Aceite visual privado | pendente |
+| Aceite visual privado | parcial (estrutura validada em `de189e0d`; sem API/dados neste preview) |
+| CI tip ABERTO **`de189e0d`** | SUCCESS |
 | CI tip layout **`82b15566`** | SUCCESS |
 | CI tip CAS freeze **`c348d4d3`** / runtime **`8650fd4d`** | SUCCESS 9/9 |
 | Aceite :15173 | pack no tip `8650fd4d` — CI ≠ homologação |
