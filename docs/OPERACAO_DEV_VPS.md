@@ -1,5 +1,35 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Escala privada de cadastros - ensaios500/1000 reais (2026-11-11)
+
+Codigo efbde32d/CI6859/6860 e servicos existentes, sem endpoint/importador paralelo.
+staging-checkpoint exporta prepararPersistenciaClientesLegado/persistirLoteClientesLegado/
+reverterLoteClientesLegado. FonteCSV e JSON privados sao conferidos integralmente,
+selecao nativa e transformacoes derivadas pelo seletor existente; manifeste RUN,
+lote, ator/Grupo, alvofisico e hashes ANTES da escrita. OID+clusterIdentifier nao
+nulo, banco/schema/principal e perfil/Auth devem bater; nenhum NULL de socket
+prova igualdade. Sem fallback para operacional nem grants/seed/migrador automatico.
+
+RecibosDB RUN/lote e CRUD/auditoria no mesmo DbClient ALS/COMMIT; replay consulta
+o banco depois de perda do recibo externo. Nunca limpar lock desconhecido, repetir
+escrita apos resposta ambigua ou sobrescrever postimagem mudada manualmente.
+Reversao via inativacao canonica apenas dos inseridos proprios e inalterados.
+
+500 e1000 reais foram inseridos/confrontados/reexecutados/revertidos no MESMO
+HML privado existente;100 originais preservados em todas as etapas. Agora1600
+registros,1500inativos de ensaio auditados. Nao reimportar nem reativar esses testes.
+Temporariamente API/webSTOPPED: dadospersistentes nao significam URL servida.
+0VPS alterada, nenhum efeitoexterno,0DDL/grants/novasroles. Campos ainda pendentes
+e contatos/enderecos nao carregados ficam explicitos; nao chamar cadastro completo.
+
+Antes de qualquer novo lote: consultar combined-trials e receipts privados no
+scale-validation-efbde32d; revalidar fonte/alvo/capacidade/reservas e backup atual.
+Os novos backupsCUSTOM tem hash/listagem verificados; restore anterior reutilizado,
+nao restaurar apenas para repetir prova intacta nem afirmar restore destes arquivos.
+Manifestos/dumps/raw156/credenciais ficam fora do GitHub/CI/builds. A CI usa somente
+sinteticos; HML real foi ensaiada separadamente. VPS requer preflightSQL/schema/
+principal/backup atuais, revisao/integracao e autorizacao especifica de escrita/deploy.
+
 ## Leitura de locais na HML - alteracao autorizada (2026-11-11)
 
 Somente Cadastros.cliente_local=['visualizar'] adicionado ao perfil existente,

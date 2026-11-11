@@ -1,4 +1,63 @@
-## Estado vigente - persistencia retomavel canonica em validacao (2026-11-11)
+## Estado vigente - ensaios REAIS500/1000 concluidos, sem cargaVPS (2026-11-11)
+
+Codigo funcional efbde32d: CI6859/6860SUCCESS, inclusive PostgreSQL real500/1000
+SINTETICOS com concorrencia/COMMITgap/replay/reversao. Depois executados500 e1000
+REAIS no MESMO hml344_restore_20261104/hml344_cpa_20261104 privado persistente,
+GrupoCPA/perfiluser/Auth existente comprovados, sem novo namespace/role/grant/DDL.
+Principal SQL administrativo existente, NAO leitor estrito; RBAC/tenant canonicos
+foram testados separadamente. API/web nao atualizados:15173 continuaSTOPPED.
+
+500: aplicar6175.62ms, replay2837.05ms/0novos, reversao4633.03ms/500inativados.
+1000: aplicar10231.22ms, replay3168.53ms/0novos, reversao6055.03ms/1000inativados.
+Contagens100->600->1600. Originais100 integralmente iguais; lote1000 tambem preservou
+o500anterior.1500inativos de ensaio foram CONSERVADOS com IDs/codigos/campos/auditoria;
+nao apagar nem reativar automaticamente. Nenhuma carga operacional, seed ou reload100.
+Cada candidato: bytes CSV/SHA/parser -> JSON/linha/payload; codigo nativo+documento
+conferidos na copia SQLREADONLY,156campos originais por cliente guardados privadamente.
+Nenhum conflito no preflight500/1000 por codigo/documento/identidade, incluindo
+inativos e outrosGrupos do schema. Isto NAO prova ausencia de conflitos na VPS.
+
+BackupsCUSTOM atuais antes de cada ensaio, hashes/listagem verificados; recuperacao
+anterior reutilizada. NAO restaurados esses dois novos arquivos. Locks exclusivos,
+recibosRUN/lote noDB atomicos e todas as postimagens confrontadas no replay/reversao.
+RBAClido antes/depois, perfilroleuser/Auth/Grupo e clusterID/OIDs/principal positivos.
+LeitorSQLlegado parado apos500/1000;0originais/0VPS alterados. Private:
+scale-validation-efbde32d/{trial500,combined-trials}.private.json e run1000/trial1000;
+raw156/sourceproofs em address-native-20261110-followup/scale{500,1000}-native-*.
+
+CADASTRO PARCIAL, nao completo:1500documentos,1243nomesPF/257razoesPJ,
+1500fantasias,205IE e80emails no payload canonico confrontado com DB.0telefones/
+celulares nesses exports selecionados,0contatos auxiliares novos importados;
+nao e ausencia no backup!331canais/20IE dos100 originais permanecem intactos.
+Raw156 de500 observou6dos14campos adicionais; raw1000 observou9dos14. Componentes
+de enderecos, RG e vinculos comerciais continuam privados/pendentes sem inventar
+numero/pais/WhatsApp/finalidade ou promoverhistorico/credito/estoque/preco.
+
+Taxa observada SOMENTE mestres parciais HML:5485.52clientes/min (1500/16.4068s).
+Extrapolacao aritmetica17471mestresCSV:3.18min de aplicacao pura NESSE contexto;
+NAO inclui extracao/auxiliares/backup/replay/reversao/UI, NAO e prazo completo nem
+benchmarkVPS. PicosRSS:679MB/800MB; workspace livre apos1000:4118122496bytes.
+
+RUN nao fica limitado a1000: selecao agora limitada pelos bytes da fonte(64MiB)
+e quantidade real de rows, mas transacoes continuam<=1000. Auxiliares indexados
+porindice para evitar filtro quadratico. Prova nova1001em500/500/1 no mesmoRUN
+adicionada ao PostgreSQL; PGlite2PASS. CI do novo delta deve fechar no SHA atual.
+
+Outras entidades: originaisCSV->JSON conferidos tambem para fornecedor/produto/
+unitMap;790fornecedores passam no seletor (sem conflito statusInativo/flag), ainda
+sem gate/binding de destino;1208produtos,0liberados/1208pendentes de classificacao/
+unidade/escopo. Nao confundir com exportBase44 de outra frente/fonte.
+
+VPS identificada viaMCP autenticado: host bate com DNS da API, projetoerp-zuccaro,
+api-dev saudavel/health200 versao0.1.0-runtime-01 (semSHAexposto),web eSupabase17.6
+emexecucao. Metricas12h49Brasilia:CPU12.77%,RAM2170019840B,disco70162038784B usados.
+Nao e df/livre comprovado, nem DB/schema/principal efetivo fresco. Detalhes no
+recibo privado vps-migration-target-20261111.0alteracoesVPS/0cobranca/0deploy.
+Proximo lote: enriquecer canais/contatos/enderecos dos MESMOS registros pelos joins
+nativos; fechar RG/crosswalks e14campos; preparar minimo schema/RBAC/backup e SQL
+atual do destinoVPS ANTES de pedir a liberacao operacional especifica.
+
+## Historico imediato - persistencia retomavel canonica em validacao (2026-11-11)
 
 Entrada existente staging-checkpoint agora expoe coordenacao PostgreSQL auxiliar
 staging-persistence. Nao cria endpoint, cadastro, mapper, repositorio, tabela ou

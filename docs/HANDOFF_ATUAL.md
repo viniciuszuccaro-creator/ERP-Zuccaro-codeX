@@ -1,4 +1,40 @@
-## Adendo vigente - RUN/lote e persistencia canonica (2026-11-11)
+## Adendo vigente -500/1000REAIS no mesmoHML,100preservados (2026-11-11)
+
+efbde32d CI6859/6860SUCCESS: PG500/1000sinteticos/conexoes concorrentes/COMMITgap.
+Depois500 e1000REAIS no hml344_restore_20261104/schemahml344_cpa_20261104, mesmos
+GrupoCPA/perfilAuthuser e isolamento.0novasroles/grants/DDL/operacional. PrincipalSQL
+administrativo existente NAO e leitor estrito. Aplicar500:6.18s;1000:10.23s.
+Replay0novos; reversao500:4.63s/1000:6.06s; replay da reversao passou.100 originais
+iguais integralmente, e500anteriores preservados no1000. TotalHML1600:100preservados
++1500inativos auditados dos ensaios. NAO repetir carga nem reativar/apagar essesIDs.
+HMLAPP continuaSTOPPED/15173PRIVATE, sem anuncio de browser/HML funcional atual.
+
+CSVoriginalbytes->JSON->selecao/transformacao e codigo nativo+documento500/1000
+verificados. Raw156 guardado para cada novo,0originais tocados; sourceSQL parado.
+BackupCUSTOM antes de cada,hash/listagemPASS; recuperacao anterior reutilizada,
+NAO dizer que novosdumps foram restaurados. Recibos privados:
+/workspaces/.erp-private-344/scale-validation-efbde32d/trial500.private.json,
+run1000/trial1000.private.json e combined-trials.private.json. Raw/joins no mesmo
+address-native-20261110-followup/scale{500,1000}-native-*; sem nova coorte100.
+
+Cadastros PARCIAIS:1500docs/1500fantasias/205IE/80emails confrontados;0telefones
+nessesCSV selecionados e0auxiliares novos importados NAO significam fonte vazia.
+Originais331canais/20IE conservados.6/14campos novos observados no500,9/14no1000,
+ainda sem promovercampos nao mapeados. Proximo enriquecer os MESMOS por nativejoins,
+nao importar outros milhares de nomes como se cadastro estivesse completo.
+
+5485.52mestres/min soHML;17471/5485.52=3.18min aplicacao aritmetica pura, exclui
+auxiliares/todosgates/VPS e nao e previsao integral. RSSmax800399360B,livre4118122496B.
+SeletorRUN agora pode ultrapassar1000 dentro da fonte64MiB; lote permanece<=1000.
+Auxiliarmap porindice evitaO(n2); novoPG1001em500/500/1 fecha na CI do delta.
+790fornecedores com bytesCSV/JSONvalidos/seletor, sem targetgate;1208produtos ainda
+0liberados por mapaunidade/classificacao.0escritasnessasentidades.
+VPSreadonly MCP confirmou host/DNS/API0.1.0-runtime-01/projeto atual/saude e recursos;
+DB/schema/principal/frescorbackup ainda exigem preflightSQL, nao inventar. Recibo
+desktopprivado vps-migration-target-20261111. Proibicao operacional continua vigente.
+Preparar pacotecompleto antes de solicitar uma decisao especifica, nao generica.
+
+## Historico imediato - RUN/lote e persistencia canonica (2026-11-11)
 
 Reserva Codex342/6799502030; consumidor e guardas antigos/UI/composicao intactos.
 staging-checkpoint expoe auxiliar staging-persistence reutilizando o seletor,

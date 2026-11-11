@@ -42,23 +42,28 @@ export function prepararPersistenciaClientesLegado(input, schemas) {
   'LEGACY_GROUP_CONTEXT_REQUIRED');
   need(typeof sourceSystem === 'string' && sourceSystem.length>0 && sourceSystem.length<=80
     && Number.isSafeInteger(batchSize) && batchSize>=1 && batchSize<=1000
-    && Number.isSafeInteger(limit) && limit>=1 && limit<=1000
+    && Number.isSafeInteger(limit) && limit>=1
     && Array.isArray(excludeLegacyCodes) && excludeLegacyCodes.every(x=>typeof x==='string'), 'LEGACY_SELECTION_INVALID');
   need(target && ['database','schema','principal'].every(k=>typeof target[k]==='string'&&/^[a-z_][a-z0-9_]{0,62}$/.test(target[k]))
     && ['databaseOid','schemaOid'].every(k=>Number.isSafeInteger(target[k])&&target[k]>0)
     && /^\d{1,30}$/.test(target.clusterIdentifier||''), 'LEGACY_TARGET_REQUIRED');
   const source = JSON.parse(sourceBytes.toString('utf8'));
   need(Array.isArray(source?.rows?.cliente) && Array.isArray(source?.rows?.fornecedor), 'LEGACY_SOURCE_FORMAT_INVALID');
+  need(limit<=source.rows.cliente.length,'LEGACY_SELECTION_EXCEEDS_SOURCE');
   const originalSha256=conferirDerivacaoClientesLegado(source,input.originalSource,schemas.parseCsv);
   const selection = selectFunctionalRows({rows:{cliente:source.rows.cliente,fornecedor:[]}},
     {groupId:ctx.groupId,batch:runId,sourceSystem,...schemas});
   const consumed=new Set(['codigo_legado','codigo','tipo','cpf','cnpj','nome','razao_social','nome_fantasia',
     'status','quarantine_reasons','nome_social','inscricao_estadual','inscricao_municipal','telefone','celular','observacoes','contato_email']);
+  const auxiliary=new Map();
+  for(const row of selection.auxiliary.filter(row=>row.entity==='cliente')) {
+    const group=auxiliary.get(row.index)||[];group.push(row);auxiliary.set(row.index,group);
+  }
   const excluded = new Set(excludeLegacyCodes);
   const items = selection.selected.cliente.filter(item=>!excluded.has(item.payload.codigo_legado))
     .sort((a,b)=>a.payload.codigo_legado<b.payload.codigo_legado?-1:a.payload.codigo_legado>b.payload.codigo_legado?1:0)
     .slice(0,limit).map(item=>({ ...item, sourceRowSha256:fingerprint(source.rows.cliente[item.index]),
-      pending:[...selection.auxiliary.filter(row=>row.entity==='cliente'&&row.index===item.index),
+      pending:[...(auxiliary.get(item.index)||[]),
         ...Object.keys(source.rows.cliente[item.index]).filter(key=>!consumed.has(key))
           .map(field=>({reason:'SOURCE_FIELD_WITHOUT_APPROVED_MAPPING',field,sourcePreserved:true}))] }));
   need(items.length>0,'LEGACY_NO_ELIGIBLE_SELECTION');

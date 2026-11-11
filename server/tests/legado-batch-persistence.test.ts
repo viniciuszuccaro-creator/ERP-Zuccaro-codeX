@@ -72,3 +72,16 @@ test('canonical migration receipt: failures, replay, source derivation and bound
     await assert.rejects(persistirLoteClientesLegado({...input,ctx:{...input.ctx,empresaId:'00000000-0000-4000-8000-000000000001'}},deps),/GROUP_CONTEXT/);
   } finally {await f.close();}
 });
+
+test('one migration RUN may exceed 1000 while each transaction remains bounded',async()=>{
+  const f=await localCrmFixture();
+  try {
+    const deps=batchDependencies(nestedPgliteClient(f.admin));
+    const source=await syntheticBatch(deps,1001,4000);
+    const plan=prepararPersistenciaClientesLegado({...source,batchSize:500},deps.schemas);
+    assert.deepEqual(plan.batches.map(batch=>batch.items.length),[500,500,1]);
+    assert.equal(new Set(plan.batches.map(batch=>batch.id)).size,3);
+    assert.throws(()=>prepararPersistenciaClientesLegado({...source,limit:1002},deps.schemas),/EXCEEDS_SOURCE/);
+    assert.throws(()=>prepararPersistenciaClientesLegado({...source,batchSize:1001},deps.schemas),/SELECTION_INVALID/);
+  }finally{await f.close();}
+});

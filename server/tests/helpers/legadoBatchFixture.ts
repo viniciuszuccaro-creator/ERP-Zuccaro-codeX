@@ -43,7 +43,7 @@ export async function syntheticBatch(deps:ReturnType<typeof batchDependencies>,c
     (SELECT system_identifier::text FROM pg_control_system()) AS "clusterIdentifier"`)).rows[0];
   const input={sourceBytes,sourceSha256:sha(sourceBytes),originalSource:{bytes:csv,sha256:sha(csv),delimiter:';'},
     runId:randomUUID(),sourceSystem:'SYNTHETIC_SCALE_TEST',ctx:{groupId:ID.groupA,actorId:ID.runtimeActorA,requestId:randomUUID(),scopeType:'grupo'},
-    target,batchSize:count,limit:count,batchIndex:0};
+    target,batchSize:Math.min(count,1000),limit:count,batchIndex:0};
   const plan=prepararPersistenciaClientesLegado(input,deps.schemas);
   return {...input,manifestSha256:plan.manifestSha256};
 }

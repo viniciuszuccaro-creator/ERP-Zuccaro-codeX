@@ -4,7 +4,7 @@ import pg from 'pg';
 import {createPoolDbClient} from '../src/db/client.ts';
 import {realCrmFixture} from './helpers/crmPostgresFixture.ts';
 import {batchDependencies,syntheticBatch} from './helpers/legadoBatchFixture.ts';
-import {persistirLoteClientesLegado,reverterLoteClientesLegado} from '../../scripts/legado/staging-persistence.mjs';
+import {persistirLoteClientesLegado,reverterLoteClientesLegado,prepararPersistenciaClientesLegado} from '../../scripts/legado/staging-persistence.mjs';
 
 const url=process.env.DATABASE_URL;
 test('PostgreSQL canonical 500 then 1000: commit-gap replay, full postimages, reversal and concurrent attempts',
@@ -52,5 +52,21 @@ test('PostgreSQL canonical 500 then 1000: commit-gap replay, full postimages, re
         console.log(JSON.stringify({engine:'PostgreSQL',data:'SYNTHETIC',size,elapsedMs:performance.now()-start,
           reversalMs:performance.now()-reverseStart,peakRssBytes:process.resourceUsage().maxRSS*1024}));
       }
+      const source=await syntheticBatch(deps,1001,4000),raw={...source,batchSize:500};
+      const plan=prepararPersistenciaClientesLegado(raw,deps.schemas);
+      assert.deepEqual(plan.batches.map(batch=>batch.items.length),[500,500,1]);
+      const input={...raw,manifestSha256:plan.manifestSha256};
+      const applied=[];
+      for(const batch of plan.batches) {
+        const request={...input,batchIndex:batch.index};
+        const receipt=await persistirLoteClientesLegado(request,deps);
+        assert.equal(receipt.items.length,batch.items.length);applied.push(receipt);
+        assert.equal((await persistirLoteClientesLegado(request,deps)).replayed,true);
+      }
+      assert.equal(new Set(applied.flatMap(receipt=>receipt.items.map(item=>item.id))).size,1001);
+      for(const batch of [...plan.batches].reverse())await reverterLoteClientesLegado({...input,batchIndex:batch.index},deps);
+      assert.equal((await f.admin.query('SELECT count(*)::int AS n FROM clientes WHERE migration_batch=ANY($1::text[]) AND ativo',
+        [plan.batches.map(batch=>batch.id)])).rows[0].n,0);
+      console.log(JSON.stringify({engine:'PostgreSQL',data:'SYNTHETIC',runRecords:1001,batchSizes:[500,500,1],replayed:true,reversed:true}));
     }finally{await pool.end();await f.close();}
   });
