@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { transformSync } from 'esbuild';
 import * as policy from '../src/components/cadastros/cadastroReopenPolicy.js';
+import * as localPayload from '../src/api/clienteHttpPayload.js';
 
 /**
  * Contraprovas comportamentais dos formulários COMPLETOS (não Representante/Banco).
@@ -572,4 +573,27 @@ test('CadastroFornecedorCompleto: updated_date externo com rascunho sujo cancela
   });
   h.render();
   assert.equal(h.getNome(), 'Externo Aceito');
+});
+
+test('CadastroClienteCompleto HTTP: local incompleto e permissao local negada nao gravam MASTER',async()=>{
+  const address={apelido:'Synthetic',tipo_endereco:'Entrega',cep:'01310100',logradouro:'Rua Sintetica',numero:'001',bairro:'Bairro',cidade:'Cidade',estado:'SP',pais:'BRASIL'};
+  for(const denied of [false,true,'principal','oversized','batch']){
+    const local=denied?{...address,principal:denied==='principal'}:{...address,pais:''};
+    if (denied==='oversized') local.logradouro='x'.repeat(221);
+    const locais=denied==='batch'?Array.from({length:51},()=>({...local})):[local];
+    const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{
+      propName:'cliente',initial:{...clienteA,locais_entrega:locais},extraModules:{
+        '@/api/base44Client':{base44:{auth:{me:async()=>null},entities:{}},isHttpBackendMode:true},
+        '@/api/clienteHttpPayload':localPayload,
+        '@/components/lib/usePermissions':{__esModule:true,default:()=>({canCreate:()=>true,canEdit:()=>true,canDelete:()=>true,
+          hasPermission:(_module,entity,action)=>!(entity==='cliente_local'&&(denied===true||denied==='principal'&&action==='principal')),hasFieldPermission:()=>true,isAdmin:()=>false})},
+      },
+    });
+    await h.save();
+    assert.equal(h.updates.length,0);assert.equal(h.creates.length,0);
+    const expected=denied==='oversized'?'truncado':denied==='batch'?'50 itens':denied?'Permissao de locais ausente':'pais';
+    assert.ok(h.toasts.some(t=>String(t.description||'').includes(expected)));
+    const child=h.walk().find(n=>n.type==='GerenciarEnderecosClienteForm');
+    assert.equal(child.props.enderecos[0].numero,'001');assert.equal(child.props.enderecos[0].pais,local.pais);
+  }
 });

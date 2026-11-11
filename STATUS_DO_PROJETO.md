@@ -14,9 +14,28 @@ indisponivel, fonte negada nao e consultada. Fechar!=Cancelar preservado.
 51testes focadosPASS, incluindo snapshot de permissao negada e guardas de layout.
 React/TanStack montados noSHAe3 antigo:5PASS/7FAIL,
 fronteiras sinteticas de transporte/UI/estoque, naoHTTP/PG/browserHML.
-Fechamento Linux e montagem do novo snapshot ainda pendentes antes do aceite.
-Proximo independente: capacidade granular de locais; adapter591 ainda preenche
-S/N/Centro/BRASIL sem fonte. Corrigir no existente, sem ampliar perfilHML.
+Pacote1 publicado32a0198b naPR594draft, base591 preservada. Linux exato v03:
+audit/raiz/lint/typecheck/buildPASS, sem instalar dependencias ou alterarcheckout
+canonico. React real do novoSHA:12PASS/0FAIL (antes5/7); naoHTTP/PG/HML.
+Pacote2: capacidade granularcliente_local poracao, sem ampliar perfilHML;
+adapter nao inventaS/N/Centro/BRASIL, rejeita truncamento e lote>50 anteswrites.
+Conserva pais, coordenadaszero/origem e finalidades multiplas; mestre prevalidado
+anteswrite quando locaisinvalidos/negados.53focadosPASS. LoteLocal seguePARCIAL,
+nao transacaoMASTER+locais; anexomapa/logisticaextras continuam nao suportados.
+Linuxv04:2887PASS/2FAIL (peel nao reconhecia preflight); typecheckSet estreito.
+Corrigidos tipo e peel exato com hash/historico integral intacto, contraprovas de
+omissao/repeticao/adulteracaoPASS (15testes). Principal tambem exige permissao
+antesMASTER. Linuxv05 todoschecksPASS; revisao do consumidor mostrou sanitizacao
+anterior ao preflight: HTTP agora entrega rascunho bruto a mutation, saneamento
+MASTER permanece dentro dela.68focadosPASS/lintdirecionado/typecheckPASS.
+FechamentoLinuxv06:2890PASS/0FAIL/0SKIP; audit/lint/typecheck/buildPASS.
+13/13blobs conferidos antes deste fechamento documental; nenhumwriteHML/VPS,
+checkoutcanonico preservado. Patch36009471fe5868fc privado, sem dados reais.
+PR594draft: CI6921/6922 aindaemfila semjobs naultima leitura, naoCIverde.
+ReservaUI/adapter encerrada ao publicar. HML nao atualizada nem homologada poristo.
+Proximo: composicao controlada combackend482/87fe, sem trocarHML por ancestral.
+Ensaio merge-tree semcheckout identificou19conflitos de documentos/Cliente/Auth/
+guardas; preservar ambasfrentes porhunk, sem copiarservicos inteiros.
 Decisao encerrada: mestreFISCAL, ObrasENTREGA multiplas, cobranca fora da migracao
 ativa/rawpreservado.1500ensaios inativos/4200contatos/extensoes nao recarregar.
 

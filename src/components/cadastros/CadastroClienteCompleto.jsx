@@ -5,6 +5,8 @@ import { readErpHttpSession } from "@/api/erpHttpSession";
 import {
   mapClienteLocalToUiEndereco,
   syncClienteLocaisViaHttp,
+  prepareClienteLocaisHttpDraft,
+  isClienteLocalCanonicalId,
   CLIENTE_LOCAIS_SYNC_PARTIAL,
   isContatoCanalCanonico,
   partitionContatosByCanal,
@@ -545,10 +547,30 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
       const payload = buildPayload(data);
       // Write canônico: locais via /clientes/:id/locais — não empurrar no MASTER.
-      const locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
+      let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
         ? payload.locais_entrega
         : undefined;
       if (isHttpBackendMode && locaisDraft !== undefined) {
+        locaisDraft = data.locais_entrega;
+        const localPlan = prepareClienteLocaisHttpDraft(locaisDraft);
+        const required = new Set(/** @type {string[]} */ (localPlan.map(step => step.kind === 'create' ? 'criar' : 'editar')));
+        for (const step of localPlan) {
+          const original = locaisDraft.find(row => String(row?.id || '') === step.localId);
+          const previous = original?._finalidades_detalhadas;
+          const next = Array.isArray(step.fins) ? step.fins : [];
+          if (step.kind === 'create' ? next.some(row => row.principal === true)
+            : !Array.isArray(previous) || next.some(row => !previous.some(before => before.finalidade === row.finalidade && before.principal === row.principal))
+              || previous.some(before => before.principal && !next.some(row => row.finalidade === before.finalidade))) required.add('principal');
+        }
+        const keptIds = new Set(localPlan.map(step => step.localId).filter(Boolean));
+        const baseline = locaisHttpBaselineRef.current;
+        if (Array.isArray(baseline) && baseline.some(row => {
+          const id = row && typeof row === 'object' ? String(/** @type {{id?: unknown}} */ (row).id || '') : '';
+          return isClienteLocalCanonicalId(id) && !keptIds.has(id);
+        })) required.add('inativar');
+        for (const action of required) if (!hasPermission('Cadastros', 'cliente_local', action)) {
+          throw Object.assign(new Error(`Permissao de locais ausente: ${action}. MASTER nao enviado; rascunho preservado.`), { code: 'PERMISSION_DENIED', status: 403 });
+        }
         delete payload.locais_entrega;
       }
       // Anexos documentos[] ≠ CPF/CNPJ MASTER ≠ ModeloDocumento — sem DocumentosCliente paralelo.
@@ -872,7 +894,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     try { assertFormScopeCurrent(); }
     catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
     setIsSaving(true);
-    saveMutation.mutate(buildPayload(formData), {
+    saveMutation.mutate(isHttpBackendMode ? formData : buildPayload(formData), {
       onSettled: () => setIsSaving(false)
     });
   };

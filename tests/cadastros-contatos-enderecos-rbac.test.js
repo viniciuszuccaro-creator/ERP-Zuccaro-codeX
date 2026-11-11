@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 const require = createRequire(import.meta.url);
 
-async function loadForm(relativePath, { canEditCliente = true } = {}) {
+async function loadForm(relativePath, { canEditCliente = true, localActions = ['criar','editar','inativar','principal'] } = {}) {
   const source = await readFile(new URL(relativePath, import.meta.url), 'utf8');
   const code = transformSync(source, { loader: 'jsx', format: 'cjs', jsx: 'transform' }).code;
   const state = { errors: [], changes: [] };
@@ -54,6 +54,7 @@ async function loadForm(relativePath, { canEditCliente = true } = {}) {
         return {
           __esModule: true,
           default: () => ({
+            hasPermission: (moduleName, section, action) => moduleName === 'Cadastros' && section === 'cliente_local' && localActions.includes(action),
             canEdit: (moduleName, section) => {
               if (moduleName !== 'Cadastros') return false;
               if (section === 'Cliente' || section == null) return canEditCliente;
@@ -125,6 +126,24 @@ test('UI enderecos: sem permissão não muta', async () => {
   del.onClick();
   assert.equal(state.changes.length, 0);
   assert.ok(state.errors.some((e) => /permiss/i.test(e)));
+});
+
+test('UI enderecos: Cliente.editar nao concede criar/editar/inativar locais', async () => {
+  const h=await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx',{canEditCliente:true,localActions:['visualizar']});
+  const enderecos=[{id:'synthetic',apelido:'Obra',logradouro:'Rua Sintetica',numero:'001',cidade:'Sintetica',estado:'SP'}];
+  h.render({enderecos,commitMode:'draft',onChange:next=>h.state.changes.push(next)});
+  for(const action of ['adicionar','editar','excluir']) {
+    const button=h.buttons.find(b=>b['data-action']==='Cadastros.Cliente.endereco.'+action);
+    assert.ok(button?.disabled);await button.onClick();
+  }
+  assert.equal(h.state.changes.length,0);assert.deepEqual(enderecos[0].numero,'001');
+});
+
+test('UI enderecos: permissoes locais sao separadas por acao', async()=>{
+  const h=await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx',{localActions:['editar']});
+  h.render({enderecos:[{apelido:'Obra'}],onChange:next=>h.state.changes.push(next)});
+  for(const [action,disabled]of [['adicionar',true],['editar',false],['excluir',true]])
+    assert.equal(h.buttons.find(b=>b['data-action']==='Cadastros.Cliente.endereco.'+action)?.disabled,disabled);
 });
 
 test('CadastroClienteCompleto: saveMutation exige podeEditar e passa assertScope aos gerenciadores', async () => {

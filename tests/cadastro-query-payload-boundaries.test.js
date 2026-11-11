@@ -69,6 +69,17 @@ test('Cliente contatos: remainder mantem alteracao externa visivel ao hash integ
     createHash('sha256').update(original).digest('hex'));
 });
 
+test('Cliente local preflight: peel nao aceita omissao, repeticao ou permissao adulterada', () => {
+  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const start = source.indexOf('        locaisDraft = data.locais_entrega;');
+  const end = source.indexOf('        delete payload.locais_entrega;', start);
+  const hunk = source.slice(start, end);
+  assert.ok(hunk.includes("hasPermission('Cadastros', 'cliente_local', action)"));
+  for (const replacement of ['', hunk + hunk, hunk.replace("hasPermission('Cadastros', 'cliente_local', action)", 'true')]) {
+    assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, replacement)));
+  }
+});
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -90,6 +101,19 @@ function once(source, current, previous) {
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  source = once(source, '    saveMutation.mutate(isHttpBackendMode ? formData : buildPayload(formData), {', '    saveMutation.mutate(buildPayload(formData), {');
+  source = once(source, '  prepareClienteLocaisHttpDraft,\n  isClienteLocalCanonicalId,\n', '');
+  source = once(source, "      let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')", "      const locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')");
+  const preflightStart = '        locaisDraft = data.locais_entrega;';
+  assert.equal(source.split(preflightStart).length - 1, 1, 'one reviewed local preflight');
+  const start = source.indexOf(preflightStart);
+  const end = source.indexOf('        delete payload.locais_entrega;', start);
+  assert.ok(end > start, 'local preflight boundary');
+  const preflight = source.slice(start, end);
+  assert.equal(createHash('sha256').update(preflight).digest('hex'),
+    'f8d72f848f19e1a5d5a49f405412319e0a4be32d6ed51f7c6e90506ada78afc9',
+    'exact reviewed RBAC/payload preflight; historical golden unchanged');
+  source = source.slice(0, start) + source.slice(end);
   source = once(source,
     'import {\n'
     + '  mapClienteLocalToUiEndereco,\n'

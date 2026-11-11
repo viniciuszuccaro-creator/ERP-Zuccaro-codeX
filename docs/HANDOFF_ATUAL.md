@@ -10,9 +10,21 @@ Pacote: gate abrange await do detalhe inclusivefast-path antes da conversao;
 KG/quantidade/preco preservados; fontesPedidos/Orcamentos independentes por
 permissao com401failclosed e parcialexplicito.51focadosPASS; antesReactreal
 e3:5PASS/7FAIL com fronteiras sinteticas, nao provaHTTP/PG/HML.
-Validar snapshotLinux antespush; montagem doSHA novo depois. Proximo independente:
-RBACcliente_local e removerdefaults inventadosS/N/Centro/BRASIL noadapter591,
-preservando rascunho/dados ausentes/locais multiplos. Nao ampliar perfilHML.
+Pacote1 publicado32a0198b/PR594draft: Linuxv03 audit/raiz/lint/typecheck/buildPASS,
+6/6blobsconferidos; Reactreal12/12PASS (antes5/12), fronteiras sinteticas.
+Pacote2WIP separado: RBACcliente_local poracao, semdefaultsS/N/Centro/BRASIL,
+semtruncamento; pais/zero/origem/finalidades preservados.53focadosPASS.
+Preflight local antesMASTERwrite; sincronizacao continuaPARCIAL, naoatomica.
+Nao ampliarperfilHML; mapas/anexos/logistica nao suportados continuam bloqueados.
+Linuxv04 nao aprovado:2peels e tipagemSet; corrigidos com goldenintacto e15testes
+depreservacaoPASS, incluindo3adulteracoesnegativas. Linuxv05todoschecksPASS.
+Deltafinal protege rascunhoHTTP antesbuildPayload (nao truncar51oucamposlongos);
+68focados/lintdirecionado/typecheckPASS. Linuxv06:2890PASS/0FAIL/0SKIP,
+audit/lint/typecheck/buildPASS,13/13blobs antesfechamentodoc, zeroHMLwrites.
+PR594draft/32a0198b:CI6921/6922 aindaemfila, nao declararverde.
+Publicar pacoteLocais e liberarreserva; proximo comporbackend482/87fe sem
+substituir por ancestral. Merge-tree semeditarcheckout mapeou19conflitos:
+Cliente/Auth/docs/guardas exigemkeep-both porhunk. Nao iniciarHML antescomposicao.
 MestreFISCAL/ObrasENTREGA/cobrancadispensada definidos pelo dono; rawintacto.
 Referencias vigentes da migracao e recibos completos permanecem na3425d1fa0fc.
 
