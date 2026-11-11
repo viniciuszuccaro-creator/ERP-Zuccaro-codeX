@@ -41,7 +41,8 @@ test('Completo: quarentena de canal inválido não aparece como contato válido'
   assert.match(completo, /data-fonte="contatos-quarentena"/);
   assert.match(completo, /partitionContatosByCanal/);
   assert.match(completo, /isContatoCanalCanonico/);
-  assert.match(completo, /não exibidos como contato válido/);
+  assert.match(completo, /não confirmados como contato válido/);
+  assert.match(completo, /data-quarentena-lista="contatos"/);
 });
 
 test('GerenciarContatos: UI declara Celular ≠ WhatsApp (sem conversão automática)', () => {

@@ -19,6 +19,17 @@ export const readBoundaryHunks = {
     ['  isHttpApiError,\n  readHttpErrorBodyCode,\n', '', 1],
     ['const status = isHttpApiError(query.error) ? query.error.status : undefined;', 'const status = query.error?.status;', 1],
     ['const code = isHttpApiError(query.error) ? query.error.code || readHttpErrorBodyCode(query.error.body) : undefined;', 'const code = query.error?.code || query.error?.body?.error?.code;', 1],
+    // #591: abrir cadastro com visualizar; editar permanece no Completo.
+    [
+      '  // Abrir cadastro mestre: visualizar basta. Editar/salvar permanece no Completo (fail-closed).\n'
+      + '  // Não exigir Cliente.editar aqui — evita esconder leitura autorizada.\n'
+      + '  const cadastroAllowed = enabled && !permissionsLoading\n'
+      + "    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit });\n",
+      '  const cadastroAllowed = enabled && !permissionsLoading\n'
+      + "    && hasCadastroEntityPermission('Cliente', 'visualizar', { hasPermission, canEdit })\n"
+      + "    && hasCadastroEntityPermission('Cliente', 'editar', { hasPermission, canEdit });\n",
+      1,
+    ],
   ],
   'src/components/comercial/centralCliente360Pagination.js': [
     [' * @template {Record<string, number>} T\n * @param {T} limits', ' * @param {Record<string, number>} limits', 1],
