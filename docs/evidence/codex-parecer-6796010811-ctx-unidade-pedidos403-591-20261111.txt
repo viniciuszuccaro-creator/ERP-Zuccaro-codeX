@@ -1,7 +1,8 @@
 # Parecer Codex 6796010811 — correções Cursor #591
 # Data: 2026-11-11 (America/Sao_Paulo)
 # Tip base revisado: e3b32276 (Fechar≠Cancelar CI SUCCESS)
-# Branch: cursor/c360-parecer-ctx-unidade-cnpj-392b
+# Tip correção: ea318931 — CI SUCCESS 9/9 (runs 43028665978 / 43028625529)
+# Branch / PR: cursor/c360-parecer-ctx-unidade-cnpj-392b · #592 (stack #591)
 
 ## Escopo
 Correções no existente (sem HML / sem ContatoClienteV2 / sem deploy operacional).
@@ -53,5 +54,8 @@ não amplia RBAC; erro de Orçamentos continua fatal para a ação.
 - Jornada API completa (criar→fechar→Produção) e Cliente360 fontes: próximo lote.
 - Freeze :15173 `8650fd4d` intacto (CI ≠ homologação).
 
+## CI
+SUCCESS 9/9 no tip `ea318931` (America/Sao_Paulo 11/11/2026).
+
 ## Próximo
-CI deste tip → ACK Codex → snapshot API+web coordenado pós-recuperação HML.
+ACK Codex → jornada API + Cliente360 fontes → snapshot API+web pós-recuperação HML.

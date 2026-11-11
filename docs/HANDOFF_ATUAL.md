@@ -1,9 +1,9 @@
-## CURSOR — #591 parecer 6796010811 (2026-11-11 America/Sao_Paulo)
-- Branch **`cursor/c360-parecer-ctx-unidade-cnpj-392b`** (base tip `e3b32276`).
-- P1 ctx pós-await Fechar/loadDetail/convert (documentId+opened); P1 unidade sem fator; P2 Pedidos403 parcial; CNPJ/nome PJ + grade sem bleed CPF↔CNPJ.
+## CURSOR — #591 CI SUCCESS parecer 6796010811 (2026-11-11 America/Sao_Paulo)
+- Tip **`ea318931`** CI SUCCESS 9/9 · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) (stack #591).
+- P1 ctx pós-await · P1 unidade sem fator · P2 Pedidos403 parcial · CNPJ/nome PJ + grade sem bleed.
 - Evidence `codex-parecer-6796010811-ctx-unidade-pedidos403-591-20261111.txt`. Tentativa frontend ≠ escrita cruzada backend.
-- Sem HML nesta janela (Codex STOPPED_EMERGENCY). Freeze **`8650fd4d`** intacto.
-- **Próximo:** CI tip · ACK Codex · jornada API/Cliente360 · snapshot pós-HML.
+- Sem HML (Codex STOPPED_EMERGENCY). Freeze **`8650fd4d`** intacto. CI ≠ homologação.
+- **Próximo:** ACK Codex · jornada API/Cliente360 · snapshot pós-HML.
 
 ## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
 - Tip **`ca9a88aa`** / docs **`e3b32276`** CI SUCCESS 9/9 (runtime `e71808a3` + peels).
