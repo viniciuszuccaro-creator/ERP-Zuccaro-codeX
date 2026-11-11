@@ -52,7 +52,30 @@ ativa. O operador iniciou PG antes do bootstrap: parar apoio ocioso exige
 conferir locks/processos, sem supor que o bootstrap o fechara automaticamente.
 Artefatos/recibos detalhados privados; sem promessa de24h ou alteracao na VPS.
 
-## Retomada assistida e capacidade - controlador fino (2026-11-11)
+## Iniciar HML pelo desktop autenticado (2026-11-11)
+
+Validado em22ccb386, CI6807/6808SUCCESS: usar o MESMO controlador com
+`--via-gh start`, `--via-gh status` ou `--via-gh diagnose`. GitHubCLI oficial
+ja autenticado no desktop; ERP344_GH_EXECUTABLE aponta seu executavel aprovado
+e GH_CONFIG_DIR seu diretorio privado. Nunca copiar esse config/token ao remoto.
+O controlador envia somente codigo publico e prova curta do tunel privado via
+SSH oficial; exige owner/repositorio/maquina/Available e preserva pins/lease.
+Codespace parado exige abrir o MESMO ambiente pelo canal oficial, sem rebuild.
+
+Atalho privado desktop `Iniciar HML ERP` chama o wrapper fino Iniciar-HML.ps1
+existente em ERP-Integracao-Privada, que confere SHA256 do controlador publicado.
+Nao altera execution policy, nao instala dependencias, nao duplica bootstrap.
+Manual de recuperacao: executar esse wrapper com -Modo status -SemPausa
+-SemAbrir; -Modo start inicia somente se necessario. Ao atualizar o controlador,
+conferir/revisar seu hash antes de atualizar o pin privado do wrapper.
+
+Ensaio start/replay/status produziu HML_STARTED/HML_ALREADY_RUNNING sem carga.
+Janela atual pid32692 ate2026-11-11T12:40:56Z; API/web8650fd4d, dados reais FINAL100.
+Sessao do dono e acesso externo precisam verificacao propria; timeout do Chrome
+neste ultimo ensaio NAO e prova de indisponibilidade do servidor nem aceite UI.
+Janela anterior terminou com100antes/depois/fingerprint igual e0writes.
+
+## Historico - controlador fino antes da recuperacao (2026-11-11)
 
 `scripts/legado/hml-control.mjs` coordena SOMENTE o bootstrap privado existente.
 Nao e outro ERP/importador. Nao executa seed, carga, migracao, restore, limpeza,

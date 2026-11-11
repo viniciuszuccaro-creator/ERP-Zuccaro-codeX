@@ -85,3 +85,42 @@ test('complete address still needs the canonical validator; no fictitious persis
   assert.equal(classifyLegacyAddresses(input, { validateAddress: () => ({ success: false }) }).ready, 0);
   assert.equal(classifyLegacyAddresses(input, { validateAddress: () => ({ success: true }) }).ready, 1);
 });
+
+test('native Obras preserve identity/text without inferring delivery, street number, country or receiver contacts', () => {
+  const proposal = { clienteId: '11111111-1111-4111-8111-111111111111', groupId,
+    sourceIdentity: { table: 'ClientesObras', CODIGOCLIENTE: '0007', ITEM: '01', SEQUENCIA: '002' },
+    sourceRowJsonSha256: 'a'.repeat(64), sourceText: 'SYNTHETIC STREET 99',
+    provenComponents: { cep: '12345678', cidade: 'SYNTHETIC', bairro: 'SYNTHETIC', ufNative: 'SP' },
+    recipient: { nome: 'SYNTHETIC RECEIVER', telefone: '000123' },
+    target: { finalidades: [{ finalidade: 'ENTREGA' }], pais: 'BR', numero: '99' },
+    canonicalReady: true, pending: ['PURPOSE_NOT_PROVEN'] };
+  const before = structuredClone(proposal);
+  const result = classifyLegacyAddresses({ rows: { cliente: [], fornecedor: [] }, nativeWorks: [proposal] },
+    { validateAddress: () => ({ success: true }) });
+  assert.deepEqual(proposal, before);
+  assert.equal(result.ready, 0);
+  const entry = result.entries[0];
+  assert.equal(entry.kind, 'obra_referencia');
+  assert.equal(entry.sourceIdentity.CODIGOCLIENTE, '0007');
+  assert.equal(entry.sourceIdentity.SEQUENCIA, '002');
+  assert.equal(entry.sourceText, proposal.sourceText);
+  assert.equal(entry.recipientPromoted, false);
+  for (const key of ['numero', 'pais', 'finalidades', 'logradouro']) assert.ok(entry.missing.includes(key));
+  assert.ok(entry.conflicts.includes('NATIVE_PURPOSE_UNPROVEN'));
+  assert.equal(result.fieldsInvented, 0);
+});
+
+test('native Obras isolate invalid CEP and missing provenance; stable repeated classification never applies data', () => {
+  const input = { rows: { cliente: [], fornecedor: [] }, nativeWorks: [
+    { provenComponents: { cep: '1', ufNative: 'SP' }, sourceIdentity: { CODIGOCLIENTE: '0001' } },
+    { provenComponents: { cep: '12345678', ufNative: 'SP' } },
+  ] };
+  const result = classifyLegacyAddresses(input);
+  assert.deepEqual(classifyLegacyAddresses(input), result);
+  assert.equal(result.addresses, 2);
+  assert.equal(result.ready, 0);
+  assert.ok(result.entries[0].conflicts.includes('CEP_FORMAT'));
+  assert.equal(result.entries[1].conflicts.includes('CEP_FORMAT'), false);
+  assert.ok(result.entries.every(row => row.conflicts.includes('NATIVE_SOURCE_HASH_REQUIRED')));
+  assert.equal(result.groups.reduce((sum, group) => sum + group.count, 0), 2);
+});

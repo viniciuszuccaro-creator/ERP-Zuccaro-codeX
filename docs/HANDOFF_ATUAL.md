@@ -1,4 +1,45 @@
-## Continuidade vigente - controlador desktop/SSH e completude100 (2026-11-11)
+## Continuidade vigente - launcher comprovado e Obras classificadas (2026-11-11)
+
+Controlador22ccb386 publicado, CI6807/6808 SUCCESS. Ensaio real via-gh
+start/replay/status: HML_STARTED e HML_ALREADY_RUNNING, API/web8650fd4d,
+origem FINAL100 privada. Wrapper fino privado Iniciar-HML.ps1 e atalho desktop
+reutilizam o mesmo controlador/pins; OAuth permanece no desktop. Nao reinicia
+Codespace parado automaticamente. Janela temporaria; status exige conferir
+sessao do dono. Nova verificacao externa interrompida por timeout do controle
+Chrome; nao apresentar esse ensaio novo como aceite browser concluido.
+
+Matriz privada atual:100 documentos,20IE,331canais (230telefone/101email),
+100IDs/codigos/procedencia conservados. Nomes conferidos pelo contrato PF/PJ:
+0divergencias canonicas;22diferencas de campo legado bruto NAO sao erros de nome.
+WhatsApp/celular nao comprovados; enderecos ainda nao incorporados. Uma amostra
+PJ mostrou documento no banco mas CNPJ vazio no formulario; projecao API/UI
+precisa rastreamento. Nao chamar cadastro completo nem generalizar amostra100.
+
+Mesmo classificador de enderecos agora recebe propostas nativas ClientesObras:
+preserva identidade/texto/hash, separa campos comprovados e nunca infere entrega,
+numero/pais ou contato mestre do recebedor. Binding fornecido explicitamente
+NAO e reverificado pelo classificador. Aplicacao analitica do plano privado
+existente:117propostas,2grupos de pendencias,0aptas,0writes. Nenhuma reextracao,
+carga ou nova coorte. Recibo classification-20261111.private.json permanece
+no diretorio privado address-native-20261110-followup.
+
+Revisao atualizada591/e3b32276 em6796010811: Fechar->cancel ENCERRADO. NovoP1:
+apos await de detalhe completo em memoria, troca Empresa/ator/sessao reassocia
+documento antigo ao contexto novo;3/3 tentam API simulada. Nao prova aceitacao
+backend/bypass RBAC ou escrita cruzada. Unidade100KG->100UN sem fator e
+Pedidos403 bloqueando Orcamentos200 permanecem, reexecutados sem delta nesses
+trechos. Contraprovas helper/callback, NAO banco/browser. Cursor escritor UI.
+Proximo: corrigir esses deltas com Cursor; rastrear documento API/formulario;
+resolver semantica nativa dos locais antes de qualquer enriquecimento de endereco.
+
+Fechamento:23focadosPASS; Windows2444PASS/4FAIL (Python/POSIX). Linux auditPASS,
+blobs iguais; arquivo sem.git gerou82falhas de comparacao historica em2448testes.
+Reexecucao afetada com GIT_DIR somente leitura em andamento, sem mudar testes.
+Snapshot validation-fb8f7f1185a3 privado, fora do checkout/runtime da HML; logs e
+closing-result privados. Publicacao draft autorizada para validacao; exigir CI
+terminal exata antes de declarar encerrado. Nenhum dado real foi enviado a CI.
+
+## Historico - controlador desktop/SSH e completude100 (2026-11-11)
 
 Janela12135 encerrada: APP_STOPPED_RECORDS_PRESERVED,100antes/depois,
 fingerprint igual,0writes e writer.lock removido pelo proprio bootstrap.

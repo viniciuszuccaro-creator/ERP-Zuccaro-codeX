@@ -1,4 +1,33 @@
-## Continuidade vigente - retomada idempotente e matriz de completude (2026-11-11)
+## Continuidade vigente - launcher e classificacao nativa sem escrita (2026-11-11)
+
+ENTREGUE:22ccb386/CI6807/6808SUCCESS; start/replay/status reais pelo GitHubCLI
+oficial. Atalho desktop Iniciar HML ERP reutiliza controlador com OAuth somente
+desktop,15173PRIVATE,pins e lease. API/web8650fd4d, mesmos100, sem carga/restore.
+Nova verificacao browser interrompida por timeout; sessao atual nao aceita por
+inferência de READY. Janela anterior encerrou preservando fingerprint100/0writes.
+
+Completude privada conferida:100documentos,20IE,331canais;0divergencias canonicas
+de nome PF/PJ. Uma amostra PJ com CNPJ persistido apareceu vazio no formulario:
+investigar projecao sem reimportar. WhatsApp/celular nao comprovados; cadastro
+completo ainda NAO aceito.117Obras continuam referencias, nao enderecos de entrega.
+Classificador existente ampliado sem novo importador: preserva identidade/hash/
+texto, distingue campos e pendencias, nao infere numero/pais/finalidade/recebedor.
+Plano privado117 classificado em2grupos,0liberados/0writes;23testes focados PASS.
+Windows:2444PASS/4FAIL (Python indisponivel e APIs POSIX ausentes); nao e verde.
+Linux: blobs de codigo identicos ao WIP; audit PASS; primeira execucao2448testes
+teve2366PASS/82FAIL por arquivo sem metadados Git nas comparacoes historicas.
+Reexecucao SOMENTE desses arquivos com GIT_DIR existente somente leitura e
+lint/typecheck/build em andamento. Publicacao draft de validacao usa autorizacao
+preexistente; CI terminal do SHA novo ainda obrigatoria, sem aceite antecipado.
+
+Revisao591/e3b32276 em6796010811: Fechar->cancelar ENCERRADO; novoP1 de await
+reassocia documento antigo a Empresa/ator/sessao novos (tentativa API simulada,
+nao escrita backend). Unidade reinterpretada sem fator e fonte Pedidos403
+bloqueando Orcamentos autorizados permanecem. Nao integrar esses hunks sem
+correcao; freeze8650 preservado. Proximo: documento API/UI e
+semantica dos locais, com Cursor mantendo autoria UI/composicao. Sem operacional.
+
+## Historico - retomada idempotente e matriz de completude (2026-11-11)
 
 Conservacao da janela anterior comprovada100antes/depois/fingerprint igual,
 0writes. Mesmo controlador HML adaptado para OAuth no DESKTOP e SSH sem tokens

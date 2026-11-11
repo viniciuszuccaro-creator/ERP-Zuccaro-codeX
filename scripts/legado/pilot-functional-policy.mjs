@@ -222,6 +222,24 @@ export function classifyLegacyAddresses(input, { validateAddress } = {}) {
       } catch { add('fornecedor', index, 'cobranca', {}, ['BILLING_JSON_INVALID']); }
     }
   }
+  // Existing native proposals are references, not an authorization to create delivery addresses.
+  for (const [index, row] of (input.nativeWorks || []).entries()) {
+    const components = row.provenComponents || {}, identity = row.sourceIdentity || {};
+    const conflicts = ['NATIVE_PURPOSE_UNPROVEN'];
+    const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value);
+    if (!uuid(row.clienteId) || !uuid(row.groupId)) conflicts.push('NATIVE_BINDING_UNPROVEN');
+    if (!/^(?:dbo\.)?ClientesObras$/.test(identity.table || '')
+      || !['CODIGOCLIENTE', 'ITEM', 'SEQUENCIA'].every(key => identity[key] !== null && identity[key] !== undefined)) {
+      conflicts.push('NATIVE_IDENTITY_REQUIRED');
+    }
+    if (!/^[a-f0-9]{64}$/.test(row.sourceRowJsonSha256 || '')) conflicts.push('NATIVE_SOURCE_HASH_REQUIRED');
+    add('cliente', index, 'obra_referencia', { cep: components.cep, cidade: components.cidade,
+      bairro: components.bairro, uf: components.ufNative }, conflicts);
+    Object.assign(entries.at(-1), { sourceIdentity: structuredClone(identity),
+      sourceRowJsonSha256: row.sourceRowJsonSha256 ?? null, sourceText: row.sourceText ?? null,
+      clienteId: row.clienteId ?? null, groupId: row.groupId ?? null,
+      pending: [...(row.pending || [])], nativeBinding: 'SUPPLIED_NOT_REVERIFIED', recipientPromoted: false });
+  }
   const groups = new Map();
   for (const entry of entries) {
     const key = JSON.stringify([entry.entity, entry.kind, entry.available, entry.missing, entry.conflicts]);
