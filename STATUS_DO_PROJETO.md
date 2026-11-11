@@ -1,3 +1,15 @@
+## CURSOR — #591 CI SUCCESS tip `739241da` locais incompleto (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`739241da`** locais parcial≠completo · identity IE `eae2c4df` · Completo omit `91b112ac`/`432edac1` |
+| **CI** | SUCCESS 9/9 |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática |
+| Fora | 14 nomes · SHA API+web · HML · canais externos |
+
+**Próximo:** ACK Codex nomes 14 + aceite :15173 · recuperação/canais independente.
+
 ## CURSOR — #591 locais parcial≠completo Central360 (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
