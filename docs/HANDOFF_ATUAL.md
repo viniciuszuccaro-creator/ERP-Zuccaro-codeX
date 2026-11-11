@@ -1,3 +1,7 @@
+## CURSOR — #591 CI SUCCESS `c2cd0859` (2026-11-11 America/Sao_Paulo)
+- Tip PR#592 CI SUCCESS 9/9 — vínculos + RG/docs + Contatos MASTER/volume.
+- Sem HML. **Próximo:** ACK Codex BFF · aceite :15173.
+
 ## CURSOR — #591 vínculos comerciais Central360 (2026-11-11 America/Sao_Paulo)
 - Tip PR#592: vendedor/indicador/região com estados (absent/BFF); GET MASTER compartilhada.
 - Empilha RG/docs + contatos. Sem HML. **Próximo:** CI · ACK Codex BFF · aceite :15173.

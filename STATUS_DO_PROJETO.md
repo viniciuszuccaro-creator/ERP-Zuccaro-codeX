@@ -1,3 +1,14 @@
+## CURSOR — #591 CI SUCCESS tip vínculos/docs/contatos (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | **`c2cd0859`** CI SUCCESS 9/9 · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Empilha** | vínculos · RG/docs estados · Contatos MASTER + volume · fixture CRM |
+| **Estados** | Pareceres preservados · omit ≠ limpar · BFF escrita fail-closed |
+| Fora | HML · SHA API+web aceite · ContatoB2B FK · provedores externos |
+
+**Próximo:** ACK Codex BFF enriquecimento · aceite :15173 coordenado.
+
 ## CURSOR — #591 Cliente360 vínculos comerciais (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
