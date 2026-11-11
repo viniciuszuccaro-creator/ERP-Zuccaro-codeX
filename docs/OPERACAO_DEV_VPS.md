@@ -2,6 +2,9 @@
 
 ## Promocao do Cliente - pacote ainda nao executavel (2026-11-11)
 
+Codigo87fe18bb CI6915/6916SUCCESS; indiceCliente-only provado emPostgreSQL real,
+suite3PASS/0FAIL/0SKIP. Prova de teste nao autoriza DDL ou carga naVPS.
+
 Destino SQL comprovado no recibo de16:52Z: srv1982741/postgres/public; API e
 manutencao usam o MESMO postgres NOSUPER/BYPASSRLS. Nao leitor restrito;0policies
 nas9relacoes selecionadas comRLS/FORCE nao comprovam isolamento desse login.

@@ -1,5 +1,9 @@
 ## Retomada vigente - restante dos dados e Cliente-only (2026-11-11)
 
+87fe18bb9b4f2425579f83c1cb38162cb4ccfcbf CI6915/6916SUCCESS. TestePG real
+Cliente-only positivo/rejeicoes/conservacao executado: suite3PASS/0FAIL/0SKIP.
+Fechamento Linux concluido, nao mantergetuidWindows como bloqueio atual.
+
 5extensoes/cargas anteriores FECHADAS, nao repetir. Matriz156 dos mesmos1600
 derivada das3fontes privadas pinadas;85campos com algum valor(inclui zeros),
 71vazios. Fonte/chave/quantidade/destino/regra/pendencia por campo em
@@ -14,11 +18,11 @@ visualizarLocal permitido, criar/editar/inativar negados.0completos comprovados,
 globalVPS desconhecido. Nao vincular empresa, vendedor ou tabela por semelhanca.
 Review existente agora preserva complemento/referencia sem liberar persistencia
 de endereco incompleto. AntesFAIL/depoisPASS;17PASS+1getuidWindows infra; checks
-locaisPASS, fechamentoUbuntuCI pendente. Sem nova ativacao/carga/DDL HML/VPS.
+locaisPASS, fechamentoUbuntuCI6915/6916PASS. Sem nova ativacao/carga/DDL HML/VPS.
 Cliente-only candidate extraido da043 necessario porque arquivo original mistura
-produtos/auth; testePG real novo fecha naCI, sem atualizar journals ou aplicar.
-Reservas342/6804760803 e6804970949 Codex backend/review/testes/docs; UI Cursor.
-Proximo: fecharCI/revisao, crosswalks autoritativos e contrato/RBAC de locais
+produtos/auth; testePG real novoPASS naCI, sem atualizar journals ou aplicar.
+Reservas342/6804760803 e6804970949 LIBERADAS; UI/composicao continuam Cursor.
+Proximo: revisao, crosswalks autoritativos e contrato/RBAC de locais
 parciais; compor API/web com Cursor. VPS aguarda os gates concretos, naoCI apenas.
 
 ## Retomada anterior -5extensoes concluidas na HML (2026-11-11)

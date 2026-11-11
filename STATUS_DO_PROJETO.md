@@ -1,5 +1,9 @@
 ## Estado vigente - matriz restante e preparacao Cliente-only (2026-11-11)
 
+Publicado87fe18bb9b4f2425579f83c1cb38162cb4ccfcbf, CI6915/6916SUCCESS.
+PG real do candidato Cliente-only executado na suite dirigida3PASS/0FAIL/0SKIP;
+revisao de endereco incompleto passa no Ubuntu. Sem aplicacao operacional.
+
 Sem repetir5extensoes/cargas/contatos. Derivados os156campos nativos dos MESMOS
 1600 a partir de3artefatos pinados existentes, sem nova consulta ao SQL legado.
 Matriz privada unica: scale-validation-efbde32d/remaining-matrix-after-master-482fd666/
@@ -31,10 +35,10 @@ Conflitos operacionais globais ainda desconhecidos, nao0liberados automaticament
 Defeito reproduzido na revisao existente: complemento/referencia sumiam da
 projecao. Corrigida allowlist e protecao, mantendo raw/NULL/zeros e bloqueios;
 nao gravaLocais nem relaxa contrato. Novo teste antesFAIL/depoisPASS; focados17PASS/
-1falha infraWindows(getuid). Audit/lint/typecheck/build PASS; Linux fecha naCI
-pela excecao draft vigente, sem pular teste. Novo SQL candidato Cliente-only
+1falha infraWindows(getuid). Audit/lint/typecheck/build PASS; Linux fechado naCI
+6915/6916 pela excecao draft vigente, sem pular teste. Novo SQL candidato Cliente-only
 reutiliza exatamente o indice043, recusa nome preexistente/duplicidades, sem
-produtos/roles/journal; testePG real pendenteCI. Sem aplicacaoHML/VPS.
+produtos/roles/journal; testePG realPASS. Sem aplicacaoHML/VPS.
 
 ## Estado anterior - pacote5extensoes aplicado na HML (2026-11-11)
 
