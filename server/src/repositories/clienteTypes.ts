@@ -103,7 +103,12 @@ export const clienteCreateSchema = z.object({
   email: z.string().trim().email().max(180).optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
   telefone: z.string().trim().max(40).optional().nullable(),
   celular: z.string().trim().max(40).optional().nullable(),
-  // POST sem contatos ricos — substituição só via PATCH + CAS (contrato Codex).
+  /**
+   * Contatos iniciais na criação — sem CAS (não há versão prévia).
+   * Substituição posterior só via PATCH + expectedVersion.
+   * null não é comando público (omitir); [] = lista vazia explícita.
+   */
+  contatos: z.array(clienteContatoSchema).max(200).optional(),
   status: z.string().trim().max(40).optional().default('Ativo'),
   origem: z.enum(CLIENTE_ORIGENS).optional().default('ERP'),
   /** Código de registro (importação); novos sem código usam reserva concorrente. */
@@ -133,6 +138,20 @@ export const clienteCreateSchema = z.object({
     }
     if (!data.razao_social || !String(data.razao_social).trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'razao_social obrigatoria para PJ', path: ['razao_social'] });
+    }
+  }
+  if (data.contatos !== undefined) {
+    const ids = new Set<string>();
+    let principals = 0;
+    data.contatos.forEach((contact, index) => {
+      if (contact.id && ids.has(contact.id)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contatos', index, 'id'], message: 'duplicate_contact_identity' });
+      }
+      if (contact.id) ids.add(contact.id);
+      if (contact.principal) principals += 1;
+    });
+    if (principals > 1) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['contatos'], message: 'conflicting_principal_contacts' });
     }
   }
 });

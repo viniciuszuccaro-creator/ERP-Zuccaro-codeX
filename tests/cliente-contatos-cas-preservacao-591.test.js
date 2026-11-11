@@ -54,7 +54,7 @@ test('adapter: omissão de contatos ≠ []; [] = limpeza; CAS obrigatório na su
     () => toClienteMasterHttpPayload({
       tipo: 'Pessoa Física',
       contatos: [{ tipo: 'Telefone', valor: '11' }],
-    }),
+    }, { mode: 'update' }),
     /expectedVersion|contatos_version/,
   );
 
@@ -63,10 +63,40 @@ test('adapter: omissão de contatos ≠ []; [] = limpeza; CAS obrigatório na su
     tipo: 'Pessoa Física',
     contatos: [],
     contatos_version: version,
-  });
+  }, { mode: 'update' });
   assert.deepEqual(wire.contatos, []);
   assert.equal(wire.expectedVersion, version);
   assert.equal(Object.hasOwn(wire, 'contatos_version'), false);
+});
+
+test('adapter: POST create com contatos[] não exige CAS nem inventa versão', () => {
+  const created = toClienteMasterHttpPayload({
+    nome: 'SYNTHETIC',
+    tipo: 'Pessoa Física',
+    contatos: [],
+  }, { mode: 'create' });
+  assert.deepEqual(created.contatos, []);
+  assert.equal(Object.hasOwn(created, 'expectedVersion'), false);
+  assert.equal(Object.hasOwn(created, 'contatos_version'), false);
+
+  const withManual = toClienteMasterHttpPayload({
+    nome: 'SYNTHETIC',
+    tipo: 'Pessoa Física',
+    contatos: [{ tipo: 'Telefone', valor: '1133334444', nome: 'Compras' }],
+  }, { mode: 'create' });
+  assert.equal(withManual.contatos.length, 1);
+  assert.equal(withManual.contatos[0].nome, 'Compras');
+  assert.equal(Object.hasOwn(withManual, 'expectedVersion'), false);
+});
+
+test('adapter: contatos:null em edição escalar omite (não envia NULL ao schema)', () => {
+  const wire = toClienteMasterHttpPayload({
+    tipo: 'Pessoa Física',
+    nome_fantasia: 'SYNTHETIC EDIT',
+    contatos: null,
+  }, { mode: 'update' });
+  assert.equal(Object.hasOwn(wire, 'contatos'), false);
+  assert.equal(wire.nome_fantasia, 'SYNTHETIC EDIT');
 });
 
 test('adapter: principal ausente não vira false; ids duplicados / multi-principal / B2B rejeitados', () => {

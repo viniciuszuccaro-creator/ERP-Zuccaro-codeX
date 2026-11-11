@@ -111,6 +111,37 @@ test('form real: lista explicita e metadata passam em contatos[] (não overflow 
   }
 });
 
+test('form real: observação 2001 rejeita sem truncar (rascunho intacto)', () => {
+  const { buildPayload, mapToForm } = actualClienteFormPayload();
+  const draft = mapToForm({
+    id: 'synthetic-client',
+    contatos: [{ tipo: 'Telefone', valor: '11', observacao: 'y'.repeat(2001) }],
+    contatos_version: CAS_VERSION,
+  });
+  const before = draft.contatos[0].observacao;
+  assert.equal(String(before).length, 2001);
+  assert.throws(
+    () => buildPayload(draft),
+    (error) => error?.code === 'CLIENTE_CONTATOS_VALIDATION' && /observacao|2000/.test(String(error?.message)),
+  );
+  assert.equal(String(draft.contatos[0].observacao).length, 2001, 'rascunho preservado após rejeição');
+});
+
+test('form real: create com contatos:[] não exige CAS no fio HTTP', () => {
+  const { buildPayload } = actualClienteFormPayload();
+  const ui = buildPayload({
+    tipo: 'Pessoa Física',
+    nome: 'SYNTHETIC',
+    cpf: '529.982.247-25',
+    contatos: [],
+  });
+  assert.deepEqual(ui.contatos, []);
+  assert.equal(Object.hasOwn(ui, 'expectedVersion'), false);
+  const wire = toClienteMasterHttpPayload(ui, { mode: 'create' });
+  assert.deepEqual(wire.contatos, []);
+  assert.equal(Object.hasOwn(wire, 'expectedVersion'), false);
+});
+
 test('HTTP MASTER: locais_entrega/documentos não vazios falham fechados (sem drop silencioso)', () => {
   assert.doesNotThrow(() => assertClienteHttpRichFieldsWritable({}));
   assert.doesNotThrow(() => assertClienteHttpRichFieldsWritable({ locais_entrega: [], documentos: [] }));

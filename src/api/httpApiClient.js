@@ -478,10 +478,14 @@ SeparacaoConferencia: {
           return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;
         },
         async create(data) {
-          return hydrateClienteHttpRowForUi(await base.create(toClienteMasterHttpPayload(data)));
+          return hydrateClienteHttpRowForUi(
+            await base.create(toClienteMasterHttpPayload(data, { mode: 'create' })),
+          );
         },
         async update(id, data) {
-          return hydrateClienteHttpRowForUi(await base.update(id, toClienteMasterHttpPayload(data)));
+          return hydrateClienteHttpRowForUi(
+            await base.update(id, toClienteMasterHttpPayload(data, { mode: 'update' })),
+          );
         },
       };
     })(),

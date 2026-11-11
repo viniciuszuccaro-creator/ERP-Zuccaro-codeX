@@ -94,6 +94,12 @@ const assertContatoLen = (value, max, field) => {
   }
   return text;
 };
+/** Sanitiza sem truncar: rejeita acima do limite antes de qualquer slice. */
+const sanitizeContatoField = (value, max, field) => {
+  if (value === undefined || value === null) return value;
+  assertContatoLen(value, max, field);
+  return sanitizeText(value, max);
+};
 const sanitizeContatos = (contatos) => {
   if (!Array.isArray(contatos)) {
     throw contatosValidationError(
@@ -111,15 +117,15 @@ const sanitizeContatos = (contatos) => {
   let principals = 0;
   return contatos.map((contato) => {
     const obsRaw = contato?.observacao !== undefined ? contato.observacao : contato?.obs;
-    const observacao = obsRaw === undefined ? undefined : (obsRaw === null ? null : assertContatoLen(sanitizeText(obsRaw, 2000), 2000, 'observacao'));
+    const observacao = obsRaw === undefined ? undefined : (obsRaw === null ? null : sanitizeContatoField(obsRaw, 2000, 'observacao'));
     const out = {
       ...contato,
-      nome: contato?.nome === undefined ? undefined : (contato.nome === null ? null : assertContatoLen(sanitizeText(contato.nome, 180), 180, 'nome')),
-      cargo: contato?.cargo === undefined ? undefined : (contato.cargo === null ? null : assertContatoLen(sanitizeText(contato.cargo, 120), 120, 'cargo')),
-      departamento: contato?.departamento === undefined ? undefined : (contato.departamento === null ? null : assertContatoLen(sanitizeText(contato.departamento, 120), 120, 'departamento')),
-      tipo: assertContatoLen(sanitizeText(contato?.tipo, 60), 60, 'tipo'),
-      valor: contato?.valor === undefined ? undefined : (contato.valor === null ? null : assertContatoLen(sanitizeText(contato.valor, 180), 180, 'valor')),
-      ramal: contato?.ramal === undefined ? undefined : (contato.ramal === null ? null : assertContatoLen(sanitizeText(contato.ramal, 40), 40, 'ramal')),
+      nome: contato?.nome === undefined ? undefined : (contato.nome === null ? null : sanitizeContatoField(contato.nome, 180, 'nome')),
+      cargo: contato?.cargo === undefined ? undefined : (contato.cargo === null ? null : sanitizeContatoField(contato.cargo, 120, 'cargo')),
+      departamento: contato?.departamento === undefined ? undefined : (contato.departamento === null ? null : sanitizeContatoField(contato.departamento, 120, 'departamento')),
+      tipo: sanitizeContatoField(contato?.tipo, 60, 'tipo'),
+      valor: contato?.valor === undefined ? undefined : (contato.valor === null ? null : sanitizeContatoField(contato.valor, 180, 'valor')),
+      ramal: contato?.ramal === undefined ? undefined : (contato.ramal === null ? null : sanitizeContatoField(contato.ramal, 40, 'ramal')),
       ...(observacao !== undefined ? { observacao } : {}),
     };
     if (contato?.principal !== undefined) out.principal = contato.principal === true;

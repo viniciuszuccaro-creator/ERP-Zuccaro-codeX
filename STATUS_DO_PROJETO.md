@@ -1,3 +1,18 @@
+## CURSOR — #591 resíduos 6779554174/6779707769/6780153153 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `6b3c84c2` CI SUCCESS — regressões de parecer ainda abertas |
+| **Lote** | create≠CAS · null omit · Completo 2001 reject · ctx capture/reauth · enrichLegacyContacts |
+| **Reuso** | `clienteService`/`clienteLegacyNameCorrection` canônico 29726 · `clienteHttpPayload` · Completo |
+| **Testes** | ctx-capture 3 · rbac contatos · cas/http-adapter/limitacao/publication peels · server typecheck |
+| **Evidence** | `docs/evidence/codex-parecer-6779554174-residuos-591-20261111.txt` |
+| **Estados** | tip aguarda CI · :15173 só após SUCCESS · parcial/quarentena UI comprovada |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 |
+
+**Próximo:** CI SUCCESS deste tip · freeze API+web mesmo SHA :15173 · screenshots/ABERTO · #401 pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS c348d4d3 + prefs colunas Central (2026-11-10 America/Sao_Paulo)
 
 | Campo | Valor |

@@ -3,12 +3,8 @@ import type { DbQueryExecutor } from '../db/client.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import { sanitizeClienteAudit } from '../audit/clienteAuditSnapshot.js';
 import { restoreClienteBulkSnapshot } from './clienteBulkLifecycle.js';
-import { correctInactiveLegacyName } from './clienteLegacyNameCorrection.js';
-import {
-  assertClienteContatosVersion,
-  assertContactReferences,
-  withClienteContatosVersion,
-} from './clienteContatos.js';
+import { correctInactiveLegacyName, enrichLegacyContacts } from './clienteLegacyNameCorrection.js';
+import { assertClienteContatosVersion, assertContactReferences, withClienteContatosVersion } from './clienteContatos.js';
 import { exportClientes } from './clienteExport.js';
 import type { AppliedBulkItem } from './cadastroBulkPolicy.js';
 import { AppError } from '../api/errors.js';
@@ -122,7 +118,12 @@ export class ClienteService {
     return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
   }
 
+  enrichLegacyContacts(ctx: RequestContext, input: unknown) {
+    return enrichLegacyContacts({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);
+  }
+
   async get(ctx: RequestContext, id: string) {
+    ctx = { ...ctx };
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'visualizar');
     const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);
@@ -130,6 +131,7 @@ export class ClienteService {
     if (!row || row.ativo === false) {
       throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');
     }
+    await this.assertPermission(ctx, 'visualizar');
     return withClienteContatosVersion(ctx, row);
   }
 
@@ -203,6 +205,9 @@ export class ClienteService {
     const parsed = clienteCreateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
+    }
+    if (parsed.data.contatos !== undefined) {
+      assertContactReferences(parsed.data.contatos);
     }
     const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;
     if (parsed.data.source_system && parsed.data.codigo_legado) {
@@ -285,10 +290,11 @@ export class ClienteService {
   }
 
   async update(ctx: RequestContext, id: string, payload: unknown) {
+    ctx = { ...ctx };
+    const parsed = clienteUpdateSchema.safeParse(payload);
     this.assertScope(ctx);
     await this.assertPermission(ctx, 'editar');
     this.rejectForbiddenFields(payload);
-    const parsed = clienteUpdateSchema.safeParse(payload);
     if (!parsed.success) {
       throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());
     }

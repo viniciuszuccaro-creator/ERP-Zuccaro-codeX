@@ -1,3 +1,11 @@
+## CURSOR — #591 resíduos pareceres 6779554174/6779707769/6780153153 (2026-11-11 America/Sao_Paulo)
+- RECEBIDO + corrigido runtime (não só peels): create≠CAS; null omite; Completo rejeita 2001 sem truncar;
+  get/update captura+reauth; `enrichLegacyContacts` restaurado (29726).
+- Evidence: `docs/evidence/codex-parecer-6779554174-residuos-591-20261111.txt`.
+- Contraprovas: `server/tests/cliente-service-ctx-capture-591.test.ts`.
+- **Não** HML/:15173 até CI SUCCESS deste tip. Layout v6 `82b15566` + prefs `6b3c84c2` intactos.
+- **Próximo:** CI SUCCESS → freeze API+web mesmo SHA → aceite :15173; screenshots/ABERTO; #401 pós-aceite.
+
 ## CURSOR — #591 CI SUCCESS c348d4d3 + prefs colunas Central (2026-11-10 America/Sao_Paulo)
 - Tip **`c348d4d3`** CI SUCCESS 9/9 — freeze candidato API+web p/ :15173 (pareceres CAS fechados).
 - Prefs colunas Central: storage `central360.cols.v6:actor:group:empresa` — fail-closed sem escopo.

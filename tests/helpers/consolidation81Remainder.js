@@ -293,16 +293,28 @@ export const clienteSelectedReferenceHunks={
     "hash": "2c711fb1d47d5ba53e2c0e0099ec75d816a3746bcc583b77df6d0d0d0517578f",
     "hunks": [
       [
-        "import { correctInactiveLegacyName } from './clienteLegacyNameCorrection.js';\nimport {\n  assertClienteContatosVersion,\n  assertContactReferences,\n  withClienteContatosVersion,\n} from './clienteContatos.js';\nimport { exportClientes } from './clienteExport.js';\n",
+        "import { correctInactiveLegacyName, enrichLegacyContacts } from './clienteLegacyNameCorrection.js';\nimport { assertClienteContatosVersion, assertContactReferences, withClienteContatosVersion } from './clienteContatos.js';\nimport { exportClientes } from './clienteExport.js';\n",
         "import { correctInactiveLegacyName } from './clienteLegacyNameCorrection.js';\nimport { exportClientes } from './clienteExport.js';\n"
       ],
       [
-        "    if (!row || row.ativo === false) {\n      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');\n    }\n    return withClienteContatosVersion(ctx, row);\n  }",
+        "    return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);\n  }\n\n  enrichLegacyContacts(ctx: RequestContext, input: unknown) {\n    return enrichLegacyContacts({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);\n  }\n\n  async get(ctx: RequestContext, id: string) {\n    ctx = { ...ctx };\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'visualizar');\n    const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);\n",
+        "    return correctInactiveLegacyName({ repo: this.repo, audit: this.audit, rbac: this.rbacGuard }, ctx, input);\n  }\n\n  async get(ctx: RequestContext, id: string) {\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'visualizar');\n    const row = await this.repo.getById({ groupId: ctx.groupId, empresaId: ctx.empresaId }, id);\n"
+      ],
+      [
+        "  }\n\n  async update(ctx: RequestContext, id: string, payload: unknown) {\n    ctx = { ...ctx };\n    const parsed = clienteUpdateSchema.safeParse(payload);\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'editar');\n    this.rejectForbiddenFields(payload);\n    if (!parsed.success) {\n      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());\n    }\n",
+        "  }\n\n  async update(ctx: RequestContext, id: string, payload: unknown) {\n    this.assertScope(ctx);\n    await this.assertPermission(ctx, 'editar');\n    this.rejectForbiddenFields(payload);\n    const parsed = clienteUpdateSchema.safeParse(payload);\n    if (!parsed.success) {\n      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());\n    }\n"
+      ],
+      [
+        "    if (!row || row.ativo === false) {\n      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');\n    }\n    await this.assertPermission(ctx, 'visualizar');\n    return withClienteContatosVersion(ctx, row);\n  }",
         "    if (!row || row.ativo === false) {\n      throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');\n    }\n    return row;\n  }"
       ],
       [
         "          await this.empresaOperations.auditCreatedLink(ctx, link, executor);\n        }\n        return withClienteContatosVersion(ctx, created);\n      });",
         "          await this.empresaOperations.auditCreatedLink(ctx, link, executor);\n        }\n        return created;\n      });"
+      ],
+      [
+        "    if (!parsed.success) {\n      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());\n    }\n    if (parsed.data.contatos !== undefined) {\n      assertContactReferences(parsed.data.contatos);\n    }\n    const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;\n",
+        "    if (!parsed.success) {\n      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid Cliente payload', parsed.error.flatten());\n    }\n    const empresaId = parsed.data.empresa_id ?? ctx.empresaId ?? null;\n"
       ],
       [
         "      if (!before || before.ativo === false) {\n        throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Cliente not found in tenant scope');\n      }\n      if (parsed.data.contatos !== undefined) {\n        assertClienteContatosVersion(ctx, before, parsed.data.expectedVersion);\n        assertContactReferences(parsed.data.contatos);\n        await this.tenantGuard.assertEmpresaInGroup(ctx.groupId, ctx.empresaId, executor);\n      }\n      if (before.source_system && before.codigo_legado && (['origem','source_system','codigo_legado','legacy_id','migration_batch'] as const)",
@@ -426,6 +438,10 @@ export const clienteSelectedReferenceHunks={
       [
         "        throw failure(422, 'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');\n      if (clienteEmpresaId !== undefined && (typeof clienteEmpresaId !== 'string'\n        || clienteEmpresaId.length !== 36 || clienteEmpresaId !== clienteEmpresaId.trim() || clienteSearch)) {\n        throw failure(422, 'VALIDATION_ERROR');\n      }\n      let pages, caught;\n      try {\n        pages = await Promise.all([\n          request('/api/v1/clientes', { query: { operacao: true, ativo: true, cliente_empresa_id: clienteEmpresaId, search: clienteSearch, limit: clienteEmpresaId ? 1 : 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),\n          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),\n",
         "        throw failure(422, 'VALIDATION_ERROR');\n      }\n      if (signal?.aborted) throw failure(409, 'CONTEXT_CHANGED');\n      let pages, caught;\n      try {\n        pages = await Promise.all([\n          request('/api/v1/clientes', { query: { operacao: true, ativo: true, search: clienteSearch, limit: 50, offset: 0, order_by: 'codigo' }, signal, unwrap: false }, before),\n          request('/api/v1/produtos', { query: { operacao: true, ativo: true, search: produtoSearch, limit: 50, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/condicoes-pagamento', { query: { ativo: true, limit: 200, offset: 0 }, signal, unwrap: false }, before),\n          request('/api/v1/unidades-medida', { query: { ativo: true, limit: 200 }, signal, unwrap: false }, before),\n"
+      ],
+      [
+        "        async create(data) {\n          return hydrateClienteHttpRowForUi(\n            await base.create(toClienteMasterHttpPayload(data, { mode: 'create' })),\n          );\n        },\n        async update(id, data) {\n          return hydrateClienteHttpRowForUi(\n            await base.update(id, toClienteMasterHttpPayload(data, { mode: 'update' })),\n          );\n        },",
+        "        async create(data) {\n          return hydrateClienteHttpRowForUi(await base.create(toClienteMasterHttpPayload(data)));\n        },\n        async update(id, data) {\n          return hydrateClienteHttpRowForUi(await base.update(id, toClienteMasterHttpPayload(data)));\n        },"
       ]
     ]
   }

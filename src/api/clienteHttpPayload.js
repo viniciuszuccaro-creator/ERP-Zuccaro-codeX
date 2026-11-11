@@ -389,19 +389,37 @@ export function createContatosScalarOverflowError(losses) {
 
 /**
  * Grava `contatos[]` canônico no payload HTTP e espelha escalares best-effort.
- * Omitir a chave = não tocar; `[]` = limpar; WhatsApp nunca preenche celular.
+ * Omitir a chave = não tocar; `null` = desconhecido (omitir, não comando público);
+ * `[]` = limpar; WhatsApp nunca preenche celular.
+ * CAS (`expectedVersion`) só na substituição (update). Criação pode enviar contatos
+ * sem inventar versão.
  * Não lança CONTATOS_SCALAR_OVERFLOW no caminho jsonb (decisão a).
  *
  * @param {Record<string, unknown>} src
  * @param {Record<string, unknown>} out
+ * @param {{ mode?: 'create'|'update' }} [options]
  */
-export function applyContatosProjection(src, out) {
+export function applyContatosProjection(src, out, options = {}) {
   if (!Object.prototype.hasOwnProperty.call(src, 'contatos')) return;
   const contatos = src.contatos;
-  if (contatos == null) return;
+  // null/ausência ≠ [] : não enviar NULL ao schema (rejeição); preservar omissão.
+  if (contatos == null) {
+    delete out.contatos;
+    delete out.expectedVersion;
+    delete out.contatos_version;
+    return;
+  }
 
   const sanitized = sanitizeContatosForHttp(contatos);
   out.contatos = sanitized;
+
+  const mode = options.mode === 'create' ? 'create' : 'update';
+  // Criação: contatos iniciais sem CAS; não inventar expectedVersion.
+  if (mode === 'create') {
+    delete out.expectedVersion;
+    delete out.contatos_version;
+    return;
+  }
 
   // CAS: contatos_version (leitura) → expectedVersion (escrita). Omissão ≠ limpar.
   const version = src.expectedVersion ?? src.contatos_version;
@@ -1030,9 +1048,10 @@ export function assertClienteHttpRichFieldsWritable(src) {
 
 /**
  * @param {Record<string, unknown>|null|undefined} raw
+ * @param {{ mode?: 'create'|'update' }} [options]
  * @returns {Record<string, unknown>}
  */
-export function toClienteMasterHttpPayload(raw) {
+export function toClienteMasterHttpPayload(raw, options = {}) {
   const src = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   assertClienteHttpRichFieldsWritable(src);
   /** @type {Record<string, unknown>} */
@@ -1040,8 +1059,12 @@ export function toClienteMasterHttpPayload(raw) {
   for (const key of ALLOWED_KEYS) {
     if (src[key] !== undefined) out[key] = src[key];
   }
+  // contatos:null não é comando público — remove antes da projeção CAS.
+  if (Object.prototype.hasOwnProperty.call(out, 'contatos') && out.contatos == null) {
+    delete out.contatos;
+  }
 
-  applyContatosProjection(src, out);
+  applyContatosProjection(src, out, options);
 
   const doc = pickDoc(src);
   if (doc) {

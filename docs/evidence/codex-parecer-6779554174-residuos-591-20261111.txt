@@ -1,0 +1,54 @@
+# Contraprovas #591 — pareceres 6779554174 / 6779707769 / 6780153153
+# Data: 2026-11-11 America/Sao_Paulo
+# Branch: cursor/hml-grupo-erro-fornecedor-392b
+# Base tip anterior CI SUCCESS: 6b3c84c2
+# Canônico referência: 29726d3d (captura/reauth/enrichLegacyContacts)
+
+## Resíduos fechados (runtime — não só peels)
+
+1) POST create `{contatos:[]}` sem CAS
+   - `toClienteMasterHttpPayload(..., { mode: 'create' })` não exige expectedVersion
+   - `httpApiClient` Cliente.create usa mode create; update usa mode update
+   - `clienteCreateSchema` aceita contatos iniciais sem expectedVersion
+   - Testes: `cliente-contatos-cas-preservacao-591` + form real http-adapter
+
+2) contatos:null em edição escalar
+   - null ≠ []: adapter omite chave (não envia NULL ao schema)
+   - Completo buildPayload já omitia null; ALLOWED_KEYS+projeção agora limpam null
+   - Teste: cas-preservacao `contatos:null em edição escalar`
+
+3) UI Completo 2001→2000 silencioso
+   - `sanitizeContatoField`: assertContatoLen ANTES de sanitizeText/slice
+   - Rejeição CLIENTE_CONTATOS_VALIDATION; rascunho intacto
+   - Teste: form real observação 2001
+
+4) ClienteService vs 29726
+   - get: `ctx={...ctx}` + reauth após getById
+   - update: `ctx={...ctx}` + parse payload ANTES do 1º await
+   - `enrichLegacyContacts` restaurado (legacy file + delegação pública)
+   - CAS / withClienteContatosVersion / commercial hunks preservados
+   - Contraprovas: `server/tests/cliente-service-ctx-capture-591.test.ts`
+     GET revogação durante leitura → PERMISSION_DENIED
+     UPDATE ator/payload adulterados no 1º await → atorA + nome capturado
+
+## Peels
+- selected-reference afters exigem enrichLegacy + captura/reauth/parse-first
+  (remoção das proteções quebra peel — não aceitar regressão por pin frouxo)
+- `tests/helpers/clienteContatosRemainder.js` restaurado (+ hunks create CAS/assert)
+  para validação canônica do service
+
+## Parcial / quarentena (sem ContatoClienteV2)
+- Completo: `data-pendencia=cliente-parcial` quando contatos/locais/documentos ausentes
+- Canais inválidos: `partitionContatosByCanal` → quarentena (`data-fonte=contatos-quarentena`)
+  não contam como válidos; preservados no save junto aos canônicos
+- Testes: `cliente-contatos-limitacao-591`
+
+## Fora deste lote
+- Publicação HML :15173 (aguardar CI SUCCESS deste tip)
+- Deploy operacional / PII / #401 port cego
+- Ações ABERTO restantes / screenshots v6
+
+## Checks locais (foco)
+- server: cliente-contatos-rbac-update + ctx-capture PASS
+- server typecheck PASS
+- frontend: cas-preservacao + http-adapter + limitacao + publication peels PASS
