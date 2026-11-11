@@ -1,3 +1,16 @@
+## CURSOR — #591 CI SUCCESS 8650fd4d + pack :15173 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip freeze** | **`8650fd4d`** CI SUCCESS 9/9 (run 42999100236) — API+web mesmo SHA |
+| **Lote** | Resíduos pareceres + peels Completo + pack aceite :15173 atualizado |
+| **Evidence** | `hml-15173-aceite-codex-tip-591-20261109.txt` · `codex-parecer-6779554174-residuos-591-20261111.txt` |
+| **Estados** | freeze tip pronto · aceite privado Codex pendente · ABERTO/screenshots parciais |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 |
+
+**Próximo:** servir :15173 no tip · validar roteiro com Codex · screenshots v6 · ABERTO restante · #401 pós-aceite.
+
 ## CURSOR — #591 resíduos 6779554174/6779707769/6780153153 (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

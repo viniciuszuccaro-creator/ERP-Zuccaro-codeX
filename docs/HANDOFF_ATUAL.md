@@ -1,3 +1,10 @@
+## CURSOR — #591 CI SUCCESS 8650fd4d + pack :15173 (2026-11-11 America/Sao_Paulo)
+- Tip freeze **`8650fd4d`** CI SUCCESS 9/9 (run 42999100236) — API+web mesmo SHA.
+- Resíduos pareceres fechados em `353cfa46` + peels Completo `8650fd4d`.
+- Pack Codex: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` (roteiro + contratos).
+- CI ≠ homologação: aceite privado listagem/detalhe/contatos/reabertura com Codex.
+- **Próximo:** servir :15173 no tip · screenshots v6 · ABERTO restante · #401 pós-aceite.
+
 ## CURSOR — #591 resíduos pareceres 6779554174/6779707769/6780153153 (2026-11-11 America/Sao_Paulo)
 - RECEBIDO + corrigido runtime (não só peels): create≠CAS; null omite; Completo rejeita 2001 sem truncar;
   get/update captura+reauth; `enrichLegacyContacts` restaurado (29726).

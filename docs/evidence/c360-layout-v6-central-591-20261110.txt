@@ -28,7 +28,7 @@ NÃO CRIADO
 
 PENDENTE / BLOQUEADO
 - Aceite visual screenshots privados vs v6 (dois monitores)
-- Servir :15173 no tip freeze **`c348d4d3`** (API+web; sem deploy operacional automático)
+- Servir :15173 no tip freeze **`8650fd4d`** (API+web; sem deploy operacional automático; pack atualizado 2026-11-11)
 - documentos[] BFF
 - Integração seletiva #401 só pós-aceite
 - Ações ABERTO Imprimir/Enviar/Fechar/Mais Ações — parciais (Novo Orçamento OK); sem botão decorativo como integração

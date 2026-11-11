@@ -1,56 +1,71 @@
 #591 — Pack aceite HML :15173 para Codex (sem PII)
-America/Sao_Paulo 2026-11-09
+America/Sao_Paulo 2026-11-11
 
-SNAPSHOT EXATO (API+web mesma versão após CI tip)
+SNAPSHOT EXATO (API+web mesma versão — CI tip)
 - Branch: cursor/hml-grupo-erro-fornecedor-392b
 - PR: #591
-- Tip freeze CAS/preservação (pareceres 6778237293/6778347806): **c348d4d31e0a470ccc9e3e592080df3ec9c3c157** · CI SUCCESS 9/9 (run 42905250250)
-  - Inclui: expectedVersion↔contatos_version · omit≠[] · null≠[] · sem truncamento · peels/typecheck
-  - Layout v6: `82b15566` no mesmo branch
-  - Publicação privada :15173 = mesmo SHA API+web; sem deploy operacional automático neste agente
-- Tip homologação locais: 77f11b28a7502b11b3511a528011d1c0e971a6d3 · CI SUCCESS
-- Tip C360/contrato contatos: 10a1dd8eb5dd996b6be0bc7933821f9dcf9e03af · CI SUCCESS
-- Docs tip referência: 6572b9ae1d7603f5e19d67a3dd9e530d0da86feb · CI SUCCESS (PR591)
-- Tip HEAD código: 13dde4a539be899a2ba07284096596acd0dc3764 · CI SUCCESS
-- Docs tip referência: a4a53dd2804812e252a1002756b8d5b93397d724 · CI SUCCESS
-- Tip decisão contatos/cadastral: 2e90587f08d426f175dc8f8ad949be735c4daf3b · CI SUCCESS (9/9)
-- Tip limpo CANAL/Completo (b): 84325aacc4a94545221d24c8b5250f31c7082d3d · CI SUCCESS (9/9)
-- Tip C360 A/B/C + typecheck: 9ffae37bf6a8516918df79b4d43a60891c88b49e · CI SUCCESS (9/9)
-- Freeze antigo: 0afd378f284 — trocar só com acordo Codex no tip 77f11b28 (API+web mesmo SHA)
-- Pedido objetivo contatos: docs/evidence/codex-pedido-decisao-objetiva-contatos-591-20261110.txt
-- C360 proposta: docs/evidence/c360-proposta-etapas-abc-591-20261110.txt (`?proposta=comercial360`)
-- Pedido batch atômico: docs/evidence/codex-locais-batch-atomico-pedido-591-20261110.txt
-- Contatos tenant: docs/evidence/codex-contrato-contatos-tenant-591-20261110.txt
-- Decisão a/b/c: docs/evidence/codex-decisao-contatos-abc-591-20261110.txt
-- FK reconfirm ContatoB2B: docs/evidence/codex-contatob2b-fk-reconfirm-591-20261110.txt
-  (amostra Base ainda sem cliente_id/empresa_id → (b) bloqueada)
+- Tip freeze atual (pareceres 6779554174/6779707769/6780153153 + peels):
+  **8650fd4d14a8f3f43ebdf5784f6dcb1df1933d89**
+  · CI SUCCESS 9/9 (run 42999100236)
+  · Runtime resíduos: 353cfa46 · peels Completo: 8650fd4d
+- Inclui: create≠CAS · null omit · Completo rejeita >2000 sem truncar ·
+  get/update ctx capture+reauth · enrichLegacyContacts · CAS expectedVersion ·
+  omit≠[] · prefs Central `central360.cols.v6:actor:group:empresa`
+- Layout v6: `82b15566` no mesmo branch
+- Publicação privada :15173 = **mesmo SHA API+web** deste tip
+  (CI verde ≠ homologação sozinha — validar roteiro abaixo com Codex)
+- Sem deploy operacional automático neste agente · sem PII no GitHub
 
-DELTAS vs freeze (resumo)
-1. Projeção documento→cpf/cnpj/tipo PF-PJ; zeros; grade cols email/fone/celular
-2. Parecer 6746649125: fail-closed rich fields / tipo / origem
-3. Locais: GET+write /clientes/:id/locais; preflight; scope freeze; PARTIAL+reconcile
-4. CLIENTE_LOCAIS_BATCH_ATOMIC=false (explícito); batch atômico = BLOCKED BFF
-5. Celular ≠ WhatsApp; cadastral ≠ entrega automática
-6. Contatos/docs: fail-closed MASTER ≠ conclusão; pack
-   docs/evidence/codex-contrato-contatos-documentos-591-20261109.txt (ContatoB2B + GerenciarContatos)
-7. Contraprova locais: docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt
-8. C360: Voltar/Avançar + capacidades — docs/evidence/c360-capacidades-atalhos-591-20261109.txt
+DELTA vs tip anterior freeze `6b3c84c2` / `c348d4d3`
+1. POST create com contatos[] sem expectedVersion (update mantém CAS)
+2. contatos:null em edição escalar → omissão (schema não recebe NULL)
+3. Completo: assertContatoLen antes de sanitizeText/slice (2001 rejeita)
+4. ClienteService: ctx={...ctx}; parse pré-await no update; reauth no get
+5. enrichLegacyContacts restaurado (delegação pública + legacy file 29726)
+6. Contraprovas: server/tests/cliente-service-ctx-capture-591.test.ts
+7. Evidence resíduos: docs/evidence/codex-parecer-6779554174-residuos-591-20261111.txt
 
-CHECKLIST ACEITE PRIVADO (:15173)
-[ ] Listagem: documento/email/telefone/celular visíveis (não só nome)
-[ ] Detalhe PF: CPF com zeros; nome; sem inventar razão social
-[ ] Detalhe PJ: CNPJ; razão social; fantasia
-[ ] Aba Contatos: contatos[] MASTER + CAS (expectedVersion); Celular≠WhatsApp; omissão≠[]; null≠[]
-[ ] Contatos: concorrência 409; carga parcial; troca contexto; reabertura
-[ ] Aba Endereços: leitura cliente_locais; editar+salvar sync /locais; reabrir
-[ ] Soft-delete só após carga OK; falha de leitura não apaga
-[ ] Erro remoto / sync parcial ≠ toast de sucesso
-[ ] Troca cliente/contexto / resposta tardia / duplo clique
+CONTRATOS (API + UI no mesmo SHA)
+- Contatos[] jsonb MASTER + CAS (expectedVersion ↔ contatos_version)
+- Create: contatos opcional sem CAS; Update replace: CAS obrigatório
+- null = desconhecido/omitir; [] = limpeza explícita; omit = não tocar
+- Celular ≠ WhatsApp; canal inválido → quarentena (não conta como válido)
+- cliente-parcial: banner quando contatos/locais/documentos não carregados
+- Locais: sync /clientes/:id/locais; BATCH_ATOMIC=false; PARTIAL+reconcile
+- Documentos[] anexos: ainda fail-closed sem BFF (unsupported)
 
-COORD FREEZE→TIP
-- Tip freeze candidato: **c348d4d3** (CI SUCCESS) — API+web mesmo SHA
-- Sair do freeze antigo `0afd378f284` só com acordo Codex neste tip
-- Publicação #591 ≠ integração #401 · sem PII no GitHub
+ROTEIRO CURTO ACEITE PRIVADO (:15173) — Codex
+1. Servir API+web no tip **8650fd4d** (mesmo SHA; sem misturar freeze antigo)
+2. Listagem Cadastros Cliente: documento/email/telefone/celular (não só nome)
+3. Abrir PF: CPF com zeros; nome; sem inventar razão social
+4. Abrir PJ: CNPJ; razão; fantasia
+5. Aba Contatos: lista MASTER; quarentena visível se canal inválido;
+   editar obs ≤2000; tentar 2001 → rejeição + rascunho intacto
+6. Novo cliente: contatos:[] ou manuais → POST sem inventar versão
+7. Cliente com contatos:null: editar só nome_fantasia → não enviar contatos:null
+8. Concorrência: dois patches com mesmo expectedVersion → 409 no segundo
+9. Troca de ator/contexto durante await (não liberar ação cruzada)
+10. Reabrir após save: valores + contatos_version novos
+11. Endereços: carga OK → editar/salvar; falha de leitura ≠ soft-delete em massa
+12. Central360 shell v6: 12 colunas; grades dual; Cliente360 retrátil;
+    clique simples seleciona; duplo edita; Voltar ≠ reverte negócio
+
+CHECKLIST ESTADO
+[ ] Listagem / detalhes / documentos / inscrições / contatos / pendências / reabertura
+[ ] Parcial + quarentena comprovados em UI (sem ContatoClienteV2)
+[ ] Screenshots privados vs v6 (desktop/notebook/dois monitores)
+[ ] URL privada + SHA servido registrados (fora do GitHub se PII)
+
+COORD
+- Freeze candidato: **8650fd4d** (CI SUCCESS) — substituir c348d4d3/6b3c84c2
+- Sair de freeze antigo `0afd378f284` só com acordo Codex neste tip
+- Publicação #591 ≠ integração #401 · sem PII · sem ContatoClienteV2
+
+PENDENTE PÓS-ACEITE
+- Ações ABERTO: Imprimir/Enviar/Fechar/Mais (duplicar/desmembrar/itens anteriores)
+- Screenshots privados v6
+- Integração seletiva candidata / #401 sem port cego
+- documentos[] BFF
 
 FORA
-dados reais no GitHub · screenshots com PII · recreate · ContatoClienteV2 · merge/VPS
+dados reais no GitHub · recreate · merge/VPS write · botão decorativo como “integração”
