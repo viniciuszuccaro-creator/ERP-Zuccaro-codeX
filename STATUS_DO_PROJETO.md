@@ -1,4 +1,41 @@
-## Estado vigente - leitura granular de locais na HML (2026-11-11)
+## Estado vigente - escala do staging e fechamento CI6827 (2026-11-11)
+
+CI6827 falhou por comparar HTML integral em segundos diferentes (14:27:12/13).
+Harness agora injeta o MESMO relogio nas duas implementacoes; comparacao integral,
+HTML, timer e hashes anteriores preservados. Contraprova detecta segundo distinto.
+20 testes de consumidores PASS; nenhuma mudanca de produto para ocultar a falha.
+
+Consumidor staging existente ganhou entrada consumirLotesStagingRetomavel.
+Helper extraido porque o consumidor ja tem mais de500linhas; reutiliza mapper,
+classificacao e fingerprints existentes. Lotes1..1000(default500), ordem lexical
+pela chave nativa textual explicita, manifesto de selecao/opcoes/fonte/run,
+recibos privados fsync/hash encadeado e trava exclusiva. Retoma lotes concluidos;
+mudanca de fonte/opcoes/conteudo ou recibo divergente bloqueia. Interrupcao abrupta
+que deixe lock/recibo incompleto exige inspecao: nao ha remocao forcada automatica.
+E STAGING, nao persistencia de negocio, importacaoPG, auditoria transacionalPG ou
+reversaoPG homologadas. SourceSha256 e pin informado pelo chamador; nao comprova
+sozinho derivacao dos rows. Nenhuma permissao operacional decorre desse manifesto.
+32 testes mapper/consolidacao/checkpoint PASS; peel de dois hunks EXATOS mantem
+todo o restante ancestral e contraprovas contra ausencia/duplicacao/mutacao.
+
+Perfil agregado NOVO da copia legada isolada:22895linhas/22895chaves distintas,
+156campos/90com algum valor;14campos com valores fora da cobertura do piloto100.
+Isto nao e22895aptos: elegibilidade continua DESCONHECIDA ate contrato/reconciliacao.
+Tentativa1 parou com SQL904 (master pronto, banco fonte ainda iniciando). Driver
+agora exige leitura TOP0 do proprio banco; tentativa2 concluiu READONLY/ROLLBACK,
+leitor parado/networknone/zeroportas/0writes. Sem nova coorte/extracao de registros.
+Recibos privados population-profile-20261111[-ready02], sourceProfileSha256
+064498224f27ef100975ec34c7f33ce639b4761782b5ec0d97dc4ce14faddbc2.
+
+Audit/lint/typecheck/build PASS; Windows2449PASS/4FAIL (Python ausente3 e getuid1).
+Nao e suite aprovada; fechamento Ubuntu na mesma PR342 draft pela excecao de
+validacao ja registrada. CI do SHA publicado deve ser conferida separadamente.
+591 continua e3b32276, sem novo delta.100HML/331canais/20IE intactos, sem carga.
+Proximo: mapear os14campos adicionais e crosswalks6/4/9; completar contratos ricos
+antes de ensaioPG500/1000. Velocidade real de importacao/previsao NAO medidas.
+VPS operacional continua sem autorizacao de escrita/DDL/deploy neste lote.
+
+## Historico imediato - leitura granular de locais na HML (2026-11-11)
 
 Autorizacao especifica do dono aplicada SOMENTE Cadastros.cliente_local visualizar
 no perfiluser HMLCPA existente. Sem endpointIAMnovo: profiles/audit_logs canônicos

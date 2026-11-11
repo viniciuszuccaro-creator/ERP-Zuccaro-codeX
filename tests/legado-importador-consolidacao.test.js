@@ -12,11 +12,26 @@ import {
 const sourcePath='scripts/legado/consumir-lote-staging.mjs';
 const exportLine="export { persistirEnderecoClienteGrupoLegado, criarRegistroEnderecoPilotoPostgres } from './persistencia-endereco-legado.mjs';\n";
 const readHead=path=>execFileSync('git',['show',`e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${path}`],{encoding:'utf8'}).replaceAll('\r\n','\n');
+const checkpointHunks = [
+  "import { processStagingBatches } from './staging-checkpoint.mjs';\n",
+  "\n// The helper isolates filesystem checkpoints from this existing mapper/consumer.\nexport const consumirLotesStagingRetomavel = options => processStagingBatches({\n  ...options, consume: consumirLoteStagingLegado,\n});\n",
+];
+const withoutCheckpoint = source => checkpointHunks.reduce((text,hunk)=>{
+  assert.equal(text.split(hunk).length,2,'exactly one reviewed checkpoint hunk');
+  return text.replace(hunk,'');
+},source);
 
 test('importer consolidation preserves every remote consumer/reconciliation byte except the reviewed address export',()=>{
   const current=fs.readFileSync(sourcePath,'utf8').replaceAll('\r\n','\n');
   assert.equal(current.split(exportLine).length,2);
-  assert.equal(current.replace(exportLine,''),readHead(sourcePath));
+  assert.equal(withoutCheckpoint(current).replace(exportLine,''),readHead(sourcePath));
+  for (const hunk of checkpointHunks) {
+    assert.throws(()=>withoutCheckpoint(current.replace(hunk,'')));
+    assert.throws(()=>withoutCheckpoint(current.replace(hunk,hunk+hunk)));
+    assert.throws(()=>withoutCheckpoint(current.replace(hunk,hunk.replace('Staging','Changed'))));
+  }
+  assert.notEqual(withoutCheckpoint(current.replace('LEGACY_CANONICAL_CONTRACT_REQUIRED','UNREVIEWED_CHANGE'))
+    .replace(exportLine,''),readHead(sourcePath));
 });
 
 test('importer consolidation retains all remote staging tests unchanged while adding preserved address tests',()=>{

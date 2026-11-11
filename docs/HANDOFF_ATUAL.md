@@ -1,4 +1,31 @@
-## Adendo vigente - leitura de locais autorizada na HML (2026-11-11)
+## Adendo vigente - staging retomavel e populacao alem do piloto (2026-11-11)
+
+Reserva Codex342/6798695196 e6798742173; Cursor UI/composicao preservados.
+CI6827: diferenca de segundo no rodape PDF, nao perda de HTML. Relogio injetado
+somente no harness,20PASS incl. contraprova de timestamp diferente; sem enfraquecer
+comparacao integral ou hashes. Consumidor legado existente recebe wrapper de
+staging em lotes1..1000/default500: helper privado de checkpoints, ordem nativa,
+manifesto pinned/opcoes/run, fsync/hashchain/lock, replay sem reprocessar concluidos.
+32PASS mapper+guardas+checkpoint; ancestral preservado salvo dois hunks exatos,
+com negativos contra falta/duplicacao/mutacao. Nao e importadorPG paralelo.
+Nenhuma cargaPG/reversaoPG/velocidade de importacao comprovada por esses testes.
+Lock ou recibo incompleto apos crash real: inspecionar, nao forcar limpeza.
+
+Perfil agregado fonte READONLY/ROLLBACK concluido:22895linhas/chaves distintas,
+90/156campos com valores,14fora da cobertura da100. Aptos:DESCONHECIDO. Nao houve
+selecao substituta, extracao integral, carga, mudanca100 ou operacaoVPS. Leitor
+parado com originais nao montados. Tentativa1 SQL904 preservada; prontidao foi
+corrigida para banco fonte TOP0, nao somente masterSELECT1, tentativa2 concluida.
+Privado: address-native-20261110-followup/population-profile-20261111-ready02,
+population-profile e pilot-coverage-delta; pin064498224f27ef100975ec34c7f33ce639b4761782b5ec0d97dc4ce14faddbc2.
+Audit/lint/typecheck/build PASS; Windows2449PASS/4FAIL Python/POSIX conhecidos,
+nao aprovar por isso. Publicacao draft para CIUbuntu conforme excecao vigente;
+conferir CI terminal do novo SHA, nao reutilizar6828como prova do snapshot novo.
+Proximo: mappings dos14novos campos e crosswalks vendedores6/tabelas4/regioes9;
+depois ensaio privadoPG500/1000 com contratos completos e gates de destino.
+591 e3b32276 inalterada; nenhuma edicao branchCursor. Sem carga operacional.
+
+## Historico imediato - leitura de locais autorizada na HML (2026-11-11)
 
 Dono autorizou SOMENTE Cadastros.cliente_local visualizar no perfil HML existente.
 Antes: perfiluser ativo/GrupoCPA/empresaNULL, cliente permitido ecliente_local
