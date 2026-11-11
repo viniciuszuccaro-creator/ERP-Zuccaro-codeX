@@ -1,9 +1,15 @@
 ## Continuidade vigente - recuperar capacidade e iniciar mesma HML (2026-11-11)
 
+Codigo publicado0ee98b5b2def8ab047573a047a6ea9b52027d7d9, CI6797/6798 SUCCESS.
+Controlador e6testes validados no Linux da CI; NAO instalacao/execucao no Codespace
+nem aceite do bootstrap privado. Reserva de codigo encerrada, sem outro escritor.
+
 Controle local ainda falha ANTES do inventario de abas: kernel assets os error3.
 gh ausente no PATH e nos dois caminhos conhecidos; nenhum alias SSH Codespace
 documentado na config local. Nao declarar conexao remota, causa do aviso ou15173
-disponivel. Nenhuma medicao remota/limpeza/inicializacao/carga foi executada.
+disponivel. Nenhuma medicao de disco/limpeza/inicializacao/carga foi executada.
+HTTP externo ANONIMO em2026-11-11T10:38Z: /cadastros e /__erp_hml retornaram404,
+sem redirecionamento; nao prova estado interno, causa, sessao ou ausencia de dados.
 Proprietario recusou repasse de comandos: executar pelos agentes. Solicitacao
 dirigida Cursor591/6793482990: df-h/df-i,Docker system df e du conhecidos pelo
 canal existente, sem escrita. Envio nao comprova recebimento ou execucao; nenhum
@@ -17,7 +23,8 @@ cache, lock alheio, volume ou container. Procedimento e config restrita no topo
 de OPERACAO_DEV_VPS. Config privada ainda nao produzida/ativada remotamente;
 bootstrap-next local antigofc1 precisa revisao/atualizacao, nao usar por engano.
 Focado6PASS, incluindo concorrencia real de lease no filesystem sintetico;
-audit/lint/typecheck/build/diff-check PASS. CI nova pendente; suite inalterada
+audit/lint/typecheck/build/diff-check PASS. CI6797/6798 SUCCESS em0ee98b5b;
+suite inalterada
 reutiliza a92efc44/CI6787/6788, nao chamar os6testes de aceite HML/PG/browser.
 
 Proximo: restabelecer canal suportado; conferir checkout/WIP/processos/reservas,

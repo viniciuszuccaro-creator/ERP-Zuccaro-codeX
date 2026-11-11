@@ -46,7 +46,9 @@ iniciar dados reais; usar registro suportado no painel Portas, nunca publico.
 Referencia: https://cli.github.com/manual/gh_codespace_ports_visibility
 Saude localhost/registro privado NAO comprovam acesso externo ou sessao: abrir
 a URL completa existente, conferir marcador, login/perfil/Grupo/Empresas e
-mesmos100/331/20IE antes de entregar. Nenhuma URL foi testada neste lote.
+mesmos100/331/20IE antes de entregar. Em11/11 10:38Z, HTTP externo SEM sessao
+retornou404 em /cadastros e /__erp_hml, sem redirecionamento. Nao comprova
+causa ou estado interno; URL ainda nao entregue como funcional.
 
 Autostart/task ao abrir a pasta ainda NAO configurados: .vscode remoto e reservas
 nao foram conferidos. Nao sobrescrever WIP para oferecer um botao. Apos aceite

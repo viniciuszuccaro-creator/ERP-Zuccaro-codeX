@@ -1,5 +1,8 @@
 ## Continuidade vigente - capacidade/retomada HML ainda sem canal remoto (2026-11-11)
 
+Codigo0ee98b5b publicado, CI6797/6798 SUCCESS. Controlador validado, nao aplicado
+na HML; nao declarar espaco recuperado ou ERP acessivel. Reserva encerrada.
+
 Aviso de espaco: causa/total/usado/livre/inodes/cota/computacao DESCONHECIDOS,
 nao medidos por falta de controle (kernel assets os error3 antes das abas).
 Nenhuma limpeza, remocao, rebuild, troca de maquina, custo ou carga100.
@@ -8,11 +11,13 @@ scripts/legado/hml-control.mjs + teste, sem novo ERP/IdP/importador. Diagnostico
 somente leitura; startup idempotente por lease e identidade/saude, bootstrap
 privado hash/reviewedSHA/pins, porta15173privada obrigatoria.6testes focados PASS,
 incluindo exclusao concorrente/lease preservada e liberacao apos falha. Audit,
-lint,typecheck,build e diff-check PASS; CI Linux do novo lote pendente. Reutilizar
+lint,typecheck,build e diff-check PASS; CI Linux6797/6798 SUCCESS no0ee98b5b. Reutilizar
 suite/base a92efc44/CI6787/6788 para codigo inalterado, nao para este delta.
-NAO prova de HML/browser. Nao declarar CI nova verde antecipadamente.
+NAO prova de HML/browser; nao atribuir CI de codigo ao fechamento documental.
 Detalhes no procedimento canonico OPERACAO_DEV_VPS, sem manual paralelo.
-Cursor conserva UI/composicao; .vscode remoto nao alterado. URL15173 nao testada.
+Cursor conserva UI/composicao; .vscode remoto nao alterado. HTTP externo anonimo
+15173 /cadastros e /__erp_hml retornou404 sem redirect em11/11 10:38Z; NAO e
+teste autenticado, causa do aviso ou prova de dados perdidos.0bytes removidos.
 Proximo: medir ambiente real, conferir reservas e pins, atualizar bootstrap
 revisado e validar acesso externo/mesmos100/331/20IE; nao repetir importacao.
 Proprietario pediu execucao pelos agentes, nao comandos manuais: solicitacao
