@@ -26,6 +26,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { buildEscalarParaHub, resolveSessaoEstavel } from "@/components/lib/atendimentoConversaPolicy";
+import ProtectedSection from "@/components/security/ProtectedSection";
 
 /**
  * V21.6 - Chatbot ERP-Cêntrico - 100% COMPLETO
@@ -34,8 +35,9 @@ import { buildEscalarParaHub, resolveSessaoEstavel } from "@/components/lib/aten
  * ✅ Integração com HubAtendimento
  * ✅ IA com fallback
  * ✅ Layout responsivo w-full h-full
+ * Recuperação: reconectado ao menu Layout (antes só em pages.config).
  */
-export default function ChatbotAtendimento() {
+function ChatbotAtendimentoContent() {
   const [mensagem, setMensagem] = useState('');
   const [sessaoAtual, setSessaoAtual] = useState(null);
   const [clienteAutenticado, setClienteAutenticado] = useState(null);
@@ -603,5 +605,15 @@ export default function ChatbotAtendimento() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatbotAtendimento() {
+  return (
+    <ProtectedSection module="CRM" section="Atendimento" action="visualizar">
+      <div className="w-full h-full" data-permission="CRM.Atendimento.visualizar">
+        <ChatbotAtendimentoContent />
+      </div>
+    </ProtectedSection>
   );
 }

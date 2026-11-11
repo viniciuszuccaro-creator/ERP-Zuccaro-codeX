@@ -1,0 +1,70 @@
+#591 — Cursor pronto p/ aceite HML Codex (:15173) — tip congelado
+America/Sao_Paulo 2026-11-10 · sem PII
+
+HOMOLOG TIP (não alterar sem acordo Codex)
+- Tip HML coordenado: 77f11b28 (CI SUCCESS)
+- Freeze: 0afd378f284 até tip API+web acordado
+
+O QUE CURSOR JÁ ENTREGOU NA #591 (UI/contrato consumidor)
+- Completo: banners contatos/anexos; (b) ContatoB2B bloqueada sem FK;
+  Celular≠WhatsApp; omit-if-undefined; locais BATCH_ATOMIC=false ≠ toast integral;
+  Cadastral/Fiscal ≠ Entrega (UI + regra)
+- GerenciarContatos: data-regra=celular-nao-whatsapp
+- GerenciarEnderecos: data-regra=cadastral-fiscal-nao-entrega; Outro único
+- Produto V22: banner produto-foto-storage-http (Storage oficial)
+- C360: ?proposta=comercial360 A/B/C; filtros só A; atalhos C
+  data-integracao-pronta=false; Voltar≠discard; Avançar≠save
+- Packs Codex: decisão a/b/c · pedido objetivo · consumidores prontos ·
+  locais batch · FK ContatoB2B reconfirm (ainda ausente)
+
+PEDIDO AO CODEX PARA ACEITE :15173
+1. Rodar aceite no tip 77f11b28 (ou sucessor acordado) — não no tip Cursor WIP
+2. Decidir (a) jsonb / (b) ContatoB2B+FK / (c) anexos e publicar contrato BFF
+3. Batch locais atômico se BATCH_ATOMIC=false for inaceitável em HML
+4. Liberar tip composto API+web se freeze 0afd378f284 for atualizado
+
+NEGATIVOS
+- Sem ContatoClienteV2 / storage paralelo
+- Sem ContatoB2B no Completo sem FK
+- Sem merge/VPS/port cego #591→#401
+- Sem PII em GitHub/CI
+- Sem redesign operacional C360 sem OK visual
+
+ATUALIZAÇÃO 2026-11-10 (America/Sao_Paulo)
+- Verde CI: e6a31225 · dc48c9ff · 3b5132de (peels LaunchpadCard)
+- Produto banner visual: ADIADO (peels pin d312fbcd) — toast+disabled HTTP ok
+- Dialog Contatos/Endereços: persistBusy + ESC/overlay
+- ContatoB2B UI WhatsApp≠telefone; banner FK ausente; reconfirm 20261110d sem cliente_id
+- Endereços: Outro único enforçado (select+save) — data-regra=outro-unico
+- C360: filtros só A; owner-only atalhos; rótulo sintético; aria-live etapa;
+  proposta-salvar-bloqueado; proposta-fechar / confirm rascunho sintético
+
+CURSOR AGUARDA
+- Decisão objetiva (a)/(b)/(c) + contrato
+- Aceite :15173 no tip homolog
+Wire Completo inicia no tip CI SUCCESS pós-contrato.
+
+ATUALIZAÇÃO 2026-11-10b (America/Sao_Paulo) — contatos[] MASTER (a) aplicado
+- Decisão (a) integrada no tip Cursor fa17c5c8 (feat cc7c71f5 + CI-fix).
+- Pedido Codex #2 (decidir a/b/c) → SUPERADO: (a) contatos[] jsonb.
+- Aceite :15173: alinhar API+web ao tip revisado pós-CI verde fa17c5c8
+  (não misturar freeze 0afd378f284 com funcionalidade posterior sem acordo).
+- Locais: sync /clientes/:id/locais já no Completo; BATCH_ATOMIC=false.
+- Documentos[]: ainda pendente contrato BFF (unsupported fail-closed).
+- ContatoB2B FK: NÃO destrava; sem ContatoClienteV2.
+
+ATUALIZAÇÃO 2026-11-10c — CI SUCCESS ba21a342
+- Tip Cursor revisado e verde: ba21a342
+- Pedido Codex aceite :15173: usar ba21a342 (ou sucessor acordado) como tip API+web
+  — não misturar freeze 0afd378f284 com funcionalidade contatos[] posterior sem acordo.
+- Contatos[] MASTER (a) comprovado em CI; locais sync ok; documentos[] ainda BFF.
+
+CHECKPOINT 2026-11-10d — tip revisado pronto p/ :15173
+- Tip funcional CI SUCCESS: ba21a342 (9/9)
+- Tip docs: f9b11cf6 (CI SUCCESS)
+- Homolog legado 77f11b28 / freeze 0afd378f284: NÃO misturar com contatos[] sem acordo
+- Pedido Codex: aceitar contatos reais nos detalhes/reabertura no tip ba21a342
+  · 331 canais = agregados ≠ 331 clientes · 99 prontos / 1 parcial
+  · comparações privadas · sem reimportação p/ CPF/CNPJ/nome já persistidos
+- Documentos[] (c): ainda BLOCKED BFF — Completo fail-closed antes do MASTER
+- C360: soft-landing documentado (c360-soft-landing-591-20261110.txt)

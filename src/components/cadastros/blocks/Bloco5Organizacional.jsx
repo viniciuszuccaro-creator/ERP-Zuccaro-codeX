@@ -24,7 +24,7 @@ function filterTiles(tiles, searchTerm) {
   return tiles.filter(({ k, t }) => `${k} ${t}`.toLowerCase().includes(q));
 }
 
-export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm = "" }) {
+export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm = "", missingCounts = [] }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
   const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
@@ -34,7 +34,12 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
 
-  const getTotalEntidade = (entidade) => Number(allCounts?.[entidade] || 0);
+  const missingSet = new Set(Array.isArray(missingCounts) ? missingCounts : []);
+  const getTotalEntidade = (entidade) => {
+    if (missingSet.has(entidade) || !Object.prototype.hasOwnProperty.call(allCounts || {}, entidade)) return null;
+    const n = allCounts[entidade];
+    return typeof n === 'number' && Number.isSafeInteger(n) && n >= 0 ? n : null;
+  };
 
   const getDadosContexto = () => ({
     bloco: "Estrutura Organizacional",
@@ -182,7 +187,7 @@ export default function Bloco5Organizacional({ allCounts, isLoading, searchTerm 
                   <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {t}
-                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} missing={missingCounts} isLoading={isLoading} />
               </CardTitle>
               <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}

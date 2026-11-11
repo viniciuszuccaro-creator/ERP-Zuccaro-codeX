@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bell, Mail, Monitor, Volume2, Clock, Save, CheckCircle, AlertCircle, Settings, User, Lock, Palette } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 // Funções de notificação push (inline)
 const isPushHabilitado = () => {
@@ -127,6 +128,9 @@ export default function ConfiguracoesUsuario() {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
+    },
+    onError: (error) => {
+      toast.error(error?.message || "Falha ao salvar preferências do usuário.");
     },
   });
 

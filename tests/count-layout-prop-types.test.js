@@ -9,7 +9,8 @@ import {renderToStaticMarkup} from 'react-dom/server';
 
 const count='src/components/cadastros/CountBadgeSimplificado.jsx';
 const layout='src/components/layout/ModuleLayout.jsx';
-for(const [file,hash] of [[count,'f7561ff0edd370a410f1a567fccedffde95a909ab2f943ce66f6c5b55a143791'],[layout,'0005123730c26391d72f8a52884985ba244ce092f71493c908b8e5be95defbdc']])test(`${file}: full executable runtime unchanged`,()=>{
+// Hash CountBadge: chave ausente/missing → "—" (achado parcial≠zero / #591).
+for(const [file,hash] of [[count,'dbb4408fb580b2dcd9a026d223ba8a0f3fc583575d0a3d958ed763f39042b749'],[layout,'0005123730c26391d72f8a52884985ba244ce092f71493c908b8e5be95defbdc']])test(`${file}: full executable runtime unchanged`,()=>{
   const emitted=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),hash);
 });
@@ -25,12 +26,14 @@ function badge(result={total:0,isLoading:false}){
   return {Component,calls};
 }
 
-test('parent counts, including an empty object, disable internal entity requests and preserve numeric coercion',()=>{
+test('parent counts disable internal fetch; missing keys show unavailable, not coerced zero',()=>{
   const {Component,calls}=badge({total:999,isLoading:false});
   const populated=render(Component,{entities:['Cliente','Produto'],allCounts:{Cliente:'2',Produto:3}});
   assert.match(populated,/>5<\/span>/);assert.deepEqual(calls,[[]]);
   const empty=render(Component,{entities:'Cliente',allCounts:{}});
-  assert.match(empty,/>0<\/span>/);assert.deepEqual(calls,[[],[]]);
+  assert.match(empty,/>—<\/span>/);assert.deepEqual(calls,[[],[]]);
+  const partial=render(Component,{entities:['Cliente','Marca'],allCounts:{Cliente:12},missing:['Marca']});
+  assert.match(partial,/>—<\/span>/);
 });
 
 test('precomputed zero retains precedence without changing the existing hook invocation',()=>{

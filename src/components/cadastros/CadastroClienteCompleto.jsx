@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef, Suspense } from "react";
 import { base44, isHttpBackendMode } from "@/api/base44Client";
 import { createHttpApiClient } from "@/api/httpApiClient";
 import { readErpHttpSession } from "@/api/erpHttpSession";
+import {
+  mapClienteLocalToUiEndereco,
+  syncClienteLocaisViaHttp,
+  CLIENTE_LOCAIS_SYNC_PARTIAL,
+  isContatoCanalCanonico,
+  partitionContatosByCanal,
+} from "@/api/clienteHttpPayload";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,12 +75,83 @@ const sanitizeEndereco = (endereco = {}) => ({
   longitude: endereco.longitude === null || endereco.longitude === undefined ? null : toNumber(endereco.longitude, null),
   mapa_url: sanitizeText(endereco.mapa_url, 300)
 });
-const sanitizeContatos = (contatos) => Array.isArray(contatos) ? contatos.slice(0, 50).map((contato) => ({
-  ...contato,
-  tipo: sanitizeText(contato?.tipo, 60),
-  valor: sanitizeText(contato?.valor, 180),
-  principal: sanitizeBoolean(contato?.principal)
-})) : [];
+/** Preserva procedência/flags/null; rejeita acima do limite (200/2000) — sem truncar. */
+/** @param {string} message @param {string} code @param {number} [status] */
+const contatosValidationError = (message, code, status = 422) => {
+  const err = /** @type {Error & { code: string, status: number }} */ (new Error(message));
+  err.code = code;
+  err.status = status;
+  return err;
+};
+const assertContatoLen = (value, max, field) => {
+  if (value == null) return value;
+  const text = String(value);
+  if (text.length > max) {
+    throw contatosValidationError(
+      `Contato.${field} excede ${max} — rejeitado sem truncamento.`,
+      'CLIENTE_CONTATOS_VALIDATION',
+    );
+  }
+  return text;
+};
+/** Sanitiza sem truncar: rejeita acima do limite antes de qualquer slice. */
+const sanitizeContatoField = (value, max, field) => {
+  if (value === undefined || value === null) return value;
+  assertContatoLen(value, max, field);
+  return sanitizeText(value, max);
+};
+const sanitizeContatos = (contatos) => {
+  if (!Array.isArray(contatos)) {
+    throw contatosValidationError(
+      'contatos deve ser array — rejeitado sem converter em [].',
+      'CLIENTE_CONTATOS_VALIDATION',
+    );
+  }
+  if (contatos.length > 200) {
+    throw contatosValidationError(
+      'Contatos[] excede 200 itens — rejeitado sem truncamento.',
+      'CLIENTE_CONTATOS_VALIDATION',
+    );
+  }
+  const ids = new Set();
+  let principals = 0;
+  return contatos.map((contato) => {
+    const obsRaw = contato?.observacao !== undefined ? contato.observacao : contato?.obs;
+    const observacao = obsRaw === undefined ? undefined : (obsRaw === null ? null : sanitizeContatoField(obsRaw, 2000, 'observacao'));
+    const out = {
+      ...contato,
+      nome: contato?.nome === undefined ? undefined : (contato.nome === null ? null : sanitizeContatoField(contato.nome, 180, 'nome')),
+      cargo: contato?.cargo === undefined ? undefined : (contato.cargo === null ? null : sanitizeContatoField(contato.cargo, 120, 'cargo')),
+      departamento: contato?.departamento === undefined ? undefined : (contato.departamento === null ? null : sanitizeContatoField(contato.departamento, 120, 'departamento')),
+      tipo: sanitizeContatoField(contato?.tipo, 60, 'tipo'),
+      valor: contato?.valor === undefined ? undefined : (contato.valor === null ? null : sanitizeContatoField(contato.valor, 180, 'valor')),
+      ramal: contato?.ramal === undefined ? undefined : (contato.ramal === null ? null : sanitizeContatoField(contato.ramal, 40, 'ramal')),
+      ...(observacao !== undefined ? { observacao } : {}),
+    };
+    if (contato?.principal !== undefined) out.principal = contato.principal === true;
+    if (contato?.ativo !== undefined) out.ativo = contato.ativo === true;
+    if (contato?.id != null && String(contato.id).trim() !== '') {
+      const id = String(contato.id);
+      if (ids.has(id)) {
+        throw contatosValidationError('Contatos[] com id duplicado — rejeitado.', 'CLIENTE_CONTATOS_VALIDATION');
+      }
+      ids.add(id);
+      out.id = id;
+    }
+    if (out.principal === true) principals += 1;
+    if (principals > 1) {
+      throw contatosValidationError('Contatos[] com múltiplos principais — rejeitado.', 'CLIENTE_CONTATOS_VALIDATION');
+    }
+    if (contato?.contato_b2b_id != null && String(contato.contato_b2b_id).trim() !== '') {
+      throw contatosValidationError(
+        'contato_b2b_id sem resolução canônica — rejeitado.',
+        'CLIENTE_CONTATO_B2B_REVIEW_REQUIRED',
+        409,
+      );
+    }
+    return out;
+  });
+};
 const sanitizeDocumentos = (documentos) => Array.isArray(documentos) ? documentos.slice(0, 100).map((doc) => ({
   ...doc,
   nome_arquivo: sanitizeText(doc?.nome_arquivo, 180),
@@ -249,8 +327,24 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     motivo_inatividade: sanitizeText(data.motivo_inatividade, 500),
     observacoes: sanitizeText(data.observacoes, 2000),
     endereco_principal: sanitizeEndereco(data.endereco_principal),
-    ...(data.contatos === undefined ? {} : { contatos: sanitizeContatos(data.contatos) }),
-    locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],
+    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.
+    ...(data.contatos === undefined || data.contatos === null
+      ? {}
+      : {
+          contatos: sanitizeContatos(data.contatos),
+          ...(data.expectedVersion !== undefined
+            ? { expectedVersion: data.expectedVersion }
+            : (data.contatos_version !== undefined
+              ? { expectedVersion: data.contatos_version }
+              : {})),
+        }),
+    ...(data.locais_entrega === undefined
+      ? {}
+      : {
+          locais_entrega: Array.isArray(data.locais_entrega)
+            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)
+            : [],
+        }),
     condicao_comercial: {
       ...(data.condicao_comercial || {}),
       tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
@@ -271,7 +365,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
       observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)
     },
-    documentos: sanitizeDocumentos(data.documentos),
+    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),
     empresa_id: data.empresa_id || empresaAtual?.id,
     group_id: data.group_id || groupId
   });
@@ -393,29 +487,52 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       empresa_id: empresaAtual?.id,
       group_id: groupId,
     },
-    mapToForm: (record) => ({
-      ...record,
-      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),
-      locais_entrega: record.locais_entrega || [],
-      condicao_comercial: record.condicao_comercial || {
-        tabela_preco_id: "",
-        forma_pagamento_padrao_id: "",
-        percentual_desconto: 0,
-        condicao_pagamento: "À Vista",
-        limite_credito: 0,
-        limite_credito_utilizado: 0,
-        situacao_credito: "OK",
-      },
-      configuracao_fiscal: record.configuracao_fiscal || {
-        regime_tributario: "Simples Nacional",
-        cfop_padrao_venda: "5102",
-        contribuinte_icms: true,
-        tipo_contribuinte: "1 - Contribuinte",
-        isento_ipi: false,
-        isento_icms: false,
-      },
-      documentos: record.documentos || [],
-    }),
+    mapToForm: (record) => {
+      // HTTP MASTER: documento unificado → cpf/cnpj da UI (zeros preservados; não inventa).
+      const blank = (v) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+      const docRaw = record?.documento ?? record?.cpf_cnpj ?? '';
+      const doc = String(docRaw ?? '').trim();
+      const digits = doc.replace(/\D/g, '');
+      let cpf = record?.cpf;
+      let cnpj = record?.cnpj;
+      if (digits && !/^0+$/.test(digits)) {
+        if (blank(cpf) && digits.length === 11) cpf = doc;
+        if (blank(cnpj) && digits.length === 14) cnpj = doc;
+      }
+      return {
+        ...record,
+        ...(cpf !== undefined ? { cpf } : {}),
+        ...(cnpj !== undefined ? { cnpj } : {}),
+        // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.
+        ...(record.contatos === undefined || record.contatos === null
+          ? {}
+          : { contatos: record.contatos }),
+        ...(record.contatos_version !== undefined
+          ? { contatos_version: record.contatos_version, expectedVersion: record.contatos_version }
+          : {}),
+        ...(record.locais_entrega === undefined
+          ? {}
+          : { locais_entrega: record.locais_entrega || [] }),
+        condicao_comercial: record.condicao_comercial || {
+          tabela_preco_id: "",
+          forma_pagamento_padrao_id: "",
+          percentual_desconto: 0,
+          condicao_pagamento: "À Vista",
+          limite_credito: 0,
+          limite_credito_utilizado: 0,
+          situacao_credito: "OK",
+        },
+        configuracao_fiscal: record.configuracao_fiscal || {
+          regime_tributario: "Simples Nacional",
+          cfop_padrao_venda: "5102",
+          contribuinte_icms: true,
+          tipo_contribuinte: "1 - Contribuinte",
+          isento_ipi: false,
+          isento_icms: false,
+        },
+        ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),
+      };
+    },
   });
 
   const saveMutation = useMutation({
@@ -427,30 +544,178 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       }
 
       const payload = buildPayload(data);
+      // Write canônico: locais via /clientes/:id/locais — não empurrar no MASTER.
+      const locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
+        ? payload.locais_entrega
+        : undefined;
+      if (isHttpBackendMode && locaisDraft !== undefined) {
+        delete payload.locais_entrega;
+      }
+      // Anexos documentos[] ≠ CPF/CNPJ MASTER ≠ ModeloDocumento — sem DocumentosCliente paralelo.
+      // Não vazio: fail-closed antes do MASTER (erro HTTP ≠ sucesso local). Vazio/omit: não envia.
+      if (isHttpBackendMode) {
+        const docsDraft = Object.prototype.hasOwnProperty.call(payload, 'documentos')
+          ? payload.documentos
+          : undefined;
+        if (Array.isArray(docsDraft) && docsDraft.length > 0) {
+          const err = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
+            new Error(
+              'Anexos documentos[] ainda sem contrato BFF. Rascunho preservado — '
+                + 'CPF/CNPJ e demais campos MASTER não foram enviados neste save.',
+            )
+          );
+          err.code = 'CLIENTE_HTTP_UNSUPPORTED_FIELDS';
+          err.status = 422;
+          err.fields = ['documentos'];
+          throw err;
+        }
+        delete payload.documentos;
+      }
 
       // Identidade do rascunho (boundId), não props — evita salvar A em B após reject switch.
       const targetId = clienteBoundId || formData?.id || null;
+      let saved;
       if (targetId) {
         if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
-        return updateInContext('Cliente', targetId, payload);
+        saved = await updateInContext('Cliente', targetId, payload);
+      } else {
+        if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
+        saved = await createInContext('Cliente', payload);
       }
 
-      if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
-      return createInContext('Cliente', payload);
+      if (isHttpBackendMode && locaisDraft !== undefined) {
+        assertFormScopeCurrent();
+        const clienteId = String(
+          (saved && typeof saved === 'object' && /** @type {{ id?: unknown }} */ (saved).id)
+            || targetId
+            || '',
+        ).trim();
+        if (!clienteId) {
+          throw new Error(
+            'Cliente MASTER gravado, mas id ausente para sincronizar endereços canônicos. '
+              + 'Rascunho de locais preservado — reabra e salve novamente.',
+          );
+        }
+        const sessionBefore = readErpHttpSession();
+        if (!sessionBefore?.token || !sessionBefore?.groupId) {
+          throw new Error(
+            'Sessão HTTP indisponível após salvar MASTER — endereços não sincronizados. '
+              + 'Erro remoto ≠ sucesso local; reabra o cadastro.',
+          );
+        }
+        const frozenScope = Object.freeze({
+          token: String(sessionBefore.token || ''),
+          groupId: String(sessionBefore.groupId || ''),
+          empresaId: String(sessionBefore.empresaId || ''),
+          actorId: String(sessionBefore.actorId || ''),
+          clienteId,
+        });
+        const assertLocaisScope = () => {
+          assertFormScopeCurrent();
+          const now = /** @type {Record<string, unknown>} */ (readErpHttpSession() || {});
+          if (
+            String(now.token || '') !== frozenScope.token
+            || String(now.groupId || '') !== frozenScope.groupId
+            || String(now.empresaId || '') !== frozenScope.empresaId
+            || String(now.actorId || '') !== frozenScope.actorId
+          ) {
+            const err = /** @type {Error & { code: string, status: number }} */ (
+              new Error('Contexto/sessão mudou durante sync de endereços. Reabra o cadastro.')
+            );
+            err.code = 'CONTEXT_CHANGED';
+            err.status = 409;
+            throw err;
+          }
+        };
+        const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
+        // baselineIds null se carga falhou: campo não carregado não apaga persistido.
+        const baselineView = locaisHttpBaselineRef.current;
+        const baselineIds = Array.isArray(baselineView)
+          ? baselineView
+            .map((row) => (row && typeof row === 'object'
+              ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+              : ''))
+            .filter(Boolean)
+          : null;
+        try {
+          const locaisSummary = await syncClienteLocaisViaHttp({
+            clienteId: frozenScope.clienteId,
+            draft: locaisDraft,
+            baselineIds,
+            assertScope: assertLocaisScope,
+            api: api.clientes,
+          });
+          // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
+          lastLocaisSyncSummaryRef.current = locaisSummary;
+        } catch (syncErr) {
+          lastLocaisSyncSummaryRef.current = null;
+          const code = /** @type {Error & { code?: string }} */ (syncErr)?.code;
+          if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
+            // Estado real: reconcilia baseline/rascunho com listLocais (reexecução segura).
+            try {
+              assertLocaisScope();
+              const rows = await api.clientes.listLocais(frozenScope.clienteId, {
+                limit: 50, ativo: true,
+              });
+              const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+                /** @type {Record<string, unknown>} */ (row),
+              ));
+              setLocaisHttpView(mapped);
+              locaisHttpBaselineRef.current = mapped;
+              setFormData((prev) => ({ ...prev, locais_entrega: mapped }));
+            } catch {
+              locaisHttpBaselineRef.current = null;
+            }
+          }
+          throw syncErr;
+        }
+      }
+
+      return saved;
     },
     onSuccess: (_result, savedPayload) => {
       if (!isFormScopeCurrent()) return;
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      toast({ title: `✅ Cliente ${formData?.id ? 'atualizado' : 'criado'} com sucesso!` });
+      const locaisSummary = lastLocaisSyncSummaryRef.current;
+      lastLocaisSyncSummaryRef.current = null;
+      const verb = formData?.id ? 'atualizado' : 'criado';
+      if (
+        locaisSummary
+        && locaisSummary.skipped !== true
+        && locaisSummary.batchAtomic === false
+      ) {
+        const ops = Number(locaisSummary.created || 0)
+          + Number(locaisSummary.updated || 0)
+          + Number(locaisSummary.deleted || 0);
+        // BATCH_ATOMIC=false = limitação BFF — não declarar salvamento integral/atômico.
+        toast({
+          title: `Cliente ${verb}`,
+          description: ops > 0
+            ? `Endereços sincronizados em ${ops} operação(ões). Lote não atômico no BFF (BATCH_ATOMIC=false) — não é salvamento integral.`
+            : 'Cliente gravado. Sync de endereços sem operações (lote não atômico no BFF).',
+        });
+      } else {
+        toast({ title: `✅ Cliente ${verb} com sucesso!` });
+      }
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
       if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
       const sameScope = isFormScopeCurrent();
+      const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);
+      const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
+      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.
+      if (partial) {
+        queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      }
       toast({
-        title: sameScope ? "❌ Erro ao salvar cliente" : "Contexto alterado",
-        description: sameScope ? (error?.message || String(error)) : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
+        title: !sameScope
+          ? "Contexto alterado"
+          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),
+        description: sameScope
+          ? (err?.message || String(error))
+          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
     }
@@ -504,8 +769,99 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   /** Rascunho de contatos/endereços — NÃO grava no backend; só `handleSave`/`saveMutation` persistem. */
+  /**
+   * Exibição Contatos: canais canônicos apenas (quarentena ≠ contato válido).
+   * Sem contatos[] no transporte: resumo escalar (≠ lista completa); omit-if-unknown no save.
+   * Celular ≠ WhatsApp automático (mesmo contrato do Painel).
+   */
+  const contatosQuarentena = Array.isArray(formData.contatos)
+    ? partitionContatosByCanal(formData.contatos).quarentena
+    : [];
+  const contatosViewForUi = (() => {
+    if (Array.isArray(formData.contatos)) {
+      return formData.contatos.filter((c) => isContatoCanalCanonico(c?.tipo));
+    }
+    const items = formData.contatos_escalares?.items;
+    if (Array.isArray(items) && items.length > 0) {
+      return items
+        .map((item) => ({
+          nome: "",
+          tipo: item.tipo || item.canal || "Telefone",
+          valor: item.valor || "",
+          principal: false,
+        }))
+        .filter((c) => isContatoCanalCanonico(c.tipo));
+    }
+    const seeded = [];
+    const push = (tipo, valor) => {
+      if (valor == null || String(valor).trim() === "") return;
+      seeded.push({ nome: "", tipo, valor: String(valor).trim(), principal: false });
+    };
+    push("E-mail", formData.email);
+    push("Telefone", formData.telefone);
+    push("Celular", formData.celular);
+    return seeded;
+  })();
+
+  /** Locais canônicos BFF — leitura; write via `/locais` no save (não MASTER). */
+  const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));
+  /** Baseline lido para soft-delete só quando a carga HTTP concluiu (ref evita stale no mutate). */
+  const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
+  /** Último summary de sync `/locais` — BATCH_ATOMIC=false nunca vira toast de salvamento integral. */
+  const lastLocaisSyncSummaryRef = useRef(/** @type {{
+    skipped?: boolean,
+    batchAtomic?: boolean,
+    created?: number,
+    updated?: number,
+    deleted?: number,
+  }|null} */ (null));
+  useEffect(() => {
+    const id = clienteBoundId || cliente?.id || null;
+    if (!id || !isHttpBackendMode) {
+      setLocaisHttpView(undefined);
+      locaisHttpBaselineRef.current = undefined;
+      return undefined;
+    }
+    let cancelled = false;
+    const session = readErpHttpSession();
+    if (!session?.token || !session?.groupId) {
+      setLocaisHttpView(undefined);
+      locaisHttpBaselineRef.current = undefined;
+      return undefined;
+    }
+    (async () => {
+      try {
+        const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
+        const rows = await api.clientes.listLocais(id, { limit: 50, ativo: true });
+        if (cancelled) return;
+        const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+          /** @type {Record<string, unknown>} */ (row),
+        ));
+        setLocaisHttpView(mapped);
+        locaisHttpBaselineRef.current = mapped;
+      } catch {
+        if (!cancelled) {
+          setLocaisHttpView(undefined);
+          // Carga falhou: não autoriza remoção por omissão.
+          locaisHttpBaselineRef.current = null;
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clienteBoundId, cliente?.id]);
+
+  const locaisViewForUi = Array.isArray(formData.locais_entrega)
+    ? formData.locais_entrega
+    : (Array.isArray(locaisHttpView) ? locaisHttpView : []);
+
   const applyContatosDraft = (novosContatos) => {
-    setFormData((prev) => ({ ...prev, contatos: novosContatos }));
+    setFormData((prev) => {
+      const quarantine = Array.isArray(prev.contatos)
+        ? partitionContatosByCanal(prev.contatos).quarentena
+        : [];
+      const validos = Array.isArray(novosContatos) ? novosContatos : [];
+      return { ...prev, contatos: [...validos, ...quarantine] };
+    });
   };
   const applyEnderecosDraft = (novosEnderecos) => {
     setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
@@ -696,6 +1052,22 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </div>
           </div>
       </div>
+
+      {Boolean(cliente?.id) && (formData.contatos === undefined || formData.locais_entrega === undefined || formData.documentos === undefined) && (
+        <div
+          className="mx-6 mt-3 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shrink-0"
+          data-pendencia="cliente-parcial"
+          role="status"
+        >
+          {[
+            formData.contatos === undefined ? "contatos" : null,
+            formData.locais_entrega === undefined ? "endereços de entrega/cobrança" : null,
+            formData.documentos === undefined ? "documentos" : null,
+          ].filter(Boolean).join(", ")
+            + " ainda não recuperados nesta carga — o salvamento omite esses campos (sem apagar a fonte)."}
+          {" "}Endereço cadastral/fiscal permanece em Dados Gerais; não presumir entrega = cadastral. Celular ≠ WhatsApp.
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="grid w-full grid-cols-7 flex-shrink-0 px-6 bg-slate-50">
@@ -1183,8 +1555,36 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </TabsContent>
 
             <TabsContent value="contatos" className="m-0 mt-4" data-cadastro-commit="draft">
+              {isHttpBackendMode && (
+                <p
+                  className="mb-2 text-xs text-sky-900 bg-sky-50 border border-sky-200 rounded px-2 py-1.5"
+                  data-fonte="contatos-jsonb-http"
+                  data-contrato="contatos-array-master"
+                  role="status"
+                >
+                  Contrato MASTER `contatos[]` (decisão a): leitura/gravação no cadastro canônico.
+                  Escalares espelhados best-effort; Celular ≠ WhatsApp. Sem ContatoClienteV2; ContatoB2B FK
+                  não destrava este fluxo. Omitir no save ≠ limpar; `[]` limpa. Salvar não duplica canais.
+                </p>
+              )}
+              {formData.contatos === undefined && contatosViewForUi.length > 0 && (
+                <p className="mb-2 text-xs text-slate-600" data-fonte="contatos-escalares-http" role="status">
+                  Contatos escalares do MASTER (e-mail/telefone/celular). Editar assume a lista no rascunho;
+                  Celular não vira WhatsApp automaticamente.
+                </p>
+              )}
+              {contatosQuarentena.length > 0 && (
+                <p
+                  className="mb-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                  data-fonte="contatos-quarentena"
+                  role="status"
+                >
+                  {contatosQuarentena.length} canal(is) em quarentena (tipo inválido) — preservados no save,
+                  não exibidos como contato válido.
+                </p>
+              )}
               <GerenciarContatosClienteForm
-                contatos={formData.contatos || []}
+                contatos={contatosViewForUi}
                 onChange={applyContatosDraft}
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
@@ -1193,8 +1593,14 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </TabsContent>
 
             <TabsContent value="enderecos" className="m-0 mt-4" data-cadastro-commit="draft">
+              {formData.locais_entrega === undefined && Array.isArray(locaisHttpView) && locaisHttpView.length > 0 && (
+                <p className="mb-2 text-xs text-slate-600" data-fonte="cliente-locais-http" role="status">
+                  Endereços lidos de cliente_locais (canônico). Editar assume o rascunho;
+                  ao Salvar, grava via `/locais` (não no MASTER). Entrega ≠ cadastral.
+                </p>
+              )}
               <GerenciarEnderecosClienteForm
-                enderecos={formData.locais_entrega || []}
+                enderecos={locaisViewForUi}
                 onChange={applyEnderecosDraft}
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
@@ -1561,13 +1967,25 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             </TabsContent>
 
             <TabsContent value="anexos" className="space-y-6 m-0 mt-4">
+              {isHttpBackendMode && (
+                <p
+                  className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5"
+                  data-fonte="documentos-limitacao-http"
+                  data-pendencia="documentos-anexos-bff"
+                  role="status"
+                >
+                  Documento de identificação (CPF/CNPJ) fica em Dados Gerais / MASTER.
+                  Anexos adicionais (`documentos[]`) ≠ ModeloDocumento cadastro; HTTP MASTER
+                  fail-closed até storage canônico BFF — sem DocumentosCliente paralelo.
+                </p>
+              )}
               <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
                 <Paperclip className="w-12 h-12 mx-auto mb-4 text-slate-400" />
                 <p className="text-slate-600 mb-2">Upload de Documentos</p>
                 <p className="text-sm text-slate-500 mb-4">
                   Arraste arquivos ou clique para fazer upload
                 </p>
-                <Button variant="outline">
+                <Button variant="outline" disabled={isHttpBackendMode} title={isHttpBackendMode ? 'Anexos HTTP aguardam BFF' : undefined}>
                   Selecionar Arquivos
                 </Button>
               </div>

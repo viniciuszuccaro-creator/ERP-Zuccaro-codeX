@@ -90,13 +90,21 @@ export default function ParametroOrigemPedidoForm({
     : "";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-cadastro-visual="sky-param-origem">
+      {windowMode && (
+        <div className="px-6 pt-4 pb-3 border-b bg-gradient-to-r from-sky-50 to-sky-100">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900">
+            <Settings className="w-6 h-6 text-sky-700" />
+            {parametro?.id ? "Editar Origem de Pedido" : "Parâmetro de Origem de Pedido"}
+          </h2>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className={windowMode ? "flex-1 overflow-auto p-6 space-y-6" : "space-y-6"}>
         
-        <Card>
+        <Card className="border-sky-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Settings className="w-5 h-5 text-blue-600" />
+              <Settings className="w-5 h-5 text-sky-700" />
               Configuração do Canal
             </CardTitle>
           </CardHeader>

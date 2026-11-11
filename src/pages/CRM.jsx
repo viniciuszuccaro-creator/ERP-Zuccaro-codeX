@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
@@ -34,9 +35,16 @@ export default function CRMPage() {
   const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
   const { openWindow } = useWindow();
   const { user } = useUser();
+  const queryClient = useQueryClient();
 
   const moverEtapaOportunidade = async (oportunidadeId, novaEtapa) => {
-    await updateInContext('Oportunidade', oportunidadeId, { etapa: novaEtapa, etapa_funil: novaEtapa });
+    try {
+      await updateInContext('Oportunidade', oportunidadeId, { etapa: novaEtapa, etapa_funil: novaEtapa });
+      await queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+    } catch (error) {
+      toast.error(error?.message || 'Falha ao mover oportunidade no funil.');
+      throw error;
+    }
   };
 
   const groupId = empresaAtual?.group_id || empresaAtual?.grupo_id || null;
@@ -215,7 +223,32 @@ export default function CRMPage() {
     },
   ];
 
+  /** Fail-closed por seção (Funil×3 / Oportunidades → CRM.oportunidades). */
+  const canViewCrmModule = (module) => {
+    const key = module.sectionKey;
+    if (key) {
+      return hasPermission('CRM', key, 'ver') || hasPermission('CRM', key, 'visualizar');
+    }
+    return hasPermission('CRM', null, 'ver') || hasPermission('CRM', null, 'visualizar');
+  };
+  const allowedModules = modules.filter(canViewCrmModule);
+
   const handleModuleClick = (module) => {
+    if (!canViewCrmModule(module)) {
+      toast.error('Sem permissão para abrir este módulo do CRM.');
+      try {
+        base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          acao: 'Bloqueio',
+          modulo: 'CRM',
+          tipo_auditoria: 'seguranca',
+          entidade: 'Seção',
+          descricao: `Acesso bloqueado: ${module.title}`,
+          data_hora: new Date().toISOString(),
+        });
+      } catch { /* auditoria best-effort */ }
+      return;
+    }
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
@@ -258,7 +291,7 @@ export default function CRMPage() {
         </ModuleKPIs>
         <ModuleContent>
           <ModuleTabs
-            listagem={<ModulosGridCRM modules={modules} onModuleClick={handleModuleClick} />}
+            listagem={<ModulosGridCRM modules={allowedModules} onModuleClick={handleModuleClick} />}
           />
         </ModuleContent>
       </ModuleLayout>

@@ -1,0 +1,60 @@
+#591 — Contrato contatos/documentos (alinhar Codex) — sem ContatoClienteV2
+America/Sao_Paulo 2026-11-09 · sem PII
+Tip homologação locais: 77f11b28 · CI SUCCESS. Este pack = coordenação BFF.
+
+OWNERS CANÔNICOS (reutilizar — não criar paralelo)
+1) ContatoB2B (entidade Cadastros)
+   - Form: ContatoB2BForm.jsx (reopen ID, RBAC Cadastros/Comercial.ContatoB2B)
+   - Campos shape (Base MCP, sem valores): id, cliente_id, nome_contato, cargo,
+     email, telefone, whatsapp, principal, ativo, empresa_id, group_id,
+     preferencias_comunicacao
+   - whatsapp é campo PRÓPRIO — celular escalar do Cliente NÃO vira WhatsApp
+2) Canais embutidos do Cliente (GerenciarContatosClienteForm)
+   - tipos explícitos: Telefone | Celular | WhatsApp | E-mail
+   - remoção/edição explícita; RBAC Cadastros.Cliente; assertScope; lock duplo clique
+   - commitMode draft (Completo) vs backend (Painel/adaptador)
+3) Documentos do Cliente
+   - UI Completo: formData.documentos omit-if-undefined (não wipe)
+   - MASTER HTTP: documentos[] não vazios → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+   - ModeloDocumento = template cadastro ≠ anexos do cliente
+   - Sem DocumentosClienteV2 / storage paralelo
+
+LEITURA / ESCRITA / REMOÇÃO / AUDITORIA (estado atual)
+- Escalares email/telefone/celular: MASTER HTTP (ALLOWED_KEYS) + fidelity overflow
+- contatos[] ricos / documentos[]: fail-closed MASTER (422) até BFF
+  jsonb ou tabela filha + endpoints canônicos (Codex)
+- Locais: cliente_locais via /api/v1/clientes/:id/locais (já tip 77f11b28)
+- ContatoB2B: CRUD entidade existente (Base/local) — vínculo cliente_id + group/empresa
+- Remoção: ContatoB2B delete; canais via GerenciarContatos excluir explícito;
+  soft-delete locais só com baseline carregado
+- Auditoria: ações sensíveis Cliente/ContatoB2B pelos owners existentes
+  (não inventar log paralelo neste tip)
+
+NÃO É CONCLUSÃO DO REQUISITO
+- Bloqueio permanente 422 ≠ cadastro completo. Exige acordo BFF:
+  a) contatos[] jsonb no Cliente + sync parcial/atômico documentado; OU
+  b) ContatoB2B como fonte rica + UI Completo lista ContatoB2B filtrada
+     por cliente_id (sem ContatoClienteV2)
+  c) documentos: storage canônico (tabela/anexo) com permissão+auditoria
+
+PRESERVAÇÃO
+- undefined ≠ [] (omit)
+- zeros à esquerda em documento/código
+- Celular ≠ WhatsApp automático
+- endereço cadastral ≠ entrega/cobrança automática
+
+PEDIDO AO CODEX
+1) Aceite HML :15173 no tip 77f11b28 (pack aceite)
+2) Decidir (a)/(b)/(c) para contatos/docs — Cursor implementa no owner escolhido
+3) Batch locais atômico opcional (CLIENTE_LOCAIS_BATCH_ATOMIC hoje false)
+
+FORA
+ContatoClienteV2 · DocumentosCliente paralelo · merge · VPS · PII no GitHub
+
+ATUALIZAÇÃO 2026-11-10 — decisão (a) aplicada; (c) permanece
+- (a) contatos[] jsonb MASTER: tip ba21a342 CI SUCCESS — Completo/HTTP/PG.
+- ContatoB2B FK (b): NÃO destrava; não usado no Completo.
+- (c) documentos[] anexos: ainda BLOCKED. Completo HTTP fail-closed antes do MASTER
+  (CLIENTE_HTTP_UNSUPPORTED_FIELDS / fields=['documentos']); omit/[] não envia.
+- Sem DocumentosClienteV2 / storage paralelo.
+- Aceite :15173 no tip ba21a342; batch locais atômico ainda opcional (BATCH_ATOMIC=false).

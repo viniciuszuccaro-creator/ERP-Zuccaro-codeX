@@ -1,0 +1,20 @@
+#591 — GerenciarEnderecos: tipo Outro único + proposta-salvar-bloqueado
+America/Sao_Paulo 2026-11-10 · sem PII
+
+ALTERAÇÃO (existente)
+- GerenciarEnderecosClienteForm:
+  - data-regra=outro-unico
+  - SelectItem Outro disabled se já houver Outro (exceto edição do mesmo)
+  - handleSalvarEndereco toast fail-closed se segundo Outro
+- OrcamentosTab: data-action=proposta-salvar-bloqueado no Salvar sob proposalMode
+
+TESTES FOCADOS OK
+- cliente-contatos-limitacao-591
+- c360-orcamentos-centro-prep-591
+
+FORA
+- ContatoB2B Completo / ContatoClienteV2
+- peels LaunchpadCard / Produto
+- merge / VPS / PII
+
+Homolog: 77f11b28 · freeze 0afd378f284 · CI base 3b5132de

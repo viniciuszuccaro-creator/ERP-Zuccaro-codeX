@@ -1,0 +1,9 @@
+#591 — ContatoB2B FK reconfirm 20261110d
+America/Sao_Paulo 2026-11-10 · sem PII
+
+Base MCP query_contatob2b limit=1 fields=[id,group_id,cliente_id,empresa_id,whatsapp]
+Presentes: id · group_id · whatsapp
+Ausentes: cliente_id · empresa_id
+
+UI: ContatoB2BForm banner data-pendencia=contatob2b-fk-ausente (sem wire Completo).
+Decisão: (b) continua BLOQUEADA. Sem ContatoClienteV2 / merge / VPS / PII.

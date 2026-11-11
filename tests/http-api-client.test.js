@@ -222,8 +222,24 @@ test('Produto HTTP nao troca consumidores legados de fonte mesmo com opt-in do f
 test('Cliente entra no piloto HTTP somente com flag CLIENTE autorizada', () => {
   assert.equal(resolveHttpPilotEntities({}).includes('Cliente'), false);
   assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'false' }).includes('Cliente'), false);
-  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'), true);
-  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE: 'true' }).includes('Cliente'), true);
+  // Flag sozinha em modo local NÃO liga piloto (store local ≠ API).
+  assert.equal(resolveHttpPilotEntities({ VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'), false);
+  assert.equal(
+    resolveHttpPilotEntities({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE_360: 'true' }).includes('Cliente'),
+    true,
+  );
+  assert.equal(
+    resolveHttpPilotEntities({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE: 'true' }).includes('Cliente'),
+    true,
+  );
+});
+
+test('isHttpClienteListEnabled exige modo http + flag CLIENTE', async () => {
+  const { isHttpClienteListEnabled } = await import('../src/api/runtimeBackend.js');
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'local', VITE_ERP_HTTP_CLIENTE: 'true' }), false);
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'http' }), false);
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE: 'true' }), true);
+  assert.equal(isHttpClienteListEnabled({ VITE_ERP_BACKEND: 'http', VITE_ERP_HTTP_CLIENTE_360: 'true' }), true);
 });
 
 
@@ -560,9 +576,34 @@ test('HTTP rejected Bearer never falls back to local data or leaks token in erro
   assert.equal(calls, 1);
 });
 
-test('Cliente HTTP update strips commercial/extra form fields to master-data allowlist', async () => {
-  let body = null;
+test('Cliente HTTP update: campos ricos significativos fail-closed; MASTER allowlist sem extras', async () => {
+  let fetches = 0;
   const client = createHttpApiClient({
+    baseUrl: 'https://erp.synthetic.test',
+    getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
+    fetchImpl: async () => {
+      fetches += 1;
+      return new Response(JSON.stringify({ data: { id: 'cli-1' } }), { status: 200 });
+    },
+  });
+  // Parecer 6746649125: não descartar endereço/condição/vínculos em silêncio.
+  await assert.rejects(
+    () => client.entities.Cliente.update('cli-1', {
+      tipo: 'Pessoa Juridica',
+      razao_social: 'CLIENTE DEV SINTETICO PJ A LTDA',
+      cnpj: '11222333000181',
+      vendedor_responsavel: 'X',
+      condicao_comercial: { limite_credito: 999 },
+      endereco_principal: { cidade: 'SP' },
+      contatos: [{ tipo: 'email', valor: 'a@b.c' }],
+      status: 'Ativo',
+    }),
+    (err) => err?.code === 'CLIENTE_HTTP_UNSUPPORTED_FIELDS',
+  );
+  assert.equal(fetches, 0);
+
+  let body = null;
+  const okClient = createHttpApiClient({
     baseUrl: 'https://erp.synthetic.test',
     getScope: () => ({ groupId: 'grupo-sintetico', empresaId: 'empresa-sintetica', token: 'tok' }),
     fetchImpl: async (_url, init) => {
@@ -572,7 +613,8 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
       }), { status: 200, headers: { 'content-type': 'application/json' } });
     },
   });
-  const updated = await client.entities.Cliente.update('cli-1', {
+  const contatosVersion = 'a'.repeat(64);
+  const updated = await okClient.entities.Cliente.update('cli-1', {
     id: 'cli-1',
     group_id: 'grupo-sintetico',
     empresa_id: 'empresa-sintetica',
@@ -580,24 +622,24 @@ test('Cliente HTTP update strips commercial/extra form fields to master-data all
     razao_social: 'CLIENTE DEV SINTETICO PJ A LTDA',
     nome_fantasia: 'MARKER-OK',
     cnpj: '11222333000181',
-    vendedor_responsavel: 'X',
-    vendedor_responsavel_id: 'y',
-    condicao_comercial: { limite_credito: 999 },
-    endereco_principal: { cidade: 'SP' },
     contatos: [{ tipo: 'email', valor: 'a@b.c' }],
+    // CAS: substituir contatos[] exige expectedVersion (ou contatos_version do GET).
+    contatos_version: contatosVersion,
     status: 'Ativo',
   });
   assert.equal(updated.nome_fantasia, 'MARKER-OK');
   assert.equal(body.nome_fantasia, 'MARKER-OK');
   assert.equal(body.documento, '11222333000181');
   assert.equal(body.tipo, 'Pessoa Jurídica');
-  assert.equal(body.vendedor_responsavel, undefined);
-  assert.equal(body.condicao_comercial, undefined);
-  assert.equal(body.endereco_principal, undefined);
   assert.equal(body.group_id, undefined);
   assert.equal(body.id, undefined);
-  assert.equal(body.contatos, undefined);
+  // Decisão a: contatos[] jsonb no MASTER + espelho escalar + CAS.
+  assert.ok(Array.isArray(body.contatos));
+  assert.equal(body.contatos.length, 1);
+  assert.equal(body.contatos[0].valor, 'a@b.c');
   assert.equal(body.email, 'a@b.c');
+  assert.equal(body.expectedVersion, contatosVersion);
+  assert.equal(body.contatos_version, undefined);
 });
 
 test('Cliente filter: status Ativo não vira ativo=false; retorna sempre array', async () => {

@@ -48,15 +48,25 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
     });
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+  const containerClass = windowMode
+    ? "w-full h-full overflow-auto bg-white p-6"
+    : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-cadastro-visual="sky-param-nfe">
+      {windowMode && (
+        <div className="mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 rounded-t-lg px-3 -mx-1">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900">
+            <FileText className="w-6 h-6 text-sky-700" />
+            {parametro?.id ? "Editar Recebimento NF-e" : "Parâmetros de Recebimento de NF-e"}
+          </h2>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
+        <Card className="border-sky-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-green-600" />
+              <FileText className="w-5 h-5 text-emerald-700" />
               Parâmetros de Recebimento de NF-e
             </CardTitle>
           </CardHeader>
@@ -118,7 +128,7 @@ export default function ParametroRecebimentoNFeForm({ parametro, onSubmit, windo
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroRecebimentoNFe.salvar" data-action="salvar-parametros-recebimento-nfe" data-sensitive>
+          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroRecebimentoNFe.salvar" data-action="salvar-parametros-recebimento-nfe" data-sensitive>
             <Save className="w-4 h-4 mr-2" />
             Salvar Parâmetros
           </Button>

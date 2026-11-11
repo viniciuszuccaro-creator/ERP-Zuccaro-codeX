@@ -1,0 +1,189 @@
+/**
+ * #591 — Central Vendas360 evolui de Orçamentos existentes (sem paralelo).
+ */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const read = (p) => fs.readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
+
+test('Comercial launchpad: Central de Vendas360° hospeda Orcamentos (sem OrcamentosV2)', () => {
+  const src = read('src/pages/Comercial.jsx');
+  // Decisão 10/11: tile Orçamentos retirado; OrcamentosTab embutido na Central via shell no launchpad.
+  assert.match(src, /title: 'Central de Vendas360°'/);
+  assert.match(src, /component: CentralVendas360Shell/);
+  assert.match(src, /data-proposta=\{propostaIntegrada \? 'comercial360'/);
+  assert.match(src, /proposalMode: propostaIntegrada/);
+  assert.match(src, /proposta-pedido-bloqueado/);
+  assert.match(src, /disabled=\{propostaIntegrada\}/);
+  assert.match(src, /Proposta visual — abra apenas a Central de Vendas360°/);
+  assert.match(src, /proposalMode: true/);
+  assert.match(src, /proposta-kpis-sinteticos/);
+  assert.match(src, /KPIs operacionais ocultos/);
+  assert.match(src, /proposta-kpis-shell/);
+  assert.match(src, /proposta-fluxo-hint/);
+  assert.match(src, /proposta-acoes-topo/);
+  assert.match(src, /aria-disabled=\{propostaIntegrada/);
+  assert.match(src, /ModulosGridComercial[\s\S]*proposalMode=\{propostaIntegrada\}/);
+  assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova|OrcamentosNovo/);
+  assert.doesNotMatch(src, /title: 'Orçamentos'/);
+});
+
+test('ModulosGridComercial: proposta dim cards não-Orçamentos sem tocar LaunchpadCard peels', () => {
+  const grid = read('src/components/comercial/comercial-launchpad/ModulosGridComercial.jsx');
+  const card = read('src/components/financeiro/LaunchpadCard.jsx');
+  assert.match(grid, /proposalMode = false/);
+  assert.match(grid, /data-proposta-grid=\{proposalMode \? 'comercial360'/);
+  assert.match(grid, /proposta-modulo-bloqueado/);
+  assert.match(grid, /liberatedByProposal/);
+  assert.match(grid, /bloqueado.*liberado|liberado.*bloqueado|'bloqueado'|'liberado'/);
+  assert.match(grid, /data-proposta-card=\{/);
+  assert.match(grid, /onClickCapture=\{blockedByProposal/);
+  assert.match(grid, /cursor-not-allowed/);
+  assert.match(grid, /aria-disabled=\{blockedByProposal/);
+  assert.match(grid, /ring-sky-400/);
+  // peels stage56: LaunchpadCard permanece sem prop disabled (hash pin).
+  assert.doesNotMatch(card, /\bdisabled\b/);
+  assert.doesNotMatch(grid, /disabled=\{blockedByProposal\}/);
+});
+
+test('OrcamentosTab: proposal aside + rascunho; salvar bloqueado em proposalMode', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  assert.match(src, /OrcamentoProposalAside/);
+  assert.match(src, /proposalMode/);
+  assert.match(src, /Proposta visual: gravação desabilitada/);
+  assert.match(src, /disabled=\{proposalMode \|\| submitting/);
+  assert.match(src, /Incluir item|Item<\/Button>|<Plus/);
+});
+
+test('OrcamentosTab: proposta etapas A/B/C sintéticas sem save/convert implícito', () => {
+  const src = read('src/components/comercial/OrcamentosTab.jsx');
+  assert.match(src, /data-block="proposta-etapas"/);
+  assert.match(src, /data-action=\{`proposta-etapa-\$\{key\}`\}/);
+  assert.match(src, /data-proposta-rascunho=\{key === 'edicao' && dirty \? 'sujo'/);
+  assert.match(src, /proposta-rascunho-sujo/);
+  assert.match(src, /proposta-rascunho-preservado/);
+  assert.match(src, /Rascunho sintético preservado/);
+  assert.match(src, /\['lista', 'A · Negociações'\]/);
+  assert.match(src, /\['edicao', 'B · Orçamento'\]/);
+  assert.match(src, /\['acompanhamento', 'C · Acompanhamento'\]/);
+  assert.match(src, /proposta-negociacoes/);
+  assert.match(src, /data-block="proposta-acompanhamento"/);
+  assert.match(src, /proposalBackToLista/);
+  assert.match(src, /Voltar não desfaz o rascunho/);
+  assert.match(src, /Avançar não salva\/converte/);
+  assert.match(src, /PROPOSTA_CAPACIDADES/);
+  assert.match(src, /data-block="proposta-atalhos-capacidade"/);
+  assert.match(src, /data-integracao-pronta=\{item\.capacidade === 'existente' \? 'owner-only' : 'false'\}/);
+  assert.match(src, /data-integracao-pronta="false"|owner-only/);
+  assert.match(src, /goto-atendimento|chatbot/);
+  // Proposta: filtros só na etapa A (lista) — B/C sem misturar lista HTTP.
+  assert.match(src, /\(!proposalMode \|\| proposalStage === 'lista'\)/);
+  assert.match(src, /proposta-filtros-lista/);
+  assert.match(src, /proposta-sem-paginacao/);
+  assert.match(src, /proposalListaRows/);
+  assert.match(src, /appliedFilters\.search/);
+  assert.match(src, /appliedFilters\.status/);
+  assert.match(src, /appliedFilters\.clienteEmpresaId/);
+  assert.match(src, /appliedFilters\.validadeDe/);
+  assert.match(src, /appliedFilters\.validadeAte/);
+  assert.match(src, /clienteLabel\(row\.cliente_empresa_id\)/);
+  assert.match(src, /proposta-lista-vazia/);
+  assert.match(src, /proposta-limpar-filtros/);
+  assert.match(src, /proposta-lista-contagem/);
+  assert.match(src, /proposta-filtro-status/);
+  assert.match(src, /proposta-filtro-cliente/);
+  assert.match(src, /proposta-filtro-validade-de/);
+  assert.match(src, /proposta-filtro-validade-ate/);
+  assert.match(src, /proposta-filtro-search/);
+  assert.match(src, /onBlur=\{\(\) => \{ if \(proposalMode\)/);
+  assert.match(src, /proposta-filtrar/);
+  assert.match(src, /Negociação sintética — sem gravação/);
+  assert.match(src, /proposta-acompanhamento-rascunho/);
+  assert.match(src, /aria-current=\{proposalStage === key \? 'step'/);
+  assert.match(src, /Pesquisar número ou cliente/);
+  assert.match(src, /Nenhuma negociação sintética para os filtros atuais/);
+  assert.match(src, /!proposalMode && \(/);
+  assert.match(src, /proposta-edicao-placeholder/);
+  assert.match(src, /proposta-subtitulo-etapa/);
+  assert.match(src, /Proposta Comercial 360/);
+  assert.match(src, /aria-live=\{proposalMode \? 'polite'/);
+  assert.match(src, /proposta-nova-negociacao/);
+  assert.match(src, /Nova negociação sintética/);
+  assert.match(src, /proposta-salvar-bloqueado/);
+  assert.match(src, /proposta-fechar/);
+  assert.match(src, /Descartar o rascunho sintético desta proposta visual/);
+  // Avançar etapa só muda stage — sem save/convert.
+  const avancarIdx = src.indexOf('data-action="proposta-etapa-avancar-acompanhamento"');
+  assert.ok(avancarIdx > 0);
+  const slice = src.slice(avancarIdx, avancarIdx + 220);
+  assert.match(slice, /setProposalStage\('acompanhamento'\)/);
+  assert.doesNotMatch(slice, /save\(|convertToPedido|criarPedido|mutate\(/i);
+  assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
+});
+
+test('comercialProposalFixture: negociacoes + acompanhamento sintéticos (sem IDs operacionais reservados)', () => {
+  const src = read('src/components/comercial/comercialProposalFixture.js');
+  assert.match(src, /negociacoes:/);
+  assert.match(src, /acompanhamentoPedido:/);
+  assert.match(src, /ORC-SINT-/);
+  assert.match(src, /PED-SINT-/);
+  assert.match(src, /Não são cadastros/);
+  // Filtros A: ≥2 clientes + status CANCELADO sintético (sem cadastro real).
+  assert.match(src, /preview-vinculo-2/);
+  assert.match(src, /preview-cliente-2/);
+  assert.match(src, /ORC-SINT-003/);
+  assert.match(src, /status: 'CANCELADO'/);
+  assert.doesNotMatch(src, /entities\.|base44\.|fetch\(|localStorage/);
+});
+
+test('OrcamentoProposalAside: Voltar/Avançar por painel sem perder rascunho do editor', () => {
+  const src = read('src/components/comercial/OrcamentoProposalAside.jsx');
+  assert.match(src, /data-action="proposta-voltar"/);
+  assert.match(src, /data-action="proposta-avancar"/);
+  // Ações stub: slug estável (sem espaços) + sempre disabled.
+  assert.match(src, /data-action=\{`proposta-acao-\$\{slug\}`\}/);
+  assert.match(src, /'salvar-orcamento'/);
+  assert.match(src, /'converter-pedido'/);
+  assert.match(src, /'reservar-estoque'/);
+  assert.match(src, /'enviar-whatsapp'/);
+  assert.doesNotMatch(src, /proposta-acao-\$\{label\}|proposta-acao-Salvar/);
+  assert.match(src, /Rascunho do editor permanece ao navegar/);
+  assert.match(src, /data-block="proposta-painel-indice"/);
+  assert.match(src, /data-block="proposta-paineis-nav"/);
+  assert.match(src, /data-block="proposta-conteudo-cliente"/);
+  assert.match(src, /data-block="proposta-conteudo-produtos"/);
+  assert.match(src, /data-block="proposta-conteudo-resumo"/);
+  assert.match(src, /data-block="proposta-conteudo-acoes"/);
+  assert.match(src, /proposta-painel-produtos-contagem/);
+  assert.match(src, /proposta-produtos-vazio/);
+  assert.match(src, /aria-current=\{panel === key \? 'true'/);
+  assert.doesNotMatch(src, /OrcamentosV2|CentralVendas360Nova/);
+  // Voltar/Avançar só muda painel — sem save/convert/efeitos externos.
+  const voltarIdx = src.indexOf('data-action="proposta-voltar"');
+  const avancarIdx = src.indexOf('data-action="proposta-avancar"');
+  assert.ok(voltarIdx > 0 && avancarIdx > 0);
+  const navSlice = src.slice(Math.min(voltarIdx, avancarIdx) - 120, Math.max(voltarIdx, avancarIdx) + 280);
+  assert.match(navSlice, /goPanelByDelta\(/);
+  assert.match(src, /ArrowLeft|ArrowRight/);
+  assert.match(src, /setPanel\(\(current\)/);
+  assert.doesNotMatch(navSlice, /save\(|convert|criarPedido|fetch\(|mutate\(/i);
+});
+
+test('OrcamentoProposalAside: capacidades existente/parcial/futuro sem owners paralelos', () => {
+  const src = read('src/components/comercial/OrcamentoProposalAside.jsx');
+  assert.match(src, /PROPOSTA_CAPACIDADES/);
+  assert.match(src, /data-capacidade=/);
+  assert.match(src, /data-block="proposta-capacidades"/);
+  assert.match(src, /CentralCliente360Panel/);
+  assert.match(src, /ValidadorEstoquePedido/);
+  assert.match(src, /titleToModule/);
+  assert.doesNotMatch(src, /ContatoClienteV2|CentralVendas360Nova|OrcamentosV2/);
+});
+
+test('CentralCliente360Panel: reabre OrcamentosTab existente (não paralela)', () => {
+  const src = read('src/components/comercial/CentralCliente360Panel.jsx');
+  assert.match(src, /OrcamentosTab/);
+  assert.match(src, /canLoadCentralCliente360/);
+  assert.doesNotMatch(src, /CentralVendas360Nova|OrcamentosV2/);
+});

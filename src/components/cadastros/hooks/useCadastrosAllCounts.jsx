@@ -4,6 +4,7 @@
  * Pacote A (#429→correção):
  * - Filtro alinhado a buildContextFilter / Visualizador (núcleo puro).
  * - Falha de countEntities ≠ resultado vazio (isError; sem fabricar 0).
+ * - Auxiliar parcial (ex. SetorAtividade 500) ≠ envenenar blocos autorizados.
  * - Troca de grupo/empresa: sem placeholder cross-tenant.
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +17,6 @@ import {
   BLOCOS_ENTITIES,
   ALL_ENTITIES,
   buildCadastrosAllCountsFilter,
-  emptyCadastrosCounts,
   fetchCadastrosAllCounts as fetchCountsCore,
 } from "./cadastrosAllCountsCore.js";
 
@@ -33,6 +33,10 @@ function readSessionCacheKey() {
   const session = readErpHttpSession();
   return central360SessionKey(session?.token);
 }
+
+/**
+ * @typedef {{ counts: Record<string, number>, missing: string[] }} CadastrosCountsPayload
+ */
 
 export default function useCadastrosAllCounts() {
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
@@ -51,13 +55,36 @@ export default function useCadastrosAllCounts() {
   const { data, isLoading, isError, error, isFetching, failureReason } = useQuery({
     queryKey: ["cadastros-all-counts-v5", empresaId, groupId, grupoEmpIds, actorId, sessionKey],
     queryFn: async () => {
-      if (!contextoValido) return emptyCadastrosCounts();
-      return fetchCountsCore({
-        invoke: (name, body) => base44.functions.invoke(name, body),
-        empresaId,
-        groupId,
-        empresasDoGrupo,
-      });
+      if (!contextoValido) {
+        // Sem grupo/empresa: indisponível (—), nunca fabricar 0 como total confirmado.
+        return /** @type {CadastrosCountsPayload} */ ({
+          counts: {},
+          missing: ALL_ENTITIES.slice(),
+        });
+      }
+      try {
+        const counts = await fetchCountsCore({
+          invoke: (name, body) => base44.functions.invoke(name, body),
+          empresaId,
+          groupId,
+          empresasDoGrupo,
+        });
+        return /** @type {CadastrosCountsPayload} */ ({ counts, missing: [] });
+      } catch (err) {
+        const partial = /** @type {{ code?: string, message?: string, partialCounts?: Record<string, number>, missing?: string[] }} */ (err);
+        if (
+          (partial?.code === "READ_COUNT_PARTIAL" || partial?.message === "READ_COUNT_PARTIAL")
+          && partial.partialCounts
+          && Object.keys(partial.partialCounts).length > 0
+        ) {
+          // Parcial utilizável: não marcar a query como erro global.
+          return {
+            counts: partial.partialCounts,
+            missing: Array.isArray(partial.missing) ? partial.missing : [],
+          };
+        }
+        throw err;
+      }
     },
     staleTime: 20_000,
     gcTime: 10 * 60_000,
@@ -84,22 +111,31 @@ export default function useCadastrosAllCounts() {
     }).filter(Boolean);
     return () => { unsubs.forEach((u) => { if (typeof u === "function") u(); }); };
   }, [empresaId, groupId, actorId, sessionKey, queryClient]);
-  const counts = isError ? {} : (data || {});
+
+  const counts = isError ? {} : (data?.counts || {});
+  const missing = isError ? ALL_ENTITIES.slice() : (data?.missing || []);
+  const missingSet = new Set(missing);
   const totals = Object.fromEntries(
-    Object.entries(BLOCOS_ENTITIES).map(([bloco, entities]) => [
-      bloco,
-      isError
-        ? null
-        : entities.reduce((sum, e) => sum + (Number(counts[e]) || 0), 0),
-    ]),
+    Object.entries(BLOCOS_ENTITIES).map(([bloco, entities]) => {
+      if (isError) return [bloco, null];
+      const blocoMissing = entities.some((e) => missingSet.has(e));
+      if (blocoMissing) return [bloco, null];
+      return [bloco, entities.reduce((sum, e) => sum + (Number(counts[e]) || 0), 0)];
+    }),
   );
+
+  const hasAnyCount = Object.keys(counts).length > 0;
+  const countsPartial = !isError && missing.length > 0 && hasAnyCount;
+  const countsUnavailable = Boolean(isError) || (!hasAnyCount && missing.length > 0);
 
   return {
     counts,
     totals,
+    missing,
+    countsPartial,
     isLoading: isLoading || (isFetching && !data && !isError),
     isError,
     error: error || failureReason || null,
-    countsUnavailable: Boolean(isError),
+    countsUnavailable,
   };
 }

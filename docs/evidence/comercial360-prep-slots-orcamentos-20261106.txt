@@ -1,0 +1,36 @@
+C360 prep — slots sobre Orçamentos existentes (2026-11-06 America/Sao_Paulo)
+===========================================================================
+Regra: sem central paralela · sem redesign amplo · sem fingir integração futura.
+PR #591 branch cursor/hml-grupo-erro-fornecedor-392b.
+
+Fonte canônica UI
+- pages/Comercial.jsx → OrcamentosTab (proposalMode DEV ?proposta=comercial360)
+- OrcamentoProposalAside: painéis sintéticos; rascunho permanece no OrcamentosTab
+- Testes rascunho: orcamento-component-behavior (duplo Novo; session revoke)
+
+Mapeamento solicitado → componente existente (proprietário do dado)
+---------------------------------------------------------------------------
+| slot pedido                         | canônico existente                         | status prep |
+| orçamento/itens centro              | OrcamentosTab form + itens                  | pronto      |
+| cliente / Grupo/Empresa / vendedor  | masters HTTP + contexto visual              | pronto      |
+| canal / situação                    | status orçamento + origem pedido            | parcial     |
+| GoTo / atendimento / chatbot        | HubAtendimento + ChatbotAtendimento menu    | nav OK      |
+| site/e-commerce / marketplaces      | OrcamentoSite / PortalCliente               | rota OK     |
+| histórico                           | aside sintético; HTTP histórico operacional | keep synth  |
+| crédito/financeiro                  | CentralAprovacoes / Financeiro CR           | não embutir |
+| estoque                             | ValidadorEstoquePedido (conversão)          | wired       |
+| produção                            | GerarOP modal Comercial                     | keep owner  |
+| entregas/mapa                       | Expedicao / RoteirizacaoMapa                | keep owner  |
+| nota                                | NotasFiscaisTab Comercial                   | keep owner  |
+| boleto/Pix                          | ConfiguracaoBoletos / GerarCobrancaModal    | keep owner  |
+| documentos                          | anexos orçamento/pedido onda4/5             | keep owner  |
+| Incluir item / Salvar / Avançar     | Item+Salvar no form; converter=avançar      | pronto      |
+
+Decisões
+- Painéis consultivos não abrem modal empilhado sobre o editor (aside interno).
+- Integrações futuras: botões disabled + título explicativo na prévia (já em "acoes").
+- Redesign visual amplo: BLOCKED até aprovação owner.
+- Homolog dados reais: BLOCKED.
+
+Próximo C360 (após CI/HML): canal/situação no cabeçalho operacional sem mock;
+slots reais só com owner + RBAC do módulo dono.

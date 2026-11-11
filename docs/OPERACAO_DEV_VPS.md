@@ -1,5 +1,12 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## CURSOR — HML Grupo UI + Fornecedor HTTP port (2026-11-06 America/Sao_Paulo)
+
+Branch `cursor/hml-grupo-erro-fornecedor-392b`. UI reconcilia visão Grupo com
+`profileEmpresaId` null (sem promover admin). Contagens auxiliares isoladas.
+Fornecedor HTTP port de `6b81004fc`, flag `ENABLE_FORNECEDOR_HTTP` default OFF.
+Sem deploy/VPS/merge. SHA do tip para Codex validar seletor/nomes na HML.
+
 ## Orientacao vigente de continuidade e reconciliacao (2026-10-29)
 
 Consulta fixa preparada no modulo scripts/legado/pilot-functional-load-plan.mjs,

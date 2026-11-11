@@ -1,8 +1,19 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { base44, isLocalOnlyMode, isHttpBackendMode } from '@/api/base44Client';
 import { toast } from 'sonner';
 import usePermissions from '@/components/lib/usePermissions';
+import { canFallbackConfigToLocalEntity as canFallbackConfigToLocalEntityPolicy } from '@/components/lib/configPersistPolicy.js';
+
+export { canFallbackConfigToLocalEntityPolicy as canFallbackConfigToLocalEntity };
+
+function canFallbackConfigToLocalEntity(flags) {
+  return canFallbackConfigToLocalEntityPolicy({
+    localOnly: isLocalOnlyMode,
+    httpMode: isHttpBackendMode,
+    ...flags,
+  });
+}
 
 const CONFIG_PERMISSION_RULES = [
   { match: (chave, categoria) => String(categoria || '').toLowerCase().includes('seguranca') || String(chave || '').startsWith('seg_'), permissions: [['Sistema', 'Seguranca', 'editar'], ['Sistema', 'Segurança', 'editar']] },
@@ -148,6 +159,7 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
   }, [findMatchingRecord]);
 
   const persistToggle = useCallback(async (chave, categoria, newValue, scope) => {
+    const allowLocalEntityFallback = canFallbackConfigToLocalEntity();
     try {
       const res = await base44.functions.invoke('upsertConfig', {
         chave,
@@ -158,8 +170,16 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       if (record && typeof record.ativa === 'boolean' && record.ativa === newValue) {
         return record;
       }
-    } catch (_) {
-      // Fallback direto abaixo mantém o toggle funcional quando a função estiver indisponível.
+      if (!allowLocalEntityFallback) {
+        throw Object.assign(new Error('UPSERT_CONFIG_RESPONSE_INVALID'), {
+          code: 'UPSERT_CONFIG_RESPONSE_INVALID',
+        });
+      }
+    } catch (error) {
+      if (!allowLocalEntityFallback) {
+        // Parecer 6691042172: não transformar falha HTTP/remota em gravação local.
+        throw error;
+      }
     }
 
     return await saveDirectConfig(chave, categoria, newValue, scope);

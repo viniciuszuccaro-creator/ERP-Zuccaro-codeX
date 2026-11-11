@@ -1,0 +1,19 @@
+#591 — CI SUCCESS tip a51f162d (fix 347 proposta-nova-negociacao)
+America/Sao_Paulo 2026-11-10 · sem PII
+
+VERDE CONFIRMADO
+- 52aed2c4 — peels Produto (banner adiado; pin d312fbcd)
+- a92d7bd4 — dialog Contatos/Endereços busy
+- a51f162d — testes 347 usam data-action=proposta-nova-negociacao
+
+FAIL ESPERADO (pré-fix, superado por a51f)
+- ba53dc05 … a39986e6: harness buscava botão "Novo orçamento"
+  na proposta (rótulo virou "Nova negociação sintética")
+
+TIPS POSTERIORES EM CI
+- ae0773f4 — bloqueio módulos operacionais
+- b28fedaf — KPIs ocultos na proposta
+- 7d24f0f1 — docs status
+
+Homolog: 77f11b28 · freeze 0afd378f284
+ContatoB2B: (b) bloqueada sem FK

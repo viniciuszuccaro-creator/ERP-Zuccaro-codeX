@@ -1,0 +1,31 @@
+Central Vendas360 — prep a partir de Orçamentos (sem paralelo)
+==============================================================
+America/Sao_Paulo 2026-11-09 · PR #591
+Publicação ≠ integração #401. Sem redesign amplo (OK visual pendente).
+
+CANÔNICO EXISTENTE (reutilizar)
+- src/pages/Comercial.jsx → OrcamentosTab (launchpad)
+- src/components/comercial/OrcamentosTab.jsx
+  - form/itens/salvar; proposalMode (gravação off) + rascunho
+  - OrcamentoProposalAside: painéis cliente/produtos/resumo/ações
+- src/components/comercial/CentralCliente360Panel.jsx
+  - read-model cliente; abre OrcamentosTab/PedidosTab via loadPanel
+- DetalhesCliente embute CentralCliente360Panel
+
+NÃO CRIAR
+- OrcamentosV2 / CentralVendas360Nova / dashboard paralelo
+- Integração futura (site/marketplace/NF) apresentada como funcional
+
+INCREMENTO (tip capacidades)
+1. Voltar/Avançar = goPanel only; teclado ArrowLeft/Right; sem save/convert
+2. PROPOSTA_CAPACIDADES no painel Ações: existente/parcial/futuro + owners
+   (Hub/Chatbot existentes; crédito/estoque/entregas parciais; NF/site futuros)
+3. Pack: docs/evidence/c360-capacidades-atalhos-591-20261109.txt
+
+PRÓXIMO (quando franquia visual / pós-aceite HML)
+- Wire operacional aside no modo real (não só proposalMode) fail-closed
+- Consumir CentralCliente360Panel / ValidadorEstoque / entrega/mapa nos painéis
+
+BLOQUEIOS
+- Persistência ponta a ponta HML real: BLOCKED até aceite Codex no tip 77f11b28
+- Redesign visual amplo: BLOCKED sem aprovação

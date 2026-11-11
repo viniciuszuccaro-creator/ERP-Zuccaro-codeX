@@ -68,12 +68,21 @@ export const HTTP_PILOT_ENTITIES = Object.freeze([
  * - Cliente entra quando Central 360 / listagem HTTP esta autorizada em DEV
  *   (`VITE_ERP_HTTP_CLIENTE_360=true` ou `VITE_ERP_HTTP_CLIENTE=true`).
  */
-export function resolveHttpPilotEntities(env = import.meta.env) {
-  const list = [...HTTP_PILOT_ENTITIES];
-  const clienteOn = String(env?.VITE_ERP_HTTP_CLIENTE_360 || env?.VITE_ERP_HTTP_CLIENTE || '')
+/**
+ * Listagem/CRUD Cliente no BFF (≠ Central 360 UI isolada).
+ * Sem este opt-in, modo http mantém Cliente no store local — lista vazia ≠ API HML.
+ * @param {ImportMetaEnv | Record<string, string | undefined>} [env]
+ */
+export function isHttpClienteListEnabled(env = import.meta.env) {
+  if (resolveErpBackendMode(env) !== 'http') return false;
+  return String(env?.VITE_ERP_HTTP_CLIENTE_360 || env?.VITE_ERP_HTTP_CLIENTE || '')
     .trim()
     .toLowerCase() === 'true';
-  if (clienteOn && !list.includes('Cliente')) list.push('Cliente');
+}
+
+export function resolveHttpPilotEntities(env = import.meta.env) {
+  const list = [...HTTP_PILOT_ENTITIES];
+  if (isHttpClienteListEnabled(env) && !list.includes('Cliente')) list.push('Cliente');
   void env?.VITE_ERP_HTTP_PRODUTO; // opt-in do formulario; nao troca fonte dos grids
   if (isHttpExpedicaoEnabled(env)) list.push(...HTTP_EXPEDICAO_ENTITIES);
   return list;

@@ -1,0 +1,13 @@
+# ContatoB2B MCP — FK ainda ausente (#591 / 2026-11-10 America/Sao_Paulo)
+
+Probe Base MCP `query_contatob2b` (amostra):
+- presentes: group_id, empresa_vinculada_id, empresa_interna_responsavel_id, tipo_vinculo, whatsapp, ...
+- AUSENTES: cliente_id, empresa_id
+
+Decisão mantida:
+- (b) ContatoB2B→Completo BLOQUEADA até contrato FK + BFF
+- Sem ContatoClienteV2 / storage paralelo
+- UI fail-closed group/empresa permanece (tip 23ac22f9 CI SUCCESS)
+- Completo peels NÃO alterar (pin c8d7c134 / 516497af)
+
+Homolog tip freeze: 77f11b28 / 0afd378f284

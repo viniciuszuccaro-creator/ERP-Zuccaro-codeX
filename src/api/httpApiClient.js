@@ -1,5 +1,5 @@
 import { HTTP_PILOT_ENTITIES, resolveErpApiBaseUrl } from './runtimeBackend.js';
-import { toClienteMasterHttpPayload, withHydratedContatos } from './clienteHttpPayload.js';
+import { toClienteMasterHttpPayload, hydrateClienteHttpRowForUi } from './clienteHttpPayload.js';
 import { readErpHttpSession } from './erpHttpSession.js';
 import { parseA1CertificateMetadata } from './a1CertificateContract.js';
 import { createBankStatementApi } from './bankStatementHttp.js';
@@ -467,21 +467,25 @@ SeparacaoConferencia: {
       return {
         ...base,
         async get(id) {
-          return withHydratedContatos(await base.get(id));
+          return hydrateClienteHttpRowForUi(await base.get(id));
         },
         async list(orderBy, limit = 100) {
           const rows = await base.list(orderBy, limit);
-          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;
+          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;
         },
         async filter(query = {}, orderBy, limit = 100, skip = 0) {
           const rows = await base.filter(query, orderBy, limit, skip);
-          return Array.isArray(rows) ? rows.map(withHydratedContatos) : rows;
+          return Array.isArray(rows) ? rows.map(hydrateClienteHttpRowForUi) : rows;
         },
         async create(data) {
-          return withHydratedContatos(await base.create(toClienteMasterHttpPayload(data)));
+          return hydrateClienteHttpRowForUi(
+            await base.create(toClienteMasterHttpPayload(data, { mode: 'create' })),
+          );
         },
         async update(id, data) {
-          return withHydratedContatos(await base.update(id, toClienteMasterHttpPayload(data)));
+          return hydrateClienteHttpRowForUi(
+            await base.update(id, toClienteMasterHttpPayload(data, { mode: 'update' })),
+          );
         },
       };
     })(),
@@ -850,6 +854,140 @@ SeparacaoConferencia: {
         signal,
         unwrap: false,
       });
+    },
+    /**
+     * Lista canônica de locais do cliente (BFF `/clientes/:id/locais`).
+     * Leitura para Completo/Cadastros — sem storage paralelo; escrita MASTER continua fail-closed.
+     * @param {string} clienteId
+     * @param {{ limit?: number, offset?: number, ativo?: boolean, signal?: AbortSignal }} [options]
+     */
+    async listLocais(clienteId, { limit = 50, offset = 0, ativo, signal } = {}) {
+      const id = String(clienteId ?? '').trim();
+      if (!id) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId obrigatório para listLocais')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {
+        query: {
+          limit,
+          offset,
+          ...(ativo === undefined ? {} : { ativo: ativo ? 'true' : 'false' }),
+          order_by: 'nome',
+        },
+        signal,
+        unwrap: false,
+      });
+      const rows = page && typeof page === 'object' && Array.isArray(/** @type {{ data?: unknown }} */ (page).data)
+        ? /** @type {{ data: unknown[] }} */ (page).data
+        : [];
+      return rows;
+    },
+    /**
+     * Cria local canônico (POST `/clientes/:id/locais`) — sem storage paralelo.
+     * @param {string} clienteId
+     * @param {Record<string, unknown>} body
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async createLocal(clienteId, body, { signal } = {}) {
+      const id = String(clienteId ?? '').trim();
+      if (!id) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId obrigatório para createLocal')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {
+        method: 'POST',
+        body,
+        signal,
+        unwrap: false,
+      });
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
+    },
+    /**
+     * Atualiza local canônico (PATCH `/clientes/:id/locais/:localId`).
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {Record<string, unknown>} body
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async updateLocal(clienteId, localId, body, { signal } = {}) {
+      const cid = String(clienteId ?? '').trim();
+      const lid = String(localId ?? '').trim();
+      if (!cid || !lid) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId/localId obrigatórios para updateLocal')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(
+        `/api/v1/clientes/${encodeURIComponent(cid)}/locais/${encodeURIComponent(lid)}`,
+        { method: 'PATCH', body, signal, unwrap: false },
+      );
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
+    },
+    /**
+     * Soft-delete local canônico (DELETE `/clientes/:id/locais/:localId`).
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async softDeleteLocal(clienteId, localId, { signal } = {}) {
+      const cid = String(clienteId ?? '').trim();
+      const lid = String(localId ?? '').trim();
+      if (!cid || !lid) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId/localId obrigatórios para softDeleteLocal')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(
+        `/api/v1/clientes/${encodeURIComponent(cid)}/locais/${encodeURIComponent(lid)}`,
+        { method: 'DELETE', signal, unwrap: false },
+      );
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
+    },
+    /**
+     * Substitui finalidades do local (PUT `.../finalidades`).
+     * @param {string} clienteId
+     * @param {string} localId
+     * @param {unknown} finalidades
+     * @param {{ signal?: AbortSignal }} [options]
+     */
+    async setFinalidades(clienteId, localId, finalidades, { signal } = {}) {
+      const cid = String(clienteId ?? '').trim();
+      const lid = String(localId ?? '').trim();
+      if (!cid || !lid) {
+        const err = /** @type {Error & { status: number, code: string }} */ (
+          new Error('clienteId/localId obrigatórios para setFinalidades')
+        );
+        err.status = 422;
+        err.code = 'VALIDATION_ERROR';
+        throw err;
+      }
+      const page = await request(
+        `/api/v1/clientes/${encodeURIComponent(cid)}/locais/${encodeURIComponent(lid)}/finalidades`,
+        { method: 'PUT', body: { finalidades }, signal, unwrap: false },
+      );
+      return page && typeof page === 'object' && 'data' in /** @type {object} */ (page)
+        ? /** @type {{ data: unknown }} */ (page).data
+        : page;
     },
     /**
      * Sugestão de vínculo por documento no Grupo (sem mescla).

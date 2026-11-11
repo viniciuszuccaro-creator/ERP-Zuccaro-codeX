@@ -204,8 +204,35 @@ async function mountCompleto(relPath, {
       useQueryClient: () => ({ invalidateQueries() {} }),
     },
     '@/api/base44Client': { base44: { auth: { me: async () => null }, entities: {} }, isHttpBackendMode: false },
-    '@/api/httpApiClient': { createHttpApiClient: () => ({}) },
+    '@/api/httpApiClient': { createHttpApiClient: () => ({ clientes: { listLocais: async () => [] } }) },
     '@/api/erpHttpSession': { readErpHttpSession: () => null },
+    '@/api/clienteHttpPayload': {
+      mapClienteLocalToUiEndereco: (row) => ({
+        apelido: row?.nome || '',
+        tipo_endereco: 'Entrega',
+        cep: row?.cep || '',
+        logradouro: row?.logradouro || '',
+        numero: row?.numero || '',
+        cidade: row?.cidade || '',
+        estado: row?.uf || '',
+      }),
+      syncClienteLocaisViaHttp: async () => ({ created: 0, updated: 0, deleted: 0, skipped: true }),
+      CLIENTE_LOCAIS_SYNC_PARTIAL: 'CLIENTE_LOCAIS_SYNC_PARTIAL',
+      isContatoCanalCanonico: (tipo) => ['Telefone', 'Celular', 'WhatsApp', 'E-mail'].includes(String(tipo || '').trim()),
+      partitionContatosByCanal: (contatos) => {
+        const validos = [];
+        const quarentena = [];
+        if (!Array.isArray(contatos)) return { validos, quarentena };
+        for (const row of contatos) {
+          if (row && ['Telefone', 'Celular', 'WhatsApp', 'E-mail'].includes(String(row.tipo || '').trim())) {
+            validos.push(row);
+          } else if (row) {
+            quarentena.push(row);
+          }
+        }
+        return { validos, quarentena };
+      },
+    },
     '@/api/localCadastroMasterPolicy': {
       normalizeFornecedorCadastro: (payload) => ({ ...payload, normalized: true }),
     },

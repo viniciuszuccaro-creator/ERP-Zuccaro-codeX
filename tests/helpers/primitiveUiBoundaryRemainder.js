@@ -82,6 +82,31 @@ export const reportRecoveryEdits = [
   ]
 ];
 
+
+// #591 aceite: Separação clássica — seletor de entregas no launchpad (não tela vazia).
+export const separacaoAceiteRecoveryEdits = [
+  [
+    "export default function SeparacaoConferencia({\n  entregaId: entregaIdProp,\n  pedido,\n  empresaId,\n  onClose,\n  windowMode = false,\n  entregasCandidatas = [],\n  pedidosCandidatos = [],\n}) {",
+    "export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onClose, windowMode = false }) {"
+  ],
+  [
+    "  const [activeTab, setActiveTab] = useState(\"scanner\");\n  const [entregaIdSelecionada, setEntregaIdSelecionada] = useState(entregaIdProp || \"\");\n  const entregaId = entregaIdProp || entregaIdSelecionada || null;\n  \n  const containerClass = windowMode ? \"w-full h-full flex flex-col overflow-auto\" : \"space-y-6\";",
+    "  const [activeTab, setActiveTab] = useState(\"scanner\");\n  \n  const containerClass = windowMode ? \"w-full h-full flex flex-col overflow-auto\" : \"space-y-6\";"
+  ],
+  [
+    "  if (!dadosParaSeparacao) {\n    const candidatas = Array.isArray(entregasCandidatas) ? entregasCandidatas.filter((e) => e?.id) : [];\n    return (\n      <div className={containerClass} data-permission=\"Expedicao.Separacao.criar\" data-context-required=\"true\">\n        <div className={windowMode ? \"p-6 space-y-4\" : \"space-y-4\"}>\n          <p className=\"text-slate-700 font-medium\">Selecione uma entrega para conferência</p>\n          <p className=\"text-sm text-slate-500\">\n            O atalho do launchpad não envia entrega pré-selecionada; escolha abaixo ou abra pela listagem de entregas.\n          </p>\n          {!contextoBaseValido && (\n            <p className=\"text-amber-700 text-sm\">Selecione Grupo e Empresa antes de conferir.</p>\n          )}\n          {!canConcluirSeparacao && (\n            <p className=\"text-red-600 text-sm\">Sem permissão para Separação/Conferência.</p>\n          )}\n          {candidatas.length === 0 ? (\n            <p className=\"text-gray-500\">Nenhuma entrega candidata no contexto atual.</p>\n          ) : (\n            <div className=\"space-y-2 max-h-[60vh] overflow-auto\">\n              {candidatas.map((e) => {\n                const pedidoRel = (Array.isArray(pedidosCandidatos) ? pedidosCandidatos : [])\n                  .find((p) => p?.id && (p.id === e.pedido_id || p.id === e.pedidoId));\n                const label = e.numero_entrega || e.numero_pedido || e.id;\n                return (\n                  <Button\n                    key={e.id}\n                    type=\"button\"\n                    variant=\"outline\"\n                    className=\"w-full justify-start\"\n                    disabled={!contextoBaseValido || !canConcluirSeparacao}\n                    data-action=\"separacao-selecionar-entrega\"\n                    onClick={() => setEntregaIdSelecionada(e.id)}\n                  >\n                    <Package className=\"w-4 h-4 mr-2\" />\n                    {label}\n                    {pedidoRel?.cliente_nome ? ` · ${pedidoRel.cliente_nome}` : \"\"}\n                    {e.status ? ` · ${e.status}` : \"\"}\n                  </Button>\n                );\n              })}\n            </div>\n          )}\n          {onClose && (\n            <Button type=\"button\" variant=\"ghost\" onClick={onClose}>Fechar</Button>\n          )}\n        </div>\n      </div>\n    );\n  }\n",
+    "  if (!dadosParaSeparacao) {\n    return <p className=\"text-gray-500\">Nenhum dado encontrado.</p>;\n  }"
+  ]
+];
+
+/** #591 — Funil Avançado queryKey com groupId/escopo (paridade Funil IA). */
+const funilAvancadoScopeEdits = [
+  [
+    "  const groupId = empresaAtual?.group_id || empresaAtual?.grupo_id || null;\n  const { data: oportunidades = [] } = useQuery({\n    queryKey: ['oportunidades', groupId, empresaAtual?.id, estaNoGrupo ? 'grupo' : 'empresa'],\n    queryFn: () => filtrarPorContexto('Oportunidade', {}, '-created_date', 200),\n    enabled: contextoPronto,\n  });\n",
+    "  const { data: oportunidades = [] } = useQuery({\n    queryKey: ['oportunidades', empresaAtual?.id],\n    queryFn: () => filtrarPorContexto('Oportunidade', {}, '-created_date', 200),\n    enabled: contextoPronto,\n  });\n",
+  ],
+];
+
 export function primitiveUiBoundaryRemainder(file, source) {
   if (file === 'src/components/comercial/MonitoramentoCanaisRealtime.jsx') {
     source = monitoramentoCanaisScopeRemainder(source);
@@ -89,6 +114,20 @@ export function primitiveUiBoundaryRemainder(file, source) {
   if (file === 'src/pages/Relatorios.jsx') for (const [after,before] of reportRecoveryEdits) {
     assert.equal(source.split(after).length-1,1,'Exact authorized #348 recovery hunk');
     source=source.replace(after,before);
+  }
+  if (file === 'src/components/expedicao/SeparacaoConferencia.jsx') for (const [after,before] of separacaoAceiteRecoveryEdits) {
+    assert.equal(source.split(after).length-1,1,'Exact authorized #591 separacao aceite hunk');
+    source=source.replace(after,before);
+  }
+  if (file === 'src/components/crm/FunilVendasAvancado.jsx') {
+    // runtimeProofSource canônica CRLF; peels usam \n.
+    const hadCrlf = source.includes('\r\n');
+    let next = source.replace(/\r\n/g, '\n');
+    for (const [after, before] of funilAvancadoScopeEdits) {
+      assert.equal(next.split(after).length - 1, 1, 'Exact authorized #591 funil avancado scope hunk');
+      next = next.replace(after, before);
+    }
+    source = hadCrlf ? next.replace(/\n/g, '\r\n') : next;
   }
   const edits = primitiveUiEdits[file]; if (!edits) return source;
   for (const [after, before, count] of edits) {

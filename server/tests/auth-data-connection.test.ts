@@ -28,6 +28,33 @@ test('Runtime keeps one legacy client, rejects unsafe split/different target and
   }
   ended=0; const split=await createRuntimeDbClients(config,factory); assert.notEqual(split.db,split.authDb);await split.end();assert.equal(ended,2);
 });
+
+test('Explicit identical Auth/data URL shares one verified socket pool; distinct NULL addresses stay rejected',async()=>{
+  const url='postgresql://synthetic/shared?host=/synthetic/socket';
+  const config=cfg({DATABASE_URL:url,AUTH_DATABASE_URL:url,ENABLE_TENANT_CONTEXT:'true'});
+  let calls=0;let ended=0;
+  const socketIdentity={...identity,address:null,port:null};
+  const factory=(change:Partial<typeof identity>={})=>{
+    calls++;
+    const db=createDbClient(cfg());
+    db.end=async()=>{ended++;};
+    db.query=async()=>({rows:[{...socketIdentity,...change}],command:'SELECT',rowCount:1,oid:0,fields:[]}) as any;
+    return db;
+  };
+  const shared=await createRuntimeDbClients(config,()=>factory());
+  assert.equal(calls,1);
+  assert.equal(shared.db,shared.authDb);
+  await shared.end();assert.equal(ended,1);
+  for(const change of [{rolsuper:true},{rolbypassrls:true},{login_super:true},{login_bypass:true},{database:''},{schema:''}]){
+    calls=0;ended=0;
+    await assert.rejects(createRuntimeDbClients(config,()=>factory(change)),/PREFLIGHT_FAILED/);
+    assert.equal(calls,1);assert.equal(ended,1);
+  }
+  calls=0;ended=0;
+  const splitConfig=cfg({DATABASE_URL:url,AUTH_DATABASE_URL:url+'&application_name=auth',ENABLE_TENANT_CONTEXT:'true'});
+  await assert.rejects(createRuntimeDbClients(splitConfig,()=>factory()),/PREFLIGHT_FAILED/);
+  assert.equal(calls,2);assert.equal(ended,2);
+});
 test('HTTP verified profile uses authDb exclusively; data/ready stay on db',async()=>{
   const group='11111111-1111-4111-8111-111111111111';const company='22222222-2222-4222-8222-222222222222';
   const db=createDbClient(cfg());let authCalls=0;let contextCalls=0;let readyCalls=0;

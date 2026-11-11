@@ -28,3 +28,11 @@ test('canônico Admin: aba Integrações permanece IntegracoesIndex', () => {
 test('navegação: Administração do Sistema aponta tab=integracoes', () => {
   assert.match(layout, /AdministracaoSistema\?tab=integracoes/);
 });
+
+test('parecer 6691042172: rota Integracoes com ProtectedSection granular', () => {
+  assert.match(page, /ProtectedSection/);
+  assert.match(page, /module="Sistema"/);
+  assert.match(page, /section="Integracoes"/);
+  assert.match(page, /action="visualizar"/);
+  assert.match(layout, /Integracoes:\s*'Sistema'/);
+});

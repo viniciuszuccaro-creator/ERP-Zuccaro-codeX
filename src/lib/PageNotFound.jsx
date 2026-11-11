@@ -12,7 +12,7 @@ export default function PageNotFound({}) {
     // Redirecionamento inteligente: tenta normalizar rota desconhecida (case/acentos/hífens) e aliases comuns
     useEffect(() => {
         const known = [
-            'Home','Dashboard','DashboardCorporativo','Relatorios','Agenda','CRM','Cadastros','Comercial','Estoque','Compras','Expedicao','Producao','ProducaoMobile','Financeiro','RH','Fiscal','Contratos','AdministracaoSistema','HubAtendimento','OrcamentoSite','PortalCliente','EntregasMobile'
+            'Home','Dashboard','DashboardCorporativo','DashboardFechamentoPedidos','Relatorios','Agenda','CRM','Cadastros','Comercial','Estoque','Compras','Expedicao','Producao','ProducaoMobile','Financeiro','RH','Fiscal','Contratos','AdministracaoSistema','Integracoes','HubAtendimento','ChatbotAtendimento','OrcamentoSite','PortalCliente','EntregasMobile','Empresas','ConfiguracoesUsuario'
         ];
         const normalize = (s) => (s || '')
           .toString()
@@ -39,7 +39,16 @@ export default function PageNotFound({}) {
           logistica: 'Expedicao',
           // Financeiro/Fiscal
           financeirocontabil: 'Financeiro',
-          fiscaltributario: 'Fiscal'
+          fiscaltributario: 'Fiscal',
+          // Atendimento
+          chatbot: 'ChatbotAtendimento',
+          chatbotatendimento: 'ChatbotAtendimento',
+          hubatendimento: 'HubAtendimento',
+          atendimento: 'HubAtendimento',
+          // Fechamento / Integrações
+          fechamento: 'DashboardFechamentoPedidos',
+          dashboardfechamento: 'DashboardFechamentoPedidos',
+          integracoes: 'Integracoes',
         };
         const norm = normalize(pageName);
         let target = normMap[norm] || alias[norm];

@@ -1,0 +1,25 @@
+#591 — Central Vendas360 proposta navegável A/B/C (sintético)
+America/Sao_Paulo 2026-11-10 · sem PII
+Tip base CI: 84325aac SUCCESS · URL privada DEV: Comercial?proposta=comercial360
+
+CANÔNICO (sem paralelo)
+- OrcamentosTab + OrcamentoProposalAside + comercialProposalFixture
+- Sem OrcamentosV2 / CentralVendas360Nova
+
+ETAPAS
+A lista: negociacoes[] sintéticas (ORC-SINT-*) — seleção abre edição
+B edição: form+aside existentes; Incluir item; Salvar disabled; rascunho preservado
+C acompanhamento: painel ilustrativo PED-SINT — capacidades parcial/futuro nomeadas
+  (não convert / não grava)
+  + atalhos GoTo/Hub/Chatbot/site/marketplaces via PROPOSTA_CAPACIDADES
+    (data-integracao-pronta=false; sem disparo)
+
+NAVEGAÇÃO
+- Voltar (lista) não descarta rascunho (proposalBackToLista)
+- Avançar (acompanhamento) só setProposalStage — sem save/convert
+- Aside Voltar/Avançar continua só trocando painéis do contexto
+
+URL privada DEV: Comercial?proposta=comercial360 (subtitle A→B→C)
+
+FORA
+redesign operacional · modais empilhados · botão fictício como integração pronta · PII

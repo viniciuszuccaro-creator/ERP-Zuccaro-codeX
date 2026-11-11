@@ -1,0 +1,22 @@
+Unificação Empresas × Cadastros (2026-11-06 America/Sao_Paulo)
+==============================================================
+Canônico: Cadastros Gerais → Bloco5 Organizacional → EmpresaForm
+Secundário preservado: pages/Empresas.jsx (KPIs Matriz/Filial/Ativas + listagem)
+
+Motivo keep both curto
+- EmpresaForm no Cadastros é o fluxo mestre (código, ID técnico, RBAC Organizacional).
+- Empresas.jsx traz visão operacional/consolidada com KPIs; apagar perderia capacidade útil.
+- Banner + pageToModule='Cadastros' orientam navegação sem segundo mestre silencioso.
+
+Atualização 2026-11-09 — salvamento único
+- Dialog Nova/Editar em Empresas.jsx passou a montar EmpresaForm canônico
+  (data-unify=empresas-form-canonico). FormWrapper/schema paralelo removidos.
+- KPIs + listagem + visualização read-only preservados.
+- createInContext/updateInContext únicos via handleEmpresaFormSubmit.
+
+Não feito
+- Redirect destrutivo Home-style (apagaria KPIs).
+- Dados reais / deploy / integração cega #401.
+
+Teste: tests/unificacao-empresas-cadastros.test.js
+

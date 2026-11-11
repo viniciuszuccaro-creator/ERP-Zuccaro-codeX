@@ -1,3 +1,1238 @@
+## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip** | **`ca9a88aa`** CI SUCCESS 9/9 — peels + runtime Fechar≠Cancelar |
+| **Runtime** | `e71808a3` Fechar→converter · Cancelar separado · Fechar janela só UI |
+| **Freeze cadastro :15173** | **`8650fd4d`** (Codex) — tip UI não substitui aceite HML |
+| **Evidence** | `c360-fechar-neq-cancelar-591-20261111.txt` · canais/recuperação 20261111 |
+| **Estados** | CI verde · CI ≠ homologação · aceite :15173 / jornada API pendentes |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar · importação HML |
+
+**Próximo:** aceite :15173 com Codex no freeze `8650fd4d` · jornada com API no tip web+API alinhados · #401 pós-aceite.
+
+## CURSOR — #591 Fechar≠Cancelar + matrizes canais/recuperação (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base** | `3a559c1d` (docs visual) · ABERTO runtime `de189e0d` · freeze cadastro `8650fd4d` |
+| **Lote** | Semântica Fechar→converter-pedido; Cancelar separado; Fechar janela ≠ negócio; matrizes canais/recuperação |
+| **Testes** | `central-vendas360-layout-v6-591` 11 PASS (incl. Fechar≠Cancelar) |
+| **Evidence** | `c360-fechar-neq-cancelar-591-20261111.txt` · `c360-canais-bot-matriz-591-20261111.txt` · `recuperacao-matriz-proxima-591-20261111.txt` |
+| **Estados** | Fechar corrigido · tip aguarda CI · aceite :15173 Codex pendente · HML propriedade Codex |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar · importação HML |
+
+**Próximo:** CI deste tip · aceite :15173 com Codex no freeze `8650fd4d` · jornada com API · #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS ABERTO + screenshots privados (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip ABERTO** | **`de189e0d`** CI SUCCESS (push 43000781886 / PR 43000795425) |
+| **Freeze runtime :15173** | **`8650fd4d`** CI SUCCESS 9/9 — pack Codex intacto |
+| **Lote** | ABERTO toolbar + screenshots privados shell vs v6 (estrutura; não pixel-homolog) |
+| **Evidence** | `c360-aberto-acoes-591-20261111.txt` · `c360-visual-privado-de189e0d-20261111.txt` · artifacts `/opt/cursor/artifacts/c360-v6-de189e0d/` |
+| **Estados** | ABERTO UI validada · listagem HTTP neste preview sem API = parcial · aceite :15173 Codex pendente |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar |
+
+**Próximo:** aceite privado :15173 no freeze `8650fd4d` com Codex · HML visual com API · #401 pós-aceite.
+
+## CURSOR — #591 ABERTO Central + pack :15173 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Freeze runtime** | **`8650fd4d`** CI SUCCESS 9/9 — pack :15173 |
+| **Lote** | Ações ABERTO reais (Imprimir/Enviar/Fechar/Duplicar/Itens anteriores); Desmembrar = limitação explícita |
+| **Reuso** | `OrcamentosTab` + `orcamentoUiPolicy` + cancel/print/share/HTTP list existentes |
+| **Testes** | `central-vendas360-layout-v6-591` + `orcamento-ui-policy` 20 PASS |
+| **Evidence** | `c360-layout-v6-central-591-20261110.txt` · pack :15173 |
+| **Estados** | ABERTO toolbar fechada sem fingir sucesso · tip ABERTO aguarda CI · screenshots/aceite :15173 pendentes |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 · Desmembrar sem contrato |
+
+**Próximo:** CI SUCCESS deste tip · servir :15173 no freeze `8650fd4d` (ou tip ABERTO se UI exigida) · screenshots v6 · #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS 8650fd4d + pack :15173 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip freeze** | **`8650fd4d`** CI SUCCESS 9/9 (run 42999100236) — API+web mesmo SHA |
+| **Lote** | Resíduos pareceres + peels Completo + pack aceite :15173 atualizado |
+| **Evidence** | `hml-15173-aceite-codex-tip-591-20261109.txt` · `codex-parecer-6779554174-residuos-591-20261111.txt` |
+| **Estados** | freeze tip pronto · aceite privado Codex pendente · ABERTO/screenshots parciais |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 |
+
+**Próximo:** servir :15173 no tip · validar roteiro com Codex · screenshots v6 · ABERTO restante · #401 pós-aceite.
+
+## CURSOR — #591 resíduos 6779554174/6779707769/6780153153 (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `6b3c84c2` CI SUCCESS — regressões de parecer ainda abertas |
+| **Lote** | create≠CAS · null omit · Completo 2001 reject · ctx capture/reauth · enrichLegacyContacts |
+| **Reuso** | `clienteService`/`clienteLegacyNameCorrection` canônico 29726 · `clienteHttpPayload` · Completo |
+| **Testes** | ctx-capture 3 · rbac contatos · cas/http-adapter/limitacao/publication peels · server typecheck |
+| **Evidence** | `docs/evidence/codex-parecer-6779554174-residuos-591-20261111.txt` |
+| **Estados** | tip aguarda CI · :15173 só após SUCCESS · parcial/quarentena UI comprovada |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 |
+
+**Próximo:** CI SUCCESS deste tip · freeze API+web mesmo SHA :15173 · screenshots/ABERTO · #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS c348d4d3 + prefs colunas Central (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CAS** | **`c348d4d3`** CI SUCCESS 9/9 (run 42905250250) — freeze candidato API+web |
+| **Lote** | Docs freeze :15173 · prefs colunas Central escopo actor+grupo+empresa |
+| **Reuso** | `centralVendas360Layout` + `OrcamentosTab` centralLayout |
+| **Estados** | CAS fechado em tip · prefs colunas · screenshots/v6 ABERTO parciais · :15173 publicação privada |
+| Fora | ContatoClienteV2 · deploy operacional · PII · #401 |
+
+**Próximo:** publicar :15173 no tip freeze (acordo) · screenshots privados · ações ABERTO restantes · #401 pós-aceite.
+
+## CURSOR — #591 CI typecheck Contatos Error.code (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `8f23094c` testes OK; typecheck FAIL `Error.code/status` em Completo |
+| **Lote** | `contatosValidationError` tipado + peel Completo atualizado |
+| **Testes** | typecheck PASS · boundaries 14 · http/CAS/RBAC 61 PASS |
+| **Estados** | tip CI em republicação · HML/:15173 só após SUCCESS · layout v6 `82b15566` |
+| Fora | ContatoClienteV2 · port cego #401 · merge/VPS · PII |
+
+**Próximo:** CI SUCCESS · freeze API+web :15173 · v6 prefs/screenshots · #401 pós-aceite.
+
+## CURSOR — #591 CI frontend CAS expectedVersion (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `a59e1eda` peels OK; frontend 1 FAIL (`http-api-client` sucesso sem CAS) |
+| **Lote** | Update MASTER com `contatos[]` exige `contatos_version`→`expectedVersion` no teste |
+| **Testes** | `http-api-client` 37 PASS · peels/RBAC intactos |
+| **Estados** | tip `8f23094c` + typecheck follow-up · layout v6 `82b15566` |
+| Fora | ContatoClienteV2 · port cego #401 · merge/VPS · PII |
+
+**Próximo:** CI SUCCESS · freeze API+web :15173 · v6 prefs/screenshots · #401 pós-aceite.
+
+## CURSOR — #591 CI peels CAS tip fc1f870d (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | `fc1f870d` (CAS/preservação) falhou peels/assert contrato ReplaceSchema |
+| **Lote** | Peels `current→golden` inMemory/postgres + CAS peels service; RBAC assert `clienteContatosReplaceSchema`+`expectedVersion` |
+| **Testes** | publication-channel 14 PASS · RBAC/CAS PASS · remainder hashes intactos |
+| **Estados** | tip `a59e1eda` peels · frontend CAS follow-up · layout v6 `82b15566` |
+| Fora | ContatoClienteV2 · port cego #401 · merge/VPS · PII |
+
+**Próximo:** CI SUCCESS deste tip · freeze API+web :15173 · v6 prefs/screenshots · #401 pós-aceite.
+
+## CURSOR — #591 CAS/preservação contatos (pareceres 6778237293/6778347806) (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | RECEBIDO pareceres CAS · port contrato Codex `29726d3d` · sem truncamento · omit≠[] · null≠[] |
+| **CAS** | `contatos_version` (GET) ↔ `expectedVersion` (PATCH); conflito 409; schema ausente 503 |
+| **Limites** | 200 contatos / obs 2000 — rejeitar acima; não slice |
+| **Reuso** | `clienteContatos.ts` + types/repo/service + Completo/`clienteHttpPayload` |
+| **Evidence** | `docs/evidence/codex-parecer-6778237293-cas-preservacao-591-20261110.txt` |
+| **Testes** | CAS 6 PASS · adapter 33 PASS · peels 14 PASS · RBAC/CAS 7 PASS · tsc server limpo |
+| **Estados** | tip `fc1f870d` + peels CI · layout v6 `82b15566` preservado · aceite :15173 após CI |
+| Fora | ContatoClienteV2 · migration 046 numerada (peels) · merge/VPS · PII · HML sem tip revisado |
+
+**Próximo:** CI tip · ACK Codex · freeze API+web mesmo SHA p/ :15173 · v6 prefs/screenshots · #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS 82b15566 layout v6 Central (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CI** | **`82b15566`** SUCCESS (12/12) · layout feat `5176c590` · peel/typecheck fixes |
+| **Lote** | Decisão 10/11: Pedidos→**Central de Vendas360°**; tile Orçamentos retirado; shell v6 |
+| **Reuso** | `CentralVendas360Shell` + `OrcamentosTab` + `PedidoCanonicoPanel` + `CentralCliente360Panel` |
+| **Evidence** | `docs/evidence/c360-layout-v6-central-591-20261110.txt` · artifact `c360-versao6-aprovada.png` |
+| **Estados** | publicado+CI · layout implementado · aceite visual privado pendente · aceite :15173 pendente · não integrado #401 |
+| Contatos[] | tip funcional **`ba21a342`** SUCCESS (preservado) |
+| Fora | CentralVendas360Nova · ContatoClienteV2 · merge/VPS · PII · deploy operacional |
+
+**Próximo:** screenshots privados vs v6 · aceite :15173 (Codex tip `ba21a342`) · preferências coluna/usuário · #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS 21fa888a peel docs + soft-landing (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CI** | **`21fa888a`** SUCCESS (push 42885797554) · funcional **`ba21a342`** SUCCESS |
+| **Lote** | Soft-landing C360 · documentos[] fail-closed · peel Completo |
+| **Estados** | publicado+CI · revisado · aceite :15173 pendente · não integrado #401 · não implantado |
+| **Pendências** | aceite :15173 (Codex tip ba21a342) · BFF documentos[] · batch locais · port seletivo #401 |
+| Fora | ContatoClienteV2 · redesign · merge/VPS · PII · port cego |
+
+**Próximo:** aceite HML :15173 no tip `ba21a342` · contrato BFF docs · composição seletiva.
+
+## CURSOR — #591 CI-fix peels Completo documentos[] (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip anterior** | `0db3df61` frontend FAIL — `clienteContactPresenceRemainder` hunk desatualizado |
+| **Fix** | Peel `cadastro-query-payload-boundaries` inclui gate HTTP documentos[] |
+| **Base CI** | **`ba21a342`** SUCCESS (contatos[]) |
+| Fora | ContatoClienteV2 · redesign · merge/VPS · PII |
+
+**Próximo:** CI tip deste fix · aceite :15173 · composição seletiva pós-aceite.
+
+## CURSOR — #591 soft-landing C360 + docs fail-closed + aceite tip (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CI** | **`ba21a342`** SUCCESS · docs **`f9b11cf6`** SUCCESS |
+| **Lote** | Soft-landing C360 (pausa microajustes) · Completo HTTP `documentos[]` fail-closed antes MASTER · pack aceite tip |
+| **Estados** | publicado+CI · revisado tip · aceite :15173 pendente · não implantado |
+| **Documentos[]** | BLOCKED BFF (c) — sem DocumentosCliente paralelo; omit/[] ok; não vazio 422 |
+| **C360** | proposalMode isolado do ERP normal; Voltar/Avançar sem save implícito |
+| **Evidence** | `docs/evidence/c360-soft-landing-591-20261110.txt` · aceite checkpoint 10d |
+| Fora | ContatoClienteV2 · redesign C360 · merge/VPS · PII |
+
+**Próximo:** aceite :15173 no tip `ba21a342` (Codex) · contrato BFF documentos[] · composição seletiva pós-aceite.
+
+## CURSOR — #591 CI SUCCESS ba21a342 contatos[] MASTER (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip CI** | **`ba21a342`** SUCCESS (push 42880318139 · PR 42880331779) |
+| **Lote** | contatos[] jsonb MASTER (a) + peels/mock/rbac/045 + publication + PG fixture |
+| **Contrato** | omit≠limpar · [] limpa · WhatsApp≠celular · quarentena≠válido · Sem ContatoClienteV2 |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` — alinhar API+web a **`ba21a342`** p/ aceite :15173 |
+| **Pendências** | aceite :15173 (privado) · documentos[] BFF · soft-landing C360 · batch locais atômico (Codex) |
+| Fora | ContatoClienteV2 · ContatoB2B→Completo · merge/VPS · PII · redesign C360 |
+
+**Próximo:** aceite real :15173 no tip alinhado · docs BFF · soft-landing Central360 (sem micro-toasts).
+
+## CURSOR — #591 CI-fix publication+PG fixture contatos (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Tip `5e109b2a` FAIL → publication peels infra/legado + entry fixture `045` + GRANT contatos |
+| **Causa** | publication hash infra; legado refs 1≠2; PG entry `column contatos does not exist` |
+| **Fix** | `fornecedorHttpRemainder` peels 34/045 · 2ª ref e362 no legado · `crmFixture` deltas+UPDATE contatos |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · merge/VPS · PII · redesign C360 |
+
+**Próximo:** CI tip deste fix · aceite :15173 · docs BFF · soft-landing C360.
+
+## CURSOR — #591 CI-fix contatos[] peels/mock/045 (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Tip `cc7c71f5` FAIL → peels counterproof + mock `partitionContatosByCanal` + RBAC jsonb + catálogo `045` |
+| **Causa** | Peels postgres `after` fora do source atual; harness Completo sem partition; testes ainda esperavam reject de contatos; legado SHA/migrations |
+| **Fix** | `consolidation81Remainder` (mapContatos≠import) · `fornecedorHttpRemainder` tip `cc7c71f5` · mock Completo · rbac/http-api aceitam jsonb · infra/runtime01 `045` |
+| **CI tip anterior** | **`cc7c71f5`** FAIL (42875552348) — este lote corrige |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` (aceite :15173 pendente alinhamento SHA) |
+| Fora | ContatoClienteV2 · ContatoB2B→Completo · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360 |
+
+**Próximo:** CI tip deste fix · aceite real :15173 (contatos/reabertura) · locais/docs · soft-landing C360.
+
+## CURSOR — #591 contatos[] MASTER (decisão a) Completo/HTTP/PG (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Integração `contatos[]` jsonb no cadastro mestre (pack a/b/c **encerrado** em a) |
+| **Contrato** | omit ≠ limpar · `[]` limpa · WhatsApp ≠ celular · quarentena ≠ válido · Sem ContatoClienteV2 |
+| **Wire** | `clienteHttpPayload` ALLOWED+sanitize · Completo read/save · migration `045` · schema/repo BFF |
+| **CI base** | **`9c2966a9`** SUCCESS · **`199cc570`** SUCCESS (consultados) · tip feat **`cc7c71f5`** FAIL→fix neste lote |
+| **Evidence** | `docs/evidence/contatos-jsonb-master-591-20261110.txt` |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` (aceite :15173 pendente alinhamento SHA) |
+| Fora | ContatoClienteV2 · ContatoB2B→Completo · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360 |
+
+**Próximo:** CI tip do fix peels/mock · aceite real :15173 (contatos/reabertura) · locais/docs · soft-landing C360.
+
+## CURSOR — #591 fix toast.message mock 347 + CI f6e0 FAIL (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Mock sonner inclui `toast.message` — tip `8f7e8bbf` frontend FAIL 2 testes 347 |
+| **Causa** | `openCreate` usa `toast.message`; harness só mockava error/success |
+| **CI verde** | **`9c2966a9`** · **`f6e0a11a`** · **`5790c783`** · **`199cc570`** · **`de8511eb`** |
+| **FK ContatoB2B** | **20261110e** — (b) não destrava contatos[] (fluxo a) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** (superseded) contatos[] MASTER integrado neste lote.
+
+## CURSOR — #591 CI f6e0 + Aplicar + toast nova sintética (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI **`f6e0a11a`**; botão Aplicar + toast ao criar negociação sintética |
+| **CI verde** | **`f6e0a11a`** · **`5790c783`** · **`199cc570`** · **`de8511eb`** · **`b9d9a180`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 CI 5790 + search blur proposta (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI **`5790c783`**; busca aplica no blur (`proposta-filtro-search`) |
+| **CI verde** | **`5790c783`** · **`199cc570`** · **`de8511eb`** · **`b9d9a180`** · **`e682df34`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 CI 199c + validade auto proposta (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI **`199cc570`**; validade De/Até aplicam na proposta A na hora |
+| **CI verde** | **`199cc570`** · **`de8511eb`** · **`b9d9a180`** · **`e682df34`** · **`3718fb01`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 CI de85 + filtros auto + acomp rascunho (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI **`de8511eb`**; proposta: filtro status/cliente aplica na hora; C mostra rascunho |
+| **CI verde** | **`de8511eb`** · **`b9d9a180`** · **`e682df34`** · **`3718fb01`** · **`ef35643c`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 CI b9d9 + rascunho preservado toast (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI **`b9d9a180`**; toast + `proposta-rascunho-preservado` ao Voltar com dirty |
+| **CI verde** | **`b9d9a180`** · **`e682df34`** · **`3718fb01`** · **`cf403835`** · **`ef35643c`** · **`90b8fb7d`** · **`23ac22f9`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 CI 3718/e682 verde + shell KPIs hint (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI **`3718fb01`**/**`e682df34`**; shell `proposta-fluxo-hint` + `proposta-acoes-topo` |
+| **CI verde** | **`e682df34`** · **`3718fb01`** · **`cf403835`** · **`c1f8ed98`** · **`a35adcbc`** · **`55e2b943`** · **`df3f8c0e`** · **`ef35643c`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 fixture 2º cliente + CANCELADO sintético (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Fixture: `preview-vinculo-2` + `ORC-SINT-003` CANCELADO para filtros A |
+| **CI verde** | **`cf403835`** · **`c1f8ed98`** · **`a35adcbc`** · **`55e2b943`** · **`df3f8c0e`** · **`ef35643c`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 CI lote df3f→cf403 verde + aside painéis (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence CI SUCCESS tips df3f…cf403; aside `proposta-conteudo-*` + contagem produtos |
+| **CI verde** | **`cf403835`** · **`c1f8ed98`** · **`8594719e`** · **`a35adcbc`** · **`55e2b943`** · **`f215cc4d`** · **`df3f8c0e`** · **`ef35643c`** · **`90b8fb7d`** · **`23ac22f9`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · CI tip deste lote.
+
+## CURSOR — #591 ContatoB2B banner evidence 20261110e (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Banner ContatoB2B referencia MCP **20261110e**; (b) bloqueada |
+| **CI verde** | **`ef35643c`** · **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 ContatoB2B MCP 20261110e sem FK + rascunho sujo (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Evidence MCP ContatoB2B sem `cliente_id`/`empresa_id`; etapa B `proposta-rascunho-sujo` |
+| **CI verde** | **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
+| **FK ContatoB2B** | **20261110e** — (b) bloqueada (MCP só `group_id`) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 proposta rascunho sujo na etapa B (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Etapa B marca `proposta-rascunho-sujo` quando dirty; grid Orçamentos `liberado` |
+| **CI verde** | **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
+| **FK ContatoB2B** | MCP ainda sem `cliente_id`/`empresa_id` — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 grid proposta Orçamentos liberado (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Grid: `data-proposta-card=liberado` + ring no Orçamentos; LaunchpadCard intacto |
+| **CI verde** | **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
+| **FK ContatoB2B** | MCP ainda sem `cliente_id`/`empresa_id` — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 proposta limpar filtros + aria-current (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Proposta A: limpar filtros junto à contagem; `aria-current=step`; busca nº/cliente |
+| **CI verde** | **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
+| **FK ContatoB2B** | MCP ainda sem `cliente_id`/`empresa_id` — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 proposta filtro cliente + contagem + CI 23ac/90b8 (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Proposta A: filtro `clienteEmpresaId` + busca por label; `proposta-lista-contagem` |
+| **CI verde** | **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`** · **`c8d7c134`** · **CI SUCCESS** |
+| **FK ContatoB2B** | MCP ainda sem `cliente_id`/`empresa_id` — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip `ef35643c`+ · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 proposta vazia filtrada + CI 86a4 (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Proposta A: filtros search/status/validade + empty `proposta-lista-vazia` / `proposta-limpar-filtros` |
+| **CI verde** | **`86a4ad96`** · **`c8d7c134`** · **`a8305828`** · **`75aa36c1`** · **`3b5132de`** · **CI SUCCESS** |
+| **CI tip** | `23ac22f9` / `90b8fb7d` — em acompanhamento |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 proposta lista filtrada sintética + B2B fail-closed (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Proposta A: `proposalListaRows` filtra sintéticos por search/status; ContatoB2B fail-closed group/empresa |
+| **CI verde** | **`c8d7c134`** · **`77edc2ea`** · **`516497af`** · **`75aa36c1`** · **`3b5132de`** |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 ContatoB2B fail-closed empresa + grid aria (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | ContatoB2B: toast se sem `group_id` / sem `empresa_id` no escopo empresa; grid proposta `cursor-not-allowed`+`aria-disabled` |
+| **CI verde** | **`c8d7c134`** · **`77edc2ea`** · **`516497af`** · **`75aa36c1`** · **`3b5132de`** |
+| **CI tip** | `86a4ad96`+ — em acompanhamento |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada (sem Completo) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 proposta-acao slug + fix peels Completo (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Aside: `proposta-acao-{slug}` estável; Completo peels restaurado (`c8d7c134`); `88b9` FAIL = Completo herdado |
+| **CI verde** | **`c8d7c134`** · **`77edc2ea`** · **`516497af`** · **`75aa36c1`** · **`3b5132de`** · **CI SUCCESS** |
+| **CI tip** | `86a4ad96` (proposta-acao slug) — em acompanhamento |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 fix peels Completo e09f + proposta-sem-paginacao (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `e09f882b` FAIL stage48 Completo (hunk contatos/locais) |
+| **Fix** | Completo restaurado `516497af`; toast ContatoB2B + Outro único no form mantidos |
+| **CI verde** | **`77edc2ea`** · **`516497af`** · **`75aa36c1`** · **`3b5132de`** |
+| **C360** | `proposta-sem-paginacao` · fechar/salvar bloqueados |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · peels Completo/Produto/LaunchpadCard · merge/VPS · PII |
+
+**Próximo:** CI tip deste fix · Codex (a)/(b)/(c) · aceite :15173.
+
+## CURSOR — #591 proposta sem paginação HTTP + toast B2B (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | Proposta: `proposta-sem-paginacao`; ContatoB2B toast; Completo regras Outro único/BATCH_ATOMIC |
+| **CI verde** | **`75aa36c1`** · **`3b5132de`** |
+| **CI tip** | `77edc2ea` / `516497af` / `e09f882b` — em acompanhamento |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto/LaunchpadCard peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · CI tip.
+
+## CURSOR — #591 ContatoB2B toast + Completo regras locais (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | ContatoB2B `alert`→`toast.error`; Completo banner FK **20261110d** + regras UI Outro único/BATCH_ATOMIC |
+| **CI verde** | **`75aa36c1`** · **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** |
+| **CI tip** | `77edc2ea` / `516497af` — em acompanhamento |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto/LaunchpadCard peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · CI tip.
+
+## CURSOR — #591 proposta-fechar + ContatoB2B banner FK (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | `proposta-fechar` + confirm rascunho sintético; ContatoB2B banner FK; Endereços `outro-unico`; `proposta-salvar-bloqueado` |
+| **FK ContatoB2B** | **20261110d** — (b) bloqueada |
+| **CI verde** | **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto/LaunchpadCard peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · CI tip.
+
+## CURSOR — #591 ContatoB2B banner FK + Outro único (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | ContatoB2BForm banner `contatob2b-fk-ausente` (sem wire Completo); Endereços `outro-unico`; `proposta-salvar-bloqueado` |
+| **FK ContatoB2B** | reconfirm **20261110d** — só `group_id` · **(b) bloqueada** |
+| **CI verde** | **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto/LaunchpadCard peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · CI tip.
+
+## CURSOR — #591 Outro único endereços + proposta-salvar (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | `GerenciarEnderecosClienteForm`: `data-regra=outro-unico` (select disabled + toast save); OrcamentosTab `proposta-salvar-bloqueado` |
+| **CI verde** | **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** |
+| **FK ContatoB2B** | **20261110c** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto/LaunchpadCard peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · CI tip deste lote.
+
+## CURSOR — #591 CI 3b5132de SUCCESS peels grid (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`3b5132de`** — peels LaunchpadCard OK; dim proposta no grid · **CI SUCCESS** |
+| **CI verde** | **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · **`52aed2c4`** · **`a92d7bd4`** |
+| **C360** | proposta: wrapper `data-proposta-card` + toast; KPIs sintéticos; Pedido/externo off |
+| **FK ContatoB2B** | **20261110c** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Pack** | `ci-verde-3b5132de-peels-grid-591` · `ci-fix-peels-launchpad-591` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF · lote independente sem peels LaunchpadCard/Produto.
+
+## CURSOR — #591 fix peels LaunchpadCard (wrapper grid) (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `31b66b6e`+ FAIL peels stage56 `LaunchpadCard.jsx` |
+| **Fix** | restaurar LaunchpadCard pin; dim/bloqueio só em `ModulosGridComercial` (`onClickCapture` + `data-proposta-card`) |
+| **CI verde** | **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · peels pin `4003fb06…` |
+| **FK ContatoB2B** | **20261110c** — (b) bloqueada |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 proposta title disabledReason + FK reconfirm (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | LaunchpadCard `disabled` + `disabledReason` (tooltip); grid `proposta-modulo-bloqueado` |
+| **FK ContatoB2B** | reconfirm **20261110c** — só `group_id` · **(b) bloqueada** |
+| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · **CI SUCCESS** |
+| **CI tip** | `31b66b6e` / `c3acbb70` — em acompanhamento |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 proposta dim cards + CI a51f (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Lote** | LaunchpadCard `disabled` + grid proposta `proposta-modulo-bloqueado` (só Orçamentos ativo) |
+| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`** · **CI SUCCESS** |
+| **CI tip** | `7d24f0f1` / **`31b66b6e`** (dim cards) — in_progress |
+| **C360** | proposta: cards operacionais dim + toast; KPIs sintéticos; Pedido/externo off |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Pack** | `ci-verde-a51f-347-591` · `proposta-launchpad-disabled-591` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip verde · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 CI a51f SUCCESS + proposta KPIs/módulos (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`7d24f0f1`** — docs; código tip **`b28fedaf`** (KPIs) / **`ae0773f4`** (módulos) |
+| **CI verde** | **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347) · **CI SUCCESS** |
+| **C360** | proposta: só Orçamentos; KPIs sintéticos; Novo Pedido/externo off |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Pack** | `ci-verde-a51f-347-591` · `ci-verde-peels-busy-591` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip `ae0773f4`+ · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 proposta bloqueia módulos + fix 347 (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`b28fedaf`** — KPIs ocultos na proposta; grid só Orçamentos; fix 347 |
+| **C360** | proposta: só Orçamentos no grid; KPIs sintéticos; módulos toast-bloqueados |
+| **Fix 347** | harness `proposta-nova-negociacao` · tip **`a51f162d` CI SUCCESS** |
+| **Verde** | **`52aed2c4`** + **`a92d7bd4`** + **`a51f162d`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 fix 347 data-action nova negociação (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `ba53dc05` FAIL: testes 347 buscavam botão "Novo orçamento" |
+| **Fix** | harness usa `data-action=proposta-nova-negociacao` |
+| **Verde** | **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS** (peels + busy dialog) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 C360 painel 1/N + peels Produto adiado (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`ff3243ac`** — `data-proposta` + bloqueio Novo Pedido/externo na proposta |
+| **Fix peels** | **`52aed2c4`** · **CI SUCCESS** — banner Produto adiado (pin d312fbcd) |
+| **Busy dialog** | Contatos/Endereços: ESC/overlay + fields sob bloqueado |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** + **`a92d7bd4`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 dialog Contatos/Endereços não fecha sob busy (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Contatos/Endereços** | `onOpenChange`: `if (!open && bloqueado) return` (ESC/overlay) |
+| **Produto banner** | adiado (peels pin d312fbcd) — toast+disabled HTTP ok |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · Produto peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 Produto foto banner adiado (peels pin) (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | `288947e4` FAIL `runtime-proof-source` — SHA pin `product-query-v5` (d312fbcd) |
+| **Fix** | reverte banner Produto; restaura hashes peels; toast+disabled HTTP mantidos |
+| **Pack** | `recuperacao-produto-foto-banner-adiado-591` |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · merge/VPS · PII · mascarar pin |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 Contatos/Endereços busy dialog + peels Produto (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HEAD** | **`bb265744`** — Endereços fieldset persistBusy; Contatos fields busy |
+| **Tip peels** | **`288947e4`** — hashes ProdutoFormV22 (ia/v5) após banner Storage |
+| **Verde** | **`e6a31225`** + **`dc48c9ff`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **ContatoB2B** | FK reconfirm: sem cliente_id/empresa_id → (b) bloqueada |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · merge/VPS · PII |
+
+**Próximo:** CI tip peels `288947e4`+ · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 CI fix peels Produto foto banner (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Causa** | tip `0cee5367`/`80e581e3` frontend FAIL — peels stage46/v5 ProdutoFormV22 |
+| **Fix** | hashes recalculados: ia `db8787c4…` · v5 `448a0561…` (banner Storage mantido) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` |
+| **Base tip verde** | **`e6a31225`** · **CI SUCCESS** |
+| Fora | ContatoClienteV2 · ContatoB2B Completo · merge/VPS · PII · CANAL sky |
+
+**Próximo:** CI tip fix · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 ContatoB2B FK reconfirm 20261110b (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **ContatoB2B** | amostra Base: `group_id` presente; **sem** `cliente_id`/`empresa_id` → (b) bloqueada |
+| **Pack** | `codex-contatob2b-fk-reconfirm-591-20261110b` |
+| **UI** | WhatsApp campo próprio (`whatsapp-campo-proprio`) |
+| Fora | ContatoClienteV2 · wire Completo · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 ContatoB2B WhatsApp UI + Endereços Cancelar busy (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **ContatoB2B** | `data-regra=whatsapp-campo-proprio` (UI) — sem wire Completo |
+| **Endereços** | Cancelar dialog gated por `persistBusy` |
+| **Base tip** | **`e6a31225`** · **CI SUCCESS** |
+| Fora | ContatoClienteV2 · ContatoB2B no Completo · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 Contatos Salvar gated por persistBusy (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | botão Salvar dialog: `disabled={bloqueado \|\| !podeEditar}` (paridade Endereços) |
+| **Base tip** | **`e6a31225`** · **CI SUCCESS** |
+| Fora | ContatoClienteV2 · ContatoB2B wire · Completo peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 C360 subtítulo por etapa + pack aceite HML (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **C360** | título/subtítulo por etapa A/B/C (`proposta-subtitulo-etapa`) |
+| **Pack** | `hml-aceite-cursor-pronto-codex-591` — checklist p/ :15173 |
+| Fora | ContatoClienteV2 · ContatoB2B wire · merge/VPS · PII · redesign operacional |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) + aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 Cadastral/Fiscal≠Entrega UI + Outro único (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Endereços** | `data-regra=cadastral-fiscal-nao-entrega`; remove Outro duplicado |
+| **Contatos** | Celular≠WhatsApp UI vigente |
+| Fora | ContatoClienteV2 · ContatoB2B wire · Completo peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 Celular≠WhatsApp UI + C360 B placeholder (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base** | **`e6a31225`** CI SUCCESS · tip produto **`0cee5367`** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | GerenciarContatos: `data-regra=celular-nao-whatsapp` |
+| **C360** | etapa B: placeholder sem empty-state ruidoso |
+| Fora | ContatoClienteV2 · ContatoB2B wire · Completo peels · merge/VPS · PII |
+
+**Próximo:** CI tip · Codex (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 produto foto banner + C360 filtros só A (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | **`e6a31225`** · **CI SUCCESS** · tip filtros **`dc48c9ff`** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Produto** | banner HTTP Storage (`produto-foto-storage-http`) — botões disabled |
+| **C360** | filtros só etapa A (`lista`); B/C sem filtros operacionais |
+| **Contatos** | consumidores prontos; (b) bloqueada sem FK |
+| Fora | ContatoClienteV2 · ContatoB2B wire · merge/VPS · PII · CANAL sky |
+
+**Próximo:** CI tip · Codex decide (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 C360 etapa C filtros + consumidores prontos (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | **`e6a31225`** · **CI SUCCESS** · tip **`dc48c9ff`** filtros C |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **C360** | etapa C: filtros lista ocultos (`proposta-filtros-lista` só A) |
+| **Contatos** | pack consumidores prontos pós-decisão (a)/(b)/(c) — sem ContatoB2B wire |
+| **Packs** | `codex-consumidores-prontos-contatos-591` · pedido objetivo atualizado |
+| Fora | ContatoClienteV2 · ContatoB2B sem FK · merge/VPS · PII · CANAL sky |
+
+**Próximo:** CI tip · Codex decide (a)/(b)/(c) · aceite :15173 · batch locais BFF.
+
+## CURSOR — #591 C360 atalhos etapa C + FK reconfirm (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip** | **`9ffae37b`** / docs **`b39e50ef`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | FK ContatoB2B reconfirm: ainda sem cliente_id/empresa_id → (b) bloqueada |
+| **C360** | etapa C: atalhos GoTo/Hub/Chatbot/site/marketplace (`data-integracao-pronta=false`) |
+| **Subtitle** | Comercial proposta A→B→C |
+| **Packs** | `c360-proposta-etapas-abc-591` · `codex-contatob2b-fk-reconfirm-591` |
+| Fora | ContatoClienteV2 · wire ContatoB2B · merge/VPS · PII · redesign operacional |
+
+**Próximo:** CI deste tip · Codex decide (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+
+## CURSOR — #591 C360 A/B/C tip 9ffae37b CI SUCCESS (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`9ffae37b`** · **CI SUCCESS** 9/9 (C360 A/B/C + typecheck fix) |
+| **Docs tip** | **`b39e50ef`** · **CI SUCCESS** |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | pedido objetivo (a)/(b)/(c); (b) bloqueada sem FK; sem ContatoClienteV2 |
+| **Completo** | consumidores prontos; negativo sem ContatoB2B/wire paralelo |
+| **C360** | `?proposta=comercial360` A/B/C; Voltar≠desfazer; Avançar≠save |
+| **Packs** | `codex-pedido-decisao-objetiva-contatos-591` · `c360-proposta-etapas-abc-591` |
+| Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII · redesign operacional |
+
+**Próximo:** Codex decide (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF · wire Completo pós-contrato.
+
+## CURSOR — #591 CI 2e90587f + sky Usuario/Fiscal + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip decisão / CI** | **`2e90587f`** · **CI SUCCESS** 9/9 (ref PR591a4a53dd2) |
+| **Tip limpo** | **`84325aac`** · **CI SUCCESS** (reverte Usuario/CANAL; Completo (b)) |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | (b) ContatoB2B ainda **bloqueada** (Base sem cliente_id/empresa_id) |
+| **Completo** | banner cita FK ausente; Celular≠WhatsApp; sem ContatoClienteV2 |
+| **Visual** | Usuario/Fiscal sky **adiado** (CANAL 53ed9f42 + ID-only); params+JobAgendado ok |
+| **C360** | chatbot owner: regras + exceção→humano |
+| **Packs** | `codex-contatob2b-fk-reconfirm-591` · `recuperacao-sky-usuario-fiscal-591` |
+| Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII · reservas WIP |
+
+**Próximo:** Codex fecha (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+
+## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`2e90587f`** · **CI SUCCESS** 9/9 |
+| **Homolog** | **`77f11b28`** — freeze `0afd378f284` até acordo Codex |
+| **Contatos** | pack decisão a/b/c; ContatoB2B vínculo **não** comprovado na amostra Base |
+| **Completo** | banners limitação HTTP contatos/anexos; Celular≠WhatsApp |
+| **Locais** | CADASTRAL/FISCAL ≠ Entrega na UI |
+| **Visual** | JobAgendado sky chrome |
+| **Pack** | `docs/evidence/codex-decisao-contatos-abc-591-20261110.txt` |
+| Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII |
+
+**Próximo:** Codex fecha (a)/(b)/(c) · aceite :15173 no `77f11b28` · batch locais BFF.
+
+## CURSOR — #591 locais≠integral + ContatoB2B tenant + sky params (2026-11-10 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`13dde4a5`** · **CI SUCCESS** push+PR 9/9 |
+| **Base docs tip** | **`6572b9ae`** · **CI SUCCESS** (ref PR591) |
+| **Homolog locais** | **`77f11b28`** CI SUCCESS — freeze `0afd378f284` até acordo |
+| **Locais** | toast sem salvamento integral se `BATCH_ATOMIC=false`; pedido BFF sync atômico |
+| **Contatos** | ContatoB2B exige cliente do tenant; WhatsApp≠auto; decisão (a)/(b) Codex |
+| **Visual** | sky Portal/Caixa/Conciliação/NFe/Origem — reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas |
+| **C360** | capacidades + `data-integracao-pronta=false` (sem falso pronto) |
+| **Testes** | peels+locais+contatos+sky+c360 **58 PASS** |
+| Fora | ContatoClienteV2 · storage paralelo · merge/VPS · PII |
+
+**Próximo:** Codex aceite :15173 no `77f11b28` · batch locais BFF · wire ContatoB2B no Completo após decisão.
+
+## CURSOR — #591 C360 capacidades + contrato contatos/docs (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`10a1dd8e`** · **CI SUCCESS** push+PR |
+| **Base tip verdes** | locais **`77f11b28`** CI SUCCESS |
+| **C360** | Voltar/Avançar = `goPanelByDelta` (teclado+clique; sem save/convert); `PROPOSTA_CAPACIDADES` |
+| **Contatos/docs** | pack Codex owners ContatoB2B + GerenciarContatos; MASTER fail-closed ≠ conclusão |
+| **Packs** | `c360-capacidades-atalhos-591` · `codex-contrato-contatos-documentos-591` |
+| **Testes** | c360-prep + proposal-aside **8 PASS** |
+| **Freeze** | **`0afd378f284`** até acordo no tip **`77f11b28`** |
+| Fora | ContatoClienteV2 · central paralela · merge/VPS · PII |
+
+**Próximo:** Codex aceite :15173 no `77f11b28` + decisão BFF contatos/docs · wire C360 operacional pós-OK visual.
+
+## CURSOR — #591 contraprova locais atomicidade/contexto (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`77f11b28`** · **CI SUCCESS** push+PR 3/3 |
+| **Base tip verde** | **`898d8c32`** / docs **`bde45554`** · **CI SUCCESS** |
+| **Atomicidade** | `CLIENTE_LOCAIS_BATCH_ATOMIC=false`; batch atômico = BLOCKED BFF |
+| **Contraprova** | `docs/evidence/codex-contraprova-locais-atomicidade-591-20261109.txt` |
+| **Aceite** | `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` |
+| **C360** | Voltar/Avançar só `setPanel` (sem save/convert) |
+| **Freeze** | **`0afd378f284`** até acordo no tip **`77f11b28`** |
+| Fora | ContatoClienteV2 · toast sem reconciliar · merge/VPS · PII |
+
+**Próximo:** Codex aceite :15173 no tip `77f11b28` · batch locais / contatos BFF · painéis C360 com OK visual.
+
+## CURSOR — #591 locais parcial + aceite :15173 + C360 Voltar/Avançar (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`898d8c32`** · **CI SUCCESS** push+PR 3/3 |
+| **Base write** | **`d1b08f96`** / docs **`94d49ab3`** (também SUCCESS) |
+| **Locais** | omit≠vazio; baseline null≠delete; `CLIENTE_LOCAIS_SYNC_PARTIAL` ≠ sucesso |
+| **Aceite pack** | `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` |
+| **Contatos/docs** | fail-closed MASTER; BFF jsonb/tabela com Codex — sem ContatoClienteV2 |
+| **C360** | OrcamentoProposalAside Voltar/Avançar (rascunho preservado; sem paralelo) |
+| **Freeze** | **`0afd378f284`** até acordo tip API+web no `898d8c32` |
+| Fora | storage paralelo · redesign C360 · merge/VPS · PII |
+
+**Próximo:** Codex aceite :15173 no tip `898d8c32` · contatos ricos BFF · painéis C360 operacionais com OK visual.
+
+## CURSOR — #591 write `/locais` canônico + peels CI (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`d1b08f96`** · **CI SUCCESS** push+PR 3/3 |
+| **Base peels** | **`14005f39`** peels/stub · write `4da219d5` · RBAC fix tip |
+| **Parecer** | **6746649125** — fail-closed extras (horário/contato) sem drop |
+| **Contrato** | read+write `/api/v1/clientes/:id/locais`; MASTER sem `locais_entrega` |
+| **Preservação** | baseline null (carga falhou) → sem soft-delete; undefined draft → sem sync |
+| **Freeze** | **`0afd378f284`** até acordo Codex tip API+web |
+| **Base44** | MCP `Base` acessível — shape Contatos/locais_entrega confirmado (sem PII no Git) |
+| **Pack** | `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt` |
+| Fora | storage paralelo · ContatoClienteV2 · merge/VPS · PII |
+
+**Próximo:** Codex aceite :15173 no tip `d1b08f96` · contatos ricos / documentos · C360 Orçamentos (sem redesign).
+
+## CURSOR — #591 parecer 6746649125 descarte + locais read (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip verde** | peels **`89eabf78`** · **CI SUCCESS** |
+| **Tip peels fix** | **`14005f39`** · **CI SUCCESS** |
+| **Parecer** | **6746649125** recebido — fail-closed vs descarte silencioso |
+| **Documento UI** | hydrate cpf/cnpj/tipo; grade cols; ~100 HML sem reimport |
+| **Locais** | read+write `cliente_locais` canônico (tip write) |
+| **Freeze** | **`0afd378f284`** até acordo Codex tip API+web |
+| **Pack** | `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt` |
+| Fora | storage paralelo · wipe · recreate · VPS · PII |
+
+**Próximo:** CI tip write · Codex aceite :15173 · contatos/documentos · C360 Orçamentos.
+
+## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`781a6fa9`** — aguarda CI push+PR |
+| **HML owner** | **~100 clientes** :15173; grade parecia só nomes |
+| **Freeze** | **`0afd378f284`** — não trocar mid-teste; tip API+web com acordo Codex |
+| **Causa UI** | cols cnpj/cpf sem `documento`; Contatos `\|\| []` escondia escalares |
+| **Fix** | hydrateClienteHttpRowForUi; cols Bloco1/ClientesTab; V24 variants; Completo mapToForm + contatosViewForUi |
+| **Pack** | `docs/evidence/codex-cliente-campos-lista-completo-591-20261109.txt` |
+| **Base44** | Declined/needsAuth — recuperação via erp-integra-novo |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| Fora | wipe campos · storage paralelo · recreate · PII · merge/VPS |
+
+**Próximo:** CI tip · Codex aceite campos :15173 · param residual / C360 com OK visual.
+
+## CURSOR — #591 HML :15173 + rich-fields fail-closed + retomada (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`0df103e2`** (código `284f2428` + types) · **CI SUCCESS** push+PR 3/3 |
+| **HML owner** | **~100 clientes** confirmados na porta **15173** (Codespace; Codex persiste) |
+| **Freeze** | **`0afd378f284`** até acordo; tip publicação = HEAD #591 |
+| **Vite / preview** | allowedHosts 5173+15173; `/__erp_preview` → sha + previewPorts |
+| **HTTP Cliente** | `locais_entrega`/`documentos` não vazios → `CLIENTE_HTTP_UNSUPPORTED_FIELDS` |
+| **Retomada** | `docs/evidence/hml-15173-retomada-acesso-591-20261109.txt` (sem seed) |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| Fora | recreate clientes · PII GitHub · ContatoClienteV2 · merge/VPS operacional |
+
+**Próximo:** Codex confere campos reais na :15173 (mesmo SHA tip) · param residual / C360 painéis com OK visual.
+
+## CURSOR — #591 celular≠WhatsApp + lacunas HTTP + C360 prep (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`a287c80f`** · **CI SUCCESS** push+PR (`erp-runtime-ci` 3/3) |
+| **Base tip verde** | **`2e2ccfeb`** / **`9c29a392`** CI SUCCESS |
+| **HML congelado** | **`0afd378f284`** — passagem para HEAD só com acordo Codex |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **Cliente** | escalar `celular` → tipo **Celular** (não WhatsApp); omit docs/contatos/locais |
+| **Lacunas HTTP** | MASTER sem `locais_entrega`/`documentos`/`contatos[]` ricos — pack Codex atualizado |
+| **Mapa** | POST `criarRomaneio` ≠ reopen completo; owners IntegracaoRomaneio |
+| **C360 prep** | OrcamentosTab + ProposalAside + CentralCliente360Panel (sem paralelo) |
+| **Packs** | piloto + coord + `c360-orcamentos-centro-prep-591-20261109.txt` |
+| Fora | merge · VPS · dados reais · ContatoClienteV2 · redesign C360 · troca freeze |
+
+**Próximo:** CI deste tip · aceite HML privado · param residual fora reservas · C360 painéis operacionais com OK visual.
+
+## CURSOR — #591 Mapa persist + Funil peels + piloto contrato (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip / CI** | **`9c29a392`** · **CI SUCCESS** push+PR (`erp-runtime-ci` 3/3) |
+| **Base tip** | `f2c0b68e` (CI frontend FAIL Funil remainder) → peels + Mapa |
+| **HML congelado** | **`0afd378f284`** — Codex coorte100; **não** trocar mid-teste |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **MapaRoteirizacaoIA** | Persist HTTP `criarRomaneio` fail-closed (sem create Entrega local); local Rota+Romaneio |
+| **Funil peels** | `funilAvancadoScopeEdits` + CRLF-aware em `primitiveUiBoundaryRemainder` |
+| **Form Cliente** | omit documentos/contatos/locais se undefined; zeros via sanitizeCode string |
+| **Piloto Codex** | `docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt` (flags, sem secrets) |
+| **Matriz** | próximo: cadastros param residual → C360 orçamentos (sem paralelo) |
+| Fora | merge · deploy VPS · dados reais · recreate clientes · troca freeze |
+
+**Próximo:** aceite HML privado Codex no freeze · cadastros residual · port #401 pós-aceite.
+
+## CURSOR — #591 HTTP fail-closed + Funil RBAC + titleToModule (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HML congelado** | **`0afd378f284`** — Codex reconcilia coorte100; **não** trocar mid-teste |
+| **#401** | `5d9a7e37` — publicar ≠ integrar; VPS só após aceite proprietário |
+| **HTTP→API** | Cliente sem piloto: query off + `data-fonte-estado` (≠ lista vazia / erro / permissão) |
+| **CRM Funil×3** | RBAC `oportunidades` no launchpad; mover invalidates+toast; Avançado queryKey escopo |
+| **Nav** | `titleToModule` Chatbot/Hub + Cadastros/Expedição/Produção/Contratos/Sistema |
+| **Form Cliente** | canônico omit-if-unknown (lote anterior); aceite real pendente HML Codex |
+| **Coord** | `docs/evidence/codex-coord-fluxo-hml-591-20261109.txt` |
+| Fora | merge · deploy VPS · dados reais · recreate clientes · troca freeze |
+
+**Próximo:** CI deste tip · aceite HML privado com Codex · MapaRoteirizacaoIA persist · port #401 pós-aceite.
+
+## CURSOR — #591 clientes UI fonte + preservação (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tip publicação** | **`32796b6a`** (fonte `fe849e1f` + pins) — **CI SUCCESS** push+PR (`erp-runtime-ci`) |
+| **HML congelado (ensaio)** | **`0afd378f284`** — **não** trocar mid-teste; publicação tip ≠ snapshot HML |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **Origem lista Cliente** | Banner `data-fonte-dados` + empty distinto; piloto `VITE_ERP_HTTP_CLIENTE(_360)` + modo http; contagem API ≠ aceite UI |
+| **Form completo** | `CadastroClienteCompleto` canônico; contatos/endereços multi; WhatsApp não default; entrega ≠ cadastral |
+| **Preservação** | `locais_entrega`/`contatos` omit-if-undefined; `data-pendencia=cliente-parcial`; sem contexto → counts missing (não 0) |
+| **Pack Codex** | `docs/evidence/codex-clientes-fonte-ui-591-20261109.txt` |
+| **Testes** | `cliente-fonte-lista-preservacao-591` + payload boundaries + http piloto + consolidacao V24 PASS |
+| Fora | merge · deploy · VPS · dados reais GitHub · troca `0afd378f` |
+
+**Próximo:** tip CI deste commit · Codex aceite UI no HML congelado (privado) · port #591→#401 só após aceite · matriz Funil/Mapa/Chatbot.
+
+## CURSOR — #591 aceite gaps + unificação EmpresaForm (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **HML congelado** | **`0afd378f284`** — Codex não troca snapshot no meio do teste |
+| **Parecer pack** | `docs/evidence/codex-parecer-6694327032-pack-591-20261109.txt` |
+| **Aceite gaps** | Separação seletor · ConfigFin AND · Widget Fechamento perm · ConfigUsuario onError |
+| **Unificação** | Empresas CRUD → `EmpresaForm` canônico (KPIs preservados) |
+| **#401** | `5d9a7e37` — publicar ≠ integrar |
+| **Próximo matriz** | `docs/evidence/matriz-proximo-lote-pos-591-20261109.txt` (Funil RBAC → rota persist → Chatbot titleToModule) |
+| Fora | merge · deploy · VPS · dados reais · port cego |
+
+## CURSOR — #591 CI SUCCESS tip `0afd378f` (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / HEAD / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · **`0afd378f284`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS** push+PR |
+| **SHA Codex HML** | **`0afd378f284d8693b859477fa532b54a2367527f`** — montar API+web nesta tip |
+| **Achados 6694327032** | ports f51376fa / 2f588154 / 9b5de2bc · upsertConfig HTTP · parcial≠0 · remainder stage81 |
+| **Candidata #401** | tip **`5d9a7e37`** — publicação #591 ≠ integração #401 |
+| **Recuperação** | Home/Dashboard; Chatbot; Separação clássica+IA; Fechamento; ConfiguracoesUsuario; 404; MapaRoteirizacaoIA; ConfigFinanceiroLogistica |
+| **Homolog** | BLOCKED dados reais — fixtures/testes montados ≠ aceite HML |
+| Fora | merge · deploy · VPS · dados reais GitHub · port cego #591→#401 |
+
+**Próximo:** Codex HML no SHA composto · port seletivo #591→#401 só após aceite · próximo desconectado matriz (sem fila mecânica).
+
+## CURSOR — #591 achados revisão 6694327032 (2026-11-09 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Base tip verde** | **`c80cf05c`** CI SUCCESS 3/3 (pré-achados) |
+| **Delta** | ports **f51376fa** / **2f588154** / **9b5de2bc** + upsertConfig HTTP fail-closed + parcial≠confirmado |
+| **Candidata #401** | tip **`5d9a7e37`** — publicação #591 ≠ integração #401 |
+| **Testes locais** | `hml-591-review-findings` PASS · `count-layout-prop-types` PASS · server suite auth/fornecedor PASS |
+| **Recuperação (estático)** | Home/Dashboard; Chatbot; Separação clássica+IA; Fechamento; ConfiguracoesUsuario; 404 aliases; MapaRoteirizacaoIA; ConfigFinanceiroLogistica |
+| **Homolog** | BLOCKED — Codex deve montar API+web no **mesmo SHA** deste tip; fixtures ≠ homolog real |
+| Fora | merge · deploy · VPS · dados reais GitHub · integração cega na #401 |
+
+**Próximo:** CI deste tip · aceite Codex HML no SHA composto · só então port seletivo #591→#401.
+
+## CURSOR — recuperação + unificação Empresas + C360 prep (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / HEAD / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · **`b16b4865a`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 3/3** (push+PR) |
+| **Tips verdes** | parecer **`3fc45c320`** · hash **`a670`** · 404 **`e792`** · docs **`792e`** · Expedição mapa/config **`b16b4865a`** |
+| **Coord / parecer** | 6690425383 · 6691042172 fechado |
+| **Recuperação** | Chatbot menu; SeparacaoConferencia keep both; Fechamento Comercial+rota; ConfiguracoesUsuario ≠ Sistema; 404 aliases |
+| **Unificação** | Empresas×Cadastros: EmpresaForm canônico; KPIs preservados + banner |
+| **C360 prep** | evidence slots Orçamentos — sem redesign |
+| **Homolog** | BLOCKED dados reais — Codex validar seletor no tip **`792e265f1`** / **`e7926b4a2`** |
+| Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
+
+**CI note:** `c9ef`/`c6ba8` FAIL = hash Chatbot (fix `a670`); flake legado runtime04 ocasional em PR — push verde prevalece.
+**Append:** Expedição — `MapaRoteirizacaoIA` + `ConfigFinanceiroLogistica` reconectados · tip **`b16b4865a`** **CI SUCCESS 3/3**.
+**Próximo:** Codex HML seletor · próximo desconectado matriz.
+
+## CURSOR — recuperação Separação/Fechamento + Chatbot (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) |
+| **Tips** | parecer **`3fc45c320`** CI SUCCESS 9/9 · Chatbot menu · Separação clássica + Fechamento hub |
+| **Coord / parecer** | 6690425383 · 6691042172 fechado |
+| **Recuperação** | ChatbotAtendimento no menu (Hub keep both); SeparacaoConferencia no launchpad Expedição; Fechamento no Comercial + ProtectedSection rota; ConfiguracoesUsuario ≠ falso bloqueio Sistema |
+| **Homolog** | BLOCKED dados reais — Codex validar seletor no tip CI verde |
+| Fora | merge · deploy · VPS · P1 remainder · redesign C360 · dados reais GitHub |
+
+**Próximo:** CI deste tip · Codex HML · C360 prep sem redesign · próximo desconectado matriz.
+
+## CURSOR — parecer 6691042172 + Setor RBAC + HML (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / tip / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · tip **`3fc45c320`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 9/9** |
+| **Coord** | 6690425383 (Grupo HML) · parecer **6691042172** (Layout/Integracoes/upsertConfig) |
+| **Grupo UI** | tip CI `bdb912541` — `profileEmpresaId` null; sem admin-only |
+| **Layout** | `pageToModule.DashboardFechamentoPedidos='Comercial'`; `Integracoes='Sistema'` |
+| **Integracoes rota** | `ProtectedSection` Sistema/Integracoes/visualizar |
+| **upsertConfig** | HTTP/remote: falha ≠ fallback entity local; local explícito preservado (`configPersistPolicy`) |
+| **Setor RBAC** | port Codex `221b6822a` — `TenantCrudService` + authorization setor_atividade |
+| **Fornecedor / Banco** | HTTP flag OFF · #462 aceite boundId+ID técnico |
+| **Homolog** | BLOCKED dados reais — tip **`3fc45c320`** CI OK para Codex validar nomes HML |
+| Fora | merge · deploy · VPS · refazer P1 remainder · dados reais GitHub |
+
+**Próximo:** Codex HML seletor no tip `3fc45c320` · ChatbotAtendimento menu reconectado neste append · C360 prep sem redesign.
+
+## CURSOR — HML Grupo UI + erro isolado + Fornecedor HTTP (2026-11-06 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / tip / PR** | `cursor/hml-grupo-erro-fornecedor-392b` · tip **`bdb912541`** · [#591](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591) · **CI SUCCESS 9/9** (fix `b1c7ed6b5` + Home/Banco) |
+| **Coord** | 6690425383 · sessão HML user/`empresa_id` NULL/Grupo CPA · API clientes total100 |
+| **Grupo UI** | `erpHttpSession` switch/buildUser/login/refresh: `pode_operar_em_grupo` por `profileEmpresaId` null — **sem** exigir admin; **sem** liberar grupos alheios |
+| **Erro isolado** | Expedição KPI erro≠0; Cadastros `SetorAtividade` 500 → PARTIAL com `partialCounts` (bloco afetado "—", demais válidos) |
+| **Fornecedor** | Port adapter Codex `6b81004fc` (rotas/importar/reverter opt-in `ENABLE_FORNECEDOR_HTTP` default OFF) — reserva liberada |
+| **Banco #462** | aceite no tip: `boundId`+sky+**ID técnico** (sem path-checkout que regrediria reopen); cadastro mestre ≠ infra DB |
+| **Recuperação** | `Home.jsx` placeholder → `Dashboard` canônico (como Integracoes→Index) |
+| **Homolog** | BLOCKED dados reais; tip `60096f050` CI OK para Codex validar nomes HML |
+| Fora | merge main · deploy · VPS · flag por inferência · promover user |
+
+**Próximo:** Codex validar seletor Grupo HML no tip `bdb912541` · próximo desconectado matriz.
+
 ## CURSOR — #401 Integrações + pacote Codex CI SUCCESS (2026-11-06 America/Sao_Paulo)
 
 | Campo | Valor |

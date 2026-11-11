@@ -1,0 +1,12 @@
+#591 — FAIL tip 88b9b242 = peels Completo herdado de e09f
+America/Sao_Paulo 2026-11-10 · sem PII
+
+FAIL 88b9b242
+- mesmos testes stage48 Completo que e09f882b
+- causa: árvore ainda continha CadastroClienteCompleto alterado
+
+FIX
+- c8d7c134 restaura Completo ao tip 516497af
+- proposta-sem-paginacao (88b9) permanece válida após fix peels
+
+Homolog: 77f11b28 · freeze 0afd378f284

@@ -98,3 +98,65 @@ export function buildOrcamentoShareText(orcamento, { empresaNome = 'Empresa', cl
   const validade = orcamento.validade_em ? new Intl.DateTimeFormat('pt-BR').format(new Date(orcamento.validade_em)) : '-';
   return [`${empresaNome} - Orçamento ${orcamento.numero}`, `Cliente: ${clienteNome}`, `Status: ${status}`, `Validade: ${validade}`, `Total: ${total}`, 'O documento completo deve ser conferido no ERP antes do envio.'].join('\n');
 }
+
+/** Rascunho de criação a partir de um orçamento existente (sem id/número/status). */
+export function mapOrcamentoRowToCreateDraft(row, { clearValidade = true } = {}) {
+  if (!row?.cliente_empresa_id) throw new Error('Orçamento sem cliente para duplicar.');
+  const itens = Array.isArray(row.itens) ? row.itens : [];
+  return {
+    cliente_empresa_id: row.cliente_empresa_id,
+    condicao_pagamento_id: row.condicao_pagamento_id || '',
+    tabela_preco_id: row.tabela_preco_id || '',
+    validade_em: clearValidade ? '' : String(row.validade_em || '').slice(0, 10),
+    observacoes: row.observacoes || '',
+    itens: itens.length
+      ? itens.map((item) => ({
+        produto_id: item.produto_id || '',
+        unidade_id: item.unidade_id || '',
+        descricao: item.descricao || '',
+        unidade_sigla: item.unidade_sigla || '',
+        quantidade: String(item.quantidade ?? '1'),
+        preco_unitario: String(item.preco_unitario ?? '0'),
+        desconto: String(item.desconto ?? '0'),
+      }))
+      : [{ produto_id: '', unidade_id: '', descricao: '', unidade_sigla: '', quantidade: '1', preco_unitario: '0', desconto: '0' }],
+  };
+}
+
+/**
+ * Revalida itens contra mestres atuais (produto/unidade/condição).
+ * Não inventa preço: se o produto existir, atualiza descrição/unidade; preço fica para revisão humana.
+ */
+export function revalidateOrcamentoDraftAgainstMasters(draft, masters = {}) {
+  const produtos = Array.isArray(masters.produtos) ? masters.produtos : [];
+  const unidades = Array.isArray(masters.unidades) ? masters.unidades : [];
+  const condicoes = Array.isArray(masters.condicoes) ? masters.condicoes : [];
+  const missingProducts = [];
+  const missingUnits = [];
+  let condicaoOk = true;
+  if (draft.condicao_pagamento_id) {
+    condicaoOk = condicoes.some((c) => c.id === draft.condicao_pagamento_id);
+  }
+  const itens = (Array.isArray(draft.itens) ? draft.itens : []).map((item) => {
+    const produto = produtos.find((p) => p.id === item.produto_id);
+    if (item.produto_id && !produto) missingProducts.push(item.produto_id);
+    const unidadeId = produto?.unidade_medida_id || item.unidade_id || '';
+    const unidade = unidades.find((u) => u.id === unidadeId);
+    if (unidadeId && !unidade) missingUnits.push(unidadeId);
+    if (!produto) return { ...item };
+    return {
+      ...item,
+      unidade_id: unidadeId,
+      descricao: produto.descricao || produto.nome || item.descricao || '',
+      unidade_sigla: unidade?.sigla || item.unidade_sigla || '',
+    };
+  });
+  return {
+    draft: { ...draft, itens },
+    warnings: {
+      condicaoAusente: Boolean(draft.condicao_pagamento_id) && !condicaoOk,
+      produtosAusentes: [...new Set(missingProducts)],
+      unidadesAusentes: [...new Set(missingUnits)],
+    },
+  };
+}

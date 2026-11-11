@@ -4,8 +4,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
@@ -124,18 +126,38 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!podeSalvar) {
-      alert(contatoBoundId ? "Sem permissao para editar contato B2B." : "Sem permissao para criar contato B2B.");
+      toast.error(contatoBoundId ? "Sem permissão para editar contato B2B." : "Sem permissão para criar contato B2B.");
       return;
     }
     if (!contextoValido) {
-      alert("Selecione um grupo ou empresa antes de salvar o contato.");
+      toast.error("Selecione um grupo ou empresa antes de salvar o contato.");
       return;
     }
 
     const payload = buildPayload();
     if (!payload.nome_contato || !payload.email) {
-      alert("Preencha os campos obrigatorios");
+      toast.error("Preencha os campos obrigatórios.");
       return;
+    }
+    // Correspondência Cliente×tenant: só aceita cliente_id presente no filtro do contexto.
+    const clienteOk = Boolean(payload.cliente_id)
+      && clientes.some((c) => String(c?.id || '') === String(payload.cliente_id));
+    if (!clienteOk) {
+      toast.error("Selecione um cliente do grupo/empresa ativos. Contato B2B não aceita cliente fora do tenant.");
+      return;
+    }
+    // Fail-closed multiempresa: group_id sempre; empresa_id obrigatória no escopo empresa.
+    if (!payload.group_id) {
+      toast.error("Grupo do contexto obrigatório para Contato B2B.");
+      return;
+    }
+    if (contexto === "empresa" && !payload.empresa_id) {
+      toast.error("Empresa do contexto obrigatória para Contato B2B.");
+      return;
+    }
+    // WhatsApp é campo próprio — não copiar telefone/celular automaticamente.
+    if (!payload.whatsapp) {
+      payload.whatsapp = "";
     }
 
     if (onSubmit) {
@@ -154,6 +176,17 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
         entityId={contatoBoundId}
         action="id-tecnico-contato-b2b"
       />
+      <Alert
+        className="border-amber-200 bg-amber-50 text-amber-950"
+        data-pendencia="contatob2b-fk-ausente"
+        data-regra="contatob2b-completo-bloqueado"
+      >
+        <AlertDescription className="text-xs leading-relaxed" data-evidence="contato-b2b-mcp-20261110e">
+          Base ContatoB2B ainda sem FK canônica <code>cliente_id</code>/<code>empresa_id</code>
+          (MCP probe <strong>20261110e</strong>) — wire CadastroClienteCompleto <strong>(b) bloqueada</strong>.
+          Sem ContatoClienteV2 / storage paralelo. WhatsApp permanece campo próprio (não copia telefone/celular).
+        </AlertDescription>
+      </Alert>
       <div>
         <Label>Cliente *</Label>
         <Select value={formData.cliente_id} onValueChange={(v) => setFormData({ ...formData, cliente_id: v })} disabled={!contextoValido || !podeSalvar}>
@@ -211,6 +244,9 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
           <Input value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} disabled={!podeSalvar} data-permission="Cadastros.ContatoB2B.editar" data-action="Cadastros.ContatoB2B.whatsapp" data-sensitive />
         </div>
       </div>
+      <p className="text-[11px] text-slate-500 -mt-2" data-regra="whatsapp-campo-proprio" role="note">
+        WhatsApp é campo próprio — não copia telefone/celular automaticamente.
+      </p>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
         <Label>Contato Principal</Label>

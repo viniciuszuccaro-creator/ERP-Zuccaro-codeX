@@ -1,0 +1,9 @@
+# CI verde — tip search blur proposta (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: f6e0a11a
+- workflow: erp-runtime-ci
+- run: 42869752951
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: proposta-filtro-search onBlur auto-apply
+- peels: sem alteração Completo / Produto / LaunchpadCard

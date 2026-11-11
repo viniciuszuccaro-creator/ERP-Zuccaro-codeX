@@ -1,0 +1,8 @@
+# CI verde — tip proposta empty filtrado + CI 86a4 (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: ef35643c67fab022d78d012ca1635d2a99b7b233
+- workflow: erp-runtime-ci
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: filtros validade + empty proposta-lista-vazia / proposta-limpar-filtros
+- peels: sem alteração Completo / Produto / LaunchpadCard

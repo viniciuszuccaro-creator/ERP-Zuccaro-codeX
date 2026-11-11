@@ -1,0 +1,21 @@
+#591 — Sky Usuario/Fiscal adiado (CANAL + ID-only)
+America/Sao_Paulo 2026-11-10
+
+Tentativa tip bfe3e25d/2d0bff6e:
+- UsuarioForm sky + peels em cursor-identidade-consolidacao.test.js
+- CadastroFiscalForm windowMode sky
+
+CI FAIL:
+- CadastroFiscal: coorte ID-only e36231b3
+- Usuario peels no teste consolidacao: CANAL pin hash 53ed9f42
+  (tests/helpers/consolidation81Remainder.js) — alteração do arquivo
+  de teste sem hunk registrado → FAIL publication/CANAL
+
+Decisão deste tip:
+- Reverter UsuarioForm e CadastroFiscalForm ao tip verde 2e90587f
+- Reverter cursor-identidade-consolidacao.test.js (sem tocar CANAL)
+- Manter Completo banner ContatoB2B (b) bloqueada + peels boundaries
+- Sky residual já fechado: params Portal/Caixa/Conciliação/NFe/Origem + JobAgendado
+- Usuario/Fiscal sky = lote futuro com hunk CANAL explícito aprovado
+
+Reservas WIP intocadas: ApiExterna / ParametroRoteirizacao / ChatbotCanal

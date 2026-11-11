@@ -1,0 +1,36 @@
+CODEx HML — SHA composto PR #591
+=================================
+America/Sao_Paulo 2026-11-09
+
+PUBLICACAO (#591) ≠ INTEGRACAO (#401) ≠ SNAPSHOT HML CONGELADO
+- Branch: cursor/hml-grupo-erro-fornecedor-392b
+- PR: https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/591
+- Tip publicacao CI SUCCESS (referencia): 05b3b711 (+ tip posterior fonte/preservacao no mesmo PR)
+- Snapshot HML CONGELADO para ensaio em andamento: 0afd378f284d8693b859477fa532b54a2367527f
+  (nao reiniciar nem trocar este SHA no meio do teste Codex)
+- Candidata #401 tip (nao integrar neste lote): 5d9a7e37cb11e40c1361cc125aaa016fa33a707c
+
+MONTAR API + WEB NO MESMO SHA (ensaio)
+- git checkout 0afd378f284d8693b859477fa532b54a2367527f
+- Nao declarar homologacao com fixtures/testes montados.
+- Para validar correcoes de fonte/UI Cliente deste lote, coordenar tip posterior
+  explicitamente — sem abandonar 0afd378f mid-flight sem acordo.
+
+ACHADOS 6694327032 FECHADOS
+- f51376fa sharedAuthPool / preflight
+- 2f588154 Grupo: empresaId null + permissao granular (sem admin-only)
+- 9b5de2bc Fornecedor Object.freeze(ctx) antes de await
+- upsertConfig HTTP → UPSERT_CONFIG_HTTP_UNAVAILABLE (sem local silencioso)
+- parcial/missing → badge "—"; countsUnavailable; fatia counts:{} ≠ complete
+
+RECUPERACOES (aceite estatico no tip)
+Home/Dashboard, ChatbotAtendimento, Separacao classica+IA (keep both),
+Fechamento, ConfiguracoesUsuario, aliases 404, MapaRoteirizacaoIA,
+ConfigFinanceiroLogistica.
+
+HOMLOG
+BLOCKED ate aceite com clientes reais (login/refresh/troca Grupo-Empresa/
+expiracao/revogacao; negar escopos alheios).
+
+FORA
+merge, deploy, VPS, dados reais no GitHub, port cego #591→#401.

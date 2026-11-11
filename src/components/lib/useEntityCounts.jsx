@@ -119,12 +119,25 @@ export function useEntityCounts(entities = []) {
         console.warn('[useEntityCounts] Contagem agregada indisponivel', error);
       }
 
-      // Fallback sequencial: falha propaga (erro ≠ vazio); nunca misturar parcial com total
+      // Fallback sequencial isolado: falha de uma entidade não zera as demais.
       const result = {};
+      const missing = [];
       for (let i = 0; i < batchPayload.length; i++) {
         const { entityName, filter } = batchPayload[i];
-        result[entityName] = await countSingle(entityName, filter);
+        try {
+          result[entityName] = await countSingle(entityName, filter);
+        } catch (entityError) {
+          console.warn('[useEntityCounts] Contagem auxiliar isolada falhou', entityName, entityError);
+          missing.push(entityName);
+        }
         if (i < batchPayload.length - 1) await new Promise(r => setTimeout(r, 200));
+      }
+      if (Object.keys(result).length === 0) {
+        throw new Error('READ_COUNT_UNAVAILABLE');
+      }
+      if (missing.length) {
+        console.warn('[useEntityCounts] Contagem parcial descartada (≠ total)', { missing });
+        // Retorna só o que respondeu — consumidor usa ausência ≠ 0.
       }
       return result;
     },
@@ -151,18 +164,29 @@ export function useEntityCounts(entities = []) {
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
   }, [entitiesKey, queryClient]);
 
-  const total = useMemo(
-    () => (isError ? null : normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0)),
-    [counts, normalized, isError]
-  );
+  const countsSafe = isError ? {} : (counts || {});
+  const complete = !isError
+    && normalized.length > 0
+    && normalized.every((e) => (
+      Object.prototype.hasOwnProperty.call(countsSafe, e)
+      && typeof countsSafe[e] === 'number'
+      && Number.isSafeInteger(countsSafe[e])
+      && countsSafe[e] >= 0
+    ));
+  // Parcial ≠ total confirmado: ausência/falha não vira 0.
+  const total = useMemo(() => {
+    if (isError || !normalized.length) return isError ? null : 0;
+    if (!complete) return null;
+    return normalized.reduce((acc, e) => acc + countsSafe[e], 0);
+  }, [countsSafe, normalized, isError, complete]);
 
   return {
-    counts: isError ? {} : (counts || {}),
+    counts: countsSafe,
     total,
     isLoading,
     isError,
     error: error || null,
-    countsUnavailable: Boolean(isError),
+    countsUnavailable: Boolean(isError) || (!isLoading && normalized.length > 0 && !complete),
   };
 }
 

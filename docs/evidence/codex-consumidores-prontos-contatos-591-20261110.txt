@@ -1,0 +1,35 @@
+#591 — Consumidores prontos p/ integrar após decisão Codex (sem storage paralelo)
+America/Sao_Paulo 2026-11-10 · sem PII
+Tip C360: e6a31225 (atalhos C) · pedido objetivo: codex-pedido-decisao-objetiva-contatos-591
+FK ContatoB2B: ainda ausente → (b) NÃO integrar Completo
+
+QUANDO CODEX PUBLICAR CONTRATO — Cursor integra NESTA ORDEM
+1. (a) jsonb contatos[] no MASTER
+   UI: GerenciarContatosClienteForm (nome,cargo,tipo,valor,principal,observacao)
+   Payload: omit-if-undefined; [] = remoção explícita; Celular ≠ WhatsApp
+   Consumidores: CadastroClienteCompleto draft→save; clienteHttpPayload
+     applyContatosProjection / CONTATOS_SCALAR_OVERFLOW; PainelDinamicoCliente
+   Testes: leitura/criação/edição/remoção; troca cliente/contexto; resposta tardia;
+     duplo clique (persistBusy); reabertura; sem ContatoClienteV2
+
+2. (b) ContatoB2B — SÓ com prova FK cliente_id+group_id+empresa_id
+   NÃO presumir equivalência com GerenciarContatos (canais ≠ pessoa B2B)
+   Wire Completo: list/filter por cliente_id+tenant; WhatsApp campo próprio
+   Sem merge silencioso com escalares Cliente
+
+3. (c) documentos[] anexos ≠ CPF/CNPJ MASTER ≠ ModeloDocumento
+   Banner Completo já declara limitação HTTP; botão anexos disabled em HTTP
+
+LOCAIS (paralelo ao pack contatos)
+- Proteções publicadas: baseline null≠delete; undefined≠[]; BATCH_ATOMIC=false
+  ≠ toast integral; cadastral/fiscal ≠ entrega
+- Batch atômico: docs/evidence/codex-locais-batch-atomico-pedido-591-20261110.txt
+
+NEGATIVOS JÁ COBERTOS (não regredir)
+- Sem ContatoClienteV2 / storage paralelo
+- Celular escalar ≠ WhatsApp automático
+- Campo undefined no save não wipe
+- MASTER rich fields → CLIENTE_HTTP_UNSUPPORTED_FIELDS (422)
+
+FORA
+fixtures como aceite HML · PII · merge/VPS · ContatoB2B sem FK

@@ -32,7 +32,8 @@ export function resolveSessionEntityGuard(profiles: AuthSessionProfile[], payloa
   const groupView = guard.empresa_id === null;
   if (guard.scope_type && ['group', 'grupo'].includes(guard.scope_type) !== groupView) return false;
   if (groupView) {
-    if (profile.empresaId !== null || profile.role !== 'admin') return false;
+    // Grupo: perfil com empresaId null + permissão explícita (não exige role admin).
+    if (profile.empresaId !== null) return false;
   } else if (!profile.empresas.some(e => e.id === guard.empresa_id)
     || (profile.empresaId !== null && profile.empresaId !== guard.empresa_id)) return false;
   return permissionViewAllows(profile.permissoes, guard.module, guard.section ?? null, guard.action);

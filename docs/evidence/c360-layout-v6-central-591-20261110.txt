@@ -1,0 +1,59 @@
+Central de Vendas360° — layout versão 6 (decisão 10/11)
+=======================================================
+America/Sao_Paulo 2026-11-10 · PR #591 · branch cursor/hml-grupo-erro-fornecedor-392b
+
+ANEXOS
+- ERP_ZUCCARO_COMERCIAL_360.docx (texto + Figura 1 / image1.png = versão 6)
+- Artefato: /opt/cursor/artifacts/c360-versao6-aprovada.png
+
+DECISÃO (substitui soft-landing “aguardar desenho”)
+- Pedidos → Central de Vendas360°
+- Tile Orçamentos retirado do launchpad
+- Orçamentos/pedidos/histórico dentro da Central (sem paralelo)
+- Azul/branco v6: cabeçalho, faixa, situações, 12 colunas, grades dual, Cliente360
+
+ARQUIVOS
+- src/components/comercial/centralVendas360Layout.js (contrato puro)
+- src/components/comercial/CentralVendas360Shell.jsx (composição)
+- src/components/comercial/PedidosTab.jsx (canonicalHttp → shell)
+- src/components/comercial/OrcamentosTab.jsx (centralLayout + 12 colunas)
+- src/components/comercial/PedidoCanonicoPanel.jsx (centralLayout / seleção)
+- src/pages/Comercial.jsx (nav)
+- src/components/comercial/comercial-launchpad/ModulosGridComercial.jsx
+- docs/COMERCIAL_360.md
+- tests/central-vendas360-layout-v6-591.test.js
+
+NÃO CRIADO
+- CentralVendas360Nova / OrcamentosV2 / chatbot/financeiro paralelo
+
+ABERTO (2026-11-11 America/Sao_Paulo)
+- Novo Orçamento · Imprimir (PDF) · Enviar (WhatsApp/e-mail = copiar texto revisável)
+- Fechar Orçamento = converter→pedido no servidor (≠ Cancelar) — ver `c360-fechar-neq-cancelar-591-20261111.txt`
+- Mais Ações: Duplicar · Incluir itens anteriores · Cancelar (próprio) · Desmembrar = limitação explícita
+- Helpers: `mapOrcamentoRowToCreateDraft` / `revalidateOrcamentoDraftAgainstMasters` em `orcamentoUiPolicy.js`
+
+PENDENTE / BLOQUEADO
+- Aceite visual screenshots privados vs v6 (dois monitores)
+- Servir :15173 no tip freeze **`8650fd4d`** runtime; tip ABERTO aguarda CI deste commit (API+web mesmo SHA)
+- documentos[] BFF
+- Integração seletiva #401 só pós-aceite
+- Contadores reais Bot/Aprovações — só quando API oficial existir (faixa abre janelas owners)
+- Desmembrar — futuro (sem contrato HTTP)
+
+CHECKLIST DOC
+| Item | Estado |
+|------|--------|
+| Nav Central / sem Orçamento separado | implementado |
+| Shell v6 chrome + situações | implementado |
+| Tabela 12 col orçamentos | implementado (campos ausentes = —) |
+| Prefs colunas por usuário/grupo/empresa | implementado (localStorage escopado; fail-closed) |
+| Grades simultâneas | implementado |
+| Cliente360 lateral | implementado (token sessão) |
+| Clique simples/duplo | implementado |
+| ABERTO Novo/Imprimir/Enviar/Fechar/Duplicar/Itens anteriores | implementado (contratos existentes) |
+| ABERTO Desmembrar | bloqueado (limitação explícita) |
+| Aceite visual privado | parcial (estrutura validada em `de189e0d`; sem API/dados neste preview) |
+| CI tip ABERTO **`de189e0d`** | SUCCESS |
+| CI tip layout **`82b15566`** | SUCCESS |
+| CI tip CAS freeze **`c348d4d3`** / runtime **`8650fd4d`** | SUCCESS 9/9 |
+| Aceite :15173 | pack no tip `8650fd4d` — CI ≠ homologação |

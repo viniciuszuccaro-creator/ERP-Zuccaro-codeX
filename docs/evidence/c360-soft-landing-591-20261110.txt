@@ -1,0 +1,18 @@
+#591 — Central360 soft-landing (sem redesign) — 2026-11-10 America/Sao_Paulo
+Tip funcional CI: ba21a342 · docs tip: f9b11cf6 · sem PII
+
+PACOTE DEMONSTRÁVEL (parar microajustes de toast/banner/CI churn)
+- ?proposta=comercial360 A/B/C navegável no OrcamentosTab (proposalMode)
+- Filtros só em A (search/status/cliente/validade); Aplicar/blur
+- B rascunho sintético: Voltar ≠ discard; dirty → proposta-rascunho-preservado
+- C acompanhamento: Avançar ≠ save/convert; data-integracao-pronta=false|owner-only
+- proposalMode bloqueia create/update/cancel/convert (toast gravação desabilitada)
+- Layout final visual: chat “ERP CPA 2 - Imagem” — sem direção concorrente neste tip
+
+FORA DESTE SOFT-LANDING
+- Redesign amplo · novos banners/toasts de CI · recursos demonstrativos no ERP normal
+- Aceite HML :15173 (privado) · merge/VPS · PII
+
+PRÓXIMO COMPORTAMENTAL (sem micro-UI)
+- Negociações/filtros operacionais reais (fora proposalMode)
+- Histórico/preço/estoque/crédito/aprovação nos owners existentes

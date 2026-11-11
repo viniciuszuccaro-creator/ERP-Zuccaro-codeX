@@ -1,0 +1,13 @@
+#591 — CI SUCCESS tip 3b5132de (peels LaunchpadCard + grid proposta)
+America/Sao_Paulo 2026-11-10 · sem PII
+
+VERDE CONFIRMADO
+- 3b5132de — fix peels LaunchpadCard; bloqueio só ModulosGridComercial
+- a51f162d · ae0773f4 · b28fedaf — base proposta/fix 347
+- 52aed2c4 · a92d7bd4 — peels Produto + busy dialog
+
+FAIL SUPERADO
+- 31b66b6e / c3acbb70 / 25e8ebb8: peels stage56 LaunchpadCard
+
+Homolog: 77f11b28 · freeze 0afd378f284
+ContatoB2B: (b) bloqueada sem FK

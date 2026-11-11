@@ -10,6 +10,30 @@ const TABS = [
   ['acoes', 'Ações próximas'],
 ];
 
+/**
+ * Capacidade dos atalhos/painéis — reutiliza owners existentes; sem central paralela.
+ * existente = serviço/owner no repo; parcial = UI ou HTTP incompleto; futuro = planejado.
+ */
+export const PROPOSTA_CAPACIDADES = [
+  { key: 'cliente-historico', label: 'Cliente / histórico', capacidade: 'parcial', owner: 'CentralCliente360Panel + HistoricoCliente' },
+  { key: 'credito-financeiro', label: 'Crédito / financeiro', capacidade: 'parcial', owner: 'validação crédito pedido + ContasReceber' },
+  { key: 'estoque', label: 'Estoque', capacidade: 'parcial', owner: 'ValidadorEstoquePedido' },
+  { key: 'producao', label: 'Produção', capacidade: 'parcial', owner: 'GerarOpModal / OrdemProducao' },
+  { key: 'entregas-mapa', label: 'Entregas / mapa', capacidade: 'parcial', owner: 'PedidosEntregaTab + MapaRoteirizacaoIA' },
+  { key: 'nota', label: 'Nota fiscal', capacidade: 'futuro', owner: 'Fiscal (emissão só na empresa)' },
+  { key: 'cobranca', label: 'Cobrança', capacidade: 'parcial', owner: 'GerarCobrancaModal / ConfiguracaoCobranca' },
+  { key: 'goto-atendimento', label: 'GoTo Hub Atendimento', capacidade: 'existente', owner: 'Layout titleToModule → HubAtendimento' },
+  { key: 'chatbot', label: 'Chatbot', capacidade: 'existente', owner: 'ChatbotAtendimento (regras; exceção → humano)' },
+  { key: 'site-ecommerce', label: 'Site / e-commerce', capacidade: 'futuro', owner: 'site próprio integrado (não paralelo)' },
+  { key: 'marketplaces', label: 'Marketplaces', capacidade: 'parcial', owner: 'ConfiguracaoIntegracaoMarketplace' },
+];
+
+const CAPACIDADE_LABEL = {
+  existente: 'Existente',
+  parcial: 'Parcial',
+  futuro: 'Futuro',
+};
+
 /** Composição visual do editor existente. O rascunho continua no OrcamentosTab. */
 export default function OrcamentoProposalAside({
   cliente,
@@ -23,7 +47,17 @@ export default function OrcamentoProposalAside({
   formasPagamentoIlustrativas = [],
 }) {
   const [panel, setPanel] = useState('cliente');
+  const panelIndex = Math.max(0, TABS.findIndex(([key]) => key === panel));
   const itensComProduto = itens.filter((item) => item.produto_id);
+
+  /** Atualização funcional — clique/teclado repetido não usa índice stale. */
+  const goPanelByDelta = (delta) => {
+    setPanel((current) => {
+      const idx = Math.max(0, TABS.findIndex(([key]) => key === current));
+      const next = Math.max(0, Math.min(TABS.length - 1, idx + delta));
+      return TABS[next][0];
+    });
+  };
 
   return (
     <aside
@@ -36,7 +70,7 @@ export default function OrcamentoProposalAside({
         </Badge>
         <p className="text-xs text-slate-600">Rascunho preservado ao trocar painéis.</p>
       </div>
-      <nav className="flex flex-wrap gap-2" aria-label="Painéis da proposta">
+      <nav className="flex flex-wrap gap-2" aria-label="Painéis da proposta" data-block="proposta-paineis-nav">
         {TABS.map(([key, label]) => (
           <Button
             key={key}
@@ -49,16 +83,22 @@ export default function OrcamentoProposalAside({
                 : 'bg-white text-slate-800 border-sky-200'
             }
             aria-pressed={panel === key}
+            aria-current={panel === key ? 'true' : undefined}
             data-action={`proposta-painel-${key}`}
             onClick={() => setPanel(key)}
           >
             {label}
+            {key === 'produtos' && itensComProduto.length > 0 ? (
+              <span className="ml-1 tabular-nums text-[10px] opacity-90" data-block="proposta-painel-produtos-contagem">
+                ({itensComProduto.length})
+              </span>
+            ) : null}
           </Button>
         ))}
       </nav>
 
       {panel === 'cliente' && (
-        <section className="space-y-3" aria-label="Cliente e histórico sintéticos">
+        <section className="space-y-3" aria-label="Cliente e histórico sintéticos" data-block="proposta-conteudo-cliente">
           <h3 className="font-semibold text-sky-950">{cliente || 'Selecione o cliente ao lado'}</h3>
           {(clienteCodigo || clienteIdTecnico) && (
             <dl className="grid grid-cols-1 gap-1 text-xs text-slate-700 bg-white border border-sky-100 rounded-lg p-3">
@@ -97,8 +137,13 @@ export default function OrcamentoProposalAside({
       )}
 
       {panel === 'produtos' && (
-        <section className="space-y-3" aria-label="Produtos preços e disponibilidade ilustrativos">
-          <h3 className="font-semibold text-sky-950">Produtos do rascunho</h3>
+        <section className="space-y-3" aria-label="Produtos preços e disponibilidade ilustrativos" data-block="proposta-conteudo-produtos">
+          <h3 className="font-semibold text-sky-950">
+            Produtos do rascunho
+            {itensComProduto.length > 0 ? (
+              <span className="ml-1 text-sm font-normal text-slate-600">({itensComProduto.length})</span>
+            ) : null}
+          </h3>
           {itensComProduto.map((item, index) => (
             <div key={`${item.produto_id}-${index}`} className="rounded-lg bg-white border border-sky-100 p-3 space-y-1">
               <p className="font-medium">{item.descricao}</p>
@@ -112,12 +157,16 @@ export default function OrcamentoProposalAside({
               <p className="text-xs text-slate-500">Sem consulta ou reserva de estoque real.</p>
             </div>
           ))}
-          {itensComProduto.length === 0 && <p className="text-sm text-slate-600">Selecione um produto no editor.</p>}
+          {itensComProduto.length === 0 && (
+            <p className="text-sm text-slate-600" data-block="proposta-produtos-vazio" role="status">
+              Selecione um produto no editor.
+            </p>
+          )}
         </section>
       )}
 
       {panel === 'resumo' && (
-        <section className="space-y-3" aria-label="Resumo e pagamento sintéticos">
+        <section className="space-y-3" aria-label="Resumo e pagamento sintéticos" data-block="proposta-conteudo-resumo">
           <h3 className="font-semibold text-sky-950">Resumo do rascunho</h3>
           <dl className="grid grid-cols-2 gap-2 text-sm bg-white border border-sky-100 rounded-lg p-3">
             <dt>Subtotal</dt>
@@ -149,33 +198,121 @@ export default function OrcamentoProposalAside({
       )}
 
       {panel === 'acoes' && (
-        <section className="space-y-3" aria-label="Ações próximas desabilitadas">
+        <section className="space-y-3" aria-label="Ações próximas desabilitadas" data-block="proposta-conteudo-acoes">
           <h3 className="font-semibold text-sky-950">Ações próximas</h3>
           <p className="text-xs text-slate-600">
             Botões visíveis apenas para layout. Operações reais seguem Orçamento/Pedido canônicos após aprovação visual.
+            Sem conversão, fechamento ou efeitos externos nesta prévia.
           </p>
           <div className="flex flex-col gap-2">
             {[
-              ['Salvar orçamento', 'Gravação bloqueada na prévia sintética'],
-              ['Converter em pedido', 'Conversão canônica desabilitada na prévia'],
-              ['Reservar estoque', 'Sem reserva real nesta demonstração'],
-              ['Enviar WhatsApp', 'Compartilhamento operacional fora da prévia'],
-            ].map(([label, reason]) => (
+              ['Salvar orçamento', 'Gravação bloqueada na prévia sintética', 'salvar-orcamento'],
+              ['Converter em pedido', 'Conversão canônica desabilitada na prévia', 'converter-pedido'],
+              ['Reservar estoque', 'Sem reserva real nesta demonstração', 'reservar-estoque'],
+              ['Enviar WhatsApp', 'Compartilhamento operacional fora da prévia', 'enviar-whatsapp'],
+            ].map(([label, reason, slug]) => (
               <Button
-                key={label}
+                key={slug}
                 type="button"
                 variant="outline"
                 disabled
                 className="justify-start border-sky-200 bg-white text-slate-700"
                 title={reason}
-                data-action={`proposta-acao-${label}`}
+                data-action={`proposta-acao-${slug}`}
+                aria-disabled="true"
               >
                 {label}
               </Button>
             ))}
           </div>
+          <div className="rounded-lg bg-white border border-sky-100 p-3 space-y-2" data-block="proposta-capacidades">
+            <h4 className="font-medium text-sm">Painéis e atalhos (capacidade)</h4>
+            <p className="text-xs text-slate-600">
+              Indicam owners já no ERP — sem abrir modal empilhado nem central paralela.
+            </p>
+            <ul className="space-y-2">
+              {PROPOSTA_CAPACIDADES.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex flex-wrap items-center justify-between gap-2 text-sm border-b border-slate-100 pb-2 last:border-0"
+                  data-capacidade={item.capacidade}
+                  data-capacidade-key={item.key}
+                  data-integracao-pronta={item.capacidade === 'existente' ? 'owner-only' : 'false'}
+                  aria-disabled="true"
+                  title="Indicador de capacidade — sem disparo de integração nesta prévia"
+                >
+                  <span className="min-w-0">
+                    <span className="font-medium text-slate-800">{item.label}</span>
+                    <span className="block text-[11px] text-slate-500 truncate" title={item.owner}>
+                      {item.owner}
+                    </span>
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={
+                      item.capacidade === 'existente'
+                        ? 'border-emerald-300 text-emerald-800 bg-emerald-50'
+                        : item.capacidade === 'parcial'
+                          ? 'border-amber-300 text-amber-900 bg-amber-50'
+                          : 'border-slate-300 text-slate-700 bg-slate-50'
+                    }
+                  >
+                    {CAPACIDADE_LABEL[item.capacidade] || item.capacidade}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
       )}
+
+      <div
+        className="flex flex-wrap gap-2 pt-1 border-t border-sky-100"
+        role="group"
+        aria-label="Navegação de painéis da proposta"
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            goPanelByDelta(-1);
+          } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            goPanelByDelta(1);
+          }
+        }}
+      >
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="bg-white border-sky-200"
+          disabled={panelIndex <= 0}
+          data-action="proposta-voltar"
+          aria-keyshortcuts="ArrowLeft"
+          onClick={() => goPanelByDelta(-1)}
+        >
+          Voltar
+        </Button>
+        <span
+          className="text-xs font-medium text-sky-900 self-center tabular-nums"
+          data-block="proposta-painel-indice"
+          aria-live="polite"
+        >
+          {panelIndex + 1}/{TABS.length}
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="bg-white border-sky-200"
+          disabled={panelIndex >= TABS.length - 1}
+          data-action="proposta-avancar"
+          aria-keyshortcuts="ArrowRight"
+          onClick={() => goPanelByDelta(1)}
+        >
+          Avançar
+        </Button>
+        <p className="text-xs text-slate-500 self-center">Rascunho do editor permanece ao navegar.</p>
+      </div>
     </aside>
   );
 }

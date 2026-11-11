@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, ShoppingCart, FileText, ClipboardList, TrendingUp, ShieldCheck, Truck, Package, AlertCircle } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, ShieldCheck, Truck, Package, AlertCircle, LayoutDashboard } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -24,8 +24,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import useComercialDerivedData from "@/components/comercial/hooks/useComercialDerivedData";
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
-const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
-const OrcamentosTab = React.lazy(() => import("../components/comercial/OrcamentosTab"));
+// PedidosTab permanece para deep-link (CentralCliente360 → PedidoCanonicoPanel); launchpad usa o shell v6.
+const CentralVendas360Shell = React.lazy(() => import("../components/comercial/CentralVendas360Shell"));
 const ComissoesTab = React.lazy(() => import("../components/comercial/ComissoesTab"));
 const NotasFiscaisTab = React.lazy(() => import("../components/comercial/NotasFiscaisTab"));
 const TabelasPrecoTab = React.lazy(() => import("../components/comercial/TabelasPrecoTab"));
@@ -33,6 +33,7 @@ const CentralAprovacoesManager = React.lazy(() => import("../components/comercia
 const PedidosEntregaTab = React.lazy(() => import("../components/comercial/PedidosEntregaTab"));
 const PedidosRetiradaTab = React.lazy(() => import("../components/comercial/PedidosRetiradaTab"));
 const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comercial/MonitoramentoCanaisRealtime"));
+const DashboardFechamentoPedidos = React.lazy(() => import("@/components/comercial/DashboardFechamentoPedidos"));
 
 const reportComercialRealtimeFailure = (operation, error, context = {}) => {
   console.error('[Comercial] ' + operation, {
@@ -337,30 +338,30 @@ function ComercialContent() {
       props: { clientes, isLoading: false }
     },
     {
-      title: 'Orçamentos',
-      sectionKey: 'orcamento',
-      exactPermission: true,
-      description: 'Propostas comerciais',
-      icon: ClipboardList,
-      color: 'blue',
-      component: OrcamentosTab,
-      windowTitle: 'Orçamentos',
-      width: 1500,
-      height: 850,
-      props: { groupId, empresaId, actorId: user?.id, actorEmail: user?.email, empresaAtual, hasPermission, filterInContext, proposalMode:propostaIntegrada }
-    },
-    {
-      title: 'Pedidos',
+      // Decisão 10/11: Pedidos → Central de Vendas360°; Orçamentos deixa de ser tile separado
+      // (orçamentos/pedidos/histórico na Central). PedidosTab/PedidoCanonicoPanel intactos p/ deep-link.
+      title: 'Central de Vendas360°',
       sectionKey: 'pedido',
-      exactPermission: true,
-      description: 'Orçamentos e vendas',
+      accessKeys: ['pedido', 'orcamento'],
+      description: 'Orçamentos, pedidos e Cliente360',
       icon: ShoppingCart,
       color: 'blue',
-      component: PedidosTab,
-      windowTitle: ' Pedidos',
-      width: 1500,
-      height: 850,
-      props: { canonicalHttp: true, groupId, empresaId, actorId: user?.id, actorEmail: user?.email, hasPermission, filterInContext, empresas, empresaAtual }
+      component: CentralVendas360Shell,
+      windowTitle: 'Central de Vendas360°',
+      width: 1600,
+      height: 900,
+      props: {
+        canonicalHttp: true,
+        groupId,
+        empresaId,
+        actorId: user?.id,
+        actorEmail: user?.email,
+        hasPermission,
+        filterInContext,
+        empresas,
+        empresaAtual,
+        proposalMode: propostaIntegrada,
+      }
     },
     {
       title: 'Logística Entrega',
@@ -441,19 +442,50 @@ function ComercialContent() {
       width: 1300,
       height: 750,
       props: { autoRefresh: true }
+    },
+    {
+      title: 'Fechamento',
+      sectionKey: 'Fechamento',
+      description: 'Dashboard de fechamento',
+      icon: LayoutDashboard,
+      color: 'blue',
+      component: DashboardFechamentoPedidos,
+      windowTitle: 'Dashboard de Fechamento',
+      width: 1400,
+      height: 850,
+      props: { empresaId }
     }
   ];
 
   const allowedModules = modules
     .map((m) => ({ ...m, permissionKey: `Comercial.${m.sectionKey || m.title}.visualizar` }))
-    .filter((m) => m.exactPermission
-      ? hasPermission('Comercial', m.sectionKey, 'visualizar')
-      : canViewComercial(m.sectionKey || m.title));
+    .filter((m) => {
+      if (Array.isArray(m.accessKeys) && m.accessKeys.length) {
+        return m.accessKeys.some((key) => hasPermission('Comercial', key, 'visualizar') || canViewComercial(key));
+      }
+      const exact = Boolean(/** @type {{exactPermission?: boolean}} */ (m).exactPermission);
+      return exact
+        ? hasPermission('Comercial', m.sectionKey, 'visualizar')
+        : canViewComercial(m.sectionKey || m.title);
+    });
 
    const handleModuleClick = (module) => {
-    const allowed = module.exactPermission
-      ? hasPermission('Comercial', module.sectionKey, 'visualizar')
-      : canViewComercial(module.sectionKey || module.title);
+    // Proposta visual: só Central de Vendas360° (hospeda orçamentos sintéticos). Demais = operacional.
+    if (propostaIntegrada) {
+      const isCentral = /central\s*de\s*vendas|vendas360/i.test(String(module.title || ''))
+        || /or[cç]amento/i.test(String(module.title || ''))
+        || /or[cç]amento/i.test(String(module.sectionKey || ''));
+      if (!isCentral) {
+        toast.error('Proposta visual — abra apenas a Central de Vendas360° (orçamentos sintéticos).');
+        return;
+      }
+    }
+    const exact = Boolean(/** @type {{exactPermission?: boolean}} */ (module).exactPermission);
+    const allowed = Array.isArray(module.accessKeys) && module.accessKeys.length
+      ? module.accessKeys.some((key) => hasPermission('Comercial', key, 'visualizar') || canViewComercial(key))
+      : (exact
+        ? hasPermission('Comercial', module.sectionKey, 'visualizar')
+        : canViewComercial(module.sectionKey || module.title));
     if (!allowed) {
       auditComercial('comercial_modulo_bloqueado', { modulo: module.title, sectionKey: module.sectionKey || module.title, motivo: 'permissao_negada' }, false);
       toast.error('Sem permissao para visualizar esta area do Comercial.');
@@ -463,7 +495,7 @@ function ComercialContent() {
       auditComercial('comercial_modulo_aberto', { modulo: module.title, sectionKey: module.sectionKey || module.title, entidade: 'Secao', descricao: `Abrir secao: ${module.title}` }, true);
       openWindow(
         module.component,
-        { ...(module.props || {}), windowMode: true },
+        { ...(module.props || {}), windowMode: true, ...(propostaIntegrada ? { proposalMode: true } : {}) },
         {
           title: module.windowTitle,
           width: module.width,
@@ -477,43 +509,75 @@ function ComercialContent() {
   return (
     <ProtectedSection module="Comercial" action="visualizar">
     <ErrorBoundary>
+      <div className="w-full h-full" data-proposta={propostaIntegrada ? 'comercial360' : undefined}>
       <ModuleLayout
               title="Comercial e Vendas"
-              subtitle={propostaIntegrada ? "Proposta visual: abra Orçamentos → Novo orçamento. Demonstração sintética, sem gravação." : "Vendas, clientes e canais"}
-              actions={<div className="flex items-center gap-2">
+              subtitle={propostaIntegrada ? "Proposta visual Comercial360: Central de Vendas360° · Orçamentos A lista → B edição → C acompanhamento (sintético, sem gravação)." : "Vendas, clientes e canais"}
+              actions={<div className="flex items-center gap-2" data-block={propostaIntegrada ? 'proposta-acoes-topo' : undefined}>
                 <ProtectedSection module="Comercial" section="Pedidos" action="criar">
-                  <Button data-permission="Comercial.Pedidos.criar" data-sensitive onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
+                  <Button
+                    data-permission="Comercial.Pedidos.criar"
+                    data-sensitive
+                    data-action={propostaIntegrada ? 'proposta-pedido-bloqueado' : undefined}
+                    disabled={propostaIntegrada}
+                    aria-disabled={propostaIntegrada || undefined}
+                    title={propostaIntegrada ? 'Proposta visual — sem criar pedido operacional' : undefined}
+                    onClick={handleCreateNewPedido}
+                    className="bg-indigo-600 hover:bg-indigo-700"
+                  >Novo Pedido</Button>
                 </ProtectedSection>
                 <ProtectedSection module="Comercial" section="Pedidos" action="visualizar">
                   <Button
                     data-permission="Comercial.Pedidos.visualizar"
                     variant="outline"
+                    data-action={propostaIntegrada ? 'proposta-externo-bloqueado' : undefined}
+                    disabled={propostaIntegrada}
+                    aria-disabled={propostaIntegrada || undefined}
+                    title={propostaIntegrada ? 'Proposta visual — validação externa desabilitada' : undefined}
                     onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
                   >Validar Pedido Externo</Button>
                 </ProtectedSection>
               </div>}
             >
               <ModuleKPIs>
-                <KPIsComercial
-                  totalClientes={clientesFiltrados.length}
-                  clientesAtivos={clientesAtivos}
-                  totalPedidos={pedidosFiltrados.length}
-                  totalVendas={totalVendas}
-                  ticketMedio={ticketMedio}
-                />
-                {pedidosExternosPendentes > 0 && (
-                  <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
-                    <AlertCircle className="w-3 h-3 mr-2" />
-                    {pedidosExternosPendentes} pedido(s) externo(s) a validar
+                {propostaIntegrada ? (
+                  <div className="flex flex-wrap items-center gap-2" data-block="proposta-kpis-shell">
+                  <Badge
+                    className="bg-sky-100 text-sky-900 px-3 py-2 text-sm font-medium"
+                    data-block="proposta-kpis-sinteticos"
+                    role="status"
+                  >
+                    Proposta visual — KPIs operacionais ocultos (sem consulta de totais reais)
                   </Badge>
+                  <p className="text-xs text-slate-600" data-block="proposta-fluxo-hint" role="note">
+                    Entrada liberada: Central de Vendas360° (orçamentos) · A lista → B edição → C acompanhamento · <code>?proposta=comercial360</code>
+                  </p>
+                  </div>
+                ) : (
+                  <>
+                    <KPIsComercial
+                      totalClientes={clientesFiltrados.length}
+                      clientesAtivos={clientesAtivos}
+                      totalPedidos={pedidosFiltrados.length}
+                      totalVendas={totalVendas}
+                      ticketMedio={ticketMedio}
+                    />
+                    {pedidosExternosPendentes > 0 && (
+                      <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
+                        <AlertCircle className="w-3 h-3 mr-2" />
+                        {pedidosExternosPendentes} pedido(s) externo(s) a validar
+                      </Badge>
+                    )}
+                  </>
                 )}
               </ModuleKPIs>
               <ModuleContent>
                 <ModuleTabs
-                  listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} />}
+                  listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} proposalMode={propostaIntegrada} />}
                 />
               </ModuleContent>
             </ModuleLayout>
+      </div>
     </ErrorBoundary>
     </ProtectedSection>
   );

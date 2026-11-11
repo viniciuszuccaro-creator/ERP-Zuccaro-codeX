@@ -1,0 +1,55 @@
+#591 — Parecer 6746649125 (recebido) + locais canônicos + documento UI
+America/Sao_Paulo 2026-11-09 · sem PII
+
+RECEBIMENTO
+- Parecer Codex/coord 6746649125: formatos inválidos / campos ricos não podem
+  desaparecer em silêncio no payload HTTP Cliente.
+- Tip peels lista/Completo: 89eabf78 CI SUCCESS (frontend peels).
+- Freeze HML: 0afd378f284 — tip API+web só com acordo; ~100 clientes já na :15173.
+
+DESCARTE SILENCIOSO → FAIL-CLOSED (clienteHttpPayload)
+- endereco_principal significativo → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+- condicao_comercial significativa (limite/desconto/ids) → idem
+- vendedor/indicador/região/rg com valor → idem
+- locais_entrega[] / documentos[] não vazios → idem (já existia)
+- tipo inválido / origem fora do enum → erro (não delete silencioso)
+- Defaults vazios do Completo NÃO bloqueiam MASTER (só valor significativo)
+- Mensagem: valores preservados no rascunho; sem storage paralelo
+
+DOCUMENTO / IDENTIFICAÇÃO (projeção, sem reimport)
+- Codex confirmou documento persistido nos ~100
+- hydrateClienteHttpRowForUi: documento→cpf/cnpj (zeros); tipo PF/PJ se ausente
+- Grade Bloco1/ClientesTab + V24 variants; Completo mapToForm
+- Não inventa nome genérico; razao_social/nome_fantasia preservados do MASTER
+
+CONTRATO LOCAIS (completar, não só bloquear) — FECHADO NESTE TIP
+- Proprietário canônico BFF: GET/POST/PATCH/DELETE + finalidades
+  /api/v1/clientes/:id/locais (clienteLocalService) — reutilizado
+- UI Completo: listLocais → locaisViewForUi; Salvar → syncClienteLocaisViaHttp
+  (MASTER sem locais_entrega; entrega≠cadastral)
+- Soft-delete só com baseline carregado; carga falhou → null baseline → sem wipe
+- Extras UI (horário/contato/mapa) significativos → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+  (sem drop; extensão BFF futura)
+- Sem ContatoClienteV2 / storage paralelo
+
+BASE44 (MCP Base acessível neste ambiente)
+- Shape confirmado: Contatos[] ricos; locais_entrega com horário/contato
+- Sem PII commitado; recuperação visual/campos via contrato, não dump
+
+CONTATOS RICOS / DOCUMENTOS (próximo com Codex — sem ContatoClienteV2)
+- MASTER HTTP: escalares email/telefone/celular; Celular≠WhatsApp
+- contatos[] com nome/obs/múltiplos → CONTATOS_SCALAR_OVERFLOW (fail-closed)
+- documentos[] não vazios → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+- Proprietário canônico proposto: coluna jsonb ou tabela filha no BFF
+  (docs/evidence/contatos-fidelidade-353-*) — Cursor não inventa storage paralelo
+- Aceite pack: docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt
+
+TESTES
+- cliente-locais-sync-http-591 (omit/partial/baseline)
+- cliente-http-descarte-silencioso-591
+- cadastro-query-payload-boundaries (peels Completo + mutationFn)
+- http-api-client / financial peels
+- tip **d1b08f96** CI SUCCESS; peels **14005f39**
+
+FORA
+merge · deploy VPS · dados reais no GitHub · recreate clientes · enfraquecer validação · ContatoClienteV2

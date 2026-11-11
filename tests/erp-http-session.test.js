@@ -58,7 +58,14 @@ test('fachada Base44 real em HTTP encaminha entityGuard somente ao BFF, sem fall
       runHttpPilotAwareCountEntities: async () => ({ data: { counts: {} } }),
     },
     './httpApiClient.js': { createHttpApiClient: () => ({ entities: {}, entityGuard: async payload => { backendCalls++; assert.equal(payload.module, 'Comercial'); throw new Error('Bearer rejected'); } }) },
-    './runtimeBackend.js': { HTTP_PILOT_ENTITIES: [], isHttpExpedicaoEnabled: () => false, resolveErpApiBaseUrl: () => '', resolveErpBackendMode: () => 'http', resolveHttpPilotEntities: () => [] },
+    './runtimeBackend.js': {
+      HTTP_PILOT_ENTITIES: [],
+      isHttpExpedicaoEnabled: () => false,
+      isHttpClienteListEnabled: () => false,
+      resolveErpApiBaseUrl: () => '',
+      resolveErpBackendMode: () => 'http',
+      resolveHttpPilotEntities: () => [],
+    },
   });
   await assert.rejects(facade.base44.functions.invoke('entityGuard', { module: 'Comercial' }), /Bearer rejected/);
   assert.equal(backendCalls, 1); assert.equal(localCalls, 0);
@@ -494,6 +501,134 @@ test('admin exclusivo de filial não recebe operação no Grupo nem outra empres
   assert.equal(buildHttpSessionUser(session).pode_operar_em_grupo, false);
   assert.throws(() => switchErpHttpSessionEmpresa({ storage, empresaId: null }), /Grupo/);
   assert.throws(() => switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_B }), /não autorizada/);
+});
+
+test('HML: user com empresa_id NULL opera no próprio Grupo sem promover a admin', async () => {
+  const storage = memoryStorage();
+  const empresas = [
+    { id: EMPRESA_A, group_id: GROUP, razao_social: 'CPA Filial A', status: 'Ativa' },
+    { id: EMPRESA_B, group_id: GROUP, razao_social: 'CPA Filial B', status: 'Ativa' },
+  ];
+  const OTHER_GROUP = '66666666-6666-4666-8666-666666666666';
+  const OTHER_EMPRESA = '77777777-7777-4777-8777-777777777777';
+
+  // Login real HML: perfil user, empresa_id null, duas empresas aprovadas.
+  const loginStorage = memoryStorage();
+  const origLocal = globalThis.localStorage;
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: loginStorage });
+  let login;
+  try {
+    login = await loginErpHttpSession({
+      email: 'operador@cpa.example',
+      password: 'senha-forte-123',
+      baseUrl: '',
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        async json() {
+          return {
+            data: {
+              access_token: 'tok-hml-user',
+              expires_in: 3600,
+              user: { id: ACTOR, email: 'operador@cpa.example' },
+              profiles: [{
+                id: ACTOR,
+                group_id: GROUP,
+                group_name: 'Grupo CPA',
+                empresa_id: null,
+                role: 'user',
+                full_name: 'Operador CPA',
+                empresas,
+                permissoes: { Cadastros: { Cliente: ['visualizar'] } },
+              }],
+            },
+          };
+        },
+      }),
+    });
+  } finally {
+    if (origLocal === undefined) delete globalThis.localStorage;
+    else Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: origLocal });
+  }
+
+  assert.equal(login.role, 'user');
+  assert.equal(login.scopeType, 'grupo');
+  assert.equal(login.empresaId, null);
+  assert.equal(login.user.pode_operar_em_grupo, true);
+  assert.equal(login.user.role, 'user');
+  assert.equal(login.user.grupo_atual_id, GROUP);
+  assert.equal(login.user.empresa_atual_id, null);
+
+  // Sessão ativa em empresa → volta ao Grupo (próprio) e troca entre empresas autorizadas.
+  persistErpHttpSession({
+    accessToken: 'tok-hml-user',
+    actorId: ACTOR,
+    groupId: GROUP,
+    groupName: 'Grupo CPA',
+    empresaId: EMPRESA_A,
+    role: 'user',
+    empresas,
+    profileEmpresaId: null,
+    scopeType: 'empresa',
+    storage,
+  });
+  const ui = buildHttpSessionUser({
+    ...readErpHttpSession(storage),
+    profileEmpresaId: null,
+    permissoes: { Cadastros: { Cliente: ['visualizar'] } },
+  });
+  assert.equal(ui.pode_operar_em_grupo, true);
+  assert.equal(ui.role, 'user');
+
+  const asGroup = switchErpHttpSessionEmpresa({ storage, empresaId: null });
+  assert.equal(asGroup.scopeType, 'grupo');
+  assert.equal(asGroup.empresaId, null);
+
+  const asB = switchErpHttpSessionEmpresa({ storage, empresaId: EMPRESA_B });
+  assert.equal(asB.empresaId, EMPRESA_B);
+
+  assert.throws(
+    () => switchErpHttpSessionEmpresa({ storage, empresaId: OTHER_EMPRESA }),
+    /não autorizada/,
+  );
+
+  // Refresh preserva visão Grupo para perfil user com empresa_id null.
+  persistErpHttpSession({
+    accessToken: 'tok-hml-user',
+    actorId: ACTOR,
+    groupId: GROUP,
+    empresaId: null,
+    role: 'user',
+    empresas,
+    profileEmpresaId: null,
+    scopeType: 'grupo',
+    storage,
+  });
+  const refreshed = await refreshErpHttpSessionFromServer({
+    storage,
+    baseUrl: '',
+    fetchImpl: async () => ({
+      ok: true,
+      json: async () => ({
+        data: {
+          user: { email: 'operador@cpa.example' },
+          profiles: [{
+            id: ACTOR,
+            group_id: GROUP,
+            group_name: 'Grupo CPA',
+            empresa_id: null,
+            role: 'user',
+            empresas,
+            permissoes: { Cadastros: { Cliente: ['visualizar'] } },
+          }],
+        },
+      }),
+    }),
+  });
+  assert.equal(refreshed.scopeType, 'grupo');
+  assert.equal(refreshed.empresaId, null);
+  assert.equal(buildHttpSessionUser(refreshed).pode_operar_em_grupo, true);
+  assert.notEqual(refreshed.groupId, OTHER_GROUP);
 });
 
 test('persistErpHttpSession espelha cnpj das empresas do perfil (edit Cadastros)', () => {

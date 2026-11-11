@@ -1,0 +1,14 @@
+#591 — CI SUCCESS tip ae0773f4 + b28fedaf
+America/Sao_Paulo 2026-11-10 · sem PII
+
+VERDE CONFIRMADO
+- a51f162d — fix 347 proposta-nova-negociacao
+- ae0773f4 — proposta bloqueia módulos operacionais
+- b28fedaf — KPIs operacionais ocultos na proposta
+
+IN_PROGRESS (pós-push)
+- 7d24f0f1 — docs status
+- 31b66b6e — LaunchpadCard disabled na proposta
+
+Homolog: 77f11b28 · freeze 0afd378f284
+ContatoB2B: (b) bloqueada sem FK

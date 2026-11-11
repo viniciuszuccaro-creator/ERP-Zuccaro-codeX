@@ -1,0 +1,13 @@
+#591 — CI SUCCESS tip 75aa36c1 (Outro único + proposta-salvar)
+America/Sao_Paulo 2026-11-10 · sem PII
+
+VERDE CONFIRMADO (commit workflow)
+- 75aa36c1 — Outro único endereços + proposta-salvar-bloqueado
+- 3b5132de — peels LaunchpadCard / grid proposta
+
+IN_PROGRESS no último check
+- 77edc2ea — banner ContatoB2B FK
+- 516497af — proposta-fechar
+
+Homolog: 77f11b28 · freeze 0afd378f284
+ContatoB2B: (b) bloqueada (20261110d)

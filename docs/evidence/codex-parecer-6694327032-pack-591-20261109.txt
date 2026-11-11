@@ -1,0 +1,481 @@
+CODEx — parecer 6694327032 / PR #591 (recebido e respondido)
+============================================================
+America/Sao_Paulo 2026-11-09
+Canal: HANDOFF + este pacote (sem retransmissão do proprietário).
+
+RECEBIMENTO EXPLICITO
+- Pedido Codex 6694327032: ports f51376fa / 2f588154 / 9b5de2bc;
+  HTTP sem fallback local silencioso; parcial ≠ total confirmado.
+- Status: FECHADO no tip código abaixo (CI SUCCESS push+PR).
+
+PUBLICACAO ≠ INTEGRACAO
+- PR #591 (publicação): tip docs 0385c2d2 / tip código HML 0afd378f
+- PR #401 (candidata): tip 5d9a7e37 — NÃO integrada neste lote
+
+SNAPSHOT FIXO PARA HOMOLOG HML (API+web mesma versão)
+-----------------------------------------------------
+git checkout 0afd378f284d8693b859477fa532b54a2367527f
+Não alterar este snapshot durante o teste sem coordenação.
+Tip docs 0385c2d2 = mesmo runtime + STATUS/HANDOFF/pacote.
+
+CI
+--
+código 0afd378f: SUCCESS push+PR (erp-runtime-ci)
+docs 0385c2d2: SUCCESS push; PR recheck em andamento
+
+DIFFSTAT c80cf05c..0afd378f
+---------------------------
+ STATUS_DO_PROJETO.md                               | 15 ++++
+ docs/HANDOFF_ATUAL.md                              |  9 +++
+ server/src/db/client.ts                            |  9 ++-
+ server/src/services/authSessionService.ts          |  3 +-
+ server/src/services/fornecedorService.ts           |  3 +
+ server/tests/auth-data-connection.test.ts          | 27 +++++++
+ server/tests/auth-session-http-exact.test.ts       | 34 ++++++++-
+ server/tests/fornecedor-import.test.ts             | 36 +++++++++
+ src/api/base44Client.js                            |  8 ++
+ .../cadastros/CountBadgeSimplificado.jsx           | 31 ++++++--
+ src/components/cadastros/blocks/Bloco1Pessoas.jsx  | 11 ++-
+ src/components/cadastros/blocks/Bloco2Produtos.jsx | 13 +++-
+ .../cadastros/blocks/Bloco3Financeiro.jsx          | 11 ++-
+ .../cadastros/blocks/Bloco4Logistica.jsx           | 11 ++-
+ .../cadastros/blocks/Bloco5Organizacional.jsx      | 11 ++-
+ .../cadastros/blocks/Bloco6Tecnologia.jsx          | 11 ++-
+ .../cadastros/hooks/cadastrosAllCountsCore.js      | 34 +++++++--
+ src/components/lib/useEntityCounts.jsx             | 23 ++++--
+ src/pages/Cadastros.jsx                            | 12 +--
+ tests/count-layout-prop-types.test.js              |  9 ++-
+ tests/helpers/consolidation81Remainder.js          |  5 ++
+ tests/hml-591-review-findings.test.js              | 85 ++++++++++++++++++++++
+ 22 files changed, 359 insertions(+), 52 deletions(-)
+
+ARQUIVOS CORE DO PARECER
+------------------------
+server/src/db/client.ts — sharedAuthPool / preflight (f51376fa)
+server/src/services/authSessionService.ts — Grupo granular (2f588154)
+server/src/services/fornecedorService.ts — Object.freeze(ctx) (9b5de2bc)
+src/api/base44Client.js — UPSERT_CONFIG_HTTP_UNAVAILABLE
+src/components/lib/useEntityCounts.jsx — total null + countsUnavailable
+src/components/cadastros/CountBadgeSimplificado.jsx — missing → —
+src/components/cadastros/hooks/cadastrosAllCountsCore.js — counts:{} ≠ complete
+tests/helpers/consolidation81Remainder.js — hunk autorizado (pins preservados)
+tests/hml-591-review-findings.test.js — contraprovas
+
+TESTES (não enfraquecer assertions)
+-----------------------------------
+node --test tests/hml-591-review-findings.test.js
+node --test tests/count-layout-prop-types.test.js
+node --test tests/bank-history-analysis.test.js tests/context-stamp-lazy-contracts.test.js tests/guard-session-http-ia-consolidacao.test.js
+cd server && npm test -- tests/auth-data-connection.test.ts tests/auth-session-http-exact.test.ts tests/fornecedor-import.test.ts
+
+PRESERVACOES OBRIGATORIAS
+-------------------------
+- Grupo: empresaId null + permissão; sem admin-only; negar escopos alheios
+- Pool Auth compartilhado quando URL idêntica; socket NULL não compara address
+- Fornecedor: freeze ctx antes de await em importar/get/softDelete
+- HTTP upsertConfig: throw UPSERT_CONFIG_HTTP_UNAVAILABLE (sem local)
+- Contagem parcial/missing → — ; total confirmado só com complete
+
+DIFF CORE (patch)
+-----------------
+diff --git a/server/src/db/client.ts b/server/src/db/client.ts
+index 7f850e5d..4e10224a 100644
+--- a/server/src/db/client.ts
++++ b/server/src/db/client.ts
+@@ -140,14 +140,15 @@ export function createDbClient(config: AppConfig): DbClient {
+   return createPoolDbClient(pool);
+ }
+ 
+-/** Two explicit connections; only verified Auth bootstrap can use authDb. No role is created or changed. */
++/** Explicit Auth bootstrap target; identical URLs share a pool, not an inferred socket identity. */
+ export async function createRuntimeDbClients(config: AppConfig, factory = createDbClient) {
+   const db = factory(config);
+   if (!config.authDatabaseUrl) return { db, authDb: db, end: () => db.end() };
++  const sharedAuthPool = config.authDatabaseUrl === config.databaseUrl;
+   let authDb: DbClient | undefined;
+-  const close = async () => { await Promise.allSettled([db.end(), ...(authDb ? [authDb.end()] : [])]); };
++  const close = async () => { await Promise.allSettled([db.end(), ...(authDb && authDb !== db ? [authDb.end()] : [])]); };
+   try {
+-    authDb = factory({ ...config, databaseUrl: config.authDatabaseUrl, authDatabaseUrl: undefined });
++    authDb = sharedAuthPool ? db : factory({ ...config, databaseUrl: config.authDatabaseUrl, authDatabaseUrl: undefined });
+     type Identity = { database: string; schema: string; address: string | null; port: number | null;
+       rolsuper: boolean; rolbypassrls: boolean; login_super: boolean; login_bypass: boolean };
+     const sql = `SELECT current_database() AS database, current_schema() AS schema,
+@@ -163,7 +164,7 @@ export async function createRuntimeDbClients(config: AppConfig, factory = create
+       throw new Error('AUTH_DATABASE_ROLE_UNSAFE');
+     }
+     if (!row.database || !row.schema || row.database !== auth.database || row.schema !== auth.schema
+-      || !row.address || !auth.address || row.address !== auth.address || !row.port || row.port !== auth.port) {
++      || (!sharedAuthPool && (!row.address || !auth.address || row.address !== auth.address || !row.port || row.port !== auth.port))) {
+       throw new Error('AUTH_DATA_DATABASE_IDENTITY_MISMATCH');
+     }
+     return { db, authDb, end: close };
+diff --git a/server/src/services/authSessionService.ts b/server/src/services/authSessionService.ts
+index d03d5947..2c855fb4 100644
+--- a/server/src/services/authSessionService.ts
++++ b/server/src/services/authSessionService.ts
+@@ -32,7 +32,8 @@ export function resolveSessionEntityGuard(profiles: AuthSessionProfile[], payloa
+   const groupView = guard.empresa_id === null;
+   if (guard.scope_type && ['group', 'grupo'].includes(guard.scope_type) !== groupView) return false;
+   if (groupView) {
+-    if (profile.empresaId !== null || profile.role !== 'admin') return false;
++    // Grupo: perfil com empresaId null + permissão explícita (não exige role admin).
++    if (profile.empresaId !== null) return false;
+   } else if (!profile.empresas.some(e => e.id === guard.empresa_id)
+     || (profile.empresaId !== null && profile.empresaId !== guard.empresa_id)) return false;
+   return permissionViewAllows(profile.permissoes, guard.module, guard.section ?? null, guard.action);
+diff --git a/server/src/services/fornecedorService.ts b/server/src/services/fornecedorService.ts
+index 18c872dc..97f2fcf3 100644
+--- a/server/src/services/fornecedorService.ts
++++ b/server/src/services/fornecedorService.ts
+@@ -27,6 +27,7 @@ export class FornecedorService {
+     await this.rbac.assertAllowed(ctx, 'Cadastros', 'fornecedor', action, { allowGlobalWildcard: false, executor: q });
+   }
+   async importar(ctx: RequestContext, payload: unknown) {
++    ctx = Object.freeze({ ...ctx });
+     await this.authorize(ctx, 'importar');
+     await this.authorize(ctx, 'criar');
+     const parsed = fornecedorImportSchema.safeParse(payload);
+@@ -62,6 +63,7 @@ export class FornecedorService {
+     });
+   }
+   async get(ctx: RequestContext, id: string) {
++    ctx = Object.freeze({ ...ctx });
+     await this.authorize(ctx, 'visualizar'); uuid.parse(id);
+     return this.repo.db.withTransaction(async q => {
+       await this.authorize(ctx, 'visualizar', q);
+@@ -71,6 +73,7 @@ export class FornecedorService {
+     });
+   }
+   async softDelete(ctx: RequestContext, id: string, expectedRevision: number, source: string, batch: string, expectedFingerprint: string) {
++    ctx = Object.freeze({ ...ctx });
+     await this.authorize(ctx, 'inativar'); uuid.parse(id); uuid.parse(batch);
+     z.number().int().positive().parse(expectedRevision);
+     z.string().regex(/^[a-f0-9]{64}$/).parse(expectedFingerprint);
+diff --git a/src/api/base44Client.js b/src/api/base44Client.js
+index 8acc9622..941da540 100644
+--- a/src/api/base44Client.js
++++ b/src/api/base44Client.js
+@@ -244,6 +244,14 @@ function createHttpHybridClient() {
+             });
+           }
+         }
++        // Parecer 6694327032: em HTTP, upsertConfig não pode gravar no store local
++        // e fingir sucesso remoto. Modo local explícito permanece em resolveBase44Client.
++        if (name === 'upsertConfig') {
++          throw Object.assign(new Error('UPSERT_CONFIG_HTTP_UNAVAILABLE'), {
++            code: 'UPSERT_CONFIG_HTTP_UNAVAILABLE',
++            status: 503,
++          });
++        }
+         return localBase44.functions.invoke(name, payload);
+       },
+     },
+diff --git a/src/components/cadastros/CountBadgeSimplificado.jsx b/src/components/cadastros/CountBadgeSimplificado.jsx
+index c0dd4f10..728a08f0 100644
+--- a/src/components/cadastros/CountBadgeSimplificado.jsx
++++ b/src/components/cadastros/CountBadgeSimplificado.jsx
+@@ -11,22 +11,36 @@ import useEntityCounts from "@/components/lib/useEntityCounts";
+  * Só faz fetch interno quando allCounts NÃO foi fornecido pelo pai.
+  * isLoading (prop do pai) controla o estado de carregamento visual.
+  */
+-/** @param {{entities?: string | string[], className?: string, precomputedTotal?: number,
+- * allCounts?: Record<string, unknown>, isLoading?: boolean}} props */
+-export default function CountBadgeSimplificado({ entities = [], className = "", precomputedTotal, allCounts, isLoading: isLoadingProp }) {
++/** @param {{entities?: string | string[], className?: string, precomputedTotal?: number|null,
++ * allCounts?: Record<string, unknown>, missing?: string[], isLoading?: boolean}} props */
++export default function CountBadgeSimplificado({ entities = [], className = "", precomputedTotal, allCounts, missing, isLoading: isLoadingProp }) {
+   const list = Array.isArray(entities) ? entities.filter(Boolean) : [entities].filter(Boolean);
++  const missingSet = new Set(Array.isArray(missing) ? missing : []);
+ 
+   // Se allCounts foi fornecido pelo pai, não faz fetch próprio (evita burst de 429s)
+   const hasParentCounts = allCounts !== undefined;
+-  const { total: fetched, isLoading: isLoadingInternal } = useEntityCounts(hasParentCounts ? [] : list);
++  const {
++    total: fetched,
++    isLoading: isLoadingInternal,
++    countsUnavailable: fetchedUnavailable,
++  } = useEntityCounts(hasParentCounts ? [] : list);
+ 
+   let total;
++  let unavailable = false;
+   if (precomputedTotal !== undefined) {
+     total = precomputedTotal;
++    unavailable = precomputedTotal == null;
+   } else if (hasParentCounts) {
+-    total = list.reduce((s, e) => s + (Number(allCounts[e]) || 0), 0);
++    // Chave ausente / missing explícito ≠ zero confirmado.
++    unavailable = list.some((e) => (
++      missingSet.has(e) || !Object.prototype.hasOwnProperty.call(allCounts || {}, e)
++    ));
++    total = unavailable
++      ? null
++      : list.reduce((s, e) => s + (Number(allCounts[e]) || 0), 0);
+   } else {
+     total = fetched;
++    unavailable = Boolean(fetchedUnavailable) || total == null;
+   }
+ 
+   const isLoading = isLoadingProp || isLoadingInternal;
+@@ -37,11 +51,14 @@ export default function CountBadgeSimplificado({ entities = [], className = "",
+     <Badge
+       variant="outline"
+       className={`ml-1 rounded-sm bg-slate-100 text-slate-600 border-slate-300 text-xs font-semibold tabular-nums shrink-0 ${className}`}
++      title={unavailable ? 'Contagem indisponível' : undefined}
+     >
+-      {(isLoading && total === 0) ? (
++      {isLoading && (total === 0 || total == null) ? (
+         <span className="animate-pulse opacity-60">···</span>
++      ) : unavailable ? (
++        '—'
+       ) : (
+-        total.toLocaleString("pt-BR")
++        Number(total).toLocaleString("pt-BR")
+       )}
+     </Badge>
+   );
+diff --git a/src/components/cadastros/hooks/cadastrosAllCountsCore.js b/src/components/cadastros/hooks/cadastrosAllCountsCore.js
+index c6857011..8cfaf113 100644
+--- a/src/components/cadastros/hooks/cadastrosAllCountsCore.js
++++ b/src/components/cadastros/hooks/cadastrosAllCountsCore.js
+@@ -145,12 +145,30 @@ export async function fetchCadastrosAllCounts({
+   for (let i = 0; i < pending.length; i += BATCH) {
+     const slice = pending.slice(i, i + BATCH);
+     if (i > 0) await new Promise((r) => setTimeout(r, 0));
++    let sliceComplete = false;
+     try {
+       const res = await invoke('countEntities', { entities: slice });
+       const raw = res?.data?.counts || res?.data || {};
+-      if (raw && typeof raw === 'object') {
+-        Object.assign(result, /** @type {Record<string, unknown>} */ (raw));
+-        continue;
++      if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
++        // counts:{} ou chaves omitidas NÃO contam como fatia completa — isola ausentes.
++        sliceComplete = slice.every((row) => (
++          Object.prototype.hasOwnProperty.call(raw, row.entityName)
++          && isValidCountValue(/** @type {Record<string, unknown>} */ (raw)[row.entityName])
++        ));
++        if (sliceComplete) {
++          for (const row of slice) {
++            result[row.entityName] = /** @type {Record<string, unknown>} */ (raw)[row.entityName];
++          }
++          continue;
++        }
++        for (const row of slice) {
++          if (
++            Object.prototype.hasOwnProperty.call(raw, row.entityName)
++            && isValidCountValue(/** @type {Record<string, unknown>} */ (raw)[row.entityName])
++          ) {
++            result[row.entityName] = /** @type {Record<string, unknown>} */ (raw)[row.entityName];
++          }
++        }
+       }
+     } catch (sliceError) {
+       if (typeof console !== 'undefined') {
+@@ -158,14 +176,20 @@ export async function fetchCadastrosAllCounts({
+       }
+     }
+     for (const row of slice) {
++      if (Object.prototype.hasOwnProperty.call(result, row.entityName) && isValidCountValue(result[row.entityName])) {
++        continue;
++      }
+       try {
+         const one = await invoke('countEntities', {
+           entities: [{ entityName: row.entityName, filter: row.filter }],
+         });
+         const rawOne = one?.data?.counts || one?.data || {};
+         if (rawOne && typeof rawOne === 'object' && Object.prototype.hasOwnProperty.call(rawOne, row.entityName)) {
+-          result[row.entityName] = /** @type {Record<string, unknown>} */ (rawOne)[row.entityName];
+-          continue;
++          const v = /** @type {Record<string, unknown>} */ (rawOne)[row.entityName];
++          if (isValidCountValue(v)) {
++            result[row.entityName] = v;
++            continue;
++          }
+         }
+         // Formato single: { count: n }
+         const n = one?.data?.count;
+diff --git a/src/components/lib/useEntityCounts.jsx b/src/components/lib/useEntityCounts.jsx
+index 76ff20e6..79a6a850 100644
+--- a/src/components/lib/useEntityCounts.jsx
++++ b/src/components/lib/useEntityCounts.jsx
+@@ -164,18 +164,29 @@ export function useEntityCounts(entities = []) {
+     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
+   }, [entitiesKey, queryClient]);
+ 
+-  const total = useMemo(
+-    () => (isError ? null : normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0)),
+-    [counts, normalized, isError]
+-  );
++  const countsSafe = isError ? {} : (counts || {});
++  const complete = !isError
++    && normalized.length > 0
++    && normalized.every((e) => (
++      Object.prototype.hasOwnProperty.call(countsSafe, e)
++      && typeof countsSafe[e] === 'number'
++      && Number.isSafeInteger(countsSafe[e])
++      && countsSafe[e] >= 0
++    ));
++  // Parcial ≠ total confirmado: ausência/falha não vira 0.
++  const total = useMemo(() => {
++    if (isError || !normalized.length) return isError ? null : 0;
++    if (!complete) return null;
++    return normalized.reduce((acc, e) => acc + countsSafe[e], 0);
++  }, [countsSafe, normalized, isError, complete]);
+ 
+   return {
+-    counts: isError ? {} : (counts || {}),
++    counts: countsSafe,
+     total,
+     isLoading,
+     isError,
+     error: error || null,
+-    countsUnavailable: Boolean(isError),
++    countsUnavailable: Boolean(isError) || (!isLoading && normalized.length > 0 && !complete),
+   };
+ }
+ 
+diff --git a/tests/count-layout-prop-types.test.js b/tests/count-layout-prop-types.test.js
+index 1be0d5b0..f83d3fb3 100644
+--- a/tests/count-layout-prop-types.test.js
++++ b/tests/count-layout-prop-types.test.js
+@@ -9,7 +9,8 @@ import {renderToStaticMarkup} from 'react-dom/server';
+ 
+ const count='src/components/cadastros/CountBadgeSimplificado.jsx';
+ const layout='src/components/layout/ModuleLayout.jsx';
+-for(const [file,hash] of [[count,'f7561ff0edd370a410f1a567fccedffde95a909ab2f943ce66f6c5b55a143791'],[layout,'0005123730c26391d72f8a52884985ba244ce092f71493c908b8e5be95defbdc']])test(`${file}: full executable runtime unchanged`,()=>{
++// Hash CountBadge: chave ausente/missing → "—" (achado parcial≠zero / #591).
++for(const [file,hash] of [[count,'dbb4408fb580b2dcd9a026d223ba8a0f3fc583575d0a3d958ed763f39042b749'],[layout,'0005123730c26391d72f8a52884985ba244ce092f71493c908b8e5be95defbdc']])test(`${file}: full executable runtime unchanged`,()=>{
+   const emitted=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
+   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),hash);
+ });
+@@ -25,12 +26,14 @@ function badge(result={total:0,isLoading:false}){
+   return {Component,calls};
+ }
+ 
+-test('parent counts, including an empty object, disable internal entity requests and preserve numeric coercion',()=>{
++test('parent counts disable internal fetch; missing keys show unavailable, not coerced zero',()=>{
+   const {Component,calls}=badge({total:999,isLoading:false});
+   const populated=render(Component,{entities:['Cliente','Produto'],allCounts:{Cliente:'2',Produto:3}});
+   assert.match(populated,/>5<\/span>/);assert.deepEqual(calls,[[]]);
+   const empty=render(Component,{entities:'Cliente',allCounts:{}});
+-  assert.match(empty,/>0<\/span>/);assert.deepEqual(calls,[[],[]]);
++  assert.match(empty,/>—<\/span>/);assert.deepEqual(calls,[[],[]]);
++  const partial=render(Component,{entities:['Cliente','Marca'],allCounts:{Cliente:12},missing:['Marca']});
++  assert.match(partial,/>—<\/span>/);
+ });
+ 
+ test('precomputed zero retains precedence without changing the existing hook invocation',()=>{
+diff --git a/tests/helpers/consolidation81Remainder.js b/tests/helpers/consolidation81Remainder.js
+index b9e25940..dd55c608 100644
+--- a/tests/helpers/consolidation81Remainder.js
++++ b/tests/helpers/consolidation81Remainder.js
+@@ -5,6 +5,11 @@ export const consolidation81Hunks={
+   "src/api/base44Client.js": {
+     "hash": "5f36584a17fce4cfe46b1298942caae2575dd7866e77ff0a20d9c8daa4e16b6b",
+     "hunks": [
++      [
++        // Achado 6694327032 / #591: HTTP não grava upsertConfig no store local.
++        "        }\n        // Parecer 6694327032: em HTTP, upsertConfig não pode gravar no store local\n        // e fingir sucesso remoto. Modo local explícito permanece em resolveBase44Client.\n        if (name === 'upsertConfig') {\n          throw Object.assign(new Error('UPSERT_CONFIG_HTTP_UNAVAILABLE'), {\n            code: 'UPSERT_CONFIG_HTTP_UNAVAILABLE',\n            status: 503,\n          });\n        }\n        return localBase44.functions.invoke(name, payload);",
++        "        }\n        return localBase44.functions.invoke(name, payload);"
++      ],
+       [
+         "} from './localAuthSessionPolicy.js';\nimport { createHttpApiClient } from './httpApiClient.js';\nimport { HTTP_CONTEXT_CHANGED } from './erpHttpSession.js';\nimport { runLocalEntityReadFunction, notifyEntityApiAccess } from './localEntityReadApi.js';\nimport {\n  countEntitiesTouchesHttpPilot,\n  runHttpPilotAwareCountEntities,",
+         "} from './localAuthSessionPolicy.js';\nimport { createHttpApiClient } from './httpApiClient.js';\nimport { HTTP_CONTEXT_CHANGED } from './erpHttpSession.js';\nimport { runLocalEntityReadFunction } from './localEntityReadApi.js';\nimport {\n  countEntitiesTouchesHttpPilot,\n  runHttpPilotAwareCountEntities,"
+diff --git a/tests/hml-591-review-findings.test.js b/tests/hml-591-review-findings.test.js
+new file mode 100644
+index 00000000..aca90c45
+--- /dev/null
++++ b/tests/hml-591-review-findings.test.js
+@@ -0,0 +1,85 @@
++/**
++ * Achados revisão 6694327032 / Codex sobre tip 3fc45c320 — contraprovas do delta #591.
++ */
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { readFileSync } from 'node:fs';
++import {
++  fetchCadastrosAllCounts,
++  isValidCountValue,
++} from '../src/components/cadastros/hooks/cadastrosAllCountsCore.js';
++import { canFallbackConfigToLocalEntity } from '../src/components/lib/configPersistPolicy.js';
++
++const clientTs = readFileSync('server/src/db/client.ts', 'utf8');
++const authSession = readFileSync('server/src/services/authSessionService.ts', 'utf8');
++const fornecedor = readFileSync('server/src/services/fornecedorService.ts', 'utf8');
++const base44 = readFileSync('src/api/base44Client.js', 'utf8');
++const entityCounts = readFileSync('src/components/lib/useEntityCounts.jsx', 'utf8');
++const badge = readFileSync('src/components/cadastros/CountBadgeSimplificado.jsx', 'utf8');
++
++test('port f51376fa: URL Auth idêntica compartilha pool; socket NULL não compara address', () => {
++  assert.match(clientTs, /sharedAuthPool/);
++  assert.match(clientTs, /authDatabaseUrl === config\.databaseUrl/);
++  assert.match(clientTs, /!sharedAuthPool && \(!row\.address/);
++  assert.match(clientTs, /authDb && authDb !== db/);
++});
++
++test('port 2f588154: Grupo não exige role admin — só empresaId null + permissão', () => {
++  assert.match(authSession, /if \(profile\.empresaId !== null\) return false;/);
++  assert.doesNotMatch(authSession, /profile\.role !== 'admin'/);
++});
++
++test('port 9b5de2bc: Fornecedor congela ctx antes de await', () => {
++  assert.match(fornecedor, /async importar\(ctx[\s\S]*?ctx = Object\.freeze\(\{ \.\.\.ctx \}\)/);
++  assert.match(fornecedor, /async get\(ctx[\s\S]*?ctx = Object\.freeze\(\{ \.\.\.ctx \}\)/);
++  assert.match(fornecedor, /async softDelete\(ctx[\s\S]*?ctx = Object\.freeze\(\{ \.\.\.ctx \}\)/);
++});
++
++test('HTTP: upsertConfig não despacha para localBase44', () => {
++  assert.match(base44, /UPSERT_CONFIG_HTTP_UNAVAILABLE/);
++  assert.match(base44, /if \(name === 'upsertConfig'\)/);
++  assert.equal(canFallbackConfigToLocalEntity({ httpMode: true, localOnly: false }), false);
++  assert.equal(canFallbackConfigToLocalEntity({ httpMode: false, localOnly: true }), true);
++});
++
++test('useEntityCounts: parcial marca unavailable e total null', () => {
++  assert.match(entityCounts, /countsUnavailable: Boolean\(isError\) \|\| \(!isLoading && normalized\.length > 0 && !complete\)/);
++  assert.match(entityCounts, /if \(!complete\) return null;/);
++});
++
++test('CountBadge: chave ausente / missing → — ≠ 0', () => {
++  assert.match(badge, /unavailable \? \([\s\S]*?'—'/);
++  assert.match(badge, /missingSet\.has\(e\)/);
++});
++
++test('fatia counts:{} não pula isolamento — consulta entidades ausentes', async () => {
++  const calls = [];
++  const invoke = async (name, body) => {
++    assert.equal(name, 'countEntities');
++    calls.push(body);
++    const entities = body.entities || [];
++    if (entities.length > 1) {
++      // Fatia “sucesso” vazia — regressão Codex.
++      return { data: { counts: {} } };
++    }
++    const entityName = entities[0].entityName;
++    if (entityName === 'Produto') return { data: { counts: { Produto: 5 } } };
++    throw new Error(`${entityName} 500`);
++  };
++  await assert.rejects(
++    () => fetchCadastrosAllCounts({
++      invoke,
++      empresaId: '00000000-0000-4000-8000-000000000001',
++      groupId: '00000000-0000-4000-8000-000000000099',
++      entities: ['Produto', 'Marca'],
++    }),
++    (err) => err?.code === 'READ_COUNT_PARTIAL'
++      && err.partialCounts?.Produto === 5
++      && Array.isArray(err.missing)
++      && err.missing.includes('Marca'),
++  );
++  assert.ok(calls.some((c) => Array.isArray(c.entities) && c.entities.length === 1 && c.entities[0].entityName === 'Produto'));
++  assert.ok(calls.some((c) => Array.isArray(c.entities) && c.entities.length === 1 && c.entities[0].entityName === 'Marca'));
++  assert.equal(isValidCountValue(0), true);
++  assert.equal(isValidCountValue(null), false);
++});
+
+FOLLOW-UP ACEITE (pós-congelamento HML)
+--------------------------------------
+Correções de gaps de recuperação/unificação vão em tip sucessor da #591.
+Homolog em andamento deve permanecer em 0afd378f até coordenação explícita
+para re-montar no tip sucessor. Publicação ≠ integração #401.

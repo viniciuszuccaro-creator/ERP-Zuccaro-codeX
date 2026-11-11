@@ -1,93 +1,39 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { Link } from "react-router-dom";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Building2, 
-  Plus, 
-  Search, 
-  Edit, 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Building2,
+  Plus,
+  Search,
+  Edit,
   MapPin,
   Phone,
   Mail,
-  FileText,
   TrendingUp,
-  Users,
-  ShoppingCart,
-  DollarSign,
-  Package,
   Eye
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { z } from "zod";
-import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from "sonner";
+import EmpresaForm from "@/components/cadastros/EmpresaForm";
 
 export default function Empresas() {
-  const { filterInContext, createInContext, updateInContext, getFiltroContexto, grupoAtual, empresaAtual } = useContextoVisual();
+  const { filterInContext, createInContext, updateInContext, grupoAtual, empresaAtual } = useContextoVisual();
   const groupIdCadastro = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmpresa, setEditingEmpresa] = useState(null);
   const [viewingEmpresa, setViewingEmpresa] = useState(null);
-  const [formData, setFormData] = useState({
-    razao_social: "",
-    nome_fantasia: "",
-    cnpj: "",
-    inscricao_estadual: "",
-    regime_tributario: "Simples Nacional",
-    tipo: "Matriz",
-    endereco: {
-      logradouro: "",
-      numero: "",
-      bairro: "",
-      cidade: "",
-      estado: "",
-      cep: ""
-    },
-    contato: {
-      telefone: "",
-      email: ""
-    },
-    status: "Ativa",
-    permite_emissao_fiscal: true
-  });
-
   const queryClient = useQueryClient();
 
-  const empresaSchema = z.object({
-    razao_social: z.string().min(2, 'Informe a razão social'),
-    nome_fantasia: z.string().optional().default(''),
-    cnpj: z.string().min(14, 'CNPJ inválido'),
-    inscricao_estadual: z.string().optional().default(''),
-    regime_tributario: z.string().min(2, 'Selecione o regime'),
-    tipo: z.enum(['Matriz','Filial']).default('Matriz'),
-    endereco: z.object({
-      logradouro: z.string().optional().default(''),
-      numero: z.string().optional().default(''),
-      bairro: z.string().optional().default(''),
-      cidade: z.string().optional().default(''),
-      estado: z.string().optional().default(''),
-      cep: z.string().optional().default('')
-    }).optional().default({}),
-    contato: z.object({
-      telefone: z.string().optional().default(''),
-      email: z.string().email('E-mail inválido').optional().or(z.literal(''))
-    }).optional().default({}),
-    status: z.enum(['Ativa','Inativa','Suspensa']).default('Ativa'),
-    permite_emissao_fiscal: z.boolean().default(true)
-  });
-
-  const { data: empresas = [], isLoading } = useQuery({
+  const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-cadastro', groupIdCadastro],
     queryFn: () => filterInContext('Empresa', {}, '-created_date', undefined, 'group_id'),
     enabled: Boolean(groupIdCadastro),
@@ -99,22 +45,26 @@ export default function Empresas() {
   };
 
   const createMutation = useMutation({
-    mutationFn: (/** @type {typeof formData} */ data) => createInContext('Empresa', data, 'group_id'),
-    onSuccess: () => {
-      invalidateEmpresasQueries();
-      setIsDialogOpen(false);
-      resetForm();
-      toast.success("Empresa cadastrada com sucesso!");
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (/** @type {{id: string, data: typeof formData}} */ { id, data }) => updateInContext('Empresa', id, data, 'group_id'),
+    mutationFn: (/** @type {Record<string, unknown>} */ data) => createInContext('Empresa', data, 'group_id'),
     onSuccess: () => {
       invalidateEmpresasQueries();
       setIsDialogOpen(false);
       setEditingEmpresa(null);
-      resetForm();
+      toast.success("Empresa cadastrada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Falha ao cadastrar empresa.');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (/** @type {{ id: string, data: Record<string, unknown> }} */ { id, data }) => (
+      updateInContext('Empresa', id, data, 'group_id')
+    ),
+    onSuccess: () => {
+      invalidateEmpresasQueries();
+      setIsDialogOpen(false);
+      setEditingEmpresa(null);
       toast.success("Empresa atualizada com sucesso!");
     },
     onError: (error) => {
@@ -122,72 +72,27 @@ export default function Empresas() {
     },
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingEmpresa) {
-      updateMutation.mutate({ id: editingEmpresa.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
-    }
-  };
-
-  const REGIMES = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real', 'MEI'];
-  const TIPOS = ['Matriz', 'Filial'];
-
   const handleEdit = (empresa) => {
     setEditingEmpresa(empresa);
-    setFormData({
-      razao_social: empresa.razao_social || '',
-      nome_fantasia: empresa.nome_fantasia || '',
-      cnpj: empresa.cnpj || '',
-      inscricao_estadual: empresa.inscricao_estadual || '',
-      regime_tributario: REGIMES.includes(empresa.regime_tributario)
-        ? empresa.regime_tributario
-        : 'Simples Nacional',
-      tipo: TIPOS.includes(empresa.tipo) ? empresa.tipo : 'Matriz',
-      endereco: {
-        logradouro: '',
-        numero: '',
-        bairro: '',
-        cidade: '',
-        estado: '',
-        cep: '',
-        ...(empresa.endereco || {}),
-      },
-      contato: {
-        telefone: '',
-        email: '',
-        ...(empresa.contato || {}),
-      },
-      status: empresa.status || 'Ativa',
-      permite_emissao_fiscal: empresa.permite_emissao_fiscal !== false,
-    });
     setIsDialogOpen(true);
   };
 
-  const resetForm = () => {
-    setFormData({
-      razao_social: "",
-      nome_fantasia: "",
-      cnpj: "",
-      inscricao_estadual: "",
-      regime_tributario: "Simples Nacional",
-      tipo: "Matriz",
-      endereco: {
-        logradouro: "",
-        numero: "",
-        bairro: "",
-        cidade: "",
-        estado: "",
-        cep: ""
-      },
-      contato: {
-        telefone: "",
-        email: ""
-      },
-      status: "Ativa",
-      permite_emissao_fiscal: true
-    });
+  /** @param {Record<string, unknown>} payload */
+  const handleEmpresaFormSubmit = (payload) => {
+    const groupId = payload?.group_id
+      || payload?.grupo_id
+      || editingEmpresa?.group_id
+      || editingEmpresa?.grupo_id
+      || groupIdCadastro;
+    const data = {
+      ...payload,
+      ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
+    };
+    if (editingEmpresa?.id) {
+      updateMutation.mutate({ id: editingEmpresa.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const filteredEmpresas = empresas.filter(e =>
@@ -214,7 +119,13 @@ export default function Empresas() {
   const filiais = empresas.filter(e => e.tipo === 'Filial').length;
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="w-full h-full p-6 lg:p-8 space-y-6">
+      <Alert className="border-sky-200 bg-sky-50" data-unify="empresas-cadastros-canonico">
+        <AlertDescription className="text-sm text-sky-950">
+          Cadastro mestre canônico: <Link className="underline font-medium" to={createPageUrl('Cadastros')}>Cadastros Gerais → Organizacional → Empresas</Link>
+          {' '}(EmpresaForm). Esta tela preserva a visão operacional/KPIs; não é um segundo cadastro paralelo.
+        </AlertDescription>
+      </Alert>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
@@ -294,7 +205,6 @@ export default function Empresas() {
           data-action="empresa-nova"
           onClick={() => {
             setEditingEmpresa(null);
-            resetForm();
             setIsDialogOpen(true);
           }}
         >
@@ -304,159 +214,23 @@ export default function Empresas() {
 
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
-          if (!open) {
-            setEditingEmpresa(null);
-            resetForm();
-          }
+          if (!open) setEditingEmpresa(null);
         }}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-action="empresa-form-dialog">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-action="empresa-form-dialog" data-unify="empresas-form-canonico">
             <DialogHeader>
               <DialogTitle>{editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             </DialogHeader>
-            <FormWrapper
+            <EmpresaForm
               key={editingEmpresa?.id || 'nova-empresa'}
-              schema={empresaSchema}
-              defaultValues={formData}
-              withContext={false}
-              onSubmit={(values) => {
-                const groupId = editingEmpresa?.group_id
-                  || editingEmpresa?.grupo_id
-                  || groupIdCadastro;
-                const payload = {
-                  ...values,
-                  ...(groupId ? { group_id: groupId, grupo_id: groupId } : {}),
-                };
-                if (editingEmpresa) {
-                  updateMutation.mutate({ id: editingEmpresa.id, data: payload });
-                } else {
-                  createMutation.mutate(payload);
-                }
-              }}
-            >
-              {(methods) => (
-                <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="razao_social">Razão Social *</Label>
-                  <Input id="razao_social" {...methods.register('razao_social')} />
-                </div>
-                <div>
-                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                  <Input id="nome_fantasia" {...methods.register('nome_fantasia')} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="cnpj">CNPJ *</Label>
-                  <Input id="cnpj" {...methods.register('cnpj')} />
-                </div>
-                <div>
-                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                  <Input id="inscricao_estadual" {...methods.register('inscricao_estadual')} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="regime_tributario">Regime Tributário</Label>
-                  <Select
-                    value={methods.watch('regime_tributario')}
-                    onValueChange={(value) => methods.setValue('regime_tributario', value, { shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
-                      <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
-                      <SelectItem value="Lucro Real">Lucro Real</SelectItem>
-                      <SelectItem value="MEI">MEI</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="tipo">Tipo</Label>
-                  <Select
-                    value={methods.watch('tipo')}
-                    onValueChange={(value) => methods.setValue('tipo', value, { shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Matriz">Matriz</SelectItem>
-                      <SelectItem value="Filial">Filial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Endereço */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Endereço</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="endereco.cep">CEP</Label>
-                    <Input id="endereco.cep" {...methods.register('endereco.cep')} />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="endereco.logradouro">Logradouro</Label>
-                    <Input id="endereco.logradouro" {...methods.register('endereco.logradouro')} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-3">
-                  <div>
-                    <Label htmlFor="endereco.numero">Número</Label>
-                    <Input id="endereco.numero" {...methods.register('endereco.numero')} />
-                  </div>
-                  <div className="col-span-2">
-                    <Label htmlFor="endereco.bairro">Bairro</Label>
-                    <Input id="endereco.bairro" {...methods.register('endereco.bairro')} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4 mt-3">
-                  <div className="col-span-2">
-                    <Label htmlFor="endereco.cidade">Cidade</Label>
-                    <Input id="endereco.cidade" {...methods.register('endereco.cidade')} />
-                  </div>
-                  <div>
-                    <Label htmlFor="endereco.estado">UF</Label>
-                    <Input id="endereco.estado" maxLength={2} {...methods.register('endereco.estado')} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Contato */}
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Contato</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contato.telefone">Telefone</Label>
-                    <Input id="contato.telefone" {...methods.register('contato.telefone')} />
-                  </div>
-                  <div>
-                    <Label htmlFor="contato.email">E-mail</Label>
-                    <Input id="contato.email" type="email" {...methods.register('contato.email')} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {editingEmpresa ? 'Atualizar' : 'Cadastrar'}
-                </Button>
-              </div>
-            </div>
-            )}
-            </FormWrapper>
+              empresa={editingEmpresa || null}
+              item={null}
+              data={null}
+              initialData={null}
+              defaultValues={null}
+              isSubmitting={createMutation.isPending || updateMutation.isPending}
+              onSubmit={handleEmpresaFormSubmit}
+            />
+            
           </DialogContent>
         </Dialog>
       </div>

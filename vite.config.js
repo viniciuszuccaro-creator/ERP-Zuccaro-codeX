@@ -4,11 +4,15 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
+// 5173 = prévia DEV; 15173 = HML privada Codespace (aceite ~100 confirmado pelo owner).
+const HML_PREVIEW_PORTS = Object.freeze([5173, 15173]);
 const codespaceName = process.env.CODESPACE_NAME;
-const privatePreviewHost = /^[a-z0-9-]+$/.test(codespaceName || '') ? `${codespaceName}-5173.app.github.dev` : null;
+const privatePreviewHosts = /^[a-z0-9-]+$/.test(codespaceName || '')
+  ? HML_PREVIEW_PORTS.map((port) => `${codespaceName}-${port}.app.github.dev`)
+  : [];
 
 export default defineConfig({
-  server: { allowedHosts: privatePreviewHost ? [privatePreviewHost] : [] },
+  server: { allowedHosts: privatePreviewHosts },
   plugins: [
     {
       name:'erp-private-preview-provenance',
@@ -17,7 +21,13 @@ export default defineConfig({
           res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');
           try {
             const git = args => execFileSync('git',args,{encoding:'utf8',timeout:2000,stdio:['ignore','pipe','ignore']}).trim();
-            res.end(JSON.stringify({sha:git(['rev-parse','HEAD']),branch:git(['branch','--show-current']),dirty:Boolean(git(['status','--porcelain'])),purpose:'private-dev-preview'}));
+            res.end(JSON.stringify({
+              sha: git(['rev-parse', 'HEAD']),
+              branch: git(['branch', '--show-current']),
+              dirty: Boolean(git(['status', '--porcelain'])),
+              purpose: 'private-hml-preview',
+              previewPorts: [...HML_PREVIEW_PORTS],
+            }));
           } catch { res.statusCode=503;res.end(JSON.stringify({error:'PREVIEW_PROVENANCE_UNAVAILABLE'})); }
         });
       },

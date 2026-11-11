@@ -1,0 +1,49 @@
+CODEx / CURSOR — fluxo combinado (GitHub → Codespace HML → aceite → VPS)
+=======================================================================
+America/Sao_Paulo 2026-11-09 (retomada tip 2e2ccfeb+)
+
+FREEZE / WIP
+- Owner: ~100 clientes reais confirmados na HML Codespace **:15173** (privado).
+- Snapshot HML ensaio: 0afd378f284 (NAO trocar mid-teste sem acordo Codex)
+- Passagem acordada: quando coorte100 fechar OU Codex pedir tip com correções
+  — montar API+web no HEAD #591 (STATUS) no mesmo SHA; conferir /__erp_preview.
+- Retomada sem seed: docs/evidence/hml-15173-retomada-acesso-591-20261109.txt
+- Publicacao #591 tip atual: ver STATUS / HEAD da branch
+- #401 integrar: 5d9a7e37 — publicar ≠ integrar
+- Sem recreate clientes, fixtures, rename sinteticos, alteracao de banco/infra privada
+
+FRONTEND → API (Cliente)
+- Modo HTTP + piloto OFF: NAO cai em store local (query disabled + estado
+  data-fonte-estado=http-piloto-cliente-off). Distinto de erro-api, sem-permissao,
+  lista-vazia, busca-vazia, contexto ausente.
+- Piloto ON: VITE_ERP_BACKEND=http + VITE_ERP_HTTP_CLIENTE(_360)=true + sessao
+  groupId/empresaId autorizados (Grupo CPA conforme servidor; negativas cross-tenant).
+- Pack detalhado: docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt
+
+FORM CANONICO
+- CadastroClienteCompleto: abas + contatos/enderecos/documentos multi;
+  omit-if-undefined; pendencia cliente-parcial;
+  WhatsApp so se tipo escolhido (celular escalar → Celular, nao WhatsApp).
+- Lacunas HTTP: locais_entrega/documentos/contatos[] ricos exigem evolucao BFF
+  (jsonb ou tabelas filhas) — sem storage paralelo no front.
+
+ACEITE REAL
+- Apos Codex disponibilizar HML (freeze ou tip acordado): mesmo SHA API+web;
+  listagem/busca/paginacao/detalhes/abas; preservacao; retomada.
+  Testes sinteticos ≠ aceite dos ~100. Comparacao privada; sem PII no GitHub.
+
+RECUPERACOES NESTE LOTE
+- CRM Funil×3: RBAC sectionKey + invalidate/toast; Avancado queryKey escopo
+- Layout titleToModule: Chatbot/Hub + Cadastros/Expedicao/Producao/Contratos/Sistema
+- MapaRoteirizacaoIA: criarRomaneio HTTP fail-closed; local Rota+Romaneio;
+  POST ≠ reopen completo (owners IntegracaoRomaneio)
+
+PROXIMO MATRIZ
+1. Cadastros param residual sky/reopen (fora branches reservadas ApiExterna/
+   ParametroRoteirizacao/ChatbotCanal se ainda WIP)
+2. Central Vendas360: evoluir OrcamentosTab existente (proposalMode/aside já);
+   painéis operacionais sem paralela; redesign só com OK visual
+3. Fechar aceites das telas já recuperadas antes de fila mecânica nova
+
+FORA
+merge, deploy operacional VPS sem aprovacao, dados reais no repo, cobranca extra

@@ -46,15 +46,25 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
     });
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+  const containerClass = windowMode
+    ? "w-full h-full overflow-auto bg-white p-6"
+    : "space-y-6";
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} data-cadastro-visual="sky-param-portal">
+      {windowMode && (
+        <div className="mb-6 pb-4 border-b bg-gradient-to-r from-sky-50 to-sky-100 rounded-t-lg px-3 -mx-1">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-900">
+            <Globe className="w-6 h-6 text-sky-700" />
+            {parametro?.id ? "Editar Portal do Cliente" : "Parâmetros do Portal do Cliente"}
+          </h2>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
+        <Card className="border-sky-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5 text-blue-600" />
+              <Globe className="w-5 h-5 text-sky-700" />
               Parâmetros do Portal do Cliente
             </CardTitle>
           </CardHeader>
@@ -144,7 +154,7 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroPortalCliente.salvar" data-action="salvar-parametros-portal-cliente" data-sensitive>
+          <Button type="submit" className="bg-sky-600 hover:bg-sky-700" disabled={!contextoValido || !podeSalvar} data-permission="Cadastros.ParametroPortalCliente.salvar" data-action="salvar-parametros-portal-cliente" data-sensitive>
             <Save className="w-4 h-4 mr-2" />
             Salvar Parâmetros
           </Button>

@@ -1,0 +1,42 @@
+Contatos[] MASTER (decisão a) — integração Completo/HTTP/PG (#591)
+=================================================================
+Data: 2026-11-10 America/Sao_Paulo
+Coordenação: 591 / 6773254795
+Referência Codex citada: 3427b141d47 (SHA não resolvido no remoto; contrato alinhado a Base Cliente.contatos[])
+Base PR591 consultada: 199cc570 / CI SUCCESS; tip anterior 9c2966a9 SUCCESS
+
+Decisão
+- Pack a/b/c superado: (a) contatos[] jsonb no cadastro mestre Cliente.
+- ContatoB2B FK NÃO destrava este fluxo; sem ContatoClienteV2 / storage paralelo.
+
+Wire
+- clienteHttpPayload: ALLOWED_KEYS inclui contatos; sanitizeContatosForHttp;
+  applyContatosProjection grava contatos[] + espelho escalar; WhatsApp ≠ celular.
+- Completo: banner contatos-jsonb-http; quarentena de canal inválido; omit≠limpar.
+- BFF: clienteContatosSchema + migration 045_clientes_contatos_jsonb.sql;
+  postgres/inMemory repos persistem contatos.
+
+Testes: cliente-contatos-http-adapter, limitacao-591, peels boundaries, rbac, fonte-lista.
+
+CI tip feat
+- cc7c71f5 FAIL (42875552348): mock Completo sem partitionContatosByCanal;
+  peels postgres counterproof; rbac ainda reject; catálogo 33→34; legado SHA.
+
+CI tip fix
+- fa17c5c8: peels mapContatos≠import · fornecedorHttpRemainder tip cc7c71f5 ·
+  mock partitionContatosByCanal · rbac/http-api jsonb · infra/runtime01 045.
+- Locais sync HTTP: 12/12 PASS (omit≠[] · PARTIAL · CONTEXT_CHANGED).
+- Documentos[]: ainda CLIENTE_HTTP_UNSUPPORTED_FIELDS (sem storage paralelo).
+
+Aceite :15173
+- Homolog tip coordenado 77f11b28 / freeze 0afd378f284 até API+web no mesmo SHA.
+- 331 canais = agregados (≠ 331 clientes); distinguir 99 prontos / 1 parcial.
+- Comparações reais privadas; sem PII no GitHub.
+
+CI SUCCESS
+- Tip ba21a342 (America/Sao_Paulo 2026-11-10): 9/9 erp-runtime-ci
+  push 42880318139 · PR 42880331779
+- Pronto p/ aceite :15173 com API+web no mesmo SHA revisado (ba21a342).
+
+CI SUCCESS peel tip
+- 21fa888a (America/Sao_Paulo 2026-11-10): 9/9 após soft-landing + gate documentos[].

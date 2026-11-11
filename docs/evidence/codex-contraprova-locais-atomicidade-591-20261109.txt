@@ -1,0 +1,44 @@
+#591 — Contraprova Codex: fidelidade / atomicidade / contexto de locais
+America/Sao_Paulo 2026-11-09 · sem PII
+Resposta aos achados sobre tip docs 94d49ab3 / write parcial.
+
+ACHADO
+CLIENTE_LOCAIS_SYNC_PARTIAL evita falso sucesso, mas não prova atomicidade
+nem recuperação correta do estado após falha no meio do lote.
+
+CONTRATO BFF (explícito)
+- CLIENTE_LOCAIS_BATCH_ATOMIC = false
+- Cada POST/PATCH/DELETE /clientes/:id/locais é transação própria no server
+  (clienteLocalService.withTransaction por operação).
+- Lote multi-local atômico exige endpoint batch canônico (Codex BFF) —
+  Cursor NÃO inventa storage paralelo nem ContatoClienteV2.
+
+O QUE ESTE TIP ENTREGA (comportamento suportado e testado)
+1) Preflight do lote inteiro (map create/update) → zero writes se inválido/extras.
+2) draft === undefined → skip (omissão ≠ lista vazia).
+3) baselineIds null/undefined → sem soft-delete.
+4) assertScope + clienteId congelado entre awaits (Grupo/Empresa/sessão/ator).
+5) Falha remota → CLIENTE_LOCAIS_SYNC_PARTIAL com:
+   created/updated/deleted, ops[], reconcileRequired=true, batchAtomic=false.
+6) Completo: em PARTIAL, listLocais → reconcilia locaisHttpView + baseline +
+   formData.locais_entrega (estado real); toast ≠ sucesso; invalidate queries.
+7) Reexecução: draft reconciliado só com ids canônicos → updates idempotentes.
+
+TESTES
+- tests/cliente-locais-sync-http-591.test.js
+  preflight / extras / omit / baseline null / partial+ops / CONTEXT_CHANGED
+- Completo peels + RBAC saveMutation
+- tip homologação anterior: 898d8c32 CI SUCCESS; tip desta contraprova: HEAD
+
+DELTA PARA REVISÃO INDEPENDENTE
+- src/api/clienteHttpPayload.js (sync + CLIENTE_LOCAIS_BATCH_ATOMIC)
+- src/components/cadastros/CadastroClienteCompleto.jsx (scope freeze + reconcile)
+- docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt (atualizado)
+
+BLOQUEIO ABERTO (Codex)
+- Endpoint batch atômico /clientes/:id/locais/sync (ou equivalente) se produto
+  exigir “tudo ou nada” no lote de endereços.
+- Contatos ricos / documentos: jsonb ou tabela filha — sem ContatoClienteV2.
+
+FORA
+merge · VPS · PII · recreate · toast sem reconciliar estado

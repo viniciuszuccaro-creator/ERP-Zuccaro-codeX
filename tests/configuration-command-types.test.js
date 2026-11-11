@@ -13,7 +13,8 @@ for(const [file,hash] of [
   [report,'9a82460dfe4943f24497ee134b980934fad2d5f67dedc496ad030edf1d521d0f'],
   [backup,'5df6765b7cdb241db299b5a0069f7a4f3a6c6021f749eefa86472bae71d605bf'],
   [monitor,'5a87ca5d2df7f7023171bf36131c6b0d0241abc94c1dcc1424f5083b4184cf97'],
-  [preferences,'7a94792014c371cf3a477aa445cb6b157668432c710d63dc623ade88ad6aec6e'],
+  // #591: onError toast em updateMe — hash atualizado sem enfraquecer demais pins.
+  [preferences,'f4586e4309672ef5419260ca92746778aad2d8a38793173b820bd5dd231aff4b'],
 ])test(`${file}: full executable runtime unchanged by annotations`,()=>{
   const emitted=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),hash);

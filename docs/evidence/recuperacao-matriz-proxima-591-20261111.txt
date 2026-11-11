@@ -1,0 +1,34 @@
+Recuperação / unificação — matriz objetiva (lote atual #591)
+===========================================================
+America/Sao_Paulo 2026-11-11
+
+Fontes reutilizadas (sem recoleta integral):
+- `docs/evidence/recuperacao-erp-integra-capacidades-20261029.txt`
+- `docs/evidence/recuperacao-erp-integra-prioridades-20261026.txt`
+- `docs/evidence/matriz-consolidacao-modulos-20261010.txt`
+- HANDOFF inventário erp-integra-novo (paths/páginas)
+- Repo referência: https://github.com/viniciuszuccaro-creator/erp-integra-novo
+
+| Recurso anterior | Equivalente atual | Lacuna | Proposta | Teste |
+|------------------|-------------------|--------|----------|-------|
+| Tile Pedidos | Central de Vendas360° | — | mantido | layout v6 tests |
+| Tile Orçamentos separado | embutido na Central | — | não recriar tile | Comercial.jsx assert |
+| Orçamento→Pedido | `convertOrcamento` | Fechar estava=cancel | Fechar→converter | peels Fechar≠Cancelar |
+| Cliente360 | `CentralCliente360Panel` | docs/contatos ricos + API | aceite :15173 Codex | pack HML |
+| Contatos MASTER | Completo + HTTP | freeze `8650fd4d` | aceite privado | peels CAS |
+| Hub / Bot | páginas existentes | contadores | API oficial | RBAC |
+| Cadastros Gerais categorias | Cadastros.jsx | submódulos residuais | lotes sky/recovery existentes | por lote |
+| Cores azul Comercial | padrão visual | — | preservar | PR azul |
+| Duplicidade Central/OrçamentosV2 | proibido | — | não criar | tests doesNotMatch |
+
+Classificação de lacunas (não inventar registro):
+- A oculto por contexto/RBAC ≠ perdido
+- B contrato omitido (HTTP) ≠ inventar storage
+- C registro pré-perda exige fonte confiável (Codex/HML)
+- D rota ausente documentada ≠ criar paralelo
+
+Próximo lote recuperação executável (Cursor, sem tocar reserva Codex HML):
+1. Fechar≠Cancelar (este tip) + CI
+2. Aceite :15173 coordenado com Codex no freeze `8650fd4d`
+3. Contadores faixa Central quando endpoint oficial
+4. Unificar consumidores orfãos já listados em recovery sky — um lote por vez

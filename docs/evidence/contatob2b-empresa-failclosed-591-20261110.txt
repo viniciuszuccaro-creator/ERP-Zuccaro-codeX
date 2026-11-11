@@ -1,0 +1,14 @@
+#591 — ContatoB2B fail-closed group/empresa + grid cursor-not-allowed
+America/Sao_Paulo 2026-11-10 · sem PII
+
+ALTERAÇÃO
+- ContatoB2BForm: toast se !group_id; se contexto empresa e !empresa_id
+- ModulosGridComercial: cursor-not-allowed + aria-disabled nos cards bloqueados
+- Sem wire Completo · sem peels Completo/LaunchpadCard/Produto
+
+TESTES FOCADOS OK (local)
+- contato-b2b-tenant-591
+- c360-orcamentos-centro-prep-591
+- cadastros-reopen-contato-b2b-behavioral
+
+Homolog: 77f11b28 · freeze 0afd378f284 · CI base c8d7c134

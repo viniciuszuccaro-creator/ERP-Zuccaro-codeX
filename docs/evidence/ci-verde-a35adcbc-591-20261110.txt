@@ -1,0 +1,11 @@
+# CI verde — tip a35adcbc (#591)
+
+- branch: cursor/hml-grupo-erro-fornecedor-392b
+- tip: a35adcbc
+- workflow: erp-runtime-ci
+- run: 42858418274
+- conclusion: success (2026-11-10 America/Sao_Paulo)
+- lote: proposta-rascunho-sujo etapa B
+- peels: sem alteração Completo / Produto / LaunchpadCard
+- Contatos (a)/(b)/(c): Codex; MCP 20261110e sem FK
+- homolog: 77f11b28 / freeze 0afd378f284

@@ -1,0 +1,22 @@
+#591 — CI FAIL peels LaunchpadCard → fix wrapper grid
+America/Sao_Paulo 2026-11-10 · sem PII
+
+FAIL
+- tip 31b66b6e / c3acbb70 / 25e8ebb8
+- frontend: optional-consumer-contracts
+  LaunchpadCard.jsx whole stage56 source retained outside exact approved hunks
+  (annotation split 1 !== 2 após prop disabled)
+
+FIX
+- Restaurar LaunchpadCard pin hash 4003fb06… (sem disabled)
+- Bloqueio visual/funcional só em ModulosGridComercial:
+  wrapper onClickCapture + data-proposta-card=bloqueado
+  + data-action=proposta-modulo-bloqueado
+  + handleModuleClick toast fail-closed
+
+TESTES LOCAIS OK
+- optional-consumer-contracts (peels)
+- c360-orcamentos-centro-prep-591
+- expedicao-launchpad-openwindow-contract
+
+Homolog: 77f11b28 · freeze 0afd378f284

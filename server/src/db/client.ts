@@ -140,14 +140,15 @@ export function createDbClient(config: AppConfig): DbClient {
   return createPoolDbClient(pool);
 }
 
-/** Two explicit connections; only verified Auth bootstrap can use authDb. No role is created or changed. */
+/** Explicit Auth bootstrap target; identical URLs share a pool, not an inferred socket identity. */
 export async function createRuntimeDbClients(config: AppConfig, factory = createDbClient) {
   const db = factory(config);
   if (!config.authDatabaseUrl) return { db, authDb: db, end: () => db.end() };
+  const sharedAuthPool = config.authDatabaseUrl === config.databaseUrl;
   let authDb: DbClient | undefined;
-  const close = async () => { await Promise.allSettled([db.end(), ...(authDb ? [authDb.end()] : [])]); };
+  const close = async () => { await Promise.allSettled([db.end(), ...(authDb && authDb !== db ? [authDb.end()] : [])]); };
   try {
-    authDb = factory({ ...config, databaseUrl: config.authDatabaseUrl, authDatabaseUrl: undefined });
+    authDb = sharedAuthPool ? db : factory({ ...config, databaseUrl: config.authDatabaseUrl, authDatabaseUrl: undefined });
     type Identity = { database: string; schema: string; address: string | null; port: number | null;
       rolsuper: boolean; rolbypassrls: boolean; login_super: boolean; login_bypass: boolean };
     const sql = `SELECT current_database() AS database, current_schema() AS schema,
@@ -163,7 +164,7 @@ export async function createRuntimeDbClients(config: AppConfig, factory = create
       throw new Error('AUTH_DATABASE_ROLE_UNSAFE');
     }
     if (!row.database || !row.schema || row.database !== auth.database || row.schema !== auth.schema
-      || !row.address || !auth.address || row.address !== auth.address || !row.port || row.port !== auth.port) {
+      || (!sharedAuthPool && (!row.address || !auth.address || row.address !== auth.address || !row.port || row.port !== auth.port))) {
       throw new Error('AUTH_DATA_DATABASE_IDENTITY_MISMATCH');
     }
     return { db, authDb, end: close };

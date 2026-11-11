@@ -142,6 +142,18 @@ export default function GerenciarEnderecosClienteForm({
       return;
     }
 
+    // Tipo Outro é único por cliente (evidência HML #591) — editar o existente ou escolher outro tipo.
+    const tipoAtual = String(novoEndereco.tipo_endereco || "");
+    if (tipoAtual === "Outro") {
+      const outroDuplicado = enderecos.some(
+        (end, idx) => String(end?.tipo_endereco || "") === "Outro" && idx !== enderecoEditando
+      );
+      if (outroDuplicado) {
+        toast.error("Já existe um endereço do tipo Outro. Edite o existente ou escolha outro tipo.");
+        return;
+      }
+    }
+
     // Gerar URL do Google Maps se tiver coordenadas ou CEP
     let mapaUrl = novoEndereco.mapa_url;
     if (!mapaUrl) {
@@ -352,7 +364,14 @@ export default function GerenciarEnderecosClienteForm({
         </div>
       )}
 
-      <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
+      <Dialog
+        open={dialogAberto}
+        onOpenChange={(open) => {
+          if (!open && bloqueado) return;
+          setDialogAberto(open);
+          if (!open) resetForm();
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-[9999]">
           <DialogHeader>
             <DialogTitle>
@@ -360,7 +379,11 @@ export default function GerenciarEnderecosClienteForm({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <fieldset
+            disabled={bloqueado || !podeEditar}
+            className="space-y-4 border-0 p-0 m-0 min-w-0 disabled:opacity-70"
+            data-block="endereco-dialog-fields"
+          >
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Apelido do Endereço *</Label>
@@ -377,15 +400,26 @@ export default function GerenciarEnderecosClienteForm({
                   value={novoEndereco.tipo_endereco || "Entrega"}
                   onValueChange={(value) => setNovoEndereco({ ...novoEndereco, tipo_endereco: value })}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger data-action="endereco-tipo"><SelectValue /></SelectTrigger>
                   <SelectContent className="z-[10000]">
                     <SelectItem value="Entrega">Entrega</SelectItem>
                     <SelectItem value="Cobrança">Cobrança</SelectItem>
+                    <SelectItem value="Cadastral">Cadastral</SelectItem>
+                    <SelectItem value="Fiscal">Fiscal</SelectItem>
+                    <SelectItem value="Correspondência">Correspondência</SelectItem>
                     <SelectItem value="Matriz">Matriz</SelectItem>
                     <SelectItem value="Obra">Obra</SelectItem>
-                    <SelectItem value="Outro">Outro</SelectItem>
+                    <SelectItem value="Outro" disabled={enderecos.some((end, idx) => String(end?.tipo_endereco || "") === "Outro" && idx !== enderecoEditando)}>
+                      Outro
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                <p className="mt-1 text-[11px] text-slate-500" data-regra="cadastral-fiscal-nao-entrega" role="note">
+                  Cadastral/Fiscal ≠ Entrega operacional — escolha o tipo certo; não misture no sync de locais.
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500" data-regra="outro-unico" role="note">
+                  Tipo Outro é único por cliente — no máximo um registro; edite o existente se precisar.
+                </p>
               </div>
             </div>
 
@@ -550,9 +584,10 @@ export default function GerenciarEnderecosClienteForm({
               />
               <Label className="cursor-pointer font-normal">Marcar como endereço principal</Label>
             </div>
+          </fieldset>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }}>
+              <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }} disabled={bloqueado}>
                 Cancelar
               </Button>
               <Button
@@ -565,7 +600,6 @@ export default function GerenciarEnderecosClienteForm({
                 Salvar
               </Button>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

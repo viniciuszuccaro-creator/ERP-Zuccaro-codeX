@@ -1,0 +1,88 @@
+Próximo lote concreto pós-#591 (sem inventário genérico)
+=======================================================
+America/Sao_Paulo 2026-11-09
+Base: recuperacao-erp-integra-capacidades-20261029 + prioridades-20261026
+Publicação #591 ≠ integração #401. Homolog HML tip congelado: 0afd378f
+(passagem para HEAD com correções = acordo Codex explícito).
+
+Já fechado neste tip (aceitação profunda)
+- Separação clássica: seletor de entregas no launchpad (não tela vazia)
+- Separação IA: keep both (já no launchpad)
+- ConfigFinanceiroLogistica: grupo AND empresa
+- Empresas×Cadastros: EmpresaForm canônico no CRUD da página Empresas
+- Widget Fechamento: gate de permissão
+- ConfiguracoesUsuario: onError toast
+- Clientes UI: fonte local≠API; Completo omit contatos/locais/documentos;
+  celular escalar ≠ WhatsApp; HML freeze 0afd378f preservado
+- HTTP Cliente sem piloto: sem fallback local (estados distintos)
+- CRM Funil×3: RBAC + invalidate/toast; Avancado queryKey escopo
+- Chatbot/Hub titleToModule fail-closed
+- MapaRoteirizacaoIA: HTTP criarRomaneio fail-closed; local Rota+Romaneio;
+  contrato: POST ≠ reopen completo (IntegracaoRomaneio)
+
+Lacunas documentadas p/ Codex (sem storage paralelo)
+- HTTP MASTER sem locais_entrega[] / documentos[] / contatos[] ricos
+- Aceite “campos reais preservados” exige evolução BFF ou Base44 transporte
+
+Homolog tip coordenado: 77f11b28 (CI SUCCESS) — freeze 0afd378f até acordo Codex
+Decisão contatos tip: 2e90587f CI SUCCESS. Contatos/docs packs 20261109+20261110.
+FK ContatoB2B reconfirm 20261110: (b) ainda bloqueada (sem cliente_id/empresa_id).
+C360: capacidades + data-integracao-pronta=false (sem falso pronto)
+Sky: params Portal/Caixa/Conciliação/NFe/Origem + JobAgendado
+Usuario/Fiscal sky: adiado (CANAL consolidacao 53ed9f42 + ID-only e36231b3)
+Reservas ApiExterna/Roteirizacao/ChatbotCanal intocadas
+
+C360 proposta A/B/C publicada tip 9ffae37b CI SUCCESS (`?proposta=comercial360`).
+Atalhos etapa C + filtros só A: e6a31225 CI SUCCESS → dc48c9ff CI SUCCESS.
+Produto foto banner: ADIADO (0cee FAIL peels; 288947 FAIL runtime-proof pin) —
+  toast+disabled HTTP mantidos; pack recuperacao-produto-foto-banner-adiado.
+Busy dialog Contatos/Endereços: 8651ddc6 / bb265744.
+Consumidores prontos: docs/evidence/codex-consumidores-prontos-contatos-591-20261110.txt
+FK ContatoB2B reconfirm 20261110b: sem cliente_id/empresa_id → (b) bloqueada
+Aceite HML pack: docs/evidence/hml-aceite-cursor-pronto-codex-591-20261110.txt
+
+Próximo lote FUNCIONAL (reconectar existente, nesta ordem)
+1. Wire Completo após decisão Codex (a) jsonb OU (b) ContatoB2B com FK comprovada
+2. Central Vendas360: wire operacional dos painéis (fora proposalMode) após OK visual
+3. Fechar aceites :15173 no tip 77f11b28 + BFF contatos/docs/batch locais
+4. Sky Usuario/Fiscal só com hunk CANAL explícito (53ed9f42)
+
+Não iniciar
+- Documentacao / EmpresaOnboarding / OAuthConsent (classe C)
+- Seed de registros reais / contagens fabricadas
+- Port cego #591→#401 antes do aceite HML
+- Redesign C360 amplo sem aprovação
+- ContatoClienteV2 / DocumentosCliente paralelo
+
+Integração seletiva #401
+- Após aceite Codex no SHA 0afd378f (ou tip coordenado sucessor)
+- Port hunks: auth Grupo, counts parcial, upsertConfig HTTP, recoveries
+- Preservar WIP Fornecedor/reservas; um escritor por checkout
+
+Pack piloto: docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt
+
+
+ATUALIZAÇÃO 2026-11-10e — tip ba21a342 / peel 21fa888a
+=======================================================
+Fechado
+- (a) contatos[] jsonb MASTER: Completo/HTTP/PG + CI ba21a342 SUCCESS
+- Soft-landing C360 (pausa microajustes); proposalMode isolado
+- Completo HTTP documentos[] fail-closed antes MASTER (sem paralelo)
+- Locais sync canônico; BATCH_ATOMIC=false permanece
+
+Estados #591
+- Publicado + CI tip: ba21a342 (funcional) / 21fa888a (peel docs)
+- Revisado tip: sim (CI)
+- Aceite HML :15173: pendente Codex — alinhar API+web a ba21a342
+  (não misturar freeze 0afd378f284 sem acordo)
+- Integrado na candidata #401: NÃO — só após aceite
+- Implantado/VPS: NÃO
+
+Próximo funcional (ordem)
+1. Aceite :15173 privado no tip ba21a342 (contatos reais detalhes/reabertura)
+2. Contrato BFF documentos[] (c) — sem DocumentosClienteV2
+3. Batch locais atômico se HML exigir (hoje PARTIAL ok)
+4. Integração seletiva #401 pós-aceite (preservar WIP/reservas)
+
+Não iniciar
+- Port cego #591→#401 · redesign C360 · ContatoClienteV2 · PII/GitHub · merge/VPS

@@ -1,3 +1,522 @@
+## CURSOR — #591 CI SUCCESS Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+- Tip **`ca9a88aa`** CI SUCCESS 9/9 (runtime `e71808a3` + peels).
+- Fechar → converter-pedido; Cancelar separado; Fechar janela só UI.
+- Freeze :15173 **`8650fd4d`** intacto (Codex). CI ≠ homologação.
+- **Próximo:** aceite :15173 · jornada API · #401 pós-aceite.
+
+## CURSOR — #591 Fechar≠Cancelar (2026-11-11 America/Sao_Paulo)
+- RECEBIDO: «Fechar (cancel)» estava errado em `de189e0d`.
+- Correção: Fechar Orçamento → `convertOrcamento` (validações + pedido no servidor); Cancelar separado; Fechar janela só UI.
+- Evidence: `c360-fechar-neq-cancelar-591-20261111.txt` · canais `c360-canais-bot-matriz-591-20261111.txt` · recovery `recuperacao-matriz-proxima-591-20261111.txt`.
+- Freeze cadastro :15173 **`8650fd4d`** (Codex/HML). Tip deste delta aguarda CI.
+- **Próximo:** CI · aceite :15173 coordenado · jornada API · #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS ABERTO + visual privado (2026-11-11 America/Sao_Paulo)
+- Tip **`de189e0d`** CI SUCCESS — ABERTO toolbar (Novo/Imprimir/Enviar/Fechar/Duplicar/Itens; Desmembrar=limitação).
+- Screenshots privados: `/opt/cursor/artifacts/c360-v6-de189e0d/` · evidence `c360-visual-privado-de189e0d-20261111.txt`.
+- Estrutura v6 validada (faixa/situações/ABERTO/grades/Cliente360); listagem HTTP neste preview sem API = parcial.
+- Freeze :15173 runtime **`8650fd4d`** intacto. CI ≠ homologação completa.
+- **Próximo:** aceite Codex :15173 · HML com API · #401 pós-aceite.
+
+## CURSOR — #591 ABERTO Central (2026-11-11 America/Sao_Paulo)
+- Toolbar ABERTO: Novo · Imprimir · Enviar (texto) · Fechar (cancel) · Mais (Duplicar / Itens anteriores / Desmembrar=limitação).
+- Sem fingir sucesso; Desmembrar bloqueado sem contrato HTTP.
+- Freeze runtime cadastro :15173 permanece **`8650fd4d`**; tip ABERTO aguarda CI.
+- **Próximo:** CI deste tip · screenshots v6 privados · aceite :15173 com Codex · #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS 8650fd4d + pack :15173 (2026-11-11 America/Sao_Paulo)
+- Tip freeze **`8650fd4d`** CI SUCCESS 9/9 (run 42999100236) — API+web mesmo SHA.
+- Resíduos pareceres fechados em `353cfa46` + peels Completo `8650fd4d`.
+- Pack Codex: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt` (roteiro + contratos).
+- CI ≠ homologação: aceite privado listagem/detalhe/contatos/reabertura com Codex.
+- **Próximo:** servir :15173 no tip · screenshots v6 · ABERTO restante · #401 pós-aceite.
+
+## CURSOR — #591 resíduos pareceres 6779554174/6779707769/6780153153 (2026-11-11 America/Sao_Paulo)
+- RECEBIDO + corrigido runtime (não só peels): create≠CAS; null omite; Completo rejeita 2001 sem truncar;
+  get/update captura+reauth; `enrichLegacyContacts` restaurado (29726).
+- Evidence: `docs/evidence/codex-parecer-6779554174-residuos-591-20261111.txt`.
+- Contraprovas: `server/tests/cliente-service-ctx-capture-591.test.ts`.
+- **Não** HML/:15173 até CI SUCCESS deste tip. Layout v6 `82b15566` + prefs `6b3c84c2` intactos.
+- **Próximo:** CI SUCCESS → freeze API+web mesmo SHA → aceite :15173; screenshots/ABERTO; #401 pós-aceite.
+
+## CURSOR — #591 CI SUCCESS c348d4d3 + prefs colunas Central (2026-11-10 America/Sao_Paulo)
+- Tip **`c348d4d3`** CI SUCCESS 9/9 — freeze candidato API+web p/ :15173 (pareceres CAS fechados).
+- Prefs colunas Central: storage `central360.cols.v6:actor:group:empresa` — fail-closed sem escopo.
+- Evidence: CAS pack + `hml-15173-aceite` + `c360-layout-v6` atualizados.
+- Sem deploy operacional automático / PII / #401. Ações ABERTO (Imprimir/Fechar/Mais) ainda parciais.
+- **Próximo:** publicação privada :15173 no tip · screenshots · ABERTO restante · #401 pós-aceite.
+
+## CURSOR — #591 CI typecheck Contatos Error.code (2026-11-10 America/Sao_Paulo)
+- Tip `8f23094c` typecheck FAIL: `err.code/status` em Completo sem cast.
+- Fix: helper `contatosValidationError` tipado + peel Completo; typecheck/boundaries PASS.
+- **Não** HML/:15173 até SUCCESS. Layout v6 `82b15566` intacto.
+- **Próximo:** CI SUCCESS → freeze API+web :15173; v6 prefs/screenshots; #401 pós-aceite.
+
+## CURSOR — #591 CI frontend CAS expectedVersion (2026-11-10 America/Sao_Paulo)
+- Tip `a59e1eda` peels OK; frontend 1 FAIL: update MASTER com `contatos[]` sem `contatos_version`.
+- Fix teste: `contatos_version`→`expectedVersion` no body; peels/RBAC intactos.
+- **Não** HML/:15173 até SUCCESS. Layout v6 `82b15566` intacto.
+- **Próximo:** CI SUCCESS → freeze API+web :15173; v6 prefs/screenshots; #401 pós-aceite.
+
+## CURSOR — #591 CI peels CAS tip fc1f870d (2026-11-10 America/Sao_Paulo)
+- CI tip `fc1f870d` falhou: peels inMemory/postgres (after fora do tip) + assert RBAC ainda em `clienteContatosSchema`.
+- Fix: peels `current→golden` (counterproof 14 PASS); RBAC exige `clienteContatosReplaceSchema`+`expectedVersion`.
+- **Não** HML/:15173 até SUCCESS deste tip. Layout v6 `82b15566` intacto.
+- **Próximo:** CI SUCCESS → freeze API+web :15173; v6 prefs/screenshots; #401 pós-aceite.
+
+## CURSOR — #591 CAS/preservação contatos (pareceres 6778237293/6778347806) (2026-11-10 America/Sao_Paulo)
+- RECEBIDO + delta: CAS `expectedVersion`/`contatos_version` (Codex `29726d3d`); sem truncamento (200/2000); omit≠[]; null≠[]; guardas id/principal/B2B.
+- Paths: `clienteContatos.ts`, types/repo/service, Completo + `clienteHttpPayload`, schema-candidate NULL, peels/tests.
+- Evidence: `docs/evidence/codex-parecer-6778237293-cas-preservacao-591-20261110.txt`. Layout v6 `82b15566` intacto.
+- **Não** atualizar HML/:15173 até tip+CI deste delta; sem ContatoClienteV2 / migration 046 numerada / PII.
+- **Próximo:** CI → freeze API+web mesmo SHA → aceite :15173; v6 prefs/screenshots.
+
+## CURSOR — #591 CI SUCCESS 82b15566 layout v6 Central (2026-11-10 America/Sao_Paulo)
+- Tip **`82b15566`** CI SUCCESS (12/12). Decisão 10/11: **Pedidos → Central de Vendas360°**; tile Orçamentos removido.
+- Shell no launchpad; `PedidosTab` peel/`PedidoCanonicoPanel` preservados p/ deep-link.
+- Contatos[] (a) tip **`ba21a342`** intacto. Aceite :15173 + #401 só pós-homolog.
+- Pendente: aceite visual privado vs v6. Sem CentralVendas360Nova · ContatoClienteV2 · merge/VPS · PII.
+
+## CURSOR — #591 CI SUCCESS 21fa888a (2026-11-10 America/Sao_Paulo)
+- Tip **`21fa888a`** CI SUCCESS (peel Completo documentos[]). Funcional **`ba21a342`** SUCCESS.
+- Contatos[] (a) · soft-landing C360 · docs[] fail-closed HTTP · locais sync.
+- Aceite :15173: alinhar API+web a ba21a342. #401 integração só pós-aceite.
+- Sem ContatoClienteV2 · port cego · redesign · merge/VPS · PII.
+
+## CURSOR — #591 soft-landing C360 + docs fail-closed (2026-11-10 America/Sao_Paulo)
+- Tip **`ba21a342`** / docs **`f9b11cf6`** CI SUCCESS. Contatos[] (a) integrado.
+- Completo HTTP: `documentos[]` não vazio → 422 antes do MASTER; vazio/omit não envia.
+- C360 soft-landing: pausa micro-toasts; proposalMode não contamina ERP; evidence pack.
+- Aceite :15173: alinhar API+web a ba21a342. Documentos[] (c) BLOCKED BFF.
+- Sem ContatoClienteV2 · DocumentosCliente paralelo · redesign · merge/VPS · PII.
+
+## CURSOR — #591 CI SUCCESS ba21a342 contatos[] (2026-11-10 America/Sao_Paulo)
+- Tip **`ba21a342`** CI SUCCESS (9/9). Decisão **(a)** contatos[] jsonb MASTER integrada.
+- Wire Completo/HTTP/PG + peels publication + entry fixture `045`.
+- Aceite :15173: alinhar API+web a **`ba21a342`** (não misturar freeze `0afd378f284` sem acordo).
+- 331 canais = agregados ≠ 331 clientes; 99 prontos / 1 parcial; comparações privadas.
+- Pendente: documentos[] BFF · batch locais atômico · soft-landing C360.
+- Sem ContatoClienteV2 · merge/VPS · PII · redesign C360.
+
+## CURSOR — #591 CI-fix publication+PG fixture contatos (2026-11-10 America/Sao_Paulo)
+- Tip **`5e109b2a`** FAIL: publication infra hash; legado refs; PG entry `column contatos does not exist`.
+- Fix: peels infra 34/045 · 2ª ref e362 no legado · `crmFixture` deltas `045` + GRANT UPDATE contatos.
+- Pack **(a)** permanece. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente.
+- Sem ContatoClienteV2 · merge/VPS · PII · redesign C360.
+
+## CURSOR — #591 CI-fix peels/mock/045 contatos[] (2026-11-10 America/Sao_Paulo)
+- Tip **`cc7c71f5`** FAIL (frontend Completo mock sem `partitionContatosByCanal`; backend rbac ainda reject; peels postgres counterproof; catálogo 33→34/`045`; legado SHA).
+- Fix: peels `mapContatos`≠import fold+ClienteContatoItem · `fornecedorHttpRemainder` tip `cc7c71f5` · mock Completo · rbac/http-api jsonb · infra/runtime01.
+- Pack **(a)** permanece. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente alinhamento SHA.
+- Sem ContatoClienteV2 · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360.
+
+## CURSOR — #591 contatos[] MASTER (a) Completo/HTTP/PG (2026-11-10 America/Sao_Paulo)
+- Pack a/b/c **encerrado**: decisão **(a)** `contatos[]` jsonb no Cliente MASTER. ContatoB2B FK **não** destrava.
+- Wire: `clienteHttpPayload` (ALLOWED+sanitize+espelho; WhatsApp≠celular) · Completo (banner jsonb + quarentena) · migration `045` · schema/repo.
+- CI consultados: **`9c2966a9`** · **`199cc570`**. Tip feat **`cc7c71f5`** FAIL→fix neste lote. Freeze `0afd378f284`. Homolog `77f11b28`. Aceite :15173 pendente.
+- Sem ContatoClienteV2 · peels LaunchpadCard/Produto · merge/VPS · PII · redesign C360.
+
+## CURSOR — #591 fix mock toast.message 347 (2026-11-10 America/Sao_Paulo)
+- Tip `8f7e8bbf` FAIL frontend: harness sem `toast.message`. Mock ampliado (error/success/message/info).
+- ContatoB2B MCP **20261110e** — (b) não destrava contatos[] (fluxo a). Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 CI f6e0 + Aplicar sintética (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`f6e0a11a`**. Proposta A: botão Aplicar (`proposta-filtrar`); toast ao criar sintética.
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 CI 5790 + search blur (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`5790c783`**. Proposta A: busca aplica no blur (`proposta-filtro-search`).
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 CI 199c + validade auto (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`199cc570`**. Proposta A: validade De/Até auto-apply (`proposta-filtro-validade-*`).
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 CI de85 + filtros auto proposta (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`de8511eb`**. Proposta A: status/cliente aplicam na seleção; C: `proposta-acompanhamento-rascunho`.
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 CI b9d9 + rascunho preservado (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`b9d9a180`**. Voltar à lista: toast + `proposta-rascunho-preservado` se dirty.
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 CI 3718/e682 + shell fluxo hint (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS **`e682df34`** · **`3718fb01`**. Shell: `proposta-fluxo-hint` + ações topo aria-disabled.
+- ContatoB2B MCP **20261110e** — (b) bloqueada. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 fixture 2º cliente + CANCELADO (2026-11-10 America/Sao_Paulo)
+- Fixture sintética: 2º vínculo + ORC-SINT-003 CANCELADO para demo de filtros A.
+- CI verde lote anterior df3f→cf403. ContatoB2B MCP **20261110e** — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 CI df3f→cf403 verde + aside painéis (2026-11-10 America/Sao_Paulo)
+- CI SUCCESS: `cf403` · `c1f8` · `8594` · `a35a` · `55e2` · `f215` · `df3f` · `ef356` · `90b8` · `23ac`.
+- Aside: `proposta-conteudo-*` + contagem produtos. ContatoB2B MCP **20261110e** — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 ContatoB2B banner 20261110e (2026-11-10 America/Sao_Paulo)
+- Banner ContatoB2B: `data-evidence=contato-b2b-mcp-20261110e`. (b) bloqueada.
+- Verde **`23ac22f9`** · **`90b8fb7d`**. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 ContatoB2B MCP 20261110e + rascunho sujo (2026-11-10 America/Sao_Paulo)
+- Evidence: ContatoB2B MCP sem `cliente_id`/`empresa_id` — (b) bloqueada (**20261110e**).
+- Etapa B: `proposta-rascunho-sujo`. Grid Orçamentos `liberado`. Verde **`23ac`/`90b8`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 proposta rascunho sujo + grid liberado (2026-11-10 America/Sao_Paulo)
+- Etapa B: `proposta-rascunho-sujo` quando dirty. Grid Orçamentos `liberado` + ring.
+- Verde **`23ac22f9`** · **`90b8fb7d`**. ContatoB2B MCP sem FK — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 grid Orçamentos liberado (2026-11-10 America/Sao_Paulo)
+- Grid proposta: card Orçamentos `liberado` + ring; bloqueados dim. LaunchpadCard intacto.
+- Verde **`23ac22f9`** · **`90b8fb7d`**. ContatoB2B MCP sem FK — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 proposta limpar+aria-current (2026-11-10 America/Sao_Paulo)
+- Proposta A: limpar filtros na contagem; `aria-current=step`; placeholder nº/cliente.
+- Verde **`23ac22f9`** · **`90b8fb7d`**. ContatoB2B MCP sem FK — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 proposta cliente/contagem + CI 23ac/90b8 (2026-11-10 America/Sao_Paulo)
+- Proposta A: filtro cliente + busca por label + `proposta-lista-contagem`.
+- Verde **`23ac22f9`** · **`90b8fb7d`** · **`86a4ad96`**. ContatoB2B MCP sem FK — (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 proposta filtros + empty + CI 86a4 (2026-11-10 America/Sao_Paulo)
+- Proposta A: validade + empty `proposta-lista-vazia` / limpar filtros. Verde **`86a4ad96`** · **`c8d7c134`**.
+- ContatoB2B fail-closed group/empresa. Freeze `0afd378f284`. Homolog `77f11b28`.
+- Sem peels Completo/Produto/LaunchpadCard · ContatoClienteV2.
+
+## CURSOR — #591 ContatoB2B fail-closed empresa + grid aria (2026-11-10 America/Sao_Paulo)
+- ContatoB2B: exige `group_id`; `empresa_id` no escopo empresa (toast). Sem Completo.
+- Grid proposta: `cursor-not-allowed` + `aria-disabled`. Verde peels **`c8d7c134`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 proposta-acao slug + peels Completo fix (2026-11-10 America/Sao_Paulo)
+- Aside: `proposta-acao-{slug}` (salvar-orcamento…). `88b9` FAIL = Completo herdado de `e09f`.
+- Fix peels Completo: **`c8d7c134`**. Verde **`77edc2ea`** · **`516497af`** · **`75aa36c1`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem peels Completo/Produto/LaunchpadCard.
+
+## CURSOR — #591 fix peels Completo e09f (2026-11-10 America/Sao_Paulo)
+- FAIL `e09f882b` stage48 Completo → restaurado tip `516497af`.
+- Mantidos: ContatoB2B toast · Outro único no form · proposta-sem-paginacao.
+- Verde **`77edc2ea`** · **`516497af`** · **`75aa36c1`**. Sem peels Completo/Produto/LaunchpadCard.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 ContatoB2B toast + Completo locais UI (2026-11-10 America/Sao_Paulo)
+- ContatoB2B: validação via `toast.error` (sem `alert`); banner FK + Completo 20261110d.
+- Completo aba endereços: `cliente-locais-regras-ui` (Outro único / BATCH_ATOMIC).
+- Verde **`75aa36c1`** · **`3b5132de`**. Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 ContatoB2B banner FK 20261110d + Outro único (2026-11-10 America/Sao_Paulo)
+- ContatoB2BForm: `contatob2b-fk-ausente` (b bloqueada; sem Completo). FK MCP só `group_id`.
+- Endereços `outro-unico` · proposta `proposta-salvar-bloqueado`. Verde base **`3b5132de`**.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/peels LaunchpadCard-Produto.
+
+## CURSOR — #591 Outro único + proposta-salvar (2026-11-10 America/Sao_Paulo)
+- Endereços: `outro-unico` (select+save). Proposta: `proposta-salvar-bloqueado`.
+- Verde base **`3b5132de`**. ContatoB2B (b) bloqueada. Sem ContatoClienteV2/peels LaunchpadCard-Produto.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 CI 3b5132de SUCCESS peels grid (2026-11-10 America/Sao_Paulo)
+- **`3b5132de` CI SUCCESS** — LaunchpadCard peels OK; bloqueio proposta no grid.
+- Verde: **`3b5132de`** · **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. ContatoB2B (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 fix peels LaunchpadCard → wrapper grid (2026-11-10 America/Sao_Paulo)
+- FAIL peels `LaunchpadCard` (stage56) nos tips `31b66b6e`+.
+- Fix: card peels restaurado; dim/bloqueio só em `ModulosGridComercial` (`onClickCapture`).
+- Verde base: **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. ContatoB2B (b) bloqueada.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 proposta disabledReason + FK 20261110c (2026-11-10 America/Sao_Paulo)
+- Verde: **`a51f162d`** · **`ae0773f4`** · **`b28fedaf`**. Tip código dim cards `31b66b6e` + tooltip `disabledReason`.
+- ContatoB2B MCP: só `group_id` → (b) bloqueada (evidence 20261110c). Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 proposta LaunchpadCard disabled + CI a51f (2026-11-10 America/Sao_Paulo)
+- Verde: **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347).
+- Lote: grid proposta dim cards (`proposta-modulo-bloqueado`); KPIs sintéticos; Pedido/externo off.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 CI a51f SUCCESS + proposta KPIs/módulos (2026-11-10 America/Sao_Paulo)
+- Verde: **`52aed2c4`** · **`a92d7bd4`** · **`a51f162d`** (fix 347).
+- HEAD **`7d24f0f1`**: docs; tip `b28fedaf` KPIs ocultos; `ae0773f4` grid só Orçamentos.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 proposta só Orçamentos + fix 347 + peels verde (2026-11-10 America/Sao_Paulo)
+- **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS**. Fix 347: `proposta-nova-negociacao`.
+- Proposta: grid só Orçamentos; KPIs operacionais ocultos (`proposta-kpis-sinteticos`).
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 fix 347 proposta-nova-negociacao + peels verde (2026-11-10 America/Sao_Paulo)
+- **`52aed2c4`** + **`a92d7bd4`** · **CI SUCCESS** (peels Produto + dialog busy).
+- Tip `ba53dc05` FAIL 347: harness atualizado p/ `data-action=proposta-nova-negociacao`.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 C360 painel 1/N + peels Produto adiado (2026-11-10 America/Sao_Paulo)
+- HEAD **`ff3243ac`**: shell `data-proposta` + Novo Pedido/externo bloqueados na proposta.
+- **`52aed2c4`**: banner Produto adiado (pin peels d312fbcd). Dialog busy ok.
+- Verde: `e6a31225`+`dc48c9ff`+`a92d7bd4`. ContatoB2B sem FK → (b) bloqueada.
+- Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 C360 rótulo sintético + a11y + peels revert (2026-11-10 America/Sao_Paulo)
+- HEAD **`ba53dc05`**: proposta — Nova negociação sintética + aria-live etapa.
+- **`52aed2c4`**: banner Produto adiado (pin peels). Dialog busy ESC/overlay ok.
+- Verde: `e6a31225`+`dc48c9ff`. ContatoB2B sem FK → (b) bloqueada.
+- Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 dialog busy ESC/overlay + Produto banner adiado (2026-11-10 America/Sao_Paulo)
+- Contatos/Endereços: dialog não fecha sob `bloqueado` (ESC/overlay).
+- Produto banner adiado (pin peels d312fbcd); toast+disabled HTTP ok.
+- Verde: `e6a31225`+`dc48c9ff`. ContatoB2B sem FK → (b) bloqueada.
+- Sem ContatoClienteV2/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 Produto foto banner adiado (peels pin) (2026-11-10 America/Sao_Paulo)
+- `288947e4` FAIL runtime-proof-source (pin product-query-v5 @ d312fbcd).
+- Reverte banner; hashes peels restaurados; toast+disabled HTTP mantidos.
+- Pack: `recuperacao-produto-foto-banner-adiado-591`. Verde: `e6a31225`+`dc48c9ff`.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 Contatos/Endereços busy dialog + peels Produto (2026-11-10 America/Sao_Paulo)
+- HEAD **`bb265744`**: dialog Contatos/Endereços gated por persistBusy.
+- Tip **`288947e4`**: peels ProdutoFormV22 (em CI). Verde: `e6a31225`+`dc48c9ff`.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 C360 atalhos owner-only + peels Produto (2026-11-10 America/Sao_Paulo)
+- Tip **`288947e4`**: peels ProdutoFormV22 (ia/v5) após banner Storage.
+- Tip **`1d41562c`**: atalhos etapa C existente=`owner-only` (paridade Aside).
+- Base verde **`e6a31225`** + tip **`dc48c9ff`** · **CI SUCCESS**.
+- Tip peels **`288947e4`** em CI (corrige FAIL Produto banner). Homolog `77f11b28`.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 CI fix peels Produto foto banner (2026-11-10 America/Sao_Paulo)
+- FAIL `0cee5367`/`80e581e3`: peels ProdutoFormV22 stage46/v5 após banner Storage.
+- Fix: hashes ia `db8787c4…` + v5 `448a0561…` (banner mantido; sem ContatoClienteV2).
+- Freeze `0afd378f284`. Homolog `77f11b28`. Tip verde base `e6a31225`.
+
+## CURSOR — #591 ContatoB2B FK reconfirm 20261110b (2026-11-10 America/Sao_Paulo)
+- Base MCP: ContatoB2B tem `group_id`; **sem** `cliente_id`/`empresa_id` → (b) bloqueada.
+- Pack: `codex-contatob2b-fk-reconfirm-591-20261110b`. UI WhatsApp campo próprio.
+- Sem ContatoClienteV2/wire Completo/merge/VPS/PII. Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 ContatoB2B WhatsApp UI + Endereços Cancelar busy (2026-11-10 America/Sao_Paulo)
+- ContatoB2BForm: `data-regra=whatsapp-campo-proprio` (sem auto-cópia). Sem wire Completo.
+- Endereços: Cancelar gated por persistBusy. Tip **`e6a31225`** CI SUCCESS.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 Contatos Salvar gated persistBusy (2026-11-10 America/Sao_Paulo)
+- GerenciarContatos: Salvar dialog `disabled={bloqueado || !podeEditar}` (paridade Endereços).
+- Tip **`e6a31225`** CI SUCCESS. Pack aceite HML vigente.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 C360 subtítulo etapa + pack aceite HML (2026-11-10 America/Sao_Paulo)
+- Proposta: título/subtítulo A/B/C (`proposta-subtitulo-etapa`).
+- Pack Codex: `hml-aceite-cursor-pronto-codex-591` p/ :15173 no tip `77f11b28`.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 Cadastral/Fiscal≠Entrega UI (2026-11-10 America/Sao_Paulo)
+- GerenciarEnderecos: `data-regra=cadastral-fiscal-nao-entrega`; Outro único no select.
+- Contatos Celular≠WhatsApp + C360 B placeholder vigentes.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 Celular≠WhatsApp UI + C360 B placeholder (2026-11-10 America/Sao_Paulo)
+- GerenciarContatos: `data-regra=celular-nao-whatsapp` (sem auto-conversão).
+- C360 etapa B: placeholder silencioso (`proposta-edicao-placeholder`).
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 produto foto banner HTTP + C360 filtros só A (2026-11-10 America/Sao_Paulo)
+- Tip **`e6a31225`** · **CI SUCCESS**. Produto V22: banner `produto-foto-storage-http`.
+- C360: filtros só etapa A (`lista`). Pack consumidores prontos vigente.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 C360 etapa C filtros + consumidores prontos (2026-11-10 America/Sao_Paulo)
+- Etapa C: filtros operacionais ocultos (`proposta-filtros-lista` só A).
+- Pack Codex: `codex-consumidores-prontos-contatos-591` — ordem (a)/(b)/(c) pós-decisão.
+- ContatoB2B sem FK → (b) bloqueada. Sem ContatoClienteV2/merge/VPS/PII.
+- Freeze `0afd378f284`. Homolog `77f11b28`.
+
+## CURSOR — #591 C360 atalhos C + FK ContatoB2B reconfirm (2026-11-10 America/Sao_Paulo)
+- Base **`9ffae37b`/`b39e50ef`** CI SUCCESS. Etapa C: PROPOSTA_CAPACIDADES GoTo/Hub/Chatbot
+  com `data-integracao-pronta=false` (sem disparo). Subtitle Comercial A→B→C.
+- ContatoB2B MCP: ainda sem cliente_id/empresa_id → (b) bloqueada. Pedido Codex vigente.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 C360 A/B/C tip 9ffae37b CI SUCCESS (2026-11-10 America/Sao_Paulo)
+- Tip **`9ffae37b`** · **CI SUCCESS** 9/9 (typecheck `proposalAcomp` + etapas A/B/C).
+- Pedido Codex objetivo: `codex-pedido-decisao-objetiva-contatos-591` — (b) sem FK = bloqueada.
+- C360: `?proposta=comercial360` A lista / B edição / C acompanhamento; sem paralelo.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 CI 84325aac + C360 A/B/C + pedido Codex contatos (2026-11-10 America/Sao_Paulo)
+- Tip **`84325aac`** · **CI SUCCESS** 9/9. Base limpa antes do tip C360 `9ffae37b`.
+- ContatoB2B sem FK → não conectar Completo. Negativo: sem ContatoB2B/ContatoClienteV2.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 CI FAIL 2d0bff6e → reverte Usuario/CANAL; Completo (b) (2026-11-10 America/Sao_Paulo)
+- Tip **`84325aac`** · **CI SUCCESS** (reverte Usuario/consolidacao; Completo (b) mantido).
+- `2d0bff6e` FAIL CANAL `53ed9f42`. Sky Usuario/Fiscal = futuro c/ hunk CANAL.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 CI peels pós-bfe3e25d (Completo + Usuario sky) (2026-11-10 America/Sao_Paulo)
+- Tip **`bfe3e25d`** frontend FAIL: peels Completo banner FK + CadastroFiscal ID-only.
+- `2d0bff6e` tentou Usuario sky — FAIL CANAL. Superado pelo bloco acima.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 CI 2e90587f + sky Usuario + FK ContatoB2B (2026-11-10 America/Sao_Paulo)
+- Tip decisão **`2e90587f`** · **CI SUCCESS** 9/9 (ref PR591a4a53dd2/CI6594SUCCESS).
+- ContatoB2B Base reconfirm: sem `cliente_id`/`empresa_id` → (b) ainda bloqueada no Completo.
+- Sky: UsuarioForm (Fiscal adiado — ID-only). Reservas ApiExterna/Roteirizacao/ChatbotCanal
+  intocadas. C360 chatbot owner: exceção→humano.
+- Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 decisão contatos a/b/c + cadastral≠entrega (2026-11-10 America/Sao_Paulo)
+- Tip **`2e90587f`** · **CI SUCCESS**. Pack: `codex-decisao-contatos-abc-591-20261110.txt`
+  (a jsonb / b ContatoB2B com FK / c anexos) — amostra Base sem cliente_id → (b) bloqueada.
+- Completo: banners limitação HTTP contatos/anexos. Locais: CADASTRAL/FISCAL ≠ Entrega.
+- JobAgendado sky. Freeze `0afd378f284`. Homolog `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 locais≠integral + ContatoB2B tenant + sky params (2026-11-10 America/Sao_Paulo)
+- Tip **`13dde4a5`** · **CI SUCCESS** push+PR 9/9. Docs base **`6572b9ae`**. Homolog **`77f11b28`**.
+- Toast Completo: BATCH_ATOMIC=false → não declara salvamento integral; pedido BFF
+  `codex-locais-batch-atomico-pedido-591-20261110.txt`. Freeze `0afd378f284`.
+- ContatoB2B: cliente só do tenant; WhatsApp campo próprio; pack tenant 20261110.
+- Sky residual: Portal/Caixa/Conciliação/NFe/Origem — reservas ApiExterna/Roteirizacao/
+  ChatbotCanal intocadas. C360: data-integracao-pronta=false.
+- Sem ContatoClienteV2/merge/VPS/PII. Aceite :15173 no tip `77f11b28` com Codex.
+
+## CURSOR — #591 C360 capacidades + contrato contatos/docs (2026-11-09 America/Sao_Paulo)
+- Tip **`10a1dd8e`** · **CI SUCCESS** push+PR. Base locais **`77f11b28`** CI SUCCESS.
+- C360: `goPanelByDelta` + teclado; `PROPOSTA_CAPACIDADES` (existente/parcial/futuro).
+- Contatos/docs: pack ContatoB2B + GerenciarContatos — 422 MASTER ≠ conclusão; BFF com Codex.
+- Packs: `c360-capacidades-atalhos-591` · `codex-contrato-contatos-documentos-591`.
+- Freeze `0afd378f284` até acordo no tip `77f11b28`. Sem ContatoClienteV2/merge/VPS/PII.
+
+## CURSOR — #591 contraprova locais atomicidade + contexto (2026-11-09 America/Sao_Paulo)
+- Tip **`77f11b28`** · **CI SUCCESS** push+PR. Contraprova Codex (94d49): preflight; scope freeze;
+  PARTIAL ops+reconcile via listLocais; `CLIENTE_LOCAIS_BATCH_ATOMIC=false` (batch BLOCKED BFF).
+- Packs: `codex-contraprova-locais-atomicidade-591` + aceite :15173. C360 Voltar=setPanel.
+- Sem ContatoClienteV2/merge/VPS/PII. Aceite HML no tip `77f11b28` com acordo freeze.
+
+## CURSOR — #591 locais parcial + aceite :15173 + C360 etapas (2026-11-09 America/Sao_Paulo)
+- Tip **`898d8c32`** · **CI SUCCESS** push+PR 3/3 (parcial + typecheck + aceite + C360).
+- Pack aceite: `docs/evidence/hml-15173-aceite-codex-tip-591-20261109.txt`. Freeze `0afd378f284`.
+- Contatos/docs fail-closed MASTER; C360 Aside Voltar/Avançar. Sem ContatoClienteV2.
+
+## CURSOR — #591 write `/locais` + peels CI SUCCESS (2026-11-09 America/Sao_Paulo)
+- Tip **`d1b08f96`** · **CI SUCCESS** push+PR 3/3 (peels `14005f39` + write + RBAC assert).
+- Write canônico `/clientes/:id/locais`; baseline null≠delete; extras fail-closed.
+- Base44 MCP `Base` acessível — sem PII. Freeze **`0afd378f284`**.
+
+## CURSOR — #591 parecer 6746649125 + locais read + doc UI (2026-11-09 America/Sao_Paulo)
+- Recebido parecer **6746649125**: descarte silencioso de campos ricos/invalidos = defeito.
+- Tip peels `89eabf78` / fix **`14005f39`** **CI SUCCESS**.
+- Fail-closed: `endereco_principal`/`condicao`/`vínculos` significativos; `tipo`/`origem` inválidos — sem delete silencioso; rascunho preservado.
+- Leitura+escrita canônica `cliente_locais` (não MASTER). Documento hydrate PF-PJ/zeros.
+- Pack: `docs/evidence/codex-parecer-6746649125-descarte-locais-591-20261109.txt`. Sem storage paralelo/VPS/PII.
+
+## CURSOR — #591 lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
+- Owner confirmou **~100 clientes** HML **:15173**; grade Cadastros parecia só nomes.
+- Causa UI: colunas `cnpj`/`cpf` sem `documento` HTTP; e-mail/fone ausentes na grade; Contatos `|| []` escondia escalares.
+- Fix tip (este push): `hydrateClienteHttpRowForUi` (documento→cpf/cnpj); Bloco1/ClientesTab cols documento+email+telefone+celular; V24 variants/labels; Completo mapToForm espelha documento; `contatosViewForUi` (escalares sem wipe / Celular≠WhatsApp).
+- Freeze HML **`0afd378f284`** — **não trocar snapshot mid-teste**; tip API+web só após acordo Codex.
+- Base44 MCP: owner Declined / needsAuth — recuperação via `erp-integra-novo` sem Base44 neste lote.
+- Codex: conferir base persistente + backup campos; aceite privado em :15173 após tip CI. Sem VPS/PII/fixtures/recreate.
+
+## CURSOR — #591 HML :15173 + fail-closed rich fields + retomada (2026-11-09 America/Sao_Paulo)
+- Tip **`0df103e2`** · **CI SUCCESS** push+PR. Owner: **~100 clientes** HML **:15173** (Codex).
+- Vite: `allowedHosts` 5173+**15173**; `/__erp_preview` com `previewPorts` + purpose `private-hml-preview`.
+- HTTP Cliente: `locais_entrega`/`documentos` não vazios → `CLIENTE_HTTP_UNSUPPORTED_FIELDS` (sem drop silencioso).
+- Retomada: `docs/evidence/hml-15173-retomada-acesso-591-20261109.txt` — mesmo SHA API+web, sem seed.
+- Freeze `0afd378f284` só troca com acordo Codex. #401 `5d9a7e37` publicar≠integrar. Sem VPS/PII no GitHub.
+
+## CURSOR — #591 celular≠WhatsApp + lacunas HTTP + C360 prep (2026-11-09 America/Sao_Paulo)
+- Tip **`a287c80f`** · **CI SUCCESS** push+PR. HML freeze **`0afd378f284`** — passagem só com acordo Codex.
+- Celular escalar → tipo **Celular** (não WhatsApp automático) em payload + PainelDinamicoCliente.
+- Pack piloto atualizado: lacunas HTTP MASTER (`locais_entrega`/`documentos`/`contatos[]` ricos) — sem storage paralelo.
+- Mapa: POST ≠ reopen completo. C360 prep: OrcamentosTab + Aside + CentralCliente360Panel (sem paralelo).
+- Sem VPS/dados reais/merge/#401.
+
+## CURSOR — #591 Mapa persist + Funil peels + piloto contrato (2026-11-09 America/Sao_Paulo)
+- Tip **`9c29a392`** · **CI SUCCESS** push+PR. HML **congelado `0afd378f284`**.
+- MapaRoteirizacaoIA: HTTP `criarRomaneio` fail-closed (entregas ausentes → erro, sem create local); local Rota+Romaneio+stamp.
+- Funil peels: `funilAvancadoScopeEdits` CRLF-aware (fecha FAIL `f2c0b68e`).
+- Cliente: omit documentos/contatos/locais se undefined; pack piloto `docs/evidence/codex-piloto-cliente-contrato-hml-591-20261109.txt`.
+- Matriz próximo: cadastros param residual → C360 orçamentos. Sem VPS/dados reais/merge.
+
+## CURSOR — #591 HTTP fail-closed + Funil + titleToModule (2026-11-09 America/Sao_Paulo)
+- HML **congelado `0afd378f284`** (Codex coorte100); tip publicação em CI neste push.
+- Cliente HTTP sem piloto: **sem** fallback local; estados `http-piloto-cliente-off` / erro / permissão / vazia.
+- CRM Funil×3: RBAC `sectionKey` + invalidate/toast; Funil Avançado queryKey com groupId.
+- Layout `titleToModule`: Chatbot/Hub + Cadastros/Expedição/Produção/Contratos/Sistema.
+- Coord fluxo: `docs/evidence/codex-coord-fluxo-hml-591-20261109.txt`. Aceite real pendente HML. Sem VPS/dados reais.
+
+## CURSOR — #591 clientes UI fonte + preservação (2026-11-09 America/Sao_Paulo)
+- Tip publicação CI **`32796b6a`** SUCCESS; HML ensaio **congelado `0afd378f284`** (não trocar mid-teste).
+- Causa UI vazia vs contagem API: sem `VITE_ERP_HTTP_CLIENTE(_360)` em modo http → store local ≠ BFF.
+- V24: banner `data-fonte-dados` + empty/erro/contexto distintos.
+- `CadastroClienteCompleto`: omit `locais_entrega`/`contatos` se undefined; pendência `cliente-parcial`.
+- Pack: `docs/evidence/codex-clientes-fonte-ui-591-20261109.txt`. Aceite real/privado com Codex. Sem dados reais no GitHub.
+- #401 `5d9a7e37` — publicar ≠ integrar. Sem merge/deploy/VPS.
+
+## CURSOR — #591 aceite gaps + EmpresasForm + parecer pack (2026-11-09 America/Sao_Paulo)
+- HML **congelado** para Codex: **`0afd378f284`** (não mudar snapshot no meio do teste).
+- Tip docs CI: **`0385c2d2`**. Delta aceite (este lote): Separação seletor; ConfigFin AND; Empresas→EmpresaForm; Fechamento perm; ConfigUsuario onError.
+- Parecer **6694327032** pack: `docs/evidence/codex-parecer-6694327032-pack-591-20261109.txt` (snapshot+diff+testes).
+- Unificação Empresas: salvamento único via EmpresaForm (`data-unify=empresas-form-canonico`).
+- #401 `5d9a7e37` — publicação ≠ integração. Sem merge/deploy/VPS/dados reais.
+
+## CURSOR — #591 tip `0afd378f` CI SUCCESS (2026-11-09 America/Sao_Paulo)
+- PR #591 · tip **`0afd378f284`** · **CI SUCCESS** push+PR (`erp-runtime-ci`).
+- Achados **6694327032** fechados: ports f51376fa / 2f588154 / 9b5de2bc; upsertConfig HTTP fail-closed; parcial≠0; pin remainder stage81.
+- SHA composto para Codex HML: **`0afd378f284d8693b859477fa532b54a2367527f`** (API+web mesma versão).
+- Publicação #591 ≠ integração #401 (`5d9a7e37`). Homolog BLOCKED até aceite Codex com dados reais.
+- Sem merge/deploy/VPS.
+
+## CURSOR — #591 achados 6694327032 fechados (2026-11-09 America/Sao_Paulo)
+- Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip a publicar (pós-c80cf05c).
+- Ports: pool/preflight **f51376fa**; Grupo granular **2f588154**; Fornecedor freeze **9b5de2bc**.
+- HTTP: `upsertConfig` → `UPSERT_CONFIG_HTTP_UNAVAILABLE` (sem local silencioso).
+- Contagens: parcial/`missing` → badge "—"; `total` null + `countsUnavailable`; fatia `counts:{}` não marca complete.
+- Testes: `hml-591-review-findings` + `count-layout-prop-types` + server suite auth/fornecedor PASS.
+- Publicação #591 ≠ integração #401 (`5d9a7e37`). Homolog HML BLOCKED (sem dados reais / mesmo SHA API+web Codex).
+- Sem merge/deploy/VPS.
+
+## CURSOR — recuperação + Empresas unify + C360 prep (2026-11-06 America/Sao_Paulo)
+- PR #591 HEAD **`b16b4865a`** · **CI SUCCESS 3/3** (push+PR).
+- Coord **6690425383**; parecer **6691042172** fechado; tip parecer **`3fc45c320`** SUCCESS.
+- Recuperação: Chatbot; Separacao keep both; Fechamento hub; ConfiguracoesUsuario; 404; MapaRoteirizacaoIA + ConfigFinanceiroLogistica.
+- Unificação Empresas×Cadastros + C360 prep (evidence, sem redesign).
+- Homolog BLOCKED. Sem merge/deploy/VPS.
+
+## CURSOR — HML Grupo UI + PARTIAL counts + Fornecedor `6b81004fc` (2026-11-06 America/Sao_Paulo)
+- Branch `cursor/hml-grupo-erro-fornecedor-392b` · PR #591 · tip **`bdb912541`** · **CI SUCCESS 9/9**. Coord 6690425383.
+- UI Grupo: `erpHttpSession` deixa de exigir `role===admin` para visão Grupo quando `profileEmpresaId` null. Negativa cross-tenant preservada.
+- Contagens: SetorAtividade 500 isolado (`READ_COUNT_PARTIAL` + `partialCounts`); Expedição KPI erro≠zero.
+- Fornecedor HTTP: port `6b81004fc` (flag OFF). Banco #462: aceite por `boundId`+sky+ID técnico (sem regressão path-checkout).
+- Recuperação: `Home` → `Dashboard` canônico. Homolog HML BLOCKED. Sem merge/deploy/VPS/dados reais.
+
 ## CURSOR — #401 tip `76cd4e299` CI SUCCESS (2026-11-06 America/Sao_Paulo)
 - **CI SUCCESS 3/3** em `76cd4e299`: Integrações reconnect + `initialTab={null}` (typecheck).
 - Base `912bc7b0f` P1/Dashboard. Pacote Codex: `docs/evidence/codex-review-pack-401-p1-dashboard-20261106.txt`.

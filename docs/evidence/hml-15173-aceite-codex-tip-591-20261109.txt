@@ -1,0 +1,71 @@
+#591 — Pack aceite HML :15173 para Codex (sem PII)
+America/Sao_Paulo 2026-11-11
+
+SNAPSHOT EXATO (API+web mesma versão — CI tip)
+- Branch: cursor/hml-grupo-erro-fornecedor-392b
+- PR: #591
+- Tip freeze atual (pareceres 6779554174/6779707769/6780153153 + peels):
+  **8650fd4d14a8f3f43ebdf5784f6dcb1df1933d89**
+  · CI SUCCESS 9/9 (run 42999100236)
+  · Runtime resíduos: 353cfa46 · peels Completo: 8650fd4d
+- Inclui: create≠CAS · null omit · Completo rejeita >2000 sem truncar ·
+  get/update ctx capture+reauth · enrichLegacyContacts · CAS expectedVersion ·
+  omit≠[] · prefs Central `central360.cols.v6:actor:group:empresa`
+- Layout v6: `82b15566` no mesmo branch
+- Publicação privada :15173 = **mesmo SHA API+web** deste tip
+  (CI verde ≠ homologação sozinha — validar roteiro abaixo com Codex)
+- Sem deploy operacional automático neste agente · sem PII no GitHub
+
+DELTA vs tip anterior freeze `6b3c84c2` / `c348d4d3`
+1. POST create com contatos[] sem expectedVersion (update mantém CAS)
+2. contatos:null em edição escalar → omissão (schema não recebe NULL)
+3. Completo: assertContatoLen antes de sanitizeText/slice (2001 rejeita)
+4. ClienteService: ctx={...ctx}; parse pré-await no update; reauth no get
+5. enrichLegacyContacts restaurado (delegação pública + legacy file 29726)
+6. Contraprovas: server/tests/cliente-service-ctx-capture-591.test.ts
+7. Evidence resíduos: docs/evidence/codex-parecer-6779554174-residuos-591-20261111.txt
+
+CONTRATOS (API + UI no mesmo SHA)
+- Contatos[] jsonb MASTER + CAS (expectedVersion ↔ contatos_version)
+- Create: contatos opcional sem CAS; Update replace: CAS obrigatório
+- null = desconhecido/omitir; [] = limpeza explícita; omit = não tocar
+- Celular ≠ WhatsApp; canal inválido → quarentena (não conta como válido)
+- cliente-parcial: banner quando contatos/locais/documentos não carregados
+- Locais: sync /clientes/:id/locais; BATCH_ATOMIC=false; PARTIAL+reconcile
+- Documentos[] anexos: ainda fail-closed sem BFF (unsupported)
+
+ROTEIRO CURTO ACEITE PRIVADO (:15173) — Codex
+1. Servir API+web no tip **8650fd4d** (mesmo SHA; sem misturar freeze antigo)
+2. Listagem Cadastros Cliente: documento/email/telefone/celular (não só nome)
+3. Abrir PF: CPF com zeros; nome; sem inventar razão social
+4. Abrir PJ: CNPJ; razão; fantasia
+5. Aba Contatos: lista MASTER; quarentena visível se canal inválido;
+   editar obs ≤2000; tentar 2001 → rejeição + rascunho intacto
+6. Novo cliente: contatos:[] ou manuais → POST sem inventar versão
+7. Cliente com contatos:null: editar só nome_fantasia → não enviar contatos:null
+8. Concorrência: dois patches com mesmo expectedVersion → 409 no segundo
+9. Troca de ator/contexto durante await (não liberar ação cruzada)
+10. Reabrir após save: valores + contatos_version novos
+11. Endereços: carga OK → editar/salvar; falha de leitura ≠ soft-delete em massa
+12. Central360 shell v6: 12 colunas; grades dual; Cliente360 retrátil;
+    clique simples seleciona; duplo edita; Voltar ≠ reverte negócio
+
+CHECKLIST ESTADO
+[ ] Listagem / detalhes / documentos / inscrições / contatos / pendências / reabertura
+[ ] Parcial + quarentena comprovados em UI (sem ContatoClienteV2)
+[ ] Screenshots privados vs v6 (desktop/notebook/dois monitores)
+[ ] URL privada + SHA servido registrados (fora do GitHub se PII)
+
+COORD
+- Freeze candidato: **8650fd4d** (CI SUCCESS) — substituir c348d4d3/6b3c84c2
+- Sair de freeze antigo `0afd378f284` só com acordo Codex neste tip
+- Publicação #591 ≠ integração #401 · sem PII · sem ContatoClienteV2
+
+PENDENTE PÓS-ACEITE
+- Ações ABERTO: Imprimir/Enviar/Fechar/Duplicar/Itens anteriores implementados; Desmembrar = limitação explícita (ver c360-aberto-acoes-591-20261111.txt)
+- Screenshots privados v6
+- Integração seletiva candidata / #401 sem port cego
+- documentos[] BFF
+
+FORA
+dados reais no GitHub · recreate · merge/VPS write · botão decorativo como “integração”

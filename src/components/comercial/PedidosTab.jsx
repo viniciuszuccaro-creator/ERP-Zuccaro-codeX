@@ -48,6 +48,7 @@ import PedidoCanonicoPanel from "./PedidoCanonicoPanel";
 import { isPedidoLegacyProducaoSobMedida, matchesPedidoLegacyStatusFilter, pedidoLegacyStatusLabel } from './pedidoUiPolicy';
 
 export default function PedidosTab(props) {
+  // Painel HTTP canônico preservado; Central de Vendas360° monta o shell no launchpad (Comercial.jsx).
   if (props.canonicalHttp) return <PedidoCanonicoPanel {...props} />;
   return <PedidosOperacaoLegada {...props} />;
 }

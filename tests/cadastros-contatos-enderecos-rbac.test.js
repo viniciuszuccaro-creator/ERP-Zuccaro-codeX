@@ -131,9 +131,12 @@ test('CadastroClienteCompleto: saveMutation exige podeEditar e passa assertScope
   const text = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const start = text.indexOf('mutationFn: async (data) => {');
   assert.ok(start > 0, 'saveMutation.mutationFn deve existir');
-  const slice = text.slice(start, start + 900);
+  const end = text.indexOf('onSuccess:', start);
+  const slice = text.slice(start, end > start ? end : start + 6000);
   assert.match(slice, /if \(!podeEditar\) throw new Error\("Seu perfil nao permite editar clientes\."\);/);
-  assert.match(slice, /return updateInContext\('Cliente'/);
+  // Write canônico: MASTER via updateInContext; locais via syncClienteLocaisViaHttp.
+  assert.match(slice, /(?:return |saved = await )updateInContext\('Cliente'/);
+  assert.match(slice, /syncClienteLocaisViaHttp/);
   assert.match(text, /assertScopeCurrent=\{assertFormScopeCurrent\}/);
 });
 
@@ -183,6 +186,7 @@ test('UI enderecos: mudança de Grupo/sessão bloqueia excluir no componente rea
 test('salvar contato principal: botão gated + algoritmo real limpa duplicidade', async () => {
   const source = await readFile(new URL('../src/components/cadastros/GerenciarContatosClienteForm.jsx', import.meta.url), 'utf8');
   assert.match(source, /data-action="Cadastros\.Cliente\.contato\.salvar"/);
+  assert.match(source, /disabled=\{bloqueado \|\| !podeEditar\}/);
   assert.match(source, /if \(novoContato\.principal\)/);
   assert.match(source, /cont\.principal = false/);
 
@@ -245,18 +249,29 @@ test('UI contatos: salvar com contexto capturado — resposta tardia não muta a
   assert.ok(capturedScopes.includes('stale'), 'assertScope captura contexto no momento do salvar');
 });
 
-test('contrato HTTP: BFF .strict rejeita contatos crus; adapter projeta para email/telefone/celular', async () => {
+test('contrato HTTP: BFF aceita contatos[] jsonb; adapter espelha escalares (WhatsApp≠celular)', async () => {
   const types = await readFile(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url), 'utf8');
   const service = await readFile(new URL('../server/src/services/clienteService.ts', import.meta.url), 'utf8');
   const ui = await readFile(new URL('../src/components/cadastros/CadastroClienteCompleto.jsx', import.meta.url), 'utf8');
   const adapter = await readFile(new URL('../src/api/clienteHttpPayload.js', import.meta.url), 'utf8');
-  // Frontend inclui contatos no payload local.
+  // Frontend inclui contatos no payload local (omit-if-undefined).
   assert.match(ui, /contatos: sanitizeContatos\(data\.contatos\)/);
-  // Backend: update schema strict e sem campo contatos — proteção UI não é autorização.
+  // Backend: update schema strict COM contatos[] + CAS expectedVersion (decisão a / jsonb MASTER).
   assert.match(types, /clienteUpdateSchema/);
-  assert.doesNotMatch(types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 1200), /\bcontatos\b/);
+  assert.match(types, /clienteContatosReplaceSchema/);
+  assert.match(types, /clienteContatosSchema/);
+  assert.match(
+    types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 2000),
+    /\bcontatos:\s*clienteContatosReplaceSchema/,
+  );
+  assert.match(
+    types.slice(types.indexOf('clienteUpdateSchema'), types.indexOf('clienteUpdateSchema') + 2000),
+    /\bexpectedVersion:\s*clienteContatosReplaceSchema/,
+  );
   assert.match(service, /clienteUpdateSchema\.safeParse/);
-  // Adapter no contrato MASTER existente: projeta contatos[] → escalares; nunca envia contatos no wire.
+  // Adapter: grava contatos[] + espelho escalar; WhatsApp ≠ celular.
   assert.match(adapter, /applyContatosProjection/);
+  assert.match(adapter, /sanitizeContatosForHttp/);
+  assert.match(adapter, /return 'whatsapp'/);
   assert.match(adapter, /hydrateContatosFromScalars/);
 });

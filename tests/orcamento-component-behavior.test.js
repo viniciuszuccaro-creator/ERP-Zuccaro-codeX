@@ -72,9 +72,10 @@ async function mount() {
     }) },
     './comercialProposalFixture':proposalFixture,'./OrcamentoProposalAside':{__esModule:true,default:'OrcamentoProposalAside'},
     './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido'},
+    './centralVendas360Layout': await import('../src/components/comercial/centralVendas360Layout.js'),
     './orcamentoUiPolicy': policy, './pedidoUiPolicy': pedidoPolicy, './comercialMasterPicker': picker,
     './centralCliente360Navigation': navigation,
-    sonner: { toast: Object.fromEntries(['error', 'success'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },
+    sonner: { toast: Object.fromEntries(['error', 'success', 'message', 'info'].map((kind) => [kind, (text) => messages.push({ kind, text })])) },
     '@/components/lib/exportacaoPDF': { gerarPDFOrcamento: () => true },
   };
   const exports = {};
@@ -126,9 +127,9 @@ test('Orcamento real: cancelar/converter bloqueiam clique duplo e callback tardi
   for (const method of ['cancel', 'convert']) {
     const h = await mount(); h.pending[method] = deferred(); let click;
     if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find((n) => typeof n.props.onConfirm === 'function').props.onConfirm; }
-    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render();
+    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render();
       h.nodes().filter((n) => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
-      h.render(); click = h.button('Criar pedido').props.onClick; }
+      h.render(); click = h.button('Confirmar fechamento').props.onClick; }
     const result = click(); click(); assert.equal(h.calls.filter((c) => c.method === method).length, 1);
     h.setSession(tresZ); h.pending[method].resolve(row()); await result; await flush();
     assert.equal(h.invalidations.length, 0); assert.equal(h.messages.filter((m) => m.kind === 'success').length, 0);
@@ -140,7 +141,7 @@ test('Orcamento real: permissao revogada com formulario aberto impede envio', as
     const h = await mount(); let click;
     if (method === 'update') { h.title('Editar').props.onClick(); h.render(); click = h.button('Salvar orçamento').props.onClick; }
     else if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find((n) => typeof n.props.onConfirm === 'function').props.onConfirm; }
-    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render(); click = h.button('Criar pedido').props.onClick; }
+    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render(); click = h.button('Confirmar fechamento').props.onClick; }
     const before = h.calls.length; h.revoke(); await click();
     assert.equal(h.calls.length, before); assert.equal(h.messages.at(-1).kind, 'error');
   }
@@ -201,9 +202,9 @@ for (const method of ['update', 'cancel', 'convert']) {
     if (method === 'update') { h.title('Editar').props.onClick(); h.render(); click = h.button('Salvar orçamento').props.onClick; }
     if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find(n => typeof n.props.onConfirm === 'function').props.onConfirm; }
     if (method === 'convert') {
-      await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render();
+      await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render();
       h.nodes().filter(n => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
-      h.render(); click = h.button('Criar pedido').props.onClick;
+      h.render(); click = h.button('Confirmar fechamento').props.onClick;
     }
     const previous = h.calls.length;
     h.setSession({ ...cpa, token: 'synthetic-new' });
@@ -232,7 +233,8 @@ test('346 quote query keys separate actor and session without embedding credenti
 test('347 proposta no editor real usa somente memória e bloqueia gravação mesmo pelo callback', async () => {
   const h=await mount();h.setProps({...cpa,proposalMode:true});h.render();h.render();
   assert.ok(h.queries.every(key=>!JSON.stringify(key).includes('synthetic-session')));
-  h.button('Novo orçamento').props.onClick();h.render();
+  // #591: rótulo sintético — aciona via data-action (não "Novo orçamento" operacional).
+  h.find(n=>n.type==='Button'&&n.props['data-action']==='proposta-nova-negociacao').props.onClick();h.render();
   h.find(n=>n.type==='Select'&&n.props['data-action']==='orcamento-cliente').props.onValueChange('preview-vinculo');h.render();
   h.find(n=>n.type==='Select'&&n.props['data-action']==='orcamento-produto').props.onValueChange('preview-produto');h.render();
   const aside=h.find(n=>n.type==='OrcamentoProposalAside');
@@ -251,11 +253,12 @@ test('347 clique duplo em Novo orçamento não zera rascunho já aberto', async 
   h.setProps({ ...cpa, proposalMode: true });
   h.render();
   h.render();
-  h.button('Novo orçamento').props.onClick();
+  const nova = () => h.find((n) => n.type === 'Button' && n.props['data-action'] === 'proposta-nova-negociacao');
+  nova().props.onClick();
   h.render();
   h.find((n) => n.type === 'Select' && n.props['data-action'] === 'orcamento-cliente').props.onValueChange('preview-vinculo');
   h.render();
-  h.button('Novo orçamento').props.onClick();
+  nova().props.onClick();
   h.render();
   const aside = h.find((n) => n.type === 'OrcamentoProposalAside');
   assert.ok(aside.props.cliente.includes('SINTÉTICO'));

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-/** Exactly ten approved integration/optional-contract hunks; every other V24 statement stays under the original invariant. */
+/** Approved integration/optional-contract hunks; every other V24 statement stays under the original invariant. */
 export function clienteNavigationRemainder(source) {
   const changes = [
     ["import useClienteCadastroNavigation from './hooks/useClienteCadastroNavigation';\n", ''],
@@ -28,6 +28,39 @@ export function clienteNavigationRemainder(source) {
         </div>
       )}
 `, ''],
+    // #591: documento/email/telefone variants + labels — peel back to golden e36231b3
+    [
+      "  if (/^(nome|titulo|label|descricao)/i.test(String(field || ''))) {\n"
+      + "    variants = variants.concat(['nome', 'descricao', 'titulo']);\n"
+      + "  }\n"
+      + "  // HTTP MASTER Cliente: documento unificado ↔ colunas cpf/cnpj da grade.\n"
+      + "  if (/^(cpf|cnpj|cpf_cnpj|documento)$/i.test(String(field || ''))) {\n"
+      + "    variants = variants.concat(['documento', 'cpf_cnpj', 'cnpj', 'cpf']);\n"
+      + "  }\n"
+      + "  if (/^(telefone|fone|celular|whatsapp)$/i.test(String(field || ''))) {\n"
+      + "    variants = variants.concat(['telefone', 'celular']);\n"
+      + "  }\n"
+      + "  if (/^(email|e_mail)$/i.test(String(field || ''))) {\n"
+      + "    variants = variants.concat(['email']);\n"
+      + "  }\n"
+      + "  return variants;\n",
+      "  if (/^(nome|titulo|label|descricao)/i.test(String(field || ''))) {\n"
+      + "    variants = variants.concat(['nome', 'descricao', 'titulo']);\n"
+      + "  }\n"
+      + "  return variants;\n",
+    ],
+    [
+      '      ativo: "Ativo",\n'
+      + '      documento: "CPF/CNPJ",\n'
+      + '      cpf: "CPF",\n'
+      + '      cnpj: "CNPJ",\n'
+      + '      email: "E-mail",\n'
+      + '      telefone: "Telefone",\n'
+      + '      celular: "Celular",\n'
+      + '      razao_social: "Razão social",\n',
+      '      ativo: "Ativo",\n'
+      + '      razao_social: "Razão social",\n',
+    ],
   ];
   let result = source.replace(/\r\n/g, '\n');
   for (const [before, after] of changes) {

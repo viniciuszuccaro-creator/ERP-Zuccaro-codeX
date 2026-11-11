@@ -1,0 +1,76 @@
+#591 — DECISÃO TÉCNICA Contatos (a)/(b)/(c) — fechar sem rodada genérica
+America/Sao_Paulo 2026-11-10 · sem PII
+Tip decisão: 2e90587f CI SUCCESS · tip limpo HEAD 84325aac CI SUCCESS
+Tip docs a4a53dd2 · tip código base 13dde4a5
+Homolog locais: 77f11b28 · Freeze HML: 0afd378f284
+Reconfirm Base 2026-11-10: docs/evidence/codex-contatob2b-fk-reconfirm-591-20261110.txt
+  (cliente_id/empresa_id ainda ausentes → (b) bloqueada)
+Pedido objetivo (1 página): docs/evidence/codex-pedido-decisao-objetiva-contatos-591-20261110.txt
+
+PEDIDO AO CODEX
+Escolher UMA representação abaixo e publicar contrato BFF (endpoints + schema).
+Responder com decisão objetiva — sem nova rodada genérica.
+Cursor integra no CadastroClienteCompleto assim que o contrato existir.
+Não criar ContatoClienteV2 / storage paralelo.
+Não conectar ContatoB2B ao Completo sem prova FK.
+
+────────────────────────────────────────
+ALTERNATIVA (a) — contatos[] jsonb no Cliente MASTER
+────────────────────────────────────────
+Campos UI (GerenciarContatosClienteForm):
+  nome, cargo, tipo (Telefone|Celular|WhatsApp|E-mail), valor, principal, observacao
+Persistência: coluna jsonb `contatos` (ou equivalente) em Cliente, scoped groupId+empresaId
+Sync: omit-if-undefined; [] = remoção explícita; overflow → CONTATOS_SCALAR_OVERFLOW se
+  projetar escalares; Celular ≠ WhatsApp automático
+Consumidores a atualizar após BFF:
+  - CadastroClienteCompleto (draft→save)
+  - PainelDinamicoCliente / GerenciarContatosCliente
+  - clienteHttpPayload applyContatosProjection / assert rich fields
+  - MotorNotificacoes / WhatsAppBusinessEngine (lê contatos[].tipo WhatsApp)
+Lacunas hoje: MASTER ALLOWED_KEYS sem contatos[]; não-vazio → CLIENTE_HTTP_UNSUPPORTED_FIELDS
+Prós: 1:1 com UI Completo; remoção/edição por índice no mesmo registro
+Contras: jsonb grande; auditoria item-a-item mais fraca
+
+────────────────────────────────────────
+ALTERNATIVA (b) — ContatoB2B como fonte rica por cliente_id
+────────────────────────────────────────
+Campos entidade ContatoB2B (Base MCP shape):
+  id, cliente_id, nome_contato, cargo, departamento, email, telefone, whatsapp,
+  principal, ativo, empresa_id, group_id, preferencias_comunicacao
+Owner UI: ContatoB2BForm (Cadastros.pessoas) — RBAC Cadastros/Comercial.ContatoB2B
+Consumidores atuais: Bloco1Pessoas, V24, counts, StatusFase3, useInvalidationBus
+Pré-condição OBRIGATÓRIA (ainda NÃO comprovada na amostra Base):
+  - todo ContatoB2B usado no Completo DEVE ter cliente_id + group_id/empresa_id
+    pertencentes ao tenant do Cliente
+  - amostra MCP tip: registros com group_id, mas cliente_id/empresa_id AUSENTES
+    nos fields retornados → VÍNCULO NÃO COMPROVADO → NÃO reutilizar no Completo
+    até BFF/dados garantirem FK cliente_id + escopo
+Wire Completo após prova:
+  list ContatoB2B where cliente_id=X + tenant; CRUD com assertScope; Celular escalar
+  do Cliente ≠ campo whatsapp do ContatoB2B
+Lacunas: sem HTTP BFF ContatoB2B no httpApiClient; Completo não lista ContatoB2B hoje
+Prós: entidade já existe; auditoria por registro; WhatsApp campo próprio
+Contras: dois modelos (escalares Cliente + pessoas ContatoB2B); exige backfill cliente_id
+
+────────────────────────────────────────
+ALTERNATIVA (c) — documentos anexos (separado de identificação)
+────────────────────────────────────────
+Identificação PF/PJ: documento/cpf/cnpj MASTER (hydrateClienteHttpRowForUi; zeros via string)
+Anexos `documentos[]` Completo ≠ ModeloDocumento (template cadastro)
+Precisa: tabela/storage anexo + permissão + auditoria + groupId/empresaId
+Hoje: documentos[] não vazio → CLIENTE_HTTP_UNSUPPORTED_FIELDS; UI declara limitação
+Pode combinar com (a) ou (b)
+
+────────────────────────────────────────
+RECOMENDAÇÃO CURSOR (não decide sozinha)
+────────────────────────────────────────
+Se BFF puder jsonb rápido → (a) desbloqueia Completo canais.
+Se ContatoB2B for mestre de pessoas → (b) SOMENTE após FK cliente_id+tenant 100%.
+(c) em paralelo para anexos; nunca misturar com CPF/CNPJ.
+
+TESTES CURSOR APÓS DECISÃO
+leitura/criação/edição/remoção explícita; erro; reabertura; troca cliente/contexto/
+sessão; resposta tardia; Celular≠WhatsApp; sem wipe de undefined.
+
+FORA
+ContatoClienteV2 · merge · VPS · PII no GitHub · toast como solução de contrato

@@ -1,0 +1,22 @@
+#591 — Cliente lista só-nome → campos HTTP + Completo (2026-11-09 America/Sao_Paulo)
+
+Owner: ~100 clientes confirmados HML :15173; Cadastros pareciam mostrar só nomes.
+Freeze HML: 0afd378f284 — não trocar mid-teste; tip API+web só com acordo Codex.
+
+Causa (UI, sem PII):
+- Grade Bloco1/ClientesTab listava cnpj/cpf; BFF MASTER envia documento unificado.
+- Colunas email/telefone/celular ausentes na grade.
+- Completo Contatos usava formData.contatos || [] → lista vazia quando HTTP só tem escalares
+  (omit-if-unknown correto no save, mas escondia e-mail/fone na aba).
+
+Fix (código sanitizado, sem storage paralelo / sem recreate / sem fixtures):
+- src/api/clienteHttpPayload.js — hydrateClienteHttpRowForUi (documento→cpf/cnpj; withHydratedContatos).
+- src/api/httpApiClient.js — get/list/filter/create/update Cliente via hydrate.
+- Bloco1Pessoas + ClientesTab — cols documento,cnpj,cpf,email,telefone,celular.
+- VisualizadorUniversalEntidadeV24 — variants/labels documento/cpf/cnpj/email/telefone/celular.
+- CadastroClienteCompleto — mapToForm espelha documento; contatosViewForUi (Celular≠WhatsApp).
+
+Testes: cliente-lista-campos-http-591, cliente-contatos-http-adapter, cliente-fonte-lista-preservacao-591.
+Base44 MCP: Declined/needsAuth — recuperação independente via erp-integra-novo neste lote.
+Codex: base persistente + backup campos; aceite privado :15173 após tip CI verde.
+Sem merge/deploy/VPS/dados reais no GitHub. #401 publicar≠integrar.

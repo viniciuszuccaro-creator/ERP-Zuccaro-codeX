@@ -15,7 +15,8 @@ import {
         Calendar,
         BarChart3,
         Factory,
-        MessageCircle
+        MessageCircle,
+        Bot
       } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
@@ -69,6 +70,8 @@ const navigationItems = [
   
   
   { title: "Hub de Atendimento", url: createPageUrl("HubAtendimento"), icon: MessageCircle, group: "principal" },
+  // Página canônica do bot (complementar ao Hub — matriz keep both); estava só em pages.config.
+  { title: "Chatbot de Atendimento", url: createPageUrl("ChatbotAtendimento"), icon: Bot, group: "principal" },
   ];
 
 // React Query client centralizado (padrões seguros + performance)
@@ -90,6 +93,8 @@ function LayoutContent({ children, currentPageName }) {
   const pageToModule = {
     CRM: 'CRM',
     Comercial: 'Comercial',
+    // Fechamento de pedidos é superfície Comercial (não cair em Sistema por omissão).
+    DashboardFechamentoPedidos: 'Comercial',
     Estoque: 'Estoque',
     Compras: 'Compras',
     Financeiro: 'Financeiro',
@@ -103,8 +108,19 @@ function LayoutContent({ children, currentPageName }) {
     Relatorios: 'Relatórios',
     Agenda: 'Agenda',
     Cadastros: 'Cadastros',
+    // Visão operacional de empresas; mestre canônico permanece em Cadastros.
+    Empresas: 'Cadastros',
     Contratos: 'Contratos',
     AdministracaoSistema: 'Sistema',
+    // Rota direta /Integracoes — mesmo módulo da aba Admin (proteção granular na página).
+    Integracoes: 'Sistema',
+    HubAtendimento: 'CRM',
+    ChatbotAtendimento: 'CRM',
+    PortalCliente: 'Portal',
+    OrcamentoSite: 'Comercial',
+    EntregasMobile: 'Expedição',
+    // Preferências do próprio usuário (footer/avatar) — não auditar como Sistema.
+    ConfiguracoesUsuario: 'ConfiguracoesUsuario',
   };
   const moduleName = pageToModule?.[currentPageName] || 'Sistema';
               // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado
@@ -1266,12 +1282,19 @@ function LayoutContent({ children, currentPageName }) {
 
   const titleToModule = {
     "CRM - Relacionamento": "CRM",
+    "Hub de Atendimento": "CRM",
+    "Chatbot de Atendimento": "CRM",
+    "Cadastros Gerais": "Cadastros",
     "Comercial e Vendas": "Comercial",
     "Estoque e Almoxarifado": "Estoque",
     "Compras e Suprimentos": "Compras",
+    "Expedição e Logística": "Expedição",
+    "Produção e Manufatura": "Produção",
     "Financeiro e Contábil": "Financeiro",
     "Fiscal e Tributário": "Fiscal",
     "Recursos Humanos": "RH",
+    "Gestão de Contratos": "Contratos",
+    "Administração do Sistema": "Sistema",
   };
 
   const itemsFiltrados = navigationItems.filter(item => {
@@ -1283,6 +1306,8 @@ function LayoutContent({ children, currentPageName }) {
 
   useEffect(() => {
     if (!moduleName) return;
+    // Self-service: ConfiguracoesUsuario não exige módulo Sistema.
+    if (currentPageName === 'ConfiguracoesUsuario' || moduleName === 'ConfiguracoesUsuario') return;
     const key = `audit_block_${moduleName}`;
     try {
       const allowed = hasPermission(moduleName, null, 'ver');

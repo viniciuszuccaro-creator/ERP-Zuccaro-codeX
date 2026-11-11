@@ -292,7 +292,14 @@ export default function GerenciarContatosClienteForm({
         </div>
       )}
 
-      <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
+      <Dialog
+        open={dialogAberto}
+        onOpenChange={(open) => {
+          if (!open && bloqueado) return;
+          setDialogAberto(open);
+          if (!open) resetForm();
+        }}
+      >
         <DialogContent className="max-w-md z-[9999]">
           <DialogHeader>
             <DialogTitle>
@@ -300,14 +307,14 @@ export default function GerenciarContatosClienteForm({
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4" data-block="contato-dialog-fields">
             <div>
               <Label>Nome do Contato</Label>
               <Input
                 value={novoContato.nome}
                 onChange={(e) => setNovoContato({ ...novoContato, nome: e.target.value })}
                 placeholder="Ex: João Silva"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -317,7 +324,7 @@ export default function GerenciarContatosClienteForm({
                 value={novoContato.cargo}
                 onChange={(e) => setNovoContato({ ...novoContato, cargo: e.target.value })}
                 placeholder="Ex: Gerente de Compras"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -326,7 +333,7 @@ export default function GerenciarContatosClienteForm({
               <Select
                 value={novoContato.tipo || "Telefone"}
                 onValueChange={(v) => setNovoContato({ ...novoContato, tipo: v })}
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent className="z-[10000]">
@@ -336,6 +343,9 @@ export default function GerenciarContatosClienteForm({
                   <SelectItem value="E-mail">E-mail</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="mt-1 text-[11px] text-slate-500" data-regra="celular-nao-whatsapp" role="note">
+                Celular ≠ WhatsApp — escolha o tipo explicitamente; não há conversão automática.
+              </p>
             </div>
 
             <div>
@@ -344,7 +354,7 @@ export default function GerenciarContatosClienteForm({
                 value={novoContato.valor}
                 onChange={(e) => setNovoContato({ ...novoContato, valor: e.target.value })}
                 placeholder={novoContato.tipo === 'E-mail' ? 'email@exemplo.com' : '(11) 99999-9999'}
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -354,7 +364,7 @@ export default function GerenciarContatosClienteForm({
                 value={novoContato.observacao}
                 onChange={(e) => setNovoContato({ ...novoContato, observacao: e.target.value })}
                 placeholder="Ex: Ligar somente após 14h"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
             </div>
 
@@ -364,18 +374,18 @@ export default function GerenciarContatosClienteForm({
                 checked={novoContato.principal}
                 onChange={(e) => setNovoContato({ ...novoContato, principal: e.target.checked })}
                 className="w-4 h-4"
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
               />
               <Label className="cursor-pointer font-normal">Marcar como contato principal</Label>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }}>
+              <Button variant="outline" onClick={() => { setDialogAberto(false); resetForm(); }} disabled={bloqueado}>
                 Cancelar
               </Button>
               <Button
                 onClick={handleSalvarContato}
-                disabled={!podeEditar}
+                disabled={bloqueado || !podeEditar}
                 data-permission="Cadastros.Cliente.editar"
                 data-action="Cadastros.Cliente.contato.salvar"
               >

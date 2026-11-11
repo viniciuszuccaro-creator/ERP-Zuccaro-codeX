@@ -1,0 +1,24 @@
+#591 — C360 OrcamentoProposalAside: Voltar/Avançar + capacidades
+America/Sao_Paulo 2026-11-09 · sem PII
+
+VALIDADO
+- Voltar/Avançar = só goPanel/setPanel (rascunho no OrcamentosTab)
+- Sem save / convert / fetch / mutate na navegação
+- Teclado ArrowLeft/ArrowRight; clique repetido nos limites não avança além
+- Ações Salvar/Converter/Reservar/WhatsApp permanecem disabled na prévia
+
+CAPACIDADES (data-capacidade / PROPOSTA_CAPACIDADES)
+- existente: Hub Atendimento, Chatbot (titleToModule)
+- parcial: cliente/histórico, crédito, estoque, produção, entregas/mapa,
+  cobrança, marketplaces (owners nomeados no aside)
+- futuro: NF (emissão só na empresa), site/e-commerce integrado
+
+NÃO FEITO (franquia / BFF)
+- Wire operacional dos painéis no modo real (fora proposalMode)
+- Redesign amplo / central paralela / modais empilhados
+
+TESTES
+- tests/c360-orcamentos-centro-prep-591.test.js
+- tests/comercial-proposal-aside.test.js (Voltar/Avançar + capacidades)
+
+Owners: OrcamentosTab + OrcamentoProposalAside + CentralCliente360Panel
