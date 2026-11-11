@@ -1,3 +1,15 @@
+## CURSOR — #591 CI SUCCESS tip `91b112ac` IE/IM/obs UI (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`91b112ac`** Completo IE/IM/obs omit-aware · peels · runtime identity `95bfe2d7` · piloto `432edac1` |
+| **CI** | SUCCESS 9/9 |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática |
+| Fora | IE no identity BFF (Codex) · 14 nomes · SHA API+web · canais externos |
+
+**Próximo:** ACK Codex IE identity + nomes 14 + aceite :15173 · recuperação/canais independente.
+
 ## CURSOR — #591 Completo IE/IM/obs omit-aware UI (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
