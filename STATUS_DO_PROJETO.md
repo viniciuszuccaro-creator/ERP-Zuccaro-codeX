@@ -1,3 +1,17 @@
+## CURSOR — #591 CI SUCCESS tip `432edac1` piloto-cobertura (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`432edac1`** omit escalares + lista rica · peels stage48 |
+| **CI** | SUCCESS 9/9 |
+| **Lote** | Completo hasOwn/ownText; UI procedência/contato; listas fantasia/IE/origem |
+| **Evidence** | `docs/evidence/cursor-cliente-piloto-cobertura-omit-591-20261111.txt` |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática deste tip |
+| Fora | SHA API+web Codex · 14 nomes privados · BFF rich · canais externos |
+
+**Próximo:** ACK Codex nomes 14 + aceite :15173 · próximo lote recuperação/canais independente.
+
 ## CURSOR — #591 piloto-cobertura omit escalares + lista rica (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
