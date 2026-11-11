@@ -1,4 +1,58 @@
-## Estado vigente - contatos enriquecidos nos MESMOS1500 inativos (2026-11-11)
+## Estado vigente - extensoes do mesmo Cliente e delta VPS (2026-11-11)
+
+658d8cca CI6887/6888SUCCESS, fechamento confirmado; contatos NAO reaplicados.
+1600mestres/1500INATIVOS/4200canais e recibos1504 preservados. Nenhum dado novo,
+DDL, grant ou reativacao executados neste pacote; HMLAPP permaneceSTOPPED.
+
+Contrato backend ampliado no Cliente existente: rg, numero_caixa_postal,
+cep_caixa_postal, caixa_postal_cobranca, inscricao_produtor_rural. Campos opcionais,
+nullable/sem defaults; omissao nao limpa e schema antigo recusa escrita explicita
+com503. Reutilizados CRUD/repositorios e enrichLegacyContacts, agora com masterFields
+opcional, CAS/fullsnapshot/lock/RBAC/auditoria/replay/reversao; contatos continuam
+append-only. Enriquecimento so preenche campos vazios; edicao manual bloqueia
+sobrescrita/reversao. RG mascarado na auditoria CRUD ordinaria. Sem endpoint novo.
+
+Mapper existente reexporta auxiliar puro de5campos (necessario para nao ampliar
+o arquivo ja grande): identidade nativa tipada, zeros a esquerda, trim de borda
+declarado, proveniencia e pendencia por campo; nao toca observacoes/historicos,
+COMENTARIO/STRINGLIVRE6/WhatsApp ou vinculos. Novo helper de esquema/parametros
+reutilizado pelos repositorios evita SQL duplicado e identifica storage ausente.
+SQL cliente_master_extras.sql e CANDIDATO fora do migrador: NAO aplicado.
+
+Preflight privado dos MESMOS1600 pelo mapper/schema reais:1315RG candidatos,
+1numero/1CEP de caixa postal,1316clientes com candidatos;5RG-placeholder retidos.
+284sem candidato nesses5campos nao significam cadastro vazio. Os outros2campos
+de extensao estao vazios nesta populacao, nao foram inventados.0campos liberados
+para escrita antes do gateDDL,1317valores candidatos com storage pendente.
+Recibo master-extras-preflight.private.json junto dos ensaios existentes, sem
+novo lote/coorte. TODOS1600 continuam parciais; endereco/Obras/finalidade/numero/
+pais e crosswalks vendedor/tabela/regiao seguem seus contratos comprovados.
+
+PGlite17PASS e raiz168PASS afetados, incluindo falha->correcao de3contraprovas
+de preservacao: camada exata nova, mesmos hashes ancestrais/comparacao integral,
+mutacoes reais rejeitadas por TODOS os entrypoints antigos. Novo testePG isolado
+no runner existente exige LOGIN NOSUPER/NOBYPASS, concorrencia/CAS/replay/reversao
+e conserva inativo. PG novo e suite Linux completa dependem da CI desteSHA;
+publicacao draft pela excecao de validacao ja autorizada, nao homologacao.
+Audit/lint/typecheck/build frontend e typecheck/build backendPASS; lint1aviso previo.
+
+VPSconsole recuperado: catalogos reais de9relacoes/165colunas/76constraints/
+46indices/0policies, READONLY/ROLLBACK, recibo privado schema-contract-20261111.
+RLS/FORCE presentes mas API usa o MESMO login postgres com BYPASSRLS, nao leitor
+restrito. Cliente carece dos6campos (contatos+5extensoes); indice unico de origem
+legada ausente. Reutilizar apenas fatiaCliente da043 apos conflitos, nao toda
+migration/produtos. Fornecedor ausente. Nomes de journal nao provam SQL igual.
+PacoteVPS ainda NAO pronto para autorizacao: falta fechar principal/policies,
+conflitos da selecao exata/frescorbackup e parAPI/web revisado. Nenhuma escritaVPS.
+
+Gate imediato agrupadoHML: revisar SHA/SQL, backup atual e autorizar somente
+5colunas nullable+check no schemaHML e enriquecimento auditado dos1316candidatos.
+FreshCAS obrigatorio APOS DDL; antigos recibos/fullpostimages continuam imutaveis
+e BLOQUEIAM replay se schema mudou, nao ignoram novos camposNULL. Reversao das
+novas operacoes restaura os campos anteriores sem apagar historicos/colunas;
+retorno estrutural exige backup/plano separado, nunca DROP automatico.
+
+## Historico - contatos enriquecidos nos MESMOS1500 inativos (2026-11-11)
 
 10144c3b encerrou CI6877/6878SUCCESS. Sem repetir carga500/1000 ou reativar:
 os MESMOS1500 receberam3869 canais no PostgreSQL HML privado, pelo mapper
@@ -28,7 +82,7 @@ ausente,1getuid indisponivel,1provisionador exigePython real e1arquivoVPS
 interrompido apos307s de verificacao local ja falha. NAO contar como PASS nem
 falha funcional nova. Teste/guardas preservados; validacao Ubuntu da mesmaPRdraft
 usa a excecao de publicacao sanitizada ja autorizada, sem homologacao/merge/deploy.
-CI do novoSHA ainda pendente; recibo terminal deve acompanhar o fechamento.
+CI desseSHA658d8cca fechou6887/6888SUCCESS (recibo342/6802033620).
 
 Cadastro NAO completo: RG/extensoes/endereco/Obras e vinculos comerciais seguem
 contratos/gates individuais. COMENTARIO/STRINGLIVRE6 continuam dispensados do mapa

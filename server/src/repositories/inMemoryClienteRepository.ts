@@ -1,4 +1,5 @@
 import { AppError } from '../api/errors.js';
+import { projectClienteMasterExtras } from './clienteMasterExtras.js';
 import { clienteOperacaoLinkSchema } from './clienteTypes.js';
 import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
@@ -124,6 +125,7 @@ function buildCliente(
   return {
     id,
     contatos: null,
+    ...projectClienteMasterExtras(data),
     group_id: scope.groupId,
     empresa_id: data.empresa_id ?? scope.empresaId ?? null,
     codigo,

@@ -1,0 +1,114 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+// Exact reviewed extensions over 658d8cca; all ancestor pins remain unchanged.
+export const clienteMasterExtraHunks = {
+  "server/src/audit/clienteAuditSnapshot.ts": {
+    "hash": "2c4b31203bce96b724e98148d5e3fc220f5129a32161fe8565edb0308e3e3498",
+    "hunks": [
+      [
+        "  if (!snap) return null;\n  if (snap.documento != null) snap.documento = maskDocumento(snap.documento);\n  if (snap.documento_normalizado != null) snap.documento_normalizado = maskDocumento(snap.documento_normalizado);\n  if (snap.rg != null) snap.rg = maskDocumento(snap.rg);\n  return snap;\n}\n",
+        "  if (!snap) return null;\n  if (snap.documento != null) snap.documento = maskDocumento(snap.documento);\n  if (snap.documento_normalizado != null) snap.documento_normalizado = maskDocumento(snap.documento_normalizado);\n  return snap;\n}\n"
+      ]
+    ]
+  },
+  "server/src/repositories/clienteTypes.ts": {
+    "hash": "e2823bd920fc45023c0ce84465137f9ebb220a1f2f1cbe0c4741e431d320be3e",
+    "hunks": [
+      [
+        "import { z } from 'zod';\nimport { isValidCnpj, isValidCpf, normalizeDocumento } from '../db/documentoValidators.js';\nimport { clienteMasterExtraFields, type ClienteMasterExtras } from './clienteMasterExtras.js';\n\nexport const CLIENTE_TIPOS = ['Pessoa Física', 'Pessoa Jurídica'] as const;\nexport const CLIENTE_ORIGENS = [\n",
+        "import { z } from 'zod';\nimport { isValidCnpj, isValidCpf, normalizeDocumento } from '../db/documentoValidators.js';\n\nexport const CLIENTE_TIPOS = ['Pessoa Física', 'Pessoa Jurídica'] as const;\nexport const CLIENTE_ORIGENS = [\n"
+      ],
+      [
+        "};\n\nexport const clienteCreateSchema = z.object({\n  ...clienteMasterExtraFields,\n  ...baseCreate,\n  tipo: z.enum(CLIENTE_TIPOS),\n  documento: z.string().trim().max(32).optional().nullable(),\n",
+        "};\n\nexport const clienteCreateSchema = z.object({\n  ...baseCreate,\n  tipo: z.enum(CLIENTE_TIPOS),\n  documento: z.string().trim().max(32).optional().nullable(),\n"
+      ],
+      [
+        "});\n\nexport const clienteUpdateSchema = z.object({\n  ...clienteMasterExtraFields,\n  contatos: clienteContatosReplaceSchema.innerType().shape.contatos,\n  expectedVersion: clienteContatosReplaceSchema.innerType().shape.expectedVersion.optional(),\n  empresa_id: z.string().uuid().optional().nullable(),\n",
+        "});\n\nexport const clienteUpdateSchema = z.object({\n  contatos: clienteContatosReplaceSchema.innerType().shape.contatos,\n  expectedVersion: clienteContatosReplaceSchema.innerType().shape.expectedVersion.optional(),\n  empresa_id: z.string().uuid().optional().nullable(),\n"
+      ],
+      [
+        "  contatos?: ClienteContato[] | null;\n};\n\nexport type Cliente = ClienteMasterExtras & {\n  contatos?: ClienteContato[] | null;\n  id: string;\n  group_id: string;\n",
+        "  contatos?: ClienteContato[] | null;\n};\n\nexport type Cliente = {\n  contatos?: ClienteContato[] | null;\n  id: string;\n  group_id: string;\n"
+      ]
+    ]
+  },
+  "server/src/repositories/inMemoryClienteRepository.ts": {
+    "hash": "9008e70150083fef47b5fca9fe701f25de67f92e59aec673b0d2e595986ad7d7",
+    "hunks": [
+      [
+        "import { AppError } from '../api/errors.js';\nimport { projectClienteMasterExtras } from './clienteMasterExtras.js';\nimport { clienteOperacaoLinkSchema } from './clienteTypes.js';\nimport { randomUUID } from 'node:crypto';\nimport type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';\n",
+        "import { AppError } from '../api/errors.js';\nimport { clienteOperacaoLinkSchema } from './clienteTypes.js';\nimport { randomUUID } from 'node:crypto';\nimport type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';\n"
+      ],
+      [
+        "  return {\n    id,\n    contatos: null,\n    ...projectClienteMasterExtras(data),\n    group_id: scope.groupId,\n    empresa_id: data.empresa_id ?? scope.empresaId ?? null,\n    codigo,\n",
+        "  return {\n    id,\n    contatos: null,\n    group_id: scope.groupId,\n    empresa_id: data.empresa_id ?? scope.empresaId ?? null,\n    codigo,\n"
+      ]
+    ]
+  },
+  "server/src/repositories/postgresClienteRepository.ts": {
+    "hash": "0aed45b9ec08a5b579e3db9c2a5e48a11dd140a3b7a45ce1a63c3832dd7102eb",
+    "hunks": [
+      [
+        "import { AppError } from '../api/errors.js';\nimport { assertClienteMasterExtraStorage, clienteMasterExtraWrite, projectClienteMasterExtras } from './clienteMasterExtras.js';\nimport type { DbClient, DbQueryExecutor } from '../db/client.js';\nimport { normalizeDocumento } from '../db/documentoValidators.js';\nimport type { ListOptions, Scope } from '../services/tenantCrudService.js';\n",
+        "import { AppError } from '../api/errors.js';\nimport type { DbClient, DbQueryExecutor } from '../db/client.js';\nimport { normalizeDocumento } from '../db/documentoValidators.js';\nimport type { ListOptions, Scope } from '../services/tenantCrudService.js';\n"
+      ],
+      [
+        "\nfunction mapCliente(row: Record<string, unknown>): Cliente {\n  return {\n    ...projectClienteMasterExtras(row),\n    ...(Object.hasOwn(row, 'contatos') ? { contatos: row.contatos === null ? null\n      : clienteContatosReplaceSchema.parse({ contatos: row.contatos, expectedVersion: '0'.repeat(64) }).contatos } : {}),\n    id: String(row.id),\n",
+        "\nfunction mapCliente(row: Record<string, unknown>): Cliente {\n  return {\n    ...(Object.hasOwn(row, 'contatos') ? { contatos: row.contatos === null ? null\n      : clienteContatosReplaceSchema.parse({ contatos: row.contatos, expectedVersion: '0'.repeat(64) }).contatos } : {}),\n    id: String(row.id),\n"
+      ],
+      [
+        "        incomingCodigo: data.codigo,\n      });\n\n      const extra = clienteMasterExtraWrite(data, 24);\n      await assertClienteMasterExtraStorage(client, extra.columns);\n      const insert = await client.query(\n        `INSERT INTO clientes (\n          group_id, empresa_id, codigo, tipo, documento, documento_normalizado,\n          nome, razao_social, nome_fantasia, nome_social,\n          inscricao_estadual, inscricao_municipal, email, telefone, celular,\n          status, origem, codigo_legado, legacy_id, source_system, migration_batch,\n          observacoes, ativo, created_by, updated_by${extra.columns.length ? ', ' + extra.columns.join(', ') : ''}\n        ) VALUES (\n          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24${extra.placeholders.length ? ', ' + extra.placeholders.join(', ') : ''}\n        ) RETURNING *`,\n        [\n          scope.groupId,\n",
+        "        incomingCodigo: data.codigo,\n      });\n\n      const insert = await client.query(\n        `INSERT INTO clientes (\n          group_id, empresa_id, codigo, tipo, documento, documento_normalizado,\n          nome, razao_social, nome_fantasia, nome_social,\n          inscricao_estadual, inscricao_municipal, email, telefone, celular,\n          status, origem, codigo_legado, legacy_id, source_system, migration_batch,\n          observacoes, ativo, created_by, updated_by\n        ) VALUES (\n          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24\n        ) RETURNING *`,\n        [\n          scope.groupId,\n"
+      ],
+      [
+        "          data.observacoes ?? null,\n          data.ativo ?? true,\n          actorId ?? null,\n          ...extra.values,\n        ],\n      );\n      const created = mapCliente(insert.rows[0] as Record<string, unknown>);\n",
+        "          data.observacoes ?? null,\n          data.ativo ?? true,\n          actorId ?? null,\n        ],\n      );\n      const created = mapCliente(insert.rows[0] as Record<string, unknown>);\n"
+      ],
+      [
+        "      ativo: data.ativo === undefined ? current.ativo : data.ativo,\n    };\n\n    const extra = clienteMasterExtraWrite(data, data.contatos === undefined ? 23 : 24);\n    await assertClienteMasterExtraStorage(executor, extra.columns);\n    const result = await executor.query(\n      `UPDATE clientes SET\n        empresa_id=$1, tipo=$2, documento=$3, documento_normalizado=$4,\n        nome=$5, razao_social=$6, nome_fantasia=$7, nome_social=$8,\n        inscricao_estadual=$9, inscricao_municipal=$10, email=$11, telefone=$12, celular=$13,\n        status=$14, origem=$15, codigo_legado=$16, legacy_id=$17, source_system=$18,\n        migration_batch=$19, observacoes=$20, ativo=$21${data.contatos === undefined ? '' : ', contatos=$24::jsonb'}${extra.assignments.length ? ', ' + extra.assignments.join(', ') : ''}\n       WHERE group_id=$22 AND id=$23\n       RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS cliente_updated_at_canonical`,\n      [\n",
+        "      ativo: data.ativo === undefined ? current.ativo : data.ativo,\n    };\n\n    const result = await executor.query(\n      `UPDATE clientes SET\n        empresa_id=$1, tipo=$2, documento=$3, documento_normalizado=$4,\n        nome=$5, razao_social=$6, nome_fantasia=$7, nome_social=$8,\n        inscricao_estadual=$9, inscricao_municipal=$10, email=$11, telefone=$12, celular=$13,\n        status=$14, origem=$15, codigo_legado=$16, legacy_id=$17, source_system=$18,\n        migration_batch=$19, observacoes=$20, ativo=$21${data.contatos === undefined ? '' : ', contatos=$24::jsonb'}\n       WHERE group_id=$22 AND id=$23\n       RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"') AS cliente_updated_at_canonical`,\n      [\n"
+      ],
+      [
+        "        next.migration_batch, next.observacoes, next.ativo,\n        scope.groupId, id,\n        ...(data.contatos === undefined ? [] : [data.contatos === null ? null : JSON.stringify(data.contatos)]),\n        ...extra.values,\n      ],\n    );\n    const row = result.rows[0] as Record<string, unknown> | undefined;\n",
+        "        next.migration_batch, next.observacoes, next.ativo,\n        scope.groupId, id,\n        ...(data.contatos === undefined ? [] : [data.contatos === null ? null : JSON.stringify(data.contatos)]),\n      ],\n    );\n    const row = result.rows[0] as Record<string, unknown> | undefined;\n"
+      ]
+    ]
+  },
+  "server/src/services/clienteLegacyNameCorrection.ts": {
+    "hash": "1ef2f8a8fcf027ec976e63292a610aaeb2402a784698275e57389f70e3e9b260",
+    "hunks": [
+      [
+        "import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';\nimport { clienteContatosReplaceSchema } from '../repositories/clienteTypes.js';\nimport { canonicalClienteJson, assertContactReferences } from './clienteContatos.js';\nimport { clienteMasterExtrasSchema, type ClienteMasterExtras } from '../repositories/clienteMasterExtras.js';\n\nconst hashSchema = z.string().regex(/^[a-f0-9]{64}$/);\nconst fields = { id: z.string().uuid(), operationId: z.string().uuid(), expectedFingerprint: hashSchema,\n",
+        "import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';\nimport { clienteContatosReplaceSchema } from '../repositories/clienteTypes.js';\nimport { canonicalClienteJson, assertContactReferences } from './clienteContatos.js';\n\nconst hashSchema = z.string().regex(/^[a-f0-9]{64}$/);\nconst fields = { id: z.string().uuid(), operationId: z.string().uuid(), expectedFingerprint: hashSchema,\n"
+      ],
+      [
+        "  parser: z.literal('ndjson-v1') }).strict();\nconst contactsCommand = z.discriminatedUnion('mode', [\n  z.object({ ...fields, mode: z.literal('apply'),\n    contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap(), sourceProof: ndjsonProof,\n    masterFields: clienteMasterExtrasSchema.refine(value => Object.keys(value).length > 0\n      && Object.values(value).every(v => typeof v === 'string' && v.length > 0)).optional() }).strict(),\n  z.object({ ...fields, mode: z.literal('reverse'), originalOperationId: z.string().uuid() }).strict(),\n]);\nconst contactsReceipt = z.object({ kind: z.literal('legacy_contacts_enrichment'),\n  operationId: z.string().uuid(), commandHash: hashSchema, mode: z.enum(['apply', 'reverse']),\n  fingerprint: hashSchema, sourceProof: ndjsonProof,\n  changedMasterFields: z.array(z.enum(['rg', 'numero_caixa_postal', 'cep_caixa_postal',\n    'caixa_postal_cobranca', 'inscricao_produtor_rural'])).max(5).optional(),\n  snapshot: z.object({ contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap().nullable() }).passthrough(),\n}).strict();\n\n",
+        "  parser: z.literal('ndjson-v1') }).strict();\nconst contactsCommand = z.discriminatedUnion('mode', [\n  z.object({ ...fields, mode: z.literal('apply'),\n    contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap(), sourceProof: ndjsonProof }).strict(),\n  z.object({ ...fields, mode: z.literal('reverse'), originalOperationId: z.string().uuid() }).strict(),\n]);\nconst contactsReceipt = z.object({ kind: z.literal('legacy_contacts_enrichment'),\n  operationId: z.string().uuid(), commandHash: hashSchema, mode: z.enum(['apply', 'reverse']),\n  fingerprint: hashSchema, sourceProof: ndjsonProof,\n  snapshot: z.object({ contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap().nullable() }).passthrough(),\n}).strict();\n\n"
+      ],
+      [
+        "    }\n    if (legacyContactsFingerprint(before) !== command.expectedFingerprint) throw mismatch();\n    let target;\n    const masterFields: ClienteMasterExtras = {};\n    let changedMasterFields: (keyof ClienteMasterExtras)[] = [];\n    let sourceProof: z.infer<typeof ndjsonProof>;\n    if (command.mode === 'apply') {\n      const baseline = before.contatos === null ? [] : before.contatos;\n      for (const [key, value] of Object.entries(command.masterFields || {}) as [keyof ClienteMasterExtras, string][]) {\n        if (!Object.hasOwn(before, key)) throw new AppError(503, 'CLIENTE_MASTER_STORAGE_REQUIRED', 'Reviewed master schema required');\n        if (before[key] != null && before[key] !== '') throw mismatch();\n        masterFields[key] = value;\n        changedMasterFields.push(key);\n      }\n      // Enrichment appends only: preserve the complete ordered baseline, including manual metadata.\n      if (!Array.isArray(baseline) || command.contatos.length < baseline.length\n        || (command.contatos.length === baseline.length && changedMasterFields.length === 0)\n        || !isDeepStrictEqual(command.contatos.slice(0, baseline.length), baseline)) throw mismatch();\n      const existingIds = new Set(baseline.map(contact => contact.id));\n      if (command.contatos.slice(baseline.length).some(contact => !contact.id || existingIds.has(contact.id))) throw mismatch();\n",
+        "    }\n    if (legacyContactsFingerprint(before) !== command.expectedFingerprint) throw mismatch();\n    let target;\n    let sourceProof: z.infer<typeof ndjsonProof>;\n    if (command.mode === 'apply') {\n      const baseline = before.contatos === null ? [] : before.contatos;\n      // Enrichment appends only: preserve the complete ordered baseline, including manual metadata.\n      if (!Array.isArray(baseline) || command.contatos.length <= baseline.length\n        || !isDeepStrictEqual(command.contatos.slice(0, baseline.length), baseline)) throw mismatch();\n      const existingIds = new Set(baseline.map(contact => contact.id));\n      if (command.contatos.slice(baseline.length).some(contact => !contact.id || existingIds.has(contact.id))) throw mismatch();\n"
+      ],
+      [
+        "        || !isDeepStrictEqual(original.snapshot, before)\n        || originalBefore.data.fingerprint !== legacyContactsFingerprint(originalBefore.data.snapshot)) throw mismatch();\n      target = originalBefore.data.snapshot.contatos;\n      changedMasterFields = original.changedMasterFields || [];\n      if (new Set(changedMasterFields).size !== changedMasterFields.length) throw mismatch();\n      for (const key of changedMasterFields) {\n        if (!Object.hasOwn(before, key) || !Object.hasOwn(originalBefore.data.snapshot, key)) throw mismatch();\n        const parsed = clienteMasterExtrasSchema.safeParse({ [key]: originalBefore.data.snapshot[key] });\n        if (!parsed.success) throw mismatch();\n        Object.assign(masterFields, parsed.data);\n      }\n      sourceProof = original.sourceProof;\n    }\n    await deps.repo.update(scope, command.id, { contatos: target, ...masterFields }, q);\n    const after = await deps.repo.getBulkSnapshot(scope, command.id, q);\n    if (!after || !isDeepStrictEqual(after, { ...before, contatos: target, ...masterFields, updated_at: after.updated_at })) {\n      throw new AppError(409, 'LEGACY_ENRICHMENT_MISMATCH', 'Unexpected canonical contacts enrichment change');\n    }\n    const common = { kind: 'legacy_contacts_enrichment', operationId: command.operationId, commandHash,\n      mode: command.mode, sourceProof, ...(changedMasterFields.length ? { changedMasterFields } : {}) };\n    await deps.audit.append({ ...ctx, empresaId: null, entity: 'Cliente', entityId: command.id, action: 'update',\n      beforeData: { ...common, snapshot: before, fingerprint: legacyContactsFingerprint(before) },\n      afterData: { ...common, snapshot: after, fingerprint: legacyContactsFingerprint(after) } }, q);\n",
+        "        || !isDeepStrictEqual(original.snapshot, before)\n        || originalBefore.data.fingerprint !== legacyContactsFingerprint(originalBefore.data.snapshot)) throw mismatch();\n      target = originalBefore.data.snapshot.contatos;\n      sourceProof = original.sourceProof;\n    }\n    await deps.repo.update(scope, command.id, { contatos: target }, q);\n    const after = await deps.repo.getBulkSnapshot(scope, command.id, q);\n    if (!after || !isDeepStrictEqual(after, { ...before, contatos: target, updated_at: after.updated_at })) {\n      throw new AppError(409, 'LEGACY_ENRICHMENT_MISMATCH', 'Unexpected canonical contacts enrichment change');\n    }\n    const common = { kind: 'legacy_contacts_enrichment', operationId: command.operationId, commandHash,\n      mode: command.mode, sourceProof };\n    await deps.audit.append({ ...ctx, empresaId: null, entity: 'Cliente', entityId: command.id, action: 'update',\n      beforeData: { ...common, snapshot: before, fingerprint: legacyContactsFingerprint(before) },\n      afterData: { ...common, snapshot: after, fingerprint: legacyContactsFingerprint(after) } }, q);\n"
+      ]
+    ]
+  }
+};
+Object.assign(clienteMasterExtraHunks, {"tests/helpers/clienteContatosRemainder.js":{"hash":"6bf7eca1801d8caaf1eb9f70973aad0a325f0342f6e4a838f5500d9a9ab2cc7f","hunks":[["import assert from 'node:assert/strict';\nimport { createHash } from 'node:crypto';\nimport { clienteMasterExtrasRemainder } from './clienteMasterExtrasRemainder.js';\n\n// Only the reviewed contacts delta; no equivalent historical layer exists.\nexport const clienteContatosBaseline = '0bb7313c605d0cb97ca10e7ee91094623e5407df';\n","import assert from 'node:assert/strict';\nimport { createHash } from 'node:crypto';\n\n// Only the reviewed contacts delta; no equivalent historical layer exists.\nexport const clienteContatosBaseline = '0bb7313c605d0cb97ca10e7ee91094623e5407df';\n"],["\n/** Always verify the entire previous file, even when ancestor checks disable their own hash. */\nexport function clienteContatosRemainder(file, text) {\n  text = clienteMasterExtrasRemainder(file, text);\n  const entry = clienteContatosHunks[file];\n  if (!entry) return text;\n  let source = text.replace(/\\r\\n/g, '\\n');\n","\n/** Always verify the entire previous file, even when ancestor checks disable their own hash. */\nexport function clienteContatosRemainder(file, text) {\n  const entry = clienteContatosHunks[file];\n  if (!entry) return text;\n  let source = text.replace(/\\r\\n/g, '\\n');\n"],["/** Historical callers may already have peeled selected-reference hunks. Their own pins still apply. */\nconst historicalInputHashes = {\"server/src/services/clienteService.ts\":\"2c711fb1d47d5ba53e2c0e0099ec75d816a3746bcc583b77df6d0d0d0517578f\",\"server/src/repositories/inMemoryClienteRepository.ts\":\"cb2811d0bcb37f4f5f114955d4de9ff5766fdddfe3e3a92aca1a55bda9fc0db5\",\"server/src/repositories/postgresClienteRepository.ts\":\"f0b68691a479dc10758c2680ff4e2c0a40b0142ffcdaa02af19a1a9e038ab348\"};\nexport function clienteContatosHistoricalInput(file, text, selectedReference) {\n  text = clienteMasterExtrasRemainder(file, text);\n  const entry = clienteContatosHunks[file];\n  if (!entry) return text;\n  const source = text.replace(/\\r\\n/g, '\\n');\n","/** Historical callers may already have peeled selected-reference hunks. Their own pins still apply. */\nconst historicalInputHashes = {\"server/src/services/clienteService.ts\":\"2c711fb1d47d5ba53e2c0e0099ec75d816a3746bcc583b77df6d0d0d0517578f\",\"server/src/repositories/inMemoryClienteRepository.ts\":\"cb2811d0bcb37f4f5f114955d4de9ff5766fdddfe3e3a92aca1a55bda9fc0db5\",\"server/src/repositories/postgresClienteRepository.ts\":\"f0b68691a479dc10758c2680ff4e2c0a40b0142ffcdaa02af19a1a9e038ab348\"};\nexport function clienteContatosHistoricalInput(file, text, selectedReference) {\n  const entry = clienteContatosHunks[file];\n  if (!entry) return text;\n  const source = text.replace(/\\r\\n/g, '\\n');\n"]]}});
+const hash = text => createHash('sha256').update(text).digest('hex');
+export function clienteMasterExtrasRemainder(file, text) {
+  const entry = clienteMasterExtraHunks[file];
+  if (!entry) return text;
+  let source = text.replace(/\r\n/g, '\n');
+  if (hash(source) === entry.hash) return text;
+  if (!/clienteMasterExtra|projectClienteMasterExtras|changedMasterFields|if \(snap\.rg/.test(source)) return text;
+  for (const [after,before] of entry.hunks) {
+    assert.equal(source.split(after).length, 2, file + ': exact master extension hunk');
+    source = source.replace(after, () => before);
+  }
+  assert.equal(hash(source), entry.hash, file + ': complete pre-extension source');
+  return text.includes('\r\n') ? source.replace(/\n/g, '\r\n') : source;
+}

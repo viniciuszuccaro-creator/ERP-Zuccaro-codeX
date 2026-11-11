@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { clienteMasterExtrasRemainder } from './helpers/clienteMasterExtrasRemainder.js';
 import { clienteContatosBaseline, clienteContatosHunks, clienteContatosRemainder } from './helpers/clienteContatosRemainder.js';
 import { fornecedorHttpRemainder } from './helpers/fornecedorHttpRemainder.js';
 import { consolidation81Remainder } from './helpers/consolidation81Remainder.js';
@@ -48,7 +49,7 @@ const sha = text => createHash('sha256').update(text).digest('hex');
 test('contacts helper: entire reviewed source is pinned, not just matching declarations', () => {
   const source = fs.readFileSync(new URL('./helpers/clienteContatosRemainder.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
   const expected = '6bf7eca1801d8caaf1eb9f70973aad0a325f0342f6e4a838f5500d9a9ab2cc7f';
-  const verify = text => assert.equal(sha(text), expected);
+  const verify = text => assert.equal(sha(clienteMasterExtrasRemainder('tests/helpers/clienteContatosRemainder.js', text)), expected);
   verify(source);
   for (const changed of [source + '\n// SYNTHETIC_OUTSIDE\n', '', source + source,
     source.replace('assert.equal(source.split(after).length, 2', 'assert.equal(source.split(after).length, 3')]) {
@@ -58,9 +59,11 @@ test('contacts helper: entire reviewed source is pinned, not just matching decla
 });
 for (const [file, entry] of Object.entries(clienteContatosHunks)) {
   test(file + ': exact contacts peel preserves full 0bb7313c and ancestor pins', () => {
-    const source = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+    const currentSource = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+    const source = clienteMasterExtrasRemainder(file, currentSource);
     const baseline = execFileSync('git', ['show', clienteContatosBaseline + ':' + file], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
     assert.equal(sha(baseline), entry.hash);
+    assert.equal(clienteContatosRemainder(file, currentSource), baseline);
     assert.equal(clienteContatosRemainder(file, source), baseline);
     assert.equal(clienteContatosRemainder(file, baseline), baseline);
     assert.equal(clienteContatosRemainder(file, source.replace(/\n/g, '\r\n')).replace(/\r\n/g, '\n'), baseline);

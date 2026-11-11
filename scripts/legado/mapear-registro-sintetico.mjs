@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
+export { mapLegadoClienteMasterFields } from './cliente-master-field-mapping.mjs';
 import { resolveProdutoTipoImportacao } from '../../src/components/cadastros/produto/produtoTipoPolicy.js';
 /**
  * Mapeia um registro sintético legado → campos canônicos de migração.

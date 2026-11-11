@@ -12,6 +12,8 @@ import { InMemoryTenantGuard, PostgresTenantGuard } from '../src/db/tenantGuard.
 import { ClienteService } from '../src/services/clienteService.ts';
 import { clienteContatoSchema } from '../src/repositories/clienteTypes.ts';
 import { mapLegadoClienteContatos } from '../../scripts/legado/mapear-registro-sintetico.mjs';
+import { mapLegadoClienteMasterFields } from '../../scripts/legado/mapear-registro-sintetico.mjs';
+import { clienteMasterExtrasSchema } from '../src/repositories/clienteMasterExtras.ts';
 import { clienteContatosVersion, canonicalClienteJson } from '../src/services/clienteContatos.ts';
 import { enrichLegacyContacts, legacyContactsFingerprint } from '../src/services/clienteLegacyNameCorrection.ts';
 import type { RequestContext, AuditRepository } from '../src/audit/types.ts';
@@ -306,6 +308,84 @@ test('contacts canonical persistence, CAS and legacy receipts: isolated syntheti
           contatos: [...approved.contatos, { id: 'native-must-rollback', tipo: 'Telefone', valor: '009900' }] }), /SYNTHETIC_LEGACY_REVOKED/);
       assert.deepEqual(await snapshot(), current); assert.equal(await audits(), count);
     });
+    await t.test('optional master extensions: old schema fails closed; combined CAS, replay, reversal and manual edits', async () => {
+      const old = await snapshot(); assert.ok(old);
+      const historical = (await audit.listByEntity('Cliente', ID.clientePfA)).find(e =>
+        (e.afterData as any)?.kind === 'legacy_contacts_enrichment' && (e.afterData as any)?.mode === 'apply'
+        && (e.afterData as any)?.fingerprint === legacyContactsFingerprint(old));
+      assert.ok(historical);
+      await assert.rejects(service().update(ctx, ID.clientePfA, { rg: '001234-X' }), { code: 'CLIENTE_MASTER_STORAGE_REQUIRED' });
+      assert.deepEqual(await snapshot(), old);
+      await f.exec(await readFile(new URL('../schema-candidates/cliente_master_extras.sql', import.meta.url), 'utf8'));
+      const schemaChanged = await snapshot(); assert.ok(schemaChanged);
+      assert.deepEqual(schemaChanged, { ...old, rg: null, numero_caixa_postal: null, cep_caixa_postal: null,
+        caixa_postal_cobranca: null, inscricao_produtor_rural: null });
+      const prior = historical.afterData as any;
+      await assert.rejects(enrich({ mode: 'apply', id: ID.clientePfA, operationId: prior.operationId,
+        expectedFingerprint: (historical.beforeData as any).fingerprint, sourceSystem: 'SYNTHETIC',
+        legacyCode: 'SYNTHETIC-CONTACTS', batch, contatos: old.contatos, sourceProof: prior.sourceProof }),
+      { code: 'LEGACY_ENRICHMENT_CONFLICT' });
+      assert.deepEqual(await snapshot(), schemaChanged, 'schema drift must not silently refresh an old receipt');
+      await f.admin.query('UPDATE clientes SET ativo=false WHERE id=$1', [ID.clientePfA]);
+      const before = await snapshot(); assert.ok(before);
+      const masterFields = { rg: '001234-X', numero_caixa_postal: '00017', cep_caixa_postal: '01234000',
+        caixa_postal_cobranca: '00091', inscricao_produtor_rural: '001122' };
+      const mapped = mapLegadoClienteMasterFields({ nativeParent: { CODIGOCLIENTE: 'SYNTHETIC-CONTACTS',
+        RG: '001234-X', NUMEROCXPOSTAL: '00017', CEPCXPOSTAL: '01234000',
+        CAIXAPOSTALCOBRANCA: '00091', INSCRICAOPRODUTORRURAL: '001122' },
+        nativeKey: 'SYNTHETIC-CONTACTS', canonical: before, sourceSystem: 'SYNTHETIC' },
+      { validateFields: (value: unknown) => clienteMasterExtrasSchema.safeParse(value) });
+      assert.deepEqual(mapped.masterFields, masterFields); assert.equal(mapped.status, 'ready');
+      const command = { mode: 'apply', id: ID.clientePfA, operationId: randomUUID(),
+        expectedFingerprint: legacyContactsFingerprint(before), sourceSystem: 'SYNTHETIC', legacyCode: 'SYNTHETIC-CONTACTS', batch,
+        contatos: before.contatos, masterFields, sourceProof: { fileSha256: 'a'.repeat(64), rowSha256: 'b'.repeat(64), parser: 'ndjson-v1' } };
+      const count = await audits();
+      for (const invalid of [{ rg: null }, {}, { rg: '' }, { rg: ' trim ' }, { rg: '<script>' },
+        { cep_caixa_postal: '00000000' }, { cep_caixa_postal: '123' }, { empresa_id: ID.empresaA }]) {
+        await assert.rejects(enrich({ ...command, masterFields: invalid }), { code: 'VALIDATION_ERROR' });
+        assert.deepEqual(await snapshot(), before); assert.equal(await audits(), count);
+      }
+      await assert.rejects(enrich(command, audit, { ...ctx, groupId: ID.groupB }));
+      await assert.rejects(enrich(command, failingAudit), /SYNTHETIC_AUDIT_FAILURE/);
+      assert.deepEqual(await snapshot(), before); assert.equal(await audits(), count);
+      const applied = await enrich(command), after = await snapshot(); assert.ok(after);
+      assert.deepEqual(after, { ...before, ...masterFields, updated_at: after.updated_at });
+      assert.equal(after.ativo, false); assert.deepEqual(after.contatos, before.contatos);
+      assert.equal((await enrich(command)).reused, true); assert.equal(await audits(), count + 1);
+      const reverse = { mode: 'reverse', id: command.id, operationId: randomUUID(), originalOperationId: command.operationId,
+        expectedFingerprint: applied.fingerprint, sourceSystem: command.sourceSystem, legacyCode: command.legacyCode, batch };
+      await enrich(reverse);
+      const restored = await snapshot(); assert.ok(restored);
+      assert.deepEqual(restored, { ...before, updated_at: restored.updated_at });
+      assert.equal((await enrich(reverse)).reused, true); assert.equal(await audits(), count + 2);
+      const again = { ...command, operationId: randomUUID(), expectedFingerprint: legacyContactsFingerprint(restored) };
+      const appliedAgain = await enrich(again);
+      await f.admin.query("UPDATE clientes SET rg='MANUAL-001' WHERE id=$1", [ID.clientePfA]);
+      const manual = await snapshot(); assert.ok(manual);
+      await assert.rejects(enrich({ ...reverse, operationId: randomUUID(), originalOperationId: again.operationId,
+        expectedFingerprint: appliedAgain.fingerprint }), { code: 'LEGACY_ENRICHMENT_CONFLICT' });
+      await assert.rejects(enrich({ ...command, operationId: randomUUID(), expectedFingerprint: legacyContactsFingerprint(manual) }),
+        { code: 'LEGACY_ENRICHMENT_CONFLICT' });
+      assert.deepEqual(await snapshot(), manual); assert.equal(manual.ativo, false);
+    });
+    await t.test('new optional fields persist on create, omission preserves, explicit NULL clears only its own field', async () => {
+      await setPermissions({ Cadastros: { cliente: ['visualizar', 'criar', 'editar', 'importar'] } });
+      await f.exec(`GRANT INSERT ON clientes TO "${ROLE}";
+        GRANT SELECT,INSERT,UPDATE ON entity_code_sequences TO "${ROLE}";
+        CREATE POLICY master_extra_codes ON entity_code_sequences FOR ALL TO "${ROLE}"
+        USING(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid)
+        WITH CHECK(group_id=NULLIF(current_setting('app.group_id',true),'')::uuid)`);
+      const created = await service().create(ctx, { tipo: 'Pessoa Física', nome: 'SYNTHETIC master extras',
+        documento: '11144477735', rg: '001234-X', numero_caixa_postal: '00017', cep_caixa_postal: '01234000' });
+      assert.equal(created.rg, '001234-X'); assert.equal(created.numero_caixa_postal, '00017');
+      const reopened = await service().get(ctx, created.id);
+      assert.equal(reopened.cep_caixa_postal, '01234000');
+      const cleared = await service().update(ctx, created.id, { rg: null });
+      assert.equal(cleared.rg, null); assert.equal(cleared.numero_caixa_postal, '00017');
+      assert.equal(cleared.cep_caixa_postal, '01234000');
+      const receipt = (await audit.listByEntity('Cliente', created.id)).find(e => e.action === 'create');
+      assert.notEqual((receipt?.afterData as any)?.rg, '001234-X', 'ordinary audit must mask the identity document');
+    });
   } finally { await f.close(); }
 });
 
@@ -314,7 +394,8 @@ test('in-memory parity: NULL/omission/[], serialized CAS and defensive contact c
   const rbac = new InMemoryRbacGuard();
   rbac.link({ actorId: ctx.actorId, groupId: ctx.groupId, permissions: { Cadastros: { cliente: ['criar', 'visualizar', 'editar'] } } });
   const service = new ClienteService(repo, audit, new InMemoryTenantGuard(), rbac);
-  const created = await service.create(ctx, { tipo: 'Pessoa Física', nome: 'SYNTHETIC', documento: '52998224725' });
+  const created = await service.create(ctx, { tipo: 'Pessoa Física', nome: 'SYNTHETIC', documento: '52998224725', rg: '001234-X' });
+  assert.equal(created.rg, '001234-X');
   const initial = await service.get(ctx, created.id); assert.equal(initial.contatos, null);
   const rich = await service.update(ctx, created.id, { contatos: channels, expectedVersion: version(initial) });
   rich.contatos![0].valor = 'FORGED';
@@ -344,4 +425,34 @@ test('pure native mapper delegates to the canonical contact schema without losin
   const phone = result.contatos?.find(c => c.valor === '001122');
   assert.equal(phone?.cargo, 'SYNTHETIC cargo'); assert.equal(Object.hasOwn(phone!, 'nome'), false);
   assert(result.contatos?.every(c => clienteContatoSchema.safeParse(c).success));
+});
+
+test('master mapper keeps per-field provenance, rejects placeholders, and never clears or guesses a link', () => {
+  const canonical = { id: ID.clientePfA, group_id: ctx.groupId, empresa_id: null, source_system: 'SYNTHETIC',
+    codigo_legado: '7', rg: 'MANUAL', numero_caixa_postal: null, cep_caixa_postal: null,
+    caixa_postal_cobranca: null, inscricao_produtor_rural: null };
+  const nativeParent = { CODIGOCLIENTE: 7, RG: '000123-X', NUMEROCXPOSTAL: ' 00017 ', CEPCXPOSTAL: '01234000',
+    CAIXAPOSTALCOBRANCA: ' ', INSCRICAOPRODUTORRURAL: null, COMENTARIO: 'unused', STRINGLIVRE6: 'unused', CODREGIAO: 99 };
+  const record = { nativeParent, nativeKey: 7, canonical, sourceSystem: 'SYNTHETIC' };
+  const validateFields = (value: unknown) => clienteMasterExtrasSchema.safeParse(value);
+  const original = structuredClone(record);
+  const result = mapLegadoClienteMasterFields(record, { validateFields });
+  assert.deepEqual(result.masterFields, { numero_caixa_postal: '00017', cep_caixa_postal: '01234000' });
+  assert.ok(result.pending.some(p => p.target === 'rg' && p.reason === 'TARGET_VALUE_CONFLICT'));
+  assert.ok(result.provenance.some(p => p.target === 'numero_caixa_postal' && p.transformation === 'trim-boundary'));
+  assert.deepEqual(record, original);
+  for (const value of ['0', '000.000', '<unsafe>', 'x'.repeat(31), 123]) {
+    const invalid = mapLegadoClienteMasterFields({ ...record, nativeParent: { ...nativeParent, RG: value } }, { validateFields });
+    assert.equal(Object.hasOwn(invalid.masterFields, 'rg'), false);
+    assert.deepEqual(invalid.masterFields, result.masterFields);
+  }
+  const unloaded = mapLegadoClienteMasterFields({ ...record, canonical: { ...canonical, rg: undefined },
+    nativeParent: { CODIGOCLIENTE: 7 } }, { validateFields });
+  assert.equal(unloaded.pending.length, 5); assert.deepEqual(unloaded.masterFields, {});
+  const unknownStorage = mapLegadoClienteMasterFields({ ...record,
+    canonical: { id: canonical.id, group_id: ctx.groupId, empresa_id: null, source_system: 'SYNTHETIC', codigo_legado: '7' } }, { validateFields });
+  assert.deepEqual(unknownStorage.masterFields, {});
+  assert.ok(unknownStorage.pending.some(p => p.reason === 'TARGET_STORAGE_NOT_REVIEWED'));
+  assert.throws(() => mapLegadoClienteMasterFields({ ...record, nativeKey: '7' }, { validateFields }));
+  assert.throws(() => mapLegadoClienteMasterFields({ ...record, canonical: { ...canonical, empresa_id: ID.empresaA } }, { validateFields }));
 });

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidCnpj, isValidCpf, normalizeDocumento } from '../db/documentoValidators.js';
+import { clienteMasterExtraFields, type ClienteMasterExtras } from './clienteMasterExtras.js';
 
 export const CLIENTE_TIPOS = ['Pessoa Física', 'Pessoa Jurídica'] as const;
 export const CLIENTE_ORIGENS = [
@@ -83,6 +84,7 @@ const baseCreate = {
 };
 
 export const clienteCreateSchema = z.object({
+  ...clienteMasterExtraFields,
   ...baseCreate,
   tipo: z.enum(CLIENTE_TIPOS),
   documento: z.string().trim().max(32).optional().nullable(),
@@ -130,6 +132,7 @@ export const clienteCreateSchema = z.object({
 });
 
 export const clienteUpdateSchema = z.object({
+  ...clienteMasterExtraFields,
   contatos: clienteContatosReplaceSchema.innerType().shape.contatos,
   expectedVersion: clienteContatosReplaceSchema.innerType().shape.expectedVersion.optional(),
   empresa_id: z.string().uuid().optional().nullable(),
@@ -168,7 +171,7 @@ export type ClienteUpdate = Omit<z.infer<typeof clienteUpdateSchema>, 'contatos'
   contatos?: ClienteContato[] | null;
 };
 
-export type Cliente = {
+export type Cliente = ClienteMasterExtras & {
   contatos?: ClienteContato[] | null;
   id: string;
   group_id: string;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { clienteMasterExtrasRemainder } from './clienteMasterExtrasRemainder.js';
 
 // Only the reviewed contacts delta; no equivalent historical layer exists.
 export const clienteContatosBaseline = '0bb7313c605d0cb97ca10e7ee91094623e5407df';
@@ -92,6 +93,7 @@ const hash = text => createHash('sha256').update(text).digest('hex');
 
 /** Always verify the entire previous file, even when ancestor checks disable their own hash. */
 export function clienteContatosRemainder(file, text) {
+  text = clienteMasterExtrasRemainder(file, text);
   const entry = clienteContatosHunks[file];
   if (!entry) return text;
   let source = text.replace(/\r\n/g, '\n');
@@ -107,6 +109,7 @@ export function clienteContatosRemainder(file, text) {
 /** Historical callers may already have peeled selected-reference hunks. Their own pins still apply. */
 const historicalInputHashes = {"server/src/services/clienteService.ts":"2c711fb1d47d5ba53e2c0e0099ec75d816a3746bcc583b77df6d0d0d0517578f","server/src/repositories/inMemoryClienteRepository.ts":"cb2811d0bcb37f4f5f114955d4de9ff5766fdddfe3e3a92aca1a55bda9fc0db5","server/src/repositories/postgresClienteRepository.ts":"f0b68691a479dc10758c2680ff4e2c0a40b0142ffcdaa02af19a1a9e038ab348"};
 export function clienteContatosHistoricalInput(file, text, selectedReference) {
+  text = clienteMasterExtrasRemainder(file, text);
   const entry = clienteContatosHunks[file];
   if (!entry) return text;
   const source = text.replace(/\r\n/g, '\n');

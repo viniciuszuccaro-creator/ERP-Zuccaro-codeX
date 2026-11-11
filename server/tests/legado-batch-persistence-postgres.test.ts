@@ -1,12 +1,71 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import pg from 'pg';
+import {randomUUID} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
+import {SEED_IDS as ID} from '../scripts/seedDevIds.ts';
+import {legacyContactsFingerprint} from '../src/services/clienteLegacyNameCorrection.ts';
 import {createPoolDbClient} from '../src/db/client.ts';
 import {realCrmFixture} from './helpers/crmPostgresFixture.ts';
 import {batchDependencies,syntheticBatch} from './helpers/legadoBatchFixture.ts';
 import {persistirLoteClientesLegado,reverterLoteClientesLegado,prepararPersistenciaClientesLegado} from '../../scripts/legado/staging-persistence.mjs';
 
 const url=process.env.DATABASE_URL;
+test('PostgreSQL master extensions: restricted login, concurrent CAS, replay, rollback and inactive reversal',
+  {skip:!url},async()=>{
+    const f=await realCrmFixture(url!,{restrictedLogin:true});
+    try {
+      await f.exec(await readFile(new URL('../schema-candidates/cliente_contatos.sql',import.meta.url),'utf8'));
+      await f.exec(await readFile(new URL('../schema-candidates/cliente_master_extras.sql',import.meta.url),'utf8'));
+      await f.exec(`GRANT SELECT,UPDATE ON clientes TO "${f.role}";
+        GRANT SELECT,INSERT ON audit_logs TO "${f.role}";
+        CREATE POLICY master_extra_cliente ON clientes FOR ALL TO "${f.role}"
+          USING(group_id='${ID.groupA}' AND empresa_id IS NULL)
+          WITH CHECK(group_id='${ID.groupA}' AND empresa_id IS NULL);
+        CREATE POLICY master_extra_audit ON audit_logs FOR ALL TO "${f.role}"
+          USING(group_id='${ID.groupA}' AND empresa_id IS NULL)
+          WITH CHECK(group_id='${ID.groupA}' AND empresa_id IS NULL)`);
+      const role=(await f.data.query('SELECT r.rolsuper,r.rolbypassrls,current_user=session_user AS same_login FROM pg_roles r WHERE r.rolname=current_user')).rows[0];
+      assert.deepEqual(role,{rolsuper:false,rolbypassrls:false,same_login:true});
+      const batch=randomUUID();
+      await f.admin.query(`UPDATE clientes SET empresa_id=NULL,ativo=false,origem='MIGRACAO',source_system='SYNTHETIC_MASTER',
+        codigo_legado='7',migration_batch=$1 WHERE id=$2`,[batch,ID.clientePfA]);
+      const deps=batchDependencies(f.data),ctx={groupId:ID.groupA,actorId:ID.runtimeActorA,scopeType:'grupo' as const};
+      const snapshot=()=>deps.repo.withTransaction(async q=>{assert.ok(q);return deps.repo.getBulkSnapshot(ctx,ID.clientePfA,q);});
+      const before=await snapshot();assert.ok(before);
+      const command={mode:'apply',id:ID.clientePfA,operationId:randomUUID(),expectedFingerprint:legacyContactsFingerprint(before),
+        sourceSystem:'SYNTHETIC_MASTER',legacyCode:'7',batch,contatos:[],masterFields:{rg:'00123-X',numero_caixa_postal:'00017'},
+        sourceProof:{fileSha256:'a'.repeat(64),rowSha256:'b'.repeat(64),parser:'ndjson-v1'}};
+      const alternative={...command,operationId:randomUUID(),masterFields:{rg:'00456-X',numero_caixa_postal:'00018'}};
+      const commands=[command,alternative];
+      const results=await Promise.allSettled(commands.map(c=>deps.service.enrichLegacyContacts(ctx,c)));
+      assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+      assert.equal(results.filter(r=>r.status==='rejected'&&r.reason.code==='LEGACY_ENRICHMENT_CONFLICT').length,1);
+      const index=results.findIndex(r=>r.status==='fulfilled'),winner=commands[index];
+      const after=await snapshot();assert.ok(after);
+      assert.deepEqual(after,{...before,...winner.masterFields,contatos:[],updated_at:after.updated_at});
+      const count=async()=>(await deps.audit.listByEntity('Cliente',ID.clientePfA)).length;
+      const auditCount=await count();
+      const replay=await deps.service.enrichLegacyContacts(ctx,winner);
+      assert.equal(replay.reused,true);assert.equal(await count(),auditCount);
+      await assert.rejects(deps.service.enrichLegacyContacts({...ctx,groupId:ID.groupB},winner));
+      const reverse={mode:'reverse',id:winner.id,operationId:randomUUID(),originalOperationId:winner.operationId,
+        expectedFingerprint:replay.fingerprint,sourceSystem:winner.sourceSystem,legacyCode:winner.legacyCode,batch};
+      await deps.service.enrichLegacyContacts(ctx,reverse);
+      const restored=await snapshot();assert.ok(restored);
+      assert.deepEqual(restored,{...before,updated_at:restored.updated_at});
+      assert.equal((await deps.service.enrichLegacyContacts(ctx,reverse)).reused,true);
+      await assert.rejects(f.admin.query("UPDATE clientes SET rg='<unsafe>' WHERE id=$1",[ID.clientePfA]));
+      assert.deepEqual(await snapshot(),restored);
+      const again={...winner,operationId:randomUUID(),expectedFingerprint:legacyContactsFingerprint(restored)};
+      const applied=await deps.service.enrichLegacyContacts(ctx,again);
+      await f.admin.query("UPDATE clientes SET rg='MANUAL' WHERE id=$1",[ID.clientePfA]);
+      const manual=await snapshot();assert.ok(manual);
+      await assert.rejects(deps.service.enrichLegacyContacts(ctx,{...reverse,operationId:randomUUID(),
+        originalOperationId:again.operationId,expectedFingerprint:applied.fingerprint}),{code:'LEGACY_ENRICHMENT_CONFLICT'});
+      assert.deepEqual(await snapshot(),manual);assert.equal(manual.ativo,false);
+    }finally{await f.close();}
+  });
 test('PostgreSQL canonical 500 then 1000: commit-gap replay, full postimages, reversal and concurrent attempts',
   {skip:!url},async()=>{
     const f=await realCrmFixture(url!);

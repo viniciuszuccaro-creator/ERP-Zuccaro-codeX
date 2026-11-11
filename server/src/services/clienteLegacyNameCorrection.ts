@@ -8,6 +8,7 @@ import type { DbQueryExecutor } from '../db/client.js';
 import type { ClienteRepository } from '../repositories/inMemoryClienteRepository.js';
 import { clienteContatosReplaceSchema } from '../repositories/clienteTypes.js';
 import { canonicalClienteJson, assertContactReferences } from './clienteContatos.js';
+import { clienteMasterExtrasSchema, type ClienteMasterExtras } from '../repositories/clienteMasterExtras.js';
 
 const hashSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const fields = { id: z.string().uuid(), operationId: z.string().uuid(), expectedFingerprint: hashSchema,
@@ -195,12 +196,16 @@ const ndjsonProof = z.object({ fileSha256: hashSchema, rowSha256: hashSchema,
   parser: z.literal('ndjson-v1') }).strict();
 const contactsCommand = z.discriminatedUnion('mode', [
   z.object({ ...fields, mode: z.literal('apply'),
-    contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap(), sourceProof: ndjsonProof }).strict(),
+    contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap(), sourceProof: ndjsonProof,
+    masterFields: clienteMasterExtrasSchema.refine(value => Object.keys(value).length > 0
+      && Object.values(value).every(v => typeof v === 'string' && v.length > 0)).optional() }).strict(),
   z.object({ ...fields, mode: z.literal('reverse'), originalOperationId: z.string().uuid() }).strict(),
 ]);
 const contactsReceipt = z.object({ kind: z.literal('legacy_contacts_enrichment'),
   operationId: z.string().uuid(), commandHash: hashSchema, mode: z.enum(['apply', 'reverse']),
   fingerprint: hashSchema, sourceProof: ndjsonProof,
+  changedMasterFields: z.array(z.enum(['rg', 'numero_caixa_postal', 'cep_caixa_postal',
+    'caixa_postal_cobranca', 'inscricao_produtor_rural'])).max(5).optional(),
   snapshot: z.object({ contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap().nullable() }).passthrough(),
 }).strict();
 
@@ -257,11 +262,20 @@ export async function enrichLegacyContacts(
     }
     if (legacyContactsFingerprint(before) !== command.expectedFingerprint) throw mismatch();
     let target;
+    const masterFields: ClienteMasterExtras = {};
+    let changedMasterFields: (keyof ClienteMasterExtras)[] = [];
     let sourceProof: z.infer<typeof ndjsonProof>;
     if (command.mode === 'apply') {
       const baseline = before.contatos === null ? [] : before.contatos;
+      for (const [key, value] of Object.entries(command.masterFields || {}) as [keyof ClienteMasterExtras, string][]) {
+        if (!Object.hasOwn(before, key)) throw new AppError(503, 'CLIENTE_MASTER_STORAGE_REQUIRED', 'Reviewed master schema required');
+        if (before[key] != null && before[key] !== '') throw mismatch();
+        masterFields[key] = value;
+        changedMasterFields.push(key);
+      }
       // Enrichment appends only: preserve the complete ordered baseline, including manual metadata.
-      if (!Array.isArray(baseline) || command.contatos.length <= baseline.length
+      if (!Array.isArray(baseline) || command.contatos.length < baseline.length
+        || (command.contatos.length === baseline.length && changedMasterFields.length === 0)
         || !isDeepStrictEqual(command.contatos.slice(0, baseline.length), baseline)) throw mismatch();
       const existingIds = new Set(baseline.map(contact => contact.id));
       if (command.contatos.slice(baseline.length).some(contact => !contact.id || existingIds.has(contact.id))) throw mismatch();
@@ -280,15 +294,23 @@ export async function enrichLegacyContacts(
         || !isDeepStrictEqual(original.snapshot, before)
         || originalBefore.data.fingerprint !== legacyContactsFingerprint(originalBefore.data.snapshot)) throw mismatch();
       target = originalBefore.data.snapshot.contatos;
+      changedMasterFields = original.changedMasterFields || [];
+      if (new Set(changedMasterFields).size !== changedMasterFields.length) throw mismatch();
+      for (const key of changedMasterFields) {
+        if (!Object.hasOwn(before, key) || !Object.hasOwn(originalBefore.data.snapshot, key)) throw mismatch();
+        const parsed = clienteMasterExtrasSchema.safeParse({ [key]: originalBefore.data.snapshot[key] });
+        if (!parsed.success) throw mismatch();
+        Object.assign(masterFields, parsed.data);
+      }
       sourceProof = original.sourceProof;
     }
-    await deps.repo.update(scope, command.id, { contatos: target }, q);
+    await deps.repo.update(scope, command.id, { contatos: target, ...masterFields }, q);
     const after = await deps.repo.getBulkSnapshot(scope, command.id, q);
-    if (!after || !isDeepStrictEqual(after, { ...before, contatos: target, updated_at: after.updated_at })) {
+    if (!after || !isDeepStrictEqual(after, { ...before, contatos: target, ...masterFields, updated_at: after.updated_at })) {
       throw new AppError(409, 'LEGACY_ENRICHMENT_MISMATCH', 'Unexpected canonical contacts enrichment change');
     }
     const common = { kind: 'legacy_contacts_enrichment', operationId: command.operationId, commandHash,
-      mode: command.mode, sourceProof };
+      mode: command.mode, sourceProof, ...(changedMasterFields.length ? { changedMasterFields } : {}) };
     await deps.audit.append({ ...ctx, empresaId: null, entity: 'Cliente', entityId: command.id, action: 'update',
       beforeData: { ...common, snapshot: before, fingerprint: legacyContactsFingerprint(before) },
       afterData: { ...common, snapshot: after, fingerprint: legacyContactsFingerprint(after) } }, q);

@@ -1,5 +1,32 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Delta de enriquecimento e destino efetivo (2026-11-11)
+
+Cliente existente:5extensoes opcionais no contrato backend e no ciclo canonico
+de enriquecimento. SQL candidato cliente_master_extras.sql fora do migrador;
+NAO aplicar por bootstrap/CI. Preflight privado1600:1316clientes/1317valores
+candidatos, sem escrita. Contatos4200 e1500inativos conservados. Exigir aprovacao
+agrupadaHML/revisao/backup/freshCAS antes de espelhar colunas e enriquecer.
+Omissao preserva; vazio explicitoNULL e comando consciente; importacao nao apaga
+nem sobrescreve valor manual. Recibos antigos nao podem ser reescritos ou aceitos
+por ignorar colunasNULL novas. Alteracao de schema bloqueiaCAS antigo; reversao
+nova usa seus snapshots completos e conserva os historicos.
+
+CatalogoVPS lido via sessao existente emREADONLY/ROLLBACK: postgres/public,
+login efetivo APIpostgres=manutencao, BYPASSRLStrue/NOSUPER.9tabelas comRLS/FORCE,
+165colunas/76constraints/46indices/0policies. Falta contatos+5extensoes e unique
+Cliente(group_id,source_system,codigo_legado);043 existente tem a fatiaCliente,
+nao aplicar SQL de produtos ou todas migrations por conveniencia. Fornecedor
+nao presente. Compatibilidade por campos/constraints/indices, nunca journal.
+Catalogo completo privado em operational-gates-344-20261026/schema-contract-
+20261111.private.json; nomes/IDs/dados de clientes nao foram publicados.
+
+PromocaoVPS continua BLOQUEADA para escrita: resolver principal/policies/grants
+minimos, conflitos da selecao efetiva, parAPI/web revisado, backup atual/retorno
+e janela antes de uma decisao operacional unica.100NEW antigo nao prova destino
+atual vazio nem ausencia de conflitosglobais para1600/17471. Plano/binding/query
+anteriores preservados, sem novo inventario/carga/consulta repetida nesta etapa.
+
 ## Escala privada de cadastros - ensaios500/1000 reais (2026-11-11)
 
 Codigo efbde32d/CI6859/6860 e servicos existentes, sem endpoint/importador paralelo.

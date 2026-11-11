@@ -1,4 +1,53 @@
-## Retomada vigente -3869canais aplicados,1500continuamINATIVOS (2026-11-11)
+## Retomada vigente -5extensoes prontas no codigo, DDL pendente (2026-11-11)
+
+658d8cca CI6887/6888SUCCESS; encerrar bloqueio documental antigo deCI. Nenhum
+contato/carga/reativacao repetidos:1600mestres/1500inativos/4200canais preservados.
+ReservaCodex342/6802272541: backend/schema/mapper/testes; UI/composicao continuam
+Cursor (591e3b32276/4015d9a7e37 sem novo delta). Coord591/6802728177 nao e aceite.
+
+Mesmo Cliente agora aceita RG/numero_caixa_postal/cep_caixa_postal/
+caixa_postal_cobranca/inscricao_produtor_rural opcionais. Auxiliar pequeno de
+schema/projecao/SQL parametrizado extraido, sem cadastro paralelo; mapper legado
+existente reexporta auxiliar puro. CRUD omissao/NULL/read/create/reopen e ciclo
+existente enrichLegacyContacts(masterFields opcionais) mantem CAS/fullsnapshot,
+lock/RBAC/auditoria/replay/reversao, append-only de contatos e inatividade.
+Schema antigo segue funcional sem esses campos, tentativa explicita recebe503.
+SQL candidato server/schema-candidates/cliente_master_extras.sql NAO aplicado.
+
+Preflight privado atual dos mesmos1600:1315RG+1numero/1CEP caixa postal,
+1316clientes candidatos,5RG-placeholder.0escritas,1317valores aguardam storage
+revisado;284sem candidato nesses campos. Sem dados inventados nos2campos vazios.
+Artefato privado master-extras-preflight.private.json em scale-validation-efbde32d;
+novos scripts continuam operadores privados existentes, nao importer paralelo.
+Fonte/IDs/documentos batem; sourceSQLreader segueSTOPPED, nenhum writerlock novo.
+
+PGlite17PASS/raiz168PASS;3contraprovas afetadas inicialmente falharam porque os
+hunks novos sobrepunham contexto antigo. Corrigida composicao das camadas exatas,
+SEM trocar hashes ancestrais, mantendo comparacao integral e contraprovas de
+mutacao/omissao/repeticao em todos entrypoints reais. NovoPG no runner existente
+com LOGIN restrito/concorrencia/replay/reversao; falta CI desteSHA, nao contar SKIP
+local comoPG. Audit/lint/types/buildPASS,1aviso lint existente. Ubuntu completo via
+excecao draft existente; CI terminal deve constar no recibo de fechamento.
+
+VPS console restabelecido pelo dono apos Session expired. Leitura real de
+definicoes/constraints/indices/policies:9relacoes/165colunas/76constraints/
+46indices/0policies; RLS/FORCE mas loginAPIpostgres BypassRLS (igual manutencao).
+6campos ausentes em clientes; falta unique legado, reutilizar fatiaCliente043
+somente apos conferir conflitos; fornecedor ausente. Nada aplicado/inventado por
+numero de journal. Recibo rootprivado operational-gates-344-20261026/
+schema-contract-20261111.private.json. Plano fixo100/binding/code-precheck originais
+localizados/conservados, NAO reexecutados nem tomados como prova atual dos1600.
+
+PROXIMO GATE agrupadoHML: revisao/backup/autorizar5colunas+check e1316candidatos,
+reler antes de aplicar e emitir novosCAS. Schema muda fullpostimages: recibos
+antigos imutaveis devem BLOQUEAR replay, nunca ignorarNULL para fazer passar.
+Novosrecibos revertem so proprios campos; sem apagar dados/colunas. Nenhuma
+autorizacaoVPS inferida. VPS ainda precisa principal/policies, conflitosglobais/
+selecaoexata, frescorbackup e API/web da mesma candidata revisada. Enderecos/Obras
+e crosswalks comerciais nao inventados.22895/18458/4437 continuam reconciliados
+por chaves, causa do filtro4437 desconhecida; nao classificar automaticamente.
+
+## Historico -3869canais aplicados,1500continuamINATIVOS (2026-11-11)
 
 10144c3b CI6877/6878SUCCESS. Reutilizados mapper/servico canonicosefbde32d,
 SEM nova carga:500receberam1325canais;1000receberam2544. MesmoPG/schemaCPA,
