@@ -1,5 +1,39 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Promocao do Cliente - pacote ainda nao executavel (2026-11-11)
+
+Destino SQL comprovado no recibo de16:52Z: srv1982741/postgres/public; API e
+manutencao usam o MESMO postgres NOSUPER/BYPASSRLS. Nao leitor restrito;0policies
+nas9relacoes selecionadas comRLS/FORCE nao comprovam isolamento desse login.
+Reutilizado catalogo privado existente; nao declarar nova consulta operacional.
+Delta minimo identificado: cliente_contatos.sql, cliente_master_extras.sql e
+indice Cliente(group_id,source_system,codigo_legado). Novo candidato
+server/schema-candidates/cliente_legacy_identity.sql extrai somente a definicao
+canonica043, sem SQL de produtos/opportunities/auth e sem journal. Nome existente
+obriga revisar definicao; duplicidade obriga reconciliar. NAO aplicar por numero.
+Arquivo separado necessario para revisar/executar apenas esse delta, sem criar
+importador ou migrador paralelo. Nenhum desses candidatos aplicado naVPS.
+
+Gates finitos e responsaveis:
+- Codex: conteudo/joins restantes e selecao definitiva com rejeicoes;1600HML
+  continuam parciais.1500ensaios ficam inativos, nao sao carga operacional liberada.
+- Codex/revisao: principal real daAPI e policies/grants minimos por contrato;
+  nao trocar role nem reaproveitar BYPASSRLS como isolamento, sem novo gate.
+- Cursor/composicao: parAPI/web mesmoSHA revisado, builds efetivos e aceite15173;
+  candidato4015d9a7e37 nao incorpora automaticamente o backend482fd666 ou este delta.
+- Executor autorizado: capacidadefilesystem atual, conflitos globais da selecao,
+  backupfresco do destino/recuperacao/retorno; metricaProvider nao substitui df.
+- Proprietario: decisao operacional agrupada SOMENTE quando os itens anteriores
+  estiverem comprovados; janela/parada/versao/lotes/efeitos/reversao identificados.
+
+Plano: lotes canonicos<=1000 apos benchmark do conteudo completo; checkpoints
+transacionais e CAS, no-op/replay, rejeicoes isoladas e reconciliacao de cada
+campo/relacao, nao apenas contagem. Nenhum commit de teste marca carga concluida.
+Reversao logica do proprio lote/permissoes/configuracao, preservando historico e
+alteracoes manuais posteriores; sem sobrescrever banco inteiro ouDROP automatico.
+Enquanto versao/principal/selecao nao fecharem, pacoteVPS NOT_READY: nao pedir
+liberacao generica de producao nem atribuir umSHA/digest a imagem sem prova.
+
 ## HML5extensoes concluida (2026-11-11)
 
 Codigo482fd666 CI6909/6910SUCCESS; SQL candidato aplicado SOMENTE em

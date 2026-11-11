@@ -1,4 +1,42 @@
-## Estado vigente - pacote5extensoes aplicado na HML (2026-11-11)
+## Estado vigente - matriz restante e preparacao Cliente-only (2026-11-11)
+
+Sem repetir5extensoes/cargas/contatos. Derivados os156campos nativos dos MESMOS
+1600 a partir de3artefatos pinados existentes, sem nova consulta ao SQL legado.
+Matriz privada unica: scale-validation-efbde32d/remaining-matrix-after-master-482fd666/
+matrix.private.json; por campo conserva fonte/chave/quantidade/destino/regra/
+implementacao/decisao e continuidade independente. Motivos por registro privados.
+85campos com algum valor(inclusive zeros),71vazios neste recorte; nao equivale
+a85campos aprovados. COMENTARIO/STRINGLIVRE6 dispensados do mapa ativo, raw intacto.
+
+Lista restante prioritaria, sem valores identificaveis:
+- Principal: ENDERECO/CIDADE/BAIRRO/CODIGOUF/CEPCLIENTE presentes1600cada;1585CEP
+  passam somente formato,15nao passam. UF1600com2letras nao prova pais. Numero,
+  pais e finalidade nao segregados/comprovados; nao extrair por suposicao.
+- Cobranca: ENDERECOCOBRANCA/CEPCOBRANCA15cada; bairro/cidade/UF14cada. Complementos
+  vazios neste recorte NAO autorizam apaga-los quando outra fonte os comprovar.
+- Obras:117propostas do recorte original100 preservadas; nao extrapolar a1600,
+  nao reextrair nem inferir entrega.0aptas no plano anterior, sem nova carga.
+- Vendedor1600refs/20chaves; tabela1599naozero/5chaves; regiao1600/9chaves;
+  condicao5naozero/4chaves. Exigem crosswalk autoritativo e escopo, nao nome.
+ 1595zeros de condicao nao sao prazo aprovado.62campos preenchidos ainda sem
+ regra/target aprovado incluem controles/placeholders, nao62requisitos comerciais.
+
+HML fisica/permissoes conferidas READONLY/ROLLBACK: no recorte1600 ha0locais e
+0cliente_empresas, NAO destino global vazio. Perfil pode visualizar locais,
+criar/editar/inativar DENIED; sem ampliar acesso. ClienteGrupo nao exige vinculo
+empresarial inventado. Completos comprovados0;1600parciais por implementacao e
+tambem por componentes/semantica faltantes(motivos sobrepostos, nao somar).
+Conflitos operacionais globais ainda desconhecidos, nao0liberados automaticamente.
+
+Defeito reproduzido na revisao existente: complemento/referencia sumiam da
+projecao. Corrigida allowlist e protecao, mantendo raw/NULL/zeros e bloqueios;
+nao gravaLocais nem relaxa contrato. Novo teste antesFAIL/depoisPASS; focados17PASS/
+1falha infraWindows(getuid). Audit/lint/typecheck/build PASS; Linux fecha naCI
+pela excecao draft vigente, sem pular teste. Novo SQL candidato Cliente-only
+reutiliza exatamente o indice043, recusa nome preexistente/duplicidades, sem
+produtos/roles/journal; testePG real pendenteCI. Sem aplicacaoHML/VPS.
+
+## Estado anterior - pacote5extensoes aplicado na HML (2026-11-11)
 
 Codigo482fd666ba33251c813e72b1afaea1dcddbdf647:CI6909/6910SUCCESS, todos3jobs.
 TestePG real de extensoes restritas/CAS/replay/rollback/reversao2PASS/0FAIL/0SKIP;

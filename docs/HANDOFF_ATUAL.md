@@ -1,4 +1,27 @@
-## Retomada vigente -5extensoes concluidas na HML (2026-11-11)
+## Retomada vigente - restante dos dados e Cliente-only (2026-11-11)
+
+5extensoes/cargas anteriores FECHADAS, nao repetir. Matriz156 dos mesmos1600
+derivada das3fontes privadas pinadas;85campos com algum valor(inclui zeros),
+71vazios. Fonte/chave/quantidade/destino/regra/pendencia por campo em
+scale-validation-efbde32d/remaining-matrix-after-master-482fd666/matrix.private.json.
+reference-quality e hml-relations-readonly complementam a MESMA matriz, nao fila nova.
+Principal1600,15CEP fora de formato; cobranca15textos/15CEP e14bairro/cidade/UF.
+Crosswalks reais:20vendedores/5tabelas/9regioes/4condicoes(5linhasnaozero).
+117Obras continuam no recorte100, nao prova1600. COMENTARIO/STRINGLIVRE6 dispensados.
+READONLY/ROLLBACK HML:0locais/0cliente_empresas para1600IDs, nao globalvazio;
+visualizarLocal permitido, criar/editar/inativar negados.0completos comprovados,
+1600parciais(motivos de fonte/implementacao/ambiguidade sobrepostos). Conflito
+globalVPS desconhecido. Nao vincular empresa, vendedor ou tabela por semelhanca.
+Review existente agora preserva complemento/referencia sem liberar persistencia
+de endereco incompleto. AntesFAIL/depoisPASS;17PASS+1getuidWindows infra; checks
+locaisPASS, fechamentoUbuntuCI pendente. Sem nova ativacao/carga/DDL HML/VPS.
+Cliente-only candidate extraido da043 necessario porque arquivo original mistura
+produtos/auth; testePG real novo fecha naCI, sem atualizar journals ou aplicar.
+Reservas342/6804760803 e6804970949 Codex backend/review/testes/docs; UI Cursor.
+Proximo: fecharCI/revisao, crosswalks autoritativos e contrato/RBAC de locais
+parciais; compor API/web com Cursor. VPS aguarda os gates concretos, naoCI apenas.
+
+## Retomada anterior -5extensoes concluidas na HML (2026-11-11)
 
 482fd666ba33251c813e72b1afaea1dcddbdf647 CI6909/6910SUCCESS. PG real de
 extensoes restritas/CAS/replay/rollback/reversao2PASS/0FAIL/0SKIP.

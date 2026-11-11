@@ -11,6 +11,32 @@ import {batchDependencies,syntheticBatch} from './helpers/legadoBatchFixture.ts'
 import {persistirLoteClientesLegado,reverterLoteClientesLegado,prepararPersistenciaClientesLegado} from '../../scripts/legado/staging-persistence.mjs';
 
 const url=process.env.DATABASE_URL;
+
+test('PostgreSQL Cliente-only identity candidate refuses unknown index and duplicates without changing rows',
+  {skip:!url},async()=>{
+    const f=await realCrmFixture(url!);
+    try {
+      const candidate=await readFile(new URL('../schema-candidates/cliente_legacy_identity.sql',import.meta.url),'utf8');
+      const full=(await readFile(new URL('../migrations/043_legado_identidade_compartilhada.sql',import.meta.url),'utf8')).replace(/\r\n/g,'\n');
+      const definition=candidate.slice(candidate.indexOf('CREATE UNIQUE INDEX')).replace(/\r\n/g,'\n');
+      assert.ok(full.includes(definition.replace('CREATE UNIQUE INDEX ', 'CREATE UNIQUE INDEX IF NOT EXISTS ')));
+      assert.doesNotMatch(candidate,/\b(?:produtos|profiles|GRANT|DROP|schema_migrations)\b/i);
+      await assert.rejects(f.exec(candidate),/LEGACY_CLIENT_INDEX_DEFINITION_REVIEW_REQUIRED/);
+      // Only this newly-created synthetic fixture owns the index being removed.
+      await f.exec('DROP INDEX clientes_legacy_identity_uidx');
+      await f.admin.query("UPDATE clientes SET source_system='SYNTHETIC_IDENTITY',codigo_legado='00007' WHERE id=ANY($1::uuid[])",[[ID.clientePfA,ID.clientePjA]]);
+      const snapshot=async()=>(await f.admin.query('SELECT to_jsonb(c) AS row FROM clientes c ORDER BY id')).rows;
+      const duplicate=await snapshot();
+      await assert.rejects(f.exec(candidate),/LEGACY_CLIENT_IDENTITY_RECONCILIATION_REQUIRED/);
+      assert.deepEqual(await snapshot(),duplicate);
+      await f.admin.query("UPDATE clientes SET codigo_legado='00008' WHERE id=$1",[ID.clientePjA]);
+      const before=await snapshot();await f.exec(candidate);assert.deepEqual(await snapshot(),before);
+      await assert.rejects(f.admin.query("UPDATE clientes SET codigo_legado='00007' WHERE id=$1",[ID.clientePjA]),{code:'23505'});
+      assert.deepEqual(await snapshot(),before);
+      await f.admin.query("UPDATE clientes SET source_system='SYNTHETIC_IDENTITY',codigo_legado='00007' WHERE id=$1",[ID.clientePjB]);
+      await assert.rejects(f.exec(candidate),/LEGACY_CLIENT_INDEX_DEFINITION_REVIEW_REQUIRED/);
+    }finally{await f.close();}
+  });
 test('PostgreSQL master extensions: restricted login, concurrent CAS, replay, rollback and inactive reversal',
   {skip:!url},async()=>{
     const f=await realCrmFixture(url!,{restrictedLogin:true});
