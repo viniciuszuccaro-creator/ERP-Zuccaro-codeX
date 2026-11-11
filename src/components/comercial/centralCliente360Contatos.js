@@ -65,14 +65,36 @@ export function classifyCentral360Contatos(row, flags = {}) {
 }
 
 /**
+ * WhatsApp só com tipo canônico comprovado — nunca promover Celular.
+ * @param {unknown} tipo
+ */
+export function isWhatsAppClassificado(tipo) {
+  const t = String(tipo || '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+  return t === 'whatsapp' || t === 'whats';
+}
+
+/**
  * Rótulo de canal sem confundir Celular com WhatsApp.
  * @param {unknown} tipo
  */
 export function labelContatoCanal(tipo) {
   const t = String(tipo || '').trim().toLowerCase();
-  if (t === 'whatsapp') return 'WhatsApp';
+  if (isWhatsAppClassificado(tipo)) return 'WhatsApp';
   if (t === 'celular') return 'Celular';
   if (t === 'telefone' || t === 'fone') return 'Telefone';
   if (t === 'email' || t === 'e_mail') return 'E-mail';
   return String(tipo || 'Canal').trim() || 'Canal';
+}
+
+/**
+ * Atributo estável para UI: whatsapp-classificado | celular | telefone | email | outro.
+ * @param {unknown} tipo
+ */
+export function canalClassificacaoAttr(tipo) {
+  if (isWhatsAppClassificado(tipo)) return 'whatsapp-classificado';
+  const t = String(tipo || '').trim().toLowerCase();
+  if (t === 'celular') return 'celular';
+  if (t === 'telefone' || t === 'fone') return 'telefone';
+  if (t === 'email' || t === 'e_mail') return 'email';
+  return 'outro';
 }

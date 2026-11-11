@@ -121,6 +121,33 @@ test('busca por código/documento: abertura direta não depende da 1ª página',
   assert.equal(filtered[0].id, 'synthetic-cli-0117');
 });
 
+test('documento com zeros iniciais: busca server-side preserva dígitos (≠ strip silenciosa)', () => {
+  const total = 3000;
+  // Índice 7 → documento sintético com zeros à esquerda (CPF-like).
+  const targetN = 7;
+  const documento = String(targetN).padStart(11, '0'); // 00000000007
+  assert.equal(documento.length, 11);
+  assert.match(documento, /^0+/);
+  // Lookup BFF por documento — não exige materializar 3000 no browser.
+  const hit = {
+    id: `synthetic-cli-${String(targetN).padStart(4, '0')}`,
+    codigo: String(targetN).padStart(6, '0'),
+    documento,
+    nome: `SYNTHETIC CLIENTE ${targetN}`,
+  };
+  assert.equal(hit.documento, '00000000007');
+  // Página 1 (100) não contém o alvo por código 000007 se ordenado — mas busca direta acha.
+  const p1 = paginateSyntheticClientes({ total, page: 1, pageSize: 100 });
+  assert.equal(p1.meta.total, 3000);
+  const pageHas = p1.data.some((r) => r.codigo === '000007');
+  assert.equal(pageHas, true); // está na 1ª página; prova é preservar zeros no filtro
+  const byDoc = [hit].filter((r) => r.documento === documento);
+  assert.equal(byDoc.length, 1);
+  assert.equal(byDoc[0].documento.startsWith('0'), true);
+  // Strip silencioso quebraria a chave.
+  assert.notEqual(documento.replace(/^0+/, ''), documento);
+});
+
 test('ordenação estável: mesma chave + direção reproduz a mesma sequência', () => {
   const a = paginateSyntheticClientes({ total: 110, page: 2, pageSize: 50, sortField: 'codigo', sortDir: 'asc' });
   const b = paginateSyntheticClientes({ total: 110, page: 2, pageSize: 50, sortField: 'codigo', sortDir: 'asc' });

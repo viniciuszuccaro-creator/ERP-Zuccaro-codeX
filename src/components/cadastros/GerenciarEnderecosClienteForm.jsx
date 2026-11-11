@@ -259,13 +259,22 @@ export default function GerenciarEnderecosClienteForm({
   };
 
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      data-cliente-local-caps="probed"
+      data-cap-visualizar={podeVisualizarLocais ? '1' : '0'}
+      data-cap-criar={podeCriarLocal ? '1' : '0'}
+      data-cap-editar={podeEditarLocal ? '1' : '0'}
+      data-cap-inativar={podeInativarLocal ? '1' : '0'}
+      data-cap-view-only={viewOnly ? '1' : '0'}
+    >
       {viewOnly && (
         <p
           className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
           role="status"
           data-permission="Cadastros.cliente_local.visualizar"
           data-rbac="cliente-local-somente-leitura"
+          data-hml-cenario="cliente-local-somente-visualizar"
         >
           Endereços em modo leitura (Cadastros.cliente_local.visualizar).
           Criar/editar/inativar exigem permissões específicas — Cliente.editar não autoriza locais.

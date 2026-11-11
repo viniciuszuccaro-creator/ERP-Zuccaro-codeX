@@ -1,3 +1,17 @@
+## CURSOR — #591 Entregas + WhatsApp classificado + caps locais (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS runtime `c2cd0859` / docs `599ba242` |
+| **Lote** | Entregas HTTP Cliente360 · WhatsApp só classificado · caps `cliente_local` probed · volume doc zeros |
+| **Testes** | `central-cliente360-entregas-whatsapp-591` · volume · peels · CRM fixture · RBAC locais |
+| **Evidence** | `docs/evidence/cursor-cliente360-entregas-whatsapp-locais-591-20261111.txt` |
+| **Estados** | Pareceres preservados · Fechar≠Cancelar · omit ≠ limpar · sem sucesso fictício |
+| Fora | HML/1500 · SHA API+web · ContatoB2B FK · provedores externos |
+
+**Próximo:** CI tip · ACK Codex BFF · aceite :15173 · financeiro autorizado no Cliente360.
+
 ## CURSOR — #591 CI SUCCESS tip vínculos/docs/contatos (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
