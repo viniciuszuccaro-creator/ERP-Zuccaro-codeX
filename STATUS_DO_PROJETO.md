@@ -1,3 +1,14 @@
+## CURSOR — #591 CI SUCCESS tip entregas/WhatsApp/financeiro (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Tip** | **`f42f51a1`** CI SUCCESS 9/9 · PR [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Empilha** | entregas HTTP · WhatsApp classificado · caps locais · volume zeros · financeiro pending_bff · vínculos/RG/contatos |
+| **Estados** | Pareceres preservados · Fechar≠Cancelar · omit ≠ limpar · sem inventar títulos |
+| Fora | HML/1500 · SHA API+web · ContasReceber BFF · ContatoB2B FK · provedores externos |
+
+**Próximo:** ACK Codex BFF ContasReceber/RG · aceite :15173 coordenado.
+
 ## CURSOR — #591 Entregas + WhatsApp classificado + caps locais (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

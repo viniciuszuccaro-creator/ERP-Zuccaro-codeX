@@ -1,3 +1,7 @@
+## CURSOR — #591 CI SUCCESS `f42f51a1` (2026-11-11 America/Sao_Paulo)
+- Tip PR#592 CI SUCCESS 9/9 — entregas · WhatsApp classificado · caps locais · financeiro pending_bff.
+- Sem HML/1500. **Próximo:** ACK Codex BFF ContasReceber/RG · aceite :15173.
+
 ## CURSOR — #591 Entregas + WhatsApp + caps locais (2026-11-11 America/Sao_Paulo)
 - Tip PR#592: entregas canônicas Cliente360; WhatsApp classificado ≠ Celular; caps cliente_local probed.
 - Volume: documento com zeros iniciais. Empilha `c2cd0859`. Sem HML/1500.
