@@ -1,3 +1,15 @@
+## CURSOR — #591 CI-fix peels identity rica (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Causa** | frontend FAIL `3284170d`: stage51 `CentralCliente360Panel` hash fora do peel |
+| **Fix** | hunk aprovado em `readBoundaryRemainder` (identity rica → painel mínimo) |
+| **Testes** | `read-boundary-contracts` 24 pass |
+| **Estados** | Runtime `95bfe2d7` preservado · CI tip peels |
+
+**Próximo:** CI tip peels · ACK Codex IE identity + nomes 14.
+
 ## CURSOR — #591 Cliente360 identity rica (API→UI) (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
