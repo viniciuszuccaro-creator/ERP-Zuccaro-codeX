@@ -532,7 +532,10 @@ export default function CentralCliente360Panel({
       {cadastroOpenError && <div role="alert" className="text-sm text-red-700">{cadastroOpenError}</div>}
       {createOpenError && <div role="alert" className="text-sm text-red-700" data-testid="central360-create-open-error">{createOpenError}</div>}
       {identity && (
-        <div className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div
+          className="border rounded-md bg-slate-50 p-3 text-sm grid grid-cols-1 md:grid-cols-3 gap-2"
+          data-block="central360-identity-rica"
+        >
           <div><span className="text-slate-500">Código</span><p className="font-mono" data-action="codigo-registro-central360">{identity.codigo ?? '—'}</p></div>
           <div>
             <span className="text-slate-500">ID técnico</span>
@@ -540,11 +543,25 @@ export default function CentralCliente360Panel({
               {identity.id || clienteId || '—'}
             </p>
           </div>
-          <div><span className="text-slate-500">Documento</span><p>{identity.documento || '—'}</p></div>
-          <div><span className="text-slate-500">E-mail</span><p>{identity.email || '—'}</p></div>
-          <div><span className="text-slate-500">Telefone</span><p>{identity.telefone || '—'}</p></div>
-          <div><span className="text-slate-500">Celular</span><p>{identity.celular || '—'}</p></div>
-          <div><span className="text-slate-500">Status</span><p>{identity.status}</p></div>
+          <div><span className="text-slate-500">Tipo</span><p data-campo="tipo">{identity.tipo || '—'}</p></div>
+          <div><span className="text-slate-500">Nome</span><p data-campo="nome">{identity.nome || '—'}</p></div>
+          <div><span className="text-slate-500">Razão social</span><p data-campo="razao_social">{identity.razao_social || '—'}</p></div>
+          <div><span className="text-slate-500">Nome fantasia</span><p data-campo="nome_fantasia">{identity.nome_fantasia || '—'}</p></div>
+          <div><span className="text-slate-500">Nome social</span><p data-campo="nome_social">{identity.nome_social || '—'}</p></div>
+          <div><span className="text-slate-500">Documento</span><p data-campo="documento">{identity.documento || '—'}</p></div>
+          <div><span className="text-slate-500">E-mail</span><p data-campo="email">{identity.email || '—'}</p></div>
+          <div><span className="text-slate-500">Telefone</span><p data-campo="telefone">{identity.telefone || '—'}</p></div>
+          <div>
+            <span className="text-slate-500">Celular</span>
+            <p data-campo="celular">{identity.celular || '—'}</p>
+            <p className="text-[10px] text-slate-400">Celular ≠ WhatsApp</p>
+          </div>
+          <div><span className="text-slate-500">Origem</span><p data-campo="origem">{identity.origem || '—'}</p></div>
+          <div><span className="text-slate-500">Status</span><p data-campo="status">{identity.status || '—'}</p></div>
+          <div>
+            <span className="text-slate-500">Ativo</span>
+            <p data-campo="ativo">{identity.ativo === true ? 'Sim' : identity.ativo === false ? 'Não' : '—'}</p>
+          </div>
         </div>
       )}
 

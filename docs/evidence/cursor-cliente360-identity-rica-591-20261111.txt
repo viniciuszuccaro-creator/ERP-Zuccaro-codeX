@@ -1,0 +1,22 @@
+#591 — Cliente360 identity rica (campos já no BFF, ocultos na UI)
+America/Sao_Paulo 2026-11-11
+
+## Problema
+`projectIdentity` (clienteCentral360Service) já devolve nome, razao_social,
+nome_fantasia, nome_social, origem, tipo, ativo além de documento/contato.
+O painel lateral só mostrava código/id/documento/e-mail/fones/status —
+informação no banco/API oculta por falha da interface.
+
+## Correção (UI; sem alterar contrato BFF)
+CentralCliente360Panel: bloco `central360-identity-rica` exibe fantasia,
+social, razão, nome, tipo, origem, ativo; Celular ≠ WhatsApp.
+Ausência visual: "—" (não inventa valor).
+
+## Fora deste lote
+- IE/IM/observações: presentes no row Cliente, ainda fora do tipo identity —
+  próximo com Codex (estender projectIdentity), sem inventar na UI.
+- 14 nomes privados fora piloto100 · HML · SHA API+web.
+
+## Testes
+tests/central-cliente-360-pagina-ui.test.js (+ cadastro-navigation / layout v6)
+→ pass
