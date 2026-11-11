@@ -233,6 +233,13 @@ async function mountCompleto(relPath, {
         return { validos, quarentena };
       },
     },
+    '@/api/clienteMasterExtrasUi': {
+      isClienteMasterStorageRequired: (err) => err?.code === 'CLIENTE_MASTER_STORAGE_REQUIRED',
+      CLIENTE_MASTER_STORAGE_REQUIRED: 'CLIENTE_MASTER_STORAGE_REQUIRED',
+      CLIENTE_MASTER_EXTRA_KEYS: ['rg', 'numero_caixa_postal', 'cep_caixa_postal', 'caixa_postal_cobranca', 'inscricao_produtor_rural'],
+      classifyClienteMasterExtras: () => ({ fields: {}, present: 0, absent: 5, message: 'stub' }),
+      pickClienteMasterExtrasForWrite: () => ({}),
+    },
     '@/api/localCadastroMasterPolicy': {
       normalizeFornecedorCadastro: (payload) => ({ ...payload, normalized: true }),
     },
