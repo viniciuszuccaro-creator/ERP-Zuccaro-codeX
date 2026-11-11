@@ -1,4 +1,23 @@
-## Checkpoint vigente - codigo verde, parada HML requer inspecao (2026-11-11)
+## Lote vigente - fechamento proprio e recuperacao explicita em validacao (2026-11-11)
+
+Controlador existente ganhou rastreio de conexoes proprias api/web e close
+concorrente com Vite, drenagem limitada e fases sanitizadas. Contraprova HTTP
+real: conexao ativa impede close antigo; novo helper fecha somente os servidores
+registrados, preserva servidor alheio e nao aceita falha/timeout como clean.
+Recuperacao EXPLICITA --via-gh recover: pins/baseline aprovada, conservacao100
+pos-parada fresca, hashes de plano/state/lock/recibo, PID ausente e socket/porta
+recusando conexao. Arquiva originais, nao apaga lock; in-progress impede start
+parcial. Nao executa carga/restore/start implicitamente.14testesPASS e revisao
+independente favoravel ao controlador; CI e entrypoint Linux ainda pendentes.
+
+Bootstrap privado candidato usa mesmo helper publico por hash, preservando
+Auth real/pins/banco/freeze8650/30s protecao. Ainda NAO aplicado; revisao propria
+necessaria. Nao alterar estado emergencial manualmente para superar guardas.
+Leitura dirigida dos156campos Clientes da MESMA100 preparada pelo coletor privado
+existente, com container leitor anterior/networknone/zeroportas/copiaREADONLY;
+nao e nova selecao nem reextracao das117Obras. Resultado ainda a conferir.
+
+## Historico imediato - codigo verde, parada HML requer inspecao (2026-11-11)
 
 Codigo0ea74eafc6ccd894342b83b2464a6b5994e90068 publicado na mesma342:
 CI6813/6814SUCCESS. Controller22ccb/CI6807/6808 tambem preservado. Nao repetir

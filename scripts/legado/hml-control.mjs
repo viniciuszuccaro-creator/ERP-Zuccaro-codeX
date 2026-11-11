@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import net from 'node:net';
 
 // Coordinates the existing private bootstrap; never provisions or imports data.
 export const codespace = 'potential-xylophone-5gj7r9v9qqg637vxp';
@@ -122,7 +123,7 @@ async function registerMissingPort(run) {
 }
 
 export async function viaGh(mode, run = command, register = registerMissingPort) {
-  assert.ok(['diagnose', 'status', 'start'].includes(mode), 'MODE_REQUIRED');
+  assert.ok(['diagnose', 'status', 'start', 'recover'].includes(mode), 'MODE_REQUIRED');
   const target = JSON.parse(run('gh', ['api', `/user/codespaces/${codespace}`, '--jq',
     '{name,state,owner:.owner.login,repository:.repository.full_name,machine:.machine.name}']));
   assert.equal(target.name, codespace);
@@ -172,10 +173,152 @@ export async function withStartLease(directory, action) {
   finally { fs.rmdirSync(directory); }
 }
 
+/** Tracks only sockets accepted by the explicitly supplied HML servers. */
+export function createOwnedShutdown({ graceMs = 1000, timeoutMs = 15000, onStage = () => {} } = {}) {
+  assert.ok(Number.isSafeInteger(graceMs) && graceMs >= 0);
+  assert.ok(Number.isSafeInteger(timeoutMs) && timeoutMs > graceMs);
+  const servers = new Map(), errors = [];
+  let closing;
+  const emit = (stage, phase) => {
+    try { onStage({ event: 'HML_CLOSE_STAGE', stage, phase }); }
+    catch (error) { errors.push(error); }
+  };
+  return {
+    track(label, server) {
+      assert.ok(['api', 'web'].includes(label) && !servers.has(label) && !closing);
+      assert.ok([...servers.values()].every(entry => entry.server !== server));
+      const sockets = new Set();
+      const connection = socket => { sockets.add(socket); socket.once('close', () => sockets.delete(socket)); };
+      server.on('connection', connection);
+      servers.set(label, { server, sockets, connection });
+      return server;
+    },
+    close(vite) {
+      if (closing) return closing;
+      closing = (async () => {
+        let drain, deadline, forcedConnections = 0;
+        try {
+          const jobs = [...servers].map(([label, { server }]) => {
+            emit(label, 'BEGIN');
+            return new Promise((resolve, reject) => server.close(error => {
+              if (error && error.code !== 'ERR_SERVER_NOT_RUNNING') { emit(label, 'FAILED'); reject(error); }
+              else { emit(label, 'DONE'); resolve(); }
+            }));
+          });
+          jobs.push(Promise.resolve().then(async () => {
+            emit('vite', 'BEGIN'); await vite?.close(); emit('vite', 'DONE');
+          }));
+          drain = setTimeout(() => {
+            for (const { sockets } of servers.values()) for (const socket of sockets) {
+              forcedConnections++; socket.destroy();
+            }
+            emit('owned-connections', 'DRAINED');
+          }, graceMs);
+          const settled = Promise.allSettled(jobs).then(results => {
+            errors.push(...results.filter(result => result.status === 'rejected').map(result => result.reason));
+            if (errors.length) throw new AggregateError(errors, 'HML_CLOSE_FAILED');
+          });
+          await Promise.race([settled, new Promise((_, reject) => {
+            deadline = setTimeout(() => { emit('lifecycle', 'TIMEOUT'); reject(new Error('HML_CLOSE_TIMEOUT')); }, timeoutMs);
+          })]);
+          return { forcedConnections, servers: servers.size };
+        } finally {
+          clearTimeout(drain); clearTimeout(deadline);
+          for (const { server, connection } of servers.values()) server.off('connection', connection);
+        }
+      })();
+      return closing;
+    },
+  };
+}
+
+export function validateRecoveryEvidence(plan, state, lock, conservation, baseline, now = Date.now()) {
+  assert.equal(state.state, 'STOPPED_EMERGENCY_REQUIRES_INSPECTION');
+  assert.ok(Number.isSafeInteger(plan.pid) && plan.pid > 1);
+  assert.equal(plan.pid, state.pid); assert.equal(lock.pid, state.pid);
+  assert.equal(conservation.rows, 100); assert.equal(conservation.fullRowsMatch, true);
+  assert.equal(conservation.readOnly, true); assert.equal(conservation.rolledBack, true);
+  assert.equal(conservation.businessWrites, 0);
+  assert.ok(Number.isSafeInteger(plan.observedAt) && now >= plan.observedAt && now - plan.observedAt <= 300000);
+  assert.ok(Number.isSafeInteger(plan.stoppedAt) && plan.stoppedAt <= plan.observedAt);
+  assert.ok(now >= Date.parse(conservation.observedAt) && now - Date.parse(conservation.observedAt) <= 300000);
+  assert.ok(Date.parse(conservation.observedAt) >= plan.stoppedAt
+    && Date.parse(conservation.observedAt) <= plan.observedAt, 'RECOVERY_PROOF_MUST_FOLLOW_STOP');
+  assert.equal(baseline.state.rows.length, 100);
+  const stable = value => Array.isArray(value) ? value.map(stable) : value && typeof value === 'object'
+    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+  const rows = [...baseline.state.rows].sort((a, b) => a.id.localeCompare(b.id));
+  assert.equal(new Set(rows.map(row => row.id)).size, 100);
+  assert.equal(hash(JSON.stringify(stable(rows))), conservation.sha256, 'RECOVERY_ROWS_NOT_CONSERVED');
+  for (const key of ['stateSha256', 'lockSha256', 'conservationSha256', 'baselineSha256']) assert.match(plan[key], /^[a-f0-9]{64}$/);
+  return true;
+}
+
+export async function recoverStoppedResources(root, { checkProcess, checkSocket, baselineSha256, now = Date.now() } = {}) {
+  assert.equal(typeof checkProcess, 'function'); assert.equal(typeof checkSocket, 'function');
+  const read = name => privateFile(path.join(root, name));
+  const planBytes = read('hml-recovery.private.json'), plan = JSON.parse(planBytes);
+  const stateBytes = read('api-bootstrap.private.json'), lockBytes = read('writer.lock');
+  assert.equal(Math.trunc(fs.lstatSync(path.join(root, 'api-bootstrap.private.json')).mtimeMs), plan.stoppedAt);
+  const conservationBytes = read('recovery-conservation.private.json');
+  const baselineBytes = privateFile('/workspaces/.erp-private-344/ie20-address-20261110/conservation-baseline-after-ie20.private.json');
+  assert.match(baselineSha256 || '', /^[a-f0-9]{64}$/);
+  assert.equal(hash(baselineBytes), baselineSha256, 'REVIEWED_BASELINE_PIN_CHANGED');
+  for (const [key, bytes] of [['state', stateBytes], ['lock', lockBytes], ['conservation', conservationBytes], ['baseline', baselineBytes]]) {
+    assert.equal(hash(bytes), plan[`${key}Sha256`]);
+  }
+  validateRecoveryEvidence(plan, JSON.parse(stateBytes), JSON.parse(lockBytes), JSON.parse(conservationBytes), JSON.parse(baselineBytes), now);
+  await checkProcess(plan.pid);
+  const socket = path.join(root, 'api.sock');
+  if (fs.existsSync(socket)) {
+    const stat = fs.lstatSync(socket);
+    assert.ok(stat.isSocket() && stat.uid === process.getuid());
+    assert.equal(stat.ino, plan.socket?.ino); assert.equal(stat.dev, plan.socket?.dev);
+    await checkSocket(socket);
+  } else assert.equal(plan.socket, null);
+  await checkProcess(plan.pid);
+  assert.equal(hash(read('api-bootstrap.private.json')), plan.stateSha256);
+  assert.equal(hash(read('writer.lock')), plan.lockSha256);
+  assert.equal(hash(read('hml-recovery.private.json')), hash(planBytes));
+  assert.equal(hash(read('recovery-conservation.private.json')), plan.conservationSha256);
+  return archiveInspectedResources(root, plan, { now, planSha256: hash(planBytes) });
+}
+
+// Archival is deliberately separate from authorization: main/recover performs all probes first.
+export function archiveInspectedResources(root, plan, { now = Date.now(), move = fs.renameSync, planSha256 } = {}) {
+  assert.match(planSha256 || '', /^[a-f0-9]{64}$/);
+  assert.equal(hash(fs.readFileSync(path.join(root, 'api-bootstrap.private.json'))), plan.stateSha256);
+  assert.equal(hash(fs.readFileSync(path.join(root, 'writer.lock'))), plan.lockSha256);
+  assert.equal(hash(fs.readFileSync(path.join(root, 'hml-recovery.private.json'))), planSha256);
+  assert.equal(hash(fs.readFileSync(path.join(root, 'recovery-conservation.private.json'))), plan.conservationSha256);
+  const archive = path.join(root, `recovery-${now}-${process.pid}`);
+  fs.mkdirSync(archive, { mode: 0o700 });
+  // An interrupted archival never makes the ordinary start path eligible.
+  const inProgress = path.join(root, 'hml-recovery.in-progress');
+  fs.writeFileSync(inProgress, JSON.stringify({ archive, planSha256 }), { flag: 'wx', mode: 0o600 });
+  for (const [name, expected] of [['api-bootstrap.private.json', plan.stateSha256], ['writer.lock', plan.lockSha256],
+    ['hml-recovery.private.json', planSha256], ['recovery-conservation.private.json', plan.conservationSha256]]) {
+    assert.equal(hash(fs.readFileSync(path.join(root, name))), expected);
+    move(path.join(root, name), path.join(archive, name));
+    assert.equal(hash(fs.readFileSync(path.join(archive, name))), expected);
+  }
+  const socket = path.join(root, 'api.sock');
+  if (fs.existsSync(socket)) {
+    const stat = fs.lstatSync(socket);
+    assert.ok(stat.isSocket() && stat.uid === process.getuid());
+    assert.equal(stat.ino, plan.socket.ino); assert.equal(stat.dev, plan.socket.dev);
+    move(socket, path.join(archive, 'api.sock'));
+  }
+  fs.writeFileSync(path.join(root, 'api-bootstrap.private.json'), JSON.stringify({ pid: plan.pid, state: 'STOPPED',
+    recoveredFrom: plan.stateSha256, recoveryArchive: archive, authSessionVerified: false }), { flag: 'wx', mode: 0o600 });
+  move(inProgress, path.join(archive, 'recovery-completed.private.json'));
+  return { event: 'HML_RECOVERED_AFTER_INSPECTION', businessWrites: 0, restartPerformed: false };
+}
+
 export async function main(mode, tunnelProof = null) {
   assert.equal(process.platform, 'linux', 'LINUX_CODESPACE_REQUIRED');
   assert.equal(process.env.CODESPACE_NAME, codespace, 'EXISTING_CODESPACE_REQUIRED');
-  assert.ok(['diagnose', 'status', 'start'].includes(mode), 'MODE_REQUIRED');
+  assert.ok(['diagnose', 'status', 'start', 'recover'].includes(mode), 'MODE_REQUIRED');
   if (mode === 'diagnose') {
     console.log(JSON.stringify(capacityReport()));
     return;
@@ -194,17 +337,36 @@ export async function main(mode, tunnelProof = null) {
   const lease = `${privateRoot}/hml-start.lock`;
   // Never recover a stale lease automatically: another executor may still own it.
   return withStartLease(lease, async () => {
+    assert.equal(fs.existsSync(`${privateRoot}/hml-recovery.in-progress`), false, 'INCOMPLETE_RECOVERY_REQUIRES_INSPECTION');
     let response;
     try { response = await fetch('http://127.0.0.1:15173/__erp_hml', { signal: AbortSignal.timeout(2000) }); }
     catch (error) {
       if (error.cause?.code !== 'ECONNREFUSED') throw error;
     }
     if (response) {
+      assert.notEqual(mode, 'recover', 'LIVE_HML_RECOVERY_DENIED');
       ownsBootstrap(JSON.parse(privateFile(statePath)));
       const checked = await health(config.reviewedSha);
       await forward();
       console.log(JSON.stringify({ event: 'HML_ALREADY_RUNNING', ...checked, session: 'OWNER_VERIFICATION_REQUIRED' }));
       return;
+    }
+    if (mode === 'recover') {
+      const result = await recoverStoppedResources(privateRoot, {
+        baselineSha256: config.pins.ERP344_POST_IE_BASELINE_SHA256,
+        checkProcess: async pid => {
+          assert.equal(fs.existsSync(`/proc/${pid}`), false, 'RECOVERY_PROCESS_STILL_PRESENT');
+          try { process.kill(pid, 0); assert.fail('RECOVERY_PROCESS_ALIVE'); }
+          catch (error) { assert.equal(error.code, 'ESRCH', 'RECOVERY_PROCESS_UNPROVEN'); }
+        },
+        checkSocket: socket => new Promise((resolve, reject) => {
+          const connection = net.createConnection(socket);
+          connection.setTimeout(1500, () => { connection.destroy(); reject(new Error('RECOVERY_SOCKET_UNPROVEN')); });
+          connection.once('connect', () => { connection.destroy(); reject(new Error('RECOVERY_SOCKET_ALIVE')); });
+          connection.once('error', error => { connection.destroy(); error.code === 'ECONNREFUSED' ? resolve() : reject(error); });
+        }),
+      });
+      console.log(JSON.stringify(result)); return;
     }
     assert.equal(mode, 'start', 'HML_NOT_RUNNING');
     assert.equal(fs.existsSync(`${privateRoot}/writer.lock`), false, 'HML_WRITER_BUSY');

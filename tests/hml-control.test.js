@@ -4,7 +4,12 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { capacityReport, forwardPrivate, validateConfig, validateMarker, validateTunnelProof, viaGh, withStartLease, codespace } from '../scripts/legado/hml-control.mjs';
+import http from 'node:http';
+import net from 'node:net';
+import { once } from 'node:events';
+import { createHash } from 'node:crypto';
+import { capacityReport, forwardPrivate, validateConfig, validateMarker, validateTunnelProof, viaGh, withStartLease, codespace,
+  createOwnedShutdown, validateRecoveryEvidence, archiveInspectedResources } from '../scripts/legado/hml-control.mjs';
 
 const sha = 'a'.repeat(40);
 const digest = 'b'.repeat(64);
@@ -169,4 +174,102 @@ test('HML controller refuses another executor before filesystem, Docker or start
   assert.equal(run.status, 1);
   assert.match(run.stderr, /HML_CONTROL_BLOCKED/);
   assert.doesNotMatch(run.stderr, /secret|password|token/i);
+});
+
+test('active HTTP and upgraded connections reproduce blocked close; owned draining leaves foreign server intact', async () => {
+  const stages = [], shutdown = createOwnedShutdown({ graceMs: 30, timeoutMs: 2000, onStage: stage => stages.push(stage) });
+  const api = shutdown.track('api', http.createServer((_, res) => { res.writeHead(200); res.write('synthetic pending'); }));
+  const web = shutdown.track('web', http.createServer());
+  web.on('upgrade', (_, socket) => socket.write('HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n'));
+  const foreign = http.createServer((_, res) => { res.writeHead(200); res.write('synthetic foreign'); });
+  const sockets = [];
+  const stream = async server => {
+    const request = http.get(`http://127.0.0.1:${server.address().port}`);
+    request.on('error', () => {});
+    const [response] = await once(request, 'response'); response.on('error', () => {});
+    sockets.push(response); return response;
+  };
+  try {
+    for (const server of [api, web, foreign]) { server.listen(0, '127.0.0.1'); await once(server, 'listening'); }
+    await stream(api);
+    const untouched = await stream(foreign);
+    const upgrade = net.createConnection(web.address().port, '127.0.0.1'); sockets.push(upgrade);
+    await once(upgrade, 'connect');
+    upgrade.write('GET / HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n');
+    await once(upgrade, 'data');
+    let oldCloseDone = false;
+    // The previous lifecycle waited indefinitely for this close before inspecting persistence.
+    api.close(() => { oldCloseDone = true; });
+    await new Promise(resolve => setTimeout(resolve, 15)); assert.equal(oldCloseDone, false);
+    const first = shutdown.close({ close: async () => {} });
+    assert.equal(shutdown.close(), first);
+    const result = await first;
+    assert.ok(result.forcedConnections >= 2);
+    assert.equal(untouched.destroyed, false); assert.equal(foreign.listening, true);
+    assert.ok(stages.some(stage => stage.stage === 'owned-connections' && stage.phase === 'DRAINED'));
+    assert.equal(api.listening, false); assert.equal(web.listening, false);
+    assert.throws(() => shutdown.track('api', foreign));
+  } finally {
+    for (const socket of sockets) socket.destroy();
+    for (const server of [api, web, foreign]) { server.closeAllConnections(); server.close(); }
+  }
+});
+
+test('failed Vite, trace or deadline never reports clean shutdown and still closes owned HTTP', async () => {
+  for (const kind of ['vite', 'trace', 'timeout']) {
+    const server = http.createServer();
+    const shutdown = createOwnedShutdown({ graceMs: 5, timeoutMs: 30,
+      onStage: () => { if (kind === 'trace') throw new Error('synthetic trace failure'); } });
+    shutdown.track('web', server); server.listen(0, '127.0.0.1'); await once(server, 'listening');
+    await assert.rejects(shutdown.close({ close: () => kind === 'timeout' ? new Promise(() => {})
+      : kind === 'vite' ? Promise.reject(new Error('synthetic vite failure')) : Promise.resolve() }), /HML_CLOSE/);
+    assert.equal(server.listening, false);
+  }
+});
+
+test('recovery requires fresh pinned full rows and rejects changed identity, writes, partial and stale evidence', () => {
+  const now = Date.now(), baseline = { state: { rows: Array.from({ length: 100 }, (_, id) => ({ id: String(id).padStart(3, '0') })) } };
+  const conservation = { observedAt: new Date(now).toISOString(), rows: 100, fullRowsMatch: true,
+    readOnly: true, rolledBack: true, businessWrites: 0,
+    sha256: createHash('sha256').update(JSON.stringify(baseline.state.rows)).digest('hex') };
+  const plan = { pid: 12345, observedAt: now, stoppedAt: now - 1000, stateSha256: digest, lockSha256: digest,
+    conservationSha256: digest, baselineSha256: digest };
+  const state = { pid: plan.pid, state: 'STOPPED_EMERGENCY_REQUIRES_INSPECTION' }, lock = { pid: plan.pid };
+  assert.equal(validateRecoveryEvidence(plan, state, lock, conservation, baseline, now), true);
+  for (const patch of [{ rows: 99 }, { fullRowsMatch: false }, { rolledBack: false }, { readOnly: false },
+    { businessWrites: 1 }, { sha256: digest }, { observedAt: new Date(now - 300001).toISOString() }]) {
+    assert.throws(() => validateRecoveryEvidence(plan, state, lock, { ...conservation, ...patch }, baseline, now));
+  }
+  assert.throws(() => validateRecoveryEvidence(plan, { ...state, state: 'RUNNING' }, lock, conservation, baseline, now));
+  assert.throws(() => validateRecoveryEvidence(plan, state, { pid: 12346 }, conservation, baseline, now));
+  assert.throws(() => validateRecoveryEvidence({ ...plan, observedAt: now - 300001 }, state, lock, conservation, baseline, now));
+  assert.throws(() => validateRecoveryEvidence(plan, state, lock, { ...conservation, observedAt: new Date(now - 1001).toISOString() }, baseline, now));
+});
+
+test('inspected resource archival preserves old bytes; interrupted archival blocks start rather than deleting evidence', () => {
+  for (const interrupt of [false, true]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hml-recovery-synthetic-'));
+    const state = JSON.stringify({ pid: 12345, state: 'STOPPED_EMERGENCY_REQUIRES_INSPECTION' });
+    const lock = JSON.stringify({ pid: 12345 });
+    const plan = { pid: 12345, socket: null, stateSha256: createHash('sha256').update(state).digest('hex'),
+      lockSha256: createHash('sha256').update(lock).digest('hex'), conservationSha256: createHash('sha256').update('{}').digest('hex') };
+    const originals = { 'api-bootstrap.private.json': state, 'writer.lock': lock,
+      'hml-recovery.private.json': JSON.stringify(plan), 'recovery-conservation.private.json': '{}' };
+    for (const [name, value] of Object.entries(originals)) fs.writeFileSync(path.join(root, name), value);
+    try {
+      let moved = 0;
+      const run = () => archiveInspectedResources(root, plan, { now: 1,
+        planSha256: createHash('sha256').update(originals['hml-recovery.private.json']).digest('hex'), move: (from, to) => {
+        if (interrupt && ++moved === 2) throw new Error('synthetic disk failure');
+        fs.renameSync(from, to);
+      } });
+      if (interrupt) { assert.throws(run, /synthetic disk failure/); assert.ok(fs.existsSync(path.join(root, 'hml-recovery.in-progress'))); }
+      else { assert.equal(run().restartPerformed, false); assert.equal(JSON.parse(fs.readFileSync(path.join(root, 'api-bootstrap.private.json'))).state, 'STOPPED'); }
+      const archive = path.join(root, `recovery-1-${process.pid}`);
+      for (const [name, value] of Object.entries(originals)) {
+        const preserved = fs.existsSync(path.join(archive, name)) ? path.join(archive, name) : path.join(root, name);
+        assert.equal(fs.readFileSync(preserved, 'utf8'), value);
+      }
+    } finally { fs.rmSync(root, { recursive: true, force: true }); }
+  }
 });

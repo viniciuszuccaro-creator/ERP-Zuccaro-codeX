@@ -1,4 +1,21 @@
-## Estado vigente - publicacao verde e protecao de parada HML (2026-11-11)
+## Em validacao - encerramento e recuperacao inspecionada HML (2026-11-11)
+
+Mesmo controlador: close HTTP/Vite concorrente, sockets proprios rastreados,
+drain limitado e traces sanitizados.14testesPASS, incluindo HTTP/upgrade reais,
+servidor alheio conservado e falha/timeout sem falso clean. Recovery explicito
+exige conservacao100 fresca apos parada, baseline aprovada, hashes, PID morto,
+porta/socket inativos; arquiva recursos antigos com barreira contra interrupcao.
+Revisao independente do controlador favoravel; CI/ensaio Linux ainda pendentes.
+Bootstrapprivado candidato/freeze8650 permanece sem aplicacao ate revisao e CI.
+Nao reiniciar por forca, apagar lock, importar100 ou restaurar backup.
+
+Coletor privado existente ampliado para leitura dirigida dos156campos Clientes
+na MESMA100 nativa; fonte READONLY, containerisolado anterior semoriginais.
+Resultado em andamento. Matriz nao pode chamar coluna nao lida de ausente.
+Documento: helper/HTTP sinteticospassam; montagem com props nao normalizadas
+pode ficar vazia, mas consumidor real da amostra ainda exige rastreio browser.
+
+## Historico imediato - publicacao verde e protecao de parada HML (2026-11-11)
 
 0ea74eaf publicado342,CI6813/6814SUCCESS. Classificador existente preserva
 117referencias Obras sem inferir endereco;2grupos pendentes,0writes. Matriz
