@@ -23,6 +23,7 @@ import usePermissions from '@/components/lib/usePermissions';
  * Painel de Governança Corporativa
  * Compliance, Auditoria e Segurança
  */
+/** @param {{empresaId?: string, grupoId?: string}} props */
 export default function PainelGovernanca({ empresaId, grupoId }) {
   const [periodo, setPeriodo] = useState('hoje');
   const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();

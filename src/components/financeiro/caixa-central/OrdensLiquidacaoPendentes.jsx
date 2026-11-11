@@ -39,6 +39,8 @@ export default function OrdensLiquidacaoPendentes() {
   const podeLiquidarOrdem = (ordem) => (
     ordem?.tipo_operacao === 'Pagamento' ? podePagar : podeReceber
   );
+  /** @param {{acao: string, ordem: Record<string, unknown> | null, descricao: string,
+   * dadosAnteriores?: unknown, dadosNovos?: unknown, sucesso?: boolean}} options */
   const auditarOrdem = async ({ acao, ordem, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -70,6 +72,7 @@ export default function OrdensLiquidacaoPendentes() {
   });
 
   const liquidarOrdemMutation = useMutation({
+    /** @param {{ordemId: string | number, dados: {forma_pagamento: string, observacoes: string, usuario_id?: string | number}}} command */
     mutationFn: async ({ ordemId, dados }) => {
       const ordem = ordensLiquidacao.find(o => o.id === ordemId);
       if (!contextoValido || !podeLiquidarOrdem(ordem)) throw new Error("Sem contexto ou permissao para liquidar.");

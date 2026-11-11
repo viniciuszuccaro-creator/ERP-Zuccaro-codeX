@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { validarSugestoesCompraIA } from '@/components/lib/iaResponsePolicy';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   const canRejectSolicitacao = hasPermission('Compras','SolicitacaoCompra','rejeitar') || hasPermission('Compras', null, 'rejeitar');
   const canGerarOC = hasPermission('Compras','SolicitacaoCompra','gerar_oc') || hasPermission('Compras','OrdemCompra','criar');
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string | null, dados?: Record<string, unknown>}} options */
   const auditSolicitacaoCompra = async ({ acao, sucesso = true, motivo = null, dados = {} }) => {
     try {
       await createInContext('AuditLog', {
@@ -118,7 +120,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async (/** @type {typeof formData} */ data) => {
       if (!contextoValido || !canCreateSolicitacao) {
         await auditSolicitacaoCompra({
           acao: 'SolicitacaoCompra.criacao_bloqueada',
@@ -152,7 +154,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   });
 
   const aprovarMutation = useMutation({
-    mutationFn: ({ id }) => updateInContext('SolicitacaoCompra', id, {
+    mutationFn: (/** @type {{id: string}} */ { id }) => updateInContext('SolicitacaoCompra', id, {
       status: "Aprovada",
       aprovador: user?.full_name,
       data_aprovacao: new Date().toISOString().split('T')[0]
@@ -168,7 +170,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   });
 
   const rejeitarMutation = useMutation({
-    mutationFn: ({ id, motivo }) => updateInContext('SolicitacaoCompra', id, {
+    mutationFn: (/** @type {{id: string, motivo: string}} */ { id, motivo }) => updateInContext('SolicitacaoCompra', id, {
       status: "Rejeitada",
       aprovador: user?.full_name,
       data_aprovacao: new Date().toISOString().split('T')[0],
@@ -185,7 +187,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   });
 
   const gerarOCMutation = useMutation({
-    mutationFn: async (solicitacao) => {
+    mutationFn: async (/** @type {{id: string} & Pick<typeof formData, 'produto_id' | 'produto_descricao' | 'quantidade_solicitada' | 'unidade_medida'>} */ solicitacao) => {
       // Criar Ordem de Compra
       const oc = await createInContext('OrdemCompra', {
         fornecedor_nome: "A definir",
@@ -268,7 +270,7 @@ Retorne JSON com:
 - prioridade (Baixa/Média/Alta/Urgente)
       `.trim();
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = validarSugestoesCompraIA(await base44.integrations.Core.InvokeLLM({
         prompt: prompt,
         response_json_schema: {
           type: "object",
@@ -287,7 +289,7 @@ Retorne JSON com:
             }
           }
         }
-      });
+      }), produtosBaixos);
 
       // Criar solicitações automaticamente
       const solicitacoesCriadas = [];

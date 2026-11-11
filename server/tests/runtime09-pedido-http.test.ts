@@ -121,3 +121,23 @@ test('HTTP Pedido aplica RBAC fail-closed e isolamento entre empresas', async ()
   assert.equal(cross.status, 404); assert.equal(cross.body.error.code, 'PEDIDO_NOT_FOUND');
   const meta = await request(runtime.app, '/api/v1/meta'); assert.equal(meta.body.pedido.backendHttp, true); assert.equal(meta.body.pedido.frontendHttp, true);
 });
+
+test('HTTP Pedido exige motivo e preserva pedido historico e isolamento quando invalido', async()=>{
+ const runtime=fixture();
+ const created=await request(runtime.app,'/api/v1/pedidos',{method:'POST',headers:headers(),body:JSON.stringify(pedidoPayload)});
+ assert.equal(created.status,201);const id=created.body.data.id,path=`/api/v1/pedidos/${id}/cancelar`;
+ const read=async()=>({row:(await request(runtime.app,`/api/v1/pedidos/${id}`,{headers:headers()})).body.data,history:(await request(runtime.app,`/api/v1/pedidos/${id}/historico`,{headers:headers()})).body.data});
+ const before=await read();
+ for(const body of [{},{motivo:null},{motivo:''},{motivo:'  '},{motivo:'ab'},{motivo:9},{motivo:'a'.repeat(501)}]){
+  const result=await request(runtime.app,path,{method:'POST',headers:headers(),body:JSON.stringify(body)});
+  assert.equal(result.status,422);assert.deepEqual(await read(),before);
+ }
+ assert.equal((await request(runtime.app,path,{method:'POST',headers:headers({'x-actor-id':deniedActorId}),body:JSON.stringify({motivo:'Motivo sintetico'})})).status,403);
+ assert.equal((await request(runtime.app,path,{method:'POST',headers:headers({'x-empresa-id':otherEmpresaId}),body:JSON.stringify({motivo:'Motivo sintetico'})})).status,404);
+ assert.deepEqual(await read(),before);
+ const cancelled=await request(runtime.app,path,{method:'POST',headers:headers(),body:JSON.stringify({motivo:'Motivo sintetico autorizado'})});
+ assert.equal(cancelled.status,200);assert.equal(cancelled.body.data.status,'CANCELADO');
+ assert.equal(cancelled.body.data.numero,before.row.numero);assert.deepEqual(cancelled.body.data.itens,before.row.itens);
+ const after=await read();assert.deepEqual(after.history.map((row:any)=>row.status_novo),['EM_ABERTO','CANCELADO']);
+ assert.equal(after.history[1].motivo,'Motivo sintetico autorizado');
+});

@@ -25,8 +25,11 @@ const readStorage = (storage, key) => {
  *   permission?: string,
  *   actionName?: string,
  *   path?: string,
- *   storage?: Pick<Storage, 'getItem'>|null
- * }} options
+ *   storage?: Pick<Storage, 'getItem'>|null,
+ *   groupId?: string|null,
+ *   empresaId?: string|null,
+ *   scopeType?: string|null
+ * }} [options]
  */
 export function buildSensitiveGuardRequest({
   permission,

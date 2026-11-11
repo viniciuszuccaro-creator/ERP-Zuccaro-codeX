@@ -18,6 +18,7 @@ export default function WindowModal({ window, children }) {
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
   // Estilo da janela - V21.6.4: z-index GARANTIDO sempre aplicado
+  /** @type {import('framer-motion').MotionStyle} */
   const windowStyle = window.isMaximized
     ? {
         position: 'fixed',
@@ -125,7 +126,7 @@ export default function WindowModal({ window, children }) {
       }`}
       onMouseDown={(e) => {
         // Só ativar janela se não clicar em input/textarea/select/button
-        const isInteractiveElement = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName);
+        const isInteractiveElement = e.target instanceof Element && ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName);
         if (!isInteractiveElement) {
           e.stopPropagation();
           bringToFront(window.id);

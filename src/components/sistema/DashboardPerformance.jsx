@@ -22,6 +22,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Dashboard de Performance e APM
+ * @param {{empresaId?: string, grupoId?: string}} props
  */
 export default function DashboardPerformance({ empresaId, grupoId }) {
   const [periodo, setPeriodo] = useState('24h');

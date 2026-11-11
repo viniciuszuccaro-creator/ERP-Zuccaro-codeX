@@ -42,7 +42,7 @@ export default function ChatCliente({ clienteId, clienteNome }) {
   }, [conversaAtiva?.mensagens]);
 
   const enviarMensagemMutation = useMutation({
-    mutationFn: async (novaMensagem) => {
+    mutationFn: async (/** @type {string} */ novaMensagem) => {
       const mensagens = conversaAtiva?.mensagens || [];
       const novaMsg = {
         autor: clienteNome,

@@ -10,7 +10,7 @@ const ALL_STATUSES = [
 ];
 
 export default function ControlsBar({ filters, setFilters, rules, onSaveRules, loadingRules, contextoValido = true, canEditRules = true, canSimulate = true, onAudit }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(/** @returns {boolean|'sim'} */ () => false);
   const [local, setLocal] = React.useState(rules || {});
 
   React.useEffect(() => setLocal(rules || {}), [rules]);

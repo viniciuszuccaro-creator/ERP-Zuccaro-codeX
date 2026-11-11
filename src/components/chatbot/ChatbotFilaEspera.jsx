@@ -7,6 +7,7 @@ import { Clock, Users, AlertCircle, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { displayScalar } from '@/lib/utils';
 import {
   buildAssumirConversa,
   ordenarFilaAtendimento,
@@ -54,7 +55,7 @@ export default function ChatbotFilaEspera() {
   });
 
   const assumirMutation = useMutation({
-    mutationFn: async (conversa) => {
+    mutationFn: async (/** @type {import('../lib/atendimentoConversaPolicy').AtendimentoRecord} */ conversa) => {
       if (!canAssume) throw new Error('Sem permissao para assumir conversa.');
       const decision = buildAssumirConversa({ conversa, user, empresaId });
       if (decision.reuse) return decision.patch;
@@ -87,7 +88,7 @@ export default function ChatbotFilaEspera() {
     if (!dataTransferencia) return '0min';
     const agora = new Date();
     const transferido = new Date(dataTransferencia);
-    const diffMinutos = Math.floor((agora - transferido) / 1000 / 60);
+    const diffMinutos = Math.floor((agora.getTime() - transferido.getTime()) / 1000 / 60);
     if (diffMinutos < 60) return `${diffMinutos}min`;
     const horas = Math.floor(diffMinutos / 60);
     const minutos = diffMinutos % 60;
@@ -99,7 +100,7 @@ export default function ChatbotFilaEspera() {
     ? conversasOrdenadas.reduce((sum, c) => {
         const base = c.transferido_em || c.data_inicio || c.created_date;
         if (!base) return sum;
-        const diffMinutos = Math.floor((new Date() - new Date(base)) / 1000 / 60);
+        const diffMinutos = Math.floor((new Date().getTime() - new Date(base).getTime()) / 1000 / 60);
         return sum + Math.max(0, diffMinutos);
       }, 0) / conversasOrdenadas.length
     : 0;
@@ -159,7 +160,7 @@ export default function ChatbotFilaEspera() {
               {conversasOrdenadas.map((conversa, idx) => {
                 const baseTempo = conversa.transferido_em || conversa.data_inicio || conversa.created_date;
                 const tempoEspera = calcularTempoEspera(baseTempo);
-                const esperaMuito = baseTempo && (new Date() - new Date(baseTempo) > 10 * 60 * 1000);
+                const esperaMuito = baseTempo && (new Date().getTime() - new Date(baseTempo).getTime() > 10 * 60 * 1000);
 
                 return (
                   <div
@@ -173,20 +174,20 @@ export default function ChatbotFilaEspera() {
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="font-semibold text-slate-900">#{idx + 1}</span>
                           <span className="text-sm font-medium">
-                            {conversa.cliente_nome || 'Cliente Anônimo'}
+                            {displayScalar(conversa.cliente_nome) || 'Cliente Anônimo'}
                           </span>
                           <Badge className={`text-xs ${
                             conversa.prioridade === 'Urgente' ? 'bg-red-600' :
                             conversa.prioridade === 'Alta' ? 'bg-orange-600' :
                             'bg-slate-600'
                           }`}>
-                            {conversa.prioridade || 'Normal'}
+                            {displayScalar(conversa.prioridade) || 'Normal'}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            {conversa.canal}
+                            {displayScalar(conversa.canal)}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            {conversa.status}
+                            {displayScalar(conversa.status)}
                           </Badge>
                         </div>
 
@@ -201,7 +202,7 @@ export default function ChatbotFilaEspera() {
                               conversa.sentimento_geral === 'Urgente' ? 'bg-orange-600' :
                               'bg-slate-600'
                             }`}>
-                              {conversa.sentimento_geral}
+                              {displayScalar(conversa.sentimento_geral)}
                             </Badge>
                           )}
                         </div>

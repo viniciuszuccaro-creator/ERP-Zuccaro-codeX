@@ -1,0 +1,63 @@
+{
+  "task": 347,
+  "codespace": "potential-xylophone-5gj7r9v9qqg637vxp",
+  "baseSha": "0409d3f721634218950876cf7389c79be0478647",
+  "source": "commit containing this evidence; served SHA available at /__erp_preview",
+  "synthetic": true,
+  "recordsRecovered": 0,
+  "operationalImport": false,
+  "visualApproval": "PENDING",
+  "browser": {
+    "retained": true,
+    "quantity": true,
+    "saveDisabled": true,
+    "horizontalOverflow": false,
+    "geometry": {
+      "left": 20.484375,
+      "right": 1003.515625,
+      "width": 983.03125,
+      "viewport": 1024,
+      "cssWidth": "983.031px",
+      "minWidth": "0px",
+      "maxWidth": "1280px"
+    },
+    "writes": 0,
+    "blockedRequests": 0,
+    "errors": []
+  },
+  "viewports": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "tablet": [
+      1024,
+      900
+    ]
+  },
+  "privateUrl": "https://potential-xylophone-5gj7r9v9qqg637vxp-5173.app.github.dev/Comercial?proposta=comercial360",
+  "scope": "existing quotation editor; proposal in memory; no operational actions",
+  "tests": {
+    "root": {
+      "pass": 2232,
+      "fail": 0,
+      "skip": 0,
+      "exitCode": 0
+    },
+    "focused": {
+      "pass": 26,
+      "fail": 0,
+      "skip": 0,
+      "exitCode": 0
+    },
+    "auditBaseline": 0,
+    "lint": 0,
+    "typecheck": 0,
+    "build": 0,
+    "diffCheck": 0
+  },
+  "capturesSha256": {
+    "comercial360-proposta-desktop-20261023.png": "5d386eb2824f7937e2327d38b4269b3d850c6dc2fc05c809451476ce094cea31",
+    "comercial360-proposta-tablet-20261023.png": "6864e88354bc29a6681c554199793e94d792fbb7039946f64322e0548c313ebf"
+  }
+}

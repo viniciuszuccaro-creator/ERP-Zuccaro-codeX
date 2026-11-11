@@ -1,4 +1,5 @@
-﻿import React, { useState } from "react";
+import useCadastroRecordState from './useCadastroRecordState';
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 500) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeEmail = (value) => sanitizeText(value, 180).toLowerCase();
@@ -25,7 +27,7 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
   const podeCriar = canCreate("Cadastros", "ContatoB2B") || canCreate("Comercial", "ContatoB2B") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ContatoB2B") || canEdit("Comercial", "ContatoB2B") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     cliente_id: "",
     nome_contato: "",
     cargo: "",
@@ -40,7 +42,7 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
     },
     principal: false,
     ativo: true
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes-contato-b2b", empresaAtual?.id || groupId || "sem-contexto"],
@@ -94,6 +96,12 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, initia
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        idOnly
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        action="id-tecnico-contato-b2b"
+      />
       <div>
         <Label>Cliente *</Label>
         <Select value={formData.cliente_id} onValueChange={(v) => setFormData({ ...formData, cliente_id: v })} disabled={!contextoValido || !podeSalvar}>

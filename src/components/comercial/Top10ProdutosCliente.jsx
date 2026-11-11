@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { invokeErpIa } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,17 +9,30 @@ import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { assertIaUiContext } from "@/components/lib/iaTransversalPolicy";
+import { validarSugestoesProdutosIA } from "@/components/lib/iaResponsePolicy.js";
 
-export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto }) {
+export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto = undefined }) {
   const [usandoIA, setUsandoIA] = useState(false);
   const [sugestoesIA, setSugestoesIA] = useState([]);
   const { toast } = useToast();
   const { filterInContext, empresaAtual, grupoAtual, contexto, estaNoGrupo } = useContextoVisual();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, user } = usePermissions();
 
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const empresaId = empresaAtual?.id || null;
   const scopeType = estaNoGrupo || contexto === "grupo" ? "grupo" : "empresa";
+  const iaIdentityKey = JSON.stringify([user?.id, clienteId, groupId, empresaId, scopeType]);
+  const iaRequestScope = React.useRef({ key: iaIdentityKey, pending: false, active: true });
+  const iaResultScope = React.useRef(null);
+  if (iaRequestScope.current.key !== iaIdentityKey) iaRequestScope.current = { key: iaIdentityKey, pending: false, active: true };
+  const sugestoesVisiveis = iaResultScope.current === iaRequestScope.current ? sugestoesIA : [];
+  React.useEffect(() => {
+    const scope = iaRequestScope.current;
+    scope.active = true;
+    setSugestoesIA([]);
+    setUsandoIA(false);
+    return () => { scope.active = false; };
+  }, [iaIdentityKey]);
   let contextoValido = false;
   try {
     assertIaUiContext({ groupId, empresaId, scopeType });
@@ -112,6 +125,10 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
       return;
     }
 
+    const activeScope = iaRequestScope.current;
+    if (activeScope.pending || activeScope.active === false) return;
+    activeScope.pending = true;
+    const isCurrent = () => iaRequestScope.current === activeScope && activeScope.active !== false;
     setUsandoIA(true);
     setSugestoesIA([]);
 
@@ -157,7 +174,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
         "- produtos_complementares: string[] opcional"
       ].join("\n");
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = await invokeErpIa('comercial_produtos', {
         prompt,
         group_id: groupId,
         empresa_id: scopeType === "grupo" ? null : empresaId,
@@ -185,7 +202,9 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
         }
       });
 
-      const sugestoesComProdutos = (resultado.sugestoes || [])
+      if (!isCurrent()) return;
+      const resposta = validarSugestoesProdutosIA(resultado, produtos.slice(0, 50));
+      const sugestoesComProdutos = resposta.sugestoes
         .map(sug => {
           const prod = produtos.find(p => p.codigo === sug.produto_codigo);
           return prod ? { ...sug, produto: prod } : null;
@@ -193,6 +212,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
         .filter(Boolean)
         .slice(0, 10);
 
+      iaResultScope.current = activeScope;
       setSugestoesIA(sugestoesComProdutos);
 
       toast({
@@ -200,6 +220,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
         description: sugestoesComProdutos.length + " produtos sugeridos com base no comportamento do cliente"
       });
     } catch (error) {
+      if (!isCurrent()) return;
       console.error("Erro ao buscar sugestoes de IA:", error);
       toast({
         title: "Erro na IA",
@@ -207,12 +228,13 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
         variant: "destructive"
       });
     } finally {
-      setUsandoIA(false);
+      activeScope.pending = false;
+      if (isCurrent()) setUsandoIA(false);
     }
   };
 
-  const sugestoesExibir = sugestoesIA.length > 0
-    ? sugestoesIA
+  const sugestoesExibir = sugestoesVisiveis.length > 0
+    ? sugestoesVisiveis
     : top10Produtos.map(t => {
       const fullProduct = produtos.find(p => p.id === t.produto_id) || {
         id: t.produto_id,
@@ -250,7 +272,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
     );
   }
 
-  if (pedidos.length === 0 && sugestoesIA.length === 0 && top10Produtos.length === 0) {
+  if (pedidos.length === 0 && sugestoesVisiveis.length === 0 && top10Produtos.length === 0) {
     return (
       <div className="w-full h-full text-center py-8 text-slate-500 border rounded-lg bg-white p-6 shadow-sm" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
         <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
@@ -266,7 +288,7 @@ export default function Top10ProdutosCliente({ clienteId, onSelecionarProduto })
     <div className="w-full h-full space-y-4" data-context-required="true" data-permission="Comercial.Pedido.visualizar">
       <div className="flex justify-between items-center">
         <p className="text-sm text-blue-700 font-medium">
-          {sugestoesIA.length > 0 ? "Sugestoes da IA" : "Baseado em historico"}
+          {sugestoesVisiveis.length > 0 ? "Sugestoes da IA" : "Baseado em historico"}
         </p>
         <Button size="sm" variant="outline" onClick={buscarSugestoesIA} disabled={usandoIA || !podeUsarIA || isLoadingProdutos || isLoadingPedidos} className="border-purple-300 text-purple-700 hover:bg-purple-50" data-permission="Comercial.Pedido.criar" data-action="analisar-produtos-cliente-ia" data-sensitive="true">
           {usandoIA ? "Analisando..." : "Analisar com IA"}

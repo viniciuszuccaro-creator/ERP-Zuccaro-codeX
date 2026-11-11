@@ -1,0 +1,30 @@
+CICLO COMERCIAL — pacote 2 candidata #353 (coordenação Codex)
+============================================================
+Modalidade desta execução: **runner Cursor** `/workspace`
+Codespace xylophone: API 403 neste token — medição SHA = Codex/executor.
+
+Roteiro alvo
+------------
+Login → Grupo/Empresa → Cliente → Produto/preço → Orçamento → Pedido → reabrir
+
+| Etapa | Componente | HTTP/API | Serviço | PG destino | Navegador |
+|-------|------------|----------|---------|------------|-----------|
+| Login/contexto | fail-closed | N/A IdP | N/A | N/A | N/A runner |
+| Cliente abrir/salvar/reabrir | PASS_SINT reopen/boundId | mock PASS_SINT | N/A | N/A destino | N/A |
+| Contatos overflow | PASS_SINT (já parecer) | fetch=0 | — | — | N/A |
+| Produto/preço | V22 + TabelaPreco codigo | mock/CI | reserve codigo | N/A | N/A |
+| Orçamento save/reopen | PASS_SINT OrcamentosTab | mock | N/A | N/A | N/A |
+| Pedido UI | explain 044 PASS_SINT | pode chegar API | fingerprint | INSERT BLOQ 044 | N/A |
+| Pedido persistido | — | — | — | **BLOQ_SCHEMA** | — |
+
+Dependência explícita (Codex)
+-----------------------------
+Migration 044 + candidato `pedido_idempotency_pair.sql` (fora migrador).
+Cursor não aplica DDL. Mensagem explain ≠ Pedido reaberto no banco.
+
+Pedido a Codex (#353)
+---------------------
+1. Janela exclusiva Codespace `potential-xylophone-5gj7r9v9qqg637vxp`:
+   medir HEAD == tip remoto; URL privada; sem reset/force.
+2. Quando HML isolada autorizada: fixture Cliente→Orc→Pedido com 044
+   aplicada — ou registrar erro SQL exato se ausente.

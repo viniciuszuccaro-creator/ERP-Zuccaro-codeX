@@ -1,0 +1,370 @@
+[
+  {
+    "file": "src/components/cadastros/EmpresaForm.jsx",
+    "emittedBeforeSha256": "cbbf6c997fe897edfaf536cc671aa532b6733b2b90054b9787750d8842ba414f",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "      const diasRestantes = Math.floor((dataValidade - hoje) / (1000 * 60 * 60 * 24));",
+        "after": "      const diasRestantes = Math.floor((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/chatbot/ChatbotFilaEspera.jsx",
+    "emittedBeforeSha256": "1e78e762d201bd006add89fa87c7dfea223cfb7f2a4ba3e3feddb2e85636921a",
+    "operands": 6,
+    "lines": [
+      {
+        "before": "    const diffMinutos = Math.floor((agora - transferido) / 1000 / 60);",
+        "after": "    const diffMinutos = Math.floor((agora.getTime() - transferido.getTime()) / 1000 / 60);"
+      },
+      {
+        "before": "        const diffMinutos = Math.floor((new Date() - new Date(base)) / 1000 / 60);",
+        "after": "        const diffMinutos = Math.floor((new Date().getTime() - new Date(base).getTime()) / 1000 / 60);"
+      },
+      {
+        "before": "                const esperaMuito = baseTempo && (new Date() - new Date(baseTempo) > 10 * 60 * 1000);",
+        "after": "                const esperaMuito = baseTempo && (new Date().getTime() - new Date(baseTempo).getTime() > 10 * 60 * 1000);"
+      }
+    ]
+  },
+  {
+    "file": "src/components/chatbot/GerarBoletoChat.jsx",
+    "emittedBeforeSha256": "bf5566dec1d2502a6758fae69bbeb2a2379e5c963a709ac4fb35f6be86dbd9f0",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "    const diff = Math.floor((hoje - vencimento) / (1000 * 60 * 60 * 24));",
+        "after": "    const diff = Math.floor((hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/chatbot/MonitorSLA.jsx",
+    "emittedBeforeSha256": "6200a996e4105cd53f235fd691e5231990911eaede331c5cde0f8ab06f81fc29",
+    "operands": 4,
+    "lines": [
+      {
+        "before": "      const tempoDecorrido = (agora - new Date(c.data_inicio)) / 1000 / 60; // minutos",
+        "after": "      const tempoDecorrido = (agora.getTime() - new Date(c.data_inicio).getTime()) / 1000 / 60; // minutos"
+      },
+      {
+        "before": "      const tempoDecorrido = (agora - new Date(c.data_inicio)) / 1000 / 60;",
+        "after": "      const tempoDecorrido = (agora.getTime() - new Date(c.data_inicio).getTime()) / 1000 / 60;"
+      }
+    ]
+  },
+  {
+    "file": "src/components/cliente/TimelineCliente.jsx",
+    "emittedBeforeSha256": "823a29274a68333a43b9e9cbe9a98b2fa04297819e8144582e0884b5bf31b22a",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "    ? Math.floor((new Date() - new Date(ultimoEvento.data_evento)) / (1000 * 60 * 60 * 24))",
+        "after": "    ? Math.floor((new Date().getTime() - new Date(ultimoEvento.data_evento).getTime()) / (1000 * 60 * 60 * 24))"
+      }
+    ]
+  },
+  {
+    "file": "src/components/comercial/MonitoramentoCanaisRealtime.jsx",
+    "emittedBeforeSha256": "77602fdf29f178b9be6a9b0c271666c6e62149a8aa340b3afef93b56c7416b7a",
+    "operands": 3,
+    "lines": [
+      {
+        "before": "  const tempoDesdeUltimaAtualizacao = Math.floor((agora - ultimaAtualizacao) / 1000);",
+        "after": "  const tempoDesdeUltimaAtualizacao = Math.floor((agora.getTime() - ultimaAtualizacao) / 1000);"
+      },
+      {
+        "before": "            Math.floor((agora - new Date(canal.ultimoPedido)) / 60000) :",
+        "after": "            Math.floor((agora.getTime() - new Date(canal.ultimoPedido).getTime()) / 60000) :"
+      }
+    ]
+  },
+  {
+    "file": "src/components/compras/OrdensCompraTab.jsx",
+    "emittedBeforeSha256": "e7bff1402de0dfbae3c39f919f5846c268440020174dc7971f2a7643bef35061",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "      const leadTimeReal = Math.floor((dataRecebimento - dataEnvio) / (1000 * 60 * 60 * 24));",
+        "after": "      const leadTimeReal = Math.floor((dataRecebimento.getTime() - dataEnvio.getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/crm/FunilComercialInteligente.jsx",
+    "emittedBeforeSha256": "9fbb6c9e03f0f6746e6c41650e1caea3a0b1f74542a82c3a80d123b9d9ed9eb3",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "  dias_aberto: Math.floor((new Date() - new Date(o.data_abertura)) / (1000 * 60 * 60 * 24))",
+        "after": "  dias_aberto: Math.floor((new Date().getTime() - new Date(o.data_abertura).getTime()) / (1000 * 60 * 60 * 24))"
+      }
+    ]
+  },
+  {
+    "file": "src/components/crm/FunilVendasAvancado.jsx",
+    "emittedBeforeSha256": "b775cb380735166f1d40fe26cddc02b435d7e6bc5a288fab963c7f77661f7416",
+    "operands": 1,
+    "lines": [
+      {
+        "before": "Dias desde último contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now())) / 86400000)}",
+        "after": "Dias desde último contato: ${Math.floor((Date.now() - new Date(oportunidade.data_ultimo_contato || Date.now()).getTime()) / 86400000)}"
+      }
+    ]
+  },
+  {
+    "file": "src/components/estoque/ControleLotesValidade.jsx",
+    "emittedBeforeSha256": "ac7270db327e8be80be4024955b15fb166c329053044c0bccce5069d80313da8",
+    "operands": 1,
+    "lines": [
+      {
+        "before": "        const diasRestantes = dataValidade ? Math.floor((dataValidade - hoje) / (1000 * 60 * 60 * 24)) : null;",
+        "after": "        const diasRestantes = dataValidade ? Math.floor((dataValidade - hoje.getTime()) / (1000 * 60 * 60 * 24)) : null;"
+      }
+    ]
+  },
+  {
+    "file": "src/components/estoque/RelatoriosEstoque.jsx",
+    "emittedBeforeSha256": "334f4161cd1833da511fd2b9fece2fcfce2de08bdf8e5c0e1af53a3ff57fdd0c",
+    "operands": 4,
+    "lines": [
+      {
+        "before": "      .sort((a, b) => new Date(b.data_movimentacao) - new Date(a.data_movimentacao))[0];",
+        "after": "      .sort((a, b) => new Date(b.data_movimentacao).getTime() - new Date(a.data_movimentacao).getTime())[0];"
+      },
+      {
+        "before": "    const diasParado = Math.floor((hoje - new Date(ultimaMov.data_movimentacao)) / (1000 * 60 * 60 * 24));",
+        "after": "    const diasParado = Math.floor((hoje.getTime() - new Date(ultimaMov.data_movimentacao).getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/expedicao/DetalhesEntregaView.jsx",
+    "emittedBeforeSha256": "a11ed2f9b593725c566580ba3dc3a10a20acc5bc816a5c26030e64c5b584bba3",
+    "operands": 4,
+    "lines": [
+      {
+        "before": "                .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))",
+        "after": "                .sort((a, b) => new Date(b.data_hora).getTime() - new Date(a.data_hora).getTime())"
+      },
+      {
+        "before": "                .sort((a, b) => new Date(b.data_envio) - new Date(a.data_envio))",
+        "after": "                .sort((a, b) => new Date(b.data_envio).getTime() - new Date(a.data_envio).getTime())"
+      }
+    ]
+  },
+  {
+    "file": "src/components/expedicao/painel-logistico/AlertsPanel.jsx",
+    "emittedBeforeSha256": "799a22dc5c1d136a56ac1569211d80e11b5753a2a0d49f70fd6f0553b47b91a3",
+    "operands": 3,
+    "lines": [
+      {
+        "before": "        const diffH = Math.round((now - prev) / 36e5);",
+        "after": "        const diffH = Math.round((now.getTime() - prev) / 36e5);"
+      },
+      {
+        "before": "          const diffH = Math.round((now - tsPronto) / 36e5);",
+        "after": "          const diffH = Math.round((now.getTime() - tsPronto) / 36e5);"
+      },
+      {
+        "before": "          const diffH = Math.round((now - saida) / 36e5);",
+        "after": "          const diffH = Math.round((now.getTime() - saida) / 36e5);"
+      }
+    ]
+  },
+  {
+    "file": "src/components/expedicao/painel-logistico/BottlenecksPanel.jsx",
+    "emittedBeforeSha256": "9f4c746c464e4750804d6e63f3e13141c0ed434fb133a7dfad0f624fb2715335",
+    "operands": 1,
+    "lines": [
+      {
+        "before": "        const esperaH = msToH(now - tsPronto);",
+        "after": "        const esperaH = msToH(now.getTime() - tsPronto);"
+      }
+    ]
+  },
+  {
+    "file": "src/components/expedicao/painel-logistico/DriverChat.jsx",
+    "emittedBeforeSha256": "2b133db612285b0d4ea8948cf025be3a2a82155255a5d2c25359867bfbb0880f",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "      .sort((a, b) => new Date(a.data_hora || 0) - new Date(b.data_hora || 0));",
+        "after": "      .sort((a, b) => new Date(a.data_hora || 0).getTime() - new Date(b.data_hora || 0).getTime());"
+      }
+    ]
+  },
+  {
+    "file": "src/components/expedicao/painel-logistico/OcorrenciasPanel.jsx",
+    "emittedBeforeSha256": "41f88eca34db497bf002cd9147629938be460e6bb95094c6e9a3182b35a2587d",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "  ).sort((a,b)=> new Date(b.data_hora||0)-new Date(a.data_hora||0)), [entrega?.ocorrencias]);",
+        "after": "  ).sort((a,b)=> new Date(b.data_hora||0).getTime()-new Date(a.data_hora||0).getTime()), [entrega?.ocorrencias]);"
+      }
+    ]
+  },
+  {
+    "file": "src/components/expedicao/RelatoriosLogistica.jsx",
+    "emittedBeforeSha256": "1abb8359298c14cab4755ee645c037106c6dfb9846cffac0dcbabac1c910f758",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "        const horas = (new Date(e.data_entrega) - new Date(e.data_saida)) / (1000 * 60 * 60);",
+        "after": "        const horas = (new Date(e.data_entrega).getTime() - new Date(e.data_saida).getTime()) / (1000 * 60 * 60);"
+      }
+    ]
+  },
+  {
+    "file": "src/components/financeiro/AlertasFinanceirosEmpresa.jsx",
+    "emittedBeforeSha256": "1ab00b0b284292660427eec9bcbcd2052b7f27eef1896951a499315f5774cfc2",
+    "operands": 4,
+    "lines": [
+      {
+        "before": "    const diffDias = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));",
+        "after": "    const diffDias = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));"
+      },
+      {
+        "before": "    const diffDias = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));",
+        "after": "    const diffDias = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/financeiro/contas-receber/TabelaReceber.jsx",
+    "emittedBeforeSha256": "f054dae5e4ed454d12be3e73ccad7a991db7fb9a70192cd31f1fa65257ea4142",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "        const diasAtraso = vencida ? Math.floor((new Date() - new Date(r.data_vencimento)) / (1000*60*60*24)) : 0;",
+        "after": "        const diasAtraso = vencida ? Math.floor((new Date().getTime() - new Date(r.data_vencimento).getTime()) / (1000*60*60*24)) : 0;"
+      }
+    ]
+  },
+  {
+    "file": "src/components/financeiro/ReguaCobrancaIA.jsx",
+    "emittedBeforeSha256": "02e2677052a86f767fc74043b7ac79f36047615e0ac89c341649ebaf473d4345",
+    "operands": 8,
+    "lines": [
+      {
+        "before": "          (hoje - new Date(titulo.data_vencimento)) / (1000 * 60 * 60 * 24),",
+        "after": "          (hoje.getTime() - new Date(titulo.data_vencimento).getTime()) / (1000 * 60 * 60 * 24),"
+      },
+      {
+        "before": "    const dias = Math.floor((hoje - new Date(t.data_vencimento)) / (1000 * 60 * 60 * 24));",
+        "after": "    const dias = Math.floor((hoje.getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));"
+      },
+      {
+        "before": "    const dias = Math.floor((hoje - new Date(t.data_vencimento)) / (1000 * 60 * 60 * 24));",
+        "after": "    const dias = Math.floor((hoje.getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));"
+      },
+      {
+        "before": "    const dias = Math.floor((hoje - new Date(t.data_vencimento)) / (1000 * 60 * 60 * 24));",
+        "after": "    const dias = Math.floor((hoje.getTime() - new Date(t.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/portal/DocumentosCliente.jsx",
+    "emittedBeforeSha256": "77d1de14cae3081b9500c249324e71f517e5ff2aeea853d47f51756ec4ae74ed",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "                const diasAtraso = isVencido ? Math.floor((new Date() - new Date(conta.data_vencimento)) / (1000 * 60 * 60 * 24)) : 0;",
+        "after": "                const diasAtraso = isVencido ? Math.floor((new Date().getTime() - new Date(conta.data_vencimento).getTime()) / (1000 * 60 * 60 * 24)) : 0;"
+      }
+    ]
+  },
+  {
+    "file": "src/components/producao/ApontamentoProducao.jsx",
+    "emittedBeforeSha256": "b460a9b99902b37c9aa18c3946be748912ec07941ef0de2d992d67372a730a49",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "                .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))",
+        "after": "                .sort((a, b) => new Date(b.data_hora).getTime() - new Date(a.data_hora).getTime())"
+      }
+    ]
+  },
+  {
+    "file": "src/components/producao/ControleRefugo.jsx",
+    "emittedBeforeSha256": "6a4386ad003ca5ca950c9e1cd1beb7a75ee9f80fda60c65eb4e0f751ed432daa",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "                .sort((a, b) => new Date(b.data) - new Date(a.data))",
+        "after": "                .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())"
+      }
+    ]
+  },
+  {
+    "file": "src/components/relatorios/RentabilidadeCliente.jsx",
+    "emittedBeforeSha256": "be406ab960904a2f189dabac40038a71392e4a8c15e942609be1f9b89d3dfa70",
+    "operands": 4,
+    "lines": [
+      {
+        "before": "          const diasAtraso = Math.floor((hoje - new Date(c.data_vencimento)) / (1000 * 60 * 60 * 24));",
+        "after": "          const diasAtraso = Math.floor((hoje.getTime() - new Date(c.data_vencimento).getTime()) / (1000 * 60 * 60 * 24));"
+      },
+      {
+        "before": "          const diasAtivo = Math.floor((new Date(c.ultima_compra) - new Date(c.primeira_compra)) / (1000 * 60 * 60 * 24));",
+        "after": "          const diasAtivo = Math.floor((new Date(c.ultima_compra).getTime() - new Date(c.primeira_compra).getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/rh/PontoForm.jsx",
+    "emittedBeforeSha256": "9d2f835d7d32f00c6b008b3e377a0794addb332b7927766883a9c74482adbcca",
+    "operands": 4,
+    "lines": [
+      {
+        "before": "      ? (new Date(`2000-01-01T${formData.retorno_almoco}`) - new Date(`2000-01-01T${formData.saida_almoco}`)) / (1000 * 60 * 60)",
+        "after": "      ? (new Date(`2000-01-01T${formData.retorno_almoco}`).getTime() - new Date(`2000-01-01T${formData.saida_almoco}`).getTime()) / (1000 * 60 * 60)"
+      },
+      {
+        "before": "    const horasTotais = (saida - entrada) / (1000 * 60 * 60) - almoco;",
+        "after": "    const horasTotais = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60) - almoco;"
+      }
+    ]
+  },
+  {
+    "file": "src/components/rh/PontoTab.jsx",
+    "emittedBeforeSha256": "fabfdfcce35d003bb25c6f90071da84c60bb9fa72dbb84b04a95af1442a8cd9f",
+    "operands": 4,
+    "lines": [
+      {
+        "before": "          ? (new Date(`2000-01-01T${data.retorno_almoco}`) - new Date(`2000-01-01T${data.saida_almoco}`)) / (1000 * 60 * 60)",
+        "after": "          ? (new Date(`2000-01-01T${data.retorno_almoco}`).getTime() - new Date(`2000-01-01T${data.saida_almoco}`).getTime()) / (1000 * 60 * 60)"
+      },
+      {
+        "before": "        const horasTotais = (saida - entrada) / (1000 * 60 * 60) - almoco;",
+        "after": "        const horasTotais = (saida.getTime() - entrada.getTime()) / (1000 * 60 * 60) - almoco;"
+      }
+    ]
+  },
+  {
+    "file": "src/components/sistema/MotorNotificacoes.jsx",
+    "emittedBeforeSha256": "75d8386b4981d4a19bc4dfa4a3a05cdcc6a68baa53e02e4243bd75fbf2ee31eb",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "    const diasRestantes = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));",
+        "after": "    const diasRestantes = Math.ceil((dataVencimento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  },
+  {
+    "file": "src/components/sistema/WhatsAppBusinessEngine.jsx",
+    "emittedBeforeSha256": "17accc70d3c6ad1aa29d7d8f9d35431b63d2dae75580dfe9f82dec345334bd82",
+    "operands": 2,
+    "lines": [
+      {
+        "before": "    const diasAteVencimento = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));",
+        "after": "    const diasAteVencimento = Math.ceil((vencimento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));"
+      }
+    ]
+  }
+]

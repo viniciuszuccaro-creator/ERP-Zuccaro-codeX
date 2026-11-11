@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, FileText, CheckCircle2, Clock, AlertCircle, Download } from "lucide-react";
 import { format } from "date-fns";
+import { isPortalClienteIdentificado } from '@/components/lib/portalClientePolicy';
 
 /**
  * V21.5 - Upload de Projetos COMPLETO
@@ -20,6 +21,7 @@ import { format } from "date-fns";
  * ✅ Geração automática de orçamento
  * ✅ 100% Responsivo w-full h-full
  */
+/** @param {{clienteId?: string, clienteNome?: string}} props */
 export default function UploadProjetos({ clienteId, clienteNome }) {
   const [arquivoSelecionado, setArquivoSelecionado] = useState(null);
   const [descricaoProjeto, setDescricaoProjeto] = useState("");
@@ -32,6 +34,7 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
     queryKey: ['projetosCliente', clienteId],
     queryFn: async () => {
       // Buscar pedidos do cliente que têm projetos anexados
+      if (!isPortalClienteIdentificado(clienteId)) return [];
       const pedidos = await base44.entities.Pedido.filter({ cliente_id: clienteId }, '-created_date');
       
       const projetosCliente = [];
@@ -50,11 +53,12 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
       
       return projetosCliente;
     },
-    enabled: !!clienteId
+    enabled: isPortalClienteIdentificado(clienteId)
   });
 
   const uploadProjetoMutation = useMutation({
-    mutationFn: async (file) => {
+    mutationFn: async (/** @type {File} */ file) => {
+      if (!isPortalClienteIdentificado(clienteId)) throw new Error('Cliente do portal nao identificado.');
       setUploading(true);
       
       // Upload do arquivo
@@ -138,6 +142,7 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
     }
   };
 
+  if (!isPortalClienteIdentificado(clienteId)) return <p role="status">Cliente do portal nao identificado. Operacoes indisponiveis.</p>;
   return (
     <div className="space-y-6 w-full h-full">
       <div>

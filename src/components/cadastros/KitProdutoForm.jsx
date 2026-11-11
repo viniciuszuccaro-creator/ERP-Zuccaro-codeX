@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
   const podeCriar = hasPermission?.("Cadastros.KitProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
   const podeEditar = hasPermission?.("Cadastros.KitProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome_kit: '',
     codigo_kit: '',
     descricao: '',
@@ -28,7 +29,7 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
     aplicar_desconto_kit: false,
     percentual_desconto: 0,
     ativo: true
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

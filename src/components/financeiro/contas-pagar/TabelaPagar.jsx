@@ -52,7 +52,7 @@ export default function TabelaPagar({
     },
     { key: 'data_vencimento', label: 'Vencimento', render: (r) => (<span className="text-sm">{new Date(r.data_vencimento).toLocaleDateString('pt-BR')}</span>) },
     { key: 'valor', label: 'Valor', isNumeric: true, render: (r) => (<span className="font-semibold">R$ {(r.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>) },
-    { key: 'status', label: 'Status', render: (r) => (<StatusBadge status={r.status} size="sm" />) },
+    { key: 'status', label: 'Status', render: (r) => (<StatusBadge status={r.status} />) },
     { key: 'actions', label: 'Ações', render: (r) => {
         const emp = empresas.find(e => e.id === r.empresa_id);
         const vencida = r.status === 'Pendente' && new Date(r.data_vencimento) < new Date();

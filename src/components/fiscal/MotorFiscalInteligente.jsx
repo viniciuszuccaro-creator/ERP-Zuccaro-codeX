@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { invokeErpIa } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +51,7 @@ export default function MotorFiscalInteligente({ windowMode = false }) {
   });
 
   const validarFiscalIAMutation = useMutation({
-    mutationFn: async ({ pedidoId }) => {
+    mutationFn: async (/** @type {{pedidoId: string | number}} */ { pedidoId }) => {
       const ctx = assertIaUiContext({ groupId, empresaId, scopeType });
       if (!canView) throw new Error("Sem permissao para validacao fiscal com IA.");
 
@@ -61,7 +61,7 @@ export default function MotorFiscalInteligente({ windowMode = false }) {
 
       toast.info("IA validando operacao fiscal (apenas sugestao)...");
 
-      const result = await base44.integrations.Core.InvokeLLM({
+      const result = await invokeErpIa('fiscal_validacao', {
         group_id: ctx.group_id,
         empresa_id: ctx.empresa_id,
         prompt: `Valide esta operação fiscal. APENAS SUGIRA. Nao emita NF nem altere pedido.
@@ -272,13 +272,13 @@ Retorne validação e alertas.`,
                 <tbody>
                   {!contextoValido || !canView ? (
                     <tr>
-                      <td colSpan="6" className="text-center p-6 text-slate-500">
+                      <td colSpan={6} className="text-center p-6 text-slate-500">
                         Contexto ou permissao insuficiente
                       </td>
                     </tr>
                   ) : pedidosProntos.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center p-6 text-slate-500">
+                      <td colSpan={6} className="text-center p-6 text-slate-500">
                         Nenhum pedido pronto para validação
                       </td>
                     </tr>

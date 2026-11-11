@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { TrendingUp, Package, DollarSign, Calendar } from 'lucide-react';
+import { isPortalClienteIdentificado } from '@/components/lib/portalClientePolicy';
 
 /**
  * V21.5 - Analytics Portal Cliente
@@ -13,11 +14,12 @@ import { TrendingUp, Package, DollarSign, Calendar } from 'lucide-react';
  * ✅ Métricas de relacionamento
  * ✅ 100% Responsivo
  */
+/** @param {{clienteId?: string}} props */
 export default function AnalyticsPortalCliente({ clienteId }) {
   const { data: pedidos = [] } = useQuery({
     queryKey: ['analytics-pedidos', clienteId],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteId }, '-data_pedido', 100),
-    enabled: !!clienteId,
+    queryFn: () => isPortalClienteIdentificado(clienteId) ? base44.entities.Pedido.filter({ cliente_id: clienteId }, '-data_pedido', 100) : Promise.resolve([]),
+    enabled: isPortalClienteIdentificado(clienteId),
   });
 
   // Agregar pedidos por mês
@@ -57,6 +59,7 @@ export default function AnalyticsPortalCliente({ clienteId }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
+  if (!isPortalClienteIdentificado(clienteId)) return <p role="status">Cliente do portal nao identificado. Operacoes indisponiveis.</p>;
   return (
     <div className="space-y-6 w-full h-full">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">

@@ -1,5 +1,31 @@
 const firstText = (...values) => values.map((value) => String(value || '').trim()).find(Boolean) || '';
 
+/**
+ * Identity fields used by the existing guards; provider metadata remains untrusted.
+ * @typedef {Object} MarketplacePedidoIdentity
+ * @property {string} [id]
+ * @property {string} [empresa_id]
+ * @property {string} [origem]
+ * @property {string} [origem_pedido]
+ * @property {string} [marketplace]
+ * @property {string} [origem_externa_id]
+ * @property {string} [id_externo]
+ * @property {string} [status_externo]
+ */
+
+/**
+ * @typedef {Object} MarketplaceSkuItem
+ * @property {string} [sku_interno]
+ * @property {string} [sku_externo]
+ * @property {string} [codigo_sku]
+ * @property {string} [codigo]
+ * @property {string|null} [produto_id]
+ * @property {string} [descricao]
+ * @property {unknown} [quantidade]
+ * @property {unknown} [preco_unitario]
+ * @property {unknown} [valor_total]
+ */
+
 export const MARKETPLACE_ORIGENS = ['Mercado Livre', 'Shopee', 'Amazon'];
 export const MARKETPLACE_STATUS_PENDENTES = ['A Validar', 'Em Revisão'];
 
@@ -66,6 +92,7 @@ export const findPedidoMarketplaceDuplicado = (record = {}, pedidos = []) => {
   )) || null;
 };
 
+/** @param {{record?: MarketplacePedidoIdentity & Record<string, unknown>, pedidosExternos?: MarketplacePedidoIdentity[]}} [options] */
 export const assertPedidoExternoOnCreate = ({ record = {}, pedidosExternos = [] } = {}) => {
   if (!firstText(record.empresa_id)) {
     throw new Error('Empresa obrigatoria para pedido de marketplace.');
@@ -82,6 +109,7 @@ export const assertPedidoExternoOnCreate = ({ record = {}, pedidosExternos = [] 
   return { reuse: null, record: stamped };
 };
 
+/** @param {{record?: MarketplacePedidoIdentity & Record<string, unknown>, pedidos?: MarketplacePedidoIdentity[]}} [options] */
 export const assertPedidoMarketplaceOnCreate = ({ record = {}, pedidos = [] } = {}) => {
   const looksMarketplace = isMarketplaceOrigem(record.origem_pedido)
     || isMarketplaceOrigem(record.origem)
@@ -138,6 +166,7 @@ export const assertItensMarketplaceParaImport = (itens = []) => {
   return true;
 };
 
+/** @param {{configs?: Array<{nome?: string, marketplace?: string, marketplace_id?: string, chave?: string, ativo?: boolean|string|number}>, origem?: string}} [options] */
 export const assertMarketplaceAtivo = ({ configs = [], origem } = {}) => {
   if (!isMarketplaceAtivo(configs, origem)) {
     throw new Error(`Marketplace ${firstText(origem) || 'desconhecido'} inativo na configuracao.`);
@@ -149,6 +178,7 @@ export const filtrarPedidosSimuladosAtivos = (pedidos = [], configs = []) => (
   (Array.isArray(pedidos) ? pedidos : []).filter((pedido) => isMarketplaceAtivo(configs, pedido.origem || pedido.marketplace))
 );
 
+/** @param {MarketplaceSkuItem} [item] */
 export const resolveSkuMarketplace = (item = {}, produtos = []) => {
   const sku = firstText(item.sku_interno, item.sku_externo, item.codigo_sku, item.codigo);
   if (!sku) return { ...item, produto_id: item.produto_id || null, sku_resolvido: false };
@@ -196,6 +226,7 @@ export const buildConciliacaoResumo = (pedido = {}) => {
   };
 };
 
+/** @param {{pedidoExterno?: MarketplacePedidoIdentity & Record<string, unknown>, acao?: string, motivo?: string}} [options] */
 export const applyStatusExternoMarketplace = ({
   pedidoExterno = {},
   acao = '',

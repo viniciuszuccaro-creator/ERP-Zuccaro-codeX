@@ -244,9 +244,9 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
 
   return (
     <div className="space-y-4">
-      <Alert className="border-purple-200 bg-purple-50">
-        <FileSpreadsheet className="w-4 h-4 text-purple-600" />
-        <AlertDescription className="text-sm text-purple-900">
+      <Alert className="border-sky-200 bg-sky-50">
+        <FileSpreadsheet className="w-4 h-4 text-sky-600" />
+        <AlertDescription className="text-sm text-sky-900">
           <strong>{'Importa\u00e7\u00e3o em Lote:'}</strong> Envie CSV ou XLSX com seus produtos
         </AlertDescription>
       </Alert>
@@ -435,7 +435,7 @@ export default function ImportarProdutosLote({ onProdutosCriados, onClose }) {
                 data-permission="Cadastros.Produto.criar"
                 data-action="importar-produtos-lote"
                 data-sensitive
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-sky-600 hover:bg-sky-700"
               >
                 {processando ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

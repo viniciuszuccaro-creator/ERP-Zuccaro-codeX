@@ -100,14 +100,17 @@ test('tela contempla estados, detalhe, edicao, confirmacao e invalidacao por emp
   assert.match(tab, /openEdit/);
   assert.match(tab, /Cancelar orçamento\?/);
   assert.match(tab, /beforeunload/);
-  assert.match(tab, /\[groupId, empresaId, actorId\]/);
+  assert.match(tab, /\[groupId, empresaId, actorId, sessionIdentity, proposalMode\]/);
   assert.match(tab, /invalidateQueries\(\{ queryKey: \['orcamentos-http', groupId, empresaId\]/);
   assert.match(tab, /comercialMasterPicker/);
   assert.match(tab, /orcamento-busca-cliente/);
   assert.match(tab, /orcamento-busca-produto/);
   assert.match(tab, /orcamento-tabela-preco/);
   assert.match(tab, /tabela_preco_id/);
-  assert.match(tab, /TabelaPreco/);
+  assert.match(tab, /http\.comercialMasters\.list/);
+  assert.match(tab, /resolveComercialMasterPages/);
+  const transport = await readFile(new URL('../src/api/httpApiClient.js', import.meta.url), 'utf8');
+  assert.ok(transport.includes("request('/api/v1/tabelas-preco'"));
   assert.match(tab, /ORCAMENTO_PERSISTENCE_GAPS/);
 });
 test('preparacao de compartilhamento usa somente resumo comercial revisavel', () => {

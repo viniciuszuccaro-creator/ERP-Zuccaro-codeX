@@ -32,6 +32,8 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     grupo_nome: grupoAtual?.nome || grupoAtual?.nome_grupo || null,
   });
 
+  /** @param {{formato: string, resumo: Record<string, unknown>, sucesso?: boolean,
+   * descricao?: string, motivo?: string}} options */
   const auditarRelatorio = async ({ formato, resumo, sucesso = true, descricao, motivo }) => {
     try {
       await createInContext('AuditLog', {

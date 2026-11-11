@@ -1,0 +1,40 @@
+ROTEIRO POR CAMADA — execução isolada candidata #353
+====================================================
+Checkpoint: d0e38a16 · tip código ops: e30cffcc · contatos: e9d7ef15
+Ambiente desta prova: runner Cursor /workspace (NÃO Codespace; NÃO VPS)
+Executor: Cursor · Sem escrita no banco real · Sem migration
+
+Legenda de resultado
+  PASS_SINT = passou em teste sintético/componente/transporte mock
+  PASS_CI   = suite CI no SHA
+  BLOQ_*    = bloqueio explícito documentado
+  N/A       = não exercitado neste ambiente
+
+| Passo | Componente | Transporte HTTP | Serviço | Banco | Navegador |
+|-------|------------|-----------------|---------|-------|-----------|
+| Login/contexto | fail-closed arquitetura | N/A IdP real | N/A | N/A | N/A (runner) |
+| Cadastro abrir | reopen/boundId PASS_SINT | Cliente.get mock PASS_SINT | N/A | N/A | N/A |
+| Editar/salvar escalar | form PASS_SINT | update mock PASS_SINT | N/A destino | N/A | N/A |
+| Contatos principal/meta | fidelity PASS_SINT | fetch=0 PASS_SINT | N/A | N/A | N/A |
+| Reabrir escalares | complete=false PASS_SINT | GET mock PASS_SINT | N/A | N/A | N/A |
+| Orçamento save/retry/escopo | OrcamentosTab PASS_SINT | mock PASS_SINT | N/A | N/A | N/A |
+| Pedido create/convert | UI + explain044 PASS_SINT | pode chegar API | service calcula fingerprint | INSERT exige 044 → BLOQ_SCHEMA | N/A |
+
+Pedido — regra deste lote
+-------------------------
+`explainPedidoPersistenceError` prova HONESTIDADE da UI quando o destino
+responde coluna ausente. **Não** substitui:
+  pedido persistido → reaberto → status coerente no banco alvo.
+Persistência real de Pedido = coordenação Codex (delta 044 + HML autorizada).
+Cursor não aplica DDL / não altera VPS.
+
+Provas locais deste tip
+- tests/cliente-contatos-http-adapter.test.js (draft intacto + mensagem)
+- tests/orcamento-component-behavior.test.js
+- tests/pedido-ui-policy.test.js (explain 044)
+- CI tip e30cffcc 4805/4806 · d0e38a16 4807/4808
+
+O que NÃO foi exercitado aqui
+- Sessão IdP real / navegador Codespace
+- CRUD Cliente no PG do destino observado
+- INSERT Pedido com 044 aplicada

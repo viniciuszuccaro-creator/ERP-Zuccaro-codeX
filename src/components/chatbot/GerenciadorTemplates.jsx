@@ -88,7 +88,7 @@ export default function GerenciadorTemplates() {
   });
 
   const salvarTemplateMutation = useMutation({
-    mutationFn: async (template) => {
+    mutationFn: async (/** @type {typeof formData} */ template) => {
       if (!contextoValido || !canEditTemplates) {
         throw new Error('Contexto ou permissao insuficiente para salvar template');
       }
@@ -129,7 +129,7 @@ export default function GerenciadorTemplates() {
   });
 
   const excluirTemplateMutation = useMutation({
-    mutationFn: async (template) => {
+    mutationFn: async (/** @type {{canal_config_id: string, template_id: string}} */ template) => {
       if (!contextoValido || !canEditTemplates) {
         throw new Error('Contexto ou permissao insuficiente para excluir template');
       }

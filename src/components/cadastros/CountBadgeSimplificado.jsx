@@ -11,6 +11,8 @@ import useEntityCounts from "@/components/lib/useEntityCounts";
  * Só faz fetch interno quando allCounts NÃO foi fornecido pelo pai.
  * isLoading (prop do pai) controla o estado de carregamento visual.
  */
+/** @param {{entities?: string | string[], className?: string, precomputedTotal?: number,
+ * allCounts?: Record<string, unknown>, isLoading?: boolean}} props */
 export default function CountBadgeSimplificado({ entities = [], className = "", precomputedTotal, allCounts, isLoading: isLoadingProp }) {
   const list = Array.isArray(entities) ? entities.filter(Boolean) : [entities].filter(Boolean);
 

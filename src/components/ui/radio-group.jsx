@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils"
 import { uiAuditWrap } from "@/components/lib/uiAudit";
 import usePermissions from "@/components/lib/usePermissions";
 
+/** @type {React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root> & React.RefAttributes<React.ElementRef<typeof RadioGroupPrimitive.Root>>>} */
 const RadioGroup = React.forwardRef(({ className, ...props }, ref) => {
   return <RadioGroupPrimitive.Root className={cn("grid gap-2", className)} {...props} ref={ref} />;
 })
 RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
 
+/** @type {React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item> & React.RefAttributes<React.ElementRef<typeof RadioGroupPrimitive.Item>>>} */
 const RadioGroupItem = React.forwardRef(({ className, ...props }, ref) => {
   return (
     <RadioGroupPrimitive.Item
@@ -29,6 +31,7 @@ const RadioGroupItem = React.forwardRef(({ className, ...props }, ref) => {
 })
 RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
 
+/** @type {React.ForwardRefExoticComponent<React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Root> & {'data-permission'?: string, 'data-toast-success'?: boolean|'true'|'false', 'data-action'?: string, __wrapped_audit?: unknown} & React.RefAttributes<React.ElementRef<typeof RadioGroupPrimitive.Root>>>} */
 const AuditedRadioGroup = React.forwardRef(({ onValueChange, ...props }, ref) => {
   const { hasPermissionKey } = usePermissions();
   const toastSuccess = props?.['data-toast-success'] === true || props?.['data-toast-success'] === 'true';

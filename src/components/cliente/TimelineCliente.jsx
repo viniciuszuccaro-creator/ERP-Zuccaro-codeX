@@ -345,7 +345,7 @@ export function ResumoHistorico({ clienteId }) {
 
   const ultimoEvento = eventos[0];
   const diasDesdeUltimo = ultimoEvento 
-    ? Math.floor((new Date() - new Date(ultimoEvento.data_evento)) / (1000 * 60 * 60 * 24))
+    ? Math.floor((new Date().getTime() - new Date(ultimoEvento.data_evento).getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
   return (

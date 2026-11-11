@@ -1,3 +1,4 @@
+import { authorizeEntityRead, readSecureReport, safeReadError, EntityReadError } from '../_lib/security/entityReadPolicy/entry.ts';
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const DEFAULT_SORTS = {
@@ -70,24 +71,6 @@ const SEARCH_FIELDS = {
   default: ['nome', 'descricao', 'codigo', 'razao_social', 'nome_completo', 'nome_grupo', 'nome_segmento', 'nome_regiao', 'nome_banco', 'nome_fantasia', 'sigla']
 };
 
-// Entidades que não precisam de filtro empresa/grupo
-const SIMPLE_CATALOG = new Set([
-  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
-  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
-  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
-  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
-  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
-  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
-  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
-  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
-  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
-  'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
-  'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
-]);
-
-// Entidades com empresas_compartilhadas_ids ou campos de vinculação múltiplos
-const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Produto']);
-
 function normalizeSortField(entityName, requested) {
   if (!requested || typeof requested !== 'string') return DEFAULT_SORTS[entityName]?.field || 'updated_date';
   const r = requested.toLowerCase();
@@ -98,160 +81,33 @@ function normalizeSortField(entityName, requested) {
   return requested;
 }
 
-function sanitizeVal(v) {
-  return typeof v === 'string'
-    ? v.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '').replace(/javascript:\s*/gi, '')
-    : v;
-}
-
-function sanitizeFilter(f) {
-  if (!f || typeof f !== 'object') return f || {};
-  const out = {};
-  for (const [k, v] of Object.entries(f)) {
-    if (k === '$or' || k === '$and') {
-      out[k] = Array.isArray(v) ? v.map(sanitizeFilter) : v;
-    } else if (k === '$in') {
-      out[k] = Array.isArray(v) ? v.map(sanitizeVal) : v;
-    } else if (v && typeof v === 'object' && !Array.isArray(v)) {
-      out[k] = sanitizeFilter(v);
-    } else if (Array.isArray(v)) {
-      out[k] = v.map(sanitizeVal);
-    } else {
-      out[k] = sanitizeVal(v);
-    }
-  }
-  return out;
-}
-
-// Normaliza filtro de empresas_compartilhadas_ids para objeto $in
-function normalizeSharedFilter(f) {
-  if (!f || typeof f !== 'object') return f || {};
-  let out = { ...f };
-  if ('empresas_compartilhadas_ids' in out && typeof out.empresas_compartilhadas_ids === 'string') {
-    out.empresas_compartilhadas_ids = { $in: [out.empresas_compartilhadas_ids] };
-  }
-  if (Array.isArray(out.$or)) {
-    out.$or = out.$or.map(cond => {
-      if (cond?.empresas_compartilhadas_ids && typeof cond.empresas_compartilhadas_ids === 'string') {
-        return { ...cond, empresas_compartilhadas_ids: { $in: [cond.empresas_compartilhadas_ids] } };
-      }
-      return cond;
-    });
-  }
-  return out;
-}
-
-// Expande filtro de empresa/grupo para cobrir todos os campos de vinculação
-async function expandGroupFilter(base44, entityName, f) {
-  const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id'
-    : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
-
-  // empresa_id simples → expande para $or cobrindo todos os campos + registros legados
-  if (f?.empresa_id && !f?.$or && !f?.group_id) {
-    const { empresa_id, ...rest } = f;
-    const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }];
-    if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados (não para Produto)
-    if (EXPAND_SET.has(entityName)) {
-      orConds.push({ empresas_compartilhadas_ids: { $in: [empresa_id] } });
-    }
-    if (entityName === 'Colaborador') {
-      orConds.push({ empresa_alocada_id: empresa_id });
-    }
-    if (entityName === 'Produto') {
-      orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
-    }
-    return { ...rest, $or: orConds };
-  }
-
-  // Apenas group_id → expande para todas as empresas do grupo
-  if (f?.group_id && !f?.$or && !f?.empresa_id && !f?.empresa_dona_id && !f?.empresa_alocada_id) {
-    try {
-      const groupId = f.group_id;
-      const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, '-id', 200);
-      const empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
-      const rest = { ...f };
-      delete rest.group_id;
-      const orConds = [
-        { empresa_id: { $in: empresasIds } },
-        { empresa_dona_id: { $in: empresasIds } },
-        { group_id: groupId },
-      ];
-      if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados
-      if (EXPAND_SET.has(entityName)) {
-        orConds.push({ empresas_compartilhadas_ids: { $in: empresasIds } });
-      }
-      if (entityName === 'Colaborador') {
-        orConds.push({ empresa_alocada_id: { $in: empresasIds } });
-      }
-      if (entityName === 'Produto') {
-        orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
-      }
-      return { ...rest, $or: orConds };
-    } catch (_) { /* fallback: usa group_id direto */ }
-  }
-
-  // $or existente + group_id residual
-  if (f?.$or && f?.group_id) {
-    const { group_id, ...rest } = f;
-    return { ...rest, $or: [...f.$or, { group_id }] };
-  }
-
-  return f;
-}
-
-async function listOne(base44, user, q) {
+async function listOne(base44, user, q, cache = new Map()) {
+  const access = await authorizeEntityRead(base44,user,q,cache);
   const entityName = q?.entityName;
   if (!entityName) return { entityName, items: [] };
 
-  const isSimple = SIMPLE_CATALOG.has(entityName);
-  const rawFilter = q?.filter || {};
-  const hasOr = Array.isArray(rawFilter?.$or) && rawFilter.$or.length > 0;
-  const scopeProvided = rawFilter?.empresa_id || rawFilter?.group_id || rawFilter?.empresa_dona_id || rawFilter?.empresa_alocada_id || hasOr;
+  const limit = Number(q?.limit ?? q?.pageSize ?? 100);
+  const skip = Number(q?.skip ?? q?.offset ?? 0);
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500 || !Number.isSafeInteger(skip) || skip < 0 || skip > 100000) throw new EntityReadError('READ_INVALID_PAGE',400);
 
-  // Sem escopo → lista tudo (acesso autenticado e auditado; dados protegidos por RBAC no frontend)
-
-  const limit = Math.max(1, Math.min(Number(q?.limit || q?.pageSize) || 100, 500));
-  const skip = Math.max(0, Number(q?.skip ?? q?.offset ?? 0) || 0);
-
-  const sortField = normalizeSortField(entityName, q?.sortField || q?.sortBy);
+  const requestedSort = normalizeSortField(entityName, q?.sortField || q?.sortBy);
+  const sortField = access.grant(requestedSort) ? requestedSort : 'id';
   const sortDir = ((q?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc') === 'asc') ? 'asc' : 'desc';
   const orderHint = `${sortDir === 'desc' ? '-' : ''}${sortField}`;
 
-  // Monta filtro de escopo (sem busca de texto — busca vem em q.search separada)
-  let scopeFilter = sanitizeFilter(rawFilter);
-  scopeFilter = normalizeSharedFilter(scopeFilter);
-  // Remove $or de busca embutido no filter (compatibilidade com clientes antigos)
-  // Detecta se o $or do filter é de busca (campos de texto) ou de escopo (empresa_id/group_id)
-  const isSearchOr = Array.isArray(scopeFilter?.$or) && scopeFilter.$or.length > 0 &&
-    scopeFilter.$or.every(c => {
-      const keys = Object.keys(c || {});
-      return keys.length === 1 && !['empresa_id','empresa_dona_id','empresa_alocada_id','group_id','empresas_compartilhadas_ids'].includes(keys[0]);
-    });
-  const embeddedSearch = isSearchOr ? scopeFilter.$or : null;
-  if (isSearchOr) { scopeFilter = { ...scopeFilter }; delete scopeFilter.$or; }
-
-  // Expande sempre (escopo limpo)
-  let finalFilter = scopeFilter;
-  if (!isSimple) {
-    finalFilter = await expandGroupFilter(base44, entityName, scopeFilter);
-  }
-
-  // Aplica busca por texto (prioridade: q.search, depois embeddedSearch)
+  // The authorization predicate is immutable; text search can only narrow it.
+  let finalFilter = access.filter;
   const term = q?.search || q?.busca || null;
-  if (term && typeof term === 'string' && term.trim()) {
-    const fields = SEARCH_FIELDS[entityName] || SEARCH_FIELDS.default;
-    const rx = { $regex: term.trim(), $options: 'i' };
-    const orConds = fields.map(f => ({ [f]: rx }));
-    const hasScope = Object.keys(finalFilter).length > 0;
-    finalFilter = hasScope ? { $and: [finalFilter, { $or: orConds }] } : { $or: orConds };
-  } else if (embeddedSearch) {
-    // Busca legada embutida no filter
-    const hasScope = Object.keys(finalFilter).length > 0;
-    finalFilter = hasScope ? { $and: [finalFilter, { $or: embeddedSearch }] } : { $or: embeddedSearch };
+  if (term != null && (typeof term !== 'string' || term.length > 200)) throw new EntityReadError('READ_INVALID_SEARCH',400);
+  if (term?.trim()) {
+    const fields = (SEARCH_FIELDS[entityName] || SEARCH_FIELDS.default).filter(access.grant);
+    if (!fields.length) throw new EntityReadError('READ_FORBIDDEN',403);
+    const literal = term.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    finalFilter = { $and:[finalFilter,{ $or:fields.map(field => ({ [field]:{ $regex:literal,$options:'i' } })) }] };
   }
 
   const items = await base44.asServiceRole.entities[entityName].filter(finalFilter, orderHint, limit, skip) || [];
-  return { entityName, items };
+  return { entityName, items:items.map(access.project) };
 }
 
 // Compressão gzip quando suportado
@@ -285,16 +141,20 @@ Deno.serve(async (req) => {
     let body = {};
     try { body = await req.json(); } catch (_) { }
 
+    if (body?.report) return compressedJson(await readSecureReport(base44,user,body),req);
+    const cache = new Map();
     // MODO LOTE: { queries: [...] }
     const queries = Array.isArray(body?.queries) ? body.queries : null;
     if (queries && queries.length > 0) {
+      if (queries.length > 20) return Response.json({ error:'READ_INVALID_BATCH' },{ status:400 });
+      for (const q of queries) await authorizeEntityRead(base44,user,q,cache);
       const results = [];
       for (let i = 0; i < queries.length; i++) {
         const q = queries[i];
         try {
-          results.push(await listOne(base44, user, q));
+          results.push(await listOne(base44, user, q, cache));
         } catch (err) {
-          results.push({ entityName: q?.entityName, items: [], error: String(err?.message || err) });
+          results.push({ entityName: q?.entityName, items: [], error:err instanceof EntityReadError ? err.message : 'READ_UNAVAILABLE' });
         }
         // Delay entre queries em lote para evitar 429
         if (i < queries.length - 1) await new Promise(r => setTimeout(r, 150));
@@ -310,15 +170,13 @@ Deno.serve(async (req) => {
       sortDirection: body?.sortDirection,
       limit: body?.limit,
       skip: body?.skip,
+      context: body?.context,
       search: body?.search || body?.busca
     });
 
-    if (single.error === 'escopo_obrigatorio') {
-      return Response.json({ error: single.error }, { status: 400 });
-    }
     return compressedJson(single.items, req);
 
   } catch (err) {
-    return Response.json({ error: String(err?.message || err) }, { status: 500 });
+    return safeReadError(err);
   }
 });

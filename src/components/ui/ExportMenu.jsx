@@ -26,6 +26,12 @@ const escapeHtml = (value) => sanitizeCell(value)
 /**
  * Menu de exportacao reutilizavel.
  * Exporta dados em CSV ou PDF/impressao com RBAC, contexto e auditoria opcional.
+ * `action` legado aceita somente exportar; a permissao interna nunca e selecionada pelo consumidor.
+ * @param {{data: Record<string, unknown>[], fileName?: string, title?: string,
+ * module?: string, section?: string, disabled?: boolean,
+ * columns?: {header?: string, accessor: string}[]|null, action?: 'exportar',
+ * onBeforeExport?: (event: {formato: string, quantidade: number}) => boolean|void|Promise<boolean|void>,
+ * onExport?: (event: {formato: string, quantidade: number}) => void|Promise<void>}} props
  */
 export default function ExportMenu({
   data,

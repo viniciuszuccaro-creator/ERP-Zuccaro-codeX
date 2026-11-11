@@ -83,7 +83,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
   };
 
   const restaurarMutation = useMutation({
-    mutationFn: async (backup) => {
+    mutationFn: async (/** @type {import('@/components/lib/viradaProducaoPolicy').ViradaRecord} */ backup) => {
       if (!contextoValido) {
         throw new Error('Selecione um grupo ou empresa antes de restaurar backup.');
       }
@@ -100,14 +100,46 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
         throw new Error('Somente backup concluido pode ser restaurado.');
       }
 
+      if (!backup || typeof backup !== 'object' || Array.isArray(backup)
+        || (typeof backup.id !== 'string' && typeof backup.id !== 'number')
+        || (typeof backup.id === 'string' && !backup.id.trim())
+        || (typeof backup.id === 'number' && !Number.isFinite(backup.id))) {
+        throw new Error('Identidade do backup invalida.');
+      }
+      const backupApi = base44.entities.BackupAutomatico;
+      if (!backupApi || !('restore' in backupApi) || typeof backupApi.restore !== 'function') {
+        await auditBackup({
+          acao: 'Backup.restaurar_bloqueado',
+          sucesso: false,
+          motivo: 'backend_sem_restauracao',
+          registroId: backup.id,
+        });
+        throw new Error('Restauracao indisponivel neste backend.');
+      }
+
       toast.success('🔄 Iniciando restauração...', {
         description: 'Este processo pode levar alguns minutos'
       });
 
-      const result = await base44.entities.BackupAutomatico.restore(backup.id, {
+      /** @type {unknown} */
+      const result = await backupApi.restore(backup.id, {
         group_id: grupoAtivoId,
         empresa_id: empresaAtivaId,
       });
+
+      if (!result || typeof result !== 'object' || Array.isArray(result)
+        || !('backup' in result) || !result.backup || typeof result.backup !== 'object'
+        || Array.isArray(result.backup) || !('id' in result.backup) || result.backup.id !== backup.id
+        || !('summary' in result) || !result.summary || typeof result.summary !== 'object'
+        || Array.isArray(result.summary)) {
+        await auditBackup({
+          acao: 'Backup.restaurar_recibo_invalido',
+          sucesso: false,
+          motivo: 'recibo_invalido',
+          registroId: backup.id,
+        });
+        throw new Error('Recibo de restauracao invalido; verifique o resultado antes de repetir.');
+      }
 
       await auditBackup({
         acao: 'Backup.restaurar',
@@ -132,7 +164,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
   });
 
   const excluirMutation = useMutation({
-    mutationFn: async (backupId) => {
+    mutationFn: async (/** @type {string} */ backupId) => {
       if (!contextoValido) {
         throw new Error('Selecione um grupo ou empresa antes de expirar backup.');
       }

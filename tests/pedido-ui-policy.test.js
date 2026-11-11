@@ -24,6 +24,7 @@ import {
   PEDIDO_CANCEL_MOTIVO_MAX,
   PEDIDO_CANCEL_MOTIVO_MIN,
   resolvePedidoHistoryUiState,
+  explainPedidoPersistenceError,
 } from '../src/components/comercial/pedidoUiPolicy.js';
 
 const item = { produto_id:'p', unidade_id:'u', descricao:'Produto', unidade_sigla:'UN', quantidade:'2', preco_unitario:'10', desconto:'1', requer_producao:true };
@@ -78,7 +79,7 @@ test('painel Pedido aplica gate nas respostas de detalhe e histórico', async()=
   assert.ok(saveLine.indexOf('clearPedidoCreateIntentKey(ticket.scope') < saveLine.indexOf('if(!detailGate.current.isCurrent(ticket'), 'sucesso tardio deve retirar a chave antes de descartar a resposta da UI');
   assert.match(saveLine,/error\?\.code==='PEDIDO_IDEMPOTENCY_CONFLICT'/);
   assert.match(saveLine,/recoverPedidoCreateIntentAfterConflict\(ticket\.scope,intentStorage\(\),createKey/);
-  assert.match(source,/queryKey:\['pedidos-http',groupId,empresaId,actorId,page,pageSize,applied\]/);
+  assert.match(source,/queryKey:\['pedidos-http',groupId,empresaId,actorId,sessionIdentity,page,pageSize,applied\]/);
   assert.match(source,/const refreshConflictScope=async\(ticket,scope\)=>\{if\(!canView\|\|!detailGate\.current\.isCurrent/);
   assert.match(source,/await api\.list\(\{limit:1,offset:0\}\)/);
   assert.match(source,/invalidateQueries\(\{queryKey:\['pedidos-http',scope\.groupId,scope\.empresaId,scope\.actorId\],refetchType:'all'\},\{throwOnError:true\}\)/);
@@ -327,4 +328,47 @@ test('painel Pedido: imprimir e compartilhar no detalhe', async ()=>{
   assert.match(source,/pedido-print-pdf/);
   assert.match(source,/pedido-share-whatsapp/);
   assert.match(source,/gerarPDFPedido/);
+});
+
+
+test('explainPedidoPersistenceError: coluna idempotency_key ausente → mensagem 044 explícita', () => {
+  const msg = explainPedidoPersistenceError({
+    message: 'column "idempotency_key" of relation "pedidos" does not exist',
+    code: '42703',
+  });
+  assert.ok(msg);
+  assert.match(msg, /044/);
+  assert.match(msg, /não foi confirmado como salvo/i);
+  assert.equal(explainPedidoPersistenceError({ message: 'timeout de rede' }), null);
+  assert.equal(explainPedidoPersistenceError(null), null);
+});
+
+test('explainPedidoPersistenceError: body API com payload_fingerprint', () => {
+  const msg = explainPedidoPersistenceError({
+    status: 500,
+    body: { error: { message: 'column payload_fingerprint does not exist' } },
+  });
+  assert.ok(msg);
+  assert.match(msg, /idempotência/i);
+});
+
+test('PedidoCanonicoPanel e OrcamentosTab usam explainPedidoPersistenceError (não mascaram 044)', async () => {
+  const panel = await readFile(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx', import.meta.url), 'utf8');
+  const orc = await readFile(new URL('../src/components/comercial/OrcamentosTab.jsx', import.meta.url), 'utf8');
+  assert.match(panel, /explainPedidoPersistenceError/);
+  assert.match(orc, /explainPedidoPersistenceError/);
+});
+
+
+test('Pedido convertido mantém vínculo de orçamento no payload de edição e pedido direto não o inventa',()=>{
+  for (const origin of ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', null]) {
+    const row={cliente_empresa_id:'ce',condicao_pagamento_id:'cp',tipo_operacao:'RETIRADA',
+      orcamento_id:origin,data_entrega_solicitada:'2027-12-01T00:00:00.000Z',itens:[item]};
+    const form=mapPedidoRowToForm(row);
+    form.observacoes='Ajuste permitido sem perder origem';
+    const payload=buildPedidoPayload(form);
+    assert.equal(payload.orcamento_id ?? null,origin);
+    assert.equal(payload.cliente_empresa_id,row.cliente_empresa_id);
+    assert.equal(row.orcamento_id,origin);
+  }
 });

@@ -1,0 +1,25 @@
+Contatos Cliente — lacuna HTTP corrigida no contrato MASTER existente
+======================================================================
+Tip base: a37b736f · lote neste SHA (ver commit) · #353
+
+Fluxo real
+  UI GerenciarContatosClienteForm / CadastroClienteCompleto
+    → formData.contatos[]
+    → httpApiClient.entities.Cliente.create|update
+    → toClienteMasterHttpPayload (projeta contatos → email/telefone/celular)
+    → PATCH/POST /api/v1/clientes
+    → clienteUpdateSchema.strict (rejeita contatos cru)
+    → ClienteService + repo (escalares)
+    → GET hidrata contatos[] via withHydratedContatos
+
+Provas (sintético / isolado)
+- Adapter: add/edit/remove/reopen via projeção + hidratação
+- BFF: viewer 403; contatos cru 400; escalares add/edit/remove + GET;
+  tenant indevido / ator ausente não mutam
+- UI RBAC + late-save (assertScopeCurrent) já em cadastros-contatos-enderecos-rbac
+- CANAL: hunks autorizados em consolidation81Remainder (httpApiClient)
+
+Não feito
+- Entidade/tabela contatos paralela
+- Aceitar contatos[] no schema BFF
+- Multi-contato do mesmo canal além do principal (escalar único por canal)

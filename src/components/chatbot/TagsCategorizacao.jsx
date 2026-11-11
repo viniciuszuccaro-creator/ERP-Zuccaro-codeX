@@ -53,7 +53,7 @@ export default function TagsCategorizacao({ conversa }) {
   };
 
   const salvarTagsMutation = useMutation({
-    mutationFn: async (tags) => {
+    mutationFn: async (/** @type {string[]} */ tags) => {
       if (!contextoValido || !canEditTags) {
         throw new Error('Contexto ou permissao insuficiente para atualizar tags');
       }

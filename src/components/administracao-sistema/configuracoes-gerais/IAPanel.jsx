@@ -8,7 +8,7 @@ export default function IAPanel() {
     <div className="w-full h-full grid grid-cols-1 2xl:grid-cols-2 gap-6 items-start">
       <div className="w-full min-h-[300px]">
         <ProtectedSection module="Sistema" section={["Configurações","IA"]} action="visualizar">
-          <ConfigCenter scope="ia" />
+          <ConfigCenter />
         </ProtectedSection>
       </div>
     </div>

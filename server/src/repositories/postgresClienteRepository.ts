@@ -1,9 +1,11 @@
 import { AppError } from '../api/errors.js';
+import { assertClienteMasterExtraStorage, clienteMasterExtraWrite, projectClienteMasterExtras } from './clienteMasterExtras.js';
 import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { ListOptions, Scope } from '../services/tenantCrudService.js';
 import type {
   Cliente,
+  ClienteListItem,
   ClienteCreate,
   ClienteEmpresa,
   ClienteEmpresaCreate,
@@ -16,9 +18,14 @@ import type {
   ClienteRepository,
 } from './inMemoryClienteRepository.js';
 import { reserveEntityCodigo } from './reserveEntityCodigo.js';
+import { clienteBulkSnapshotSchema } from '../services/clienteBulkLifecycle.js';
+import { clienteOperacaoLinksSchema, clienteContatosReplaceSchema } from './clienteTypes.js';
 
 function mapCliente(row: Record<string, unknown>): Cliente {
   return {
+    ...projectClienteMasterExtras(row),
+    ...(Object.hasOwn(row, 'contatos') ? { contatos: row.contatos === null ? null
+      : clienteContatosReplaceSchema.parse({ contatos: row.contatos, expectedVersion: '0'.repeat(64) }).contatos } : {}),
     id: String(row.id),
     group_id: String(row.group_id),
     empresa_id: row.empresa_id == null ? null : String(row.empresa_id),
@@ -46,7 +53,7 @@ function mapCliente(row: Record<string, unknown>): Cliente {
     created_by: row.created_by == null ? null : String(row.created_by),
     updated_by: row.updated_by == null ? null : String(row.updated_by),
     created_at: String(row.created_at),
-    updated_at: String(row.updated_at),
+    updated_at: String(row.contatos === undefined ? row.updated_at : row.cliente_updated_at_canonical ?? row.updated_at),
   };
 }
 
@@ -98,16 +105,53 @@ export class PostgresClienteRepository implements ClienteRepository {
     return this.db.withTransaction(fn);
   }
 
+  async getBulkSnapshot(scope: Scope, id: string, executor: DbQueryExecutor) {
+    const result = await executor.query(`SELECT to_jsonb(c) AS snapshot FROM clientes c
+      WHERE c.group_id=$1 AND c.id=$2 AND ($3::uuid IS NULL OR c.empresa_id=$3::uuid) FOR UPDATE OF c`,
+    [scope.groupId, id, scope.empresaId ?? null]);
+    return result.rows.length ? clienteBulkSnapshotSchema.parse(result.rows[0].snapshot) : null;
+  }
+
   async list(filter: Scope & ListOptions): Promise<Cliente[]> {
     const page = await this.listPage({ ...filter, offset: 0 });
     return page.rows;
   }
 
-  async listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }> {
+  async prepareExport(scope: Scope, executor: DbQueryExecutor): Promise<() => Promise<void>> {
+    const state = await executor.query(`SELECT current_setting('app.group_id',true) AS group_id,
+      NULLIF(current_setting('app.empresa_id',true),'') AS empresa_id,
+      current_setting('transaction_isolation') AS isolation, current_setting('row_security') AS row_security`);
+    if (state.rows[0]?.group_id !== scope.groupId || state.rows[0]?.empresa_id !== (scope.empresaId ?? null)
+      || state.rows[0]?.isolation !== 'read committed') {
+      throw new AppError(403, 'CLIENTE_EXPORT_CONTEXT_REQUIRED', 'Matching tenant transaction required');
+    }
+    await executor.query('LOCK TABLE clientes IN SHARE MODE NOWAIT');
+    const previous = state.rows[0]?.row_security;
+    if (previous !== 'on' && previous !== 'off') throw new Error('CLIENTE_EXPORT_VISIBILITY_UNVERIFIED');
+    // off does not bypass policies: PostgreSQL rejects a query affected by RLS instead of silently filtering.
+    await executor.query("SELECT set_config('row_security','off',true)");
+    return async () => { await executor.query("SELECT set_config('row_security',$1,true)", [previous]); };
+  }
+
+  async listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,
+    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }> {
+    if (exportOptions && !executor) throw new Error('CLIENTE_EXPORT_TRANSACTION_REQUIRED');
+    if (filter.clienteEmpresaId && !filter.operacao) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');
+    }
+    const query = executor ?? this.db;
     const limit = Math.min(Math.max(filter.limit ?? 50, 1), 200);
     const offset = Math.max(filter.offset ?? 0, 0);
     const params: unknown[] = [filter.groupId];
     const where = ['group_id = $1'];
+    if (exportOptions?.exactEmpresa && filter.empresaId != null) {
+      params.push(filter.empresaId);
+      where.push(`empresa_id = $${params.length}::uuid`);
+    }
+    if (exportOptions?.ids) {
+      params.push(exportOptions.ids);
+      where.push(`id = ANY($${params.length}::uuid[])`);
+    }
     const ativoFilter = typeof filter.ativo === 'boolean' ? filter.ativo : true;
     params.push(ativoFilter);
     where.push(`ativo = $${params.length}`);
@@ -148,19 +192,67 @@ export class PostgresClienteRepository implements ClienteRepository {
         )`);
       }
     }
+    let operationalLinksSql: string | undefined;
+    if (filter.operacao) {
+      if (!filter.empresaId || filter.ativo === false || exportOptions) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
+      params.push(filter.empresaId);
+      operationalLinksSql = `ce.group_id=clientes.group_id AND ce.cliente_id=clientes.id AND ce.empresa_id=$${params.length}
+        AND ce.ativo=true AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao=true AND ce.bloqueado=false`;
+      if (filter.clienteEmpresaId) {
+        params.push(filter.clienteEmpresaId);
+        where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql} AND ce.id=$${params.length}::uuid)`);
+      }
+      where.push(`EXISTS (SELECT 1 FROM cliente_empresas ce WHERE ${operationalLinksSql})`);
+    }
     const whereSql = where.join(' AND ');
     const orderBy = filter.orderBy === 'nome'
       ? `lower(coalesce(nome, razao_social, '')) ${filter.orderDir === 'desc' ? 'DESC' : 'ASC'}`
       : `(NULLIF(regexp_replace(codigo, '\\D', '', 'g'), '')::BIGINT) ${filter.orderDir === 'desc' ? 'DESC' : 'ASC'} NULLS LAST`;
 
-    const countResult = await this.db.query(
+    if (operationalLinksSql) {
+      params.push(limit, offset);
+      // One statement fixes total, identities and the page to the same snapshot.
+      const result = await query.query<{ total: number; rows: Record<string, unknown>[] }>(
+        `WITH filtered AS MATERIALIZED (
+          SELECT clientes.*, (SELECT jsonb_agg(jsonb_build_object(
+            'id',ce.id,'group_id',ce.group_id,'cliente_id',ce.cliente_id,'empresa_id',ce.empresa_id,
+            'ativo',ce.ativo,'situacao_comercial',ce.situacao_comercial,'habilitado_operacao',ce.habilitado_operacao,
+            'bloqueado',ce.bloqueado,'elegivel_operacao',ce.ativo AND ce.situacao_comercial='ATIVO' AND ce.habilitado_operacao AND NOT ce.bloqueado
+          )) FROM cliente_empresas ce WHERE ${operationalLinksSql}) AS operational_links
+          FROM clientes WHERE ${whereSql}
+        ), page AS (
+          SELECT *,row_number() OVER (ORDER BY ${orderBy},created_at DESC,id ASC) AS _ordinal
+          FROM filtered ORDER BY ${orderBy},created_at DESC,id ASC
+          LIMIT $${params.length - 1} OFFSET $${params.length}
+        )
+        SELECT (SELECT count(*)::int FROM filtered) AS total,
+          coalesce((SELECT jsonb_agg(to_jsonb(page) ORDER BY _ordinal) FROM page),'[]'::jsonb) AS rows`,
+        params,
+      );
+      const page = result.rows[0];
+      if (!page || !Number.isSafeInteger(page.total) || page.total < 0 || !Array.isArray(page.rows)) {
+        throw new AppError(503, 'CLIENTE_OPERATIONAL_PAGE_INVALID', 'Operational customer page unavailable');
+      }
+      return {
+        total: page.total,
+        rows: page.rows.map(row => {
+          const parsed = clienteOperacaoLinksSchema.safeParse(row.operational_links);
+          if (!parsed.success || parsed.data[0].cliente_id !== String(row.id)
+            || parsed.data[0].group_id !== filter.groupId || parsed.data[0].empresa_id !== filter.empresaId) {
+            throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');
+          }
+          return { ...mapCliente(row), empresa_operacao: parsed.data[0] };
+        }),
+      };
+    }
+    const countResult = await query.query(
       `SELECT count(*)::int AS total FROM clientes WHERE ${whereSql}`,
       params,
     );
     const total = Number(countResult.rows[0]?.total ?? 0);
     params.push(limit, offset);
-    const result = await this.db.query(
-      `SELECT * FROM clientes WHERE ${whereSql} ORDER BY ${orderBy}, created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    const result = await query.query(
+      `SELECT * FROM clientes WHERE ${whereSql} ORDER BY ${orderBy}, created_at DESC${exportOptions ? ', id ASC' : ''} LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
     return {
@@ -172,7 +264,8 @@ export class PostgresClienteRepository implements ClienteRepository {
   async getById(scope: Scope, id: string,executor?:DbQueryExecutor,options?:{forUpdate?:boolean}): Promise<Cliente | null> {
     if(options?.forUpdate&&!executor)throw new Error('CLIENTE_ROW_LOCK_REQUIRES_TRANSACTION');
     const result = await (executor??this.db).query(
-      `SELECT * FROM clientes WHERE group_id = $1 AND id = $2${options?.forUpdate?' FOR UPDATE':''}`,
+      `SELECT c.*, to_char(c.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical
+       FROM clientes c WHERE group_id = $1 AND id = $2${options?.forUpdate?' FOR UPDATE':''}`,
       [scope.groupId, id],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;
@@ -181,15 +274,18 @@ export class PostgresClienteRepository implements ClienteRepository {
 
   async findByDocumento(groupId: string, documentoNormalizado: string,executor?:DbQueryExecutor): Promise<Cliente | null> {
     const result = await (executor??this.db).query(
-      'SELECT * FROM clientes WHERE group_id = $1 AND documento_normalizado = $2 LIMIT 1',
+      'SELECT * FROM clientes WHERE group_id = $1 AND documento_normalizado = $2 LIMIT 2',
       [groupId, documentoNormalizado],
     );
+    if (result.rows.length > 1) {
+      throw new AppError(409, 'LEGACY_RECONCILIATION_REQUIRED', 'Ambiguous customer document');
+    }
     const row = result.rows[0] as Record<string, unknown> | undefined;
     return row ? mapCliente(row) : null;
   }
 
   async findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null> {
-    const result = await this.db.query('SELECT * FROM clientes WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3',
+    const result = await this.db.query('SELECT * FROM clientes WHERE group_id=$1 AND source_system=$2 AND codigo_legado=$3 LIMIT 2',
       [groupId,sourceSystem,codigoLegado]);
     if (result.rows.length > 1) throw new AppError(409,'LEGACY_RECONCILIATION_REQUIRED','Ambiguous imported identity');
     return result.rows[0] ? mapCliente(result.rows[0] as Record<string,unknown>) : null;
@@ -215,15 +311,17 @@ export class PostgresClienteRepository implements ClienteRepository {
         incomingCodigo: data.codigo,
       });
 
+      const extra = clienteMasterExtraWrite(data, 24);
+      await assertClienteMasterExtraStorage(client, extra.columns);
       const insert = await client.query(
         `INSERT INTO clientes (
           group_id, empresa_id, codigo, tipo, documento, documento_normalizado,
           nome, razao_social, nome_fantasia, nome_social,
           inscricao_estadual, inscricao_municipal, email, telefone, celular,
           status, origem, codigo_legado, legacy_id, source_system, migration_batch,
-          observacoes, ativo, created_by, updated_by
+          observacoes, ativo, created_by, updated_by${extra.columns.length ? ', ' + extra.columns.join(', ') : ''}
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$24${extra.placeholders.length ? ', ' + extra.placeholders.join(', ') : ''}
         ) RETURNING *`,
         [
           scope.groupId,
@@ -250,6 +348,7 @@ export class PostgresClienteRepository implements ClienteRepository {
           data.observacoes ?? null,
           data.ativo ?? true,
           actorId ?? null,
+          ...extra.values,
         ],
       );
       const created = mapCliente(insert.rows[0] as Record<string, unknown>);
@@ -272,6 +371,9 @@ export class PostgresClienteRepository implements ClienteRepository {
     if(!executor)return this.db.withTransaction(q=>this.update(scope,id,data,q));
     const current = await this.getById(scope, id,executor,{forUpdate:true});
     if (!current) return null;
+    if (data.contatos !== undefined && current.contatos === undefined) {
+      throw new AppError(503, 'CLIENTE_CONTATOS_STORAGE_REQUIRED', 'Reviewed contacts schema required');
+    }
     const rawDoc = data.documento !== undefined || data.cpf_cnpj !== undefined
       ? (data.documento ?? data.cpf_cnpj ?? '')
       : undefined;
@@ -304,15 +406,17 @@ export class PostgresClienteRepository implements ClienteRepository {
       ativo: data.ativo === undefined ? current.ativo : data.ativo,
     };
 
+    const extra = clienteMasterExtraWrite(data, data.contatos === undefined ? 23 : 24);
+    await assertClienteMasterExtraStorage(executor, extra.columns);
     const result = await executor.query(
       `UPDATE clientes SET
         empresa_id=$1, tipo=$2, documento=$3, documento_normalizado=$4,
         nome=$5, razao_social=$6, nome_fantasia=$7, nome_social=$8,
         inscricao_estadual=$9, inscricao_municipal=$10, email=$11, telefone=$12, celular=$13,
         status=$14, origem=$15, codigo_legado=$16, legacy_id=$17, source_system=$18,
-        migration_batch=$19, observacoes=$20, ativo=$21
+        migration_batch=$19, observacoes=$20, ativo=$21${data.contatos === undefined ? '' : ', contatos=$24::jsonb'}${extra.assignments.length ? ', ' + extra.assignments.join(', ') : ''}
        WHERE group_id=$22 AND id=$23
-       RETURNING *`,
+       RETURNING *, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cliente_updated_at_canonical`,
       [
         next.empresa_id, next.tipo, next.documento, next.documento_normalizado,
         next.nome, next.razao_social, next.nome_fantasia, next.nome_social,
@@ -320,6 +424,8 @@ export class PostgresClienteRepository implements ClienteRepository {
         next.status, next.origem, next.codigo_legado, next.legacy_id, next.source_system,
         next.migration_batch, next.observacoes, next.ativo,
         scope.groupId, id,
+        ...(data.contatos === undefined ? [] : [data.contatos === null ? null : JSON.stringify(data.contatos)]),
+        ...extra.values,
       ],
     );
     const row = result.rows[0] as Record<string, unknown> | undefined;

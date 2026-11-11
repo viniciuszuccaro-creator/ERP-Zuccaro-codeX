@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, ShoppingCart } from "lucide-react";
 import FormWrapper from "@/components/common/FormWrapper";
+import { formErrorMessage } from "@/components/common/FormErrorSummary";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useToast } from "@/components/ui/use-toast";
 import usePermissions from "@/components/lib/usePermissions";
@@ -177,7 +178,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 data-action="Compras.SolicitacaoCompra.dataSolicitacao"
                 data-context-required="group-and-company"
               />
-              {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{errors.data_solicitacao.message}</p>}
+              {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.data_solicitacao.message)}</p>}
             </div>
 
             <div className="col-span-2">
@@ -204,7 +205,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                   </Select>
                 )}
               />
-              {errors.produto_id && <p className="text-red-600 text-xs mt-1">{errors.produto_id.message}</p>}
+              {errors.produto_id && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.produto_id.message)}</p>}
             </div>
 
             <div>
@@ -222,7 +223,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                   data-context-required="group-and-company"
                   data-sensitive="true"
                 />
-                {errors.quantidade_solicitada && <p className="text-red-600 text-xs mt-1">{errors.quantidade_solicitada.message}</p>}
+                {errors.quantidade_solicitada && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.quantidade_solicitada.message)}</p>}
                 <span className="bg-slate-100 px-3 py-2 rounded border text-sm">
                   {watch('unidade_medida')}
                 </span>
@@ -277,7 +278,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                 data-action="Compras.SolicitacaoCompra.justificativa"
                 data-context-required="group-and-company"
               />
-              {errors.justificativa && <p className="text-red-600 text-xs mt-1">{errors.justificativa.message}</p>}
+              {errors.justificativa && <p className="text-red-600 text-xs mt-1">{formErrorMessage(errors.justificativa.message)}</p>}
             </div>
 
             <div className="col-span-2">

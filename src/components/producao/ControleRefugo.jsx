@@ -123,7 +123,7 @@ export default function ControleRefugo({ ops }) {
             </TableHeader>
             <TableBody>
               {todosRefugos
-                .sort((a, b) => new Date(b.data) - new Date(a.data))
+                .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
                 .slice(0, 50)
                 .map((r, idx) => (
                   <TableRow key={idx}>

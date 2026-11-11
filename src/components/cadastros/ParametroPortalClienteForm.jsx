@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
   const podeCriar = canCreate("Cadastros", "ParametroPortalCliente") || canCreate("Sistema", "PortalCliente") || canCreate("Cadastros", null);
   const podeEditar = canEdit("Cadastros", "ParametroPortalCliente") || canEdit("Sistema", "PortalCliente") || canEdit("Cadastros", null);
   const podeSalvar = parametro?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = useState(parametro || {
+  const [formData, setFormData] = useCadastroRecordState(parametro || {
     habilitar_portal: true,
     permitir_visualizar_pedidos: true,
     permitir_aprovar_orcamentos: true,
@@ -26,7 +27,7 @@ export default function ParametroPortalClienteForm({ parametro, onSubmit, window
     permitir_download_documentos: true,
     prazo_expiracao_link_dias: 30,
     observacoes: ""
-  });
+  }, JSON.stringify([parametro?.id ?? null, parametro?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();

@@ -58,7 +58,7 @@ export default function OcorrenciasPanel({ entrega, onUpdated }) {
 
   const lista = useMemo(() => (
     Array.isArray(entrega?.ocorrencias) ? [...entrega.ocorrencias] : []
-  ).sort((a,b)=> new Date(b.data_hora||0)-new Date(a.data_hora||0)), [entrega?.ocorrencias]);
+  ).sort((a,b)=> new Date(b.data_hora||0).getTime()-new Date(a.data_hora||0).getTime()), [entrega?.ocorrencias]);
 
   const uploadFoto = async (file) => {
     if (!contextoValido || !canCreateOccurrence) {

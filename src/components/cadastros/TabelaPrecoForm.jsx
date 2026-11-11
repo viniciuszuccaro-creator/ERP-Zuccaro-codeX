@@ -1,3 +1,4 @@
+import useCadastroRecordState from './useCadastroRecordState';
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 const sanitizeText = (value, max = 255) => String(value ?? "").replace(/[<>]/g, "").slice(0, max).trim();
 const sanitizeDate = (value) => sanitizeText(value, 20);
@@ -22,7 +24,7 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
   const podeEditar = canEdit("Cadastros", "TabelaPreco") || canEdit("Comercial", "TabelaPreco") || canEdit("Cadastros", null);
   const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Produtos', 'TabelaPreco', 'codigo_tabela_legado', 'editar');
-  const [formData, setFormData] = useState(dadosIniciais || {
+  const [formData, setFormData] = useCadastroRecordState(dadosIniciais || {
     nome: '',
     descricao: '',
     codigo_tabela_legado: '',
@@ -30,7 +32,7 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
     data_inicio: new Date().toISOString().split('T')[0],
     data_fim: '',
     ativo: true
-  });
+  }, JSON.stringify([dadosIniciais?.id ?? null, dadosIniciais?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -63,6 +65,12 @@ export default function TabelaPrecoForm({ tabela, item, data, initialData, defau
 
   const content = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <CadastroCodigoRegistroField
+        hasId={Boolean(dadosIniciais?.id)}
+        entityId={dadosIniciais?.id}
+        value={dadosIniciais?.codigo ?? formData.codigo}
+        action="codigo-registro-tabela-preco"
+      />
       <div>
         <Label>Nome da Tabela *</Label>
         <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Ex: Atacado SP, Varejo Nacional" disabled={!podeSalvar} data-permission="Cadastros.TabelaPreco.editar" data-action="editar-nome-tabela-preco" data-sensitive />

@@ -91,7 +91,7 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
     cyan: 'from-cyan-500 to-cyan-600'
   };
 
-  const tempoDesdeUltimaAtualizacao = Math.floor((agora - ultimaAtualizacao) / 1000);
+  const tempoDesdeUltimaAtualizacao = Math.floor((agora.getTime() - ultimaAtualizacao.getTime()) / 1000);
 
   return (
     <Card className="border-cyan-300 bg-gradient-to-r from-cyan-50 to-blue-50">
@@ -154,7 +154,7 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
         <div className="space-y-2">
             {porCanal.map((canal, idx) => {
             const tempoUltimo = canal.ultimoPedido ?
-            Math.floor((agora - new Date(canal.ultimoPedido)) / 60000) :
+            Math.floor((agora.getTime() - new Date(canal.ultimoPedido).getTime()) / 60000) :
             null;
 
             return (

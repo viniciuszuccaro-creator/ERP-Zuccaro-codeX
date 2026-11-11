@@ -13,11 +13,18 @@ import { Split, Shuffle, Building2, DollarSign, Percent } from "lucide-react";
 
 /**
  * Componente de rateio automático de despesas/receitas do GRUPO para as empresas
+ * @typedef {{tipo_documento: string, descricao: string, categoria: string, valor_total: number,
+ * data_vencimento: string, criterio_rateio: string,
+ * distribuicao: {empresa_id: string, empresa_nome: string, percentual: number, valor: number|string, observacao: string}[]}} RateioForm
+ */
+/**
+ * @param {{empresas: {id: string, nome_fantasia?: string, razao_social: string}[], grupoId: string, windowMode?: boolean}} props
  */
 export default function RateioMultiempresa({ empresas, grupoId, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  /** @type {[RateioForm, import('react').Dispatch<import('react').SetStateAction<RateioForm>>]} */
   const [formRateio, setFormRateio] = useState({
     tipo_documento: "ContaPagar",
     descricao: "",
@@ -35,7 +42,7 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
   });
 
   const criarRateioMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {typeof formRateio} */ dados) => {
       // 1. Criar registro de rateio
       const rateio = await base44.entities.RateioFinanceiro.create({
         group_id: grupoId,
@@ -54,7 +61,7 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
       const titulosCriados = [];
       
       for (const dist of dados.distribuicao) {
-        if (dist.valor > 0) {
+        if (Number(dist.valor) > 0) {
           const EntidadeAlvo = dados.tipo_documento === "ContaPagar" 
             ? base44.entities.ContaPagar 
             : base44.entities.ContaReceber;
@@ -68,7 +75,7 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
             rateio_id: rateio.id,
             descricao: `${dados.descricao} (${dist.empresa_nome})`,
             [dados.tipo_documento === "ContaPagar" ? "fornecedor" : "cliente"]: dados.descricao,
-            valor: parseFloat(dist.valor),
+            valor: parseFloat(String(dist.valor)),
             valor_original_grupo: dados.valor_total,
             percentual_rateio: dist.percentual,
             data_emissao: new Date().toISOString().split('T')[0],
@@ -157,7 +164,7 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const totalPercentual = formRateio.distribuicao.reduce((sum, d) => sum + (parseFloat(d.percentual) || 0), 0);
+    const totalPercentual = formRateio.distribuicao.reduce((sum, d) => sum + (parseFloat(String(d.percentual)) || 0), 0);
     
     if (Math.abs(totalPercentual - 100) > 0.01) {
       toast({
@@ -336,17 +343,17 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
                   <div>
                     <span className="text-sm text-blue-700">Percentual: </span>
                     <span className={`font-bold text-lg ${
-                      Math.abs(formRateio.distribuicao.reduce((s, d) => s + (parseFloat(d.percentual) || 0), 0) - 100) < 0.01
+                      Math.abs(formRateio.distribuicao.reduce((s, d) => s + (parseFloat(String(d.percentual)) || 0), 0) - 100) < 0.01
                         ? "text-green-600"
                         : "text-red-600"
                     }`}>
-                      {formRateio.distribuicao.reduce((s, d) => s + (parseFloat(d.percentual) || 0), 0).toFixed(2)}%
+                      {formRateio.distribuicao.reduce((s, d) => s + (parseFloat(String(d.percentual)) || 0), 0).toFixed(2)}%
                     </span>
                   </div>
                   <div>
                     <span className="text-sm text-blue-700">Valor: </span>
                     <span className="font-bold text-lg text-blue-900">
-                      R$ {formRateio.distribuicao.reduce((s, d) => s + (parseFloat(d.valor) || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      R$ {formRateio.distribuicao.reduce((s, d) => s + (parseFloat(String(d.valor)) || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>

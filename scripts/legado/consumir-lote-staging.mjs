@@ -25,6 +25,7 @@ import {
 } from './mapear-registro-sintetico.mjs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+export { persistirEnderecoClienteGrupoLegado, criarRegistroEnderecoPilotoPostgres } from './persistencia-endereco-legado.mjs';
 
 /** Ordem de dependencia minima para Produtos / Clientes / Fornecedores. */
 export const LEGADO_DEPENDENCIA_ORDEM = Object.freeze([

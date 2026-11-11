@@ -17,7 +17,43 @@ import {
   buildVendasRecompraSuggestions,
   isSensitiveIaExecution,
   stampAnomalyScanResult,
+  buildUpsellSuggestions,
 } from '../src/components/lib/iaTransversalPolicy.js';
+import * as invocation from '../src/components/lib/iaInvocationPolicy.js';
+import * as finance from '../src/components/lib/iaFinancePolicy.js';
+
+test('exports publicos reutilizam as mesmas policies extraidas', () => {
+  assert.equal(assertIaInvocation, invocation.assertIaInvocation);
+  assert.equal(assertIaUiContext, invocation.assertIaUiContext);
+  assert.equal(assertForecastUiContext, invocation.assertForecastUiContext);
+  assert.equal(assertAnomalyScanContext, invocation.assertAnomalyScanContext);
+  assert.equal(buildFinanceAnomalySuggestions, finance.buildFinanceAnomalySuggestions);
+  assert.equal(buildConciliacaoMatchSuggestions, finance.buildConciliacaoMatchSuggestions);
+  assert.equal(buildFluxoCaixaProjection, finance.buildFluxoCaixaProjection);
+});
+
+test('timestamps preservam limites de reposicao e nao sugerem com data invalida', () => {
+  const hoje = new Date('2026-10-13T12:00:00Z');
+  for (const [days, expected] of [[24.99, 0], [25, 1], [35, 1], [36, 0]]) {
+    const data_pedido = new Date(hoje.getTime() - days * 86400000).toISOString();
+    const options = { pedidos: [{ data_pedido, itens_revenda: [] }], hoje };
+    const result = buildUpsellSuggestions(options);
+    assert.equal(result.sugestoes.filter(item => item.tipo === 'reposicao').length, expected);
+    assert.deepEqual(buildUpsellSuggestions({ ...options, hoje: hoje.toISOString() }), result);
+  }
+  const invalid = buildUpsellSuggestions({ pedidos: [{ data_pedido: 'INVALID_SYNTHETIC_DATE' }], hoje });
+  assert.equal(invalid.sugestoes.some(item => item.tipo === 'reposicao'), false);
+});
+
+test('recompra preserva ordem cronologica e ignora datas invalidas', () => {
+  const cliente = { id: 'SYNTHETIC-CLIENT', status: 'Ativo', data_ultima_compra: '2026-10-02T12:00:00Z' };
+  const dates = ['2026-08-03T12:00:00Z', '2026-09-02T12:00:00Z', '2026-10-02T12:00:00Z'];
+  const options = { clientes: [cliente], pedidos: dates.map(data_pedido => ({ cliente_id: cliente.id, data_pedido })),
+    hoje: new Date('2026-11-02T12:00:00Z') };
+  const expected = buildVendasRecompraSuggestions(options);
+  const reordered = { ...options, pedidos: [...options.pedidos].reverse().concat({ cliente_id: cliente.id, data_pedido: 'INVALID_SYNTHETIC_DATE' }) };
+  assert.deepEqual(buildVendasRecompraSuggestions(reordered), expected);
+});
 
 test('IA exige grupo e nao executa acao sensivel', () => {
   assert.throws(() => assertIaInvocation({ payload: { prompt: 'oi' } }), /Grupo obrigatorio/);
@@ -105,8 +141,12 @@ test('P2 IA transversal: CRM, financeiro e logistica usam sugestao com contexto'
   assert.match(crmUi, /buildCrmAbcChurnSuggestions/);
   assert.match(crmUi, /requireIaHumanConfirm/);
   assert.doesNotMatch(crmUi, /entities\.Oportunidade\.create/);
-  assert.match(concUi, /buildConciliacaoMatchSuggestions/);
-  assert.match(concUi, /requireIaHumanConfirm/);
+  assert.match(concUi, /ExtratoBancarioImportDialog/);
+  assert.match(concUi, /financeiro_conciliacao/);
+  assert.doesNotMatch(concUi, /updateInContext|createInContext|buildConciliacaoMatchSuggestions/);
+  const canonicalDialog = await readFile(new URL('../src/components/financeiro/ExtratoBancarioImportDialog.jsx',import.meta.url),'utf8');
+  assert.match(canonicalDialog, /window.confirm/);
+  assert.match(canonicalDialog, /reconcileSource/);
   assert.match(anomUi, /buildFinanceAnomalySuggestions/);
   assert.match(prevUi, /assertIaUiContext/);
   assert.match(prevUi, /group_id: groupId/);

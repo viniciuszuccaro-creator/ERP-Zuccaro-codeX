@@ -122,7 +122,7 @@ export default function ConfiguracoesUsuario() {
   }, [user]);
 
   const updateUserMutation = useMutation({
-    mutationFn: (data) => base44.auth.updateMe(data),
+    mutationFn: (/** @type {typeof preferencesForm} */ data) => base44.auth.updateMe(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       setSaveSuccess(true);

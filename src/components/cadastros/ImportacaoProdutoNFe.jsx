@@ -312,10 +312,10 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
   };
 
   return (
-    <Card className="border-2 border-purple-200 w-full h-full" data-context-required="group-and-company" data-permission="Cadastros.Produto.importar">
-      <CardHeader className="bg-purple-50">
+    <Card className="border-2 border-sky-200 w-full h-full" data-context-required="group-and-company" data-permission="Cadastros.Produto.importar">
+      <CardHeader className="bg-sky-50">
         <CardTitle className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-purple-600" />
+          <FileText className="w-5 h-5 text-sky-600" />
           Importar Produtos da NF-e
         </CardTitle>
       </CardHeader>
@@ -372,7 +372,7 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
             data-permission="Cadastros.Produto.importar"
             data-action="Cadastros.Produto.importar-nfe.processar"
             data-context-required="group-and-company"
-            className="w-full bg-purple-600 hover:bg-purple-700"
+            className="w-full bg-sky-600 hover:bg-sky-700"
           >
             {processando ? (
               <>

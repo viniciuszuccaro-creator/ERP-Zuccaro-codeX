@@ -13,7 +13,7 @@ export default function DashboardTabsNav() {
         <BarChart3 className="w-4 h-4 mr-2" />
         Resumo Geral
       </TabsTrigger>
-      <TabsTrigger value="bi-operacional" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+      <TabsTrigger value="bi-operacional" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
         🤖 BI Operacional
       </TabsTrigger>
     </TabsList>

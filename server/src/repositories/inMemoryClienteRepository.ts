@@ -1,10 +1,14 @@
 import { AppError } from '../api/errors.js';
+import { projectClienteMasterExtras } from './clienteMasterExtras.js';
+import { clienteOperacaoLinkSchema } from './clienteTypes.js';
 import { randomUUID } from 'node:crypto';
 import type { ListOptions, Scope, TenantEntityRepository } from '../services/tenantCrudService.js';
 import { normalizeDocumento } from '../db/documentoValidators.js';
 import type { DbQueryExecutor } from '../db/client.js';
+import type { CadastroBulkRow } from '../services/cadastroBulkPolicy.js';
 import type {
   Cliente,
+  ClienteListItem,
   ClienteCreate,
   ClienteEmpresa,
   ClienteEmpresaCreate,
@@ -15,6 +19,8 @@ import type {
 function nowIso() { return new Date().toISOString(); }
 
 export type ClienteListFilter = Scope & ListOptions & {
+  operacao?: boolean;
+  clienteEmpresaId?: string;
   offset?: number;
   codigo?: string;
   documento?: string;
@@ -33,6 +39,8 @@ export type ClienteEmpresaListFilter = Scope & ListOptions & {
 };
 
 export interface ClienteRepository extends TenantEntityRepository<Cliente, ClienteCreate, ClienteUpdate> {
+  prepareExport?(scope: Scope, executor: DbQueryExecutor): Promise<() => Promise<void>>;
+  getBulkSnapshot?(scope: Scope, id: string, executor: DbQueryExecutor): Promise<CadastroBulkRow | null>;
   withTransaction<T>(fn: (executor?: DbQueryExecutor) => Promise<T>): Promise<T>;
   create(
     scope: Scope,
@@ -43,7 +51,8 @@ export interface ClienteRepository extends TenantEntityRepository<Cliente, Clien
   getById(scope: Scope,id:string,executor?:DbQueryExecutor,options?:{forUpdate?:boolean}):Promise<Cliente|null>;
   update(scope:Scope,id:string,data:ClienteUpdate,executor?:DbQueryExecutor):Promise<Cliente|null>;
   softDelete(scope:Scope,id:string,executor?:DbQueryExecutor):Promise<Cliente|null>;
-  listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }>;
+  listPage(filter: ClienteListFilter, executor?: DbQueryExecutor,
+    exportOptions?: { ids?: readonly string[]; exactEmpresa: true }): Promise<{ rows: ClienteListItem[]; total: number }>;
   findByDocumento(groupId: string, documentoNormalizado: string,executor?:DbQueryExecutor): Promise<Cliente | null>;
   findByLegacyIdentity(groupId: string, sourceSystem: string, codigoLegado: string): Promise<Cliente | null>;
   restore(scope: Scope, id: string,executor?:DbQueryExecutor): Promise<Cliente | null>;
@@ -115,6 +124,8 @@ function buildCliente(
   const docNorm = normalizeDocumento(raw) || null;
   return {
     id,
+    contatos: null,
+    ...projectClienteMasterExtras(data),
     group_id: scope.groupId,
     empresa_id: data.empresa_id ?? scope.empresaId ?? null,
     codigo,
@@ -209,8 +220,21 @@ export class InMemoryClienteRepository implements ClienteRepository {
     return page.rows;
   }
 
-  async listPage(filter: ClienteListFilter): Promise<{ rows: Cliente[]; total: number }> {
-    let all = [...this.rows.values()].filter((r) => this.matches(filter, r));
+  async listPage(filter: ClienteListFilter): Promise<{ rows: ClienteListItem[]; total: number }> {
+    if (filter.clienteEmpresaId && !filter.operacao) {
+      throw new AppError(422, 'VALIDATION_ERROR', 'Exact relationship requires operational scope');
+    }
+    let all: ClienteListItem[] = [...this.rows.values()].filter((r) => this.matches(filter, r));
+    if (filter.operacao) {
+      if (!filter.empresaId || filter.ativo === false) throw new AppError(422, 'CLIENTE_OPERATIONAL_SCOPE_REQUIRED', 'Active company scope required');
+      all = all.flatMap(row => {
+        const links = [...this.empresaLinks.values()].filter(link => link.group_id === filter.groupId
+          && link.empresa_id === filter.empresaId && link.cliente_id === row.id && link.elegivel_operacao);
+        if (filter.clienteEmpresaId && !links.some(link => link.id === filter.clienteEmpresaId)) return [];
+        if (links.length > 1) throw new AppError(409, 'CLIENTE_OPERATIONAL_LINK_AMBIGUOUS', 'Ambiguous operational customer link');
+        return links.length === 1 ? [{ ...row, empresa_operacao: clienteOperacaoLinkSchema.parse(links[0]) }] : [];
+      });
+    }
     const orderBy = filter.orderBy ?? 'codigo';
     const dir = filter.orderDir === 'desc' ? -1 : 1;
     all.sort((a, b) => {
@@ -232,13 +256,17 @@ export class InMemoryClienteRepository implements ClienteRepository {
   async getById(scope: Scope, id: string,_executor?:DbQueryExecutor,_options?:{forUpdate?:boolean}): Promise<Cliente | null> {
     const row = this.rows.get(id);
     if (!row || row.group_id !== scope.groupId) return null;
-    return row;
+    return structuredClone(row);
   }
 
   async findByDocumento(groupId: string, documentoNormalizado: string,_executor?:DbQueryExecutor): Promise<Cliente | null> {
-    return [...this.rows.values()].find(
-      (r) => r.group_id === groupId && r.documento_normalizado === documentoNormalizado,
-    ) ?? null;
+    let match: Cliente | null = null;
+    for (const row of this.rows.values()) {
+      if (row.group_id !== groupId || row.documento_normalizado !== documentoNormalizado) continue;
+      if (match) throw new AppError(409, 'LEGACY_RECONCILIATION_REQUIRED', 'Ambiguous customer document');
+      match = row;
+    }
+    return match;
   }
 
   async create(
@@ -297,9 +325,10 @@ export class InMemoryClienteRepository implements ClienteRepository {
     const next: Cliente = {
       ...current,
       ...Object.fromEntries(
-        Object.entries(data).filter(([k]) => k !== 'cpf_cnpj' && k !== 'documento'),
+        Object.entries(data).filter(([k, v]) => k !== 'cpf_cnpj' && k !== 'documento' && v !== undefined)
+          .map(([k, v]) => [k, structuredClone(v)]),
       ),
-      updated_at: nowIso(),
+      updated_at: new Date(Math.max(Date.now(), Date.parse(current.updated_at) + 1)).toISOString(),
     } as Cliente;
     if (data.documento !== undefined || data.cpf_cnpj !== undefined) {
       const raw = data.documento ?? data.cpf_cnpj ?? '';
@@ -312,7 +341,7 @@ export class InMemoryClienteRepository implements ClienteRepository {
       throw new Error('unique constraint clientes_legacy_identity_uidx');
     }
     this.rows.set(id, next);
-    return next;
+    return structuredClone(next);
   }
 
   softDelete(scope: Scope, id: string,executor?:DbQueryExecutor) {

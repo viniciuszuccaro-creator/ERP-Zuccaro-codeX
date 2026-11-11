@@ -2,6 +2,8 @@ import React from "react";
 import ModuleHeader from "@/components/layout/ModuleHeader";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
+/** @param {{title: React.ReactNode, subtitle?: React.ReactNode, actions?: React.ReactNode,
+ * children: React.ReactNode, className?: string}} props */
 export default function ModuleLayout({ title, subtitle, actions, children, className = "" }) {
   const { empresaAtual } = useContextoVisual();
   return (

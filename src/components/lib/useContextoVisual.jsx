@@ -116,14 +116,31 @@ export function useContextoVisual() {
   };
 
   // Compatibilidade: se receber array -> filtra local; se receber string -> delega para filterInContext (consulta server com ordenação)
-  const filtrarPorContexto = (arg, campo = 'empresa_id', maybeOrder, maybeLimit) => {
+  /** @overload
+   * @returns {never[]}
+   */
+  /** @template T
+   * @overload
+   * @param {T[]} arg
+   * @param {string} [campo]
+   * @returns {T[]}
+   */
+  /** @overload
+   * @param {string} arg
+   * @param {string | Record<string, unknown>} [campo]
+   * @param {string} [maybeOrder]
+   * @param {number} [maybeLimit]
+   * @param {string} [maybeCampo]
+   * @returns {ReturnType<typeof filterInContext>}
+   */
+  const filtrarPorContexto = (arg, campo = 'empresa_id', maybeOrder, maybeLimit, maybeCampo) => {
     // Caso 1: entidade (string) => usa backend ordenado e multiempresa
     if (typeof arg === 'string') {
       const entityName = arg;
       const criterios = typeof campo === 'object' ? campo : {};
       const order = typeof maybeOrder === 'string' ? maybeOrder : undefined;
       const limit = typeof maybeLimit === 'number' ? maybeLimit : undefined;
-      const contextoCampo = typeof campo === 'string' ? campo : 'empresa_id';
+      const contextoCampo = typeof maybeCampo === 'string' && maybeCampo ? maybeCampo : (typeof campo === 'string' ? campo : 'empresa_id');
       return filterInContext(entityName, criterios, order, limit, contextoCampo);
     }
 
@@ -243,6 +260,7 @@ export function useContextoVisual() {
 
   // Helpers: multiempresa stamping and server-side filter
   const getFiltroContexto = (campo = 'empresa_id', incluirGrupo = false) => {
+    /** @type {Record<string, string>} */
     const filtro = {};
     if (!validacaoContexto.valid) return filtro;
     if (incluirGrupo) filtro.group_id = contextoCanonico.groupId;
@@ -459,12 +477,20 @@ export function useContextoVisual() {
                    let hasGroupField = true;
                    let hasCtxField = true;
                    try {
-                     const sch = (base44.entities?.[entityName]?.schema ? await base44.entities[entityName].schema() : null);
-                     const props = sch?.properties || {};
-                     hasGroupField = Object.prototype.hasOwnProperty.call(props, 'group_id');
-                     hasCtxField = Object.prototype.hasOwnProperty.call(props, ctxCampo);
+                     const entity = base44.entities?.[entityName];
+                     if (entity && 'schema' in entity && typeof entity.schema === 'function') {
+                       /** @type {unknown} */
+                       const sch = await entity.schema();
+                       if (sch && typeof sch === 'object' && 'properties' in sch) {
+                         const props = sch.properties;
+                         if (props && typeof props === 'object' && !Array.isArray(props)) {
+                           hasGroupField = Object.prototype.hasOwnProperty.call(props, 'group_id');
+                           hasCtxField = Object.prototype.hasOwnProperty.call(props, ctxCampo);
+                         }
+                       }
+                     }
                    } catch {
-                     // Schema remoto indisponivel: a verificacao conservadora abaixo permanece ativa.
+                     console.warn('[useContextoVisual] Schema indisponivel; filtro de contexto obrigatorio.');
                    }
                    const noContext = !hasGroupField && !hasCtxField;
 

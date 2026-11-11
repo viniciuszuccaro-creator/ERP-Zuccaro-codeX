@@ -1,3 +1,4 @@
+/// <reference path="../lib/browserRuntimeContracts.d.ts" />
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,7 +137,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
   // V21.6: APROVAÇÃO COM FECHAMENTO AUTOMÁTICO OPCIONAL
   const aprovarPedidoMutation = useMutation({
-    mutationFn: async ({ pedidoId, dados, executarFechamento = false }) => {
+    mutationFn: async (/** @type {{pedidoId: string, dados: {valorFinal?: number, descontoGeralPercentual?: number, descontoGeralValor?: number, margemMedia?: number, comentarios?: string, itensAtualizados?: (Record<string, unknown> & {tipo: string})[]}, executarFechamento?: boolean}} */ { pedidoId, dados, executarFechamento = false }) => {
       if (!contextoValido || !podeEditarAprovacoes) {
         await auditAprovacao({
           acao: "Aprovacao bloqueada",
@@ -272,7 +273,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   });
 
   const negarPedidoMutation = useMutation({
-    mutationFn: async ({ pedidoId, comentarios }) => {
+    mutationFn: async (/** @type {{pedidoId: string, comentarios: string}} */ { pedidoId, comentarios }) => {
       if (!contextoValido || !podeEditarAprovacoes) {
         await auditAprovacao({
           acao: "Negacao bloqueada",

@@ -159,13 +159,13 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
+        <Card className="border-sky-200 bg-gradient-to-br from-sky-50 to-sky-100">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <Zap className="w-8 h-8 text-purple-600" />
-              <Badge className="bg-purple-600 text-white">BITOLAS</Badge>
+              <Zap className="w-8 h-8 text-sky-600" />
+              <Badge className="bg-sky-600 text-white">BITOLAS</Badge>
             </div>
-            <p className="text-3xl font-bold text-purple-700">{bitolas.length}</p>
+            <p className="text-3xl font-bold text-sky-700">{bitolas.length}</p>
             <p className="text-sm text-slate-600 mt-1">Bitolas de Aço</p>
           </CardContent>
         </Card>

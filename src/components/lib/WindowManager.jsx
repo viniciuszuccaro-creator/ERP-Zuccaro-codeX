@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useCallback, useRef } from 
  * Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar
  */
 
-const WindowContext = createContext();
+const WindowContext = createContext(undefined);
 
 export const useWindowManager = () => {
   const context = useContext(WindowContext);

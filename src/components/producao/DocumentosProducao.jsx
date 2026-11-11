@@ -214,7 +214,7 @@ export default function DocumentosProducao({ pedido, itensProducao }) {
                     </tr>
                   ))}
                   <tr className="bg-green-100 font-bold text-xl">
-                    <td colSpan="3" className="border-2 border-black p-3 text-right">PESO TOTAL:</td>
+                    <td colSpan={3} className="border-2 border-black p-3 text-right">PESO TOTAL:</td>
                     <td className="border-2 border-black p-3 text-right">
                       {pedido?.peso_total_kg?.toFixed(2) || 0} kg
                     </td>
@@ -354,7 +354,7 @@ export default function DocumentosProducao({ pedido, itensProducao }) {
                       </tr>
                     ))}
                     <tr className="bg-green-100 font-bold text-xl">
-                      <td className="border-2 border-black p-3 text-right" colSpan="2">TOTAL AÇO:</td>
+                      <td className="border-2 border-black p-3 text-right" colSpan={2}>TOTAL AÇO:</td>
                       <td className="border-2 border-black p-3 text-right text-2xl">{pesoTotalAco.toFixed(2)} kg</td>
                     </tr>
                   </tbody>

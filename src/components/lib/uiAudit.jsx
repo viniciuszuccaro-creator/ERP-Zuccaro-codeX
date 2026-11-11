@@ -70,6 +70,7 @@ export function logUIAction({ component, action, status, meta }) {
   } catch (error) { reportUIAuditFailure('Falha ao preparar auditoria de UI', error, { component, action }); }
 }
 
+/** @param {{component: string, issue: string, severity?: string, meta?: unknown}} options */
 export function logUIIssue({ component, issue, severity = "warn", meta }) {
   try {
     const descricao = `[${component}] ISSUE: ${issue}`;

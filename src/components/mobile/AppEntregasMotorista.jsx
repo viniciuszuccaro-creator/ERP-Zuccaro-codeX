@@ -52,7 +52,7 @@ export default function AppEntregasMotorista() {
   const { hasPermission } = usePermissions();
   const [entregaAtual, setEntregaAtual] = useState(null);
   const [localizacao, setLocalizacao] = useState(null);
-  const [rastreando, setRastreando] = useState(false);
+  const [rastreando, setRastreando] = useState(/** @returns {false | number} */ () => false);
   const [fotoComprovante, setFotoComprovante] = useState(null);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [smsNumero, setSmsNumero] = useState('');
@@ -82,6 +82,7 @@ export default function AppEntregasMotorista() {
     || hasPermission('Expedicao', 'Entrega', 'ocorrencia')
     || hasPermission('Logistica', 'Entrega', 'entregar');
 
+  /** @param {{acao: string, sucesso?: boolean, motivo?: string|null, entregaId?: string|null, detalhes?: Record<string, unknown>}} command */
   const auditMotorista = async ({ acao, sucesso = true, motivo = null, entregaId = null, detalhes = {} }) => {
     await base44.entities.AuditLog.create({
       acao,
@@ -103,8 +104,9 @@ export default function AppEntregasMotorista() {
   // Captura de assinatura no canvas
   React.useEffect(() => {
     const canvas = document.getElementById('assinatura-canvas');
-    if (!canvas) return;
+    if (!(canvas instanceof HTMLCanvasElement)) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     let drawing = false; let lastX = 0; let lastY = 0;
     const start = (x, y) => { drawing = true; lastX = x; lastY = y; };
     const move = (x, y) => { if (!drawing) return; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; };
@@ -277,7 +279,7 @@ export default function AppEntregasMotorista() {
             placa: entregaAtual.placa,
             ...novaLocalizacao,
             bateria_nivel: 0,
-            conectividade: navigator.connection?.effectiveType || '4G'
+            conectividade: ('connection' in navigator && navigator.connection && typeof navigator.connection === 'object' && 'effectiveType' in navigator.connection && typeof navigator.connection.effectiveType === 'string' && navigator.connection.effectiveType) || '4G'
           }).catch((error) => {
             console.error('[Motorista] Falha ao gravar PosicaoVeiculo.', error);
           });
@@ -326,7 +328,7 @@ export default function AppEntregasMotorista() {
     input.capture = 'environment';
 
     input.onchange = async (e) => {
-      const file = e.target.files[0];
+      const file = input.files?.[0];
       if (!file) return;
 
       try {
@@ -364,7 +366,8 @@ export default function AppEntregasMotorista() {
     let assinatura = assinaturaBase64;
     try {
       const canvas = document.getElementById('assinatura-canvas');
-      if (canvas) assinatura = canvas.toDataURL('image/png');
+      if (canvas && !(canvas instanceof HTMLCanvasElement)) throw new Error('Elemento de assinatura invalido.');
+      if (canvas instanceof HTMLCanvasElement) assinatura = canvas.toDataURL('image/png');
     } catch (error) {
       console.error('[Entrega] Falha ao preparar assinatura.', error);
       toast.error('Nao foi possivel preparar a assinatura da entrega.');
@@ -718,7 +721,9 @@ export default function AppEntregasMotorista() {
                 className="mt-2"
                 onClick={() => {
                   const canvas = document.getElementById('assinatura-canvas');
+                  if (!(canvas instanceof HTMLCanvasElement)) return;
                   const ctx = canvas.getContext('2d');
+                  if (!ctx) return;
                   ctx.clearRect(0, 0, canvas.width, canvas.height);
                   setAssinaturaBase64(null);
                 }}

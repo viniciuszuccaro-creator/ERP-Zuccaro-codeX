@@ -31,7 +31,7 @@ import {
 export default function ContasPagarTab({ contas, windowMode = false }) {
   const { createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { user: authUser } = useUser();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const empresaId = empresaAtual?.id || null;
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
   const scopeKey = buildFinanceiroQueryScopeKey({ groupId, empresaId });
@@ -49,6 +49,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const { openWindow } = useWindow();
   const { formasPagamento } = useFormasPagamento();
   const podeBaixarPagar = hasPermission('Financeiro','ContaPagar','pagar') || hasPermission('Financeiro','ContaPagar','baixar') || hasPermission('Financeiro','ContaPagar','liquidar');
+  const podeBaixarMultiplaPagar = !permissionsLoading && podeBaixarPagar && hasPermission('Financeiro','ContaPagar','baixar_multiplos');
   const podeEnviarCaixaPagar = hasPermission('Financeiro','ContaPagar','enviar_caixa') || hasPermission('Financeiro','ContaPagar','editar');
   const podeExportarPagar = hasPermission('Financeiro','ContaPagar','exportar');
   const podeAprovarPagar = hasPermission('Financeiro','ContaPagar','aprovar');
@@ -90,6 +91,8 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
     enabled: contextoValido,
   });
 
+  /** @param {{acao: string, entidade: string, registroId?: string | number | null, descricao: string,
+   * dadosAnteriores?: unknown, dadosNovos?: unknown, sucesso?: boolean}} options */
   const auditarFinanceiro = async ({ acao, entidade, registroId, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -115,7 +118,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   };
 
   const enviarParaCaixaMutation = useMutation({
-    mutationFn: async (titulos) => {
+    mutationFn: async (/** @type {Record<string, unknown>[]} */ titulos) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de enviar titulos ao Caixa.');
       if (!podeEnviarCaixaPagar) throw new Error('Sem permissao para enviar titulos ao Caixa.');
       if (!Array.isArray(titulos) || titulos.length === 0) throw new Error('Selecione ao menos um titulo para enviar ao Caixa.');
@@ -176,7 +179,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   });
 
   const baixarTituloMutation = useMutation({
-    mutationFn: async ({ id, dados }) => {
+    mutationFn: async (/** @type {{id: string, dados: typeof dadosBaixa}} */ { id, dados }) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de pagar titulo.');
       if (!podeBaixarPagar) throw new Error('Sem permissao para pagar titulo.');
       const conta = contasList.find(c => c.id === id);
@@ -248,9 +251,9 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   });
 
   const baixarMultiplaMutation = useMutation({
-    mutationFn: async (dados) => {
+    mutationFn: async (/** @type {typeof dadosBaixa} */ dados) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes do pagamento multiplo.');
-      if (!podeBaixarPagar) throw new Error('Sem permissao para pagamento multiplo.');
+      if (!podeBaixarMultiplaPagar) throw new Error('Sem permissao para pagamento multiplo.');
       if (contasSelecionadas.length === 0) throw new Error('Selecione ao menos um titulo para pagamento multiplo.');
       await Promise.all(contasSelecionadas.map(async (contaId) => {
         const conta = contasList.find(c => c.id === contaId);
@@ -276,7 +279,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   });
 
   const aprovarPagamentoMutation = useMutation({
-    mutationFn: async (contaId) => {
+    mutationFn: async (/** @type {string} */ contaId) => {
       if (!contextoValido) throw new Error('Selecione grupo ou empresa antes de aprovar pagamento.');
       if (!podeAprovarPagar) throw new Error('Sem permissao para aprovar pagamento.');
       const conta = contasList.find(c => c.id === contaId);
@@ -370,7 +373,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
       toast({ title: 'Selecione grupo ou empresa para baixa multipla', variant: 'destructive' });
       return;
     }
-    if (!podeBaixarPagar) {
+    if (!podeBaixarMultiplaPagar) {
       toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
       return;
     }
@@ -395,6 +398,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
     e.preventDefault();
     if (!contextoValido) {
       toast({ title: 'Contexto obrigatorio', description: 'Selecione grupo ou empresa antes de confirmar o pagamento.', variant: 'destructive' });
+      return;
+    }
+    if (!contaAtual && !podeBaixarMultiplaPagar) {
+      toast({ title: 'Sem permissao para baixa multipla', variant: 'destructive' });
       return;
     }
     const totalTitulos = contaAtual ? 1 : contasSelecionadas.length;
@@ -584,7 +591,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)} data-action="ContaPagar.baixa_cancelar">Cancelar</Button>
-              <Button type="submit" disabled={!contextoValido || baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600" data-action="ContaPagar.baixar" data-permission="Financeiro.ContaPagar.baixar" data-context-required="true" data-sensitive>
+              <Button type="submit" disabled={!contextoValido || (!contaAtual && !podeBaixarMultiplaPagar) || baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600" data-action={contaAtual ? 'ContaPagar.baixar' : 'ContaPagar.baixar_multiplos'} data-permission={contaAtual ? 'Financeiro.ContaPagar.baixar' : 'Financeiro.ContaPagar.baixar_multiplos'} data-context-required="true" data-sensitive>
                 {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Registrando...' : 'Confirmar'}
               </Button>
             </div>

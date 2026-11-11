@@ -87,6 +87,27 @@ const emptyBaixaPagar = () => ({
 /**
  * Troca de grupo/empresa em Contas a Receber/Pagar: zera seleção residual,
  * fecha diálogos e limpa rascunho de baixa (sem preservar IDs cross-tenant).
+ * @typedef {{contasSelecionadas: unknown[], contaAtual: null, dialogBaixaOpen: boolean}} TitulosResetBase
+ * @typedef {{juros: number, multa: number, desconto: number, observacoes: string}} BaixaAjustes
+ * @typedef {BaixaAjustes & {data_pagamento: string, valor_pago: number, forma_pagamento: string}} BaixaPagar
+ * @typedef {BaixaAjustes & {data_recebimento: string, valor_recebido: number, forma_recebimento: string}} BaixaReceber
+ * @typedef {TitulosResetBase & {dadosBaixa: BaixaPagar}} TitulosPagarReset
+ * @typedef {TitulosResetBase & {
+ * gerarCobrancaDialogOpen: boolean, simularPagamentoDialogOpen: boolean, gerarLinkDialogOpen: boolean,
+ * contaParaCobranca: null, contaParaSimulacao: null, contaParaLink: null,
+ * dadosBaixa: BaixaReceber}} TitulosReceberReset
+ */
+/** @overload
+ * @param {'pagar'} kind
+ * @returns {TitulosPagarReset}
+ */
+/** @overload
+ * @param {'receber'} [kind]
+ * @returns {TitulosReceberReset}
+ */
+/** @overload
+ * @param {string} kind
+ * @returns {TitulosPagarReset | TitulosReceberReset}
  */
 export function buildFinanceiroTitulosScopeSwitchReset(kind = 'receber') {
   const base = {

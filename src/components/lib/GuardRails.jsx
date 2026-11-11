@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 
+/** @param {{hint?: React.ReactNode}} props */
 function SessionEscapeActions({ hint }) {
   const { logout, supportsPasswordLogin } = useAuth();
   const handleSair = () => {

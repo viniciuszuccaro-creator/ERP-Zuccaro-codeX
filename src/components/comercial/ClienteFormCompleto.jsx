@@ -1,5 +1,7 @@
 import React, { useState, useEffect, Suspense, useRef } from "react";
 import { base44 } from "@/api/base44Client";
+import { useMemo } from 'react';
+import useCadastroRecordState from '@/components/cadastros/useCadastroRecordState';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -93,8 +95,9 @@ const defaultFormData = {
 
 
 
-function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
-  const { carimbarContexto } = useContextoVisual();
+function ClienteFormCompleto({ cliente: clienteProp = undefined, item = undefined, data = undefined, initialData = undefined, defaultValues = undefined, onSubmit, isSubmitting, onCancel }) {
+  const cliente = clienteProp || item || data || initialData || defaultValues || null;
+  const { carimbarContexto, grupoAtual, empresaAtual, contexto } = useContextoVisual();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("principal");
   const [buscandoCep, setBuscandoCep] = useState(false);
@@ -111,7 +114,7 @@ function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
   };
 
   // Merge dos dados do cliente com os valores padrão
-  const [formData, setFormData] = useState(() => {
+  const initialFormData = useMemo(() => {
     if (!cliente) return { ...defaultFormData };
     
     return {
@@ -141,7 +144,11 @@ function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
       proxima_acao: safeMerge(defaultFormData.proxima_acao, cliente.proxima_acao),
       observacoes: cliente.observacoes || ""
     };
-  });
+  }, [cliente]);
+  const [formData, setFormData] = useCadastroRecordState(initialFormData, JSON.stringify([
+    cliente?.id ?? null, cliente?.updated_date ?? null,
+    grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto,
+  ]));
 
   // Buscar CEP
   const buscarCep = async (cep) => {

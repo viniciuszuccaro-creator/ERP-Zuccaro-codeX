@@ -1,0 +1,40 @@
+PEDIDO DE CONTRAPROVA INDEPENDENTE — CONTATOS (#353)
+====================================================
+Checkpoint candidata: d0e38a16 (CI4807/4808) · tip código contatos: e9d7ef15
+Parecer origem: 6416585754 · P1 guardas reopen: ENCERRADO (não reabrir)
+
+Bot review / CI SUCCESS ≠ fechamento desta pendência.
+
+Casos a repetir (módulo real: src/api/clienteHttpPayload.js + HttpApiClient Cliente)
+------------------------------------------------------------------------------------
+Caso A — preferência principal entre canais
+  Entrada:
+    [{ tipo:'E-mail', valor:'a@sintetico.dev', principal:false },
+     { tipo:'Telefone', valor:'1133334444', principal:true }]
+  Esperado:
+    - assessContatosScalarFidelity.ok === false
+    - losses inclui principal_nao_representavel
+    - Cliente.update rejeita CONTATOS_SCALAR_OVERFLOW status 422
+    - fetch NÃO chamado
+    - mensagem contém “rascunho não foi enviado” (não “salvo”)
+    - objeto draft do caller byte-idêntico após a rejeição
+
+Caso B — metadata com valor vazio
+  Entrada:
+    [{ tipo:'Telefone', valor:'', nome:'Compras', principal:false }]
+    (variantes: observacao / id / ordem)
+  Esperado:
+    - losses inclui metadata_sem_valor:0
+    - overflow antes do fetch
+    - rascunho vazio SEM metadata continua ok (tratamento vigente)
+
+Caso C — reabertura honesta
+  GET só com email/telefone escalares → contatos undefined;
+  contatos_escalares.complete === false (não fabricar lista completa).
+
+Provas Cursor (sintético/transporte — não substituem contraprova Codex)
+- tests/cliente-contatos-http-adapter.test.js
+  (principal, metadata, fetches=0, draft intacto, complete=false, onError UI)
+
+Favor responder no GitHub #353 com: PASS/FAIL por caso, SHA fixado, exit code.
+Sem editar branch Cursor. Sem migration neste fechamento.

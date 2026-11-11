@@ -68,6 +68,8 @@ export const resolveModoOperacao = (configs = []) => {
 
 export const isModoPiloto = (modo) => resolveModoOperacao([{ chave: MODO_OPERACAO_CHAVE, valor: modo }]) === 'piloto';
 
+/** @param {Record<string, unknown>} record
+ * @param {{piloto?: boolean, papel?: unknown}} options */
 export const stampUsuarioPiloto = (record = {}, { piloto = false, papel } = {}) => {
   if (!piloto) {
     return { ...record, usuario_piloto: false, papel_piloto: null };
@@ -108,6 +110,7 @@ export const normalizeCenarioPiloto = (value) => {
   return CENARIOS_PILOTO.includes(raw) ? raw : null;
 };
 
+/** @param {{record?: Record<string, unknown>, user?: {email?: string, full_name?: string}}} options */
 export const applyPilotoCenariosOnWrite = ({ record = {}, user = null } = {}) => {
   if (firstText(record.chave) !== PILOTO_CENARIOS_CHAVE) return record;
   const incoming = Array.isArray(record.valor_json) ? record.valor_json : [];
@@ -157,6 +160,7 @@ export const evaluateHomologacaoPiloto = ({ users = [], cenariosExecutados = [] 
   };
 };
 
+/** @param {{user?: {usuario_piloto?: boolean, papel_piloto?: unknown, ativo?: boolean}, modoOperacao?: string, acao?: string}} options */
 export const assertOperacaoPiloto = ({ user, modoOperacao = 'piloto', acao = 'operacao_critica' } = {}) => {
   if (!isModoPiloto(modoOperacao)) return { modo: 'producao', permitido: true };
   if (!isUsuarioPiloto(user)) {
@@ -190,6 +194,7 @@ export const assertViradaProducao = ({
   return { permitido: true, modo: 'producao' };
 };
 
+/** @param {{record?: Record<string, unknown>, users?: Array<object>, cenariosExecutados?: Array<object>, incidentesCriticosAbertos?: Array<object>, backups?: Array<object>, configBackup?: object, configs?: Array<object>}} options */
 export const applyModoOperacaoOnWrite = ({
   record = {},
   users = [],

@@ -97,9 +97,9 @@ export default function DashboardEstruturantes() {
       total: setores.length,
       ativos: setoresAtivos,
       color: "indigo",
-      bgGradient: "from-indigo-50 to-indigo-100",
-      borderColor: "border-indigo-300",
-      textColor: "text-indigo-700",
+      bgGradient: "from-sky-50 to-sky-100",
+      borderColor: "border-sky-300",
+      textColor: "text-sky-700",
       metrica: `${setoresAtivos}/${setores.length} ativos`,
       status: setoresAtivos > 0 ? "ok" : "alert"
     },
@@ -133,9 +133,9 @@ export default function DashboardEstruturantes() {
       total: locais.length,
       ativos: locaisAtivos,
       color: "purple",
-      bgGradient: "from-purple-50 to-purple-100",
-      borderColor: "border-purple-300",
-      textColor: "text-purple-700",
+      bgGradient: "from-sky-50 to-sky-100",
+      borderColor: "border-sky-300",
+      textColor: "text-sky-700",
       metrica: `${percentualOcupacao}% ocupação`,
       status: parseInt(percentualOcupacao) < 90 ? "ok" : "alert"
     },
@@ -159,7 +159,7 @@ export default function DashboardEstruturantes() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-            <Stars className="w-7 h-7 text-purple-600" />
+            <Stars className="w-7 h-7 text-sky-600" />
             Dashboard de Cadastros Estruturantes
           </h2>
           <p className="text-sm text-slate-600 mt-1">
@@ -234,21 +234,21 @@ export default function DashboardEstruturantes() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-300">
+        <Card className="bg-gradient-to-br from-sky-50 to-sky-100 border-2 border-sky-300">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-purple-900">
+            <CardTitle className="text-sm flex items-center gap-2 text-sky-900">
               <Warehouse className="w-4 h-4" />
               Ocupação de Almoxarifados
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-end gap-3">
-              <div className="text-4xl font-bold text-purple-900">{percentualOcupacao}%</div>
-              <div className="text-sm text-purple-700 mb-1">
+              <div className="text-4xl font-bold text-sky-900">{percentualOcupacao}%</div>
+              <div className="text-sm text-sky-700 mb-1">
                 {ocupacaoTotal.toFixed(0)}m³ / {capacidadeTotal.toFixed(0)}m³
               </div>
             </div>
-            <p className="text-xs text-purple-600 mt-2">
+            <p className="text-xs text-sky-600 mt-2">
               capacidade total utilizada
             </p>
           </CardContent>
@@ -288,7 +288,7 @@ export default function DashboardEstruturantes() {
             <div className="flex items-center gap-3">
               <div className="w-32 text-sm font-semibold text-slate-700">Produtos</div>
               <ChevronRight className="w-4 h-4 text-slate-400" />
-              <Badge className="bg-indigo-100 text-indigo-700">Setor Atividade</Badge>
+              <Badge className="bg-sky-100 text-sky-700">Setor Atividade</Badge>
               <span className="text-xs text-slate-500">+</span>
               <Badge className="bg-cyan-100 text-cyan-700">Grupo Produto</Badge>
               <span className="text-xs text-slate-500">+</span>
@@ -300,7 +300,7 @@ export default function DashboardEstruturantes() {
             <div className="flex items-center gap-3">
               <div className="w-32 text-sm font-semibold text-slate-700">Movimentações</div>
               <ChevronRight className="w-4 h-4 text-slate-400" />
-              <Badge className="bg-purple-100 text-purple-700">Local Estoque</Badge>
+              <Badge className="bg-sky-100 text-sky-700">Local Estoque</Badge>
               <span className="text-xs text-slate-500">→</span>
               <Badge className="bg-blue-100 text-blue-700">Picking Estruturado</Badge>
             </div>
@@ -310,7 +310,7 @@ export default function DashboardEstruturantes() {
               <ChevronRight className="w-4 h-4 text-slate-400" />
               <Badge className="bg-red-100 text-red-700">Tabela Fiscal</Badge>
               <span className="text-xs text-slate-500">→</span>
-              <Badge className="bg-purple-100 text-purple-700">IA Compliance</Badge>
+              <Badge className="bg-sky-100 text-sky-700">IA Compliance</Badge>
               <span className="text-xs text-slate-500">→</span>
               <Badge className="bg-green-100 text-green-700">Emissão Validada ✅</Badge>
             </div>
@@ -329,7 +329,7 @@ export default function DashboardEstruturantes() {
       </Card>
 
       {/* PRÓXIMOS PASSOS */}
-      <Card className="border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
+      <Card className="border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-sky-50">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Stars className="w-5 h-5 text-blue-600" />
@@ -342,7 +342,7 @@ export default function DashboardEstruturantes() {
             Controle de acesso granular por cadastro estruturante
           </p>
           <p className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+            <span className="w-2 h-2 bg-sky-600 rounded-full"></span>
             IA sugere classificação automática de produtos
           </p>
           <p className="flex items-center gap-2">

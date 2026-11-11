@@ -87,7 +87,7 @@ ${linkRastreamento ? `🔗 *Rastreie em tempo real:*\n${linkRastreamento}\n\n` :
 
     const vencimento = new Date(contaReceber.data_vencimento);
     const hoje = new Date();
-    const diasAteVencimento = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
+    const diasAteVencimento = Math.ceil((vencimento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
     
     let emoji = '📄';
     let urgencia = '';

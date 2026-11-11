@@ -97,7 +97,7 @@ export default function ParametrosOrigemPedidoTab() {
         <Card>
           <CardContent className="p-3">
             <p className="text-xs text-slate-600">Automáticos</p>
-            <p className="text-2xl font-bold text-purple-600">
+            <p className="text-2xl font-bold text-sky-600">
               {parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length}
             </p>
           </CardContent>

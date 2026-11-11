@@ -24,7 +24,8 @@ export function openCadastroEntityWindow(openWindow, {
   props = {},
   width = 1400,
   height = 800,
-} = {}) {
+}) {
+  if (component == null) throw new TypeError('Componente de cadastro obrigatorio.');
   const entity = String(entityName || '').trim();
   const uniqueKey = entity ? `Cadastros.${entity}.visualizador` : `Cadastros.${String(title || 'janela')}`;
   if (pendingOpenKeys.has(uniqueKey)) {

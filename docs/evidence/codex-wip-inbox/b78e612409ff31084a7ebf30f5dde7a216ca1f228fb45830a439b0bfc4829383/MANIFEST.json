@@ -1,0 +1,21 @@
+{
+  "base": "3cf0831563388131e2506b4aba9dad65947cdaff",
+  "patchSha256": "b78e612409ff31084a7ebf30f5dde7a216ca1f228fb45830a439b0bfc4829383",
+  "purpose": "Disposable Linux validation only; no implementation writer, commit or push",
+  "normalization": "Compare Git clean blob IDs after applying patch; raw Windows CRLF hashes are not Linux file hashes",
+  "files": [
+    {"path":".gitattributes","gitBlob":"df99c20a960eba19e9a66b084fe558b7b610c62e"},
+    {"path":"docs/PROGRAMA_COMERCIAL_360_OMNICANAL_EXECUCAO_AUTONOMA.md","gitBlob":"d05c6ffecc798805ac000dbd5efaba69c01cf1a4"},
+    {"path":"scripts/legado/pilot-functional-load-plan.mjs","gitBlob":"59090d77552817a1ad25d1168e35365efb006378"},
+    {"path":"scripts/legado/pilot-isolated.mjs","gitBlob":"b623072e82d2cf93c9bb1583518a7918d3b0d6ef"},
+    {"path":"server/src/services/orcamentoService.ts","gitBlob":"c769500fdb033c27944d0be60b486cffeadd2f56"},
+    {"path":"server/src/services/pedidoService.ts","gitBlob":"d8dacef4fc42bf3e8083f25103c37b9b6ae68bb6"},
+    {"path":"server/tests/cliente-conferencia-duplicates.test.ts","gitBlob":"f1d4139f0193c9ac99d381c1b807e9ddfcb9b5bd"},
+    {"path":"server/tests/comercial-expedicao-composicao.test.ts","gitBlob":"db7fb64aadd7a2899764d0602a82ef4be4b566ac"},
+    {"path":"server/tests/runtime08c-orcamento-service.test.ts","gitBlob":"cf4f46700ec697dc09aec9427439929a02ac7990"},
+    {"path":"server/tests/runtime09-pedido-service.test.ts","gitBlob":"71d6af812ed7506076ba0184994971845587caef"},
+    {"path":"tests/legado-filesystem-precheck.test.js","gitBlob":"e3bdde2bd036f07c8b4a1c59e4e72c9a65383508"},
+    {"path":"tests/legado-piloto-funcional.test.js","gitBlob":"505894244429ee231e750e19d49c9dad13379e5b"},
+    {"path":"tests/legado-piloto-isolado.test.js","gitBlob":"5b0f42b9b73e5acddabb20d219cc7f6cbc2f92ae"}
+  ]
+}

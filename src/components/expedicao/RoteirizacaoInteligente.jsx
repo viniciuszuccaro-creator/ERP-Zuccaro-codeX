@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { validarRoteirizacaoEntregaIA } from '@/components/lib/iaResponsePolicy';
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,7 @@ export default function RoteirizacaoInteligente({ windowMode = false }) {
   });
 
   const gerarRotaIAMutation = useMutation({
-    mutationFn: async ({ entregasIds, motoristaId, veiculoId }) => {
+    mutationFn: async (/** @type {{entregasIds: Array<string | number>, motoristaId: string, veiculoId: string}} */ { entregasIds, motoristaId, veiculoId }) => {
       if (!contextoValido || !canGenerateRoteirizacao) {
         await auditIA({ acao: "RoteirizacaoIA.gerar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
         throw new Error("Contexto ou permissao obrigatoria para gerar rota com IA.");
@@ -87,10 +88,11 @@ export default function RoteirizacaoInteligente({ windowMode = false }) {
       let result = null;
       let llmFalhou = false;
       try {
-        result = await base44.integrations.Core.InvokeLLM({
+        result = validarRoteirizacaoEntregaIA(await base44.integrations.Core.InvokeLLM({
           prompt: `Otimize a rota de entrega considerando:
 
 Entregas: ${JSON.stringify(entregasSelecionadas.map(e => ({
+  entrega_id: e.id,
   cliente: e.cliente_nome,
   endereco: e.endereco_entrega_completo,
   janela: e.janela_entrega_inicio + ' - ' + e.janela_entrega_fim,
@@ -109,7 +111,7 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
               economia_vs_manual: { type: "object" }
             }
           }
-        });
+        }), entregasSelecionadas);
       } catch (error) {
         llmFalhou = true;
         await auditIA({
@@ -132,7 +134,7 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
         ? result.sequencia_otimizada
         : fallback.pontos.map((p) => p.id);
       const entregasOrdenadas = sequenciaIds
-        .map((id) => entregasSelecionadas.find((e) => String(e.id) === String(id)))
+        .map((id) => entregasSelecionadas.find((e) => e.id === id))
         .filter(Boolean);
       const pontosFinais = entregasOrdenadas.length ? entregasOrdenadas : fallback.pontos;
 
@@ -375,7 +377,7 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
               <tbody>
                 {rotas.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="text-center p-6 text-slate-500">
+                    <td colSpan={9} className="text-center p-6 text-slate-500">
                       Nenhuma rota gerada ainda
                     </td>
                   </tr>

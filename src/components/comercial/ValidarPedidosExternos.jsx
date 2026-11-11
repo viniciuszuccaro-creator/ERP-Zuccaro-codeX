@@ -32,6 +32,8 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
   const canValidatePedidoExterno = hasPermission("Comercial", "PedidoExterno", "validar") || hasPermission("Comercial", "Pedido", "editar");
   const canDeletePedidoExterno = hasPermission("Comercial", "PedidoExterno", "excluir") || hasPermission("Comercial", "Pedido", "excluir");
 
+  /** @param {{acao: string, ext?: Record<string, unknown> | null, descricao: string,
+   * sucesso?: boolean, detalhes?: Record<string, unknown>}} options */
   const auditPedidoExterno = async ({ acao, ext = null, descricao, sucesso = true, detalhes = {} }) => {
     try {
       await createInContext("AuditLog", {
@@ -75,7 +77,7 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
   });
 
   const marcarValidado = useMutation({
-    mutationFn: async (ext) => {
+    mutationFn: async (/** @type {{id: string} & Record<string, unknown>} */ ext) => {
       if (!contextoValido || !canValidatePedidoExterno) {
         await auditPedidoExterno({ acao: "Validacao bloqueada", ext, descricao: "Bloqueio ao validar pedido externo", sucesso: false, detalhes: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" } });
         throw new Error(!contextoValido ? "Selecione grupo ou empresa antes de validar." : "Sem permissao para validar pedido externo.");
@@ -96,7 +98,7 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
   });
 
   const excluirExterno = useMutation({
-    mutationFn: async (ext) => {
+    mutationFn: async (/** @type {{id: string} & Record<string, unknown>} */ ext) => {
       if (!contextoValido || !canDeletePedidoExterno) {
         await auditPedidoExterno({ acao: "Exclusao bloqueada", ext, descricao: "Bloqueio ao excluir pedido externo", sucesso: false, detalhes: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" } });
         throw new Error(!contextoValido ? "Selecione grupo ou empresa antes de excluir." : "Sem permissao para excluir pedido externo.");
@@ -115,7 +117,9 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
   });
 
   const importarComoPedido = useMutation({
-    mutationFn: async (ext) => {
+    mutationFn: async (/** @type {import('../lib/marketplacePedidoPolicy').MarketplacePedidoIdentity & {
+     * id: string, itens?: import('../lib/marketplacePedidoPolicy').MarketplaceSkuItem[]
+     * } & Record<string, unknown>} */ ext) => {
       if (!contextoValido || !canImportPedidoExterno) {
         await auditPedidoExterno({ acao: "Importacao bloqueada", ext, descricao: "Bloqueio ao importar pedido externo", sucesso: false, detalhes: { motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" } });
         throw new Error(!contextoValido ? "Selecione grupo e empresa antes de importar." : "Sem permissao para importar pedido externo.");
@@ -186,7 +190,7 @@ export default function ValidarPedidosExternos({ windowMode = true }) {
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col" : "w-full h-full space-y-4"} data-context-required="true" data-permission="Comercial.PedidoExterno.visualizar">
-      <Card className="border-2 border-indigo-300 bg-indigo-50/40">
+      <Card className="border-2 border-sky-300 bg-sky-50/40">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Validar Pedidos Externos</CardTitle>
         </CardHeader>

@@ -46,6 +46,8 @@ export default function CartoesACompensar() {
     enabled: contextoValido && canViewCartoes,
   });
 
+  /** @param {{acao: string, cartao: Record<string, unknown> | null, descricao: string,
+   * dadosAnteriores?: unknown, dadosNovos?: unknown, sucesso?: boolean}} options */
   const auditarCartao = async ({ acao, cartao, descricao, dadosAnteriores, dadosNovos, sucesso = true }) => {
     try {
       await base44.entities.AuditLog.create({
@@ -71,6 +73,7 @@ export default function CartoesACompensar() {
   };
 
   const conciliarMutation = useMutation({
+    /** @param {{cartao: {id?: string | number, valor_liquido?: string | number | null, group_id?: string | null, grupo_id?: string | null, empresa_id?: string | null}}} command */
     mutationFn: async ({ cartao }) => {
       if (!contextoValido || !canConciliarCartoes) {
         throw new Error("Sem contexto ou permissao para conciliar cartao.");
@@ -248,7 +251,7 @@ export default function CartoesACompensar() {
               <tbody>
                 {cartoesFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="text-center p-6 text-slate-500">
+                    <td colSpan={11} className="text-center p-6 text-slate-500">
                       Nenhum cartao encontrado
                     </td>
                   </tr>

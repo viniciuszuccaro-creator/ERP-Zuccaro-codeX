@@ -10,6 +10,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
+import useCadastroReopenOnIdentity from "@/components/cadastros/useCadastroReopenOnIdentity";
 import { toast } from "sonner";
 
 /**
@@ -23,8 +24,7 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
   const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
   const podeCriar = hasPermission?.("Cadastros.Veiculo.criar") || hasPermission?.("Logistica.Veiculo.criar");
   const podeEditar = hasPermission?.("Cadastros.Veiculo.editar") || hasPermission?.("Logistica.Veiculo.editar");
-  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
-  const [formData, setFormData] = React.useState(dadosIniciais || {
+    const emptyFormData = {
     placa: '',
     modelo: '',
     tipo_veiculo: 'Caminhão Toco',
@@ -38,15 +38,16 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
     rastreador_instalado: false,
     status: 'Disponível',
     proprio: true
-  });
+  };
+  const [formData, setFormData] = React.useState(dadosIniciais || emptyFormData);
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  React.useEffect(() => {
-    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
-      prevIdRef.current = dadosIniciais.id;
-      setFormData({ ...dadosIniciais });
-    }
-  }, [dadosIniciais?.id]);
+  const { boundId: veiculoBoundId } = useCadastroReopenOnIdentity(dadosIniciais, {
+    formData,
+    setFormData,
+    emptyForm: emptyFormData,
+    mapToForm: (record) => record || emptyFormData,
+  });
+  const podeSalvar = veiculoBoundId ? podeEditar : podeCriar;
 
   const schema = z.object({
     placa: z.string().min(3, 'Placa é obrigatória'),
@@ -54,6 +55,7 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
   });
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!contextoValido) {
       toast.error("Selecione um grupo ou empresa antes de salvar.");
       return;
@@ -64,6 +66,7 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
     }
     onSubmit({
       ...formData,
+      ...(veiculoBoundId ? { id: veiculoBoundId } : {}),
       group_id: groupId || formData.group_id,
       empresa_id: contexto === "empresa" ? empresaAtual?.id : formData.empresa_id
     });

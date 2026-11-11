@@ -271,7 +271,7 @@ export default function DashboardCorporativo() {
       nome: empresa.nome_fantasia || empresa.razao_social,
       faturamento: valorTotal,
       pedidos: qtdPedidos,
-      otd: parseFloat(otd),
+      otd: parseFloat(String(otd)),
       tipo: empresa.tipo
     };
   }).sort((a, b) => b.faturamento - a.faturamento);
@@ -307,7 +307,7 @@ export default function DashboardCorporativo() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-purple-600" />
+              <Building2 className="w-8 h-8 text-blue-600" />
               Dashboard Corporativo
             </h1>
             <p className="text-slate-600 mt-1">
@@ -350,7 +350,7 @@ export default function DashboardCorporativo() {
         {/* Tabs de Navegação */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-white border shadow-sm w-full flex-wrap h-auto">
-            <TabsTrigger value="visao-geral" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="visao-geral" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Visão Geral
             </TabsTrigger>

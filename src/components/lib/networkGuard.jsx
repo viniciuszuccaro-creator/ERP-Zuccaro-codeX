@@ -4,8 +4,8 @@
 
 (function initNetworkGuard() {
   if (typeof window === 'undefined') return;
-  if (window.__networkGuardInitialized) return;
-  window.__networkGuardInitialized = true;
+  if (Reflect.get(window, '__networkGuardInitialized')) return;
+  if (!Reflect.set(window, '__networkGuardInitialized', true)) throw new TypeError('Network guard initialization blocked.');
 
   const originalFetch = window.fetch;
 
@@ -45,7 +45,7 @@
         const empresaId = getEmpresaAtualId();
 
         // Resolve URL absoluta para checar se é mesmo domínio
-        const urlStr = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+        const urlStr = typeof input === 'string' ? input : (input instanceof URL ? input.href : input.url);
         const fullUrl = new URL(urlStr, window.location.origin);
 
         // Só injeta em chamadas do mesmo domínio (inclui SDK/entities/functions)
@@ -53,7 +53,7 @@
 
         if (isSameOrigin) {
           // Normaliza headers preservando existentes
-          const headers = new Headers((init && init.headers) || (typeof input !== 'string' && input && input.headers) || {});
+          const headers = new Headers((init && init.headers) || (input instanceof Request ? input.headers : undefined) || {});
           const contexto = getContextoAtual();
           const groupId = getGroupAtualId();
           if (empresaId) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { validarOrcamentoProjetoIA } from '@/components/lib/iaResponsePolicy';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { buildSiteLeadPayload, matchClienteSite, stampSiteOrigem } from '@/components/lib/siteOrigemPolicy';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,7 +53,7 @@ export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) {
 
       let visionAIResult = null;
       if (arquivoUrl) {
-        visionAIResult = await base44.integrations.Core.InvokeLLM({
+        visionAIResult = validarOrcamentoProjetoIA(await base44.integrations.Core.InvokeLLM({
           prompt: `
 Você é um especialista em estruturas metálicas e projetos de engenharia.
 
@@ -102,7 +103,7 @@ Retorne em JSON estruturado com todas as peças e um resumo.
             },
             required: ['pecas', 'resumo', 'confianca']
           }
-        });
+        }));
       }
 
       const clientes = await filterInContext('Cliente', {}, undefined, 200);

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import useCadastroRecordState from "@/components/cadastros/useCadastroRecordState";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,10 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
   const onCloseNorm = onClose || onSave;
   // Sync form when editing existing record
   const [_syncKey, _setSyncKey] = React.useState(colaborador?.id || 'new');
-  const { carimbarContexto } = useContextoVisual();
+  const { carimbarContexto, grupoAtual, empresaAtual, contexto } = useContextoVisual();
   const { hasFieldPermission, isAdmin } = usePermissions();
   const podeEditarCodigoLegado = isAdmin() || hasFieldPermission('Cadastros', 'Pessoas', 'Colaborador', 'codigo_vendedor_legado', 'editar');
-  const [formData, setFormData] = useState(colaborador || {
+  const [formData, setFormData] = useCadastroRecordState(colaborador || {
     nome_completo: '',
     codigo_vendedor_legado: '',
     cpf: '',
@@ -48,13 +49,7 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
     cnh_categoria: '',
     cnh_validade: '',
     aso_validade: ''
-  });
-
-  useEffect(() => {
-    if (colaborador?.id) {
-      setFormData({ ...colaborador });
-    }
-  }, [colaborador?.id]);
+  }, JSON.stringify([colaborador?.id ?? null, colaborador?.updated_date ?? null, grupoAtual?.id ?? null, empresaAtual?.id ?? null, contexto]));
 
   const schema = z.object({
     nome_completo: z.string().min(3, 'Nome é obrigatório'),

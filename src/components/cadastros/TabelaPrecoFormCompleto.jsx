@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { validarPrecificacaoTabelaIA } from '@/components/lib/iaResponsePolicy';
+import useCadastroRecordState from './useCadastroRecordState';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +16,7 @@ import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Sa
 import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import CadastroCodigoRegistroField from "@/components/cadastros/CadastroCodigoRegistroField";
 
 /**
  * V21.0 - TABELA DE PREÇO RECONSTRUÍDA
@@ -51,7 +54,7 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     loadUser();
   }, []);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useCadastroRecordState({
     nome: tabela?.nome || '',
     codigo_tabela_legado: tabela?.codigo_tabela_legado || '',
     descricao: tabela?.descricao || '',
@@ -62,13 +65,13 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     empresa_id: tabela?.empresa_id || empresaAtual?.id || user?.empresa_selecionada_id || '',
     group_id: tabela?.group_id || groupId || '',
     compartilhar_grupo: tabela?.compartilhar_grupo || false
-  });
+  }, JSON.stringify([tabela?.id ?? null, tabela?.updated_date ?? null, groupId, empresaAtual?.id ?? null]));
 
   const [activeTab, setActiveTab] = useState('config');
   const [modoInclusao, setModoInclusao] = useState('lote');
   const [calculando, setCalculando] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
-  const [itensTabela, setItensTabela] = useState([]);
+  const [itensTabela, setItensTabela] = useCadastroRecordState([], JSON.stringify([tabela?.id ?? null, groupId, empresaAtual?.id ?? null]));
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', contextKey],
@@ -245,6 +248,7 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
 
     try {
       const amostra = itensTabela.slice(0, 15).map(i => ({
+        produto_id: i.produto_id,
         descricao: i.produto_descricao,
         setor: i.setor_atividade_nome,
         grupo: i.grupo_produto_nome,
@@ -254,7 +258,7 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
         margem_atual: i.margem_percentual
       }));
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
+      const resultado = validarPrecificacaoTabelaIA(await base44.integrations.Core.InvokeLLM({
         prompt: `Você é o PriceBrain 3.0, IA especialista em precificação estratégica V21.0.
 
 Analise esta amostra de produtos da tabela "${formData.nome}" (tipo: ${formData.tipo}):
@@ -294,7 +298,7 @@ RETORNE:
             observacoes: { type: "string" }
           }
         }
-      });
+      }), amostra);
 
       const itensAtualizados = itensTabela.map(item => {
         const custoBase = item.custo_base;
@@ -464,9 +468,9 @@ RETORNE:
 
   const content = (
     <div className={`space-y-4 flex flex-col ${windowMode ? 'h-full p-6' : ''}`}>
-      <Alert className="border-purple-300 bg-purple-50">
-        <Sparkles className="w-4 h-4 text-purple-600" />
-        <AlertDescription className="text-sm text-purple-900">
+      <Alert className="border-sky-300 bg-sky-50">
+        <Sparkles className="w-4 h-4 text-sky-600" />
+        <AlertDescription className="text-sm text-sky-900">
           🚀 <strong>V21.0:</strong> Tabela de Preço reconstruída com Dupla Classificação, Multiempresa e IA PriceBrain 3.0
         </AlertDescription>
       </Alert>
@@ -492,6 +496,13 @@ RETORNE:
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4 space-y-4">
                 <h3 className="font-bold text-blue-900">⚙️ Identificação da Tabela</h3>
+
+                <CadastroCodigoRegistroField
+                  hasId={Boolean(tabela?.id)}
+                  entityId={tabela?.id}
+                  value={tabela?.codigo}
+                  action="codigo-registro-tabela-preco"
+                />
 
                 <div>
                   <Label>Nome da Tabela *</Label>
@@ -702,12 +713,12 @@ RETORNE:
 
             {modoInclusao === 'lote' && (
               <Card>
-                <CardHeader className="bg-purple-50 border-b pb-3">
+                <CardHeader className="bg-sky-50 border-b pb-3">
                   <CardTitle className="text-base">🎯 V21.0: Filtros por Dupla Classificação</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
-                  <Alert className="border-indigo-200 bg-indigo-50">
-                    <AlertDescription className="text-xs text-indigo-900">
+                  <Alert className="border-sky-200 bg-sky-50">
+                    <AlertDescription className="text-xs text-sky-900">
                       💡 Combine Setor + Grupo + Marca para inclusão cirúrgica de produtos
                     </AlertDescription>
                   </Alert>
@@ -805,7 +816,7 @@ RETORNE:
                   <Button 
                     type="button" 
                     onClick={handleAdicionarProdutosLote} 
-                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    className="w-full bg-sky-600 hover:bg-sky-700"
                     disabled={produtosDisponiveis.length === 0}
                     data-permission="Cadastros.TabelaPreco.editar"
                     data-action="adicionar-produtos-lote-tabela-preco"
@@ -816,9 +827,9 @@ RETORNE:
                   </Button>
 
                   <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                    <div className="p-2 bg-indigo-50 rounded">
-                      <p className="font-semibold text-indigo-900">{produtosDisponiveis.length}</p>
-                      <p className="text-indigo-600">Disponíveis</p>
+                    <div className="p-2 bg-sky-50 rounded">
+                      <p className="font-semibold text-sky-900">{produtosDisponiveis.length}</p>
+                      <p className="text-sky-600">Disponíveis</p>
                     </div>
                     <div className="p-2 bg-green-50 rounded">
                       <p className="font-semibold text-green-900">{itensTabela.length}</p>
@@ -846,7 +857,7 @@ RETORNE:
                           <p className="font-semibold text-sm">{item.produto_descricao}</p>
                           <div className="flex gap-3 mt-1 text-xs">
                             {item.setor_atividade_nome && (
-                              <Badge className="bg-indigo-100 text-indigo-700 text-xs">
+                              <Badge className="bg-sky-100 text-sky-700 text-xs">
                                 <Factory className="w-3 h-3 mr-1" />
                                 {item.setor_atividade_nome}
                               </Badge>
@@ -869,7 +880,7 @@ RETORNE:
                             <span>Preço: <strong className="text-green-700">R$ {(item.preco || 0).toFixed(2)}</strong></span>
                             <span>Margem: <strong>{(item.margem_percentual || 0).toFixed(1)}%</strong></span>
                             {item.markup_aplicado_ia && (
-                              <Badge className="bg-purple-100 text-purple-700 text-xs">
+                              <Badge className="bg-sky-100 text-sky-700 text-xs">
                                 <Sparkles className="w-3 h-3 mr-1" />
                                 Markup IA: {item.markup_aplicado_ia.toFixed(1)}%
                               </Badge>
@@ -901,9 +912,9 @@ RETORNE:
           </TabsContent>
 
           <TabsContent value="calculo" className="space-y-4 mt-4">
-            <Alert className="border-purple-200 bg-purple-50">
-              <Sparkles className="w-4 h-4 mr-2 text-purple-600" />
-              <AlertDescription className="text-sm text-purple-900">
+            <Alert className="border-sky-200 bg-sky-50">
+              <Sparkles className="w-4 h-4 mr-2 text-sky-600" />
+              <AlertDescription className="text-sm text-sky-900">
                 🧠 <strong>PriceBrain 3.0:</strong> IA analisa Setor + Grupo + Marca e sugere markup diferenciado
               </AlertDescription>
             </Alert>
@@ -983,16 +994,16 @@ RETORNE:
               </CardContent>
             </Card>
 
-            <Card className="border-purple-200 bg-purple-50">
-              <CardHeader className="bg-purple-100 border-b pb-3">
+            <Card className="border-sky-200 bg-sky-50">
+              <CardHeader className="bg-sky-100 border-b pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-purple-700" />
+                  <Sparkles className="w-5 h-5 text-sky-700" />
                   IA PriceBrain 3.0 - Precificação Inteligente
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
-                <Alert className="border-purple-300 bg-white">
-                  <AlertDescription className="text-xs text-purple-900">
+                <Alert className="border-sky-300 bg-white">
+                  <AlertDescription className="text-xs text-sky-900">
                     🧠 A IA analisa Setor + Grupo + Marca e sugere markup diferenciado por categoria
                   </AlertDescription>
                 </Alert>
@@ -1001,7 +1012,7 @@ RETORNE:
                   type="button"
                   onClick={handleSugerirPrecosIA}
                   disabled={calculando || itensTabela.length === 0}
-                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  className="w-full bg-sky-600 hover:bg-sky-700"
                   data-permission="Cadastros.TabelaPreco.ia"
                   data-action="sugerir-precos-tabela-preco-ia"
                   data-sensitive
@@ -1044,7 +1055,7 @@ RETORNE:
                         <p className="font-semibold">{item.produto_descricao}</p>
                         <div className="flex gap-2 mt-1 flex-wrap">
                           {item.setor_atividade_nome && (
-                            <Badge className="bg-indigo-100 text-indigo-700 text-xs">{item.setor_atividade_nome}</Badge>
+                            <Badge className="bg-sky-100 text-sky-700 text-xs">{item.setor_atividade_nome}</Badge>
                           )}
                           {item.grupo_produto_nome && (
                             <Badge className="bg-cyan-100 text-cyan-700 text-xs">{item.grupo_produto_nome}</Badge>

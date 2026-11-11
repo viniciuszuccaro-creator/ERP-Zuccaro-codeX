@@ -8,9 +8,7 @@ import { Lock, Bolt, User } from "lucide-react";
  * Badge visual inteligente para origem de pedido
  * Mostra cor e ícone baseado no parâmetro configurado
  * 
- * @param {string} origemPedido - Origem do pedido (Manual, Site, Chatbot, etc.)
- * @param {boolean} showLock - Se deve mostrar ícone de cadeado quando bloqueado
- * @param {string} className - Classes adicionais
+ * @param {{origemPedido: string, showLock?: boolean, className?: string}} props
  */
 export default function BadgeOrigemPedido({ 
   origemPedido, 

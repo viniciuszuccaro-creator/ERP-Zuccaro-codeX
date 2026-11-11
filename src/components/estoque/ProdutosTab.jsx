@@ -51,7 +51,7 @@ export default function ProdutosTab(props) {
       return data?.count || 0;
     },
     staleTime: 60000,
-    keepPreviousData: true
+    placeholderData: undefined
   });
   const { data: revendaCount = 0 } = useQuery({
     queryKey: ['produtos-count-revenda', filtroEmpresaKey],
@@ -64,7 +64,7 @@ export default function ProdutosTab(props) {
       return data?.count || 0;
     },
     staleTime: 60000,
-    keepPreviousData: true
+    placeholderData: undefined
   });
   const { data: producaoCount = 0 } = useQuery({
     queryKey: ['produtos-count-producao', filtroEmpresaKey],
@@ -77,7 +77,7 @@ export default function ProdutosTab(props) {
       return data?.count || 0;
     },
     staleTime: 60000,
-    keepPreviousData: true
+    placeholderData: undefined
   });
 
   // Estoque baixo ainda precisa avaliar campo <= mínimo (sem suporte direto no count): fallback leve por lote
@@ -96,7 +96,7 @@ export default function ProdutosTab(props) {
       return Array.isArray(data) ? data : [];
     },
     staleTime: 30000,
-    keepPreviousData: true
+    placeholderData: undefined
   });
 
   const estoqueBaixoCalc = useMemo(() => (produtosParaEstoqueBaixo || []).filter(p => (p.status === 'Ativo') && ((p.estoque_disponivel || 0) <= (p.estoque_minimo || 0))).length, [produtosParaEstoqueBaixo]);
@@ -148,14 +148,14 @@ export default function ProdutosTab(props) {
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-purple-50">
+        <Card className="border-sky-200 bg-sky-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-purple-700 mb-1">Revenda</p>
-                <p className="text-2xl font-bold text-purple-900">{isLoadingContagens ? '...' : contagensTotais.revenda}</p>
+                <p className="text-xs text-sky-700 mb-1">Revenda</p>
+                <p className="text-2xl font-bold text-sky-900">{isLoadingContagens ? '...' : contagensTotais.revenda}</p>
               </div>
-              <ShoppingCart className="w-8 h-8 text-purple-600" />
+              <ShoppingCart className="w-8 h-8 text-sky-600" />
             </div>
           </CardContent>
         </Card>
@@ -240,7 +240,7 @@ export default function ProdutosTab(props) {
           {hasPermission('Estoque', 'Produtos', 'editar') && (
             <Button 
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-50" 
+              className="border-sky-300 text-sky-700 hover:bg-sky-50"
               data-permission="Estoque.Produtos.editar"
               data-action="Estoque.Produtos.abrirConversaoMassa"
               data-context-required="group-or-company"

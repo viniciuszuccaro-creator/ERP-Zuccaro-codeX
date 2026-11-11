@@ -24,6 +24,7 @@ import {
   assertCadastroRecordInTenant,
   buildCadastroEditSavePayload,
   classifyCadastroEditLoad,
+  getCadastroEntityPermissionKey,
   hasCadastroEntityPermission,
   isCadastroEditLoadComplete,
   mergeCadastroEditHydration,
@@ -38,6 +39,7 @@ import {
 } from "lucide-react";
 import { useWindow } from "@/components/lib/useWindow";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
+import useClienteCadastroNavigation from './hooks/useClienteCadastroNavigation';
 import DetalhesCliente from "@/components/comercial/DetalhesCliente";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 import TransportadoraForm from "@/components/cadastros/TransportadoraForm";
@@ -88,7 +90,7 @@ const DEFAULT_FORM_COMPONENTS = {
 
 const SELF_MANAGED_NAMES = new Set([
   "CadastroClienteCompleto","CadastroFornecedorCompleto","RepresentanteFormCompleto",
-  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",
+  "ProdutoFormV22_Completo",
 ]);
 
 /** Flag estável sob minify (Function.name some no bundle). */
@@ -117,6 +119,9 @@ const FORM_ALIASES = [
   "evento",       // EventoNotificacaoForm usa { evento }
   "tabela",       // TabelaFiscalForm usa { tabela }
   "condicao",     // CondicaoComercialForm usa { condicao }
+  "cadastroFiscal", // CadastroFiscalForm usa { cadastroFiscal }
+  "comissao",       // ComissaoForm usa { comissao }
+  "notaFiscal",     // NotaFiscalFormCompleto usa { notaFiscal }
   "apiExternaForm", // cobertura extra
   "webhookForm",    // cobertura extra
 ];
@@ -245,10 +250,13 @@ function invalidateAll(qc, entity) {
 export default function VisualizadorUniversalEntidadeV24({
   nomeEntidade, tituloDisplay, icone: IconeProp,
   camposPrincipais, componenteEdicao: FormComponentProp,
-  windowMode, entityName, columns,
-  pageSize: pageSizeProp,
-  statusColors: extraColors,
+  windowMode, entityName = undefined, columns = undefined,
+  pageSize: pageSizeProp = undefined,
+  statusColors: extraColors = undefined,
   startWithForm = false,
+  initialRecordId = undefined,
+  navigationReceipt = undefined,
+  reopenRequestId = undefined,
 }) {
   const ENTITY   = nomeEntidade || entityName || "";
   const TITULO   = tituloDisplay || ENTITY;
@@ -273,28 +281,36 @@ export default function VisualizadorUniversalEntidadeV24({
     deleteInContext,
     getInContext,
   } = useContextoVisual();
-  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission, isLoading: permissionsLoading } = usePermissions();
   const empresaId = (empresaAtual && empresaAtual.id) || null;
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
   // Fail-closed: catálogo "simples" tambem exige grupo/empresa para listar/salvar
   const contextoValido = !!(empresaId || groupId);
-  const permCheckers = { hasPermission, canCreate, canEdit, canDelete };
+  const permCheckers = { hasPermission, canCreate, canEdit, canDelete, isLoading: permissionsLoading };
   const canViewCadastro = hasCadastroEntityPermission(ENTITY, "visualizar", permCheckers);
   const canCreateCadastro = hasCadastroEntityPermission(ENTITY, "criar", permCheckers);
   const canEditCadastro = hasCadastroEntityPermission(ENTITY, "editar", permCheckers);
   const canDeleteCadastro = hasCadastroEntityPermission(ENTITY, "excluir", permCheckers);
   // Tenant masters: gate efetivo é Cadastros.Organizacional (não Cadastros.Empresa.*).
   // data-permission do Button/Input deve espelhar o mesmo gate — senão busca/+ Novo ficam "Acesso negado".
-  const permSection = isTenantMasterEntity(ENTITY) ? "Organizacional" : ENTITY;
-  const cadastroPerm = function(action) { return "Cadastros." + permSection + "." + action; };
+  const cadastroPerm = function(action) { return getCadastroEntityPermissionKey(ENTITY, action); };
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
+    const FIELD_LABELS = {
+      id: "ID técnico",
+      codigo: "Código",
+      codigo_tabela_legado: "Código legado",
+      nome: "Nome",
+      nome_condicao: "Nome da condição",
+      forma_pagamento: "Forma de pagamento",
+      ativo: "Ativo",
+    };
     if (_camposPrincipais.length > 0) {
       return _camposPrincipais.map(function(c) {
         return {
           field: c,
-          label: c.replace(/_/g, " ").replace(/\b\w/g, function(x) { return x.toUpperCase(); }),
+          label: FIELD_LABELS[c] || c.replace(/_/g, " ").replace(/\b\w/g, function(x) { return x.toUpperCase(); }),
           sortable: true,
         };
       });
@@ -572,7 +588,7 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     if (formData._action === "delete") {
       if (!canDeleteCadastro) {
-        await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro pelo formulario sem permissao", { registro_id: formData.id || null, permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false });
+        await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro pelo formulario sem permissao", { registro_id: formData.id || null, permissao: cadastroPerm('excluir'), sucesso: false });
         throw new Error("Sem permissao para excluir.");
       }
       if (formData.id) {
@@ -587,11 +603,11 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     if (editItem && editItem.id && !canEditCadastro) {
-      await auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem permissao", { registro_id: editItem.id, permissao: `Cadastros.${ENTITY}.editar`, sucesso: false });
+      await auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem permissao", { registro_id: editItem.id, permissao: cadastroPerm('editar'), sucesso: false });
       throw new Error("Sem permissao para editar.");
     }
     if ((!editItem || !editItem.id) && !canCreateCadastro) {
-      await auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: `Cadastros.${ENTITY}.criar`, sucesso: false });
+      await auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: cadastroPerm('criar'), sucesso: false });
       throw new Error("Sem permissao para criar.");
     }
     if (isLoadingEdit || editLoadBlocked) {
@@ -627,7 +643,7 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     if (!canCreateCadastro) {
-      auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: `Cadastros.${ENTITY}.criar` });
+      auditCadastroEvent("Bloqueio", "Tentativa de criar cadastro sem permissao", { permissao: cadastroPerm('criar') });
       alert("Sem permissao para criar.");
       return;
     }
@@ -642,7 +658,8 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(true);
   }, [ENTITY, auditCadastroEvent, canCreateCadastro, contextoValido, scopeKey]);
 
-  const handleEditItem = useCallback(async function(item) {
+  const handleEditItem = useCallback(async function(item, navigationIsCurrent = () => true) {
+    if (!navigationIsCurrent()) return false;
     if (!item || !item.id) return;
     if (!contextoValido) {
       auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem contexto grupo/empresa", { registro_id: item.id, motivo: "sem_contexto" });
@@ -650,7 +667,7 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     if (!canEditCadastro) {
-      auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem permissao", { registro_id: item.id, permissao: `Cadastros.${ENTITY}.editar` });
+      auditCadastroEvent("Bloqueio", "Tentativa de editar cadastro sem permissao", { registro_id: item.id, permissao: cadastroPerm('editar') });
       alert("Sem permissao para editar.");
       return;
     }
@@ -658,7 +675,7 @@ export default function VisualizadorUniversalEntidadeV24({
     const request = ++editRequestRef.current;
     const requestedScope = scopeKey;
     const stillCurrent = function() {
-      return isEditRequestCurrent({
+      return navigationIsCurrent() && isEditRequestCurrent({
         request: request,
         current: editRequestRef.current,
         requestedScope: requestedScope,
@@ -755,6 +772,7 @@ export default function VisualizadorUniversalEntidadeV24({
       setEditLoadBlocked(false);
       setEditError(classified.message);
       setFormKey(function(k) { return k + 1; });
+      return true;
     } catch (error) {
       if (!stillCurrent()) return;
       console.error("[VisualizadorUniversalEntidade] Falha ao carregar registro completo", error);
@@ -766,10 +784,17 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       setEditLoadBlocked(true);
       setEditError(failed.message);
+      return false;
     } finally {
       if (stillCurrent()) setIsLoadingEdit(false);
     }
   }, [ENTITY, auditCadastroEvent, canEditCadastro, contextoValido, groupId, empresaId, getInContext, contextoCanonico, scopeKey]);
+
+  const initialNavigation = useClienteCadastroNavigation({
+    entityName: ENTITY, id: initialRecordId, requestId: reopenRequestId, receipt: navigationReceipt,
+    groupId, empresaId, canView: canViewCadastro, canEdit: canEditCadastro, permissionsLoading,
+    openRecord: handleEditItem, closeRecord: handleCloseForm,
+  });
 
   const formProps = useMemo(
     function() {
@@ -792,7 +817,7 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     if (!canDeleteCadastro) {
-      await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro sem permissao", { registro_id: item.id, permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false, acao_sensivel: true });
+      await auditCadastroEvent("Bloqueio", "Tentativa de excluir cadastro sem permissao", { registro_id: item.id, permissao: cadastroPerm('excluir'), sucesso: false, acao_sensivel: true });
       alert("Sem permissao para excluir.");
       return;
     }
@@ -820,7 +845,7 @@ export default function VisualizadorUniversalEntidadeV24({
       return;
     }
     if (!canDeleteCadastro) {
-      await auditCadastroEvent("Bloqueio", "Tentativa de exclusao em lote sem permissao", { permissao: `Cadastros.${ENTITY}.excluir`, sucesso: false, acao_sensivel: true });
+      await auditCadastroEvent("Bloqueio", "Tentativa de exclusao em lote sem permissao", { permissao: cadastroPerm('excluir'), sucesso: false, acao_sensivel: true });
       alert("Sem permissao para excluir.");
       return;
     }
@@ -1284,6 +1309,15 @@ export default function VisualizadorUniversalEntidadeV24({
         {renderTableBody()}
       </div>
 
+      {initialNavigation.error && (
+        <div role="alert" className="flex items-center gap-2 text-sm text-red-700" data-action="cliente-cadastro-navigation-error">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{initialNavigation.error}</span>
+          <button type="button" onClick={initialNavigation.retry} title="Tentar abrir cadastro novamente" aria-label="Tentar abrir cadastro novamente" className="h-8 w-8 shrink-0 flex items-center justify-center">
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       {/* Paginação */}
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1">
         <span>Pág. {page} · {items.length} exibidos · {totalCount} total</span>

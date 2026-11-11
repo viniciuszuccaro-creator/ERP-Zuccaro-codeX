@@ -57,7 +57,7 @@ export default function DriverChat({ entrega, onUpdated }) {
     // Usa ocorrencias como trilha de comunicacao operacional com o motorista.
     return arr
       .filter((o) => o && (o.tipo === "Outros" || o.tipo === "Comunicacao" || o.tipo === "Mensagem"))
-      .sort((a, b) => new Date(a.data_hora || 0) - new Date(b.data_hora || 0));
+      .sort((a, b) => new Date(a.data_hora || 0).getTime() - new Date(b.data_hora || 0).getTime());
   }, [entrega?.ocorrencias]);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function DriverChat({ entrega, onUpdated }) {
   }, [mensagens?.length]);
 
   const enviarMutation = useMutation({
-    mutationFn: async (textoOriginal) => {
+    mutationFn: async (/** @type {unknown} */ textoOriginal) => {
       const texto = sanitizeText(textoOriginal);
       if (!contextoValido || !canSend) {
         await auditChat({ acao: "Entrega.comunicacao.enviar.bloqueado", sucesso: false, motivo: !contextoValido ? "contexto_obrigatorio" : "permissao_negada" });
