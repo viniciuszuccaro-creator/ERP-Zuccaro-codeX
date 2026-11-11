@@ -260,6 +260,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     tipo: "Pessoa Física",
     status: "Prospect",
     nome: "",
+    nome_social: "",
     razao_social: "",
     nome_fantasia: "",
     cpf: "",
@@ -267,6 +268,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     rg: "",
     inscricao_estadual: "",
     inscricao_municipal: "",
+    email: "",
+    telefone: "",
+    celular: "",
+    origem: "",
     regiao_atendimento: "Sudeste",
     endereco_principal: {
       cep: "",
@@ -307,81 +312,103 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     group_id: groupId
   });
 
-  const buildPayload = (data = formData) => ({
-    ...data,
-    tipo: sanitizeText(data.tipo || "Pessoa Fisica", 40),
-    status: sanitizeText(data.status || "Prospect", 40),
-    nome: sanitizeText(data.nome, 180),
-    razao_social: sanitizeText(data.razao_social, 180),
-    nome_fantasia: sanitizeText(data.nome_fantasia, 180),
-    cpf: sanitizeCode(data.cpf, 18),
-    cnpj: sanitizeCode(data.cnpj, 24),
-    rg: sanitizeCode(data.rg, 30),
-    inscricao_estadual: sanitizeCode(data.inscricao_estadual, 40),
-    inscricao_municipal: sanitizeCode(data.inscricao_municipal, 40),
-    regiao_atendimento: sanitizeText(data.regiao_atendimento, 120),
-    regiao_atendimento_id: sanitizeCode(data.regiao_atendimento_id, 120),
-    vendedor_responsavel: sanitizeText(data.vendedor_responsavel, 180),
-    vendedor_responsavel_id: sanitizeCode(data.vendedor_responsavel_id, 120),
-    indicador_id: sanitizeCode(data.indicador_id, 120),
-    motivo_inatividade: sanitizeText(data.motivo_inatividade, 500),
-    observacoes: sanitizeText(data.observacoes, 2000),
-    endereco_principal: sanitizeEndereco(data.endereco_principal),
-    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.
-    ...(data.contatos === undefined || data.contatos === null
-      ? {}
-      : {
-          contatos: sanitizeContatos(data.contatos),
-          ...(data.expectedVersion !== undefined
-            ? { expectedVersion: data.expectedVersion }
-            : (data.contatos_version !== undefined
-              ? { expectedVersion: data.contatos_version }
-              : {})),
-        }),
-    ...(data.locais_entrega === undefined
-      ? {}
-      : {
-          locais_entrega: Array.isArray(data.locais_entrega)
-            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)
-            : [],
-        }),
-    // Campo não carregado: omitir (≠ limpar; ≠ inventar default comercial/fiscal).
-    ...(data.condicao_comercial === undefined || data.condicao_comercial === null
-      ? {}
-      : {
-          condicao_comercial: {
-            ...(data.condicao_comercial || {}),
-            tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
-            forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),
-            percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),
-            condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),
-            limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),
-            limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),
-            situacao_credito: sanitizeText(
-              data.condicao_comercial?.situacao_credito
-                || (typeof calcularSituacaoCredito === 'function' ? calcularSituacaoCredito() : 'OK'),
-              40,
-            ),
-          },
-        }),
-    ...(data.configuracao_fiscal === undefined || data.configuracao_fiscal === null
-      ? {}
-      : {
-          configuracao_fiscal: {
-            ...(data.configuracao_fiscal || {}),
-            regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),
-            cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),
-            contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),
-            tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),
-            isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),
-            isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
-            observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000),
-          },
-        }),
-    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),
-    empresa_id: data.empresa_id || empresaAtual?.id,
-    group_id: data.group_id || groupId
-  });
+  const buildPayload = (data = formData) => {
+    // Omit ≠ limpar: campo não carregado (sem hasOwn) não vira "" no fio.
+    const has = (key) => Object.prototype.hasOwnProperty.call(data, key);
+    const ownText = (key, max) => (has(key) ? { [key]: sanitizeText(data[key], max) } : {});
+    const ownCode = (key, max) => (has(key) ? { [key]: sanitizeCode(data[key], max) } : {});
+    return {
+      ...data,
+      ...(has('tipo') || !data.id
+        ? { tipo: sanitizeText(data.tipo || 'Pessoa Fisica', 40) }
+        : {}),
+      ...(has('status') || !data.id
+        ? { status: sanitizeText(data.status || 'Prospect', 40) }
+        : {}),
+      ...ownText('nome', 180),
+      ...ownText('razao_social', 180),
+      ...ownText('nome_fantasia', 180),
+      ...ownText('nome_social', 180),
+      ...ownCode('cpf', 18),
+      ...ownCode('cnpj', 24),
+      ...ownCode('rg', 30),
+      ...ownCode('inscricao_estadual', 40),
+      ...ownCode('inscricao_municipal', 40),
+      ...ownText('email', 180),
+      ...ownText('telefone', 40),
+      ...ownText('celular', 40),
+      ...ownText('observacoes', 2000),
+      // origem/legado: só reenviar se carregados — procedência importada é imutável no BFF.
+      ...ownText('origem', 40),
+      ...(has('codigo_legado') ? { codigo_legado: sanitizeCode(data.codigo_legado, 120) } : {}),
+      ...(has('source_system') ? { source_system: sanitizeText(data.source_system, 80) } : {}),
+      ...(has('legacy_id') ? { legacy_id: sanitizeCode(data.legacy_id, 120) } : {}),
+      ...(has('migration_batch') ? { migration_batch: sanitizeText(data.migration_batch, 120) } : {}),
+      ...ownText('regiao_atendimento', 120),
+      ...ownCode('regiao_atendimento_id', 120),
+      ...ownText('vendedor_responsavel', 180),
+      ...ownCode('vendedor_responsavel_id', 120),
+      ...ownCode('indicador_id', 120),
+      ...ownText('motivo_inatividade', 500),
+      ...(has('endereco_principal')
+        ? { endereco_principal: sanitizeEndereco(data.endereco_principal) }
+        : {}),
+      // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.
+      ...(data.contatos === undefined || data.contatos === null
+        ? {}
+        : {
+            contatos: sanitizeContatos(data.contatos),
+            ...(data.expectedVersion !== undefined
+              ? { expectedVersion: data.expectedVersion }
+              : (data.contatos_version !== undefined
+                ? { expectedVersion: data.contatos_version }
+                : {})),
+          }),
+      ...(data.locais_entrega === undefined
+        ? {}
+        : {
+            locais_entrega: Array.isArray(data.locais_entrega)
+              ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)
+              : [],
+          }),
+      // Campo não carregado: omitir (≠ limpar; ≠ inventar default comercial/fiscal).
+      ...(data.condicao_comercial === undefined || data.condicao_comercial === null
+        ? {}
+        : {
+            condicao_comercial: {
+              ...(data.condicao_comercial || {}),
+              tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),
+              forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),
+              percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),
+              condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),
+              limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),
+              limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),
+              situacao_credito: sanitizeText(
+                data.condicao_comercial?.situacao_credito
+                  || (typeof calcularSituacaoCredito === 'function' ? calcularSituacaoCredito() : 'OK'),
+                40,
+              ),
+            },
+          }),
+      ...(data.configuracao_fiscal === undefined || data.configuracao_fiscal === null
+        ? {}
+        : {
+            configuracao_fiscal: {
+              ...(data.configuracao_fiscal || {}),
+              regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),
+              cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),
+              contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),
+              tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),
+              isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),
+              isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),
+              observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000),
+            },
+          }),
+      ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),
+      empresa_id: data.empresa_id || empresaAtual?.id,
+      group_id: data.group_id || groupId,
+    };
+  };
 
   const { data: tabelasPreco = [] } = useQuery({
     queryKey: ['tabelas-preco', contextKey],
@@ -454,6 +481,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       tipo: "Pessoa Física",
       status: "Prospect",
       nome: "",
+      nome_social: "",
       razao_social: "",
       nome_fantasia: "",
       cpf: "",
@@ -461,6 +489,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       rg: "",
       inscricao_estadual: "",
       inscricao_municipal: "",
+      email: "",
+      telefone: "",
+      celular: "",
+      origem: "",
       regiao_atendimento: "Sudeste",
       endereco_principal: {
         cep: "",
@@ -1195,10 +1227,81 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   <Label htmlFor="nome">Nome / Razão Social *</Label>
                   <Input
                     id="nome"
-                    value={formData.nome}
+                    value={formData.nome ?? ''}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                     required
                   />
+                </div>
+
+                <div className="col-span-2">
+                  <Label htmlFor="nome_social">Nome social</Label>
+                  <Input
+                    id="nome_social"
+                    value={formData.nome_social ?? ''}
+                    onChange={(e) => setFormData({ ...formData, nome_social: e.target.value })}
+                    data-campo="nome_social"
+                    placeholder={formData.nome_social === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                </div>
+
+                {(formData.origem || formData.codigo_legado || formData.source_system) && (
+                  <div
+                    className="col-span-2 rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                    data-fonte="cliente-procedencia"
+                    role="status"
+                  >
+                    <p>
+                      Procedência:
+                      {' '}
+                      <span data-campo="origem">{formData.origem || '—'}</span>
+                      {formData.codigo_legado ? (
+                        <>
+                          {' · '}código legado <span data-campo="codigo_legado">{String(formData.codigo_legado)}</span>
+                        </>
+                      ) : null}
+                      {formData.source_system ? (
+                        <>
+                          {' · '}fonte <span data-campo="source_system">{String(formData.source_system)}</span>
+                        </>
+                      ) : null}
+                    </p>
+                    <p className="mt-1 text-slate-500">
+                      Campos de procedência importada não são alteráveis aqui — omitir no save ≠ limpar.
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email ?? ''}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    data-campo="email"
+                    placeholder={formData.email === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    value={formData.telefone ?? ''}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    data-campo="telefone"
+                    placeholder={formData.telefone === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="celular">Celular</Label>
+                  <Input
+                    id="celular"
+                    value={formData.celular ?? ''}
+                    onChange={(e) => setFormData({ ...formData, celular: e.target.value })}
+                    data-campo="celular"
+                    placeholder={formData.celular === undefined ? 'Não recuperado nesta carga' : undefined}
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Celular ≠ WhatsApp (canal tipado só em Contatos).</p>
                 </div>
 
                 {formData.tipo === "Pessoa Jurídica" && (
@@ -1303,12 +1406,18 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                     </div>
 
                     <div>
-                      <Label htmlFor="rg">RG</Label>
-                      <Input
+                  <Label htmlFor="rg">RG</Label>
+                  <Input
                         id="rg"
-                        value={formData.rg}
+                        value={formData.rg ?? ''}
                         onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
+                        data-campo="rg"
+                        data-persistencia={formData.rg === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.rg === undefined ? 'Não recuperado nesta carga' : undefined}
                       />
+                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-bff">
+                        RG com valor ainda exige contrato BFF — save HTTP fail-closed se preenchido; omitir ≠ limpar.
+                      </p>
                     </div>
                   </>
                 )}

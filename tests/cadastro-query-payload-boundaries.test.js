@@ -1,17 +1,17 @@
 test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito colateral nos hunks', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const payload = [
-    '    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.',
-    '    ...(data.contatos === undefined || data.contatos === null',
-    '      ? {}',
-    '      : {',
-    '          contatos: sanitizeContatos(data.contatos),',
-    '          ...(data.expectedVersion !== undefined',
-    '            ? { expectedVersion: data.expectedVersion }',
-    '            : (data.contatos_version !== undefined',
-    '              ? { expectedVersion: data.contatos_version }',
-    '              : {})),',
-    '        }),',
+    '      // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.',
+    '      ...(data.contatos === undefined || data.contatos === null',
+    '        ? {}',
+    '        : {',
+    '            contatos: sanitizeContatos(data.contatos),',
+    '            ...(data.expectedVersion !== undefined',
+    '              ? { expectedVersion: data.expectedVersion }',
+    '              : (data.contatos_version !== undefined',
+    '                ? { expectedVersion: data.contatos_version }',
+    '                : {})),',
+    '          }),',
   ].join('\n');
   const mapper = [
     '        // Ausência/null ≠ [] : omitir evita wipe; [] hidratado = limpeza explícita prévia.',
@@ -23,20 +23,20 @@ test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito cola
     '          : {}),',
   ].join('\n');
   const locaisPayload = [
-    '    ...(data.locais_entrega === undefined',
-    '      ? {}',
-    '      : {',
-    '          locais_entrega: Array.isArray(data.locais_entrega)',
-    '            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)',
-    '            : [],',
-    '        }),',
+    '      ...(data.locais_entrega === undefined',
+    '        ? {}',
+    '        : {',
+    '            locais_entrega: Array.isArray(data.locais_entrega)',
+    '              ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)',
+    '              : [],',
+    '          }),',
   ].join('\n');
   const locaisMapper = [
     '        ...(record.locais_entrega === undefined',
     '          ? {}',
     '          : { locais_entrega: record.locais_entrega || [] }),',
   ].join('\n');
-  const docsPayload = '    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),';
+  const docsPayload = '      ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),';
   const docsMapper = '        ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),';
   for (const hunk of [payload, mapper, locaisPayload, locaisMapper, docsPayload, docsMapper]) {
     assert.equal(source.split(hunk).length - 1, 1);
@@ -62,9 +62,9 @@ test('Cliente contatos/locais: remainder rejeita omissao repeticao e efeito cola
 test('Cliente contatos: remainder mantem alteracao externa visivel ao hash integral', () => {
   const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   const original = clienteContactPresenceRemainder(source);
-  const target = '    nome_fantasia: sanitizeText(data.nome_fantasia, 180),';
+  const target = "      ...ownText('nome_fantasia', 180),";
   assert.equal(source.split(target).length - 1, 1);
-  const forged = source.replace(target, "    nome_fantasia: 'FORGED',");
+  const forged = source.replace(target, "      ...ownText('FORGED_FANTASIA', 180),");
   assert.notEqual(createHash('sha256').update(clienteContactPresenceRemainder(forged)).digest('hex'),
     createHash('sha256').update(original).digest('hex'));
 });
@@ -421,99 +421,99 @@ function clienteContactPresenceRemainder(source) {
     + '              />\n'
     + '            </TabsContent>\n');
   source = once(source,
-    '    // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.\n'
-    + '    ...(data.contatos === undefined || data.contatos === null\n'
-    + '      ? {}\n'
-    + '      : {\n'
-    + '          contatos: sanitizeContatos(data.contatos),\n'
-    + '          ...(data.expectedVersion !== undefined\n'
-    + '            ? { expectedVersion: data.expectedVersion }\n'
-    + '            : (data.contatos_version !== undefined\n'
-    + '              ? { expectedVersion: data.contatos_version }\n'
-    + '              : {})),\n'
-    + '        }),',
-    '    contatos: sanitizeContatos(data.contatos),');
+    '      // null = desconhecido (não comando público); [] = limpeza explícita; omit = não tocar.\n'
+    + '      ...(data.contatos === undefined || data.contatos === null\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            contatos: sanitizeContatos(data.contatos),\n'
+    + '            ...(data.expectedVersion !== undefined\n'
+    + '              ? { expectedVersion: data.expectedVersion }\n'
+    + '              : (data.contatos_version !== undefined\n'
+    + '                ? { expectedVersion: data.contatos_version }\n'
+    + '                : {})),\n'
+    + '          }),',
+    '      contatos: sanitizeContatos(data.contatos),');
   // mapToForm já foi peeleado à forma mínima; peel residual do omit→atributo.
   source = once(source, '      ...(record.contatos === undefined ? {} : { contatos: record.contatos || [] }),',
     '      contatos: record.contatos || [],');
   source = once(source,
-    '    ...(data.locais_entrega === undefined\n'
-    + '      ? {}\n'
-    + '      : {\n'
-    + '          locais_entrega: Array.isArray(data.locais_entrega)\n'
-    + '            ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)\n'
-    + '            : [],\n'
-    + '        }),',
-    '    locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],');
+    '      ...(data.locais_entrega === undefined\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            locais_entrega: Array.isArray(data.locais_entrega)\n'
+    + '              ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco)\n'
+    + '              : [],\n'
+    + '          }),',
+    '      locais_entrega: Array.isArray(data.locais_entrega) ? data.locais_entrega.slice(0, 50).map(sanitizeEndereco) : [],');
   // #591: omit crédito/fiscal não carregados → sempre enviar (forma anterior do Completo).
   source = once(source,
-    '    // Campo não carregado: omitir (≠ limpar; ≠ inventar default comercial/fiscal).\n'
-    + '    ...(data.condicao_comercial === undefined || data.condicao_comercial === null\n'
-    + '      ? {}\n'
-    + '      : {\n'
-    + '          condicao_comercial: {\n'
-    + '            ...(data.condicao_comercial || {}),\n'
-    + '            tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),\n'
-    + '            forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),\n'
-    + '            percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),\n'
-    + '            condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),\n'
-    + '            limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),\n'
-    + '            limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),\n'
-    + '            situacao_credito: sanitizeText(\n'
-    + '              data.condicao_comercial?.situacao_credito\n'
-    + '                || (typeof calcularSituacaoCredito === \'function\' ? calcularSituacaoCredito() : \'OK\'),\n'
-    + '              40,\n'
-    + '            ),\n'
-    + '          },\n'
-    + '        }),\n'
-    + '    ...(data.configuracao_fiscal === undefined || data.configuracao_fiscal === null\n'
-    + '      ? {}\n'
-    + '      : {\n'
-    + '          configuracao_fiscal: {\n'
-    + '            ...(data.configuracao_fiscal || {}),\n'
-    + '            regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),\n'
-    + '            cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),\n'
-    + '            contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),\n'
-    + '            tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),\n'
-    + '            isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),\n'
-    + '            isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),\n'
-    + '            observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000),\n'
-    + '          },\n'
-    + '        }),',
-    '    condicao_comercial: {\n'
-    + '      ...(data.condicao_comercial || {}),\n'
-    + '      tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),\n'
-    + '      forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),\n'
-    + '      percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),\n'
-    + '      condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),\n'
-    + '      limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),\n'
-    + '      limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),\n'
-    + '      situacao_credito: sanitizeText(data.condicao_comercial?.situacao_credito || calcularSituacaoCredito(), 40)\n'
-    + '    },\n'
-    + '    configuracao_fiscal: {\n'
-    + '      ...(data.configuracao_fiscal || {}),\n'
-    + '      regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),\n'
-    + '      cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),\n'
-    + '      contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),\n'
-    + '      tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),\n'
-    + '      isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),\n'
-    + '      isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),\n'
-    + '      observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)\n'
-    + '    },');
+    '      // Campo não carregado: omitir (≠ limpar; ≠ inventar default comercial/fiscal).\n'
+    + '      ...(data.condicao_comercial === undefined || data.condicao_comercial === null\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            condicao_comercial: {\n'
+    + '              ...(data.condicao_comercial || {}),\n'
+    + '              tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),\n'
+    + '              forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),\n'
+    + '              percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),\n'
+    + '              condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),\n'
+    + '              limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),\n'
+    + '              limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),\n'
+    + '              situacao_credito: sanitizeText(\n'
+    + '                data.condicao_comercial?.situacao_credito\n'
+    + '                  || (typeof calcularSituacaoCredito === \'function\' ? calcularSituacaoCredito() : \'OK\'),\n'
+    + '                40,\n'
+    + '              ),\n'
+    + '            },\n'
+    + '          }),\n'
+    + '      ...(data.configuracao_fiscal === undefined || data.configuracao_fiscal === null\n'
+    + '        ? {}\n'
+    + '        : {\n'
+    + '            configuracao_fiscal: {\n'
+    + '              ...(data.configuracao_fiscal || {}),\n'
+    + '              regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),\n'
+    + '              cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),\n'
+    + '              contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),\n'
+    + '              tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),\n'
+    + '              isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),\n'
+    + '              isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),\n'
+    + '              observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000),\n'
+    + '            },\n'
+    + '          }),',
+    '      condicao_comercial: {\n'
+    + '        ...(data.condicao_comercial || {}),\n'
+    + '        tabela_preco_id: sanitizeCode(data.condicao_comercial?.tabela_preco_id, 120),\n'
+    + '        forma_pagamento_padrao_id: sanitizeCode(data.condicao_comercial?.forma_pagamento_padrao_id, 120),\n'
+    + '        percentual_desconto: toNumber(data.condicao_comercial?.percentual_desconto, 0),\n'
+    + '        condicao_pagamento: sanitizeText(data.condicao_comercial?.condicao_pagamento || "A Vista", 80),\n'
+    + '        limite_credito: toNumber(data.condicao_comercial?.limite_credito, 0),\n'
+    + '        limite_credito_utilizado: toNumber(data.condicao_comercial?.limite_credito_utilizado, 0),\n'
+    + '        situacao_credito: sanitizeText(data.condicao_comercial?.situacao_credito || calcularSituacaoCredito(), 40)\n'
+    + '      },\n'
+    + '      configuracao_fiscal: {\n'
+    + '        ...(data.configuracao_fiscal || {}),\n'
+    + '        regime_tributario: sanitizeText(data.configuracao_fiscal?.regime_tributario || "Simples Nacional", 80),\n'
+    + '        cfop_padrao_venda: sanitizeCode(data.configuracao_fiscal?.cfop_padrao_venda || "5102", 12),\n'
+    + '        contribuinte_icms: sanitizeBoolean(data.configuracao_fiscal?.contribuinte_icms),\n'
+    + '        tipo_contribuinte: sanitizeText(data.configuracao_fiscal?.tipo_contribuinte || "1 - Contribuinte", 80),\n'
+    + '        isento_ipi: sanitizeBoolean(data.configuracao_fiscal?.isento_ipi),\n'
+    + '        isento_icms: sanitizeBoolean(data.configuracao_fiscal?.isento_icms),\n'
+    + '        observacoes_fiscais: sanitizeText(data.configuracao_fiscal?.observacoes_fiscais, 1000)\n'
+    + '      },');
   source = once(source,
     '      ...(record.locais_entrega === undefined\n'
     + '        ? {}\n'
     + '        : { locais_entrega: record.locais_entrega || [] }),',
     '      locais_entrega: record.locais_entrega || [],');
-  source = once(source, '    ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),',
-    '    documentos: sanitizeDocumentos(data.documentos),');
+  source = once(source, '      ...(data.documentos === undefined ? {} : { documentos: sanitizeDocumentos(data.documentos) }),',
+    '      documentos: sanitizeDocumentos(data.documentos),');
   return once(source, '      ...(record.documentos === undefined ? {} : { documentos: record.documentos || [] }),',
     '      documentos: record.documentos || [],');
 }
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', '3aef941b02cb40f811b47511c23bc4e9d8e3f9d1970f973b6ca0d043aba153af'], // #591 omit crédito/fiscal + quarentena revisável
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', '387761ffcdfa9ca6b55b8e4d5c9a2d6819eb328dd1eff464dbca415e65bb5e27'], // #591 piloto-cobertura: ownText omit + superfície ALLOWED_KEYS
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];

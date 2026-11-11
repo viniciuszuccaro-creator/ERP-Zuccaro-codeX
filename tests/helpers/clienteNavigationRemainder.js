@@ -68,6 +68,11 @@ export function clienteNavigationRemainder(source) {
       + '      email: "E-mail",\n'
       + '      telefone: "Telefone",\n'
       + '      celular: "Celular",\n'
+      + '      nome_fantasia: "Nome fantasia",\n'
+      + '      nome_social: "Nome social",\n'
+      + '      inscricao_estadual: "Inscrição estadual",\n'
+      + '      inscricao_municipal: "Inscrição municipal",\n'
+      + '      origem: "Origem",\n'
       + '      razao_social: "Razão social",\n',
       '      ativo: "Ativo",\n'
       + '      razao_social: "Razão social",\n',
