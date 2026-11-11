@@ -1,4 +1,24 @@
-## Entregue - recuperacao HML e matriz nativa completa de Clientes (2026-11-11)
+## Estado vigente - leitura granular de locais na HML (2026-11-11)
+
+Autorizacao especifica do dono aplicada SOMENTE Cadastros.cliente_local visualizar
+no perfiluser HMLCPA existente. Sem endpointIAMnovo: profiles/audit_logs canônicos
+via procedimento administrativo privado, com lock/CAS integral, backup, ensaio
+PGlite e PostgreSQL rollback, revisao independente e auditoria transacional.
+Replay nao duplicouevento; reverse-trial PostgreSQL rollbackpreservou concessao.
+Demais capacidades/roleuser preservadas;0grantsSQL/0escritasclientesouenderecos.
+Fontes sanitizadas344/6797920338 e6798163177; planos/identidades/reversao privados.
+Leitura APIde locais apos concessao depende de novo login; NAO declararHTTP200.
+
+Timer da janela81598 encerrouNORMAL,100fullrows iguais/checkpointfinal/0writes;
+retomada98849 ate11h31Brasilia,API/web8650/15173PRIVATE. Dono solicitado login.
+App eba68f2f CI6819/6820SUCCESS; checkpoint0424210a CI6823/6824SUCCESS. Matriz
+156campos Clientes/34contatos e fonte100 preservadas; nada foi reimportado.
+Proximo: sessao->GETlocais e mappings auxiliares autorizados, sem inventar dados.
+Dependencias nativas conferidas:6vendedores/4tabelas/9regioes por codigo, ainda
+sem associacao canonica aprovada; condicao pagamento zero em100 nao vira padrao.
+Fonte/captura anterior coincidem100/100; plano privado preservado sem nova carga.
+
+## Historico imediato - recuperacao HML e matriz nativa completa de Clientes (2026-11-11)
 
 Codigo eba68f2f, CI6819/6820SUCCESS;14contraprovasPASS, audit/lint/typecheck/build
 PASS e revisoes independentes favoraveis. Recuperacao Linux explicita arquivou

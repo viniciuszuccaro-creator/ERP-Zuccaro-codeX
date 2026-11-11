@@ -1,4 +1,34 @@
-## Checkpoint vigente - HML recuperada e fonte156 conferida (2026-11-11)
+## Adendo vigente - leitura de locais autorizada na HML (2026-11-11)
+
+Dono autorizou SOMENTE Cadastros.cliente_local visualizar no perfil HML existente.
+Antes: perfiluser ativo/GrupoCPA/empresaNULL, cliente permitido ecliente_local
+ausente;403explicado sem tratar como vazio. Nao existe endpoint writeProfiles:
+procedimento administrativo excepcional reutilizou profiles/permissoes/audit_logs
+e executor privado ja aprovado, sem criar moduloIAM ou expor endpointnovo.
+Template revisado c381f928/fixture PGlite PASS: CAS integral/lock/replay/rollback
+de auditoria/reversao; autoria explicitamente vinculada ao dono e executor DB
+registrado separadamente; schemas qualificados contra shadowtemporario.
+Driver7294ab84 exige pins do ensaio/backup/args/SQL/alvo/aprovacao e flags rollback.
+Ensaio PostgreSQL HML rollbackPASS; aplicacao EXPLICITA auditada1perfil; replay
+sem novo evento; reversao real ensaiada ROLLBACK mantendo leitura.0SQLgrants,
+0enderecos/0clientes alterados, roleuser e demais capacidades preservadas.
+Fontes sanitizadas344/6797920338 e6798163177; planos/backup/reverse privados em
+hml344-cpa-20261104/local-read-gate-20261111. Nao autoriza escrita de locais/Obras.
+
+Janela81598 tambem expirou NORMAL:100fullrows iguais,checkpoint final/0writes.
+Retomada98849 ate2026-11-11T14:31:13Z(11h31Brasilia),API/web8650/15173PRIVATE.
+Nova janela exige login; dono solicitado a entrar. HTTPpositivo de locais apos
+concessao AINDA PENDENTE, nao confundir perfil aplicado com aceite endpoint.
+Codigo app eba68f2f/CI6819/6820SUCCESS; checkpoint0424210a/CI6823/6824SUCCESS.
+Proximo: sessao real->GETlocais (sem escrita), matriz156/auxiliares e mappings
+comprovados; sem alterarVPS/DDL/grants ou promoverhistoricos/saldos.
+Referencias comerciais nativas da100:6codigos de vendedor,4tabelas de preco e
+9regioes; valores capturados antes conferem100/100 com leitura nativa completa.
+CONDICAOPAGTO tem zero nas100, nao condicao comercial aprovada. Nenhum vinculo
+canonico criado por nome/semelhanca. Plano privado commercial-reference-dependencies
+fica junto da matriz156; reutilizar para crosswalk, nao repetir extracao.
+
+## Historico imediato - HML recuperada e fonte156 conferida (2026-11-11)
 
 Codigo eba68f2fecc4016adaf1c61e197b3966afae8cb3, CI6819/6820SUCCESS.
 Revisoes independentes favoraveis ao controlador e bootstrap privado de14e28f;

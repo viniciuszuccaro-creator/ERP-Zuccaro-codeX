@@ -1,5 +1,18 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Leitura de locais na HML - alteracao autorizada (2026-11-11)
+
+Somente Cadastros.cliente_local=['visualizar'] adicionado ao perfil existente,
+por autorizacao especifica; roleuser/GrupoCPA/empresaNULL preservados. Nenhum
+grant SQL, Authuser novo, admin, DDL ou capacidade de escrever enderecos.
+Sem endpointwriteProfiles nesse BFF: artefato administrativo privado reutiliza
+profiles/audit_logs/executor existente; nao e novo controle de acesso.
+Backup/CAS/replay/auditoria/reversao ensaiados; fontes344/6797920338 e6798163177.
+Aplicacao privada auditada, HTTPpositivo ainda depende
+da nova sessao. Nao usar permissao aplicada como prova de endereco carregado.
+Reversao em local-read-gate-20261111 exige CAS e auditoria; nao executar SQL
+arquivado sem conferir bytes/pins/plano, nem repetir commit de resposta ambigua.
+
 ## Recuperacao revisada e parada normal (2026-11-11)
 
 Codigo eba68f2f/CI6819/6820SUCCESS. Iniciar HML ERP continua wrapper do mesmo
