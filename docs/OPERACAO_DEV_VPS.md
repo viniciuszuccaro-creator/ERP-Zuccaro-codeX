@@ -1,5 +1,59 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Retomada assistida e capacidade - controlador fino (2026-11-11)
+
+`scripts/legado/hml-control.mjs` coordena SOMENTE o bootstrap privado existente.
+Nao e outro ERP/importador. Nao executa seed, carga, migracao, restore, limpeza,
+Docker prune ou remapeamento. Ainda NAO instalado/testado na HML remota.
+Controle local falha antes das abas (kernel assets, os error3); capacidade,
+cota, processos remotos e HTTP externo continuam DESCONHECIDOS neste lote.
+Nao atribuir o aviso a disco/computacao/cota sem painel e medidas atuais.
+
+Depois de disponibilizar o codigo validado pelo canal suportado, sem sobrescrever
+checkout/WIP de outro executor:
+
+```sh
+node scripts/legado/hml-control.mjs diagnose
+node scripts/legado/hml-control.mjs status
+node scripts/legado/hml-control.mjs start
+```
+
+`diagnose` mede df-h/df-i/Docker system df/du dos tres diretorios conhecidos,
+independentemente; indisponivel nao vira zero. Nao consulta cobranca nem remove
+itens. Antes de remover cache/build, conferir propriedade, referencia, reserva,
+reconstrutibilidade e espaco antes/depois. Nada foi removido neste lote.
+
+`start` exige mesmo Codespace e configuracao privada0600 existente/preparada em
+`/home/codespace/erp-legado-privado-20261023/hml344-cpa-20261104/hml-launch.private.json`:
+somente reviewedSha(40hex), bootstrapSha256(64hex) e objeto pins com as quatro
+chaves ERP344_IE_GATE_SHA256, ERP344_POST_IE_BASELINE_SHA256,
+ERP344_IE_COMPLETION_SHA256, ERP344_PHYSICAL_BASELINE_SHA256. Usar os hashes
+dos recibos aprovados e dos bytes do bootstrap REVISADO, nunca placeholders,
+credenciais, pin antigo ou hash calculado de arquivo nao revisado.
+O candidato local antigo api-bootstrap-next ainda aponta fc1: NAO serve como
+autorizacao de retomada. Atualizar/revisar pelo procedimento existente primeiro.
+
+Trava atomica propria contra dois starters; nunca apaga writer.lock nem lease
+antiga. Reaproveita processo saudavel somente com PID/cmdline/expiracao, marcador
+API/web do SHA aprovado, origem FINAL100, Auth real e health/ready/401 anonimo.
+Se parado e sem reserva, invoca exatamente api-bootstrap.private.mjs --hml-current;
+esse bootstrap continua dono do banco, preflight fisico, baseline e janela20min.
+Logs novos ficam privados0600; erro nao dispara nova tentativa automatica.
+
+Encaminhamento usa gh codespace ports visibility15173:private e verifica a porta,
+HTTPS e hostname retornados. Falta de registro/gh/autenticacao BLOQUEIA antes de
+iniciar dados reais; usar registro suportado no painel Portas, nunca publico.
+Referencia: https://cli.github.com/manual/gh_codespace_ports_visibility
+Saude localhost/registro privado NAO comprovam acesso externo ou sessao: abrir
+a URL completa existente, conferir marcador, login/perfil/Grupo/Empresas e
+mesmos100/331/20IE antes de entregar. Nenhuma URL foi testada neste lote.
+
+Autostart/task ao abrir a pasta ainda NAO configurados: .vscode remoto e reservas
+nao foram conferidos. Nao sobrescrever WIP para oferecer um botao. Apos aceite
+do controlador remoto, ligar a acao existente ao comando acima, sem rebuild e
+sem prolongar janela/custo. Disponibilidade continua na VPS permanece proposta
+condicionada a capacidade/isolamento/backup e autorizacao, nao implantacao.
+
 ## Delta vigente - IE20 HML finalizada e port rico sob revisao (2026-11-10)
 
 - Mesma100/331contatos preservados; IE20 preenchida pelo lifecycle canonico

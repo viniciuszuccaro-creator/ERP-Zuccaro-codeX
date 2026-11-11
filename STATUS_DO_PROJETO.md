@@ -1,4 +1,25 @@
-## Continuidade vigente - protecao comportamental do contrato Cliente (2026-11-11)
+## Continuidade vigente - capacidade/retomada HML ainda sem canal remoto (2026-11-11)
+
+Aviso de espaco: causa/total/usado/livre/inodes/cota/computacao DESCONHECIDOS,
+nao medidos por falta de controle (kernel assets os error3 antes das abas).
+Nenhuma limpeza, remocao, rebuild, troca de maquina, custo ou carga100.
+Avanco independente: controlador fino existente-bootstrap em
+scripts/legado/hml-control.mjs + teste, sem novo ERP/IdP/importador. Diagnostico
+somente leitura; startup idempotente por lease e identidade/saude, bootstrap
+privado hash/reviewedSHA/pins, porta15173privada obrigatoria.6testes focados PASS,
+incluindo exclusao concorrente/lease preservada e liberacao apos falha. Audit,
+lint,typecheck,build e diff-check PASS; CI Linux do novo lote pendente. Reutilizar
+suite/base a92efc44/CI6787/6788 para codigo inalterado, nao para este delta.
+NAO prova de HML/browser. Nao declarar CI nova verde antecipadamente.
+Detalhes no procedimento canonico OPERACAO_DEV_VPS, sem manual paralelo.
+Cursor conserva UI/composicao; .vscode remoto nao alterado. URL15173 nao testada.
+Proximo: medir ambiente real, conferir reservas e pins, atualizar bootstrap
+revisado e validar acesso externo/mesmos100/331/20IE; nao repetir importacao.
+Proprietario pediu execucao pelos agentes, nao comandos manuais: solicitacao
+dirigida ao Cursor591/6793482990 para leituras pelo seu canal existente; envio
+NAO comprova recebimento/execucao. Nenhum recibo remoto recebido ate este ponto.
+
+## Historico imediato - protecao comportamental do contrato Cliente (2026-11-11)
 
 FECHADO: codigo a92efc44 remoto, CI6787/6788 SUCCESS.591 atual8650fd4d,
 CI6785/6786 SUCCESS: peel delimitado revisado,14/14contraprovas PASS,

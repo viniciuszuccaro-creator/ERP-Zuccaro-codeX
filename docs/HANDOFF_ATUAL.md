@@ -1,4 +1,33 @@
-## Continuidade vigente - contraprovas canonicas de preservacao (2026-11-11)
+## Continuidade vigente - recuperar capacidade e iniciar mesma HML (2026-11-11)
+
+Controle local ainda falha ANTES do inventario de abas: kernel assets os error3.
+gh ausente no PATH e nos dois caminhos conhecidos; nenhum alias SSH Codespace
+documentado na config local. Nao declarar conexao remota, causa do aviso ou15173
+disponivel. Nenhuma medicao remota/limpeza/inicializacao/carga foi executada.
+Proprietario recusou repasse de comandos: executar pelos agentes. Solicitacao
+dirigida Cursor591/6793482990: df-h/df-i,Docker system df e du conhecidos pelo
+canal existente, sem escrita. Envio nao comprova recebimento ou execucao; nenhum
+recibo recebido ate este checkpoint. Nao pedir novamente para abrir Codespace.
+
+Codex reservou342/6793399097: controlador fino scripts/legado/hml-control.mjs,
+teste e deltas canonicosem editar UI/Cursor/.vscode remoto. Reutiliza bootstrap
+privado; diagnose independente, pins/versao/origem, trava startup, saude e
+gh15173privada. Preparado/testado localmente, NAO HML homologada. Nao remove
+cache, lock alheio, volume ou container. Procedimento e config restrita no topo
+de OPERACAO_DEV_VPS. Config privada ainda nao produzida/ativada remotamente;
+bootstrap-next local antigofc1 precisa revisao/atualizacao, nao usar por engano.
+Focado6PASS, incluindo concorrencia real de lease no filesystem sintetico;
+audit/lint/typecheck/build/diff-check PASS. CI nova pendente; suite inalterada
+reutiliza a92efc44/CI6787/6788, nao chamar os6testes de aceite HML/PG/browser.
+
+Proximo: restabelecer canal suportado; conferir checkout/WIP/processos/reservas,
+capacidade/conta, liberar apenas descartaveis comprovados; depois instalar
+controlador revisado, configurar pins e API/web mesmoSHA, testar15173externa e
+mesmos100/331/20IE. Autostart nao configurado sem conferir .vscode existente.
+PGdata persistente/workspaces/.erp-private-344/pgdata e recibos preservados,
+sem alegar nova prova de persistencia.117Obras continuam pendentes, nao carga.
+
+## Historico imediato - contraprovas canonicas de preservacao (2026-11-11)
 
 Fechamento: codigo a92efc444a3fea8430fb2fcaab2733b2cc4c61b0 remoto confirmado,
 CI6787/6788 SUCCESS, inclusive jobs Ubuntu backend/PostgreSQL/frontend/composicao.
