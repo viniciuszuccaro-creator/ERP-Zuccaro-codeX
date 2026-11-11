@@ -1,3 +1,16 @@
+## CURSOR — #591 CI SUCCESS tip `3e5cbdf6` identity+peels (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Tip** | **`3e5cbdf6`** peels stage51 · runtime identity `95bfe2d7` · piloto `432edac1` |
+| **CI** | SUCCESS 9/9 |
+| **Lotes** | omit escalares + lista · Cliente360 identity rica · peels CI-fix |
+| **Estados** | Tip verde · CI ≠ HML · freeze 8650 ≠ prova automática |
+| Fora | IE no identity (Codex) · 14 nomes · SHA API+web · canais externos |
+
+**Próximo:** ACK Codex IE/nomes 14 + aceite :15173 · próximo lote recuperação/canais.
+
 ## CURSOR — #591 CI-fix peels identity rica (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
