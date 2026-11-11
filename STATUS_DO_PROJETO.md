@@ -1,3 +1,16 @@
+## CURSOR — #591 Completo IE/IM/obs omit-aware UI (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `3e5cbdf6` |
+| **Lote** | Inputs IE/IM/observações com `??` + placeholder “Não recuperado” (carga parcial ≠ limpar) |
+| **Testes** | `cliente-campos-piloto-cobertura-591` · peels Completo stage48 |
+| **Estados** | Continuação da matriz cadastro rico · peels hash atualizado |
+| Fora | IE no identity BFF · 14 nomes · HML |
+
+**Próximo:** CI tip · ACK Codex identity IE + nomes 14.
+
 ## CURSOR — #591 CI SUCCESS tip `3e5cbdf6` identity+peels (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |

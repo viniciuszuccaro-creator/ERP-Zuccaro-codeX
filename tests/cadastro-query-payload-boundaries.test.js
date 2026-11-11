@@ -513,7 +513,7 @@ function clienteContactPresenceRemainder(source) {
 
 // previousHash: stage48 + P1 reopen + boundId coorte (#353 Banco/Cargo/+; switch-reject).
 const forms = [
-  ['CadastroClienteCompleto', 'cliente', 'Cliente', '387761ffcdfa9ca6b55b8e4d5c9a2d6819eb328dd1eff464dbca415e65bb5e27'], // #591 piloto-cobertura: ownText omit + superfície ALLOWED_KEYS
+  ['CadastroClienteCompleto', 'cliente', 'Cliente', 'ac398f664ff95ccb1c3ca2a60ffe898cd6c6199c7d14dfe5ce353287ea25f9c2'], // #591 IE/IM/obs UI omit-aware + ownText
   ['CadastroFornecedorCompleto', 'fornecedor', 'Fornecedor', 'b8def9d66502f8dba814f1ecf457e40b59215cbdc2d31866590fad491db587fb'],
   ['RepresentanteFormCompleto', 'representante', 'Representante', '961a1d5e46395bad4e738f9671c6a86051a27ed8076346a87457ead41a9dc910'],
 ];

@@ -44,10 +44,14 @@ test('Completo expõe nome_social, escalares e procedência (≠ só nome/docume
   assert.match(completo, /data-campo="email"/);
   assert.match(completo, /data-campo="telefone"/);
   assert.match(completo, /data-campo="celular"/);
+  assert.match(completo, /data-campo="inscricao_estadual"/);
+  assert.match(completo, /data-campo="inscricao_municipal"/);
+  assert.match(completo, /data-campo="observacoes"/);
   assert.match(completo, /data-fonte="cliente-procedencia"/);
   assert.match(completo, /data-campo="codigo_legado"/);
   assert.match(completo, /Celular ≠ WhatsApp/);
   assert.match(completo, /Omit ≠ limpar|omitir ≠ limpar|Omitir no save ≠ limpar/i);
+  assert.match(completo, /Não recuperado nesta carga/);
 });
 
 test('Listagem Cliente inclui fantasia/IE/origem além de nome', () => {

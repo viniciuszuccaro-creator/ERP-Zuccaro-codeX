@@ -32,7 +32,13 @@ node --test \
 - No banco e oculto na UI: coberto nesta superfície para ALLOWED_KEYS listados.
 - Não autorizado: RBAC Cliente.visualizar ≠ editar / cliente_local.* (lotes anteriores).
 
+## Delta UI IE/IM/obs (após tip 432edac1)
+- Inputs Inscrição Estadual/Municipal e Observações: `?? ''` + placeholder
+  "Não recuperado nesta carga" quando `undefined` (omit ≠ limpar visual).
+- data-campo=inscricao_estadual|inscricao_municipal|observacoes.
+
 ## Fora / Codex
 - Nomes exatos dos 14 campos privados fora piloto100 (tip ae4c6aa2).
 - Persistência BFF de rich ainda fora ALLOWED_KEYS; import HML; SHA API+web combinados.
 - Freeze 8650fd4d não prova este tip automaticamente.
+- IE no identity Central360 (projectIdentity) — coordenar com Codex.

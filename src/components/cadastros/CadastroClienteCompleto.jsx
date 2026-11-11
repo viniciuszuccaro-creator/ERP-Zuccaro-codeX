@@ -1355,8 +1355,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
                       <Input
                         id="inscricao_estadual"
-                        value={formData.inscricao_estadual}
+                        value={formData.inscricao_estadual ?? ''}
                         onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                        data-campo="inscricao_estadual"
+                        placeholder={formData.inscricao_estadual === undefined ? 'Não recuperado nesta carga' : undefined}
                       />
                     </div>
 
@@ -1364,8 +1366,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Label htmlFor="inscricao_municipal">Inscrição Municipal</Label>
                       <Input
                         id="inscricao_municipal"
-                        value={formData.inscricao_municipal}
+                        value={formData.inscricao_municipal ?? ''}
                         onChange={(e) => setFormData({ ...formData, inscricao_municipal: e.target.value })}
+                        data-campo="inscricao_municipal"
+                        placeholder={formData.inscricao_municipal === undefined ? 'Não recuperado nesta carga' : undefined}
                       />
                     </div>
                   </>
@@ -1681,8 +1685,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   <Label htmlFor="observacoes">Observações Internas</Label>
                   <Textarea
                     id="observacoes"
-                    value={formData.observacoes}
+                    value={formData.observacoes ?? ''}
                     onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                    data-campo="observacoes"
+                    placeholder={formData.observacoes === undefined ? 'Não recuperado nesta carga — omitir ≠ limpar' : undefined}
                     rows={3}
                   />
                 </div>
