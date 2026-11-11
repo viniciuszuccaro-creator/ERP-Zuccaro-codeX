@@ -1,4 +1,35 @@
-## Continuidade vigente - fonte117Obras extraida; fechar preservacao antes da15173 (2026-11-10)
+## Continuidade vigente - contraprovas canonicas de preservacao (2026-11-11)
+
+Base342 7d803e99, checkout interno preservado.591 reconferida em6b3c84c2,
+sem delta de runtime para encerrar os pareceres6779554174/6779707769.
+Coordenacao Cursor591/6792493303: Cursor segue escritor UI/composicao.
+Novo353cfa46 recebido e revisado durante o fechamento:46contratos/formulario,
+10servico/HTTP e9contraprovas adicionais PASS no snapshot exato, locks iguais.
+Captura/reautorizacao/delegacao e3residuos UI encerrados NESSE alcance; nao PG
+ou browser. CI6783/6784 FAILURE:frontend testes291/292 de remainder/stage48,
+expected1/actual0; backend/composicao verdes. Cursor deve fechar peels sem
+enfraquecer hashes/contraprovas. Qualidade parcial da fonte ainda nao comprovada.
+Codex alterou somente o teste existente cliente-contatos-rbac-update:
+GET revogado durante leitura deve negar retorno; UPDATE captura ator/payload
+antes do await e conserva autoria/Grupo/Empresa na auditoria e reabertura.
+Nao alterou service, pins, assertions antigas, importadores ou dados reais.
+
+Focado final9PASS; backend completo611PASS/0FAIL/39SKIP, build/typecheck backend
+PASS. Limites: repositorio/RBAC em memoria e HTTP loopback; NAO PostgreSQL ou
+browser. Raiz inicial2432PASS/4FAIL:3precondicoes Python e1getuid POSIX no Windows.
+Python integrado: rechecagem25testes,24PASS/1FAIL (semantica de permissoes/symlink
+POSIX no Windows); CSV e provision resolvidos. Falta tambem getuid na raiz.
+Audit:baseline/lint/typecheck/build raiz PASS; diff--check PASS. CI Linux do
+novo SHA e obrigatoria antes de apresentar o lote como validado integralmente.
+Nao reinstalar WSL ou enfraquecer testes. Publicacao de validacao draft antes
+do fechamento Linux permanece limitada a excecao expressa do proprietario.
+
+15173 nao ativada: fechar CI/peels591 e revisar novo SHA,
+depois mesmo snapshot API/web com Auth real e baseline pos-IE. Mesma100/331/20IE
+intacta, sem recarga/replay.117Obras continuam propostas pendentes, nao locais
+completos; nao repetir extracao ou inferir pais/numero/finalidade.
+
+## Historico imediato - fonte117Obras extraida; fechar preservacao antes da15173 (2026-11-10)
 
 Coorte FINAL100 e baseline pos-IE preservados. NAO repetir carga, contatos331,
 IE20, remapeamento ou backups intactos. Novo trabalho foi leitura nativa limitada:

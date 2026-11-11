@@ -1,4 +1,26 @@
-## Continuidade vigente -117registros nativos de obras recuperados; port rico ainda sob correcao (2026-11-10)
+## Continuidade vigente - protecao comportamental do contrato Cliente (2026-11-11)
+
+Lote sobre7d803e99: duas contraprovas no teste canonico existente, sem mudanca
+de runtime. GET precisa reautorizar apos leitura/revogacao; UPDATE precisa
+capturar contexto/payload antes do primeiro await, conservar ator da auditoria
+e reabrir o valor original. Focado9PASS; backend611PASS/0FAIL/39SKIP; build e
+typecheck backend PASS. Raiz inicial2432PASS/4FAIL, com3precondicoes Python e
+1process.getuid indisponivel no Windows. Rechecagem Python integrado25testes:
+24PASS/1FAIL por permissoes/symlink POSIX; CSV/provision resolvidos sem editar
+testes. Audit:baseline/lint/typecheck/build raiz e diff--check PASS. CI Linux
+pendente no fechamento; nao apresentar skips ou suite inicial como aprovacao.
+
+591 avancou353cfa46 durante o lote. Snapshot exato/locks iguais:46contratos de
+adapter/formulario,10servico/HTTP e9contraprovas Codex PASS. Captura/reautorizacao,
+delegacao e3residuos UI encerrados nesse alcance, nao PG/browser. CI6783/6784
+FAILURE:frontend testes291/292 remainder/stage48 expected1/actual0; backend e
+composicao verdes. Cursor mantem UI/composicao, Codex nao editou sua branch.
+Proximo gate: corrigir peels sem enfraquecer hashes e revisar CI do novo SHA;
+projecao parcial da fonte e HTTP/PG/browser continuam distintos antes15173.
+100clientes,331canais e20IE preservados.117Obras pendentes de semantica/campos,
+sem nova extracao, importacao, DDL, grants ou operacao na VPS.
+
+## Historico imediato -117registros nativos de obras recuperados; port rico ainda sob correcao (2026-11-10)
 
 Sem recarga100, replay de contatos/IE, DDL ou escrita de negocio neste lote.
 Recorte nativo limitado aos mesmos100: pais/CPF-CGC conferidos,0linhas na tabela

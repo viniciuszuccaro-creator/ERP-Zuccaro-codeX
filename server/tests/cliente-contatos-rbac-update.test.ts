@@ -85,6 +85,65 @@ function headers(actorId: string) {
   };
 }
 
+test('servico: GET reautoriza depois da leitura quando a permissao e revogada', async () => {
+  const runtime = fixture();
+  const request = ctx(ACTOR_EDIT, 'get-revoked');
+  const created = await runtime.clienteService.create(request, {
+    tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC revocation',
+  });
+  const original = runtime.rbacGuard.assertAllowed.bind(runtime.rbacGuard);
+  let checks = 0;
+  runtime.rbacGuard.assertAllowed = async (...args) => {
+    checks += 1;
+    await original(...args);
+    if (checks === 1) {
+      (runtime.rbacGuard as InMemoryRbacGuard).link({
+        actorId: ACTOR_EDIT, groupId: GROUP, permissions: {},
+      });
+    }
+  };
+  await assert.rejects(
+    () => runtime.clienteService.get(request, created.id),
+    (error: any) => error.statusCode === 403 && error.code === 'PERMISSION_DENIED',
+  );
+  assert.equal(checks, 2, 'a segunda autorizacao deve falhar antes de retornar o registro');
+});
+
+test('servico: UPDATE captura ator e payload antes do primeiro await', async () => {
+  const runtime = fixture();
+  const created = await runtime.clienteService.create(ctx(ACTOR_EDIT, 'create-capture'), {
+    tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC capture',
+  });
+  (runtime.rbacGuard as InMemoryRbacGuard).link({
+    actorId: ACTOR_VIEW, groupId: GROUP,
+    permissions: { Cadastros: { cliente: ['visualizar', 'editar'] } },
+  });
+  const request = ctx(ACTOR_EDIT, 'update-capture');
+  const payload = { observacoes: 'original-intent' };
+  const original = runtime.rbacGuard.assertAllowed.bind(runtime.rbacGuard);
+  const actors: Array<string | null | undefined> = [];
+  runtime.rbacGuard.assertAllowed = async (...args) => {
+    actors.push(args[0].actorId);
+    await original(...args);
+    if (actors.length === 1) {
+      request.actorId = ACTOR_VIEW;
+      payload.observacoes = 'mutated-after-await';
+    }
+  };
+  const changed = await runtime.clienteService.update(request, created.id, payload);
+  assert.equal(changed?.observacoes, 'original-intent');
+  assert.ok(actors.length >= 2, 'escrita exige reautorizacao');
+  assert.ok(actors.every((actor) => actor === ACTOR_EDIT));
+  const updates = (await runtime.auditRepo.listByEntity('Cliente', created.id))
+    .filter((entry) => entry.action === 'update');
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].actorId, ACTOR_EDIT);
+  assert.equal(updates[0].groupId, GROUP);
+  assert.equal(updates[0].empresaId, EMPRESA);
+  const reopened = await runtime.clienteService.get(ctx(ACTOR_EDIT, 'reopen-capture'), created.id);
+  assert.equal(reopened?.observacoes, 'original-intent');
+});
+
 async function http(
   app: ReturnType<typeof createApp>['app'],
   path: string,
