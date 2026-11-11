@@ -15,6 +15,7 @@ import * as centralContatos from '../src/components/comercial/centralCliente360C
 import * as centralDocumentos from '../src/components/comercial/centralCliente360Documentos.js';
 import * as centralVinculos from '../src/components/comercial/centralCliente360Vinculos.js';
 import * as centralEntregas from '../src/components/comercial/centralCliente360Entregas.js';
+import * as centralFinanceiro from '../src/components/comercial/centralCliente360Financeiro.js';
 import * as http from '../src/api/httpApiClient.js';
 import * as cadastroEditLoadPolicy from '../src/components/cadastros/cadastroEditLoadPolicy.js';
 const require=createRequire(import.meta.url);
@@ -101,6 +102,7 @@ async function panelFixture({deny=false,late=false,mismatch=false,groupView=fals
     if(path.includes('centralCliente360Documentos'))return centralDocumentos;
     if(path.includes('centralCliente360Vinculos'))return centralVinculos;
     if(path.includes('centralCliente360Entregas'))return centralEntregas;
+    if(path.includes('centralCliente360Financeiro'))return centralFinanceiro;
     if(path.includes('cadastroEditLoadPolicy'))return cadastroEditLoadPolicy;
     if(path.includes('useContextoVisual'))return {__esModule:true,default:()=>({grupoAtual:{id:groupId},empresaAtual:groupView?null:{id:empresaId}})};
     if(path.includes('usePermissions'))return {__esModule:true,default:()=>({hasPermission:()=>true,canEdit:()=>true,isLoading:false})};

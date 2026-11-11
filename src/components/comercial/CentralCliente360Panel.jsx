@@ -20,6 +20,10 @@ import {
   classifyCentral360Entregas,
 } from '@/components/comercial/centralCliente360Entregas';
 import {
+  canViewCentral360Financeiro,
+  classifyCentral360Financeiro,
+} from '@/components/comercial/centralCliente360Financeiro';
+import {
   canLoadCentralCliente360,
   central360SessionKey,
   createHttpApiClient,
@@ -457,6 +461,11 @@ export default function CentralCliente360Panel({
       total: raw?.total == null ? null : raw.total,
     };
   })();
+  const canViewFinanceiro = enabled && !permissionsLoading && canViewCentral360Financeiro(hasPermission);
+  const financeiroClassified = classifyCentral360Financeiro({
+    forbidden: !canViewFinanceiro && !permissionsLoading,
+    httpPending: true,
+  });
 
   if (!isHttpCliente360Enabled) return null;
 
@@ -987,6 +996,21 @@ export default function CentralCliente360Panel({
           )}
           <p className="text-[10px] text-slate-400">
             Fonte canônica `/api/v1/entregas` · sem sucesso fictício · envio externo depende de config/autorização.
+          </p>
+        </div>
+        <div
+          className="border rounded-md bg-white p-3 text-sm space-y-2 md:col-span-2"
+          data-block="central360-financeiro-cliente"
+          data-financeiro-status={financeiroClassified.status}
+          data-permission="Financeiro.ContasReceber.visualizar"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="font-medium text-slate-800">Financeiro autorizado</h4>
+            <span className="text-xs text-slate-500">{financeiroClassified.status}</span>
+          </div>
+          <p className="text-xs text-slate-600" role="status">{financeiroClassified.message}</p>
+          <p className="text-[10px] text-slate-400">
+            Sem inventar títulos/saldos · cobrança/NF dependem de módulo Fiscal/Financeiro e autorização na empresa.
           </p>
         </div>
         {shouldUseCrmLegadoAdapter(blocks.crm) ? (

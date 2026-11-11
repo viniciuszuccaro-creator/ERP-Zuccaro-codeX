@@ -13,6 +13,10 @@ import {
   canViewCentral360Entregas,
   classifyCentral360Entregas,
 } from '../src/components/comercial/centralCliente360Entregas.js';
+import {
+  canViewCentral360Financeiro,
+  classifyCentral360Financeiro,
+} from '../src/components/comercial/centralCliente360Financeiro.js';
 
 const panel = readFileSync('src/components/comercial/CentralCliente360Panel.jsx', 'utf8');
 const enderecos = readFileSync('src/components/cadastros/GerenciarEnderecosClienteForm.jsx', 'utf8');
@@ -70,4 +74,17 @@ test('GerenciarEnderecos: caps cliente_local probed (HML só visualizar)', () =>
   assert.match(enderecos, /data-hml-cenario="cliente-local-somente-visualizar"/);
   assert.match(enderecos, /Cliente\.editar não autoriza locais/);
   assert.doesNotMatch(enderecos, /hasPermission\("Cadastros", "Cliente", "editar"\).*criar/);
+});
+
+test('Financeiro Cliente360: soft-land pending_bff sem inventar títulos', () => {
+  assert.equal(classifyCentral360Financeiro({ forbidden: true }).status, 'forbidden');
+  assert.equal(classifyCentral360Financeiro({ httpPending: true }).status, 'pending_bff');
+  assert.match(classifyCentral360Financeiro({ httpPending: true }).message, /sem inventar/i);
+  assert.equal(
+    canViewCentral360Financeiro((m, r, a) => m === 'Financeiro' && r === 'ContasReceber' && a === 'visualizar'),
+    true,
+  );
+  assert.match(panel, /data-block="central360-financeiro-cliente"/);
+  assert.match(panel, /data-financeiro-status=/);
+  assert.doesNotMatch(panel, /data-block="central360-financeiro-cliente"[\s\S]*Saldo inventado/);
 });
