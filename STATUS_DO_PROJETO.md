@@ -1,4 +1,24 @@
-## Estado vigente - extensoes do mesmo Cliente e delta VPS (2026-11-11)
+## Delta vigente - preservar contatos omitidos no enriquecimento (2026-11-11)
+
+Autorizacao agrupada das5extensoes recebida: somenteHML,1316clientes/1317valores,
+condicionada a revisao/backup/revalidacao/CASnovo. Nao pedir novamente nem
+confundir com autorizacaoVPS. NenhumDDL/enriquecimento desse pacote executado.
+Ao preparar o operador, detectado risco NULL->[] em comando escalar. Corrigido
+o contrato existente: contatos omitidos preservam o valor integral anterior;
+comando sem contatos nem campos e rejeitado. Testes PGlite apply/replay/reverse
+incluem NULL verdadeiro; testePG candidato tambem omite contatos.
+Preservacao: camada externa exata recompõe o fonte58 antes da camada anterior,
+sem alterar pins ancestrais.27contraprovasPASS. Nao e homologacaoUI.
+Revisao independente automatizada somente leitura encontrou guardas faltantes
+no operador privado (identidade/bytes/arquivos atomicos); correcoes reavaliadas
+sem achado residual concreto, nao teste de queda/DB nem parecerCursor.
+Auditbaseline/lint/typecheck/build e backendbuild locaisPASS; lint tem1aviso
+anterior fora do lote. RaizWindows interrompida em precheckPOSIX sem resultado
+terminal: NAO PASS. Usar autorizacao vigente de commitdraft para fechamento
+Ubuntu, sem remover testes. ExecucaoHML aguarda CI e pins do novo runtime.
+Backend local completo618PASS/0FAIL/41SKIP; SKIP nao comprovaPostgreSQL.
+
+## Estado anterior - extensoes do mesmo Cliente e delta VPS (2026-11-11)
 
 Codigo58c927e0d157ad09b3e9506ad324d651cac7c70f publicado: CI6897/6898SUCCESS.
 RaizUbuntu2467PASS/0FAIL/0SKIP. RunnerPG existente2PASS/0FAIL/0SKIP inclui

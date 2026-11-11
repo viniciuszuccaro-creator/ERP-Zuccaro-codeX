@@ -196,7 +196,7 @@ const ndjsonProof = z.object({ fileSha256: hashSchema, rowSha256: hashSchema,
   parser: z.literal('ndjson-v1') }).strict();
 const contactsCommand = z.discriminatedUnion('mode', [
   z.object({ ...fields, mode: z.literal('apply'),
-    contatos: clienteContatosReplaceSchema.innerType().shape.contatos.unwrap(), sourceProof: ndjsonProof,
+    contatos: clienteContatosReplaceSchema.innerType().shape.contatos, sourceProof: ndjsonProof,
     masterFields: clienteMasterExtrasSchema.refine(value => Object.keys(value).length > 0
       && Object.values(value).every(v => typeof v === 'string' && v.length > 0)).optional() }).strict(),
   z.object({ ...fields, mode: z.literal('reverse'), originalOperationId: z.string().uuid() }).strict(),
@@ -231,9 +231,12 @@ export async function enrichLegacyContacts(
   if (!parsed.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid contacts enrichment command');
   const command = parsed.data;
   if (command.mode === 'apply') {
+    if (command.contatos === undefined && command.masterFields === undefined) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Contacts or master fields required');
+    }
     const validated = clienteContatosReplaceSchema.safeParse({ contatos: command.contatos, expectedVersion: command.expectedFingerprint });
     if (!validated.success) throw new AppError(400, 'VALIDATION_ERROR', 'Invalid contacts replacement');
-    assertContactReferences(command.contatos);
+    if (command.contatos !== undefined) assertContactReferences(command.contatos);
   }
   const commandHash = legacyContactsFingerprint({ group: ctx.groupId, actor: ctx.actorId, command });
   const mismatch = () => new AppError(409, 'LEGACY_ENRICHMENT_CONFLICT', 'Matching source and unchanged snapshot required');
@@ -267,6 +270,10 @@ export async function enrichLegacyContacts(
     let sourceProof: z.infer<typeof ndjsonProof>;
     if (command.mode === 'apply') {
       const baseline = before.contatos === null ? [] : before.contatos;
+      const preserved = before.contatos === null ? null : clienteContatosReplaceSchema.parse({
+        contatos: before.contatos, expectedVersion: command.expectedFingerprint }).contatos!;
+      const proposed = command.contatos === undefined ? preserved : command.contatos;
+      const channels = proposed === null ? [] : proposed;
       for (const [key, value] of Object.entries(command.masterFields || {}) as [keyof ClienteMasterExtras, string][]) {
         if (!Object.hasOwn(before, key)) throw new AppError(503, 'CLIENTE_MASTER_STORAGE_REQUIRED', 'Reviewed master schema required');
         if (before[key] != null && before[key] !== '') throw mismatch();
@@ -274,12 +281,12 @@ export async function enrichLegacyContacts(
         changedMasterFields.push(key);
       }
       // Enrichment appends only: preserve the complete ordered baseline, including manual metadata.
-      if (!Array.isArray(baseline) || command.contatos.length < baseline.length
-        || (command.contatos.length === baseline.length && changedMasterFields.length === 0)
-        || !isDeepStrictEqual(command.contatos.slice(0, baseline.length), baseline)) throw mismatch();
+      if (!Array.isArray(baseline) || channels.length < baseline.length
+        || (channels.length === baseline.length && changedMasterFields.length === 0)
+        || !isDeepStrictEqual(channels.slice(0, baseline.length), baseline)) throw mismatch();
       const existingIds = new Set(baseline.map(contact => contact.id));
-      if (command.contatos.slice(baseline.length).some(contact => !contact.id || existingIds.has(contact.id))) throw mismatch();
-      target = command.contatos;
+      if (channels.slice(baseline.length).some(contact => !contact.id || existingIds.has(contact.id))) throw mismatch();
+      target = proposed;
       sourceProof = command.sourceProof;
     }
     else {

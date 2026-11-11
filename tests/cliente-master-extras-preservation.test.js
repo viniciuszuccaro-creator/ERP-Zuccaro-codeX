@@ -10,7 +10,7 @@ import { consolidation81Remainder, clienteConferenciaRemainder, clienteSelectedR
 
 test('new extension guard retains its complete reviewed bytes', () => {
   const source = fs.readFileSync(new URL('./helpers/clienteMasterExtrasRemainder.js', import.meta.url));
-  const expected = 'c412bc7a3da73571e6699b8c49d92be8ab7f9280372e670f7c5f36955ea9a027';
+  const expected = '5f579b16b02e980742defc3bbfe01238fa645826efc724e3ec898f3fc2a536e3';
   assert.equal(createHash('sha256').update(source).digest('hex'), expected);
   assert.notEqual(createHash('sha256').update(Buffer.concat([source, Buffer.from('// changed')])).digest('hex'), expected);
 });

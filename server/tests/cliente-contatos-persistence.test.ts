@@ -368,6 +368,24 @@ test('contacts canonical persistence, CAS and legacy receipts: isolated syntheti
         { code: 'LEGACY_ENRICHMENT_CONFLICT' });
       assert.deepEqual(await snapshot(), manual); assert.equal(manual.ativo, false);
     });
+    await t.test('master-only command preserves NULL contacts through apply, replay and reversal', async () => {
+      await f.admin.query('UPDATE clientes SET contatos=NULL,inscricao_produtor_rural=NULL WHERE id=$1',[ID.clientePfA]);
+      const before = await snapshot(); assert.ok(before); assert.equal(before.contatos,null);
+      const command = {mode:'apply',id:ID.clientePfA,operationId:randomUUID(),
+        expectedFingerprint:legacyContactsFingerprint(before),sourceSystem:'SYNTHETIC',legacyCode:'SYNTHETIC-CONTACTS',batch,
+        masterFields:{inscricao_produtor_rural:'00099'},sourceProof:{fileSha256:'a'.repeat(64),rowSha256:'b'.repeat(64),parser:'ndjson-v1'}};
+      const count=await audits();
+      const {masterFields: _fields,...empty}=command;
+      await assert.rejects(enrich(empty),{code:'VALIDATION_ERROR'});
+      const applied=await enrich(command),after=await snapshot();assert.ok(after);
+      assert.deepEqual(after,{...before,inscricao_produtor_rural:'00099',updated_at:after.updated_at});
+      assert.equal((await enrich(command)).reused,true);assert.equal(await audits(),count+1);
+      const reverse={mode:'reverse',id:command.id,operationId:randomUUID(),originalOperationId:command.operationId,
+        expectedFingerprint:applied.fingerprint,sourceSystem:command.sourceSystem,legacyCode:command.legacyCode,batch};
+      await enrich(reverse);const restored=await snapshot();assert.ok(restored);
+      assert.deepEqual(restored,{...before,updated_at:restored.updated_at});
+      assert.equal((await enrich(reverse)).reused,true);assert.equal(await audits(),count+2);
+    });
     await t.test('new optional fields persist on create, omission preserves, explicit NULL clears only its own field', async () => {
       await setPermissions({ Cadastros: { cliente: ['visualizar', 'criar', 'editar', 'importar'] } });
       await f.exec(`GRANT INSERT ON clientes TO "${ROLE}";

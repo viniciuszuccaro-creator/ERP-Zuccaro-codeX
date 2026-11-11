@@ -1,4 +1,25 @@
-## Retomada vigente -5extensoes prontas no codigo, DDL pendente (2026-11-11)
+## Retomada vigente - autorizacao agrupada e contatos omitidos (2026-11-11)
+
+Gate humano das5extensoes HML foi autorizado,1316clientes/1317valores; nao
+solicitar outra autorizacao generica. DDL e enriquecimento ainda NAO executados.
+Preservacao adicional: comando escalar omite contatos e conserva NULL/array
+integral em apply/replay/reversao; jamais sintetizar[] a partir deNULL.
+Nova camada exata restaura fonte58 antes das guardas ancestrais, pins intactos.
+27contraprovasPASS; novoPGlite inclui omissaoNULL. Fechamento/CI deste delta
+ainda separado da CI6897/6898. Reserva342/6803993152 apenas backend/testes/docs.
+Revisao independente de agente read-only achou riscos no executor PRIVADO:
+identidade fisica por conexao, manifest/executor efetivos e retomada atomica.
+Correcoes reavaliadas sem achado residual concreto; leitura estatica, nao prova
+de queda/DB. Auditbaseline/lint/typecheck/build/backendbuild locaisPASS.
+RaizWindows interrompida no precheckPOSIX sem resultado terminal; nao PASS.
+Fechar Ubuntu pela excecao vigente de commitdraft, sem remover/afrouxar testes.
+ExecucaoHML aguarda CI e novo runtime pinado, nao nova autorizacao generica.
+Backend local completo618PASS/0FAIL/41SKIP, sem inferir provaPG dosSKIP.
+Nao repetir cargas/contatos, nao reativar1500, nao mudar recibos antigos.
+Proximo: fechar guardas, publicar delta, fixar novo bundle imutavel e executar
+pacote condicionado com CASposDDL, replay/reversao e reconciliacao integral.
+
+## Retomada anterior -5extensoes prontas no codigo, DDL pendente (2026-11-11)
 
 FECHADO codigo58c927e0:CI6897/6898SUCCESS; raizUbuntu2467PASS/0FAIL/0SKIP,
 novo testePG de extensoes executado comLOGIN restrito/concorrencia/replay/

@@ -34,7 +34,7 @@ test('PostgreSQL master extensions: restricted login, concurrent CAS, replay, ro
       const snapshot=()=>deps.repo.withTransaction(async q=>{assert.ok(q);return deps.repo.getBulkSnapshot(ctx,ID.clientePfA,q);});
       const before=await snapshot();assert.ok(before);
       const command={mode:'apply',id:ID.clientePfA,operationId:randomUUID(),expectedFingerprint:legacyContactsFingerprint(before),
-        sourceSystem:'SYNTHETIC_MASTER',legacyCode:'7',batch,contatos:[],masterFields:{rg:'00123-X',numero_caixa_postal:'00017'},
+        sourceSystem:'SYNTHETIC_MASTER',legacyCode:'7',batch,masterFields:{rg:'00123-X',numero_caixa_postal:'00017'},
         sourceProof:{fileSha256:'a'.repeat(64),rowSha256:'b'.repeat(64),parser:'ndjson-v1'}};
       const alternative={...command,operationId:randomUUID(),masterFields:{rg:'00456-X',numero_caixa_postal:'00018'}};
       const commands=[command,alternative];
@@ -43,7 +43,7 @@ test('PostgreSQL master extensions: restricted login, concurrent CAS, replay, ro
       assert.equal(results.filter(r=>r.status==='rejected'&&r.reason.code==='LEGACY_ENRICHMENT_CONFLICT').length,1);
       const index=results.findIndex(r=>r.status==='fulfilled'),winner=commands[index];
       const after=await snapshot();assert.ok(after);
-      assert.deepEqual(after,{...before,...winner.masterFields,contatos:[],updated_at:after.updated_at});
+      assert.deepEqual(after,{...before,...winner.masterFields,updated_at:after.updated_at});
       const count=async()=>(await deps.audit.listByEntity('Cliente',ID.clientePfA)).length;
       const auditCount=await count();
       const replay=await deps.service.enrichLegacyContacts(ctx,winner);
