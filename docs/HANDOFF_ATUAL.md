@@ -1,5 +1,20 @@
 ## Continuidade vigente - contraprovas canonicas de preservacao (2026-11-11)
 
+Fechamento: codigo a92efc444a3fea8430fb2fcaab2733b2cc4c61b0 remoto confirmado,
+CI6787/6788 SUCCESS, inclusive jobs Ubuntu backend/PostgreSQL/frontend/composicao.
+Skips locais39 continuam nao executados localmente, sem promove-los a PASS.
+591 avancou8650fd4d14a8f3f43ebdf5784f6dcb1df1933d89, CI6785/6786 SUCCESS.
+Unico delta frente353: literal exato do peel. Contraprovas14/14 no snapshot+
+overlay exato; golden/assertions preservados. Parecer591/6792852157 encerra
+as2falhas abaixo nesse SHA; NAO manter CI353 como bloqueio atual.
+
+Proxima acao: retomar bootstrap/HML revisado, nao recarregar100. Controle local
+bloqueado ANTES de listar abas: `failed to write kernel assets ... (os error 3)`
+em cua_repl e node_repl/sky, inclusive resets suportados. Nao e Codespace fechado
+ou falta de autorizacao. Intervencao minima: reabrir SOMENTE Codex Desktop e
+retomar esta conversa; preservar Chrome/Codespace/PG/WIP. Nao reinstalar/resetar
+ambientes por tentativa. Nenhum processo remoto/HML foi iniciado neste lote.
+
 Base342 7d803e99, checkout interno preservado.591 reconferida em6b3c84c2,
 sem delta de runtime para encerrar os pareceres6779554174/6779707769.
 Coordenacao Cursor591/6792493303: Cursor segue escritor UI/composicao.
@@ -24,7 +39,8 @@ novo SHA e obrigatoria antes de apresentar o lote como validado integralmente.
 Nao reinstalar WSL ou enfraquecer testes. Publicacao de validacao draft antes
 do fechamento Linux permanece limitada a excecao expressa do proprietario.
 
-15173 nao ativada: fechar CI/peels591 e revisar novo SHA,
+15173 nao ativada: CI/peels591 fechados em8650; recuperar controle e fixar
+bootstrap API/web nesse SHA revisado,
 depois mesmo snapshot API/web com Auth real e baseline pos-IE. Mesma100/331/20IE
 intacta, sem recarga/replay.117Obras continuam propostas pendentes, nao locais
 completos; nao repetir extracao ou inferir pais/numero/finalidade.

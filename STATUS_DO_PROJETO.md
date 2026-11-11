@@ -1,5 +1,15 @@
 ## Continuidade vigente - protecao comportamental do contrato Cliente (2026-11-11)
 
+FECHADO: codigo a92efc44 remoto, CI6787/6788 SUCCESS.591 atual8650fd4d,
+CI6785/6786 SUCCESS: peel delimitado revisado,14/14contraprovas PASS,
+golden/assertions conservados (parecer591/6792852157). As2falhas353 abaixo
+sao historicas, nao achados abertos do novo SHA. Alcances memoria/HTTP loopback
+na revisao591 nao equivalem a PostgreSQL/HML/browser desse snapshot.
+PROXIMO: bootstrap API+web revisado na mesma15173, mesma100/331/20IE intacta.
+Bloqueio local reproduzido: cua_repl e node_repl/sky nao preparam kernel assets
+(os error3), inclusive reset suportado. Reabrir apenas Codex Desktop para
+restabelecer o controle; nao reiniciar Chrome/Codespace/PG ou repetir carga.
+
 Lote sobre7d803e99: duas contraprovas no teste canonico existente, sem mudanca
 de runtime. GET precisa reautorizar apos leitura/revogacao; UPDATE precisa
 capturar contexto/payload antes do primeiro await, conservar ator da auditoria
@@ -15,7 +25,7 @@ adapter/formulario,10servico/HTTP e9contraprovas Codex PASS. Captura/reautorizac
 delegacao e3residuos UI encerrados nesse alcance, nao PG/browser. CI6783/6784
 FAILURE:frontend testes291/292 remainder/stage48 expected1/actual0; backend e
 composicao verdes. Cursor mantem UI/composicao, Codex nao editou sua branch.
-Proximo gate: corrigir peels sem enfraquecer hashes e revisar CI do novo SHA;
+Gate de peels/CI encerrado em8650 conforme fechamento acima;
 projecao parcial da fonte e HTTP/PG/browser continuam distintos antes15173.
 100clientes,331canais e20IE preservados.117Obras pendentes de semantica/campos,
 sem nova extracao, importacao, DDL, grants ou operacao na VPS.
