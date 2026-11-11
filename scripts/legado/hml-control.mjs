@@ -51,8 +51,9 @@ function privateFile(file) {
   return fs.readFileSync(file);
 }
 
-function command(program, args) {
-  const result = spawnSync(program, args, { encoding: 'utf8', timeout: 30000,
+function command(program, args, input) {
+  const executable = program === 'gh' ? process.env.ERP344_GH_EXECUTABLE || program : program;
+  const result = spawnSync(executable, args, { input, encoding: 'utf8', timeout: input ? 75000 : 30000,
     maxBuffer: 1024 * 1024, windowsHide: true });
   assert.equal(result.status, 0, `${program}_FAILED`);
   return result.stdout.trim();
@@ -85,6 +86,68 @@ export async function forwardPrivate(run = command) {
   assert.equal(new URL(port.browseUrl).hostname, `${codespace}-15173.app.github.dev`);
 }
 
+export function validateTunnelProof(proof, mode, now = Date.now()) {
+  assert.deepEqual(Object.keys(proof).sort(), ['browseUrl', 'codespace', 'expiresAt', 'mode',
+    'observedAt', 'owner', 'port', 'repository', 'visibility']);
+  assert.equal(proof.codespace, codespace);
+  assert.equal(proof.repository, 'viniciuszuccaro-creator/ERP-Zuccaro-codeX');
+  assert.equal(proof.owner, 'viniciuszuccaro-creator');
+  assert.equal(proof.mode, mode);
+  assert.equal(proof.port, 15173);
+  assert.equal(proof.visibility, 'private');
+  assert.equal(proof.browseUrl, publicUrl.replace('/cadastros', ''));
+  assert.ok(Number.isSafeInteger(proof.observedAt) && Number.isSafeInteger(proof.expiresAt));
+  assert.ok(proof.observedAt <= now + 5000 && now <= proof.expiresAt, 'TUNNEL_PROOF_EXPIRED');
+  assert.ok(proof.expiresAt > proof.observedAt && proof.expiresAt - proof.observedAt <= 90000);
+  return proof;
+}
+
+async function registerMissingPort(run) {
+  const executable = process.env.ERP344_GH_EXECUTABLE || 'gh';
+  const child = spawn(executable, ['codespace', 'ports', 'forward', '15173:15173', '-c', codespace],
+    { stdio: 'ignore', windowsHide: true });
+  let failed = false;
+  child.on('error', () => { failed = true; });
+  try {
+    for (let i = 0; i < 15; i += 1) {
+      const ports = JSON.parse(run('gh', ['codespace', 'ports', '-c', codespace, '--json', 'sourcePort']));
+      if (ports.some(port => port.sourcePort === 15173)) return;
+      assert.equal(failed || child.exitCode !== null, false, 'PORT_REGISTRATION_FAILED');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    assert.fail('PORT_REGISTRATION_TIMEOUT');
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGINT');
+  }
+}
+
+export async function viaGh(mode, run = command, register = registerMissingPort) {
+  assert.ok(['diagnose', 'status', 'start'].includes(mode), 'MODE_REQUIRED');
+  const target = JSON.parse(run('gh', ['api', `/user/codespaces/${codespace}`, '--jq',
+    '{name,state,owner:.owner.login,repository:.repository.full_name,machine:.machine.name}']));
+  assert.equal(target.name, codespace);
+  assert.equal(target.repository, 'viniciuszuccaro-creator/ERP-Zuccaro-codeX');
+  assert.equal(target.owner, 'viniciuszuccaro-creator');
+  assert.equal(target.machine, 'basicLinux32gb', 'MACHINE_CHANGED_REQUIRES_REVIEW');
+  assert.equal(target.state, 'Available', 'CODESPACE_NOT_AVAILABLE_NO_AUTOMATIC_RESTART');
+  if (mode !== 'diagnose') {
+    const ports = JSON.parse(run('gh', ['codespace', 'ports', '-c', codespace, '--json', 'sourcePort']));
+    if (!ports.some(port => port.sourcePort === 15173)) await register(run);
+    await forwardPrivate(run);
+  }
+  const observedAt = Date.now();
+  const proof = { codespace, repository: target.repository, owner: target.owner, mode, port: 15173,
+    visibility: 'private', browseUrl: publicUrl.replace('/cadastros', ''), observedAt, expiresAt: observedAt + 90000 };
+  // The authenticated SSH stream carries public controller code and bounded metadata ONLY.
+  // OAuth remains in the desktop credential store, never an environment copied to Codespace.
+  const source = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8');
+  const input = source + `\nawait main(${JSON.stringify(mode)},${JSON.stringify(proof)}).catch(reportFailure);\n`;
+  const result = run('gh', ['codespace', 'ssh', '-c', codespace, '--',
+    `env CODESPACE_NAME=${codespace} node --input-type=module`], input);
+  if (mode !== 'diagnose') await forwardPrivate(run);
+  return result;
+}
+
 async function health(sha, base = 'http://127.0.0.1:15173') {
   const get = suffix => fetch(`${base}${suffix}`, { redirect: 'error', signal: AbortSignal.timeout(4000) });
   const marker = await get('/__erp_hml');
@@ -109,7 +172,7 @@ export async function withStartLease(directory, action) {
   finally { fs.rmdirSync(directory); }
 }
 
-export async function main(mode) {
+export async function main(mode, tunnelProof = null) {
   assert.equal(process.platform, 'linux', 'LINUX_CODESPACE_REQUIRED');
   assert.equal(process.env.CODESPACE_NAME, codespace, 'EXISTING_CODESPACE_REQUIRED');
   assert.ok(['diagnose', 'status', 'start'].includes(mode), 'MODE_REQUIRED');
@@ -123,7 +186,10 @@ export async function main(mode) {
   assert.equal(rootStat.uid, process.getuid());
   assert.equal(rootStat.mode & 0o077, 0, 'PRIVATE_DIRECTORY_PERMISSIONS_REQUIRED');
   // Fail before starting real-data services unless the existing tunnel is private.
-  await forwardPrivate();
+  const forward = tunnelProof
+    ? async () => validateTunnelProof(tunnelProof, mode)
+    : forwardPrivate;
+  await forward();
   const statePath = `${privateRoot}/api-bootstrap.private.json`;
   const lease = `${privateRoot}/hml-start.lock`;
   // Never recover a stale lease automatically: another executor may still own it.
@@ -136,7 +202,7 @@ export async function main(mode) {
     if (response) {
       ownsBootstrap(JSON.parse(privateFile(statePath)));
       const checked = await health(config.reviewedSha);
-      await forwardPrivate();
+      await forward();
       console.log(JSON.stringify({ event: 'HML_ALREADY_RUNNING', ...checked, session: 'OWNER_VERIFICATION_REQUIRED' }));
       return;
     }
@@ -169,17 +235,21 @@ export async function main(mode) {
     }
     assert.equal(ready, true, `HML_START_NOT_READY_${lastFailure}_INSPECT_PRIVATE_LOG_NO_RETRY`);
     ownsBootstrap(JSON.parse(privateFile(statePath)));
-    await forwardPrivate();
+    await forward();
     const checked = await health(config.reviewedSha);
     console.log(JSON.stringify({ event: 'HML_STARTED', ...checked, session: 'OWNER_VERIFICATION_REQUIRED',
       externalAccess: 'NOT_VERIFIED_OPEN_PRIVATE_URL', availability: 'EXISTING_BOOTSTRAP_WINDOW' }));
   });
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv[2]).catch(error => {
+function reportFailure(error) {
     console.error(JSON.stringify({ event: 'HML_CONTROL_BLOCKED', code: error.code || 'GUARD_FAILED',
       reason: error.code === 'ERR_ASSERTION' ? String(error.message).split('\n')[0] : 'Inspect private configuration and runtime' }));
     process.exitCode = 1;
-  });
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv[2] === '--via-gh') {
+    viaGh(process.argv[3]).then(output => console.log(output)).catch(reportFailure);
+  } else main(process.argv[2]).catch(reportFailure);
 }

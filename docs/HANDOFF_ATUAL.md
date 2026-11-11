@@ -1,4 +1,25 @@
-## Continuidade vigente - SSH e HML15173 recuperados (2026-11-11)
+## Continuidade vigente - controlador desktop/SSH e completude100 (2026-11-11)
+
+Janela12135 encerrada: APP_STOPPED_RECORDS_PRESERVED,100antes/depois,
+fingerprint igual,0writes e writer.lock removido pelo proprio bootstrap.
+Nao repetir limpeza/carga/restore. Codespace mantem87%/aprox4Glivres.
+
+Mesmo hml-control.mjs ganhou --via-gh: OAuth/config ficam desktop; verifica
+owner/repositorio/maquina/Available, registra15173 se ausente e exigePRIVATE
+antes/depois. Transmite SOMENTE codigo publico+metadados frescos via SSH oficial.
+Proof de tunel vinculada a alvo/acao/porta, validade<=90s; sem token remoto,
+grant, seed, carga ou reinicio automatico do Codespace. Core remoto mantem
+pins/lease/saude/identidade e bootstrap privado.10contraprovas locais PASS;
+audit/lint/typecheck/build PASS; CI/ensaio real do novo controlador pendentes.
+Publicacao draft segue excecao de validacao Linux, nao homologacao antecipada.
+
+Proximo: CI do novo SHA, testar --via-gh start/replay/status e prover entrada
+Iniciar HML como wrapper fino do controlador, nao outro bootstrap. Em paralelo,
+matriz privada fonte/banco/API/UI e revisao read-only Central pos8650. Cursor
+continua escritor UI/composicao; Codex nao edita sua branch. Fonte confirma
+77PF/23PJ,documento100/IE20/331canais;117Obras pendentes sem nova extracao.
+
+## Historico imediato - SSH e HML15173 recuperados (2026-11-11)
 
 ENTREGUE REAL: OAuth GitHubCLI aprovado pelo proprietario; mesmo Codespace,
 owner/repositorio conferidos, Available,2cores/8GB/32GB. CLI oficial portatil

@@ -1,4 +1,15 @@
-## Continuidade vigente - espaco liberado e HML real reaberta (2026-11-11)
+## Continuidade vigente - retomada idempotente e matriz de completude (2026-11-11)
+
+Conservacao da janela anterior comprovada100antes/depois/fingerprint igual,
+0writes. Mesmo controlador HML adaptado para OAuth no DESKTOP e SSH sem tokens
+remotos, sem nova estrutura de dados. Alvo/repositorio/maquina/estado, tunel
+privado antes/depois, proof curta e lease preservados.10testes focados PASS;
+audit/lint/typecheck/build PASS. CI e ensaio real do novo delta pendentes,
+nao declarar launcher homologado antes deles. Sem nova limpeza/importacao.
+Em paralelo: matriz100 completa por evidencias e revisao Central apos8650;
+77PF/23PJ/documento100/IE20/331canais ja persistidos,117Obras ainda propostas.
+
+## Historico imediato - espaco liberado e HML real reaberta (2026-11-11)
 
 Conexao recuperada pelo GitHubCLI oficial/OAuth aprovado, mesmo Codespace
 2cores/8GB/32GB, sem novo ambiente/custo/maquina. Chrome tambem voltou.

@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { capacityReport, forwardPrivate, validateConfig, validateMarker, withStartLease, codespace } from '../scripts/legado/hml-control.mjs';
+import { capacityReport, forwardPrivate, validateConfig, validateMarker, validateTunnelProof, viaGh, withStartLease, codespace } from '../scripts/legado/hml-control.mjs';
 
 const sha = 'a'.repeat(40);
 const digest = 'b'.repeat(64);
@@ -17,6 +17,76 @@ const marker = () => ({ apiSha: sha, webSha: sha, dataOrigin: 'real-clients-FINA
     database: 'hml344_restore_20261104', schema: 'hml344_cpa_20261104',
     systemIdentifier: '1234567890', schemaOid: '1234', role: 'synthetic_hml_role',
   } });
+
+const tunnel = (now = Date.now()) => ({ codespace, repository: 'viniciuszuccaro-creator/ERP-Zuccaro-codeX',
+  owner: 'viniciuszuccaro-creator', mode: 'start', port: 15173, visibility: 'private',
+  browseUrl: `https://${codespace}-15173.app.github.dev`, observedAt: now, expiresAt: now + 90000 });
+
+test('SSH tunnel proof binds operation, target, private port and a short validity window', () => {
+  const now = Date.now(), proof = tunnel(now);
+  assert.equal(validateTunnelProof(proof, 'start', now), proof);
+  for (const patch of [{ codespace: 'another' }, { repository: 'other/repo' }, { owner: 'another' },
+    { mode: 'status' }, { port: 5173 }, { visibility: 'public' }, { browseUrl: 'https://example.test' },
+    { expiresAt: now - 1 }, { expiresAt: now + 90001 }, { observedAt: now + 6000 }, { token: 'not-allowed' }]) {
+    assert.throws(() => validateTunnelProof({ ...proof, ...patch }, 'start', now));
+  }
+});
+
+test('desktop verifies identity/private tunnel before SSH, sends no OAuth and verifies tunnel again', async () => {
+  const calls = [], old = process.env.GH_TOKEN;
+  process.env.GH_TOKEN = 'SYNTHETIC_NEVER_COPY_TO_REMOTE';
+  try {
+    const result = await viaGh('start', (program, args, input) => {
+      calls.push({ program, args, input });
+      if (args[0] === 'api') return JSON.stringify({ name: codespace, state: 'Available',
+        repository: 'viniciuszuccaro-creator/ERP-Zuccaro-codeX', owner: 'viniciuszuccaro-creator', machine: 'basicLinux32gb' });
+      if (args.includes('ssh')) {
+        assert.ok(calls.some(c => c.args.includes('15173:private')));
+        assert.ok(input.includes('await main("start",'));
+        assert.equal(input.includes(process.env.GH_TOKEN), false);
+        assert.equal(input.includes('GH_TOKEN='), false);
+        return 'SYNTHETIC_ALREADY_RUNNING';
+      }
+      return args.includes('--json') ? JSON.stringify([{ sourcePort: 15173, visibility: 'private',
+        browseUrl: `https://${codespace}-15173.app.github.dev` }]) : '';
+    }, () => assert.fail('existing tunnel must not be registered again'));
+    assert.equal(result, 'SYNTHETIC_ALREADY_RUNNING');
+    assert.equal(calls.filter(c => c.args.includes('ssh')).length, 1);
+    assert.equal(calls.filter(c => c.args.includes('15173:private')).length, 2);
+  } finally { if (old === undefined) delete process.env.GH_TOKEN; else process.env.GH_TOKEN = old; }
+});
+
+test('desktop rejects another target, stopped environment or failed private visibility before SSH', async () => {
+  for (const patch of [{ name: 'other' }, { state: 'Shutdown' }, { machine: 'larger' },
+    { repository: 'other/repo' }, { owner: 'other' }]) {
+    await assert.rejects(() => viaGh('start', (_program, args) => {
+      assert.equal(args[0], 'api');
+      return JSON.stringify({ name: codespace, state: 'Available', repository: 'viniciuszuccaro-creator/ERP-Zuccaro-codeX',
+        owner: 'viniciuszuccaro-creator', machine: 'basicLinux32gb', ...patch });
+    }));
+  }
+  await assert.rejects(() => viaGh('start', (_program, args) => {
+    assert.equal(args.includes('ssh'), false);
+    if (args[0] === 'api') return JSON.stringify({ name: codespace, state: 'Available',
+      repository: 'viniciuszuccaro-creator/ERP-Zuccaro-codeX', owner: 'viniciuszuccaro-creator', machine: 'basicLinux32gb' });
+    if (args.includes('visibility')) throw new Error('GH_PERMISSION_DENIED');
+    return JSON.stringify([{ sourcePort: 15173 }]);
+  }), /GH_PERMISSION_DENIED/);
+});
+
+test('desktop registers a missing 15173 once and never substitutes the synthetic port', async () => {
+  let registered = false, registrations = 0, ssh = 0;
+  await viaGh('status', (_program, args) => {
+    if (args[0] === 'api') return JSON.stringify({ name: codespace, state: 'Available',
+      repository: 'viniciuszuccaro-creator/ERP-Zuccaro-codeX', owner: 'viniciuszuccaro-creator', machine: 'basicLinux32gb' });
+    if (args.includes('ssh')) { ssh++; assert.equal(registered, true); return 'SYNTHETIC_STATUS'; }
+    if (args.includes('visibility')) { assert.ok(args.includes('15173:private')); return ''; }
+    return JSON.stringify(registered ? [{ sourcePort: 15173, visibility: 'private',
+      browseUrl: `https://${codespace}-15173.app.github.dev` }] : [{ sourcePort: 5173 }]);
+  }, async () => { registered = true; registrations++; });
+  assert.equal(registrations, 1);
+  assert.equal(ssh, 1);
+});
 
 test('startup lease excludes concurrent invocation, preserves another lease and releases only its own on failure', async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'hml-controller-synthetic-'));
