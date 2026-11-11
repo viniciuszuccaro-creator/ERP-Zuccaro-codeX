@@ -1,5 +1,13 @@
 ## Estado vigente - ensaios REAIS500/1000 concluidos, sem cargaVPS (2026-11-11)
 
+Decisao do dono: COMENTARIO e STRINGLIVRE6 nao tinham uso. Ficam EXCLUIDOS do
+mapeamento ativo, nao vao para observacoes e nao bloqueiam a migracao. Valores
+brutos preservados privadamente; nao autoriza apagar campos/historicos existentes.
+Matriz14 reconciliada:6componentes candidatos/4extensoes/2historicos/2dispensados.
+Owner-decision e matriz anterior conservadas;0escritas de cadastro nesta decisao.
+Codigo5f5813c5 CI6875/6876SUCCESS: tambem comprovou PG1001em500/500/1 no mesmoRUN,
+com replay e reversao. Ensaios REAIS abaixo continuam vinculados ao efbde32d.
+
 Codigo funcional efbde32d: CI6859/6860SUCCESS, inclusive PostgreSQL real500/1000
 SINTETICOS com concorrencia/COMMITgap/replay/reversao. Depois executados500 e1000
 REAIS no MESMO hml344_restore_20261104/hml344_cpa_20261104 privado persistente,

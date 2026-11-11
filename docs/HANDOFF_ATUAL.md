@@ -1,5 +1,12 @@
 ## Adendo vigente -500/1000REAIS no mesmoHML,100preservados (2026-11-11)
 
+Dono encerrou a duvida COMENTARIO/STRINGLIVRE6: nao tinham uso. Excluir SOMENTE
+esses2 do mapeamento ativo, preservar raw/procedencia, nao copiar para observacoes
+nem bloquear mestres por eles. Nao apagar dados/campos do ERP. Matrizes privadas
+owner-unused-fields-decision e fourteen-field-contract-review-owner-reconciled
+junto do perfil agregado; anterior preservada. Restantes12 seguem seus gates.
+5f5813c5 CI6875/6876SUCCESS, inclusive PG1001em500/500/1/replay/reversao no mesmoRUN.
+
 efbde32d CI6859/6860SUCCESS: PG500/1000sinteticos/conexoes concorrentes/COMMITgap.
 Depois500 e1000REAIS no hml344_restore_20261104/schemahml344_cpa_20261104, mesmos
 GrupoCPA/perfilAuthuser e isolamento.0novasroles/grants/DDL/operacional. PrincipalSQL
