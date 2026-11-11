@@ -367,13 +367,21 @@ export default function CentralCliente360Panel({
     refetchOnMount: 'always',
     placeholderData: undefined,
   });
-  const contatosClassified = classifyCentral360Contatos(
-    contatosQuery.data,
-    {
-      forbidden: !canViewContatosMaster && !permissionsLoading,
-      loadError: Boolean(contatosQuery.isError),
-    },
-  );
+  const contatosClassified = (() => {
+    const raw = classifyCentral360Contatos(
+      contatosQuery.data,
+      {
+        forbidden: !canViewContatosMaster && !permissionsLoading,
+        loadError: Boolean(contatosQuery.isError),
+      },
+    );
+    return {
+      status: raw?.status || 'unavailable',
+      message: raw?.message || 'Contatos indisponíveis',
+      validos: Array.isArray(raw?.validos) ? raw.validos : [],
+      quarentena: Array.isArray(raw?.quarentena) ? raw.quarentena : [],
+    };
+  })();
 
   if (!isHttpCliente360Enabled) return null;
 

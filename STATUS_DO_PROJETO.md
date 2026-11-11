@@ -1,3 +1,15 @@
+## CURSOR — #591 CI-fix fixture Contatos MASTER (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Causa** | frontend FAIL `7fba8c13`: `crm-conversao-consumer` Proxy mock → `.quarentena.length` |
+| **Fix** | resolver real `centralCliente360Contatos` + `cadastroEditLoadPolicy`; classificar fail-safe |
+| **Testes** | `crm-conversao-consumer` · peels · contatos-master |
+| **Estados** | Runtime contatos/volume preservado |
+
+**Próximo:** CI tip peels/fix · ACK Codex.
+
 ## CURSOR — #591 Contatos MASTER Central360 + volume 2k/5k (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
