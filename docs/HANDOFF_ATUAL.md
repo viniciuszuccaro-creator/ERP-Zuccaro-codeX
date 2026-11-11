@@ -1,3 +1,8 @@
+## CURSOR — #591 CI SUCCESS `b36ea0ae` (2026-11-11 America/Sao_Paulo)
+- Tip peels+runtime PR#592 CI SUCCESS 9/9.
+- Empilha: locais RBAC · omit crédito/fiscal · volume · Cliente360 visualizar · Fechar ENTREGA/RETIRA · quarentena.
+- Sem HML. **Próximo:** ACK Codex SHA HML · aceite :15173.
+
 ## CURSOR — #591 Cliente360 visualizar + Fechar ENTREGA/RETIRA (2026-11-11 America/Sao_Paulo)
 - `CentralCliente360Panel`: abrir cadastro com `Cliente.visualizar` (editar só no Completo).
 - Teste jornada: Fechar oferece ENTREGA/RETIRADA; situações PRODUCAO/ENTREGA/RETIRA no layout.

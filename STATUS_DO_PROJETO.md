@@ -1,14 +1,15 @@
-## CURSOR — #591 tip `163c9de8` empilhado (2026-11-11 America/Sao_Paulo)
+## CURSOR — #591 CI SUCCESS tip `b36ea0ae` (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
 |-------|-------|
 | **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
-| **Tip** | **`163c9de8`** (quarentena revisável) · Cliente360 `ffbb938f` · omit/volume `f61c7524` · locais RBAC `559c01c1` · 679601 `ea318931` |
-| **Lotes** | pareceres ctx/unidade/Pedidos403 · cliente_local visualizar≠escrita · omit crédito/fiscal · volume 150 · Fechar ENTREGA/RETIRA · quarentena lista |
-| **Estados** | Aguardando CI tip · sem HML neste agente |
-| Fora | Importação · grants · SHA API+web · BFF 156/34 |
+| **Tip** | **`b36ea0ae`** peels CI · runtime `163c9de8`/`ffbb938f`/`f61c7524`/`559c01c1` · 679601 `ea318931` |
+| **CI** | SUCCESS 9/9 |
+| **Lotes** | ctx/unidade/Pedidos403 · cliente_local RBAC · omit crédito/fiscal · volume 150 · Cliente360 visualizar · Fechar ENTREGA/RETIRA · quarentena revisável |
+| **Estados** | Tip verde · CI ≠ homologação HML · sem importação neste agente |
+| Fora | SHA API+web Codex · BFF 156/34 · contadores faixa · provedores externos |
 
-**Próximo:** CI SUCCESS · ACK Codex · aceite :15173 com SHA combinados.
+**Próximo:** ACK Codex · aceite :15173 com SHA API+web alinhados · recuperação sky residual.
 
 ## CURSOR — #591 Cliente360 visualizar≠editar + jornada Fechar (2026-11-11 America/Sao_Paulo)
 
