@@ -127,9 +127,9 @@ test('Orcamento real: cancelar/converter bloqueiam clique duplo e callback tardi
   for (const method of ['cancel', 'convert']) {
     const h = await mount(); h.pending[method] = deferred(); let click;
     if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find((n) => typeof n.props.onConfirm === 'function').props.onConfirm; }
-    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render();
+    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render();
       h.nodes().filter((n) => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
-      h.render(); click = h.button('Criar pedido').props.onClick; }
+      h.render(); click = h.button('Confirmar fechamento').props.onClick; }
     const result = click(); click(); assert.equal(h.calls.filter((c) => c.method === method).length, 1);
     h.setSession(tresZ); h.pending[method].resolve(row()); await result; await flush();
     assert.equal(h.invalidations.length, 0); assert.equal(h.messages.filter((m) => m.kind === 'success').length, 0);
@@ -141,7 +141,7 @@ test('Orcamento real: permissao revogada com formulario aberto impede envio', as
     const h = await mount(); let click;
     if (method === 'update') { h.title('Editar').props.onClick(); h.render(); click = h.button('Salvar orçamento').props.onClick; }
     else if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find((n) => typeof n.props.onConfirm === 'function').props.onConfirm; }
-    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render(); click = h.button('Criar pedido').props.onClick; }
+    else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render(); click = h.button('Confirmar fechamento').props.onClick; }
     const before = h.calls.length; h.revoke(); await click();
     assert.equal(h.calls.length, before); assert.equal(h.messages.at(-1).kind, 'error');
   }
@@ -202,9 +202,9 @@ for (const method of ['update', 'cancel', 'convert']) {
     if (method === 'update') { h.title('Editar').props.onClick(); h.render(); click = h.button('Salvar orçamento').props.onClick; }
     if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find(n => typeof n.props.onConfirm === 'function').props.onConfirm; }
     if (method === 'convert') {
-      await h.title('Visualizar').props.onClick(); h.render(); h.button('Converter em pedido').props.onClick(); h.render();
+      await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render();
       h.nodes().filter(n => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
-      h.render(); click = h.button('Criar pedido').props.onClick;
+      h.render(); click = h.button('Confirmar fechamento').props.onClick;
     }
     const previous = h.calls.length;
     h.setSession({ ...cpa, token: 'synthetic-new' });
