@@ -40,9 +40,14 @@ test('staging rejects duplicate identities, invalid size and concurrent writer',
 });
 test('existing mapper remains owner of staging classification, no business persistence',t=>{
   const args=fixture(t);
-  const result=consumirLotesStagingRetomavel({...args,options:{entidade:'cliente',groupId:'synthetic'}});
+  args.rows=args.rows.map(row=>({...row,nome:'Synthetic',group_id:'synthetic'}));
+  const options={entidade:'cliente',groupId:'synthetic',contratoEntrada:{coorte:'synthetic',crosswalkEmpresas:{1:'synthetic-company'}}};
+  const result=consumirLotesStagingRetomavel({...args,options});
   assert.equal(result.records,3);assert.equal(result.businessWrites,0);
-  assert.equal(consumirLotesStagingRetomavel({...args,options:{entidade:'cliente',groupId:'synthetic'}}).reused,2);
+  const receipt=JSON.parse(fs.readFileSync(path.join(args.directory,'batch-00000000.private.json')));
+  assert.equal(receipt.result.comprovados.length,2);
+  assert.equal(Object.hasOwn(receipt.result.comprovados[0],'empresa_id'),false);
+  assert.equal(consumirLotesStagingRetomavel({...args,options}).reused,2);
 });
 test('500 and 1000 are bounded staging parameters, not operational authorization',t=>{
   for (const batchSize of [500,1000]) {

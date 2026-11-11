@@ -8,6 +8,8 @@ staging em lotes1..1000/default500: helper privado de checkpoints, ordem nativa,
 manifesto pinned/opcoes/run, fsync/hashchain/lock, replay sem reprocessar concluidos.
 32PASS mapper+guardas+checkpoint; ancestral preservado salvo dois hunks exatos,
 com negativos contra falta/duplicacao/mutacao. Nao e importadorPG paralelo.
+Positivo de comprovados tambem cobre empresa_id undefined do mapper: recibo omite
+esse campo como JSON canonico, sem inventar empresa/null. Retomada passou.
 Nenhuma cargaPG/reversaoPG/velocidade de importacao comprovada por esses testes.
 Lock ou recibo incompleto apos crash real: inspecionar, nao forcar limpeza.
 

@@ -17,6 +17,9 @@ reversaoPG homologadas. SourceSha256 e pin informado pelo chamador; nao comprova
 sozinho derivacao dos rows. Nenhuma permissao operacional decorre desse manifesto.
 32 testes mapper/consolidacao/checkpoint PASS; peel de dois hunks EXATOS mantem
 todo o restante ancestral e contraprovas contra ausencia/duplicacao/mutacao.
+Caso positivo usa registros comprovados pelo mapper: empresa_id ausente continua
+omitido no JSON privado, nunca preenchido com null/empresa ficticia. Inputs JSON
+invalidos continuam rejeitados; nao confundir ausente de objeto com array invalido.
 
 Perfil agregado NOVO da copia legada isolada:22895linhas/22895chaves distintas,
 156campos/90com algum valor;14campos com valores fora da cobertura do piloto100.

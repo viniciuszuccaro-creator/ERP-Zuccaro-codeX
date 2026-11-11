@@ -3,12 +3,14 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const plain = value => {
+const plain = (value, omitUndefinedFields = false) => {
   if (value === null || ['string','boolean'].includes(typeof value)) return value;
   if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (Array.isArray(value)) return value.map(plain);
+  if (Array.isArray(value)) return value.map(item => plain(item, omitUndefinedFields));
   if (value && Object.getPrototypeOf(value) === Object.prototype)
-    return Object.fromEntries(Object.keys(value).sort().map(key => [key, plain(value[key])]));
+    return Object.fromEntries(Object.keys(value).sort()
+      .filter(key => !omitUndefinedFields || value[key] !== undefined)
+      .map(key => [key, plain(value[key], omitUndefinedFields)]));
   throw new Error('STAGING_JSON_REQUIRED');
 };
 const write = (file, value) => {
@@ -79,7 +81,7 @@ export function processStagingBatches({ rows, nativeKey, sourceSha256, runId, ba
         reused++;
       } else {
         const result = plain(consume(selected.map(item => item.row),
-          {...structuredClone(config), chavesJaGravadas: structuredClone(keys)}));
+          {...structuredClone(config), chavesJaGravadas: structuredClone(keys)}), true);
         if (!Array.isArray(result.comprovados) || !result.totais)
           throw new Error('STAGING_RESULT_INVALID');
         receipt = {manifestSha256, previous, index, batchSha256, result, resultSha256: digest(result)};
