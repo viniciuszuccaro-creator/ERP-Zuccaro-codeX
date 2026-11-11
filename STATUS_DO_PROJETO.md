@@ -1,3 +1,17 @@
+## CURSOR — #591 Cliente360 identity rica (API→UI) (2026-11-11 America/Sao_Paulo)
+
+| Campo | Valor |
+|-------|-------|
+| **Branch / PR** | `cursor/c360-parecer-ctx-unidade-cnpj-392b` · [#592](https://github.com/viniciuszuccaro-creator/ERP-Zuccaro-codeX/pull/592) |
+| **Base** | CI SUCCESS `432edac1` / docs `64d8fe11` |
+| **Lote** | Painel identity exibe fantasia/social/razão/origem/tipo/ativo já retornados por `projectIdentity` (ocultos na UI) |
+| **Testes** | `central-cliente-360-pagina-ui` · navigation · layout v6 |
+| **Evidence** | `docs/evidence/cursor-cliente360-identity-rica-591-20261111.txt` |
+| **Estados** | IE/IM ainda fora do contrato identity · Celular ≠ WhatsApp |
+| Fora | Estender BFF identity (Codex) · 14 nomes · HML · canais externos |
+
+**Próximo:** CI tip · ACK Codex IE no identity + nomes 14 · aceite :15173.
+
 ## CURSOR — #591 CI SUCCESS tip `432edac1` piloto-cobertura (2026-11-11 America/Sao_Paulo)
 
 | Campo | Valor |
