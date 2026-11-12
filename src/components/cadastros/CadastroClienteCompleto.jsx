@@ -546,6 +546,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       }
 
       const payload = buildPayload(data);
+      if (isHttpBackendMode) {
+        if (data.rg !== undefined) payload.rg = data.rg;
+        else delete payload.rg;
+      }
       // Write canônico: locais via /clientes/:id/locais — não empurrar no MASTER.
       let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
         ? payload.locais_entrega
@@ -1302,8 +1306,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Label htmlFor="rg">RG</Label>
                       <Input
                         id="rg"
-                        value={formData.rg}
-                        onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
+                        value={formData.rg ?? ""}
+                        onChange={(e) => setFormData({ ...formData, rg: e.target.value === "" ? null : e.target.value })}
                       />
                     </div>
                   </>

@@ -17,8 +17,12 @@ const CLIENTE_ORIGENS = new Set([
 ]);
 
 const CLIENTE_TIPOS = new Set(['Pessoa Física', 'Pessoa Jurídica']);
+export const CLIENTE_MASTER_EXTRA_KEYS = Object.freeze([
+  'rg', 'numero_caixa_postal', 'cep_caixa_postal', 'caixa_postal_cobranca', 'inscricao_produtor_rural',
+]);
 
 const ALLOWED_KEYS = [
+  ...CLIENTE_MASTER_EXTRA_KEYS,
   'empresa_id',
   'ativo',
   'tipo',
@@ -1065,7 +1069,6 @@ export function assertClienteHttpRichFieldsWritable(src) {
     'indicador_id',
     'regiao_atendimento_id',
     'regiao_atendimento',
-    'rg',
   ]) {
     if (isMeaningfulScalar(src[key])) unsupported.push(key);
   }
@@ -1096,6 +1099,8 @@ export function toClienteMasterHttpPayload(raw, options = {}) {
   /** @type {Record<string, unknown>} */
   const out = {};
   for (const key of ALLOWED_KEYS) {
+    // Empty form defaults are not clear commands; explicit NULL remains a clear command.
+    if (CLIENTE_MASTER_EXTRA_KEYS.includes(key) && src[key] === '') continue;
     if (src[key] !== undefined) out[key] = src[key];
   }
   // contatos:null não é comando público — remove antes da projeção CAS.

@@ -20903,3 +20903,16 @@ TypecheckbackendPASS. Diffcheck acusou linha vazia final, corrigida no fechament
 Validacao PostgreSQL via CI Ubuntu existente,
 commit draft de validacao conforme autorizacao; nao homologado por antecedencia.
 WIPUI6 separado e dados/HML intactos. Proximo: CI do reparo, depois UI/baselineHML.
+## Continuidade unificada e conservacao HML (2026-11-12)
+
+Composicao d143ad4d/PR594 CI6931/6932 SUCCESS, PostgreSQL real incluido.
+UI6: snapshot cc33d2bcbc06d28e passou8checksLinux; raiz2949PASS/backend647PASS,
+0FAIL/30SKIPbackend. Audit/lint/typechecks/buildsPASS, checkout remoto inalterado.
+RG/5extras preservados no adapter; clearNULL e omissao distintos, sem truncamento.
+Outros4extras ainda sem novos inputs visiveis. CI propria exigida apos publicacao.
+READ ONLY/ROLLBACK comprovou 1600 mestres/4200 contatos/1500 inativos e
+hashes integrais de dados/auditorias contra checkpoint pos-enriquecimento.
+100 originais conservaram demais campos; cinco extras conferidos com fonte
+e comandos pinados. Novo recibo privado62a56d06, antigo preservado, nao ativado.
+Suporte PG retornou parado. Nenhuma carga, SQL write, grant ou acao VPS.
+Proximo: fechamento UI, bootstrap da mesma versao e novo baseline imutavel.

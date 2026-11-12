@@ -5,6 +5,7 @@ import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
+import { toClienteMasterHttpPayload } from '../../src/api/clienteHttpPayload.js';
 
 /**
  * Contatos[] jsonb MASTER + CAS (expectedVersion) / RBAC.
@@ -83,6 +84,36 @@ function headers(actorId: string) {
     'x-actor-id': actorId,
   };
 }
+
+test('HTTP adapter -> canonical API preserves RG/extras, explicit null and denied/invalid writes', async () => {
+  const runtime = fixture();
+  const server = runtime.app.listen(0, '127.0.0.1');
+  await new Promise<void>(resolve => server.once('listening', resolve));
+  const port = (server.address() as {port:number}).port;
+  const url = `http://127.0.0.1:${port}/api/v1/clientes`;
+  const fields = { rg:'000123-X', numero_caixa_postal:'00017', cep_caixa_postal:'01234000',
+    caixa_postal_cobranca:'0009', inscricao_produtor_rural:'0000123' };
+  try {
+    const createdResponse = await fetch(url, { method:'POST', headers:headers(ACTOR_EDIT),
+      body:JSON.stringify(toClienteMasterHttpPayload({ tipo:'Pessoa Física', documento:'52998224725', nome:'SYNTHETIC extras', ...fields }, {mode:'create'})) });
+    assert.equal(createdResponse.status,201);
+    const {data:created} = await createdResponse.json() as any;
+    for(const [key,value]of Object.entries(fields))assert.equal(created[key],value);
+    const target=url+'/'+created.id;
+    for(const [actor,payload,status]of [[ACTOR_VIEW,{rg:'DENIED'},403],[ACTOR_EDIT,{rg:'   '},400],[ACTOR_EDIT,{rg:'x'.repeat(200)},400]] as const){
+      const response=await fetch(target,{method:'PATCH',headers:headers(actor),body:JSON.stringify(toClienteMasterHttpPayload(payload,{mode:'update'}))});
+      assert.equal(response.status,status);
+      assert.equal((await runtime.clienteService.get(ctx(ACTOR_EDIT,'reopen-extra-negative'),created.id)).rg,fields.rg);
+    }
+    const changed=await fetch(target,{method:'PATCH',headers:headers(ACTOR_EDIT),body:JSON.stringify(toClienteMasterHttpPayload({rg:null},{mode:'update'}))});
+    assert.equal(changed.status,200);
+    const reopened=await runtime.clienteService.get(ctx(ACTOR_EDIT,'reopen-extra-clear'),created.id);
+    assert.equal(reopened.rg,null);
+    for(const key of Object.keys(fields).filter(k=>k!=='rg'))assert.equal((reopened as any)[key],fields[key as keyof typeof fields]);
+    const updates=(await runtime.auditRepo.listByEntity('Cliente',created.id)).filter(row=>row.action==='update');
+    assert.equal(updates.length,1);
+  } finally { await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve())); }
+});
 
 test('create preserves initial contacts in the canonical transaction and reopens with CAS', async () => {
   const runtime = fixture();

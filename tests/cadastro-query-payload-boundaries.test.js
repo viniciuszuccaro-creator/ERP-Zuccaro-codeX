@@ -80,6 +80,17 @@ test('Cliente local preflight: peel nao aceita omissao, repeticao ou permissao a
   }
 });
 
+test('RG HTTP: exact peel rejects omission, repetition and changes while retaining the historical whole form', () => {
+  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  assert.doesNotThrow(() => clienteContactPresenceRemainder(source));
+  for (const [after] of rgHttpHunks) {
+    for (const replacement of ['', after + after, after.replace('rg', 'rg /* FORGED */')])
+      assert.throws(() => clienteContactPresenceRemainder(source.replace(after, replacement)));
+  }
+  const digest = text => createHash('sha256').update(clienteContactPresenceRemainder(text)).digest('hex');
+  assert.notEqual(digest(source + '\n// OUTSIDE_RG\n'), digest(source));
+});
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -97,10 +108,17 @@ function once(source, current, previous) {
   assert.equal(source.split(current).length - 1, 1, 'exact integration hunk');
   return source.replace(current, previous);
 }
+const rgHttpHunks = [
+  ['      if (isHttpBackendMode) {\n        if (data.rg !== undefined) payload.rg = data.rg;\n        else delete payload.rg;\n      }\n', ''],
+  ['value={formData.rg ?? ""}', 'value={formData.rg}'],
+  ['onChange={(e) => setFormData({ ...formData, rg: e.target.value === "" ? null : e.target.value })}',
+    'onChange={(e) => setFormData({ ...formData, rg: e.target.value })}'],
+];
 // Browser-proven absence is not an explicit empty list. Preserve the old golden;
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  for (const [after, before] of rgHttpHunks) source = once(source, after, before);
   source = once(source, '    saveMutation.mutate(isHttpBackendMode ? formData : buildPayload(formData), {', '    saveMutation.mutate(buildPayload(formData), {');
   source = once(source, '  prepareClienteLocaisHttpDraft,\n  isClienteLocalCanonicalId,\n', '');
   source = once(source, "      let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')", "      const locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')");

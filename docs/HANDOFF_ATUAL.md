@@ -1,3 +1,31 @@
+## Continuidade unificada - conservacao HML comprovada (2026-11-12)
+
+Codex segue unico escritor temporario da frente Cursor por ordem do dono.
+Composicao d143ad4d/PR594: CI6931/6932 SUCCESS, inclusive PostgreSQL real.
+Fixture corrigida sem reaplicar045/DDL candidato; negativas preservadas.
+UI6 fechada separadamente: snapshot cc33d2bcbc06d28e, 8checks Linux PASS;
+raiz2949PASS/0FAIL/0SKIP, backend647PASS/0FAIL/30SKIP. Audit/lint/typechecks/
+buildsPASS.74 arquivos conferidos, checkout remoto inalterado, nenhuma dependencia
+instalada. Raiz333s/backend378s: tempos de testes, NAO prazo de migracao.
+RG preservado/clearNULL no formulario existente e cincoextras no adapter HTTP;
+campos omitidos nao apagam dados, whitespace/invalido chegam ao validador canonico.
+403/400 conservam valores e auditoria,1alteracao valida=1audit.13HTTP/memoriaPASS.
+Os outros quatroextras nao ganharam novos controles visiveis; nao declarar UI completa.
+
+Conservacao privada READ ONLY/ROLLBACK: 1600 mestres/4200 contatos/1500 inativos
+iguais ao checkpoint pos-extensoes por hash integral dos mestres E auditorias.
+100 originais comparados ao baseline IE20: demais campos preservados; cinco
+extras conferidos por plano/preflight/commands/provas NDJSON nativas.
+Driver inicialmente comparou pin do plano JSON com NDJSON: parou sem escrita;
+ligacao corrigida conforme executor original, nao por troca cega de pin.
+Recibo novo imutavel SHA62a56d06827e229ac1eca4a548d182e93503de85a4c4a8cf0ec3ace5b21292de,
+separado do baseline antigo e ainda NAO ativado. Suporte PG voltou parado,
+rede none/zero portas/imagem e mounts fixados preservados. Zero escrita SQL.
+Proximo: publicar UI apos fechamento, depois ativar revisao de bootstrap com
+novo recibo e API/web do mesmo SHA CI aprovado; nao recarregar/reimportar.
+Enderecos: ledger64f0/v02 continua parcial, nao ha permissao implicita de escrita.
+1500 ensaios continuam INATIVOS; nao promover/reaplicar automaticamente.
+
 ## Composicao publicada - fechamento PostgreSQL pendente (2026-11-12)
 
 Publicado7d7ee5b2 naPR594, parents64f0dcf2+5d1fa0fc. CI6927 encontrou

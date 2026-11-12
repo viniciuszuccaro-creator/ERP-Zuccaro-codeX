@@ -413,6 +413,26 @@ const clienteA = {
   group_id: 'g1',
 };
 
+test('CadastroClienteCompleto HTTP: RG and loaded extras survive save; explicit RG clear is null',async()=>{
+  const fields={rg:'000123-X',numero_caixa_postal:'00017',cep_caixa_postal:'01234000',caixa_postal_cobranca:'0009',inscricao_produtor_rural:'0000123'};
+  const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{
+    propName:'cliente',initial:{...clienteA,...fields,contatos_version:'a'.repeat(64)},extraModules:{
+      '@/api/base44Client':{base44:{auth:{me:async()=>null},entities:{}},isHttpBackendMode:true},
+      '@/api/clienteHttpPayload':localPayload,
+    },
+  });
+  const rg=()=>h.walk().find(n=>n.props?.id==='rg');
+  assert.equal(rg().props.value,fields.rg);
+  await h.save();
+  let wire=localPayload.toClienteMasterHttpPayload(h.updates[0].payload,{mode:'update'});
+  for(const [key,value]of Object.entries(fields))assert.equal(wire[key],value);
+  rg().props.onChange({target:{value:''}});h.render();
+  await h.save();
+  wire=localPayload.toClienteMasterHttpPayload(h.updates[1].payload,{mode:'update'});
+  assert.equal(wire.rg,null);
+  for(const key of Object.keys(fields).filter(k=>k!=='rg'))assert.equal(wire[key],fields[key]);
+});
+
 const clienteB = {
   id: 'cli-b',
   codigo: '000002',
