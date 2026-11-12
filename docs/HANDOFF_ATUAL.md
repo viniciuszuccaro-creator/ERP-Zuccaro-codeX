@@ -1,5 +1,20 @@
 ## Retomada - enderecos nativos e historicos PR594 (2026-11-12)
 
+Checkpoint funcional e53bf833/PR594, CI6943/6944SUCCESS; PGenderecos7/0/0,
+inclusive negativa de continuar transacao falha. Runtime igual9511 revisado.
+Nao aplicar af4003dc sem gate6826377124: ledger ausente+criar/inativar negados;
+API/webHML continuam04eb39f6. Sem escritaHML/operacional ou grants automaticos.
+Fonte empresarial EMP02 agora copiada/verificada por3fronteiras,2arquivos120MB;
+nao repetir transferencia. Reciboc20f6304, filelistfb01c97f, catalogoa6972a7f em
+/workspaces/.erp-private-344/company-catalog-emp02-20261112, fonte em
+/workspaces/.erp-private-344/company-source-emp02-20261112 (privados).
+Copia anexada READ_ONLY ao mesmo leitor isolado;276tabelas/9678colunas, parado.
+Originais nunca montados. Sem valores financeiros importados nem empresa inferida.
+Proximo: PedidoVenda/CODIGOCLIENTE/NRPEDIDO -> PedidoVendaItens/ITEMPEDIDO;
+ClientesDuplicatas e baixas precisam cardinalidade/chaves/datas int comprovadas.
+Crosswalk5nativas/2HML conserva1unico/1ambiguo: nao escolher por nome/sufixo.
+Reservas de codigo encerradas; sem outro escritor ou promessa de processo continuo.
+
 9511d226 publicado; CI6941: frontend/composicaoPASS, negativa da nova suite PG
 falhou por reutilizar transacao apos restore rejeitado. Fixture corrigida:3negativas
 isoladas e contraprova adicional exige ROLLBACK_REQUIRED apos falha capturada;

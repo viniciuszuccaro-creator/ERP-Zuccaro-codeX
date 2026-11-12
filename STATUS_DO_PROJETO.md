@@ -1,5 +1,19 @@
 ## Enderecos nativos e historicos - lote PR594 (2026-11-12)
 
+Fechamento funcional: e53bf833/PR594 CI6943/6944 SUCCESS no mesmo SHA;
+PG real legacy-address:7PASS/0FAIL/0SKIP. Corrigida apenas a fixture transacional,
+sem relaxar guardas. Parecer independente9511 sem achados, alcance estatico.
+Plano af4003dc100fiscais+117entregas ainda NAO aplicado: gate HML descrito em
+6826377124 (ledger+criar/inativar temporarios, escopo/impacto/reversao explicitos).
+Nenhuma alteracao de perfil/grant/schema/dadosHML; operacional intacto.
+Fonte empresarial dirigida:2arquivos/119930880bytes, SHA origem/copia/volume
+conferidos; filelist nativofb01c97f revisado, somente copia anexada READ_ONLY ao
+leitor existente. Catalogoa6972a7f:276tabelas/9678colunas, leitor parado ao fechar.
+PedidoVenda/NRPEDIDO/CODIGOCLIENTE, PedidoVendaItens/ITEMPEDIDO e ClientesDuplicatas
+localizados; datas int e chaves de baixas exigem contrato, nao interpretar por palpite.
+Proximo historico: provar cardinalidade/joins no recorte100, identidade empresarial
+e datas antes de extrair/importar valores. Nenhum saldo, titulo ou cobranca criado.
+
 Publicado9511d226, CI6941: frontend/composicaoPASS, backend falhou na negativa
 PG da fixture: restore rejeitado invalidou transacao e create seguinte recebeu
 LEGACY_ADDRESS_ROLLBACK_REQUIRED. Runtime/guardas corretos e inalterados.
