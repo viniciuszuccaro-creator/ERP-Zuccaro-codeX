@@ -1,5 +1,20 @@
 ## Continuidade unificada - conservacao HML comprovada (2026-11-12)
 
+Fechamento atual: ce5f1cfb/PR594 CI6933/6934 SUCCESS. UI6 publicada;
+checkout desktop limpo. HML retomada pelo controlador existente, API/webce5f1cfb,
+origem FINAL100 real, banco/schema privados anteriores, sem seed/carga/DDL/grant.
+Bootstrap privado e launch anteriores conservados e verificados para reversao;
+novo recibo62a56d06 ATIVADO apos guardas reais1positivo/5negativos e CI exata.
+Comparacao integral de linhas continua obrigatoria antesREADY/depoisparada.
+Controller confirmou health/ready200 e Cliente anonimo401. Porta15173PRIVATE;
+HTTP externo semsessao302 para github.dev, nao404, mas nao equivale a browser
+autenticado. ControleUI local/nativo falha antesChrome: kernel assets/oserror3.
+Aceite visual e sessao real desta versao PENDENTES, solicitado ao dono sem senha.
+Janela corrente encerra2026-11-12T12:10:51.606Z(09:10Brasilia), nao24h.
+URL https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/cadastros
+Proximo: conferir sessao/UI documentos/RG/reabertura; depois ledger de enderecos
+e bindings comerciais existentes. Nao repetir carga1600/contatos/extensoes.
+
 Codex segue unico escritor temporario da frente Cursor por ordem do dono.
 Composicao d143ad4d/PR594: CI6931/6932 SUCCESS, inclusive PostgreSQL real.
 Fixture corrigida sem reaplicar045/DDL candidato; negativas preservadas.
@@ -19,7 +34,7 @@ extras conferidos por plano/preflight/commands/provas NDJSON nativas.
 Driver inicialmente comparou pin do plano JSON com NDJSON: parou sem escrita;
 ligacao corrigida conforme executor original, nao por troca cega de pin.
 Recibo novo imutavel SHA62a56d06827e229ac1eca4a548d182e93503de85a4c4a8cf0ec3ace5b21292de,
-separado do baseline antigo e ainda NAO ativado. Suporte PG voltou parado,
+separado do baseline antigo; na prova isolada ainda NAO ativado. Suporte PG voltou parado,
 rede none/zero portas/imagem e mounts fixados preservados. Zero escrita SQL.
 Proximo: publicar UI apos fechamento, depois ativar revisao de bootstrap com
 novo recibo e API/web do mesmo SHA CI aprovado; nao recarregar/reimportar.

@@ -300,6 +300,22 @@ Se parado e sem reserva, invoca exatamente api-bootstrap.private.mjs --hml-curre
 esse bootstrap continua dono do banco, preflight fisico, baseline e janela20min.
 Logs novos ficam privados0600; erro nao dispara nova tentativa automatica.
 
+Retomada verificada12/11: runtime privado ce5f1cfb/CI6933/6934SUCCESS,
+API/web mesmo SHA. Novo baseline de conservacao62a56d06 conserva o IE20 antigo
+e liga fonte/commands/checkpoint pos-extensoes por hashes; nao reescreve recibos.
+READ ONLY/ROLLBACK confirmou1600mestres/4200contatos/1500inativos e auditorias;
+100originais conservam demais campos, extras conferidos no plano fonte.
+Bootstrap atual compara a linha completa nova; nao ignora extras/CAS.
+Antes de trocar, backup privado dos bytes de bootstrap e launch; para retorno,
+parar somente a HML pelo fluxo existente e restaurar esses DOIS arquivos juntos.
+Nao usar o baseline antigo contra dados enriquecidos nem anunciarREADY ignorando
+falha. Voltar configuracao antiga nao equivale a autorizar escrita/reversao de dados.
+Guardas reais1positivo/5negativos, syntax e pins passaram antes da ativacao.
+Controller atual iniciou com health/ready200 e cliente anonimo401;15173PRIVATE.
+Externo anonimo302 para github.dev; browser autenticado ainda depende de aceite.
+Falha local kernel assets/oserror3 impede controleUI, nao comprova Codespace fechado.
+Nao reinstalar/reiniciar servicos por essa falha. Retomar via controlador/gh suportado.
+
 Encaminhamento usa gh codespace ports visibility15173:private e verifica a porta,
 HTTPS e hostname retornados. Falta de registro/gh/autenticacao BLOQUEIA antes de
 iniciar dados reais; usar registro suportado no painel Portas, nunca publico.
