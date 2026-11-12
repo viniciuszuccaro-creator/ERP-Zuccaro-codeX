@@ -48,6 +48,15 @@ export function selectFunctionalRows(input, { groupId, batch, sourceSystem, clie
         status: r.status, status_fornecedor: r.status_fornecedor, codigo_legado: code,
         legacy_id: code, source_system: sourceSystem, migration_batch: batch,
       };
+      if (entity === 'cliente') {
+        // Preserve only explicit scalar source fields accepted by the canonical master contract.
+        for (const field of ['nome_social', 'inscricao_estadual', 'inscricao_municipal', 'telefone', 'celular', 'observacoes']) {
+          const value = r[field];
+          if (value == null || value === '' || (typeof value === 'string' && !value.trim())) continue;
+          if (schema.safeParse({ ...payload, [field]: value }).success) payload[field] = value;
+          else auxiliary.push({ entity, index, reason: 'CANONICAL_FIELD_REQUIRES_REVIEW', rawField: field, sourcePreserved: true });
+        }
+      }
       if (entity === 'fornecedor' && [r.cpf, r.cnpj].some(x => digits(x) && digits(x) !== doc)) {
         reject('SOURCE_DOCUMENT_FIELDS_CONFLICT'); continue;
       }
@@ -258,6 +267,7 @@ export function classifyLegacyAddresses(input, { validateAddress, ownerPurposeDe
     const entry = entries.at(-1);
     Object.assign(entry, { sourceIdentity: structuredClone(identity),
       sourceRowJsonSha256: row.sourceRowJsonSha256 ?? null,
+      sourceText: row.sourceText ?? null,
       clienteId: row.clienteId ?? null, groupId: row.groupId ?? null,
       pending: [...(row.pending || [])], nativeBinding: 'SUPPLIED_NOT_REVERIFIED', recipientPromoted: false });
     const key = JSON.stringify([row.groupId, identity.CODIGOCLIENTE, identity.ITEM, identity.SEQUENCIA]);

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { fornecedorHttpRemainder } from './fornecedorHttpRemainder.js';
+import { clienteContatosHunks, clienteContatosRemainder, clienteContatosHistoricalInput } from './clienteContatosRemainder.js';
 export const consolidation81Hunks={
   "src/api/base44Client.js": {
     "hash": "5f36584a17fce4cfe46b1298942caae2575dd7866e77ff0a20d9c8daa4e16b6b",
@@ -64,12 +65,20 @@ export const consolidation81Hunks={
     ]
   }
 };
-export function consolidation81Remainder(file,text,verify=true){return exactSourceRemainder(file,text,consolidation81Hunks[file],verify); }
+export function consolidation81Remainder(file,text,verify=true){return exactSourceRemainder(file,clienteContatosRemainder(file,text),consolidation81Hunks[file],verify); }
 export function clienteConferenciaRemainder(file,text,verify=true){
  return clienteConferenciaHistoricalRemainder(file,clienteSelectedReferenceRemainder(file,text,verify),verify);
 }
-export function clienteSelectedReferenceRemainder(file,text,verify=true){return exactSourceRemainder(file,fornecedorHttpRemainder(file,text),clienteSelectedReferenceHunks[file],verify);}
-export function clienteConferenciaHistoricalRemainder(file,text,verify=true){return exactSourceRemainder(file,text,clienteConferenciaHunks[file],verify);}
+export function clienteSelectedReferenceRemainder(file,text,verify=true){
+ const source=fornecedorHttpRemainder(file,text).replace(/\r\n/g,'\n'), entry=clienteSelectedReferenceHunks[file];
+ if(entry && crypto.createHash('sha256').update(source).digest('hex')===clienteContatosHunks[file]?.hash){
+   // This exact already-peeled ancestor has a whole-file pin; never skip missing hunks for arbitrary input.
+   const remaining=entry.hunks.filter(([after])=>source.includes(after));
+   return exactSourceRemainder(file,source,{...entry,hunks:remaining},true);
+ }
+ return exactSourceRemainder(file,source,entry,verify);
+}
+export function clienteConferenciaHistoricalRemainder(file,text,verify=true){return exactSourceRemainder(file,clienteContatosHistoricalInput(file,text,source=>clienteSelectedReferenceRemainder(file,source,verify)),clienteConferenciaHunks[file],verify);}
 function exactSourceRemainder(file,text,entry,verify){
  if(!entry)return text;
  let source=text.replace(/\r\n/g,'\n');

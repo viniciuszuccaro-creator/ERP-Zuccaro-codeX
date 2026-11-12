@@ -656,6 +656,16 @@ function mountClienteRoutes(
 function mountClienteLocalRoutes(router: Router, service: ClienteLocalService) {
   const basePath = '/api/v1/clientes/:clienteId/locais';
 
+  router.get(`${basePath}/snapshot`, requireTenantScope, async (req, res, next) => {
+    try { res.json(await service.snapshot(ctxFromReq(req), req.params.clienteId)); }
+    catch (error) { next(error); }
+  });
+
+  router.post(`${basePath}/sync`, requireTenantScope, async (req, res, next) => {
+    try { res.json(await service.sync(ctxFromReq(req), req.params.clienteId, req.body)); }
+    catch (error) { next(error); }
+  });
+
   router.get(basePath, requireTenantScope, async (req, res, next) => {
     try {
       const orderByRaw = req.query.order_by ? String(req.query.order_by) : undefined;

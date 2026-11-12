@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
-import { transformSync } from 'esbuild';
+import { transformSync, buildSync } from 'esbuild';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
@@ -289,6 +290,36 @@ test('contrato HTTP: BFF aceita contatos[] jsonb; adapter espelha escalares (Wha
   );
   assert.match(service, /clienteUpdateSchema\.safeParse/);
   // Adapter: grava contatos[] + espelho escalar; WhatsApp ≠ celular.
+  // Existing POST accepts initial contacts; subsequent replacement requires CAS.
+  assert.match(types, /clienteUpdateSchema/);
+  const compiled = buildSync({ entryPoints: [fileURLToPath(new URL('../server/src/repositories/clienteTypes.ts', import.meta.url))],
+    bundle: true, platform: 'node', format: 'cjs', write: false }).outputFiles[0].text;
+  const schemaModule = { exports: {} };
+  runInNewContext(compiled, { module: schemaModule, exports: schemaModule.exports, require });
+  const { clienteUpdateSchema, clienteCreateSchema } = schemaModule.exports;
+  const channel = { id: 'synthetic-contact', tipo: 'Telefone', valor: '001122' };
+  const version = 'a'.repeat(64);
+  assert.equal(clienteUpdateSchema.safeParse({ contatos: [channel], expectedVersion: version }).success, true);
+  assert.equal(clienteUpdateSchema.safeParse({ contatos: [], expectedVersion: version }).success, true);
+  assert.equal(clienteUpdateSchema.safeParse({ nome: 'SYNTHETIC' }).success, true);
+  for (const command of [
+    { contatos: [channel] }, { contatos: [] }, { contatos: [channel], expectedVersion: 'invalid' },
+    { contatos: null, expectedVersion: version }, { contatos: [channel, channel], expectedVersion: version },
+    { contatos: [{ ...channel, unknown: true }], expectedVersion: version },
+    { contatos: [{ ...channel, principal: true }, { ...channel, id: 'other', principal: true }], expectedVersion: version },
+    { contatos: [channel], expectedVersion: version, unknown: true },
+    { contatos: Array.from({ length: 201 }, (_, i) => ({ ...channel, id: String(i) })), expectedVersion: version },
+  ]) assert.equal(clienteUpdateSchema.safeParse(command).success, false, JSON.stringify(command));
+  const create = { tipo: schemaModule.exports.CLIENTE_TIPOS[0], nome: 'SYNTHETIC', documento: '52998224725' };
+  assert.equal(clienteCreateSchema.safeParse(create).success, true);
+  assert.equal(clienteCreateSchema.safeParse({ ...create, contatos: [channel] }).success, true);
+  for (const contatos of [null, [channel, channel], [{ ...channel, unknown: true }]])
+    assert.equal(clienteCreateSchema.safeParse({ ...create, contatos }).success, false);
+  assert.equal(clienteCreateSchema.safeParse({ ...create, expectedVersion: version }).success, false);
+  assert.match(service, /clienteUpdateSchema\.safeParse/);
+  assert.match(service, /assertClienteContatosVersion\(ctx, before, parsed\.data\.expectedVersion\)/);
+  assert.match(service, /getById\(scope, id,executor,\{forUpdate:true\}\)/);
+  // Adapter no contrato MASTER existente: projeta contatos[] → escalares; nunca envia contatos no wire.
   assert.match(adapter, /applyContatosProjection/);
   assert.match(adapter, /sanitizeContatosForHttp/);
   assert.match(adapter, /return 'whatsapp'/);

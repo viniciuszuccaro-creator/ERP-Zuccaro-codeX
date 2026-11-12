@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import { isValidCnpj, isValidCpf, normalizeDocumento } from '../db/documentoValidators.js';
+import { clienteMasterExtraFields, type ClienteMasterExtras } from './clienteMasterExtras.js';
 
 export const CLIENTE_TIPOS = ['Pessoa Física', 'Pessoa Jurídica'] as const;
 export const CLIENTE_ORIGENS = [
   'ERP', 'MIGRACAO', 'SITE_CPA', 'B2B', 'PORTAL', 'CHATBOT', 'WHATSAPP',
   'MARKETPLACE', 'APP', 'API',
 ] as const;
+
 export const CLIENTE_EMPRESA_SITUACOES = ['PROSPECT', 'ATIVO', 'INATIVO'] as const;
 
 /** Chaves RBAC canônicas; operações existentes são aplicadas por ClienteService. */
@@ -90,6 +92,7 @@ export const CLIENTE_CONTATOS_MAX = 200;
 export const CLIENTE_CONTATO_OBS_MAX = 2000;
 
 export const clienteCreateSchema = z.object({
+  ...clienteMasterExtraFields,
   ...baseCreate,
   tipo: z.enum(CLIENTE_TIPOS),
   documento: z.string().trim().max(32).optional().nullable(),
@@ -157,6 +160,7 @@ export const clienteCreateSchema = z.object({
 });
 
 export const clienteUpdateSchema = z.object({
+  ...clienteMasterExtraFields,
   empresa_id: z.string().uuid().optional().nullable(),
   ativo: z.boolean().optional(),
   tipo: z.enum(CLIENTE_TIPOS).optional(),
@@ -197,7 +201,7 @@ export type ClienteUpdate = Omit<z.infer<typeof clienteUpdateSchema>, 'contatos'
   expectedVersion?: string;
 };
 
-export type Cliente = {
+export type Cliente = ClienteMasterExtras & {
   /** undefined = coluna ausente; null = SQL NULL; [] = limpeza explícita. */
   contatos?: ClienteContato[] | null;
   /** CAS tip — só na resposta HTTP. */
