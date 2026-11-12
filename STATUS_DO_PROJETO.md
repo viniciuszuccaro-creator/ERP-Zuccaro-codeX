@@ -20899,7 +20899,7 @@ A jornada ampliada revoga a permissão no executor logo após a leitura bloquean
 PR594 publicou7d7ee5b2; frontend/composicaoPASS, backendCI6927 falhou
 por reaplicacao da coluna contatos na fixture que ja aplica045.
 Teste corrigido para exigir coluna unica JSONB; demais negativas preservadas.
-Typecheckbackend/diffcheckPASS. Validacao PostgreSQL via CI Ubuntu existente,
+TypecheckbackendPASS. Diffcheck acusou linha vazia final, corrigida no fechamento.
+Validacao PostgreSQL via CI Ubuntu existente,
 commit draft de validacao conforme autorizacao; nao homologado por antecedencia.
 WIPUI6 separado e dados/HML intactos. Proximo: CI do reparo, depois UI/baselineHML.
-
