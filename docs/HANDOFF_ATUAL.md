@@ -1,3 +1,40 @@
+## Revisao visual217 e preparacao2295 - PR594 (2026-11-12)
+
+Lote sobre947726e8. CadastroClienteCompleto reutiliza a aba Enderecos e o GET
+canonico de locais, ativo=false, paginacao50 e total autoritativo. Componente
+auxiliar ClienteLocaisRevisao extrai somente a consulta/visualizacao: nao recebe
+callback de escrita, nao integra formData/baseline de locais ativos e nao ativa
+enderecos. Fiscal principal aponta para a revisao sem copiar valores parciais.
+Ausencia, falha, parcial, permissao e contexto antigo ficam distintos; nenhum
+numero/pais/coordenada e inferido. Motivos detalhados de valores invalidos ficam
+na evidencia privada; campos em branco sao apresentados como pendentes.
+
+Provas focadas:197PASS das guardas/contratos ancestrais; API2PASS e React/DOM
+montado1PASS, transporte/identidade sinteticos, nao HML autenticada nem E2E PG.
+Linux905ad95f/Node22.23.4:2958PASS/0FAIL/0SKIP; audit/lint/typecheck/build e
+diffcheckPASS (lint2warnings ancestrais). Backend sem alteracao: type/buildPASS;
+Node24 teve encerramento nativo V8/JIT em R11, nao assercao nem OOM comprovado;
+retry sequencial do mesmo arquivo6PASS/0FAIL/0SKIP, sem flags/limites alterados.
+Nao chamar a primeira execucao de backend integralmente aprovada. CI terminal
+do SHA publicado e aceite da HML autenticada continuam provas separadas.
+Revisao e helpers conservam os pins ancestrais, com peel de hunks exatos.
+
+Preparacao privada e57783d8 revalidou1500pais por ID/codigo/Grupo no mesmo PG,
+READ ONLY/ROLLBACK administrativo, nao leitor estrito:2295Obras/1497pais com
+locais,3sem nesta fonte;1600clientes,
+1500inativos,4200contatos e217locais inativos incompletos conservados. Nao houve
+aplicacao nova. Raw e chaves CODIGOCLIENTE/ITEM/SEQUENCIA preservados. Proximo:
+contrato interno explicito para revisao com pai inativo, CAS/locks/RBAC/replay
+e reversao testados; gate2295 distinto dos217. Nao reativar pais para contornar.
+
+Historicos: recibo privado498c93be ampliou SOMENTE a consulta dos IDs nativos
+ja congelados1600 na copia EMP02 verificada:0pedidos/0itens/621titulos,
+621sem pedido candidato nessa copia. Nao e ausencia global nem comprovacao de
+pagamento/empresa/data. Consulta READ ONLY/ROLLBACK, leitor parado,0importacoes.
+Resumo final do driver falhou ao interpretar campo JSON omitido; recibo SQL
+ja salvo foi lido sem repetir a consulta. Datas, baixas e vinculos positivos
+continuam gates antes de qualquer historico operacional.
+
 ## Aplicacao autorizada217 - checkpoint PR594 (2026-11-12)
 
 36a66ef7 CI6947/6948SUCCESS; runtime servidoe53bf833 CI6943/6944SUCCESS.

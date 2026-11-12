@@ -309,6 +309,10 @@ async function mountCompleto(relPath, {
       __esModule: true,
       default: (p) => ({ type: 'GerenciarEnderecosClienteForm', props: p, children: [] }),
     },
+    './ClienteLocaisRevisao': {
+      __esModule: true,
+      default: (p) => ({ type: 'ClienteLocaisRevisao', props: p, children: [] }),
+    },
     './clienteSugestaoVinculoUi': {
       buildClienteSugestaoVinculoBanner: () => ({ visible: false }),
       buildClienteSugestaoVinculoRaceKey: () => '',

@@ -1,3 +1,28 @@
+## Locais em revisao na interface e preparacao2295 - PR594 (2026-11-12)
+
+Base947726e8. Leitura dos locais inativos na aba existente, separada do
+rascunho e da persistencia: finalidade, componentes, procedencia e pendencias;
+sem ativar/salvar/selecionar para entrega. Pagina canonica rejeita envelope
+invalido/parcial, total nao seguro e linhas de outro cliente/Grupo. Troca de
+sessao/ator/Grupo/Empresa/cliente e retorno tardio invalidam a consulta.
+Auxiliar isolado evita ampliar o formulario grande e nao cria cadastro/API.
+Guardas197PASS + contrato2PASS + React/DOM1PASS sintetico. Linux905ad95f,
+Node22.23.4:2958PASS/0FAIL/0SKIP; audit/lint/typecheck/build/diffcheckPASS,
+lint2warnings ancestrais. Backend inalterado: type/buildPASS; encerramento
+nativo V8/JIT no Node24 em R11, retry sequencial6PASS, sem enfraquecer testes.
+CI terminal do novo SHA e marcador HML ainda devem ser confirmados; nao
+atribuir CI6949/6950 ao lote nem confundir provas sinteticas com aceite real.
+
+2295: vinculos alvo frescos e57783d8 em READ ONLY/ROLLBACK;1500pais continuam
+inativos,1497comObras,3sem. Conservados1600clientes/4200contatos/217locais.
+Sem nova carga, grants ou DDL. Aplicacao2295 depende do contrato de pai inativo
+e de seu gate especifico; numero/pais/lat-long nao serao inventados.
+
+Historicos498c93be:621titulos para a populacao congelada1600 na EMP02 privada,
+0pedidos/itens e621sem pedido correspondente nessa copia. Sem importacao,
+classificacao pago/aberto ou Empresa inferida. Leitor encerrado. Proxima acao:
+provar datas/baixas/vinculos positivos antes de qualquer efeito financeiro.
+
 ## Enderecos aplicados em revisao HML - PR594 (2026-11-12)
 
 Fechamento36a66ef7/CI6947/6948SUCCESS. Confirmado replay CANONICO posCOMMIT3c0ddda2:

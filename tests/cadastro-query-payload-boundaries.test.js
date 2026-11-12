@@ -81,7 +81,7 @@ test('Cliente local preflight: peel nao aceita omissao, repeticao ou permissao a
 });
 
 test('Identidade visual: hunks exatos nao aceitam omissao, repeticao ou adulteracao',()=>{
-  const source=read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const source=clienteLocaisReviewRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', read('src/components/cadastros/CadastroClienteCompleto.jsx'));
   assert.doesNotThrow(()=>clienteContactPresenceRemainder(source));
   for(const [after]of identityDisplayHunks){
     for(const forged of ['',after+after,after.replace(/\S/,'!')])
@@ -105,6 +105,47 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
+import { clienteLocaisReviewRemainder, clienteLocaisReviewHunks, clienteLocaisReviewBaseline } from './helpers/clienteLocaisReviewRemainder.js';
+import { execFileSync } from 'node:child_process';
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
+
+test('Frozen review additions retain HEAD and ancestor guards without widening the remainder', () => {
+  const digest = text => createHash('sha256').update(text).digest('hex');
+  for (const [file, entry] of Object.entries(clienteLocaisReviewHunks)) {
+    const source = read(file);
+    const ancestor = execFileSync('git', ['show', `${clienteLocaisReviewBaseline}:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+    assert.equal(digest(ancestor), entry.hash);
+    assert.equal(clienteLocaisReviewRemainder(file, source), ancestor);
+    assert.equal(clienteLocaisReviewRemainder(file, ancestor), ancestor);
+    assert.equal(clienteLocaisReviewRemainder(file, source.replace(/\n/g, '\r\n')), ancestor.replace(/\n/g, '\r\n'));
+    const historical = value => file.endsWith('.jsx')
+      ? clienteContactPresenceRemainder(value)
+      : clienteConferenciaRemainder(file, value);
+    assert.equal(historical(source), historical(ancestor));
+    for (const [addition, previous] of entry.hunks) {
+      for (const replacement of [previous, addition + addition, addition.replace(/\S/, '!')]) {
+        const forged = source.replace(addition, replacement);
+        // Removing the sole method is the exact ancestor, not a malformed new revision.
+        if (forged === ancestor) assert.equal(historical(forged), historical(ancestor));
+        else assert.throws(() => clienteLocaisReviewRemainder(file, forged));
+      }
+      const moved = source.replace(addition, previous) + '\n' + addition;
+      assert.throws(() => clienteLocaisReviewRemainder(file, moved));
+    }
+    const outside = source + '\n// OUTSIDE_FROZEN_REVIEW\n';
+    assert.throws(() => clienteLocaisReviewRemainder(file, outside));
+    if (file.endsWith('.jsx')) {
+      assert.notEqual(digest(historical(outside)), digest(historical(source)));
+      assert.notEqual(digest(historical(ancestor + '\n// OUTSIDE_ANCESTOR\n')), digest(historical(ancestor)));
+    } else {
+      assert.throws(() => historical(outside));
+      assert.throws(() => historical(ancestor + '\n// OUTSIDE_ANCESTOR\n'));
+      // A valid older input already stripped of the conference layer stays valid.
+      const older = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+      assert.equal(clienteLocaisReviewRemainder(file, older), older);
+    }
+  }
+});
 
 const read = path => fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 const parse = (path, source = read(path)) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
@@ -128,6 +169,7 @@ const rgHttpHunks = [
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  source = clienteLocaisReviewRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', source, false);
   for (const [after, before] of identityDisplayHunks) source = once(source, after, before);
   for (const [after, before] of rgHttpHunks) source = once(source, after, before);
   source = once(source, '    saveMutation.mutate(isHttpBackendMode ? formData : buildPayload(formData), {', '    saveMutation.mutate(buildPayload(formData), {');

@@ -887,6 +887,34 @@ SeparacaoConferencia: {
       return rows;
     },
     /**
+     * Pagina autoritativa para revisao; envelope invalido nunca representa vazio.
+     * @param {string} clienteId
+     * @param {{offset?: number, signal?: AbortSignal}} [options]
+     */
+    async listLocaisReviewPage(clienteId, { offset = 0, signal } = {}) {
+      const id = String(clienteId ?? '').trim();
+      if (!id) throw new Error('Cliente obrigatorio para revisao de locais');
+      const scope = Object.freeze({ ...getScope() });
+      const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {
+        query: { limit: 50, offset, ativo: 'false', order_by: 'nome' }, signal, unwrap: false,
+      }, scope);
+      const meta = page?.meta;
+      if (!Array.isArray(page?.data) || !meta || page.partial === true || meta.partial === true
+        || page.incomplete === true || meta.incomplete === true || meta.limit !== 50 || meta.offset !== offset
+        || !Number.isSafeInteger(meta.total) || meta.total < 0 || typeof meta.hasMore !== 'boolean'
+        || page.data.length > 50 || offset + page.data.length > meta.total
+        || meta.hasMore !== (offset + page.data.length < meta.total)
+        || (meta.hasMore && page.data.length === 0)
+        || new Set(page.data.map(row => row?.id)).size !== page.data.length
+        || page.data.some(row => !row || typeof row.id !== 'string' || row.ativo !== false
+          || row.cliente_id !== id || row.group_id !== scope.groupId
+          || !Array.isArray(row.finalidades)
+          || row.finalidades.some(f => !f || typeof f.finalidade !== 'string'))) {
+        throw new Error('Resposta incompleta ou invalida na revisao de locais');
+      }
+      return page;
+    },
+    /**
      * Cria local canônico (POST `/clientes/:id/locais`) — sem storage paralelo.
      * @param {string} clienteId
      * @param {Record<string, unknown>} body
