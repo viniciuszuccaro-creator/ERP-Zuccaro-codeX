@@ -1,3 +1,32 @@
+## Fila vigente - enderecos sem perda (2026-11-12)
+
+Codex permanece escritor temporario da frenteCursor por ordem do dono.
+90b860e5/PR594 CI6923/6924SUCCESS confirmadas; antigos pedidos depublicacao
+ou validacaoPOSIX encerrados. Checkout interno limpo na retomada, nenhum
+executor de projeto observado. Cursor591e3b32276/4015d9a7e37 e3425d1fa0fc intactas.
+
+ItemA: nova revisao do ledger existente, com decisaoOWNER_ADDRESS_PURPOSE_20261111
+e hash do recibo privado. Resultado: FISCALmestre/ENTREGAObras/cobrancaHISTORY,
+componentes parciais preservados, identidadeCODIGOCLIENTE/ITEM/SEQUENCIA semmerge.
+Aceite: fonte imutavel, nenhuma escrita, decisao nao vira autorizacao/RBAC/binding.
+Dependencia: componentes nao comprovados e revalidacao de vinculo fisicoHML.
+ExecutadoV02:1600FISCAL/117ENTREGA/15cobrancas excluidas.1717semnumero/pais;
+15CEPfiscais/1CEPObra invalidos,117bindingsdestino pendentes,0locaisaptos.
+Nomeausente refere-se ao rotuloLocal, nao ao nomeCliente preservado.
+3pinssourceconferidos e join117->100comprovado; zeroSQL/escritas/imports.
+V01imutavel supersedido porclassificacao correta decelulas soespacos.
+Recibo privado:scale-validation-efbde32d/address-purpose-v02-20261112-ccc72fcf1b6e8fe6.
+Linuxv08:2896PASS/0FAIL/0SKIP+audit/lint/typecheck/buildPASS,15/15blobs.
+Python3localWindows9009=infra, resolvido porLinuxsuportado semalterartestes.
+Proximaacao: composicao keep-bothbackend342/UI594; depois revalidarHML e
+componentes pendentes. Nao extrapolar117Obras aosoutros1500, nao repetircargas.
+
+ItemB: executar pipeline existente somente aposA/identidades/RBAC aptos;
+1500continuaminativos, semnovo replay/carga dos resultados concluidos.
+ItemC: pacoteVPS continua semautorizacao operacional implicita, principalBYPASS
+naoeisoloamento. ItemD/E: comporbackend482/87fe comUI594 porhunk,19conflitos
+mapeados; nao iniciarHML combackend ancestral nem criar outra candidata.
+
 ## Retomada - Codex assume temporariamente a591 (2026-11-11)
 
 Ordem explicita do dono: Codex assume UI/composicao/Central enquantoCursor sem

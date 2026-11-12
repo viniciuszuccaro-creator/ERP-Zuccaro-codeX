@@ -1,3 +1,31 @@
+## Enderecos - nova revisao da decisao do dono (2026-11-12)
+
+Base90b860e5/PR594:CI6923/6924SUCCESS confirmadas. Sem outro escritor observado,
+branchesCursor e342 preservadas; continuacaoCodex vigente porordem do dono.
+Reutiliza classifyLegacyAddresses no policy existente, sem outroimportador.
+Port controlado doledgerObras342, preservando complementos/referencias e chaves
+nativas. Nova revisao explicita permite FISCAL/ENTREGA e exclui cobranca da
+migracaoativa, sem reescrever recibos antigos ou aprovar componentes ausentes.
+Bindings fornecidos nao sao reconferencia fisica; todaObra continua naoaplicavel
+ate essegate. Duplicados segregados, sem escolher/fundir.16focadosPASS.
+Executado ledger privadoV02 dosmesmos1600:1600FISCAL/117ObrasENTREGA do100/
+15cobrancas fora migracaoativa. Numero/pais ausentes nos1717; nome do LOCAL
+tambem nao consta (nao confundir com nomes dos clientes ja existentes).
+15CEPfiscais e1CEPObra invalidos;117bindingsdestino nao revalidados.0locaisaptos.
+Fontes3pins conferidas, joinnativo117->100 comprovado; zeroSQL/imports/escritas.
+V01 preservado/supersedido: celulas soespacos geravam entradasfalsas; corrigido,
+com negativo sintetico. Originais imutaveis; demais1500Obrasnaoextraidas, nao0.
+Recibo:scale-validation-efbde32d/address-purpose-v02-20261112-ccc72fcf1b6e8fe6.
+Linuxv08:2896PASS/0FAIL/0SKIP; audit/lint/typecheck/buildPASS;15/15blobspinados
+antesfechamentodoc, checkoutHMLintacto. Python3localWindows9009 foiinfra;
+mesmos testes passaramLinux, sem instalar/enfraquecer. Nenhumaceitebrowser/PGnovo.
+Proximo: comporbackend342 comUI594 porhunk, depois reconferirbindings HML e
+preparar aplicacaoLocal somente aposcomponentes/RBAC; perfil temsoLocalvisualizar,
+nao e leitorSQLestrito nem autorizacao de escritaLocal.
+Pipeline escala existe em342/staging-checkpoint:1000portransacao, nao porrun;
+reutilizar manifestos/checkpoints, sem repetirensaios500/1000 ou criarimportador.
+Sem aplicacaoHML, perfil/grants/DDL, reativacao1500 ou VPS. Historicos intactos.
+
 ## Continuidade temporaria Codex da591 (2026-11-11)
 
 Transferencia explicita pelo proprietario por indisponibilidadeCursor. Branch
