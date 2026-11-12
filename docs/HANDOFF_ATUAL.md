@@ -1,3 +1,39 @@
+## Aplicacao autorizada217 - checkpoint PR594 (2026-11-12)
+
+CONCLUIDO o gate de ledger/criar/inativar:217revisoes INATIVAS,100fiscais/117Obras,
+COMMIT confirmado/reconciliado,0operacionais. NAO REAPLICAR af4003dc. Mantidos
+1600clientes/4200contatos/1500inativos/IDs/codigos/extensoes e auditorias anteriores.
+Permissoes temporarias invisiveis fora da transacao e restauradas antesCOMMIT;
+role=user conservada. Ledger owner-only/RLSFORCE, sem nova role/grant global/VPS.
+220auditorias novas incluem recibo SQL atomico de conclusao. Replaysemwrites;
+reversao ensaiada217 viaSAVEPOINT/ROLLBACK, nao reversao definitiva posCOMMIT.
+
+Execucao privada: /workspaces/.erp-private-344/scale-validation-efbde32d/
+address-execution-af4003dc-20261112-v03/result.private.json. Executor48f82777
+revisado apos6correcoes; guardar intent/runId/attemptId, estado de COMMIT e recibos.
+Nao repetir --execute; ler resultado/reciboSQL para recuperar qualquer interrupcao.
+Backup611309c8(3099029bytes) verificado, restore anterior reutilizado; arquivo novo
+nao restaurado. Recibos/masterbaseline62a56d06 intactos, conservacao7e873d63READONLY.
+APIrole774b3007:217proprioGrupo/0contextoalheio, criar/inativar negados. Nao JWT/browser.
+
+HML15173 retomada com API/webe53bf833/CI6943/6944SUCCESS; portPRIVATE,health/ready200,
+anonimo401 e externo302github.dev. Janela16:01:15Z(13:01Brasilia), nao permanente.
+Bootstrap mudou SOMENTE2hunks de versao, baseline/pins/guardas intactos; backup
+privado da configuracao anterior disponivel para retorno. Sessao atual nao validada.
+UI filtra ativos: revisoes persistidas ainda nao aparecem no editor normal. Proximo
+codigo: apresentar revisao somente leitura no cadastro existente, sem incluir no
+rascunho operacional/rota e sem inventar numero/pais/nome ou significado de vazio.
+
+Historicos b133b6ef: query100nativos READONLY/ROLLBACK na copiaEMP02 deu0/0/0
+pedidos/itens/duplicatas; NUNCA generalizar para outras bases. Datas int/baixas e
+empresa ambigua continuam sem contrato concluido; sem titulos/pagamentos criados.
+Obras1500: nova selecao NAO feita. Mesmos1500nativos derivados da matriz existente;
+tentativa bloqueada READER_CAPACITY antesSQL com HML ativa. Nao repetir nesta
+condicao. Quando ociosa, usar mesmo script/pins e diretorio novo de tentativa,
+preservando a tentativa privada vazia. Nao aplicar em pais inativos pelo contrato
+atual nem reativa-los. Par grandeEMP01 nao cabe nos2.91GBlivres; planejar capacidade.
+Reservas de runtime liberadas; somente fechamento documental desta execucao.
+
 ## Retomada - enderecos nativos e historicos PR594 (2026-11-12)
 
 Checkpoint funcional e53bf833/PR594, CI6943/6944SUCCESS; PGenderecos7/0/0,

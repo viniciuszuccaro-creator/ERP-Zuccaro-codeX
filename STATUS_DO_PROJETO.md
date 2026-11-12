@@ -1,3 +1,44 @@
+## Enderecos aplicados em revisao HML - PR594 (2026-11-12)
+
+Gate6826377124 AUTORIZADO e executado somente na HML. COMMIT confirmado para
+217ClienteLocais:100FISCAL/117ENTREGA, todos INATIVOS/incompletos/nao principais.
+0enderecos operacionais; numero/pais/nome nao inventados,5CEPs invalidos no raw.
+Mesmo planoaf4003dc, mesmos100pais.1600mestres/4200contatos/1500inativos e todos
+os demais campos conservados integralmente; nenhum cliente duplicado/reativado.
+
+Ledger piloto existente no importador criado no schemaHML, RLSFORCE/ACLowner-only;
+sem novas roles/grants globais. Criar/inativar no perfil user ficaram somente na
+transacao e foram restaurados ANTES do COMMIT.217auditorias+2permissao+1reciboSQL.
+Replay0writes/0auditorias novas; reversao217 ensaiada por SAVEPOINT e desfeita,
+mantendo aplicacao final. Nao equivale a restaurar backup ou executar reversao
+definitiva depois do COMMIT. Backup611309c8:3099029bytes/TOC/SHA verificados,
+prova anterior de restauracao reutilizada; este novo arquivo nao foi restaurado.
+Executor privado48f82777 revisado:6achados de seguranca/retomada corrigidos antes
+da escrita. Locks SQL, deadline, recibo atomico, recovery por runId e attempts
+imutaveis; falha/COMMIT indeterminado nao permitem reaplicacao cega.
+
+Conservacao READ ONLY/ROLLBACK7e873d63 confirma dados e baseline62a56d06 ainda
+validos, sem trocar pin ou reescrever recibo antigo. RoleAPI774b3007 le217noGrupo
+e0sob contexto alheio, criar/inativar negados; nao e prova de sessaoJWT/browser.
+Manutencao continua privilegiada; nao descrever principal como leitor estrito.
+
+API/webHML agorae53bf833 (CI6943/6944SUCCESS), guardas de incompleto presentes.
+Controlador: health/ready200, anonimo401,15173PRIVATE; externo302github.dev, nao404.
+Janela ate16:01:15Z(13:01Brasilia). Sessao atual/aceite visual NAO comprovados.
+UI existente filtra locais ativos: exibir revisoes inativas ainda e pendencia de
+interface, nao ausencia dos dados nem endereco fiscal operacional completo.
+
+Historicos: READ ONLY/ROLLBACKb133b6ef, MESMOS100nativos na copiaEMP02:
+0pedidos/0itens/0duplicatas neste recorte; nao significa historico global vazio.
+Sem exemplos positivos para fechar joins/datas/baixas. Nenhum valor importado.
+Outras bases seguem separadas; empresa1unica/1ambigua, sem escolha por sufixo.
+Ampliacao dirigida das Obras1500 bloqueada ANTES da consulta por READER_CAPACITY:
+memoria livre4042358784 <4294967296 exigidos com a HML ativa. Janela preservada;
+nao derrubar HML nem afrouxar guarda. Disco2912579584livres; parEMP01 de3811311616
+nao cabe sequer sem reserva. Sem nova transferencia ou limpeza por inferencia.
+Proximo: leitura Obras1500 quando HML ociosa, revisao visual dos inativos no cadastro
+existente e canal/capacidade para outras bases financeiras. Sem escrita operacional.
+
 ## Enderecos nativos e historicos - lote PR594 (2026-11-12)
 
 Fechamento funcional: e53bf833/PR594 CI6943/6944 SUCCESS no mesmo SHA;
