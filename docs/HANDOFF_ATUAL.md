@@ -1,5 +1,15 @@
 ## Retomada - enderecos nativos e historicos PR594 (2026-11-12)
 
+9511d226 publicado; CI6941: frontend/composicaoPASS, negativa da nova suite PG
+falhou por reutilizar transacao apos restore rejeitado. Fixture corrigida:3negativas
+isoladas e contraprova adicional exige ROLLBACK_REQUIRED apos falha capturada;
+runtime/guardas inalterados. Backendtypecheck/guarda focadaPASS; validar novo SHA
+na CI pelo gate draft anterior, sem declarar PG aprovado ou HML aplicada.
+Revisao independente de9511:sem achados, alcance estatico, comentario6826395209.
+Catalogo Empresas confirmado:5nativas/2HML, documento1unico/1ambiguo,0sem match;
+recibo privadof06dd17b, READ ONLY/ROLLBACK. Nao inferir arquivo empresarial por
+sufixo, nem escolher entre documentos repetidos. Leitor parado, zero originais.
+
 Codex unico escritor temporario, reserva6825952251; branch existente preservada.
 Lote reutiliza ClienteLocal/flag SQL ja existente e importador transacional.
 Revisao interna: parcial sempre inativo, nao principal, sem ativacao/uso operacional;

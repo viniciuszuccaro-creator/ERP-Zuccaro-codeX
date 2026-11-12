@@ -150,11 +150,17 @@ test('legacy address PostgreSQL: canonical service, audit and ledger are atomic 
         assert.equal(fingerprintEnderecoLegado(map.raw_source_json),fingerprintEnderecoLegado(s.raw));
         assert.equal((await review()).created,false);
         assert.deepEqual(await counts(),{addresses:before.addresses+1,maps:before.maps+1,audits:before.audits+1});
-        await factory()(s,async({service,ctx:scope}:any)=>{
-          await assert.rejects(service.get(scope,s.clienteId,created.id),{code:'CLIENTE_LOCAL_NOT_FOUND'});
+        await assert.rejects(factory()(s,({service,ctx:scope}:any)=>
+          service.get(scope,s.clienteId,created.id)),{code:'CLIENTE_LOCAL_NOT_FOUND'});
+        await assert.rejects(factory()(s,({service,ctx:scope}:any)=>
+          service.restore(scope,s.clienteId,created.id)),{code:'MIGRATION_REVIEW_REQUIRED'});
+        await assert.rejects(factory()(s,({service,ctx:scope}:any)=>
+          service.create(scope,s.clienteId,s.payload)),{code:'VALIDATION_ERROR'});
+        await assert.rejects(factory()(s,async({service,ctx:scope}:any)=>{
           await assert.rejects(service.restore(scope,s.clienteId,created.id),{code:'MIGRATION_REVIEW_REQUIRED'});
-          await assert.rejects(service.create(scope,s.clienteId,s.payload),{code:'VALIDATION_ERROR'});
-        });
+          return service.create(scope,s.clienteId,s.payload);
+        }),{code:'LEGACY_ADDRESS_ROLLBACK_REQUIRED'});
+        assert.deepEqual(await counts(),{addresses:before.addresses+1,maps:before.maps+1,audits:before.audits+1});
         assert.equal((await persistirEnderecoClienteGrupoLegado(s,{transaction:factory(),reviewOnly:true,action:'revert'})).reverted,true);
         assert.equal((await persistirEnderecoClienteGrupoLegado(s,{transaction:factory(),reviewOnly:true,action:'revert'})).reverted,false);
         assert.equal((await f.admin.query<{state:string}>('SELECT state FROM pilot_worker_map WHERE source_key=$1',[s.key])).rows[0].state,'REVERTED');

@@ -1,5 +1,18 @@
 ## Enderecos nativos e historicos - lote PR594 (2026-11-12)
 
+Publicado9511d226, CI6941: frontend/composicaoPASS, backend falhou na negativa
+PG da fixture: restore rejeitado invalidou transacao e create seguinte recebeu
+LEGACY_ADDRESS_ROLLBACK_REQUIRED. Runtime/guardas corretos e inalterados.
+Correcao somente da fixture separa as3negativas em transacoes proprias e EXIGE
+rollback-required ao continuar apos rejeicao, com contagens/auditorias conservadas.
+Typecheck backend e guarda focada PASS; CI do novo commit deve fechar PG real.
+Autorizacao anterior de commit draft para validacao CI se aplica; nao homologado.
+
+Catalogo nativo Empresas:5empresas, somente4colunas de identidade lidas no leitor
+isolado. Comparacao por documento com as2empresasHML:1unica/1ambigua/0sem match;
+recibo privadof06dd17b. Nao escolher empresa ambigua nem ligar arquivo por sufixo.
+READ ONLY/ROLLBACK, leitor parado, zero originais montados, nenhuma escrita.
+
 Reutilizado ClienteLocal/endereco_incompleto, sem novo cadastro/endpoint. Contrato
 interno de revisao exige MIGRACAO, ativo=false, finalidade FISCAL/ENTREGA nao
 principal e procedencia; ausente nao vira numero/pais/nome. Restore bloqueado.
