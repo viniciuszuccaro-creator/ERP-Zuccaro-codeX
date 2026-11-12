@@ -41,7 +41,10 @@ test('PostgreSQL master extensions: restricted login, concurrent CAS, replay, ro
   {skip:!url},async()=>{
     const f=await realCrmFixture(url!,{restrictedLogin:true});
     try {
-      await f.exec(await readFile(new URL('../schema-candidates/cliente_contatos.sql',import.meta.url),'utf8'));
+      // The canonical fixture already applies 045; verify it instead of applying the candidate twice.
+      const contactsColumn=await f.admin.query("SELECT data_type FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='clientes' AND column_name='contatos'");
+      assert.equal(contactsColumn.rows.length,1);
+      assert.equal(contactsColumn.rows[0].data_type,'jsonb');
       await f.exec(await readFile(new URL('../schema-candidates/cliente_master_extras.sql',import.meta.url),'utf8'));
       await f.exec(`GRANT SELECT,UPDATE ON clientes TO "${f.role}";
         GRANT SELECT,INSERT ON audit_logs TO "${f.role}";

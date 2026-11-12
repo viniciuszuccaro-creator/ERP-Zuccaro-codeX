@@ -1,3 +1,13 @@
+## Composicao publicada - fechamento PostgreSQL pendente (2026-11-12)
+
+Publicado7d7ee5b2 naPR594, parents64f0dcf2+5d1fa0fc. CI6927 encontrou
+fixture PostgreSQL reaplicando cliente_contatos depois da045 canonica.
+Correcao restrita ao teste: comprovar coluna unica JSONB existente, sem
+reaplicar DDL candidato. Assercoes de CAS/replay/rollback/reversao mantidas.
+TypecheckbackendPASS e diffcheckPASS; CI Ubuntu deve fechar o teste real.
+WIPUI6 permanece separado. PGdata presente; /workspaces32G/27G/3.4Glivres89%.
+Nenhum startHML/carga/DDL/grant realizado. BaselineHML ainda exige revisao.
+
 ## Composicao em validacao - Codex unico escritor (2026-11-12)
 
 Base publicada64f0dcf2/PR594 CI6925/6926SUCCESS. Integracao LOCAL dosparents

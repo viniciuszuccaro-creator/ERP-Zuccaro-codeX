@@ -20894,3 +20894,12 @@ No código `84640c6c`, a execução completa de `npm run typecheck` retornou 164
 ### Rechecagem após lock — defeito reproduzido e corrigido
 
 A jornada ampliada revoga a permissão no executor logo após a leitura bloqueante da Entrega. Contra o código publicado anterior, falhou com `Missing expected rejection`: o registro parcial era aceito. Na correção, tenant/RBAC são rechecados depois do lock de Entrega em separação, registro, devolução e patch; criação revalida depois da leitura bloqueante de Pedido e antes do INSERT. Romaneio preserva rechecagem após carregar/travar entregas. A mesma jornada passou localmente com 403, estado anterior preservado e rollback da revogação sintética. Typecheck backend aprovado. Exigir nova CI/revisão desse último delta; não atribuir a ele a CI de SHAs anteriores.
+## Fechamento da composicao PostgreSQL (2026-11-12)
+
+PR594 publicou7d7ee5b2; frontend/composicaoPASS, backendCI6927 falhou
+por reaplicacao da coluna contatos na fixture que ja aplica045.
+Teste corrigido para exigir coluna unica JSONB; demais negativas preservadas.
+Typecheckbackend/diffcheckPASS. Validacao PostgreSQL via CI Ubuntu existente,
+commit draft de validacao conforme autorizacao; nao homologado por antecedencia.
+WIPUI6 separado e dados/HML intactos. Proximo: CI do reparo, depois UI/baselineHML.
+
