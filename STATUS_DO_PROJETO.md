@@ -1,5 +1,13 @@
 ## Fiscal separado de entrega - PR594 (2026-11-12)
 
+Codigo/HML API+web a376a825, CI6955/6956SUCCESS. RepositorioPG canonico sob
+roleAPI naoBYPASS confirmou FISCAL1/ENTREGA5, mesmas identidades, crossGroup0,
+READ ONLY/ROLLBACK e0escritas (bfac9ab7). Aceite visual do novo layout pendente.
+Externo anonimo404; alternativa privada do MESMO desktop comprovada em
+http://127.0.0.1:15173/cadastros, encaminhamentoGitHub autenticado127.0.0.1.
+health/ready200/anonimo401, janela ate17h29BRT; helper limitado ao prazo,
+nao permanente,0portas publicas. Procedimento/recibo no HANDOFF existente.
+
 Feedback autenticado do c93 comprovou os locais visiveis, mas a organizacao
 foi reprovada: fiscal e entregas na mesma aba. Fonte confirma1fiscal/5entregas
 no cliente conferido; primeiro/endereco unico nao define finalidade.
@@ -9,7 +17,7 @@ ativos, ativacao, novos registros, grants ou alteracao operacional. Campos
 operacionais existentes e valores manuais preservados.209testesguardas e4de
 contrato/React montadoPASS. Linux7e177d85/Node22:2960PASS/0FAIL/0SKIP;
 audit/lint/typecheck/build/diffcheckPASS (2warnings ancestrais). Backend
-inalterado; CI do novo SHA ainda deve ser confirmada antes de trocar a HML.
+inalterado; CI terminal do novo SHA e troca da HML confirmadas acima.
 
 ## Locais em revisao na interface e preparacao2295 - PR594 (2026-11-12)
 

@@ -1,5 +1,27 @@
 ## Separacao fiscal/entrega - feedback autenticado PR594 (2026-11-12)
 
+Publicado/servido a376a82551be6968c191d389d5bdafe0d0b39821; CI6955/6956SUCCESS.
+API/web no mesmo SHA, backend tree preservado. Controlador health/ready200 e
+anonimo401, porta15173PRIVATE; frontend serve ambas as props de finalidade.
+Consulta nova bfac9ab7 no repositorio PostgreSQL canonico, sob roleAPI efetiva
+nao super/naoBYPASS: FISCAL1/ENTREGA5, identidades da fonte coincidem,
+crossGroup0, READ ONLY/ROLLBACK,0writes. Nao prova JWT/navegador autenticado;
+proprietario foi chamado para conferir a nova organizacao, sem salvar/ativar.
+
+URL externa anonima retornou404 mesmo com registroPRIVATE e encaminhamento
+suportado; nao repetir restart de servidor. Alternativa comprovada no MESMO
+desktop: http://127.0.0.1:15173/cadastros via gh autenticado, bind127.0.0.1.
+HTML/marker/health/ready200, Cliente anonimo401. Um probe ready5s expirou;
+diagnostico limitado seguinte confirmou200 em307ms, sem mudar timeout da app.
+Janela observada ate2026-11-12T20:29:00Z/17h29BRT. Encaminhamento limitado
+ao mesmo prazo por helper privado hml-loopback-window.private.mjs; recibo
+inspection-code-only/hml-loopback-a376a825.private.json, READY observado,
+processos proprios14952/20452. Nao e automacao permanente nem porta publica.
+Comando suportado de recuperacao do canal (nao inicia ERP nem importa):
+gh codespace ports forward 15173:15173 -c potential-xylophone-5gj7r9v9qqg637vxp
+Manter apenas durante a janela; nao usar --all-interfaces. Bootstrap anterior
+preservado para reversao, dados/IDs/217inativos e historicos nao alterados.
+
 Proprietario comprovou a leitura autenticada de seis locais no c93a5885,
 mas reprovou fiscal e entregas agrupados na mesma aba. Fonte privada confirmou
 1FISCAL do mestre e5ENTREGA de ClientesObras nesse recorte, todos ainda inativos.
@@ -15,7 +37,7 @@ operacionais; nenhum local ativado, novo registro, grant ou escrita de dados.
 Guards ancestrais c93 mantidos sob novo peel exato. Testes focados209PASS e
 contratos/React montado4PASS. Linux7e177d85/Node22:2960PASS/0FAIL/0SKIP;
 audit/lint/typecheck/build/diffcheckPASS, lint2warnings ancestrais. Backend
-inalterado, provas CI6951/6952 reutilizadas; CI do novo SHA ainda deve fechar.
+inalterado; CI6955/6956 terminal e marcador do novo SHA confirmados.
 Revisao autenticada do
 layout corrigido sera separada da leitura comprovada nas capturas antigas.
 
