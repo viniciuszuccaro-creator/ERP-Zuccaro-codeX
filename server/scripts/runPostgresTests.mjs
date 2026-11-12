@@ -23,11 +23,12 @@ const suites = [
   ['TENANT_CONTEXT', 'tests/db-tenant-context-postgres.test.ts'],
   ['MARCA_ATOMICITY', 'tests/marca-atomicidade.test.ts'],
   ['CLIENTE_LOCAL_BATCH', 'tests/cliente-local-batch-postgres.test.ts'],
+  ['LEGACY_ADDRESS_REVIEW', 'tests/legacy-address-postgres.test.ts'],
   ['LEGACY_BATCH_PERSISTENCE', 'tests/legado-batch-persistence-postgres.test.ts'],
 ];
 let allPassed = true;
 for (const [label, suite] of suites) {
-  const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', suite], { cwd: process.cwd(), env: { ...process.env, ...(label === 'LEGACY_NAME_REVIEW' ? { LEGACY_NAME_PG_TEST_URL: process.env.DATABASE_URL } : {}), ...(label === 'CLIENTE_CONFERENCIA' ? { CLIENTE_CONFERENCIA_PG_TEST_URL: process.env.DATABASE_URL } : {}) }, encoding: 'utf8' });
+  const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', suite], { cwd: process.cwd(), env: { ...process.env, ...(label === 'LEGACY_NAME_REVIEW' ? { LEGACY_NAME_PG_TEST_URL: process.env.DATABASE_URL } : {}), ...(label === 'CLIENTE_CONFERENCIA' ? { CLIENTE_CONFERENCIA_PG_TEST_URL: process.env.DATABASE_URL } : {}), ...(label === 'LEGACY_ADDRESS_REVIEW' ? { LEGACY_ADDRESS_PG_TEST_URL: process.env.DATABASE_URL } : {}) }, encoding: 'utf8' });
   const output = `${result.stdout ?? ''}${result.stderr ?? ''}`;
   process.stdout.write(output);
   const total = Number(output.match(/tests\s+(\d+)/)?.[1] ?? 0);

@@ -1,3 +1,38 @@
+## Enderecos nativos e historicos - lote PR594 (2026-11-12)
+
+Reutilizado ClienteLocal/endereco_incompleto, sem novo cadastro/endpoint. Contrato
+interno de revisao exige MIGRACAO, ativo=false, finalidade FISCAL/ENTREGA nao
+principal e procedencia; ausente nao vira numero/pais/nome. Restore bloqueado.
+Importador existente conserva raw, CAS, lock, recibo, auditoria atomica e reversao
+restrita. Auditoria publica usa fingerprints dos componentes, nao endereco bruto.
+
+Preflight privado READ ONLY/ROLLBACK51ed0c07 confirmou100pais ativos, identidades,
+documentos e mesmo Grupo. Tabela cliente_locais e ramo parcial existem; falta
+pilot_worker_map. Executor tem importar/visualizar, NAO criar/editar/inativar locais.
+Nenhum grant, perfil, DDL ou dado foi alterado. Principal SQL nao e leitor estrito.
+Plano privadoaf4003dc:100fiscais+117entregas validos SOMENTE para revisao inativa.
+Supera31e6478f por normalizacao explicita de espacos, conservando raw/recibo antigo.
+5CEPs invalidos preservados no raw e pendentes, sem perder outros componentes.
+Mesmos100clientes;1500inativos protegidos, Obras desses1500 NOT_EXTRACTED, nao zero.
+Isto NAO e aplicacao de enderecos nem cadastro completo; HML continua04eb39f6.
+
+Historicos: leitura isolada de catalogos EXETPS, sem originais montados, leitor
+parado ao fechar. Escopos v03/v04:222/79tabelas,5290/2706colunas; joins e empresa
+NAO comprovados. Adendos93b147d8/f38c1ff6 corrigem so descricao do escopo, sem
+reescrever recibos. Manifesto SQL existente21arquivos/26964656868bytes; EMP01..05
+disponiveis no backup documentado, fora do leitor atual. Nao inferir EMP03=3Z.
+Sem compras/pagamentos importados, novas cobrancas, saldos, baixa ou escrita VPS.
+
+Snapshot f436aec9368cf105:8checks Linux PASS; raiz2954PASS/0FAIL/0SKIP,
+backend648PASS/0FAIL/30SKIP;
+audit/lint/typechecks/builds/diff-check PASS, checkout remoto preservado. Os30SKIP
+nao sao prova PG real. Suite real agora obrigatoria no runner, com URL explicita
+e proibicao de skip/zero testes. Codigo conferido por hash apos execucao.
+Proximo: CI do commit publicado; revisar ledger e criar/inativar do executor HML
+antes de qualquer aplicacao (editar nao e necessario para esta revisao inativa).
+Leitura das bases empresariais depende de copia isolada,
+capacidade e identidade comprovadas, nao de nova transferencia integral do HD.
+
 ## Aceite atual - corrigir grade e bloquear carga incompleta (2026-11-12)
 
 Entregue04eb39f6/PR594 CI6937/6938SUCCESS; HMLAPI/web mesmo SHA, controlador

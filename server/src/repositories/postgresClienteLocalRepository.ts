@@ -2,6 +2,7 @@ import type { DbClient, DbQueryExecutor } from '../db/client.js';
 import {
   buildClienteLocalFingerprint,
   type ClienteLocal,
+  type ClienteLocalPersistenceCreate,
   type ClienteLocalCreate,
   type ClienteLocalFinalidade,
   type ClienteLocalFinalidadeInput,
@@ -186,10 +187,12 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
 
   async create(
     scope: ClienteLocalScope,
-    data: ClienteLocalCreate,
+    data: ClienteLocalPersistenceCreate,
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<ClienteLocal> {
+    if (data.endereco_incompleto && (data.ativo !== false || data.origem !== 'MIGRACAO'))
+      throw new Error('MIGRATION_PENDING_MUST_REMAIN_INACTIVE');
     const execute = async (client: DbQueryExecutor) => {
       await this.lockCliente(client, scope);
       const fingerprint = buildClienteLocalFingerprint(scope.groupId, scope.clienteId, data);
@@ -206,7 +209,7 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           created_by, updated_by
         ) VALUES (
           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,
-          false,$20,true,$21,$22,$23,$24,$25,$26,$27,$27
+          $28,$20,$29,$21,$22,$23,$24,$25,$26,$27,$27
         ) RETURNING id`,
         [
           scope.groupId, scope.clienteId, data.nome, data.cep, data.logradouro,
@@ -216,6 +219,7 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           geo.geocodedAt, fingerprint, data.origem, data.legacy_id ?? null,
           data.legacy_code ?? null, data.source_system ?? null,
           data.migration_batch ?? null, data.imported_at ?? null, actorId ?? null,
+          data.endereco_incompleto ?? false, data.ativo ?? true,
         ],
       );
       const id = String(inserted.rows[0].id);

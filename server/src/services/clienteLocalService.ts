@@ -1,4 +1,5 @@
 import { AppError } from '../api/errors.js';
+import { createHash } from 'node:crypto';
 import { sanitizeAuditSnapshot } from '../audit/sanitizeAuditSnapshot.js';
 import type { AuditRepository, RequestContext } from '../audit/types.js';
 import type { RbacAction, RbacGuard } from '../db/rbacGuard.js';
@@ -12,6 +13,7 @@ import {
   clienteLocalCreateSchema,
   clienteLocalFinalidadesSchema,
   clienteLocalUpdateSchema,
+  clienteLocalMigrationPendingSchema,
   type ClienteLocal,
   type ClienteLocalFinalidadeInput,
 } from '../repositories/clienteLocalTypes.js';
@@ -35,6 +37,12 @@ function auditSnapshot(local: ClienteLocal) {
     group_id: local.group_id,
     cliente_id: local.cliente_id,
     nome: local.nome,
+    address_component_fingerprints: Object.fromEntries(
+      (['cep','logradouro','numero','complemento','bairro','referencia'] as const).map(field =>
+        [field, createHash('sha256').update(JSON.stringify(local[field] ?? null)).digest('hex')]),
+    ),
+    endereco_incompleto: local.endereco_incompleto,
+    legacy_id: local.legacy_id, source_system: local.source_system, migration_batch: local.migration_batch,
     cidade: local.cidade,
     uf: local.uf,
     pais: local.pais,
@@ -190,6 +198,53 @@ export class ClienteLocalService {
     }
   }
 
+  /** Canonical review storage, never an operational address or a public-create bypass. */
+  async createMigrationPending(ctx: RequestContext, clienteId: string, payload: unknown) {
+    const fixed = Object.freeze({ ...ctx });
+    await this.prepare(fixed, clienteId, 'criar');
+    const parsed = clienteLocalMigrationPendingSchema.safeParse(payload);
+    if (!parsed.success) this.validationError(parsed.error.flatten());
+    return this.withTransaction(async executor => {
+      await this.repo.lockScope(this.scope(fixed, clienteId), executor);
+      await this.assertMigrationReview(fixed, clienteId, 'criar', executor);
+      const created = await this.repo.create(this.scope(fixed, clienteId), parsed.data, fixed.actorId, executor);
+      if (created.ativo || !created.endereco_incompleto) throw new AppError(409, 'MIGRATION_REVIEW_STATE_INVALID', 'Review address must remain inactive');
+      await this.audit.append({ ...fixed, entity: 'ClienteLocal', entityId: created.id,
+        action: 'create', afterData: { ...auditSnapshot(created), migration_review: 'PENDING' } }, executor);
+      await this.assertMigrationReview(fixed, clienteId, 'criar', executor);
+      return publicLocal(created);
+    }).catch(error => { this.rethrowDuplicate(error); throw error; });
+  }
+
+  async getMigrationPending(ctx: RequestContext, clienteId: string, localId: string) {
+    const fixed = Object.freeze({ ...ctx });
+    await this.prepare(fixed, clienteId, 'visualizar', localId);
+    return this.withTransaction(async executor => {
+      await this.repo.lockScope(this.scope(fixed, clienteId), executor);
+      await this.assertMigrationReview(fixed, clienteId, 'visualizar', executor);
+      const row = await this.requireMigrationPending(fixed, clienteId, localId, executor);
+      await this.assertMigrationReview(fixed, clienteId, 'visualizar', executor);
+      return publicLocal(row);
+    });
+  }
+
+  async cancelMigrationPending(ctx: RequestContext, clienteId: string, localId: string) {
+    const fixed = Object.freeze({ ...ctx });
+    await this.prepare(fixed, clienteId, 'inativar', localId);
+    return this.withTransaction(async executor => {
+      await this.repo.lockScope(this.scope(fixed, clienteId), executor);
+      await this.assertMigrationReview(fixed, clienteId, 'inativar', executor);
+      const before = await this.requireMigrationPending(fixed, clienteId, localId, executor);
+      if (before.finalidades.length === 0) return publicLocal(before);
+      const after = await this.repo.replaceFinalidades(this.scope(fixed, clienteId), localId, [], fixed.actorId, executor);
+      if (!after) this.notFound();
+      await this.audit.append({ ...fixed, entity: 'ClienteLocal', entityId: after.id, action: 'soft_delete',
+        beforeData: auditSnapshot(before), afterData: { ...auditSnapshot(after), migration_review: 'CANCELLED' } }, executor);
+      await this.assertMigrationReview(fixed, clienteId, 'inativar', executor);
+      return publicLocal(after);
+    });
+  }
+
   async update(
     ctx: RequestContext,
     clienteId: string,
@@ -289,6 +344,7 @@ export class ClienteLocalService {
     const updated = await this.withTransaction(async (executor) => {
       const before = await this.repo.get(this.scope(ctx, clienteId), localId, executor);
       if (!before || before.ativo) this.notFound();
+      if (before.endereco_incompleto) throw new AppError(409, 'MIGRATION_REVIEW_REQUIRED', 'Complete and review the address before restoring it');
       const after = await this.repo.restore(
         this.scope(ctx, clienteId), localId, ctx.actorId, executor,
       );
@@ -407,6 +463,22 @@ export class ClienteLocalService {
       || before.finalidades.some(
         (row) => row.principal && !next.some((candidate) => candidate.finalidade === row.finalidade),
       );
+  }
+
+  private async assertMigrationReview(ctx: RequestContext, clienteId: string, action: RbacAction, executor?: DbQueryExecutor) {
+    if (ctx.empresaId != null || ctx.scopeType === 'empresa') throw new AppError(403, 'MIGRATION_GROUP_SCOPE_REQUIRED', 'Migration review requires Group scope');
+    this.assertUuid(ctx.groupId, 'groupId');
+    const options = { allowGlobalWildcard: false, executor };
+    await this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente', 'importar', options);
+    await this.rbacGuard.assertAllowed(ctx, 'Cadastros', 'cliente_local', action, options);
+    const parent = await this.clienteRepo.getById({ groupId: ctx.groupId }, clienteId, executor);
+    if (!parent?.ativo) throw new AppError(404, 'CLIENTE_NOT_FOUND', 'Active canonical parent required');
+  }
+
+  private async requireMigrationPending(ctx: RequestContext, clienteId: string, localId: string, executor?: DbQueryExecutor) {
+    const row = await this.repo.get(this.scope(ctx, clienteId), localId, executor);
+    if (!row || row.ativo || !row.endereco_incompleto || row.origem !== 'MIGRACAO') this.notFound();
+    return row;
   }
 
   private assertPermission(ctx: RequestContext, action: RbacAction) {

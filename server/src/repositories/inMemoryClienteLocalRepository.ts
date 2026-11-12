@@ -3,7 +3,7 @@ import type { DbQueryExecutor } from '../db/client.js';
 import {
   buildClienteLocalFingerprint,
   type ClienteLocal,
-  type ClienteLocalCreate,
+  type ClienteLocalPersistenceCreate,
   type ClienteLocalFinalidade,
   type ClienteLocalFinalidadeInput,
   type ClienteLocalUpdate,
@@ -34,7 +34,7 @@ export interface ClienteLocalRepository {
   get(scope: ClienteLocalScope, localId: string, executor?: DbQueryExecutor): Promise<ClienteLocal | null>;
   create(
     scope: ClienteLocalScope,
-    data: ClienteLocalCreate,
+    data: ClienteLocalPersistenceCreate,
     actorId?: string | null,
     executor?: DbQueryExecutor,
   ): Promise<ClienteLocal>;
@@ -147,10 +147,12 @@ export class InMemoryClienteLocalRepository implements ClienteLocalRepository {
 
   async create(
     scope: ClienteLocalScope,
-    data: ClienteLocalCreate,
+    data: ClienteLocalPersistenceCreate,
     actorId?: string | null,
     _executor?: DbQueryExecutor,
   ) {
+    if (data.endereco_incompleto && (data.ativo !== false || data.origem !== 'MIGRACAO'))
+      throw new Error('MIGRATION_PENDING_MUST_REMAIN_INACTIVE');
     const fingerprint = buildClienteLocalFingerprint(scope.groupId, scope.clienteId, data);
     this.assertNoDuplicate(scope, fingerprint);
     const now = timestamp();
@@ -180,9 +182,9 @@ export class InMemoryClienteLocalRepository implements ClienteLocalRepository {
       geocoded_at: data.geocode_status === 'GEOCODIFICADO'
         ? data.geocoded_at ?? null
         : null,
-      endereco_incompleto: false,
+      endereco_incompleto: data.endereco_incompleto ?? false,
       endereco_fingerprint: fingerprint,
-      ativo: true,
+      ativo: data.ativo ?? true,
       origem: data.origem,
       legacy_id: data.legacy_id ?? null,
       legacy_code: data.legacy_code ?? null,

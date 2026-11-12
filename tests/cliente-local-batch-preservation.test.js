@@ -5,6 +5,13 @@ import { execFileSync } from 'node:child_process';
 import { clienteLocalBatchRemainder, localBatchRoutesHunk } from './helpers/clienteLocalBatchRemainder.js';
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 
+test('address review PostgreSQL suite is wired to the required database and rejects skipped runs', () => {
+  const runner = readFileSync('server/scripts/runPostgresTests.mjs', 'utf8');
+  assert.match(runner, /\['LEGACY_ADDRESS_REVIEW', 'tests\/legacy-address-postgres\.test\.ts'\]/);
+  assert.match(runner, /label === 'LEGACY_ADDRESS_REVIEW' \? \{ LEGACY_ADDRESS_PG_TEST_URL: process\.env\.DATABASE_URL \}/);
+  assert.match(runner, /result\.status !== 0 \|\| total < 1 \|\| skipped > 0/);
+});
+
 test('local batch preserves entire prior router and historical guard comparisons', () => {
   const file = 'server/src/api/router.ts';
   const source = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');

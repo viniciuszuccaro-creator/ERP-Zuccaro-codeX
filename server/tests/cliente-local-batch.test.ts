@@ -120,6 +120,32 @@ test('canonical local batch: CAS, rollback, replay rejection, permissions and fi
       assert.equal(restored.id, created.data[0].id);
       assert.equal(restored.ativo, true);
     });
+    await t.test('migration review stores partial components inactive without fake country, and cannot restore', async () => {
+      const payload={nome:'',cep:'01310100',logradouro:'Rua sintetica parcial',numero:'',bairro:'Bairro',cidade:'Cidade',uf:'SP',pais:'',
+        origem:'MIGRACAO',legacy_id:'ClientesObras:00001:002:003',source_system:'SYNTHETIC_NATIVE',migration_batch:'synthetic-review',
+        imported_at:'2026-11-12T00:00:00Z',endereco_incompleto:true,ativo:false,finalidades:[{finalidade:'ENTREGA',principal:false}]};
+      const before=await snapshot(),audits=await countAudit();
+      await assert.rejects(service.create(ctx,ID.clientePjA,payload),{code:'VALIDATION_ERROR'});
+      await assert.rejects(service.createMigrationPending(ctx,ID.clientePjA,payload),{code:'PERMISSION_DENIED'});
+      rbac.link({actorId:ID.runtimeActorA,groupId:ID.groupA,permissions:{Cadastros:{cliente:['importar'],cliente_local:['visualizar','criar','editar','principal','inativar','restaurar']}}});
+      const row=await service.createMigrationPending(ctx,ID.clientePjA,payload);
+      assert.equal(row.ativo,false);assert.equal(row.endereco_incompleto,true);
+      for(const key of ['nome','numero','pais']as const)assert.equal(row[key],'');
+      assert.equal(row.logradouro,payload.logradouro);assert.equal(row.legacy_id,payload.legacy_id);
+      assert.equal((await snapshot()).version,before.version);
+      assert.equal(await countAudit(),audits+1);
+      await assert.rejects(service.get(ctx,ID.clientePjA,row.id),{code:'CLIENTE_LOCAL_NOT_FOUND'});
+      await assert.rejects(service.restore(ctx,ID.clientePjA,row.id),{code:'MIGRATION_REVIEW_REQUIRED'});
+      assert.equal((await service.getMigrationPending(ctx,ID.clientePjA,row.id)).ativo,false);
+      assert((await service.list(ctx,ID.clientePjA,{ativo:false})).data.some(item=>item.id===row.id));
+      await assert.rejects(service.createMigrationPending({...ctx,empresaId:ID.empresaA},ID.clientePjA,payload));
+      for(const change of [{ativo:true},{origem:'ERP'},{finalidades:[{finalidade:'ENTREGA',principal:true}]},{pais:'BRASIL',nome:'Completo',numero:'20'},{cep:'invalid'},{latitude:0}])
+        await assert.rejects(service.createMigrationPending(ctx,ID.clientePjA,{...payload,...change}),{code:'VALIDATION_ERROR'});
+      const cancelled=await service.cancelMigrationPending(ctx,ID.clientePjA,row.id);
+      assert.equal(cancelled.ativo,false);assert.equal(cancelled.finalidades.length,0);
+      assert.equal(cancelled.logradouro,payload.logradouro);
+      assert.equal((await snapshot()).version,before.version);
+    });
     await t.test('context mutation during authorization cannot retarget batch', async () => {
       const before = await snapshot();
       const original = { ...ctx };

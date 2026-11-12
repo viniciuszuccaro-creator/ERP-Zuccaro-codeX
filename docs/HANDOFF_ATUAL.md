@@ -1,3 +1,36 @@
+## Retomada - enderecos nativos e historicos PR594 (2026-11-12)
+
+Codex unico escritor temporario, reserva6825952251; branch existente preservada.
+Lote reutiliza ClienteLocal/flag SQL ja existente e importador transacional.
+Revisao interna: parcial sempre inativo, nao principal, sem ativacao/uso operacional;
+RBAC granular importar+local, lock/CAS, rollback de auditoria/revogacao, replay e
+reversao proprios. Endpoint publico continua estrito; restore de parcial rejeitado.
+Componentes de endereco na auditoria somente por hash; raw privado no recibo.
+
+Preflight51ed0c07 READ ONLY/ROLLBACK: mesmos100pais/doc/Grupo, cliente_locais
+compativel; pilot_worker_map ausente, criar/editar/inativar negados ao executor.
+Sem ampliacao automatica do perfil visualizador. Principal SQL nao leitor estrito.
+Plano imutavel privadoaf4003dc:100fiscais+117Obras para revisao,0rejeicoes de registro;
+supera31e6478f por coalescencia explicita de espacos, raw/recibo anterior mantidos.
+5CEPs invalidos no raw/pendentes, nao descartados silenciosamente. Nada aplicado.
+1500inativos continuam protegidos; suas Obras ainda nao extraidas, nao total zero.
+Fonte, bindings e bytes rechecados; nao duplicar100nem reconstruir coorte.
+
+Historicos EXETPS: catalogos privados v03/v04, adendos de escopo93b147d8/f38c1ff6;
+nenhum valor financeiro lido/importado, joins/empresa ainda sem prova. Leitor
+isolado parado, zero portas/rede, originais nao montados. Bases EMP01..05 existem
+no manifesto SQL21arquivos; nao estao no leitor EXETPS e nao inferem identidade
+CPA/3Z. Proximo: capacidade/copia dirigida verificada e catalogo nativo empresarial.
+
+Snapshot f436aec9368cf105:8checks Linux PASS; raiz2954PASS/0FAIL/0SKIP,
+backend648PASS/0FAIL/30SKIP,
+audit/lint/typechecks/builds/diff-check aprovados,76arquivos de codigo conferidos
+por hash, checkout remoto preservado.30SKIP nao sao prova PG. Suite real registrada
+no runner com URL explicita, nenhum skip aceito. Conferir CI do commit publicado
+antes de aplicar pacote. HML servida ainda04eb39f6, sem deploy/DDL/grant/carga.
+Proximo gate exato: ledger existente do importador + capacidades HML do executor,
+com backup/revisao/reversao, sem promover perfil admin nem mudar VPS operacional.
+
 ## Aceite do dono - grade e leitura incompleta (2026-11-12)
 
 Publicado04eb39f6/PR594, CI6937/6938SUCCESS. HML15173 retomada pelo controlador,
