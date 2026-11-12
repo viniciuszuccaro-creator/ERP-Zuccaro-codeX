@@ -1,5 +1,29 @@
 ## Aplicacao autorizada217 - checkpoint PR594 (2026-11-12)
 
+36a66ef7 CI6947/6948SUCCESS; runtime servidoe53bf833 CI6943/6944SUCCESS.
+Replay posCOMMIT3c0ddda2 aprovado217/0/0/0, sem reabrir permissoes: comandosDML
+proibidos, FOR UPDATE permitido; nao e transacao SQL READ ONLY.
+
+Obras1500 CONCLUIDA a extracao, nao manter NOT_EXTRACTED. Reciboe15d66ee em
+/workspaces/.erp-private-344/native-works-remaining1500-20261112-attempt03/
+native-works.private.json:2295locais/1497clientes,1500pais conferidos,3semObras
+nesta copia.100originais excluidos, chaves nativas unicas, HMLwrites0.
+Attempt01falhou RAM com HML ativa; attempt02falhou SQL VALUES1500. Contraprova
+sintetica Msg10738 e correcao1000+500 preservaram exatamente a selecao1500.
+Nao repetir extracao. Proximo preparar mapa alvo/campos/pendencias, respeitando
+parentes inativos e escopo de aplicacao ainda limitado aos217ja confirmados.
+
+Mapa direto901b5eb7: codigo explicito da operacao -> PK nativa -> CNPJ valido ->
+HML unica, mantendo codigo fonte.3fontes candidatas/1doc invalido/1sem destino,
+0operacoes mapeadas; nao usar arquivo/nome para preencher empresa ausente.
+Datas/baixas pendentes, nenhuma importacao financeira. Outras bases exigem
+capacidade/canal comprovados; nao utilizar VPS operacional como laboratorio.
+
+Nova janelaHML ate16:30:03Z(13:30Brasilia), API/webe53, PRIVATE e Auth real.
+Sessao atual/visualizacao das revisoes pendentes: editor existente le somente
+ativos. Nao apresentar217inativos como fiscal/entrega utilizaveis ou visiveis.
+Baseline mestre e dados originais continuam intactos; sem nova carga ao iniciar.
+
 CONCLUIDO o gate de ledger/criar/inativar:217revisoes INATIVAS,100fiscais/117Obras,
 COMMIT confirmado/reconciliado,0operacionais. NAO REAPLICAR af4003dc. Mantidos
 1600clientes/4200contatos/1500inativos/IDs/codigos/extensoes e auditorias anteriores.

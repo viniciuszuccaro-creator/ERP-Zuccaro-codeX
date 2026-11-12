@@ -1,5 +1,30 @@
 ## Enderecos aplicados em revisao HML - PR594 (2026-11-12)
 
+Fechamento36a66ef7/CI6947/6948SUCCESS. Confirmado replay CANONICO posCOMMIT3c0ddda2:
+217replays/0novos/0updates/0auditorias proprias, sem permissoes temporarias e com
+proibicao de comandosDML. Transacoes com FOR UPDATE, nao rotular SQL READ ONLY.
+
+Obras1500 agora EXTRAIDAS e somente em staging privado:2295locais/1497clientes,
+3semObras neste recorte; chaves CODIGOCLIENTE/ITEM/SEQUENCIA unicas,100originais
+excluidos. Reciboe15d66ee, pais nativos1500 conferidos. HMLwrites0, nao aplicar nem
+reativar os1500. Vinculos alvo precisam revalidacao e contrato de pais inativos.
+Falha do driver reproduzida Msg10738: VALUES1500 excedia limite do comando SQL;
+corrigido com1000+500 na MESMA selecao, sem reduzir cobertura/afrouxar testes.
+Falhas anteriores mantidas, leitor parado ao fechar, originais nao montados.
+
+Mapa empresarial DIRETO901b5eb7 preserva codigo fonte e exige codigo da operacao:
+3fontes com CNPJ valido/destinoHML unico,1documento invalido,1sem destino;0operacoes
+atribuidas. Nao encerra ambiguidade reversa por nome/sufixo nem prova datas/baixas.
+Historicos continuam sem importacao; EMP02/recorte100 com0/0/0 nao e ausencia global.
+
+HML retomada depois da extracao, API/webe53bf833, ate16:30:03Z(13:30Brasilia),
+mesma URL15173PRIVATE. SessaoJWT/browser ainda nao observados nesta janela.
+217revisoes permanecem INATIVAS/0operacionais; editor atual filtra ativos. Proximo
+item UI: consulta somente leitura das revisoes no cadastro existente, sem mistura
+no rascunho/rota. Componentes canonicos recuperados: logradouro/complemento/bairro/
+cidade/UF/CEP validos/referencia; destinatarios e todos os demais campos raw ficam
+preservados, nao chamar campos ainda sem projecao de cadastro completo.
+
 Gate6826377124 AUTORIZADO e executado somente na HML. COMMIT confirmado para
 217ClienteLocais:100FISCAL/117ENTREGA, todos INATIVOS/incompletos/nao principais.
 0enderecos operacionais; numero/pais/nome nao inventados,5CEPs invalidos no raw.
