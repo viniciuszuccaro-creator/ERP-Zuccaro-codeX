@@ -1,3 +1,12 @@
+## Previa retomada (2026-11-12)
+
+Janela17h29 expirada e CodespaceShutdown comprovados; iniciado somente o
+existente, sem rebuild/recarga. API+web a376a825: HTML/marker/ready200,
+anonimo401, externo302GitHub novamente. Janela observada ate18h05BRT;
+http://127.0.0.1:15173/cadastros, encaminhamento autenticado somente local.
+Recibo por janela no HANDOFF; sem alteracao de app/dados/operacional.
+CI6955/6956 preservada; checkpoint documental exige somente diffcheck.
+
 ## Fiscal separado de entrega - PR594 (2026-11-12)
 
 Codigo/HML API+web a376a825, CI6955/6956SUCCESS. RepositorioPG canonico sob

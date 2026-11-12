@@ -1,3 +1,21 @@
+## Retomada da previa apos janela expirada (2026-11-12)
+
+17h43BRT: encaminhamento anterior WINDOW_EXPIRED17h29, sem listener local;
+GitHub confirmou CodespaceShutdown17h42. Sem presumir causa do Shutdown.
+Iniciado somente o MESMO Codespace basicLinux32gb, sem rebuild/nova maquina.
+Controlador retomou API/web a376a825, sem carga/seed/migration. HTML/marker/
+ready200 e Cliente anonimo401 pelo localhost; externo voltou a302github.dev,
+nao404. Aceite/login autenticado do proprietario continua separado.
+Janela observada ate2026-11-12T21:05:27Z/18h05BRT. Acesso:
+http://127.0.0.1:15173/cadastros
+Encaminhamento GitHub autenticado somente127.0.0.1, sem portas publicas novas;
+helper privado agora conserva recibo distinto por prazo, sem sobrescrever o
+WINDOW_EXPIRED anterior. Recibo hml-loopback-a376a825-1794517527644.private.json
+no inspection-code-only, READY, processos proprios19712/7016, encerramento
+limitado a janela. Abertura no painel Codex solicitada (queued, nao atesta DOM).
+Nenhuma alteracao de codigo aplicativo; provas CI6955/6956 reutilizadas,
+apenas diffcheck para este checkpoint documental. Sem alteracao operacional.
+
 ## Separacao fiscal/entrega - feedback autenticado PR594 (2026-11-12)
 
 Publicado/servido a376a82551be6968c191d389d5bdafe0d0b39821; CI6955/6956SUCCESS.
