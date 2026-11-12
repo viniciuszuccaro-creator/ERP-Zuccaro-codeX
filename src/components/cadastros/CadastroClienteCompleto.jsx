@@ -1325,7 +1325,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
                 <div className="col-span-2 pt-4 border-t">
                   <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>
-                  {isHttpBackendMode && cliente?.id && <button type="button" className="text-sm text-blue-700 underline mb-3" onClick={() => setActiveTab('enderecos')}>Consultar locais inativos em revisao, sem substituir este endereco</button>}
+                  {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="FISCAL" />}
                   <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="cep">CEP</Label>
@@ -1643,7 +1643,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 assertScopeCurrent={assertFormScopeCurrent}
                 persistBusy={isSaving || saveMutation.isPending}
               />
-              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} />}
+              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" />}
             </TabsContent>
 
             <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">

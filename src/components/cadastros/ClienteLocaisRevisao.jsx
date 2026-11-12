@@ -12,18 +12,19 @@ const fields = [
 ];
 
 // Consulta separada do rascunho operacional: nenhum callback de escrita ou selecao.
-export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId }) {
+export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, finalidade }) {
   const { hasPermission } = usePermissions();
   const allowed = hasPermission('Cadastros', 'cliente_local', 'visualizar') === true;
   const session = readErpHttpSession();
-  const valid = allowed && session?.token && session.groupId === groupId
+  const purposeValid = finalidade === 'FISCAL' || finalidade === 'ENTREGA';
+  const valid = purposeValid && allowed && session?.token && session.groupId === groupId
     && (session.empresaId || null) === (empresaId || null) && Boolean(clienteId);
   const [revision, setRevision] = useState(0);
   const [offset, setOffset] = useState(0);
   const [state, setState] = useState(null);
   const epoch = useRef(0);
   const current = useRef(null);
-  current.current = { clienteId, groupId, empresaId, session, valid };
+  current.current = { clienteId, groupId, empresaId, session, valid, finalidade };
   useEffect(() => {
     const invalidate = () => { epoch.current++; setState(null); setOffset(0); setRevision(n => n + 1); };
     window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
@@ -37,7 +38,7 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId }) 
     epoch.current++;
     setOffset(0);
     setState(null);
-  }, [clienteId, groupId, empresaId, session?.token, session?.actorId]);
+  }, [clienteId, groupId, empresaId, session?.token, session?.actorId, finalidade]);
   useEffect(() => {
     if (!session?.expiresAt) return;
     const remaining = Date.parse(session.expiresAt) - Date.now();
@@ -53,30 +54,31 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId }) 
     const isCurrent = () => !controller.signal.aborted && epoch.current === generation
       && current.current.valid && current.current.clienteId === snapshot.clienteId
       && current.current.groupId === snapshot.groupId && current.current.empresaId === snapshot.empresaId
+      && current.current.finalidade === snapshot.finalidade
       && sameSession(snapshot.session, current.current.session)
       && sameSession(snapshot.session, readErpHttpSession());
     const api = createHttpApiClient({ getScope: () => {
       if (!isCurrent()) throw new Error('Contexto de revisao expirado');
       return snapshot.session;
     } });
-    api.clientes.listLocaisReviewPage(clienteId, { offset, signal: controller.signal })
+    api.clientes.listLocaisReviewPage(clienteId, { offset, finalidade, signal: controller.signal })
       .then(page => { if (isCurrent()) setState({ page, snapshot, offset, revision }); })
       .catch(() => { if (isCurrent()) setState({ error: true, snapshot, offset, revision }); });
     return () => { controller.abort(); epoch.current++; };
-  }, [clienteId, groupId, empresaId, session?.token, session?.actorId, allowed, offset, revision, valid]);
+  }, [clienteId, groupId, empresaId, session?.token, session?.actorId, allowed, offset, revision, valid, finalidade]);
   const visible = valid && state?.snapshot.clienteId === clienteId
     && state.snapshot.groupId === groupId && state.snapshot.empresaId === empresaId
-    && sameSession(state.snapshot.session, session) && state.offset === offset && state.revision === revision;
+    && state.snapshot.finalidade === finalidade && sameSession(state.snapshot.session, session) && state.offset === offset && state.revision === revision;
   if (!clienteId) return null;
-  return <section className="mt-6 border-t pt-4" aria-label="Locais em revisao">
-    <h3 className="text-sm font-semibold">Enderecos inativos e em revisao</h3>
-    <p className="text-xs text-gray-600">Inativos e somente leitura. Nao substituem o endereco fiscal principal nem estao liberados para entrega.</p>
+  return <section className="mt-6 border-t pt-4" aria-label={finalidade === 'FISCAL' ? 'Fiscal em revisao' : 'Entrega em revisao'}>
+    <h3 className="text-sm font-semibold">{finalidade === 'FISCAL' ? 'Endereco fiscal recuperado - em revisao' : 'Enderecos de entrega recuperados - em revisao'}</h3>
+    <p className="text-xs text-gray-600">{finalidade === 'FISCAL' ? 'Finalidade fiscal registrada no local. A ordem da lista nao define o principal.' : 'Somente locais com finalidade de entrega registrada. Endereco unico ou igual ao fiscal nao e classificacao automatica.'} Inativos e somente leitura; nao alteram os campos operacionais.</p>
     {!valid ? <p role="alert">Leitura indisponivel neste contexto ou sem permissao.</p>
       : !visible ? <p role="status">Carregando revisao...</p>
       : state.error ? <p role="alert">Nao foi possivel consultar os locais. Nenhum total confirmado.</p>
       : <>
-        <p role="status">{state.page.meta.total} locais inativos; pagina {Math.floor(offset / 50) + 1}.</p>
-        {state.page.data.length === 0 && <p>Nenhum local inativo neste recorte.</p>}
+        <p role="status">{state.page.meta.total} locais {finalidade === 'FISCAL' ? 'fiscais' : 'de entrega'} inativos; pagina {Math.floor(offset / 50) + 1}.</p>
+        {state.page.data.length === 0 && <p>Nenhum local {finalidade === 'FISCAL' ? 'fiscal' : 'de entrega'} inativo encontrado neste recorte.</p>}
         <ul className="divide-y">
           {state.page.data.map(row => <li key={row.id} className="py-3 text-sm break-words">
             <h4 className="font-medium">{row.nome || 'Local sem nome informado'}</h4>

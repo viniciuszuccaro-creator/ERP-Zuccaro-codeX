@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { clienteLocaisReviewRemainder } from './clienteLocaisReviewRemainder.js';
+import { clienteLocaisPurposeRemainder } from './clienteLocaisPurposeRemainder.js';
 import { fornecedorHttpRemainder } from './fornecedorHttpRemainder.js';
 import { clienteContatosHunks, clienteContatosRemainder, clienteContatosHistoricalInput } from './clienteContatosRemainder.js';
 export const consolidation81Hunks={
@@ -71,7 +72,7 @@ export function clienteConferenciaRemainder(file,text,verify=true){
  return clienteConferenciaHistoricalRemainder(file,clienteSelectedReferenceRemainder(file,text,verify),verify);
 }
 export function clienteSelectedReferenceRemainder(file,text,verify=true){
- text=clienteLocaisReviewRemainder(file,text);
+ text=clienteLocaisReviewRemainder(file,clienteLocaisPurposeRemainder(file,text));
  const source=fornecedorHttpRemainder(file,text).replace(/\r\n/g,'\n'), entry=clienteSelectedReferenceHunks[file];
  if(entry && crypto.createHash('sha256').update(source).digest('hex')===clienteContatosHunks[file]?.hash){
    // This exact already-peeled ancestor has a whole-file pin; never skip missing hunks for arbitrary input.

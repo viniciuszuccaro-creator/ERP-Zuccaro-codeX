@@ -81,7 +81,8 @@ test('Cliente local preflight: peel nao aceita omissao, repeticao ou permissao a
 });
 
 test('Identidade visual: hunks exatos nao aceitam omissao, repeticao ou adulteracao',()=>{
-  const source=clienteLocaisReviewRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', read('src/components/cadastros/CadastroClienteCompleto.jsx'));
+  const file='src/components/cadastros/CadastroClienteCompleto.jsx';
+  const source=clienteLocaisReviewRemainder(file, clienteLocaisPurposeRemainder(file, read(file)));
   assert.doesNotThrow(()=>clienteContactPresenceRemainder(source));
   for(const [after]of identityDisplayHunks){
     for(const forged of ['',after+after,after.replace(/\S/,'!')])
@@ -106,13 +107,48 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import { clienteLocaisReviewRemainder, clienteLocaisReviewHunks, clienteLocaisReviewBaseline } from './helpers/clienteLocaisReviewRemainder.js';
+import { clienteLocaisPurposeRemainder, clienteLocaisPurposeHunks, clienteLocaisPurposeBaseline } from './helpers/clienteLocaisPurposeRemainder.js';
 import { execFileSync } from 'node:child_process';
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
+
+test('Purpose review exact layer preserves c93, ancestors and outside-edit semantics', () => {
+  const digest = source => createHash('sha256').update(source).digest('hex');
+  const at = (revision, file) => execFileSync('git', ['show', `${revision}:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const oldHelper = 'tests/helpers/clienteLocaisReviewRemainder.js';
+  assert.equal(read(oldHelper), at(clienteLocaisPurposeBaseline, oldHelper));
+  for (const [file, entry] of Object.entries(clienteLocaisPurposeHunks)) {
+    const source = read(file), previous = at(clienteLocaisPurposeBaseline, file);
+    assert.equal(digest(previous), entry.hash);
+    assert.equal(clienteLocaisPurposeRemainder(file, source), previous);
+    assert.equal(clienteLocaisPurposeRemainder(file, previous), previous);
+    assert.equal(clienteLocaisPurposeRemainder(file, source.replace(/\n/g, '\r\n')), previous.replace(/\n/g, '\r\n'));
+    const historical = value => file.endsWith('.jsx') ? clienteContactPresenceRemainder(value) : clienteConferenciaRemainder(file, value);
+    assert.equal(historical(source), historical(previous));
+    const ancestor = at(clienteLocaisReviewBaseline, file);
+    assert.equal(clienteLocaisPurposeRemainder(file, ancestor), ancestor);
+    assert.equal(historical(source), historical(ancestor));
+    for (const [after, before] of entry.hunks) {
+      assert.equal(source.split(after).length, 2);
+      for (const replacement of [before, after + after, after.replace(/\S/, '!')]) {
+        const forged = source.replace(after, replacement);
+        if (forged === previous) assert.equal(historical(forged), historical(previous));
+        else assert.throws(() => historical(forged));
+      }
+      assert.throws(() => historical(source.replace(after, before) + '\n' + after));
+    }
+    assert.throws(() => clienteLocaisPurposeRemainder(file, source + '\n// OUTSIDE_PURPOSE\n'));
+    for (const input of [source, previous, ancestor]) {
+      const forged = input + '\n// OUTSIDE_ANCESTRAL_PIN\n';
+      if (file.endsWith('.jsx')) assert.notEqual(digest(historical(forged)), digest(historical(input)));
+      else assert.throws(() => historical(forged));
+    }
+  }
+});
 
 test('Frozen review additions retain HEAD and ancestor guards without widening the remainder', () => {
   const digest = text => createHash('sha256').update(text).digest('hex');
   for (const [file, entry] of Object.entries(clienteLocaisReviewHunks)) {
-    const source = read(file);
+    const source = clienteLocaisPurposeRemainder(file, read(file));
     const ancestor = execFileSync('git', ['show', `${clienteLocaisReviewBaseline}:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
     assert.equal(digest(ancestor), entry.hash);
     assert.equal(clienteLocaisReviewRemainder(file, source), ancestor);
@@ -169,6 +205,7 @@ const rgHttpHunks = [
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  source = clienteLocaisPurposeRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', source, false);
   source = clienteLocaisReviewRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', source, false);
   for (const [after, before] of identityDisplayHunks) source = once(source, after, before);
   for (const [after, before] of rgHttpHunks) source = once(source, after, before);

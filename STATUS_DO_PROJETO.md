@@ -1,3 +1,16 @@
+## Fiscal separado de entrega - PR594 (2026-11-12)
+
+Feedback autenticado do c93 comprovou os locais visiveis, mas a organizacao
+foi reprovada: fiscal e entregas na mesma aba. Fonte confirma1fiscal/5entregas
+no cliente conferido; primeiro/endereco unico nao define finalidade.
+Correcao no cadastro existente: revisaoFISCAL em Dados Gerais, revisaoENTREGA
+na aba Enderecos, com filtro/total canonicos no servidor. Sem copia para campos
+ativos, ativacao, novos registros, grants ou alteracao operacional. Campos
+operacionais existentes e valores manuais preservados.209testesguardas e4de
+contrato/React montadoPASS. Linux7e177d85/Node22:2960PASS/0FAIL/0SKIP;
+audit/lint/typecheck/build/diffcheckPASS (2warnings ancestrais). Backend
+inalterado; CI do novo SHA ainda deve ser confirmada antes de trocar a HML.
+
 ## Locais em revisao na interface e preparacao2295 - PR594 (2026-11-12)
 
 Codigo publicado e HML API/web: c93a5885, CI6951/6952SUCCESS. Marcador e modulo

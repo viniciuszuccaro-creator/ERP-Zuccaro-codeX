@@ -889,14 +889,15 @@ SeparacaoConferencia: {
     /**
      * Pagina autoritativa para revisao; envelope invalido nunca representa vazio.
      * @param {string} clienteId
-     * @param {{offset?: number, signal?: AbortSignal}} [options]
+     * @param {{offset?: number, finalidade?: 'FISCAL'|'ENTREGA', signal?: AbortSignal}} [options]
      */
-    async listLocaisReviewPage(clienteId, { offset = 0, signal } = {}) {
+    async listLocaisReviewPage(clienteId, { offset = 0, finalidade, signal } = {}) {
       const id = String(clienteId ?? '').trim();
       if (!id) throw new Error('Cliente obrigatorio para revisao de locais');
+      if (finalidade !== undefined && !['FISCAL', 'ENTREGA'].includes(finalidade)) throw new Error('Finalidade de revisao invalida');
       const scope = Object.freeze({ ...getScope() });
       const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {
-        query: { limit: 50, offset, ativo: 'false', order_by: 'nome' }, signal, unwrap: false,
+        query: { limit: 50, offset, ativo: 'false', order_by: 'nome', ...(finalidade ? { finalidade } : {}) }, signal, unwrap: false,
       }, scope);
       const meta = page?.meta;
       if (!Array.isArray(page?.data) || !meta || page.partial === true || meta.partial === true
@@ -909,7 +910,8 @@ SeparacaoConferencia: {
         || page.data.some(row => !row || typeof row.id !== 'string' || row.ativo !== false
           || row.cliente_id !== id || row.group_id !== scope.groupId
           || !Array.isArray(row.finalidades)
-          || row.finalidades.some(f => !f || typeof f.finalidade !== 'string'))) {
+          || row.finalidades.some(f => !f || typeof f.finalidade !== 'string')
+          || (finalidade && !row.finalidades.some(f => f.finalidade === finalidade && f.ativo === true)))) {
         throw new Error('Resposta incompleta ou invalida na revisao de locais');
       }
       return page;

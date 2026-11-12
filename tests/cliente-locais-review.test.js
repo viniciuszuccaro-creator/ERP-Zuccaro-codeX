@@ -38,3 +38,25 @@ test('vazio comprovado difere de erro, parcial, total invalido e registros alhei
   for (const status of [401, 403, 422, 500]) await assert.rejects(client({ error: { code: 'SYNTHETIC' } }, status)
     .clientes.listLocaisReviewPage('synthetic-client'), error => error.status === status);
 });
+test('finalidade usa filtro canonico antes da paginacao e rejeita mistura ou inferencia', async () => {
+  for (const finalidade of ['FISCAL', 'ENTREGA']) {
+    const payload = { ...envelope(), data: [{ ...row, finalidades: [{ finalidade, ativo: true }] }] };
+    const page = await client(payload, 200, url => assert.equal(url.searchParams.get('finalidade'), finalidade))
+      .clientes.listLocaisReviewPage('synthetic-client', { finalidade });
+    assert.equal(page.meta.total, 1);
+    const opposite = finalidade === 'FISCAL' ? 'ENTREGA' : 'FISCAL';
+    await assert.rejects(client(payload).clientes.listLocaisReviewPage('synthetic-client', { finalidade: opposite }));
+    await assert.rejects(client({ ...payload, data: [{ ...row, finalidades: [{ finalidade, ativo: false }] }] })
+      .clientes.listLocaisReviewPage('synthetic-client', { finalidade }));
+  }
+  let calls = 0;
+  await assert.rejects(client(envelope(), 200, () => calls++).clientes.listLocaisReviewPage('synthetic-client', { finalidade: 'PRIMEIRO' }));
+  assert.equal(calls, 0);
+  const shared = { ...envelope(), data: [{ ...row, finalidades: [
+    { finalidade: 'FISCAL', ativo: true }, { finalidade: 'ENTREGA', ativo: true },
+  ] }] };
+  for (const finalidade of ['FISCAL', 'ENTREGA']) {
+    const page = await client(shared).clientes.listLocaisReviewPage('synthetic-client', { finalidade });
+    assert.equal(page.data[0].id, row.id, 'mesmo local somente se ambas as finalidades estiverem comprovadas');
+  }
+});

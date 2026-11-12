@@ -1,3 +1,24 @@
+## Separacao fiscal/entrega - feedback autenticado PR594 (2026-11-12)
+
+Proprietario comprovou a leitura autenticada de seis locais no c93a5885,
+mas reprovou fiscal e entregas agrupados na mesma aba. Fonte privada confirmou
+1FISCAL do mestre e5ENTREGA de ClientesObras nesse recorte, todos ainda inativos.
+Primeiro da lista NAO significa principal: ordenacao nome/ID nao e finalidade.
+Nao escolher por posicao, quantidade de locais ou igualdade de logradouro.
+
+Correcao reutiliza ClienteLocaisRevisao: FISCAL em Dados Gerais junto ao bloco
+fiscal, ENTREGA somente na aba Enderecos. GET canonico filtra finalidade antes
+da paginacao/contagem; resposta com finalidade alheia/cancelada causa erro,
+nao mistura nem total falso. Mesmo local pode aparecer nas duas visoes apenas
+quando ambas as finalidades estiverem registradas. Nada copiado para campos
+operacionais; nenhum local ativado, novo registro, grant ou escrita de dados.
+Guards ancestrais c93 mantidos sob novo peel exato. Testes focados209PASS e
+contratos/React montado4PASS. Linux7e177d85/Node22:2960PASS/0FAIL/0SKIP;
+audit/lint/typecheck/build/diffcheckPASS, lint2warnings ancestrais. Backend
+inalterado, provas CI6951/6952 reutilizadas; CI do novo SHA ainda deve fechar.
+Revisao autenticada do
+layout corrigido sera separada da leitura comprovada nas capturas antigas.
+
 ## Revisao visual217 e preparacao2295 - PR594 (2026-11-12)
 
 Publicado/servido c93a5885c41d1a106f3cfc78d585862e22f53725, CI6951/6952SUCCESS.
