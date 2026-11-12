@@ -413,6 +413,45 @@ const clienteA = {
   group_id: 'g1',
 };
 
+test('Cliente com leitura incompleta bloqueia inclusive callback antigo de salvar',async()=>{
+  for(const flag of ['loadIncomplete','isLoadingRecord']){
+    const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{propName:'cliente',initial:clienteA});
+    const saveButton=()=>h.walk().find(n=>n.props?.['data-action']==='Cadastros.Cliente.salvar');
+    const staleSave=saveButton().props.onClick;
+    assert.equal(typeof staleSave,'function');
+    h.render({[flag]:true});h.render();
+    await h.save();
+    assert.equal(saveButton().props.disabled,true);
+    await staleSave();
+    assert.equal(h.updates.length,0);assert.equal(h.creates.length,0);
+    h.render({[flag]:false});h.render();await h.save();
+    assert.equal(h.updates.length,1);assert.equal(h.updates[0].payload.nome,clienteA.nome);
+  }
+});
+
+test('Cliente PF/PJ conserva identidades sem campo visual duplicado',async()=>{
+  for(const [tipo,nome,razao,visible]of [
+    ['Pessoa Física','Pessoa sintética','Legado preservado',true],
+    ['Pessoa Jurídica','Empresa sintética','Empresa sintética',false],
+    ['Pessoa Jurídica','','Empresa sintética',false],
+    ['Pessoa Jurídica','Alias sintético','Empresa sintética',true],
+  ]){
+    const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{
+      propName:'cliente',initial:{...clienteA,tipo,nome,razao_social:razao},
+    });
+    const input=h.walk().find(n=>n.props?.id==='nome');
+    assert.equal(Boolean(input),visible);
+    if(input)assert.equal(input.props.required,tipo==='Pessoa Física');
+    const legal=h.walk().find(n=>n.props?.id==='razao_social');
+    assert.equal(Boolean(legal),tipo==='Pessoa Jurídica');
+    if(legal)assert.equal(legal.props.value,razao);
+    await h.save();
+    assert.equal(h.updates.length,1);
+    assert.equal(h.updates[0].payload.nome,nome);
+    assert.equal(h.updates[0].payload.razao_social,razao);
+  }
+});
+
 test('CadastroClienteCompleto HTTP: RG and loaded extras survive save; explicit RG clear is null',async()=>{
   const fields={rg:'000123-X',numero_caixa_postal:'00017',cep_caixa_postal:'01234000',caixa_postal_cobranca:'0009',inscricao_produtor_rural:'0000123'};
   const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{

@@ -1,3 +1,37 @@
+## Aceite do dono - grade e leitura incompleta (2026-11-12)
+
+Prints do dono apontaram duplicacao visual de documento e de identidade, e falta
+de endereco fiscal/entregas/historicos. Nao sao prova de cadastro completo.
+HML15173 observada STOPPED as12:31Z, apos janela12:10Z; prints mostram cache e
+erro de leitura. Nao inferir ausencia no banco pelos campos vazios do formulario.
+
+Defeito reproduzido no componente: props loadIncomplete/isLoadingRecord eram
+ignoradas pelo formulario self-managed; callback ainda gerava1write com aviso
+de bloqueio. Correcao reutiliza guard de contexto + ref viva do bloqueio: botao,
+callbacks antigos e mutation impedidos; recarga valida libera sem perder rascunho.
+Contraprova na fronteira sintetica antesFAIL1chamada; depoisPASS0chamadas e
+recarga1chamada, identidade preservada. Nao foi escrita SQL em clientes reais.
+
+GradeCliente: documento unico, Cidade/UF no lugar de CPF/CNPJ redundantes.
+Fallback generico nao projeta CNPJ em CPF nem CPF em CNPJ. PF nome completo;
+PJ razao social obrigatoria e alias distinto preservado; vazio/igual nao duplica
+campo, mas valores existentes continuam no payload. EnderecoPrincipal rotulado
+Fiscal por decisao vigente, SEM afirmar importacao dos componentes.
+40 testes focadosPASS; audit/lint/typecheck/build locaisPASS. RaizLinux no snapshot
+826957c23ed8ae38:2953PASS/0FAIL/0SKIP em297s, checkout remoto inalterado.
+Primeiro snapshot04988216:2951PASS/1FAIL na guarda do fallback antigo. Camada
+exata nova conserva a comparacao ancestral, omissao/repeticao/adulteracao rejeitadas;
+sem trocar pin. Backend nao alterado vsce5f1cfb; PG/647testes anteriores reutilizados.
+Peel exato7hunks e hashes ancestrais conservados; negativos rejeitam adulteracao.
+
+Enderecos/Obras continuam no ledger privado parcial, sem numero/pais inferidos;
+117Obras so pertencem aos100originais. Nao chamar campo renomeado de dado migrado.
+Financeiro deste formulario configura credito/condicoes; nao comprova migracao
+de compras/pagamentos/titulos. Historicos devem seguir entidades/vinculos/RBAC
+existentes, sem lancar cobranca/baixa/saldo por exibicao. Nenhuma carga/DDL/grant/VPS.
+Proximo: fechar/publicar delta, depois atualizar snapshot pelo controlador e
+conferir campos com sessao real; completar contratos de enderecos/historicos.
+
 ## Continuidade unificada - conservacao HML comprovada (2026-11-12)
 
 Fechamento atual: ce5f1cfb/PR594 CI6933/6934 SUCCESS. UI6 publicada;

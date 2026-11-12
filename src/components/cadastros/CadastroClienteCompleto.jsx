@@ -162,12 +162,14 @@ const sanitizeDocumentos = (documentos) => Array.isArray(documentos) ? documento
   upload_por: sanitizeText(doc?.upload_por, 180)
 })) : [];
 
-export default function CadastroClienteCompleto({ cliente: clienteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
+export default function CadastroClienteCompleto({ cliente: clienteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave, isLoadingRecord = false, loadIncomplete = false }) {
   // Normaliza: aceita tanto "cliente" (legado) quanto "item"/"data" (novo Visualizador)
   const cliente = clienteProp || item || data || initialData || defaultValues || null;
   const onCloseNorm = onClose || onSave || onSubmit;
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const [isSaving, setIsSaving] = useState(false);
+  const editLoadBlockedRef = useRef(false);
+  editLoadBlockedRef.current = Boolean(isLoadingRecord || loadIncomplete);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -181,7 +183,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   } = useContextoVisual();
   const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;
-  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
+  const { isCurrent: isScopeCurrent, assertCurrent: assertScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
+  const isFormScopeCurrent = () => !editLoadBlockedRef.current && isScopeCurrent();
+  const assertFormScopeCurrent = () => {
+    assertScopeCurrent();
+    if (editLoadBlockedRef.current) throw new Error('Recarregue o cadastro completo antes de salvar. O rascunho foi preservado.');
+  };
   const contextKey = empresaAtual?.id || groupId || "sem-contexto";
   const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);
   const podeCriar = canCreate("Cadastros", "Cliente") || canCreate("Cadastros", null);
@@ -773,7 +780,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   const handleExcluir = () => {
     try { assertFormScopeCurrent(); }
-    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }
+    catch (error) { toast({ title: 'Salvamento bloqueado', description: error.message, variant: 'destructive' }); return; }
     if (!window.confirm(`Tem certeza que deseja excluir o cliente "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -1069,7 +1076,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 data-permission={cliente?.id ? "Cadastros.Cliente.editar" : "Cadastros.Cliente.criar"}
                 data-action="Cadastros.Cliente.salvar"
                 data-sensitive
-                disabled={isSaving || saveMutation.isPending || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}
+                disabled={isSaving || saveMutation.isPending || isLoadingRecord || loadIncomplete || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}
                 className="bg-sky-600 hover:bg-sky-700"
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -1191,15 +1198,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   </Select>
                 </div>
 
-                <div className="col-span-2">
-                  <Label htmlFor="nome">Nome / Razão Social *</Label>
+                {(formData.tipo !== "Pessoa Jurídica" || (formData.nome && formData.nome.trim() !== (formData.razao_social || "").trim())) && <div className="col-span-2">
+                  <Label htmlFor="nome">{formData.tipo === "Pessoa Jurídica" ? "Nome de exibição" : "Nome completo *"}</Label>
                   <Input
                     id="nome"
                     value={formData.nome}
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    required
+                    required={formData.tipo !== "Pessoa Jurídica"}
                   />
                 </div>
+                }
 
                 {formData.tipo === "Pessoa Jurídica" && (
                   <>
@@ -1209,6 +1217,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                         id="razao_social"
                         value={formData.razao_social}
                         onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
+                        required
                       />
                     </div>
 
@@ -1314,7 +1323,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 )}
 
                 <div className="col-span-2 pt-4 border-t">
-                  <h3 className="font-semibold mb-3">Endereço Principal</h3>
+                  <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>
                   <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="cep">CEP</Label>

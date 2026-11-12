@@ -1,3 +1,19 @@
+## Aceite atual - corrigir grade e bloquear carga incompleta (2026-11-12)
+
+HMLce5f1cfb/CI6933/6934 foi entregue; dono reconheceu acesso mas prints apontam
+cadastro parcial. Janela encerrada12:10Z, STOPPED comprovado12:31Z. Cache e erro
+na tela nao provam ausencia no banco. Sem nova carga ou alteracao operacional.
+Delta: um documento na grade, Municipio/UF, PF/PJ sem campo duplicado preservando
+nomes/payload; EnderecoPrincipal explicitamenteFiscal, sem inventar componentes.
+P1 reproduzido: formulario ignorava bloqueio de carga e gravava1vez. Corrigido
+no guard/botao/callbacks;0writes quando carga falha, recarga valida conserva dados.
+40focadosPASS+audit/lint/typecheck/build locaisPASS; raizLinux826957c2:
+2953PASS/0FAIL/0SKIP.04988216 teve1falha de peel antigo, resolvida com hunks
+exatos e contraprovas, sem mudar pin/comparacao ancestral. Backend inalterado.
+Enderecos/entregas e compras/pagamentos continuam pendencias de migracao real,
+nao encerradas por tela/coluna. Proximo: CI do delta e snapshotHML revisado.
+Historico de composicao abaixo; nao reabrir WIP13/POSIX/contatos/extensoes concluidos.
+
 ## Composicao controlada - em fechamento (2026-11-12)
 
 BranchCodexcontinuidade/PR594 preservaCursor e incorpora3425d1fa0fc localmente.

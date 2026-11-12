@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
 
 /** Approved integration/optional-contract hunks; every other V24 statement stays under the original invariant. */
+export const clienteDocumentDisplayHunks = [
+  ["  // Only the unified column may use either document; CPF and CNPJ are not interchangeable.\n  if (/^(cpf_cnpj|documento)$/i.test(String(field || ''))) {",
+    "  // HTTP MASTER Cliente: documento unificado ↔ colunas cpf/cnpj da grade.\n  if (/^(cpf|cnpj|cpf_cnpj|documento)$/i.test(String(field || ''))) {"],
+  ['      status: "Status",\n      cidade: "Município",\n      uf: "UF",', '      status: "Status",'],
+];
 export function clienteNavigationRemainder(source) {
   const changes = [
+    ...clienteDocumentDisplayHunks,
     ["import useClienteCadastroNavigation from './hooks/useClienteCadastroNavigation';\n", ''],
     ['  initialRecordId = undefined,\n  navigationReceipt = undefined,\n  reopenRequestId = undefined,\n', ''],
     ['  windowMode, entityName = undefined, columns = undefined,\n  pageSize: pageSizeProp = undefined,\n  statusColors: extraColors = undefined,', '  windowMode, entityName, columns,\n  pageSize: pageSizeProp,\n  statusColors: extraColors,'],
