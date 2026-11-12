@@ -1,5 +1,10 @@
 ## Aceite atual - corrigir grade e bloquear carga incompleta (2026-11-12)
 
+Entregue04eb39f6/PR594 CI6937/6938SUCCESS; HMLAPI/web mesmo SHA, controlador
+confirmou health/ready/anonimo401 e modulosUI HTTP200 com guard novo servido.
+Baseline privado inalterado; nenhuma escrita SQL de clientes/DDL/grant/VPS.
+Janela ate13:20Z(10:20Brasilia), aceite visual pendente. Completude nao encerrada.
+
 HMLce5f1cfb/CI6933/6934 foi entregue; dono reconheceu acesso mas prints apontam
 cadastro parcial. Janela encerrada12:10Z, STOPPED comprovado12:31Z. Cache e erro
 na tela nao provam ausencia no banco. Sem nova carga ou alteracao operacional.

@@ -1,5 +1,14 @@
 ## Aceite do dono - grade e leitura incompleta (2026-11-12)
 
+Publicado04eb39f6/PR594, CI6937/6938SUCCESS. HML15173 retomada pelo controlador,
+API/web04eb39f6; troca somente de versao com reversao privada de bootstrap/launch.
+Baseline62a56d06 e todas as guardas mantidos byte-a-byte fora dos2hunks de versao.
+Preflight/health/ready/401anonimo aprovados; modulosFormulario/Bloco1 HTTP200,
+formulario servido contem editLoadBlockedRef novo. Nao equivale a aceite visual.
+Janela atual ate13:20:55Z(10:20Brasilia), portaPRIVATE, sessao do dono a conferir.
+Sem carga, seed, DDL, grant ou operacao VPS. Clientes continuam parciais.
+Reservas dos arquivos publicados liberadas; proximo enderecos/historicos canonicos.
+
 Prints do dono apontaram duplicacao visual de documento e de identidade, e falta
 de endereco fiscal/entregas/historicos. Nao sao prova de cadastro completo.
 HML15173 observada STOPPED as12:31Z, apos janela12:10Z; prints mostram cache e
