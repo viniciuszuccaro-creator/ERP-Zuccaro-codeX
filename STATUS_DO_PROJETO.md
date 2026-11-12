@@ -1,5 +1,10 @@
 ## Locais em revisao na interface e preparacao2295 - PR594 (2026-11-12)
 
+Codigo publicado e HML API/web: c93a5885, CI6951/6952SUCCESS. Marcador e modulo
+de revisaoHTTP200, health/ready200, anonimo401, porta15173PRIVATE. Externo
+anonimo302GitHub, nao404; aceite autenticado ainda pendente. Janela observada
+ate16h25BRT; URL no HANDOFF.217continuam inativos/incompletos, sem ativacao.
+
 Base947726e8. Leitura dos locais inativos na aba existente, separada do
 rascunho e da persistencia: finalidade, componentes, procedencia e pendencias;
 sem ativar/salvar/selecionar para entrega. Pagina canonica rejeita envelope
@@ -10,8 +15,8 @@ Guardas197PASS + contrato2PASS + React/DOM1PASS sintetico. Linux905ad95f,
 Node22.23.4:2958PASS/0FAIL/0SKIP; audit/lint/typecheck/build/diffcheckPASS,
 lint2warnings ancestrais. Backend inalterado: type/buildPASS; encerramento
 nativo V8/JIT no Node24 em R11, retry sequencial6PASS, sem enfraquecer testes.
-CI terminal do novo SHA e marcador HML ainda devem ser confirmados; nao
-atribuir CI6949/6950 ao lote nem confundir provas sinteticas com aceite real.
+CI terminal e marcador confirmados no c93a5885; nao confundir essas provas com
+aceite autenticado ou implantacao operacional. Backend tree igual ao e53.
 
 2295: vinculos alvo frescos e57783d8 em READ ONLY/ROLLBACK;1500pais continuam
 inativos,1497comObras,3sem. Conservados1600clientes/4200contatos/217locais.
@@ -22,6 +27,15 @@ Historicos498c93be:621titulos para a populacao congelada1600 na EMP02 privada,
 0pedidos/itens e621sem pedido correspondente nessa copia. Sem importacao,
 classificacao pago/aberto ou Empresa inferida. Leitor encerrado. Proxima acao:
 provar datas/baixas/vinculos positivos antes de qualquer efeito financeiro.
+
+Staging privado a771b245 preserva agora os621titulos nativos e sua chave,
+seis campos monetarios como texto e datas/estados raw. Nao sao contas a receber
+operacionais, pagamentos comprovados ou pedidos recuperados.0importacoes e
+0atribuicoes de Empresa. Leitor encerrado, originais nao montados.
+
+Plano71740920:621titulos ligados por identidade nativa a213clientes inativos
+do snapshot privado e577; futura aplicacao exige preflight/CAS frescos e os
+contratos de datas, baixas e Empresa ainda pendentes. Nenhum lancamento criado.
 
 ## Enderecos aplicados em revisao HML - PR594 (2026-11-12)
 

@@ -1,5 +1,17 @@
 ## Revisao visual217 e preparacao2295 - PR594 (2026-11-12)
 
+Publicado/servido c93a5885c41d1a106f3cfc78d585862e22f53725, CI6951/6952SUCCESS.
+API/web no mesmo SHA pelo marcador; health/ready200, Cliente anonimo401,
+modulo de revisao servidoHTTP200. Porta15173PRIVATE; URL externa anonima302
+para github.dev (nao404), nao equivale a aceite autenticado. Janela observada
+ate2026-11-12T19:25:29Z/16h25BRT; sem disponibilidade permanente.
+https://potential-xylophone-5gj7r9v9qqg637vxp-15173.app.github.dev/cadastros
+Roteiro: mesmo cliente -> aba Enderecos -> Enderecos inativos e em revisao.
+Nao ha ativacao/escrita nesse bloco. Aceite autenticado do proprietario pendente.
+Bootstrap/launch anteriores preservados privadamente; troca so de dois hunks
+de versao, backend tree igual a e53, pins e WIP canonico preservados. Nenhuma
+carga/seed/migration ao iniciar; nao houve alteracao operacional.
+
 Lote sobre947726e8. CadastroClienteCompleto reutiliza a aba Enderecos e o GET
 canonico de locais, ativo=false, paginacao50 e total autoritativo. Componente
 auxiliar ClienteLocaisRevisao extrai somente a consulta/visualizacao: nao recebe
@@ -34,6 +46,18 @@ pagamento/empresa/data. Consulta READ ONLY/ROLLBACK, leitor parado,0importacoes.
 Resumo final do driver falhou ao interpretar campo JSON omitido; recibo SQL
 ja salvo foi lido sem repetir a consulta. Datas, baixas e vinculos positivos
 continuam gates antes de qualquer historico operacional.
+
+Staging privado a771b245:621titulos extraidos por chave nativa NRPEDIDO/SEQUENCIA,
+da mesma populacao1600/copia EMP02. Seis campos monetarios preservados como
+strings sem arredondamento; datas nativas e estados sem interpretacao. Nenhuma
+Empresa atribuida, cobranca/baixa/importacao criada; leitor parado e originais
+nao montados. Proximo provar conversor de datas, semantica das baixas e vinculos
+com pedido/recibo/Empresa, sem usar o sufixo do arquivo como identidade fiscal.
+
+Plano privado71740920 liga621titulos a213clientes do snapshot1500inativo por
+codigo nativo/ID comprovado, sem mudar estado nem atribuir Empresa. Comparacao
+de fingerprints sera obrigatoria novamente antes de aplicar; nao e lancamento
+financeiro. Nao repetir a consulta621 para refazer o resumo ja preservado.
 
 ## Aplicacao autorizada217 - checkpoint PR594 (2026-11-12)
 
