@@ -101,6 +101,10 @@ export const resolveDashboardCount = ({
     return { total: null, fonte: 'indisponivel', confiavel: false };
   }
   const len = list.length;
+  // initialData [] / lista ainda vazia ≠ zero confirmado (só count autoritativo confirma 0).
+  if (len === 0) {
+    return { total: null, fonte: 'lista_vazia_nao_confirmada', confiavel: false };
+  }
   const capped = isCappedListUnreliable(list, softLimit);
   return {
     total: capped ? null : len,
@@ -132,6 +136,7 @@ export const dashboardCountSubtitle = ({
   if (resolved.fonte === 'count') return 'count · escopo empresa/grupo';
   if (resolved.confiavel) return 'lista · escopo empresa/grupo';
   if (resolved.fonte === 'lista_capada') return 'lista capada · contagem indisponível ≠ zero';
+  if (resolved.fonte === 'lista_vazia_nao_confirmada') return 'lista vazia não confirma zero · contagem indisponível';
   return 'contagem indisponível ≠ zero';
 };
 

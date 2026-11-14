@@ -63,6 +63,19 @@ export default function SeletorEnderecoEntregaPedido({
     sessionActorId,
     canView,
   };
+  /** Binding/generation da lista carregada — não o bindingRef “ao vivo” no callback tardio. */
+  const listBindingRef = useRef(/** @type {typeof bindingRef.current | null} */ (null));
+  const listEpochRef = useRef(0);
+
+  const bindingsEqual = (a, b) => Boolean(a) && Boolean(b)
+    && a.clienteId === b.clienteId
+    && a.groupId === b.groupId
+    && a.empresaId === b.empresaId
+    && a.sessionGroupId === b.sessionGroupId
+    && a.sessionEmpresaId === b.sessionEmpresaId
+    && a.sessionToken === b.sessionToken
+    && a.sessionActorId === b.sessionActorId
+    && a.canView === b.canView;
 
   /** Checagem síncrona no callback — não inserir rascunho após troca de contexto/permissão. */
   const bindingAllowsSelect = () => {
@@ -80,6 +93,19 @@ export default function SeletorEnderecoEntregaPedido({
     return true;
   };
 
+  /**
+   * Commit só se a lista (binding+epoch capturados na carga) ainda for a do binding atual.
+   * Handler tardio com operacionais A + bindingRef B não pode onChange (nem null) no consumidor B.
+   */
+  const commitSelection = (listBinding, listEpoch, value) => {
+    if (!listBinding) return;
+    if (listEpochRef.current !== listEpoch) return;
+    if (epoch.current !== listEpoch) return;
+    if (!bindingsEqual(listBinding, bindingRef.current)) return;
+    if (value != null && !bindingAllowsSelect()) return;
+    onChange?.(value);
+  };
+
   const fromPropFallback = () => {
     const raw = Array.isArray(cliente?.locais_entrega) ? cliente.locais_entrega : [];
     return raw.filter((row) => {
@@ -95,6 +121,8 @@ export default function SeletorEnderecoEntregaPedido({
   useEffect(() => {
     const invalidate = () => {
       epoch.current += 1;
+      listBindingRef.current = null;
+      listEpochRef.current = epoch.current;
       setOperacionais([]);
       setPartialMeta(null);
       setLoadStatus("unknown");
@@ -111,6 +139,8 @@ export default function SeletorEnderecoEntregaPedido({
 
   useEffect(() => {
     const generation = ++epoch.current;
+    listBindingRef.current = null;
+    listEpochRef.current = generation;
     setOperacionais([]);
     setPartialMeta(null);
     if (!clienteId) {
@@ -127,6 +157,8 @@ export default function SeletorEnderecoEntregaPedido({
     }
     if (!isHttpBackendMode) {
       const list = fromPropFallback();
+      listBindingRef.current = { ...bindingRef.current };
+      listEpochRef.current = generation;
       setOperacionais(list);
       setLoadStatus("loaded");
       return undefined;
@@ -151,6 +183,8 @@ export default function SeletorEnderecoEntregaPedido({
         if (epoch.current !== generation) return;
         const rows = Array.isArray(page?.data) ? page.data : null;
         if (!rows) {
+          listBindingRef.current = null;
+          listEpochRef.current = generation;
           setOperacionais([]);
           setPartialMeta(null);
           setLoadStatus("failed");
@@ -164,6 +198,8 @@ export default function SeletorEnderecoEntregaPedido({
             const fins = Array.isArray(ui._finalidades) ? ui._finalidades : [];
             return fins.includes("ENTREGA");
           });
+        listBindingRef.current = { ...bindingRef.current };
+        listEpochRef.current = generation;
         setOperacionais(mapped);
         const partial = page.partial === true;
         setPartialMeta(partial
@@ -173,6 +209,8 @@ export default function SeletorEnderecoEntregaPedido({
       })
       .catch(() => {
         if (epoch.current !== generation) return;
+        listBindingRef.current = null;
+        listEpochRef.current = generation;
         setOperacionais([]);
         setPartialMeta(null);
         setLoadStatus("failed");
@@ -205,21 +243,23 @@ export default function SeletorEnderecoEntregaPedido({
   if (!cliente) return null;
 
   const handleSelecionarEndereco = (enderecoId) => {
+    // Captura da lista (não só bindingRef ao vivo): handler tardio A ≠ consumidor B.
+    const listBinding = listBindingRef.current;
+    const listEpoch = listEpochRef.current;
+    if (!listBinding || listEpoch !== epoch.current || !bindingsEqual(listBinding, bindingRef.current)) {
+      return;
+    }
     if (!bindingAllowsSelect()) {
-      onChange?.(null);
+      commitSelection(listBinding, listEpoch, null);
       return;
     }
     const endereco = operacionais.find((e) => String(e.id) === String(enderecoId));
     if (!endereco || !isClienteLocalCanonicalId(String(endereco.id || ""))) {
-      onChange?.(null);
+      commitSelection(listBinding, listEpoch, null);
       return;
     }
     if (!isEnderecoOperacionalCompleto(endereco)) {
-      onChange?.(null);
-      return;
-    }
-    if (!bindingAllowsSelect()) {
-      onChange?.(null);
+      commitSelection(listBinding, listEpoch, null);
       return;
     }
     const mapaUrl = endereco.latitude && endereco.longitude
@@ -229,7 +269,7 @@ export default function SeletorEnderecoEntregaPedido({
           `${endereco.logradouro}, ${endereco.numero}, ${endereco.cidade}, ${endereco.estado}`,
         )}`
         : "";
-    onChange?.({
+    commitSelection(listBinding, listEpoch, {
       ...endereco,
       cliente_local_id: endereco.id,
       mapa_url: mapaUrl || endereco.mapa_url || "",

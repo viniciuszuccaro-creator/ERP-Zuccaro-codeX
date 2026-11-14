@@ -71,7 +71,7 @@ function GradesSimultaneas({ itens, hasSelection = false }) {
           data-block="central360-grades-sem-itens"
           role="status"
         >
-          Documento selecionado sem itens carregados — aguarde a hidratação ou abra o detalhe (duplo clique). Grades vazias não significam estoque zerado.
+          Documento selecionado sem itens carregados — aguarde a hidratação do clique. Duplo clique só abre edição após hidratar itens; use Visualizar se a sessão não permitir GET. Grades vazias não significam estoque zerado.
         </div>
       ) : null}
       <GradeItens

@@ -31,6 +31,10 @@ test('Seletor: incompleto comprovado false; binding sync no onSelect', () => {
   assert.match(seletorSrc, /isEnderecoOperacionalCompleto/);
   assert.match(seletorSrc, /bindingAllowsSelect/);
   assert.match(seletorSrc, /bindingRef/);
+  assert.match(seletorSrc, /listBindingRef/);
+  assert.match(seletorSrc, /listEpochRef/);
+  assert.match(seletorSrc, /commitSelection/);
+  assert.match(seletorSrc, /bindingsEqual\(listBinding, bindingRef\.current\)/);
   assert.match(seletorSrc, /loadStatus === "partial"/);
   assert.match(seletorSrc, /seletor-locais-parcial/);
   assert.doesNotMatch(seletorSrc, /endereco_incompleto === true\) return false/);

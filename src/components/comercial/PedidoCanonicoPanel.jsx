@@ -275,13 +275,15 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   useEffect(()=>{
     if(!centralLayout||!centralSituacao)return undefined;
     // Status canônicos do pedidoUiPolicy — sem inventar EM_ENTREGA/ENTREGUE.
+    detailGate.current.invalidate();
+    setSelected(null);
     const map={PRODUCAO:'EM_PRODUCAO',ENTREGA:'PRONTO_ENTREGA',RETIRA:'PRONTO_RETIRADA',ENTREGUES:'FINALIZADO',FINALIZADOS:'FINALIZADO',CANCELADOS:'CANCELADO'};
     const status=map[centralSituacao]||'TODOS';
     const tipoOperacao=centralSituacao==='ENTREGA'||centralSituacao==='ENTREGUES'?'ENTREGA':centralSituacao==='RETIRA'?'RETIRADA':'TODOS';
     setFilters((prev)=>({...prev,status,tipoOperacao}));
     setApplied((prev)=>({...prev,status,tipoOperacao}));
     setPage(1);
-    return undefined;
+    return ()=>{ detailGate.current.invalidate(); };
   },[centralLayout,centralSituacao]);
   useEffect(()=>{
     if(!centralLayout)return undefined;
@@ -293,7 +295,39 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     ()=>CENTRAL_VENDAS360_COLUMNS.filter((col)=>!centralHiddenColumns.has(col.key)),
     [centralHiddenColumns],
   );
-  const notifyCentralSelect=(row)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null});};const selectCentralRow=async(row)=>{if(!row?.id)return;setSelected(row);notifyCentralSelect(row);if(Array.isArray(row.itens)&&row.itens.length>0)return;const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket)return;try{const detail=await api.get(row.id);if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setSelected(detail);notifyCentralSelect(detail);}catch(error){if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));}};
+  const notifyCentralSelect=(row)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null});};
+  const hydratePedidoRow=async(row)=>{
+    if(!row?.id)return null;
+    const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());
+    if(!ticket){
+      toast.error('Sessão/contexto insuficiente para hidratar o pedido — grades podem ficar sem itens.');
+      return null;
+    }
+    try{
+      const detail=await api.get(row.id);
+      if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return null;
+      return detail;
+    }catch(error){
+      if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));
+      return null;
+    }
+  };
+  const selectCentralRow=async(row)=>{
+    if(!row?.id)return;
+    setSelected(row);
+    notifyCentralSelect(row);
+    if(Array.isArray(row.itens)&&row.itens.length>0)return;
+    const detail=await hydratePedidoRow(row);
+    if(!detail)return;
+    setSelected(detail);
+    notifyCentralSelect(detail);
+  };
+  const openEditHydrated=async(row)=>{
+    if(!canEdit(row))return;
+    if(Array.isArray(row.itens)&&row.itens.length>0){openEdit(row);return;}
+    const detail=await hydratePedidoRow(row);
+    if(detail)openEdit(detail);
+  };
 
   if(!canView)return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4"/><AlertDescription>Acesso negado aos Pedidos.</AlertDescription></Alert></div>;
   const rows=list.data?.data||[];const meta=list.data?.meta||{total:0};let totals={subtotal:'0',desconto:'0',total:'0'};try{totals=calculatePedidoTotals(form.itens);}catch{totals={subtotal:'0',desconto:'0',total:'0'};}
@@ -361,7 +395,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
                     data-selected={selectedRow ? 'true' : undefined}
                     className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
                     onClick={() => { void selectCentralRow(row); }}
-                    onDoubleClick={() => { if (canEdit(row)) openEdit(row); }}
+                    onDoubleClick={() => { void openEditHydrated(row); }}
                     data-action="central360-selecionar-pedido"
                   >
                     {centralVisibleColumns.map((col) => cells[col.key])}

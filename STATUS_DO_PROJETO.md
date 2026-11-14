@@ -1,3 +1,9 @@
+## Cursor — PR596 merge tip PR595 f4debdbb3 (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Incorpora Continuity `f4debdbb3` (residual Seletor listBinding/epoch + peels CI).
+Sem promover HML; backend/CAS intactos.
+
 ## Cursor — PR596 Bugbot Fechar/Dashboard + peels CI (2026-11-14)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
@@ -21,6 +27,21 @@ Teste `central-vendas360-layout-v6-591` + seletor PASS.
 
 Limitações: CI tip ≠ HML servida; ativação locais/auxiliares 500 Codex.
 Próximo: jornada itens/pagamento Fechar; códigos sequenciais BFF.
+
+## Cursor — PR595 residual P1 binding + peels CI (2026-11-14)
+
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Não sobrescreve Continuity/PR594; backend/CAS e fiscal=ClienteLocal intactos.
+
+Correções sobre tip `9b876f331` (CI frontend FAIL):
+- `SeletorEnderecoEntregaPedido`: `listBindingRef`/`listEpochRef` + `commitSelection`
+  — handler tardio com operacionais A não chama `onChange` (nem null) no binding B;
+- peels purpose: tip→before externos + after Locais atualizado; review/consolidation81
+  restaurados (sem pin cego); pin stage45 LogisticaEntregaTab → `85526d50…`;
+- testes: cadastro-query-payload-boundaries + session-native + seletor-endereco-binding-595.
+
+Limitações: ativação locais / auxiliares 500 com Codex; CI tip ≠ HML `d054e2b3`.
+Próximo: push/CI deste tip → port residual para PR596 → Central360 itens/pagamento.
 
 ## Cursor — PR595 parecer endereços UI (binding / incompleto / envelope) (2026-11-14)
 
