@@ -1,3 +1,31 @@
+## Gate de schema: journal lido sem grants, lacunas comprovadas (2026-11-14)
+
+Continuidade do MESMO pacote: helper administrativo EXISTENTE hml-backup.py
+validado por hash; Database(config) confirmou container/imagem/cluster pinados.
+Nenhuma senha/token exposta ou transferida. Lease O_EXCL0600 + flock backup,
+transacoes REPEATABLE READ READ ONLY e ROLLBACK, zero registros de negocio.
+Journal lido no schema EXATO:0entradas. Isso NAO autoriza reaplicar34migrations
+nem prova que tabelas/DDL estejam ausentes. Recibo privado na VPS
+metadata-journal-20261114.private.json, SHA256
+7127a028143af75a1651105429ae7fdad657796d4a27137c8fa5b9fad0e93f26.
+
+Metadata de8pares exatos: apenas clientes.contatos/jsonb existe. Ausentes os5
+campos de produtos da043 (origem/codigo_legado/legacy_id/source_system/migration_batch)
+e pedidos.idempotency_key/payload_fingerprint da044.045coluna presente nao prova
+journal/constraints/compatibilidade integral. Recibo metadata-columns-20261114.private.json,
+SHA256 e821d7ffea02d25059adb2f8f08b8ca86e8ed8785040c030713ddd2cdaa9d4b2.
+Leases proprias liberadas, ausencia comprovada. Nao executou backup/DDL/grants/
+importacao/deploy; HML segue d054e2b3. Runtime81d1e849/CI7114 preservado.
+
+Proxima tarefa executavel, Codex: completar SOMENTE metadata dos prerequisitos
+038-042/policies/constraints/indices usados por043-045, via mesmo helper/pins/
+lease/readonly; conciliar plano privado existente com lacunas EXATAS e comandos
+reviewaveis, sem gravar schema/journal. Resolver transporteprivado+ack externo
+pelo canal existente, sem publicar archive/chaves ou improvisar proxy. Aplicacao
+exige revisao, backup fresco+restoreisolado, rollback, janela e gate especifico.
+Cursor responsavel pelos2achados Dashboard596/6883631870; nao repetir prova sem
+novoSHA e nao misturar Dashboard no pacote de enderecos. Se todositens concretos
+bloquearem, pausar mesma automacao e apresentar intervencao minima, sem polling.
 ## Revisao independente do delta Dashboard596 concluida (2026-11-14)
 
 Fonte Cursor aeff65f244fe2245300afb13e8629fcb797fedef, CI43634746414SUCCESS.
