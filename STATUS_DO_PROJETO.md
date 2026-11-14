@@ -1,3 +1,10 @@
+## Cursor — stack 595 peels + 596 Bugbot (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor.
+- PR595 tip `b5862fc53`: peels Continuity + `listLocais` array (fecha FAILURE `66ff086f3`) — CI **em curso ≠ aprovado**.
+- PR596 tip `58e7e5855`: merge 595 + Bugbot `7c50c6c1c` (loadStatus/KPI/hydrate/ENTREGA) — CI **em curso ≠ aprovado**.
+Dependência 595→596 preservada; ENTREGA onOpenDraft só na 596. HML `d054e2b3`.
+
 ## Cursor — PR596 Bugbot loadStatus/count/hydrate (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
