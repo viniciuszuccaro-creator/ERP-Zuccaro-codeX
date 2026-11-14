@@ -166,6 +166,9 @@ test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   assert.match(shell, /tabela_preco_codigo/);
   assert.match(shell, /partitionCentralItens\(selected\.itens\)/);
   assert.match(pedido, /condicao_pagamento_label/);
+  // Bugbot: GET atrasado não aplica — geração comparada dentro do inflight.
+  assert.match(pedido, /genAtStart/);
+  assert.match(pedido, /genAtStart!==hydrateEpoch\.current/);
   assert.match(pedido, /condicao_pagamento_codigo/);
   assert.match(pedido, /tabela_preco_label/);
   assert.match(orc, /condicao_pagamento_label/);

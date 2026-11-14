@@ -331,17 +331,19 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
         return null;
       }
       const opened={...renderedScope.current,token:session.token};
-      ++hydrateEpoch.current;
+      // Geração no início do GET: troca de pedido/situação invalida resultado atrasado (Bugbot).
+      const genAtStart=++hydrateEpoch.current;
       flight=(async()=>{
         try{
           const detail=await api.get(requestId);
+          if(genAtStart!==hydrateEpoch.current)return null;
           const live=activeScope();
           if(!live?.token||live.token!==opened.token)return null;
           if(opened.groupId!==renderedScope.current.groupId||opened.empresaId!==renderedScope.current.empresaId||opened.actorId!==renderedScope.current.actorId)return null;
           return detail;
         }catch(error){
-          // Toast só se este id ainda é a intenção — GET substituído não alerta.
-          if(hydrateIntentIdRef.current===requestId)toast.error(message(error));
+          // Toast só se este id ainda é a intenção e a geração segue viva — GET substituído não alerta.
+          if(genAtStart===hydrateEpoch.current&&hydrateIntentIdRef.current===requestId)toast.error(message(error));
           return null;
         }finally{
           hydrateInflightRef.current.delete(requestId);
