@@ -1,3 +1,11 @@
+## Cursor — PR596 Casa CI FAIL 3f318ccf1 — 9º path teste 591 (2026-11-14 America/Sao_Paulo)
+
+CI Casa run 43630927875 **FAIL** frontend: `GerenciarEnderecos: Cadastral/Fiscal`
+espera `disabled={bloqueado || !podeEditar}` (base) mas form freeze exige
+`… || catalogBlocksMutations`. Blob teste: base=`47aafab13` ≠ freeze=`e4aee1405`.
+**LIBERAR** 9º path `tests/cliente-contatos-limitacao-591.test.js` (EXATO `0ffff5100`).
+8/8 fontes OK; falha = dependência de teste omitida. tip ≠ HML. Sem deploy.
+
 ## Cursor — PR596 DashboardCorporativo count fail-closed (2026-11-14 America/Sao_Paulo)
 
 Gap independente (sem Completo/port): Corporativo usava `count || length` e

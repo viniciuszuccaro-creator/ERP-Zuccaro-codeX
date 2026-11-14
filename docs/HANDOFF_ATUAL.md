@@ -1,3 +1,8 @@
+## Cursor — PR596 9º path cliente-contatos-limitacao-591 (Casa CI FAIL) (2026-11-14 America/Sao_Paulo)
+
+Casa `3f318ccf1` CI FAIL: portar também `tests/cliente-contatos-limitacao-591.test.js`
+do freeze `0ffff5100` (`catalogBlocksMutations` no expect). Sem afrouxar golden.
+
 ## Cursor — PR596 DashboardCorporativo fail-closed counts (2026-11-14 America/Sao_Paulo)
 
 Independente do port endereços: — ≠ 0 em Cliente/Produto count do Corporativo.
