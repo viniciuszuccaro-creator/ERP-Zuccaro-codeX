@@ -5,6 +5,7 @@ import { parseA1CertificateMetadata } from './a1CertificateContract.js';
 import { createBankStatementApi } from './bankStatementHttp.js';
 import { createFinancialMovementApi } from './financialMovementHttp.js';
 import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';
+import { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';
 
 /**
  * Cliente HTTP compativel com a superficie parcial de base44.entities.*
@@ -887,6 +888,36 @@ SeparacaoConferencia: {
       return rows;
     },
     /**
+     * Pagina autoritativa para revisao; envelope invalido nunca representa vazio.
+     * @param {string} clienteId
+     * @param {{offset?: number, finalidade?: 'FISCAL'|'ENTREGA', signal?: AbortSignal}} [options]
+     */
+    async listLocaisReviewPage(clienteId, { offset = 0, finalidade, signal } = {}) {
+      const id = String(clienteId ?? '').trim();
+      if (!id) throw new Error('Cliente obrigatorio para revisao de locais');
+      if (finalidade !== undefined && !['FISCAL', 'ENTREGA'].includes(finalidade)) throw new Error('Finalidade de revisao invalida');
+      const scope = Object.freeze({ ...getScope() });
+      const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {
+        query: { limit: 50, offset, ativo: 'false', order_by: 'nome', ...(finalidade ? { finalidade } : {}) }, signal, unwrap: false,
+      }, scope);
+      const meta = page?.meta;
+      if (!Array.isArray(page?.data) || !meta || page.partial === true || meta.partial === true
+        || page.incomplete === true || meta.incomplete === true || meta.limit !== 50 || meta.offset !== offset
+        || !Number.isSafeInteger(meta.total) || meta.total < 0 || typeof meta.hasMore !== 'boolean'
+        || page.data.length > 50 || offset + page.data.length > meta.total
+        || meta.hasMore !== (offset + page.data.length < meta.total)
+        || (meta.hasMore && page.data.length === 0)
+        || new Set(page.data.map(row => row?.id)).size !== page.data.length
+        || page.data.some(row => !row || typeof row.id !== 'string' || row.ativo !== false
+          || row.cliente_id !== id || row.group_id !== scope.groupId
+          || !Array.isArray(row.finalidades)
+          || row.finalidades.some(f => !f || typeof f.finalidade !== 'string')
+          || (finalidade && !row.finalidades.some(f => f.finalidade === finalidade && f.ativo === true)))) {
+        throw new Error('Resposta incompleta ou invalida na revisao de locais');
+      }
+      return page;
+    },
+    /**
      * Cria local canônico (POST `/clientes/:id/locais`) — sem storage paralelo.
      * @param {string} clienteId
      * @param {Record<string, unknown>} body
@@ -912,6 +943,7 @@ SeparacaoConferencia: {
         ? /** @type {{ data: unknown }} */ (page).data
         : page;
     },
+    ...createClienteLocalBatchHttpApi({ request, getScope, createHttpError }),
     /**
      * Atualiza local canônico (PATCH `/clientes/:id/locais/:localId`).
      * @param {string} clienteId

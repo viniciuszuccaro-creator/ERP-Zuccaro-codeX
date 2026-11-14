@@ -5,6 +5,7 @@ import { loadConfig } from '../src/config/env.ts';
 import { createDbClient } from '../src/db/client.ts';
 import { InMemoryRbacGuard } from '../src/db/rbacGuard.ts';
 import { InMemoryTenantGuard } from '../src/db/tenantGuard.ts';
+import { toClienteMasterHttpPayload } from '../../src/api/clienteHttpPayload.js';
 
 /**
  * Contatos[] jsonb MASTER + CAS (expectedVersion) / RBAC.
@@ -84,6 +85,129 @@ function headers(actorId: string) {
   };
 }
 
+test('HTTP adapter -> canonical API preserves RG/extras, explicit null and denied/invalid writes', async () => {
+  const runtime = fixture();
+  const server = runtime.app.listen(0, '127.0.0.1');
+  await new Promise<void>(resolve => server.once('listening', resolve));
+  const port = (server.address() as {port:number}).port;
+  const url = `http://127.0.0.1:${port}/api/v1/clientes`;
+  const fields = { rg:'000123-X', numero_caixa_postal:'00017', cep_caixa_postal:'01234000',
+    caixa_postal_cobranca:'0009', inscricao_produtor_rural:'0000123' };
+  try {
+    const createdResponse = await fetch(url, { method:'POST', headers:headers(ACTOR_EDIT),
+      body:JSON.stringify(toClienteMasterHttpPayload({ tipo:'Pessoa Física', documento:'52998224725', nome:'SYNTHETIC extras', ...fields }, {mode:'create'})) });
+    assert.equal(createdResponse.status,201);
+    const {data:created} = await createdResponse.json() as any;
+    for(const [key,value]of Object.entries(fields))assert.equal(created[key],value);
+    const target=url+'/'+created.id;
+    for(const [actor,payload,status]of [[ACTOR_VIEW,{rg:'DENIED'},403],[ACTOR_EDIT,{rg:'   '},400],[ACTOR_EDIT,{rg:'x'.repeat(200)},400]] as const){
+      const response=await fetch(target,{method:'PATCH',headers:headers(actor),body:JSON.stringify(toClienteMasterHttpPayload(payload,{mode:'update'}))});
+      assert.equal(response.status,status);
+      assert.equal((await runtime.clienteService.get(ctx(ACTOR_EDIT,'reopen-extra-negative'),created.id)).rg,fields.rg);
+    }
+    const changed=await fetch(target,{method:'PATCH',headers:headers(ACTOR_EDIT),body:JSON.stringify(toClienteMasterHttpPayload({rg:null},{mode:'update'}))});
+    assert.equal(changed.status,200);
+    const reopened=await runtime.clienteService.get(ctx(ACTOR_EDIT,'reopen-extra-clear'),created.id);
+    assert.equal(reopened.rg,null);
+    for(const key of Object.keys(fields).filter(k=>k!=='rg'))assert.equal((reopened as any)[key],fields[key as keyof typeof fields]);
+    const updates=(await runtime.auditRepo.listByEntity('Cliente',created.id)).filter(row=>row.action==='update');
+    assert.equal(updates.length,1);
+  } finally { await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve())); }
+});
+
+test('create preserves initial contacts in the canonical transaction and reopens with CAS', async () => {
+  const runtime = fixture();
+  const request = ctx(ACTOR_EDIT, 'initial-contacts');
+  const contatos = [{ id: 'initial-01', tipo: 'Telefone', valor: '000123', nome: 'SYNTHETIC', legacy_id: 'src:01' }];
+  const created = await runtime.clienteService.create(request, {
+    tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC initial', contatos,
+  });
+  assert.deepEqual(created.contatos, contatos);
+  const reopened = await runtime.clienteService.get(request, created.id);
+  assert.deepEqual(reopened?.contatos, contatos);
+  assert.match(reopened?.contatos_version || '', /^[a-f0-9]{64}$/);
+  const audit = await runtime.auditRepo.listByEntity('Cliente', created.id);
+  assert.equal(audit.filter(row => row.action === 'create').length, 1);
+  assert.equal(audit.filter(row => row.action === 'update').length, 0);
+});
+
+test('initial contacts failure rolls back master, sequential code and create audit', async () => {
+  const runtime = fixture();
+  const request = ctx(ACTOR_EDIT, 'initial-contacts-rollback');
+  const repo = (runtime.clienteService as any).repo;
+  const original = repo.update.bind(repo);
+  let failedId = '';
+  repo.update = async (_scope: unknown, id: string) => { failedId = id; throw Error('SYNTHETIC_STORAGE_FAILURE'); };
+  const payload = { tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC rollback',
+    contatos: [{ id: 'initial-01', tipo: 'Telefone', valor: '000123' }] };
+  await assert.rejects(runtime.clienteService.create(request, payload), /SYNTHETIC_STORAGE_FAILURE/);
+  await assert.rejects(runtime.clienteService.get(request, failedId), { statusCode: 404, code: 'CLIENTE_NOT_FOUND' });
+  assert.equal((await runtime.auditRepo.listByEntity('Cliente', failedId)).length, 0);
+  repo.update = original;
+  const created = await runtime.clienteService.create(request, payload);
+  assert.equal(created.codigo, '000001');
+  assert.deepEqual(created.contatos, payload.contatos);
+});
+
+test('servico: GET reautoriza depois da leitura quando a permissao e revogada', async () => {
+  const runtime = fixture();
+  const request = ctx(ACTOR_EDIT, 'get-revoked');
+  const created = await runtime.clienteService.create(request, {
+    tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC revocation',
+  });
+  const original = runtime.rbacGuard.assertAllowed.bind(runtime.rbacGuard);
+  let checks = 0;
+  runtime.rbacGuard.assertAllowed = async (...args) => {
+    checks += 1;
+    await original(...args);
+    if (checks === 1) {
+      (runtime.rbacGuard as InMemoryRbacGuard).link({
+        actorId: ACTOR_EDIT, groupId: GROUP, permissions: {},
+      });
+    }
+  };
+  await assert.rejects(
+    () => runtime.clienteService.get(request, created.id),
+    (error: any) => error.statusCode === 403 && error.code === 'PERMISSION_DENIED',
+  );
+  assert.equal(checks, 2, 'a segunda autorizacao deve falhar antes de retornar o registro');
+});
+
+test('servico: UPDATE captura ator e payload antes do primeiro await', async () => {
+  const runtime = fixture();
+  const created = await runtime.clienteService.create(ctx(ACTOR_EDIT, 'create-capture'), {
+    tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC capture',
+  });
+  (runtime.rbacGuard as InMemoryRbacGuard).link({
+    actorId: ACTOR_VIEW, groupId: GROUP,
+    permissions: { Cadastros: { cliente: ['visualizar', 'editar'] } },
+  });
+  const request = ctx(ACTOR_EDIT, 'update-capture');
+  const payload = { observacoes: 'original-intent' };
+  const original = runtime.rbacGuard.assertAllowed.bind(runtime.rbacGuard);
+  const actors: Array<string | null | undefined> = [];
+  runtime.rbacGuard.assertAllowed = async (...args) => {
+    actors.push(args[0].actorId);
+    await original(...args);
+    if (actors.length === 1) {
+      request.actorId = ACTOR_VIEW;
+      payload.observacoes = 'mutated-after-await';
+    }
+  };
+  const changed = await runtime.clienteService.update(request, created.id, payload);
+  assert.equal(changed?.observacoes, 'original-intent');
+  assert.ok(actors.length >= 2, 'escrita exige reautorizacao');
+  assert.ok(actors.every((actor) => actor === ACTOR_EDIT));
+  const updates = (await runtime.auditRepo.listByEntity('Cliente', created.id))
+    .filter((entry) => entry.action === 'update');
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].actorId, ACTOR_EDIT);
+  assert.equal(updates[0].groupId, GROUP);
+  assert.equal(updates[0].empresaId, EMPRESA);
+  const reopened = await runtime.clienteService.get(ctx(ACTOR_EDIT, 'reopen-capture'), created.id);
+  assert.equal(reopened?.observacoes, 'original-intent');
+});
+
 async function http(
   app: ReturnType<typeof createApp>['app'],
   path: string,
@@ -100,6 +224,35 @@ async function http(
     await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
   }
 }
+
+test('HTTP MASTER: existing GET provides contacts CAS; PATCH persists rich channels and rejects stale/viewer tokens', async () => {
+  const runtime = fixture();
+  const created = await http(runtime.app, '/api/v1/clientes', { method: 'POST', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ tipo: 'Pessoa Física', documento: '52998224725', nome: 'SYNTHETIC rich contacts' }) });
+  assert.equal(created.status, 201);
+  const url = `/api/v1/clientes/${created.body.data.id}`;
+  const initial = await http(runtime.app, url, { headers: headers(ACTOR_EDIT) });
+  assert.equal(initial.body.data.contatos, null);
+  const expectedVersion = initial.body.data.contatos_version;
+  assert.match(expectedVersion, /^[a-f0-9]{64}$/);
+  const contatos = [{ id: 'native-001', tipo: 'Telefone', valor: '001122', ramal: '0007', nome: 'SYNTHETIC' }];
+  const denied = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_VIEW),
+    body: JSON.stringify({ expectedVersion, contatos }) });
+  assert.equal(denied.status, 403);
+  const changed = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion, contatos }) });
+  assert.equal(changed.status, 200, JSON.stringify(changed.body));
+  assert.deepEqual(changed.body.data.contatos, contatos);
+  const stale = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion, contatos: [] }) });
+  assert.equal(stale.status, 409); assert.equal(stale.body.error.code, 'CLIENTE_CONTATOS_VERSION_CONFLICT');
+  const reopened = await http(runtime.app, url, { headers: headers(ACTOR_EDIT) });
+  assert.deepEqual(reopened.body.data.contatos, contatos);
+  assert.equal(reopened.body.data.contatos_version, changed.body.data.contatos_version);
+  const cleared = await http(runtime.app, url, { method: 'PATCH', headers: headers(ACTOR_EDIT),
+    body: JSON.stringify({ expectedVersion: reopened.body.data.contatos_version, contatos: [] }) });
+  assert.equal(cleared.status, 200); assert.deepEqual(cleared.body.data.contatos, []);
+});
 
 test('serviço: viewer sem editar recebe PERMISSION_DENIED no update (sessão/RBAC)', async () => {
   const runtime = fixture();

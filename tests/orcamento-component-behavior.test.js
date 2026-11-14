@@ -46,7 +46,7 @@ async function mount() {
       if (prev && deps.every((v, k) => Object.is(v, prev.deps[k]))) return;
       prev?.cleanup?.(); scheduled.push(() => { effects[i] = { deps, cleanup: fn() }; }); },
   };
-  let active = cpa; let permission = true; let current = row(); let props = { ...cpa };
+  let active = cpa; let permission = true; let permissionRule = null; let current = row(); let props = { ...cpa };
   const queries = []; const plans=[];
   const calls = []; const invalidations = []; const messages = []; const pending = {};
   const request = (method, scope, args) => { calls.push({ method, scope, args }); return pending[method]?.promise || Promise.resolve(current); };
@@ -67,8 +67,10 @@ async function mount() {
     },
     '@/api/erpHttpSession': { readErpHttpSession: () => active },
     '@/api/httpApiClient': { createHttpApiClient: ({ getScope }) => ({
-      orcamentos: Object.fromEntries(['update', 'create', 'get', 'cancel'].map((method) => [method, (...args) => request(method, getScope(), args)])),
-      pedidos: { convertOrcamento: (...args) => request('convert', getScope(), args) },
+      orcamentos: { ...Object.fromEntries(['update', 'create', 'get', 'cancel'].map((method) => [method, (...args) => request(method, getScope(), args)])),
+        list: (...args) => request('listOrcamentos', getScope(), args) },
+      pedidos: { convertOrcamento: (...args) => request('convert', getScope(), args),
+        list: (...args) => request('listPedidos', getScope(), args), get: (...args) => request('getPedido', getScope(), args) },
     }) },
     './comercialProposalFixture':proposalFixture,'./OrcamentoProposalAside':{__esModule:true,default:'OrcamentoProposalAside'},
     './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido'},
@@ -84,7 +86,7 @@ async function mount() {
       ? new Proxy({ __esModule: true, default: 'ConfirmDialog' }, { get: (obj, key) => obj[key] ?? key })
       : (() => { throw new Error(`Import inesperado: ${id}`); })()) });
   let tree;
-  const render = () => { slot = 0; tree = exports.default({ ...props, hasPermission: () => permission, filterInContext: async () => [] });
+  const render = () => { slot = 0; tree = exports.default({ ...props, hasPermission: (...args) => permissionRule ? permissionRule(...args) : permission, filterInContext: async () => [] });
     scheduled.splice(0).forEach((fn) => fn()); return tree; };
   const walk = (node) => !node || typeof node !== 'object' ? [] : [node, ...(node.children || []).flatMap(walk)];
   const nodes = () => walk(tree);
@@ -95,8 +97,52 @@ async function mount() {
     title: (title) => find((n) => n.props?.title === title),
     button: (label) => find((n) => n.type === 'Button' && text(n) === label),
     find, nodes, setSession: (scope) => { active = scope; }, setProps: (scope) => { props = scope; },
-    revoke: () => { permission = false; }, setRecord: (record) => { current = record; } };
+    revoke: () => { permission = false; }, setPermission: (rule) => { permissionRule = rule; }, setRecord: (record) => { current = record; } };
 }
+
+test('Central real: fechamento fast-path nao rearma documento apos contexto ou sessao mudar', async () => {
+  const original = { ...cpa, token: 'synthetic-session-a' };
+  for (const changed of [{ ...original, empresaId: '3z' }, { ...original, actorId: 'u2' },
+    { ...original, groupId: 'other-group' }, { ...original, token: 'synthetic-session-b' }, 'ABA']) {
+    const h = await mount();h.setSession(original);h.setProps({ ...original, centralLayout: true, selectedCentralId: 'o-1' });h.render();h.render();
+    h.find(n=>n.props['data-action']==='central360-fechar-orcamento').props.onClick();
+    const next=changed==='ABA'?{...original,empresaId:'3z'}:changed;
+    h.setSession(next);h.setProps({...next,centralLayout:true,selectedCentralId:'o-1'});h.render();h.render();
+    if(changed==='ABA'){h.setSession(original);h.setProps({...original,centralLayout:true,selectedCentralId:'o-1'});h.render();h.render();}
+    await flush();h.render();
+    assert.equal(h.nodes().some(n=>n.type==='Dialog'&&n.props.open===true),false);
+    assert.equal(h.calls.filter(c=>c.method==='convert'||c.method==='cancel').length,0);
+  }
+});
+
+test('Central real: Pedidos403 nao elimina Orcamentos autorizados nem grava documento',async()=>{
+  const h=await mount(),historic={...row(),id:'o-history',numero:'OLD',created_at:'2026-01-02'};
+  h.setProps({...cpa,centralLayout:true,selectedCentralId:'o-1'});h.render();h.render();
+  h.pending.listPedidos=deferred();h.pending.listOrcamentos=deferred();h.pending.get=deferred();h.pending.get.resolve(historic);
+  h.find(n=>n.props['data-action']==='central360-itens-anteriores').props.onSelect();
+  h.pending.listPedidos.reject({status:403});h.pending.listOrcamentos.resolve({data:[historic]});await flush();h.render();
+  assert.equal(h.calls.filter(c=>c.method==='get'&&c.args[0]==='o-history').length,1);
+  assert.equal(h.calls.filter(c=>['create','update','convert','cancel'].includes(c.method)).length,0);
+  assert.ok(h.messages.some(m=>m.kind==='message'&&/rascunho/.test(m.text)));
+});
+
+test('Central real: fonte sem permissao nao e consultada',async()=>{
+  const h=await mount(),historic={...row(),id:'o-history',created_at:'2026-01-02'};
+  h.setPermission((_module,entity)=>entity!=='pedido');h.setProps({...cpa,centralLayout:true,selectedCentralId:'o-1'});h.render();h.render();
+  h.pending.listOrcamentos=deferred();h.pending.get=deferred();h.pending.get.resolve(historic);
+  h.find(n=>n.props['data-action']==='central360-itens-anteriores').props.onSelect();
+  h.pending.listOrcamentos.resolve({data:[historic]});await flush();h.render();
+  assert.equal(h.calls.filter(c=>c.method==='listPedidos').length,0);
+  assert.equal(h.calls.filter(c=>c.method==='get').length,1);
+});
+
+test('Central real: callback capturado sem capacidade nao ganha autorizacao sem nova renderizacao',async()=>{
+  const h=await mount();h.setPermission((_m,entity,action)=>!(entity==='pedido'&&action==='converter-pedido'));
+  h.setProps({...cpa,centralLayout:true,selectedCentralId:'o-1'});h.render();h.render();
+  const button=h.find(n=>n.props['data-action']==='central360-fechar-orcamento');assert.equal(button.props.disabled,true);
+  h.setPermission(()=>true);button.props.onClick();await flush();h.render();
+  assert.equal(h.nodes().some(n=>n.type==='Dialog'&&n.props.open===true),false);
+});
 
 test('Orcamento real: save duplo envia uma mutacao; falha libera retry e reabertura', async () => {
   const h = await mount(); h.title('Editar').props.onClick(); h.render();

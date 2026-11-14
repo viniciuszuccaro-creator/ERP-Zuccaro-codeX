@@ -69,11 +69,119 @@ test('Cliente contatos: remainder mantem alteracao externa visivel ao hash integ
     createHash('sha256').update(original).digest('hex'));
 });
 
+test('Cliente local preflight: peel nao aceita omissao, repeticao ou permissao adulterada', () => {
+  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const start = source.indexOf('        locaisDraft = data.locais_entrega;');
+  const end = source.indexOf('        delete payload.locais_entrega;', start);
+  const hunk = source.slice(start, end);
+  assert.ok(hunk.includes("hasPermission('Cadastros', 'cliente_local', action)"));
+  for (const replacement of ['', hunk + hunk, hunk.replace("hasPermission('Cadastros', 'cliente_local', action)", 'true')]) {
+    assert.throws(() => clienteContactPresenceRemainder(source.replace(hunk, replacement)));
+  }
+});
+
+test('Identidade visual: hunks exatos nao aceitam omissao, repeticao ou adulteracao',()=>{
+  const file='src/components/cadastros/CadastroClienteCompleto.jsx';
+  const source=clienteLocaisReviewRemainder(file, clienteLocaisPurposeRemainder(file, read(file)));
+  assert.doesNotThrow(()=>clienteContactPresenceRemainder(source));
+  for(const [after]of identityDisplayHunks){
+    for(const forged of ['',after+after,after.replace(/\S/,'!')])
+      assert.throws(()=>clienteContactPresenceRemainder(source.replace(after,forged)));
+  }
+});
+
+test('RG HTTP: exact peel rejects omission, repetition and changes while retaining the historical whole form', () => {
+  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  assert.doesNotThrow(() => clienteContactPresenceRemainder(source));
+  for (const [after] of rgHttpHunks) {
+    for (const replacement of ['', after + after, after.replace('rg', 'rg /* FORGED */')])
+      assert.throws(() => clienteContactPresenceRemainder(source.replace(after, replacement)));
+  }
+  const digest = text => createHash('sha256').update(clienteContactPresenceRemainder(text)).digest('hex');
+  assert.notEqual(digest(source + '\n// OUTSIDE_RG\n'), digest(source));
+});
+
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
+import { clienteLocaisReviewRemainder, clienteLocaisReviewHunks, clienteLocaisReviewBaseline } from './helpers/clienteLocaisReviewRemainder.js';
+import { clienteLocaisPurposeRemainder, clienteLocaisPurposeHunks, clienteLocaisPurposeBaseline } from './helpers/clienteLocaisPurposeRemainder.js';
+import { execFileSync } from 'node:child_process';
+import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
+
+test('Purpose review exact layer preserves c93, ancestors and outside-edit semantics', () => {
+  const digest = source => createHash('sha256').update(source).digest('hex');
+  const at = (revision, file) => execFileSync('git', ['show', `${revision}:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const oldHelper = 'tests/helpers/clienteLocaisReviewRemainder.js';
+  assert.equal(read(oldHelper), at(clienteLocaisPurposeBaseline, oldHelper));
+  for (const [file, entry] of Object.entries(clienteLocaisPurposeHunks)) {
+    const source = read(file), previous = at(clienteLocaisPurposeBaseline, file);
+    assert.equal(digest(previous), entry.hash);
+    assert.equal(clienteLocaisPurposeRemainder(file, source), previous);
+    assert.equal(clienteLocaisPurposeRemainder(file, previous), previous);
+    assert.equal(clienteLocaisPurposeRemainder(file, source.replace(/\n/g, '\r\n')), previous.replace(/\n/g, '\r\n'));
+    const historical = value => file.endsWith('.jsx') ? clienteContactPresenceRemainder(value) : clienteConferenciaRemainder(file, value);
+    assert.equal(historical(source), historical(previous));
+    const ancestor = at(clienteLocaisReviewBaseline, file);
+    assert.equal(clienteLocaisPurposeRemainder(file, ancestor), ancestor);
+    assert.equal(historical(source), historical(ancestor));
+    for (const [after, before] of entry.hunks) {
+      assert.equal(source.split(after).length, 2);
+      for (const replacement of [before, after + after, after.replace(/\S/, '!')]) {
+        const forged = source.replace(after, replacement);
+        if (forged === previous) assert.equal(historical(forged), historical(previous));
+        else assert.throws(() => historical(forged));
+      }
+      assert.throws(() => historical(source.replace(after, before) + '\n' + after));
+    }
+    assert.throws(() => clienteLocaisPurposeRemainder(file, source + '\n// OUTSIDE_PURPOSE\n'));
+    for (const input of [source, previous, ancestor]) {
+      const forged = input + '\n// OUTSIDE_ANCESTRAL_PIN\n';
+      if (file.endsWith('.jsx')) assert.notEqual(digest(historical(forged)), digest(historical(input)));
+      else assert.throws(() => historical(forged));
+    }
+  }
+});
+
+test('Frozen review additions retain HEAD and ancestor guards without widening the remainder', () => {
+  const digest = text => createHash('sha256').update(text).digest('hex');
+  for (const [file, entry] of Object.entries(clienteLocaisReviewHunks)) {
+    const source = clienteLocaisPurposeRemainder(file, read(file));
+    const ancestor = execFileSync('git', ['show', `${clienteLocaisReviewBaseline}:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+    assert.equal(digest(ancestor), entry.hash);
+    assert.equal(clienteLocaisReviewRemainder(file, source), ancestor);
+    assert.equal(clienteLocaisReviewRemainder(file, ancestor), ancestor);
+    assert.equal(clienteLocaisReviewRemainder(file, source.replace(/\n/g, '\r\n')), ancestor.replace(/\n/g, '\r\n'));
+    const historical = value => file.endsWith('.jsx')
+      ? clienteContactPresenceRemainder(value)
+      : clienteConferenciaRemainder(file, value);
+    assert.equal(historical(source), historical(ancestor));
+    for (const [addition, previous] of entry.hunks) {
+      for (const replacement of [previous, addition + addition, addition.replace(/\S/, '!')]) {
+        const forged = source.replace(addition, replacement);
+        // Removing the sole method is the exact ancestor, not a malformed new revision.
+        if (forged === ancestor) assert.equal(historical(forged), historical(ancestor));
+        else assert.throws(() => clienteLocaisReviewRemainder(file, forged));
+      }
+      const moved = source.replace(addition, previous) + '\n' + addition;
+      assert.throws(() => clienteLocaisReviewRemainder(file, moved));
+    }
+    const outside = source + '\n// OUTSIDE_FROZEN_REVIEW\n';
+    assert.throws(() => clienteLocaisReviewRemainder(file, outside));
+    if (file.endsWith('.jsx')) {
+      assert.notEqual(digest(historical(outside)), digest(historical(source)));
+      assert.notEqual(digest(historical(ancestor + '\n// OUTSIDE_ANCESTOR\n')), digest(historical(ancestor)));
+    } else {
+      assert.throws(() => historical(outside));
+      assert.throws(() => historical(ancestor + '\n// OUTSIDE_ANCESTOR\n'));
+      // A valid older input already stripped of the conference layer stays valid.
+      const older = execFileSync('git', ['show', `e36231b3a7e546aa9fd2529abb8d5edb61d8189c:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+      assert.equal(clienteLocaisReviewRemainder(file, older), older);
+    }
+  }
+});
 
 const read = path => fs.readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
 const parse = (path, source = read(path)) => ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JSX);
@@ -86,10 +194,34 @@ function once(source, current, previous) {
   assert.equal(source.split(current).length - 1, 1, 'exact integration hunk');
   return source.replace(current, previous);
 }
+const identityDisplayHunks = [["  upload_por: sanitizeText(doc?.upload_por, 180)\n})) : [];\n\nexport default function CadastroClienteCompleto({ cliente: clienteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave, isLoadingRecord = false, loadIncomplete = false }) {\n  // Normaliza: aceita tanto \"cliente\" (legado) quanto \"item\"/\"data\" (novo Visualizador)\n  const cliente = clienteProp || item || data || initialData || defaultValues || null;\n  const onCloseNorm = onClose || onSave || onSubmit;\n  const [activeTab, setActiveTab] = useState(\"dados-gerais\");\n  const [isSaving, setIsSaving] = useState(false);\n  const editLoadBlockedRef = useRef(false);\n  editLoadBlockedRef.current = Boolean(isLoadingRecord || loadIncomplete);\n\n  const { toast } = useToast();\n  const queryClient = useQueryClient();","  upload_por: sanitizeText(doc?.upload_por, 180)\n})) : [];\n\nexport default function CadastroClienteCompleto({ cliente: clienteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {\n  // Normaliza: aceita tanto \"cliente\" (legado) quanto \"item\"/\"data\" (novo Visualizador)\n  const cliente = clienteProp || item || data || initialData || defaultValues || null;\n  const onCloseNorm = onClose || onSave || onSubmit;\n  const [activeTab, setActiveTab] = useState(\"dados-gerais\");\n  const [isSaving, setIsSaving] = useState(false);\n\n  const { toast } = useToast();\n  const queryClient = useQueryClient();"],["  } = useContextoVisual();\n  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;\n  const { isCurrent: isScopeCurrent, assertCurrent: assertScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);\n  const isFormScopeCurrent = () => !editLoadBlockedRef.current && isScopeCurrent();\n  const assertFormScopeCurrent = () => {\n    assertScopeCurrent();\n    if (editLoadBlockedRef.current) throw new Error('Recarregue o cadastro completo antes de salvar. O rascunho foi preservado.');\n  };\n  const contextKey = empresaAtual?.id || groupId || \"sem-contexto\";\n  const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);\n  const podeCriar = canCreate(\"Cadastros\", \"Cliente\") || canCreate(\"Cadastros\", null);","  } = useContextoVisual();\n  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;\n  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);\n  const contextKey = empresaAtual?.id || groupId || \"sem-contexto\";\n  const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);\n  const podeCriar = canCreate(\"Cadastros\", \"Cliente\") || canCreate(\"Cadastros\", null);"],["\n  const handleExcluir = () => {\n    try { assertFormScopeCurrent(); }\n    catch (error) { toast({ title: 'Salvamento bloqueado', description: error.message, variant: 'destructive' }); return; }\n    if (!window.confirm(`Tem certeza que deseja excluir o cliente \"${formData.nome}\"? Esta ação não pode ser desfeita.`)) {\n      return;\n    }","\n  const handleExcluir = () => {\n    try { assertFormScopeCurrent(); }\n    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }\n    if (!window.confirm(`Tem certeza que deseja excluir o cliente \"${formData.nome}\"? Esta ação não pode ser desfeita.`)) {\n      return;\n    }"],["                data-permission={cliente?.id ? \"Cadastros.Cliente.editar\" : \"Cadastros.Cliente.criar\"}\n                data-action=\"Cadastros.Cliente.salvar\"\n                data-sensitive\n                disabled={isSaving || saveMutation.isPending || isLoadingRecord || loadIncomplete || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}\n                className=\"bg-sky-600 hover:bg-sky-700\"\n              >\n                <Save className=\"w-4 h-4 mr-2\" />","                data-permission={cliente?.id ? \"Cadastros.Cliente.editar\" : \"Cadastros.Cliente.criar\"}\n                data-action=\"Cadastros.Cliente.salvar\"\n                data-sensitive\n                disabled={isSaving || saveMutation.isPending || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}\n                className=\"bg-sky-600 hover:bg-sky-700\"\n              >\n                <Save className=\"w-4 h-4 mr-2\" />"],["                  </Select>\n                </div>\n\n                {(formData.tipo !== \"Pessoa Jurídica\" || (formData.nome && formData.nome.trim() !== (formData.razao_social || \"\").trim())) && <div className=\"col-span-2\">\n                  <Label htmlFor=\"nome\">{formData.tipo === \"Pessoa Jurídica\" ? \"Nome de exibição\" : \"Nome completo *\"}</Label>\n                  <Input\n                    id=\"nome\"\n                    value={formData.nome}\n                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}\n                    required={formData.tipo !== \"Pessoa Jurídica\"}\n                  />\n                </div>\n                }\n\n                {formData.tipo === \"Pessoa Jurídica\" && (\n                  <>","                  </Select>\n                </div>\n\n                <div className=\"col-span-2\">\n                  <Label htmlFor=\"nome\">Nome / Razão Social *</Label>\n                  <Input\n                    id=\"nome\"\n                    value={formData.nome}\n                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}\n                    required\n                  />\n                </div>\n\n                {formData.tipo === \"Pessoa Jurídica\" && (\n                  <>"],["                        id=\"razao_social\"\n                        value={formData.razao_social}\n                        onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}\n                        required\n                      />\n                    </div>\n","                        id=\"razao_social\"\n                        value={formData.razao_social}\n                        onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}\n                      />\n                    </div>\n"],["                )}\n\n                <div className=\"col-span-2 pt-4 border-t\">\n                  <h3 className=\"font-semibold mb-3\">Endereço Principal (Fiscal)</h3>\n                  <div className=\"grid grid-cols-4 gap-4\">\n                    <div>\n                      <Label htmlFor=\"cep\">CEP</Label>","                )}\n\n                <div className=\"col-span-2 pt-4 border-t\">\n                  <h3 className=\"font-semibold mb-3\">Endereço Principal</h3>\n                  <div className=\"grid grid-cols-4 gap-4\">\n                    <div>\n                      <Label htmlFor=\"cep\">CEP</Label>"]];
+const rgHttpHunks = [
+  ['      if (isHttpBackendMode) {\n        if (data.rg !== undefined) payload.rg = data.rg;\n        else delete payload.rg;\n      }\n', ''],
+  ['value={formData.rg ?? ""}', 'value={formData.rg}'],
+  ['onChange={(e) => setFormData({ ...formData, rg: e.target.value === "" ? null : e.target.value })}',
+    'onChange={(e) => setFormData({ ...formData, rg: e.target.value })}'],
+];
 // Browser-proven absence is not an explicit empty list. Preserve the old golden;
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  source = clienteLocaisPurposeRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', source, false);
+  source = clienteLocaisReviewRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', source, false);
+  for (const [after, before] of identityDisplayHunks) source = once(source, after, before);
+  for (const [after, before] of rgHttpHunks) source = once(source, after, before);
+  source = once(source, '    saveMutation.mutate(isHttpBackendMode ? formData : buildPayload(formData), {', '    saveMutation.mutate(buildPayload(formData), {');
+  source = once(source, '  prepareClienteLocaisHttpDraft,\n  isClienteLocalCanonicalId,\n', '');
+  source = once(source, "      let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')", "      const locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')");
+  const preflightStart = '        locaisDraft = data.locais_entrega;';
+  assert.equal(source.split(preflightStart).length - 1, 1, 'one reviewed local preflight');
+  const start = source.indexOf(preflightStart);
+  const end = source.indexOf('        delete payload.locais_entrega;', start);
+  assert.ok(end > start, 'local preflight boundary');
+  const preflight = source.slice(start, end);
+  assert.equal(createHash('sha256').update(preflight).digest('hex'),
+    'f8d72f848f19e1a5d5a49f405412319e0a4be32d6ed51f7c6e90506ada78afc9',
+    'exact reviewed RBAC/payload preflight; historical golden unchanged');
+  source = source.slice(0, start) + source.slice(end);
   source = once(source,
     'import {\n'
     + '  mapClienteLocalToUiEndereco,\n'

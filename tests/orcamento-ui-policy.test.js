@@ -7,12 +7,39 @@ import {
   buildOrcamentoShareText,
   mapOrcamentoRowToCreateDraft,
   revalidateOrcamentoDraftAgainstMasters,
+  resolveOrcamentoHistorySources,
   calculateItem,
   calculateTotals,
   canUseOrcamentoAction,
   createOrcamentoActionGate,
   microsToDecimal,
 } from '../src/components/comercial/orcamentoUiPolicy.js';
+
+test('revalidacao conserva 100KG/preco e nao preenche unidade historica desconhecida', () => {
+  const masters={produtos:[{id:'p',unidade_medida_id:'un'}],unidades:[{id:'kg',sigla:'KG'},{id:'un',sigla:'UN'}]};
+  const original={itens:[{produto_id:'p',unidade_id:'kg',unidade_sigla:'KG',quantidade:'100',preco_unitario:'0',desconto:'0'}]};
+  const checked=revalidateOrcamentoDraftAgainstMasters(original,masters);
+  assert.deepEqual(checked.draft.itens[0],{...original.itens[0],descricao:''});
+  assert.deepEqual(checked.warnings.unidadesDivergentes,['kg']);
+  assert.deepEqual(checked.warnings.unidadesAusentes,[]);
+  const unknown=revalidateOrcamentoDraftAgainstMasters({itens:[{produto_id:'p',quantidade:'100'}]},masters);
+  assert.equal(unknown.draft.itens[0].unidade_id,'');assert.equal(unknown.draft.itens[0].unidade_sigla,'');
+  assert.equal(unknown.draft.itens[0].preco_unitario,undefined);
+  assert.deepEqual(unknown.warnings.unidadesAusentes,['p']);
+  assert.equal(original.itens[0].unidade_id,'kg');
+});
+
+test('fontes de historico independentes distinguem 403, sessao expirada, vazio e envelope invalido',()=>{
+  const quote={id:'quote',itens:[]},fulfilled=value=>({status:'fulfilled',value});
+  const partial=resolveOrcamentoHistorySources({pedido:{status:'rejected',reason:{status:403}},orcamento:fulfilled({data:[quote]})});
+  assert.deepEqual(partial.orcamento,[quote]);assert.deepEqual(partial.unavailableSources,['pedido']);
+  assert.deepEqual(resolveOrcamentoHistorySources({pedido:{skipped:true},orcamento:fulfilled({data:[]})}),{pedido:[],orcamento:[],unavailableSources:[]});
+  assert.throws(()=>resolveOrcamentoHistorySources({pedido:{status:'rejected',reason:{status:401}},orcamento:fulfilled({data:[quote]})}),{status:401});
+  assert.throws(()=>resolveOrcamentoHistorySources({pedido:{skipped:true},orcamento:fulfilled({data:null})}),/RESPONSE_INVALID/);
+  assert.throws(()=>resolveOrcamentoHistorySources({pedido:{status:'rejected',reason:{status:500}},orcamento:{status:'rejected',reason:{status:403}}}),{status:500});
+  const invalid=resolveOrcamentoHistorySources({pedido:fulfilled({count:0}),orcamento:fulfilled({data:[quote]})});
+  assert.deepEqual(invalid.unavailableSources,['pedido']);assert.deepEqual(invalid.orcamento,[quote]);
+});
 
 test('Orçamento trava duplo clique e descarta resposta antiga após CPA→3Z', () => {
   const gate = createOrcamentoActionGate();
@@ -176,9 +203,11 @@ test('duplicar: draft sem id/número; validade limpa; revalida mestres sem inven
     condicoes: [{ id: 'cond-new' }],
   });
   assert.equal(checked.draft.itens[0].descricao, 'Atualizada');
-  assert.equal(checked.draft.itens[0].unidade_id, 'un-2');
-  assert.equal(checked.draft.itens[0].unidade_sigla, 'UN');
+  assert.equal(checked.draft.itens[0].unidade_id, 'un-1');
+  assert.equal(checked.draft.itens[0].unidade_sigla, 'KG');
+  assert.equal(checked.draft.itens[0].quantidade, '2');
   assert.equal(checked.draft.itens[0].preco_unitario, '10.5');
   assert.equal(checked.warnings.condicaoAusente, true);
   assert.deepEqual(checked.warnings.produtosAusentes, []);
+  assert.deepEqual(checked.warnings.unidadesAusentes, ['un-1']);
 });

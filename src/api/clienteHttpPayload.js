@@ -17,8 +17,12 @@ const CLIENTE_ORIGENS = new Set([
 ]);
 
 const CLIENTE_TIPOS = new Set(['Pessoa Física', 'Pessoa Jurídica']);
+export const CLIENTE_MASTER_EXTRA_KEYS = Object.freeze([
+  'rg', 'numero_caixa_postal', 'cep_caixa_postal', 'caixa_postal_cobranca', 'inscricao_produtor_rural',
+]);
 
 const ALLOWED_KEYS = [
+  ...CLIENTE_MASTER_EXTRA_KEYS,
   'empresa_id',
   'ativo',
   'tipo',
@@ -556,7 +560,7 @@ export function mapClienteLocalToUiEndereco(local) {
     .map((f) => String(/** @type {{ finalidade?: unknown }} */ (f)?.finalidade || '').toUpperCase())
     .filter(Boolean);
   // Cadastral/Fiscal ≠ Entrega — não reescrever finalidade cadastral como entrega.
-  let tipo_endereco = 'Entrega';
+  let tipo_endereco = '';
   if (codes.includes('COBRANCA')) tipo_endereco = 'Cobrança';
   else if (codes.includes('ENTREGA')) tipo_endereco = 'Entrega';
   else if (codes.includes('CADASTRAL')) tipo_endereco = 'Cadastral';
@@ -575,12 +579,17 @@ export function mapClienteLocalToUiEndereco(local) {
     bairro: row.bairro || '',
     cidade: row.cidade || '',
     estado: row.uf || row.estado || '',
+    pais: row.pais ?? '',
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
+    coordinate_source: row.coordinate_source ?? null,
     observacoes: row.referencia || '',
-    principal: fins.some((f) => /** @type {{ principal?: unknown }} */ (f)?.principal === true),
+    principal: fins.some((f) => /** @type {{ finalidade?: unknown, principal?: unknown }} */ (f)?.finalidade === mapTipoEnderecoToFinalidade(tipo_endereco)
+      && /** @type {{ principal?: unknown }} */ (f)?.principal === true),
     _fonte: 'cliente_locais',
     _finalidades: codes,
+    _tipo_endereco_original: tipo_endereco,
+    _finalidades_detalhadas: fins.map(f => ({ finalidade: f.finalidade, principal: f.principal === true })),
   };
 }
 
@@ -618,7 +627,36 @@ export function mapTipoEnderecoToFinalidade(tipoEndereco) {
   if (raw === 'fiscal') return 'FISCAL';
   if (raw === 'correspondencia') return 'CORRESPONDENCIA';
   if (raw === 'outro') return 'OUTRO';
-  return 'ENTREGA';
+  if (raw === 'entrega' || raw === 'obra') return 'ENTREGA';
+  clienteLocalValidation(['tipo_endereco'], 'Finalidade do endereco nao comprovada. Selecione uma finalidade canonica.');
+}
+
+/** @param {string[]} fields @param {string} message @returns {never} */
+function clienteLocalValidation(fields, message) {
+  const error = Object.assign(new Error(message), { name: 'ClienteLocalValidationError', code: 'VALIDATION_ERROR', status: 422, fields });
+  throw error;
+}
+
+/** Preserve other purposes when the single-purpose editor changes unrelated fields. */
+function finalidadesDoEndereco(row) {
+  const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
+  if (!Object.hasOwn(row, '_finalidades_detalhadas')) {
+    if (Array.isArray(row._finalidades) && row._finalidades.length > 1)
+      clienteLocalValidation(['finalidades'], 'Finalidades completas nao carregadas. Reabra o local antes de editar.');
+    return [{ finalidade, principal: row.principal === true }];
+  }
+  const original = row._finalidades_detalhadas;
+  const allowed = new Set(['CADASTRAL','FISCAL','COBRANCA','ENTREGA','CORRESPONDENCIA','OUTRO']);
+  if (!Array.isArray(original) || !original.length || original.length > 6
+      || original.some(f => !f || !allowed.has(f.finalidade) || typeof f.principal !== 'boolean')
+      || new Set(original.map(f => f.finalidade)).size !== original.length)
+    clienteLocalValidation(['finalidades'], 'Envelope de finalidades invalido. Rascunho preservado.');
+  if (row.tipo_endereco !== row._tipo_endereco_original && original.length > 1)
+    clienteLocalValidation(['finalidades'], 'Local com varias finalidades: alteracao exige gerenciamento canonico das finalidades.');
+  if (original.length === 1 && row.tipo_endereco !== row._tipo_endereco_original)
+    return [{ finalidade, principal: row.principal === true }];
+  return original.map(f => ({ finalidade: f.finalidade,
+    principal: f.finalidade === finalidade && Object.hasOwn(row, 'principal') ? row.principal === true : f.principal }));
 }
 
 /**
@@ -656,6 +694,11 @@ export function mapUiEnderecoToClienteLocalCreate(endereco) {
     ? /** @type {Record<string, unknown>} */ (endereco)
     : {};
   assertClienteLocalUiExtrasWritable(row);
+  const missing = ['numero','bairro','pais'].filter(key => typeof row[key] !== 'string' || !String(row[key]).trim());
+  if (missing.length) clienteLocalValidation(missing, `Componentes nao comprovados: ${missing.join(', ')}. Rascunho preservado.`);
+  const limits = { apelido: 160, nome: 160, logradouro: 220, numero: 40, bairro: 160, cidade: 160, pais: 80, complemento: 160, observacoes: 500 };
+  const oversized = Object.entries(limits).filter(([key, max]) => String(row[key] ?? '').trim().length > max).map(([key]) => key);
+  if (oversized.length) clienteLocalValidation(oversized, 'Campo excede o contrato canonico. Nenhum valor foi truncado.');
   if (!isMeaningfulEndereco(row)) {
     const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
       new Error(
@@ -670,7 +713,7 @@ export function mapUiEnderecoToClienteLocalCreate(endereco) {
     throw error;
   }
   const cepDigits = String(row.cep ?? '').replace(/\D/g, '');
-  if (cepDigits.length !== 8) {
+  if (cepDigits.length !== 8 || cepDigits === '00000000' || !/^[\d.\-\s]+$/.test(String(row.cep ?? ''))) {
     const error = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
       new Error('CEP inválido para cliente_locais (8 dígitos). Rascunho preservado.')
     );
@@ -691,7 +734,7 @@ export function mapUiEnderecoToClienteLocalCreate(endereco) {
     error.fields = ['uf'];
     throw error;
   }
-  const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
+  const finalidades = finalidadesDoEndereco(row);
   const nome = String(row.apelido || row.nome || row.logradouro || 'Endereço').trim().slice(0, 160)
     || 'Endereço';
   /** @type {Record<string, unknown>} */
@@ -699,13 +742,13 @@ export function mapUiEnderecoToClienteLocalCreate(endereco) {
     nome,
     cep: cepDigits,
     logradouro: String(row.logradouro ?? '').trim().slice(0, 220),
-    numero: String(row.numero ?? 'S/N').trim().slice(0, 40) || 'S/N',
-    bairro: String(row.bairro ?? '').trim().slice(0, 160) || 'Centro',
+    numero: String(row.numero).trim().slice(0, 40),
+    bairro: String(row.bairro).trim().slice(0, 160),
     cidade: String(row.cidade ?? '').trim().slice(0, 160),
     uf,
-    pais: 'BRASIL',
+    pais: String(row.pais).trim(),
     origem: 'ERP',
-    finalidades: [{ finalidade, principal: row.principal === true }],
+    finalidades,
   };
   const complemento = String(row.complemento ?? '').trim();
   if (complemento) body.complemento = complemento.slice(0, 160);
@@ -713,10 +756,17 @@ export function mapUiEnderecoToClienteLocalCreate(endereco) {
   if (referencia) body.referencia = referencia.slice(0, 500);
   const lat = row.latitude == null || row.latitude === '' ? null : Number(row.latitude);
   const lng = row.longitude == null || row.longitude === '' ? null : Number(row.longitude);
-  if (lat != null && Number.isFinite(lat) && lng != null && Number.isFinite(lng)) {
+  if ((lat == null) !== (lng == null) || (lat != null && (!Number.isFinite(lat) || Math.abs(lat) > 90))
+      || (lng != null && (!Number.isFinite(lng) || Math.abs(lng) > 180)))
+    clienteLocalValidation(['latitude','longitude'], 'Coordenadas devem formar um par valido. Rascunho preservado.');
+  if (lat != null && lng != null) {
+    if (row._fonte === 'cliente_locais' && !row.coordinate_source)
+      clienteLocalValidation(['coordinate_source'], 'Origem das coordenadas nao comprovada. Nao substituir por MANUAL.');
     body.latitude = lat;
     body.longitude = lng;
-    body.coordinate_source = 'MANUAL';
+    body.coordinate_source = row.coordinate_source ?? 'MANUAL';
+  } else if (Object.hasOwn(row, 'latitude') && Object.hasOwn(row, 'longitude')) {
+    body.latitude = null; body.longitude = null; body.coordinate_source = null;
   }
   return body;
 }
@@ -731,7 +781,6 @@ export function mapUiEnderecoToClienteLocalUpdate(endereco) {
   const {
     finalidades: _finalidades,
     origem: _origem,
-    pais: _pais,
     ...update
   } = created;
   return update;
@@ -749,6 +798,26 @@ export const CLIENTE_LOCAIS_SYNC_PARTIAL = 'CLIENTE_LOCAIS_SYNC_PARTIAL';
  * 3) em falha remota: relatório preciso + reconcileRequired (reexecução idempotente).
  */
 export const CLIENTE_LOCAIS_BATCH_ATOMIC = false;
+
+/** Complete local preflight, reused before MASTER and before any local write. */
+export function prepareClienteLocaisHttpDraft(draft) {
+  if (draft === undefined) return [];
+  if (!Array.isArray(draft) || draft.length > 50)
+    clienteLocalValidation(['locais_entrega'], 'O lote de locais deve ser um array com ate 50 itens. Nenhum item foi truncado.');
+  const seen = new Set();
+  return draft.map(item => {
+    const row = item && typeof item === 'object' ? item : {};
+    const localId = isClienteLocalCanonicalId(row.id) ? String(row.id).trim() : '';
+    if (row.id != null && row.id !== '' && !localId)
+      clienteLocalValidation(['id'], 'Identidade do local invalida. Nao criar substituto automaticamente.');
+    if (localId && seen.has(localId)) clienteLocalValidation(['id'], 'Identidade de local repetida no lote.');
+    if (localId) seen.add(localId);
+    const body = localId ? mapUiEnderecoToClienteLocalUpdate(row) : mapUiEnderecoToClienteLocalCreate(row);
+    return { kind: localId ? 'update' : 'create', localId, body,
+      fins: localId ? finalidadesDoEndereco(row) : body.finalidades,
+      nome: String(body.nome || row.apelido || localId) };
+  });
+}
 
 /**
  * @typedef {{ created: number, updated: number, deleted: number, skipped: boolean,
@@ -819,33 +888,7 @@ export async function syncClienteLocaisViaHttp({
     }
   };
 
-  /** @type {Array<{ kind: 'update'|'create', localId: string, body: Record<string, unknown>, fins: unknown, nome: string }>} */
-  const planned = [];
-  for (const item of draft.slice(0, 50)) {
-    const row = item && typeof item === 'object' ? /** @type {Record<string, unknown>} */ (item) : {};
-    const localId = isClienteLocalCanonicalId(row.id) ? String(row.id).trim() : '';
-    // Pré-validação do lote inteiro — nenhum write se algum item for inválido/extras.
-    if (localId) {
-      const body = mapUiEnderecoToClienteLocalUpdate(row);
-      const finalidade = mapTipoEnderecoToFinalidade(row.tipo_endereco);
-      planned.push({
-        kind: 'update',
-        localId,
-        body,
-        fins: [{ finalidade, principal: row.principal === true }],
-        nome: String(body.nome || row.apelido || localId),
-      });
-    } else {
-      const body = mapUiEnderecoToClienteLocalCreate(row);
-      planned.push({
-        kind: 'create',
-        localId: '',
-        body,
-        fins: body.finalidades,
-        nome: String(body.nome || 'Endereço'),
-      });
-    }
-  }
+  const planned = prepareClienteLocaisHttpDraft(draft);
 
   /** @type {ClienteLocaisSyncSummary} */
   const summary = {
@@ -1026,7 +1069,6 @@ export function assertClienteHttpRichFieldsWritable(src) {
     'indicador_id',
     'regiao_atendimento_id',
     'regiao_atendimento',
-    'rg',
   ]) {
     if (isMeaningfulScalar(src[key])) unsupported.push(key);
   }
@@ -1057,6 +1099,8 @@ export function toClienteMasterHttpPayload(raw, options = {}) {
   /** @type {Record<string, unknown>} */
   const out = {};
   for (const key of ALLOWED_KEYS) {
+    // Empty form defaults are not clear commands; explicit NULL remains a clear command.
+    if (CLIENTE_MASTER_EXTRA_KEYS.includes(key) && src[key] === '') continue;
     if (src[key] !== undefined) out[key] = src[key];
   }
   // contatos:null não é comando público — remove antes da projeção CAS.

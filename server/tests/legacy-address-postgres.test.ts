@@ -20,7 +20,7 @@ test('legacy address PostgreSQL: canonical service, audit and ledger are atomic 
     if (!url) throw new Error('ISOLATED_TEST_URL_REQUIRED');
     const f = await realCrmFixture(url, { restrictedLogin: true });
     try {
-      const permissions = { Cadastros: { cliente: ['importar'], cliente_local: ['visualizar', 'criar', 'editar', 'inativar'] } };
+      const permissions = { Cadastros: { cliente: ['importar'], cliente_local: ['visualizar', 'criar', 'editar', 'inativar', 'restaurar'] } };
       await f.admin.query('UPDATE profiles SET permissoes=$1::jsonb,empresa_id=NULL WHERE id=$2', [JSON.stringify(permissions), ID.runtimeActorA]);
       await f.admin.query('UPDATE clientes SET empresa_id=NULL WHERE id=$1', [ID.clientePfA]);
       await f.exec(`GRANT SELECT ON clientes,cliente_locais,cliente_local_finalidades TO "${f.role}";
@@ -132,6 +132,54 @@ test('legacy address PostgreSQL: canonical service, audit and ledger are atomic 
         const results = await Promise.all(attempts);
         assert.equal(results.filter(r => r && typeof r === 'object' && 'created' in r && r.created === true).length, 1);
         assert.deepEqual(await counts(), { addresses: before.addresses + 1, maps: before.maps + 1, audits: before.audits + 1 });
+      });
+      await t.test('partial native address review: no defaults, no operational eligibility, exact replay and scoped reversal', async () => {
+        const s={...source(),payload:{...source().payload,nome:'',numero:'',pais:'',
+          endereco_incompleto:true,ativo:false,imported_at:new Date().toISOString()}};
+        s.payload.legacy_id=s.key;
+        const review=(value= s)=>persistirEnderecoClienteGrupoLegado(value,{transaction:factory(),reviewOnly:true});
+        const before=await counts();
+        await assert.rejects(apply(s),/REVIEW_SCOPE_REQUIRED/);
+        const created=await review();
+        assert.equal(created.created,true);
+        const row=(await f.admin.query<Record<string,unknown>>('SELECT to_jsonb(l) AS row FROM cliente_locais l WHERE id=$1',[created.id])).rows[0].row as Record<string,unknown>;
+        assert.equal(row.ativo,false);assert.equal(row.endereco_incompleto,true);
+        for(const key of ['nome','numero','pais'])assert.equal(row[key],'');
+        assert.equal(row.logradouro,s.payload.logradouro);
+        const map=(await f.admin.query<{raw_source_json:unknown}>('SELECT raw_source_json FROM pilot_worker_map WHERE source_key=$1',[s.key])).rows[0];
+        assert.equal(fingerprintEnderecoLegado(map.raw_source_json),fingerprintEnderecoLegado(s.raw));
+        assert.equal((await review()).created,false);
+        assert.deepEqual(await counts(),{addresses:before.addresses+1,maps:before.maps+1,audits:before.audits+1});
+        await assert.rejects(factory()(s,({service,ctx:scope}:any)=>
+          service.get(scope,s.clienteId,created.id)),{code:'CLIENTE_LOCAL_NOT_FOUND'});
+        await assert.rejects(factory()(s,({service,ctx:scope}:any)=>
+          service.restore(scope,s.clienteId,created.id)),{code:'MIGRATION_REVIEW_REQUIRED'});
+        await assert.rejects(factory()(s,({service,ctx:scope}:any)=>
+          service.create(scope,s.clienteId,s.payload)),{code:'VALIDATION_ERROR'});
+        await assert.rejects(factory()(s,async({service,ctx:scope}:any)=>{
+          await assert.rejects(service.restore(scope,s.clienteId,created.id),{code:'MIGRATION_REVIEW_REQUIRED'});
+          return service.create(scope,s.clienteId,s.payload);
+        }),{code:'LEGACY_ADDRESS_ROLLBACK_REQUIRED'});
+        assert.deepEqual(await counts(),{addresses:before.addresses+1,maps:before.maps+1,audits:before.audits+1});
+        assert.equal((await persistirEnderecoClienteGrupoLegado(s,{transaction:factory(),reviewOnly:true,action:'revert'})).reverted,true);
+        assert.equal((await persistirEnderecoClienteGrupoLegado(s,{transaction:factory(),reviewOnly:true,action:'revert'})).reverted,false);
+        assert.equal((await f.admin.query<{state:string}>('SELECT state FROM pilot_worker_map WHERE source_key=$1',[s.key])).rows[0].state,'REVERTED');
+        assert.equal((await f.admin.query<{ativo:boolean}>('SELECT ativo FROM cliente_locais WHERE id=$1',[created.id])).rows[0].ativo,false);
+        assert.equal((await counts()).audits,before.audits+2);
+        const failing={...s,key:randomUUID(),payload:{...s.payload,legacy_id:randomUUID()}};
+        const conserved=await counts();
+        failAudit=true;
+        try{await assert.rejects(review(failing),/SYNTHETIC_AUDIT_FAILURE/);}finally{failAudit=false;}
+        assert.deepEqual(await counts(),conserved);
+        auditSeen=false;denyLate=true;
+        try{await assert.rejects(review(failing),/SYNTHETIC_LATE_PERMISSION_DENIED/);}finally{denyLate=false;}
+        assert.deepEqual(await counts(),conserved);
+        const sameStreet={...s,key:randomUUID(),payload:{...s.payload,legacy_id:randomUUID()}};
+        const two=await Promise.all([review(sameStreet),review(sameStreet)]);
+        assert.equal(two.filter(result=>result.created===true).length,1);
+        assert.deepEqual(await counts(),{addresses:conserved.addresses+1,maps:conserved.maps+1,audits:conserved.audits+1});
+        await f.admin.query("UPDATE cliente_locais SET referencia='SYNTHETIC_MANUAL_EDIT' WHERE id=$1",[two[0].id]);
+        await assert.rejects(persistirEnderecoClienteGrupoLegado(sameStreet,{transaction:factory(),reviewOnly:true,action:'revert'}),/DESTINATION_CHANGED_OUTSIDE_BATCH/);
       });
       await t.test('logical reversal and ledger are atomic; outside edits remain protected', async () => {
         const s = source(), first = await apply(s), transaction = factory();

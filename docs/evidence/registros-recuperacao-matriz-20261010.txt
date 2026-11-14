@@ -1,4 +1,44 @@
-# Matriz recuperação — privado × DB × API × UI (2026-10-10)
+# Matriz recuperação — privado × DB × API × UI
+
+## Delta adicional comprovado (2026-11-06) — auxiliares nativos
+
+UnidadeMedida:14linhas/14IDs, CSV3857bytes preservado/copiaSHA256 igual.
+TresCSV total711990bytes em privado. Comparacao ordinal EXATA por sigla contra
+os871produtos: unidade_medida/principal/estoque/venda presentes e encontradas
+no cadastro nativo; unidade_compra ausente871. Nenhum fator/equivalencia aprovada.
+PC/UN nao fundidas; CX nao recebe conteudo presumido. Sem restauracao no destino.
+
+Lixeira nativaGrupoProduto: GET200/array0 observado, sem restaurar/excluir.
+Nao prova ausencia em backups ou alem da retencao30dias;817refs nao resolvidas
+e54ausentes continuam pendentes. Marca: leituras200 e429; CSV nao confirmado,
+nao chamar exportacao/recuperacao concluida nem contornar limite. O conectorMCP
+e a sessao web continuam capacidades separadas; nenhuma mudanca de plano.
+
+## Delta comprovado (2026-11-06) — fonte ERP novo, nao legado
+
+Base44 navegador autenticado no appERP Integra/conta proprietaria/Grupo CPA.
+ConectorMCP separado ainda UNAUTHORIZED; reautenticacao historica nao bloqueia
+o navegador. Nenhuma alteracao de app, permissao ou publicacao Base44 executada.
+
+| fonte nativa preservada | linhas / IDs distintos | prova / limite |
+| Produto | 871 / 871 | CSV final679171bytes; origem/copiaSHA256 iguais;870ativos/1inativo;0codigo ausente/duplicado |
+| GrupoProduto | 91 / 91 | CSV final28962bytes; origem/copiaSHA256 iguais |
+
+DoisCSV708133bytes e recibos em armazenamento LOCAL PRIVADO restrito, fora
+do checkout/Git/build/CI. Nenhum registro importado/restaurado no ERP atual.
+Confronto fonte-fonte por ID exato:817produtos com referencia de classe nao
+resolvida nesse conjunto;54sem referencia. IDs nativos preservados, nao ligados
+por nome/codigo similar. Um Grupo de origem em ambos; binding entre destinos
+e demais dependencias ainda exige reconciliacao. Valores de estoque/custo/preco
+da fonte nao foram promovidos a saldos ou operacoes. is_sample=false nao basta
+para declarar historico/saldo operacional homologado.
+
+Classificacao vigente: fonteProduto/GrupoProduto ACESSIVEL E PRESERVADA,
+restauracao no destino PENDENTE; referencias CONFLITANTES/INCOMPLETAS. Proximo:
+conferir classes anteriores/excluidas e outros auxiliares porIDs, comparar com
+destino atual antes de preparar reversao/carga por gate. Nao gerar exemplos.
+
+## Historico (2026-10-10)
 # VPS tip implantado: bd2fa504 · mig 001–024+038+039
 # Dados reais privados fora do GitHub; contagens sanitizadas.
 

@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { transformSync } from 'esbuild';
 import * as policy from '../src/components/cadastros/cadastroReopenPolicy.js';
+import * as localPayload from '../src/api/clienteHttpPayload.js';
 
 /**
  * Contraprovas comportamentais dos formulários COMPLETOS (não Representante/Banco).
@@ -308,6 +309,10 @@ async function mountCompleto(relPath, {
       __esModule: true,
       default: (p) => ({ type: 'GerenciarEnderecosClienteForm', props: p, children: [] }),
     },
+    './ClienteLocaisRevisao': {
+      __esModule: true,
+      default: (p) => ({ type: 'ClienteLocaisRevisao', props: p, children: [] }),
+    },
     './clienteSugestaoVinculoUi': {
       buildClienteSugestaoVinculoBanner: () => ({ visible: false }),
       buildClienteSugestaoVinculoRaceKey: () => '',
@@ -411,6 +416,65 @@ const clienteA = {
   empresa_id: 'e1',
   group_id: 'g1',
 };
+
+test('Cliente com leitura incompleta bloqueia inclusive callback antigo de salvar',async()=>{
+  for(const flag of ['loadIncomplete','isLoadingRecord']){
+    const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{propName:'cliente',initial:clienteA});
+    const saveButton=()=>h.walk().find(n=>n.props?.['data-action']==='Cadastros.Cliente.salvar');
+    const staleSave=saveButton().props.onClick;
+    assert.equal(typeof staleSave,'function');
+    h.render({[flag]:true});h.render();
+    await h.save();
+    assert.equal(saveButton().props.disabled,true);
+    await staleSave();
+    assert.equal(h.updates.length,0);assert.equal(h.creates.length,0);
+    h.render({[flag]:false});h.render();await h.save();
+    assert.equal(h.updates.length,1);assert.equal(h.updates[0].payload.nome,clienteA.nome);
+  }
+});
+
+test('Cliente PF/PJ conserva identidades sem campo visual duplicado',async()=>{
+  for(const [tipo,nome,razao,visible]of [
+    ['Pessoa Física','Pessoa sintética','Legado preservado',true],
+    ['Pessoa Jurídica','Empresa sintética','Empresa sintética',false],
+    ['Pessoa Jurídica','','Empresa sintética',false],
+    ['Pessoa Jurídica','Alias sintético','Empresa sintética',true],
+  ]){
+    const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{
+      propName:'cliente',initial:{...clienteA,tipo,nome,razao_social:razao},
+    });
+    const input=h.walk().find(n=>n.props?.id==='nome');
+    assert.equal(Boolean(input),visible);
+    if(input)assert.equal(input.props.required,tipo==='Pessoa Física');
+    const legal=h.walk().find(n=>n.props?.id==='razao_social');
+    assert.equal(Boolean(legal),tipo==='Pessoa Jurídica');
+    if(legal)assert.equal(legal.props.value,razao);
+    await h.save();
+    assert.equal(h.updates.length,1);
+    assert.equal(h.updates[0].payload.nome,nome);
+    assert.equal(h.updates[0].payload.razao_social,razao);
+  }
+});
+
+test('CadastroClienteCompleto HTTP: RG and loaded extras survive save; explicit RG clear is null',async()=>{
+  const fields={rg:'000123-X',numero_caixa_postal:'00017',cep_caixa_postal:'01234000',caixa_postal_cobranca:'0009',inscricao_produtor_rural:'0000123'};
+  const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{
+    propName:'cliente',initial:{...clienteA,...fields,contatos_version:'a'.repeat(64)},extraModules:{
+      '@/api/base44Client':{base44:{auth:{me:async()=>null},entities:{}},isHttpBackendMode:true},
+      '@/api/clienteHttpPayload':localPayload,
+    },
+  });
+  const rg=()=>h.walk().find(n=>n.props?.id==='rg');
+  assert.equal(rg().props.value,fields.rg);
+  await h.save();
+  let wire=localPayload.toClienteMasterHttpPayload(h.updates[0].payload,{mode:'update'});
+  for(const [key,value]of Object.entries(fields))assert.equal(wire[key],value);
+  rg().props.onChange({target:{value:''}});h.render();
+  await h.save();
+  wire=localPayload.toClienteMasterHttpPayload(h.updates[1].payload,{mode:'update'});
+  assert.equal(wire.rg,null);
+  for(const key of Object.keys(fields).filter(k=>k!=='rg'))assert.equal(wire[key],fields[key]);
+});
 
 const clienteB = {
   id: 'cli-b',
@@ -572,4 +636,27 @@ test('CadastroFornecedorCompleto: updated_date externo com rascunho sujo cancela
   });
   h.render();
   assert.equal(h.getNome(), 'Externo Aceito');
+});
+
+test('CadastroClienteCompleto HTTP: local incompleto e permissao local negada nao gravam MASTER',async()=>{
+  const address={apelido:'Synthetic',tipo_endereco:'Entrega',cep:'01310100',logradouro:'Rua Sintetica',numero:'001',bairro:'Bairro',cidade:'Cidade',estado:'SP',pais:'BRASIL'};
+  for(const denied of [false,true,'principal','oversized','batch']){
+    const local=denied?{...address,principal:denied==='principal'}:{...address,pais:''};
+    if (denied==='oversized') local.logradouro='x'.repeat(221);
+    const locais=denied==='batch'?Array.from({length:51},()=>({...local})):[local];
+    const h=await mountCompleto('src/components/cadastros/CadastroClienteCompleto.jsx',{
+      propName:'cliente',initial:{...clienteA,locais_entrega:locais},extraModules:{
+        '@/api/base44Client':{base44:{auth:{me:async()=>null},entities:{}},isHttpBackendMode:true},
+        '@/api/clienteHttpPayload':localPayload,
+        '@/components/lib/usePermissions':{__esModule:true,default:()=>({canCreate:()=>true,canEdit:()=>true,canDelete:()=>true,
+          hasPermission:(_module,entity,action)=>!(entity==='cliente_local'&&(denied===true||denied==='principal'&&action==='principal')),hasFieldPermission:()=>true,isAdmin:()=>false})},
+      },
+    });
+    await h.save();
+    assert.equal(h.updates.length,0);assert.equal(h.creates.length,0);
+    const expected=denied==='oversized'?'truncado':denied==='batch'?'50 itens':denied?'Permissao de locais ausente':'pais';
+    assert.ok(h.toasts.some(t=>String(t.description||'').includes(expected)));
+    const child=h.walk().find(n=>n.type==='GerenciarEnderecosClienteForm');
+    assert.equal(child.props.enderecos[0].numero,'001');assert.equal(child.props.enderecos[0].pais,local.pais);
+  }
 });

@@ -85,3 +85,132 @@ test('complete address still needs the canonical validator; no fictitious persis
   assert.equal(classifyLegacyAddresses(input, { validateAddress: () => ({ success: false }) }).ready, 0);
   assert.equal(classifyLegacyAddresses(input, { validateAddress: () => ({ success: true }) }).ready, 1);
 });
+
+const ownerPurposeDecision = { version: 'OWNER_ADDRESS_PURPOSE_20261111', sha256: 'a'.repeat(64) };
+test('new purpose revision classifies fiscal and excludes billing without rewriting source', () => {
+  const input = { rows: { cliente: [{ endereco_logradouro: 'Synthetic', endereco_complemento: 'Fundos',
+    endereco_referencia: 'Portao', cobranca_logradouro: 'Synthetic billing', cobranca_cep: '01310100' }], fornecedor: [] } };
+  const before = structuredClone(input);
+  const old = classifyLegacyAddresses(input);
+  const revised = classifyLegacyAddresses(input, { ownerPurposeDecision });
+  assert.equal(old.excludedFromActiveMigration, 0);
+  assert.equal(old.entries[0].targetPurpose, null);
+  assert.equal(revised.entries[0].targetPurpose, 'FISCAL');
+  assert.ok(!revised.entries[0].missing.includes('finalidades'));
+  for (const field of ['complemento','referencia']) assert.ok(revised.entries[0].preservedComponents.includes(field));
+  for (const field of ['numero','pais']) assert.ok(revised.entries[0].missing.includes(field));
+  assert.equal(revised.excludedFromActiveMigration, 1);
+  assert.equal(revised.entries[1].canonicalReady, false);
+  assert.deepEqual(input, before);
+  assert.throws(() => classifyLegacyAddresses(input, { ownerPurposeDecision: { ...ownerPurposeDecision, sha256: '' } }), /EVIDENCE_REQUIRED/);
+});
+
+test('partial address with only complement remains explicitly preserved', () => {
+  const result = classifyLegacyAddresses({ rows: { cliente: [{ endereco_complemento: 'Synthetic' }], fornecedor: [] } }, { ownerPurposeDecision });
+  assert.equal(result.addresses, 1); assert.equal(result.ready, 0);
+  assert.ok(result.entries[0].preservedComponents.includes('complemento'));
+});
+
+const nativeWork = sequence => ({ groupId, clienteId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+  sourceIdentity: { table: 'dbo.ClientesObras', CODIGOCLIENTE: '00001', ITEM: 0, SEQUENCIA: sequence },
+  sourceRowJsonSha256: 'b'.repeat(64), provenComponents: { logradouro: 'Synthetic', complemento: 'Fundos',
+    referencia: 'Portao', cep: '01310100', ufNative: 'SP', latitude: 0, longitude: 0, coordinate_source: 'MANUAL' } });
+test('native Obras preserve separate identities/components and never claim binding or permission', () => {
+  const input = { rows: { cliente: [], fornecedor: [] }, nativeWorks: [nativeWork('0001'), nativeWork('0002')] };
+  const before = structuredClone(input);
+  const old = classifyLegacyAddresses(input);
+  assert.ok(old.entries.every(e => e.conflicts.includes('NATIVE_PURPOSE_UNPROVEN')));
+  const result = classifyLegacyAddresses(input, { ownerPurposeDecision, groupId, validateAddress: () => ({ success: true }) });
+  assert.equal(result.addresses, 2); assert.equal(result.ready, 0);
+  assert.equal(result.fieldsInvented, 0);
+  for (const entry of result.entries) {
+    assert.equal(entry.targetPurpose, 'ENTREGA');
+    assert.ok(!entry.conflicts.includes('NATIVE_PURPOSE_UNPROVEN'));
+    assert.ok(entry.conflicts.includes('NATIVE_BINDING_REVALIDATION_REQUIRED'));
+    assert.equal(entry.recipientPromoted, false);
+    for (const field of ['logradouro','complemento','referencia','latitude','longitude']) assert.ok(entry.preservedComponents.includes(field));
+    for (const field of ['numero','pais']) assert.ok(entry.missing.includes(field));
+  }
+  assert.deepEqual(result.entries.map(e=>e.sourceIdentity.SEQUENCIA), ['0001','0002']);
+  assert.deepEqual(input, before);
+});
+
+test('duplicated native identity, foreign group and invalid proof stay segregated', () => {
+  const other = { ...nativeWork('3'), groupId: 'ffffffff-bbbb-4ccc-8ddd-eeeeeeeeeeee', sourceRowJsonSha256: 'invalid' };
+  const result = classifyLegacyAddresses({ rows: { cliente: [], fornecedor: [] }, nativeWorks: [nativeWork('1'),nativeWork('1'),other] }, { ownerPurposeDecision, groupId });
+  assert.ok(result.entries.slice(0,2).every(e=>e.conflicts.includes('NATIVE_IDENTITY_DUPLICATED')));
+  assert.ok(result.entries[2].conflicts.includes('NATIVE_BINDING_UNPROVEN'));
+  assert.ok(result.entries[2].conflicts.includes('NATIVE_SOURCE_HASH_REQUIRED'));
+  assert.equal(result.ready, 0);
+});
+
+test('native master and Obras use explicit columns without splitting street numbers or copying billing', () => {
+  const nativeCustomers=[{ CODIGOCLIENTE:'00001',ENDERECO:'Synthetic street 99',COMPLEMENTOENDERECO:'Sala 2',
+    BAIRRO:'Synthetic',CIDADE:'Synthetic',CODIGOUF:'SP',CEPCLIENTE:'01310100',ENDERECOCOBRANCA:'Other street' }];
+  const nativeDeliveryRows=[{CODIGOCLIENTE:'00001',ITEM:'001',SEQUENCIA:'0002',ENDERECO:'Work street 100',
+    ComplementoEndereco:'Portao lateral',REFERENCIA:'Synthetic reference',CIDADE:'Synthetic',CODIGOUF:'SP'}];
+  const input={rows:{cliente:[],fornecedor:[]},nativeCustomers,nativeDeliveryRows,
+    nativeParentBindings:{'00001':'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'}};
+  const before=structuredClone(input);
+  const result=classifyLegacyAddresses(input,{ownerPurposeDecision,groupId});
+  assert.equal(result.addresses,3);assert.equal(result.excludedFromActiveMigration,1);assert.equal(result.ready,0);
+  assert.equal(result.entries[0].targetPurpose,'FISCAL');assert.equal(result.entries[2].targetPurpose,'ENTREGA');
+  assert.equal(result.entries[0].sourceIdentity.CODIGOCLIENTE,'00001');
+  assert.equal(result.entries[2].sourceIdentity.ITEM,'001');
+  assert.equal(result.entries[2].sourceIdentity.SEQUENCIA,'0002');
+  assert.ok(result.entries[0].preservedComponents.includes('complemento'));
+  assert.ok(result.entries[2].preservedComponents.includes('referencia'));
+  for(const entry of [result.entries[0],result.entries[2]])for(const key of ['numero','pais'])assert.ok(entry.missing.includes(key));
+  assert.deepEqual(input,before);
+  assert.throws(()=>classifyLegacyAddresses({...input,rows:{cliente:[{}],fornecedor:[]}},{ownerPurposeDecision}),/SOURCE_AMBIGUOUS/);
+  assert.throws(()=>classifyLegacyAddresses({...input,nativeWorks:[]},{ownerPurposeDecision}),/SOURCE_AMBIGUOUS/);
+});
+
+test('whitespace-only native billing does not create an address; zero coordinates remain evidence', () => {
+  const input={rows:{cliente:[],fornecedor:[]},nativeCustomers:[{CODIGOCLIENTE:'01',ENDERECO:'Synthetic',
+    CEPCOBRANCA:'        ',UFCOBRANCA:'  ',ENDERECOCOBRANCA:' ',BAIRROCOBRANCA:'  '}],nativeWorks:[nativeWork('1')]};
+  const result=classifyLegacyAddresses(input,{ownerPurposeDecision});
+  assert.equal(result.addresses,2);assert.equal(result.excludedFromActiveMigration,0);
+  assert.ok(!result.entries.some(e=>e.kind==='cobranca'));
+  assert.ok(result.entries[1].preservedComponents.includes('latitude'));
+  assert.ok(result.entries[1].preservedComponents.includes('longitude'));
+});
+
+test('native Obras preserve identity/text without inferring delivery, street number, country or receiver contacts', () => {
+  const proposal = { clienteId: '11111111-1111-4111-8111-111111111111', groupId,
+    sourceIdentity: { table: 'ClientesObras', CODIGOCLIENTE: '0007', ITEM: '01', SEQUENCIA: '002' },
+    sourceRowJsonSha256: 'a'.repeat(64), sourceText: 'SYNTHETIC STREET 99',
+    provenComponents: { cep: '12345678', cidade: 'SYNTHETIC', bairro: 'SYNTHETIC', ufNative: 'SP' },
+    recipient: { nome: 'SYNTHETIC RECEIVER', telefone: '000123' },
+    target: { finalidades: [{ finalidade: 'ENTREGA' }], pais: 'BR', numero: '99' },
+    canonicalReady: true, pending: ['PURPOSE_NOT_PROVEN'] };
+  const before = structuredClone(proposal);
+  const result = classifyLegacyAddresses({ rows: { cliente: [], fornecedor: [] }, nativeWorks: [proposal] },
+    { validateAddress: () => ({ success: true }) });
+  assert.deepEqual(proposal, before);
+  assert.equal(result.ready, 0);
+  const entry = result.entries[0];
+  assert.equal(entry.kind, 'obra_referencia');
+  assert.equal(entry.sourceIdentity.CODIGOCLIENTE, '0007');
+  assert.equal(entry.sourceIdentity.SEQUENCIA, '002');
+  assert.equal(entry.sourceText, proposal.sourceText);
+  assert.equal(entry.recipientPromoted, false);
+  for (const key of ['numero', 'pais', 'finalidades', 'logradouro']) assert.ok(entry.missing.includes(key));
+  assert.ok(entry.conflicts.includes('NATIVE_PURPOSE_UNPROVEN'));
+  assert.equal(result.fieldsInvented, 0);
+});
+
+test('native Obras isolate invalid CEP and missing provenance; stable repeated classification never applies data', () => {
+  const input = { rows: { cliente: [], fornecedor: [] }, nativeWorks: [
+    { provenComponents: { cep: '1', ufNative: 'SP' }, sourceIdentity: { CODIGOCLIENTE: '0001' } },
+    { provenComponents: { cep: '12345678', ufNative: 'SP' } },
+  ] };
+  const result = classifyLegacyAddresses(input);
+  assert.deepEqual(classifyLegacyAddresses(input), result);
+  assert.equal(result.addresses, 2);
+  assert.equal(result.ready, 0);
+  assert.ok(result.entries[0].conflicts.includes('CEP_FORMAT'));
+  assert.equal(result.entries[1].conflicts.includes('CEP_FORMAT'), false);
+  assert.ok(result.entries.every(row => row.conflicts.includes('NATIVE_SOURCE_HASH_REQUIRED')));
+  assert.equal(result.groups.reduce((sum, group) => sum + group.count, 0), 2);
+});
