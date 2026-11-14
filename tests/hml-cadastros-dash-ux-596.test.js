@@ -50,6 +50,25 @@ test('Dashboard: contagens usam formatDashboardCountDisplay (— ≠ 0 falso)', 
   assert.match(dash, /amostra carregada · ≠ total global confirmado/);
 });
 
+test('Dashboard: KPIs derivados dinheiro/% fail-closed (— ≠ R$ 0,00 / 0%)', () => {
+  const fin = readFileSync('src/components/dashboard/FinancialSummary.jsx', 'utf8');
+  assert.match(dash, /formatCanaisOrigemKpiDisplay/);
+  assert.match(dash, /fluxoCaixaDisplay/);
+  assert.match(dash, /vendasPeriodoDisplay/);
+  assert.match(dash, /otdDisplay/);
+  assert.match(dash, /taxaInadimplenciaDisplay/);
+  assert.match(dash, /financeiroSampleOk/);
+  assert.match(dash, /amostra indisponível ≠ R\$ 0,00/);
+  assert.match(dash, /isError: errorContasReceber/);
+  assert.match(dash, /isError: errorPedidos/);
+  assert.doesNotMatch(dash, /value: `R\$ \$\{fluxoCaixa\.toLocaleString/);
+  assert.doesNotMatch(dash, /value: `\$\{otd\}%`/);
+  assert.match(fin, /receitasPendentesDisplay/);
+  assert.match(fin, /fluxoCaixaDisplay/);
+  assert.match(fin, /data-block="dashboard-financial-summary"/);
+  assert.doesNotMatch(fin, /receitasPendentes\.toLocaleString/);
+});
+
 test('DashboardCorporativo: count fail-closed (— ≠ 0; sem || length)', () => {
   const corp = readFileSync('src/pages/DashboardCorporativo.jsx', 'utf8');
   assert.match(corp, /resolveDashboardCountAfterFailure/);

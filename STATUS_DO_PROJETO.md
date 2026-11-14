@@ -1,8 +1,21 @@
+## Cursor — PR596 Dashboard KPIs derivados fail-closed (2026-11-14 America/Sao_Paulo)
+
+Fluxo/Vendas/Ticket/Conversão/OTD/Peso/Aproveitamento/Inadimplência +
+FinancialSummary: amostra vazia/erro/cap → "—" (≠ R$ 0,00 / 0%). Reusa
+`formatCanaisOrigemKpiDisplay`. Sem Completo/deploy. tip ≠ HML `d054e2b3`.
+
+## Cursor — PR596 tip 4485508c9 CI SUCCESS — Formas rebalance (2026-11-14 America/Sao_Paulo)
+
+HEAD **`4485508c9` CI SUCCESS** (43647313537). Bugbot tip **neutral**.
+Freeze endereços `0ffff5100` / port Casa `81d1e849`. tip ≠ HML `d054e2b3`.
+Sem deploy. Completo Bugbot High (ownership em load) permanece com Casa/freeze.
+Próximo Cursor: Dashboard/Cadastros/C360 sem Completo; Casa preflight pacote 81.
+
 ## Cursor — PR596 Bugbot Formas rebalance vs hydrate (2026-11-14 America/Sao_Paulo)
 
 Bugbot High f760: `skipRebalanceOnceRef` + baseline — não sobrescrever valores
 hidratados/custom; rebalance só se total/acréscimo mudarem; nº fica com
-gerarParcelas. Tip pushed — aguarda CI. tip ≠ HML. Sem deploy.
+gerarParcelas. **`4485508c9` CI SUCCESS**. tip ≠ HML. Sem deploy.
 
 ## Cursor — PR596 tip f7603d651 CI SUCCESS — Bugbot/Casa lote (2026-11-14 America/Sao_Paulo)
 

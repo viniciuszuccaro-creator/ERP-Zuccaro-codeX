@@ -84,7 +84,16 @@ import {
   resolveDashboardCountAfterFailure,
   formatDashboardCountDisplay,
   dashboardCountSubtitle,
+  formatCanaisOrigemKpiDisplay,
+  isCappedListUnreliable,
+  DASHBOARD_LIST_SOFT_LIMIT,
 } from "@/components/lib/dashboardKpiPolicy";
+
+const formatDashboardMoneyBrl = (n) =>
+  `R$ ${Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+const formatDashboardPct = (n) => `${Number(n)}%`;
+const formatDashboardKg = (n) =>
+  `${Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg`;
 
 const reportDashboardFailure = (operation, error, context = {}) => {
   console.error('[Dashboard] ' + operation, {
@@ -200,7 +209,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const refetchInterval = hasContextoAtivo ? ((activeTab === 'resumo' && autoRefresh) ? 60000 : 0) : false;
 
-  const { data: pedidos = [] } = useQuery({
+  const { data: pedidos = [], isError: errorPedidos } = useQuery({
       enabled: Boolean(canSeeComercial && hasContextoAtivo),
       queryKey: ['pedidos', ...contextQueryKey],
       queryFn: async () => {
@@ -243,7 +252,7 @@ export default function Dashboard() {
   });
   const totalPedidosDisplay = formatDashboardCountDisplay(totalPedidosResolved);
 
-  const { data: contasReceber = [] } = useQuery({
+  const { data: contasReceber = [], isError: errorContasReceber } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['contasReceber', ...contextQueryKey],
       queryFn: async () => {
@@ -259,7 +268,7 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: contasPagar = [] } = useQuery({
+  const { data: contasPagar = [], isError: errorContasPagar } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['contasPagar', ...contextQueryKey],
       queryFn: async () => {
@@ -275,7 +284,7 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: entregas = [] } = useQuery({
+  const { data: entregas = [], isError: errorEntregas } = useQuery({
       enabled: Boolean(canSeeExpedicao && hasContextoAtivo),
       queryKey: ['entregas', ...contextQueryKey],
       queryFn: async () => {
@@ -307,7 +316,7 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: produtos = [] } = useQuery({
+  const { data: produtos = [], isError: errorProdutos } = useQuery({
       enabled: Boolean(canSeeEstoque && hasContextoAtivo),
       queryKey: ['produtos', ...contextQueryKey],
       queryFn: async () => {
@@ -351,7 +360,7 @@ export default function Dashboard() {
   });
   const totalProdutosDisplay = formatDashboardCountDisplay(totalProdutosResolved);
 
-  const { data: clientes = [] } = useQuery({
+  const { data: clientes = [], isError: errorClientes } = useQuery({
       enabled: Boolean(canSeeCRM && hasContextoAtivo),
       queryKey: ['clientes', ...contextQueryKey],
       queryFn: async () => {
@@ -417,7 +426,7 @@ export default function Dashboard() {
   });
   const totalColaboradoresDisplay = formatDashboardCountDisplay(totalColaboradoresResolved);
 
-  const { data: ordensProducao = [] } = useQuery({
+  const { data: ordensProducao = [], isError: errorOrdensProducao } = useQuery({
       enabled: Boolean(canSeeProducao && hasContextoAtivo),
       queryKey: ['ordensProducao', ...contextQueryKey],
       queryFn: async () => {
@@ -433,7 +442,7 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: notasFiscais = [] } = useQuery({
+  const { data: notasFiscais = [], isError: errorNotasFiscais } = useQuery({
       enabled: Boolean((canSeeFinanceiro || canSeeFiscal || canSeeComercial) && hasContextoAtivo),
       queryKey: ['notasFiscais', ...contextQueryKey],
       queryFn: async () => {
@@ -450,7 +459,7 @@ export default function Dashboard() {
 
   const nfAutorizadas = (notasFiscais || []).filter(n => n?.status === 'Autorizada').length;
 
-  const { data: cobrancas = [] } = useQuery({
+  const { data: cobrancas = [], isError: errorCobrancas } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['cobrancas', ...contextQueryKey],
       queryFn: async () => {
@@ -670,11 +679,107 @@ export default function Dashboard() {
     navigate(url);
   };
 
+  // Listas com initialData []: vazia/erro/cap ≠ zero confirmado (fail-closed em dinheiro/%).
+  const pedidosSampleOk = Boolean(
+    canSeeComercial && hasContextoAtivo && !errorPedidos
+    && Array.isArray(pedidos) && pedidos.length > 0
+    && !isCappedListUnreliable(pedidos, DASHBOARD_LIST_SOFT_LIMIT),
+  );
+  const clientesSampleOk = Boolean(
+    canSeeCRM && hasContextoAtivo && !errorClientes
+    && Array.isArray(clientes) && clientes.length > 0
+    && !isCappedListUnreliable(clientes, DASHBOARD_LIST_SOFT_LIMIT),
+  );
+  const financeiroSampleOk = Boolean(
+    canSeeFinanceiro && hasContextoAtivo && !errorContasReceber && !errorContasPagar
+    && (
+      (Array.isArray(contasReceber) && contasReceber.length > 0
+        && !isCappedListUnreliable(contasReceber, DASHBOARD_LIST_SOFT_LIMIT))
+      || (Array.isArray(contasPagar) && contasPagar.length > 0
+        && !isCappedListUnreliable(contasPagar, DASHBOARD_LIST_SOFT_LIMIT))
+    ),
+  );
+  const entregasSampleOk = Boolean(
+    canSeeExpedicao && hasContextoAtivo && !errorEntregas
+    && Array.isArray(entregas) && entregas.length > 0
+    && !isCappedListUnreliable(entregas, DASHBOARD_LIST_SOFT_LIMIT),
+  );
+  const producaoSampleOk = Boolean(
+    canSeeProducao && hasContextoAtivo && !errorOrdensProducao
+    && Array.isArray(ordensProducao) && ordensProducao.length > 0
+    && !isCappedListUnreliable(ordensProducao, DASHBOARD_LIST_SOFT_LIMIT),
+  );
+  const vendasBlocked = !pedidosSampleOk;
+  const fluxoBlocked = !financeiroSampleOk;
+  const conversaoBlocked = !pedidosSampleOk || !clientesSampleOk;
+  const otdBlocked = !entregasSampleOk;
+  const producaoBlocked = !producaoSampleOk;
+  const inadimplenciaBlocked = !financeiroSampleOk;
+
+  const vendasPeriodoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: vendasBlocked,
+    value: totalVendas,
+    format: formatDashboardMoneyBrl,
+  });
+  const ticketMedioDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: vendasBlocked,
+    value: ticketMedio,
+    format: formatDashboardMoneyBrl,
+  });
+  const fluxoCaixaDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: fluxoBlocked,
+    value: fluxoCaixa,
+    format: formatDashboardMoneyBrl,
+  });
+  const taxaConversaoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: conversaoBlocked,
+    value: Number(taxaConversao),
+    format: formatDashboardPct,
+  });
+  const otdDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: otdBlocked,
+    value: Number(otd),
+    format: formatDashboardPct,
+  });
+  const pesoProduzidoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: producaoBlocked,
+    value: pesoProduzido,
+    format: formatDashboardKg,
+  });
+  const aproveitamentoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: producaoBlocked,
+    value: Number(aproveitamentoBarra),
+    format: formatDashboardPct,
+  });
+  const taxaInadimplenciaDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: inadimplenciaBlocked,
+    value: Number(taxaInadimplencia),
+    format: formatDashboardPct,
+  });
+  const valorVencidoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: inadimplenciaBlocked,
+    value: valorVencido,
+    format: formatDashboardMoneyBrl,
+  });
+  const receitasPendentesDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: fluxoBlocked,
+    value: receitasPendentes,
+    format: formatDashboardMoneyBrl,
+  });
+  const despesasPendentesDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: fluxoBlocked,
+    value: despesasPendentes,
+    format: formatDashboardMoneyBrl,
+  });
+  const fluxoCaixaReliable = !fluxoBlocked && typeof fluxoCaixa === 'number' && Number.isFinite(fluxoCaixa);
+
   const statsCards = [
     {
       title: "Vendas do Período",
-      value: `R$ ${totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      subtitle: `${pedidosPeriodo.length} pedidos`,
+      value: vendasPeriodoDisplay,
+      subtitle: vendasBlocked
+        ? (canSeeComercial ? 'amostra indisponível ≠ R$ 0,00' : 'sem permissão neste perfil')
+        : `${pedidosPeriodo.length} pedidos`,
       icon: DollarSign,
       color: "from-green-500 to-green-600",
       bgColor: "bg-green-50",
@@ -684,8 +789,8 @@ export default function Dashboard() {
     },
     {
       title: "Ticket Médio",
-      value: `R$ ${ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      subtitle: "por pedido",
+      value: ticketMedioDisplay,
+      subtitle: vendasBlocked ? 'amostra indisponível ≠ R$ 0,00' : "por pedido",
       icon: TrendingUp,
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-50",
@@ -695,19 +800,27 @@ export default function Dashboard() {
     },
     {
       title: "Fluxo de Caixa",
-      value: `R$ ${fluxoCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-      subtitle: `${fluxoCaixa >= 0 ? 'Positivo' : 'Negativo'}`,
+      value: fluxoCaixaDisplay,
+      subtitle: fluxoCaixaReliable
+        ? `${fluxoCaixa >= 0 ? 'Positivo' : 'Negativo'}`
+        : (canSeeFinanceiro ? 'amostra indisponível ≠ R$ 0,00' : 'sem permissão neste perfil'),
       icon: DollarSign,
-      color: fluxoCaixa >= 0 ? "from-emerald-500 to-emerald-600" : "from-orange-500 to-orange-600",
-      bgColor: fluxoCaixa >= 0 ? "bg-emerald-50" : "bg-orange-50",
-      textColor: fluxoCaixa >= 0 ? "text-emerald-600" : "text-orange-600",
+      color: fluxoCaixaReliable
+        ? (fluxoCaixa >= 0 ? "from-emerald-500 to-emerald-600" : "from-orange-500 to-orange-600")
+        : "from-slate-400 to-slate-500",
+      bgColor: fluxoCaixaReliable
+        ? (fluxoCaixa >= 0 ? "bg-emerald-50" : "bg-orange-50")
+        : "bg-slate-50",
+      textColor: fluxoCaixaReliable
+        ? (fluxoCaixa >= 0 ? "text-emerald-600" : "text-orange-600")
+        : "text-slate-600",
       link: createPageUrl("Financeiro"),
       drillDown: () => handleDrillDown(createPageUrl("Financeiro"))
     },
     {
       title: "Taxa de Conversão",
-      value: `${taxaConversao}%`,
-      subtitle: "vendas/clientes",
+      value: taxaConversaoDisplay,
+      subtitle: conversaoBlocked ? 'amostra indisponível ≠ 0%' : "vendas/clientes",
       icon: TrendingUp,
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-50",
@@ -722,17 +835,25 @@ export default function Dashboard() {
   const kpisOperacionais = [
     {
       title: "OTD (On-Time)",
-      value: `${otd}%`,
-      subtitle: `${entregasNoPrazo.length}/${entregasConcluidas.length} entregas`,
+      value: otdDisplay,
+      subtitle: otdBlocked
+        ? (canSeeExpedicao ? 'amostra indisponível ≠ 0%' : 'sem permissão neste perfil')
+        : `${entregasNoPrazo.length}/${entregasConcluidas.length} entregas`,
       icon: CheckCircle,
-      color: Number(otd) >= 90 ? "text-green-600" : Number(otd) >= 70 ? "text-orange-600" : "text-red-600",
-      bgColor: Number(otd) >= 90 ? "bg-green-50" : Number(otd) >= 70 ? "bg-orange-50" : "bg-red-50",
+      color: otdBlocked
+        ? "text-slate-600"
+        : Number(otd) >= 90 ? "text-green-600" : Number(otd) >= 70 ? "text-orange-600" : "text-red-600",
+      bgColor: otdBlocked
+        ? "bg-slate-50"
+        : Number(otd) >= 90 ? "bg-green-50" : Number(otd) >= 70 ? "bg-orange-50" : "bg-red-50",
       drillDown: () => handleDrillDown(createPageUrl("Expedicao"))
     },
     {
       title: "Peso Produzido",
-      value: `${pesoProduzido.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg`,
-      subtitle: `${opsConcluidasCount} OPs concluídas`,
+      value: pesoProduzidoDisplay,
+      subtitle: producaoBlocked
+        ? (canSeeProducao ? 'amostra indisponível ≠ 0 kg' : 'sem permissão neste perfil')
+        : `${opsConcluidasCount} OPs concluídas`,
       icon: Package,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
@@ -740,20 +861,30 @@ export default function Dashboard() {
     },
     {
       title: "Aproveitamento",
-      value: `${aproveitamentoBarra}%`,
-      subtitle: "aproveitamento de barra",
+      value: aproveitamentoDisplay,
+      subtitle: producaoBlocked ? 'amostra indisponível ≠ 0%' : "aproveitamento de barra",
       icon: Percent,
-      color: Number(aproveitamentoBarra) >= 90 ? "text-green-600" : Number(aproveitamentoBarra) >= 80 ? "text-orange-600" : "text-red-600",
-      bgColor: Number(aproveitamentoBarra) >= 90 ? "bg-green-50" : Number(aproveitamentoBarra) >= 80 ? "bg-orange-50" : "bg-red-50",
+      color: producaoBlocked
+        ? "text-slate-600"
+        : Number(aproveitamentoBarra) >= 90 ? "text-green-600" : Number(aproveitamentoBarra) >= 80 ? "text-orange-600" : "text-red-600",
+      bgColor: producaoBlocked
+        ? "bg-slate-50"
+        : Number(aproveitamentoBarra) >= 90 ? "bg-green-50" : Number(aproveitamentoBarra) >= 80 ? "bg-orange-50" : "bg-red-50",
       drillDown: () => handleDrillDown(createPageUrl("Producao"))
     },
     {
       title: "Inadimplência",
-      value: `${taxaInadimplencia}%`,
-      subtitle: `R$ ${valorVencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} vencido`,
+      value: taxaInadimplenciaDisplay,
+      subtitle: inadimplenciaBlocked
+        ? (canSeeFinanceiro ? 'amostra indisponível ≠ 0%' : 'sem permissão neste perfil')
+        : `${valorVencidoDisplay} vencido`,
       icon: AlertCircle,
-      color: Number(taxaInadimplencia) < 5 ? "text-green-600" : Number(taxaInadimplencia) < 10 ? "text-orange-600" : "text-red-600",
-      bgColor: Number(taxaInadimplencia) < 5 ? "bg-green-50" : Number(taxaInadimplencia) < 10 ? "bg-orange-50" : "bg-red-50",
+      color: inadimplenciaBlocked
+        ? "text-slate-600"
+        : Number(taxaInadimplencia) < 5 ? "text-green-600" : Number(taxaInadimplencia) < 10 ? "text-orange-600" : "text-red-600",
+      bgColor: inadimplenciaBlocked
+        ? "bg-slate-50"
+        : Number(taxaInadimplencia) < 5 ? "bg-green-50" : Number(taxaInadimplencia) < 10 ? "bg-orange-50" : "bg-red-50",
       drillDown: () => handleDrillDown(createPageUrl("Financeiro"))
     }
   ];
@@ -762,24 +893,32 @@ export default function Dashboard() {
   const clientesKpiDisplay = canSeeCRM ? totalClientesDisplay : '—';
   // Contagem derivada da lista carregada: zero da amostra ≠ total global confirmado.
   const entregasPendentesDisplay = canSeeExpedicao
-    ? (Number(entregasPendentes) > 0
-      ? Number(entregasPendentes).toLocaleString('pt-BR')
-      : (Array.isArray(entregas) && entregas.length > 0 ? '0' : '—'))
+    ? (errorEntregas
+      ? '—'
+      : (Number(entregasPendentes) > 0
+        ? Number(entregasPendentes).toLocaleString('pt-BR')
+        : (Array.isArray(entregas) && entregas.length > 0 ? '0' : '—')))
     : '—';
   const estoqueBaixoDisplay = canSeeEstoque
-    ? (Number(produtosBaixoEstoque) > 0
-      ? Number(produtosBaixoEstoque).toLocaleString('pt-BR')
-      : (Array.isArray(produtos) && produtos.length > 0 ? '0' : '—'))
+    ? (errorProdutos
+      ? '—'
+      : (Number(produtosBaixoEstoque) > 0
+        ? Number(produtosBaixoEstoque).toLocaleString('pt-BR')
+        : (Array.isArray(produtos) && produtos.length > 0 ? '0' : '—')))
     : '—';
   const nfAutorizadasDisplay = (canSeeFinanceiro || canSeeFiscal || canSeeComercial)
-    ? (Number(nfAutorizadas) > 0
-      ? Number(nfAutorizadas).toLocaleString('pt-BR')
-      : (Array.isArray(notasFiscais) && notasFiscais.length > 0 ? '0' : '—'))
+    ? (errorNotasFiscais
+      ? '—'
+      : (Number(nfAutorizadas) > 0
+        ? Number(nfAutorizadas).toLocaleString('pt-BR')
+        : (Array.isArray(notasFiscais) && notasFiscais.length > 0 ? '0' : '—')))
     : '—';
   const cobrancasPagasDisplay = canSeeFinanceiro
-    ? (Number(cobrancasPagas) > 0
-      ? Number(cobrancasPagas).toLocaleString('pt-BR')
-      : (Array.isArray(cobrancas) && cobrancas.length > 0 ? '0' : '—'))
+    ? (errorCobrancas
+      ? '—'
+      : (Number(cobrancasPagas) > 0
+        ? Number(cobrancasPagas).toLocaleString('pt-BR')
+        : (Array.isArray(cobrancas) && cobrancas.length > 0 ? '0' : '—')))
     : '—';
 
   const kpiCards = [
@@ -1324,7 +1463,12 @@ export default function Dashboard() {
 
           {/* Resumo Financeiro */}
           {canSeeFinanceiro && (
-          <FinancialSummary receitasPendentes={receitasPendentes} despesasPendentes={despesasPendentes} fluxoCaixa={fluxoCaixa} />
+          <FinancialSummary
+            receitasPendentesDisplay={receitasPendentesDisplay}
+            despesasPendentesDisplay={despesasPendentesDisplay}
+            fluxoCaixaDisplay={fluxoCaixaDisplay}
+            fluxoCaixa={fluxoCaixaReliable ? fluxoCaixa : null}
+          />
           )}
 
           {/* NOVO: Gamificação */}

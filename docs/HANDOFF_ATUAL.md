@@ -1,7 +1,18 @@
+## Cursor — PR596 Dashboard KPIs derivados fail-closed (2026-11-14 America/Sao_Paulo)
+
+Fluxo/OTD/%/FinancialSummary: — ≠ R$ 0,00. tip ≠ HML. Sem Completo/deploy.
+Aguarda CI. Freeze `0ffff5100` / port `81d1e849`. Casa: Completo ownership + pacote 81.
+
+## Cursor — PR596 tip 4485508c9 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Formas rebalance vs hydrate. CI **43647313537** SUCCESS; Bugbot tip neutral.
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+Completo ownership-in-load: Casa/freeze.
+
 ## Cursor — PR596 Bugbot Formas rebalance vs hydrate (2026-11-14 America/Sao_Paulo)
 
 skipRebalanceOnce + baseline — valores salvos preservados. tip ≠ HML. Sem deploy.
-Aguarda CI. Casa: Formas e6 PASS focado; PedidoCanonico f2 próximo.
+CI tip SUCCESS. Casa: Formas e6 PASS focado; PedidoCanonico f2 fechado.
 
 ## Cursor — PR596 tip f7603d651 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
