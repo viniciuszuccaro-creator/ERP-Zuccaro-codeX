@@ -1,3 +1,36 @@
+## Revisao independente Dashboard Produtos/Producao e Estruturantes (2026-11-14)
+
+Heartbeat nativo21:53:16.677Z, Casa/CPA, base ded54af4 local/remoto iguais,
+checkout limpo/sem escritor no recurso; reserva594/6884810786 e travaCreateNew.
+Cursor596 avancou para0de8d88359bd5f0bcc77a00e270b59bf1a10ba55; nenhuma branch
+Cursor/Empresa editada, nenhum port/runtime/dado/deploy alterado.
+
+Consumidores REAIS ReactSSR + QueryClient/useQuery + policies canonicas,
+Auth/contexto/transporte e folhasUI/charts sinteticos.18cenarios executados:
+10Produtos/Producao,8Estruturantes. Nao Reactclientmontado/browser/API/PG,
+nao aceiteglobal; nenhuma consulta real/escrita de negocio.
+
+Produtos: zero confirmado/1produto/cache revogado/contexto/RBAC/loading,
+falhaOP isolada preservando KPIProduto, falhaProduto e capEXATO9999 comprovados.
+Fixtureinicial500 corrigida para limitecanonico9999; nao defeito do produto.
+P2pendentesCursor:Top5 de100OPs sem indicarrecorte; Produto503+OPcarregada
+renderizaDesconhecido com unidadeUN inferida. Parecer596/6884793571.
+
+Estruturantes: sucesso vazio/1marca/erroMarca isolado/cap9999/revogacao cache/
+semcontexto/negacaofria comprovados. P2: primeirocarregamento com queriespendentes
+mostra5zeros antes de resposta, apesar de avisoCarregando; bloqueios porentidade
+ignoram isPending. Parecer596/6884810577. Preservar zero somente confirmado.
+Harnesses/recibos privados review-products-0de-ssr e review-estruturantes-0de-ssr
+foraGit. Revisoes somenteleitura liberadas; CI7145ded54af4 intacta/naorepetida.
+
+PROXIMO ITEM EXECUTAVEL: Codex revisa delta existente FormasPagamentoPedido
+(e6a5b44a, hydrate/parcelas, resolverHEADatual e somente delta) com consumidorreal
+isolado, semeditarbranchCursor. Cursor corrige3P2porSHA. SFTP pedido unico ainda
+pendente; nao presumirsessao nemrepetirpergunta. HMLd054e2b3/arquivo81/guards e
+planoprivado v9canApplyfalse inalterados; semDDL/carga/grant/deploy. Mesmaautomacao
+15min permaneceACTIVE enquanto esseitemindependenteexecutavel existe; depois
+pausar se restarem somente acesso/revisao/gates, sempollingvazio.
+
 ## Prova PostgreSQL embarcado dos guards e tresclausulas (2026-11-14)
 
 Extensao JUSTIFICADA do MESMO heartbeat20:59:15.645Z, reservas594/6884445742 e
