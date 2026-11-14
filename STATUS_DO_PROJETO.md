@@ -1,9 +1,15 @@
+## Cursor — PR596 Bugbot FormasPagamentoPedido hydrate parcelas (2026-11-14 America/Sao_Paulo)
+
+Bugbot High: `userRequestedRegenRef` — não regenerar vencimentos enquanto
+parcelas ainda vazias (hydrate do pai). Tip `e6a5b44aa` pushed — aguarda CI.
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+Completo/endereços: achados Bugbot no Completo ficam com Casa/freeze.
+
 ## Cursor — PR596 tip e913b0f0e CI SUCCESS — Estruturantes + Bugbot OP (2026-11-14 America/Sao_Paulo)
 
 HEAD **`e913b0f0e` CI SUCCESS** (43643870008). Inclui Bugbot ProdutosProducao
 `6b3e4a1bd` CI SUCCESS (43643708107). tip ≠ HML `d054e2b3`. Sem deploy.
-Freeze `0ffff5100` / port `81d1e849`. Próximo: Casa preflight pacote 81 /
-próximo card Base44 residual fora dos 3 dashboards cadastros.
+Freeze `0ffff5100` / port `81d1e849`.
 
 ## Cursor — PR596 DashboardEstruturantes KPI fail-closed (Base44) (2026-11-14 America/Sao_Paulo)
 
