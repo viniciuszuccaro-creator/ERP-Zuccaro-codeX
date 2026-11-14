@@ -1,0 +1,20 @@
+[Unit]
+Description=Backup privado e restore verificado da HML ERP Zuccaro
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+ExecStart=/usr/bin/bash /root/erp-private/hml-recovery-20261114/backup-runtime/create-pre-gate-e-backup.sh --hml /root/erp-private/hml-recovery-20261114/backup.private.json
+Nice=10
+IOSchedulingClass=idle
+CPUQuota=10%
+MemoryMax=192M
+TimeoutStartSec=15min
+KillMode=control-group
+NoNewPrivileges=true
+PrivateTmp=true
+

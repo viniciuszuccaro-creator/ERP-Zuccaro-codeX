@@ -1,3 +1,16 @@
+## Backup HML - implementacao aguardando CI/ensaio (2026-11-14)
+
+Modo HML no scriptbackup existente + helpers de snapshot/restore/retencao e
+copia externa; unidades systemd preparadas, NAO instaladas/ativadas ainda.
+Politica7VPS/30desktop, sem remover historicos; expirarVPS somente apos ack
+externo e restore verificado. FonteREADONLY consistente, restore em base nova
+propria no mesmoPGisolado, comparar conteudo/IDs e nao apenas contagens.
+Focal3PASS (8contraprovasPython),audit/lint/typecheck/build/bashsyntaxPASS;
+CIUbuntu e execucao real pendentes. Nenhuma carga ou escrita de cadastro.
+Outropc solicitado; retorno ainda pendente. Enderecos apenas em revisao NAO
+atendem ao uso operacional: enriquecimento/ativacao/contratos seguem pacote
+separado e gates correspondentes, sem amplia-los neste lote de backup.
+
 ## HML - acesso e100clientes confirmados pelo proprietario (2026-11-14)
 
 https://hml-erp.cpaferroeaco.com.br/ autenticada. Conferencia Chrome na origem

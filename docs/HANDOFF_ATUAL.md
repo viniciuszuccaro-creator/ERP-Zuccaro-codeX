@@ -1,3 +1,37 @@
+## Backup HML - pacote em validacao, ainda nao agendado (2026-11-14)
+
+Codex desktop DELL-VINI, base7fa37aaf limpa/remota igual; reserva PR594/6877168958
+e lease privado hml-backup-retention. UI/enderecos/Central360 livres ao Cursor.
+Escopo deste lote: backupautomatico/retencao/copia externa e preparooutroPC,
+NAO ativacao dos enderecos ou nova carga. Impedimento operacional dos enderecos
+em revisao registrado pelo proprietario permanece aberto para pacote canonico.
+
+Reutilizado create-pre-gate-e-backup.sh por modo --hml <configprivada>, sem mudar
+defaults/comportamento legado. Auxiliares hml-backup.py (guarda fisica/snapshot/
+restore/retencao) e sync-hml-backup.mjs (transporte privado existente, sem outro
+servico SSH) necessarios: rotina anterior nao tinha contrato HML/restorerreal ou
+copia externa/ack. Nao criam outra HML/cadastro/importador. Unidades systemd
+propostas: diario03h30Brasilia+ate5min, PGmesmoisolado1GiB/0,40CPU; helper10%CPU,
+192MiB. Exporta snapshotREADONLY consistente e restaura dump em base temporaria
+criada pela propria execucao, compara IDs/valores de todas tabelas HML e remove
+somente essa base apos sucesso. Banco fonte e ERP operacional nao restaurados.
+
+Retencao proposta:7geracoesVPS, antigas elegiveis somente com copiaexterna
+confirmada;30geracoes no desktop privado. Nunca apagar backups historicos fora
+do diretorio proprio. Reserva>=20GiB+espaco para ensaio; bloquear sob conflito,
+hash/identidade/permissoes ou capacidade. Dump/globals/config e recibos sempre
+privados. Identidade administrativa somente manutencao, NAO leitor estrito.
+Transporte por SSHalias existente strictHostKeyChecking/BatchMode, checksum,
+recibos imutaveis e ack separado. Agendamento externo depende desktop ligado/
+conectado/logado; nao declarar offsite sempre atualizado ou scheduler instalado.
+
+Focados3PASS (inclui8contraprovasPython), bashsyntax/audit/lint/typecheck/buildPASS;
+lint2warnings antigos. Suite completa sera fechada na CIUbuntu pela excecao
+draft existente; nao repetir Windowsfull com prerequisitosPOSIX conhecidos.
+Nao ativar timer antes de CI/revisao e ensaio real/copiaexterna verificada.
+Proximo: CI do pacote -> ensaio real -> timer e tarefa externa -> recibos reais.
+TesteoutroPC solicitado ao proprietario na URLHTTPS; ainda sem resultado novo.
+
 ## Acesso autenticado HML confirmado - sem escrita de cadastro (2026-11-14)
 
 Proprietario confirmou abertura e100clientes na nova URL HTTPS. Chrome na mesma
