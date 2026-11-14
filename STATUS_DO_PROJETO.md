@@ -1,17 +1,19 @@
-## Cursor — PR596 Casa montagem React + candidata 197bbc090 (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Casa montagem React 40 PASS + port seletivo (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
-| Ref | Tip | CI / runtime |
-|-----|-----|----------------|
-| **Candidata UI freeze** | **`197bbc090`** | **CI SUCCESS** (run 43624913215) |
-| Tip `6b7bcc3dc` | AST harness | **CI SUCCESS** |
-| **HEAD** | **`f804b1f12`** | CI SUCCESS docs; Casa #6882120998 montagem React privada |
-| Tip `c644b6785` | surfaceKey | Casa mutationFn PASS; CI FAIL AST (histórico) |
-| **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
+| Ref | Tip | Prova |
+|-----|-----|-------|
+| **Candidata freeze** | **`197bbc090`** | CI SUCCESS 43624913215; Completo blob `d81264b5` |
+| Casa montagem | `f804b1f12` | **40 PASS** (#6882204635); Completo blob **igual** `d81264b5` |
+| Contraprova fail | `c17fbfa29` | Casa: monta e FALHA `B_draft_unchanged` (blob `66e4ac84`) |
+| Casa mutationFn | `c644b6785` | PASS sintético; CI FAIL AST (histórico) |
+| **HML** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Casa assume harness React montado privado do HEAD `f804b1f12` (sem editar branch
-Cursor). Cursor: **não toca** Completo/`clienteHttpPayload` neste heartbeat; inventário
-Cadastros/Base44. Freeze Codex: SHA **`197bbc090`**. Sem implantar.
+### Port seletivo (coordenação Cursor → cadeia Codex)
+Hunks aprovados (Completo + `clienteHttpPayload` + peels/AST harness) **já estão** na
+PR596 / candidata **`197bbc090`** — mesmo blob Completo que Casa montou em `f804`.
+**Não** portar Dashboard nem branches inteiras. Cadeia: Continuity591→595→596.
+Não é E2E HTTP/PG/HML nem aceite global. Sem implantar.
 
 ### Inventário Cadastros (Etapa 6) — estrutura tip `f804b1f12`
 Seis blocos já no `Cadastros.jsx` (sem paralelo): Pessoas/Parceiros · Produtos/Serviços ·

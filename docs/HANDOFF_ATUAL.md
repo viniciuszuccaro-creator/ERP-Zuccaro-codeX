@@ -1,10 +1,9 @@
-## Cursor — PR596 Casa montagem React f804b1f12 (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Casa 40 PASS montagem + port seletivo (2026-11-14 America/Sao_Paulo)
 
-Identidade: Cursor. Branch PR596. Casa #6882120998: revisão React montada **privada**
-do HEAD `f804b1f12` (trava local exclusiva Casa; harness fora do Git). Cursor **não
-edita** `CadastroClienteCompleto`/`clienteHttpPayload` neste heartbeat. Delta
-c644→f804 = docs/testes. Candidata freeze código: **`197bbc090`** CI SUCCESS.
-tip ≠ HML `d054e2b3`. Sem implantar.
+Identidade: Cursor. Branch PR596. Casa #6882204635: **40 checks PASS** montagem React
+em `f804b1f12` (Completo blob `d81264b5` = candidata **`197bbc090`**). Contraprova
+`c17fbfa29` FALHA `B_draft_unchanged`. Port seletivo: hunks já na PR596/197bbc090 —
+**sem** Dashboard/branches inteiras. tip ≠ HML `d054e2b3`. Sem E2E/HML/promote.
 
 ## Cursor — PR596 tip 197bbc090 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
