@@ -853,13 +853,17 @@ export function reconcileClienteLocaisDraftAfterPartial(draft, persistedMapped, 
 
 /**
  * Gate de publicação pós-PARTIAL: não aplicar baseline/view/owned/carimbo do save A
- * no formulário B (mesmo tenant) nem em create vazio que já saiu do gate A.
+ * no formulário B (mesmo tenant) nem em create vazio após troca de superfície.
+ * `stampGateSurfaceKey` deve ser a chave capturada **antes** do MASTER await;
+ * `liveSurfaceKey` sobe a cada troca de identidade (inclui A→novo create).
  * @param {{
  *   stampClienteId?: string|null,
  *   liveFormClienteId?: string|null,
  *   catalogClientId?: string|null,
  *   stampGateClienteId?: string|null,
  *   stampGateAllow?: boolean,
+ *   stampGateSurfaceKey?: number|null,
+ *   liveSurfaceKey?: number|null,
  *   scopeCurrent?: boolean,
  * }} args
  * @returns {boolean}
@@ -870,9 +874,12 @@ export function canPublishClienteLocaisPartialReconcile(args = {}) {
   if (args.scopeCurrent !== true) return false;
   if (args.stampGateAllow !== true) return false;
   if (String(args.stampGateClienteId || '').trim() !== stamp) return false;
+  // Superfície mudou durante MASTER/sync (novo create / outro cliente) — não publicar A em B.
+  if (Number(args.stampGateSurfaceKey) !== Number(args.liveSurfaceKey)) return false;
   const live = String(args.liveFormClienteId || '').trim();
   if (live) return live === stamp;
-  // Create sem id: catálogo de outro cliente (B) bloqueia; null/mesmo stamp ok.
+  // Create sem id: catálogo de outro cliente bloqueia; catálogo vazio NÃO implica A —
+  // só a igualdade de surfaceKey (já checada) autoriza o create do próprio save.
   const cat = args.catalogClientId == null || args.catalogClientId === ''
     ? ''
     : String(args.catalogClientId).trim();

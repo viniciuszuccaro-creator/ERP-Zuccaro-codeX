@@ -1,10 +1,12 @@
-## Cursor — PR596 Bugbot gate PARTIAL A→B (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Bugbot surfaceKey pré-MASTER (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-Bugbot High: create vazio / mesmo tenant não publicam baseline/view/owned/ids de A em B.
-`canPublishClienteLocaisPartialReconcile` + stamp gate. tip ≠ HML `d054e2b3`.
-Casa #6881689474: tip `64fe7883f` mutationFn PASS. CI **em curso ≠ aprovado** neste tip.
-PROXIMO: CI SUCCESS → aceite composto / freeze HML (Codex).
+Bugbot High `d4b64a74a`: A→novo create durante MASTER não publica mais A (surfaceKey).
+tip ≠ HML `d054e2b3`. CI **em curso ≠ aprovado**. PROXIMO: CI → aceite/freeze Codex.
+
+## Cursor — PR596 Bugbot gate PARTIAL A→B (2026-11-14 America/Sao_Paulo)
+
+Tip `d4b64a74a` CI SUCCESS (histórico). HML `d054e2b3` ≠ tip.
 
 ## Cursor — PR596 P1 contexto PARTIAL A→B (2026-11-14 America/Sao_Paulo)
 

@@ -229,10 +229,11 @@ export function clienteLocalOperationalRemainder(file, text) {
       + '    if (clientChanged) {\n'
       + '      locaisCatalogClientIdRef.current = id;\n'
       + '      locaisDraftOwnedRef.current = false;\n'
-      + '    }\n'
-      + '    const gate = locaisPartialStampGateRef.current;\n'
-      + '    if (gate.allow && gate.clienteId && id !== gate.clienteId) {\n'
-      + '      gate.allow = false;\n'
+      + '      formSurfaceKeyRef.current += 1;\n'
+      + '      // Qualquer troca de identidade (inclui A→novo create) desarma publish do save anterior.\n'
+      + '      if (locaisPartialStampGateRef.current.allow) {\n'
+      + '        locaisPartialStampGateRef.current.allow = false;\n'
+      + '      }\n'
       + '    }\n'
       + '    // Create HTTP: sem id = catálogo vazio confirmado (permite rascunho no 1º save).\n'
       + '    if (!id) {\n'
@@ -266,18 +267,33 @@ export function clienteLocalOperationalRemainder(file, text) {
       + '  const formClienteIdLiveRef = useRef(/** @type {string|null} */ (null));\n'
       + '  formClienteIdLiveRef.current = String(formData?.id || \'\').trim() || null;\n'
       + '  /**\n'
-      + '   * Gate do carimbo PARTIAL: armado no sync do cliente A; desarmado ao trocar identidade do form.\n'
+      + '   * Gate do carimbo PARTIAL: surfaceKey capturada antes do MASTER; desarmado ao trocar identidade.\n'
       + '   * Evita publicar baseline/view/owned/ids de A em B (mesmo tenant / create vazio).\n'
       + '   */\n'
-      + '  const locaisPartialStampGateRef = useRef(/** @type {{ clienteId: string|null, allow: boolean }} */ ({\n'
+      + '  const formSurfaceKeyRef = useRef(0);\n'
+      + '  const locaisPartialStampGateRef = useRef(/** @type {{\n'
+      + '    clienteId: string|null,\n'
+      + '    allow: boolean,\n'
+      + '    surfaceKey: number,\n'
+      + '  }} */ ({\n'
       + '    clienteId: null,\n'
       + '    allow: false,\n'
+      + '    surfaceKey: 0,\n'
       + '  }));\n',
       '',
     ],
     [
-      '        // Arma gate do PARTIAL neste cliente — troca A→B desarma no effect / canPublish.\n'
-      + '        locaisPartialStampGateRef.current = { clienteId, allow: true };\n',
+      '        // Arma gate com surfaceKey do início do save (pré-MASTER) — troca durante await desarma.\n'
+      + '        locaisPartialStampGateRef.current = {\n'
+      + '          clienteId,\n'
+      + '          allow: true,\n'
+      + '          surfaceKey: saveSurfaceKey,\n'
+      + '        };\n',
+      '',
+    ],
+    [
+      '      // Antes de qualquer await MASTER: superfície do formulário no início do save.\n'
+      + '      const saveSurfaceKey = formSurfaceKeyRef.current;\n',
       '',
     ],
     [
@@ -443,6 +459,8 @@ export function clienteLocalOperationalRemainder(file, text) {
                 catalogClientId: locaisCatalogClientIdRef.current,
                 stampGateClienteId: gate.clienteId,
                 stampGateAllow: gate.allow,
+                stampGateSurfaceKey: gate.surfaceKey,
+                liveSurfaceKey: formSurfaceKeyRef.current,
                 scopeCurrent: isFormScopeCurrent(),
               });
             };
@@ -509,6 +527,8 @@ export function clienteLocalOperationalRemainder(file, text) {
                   catalogClientId: locaisCatalogClientIdRef.current,
                   stampGateClienteId: gate.clienteId,
                   stampGateAllow: gate.allow,
+                  stampGateSurfaceKey: gate.surfaceKey,
+                  liveSurfaceKey: formSurfaceKeyRef.current,
                   scopeCurrent: isFormScopeCurrent(),
                 })) {
                   return prev;

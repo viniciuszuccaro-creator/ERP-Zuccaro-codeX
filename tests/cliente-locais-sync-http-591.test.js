@@ -306,7 +306,9 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   assert.match(block, /formClienteIdLiveRef/);
   assert.match(block, /\/\/ Guard após await/);
   assert.match(block, /if \(!scopeRevoked\)/);
-  assert.match(src, /locaisPartialStampGateRef\.current = \{ clienteId, allow: true \}/);
+  assert.match(src, /surfaceKey: saveSurfaceKey/);
+  assert.match(src, /const saveSurfaceKey = formSurfaceKeyRef\.current/);
+  assert.match(src, /formSurfaceKeyRef\.current \+= 1/);
   assert.equal(
     /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped\s*\}\s*\)/.test(block),
     false,
@@ -325,6 +327,8 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
     catalogClientId: stampA,
     stampGateClienteId: stampA,
     stampGateAllow: true,
+    stampGateSurfaceKey: 1,
+    liveSurfaceKey: 1,
     scopeCurrent: true,
   }), true);
   // Mesmo tenant, form B com id.
@@ -334,6 +338,8 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
     catalogClientId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     stampGateClienteId: stampA,
     stampGateAllow: true,
+    stampGateSurfaceKey: 1,
+    liveSurfaceKey: 1,
     scopeCurrent: true,
   }), false);
   // Gate desarmado na troca A→B (effect).
@@ -343,6 +349,19 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
     catalogClientId: null,
     stampGateClienteId: stampA,
     stampGateAllow: false,
+    stampGateSurfaceKey: 1,
+    liveSurfaceKey: 2,
+    scopeCurrent: true,
+  }), false);
+  // Create vazio após A→novo durante MASTER: surfaceKey diverge (catálogo ainda vazio).
+  assert.equal(canPublishClienteLocaisPartialReconcile({
+    stampClienteId: stampA,
+    liveFormClienteId: null,
+    catalogClientId: null,
+    stampGateClienteId: stampA,
+    stampGateAllow: true,
+    stampGateSurfaceKey: 1,
+    liveSurfaceKey: 2,
     scopeCurrent: true,
   }), false);
   // Create vazio em B: catálogo B ≠ stamp A.
@@ -352,22 +371,26 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
     catalogClientId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     stampGateClienteId: stampA,
     stampGateAllow: true,
+    stampGateSurfaceKey: 1,
+    liveSurfaceKey: 1,
     scopeCurrent: true,
   }), false);
-  // Simula refs do consumidor após A→B com leitura ainda pendente.
+  // Simula refs do consumidor após A→novo create com leitura ainda pendente.
   const refsB = {
     view: undefined,
     baseline: undefined,
     owned: false,
     draft: [{ ...baseEndereco, apelido: 'Local-B1' }],
   };
-  const gate = { clienteId: stampA, allow: false };
+  const gate = { clienteId: stampA, allow: true, surfaceKey: 1 };
   const publish = canPublishClienteLocaisPartialReconcile({
     stampClienteId: stampA,
-    liveFormClienteId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
-    catalogClientId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    liveFormClienteId: null,
+    catalogClientId: null,
     stampGateClienteId: gate.clienteId,
     stampGateAllow: gate.allow,
+    stampGateSurfaceKey: gate.surfaceKey,
+    liveSurfaceKey: 2,
     scopeCurrent: true,
   });
   assert.equal(publish, false);

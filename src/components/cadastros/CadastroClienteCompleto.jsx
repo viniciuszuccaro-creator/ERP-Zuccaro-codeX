@@ -556,6 +556,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o cliente.");
       }
+      // Antes de qualquer await MASTER: superfície do formulário no início do save.
+      const saveSurfaceKey = formSurfaceKeyRef.current;
 
       const payload = buildPayload(data);
       if (isHttpBackendMode) {
@@ -669,8 +671,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           actorId: String(sessionBefore.actorId || ''),
           clienteId,
         });
-        // Arma gate do PARTIAL neste cliente — troca A→B desarma no effect / canPublish.
-        locaisPartialStampGateRef.current = { clienteId, allow: true };
+        // Arma gate com surfaceKey do início do save (pré-MASTER) — troca durante await desarma.
+        locaisPartialStampGateRef.current = {
+          clienteId,
+          allow: true,
+          surfaceKey: saveSurfaceKey,
+        };
         const assertLocaisScope = () => {
           assertFormScopeCurrent();
           const now = /** @type {Record<string, unknown>} */ (readErpHttpSession() || {});
@@ -786,6 +792,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 catalogClientId: locaisCatalogClientIdRef.current,
                 stampGateClienteId: gate.clienteId,
                 stampGateAllow: gate.allow,
+                stampGateSurfaceKey: gate.surfaceKey,
+                liveSurfaceKey: formSurfaceKeyRef.current,
                 scopeCurrent: isFormScopeCurrent(),
               });
             };
@@ -852,6 +860,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   catalogClientId: locaisCatalogClientIdRef.current,
                   stampGateClienteId: gate.clienteId,
                   stampGateAllow: gate.allow,
+                  stampGateSurfaceKey: gate.surfaceKey,
+                  liveSurfaceKey: formSurfaceKeyRef.current,
                   scopeCurrent: isFormScopeCurrent(),
                 })) {
                   return prev;
@@ -1079,12 +1089,18 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   const formClienteIdLiveRef = useRef(/** @type {string|null} */ (null));
   formClienteIdLiveRef.current = String(formData?.id || '').trim() || null;
   /**
-   * Gate do carimbo PARTIAL: armado no sync do cliente A; desarmado ao trocar identidade do form.
+   * Gate do carimbo PARTIAL: surfaceKey capturada antes do MASTER; desarmado ao trocar identidade.
    * Evita publicar baseline/view/owned/ids de A em B (mesmo tenant / create vazio).
    */
-  const locaisPartialStampGateRef = useRef(/** @type {{ clienteId: string|null, allow: boolean }} */ ({
+  const formSurfaceKeyRef = useRef(0);
+  const locaisPartialStampGateRef = useRef(/** @type {{
+    clienteId: string|null,
+    allow: boolean,
+    surfaceKey: number,
+  }} */ ({
     clienteId: null,
     allow: false,
+    surfaceKey: 0,
   }));
   useEffect(() => {
     const id = clienteBoundId || cliente?.id || null;
@@ -1092,10 +1108,11 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     if (clientChanged) {
       locaisCatalogClientIdRef.current = id;
       locaisDraftOwnedRef.current = false;
-    }
-    const gate = locaisPartialStampGateRef.current;
-    if (gate.allow && gate.clienteId && id !== gate.clienteId) {
-      gate.allow = false;
+      formSurfaceKeyRef.current += 1;
+      // Qualquer troca de identidade (inclui A→novo create) desarma publish do save anterior.
+      if (locaisPartialStampGateRef.current.allow) {
+        locaisPartialStampGateRef.current.allow = false;
+      }
     }
     // Create HTTP: sem id = catálogo vazio confirmado (permite rascunho no 1º save).
     if (!id) {

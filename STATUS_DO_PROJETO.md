@@ -1,4 +1,4 @@
-## Cursor — PR596 Bugbot: gate PARTIAL A→B (baseline/owned/create vazio) (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Bugbot: surfaceKey pré-MASTER no gate PARTIAL (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
 | Ref | Tip | CI / runtime |
@@ -6,14 +6,18 @@
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
 | **PR596 HEAD** | **este lote** (após push) | CI **em curso ≠ aprovado** |
-| Tip `64fe7883f` | P1 contexto | **CI SUCCESS** (Casa #6881689474 PASS mutationFn) |
+| Tip `d4b64a74a` | gate A→B | **CI SUCCESS** — Bugbot High create vazio residual |
+| Tip `64fe7883f` | P1 contexto | **CI SUCCESS** + Casa mutationFn PASS |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Executor: Cursor. Bugbot High em `64fe7883f`: create vazio ainda carimbava A; A→B
-mesmo tenant publicava view/baseline/owned de A.
-Fix: `canPublishClienteLocaisPartialReconcile` + `locaisPartialStampGateRef` (arma no sync,
-desarma na troca de identidade); publish de view/baseline/owned/carimbo só com gate.
-Prova negativa A→B (refs/view/baseline/owned/draftB). Contraprovas Casa permanecem válidas.
+Executor: Cursor. Bugbot High em `d4b64a74a`: A→novo create durante MASTER await
+deixava catálogo/id vazios e ainda publicava A.
+Fix: `saveSurfaceKey` capturado **antes** do MASTER; `formSurfaceKeyRef` sobe na troca;
+`canPublish` exige `stampGateSurfaceKey === liveSurfaceKey`. Peels/pins PASS.
+
+## Cursor — PR596 Bugbot: gate PARTIAL A→B (baseline/owned/create vazio) (2026-11-14 America/Sao_Paulo)
+
+Tip `d4b64a74a` CI SUCCESS (histórico). HML `d054e2b3` ≠ tip.
 
 ## Cursor — PR596 P1 contexto: PARTIAL não carimba A→B (2026-11-14 America/Sao_Paulo)
 
