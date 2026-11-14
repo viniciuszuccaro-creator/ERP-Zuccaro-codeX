@@ -1,3 +1,52 @@
+## Preflight estrutural HML concluido e plano privado conciliado (2026-11-14)
+
+Heartbeat NATIVO20:26:14.914Z, CASA/CPA, c9265daf local/remoto/limpo/semwriter;
+reserva594/6883722072 e travaCreateNew. CI7125/run43637263716 doSHA c9265daf
+terminalSUCCESS. Sem repetir pacote81/CI7114, que continuaimutavel e naoimplantado.
+Helperbackup EXISTENTE/hash pinado, Database(config) valida container/imagem/
+cluster. LeasesO_EXCL0600 + flockbackup; SQL REPEATABLE READ READ ONLY/ROLLBACK.
+Zero consultas de conteudo de clientes/produtos/pedidos, zero escrita de negocio.
+
+Metadados EXATOS: entre13relacoes-alvo, presentes empresas/groups/marcas/profiles,
+todas RLS+FORCE. Ausentes oportunidades/produto_empresas/orcamentos/orcamento_itens/
+pedidos/pedido_itens/setores_atividade/unidades_medida/grupos_produto. Consulta
+adicional confirmou clientes presente e produtos ausente.0/5nomes de policies
+canonicas e0/9nomes de indices consultados. Outras policies/indices equivalentes
+NAO avaliados: nao inferir ausencia global de protecao ou mudargrants.
+7constraints existentes de clientes validadas, preservadas. contatos:jsonb,
+nullableYES/defaultNULL, divergente doNOTNULL/default[] da045. marcas codigo e
+codigo_origem ausentes. Journal vazio NAO autoriza replay amplo nem inserirrecibos.
+Nao aplicar somente043-045: faltam relacoes/policies prerequisito,044sequer tem
+pedidos; ADDCOLUMNIFNOTEXISTS045 nao concilia coluna jaexistente nullable.
+038contem backfills de negocio: nao executar por tentativa ou como simplesDDL.
+
+3recibos privados novos na raizHML: metadata-prerequisites-20261114.private.json,
+metadata-constraints-20261114.private.json e metadata-column-contracts-20261114.private.json.
+Plano PRIVADO existente promotion-81d1e849.plan.private.json evoluido SOMENTE com
+schemaCompatibility/statusBLOCKED_NOT_CODE_ONLY,8fontesSQL pinadas e evidencias;
+backup do plano anterior preservado. SHA256novo
+0d237d091eadf50c96b7a7e0b5d2b6c2c3b812b57a7462441f2374e3bd27bfc8.
+Asserts reais: artifact/6contracts/gatedcommands inalterados,canApplyfalse.
+Leases remotas proprias liberadas/ausencia comprovada. Sem backup/DDL/grant/
+importacao/deploy. HML continua d054e2b3; dados/ensaios/auditorias preservados.
+
+Revisao INDEPENDENTE do novoCursor596/5f46bad2: Cliente queryFn AST→bridge→
+HTTPadapter→policy reais,fetchsintetico:0/403/vazio/1ativo+1inativo/null/metaNULL/
+fallbackativo/capbruto9999 PASS. Nao React montado/navegador→API→PG.
+Residuo NOVO publicado596/6883819072: Produto continua no caminhoLOCAL canonico;
+filtrodual ativo:true+status:Ativo exigeambos no matchesFilter. Fixturelegada
+status-only com1ativo retorna0confirmado. Prova queryFnProduto+runLocalEntityCounts+
+matcher reais/contextosintetico, sem escrita. Cursor dono da correcao; nao ativar
+ProdutoHTTP implicitamente, naoeditar sua branch, naoportarDashboard no pacote81.
+
+Proximo Codex executavel: preparar delta de reconciliacao estrutural ESPECIFICO
+no plano privado existente, comparando definicoes das5relacoes existentes com
+DDLcanonico antes de propor expansao dasrelacoesausentes; preservar campos,
+RLS/custompolicies/vinculos/dados. Testar proposta estaticamente/fixturesforaVPS;
+sem aplicarDDL/backfills ou marcarjournal. Nao repetir metadados fechados.
+Transporte privado/ack externo/freshbackup+restore/revisao/janela continuam gates.
+Cursor: corrigir ProdutoLOCAL e publicarSHA; revisar apenas o NOVOdelta quando
+existir. Se nenhum itemconcreto executavel restar, pausar mesmaautomacao.
 ## Gate de schema: journal lido sem grants, lacunas comprovadas (2026-11-14)
 
 Continuidade do MESMO pacote: helper administrativo EXISTENTE hml-backup.py
