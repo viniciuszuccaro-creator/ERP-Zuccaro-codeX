@@ -1,3 +1,8 @@
+## Cursor — PR596 tip 87571fdd4 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+DashboardProdutosProducao KPI fail-closed (Base44). Freeze `0ffff5100` / port
+`81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy. Próximo: Casa preflight pacote 81.
+
 ## Cursor — PR596 DashboardProdutosProducao KPI fail-closed (2026-11-14 America/Sao_Paulo)
 
 Card Base44 Produtos Produção: — ≠ 0; ativos canônicos. tip ≠ HML; sem deploy.
