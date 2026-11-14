@@ -1,9 +1,20 @@
+## Cursor — PR596 openDraft A→B CI SUCCESS e20e66a06 (2026-11-14 America/Sao_Paulo)
+
+### Estado atual (≠ HML)
+| Ref | Tip | Prova |
+|-----|-----|-------|
+| **Candidata UI freeze** | **`e20e66a06`** | **CI SUCCESS** (run 43628531520) — openDraft binding |
+| Tip anterior | `197bbc090` | CI SUCCESS pré-openDraft; Completo blob antigo |
+| Casa residual | #6882444389 | callback A→B; fechado neste tip |
+| **HML** | `d054e2b3` | **tip ≠ HML — sem promote** |
+
+Fix: Revisao congela identidade; `canApplyClienteLocalReviewDraftToForm`; prev.id.
+**Port Casa:** 5 paths + `ClienteLocaisRevisao.jsx` + binding Completo/payload/peels/pins
+deste tip. Sem deploy.
+
 ## Cursor — PR596 openDraft revisão A→B binding (2026-11-14 America/Sao_Paulo)
 
-Casa #6882444389: callback `openDraft` de A após render B publicava local A em B.
-Fix: `ClienteLocaisRevisao` congela cliente/grupo/empresa/sessão/generation;
-`canApplyClienteLocalReviewDraftToForm` + consumidor revalida superfície viva;
-updater rejeita `prev.id` ≠ review. Pins + unitários PASS. tip ≠ HML. Sem deploy.
+Tip `e20e66a06` (histórico): openDraft A→B. CI → lote acima.
 
 ## Cursor — PR596 liberação hunks port Casa (patch prep) (2026-11-14 America/Sao_Paulo)
 
