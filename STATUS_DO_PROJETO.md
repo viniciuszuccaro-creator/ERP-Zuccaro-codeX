@@ -1,3 +1,9 @@
+## Cursor — PR596 Security C360 tenant clear + Bloco2 entity gate (2026-11-14 America/Sao_Paulo)
+
+Security High: Central360 limpa selected/Cliente360 + bump epoch em
+group/empresa/ator/sessão. Medium: Bloco2 `canViewEntity` pela entidade
+(ownOnly) — Marca não abre Produto. Sem Completo/deploy. tip ≠ HML.
+
 ## Cursor — PR596 Casa PedidoCanonico sessão monotônica + RBAC (2026-11-14 America/Sao_Paulo)
 
 Casa #6885162320: (P1) A→B→A token — `hydrateEpoch` monotônico + sessionIdentity;

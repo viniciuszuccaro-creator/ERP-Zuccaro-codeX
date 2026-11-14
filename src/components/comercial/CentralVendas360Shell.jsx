@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   Bot,
@@ -182,6 +182,15 @@ export default function CentralVendas360Shell({
     setSelected(row || null);
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);
+
+  // Security: grupo/empresa/ator/sessão — limpar pagamento-resumo e Cliente360 (≠ só situação).
+  useEffect(() => {
+    const nextEpoch = selectionEpochRef.current + 1;
+    selectionEpochRef.current = nextEpoch;
+    setSelectionEpoch(nextEpoch);
+    setSelected(null);
+    setSelectedClienteId(null);
+  }, [groupId, empresaId, actorId, rest.sessionToken]);
 
   const openHub = () => {
     void import('@/pages/HubAtendimento').then((mod) => {
