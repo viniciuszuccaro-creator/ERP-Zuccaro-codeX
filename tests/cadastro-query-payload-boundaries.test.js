@@ -116,6 +116,7 @@ import { createHash } from 'node:crypto';
 import ts from 'typescript';
 import { clienteLocaisReviewRemainder, clienteLocaisReviewHunks, clienteLocaisReviewBaseline } from './helpers/clienteLocaisReviewRemainder.js';
 import { clienteLocaisPurposeRemainder, clienteLocaisPurposeHunks, clienteLocaisPurposeBaseline } from './helpers/clienteLocaisPurposeRemainder.js';
+import { clienteLocalOperationalRemainder } from './helpers/clienteLocalOperationalRemainder.js';
 import { execFileSync } from 'node:child_process';
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
 
@@ -125,7 +126,7 @@ test('Purpose review exact layer preserves c93, ancestors and outside-edit seman
   const oldHelper = 'tests/helpers/clienteLocaisReviewRemainder.js';
   assert.equal(read(oldHelper), at(clienteLocaisPurposeBaseline, oldHelper));
   for (const [file, entry] of Object.entries(clienteLocaisPurposeHunks)) {
-    const source = read(file), previous = at(clienteLocaisPurposeBaseline, file);
+    const source = clienteLocalOperationalRemainder(file, read(file)), previous = at(clienteLocaisPurposeBaseline, file);
     assert.equal(digest(previous), entry.hash);
     assert.equal(clienteLocaisPurposeRemainder(file, source), previous);
     assert.equal(clienteLocaisPurposeRemainder(file, previous), previous);

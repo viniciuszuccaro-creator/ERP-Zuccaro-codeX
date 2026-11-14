@@ -182,7 +182,7 @@ export default function SeletorEnderecoEntregaPedido({
     setLoadStatus("loading");
     const controller = new AbortController();
     const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
-    api.clientes.listLocais(clienteId, { limit: 50, ativo: true, signal: controller.signal })
+    api.clientes.snapshotLocais(clienteId, { signal: controller.signal })
       .then((page) => {
         if (epoch.current !== generation) return;
         const rows = Array.isArray(page?.data) ? page.data : null;
@@ -194,6 +194,8 @@ export default function SeletorEnderecoEntregaPedido({
           return;
         }
         const mapped = rows
+          .filter((row) => row?.ativo === true && Array.isArray(row.finalidades)
+            && row.finalidades.some((purpose) => purpose.ativo === true && purpose.finalidade === 'ENTREGA'))
           .map((row) => mapClienteLocalToUiEndereco(/** @type {Record<string, unknown>} */ (row)))
           .filter((ui) => {
             if (!isClienteLocalCanonicalId(String(ui.id || ""))) return false;
@@ -228,7 +230,7 @@ export default function SeletorEnderecoEntregaPedido({
     };
   }, [
     clienteId, canView, permissionsLoading, groupId, empresaId, contextTick,
-    sessionToken, sessionGroupId, sessionEmpresaId, cliente?.locais_entrega,
+    sessionToken, sessionActorId, sessionGroupId, sessionEmpresaId, cliente?.locais_entrega,
   ]);
 
   // Troca de cliente / perda de binding: limpa seleção.
@@ -248,10 +250,11 @@ export default function SeletorEnderecoEntregaPedido({
 
   if (!cliente) return null;
 
+  const renderedSnapshot = listSnapshotRef.current;
   const handleSelecionarEndereco = (enderecoId) => {
     // Snapshot ativo (binding+epoch+items). Lookup NUNCA usa `operacionais` fechado:
     // após carga B, refs antigas listBinding==B + find em operacionais A gravaria A em B.
-    const snapshot = listSnapshotRef.current;
+    const snapshot = renderedSnapshot;
     if (!snapshot?.binding || snapshot.epoch !== epoch.current || listSnapshotRef.current !== snapshot) {
       return;
     }

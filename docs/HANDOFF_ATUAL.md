@@ -1,3 +1,9 @@
+## Cursor — stack 591→595→596 composta (2026-11-14 America/Sao_Paulo)
+
+PR595 `66ff086f3` (Codex `38b4e1ec` fiscal/Seletor) mergeado em PR596.
+Completo/ClienteLocaisRevisao + Seletor `snapshotLocais`/`renderedSnapshot` preservados.
+Sem HML; tip CI em curso ≠ aprovado.
+
 ## Cursor — PR596 pagamento/dashboard/códigos (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
