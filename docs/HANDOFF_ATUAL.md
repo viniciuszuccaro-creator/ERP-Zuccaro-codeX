@@ -29,7 +29,11 @@ Focados3PASS (inclui8contraprovasPython), bashsyntax/audit/lint/typecheck/buildP
 lint2warnings antigos. Suite completa sera fechada na CIUbuntu pela excecao
 draft existente; nao repetir Windowsfull com prerequisitosPOSIX conhecidos.
 Nao ativar timer antes de CI/revisao e ensaio real/copiaexterna verificada.
-Proximo: CI do pacote -> ensaio real -> timer e tarefa externa -> recibos reais.
+Preflight desktop detectou falha de autoload Get-Acl do PowerShell5 herdando
+ambiente PowerShell7. Corrigido SOMENTE acesso ao mesmo descritor ACL por API
+.NET nativa, mantendo allowlistSID/owner e sem relaxar politica/ACL. Leitura
+real da pasta externa privada PASS; nenhum dado copiado antes dessa guarda.
+Proximo: CI do pacote atualizado -> ensaio real -> timer/tarefa -> recibos reais.
 TesteoutroPC solicitado ao proprietario na URLHTTPS; ainda sem resultado novo.
 
 ## Acesso autenticado HML confirmado - sem escrita de cadastro (2026-11-14)

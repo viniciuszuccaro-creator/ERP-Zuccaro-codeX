@@ -36,10 +36,11 @@ export function secureRoot(root) {
   assert.equal(fs.realpathSync(root), root);
   if (process.platform === 'win32') {
     const check = '$ErrorActionPreference="Stop"; $me=[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value; '
-      + '$acl=Get-Acl -LiteralPath $env:HML_BACKUP_LOCAL_ROOT; '
+      + '$acl=[System.IO.Directory]::GetAccessControl($env:HML_BACKUP_LOCAL_ROOT); '
       + 'foreach($a in $acl.Access){if($a.AccessControlType -eq "Allow"){$sid=$a.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value; '
       + 'if($sid -notin @($me,"S-1-5-18","S-1-5-32-544")){throw "PRIVATE_DIRECTORY_ACL"}}}; "PRIVATE_ACL_OK"';
-    assert.match(command('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', check],
+    // EncodedCommand preserves quoting across Node/Windows argv; no policy bypass.
+    assert.match(command('powershell.exe', ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(check, 'utf16le').toString('base64')],
       { ...process.env, HML_BACKUP_LOCAL_ROOT: root }), /PRIVATE_ACL_OK/);
   } else {
     assert.equal(stat.uid, process.getuid());
