@@ -1,3 +1,27 @@
+## Primeiro trabalho executado por heartbeat nativo (2026-11-14)
+
+Origem comprovada: heartbeat revis-o-e-acesso-erp-45-e-46 recebido
+2026-11-14T17:48:42.200Z; executor CASA/CPA, base9c50ee9e, branch/remoto iguais,
+checkout limpo, sem writer do checkout detectado; reserva594/6881717552 e trava
+CreateNew exclusiva foraGit. Nao contou o build manual como automatico.
+
+Tarefa executada: retomou manifesto do pacote04519a59 SEM rebuild e criou archive
+privado de transporte pelo Python3.12 existente. Conferiu todos os2215membros
+(2214arquivos+manifesto), bytes/hashes individuais, nomes permitidos, ausencia de
+symlinks/traversal/arquivos secretos ou nativos. Payload17859832bytes;
+archive4017570bytes, SHA256
+19afffcfa46d3d7db41aff194181526cc3de2383fe483c72a54cc9a869d1a962.
+Recibo privado native-archive-20261114.receipt.private.json e archive em
+C:/Users/cpaba/.codex/erp-review-20261114, foraGit/build/CI. Sem extracao na VPS,
+sem alteracao HML/DB/permissoes; nao e prova de implantacao ou restauracao.
+
+MESMA automacao atualizada ACTIVE15min para proximo item concreto: manifesto
+privado de promocao/reversao HML a partir de scripts/procedimento existentes,
+com comandos/pins/pre-condicoes falha-fechada; sem aplicar. Nao repetir build
+ou archive. Prova da retomada seguinte ainda PENDENTE; primeiro trabalho nativo
+nao prova disponibilidade permanente. CI deste checkpoint deve ser registrada
+porSHA no fechamento; reservas/trava liberadas somente ao concluir o disparo.
+
 ## Pacote privado composto preparado; revisao596 atualizada (2026-11-14)
 
 CI7077/da45cf5a e CI7079/04519a594709959f4a9e99fe8113e0a64411f5b4
