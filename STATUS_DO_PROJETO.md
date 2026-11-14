@@ -1,8 +1,14 @@
+## Cursor — PR596 Bugbot Formas rebalance vs hydrate (2026-11-14 America/Sao_Paulo)
+
+Bugbot High f760: `skipRebalanceOnceRef` + baseline — não sobrescrever valores
+hidratados/custom; rebalance só se total/acréscimo mudarem; nº fica com
+gerarParcelas. Tip pushed — aguarda CI. tip ≠ HML. Sem deploy.
+
 ## Cursor — PR596 tip f7603d651 CI SUCCESS — Bugbot/Casa lote (2026-11-14 America/Sao_Paulo)
 
 HEAD **`f7603d651` CI SUCCESS** (43646627187). Estruturantes/Canais/Formas/
 PedidoCanonico/Produtos. Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML
-`d054e2b3`. Sem deploy. Próximo: Casa preflight pacote 81.
+`d054e2b3`. Sem deploy.
 
 ## Cursor — PR596 Bugbot/Casa dash+formas+hydrate (2026-11-14 America/Sao_Paulo)
 

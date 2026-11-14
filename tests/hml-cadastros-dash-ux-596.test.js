@@ -87,11 +87,13 @@ test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {
   assert.match(formas, /if \(!formaSelecionada\) return/);
   assert.match(formas, /preserveSavedScheduleRef/);
   assert.match(formas, /userRequestedRegenRef/);
+  assert.match(formas, /skipRebalanceOnceRef/);
+  assert.match(formas, /lastRebalanceInputRef/);
   assert.match(formas, /requestFormaChange/);
   // Bugbot: não regenerar cronograma só porque parcelas ainda estão vazias (hydrate do pai).
   assert.match(formas, /Vazias: só gerar se o usuário pediu/);
-  // Rebalanceia valores sem apagar vencimentos quando total muda.
-  assert.match(formas, /Rebalanceia só valores/);
+  // Rebalance só quando total/acréscimo mudam — não no hydrate nem vs valores custom.
+  assert.match(formas, /nunca no hydrate/);
   assert.match(formas, /pedido-forma-pagamento-atalho/);
 });
 

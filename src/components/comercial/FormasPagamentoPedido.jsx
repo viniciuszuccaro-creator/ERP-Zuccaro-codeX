@@ -50,6 +50,10 @@ export default function FormasPagamentoPedido({
   const preserveSavedScheduleRef = useRef(Array.isArray(parcelas) && parcelas.length > 0);
   /** Só regenera datas após ação do usuário (≠ corrida com hydrate do pai). */
   const userRequestedRegenRef = useRef(false);
+  /** Após preserve/hydrate: não rebalancear valores no mesmo paint (Bugbot High). */
+  const skipRebalanceOnceRef = useRef(Array.isArray(parcelas) && parcelas.length > 0);
+  /** Baseline de total/acréscimo/n — rebalance só quando total/acréscimo mudam de verdade. */
+  const lastRebalanceInputRef = useRef(null);
   const lastParcelasSigRef = useRef('');
 
   useEffect(() => {
@@ -62,6 +66,7 @@ export default function FormasPagamentoPedido({
     if (sig === lastParcelasSigRef.current) return undefined;
     lastParcelasSigRef.current = sig;
     preserveSavedScheduleRef.current = true;
+    skipRebalanceOnceRef.current = true;
     setNumeroParcelas(parcelas.length);
     return undefined;
   }, [parcelas]);
@@ -131,6 +136,13 @@ export default function FormasPagamentoPedido({
     if (preserveSavedScheduleRef.current && Array.isArray(parcelas) && parcelas.length > 0) {
       preserveSavedScheduleRef.current = false;
       userRequestedRegenRef.current = false;
+      // Mesmo paint: rebalance não pode reescrever valores hidratados/customizados.
+      skipRebalanceOnceRef.current = true;
+      lastRebalanceInputRef.current = {
+        valorTotal,
+        percentualAcrescimo,
+        n: parcelas.length,
+      };
       return undefined;
     }
 
@@ -148,31 +160,60 @@ export default function FormasPagamentoPedido({
     if (Array.isArray(parcelas) && parcelas.length > 0) {
       if (!userRequestedRegenRef.current) return undefined;
       userRequestedRegenRef.current = false;
+      // Nº/forma: gerarParcelas é dono — rebalance não compete com props atrasadas.
+      skipRebalanceOnceRef.current = true;
       gerarParcelas();
+      lastRebalanceInputRef.current = {
+        valorTotal,
+        percentualAcrescimo,
+        n: Math.max(1, Math.min(maxParcelas, Number(numeroParcelas) || 1)),
+      };
       return undefined;
     }
 
-    // Vazias: só gerar se o usuário pediu (forma/nº/acréscimo/atalho) — senão aguarda hydrate.
+    // Vazias: só gerar se o usuário pediu (forma/nº/atalho) — senão aguarda hydrate.
     if (!userRequestedRegenRef.current) return undefined;
     userRequestedRegenRef.current = false;
+    skipRebalanceOnceRef.current = true;
     gerarParcelas();
+    lastRebalanceInputRef.current = {
+      valorTotal,
+      percentualAcrescimo,
+      n: Math.max(1, Math.min(maxParcelas, Number(numeroParcelas) || 1)),
+    };
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- datas só com userRequest; valores em efeito à parte
   }, [loadingFormas, formasLoadFailed, formaSelecionada, numeroParcelas, formaPagamento, permiteParcelar, parcelas]);
 
-  // Rebalanceia só valores quando o total/acréscimo muda — preserva vencimentos do cronograma.
+  // Rebalanceia só valores quando total/acréscimo mudam de verdade — nunca no hydrate nem
+  // quando gerarParcelas já regenerou o nº (Bugbot: não sobrescrever valores salvos/custom).
   useEffect(() => {
     if (loadingFormas || formasLoadFailed) return undefined;
     if (!permiteParcelar || !formaSelecionada || !onParcelasChange) return undefined;
     if (!Array.isArray(parcelas) || parcelas.length === 0) return undefined;
-    if (preserveSavedScheduleRef.current) return undefined;
+    if (preserveSavedScheduleRef.current || skipRebalanceOnceRef.current) {
+      skipRebalanceOnceRef.current = false;
+      lastRebalanceInputRef.current = {
+        valorTotal,
+        percentualAcrescimo,
+        n: parcelas.length,
+      };
+      return undefined;
+    }
+    if (userRequestedRegenRef.current) return undefined;
+    const prev = lastRebalanceInputRef.current;
+    const next = { valorTotal, percentualAcrescimo, n: parcelas.length };
+    lastRebalanceInputRef.current = next;
+    if (!prev) return undefined;
+    if (prev.n !== next.n) return undefined;
+    if (prev.valorTotal === next.valorTotal && prev.percentualAcrescimo === next.percentualAcrescimo) {
+      return undefined;
+    }
     const base = Number(valorTotal);
     if (!Number.isFinite(base) || base < 0) return undefined;
     const valorComAcrescimo = base * (1 + (Number(percentualAcrescimo) || 0) / 100);
     const n = parcelas.length;
     const valorParcela = valorComAcrescimo / n;
-    const same = parcelas.every((p) => Math.abs(Number(p?.valor) - valorParcela) < 0.005);
-    if (same) return undefined;
     onParcelasChange(parcelas.map((p, i) => ({
       ...p,
       numero_parcela: p?.numero_parcela || i + 1,
@@ -193,7 +234,7 @@ export default function FormasPagamentoPedido({
   };
 
   const handleAcrescimoChange = (valor) => {
-    userRequestedRegenRef.current = true;
+    // Acréscimo só rebalanceia valores (efeito abaixo) — não regenera datas.
     setPercentualAcrescimo(valor);
     if (onAcrescimoChange) onAcrescimoChange(valor);
   };
