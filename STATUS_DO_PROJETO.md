@@ -1,3 +1,10 @@
+## Cursor — PR596 ownOnly + _acoes owner (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+Tip `538736fa3`: frontend **FAILURE** (owner Fiscal/Compras/Cadastros: ownOnly ignorava `_acoes`) — **não aprovado**.
+Correção: `nodeHasOwnAction` aceita array do nó **ou** `node._acoes`; nunca Object.values. Owner aliases + sibling deny PASS.
+Sem HML. CI tip **em curso ≠ aprovado**.
+
 ## Cursor — PR596 ownOnly estrito + peels stage52 (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch PR596.

@@ -122,6 +122,10 @@ test('Cadastros entity alias: sibling grant under owner section does not authori
   const sectionGrant = permissions({ Cadastros: { produtos: ['editar', 'visualizar'] } });
   assert.equal(sectionGrant.canEdit('Cadastros', 'TabelaPreco'), true);
   assert.equal(sectionGrant.canEdit('Cadastros', 'Marca'), true);
+  // Owner canônico: `_acoes` na seção (não irmãos) cobre alias UI/entidade sem filho.
+  const acoesGrant = permissions({ Cadastros: { produtos: { _acoes: ['editar', 'visualizar'], marca: ['visualizar'] } } });
+  assert.equal(acoesGrant.canEdit('Cadastros', 'TabelaPreco'), true);
+  assert.equal(acoesGrant.hasPermission('Cadastros', 'Marca', 'visualizar'), true);
   // Motorista sob logística: Veiculo.visualizar não abre Motorista.
   const onlyVeiculo = permissions({ Cadastros: { logistica: { veiculo: ['visualizar'] } } });
   assert.equal(onlyVeiculo.hasPermission('Cadastros', 'Veiculo', 'visualizar'), true);

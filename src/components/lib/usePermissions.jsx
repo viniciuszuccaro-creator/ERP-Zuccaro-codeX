@@ -282,10 +282,14 @@ export default function usePermissions() {
     );
 
     /**
-     * Grant só se o próprio nó for a lista de ações.
-     * Não inspeciona Object.values — arrays filhos são entidades irmãs (Marca/Motorista).
+     * Grant de seção: o próprio nó como array OU chave canônica _acoes.
+     * Nunca Object.values — arrays em marca/motorista/… são entidades irmãs.
      */
-    const nodeHasOwnAction = (node, desired) => actionMatches(node, desired);
+    const nodeHasOwnAction = (node, desired) => {
+      if (actionMatches(node, desired)) return true;
+      if (!node || typeof node !== 'object' || Array.isArray(node)) return false;
+      return actionMatches(node._acoes, desired);
+    };
 
     const nodeHasAction = (node, desired) => {
       if (actionMatches(node, desired)) return true;
