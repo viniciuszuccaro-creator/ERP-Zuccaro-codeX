@@ -1,9 +1,14 @@
+## Cursor — PR596 tip f7603d651 CI SUCCESS — Bugbot/Casa lote (2026-11-14 America/Sao_Paulo)
+
+HEAD **`f7603d651` CI SUCCESS** (43646627187). Estruturantes/Canais/Formas/
+PedidoCanonico/Produtos. Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML
+`d054e2b3`. Sem deploy. Próximo: Casa preflight pacote 81.
+
 ## Cursor — PR596 Bugbot/Casa dash+formas+hydrate (2026-11-14 America/Sao_Paulo)
 
 Lote: Estruturantes pending→—; CanaisOrigem contentAllowed (P1 cache) +
 pedidosUnavailable (P2 ≠0); Formas atalho+rebalance valores; PedidoCanonico
-waiter (sem genAtStart no Promise); Produtos Top5 amostra+unidade —.
-Tip pushed — aguarda CI. Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML.
+waiter; Produtos Top5 amostra+unidade —. HEAD **`f7603d651` CI SUCCESS**.
 
 ## Cursor — PR596 tip f2d92ec9c CI SUCCESS — PedidoCanonico hydrateEpoch (2026-11-14 America/Sao_Paulo)
 

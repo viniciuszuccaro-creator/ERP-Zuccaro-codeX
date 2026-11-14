@@ -1,7 +1,13 @@
+## Cursor — PR596 tip f7603d651 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Bugbot/Casa lote (dash+formas+hydrate). CI **43646627187** SUCCESS.
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+Próximo: Casa preflight pacote 81.
+
 ## Cursor — PR596 Bugbot/Casa dash+formas+hydrate (2026-11-14 America/Sao_Paulo)
 
 Casa P1/P2 Canais+Produtos+Estruturantes; Bugbot Formas/PedidoCanonico.
-Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML. Sem deploy. Aguarda CI.
+HEAD `f7603d651` CI SUCCESS.
 
 ## Cursor — PR596 tip f2d92ec9c CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
