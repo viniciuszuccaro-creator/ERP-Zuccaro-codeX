@@ -1,3 +1,36 @@
+## Segunda retomada nativa executada - plano HML falha-fechada (2026-11-14)
+
+Heartbeat revis-o-e-acesso-erp-45-e-46/2026-11-14T18:03:42.367Z, CASA/CPA,
+baseba279b8c/remotoigual/checkoutlimpo, reserva594/6881921115 e travaCreateNew.
+Retomou o recibo nativo anterior sem repetir build/archive. Gerou plano privado
+promotion-04519a59.plan.private.json, SHA256
+b0a51f48847f475a3c75624194fcc5620caf021177fbe32b76577140d996abbb,
+no diretorio privado Casa ja registrado. Fixou contratos/hashes dos scripts
+existentes, SHA conjunto API/web, archive, recursos/limites historicos e reversao;
+comandos exatos de inspeção, backup HML, copia/ack e bootstrap, NAO executados.
+Validacao positiva e7negativosPASS: versao mista, archive divergente, traversal,
+aplicacao prematura, backup ficticio, restoreDB automatico e redePGoperacional.
+
+CanApply=false:8pins da janela exigem reconexao/revalidacao, nao presumidos:
+container/imagem; hash/owner/mode/mount config; DB/role/schemaOID/cluster/ator;
+lease; backup fresco+restore+ack; espaco; staging/specDocker; revisao/janela.
+Causa concreta do canal: SSHCasa recusou identidade existente e console autorizada
+foi fechada. Nenhum comando remoto, backup, restore, grant ou deploy realizado.
+Nao usar helper antigo de restore com defaults operacionais para esta HML.
+Backup helper recusa deployment.lock de outro task: preparar backup antes da
+janela exclusiva, sem falsificar task hml-backup-retention para burlar o guard.
+
+596 atualc644b678:6provasmutationFn/transporte originais PASS, incluindo resposta
+SUCESSO tardia A->B e A->createvazio no MESMO contexto/sessao sem alterar draft/
+view/baseline/owned. Fronteiras/refs sinteticas, nao React montado/HTTP/PG.
+Nao incorporado. Proximo item independente Codex: contraprova privada montada
+CadastroClienteCompleto real, sem editar hunks Cursor; CI/aceite separados.
+
+Primeiro trabalho nativo e retomada seguinte agora executados com recibos privados
+proprios; este checkpoint exigeCI terminal no fechamento. Nao prova execucao
+permanente: dependePC/app/rede/ferramentas/creditos. Mesma automacao15min,
+sem duplicata; se harness/itens restantes bloquearem, registrar causa e pausar.
+
 ## Primeiro trabalho executado por heartbeat nativo (2026-11-14)
 
 Origem comprovada: heartbeat revis-o-e-acesso-erp-45-e-46 recebido
