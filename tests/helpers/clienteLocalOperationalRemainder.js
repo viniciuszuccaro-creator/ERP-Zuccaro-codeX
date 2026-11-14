@@ -9,6 +9,8 @@ export function clienteLocalOperationalRemainder(file, text) {
   ] : file === 'server/src/api/router.ts' ? [
     ['service.snapshot(ctxFromReq(req), req.params.clienteId, req.query.include_review === \'true\')',
       'service.snapshot(ctxFromReq(req), req.params.clienteId)'],
+  ] : file === 'src/components/cadastros/CadastroClienteCompleto.jsx' ? [
+    ['finalidade="FISCAL" allowReviewEdit />', 'finalidade="FISCAL" />'],
   ] : [];
   if (!changes.some(([after]) => source.includes(after))) return text;
   for (const [after, before] of changes) {

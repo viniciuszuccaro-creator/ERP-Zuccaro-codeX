@@ -1,3 +1,16 @@
+## Fiscal canonico e callback: pacote de interface em validacao (2026-11-14)
+
+595f6bfffac/CI7031SUCCESS reconferidos. Na continuidade594: port controlado do
+seletor, snapshot canonico completo e callback ligado ao render/geracao original.
+Fiscal editavel no bloco ClienteLocal existente, review/CAS activate:false,
+somente campos alterados; nenhum MASTER.endereco_principal, novo cadastro ou
+ativacao automatica. Permissao editar granular exigida, nao concedida na HML.
+Review e consumidor Logistica montados em React real; inversao do fix reproduz
+ABA e corrigido passa. Transporte/identidade/Select sinteticos, nao E2E HML.
+64testes afetadosPASS; CI/fechamento do novo lote pendentes. Backend inalterado.
+RuntimeHML d054e2b3 e217inativos intactos; preparacao de pacote foraVPS segue CI.
+Reserva6878712054; detalhes/gates e retomada da ref Git no HANDOFF.
+
 ## Enderecos operacionais: backend preparado, HML preservada (2026-11-14)
 
 Fechamento codigo da98af34 remoto PR594 / CI7015 SUCCESS frontend/backend/compose.

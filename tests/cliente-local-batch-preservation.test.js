@@ -31,12 +31,16 @@ test('local batch preserves entire prior router and historical guard comparisons
 });
 
 test('operational address wiring peels only exact additions and retains every ancestral byte', () => {
-  for (const file of ['server/src/api/router.ts', 'src/api/httpApiClient.js']) {
+  for (const file of ['server/src/api/router.ts', 'src/api/httpApiClient.js', 'src/components/cadastros/CadastroClienteCompleto.jsx']) {
     const source = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
     const previous = execFileSync('git', ['show', `84f820d823e87499b0037b0ea2c75e508369afaf:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
     assert.equal(clienteLocalOperationalRemainder(file, source), previous);
     assert.equal(clienteLocalOperationalRemainder(file, previous), previous);
     assert.notEqual(clienteLocalOperationalRemainder(file, source + '\n// OUTSIDE\n'), previous);
+    if (file.endsWith('.jsx')) {
+      assert.notEqual(clienteLocalOperationalRemainder(file, source.replace('allowReviewEdit />', 'allowReviewEdit={false} />')), previous);
+      continue;
+    }
     const marker = file.endsWith('router.ts') ? "req.query.include_review === 'true'" : 'createClienteLocalBatchHttpApi({ request, getScope, createHttpError })';
     const forged = source.replace(marker, marker + ' + FORGED');
     assert.throws(() => file.endsWith('router.ts')

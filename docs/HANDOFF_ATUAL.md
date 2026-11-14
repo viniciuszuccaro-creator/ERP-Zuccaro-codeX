@@ -1,3 +1,43 @@
+## Fiscal canonico e callback: consumidor montado, sem ativacao (2026-11-14)
+
+Retomada595 em f6bfffac/CI7031SUCCESS; os achados de9b876f33 nao sao
+automaticamente atuais. Reserva6878712054 delimita Review/opt-in FISCAL/testes
+na continuidade594; branch Cursor preservada,596/Central separados.
+Seletor portado por hunks desde ancestral comum7fa37aaf, sem portar servicos,
+repositorios ou branches inteiras. Adaptado ao snapshotLocais canonico completo
+(nao mudar listLocais legado para envelope e quebrar seus consumidores).
+Callback captura snapshot do proprio render; refs novas nao legitimam clique
+antigo A->B->A. Mapeamento conserva flag de completude; somente ativo/completo
+e finalidade ENTREGA ativa podem ser selecionados. Sem UN/preco/numero inventado.
+
+ClienteLocaisRevisao, ja presente em Dados Gerais/FISCAL, ganhou opt-in de
+edicao com permissao explicita editar. Le snapshot/reviewVersion ANTES da pagina,
+preserva ID/procedencia/finalidade e grava review activate:false no sync existente.
+Envia somente campos efetivamente alterados; nao carregado/omitido nao e vazio
+nem apaga valor persistido. Nao envia MASTER.endereco_principal; nao duplica
+cadastro/storage/endpoints. Cancelar recarrega CAS; conflito/rejeicao mantem
+rascunho. Token/ator/Grupo/Empresa/cliente/geracao validados antes/depois do await.
+Busy sincrono bloqueia duplo clique. Completar nao define principal nem ativa.
+
+Prova React/DOM real em Chrome existente: Review e LogisticaEntregaTab montados,
+HTTP client canonico; identidade/transporte e primitiva Select sinteticos.
+Confere payload fiscal mesmo ID, alteracao real do rascunho do Pedido, erros,
+conflito, callbacks antigos, sessao renovada, permissao e A->B->A. Inversao
+SOMENTE do fix do snapshot reproduz falha ABA; correcao passa. Nao e navegador
+integrado/API/PG/HML. Backend do pacote anterior permanece inalterado/CI7015.
+Contraprovas afetadas64PASS; fechamento completo/CI deste lote ainda pendente.
+
+HML continua d054e2b3,217locais INATIVOS e demais dados preservados; nenhuma
+escrita, carga, DDL, grants ou deploy operacional. Perfil HML visualizar nao
+foi ampliado. Atualizacao: preparar artefato foraVPS apos CI, conferir manifesto,
+identidade/espaco>=20GiB/backup/reversao e versao API/web unica. Ativacao e
+permissao editar/restaurar/principal nos dados reais continuam gates separados.
+Nao declarar fiscal operacional principal ou entrega real ativos nesta etapa.
+
+Git: unica ref local de rastreamento continuidado591 estava com41bytes nulos;
+preservada privadamente e fetch suportado recompôs a ref a partir do remoto
+1a202d22. Nenhuma branch/commit/WIP/reset/config/autenticacao alterados.
+
 ## Enderecos operacionais: revisao e CAS preparados, sem ativacao (2026-11-14)
 
 FECHAMENTO: codigo da98af34670a784d46078cf69e7bfdc14258c456 remoto PR594,

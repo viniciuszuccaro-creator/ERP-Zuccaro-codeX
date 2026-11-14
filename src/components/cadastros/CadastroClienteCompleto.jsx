@@ -1325,7 +1325,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
                 <div className="col-span-2 pt-4 border-t">
                   <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>
-                  {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="FISCAL" />}
+                  {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="FISCAL" allowReviewEdit />}
                   <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="cep">CEP</Label>
