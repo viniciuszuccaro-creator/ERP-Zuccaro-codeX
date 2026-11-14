@@ -3,6 +3,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   mapUiEnderecoToClienteLocalCreate,
   mapClienteLocalToUiEndereco,
@@ -309,6 +310,13 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   assert.match(src, /surfaceKey: saveSurfaceKey/);
   assert.match(src, /const saveSurfaceKey = formSurfaceKeyRef\.current/);
   assert.match(src, /formSurfaceKeyRef\.current \+= 1/);
+  // AST cadastro-query-payload: mutationFn lê formSurfaceKeyRef pré-MASTER — harness deve injetar.
+  const astHarness = readFileSync(
+    new URL('./cadastro-query-payload-boundaries.test.js', import.meta.url),
+    'utf8',
+  );
+  assert.match(astHarness, /formSurfaceKeyRef:\s*\{\s*current:\s*0\s*\}/);
+  assert.match(astHarness, /locaisPartialStampGateRef:\s*\{\s*current:/);
   assert.equal(
     /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped\s*\}\s*\)/.test(block),
     false,

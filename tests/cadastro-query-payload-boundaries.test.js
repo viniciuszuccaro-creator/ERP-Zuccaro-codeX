@@ -766,6 +766,9 @@ for (const [name, recordKey, entity, previousHash] of forms) {
         lastLocaisSyncSummaryRef: { current: null },
         locaisPreferLegacyRef: { current: false },
         locaisDraftOwnedRef: { current: false },
+        // surfaceKey pré-MASTER (PARTIAL A→novo): mutationFn lê formSurfaceKeyRef antes do await.
+        formSurfaceKeyRef: { current: 0 },
+        locaisPartialStampGateRef: { current: { allow: false, clienteId: null, groupId: null, surfaceKey: null } },
         readErpHttpSession: () => null,
         createHttpApiClient: () => ({ clientes: {} }),
         syncClienteLocaisViaHttp: async () => { throw new Error('sync não deve rodar neste AST'); },
@@ -796,6 +799,8 @@ for (const [name, recordKey, entity, previousHash] of forms) {
         lastLocaisSyncSummaryRef: { current: null },
         locaisPreferLegacyRef: { current: false },
         locaisDraftOwnedRef: { current: false },
+        formSurfaceKeyRef: { current: 0 },
+        locaisPartialStampGateRef: { current: { allow: false, clienteId: null, groupId: null, surfaceKey: null } },
         readErpHttpSession: () => null,
         createHttpApiClient: () => ({ clientes: {} }),
         syncClienteLocaisViaHttp: async () => {},

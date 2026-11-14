@@ -1,19 +1,24 @@
-## Cursor — PR596 Bugbot: surfaceKey pré-MASTER no gate PARTIAL (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 CI FAIL: AST harness formSurfaceKeyRef (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
 | Ref | Tip | CI / runtime |
 |-----|-----|----------------|
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
+| Tip `c644b6785` | surfaceKey | CI FAIL frontend (`formSurfaceKeyRef is not defined` AST) |
 | **PR596 HEAD** | **este lote** (após push) | CI **em curso ≠ aprovado** |
-| Tip `d4b64a74a` | gate A→B | **CI SUCCESS** — Bugbot High create vazio residual |
-| Tip `64fe7883f` | P1 contexto | **CI SUCCESS** + Casa mutationFn PASS |
+| Tip `d4b64a74a` | gate A→B | **CI SUCCESS** histórico |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Executor: Cursor. Bugbot High em `d4b64a74a`: A→novo create durante MASTER await
-deixava catálogo/id vazios e ainda publicava A.
-Fix: `saveSurfaceKey` capturado **antes** do MASTER; `formSurfaceKeyRef` sobe na troca;
-`canPublish` exige `stampGateSurfaceKey === liveSurfaceKey`. Peels/pins PASS.
+Causa: `mutationFn` lê `formSurfaceKeyRef` pré-MASTER; harness AST
+`cadastro-query-payload-boundaries` não injetava o ref. Fix: bindings
+`formSurfaceKeyRef` + `locaisPartialStampGateRef`; pin no sync-591.
+Candidata HML UI: tip pós-CI SUCCESS (não `c644b6785`). Sem promote.
+
+## Cursor — PR596 Bugbot: surfaceKey pré-MASTER no gate PARTIAL (2026-11-14 America/Sao_Paulo)
+
+Tip `c644b6785` (histórico): surfaceKey pré-MASTER. CI FAIL harness AST → lote acima.
+HML `d054e2b3` — tip ≠ HML.
 
 ## Cursor — PR596 Bugbot: gate PARTIAL A→B (baseline/owned/create vazio) (2026-11-14 America/Sao_Paulo)
 

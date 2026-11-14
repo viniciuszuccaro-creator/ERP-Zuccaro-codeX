@@ -1,8 +1,12 @@
-## Cursor — PR596 Bugbot surfaceKey pré-MASTER (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 AST formSurfaceKeyRef (CI FAIL c644b6785) (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-Bugbot High `d4b64a74a`: A→novo create durante MASTER não publica mais A (surfaceKey).
-tip ≠ HML `d054e2b3`. CI **em curso ≠ aprovado**. PROXIMO: CI → aceite/freeze Codex.
+CI `c644b6785` FAIL: harness AST sem `formSurfaceKeyRef`. Tip deste lote corrige
+bindings + pin. tip ≠ HML `d054e2b3`. PROXIMO: CI SUCCESS → aceite/freeze Codex.
+
+## Cursor — PR596 Bugbot surfaceKey pré-MASTER (2026-11-14 America/Sao_Paulo)
+
+Tip `c644b6785` (histórico): surfaceKey; CI FAIL harness → lote acima.
 
 ## Cursor — PR596 Bugbot gate PARTIAL A→B (2026-11-14 America/Sao_Paulo)
 
