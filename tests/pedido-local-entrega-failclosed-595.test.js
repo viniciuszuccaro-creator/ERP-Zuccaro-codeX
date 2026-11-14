@@ -11,7 +11,8 @@ const picker = readFileSync('src/components/comercial/comercialMasterPicker.js',
 
 test('PedidoCanonico: ENTREGA bloqueia save sem local operacional', () => {
   assert.match(panel, /form\.tipo_operacao==='ENTREGA'/);
-  assert.match(panel, /Entrega exige local operacional ativo com identidade canônica/);
+  assert.match(panel, /isLocalEntregaOperacional/);
+  assert.match(panel, /Entrega exige local operacional ativo com finalidade ENTREGA e identidade canônica/);
   assert.match(panel, /endereco_incompleto===false/);
   assert.match(panel, /data-action="pedido-selecionar-cliente-local"/);
   // NENHUM só fora de ENTREGA

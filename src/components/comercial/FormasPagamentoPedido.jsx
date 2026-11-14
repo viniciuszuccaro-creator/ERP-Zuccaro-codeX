@@ -46,8 +46,23 @@ export default function FormasPagamentoPedido({
     Array.isArray(parcelas) && parcelas.length > 0 ? parcelas.length : 1,
   );
   const [percentualAcrescimo, setPercentualAcrescimo] = useState(acrescimo || 0);
-  /** Evita regenerar cronograma salvo na 1ª resolução do Cadastros (loading ≠ limpar). */
+  /** Evita regenerar cronograma salvo; reabre preserve quando o pai hidrata parcelas após mount. */
   const preserveSavedScheduleRef = useRef(Array.isArray(parcelas) && parcelas.length > 0);
+  const lastParcelasSigRef = useRef('');
+
+  useEffect(() => {
+    if (!Array.isArray(parcelas) || parcelas.length === 0) return undefined;
+    const sig = parcelas.map((p) => [
+      p?.id || '',
+      p?.data_vencimento || p?.vencimento || '',
+      p?.valor ?? '',
+    ].join(':')).join('|');
+    if (sig === lastParcelasSigRef.current) return undefined;
+    lastParcelasSigRef.current = sig;
+    preserveSavedScheduleRef.current = true;
+    setNumeroParcelas(parcelas.length);
+    return undefined;
+  }, [parcelas]);
 
   const {
     formasPagamento = [],

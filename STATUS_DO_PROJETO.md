@@ -1,3 +1,16 @@
+## Cursor — PR596 Bugbot loadStatus/count/hydrate (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Tip anterior `6306752c5`: frontend SUCCESS; backend/Bugbot ainda **em curso ≠ aprovado**.
+Correções Bugbot (este tip):
+- Completo: clear-before-fetch + `locaisOperacionalLoadStatus` → Gerenciar (`default unknown`).
+- Dashboard counts: `list-ready` + `queryClient.getQueryData` (initialData [] ≠ zero).
+- PedidoCanonico: `isLocalEntregaOperacional` (ENTREGA+completo) + hydrate inflight compartilhado.
+- OrcamentosTab: `fetchOrcamentoDetail` compartilhado com `epochAtClick`.
+- FormasPagamentoPedido: reabre preserve quando parcelas hidratam após mount.
+Peels operacional + pin Dashboard atualizados. Local suites PASS. Sem HML (`d054e2b3`).
+Dependência: PR595→PR596; Completo FISCAL in-place continua reserva Codex.
+
 ## Cursor — CI frontend residual pós-peels (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Tip `d06f33818` frontend **FAILURE** (5 testes) — **não aprovado**.

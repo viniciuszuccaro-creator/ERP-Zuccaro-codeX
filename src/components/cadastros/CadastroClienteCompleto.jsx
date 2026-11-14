@@ -867,6 +867,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       locaisHttpBaselineRef.current = undefined;
       return undefined;
     }
+    // Limpa visão anterior antes do fetch — loading ≠ catálogo vazio confirmado.
+    setLocaisHttpView(undefined);
+    locaisHttpBaselineRef.current = undefined;
     (async () => {
       try {
         const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
@@ -891,6 +894,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   const locaisViewForUi = Array.isArray(formData.locais_entrega)
     ? formData.locais_entrega
     : (Array.isArray(locaisHttpView) ? locaisHttpView : []);
+
+  /** Operacional: draft = loaded; HTTP falhou = failed; lista HTTP ok = loaded; senão loading/unknown. */
+  const locaisOperacionalLoadStatus = (() => {
+    if (Array.isArray(formData.locais_entrega)) return 'loaded';
+    if (!isHttpBackendMode) return 'unknown';
+    if (!(clienteBoundId || cliente?.id)) return 'unknown';
+    if (locaisHttpBaselineRef.current === null) return 'failed';
+    if (Array.isArray(locaisHttpView)) return 'loaded';
+    return 'loading';
+  })();
 
   const applyContatosDraft = (novosContatos) => {
     setFormData((prev) => {
@@ -1679,6 +1692,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
                 persistBusy={isSaving || saveMutation.isPending}
+                loadStatus={locaisOperacionalLoadStatus}
                 reviewPendingHint={revisaoEntregaTotal}
               />
               {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />}

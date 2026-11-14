@@ -35,6 +35,10 @@ test('Completo: ENTREGA onOpenDraft + FISCAL allowReviewEdit (sem MASTER)', () =
   assert.match(completo, /const reviewClienteId = clienteBoundId \|\| cliente\?\.id \|\| null/);
   assert.match(completo, /setRevisaoEntregaTotal\(null\);\s*\}, \[reviewClienteId\]/);
   assert.match(completo, /Fiscal não abre rascunho MASTER/);
+  assert.match(completo, /locaisOperacionalLoadStatus/);
+  assert.match(completo, /loadStatus=\{locaisOperacionalLoadStatus\}/);
+  assert.match(completo, /Limpa visão anterior antes do fetch/);
+  assert.match(gerenciar, /loadStatus = "unknown"/);
   assert.match(revisao, /hasPermission\('Cadastros', 'cliente_local', 'visualizar'\)/);
 });
 

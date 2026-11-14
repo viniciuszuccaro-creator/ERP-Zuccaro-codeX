@@ -405,21 +405,48 @@ export default function OrcamentosTab({
     setDirty(false); setDetailOpen(false); setFormOpen(true);
     if (proposalMode) setProposalStage('edicao');
   };
+  const detailInflightRef = useRef(new Map());
+  const fetchOrcamentoDetail = async (row, { epochAtClick = null } = {}) => {
+    if (!row?.id) return null;
+    const existing = detailInflightRef.current.get(row.id);
+    if (existing) return existing;
+    const request = ++detailRequest.current;
+    const opened = { ...renderedScope.current, token: activeScope()?.token };
+    const flight = (async () => {
+      try {
+        const detail = await api.get(row.id);
+        if (request !== detailRequest.current) return null;
+        if (epochAtClick != null && epochAtClick !== selectionEpochLiveRef.current) return null;
+        if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return null;
+        return detail;
+      } catch (error) {
+        if (
+          request === detailRequest.current
+          && (epochAtClick == null || epochAtClick === selectionEpochLiveRef.current)
+          && sameOrcamentoScope(opened, renderedScope.current, activeScope())
+        ) {
+          toast.error(errorMessage(error));
+        }
+        return null;
+      } finally {
+        detailInflightRef.current.delete(row.id);
+      }
+    })();
+    detailInflightRef.current.set(row.id, flight);
+    return flight;
+  };
   const openEditHydrated = async (row) => {
     if (proposalMode) { openEdit(row); return; }
     if (!canEdit(row) || !row?.id) return;
-    const request = ++detailRequest.current;
-    const opened = { ...renderedScope.current, token: activeScope()?.token };
-    try {
-      const detail = await api.get(row.id);
-      if (request !== detailRequest.current) return;
-      if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
-      openEdit(detail);
-    } catch (error) {
-      if (request === detailRequest.current && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
-        toast.error(errorMessage(error));
-      }
-    }
+    // Duplo clique compartilha GET com selectCentralRow — não abortar grades/pagamento-resumo.
+    const epochAtClick = selectionEpochLiveRef.current;
+    setSelected(row);
+    notifyCentralSelect(row, epochAtClick);
+    const detail = await fetchOrcamentoDetail(row, { epochAtClick });
+    if (!detail) return;
+    setSelected(detail);
+    notifyCentralSelect(detail, epochAtClick);
+    openEdit(detail);
   };
   const changeForm = (key, value) => { setForm((current) => ({ ...current, [key]: value })); setDirty(true); };
   const changeItem = (index, key, value) => {
@@ -890,24 +917,10 @@ const convertToPedido = async () => {
     setSelected(row);
     notifyCentralSelect(row, epochAtClick);
     if (proposalMode) return;
-    const request = ++detailRequest.current;
-    const opened = { ...renderedScope.current, token: activeScope()?.token };
-    try {
-      const detail = await api.get(row.id);
-      if (request !== detailRequest.current) return;
-      if (epochAtClick !== selectionEpochLiveRef.current) return;
-      if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
-      setSelected(detail);
-      notifyCentralSelect(detail, epochAtClick);
-    } catch (error) {
-      if (
-        request === detailRequest.current
-        && epochAtClick === selectionEpochLiveRef.current
-        && sameOrcamentoScope(opened, renderedScope.current, activeScope())
-      ) {
-        toast.error(errorMessage(error));
-      }
-    }
+    const detail = await fetchOrcamentoDetail(row, { epochAtClick });
+    if (!detail) return;
+    setSelected(detail);
+    notifyCentralSelect(detail, epochAtClick);
   };
 
   return <div className={`w-full h-full flex flex-col ${centralLayout ? 'bg-transparent p-0' : `bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined} data-central-layout={centralLayout ? 'versao6' : undefined}>

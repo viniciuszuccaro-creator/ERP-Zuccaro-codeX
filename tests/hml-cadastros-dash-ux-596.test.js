@@ -90,7 +90,10 @@ test('OrcamentosTab Bugbot: epochAtClick no select + submitting após invalidate
   const orc = readFileSync('src/components/comercial/OrcamentosTab.jsx', 'utf8');
   assert.match(orc, /const epochAtClick = selectionEpochLiveRef\.current/);
   assert.match(orc, /notifyCentralSelect\(detail, epochAtClick\)/);
-  assert.match(orc, /if \(epochAtClick !== selectionEpochLiveRef\.current\) return/);
+  // Epoch no GET compartilhado (select + dblclick) — não aborta grades/pagamento-resumo.
+  assert.match(orc, /epochAtClick != null && epochAtClick !== selectionEpochLiveRef\.current/);
+  assert.match(orc, /detailInflightRef/);
+  assert.match(orc, /fetchOrcamentoDetail/);
   assert.match(orc, /actionGate\.current\.invalidate\(\);\s*\n\s*setSubmitting\(false\)/);
 });
 

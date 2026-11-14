@@ -222,18 +222,20 @@ export default function Dashboard() {
     isFetching: fetchingPedidosCount,
   } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeComercial),
-    queryKey: ['pedidos-count-dash', ...contextQueryKey],
+    queryKey: ['pedidos-count-dash', ...contextQueryKey, Array.isArray(pedidos) && pedidos.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
+      const liveList = queryClient.getQueryData(['pedidos', ...contextQueryKey]);
+      const listForFallback = Array.isArray(liveList) ? liveList : (Array.isArray(pedidos) ? pedidos : []);
       try {
         const filtro = getFiltroContexto('empresa_id');
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Pedido',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: pedidos });
+        return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch (error) {
         reportDashboardFailure('Falha ao contar pedidos — não fabricar zero', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCountAfterFailure(pedidos);
+        return resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 120000,
@@ -327,19 +329,21 @@ export default function Dashboard() {
     isFetching: fetchingProdutosCount,
   } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeEstoque),
-    queryKey: ['produtos-count-dash', ...contextQueryKey],
+    queryKey: ['produtos-count-dash', ...contextQueryKey, Array.isArray(produtos) && produtos.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
+      const liveList = queryClient.getQueryData(['produtos', ...contextQueryKey]);
+      const listForFallback = Array.isArray(liveList) ? liveList : (Array.isArray(produtos) ? produtos : []);
       try {
         const filtro = getFiltroContexto('empresa_id');
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: produtos });
+        return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch (error) {
         reportDashboardFailure('Falha ao contar produtos — não fabricar zero', error, { scopeType, groupId, empresaId });
         // initialData [] não é zero confirmado; falha de count → — salvo lista real não vazia.
-        return resolveDashboardCountAfterFailure(produtos);
+        return resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 120000,
@@ -365,18 +369,20 @@ export default function Dashboard() {
 
   const { data: totalClientesResolved } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeCRM),
-    queryKey: ['clientes-count', ...contextQueryKey],
+    queryKey: ['clientes-count', ...contextQueryKey, Array.isArray(clientes) && clientes.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
+      const liveList = queryClient.getQueryData(['clientes', ...contextQueryKey]);
+      const listForFallback = Array.isArray(liveList) ? liveList : (Array.isArray(clientes) ? clientes : []);
       try {
         const filtro = getFiltroContexto('empresa_id', true);
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: clientes });
+        return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch (error) {
         reportDashboardFailure('Falha ao contar clientes — não fabricar zero', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCountAfterFailure(clientes);
+        return resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 120000,
@@ -390,18 +396,20 @@ export default function Dashboard() {
     isFetching: fetchingColaboradoresCount,
   } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeRH),
-    queryKey: ['colaboradores-count-dash', ...contextQueryKey],
+    queryKey: ['colaboradores-count-dash', ...contextQueryKey, Array.isArray(colaboradores) && colaboradores.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
+      const liveList = queryClient.getQueryData(['colaboradores', ...contextQueryKey]);
+      const listForFallback = Array.isArray(liveList) ? liveList : (Array.isArray(colaboradores) ? colaboradores : []);
       try {
         const filtro = getFiltroContexto('empresa_alocada_id', true);
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Colaborador',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: colaboradores });
+        return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch (error) {
         reportDashboardFailure('Falha ao contar colaboradores — não fabricar zero', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCountAfterFailure(colaboradores);
+        return resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 120000,

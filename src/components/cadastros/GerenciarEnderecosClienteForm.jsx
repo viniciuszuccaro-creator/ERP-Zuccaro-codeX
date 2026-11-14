@@ -40,7 +40,8 @@ export default function GerenciarEnderecosClienteForm({
   assertScopeCurrent,
   persistBusy = false,
   commitMode = "backend",
-  loadStatus = "loaded",
+  // Fail-closed: omitido ≠ loaded (não fingir catálogo vazio confirmado).
+  loadStatus = "unknown",
   reviewPendingHint = null,
 }) {
   const permissions = usePermissions();

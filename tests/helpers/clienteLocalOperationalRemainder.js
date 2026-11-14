@@ -52,6 +52,29 @@ export function clienteLocalOperationalRemainder(file, text) {
 `,
       '',
     ],
+    // Clear-before-fetch + loadStatus operacional (Bugbot) — peel após onOpenDraft.
+    [
+      '    // Limpa visão anterior antes do fetch — loading ≠ catálogo vazio confirmado.\n'
+      + '    setLocaisHttpView(undefined);\n'
+      + '    locaisHttpBaselineRef.current = undefined;\n',
+      '',
+    ],
+    [
+      '  /** Operacional: draft = loaded; HTTP falhou = failed; lista HTTP ok = loaded; senão loading/unknown. */\n'
+      + '  const locaisOperacionalLoadStatus = (() => {\n'
+      + "    if (Array.isArray(formData.locais_entrega)) return 'loaded';\n"
+      + "    if (!isHttpBackendMode) return 'unknown';\n"
+      + '    if (!(clienteBoundId || cliente?.id)) return \'unknown\';\n'
+      + "    if (locaisHttpBaselineRef.current === null) return 'failed';\n"
+      + "    if (Array.isArray(locaisHttpView)) return 'loaded';\n"
+      + "    return 'loading';\n"
+      + '  })();\n\n',
+      '',
+    ],
+    [
+      '                loadStatus={locaisOperacionalLoadStatus}\n',
+      '',
+    ],
     [
       '                reviewPendingHint={revisaoEntregaTotal}\n',
       '',
