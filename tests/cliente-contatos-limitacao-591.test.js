@@ -79,7 +79,7 @@ test('GerenciarEnderecos: Cadastral/Fiscal explícitos na UI', () => {
   assert.match(enderecos, /idx !== enderecoEditando/);
   // Cancelar/Salvar respeitam persistBusy (paridade Contatos).
   assert.match(enderecos, /disabled=\{bloqueado\}/);
-  assert.match(enderecos, /disabled=\{bloqueado \|\| !podeEditar\}/);
+  assert.match(enderecos, /disabled=\{bloqueado \|\| !podeEditar \|\| catalogBlocksMutations\}/);
   assert.match(enderecos, /data-block="endereco-dialog-fields"/);
   assert.match(enderecos, /if \(!open && bloqueado\) return/);
 });

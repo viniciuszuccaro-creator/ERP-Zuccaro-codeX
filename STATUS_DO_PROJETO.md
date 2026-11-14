@@ -1,3 +1,19 @@
+## Fechamento do contrato remanescente da composicao596 (2026-11-14)
+
+CI7110/run43630927875 do3f318ccf: backend/PostgreSQL ecomposeSUCCESS;
+frontend npmtest1FAIL, teste700 em cliente-contatos-limitacao-591.test.js:68.
+Logjob132557115537: regexdisabled antiga nao exigia catalogBlocksMutations.
+Causa precisa de dependencia do port, nao infraestrutura. Nenhum reruncego.
+
+Portada SOMENTE a1linha ja existente na origem0ffff510/CI7107SUCCESS,
+exigindo disabled={bloqueado || !podeEditar || catalogBlocksMutations} exato.
+Preserva demais asserts e18goldens.49focaisPASS/0FAIL/0SKIP. Contraprova do
+MESMO teste contra fonte595 sem o guardREJEITA exatamente essa expectativa.
+Nao relaxou regex, nao removeu guard/teste, nao mudou codigo de produto.
+Port completo agora9arquivos exatos da origem, incluindo teste correspondente;
+13montados/101focais/audit/lint/typecheck/build do produto3f318ccf preservados.
+NovaCI deve fechar porSHA corretivo antes do novo pacote; HML segue d054e2b3.
+
 ## Port funcional596 fechado localmente na mesma candidataCodex (2026-11-14)
 
 Heartbeat18:53:13.104Z, CASA/CPA, base4ba14509/remotoigual/limpo/semwriter,
