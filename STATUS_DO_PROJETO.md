@@ -70,6 +70,8 @@ Lote UI endereços (sem HML/DDL/carga; 1500 ensaio intactos):
 - `SeletorEnderecoEntregaPedido`: listLocais ativos+ENTREGA+id canônico;
 - peels Continuity + testes sintéticos (incl. review mounted PASS).
 
+PedidoCanonico: ENTREGA exige `cliente_local_id` ativo (fail-closed; incompleto fora do seletor).
+
 Limitações: ativação real do local inativo no BFF permanece no save canônico
 Codex; aceite HML combina API/web. Próximo: Cliente360 rich + jornada Central360
 itens/pagamento; canais sem bloquear cadastro.
