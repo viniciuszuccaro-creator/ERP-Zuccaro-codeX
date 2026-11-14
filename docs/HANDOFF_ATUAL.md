@@ -1,3 +1,10 @@
+## Cursor — PR596 Casa #6883819072 — dual AND supersedido + teste percurso (2026-11-14 America/Sao_Paulo)
+
+Casa revisou `5f46bad2d` (AND `ativo`+`status`). Já corrigido em **`cb7047c81`**:
+Produto local → só `{status:'Ativo'}`; HTTP piloto → `{ativo:true}`. Teste
+percurso `runLocalEntityCounts` + fixture status-only conta **1** (dual AND = 0).
+tip ≠ HML; fora pacote 81. Sem deploy.
+
 ## Cursor — PR596 Bugbot Corporativo ativo+cap (2026-11-14 America/Sao_Paulo)
 
 `ativo:true` HTTP + cap lista bruta. tip ≠ HML.

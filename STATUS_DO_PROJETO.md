@@ -1,3 +1,9 @@
+## Cursor — PR596 Casa #6883819072 — P2 local já em cb7047 + teste percurso (2026-11-14 America/Sao_Paulo)
+
+Casa revisou SHA `5f46bad2d` (dual AND). Correção já em **`cb7047c81`**: Produto
+local só `status: 'Ativo'`. Acrescentado teste percurso `runLocalEntityCounts` +
+fixture status-only (1 ativo). tip ≠ HML; fora pacote 81.
+
 ## Cursor — PR596 Corporativo cb7047c81 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Tip **`cb7047c81`** CI SUCCESS (43637794138): Ativos sem AND local/HTTP + cap +

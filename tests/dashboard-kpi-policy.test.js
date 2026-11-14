@@ -20,6 +20,7 @@ import {
   resolveMetaOperacional,
   DASHBOARD_LIST_SOFT_LIMIT,
 } from '../src/components/lib/dashboardKpiPolicy.js';
+import { runLocalEntityCounts } from '../src/api/localEntityCountApi.js';
 
 test('dashboard exige contexto de grupo/empresa', () => {
   assert.throws(() => assertDashboardContext({ groupId: '', empresaId: 'e1' }), /Grupo/);
@@ -115,6 +116,40 @@ test('cadastro ativo: HTTP ativo/ativa e legado status; filtro count sem AND', (
     { status: 'Ativo' },
   );
   assert.deepEqual(dashboardAtivosCountFilter('Cliente'), { status: 'Ativo' });
+});
+
+test('percurso local Produto status-only: filtro sem AND conta 1 (Casa #6883819072)', async () => {
+  // Fixture legado real: só `status`, sem campo `ativo` (Produto fora do piloto HTTP).
+  const rows = [
+    { id: 'p1', group_id: 'g1', status: 'Ativo' },
+    { id: 'p2', group_id: 'g1', status: 'Inativo' },
+  ];
+  const matchesLocalAnd = (record, filter = {}) => (
+    Object.entries(filter).every(([key, expected]) => record[key] === expected)
+  );
+  const pilots = new Set(['Cliente']);
+  const filter = {
+    ...dashboardAtivosCountFilter('Produto', { httpPilotEntities: pilots }),
+    group_id: 'g1',
+  };
+  assert.deepEqual(filter, { status: 'Ativo', group_id: 'g1' });
+
+  const result = await runLocalEntityCounts(
+    { entityName: 'Produto', filter },
+    {
+      expandFilter: (_entity, next) => next || {},
+      countEntity: async (_name, nextFilter) => rows.filter((row) => matchesLocalAnd(row, nextFilter)).length,
+    },
+  );
+  assert.equal(result.data.count, 1);
+  assert.equal(
+    formatDashboardCountDisplay(resolveDashboardCount({ countValue: result.data.count })),
+    '1',
+  );
+
+  // Dual AND do SHA 5f46bad2d: 0 autoritativo falso (impediria fallback).
+  const dual = { ativo: true, status: 'Ativo', group_id: 'g1' };
+  assert.equal(rows.filter((row) => matchesLocalAnd(row, dual)).length, 0);
 });
 
 test('kpis derivados e vendas mensais usam pedidos reais', () => {
