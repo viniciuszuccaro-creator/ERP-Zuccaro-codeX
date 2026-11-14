@@ -1,3 +1,10 @@
+## Cursor — PR595/596 Seletor listSnapshot (Bugbot high) (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. PR595 `eb542ae3b` / PR596 `ba985a5d4`.
+Bugbot: handler tardio lia refs já em B e `operacionais` fechado de A.
+Fix: `listSnapshotRef` {binding,epoch,items}; lookup só em `snapshot.items`;
+id ausente = no-op. Tip `c3a3a1143` CI SUCCESS; contrato `da98af346` reconhecido.
+
 ## Cursor — PR596 Bugbot hydrate epoch + situação (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
