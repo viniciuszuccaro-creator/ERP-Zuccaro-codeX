@@ -1,3 +1,12 @@
+## Cursor — PR596 revisão independente port Casa 3f318ccf1 (2026-11-14 America/Sao_Paulo)
+
+Casa #6882827840: port composto `codex/casa-fechamento-hml-20261114` SHA
+**`3f318ccf1`**. Revisão Cursor (blobs vs freeze **`0ffff5100`**):
+**8/8 ORIGEM_EXATA** — Completo, payload, Revisao, GerenciarEnderecos,
+operacional-595, boundaries AST/pins, sync-591, remainder operacional.
+Extras: só STATUS/HANDOFF Casa. Backend/Dashboard/count intocados no compare
+base→port. CI Casa `43630927875` em curso — **≠ aprovação deploy**. tip ≠ HML.
+
 ## Cursor — PR596 libera 8º path GerenciarEnderecosClienteForm (2026-11-14 America/Sao_Paulo)
 
 Casa #6882779273: CI7107 `0ffff5100` SUCCESS; port 7 paths em Codex; FAIL focal

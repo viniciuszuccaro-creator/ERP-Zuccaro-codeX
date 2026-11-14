@@ -1,3 +1,9 @@
+## Cursor — PR596 revisão FINAL port Casa 3f318ccf1 (2026-11-14 America/Sao_Paulo)
+
+Independente: 8/8 blobs = freeze `0ffff5100`. Branch Codex
+`codex/casa-fechamento-hml-20261114`. CI própria em curso ≠ approve HML.
+Freeze Cursor permanece `0ffff5100`. tip ≠ HML `d054e2b3`. Sem deploy.
+
 ## Cursor — PR596 8º path GerenciarEnderecosClienteForm liberado (2026-11-14 America/Sao_Paulo)
 
 Casa #6882779273: incluir só `GerenciarEnderecosClienteForm.jsx` no port Codex
