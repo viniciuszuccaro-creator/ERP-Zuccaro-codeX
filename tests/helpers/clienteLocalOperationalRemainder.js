@@ -426,15 +426,18 @@ export function clienteLocalOperationalRemainder(file, text) {
               mapped = null;
             }
             locaisDraftOwnedRef.current = true;
-            const reconciled = reconcileClienteLocaisDraftAfterPartial(
-              locaisDraft,
-              mapped,
-              partialErr.summary,
-            );
-            // Só atualiza rascunho para carimbar ids — não substitui por mapped puro.
-            if (reconciled !== locaisDraft) {
-              setFormData((prev) => ({ ...prev, locais_entrega: reconciled }));
-            }
+            // Carimba sobre o rascunho VIVO (prev), não o snapshot do save — Abrir rascunho
+            // durante sync legado lento não pode ser descartado pelo catch PARTIAL.
+            setFormData((prev) => {
+              const live = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : locaisDraft;
+              const reconciled = reconcileClienteLocaisDraftAfterPartial(
+                live,
+                mapped,
+                partialErr.summary,
+              );
+              if (reconciled === live) return prev;
+              return { ...prev, locais_entrega: reconciled };
+            });
           }
           throw syncErr;
         }

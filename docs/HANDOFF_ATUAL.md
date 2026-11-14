@@ -1,9 +1,13 @@
-## Cursor — PR596 P1 residual carimbo PARTIAL sem listLocais (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Bugbot carimbo PARTIAL no rascunho vivo (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-Codex P1 (#6881291218): create confirmado + listLocais 503 não carimbava id → retry duplicava.
-Completo: reconcile após try/catch da leitura (mapped null ok); baseline null sem deletes.
-tip ≠ HML `d054e2b3`. CI **em curso ≠ aprovado**. PROXIMO: CI tip; aceite composto com Codex.
+Bugbot Medium: PARTIAL não sobrescreve `prev.locais_entrega` com snapshot do save
+(Abrir rascunho durante sync legado). tip ≠ HML `d054e2b3`. CI **em curso ≠ aprovado**.
+
+## Cursor — PR596 P1 residual carimbo PARTIAL sem listLocais (2026-11-14 America/Sao_Paulo)
+
+Tip `7d9e58e71` (histórico): reconcile após listLocais try/catch (mapped null ok).
+HML `d054e2b3` — tip ≠ HML.
 
 ## Cursor — PR596 toast pin «não é salvamento integral» + BATCH_ATOMIC=false (2026-11-14 America/Sao_Paulo)
 

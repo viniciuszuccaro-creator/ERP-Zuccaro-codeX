@@ -293,11 +293,36 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   const catchBaselineAt = block.indexOf('locaisHttpBaselineRef.current = null');
   assert.ok(reconcileAt > 0 && catchBaselineAt > 0 && reconcileAt > catchBaselineAt,
     'reconcile deve rodar após try/catch da leitura (carimba mesmo com baseline null)');
+  // Bugbot: carimbar no rascunho vivo (prev.locais_entrega), não só no snapshot do save.
+  assert.match(block, /prev\.locais_entrega/);
+  assert.match(block, /const live = Array\.isArray\(prev\.locais_entrega\)/);
   assert.equal(
     /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped\s*\}\s*\)/.test(block),
     false,
     'PARTIAL não pode setFormData(...locais_entrega: mapped) puro',
   );
+  assert.equal(
+    /setFormData\(\(prev\) => \(\{ \.\.\.prev, locais_entrega: reconciled \}\)\)/.test(block),
+    false,
+    'PARTIAL não pode gravar reconciled do snapshot locaisDraft por cima do vivo',
+  );
+
+  // Live = save + rascunho aberto durante sync: carimba create OK e preserva extra.
+  const liveDuringSync = [
+    { ...baseEndereco, apelido: 'Novo-A' },
+    { ...baseEndereco, apelido: 'Novo-B-pendente' },
+    { ...baseEndereco, apelido: 'Revisao-durante-sync', _rascunho_revisao: true },
+  ];
+  const stampedLive = reconcileClienteLocaisDraftAfterPartial(
+    liveDuringSync,
+    null,
+    { ops: [{ op: 'create', localId: uuidA }] },
+  );
+  assert.equal(stampedLive[0].id, uuidA);
+  assert.equal(stampedLive[2].apelido, 'Revisao-durante-sync');
+  assert.equal(stampedLive[2]._rascunho_revisao, true);
+  assert.ok(!isClienteLocalCanonicalId(stampedLive[1].id));
+  assert.ok(!isClienteLocalCanonicalId(stampedLive[2].id));
 
   // Create ok + create falha: carimba id do 1º; 2º permanece sem id para retry.
   const draftPending = [
