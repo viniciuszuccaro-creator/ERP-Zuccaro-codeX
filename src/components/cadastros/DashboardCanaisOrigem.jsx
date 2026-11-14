@@ -248,11 +248,13 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
     ? "w-full h-full flex flex-col overflow-hidden" 
     : "space-y-6";
 
-  const isLoading = loadingParametros || loadingPedidos;
+  // Query desabilitada fica isPending sem fetch — só spin quando há consulta ativa.
+  const queriesEnabled = contextoValido && canViewDashboard;
+  const isLoading = queriesEnabled && (loadingParametros || loadingPedidos);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex items-center justify-center h-96" data-block="canais-origem-loading">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -600,7 +602,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
               }
 
               // Canais inativos
-              const canaisInativos = parametros.filter(p => !p.ativo).length;
+              const canaisInativos = parametrosList.filter(p => !p.ativo).length;
               if (canaisInativos > 0) {
                 insights.push({
                   tipo: 'warning',

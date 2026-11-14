@@ -23,8 +23,8 @@ const hashes = [
   ['src/components/chatbot/DashboardAtendente.jsx','ea837f257d99bb269547b841e80b395f9714a5ca3d9397070c05ba19be80997e'],
   ['src/components/crm/FunilVendasAvancado.jsx','f06224b74b17273cf6f10edb54d4c8bab18574990e7f968b0b9e674130ffa588'],
   ['src/pages/DashboardCorporativo.jsx','5a73d0390fb1130d8c5e0dc5dcfeb569ace1bfa7b41867b91b2dd6d85e120f78'],
-  // Hash atualizado: KPIs fail-closed (— ≠ 0) + soft cap amostra; formatter Number.isFinite preservado.
-  ['src/components/cadastros/DashboardCanaisOrigem.jsx','a784ecaf225f3fb8d0f1ce49aa55e17dd39ee1213d62766b186cedcca15059b5'],
+  // Hash: KPI fail-closed + Bugbot (parametrosList insights; spin só com query enabled).
+  ['src/components/cadastros/DashboardCanaisOrigem.jsx','633f477763743b6a1170c3efe8d61414c3e68cb08e7ac863aa8c0be1db2d7785'],
   ['src/components/cadastros/HistoricoProduto.jsx','bfdd237c2e172268d275a6727778f72ad229b34f77057860525a87c5aa054c2c'],
   ['src/components/producao/DashboardRefugoIA.jsx','65e14a60239cbf60dee4ed080cf43e3c874d23187663497bb5fd0c70dac7192e'],
 ];

@@ -1,3 +1,9 @@
+## Cursor — PR596 Bugbot CanaisOrigem spin+insights (2026-11-14 America/Sao_Paulo)
+
+Bugbot 96545: (1) insights usam `parametrosList` (erro não crasha render);
+(2) spinner só com `queriesEnabled` (disabled ≠ pending infinito).
+Casa: delta Central `802ea50aa` sem achado bloqueante (notify tabela). tip ≠ HML.
+
 ## Cursor — PR596 DashboardCanaisOrigem KPI fail-closed (Base44) (2026-11-14 America/Sao_Paulo)
 
 Card Canais: sem `initialData []`; contexto/RBAC/erro/amostra 500 → "—"

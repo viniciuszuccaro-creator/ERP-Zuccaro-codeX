@@ -112,7 +112,10 @@ test('DashboardCanaisOrigem: KPI fail-closed (— ≠ 0; amostra capada)', async
   assert.match(src, /formatCanaisOrigemKpiDisplay/);
   assert.match(src, /metricsBlocked/);
   assert.match(src, /canais-origem-amostra-capada/);
+  assert.match(src, /queriesEnabled && \(loadingParametros \|\| loadingPedidos\)/);
+  assert.match(src, /parametrosList\.filter\(p => !p\.ativo\)/);
   assert.doesNotMatch(src, /initialData:\s*\[\]/);
+  assert.doesNotMatch(src, /parametros\.filter\(p => !p\.ativo\)/);
 });
 
 test('Central360: pagamento-resumo usa labels de condição hidratados', () => {

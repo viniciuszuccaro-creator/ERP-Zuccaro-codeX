@@ -1,3 +1,8 @@
+## Cursor — PR596 Bugbot CanaisOrigem + Casa 802 PASS (2026-11-14 America/Sao_Paulo)
+
+Bugbot: parametrosList nos insights; spin só com query enabled. Casa: notify
+Central `802ea50aa` sem bloqueio no alcance. tip ≠ HML; sem deploy.
+
 ## Cursor — PR596 tip 96545d417 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 DashboardCanaisOrigem KPI fail-closed (Base44). Freeze `0ffff5100` / port
