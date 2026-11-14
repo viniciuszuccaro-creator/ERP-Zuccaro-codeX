@@ -1,3 +1,9 @@
+## Cursor — PR596 Bugbot ProdutosProducao OP≠produto + resumo (2026-11-14 America/Sao_Paulo)
+
+Bugbot: falha de OP não zera ativos/bitolas/estoque; resumo com displays "—".
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+Próximo: CI tip; Casa preflight pacote 81.
+
 ## Cursor — PR596 tip 87571fdd4 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 DashboardProdutosProducao KPI fail-closed (Base44). Freeze `0ffff5100` / port

@@ -103,11 +103,18 @@ test('DashboardProdutosProducao: KPI fail-closed (— ≠ 0; ativos canônicos)'
   assert.match(src, /formatCanaisOrigemKpiDisplay/);
   assert.match(src, /isDashboardCadastroAtivo/);
   assert.match(src, /isCappedListUnreliable/);
-  assert.match(src, /metricsBlocked/);
+  assert.match(src, /productMetricsBlocked/);
+  assert.match(src, /ordensUnavailable/);
   assert.match(src, /consultasHabilitadas && \(loadingProdutos \|\| loadingOrdens\)/);
   assert.match(src, /produtos-producao-amostra-capada/);
+  assert.match(src, /produtos-producao-resumo-ativos/);
+  assert.match(src, /bitolasDisplay/);
+  // Falha de OP não bloqueia KPIs de produto (Bugbot).
+  assert.doesNotMatch(src, /productMetricsBlocked = !consultasHabilitadas \|\| errorProdutos \|\| errorOrdens/);
   assert.doesNotMatch(src, /data: produtos = \[\]/);
   assert.doesNotMatch(src, /p\.status === 'Ativo'/);
+  assert.doesNotMatch(src, /\{produtosAtivos\.length\} produto/);
+  assert.doesNotMatch(src, /text-purple-700">\{bitolas\.length\}</);
 });
 
 test('DashboardCanaisOrigem: KPI fail-closed (— ≠ 0; amostra capada)', async () => {

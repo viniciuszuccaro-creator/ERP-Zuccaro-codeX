@@ -64,24 +64,26 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
   const produtosList = Array.isArray(produtos) ? produtos : [];
   const ordensList = Array.isArray(ordensProducao) ? ordensProducao : [];
   const produtosCapped = isCappedListUnreliable(produtosList, DASHBOARD_LIST_SOFT_LIMIT);
-  const metricsBlocked = !consultasHabilitadas || errorProdutos || errorOrdens || produtosCapped;
+  // KPIs de produto dependem só da query Produto — falha de OP não zera ativos/bitolas/estoque.
+  const productMetricsBlocked = !consultasHabilitadas || errorProdutos || produtosCapped;
+  const ordensUnavailable = !consultasHabilitadas || errorOrdens;
   const isLoading = consultasHabilitadas && (loadingProdutos || loadingOrdens);
 
-  // Análises (amostra local; KPI autoritativo bloqueado se cap/erro/contexto)
+  // Análises (amostra local; KPI autoritativo bloqueado se cap/erro/contexto de produto)
   const produtosAtivos = produtosList.filter(isDashboardCadastroAtivo);
   const bitolas = produtosList.filter(p => p.eh_bitola);
   const estoqueTotal = produtosList.reduce((sum, p) => sum + (p.estoque_atual || 0), 0);
   const produtosCriticos = produtosList.filter(p =>
     (p.estoque_atual || 0) <= (p.estoque_minimo || 0) && isDashboardCadastroAtivo(p)
   );
-  const produtosAtivosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: produtosAtivos.length });
-  const bitolasDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: bitolas.length });
+  const produtosAtivosDisplay = formatCanaisOrigemKpiDisplay({ blocked: productMetricsBlocked, value: produtosAtivos.length });
+  const bitolasDisplay = formatCanaisOrigemKpiDisplay({ blocked: productMetricsBlocked, value: bitolas.length });
   const estoqueDisplay = formatCanaisOrigemKpiDisplay({
-    blocked: metricsBlocked,
+    blocked: productMetricsBlocked,
     value: estoqueTotal,
     format: (n) => (n / 1000).toFixed(1),
   });
-  const criticosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: produtosCriticos.length });
+  const criticosDisplay = formatCanaisOrigemKpiDisplay({ blocked: productMetricsBlocked, value: produtosCriticos.length });
 
   // Análise por tipo de aço
   const porTipoAco = {};
@@ -162,11 +164,19 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
           </AlertDescription>
         </Alert>
       )}
-      {(errorProdutos || errorOrdens) && (
+      {errorProdutos && (
         <Alert className="border-amber-300 bg-amber-50" data-block="produtos-producao-consulta-indisponivel">
           <AlertCircle className="w-5 h-5 text-amber-700" />
           <AlertDescription>
-            Contagem/amostra indisponível (erro de consulta — não é zero confirmado).
+            Contagem/amostra de produtos indisponível (erro de consulta — não é zero confirmado).
+          </AlertDescription>
+        </Alert>
+      )}
+      {errorOrdens && (
+        <Alert className="border-amber-300 bg-amber-50" data-block="produtos-producao-ordens-indisponivel">
+          <AlertCircle className="w-5 h-5 text-amber-700" />
+          <AlertDescription>
+            Ordens de produção indisponíveis — top de uso não confirmado (KPIs de produto permanecem).
           </AlertDescription>
         </Alert>
       )}
@@ -179,8 +189,8 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
         </Alert>
       )}
 
-      {/* Alertas Criticos — só quando amostra confiável */}
-      {!metricsBlocked && produtosCriticos.length > 0 && (
+      {/* Alertas Criticos — só quando amostra de produto confiável */}
+      {!productMetricsBlocked && produtosCriticos.length > 0 && (
         <Alert className="border-red-300 bg-red-50">
           <AlertCircle className="w-5 h-5 text-red-600" />
           <AlertDescription>
@@ -256,7 +266,11 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
             <CardTitle className="text-base">🔧 Distribuição por Tipo de Aço</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            {dadosTipoAco.length > 0 ? (
+            {productMetricsBlocked ? (
+              <div className="text-center py-12 text-slate-500" data-block="produtos-producao-tipo-aco-indisponivel">
+                <p>Distribuição de bitolas indisponível (≠ zero confirmado)</p>
+              </div>
+            ) : dadosTipoAco.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
@@ -290,7 +304,12 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
             <CardTitle className="text-base">🏆 Top 5 Produtos Mais Usados</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            {top5Produtos.length > 0 ? (
+            {ordensUnavailable ? (
+              <div className="text-center py-12 text-slate-500" data-block="produtos-producao-top5-indisponivel">
+                <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                <p>Uso por OP indisponível (≠ zero confirmado)</p>
+              </div>
+            ) : top5Produtos.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={top5Produtos}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -316,7 +335,7 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
       </div>
 
       {/* Lista de Produtos Críticos */}
-      {produtosCriticos.length > 0 && (
+      {!productMetricsBlocked && produtosCriticos.length > 0 && (
         <Card className="border-red-200 bg-red-50">
           <CardHeader className="border-b bg-red-100">
             <CardTitle className="text-base text-red-900">
@@ -360,12 +379,14 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
             </div>
             <div className="flex-1">
               <p className="font-bold text-purple-900 text-lg">Sistema de Produção Configurado</p>
-              <p className="text-sm text-purple-700">
-                {produtosAtivos.length} produto(s) disponíveis para Ordens de Produção
+              <p className="text-sm text-purple-700" data-block="produtos-producao-resumo-ativos">
+                {productMetricsBlocked
+                  ? 'Totais de produto indisponíveis nesta amostra (≠ zero).'
+                  : `${produtosAtivosDisplay} produto(s) disponíveis para Ordens de Produção`}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold text-purple-700">{bitolas.length}</p>
+              <p className="text-3xl font-bold text-purple-700" data-kpi="resumo-bitolas">{bitolasDisplay}</p>
               <p className="text-xs text-slate-600">Bitolas Ativas</p>
             </div>
           </div>

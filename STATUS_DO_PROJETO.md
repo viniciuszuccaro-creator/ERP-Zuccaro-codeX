@@ -1,3 +1,10 @@
+## Cursor — PR596 Bugbot ProdutosProducao OP≠produto + resumo (2026-11-14 America/Sao_Paulo)
+
+Bugbot 87571: (1) `errorOrdens` não bloqueia KPIs de produto (`productMetricsBlocked`
+só Produto/contexto/cap; `ordensUnavailable` só top5/OP); (2) resumo usa
+`produtosAtivosDisplay`/`bitolasDisplay` (sem zeros falsos). Tip pushed — aguarda CI.
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+
 ## Cursor — PR596 DashboardProdutosProducao KPI fail-closed (2026-11-14 America/Sao_Paulo)
 
 Card Base44 Produtos em Produção: sem `= []`; ativos via `isDashboardCadastroAtivo`;
