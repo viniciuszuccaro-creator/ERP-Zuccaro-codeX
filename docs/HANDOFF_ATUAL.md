@@ -1,3 +1,9 @@
+## Cursor — PR596 candidata freeze 0ffff5100 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch PR596 tip **`0ffff5100`** CI SUCCESS (43629783547).
+Casa #6882700394: 13 React PASS; resíduos create/ABA/perm/loading encerrados;
+port 7 paths na candidata Codex após checks. tip ≠ HML `d054e2b3`. Sem deploy.
+
 ## Cursor — PR596 liberação port patch Casa a79e63a5 (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
