@@ -7,6 +7,7 @@ import {
   syncClienteLocaisViaHttp,
   syncClienteLocaisAtomicViaHttp,
   buildClienteLocaisSyncOperations,
+  reconcileClienteLocaisDraftAfterPartial,
   prepareClienteLocaisHttpDraft,
   isClienteLocalCanonicalId,
   CLIENTE_LOCAIS_SYNC_PARTIAL,
@@ -769,8 +770,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             lastLocaisSyncSummaryRef.current = null;
           }
           if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
-            // Baseline/visão = persistido; rascunho formData.locais_entrega permanece
-            // (edições ainda não gravadas) para reconciliação/reexecução explícita.
+            // Baseline = persistido; carimba ids dos creates ok no rascunho; pendências sem id ficam.
             try {
               assertLocaisScope();
               const rows = await api.clientes.listLocais(frozenScope.clienteId, {
@@ -782,7 +782,15 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               setLocaisHttpView(mapped);
               locaisHttpBaselineRef.current = mapped;
               locaisDraftOwnedRef.current = true;
-              // NÃO setFormData(locais_entrega: mapped) — descartaria pendências.
+              const reconciled = reconcileClienteLocaisDraftAfterPartial(
+                locaisDraft,
+                mapped,
+                partialErr.summary,
+              );
+              // Só atualiza rascunho para carimbar ids — não substitui por mapped puro.
+              if (reconciled !== locaisDraft) {
+                setFormData((prev) => ({ ...prev, locais_entrega: reconciled }));
+              }
             } catch {
               locaisHttpBaselineRef.current = null;
             }

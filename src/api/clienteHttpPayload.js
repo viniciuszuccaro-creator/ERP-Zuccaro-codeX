@@ -796,6 +796,62 @@ export function mapUiEnderecoToClienteLocalUpdate(endereco) {
 export const CLIENTE_LOCAIS_SYNC_PARTIAL = 'CLIENTE_LOCAIS_SYNC_PARTIAL';
 
 /**
+ * Após PARTIAL: carimba `id`/`codigo` dos creates já persistidos no rascunho (ordem das ops),
+ * preservando edições pendentes sem id. Evita retry que recria e soft-deleta o recém-gravado.
+ * @param {unknown} draft
+ * @param {unknown} persistedMapped listLocais → UI (baseline)
+ * @param {{ ops?: Array<{ op?: string, localId?: string, nome?: string }> }|null|undefined} summary
+ * @returns {unknown} draft reconciliado (mesmo array se nada a carimbar)
+ */
+export function reconcileClienteLocaisDraftAfterPartial(draft, persistedMapped, summary) {
+  if (!Array.isArray(draft) || draft.length === 0) return draft;
+  const ops = Array.isArray(summary?.ops) ? summary.ops : [];
+  const createdOps = ops.filter((op) => op?.op === 'create' && isClienteLocalCanonicalId(op.localId));
+  if (createdOps.length === 0) return draft;
+  const byId = new Map();
+  if (Array.isArray(persistedMapped)) {
+    for (const row of persistedMapped) {
+      const id = row && typeof row === 'object'
+        ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+        : '';
+      if (isClienteLocalCanonicalId(id)) byId.set(id, row);
+    }
+  }
+  const next = draft.map((row) => (row && typeof row === 'object' ? { ...row } : row));
+  const pendingIdx = [];
+  for (let i = 0; i < next.length; i += 1) {
+    const row = next[i];
+    const id = row && typeof row === 'object'
+      ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+      : '';
+    if (!isClienteLocalCanonicalId(id)) pendingIdx.push(i);
+  }
+  let pi = 0;
+  for (const op of createdOps) {
+    if (pi >= pendingIdx.length) break;
+    const idx = pendingIdx[pi];
+    pi += 1;
+    const prev = /** @type {Record<string, unknown>} */ (next[idx] || {});
+    const persist = byId.get(String(op.localId));
+    if (persist && typeof persist === 'object') {
+      next[idx] = {
+        ...persist,
+        ...prev,
+        id: String(op.localId),
+        ...(persist.codigo !== undefined ? { codigo: persist.codigo } : {}),
+        _fonte: 'cliente_locais',
+        _finalidades: persist._finalidades ?? prev._finalidades,
+        _finalidades_detalhadas: persist._finalidades_detalhadas ?? prev._finalidades_detalhadas,
+        _tipo_endereco_original: persist._tipo_endereco_original ?? prev._tipo_endereco_original,
+      };
+    } else {
+      next[idx] = { ...prev, id: String(op.localId), _fonte: 'cliente_locais' };
+    }
+  }
+  return next;
+}
+
+/**
  * Path legado (create/update/delete por request): NÃO atômico.
  * Preferir `syncClienteLocaisAtomicViaHttp` → POST `/locais/sync` (`batchAtomic:true`).
  * Este sync legado:

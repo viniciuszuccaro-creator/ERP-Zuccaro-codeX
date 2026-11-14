@@ -1,15 +1,20 @@
-## Cursor — PR596 P1 PARTIAL preserva rascunho (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Bugbot PARTIAL carimba create no rascunho (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico)
 | Ref | Tip | CI |
 |-----|-----|-----|
-| PR595 | `b5862fc53` | **SUCCESS** |
-| PR596 | `b8a6710b6`/`876130480` | histórico / tip anterior |
+| PR595 | `b5862fc53` | **SUCCESS** (CASA 11 testes focais) |
 | PR596 | **este lote** (após push) | CI **em curso ≠ aprovado** |
 | **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Executor: Cursor. Contraprova P1 (PARTIAL): `listLocais` atualiza baseline/visão; **não** `setFormData(locais_entrega: mapped)` — pendências preservadas; toast com progresso/IDs; comentário overflow ≠ prova de atomicidade MASTER+locais.
-Teste: falha após 1ª escrita + assert Completo. Peels OK.
+Executor: Cursor. Bugbot High: retry PARTIAL recriava creates sem id e soft-deletava o persistido.
+`reconcileClienteLocaisDraftAfterPartial`: carimba `id`/`codigo` dos creates ok (ordem das ops); pendências sem id ficam; baseline via listLocais; não substitui rascunho por mapped puro.
+Testes + peels PASS.
+
+## Cursor — PR596 P1 PARTIAL preserva rascunho (2026-11-14 America/Sao_Paulo)
+
+Tip `b1eea9d1f`/`1135f9433` (histórico): baseline sem `setFormData(mapped)`; toast progresso.
+HML `d054e2b3` — tip ≠ HML.
 
 ## Cursor — PR596 jornadas/overflow toast/fiscal/códigos (2026-11-14 America/Sao_Paulo)
 

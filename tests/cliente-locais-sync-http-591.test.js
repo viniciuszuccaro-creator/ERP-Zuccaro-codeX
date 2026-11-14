@@ -10,7 +10,9 @@ import {
   syncClienteLocaisViaHttp,
   syncClienteLocaisAtomicViaHttp,
   buildClienteLocaisSyncOperations,
+  reconcileClienteLocaisDraftAfterPartial,
   assertClienteLocalUiExtrasWritable,
+  isClienteLocalCanonicalId,
   CLIENTE_HTTP_UNSUPPORTED_FIELDS,
   CLIENTE_LOCAIS_SYNC_PARTIAL,
   CLIENTE_LOCAIS_BATCH_ATOMIC,
@@ -275,7 +277,7 @@ test('sync: falha intermediária → PARTIAL com ops + reconcileRequired', async
   );
 });
 
-test('Completo PARTIAL: baseline via listLocais sem sobrescrever rascunho pendente', async () => {
+test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por mapped puro', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync('src/components/cadastros/CadastroClienteCompleto.jsx', 'utf8');
   const start = src.indexOf('if (code === CLIENTE_LOCAIS_SYNC_PARTIAL)');
@@ -283,40 +285,37 @@ test('Completo PARTIAL: baseline via listLocais sem sobrescrever rascunho penden
   assert.ok(start > 0 && end > start, 'PARTIAL catch presente');
   const block = src.slice(start, end);
   assert.match(block, /listLocais/);
+  assert.match(block, /reconcileClienteLocaisDraftAfterPartial/);
   assert.match(block, /locaisHttpBaselineRef\.current = mapped/);
-  assert.match(block, /descartaria pendências|rascunho formData\.locais_entrega permanece/i);
   assert.equal(
-    /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped/.test(block),
+    /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped\s*\}\s*\)/.test(block),
     false,
-    'PARTIAL não pode setFormData(...locais_entrega: mapped)',
+    'PARTIAL não pode setFormData(...locais_entrega: mapped) puro',
   );
 
-  // Consumidor sintético: 1ª escrita ok, 2ª falha → baseline=persistido, draft intacto.
+  // Create ok + create falha: carimba id do 1º; 2º permanece sem id para retry.
   const draftPending = [
-    { ...baseEndereco, id: uuidA, apelido: 'Editado-1', _finalidades_detalhadas: [{ finalidade: 'ENTREGA', principal: true }], _tipo_endereco_original: 'Entrega', tipo_endereco: 'Entrega' },
-    { ...baseEndereco, id: uuidB, apelido: 'Editado-2-pendente', _finalidades_detalhadas: [{ finalidade: 'ENTREGA', principal: false }], _tipo_endereco_original: 'Entrega', tipo_endereco: 'Entrega' },
+    { ...baseEndereco, apelido: 'Novo-A' },
+    { ...baseEndereco, apelido: 'Novo-B-pendente' },
   ];
-  const persistedBefore = [
-    { id: uuidA, nome: 'Antigo-1', cep: '01310100', logradouro: 'Av', numero: '1', bairro: 'B', cidade: 'SP', uf: 'SP', pais: 'BRASIL', ativo: true, finalidades: [{ finalidade: 'ENTREGA', principal: true }] },
-    { id: uuidB, nome: 'Antigo-2', cep: '01310100', logradouro: 'Av', numero: '2', bairro: 'B', cidade: 'SP', uf: 'SP', pais: 'BRASIL', ativo: true, finalidades: [{ finalidade: 'ENTREGA', principal: false }] },
-  ];
-  let updates = 0;
+  let creates = 0;
   let partial;
   try {
     await syncClienteLocaisViaHttp({
-      clienteId: 'cli-partial',
+      clienteId: 'cli-partial-create',
       draft: draftPending,
-      baselineIds: [uuidA, uuidB],
+      baselineIds: [],
       api: {
-        createLocal: async () => ({ id: uuidA }),
-        updateLocal: async () => {
-          updates += 1;
-          if (updates > 1) {
+        createLocal: async () => {
+          creates += 1;
+          if (creates > 1) {
             const err = /** @type {Error & { status: number }} */ (new Error('remoto 503'));
             err.status = 503;
             throw err;
           }
+          return { id: uuidA, codigo: '00007' };
         },
+        updateLocal: async () => {},
         softDeleteLocal: async () => {},
         setFinalidades: async () => {},
       },
@@ -325,18 +324,25 @@ test('Completo PARTIAL: baseline via listLocais sem sobrescrever rascunho penden
     partial = err;
   }
   assert.equal(partial?.code, CLIENTE_LOCAIS_SYNC_PARTIAL);
-  assert.equal(partial?.summary?.updated, 1);
-  // Simula catch Completo: listLocais → baseline; draft permanece.
-  const formDraft = structuredClone(draftPending);
-  const baseline = persistedBefore.map((row) => mapClienteLocalToUiEndereco(row));
-  // Após 1 update bem-sucedido, servidor teria Editado-1; listLocais sintético mistura.
-  baseline[0] = mapClienteLocalToUiEndereco({
-    ...persistedBefore[0],
-    nome: 'Editado-1',
-  });
-  assert.equal(formDraft[1].apelido, 'Editado-2-pendente');
-  assert.notEqual(formDraft[1].apelido, baseline[1].apelido);
-  assert.equal(baseline[0].apelido, 'Editado-1');
+  assert.equal(partial?.summary?.created, 1);
+  assert.equal(partial?.summary?.ops?.[0]?.localId, uuidA);
+  const persisted = [
+    mapClienteLocalToUiEndereco({
+      id: uuidA, nome: 'Novo-A', codigo: '00007', cep: '01310100', logradouro: 'Av Paulista',
+      numero: '1000', bairro: 'Bela Vista', cidade: 'São Paulo', uf: 'SP', pais: 'BRASIL',
+      ativo: true, finalidades: [{ finalidade: 'ENTREGA', principal: true }],
+    }),
+  ];
+  const reconciled = reconcileClienteLocaisDraftAfterPartial(draftPending, persisted, partial.summary);
+  assert.equal(reconciled[0].id, uuidA);
+  assert.equal(reconciled[0].codigo, '00007');
+  assert.equal(reconciled[0].apelido, 'Novo-A');
+  assert.equal(reconciled[1].apelido, 'Novo-B-pendente');
+  assert.ok(!isClienteLocalCanonicalId(reconciled[1].id));
+  // Retry keptIds incluiria uuidA — não soft-deleta o create já gravado.
+  const retryPlan = buildClienteLocaisSyncOperations(reconciled, [uuidA]);
+  assert.equal(retryPlan.operations.filter((op) => op.op === 'inactivate').length, 0);
+  assert.equal(retryPlan.operations.filter((op) => op.op === 'create').length, 1);
 });
 
 test('sync: assertScope CONTEXT_CHANGED no meio do lote', async () => {

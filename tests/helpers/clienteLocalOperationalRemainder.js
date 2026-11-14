@@ -12,7 +12,7 @@ export function clienteLocalOperationalRemainder(file, text) {
   ] : file === 'src/components/cadastros/CadastroClienteCompleto.jsx' ? [
     // Atomic syncLocais (Cursor) — peel before ENTREGA onOpenDraft.
     [
-      '  syncClienteLocaisViaHttp,\n  syncClienteLocaisAtomicViaHttp,\n  buildClienteLocaisSyncOperations,\n  prepareClienteLocaisHttpDraft,\n',
+      '  syncClienteLocaisViaHttp,\n  syncClienteLocaisAtomicViaHttp,\n  buildClienteLocaisSyncOperations,\n  reconcileClienteLocaisDraftAfterPartial,\n  prepareClienteLocaisHttpDraft,\n',
       '  syncClienteLocaisViaHttp,\n  prepareClienteLocaisHttpDraft,\n',
     ],
     [
@@ -406,8 +406,7 @@ export function clienteLocalOperationalRemainder(file, text) {
             lastLocaisSyncSummaryRef.current = null;
           }
           if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
-            // Baseline/visão = persistido; rascunho formData.locais_entrega permanece
-            // (edições ainda não gravadas) para reconciliação/reexecução explícita.
+            // Baseline = persistido; carimba ids dos creates ok no rascunho; pendências sem id ficam.
             try {
               assertLocaisScope();
               const rows = await api.clientes.listLocais(frozenScope.clienteId, {
@@ -419,7 +418,15 @@ export function clienteLocalOperationalRemainder(file, text) {
               setLocaisHttpView(mapped);
               locaisHttpBaselineRef.current = mapped;
               locaisDraftOwnedRef.current = true;
-              // NÃO setFormData(locais_entrega: mapped) — descartaria pendências.
+              const reconciled = reconcileClienteLocaisDraftAfterPartial(
+                locaisDraft,
+                mapped,
+                partialErr.summary,
+              );
+              // Só atualiza rascunho para carimbar ids — não substitui por mapped puro.
+              if (reconciled !== locaisDraft) {
+                setFormData((prev) => ({ ...prev, locais_entrega: reconciled }));
+              }
             } catch {
               locaisHttpBaselineRef.current = null;
             }
