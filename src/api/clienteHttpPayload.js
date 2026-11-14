@@ -586,6 +586,7 @@ export function mapClienteLocalToUiEndereco(local) {
     observacoes: row.referencia || '',
     principal: fins.some((f) => /** @type {{ finalidade?: unknown, principal?: unknown }} */ (f)?.finalidade === mapTipoEnderecoToFinalidade(tipo_endereco)
       && /** @type {{ principal?: unknown }} */ (f)?.principal === true),
+    endereco_incompleto: row.endereco_incompleto === true ? true : (row.endereco_incompleto === false ? false : undefined),
     _fonte: 'cliente_locais',
     _finalidades: codes,
     _tipo_endereco_original: tipo_endereco,

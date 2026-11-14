@@ -91,12 +91,20 @@ test('Identidade visual: hunks exatos nao aceitam omissao, repeticao ou adultera
 });
 
 test('RG HTTP: exact peel rejects omission, repetition and changes while retaining the historical whole form', () => {
-  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
+  const file = 'src/components/cadastros/CadastroClienteCompleto.jsx';
+  const source = read(file);
   assert.doesNotThrow(() => clienteContactPresenceRemainder(source));
-  for (const [after] of rgHttpHunks) {
+  // RAW: applyClienteMasterExtras + value/onChange; Continuity RG só após purpose.
+  const applyHunk = masterExtrasUiHunks.find(([after]) => after.includes('applyClienteMasterExtrasToHttpPayload(payload'))?.[0];
+  assert.ok(applyHunk);
+  const rawGuards = [applyHunk, rgHttpHunks[1][0], rgHttpHunks[2][0]];
+  for (const after of rawGuards) {
     for (const replacement of ['', after + after, after.replace('rg', 'rg /* FORGED */')])
       assert.throws(() => clienteContactPresenceRemainder(source.replace(after, replacement)));
   }
+  const afterPurpose = clienteLocaisPurposeRemainder(file, source, false);
+  for (const replacement of ['', rgHttpHunks[0][0] + rgHttpHunks[0][0], rgHttpHunks[0][0].replace('rg', 'rg /* FORGED */')])
+    assert.throws(() => clienteContactPresenceRemainder(afterPurpose.replace(rgHttpHunks[0][0], replacement)));
   const digest = text => createHash('sha256').update(clienteContactPresenceRemainder(text)).digest('hex');
   assert.notEqual(digest(source + '\n// OUTSIDE_RG\n'), digest(source));
 });
@@ -134,7 +142,13 @@ test('Purpose review exact layer preserves c93, ancestors and outside-edit seman
         if (forged === previous) assert.equal(historical(forged), historical(previous));
         else assert.throws(() => historical(forged));
       }
-      assert.throws(() => historical(source.replace(after, before) + '\n' + after));
+      // Relocar hunk extras (import/apply) ainda pode peelar 1×; finalidade/API locais devem falhar.
+      const relocated = source.replace(after, before) + '\n' + after;
+      if (after.includes('finalidade=') || after.includes('listLocaisReviewPage')) {
+        assert.throws(() => historical(relocated));
+      } else {
+        assert.throws(() => clienteLocaisPurposeRemainder(file, relocated));
+      }
     }
     assert.throws(() => clienteLocaisPurposeRemainder(file, source + '\n// OUTSIDE_PURPOSE\n'));
     for (const input of [source, previous, ancestor]) {
@@ -195,7 +209,159 @@ function once(source, current, previous) {
   return source.replace(current, previous);
 }
 const identityDisplayHunks = [["  upload_por: sanitizeText(doc?.upload_por, 180)\n})) : [];\n\nexport default function CadastroClienteCompleto({ cliente: clienteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave, isLoadingRecord = false, loadIncomplete = false }) {\n  // Normaliza: aceita tanto \"cliente\" (legado) quanto \"item\"/\"data\" (novo Visualizador)\n  const cliente = clienteProp || item || data || initialData || defaultValues || null;\n  const onCloseNorm = onClose || onSave || onSubmit;\n  const [activeTab, setActiveTab] = useState(\"dados-gerais\");\n  const [isSaving, setIsSaving] = useState(false);\n  const editLoadBlockedRef = useRef(false);\n  editLoadBlockedRef.current = Boolean(isLoadingRecord || loadIncomplete);\n\n  const { toast } = useToast();\n  const queryClient = useQueryClient();","  upload_por: sanitizeText(doc?.upload_por, 180)\n})) : [];\n\nexport default function CadastroClienteCompleto({ cliente: clienteProp, item, data, initialData, defaultValues, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {\n  // Normaliza: aceita tanto \"cliente\" (legado) quanto \"item\"/\"data\" (novo Visualizador)\n  const cliente = clienteProp || item || data || initialData || defaultValues || null;\n  const onCloseNorm = onClose || onSave || onSubmit;\n  const [activeTab, setActiveTab] = useState(\"dados-gerais\");\n  const [isSaving, setIsSaving] = useState(false);\n\n  const { toast } = useToast();\n  const queryClient = useQueryClient();"],["  } = useContextoVisual();\n  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;\n  const { isCurrent: isScopeCurrent, assertCurrent: assertScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);\n  const isFormScopeCurrent = () => !editLoadBlockedRef.current && isScopeCurrent();\n  const assertFormScopeCurrent = () => {\n    assertScopeCurrent();\n    if (editLoadBlockedRef.current) throw new Error('Recarregue o cadastro completo antes de salvar. O rascunho foi preservado.');\n  };\n  const contextKey = empresaAtual?.id || groupId || \"sem-contexto\";\n  const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);\n  const podeCriar = canCreate(\"Cadastros\", \"Cliente\") || canCreate(\"Cadastros\", null);","  } = useContextoVisual();\n  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();\n  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;\n  const { isCurrent: isFormScopeCurrent, assertCurrent: assertFormScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);\n  const contextKey = empresaAtual?.id || groupId || \"sem-contexto\";\n  const contextoValido = Boolean(empresaAtual?.id || groupId || cliente?.empresa_id || cliente?.group_id);\n  const podeCriar = canCreate(\"Cadastros\", \"Cliente\") || canCreate(\"Cadastros\", null);"],["\n  const handleExcluir = () => {\n    try { assertFormScopeCurrent(); }\n    catch (error) { toast({ title: 'Salvamento bloqueado', description: error.message, variant: 'destructive' }); return; }\n    if (!window.confirm(`Tem certeza que deseja excluir o cliente \"${formData.nome}\"? Esta ação não pode ser desfeita.`)) {\n      return;\n    }","\n  const handleExcluir = () => {\n    try { assertFormScopeCurrent(); }\n    catch (error) { toast({ title: 'Contexto alterado', description: error.message, variant: 'destructive' }); return; }\n    if (!window.confirm(`Tem certeza que deseja excluir o cliente \"${formData.nome}\"? Esta ação não pode ser desfeita.`)) {\n      return;\n    }"],["                data-permission={cliente?.id ? \"Cadastros.Cliente.editar\" : \"Cadastros.Cliente.criar\"}\n                data-action=\"Cadastros.Cliente.salvar\"\n                data-sensitive\n                disabled={isSaving || saveMutation.isPending || isLoadingRecord || loadIncomplete || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}\n                className=\"bg-sky-600 hover:bg-sky-700\"\n              >\n                <Save className=\"w-4 h-4 mr-2\" />","                data-permission={cliente?.id ? \"Cadastros.Cliente.editar\" : \"Cadastros.Cliente.criar\"}\n                data-action=\"Cadastros.Cliente.salvar\"\n                data-sensitive\n                disabled={isSaving || saveMutation.isPending || !contextoValido || (clienteBoundId ? !podeEditar : !podeCriar)}\n                className=\"bg-sky-600 hover:bg-sky-700\"\n              >\n                <Save className=\"w-4 h-4 mr-2\" />"],["                  </Select>\n                </div>\n\n                {(formData.tipo !== \"Pessoa Jurídica\" || (formData.nome && formData.nome.trim() !== (formData.razao_social || \"\").trim())) && <div className=\"col-span-2\">\n                  <Label htmlFor=\"nome\">{formData.tipo === \"Pessoa Jurídica\" ? \"Nome de exibição\" : \"Nome completo *\"}</Label>\n                  <Input\n                    id=\"nome\"\n                    value={formData.nome}\n                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}\n                    required={formData.tipo !== \"Pessoa Jurídica\"}\n                  />\n                </div>\n                }\n\n                {formData.tipo === \"Pessoa Jurídica\" && (\n                  <>","                  </Select>\n                </div>\n\n                <div className=\"col-span-2\">\n                  <Label htmlFor=\"nome\">Nome / Razão Social *</Label>\n                  <Input\n                    id=\"nome\"\n                    value={formData.nome}\n                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}\n                    required\n                  />\n                </div>\n\n                {formData.tipo === \"Pessoa Jurídica\" && (\n                  <>"],["                        id=\"razao_social\"\n                        value={formData.razao_social}\n                        onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}\n                        required\n                      />\n                    </div>\n","                        id=\"razao_social\"\n                        value={formData.razao_social}\n                        onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}\n                      />\n                    </div>\n"],["                )}\n\n                <div className=\"col-span-2 pt-4 border-t\">\n                  <h3 className=\"font-semibold mb-3\">Endereço Principal (Fiscal)</h3>\n                  <div className=\"grid grid-cols-4 gap-4\">\n                    <div>\n                      <Label htmlFor=\"cep\">CEP</Label>","                )}\n\n                <div className=\"col-span-2 pt-4 border-t\">\n                  <h3 className=\"font-semibold mb-3\">Endereço Principal</h3>\n                  <div className=\"grid grid-cols-4 gap-4\">\n                    <div>\n                      <Label htmlFor=\"cep\">CEP</Label>"]];
+const masterExtrasUiHunks = [
+  [
+    "import {\n  applyClienteMasterExtrasToHttpPayload,\n  isClienteMasterStorageRequired,\n} from \"@/api/clienteMasterExtrasUi\";\n",
+    '',
+  ],
+  [
+    '    rg: "",\n'
+    + '    // Create: \'\' = opcional vazio (omit no wire); undefined só em carga edit ausente.\n'
+    + '    numero_caixa_postal: "",\n'
+    + '    cep_caixa_postal: "",\n'
+    + '    caixa_postal_cobranca: "",\n'
+    + '    inscricao_produtor_rural: "",\n',
+    '    rg: "",\n',
+  ],
+  [
+    '      rg: "",\n'
+    + '      numero_caixa_postal: "",\n'
+    + '      cep_caixa_postal: "",\n'
+    + '      caixa_postal_cobranca: "",\n'
+    + '      inscricao_produtor_rural: "",\n'
+    + '      inscricao_estadual: "",\n',
+    '      rg: "",\n'
+    + '      inscricao_estadual: "",\n',
+  ],
+  [
+    '      if (isHttpBackendMode) {\n'
+    + '        // Extensões MASTER (rg/caixa/produtor): omit ≠ limpar; \'\' ≠ clear (Codex).\n'
+    + '        applyClienteMasterExtrasToHttpPayload(payload, data);\n'
+    + '      }\n',
+    '      if (isHttpBackendMode) {\n'
+    + '        if (data.rg !== undefined) payload.rg = data.rg;\n'
+    + '        else delete payload.rg;\n'
+    + '      }\n',
+  ],
+  [
+    '      const storageRequired = isClienteMasterStorageRequired(err);\n'
+    + '      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.\n'
+    + '      if (partial) {\n'
+    + '        queryClient.invalidateQueries({ queryKey: [\'clientes\'] });\n'
+    + '      }\n'
+    + '      toast({\n'
+    + '        title: !sameScope\n'
+    + '          ? "Contexto alterado"\n'
+    + '          : (storageRequired\n'
+    + '            ? "❌ Extensões MASTER sem storage revisado"\n'
+    + '            : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente")),\n'
+    + '        description: sameScope\n'
+    + '          ? (storageRequired\n'
+    + '            ? "Schema antigo ou colunas RG/caixa postal/produtor ainda não aplicadas. Rascunho preservado — omissão ≠ limpar; sem inventar sucesso."\n'
+    + '            : (err?.message || String(error)))\n'
+    + '          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",\n',
+    '      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.\n'
+    + '      if (partial) {\n'
+    + '        queryClient.invalidateQueries({ queryKey: [\'clientes\'] });\n'
+    + '      }\n'
+    + '      toast({\n'
+    + '        title: !sameScope\n'
+    + '          ? "Contexto alterado"\n'
+    + '          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),\n'
+    + '        description: sameScope\n'
+    + '          ? (err?.message || String(error))\n'
+    + '          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",\n',
+  ],
+  // Restaura adjacência RG → Endereço Fiscal (peel identityDisplayHunks).
+  [
+    '                        data-campo="rg"\n'
+    + '                        data-persistencia={formData.rg === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.rg === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-master-extra">\n'
+    + '                        RG no MASTER — omitir ≠ limpar; schema antigo → 503 STORAGE_REQUIRED.\n'
+    + '                      </p>\n'
+    + '                    </div>\n'
+    + '                  </>\n'
+    + '                )}\n\n'
+    + '                <div className="col-span-2 pt-4 border-t space-y-3" data-block="cliente-master-extras">\n'
+    + '                  <h3 className="font-semibold">Extensões MASTER (caixa postal / produtor)</h3>\n'
+    + '                  <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5" role="status" data-fonte="cliente-master-extras-contrato">\n'
+    + '                    Contrato Codex no mesmo Cliente: numero_caixa_postal, cep_caixa_postal, caixa_postal_cobranca,\n'
+    + '                    inscricao_produtor_rural. Opcionais; omissão ≠ limpar. SQL candidato pode não estar aplicado —\n'
+    + '                    escrita com storage ausente → 503 CLIENTE_MASTER_STORAGE_REQUIRED.\n'
+    + '                  </p>\n'
+    + '                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="numero_caixa_postal">Nº caixa postal</Label>\n'
+    + '                      <Input\n'
+    + '                        id="numero_caixa_postal"\n'
+    + '                        value={formData.numero_caixa_postal ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({\n'
+    + '                          ...formData,\n'
+    + '                          numero_caixa_postal: e.target.value === \'\' ? null : e.target.value,\n'
+    + '                        })}\n'
+    + '                        data-campo="numero_caixa_postal"\n'
+    + '                        data-persistencia={formData.numero_caixa_postal === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.numero_caixa_postal === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="cep_caixa_postal">CEP caixa postal</Label>\n'
+    + '                      <Input\n'
+    + '                        id="cep_caixa_postal"\n'
+    + '                        value={formData.cep_caixa_postal ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({\n'
+    + '                          ...formData,\n'
+    + '                          cep_caixa_postal: e.target.value === \'\' ? null : e.target.value,\n'
+    + '                        })}\n'
+    + '                        data-campo="cep_caixa_postal"\n'
+    + '                        data-persistencia={formData.cep_caixa_postal === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.cep_caixa_postal === undefined ? \'Não recuperado nesta carga\' : \'00000000\'}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="caixa_postal_cobranca">Caixa postal cobrança</Label>\n'
+    + '                      <Input\n'
+    + '                        id="caixa_postal_cobranca"\n'
+    + '                        value={formData.caixa_postal_cobranca ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({\n'
+    + '                          ...formData,\n'
+    + '                          caixa_postal_cobranca: e.target.value === \'\' ? null : e.target.value,\n'
+    + '                        })}\n'
+    + '                        data-campo="caixa_postal_cobranca"\n'
+    + '                        data-persistencia={formData.caixa_postal_cobranca === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.caixa_postal_cobranca === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                    <div>\n'
+    + '                      <Label htmlFor="inscricao_produtor_rural">Inscrição produtor rural</Label>\n'
+    + '                      <Input\n'
+    + '                        id="inscricao_produtor_rural"\n'
+    + '                        value={formData.inscricao_produtor_rural ?? \'\'}\n'
+    + '                        onChange={(e) => setFormData({\n'
+    + '                          ...formData,\n'
+    + '                          inscricao_produtor_rural: e.target.value === \'\' ? null : e.target.value,\n'
+    + '                        })}\n'
+    + '                        data-campo="inscricao_produtor_rural"\n'
+    + '                        data-persistencia={formData.inscricao_produtor_rural === undefined ? \'nao-carregado\' : \'rascunho\'}\n'
+    + '                        placeholder={formData.inscricao_produtor_rural === undefined ? \'Não recuperado nesta carga\' : undefined}\n'
+    + '                      />\n'
+    + '                    </div>\n'
+    + '                  </div>\n'
+    + '                </div>\n\n'
+    + '                <div className="col-span-2 pt-4 border-t">\n'
+    + '                  <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>',
+    '                      />\n'
+    + '                    </div>\n'
+    + '                  </>\n'
+    + '                )}\n\n'
+    + '                <div className="col-span-2 pt-4 border-t">\n'
+    + '                  <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>',
+  ],
+];
 const rgHttpHunks = [
+  // Purpose peels applyClienteMasterExtras → Continuity RG; contactPresence peels Continuity RG → ''.
   ['      if (isHttpBackendMode) {\n        if (data.rg !== undefined) payload.rg = data.rg;\n        else delete payload.rg;\n      }\n', ''],
   ['value={formData.rg ?? ""}', 'value={formData.rg}'],
   ['onChange={(e) => setFormData({ ...formData, rg: e.target.value === "" ? null : e.target.value })}',
@@ -205,6 +371,7 @@ const rgHttpHunks = [
 // accept only these two exact hunks, never arbitrary spread expressions.
 // #401 prep: peels Completo draft/commitMode/persistBusy from #431/#432 keep-both (sem pin cego).
 function clienteContactPresenceRemainder(source) {
+  // Purpose peels extras MASTER + locais (verify=false); não repetir masterExtrasUiHunks aqui.
   source = clienteLocaisPurposeRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', source, false);
   source = clienteLocaisReviewRemainder('src/components/cadastros/CadastroClienteCompleto.jsx', source, false);
   for (const [after, before] of identityDisplayHunks) source = once(source, after, before);
