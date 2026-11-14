@@ -1,7 +1,7 @@
-## Cursor — PR596 revisão FINAL port Casa 81d1e849 9/9 (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 port Casa 81d1e849 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
-Independente: 9/9 blobs = freeze `0ffff5100`. CI Casa em curso ≠ HML.
-Freeze Cursor endereços `0ffff5100`. tip ≠ HML. Sem deploy.
+Port composto **`81d1e849`** CI SUCCESS (43631755872); 9/9 = freeze `0ffff5100`.
+tip ≠ HML `d054e2b3` — sem promote. Deploy só Codex/autorizado.
 
 ## Cursor — PR596 9º path cliente-contatos-limitacao-591 (Casa CI FAIL) (2026-11-14 America/Sao_Paulo)
 

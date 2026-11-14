@@ -1,9 +1,18 @@
+## Cursor — PR596 port Casa 81d1e849 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+### Estado (≠ HML)
+| Ref | SHA | Prova |
+|-----|-----|-------|
+| Freeze Cursor endereços | `0ffff5100` | CI SUCCESS |
+| **Port Casa composto** | **`81d1e849`** | **CI SUCCESS** (43631755872) — 9/9 blobs |
+| HML | `d054e2b3` | **tip ≠ HML — sem promote** |
+
+9/9 ORIGEM_EXATA vs freeze. Pacote API/web candidata Codex pronta; deploy só com
+autorização + backup. Sem deploy Cursor.
+
 ## Cursor — PR596 revisão port Casa 81d1e849 (9/9) (2026-11-14 America/Sao_Paulo)
 
-Casa #6882932634 corretivo `81d1e849`: 9º path teste 591. Revisão Cursor:
-**9/9 ORIGEM_EXATA** vs freeze `0ffff5100` (8 fontes + `cliente-contatos-limitacao-591`).
-Diff 3f318→81d1: só teste + docs Casa. CI `43631755872` em curso ≠ approve HML.
-tip ≠ HML. Sem deploy.
+Histórico: revisão 9/9; CI → lote acima.
 
 ## Cursor — PR596 Casa CI FAIL 3f318ccf1 — 9º path teste 591 (2026-11-14 America/Sao_Paulo)
 
