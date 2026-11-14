@@ -1,13 +1,23 @@
-## Cursor — PR596 toast pin BATCH_ATOMIC + «não é salvamento integral» (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 P1 residual: carimbo PARTIAL sem listLocais (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico)
 | Ref | Tip | CI |
 |-----|-----|-----|
 | PR595 | `b5862fc53` | **SUCCESS** (histórico CI7053 / CASA) |
 | Continuity591 / CodexPR594 | `76dc3832` | **SUCCESS** histórico CI7046/7047 |
-| PR596 tip | `5f46d7e71` | CI **em curso ≠ aprovado** (run pós-toast-pin) |
-| Tips anteriores 596 | `4794b3285`/`78747d453`/`b1eea9d1f`/`7fa5b407e` | histórico FAIL toast pin / em curso — **≠ resultado deste tip** |
+| PR596 tip | **este lote** (após push) | CI **em curso ≠ aprovado** |
+| Tips anteriores 596 | `5f46d7e71`/`acb44f881`/`4794b3285`… | histórico / em curso — **≠ resultado deste tip** |
 | **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
+
+Executor: Cursor. Codex P1 residual em `4794b3285`: create OK no summary + `listLocais` 503
+deixava reconcile dentro do try da leitura → catch só zerava baseline → retry duplicava create.
+Fix: carimbar `reconcileClienteLocaisDraftAfterPartial` **após** try/catch da leitura (mapped pode ser null);
+baseline null sem deletes; peels + pin sync PASS. Contraprova Codex 6881267160 (25 edições) permanece válida.
+
+## Cursor — PR596 toast pin BATCH_ATOMIC + «não é salvamento integral» (2026-11-14 America/Sao_Paulo)
+
+Tip `5f46d7e71`/`acb44f881` (histórico deste fio): toast legado `BATCH_ATOMIC=false` + `não é salvamento integral`.
+HML `d054e2b3` — tip ≠ HML.
 
 Executor: Cursor. CI frontend FAIL em tips P1/Bugbot: pin exigia `BATCH_ATOMIC=false` + `/não é salvamento integral/` no Completo.
 Toast legado overflow/fallback restaurado com ambas as frases (minúsculo «não é…»); peel operacional alinhado.

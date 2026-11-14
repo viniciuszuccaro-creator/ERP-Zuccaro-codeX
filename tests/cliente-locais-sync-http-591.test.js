@@ -287,6 +287,12 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   assert.match(block, /listLocais/);
   assert.match(block, /reconcileClienteLocaisDraftAfterPartial/);
   assert.match(block, /locaisHttpBaselineRef\.current = mapped/);
+  // Carimbo fora do catch da leitura — IDs confirmados sobrevivem a listLocais 503.
+  assert.match(block, /locaisDraftOwnedRef\.current = true/);
+  const reconcileAt = block.indexOf('reconcileClienteLocaisDraftAfterPartial');
+  const catchBaselineAt = block.indexOf('locaisHttpBaselineRef.current = null');
+  assert.ok(reconcileAt > 0 && catchBaselineAt > 0 && reconcileAt > catchBaselineAt,
+    'reconcile deve rodar após try/catch da leitura (carimba mesmo com baseline null)');
   assert.equal(
     /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped\s*\}\s*\)/.test(block),
     false,
@@ -343,6 +349,17 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   const retryPlan = buildClienteLocaisSyncOperations(reconciled, [uuidA]);
   assert.equal(retryPlan.operations.filter((op) => op.op === 'inactivate').length, 0);
   assert.equal(retryPlan.operations.filter((op) => op.op === 'create').length, 1);
+
+  // P1 residual: listLocais 503 — carimba id do summary mesmo sem persistedMapped.
+  const stampedNoRead = reconcileClienteLocaisDraftAfterPartial(draftPending, null, partial.summary);
+  assert.equal(stampedNoRead[0].id, uuidA);
+  assert.equal(stampedNoRead[1].apelido, 'Novo-B-pendente');
+  assert.ok(!isClienteLocalCanonicalId(stampedNoRead[1].id));
+  // Baseline null: sem inactivate; create só do pendente (não recria o confirmado).
+  const retryNoBaseline = buildClienteLocaisSyncOperations(stampedNoRead, null);
+  assert.equal(retryNoBaseline.operations.filter((op) => op.op === 'inactivate').length, 0);
+  assert.equal(retryNoBaseline.operations.filter((op) => op.op === 'create').length, 1);
+  assert.equal(retryNoBaseline.operations.filter((op) => op.op === 'update' && op.id === uuidA).length, 1);
 });
 
 test('sync: assertScope CONTEXT_CHANGED no meio do lote', async () => {

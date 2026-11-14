@@ -1,12 +1,14 @@
-## Cursor — PR596 toast pin «não é salvamento integral» + BATCH_ATOMIC=false (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 P1 residual carimbo PARTIAL sem listLocais (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-Tip `5f46d7e71`: pins `cliente-contatos-limitacao-591` / `contato-b2b-tenant-591`
-exigiam `BATCH_ATOMIC=false` + `/não é salvamento integral/` no Completo.
-Toast legado overflow/fallback restaurado; peel operacional alinhado. tip ≠ HML `d054e2b3`.
-CI **em curso ≠ aprovado**.
-Contrato aceite locais + roteiro composição: ver topo STATUS (SHA UI `5f46d7e71` ≠ HML `d054e2b3`).
-PROXIMO: CI tip SUCCESS → combinar com Codex freeze API/web → aceite sintético (sem promote prematuro).
+Codex P1 (#6881291218): create confirmado + listLocais 503 não carimbava id → retry duplicava.
+Completo: reconcile após try/catch da leitura (mapped null ok); baseline null sem deletes.
+tip ≠ HML `d054e2b3`. CI **em curso ≠ aprovado**. PROXIMO: CI tip; aceite composto com Codex.
+
+## Cursor — PR596 toast pin «não é salvamento integral» + BATCH_ATOMIC=false (2026-11-14 America/Sao_Paulo)
+
+Tip `5f46d7e71`/`acb44f881` (histórico): toast `BATCH_ATOMIC=false` + `não é salvamento integral`.
+HML `d054e2b3` — tip ≠ HML.
 
 ## Cursor — PR596 PARTIAL carimba create (Bugbot High) (2026-11-14 America/Sao_Paulo)
 

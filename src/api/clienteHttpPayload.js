@@ -799,7 +799,7 @@ export const CLIENTE_LOCAIS_SYNC_PARTIAL = 'CLIENTE_LOCAIS_SYNC_PARTIAL';
  * Após PARTIAL: carimba `id`/`codigo` dos creates já persistidos no rascunho (ordem das ops),
  * preservando edições pendentes sem id. Evita retry que recria e soft-deleta o recém-gravado.
  * @param {unknown} draft
- * @param {unknown} persistedMapped listLocais → UI (baseline)
+ * @param {unknown} persistedMapped listLocais → UI (baseline); null/ausente = carimba só id do summary
  * @param {{ ops?: Array<{ op?: string, localId?: string, nome?: string }> }|null|undefined} summary
  * @returns {unknown} draft reconciliado (mesmo array se nada a carimbar)
  */

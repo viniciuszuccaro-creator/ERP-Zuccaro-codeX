@@ -406,29 +406,34 @@ export function clienteLocalOperationalRemainder(file, text) {
             lastLocaisSyncSummaryRef.current = null;
           }
           if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
-            // Baseline = persistido; carimba ids dos creates ok no rascunho; pendências sem id ficam.
+            // IDs confirmados no summary.ops devem ser carimbados mesmo se listLocais falhar
+            // (senão retry recria o create já OK). Baseline só quando a leitura confirma.
+            /** @type {Array<Record<string, unknown>>|null} */
+            let mapped = null;
             try {
               assertLocaisScope();
               const rows = await api.clientes.listLocais(frozenScope.clienteId, {
                 limit: 50, ativo: true,
               });
-              const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+              mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
                 /** @type {Record<string, unknown>} */ (row),
               ));
               setLocaisHttpView(mapped);
               locaisHttpBaselineRef.current = mapped;
-              locaisDraftOwnedRef.current = true;
-              const reconciled = reconcileClienteLocaisDraftAfterPartial(
-                locaisDraft,
-                mapped,
-                partialErr.summary,
-              );
-              // Só atualiza rascunho para carimbar ids — não substitui por mapped puro.
-              if (reconciled !== locaisDraft) {
-                setFormData((prev) => ({ ...prev, locais_entrega: reconciled }));
-              }
             } catch {
+              // Baseline desconhecida — sem deletes no próximo save; não apaga carimbo abaixo.
               locaisHttpBaselineRef.current = null;
+              mapped = null;
+            }
+            locaisDraftOwnedRef.current = true;
+            const reconciled = reconcileClienteLocaisDraftAfterPartial(
+              locaisDraft,
+              mapped,
+              partialErr.summary,
+            );
+            // Só atualiza rascunho para carimbar ids — não substitui por mapped puro.
+            if (reconciled !== locaisDraft) {
+              setFormData((prev) => ({ ...prev, locais_entrega: reconciled }));
             }
           }
           throw syncErr;
