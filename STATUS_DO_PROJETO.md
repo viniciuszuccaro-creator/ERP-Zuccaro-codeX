@@ -1,3 +1,47 @@
+## Revisao Pedido e fechamento dos novos dashboards (2026-11-14,22:23UTC)
+
+Heartbeatnativo22:23:17.265Z, Casa/CPA, base351d1cd1 local/remotoiguais,
+checkoutlimpo/semwriter, reserva594/6885182824 e travaCreateNew propria.
+CursorHEAD4485508c93f641d99ff110f014d6faf56c92f6eb conferido remoto.
+FontePedido JA posteriorf2d92ec9: f7603d65 removeuguardgenAtStart e valida waiter.
+Nao foi repetido parecerobsoleto. NenhumaUI/branchCursor/Empresa editada.
+
+PedidoREAL/hooks/useEffect/async handlers/policies montadoChromeheadlessisolado,
+query/http/sessao/permissao/folhasUI sinteticos, instrumentacaoSOobservacao.
+7cenarios:4positivos (selecionar+editar compartilha1GET/abre;A/BforaordemficaB;
+situacao+selectionEpoch descartaA;Grupo diferente descartaA) e3residuosreproduzidos:
+P1tokenA->renderB->renderA aceitaGETantigo e notificapai; P1revogacao visual
+renderizadaAcessonegado ainda notificapai e grava selected; P2erroGETaposnovotoken
+publicatoastantigo. NaoalegaAPIbypass/RBACreal ou nova leitura naoautorizada.
+Parecer596/6885162320, donoCursor. FixtureRASCUNHO corrigidaparaEM_ABERTOcanonico;
+nao defeito do produto nem relaxamentodepolicy. Recibo privado
+review-pedido-448-mounted-v2.result.private.json preserva contraprovas.
+
+NovosblobsDashboardCanais/Produtos/Estruturantes revisados:25cenariosREAISReactSSR
++QueryClient/useQuery/policies, fronteirasAuth/contexto/transporte/UI sinteticas.
+FechadosFOCALMENTE5achados anteriores: cacheCanaisocultoaposdeny;Pedido503semfalso0;
+Estruturantesloading5totais—;Top5cap100labelamostra;Produto503bloqueiaidentidade
+semUNinventada. Positivos0/1/cap/contexto/erroparcial preservados. NaoReactcliente
+montado/navegadorAPI/PG. Harnesses/recibosprivados *-448-ssr, Products-v2 com
+assertsexatos de label e identidade. Parecer596/6885177391.
+
+Mesmo parecer: novoFormasPagamento4485508c montadoChrome11/11PASS; hydratecustom
+30/70preservado;total100->120rebalanceia60/60preservandoIDs/datas; restante
+hydrate/loading/numeroexplicito/feedback/Dinheiro/Bpreservados. RepeticaoJUSTIFICADA
+porblobnovo, contratoanteriorvalorsemintencao mudoupara rebalance so valores.
+Semconsumidorativo encontrado, nao comprova jornada conectada. Perfis/servidores
+filhosisoladosencerrados, nenhuma consulta real/escrita negocio.
+
+FilaFINITA nestealcance: revisoes executaveis atuais concluidas. Dependencias
+concretas: Cursorcorrige3residuosPedido; SFTPautenticado privado ja solicitado;
+revisaoindependente das propostasDDL/overlayrestaurado/backupfresco+ack/reversao/
+janela/autorizacao para HML. Nao aplicarSQLguardado nem implantarporinferencia.
+MESMAautomacao deve ficarPAUSED ate itemliberado/acessocomprovado, sempollingvazio.
+Proximopasso aposcorrecaoCursor: revisar SO NOVO blobPedido pelos3casos+positivos;
+aposSFTP:transferirSOarquivo4MBcomhash/lease/nooverwrite0600 antesgates.
+RuntimeCasa ded54af4/CI7145, HMLd054e2b3/pacote81/planov9canApplyfalse inalterados;
+semrerunCI/codigoestavel. SemHD/retransferencia/carga/grants/DDL/deploy.
+
 ## Revisao montada FormasPagamentoPedido (2026-11-14,22:08UTC)
 
 Heartbeatnativo22:08:17.004Z, Casa/CPA, base5b37a9d5 localremotoiguais/limpo,
