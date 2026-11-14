@@ -183,6 +183,9 @@ export default function CentralVendas360Shell({
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);
 
+  // Token vivo: Comercial pode não passar sessionToken (Bugbot) — ler sessão canônica.
+  const sessionIdentity = rest.sessionToken || readErpHttpSession()?.token || null;
+
   // Security: grupo/empresa/ator/sessão — limpar pagamento-resumo e Cliente360 (≠ só situação).
   useEffect(() => {
     const nextEpoch = selectionEpochRef.current + 1;
@@ -190,7 +193,7 @@ export default function CentralVendas360Shell({
     setSelectionEpoch(nextEpoch);
     setSelected(null);
     setSelectedClienteId(null);
-  }, [groupId, empresaId, actorId, rest.sessionToken]);
+  }, [groupId, empresaId, actorId, sessionIdentity]);
 
   const openHub = () => {
     void import('@/pages/HubAtendimento').then((mod) => {
@@ -242,7 +245,7 @@ export default function CentralVendas360Shell({
             empresaId={empresaId}
             actorId={actorId}
             actorEmail={actorEmail}
-            sessionToken={rest.sessionToken}
+            sessionToken={sessionIdentity}
             empresaAtual={empresaAtual}
             hasPermission={hasPermission}
             filterInContext={filterInContext}
@@ -261,7 +264,7 @@ export default function CentralVendas360Shell({
             empresaId={empresaId}
             actorId={actorId}
             actorEmail={actorEmail}
-            sessionToken={rest.sessionToken}
+            sessionToken={sessionIdentity}
             hasPermission={hasPermission}
             filterInContext={filterInContext}
             empresaAtual={empresaAtual}

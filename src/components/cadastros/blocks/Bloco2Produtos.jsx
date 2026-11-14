@@ -157,15 +157,13 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
     return { module: "Cadastros", section: entidade };
   };
   const canViewEntity = (entidade, moduloExtra = null) => {
-    // Gate pela entidade (alias→seção ownOnly se sem filho) — NÃO por Cadastros.Produtos
-    // com DFS de irmãos (Marca.visualizar não abre Produto/TabelaPreco). data-permission
-    // continua seção owner só para o atributo UI.
+    // Gate só pela entidade (alias→seção ownOnly se sem filho).
+    // NÃO OR com hasPermission(Cadastros|Estoque, null) — DFS do módulo inteiro
+    // faria Marca.visualizar abrir Produto/TabelaPreco (Bugbot High).
+    // data-permission continua seção owner só para o atributo UI.
     return (
       hasPermission("Cadastros", entidade, "visualizar") ||
-      hasPermission("Cadastros", null, "visualizar") ||
-      (moduloExtra
-        ? hasPermission(moduloExtra, entidade, "visualizar") || hasPermission(moduloExtra, null, "visualizar")
-        : false)
+      (moduloExtra ? hasPermission(moduloExtra, entidade, "visualizar") : false)
     );
   };
   const dataPermissionFor = (entidade) => {

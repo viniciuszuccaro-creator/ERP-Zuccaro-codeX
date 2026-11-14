@@ -1,3 +1,8 @@
+## Cursor — PR596 Bugbot Bloco2 sem DFS null + C360 sessionIdentity (2026-11-14 America/Sao_Paulo)
+
+High: `canViewEntity` sem `hasPermission(Cadastros, null)`. Med: shell lê
+`readErpHttpSession()?.token` (Comercial não passa sessionToken). tip ≠ HML.
+
 ## Cursor — PR596 Bugbot finance sides + hydrate inflight clear (2026-11-14 America/Sao_Paulo)
 
 High: Fluxo exige CR **e** CP; receitas/inadimplência=CR; despesas=CP.

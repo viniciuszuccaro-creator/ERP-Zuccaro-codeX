@@ -1,7 +1,12 @@
+## Cursor — PR596 Bugbot Bloco2/C360 session (2026-11-14 America/Sao_Paulo)
+
+Sem DFS Cadastros null; shell usa sessionIdentity vivo. tip ≠ HML. Aguarda CI.
+Freeze `0ffff5100` / port `81d1e849`. Completo ownership: Casa.
+
 ## Cursor — PR596 Bugbot finance CR∩CP + inflight clear (2026-11-14 America/Sao_Paulo)
 
-Fluxo precisa dos dois lados; inflight limpo no reset. tip ≠ HML. Aguarda CI.
-Freeze `0ffff5100` / port `81d1e849`. Completo ownership: Casa.
+Fluxo precisa dos dois lados; inflight limpo no reset. tip ≠ HML.
+Freeze `0ffff5100` / port `81d1e849`.
 
 ## Cursor — PR596 Security C360 clear + Bloco2 entity gate (2026-11-14 America/Sao_Paulo)
 

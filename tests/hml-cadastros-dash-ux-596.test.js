@@ -207,7 +207,8 @@ test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   // Security: limpar seleção ao trocar grupo/empresa/ator/sessão (≠ só situação).
   assert.match(shell, /setSelected\(null\)/);
   assert.match(shell, /setSelectedClienteId\(null\)/);
-  assert.match(shell, /\[groupId, empresaId, actorId, rest\.sessionToken\]/);
+  assert.match(shell, /readErpHttpSession\(\)\?\.token/);
+  assert.match(shell, /\[groupId, empresaId, actorId, sessionIdentity\]/);
   assert.match(pedido, /condicao_pagamento_label/);
   // Bugbot: GET compartilhado valida no waiter (epoch/intent), não null no Promise.
   assert.match(pedido, /hydrateIntentIdRef\.current!==requestId/);
@@ -257,8 +258,10 @@ test('Cadastros blocos: data-permission usa seção owner (não entidade solta)'
   assert.match(b1, /Cadastros\.Pessoas\.visualizar/);
   assert.match(b2, /section: "Produtos"/);
   assert.match(b2, /dataPermissionFor\(k\)/);
-  // Gate real pela entidade (ownOnly) — não DFS Cadastros.Produtos via irmão Marca.
+  // Gate real pela entidade (ownOnly) — sem DFS módulo null via irmão Marca.
   assert.match(b2, /hasPermission\("Cadastros", entidade, "visualizar"\)/);
+  assert.doesNotMatch(b2, /hasPermission\("Cadastros", null, "visualizar"\)/);
+  assert.doesNotMatch(b2, /hasPermission\(moduloExtra, null, "visualizar"\)/);
   assert.doesNotMatch(b2, /hasPermission\(module, section, "visualizar"\)/);
   assert.doesNotMatch(b2, /data-permission=\{`Cadastros\.\$\{k\}\.visualizar`\}/);
   assert.match(b3, /Cadastros\.Financeiro\.visualizar/);
