@@ -1,3 +1,8 @@
+## Cursor — PR596 pin Dashboard a2e0cc61 (CI frontend) (2026-11-14 America/Sao_Paulo)
+
+CI FAIL tip c34f: 2 pins Dashboard (browser-indicator + fechamento-reconnect).
+Atualizado para `a2e0cc61…` pós KPI derivados. tip `d6a0acfd7`. tip ≠ HML.
+
 ## Cursor — PR596 Bugbot Bloco2 sem DFS null + C360 sessionIdentity (2026-11-14 America/Sao_Paulo)
 
 High: `canViewEntity` sem `hasPermission(Cadastros, null)`. Med: shell lê
