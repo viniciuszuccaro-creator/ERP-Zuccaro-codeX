@@ -5,7 +5,7 @@ Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
 **LIBERAR:** Completo + `clienteHttpPayload` + AST boundaries + sync-591 pins.
 **RESSALVA:** peel `clienteLocalOperationalRemainder` (~678) — CI sync; Codex audita
 fidelidade; 40 PASS não autoriza peel “integral”. Fora: Backend/Dashboard/docs.
-Candidata freeze **`197bbc090`**. tip ≠ HML. Sem implantar.
+Candidata freeze **`197bbc090`**. HEAD docs `adca97468` CI SUCCESS. tip ≠ HML. Sem implantar.
 
 ## Cursor — PR596 tip 197bbc090 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 

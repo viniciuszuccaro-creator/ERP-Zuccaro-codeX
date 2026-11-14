@@ -7,6 +7,7 @@
 | Casa montagem | `f804b1f12` | **40 PASS** (#6882204635); blob Completo igual |
 | Patch prep Casa | #6882237770 | 5 arquivos 595→f804; apply --check PASS; **não aplicado** |
 | Patch SHA256 | `a79e63a5d1006f37332395b1cb414f7962a211179b0e051a23510d42383e1a2a` | 104142 B; 1738+/61- |
+| HEAD docs liberação | `adca97468` | **CI SUCCESS** (run 43626934008) |
 | **HML** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
 ### Liberação Cursor (antes de Codex apply)
