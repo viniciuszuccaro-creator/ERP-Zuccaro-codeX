@@ -1,3 +1,10 @@
+## Cursor — PR596 Central360 pedidos 12col (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Base merge PR595 `9b876f331`. PedidoCanonico centralLayout = 12 colunas canônicas
+(mesmas chaves; labels pedido); prefs escopo; legado 7col fora da Central.
+PROXIMO: CI tips 595/596; itens/pagamento Fechar; sem promover HML.
+
 ## Cursor — PR595 parecer UI endereços (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).

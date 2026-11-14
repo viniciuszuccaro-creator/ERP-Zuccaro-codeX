@@ -55,8 +55,17 @@ import {
   produtoPickerLabel,
 } from './comercialMasterPicker';
 import { isCanonicalPedidoId } from './centralCliente360Navigation';
+import {
+  CENTRAL_VENDAS360_COLUMNS,
+  readCentralColumnHiddenKeys,
+  resolveCentralPrazoLabel,
+  sumCentralPesoKg,
+  writeCentralColumnHiddenKeys,
+} from './centralVendas360Layout';
 
 const emptyItem = () => ({ produto_id:'', unidade_id:'', descricao:'', unidade_sigla:'', quantidade:'1', preco_unitario:'0', desconto:'0', requer_producao:false });
+/** Labels da grade Central em visão pedido (mesmas 12 chaves; Nº ≠ orçamento). */
+const CENTRAL_PEDIDO_COLUMN_LABELS = Object.freeze({ numero: 'Nº Pedido', prazo: 'Prazo entrega' });
 const emptyForm = () => ({ cliente_empresa_id:'', cliente_local_id:'', obra_id:'', tabela_preco_id:'', condicao_pagamento_id:'', tipo_operacao:'ENTREGA', data_entrega_solicitada:'', observacoes:'', itens:[emptyItem()] });
 const money = (value) => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value||0));
 const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date(value)) : '-';
@@ -96,6 +105,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const [applied,setApplied]=useState(filters);
   const [clienteQuery,setClienteQuery]=useState('');
   const [produtoQuery,setProdutoQuery]=useState('');
+  const [centralHiddenColumns,setCentralHiddenColumns]=useState(()=>new Set());
   const canView=canUsePedidoAction(hasPermission,'visualizar');
   const canCreate=canUsePedidoAction(hasPermission,'criar');
   const canEdit=(row)=>canUsePedidoAction(hasPermission,'editar',row?.status);
@@ -273,6 +283,16 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     setPage(1);
     return undefined;
   },[centralLayout,centralSituacao]);
+  useEffect(()=>{
+    if(!centralLayout)return undefined;
+    const loaded=readCentralColumnHiddenKeys({actorId,groupId,empresaId});
+    setCentralHiddenColumns(new Set(Array.isArray(loaded)?loaded:[]));
+    return undefined;
+  },[centralLayout,actorId,groupId,empresaId]);
+  const centralVisibleColumns=useMemo(
+    ()=>CENTRAL_VENDAS360_COLUMNS.filter((col)=>!centralHiddenColumns.has(col.key)),
+    [centralHiddenColumns],
+  );
   const notifyCentralSelect=(row)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null});};const selectCentralRow=async(row)=>{if(!row?.id)return;setSelected(row);notifyCentralSelect(row);if(Array.isArray(row.itens)&&row.itens.length>0)return;const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());if(!ticket)return;try{const detail=await api.get(row.id);if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return;setSelected(detail);notifyCentralSelect(detail);}catch(error){if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));}};
 
   if(!canView)return <div className="w-full h-full flex items-center justify-center p-6"><Alert className="max-w-lg"><AlertCircle className="h-4 w-4"/><AlertDescription>Acesso negado aos Pedidos.</AlertDescription></Alert></div>;
@@ -291,7 +311,70 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
       </Alert>
     )}
     <form className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-3" onSubmit={e=>{e.preventDefault();setPage(1);setApplied(filters);}}><div className="md:col-span-2"><Input aria-label="Pesquisar pedido" maxLength={80} placeholder="Número do pedido" value={filters.search} onChange={e=>setFilters({...filters,search:e.target.value})}/></div><Select value={filters.status} onValueChange={v=>setFilters({...filters,status:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os status</SelectItem>{Object.entries(PEDIDO_STATUS_LABELS).map(([value,label])=><SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select><Select value={filters.tipoOperacao} onValueChange={v=>setFilters({...filters,tipoOperacao:v})}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="TODOS">Entrega e retirada</SelectItem><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select><Select value={filters.clienteEmpresaId} onValueChange={v=>setFilters({...filters,clienteEmpresaId:v})}><SelectTrigger><SelectValue placeholder="Clientes"/></SelectTrigger><SelectContent><SelectItem value="TODOS">Todos os clientes</SelectItem>{masters.clientesEmpresa.map(x=><SelectItem key={x.id} value={x.id}>{clientLabel(x.id)}</SelectItem>)}</SelectContent></Select><div className="flex gap-2"><Button type="submit" variant="outline" className="flex-1"><Search className="w-4 h-4 mr-2"/>Filtrar</Button><Button type="button" size="icon" variant="ghost" title="Limpar filtros" onClick={()=>{const clean={search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'};setFilters(clean);setApplied(clean);setPage(1);}}><RefreshCw className="w-4 h-4"/></Button></div></form>
-    {list.isLoading?<div className="flex-1 flex items-center justify-center">Carregando pedidos...</div>:list.isError?<div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{message(list.error)}</p><Button variant="outline" onClick={()=>list.refetch()}>Tentar novamente</Button></div>:rows.length===0?<div className="flex-1 flex flex-col items-center justify-center text-slate-500"><ShoppingCart className="w-10 h-10 mb-2"/><p>Nenhum pedido encontrado nesta empresa.</p></div>:<div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={centralLayout?'central360-pedidos-tabela':undefined}><Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Operação</TableHead><TableHead>Entrega solicitada</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{rows.map(row=><TableRow key={row.id} data-selected={selectedCentralId===row.id?'true':undefined} className={selectedCentralId===row.id?'bg-sky-50':(centralLayout?'cursor-pointer':undefined)} onClick={centralLayout?()=>{void selectCentralRow(row);}:undefined} data-action={centralLayout?'central360-selecionar-pedido':undefined} onDoubleClick={centralLayout?()=>{if(canEdit(row))openEdit(row);}:undefined}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clientLabel(row.cliente_empresa_id)}</TableCell><TableCell>{row.tipo_operacao==='ENTREGA'?'Entrega':'Retirada'}</TableCell><TableCell>{date(row.data_entrega_solicitada)}</TableCell><TableCell><Badge variant={row.status==='CANCELADO'?'secondary':'default'}>{PEDIDO_STATUS_LABELS[row.status]||row.status}</Badge></TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={(e)=>{e.stopPropagation();show(row);}}><Eye className="w-4 h-4"/></Button>{canEdit(row)&&<Button size="icon" variant="ghost" title="Editar" onClick={(e)=>{e.stopPropagation();openEdit(row);}}><Pencil className="w-4 h-4"/></Button>}{canCancel(row)&&<Button size="icon" variant="ghost" title="Cancelar" onClick={(e)=>{e.stopPropagation();requestCancel(row);}}><XCircle className="w-4 h-4"/></Button>}</div></TableCell></TableRow>)}</TableBody></Table></div>}
+    {list.isLoading?<div className="flex-1 flex items-center justify-center">Carregando pedidos...</div>:list.isError?<div className="flex-1 flex flex-col items-center justify-center gap-3"><p>{message(list.error)}</p><Button variant="outline" onClick={()=>list.refetch()}>Tentar novamente</Button></div>:rows.length===0?<div className="flex-1 flex flex-col items-center justify-center text-slate-500"><ShoppingCart className="w-10 h-10 mb-2"/><p>Nenhum pedido encontrado nesta empresa.</p></div>:<div className="flex-1 min-h-0 overflow-auto border bg-white rounded-md" data-block={centralLayout?'central360-pedidos-tabela-12':'central360-pedidos-tabela'}>
+      {centralLayout ? (
+        <div className="w-full overflow-x-auto" data-block="central360-scroll-h-pedidos">
+          <Table data-testid="central360-pedidos-12col">
+            <TableHeader className="sticky top-0 bg-white z-10">
+              <TableRow>
+                {centralVisibleColumns.map((col) => (
+                  <TableHead key={col.key} className={`text-xs whitespace-nowrap ${col.sticky ? 'sticky left-0 bg-white z-[11]' : ''}`}>
+                    {CENTRAL_PEDIDO_COLUMN_LABELS[col.key] || col.label}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => {
+                const link = masters.clientesEmpresa.find((x) => x.id === row.cliente_empresa_id);
+                const cliente = clients.get(link?.cliente_id);
+                const peso = sumCentralPesoKg(row.itens);
+                const prazoRaw = resolveCentralPrazoLabel(row, 'pedido');
+                const selectedRow = selectedCentralId === row.id;
+                const cells = {
+                  numero: <TableCell key="numero" className="font-mono text-xs sticky left-0 bg-inherit">{row.numero || '—'}</TableCell>,
+                  data: <TableCell key="data" className="text-xs whitespace-nowrap">{date(row.created_at || row.data)}</TableCell>,
+                  cod_cliente: <TableCell key="cod_cliente" className="font-mono text-xs">{cliente?.codigo || link?.codigo_cliente || '—'}</TableCell>,
+                  nome_cliente: <TableCell key="nome_cliente" className="text-xs sticky left-0 bg-inherit">{clientLabel(row.cliente_empresa_id)}</TableCell>,
+                  origem: <TableCell key="origem" className="text-xs">{row.origem || row.canal || '—'}</TableCell>,
+                  vendedor: <TableCell key="vendedor" className="text-xs">{row.vendedor_nome || row.nome_vendedor || '—'}</TableCell>,
+                  peso: <TableCell key="peso" className="text-xs">{peso == null ? '—' : `${peso}`}</TableCell>,
+                  valor: <TableCell key="valor" className="text-xs text-right font-semibold whitespace-nowrap">{money(row.total)}</TableCell>,
+                  cidade: <TableCell key="cidade" className="text-xs">{row.cidade || cliente?.cidade || '—'}</TableCell>,
+                  condicao: <TableCell key="condicao" className="text-xs">{condicaoLabel(row.condicao_pagamento_id)}</TableCell>,
+                  situacao: (
+                    <TableCell key="situacao" className="text-xs">
+                      <Badge variant={row.status === 'CANCELADO' ? 'secondary' : 'default'}>
+                        {PEDIDO_STATUS_LABELS[row.status] || row.status}
+                      </Badge>
+                    </TableCell>
+                  ),
+                  prazo: (
+                    <TableCell key="prazo" className="text-xs whitespace-nowrap" title="Prazo de entrega do pedido (≠ validade de orçamento)">
+                      {prazoRaw ? date(prazoRaw) : '—'}
+                    </TableCell>
+                  ),
+                };
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-selected={selectedRow ? 'true' : undefined}
+                    className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
+                    onClick={() => { void selectCentralRow(row); }}
+                    onDoubleClick={() => { if (canEdit(row)) openEdit(row); }}
+                    data-action="central360-selecionar-pedido"
+                  >
+                    {centralVisibleColumns.map((col) => cells[col.key])}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <Table><TableHeader><TableRow><TableHead>Número</TableHead><TableHead>Cliente</TableHead><TableHead>Operação</TableHead><TableHead>Entrega solicitada</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Total</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader><TableBody>{rows.map(row=><TableRow key={row.id}><TableCell className="font-mono">{row.numero}</TableCell><TableCell>{clientLabel(row.cliente_empresa_id)}</TableCell><TableCell>{row.tipo_operacao==='ENTREGA'?'Entrega':'Retirada'}</TableCell><TableCell>{date(row.data_entrega_solicitada)}</TableCell><TableCell><Badge variant={row.status==='CANCELADO'?'secondary':'default'}>{PEDIDO_STATUS_LABELS[row.status]||row.status}</Badge></TableCell><TableCell className="text-right font-semibold">{money(row.total)}</TableCell><TableCell><div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Visualizar" onClick={()=>show(row)}><Eye className="w-4 h-4"/></Button>{canEdit(row)&&<Button size="icon" variant="ghost" title="Editar" onClick={()=>openEdit(row)}><Pencil className="w-4 h-4"/></Button>}{canCancel(row)&&<Button size="icon" variant="ghost" title="Cancelar" onClick={()=>requestCancel(row)}><XCircle className="w-4 h-4"/></Button>}</div></TableCell></TableRow>)}</TableBody></Table>
+      )}
+    </div>}
     <PaginationControls currentPage={page} totalItems={meta.total||0} itemsPerPage={pageSize} onPageChange={setPage} onItemsPerPageChange={setPageSize} isLoading={list.isFetching}/>
     <Dialog open={formOpen} onOpenChange={open=>{if(!open)close();}}><DialogContent style={windowMode ? { zIndex:1000000000 } : undefined} overlayStyle={windowMode ? { zIndex:999999999 } : undefined} className="w-[96vw] max-w-6xl max-h-[92vh] overflow-auto"><DialogHeader><DialogTitle>{editing?`Editar pedido ${editing.numero}`:'Novo pedido'}</DialogTitle><DialogDescription>Valores e referências serão validados novamente pelo servidor. Busque cliente/produto por código.</DialogDescription></DialogHeader><div className="grid grid-cols-1 md:grid-cols-4 gap-3"><div className="md:col-span-2 space-y-2"><Label htmlFor="ped-cliente-busca">Buscar cliente (código ou nome)</Label><Input id="ped-cliente-busca" value={clienteQuery} maxLength={80} placeholder="Digite código ou razão social" onChange={e=>setClienteQuery(e.target.value)} data-action="pedido-busca-cliente"/><Label>Cliente</Label><Select value={form.cliente_empresa_id} onValueChange={v=>change('cliente_empresa_id',v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{clienteOptions.map(x=><SelectItem key={x.id} value={x.id}>{clientLabel(x.id)}</SelectItem>)}</SelectContent></Select></div><div><Label>Condição</Label><Select value={form.condicao_pagamento_id} onValueChange={v=>change('condicao_pagamento_id',v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{masters.condicoes.map(x=><SelectItem key={x.id} value={x.id}>{x.codigo?`${x.codigo} — `:''}{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label>Operação</Label><Select value={form.tipo_operacao} onValueChange={v=>change('tipo_operacao',v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="ENTREGA">Entrega</SelectItem><SelectItem value="RETIRADA">Retirada</SelectItem></SelectContent></Select></div><div><Label>Data solicitada</Label><Input type="date" value={form.data_entrega_solicitada} onChange={e=>change('data_entrega_solicitada',e.target.value)}/></div><div><Label>Local{form.tipo_operacao==='ENTREGA'?' *':''}</Label><Select value={form.cliente_local_id||(form.tipo_operacao==='ENTREGA'?'':'NENHUM')} onValueChange={v=>change('cliente_local_id',v==='NENHUM'?'':v)}><SelectTrigger data-action="pedido-selecionar-cliente-local"><SelectValue placeholder={form.tipo_operacao==='ENTREGA'?'Selecione local operacional…':'Opcional'}/></SelectTrigger><SelectContent>{form.tipo_operacao!=='ENTREGA'&&<SelectItem value="NENHUM">Não informado</SelectItem>}{(masters.locais||[]).filter(x=>x&&x.endereco_incompleto===false).map(x=><SelectItem key={x.id} value={x.id}>{x.nome||x.apelido||x.id}</SelectItem>)}</SelectContent></Select>{form.tipo_operacao==='ENTREGA'&&!(masters.locais||[]).some(x=>x&&x.endereco_incompleto===false)&&<p className="text-xs text-amber-800 mt-1" role="status">Nenhum local operacional ativo disponível — conclua a revisão de entregas no cadastro antes de gravar.</p>}</div><div><Label>Obra</Label><Select value={form.obra_id||'NENHUMA'} onValueChange={v=>change('obra_id',v==='NENHUMA'?'':v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Sem obra</SelectItem>{masters.obras.map(x=><SelectItem key={x.id} value={x.id}>{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div><Label>Tabela de preço</Label><Select value={form.tabela_preco_id||'NENHUMA'} onValueChange={v=>change('tabela_preco_id',v==='NENHUMA'?'':v)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="NENHUMA">Não informada</SelectItem>{masters.tabelas.map(x=><SelectItem key={x.id} value={x.id}>{x.codigo?`${x.codigo} — `:''}{x.nome||x.codigo}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-4"><Label>Observações</Label><Textarea value={form.observacoes} onChange={e=>change('observacoes',e.target.value)}/></div></div>
     <div className="space-y-2"><div className="flex flex-wrap items-end justify-between gap-2"><h3 className="font-semibold">Itens</h3><div className="flex flex-wrap gap-2 items-end"><Input value={produtoQuery} maxLength={80} placeholder="Filtrar produto por código" onChange={e=>setProdutoQuery(e.target.value)} data-action="pedido-busca-produto" className="w-56" aria-label="Buscar produto"/><Button type="button" variant="outline" size="sm" onClick={()=>change('itens',[...form.itens,emptyItem()])}><Plus className="w-4 h-4 mr-1"/>Item</Button></div></div>{form.itens.map((item,index)=><div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-2 border rounded-md p-2"><div className="md:col-span-3"><Label>Produto</Label><Select value={item.produto_id} onValueChange={v=>selectProduct(index,v)}><SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger><SelectContent>{produtoOptions.map(p=><SelectItem key={p.id} value={p.id}>{produtoPickerLabel(p)}</SelectItem>)}</SelectContent></Select></div><div className="md:col-span-3"><Label>Descrição</Label><Input value={item.descricao} onChange={e=>changeItem(index,'descricao',e.target.value)}/></div><div><Label>Un.</Label><Input value={item.unidade_sigla} readOnly/></div><div><Label>Qtd.</Label><Input value={item.quantidade} onChange={e=>changeItem(index,'quantidade',e.target.value)}/></div><div><Label>Preço</Label><Input value={item.preco_unitario} onChange={e=>changeItem(index,'preco_unitario',e.target.value)}/></div><div><Label>Desconto</Label><Input value={item.desconto} onChange={e=>changeItem(index,'desconto',e.target.value)}/></div><div className="flex items-end gap-2"><Checkbox checked={item.requer_producao} onCheckedChange={v=>changeItem(index,'requer_producao',Boolean(v))}/><span className="text-xs">Produção</span></div><div className="flex items-end"><Button type="button" size="icon" variant="ghost" disabled={form.itens.length===1} onClick={()=>change('itens',form.itens.filter((_,i)=>i!==index))}><Trash2 className="w-4 h-4"/></Button></div></div>)}</div><div className="flex justify-end gap-5 text-sm"><span>Subtotal: <strong>{money(totals.subtotal)}</strong></span><span>Desconto: <strong>{money(totals.desconto)}</strong></span><span>Total: <strong>{money(totals.total)}</strong></span></div><DialogFooter><Button variant="outline" onClick={close}>Fechar</Button><Button onClick={save} disabled={busy||master.isLoading}>{busy?'Salvando...':'Salvar pedido'}</Button></DialogFooter></DialogContent></Dialog>

@@ -1,3 +1,16 @@
+## Cursor — PR596 Central360 pedidos 12 colunas (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596) stacked
+sobre PR595 tip `9b876f331`. Merge parecer endereços resolvido em Logistica.
+
+Lote: `PedidoCanonicoPanel` em `centralLayout` passa a usar as mesmas 12 chaves
+da grade aprovada (labels Nº Pedido / Prazo entrega); prefs de coluna por
+actor+grupo+empresa; tabela legada 7 colunas preservada fora da Central.
+Teste `central-vendas360-layout-v6-591` + seletor PASS.
+
+Limitações: CI tip ≠ HML servida; ativação locais/auxiliares 500 Codex.
+Próximo: jornada itens/pagamento Fechar; códigos sequenciais BFF.
+
 ## Cursor — PR595 parecer endereços UI (binding / incompleto / envelope) (2026-11-14)
 
 Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595) sobre tip

@@ -115,6 +115,21 @@ test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravaçã
   assert.match(src, /readCentralColumnHiddenKeys/);
 });
 
+test('PedidoCanonicoPanel: tabela 12 colunas no centralLayout (mesmas chaves)', () => {
+  const ped = read('src/components/comercial/PedidoCanonicoPanel.jsx');
+  assert.match(ped, /CENTRAL_VENDAS360_COLUMNS/);
+  assert.match(ped, /central360-pedidos-12col/);
+  assert.match(ped, /central360-pedidos-tabela-12/);
+  assert.match(ped, /CENTRAL_PEDIDO_COLUMN_LABELS/);
+  assert.match(ped, /Nº Pedido/);
+  assert.match(ped, /resolveCentralPrazoLabel/);
+  assert.match(ped, /sumCentralPesoKg/);
+  assert.match(ped, /readCentralColumnHiddenKeys/);
+  assert.match(ped, /Prazo de entrega do pedido \(≠ validade de orçamento\)/);
+  assert.match(ped, /selectCentralRow/);
+  assert.match(ped, /central360-selecionar-pedido/);
+});
+
 test('Fechar bloqueia sem condição; seleção hidrata itens; pedido espelha', () => {
   const orc = read('src/components/comercial/OrcamentosTab.jsx');
   const ped = read('src/components/comercial/PedidoCanonicoPanel.jsx');
