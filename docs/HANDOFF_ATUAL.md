@@ -1,3 +1,68 @@
+## Recuperacao final e restore HML - checkpoint executado (2026-11-14)
+
+Gate de recuperacao da fonte final superado; bloco anterior agora historico.
+MetodoGitHub cadastrado pelo proprietario; Codespaces1USD/stopusagechecked,
+demais orcamentos intactos. Start solicitado07:43:33BRT, stop07:52:29,
+Shutdown confirmado07:55; retencao nova14/12/2026 07:54BRT. Orcamento devolvido
+a0/Usageblocked no painel. Consumo final faturado ainda nao consolidado.
+Nao reiniciar Codespace para servir HML ou reabrir esta janela de custo.
+
+Origem parada,writer.lock ausente,sem processosPG. Docker nao acessivel no
+primeiro probe; apareceu no bootstrap posterior sem instalacao/rebuild nosso.
+Main checkout original so.vscode desconhecido preservado. Nenhum teste/importacao
+ou sincronizacao sobre ele. Arquivo frio gerado em
+/workspaces/.erp-private-344/recovery-export-20261114,389418721bytes/7469arquivos,
+SHA703febea271bc5778e51b6435f9a2d0a11dfa068cb83305c928f8e68d7c73f9e.
+ManifestoSHA4afdc7fe581830e6d7cf5ce0989a17ad84d95858d4e525beece6fca0f8f0a4ae.
+tarcompare com fonte fria0diferencas. Inclui PGdata atual,recibos/planos/guardas,
+imagemPGpinada e configuracao privada HML; NAO codigo/dados paraGitHub.
+ghcp falhou caminho; transferencia binaria pelo MESMOghSSH suportado conferiu
+bytes/SHA no desktop; SCP pelo aliasVPS existente strictHostKeyChecking=yes.
+Nenhuma chave copiada,gerada,rotacionada ou nova confianca de host criada.
+
+Copias privadas em C:/Users/cpaba/ERP-Integracao-Privada/hml-recovery-20261114
+(ACLrestrita ao dono/SYSTEM) e /root/erp-private/hml-recovery-20261114(mode0700).
+No destino:source-copy conserva extracao fonte; pgdata-restored e volume de
+ensaio separado. Container7d56486d/erp-hml-pg-recovery-20261114,redeNONE/0portas,
+1GiB/0,40CPU. Sem APIweb novas,grants,Authuser,DNS,proxy ou bancooperacional.
+Validacao inicial confundiu configdigest com indexOCI e parou ANTES de start.
+Resolvido por prova da cadeia index9e2cf628 -> manifestamd64f9d1e581 ->
+config066167ff, todos hashes conferidos; nenhum pin trocado/afrouxado.
+
+Restore fisico: clusterIdentifier7699932255610810414/PG16/schemaHML originais,
+1600clientes/4200contatos/1500inativos/217inativos e finalidades100FISCAL117ENTREGA.
+Comparacao integral com reconciled-before-commit do run217: clientes,locais,
+finalidades,perfil,Grupo,empresas e6613auditorias identicos,0auditorias extras.
+MestresSHA5437296ca5932f91fd027636045c60cab4bce9b798f54466b7f2b985d6670f73
+igual a master-execution/checkpoint-after. Nao apenas contagem ou nomes.
+Dump atual11090943bytes SHA748aef3e5676509f73eefc79b4d129899e0d4f33e971457290c9859a4cccaa18,
+TOC valido, restore transacional em hml344_recovery_verify_20261114:16tabelas
+iguais por contagem e hash de conteudo. Outro teste parou/iniciou somente apoio
+novo e reconferiu16tabelas. Final apoioPARADOocioso, dados persistentes semseed.
+Backup/dump e recibos externos verificados no desktop; nao backupautomatico.
+
+Recibosprivados:receipt/files,cold-control,restore-started,sql-verification,
+source-content-reconciliation,logical-backup,logical-restore-verified,
+restart-verified e full-content-verification (todos private.json).
+Operacional200antes/durante/depois,IDs/StartedAt preservados;livres29436858368
+bytes(27,41GiB). Apoio restaurado tem admin de manutencao; NAO chama-lo leitor
+restrito/aplicacao. LoginAPI naoBYPASS/RBAC/auth e preflight ainda gate proprio.
+
+CIe604092d frontend falhou em real_rows_not_draft e no rerun second_page_exact;
+backend/composePASS. Proposta focalact preservada em react-act-await.private.patch
+SHA0b0dae049f751b7c7dfeb7fd617bb56365aeeec9cb621d1341f659190618d656,
+2051bytes; aplicada focal1PASS e estacionada por apply_patch reverso SOMENTE da
+propria edicao. Nenhuma assercao/timeout reduzidos ou publicados sem fechamento.
+Windowsfull2916PASS/5FAIL/0SKIP:3prerequisitosPython,1getuidPOSIX,1workerprecheck
+preso236s encerrado somente na arvore propria. Audit/lint/typecheck/buildPASS,
+lint2warnings antigos. Nao repetir transporte ou alegar CIverde deste codigo.
+
+PROXIMO EXECUTAVEL: empacotar API/web mesmoSHA foraVPS e validar bootstrap
+portavel existente contra PG restaurado; banco/schema/principal/granularRBAC,
+Authreal e efeitos externosOFF. Depois redeHML/proxyHTTPS dedicados/reversiveis,
+login externo/aceite. Sem nova carga,sem promover ao operacional. Backupautomatico
+com retencao/copiaexterna requer pacote proprio da MESMAHML, nao esta concluido.
+
 ## HML VPS autorizada - recuperar estado final primeiro (2026-11-14)
 
 HEAD local/remoto594 conferidos9a8b2f5b, checkout limpo; nenhum processo local

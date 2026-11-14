@@ -1,3 +1,32 @@
+## HML atual recuperada e restaurada isoladamente (2026-11-14)
+
+Gate de fonte final ENCERRADO neste alcance: arquivo frio389418721bytes,
+7469arquivosSHA256 conferidos; tarcompare contraCodespace sem diferencas,
+copias privadas no desktop e VPS. Nao repetir carga ou chamar dump antigo de atual.
+VPS: PG16 separado, rede none/zeroportas,1GiB/0,40CPU; fontes frias conservadas.
+1600mestres/4200contatos/1500inativos/217locais inativos(100FISCAL/117ENTREGA),
+perfil1/Grupo1/empresas2 e6613auditorias iguais ao recibo poscarga em valores/IDs.
+Hash integral dos mestres coincide com checkpoint. Dump atual11090943bytes
+restaurado em outra base isolada:16tabelas iguais em contagem/fingerprint;
+parada/inicio preservou as mesmas16tabelas. Copia externa do dump comSHA conferido.
+Nao e aceite API/Auth/UI nem backup automatizado concluido. Apoio novo PARADO
+ocioso, dados persistentes; nenhum seed/importacao/reativacao/operacional alterado.
+Disco final29436858368bytes livres(27,41GiB), acima de20GiB. API/web reais200,
+containers originais conservamIDs/StartedAt. NenhumaURLHTTPS HML nova servida.
+
+JanelaCodespace solicitada07:43-07:52BRT; Shutdown confirmado07:55, sem rebuild.
+OrcamentoCodespaces1USD somente durante recuperacao, devolvido0/Usageblocked;
+outros orcamentos intactos. Valor final faturado nao consolidado; nao afirmar0USD.
+
+CIe604092d: backend/composeSUCCESS; frontend falhou duas vezes em assercoes
+distintas do mesmo teste montado comsleep20ms. Patchact preservado privadamente,
+nao publicado: focal1PASS; audit/lint/typecheck/build/diffcheckPASS,2warnings
+ancestrais. SuiteWindows2916PASS/5FAIL/0SKIP:3Pythonausente/aliasStore,
+1getuidindisponivel,1workerPOSIXpreso236s encerrado somente na arvore propria.
+NAO suite verde nem falha funcional do backend. Proxima etapa: empacotamento
+API/web revisado foraVPS, bootstrapHML/Auth/roles/rede,HTTPS e aceite; backup
+automatizado/retencao ficam abertos. Recibos e patch no HANDOFF existente.
+
 ## HML persistente na VPS - aprovacao condicionada (2026-11-14)
 
 Proprietario aprovou HML leve separada em srv1982741, NAO promocao operacional.

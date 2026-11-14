@@ -1,5 +1,36 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## HML recuperada - gate de fonte/restore encerrado (2026-11-14)
+
+Este checkpoint supera SOMENTE o BLOCKED de recuperacao do bloco anterior.
+Copia fria final atual do Codespace recuperada foraGitHub e comparada a fonte;
+VPS tem backup/extracao e PGdata de ensaio separados em
+/root/erp-private/hml-recovery-20261114, fontes intocadas. Estado e recibos no
+HANDOFF; nao extrair arquivo sobre / nem sobre volumes existentes.
+Restauracao verificada por valores/IDs/relacoes e6613auditorias;1600mestres,
+4200contatos,1500inativos,217locaisINATIVOS(100fiscais/117entregas),1Grupo/2empresas.
+Backup logico atual restaurado em outra base isolada com16tabelas iguais;
+parada/inicio do proprio apoio preservou16tabelas. Copia externa privada/SHA
+confirmados no desktop. Nao repetir carga/ativacao; bancooperacional preservado.
+
+Container erp-hml-pg-recovery-20261114 PARADO ao fim por ociosidade;PGdata em
+pgdata-restored persistente, redeNONE/zeroportas,1GiB/0,40CPU. Nao substituir
+containerSupabase,nao apontar APIoperacional para esse volume,nao iniciar recursos
+antigos como recuperacao. A base hml344_recovery_verify_20261114 e so ensaio,
+nao outro lote/cadastro/candidata. Nenhuma API/web/URLHML nova ativa ainda.
+Manutencao SQL usou admin APENAS nesse PG separado; nao prova loginAPIrestrito.
+
+Final:27,41GiBdisponiveis,acima de20GiB;web/APIoperacionais200 e mesmos
+containers/StartedAt. Sem DNS/firewall/proxy,grants ou permissoes operacionais.
+Custos: janelaGitHub encerrada em<30min e orcamentoCodespaces devolvido0;
+nao usar isso como autorizacao continua. Faturamento final ainda pendente.
+
+Proximo pacote: imagens API/web compativeis produzidas FORAVPS a partir do
+codigo revisado; adaptar bootstrap existente com destino/schema explicitos e
+preflight fisico,Authreal,loginAPI naoBYPASS/RBAC e efeitos externosOFF. So depois
+ativar hostnameHTTPS dedicado,health/restart/logs e aceite de outro computador.
+Backupautomatico/retencao/copiaexterna recorrente ainda NAO implementados.
+
 ## HML persistente na VPS - pacote condicionado aprovado (2026-11-14)
 
 Autorizacao do proprietario: HML leve na mesma srv1982741, com API/web proprias,
