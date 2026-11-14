@@ -1,3 +1,14 @@
+## Cursor — CI frontend residual pós-peels (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Tip `d06f33818` frontend **FAILURE** (5 testes) — **não aprovado**.
+Correções locais (próximo tip):
+- mounted Revisao: stub `useContextoVisual` + exports httpmode (Logistica groupId).
+- Completo MASTER extras UI: assert Continuity (sem data-block extras).
+- Dashboard fechamento pin = KPI fail-closed.
+- payment-config hash useFormasPagamento pós-demock.
+- Seletor failclosed: `snapshotLocais` ≠ listLocais.
+Local 88/88 PASS nos suites tocados. Sem HML.
+
 ## Cursor — peels Continuity + port ENTREGA (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Tip `cd60a115a`+peels.

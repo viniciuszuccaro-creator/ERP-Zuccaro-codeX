@@ -20,6 +20,8 @@ test('PedidoCanonico: ENTREGA bloqueia save sem local operacional', () => {
 
 test('Auxiliar Central360 locais exige ativo; seletor legado HTTP alinhado', () => {
   assert.match(picker, /row\.ativo !== true/);
-  assert.match(seletor, /listLocais/);
+  // Continuity: Seletor usa snapshotLocais (não listLocais envelope).
+  assert.match(seletor, /snapshotLocais/);
+  assert.match(seletor, /api\.clientes\.snapshotLocais/);
   assert.match(seletor, /fins\.includes\("ENTREGA"\)/);
 });

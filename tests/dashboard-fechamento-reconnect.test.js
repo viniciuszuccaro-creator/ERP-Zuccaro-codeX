@@ -9,7 +9,8 @@ const dashboard = readFileSync('src/pages/Dashboard.jsx', 'utf8');
 const page = readFileSync('src/pages/DashboardFechamentoPedidos.jsx', 'utf8');
 const pagesConfig = readFileSync('src/pages.config.js', 'utf8');
 const widget = readFileSync('src/components/comercial/WidgetFechamentoPedidos.jsx', 'utf8');
-const DASHBOARD_PIN = 'bf9e62df6d7499ec4bb13ae2fb6d7eacd17a214b3e347ca627687378491a999c';
+// Tip PR596: KPI fail-closed (formatDashboardCountDisplay / resolveDashboardCountAfterFailure).
+const DASHBOARD_PIN = '0988611c3d792f03c52482ca873f5c57d87fea914305c2f78c59bd7799b1483a';
 
 test('recuperação: Dashboard monta WidgetFechamentoPedidos com RBAC Comercial', () => {
   assert.match(dashboard, /WidgetFechamentoPedidos/);

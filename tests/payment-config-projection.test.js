@@ -18,7 +18,8 @@ function remainder(text) {
 const baseline = remainder(source);
 const hash = text => createHash('sha256').update(text).digest('hex');
 test('stage49 entire hook retained except seven source-field projections', () => {
-  assert.equal(hash(baseline), 'a664f1b79edca5d51c68107a33d62b798b52f23615b80a07b8473de8a4c96b24');
+  // Tip PR596: FormasPagamentoPedido demock → useFormasPagamento sem fixture.
+  assert.equal(hash(baseline), '83770f9026bc9d70b3105c8d657dcef9d54d40a3b229722dbb108649eb7bd9be');
   assert.throws(() => remainder(baseline));
   assert.throws(() => remainder(source + projection));
   assert.notEqual(hash(remainder(source.replace('max_parcelas: forma.maximo_parcelas || 1', 'max_parcelas: 12'))), hash(baseline));
