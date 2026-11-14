@@ -1,3 +1,17 @@
+## API/web HML publicadas e saudaveis em loopback (2026-11-14)
+
+PR594 d054e2b3, CI6969/6970 SUCCESS do mesmoSHA. API/web compiladas foraVPS;
+pacote limpo2214arquivos conferidos integralmente por tamanho/SHA no destino.
+PGHML/socket privado e API/web separados ativos nos limites aprovados; somente
+127.0.0.1:13081 no host, nada publico novo. Pagina/health/ready/versao200,
+clientes401 sem sessao; API/webSHA d054e2b3. Operacional intacto/HTTPS200,
+27,36GiBlivres. Sem carga/seed/reativacao/grants ou novosusuariosAuth.
+Prova fisica ja passou; login real/UI/aceite ainda NAO comprovados.
+DNS hml-erp ausente: solicitada confirmacao pontual da exposicao HTTPS dedicada,
+sem alterar demais sites. Proximo: DNS/proxyvalidado -> login/RBAC/dados ->
+backupautomatico/retencao -> acessooutrocomputador. Dump/restore/copiaexterna
+ja verificados, nao repetir importacao. Detalhes/retomada no HANDOFF existente.
+
 ## HML - bootstrap canonico validado, acesso externo ainda pendente (2026-11-14)
 
 Base dd82ada6 CI6963/6964 SUCCESS; novo WIP portavel ainda nao publicado.

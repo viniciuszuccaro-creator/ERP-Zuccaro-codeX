@@ -1,3 +1,31 @@
+## API/web HML prontas em loopback - HTTPS pendente (2026-11-14)
+
+Codigo publicado d054e2b33f6297bd39fcdec8f0e928e03d8bff13 na mesma PR594,
+CI6969/6970 SUCCESS (frontend/backend/compose). Nao confundir Windows com Linux:
+Windows2922PASS/5FAIL descritos abaixo; CI Ubuntu do proprio SHA encerrou verde.
+Pacote PUBLISHED_CLEAN novo,2214arquivos/17838841bytes, todos SHA/tamanhos
+conferidos no destino. Manifesto agregado3acfd6915d3796a3370dc4df10ec3b0758598df130f7f9f2145184aeab18b95c.
+
+erp-hml-pg ativo (volume privado restaurado/socket/networknone), erp-hml-api e
+erp-hml-web ativos em rede erp-hml-isolated, somente web127.0.0.1:13081.
+Mesmos limites aprovados, readonly mounts/rootfs API/web, logs limitados,
+sem portas PG/API publicadas. /,health,ready,marcador200;clientes401 sem sessao.
+Marcador API/web d054e2b3 conferido; identidade fisica/RBAC do preflight PASS.
+NAO login autenticado/aceite de dados/interface. Nenhuma carga/seed/DDL/grant.
+Container antigo de recuperacao parado e conservado. Nao iniciar simultaneamente.
+ERP operacional IDs/StartedAt intactos e HTTPS200; livres29377605632bytes.
+Recibo privado api-web-loopback.private.json no diretorio privado ja documentado.
+
+DNS hml-erp nao existe (resolver e zona hPanel conferidos); nenhum registro,
+proxy ou TLS alterado. Confirmacao pontual solicitada para A hml-erp -> IP da
+VPS/TTL300 e HTTPS dedicado com login/RBAC, sem alterar os sites existentes.
+PROXIMO: apos confirmacao, preservar zona/config proxy, adicionar somente essa
+rota, validar Caddy antes de reload e conferir HTTPS externo/401; depois login
+real/Grupo/empresas/clientes e aceite em outro computador. Backupautomatico e
+retencao ainda pendentes; dump atual/copia externa/restore ja comprovados.
+Reserva deste pacote liberada no fechamento; conferir exclusividade antes de
+retomar. Recursos persistentes continuam executando, sem promessa24h/SLA.
+
 ## Bootstrap portavel HML - validacao privada (2026-11-14)
 
 Executor Codex desktop DELL-VINI; casa/empresa nao inferidos. Base dd82ada6,

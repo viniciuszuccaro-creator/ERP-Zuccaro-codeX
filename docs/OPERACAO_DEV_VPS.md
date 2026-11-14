@@ -1,5 +1,36 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Empacotamento e preflight da mesma HML recuperada
+
+`scripts/vps/package-hml-runtime.mjs <diretorio-novo-fora-do-checkout>` compila
+API e web no executor de desenvolvimento existente. Exige checkout limpo,
+branch codex publicada e HEAD remoto identico; nao instalar/buildar na VPS.
+`--validation` identifica WIP explicitamente e NAO libera ativacao. O pacote
+inclui apenas runtime/dependencias lockadas/assets e manifesto SHA256; nao leva
+PGdata, dados, .env, provider ou credenciais. Conferir manifesto e CI do SHA
+antes de usar. Nunca relabelar um pacote de validacao como publicado.
+
+Entrada API: `node /app/api/hml-bootstrap.mjs /run/hml-config.json /app/api`.
+Configuracao privada regular, dono da UID da API, modo0400/0600, mountRO.
+Usa API/Auth canonicos e socket `/run/hml-pg`; database/schema HML, role,
+schemaOID, system_identifier, perfil/identidade/Grupo e search_path precisam
+coincidir com o destino comprovado. Recusa superuser/BYPASSRLS/memberships
+perigosos, pools diferentes e fallback operacional antes de READY.
+Somente duas rotas de saida Auth do provedor existente sao permitidas pelo
+bootstrap (user GET/token POST, sem redirects); nao fornecer segredos de
+cobranca/mensagens/emissao. Nenhuma carga/seed/migration/restore no inicio.
+
+Topologia aprovada: PG privado networknone e socket, API/web em rede HML
+separada, proxy web loopback e HTTPS dedicado. Nao conectar ao network/volume
+operacional. Limites PG1GiB/0,40CPU, API512MiB/0,30CPU, web128MiB/0,05CPU;
+revalidar >=20GiB livres. O PG antigo de recuperacao permanece parado para
+reversao e NUNCA concorre com o novo sobre o mesmo pgdata-restored.
+
+Ensaio do bootstrap em14/11: PG real/health200/ready200/clientes401 sem sessao,
+sem rede/portas. Nao comprova login externo, RBAC HTTP ou navegador. Recursos
+de ensaio parados; HTTPS/DNS, aceite e backupautomatico seguem gates separados.
+Nao chamar manutencao administrativa de principal leitor restrito.
+
 ## HML recuperada - gate de fonte/restore encerrado (2026-11-14)
 
 Este checkpoint supera SOMENTE o BLOCKED de recuperacao do bloco anterior.
