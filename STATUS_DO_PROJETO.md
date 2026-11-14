@@ -1,8 +1,14 @@
+## Cursor — PR596 tip 0de8d8835 CI SUCCESS — FormasPagamento hydrate (2026-11-14 America/Sao_Paulo)
+
+HEAD **`0de8d8835` CI SUCCESS** (43644632583); código `e6a5b44aa` CI SUCCESS
+(43644615103). Bugbot High parcelas/hydrate. tip ≠ HML `d054e2b3`. Sem deploy.
+Freeze `0ffff5100` / port `81d1e849`. Próximo: OrcamentosTab Bugbot High
+(stale GET / situacao) ou Casa preflight 81.
+
 ## Cursor — PR596 Bugbot FormasPagamentoPedido hydrate parcelas (2026-11-14 America/Sao_Paulo)
 
 Bugbot High: `userRequestedRegenRef` — não regenerar vencimentos enquanto
-parcelas ainda vazias (hydrate do pai). Tip `e6a5b44aa` pushed — aguarda CI.
-Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+parcelas ainda vazias (hydrate do pai). HEAD **`e6a5b44aa` CI SUCCESS**.
 Completo/endereços: achados Bugbot no Completo ficam com Casa/freeze.
 
 ## Cursor — PR596 tip e913b0f0e CI SUCCESS — Estruturantes + Bugbot OP (2026-11-14 America/Sao_Paulo)
