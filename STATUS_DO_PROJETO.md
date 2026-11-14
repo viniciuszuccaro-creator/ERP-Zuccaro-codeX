@@ -1,3 +1,29 @@
+## Fila unica e heartbeat local configurado, prova pendente (2026-11-14)
+
+Codex CASA/WindowsCPA, mesma autonomia Empresa, um writer por recurso. Propria
+branch codex/casa-fechamento-hml-20261114, portproduto da45cf5a publicado/remoto
+igual.37focadosPASS e audit/lint/typecheck/buildPASS. SuiteWindows2991:2986PASS/
+5FAIL/0SKIP; duas falhas resolvidas no reteste dirigido usando Python incluido,
+restantes de plataforma/provisionfixture, sem modificar testes/baseline. CI7077
+frontend/composePASS, PG ainda emexecucao na ultima leitura. Fechamento terminal
+porSHA obrigatorio. RuntimeHML servido continua API/webd054e2b3.
+
+FonteVPS /root/erp-private/centralizacao-legado-20261023 existe/root0700/nosymlink,
+confirmada pela console autorizada sem mudar permissoes. HML erp-hml-pg isolado/
+schema-cluster pinados, perfilreadonly confirmado; proposta editar/CAS/audit/
+reversao0600 privada NAO aplicada. SSHCasa nao autentica, WebConsole funciona.
+GitHub nao transfere banco/chaves/recibos. Sem recarga/reativacao/deploy neste lote.
+
+MESMO heartbeat revis-o-e-acesso-erp-45-e-46 atualizado ACTIVE, a cada15min,
+ERP — fila coordenada HML e dados, neste chat/clone Casa; sem duplicata. Trava
+CreateNew local/reservas/lease remoto impedem sobreposicao. AUTO-01 pacote API/web
+via script existente aposCI/limpeza; AUTO-02 gerar/conferir archive retomando o
+recibo sem rebuild; depois fila A-H do HANDOFF. Execucao nativa e retomada ainda
+NAO observadas: configuracao ativa nao e desenvolvimento automatico comprovado.
+Trabalho atual e manual. DependePC/app/conexao/canais/creditos; pausa pelo painel
+Automations/mesmo nome. Sem item executavel salvarcheckpoint e pausar; sempolling.
+Diretriz Casa/Empresa incorporada nos MESMOS documentos, nenhum manual concorrente.
+
 ## Port595 controlado na continuidade Codex (2026-11-14)
 
 Branch Casa sobre17efe001/76dc:16hunks-arquivos do diff38b4->595b5862fc5 portados,

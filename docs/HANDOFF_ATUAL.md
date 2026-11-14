@@ -1,3 +1,67 @@
+## Continuidade unica Casa/Empresa e retomada nativa configurada (2026-11-14)
+
+Executor atual Codex CASA, Windows/computador CPA; clone existente
+C:/Users/cpaba/Documents/Codex/2026-09-26/codex-revise-o-novo-head-da/comercial-composicao-20261017,
+branch propria codex/casa-fechamento-hml-20261114, cadeia594/76dc. Port de produto
+da45cf5aeb7964205fadf3674fb873a988cf312d publicado/remoto igual,16/16blobs595
+revisados, backend/HTTP/Completo594 preservados.37focadosPASS; audit/lint/
+typecheck/buildPASS,2warningsanteriores. CI7077 frontend/composeSUCCESS, PostgreSQL
+ainda em execucao na ultima leitura; confirmar resultado terminal antes do pacote.
+
+Suite local COMPLETA:2991total/2986PASS/5FAIL/0SKIP. Quatro primeiras falhas de
+Python usaram alias MicrosoftStore, nao executavel; reteste SOMENTE quatro casos
+com Python3.12.14 ja incluido no runtime: backup e CSV passam, filesystemPOSIX
+falha por modo/symlinkNTFS e provisionfixture nao inicia corretamente. Quinta
+falha original e process.getuid indisponivel em Windows. Arquivos desses testes/
+scripts sem delta da594. Nao declarar suite Windows verde nem relaxar baseline;
+CIUbuntu deste port deve encerrar os checks de plataforma. Nenhum npm/WSL/Docker
+ou dependencia instalado; comandos de package.json executados diretamente viaNode.
+
+Fontes oficiais: GitHub codigo/migrations/testes/documentacao; VPS dados privados
+e HML compartilhada; HD original preservado, sem dependencia diaria. Existencia
+atual de /root/erp-private/centralizacao-legado-20261023 comprovada pela WebConsole
+autorizada: diretorio/root0700, sem symlink; nenhuma ampliacao/transferencia/inventario.
+HML usa erp-hml-pg recuperado, schema/cluster pinados na config privada; read do
+perfil em READ ONLY/ROLLBACK reutilizou conector do backup. Nao leu clientes ou
+reescreveu banco. Console Casa disponivel apos abertura manual; SSH continua
+sem autenticacao nesta estacao. Sessao privada nao e transportada por Git.
+
+MESMA automacao nativa revis-o-e-acesso-erp-45-e-46 atualizada/confirmada ACTIVE,
+nome ERP — fila coordenada HML e dados, heartbeat local neste chat a cada15min.
+Nenhuma outra automacao/daemon/loop de prompts ou API paga criada. Caminho do
+executor acima e targetThread nativo preservados. Trava exclusiva CreateNew foraGit
+em C:/Users/cpaba/.codex/erp-review-20261114/docs-writer.lock, mais reserva GitHub
+e lease remoto antes de VPS/DB; nunca remover trava alheia. Execucao ativa com
+lease valido impede sobreposicao e preserva a proxima retomada nativa.
+
+CONFIGURADA nao significa execucao automatica comprovada. Port/testes/prechecks
+deste turno sao MANUAIS. Prova AUTO-01 e retomada AUTO-02 ainda PENDENTES; exigir
+origem heartbeat, tarefa assumida, ausencia de writer, execucao/testes/artefato,
+publicacao/CI porSHA e liberacao da propria reserva. So recibos novos comprovam.
+Depende computador ligado, app Codex aberto, conexao, ferramentas/canais e
+creditos disponiveis. Pausar em Automations -> ERP — fila coordenada HML e dados
+-> Pause; pedido de pausa tambem deve pausar a mesma automacao. Sem disponibilidade
+permanente prometida. Fila vazia ou dependencia indispensavel sem outro item
+liberado deve salvar checkpoint e pausar, nunca virar consulta repetitiva de PR.
+
+| Item | Responsavel | Estado/dependencia | Arquivos/recursos | Criterio e proxima acao |
+|---|---|---|---|---|
+| AUTO-01 pacote | Codex ativo nativo | PENDENTE CI terminal e checkout limpo/exclusivo | package-hml-runtime.mjs; destino novo privado foraGit/VPS | Gerar API/web mesmoSHA publicado, conferir manifesto/arquivos e recibo sanitizado; nao repetir pacote existente |
+| AUTO-02 retomada | Mesmo heartbeat, disparo seguinte | PENDENTE recibo AUTO-01 valido | Mesmo pacote privado e ferramenta archive existente | Gerar archive, conferir membros/bytes/hashes, publicar recibo proprio sem repetir build; nao implantar neste ensaio |
+| A integracao/HML | Codex+Cursor porhunk | Residual596 de leitura/retry ainda aberto | Mesma cadeia594, runtimeHML/pacote/backup/lease | Revisar novoSHA/CI/consumidor, compor somente aprovados; janela/backup fresco+ack/reversao antes de atualizar HML |
+| B fiscal/entrega | Codex contratos/perm; Cursor UI | Proposta editar preparada, NAO aplicada | ClienteLocal/CAS/perfilHML pinado | Review activate:false, reabertura e selecao somenteENTREGA ativa/completa; restaurar/principal separados |
+| C/D dados escala | Codex ativo | Fontes/mapas/pins/alcance exigidos | Importadores/recibos privados existentes; HML somente | Campos origem-destino-pendencia, varios lotes medidos ate1000; reconciliar conteudo/vinculos sem repetir pilotos ou ativar pais |
+| E cadastros | Codex dados/Cursor consumidores | Fonte efetiva por entidade | Matriz existente/API/schema/perfil/fontes privadas | Registros de unidades/grupos/marcas/setores/regioes/tabelas/condicoes/formas; conflito/falha nao vira zero ou fixture |
+| F/G Central/Dashboard | Cursor; Codex revisao/composicao | Contratos e reservas atuais | Central em Pedidos/12colunas/duasgrades/Cliente360; Dashboard canonico | Jornada salva/reabre/converte; KPI com fonte/formula/periodo/escopo/falha, referenciaBase44 sem substituir projeto |
+| H codigos | Codex backend; Cursor exibicao | Reutilizar mecanismo/inventario existentes | reserve_entity_codigo/reserveEntityCodigo/indices e matrizes | Concorrencia/imutabilidade/codigo legado/replay porGrupo ouEmpresa; sem MAX+1 desprotegido/backfill cego/renumeracao |
+
+Preservar1600mestres/100originais/1500ensaiosinativos/4200contatos/extensoes/217locais
+e auditorias conforme recibos;2295staging nao e aplicado. Historicos consultaveis
+nao geram dividas/estoque/fiscal; identidade empresarial comprovada, nunca por
+nome ou sufixo. Nao copiar dados/segredos por chat/GitHub/CI/build. HML e operacional
+separados, limites/reserva20GiB, backups/retencao/copias externas preservados;
+offsite depende desktop disponivel. Nao alterar producao ou contratar recursos.
+
 ## Port seletivo595 na cadeia Codex, em fechamento (2026-11-14)
 
 Reserva594/6881308921, propria branch Casa sobre17efe001/76dc. Aplicado somente
