@@ -1,3 +1,9 @@
+## Cursor — PR596 tip SUCCESS + Completo syncLocais atômico (2026-11-14 America/Sao_Paulo)
+
+Tip `11dc2372a` CI SUCCESS (ownOnly/`_acoes`/catalog). Este lote: Completo prefer `syncLocais`
+(`batchAtomic:true`); legado só fallback SNAPSHOT/ATOMIC_UNAVAILABLE; conflito fail-closed.
+HML `d054e2b3` ≠ tip — sem promote. PROXIMO: CI deste tip; composição API/web HML com Codex.
+
 ## Cursor — stack 591→595→596 composta (2026-11-14 America/Sao_Paulo)
 
 PR595 `66ff086f3` (Codex `38b4e1ec` fiscal/Seletor) mergeado em PR596.

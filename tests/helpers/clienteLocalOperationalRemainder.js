@@ -10,6 +10,104 @@ export function clienteLocalOperationalRemainder(file, text) {
     ['service.snapshot(ctxFromReq(req), req.params.clienteId, req.query.include_review === \'true\')',
       'service.snapshot(ctxFromReq(req), req.params.clienteId)'],
   ] : file === 'src/components/cadastros/CadastroClienteCompleto.jsx' ? [
+    // Atomic syncLocais (Cursor) — peel before ENTREGA onOpenDraft.
+    [
+      '  syncClienteLocaisViaHttp,\n  syncClienteLocaisAtomicViaHttp,\n  prepareClienteLocaisHttpDraft,\n',
+      '  syncClienteLocaisViaHttp,\n  prepareClienteLocaisHttpDraft,\n',
+    ],
+    [
+      `        try {
+          // Preferir POST /locais/sync (batchAtomic:true). Legado só se snapshot/atomic indisponível.
+          let locaisSummary;
+          try {
+            locaisSummary = await syncClienteLocaisAtomicViaHttp({
+              clienteId: frozenScope.clienteId,
+              draft: locaisDraft,
+              baselineIds,
+              assertScope: assertLocaisScope,
+              api: api.clientes,
+            });
+          } catch (atomicErr) {
+            const atomicCode = /** @type {Error & { code?: string, message?: string }} */ (atomicErr)?.code
+              || String(/** @type {Error} */ (atomicErr)?.message || '');
+            const canFallback = atomicCode === 'CLIENTE_LOCAIS_SNAPSHOT_INVALID'
+              || atomicCode === 'CLIENTE_LOCAIS_ATOMIC_UNAVAILABLE'
+              || atomicCode === 'CLIENTE_LOCAIS_INPUT_INVALID'
+              || /SNAPSHOT_INVALID|ATOMIC_UNAVAILABLE|CLIENTE_LOCAIS_INPUT_INVALID/.test(atomicCode);
+            // Conflito de versão / sync inválido: fail-closed (não escrever path parcial).
+            if (!canFallback) throw atomicErr;
+            locaisSummary = await syncClienteLocaisViaHttp({
+              clienteId: frozenScope.clienteId,
+              draft: locaisDraft,
+              baselineIds,
+              assertScope: assertLocaisScope,
+              api: api.clientes,
+            });
+          }
+          // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
+          lastLocaisSyncSummaryRef.current = locaisSummary;
+`,
+      `        try {
+          const locaisSummary = await syncClienteLocaisViaHttp({
+            clienteId: frozenScope.clienteId,
+            draft: locaisDraft,
+            baselineIds,
+            assertScope: assertLocaisScope,
+            api: api.clientes,
+          });
+          // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
+          lastLocaisSyncSummaryRef.current = locaisSummary;
+`,
+    ],
+    [
+      `      if (
+        locaisSummary
+        && locaisSummary.skipped !== true
+        && locaisSummary.batchAtomic === true
+      ) {
+        toast({
+          title: \`Cliente \${verb}\`,
+          description: 'Endereços gravados atomicamente via /locais/sync (batchAtomic:true).',
+        });
+      } else if (
+        locaisSummary
+        && locaisSummary.skipped !== true
+        && locaisSummary.batchAtomic === false
+      ) {
+        const ops = Number(locaisSummary.created || 0)
+          + Number(locaisSummary.updated || 0)
+          + Number(locaisSummary.deleted || 0);
+        // Fallback legado: BATCH_ATOMIC=false — não declarar salvamento integral/atômico.
+        toast({
+          title: \`Cliente \${verb}\`,
+          description: ops > 0
+            ? \`Endereços sincronizados em \${ops} operação(ões). Fallback não atômico (BATCH_ATOMIC=false) — não é salvamento integral.\`
+            : 'Cliente gravado. Sync de endereços sem operações (fallback não atômico).',
+        });
+      } else {
+        toast({ title: \`✅ Cliente \${verb} com sucesso!\` });
+      }
+`,
+      `      if (
+        locaisSummary
+        && locaisSummary.skipped !== true
+        && locaisSummary.batchAtomic === false
+      ) {
+        const ops = Number(locaisSummary.created || 0)
+          + Number(locaisSummary.updated || 0)
+          + Number(locaisSummary.deleted || 0);
+        // BATCH_ATOMIC=false = limitação BFF — não declarar salvamento integral/atômico.
+        toast({
+          title: \`Cliente \${verb}\`,
+          description: ops > 0
+            ? \`Endereços sincronizados em \${ops} operação(ões). Lote não atômico no BFF (BATCH_ATOMIC=false) — não é salvamento integral.\`
+            : 'Cliente gravado. Sync de endereços sem operações (lote não atômico no BFF).',
+        });
+      } else {
+        toast({ title: \`✅ Cliente \${verb} com sucesso!\` });
+      }
+`,
+    ],
     // ENTREGA onOpenDraft (Cursor) — peels before FISCAL allowReviewEdit (Codex).
     [
       '  /** Contagem de entrega em revisão — null se falhou/desconhecido (≠ zero). */\n  const [revisaoEntregaTotal, setRevisaoEntregaTotal] = useState(/** @type {number|null} */ (null));\n  const reviewClienteId = clienteBoundId || cliente?.id || null;\n  useEffect(() => { setRevisaoEntregaTotal(null); }, [reviewClienteId]);\n',

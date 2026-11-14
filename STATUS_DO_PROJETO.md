@@ -1,3 +1,20 @@
+## Cursor — PR596 Completo syncLocais atômico (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+Base tip `11dc2372a` CI **SUCCESS**. Este tip:
+- `buildClienteLocaisSyncOperations` + `syncClienteLocaisAtomicViaHttp` (snapshot+sync, `batchAtomic:true`).
+- Completo: preferir path atômico; fallback legado só SNAPSHOT/ATOMIC_UNAVAILABLE; conflito = fail-closed.
+- Toast distingue atômico vs fallback `BATCH_ATOMIC=false`.
+Peels operacional + testes sync. Sem HML (`d054e2b3`). CI tip **em curso ≠ aprovado**.
+
+## Cursor — PR596 tip CI SUCCESS ownOnly/_acoes (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Tip `11dc2372a`: frontend/backend/compose/Approval/Security **SUCCESS**; Bugbot **NEUTRAL**.
+Inclui catalogBlocksMutations, Completo create/owned/throw, SECTION_ALIASES ownOnly+`_acoes`.
+HML continua `d054e2b3` (tip ≠ HML — sem promote). Dependência 595→596.
+Próximo: Completo → `syncLocais` atômico (hoje `BATCH_ATOMIC=false` via create/update/delete); coord Codex se BFF/ops.
+
 ## Cursor — PR596 ownOnly + _acoes owner (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch PR596.

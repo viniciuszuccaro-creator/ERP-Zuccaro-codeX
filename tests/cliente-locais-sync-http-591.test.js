@@ -8,6 +8,8 @@ import {
   mapClienteLocalToUiEndereco,
   mapTipoEnderecoToFinalidade,
   syncClienteLocaisViaHttp,
+  syncClienteLocaisAtomicViaHttp,
+  buildClienteLocaisSyncOperations,
   assertClienteLocalUiExtrasWritable,
   CLIENTE_HTTP_UNSUPPORTED_FIELDS,
   CLIENTE_LOCAIS_SYNC_PARTIAL,
@@ -298,5 +300,63 @@ test('sync: assertScope CONTEXT_CHANGED no meio do lote', async () => {
       },
     }),
     (err) => err?.code === 'CONTEXT_CHANGED',
+  );
+});
+
+test('atomic ops: create + update + purposes + inactivate; omit skipped', () => {
+  assert.deepEqual(buildClienteLocaisSyncOperations(undefined, [uuidDrop]), { skipped: true, operations: [] });
+  const draft = [
+    { ...baseEndereco, apelido: 'Novo' },
+    {
+      ...baseEndereco, id: uuidA, apelido: 'Existente',
+      _finalidades_detalhadas: [{ finalidade: 'ENTREGA', principal: true }],
+      tipo_endereco: 'Cobrança', principal: false,
+    },
+  ];
+  const built = buildClienteLocaisSyncOperations(draft, [uuidA, uuidDrop]);
+  assert.equal(built.skipped, false);
+  assert.equal(built.operations.filter((op) => op.op === 'create').length, 1);
+  assert.equal(built.operations.filter((op) => op.op === 'update').length, 1);
+  assert.equal(built.operations.filter((op) => op.op === 'purposes').length, 1);
+  assert.equal(built.operations.filter((op) => op.op === 'inactivate').length, 1);
+  assert.equal(built.operations.find((op) => op.op === 'inactivate')?.id, uuidDrop);
+});
+
+test('atomic sync: snapshot+syncLocais batchAtomic true; conflito não parcial', async () => {
+  const version = 'a'.repeat(64);
+  let syncBody;
+  const summary = await syncClienteLocaisAtomicViaHttp({
+    clienteId: 'cli-1',
+    draft: [{ ...baseEndereco, apelido: 'Novo' }],
+    baselineIds: [],
+    api: {
+      snapshotLocais: async () => ({ version, data: [] }),
+      syncLocais: async (_id, body) => {
+        syncBody = body;
+        return { version: 'b'.repeat(64), batchAtomic: true, data: [{ id: uuidA }] };
+      },
+    },
+  });
+  assert.equal(summary.batchAtomic, true);
+  assert.equal(summary.created, 1);
+  assert.equal(syncBody.version, version);
+  assert.equal(syncBody.operations[0].op, 'create');
+
+  await assert.rejects(
+    () => syncClienteLocaisAtomicViaHttp({
+      clienteId: 'cli-1',
+      draft: [{ ...baseEndereco, apelido: 'X' }],
+      baselineIds: [],
+      api: {
+        snapshotLocais: async () => ({ version }),
+        syncLocais: async () => {
+          const err = /** @type {Error & { code: string, status: number }} */ (new Error('conflict'));
+          err.code = 'CLIENTE_LOCAIS_VERSION_CONFLICT';
+          err.status = 409;
+          throw err;
+        },
+      },
+    }),
+    (err) => err?.code === 'CLIENTE_LOCAIS_VERSION_CONFLICT',
   );
 });
