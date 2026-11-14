@@ -19,14 +19,17 @@ export const CLIENTE_MASTER_EXTRA_LABELS = Object.freeze({
 });
 
 /**
+ * null = limpeza explícita; '' / só whitespace = omissão (default intocado ≠ clear).
  * @param {unknown} value
  * @param {number} max
+ * @returns {string|null|undefined}
  */
 export function sanitizeMasterExtraText(value, max) {
   if (value === null) return null;
   if (value === undefined) return undefined;
   const text = String(value).replace(/[\u0000-\u001f\u007f<>]/g, '').trim();
-  if (text.length === 0) return null;
+  // Default UI '' e string vazia: omitir — alinhado a toClienteMasterHttpPayload ('' continue).
+  if (text.length === 0) return undefined;
   if (text.length > max) {
     const err = /** @type {Error & { code: string, status: number }} */ (
       new Error(`Campo master excede ${max} — rejeitado sem truncamento.`)
@@ -40,13 +43,15 @@ export function sanitizeMasterExtraText(value, max) {
 
 /**
  * CEP caixa postal: exatamente 8 dígitos, ≠ 00000000.
+ * null = limpeza explícita; '' = omissão.
  * @param {unknown} value
+ * @returns {string|null|undefined}
  */
 export function sanitizeCepCaixaPostal(value) {
   if (value === null) return null;
   if (value === undefined) return undefined;
   const digits = String(value).replace(/\D/g, '');
-  if (digits.length === 0) return null;
+  if (digits.length === 0) return undefined;
   if (digits.length !== 8 || digits === '00000000') {
     const err = /** @type {Error & { code: string, status: number, fields: string[] }} */ (
       new Error('CEP caixa postal inválido (8 dígitos, ≠ 00000000). Rascunho preservado.')
@@ -132,7 +137,7 @@ export function isClienteMasterStorageRequired(error) {
 }
 
 /**
- * Patch omit-aware: hasOwn + blank → null; sem hasOwn → omit.
+ * Patch omit-aware: sem hasOwn → omit; '' → omit; null → clear; valor → sanitize.
  * @param {Record<string, unknown>} data
  */
 export function pickClienteMasterExtrasForWrite(data) {
@@ -141,18 +146,17 @@ export function pickClienteMasterExtrasForWrite(data) {
   if (!data || typeof data !== 'object') return out;
   for (const key of CLIENTE_MASTER_EXTRA_KEYS) {
     if (!Object.prototype.hasOwnProperty.call(data, key)) continue;
-    if (key === 'cep_caixa_postal') {
-      out[key] = sanitizeCepCaixaPostal(data[key]);
-      continue;
-    }
-    const max = key === 'rg' ? 30 : 40;
-    out[key] = sanitizeMasterExtraText(data[key], max);
+    const sanitized = key === 'cep_caixa_postal'
+      ? sanitizeCepCaixaPostal(data[key])
+      : sanitizeMasterExtraText(data[key], key === 'rg' ? 30 : 40);
+    if (sanitized === undefined) continue;
+    out[key] = sanitized;
   }
   return out;
 }
 
 /**
- * Aplica extras omit-aware no payload HTTP (preserva regra Codex: '' ≠ clear).
+ * Aplica extras omit-aware no payload HTTP ('' default ≠ clear; null = limpeza explícita).
  * @param {Record<string, unknown>} payload
  * @param {Record<string, unknown>} data
  */
@@ -162,7 +166,6 @@ export function applyClienteMasterExtrasToHttpPayload(payload, data) {
   }
   const extras = pickClienteMasterExtrasForWrite(data);
   for (const [key, value] of Object.entries(extras)) {
-    if (value === undefined) continue;
     payload[key] = value;
   }
   return payload;

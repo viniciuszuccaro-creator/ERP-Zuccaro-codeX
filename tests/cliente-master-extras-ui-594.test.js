@@ -35,7 +35,10 @@ test('CEP caixa postal e pick omit-aware', () => {
   assert.equal(sanitizeCepCaixaPostal('01234-000'), '01234000');
   assert.throws(() => sanitizeCepCaixaPostal('00000000'));
   assert.deepEqual(pickClienteMasterExtrasForWrite({ nome: 'X' }), {});
-  assert.deepEqual(pickClienteMasterExtrasForWrite({ rg: '' }), { rg: null });
+  // Default UI '' = omissão (não 503 STORAGE em create sem colunas).
+  assert.deepEqual(pickClienteMasterExtrasForWrite({ rg: '' }), {});
+  assert.deepEqual(pickClienteMasterExtrasForWrite({ rg: null }), { rg: null });
+  assert.deepEqual(pickClienteMasterExtrasForWrite({ cep_caixa_postal: '' }), {});
 });
 
 test('HTTP payload: extras na ALLOWED_KEYS; omissão sem chave', () => {
@@ -54,13 +57,22 @@ test('HTTP payload: extras na ALLOWED_KEYS; omissão sem chave', () => {
     cpf: '529.982.247-25',
   });
   assert.equal(Object.prototype.hasOwnProperty.call(omit, 'rg'), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(
+    toClienteMasterHttpPayload({ nome: 'S', tipo: 'Pessoa Física', cpf: '529.982.247-25', rg: '' }),
+    'rg',
+  ), false);
 });
 
-test('apply HTTP + STORAGE_REQUIRED', () => {
+test('apply HTTP + STORAGE_REQUIRED; create com rg default omite', () => {
   const payload = { nome: 'X', rg: 'from-build' };
   applyClienteMasterExtrasToHttpPayload(payload, { numero_caixa_postal: '00017' });
   assert.equal(Object.prototype.hasOwnProperty.call(payload, 'rg'), false);
   assert.equal(payload.numero_caixa_postal, '00017');
+  const createPayload = { nome: 'Novo', rg: '' };
+  applyClienteMasterExtrasToHttpPayload(createPayload, { rg: '', nome: 'Novo' });
+  assert.equal(Object.prototype.hasOwnProperty.call(createPayload, 'rg'), false);
+  applyClienteMasterExtrasToHttpPayload(createPayload, { rg: null, nome: 'Novo' });
+  assert.equal(createPayload.rg, null);
   assert.equal(isClienteMasterStorageRequired({ code: 'CLIENTE_MASTER_STORAGE_REQUIRED', status: 503 }), true);
 });
 
