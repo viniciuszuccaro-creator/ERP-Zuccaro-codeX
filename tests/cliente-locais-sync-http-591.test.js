@@ -13,6 +13,7 @@ import {
   buildClienteLocaisSyncOperations,
   reconcileClienteLocaisDraftAfterPartial,
   canPublishClienteLocaisPartialReconcile,
+  canApplyClienteLocalReviewDraftToForm,
   assertClienteLocalUiExtrasWritable,
   isClienteLocalCanonicalId,
   CLIENTE_HTTP_UNSUPPORTED_FIELDS,
@@ -407,6 +408,41 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   assert.equal(refsB.baseline, undefined);
   assert.equal(refsB.owned, false);
   assert.ok(!isClienteLocalCanonicalId(refsB.draft[0].id));
+  // Casa #6882444389: callback revisão A após superfície B — não aplicar local A.
+  const sessionA = { token: 'tok-a', actorId: 'actor', groupId: 'g1', empresaId: 'e1' };
+  const sessionB = { token: 'tok-a', actorId: 'actor', groupId: 'g1', empresaId: 'e1' };
+  assert.equal(canApplyClienteLocalReviewDraftToForm({
+    reviewClienteId: stampA,
+    liveFormClienteId: stampA,
+    reviewGroupId: 'g1',
+    liveGroupId: 'g1',
+    reviewEmpresaId: 'e1',
+    liveEmpresaId: 'e1',
+    reviewSession: sessionA,
+    liveSession: sessionA,
+    localClienteId: stampA,
+  }), true);
+  assert.equal(canApplyClienteLocalReviewDraftToForm({
+    reviewClienteId: stampA,
+    liveFormClienteId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    reviewGroupId: 'g1',
+    liveGroupId: 'g1',
+    reviewEmpresaId: 'e1',
+    liveEmpresaId: 'e1',
+    reviewSession: sessionA,
+    liveSession: sessionB,
+    localClienteId: stampA,
+  }), false);
+  assert.equal(canApplyClienteLocalReviewDraftToForm({
+    reviewClienteId: stampA,
+    liveFormClienteId: stampA,
+    reviewGroupId: 'g1',
+    liveGroupId: 'g1',
+    reviewEmpresaId: 'e1',
+    liveEmpresaId: 'e1',
+    reviewSession: sessionA,
+    liveSession: { ...sessionA, token: 'tok-renewed' },
+  }), false);
   const draftA = [
     { ...baseEndereco, apelido: 'Local-A1' },
     { ...baseEndereco, apelido: 'Local-A2-pendente' },

@@ -7,6 +7,12 @@ Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
 fidelidade; 40 PASS não autoriza peel “integral”. Fora: Backend/Dashboard/docs.
 Candidata freeze **`197bbc090`**. HEAD docs `adca97468` CI SUCCESS. tip ≠ HML. Sem implantar.
 
+## Cursor — PR596 openDraft A→B binding (2026-11-14 America/Sao_Paulo)
+
+Casa #6882444389: residual montado — callback revisão A em form B. Fix tip:
+congela identidade no produtor + `canApplyClienteLocalReviewDraftToForm` no
+consumidor. 6º path Revisao permanece no port. tip ≠ HML. Sem deploy.
+
 ## Cursor — PR596 6º path ClienteLocaisRevisao liberado (2026-11-14 America/Sao_Paulo)
 
 Casa #6882403031: typecheck cadeia Codex — Completo exige `onOpenDraft`/`onReviewMeta`.

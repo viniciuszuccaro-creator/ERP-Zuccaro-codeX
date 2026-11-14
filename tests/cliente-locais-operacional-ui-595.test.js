@@ -35,6 +35,9 @@ test('Completo: ENTREGA onOpenDraft + FISCAL allowReviewEdit (sem MASTER)', () =
   assert.match(completo, /const reviewClienteId = clienteBoundId \|\| cliente\?\.id \|\| null/);
   assert.match(completo, /setRevisaoEntregaTotal\(null\);\s*\}, \[reviewClienteId\]/);
   assert.match(completo, /Fiscal não abre rascunho MASTER/);
+  assert.match(completo, /canApplyClienteLocalReviewDraftToForm/);
+  assert.match(completo, /Revisão de outro contexto/);
+  assert.match(completo, /if \(prevId && String\(reviewClienteId\) !== prevId\) return prev/);
   assert.match(completo, /locaisOperacionalLoadStatus/);
   assert.match(completo, /loadStatus=\{locaisOperacionalLoadStatus\}/);
   assert.match(completo, /Limpa visão anterior antes do fetch/);
@@ -49,6 +52,11 @@ test('Revisão: FISCAL in-place + ENTREGA rascunho; sem Ativar/Excluir', () => {
   assert.match(revisao, /Salvar revisao fiscal sem ativar/);
   assert.match(revisao, /onReviewMeta\(\{ finalidade, total: null, error: false \}\)/);
   assert.match(revisao, /Leitura indisponivel neste contexto ou sem permissao/);
+  // Casa #6882444389: openDraft congela clienteId/group/session — callback A ≠ B.
+  assert.match(revisao, /Congela identidade da revisão visível/);
+  assert.match(revisao, /clienteId: snap\.clienteId/);
+  assert.match(revisao, /session: snap\.session/);
+  assert.match(revisao, /reviewGeneration: state\.generation/);
   assert.doesNotMatch(revisao, /\bAtivar\b|\bExcluir\b/);
 });
 

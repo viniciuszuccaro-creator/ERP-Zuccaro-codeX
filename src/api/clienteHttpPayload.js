@@ -888,6 +888,48 @@ export function canPublishClienteLocaisPartialReconcile(args = {}) {
 }
 
 /**
+ * Abrir rascunho a partir da revisão ENTREGA: binding cliente/grupo/empresa/sessão
+ * congelado no produtor deve coincidir com a superfície viva do consumidor.
+ * Callback obsoleto de A após trocar para B → false (não publica local A em B).
+ * @param {{
+ *   reviewClienteId?: string|null,
+ *   liveFormClienteId?: string|null,
+ *   reviewGroupId?: string|null,
+ *   liveGroupId?: string|null,
+ *   reviewEmpresaId?: string|null,
+ *   liveEmpresaId?: string|null,
+ *   reviewSession?: { token?: string, actorId?: string, groupId?: string, empresaId?: string|null }|null,
+ *   liveSession?: { token?: string, actorId?: string, groupId?: string, empresaId?: string|null }|null,
+ *   localClienteId?: string|null,
+ * }} args
+ * @returns {boolean}
+ */
+export function canApplyClienteLocalReviewDraftToForm(args = {}) {
+  const reviewCliente = String(args.reviewClienteId || '').trim();
+  const liveCliente = String(args.liveFormClienteId || '').trim();
+  if (!reviewCliente || !liveCliente || reviewCliente !== liveCliente) return false;
+  if (String(args.reviewGroupId || '').trim() !== String(args.liveGroupId || '').trim()) return false;
+  const reviewEmpresa = args.reviewEmpresaId == null || args.reviewEmpresaId === ''
+    ? null
+    : String(args.reviewEmpresaId);
+  const liveEmpresa = args.liveEmpresaId == null || args.liveEmpresaId === ''
+    ? null
+    : String(args.liveEmpresaId);
+  if (reviewEmpresa !== liveEmpresa) return false;
+  const reviewSession = args.reviewSession;
+  const liveSession = args.liveSession;
+  if (!reviewSession?.token || !liveSession?.token) return false;
+  for (const key of ['token', 'actorId', 'groupId', 'empresaId']) {
+    if (reviewSession[key] !== liveSession[key]) return false;
+  }
+  const localCliente = args.localClienteId == null || args.localClienteId === ''
+    ? ''
+    : String(args.localClienteId).trim();
+  if (localCliente && localCliente !== reviewCliente) return false;
+  return true;
+}
+
+/**
  * Path legado (create/update/delete por request): NÃO atômico.
  * Preferir `syncClienteLocaisAtomicViaHttp` → POST `/locais/sync` (`batchAtomic:true`).
  * Este sync legado:

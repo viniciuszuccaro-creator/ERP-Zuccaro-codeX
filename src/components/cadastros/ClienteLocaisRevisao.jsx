@@ -145,7 +145,26 @@ export default function ClienteLocaisRevisao({
   };
   const openDraft = (row) => {
     if (typeof onOpenDraft !== 'function' || !canDraft || finalidade !== 'ENTREGA') return;
-    onOpenDraft({ finalidade, local: row, ui: mapClienteLocalToUiEndereco(row) });
+    // Congela identidade da revisão visível — callback obsoleto de A não deve publicar em B.
+    if (!visible || !state?.snapshot || state.error) return;
+    const snap = state.snapshot;
+    if (snap.clienteId !== clienteId || snap.groupId !== groupId
+      || (snap.empresaId || null) !== (empresaId || null) || snap.finalidade !== 'ENTREGA') return;
+    if (!sameSession(snap.session, session) || !sameSession(snap.session, readErpHttpSession())) return;
+    const rowCliente = row?.cliente_id == null || row.cliente_id === ''
+      ? ''
+      : String(row.cliente_id);
+    if (rowCliente && rowCliente !== String(snap.clienteId)) return;
+    onOpenDraft({
+      finalidade: 'ENTREGA',
+      local: row,
+      ui: mapClienteLocalToUiEndereco(row),
+      clienteId: snap.clienteId,
+      groupId: snap.groupId,
+      empresaId: snap.empresaId ?? null,
+      session: snap.session,
+      reviewGeneration: state.generation,
+    });
   };
   const visibleEditor = editor && isBound(editor.binding);
   if (!clienteId) return null;

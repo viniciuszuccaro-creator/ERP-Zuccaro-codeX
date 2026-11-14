@@ -12,7 +12,7 @@ export function clienteLocalOperationalRemainder(file, text) {
   ] : file === 'src/components/cadastros/CadastroClienteCompleto.jsx' ? [
     // Atomic syncLocais (Cursor) — peel before ENTREGA onOpenDraft.
     [
-      '  syncClienteLocaisViaHttp,\n  syncClienteLocaisAtomicViaHttp,\n  buildClienteLocaisSyncOperations,\n  reconcileClienteLocaisDraftAfterPartial,\n  canPublishClienteLocaisPartialReconcile,\n  prepareClienteLocaisHttpDraft,\n',
+      '  syncClienteLocaisViaHttp,\n  syncClienteLocaisAtomicViaHttp,\n  buildClienteLocaisSyncOperations,\n  reconcileClienteLocaisDraftAfterPartial,\n  canPublishClienteLocaisPartialReconcile,\n  canApplyClienteLocalReviewDraftToForm,\n  prepareClienteLocaisHttpDraft,\n',
       '  syncClienteLocaisViaHttp,\n  prepareClienteLocaisHttpDraft,\n',
     ],
     [
@@ -151,7 +151,16 @@ export function clienteLocalOperationalRemainder(file, text) {
    * ENTREGA: revisão → rascunho operacional (não ativa/grava).
    * FISCAL: não copia para MASTER.endereco_principal — revisão in-place via allowReviewEdit.
    */
-  const openLocalDraftFromReview = ({ finalidade, ui }) => {
+  const openLocalDraftFromReview = (payload) => {
+    const {
+      finalidade,
+      ui,
+      local,
+      clienteId: reviewClienteId,
+      groupId: reviewGroupId,
+      empresaId: reviewEmpresaId,
+      session: reviewSession,
+    } = payload && typeof payload === 'object' ? payload : {};
     if (!ui || typeof ui !== 'object') return;
     if (finalidade === 'FISCAL') {
       toast({
@@ -162,6 +171,29 @@ export function clienteLocalOperationalRemainder(file, text) {
       return;
     }
     if (finalidade !== 'ENTREGA') return;
+    // Binding/sessão congelados no produtor × superfície viva (A→B / create vazio).
+    const liveCliente = formClienteIdLiveRef.current
+      || String(clienteBoundId || formData?.id || cliente?.id || '').trim()
+      || null;
+    const liveSession = readErpHttpSession();
+    if (!canApplyClienteLocalReviewDraftToForm({
+      reviewClienteId,
+      liveFormClienteId: liveCliente,
+      reviewGroupId,
+      liveGroupId: groupId,
+      reviewEmpresaId,
+      liveEmpresaId: empresaAtual?.id ?? null,
+      reviewSession,
+      liveSession,
+      localClienteId: local?.cliente_id ?? ui?.cliente_id ?? null,
+    })) {
+      toast({
+        title: 'Revisão de outro contexto',
+        description: 'Rascunho não aplicado — cliente/grupo/empresa/sessão da revisão não coincidem com o formulário atual. Rascunho e permissões preservados.',
+        variant: 'destructive',
+      });
+      return;
+    }
     // Fail-closed: sem catálogo HTTP confirmado, owned+review-only soft-deleta o restante no save.
     if (isHttpBackendMode) {
       if (locaisHttpBaselineRef.current === null) {
@@ -184,6 +216,9 @@ export function clienteLocalOperationalRemainder(file, text) {
     setActiveTab('enderecos');
     locaisDraftOwnedRef.current = true;
     setFormData((prev) => {
+      // Revalida id vivo dentro do updater (troca durante o mesmo tick).
+      const prevId = String(prev?.id || '').trim();
+      if (prevId && String(reviewClienteId) !== prevId) return prev;
       // Base = draft com itens, senão catálogo HTTP confirmado (view ou baseline).
       const httpList = Array.isArray(locaisHttpView)
         ? locaisHttpView

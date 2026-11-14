@@ -1,3 +1,10 @@
+## Cursor — PR596 openDraft revisão A→B binding (2026-11-14 America/Sao_Paulo)
+
+Casa #6882444389: callback `openDraft` de A após render B publicava local A em B.
+Fix: `ClienteLocaisRevisao` congela cliente/grupo/empresa/sessão/generation;
+`canApplyClienteLocalReviewDraftToForm` + consumidor revalida superfície viva;
+updater rejeita `prev.id` ≠ review. Pins + unitários PASS. tip ≠ HML. Sem deploy.
+
 ## Cursor — PR596 liberação hunks port Casa (patch prep) (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
