@@ -117,8 +117,10 @@ test('UI contatos: com permissão exclui e propaga onChange', async () => {
 });
 
 test('UI enderecos: sem permissão não muta', async () => {
+  // Autorização de locais = cliente_local.* (Cliente.editar não autoriza).
   const { state, buttons, render } = await loadForm('../src/components/cadastros/GerenciarEnderecosClienteForm.jsx', {
-    canEditCliente: false,
+    canEditCliente: true,
+    localActions: [],
   });
   const enderecos = [{ apelido: 'Obra', logradouro: 'Rua A', numero: '1', cidade: 'SP', estado: 'SP' }];
   render({ enderecos, onChange: (next) => state.changes.push(next) });

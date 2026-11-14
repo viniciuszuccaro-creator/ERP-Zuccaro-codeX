@@ -1,3 +1,24 @@
+## Port seletivo595 na cadeia Codex, em fechamento (2026-11-14)
+
+Reserva594/6881308921, propria branch Casa sobre17efe001/76dc. Aplicado somente
+diff de src/tests38b4->595b5862fc5:16arquivos com blobs EXATAMENTE iguais ao SHA
+revisado; nenhuma mudanca server/httpApiClient/clienteHttpPayload/Completo da594.
+Preserva fiscal ClienteLocal/CAS/callbacks38b4 e acrescenta mensagens de falha/
+permissao, contexto seletor/Pedido, extensoes MASTER/Relatorios e testes/peels
+correspondentes. Nao incorpora o fallback596 nem branches inteiras.37focados
+PASS/0FAIL/0SKIP, incluindo Review/Logistica React/Chrome com bordas sinteticas.
+audit/lint/typecheck/buildPASS;2warningslint existentes preservados. Npm ausente
+noPATH Casa: executados os MESMOS comandos de package.json diretamente comNode,
+sem instalar ferramentas. Suite completa local em execucao; quatro auxiliares
+indicaram falha, diagnostico terminal pendente. Nao declarar fechamento total.
+CI Ubuntu deste port obrigatoria antes de aceite/pacote/atualizacaoHML.
+
+Residual5964794b328 documentado abaixo permanece dependente da negativa de
+leitura de reconciliacao6881291218; nao manter perda antiga25edicoes como atual.
+Prechecks/proposta privada de perfil continuam validos no alcance abaixo, sem
+aplicacao/permissao/deploy. DepoisCI: empacotar API/web pelo script existente
+foraVPS, preservar identidade/manifesto/backup/reversao e coordenar composicao.
+
 ## Casa: console recuperado e residual de retry atual596 (2026-11-14)
 
 Checkpoint anterior749ac9103eda325948e00c9e2895e17ba699fdbb/CI7067SUCCESS.

@@ -1,3 +1,14 @@
+## Port595 controlado na continuidade Codex (2026-11-14)
+
+Branch Casa sobre17efe001/76dc:16hunks-arquivos do diff38b4->595b5862fc5 portados,
+16/16blobsiguais; backend/clienteHTTP/Completo da594 intactos.37focadosPASS,
+incluindo React/Chrome Review/Logistica com bordas sinteticas. Auditoria/lint/
+typecheck/buildPASS,2warningslintanteriores. Comandos oficiais viaNode porque
+npm nao esta noPATH, sem instalacao. Suitecompleta local ainda emexecucao com
+quatro auxiliares falhos por diagnosticar; CI Ubuntu obrigatoria desteSHA.
+Nao incorpora fallback596, nao e pacoteHML implantado ou aceite completo.
+Reserva6881308921; fila/gates/proposta granular privada e residual596 no HANDOFF.
+
 ## Casa: prechecks HML e retry596 ainda parcial (2026-11-14)
 
 749ac910/CI7067SUCCESS. WebConsole existente recuperada com ajuda do proprietario;
