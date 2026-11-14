@@ -7,6 +7,11 @@ Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
 fidelidade; 40 PASS não autoriza peel “integral”. Fora: Backend/Dashboard/docs.
 Candidata freeze **`197bbc090`**. HEAD docs `adca97468` CI SUCCESS. tip ≠ HML. Sem implantar.
 
+## Cursor — PR596 openDraft residual create/ABA (Casa 3de1b88b) (2026-11-14 America/Sao_Paulo)
+
+Casa #6882628864: aplicado surfaceKey-at-render + loaded/epoch/canDraft.
+Candidata anterior `e20e66a06` supersedida por este tip (aguarda CI). tip ≠ HML.
+
 ## Cursor — PR596 Casa revisa openDraft e20e66 (2026-11-14 America/Sao_Paulo)
 
 Casa #6882561298: revisão montada produtor+consumidor do tip `e20e66a06`

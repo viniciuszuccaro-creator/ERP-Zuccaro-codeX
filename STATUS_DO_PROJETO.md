@@ -1,3 +1,10 @@
+## Cursor — PR596 openDraft residual Casa 3de1b88b (create vazio/ABA) (2026-11-14 America/Sao_Paulo)
+
+Casa #6882628864: A→B simples PASS; residual create vazio / ABA cliente/token.
+Aplicado patch mínimo (SHA256 `3de1b88b…`): `reviewDraftSurfaceAtRender`,
+liveCliente só `formClienteIdLiveRef`, prev exige id, Revisao `loaded/epoch/canDraft`
++ `!permissionsLoading`. Pins PASS. tip ≠ HML — CI em curso. Sem deploy.
+
 ## Cursor — PR596 openDraft A→B CI SUCCESS e20e66a06 (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ HML)

@@ -22,7 +22,7 @@ export default function ClienteLocaisRevisao({
   const canEdit = allowReviewEdit && finalidade === 'FISCAL'
     && hasPermission('Cadastros', 'cliente_local', 'editar') === true;
   // ENTREGA: rascunho no formulário canônico (não grava/ativa). FISCAL usa allowReviewEdit in-place.
-  const canDraft = !canEdit && finalidade === 'ENTREGA'
+  const canDraft = !permissionsLoading && !canEdit && finalidade === 'ENTREGA'
     && (hasPermission('Cadastros', 'cliente_local', 'editar') === true
       || hasPermission('Cadastros', 'cliente_local', 'criar') === true);
   const session = readErpHttpSession();
@@ -40,7 +40,7 @@ export default function ClienteLocaisRevisao({
   loaded.current = state;
   const epoch = useRef(0);
   const current = useRef(null);
-  current.current = { clienteId, groupId, empresaId, session, valid, finalidade, canEdit };
+  current.current = { clienteId, groupId, empresaId, session, valid, finalidade, canEdit, canDraft };
   useEffect(() => {
     const invalidate = () => { epoch.current++; setState(null); setEditor(null); setSaveError(''); setOffset(0); setRevision(n => n + 1); };
     window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
@@ -147,6 +147,9 @@ export default function ClienteLocaisRevisao({
     if (typeof onOpenDraft !== 'function' || !canDraft || finalidade !== 'ENTREGA') return;
     // Congela identidade da revisão visível — callback obsoleto de A não deve publicar em B.
     if (!visible || !state?.snapshot || state.error) return;
+    // Reuse the review binding; old callbacks never revive after identity/token ABA.
+    if (loaded.current !== state || epoch.current !== state.generation
+      || !current.current.valid || !current.current.canDraft) return;
     const snap = state.snapshot;
     if (snap.clienteId !== clienteId || snap.groupId !== groupId
       || (snap.empresaId || null) !== (empresaId || null) || snap.finalidade !== 'ENTREGA') return;

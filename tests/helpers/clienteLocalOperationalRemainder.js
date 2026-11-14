@@ -151,6 +151,7 @@ export function clienteLocalOperationalRemainder(file, text) {
    * ENTREGA: revisão → rascunho operacional (não ativa/grava).
    * FISCAL: não copia para MASTER.endereco_principal — revisão in-place via allowReviewEdit.
    */
+  const reviewDraftSurfaceAtRender = formSurfaceKeyRef.current;
   const openLocalDraftFromReview = (payload) => {
     const {
       finalidade,
@@ -171,10 +172,9 @@ export function clienteLocalOperationalRemainder(file, text) {
       return;
     }
     if (finalidade !== 'ENTREGA') return;
-    // Binding/sessão congelados no produtor × superfície viva (A→B / create vazio).
-    const liveCliente = formClienteIdLiveRef.current
-      || String(clienteBoundId || formData?.id || cliente?.id || '').trim()
-      || null;
+    // Sem fallback ao render antigo quando a superfície virou create vazio / outro cliente.
+    if (reviewDraftSurfaceAtRender !== formSurfaceKeyRef.current || !isFormScopeCurrent()) return;
+    const liveCliente = formClienteIdLiveRef.current || null;
     const liveSession = readErpHttpSession();
     if (!canApplyClienteLocalReviewDraftToForm({
       reviewClienteId,
@@ -216,9 +216,10 @@ export function clienteLocalOperationalRemainder(file, text) {
     setActiveTab('enderecos');
     locaisDraftOwnedRef.current = true;
     setFormData((prev) => {
-      // Revalida id vivo dentro do updater (troca durante o mesmo tick).
+      // Revalida id vivo + superfície (create vazio / ABA) — sem prevId não aplica.
       const prevId = String(prev?.id || '').trim();
-      if (prevId && String(reviewClienteId) !== prevId) return prev;
+      if (!prevId || String(reviewClienteId) !== prevId
+        || reviewDraftSurfaceAtRender !== formSurfaceKeyRef.current || !isFormScopeCurrent()) return prev;
       // Base = draft com itens, senão catálogo HTTP confirmado (view ou baseline).
       const httpList = Array.isArray(locaisHttpView)
         ? locaisHttpView
