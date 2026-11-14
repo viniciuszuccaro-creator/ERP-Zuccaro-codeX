@@ -359,10 +359,11 @@ export const computeDashboardDerivedKpis = ({
     .reduce((sum, c) => sum + (c.valor || 0), 0);
   const fluxoCaixa = receitasPendentes - despesasPendentes;
   const produtosBaixoEstoque = (produtos || []).filter(
-    (p) => p.estoque_atual <= p.estoque_minimo && p.status === 'Ativo',
+    (p) => p.estoque_atual <= p.estoque_minimo && isDashboardCadastroAtivo(p),
   ).length;
-  const colaboradoresAtivos = (colaboradores || []).filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Afastado').length;
-  const clientesAtivos = (clientes || []).filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Bloqueado').length;
+  // Fail-closed: ausente/ambíguo ≠ ativo (antes `status||'Ativo'` contava sem status).
+  const colaboradoresAtivos = (colaboradores || []).filter(isDashboardCadastroAtivo).length;
+  const clientesAtivos = (clientes || []).filter(isDashboardCadastroAtivo).length;
   const taxaConversao = clientesAtivos > 0
     ? ((pedidosPeriodo.filter((p) => p.status !== 'Cancelado').length / clientesAtivos) * 100).toFixed(1)
     : 0;

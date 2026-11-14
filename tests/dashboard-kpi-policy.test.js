@@ -164,13 +164,20 @@ test('kpis derivados e vendas mensais usam pedidos reais', () => {
     contasPagar: [{ status: 'Pendente', valor: 10 }],
     entregas: [],
     ordensProducao: [],
-    colaboradores: [{ status: 'Ativo' }],
-    clientes: [{ status: 'Ativo' }],
-    produtos: [],
+    colaboradores: [{ status: 'Ativo' }, { status: 'Afastado' }, {}],
+    clientes: [{ status: 'Ativo' }, { status: 'Bloqueado' }, { ativo: true }, {}],
+    produtos: [
+      { estoque_atual: 1, estoque_minimo: 5, status: 'Ativo' },
+      { estoque_atual: 1, estoque_minimo: 5 },
+      { estoque_atual: 1, estoque_minimo: 5, ativo: true },
+    ],
   });
   assert.equal(derived.totalVendas, 100);
   assert.equal(derived.fluxoCaixa, 30);
   assert.ok(Number(derived.taxaInadimplencia) > 0);
+  assert.equal(derived.colaboradoresAtivos, 1);
+  assert.equal(derived.clientesAtivos, 2);
+  assert.equal(derived.produtosBaixoEstoque, 2);
 
   const meses = buildVendasPorMesFromPedidos([
     { data_pedido: `${new Date().getFullYear()}-01-15`, status: 'Aprovado', valor_total: 10 },

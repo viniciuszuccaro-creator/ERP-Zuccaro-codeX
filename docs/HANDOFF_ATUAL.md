@@ -1,3 +1,8 @@
+## Cursor — PR596 derived KPIs ativos fail-closed (2026-11-14 America/Sao_Paulo)
+
+KPIs derivados Dashboard alinhados a `isDashboardCadastroAtivo` (ausente ≠ ativo).
+tip ≠ HML; fora pacote 81. Sem deploy.
+
 ## Cursor — PR596 Casa #6883819072 — dual AND supersedido + teste percurso (2026-11-14 America/Sao_Paulo)
 
 Casa revisou `5f46bad2d` (AND `ativo`+`status`). Já corrigido em **`cb7047c81`**:
