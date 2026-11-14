@@ -1,20 +1,20 @@
-## Cursor — PR596 CI FAIL: AST harness formSurfaceKeyRef (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 tip CI SUCCESS surfaceKey+AST (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
 | Ref | Tip | CI / runtime |
 |-----|-----|----------------|
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
-| Tip `c644b6785` | surfaceKey | CI FAIL AST; **Casa** mutationFn+listLocais PASS (não React montado) |
-| **PR596 HEAD** | `6b7bcc3dc` | CI **em curso ≠ aprovado** (AST harness) |
+| **PR596 HEAD** | **`197bbc090`** | **CI SUCCESS** (run 43624913215) + Bugbot neutral |
+| Tip `6b7bcc3dc` | AST harness | **CI SUCCESS** (run 43624812707) |
+| Tip `c644b6785` | surfaceKey | CI FAIL AST; **Casa** mutationFn+listLocais PASS |
 | Tip `d4b64a74a` | gate A→B | **CI SUCCESS** histórico |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Causa CI `c644b6785`: harness AST sem `formSurfaceKeyRef`. Fix tip `6b7bcc3dc`
-(bindings + pin). Casa (#6881961186): 4+2 contraprovas PASS no mutationFn ORIGINAL
-(A→B / A→create vazio + listLocais OK) — escopo refs/sintético; lifecycle montado
-ainda pendente (Codex harness privado isolado; Cursor não disputa hunk Casa).
-Candidata HML: tip pós-CI SUCCESS. Sem aceite/port/deploy.
+Candidata composição UI: **`197bbc090`**. Handoff Codex: freeze API/web mesmo SHA
++ aceite A→novo create / PARTIAL / pedido entrega. Lifecycle React montado = Codex
+harness privado (Casa). Cursor: Cadastros/Central360 no tip — sem port/deploy.
+URL HML: `https://hml-erp.cpaferroeaco.com.br/` (ainda `d054e2b3`).
 
 ## Cursor — PR596 Bugbot: surfaceKey pré-MASTER no gate PARTIAL (2026-11-14 America/Sao_Paulo)
 
