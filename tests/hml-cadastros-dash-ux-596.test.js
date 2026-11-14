@@ -57,7 +57,12 @@ test('Dashboard: KPIs derivados dinheiro/% fail-closed (— ≠ R$ 0,00 / 0%)', 
   assert.match(dash, /vendasPeriodoDisplay/);
   assert.match(dash, /otdDisplay/);
   assert.match(dash, /taxaInadimplenciaDisplay/);
-  assert.match(dash, /financeiroSampleOk/);
+  // CR e CP separados — um lado ok não desbloqueia o outro (Bugbot High).
+  assert.match(dash, /contasReceberSampleOk/);
+  assert.match(dash, /contasPagarSampleOk/);
+  assert.match(dash, /fluxoBlocked = !contasReceberSampleOk \|\| !contasPagarSampleOk/);
+  assert.match(dash, /receitasBlocked/);
+  assert.match(dash, /despesasBlocked/);
   assert.match(dash, /amostra indisponível ≠ R\$ 0,00/);
   assert.match(dash, /isError: errorContasReceber/);
   assert.match(dash, /isError: errorPedidos/);
@@ -213,6 +218,7 @@ test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   assert.match(pedido, /hydrateEpoch\.current!==openedGen/);
   assert.match(pedido, /sessionGenAtClick!=null&&sessionGenAtClick!==hydrateEpoch\.current/);
   assert.match(pedido, /canViewLiveRef/);
+  assert.match(pedido, /hydrateInflightRef\.current\.clear\(\)/);
   assert.match(pedido, /\[groupId,empresaId,actorId,sessionIdentity\]/);
   assert.match(pedido, /condicao_pagamento_codigo/);
   assert.match(pedido, /tabela_preco_label/);

@@ -1,7 +1,12 @@
+## Cursor — PR596 Bugbot finance CR∩CP + inflight clear (2026-11-14 America/Sao_Paulo)
+
+Fluxo precisa dos dois lados; inflight limpo no reset. tip ≠ HML. Aguarda CI.
+Freeze `0ffff5100` / port `81d1e849`. Completo ownership: Casa.
+
 ## Cursor — PR596 Security C360 clear + Bloco2 entity gate (2026-11-14 America/Sao_Paulo)
 
 C360 limpa seleção no tenant switch; Bloco2 gate por entidade (≠ DFS Marca).
-tip ≠ HML. Sem Completo/deploy. Aguarda CI. Freeze `0ffff5100` / port `81d1e849`.
+tip ≠ HML. Sem Completo/deploy. Freeze `0ffff5100` / port `81d1e849`.
 
 ## Cursor — PR596 Casa PedidoCanonico P1/P2 sessão+RBAC (2026-11-14 America/Sao_Paulo)
 

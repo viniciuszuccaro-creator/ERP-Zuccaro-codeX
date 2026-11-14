@@ -1,3 +1,8 @@
+## Cursor — PR596 Bugbot finance sides + hydrate inflight clear (2026-11-14 America/Sao_Paulo)
+
+High: Fluxo exige CR **e** CP; receitas/inadimplência=CR; despesas=CP.
+Med: `hydrateInflightRef.clear()` no reset de sessão/situação. tip ≠ HML.
+
 ## Cursor — PR596 Security C360 tenant clear + Bloco2 entity gate (2026-11-14 America/Sao_Paulo)
 
 Security High: Central360 limpa selected/Cliente360 + bump epoch em

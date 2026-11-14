@@ -690,14 +690,16 @@ export default function Dashboard() {
     && Array.isArray(clientes) && clientes.length > 0
     && !isCappedListUnreliable(clientes, DASHBOARD_LIST_SOFT_LIMIT),
   );
-  const financeiroSampleOk = Boolean(
-    canSeeFinanceiro && hasContextoAtivo && !errorContasReceber && !errorContasPagar
-    && (
-      (Array.isArray(contasReceber) && contasReceber.length > 0
-        && !isCappedListUnreliable(contasReceber, DASHBOARD_LIST_SOFT_LIMIT))
-      || (Array.isArray(contasPagar) && contasPagar.length > 0
-        && !isCappedListUnreliable(contasPagar, DASHBOARD_LIST_SOFT_LIMIT))
-    ),
+  // CR e CP não são intercambiáveis: um lado ok não confirma o outro (Bugbot High).
+  const contasReceberSampleOk = Boolean(
+    canSeeFinanceiro && hasContextoAtivo && !errorContasReceber
+    && Array.isArray(contasReceber) && contasReceber.length > 0
+    && !isCappedListUnreliable(contasReceber, DASHBOARD_LIST_SOFT_LIMIT),
+  );
+  const contasPagarSampleOk = Boolean(
+    canSeeFinanceiro && hasContextoAtivo && !errorContasPagar
+    && Array.isArray(contasPagar) && contasPagar.length > 0
+    && !isCappedListUnreliable(contasPagar, DASHBOARD_LIST_SOFT_LIMIT),
   );
   const entregasSampleOk = Boolean(
     canSeeExpedicao && hasContextoAtivo && !errorEntregas
@@ -710,11 +712,13 @@ export default function Dashboard() {
     && !isCappedListUnreliable(ordensProducao, DASHBOARD_LIST_SOFT_LIMIT),
   );
   const vendasBlocked = !pedidosSampleOk;
-  const fluxoBlocked = !financeiroSampleOk;
+  const fluxoBlocked = !contasReceberSampleOk || !contasPagarSampleOk;
   const conversaoBlocked = !pedidosSampleOk || !clientesSampleOk;
   const otdBlocked = !entregasSampleOk;
   const producaoBlocked = !producaoSampleOk;
-  const inadimplenciaBlocked = !financeiroSampleOk;
+  const inadimplenciaBlocked = !contasReceberSampleOk;
+  const receitasBlocked = !contasReceberSampleOk;
+  const despesasBlocked = !contasPagarSampleOk;
 
   const vendasPeriodoDisplay = formatCanaisOrigemKpiDisplay({
     blocked: vendasBlocked,
@@ -762,12 +766,12 @@ export default function Dashboard() {
     format: formatDashboardMoneyBrl,
   });
   const receitasPendentesDisplay = formatCanaisOrigemKpiDisplay({
-    blocked: fluxoBlocked,
+    blocked: receitasBlocked,
     value: receitasPendentes,
     format: formatDashboardMoneyBrl,
   });
   const despesasPendentesDisplay = formatCanaisOrigemKpiDisplay({
-    blocked: fluxoBlocked,
+    blocked: despesasBlocked,
     value: despesasPendentes,
     format: formatDashboardMoneyBrl,
   });

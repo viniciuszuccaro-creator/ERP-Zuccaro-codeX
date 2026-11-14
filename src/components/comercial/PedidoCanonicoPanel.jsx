@@ -93,6 +93,8 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const hydrateEpoch=useRef(0);
   /** Id do pedido cuja hidratação ainda manda — GET tardio de outro id não sobrescreve. */
   const hydrateIntentIdRef=useRef(null);
+  /** GET compartilhado por id — limpar no reset de sessão (Bugbot stale flight). */
+  const hydrateInflightRef=useRef(new Map());
   const selectionEpochLiveRef=useRef(selectionEpoch);
   selectionEpochLiveRef.current=selectionEpoch;
   const canViewLiveRef=useRef(false);
@@ -242,9 +244,11 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const produtoOptions=useMemo(()=>filterProdutoOptions(masters.produtos, produtoQuery),[masters.produtos, produtoQuery]);
   useEffect(()=>{
     // Geração monotônica: token A→B→A não reabre GET da sessão antiga (Casa P1).
+    // Limpa inflight: senão o 1º clique no novo gen reusa Promise N e recebe null (Bugbot).
     detailGate.current.invalidate();
     hydrateEpoch.current += 1;
     hydrateIntentIdRef.current=null;
+    hydrateInflightRef.current.clear();
     setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setCreateKey(null);setHistory([]);setHistoryLoading(false);setHistoryError(null);setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}));setPendingCancel(null);setCancelMotivo('');setPendingTransition(null);setStatusMotivo('');setFilters({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});setApplied({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});
   },[groupId,empresaId,actorId,sessionIdentity]);
   useEffect(()=>mutationGate.current.subscribe(()=>setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}))),[groupId,empresaId,actorId]);
@@ -306,6 +310,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     detailGate.current.invalidate();
     hydrateEpoch.current += 1;
     hydrateIntentIdRef.current=null;
+    hydrateInflightRef.current.clear();
     setSelected(null);
     const map={PRODUCAO:'EM_PRODUCAO',ENTREGA:'PRONTO_ENTREGA',RETIRA:'PRONTO_RETIRADA',ENTREGUES:'FINALIZADO',FINALIZADOS:'FINALIZADO',CANCELADOS:'CANCELADO'};
     const status=map[centralSituacao]||'TODOS';
@@ -313,7 +318,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     setFilters((prev)=>({...prev,status,tipoOperacao}));
     setApplied((prev)=>({...prev,status,tipoOperacao}));
     setPage(1);
-    return ()=>{ detailGate.current.invalidate(); hydrateEpoch.current += 1; hydrateIntentIdRef.current=null; };
+    return ()=>{ detailGate.current.invalidate(); hydrateEpoch.current += 1; hydrateIntentIdRef.current=null; hydrateInflightRef.current.clear(); };
   },[centralLayout,centralSituacao]);
   useEffect(()=>{
     if(!centralLayout)return undefined;
@@ -326,7 +331,6 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     [centralHiddenColumns],
   );
   const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);const cond=masters.condicoes.find((item)=>item.id===row?.condicao_pagamento_id);const tab=(masters.tabelas||[]).find((item)=>item.id===row?.tabela_preco_id);const enriched=row?{...row,condicao_pagamento_codigo:row.condicao_pagamento_codigo||cond?.codigo||undefined,condicao_pagamento_nome:row.condicao_pagamento_nome||cond?.nome||undefined,condicao_pagamento_label:row.condicao_pagamento_label||(cond?condicaoLabel(cond.id):undefined),tabela_preco_codigo:row.tabela_preco_codigo||tab?.codigo||undefined,tabela_preco_nome:row.tabela_preco_nome||tab?.nome||undefined,tabela_preco_label:row.tabela_preco_label||(tab?tabelaLabel(tab.id):undefined)}:row;onCentralSelect(enriched,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch:epoch});};
-  const hydrateInflightRef=useRef(new Map());
   /** GET compartilhado por id; sessão monotônica + epoch/intent/RBAC validam no waiter. */
   const hydratePedidoRow=async(row,{epochAtClick=null,sessionGenAtClick=null}={})=>{
     if(!row?.id)return null;
