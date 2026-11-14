@@ -1,19 +1,29 @@
-## Cursor — PR596 Casa montagem React 40 PASS + port seletivo (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 liberação hunks port Casa (patch prep) (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
 | Ref | Tip | Prova |
 |-----|-----|-------|
-| **Candidata freeze** | **`197bbc090`** | CI SUCCESS 43624913215; Completo blob `d81264b5` |
-| Casa montagem | `f804b1f12` | **40 PASS** (#6882204635); Completo blob **igual** `d81264b5` |
-| Contraprova fail | `c17fbfa29` | Casa: monta e FALHA `B_draft_unchanged` (blob `66e4ac84`) |
-| Casa mutationFn | `c644b6785` | PASS sintético; CI FAIL AST (histórico) |
+| **Candidata freeze** | **`197bbc090`** | CI SUCCESS; Completo blob `d81264b5` |
+| Casa montagem | `f804b1f12` | **40 PASS** (#6882204635); blob Completo igual |
+| Patch prep Casa | #6882237770 | 5 arquivos 595→f804; apply --check PASS; **não aplicado** |
+| Patch SHA256 | `a79e63a5d1006f37332395b1cb414f7962a211179b0e051a23510d42383e1a2a` | 104142 B; 1738+/61- |
 | **HML** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-### Port seletivo (coordenação Cursor → cadeia Codex)
-Hunks aprovados (Completo + `clienteHttpPayload` + peels/AST harness) **já estão** na
-PR596 / candidata **`197bbc090`** — mesmo blob Completo que Casa montou em `f804`.
-**Não** portar Dashboard nem branches inteiras. Cadeia: Continuity591→595→596.
-Não é E2E HTTP/PG/HML nem aceite global. Sem implantar.
+### Liberação Cursor (antes de Codex apply)
+**LIBERAR (autorizado montagem 40 PASS + CI):**
+1. `src/api/clienteHttpPayload.js` — reconcile / `canPublish` / sync ops
+2. `src/components/cadastros/CadastroClienteCompleto.jsx` — surfaceKey / gate A→B / PARTIAL
+3. `tests/cadastro-query-payload-boundaries.test.js` — AST `formSurfaceKeyRef`
+4. `tests/cliente-locais-sync-http-591.test.js` — pins A→B / surfaceKey / PARTIAL
+
+**LIBERAR COM RESSALVA (CI peel sync; 40 PASS ≠ validação do peel):**
+5. `tests/helpers/clienteLocalOperationalRemainder.js` (~678 linhas) — espelho do Completo
+   para peels/CI. Codex **audita fidelidade peel↔Completo** antes de “aceite integral”.
+   Não tratar peel como produto; não inventar normalização de negócio.
+
+**FORA do patch / não liberar neste port:** Backend, Dashboard, docs Cursor, branches
+inteiras. Nenhuma outra candidata. PR596 já contém os 5 arquivos; patch serve apply
+em worktree Codex na base `b5862fc53`. Sem implantar.
 
 ### Inventário Cadastros (Etapa 6) — estrutura tip `f804b1f12`
 Seis blocos já no `Cadastros.jsx` (sem paralelo): Pessoas/Parceiros · Produtos/Serviços ·

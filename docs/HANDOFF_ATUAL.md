@@ -1,9 +1,11 @@
-## Cursor — PR596 Casa 40 PASS montagem + port seletivo (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 liberação port patch Casa a79e63a5 (2026-11-14 America/Sao_Paulo)
 
-Identidade: Cursor. Branch PR596. Casa #6882204635: **40 checks PASS** montagem React
-em `f804b1f12` (Completo blob `d81264b5` = candidata **`197bbc090`**). Contraprova
-`c17fbfa29` FALHA `B_draft_unchanged`. Port seletivo: hunks já na PR596/197bbc090 —
-**sem** Dashboard/branches inteiras. tip ≠ HML `d054e2b3`. Sem E2E/HML/promote.
+Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
+595→f804 (5 arquivos; SHA256 `a79e63a5…`; apply --check PASS).
+**LIBERAR:** Completo + `clienteHttpPayload` + AST boundaries + sync-591 pins.
+**RESSALVA:** peel `clienteLocalOperationalRemainder` (~678) — CI sync; Codex audita
+fidelidade; 40 PASS não autoriza peel “integral”. Fora: Backend/Dashboard/docs.
+Candidata freeze **`197bbc090`**. tip ≠ HML. Sem implantar.
 
 ## Cursor — PR596 tip 197bbc090 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
