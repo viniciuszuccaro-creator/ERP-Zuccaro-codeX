@@ -1,3 +1,11 @@
+## Cursor — PR596 Bugbot epoch Fechar/liveRef (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Tip `855b2be9c`.
+- Shell: `selectionEpoch` obrigatório em `onCentralSelect` (Fechar/loadCentralDetail).
+- Orçamento: `actionGate.invalidate` na situação; `detailRequest` no GET Fechar.
+- Pedido: `selectionEpochLiveRef` pós-await (não compara closure stale).
+Sem HML.
+
 ## Cursor — PR595/596 batch HTTP + Seletor snapshot (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. PR595 `f6bfffacf` / PR596 `210720577`.
