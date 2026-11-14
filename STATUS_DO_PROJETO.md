@@ -1,3 +1,9 @@
+## Cursor — PR596 CI tip docs flaky MOUNTED_REVIEW_TIMEOUT (2026-11-14 America/Sao_Paulo)
+
+CI `3d527031d` (só docs pacote) FAIL frontend: `cliente-locais-review-mounted`
+`MOUNTED_REVIEW_TIMEOUT` ≠ regressão produto. Tip anterior docs/código SUCCESS.
+Re-trigger empty commit. Freeze `0ffff5100` / port `81d1e849` intactos. tip ≠ HML.
+
 ## Cursor — PR596 conferência pacote API/web Casa 81d1e849 (2026-11-14 America/Sao_Paulo)
 
 Casa #6883180029: pacote off-VPS do runtime **`81d1e849`** (CI7114 SUCCESS).
