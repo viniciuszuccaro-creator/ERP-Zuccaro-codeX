@@ -1,20 +1,29 @@
-## Cursor — PR596 tip CI SUCCESS surfaceKey+AST (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Casa montagem React + candidata 197bbc090 (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
 | Ref | Tip | CI / runtime |
 |-----|-----|----------------|
-| PR594 Continuity | `76dc3832` | SUCCESS histórico |
-| PR595 | `b5862fc53` | SUCCESS histórico |
 | **Candidata UI freeze** | **`197bbc090`** | **CI SUCCESS** (run 43624913215) |
-| Tip `6b7bcc3dc` | AST harness | **CI SUCCESS** (run 43624812707) |
-| HEAD docs | `6d0ee7dfb` | handoff CI SUCCESS (CI em curso ≠ freeze) |
-| Tip `c644b6785` | surfaceKey | CI FAIL AST; **Casa** mutationFn+listLocais PASS |
+| Tip `6b7bcc3dc` | AST harness | **CI SUCCESS** |
+| **HEAD** | **`f804b1f12`** | CI SUCCESS docs; Casa #6882120998 montagem React privada |
+| Tip `c644b6785` | surfaceKey | Casa mutationFn PASS; CI FAIL AST (histórico) |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Candidata composição UI: **`197bbc090`**. Handoff Codex: freeze API/web **esse SHA**
-+ aceite A→novo create / PARTIAL / pedido entrega. Suites Cadastros/C360/pedido/count:
-45 PASS local pós-CI. Lifecycle montado = Codex privado (Casa). Sem port/deploy.
-URL HML: `https://hml-erp.cpaferroeaco.com.br/` (ainda `d054e2b3`).
+Casa assume harness React montado privado do HEAD `f804b1f12` (sem editar branch
+Cursor). Cursor: **não toca** Completo/`clienteHttpPayload` neste heartbeat; inventário
+Cadastros/Base44. Freeze Codex: SHA **`197bbc090`**. Sem implantar.
+
+### Inventário Cadastros (Etapa 6) — estrutura tip `f804b1f12`
+Seis blocos já no `Cadastros.jsx` (sem paralelo): Pessoas/Parceiros · Produtos/Serviços ·
+Financeiro/Fiscal · Logística/Frota/Almoxarifado · Organizacional · Tecnologia/IA.
+Contagens: loading/negado/indisponível/parcial/zero separados (suites PASS).
+integra-novo = referência visual/telas, **não** registros. Dados reais = VPS/legado
+(Codex). Próximo Cursor sem Completo: Dashboard fail-closed / cards Base44 úteis
+já mapeados nos blocos — validar HML pós-freeze, não recriar menu.
+
+## Cursor — PR596 tip CI SUCCESS surfaceKey+AST (2026-11-14 America/Sao_Paulo)
+
+Tip `197bbc090` CI SUCCESS + AST `6b7bcc3dc`. HML `d054e2b3` ≠ tip.
 
 ## Cursor — PR596 Bugbot: surfaceKey pré-MASTER no gate PARTIAL (2026-11-14 America/Sao_Paulo)
 

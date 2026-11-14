@@ -1,10 +1,15 @@
+## Cursor — PR596 Casa montagem React f804b1f12 (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch PR596. Casa #6882120998: revisão React montada **privada**
+do HEAD `f804b1f12` (trava local exclusiva Casa; harness fora do Git). Cursor **não
+edita** `CadastroClienteCompleto`/`clienteHttpPayload` neste heartbeat. Delta
+c644→f804 = docs/testes. Candidata freeze código: **`197bbc090`** CI SUCCESS.
+tip ≠ HML `d054e2b3`. Sem implantar.
+
 ## Cursor — PR596 tip 197bbc090 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
-Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
 Tip **`197bbc090`** CI SUCCESS (43624913215). AST `6b7bcc3dc` + Casa PASS `c644b6785`.
-**tip ≠ HML `d054e2b3` — sem promote.** Candidata UI pronta p/ freeze Codex API/web
-mesmo SHA + aceite (PARTIAL/A→novo/pedido). Cursor segue Cadastros/Central360.
-Sem port/deploy.
+**tip ≠ HML `d054e2b3` — sem promote.**
 
 ## Cursor — PR596 Bugbot surfaceKey pré-MASTER (2026-11-14 America/Sao_Paulo)
 
