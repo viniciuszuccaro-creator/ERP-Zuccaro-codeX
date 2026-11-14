@@ -281,12 +281,11 @@ export default function usePermissions() {
       && (list.includes(desired) || (desired === 'visualizar' && list.includes('ver')))
     );
 
-    /** Só arrays no nó atual — não herda ação de entidades irmãs. */
-    const nodeHasOwnAction = (node, desired) => {
-      if (actionMatches(node, desired)) return true;
-      if (!node || typeof node !== 'object' || Array.isArray(node)) return false;
-      return Object.values(node).some((value) => actionMatches(value, desired));
-    };
+    /**
+     * Grant só se o próprio nó for a lista de ações.
+     * Não inspeciona Object.values — arrays filhos são entidades irmãs (Marca/Motorista).
+     */
+    const nodeHasOwnAction = (node, desired) => actionMatches(node, desired);
 
     const nodeHasAction = (node, desired) => {
       if (actionMatches(node, desired)) return true;

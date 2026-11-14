@@ -107,6 +107,27 @@ test('real RBAC field helper still distinguishes tabs, fields, modules and actio
   assert.equal(permissions({}).hasFieldPermission('Estoque', 'KPIs', null, 'valores', 'ver'), false);
 });
 
+test('Cadastros entity alias: sibling grant under owner section does not authorize missing entity', () => {
+  // Marca.editar sob produtos NÃO libera TabelaPreco.editar (ownOnly sem filho).
+  const onlyMarca = permissions({ Cadastros: { produtos: { marca: ['editar', 'visualizar'] } } });
+  assert.equal(onlyMarca.canEdit('Cadastros', 'Marca'), true);
+  assert.equal(onlyMarca.canEdit('Cadastros', 'TabelaPreco'), false);
+  assert.equal(onlyMarca.hasPermission('Cadastros', 'TabelaPreco', 'visualizar'), false);
+  // Filho explícito da entidade autoriza só ela.
+  const withTabela = permissions({ Cadastros: { produtos: { marca: ['editar'], tabelapreco: ['visualizar'] } } });
+  assert.equal(withTabela.canEdit('Cadastros', 'Marca'), true);
+  assert.equal(withTabela.canEdit('Cadastros', 'TabelaPreco'), false);
+  assert.equal(withTabela.hasPermission('Cadastros', 'TabelaPreco', 'visualizar'), true);
+  // Grant no próprio nó seção (array) cobre entidades aliasadas sem filho.
+  const sectionGrant = permissions({ Cadastros: { produtos: ['editar', 'visualizar'] } });
+  assert.equal(sectionGrant.canEdit('Cadastros', 'TabelaPreco'), true);
+  assert.equal(sectionGrant.canEdit('Cadastros', 'Marca'), true);
+  // Motorista sob logística: Veiculo.visualizar não abre Motorista.
+  const onlyVeiculo = permissions({ Cadastros: { logistica: { veiculo: ['visualizar'] } } });
+  assert.equal(onlyVeiculo.hasPermission('Cadastros', 'Veiculo', 'visualizar'), true);
+  assert.equal(onlyVeiculo.hasPermission('Cadastros', 'Motorista', 'visualizar'), false);
+});
+
 test('actual ModuleHeader retains children-only, title, subtitle and action rendering', () => {
   const Component = functionComponent('src/components/layout/ModuleHeader.jsx', 'ModuleHeader');
   assert.ok(renderToStaticMarkup(React.createElement(Component, {}, 'Synthetic content')).includes('Synthetic content'));

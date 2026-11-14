@@ -1,3 +1,10 @@
+## Cursor — PR596 ownOnly estrito + peels stage52 (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+Tip `ec4ac684c`: frontend **FAILURE** (stage52 usePermissions fora dos hunks) + Bugbot High (ownOnly ainda lia Object.values irmãos) — **não aprovado**.
+Correção: `nodeHasOwnAction` = só array do próprio nó; peels component-contract; teste comportamental sibling deny.
+Sem HML. CI tip **em curso ≠ aprovado**.
+
 ## Cursor — PR596 catalogBlocksMutations + SECTION_ALIASES ownOnly (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).

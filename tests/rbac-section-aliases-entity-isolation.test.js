@@ -13,7 +13,10 @@ test('usePermissions: entity→section alias is ownOnly (no sibling DFS fail-ope
   assert.match(src, /Sem nó da entidade: só grants do próprio nó seção/);
   assert.match(src, /Preferir filho com o nome da entidade sob a seção owner/);
   assert.match(src, /resolved\.ownOnly\s*\?\s*nodeHasOwnAction/);
-  // Não reintroduzir getNodeByPath que retorna só o cursor sem ownOnly.
+  // Bugbot: ownOnly NÃO inspeciona Object.values (arrays filhos = irmãos).
+  assert.match(src, /const nodeHasOwnAction = \(node, desired\) => actionMatches\(node, desired\);/);
+  assert.doesNotMatch(src, /nodeHasOwnAction[\s\S]*Object\.values\(node\)\.some/);
+  // Não reintroduzir getNodeByPath que retorna só o cursor sem ownOnly no hasPermission vivo.
   assert.doesNotMatch(src, /let cursor = getNodeByPath\(modNode, path\);\s*if \(cursor == null\) return false;\s*return nodeHasAction\(cursor/);
 });
 

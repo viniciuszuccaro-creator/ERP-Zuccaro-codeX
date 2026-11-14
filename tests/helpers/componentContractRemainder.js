@@ -7,6 +7,156 @@ export const componentContractHunks = {
   ], [
     "      organizacional: 'organizacional',\n      // Bloco2 Produtos — evita Cadastros.SetorAtividade.* sem nó na árvore owner.\n      produto: 'produtos',\n      produtos: 'produtos',\n      servico: 'produtos',\n      servicos: 'produtos',\n      setoratividade: 'produtos',\n      setoresatividade: 'produtos',\n      grupoproduto: 'produtos',\n      gruposproduto: 'produtos',\n      marca: 'produtos',\n      marcas: 'produtos',\n      tabelapreco: 'produtos',\n      tabelaspreco: 'produtos',\n      kitproduto: 'produtos',\n      kitsproduto: 'produtos',\n      catalogoweb: 'produtos',\n      unidademedida: 'produtos',\n      unidadesmedida: 'produtos',\n      // Bloco3 Financeiro — seção owner Cadastros.Financeiro (não sobrescrever planodecontas→tabelas_fiscais).\n      financeiro: 'financeiro',\n      banco: 'financeiro',\n      bancos: 'financeiro',\n      formapagamento: 'financeiro',\n      formaspagamento: 'financeiro',\n      centrocusto: 'financeiro',\n      centroscusto: 'financeiro',\n      centroresultado: 'financeiro',\n      tipodespesa: 'financeiro',\n      tipodespesas: 'financeiro',\n      moedaindice: 'financeiro',\n      operadorcaixa: 'financeiro',\n      configuracaodespesarecorrente: 'financeiro',\n      tabelafiscal: 'financeiro',\n      condicaocomercial: 'financeiro',\n      // Bloco4 Logística\n      logistica: 'logistica',\n      veiculo: 'logistica',\n      veiculos: 'logistica',\n      motorista: 'logistica',\n      motoristas: 'logistica',\n      tipofrete: 'logistica',\n      localestoque: 'logistica',\n      locaisestoque: 'logistica',\n      rotapadrao: 'logistica',\n      modelodocumento: 'logistica',\n      // Bloco6 Tecnologia\n      tecnologia: 'tecnologia',\n      apiexterna: 'tecnologia',\n      chatbotcanal: 'tecnologia',\n      chatbotintent: 'tecnologia',\n      gatewaypagamento: 'tecnologia',\n      jobagendado: 'tecnologia',\n      webhook: 'tecnologia',\n      configuracaonfe: 'tecnologia',\n      eventonotificacao: 'tecnologia',\n      // Fiscal UI ↔ árvore owner (nfe / tabelas_fiscais / sped / obrigacoes).\n",
     "      organizacional: 'organizacional',\n      // Fiscal UI ↔ árvore owner (nfe / tabelas_fiscais / sped / obrigacoes).\n", 1,
+  ], [
+    // ownOnly: entidade aliasada não herda grant de irmãos (Bugbot/Security).
+    `    /**
+     * Resolve path na árvore de permissões.
+     * Entidade aliasada → seção owner: preferir filho com o nome da entidade;
+     * sem filho, só ações do próprio nó seção (ownOnly) — não herda grant de irmãos via DFS.
+     * @returns {{ node: unknown, ownOnly: boolean }}
+     */
+    const getNodeByPath = (root, pathArr) => {
+      let cursor = root;
+      let ownOnly = false;
+      for (let i = 0; i < pathArr.length; i++) {
+        if (!cursor || typeof cursor !== 'object') return { node: undefined, ownOnly: false };
+        const rawKey = pathArr[i];
+        const normRaw = normalizeSimple(rawKey);
+        const alias = SECTION_ALIASES[normRaw];
+        const keys = Object.keys(cursor || {});
+
+        // 1) Chave exata (entidade/seção) — prioridade sobre alias.
+        const exact = keys.find((k) => normalizeSimple(k) === normRaw);
+        if (exact) {
+          cursor = cursor[exact];
+          ownOnly = false;
+          continue;
+        }
+
+        // 2) Alias entidade → seção owner (ou seção→seção identidade).
+        if (alias) {
+          const sectionHit = keys.find((k) => normalizeSimple(k) === normalizeSimple(alias));
+          if (!sectionHit) {
+            cursor = undefined;
+            ownOnly = false;
+            continue;
+          }
+          const sectionNode = cursor[sectionHit];
+          // Alias identidade (produtos→produtos): checagem de seção intencional → DFS ok.
+          if (normalizeSimple(alias) === normRaw) {
+            cursor = sectionNode;
+            ownOnly = false;
+            continue;
+          }
+          // Preferir filho com o nome da entidade sob a seção owner.
+          if (sectionNode && typeof sectionNode === 'object' && !Array.isArray(sectionNode)) {
+            const entityChild = Object.keys(sectionNode).find((k) => normalizeSimple(k) === normRaw);
+            if (entityChild) {
+              cursor = sectionNode[entityChild];
+              ownOnly = false;
+              continue;
+            }
+          }
+          // Sem nó da entidade: só grants do próprio nó seção (não DFS em Marca/Motorista/…).
+          cursor = sectionNode;
+          ownOnly = true;
+          continue;
+        }
+
+        // 3) resolveModule / candidatos legados.
+        const candidates = [rawKey, resolveModule(rawKey)].filter(Boolean);
+        const found = keys.find((k) => candidates.some((candidate) => normalizeSimple(k) === normalizeSimple(candidate)));
+        cursor = found ? cursor[found] : undefined;
+        ownOnly = false;
+      }
+      return { node: cursor, ownOnly };
+    };
+
+    const getRootNode = (root, module) => {
+      if (!root || typeof root !== 'object') return undefined;
+      const candidates = [module, resolveModule(module)].filter(Boolean);
+      const keys = Object.keys(root || {});
+      for (const candidate of candidates) {
+        const found = keys.find((k) => normalizeSimple(k) === normalizeSimple(candidate));
+        if (found) return root[found];
+      }
+      return undefined;
+    };
+
+    const actionMatches = (list, desired) => (
+      Array.isArray(list)
+      && (list.includes(desired) || (desired === 'visualizar' && list.includes('ver')))
+    );
+
+    /**
+     * Grant só se o próprio nó for a lista de ações.
+     * Não inspeciona Object.values — arrays filhos são entidades irmãs (Marca/Motorista).
+     */
+    const nodeHasOwnAction = (node, desired) => actionMatches(node, desired);
+
+    const nodeHasAction = (node, desired) => {
+      if (actionMatches(node, desired)) return true;
+      if (!node || typeof node !== 'object') return false;
+      const stack = [node];
+      while (stack.length) {
+        const current = stack.pop();
+        if (actionMatches(current, desired)) return true;
+        if (current && typeof current === 'object' && !Array.isArray(current)) {
+          Object.values(current).forEach((value) => stack.push(value));
+        }
+      }
+      return false;
+    };
+`,
+    `    const getNodeByPath = (root, pathArr) => {
+      let cursor = root;
+      for (let i = 0; i < pathArr.length; i++) {
+        if (!cursor || typeof cursor !== 'object') return undefined;
+        const rawKey = pathArr[i];
+        const key = SECTION_ALIASES[normalizeSimple(rawKey)] || rawKey;
+        const candidates = [rawKey, key, resolveModule(rawKey)].filter(Boolean);
+        const keys = Object.keys(cursor || {});
+        const found = keys.find((k) => candidates.some((candidate) => normalizeSimple(k) === normalizeSimple(candidate)));
+        cursor = found ? cursor[found] : undefined;
+      }
+      return cursor;
+    };
+
+    const getRootNode = (root, module) => {
+      if (!root || typeof root !== 'object') return undefined;
+      const candidates = [module, resolveModule(module)].filter(Boolean);
+      const keys = Object.keys(root || {});
+      for (const candidate of candidates) {
+        const found = keys.find((k) => normalizeSimple(k) === normalizeSimple(candidate));
+        if (found) return root[found];
+      }
+      return undefined;
+    };
+
+    const nodeHasAction = (node, desired) => {
+      if (Array.isArray(node)) return node.includes(desired) || (desired === 'visualizar' && node.includes('ver'));
+      if (!node || typeof node !== 'object') return false;
+      const stack = [node];
+      while (stack.length) {
+        const current = stack.pop();
+        if (Array.isArray(current)) {
+          if (current.includes(desired) || (desired === 'visualizar' && current.includes('ver'))) return true;
+        } else if (current && typeof current === 'object') {
+          Object.values(current).forEach((value) => stack.push(value));
+        }
+      }
+      return false;
+    };
+`, 1,
+  ], [
+    '    const resolved = getNodeByPath(modNode, path);\n'
+    + '    if (resolved.node == null) return false;\n'
+    + '    return resolved.ownOnly\n'
+    + '      ? nodeHasOwnAction(resolved.node, desired)\n'
+    + '      : nodeHasAction(resolved.node, desired);\n',
+    '    let cursor = getNodeByPath(modNode, path);\n'
+    + '    if (cursor == null) return false;\n'
+    + '    return nodeHasAction(cursor, desired);\n', 1,
   ]],
   'src/components/estoque/estoque-launchpad/KPIsEstoque.jsx': [[
     'submodule="KPIs" tab={null} field="valores"', 'submodule="KPIs" field="valores"', 2,
