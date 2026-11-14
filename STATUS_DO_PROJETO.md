@@ -1,8 +1,13 @@
+## Cursor — PR596 tip f2d92ec9c CI SUCCESS — PedidoCanonico hydrateEpoch (2026-11-14 America/Sao_Paulo)
+
+HEAD **`f2d92ec9c` CI SUCCESS** (43645344156). Bugbot High GET atrasado.
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+Próximo: Casa preflight pacote 81 (pins pendentes ≠ implantar).
+
 ## Cursor — PR596 Bugbot PedidoCanonico hydrateEpoch no GET (2026-11-14 America/Sao_Paulo)
 
 Bugbot High: `genAtStart` comparado dentro do inflight — GET atrasado de outro
-pedido/situação não sobrescreve seleção/grades. Tip pushed — aguarda CI.
-Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML. Sem deploy.
+pedido/situação não sobrescreve seleção/grades. HEAD **`f2d92ec9c` CI SUCCESS**.
 
 ## Cursor — PR596 tip 0de8d8835 CI SUCCESS — FormasPagamento hydrate (2026-11-14 America/Sao_Paulo)
 
