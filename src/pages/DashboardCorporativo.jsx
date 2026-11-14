@@ -47,6 +47,9 @@ import {
   resolveDashboardCountAfterFailure,
   formatDashboardCountDisplay,
   dashboardCountSubtitle,
+  isCappedListUnreliable,
+  isDashboardCadastroAtivo,
+  dashboardAtivosCountFilter,
 } from "@/components/lib/dashboardKpiPolicy";
 
 export default function DashboardCorporativo() {
@@ -110,26 +113,30 @@ export default function DashboardCorporativo() {
     data: totalClientesResolved = null,
     isPending: loadingClientesCount,
   } = useQuery({
-    // Card "Clientes Ativos": count só status Ativo (≠ todos os estados do grupo).
+    // Card "Clientes Ativos": HTTP `ativo` + legado `status` (≠ todos os estados).
     queryKey: ['clientes-count-corp-ativos', grupoAtual?.id, Array.isArray(clientes) && clientes.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
-      const listForFallback = Array.isArray(clientes)
-        ? clientes.filter((c) => c?.status === 'Ativo')
-        : [];
+      const rawList = Array.isArray(clientes) ? clientes : [];
+      // Cap na lista bruta: filtrar Ativo depois NÃO transforma amostra truncada em total.
+      const listCapped = isCappedListUnreliable(rawList);
+      const listForFallback = listCapped ? [] : rawList.filter(isDashboardCadastroAtivo);
       try {
         const filter = {
-          status: 'Ativo',
+          ...dashboardAtivosCountFilter(),
           ...(estaNoGrupo ? { group_id: grupoAtual?.id } : {}),
         };
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter,
         });
-        // count 0 confirmado ≠ fallback por || (0 é falsy)
+        if (listCapped) {
+          return resolveDashboardCount({ countValue: response.data?.count, allowListFallback: false });
+        }
         return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch {
-        // lista vazia / initialData [] ≠ zero confirmado
-        return resolveDashboardCountAfterFailure(listForFallback);
+        return listCapped
+          ? resolveDashboardCount({ allowListFallback: false })
+          : resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 60000,
@@ -153,24 +160,29 @@ export default function DashboardCorporativo() {
     data: totalProdutosResolved = null,
     isPending: loadingProdutosCount,
   } = useQuery({
-    // Card "Produtos Ativos": count só status Ativo (≠ catálogo completo).
+    // Card "Produtos Ativos": HTTP `ativo` + legado `status` (≠ catálogo completo).
     queryKey: ['produtos-count-corp-ativos', grupoAtual?.id, Array.isArray(produtos) && produtos.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
-      const listForFallback = Array.isArray(produtos)
-        ? produtos.filter((p) => p?.status === 'Ativo')
-        : [];
+      const rawList = Array.isArray(produtos) ? produtos : [];
+      const listCapped = isCappedListUnreliable(rawList);
+      const listForFallback = listCapped ? [] : rawList.filter(isDashboardCadastroAtivo);
       try {
         const filter = {
-          status: 'Ativo',
+          ...dashboardAtivosCountFilter(),
           ...(estaNoGrupo ? { group_id: grupoAtual?.id } : {}),
         };
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
           filter,
         });
+        if (listCapped) {
+          return resolveDashboardCount({ countValue: response.data?.count, allowListFallback: false });
+        }
         return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch {
-        return resolveDashboardCountAfterFailure(listForFallback);
+        return listCapped
+          ? resolveDashboardCount({ allowListFallback: false })
+          : resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 60000,
@@ -245,13 +257,13 @@ export default function DashboardCorporativo() {
   // KPIs Operacionais Consolidados
   const clientesAtivos = clientes.filter(c => {
     const daEmpresa = empresaSelecionada === "todas" || c.empresa_id === empresaSelecionada;
-    return c.status === 'Ativo' && daEmpresa;
+    return isDashboardCadastroAtivo(c) && daEmpresa;
   }).length;
 
   // "todas": count canônico (— se indisponível). Filtro empresa: amostra da lista carregada.
   const produtosAtivosDisplay = empresaSelecionada === "todas"
     ? totalProdutosDisplay
-    : String(produtos.filter(p => p.empresa_id === empresaSelecionada && p.status === 'Ativo').length);
+    : String(produtos.filter(p => p.empresa_id === empresaSelecionada && isDashboardCadastroAtivo(p)).length);
 
   const valorEstoqueTotal = produtos
     .filter(p => empresaSelecionada === "todas" || p.empresa_id === empresaSelecionada)

@@ -80,6 +80,27 @@ export const isCappedListUnreliable = (list = [], softLimit = DASHBOARD_LIST_SOF
 );
 
 /**
+ * Ativo canônico para KPI: HTTP usa `ativo`/`ativa`; legado Base44 usa `status: 'Ativo'`.
+ * Ausência/ambiguidade ≠ ativo (fail-closed na amostra).
+ * @param {unknown} row
+ * @returns {boolean}
+ */
+export const isDashboardCadastroAtivo = (row) => {
+  if (!row || typeof row !== 'object' || Array.isArray(row)) return false;
+  const rec = /** @type {Record<string, unknown>} */ (row);
+  if (rec.ativo === true || rec.ativa === true) return true;
+  if (rec.ativo === false || rec.ativa === false) return false;
+  return rec.status === 'Ativo';
+};
+
+/**
+ * Filtro de count para cards "Ativos": HTTP mapeia `ativo`; local ainda lê `status`.
+ * Não enviar só `status` — createCrudEntity Cliente ignora essa chave.
+ * @returns {{ ativo: true, status: 'Ativo' }}
+ */
+export const dashboardAtivosCountFilter = () => ({ ativo: true, status: 'Ativo' });
+
+/**
  * Contagem de KPI: count autoritativo > lista só se confiável.
  * Falha/ausência ≠ 0 confirmado — `total: null` + `confiavel: false`.
  * @param {{ countValue?: unknown, list?: any[], softLimit?: number, allowListFallback?: boolean }} [input]

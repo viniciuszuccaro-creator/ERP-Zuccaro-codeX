@@ -1,3 +1,7 @@
+## Cursor — PR596 Bugbot Corporativo ativo+cap (2026-11-14 America/Sao_Paulo)
+
+`ativo:true` HTTP + cap lista bruta. tip ≠ HML.
+
 ## Cursor — PR596 P2 Corporativo Ativos + count null (Casa #6883631870) (2026-11-14 America/Sao_Paulo)
 
 Filtro status Ativo nos cards; policy rejeita null/false/'' antes de Number.

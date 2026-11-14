@@ -1,8 +1,13 @@
+## Cursor — PR596 Bugbot Corporativo ativo HTTP + cap lista (2026-11-14 America/Sao_Paulo)
+
+Bugbot #596: HTTP ignora `status` — `dashboardAtivosCountFilter` (`ativo`+`status`);
+`isDashboardCadastroAtivo`; cap na lista bruta antes do filtro Ativo.
+47 PASS. tip ≠ HML; fora pacote 81.
+
 ## Cursor — PR596 DashboardCorporativo P2 Casa #6883631870 (2026-11-14 America/Sao_Paulo)
 
-1) Cards Ativos: `countEntities` + fallback lista com `status: 'Ativo'` (≠ todos).
+1) Cards Ativos (evoluído no lote Bugbot acima).
 2) `resolveDashboardCount`: só `typeof number` seguro; null/false/'' ≠ 0.
-46 PASS. Não copiar Corporativo ao pacote 81 antes do aceite. tip ≠ HML.
 
 ## Cursor — PR596 tip docs CI SUCCESS pós flaky (2026-11-14 America/Sao_Paulo)
 
