@@ -5,7 +5,7 @@
 |-----|-----|----------------|
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
-| **PR596 HEAD** | `c17fbfa29` | frontend **SUCCESS**; backend **em curso ≠ aprovado** |
+| **PR596 HEAD** | `061ad033c` (docs; código `c17fbfa29`) | CI **em curso ≠ aprovado** (frontend tip `c17` já SUCCESS) |
 | Tips 596 anteriores | `7cce548c0`/`7d9e58e71`… | FAIL typecheck `ops` — **≠ este tip** |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
