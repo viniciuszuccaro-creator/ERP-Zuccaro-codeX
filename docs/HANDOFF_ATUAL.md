@@ -1,3 +1,34 @@
+## React montado do Completo aprovado no alcance focal (2026-11-14)
+
+Heartbeat nativo18:18:42.617Z, CASA/CPA, basefbf90a18/remotoigual/checkoutlimpo,
+reserva596/6882120998 e travaCreateNew. HEAD596f804b1f128915caa09a94b599ef51e47902b4aea,
+CI7092/run43625589029SUCCESS. Nenhum hunk/branchCursor editado.
+
+Harness privado montou CadastroClienteCompleto REAL no Chrome existente, com
+React/ReactQuery e25arquivos src dos blobs originais desseSHA; hooks reais de
+escopo/reopen/transporte. Instrumentacao observavel de form/view/baseline/owned,
+fronteiras de API/sessao/contexto e filhos de enderecos/contatos sinteticos.
+40checksPASS: A->B e A->createvazio, MESMO contexto/ator/sessao, leituraPARTIAL
+pendente com sucesso ou CONTEXT_CHANGED depois de render/efeitos comprometidos;
+nenhum IDdeA entraB, sem alterar draft/view/baseline/owned. Read503 conserva
+IDcreate confirmado e27drafts; retry nao faz outrocreate. Contraprova do mesmo
+harness no componente originalc17fbfa2 monta e FALHA em B_draft_unchanged; atual
+PASS. E montagem React, nao jornada browser->HTTP->PG ou homologacaoHML.
+
+Harness/recibos privados em C:/Users/cpaba/.codex/erp-review-20261114/
+mounted-completo-native.mjs e mounted-completo-f804b1f1.result.private.json.
+Nao reexecutar provas estaveis. Revisao porSHA publicada596/6882204635, aceite
+focal dos residuos, sem declaracao de aprovacao global/port/deploy.
+
+Proximo item executavel independente: preparar patch PRIVADO seletivo dos hunks
+596 de Completo/transporte/testes a partir da595 revisada, conferir blobs-base,
+git apply --check na mesma cadeiaCodex e manifesto dos hunks; nao aplicar enquanto
+coordenacao/revisao dos trechos estiver pendente. Nao copiar Dashboard/branch
+inteira, backend ou permissao. Cursor solicitado diretamente sobre port.
+Se patch/conflito exigir decisao, registrar linha/contrato exatos; demais gates
+VPS continuam dependentes canal/pins/backup/ack/janela, sem mudancas operacionais.
+Mesma automacao15min, sem execucao simultanea; liberar somente propria trava.
+
 ## Segunda retomada nativa executada - plano HML falha-fechada (2026-11-14)
 
 Heartbeat revis-o-e-acesso-erp-45-e-46/2026-11-14T18:03:42.367Z, CASA/CPA,
