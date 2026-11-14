@@ -12,8 +12,8 @@ const files = {
   driver: ['src/components/mobile/AppEntregasMotorista.jsx', 'ef9273614d17281d675643ab484faee93a78ea762afccdbcca582ab9dd039532'],
   dre: ['src/components/relatorios/DREComparativo.jsx', '7d9cc13ab4c7c13dd4190cfbf9a3b57f9e170f52f6a0219958225a74d8bb7434'],
   export: ['src/components/ui/ExportMenu.jsx', 'ea9ec90fcaddc2b5a461443bd95a288c8ca4627b2bdc7411040ecb4f91f0f3bf'],
-  // Tip PR596: KPI fail-closed + list-ready/getQueryData (Bugbot stale initialData []).
-  dashboard: ['src/pages/Dashboard.jsx', '052b26a1bdd0dd27847c6410e17e5d9b3538e715a513363a9eeaef4290bb761e'],
+  // Tip PR596: KPI derivados fail-closed (CR∩CP / — ≠ R$ 0,00) + list-ready/getQueryData.
+  dashboard: ['src/pages/Dashboard.jsx', 'a2e0cc61f4667e02e1c4dff628fdf5771efa6739d517b440092a2cb89dad849b'],
   quote: ['src/pages/OrcamentoSite.jsx', 'c8a2db58e48fe10416f1b270f48701f36f2ba90124c4ae59094edfb22754525b'],
 };
 const source = key => fs.readFileSync(files[key][0], 'utf8').replace(/\r\n/g, '\n');
