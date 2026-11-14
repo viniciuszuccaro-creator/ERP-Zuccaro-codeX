@@ -9,7 +9,7 @@ import { base44 } from "@/api/base44Client";
  */
 export function useFormasPagamento(filtros = {}) {
   // Buscar formas de pagamento ativas
-  const { data: formasPagamento = [], isLoading: loadingFormas } = useQuery({
+  const { data: formasPagamento = [], isLoading: loadingFormas, isError: formasQueryError, error: formasError } = useQuery({
     queryKey: ['formas-pagamento', filtros],
     queryFn: async () => {
       const formas = await base44.entities.FormaPagamento.filter({
@@ -19,6 +19,7 @@ export function useFormasPagamento(filtros = {}) {
       return formas.sort((a, b) => (a.ordem_exibicao || 0) - (b.ordem_exibicao || 0));
     },
     staleTime: 300000, // 5 minutos
+    retry: 1,
   });
 
   // Buscar bancos cadastrados
@@ -222,6 +223,8 @@ export function useFormasPagamento(filtros = {}) {
     bancos,
     gateways,
     isLoading: loadingFormas || loadingBancos,
+    isError: Boolean(formasQueryError),
+    error: formasError || null,
     obterFormasPorContexto,
     obterBancoPorTipo,
     obterConfiguracao,

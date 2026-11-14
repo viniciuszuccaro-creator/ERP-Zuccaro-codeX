@@ -44,19 +44,34 @@ export default function CountBadgeSimplificado({ entities = [], className = "", 
   }
 
   const isLoading = isLoadingProp || isLoadingInternal;
+  const state = isLoading && (total === 0 || total == null)
+    ? 'loading'
+    : unavailable
+      ? 'unavailable'
+      : total === 0
+        ? 'zero'
+        : 'ready';
 
   if (!list.length) return null;
+
+  const titleByState = {
+    loading: 'Carregando contagem…',
+    unavailable: 'Contagem indisponível (erro/parcial/negada) — não é zero confirmado',
+    zero: 'Zero confirmado neste contexto',
+    ready: undefined,
+  };
 
   return (
     <Badge
       variant="outline"
       className={`ml-1 rounded-sm bg-slate-100 text-slate-600 border-slate-300 text-xs font-semibold tabular-nums shrink-0 ${className}`}
-      title={unavailable ? 'Contagem indisponível' : undefined}
+      title={titleByState[state]}
+      data-count-state={state}
     >
-      {isLoading && (total === 0 || total == null) ? (
-        <span className="animate-pulse opacity-60">···</span>
-      ) : unavailable ? (
-        '—'
+      {state === 'loading' ? (
+        <span className="animate-pulse opacity-60" aria-label="Carregando contagem">···</span>
+      ) : state === 'unavailable' ? (
+        <span aria-label="Contagem indisponível">—</span>
       ) : (
         Number(total).toLocaleString("pt-BR")
       )}

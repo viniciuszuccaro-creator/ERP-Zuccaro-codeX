@@ -140,8 +140,11 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
   }, [searchTerm, contextoValido, filteredTiles.length]);
+  // Gate canônico owner: Cadastros.Tecnologia.
+  const dataPermissionFor = () => "Cadastros.Tecnologia.visualizar";
   const canViewEntity = (entidade) =>
     hasPermission("Cadastros", entidade, "visualizar") ||
+    hasPermission("Cadastros", "Tecnologia", "visualizar") ||
     hasPermission("Cadastros", null, "visualizar") ||
     hasPermission("Sistema", entidade, "visualizar") ||
     hasPermission("Sistema", null, "visualizar");
@@ -166,7 +169,7 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
           key={k} 
           className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={openList(k, t, Icon, c, FormComp)}
-          data-permission={`Cadastros.${k}.visualizar`}
+          data-permission={dataPermissionFor()}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required="group-or-company"
         >
@@ -184,7 +187,7 @@ export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = ""
                 className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
                 disabled={!contextoValido || !canViewEntity(k)}
-                data-permission={`Cadastros.${k}.visualizar`}
+                data-permission={dataPermissionFor()}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required="group-or-company"
               >

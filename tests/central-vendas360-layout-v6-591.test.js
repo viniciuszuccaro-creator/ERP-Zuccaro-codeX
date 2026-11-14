@@ -88,6 +88,15 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /central360-grades-simultaneas/);
   assert.match(src, /central360-grade-corte/);
   assert.match(src, /central360-grade-revenda/);
+  assert.match(src, /central360-grades-sem-itens/);
+  assert.match(src, /central360-pagamento-resumo/);
+  assert.match(src, /bloqueia Fechar/);
+  assert.match(src, /total não hidratado \(≠ zero\)/);
+  assert.match(src, /condicao_pagamento_codigo/);
+  assert.match(src, /selectionEpochRef/);
+  assert.match(src, /selectionEpoch=\{selectionEpoch\}/);
+  assert.match(src, /typeof meta\.selectionEpoch !== 'number'/);
+  assert.match(src, /hasSelection=\{Boolean\(selected\?\.id\)\}/);
   assert.match(src, /CentralCliente360Panel/);
   assert.match(src, /OrcamentosTab/);
   assert.match(src, /PedidoCanonicoPanel/);
@@ -105,10 +114,53 @@ test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravaçã
   assert.match(src, /CENTRAL_VENDAS360_COLUMNS/);
   assert.match(src, /onDoubleClick/);
   assert.match(src, /notifyCentralSelect/);
+  assert.match(src, /selectCentralRow/);
+  assert.match(src, /openEditHydrated/);
+  assert.match(src, /selectionEpochLiveRef/);
+  assert.match(src, /loadCentralDetail/);
+  assert.match(src, /actionGate\.current\.invalidate/);
+  assert.match(src, /selectionEpoch/);
+  assert.match(src, /central360-selecionar-orcamento/);
   assert.match(src, /Validade do orçamento \(≠ prazo de entrega\)/);
   assert.match(src, /central360-prefs-colunas/);
   assert.match(src, /writeCentralColumnHiddenKeys/);
   assert.match(src, /readCentralColumnHiddenKeys/);
+});
+
+test('PedidoCanonicoPanel: tabela 12 colunas no centralLayout (mesmas chaves)', () => {
+  const ped = read('src/components/comercial/PedidoCanonicoPanel.jsx');
+  assert.match(ped, /CENTRAL_VENDAS360_COLUMNS/);
+  assert.match(ped, /central360-pedidos-12col/);
+  assert.match(ped, /central360-pedidos-tabela-12/);
+  assert.match(ped, /CENTRAL_PEDIDO_COLUMN_LABELS/);
+  assert.match(ped, /Nº Pedido/);
+  assert.match(ped, /resolveCentralPrazoLabel/);
+  assert.match(ped, /sumCentralPesoKg/);
+  assert.match(ped, /readCentralColumnHiddenKeys/);
+  assert.match(ped, /Prazo de entrega do pedido \(≠ validade de orçamento\)/);
+  assert.match(ped, /selectCentralRow/);
+  assert.match(ped, /hydratePedidoRow/);
+  assert.match(ped, /openEditHydrated/);
+  assert.match(ped, /Lista pode trazer itens stub/);
+  assert.match(ped, /Edição sempre após GET/);
+  assert.match(ped, /hydrateEpoch/);
+  assert.match(ped, /selectionEpochLiveRef/);
+  assert.match(ped, /selectionEpoch/);
+  assert.match(ped, /central360-selecionar-pedido/);
+});
+
+test('Fechar bloqueia sem condição; seleção hidrata itens; pedido espelha', () => {
+  const orc = read('src/components/comercial/OrcamentosTab.jsx');
+  const ped = read('src/components/comercial/PedidoCanonicoPanel.jsx');
+  assert.match(orc, /sem condição de pagamento/);
+  assert.match(orc, /assertOrcamentoProntoParaFechar/);
+  assert.match(orc, /openFecharConversao/);
+  assert.match(orc, /orcamento-detalhe-fechar/);
+  assert.match(orc, /selectCentralRow/);
+  assert.match(ped, /selectCentralRow/);
+  assert.match(ped, /hydratePedidoRow/);
+  assert.match(ped, /detailGate\.current\.invalidate/);
+  assert.match(ped, /central360-selecionar-pedido/);
 });
 
 test('OrcamentosTab ABERTO: Imprimir/Enviar/Fechar/Mais sem fingir sucesso', () => {
@@ -141,8 +193,9 @@ test('Fechar Orçamento ≠ Cancelar: conversão backend, cancel separado', () =
   const fecharFn = src.match(/const fecharOrcamentoCentral = async \(\) => \{[\s\S]*?\n  \};/);
   assert.ok(fecharFn, 'fecharOrcamentoCentral deve existir');
   assert.doesNotMatch(fecharFn[0], /\bcancel\(row\)/);
-  assert.match(fecharFn[0], /setPendingConversion/);
+  assert.match(fecharFn[0], /openFecharConversao/);
   assert.match(fecharFn[0], /canConvert/);
+  assert.match(src, /assertOrcamentoProntoParaFechar\(pendingConversion\)/);
 });
 
 test('preferências de colunas: escopo usuário+grupo+empresa; sem cruzar contexto', () => {

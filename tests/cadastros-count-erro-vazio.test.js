@@ -115,6 +115,18 @@ test('ANTES: falha countEntities não vira zero silencioso (contraprova)', async
   );
 });
 
+test('sem grupo/empresa: READ_COUNT_UNAVAILABLE (não mapa de zeros)', async () => {
+  await assert.rejects(
+    () => fetchCadastrosAllCounts({
+      invoke: async () => ({ data: { counts: {} } }),
+      empresaId: null,
+      groupId: null,
+      entities: ['Produto', 'Marca'],
+    }),
+    /READ_COUNT_UNAVAILABLE/,
+  );
+});
+
 test('vazio real permanece distinto de falha (Produto:0 + Marca:0 sem throw)', async () => {
   const invoke = async () => ({ data: { counts: { Produto: 0, Marca: 0 } } });
   const counts = await fetchCadastrosAllCounts({

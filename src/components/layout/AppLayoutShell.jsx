@@ -61,6 +61,7 @@ const GROUP_LABELS = {
  *   canViewSystem: boolean,
  *   onLogout: () => void,
  *   onPrefetch: (item: NavigationItem) => void,
+ *   permissionsLoading?: boolean,
  * }} props
  */
 export default function AppLayoutShell({
@@ -79,6 +80,7 @@ export default function AppLayoutShell({
   canViewSystem,
   onLogout,
   onPrefetch,
+  permissionsLoading = false,
 }) {
   return (
     <SidebarProvider>
@@ -97,6 +99,15 @@ export default function AppLayoutShell({
           </SidebarHeader>
 
           <SidebarContent className="p-3">
+            {permissionsLoading ? (
+              <div
+                className="mx-2 mb-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800"
+                data-menu-permissions-loading="1"
+                role="status"
+              >
+                Carregando permissões… menu reduzido agora não significa módulo apagado.
+              </div>
+            ) : null}
             {Object.entries(groupedItems).map(([groupName, items]) => {
               if (items.length === 0) return null;
               return (

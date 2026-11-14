@@ -29,7 +29,7 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
   const { hasPermission, isAdmin, canApprove } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const [modalEtapaOpen, setModalEtapaOpen] = useState(false);
-  const resolvedGroupId = groupId || grupoAtual?.id || null;
+  const resolvedGroupId = groupId || grupoAtual?.id || empresaAtual?.group_id || null;
   const resolvedEmpresaId = empresaId || empresaAtual?.id || null;
 
   const clienteSelecionado = clientes?.find(c => c.id === formData?.cliente_id) || null;

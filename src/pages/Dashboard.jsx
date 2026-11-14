@@ -81,6 +81,9 @@ import {
   buildKpiDrillDownParams,
   buildKpiDrillDownUrl,
   resolveDashboardCount,
+  resolveDashboardCountAfterFailure,
+  formatDashboardCountDisplay,
+  dashboardCountSubtitle,
 } from "@/components/lib/dashboardKpiPolicy";
 
 const reportDashboardFailure = (operation, error, context = {}) => {
@@ -213,6 +216,31 @@ export default function Dashboard() {
     initialData: []
   });
 
+  const {
+    data: totalPedidosResolved,
+    isPending: loadingPedidosCount,
+    isFetching: fetchingPedidosCount,
+  } = useQuery({
+    enabled: Boolean(hasContextoAtivo && canSeeComercial),
+    queryKey: ['pedidos-count-dash', ...contextQueryKey],
+    queryFn: async () => {
+      try {
+        const filtro = getFiltroContexto('empresa_id');
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Pedido',
+          filter: filtro
+        });
+        return resolveDashboardCount({ countValue: response.data?.count, list: pedidos });
+      } catch (error) {
+        reportDashboardFailure('Falha ao contar pedidos — não fabricar zero', error, { scopeType, groupId, empresaId });
+        return resolveDashboardCountAfterFailure(pedidos);
+      }
+    },
+    staleTime: 120000,
+    retry: 1,
+  });
+  const totalPedidosDisplay = formatDashboardCountDisplay(totalPedidosResolved);
+
   const { data: contasReceber = [] } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['contasReceber', ...contextQueryKey],
@@ -293,7 +321,11 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: totalProdutos = 0 } = useQuery({
+  const {
+    data: totalProdutosResolved,
+    isPending: loadingProdutosCount,
+    isFetching: fetchingProdutosCount,
+  } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeEstoque),
     queryKey: ['produtos-count-dash', ...contextQueryKey],
     queryFn: async () => {
@@ -303,15 +335,17 @@ export default function Dashboard() {
           entityName: 'Produto',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: produtos }).total;
+        return resolveDashboardCount({ countValue: response.data?.count, list: produtos });
       } catch (error) {
-        reportDashboardFailure('Falha ao contar produtos; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: produtos }).total;
+        reportDashboardFailure('Falha ao contar produtos — não fabricar zero', error, { scopeType, groupId, empresaId });
+        // initialData [] não é zero confirmado; falha de count → — salvo lista real não vazia.
+        return resolveDashboardCountAfterFailure(produtos);
       }
     },
     staleTime: 120000,
     retry: 1,
   });
+  const totalProdutosDisplay = formatDashboardCountDisplay(totalProdutosResolved);
 
   const { data: clientes = [] } = useQuery({
       enabled: Boolean(canSeeCRM && hasContextoAtivo),
@@ -329,7 +363,7 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: totalClientes = 0 } = useQuery({
+  const { data: totalClientesResolved } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeCRM),
     queryKey: ['clientes-count', ...contextQueryKey],
     queryFn: async () => {
@@ -339,17 +373,22 @@ export default function Dashboard() {
           entityName: 'Cliente',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: clientes }).total;
+        return resolveDashboardCount({ countValue: response.data?.count, list: clientes });
       } catch (error) {
-        reportDashboardFailure('Falha ao contar clientes; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: clientes }).total;
+        reportDashboardFailure('Falha ao contar clientes — não fabricar zero', error, { scopeType, groupId, empresaId });
+        return resolveDashboardCountAfterFailure(clientes);
       }
     },
     staleTime: 120000,
     retry: 1,
   });
+  const totalClientesDisplay = formatDashboardCountDisplay(totalClientesResolved);
 
-  const { data: totalColaboradoresDash = 0 } = useQuery({
+  const {
+    data: totalColaboradoresResolved,
+    isPending: loadingColaboradoresCount,
+    isFetching: fetchingColaboradoresCount,
+  } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeRH),
     queryKey: ['colaboradores-count-dash', ...contextQueryKey],
     queryFn: async () => {
@@ -359,15 +398,16 @@ export default function Dashboard() {
           entityName: 'Colaborador',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: colaboradores }).total;
+        return resolveDashboardCount({ countValue: response.data?.count, list: colaboradores });
       } catch (error) {
-        reportDashboardFailure('Falha ao contar colaboradores; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: colaboradores }).total;
+        reportDashboardFailure('Falha ao contar colaboradores — não fabricar zero', error, { scopeType, groupId, empresaId });
+        return resolveDashboardCountAfterFailure(colaboradores);
       }
     },
     staleTime: 120000,
     retry: 1,
   });
+  const totalColaboradoresDisplay = formatDashboardCountDisplay(totalColaboradoresResolved);
 
   const { data: ordensProducao = [] } = useQuery({
       enabled: Boolean(canSeeProducao && hasContextoAtivo),
@@ -710,10 +750,40 @@ export default function Dashboard() {
     }
   ];
 
+  // KPI "Clientes" = população única (countEntities Cliente), sem misturar com amostra de ativos.
+  const clientesKpiDisplay = canSeeCRM ? totalClientesDisplay : '—';
+  // Contagem derivada da lista carregada: zero da amostra ≠ total global confirmado.
+  const entregasPendentesDisplay = canSeeExpedicao
+    ? (Number(entregasPendentes) > 0
+      ? Number(entregasPendentes).toLocaleString('pt-BR')
+      : (Array.isArray(entregas) && entregas.length > 0 ? '0' : '—'))
+    : '—';
+  const estoqueBaixoDisplay = canSeeEstoque
+    ? (Number(produtosBaixoEstoque) > 0
+      ? Number(produtosBaixoEstoque).toLocaleString('pt-BR')
+      : (Array.isArray(produtos) && produtos.length > 0 ? '0' : '—'))
+    : '—';
+  const nfAutorizadasDisplay = (canSeeFinanceiro || canSeeFiscal || canSeeComercial)
+    ? (Number(nfAutorizadas) > 0
+      ? Number(nfAutorizadas).toLocaleString('pt-BR')
+      : (Array.isArray(notasFiscais) && notasFiscais.length > 0 ? '0' : '—'))
+    : '—';
+  const cobrancasPagasDisplay = canSeeFinanceiro
+    ? (Number(cobrancasPagas) > 0
+      ? Number(cobrancasPagas).toLocaleString('pt-BR')
+      : (Array.isArray(cobrancas) && cobrancas.length > 0 ? '0' : '—'))
+    : '—';
+
   const kpiCards = [
     {
-      title: "Clientes Ativos",
-      value: clientesAtivos,
+      title: "Clientes",
+      value: clientesKpiDisplay,
+      subtitle: dashboardCountSubtitle({
+        resolved: totalClientesResolved,
+        loading: Boolean(canSeeCRM && hasContextoAtivo && totalClientesResolved == null),
+        allowed: Boolean(canSeeCRM),
+        hasContext: Boolean(hasContextoAtivo),
+      }),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
@@ -721,7 +791,13 @@ export default function Dashboard() {
     },
     {
       title: "Produtos Cadastrados",
-      value: totalProdutos,
+      value: canSeeEstoque ? totalProdutosDisplay : '—',
+      subtitle: dashboardCountSubtitle({
+        resolved: totalProdutosResolved,
+        loading: Boolean(canSeeEstoque && hasContextoAtivo && totalProdutosResolved == null && (loadingProdutosCount || fetchingProdutosCount)),
+        allowed: Boolean(canSeeEstoque),
+        hasContext: Boolean(hasContextoAtivo),
+      }),
       icon: Package,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
@@ -729,7 +805,13 @@ export default function Dashboard() {
     },
     {
       title: "Colaboradores",
-      value: totalColaboradoresDash,
+      value: canSeeRH ? totalColaboradoresDisplay : '—',
+      subtitle: dashboardCountSubtitle({
+        resolved: totalColaboradoresResolved,
+        loading: Boolean(canSeeRH && hasContextoAtivo && totalColaboradoresResolved == null && (loadingColaboradoresCount || fetchingColaboradoresCount)),
+        allowed: Boolean(canSeeRH),
+        hasContext: Boolean(hasContextoAtivo),
+      }),
       icon: UserCircle,
       color: "text-pink-600",
       bgColor: "bg-pink-50",
@@ -737,7 +819,12 @@ export default function Dashboard() {
     },
     {
       title: "Entregas Pendentes",
-      value: entregasPendentes,
+      value: entregasPendentesDisplay,
+      subtitle: canSeeExpedicao
+        ? (Array.isArray(entregas) && entregas.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: Truck,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
@@ -745,16 +832,27 @@ export default function Dashboard() {
     },
     {
       title: "Estoque Baixo",
-      value: produtosBaixoEstoque,
+      value: estoqueBaixoDisplay,
+      subtitle: canSeeEstoque
+        ? (Array.isArray(produtos) && produtos.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: AlertCircle,
       color: "text-red-600",
       bgColor: "bg-red-50",
-      alert: produtosBaixoEstoque > 0,
+      alert: Number(produtosBaixoEstoque) > 0,
       drillDown: () => handleDrillDown(createPageUrl("Estoque"))
     },
     {
       title: "Total Pedidos",
-      value: pedidos.length,
+      value: canSeeComercial ? totalPedidosDisplay : '—',
+      subtitle: dashboardCountSubtitle({
+        resolved: totalPedidosResolved,
+        loading: Boolean(canSeeComercial && hasContextoAtivo && totalPedidosResolved == null && (loadingPedidosCount || fetchingPedidosCount)),
+        allowed: Boolean(canSeeComercial),
+        hasContext: Boolean(hasContextoAtivo),
+      }),
       icon: ShoppingCart,
       color: "text-cyan-600",
       bgColor: "bg-cyan-50",
@@ -762,7 +860,12 @@ export default function Dashboard() {
     },
     {
       title: "NF-e Autorizadas",
-      value: nfAutorizadas,
+      value: nfAutorizadasDisplay,
+      subtitle: (canSeeFinanceiro || canSeeFiscal || canSeeComercial)
+        ? (Array.isArray(notasFiscais) && notasFiscais.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: FileText,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
@@ -770,7 +873,12 @@ export default function Dashboard() {
     },
     {
       title: "Cobranças Pagas",
-      value: cobrancasPagas,
+      value: cobrancasPagasDisplay,
+      subtitle: canSeeFinanceiro
+        ? (Array.isArray(cobrancas) && cobrancas.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: DollarSign,
       color: "text-green-600",
       bgColor: "bg-green-50",

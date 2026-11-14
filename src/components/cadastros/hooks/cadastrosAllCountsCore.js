@@ -96,7 +96,8 @@ export async function fetchCadastrosAllCounts({
     throw new Error('invoke obrigatório');
   }
   if (!empresaId && !groupId) {
-    return emptyCadastrosCounts(entities);
+    // Sem contexto: indisponível — NUNCA fabricar mapa de zeros como total confirmado.
+    throw new Error('READ_COUNT_UNAVAILABLE');
   }
 
   const batch = entities.map((entityName) => ({

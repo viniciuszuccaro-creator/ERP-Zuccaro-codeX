@@ -1,7 +1,134 @@
-## Cursor — merge Continuity591 38b4e1ec → PR595 (2026-11-14 America/Sao_Paulo)
+## Cursor — stack 591→595→596 composta (2026-11-14 America/Sao_Paulo)
 
-Composição após CI Continuity SUCCESS. Completo/ClienteLocaisRevisao/Seletor
-`renderedSnapshot`+`snapshotLocais` do tip Codex; sem HML.
+PR595 `66ff086f3` (Codex `38b4e1ec` fiscal/Seletor) mergeado em PR596.
+Completo/ClienteLocaisRevisao + Seletor `snapshotLocais`/`renderedSnapshot` preservados.
+Sem HML; tip CI em curso ≠ aprovado.
+
+## Cursor — PR596 Bugbot parcelas loading + KPI Clientes (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+- FormasPagamentoPedido: não limpa/regenera parcelas enquanto Cadastros carrega
+  ou forma ainda não resolvida (preserva vencimentos salvos).
+- Dashboard KPI Clientes: só `countEntities` (sem misturar amostra de ativos).
+Sem HML; composição 591→595→596 ainda aguarda CI Continuity591.
+
+## Cursor — composição 591→595→596 aguarda CI Continuity (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Codex tip `38b4e1ec` em `codex/continuidade-591-20261111`
+(CI7038/7039 em curso ≠ aprovado). Arquivos: Completo FISCAL opt-in,
+ClienteLocaisRevisao, Seletor `renderedSnapshot` (+teste montado).
+PR595 HEAD ainda `f6bfffac`. Cursor **não** mergeia cego; preserva hunks
+Codex; PR596 tip `6873a136d` Bugbot epoch/submitting em CI. Sem HML.
+
+## Cursor — PR596 Bugbot orçamento epoch/submitting (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+- `selectCentralRow`: congela `epochAtClick` (não notifica com epoch vivo pós-GET).
+- Troca de situação: `invalidate()` + `setSubmitting(false)` (ações não ficam sticky).
+- Codex PR595: reserva `ClienteLocaisRevisao` + hunk FISCAL Completo — Cursor não edita.
+CI tip `fc6416` SUCCESS histórico; tip `cf6c30e70`+fix em execução. Sem HML.
+
+## Cursor — PR596 pagamento canônico + dashboard fail-closed + códigos (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- CI tip anterior `fc6416bf9`: frontend SUCCESS; backend/Bugbot/Approval ainda pending
+  (≠ aprovado). PR595 Continuity tip SUCCESS. Sem promover HML (`d054e2b3` tip ≠ CI).
+- `FormasPagamentoPedido`: remove mock/fixture; `useFormasPagamento` + códigos do cadastro;
+  CondicaoComercial só via prop (sem lista ilustrativa). Central360 Pedido HTTP segue
+  `condicao_pagamento_id` — resumo ≠ formulário; não duplica seletor.
+- Shell/Pedido/Orçamento: hidrata `condicao_pagamento_{codigo,nome,label}` no select;
+  PDF pedido recebe `numero`/cliente/condição no payload (sem alterar pin exportacaoPDF).
+- Locais no form: label `codigo — nome`.
+- Dashboard: `pedidos-count-dash` + KPIs amostra ≠ total; lista vazia ≠ zero.
+- Completo/ClienteLocaisRevisao: **reserva Codex** (fiscal ClienteLocal / syncLocais).
+Sem HML.
+
+## Cursor — PR596 Bugbot epoch Fechar/liveRef (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Tip `855b2be9c`.
+- Shell: `selectionEpoch` obrigatório em `onCentralSelect` (Fechar/loadCentralDetail).
+- Orçamento: `actionGate.invalidate` na situação; `detailRequest` no GET Fechar.
+- Pedido: `selectionEpochLiveRef` pós-await (não compara closure stale).
+Sem HML.
+
+## Cursor — PR595/596 batch HTTP + Seletor snapshot (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. PR595 `f6bfffacf` / PR596 `210720577`.
+- Port isolado `clienteLocalBatchHttp` (`snapshotLocais`/`syncLocais`) + peels purpose
+  (contrato Codex `da98af346` / Continuity CI7015) — sem merge cego Continuity.
+- Seletor Bugbot high: `listSnapshotRef` {binding,epoch,items}.
+Completo/Logistica ainda não gravam via batch (activate explícito no próximo hunk).
+Sem HML.
+
+## Cursor — PR595/596 Seletor listSnapshot (Bugbot high) (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. PR595 `eb542ae3b` / PR596 `ba985a5d4`.
+Bugbot: handler tardio lia refs já em B e `operacionais` fechado de A.
+Fix: `listSnapshotRef` {binding,epoch,items}; lookup só em `snapshot.items`;
+id ausente = no-op. Tip `c3a3a1143` CI SUCCESS; contrato `da98af346` reconhecido.
+
+## Cursor — PR596 Bugbot hydrate epoch + situação (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Shell `selectionEpoch`: GET tardio após troca de situação não atualiza grades/Cliente360.
+- Pedido: `hydrateEpoch` separado do `detailGate` (save/show/history intactos).
+- Orçamento: bump `detailRequest` na situação; `openEditHydrated` no duplo clique.
+- PR595 tip `c3a3a1143` CI SUCCESS (typecheck Seletor).
+Contrato Codex `da98af346` (revisão atômica, activate explícito) reconhecido — UI
+batch ainda não mergeada nesta stack; sem HML.
+
+## Cursor — PR596 hydrate always + typecheck layout (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Tip `f990b8dc1`: `permissionsLoading` tipado no AppLayoutShell (tsc).
+- Cherry-pick Seletor `partialMeta.total` (PR595 `c3a3a1143`).
+- Central360: select/edit sempre GET canônico (lista stub ≠ detalhe); orçamento idem.
+- Pagamento-resumo: exibe código/nome da condição quando o GET trouxer; senão id.
+Sem HML; FormasPagamentoPedido mock não wired; códigos BFF/Codex próximos.
+
+## Cursor — PR595 typecheck Seletor partialMeta (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Tip `c3a3a1143`: cast `meta.total` number|null; remove eslint-disable órfão.
+CI anterior `f4debdbb3` falhou só no typecheck Seletor.
+
+## Cursor — PR596 pagamento-resumo + hidratação edição (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Shell: `central360-pagamento-resumo` (condição/total/parcelas fail-closed; ≠ zero inventado)
+- Pedido: `hydratePedidoRow` / `openEditHydrated`; invalida gate ao trocar situação
+- Dashboard: lista vazia ≠ zero confirmado
+Sem HML; FormasPagamentoPedido existente não duplicado.
+
+## Cursor — PR596 merge tip PR595 f4debdbb3 (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Incorpora Continuity `f4debdbb3` (residual Seletor listBinding/epoch + peels CI).
+Sem promover HML; backend/CAS intactos.
+
+## Cursor — PR596 Bugbot Fechar/Dashboard + peels CI (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+
+- Fechar: `assertOrcamentoProntoParaFechar` + `openFecharConversao` compartilhados
+  (Central, detalhe e `convertToPedido`) — condição/itens/masters não bypassáveis.
+- Dashboard: `dashboardCountSubtitle` separa `allowed` (RBAC) de `hasContext`.
+- Peels/pins: usePermissions aliases Bloco2–6; Dashboard/CountBadge/Logistica;
+  testes regex CountBadge/estoque/Logistica alinhados.
+- Frontend CI tip anterior `660a49a` falhou (7 pins); tip novo deve revalidar.
+
+## Cursor — PR596 Central360 pedidos 12 colunas (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596) stacked
+sobre PR595 tip `9b876f331`. Merge parecer endereços resolvido em Logistica.
+
+Lote: `PedidoCanonicoPanel` em `centralLayout` passa a usar as mesmas 12 chaves
+da grade aprovada (labels Nº Pedido / Prazo entrega); prefs de coluna por
+actor+grupo+empresa; tabela legada 7 colunas preservada fora da Central.
+Teste `central-vendas360-layout-v6-591` + seletor PASS.
+
+Limitações: CI tip ≠ HML servida; ativação locais/auxiliares 500 Codex.
+Próximo: jornada itens/pagamento Fechar; códigos sequenciais BFF.
 
 ## Cursor — PR595 residual P1 binding + peels CI (2026-11-14)
 
@@ -96,10 +223,61 @@ nenhum seed/carga/reativacao. Recursos/recibos privados no HANDOFF.
 Gates finitos: publicar/CI do WIP -> pacote limpo/APIweb -> HTTPS/DNS ->
 Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
 
+## Cursor — HML UX Cadastros/Dashboard/Central360 (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` a partir tip PR595
+`3e6461929` (CI 6998/6999 SUCCESS). Continuity/composição PR594 `d054e2b3` intocada.
+PR #596. Tip anterior `0dc773c1d` (contagens/dashboard); este tip alinha data-permission.
+
+### Diagnóstico navegação (não = módulo apagado)
+| Sintoma HML | Classificação |
+|---|---|
+| Menu reduzido | oculto por perfil RBAC (fail-closed) — sem liberar admin no FE |
+| Menu vazio enquanto carrega | `permissionsLoading` + banner shell (≠ módulo apagado) |
+| “Acesso negado” em Abrir do card | data-permission entidade ≠ seção owner (corrigido Bloco1–6) |
+| Contagem SetorAtividade/GrupoProduto/Marca/UnidadeMedida | BFF parcial/500 → PARTIAL; UI “—” |
+| Card sem rota | fora da composição ou recurso não no tip servido |
+
+### Lote UI deste tip
+- Cadastros: banners loading / unavailable / partial distintos; badge `data-count-state`
+- AllCounts: sem contexto → `READ_COUNT_UNAVAILABLE` (não mapa de zeros)
+- Dashboard canônico: count produtos/colaboradores fail-closed (`—` ≠ 0 falso); fonte no subtitle
+- LogisticaEntregaTab: seletor com `groupId`/`empresaId` (PR595 preservado)
+- Dashboard Corporativo permanece página distinta (consolidado grupo) — sem merge destrutivo
+- Bloco1–6: `data-permission` = `Cadastros.{Pessoas|Produtos|Financeiro|Logistica|Organizacional|Tecnologia}.visualizar`
+- `SECTION_ALIASES`: produtos/financeiro/logistica/tecnologia (não inventa grant; só resolve nó owner)
+- Shell: banner `data-menu-permissions-loading` durante carga RBAC
+
+### Coordenação Codex
+- 500 auxiliares bloco2; ativação `cliente_local`; códigos sequenciais BFF; composição servida
+- Integra-novo = referência visual/telas, não registros Base44
+
+### Bugbot PR596 — Dashboard count (mesmo tip)
+- Catch de countEntities: lista vazia/`initialData []` ≠ zero confirmado (`resolveDashboardCountAfterFailure`)
+- Subtitle: carregando ≠ indisponível ≠ sem permissão (`dashboardCountSubtitle`)
+
+### Coordenação Codex (PR595 Continuity)
+- Backend ClienteLocal/revisão CAS na branch Continuity; Cursor mantém interfaces 595/596
+- Fiscal permanece ClienteLocal FISCAL; sem gravar endereco_principal rejeitado pelo MASTER
+
+### Central360 — Fechar orçamento → local entrega (mesmo tip)
+- Dialog `central360-fechar-conversao`: `SeletorEnderecoEntregaPedido` quando ENTREGA
+- Fail-closed sem `cliente_local_id`; payload envia id canônico (Codex BFF confirma contrato)
+- Fechar ≠ Cancelar ≠ Fechar janela preservados
+
+### Central360 — hidratação grades + blockers ([Central360 journey gaps](bc-bcb7a25f-ebbf-5214-a0c4-fb9eb420c863))
+- Clique simples orçamento/pedido: GET hidrata `itens` para grades (lista sem linhas ≠ vazio real)
+- Shell: banner `central360-grades-sem-itens` quando seleção sem itens carregados
+- Fechar bloqueia sem condição de pagamento / masters em erro
+
+Próximo Cursor: tabela pedido 12 cols; itens/pagamento ricos; códigos UI; cards Base44.
+Sem HML/DDL/carga. Codex: schema `converter-pedido` + `cliente_local_id`.
+
 ## Cursor — endereços operacionais + rascunho de revisão (2026-11-14)
 
 Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` sobre Continuity
-`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados.
+`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados. Tip CI
+`3e6461929` SUCCESS.
 
 Lote UI endereços (sem HML/DDL/carga; 1500 ensaio intactos):
 - Mensagens: operacional vs revisão vs negado vs falha; sem zero falso;

@@ -1,7 +1,38 @@
-## Cursor — merge Continuity591 38b4e1ec → PR595 (2026-11-14 America/Sao_Paulo)
+## Cursor — stack 591→595→596 composta (2026-11-14 America/Sao_Paulo)
 
-Composição após CI Continuity SUCCESS. Completo/ClienteLocaisRevisao/Seletor
-`renderedSnapshot`+`snapshotLocais` do tip Codex; sem HML.
+PR595 `66ff086f3` (Codex `38b4e1ec` fiscal/Seletor) mergeado em PR596.
+Completo/ClienteLocaisRevisao + Seletor `snapshotLocais`/`renderedSnapshot` preservados.
+Sem HML; tip CI em curso ≠ aprovado.
+
+## Cursor — PR596 pagamento/dashboard/códigos (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Demock `FormasPagamentoPedido` → `useFormasPagamento` (Cadastros); Central360 pagamento =
+  CondicaoComercial no form HTTP; resumo hidrata labels.
+- Dashboard: count pedidos + KPIs amostra ≠ total/zero falso.
+- Códigos: locais/condição/PDF payload; Completo/LocaisRevisao reserva Codex.
+- CI tip `fc6416` ainda não era lote aprovado (backend pending). Sem HML.
+PROXIMO: CI deste tip; Codex syncLocais Completo; composição API/web HML.
+
+## Cursor — PR596 hydrate always + typecheck (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Tip `bc18f78e7`: GET canônico no clique/edição Central; pagamento-resumo com
+código/nome; typecheck AppLayoutShell + Seletor. PR595 tip `c3a3a1143`.
+PROXIMO: CI tips 595/596; códigos BFF/Codex; sem HML.
+
+## Cursor — PR596 merge Continuity f4debdbb3 (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Base tip PR595 `f4debdbb3` (Seletor listBinding/epoch + peels CI). 12col Central
+preservada. PROXIMO: Bugbot Dashboard/C360; CI tips; itens/pagamento; sem HML.
+
+## Cursor — PR596 Central360 pedidos 12col (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Base merge PR595 `9b876f331`. PedidoCanonico centralLayout = 12 colunas canônicas
+(mesmas chaves; labels pedido); prefs escopo; legado 7col fora da Central.
+PROXIMO: CI tips 595/596; itens/pagamento Fechar; sem promover HML.
 
 ## Cursor — PR595 residual P1 + peels CI (2026-11-14 America/Sao_Paulo)
 
@@ -141,14 +172,25 @@ API/web HML com rede separada e HTTPS dedicado. DNS hml-erp ainda nao comprovado
 Login real, RBAC HTTP, UI e backup automatico/retencao permanecem abertos.
 Nao reiniciar Codespace, importar clientes nem reexecutar restore.
 
+## Cursor — HML UX Cadastros/Dashboard (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Tip base PR595 `3e6461929` CI SUCCESS. Branch
+`cursor/hml-cadastros-dash-c360-ux-392b` (PR #596). Sem tocar composição HML.
+Entregue: estados contagem; dashboard count≠zero; seletor Logistica escopo;
+Bloco1–6 data-permission → seção owner; aliases produtos/financeiro/logistica/
+tecnologia; banner menu enquanto RBAC carrega. Codex: 500 auxiliares, códigos,
+ativação locais, pack API/web. Fechar orçamento ENTREGA: seletor local +
+`cliente_local_id` no convert. Próximo: itens/pagamento ricos; códigos UI; Codex
+confirma schema converter-pedido.
+
 ## Cursor — endereços operacionais / rascunho revisão (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Base Continuity `7fa37aaf` / HML runtime `d054e2b3`.
-Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595). Reservas: Completo,
+Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595 tip `3e6461929`). Reservas: Completo,
 ClienteLocaisRevisao, GerenciarEnderecos, SeletorEnderecoEntregaPedido, peels.
 Entregue: mensagens diferenciadas; rascunho revisão→form canônico sem gravar;
 seletor operacional HTTP; RBAC cliente_local. Sem escrita HML/perfil/dados.
-Próximo verificável: CI tip; aceite com SHA API/web Codex; Central360 jornada.
+Próximo verificável: aceite com SHA API/web Codex; Central360 jornada.
 
 
 ## Recuperacao final e restore HML - checkpoint executado (2026-11-14)

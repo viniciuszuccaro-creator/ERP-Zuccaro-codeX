@@ -48,8 +48,9 @@ test('useEntityCounts: parcial marca unavailable e total null', () => {
 });
 
 test('CountBadge: chave ausente / missing → — ≠ 0', () => {
-  assert.match(badge, /unavailable \? \([\s\S]*?'—'/);
+  assert.match(badge, /state === 'unavailable' \? \([\s\S]*?—/);
   assert.match(badge, /missingSet\.has\(e\)/);
+  assert.match(badge, /data-count-state=\{state\}/);
 });
 
 test('fatia counts:{} não pula isolamento — consulta entidades ausentes', async () => {

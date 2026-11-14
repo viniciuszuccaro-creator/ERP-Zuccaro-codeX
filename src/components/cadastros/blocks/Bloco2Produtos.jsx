@@ -146,11 +146,30 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
     });
   };
 
-  const canViewEntity = (entidade, modulo = "Cadastros") =>
-    hasPermission("Cadastros", entidade, "visualizar") ||
-    hasPermission("Cadastros", null, "visualizar") ||
-    hasPermission(modulo, entidade, "visualizar") ||
-    hasPermission(modulo, null, "visualizar");
+  // Gate canônico owner: Cadastros.Produtos (não Cadastros.SetorAtividade.*).
+  // data-permission do Button deve espelhar a seção — senão “Acesso negado” falso.
+  const permissionSectionFor = (entidade) => {
+    const produtos = [
+      "Produto", "Servico", "SetorAtividade", "GrupoProduto", "Marca",
+      "TabelaPreco", "KitProduto", "CatalogoWeb", "UnidadeMedida",
+    ];
+    if (produtos.includes(entidade)) return { module: "Cadastros", section: "Produtos" };
+    return { module: "Cadastros", section: entidade };
+  };
+  const canViewEntity = (entidade, moduloExtra = null) => {
+    const { module, section } = permissionSectionFor(entidade);
+    return (
+      hasPermission(module, section, "visualizar") ||
+      hasPermission("Cadastros", null, "visualizar") ||
+      (moduloExtra
+        ? hasPermission(moduloExtra, entidade, "visualizar") || hasPermission(moduloExtra, null, "visualizar")
+        : false)
+    );
+  };
+  const dataPermissionFor = (entidade) => {
+    const { module, section } = permissionSectionFor(entidade);
+    return `${module}.${section}.visualizar`;
+  };
 
   // ATENÇÃO: sempre usar o campo real que a entidade salva (não alias como nome_grupo, nome_marca etc.)
   // getDisplayValue no visualizador faz fallback automático se o campo estiver vazio
@@ -197,7 +216,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
       {/* Card Produtos (abre VisualizadorProdutos especializado) */}
       <Card className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
         onClick={openProdutos}
-        data-permission="Cadastros.Produto.visualizar"
+        data-permission={dataPermissionFor("Produto")}
         data-action="Cadastros.Produto.abrir"
         data-context-required="group-or-company">
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -212,7 +231,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
             <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
               disabled={!contextoValido || !canViewEntity("Produto", "Estoque")}
-              data-permission="Cadastros.Produto.visualizar"
+              data-permission={dataPermissionFor("Produto")}
               data-action="Cadastros.Produto.abrir"
               data-context-required="group-or-company">
               Abrir
@@ -225,7 +244,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
       {filteredTiles.map(({ k, title, Icon, campos, form: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={openList(k, title, Icon, campos, FormComp)}
-          data-permission={`Cadastros.${k}.visualizar`}
+          data-permission={dataPermissionFor(k)}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required="group-or-company">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -240,7 +259,7 @@ export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "", 
               <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
                 disabled={!contextoValido || !canViewEntity(k)}
-                data-permission={`Cadastros.${k}.visualizar`}
+                data-permission={dataPermissionFor(k)}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required="group-or-company">
                 Abrir

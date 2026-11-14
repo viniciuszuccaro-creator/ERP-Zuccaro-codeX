@@ -243,11 +243,20 @@ export default function Cadastros() {
             </Card>
           )}
 
+          {countsLoading && contextoAtivo && !countsUnavailable && (
+            <Card className="rounded-sm border border-slate-200 bg-slate-50" data-counts-loading="true" role="status">
+              <CardContent className="p-3 text-sm text-slate-700">
+                Carregando contagens dos cadastros… badges com &quot;···&quot; ainda não são zero.
+              </CardContent>
+            </Card>
+          )}
+
           {countsUnavailable && contextoAtivo && (
             <Card className="rounded-sm border border-amber-300 bg-amber-50" data-counts-unavailable="true" role="status">
               <CardContent className="p-3 text-sm text-amber-950">
                 Contagens indisponíveis por erro de consulta — isso <strong>não</strong> significa
-                que os cadastros estejam vazios. Tente novamente ou confira permissão/contexto.
+                que os cadastros estejam vazios nem módulo apagado. Tente novamente ou confira
+                permissão/contexto no perfil (sem liberar administrador no frontend).
                 Badges exibem &quot;—&quot; até a contagem responder.
               </CardContent>
             </Card>
@@ -258,9 +267,10 @@ export default function Cadastros() {
               <CardContent className="p-3 text-sm text-amber-950">
                 Contagem auxiliar parcial — algumas entidades não responderam
                 {Array.isArray(countsMissing) && countsMissing.length > 0
-                  ? ` (${countsMissing.slice(0, 4).join(", ")}${countsMissing.length > 4 ? "…" : ""})`
+                  ? ` (${countsMissing.slice(0, 6).join(", ")}${countsMissing.length > 6 ? "…" : ""})`
                   : ""}
-                . Blocos afetados exibem &quot;—&quot;; demais totais permanecem válidos. Não é zero confirmado.
+                . Diagnóstico de 500/contrato (ex.: SetorAtividade, GrupoProduto, Marca, UnidadeMedida)
+                exige Codex no BFF — UI não converte erro em zero. Blocos afetados: &quot;—&quot;; demais válidos.
               </CardContent>
             </Card>
           )}

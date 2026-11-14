@@ -36,9 +36,11 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
   const empresaId = empresaAtual?.id || null;
   const contextoValido = Boolean(groupId || empresaId);
 
-  // ContatoB2B/Segmento/Região → Cadastros.pessoas (aliases no hook); Cliente/etc. idem.
+  // Gate canônico owner: Cadastros.Pessoas (espelha Bloco5 Organizacional).
+  const dataPermissionFor = () => 'Cadastros.Pessoas.visualizar';
   const canViewEntity = (entidade) => (
     hasPermission('Cadastros', entidade, 'visualizar')
+    || hasPermission('Cadastros', 'Pessoas', 'visualizar')
     || hasPermission('Cadastros', 'pessoas', 'visualizar')
     || hasPermission('Cadastros', null, 'visualizar')
   );
@@ -176,7 +178,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
       {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={openList(k, t, Icon, c, FormComp)}
-          data-permission={`Cadastros.${k}.visualizar`}
+          data-permission={dataPermissionFor()}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required="group-or-company">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -191,7 +193,7 @@ export default function Bloco1Pessoas({ allCounts, isLoading, searchTerm = "", m
               <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
                 disabled={!contextoValido || !canViewEntity(k)}
-                data-permission={`Cadastros.${k}.visualizar`}
+                data-permission={dataPermissionFor()}
                 data-action={`Cadastros.${k}.abrir`}
                 data-context-required="group-or-company">
                 Abrir

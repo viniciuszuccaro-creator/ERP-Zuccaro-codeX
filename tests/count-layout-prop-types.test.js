@@ -10,7 +10,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 const count='src/components/cadastros/CountBadgeSimplificado.jsx';
 const layout='src/components/layout/ModuleLayout.jsx';
 // Hash CountBadge: chave ausente/missing → "—" (achado parcial≠zero / #591).
-for(const [file,hash] of [[count,'dbb4408fb580b2dcd9a026d223ba8a0f3fc583575d0a3d958ed763f39042b749'],[layout,'0005123730c26391d72f8a52884985ba244ce092f71493c908b8e5be95defbdc']])test(`${file}: full executable runtime unchanged`,()=>{
+for(const [file,hash] of [[count,'b9888399d8895a4238a8a89e6bf3d620c6e0a06ebde95a1b9cdb6c2dbd83bdf0'],[layout,'0005123730c26391d72f8a52884985ba244ce092f71493c908b8e5be95defbdc']])test(`${file}: full executable runtime unchanged`,()=>{
   const emitted=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.React,removeComments:true}}).outputText;
   assert.equal(crypto.createHash('sha256').update(emitted).digest('hex'),hash);
 });

@@ -4,6 +4,13 @@ import fs from 'node:fs';
 const panel=fs.readFileSync(new URL('../src/components/comercial/PedidoCanonicoPanel.jsx',import.meta.url),'utf8');const tab=fs.readFileSync(new URL('../src/components/comercial/PedidosTab.jsx',import.meta.url),'utf8');const comercial=fs.readFileSync(new URL('../src/pages/Comercial.jsx',import.meta.url),'utf8');const quote=fs.readFileSync(new URL('../src/components/comercial/OrcamentosTab.jsx',import.meta.url),'utf8');
 test('PedidosTab integra painel HTTP preservando operacao legada',()=>{assert.match(tab,/PedidoCanonicoPanel/);assert.match(tab,/PedidosOperacaoLegada/);assert.match(comercial,/canonicalHttp: true/);assert.doesNotMatch(panel,/base44\.entities|createInContext|updateInContext/);});
 test('painel Pedido cobre filtros formulario historico estados e contexto',()=>{for(const marker of ['pedidos-http','cliente_empresa_id','data_entrega_solicitada','requer_producao','Histórico','nextPedidoStatus','Comercial.pedido.visualizar'])assert.match(panel,new RegExp(marker));assert.match(quote,/convertOrcamento/);assert.match(quote,/Orçamento original preservado/);});
+test('Fechar orçamento ENTREGA exige cliente_local_id canônico no payload',()=>{
+  assert.match(quote,/SeletorEnderecoEntregaPedido/);
+  assert.match(quote,/central360-fechar-local-entrega/);
+  assert.match(quote,/cliente_local_id: conversion\.cliente_local_id/);
+  assert.match(quote,/Entrega exige local operacional ativo/);
+  assert.match(quote,/tipo_operacao === 'ENTREGA' && !conversion\.cliente_local_id/);
+});
 test('janela Pedido captura sessao canonica sem inventar token e separa cache por sessao',()=>{
   const identity=panel.match(/const sessionIdentity=([^;]+);/);
   assert.ok(identity,'consumidor deve capturar a identidade da sessao');

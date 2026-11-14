@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   Bot,
@@ -59,10 +59,21 @@ const dateLabel = (value) => {
   }
 };
 
-function GradesSimultaneas({ itens }) {
-  const { corte, revenda } = useMemo(() => partitionCentralItens(itens), [itens]);
+function GradesSimultaneas({ itens, hasSelection = false }) {
+  const list = Array.isArray(itens) ? itens : [];
+  const { corte, revenda } = useMemo(() => partitionCentralItens(list), [list]);
+  const semItensCarregados = hasSelection && list.length === 0;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 min-h-[160px]" data-block="central360-grades-simultaneas">
+      {semItensCarregados ? (
+        <div
+          className="lg:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          data-block="central360-grades-sem-itens"
+          role="status"
+        >
+          Documento selecionado sem itens carregados — aguarde a hidratação do clique. Duplo clique só abre edição após hidratar itens; use Visualizar se a sessão não permitir GET. Grades vazias não significam estoque zerado.
+        </div>
+      ) : null}
       <GradeItens
         title="Corte e Dobra / Montagem"
         rows={corte}
@@ -155,6 +166,9 @@ export default function CentralVendas360Shell({
   const [clientePanelOpen, setClientePanelOpen] = useState(true);
   const [selected, setSelected] = useState(null);
   const [selectedClienteId, setSelectedClienteId] = useState(null);
+  /** Epoch da seleção na Central: troca de situação invalida GET tardio do painel desmontado. */
+  const selectionEpochRef = useRef(0);
+  const [selectionEpoch, setSelectionEpoch] = useState(0);
 
   const situacao = situacaoById(proposalMode ? CENTRAL_VENDAS360_DEFAULT_SITUACAO : situacaoId);
   const contextoLabel = empresaAtual?.nome_fantasia
@@ -163,6 +177,8 @@ export default function CentralVendas360Shell({
     || (contexto === 'grupo' ? 'Grupo' : 'Empresa');
 
   const onSelectDocument = useCallback((row, meta = {}) => {
+    // Epoch obrigatório: loadCentralDetail/Fechar sem epoch não pode preencher grades após troca de situação.
+    if (typeof meta.selectionEpoch !== 'number' || meta.selectionEpoch !== selectionEpochRef.current) return;
     setSelected(row || null);
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);
@@ -226,6 +242,7 @@ export default function CentralVendas360Shell({
             centralLayout
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
+            selectionEpoch={selectionEpoch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selected?.id || null}
           />
@@ -243,17 +260,59 @@ export default function CentralVendas360Shell({
             centralLayout
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
+            selectionEpoch={selectionEpoch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selected?.id || null}
           />
         )}
       </Suspense>
-      <GradesSimultaneas itens={selected?.itens} />
+      <GradesSimultaneas itens={selected?.itens} hasSelection={Boolean(selected?.id)} />
+      {selected && (
+        <div
+          className="rounded-md border border-sky-100 bg-white px-3 py-2 text-xs text-slate-700 flex flex-wrap gap-x-4 gap-y-1"
+          data-block="central360-pagamento-resumo"
+          role="status"
+        >
+          <span>
+            Condição:{' '}
+            <strong className={selected.condicao_pagamento_id ? 'text-sky-900' : 'text-amber-800'}>
+              {selected.condicao_pagamento_id
+                ? (
+                  selected.condicao_pagamento_codigo
+                  || selected.condicao_pagamento_nome
+                  || selected.condicao_pagamento_label
+                  || 'definida (id canônico)'
+                )
+                : 'pendente — bloqueia Fechar'}
+            </strong>
+          </span>
+          <span>
+            Total:{' '}
+            <strong className="font-mono text-sky-900">
+              {selected.total == null && selected.total !== 0 ? '—' : money(selected.total)}
+            </strong>
+            {selected.total == null && selected.total !== 0 ? (
+              <span className="text-amber-800"> · total não hidratado (≠ zero)</span>
+            ) : null}
+          </span>
+          <span>
+            Parcelas:{' '}
+            {Array.isArray(selected.parcelas)
+              ? `${selected.parcelas.length} no documento`
+              : 'não carregadas nesta seleção'}
+          </span>
+          <span className="text-slate-400 w-full sm:w-auto">
+            Pagamento canônico = CondicaoComercial (`condicao_pagamento_id`) no formulário do documento;
+            resumo ≠ formulário. FormasPagamentoPedido usa Cadastros (sem mock) em jornadas legado —
+            não duplica o seletor HTTP. Condição → validações → Fechar (≠ Cancelar ≠ Fechar janela).
+          </span>
+        </div>
+      )}
       {selected && (
         <div className="text-[11px] text-slate-500 px-1 flex flex-wrap gap-3" data-block="central360-selecao-meta" role="status">
           <span>Selecionado: <strong className="font-mono text-sky-900">{selected.numero || selected.id}</strong></span>
           <span>Peso: {pesoSelecionado == null ? '—' : `${pesoSelecionado} kg`}</span>
-          <span className="text-slate-400">Clique simples seleciona · duplo clique edita em janela própria · seleção não grava</span>
+          <span className="text-slate-400">Clique simples seleciona e hidrata itens · duplo clique edita após GET · seleção não grava</span>
         </div>
       )}
     </div>
@@ -353,6 +412,9 @@ export default function CentralVendas360Shell({
               data-action={`central360-situacao-${s.id}`}
               onClick={() => {
                 if (blocked) return;
+                const nextEpoch = selectionEpochRef.current + 1;
+                selectionEpochRef.current = nextEpoch;
+                setSelectionEpoch(nextEpoch);
                 setSituacaoId(s.id);
                 setSelected(null);
                 setSelectedClienteId(null);

@@ -190,7 +190,7 @@ test('OrcamentosTab: conversão usa conversionStockOkFromAvailability (insufici�
   assert.match(src, /conversionStockOkFromAvailability/);
   assert.match(src, /conversionStockOk/);
   assert.match(src, /Estoque insuficiente ou indisponível/);
-  assert.match(src, /disabled=\{submitting \|\| !conversionStockOk\}/);
+  assert.match(src, /disabled=\{submitting \|\| !conversionStockOk \|\| \(conversion\.tipo_operacao === 'ENTREGA' && !conversion\.cliente_local_id\)\}/);
   assert.doesNotMatch(src, /fontePronta === false \? true/);
 });
 

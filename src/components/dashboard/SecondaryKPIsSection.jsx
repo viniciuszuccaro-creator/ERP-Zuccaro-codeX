@@ -20,6 +20,9 @@ export default function SecondaryKPIsSection({ kpis }) {
               </div>
               <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
               <p className="text-xs text-slate-600 mt-1">{kpi.title}</p>
+              {kpi.subtitle ? (
+                <p className="text-[10px] text-slate-500 mt-0.5" data-kpi-fonte="true">{kpi.subtitle}</p>
+              ) : null}
             </CardContent>
           </Card>
         ))}
