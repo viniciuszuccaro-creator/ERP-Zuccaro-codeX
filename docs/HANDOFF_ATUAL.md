@@ -1,3 +1,14 @@
+## Cursor — PR595 parecer UI endereços (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Base tip `3e6461929` CI6998/6999. Reserva UI: Seletor, Completo, Logistica,
+PedidoCanonico, httpApiClient.listLocais, peels Continuity.
+Entregue (parecer): binding sync no onSelect; `endereco_incompleto === false`;
+listLocais envelope `{data,meta,partial}` / `LOCAIS_ENVELOPE_INVALID`;
+fiscal continua ClienteLocal; backend/CAS intactos.
+Testes: http-api-client + seletor-endereco-binding-595 + locais/pedido PASS.
+PROXIMO: push/CI do tip; não promover HML; Codex ativação locais / auxiliares 500.
+
 ## Acesso autenticado HML confirmado - sem escrita de cadastro (2026-11-14)
 
 Proprietario confirmou abertura e100clientes na nova URL HTTPS. Chrome na mesma

@@ -10,9 +10,13 @@ import { isHttpBackendMode } from "@/api/base44Client";
 import { mapClienteLocalToUiEndereco, isClienteLocalCanonicalId } from "@/api/clienteHttpPayload";
 import usePermissions from "@/components/lib/usePermissions";
 
+/** Só operacional quando incompleto está comprovadamente false (ausente ≠ completo). */
+const isEnderecoOperacionalCompleto = (row) => row?.endereco_incompleto === false;
+
 /**
  * Seletor de entrega: só locais operacionais ativos com finalidade ENTREGA e id canônico.
  * Incompleto/inativo/sem id → rejeitados. Resposta tardia descartada ao trocar cliente/empresa.
+ * onSelect só grava se binding cliente/grupo/empresa/ator/sessão/permissão ainda vale (sync).
  */
 export default function SeletorEnderecoEntregaPedido({
   cliente,
@@ -24,8 +28,11 @@ export default function SeletorEnderecoEntregaPedido({
   const onChange = onSelect;
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canView = hasPermission("Cadastros", "cliente_local", "visualizar") === true;
-  const [loadStatus, setLoadStatus] = useState(/** @type {'idle'|'loading'|'loaded'|'failed'|'denied'|'unknown'} */ ("idle"));
+  const [loadStatus, setLoadStatus] = useState(
+    /** @type {'idle'|'loading'|'loaded'|'partial'|'failed'|'denied'|'unknown'} */ ("idle"),
+  );
   const [operacionais, setOperacionais] = useState(/** @type {Array<Record<string, unknown>>} */ ([]));
+  const [partialMeta, setPartialMeta] = useState(/** @type {{ total: number|null, hasMore: boolean }|null} */ (null));
   /** Tick de contexto: HTTP_CONTEXT_CHANGED/storage → re-fetch (não ficar preso em unknown). */
   const [contextTick, setContextTick] = useState(0);
   const epoch = useRef(0);
@@ -34,13 +41,51 @@ export default function SeletorEnderecoEntregaPedido({
   const sessionGroupId = session?.groupId || null;
   const sessionEmpresaId = session?.empresaId || null;
   const sessionToken = session?.token || null;
+  const sessionActorId = session?.actorId || null;
+
+  const bindingRef = useRef({
+    clienteId: "",
+    groupId: null,
+    empresaId: null,
+    sessionGroupId: null,
+    sessionEmpresaId: null,
+    sessionToken: null,
+    sessionActorId: null,
+    canView: false,
+  });
+  bindingRef.current = {
+    clienteId,
+    groupId: groupId || null,
+    empresaId: empresaId || null,
+    sessionGroupId,
+    sessionEmpresaId,
+    sessionToken,
+    sessionActorId,
+    canView,
+  };
+
+  /** Checagem síncrona no callback — não inserir rascunho após troca de contexto/permissão. */
+  const bindingAllowsSelect = () => {
+    const b = bindingRef.current;
+    if (!b.canView || !b.clienteId) return false;
+    if (!isHttpBackendMode) return true;
+    const live = readErpHttpSession();
+    if (!live?.token || !live?.groupId) return false;
+    if (live.token !== b.sessionToken) return false;
+    if (live.groupId !== b.sessionGroupId) return false;
+    if ((live.empresaId || null) !== (b.sessionEmpresaId || null)) return false;
+    if (b.sessionActorId && live.actorId && live.actorId !== b.sessionActorId) return false;
+    if (b.groupId && live.groupId !== b.groupId) return false;
+    if (b.empresaId && (live.empresaId || null) !== (b.empresaId || null)) return false;
+    return true;
+  };
 
   const fromPropFallback = () => {
     const raw = Array.isArray(cliente?.locais_entrega) ? cliente.locais_entrega : [];
     return raw.filter((row) => {
       const id = String(row?.id || "").trim();
       if (!id || (isHttpBackendMode && !isClienteLocalCanonicalId(id))) return false;
-      if (row?.endereco_incompleto === true) return false;
+      if (!isEnderecoOperacionalCompleto(row)) return false;
       const fins = Array.isArray(row?._finalidades) ? row._finalidades : [];
       const tipo = String(row?.tipo_endereco || "").toLowerCase();
       return fins.includes("ENTREGA") || tipo === "entrega" || tipo === "";
@@ -51,8 +96,10 @@ export default function SeletorEnderecoEntregaPedido({
     const invalidate = () => {
       epoch.current += 1;
       setOperacionais([]);
+      setPartialMeta(null);
       setLoadStatus("unknown");
       setContextTick((n) => n + 1);
+      onChange?.(null);
     };
     window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
     window.addEventListener("storage", invalidate);
@@ -60,11 +107,12 @@ export default function SeletorEnderecoEntregaPedido({
       window.removeEventListener(HTTP_CONTEXT_CHANGED, invalidate);
       window.removeEventListener("storage", invalidate);
     };
-  }, []);
+  }, [onChange]);
 
   useEffect(() => {
     const generation = ++epoch.current;
     setOperacionais([]);
+    setPartialMeta(null);
     if (!clienteId) {
       setLoadStatus("idle");
       return undefined;
@@ -99,22 +147,34 @@ export default function SeletorEnderecoEntregaPedido({
     const controller = new AbortController();
     const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
     api.clientes.listLocais(clienteId, { limit: 50, ativo: true, signal: controller.signal })
-      .then((rows) => {
+      .then((page) => {
         if (epoch.current !== generation) return;
-        const mapped = (Array.isArray(rows) ? rows : [])
+        const rows = Array.isArray(page?.data) ? page.data : null;
+        if (!rows) {
+          setOperacionais([]);
+          setPartialMeta(null);
+          setLoadStatus("failed");
+          return;
+        }
+        const mapped = rows
           .map((row) => mapClienteLocalToUiEndereco(/** @type {Record<string, unknown>} */ (row)))
           .filter((ui) => {
             if (!isClienteLocalCanonicalId(String(ui.id || ""))) return false;
-            if (ui.endereco_incompleto === true) return false;
+            if (!isEnderecoOperacionalCompleto(ui)) return false;
             const fins = Array.isArray(ui._finalidades) ? ui._finalidades : [];
             return fins.includes("ENTREGA");
           });
         setOperacionais(mapped);
-        setLoadStatus("loaded");
+        const partial = page.partial === true;
+        setPartialMeta(partial
+          ? { total: Number.isSafeInteger(page.meta?.total) ? page.meta.total : null, hasMore: page.meta?.hasMore === true }
+          : null);
+        setLoadStatus(partial ? "partial" : "loaded");
       })
       .catch(() => {
         if (epoch.current !== generation) return;
         setOperacionais([]);
+        setPartialMeta(null);
         setLoadStatus("failed");
       });
     return () => {
@@ -127,12 +187,17 @@ export default function SeletorEnderecoEntregaPedido({
     sessionToken, sessionGroupId, sessionEmpresaId, cliente?.locais_entrega,
   ]);
 
-  // Troca de cliente: limpa seleção textual sem id canônico.
+  // Troca de cliente / perda de binding: limpa seleção.
   useEffect(() => {
     if (!onChange) return;
     const selectedId = String(enderecoSelecionado?.id || "").trim();
     if (!selectedId) return;
-    if (loadStatus !== "loaded") return;
+    if (loadStatus !== "loaded" && loadStatus !== "partial") {
+      if (loadStatus === "denied" || loadStatus === "unknown" || loadStatus === "failed") {
+        onChange(null);
+      }
+      return;
+    }
     const still = operacionais.some((row) => String(row.id) === selectedId);
     if (!still) onChange(null);
   }, [clienteId, loadStatus, operacionais, enderecoSelecionado?.id, onChange]);
@@ -140,12 +205,23 @@ export default function SeletorEnderecoEntregaPedido({
   if (!cliente) return null;
 
   const handleSelecionarEndereco = (enderecoId) => {
+    if (!bindingAllowsSelect()) {
+      onChange?.(null);
+      return;
+    }
     const endereco = operacionais.find((e) => String(e.id) === String(enderecoId));
     if (!endereco || !isClienteLocalCanonicalId(String(endereco.id || ""))) {
       onChange?.(null);
       return;
     }
-    if (endereco.endereco_incompleto === true) return;
+    if (!isEnderecoOperacionalCompleto(endereco)) {
+      onChange?.(null);
+      return;
+    }
+    if (!bindingAllowsSelect()) {
+      onChange?.(null);
+      return;
+    }
     const mapaUrl = endereco.latitude && endereco.longitude
       ? `https://www.google.com/maps?q=${endereco.latitude},${endereco.longitude}`
       : endereco.cep
@@ -165,12 +241,24 @@ export default function SeletorEnderecoEntregaPedido({
   else if (loadStatus === "denied") emptyMsg = "Leitura negada (Cadastros.cliente_local.visualizar).";
   else if (loadStatus === "failed") emptyMsg = "Falha ao carregar locais. Contagem não confirmada — não trate como zero.";
   else if (loadStatus === "unknown") emptyMsg = "Contexto/sessão insuficiente para listar locais operacionais.";
+  else if (loadStatus === "partial") {
+    const totalLabel = partialMeta?.total != null ? String(partialMeta.total) : "mais";
+    emptyMsg = `Listagem parcial (há ${totalLabel} no servidor; página atual incompleta). Não trate como zero nem como catálogo completo.`;
+  }
+
+  const showSelect = (loadStatus === "loaded" || loadStatus === "partial") && operacionais.length > 0;
 
   return (
     <div className="space-y-4" data-seletor-locais-status={loadStatus}>
       <Label>Endereço de Entrega *</Label>
 
-      {loadStatus === "loaded" && operacionais.length > 0 ? (
+      {loadStatus === "partial" ? (
+        <p className="text-xs text-amber-800" role="status" data-block="seletor-locais-parcial">
+          {emptyMsg}
+        </p>
+      ) : null}
+
+      {showSelect ? (
         <Select
           value={enderecoSelecionado?.id ? String(enderecoSelecionado.id) : ""}
           onValueChange={handleSelecionarEndereco}
@@ -185,10 +273,10 @@ export default function SeletorEnderecoEntregaPedido({
                   <MapPin className="w-4 h-4 text-blue-600" />
                   <div>
                     <p className="font-medium">
-                      {String(end.apelido || `${end.cidade || ''}, ${end.estado || ''}`)}
+                      {String(end.apelido || `${end.cidade || ""}, ${end.estado || ""}`)}
                     </p>
                     <p className="text-xs text-slate-600">
-                      {String(end.logradouro || '')}, {String(end.numero || '')} - {String(end.bairro || '')}
+                      {String(end.logradouro || "")}, {String(end.numero || "")} - {String(end.bairro || "")}
                     </p>
                   </div>
                 </div>

@@ -57,6 +57,8 @@ test('Seletor: HTTP ativo+ENTREGA+id canônico; mensagens sem zero falso', () =>
   assert.match(seletor, /Falha ao carregar locais\. Contagem não confirmada/);
   assert.match(seletor, /contextTick/);
   assert.match(seletor, /sessionGroupId/);
+  assert.match(seletor, /endereco_incompleto === false/);
+  assert.match(seletor, /bindingAllowsSelect/);
   assert.equal(seletor.includes('Nenhum endereço cadastrado para este cliente'), false);
 });
 
