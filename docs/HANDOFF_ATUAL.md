@@ -1,3 +1,32 @@
+## Pacote privado composto preparado; revisao596 atualizada (2026-11-14)
+
+CI7077/da45cf5a e CI7079/04519a594709959f4a9e99fe8113e0a64411f5b4
+terminais SUCCESS. Pacote API/web MANUAL pelo script oficial existente, foraGit
+na estacao Casa:2214arquivos/17859832bytes, filesSha256
+f7ec328d2a81c3f40296f3358b3bb17c13bb22defe20084cd377bf8473a37328.
+Releitura independente de TODOS arquivos/bytes/hashes igual ao manifesto;
+marcador API/web04519a59/PUBLISHED_CLEAN/dataInBuild=false. Sem banco/segredos,
+sem migrations. CI verde nao e deploy: HML continua d054e2b3.
+Checkpoint privado C:/Users/cpaba/.codex/erp-review-20261114/
+runtime-04519a59-manual/manifest.json. Nao refazer build; proxima acao executavel
+independente: preparar/conferir archive de transporte deste pacote, sem publicar
+artefato privado no GitHub. Antes de HML: canal autenticado, janela exclusiva,
+backup fresco/ack externo/reversao e gates existentes. Console VPS foi fechada;
+SSH existente nao autenticou; nenhuma chave/permissao alterada.
+
+596 evoluiu para64fe7883f7eb3b236618a626bc654d737d2a8bea. Quatro provas
+mutationFn AST original + transporte original/fronteiras sinteticas PASS:
+preservacao26drafts/52ops, retry de create confirmado, read503 sem duplicar,
+e resposta tardia A->B sem carimbar ID de A em B. P1c17 fechado neste alcance.
+Teste novo do PR e regex/helper, nao React montado; solicitar ao Cursor negativo
+montado de form/ref/view/baseline. Nenhum hunk596 incorporado ou branchCursor
+editado. Nao confundir prova focal com aceiteglobal/HTTP/PG/HML.
+
+Automacao existente configurada ACTIVE15min para ensaio; nenhuma execucao nativa
+ou retomada comprovada neste turno. Pacote acima e MANUAL, nao AUTO-01. Retomada
+le checkpoint e assume proximo item concreto sem repetir pacote. Trava local
+liberada ao fechar a publicacao; sem escritor em segundo plano prometido.
+
 ## Continuidade unica Casa/Empresa e retomada nativa configurada (2026-11-14)
 
 Executor atual Codex CASA, Windows/computador CPA; clone existente
