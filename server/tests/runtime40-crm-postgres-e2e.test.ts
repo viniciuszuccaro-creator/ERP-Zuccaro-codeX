@@ -471,10 +471,11 @@ async function proveAtomicCrmPedido(f:{admin:DbClient;data:DbClient;exec:(sql:st
       if(f.auth)await f.auth.verify(base,httpDraft.bound.id,httpDraft.input);
       await assert.rejects(facade.convertOrcamentoToPedido(httpDraft.bound.id,{...httpDraft.input,actorId:ID.runtimeActorB}),(error:any)=>error.status===422);
       const delivery=await prepare();
-      const deliveryInput={...delivery.input,pedido:{...delivery.input.pedido,tipo_operacao:'ENTREGA',cliente_local_id:ID.clienteLocalA,obra_id:ID.obraA}};
+      const deliveryInput={...delivery.input,pedido:{...delivery.input.pedido,tipo_operacao:'ENTREGA',cliente_local_id:ID.clienteLocalB,obra_id:ID.obraA}};
+      await assert.rejects(facade.convertOrcamentoToPedido(delivery.bound.id,{...deliveryInput,pedido:{...deliveryInput.pedido,cliente_local_id:ID.clienteLocalA}}),(error:any)=>error.status===422);
       await assert.rejects(facade.convertOrcamentoToPedido(delivery.bound.id,{...deliveryInput,pedido:{...deliveryInput.pedido,cliente_local_id:ID.clienteLocalB1}}),(error:any)=>error.status===422);
       const delivered=await facade.convertOrcamentoToPedido(delivery.bound.id,deliveryInput);
-      assert.equal(delivered.pedido.tipo_operacao,'ENTREGA');assert.equal(delivered.pedido.cliente_local_id,ID.clienteLocalA);assert.equal(delivered.pedido.obra_id,ID.obraA);
+      assert.equal(delivered.pedido.tipo_operacao,'ENTREGA');assert.equal(delivered.pedido.cliente_local_id,ID.clienteLocalB);assert.equal(delivered.pedido.obra_id,ID.obraA);
     }finally{await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}
     const inactive=await prepare();
     await f.admin.query("UPDATE orcamentos SET ativo=false,status='CANCELADO' WHERE id=$1",[inactive.quote.id]);

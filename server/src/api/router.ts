@@ -657,7 +657,7 @@ function mountClienteLocalRoutes(router: Router, service: ClienteLocalService) {
   const basePath = '/api/v1/clientes/:clienteId/locais';
 
   router.get(`${basePath}/snapshot`, requireTenantScope, async (req, res, next) => {
-    try { res.json(await service.snapshot(ctxFromReq(req), req.params.clienteId)); }
+    try { res.json(await service.snapshot(ctxFromReq(req), req.params.clienteId, req.query.include_review === 'true')); }
     catch (error) { next(error); }
   });
 

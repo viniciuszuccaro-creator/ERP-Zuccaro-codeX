@@ -30,7 +30,7 @@ function mapLocal(row: Record<string, unknown>): ClienteLocal {
     id: String(row.id),
     group_id: String(row.group_id),
     cliente_id: String(row.cliente_id),
-    nome: String(row.nome),
+    nome: String(row.nome ?? ''),
     cep: String(row.cep ?? ''),
     logradouro: String(row.logradouro ?? ''),
     numero: String(row.numero ?? ''),
@@ -38,7 +38,7 @@ function mapLocal(row: Record<string, unknown>): ClienteLocal {
     bairro: String(row.bairro ?? ''),
     cidade: String(row.cidade ?? ''),
     uf: String(row.uf ?? ''),
-    pais: String(row.pais ?? 'BRASIL'),
+    pais: String(row.pais ?? ''),
     referencia: row.referencia == null ? null : String(row.referencia),
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
@@ -254,7 +254,8 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           geocode_status=$14, geocode_source=$15, geocode_precision=$16,
           geocoded_at=$17, endereco_fingerprint=$18,
           origem=$19, legacy_id=$20, legacy_code=$21, source_system=$22,
-          migration_batch=$23, imported_at=$24, updated_by=$25
+          migration_batch=$23, imported_at=$24, updated_by=$25,
+          endereco_incompleto=$29
          WHERE group_id=$26 AND cliente_id=$27 AND id=$28`,
         [
           next.nome, next.cep, next.logradouro, next.numero, next.complemento,
@@ -264,7 +265,7 @@ export class PostgresClienteLocalRepository implements ClienteLocalRepository {
           geo.geocodedAt, fingerprint, next.origem, next.legacy_id,
           next.legacy_code, next.source_system, next.migration_batch,
           next.imported_at, actorId ?? null, scope.groupId, scope.clienteId,
-          localId,
+          localId, next.endereco_incompleto,
         ],
       );
       return this.get(scope, localId, client);

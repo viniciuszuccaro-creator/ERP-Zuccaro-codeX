@@ -1,3 +1,8 @@
+## Cursor — merge Continuity591 38b4e1ec → PR595 (2026-11-14 America/Sao_Paulo)
+
+Composição após CI Continuity SUCCESS. Completo/ClienteLocaisRevisao/Seletor
+`renderedSnapshot`+`snapshotLocais` do tip Codex; sem HML.
+
 ## Cursor — PR595 residual P1 binding + peels CI (2026-11-14)
 
 Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).

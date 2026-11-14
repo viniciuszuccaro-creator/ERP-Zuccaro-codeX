@@ -1,0 +1,12 @@
+[Unit]
+Description=Backup diario HML ERP Zuccaro 03h30 Brasilia
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 America/Sao_Paulo
+RandomizedDelaySec=5min
+AccuracySec=1min
+Persistent=true
+Unit=hml-backup.service
+
+[Install]
+WantedBy=timers.target
