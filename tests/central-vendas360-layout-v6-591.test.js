@@ -134,6 +134,9 @@ test('Fechar bloqueia sem condição; seleção hidrata itens; pedido espelha', 
   const orc = read('src/components/comercial/OrcamentosTab.jsx');
   const ped = read('src/components/comercial/PedidoCanonicoPanel.jsx');
   assert.match(orc, /sem condição de pagamento/);
+  assert.match(orc, /assertOrcamentoProntoParaFechar/);
+  assert.match(orc, /openFecharConversao/);
+  assert.match(orc, /orcamento-detalhe-fechar/);
   assert.match(orc, /selectCentralRow/);
   assert.match(ped, /selectCentralRow/);
   assert.match(ped, /central360-selecionar-pedido/);
@@ -169,8 +172,9 @@ test('Fechar Orçamento ≠ Cancelar: conversão backend, cancel separado', () =
   const fecharFn = src.match(/const fecharOrcamentoCentral = async \(\) => \{[\s\S]*?\n  \};/);
   assert.ok(fecharFn, 'fecharOrcamentoCentral deve existir');
   assert.doesNotMatch(fecharFn[0], /\bcancel\(row\)/);
-  assert.match(fecharFn[0], /setPendingConversion/);
+  assert.match(fecharFn[0], /openFecharConversao/);
   assert.match(fecharFn[0], /canConvert/);
+  assert.match(src, /assertOrcamentoProntoParaFechar\(pendingConversion\)/);
 });
 
 test('preferências de colunas: escopo usuário+grupo+empresa; sem cruzar contexto', () => {

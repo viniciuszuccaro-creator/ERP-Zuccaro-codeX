@@ -41,11 +41,14 @@ test('Dashboard: contagens usam formatDashboardCountDisplay (— ≠ 0 falso)', 
   assert.match(dash, /não fabricar zero/);
   assert.match(dash, /resolveDashboardCountAfterFailure/);
   assert.match(dash, /dashboardCountSubtitle/);
+  assert.match(dash, /hasContext: Boolean\(hasContextoAtivo\)/);
+  assert.match(dash, /allowed: Boolean\(canSeeEstoque\)/);
 });
 
 test('LogisticaEntregaTab: seletor recebe groupId/empresaId', () => {
-  assert.match(logistica, /groupId=\{groupId\}/);
-  assert.match(logistica, /empresaId=\{empresaId\}/);
+  assert.match(logistica, /groupId=\{resolvedGroupId\}/);
+  assert.match(logistica, /empresaId=\{resolvedEmpresaId\}/);
+  assert.match(logistica, /endereco \|\| \{\}/);
 });
 
 test('Cadastros blocos: data-permission usa seção owner (não entidade solta)', () => {

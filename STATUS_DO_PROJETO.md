@@ -1,3 +1,14 @@
+## Cursor — PR596 Bugbot Fechar/Dashboard + peels CI (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+
+- Fechar: `assertOrcamentoProntoParaFechar` + `openFecharConversao` compartilhados
+  (Central, detalhe e `convertToPedido`) — condição/itens/masters não bypassáveis.
+- Dashboard: `dashboardCountSubtitle` separa `allowed` (RBAC) de `hasContext`.
+- Peels/pins: usePermissions aliases Bloco2–6; Dashboard/CountBadge/Logistica;
+  testes regex CountBadge/estoque/Logistica alinhados.
+- Frontend CI tip anterior `660a49a` falhou (7 pins); tip novo deve revalidar.
+
 ## Cursor — PR596 Central360 pedidos 12 colunas (2026-11-14)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596) stacked

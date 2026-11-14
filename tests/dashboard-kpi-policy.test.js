@@ -84,6 +84,8 @@ test('lista no soft limit nao e confiavel e count tem prioridade', () => {
   assert.equal(resolveDashboardCountAfterFailure([]).confiavel, false);
   assert.equal(resolveDashboardCountAfterFailure([{ id: 1 }]).total, 1);
   assert.equal(dashboardCountSubtitle({ allowed: false }), 'sem permissão neste perfil');
+  assert.equal(dashboardCountSubtitle({ allowed: true, hasContext: false }), 'sem contexto grupo/empresa');
+  assert.equal(dashboardCountSubtitle({ allowed: false, hasContext: false }), 'sem permissão neste perfil');
   assert.equal(dashboardCountSubtitle({ allowed: true, loading: true }), 'carregando contagem…');
   assert.equal(dashboardCountSubtitle({ allowed: true, resolved: null }), 'carregando contagem…');
   assert.equal(dashboardCountSubtitle({ allowed: true, resolved: { fonte: 'count', confiavel: true } }), 'count · escopo empresa/grupo');

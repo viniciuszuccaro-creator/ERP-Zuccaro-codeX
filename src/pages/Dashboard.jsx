@@ -740,7 +740,8 @@ export default function Dashboard() {
       subtitle: dashboardCountSubtitle({
         resolved: totalProdutosResolved,
         loading: Boolean(canSeeEstoque && hasContextoAtivo && totalProdutosResolved == null && (loadingProdutosCount || fetchingProdutosCount)),
-        allowed: Boolean(canSeeEstoque && hasContextoAtivo),
+        allowed: Boolean(canSeeEstoque),
+        hasContext: Boolean(hasContextoAtivo),
       }),
       icon: Package,
       color: "text-indigo-600",
@@ -753,7 +754,8 @@ export default function Dashboard() {
       subtitle: dashboardCountSubtitle({
         resolved: totalColaboradoresResolved,
         loading: Boolean(canSeeRH && hasContextoAtivo && totalColaboradoresResolved == null && (loadingColaboradoresCount || fetchingColaboradoresCount)),
-        allowed: Boolean(canSeeRH && hasContextoAtivo),
+        allowed: Boolean(canSeeRH),
+        hasContext: Boolean(hasContextoAtivo),
       }),
       icon: UserCircle,
       color: "text-pink-600",

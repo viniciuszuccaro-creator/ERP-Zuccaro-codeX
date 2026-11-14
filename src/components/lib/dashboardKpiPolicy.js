@@ -117,14 +117,17 @@ export const formatDashboardCountDisplay = (resolved) => {
 
 /**
  * Subtitle do KPI de contagem: loading ≠ indisponível ≠ zero confirmado.
- * @param {{ resolved?: { fonte?: string, confiavel?: boolean } | null, loading?: boolean, allowed?: boolean }} [input]
+ * RBAC (`allowed`) ≠ contexto grupo/empresa (`hasContext`) — não misturar.
+ * @param {{ resolved?: { fonte?: string, confiavel?: boolean } | null, loading?: boolean, allowed?: boolean, hasContext?: boolean }} [input]
  */
 export const dashboardCountSubtitle = ({
   resolved = null,
   loading = false,
   allowed = true,
+  hasContext = true,
 } = {}) => {
   if (!allowed) return 'sem permissão neste perfil';
+  if (!hasContext) return 'sem contexto grupo/empresa';
   if (loading || resolved == null) return 'carregando contagem…';
   if (resolved.fonte === 'count') return 'count · escopo empresa/grupo';
   if (resolved.confiavel) return 'lista · escopo empresa/grupo';
