@@ -1,8 +1,11 @@
+## Cursor — PR596 tip docs CI SUCCESS pós flaky (2026-11-14 America/Sao_Paulo)
+
+Tip `4a4c9b742` / `739b11fc5` CI SUCCESS (flaky `3d527031d` MOUNTED_REVIEW_TIMEOUT
+confirmado transitório). Freeze `0ffff5100` / port `81d1e849` intactos. tip ≠ HML.
+
 ## Cursor — PR596 CI tip docs flaky MOUNTED_REVIEW_TIMEOUT (2026-11-14 America/Sao_Paulo)
 
-CI `3d527031d` (só docs pacote) FAIL frontend: `cliente-locais-review-mounted`
-`MOUNTED_REVIEW_TIMEOUT` ≠ regressão produto. Tip anterior docs/código SUCCESS.
-Re-trigger empty commit. Freeze `0ffff5100` / port `81d1e849` intactos. tip ≠ HML.
+Histórico: `3d527031d` FAIL flaky; re-trigger → lote acima.
 
 ## Cursor — PR596 conferência pacote API/web Casa 81d1e849 (2026-11-14 America/Sao_Paulo)
 
