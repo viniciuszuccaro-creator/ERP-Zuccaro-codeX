@@ -185,10 +185,10 @@ export default function SeletorEnderecoEntregaPedido({
                   <MapPin className="w-4 h-4 text-blue-600" />
                   <div>
                     <p className="font-medium">
-                      {end.apelido || `${end.cidade}, ${end.estado}`}
+                      {String(end.apelido || `${end.cidade || ''}, ${end.estado || ''}`)}
                     </p>
                     <p className="text-xs text-slate-600">
-                      {end.logradouro}, {end.numero} - {end.bairro}
+                      {String(end.logradouro || '')}, {String(end.numero || '')} - {String(end.bairro || '')}
                     </p>
                   </div>
                 </div>
