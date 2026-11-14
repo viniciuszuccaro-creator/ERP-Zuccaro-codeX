@@ -1,3 +1,11 @@
+## Cursor — PR595 residual P1 + peels CI (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Residual Codex @ `9b876f331`: `listBindingRef`/`listEpochRef`/`commitSelection` no
+Seletor — lista A não grava no binding B. Peels purpose/review/consolidation81
+corrigidos (CI frontend); pin Logistica stage45 `85526d50…`. Sem backend/CAS/HML.
+PROXIMO: CI tip; port PR596; Central360 itens/pagamento; Codex ativação locais.
+
 ## Cursor — PR595 parecer UI endereços (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
