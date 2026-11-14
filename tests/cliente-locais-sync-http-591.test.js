@@ -45,8 +45,9 @@ test('local nao inventa numero, bairro, pais ou finalidade e conserva rascunho',
 
 test('local reaberto conserva pais, coordenadas zero, origem e finalidades distintas',()=>{
   const original={id:uuidA,nome:'Synthetic',cep:'01310100',logradouro:'Rua Sintetica',numero:'0007',bairro:'Bairro',cidade:'Cidade',uf:'SP',pais:'PAIS COMPROVADO',
-    latitude:0,longitude:0,coordinate_source:'GPS',finalidades:[{finalidade:'FISCAL',principal:true},{finalidade:'ENTREGA',principal:false}]};
+    codigo:'00042',latitude:0,longitude:0,coordinate_source:'GPS',finalidades:[{finalidade:'FISCAL',principal:true},{finalidade:'ENTREGA',principal:false}]};
   const draft=mapClienteLocalToUiEndereco(original);assert.equal(draft.pais,original.pais);
+  assert.equal(draft.codigo,'00042'); // apresentação BFF — UI não gera sequência
   const body=mapUiEnderecoToClienteLocalCreate(draft);
   assert.equal(body.latitude,0);assert.equal(body.longitude,0);assert.equal(body.coordinate_source,'GPS');
   assert.equal(body.pais,original.pais);assert.deepEqual(body.finalidades,original.finalidades);

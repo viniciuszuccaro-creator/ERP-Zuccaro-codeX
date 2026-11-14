@@ -18,24 +18,33 @@ export function clienteLocalOperationalRemainder(file, text) {
     [
       `        try {
           // Preferir POST /locais/sync (batchAtomic:true). Overflow/legado pré-MASTER ou fallback.
+          /** @param {Record<string, unknown>|null|undefined} summary @param {string|null} reason */
+          const annotateLocaisSummary = (summary, reason) => {
+            if (!summary || typeof summary !== 'object') return summary;
+            return {
+              ...summary,
+              syncPath: summary.batchAtomic === true ? 'atomic' : 'legacy',
+              fallbackReason: reason || null,
+            };
+          };
           let locaisSummary;
           if (locaisPreferLegacyRef.current) {
-            locaisSummary = await syncClienteLocaisViaHttp({
+            locaisSummary = annotateLocaisSummary(await syncClienteLocaisViaHttp({
               clienteId: frozenScope.clienteId,
               draft: locaisDraft,
               baselineIds,
               assertScope: assertLocaisScope,
               api: api.clientes,
-            });
+            }), 'ATOMIC_OVERFLOW_PREFLIGHT');
           } else {
             try {
-              locaisSummary = await syncClienteLocaisAtomicViaHttp({
+              locaisSummary = annotateLocaisSummary(await syncClienteLocaisAtomicViaHttp({
                 clienteId: frozenScope.clienteId,
                 draft: locaisDraft,
                 baselineIds,
                 assertScope: assertLocaisScope,
                 api: api.clientes,
-              });
+              }), null);
             } catch (atomicErr) {
               const atomicCode = /** @type {Error & { code?: string, message?: string }} */ (atomicErr)?.code
                 || String(/** @type {Error} */ (atomicErr)?.message || '');
@@ -46,13 +55,13 @@ export function clienteLocalOperationalRemainder(file, text) {
                 || /SNAPSHOT_INVALID|ATOMIC_UNAVAILABLE|ATOMIC_OVERFLOW|CLIENTE_LOCAIS_INPUT_INVALID/.test(atomicCode);
               // Conflito de versão / sync inválido: fail-closed (não escrever path parcial).
               if (!canFallback) throw atomicErr;
-              locaisSummary = await syncClienteLocaisViaHttp({
+              locaisSummary = annotateLocaisSummary(await syncClienteLocaisViaHttp({
                 clienteId: frozenScope.clienteId,
                 draft: locaisDraft,
                 baselineIds,
                 assertScope: assertLocaisScope,
                 api: api.clientes,
-              });
+              }), atomicCode || 'ATOMIC_FALLBACK');
             }
           }
           // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
@@ -78,7 +87,7 @@ export function clienteLocalOperationalRemainder(file, text) {
       ) {
         toast({
           title: \`Cliente \${verb}\`,
-          description: 'Endereços gravados atomicamente via /locais/sync (batchAtomic:true).',
+          description: 'Endereços gravados atomicamente via /locais/sync (batchAtomic:true). Cliente MASTER + locais = lote atômico só dos endereços.',
         });
       } else if (
         locaisSummary
@@ -88,15 +97,28 @@ export function clienteLocalOperationalRemainder(file, text) {
         const ops = Number(locaisSummary.created || 0)
           + Number(locaisSummary.updated || 0)
           + Number(locaisSummary.deleted || 0);
-        // Fallback legado: BATCH_ATOMIC=false — não declarar salvamento integral/atômico.
+        const reason = String(/** @type {{ fallbackReason?: unknown }} */ (locaisSummary).fallbackReason || '');
+        const overflow = /OVERFLOW/i.test(reason);
+        const recover = locaisSummary.reconcileRequired === true
+          ? ' Reabra o cliente e confira o catálogo antes de repetir o save.'
+          : ' Rascunho reconciliável — reabra se a lista operacional divergir.';
+        // Fallback legado / overflow: NÃO declarar salvamento integral nem esconder em toast genérico.
         toast({
-          title: \`Cliente \${verb}\`,
-          description: ops > 0
-            ? \`Endereços sincronizados em \${ops} operação(ões). Fallback não atômico (BATCH_ATOMIC=false) — não é salvamento integral.\`
-            : 'Cliente gravado. Sync de endereços sem operações (fallback não atômico).',
+          title: overflow
+            ? \`Cliente \${verb} — locais via legado (overflow >50 ops)\`
+            : \`Cliente \${verb} — locais via fallback não atômico\`,
+          description: (ops > 0
+            ? \`MASTER gravado; \${ops} operação(ões) de endereço em path legado\`
+              + (reason ? \` (\${reason})\` : '')
+              + '. Não é atomicidade integral.'
+            : \`MASTER gravado; sync de endereços sem operações no path legado\`
+              + (reason ? \` (\${reason})\` : '')
+              + '.')
+            + recover,
+          variant: 'default',
         });
       } else {
-        toast({ title: \`✅ Cliente \${verb} com sucesso!\` });
+        toast({ title: \`Cliente \${verb}\`, description: 'Cadastro MASTER confirmado. Sync de endereços omitido ou sem operações.' });
       }
 `,
       `      if (
@@ -332,6 +354,32 @@ export function clienteLocalOperationalRemainder(file, text) {
       '',
     ],
     [
+      '    reconcileRequired?: boolean,\n'
+      + '    syncPath?: string,\n'
+      + '    fallbackReason?: string|null,\n',
+      '',
+    ],
+    [
+      '                  {isHttpBackendMode ? (\n'
+      + '                    <p className="text-xs text-slate-600 mb-2" data-block="fiscal-cliente-local-canonico" role="note">\n'
+      + '                      Fiscal canônico = ClienteLocal (revisão abaixo). Campos MASTER.endereco_principal\n'
+      + '                      são legado/visual — HTTP rejeita gravação significativa; não copiam o fiscal operacional.\n'
+      + '                      Use «Revisar fiscal» (activate:false) e ativação explícita autorizada.\n'
+      + '                    </p>\n'
+      + '                  ) : null}\n',
+      '',
+    ],
+    [
+      '                        readOnly={isHttpBackendMode}\n'
+      + '                        disabled={isHttpBackendMode}\n',
+      '',
+      'all',
+    ],
+    [
+      '                        disabled={isHttpBackendMode || !formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\\D/g, \'\').length < 8}\n',
+      '                        disabled={!formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\\D/g, \'\').length < 8}\n',
+    ],
+    [
       '  /**\n'
       + '   * [] inicial do form ≠ catálogo HTTP confirmado.\n'
       + '   * Draft só manda com itens ou ownership explícita (apply/openDraft) — baseline sozinho não assume [].\n'
@@ -378,7 +426,12 @@ export function clienteLocalOperationalRemainder(file, text) {
   // Exige o pacote operacional completo; se faltar um hunk (ex.: allowReviewEdit
   // adulterado no teste), devolve o texto sem peel — não inventa ancestral parcial.
   if (!changes.every(([after]) => source.includes(after))) return text;
-  for (const [after, before] of changes) {
+  for (const [after, before, mode] of changes) {
+    if (mode === 'all') {
+      assert.ok(source.includes(after), file + ': operational replace-all present');
+      source = source.split(after).join(before);
+      continue;
+    }
     assert.equal(source.split(after).length, 2, file + ': exact operational wiring');
     source = source.replace(after, () => before);
   }

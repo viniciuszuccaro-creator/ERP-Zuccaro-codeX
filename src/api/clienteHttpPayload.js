@@ -568,8 +568,13 @@ export function mapClienteLocalToUiEndereco(local) {
   else if (codes.includes('CORRESPONDENCIA')) tipo_endereco = 'Correspondência';
   else if (codes.includes('OUTRO')) tipo_endereco = 'Outro';
   else if (codes.length > 0) tipo_endereco = 'Outro';
+  const codigoRaw = row.codigo ?? row.codigo_interno ?? null;
+  const codigo = codigoRaw != null && String(codigoRaw).trim() !== ''
+    ? String(codigoRaw)
+    : undefined;
   return {
     id: row.id,
+    ...(codigo !== undefined ? { codigo } : {}),
     apelido: row.nome || '',
     tipo_endereco,
     cep: row.cep || '',

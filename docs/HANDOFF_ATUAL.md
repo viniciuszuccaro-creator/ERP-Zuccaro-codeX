@@ -1,9 +1,14 @@
+## Cursor — PR596 jornadas/overflow toast/fiscal (2026-11-14 America/Sao_Paulo)
+
+Tip `b8a6710b6` CI SUCCESS (histórico). Este lote: toast overflow/fallback com
+`fallbackReason`; fiscal ClienteLocal + MASTER.endereco_principal read-only HTTP;
+código no Seletor quando BFF envia. HML `d054e2b3` ≠ tip — sem promote.
+CI tip **em curso ≠ aprovado**. PROXIMO: CI deste tip; composição API/web com Codex.
+
 ## Cursor — PR596 overflow atômico → legado pré-MASTER (2026-11-14 America/Sao_Paulo)
 
-Tip `d9d3c74ba` CI SUCCESS. Tip atual `2f3814af9`: overflow (>50 ops) preflight → sync
-legado **antes** do MASTER (`CLIENTE_LOCAIS_ATOMIC_OVERFLOW`); peels/testes.
-HML `d054e2b3` ≠ tip — sem promote. CI tip **em curso ≠ aprovado**.
-PROXIMO: CI `2f3814af9`; composição/aceite API/web HML com Codex (roteiro STATUS).
+Tip `d9d3c74ba` CI SUCCESS. Tips `2f3814af9`/`b8a6710b6` CI SUCCESS: overflow preflight →
+legado antes do MASTER. HML `d054e2b3` ≠ tip — sem promote (histórico).
 
 ## Cursor — PR596 tip SUCCESS + Completo syncLocais atômico (2026-11-14 America/Sao_Paulo)
 

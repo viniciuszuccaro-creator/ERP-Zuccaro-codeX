@@ -695,24 +695,33 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           : null;
         try {
           // Preferir POST /locais/sync (batchAtomic:true). Overflow/legado pré-MASTER ou fallback.
+          /** @param {Record<string, unknown>|null|undefined} summary @param {string|null} reason */
+          const annotateLocaisSummary = (summary, reason) => {
+            if (!summary || typeof summary !== 'object') return summary;
+            return {
+              ...summary,
+              syncPath: summary.batchAtomic === true ? 'atomic' : 'legacy',
+              fallbackReason: reason || null,
+            };
+          };
           let locaisSummary;
           if (locaisPreferLegacyRef.current) {
-            locaisSummary = await syncClienteLocaisViaHttp({
+            locaisSummary = annotateLocaisSummary(await syncClienteLocaisViaHttp({
               clienteId: frozenScope.clienteId,
               draft: locaisDraft,
               baselineIds,
               assertScope: assertLocaisScope,
               api: api.clientes,
-            });
+            }), 'ATOMIC_OVERFLOW_PREFLIGHT');
           } else {
             try {
-              locaisSummary = await syncClienteLocaisAtomicViaHttp({
+              locaisSummary = annotateLocaisSummary(await syncClienteLocaisAtomicViaHttp({
                 clienteId: frozenScope.clienteId,
                 draft: locaisDraft,
                 baselineIds,
                 assertScope: assertLocaisScope,
                 api: api.clientes,
-              });
+              }), null);
             } catch (atomicErr) {
               const atomicCode = /** @type {Error & { code?: string, message?: string }} */ (atomicErr)?.code
                 || String(/** @type {Error} */ (atomicErr)?.message || '');
@@ -723,13 +732,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 || /SNAPSHOT_INVALID|ATOMIC_UNAVAILABLE|ATOMIC_OVERFLOW|CLIENTE_LOCAIS_INPUT_INVALID/.test(atomicCode);
               // Conflito de versão / sync inválido: fail-closed (não escrever path parcial).
               if (!canFallback) throw atomicErr;
-              locaisSummary = await syncClienteLocaisViaHttp({
+              locaisSummary = annotateLocaisSummary(await syncClienteLocaisViaHttp({
                 clienteId: frozenScope.clienteId,
                 draft: locaisDraft,
                 baselineIds,
                 assertScope: assertLocaisScope,
                 api: api.clientes,
-              });
+              }), atomicCode || 'ATOMIC_FALLBACK');
             }
           }
           // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
@@ -773,7 +782,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       ) {
         toast({
           title: `Cliente ${verb}`,
-          description: 'Endereços gravados atomicamente via /locais/sync (batchAtomic:true).',
+          description: 'Endereços gravados atomicamente via /locais/sync (batchAtomic:true). Cliente MASTER + locais = lote atômico só dos endereços.',
         });
       } else if (
         locaisSummary
@@ -783,15 +792,28 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         const ops = Number(locaisSummary.created || 0)
           + Number(locaisSummary.updated || 0)
           + Number(locaisSummary.deleted || 0);
-        // Fallback legado: BATCH_ATOMIC=false — não declarar salvamento integral/atômico.
+        const reason = String(/** @type {{ fallbackReason?: unknown }} */ (locaisSummary).fallbackReason || '');
+        const overflow = /OVERFLOW/i.test(reason);
+        const recover = locaisSummary.reconcileRequired === true
+          ? ' Reabra o cliente e confira o catálogo antes de repetir o save.'
+          : ' Rascunho reconciliável — reabra se a lista operacional divergir.';
+        // Fallback legado / overflow: NÃO declarar salvamento integral nem esconder em toast genérico.
         toast({
-          title: `Cliente ${verb}`,
-          description: ops > 0
-            ? `Endereços sincronizados em ${ops} operação(ões). Fallback não atômico (BATCH_ATOMIC=false) — não é salvamento integral.`
-            : 'Cliente gravado. Sync de endereços sem operações (fallback não atômico).',
+          title: overflow
+            ? `Cliente ${verb} — locais via legado (overflow >50 ops)`
+            : `Cliente ${verb} — locais via fallback não atômico`,
+          description: (ops > 0
+            ? `MASTER gravado; ${ops} operação(ões) de endereço em path legado`
+              + (reason ? ` (${reason})` : '')
+              + '. Não é atomicidade integral.'
+            : `MASTER gravado; sync de endereços sem operações no path legado`
+              + (reason ? ` (${reason})` : '')
+              + '.')
+            + recover,
+          variant: 'default',
         });
       } else {
-        toast({ title: `✅ Cliente ${verb} com sucesso!` });
+        toast({ title: `Cliente ${verb}`, description: 'Cadastro MASTER confirmado. Sync de endereços omitido ou sem operações.' });
       }
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
@@ -918,6 +940,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     created?: number,
     updated?: number,
     deleted?: number,
+    reconcileRequired?: boolean,
+    syncPath?: string,
+    fallbackReason?: string|null,
   }|null} */ (null));
   /** true se o lote atomico overflow (>50 ops) — legado antes do MASTER, sem órfãos. */
   const locaisPreferLegacyRef = useRef(false);
@@ -1514,6 +1539,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 )}
 
                 <div className="col-span-2 pt-4 border-t">
+                  {isHttpBackendMode ? (
+                    <p className="text-xs text-slate-600 mb-2" data-block="fiscal-cliente-local-canonico" role="note">
+                      Fiscal canônico = ClienteLocal (revisão abaixo). Campos MASTER.endereco_principal
+                      são legado/visual — HTTP rejeita gravação significativa; não copiam o fiscal operacional.
+                      Use «Revisar fiscal» (activate:false) e ativação explícita autorizada.
+                    </p>
+                  ) : null}
                   <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>
                   {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="FISCAL" allowReviewEdit />}
                   <div className="grid grid-cols-4 gap-4">
@@ -1522,6 +1554,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="cep"
                         value={formData.endereco_principal?.cep || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1539,7 +1573,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                         tipo="cep"
                         valor={formData.endereco_principal?.cep}
                         onDadosEncontrados={handleDadosCEP}
-                        disabled={!formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\D/g, '').length < 8}
+                        disabled={isHttpBackendMode || !formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\D/g, '').length < 8}
                       />
                     </div>
 
@@ -1548,6 +1582,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="logradouro"
                         value={formData.endereco_principal?.logradouro || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1563,6 +1599,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="numero"
                         value={formData.endereco_principal?.numero || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1578,6 +1616,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="bairro"
                         value={formData.endereco_principal?.bairro || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1593,6 +1633,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="cidade"
                         value={formData.endereco_principal?.cidade || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1608,6 +1650,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="estado"
                         value={formData.endereco_principal?.estado || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
