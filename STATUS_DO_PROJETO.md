@@ -1,3 +1,13 @@
+## Cursor — PR596 Bugbot intent-id + draft owned (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Tip `eac4d0e6b`: Bugbot 2 high — **não aprovado**.
+Correções (este tip):
+- PedidoCanonico: `hydrateIntentIdRef` — GET tardio de outro pedido não sobrescreve; toast só se intent atual.
+- Completo: `locaisDraftOwnedRef` — `[]` pristine + baseline ≠ assumed/loaded draft; save omite sync (não soft-delete em massa).
+Peels operacional atualizados. Suites locais PASS. Sem HML (`d054e2b3`).
+CI tip **em curso ≠ aprovado**. Dependência 595→596.
+
 ## Cursor — PR596 Bugbot draft-assumed + hydrate epoch (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).

@@ -564,25 +564,34 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         : undefined;
       if (isHttpBackendMode && locaisDraft !== undefined) {
         locaisDraft = data.locais_entrega;
-        const localPlan = prepareClienteLocaisHttpDraft(locaisDraft);
-        const required = new Set(/** @type {string[]} */ (localPlan.map(step => step.kind === 'create' ? 'criar' : 'editar')));
-        for (const step of localPlan) {
-          const original = locaisDraft.find(row => String(row?.id || '') === step.localId);
-          const previous = original?._finalidades_detalhadas;
-          const next = Array.isArray(step.fins) ? step.fins : [];
-          if (step.kind === 'create' ? next.some(row => row.principal === true)
-            : !Array.isArray(previous) || next.some(row => !previous.some(before => before.finalidade === row.finalidade && before.principal === row.principal))
-              || previous.some(before => before.principal && !next.some(row => row.finalidade === before.finalidade))) required.add('principal');
+        // [] inicial do form ≠ remoção explícita — omissão preserva operacionais HTTP.
+        const omitPristineEmpty = Array.isArray(locaisDraft)
+          && locaisDraft.length === 0
+          && !locaisDraftOwnedRef.current;
+        if (omitPristineEmpty) {
+          locaisDraft = undefined;
+        } else {
+          const localPlan = prepareClienteLocaisHttpDraft(locaisDraft);
+          const required = new Set(/** @type {string[]} */ (localPlan.map(step => step.kind === 'create' ? 'criar' : 'editar')));
+          for (const step of localPlan) {
+            const original = locaisDraft.find(row => String(row?.id || '') === step.localId);
+            const previous = original?._finalidades_detalhadas;
+            const next = Array.isArray(step.fins) ? step.fins : [];
+            if (step.kind === 'create' ? next.some(row => row.principal === true)
+              : !Array.isArray(previous) || next.some(row => !previous.some(before => before.finalidade === row.finalidade && before.principal === row.principal))
+                || previous.some(before => before.principal && !next.some(row => row.finalidade === before.finalidade))) required.add('principal');
+          }
+          const keptIds = new Set(localPlan.map(step => step.localId).filter(Boolean));
+          const baseline = locaisHttpBaselineRef.current;
+          if (Array.isArray(baseline) && baseline.some(row => {
+            const id = row && typeof row === 'object' ? String(/** @type {{id?: unknown}} */ (row).id || '') : '';
+            return isClienteLocalCanonicalId(id) && !keptIds.has(id);
+          })) required.add('inativar');
+          for (const action of required) if (!hasPermission('Cadastros', 'cliente_local', action)) {
+            throw Object.assign(new Error(`Permissao de locais ausente: ${action}. MASTER nao enviado; rascunho preservado.`), { code: 'PERMISSION_DENIED', status: 403 });
+          }
         }
-        const keptIds = new Set(localPlan.map(step => step.localId).filter(Boolean));
-        const baseline = locaisHttpBaselineRef.current;
-        if (Array.isArray(baseline) && baseline.some(row => {
-          const id = row && typeof row === 'object' ? String(/** @type {{id?: unknown}} */ (row).id || '') : '';
-          return isClienteLocalCanonicalId(id) && !keptIds.has(id);
-        })) required.add('inativar');
-        for (const action of required) if (!hasPermission('Cadastros', 'cliente_local', action)) {
-          throw Object.assign(new Error(`Permissao de locais ausente: ${action}. MASTER nao enviado; rascunho preservado.`), { code: 'PERMISSION_DENIED', status: 403 });
-        }
+        // Nunca empurrar locais no MASTER — sync canônico ou omissão explícita.
         delete payload.locais_entrega;
       }
       // Anexos documentos[] ≠ CPF/CNPJ MASTER ≠ ModeloDocumento — sem DocumentosCliente paralelo.
@@ -845,6 +854,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   useEffect(() => { setRevisaoEntregaTotal(null); }, [reviewClienteId]);
   /** Baseline lido para soft-delete só quando a carga HTTP concluiu (ref evita stale no mutate). */
   const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
+  /** true só após edição explícita do rascunho (apply/openDraft) — [] inicial ≠ owned. */
+  const locaisDraftOwnedRef = useRef(false);
   /** Último summary de sync `/locais` — BATCH_ATOMIC=false nunca vira toast de salvamento integral. */
   const lastLocaisSyncSummaryRef = useRef(/** @type {{
     skipped?: boolean,
@@ -854,6 +865,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     deleted?: number,
   }|null} */ (null));
   useEffect(() => {
+    // Troca de cliente/sessão: ownership do rascunho não cruza contexto.
+    locaisDraftOwnedRef.current = false;
     const id = clienteBoundId || cliente?.id || null;
     if (!id || !isHttpBackendMode) {
       setLocaisHttpView(undefined);
@@ -893,10 +906,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   /**
    * [] inicial do form ≠ catálogo HTTP confirmado.
-   * Draft só manda se já tem itens ou se o baseline HTTP já materializou (mesmo vazio).
+   * Draft só manda com itens ou ownership explícita (apply/openDraft) — baseline sozinho não assume [].
    */
   const locaisDraftAssumed = Array.isArray(formData.locais_entrega)
-    && (formData.locais_entrega.length > 0 || Array.isArray(locaisHttpBaselineRef.current));
+    && (formData.locais_entrega.length > 0 || locaisDraftOwnedRef.current);
   const locaisViewForUi = locaisDraftAssumed
     ? formData.locais_entrega
     : (Array.isArray(locaisHttpView) ? locaisHttpView : (Array.isArray(formData.locais_entrega) ? formData.locais_entrega : []));
@@ -924,6 +937,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     });
   };
   const applyEnderecosDraft = (novosEnderecos) => {
+    locaisDraftOwnedRef.current = true;
     setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
   };
 
@@ -943,15 +957,14 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     }
     if (finalidade !== 'ENTREGA') return;
     setActiveTab('enderecos');
+    locaisDraftOwnedRef.current = true;
     setFormData((prev) => {
-      // [] inicial do form não apaga operacionais HTTP — preferir locaisHttpView até draft assumido.
+      // [] inicial do form não apaga operacionais HTTP — preferir locaisHttpView até draft com itens.
       const httpList = Array.isArray(locaisHttpView) ? locaisHttpView : null;
       const draftList = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : null;
       const list = (draftList && draftList.length > 0)
         ? [...draftList]
-        : (httpList
-          ? [...httpList]
-          : (draftList && Array.isArray(locaisHttpBaselineRef.current) ? [...draftList] : []));
+        : (httpList ? [...httpList] : []);
       const id = String(ui.id || '').trim();
       const without = id ? list.filter((row) => String(row?.id || '') !== id) : list;
       return {

@@ -91,6 +91,8 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const detailGate=useRef(createPedidoDetailGate());
   /** Hidratação de grades/seleção: epoch próprio — não compartilha sequência com save/show/history. */
   const hydrateEpoch=useRef(0);
+  /** Id do pedido cuja hidratação ainda manda — GET tardio de outro id não sobrescreve. */
+  const hydrateIntentIdRef=useRef(null);
   const selectionEpochLiveRef=useRef(selectionEpoch);
   selectionEpochLiveRef.current=selectionEpoch;
   const initialOpened=useRef(null);
@@ -295,6 +297,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     // Status canônicos do pedidoUiPolicy — sem inventar EM_ENTREGA/ENTREGUE.
     detailGate.current.invalidate();
     hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current=null;
     setSelected(null);
     const map={PRODUCAO:'EM_PRODUCAO',ENTREGA:'PRONTO_ENTREGA',RETIRA:'PRONTO_RETIRADA',ENTREGUES:'FINALIZADO',FINALIZADOS:'FINALIZADO',CANCELADOS:'CANCELADO'};
     const status=map[centralSituacao]||'TODOS';
@@ -302,7 +305,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     setFilters((prev)=>({...prev,status,tipoOperacao}));
     setApplied((prev)=>({...prev,status,tipoOperacao}));
     setPage(1);
-    return ()=>{ detailGate.current.invalidate(); hydrateEpoch.current += 1; };
+    return ()=>{ detailGate.current.invalidate(); hydrateEpoch.current += 1; hydrateIntentIdRef.current=null; };
   },[centralLayout,centralSituacao]);
   useEffect(()=>{
     if(!centralLayout)return undefined;
@@ -316,10 +319,11 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   );
   const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);const cond=masters.condicoes.find((item)=>item.id===row?.condicao_pagamento_id);const enriched=row?{...row,condicao_pagamento_codigo:row.condicao_pagamento_codigo||cond?.codigo||undefined,condicao_pagamento_nome:row.condicao_pagamento_nome||cond?.nome||undefined,condicao_pagamento_label:row.condicao_pagamento_label||(cond?condicaoLabel(cond.id):undefined)}:row;onCentralSelect(enriched,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch:epoch});};
   const hydrateInflightRef=useRef(new Map());
-  /** GET compartilhado por id; epoch da situação valida no caller — reuso não prende o 1º clique. */
+  /** GET compartilhado por id; epoch/intent validam no caller — reuso não prende o 1º clique. */
   const hydratePedidoRow=async(row,{epochAtClick=null}={})=>{
     if(!row?.id)return null;
-    let flight=hydrateInflightRef.current.get(row.id);
+    const requestId=row.id;
+    let flight=hydrateInflightRef.current.get(requestId);
     if(!flight){
       const session=activeScope();
       if(!session?.token||!renderedScope.current?.groupId||!renderedScope.current?.empresaId||!renderedScope.current?.actorId){
@@ -330,34 +334,38 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
       ++hydrateEpoch.current;
       flight=(async()=>{
         try{
-          const detail=await api.get(row.id);
+          const detail=await api.get(requestId);
           const live=activeScope();
           if(!live?.token||live.token!==opened.token)return null;
           if(opened.groupId!==renderedScope.current.groupId||opened.empresaId!==renderedScope.current.empresaId||opened.actorId!==renderedScope.current.actorId)return null;
           return detail;
         }catch(error){
-          toast.error(message(error));
+          // Toast só se este id ainda é a intenção — GET substituído não alerta.
+          if(hydrateIntentIdRef.current===requestId)toast.error(message(error));
           return null;
         }finally{
-          hydrateInflightRef.current.delete(row.id);
+          hydrateInflightRef.current.delete(requestId);
         }
       })();
-      hydrateInflightRef.current.set(row.id,flight);
+      hydrateInflightRef.current.set(requestId,flight);
     }
     const detail=await flight;
     if(!detail)return null;
     if(epochAtClick!=null&&epochAtClick!==selectionEpochLiveRef.current)return null;
+    if(hydrateIntentIdRef.current!==requestId)return null;
     return detail;
   };
   const selectCentralRow=async(row)=>{
     if(!row?.id)return;
     // Lista pode trazer itens stub sem total/parcelas — sempre GET canônico na Central.
     const epochAtClick=selectionEpochLiveRef.current;
+    hydrateIntentIdRef.current=row.id;
     setSelected(row);
     notifyCentralSelect(row,epochAtClick);
     const detail=await hydratePedidoRow(row,{epochAtClick});
     if(!detail)return;
     if(epochAtClick!==selectionEpochLiveRef.current)return;
+    if(hydrateIntentIdRef.current!==row.id)return;
     setSelected(detail);
     notifyCentralSelect(detail,epochAtClick);
   };
@@ -366,11 +374,13 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     // Edição sempre após GET: evita form incompleto quando a lista já trouxe itens parciais.
     // Duplo clique compartilha o mesmo GET da seleção — não abortar grades/pagamento-resumo.
     const epochAtClick=selectionEpochLiveRef.current;
+    hydrateIntentIdRef.current=row.id;
     setSelected(row);
     notifyCentralSelect(row,epochAtClick);
     const detail=await hydratePedidoRow(row,{epochAtClick});
     if(!detail)return;
     if(epochAtClick!==selectionEpochLiveRef.current)return;
+    if(hydrateIntentIdRef.current!==row.id)return;
     setSelected(detail);
     notifyCentralSelect(detail,epochAtClick);
     openEdit(detail);
