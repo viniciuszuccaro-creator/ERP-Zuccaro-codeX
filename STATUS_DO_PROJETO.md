@@ -1,3 +1,45 @@
+## Novo pacote API/web81d1e849 pronto e conferido (2026-11-14)
+
+Heartbeat nativo19:32:14.034Z, CASA/CPA, HEAD81d1e849/remotoigual/branchcorreta/
+checkoutlimpo/semwriter, reserva594/6883064345 e travaCreateNew. CI7114terminal
+SUCCESS. Cursor reconhece revisao final9/9blobs nos docs596/c73ab7cd; nenhum
+achado bloqueante, mas isso nao autoriza deploy. AGENTS/operacional sem delta.
+
+Script oficial package-hml-runtime.mjs executado FORA daVPS, com Node/deps ja
+existentes e envDirfalse. NOVO pacote doSHA81d1e849511527f2a70529b70b584ad54506638f:
+2214arquivos/17874603bytes, filesSha256
+73cbb4f079f5cb24edbda59a2d3f393227cd2d113e3345353a353b0d9f7a5ffd.
+Manifesto canonico e TODOSarquivos/bytes/hashes conferidos; API/web mesmosSHA,
+PUBLISHED_CLEAN/environmenthml/dataInBuildfalse. Sem DB/configprivada/segredos
+ou binarios nativos. Nao prova login/HTTP/PG nem SHA servido emHML.
+
+Archive privado gerado e verificado no MESMO disparo:2215membros(inclmanifesto),
+4021749bytes/SHA256
+1fcdf8501502256d797190752ba23a570073fb2fcfb20be58b14d3e4d53af8d3.
+Todos membros regulares, sem link/traversal; bytes/hashes individuais iguais.
+Pacote/archive045antigos preservados, nao reconstruidos ou relabelados.
+Artefatos privados C:/Users/cpaba/.codex/erp-review-20261114/
+runtime-81d1e849-native e runtime-81d1e849-native-transport.tar.gz;
+recibo native-package81-archive.receipt.private.json, foraGit/build/CIpublicos.
+
+Plano privado conciliado promotion-81d1e849.plan.private.json/SHA256
+9f3995aaa90d893c0b8a07aa416890f234ea053aee2c0e626db4fcce24aafad9:
+6contratos/scripts continuamexatos, rollback/guardas anteriores preservados,
+9pins PENDENTES/canApplyfalse. Nenhum comando remoto/backup/restore/deploy/DB
+neste disparo. HML continua d054e2b3 ate prova nova. CanalADMIN WebConsole
+retomado no disparo anterior viahPanel; reconfirmar sessao antes de usar. SSHCasa
+sem chave correspondente, transporte privado e ack externo ainda nao comprovados.
+Nao expor archive privado para contornar autenticacao; nao trocargrants/chaves.
+
+Proxima tarefa executavel: preflight HML SOMENTE LEITURA pelos conectores/scripts
+existentes, conferir lease/reserva remotos/pins/capacidade/config/cluster/role/
+schema/ator, saida privada, sem consultar clientes ou auditoria de negocio.
+Nao executar backup/grant/carga/deploy neste preflight. Depois fechar mecanismo
+privado de transporte+ack e janela/revisao; enquanto depender de acesso, revisar
+somente delta Dashboard/contagens publicado pelo Cursor (G existente), sem
+editar sua branch ou chamar codigo de recuperacao de registros. Pausar quando
+nenhum item concreto liberado restar, sem polling vazio ou promessa permanente.
+
 ## Fechamento do contrato remanescente da composicao596 (2026-11-14)
 
 CI7110/run43630927875 do3f318ccf: backend/PostgreSQL ecomposeSUCCESS;
