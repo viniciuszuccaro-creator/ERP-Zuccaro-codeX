@@ -7,6 +7,10 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { validateManifest, verifyArchive, retainExternal } from '../scripts/vps/sync-hml-backup.mjs';
 
+test('published Linux backup entry point has LF line endings', () => {
+  assert.ok(!fs.readFileSync('scripts/vps/create-pre-gate-e-backup.sh','utf8').includes('\r'));
+});
+
 test('external copy rejects traversal, duplicate names, untested restores and corrupt bytes', () => {
   const valid = { name: 'hml-20261114T120000Z-00000000', bytes: 3,
     sha256: createHash('sha256').update('abc').digest('hex'), restoreVerified: true };
