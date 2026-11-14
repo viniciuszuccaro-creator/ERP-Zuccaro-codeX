@@ -872,9 +872,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   }|null} */ (null));
   // Booleano estável — não colocar `hasPermission` (nova identidade a cada render) nas deps.
   const canViewLocais = hasPermission('Cadastros', 'cliente_local', 'visualizar') === true;
+  /** Mesmo id passado a ClienteLocaisRevisao — só nele resetar o hint de revisão. */
+  const reviewClienteId = clienteBoundId || cliente?.id || null;
   useEffect(() => {
-    const id = clienteBoundId || cliente?.id || null;
     setRevisaoEntregaTotal(null);
+  }, [reviewClienteId]);
+  useEffect(() => {
+    const id = reviewClienteId;
     if (!id || !isHttpBackendMode) {
       setLocaisHttpView(undefined);
       locaisHttpBaselineRef.current = undefined;
@@ -917,7 +921,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       }
     })();
     return () => { cancelled = true; };
-  }, [clienteBoundId, cliente?.id, permissionsLoading, canViewLocais]);
+  }, [reviewClienteId, permissionsLoading, canViewLocais]);
 
   const locaisViewForUi = Array.isArray(formData.locais_entrega)
     ? formData.locais_entrega

@@ -32,10 +32,11 @@ test('Completo: rascunho de revisão + loadStatus + cliente_local', () => {
   assert.match(completo, /loadStatus=\{Array\.isArray\(formData\.locais_entrega\) \? 'loaded' : locaisLoadStatus\}/);
   assert.match(completo, /onOpenDraft=\{openLocalDraftFromReview\}/);
   assert.match(completo, /hasPermission\('Cadastros', 'cliente_local', 'visualizar'\)/);
-  // Bugbot: deps estáveis (sem identidade de hasPermission) + reset do total de revisão.
+  // Bugbot: deps estáveis + reset do hint só no reviewClienteId (não em permissionsLoading).
   assert.match(completo, /const canViewLocais = hasPermission\('Cadastros', 'cliente_local', 'visualizar'\) === true/);
-  assert.match(completo, /setRevisaoEntregaTotal\(null\)/);
-  assert.match(completo, /\[clienteBoundId, cliente\?\.id, permissionsLoading, canViewLocais\]/);
+  assert.match(completo, /const reviewClienteId = clienteBoundId \|\| cliente\?\.id \|\| null/);
+  assert.match(completo, /setRevisaoEntregaTotal\(null\);\n  \}, \[reviewClienteId\]/);
+  assert.match(completo, /\[reviewClienteId, permissionsLoading, canViewLocais\]/);
   // Não sobrescreve fiscal manual: fill só se empty.
   assert.match(completo, /const empty = current === undefined \|\| current === null \|\| String\(current\)\.trim\(\) === ''/);
 });
