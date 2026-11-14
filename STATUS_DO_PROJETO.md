@@ -1,3 +1,9 @@
+## Cursor — PR596 Casa PedidoCanonico sessão monotônica + RBAC (2026-11-14 America/Sao_Paulo)
+
+Casa #6885162320: (P1) A→B→A token — `hydrateEpoch` monotônico + sessionIdentity;
+(P1) revogação visual — `canViewLiveRef` pós-await; (P2) toast erro com mesmo guard.
+Sem Completo/deploy. tip ≠ HML `d054e2b3`.
+
 ## Cursor — PR596 Dashboard KPIs derivados fail-closed (2026-11-14 America/Sao_Paulo)
 
 Fluxo/Vendas/Ticket/Conversão/OTD/Peso/Aproveitamento/Inadimplência +

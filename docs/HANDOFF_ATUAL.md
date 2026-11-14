@@ -1,7 +1,12 @@
+## Cursor — PR596 Casa PedidoCanonico P1/P2 sessão+RBAC (2026-11-14 America/Sao_Paulo)
+
+hydrateEpoch monotônico (token A→B→A), canViewLiveRef, toast com openedGen.
+tip ≠ HML. Sem Completo/deploy. Aguarda CI. Freeze `0ffff5100` / port `81d1e849`.
+
 ## Cursor — PR596 Dashboard KPIs derivados fail-closed (2026-11-14 America/Sao_Paulo)
 
 Fluxo/OTD/%/FinancialSummary: — ≠ R$ 0,00. tip ≠ HML. Sem Completo/deploy.
-Aguarda CI. Freeze `0ffff5100` / port `81d1e849`. Casa: Completo ownership + pacote 81.
+Freeze `0ffff5100` / port `81d1e849`. Casa: Completo ownership + pacote 81.
 
 ## Cursor — PR596 tip 4485508c9 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 

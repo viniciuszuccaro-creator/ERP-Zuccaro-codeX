@@ -89,12 +89,13 @@ const message = (error) => explainPedidoPersistenceError(error)
 export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken=undefined, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null, centralLayout=false, centralSituacao=null, centralSearch='', selectionEpoch=0, onCentralSelect=null, selectedCentralId=null }) {
   const queryClient=useQueryClient();
   const detailGate=useRef(createPedidoDetailGate());
-  /** Hidratação de grades/seleção: epoch próprio — não compartilha sequência com save/show/history. */
+  /** Hidratação: geração monotônica de sessão/contexto (Casa A→B→A) — ≠ igualdade de token. */
   const hydrateEpoch=useRef(0);
   /** Id do pedido cuja hidratação ainda manda — GET tardio de outro id não sobrescreve. */
   const hydrateIntentIdRef=useRef(null);
   const selectionEpochLiveRef=useRef(selectionEpoch);
   selectionEpochLiveRef.current=selectionEpoch;
+  const canViewLiveRef=useRef(false);
   const initialOpened=useRef(null);
   const initialCreateOpened=useRef(null);
   const mutationGate=useRef(sharedPedidoMutationGate);
@@ -127,6 +128,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const [produtoQuery,setProdutoQuery]=useState('');
   const [centralHiddenColumns,setCentralHiddenColumns]=useState(()=>new Set());
   const canView=canUsePedidoAction(hasPermission,'visualizar');
+  canViewLiveRef.current=canView;
   const canCreate=canUsePedidoAction(hasPermission,'criar');
   const canEdit=(row)=>canUsePedidoAction(hasPermission,'editar',row?.status);
   const canCancel=(row)=>canUsePedidoAction(hasPermission,'cancelar',row?.status);
@@ -238,7 +240,13 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const tabelaLabel=(id)=>{if(!id)return 'Não informada';const row=(masters.tabelas||[]).find((item)=>item.id===id);if(!row)return 'Desconhecida';return row.codigo?`${row.codigo} — ${row.nome||''}`:(row.nome||id);};
   const clienteOptions=useMemo(()=>filterClienteEmpresaOptions(masters.clientesEmpresa, clients, clienteQuery,form.cliente_empresa_id),[masters.clientesEmpresa, clients, clienteQuery,form.cliente_empresa_id]);
   const produtoOptions=useMemo(()=>filterProdutoOptions(masters.produtos, produtoQuery),[masters.produtos, produtoQuery]);
-  useEffect(()=>{detailGate.current.invalidate();setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setCreateKey(null);setHistory([]);setHistoryLoading(false);setHistoryError(null);setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}));setPendingCancel(null);setCancelMotivo('');setPendingTransition(null);setStatusMotivo('');setFilters({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});setApplied({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});},[groupId,empresaId,actorId]);
+  useEffect(()=>{
+    // Geração monotônica: token A→B→A não reabre GET da sessão antiga (Casa P1).
+    detailGate.current.invalidate();
+    hydrateEpoch.current += 1;
+    hydrateIntentIdRef.current=null;
+    setPage(1);setSelected(null);setFormOpen(false);setDetailOpen(false);setCreateKey(null);setHistory([]);setHistoryLoading(false);setHistoryError(null);setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}));setPendingCancel(null);setCancelMotivo('');setPendingTransition(null);setStatusMotivo('');setFilters({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});setApplied({search:'',status:'TODOS',clienteEmpresaId:'TODOS',tipoOperacao:'TODOS'});
+  },[groupId,empresaId,actorId,sessionIdentity]);
   useEffect(()=>mutationGate.current.subscribe(()=>setBusy(mutationGate.current.isPending({groupId,empresaId,actorId}))),[groupId,empresaId,actorId]);
   useEffect(()=>{const warn=(e)=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   const change=(key,value)=>{setForm(current=>({...current,[key]:value}));setDirty(true);};
@@ -319,9 +327,10 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   );
   const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);const cond=masters.condicoes.find((item)=>item.id===row?.condicao_pagamento_id);const tab=(masters.tabelas||[]).find((item)=>item.id===row?.tabela_preco_id);const enriched=row?{...row,condicao_pagamento_codigo:row.condicao_pagamento_codigo||cond?.codigo||undefined,condicao_pagamento_nome:row.condicao_pagamento_nome||cond?.nome||undefined,condicao_pagamento_label:row.condicao_pagamento_label||(cond?condicaoLabel(cond.id):undefined),tabela_preco_codigo:row.tabela_preco_codigo||tab?.codigo||undefined,tabela_preco_nome:row.tabela_preco_nome||tab?.nome||undefined,tabela_preco_label:row.tabela_preco_label||(tab?tabelaLabel(tab.id):undefined)}:row;onCentralSelect(enriched,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch:epoch});};
   const hydrateInflightRef=useRef(new Map());
-  /** GET compartilhado por id; epoch/intent validam no caller — reuso não prende o 1º clique. */
-  const hydratePedidoRow=async(row,{epochAtClick=null}={})=>{
+  /** GET compartilhado por id; sessão monotônica + epoch/intent/RBAC validam no waiter. */
+  const hydratePedidoRow=async(row,{epochAtClick=null,sessionGenAtClick=null}={})=>{
     if(!row?.id)return null;
+    if(!canViewLiveRef.current)return null;
     const requestId=row.id;
     let flight=hydrateInflightRef.current.get(requestId);
     if(!flight){
@@ -331,18 +340,21 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
         return null;
       }
       const opened={...renderedScope.current,token:session.token};
-      // Não invalidar o Promise compartilhado por hydrateEpoch: waiters do mesmo id
-      // reutilizam o GET; epoch/intent validam no waiter (Bugbot shared-GET).
-      ++hydrateEpoch.current;
+      // Geração no início do flight — A→B→A não reusa resultado (≠ só token igual).
+      const openedGen=hydrateEpoch.current;
       flight=(async()=>{
         try{
           const detail=await api.get(requestId);
+          if(hydrateEpoch.current!==openedGen)return null;
+          if(!canViewLiveRef.current)return null;
           const live=activeScope();
           if(!live?.token||live.token!==opened.token)return null;
           if(opened.groupId!==renderedScope.current.groupId||opened.empresaId!==renderedScope.current.empresaId||opened.actorId!==renderedScope.current.actorId)return null;
           return detail;
         }catch(error){
-          // Toast só se este id ainda é a intenção — GET substituído não alerta.
+          // Mesmo guard do sucesso: sessão monotônica + intenção vigente (Casa P2).
+          if(hydrateEpoch.current!==openedGen)return null;
+          if(!canViewLiveRef.current)return null;
           if(hydrateIntentIdRef.current===requestId)toast.error(message(error));
           return null;
         }finally{
@@ -353,37 +365,45 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     }
     const detail=await flight;
     if(!detail)return null;
-    // Waiter: situação (epoch) ou troca de pedido (intent) — sem nullar o flight compartilhado.
+    // Waiter: situação, pedido, sessão monotônica, RBAC — sem nullar o flight compartilhado.
     if(epochAtClick!=null&&epochAtClick!==selectionEpochLiveRef.current)return null;
+    if(sessionGenAtClick!=null&&sessionGenAtClick!==hydrateEpoch.current)return null;
     if(hydrateIntentIdRef.current!==requestId)return null;
+    if(!canViewLiveRef.current)return null;
     return detail;
   };
   const selectCentralRow=async(row)=>{
-    if(!row?.id)return;
+    if(!row?.id||!canViewLiveRef.current)return;
     // Lista pode trazer itens stub sem total/parcelas — sempre GET canônico na Central.
     const epochAtClick=selectionEpochLiveRef.current;
+    const sessionGenAtClick=hydrateEpoch.current;
     hydrateIntentIdRef.current=row.id;
     setSelected(row);
     notifyCentralSelect(row,epochAtClick);
-    const detail=await hydratePedidoRow(row,{epochAtClick});
+    const detail=await hydratePedidoRow(row,{epochAtClick,sessionGenAtClick});
     if(!detail)return;
     if(epochAtClick!==selectionEpochLiveRef.current)return;
+    if(sessionGenAtClick!==hydrateEpoch.current)return;
     if(hydrateIntentIdRef.current!==row.id)return;
+    if(!canViewLiveRef.current)return;
     setSelected(detail);
     notifyCentralSelect(detail,epochAtClick);
   };
   const openEditHydrated=async(row)=>{
-    if(!canEdit(row)||!row?.id)return;
+    if(!canViewLiveRef.current||!canEdit(row)||!row?.id)return;
     // Edição sempre após GET: evita form incompleto quando a lista já trouxe itens parciais.
     // Duplo clique compartilha o mesmo GET da seleção — não abortar grades/pagamento-resumo.
     const epochAtClick=selectionEpochLiveRef.current;
+    const sessionGenAtClick=hydrateEpoch.current;
     hydrateIntentIdRef.current=row.id;
     setSelected(row);
     notifyCentralSelect(row,epochAtClick);
-    const detail=await hydratePedidoRow(row,{epochAtClick});
+    const detail=await hydratePedidoRow(row,{epochAtClick,sessionGenAtClick});
     if(!detail)return;
     if(epochAtClick!==selectionEpochLiveRef.current)return;
+    if(sessionGenAtClick!==hydrateEpoch.current)return;
     if(hydrateIntentIdRef.current!==row.id)return;
+    if(!canViewLiveRef.current)return;
     setSelected(detail);
     notifyCentralSelect(detail,epochAtClick);
     openEdit(detail);

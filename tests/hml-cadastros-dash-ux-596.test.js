@@ -204,6 +204,12 @@ test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   assert.match(pedido, /hydrateIntentIdRef\.current!==requestId/);
   assert.match(pedido, /epochAtClick!=null&&epochAtClick!==selectionEpochLiveRef\.current/);
   assert.doesNotMatch(pedido, /genAtStart!==hydrateEpoch/);
+  // Casa P1/P2: sessão monotônica (≠ token A→B→A) + RBAC pós-await + toast com mesmo guard.
+  assert.match(pedido, /sessionGenAtClick/);
+  assert.match(pedido, /hydrateEpoch\.current!==openedGen/);
+  assert.match(pedido, /sessionGenAtClick!=null&&sessionGenAtClick!==hydrateEpoch\.current/);
+  assert.match(pedido, /canViewLiveRef/);
+  assert.match(pedido, /\[groupId,empresaId,actorId,sessionIdentity\]/);
   assert.match(pedido, /condicao_pagamento_codigo/);
   assert.match(pedido, /tabela_preco_label/);
   assert.match(orc, /condicao_pagamento_label/);
