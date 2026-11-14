@@ -95,6 +95,7 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /condicao_pagamento_codigo/);
   assert.match(src, /selectionEpochRef/);
   assert.match(src, /selectionEpoch=\{selectionEpoch\}/);
+  assert.match(src, /typeof meta\.selectionEpoch !== 'number'/);
   assert.match(src, /hasSelection=\{Boolean\(selected\?\.id\)\}/);
   assert.match(src, /CentralCliente360Panel/);
   assert.match(src, /OrcamentosTab/);
@@ -115,6 +116,9 @@ test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravaçã
   assert.match(src, /notifyCentralSelect/);
   assert.match(src, /selectCentralRow/);
   assert.match(src, /openEditHydrated/);
+  assert.match(src, /selectionEpochLiveRef/);
+  assert.match(src, /loadCentralDetail/);
+  assert.match(src, /actionGate\.current\.invalidate/);
   assert.match(src, /selectionEpoch/);
   assert.match(src, /central360-selecionar-orcamento/);
   assert.match(src, /Validade do orçamento \(≠ prazo de entrega\)/);
@@ -140,6 +144,7 @@ test('PedidoCanonicoPanel: tabela 12 colunas no centralLayout (mesmas chaves)', 
   assert.match(ped, /Lista pode trazer itens stub/);
   assert.match(ped, /Edição sempre após GET/);
   assert.match(ped, /hydrateEpoch/);
+  assert.match(ped, /selectionEpochLiveRef/);
   assert.match(ped, /selectionEpoch/);
   assert.match(ped, /central360-selecionar-pedido/);
 });

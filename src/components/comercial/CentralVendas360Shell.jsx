@@ -177,7 +177,8 @@ export default function CentralVendas360Shell({
     || (contexto === 'grupo' ? 'Grupo' : 'Empresa');
 
   const onSelectDocument = useCallback((row, meta = {}) => {
-    if (typeof meta.selectionEpoch === 'number' && meta.selectionEpoch !== selectionEpochRef.current) return;
+    // Epoch obrigatório: loadCentralDetail/Fechar sem epoch não pode preencher grades após troca de situação.
+    if (typeof meta.selectionEpoch !== 'number' || meta.selectionEpoch !== selectionEpochRef.current) return;
     setSelected(row || null);
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);

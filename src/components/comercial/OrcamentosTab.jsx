@@ -104,6 +104,8 @@ export default function OrcamentosTab({
   const initialOpened = useRef(null);
   const initialCreateOpened = useRef(null);
   const detailRequest = useRef(0);
+  const selectionEpochLiveRef = useRef(selectionEpoch);
+  selectionEpochLiveRef.current = selectionEpoch;
   const formScope = useRef(null);
   const cancelScope = useRef(null);
   const conversionScope = useRef(null);
@@ -145,6 +147,7 @@ export default function OrcamentosTab({
   useEffect(() => {
     if (!centralLayout) return undefined;
     detailRequest.current += 1;
+    actionGate.current.invalidate();
     setSelected(null);
     if (centralSituacao === 'VENCIDOS') {
       const today = new Date().toISOString().slice(0, 10);
@@ -734,18 +737,28 @@ const convertToPedido = async () => {
   const loadCentralDetail = async (row, ticket) => {
     if (!actionCurrent(ticket)) return null;
     if (proposalMode) return row;
-    if (Array.isArray(row?.itens) && row.itens.length > 0 && row.numero) return row;
+    const epochAtStart = selectionEpochLiveRef.current;
+    if (Array.isArray(row?.itens) && row.itens.length > 0 && row.numero) {
+      if (typeof onCentralSelect === 'function') {
+        const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
+        onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch: epochAtStart });
+      }
+      return row;
+    }
+    const request = ++detailRequest.current;
     try {
       const detail = await api.get(row.id);
       if (!actionCurrent(ticket)) return null;
+      if (request !== detailRequest.current) return null;
+      if (epochAtStart !== selectionEpochLiveRef.current) return null;
       setSelected(detail);
       if (typeof onCentralSelect === 'function') {
         const link = masters.clientesEmpresa.find((item) => item.id === detail?.cliente_empresa_id);
-        onCentralSelect(detail, { clienteId: link?.cliente_id || detail?.cliente_id || null });
+        onCentralSelect(detail, { clienteId: link?.cliente_id || detail?.cliente_id || null, selectionEpoch: epochAtStart });
       }
       return detail;
     } catch (error) {
-      if (actionCurrent(ticket)) toast.error(errorMessage(error));
+      if (actionCurrent(ticket) && request === detailRequest.current) toast.error(errorMessage(error));
       return null;
     }
   };
@@ -859,10 +872,10 @@ const convertToPedido = async () => {
     const link = masters.clientesEmpresa.find((item) => item.id === pendingConversion.cliente_empresa_id);
     return link?.cliente_id || pendingConversion.cliente_id || null;
   })();
-  const notifyCentralSelect = (row) => {
+  const notifyCentralSelect = (row, epoch = selectionEpochLiveRef.current) => {
     if (typeof onCentralSelect !== 'function') return;
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
-    onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch });
+    onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch: epoch });
   };
   /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
   const selectCentralRow = async (row) => {

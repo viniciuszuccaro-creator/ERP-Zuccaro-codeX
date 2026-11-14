@@ -77,6 +77,8 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const detailGate=useRef(createPedidoDetailGate());
   /** Hidratação de grades/seleção: epoch próprio — não compartilha sequência com save/show/history. */
   const hydrateEpoch=useRef(0);
+  const selectionEpochLiveRef=useRef(selectionEpoch);
+  selectionEpochLiveRef.current=selectionEpoch;
   const initialOpened=useRef(null);
   const initialCreateOpened=useRef(null);
   const mutationGate=useRef(sharedPedidoMutationGate);
@@ -298,7 +300,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     ()=>CENTRAL_VENDAS360_COLUMNS.filter((col)=>!centralHiddenColumns.has(col.key)),
     [centralHiddenColumns],
   );
-  const notifyCentralSelect=(row)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch});};
+  const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch:epoch});};
   const hydratePedidoRow=async(row,{forEdit=false}={})=>{
     if(!row?.id)return null;
     const session=activeScope();
@@ -323,14 +325,14 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   const selectCentralRow=async(row)=>{
     if(!row?.id)return;
     // Lista pode trazer itens stub sem total/parcelas — sempre GET canônico na Central.
-    const epochAtClick=selectionEpoch;
+    const epochAtClick=selectionEpochLiveRef.current;
     setSelected(row);
-    notifyCentralSelect(row);
+    notifyCentralSelect(row,epochAtClick);
     const detail=await hydratePedidoRow(row);
     if(!detail)return;
-    if(epochAtClick!==selectionEpoch)return;
+    if(epochAtClick!==selectionEpochLiveRef.current)return;
     setSelected(detail);
-    notifyCentralSelect(detail);
+    notifyCentralSelect(detail,epochAtClick);
   };
   const openEditHydrated=async(row)=>{
     if(!canEdit(row))return;
