@@ -1,3 +1,38 @@
+## Prova PostgreSQL embarcado dos guards e tresclausulas (2026-11-14)
+
+Extensao JUSTIFICADA do MESMO heartbeat20:59:15.645Z, reservas594/6884445742 e
+6884463036. PGlite JA instalado nas dependencias, usado sempath/conexao/env em
+MEMORIA com fixturesSINTETICAS, FORAVPS/custozero/sem instalar. Nao e backup,
+restoreHMLreal, roleloginreal ou ensaio de dadosprivados.
+
+Teste EXISTENTE tests/hml-vps-bootstrap.test.js ampliado:5/5PASS,0FAIL,0SKIP.
+Ambos SQLs PUBLICOSguardados abortam com P0001/mensagem esperada e snapshot
+sintetico de dados/colunas/indexes/policies/triggers/constraints permaneceigual.
+Apenas UMA STRING de fixture removeguard/ROLLBACK da propostaMINIMA para testar
+as3clausulas dentro de transacao no motorMEMORIA:2colunasmarcas surgemNULL
+(naorenumera),contatosNULLexistente/extraRG/inativo preservados,DEFAULT[] vale
+somente novoINSERTsintetico. Controlespreexistentesiguais;ROLLBACK restaura tudo.
+ArquivoSQLguardado nunca editado paraexecutar; naoha caminhoexecutorVPS neste
+ensaio. Proposta101clausulas/12objetos continua INCOMPLETA, naovalidada emoverlay.
+
+Publicado artefato minimo SANITIZADO docs/evidence/
+hml-existing-five-additive-20261114.proposal.sql (SHA24ca71c2a9e5a611d255d29a332e20f5c92ab93f99f8168ca955633f1a6fba1c)
+para teste/revisao reproduziveis noGitHub, sem depender do proprietario copiar
+arquivo privado. Nao entra emmigrator/runtime. Semconfig/IDprivado/dadosreais.
+Checks locais audit:baselineEXIT0,eslintfocalEXIT0,gitdiffcheckPASS. Fechamento
+completo npmtest/lint/typecheck/build/backendPG/composicao deve constar naCI do
+SHApublicado; naorerunsuiteestavel por tentativa. CI03f5d8ef/7141SUCCESSterminal.
+
+CanalSFTPprivado ainda solicitado ao proprietario (somente abrir sessao existente,
+semsecretosnochat/chaves/grants). Nao presumirconexao porresposta textual. Isto
+naoautoriza DDL/carga/deploy. HMLsegue d054e2b3, pacote81/CI7114 semrebuild.
+
+Proximo item INDEPENDENTE ja publicado Cursor596/66f31f62: revisar DashboardCanaisOrigem
+com consumidor real/transportesintetico (contexto/permissao/loading/erro/listavazia/
+cap500;parametros capados≠total) e preservar0confirmado. Nao reabrir Dashboard
+Corporativo4c65 ouCentral802 ja comprovados, naoeditar ramoCursor, nao helper
+paralelo. Enquanto esseitemexecutavel existe, manter mesmaautomacao ACTIVE;
+aoprontuario/review/transporte serem todososgates, pausarsem pollingvazio.
 ## Delta por objeto preparado e publicado para revisao (2026-11-14)
 
 HeartbeatNATIVO20:59:15.645Z, CASA/CPA, base33ad0fad/remotoigual/limpo/semwriter;
