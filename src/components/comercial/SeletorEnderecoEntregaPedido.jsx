@@ -63,9 +63,12 @@ export default function SeletorEnderecoEntregaPedido({
     sessionActorId,
     canView,
   };
-  /** Binding/generation da lista carregada — não o bindingRef “ao vivo” no callback tardio. */
-  const listBindingRef = useRef(/** @type {typeof bindingRef.current | null} */ (null));
-  const listEpochRef = useRef(0);
+  /**
+   * Snapshot atômico da lista carregada (binding + epoch + items).
+   * Lookup e commit usam este snapshot — nunca `operacionais` fechado de render antigo
+   * com listBindingRef já apontando para B (handler A escreveria local A no rascunho B).
+   */
+  const listSnapshotRef = useRef(/** @type {{ binding: typeof bindingRef.current, epoch: number, items: Array<Record<string, unknown>> } | null} */ (null));
 
   const bindingsEqual = (a, b) => Boolean(a) && Boolean(b)
     && a.clienteId === b.clienteId
@@ -94,14 +97,14 @@ export default function SeletorEnderecoEntregaPedido({
   };
 
   /**
-   * Commit só se a lista (binding+epoch capturados na carga) ainda for a do binding atual.
-   * Handler tardio com operacionais A + bindingRef B não pode onChange (nem null) no consumidor B.
+   * Commit só se o snapshot da lista ainda for o ativo e o binding atual.
+   * Id ausente no snapshot.items → no-op (não limpa rascunho B por clique tardio A).
    */
-  const commitSelection = (listBinding, listEpoch, value) => {
-    if (!listBinding) return;
-    if (listEpochRef.current !== listEpoch) return;
-    if (epoch.current !== listEpoch) return;
-    if (!bindingsEqual(listBinding, bindingRef.current)) return;
+  const commitSelection = (snapshot, value) => {
+    if (!snapshot?.binding) return;
+    if (listSnapshotRef.current !== snapshot) return;
+    if (epoch.current !== snapshot.epoch) return;
+    if (!bindingsEqual(snapshot.binding, bindingRef.current)) return;
     if (value != null && !bindingAllowsSelect()) return;
     onChange?.(value);
   };
@@ -121,8 +124,7 @@ export default function SeletorEnderecoEntregaPedido({
   useEffect(() => {
     const invalidate = () => {
       epoch.current += 1;
-      listBindingRef.current = null;
-      listEpochRef.current = epoch.current;
+      listSnapshotRef.current = null;
       setOperacionais([]);
       setPartialMeta(null);
       setLoadStatus("unknown");
@@ -139,8 +141,7 @@ export default function SeletorEnderecoEntregaPedido({
 
   useEffect(() => {
     const generation = ++epoch.current;
-    listBindingRef.current = null;
-    listEpochRef.current = generation;
+    listSnapshotRef.current = null;
     setOperacionais([]);
     setPartialMeta(null);
     if (!clienteId) {
@@ -157,8 +158,11 @@ export default function SeletorEnderecoEntregaPedido({
     }
     if (!isHttpBackendMode) {
       const list = fromPropFallback();
-      listBindingRef.current = { ...bindingRef.current };
-      listEpochRef.current = generation;
+      listSnapshotRef.current = {
+        binding: { ...bindingRef.current },
+        epoch: generation,
+        items: list,
+      };
       setOperacionais(list);
       setLoadStatus("loaded");
       return undefined;
@@ -183,8 +187,7 @@ export default function SeletorEnderecoEntregaPedido({
         if (epoch.current !== generation) return;
         const rows = Array.isArray(page?.data) ? page.data : null;
         if (!rows) {
-          listBindingRef.current = null;
-          listEpochRef.current = generation;
+          listSnapshotRef.current = null;
           setOperacionais([]);
           setPartialMeta(null);
           setLoadStatus("failed");
@@ -198,8 +201,11 @@ export default function SeletorEnderecoEntregaPedido({
             const fins = Array.isArray(ui._finalidades) ? ui._finalidades : [];
             return fins.includes("ENTREGA");
           });
-        listBindingRef.current = { ...bindingRef.current };
-        listEpochRef.current = generation;
+        listSnapshotRef.current = {
+          binding: { ...bindingRef.current },
+          epoch: generation,
+          items: mapped,
+        };
         setOperacionais(mapped);
         const partial = page.partial === true;
         const totalRaw = page.meta?.total;
@@ -211,8 +217,7 @@ export default function SeletorEnderecoEntregaPedido({
       })
       .catch(() => {
         if (epoch.current !== generation) return;
-        listBindingRef.current = null;
-        listEpochRef.current = generation;
+        listSnapshotRef.current = null;
         setOperacionais([]);
         setPartialMeta(null);
         setLoadStatus("failed");
@@ -244,23 +249,25 @@ export default function SeletorEnderecoEntregaPedido({
   if (!cliente) return null;
 
   const handleSelecionarEndereco = (enderecoId) => {
-    // Captura da lista (não só bindingRef ao vivo): handler tardio A ≠ consumidor B.
-    const listBinding = listBindingRef.current;
-    const listEpoch = listEpochRef.current;
-    if (!listBinding || listEpoch !== epoch.current || !bindingsEqual(listBinding, bindingRef.current)) {
+    // Snapshot ativo (binding+epoch+items). Lookup NUNCA usa `operacionais` fechado:
+    // após carga B, refs antigas listBinding==B + find em operacionais A gravaria A em B.
+    const snapshot = listSnapshotRef.current;
+    if (!snapshot?.binding || snapshot.epoch !== epoch.current || listSnapshotRef.current !== snapshot) {
+      return;
+    }
+    if (!bindingsEqual(snapshot.binding, bindingRef.current)) {
       return;
     }
     if (!bindingAllowsSelect()) {
-      commitSelection(listBinding, listEpoch, null);
+      commitSelection(snapshot, null);
       return;
     }
-    const endereco = operacionais.find((e) => String(e.id) === String(enderecoId));
+    const endereco = snapshot.items.find((e) => String(e.id) === String(enderecoId));
     if (!endereco || !isClienteLocalCanonicalId(String(endereco.id || ""))) {
-      commitSelection(listBinding, listEpoch, null);
+      // Id da lista A inexistente no snapshot B → no-op (não limpar seleção válida de B).
       return;
     }
     if (!isEnderecoOperacionalCompleto(endereco)) {
-      commitSelection(listBinding, listEpoch, null);
       return;
     }
     const mapaUrl = endereco.latitude && endereco.longitude
@@ -270,7 +277,7 @@ export default function SeletorEnderecoEntregaPedido({
           `${endereco.logradouro}, ${endereco.numero}, ${endereco.cidade}, ${endereco.estado}`,
         )}`
         : "";
-    commitSelection(listBinding, listEpoch, {
+    commitSelection(snapshot, {
       ...endereco,
       cliente_local_id: endereco.id,
       mapa_url: mapaUrl || endereco.mapa_url || "",
