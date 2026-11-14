@@ -1,3 +1,8 @@
+## Cursor — PR596 DashboardCorporativo fail-closed counts (2026-11-14 America/Sao_Paulo)
+
+Independente do port endereços: — ≠ 0 em Cliente/Produto count do Corporativo.
+Freeze UI endereços `0ffff5100`. tip ≠ HML. Sem deploy.
+
 ## Cursor — PR596 revisão FINAL port Casa 3f318ccf1 (2026-11-14 America/Sao_Paulo)
 
 Independente: 8/8 blobs = freeze `0ffff5100`. Branch Codex

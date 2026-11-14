@@ -1,3 +1,11 @@
+## Cursor — PR596 DashboardCorporativo count fail-closed (2026-11-14 America/Sao_Paulo)
+
+Gap independente (sem Completo/port): Corporativo usava `count || length` e
+`catch → length` (lista vazia = 0 falso). Reusa `dashboardKpiPolicy` —
+`resolveDashboardCount` / `AfterFailure` / `formatDashboardCountDisplay` /
+`dashboardCountSubtitle`. `data-corp-count`. Golden primitive atualizado.
+45 PASS focados. Freeze endereços **`0ffff5100`** intacto. tip ≠ HML. Sem deploy.
+
 ## Cursor — PR596 revisão independente port Casa 3f318ccf1 (2026-11-14 America/Sao_Paulo)
 
 Casa #6882827840: port composto `codex/casa-fechamento-hml-20261114` SHA

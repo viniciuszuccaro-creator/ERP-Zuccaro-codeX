@@ -146,6 +146,7 @@ test('realtime e drill-down sao deterministas', () => {
 
 test('telas existentes usam policy e abandonam mock de vendas', async () => {
   const dash = await readFile(new URL('../src/pages/Dashboard.jsx', import.meta.url), 'utf8');
+  const corp = await readFile(new URL('../src/pages/DashboardCorporativo.jsx', import.meta.url), 'utf8');
   const bi = await readFile(new URL('../src/components/dashboard/DashboardOperacionalBI.jsx', import.meta.url), 'utf8');
   const realtime = await readFile(new URL('../src/components/lib/useRealtimeData.jsx', import.meta.url), 'utf8');
   const realtimeDashboard = await readFile(new URL('../src/components/dashboard/DashboardTempoReal.jsx', import.meta.url), 'utf8');
@@ -155,6 +156,8 @@ test('telas existentes usam policy e abandonam mock de vendas', async () => {
   assert.match(dash, /buildDashboardQueryKey/);
   assert.match(dash, /buildKpiDrillDownUrl/);
   assert.match(dash, /resolveDashboardCount/);
+  assert.match(corp, /resolveDashboardCountAfterFailure/);
+  assert.match(corp, /formatDashboardCountDisplay/);
   assert.match(bi, /buildVendasPorMesFromPedidos/);
   assert.doesNotMatch(bi, /valor: 45000/);
   assert.match(realtime, /DASHBOARD_REALTIME_LIMIT/);

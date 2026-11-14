@@ -42,6 +42,12 @@ import {
 } from "recharts";
 import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
 import ProtectedSection from "@/components/security/ProtectedSection";
+import {
+  resolveDashboardCount,
+  resolveDashboardCountAfterFailure,
+  formatDashboardCountDisplay,
+  dashboardCountSubtitle,
+} from "@/components/lib/dashboardKpiPolicy";
 
 export default function DashboardCorporativo() {
   const { grupoAtual, empresasDoGrupo, estaNoGrupo } = useContextoGrupoEmpresa();
@@ -100,22 +106,29 @@ export default function DashboardCorporativo() {
       : base44.entities.Cliente.list('-created_date', 9999),
   });
 
-  const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['clientes-count-corp', grupoAtual?.id],
+  const {
+    data: totalClientesResolved = null,
+    isPending: loadingClientesCount,
+  } = useQuery({
+    queryKey: ['clientes-count-corp', grupoAtual?.id, Array.isArray(clientes) && clientes.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
+      const listForFallback = Array.isArray(clientes) ? clientes : [];
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
         });
-        return response.data?.count || clientes.length;
+        // count 0 confirmado ≠ fallback por || (0 é falsy)
+        return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch {
-        return clientes.length;
+        // lista vazia / initialData [] ≠ zero confirmado
+        return resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 60000,
     retry: 1
   });
+  const totalClientesDisplay = formatDashboardCountDisplay(totalClientesResolved);
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-dashboard'],
@@ -129,22 +142,27 @@ export default function DashboardCorporativo() {
       : base44.entities.Produto.list('-created_date', 9999),
   });
 
-  const { data: totalProdutos = 0 } = useQuery({
-    queryKey: ['produtos-count-corp', grupoAtual?.id],
+  const {
+    data: totalProdutosResolved = null,
+    isPending: loadingProdutosCount,
+  } = useQuery({
+    queryKey: ['produtos-count-corp', grupoAtual?.id, Array.isArray(produtos) && produtos.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
+      const listForFallback = Array.isArray(produtos) ? produtos : [];
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
           filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
         });
-        return response.data?.count || produtos.length;
+        return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch {
-        return produtos.length;
+        return resolveDashboardCountAfterFailure(listForFallback);
       }
     },
     staleTime: 60000,
     retry: 1
   });
+  const totalProdutosDisplay = formatDashboardCountDisplay(totalProdutosResolved);
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contas-receber-dashboard', grupoAtual?.id],
@@ -216,9 +234,10 @@ export default function DashboardCorporativo() {
     return c.status === 'Ativo' && daEmpresa;
   }).length;
 
-  const produtosAtivos = empresaSelecionada === "todas" 
-    ? totalProdutos 
-    : produtos.filter(p => p.empresa_id === empresaSelecionada && p.status === 'Ativo').length;
+  // "todas": count canônico (— se indisponível). Filtro empresa: amostra da lista carregada.
+  const produtosAtivosDisplay = empresaSelecionada === "todas"
+    ? totalProdutosDisplay
+    : String(produtos.filter(p => p.empresa_id === empresaSelecionada && p.status === 'Ativo').length);
 
   const valorEstoqueTotal = produtos
     .filter(p => empresaSelecionada === "todas" || p.empresa_id === empresaSelecionada)
@@ -671,8 +690,18 @@ export default function DashboardCorporativo() {
                   <Users className="w-5 h-5 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-blue-600">{clientesAtivos}</div>
-                  <p className="text-xs text-slate-500 mt-1">em todas as empresas</p>
+                  <div className="text-3xl font-bold text-blue-600" data-corp-count="clientes">
+                    {empresaSelecionada === "todas" ? totalClientesDisplay : clientesAtivos}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {empresaSelecionada === "todas"
+                      ? dashboardCountSubtitle({
+                          resolved: totalClientesResolved,
+                          loading: loadingClientesCount,
+                          hasContext: Boolean(grupoAtual?.id || !estaNoGrupo),
+                        })
+                      : 'amostra ativos na lista · ≠ total global'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -682,8 +711,18 @@ export default function DashboardCorporativo() {
                   <Box className="w-5 h-5 text-indigo-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-indigo-600">{produtosAtivos}</div>
-                  <p className="text-xs text-slate-500 mt-1">no catálogo consolidado</p>
+                  <div className="text-3xl font-bold text-indigo-600" data-corp-count="produtos">
+                    {produtosAtivosDisplay}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {empresaSelecionada === "todas"
+                      ? dashboardCountSubtitle({
+                          resolved: totalProdutosResolved,
+                          loading: loadingProdutosCount,
+                          hasContext: Boolean(grupoAtual?.id || !estaNoGrupo),
+                        })
+                      : 'amostra ativos na lista · ≠ total global'}
+                  </p>
                 </CardContent>
               </Card>
 

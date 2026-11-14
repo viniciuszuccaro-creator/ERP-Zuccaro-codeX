@@ -50,6 +50,17 @@ test('Dashboard: contagens usam formatDashboardCountDisplay (— ≠ 0 falso)', 
   assert.match(dash, /amostra carregada · ≠ total global confirmado/);
 });
 
+test('DashboardCorporativo: count fail-closed (— ≠ 0; sem || length)', () => {
+  const corp = readFileSync('src/pages/DashboardCorporativo.jsx', 'utf8');
+  assert.match(corp, /resolveDashboardCountAfterFailure/);
+  assert.match(corp, /formatDashboardCountDisplay/);
+  assert.match(corp, /dashboardCountSubtitle/);
+  assert.match(corp, /data-corp-count="clientes"/);
+  assert.match(corp, /data-corp-count="produtos"/);
+  assert.doesNotMatch(corp, /response\.data\?\.count \|\| (clientes|produtos)\.length/);
+  assert.doesNotMatch(corp, /catch \{\s*return (clientes|produtos)\.length;/);
+});
+
 test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {
   const formas = readFileSync('src/components/comercial/FormasPagamentoPedido.jsx', 'utf8');
   assert.match(formas, /useFormasPagamento/);
