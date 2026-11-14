@@ -62,5 +62,43 @@ test('local batch real PostgreSQL: two connections contend, one CAS wins, audit 
       ] }), /SYNTHETIC_AUDIT_FAILURE/);
       assert.equal((await service.snapshot(ctx, ID.clientePjA)).version, beforeFailure.version);
       assert.equal(await audits(), count + 1);
+      rbac.link({ actorId: ID.runtimeActorA, groupId: ID.groupA, permissions: { Cadastros: {
+        cliente: ['importar'], cliente_local: ['visualizar', 'criar', 'editar', 'restaurar'],
+      } } });
+      const pending = await service.createMigrationPending(ctx, ID.clientePjA, {
+        nome: '', cep: '01310100', logradouro: 'Rua review PG', numero: '', bairro: 'Bairro', cidade: 'Cidade',
+        uf: 'SP', pais: '', origem: 'MIGRACAO', legacy_id: 'synthetic-pg-review', source_system: 'SYNTHETIC',
+        migration_batch: 'synthetic-pg-review', imported_at: '2026-11-12T00:00:00Z',
+        endereco_incompleto: true, ativo: false, finalidades: [{ finalidade: 'ENTREGA', principal: false }],
+      });
+      const review = await service.snapshot(ctx, ID.clientePjA, true), reviewAudits = await audits();
+      await blocker.query('BEGIN');
+      await blocker.query('SELECT id FROM clientes WHERE group_id=$1 AND id=$2 FOR UPDATE', [ctx.groupId, ID.clientePjA]);
+      const reviews = Promise.allSettled(['A', 'B'].map(value => service.sync(ctx, ID.clientePjA, {
+        version: review.version, review_version: review.reviewVersion, operations: [{ op: 'review', id: pending.id,
+          data: { nome: `Synthetic ${value}`, numero: '42', pais: 'BRASIL' } }],
+      })));
+      let reviewQueued = false;
+      try {
+        for (let i = 0; i < 120; i++) {
+          await blocker.query('SELECT pg_stat_clear_snapshot()');
+          const waiting = await blocker.query<{ n: number }>("SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE 'SELECT id FROM clientes%'");
+          if (waiting.rows[0].n === 2) { reviewQueued = true; break; }
+          await new Promise(resolve => setTimeout(resolve, 25));
+        }
+      } finally { await blocker.query('ROLLBACK'); }
+      const done = await reviews;
+      assert.equal(reviewQueued, true);
+      assert.equal(done.filter(x => x.status === 'fulfilled').length, 1);
+      const loser = done.find(x => x.status === 'rejected');
+      assert.equal(loser?.status === 'rejected' && loser.reason.code, 'CLIENTE_LOCAIS_VERSION_CONFLICT');
+      const stable = await service.snapshot(ctx, ID.clientePjA, true);
+      await assert.rejects(failing.sync(ctx, ID.clientePjA, { version: stable.version, review_version: stable.reviewVersion,
+        operations: [{ op: 'review', id: pending.id, data: { nome: 'Must roll back' }, activate: true }] }), /SYNTHETIC_AUDIT_FAILURE/);
+      assert.equal((await service.snapshot(ctx, ID.clientePjA, true)).reviewVersion, stable.reviewVersion);
+      assert.equal(await audits(), reviewAudits + 1);
+      const saved = (await service.list(ctx, ID.clientePjA, { ativo: false })).data.find(x => x.id === pending.id);
+      assert.equal(saved?.endereco_incompleto, false); assert.equal(saved?.ativo, false);
+      assert.equal(saved?.legacy_id, pending.legacy_id);
     } finally { await blocker.end(); await f.close(); }
   });

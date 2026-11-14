@@ -16,7 +16,7 @@ const ctx:RequestContext={requestId:'req-pedido',actorId,actorEmail:'synthetic@e
 const direct:PedidoCreate={cliente_empresa_id:clienteEmpresaId,condicao_pagamento_id:condicaoId,tipo_operacao:'ENTREGA',data_entrega_solicitada:'2027-03-10T00:00:00.000Z',itens:[{produto_id:produtoId,unidade_id:unidadeId,descricao:'Produto sintetico',unidade_sigla:'UN',quantidade:'2',preco_unitario:'10',desconto:'0',requer_producao:true}]};
 const quote:OrcamentoCreate={cliente_empresa_id:clienteEmpresaId,condicao_pagamento_id:condicaoId,validade_em:'2027-02-10T00:00:00.000Z',itens:[{produto_id:produtoId,unidade_id:unidadeId,descricao:'Produto sintetico',unidade_sigla:'UN',quantidade:'2',preco_unitario:'10',desconto:'0'}]};
 
-function fixture() {
+function fixture(local: unknown = { id: 'local', ativo: true }) {
   const repo=new InMemoryPedidoRepository(),orcamentos=new InMemoryOrcamentoRepository(),audit=new InMemoryAuditRepository(),tenant=new InMemoryTenantGuard(),rbac=new InMemoryRbacGuard();
   tenant.link(empresaId,groupId);
   rbac.link({actorId,groupId,permissions:{Comercial:{pedido: ['visualizar','criar', 'aprovar','editar','cancelar','converter-pedido','alterar-status']}}});
@@ -32,7 +32,7 @@ function fixture() {
     {getById:async()=>({id:produtoId,ativo:true,unidade_medida_id:unidadeId} as never)},
     {getById:async()=>({id:unidadeId,ativo:true} as never)},
     {get:async()=>({id:condicaoId,ativo:true} as never)},
-    {get:async()=>({id:'local',ativo:true} as never)},
+    {get:async()=>local as never},
     {get:async()=>({id:'obra',ativo:true} as never)},
     {get:async()=>({id:'tabela',ativo:true} as never)},
     {resolveSalePrice:async()=>({preco:'10.000000',tabela_preco_id:'tabela'})},
@@ -41,6 +41,22 @@ function fixture() {
 }
 
 test('PedidoService cria lista consulta atualiza e audita sem aceitar total do cliente',async()=>{const f=fixture();const created=await f.service.create(ctx,direct);assert.equal(created.total,'20.000000');await assert.rejects(f.service.create(ctx,{...direct,total:'999'}),/Invalid Pedido payload/);assert.equal((await f.service.list(ctx)).meta.total,1);assert.equal((await f.service.get(ctx,created.id)).id,created.id);const updated=await f.service.update(ctx,created.id,{...direct,itens:[{...direct.itens[0],quantidade:'3'}]});assert.equal(updated.numero,created.numero);assert.equal(updated.total,'30.000000');assert.deepEqual((await f.audit.listByEntity('Pedido',created.id)).map(row=>row.action),['create','update']);});
+
+test('Pedido validates complete active ENTREGA purpose and preserves selected local on reopen', async () => {
+ const id='55555555-5555-4555-8555-555555555555';
+ const local={id,ativo:true,endereco_incompleto:false,finalidades:[{ativo:true,finalidade:'ENTREGA'}]};
+ for(const change of [{ativo:false},{endereco_incompleto:true},{endereco_incompleto:undefined},
+  {finalidades:[{ativo:true,finalidade:'FISCAL'}]},{finalidades:[{ativo:false,finalidade:'ENTREGA'}]}]){
+  const f=fixture({...local,...change});
+  await assert.rejects(f.service.create(ctx,{...direct,cliente_local_id:id}),{code:'PEDIDO_LOCAL_INVALIDO'});
+  assert.equal((await f.service.list(ctx)).meta.total,0);
+ }
+ const f=fixture(local); const order=await f.service.create(ctx,{...direct,cliente_local_id:id});
+ assert.equal(order.cliente_local_id,id);
+ assert.equal((await f.service.get(ctx,order.id)).cliente_local_id,id);
+ const edited=await f.service.update(ctx,order.id,{...direct,cliente_local_id:id,observacoes:'Synthetic reopen'});
+ assert.equal(edited.cliente_local_id,id);
+});
 
 test('Pedido direto reexecuta a mesma chave sem duplicar, mas rejeita payload divergente',async()=>{
   const f=fixture();

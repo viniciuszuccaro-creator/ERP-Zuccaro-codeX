@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { clienteLocalBatchRemainder, localBatchRoutesHunk } from './helpers/clienteLocalBatchRemainder.js';
 import { clienteConferenciaRemainder } from './helpers/consolidation81Remainder.js';
+import { clienteLocalOperationalRemainder } from './helpers/clienteLocalOperationalRemainder.js';
 
 test('address review PostgreSQL suite is wired to the required database and rejects skipped runs', () => {
   const runner = readFileSync('server/scripts/runPostgresTests.mjs', 'utf8');
@@ -14,7 +15,7 @@ test('address review PostgreSQL suite is wired to the required database and reje
 
 test('local batch preserves entire prior router and historical guard comparisons', () => {
   const file = 'server/src/api/router.ts';
-  const source = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+  const source = clienteLocalOperationalRemainder(file, readFileSync(file, 'utf8')).replace(/\r\n/g, '\n');
   const previous = execFileSync('git', ['show', `64f0dcf2:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(clienteLocalBatchRemainder(file, source, true), previous);
   assert.doesNotThrow(() => clienteConferenciaRemainder(file, source));
@@ -26,5 +27,20 @@ test('local batch preserves entire prior router and historical guard comparisons
     source + localBatchRoutesHunk,
     source.replace('req.body));', 'req.query));')]) {
     assert.throws(() => clienteLocalBatchRemainder(file, changed, true));
+  }
+});
+
+test('operational address wiring peels only exact additions and retains every ancestral byte', () => {
+  for (const file of ['server/src/api/router.ts', 'src/api/httpApiClient.js']) {
+    const source = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+    const previous = execFileSync('git', ['show', `84f820d823e87499b0037b0ea2c75e508369afaf:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+    assert.equal(clienteLocalOperationalRemainder(file, source), previous);
+    assert.equal(clienteLocalOperationalRemainder(file, previous), previous);
+    assert.notEqual(clienteLocalOperationalRemainder(file, source + '\n// OUTSIDE\n'), previous);
+    const marker = file.endsWith('router.ts') ? "req.query.include_review === 'true'" : 'createClienteLocalBatchHttpApi({ request, getScope, createHttpError })';
+    const forged = source.replace(marker, marker + ' + FORGED');
+    assert.throws(() => file.endsWith('router.ts')
+      ? clienteLocalBatchRemainder(file, forged, true)
+      : clienteConferenciaRemainder(file, forged));
   }
 });

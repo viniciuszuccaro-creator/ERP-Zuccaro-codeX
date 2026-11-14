@@ -146,6 +146,80 @@ test('canonical local batch: CAS, rollback, replay rejection, permissions and fi
       assert.equal(cancelled.logradouro,payload.logradouro);
       assert.equal((await snapshot()).version,before.version);
     });
+    await t.test('review uses separate CAS, preserves identity and needs explicit permission to activate', async () => {
+      const pending = await service.createMigrationPending(ctx, ID.clientePjA, {
+        nome: '', cep: '01310100', logradouro: 'Rua revisao CAS', numero: '', bairro: 'Bairro',
+        cidade: 'Cidade', uf: 'SP', pais: '', origem: 'MIGRACAO', legacy_id: 'synthetic-native-review',
+        source_system: 'SYNTHETIC_NATIVE', migration_batch: 'synthetic-review-cas',
+        imported_at: '2026-11-12T00:00:00Z',
+        endereco_incompleto: true, ativo: false, finalidades: [{ finalidade: 'ENTREGA', principal: false }],
+      });
+      const row = async () => (await service.list(ctx, ID.clientePjA, { ativo: false })).data.find(x => x.id === pending.id);
+      const before = await service.snapshot(ctx, ID.clientePjA, true), audits = await countAudit();
+      const op = { op: 'review', id: pending.id, data: { nome: 'Obra comprovada', numero: '42', pais: 'BRASIL' } };
+      const payload = { version: before.version, review_version: before.reviewVersion, operations: [op] };
+      for (const denied of [{ ...ctx, actorId: ID.runtimeActorB }, { ...ctx, groupId: ID.groupB }, { ...ctx, empresaId: ID.empresaB }]) {
+        await assert.rejects(service.sync(denied, ID.clientePjA, payload));
+      }
+      await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, review_version: undefined }), { code: 'CLIENTE_LOCAIS_VERSION_CONFLICT' });
+      await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, operations: [{ ...op, data: { nome: 'Ainda parcial' } }] }), { code: 'VALIDATION_ERROR' });
+      await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, operations: [{ ...op, data: { ...op.data, legacy_id: 'forged' } }] }), { code: 'VALIDATION_ERROR' });
+      rbac.link({ actorId: ID.runtimeActorA, groupId: ctx.groupId, permissions: { Cadastros: { cliente_local: ['visualizar', 'editar'] } } });
+      await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload, operations: [{ ...op, activate: true }] }), { code: 'PERMISSION_DENIED' });
+      assert.equal(await countAudit(), audits); assert.equal((await row())?.endereco_incompleto, true);
+      const done = await service.sync(ctx, ID.clientePjA, payload), completed = await row();
+      assert.equal(completed?.id, pending.id); assert.equal(completed?.ativo, false);
+      assert.equal(completed?.endereco_incompleto, false);
+      for (const key of ['legacy_id', 'source_system', 'migration_batch', 'imported_at'] as const) assert.equal(completed?.[key], pending[key]);
+      assert.equal(done.version, before.version, 'ordinary active snapshot contract unchanged');
+      assert.notEqual(done.reviewVersion, before.reviewVersion);
+      await assert.rejects(service.sync(ctx, ID.clientePjA, payload), { code: 'CLIENTE_LOCAIS_VERSION_CONFLICT' });
+      assert.equal(await countAudit(), audits + 1);
+      const noChange = { version: done.version, review_version: done.reviewVersion,
+        operations: [{ op: 'review', id: pending.id, data: {} }] };
+      await service.sync(ctx, ID.clientePjA, noChange);
+      await service.sync(ctx, ID.clientePjA, noChange);
+      assert.equal(await countAudit(), audits + 1, 'unchanged reviewed draft does not duplicate audit');
+      rbac.link({ actorId: ID.runtimeActorA, groupId: ctx.groupId, permissions: { Cadastros: { cliente_local: ['visualizar', 'editar', 'restaurar'] } } });
+      const active = await service.sync(ctx, ID.clientePjA, { version: done.version, review_version: done.reviewVersion,
+        operations: [{ op: 'review', id: pending.id, data: {}, activate: true }] });
+      assert.equal(active.data[0].id, pending.id); assert.equal(active.data[0].ativo, true);
+      assert.equal((await service.get(ctx, ID.clientePjA, pending.id)).legacy_id, pending.legacy_id);
+      assert.equal(await countAudit(), audits + 2);
+    });
+    await t.test('review rolls back first write/audit and concurrent inactive edits admit one winner', async () => {
+      rbac.link({ actorId: ID.runtimeActorA, groupId: ctx.groupId, permissions: { Cadastros: {
+        cliente: ['importar'], cliente_local: ['visualizar', 'criar', 'editar', 'restaurar'],
+      } } });
+      const local = await service.createMigrationPending(ctx, ID.clientePjA, {
+        nome: '', cep: '01310100', logradouro: 'Rua fiscal transacional', numero: '', bairro: 'Bairro',
+        cidade: 'Cidade', uf: 'SP', pais: '', origem: 'MIGRACAO', legacy_id: 'synthetic-fiscal-review',
+        source_system: 'SYNTHETIC_NATIVE', migration_batch: 'synthetic-review-atomic', imported_at: '2026-11-12T00:00:00Z',
+        endereco_incompleto: true, ativo: false, finalidades: [{ finalidade: 'FISCAL', principal: false }],
+      });
+      const read = () => service.snapshot(ctx, ID.clientePjA, true);
+      const before = await read(), audits = await countAudit();
+      const op = { op: 'review', id: local.id, data: { nome: 'Fiscal comprovado', numero: '51', pais: 'BRASIL' } };
+      const payload = { version: before.version, review_version: before.reviewVersion, operations: [op] };
+      await assert.rejects(service.sync(ctx, ID.clientePjA, { ...payload,
+        operations: [op, { ...op, id: ID.clienteLocalB1 }] }), { code: 'CLIENTE_LOCAL_NOT_FOUND' });
+      assert.equal((await read()).reviewVersion, before.reviewVersion);
+      const failing = new ClienteLocalService(new PostgresClienteLocalRepository(db), new PostgresClienteRepository(db), {
+        append: async () => { throw new Error('REVIEW_AUDIT_FAILURE'); }, listByEntity: async () => [],
+      }, new InMemoryTenantGuard(), rbac);
+      await assert.rejects(failing.sync(ctx, ID.clientePjA, payload), /REVIEW_AUDIT_FAILURE/);
+      assert.equal((await read()).reviewVersion, before.reviewVersion);
+      assert.equal(await countAudit(), audits);
+      const attempts = await Promise.allSettled(['A', 'B'].map(label => service.sync(ctx, ID.clientePjA, {
+        ...payload, operations: [{ ...op, data: { ...op.data, nome: `Fiscal ${label}` } }],
+      })));
+      assert.equal(attempts.filter(x => x.status === 'fulfilled').length, 1);
+      const denied = attempts.find(x => x.status === 'rejected');
+      assert.equal(denied?.status === 'rejected' && denied.reason.code, 'CLIENTE_LOCAIS_VERSION_CONFLICT');
+      assert.equal(await countAudit(), audits + 1);
+      const fiscal = (await service.list(ctx, ID.clientePjA, { ativo: false })).data.find(x => x.id === local.id);
+      assert.equal(fiscal?.ativo, false); assert.equal(fiscal?.finalidades[0].finalidade, 'FISCAL');
+    });
     await t.test('context mutation during authorization cannot retarget batch', async () => {
       const before = await snapshot();
       const original = { ...ctx };

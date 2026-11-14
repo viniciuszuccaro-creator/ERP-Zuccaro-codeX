@@ -354,7 +354,13 @@ export class PedidoService {
   private async validateReferences(scope: PedidoScope, data: PedidoCreate, executor?: DbQueryExecutor) {
     const link = await this.clientes.getEmpresaLinkById(scope, data.cliente_empresa_id, executor);
     if (!link || !link.ativo || link.bloqueado || !link.habilitado_operacao) throw new AppError(422, 'PEDIDO_CLIENTE_INVALIDO', 'ClienteEmpresa unavailable in tenant scope');
-    if (data.cliente_local_id && !(await this.locais.get({ groupId: scope.groupId, clienteId: link.cliente_id }, data.cliente_local_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_LOCAL_INVALIDO', 'ClienteLocal unavailable in tenant scope');
+    if (data.cliente_local_id) {
+      const local = await this.locais.get({ groupId: scope.groupId, clienteId: link.cliente_id }, data.cliente_local_id, executor);
+      if (!local?.ativo || local.endereco_incompleto !== false
+        || (data.tipo_operacao === 'ENTREGA' && !local.finalidades.some(p => p.ativo && p.finalidade === 'ENTREGA'))) {
+        throw new AppError(422, 'PEDIDO_LOCAL_INVALIDO', 'Complete operational delivery address required in tenant scope');
+      }
+    }
     if (data.obra_id && !(await this.obras.get({ groupId: scope.groupId, clienteId: link.cliente_id, empresaId: scope.empresaId }, data.obra_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_OBRA_INVALIDA', 'Obra unavailable in tenant scope');
     if (data.tabela_preco_id && !(await this.tabelas.get({ groupId: scope.groupId, empresaId: scope.empresaId }, data.tabela_preco_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_TABELA_INVALIDA', 'TabelaPreco unavailable in tenant scope');
     if (!(await this.condicoes.get(scope, data.condicao_pagamento_id, executor))?.ativo) throw new AppError(422, 'PEDIDO_CONDICAO_INVALIDA', 'CondicaoPagamento unavailable in tenant scope');

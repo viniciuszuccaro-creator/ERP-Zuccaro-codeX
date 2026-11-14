@@ -1,3 +1,21 @@
+## Enderecos operacionais: backend preparado, HML preservada (2026-11-14)
+
+PR595/3e646192 revisada com contraprovas reais de callbacks/transport HTTP:
+parecer6877992789. Contexto antigo, completude ausente e envelope/paginacao
+ainda impedem aceite; fiscal nao pode persistir no MASTER endereco_principal.
+Sem alteracao na branch Cursor. PR594 prepara review atomico no sync existente,
+CAS separado para inativos, RBAC editar/restaurar explicito e preservacao de
+IDs/procedencia; completar nao ativa. Pedido valida finalidade/completude.
+HEAD595 mudou para9b876f33: completude/envelope corrigidos no delta; residual
+callback antigo reproduzido com bindingRef novo autorizado e consumidor real.
+Nao portar como aprovado. Suite backend final639PASS/0FAIL/42SKIP; PG real e
+fechamento Linux dependem da CI. Root interrompido no POSIX Windows, sem PASS
+fabricado. Peel exato preserva pins e negativas; nenhuma baseline relaxada.
+29contraprovas backendPASS; typecheck/build backend e audit/lint/typecheck/build
+rootPASS (2warnings lint existentes). Fechamento completo/CI pendentes; detalhes
+e limites no HANDOFF. Nenhum dado/permissao/schema HML ou operacional alterado.
+217locais permanecem inativos; reversao/gate/consumidor UI ainda necessarios.
+
 ## Backup/retencao HML ativos e recuperacao verificada (2026-11-14)
 
 Codigo fdaed341 CI6990(tentativa2)/6991SUCCESS. TimerVPS enabled/active,

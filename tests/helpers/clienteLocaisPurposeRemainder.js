@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { clienteLocalOperationalRemainder } from './clienteLocalOperationalRemainder.js';
 
 // Purpose split only; the preceding c93 helper and all its pins remain intact.
 export const clienteLocaisPurposeBaseline = '109ec52a5f866eff1d5c689bacfcccacd73dcabf';
@@ -32,7 +33,7 @@ const hash = source => createHash('sha256').update(source).digest('hex');
 export function clienteLocaisPurposeRemainder(file, text, verify = true) {
   const entry = clienteLocaisPurposeHunks[file];
   if (!entry) return text;
-  let source = text.replace(/\r\n/g, '\n');
+  let source = clienteLocalOperationalRemainder(file, text).replace(/\r\n/g, '\n');
   if (hash(source) === entry.hash) return text;
   const markers = file.endsWith('.jsx')
     ? ['finalidade="FISCAL"', 'finalidade="ENTREGA"']

@@ -5,6 +5,7 @@ import { parseA1CertificateMetadata } from './a1CertificateContract.js';
 import { createBankStatementApi } from './bankStatementHttp.js';
 import { createFinancialMovementApi } from './financialMovementHttp.js';
 import { MAX_BANK_STATEMENT_BYTES } from './bankStatementContract.js';
+import { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';
 
 /**
  * Cliente HTTP compativel com a superficie parcial de base44.entities.*
@@ -942,6 +943,7 @@ SeparacaoConferencia: {
         ? /** @type {{ data: unknown }} */ (page).data
         : page;
     },
+    ...createClienteLocalBatchHttpApi({ request, getScope, createHttpError }),
     /**
      * Atualiza local canônico (PATCH `/clientes/:id/locais/:localId`).
      * @param {string} clienteId

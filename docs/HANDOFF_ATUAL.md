@@ -1,3 +1,52 @@
+## Enderecos operacionais: revisao e CAS preparados, sem ativacao (2026-11-14)
+
+Reserva PR594/6877839992 e parecer PR595/6877992789. PR595 revisada em
+3e6461929c745cb0cef724d9e49d5a93b354c079: callback antigo pode inserir local
+no novo rascunho; completude ausente e aceita; listLocais converte envelope
+invalido em vazio e limita a50; fiscal continua no payload MASTER rejeitado.
+Contraprovas de callbacks/HTTP, NAO React montado nem navegador/PG real.
+Nao portar esses hunks como aprovados. Branch Cursor nao foi editada.
+
+No backend existente, snapshot opcional include_review=true fornece reviewVersion
+separada sem mudar version ativa. Sync aceita review_version + op review,
+preservando IDs/procedencia/finalidades; exige editar explicito e, somente
+activate=true, restaurar explicito. Completar mantem inativo por padrao.
+Schema estrito exige dados comprovados; nao inventa numero/nome/pais.
+Lock/CAS/auditoria/rollback existentes reutilizados; noop nao duplica auditoria.
+Pedido rejeita local incompleto ou sem finalidade ENTREGA ativa.
+Fiscal deve usar ClienteLocal FISCAL, nao nova coluna/endereco paralelo MASTER.
+HTTP snapshotLocais/syncLocais usa as mesmas rotas/Auth, valida envelope/escopo
+e rejeita retorno tardio; helper extraido da factory grande, sem outro cliente.
+
+Atualizacao595: HEAD9b876f33 publicado durante a revisao; frontendFAIL,
+backend/composePASS. Completude agora exige false e envelope invalido e rejeitado;
+nao manter esses dois defeitos antigos como atuais. Nova contraprova no SHA:
+callback antigo usa operacionais antigos, mas bindingAllowsSelect consulta somente
+bindingRef.current novo. Com B autorizado e sessao B atual, insere local A no
+rascunho B pelo consumidor real. Falta comparar binding capturado com atual.
+Prova AST/callback, nao React montado. Fiscal MASTER permanece sem persistencia
+ClienteLocal integrada; nova UI nao foi portada.
+
+Contraprovas focadas backend29PASS; typecheck/build backend PASS. Suite inicial
+backend638PASS/1FAIL/42SKIP: CRM usava local FISCAL no positivo ENTREGA;
+fixture corrigida para local ENTREGA ja existente, com negativo fiscal mantido.
+Suite final backend639PASS/0FAIL/42SKIP (PG real condicionado nao executado aqui).
+CI ainda deve ser conferida no SHA publicado. Root audit/lint
+(0erros/2warnings preexistentes), typecheck/build PASS. Guardas historicos mantem
+pins; apenas hunks exatos normalizados com contraprovas de adulteracao.
+Montado review usa React act, sem remover assercoes ou ampliar deadlines.
+Root completo interrompido no teste POSIX vps-gate-precheck no Windows;
+somente arvore propria encerrada. Falhas iniciais de pins corrigidas por peel
+exato, nao novos hashes; contraprovas focadas passaram. Publicacao draft somente
+para validacao Ubuntu conforme excecao vigente, nao homologacao ou deploy.
+
+HML continua d054e2b3, sem escrita/config/DDL/deploy neste pacote;217locais
+inativos preservados. Perfil visualizar NAO foi ampliado. Aplicacao real depende
+de selecao completa comprovada, revisao UI, ledger/reversao restrita e gate
+especifico de editar/restaurar/principal. Nao chamar este preparo de fiscal
+editavel ou entrega operacional ja homologados. Proxima acao: fechar CI exata,
+coordenar correcao595 e provar formulario/consumidor montados antes da HML.
+
 ## Backup HML automatizado e copia externa verificada (2026-11-14)
 
 Pacote fdaed3412c34ea3ec6c76e9ec644d4c5d6b06a64 publicado na mesmaPR594;

@@ -16,14 +16,16 @@ test('React montado: revisao somente leitura, paginacao, negativas e respostas o
     : ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser', ...installed].find(file => existsSync(file)));
   assert.ok(binary && existsSync(binary), 'Chrome existente necessario; nenhum browser sera instalado');
   const entry = `
-import React from 'react'; import { createRoot } from 'react-dom/client'; import { flushSync } from 'react-dom';
+import React, { act } from 'react'; import { createRoot } from 'react-dom/client'; import { flushSync } from 'react-dom';
 import Review from './src/components/cadastros/ClienteLocaisRevisao.jsx';
 const host=document.getElementById('root'), root=createRoot(host), pending=[], checks=[], reportFetch=window.fetch.bind(window);
+window.IS_REACT_ACT_ENVIRONMENT=true;
 window.__allowed=true; window.__session={token:'synthetic-token',actorId:'actor',groupId:'group',empresaId:'company'};
 let props={clienteId:'client',groupId:'group',empresaId:'company',finalidade:'FISCAL'};
 window.fetch=(url,init)=>new Promise(resolve=>pending.push({url,init,resolve}));
-const render=()=>flushSync(()=>root.render(<Review {...props}/>));
-const pause=()=>new Promise(r=>setTimeout(r,20));
+const render=()=>act(()=>flushSync(()=>root.render(<Review {...props}/>)));
+// Drain React updates after each response instead of racing a fixed sleep.
+const pause=()=>act(async()=>{await new Promise(r=>setTimeout(r,0));});
 const check=(name,ok)=>{checks.push(name);if(!ok)throw Error(name);};
 const local=(id='synthetic-local')=>({id,cliente_id:props.clienteId,group_id:props.groupId,ativo:false,endereco_incompleto:true,
  finalidades:[{finalidade:props.finalidade,ativo:true}],logradouro:'Rua Sintetica',numero:'',pais:'',origem:'MIGRACAO',legacy_id:'0001'});

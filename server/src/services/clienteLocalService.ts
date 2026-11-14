@@ -88,12 +88,13 @@ export class ClienteLocalService {
     return this.transaction ? fn(this.transaction.executor) : this.repo.withTransaction(fn);
   }
 
-  async snapshot(ctx: RequestContext, clienteId: string) {
+  async snapshot(ctx: RequestContext, clienteId: string, includeReview = false) {
     const fixed = Object.freeze({ ...ctx });
     await this.prepare(fixed, clienteId, 'visualizar');
     return this.withTransaction(async executor => {
-      const snapshot = await localBatchSnapshot(this.repo, fixed, clienteId, executor);
-      return { version: snapshot.version, data: snapshot.rows.map(publicLocal) };
+      const snapshot = await localBatchSnapshot(this.repo, fixed, clienteId, executor, includeReview);
+      return { version: snapshot.version, data: snapshot.rows.map(publicLocal),
+        ...(snapshot.reviewVersion ? { reviewVersion: snapshot.reviewVersion } : {}) };
     });
   }
 
@@ -103,15 +104,17 @@ export class ClienteLocalService {
     await this.prepare(fixed, clienteId, 'editar');
     return this.withTransaction(async executor => {
       if (!executor) throw new AppError(503, 'CLIENTE_LOCAIS_ATOMIC_UNAVAILABLE', 'Transactional database required');
-      const before = await localBatchSnapshot(this.repo, fixed, clienteId, executor);
-      if (batch.version !== before.version) {
+      const review = batch.operations.some(op => op.op === 'review');
+      const before = await localBatchSnapshot(this.repo, fixed, clienteId, executor, review);
+      if (batch.version !== before.version || (review && batch.review_version !== before.reviewVersion)) {
         throw new AppError(409, 'CLIENTE_LOCAIS_VERSION_CONFLICT', 'Local snapshot changed; reload before retry');
       }
       const scoped = new ClienteLocalService(this.repo, this.clienteRepo, this.audit,
         this.tenantGuard, this.rbacGuard, this.obraUsage, { executor });
       const data = await applyLocalBatch(scoped, fixed, clienteId, batch);
-      const after = await localBatchSnapshot(this.repo, fixed, clienteId, executor);
-      return { data, version: after.version, batchAtomic: true };
+      const after = await localBatchSnapshot(this.repo, fixed, clienteId, executor, review);
+      return { data, version: after.version, batchAtomic: true,
+        ...(after.reviewVersion ? { reviewVersion: after.reviewVersion } : {}) };
     });
   }
 
@@ -276,6 +279,34 @@ export class ClienteLocalService {
     }
   }
 
+  /** Only the existing CAS/locked batch may complete an inactive migration row. */
+  async completeReviewInBatch(ctx: RequestContext, clienteId: string, localId: string,
+    data: import('../repositories/clienteLocalTypes.js').ClienteLocalUpdate, activate: boolean) {
+    const fixed = Object.freeze({ ...ctx });
+    const executor = this.transaction?.executor;
+    if (!executor) throw new AppError(503, 'CLIENTE_LOCAIS_ATOMIC_UNAVAILABLE', 'Review requires canonical CAS batch');
+    await this.prepare(fixed, clienteId, 'editar', localId);
+    const check = async () => {
+      await this.rbacGuard.assertAllowed(fixed, 'Cadastros', 'cliente_local', 'editar', { allowGlobalWildcard: false, executor });
+      if (activate) await this.rbacGuard.assertAllowed(fixed, 'Cadastros', 'cliente_local', 'restaurar', { allowGlobalWildcard: false, executor });
+    };
+    await check();
+    const before = await this.repo.get(this.scope(fixed, clienteId), localId, executor);
+    if (!before || before.ativo || before.origem !== 'MIGRACAO') this.notFound();
+    this.validateCandidate(before, data);
+    if (!before.endereco_incompleto && Object.entries(data).every(([key, value]) =>
+      value === (before as unknown as Record<string, unknown>)[key])) {
+      await check();
+      return activate ? this.restore(fixed, clienteId, localId) : publicLocal(before);
+    }
+    const after = await this.repo.update(this.scope(fixed, clienteId), localId,
+      { ...data, endereco_incompleto: false }, fixed.actorId, executor);
+    if (!after) this.notFound();
+    await check();
+    await this.appendAudit(fixed, 'update', before, after, executor);
+    return activate ? this.restore(fixed, clienteId, localId) : publicLocal(after);
+  }
+
   async setFinalidades(
     ctx: RequestContext,
     clienteId: string,
@@ -345,6 +376,7 @@ export class ClienteLocalService {
       const before = await this.repo.get(this.scope(ctx, clienteId), localId, executor);
       if (!before || before.ativo) this.notFound();
       if (before.endereco_incompleto) throw new AppError(409, 'MIGRATION_REVIEW_REQUIRED', 'Complete and review the address before restoring it');
+      this.validateCandidate(before, {});
       const after = await this.repo.restore(
         this.scope(ctx, clienteId), localId, ctx.actorId, executor,
       );
