@@ -8,11 +8,25 @@
 | Patch prep Casa | #6882237770 | 5 arquivos 595→f804; apply --check PASS; **não aplicado** |
 | Patch SHA256 | `a79e63a5d1006f37332395b1cb414f7962a211179b0e051a23510d42383e1a2a` | 104142 B; 1738+/61- |
 | HEAD docs liberação | `adca97468` | **CI SUCCESS** (run 43626934008) |
-| Casa peel audit | #6882342294 | privada em `adca97468`; port **não aplicado** |
+| Casa peel audit | #6882373631 | **PASS** preservação em `adca97468` (35+40 testes) |
 | **HML** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Cursor neste heartbeat: **não edita** Completo / `clienteHttpPayload` / peels
-(enquanto Casa audita normalização). Sem VPS/DB/deploy.
+### Port seletivo — coordenação explícita (#6882204635 / #6882237770)
+| Papel | Responsável |
+|-------|-------------|
+| Liberar hunks / paths | **Cursor** (feito) |
+| Apply do patch privado na cadeia Codex (base `b5862fc53`) | **Codex** (único applicator) |
+| Não aplicar / não editar branch Cursor | Casa confirma |
+
+**5 paths exatos** (patch SHA256 `a79e63a5d1006f37332395b1cb414f7962a211179b0e051a23510d42383e1a2a`):
+1. `src/api/clienteHttpPayload.js`
+2. `src/components/cadastros/CadastroClienteCompleto.jsx`
+3. `tests/cadastro-query-payload-boundaries.test.js`
+4. `tests/cliente-locais-sync-http-591.test.js`
+5. `tests/helpers/clienteLocalOperationalRemainder.js` (peel; auditoria PASS)
+
+PR596/`197bbc090` já contém os 5. Patch = apply opcional em worktree Codex na
+base 595. apply-check PASS; **não aplicado**. Sem deploy/PG/dados.
 
 ### Liberação Cursor (antes de Codex apply)
 **LIBERAR (autorizado montagem 40 PASS + CI):**
