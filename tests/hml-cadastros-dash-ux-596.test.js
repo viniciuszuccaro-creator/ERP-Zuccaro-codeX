@@ -86,6 +86,9 @@ test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {
   assert.match(formas, /if \(loadingFormas \|\| formasLoadFailed\) return/);
   assert.match(formas, /if \(!formaSelecionada\) return/);
   assert.match(formas, /preserveSavedScheduleRef/);
+  assert.match(formas, /userRequestedRegenRef/);
+  // Bugbot: não regenerar cronograma só porque parcelas ainda estão vazias (hydrate do pai).
+  assert.match(formas, /Vazias: só gerar se o usuário pediu/);
 });
 
 test('Dashboard Clientes KPI: uma população (count), sem misturar ativos da amostra', () => {

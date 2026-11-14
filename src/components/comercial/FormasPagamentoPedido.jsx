@@ -48,6 +48,8 @@ export default function FormasPagamentoPedido({
   const [percentualAcrescimo, setPercentualAcrescimo] = useState(acrescimo || 0);
   /** Evita regenerar cronograma salvo; reabre preserve quando o pai hidrata parcelas após mount. */
   const preserveSavedScheduleRef = useRef(Array.isArray(parcelas) && parcelas.length > 0);
+  /** Só regenera datas após ação do usuário (≠ corrida com hydrate do pai). */
+  const userRequestedRegenRef = useRef(false);
   const lastParcelasSigRef = useRef('');
 
   useEffect(() => {
@@ -92,33 +94,6 @@ export default function FormasPagamentoPedido({
     (c) => c && c.id && c.ativo !== false,
   );
 
-  useEffect(() => {
-    // Enquanto Cadastros carrega, formaSelecionada fica vazia → permiteParcelar false.
-    // Não limpar nem regenerar parcelas salvas até a forma estar resolvida (≠ apagar datas).
-    if (loadingFormas || formasLoadFailed) return undefined;
-    if (!formaPagamento) return undefined;
-    if (!formaSelecionada) return undefined;
-    if (permiteParcelar && numeroParcelas > 0 && onParcelasChange) {
-      if (preserveSavedScheduleRef.current && Array.isArray(parcelas) && parcelas.length > 0) {
-        preserveSavedScheduleRef.current = false;
-        return undefined;
-      }
-      preserveSavedScheduleRef.current = false;
-      gerarParcelas();
-    } else if (!permiteParcelar && Array.isArray(parcelas) && parcelas.length > 0 && onParcelasChange) {
-      preserveSavedScheduleRef.current = false;
-      onParcelasChange([]);
-    }
-    return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- regenera só quando inputs de parcela mudam
-  }, [loadingFormas, formasLoadFailed, formaSelecionada, numeroParcelas, valorTotal, percentualAcrescimo, formaPagamento, permiteParcelar]);
-
-  useEffect(() => {
-    if (acrescimo !== percentualAcrescimo) {
-      setPercentualAcrescimo(acrescimo || 0);
-    }
-  }, [acrescimo]);
-
   const gerarParcelas = () => {
     const base = Number(valorTotal);
     if (!Number.isFinite(base) || base < 0) {
@@ -145,7 +120,54 @@ export default function FormasPagamentoPedido({
     if (onParcelasChange) onParcelasChange(novasParcelas);
   };
 
+  useEffect(() => {
+    // Enquanto Cadastros carrega, formaSelecionada fica vazia → permiteParcelar false.
+    // Não limpar nem regenerar parcelas salvas até a forma estar resolvida (≠ apagar datas).
+    // Parcelas vazias no 1º resolve podem ainda estar hidratando no pai — não inventar vencimentos.
+    if (loadingFormas || formasLoadFailed) return undefined;
+    if (!formaPagamento) return undefined;
+    if (!formaSelecionada) return undefined;
+
+    if (preserveSavedScheduleRef.current && Array.isArray(parcelas) && parcelas.length > 0) {
+      preserveSavedScheduleRef.current = false;
+      userRequestedRegenRef.current = false;
+      return undefined;
+    }
+
+    if (!permiteParcelar) {
+      if (Array.isArray(parcelas) && parcelas.length > 0 && onParcelasChange) {
+        preserveSavedScheduleRef.current = false;
+        userRequestedRegenRef.current = false;
+        onParcelasChange([]);
+      }
+      return undefined;
+    }
+
+    if (!onParcelasChange || !(numeroParcelas > 0)) return undefined;
+
+    if (Array.isArray(parcelas) && parcelas.length > 0) {
+      if (!userRequestedRegenRef.current) return undefined;
+      userRequestedRegenRef.current = false;
+      gerarParcelas();
+      return undefined;
+    }
+
+    // Vazias: só gerar se o usuário pediu (forma/nº/acréscimo) — senão aguarda hydrate.
+    if (!userRequestedRegenRef.current) return undefined;
+    userRequestedRegenRef.current = false;
+    gerarParcelas();
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- regen só com preserve/userRequest; hydrate via parcelas
+  }, [loadingFormas, formasLoadFailed, formaSelecionada, numeroParcelas, formaPagamento, permiteParcelar, parcelas, percentualAcrescimo, valorTotal]);
+
+  useEffect(() => {
+    if (acrescimo !== percentualAcrescimo) {
+      setPercentualAcrescimo(acrescimo || 0);
+    }
+  }, [acrescimo]);
+
   const handleAcrescimoChange = (valor) => {
+    userRequestedRegenRef.current = true;
     setPercentualAcrescimo(valor);
     if (onAcrescimoChange) onAcrescimoChange(valor);
   };
@@ -187,6 +209,7 @@ export default function FormasPagamentoPedido({
             <Select
               value={formaSelecionada?.id || formaPagamento || undefined}
               onValueChange={(value) => {
+                userRequestedRegenRef.current = true;
                 if (onFormaPagamentoChange) onFormaPagamentoChange(value);
               }}
               disabled={loadingFormas || formasAtivas.length === 0}
@@ -282,7 +305,10 @@ export default function FormasPagamentoPedido({
               <Label htmlFor="numero-parcelas-select">Número de Parcelas:</Label>
               <Select
                 value={String(Math.min(maxParcelas, Math.max(1, numeroParcelas)))}
-                onValueChange={(v) => setNumeroParcelas(parseInt(v, 10))}
+                onValueChange={(v) => {
+                  userRequestedRegenRef.current = true;
+                  setNumeroParcelas(parseInt(v, 10));
+                }}
               >
                 <SelectTrigger id="numero-parcelas-select" className="w-32">
                   <SelectValue />
