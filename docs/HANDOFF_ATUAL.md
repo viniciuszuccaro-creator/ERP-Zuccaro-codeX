@@ -1,3 +1,69 @@
+## Retomada Casa: revisao atual595/596 e janela HML (2026-11-14)
+
+Codex CASA e EMPRESA possuem o mesmo papel/escopo/autonomia; troca de computador
+nao reinicia o projeto nem restringe Casa a revisao. Um executor por recurso,
+com processos/WIP/reservas/HEAD/lease conferidos antes de escrever ou implantar.
+Autorizacao nao transporta credenciais, banco, pacote privado ou copia externa.
+Continuar nesta fila/documentos, sem manuais por computador. Coordenacao594:
+6880959195/6881034656; reserva SOMENTE documental Casa6881084377, branch propria
+codex/casa-fechamento-hml-20261114 sobre76dc383226f21d50227d3dbd007d0beede38ac8a.
+Nenhuma escrita na branch da empresa ou branches Cursor; checkout anterior limpo.
+
+HEADs reconferidos:594/76dc3832 CI7046/7047SUCCESS;595/b5862fc5378169d2571834aeca6739bfead10361;
+596/b8a6710b6fc398ce39f9b62d151c11f41655cce7. Revisao focal595 no snapshot exato,
+locks de dependencias iguais aos existentes:11PASS/0FAIL/0SKIP nos testes seletor,
+locais operacional e Pedido failclosed. Inclui render com bordas sinteticas e
+invalida selecao apos troca de sessao/contexto; nao e aceite completo HML/API/PG.
+ClienteLocaisRevisao e batchHTTP sem delta do38b4 nesse HEAD; reutilizar suas
+provas validas, sem manter parecer antigo corrigido como bloqueio atual.
+
+P1 ATUAL596 reproduzido, publicado6881057475: mutationFn ORIGINAL extraida por
+AST do blob fixado + transporte REAL clienteHttpPayload, bordas sinteticas.
+26locais existentes com finalidades alteradas geram52ops/overflow. Ordem real:
+MASTER -> update1 -> purposes1 -> update2(503). Retorna CLIENTE_LOCAIS_SYNC_PARTIAL,
+mas catch recarrega listLocais e substitui formData.locais_entrega: os26registros
+continuam presentes, porem25edicoes ainda nao gravadas viram valores antigos.
+Perda do rascunho pendente comprovada; nao aceitar este fallback como recuperavel.
+Comentario 'legado ANTES do MASTER' escolhe estrategia antes, mas escreve depois
+do MASTER. Atomicidade dos locais nao equivale a MASTER+locais atomicos. Prova
+nao e React montado, HTTP nem PostgreSQL. Script/recibo sinteticos privados no
+desktop Casa; nenhuma chamada a dados reais, carga ou edicao de branch Cursor.
+
+Runtime HTTPS consultado agora: environment hml, sourceState PUBLISHED_CLEAN,
+dataInBuild false, API/webd054e2b33f6297bd39fcdec8f0e928e03d8bff13. Pacote38b4
+continua preparado conforme registro, sem alegacao de promocao. SSH Casa recusou
+a identidade existente na unica tentativa; nao repetir sem mudanca, nao trocar
+chaves/grants/authorized_keys. Escritor/lease da janela e artefato privado precisam
+ser comprovados pelo canal existente; silencio na coordenacao nao e liberacao.
+
+Fila executavel atual:
+- Cursor596: preservar rascunho/progresso/IDs no parcial, reconciliar baseline sem
+  descartar alteracoes pendentes, testar falha apos primeira escrita no consumidor.
+  Codex revisa novo SHA e nao edita a branch Cursor. Conflito nao vira sucesso.
+- Codex ativo: apos aceite dos hunks atuais, mesma cadeia594 e composicao por
+  hunk preservando consumidores. Pacote API/web foraVPS; manifesto/SHA iguais,
+  CI propria, capacidade>=20GiB/limites, writer exclusivo, backup fresco com ack
+  externo e rollback pinado antes de atualizar SOMENTE HML. Nao repetir restore
+  ou carga para iniciar. Enderecos editar/restaurar/principal continuam granulares.
+- Perfil HML: preparar delta explicito editar/revisar/restaurar por acao e Grupo,
+  auditoria e reversao; verificar gate vigente antes de executar. Nao conceder
+  administrador nem alterar perfil operacional como efeito colateral.
+- Dados: preservar100originais/1500ensaios inativos/4200contatos/extensoes/217locais
+  e auditorias.2295preparados exigem pais inativos/escopo explicitos. Reutilizar
+  matrizes/recibos/importadores, selecao deterministica e varios lotes retomaveis;
+  limite transacional nao limita run. Conferir conteudo/vinculos e excecoes.
+- Cadastros Gerais/codigos/modulos/dashboard: continuar fontes efetivas e matriz
+  existente; identidade comercial distinta do UUID, sequencia concorrente no
+  banco e codigo legado preservado. Nao fazer MAX+1/frontend/backfill cego,
+  fixtures comerciais ou recontagem por screenshots. KPIs exigem fonte/formula/
+  periodo/escopo/falha. Historicos consultaveis nao criam divida/estoque/fiscal.
+
+Sem deploy/carga/DDL/grants neste lote. Backup/retencao atuais reutilizados;
+copia externa depende desktop ligado/logado/conectado. Codigo/documentacao
+sanitizados; dados/dumps/segredos privados. Este checkpoint e entrega documental
+para incorporacao coordenada, nao nova candidata de produto ou autonomia permanente.
+Checks: contraprova596 reproduzida; foco59511PASS; diff-check no fechamento.
+
 ## Fiscal canonico e callback: consumidor montado, sem ativacao (2026-11-14)
 
 FECHADO codigo38b4e1ecf5f88499ce4949f3eb4ed87fa731a4e2 remotoPR594,

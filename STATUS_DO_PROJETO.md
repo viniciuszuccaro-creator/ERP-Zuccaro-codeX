@@ -1,3 +1,32 @@
+## Revisao atual Casa e fechamento HML por dependencia (2026-11-14)
+
+Casa/Empresa: mesma autonomia, um executor por recurso.59476dc3832/CI7046+7047SUCCESS
+reconferida,595b5862fc5 e596b8a6710b atuais. Casa trabalha em branch propria
+codex/casa-fechamento-hml-20261114, sem editar branches Empresa/Cursor. Coordenacao
+6881034656/reserva documental6881084377. Nenhuma carga/restore/deploy repetidos.
+
+595: foco atual11PASS/0FAIL/0SKIP (seletor/locais operacional/Pedido), bordas
+sinteticas, sem aceite global HML. Fiscal/batch HTTP conservam38b4; provas antigas
+validas reutilizadas.596: P1 atual reproduzido no mutationFn e transporte reais,
+AST/bordas sinteticas:26locais/52ops overflow; MASTER grava, primeira alteracao
+local grava e segunda503. Catch recarrega26 e substitui rascunho, perdendo25
+edicoes pendentes. Parecer6881057475 solicita correção Cursor; nao portar fallback
+como recuperavel/atomico MASTER+locais. Nao e montagem React nem HTTP/PG.
+
+HTTPS atual confirma API/webd054e2b33f6297bd39fcdec8f0e928e03d8bff13, hml,
+PUBLISHED_CLEAN/dataInBuildfalse. Pacote38b4 preparado, sem promocao alegada.
+SSH Casa recusou identidade existente na unica tentativa; nao repetir nem mudar
+chaves. Janela/lease e pacote privado devem ser comprovados antes de assumir VPS.
+
+Proximo: corrigir/revisar residual596, compor hunks na mesma cadeia594, CI/pacote
+foraVPS, backup fresco+ack externo/rollback/capacidade e atualizacao somenteHML.
+Perfil granular editar/restaurar/principal e reversao seguem gates atuais.
+Preservar100originais/1500inativos/4200contatos/217locais e dados/auditorias;2295
+preparados exigem alcance/pais inativos. Lotes em escala retomaveis nao sao novo
+piloto100. Matrizes de fontes/modulos/codigos/KPIs seguem fila no HANDOFF, sem
+dados reais no Git ou fixtures apresentadas como importacao. Lote so documental,
+diff-check e testes focais acima; nenhuma suíte completa repetida por ele.
+
 ## Fiscal canonico e callback: pacote de interface em validacao (2026-11-14)
 
 Codigo38b4e1ec remotoPR594 / CI7038/7039SUCCESS. RootUbuntu2974PASS/0FAIL/0SKIP,
