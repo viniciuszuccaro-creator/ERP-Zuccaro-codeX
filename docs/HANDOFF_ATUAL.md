@@ -1,8 +1,15 @@
+## Cursor — PR596 overflow atômico → legado pré-MASTER (2026-11-14 America/Sao_Paulo)
+
+Tip `d9d3c74ba` CI SUCCESS. Tip atual `2f3814af9`: overflow (>50 ops) preflight → sync
+legado **antes** do MASTER (`CLIENTE_LOCAIS_ATOMIC_OVERFLOW`); peels/testes.
+HML `d054e2b3` ≠ tip — sem promote. CI tip **em curso ≠ aprovado**.
+PROXIMO: CI `2f3814af9`; composição/aceite API/web HML com Codex (roteiro STATUS).
+
 ## Cursor — PR596 tip SUCCESS + Completo syncLocais atômico (2026-11-14 America/Sao_Paulo)
 
-Tip `11dc2372a` CI SUCCESS (ownOnly/`_acoes`/catalog). Este lote: Completo prefer `syncLocais`
-(`batchAtomic:true`); legado só fallback SNAPSHOT/ATOMIC_UNAVAILABLE; conflito fail-closed.
-HML `d054e2b3` ≠ tip — sem promote. PROXIMO: CI deste tip; composição API/web HML com Codex.
+Tip `11dc2372a` CI SUCCESS (ownOnly/`_acoes`/catalog). Tip `d9d3c74ba` CI SUCCESS: Completo
+prefer `syncLocais` (`batchAtomic:true`); legado só fallback SNAPSHOT/ATOMIC_UNAVAILABLE;
+conflito fail-closed. HML `d054e2b3` ≠ tip — sem promote.
 
 ## Cursor — stack 591→595→596 composta (2026-11-14 America/Sao_Paulo)
 

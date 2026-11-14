@@ -3,11 +3,23 @@
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
 Base tip `d9d3c74ba` CI **SUCCESS** (frontend/backend/compose/Approval/Security; Bugbot NEUTRAL).
 Bugbot High: overflow (>50 ops) após MASTER deixava cliente sem sync.
-Correção (este tip):
+Correção tip `2f3814af9`:
 - `buildClienteLocaisSyncOperations` retorna `overflow:true` (não lança).
 - Completo: preflight antes do MASTER → `locaisPreferLegacyRef` → sync legado; fallback pós-MASTER só SNAPSHOT/ATOMIC_UNAVAILABLE/INPUT_INVALID/ATOMIC_OVERFLOW.
 - `syncClienteLocaisAtomicViaHttp` lança `CLIENTE_LOCAIS_ATOMIC_OVERFLOW` (não VALIDATION genérico).
 Peels operacional + testes overflow. Sem HML (`d054e2b3` — tip ≠ HML). CI tip **em curso ≠ aprovado**.
+
+### Roteiro composição/aceite (Cursor+Codex) — dados sintéticos
+Não presumir tip aprovada = HML. Combinar SHA API/web antes do promote.
+1. Cadastro rico: abrir Completo; listagem/filtros; permissão negada ≠ vazio.
+2. Endereços: snapshot → revisão (sem escrita) → rascunho → save atômico; conflito; overflow legado.
+3. Fiscal: ClienteLocal revisão (não `MASTER.endereco_principal`); operacional ≠ revisão.
+4. Entrega: Seletor só local ativo+ENTREGA+completo; reabrir pedido por ID canônico.
+5. Cadastros Gerais: menu/rotas/cards — fora composição ≠ oculto RBAC ≠ endpoint down ≠ não recuperado.
+6. Dashboard: fonte/fórmula/período/Grupo-Empresa/perm/loading/erro/drill; indisponível ≠ zero.
+7. Códigos: lista/busca/form/select/export/print — backend; sem UUID/renumerar.
+8. Central360: cliente→itens→endereço→condição/pagamento canônico→salvar/reabrir→fechar→pedido.
+9. Concorrência: troca cliente/empresa/sessão; resposta tardia; duplo clique; rede; FecharOrçamento ≠ Cancelar ≠ FecharJanela.
 
 ## Cursor — PR596 Completo syncLocais atômico (2026-11-14 America/Sao_Paulo)
 
