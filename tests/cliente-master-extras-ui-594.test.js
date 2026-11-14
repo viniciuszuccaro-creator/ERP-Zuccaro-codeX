@@ -80,6 +80,9 @@ test('Completo + Relatórios wired', () => {
   assert.match(completo, /data-block="cliente-master-extras"/);
   assert.match(completo, /applyClienteMasterExtrasToHttpPayload/);
   assert.match(completo, /isClienteMasterStorageRequired/);
+  // Create/emptyForm: extras '' (opcional), não undefined → evita "Não recuperado" no novo.
+  assert.match(completo, /rg: "",\n(?:    \/\/[^\n]+\n)?    numero_caixa_postal: "",\n    cep_caixa_postal: "",\n    caixa_postal_cobranca: "",\n    inscricao_produtor_rural: "",/);
+  assert.equal((completo.match(/numero_caixa_postal: "",/g) || []).length >= 2, true);
   assert.match(relatorios, /!permissionsLoading && hasReportGrant\(perfilAcesso,'Comercial','Representantes','visualizar'\)/);
   assert.match(relatorios, /!permissionsLoading && hasReportGrant\(perfilAcesso,'Relatorios','Personalizado','visualizar'\)/);
 });

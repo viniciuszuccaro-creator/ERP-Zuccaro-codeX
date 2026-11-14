@@ -22,6 +22,25 @@ export const clienteLocaisPurposeHunks = {
         '',
       ],
       [
+        '    rg: "",\n'
+        + '    // Create: \'\' = opcional vazio (omit no wire); undefined só em carga edit ausente.\n'
+        + '    numero_caixa_postal: "",\n'
+        + '    cep_caixa_postal: "",\n'
+        + '    caixa_postal_cobranca: "",\n'
+        + '    inscricao_produtor_rural: "",\n',
+        '    rg: "",\n',
+      ],
+      [
+        '      rg: "",\n'
+        + '      numero_caixa_postal: "",\n'
+        + '      cep_caixa_postal: "",\n'
+        + '      caixa_postal_cobranca: "",\n'
+        + '      inscricao_produtor_rural: "",\n'
+        + '      inscricao_estadual: "",\n',
+        '      rg: "",\n'
+        + '      inscricao_estadual: "",\n',
+      ],
+      [
         '      if (isHttpBackendMode) {\n'
         + '        // Extensões MASTER (rg/caixa/produtor): omit ≠ limpar; \'\' ≠ clear (Codex).\n'
         + '        applyClienteMasterExtrasToHttpPayload(payload, data);\n'

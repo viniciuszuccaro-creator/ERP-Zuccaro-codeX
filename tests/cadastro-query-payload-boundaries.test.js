@@ -95,7 +95,9 @@ test('RG HTTP: exact peel rejects omission, repetition and changes while retaini
   const source = read(file);
   assert.doesNotThrow(() => clienteContactPresenceRemainder(source));
   // RAW: applyClienteMasterExtras + value/onChange; Continuity RG só após purpose.
-  const rawGuards = [masterExtrasUiHunks[1][0], rgHttpHunks[1][0], rgHttpHunks[2][0]];
+  const applyHunk = masterExtrasUiHunks.find(([after]) => after.includes('applyClienteMasterExtrasToHttpPayload(payload'))?.[0];
+  assert.ok(applyHunk);
+  const rawGuards = [applyHunk, rgHttpHunks[1][0], rgHttpHunks[2][0]];
   for (const after of rawGuards) {
     for (const replacement of ['', after + after, after.replace('rg', 'rg /* FORGED */')])
       assert.throws(() => clienteContactPresenceRemainder(source.replace(after, replacement)));
@@ -211,6 +213,25 @@ const masterExtrasUiHunks = [
   [
     "import {\n  applyClienteMasterExtrasToHttpPayload,\n  isClienteMasterStorageRequired,\n} from \"@/api/clienteMasterExtrasUi\";\n",
     '',
+  ],
+  [
+    '    rg: "",\n'
+    + '    // Create: \'\' = opcional vazio (omit no wire); undefined só em carga edit ausente.\n'
+    + '    numero_caixa_postal: "",\n'
+    + '    cep_caixa_postal: "",\n'
+    + '    caixa_postal_cobranca: "",\n'
+    + '    inscricao_produtor_rural: "",\n',
+    '    rg: "",\n',
+  ],
+  [
+    '      rg: "",\n'
+    + '      numero_caixa_postal: "",\n'
+    + '      cep_caixa_postal: "",\n'
+    + '      caixa_postal_cobranca: "",\n'
+    + '      inscricao_produtor_rural: "",\n'
+    + '      inscricao_estadual: "",\n',
+    '      rg: "",\n'
+    + '      inscricao_estadual: "",\n',
   ],
   [
     '      if (isHttpBackendMode) {\n'
