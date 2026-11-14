@@ -1,5 +1,15 @@
 ## Fiscal canonico e callback: pacote de interface em validacao (2026-11-14)
 
+Codigo38b4e1ec remotoPR594 / CI7038/7039SUCCESS. RootUbuntu2974PASS/0FAIL/0SKIP,
+backend/PostgreSQL/composePASS. Pacote API/web do mesmoSHA feito foraVPS e
+conferido2214arquivos/17857555bytes; archive3957349bytes/SHA c245b610cbe072e7f869219ce90c9f8775347992754136cdbaa8d11f1afcf5a4.
+Plano privado de atualizacao e rollback HML preparado, NAO aplicado. LeituraVPS
+27,32GiBlivres/inodes6%; IDs/limites preservados, marcador servido d054e2b3.
+Backup service success nao dispensa novo backup no gate de atualizacao.
+Coordenacao6878909054; preservar consumidores Cursor no port595/596; nao afirmar
+integracao so pela entrega dos hunks. Perfil real segue visualizar; nenhuma
+ativacao/escrita de enderecos, DDL ou alteracao operacional neste lote.
+
 595f6bfffac/CI7031SUCCESS reconferidos. Na continuidade594: port controlado do
 seletor, snapshot canonico completo e callback ligado ao render/geracao original.
 Fiscal editavel no bloco ClienteLocal existente, review/CAS activate:false,
@@ -7,7 +17,7 @@ somente campos alterados; nenhum MASTER.endereco_principal, novo cadastro ou
 ativacao automatica. Permissao editar granular exigida, nao concedida na HML.
 Review e consumidor Logistica montados em React real; inversao do fix reproduz
 ABA e corrigido passa. Transporte/identidade/Select sinteticos, nao E2E HML.
-64testes afetadosPASS; CI/fechamento do novo lote pendentes. Backend inalterado.
+64testes afetadosPASS; CI/fechamento acima. Backend inalterado.
 RuntimeHML d054e2b3 e217inativos intactos; preparacao de pacote foraVPS segue CI.
 Reserva6878712054; detalhes/gates e retomada da ref Git no HANDOFF.
 

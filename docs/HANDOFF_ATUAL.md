@@ -1,5 +1,31 @@
 ## Fiscal canonico e callback: consumidor montado, sem ativacao (2026-11-14)
 
+FECHADO codigo38b4e1ecf5f88499ce4949f3eb4ed87fa731a4e2 remotoPR594,
+CI7038/7039SUCCESS frontend/backend/compose. Ubuntu root2974PASS/0FAIL/0SKIP,
+PostgreSQL obrigatorioPASS, audit/lint/typecheck/buildPASS; afetados locais64PASS.
+Coordenacao595/6878909054 entrega hunks e alcance ao Cursor; nao declarar
+integracao em595/596 enquanto seus HEADs nao a comprovarem. Reserva do lote
+liberada apos publicacao; manter Review/ENTREGA callbacks aprovados do Cursor
+no port, sem sobrepor arquivos inteiros ou reintroduzir fiscal no MASTER.
+
+Pacote HML produzido foraVPS pelo package-hml-runtime existente, checkout
+PUBLISHED_CLEAN; API/web38b4e1ec identicos.2214arquivos/17857555bytes conferidos
+individualmente; filesSha256ea3dadb0fd37d57fb1f3f35593f3ece43412f37f0cae500eb24dbdf46de3f1c6.
+Archive3957349bytes/SHA256c245b610cbe072e7f869219ce90c9f8775347992754136cdbaa8d11f1afcf5a4;
+paths do tar conferidos, nenhum segredo/banco/.env, sem executar migrations.
+Artefato e plano privado address-update-38b4e1ec preservados foraGit/build publico.
+Plano pinou imagens/IDs/config anteriores para rollback SOMENTE API/webHML;
+rollback de runtime NAO e reversao dos dados. Nenhum upload/deploy realizado.
+
+VPS leitura atual:29334904832byteslivres (27,32GiB), inodes6%, mesmos IDs e
+StartedAt HML; limites PG1GiB/0,40CPU,API512MiB/0,30CPU,web128MiB/0,05CPU.
+Backup service Resultsuccess/ExecMainStatus0; isso nao substitui backup fresco
+com ack externo antes da atualizacao. Marcador HTTPS confirma API/webd054e2b3.
+Nao alterar banco/permissoes para promover. Proxima acao concreta: compor hunks
+595 com preservacao dos consumidores, reservar janelaHML, backup atual/reversao
+e validar pacote/canario antes de apontar runtime. Escrita real exige gate de
+editar e reversao restrita; restaurar/principal/ativacao continuam separados.
+
 Retomada595 em f6bfffac/CI7031SUCCESS; os achados de9b876f33 nao sao
 automaticamente atuais. Reserva6878712054 delimita Review/opt-in FISCAL/testes
 na continuidade594; branch Cursor preservada,596/Central separados.
@@ -25,7 +51,7 @@ Confere payload fiscal mesmo ID, alteracao real do rascunho do Pedido, erros,
 conflito, callbacks antigos, sessao renovada, permissao e A->B->A. Inversao
 SOMENTE do fix do snapshot reproduz falha ABA; correcao passa. Nao e navegador
 integrado/API/PG/HML. Backend do pacote anterior permanece inalterado/CI7015.
-Contraprovas afetadas64PASS; fechamento completo/CI deste lote ainda pendente.
+Contraprovas afetadas64PASS; fechamento completo/CI encerrados acima.
 
 HML continua d054e2b3,217locais INATIVOS e demais dados preservados; nenhuma
 escrita, carga, DDL, grants ou deploy operacional. Perfil HML visualizar nao
