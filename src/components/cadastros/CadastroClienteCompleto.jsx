@@ -937,6 +937,25 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     });
   };
   const applyEnderecosDraft = (novosEnderecos) => {
+    // Mesma guarda do openDraft: owned parcial antes do catálogo soft-deleta o restante no save.
+    if (isHttpBackendMode) {
+      if (locaisHttpBaselineRef.current === null) {
+        toast({
+          title: 'Catálogo operacional indisponível',
+          description: 'Falha na leitura de locais — edição não aplicada. Reabra o cliente e tente de novo.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (!Array.isArray(locaisHttpView) && !Array.isArray(locaisHttpBaselineRef.current)) {
+        toast({
+          title: 'Aguarde o catálogo operacional',
+          description: 'Locais HTTP ainda carregando — edição não aplicada para não apagar outros endereços no save.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
     locaisDraftOwnedRef.current = true;
     setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
   };

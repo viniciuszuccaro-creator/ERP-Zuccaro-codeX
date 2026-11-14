@@ -1,3 +1,10 @@
+## Cursor — PR596 Security applyEnderecos + Gerenciar catalog (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+Tip `022650b07`: Security MEDIUM (applyEnderecosDraft sem guarda de catálogo) — **não aprovado pleno**.
+Correção: `applyEnderecosDraft` fail-closed como openDraft; Gerenciar desabilita add/edit/inativar se `loadStatus≠loaded`.
+Peels atualizados. Suites PASS. Sem HML (`d054e2b3`). CI tip **em curso ≠ aprovado**.
+
 ## Cursor — PR596 Security openDraft vs catálogo HTTP (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch PR596.

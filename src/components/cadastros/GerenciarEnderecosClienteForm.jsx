@@ -55,6 +55,8 @@ export default function GerenciarEnderecosClienteForm({
   const podeEditar = localAllowed("editar");
   const podeInativar = localAllowed("inativar");
   const podePrincipal = localAllowed("principal");
+  /** Adicionar/editar/inativar só com catálogo confirmado — evita owned parcial vs baseline. */
+  const countKnown = loadStatus === "loaded";
   const isDraftCommit = commitMode === "draft";
   const busyLabel = isDraftCommit
     ? "Aguarde a atualização do rascunho de endereços."
@@ -100,6 +102,10 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (!countKnown) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de adicionar endereços.");
+      return;
+    }
     if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
@@ -115,6 +121,10 @@ export default function GerenciarEnderecosClienteForm({
   const handleSalvarEndereco = async () => {
     if (!localAllowed(enderecoEditando !== null ? "editar" : "criar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (!countKnown) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de gravar o rascunho.");
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -188,6 +198,10 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (!countKnown) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de editar endereços.");
+      return;
+    }
     if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
@@ -204,6 +218,10 @@ export default function GerenciarEnderecosClienteForm({
   const handleExcluirEndereco = async (index) => {
     if (!localAllowed("inativar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (!countKnown) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de inativar endereços.");
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -228,7 +246,6 @@ export default function GerenciarEnderecosClienteForm({
     }
   };
 
-  const countKnown = loadStatus === "loaded";
   const titleCount = countKnown ? ` (${enderecos.length})` : "";
   let emptyMessage = "Nenhum endereço operacional disponível.";
   if (loadStatus === "loading") emptyMessage = "Carregando endereços operacionais…";
@@ -251,7 +268,8 @@ export default function GerenciarEnderecosClienteForm({
         <Button
           onClick={abrirNovo}
           size="sm"
-          disabled={bloqueado || !podeAdicionar}
+          disabled={bloqueado || !podeAdicionar || !countKnown}
+          title={!countKnown ? 'Aguarde a confirmação do catálogo operacional' : undefined}
           data-permission="Cadastros.cliente_local.criar"
           data-action="Cadastros.Cliente.endereco.adicionar"
           data-commit-mode={commitMode}
@@ -324,7 +342,7 @@ export default function GerenciarEnderecosClienteForm({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditarEndereco(idx)}
-                    disabled={bloqueado || !podeEditar}
+                    disabled={bloqueado || !podeEditar || !countKnown}
                     data-permission="Cadastros.cliente_local.editar"
                     data-action="Cadastros.Cliente.endereco.editar"
                   >
@@ -334,7 +352,7 @@ export default function GerenciarEnderecosClienteForm({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleExcluirEndereco(idx)}
-                    disabled={bloqueado || !podeInativar}
+                    disabled={bloqueado || !podeInativar || !countKnown}
                     data-permission="Cadastros.cliente_local.inativar"
                     data-action="Cadastros.Cliente.endereco.excluir"
                   >
