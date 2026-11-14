@@ -72,9 +72,11 @@ const date = (value) => value ? new Intl.DateTimeFormat('pt-BR').format(new Date
 const message = (error) => explainPedidoPersistenceError(error)
   || (error?.status===403?'Seu perfil não possui permissão para esta ação.':error?.status===404?'Pedido não encontrado neste contexto.':error?.status===409?'O estado atual não permite esta ação.':error?.body?.error?.message||error?.message||'Não foi possível concluir a operação.');
 
-export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken=undefined, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null, centralLayout=false, centralSituacao=null, centralSearch='', onCentralSelect=null, selectedCentralId=null }) {
+export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actorEmail, sessionToken=undefined, hasPermission, filterInContext, windowMode=false, empresaAtual=null, initialSelectedId=null, reopenRequestId=null, initialCreateClienteEmpresaId=null, createRequestId=null, centralLayout=false, centralSituacao=null, centralSearch='', selectionEpoch=0, onCentralSelect=null, selectedCentralId=null }) {
   const queryClient=useQueryClient();
   const detailGate=useRef(createPedidoDetailGate());
+  /** Hidratação de grades/seleção: epoch próprio — não compartilha sequência com save/show/history. */
+  const hydrateEpoch=useRef(0);
   const initialOpened=useRef(null);
   const initialCreateOpened=useRef(null);
   const mutationGate=useRef(sharedPedidoMutationGate);
@@ -276,6 +278,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     if(!centralLayout||!centralSituacao)return undefined;
     // Status canônicos do pedidoUiPolicy — sem inventar EM_ENTREGA/ENTREGUE.
     detailGate.current.invalidate();
+    hydrateEpoch.current += 1;
     setSelected(null);
     const map={PRODUCAO:'EM_PRODUCAO',ENTREGA:'PRONTO_ENTREGA',RETIRA:'PRONTO_RETIRADA',ENTREGUES:'FINALIZADO',FINALIZADOS:'FINALIZADO',CANCELADOS:'CANCELADO'};
     const status=map[centralSituacao]||'TODOS';
@@ -283,7 +286,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     setFilters((prev)=>({...prev,status,tipoOperacao}));
     setApplied((prev)=>({...prev,status,tipoOperacao}));
     setPage(1);
-    return ()=>{ detailGate.current.invalidate(); };
+    return ()=>{ detailGate.current.invalidate(); hydrateEpoch.current += 1; };
   },[centralLayout,centralSituacao]);
   useEffect(()=>{
     if(!centralLayout)return undefined;
@@ -295,37 +298,44 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     ()=>CENTRAL_VENDAS360_COLUMNS.filter((col)=>!centralHiddenColumns.has(col.key)),
     [centralHiddenColumns],
   );
-  const notifyCentralSelect=(row)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null});};
-  const hydratePedidoRow=async(row)=>{
+  const notifyCentralSelect=(row)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);onCentralSelect(row,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch});};
+  const hydratePedidoRow=async(row,{forEdit=false}={})=>{
     if(!row?.id)return null;
-    const ticket=detailGate.current.begin(renderedScope.current,renderedScope.current,activeScope());
-    if(!ticket){
+    const session=activeScope();
+    if(!session?.token||!renderedScope.current?.groupId||!renderedScope.current?.empresaId||!renderedScope.current?.actorId){
       toast.error('Sessão/contexto insuficiente para hidratar o pedido — grades podem ficar sem itens.');
       return null;
     }
+    const opened={...renderedScope.current,token:session.token};
+    const gen=++hydrateEpoch.current;
     try{
       const detail=await api.get(row.id);
-      if(!detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))return null;
+      if(gen!==hydrateEpoch.current)return null;
+      const live=activeScope();
+      if(!live?.token||live.token!==opened.token)return null;
+      if(opened.groupId!==renderedScope.current.groupId||opened.empresaId!==renderedScope.current.empresaId||opened.actorId!==renderedScope.current.actorId)return null;
       return detail;
     }catch(error){
-      if(detailGate.current.isCurrent(ticket,renderedScope.current,activeScope()))toast.error(message(error));
+      if(gen===hydrateEpoch.current)toast.error(message(error));
       return null;
     }
   };
   const selectCentralRow=async(row)=>{
     if(!row?.id)return;
     // Lista pode trazer itens stub sem total/parcelas — sempre GET canônico na Central.
+    const epochAtClick=selectionEpoch;
     setSelected(row);
     notifyCentralSelect(row);
     const detail=await hydratePedidoRow(row);
     if(!detail)return;
+    if(epochAtClick!==selectionEpoch)return;
     setSelected(detail);
     notifyCentralSelect(detail);
   };
   const openEditHydrated=async(row)=>{
     if(!canEdit(row))return;
     // Edição sempre após GET: evita form incompleto quando a lista já trouxe itens parciais.
-    const detail=await hydratePedidoRow(row);
+    const detail=await hydratePedidoRow(row,{forEdit:true});
     if(detail)openEdit(detail);
   };
 

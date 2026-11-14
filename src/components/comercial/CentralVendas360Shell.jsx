@@ -1,4 +1,4 @@
-import React, { Suspense, useCallback, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   Bot,
@@ -166,6 +166,9 @@ export default function CentralVendas360Shell({
   const [clientePanelOpen, setClientePanelOpen] = useState(true);
   const [selected, setSelected] = useState(null);
   const [selectedClienteId, setSelectedClienteId] = useState(null);
+  /** Epoch da seleção na Central: troca de situação invalida GET tardio do painel desmontado. */
+  const selectionEpochRef = useRef(0);
+  const [selectionEpoch, setSelectionEpoch] = useState(0);
 
   const situacao = situacaoById(proposalMode ? CENTRAL_VENDAS360_DEFAULT_SITUACAO : situacaoId);
   const contextoLabel = empresaAtual?.nome_fantasia
@@ -174,6 +177,7 @@ export default function CentralVendas360Shell({
     || (contexto === 'grupo' ? 'Grupo' : 'Empresa');
 
   const onSelectDocument = useCallback((row, meta = {}) => {
+    if (typeof meta.selectionEpoch === 'number' && meta.selectionEpoch !== selectionEpochRef.current) return;
     setSelected(row || null);
     setSelectedClienteId(meta.clienteId || row?.cliente_id || null);
   }, []);
@@ -237,6 +241,7 @@ export default function CentralVendas360Shell({
             centralLayout
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
+            selectionEpoch={selectionEpoch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selected?.id || null}
           />
@@ -254,6 +259,7 @@ export default function CentralVendas360Shell({
             centralLayout
             centralSituacao={situacao.id}
             centralSearch={universalSearch}
+            selectionEpoch={selectionEpoch}
             onCentralSelect={onSelectDocument}
             selectedCentralId={selected?.id || null}
           />
@@ -403,6 +409,9 @@ export default function CentralVendas360Shell({
               data-action={`central360-situacao-${s.id}`}
               onClick={() => {
                 if (blocked) return;
+                const nextEpoch = selectionEpochRef.current + 1;
+                selectionEpochRef.current = nextEpoch;
+                setSelectionEpoch(nextEpoch);
                 setSituacaoId(s.id);
                 setSelected(null);
                 setSelectedClienteId(null);

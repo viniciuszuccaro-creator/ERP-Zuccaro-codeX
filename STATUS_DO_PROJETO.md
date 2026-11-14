@@ -1,3 +1,13 @@
+## Cursor — PR596 Bugbot hydrate epoch + situação (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Shell `selectionEpoch`: GET tardio após troca de situação não atualiza grades/Cliente360.
+- Pedido: `hydrateEpoch` separado do `detailGate` (save/show/history intactos).
+- Orçamento: bump `detailRequest` na situação; `openEditHydrated` no duplo clique.
+- PR595 tip `c3a3a1143` CI SUCCESS (typecheck Seletor).
+Contrato Codex `da98af346` (revisão atômica, activate explícito) reconhecido — UI
+batch ainda não mergeada nesta stack; sem HML.
+
 ## Cursor — PR596 hydrate always + typecheck layout (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).

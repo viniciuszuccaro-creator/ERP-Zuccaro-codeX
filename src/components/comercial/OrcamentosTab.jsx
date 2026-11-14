@@ -86,6 +86,7 @@ export default function OrcamentosTab({
   centralLayout = false,
   centralSituacao = null,
   centralSearch = '',
+  selectionEpoch = 0,
   onCentralSelect = null,
   selectedCentralId = null,
 }) {
@@ -143,6 +144,8 @@ export default function OrcamentosTab({
   }, [centralLayout, centralSearch]);
   useEffect(() => {
     if (!centralLayout) return undefined;
+    detailRequest.current += 1;
+    setSelected(null);
     if (centralSituacao === 'VENCIDOS') {
       const today = new Date().toISOString().slice(0, 10);
       setFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: today }));
@@ -151,7 +154,7 @@ export default function OrcamentosTab({
       setFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
       setAppliedFilters((prev) => ({ ...prev, status: 'EM_ABERTO', validadeAte: '' }));
     }
-    return undefined;
+    return () => { detailRequest.current += 1; };
   }, [centralLayout, centralSituacao]);
   useEffect(() => {
     if (!centralLayout) return undefined;
@@ -396,6 +399,22 @@ export default function OrcamentosTab({
     });
     setDirty(false); setDetailOpen(false); setFormOpen(true);
     if (proposalMode) setProposalStage('edicao');
+  };
+  const openEditHydrated = async (row) => {
+    if (proposalMode) { openEdit(row); return; }
+    if (!canEdit(row) || !row?.id) return;
+    const request = ++detailRequest.current;
+    const opened = { ...renderedScope.current, token: activeScope()?.token };
+    try {
+      const detail = await api.get(row.id);
+      if (request !== detailRequest.current) return;
+      if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
+      openEdit(detail);
+    } catch (error) {
+      if (request === detailRequest.current && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
+        toast.error(errorMessage(error));
+      }
+    }
   };
   const changeForm = (key, value) => { setForm((current) => ({ ...current, [key]: value })); setDirty(true); };
   const changeItem = (index, key, value) => {
@@ -843,7 +862,7 @@ const convertToPedido = async () => {
   const notifyCentralSelect = (row) => {
     if (typeof onCentralSelect !== 'function') return;
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
-    onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null });
+    onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch });
   };
   /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
   const selectCentralRow = async (row) => {
@@ -1297,7 +1316,7 @@ const convertToPedido = async () => {
                   data-selected={selectedRow ? 'true' : undefined}
                   className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
                   onClick={() => { void selectCentralRow(row); }}
-                  onDoubleClick={() => { if (proposalMode || canEdit(row)) openEdit(row); }}
+                  onDoubleClick={() => { if (proposalMode || canEdit(row)) void openEditHydrated(row); }}
                   data-action="central360-selecionar-orcamento"
                 >
                   {centralVisibleColumns.map((col) => cells[col.key])}
