@@ -1,4 +1,52 @@
-## Retomada Casa: revisao atual595/596 e janela HML (2026-11-14)
+## Casa: console recuperado e residual de retry atual596 (2026-11-14)
+
+Checkpoint anterior749ac9103eda325948e00c9e2895e17ba699fdbb/CI7067SUCCESS.
+Proprietario abriu WebConsole existente; canal Casa efetivo como root, sem
+trocar SSH/chaves/config. Prechecks SOMENTE leitura17:04UTC:29333671936bytes
+livres (~27,3GiB), limites API512MiB/0,30CPU, web128MiB/0,05CPU e PG1GiB/0,40CPU.
+PG networknone/sem portas, API sem portas publicadas, web127.0.0.1:13081 em rede
+HML separada. Containers/volumes HML identificados; ERP real saudavel separado.
+Nenhum codex/pg_dump/pg_restore/rsync em execucao no recorte; processos Node
+existentes preservados. lslocks nao mostrou lock HML retido; .writer.lock do
+backup existe vazio e foi PRESERVADO. Isso nao reserva janela futura sozinho.
+Backup service Resultsuccess/ExecMainStatus0; proximo timer15/11 03:33:08Brasilia.
+Nao equivale a backup fresco+ack externo do gate de atualizacao.
+
+Delta granular preparado PRIVADAMENTE em profile-locais-casa-20261114.proposal.private.json
+sob /root/erp-private/hml-recovery-20261114,0600/exclusivo. Reutilizado conector
+Database do hml-backup.py existente: pins container/imagem/cluster/schema/mount
+conferidos; consulta SOMENTE do perfil pinado, READ ONLY/ROLLBACK. Perfil ativo,
+Auth vinculado, Grupo sem Empresa e cliente_local somente visualizar confirmados.
+Proposta adiciona apenas editar para review activate:false, guarda arvore anterior/
+hash, identidade/escopo e condicoes de CAS/auditoria/reversao. Restaurar/ativacao/
+principal NAO incluidos; nenhum grant/permissao ou dado de negocio alterados.
+Primeira tentativa psql usou socketpadrao ausente: falhou antes da leitura; nao
+alterou configuracao. Conector canonico corrigiu o acesso, sem afrouxar gates.
+
+Cursor atualizou596:4794b32853a1ff5577e7a3e855e116934345e722. Contraprova antiga
+de perda25edicoes agora PASS; nao mante-la como defeito atual. Retry com leitura
+de reconciliacao disponivel tambem PASS: ID confirmado preservado,2registros para
+2locais.21testes focais de sync PASS/0FAIL/0SKIP; alcance transporte/mutationFn
+originais e bordas sinteticas, nao React montado/API/PG/HML.
+
+Residual NOVO no mesmo SHA: create1CONFIRMADO comID, create2falha503, e listLocais
+da reconciliacao tambem503. Carimbo doID fica dentro do try da leitura e nao roda;
+baseline vira null e draft continua semID conhecido. Retry cria ambos:3registros
+para2locais,4tentativas. Contraprova real da mutationFn/transporte reproduziu;
+nao e commit remoto desconhecido (ID1 esta em summary.ops). Cursor deve preservar
+IDs conhecidos mesmo sem leitura, ou impedir retry ate reconciliacao segura;
+manter baseline desconhecida sem deletes e pendencias intactas. Solicitar prova
+do consumidor com essa negativa antes de compor/atualizar a HML. Branchs alheias
+intactas; nao declarar o conjunto aceito por21testes ou CI anterior.
+
+HML continua API/webd054e2b3; nenhuma atualizacao/carga/DDL/grant/reativacao.
+Fila seguinte: fechar residual atual596 -> composicao mesma594 -> CI/pacote
+foraVPS -> janela/backup+ack/reversao -> atualizar SOMENTE HML -> aceite autenticado.
+Dados em escala/Cadastros Gerais/codigos seguem fila anterior, sem repetir cargas
+e sem aplicar2295em pais inativos por inferencia. Repositorio Casa limpo apos
+publicacao documental; nenhum escritor remoto de negocio deixado por este lote.
+
+## Historico — Retomada Casa: revisao595/596 e janela HML (2026-11-14)
 
 Codex CASA e EMPRESA possuem o mesmo papel/escopo/autonomia; troca de computador
 nao reinicia o projeto nem restringe Casa a revisao. Um executor por recurso,

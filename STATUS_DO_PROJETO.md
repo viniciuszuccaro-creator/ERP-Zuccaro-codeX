@@ -1,4 +1,26 @@
-## Revisao atual Casa e fechamento HML por dependencia (2026-11-14)
+## Casa: prechecks HML e retry596 ainda parcial (2026-11-14)
+
+749ac910/CI7067SUCCESS. WebConsole existente recuperada com ajuda do proprietario;
+prechecks readonly:~27,3GiBlivres, limites/rede/socket/portas HML preservados,
+ERP real separado saudavel. Backup service success/timer15/11 03:33:08Brasilia;
+nenhum lockHML retido observado, arquivo.writer.lock preservado. Nao reserva
+janela futura nem substitui backup fresco+ack externo. Nenhuma carga/deploy.
+
+Perfil pinado ativo/Auth/Grupo confirmado em READ ONLY/ROLLBACK pelo conector
+existente do backup. cliente_local atual visualizar; proposta PRIVADA0600 para
+adicionar somente editar/review activate:false, com estado anterior/hash/CAS/
+auditoria/reversao preparada. Nao aplicada; restaurar/principal/ativacao separados.
+
+596novo4794b328: perda antiga25edicoes corrigida e retry com leitura disponivel
+PASS.21testes de sync PASS. Residual NOVO: create confirmado comID + segunda
+falha + leitura de reconciliacao503 perde carimbo doID no rascunho; retry duplica
+primeirocreate,3registros para2locais. mutationFn/transporte reais, bordas
+sinteticas; sem prova React/HTTP/PG. Exigir preservarIDs sem leitura ou bloquear
+retry, depois CI/consumidor/composicao/pacote/janelaHML. Detalhes no HANDOFF.
+Nenhuma branch Cursor ou594 compartilhada alterada pelo Casa; mesmos dados e
+permissoes reais, sem reativar1500clientes/217locais ou inferir gate2295.
+
+## Historico — Revisao Casa e fechamento HML por dependencia (2026-11-14)
 
 Casa/Empresa: mesma autonomia, um executor por recurso.59476dc3832/CI7046+7047SUCCESS
 reconferida,595b5862fc5 e596b8a6710b atuais. Casa trabalha em branch propria
