@@ -59,10 +59,21 @@ const dateLabel = (value) => {
   }
 };
 
-function GradesSimultaneas({ itens }) {
-  const { corte, revenda } = useMemo(() => partitionCentralItens(itens), [itens]);
+function GradesSimultaneas({ itens, hasSelection = false }) {
+  const list = Array.isArray(itens) ? itens : [];
+  const { corte, revenda } = useMemo(() => partitionCentralItens(list), [list]);
+  const semItensCarregados = hasSelection && list.length === 0;
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 min-h-[160px]" data-block="central360-grades-simultaneas">
+      {semItensCarregados ? (
+        <div
+          className="lg:col-span-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+          data-block="central360-grades-sem-itens"
+          role="status"
+        >
+          Documento selecionado sem itens carregados — aguarde a hidratação ou abra o detalhe (duplo clique). Grades vazias não significam estoque zerado.
+        </div>
+      ) : null}
       <GradeItens
         title="Corte e Dobra / Montagem"
         rows={corte}
@@ -248,12 +259,12 @@ export default function CentralVendas360Shell({
           />
         )}
       </Suspense>
-      <GradesSimultaneas itens={selected?.itens} />
+      <GradesSimultaneas itens={selected?.itens} hasSelection={Boolean(selected?.id)} />
       {selected && (
         <div className="text-[11px] text-slate-500 px-1 flex flex-wrap gap-3" data-block="central360-selecao-meta" role="status">
           <span>Selecionado: <strong className="font-mono text-sky-900">{selected.numero || selected.id}</strong></span>
           <span>Peso: {pesoSelecionado == null ? '—' : `${pesoSelecionado} kg`}</span>
-          <span className="text-slate-400">Clique simples seleciona · duplo clique edita em janela própria · seleção não grava</span>
+          <span className="text-slate-400">Clique simples seleciona e hidrata itens · duplo clique edita · seleção não grava</span>
         </div>
       )}
     </div>

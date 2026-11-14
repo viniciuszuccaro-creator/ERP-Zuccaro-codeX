@@ -99,9 +99,13 @@ PR #596. Tip anterior `0dc773c1d` (contagens/dashboard); este tip alinha data-pe
 - Fail-closed sem `cliente_local_id`; payload envia id canônico (Codex BFF confirma contrato)
 - Fechar ≠ Cancelar ≠ Fechar janela preservados
 
-Próximo Cursor: itens/pagamento ricos na edição; códigos UI após contrato; cards Base44
-no Dashboard canônico. Sem HML/DDL/carga neste lote. Coordenar se `converter-pedido`
-já exige `cliente_local_id` no schema (enviar campo; se 422, Codex).
+### Central360 — hidratação grades + blockers ([Central360 journey gaps](bc-bcb7a25f-ebbf-5214-a0c4-fb9eb420c863))
+- Clique simples orçamento/pedido: GET hidrata `itens` para grades (lista sem linhas ≠ vazio real)
+- Shell: banner `central360-grades-sem-itens` quando seleção sem itens carregados
+- Fechar bloqueia sem condição de pagamento / masters em erro
+
+Próximo Cursor: tabela pedido 12 cols; itens/pagamento ricos; códigos UI; cards Base44.
+Sem HML/DDL/carga. Codex: schema `converter-pedido` + `cliente_local_id`.
 
 ## Cursor — endereços operacionais + rascunho de revisão (2026-11-14)
 

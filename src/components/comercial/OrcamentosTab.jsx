@@ -747,12 +747,20 @@ const convertToPedido = async () => {
       toast.error('Orçamento sem itens — não é possível fechar.');
       return;
     }
+    if (!detail.condicao_pagamento_id) {
+      toast.error('Orçamento sem condição de pagamento — edite e grave antes de fechar.');
+      return;
+    }
+    if (mastersQuery.isError) {
+      toast.error(errorMessage(mastersQuery.error) || 'Cadastros auxiliares indisponíveis — não é possível fechar.');
+      return;
+    }
     conversionScope.current = ticket.scope;
     setConversion({ tipo_operacao: 'ENTREGA', data_entrega_solicitada: '', cliente_local_id: '' });
     setConversionEndereco(null);
     setConversionStockOk(true);
     setPendingConversion(detail);
-    toast.message('Fechamento comercial: confirme operação, data e estoque. A conversão só grava após resposta do servidor — Cancelar é ação separada.');
+    toast.message('Fechamento comercial: confirme operação, data, local (se entrega) e estoque. A conversão só grava após resposta do servidor — Cancelar é ação separada.');
     });
   };
   const cancelarOrcamentoCentral = () => {
@@ -823,10 +831,30 @@ const convertToPedido = async () => {
     return link?.cliente_id || pendingConversion.cliente_id || null;
   })();
   const notifyCentralSelect = (row) => {
-
     if (typeof onCentralSelect !== 'function') return;
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
     onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null });
+  };
+  /** Clique simples: seleciona já e hidrata itens via GET (lista costuma vir sem linhas). Sem mutation gate. */
+  const selectCentralRow = async (row) => {
+    if (!row?.id) return;
+    setSelected(row);
+    notifyCentralSelect(row);
+    if (proposalMode) return;
+    if (Array.isArray(row.itens) && row.itens.length > 0) return;
+    const request = ++detailRequest.current;
+    const opened = { ...renderedScope.current, token: activeScope()?.token };
+    try {
+      const detail = await api.get(row.id);
+      if (request !== detailRequest.current) return;
+      if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
+      setSelected(detail);
+      notifyCentralSelect(detail);
+    } catch (error) {
+      if (request === detailRequest.current && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
+        toast.error(errorMessage(error));
+      }
+    }
   };
 
   return <div className={`w-full h-full flex flex-col ${centralLayout ? 'bg-transparent p-0' : `bg-slate-50 ${windowMode ? 'p-3' : 'p-4'}`}`} data-permission="Comercial.orcamento.visualizar" data-proposta-stage={proposalMode ? proposalStage : undefined} data-central-layout={centralLayout ? 'versao6' : undefined}>
@@ -1259,8 +1287,9 @@ const convertToPedido = async () => {
                   key={row.id}
                   data-selected={selectedRow ? 'true' : undefined}
                   className={selectedRow ? 'bg-sky-50' : 'cursor-pointer'}
-                  onClick={() => { setSelected(row); notifyCentralSelect(row); }}
+                  onClick={() => { void selectCentralRow(row); }}
                   onDoubleClick={() => { if (proposalMode || canEdit(row)) openEdit(row); }}
+                  data-action="central360-selecionar-orcamento"
                 >
                   {centralVisibleColumns.map((col) => cells[col.key])}
                 </TableRow>
