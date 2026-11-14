@@ -1,3 +1,9 @@
+## Cursor — PR596 8º path GerenciarEnderecosClienteForm liberado (2026-11-14 America/Sao_Paulo)
+
+Casa #6882779273: incluir só `GerenciarEnderecosClienteForm.jsx` no port Codex
+(contrato `loadStatus="unknown"` + guards). Já no tip freeze `0ffff5100`.
+Port: 5 + Review + operacional-595 + GerenciarEnderecos = 8 paths. tip ≠ HML.
+
 ## Cursor — PR596 candidata freeze 0ffff5100 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch PR596 tip **`0ffff5100`** CI SUCCESS (43629783547).

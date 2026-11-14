@@ -1,3 +1,11 @@
+## Cursor — PR596 libera 8º path GerenciarEnderecosClienteForm (2026-11-14 America/Sao_Paulo)
+
+Casa #6882779273: CI7107 `0ffff5100` SUCCESS; port 7 paths em Codex; FAIL focal
+por dependência omitida — `GerenciarEnderecosClienteForm.jsx` (default
+`loadStatus="unknown"`, guards loading/failed/denied). **LIBERAR** 8º path
+relacionado ao contrato Completo596. Sem outros Cadastros/count/Dashboard.
+Freeze código **`0ffff5100`**. tip ≠ HML. Sem deploy.
+
 ## Cursor — PR596 candidata freeze 0ffff5100 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ HML)
