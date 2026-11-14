@@ -1,6 +1,12 @@
+## Cursor — PR596 Bugbot CondicaoComercial + Casa 4c65 PASS (2026-11-14 America/Sao_Paulo)
+
+Bugbot: remove `codigo` da grade CondicaoComercial (idOnly). Representante OK.
+Casa: residual Produto LOCAL fechado em `4c65d69a4` (queryFn+matches reais).
+fora pacote 81; tip ≠ HML; sem deploy.
+
 ## Cursor — PR596 tip a99d599c7 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
-Códigos UI Representante/CondicaoComercial. Código tip anterior rico C360
+Códigos UI Representante (+ CondicaoComercial revertido Bugbot). C360 rico
 `b5b7bee84`. Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`.
 Sem deploy. Próximo: cards Base44 / Casa preflight pacote.
 

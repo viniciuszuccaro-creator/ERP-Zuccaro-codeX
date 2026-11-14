@@ -167,3 +167,16 @@ test('Bloco 6 Tecnologia lista entidades fora de MASTER_CODE field=codigo', asyn
     assert.equal(MASTER_CODE_SPECS[entity]?.field === 'codigo', false, `${entity} não deve exigir codigo numérico Cadastros`);
   }
 });
+
+test('CondicaoComercial: grade sem coluna codigo (idOnly; Bugbot a99d)', async () => {
+  assert.equal(MASTER_CODE_SPECS.CondicaoComercial?.field === 'codigo', false);
+  const form = await readFile(new URL('../src/components/cadastros/CondicaoComercialForm.jsx', import.meta.url), 'utf8');
+  assert.match(form, /idOnly/);
+  const bloco3 = await readFile(new URL('../src/components/cadastros/blocks/Bloco3Financeiro.jsx', import.meta.url), 'utf8');
+  // Não listar codigo como 1ª coluna — visualizador preenche vazio com nome.
+  assert.doesNotMatch(
+    bloco3,
+    /k:\s*'CondicaoComercial'[\s\S]{0,280}(?:campos|c):\s*\[[^\]]*\bcodigo\b/,
+  );
+  assert.match(bloco3, /k:\s*'CondicaoComercial'[\s\S]{0,280}nome_condicao/);
+});
