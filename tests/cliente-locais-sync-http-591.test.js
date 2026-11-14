@@ -275,6 +275,70 @@ test('sync: falha intermediária → PARTIAL com ops + reconcileRequired', async
   );
 });
 
+test('Completo PARTIAL: baseline via listLocais sem sobrescrever rascunho pendente', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync('src/components/cadastros/CadastroClienteCompleto.jsx', 'utf8');
+  const start = src.indexOf('if (code === CLIENTE_LOCAIS_SYNC_PARTIAL)');
+  const end = src.indexOf('throw syncErr', start);
+  assert.ok(start > 0 && end > start, 'PARTIAL catch presente');
+  const block = src.slice(start, end);
+  assert.match(block, /listLocais/);
+  assert.match(block, /locaisHttpBaselineRef\.current = mapped/);
+  assert.match(block, /descartaria pendências|rascunho formData\.locais_entrega permanece/i);
+  assert.equal(
+    /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped/.test(block),
+    false,
+    'PARTIAL não pode setFormData(...locais_entrega: mapped)',
+  );
+
+  // Consumidor sintético: 1ª escrita ok, 2ª falha → baseline=persistido, draft intacto.
+  const draftPending = [
+    { ...baseEndereco, id: uuidA, apelido: 'Editado-1', _finalidades_detalhadas: [{ finalidade: 'ENTREGA', principal: true }], _tipo_endereco_original: 'Entrega', tipo_endereco: 'Entrega' },
+    { ...baseEndereco, id: uuidB, apelido: 'Editado-2-pendente', _finalidades_detalhadas: [{ finalidade: 'ENTREGA', principal: false }], _tipo_endereco_original: 'Entrega', tipo_endereco: 'Entrega' },
+  ];
+  const persistedBefore = [
+    { id: uuidA, nome: 'Antigo-1', cep: '01310100', logradouro: 'Av', numero: '1', bairro: 'B', cidade: 'SP', uf: 'SP', pais: 'BRASIL', ativo: true, finalidades: [{ finalidade: 'ENTREGA', principal: true }] },
+    { id: uuidB, nome: 'Antigo-2', cep: '01310100', logradouro: 'Av', numero: '2', bairro: 'B', cidade: 'SP', uf: 'SP', pais: 'BRASIL', ativo: true, finalidades: [{ finalidade: 'ENTREGA', principal: false }] },
+  ];
+  let updates = 0;
+  let partial;
+  try {
+    await syncClienteLocaisViaHttp({
+      clienteId: 'cli-partial',
+      draft: draftPending,
+      baselineIds: [uuidA, uuidB],
+      api: {
+        createLocal: async () => ({ id: uuidA }),
+        updateLocal: async () => {
+          updates += 1;
+          if (updates > 1) {
+            const err = /** @type {Error & { status: number }} */ (new Error('remoto 503'));
+            err.status = 503;
+            throw err;
+          }
+        },
+        softDeleteLocal: async () => {},
+        setFinalidades: async () => {},
+      },
+    });
+  } catch (err) {
+    partial = err;
+  }
+  assert.equal(partial?.code, CLIENTE_LOCAIS_SYNC_PARTIAL);
+  assert.equal(partial?.summary?.updated, 1);
+  // Simula catch Completo: listLocais → baseline; draft permanece.
+  const formDraft = structuredClone(draftPending);
+  const baseline = persistedBefore.map((row) => mapClienteLocalToUiEndereco(row));
+  // Após 1 update bem-sucedido, servidor teria Editado-1; listLocais sintético mistura.
+  baseline[0] = mapClienteLocalToUiEndereco({
+    ...persistedBefore[0],
+    nome: 'Editado-1',
+  });
+  assert.equal(formDraft[1].apelido, 'Editado-2-pendente');
+  assert.notEqual(formDraft[1].apelido, baseline[1].apelido);
+  assert.equal(baseline[0].apelido, 'Editado-1');
+});
+
 test('sync: assertScope CONTEXT_CHANGED no meio do lote', async () => {
   let guards = 0;
   await assert.rejects(

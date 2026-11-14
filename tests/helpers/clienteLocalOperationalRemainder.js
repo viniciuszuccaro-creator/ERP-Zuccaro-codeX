@@ -310,7 +310,8 @@ export function clienteLocalOperationalRemainder(file, text) {
       + '          for (const action of required) if (!hasPermission(\'Cadastros\', \'cliente_local\', action)) {\n'
       + '            throw Object.assign(new Error(`Permissao de locais ausente: ${action}. MASTER nao enviado; rascunho preservado.`), { code: \'PERMISSION_DENIED\', status: 403 });\n'
       + '          }\n'
-      + '          // Overflow atomico (>50 ops): legado ANTES do MASTER — evita cliente sem sync.\n'
+      + '          // Overflow (>50 ops): escolhe path legado. MASTER ainda grava antes do sync\n'
+      + '          // (não é atomicidade MASTER+locais) — evita sync atômico que falharia após MASTER.\n'
       + '          const baselineIdsPlan = Array.isArray(baseline)\n'
       + '            ? baseline\n'
       + '              .map((row) => (row && typeof row === \'object\'\n'
@@ -378,6 +379,138 @@ export function clienteLocalOperationalRemainder(file, text) {
     [
       '                        disabled={isHttpBackendMode || !formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\\D/g, \'\').length < 8}\n',
       '                        disabled={!formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\\D/g, \'\').length < 8}\n',
+    ],
+    [
+      `        } catch (syncErr) {
+          const partialErr = /** @type {Error & {
+            code?: string,
+            summary?: {
+              skipped?: boolean,
+              batchAtomic?: boolean,
+              created?: number,
+              updated?: number,
+              deleted?: number,
+              reconcileRequired?: boolean,
+              ops?: Array<{ op: string, localId?: string }>,
+            },
+          }} */ (syncErr);
+          const code = partialErr?.code;
+          // Preserva summary parcial para toast/retry — não anula progresso conhecido.
+          if (code === CLIENTE_LOCAIS_SYNC_PARTIAL && partialErr.summary) {
+            lastLocaisSyncSummaryRef.current = {
+              ...partialErr.summary,
+              syncPath: 'legacy',
+              fallbackReason: 'SYNC_PARTIAL',
+            };
+          } else {
+            lastLocaisSyncSummaryRef.current = null;
+          }
+          if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
+            // Baseline/visão = persistido; rascunho formData.locais_entrega permanece
+            // (edições ainda não gravadas) para reconciliação/reexecução explícita.
+            try {
+              assertLocaisScope();
+              const rows = await api.clientes.listLocais(frozenScope.clienteId, {
+                limit: 50, ativo: true,
+              });
+              const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+                /** @type {Record<string, unknown>} */ (row),
+              ));
+              setLocaisHttpView(mapped);
+              locaisHttpBaselineRef.current = mapped;
+              locaisDraftOwnedRef.current = true;
+              // NÃO setFormData(locais_entrega: mapped) — descartaria pendências.
+            } catch {
+              locaisHttpBaselineRef.current = null;
+            }
+          }
+          throw syncErr;
+        }
+`,
+      `        } catch (syncErr) {
+          lastLocaisSyncSummaryRef.current = null;
+          const code = /** @type {Error & { code?: string }} */ (syncErr)?.code;
+          if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
+            // Estado real: reconcilia baseline/rascunho com listLocais (reexecução segura).
+            try {
+              assertLocaisScope();
+              const rows = await api.clientes.listLocais(frozenScope.clienteId, {
+                limit: 50, ativo: true,
+              });
+              const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+                /** @type {Record<string, unknown>} */ (row),
+              ));
+              setLocaisHttpView(mapped);
+              locaisHttpBaselineRef.current = mapped;
+              setFormData((prev) => ({ ...prev, locais_entrega: mapped }));
+            } catch {
+              locaisHttpBaselineRef.current = null;
+            }
+          }
+          throw syncErr;
+        }
+`,
+    ],
+    [
+      `    onError: (error) => {
+      const sameScope = isFormScopeCurrent();
+      const err = /** @type {Error & {
+        code?: string,
+        summary?: {
+          reconcileRequired?: boolean,
+          created?: number,
+          updated?: number,
+          deleted?: number,
+          ops?: Array<{ op?: string, localId?: string }>,
+        },
+      }} */ (error);
+      const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
+      // MASTER pode ter gravado; sync parcial ≠ sucesso. Baseline atualizada; rascunho preservado.
+      if (partial) {
+        queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      }
+      const summary = err?.summary || lastLocaisSyncSummaryRef.current;
+      const done = summary
+        ? \`Progresso: criados=\${Number(summary.created || 0)}, atualizados=\${Number(summary.updated || 0)}, removidos=\${Number(summary.deleted || 0)}.\`
+        : '';
+      const ids = Array.isArray(summary?.ops)
+        ? summary.ops.map((op) => op?.localId).filter(Boolean).slice(0, 8)
+        : [];
+      const idsLabel = ids.length ? \` IDs gravados (amostra): \${ids.join(', ')}.\` : '';
+      toast({
+        title: !sameScope
+          ? "Contexto alterado"
+          : (partial ? "Endereços parcialmente sincronizados — rascunho preservado" : "Erro ao salvar cliente"),
+        description: !sameScope
+          ? "A operação anterior falhou. Reabra o cadastro no contexto atual."
+          : partial
+            ? \`\${err?.message || String(error)} \${done}\${idsLabel} \`
+              + 'Catálogo operacional atualizado; edições pendentes no formulário foram mantidas — revise e salve de novo (não repita às cegas).'
+            : (err?.message || String(error)),
+        variant: "destructive"
+      });
+      if (partial) lastLocaisSyncSummaryRef.current = null;
+    }
+`,
+      `    onError: (error) => {
+      const sameScope = isFormScopeCurrent();
+      const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);
+      const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
+      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.
+      if (partial) {
+        queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      }
+      toast({
+        title: !sameScope
+          ? "Contexto alterado"
+          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),
+        description: sameScope
+          ? (err?.message || String(error))
+          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
+        variant: "destructive"
+      });
+    }
+`,
     ],
     [
       '  /**\n'

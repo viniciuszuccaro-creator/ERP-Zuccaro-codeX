@@ -1,19 +1,20 @@
-## Cursor — PR596 jornadas/overflow toast/fiscal/códigos (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 P1 PARTIAL preserva rascunho (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico)
 | Ref | Tip | CI |
 |-----|-----|-----|
 | PR595 | `b5862fc53` | **SUCCESS** |
-| PR596 | `b8a6710b6` | **SUCCESS** (histórico tip anterior) |
-| PR596 | `7fa5b407e` (este lote) | CI **em curso ≠ aprovado** |
-| Codex PR594 | `76dc3832` | SUCCESS (referência) |
+| PR596 | `b8a6710b6`/`876130480` | histórico / tip anterior |
+| PR596 | **este lote** (após push) | CI **em curso ≠ aprovado** |
 | **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b`.
-- Toast overflow/fallback: `syncPath`/`fallbackReason`; MASTER+legado ≠ atomicidade integral; orientação de reabertura.
-- Dados Gerais: fiscal = ClienteLocal; `MASTER.endereco_principal` read-only em HTTP.
-- Seletor: exibe `codigo` quando BFF envia (não gera no browser).
-Peels atualizados. Suites locais PASS.
+Executor: Cursor. Contraprova P1 (PARTIAL): `listLocais` atualiza baseline/visão; **não** `setFormData(locais_entrega: mapped)` — pendências preservadas; toast com progresso/IDs; comentário overflow ≠ prova de atomicidade MASTER+locais.
+Teste: falha após 1ª escrita + assert Completo. Peels OK.
+
+## Cursor — PR596 jornadas/overflow toast/fiscal/códigos (2026-11-14 America/Sao_Paulo)
+
+Tips `7fa5b407e`/`876130480` (histórico deste fio): toast overflow/fallback; fiscal read-only HTTP; código no Seletor.
+HML `d054e2b3` — tip ≠ HML.
 
 ### Roteiro composição/aceite (Cursor+Codex) — dados sintéticos
 Não presumir CI aprovada = versão servida. Combinar SHA API/web antes do promote.
