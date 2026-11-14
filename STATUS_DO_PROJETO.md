@@ -4,13 +4,22 @@
 | Ref | Tip | CI |
 |-----|-----|-----|
 | PR595 | `b5862fc53` | **SUCCESS** (histórico CI7053 / CASA) |
-| PR596 | **este lote** (toast pin após push) | CI **em curso ≠ aprovado** |
-| Tips anteriores 596 | `4794b3285`/`78747d453` | CI **em curso / histórico FAIL** nos tips P1 toast — não confundir com resultado deste tip |
+| Continuity591 / CodexPR594 | `76dc3832` | **SUCCESS** histórico CI7046/7047 |
+| PR596 tip | `5f46d7e71` | CI **em curso ≠ aprovado** (run pós-toast-pin) |
+| Tips anteriores 596 | `4794b3285`/`78747d453`/`b1eea9d1f`/`7fa5b407e` | histórico FAIL toast pin / em curso — **≠ resultado deste tip** |
 | **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
 Executor: Cursor. CI frontend FAIL em tips P1/Bugbot: pin exigia `BATCH_ATOMIC=false` + `/não é salvamento integral/` no Completo.
 Toast legado overflow/fallback restaurado com ambas as frases (minúsculo «não é…»); peel operacional alinhado.
 Suites: `cliente-contatos-limitacao-591`, `contato-b2b-tenant-591`, sync/operacional locais — PASS.
+
+### Contrato aceite locais (Cursor ↔ Codex) — composição
+SHA UI tip em prova: `5f46d7e71` (PR596). SHA HML servida: `d054e2b3` (congelado até aceite + freeze API/web mesmo SHA).
+Não chamar rascunho preenchido de dado aplicado. Fiscal = ClienteLocal em Dados Gerais (não MASTER.endereco_principal).
+Provas sintéticas: snapshot→revisão→rascunho→salvar→reabrir; completar sem ativar; ativação explícita; conflito sem perda; identidade/contexto.
+Overflow: atômico só dos locais no BFF `BATCH_ATOMIC`; overflow/legado = MASTER gravado + sync path legado (`BATCH_ATOMIC=false`) — **não é salvamento integral**; PARTIAL mantém rascunho + orientação de recuperação (sem toast genérico de sucesso).
+Pedido: só local ativo ENTREGA completo id canônico; envelope parcial ≠ lista vazia (Seletor `data-block="seletor-locais-parcial"`).
+Central360: pagamento canônico = `CondicaoComercial` / `condicao_pagamento_id` no formulário; faixa `central360-pagamento-resumo` ≠ formulário; FormasPagamentoPedido = Cadastros sem mock em jornadas legado (não duplicar).
 
 ## Cursor — PR596 Bugbot PARTIAL carimba create no rascunho (2026-11-14 America/Sao_Paulo)
 

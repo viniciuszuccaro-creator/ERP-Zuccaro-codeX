@@ -1,10 +1,12 @@
 ## Cursor — PR596 toast pin «não é salvamento integral» + BATCH_ATOMIC=false (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-CI FAIL tip P1/Bugbot: pins `cliente-contatos-limitacao-591` / `contato-b2b-tenant-591`
+Tip `5f46d7e71`: pins `cliente-contatos-limitacao-591` / `contato-b2b-tenant-591`
 exigiam `BATCH_ATOMIC=false` + `/não é salvamento integral/` no Completo.
 Toast legado overflow/fallback restaurado; peel operacional alinhado. tip ≠ HML `d054e2b3`.
 CI **em curso ≠ aprovado**.
+Contrato aceite locais + roteiro composição: ver topo STATUS (SHA UI `5f46d7e71` ≠ HML `d054e2b3`).
+PROXIMO: CI tip SUCCESS → combinar com Codex freeze API/web → aceite sintético (sem promote prematuro).
 
 ## Cursor — PR596 PARTIAL carimba create (Bugbot High) (2026-11-14 America/Sao_Paulo)
 
