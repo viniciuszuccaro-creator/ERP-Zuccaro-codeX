@@ -25,8 +25,9 @@
 4. `tests/cliente-locais-sync-http-591.test.js`
 5. `tests/helpers/clienteLocalOperationalRemainder.js` (peel; auditoria PASS)
 
-PR596/`197bbc090` já contém os 5. Patch = apply opcional em worktree Codex na
-base 595. apply-check PASS; **não aplicado**. Sem deploy/PG/dados.
+PR596/`197bbc090` já contém os 5. Casa #6882380538: **aplica** patch `a79e63a5…`
+na cadeia própria `casa-fechamento-hml-20261114` (base `193f5e49`) — sem editar
+branch Cursor. Ressalva peel encerrada. Sem implantação.
 
 ### Liberação Cursor (antes de Codex apply)
 **LIBERAR (autorizado montagem 40 PASS + CI):**
