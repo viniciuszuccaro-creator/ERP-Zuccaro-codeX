@@ -24,6 +24,8 @@ let props={clienteId:'client',groupId:'group',empresaId:'company',finalidade:'FI
 window.fetch=(url,init)=>new Promise(resolve=>pending.push({url,init,resolve}));
 const render=()=>flushSync(()=>root.render(<Review {...props}/>));
 const pause=()=>new Promise(r=>setTimeout(r,20));
+/** CI sob carga: 20ms fixo falha em second_page; espera predicado até deadline. */
+const waitFor=async(pred,label='wait',ms=3000)=>{const t=Date.now();while(Date.now()-t<ms){if(pred())return;await pause();}throw Error(label);};
 const check=(name,ok)=>{checks.push(name);if(!ok)throw Error(name);};
 const local=(id='synthetic-local')=>({id,cliente_id:props.clienteId,group_id:props.groupId,ativo:false,endereco_incompleto:true,
  finalidades:[{finalidade:props.finalidade,ativo:true}],logradouro:'Rua Sintetica',numero:'',pais:'',origem:'MIGRACAO',legacy_id:'0001'});
@@ -35,8 +37,10 @@ async function run(){
  check('fiscal_in_own_section',host.querySelector('[aria-label="Fiscal em revisao"]')&&host.textContent.includes('Endereco fiscal recuperado'));
  check('no_edit_or_activation',host.querySelectorAll('input,select,textarea,a').length===0&&!/Salvar|Ativar|Excluir/.test(host.textContent));
  check('missing_not_invented',host.textContent.includes('Nao informado / pendente')&&host.textContent.includes('FISCAL'));
- host.querySelector('[aria-label="Proxima pagina de revisao"]').click();await pause();
- check('old_page_hidden',host.querySelectorAll('li').length===0);reply(pending.shift(),[local('page-2')],51,50);await pause();
+ host.querySelector('[aria-label="Proxima pagina de revisao"]').click();
+ await waitFor(()=>host.querySelectorAll('li').length===0,'old_page_hidden');
+ check('old_page_hidden',host.querySelectorAll('li').length===0);reply(pending.shift(),[local('page-2')],51,50);
+ await waitFor(()=>host.querySelectorAll('li').length===1&&host.textContent.includes('pagina 2'),'second_page_exact');
  check('second_page_exact',host.querySelectorAll('li').length===1&&host.textContent.includes('pagina 2'));
  for(const kind of ['cliente','group','company','actor','token','ABA','finalidade']){
   props={clienteId:'client',groupId:'group',empresaId:'company',finalidade:'FISCAL'};window.__session={token:'synthetic-token',actorId:'actor',groupId:'group',empresaId:'company'};
