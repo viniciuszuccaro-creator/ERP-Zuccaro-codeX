@@ -33,9 +33,14 @@ export function clienteLocalOperationalRemainder(file, text) {
     if (finalidade !== 'ENTREGA') return;
     setActiveTab('enderecos');
     setFormData((prev) => {
-      const list = Array.isArray(prev.locais_entrega)
-        ? prev.locais_entrega
-        : (Array.isArray(locaisHttpView) ? [...locaisHttpView] : []);
+      // [] inicial do form não apaga operacionais HTTP — preferir locaisHttpView até draft assumido.
+      const httpList = Array.isArray(locaisHttpView) ? locaisHttpView : null;
+      const draftList = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : null;
+      const list = (draftList && draftList.length > 0)
+        ? [...draftList]
+        : (httpList
+          ? [...httpList]
+          : (draftList && Array.isArray(locaisHttpBaselineRef.current) ? [...draftList] : []));
       const id = String(ui.id || '').trim();
       const without = id ? list.filter((row) => String(row?.id || '') !== id) : list;
       return {
@@ -60,16 +65,31 @@ export function clienteLocalOperationalRemainder(file, text) {
       '',
     ],
     [
-      '  /** Operacional: draft = loaded; HTTP falhou = failed; lista HTTP ok = loaded; senão loading/unknown. */\n'
+      '  /**\n'
+      + '   * [] inicial do form ≠ catálogo HTTP confirmado.\n'
+      + '   * Draft só manda se já tem itens ou se o baseline HTTP já materializou (mesmo vazio).\n'
+      + '   */\n'
+      + '  const locaisDraftAssumed = Array.isArray(formData.locais_entrega)\n'
+      + '    && (formData.locais_entrega.length > 0 || Array.isArray(locaisHttpBaselineRef.current));\n'
+      + '  const locaisViewForUi = locaisDraftAssumed\n'
+      + '    ? formData.locais_entrega\n'
+      + '    : (Array.isArray(locaisHttpView) ? locaisHttpView : (Array.isArray(formData.locais_entrega) ? formData.locais_entrega : []));\n'
+      + '\n'
+      + '  /** Operacional: draft assumido / HTTP ok = loaded; [] inicial ≠ loaded. */\n'
       + '  const locaisOperacionalLoadStatus = (() => {\n'
-      + "    if (Array.isArray(formData.locais_entrega)) return 'loaded';\n"
-      + "    if (!isHttpBackendMode) return 'unknown';\n"
+      + '    if (!isHttpBackendMode) {\n'
+      + "      return Array.isArray(formData.locais_entrega) ? 'loaded' : 'unknown';\n"
+      + '    }\n'
       + '    if (!(clienteBoundId || cliente?.id)) return \'unknown\';\n'
       + "    if (locaisHttpBaselineRef.current === null) return 'failed';\n"
-      + "    if (Array.isArray(locaisHttpView)) return 'loaded';\n"
+      + '    if (locaisDraftAssumed || Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {\n'
+      + "      return 'loaded';\n"
+      + '    }\n'
       + "    return 'loading';\n"
       + '  })();\n\n',
-      '',
+      '  const locaisViewForUi = Array.isArray(formData.locais_entrega)\n'
+      + '    ? formData.locais_entrega\n'
+      + '    : (Array.isArray(locaisHttpView) ? locaisHttpView : []);\n\n',
     ],
     [
       '                loadStatus={locaisOperacionalLoadStatus}\n',

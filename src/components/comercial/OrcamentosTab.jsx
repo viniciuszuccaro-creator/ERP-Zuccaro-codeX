@@ -406,34 +406,34 @@ export default function OrcamentosTab({
     if (proposalMode) setProposalStage('edicao');
   };
   const detailInflightRef = useRef(new Map());
+  /** GET compartilhado por id; epoch/situação validam no caller — reuso não prende epoch do 1º clique. */
   const fetchOrcamentoDetail = async (row, { epochAtClick = null } = {}) => {
     if (!row?.id) return null;
-    const existing = detailInflightRef.current.get(row.id);
-    if (existing) return existing;
-    const request = ++detailRequest.current;
-    const opened = { ...renderedScope.current, token: activeScope()?.token };
-    const flight = (async () => {
-      try {
-        const detail = await api.get(row.id);
-        if (request !== detailRequest.current) return null;
-        if (epochAtClick != null && epochAtClick !== selectionEpochLiveRef.current) return null;
-        if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return null;
-        return detail;
-      } catch (error) {
-        if (
-          request === detailRequest.current
-          && (epochAtClick == null || epochAtClick === selectionEpochLiveRef.current)
-          && sameOrcamentoScope(opened, renderedScope.current, activeScope())
-        ) {
-          toast.error(errorMessage(error));
+    let flight = detailInflightRef.current.get(row.id);
+    if (!flight) {
+      const request = ++detailRequest.current;
+      const opened = { ...renderedScope.current, token: activeScope()?.token };
+      flight = (async () => {
+        try {
+          const detail = await api.get(row.id);
+          if (request !== detailRequest.current) return null;
+          if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return null;
+          return detail;
+        } catch (error) {
+          if (request === detailRequest.current && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
+            toast.error(errorMessage(error));
+          }
+          return null;
+        } finally {
+          detailInflightRef.current.delete(row.id);
         }
-        return null;
-      } finally {
-        detailInflightRef.current.delete(row.id);
-      }
-    })();
-    detailInflightRef.current.set(row.id, flight);
-    return flight;
+      })();
+      detailInflightRef.current.set(row.id, flight);
+    }
+    const detail = await flight;
+    if (!detail) return null;
+    if (epochAtClick != null && epochAtClick !== selectionEpochLiveRef.current) return null;
+    return detail;
   };
   const openEditHydrated = async (row) => {
     if (proposalMode) { openEdit(row); return; }
@@ -444,6 +444,7 @@ export default function OrcamentosTab({
     notifyCentralSelect(row, epochAtClick);
     const detail = await fetchOrcamentoDetail(row, { epochAtClick });
     if (!detail) return;
+    if (epochAtClick !== selectionEpochLiveRef.current) return;
     setSelected(detail);
     notifyCentralSelect(detail, epochAtClick);
     openEdit(detail);
@@ -919,6 +920,7 @@ const convertToPedido = async () => {
     if (proposalMode) return;
     const detail = await fetchOrcamentoDetail(row, { epochAtClick });
     if (!detail) return;
+    if (epochAtClick !== selectionEpochLiveRef.current) return;
     setSelected(detail);
     notifyCentralSelect(detail, epochAtClick);
   };

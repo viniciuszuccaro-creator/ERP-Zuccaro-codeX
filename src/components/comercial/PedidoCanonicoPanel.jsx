@@ -316,34 +316,38 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   );
   const notifyCentralSelect=(row,epoch=selectionEpochLiveRef.current)=>{if(typeof onCentralSelect!=='function')return;const link=masters.clientesEmpresa.find(x=>x.id===row?.cliente_empresa_id);const cond=masters.condicoes.find((item)=>item.id===row?.condicao_pagamento_id);const enriched=row?{...row,condicao_pagamento_codigo:row.condicao_pagamento_codigo||cond?.codigo||undefined,condicao_pagamento_nome:row.condicao_pagamento_nome||cond?.nome||undefined,condicao_pagamento_label:row.condicao_pagamento_label||(cond?condicaoLabel(cond.id):undefined)}:row;onCentralSelect(enriched,{clienteId:link?.cliente_id||row?.cliente_id||null,selectionEpoch:epoch});};
   const hydrateInflightRef=useRef(new Map());
-  const hydratePedidoRow=async(row)=>{
+  /** GET compartilhado por id; epoch da situação valida no caller — reuso não prende o 1º clique. */
+  const hydratePedidoRow=async(row,{epochAtClick=null}={})=>{
     if(!row?.id)return null;
-    const existing=hydrateInflightRef.current.get(row.id);
-    if(existing)return existing;
-    const session=activeScope();
-    if(!session?.token||!renderedScope.current?.groupId||!renderedScope.current?.empresaId||!renderedScope.current?.actorId){
-      toast.error('Sessão/contexto insuficiente para hidratar o pedido — grades podem ficar sem itens.');
-      return null;
-    }
-    const opened={...renderedScope.current,token:session.token};
-    const gen=++hydrateEpoch.current;
-    const flight=(async()=>{
-      try{
-        const detail=await api.get(row.id);
-        if(gen!==hydrateEpoch.current)return null;
-        const live=activeScope();
-        if(!live?.token||live.token!==opened.token)return null;
-        if(opened.groupId!==renderedScope.current.groupId||opened.empresaId!==renderedScope.current.empresaId||opened.actorId!==renderedScope.current.actorId)return null;
-        return detail;
-      }catch(error){
-        if(gen===hydrateEpoch.current)toast.error(message(error));
+    let flight=hydrateInflightRef.current.get(row.id);
+    if(!flight){
+      const session=activeScope();
+      if(!session?.token||!renderedScope.current?.groupId||!renderedScope.current?.empresaId||!renderedScope.current?.actorId){
+        toast.error('Sessão/contexto insuficiente para hidratar o pedido — grades podem ficar sem itens.');
         return null;
-      }finally{
-        hydrateInflightRef.current.delete(row.id);
       }
-    })();
-    hydrateInflightRef.current.set(row.id,flight);
-    return flight;
+      const opened={...renderedScope.current,token:session.token};
+      ++hydrateEpoch.current;
+      flight=(async()=>{
+        try{
+          const detail=await api.get(row.id);
+          const live=activeScope();
+          if(!live?.token||live.token!==opened.token)return null;
+          if(opened.groupId!==renderedScope.current.groupId||opened.empresaId!==renderedScope.current.empresaId||opened.actorId!==renderedScope.current.actorId)return null;
+          return detail;
+        }catch(error){
+          toast.error(message(error));
+          return null;
+        }finally{
+          hydrateInflightRef.current.delete(row.id);
+        }
+      })();
+      hydrateInflightRef.current.set(row.id,flight);
+    }
+    const detail=await flight;
+    if(!detail)return null;
+    if(epochAtClick!=null&&epochAtClick!==selectionEpochLiveRef.current)return null;
+    return detail;
   };
   const selectCentralRow=async(row)=>{
     if(!row?.id)return;
@@ -351,7 +355,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
     const epochAtClick=selectionEpochLiveRef.current;
     setSelected(row);
     notifyCentralSelect(row,epochAtClick);
-    const detail=await hydratePedidoRow(row);
+    const detail=await hydratePedidoRow(row,{epochAtClick});
     if(!detail)return;
     if(epochAtClick!==selectionEpochLiveRef.current)return;
     setSelected(detail);
@@ -359,11 +363,12 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   };
   const openEditHydrated=async(row)=>{
     if(!canEdit(row)||!row?.id)return;
+    // Edição sempre após GET: evita form incompleto quando a lista já trouxe itens parciais.
     // Duplo clique compartilha o mesmo GET da seleção — não abortar grades/pagamento-resumo.
     const epochAtClick=selectionEpochLiveRef.current;
     setSelected(row);
     notifyCentralSelect(row,epochAtClick);
-    const detail=await hydratePedidoRow(row);
+    const detail=await hydratePedidoRow(row,{epochAtClick});
     if(!detail)return;
     if(epochAtClick!==selectionEpochLiveRef.current)return;
     setSelected(detail);

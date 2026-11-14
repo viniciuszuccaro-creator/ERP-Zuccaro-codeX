@@ -1,8 +1,19 @@
+## Cursor — PR596 Bugbot draft-assumed + hydrate epoch (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+PR595 tip `b5862fc53`: frontend/backend/Bugbot/Approval **SUCCESS** (peels Continuity + listLocais array).
+PR596 tip `e98ac67ab`: Bugbot achou 4 issues — **não aprovado** (CI tip ≠ SUCCESS pleno).
+Correções (este tip, pós-Bugbot):
+- Completo: `locaisDraftAssumed` — `[]` inicial ≠ loaded; openLocalDraft prefer HTTP até draft assumido.
+- OrcamentosTab / PedidoCanonico: GET compartilhado; `epochAtClick` valida no caller (não prende 1º clique no inflight).
+Peels operacional atualizados. Suites locais PASS. Sem HML (`d054e2b3`).
+Dependência 595→596; FISCAL in-place reserva Codex.
+
 ## Cursor — stack 595 peels + 596 Bugbot (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor.
-- PR595 tip `b5862fc53`: peels Continuity + `listLocais` array (fecha FAILURE `66ff086f3`) — CI **em curso ≠ aprovado**.
-- PR596 tip `58e7e5855`: merge 595 + Bugbot `7c50c6c1c` (loadStatus/KPI/hydrate/ENTREGA) — CI **em curso ≠ aprovado**.
+- PR595 tip `b5862fc53`: peels Continuity + `listLocais` array (fecha FAILURE `66ff086f3`) — CI **SUCCESS** registrado depois.
+- PR596 tip `58e7e5855`/`e98ac67ab`: merge 595 + Bugbot — tip `e98ac67ab` Bugbot com findings (corrigidos no tip seguinte).
 Dependência 595→596 preservada; ENTREGA onOpenDraft só na 596. HML `d054e2b3`.
 
 ## Cursor — PR596 Bugbot loadStatus/count/hydrate (2026-11-14 America/Sao_Paulo)

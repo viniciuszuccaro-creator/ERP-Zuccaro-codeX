@@ -891,17 +891,26 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     return () => { cancelled = true; };
   }, [clienteBoundId, cliente?.id]);
 
-  const locaisViewForUi = Array.isArray(formData.locais_entrega)
+  /**
+   * [] inicial do form ≠ catálogo HTTP confirmado.
+   * Draft só manda se já tem itens ou se o baseline HTTP já materializou (mesmo vazio).
+   */
+  const locaisDraftAssumed = Array.isArray(formData.locais_entrega)
+    && (formData.locais_entrega.length > 0 || Array.isArray(locaisHttpBaselineRef.current));
+  const locaisViewForUi = locaisDraftAssumed
     ? formData.locais_entrega
-    : (Array.isArray(locaisHttpView) ? locaisHttpView : []);
+    : (Array.isArray(locaisHttpView) ? locaisHttpView : (Array.isArray(formData.locais_entrega) ? formData.locais_entrega : []));
 
-  /** Operacional: draft = loaded; HTTP falhou = failed; lista HTTP ok = loaded; senão loading/unknown. */
+  /** Operacional: draft assumido / HTTP ok = loaded; [] inicial ≠ loaded. */
   const locaisOperacionalLoadStatus = (() => {
-    if (Array.isArray(formData.locais_entrega)) return 'loaded';
-    if (!isHttpBackendMode) return 'unknown';
+    if (!isHttpBackendMode) {
+      return Array.isArray(formData.locais_entrega) ? 'loaded' : 'unknown';
+    }
     if (!(clienteBoundId || cliente?.id)) return 'unknown';
     if (locaisHttpBaselineRef.current === null) return 'failed';
-    if (Array.isArray(locaisHttpView)) return 'loaded';
+    if (locaisDraftAssumed || Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {
+      return 'loaded';
+    }
     return 'loading';
   })();
 
@@ -935,9 +944,14 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     if (finalidade !== 'ENTREGA') return;
     setActiveTab('enderecos');
     setFormData((prev) => {
-      const list = Array.isArray(prev.locais_entrega)
-        ? prev.locais_entrega
-        : (Array.isArray(locaisHttpView) ? [...locaisHttpView] : []);
+      // [] inicial do form não apaga operacionais HTTP — preferir locaisHttpView até draft assumido.
+      const httpList = Array.isArray(locaisHttpView) ? locaisHttpView : null;
+      const draftList = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : null;
+      const list = (draftList && draftList.length > 0)
+        ? [...draftList]
+        : (httpList
+          ? [...httpList]
+          : (draftList && Array.isArray(locaisHttpBaselineRef.current) ? [...draftList] : []));
       const id = String(ui.id || '').trim();
       const without = id ? list.filter((row) => String(row?.id || '') !== id) : list;
       return {
