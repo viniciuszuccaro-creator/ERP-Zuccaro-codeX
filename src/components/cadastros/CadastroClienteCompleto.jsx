@@ -956,11 +956,32 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       return;
     }
     if (finalidade !== 'ENTREGA') return;
+    // Fail-closed: sem catálogo HTTP confirmado, owned+review-only soft-deleta o restante no save.
+    if (isHttpBackendMode) {
+      if (locaisHttpBaselineRef.current === null) {
+        toast({
+          title: 'Catálogo operacional indisponível',
+          description: 'Falha na leitura de locais — rascunho não aberto. Reabra o cliente e tente de novo.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (!Array.isArray(locaisHttpView) && !Array.isArray(locaisHttpBaselineRef.current)) {
+        toast({
+          title: 'Aguarde o catálogo operacional',
+          description: 'Locais HTTP ainda carregando — rascunho não aberto para não apagar outros endereços no save.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
     setActiveTab('enderecos');
     locaisDraftOwnedRef.current = true;
     setFormData((prev) => {
-      // [] inicial do form não apaga operacionais HTTP — preferir locaisHttpView até draft com itens.
-      const httpList = Array.isArray(locaisHttpView) ? locaisHttpView : null;
+      // Base = draft com itens, senão catálogo HTTP confirmado (view ou baseline).
+      const httpList = Array.isArray(locaisHttpView)
+        ? locaisHttpView
+        : (Array.isArray(locaisHttpBaselineRef.current) ? locaisHttpBaselineRef.current : null);
       const draftList = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : null;
       const list = (draftList && draftList.length > 0)
         ? [...draftList]

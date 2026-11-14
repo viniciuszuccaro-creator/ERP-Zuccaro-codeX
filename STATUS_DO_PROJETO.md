@@ -1,3 +1,10 @@
+## Cursor — PR596 Security openDraft vs catálogo HTTP (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+Tip `e3b578f82`: frontend/backend SUCCESS; Security MEDIUM (openDraft antes do catálogo) — **não aprovado pleno**.
+Correção: `openLocalDraftFromReview` fail-closed se baseline null/loading — não marca owned com só a linha de revisão.
+Peels atualizados. Suites PASS. Sem HML (`d054e2b3`). CI tip **em curso ≠ aprovado**.
+
 ## Cursor — PR596 Bugbot intent-id + draft owned (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
