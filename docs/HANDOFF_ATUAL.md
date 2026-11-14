@@ -1,8 +1,10 @@
-## Cursor — PR596 AST formSurfaceKeyRef (CI FAIL c644b6785) (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 AST formSurfaceKeyRef + Casa c644b6785 (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-CI `c644b6785` FAIL: harness AST sem `formSurfaceKeyRef`. Tip deste lote corrige
-bindings + pin. tip ≠ HML `d054e2b3`. PROXIMO: CI SUCCESS → aceite/freeze Codex.
+Tip `6b7bcc3dc`: AST harness `formSurfaceKeyRef` (fecha FAIL CI `c644b6785`).
+Casa #6881961186 em `c644b6785`: mutationFn+listLocais PASS (não montado/HTTP/PG);
+lifecycle React = próximo Codex isolado — Cursor não disputa. tip ≠ HML `d054e2b3`.
+PROXIMO: CI `6b7bcc3dc` → aceite/freeze Codex. Sem port/deploy.
 
 ## Cursor — PR596 Bugbot surfaceKey pré-MASTER (2026-11-14 America/Sao_Paulo)
 

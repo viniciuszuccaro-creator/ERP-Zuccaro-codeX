@@ -5,15 +5,16 @@
 |-----|-----|----------------|
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
-| Tip `c644b6785` | surfaceKey | CI FAIL frontend (`formSurfaceKeyRef is not defined` AST) |
-| **PR596 HEAD** | **este lote** (após push) | CI **em curso ≠ aprovado** |
+| Tip `c644b6785` | surfaceKey | CI FAIL AST; **Casa** mutationFn+listLocais PASS (não React montado) |
+| **PR596 HEAD** | `6b7bcc3dc` | CI **em curso ≠ aprovado** (AST harness) |
 | Tip `d4b64a74a` | gate A→B | **CI SUCCESS** histórico |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Causa: `mutationFn` lê `formSurfaceKeyRef` pré-MASTER; harness AST
-`cadastro-query-payload-boundaries` não injetava o ref. Fix: bindings
-`formSurfaceKeyRef` + `locaisPartialStampGateRef`; pin no sync-591.
-Candidata HML UI: tip pós-CI SUCCESS (não `c644b6785`). Sem promote.
+Causa CI `c644b6785`: harness AST sem `formSurfaceKeyRef`. Fix tip `6b7bcc3dc`
+(bindings + pin). Casa (#6881961186): 4+2 contraprovas PASS no mutationFn ORIGINAL
+(A→B / A→create vazio + listLocais OK) — escopo refs/sintético; lifecycle montado
+ainda pendente (Codex harness privado isolado; Cursor não disputa hunk Casa).
+Candidata HML: tip pós-CI SUCCESS. Sem aceite/port/deploy.
 
 ## Cursor — PR596 Bugbot: surfaceKey pré-MASTER no gate PARTIAL (2026-11-14 America/Sao_Paulo)
 
