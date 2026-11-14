@@ -1,9 +1,13 @@
+## Cursor — PR596 P1 PARTIAL preserva rascunho (2026-11-14 America/Sao_Paulo)
+
+Tip `b1eea9d1f`: PARTIAL → baseline via listLocais; rascunho formData preservado (sem
+setFormData mapped); toast progresso/IDs; overflow ≠ atomicidade MASTER+locais.
+HML `d054e2b3` ≠ tip. CI tip **em curso ≠ aprovado**. PROXIMO: CI; composição Codex.
+
 ## Cursor — PR596 jornadas/overflow toast/fiscal (2026-11-14 America/Sao_Paulo)
 
-Tip `b8a6710b6` CI SUCCESS (histórico). Tip atual `7fa5b407e`: toast overflow/fallback
-com `fallbackReason`; fiscal ClienteLocal + MASTER.endereco_principal read-only HTTP;
-código no Seletor quando BFF envia. HML `d054e2b3` ≠ tip — sem promote.
-CI tip **em curso ≠ aprovado**. PROXIMO: CI `7fa5b407e`; composição API/web com Codex.
+Tips `7fa5b407e`/`876130480` (histórico): toast overflow/fallback; fiscal read-only HTTP;
+código no Seletor. HML `d054e2b3` ≠ tip.
 
 ## Cursor — PR596 overflow atômico → legado pré-MASTER (2026-11-14 America/Sao_Paulo)
 
