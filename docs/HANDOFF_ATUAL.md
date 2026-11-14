@@ -1,3 +1,10 @@
+## Cursor — PR596 hydrate always + typecheck (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Tip `bc18f78e7`: GET canônico no clique/edição Central; pagamento-resumo com
+código/nome; typecheck AppLayoutShell + Seletor. PR595 tip `c3a3a1143`.
+PROXIMO: CI tips 595/596; códigos BFF/Codex; sem HML.
+
 ## Cursor — PR596 merge Continuity f4debdbb3 (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
