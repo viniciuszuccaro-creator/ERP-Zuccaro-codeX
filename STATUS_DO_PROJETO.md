@@ -1,7 +1,8 @@
 ## Cursor — PR596 códigos UI grade Representante/CondicaoComercial (2026-11-14 America/Sao_Paulo)
 
 Bloco1 Representante e Bloco3 CondicaoComercial: coluna `codigo` na grade
-(campos do visualizador). tip ≠ HML; sem Completo/deploy.
+(campos do visualizador). HEAD **`a99d599c7` CI SUCCESS** (43639663052).
+tip ≠ HML; sem Completo/deploy. Próximo: cards Base44 / Casa preflight pacote 81.
 
 ## Cursor — PR596 Central360 pagamento-resumo rico (2026-11-14 America/Sao_Paulo)
 

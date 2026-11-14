@@ -1,3 +1,9 @@
+## Cursor — PR596 tip a99d599c7 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Códigos UI Representante/CondicaoComercial. Código tip anterior rico C360
+`b5b7bee84`. Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`.
+Sem deploy. Próximo: cards Base44 / Casa preflight pacote.
+
 ## Cursor — PR596 códigos UI Representante/CondicaoComercial (2026-11-14 America/Sao_Paulo)
 
 Grade Cadastros: `codigo` nos campos Representante + CondicaoComercial.
