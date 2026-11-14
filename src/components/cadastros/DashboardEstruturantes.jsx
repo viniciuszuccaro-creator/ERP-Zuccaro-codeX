@@ -80,12 +80,13 @@ export default function DashboardEstruturantes() {
   const tabelasList = Array.isArray(tabelas) ? tabelas : [];
   const produtosList = Array.isArray(produtos) ? produtos : [];
 
-  const setoresBlocked = !consultasHabilitadas || errorSetores || isCappedListUnreliable(setoresList, DASHBOARD_LIST_SOFT_LIMIT);
-  const gruposBlocked = !consultasHabilitadas || errorGrupos || isCappedListUnreliable(gruposList, DASHBOARD_LIST_SOFT_LIMIT);
-  const marcasBlocked = !consultasHabilitadas || errorMarcas || isCappedListUnreliable(marcasList, DASHBOARD_LIST_SOFT_LIMIT);
-  const locaisBlocked = !consultasHabilitadas || errorLocais || isCappedListUnreliable(locaisList, DASHBOARD_LIST_SOFT_LIMIT);
-  const tabelasBlocked = !consultasHabilitadas || errorTabelas || isCappedListUnreliable(tabelasList, DASHBOARD_LIST_SOFT_LIMIT);
-  const produtosBlocked = !consultasHabilitadas || errorProdutos || isCappedListUnreliable(produtosList, DASHBOARD_LIST_SOFT_LIMIT);
+  // isPending / data undefined → bloqueado (— ≠ 0 falso no 1º paint). Sucesso vazio → 0 confirmado.
+  const setoresBlocked = !consultasHabilitadas || loadingSetores || !Array.isArray(setores) || errorSetores || isCappedListUnreliable(setoresList, DASHBOARD_LIST_SOFT_LIMIT);
+  const gruposBlocked = !consultasHabilitadas || loadingGrupos || !Array.isArray(grupos) || errorGrupos || isCappedListUnreliable(gruposList, DASHBOARD_LIST_SOFT_LIMIT);
+  const marcasBlocked = !consultasHabilitadas || loadingMarcas || !Array.isArray(marcas) || errorMarcas || isCappedListUnreliable(marcasList, DASHBOARD_LIST_SOFT_LIMIT);
+  const locaisBlocked = !consultasHabilitadas || loadingLocais || !Array.isArray(locais) || errorLocais || isCappedListUnreliable(locaisList, DASHBOARD_LIST_SOFT_LIMIT);
+  const tabelasBlocked = !consultasHabilitadas || loadingTabelas || !Array.isArray(tabelas) || errorTabelas || isCappedListUnreliable(tabelasList, DASHBOARD_LIST_SOFT_LIMIT);
+  const produtosBlocked = !consultasHabilitadas || loadingProdutos || !Array.isArray(produtos) || errorProdutos || isCappedListUnreliable(produtosList, DASHBOARD_LIST_SOFT_LIMIT);
   const anyConsultaError = errorSetores || errorGrupos || errorMarcas || errorLocais || errorTabelas || errorProdutos;
   const anyCapped = [setoresList, gruposList, marcasList, locaisList, tabelasList, produtosList]
     .some((list) => isCappedListUnreliable(list, DASHBOARD_LIST_SOFT_LIMIT));

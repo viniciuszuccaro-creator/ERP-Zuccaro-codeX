@@ -50,13 +50,16 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
     staleTime: 120000,
   });
 
+  /** Soft cap da amostra de OP no Top5 — ranking ≠ universo completo. */
+  const ORDENS_DASHBOARD_SOFT_LIMIT = 100;
+
   const {
     data: ordensProducao,
     isPending: loadingOrdens,
     isError: errorOrdens,
   } = useQuery({
     queryKey: ['ordens-producao-dashboard-produtos', groupId, empresaId, contexto],
-    queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', 100),
+    queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', ORDENS_DASHBOARD_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
@@ -64,9 +67,12 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
   const produtosList = Array.isArray(produtos) ? produtos : [];
   const ordensList = Array.isArray(ordensProducao) ? ordensProducao : [];
   const produtosCapped = isCappedListUnreliable(produtosList, DASHBOARD_LIST_SOFT_LIMIT);
+  const ordensCapped = isCappedListUnreliable(ordensList, ORDENS_DASHBOARD_SOFT_LIMIT);
   // KPIs de produto dependem só da query Produto — falha de OP não zera ativos/bitolas/estoque.
   const productMetricsBlocked = !consultasHabilitadas || errorProdutos || produtosCapped;
   const ordensUnavailable = !consultasHabilitadas || errorOrdens;
+  // Top5: OP ok mas produto indisponível → não fabricar unidade/nome (Casa P2).
+  const top5IdentityBlocked = productMetricsBlocked;
   const isLoading = consultasHabilitadas && (loadingProdutos || loadingOrdens);
 
   // Análises (amostra local; KPI autoritativo bloqueado se cap/erro/contexto de produto)
@@ -112,10 +118,15 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
     .slice(0, 5)
     .map(([produtoId, quantidade]) => {
       const produto = produtosList.find(p => p.id === produtoId);
+      const identityKnown = Boolean(produto?.descricao);
       return {
-        nome: produto?.descricao || 'Desconhecido',
-        quantidade: quantidade,
-        unidade: produto?.unidade_principal || 'UN'
+        nome: identityKnown
+          ? produto.descricao
+          : (top5IdentityBlocked ? 'Identidade indisponível' : 'Desconhecido'),
+        quantidade,
+        // Nunca inventar 'UN' quando produto/consulta falhou (Casa P2).
+        unidade: produto?.unidade_principal || '—',
+        identityKnown,
       };
     });
 
@@ -177,6 +188,14 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
           <AlertCircle className="w-5 h-5 text-amber-700" />
           <AlertDescription>
             Ordens de produção indisponíveis — top de uso não confirmado (KPIs de produto permanecem).
+          </AlertDescription>
+        </Alert>
+      )}
+      {!ordensUnavailable && ordensCapped && (
+        <Alert className="border-amber-300 bg-amber-50" data-block="produtos-producao-ordens-amostra-capada">
+          <AlertCircle className="w-5 h-5 text-amber-700" />
+          <AlertDescription>
+            Top5 baseado em amostra de até {ORDENS_DASHBOARD_SOFT_LIMIT} OPs — ranking não é universo completo.
           </AlertDescription>
         </Alert>
       )}
@@ -309,21 +328,33 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
                 <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
                 <p>Uso por OP indisponível (≠ zero confirmado)</p>
               </div>
+            ) : top5IdentityBlocked && top5Produtos.length > 0 ? (
+              <div className="text-center py-12 text-slate-500" data-block="produtos-producao-top5-identidade-indisponivel">
+                <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                <p>Quantidades de OP presentes, mas identidade/unidade de produto indisponível (≠ inventar UN).</p>
+              </div>
             ) : top5Produtos.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={top5Produtos}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nome" angle={-45} textAnchor="end" height={100} />
-                  <YAxis />
-                  <Tooltip 
-                    formatter={(value, name, props) => [
-                      `${value} ${props.payload.unidade}`, 
-                      'Quantidade'
-                    ]}
-                  />
-                  <Bar dataKey="quantidade" fill="#3b82f6" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div data-block={ordensCapped ? 'produtos-producao-top5-amostra' : 'produtos-producao-top5'}>
+                {ordensCapped ? (
+                  <p className="text-xs text-amber-800 mb-2" data-block="produtos-producao-top5-amostra-label">
+                    Amostra ≤ {ORDENS_DASHBOARD_SOFT_LIMIT} OPs — não é ranking completo.
+                  </p>
+                ) : null}
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={top5Produtos}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="nome" angle={-45} textAnchor="end" height={100} />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value, name, props) => [
+                        `${value} ${props.payload.unidade}`, 
+                        'Quantidade'
+                      ]}
+                    />
+                    <Bar dataKey="quantidade" fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
               <div className="text-center py-12 text-slate-500">
                 <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />

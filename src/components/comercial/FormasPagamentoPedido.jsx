@@ -152,19 +152,45 @@ export default function FormasPagamentoPedido({
       return undefined;
     }
 
-    // Vazias: só gerar se o usuário pediu (forma/nº/acréscimo) — senão aguarda hydrate.
+    // Vazias: só gerar se o usuário pediu (forma/nº/acréscimo/atalho) — senão aguarda hydrate.
     if (!userRequestedRegenRef.current) return undefined;
     userRequestedRegenRef.current = false;
     gerarParcelas();
     return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- regen só com preserve/userRequest; hydrate via parcelas
-  }, [loadingFormas, formasLoadFailed, formaSelecionada, numeroParcelas, formaPagamento, permiteParcelar, parcelas, percentualAcrescimo, valorTotal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- datas só com userRequest; valores em efeito à parte
+  }, [loadingFormas, formasLoadFailed, formaSelecionada, numeroParcelas, formaPagamento, permiteParcelar, parcelas]);
+
+  // Rebalanceia só valores quando o total/acréscimo muda — preserva vencimentos do cronograma.
+  useEffect(() => {
+    if (loadingFormas || formasLoadFailed) return undefined;
+    if (!permiteParcelar || !formaSelecionada || !onParcelasChange) return undefined;
+    if (!Array.isArray(parcelas) || parcelas.length === 0) return undefined;
+    if (preserveSavedScheduleRef.current) return undefined;
+    const base = Number(valorTotal);
+    if (!Number.isFinite(base) || base < 0) return undefined;
+    const valorComAcrescimo = base * (1 + (Number(percentualAcrescimo) || 0) / 100);
+    const n = parcelas.length;
+    const valorParcela = valorComAcrescimo / n;
+    const same = parcelas.every((p) => Math.abs(Number(p?.valor) - valorParcela) < 0.005);
+    if (same) return undefined;
+    onParcelasChange(parcelas.map((p, i) => ({
+      ...p,
+      numero_parcela: p?.numero_parcela || i + 1,
+      valor: valorParcela,
+    })));
+    return undefined;
+  }, [valorTotal, percentualAcrescimo, permiteParcelar, formaSelecionada, loadingFormas, formasLoadFailed, parcelas, onParcelasChange]);
 
   useEffect(() => {
     if (acrescimo !== percentualAcrescimo) {
       setPercentualAcrescimo(acrescimo || 0);
     }
   }, [acrescimo]);
+
+  const requestFormaChange = (value) => {
+    userRequestedRegenRef.current = true;
+    if (onFormaPagamentoChange) onFormaPagamentoChange(value);
+  };
 
   const handleAcrescimoChange = (valor) => {
     userRequestedRegenRef.current = true;
@@ -208,10 +234,7 @@ export default function FormasPagamentoPedido({
             <Label htmlFor="forma-pagamento-select">Forma de Pagamento *</Label>
             <Select
               value={formaSelecionada?.id || formaPagamento || undefined}
-              onValueChange={(value) => {
-                userRequestedRegenRef.current = true;
-                if (onFormaPagamentoChange) onFormaPagamentoChange(value);
-              }}
+              onValueChange={requestFormaChange}
               disabled={loadingFormas || formasAtivas.length === 0}
             >
               <SelectTrigger id="forma-pagamento-select" data-action="pedido-forma-pagamento">
@@ -381,7 +404,7 @@ export default function FormasPagamentoPedido({
                   key={forma.id}
                   type="button"
                   variant="outline"
-                  onClick={() => onFormaPagamentoChange?.(forma.id)}
+                  onClick={() => requestFormaChange(forma.id)}
                   className="h-auto py-3 flex flex-col items-center gap-1 text-center"
                   data-action="pedido-forma-pagamento-atalho"
                 >

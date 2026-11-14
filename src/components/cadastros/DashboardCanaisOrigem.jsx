@@ -97,11 +97,13 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
     enabled: contextoValido && canViewDashboard,
   });
 
-  const parametrosList = Array.isArray(parametros) ? parametros : [];
-  const pedidosList = Array.isArray(pedidos) ? pedidos : [];
+  // Sem permissão/contexto: não vazar cache React Query (Casa P1) — listas vazias na UI.
+  const contentAllowed = Boolean(contextoValido && canViewDashboard);
+  const parametrosList = contentAllowed && Array.isArray(parametros) ? parametros : [];
+  const pedidosList = contentAllowed && Array.isArray(pedidos) ? pedidos : [];
   const pedidosCapped = isCappedListUnreliable(pedidosList, CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT);
-  const metricsBlocked = !contextoValido
-    || !canViewDashboard
+  const pedidosUnavailable = !contentAllowed || errorPedidos || pedidosCapped;
+  const metricsBlocked = !contentAllowed
     || errorParametros
     || errorPedidos
     || pedidosCapped;
@@ -111,7 +113,9 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
     const metricas = {};
 
     parametrosList.forEach(param => {
-      const pedidosCanal = pedidosList.filter(p => {
+      const pedidosCanal = pedidosUnavailable
+        ? []
+        : pedidosList.filter(p => {
         // Mapear origem_pedido para canal
         const origemMap = {
           'Manual': 'ERP',
@@ -129,13 +133,19 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
         return canalPedido === param.canal;
       });
 
-      const totalPedidos = pedidosCanal.length;
-      const valorTotal = pedidosCanal.reduce((sum, p) => sum + (p.valor_total || 0), 0);
-      const pedidosAprovados = pedidosCanal.filter(p => 
-        p.status === 'Aprovado' || p.status === 'Faturado' || p.status === 'Entregue'
-      ).length;
-      const taxaConversao = totalPedidos > 0 ? (pedidosAprovados / totalPedidos) * 100 : 0;
-      const ticketMedio = totalPedidos > 0 ? valorTotal / totalPedidos : 0;
+      const totalPedidos = pedidosUnavailable ? null : pedidosCanal.length;
+      const valorTotal = pedidosUnavailable ? null : pedidosCanal.reduce((sum, p) => sum + (p.valor_total || 0), 0);
+      const pedidosAprovados = pedidosUnavailable
+        ? null
+        : pedidosCanal.filter(p => 
+          p.status === 'Aprovado' || p.status === 'Faturado' || p.status === 'Entregue'
+        ).length;
+      const taxaConversao = (typeof totalPedidos === 'number' && totalPedidos > 0)
+        ? (pedidosAprovados / totalPedidos) * 100
+        : (pedidosUnavailable ? null : 0);
+      const ticketMedio = (typeof totalPedidos === 'number' && totalPedidos > 0)
+        ? valorTotal / totalPedidos
+        : (pedidosUnavailable ? null : 0);
 
       metricas[param.canal] = {
         nome: param.nome,
@@ -147,7 +157,8 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
         valorTotal,
         pedidosAprovados,
         taxaConversao,
-        ticketMedio
+        ticketMedio,
+        pedidosUnavailable,
       };
     });
 
@@ -156,8 +167,12 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
 
   const metricas = calcularMetricas();
   const canaisAtivos = Object.values(metricas).filter(m => m.ativo);
-  const totalGeralPedidos = canaisAtivos.reduce((sum, m) => sum + m.totalPedidos, 0);
-  const totalGeralValor = canaisAtivos.reduce((sum, m) => sum + m.valorTotal, 0);
+  const totalGeralPedidos = pedidosUnavailable
+    ? null
+    : canaisAtivos.reduce((sum, m) => sum + (Number(m.totalPedidos) || 0), 0);
+  const totalGeralValor = pedidosUnavailable
+    ? null
+    : canaisAtivos.reduce((sum, m) => sum + (Number(m.valorTotal) || 0), 0);
   const canaisAtivosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: canaisAtivos.length });
   const totalPedidosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: totalGeralPedidos });
   const valorTotalDisplay = formatCanaisOrigemKpiDisplay({
@@ -166,39 +181,45 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
     format: (n) => `R$ ${(n / 1000).toFixed(0)}k`,
   });
   const taxaConversaoDisplay = formatCanaisOrigemKpiDisplay({
-    blocked: metricsBlocked,
-    value: canaisAtivos.length > 0
-      ? canaisAtivos.reduce((sum, m) => sum + m.taxaConversao, 0) / canaisAtivos.length
-      : 0,
+    blocked: metricsBlocked || pedidosUnavailable,
+    value: !pedidosUnavailable && canaisAtivos.length > 0
+      ? canaisAtivos.reduce((sum, m) => sum + (Number(m.taxaConversao) || 0), 0) / canaisAtivos.length
+      : (pedidosUnavailable ? null : 0),
     format: (n) => `${n.toFixed(0)}%`,
   });
 
-  // Dados para gráficos
-  const dadosBarras = Object.values(metricas)
-    .filter(m => m.totalPedidos > 0)
-    .sort((a, b) => b.totalPedidos - a.totalPedidos)
-    .slice(0, 8);
+  // Dados para gráficos — sem cache/erro: não inventar série com zeros falsos.
+  const dadosBarras = pedidosUnavailable
+    ? []
+    : Object.values(metricas)
+      .filter(m => Number(m.totalPedidos) > 0)
+      .sort((a, b) => b.totalPedidos - a.totalPedidos)
+      .slice(0, 8);
 
-  const dadosPizza = Object.values(metricas)
-    .filter(m => m.totalPedidos > 0)
-    .map(m => ({
-      name: m.canal,
-      value: m.totalPedidos
+  const dadosPizza = pedidosUnavailable
+    ? []
+    : Object.values(metricas)
+      .filter(m => Number(m.totalPedidos) > 0)
+      .map(m => ({
+        name: m.canal,
+        value: m.totalPedidos
+      }));
+
+  const dadosExportacao = (!contentAllowed || pedidosUnavailable)
+    ? []
+    : Object.values(metricas).map(m => ({
+      Canal: m.nome,
+      Tipo: m.tipo,
+      Ativo: m.ativo ? 'Sim' : 'Nao',
+      'Total Pedidos': m.totalPedidos,
+      'Valor Total': m.valorTotal,
+      'Pedidos Aprovados': m.pedidosAprovados,
+      'Taxa Conversao (%)': Number(m.taxaConversao).toFixed(2),
+      'Ticket Medio': Number(m.ticketMedio).toFixed(2),
+      group_id: groupId || '',
+      grupo_id: groupId || '',
+      empresa_id: empresaSelecionadaId || '',
     }));
-
-  const dadosExportacao = Object.values(metricas).map(m => ({
-    Canal: m.nome,
-    Tipo: m.tipo,
-    Ativo: m.ativo ? 'Sim' : 'Nao',
-    'Total Pedidos': m.totalPedidos,
-    'Valor Total': m.valorTotal,
-    'Pedidos Aprovados': m.pedidosAprovados,
-    'Taxa Conversao (%)': m.taxaConversao.toFixed(2),
-    'Ticket Medio': m.ticketMedio.toFixed(2),
-    group_id: groupId || '',
-    grupo_id: groupId || '',
-    empresa_id: empresaSelecionadaId || '',
-  }));
 
   const beforeExportDashboard = async (formato) => {
     if (!contextoValido || !canExportDashboard) {
@@ -369,13 +390,41 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            {!contentAllowed ? (
+              <p className="text-sm text-slate-600" data-block="canais-origem-performance-bloqueada" role="status">
+                Performance por canal oculta sem contexto/permissão (cache não é exibido).
+              </p>
+            ) : pedidosUnavailable ? (
+              <p className="text-sm text-amber-800" data-block="canais-origem-performance-indisponivel" role="status">
+                Pedidos indisponíveis nesta amostra — linhas de volume não confirmadas (≠ zero).
+              </p>
+            ) : (
+            <div className="space-y-3" data-block="canais-origem-performance-lista">
               {Object.values(metricas)
-                .sort((a, b) => b.totalPedidos - a.totalPedidos)
+                .sort((a, b) => (Number(b.totalPedidos) || 0) - (Number(a.totalPedidos) || 0))
                 .map((metrica, idx) => {
                   const participacao = totalGeralPedidos > 0 
                     ? (metrica.totalPedidos / totalGeralPedidos) * 100 
                     : 0;
+                  const pedidosDisplay = formatCanaisOrigemKpiDisplay({
+                    blocked: metrica.pedidosUnavailable,
+                    value: metrica.totalPedidos,
+                  });
+                  const valorDisplay = formatCanaisOrigemKpiDisplay({
+                    blocked: metrica.pedidosUnavailable,
+                    value: metrica.valorTotal,
+                    format: (n) => `R$ ${(n / 1000).toFixed(1)}k`,
+                  });
+                  const conversaoDisplay = formatCanaisOrigemKpiDisplay({
+                    blocked: metrica.pedidosUnavailable,
+                    value: metrica.taxaConversao,
+                    format: (n) => `${n.toFixed(0)}%`,
+                  });
+                  const ticketDisplay = formatCanaisOrigemKpiDisplay({
+                    blocked: metrica.pedidosUnavailable,
+                    value: metrica.ticketMedio,
+                    format: (n) => `R$ ${n.toFixed(0)}`,
+                  });
 
                   return (
                     <div key={idx} className="p-4 border rounded-lg hover:bg-slate-50 transition-colors">
@@ -407,24 +456,24 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
                         <div className="grid grid-cols-4 gap-6 text-right">
                           <div>
                             <p className="text-xs text-slate-600">Pedidos</p>
-                            <p className="text-lg font-bold text-blue-600">{metrica.totalPedidos}</p>
+                            <p className="text-lg font-bold text-blue-600" data-kpi="canal-pedidos">{pedidosDisplay}</p>
                           </div>
                           <div>
                             <p className="text-xs text-slate-600">Valor Total</p>
-                            <p className="text-lg font-bold text-green-600">
-                              R$ {(metrica.valorTotal / 1000).toFixed(1)}k
+                            <p className="text-lg font-bold text-green-600" data-kpi="canal-valor">
+                              {valorDisplay}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-slate-600">Conversão</p>
-                            <p className="text-lg font-bold text-sky-600">
-                              {metrica.taxaConversao.toFixed(0)}%
+                            <p className="text-lg font-bold text-sky-600" data-kpi="canal-conversao">
+                              {conversaoDisplay}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-slate-600">Ticket Médio</p>
-                            <p className="text-lg font-bold text-orange-600">
-                              R$ {metrica.ticketMedio.toFixed(0)}
+                            <p className="text-lg font-bold text-orange-600" data-kpi="canal-ticket">
+                              {ticketDisplay}
                             </p>
                           </div>
                         </div>
@@ -433,14 +482,15 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
                       <div className="mt-2">
                         <div className="flex justify-between text-xs text-slate-600 mb-1">
                           <span>Participação</span>
-                          <span>{participacao.toFixed(1)}%</span>
+                          <span>{pedidosUnavailable ? '—' : `${participacao.toFixed(1)}%`}</span>
                         </div>
-                        <Progress value={participacao} className="h-2" />
+                        <Progress value={pedidosUnavailable ? 0 : participacao} className="h-2" />
                       </div>
                     </div>
                   );
                 })}
             </div>
+            )}
           </CardContent>
         </Card>
 

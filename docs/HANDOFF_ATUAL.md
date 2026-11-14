@@ -1,8 +1,12 @@
+## Cursor — PR596 Bugbot/Casa dash+formas+hydrate (2026-11-14 America/Sao_Paulo)
+
+Casa P1/P2 Canais+Produtos+Estruturantes; Bugbot Formas/PedidoCanonico.
+Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML. Sem deploy. Aguarda CI.
+
 ## Cursor — PR596 tip f2d92ec9c CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 PedidoCanonico hydrateEpoch GET (Bugbot High). CI **43645344156** SUCCESS.
 Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
-Próximo: Casa preflight pacote 81 (pins ≠ deploy).
 
 ## Cursor — PR596 Bugbot PedidoCanonico hydrateEpoch GET (2026-11-14 America/Sao_Paulo)
 

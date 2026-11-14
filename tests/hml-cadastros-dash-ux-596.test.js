@@ -87,8 +87,12 @@ test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {
   assert.match(formas, /if \(!formaSelecionada\) return/);
   assert.match(formas, /preserveSavedScheduleRef/);
   assert.match(formas, /userRequestedRegenRef/);
+  assert.match(formas, /requestFormaChange/);
   // Bugbot: não regenerar cronograma só porque parcelas ainda estão vazias (hydrate do pai).
   assert.match(formas, /Vazias: só gerar se o usuário pediu/);
+  // Rebalanceia valores sem apagar vencimentos quando total muda.
+  assert.match(formas, /Rebalanceia só valores/);
+  assert.match(formas, /pedido-forma-pagamento-atalho/);
 });
 
 test('Dashboard Clientes KPI: uma população (count), sem misturar ativos da amostra', () => {
@@ -108,12 +112,16 @@ test('DashboardProdutosProducao: KPI fail-closed (— ≠ 0; ativos canônicos)'
   assert.match(src, /isCappedListUnreliable/);
   assert.match(src, /productMetricsBlocked/);
   assert.match(src, /ordensUnavailable/);
+  assert.match(src, /ORDENS_DASHBOARD_SOFT_LIMIT/);
+  assert.match(src, /produtos-producao-ordens-amostra-capada/);
+  assert.match(src, /top5IdentityBlocked/);
   assert.match(src, /consultasHabilitadas && \(loadingProdutos \|\| loadingOrdens\)/);
   assert.match(src, /produtos-producao-amostra-capada/);
   assert.match(src, /produtos-producao-resumo-ativos/);
   assert.match(src, /bitolasDisplay/);
   // Falha de OP não bloqueia KPIs de produto (Bugbot).
   assert.doesNotMatch(src, /productMetricsBlocked = !consultasHabilitadas \|\| errorProdutos \|\| errorOrdens/);
+  assert.doesNotMatch(src, /unidade_principal \|\| 'UN'/);
   assert.doesNotMatch(src, /data: produtos = \[\]/);
   assert.doesNotMatch(src, /p\.status === 'Ativo'/);
   assert.doesNotMatch(src, /\{produtosAtivos\.length\} produto/);
@@ -129,6 +137,8 @@ test('DashboardEstruturantes: KPI fail-closed (— ≠ 0; sem default [])', () =
   assert.match(src, /estruturantes-consulta-indisponivel/);
   assert.match(src, /totalDisplay/);
   assert.match(src, /classificacaoDisplay/);
+  // Loading/pending bloqueia (— ≠ 0 no 1º paint).
+  assert.match(src, /loadingSetores \|\| !Array\.isArray\(setores\)/);
   assert.doesNotMatch(src, /data: setores = \[\]/);
   assert.doesNotMatch(src, /data: produtos = \[\]/);
   assert.doesNotMatch(src, /100% Operacional/);
@@ -149,6 +159,9 @@ test('DashboardCanaisOrigem: KPI fail-closed (— ≠ 0; amostra capada)', async
   assert.match(src, /isCappedListUnreliable/);
   assert.match(src, /formatCanaisOrigemKpiDisplay/);
   assert.match(src, /metricsBlocked/);
+  assert.match(src, /contentAllowed/);
+  assert.match(src, /pedidosUnavailable/);
+  assert.match(src, /canais-origem-performance-bloqueada/);
   assert.match(src, /canais-origem-amostra-capada/);
   assert.match(src, /queriesEnabled && \(loadingParametros \|\| loadingPedidos\)/);
   assert.match(src, /parametrosList\.filter\(p => !p\.ativo\)/);
@@ -166,9 +179,10 @@ test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   assert.match(shell, /tabela_preco_codigo/);
   assert.match(shell, /partitionCentralItens\(selected\.itens\)/);
   assert.match(pedido, /condicao_pagamento_label/);
-  // Bugbot: GET atrasado não aplica — geração comparada dentro do inflight.
-  assert.match(pedido, /genAtStart/);
-  assert.match(pedido, /genAtStart!==hydrateEpoch\.current/);
+  // Bugbot: GET compartilhado valida no waiter (epoch/intent), não null no Promise.
+  assert.match(pedido, /hydrateIntentIdRef\.current!==requestId/);
+  assert.match(pedido, /epochAtClick!=null&&epochAtClick!==selectionEpochLiveRef\.current/);
+  assert.doesNotMatch(pedido, /genAtStart!==hydrateEpoch/);
   assert.match(pedido, /condicao_pagamento_codigo/);
   assert.match(pedido, /tabela_preco_label/);
   assert.match(orc, /condicao_pagamento_label/);
