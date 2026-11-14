@@ -304,7 +304,10 @@ test('sync: assertScope CONTEXT_CHANGED no meio do lote', async () => {
 });
 
 test('atomic ops: create + update + purposes + inactivate; omit skipped', () => {
-  assert.deepEqual(buildClienteLocaisSyncOperations(undefined, [uuidDrop]), { skipped: true, operations: [] });
+  assert.deepEqual(
+    buildClienteLocaisSyncOperations(undefined, [uuidDrop]),
+    { skipped: true, operations: [], overflow: false },
+  );
   const draft = [
     { ...baseEndereco, apelido: 'Novo' },
     {
@@ -315,11 +318,57 @@ test('atomic ops: create + update + purposes + inactivate; omit skipped', () => 
   ];
   const built = buildClienteLocaisSyncOperations(draft, [uuidA, uuidDrop]);
   assert.equal(built.skipped, false);
+  assert.equal(built.overflow, false);
   assert.equal(built.operations.filter((op) => op.op === 'create').length, 1);
   assert.equal(built.operations.filter((op) => op.op === 'update').length, 1);
   assert.equal(built.operations.filter((op) => op.op === 'purposes').length, 1);
   assert.equal(built.operations.filter((op) => op.op === 'inactivate').length, 1);
   assert.equal(built.operations.find((op) => op.op === 'inactivate')?.id, uuidDrop);
+});
+
+test('atomic ops: overflow >50 retorna flag sem lançar (legado pré-MASTER)', () => {
+  // 26 updates + 26 purposes (fins mudam) = 52 > 50 — sem chamar snapshot.
+  const many = Array.from({ length: 26 }, (_, i) => ({
+    ...baseEndereco,
+    id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+    apelido: `L${i}`,
+    tipo_endereco: 'Entrega',
+    _tipo_endereco_original: 'Entrega',
+    principal: false,
+    _finalidades_detalhadas: [{ finalidade: 'ENTREGA', principal: true }],
+  }));
+  const built = buildClienteLocaisSyncOperations(many, many.map((r) => r.id));
+  assert.equal(built.skipped, false);
+  assert.equal(built.overflow, true);
+  assert.ok(built.operations.length > 50);
+});
+
+test('atomic sync: overflow lança CLIENTE_LOCAIS_ATOMIC_OVERFLOW (não VALIDATION genérico)', async () => {
+  const many = Array.from({ length: 26 }, (_, i) => ({
+    ...baseEndereco,
+    id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+    apelido: `L${i}`,
+    tipo_endereco: 'Entrega',
+    _tipo_endereco_original: 'Entrega',
+    principal: false,
+    _finalidades_detalhadas: [{ finalidade: 'ENTREGA', principal: true }],
+  }));
+  await assert.rejects(
+    () => syncClienteLocaisAtomicViaHttp({
+      clienteId: 'cli-1',
+      draft: many,
+      baselineIds: many.map((r) => r.id),
+      api: {
+        snapshotLocais: async () => {
+          throw new Error('snapshot não deve ser chamado em overflow');
+        },
+        syncLocais: async () => {
+          throw new Error('sync não deve ser chamado em overflow');
+        },
+      },
+    }),
+    (err) => err?.code === 'CLIENTE_LOCAIS_ATOMIC_OVERFLOW',
+  );
 });
 
 test('atomic sync: snapshot+syncLocais batchAtomic true; conflito não parcial', async () => {

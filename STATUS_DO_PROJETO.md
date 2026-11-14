@@ -1,11 +1,22 @@
+## Cursor — PR596 overflow atômico → legado pré-MASTER (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Base tip `d9d3c74ba` CI **SUCCESS** (frontend/backend/compose/Approval/Security; Bugbot NEUTRAL).
+Bugbot High: overflow (>50 ops) após MASTER deixava cliente sem sync.
+Correção (este tip):
+- `buildClienteLocaisSyncOperations` retorna `overflow:true` (não lança).
+- Completo: preflight antes do MASTER → `locaisPreferLegacyRef` → sync legado; fallback pós-MASTER só SNAPSHOT/ATOMIC_UNAVAILABLE/INPUT_INVALID/ATOMIC_OVERFLOW.
+- `syncClienteLocaisAtomicViaHttp` lança `CLIENTE_LOCAIS_ATOMIC_OVERFLOW` (não VALIDATION genérico).
+Peels operacional + testes overflow. Sem HML (`d054e2b3` — tip ≠ HML). CI tip **em curso ≠ aprovado**.
+
 ## Cursor — PR596 Completo syncLocais atômico (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch PR596.
-Base tip `11dc2372a` CI **SUCCESS**. Este tip:
+Base tip `11dc2372a` CI **SUCCESS**. Tip `d9d3c74ba` CI **SUCCESS**:
 - `buildClienteLocaisSyncOperations` + `syncClienteLocaisAtomicViaHttp` (snapshot+sync, `batchAtomic:true`).
 - Completo: preferir path atômico; fallback legado só SNAPSHOT/ATOMIC_UNAVAILABLE; conflito = fail-closed.
 - Toast distingue atômico vs fallback `BATCH_ATOMIC=false`.
-Peels operacional + testes sync. Sem HML (`d054e2b3`). CI tip **em curso ≠ aprovado**.
+Peels operacional + testes sync. Sem HML (`d054e2b3`).
 
 ## Cursor — PR596 tip CI SUCCESS ownOnly/_acoes (2026-11-14 America/Sao_Paulo)
 

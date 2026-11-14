@@ -6,6 +6,7 @@ import {
   mapClienteLocalToUiEndereco,
   syncClienteLocaisViaHttp,
   syncClienteLocaisAtomicViaHttp,
+  buildClienteLocaisSyncOperations,
   prepareClienteLocaisHttpDraft,
   isClienteLocalCanonicalId,
   CLIENTE_LOCAIS_SYNC_PARTIAL,
@@ -563,6 +564,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
         ? payload.locais_entrega
         : undefined;
+      locaisPreferLegacyRef.current = false;
       if (isHttpBackendMode && locaisDraft !== undefined) {
         locaisDraft = data.locais_entrega;
         // [] inicial do form ≠ remoção explícita — omissão preserva operacionais HTTP.
@@ -591,6 +593,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           for (const action of required) if (!hasPermission('Cadastros', 'cliente_local', action)) {
             throw Object.assign(new Error(`Permissao de locais ausente: ${action}. MASTER nao enviado; rascunho preservado.`), { code: 'PERMISSION_DENIED', status: 403 });
           }
+          // Overflow atomico (>50 ops): legado ANTES do MASTER — evita cliente sem sync.
+          const baselineIdsPlan = Array.isArray(baseline)
+            ? baseline
+              .map((row) => (row && typeof row === 'object'
+                ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+                : ''))
+              .filter(Boolean)
+            : null;
+          const atomicPlan = buildClienteLocaisSyncOperations(locaisDraft, baselineIdsPlan);
+          if (atomicPlan.overflow) locaisPreferLegacyRef.current = true;
         }
         // Nunca empurrar locais no MASTER — sync canônico ou omissão explícita.
         delete payload.locais_entrega;
@@ -682,25 +694,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             .filter(Boolean)
           : null;
         try {
-          // Preferir POST /locais/sync (batchAtomic:true). Legado só se snapshot/atomic indisponível.
+          // Preferir POST /locais/sync (batchAtomic:true). Overflow/legado pré-MASTER ou fallback.
           let locaisSummary;
-          try {
-            locaisSummary = await syncClienteLocaisAtomicViaHttp({
-              clienteId: frozenScope.clienteId,
-              draft: locaisDraft,
-              baselineIds,
-              assertScope: assertLocaisScope,
-              api: api.clientes,
-            });
-          } catch (atomicErr) {
-            const atomicCode = /** @type {Error & { code?: string, message?: string }} */ (atomicErr)?.code
-              || String(/** @type {Error} */ (atomicErr)?.message || '');
-            const canFallback = atomicCode === 'CLIENTE_LOCAIS_SNAPSHOT_INVALID'
-              || atomicCode === 'CLIENTE_LOCAIS_ATOMIC_UNAVAILABLE'
-              || atomicCode === 'CLIENTE_LOCAIS_INPUT_INVALID'
-              || /SNAPSHOT_INVALID|ATOMIC_UNAVAILABLE|CLIENTE_LOCAIS_INPUT_INVALID/.test(atomicCode);
-            // Conflito de versão / sync inválido: fail-closed (não escrever path parcial).
-            if (!canFallback) throw atomicErr;
+          if (locaisPreferLegacyRef.current) {
             locaisSummary = await syncClienteLocaisViaHttp({
               clienteId: frozenScope.clienteId,
               draft: locaisDraft,
@@ -708,6 +704,33 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
               assertScope: assertLocaisScope,
               api: api.clientes,
             });
+          } else {
+            try {
+              locaisSummary = await syncClienteLocaisAtomicViaHttp({
+                clienteId: frozenScope.clienteId,
+                draft: locaisDraft,
+                baselineIds,
+                assertScope: assertLocaisScope,
+                api: api.clientes,
+              });
+            } catch (atomicErr) {
+              const atomicCode = /** @type {Error & { code?: string, message?: string }} */ (atomicErr)?.code
+                || String(/** @type {Error} */ (atomicErr)?.message || '');
+              const canFallback = atomicCode === 'CLIENTE_LOCAIS_SNAPSHOT_INVALID'
+                || atomicCode === 'CLIENTE_LOCAIS_ATOMIC_UNAVAILABLE'
+                || atomicCode === 'CLIENTE_LOCAIS_INPUT_INVALID'
+                || atomicCode === 'CLIENTE_LOCAIS_ATOMIC_OVERFLOW'
+                || /SNAPSHOT_INVALID|ATOMIC_UNAVAILABLE|ATOMIC_OVERFLOW|CLIENTE_LOCAIS_INPUT_INVALID/.test(atomicCode);
+              // Conflito de versão / sync inválido: fail-closed (não escrever path parcial).
+              if (!canFallback) throw atomicErr;
+              locaisSummary = await syncClienteLocaisViaHttp({
+                clienteId: frozenScope.clienteId,
+                draft: locaisDraft,
+                baselineIds,
+                assertScope: assertLocaisScope,
+                api: api.clientes,
+              });
+            }
           }
           // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
           lastLocaisSyncSummaryRef.current = locaisSummary;
@@ -896,6 +919,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     updated?: number,
     deleted?: number,
   }|null} */ (null));
+  /** true se o lote atomico overflow (>50 ops) — legado antes do MASTER, sem órfãos. */
+  const locaisPreferLegacyRef = useRef(false);
   useEffect(() => {
     const id = clienteBoundId || cliente?.id || null;
     const clientChanged = locaisCatalogClientIdRef.current !== id;

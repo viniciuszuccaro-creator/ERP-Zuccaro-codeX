@@ -803,12 +803,15 @@ export const CLIENTE_LOCAIS_BATCH_ATOMIC = false;
 /**
  * Monta `operations` do POST `/locais/sync` a partir do rascunho UI.
  * update + purposes (se fins mudaram) + inactivate; máx. 50 ops.
+ * Overflow (>50) NÃO lança — retorna `overflow:true` para o caller escolher legado
+ * antes do MASTER (evitar cliente gravado com locais órfãos).
  * @param {unknown} draft
  * @param {string[]|null|undefined} baselineIds
- * @returns {{ skipped: true, operations: [] } | { skipped: false, operations: Array<Record<string, unknown>> }}
+ * @returns {{ skipped: true, operations: [], overflow?: false }
+ *   | { skipped: false, operations: Array<Record<string, unknown>>, overflow: boolean }}
  */
 export function buildClienteLocaisSyncOperations(draft, baselineIds) {
-  if (draft === undefined) return { skipped: true, operations: [] };
+  if (draft === undefined) return { skipped: true, operations: [], overflow: false };
   const planned = prepareClienteLocaisHttpDraft(draft);
   /** @type {Array<Record<string, unknown>>} */
   const operations = [];
@@ -841,14 +844,11 @@ export function buildClienteLocaisSyncOperations(draft, baselineIds) {
       operations.push({ op: 'inactivate', id: bid });
     }
   }
-  if (operations.length === 0) return { skipped: true, operations: [] };
+  if (operations.length === 0) return { skipped: true, operations: [], overflow: false };
   if (operations.length > 50) {
-    clienteLocalValidation(
-      ['locais_entrega'],
-      'Lote atomico excede 50 operacoes (update+purposes contam separado). Rascunho preservado.',
-    );
+    return { skipped: false, operations, overflow: true };
   }
-  return { skipped: false, operations };
+  return { skipped: false, operations, overflow: false };
 }
 
 /**
@@ -902,6 +902,16 @@ export async function syncClienteLocaisAtomicViaHttp({
       created: 0, updated: 0, deleted: 0, skipped: true,
       ops: [], reconcileRequired: false, batchAtomic: true,
     };
+  }
+  if (built.overflow) {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error(
+        'Lote atomico excede 50 operacoes (update+purposes). Use sync legado — rascunho preservado.',
+      )
+    );
+    error.code = 'CLIENTE_LOCAIS_ATOMIC_OVERFLOW';
+    error.status = 422;
+    throw error;
   }
   guard();
   const snap = await api.snapshotLocais(frozenClienteId);
