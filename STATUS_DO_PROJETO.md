@@ -1,3 +1,17 @@
+## HML - acesso e100clientes confirmados pelo proprietario (2026-11-14)
+
+https://hml-erp.cpaferroeaco.com.br/ autenticada. Conferencia Chrome na origem
+nova: Grupo CPA, duas empresas existentes no seletor,100clientes/20porpagina,
+documento unificado/PF-PJ e leitura de cadastro. Exemplo real com3contatos,
+fiscal em Dados Gerais e entregas em Enderecos, todos locais ainda inativos/em
+revisao, sem ativacao ou preenchimento presumido dos campos operacionais.
+Nenhuma acao de escrita de cadastro executada; contexto conservado.
+Runtime d054e2b3 CI6969/6970SUCCESS inalterado. Isso NAO e completude integral,
+aceite de financeiro/compras nem nova prova de persistencia/isolamento.
+Auxiliares de produtos ainda indicam contagem parcial/indisponivel; nao zero.
+Proximos: backupautomatico/retencao -> testeoutroPC -> completude e escala pelos
+gates existentes. Preservados100ativos e1500ensaiosinativos, sem reimportacao.
+
 ## HML HTTPS disponivel na VPS, sem Codespace (2026-11-14)
 
 URL https://hml-erp.cpaferroeaco.com.br/; runtime d054e2b3 CI6969/6970SUCCESS,

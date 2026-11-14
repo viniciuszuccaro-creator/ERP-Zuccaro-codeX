@@ -1,3 +1,28 @@
+## Acesso autenticado HML confirmado - sem escrita de cadastro (2026-11-14)
+
+Proprietario confirmou abertura e100clientes na nova URL HTTPS. Chrome na mesma
+aba/origem conferiu sessao autenticada, Grupo CPA selecionado e duas empresas
+existentes disponiveis (CPA ferro e aco/3Z LTDA). Seletor aberto e fechado sem
+trocar contexto. Listagem:100total/20exibidos na primeira pagina, CPF/CNPJ
+unificado e PF/PJ. Leitura de cadastro real: codigo/documento/IE/fantasia,
+3contatos no exemplo aberto, fiscal recuperado em Dados Gerais e entregas
+separadas em Enderecos. Locais continuam INATIVOS/emrevisao/somenteleitura,
+com pendencias explicitas. Campos fiscais operacionais nao foram preenchidos
+automaticamente. Nenhum Salvar/Inativar/Adicionar ou troca de contexto executado.
+Modal de consulta fechado sem salvar; aba da HML mantida para o proprietario.
+
+Alcance: acesso real navegador -> API canonica -> PG HML, listagem/cadastro e
+leitura dos locais; NAO teste novo de edicao/replay/cross-tenant ou completude
+integral.100ativos nao substituem1600mestres/1500inativos preservados na base.
+Contagens auxiliares de produtos exibem indisponibilidade/parcial, nao aceitar
+isso como zero confirmado. Financeiro/compras historicos nao homologados aqui.
+Runtime d054e2b3 CI6969/6970SUCCESS, sem redeploy/importacao/DDL/grants neste lote.
+
+PROXIMO: backupautomatico/retencao da mesmaHML (nao concluido), aceiteoutroPC e
+matriz de completude/endereco fiscal/entrega conforme procedencia, preservando
+inativos. Dump atual/restauracao/copiaexterna ja verificados; nao recarregar100.
+Reserva documental liberada ao publicar; nenhum processo agente em background.
+
 ## HTTPS dedicado HML ativo - login real aguardando (2026-11-14)
 
 Confirmacao pontual recebida. https://hml-erp.cpaferroeaco.com.br/ disponivel
