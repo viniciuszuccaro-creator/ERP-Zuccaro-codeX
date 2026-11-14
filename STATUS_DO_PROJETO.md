@@ -1,8 +1,12 @@
+## Cursor — PR596 Corporativo cb7047c81 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Tip **`cb7047c81`** CI SUCCESS (43637794138): Ativos sem AND local/HTTP + cap +
+count null ≠ 0. Freeze endereços `0ffff5100` / port Casa `81d1e849` intactos.
+Fora pacote 81. tip ≠ HML `d054e2b3`. Sem deploy.
+
 ## Cursor — PR596 Bugbot Corporativo filtro sem AND local (2026-11-14 America/Sao_Paulo)
 
-Bugbot: AND `ativo`+`status` zerava local/Produto. Filtro por piloto HTTP
-(`ativo`) vs local (`status: 'Ativo'`). Cap lista bruta preservado. 47 PASS.
-tip ≠ HML; fora pacote 81.
+Histórico: AND fix → CI no lote acima.
 
 ## Cursor — PR596 Bugbot Corporativo ativo HTTP + cap lista (2026-11-14 America/Sao_Paulo)
 
