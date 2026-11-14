@@ -1,3 +1,21 @@
+## HML - bootstrap canonico validado, acesso externo ainda pendente (2026-11-14)
+
+Base dd82ada6 CI6963/6964 SUCCESS; novo WIP portavel ainda nao publicado.
+Empacotamento TS/Vite feito no desktop, manifesto de bytes/SHA, sem dados/.env.
+Bootstrap exige DB/schema/cluster/role/perfil/Grupo exatos antes de READY;
+Auth e Data no mesmo pool, provedor real, sem fallback operacional/IdP sintetico.
+Focal6PASS, audit/lint/typecheck/buildPASS; Windows2922PASS/5FAIL/0SKIP:
+3Python/1getuid e1workerBash interrompido (nao PASS funcional). Publicacao
+somente draft para validacao Linux conforme excecao vigente, sem aceite antecipado.
+Ensaio real API compilada -> PG HML restaurado: health200/ready200 e clientes401
+sem sessao; login nao super/BYPASS e sem memberships perigosos. Rede none e
+zeroportas; nao chamar essa prova de login real, HTTPS ou aceite navegador.
+Somente recursos HML novos usados e parados; ERP real preservado. Livre27,39GiB.
+1600clientes/4200contatos/1500inativos/217locais/6613auditorias preservados;
+nenhum seed/carga/reativacao. Recursos/recibos privados no HANDOFF.
+Gates finitos: publicar/CI do WIP -> pacote limpo/APIweb -> HTTPS/DNS ->
+Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
+
 ## HML atual recuperada e restaurada isoladamente (2026-11-14)
 
 Gate de fonte final ENCERRADO neste alcance: arquivo frio389418721bytes,

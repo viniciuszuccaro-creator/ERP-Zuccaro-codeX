@@ -1,3 +1,38 @@
+## Bootstrap portavel HML - validacao privada (2026-11-14)
+
+Executor Codex desktop DELL-VINI; casa/empresa nao inferidos. Base dd82ada6,
+CI6963/6964 SUCCESS. Reserva PR594/6876586953, sem assumir arquivos UI Cursor.
+WIP: scripts/vps/hml-bootstrap.mjs, scripts/vps/package-hml-runtime.mjs e dois
+testes correspondentes. Extraem o bootstrap privado existente, reutilizando
+createApp/loadConfig/createRuntimeDbClients, compilacao TS/Vite e lockfile.
+Nao ha outro ERP, cadastro, endpoint ou candidato. Empacotamento fora da VPS,
+sem .env/dados/config privada, com manifesto por arquivo e marcador API/web.
+Pacote de validacao UNPUBLISHED_VALIDATION NAO autoriza ativacao publica.
+
+Focal 6PASS/0FAIL/0SKIP; audit/lint/typecheck/build PASS (lint2warnings antigos).
+Suite Windows2922PASS/5FAIL/0SKIP:3Python ausente/aliasStore,1getuidPOSIX,
+1workerBashprecheck encerrado somente na arvore propria apos55s sem conclusao.
+Duracao total166s; interrupcao nao e assercao funcional reprovada nem PASS.
+Publicacao SOMENTE draft para CI Linux pela excecao vigente registrada abaixo;
+nao atribuir CI ancestral ao WIP e nao ativar sem CI terminal do novo SHA.
+Contra PG restaurado real: preflight fisico PASS, /health200, /ready200,
+/api/v1/clientes401 sem sessao. App/login nao superuser, nao BYPASSRLS, sem
+membership perigoso; DB e Auth pool identicos, namespace/search_path explicitos.
+Teste com rede none/zeroportas: NAO prova login Auth real ou navegador/HTTPS.
+API de validacao e PG dedicados PARADOS ao concluir ensaio, operacional intacto.
+PG antigo conservado parado: nunca iniciar os dois sobre pgdata-restored.
+Socket privado compartilhado; limites PG1GiB/0,40CPU, API512MiB/0,30CPU.
+Somente senha da role app da COPIA HML foi substituida por credencial exclusiva
+privada; nenhuma role/grant/Authuser ou senha operacional alterada.
+Recibo: /root/erp-private/hml-recovery-20261114/api-validation.private.json;
+config privada separada do pacote. Espaco livre29407039488bytes (>20GiB).
+
+PROXIMO: fechar suite/checks, publicar mesmoPR/branch e conferir CI do SHA novo;
+gerar pacote PUBLISHED_CLEAN novo (nao relabel do WIP), revisar/ativar somente
+API/web HML com rede separada e HTTPS dedicado. DNS hml-erp ainda nao comprovado.
+Login real, RBAC HTTP, UI e backup automatico/retencao permanecem abertos.
+Nao reiniciar Codespace, importar clientes nem reexecutar restore.
+
 ## Recuperacao final e restore HML - checkpoint executado (2026-11-14)
 
 Gate de recuperacao da fonte final superado; bloco anterior agora historico.
