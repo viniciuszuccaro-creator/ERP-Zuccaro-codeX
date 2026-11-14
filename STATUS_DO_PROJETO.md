@@ -1,3 +1,13 @@
+## Cursor — peels Continuity + port ENTREGA (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Tip `cd60a115a`+peels.
+- Restaurado `clienteLocaisPurposeRemainder` tip Continuity `38b4e1ec` (Completo fino; sem MASTER extras no purpose).
+- RG HTTP guards = Continuity (sem applyClienteMasterExtras fantasma).
+- Dashboard browser golden atualizado p/ KPI fail-closed.
+- Completo: FISCAL `allowReviewEdit`; ENTREGA `onOpenDraft`+contadores (peel operacional).
+- CI tip anterior `2c0beaa6b`/`66ff086f3`: frontend FAILURE (purpose expandido ≠ Completo Continuity) — **não aprovado**.
+- Sem HML (`d054e2b3`).
+
 ## Cursor — port controlado ENTREGA onOpenDraft + FISCAL allowReviewEdit (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Pós-fechamento Codex `76dc3832` (docs) / `38b4e1ec` CI SUCCESS.

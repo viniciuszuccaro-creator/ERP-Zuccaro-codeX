@@ -12,7 +12,8 @@ const files = {
   driver: ['src/components/mobile/AppEntregasMotorista.jsx', 'ef9273614d17281d675643ab484faee93a78ea762afccdbcca582ab9dd039532'],
   dre: ['src/components/relatorios/DREComparativo.jsx', '7d9cc13ab4c7c13dd4190cfbf9a3b57f9e170f52f6a0219958225a74d8bb7434'],
   export: ['src/components/ui/ExportMenu.jsx', 'ea9ec90fcaddc2b5a461443bd95a288c8ca4627b2bdc7411040ecb4f91f0f3bf'],
-  dashboard: ['src/pages/Dashboard.jsx', 'bf9e62df6d7499ec4bb13ae2fb6d7eacd17a214b3e347ca627687378491a999c'],
+  // Tip PR596: KPI fail-closed (formatDashboardCountDisplay / resolveDashboardCountAfterFailure).
+  dashboard: ['src/pages/Dashboard.jsx', '0988611c3d792f03c52482ca873f5c57d87fea914305c2f78c59bd7799b1483a'],
   quote: ['src/pages/OrcamentoSite.jsx', 'c8a2db58e48fe10416f1b270f48701f36f2ba90124c4ae59094edfb22754525b'],
 };
 const source = key => fs.readFileSync(files[key][0], 'utf8').replace(/\r\n/g, '\n');
