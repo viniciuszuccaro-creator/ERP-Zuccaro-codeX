@@ -1,10 +1,14 @@
-## Cursor — PR596 P1 contexto PARTIAL A→B (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Bugbot gate PARTIAL A→B (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-Codex P1 (#6881592804): CONTEXT_CHANGED durante listLocais PARTIAL não carimba ID de A em B.
-Guard pós-await + scopeRevoked + updater `prev.id === frozenScope.clienteId`.
-tip ≠ HML `d054e2b3`. CI **em curso ≠ aprovado**. Aceite composto aguarda este tip.
-PROXIMO: CI SUCCESS → Codex reteste A→B → freeze/aceite HML.
+Bugbot High: create vazio / mesmo tenant não publicam baseline/view/owned/ids de A em B.
+`canPublishClienteLocaisPartialReconcile` + stamp gate. tip ≠ HML `d054e2b3`.
+Casa #6881689474: tip `64fe7883f` mutationFn PASS. CI **em curso ≠ aprovado** neste tip.
+PROXIMO: CI SUCCESS → aceite composto / freeze HML (Codex).
+
+## Cursor — PR596 P1 contexto PARTIAL A→B (2026-11-14 America/Sao_Paulo)
+
+Tip `64fe7883f` CI SUCCESS (histórico). HML `d054e2b3` ≠ tip.
 
 ## Cursor — continuidade consolidada / PR596 tip c17fbfa29 (2026-11-14 America/Sao_Paulo)
 

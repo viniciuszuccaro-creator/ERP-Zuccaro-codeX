@@ -11,6 +11,7 @@ import {
   syncClienteLocaisAtomicViaHttp,
   buildClienteLocaisSyncOperations,
   reconcileClienteLocaisDraftAfterPartial,
+  canPublishClienteLocaisPartialReconcile,
   assertClienteLocalUiExtrasWritable,
   isClienteLocalCanonicalId,
   CLIENTE_HTTP_UNSUPPORTED_FIELDS,
@@ -296,13 +297,16 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   // Bugbot: carimbar no rascunho vivo (prev.locais_entrega), não só no snapshot do save.
   assert.match(block, /prev\.locais_entrega/);
   assert.match(block, /const live = Array\.isArray\(prev\.locais_entrega\)/);
-  // P1 contexto A→B: não engolir CONTEXT_CHANGED; não carimbar no form B.
+  // P1/Bugbot A→B: gate + canPublish; sem baseline/owned/carimbo no B (id ou create vazio).
   assert.match(block, /scopeRevoked/);
   assert.match(block, /CONTEXT_CHANGED/);
-  assert.match(block, /assertLocaisScope\(\);\s*\n\s*const rows = await api\.clientes\.listLocais/);
+  assert.match(block, /canPublishClienteLocaisPartialReconcile/);
+  assert.match(block, /publishStillAllowed/);
+  assert.match(block, /locaisPartialStampGateRef/);
+  assert.match(block, /formClienteIdLiveRef/);
   assert.match(block, /\/\/ Guard após await/);
-  assert.match(block, /prevId && prevId !== stampClienteId/);
   assert.match(block, /if \(!scopeRevoked\)/);
+  assert.match(src, /locaisPartialStampGateRef\.current = \{ clienteId, allow: true \}/);
   assert.equal(
     /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped\s*\}\s*\)/.test(block),
     false,
@@ -313,7 +317,65 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
     false,
     'PARTIAL não pode gravar reconciled do snapshot locaisDraft por cima do vivo',
   );
-  // Consumidor sintético: carimbo de A não se aplica quando prev.id = B.
+  // Consumidor A→B (leitura pendente): gate/canPublish bloqueia publish de baseline/owned/carimbo.
+  const stampA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  assert.equal(canPublishClienteLocaisPartialReconcile({
+    stampClienteId: stampA,
+    liveFormClienteId: stampA,
+    catalogClientId: stampA,
+    stampGateClienteId: stampA,
+    stampGateAllow: true,
+    scopeCurrent: true,
+  }), true);
+  // Mesmo tenant, form B com id.
+  assert.equal(canPublishClienteLocaisPartialReconcile({
+    stampClienteId: stampA,
+    liveFormClienteId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    catalogClientId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    stampGateClienteId: stampA,
+    stampGateAllow: true,
+    scopeCurrent: true,
+  }), false);
+  // Gate desarmado na troca A→B (effect).
+  assert.equal(canPublishClienteLocaisPartialReconcile({
+    stampClienteId: stampA,
+    liveFormClienteId: null,
+    catalogClientId: null,
+    stampGateClienteId: stampA,
+    stampGateAllow: false,
+    scopeCurrent: true,
+  }), false);
+  // Create vazio em B: catálogo B ≠ stamp A.
+  assert.equal(canPublishClienteLocaisPartialReconcile({
+    stampClienteId: stampA,
+    liveFormClienteId: null,
+    catalogClientId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    stampGateClienteId: stampA,
+    stampGateAllow: true,
+    scopeCurrent: true,
+  }), false);
+  // Simula refs do consumidor após A→B com leitura ainda pendente.
+  const refsB = {
+    view: undefined,
+    baseline: undefined,
+    owned: false,
+    draft: [{ ...baseEndereco, apelido: 'Local-B1' }],
+  };
+  const gate = { clienteId: stampA, allow: false };
+  const publish = canPublishClienteLocaisPartialReconcile({
+    stampClienteId: stampA,
+    liveFormClienteId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    catalogClientId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+    stampGateClienteId: gate.clienteId,
+    stampGateAllow: gate.allow,
+    scopeCurrent: true,
+  });
+  assert.equal(publish, false);
+  // Sem publish: view/baseline/owned/draft B intactos (não recebem mapped/IDs de A).
+  assert.equal(refsB.view, undefined);
+  assert.equal(refsB.baseline, undefined);
+  assert.equal(refsB.owned, false);
+  assert.ok(!isClienteLocalCanonicalId(refsB.draft[0].id));
   const draftA = [
     { ...baseEndereco, apelido: 'Local-A1' },
     { ...baseEndereco, apelido: 'Local-A2-pendente' },
@@ -324,11 +386,6 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
     { ops: [{ op: 'create', localId: uuidA }] },
   );
   assert.equal(stampedA[0].id, uuidA);
-  const formB = { id: 'cliente-B-uuid', locais_entrega: [{ ...baseEndereco, apelido: 'Local-B1' }] };
-  const wouldCrossStamp = formB.id && formB.id !== 'cliente-A-uuid';
-  assert.equal(wouldCrossStamp, true);
-  // Updater deve no-op quando prevId !== stampClienteId — preserva B sem id de A.
-  assert.notEqual(formB.locais_entrega[0].id, uuidA);
 
   // Live = save + rascunho aberto durante sync: carimba create OK e preserva extra.
   const liveDuringSync = [

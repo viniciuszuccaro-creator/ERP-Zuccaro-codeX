@@ -1,4 +1,4 @@
-## Cursor — PR596 P1 contexto: PARTIAL não carimba A→B (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 Bugbot: gate PARTIAL A→B (baseline/owned/create vazio) (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
 | Ref | Tip | CI / runtime |
@@ -6,15 +6,19 @@
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
 | **PR596 HEAD** | **este lote** (após push) | CI **em curso ≠ aprovado** |
-| Tips anteriores | `c17fbfa29`/`8631a02b1`… | Codex P1 contexto / docs — **≠ este tip** |
+| Tip `64fe7883f` | P1 contexto | **CI SUCCESS** (Casa #6881689474 PASS mutationFn) |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Executor: Cursor. Codex P1 (#6881592804): após create OK em A + listLocais tardio,
-troca para B engolia CONTEXT_CHANGED e carimbava ID de A no rascunho B.
-Fix: guard pós-await; CONTEXT_CHANGED → scopeRevoked (sem owned/stamp/baseline);
-updater exige `prev.id === frozenScope.clienteId` (ou form create sem id no mesmo escopo).
-Contraprovas 25 edições / retry sem duplicação / listLocais 503 **permanecem válidas**.
-Aceite composto 596/HML bloqueado até CI deste tip.
+Executor: Cursor. Bugbot High em `64fe7883f`: create vazio ainda carimbava A; A→B
+mesmo tenant publicava view/baseline/owned de A.
+Fix: `canPublishClienteLocaisPartialReconcile` + `locaisPartialStampGateRef` (arma no sync,
+desarma na troca de identidade); publish de view/baseline/owned/carimbo só com gate.
+Prova negativa A→B (refs/view/baseline/owned/draftB). Contraprovas Casa permanecem válidas.
+
+## Cursor — PR596 P1 contexto: PARTIAL não carimba A→B (2026-11-14 America/Sao_Paulo)
+
+Tip `64fe7883f` CI SUCCESS: CONTEXT_CHANGED + prev.id. HML `d054e2b3` ≠ tip.
+Casa confirmou 4 contraprovas mutationFn (não React montado).
 
 ## Cursor — continuidade consolidada (endereços → composição HML) (2026-11-14 America/Sao_Paulo)
 

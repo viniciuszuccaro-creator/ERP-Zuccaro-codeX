@@ -852,6 +852,35 @@ export function reconcileClienteLocaisDraftAfterPartial(draft, persistedMapped, 
 }
 
 /**
+ * Gate de publicação pós-PARTIAL: não aplicar baseline/view/owned/carimbo do save A
+ * no formulário B (mesmo tenant) nem em create vazio que já saiu do gate A.
+ * @param {{
+ *   stampClienteId?: string|null,
+ *   liveFormClienteId?: string|null,
+ *   catalogClientId?: string|null,
+ *   stampGateClienteId?: string|null,
+ *   stampGateAllow?: boolean,
+ *   scopeCurrent?: boolean,
+ * }} args
+ * @returns {boolean}
+ */
+export function canPublishClienteLocaisPartialReconcile(args = {}) {
+  const stamp = String(args.stampClienteId || '').trim();
+  if (!stamp) return false;
+  if (args.scopeCurrent !== true) return false;
+  if (args.stampGateAllow !== true) return false;
+  if (String(args.stampGateClienteId || '').trim() !== stamp) return false;
+  const live = String(args.liveFormClienteId || '').trim();
+  if (live) return live === stamp;
+  // Create sem id: catálogo de outro cliente (B) bloqueia; null/mesmo stamp ok.
+  const cat = args.catalogClientId == null || args.catalogClientId === ''
+    ? ''
+    : String(args.catalogClientId).trim();
+  if (cat && cat !== stamp) return false;
+  return true;
+}
+
+/**
  * Path legado (create/update/delete por request): NÃO atômico.
  * Preferir `syncClienteLocaisAtomicViaHttp` → POST `/locais/sync` (`batchAtomic:true`).
  * Este sync legado:

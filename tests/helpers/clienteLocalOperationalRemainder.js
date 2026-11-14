@@ -12,7 +12,7 @@ export function clienteLocalOperationalRemainder(file, text) {
   ] : file === 'src/components/cadastros/CadastroClienteCompleto.jsx' ? [
     // Atomic syncLocais (Cursor) — peel before ENTREGA onOpenDraft.
     [
-      '  syncClienteLocaisViaHttp,\n  syncClienteLocaisAtomicViaHttp,\n  buildClienteLocaisSyncOperations,\n  reconcileClienteLocaisDraftAfterPartial,\n  prepareClienteLocaisHttpDraft,\n',
+      '  syncClienteLocaisViaHttp,\n  syncClienteLocaisAtomicViaHttp,\n  buildClienteLocaisSyncOperations,\n  reconcileClienteLocaisDraftAfterPartial,\n  canPublishClienteLocaisPartialReconcile,\n  prepareClienteLocaisHttpDraft,\n',
       '  syncClienteLocaisViaHttp,\n  prepareClienteLocaisHttpDraft,\n',
     ],
     [
@@ -230,6 +230,10 @@ export function clienteLocalOperationalRemainder(file, text) {
       + '      locaisCatalogClientIdRef.current = id;\n'
       + '      locaisDraftOwnedRef.current = false;\n'
       + '    }\n'
+      + '    const gate = locaisPartialStampGateRef.current;\n'
+      + '    if (gate.allow && gate.clienteId && id !== gate.clienteId) {\n'
+      + '      gate.allow = false;\n'
+      + '    }\n'
       + '    // Create HTTP: sem id = catálogo vazio confirmado (permite rascunho no 1º save).\n'
       + '    if (!id) {\n'
       + '      if (isHttpBackendMode) {\n'
@@ -256,6 +260,25 @@ export function clienteLocalOperationalRemainder(file, text) {
       + '      locaisHttpBaselineRef.current = undefined;\n'
       + '      return undefined;\n'
       + '    }\n',
+    ],
+    [
+      '  /** Id do formulário vivo (ref) — mutation PARTIAL não usa formData fechado do render do save. */\n'
+      + '  const formClienteIdLiveRef = useRef(/** @type {string|null} */ (null));\n'
+      + '  formClienteIdLiveRef.current = String(formData?.id || \'\').trim() || null;\n'
+      + '  /**\n'
+      + '   * Gate do carimbo PARTIAL: armado no sync do cliente A; desarmado ao trocar identidade do form.\n'
+      + '   * Evita publicar baseline/view/owned/ids de A em B (mesmo tenant / create vazio).\n'
+      + '   */\n'
+      + '  const locaisPartialStampGateRef = useRef(/** @type {{ clienteId: string|null, allow: boolean }} */ ({\n'
+      + '    clienteId: null,\n'
+      + '    allow: false,\n'
+      + '  }));\n',
+      '',
+    ],
+    [
+      '        // Arma gate do PARTIAL neste cliente — troca A→B desarma no effect / canPublish.\n'
+      + '        locaisPartialStampGateRef.current = { clienteId, allow: true };\n',
+      '',
     ],
     [
       '  const applyEnderecosDraft = (novosEnderecos) => {\n'
@@ -409,29 +432,52 @@ export function clienteLocalOperationalRemainder(file, text) {
           if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
             // IDs confirmados no summary.ops devem ser carimbados mesmo se listLocais falhar
             // (senão retry recria o create já OK). Baseline só quando a leitura confirma.
-            // P1 contexto: CONTEXT_CHANGED / troca A→B NÃO publica carimbo/baseline/owned no form B.
+            // P1/Bugbot: CONTEXT_CHANGED e A→B (mesmo tenant / create vazio) NÃO publicam
+            // baseline/view/owned/carimbo de A no formulário B.
+            const stampClienteId = frozenScope.clienteId;
+            const publishStillAllowed = () => {
+              const gate = locaisPartialStampGateRef.current;
+              return canPublishClienteLocaisPartialReconcile({
+                stampClienteId,
+                liveFormClienteId: formClienteIdLiveRef.current,
+                catalogClientId: locaisCatalogClientIdRef.current,
+                stampGateClienteId: gate.clienteId,
+                stampGateAllow: gate.allow,
+                scopeCurrent: isFormScopeCurrent(),
+              });
+            };
             /** @type {Array<Record<string, unknown>>|null} */
             let mapped = null;
             let scopeRevoked = false;
             try {
               assertLocaisScope();
-              const rows = await api.clientes.listLocais(frozenScope.clienteId, {
-                limit: 50, ativo: true,
-              });
-              // Guard após await — antes de refs/setState.
-              assertLocaisScope();
-              mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
-                /** @type {Record<string, unknown>} */ (row),
-              ));
-              setLocaisHttpView(mapped);
-              locaisHttpBaselineRef.current = mapped;
-            } catch (readErr) {
-              const readCode = /** @type {Error & { code?: string }} */ (readErr)?.code;
-              if (readCode === 'CONTEXT_CHANGED' || !isFormScopeCurrent()) {
+              if (!publishStillAllowed()) {
                 scopeRevoked = true;
                 lastLocaisSyncSummaryRef.current = null;
               } else {
-                // Baseline desconhecida — sem deletes no próximo save; carimbo só se escopo A intacto.
+                const rows = await api.clientes.listLocais(frozenScope.clienteId, {
+                  limit: 50, ativo: true,
+                });
+                // Guard após await — antes de refs/setState (sessão + identidade A).
+                assertLocaisScope();
+                if (!publishStillAllowed()) {
+                  scopeRevoked = true;
+                  lastLocaisSyncSummaryRef.current = null;
+                } else {
+                  mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+                    /** @type {Record<string, unknown>} */ (row),
+                  ));
+                  setLocaisHttpView(mapped);
+                  locaisHttpBaselineRef.current = mapped;
+                }
+              }
+            } catch (readErr) {
+              const readCode = /** @type {Error & { code?: string }} */ (readErr)?.code;
+              if (readCode === 'CONTEXT_CHANGED' || !isFormScopeCurrent() || !publishStillAllowed()) {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              } else {
+                // Baseline desconhecida — sem deletes no próximo save; carimbo só se A intacto.
                 locaisHttpBaselineRef.current = null;
                 mapped = null;
               }
@@ -442,22 +488,34 @@ export function clienteLocalOperationalRemainder(file, text) {
                 scopeRevoked = true;
                 lastLocaisSyncSummaryRef.current = null;
               }
+              if (!publishStillAllowed()) {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              }
             }
             if (!scopeRevoked) {
               locaisDraftOwnedRef.current = true;
-              const stampClienteId = frozenScope.clienteId;
               const stampMapped = mapped;
               const stampSummary = partialErr.summary;
               const stampSaveDraft = locaisDraft;
               // Carimba sobre o rascunho VIVO (prev), não o snapshot do save — Abrir rascunho
               // durante sync legado lento não pode ser descartado pelo catch PARTIAL.
               setFormData((prev) => {
-                if (!isFormScopeCurrent()) return prev;
+                const gate = locaisPartialStampGateRef.current;
+                const prevId = String(prev?.id || '').trim() || null;
+                if (!canPublishClienteLocaisPartialReconcile({
+                  stampClienteId,
+                  liveFormClienteId: prevId,
+                  catalogClientId: locaisCatalogClientIdRef.current,
+                  stampGateClienteId: gate.clienteId,
+                  stampGateAllow: gate.allow,
+                  scopeCurrent: isFormScopeCurrent(),
+                })) {
+                  return prev;
+                }
                 try { assertLocaisScope(); }
                 catch { return prev; }
-                const prevId = String(prev?.id || '').trim();
-                // Form vivo já é outro cliente (B) — não aplicar IDs confirmados de A.
-                if (prevId && prevId !== stampClienteId) return prev;
+                // Sem array vivo: só reutiliza snapshot do save A se o gate ainda é A (já checado).
                 const live = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : stampSaveDraft;
                 const reconciled = reconcileClienteLocaisDraftAfterPartial(
                   live,
