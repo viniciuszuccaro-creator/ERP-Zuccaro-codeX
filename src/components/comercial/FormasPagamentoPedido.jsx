@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,8 @@ export default function FormasPagamentoPedido({
     Array.isArray(parcelas) && parcelas.length > 0 ? parcelas.length : 1,
   );
   const [percentualAcrescimo, setPercentualAcrescimo] = useState(acrescimo || 0);
+  /** Evita regenerar cronograma salvo na 1ª resolução do Cadastros (loading ≠ limpar). */
+  const preserveSavedScheduleRef = useRef(Array.isArray(parcelas) && parcelas.length > 0);
 
   const {
     formasPagamento = [],
@@ -76,13 +78,25 @@ export default function FormasPagamentoPedido({
   );
 
   useEffect(() => {
+    // Enquanto Cadastros carrega, formaSelecionada fica vazia → permiteParcelar false.
+    // Não limpar nem regenerar parcelas salvas até a forma estar resolvida (≠ apagar datas).
+    if (loadingFormas || formasLoadFailed) return undefined;
+    if (!formaPagamento) return undefined;
+    if (!formaSelecionada) return undefined;
     if (permiteParcelar && numeroParcelas > 0 && onParcelasChange) {
+      if (preserveSavedScheduleRef.current && Array.isArray(parcelas) && parcelas.length > 0) {
+        preserveSavedScheduleRef.current = false;
+        return undefined;
+      }
+      preserveSavedScheduleRef.current = false;
       gerarParcelas();
     } else if (!permiteParcelar && Array.isArray(parcelas) && parcelas.length > 0 && onParcelasChange) {
+      preserveSavedScheduleRef.current = false;
       onParcelasChange([]);
     }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- regenera só quando inputs de parcela mudam
-  }, [numeroParcelas, valorTotal, percentualAcrescimo, formaPagamento, permiteParcelar]);
+  }, [loadingFormas, formasLoadFailed, formaSelecionada, numeroParcelas, valorTotal, percentualAcrescimo, formaPagamento, permiteParcelar]);
 
   useEffect(() => {
     if (acrescimo !== percentualAcrescimo) {

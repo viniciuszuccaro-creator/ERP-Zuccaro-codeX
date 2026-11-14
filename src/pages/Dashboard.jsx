@@ -750,15 +750,8 @@ export default function Dashboard() {
     }
   ];
 
-  const clientesAtivosResolved = resolveDashboardCount({
-    list: (clientes || []).filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Bloqueado'),
-    allowListFallback: true,
-  });
-  const clientesAtivosDisplay = canSeeCRM
-    ? (totalClientesResolved?.confiavel
-      ? totalClientesDisplay
-      : formatDashboardCountDisplay(clientesAtivosResolved))
-    : '—';
+  // KPI "Clientes" = população única (countEntities Cliente), sem misturar com amostra de ativos.
+  const clientesKpiDisplay = canSeeCRM ? totalClientesDisplay : '—';
   // Contagem derivada da lista carregada: zero da amostra ≠ total global confirmado.
   const entregasPendentesDisplay = canSeeExpedicao
     ? (Number(entregasPendentes) > 0
@@ -784,9 +777,9 @@ export default function Dashboard() {
   const kpiCards = [
     {
       title: "Clientes",
-      value: clientesAtivosDisplay,
+      value: clientesKpiDisplay,
       subtitle: dashboardCountSubtitle({
-        resolved: totalClientesResolved?.confiavel ? totalClientesResolved : clientesAtivosResolved,
+        resolved: totalClientesResolved,
         loading: Boolean(canSeeCRM && hasContextoAtivo && totalClientesResolved == null),
         allowed: Boolean(canSeeCRM),
         hasContext: Boolean(hasContextoAtivo),

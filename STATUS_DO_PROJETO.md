@@ -1,3 +1,11 @@
+## Cursor — PR596 Bugbot parcelas loading + KPI Clientes (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+- FormasPagamentoPedido: não limpa/regenera parcelas enquanto Cadastros carrega
+  ou forma ainda não resolvida (preserva vencimentos salvos).
+- Dashboard KPI Clientes: só `countEntities` (sem misturar amostra de ativos).
+Sem HML; composição 591→595→596 ainda aguarda CI Continuity591.
+
 ## Cursor — composição 591→595→596 aguarda CI Continuity (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Codex tip `38b4e1ec` em `codex/continuidade-591-20261111`

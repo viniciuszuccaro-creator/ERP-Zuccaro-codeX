@@ -59,6 +59,19 @@ test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {
   assert.doesNotMatch(formas, /base44\.entities\.FormaPagamento\.list/);
   assert.doesNotMatch(formas, /id: "1", tipo: "À Vista"/);
   assert.doesNotMatch(formas, /const useQuery = \(\{ queryKey, queryFn \}\) =>/);
+  assert.match(formas, /if \(loadingFormas \|\| formasLoadFailed\) return/);
+  assert.match(formas, /if \(!formaSelecionada\) return/);
+  assert.match(formas, /preserveSavedScheduleRef/);
+});
+
+test('Dashboard Clientes KPI: uma população (count), sem misturar ativos da amostra', () => {
+  assert.match(dash, /clientesKpiDisplay/);
+  assert.match(dash, /title: "Clientes"/);
+  assert.doesNotMatch(dash, /clientesAtivosDisplay/);
+  assert.doesNotMatch(
+    dash,
+    /totalClientesResolved\?\.confiavel\s*\?\s*totalClientesDisplay\s*:\s*formatDashboardCountDisplay\(clientesAtivosResolved\)/,
+  );
 });
 
 test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
