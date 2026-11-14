@@ -1,3 +1,25 @@
+## HML persistente na VPS - aprovacao condicionada (2026-11-14)
+
+Proprietario aprovou HML leve separada em srv1982741, NAO promocao operacional.
+Execucao BLOCKED no primeiro gate: copia externa do estado final da HML ainda
+nao comprovada. Codespace Shutdown; API informa retencao ate12/12/2026 18:23BRT.
+Nao repetir start com402, importacao, exportar dados para branch ou mudar cobranca.
+Nos caminhos privados documentados do desktop foram encontrados recibos/codigo,
+nao dump final. Busca limitada NAO comprova ausencia global. Backup611309c8
+documentado antecede217; nao afirmar que contem esses locais/auditorias.
+
+Capacidade medida14/11: KVM2/2vCPU/8GB; df102888095744total/70164590592usados/
+32706727936disponiveis bytes,69%; inodes6%. Historico717amostras horarias:
+CPUmedia12,42%/P9513,08%/max49,84%; RAMmax3,16GB. Nao sao picos instantaneos.
+Proposta autorizada API512MiB/0,30CPU, PG1GiB/0,40CPU, web128MiB/0,05CPU;
+reserva minima20GiB, sem builds/testes pesados/SQLlegado nesse host.
+Nenhum deploy, container, role, DDL, DNS, proxy ou dado alterado nesta retomada.
+
+Proximo: recuperar dump+recibos atuais privadamente, provar217/4200/1600,
+conteudo/IDs/auditorias e lacunas; depois restore separado e isolamento antes
+de ativar HTTPS. Procedimento/gates e alternativa de custo no OPERACAO/HANDOFF.
+Lote documental: diffcheck; nao atribuir CI aplicativo ancestral a este checkpoint.
+
 ## Previa retomada (2026-11-12)
 
 Janela17h29 expirada e CodespaceShutdown comprovados; iniciado somente o

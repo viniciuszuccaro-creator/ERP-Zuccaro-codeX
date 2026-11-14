@@ -1,3 +1,38 @@
+## HML VPS autorizada - recuperar estado final primeiro (2026-11-14)
+
+HEAD local/remoto594 conferidos9a8b2f5b, checkout limpo; nenhum processo local
+associado ao checkout na consulta. Reserva documental594/6876010564; publicacao
+na mesma branch, sem merge/main. Aprovacao privada3e55b110 permite HML isolada,
+nao escrita no operacional nem novos custos sem decisao especifica.
+
+Gate atual BLOCKED: nao foi comprovado dump final externo com os217locais e
+suas auditorias. Recibo/arquivo de runtime nao substituem backup. Nos locais
+documentados do desktop ha manifestos/recibos, nao dump final; leitura limitada,
+sem busca indiscriminada. Na VPS, exame anterior maxdepth2 identificou dump de
+13/10, nao estado da HMLnovembro. Nao extrapolar essa busca para ausencia global.
+Backup611309c8/3099029bytes antecede aplicacao217; nao restaurar como continuidade
+completa. Nao repetir carga100/1500,4200contatos,extensoes ou217revisoes.
+
+GitHub API14/11: mesmo Codespace Shutdown, last_used12/11 17:52BRT,
+retention_expires_at12/12/2026 18:23:52BRT. Bloqueio402 de franquia/orcamento
+ja comprovado, sem repetir start. Export changes publica somente branchGit,
+nao e canal para volumePG/arquivos privados; nao executar para dados reais.
+Fonte: https://docs.github.com/en/codespaces/troubleshooting/exporting-changes-to-a-branch
+
+Alternativa sem custo: renovacao mensal prevista01/12, reconferir franquia e
+retencao antes de iniciar. Alternativa antecipada exige decisao de custo:
+janela no MESMO2core, tarifa oficialUSD0,18/h (30minUSD0,09 computacao estimada,
+fora impostos/cambio e eventual armazenamentoUSD0,07/GB-mes). Nao e teto nem
+autorizacao de cobranca; revalidar painel/forma de pagamento/orcamento antes
+de qualquer mudanca. Nenhum pagamento, novo recurso ou pedido de segredo.
+Fonte: https://docs.github.com/en/billing/concepts/product-billing/github-codespaces
+
+Quando canal liberar: ler recibos/bootstrap e processos antes de iniciar,
+conferir fisicoPG, recuperar dump atual+schema+recibos+fingerprints em canal
+privado, SHA256/TOC e cobertura posterior217; registrar lacunas, sem replay cego.
+So entao restore em PG separado na VPS, conferir conteudo/IDs/vinculos/auditoria
+e naoBYPASS/roles antes de configurar acesso; etapas no OPERACAO existente.
+
 ## Retomada da previa apos janela expirada (2026-11-12)
 
 17h43BRT: encaminhamento anterior WINDOW_EXPIRED17h29, sem listener local;

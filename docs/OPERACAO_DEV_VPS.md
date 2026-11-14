@@ -1,5 +1,61 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## HML persistente na VPS - pacote condicionado aprovado (2026-11-14)
+
+Autorizacao do proprietario: HML leve na mesma srv1982741, com API/web proprias,
+PostgreSQL separado, banco/credenciais/volume/rede exclusivos; aplicacao sem
+superusuario/BYPASSRLS, banco sem porta publica, HTTPS autenticado. Nao substituir
+nem reiniciar operacional. Sem builds, testes pesados ou extracaoSQLlegada no host.
+Limites iniciais: API512MiB/0,30CPU; PG1GiB/0,40CPU; web128MiB/0,05CPU.
+Preservar20GiB livres. Nenhuma dessas configuracoes foi aplicada nesta retomada.
+
+Preflight somente leitura14/11 10:12-10:15UTC: KVM2/2vCPU/8GB/100GBcontratados;
+filesystemext4 total102888095744/disponivel32706727936bytes,69%usado,inodes6%;
+free7,8GiBtotal/5,9GiBavailable,swap0. HistoricoProvider15/10-14/11:
+717amostras horarias,CPUmedia12,42/P9513,08/max49,84%; RAMmax3,16GB.
+Sar13/11: idlemedio87,41%,iowait0,02%,steal1,84%; SDAawaitmedio0,46ms.
+Media horaria/diaria nao limita picos curtos nem prova carga futura.
+
+13containers ativos/15parados,25imagens10,24GB; API512MiB/0,5CPU e web128MiB/
+0,25CPU existentes; PG/Supabase sem limiteCPU/RAM explicito. PGdata persistente
+em/root/supabase/docker/volumes/db/data,116MiB na leitura. Nao reutilizar esse
+volume para HML. /root/erp-private51GiB,centralizacao48GiB preservados.
+Caddy/Docker ativos,webHTTPS200/APIhealthHTTPS200; listenersAPI/web loopback,
+proxy443 existente. PortasSupabase5432/6543/8000 escutam wildcard: observacao
+local nao comprova exposicao externa/firewall, nem autoriza amplia-la.
+Bancos lidos emBEGIN READ ONLY/ROLLBACK: postgres16MB,_supabase7811kB e tres
+restores historicos13-15MB; nenhum schemahml no postgres dessa leitura.
+Nao e inventario de schemas de todos os bancos ou prova de ausencia global.
+
+Provider: backups semanais12/11 20:20 e05/11 11:38,65,34/65,33GB; horario como
+exibido, sem converter timezone nao informado. Tempo de restauracao1h48 e
+estimativa do painel, nao ensaio nosso. Nao contem automaticamente o Codespace.
+
+Fila executavel do MESMO pacote:
+1. Recuperar estado final HML+recibos privados, provar cobertura dos217locais,
+   1600clientes/1500inativos/4200contatos/extensoes e auditorias por identidade e
+   valor. BLOCKED ate fonte atual externa comprovada; nao usar dump13/10 nem
+   backup anterior217 como estado completo. Nao alterar cobranca sem decisao.
+2. Fixar SHA API/web compativel e imagens construidas foraVPS; medir imagens+
+   dados+WAL+backup/logs, conservando20GiB; parar expansao se ultrapassar.
+3. Restore somente em PG/volume separados, roles proprias naoBYPASS, sem
+   credenciais operacionais na APIHML. Conferir schema/search_path/preflight
+   fisico, Auth real existente/perfilHML e negativas crossGrupo/Empresa.
+4. Antes/depois de restore/ativacao medir saude operacional,CPU/RAM/disco/I/O;
+   interromper SOMENTE novaHML por degradacao, nunca desligar o real.
+5. HTTPS dedicado/reversivel no proxy existente, configuracao validada; qualquer
+   ampliacao de acesso exige confirmacao de escopo no momento aplicavel. Sem
+   tunel/devserver, sem portasPGpublicas; restartpolicy/healthchecks/logretention.
+   Confirmar nomes e efeitos externos bloqueados antes do acesso funcional.
+6. BackupHML automatizado com retencao/copia externa privada,hash e restore
+   ensaiado; nao usar restoreVPSinteira como retorno da HML. Login/Grupo/Empresa,
+   dados/edicao/reabertura e acesso de outro computador sao aceites separados.
+
+Status: PREPARACAO, nenhum recurso HML novo ativo; nao ha URLHTTPS servida.
+Unica decisao potencial de custo: recuperarCodespace antes da renovacao ou
+aguardar franquia; precos/retencao e limites registrados no HANDOFF. Nao ampliar
+plano/armazenamento nem apagar legado, containers parados ou backups por inferencia.
+
 ## CURSOR — HML Grupo UI + Fornecedor HTTP port (2026-11-06 America/Sao_Paulo)
 
 Branch `cursor/hml-grupo-erro-fornecedor-392b`. UI reconcilia visão Grupo com
