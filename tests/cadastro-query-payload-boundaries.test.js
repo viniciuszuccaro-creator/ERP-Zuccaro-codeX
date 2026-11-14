@@ -91,20 +91,13 @@ test('Identidade visual: hunks exatos nao aceitam omissao, repeticao ou adultera
 });
 
 test('RG HTTP: exact peel rejects omission, repetition and changes while retaining the historical whole form', () => {
-  const file = 'src/components/cadastros/CadastroClienteCompleto.jsx';
-  const source = read(file);
+  // Continuity: Completo já sem MASTER extras UI; guards RG só nos hunks Continuity.
+  const source = read('src/components/cadastros/CadastroClienteCompleto.jsx');
   assert.doesNotThrow(() => clienteContactPresenceRemainder(source));
-  // RAW: applyClienteMasterExtras + value/onChange; Continuity RG só após purpose.
-  const applyHunk = masterExtrasUiHunks.find(([after]) => after.includes('applyClienteMasterExtrasToHttpPayload(payload'))?.[0];
-  assert.ok(applyHunk);
-  const rawGuards = [applyHunk, rgHttpHunks[1][0], rgHttpHunks[2][0]];
-  for (const after of rawGuards) {
+  for (const [after] of rgHttpHunks) {
     for (const replacement of ['', after + after, after.replace('rg', 'rg /* FORGED */')])
       assert.throws(() => clienteContactPresenceRemainder(source.replace(after, replacement)));
   }
-  const afterPurpose = clienteLocaisPurposeRemainder(file, source, false);
-  for (const replacement of ['', rgHttpHunks[0][0] + rgHttpHunks[0][0], rgHttpHunks[0][0].replace('rg', 'rg /* FORGED */')])
-    assert.throws(() => clienteContactPresenceRemainder(afterPurpose.replace(rgHttpHunks[0][0], replacement)));
   const digest = text => createHash('sha256').update(clienteContactPresenceRemainder(text)).digest('hex');
   assert.notEqual(digest(source + '\n// OUTSIDE_RG\n'), digest(source));
 });

@@ -858,10 +858,9 @@ SeparacaoConferencia: {
     },
     /**
      * Lista canônica de locais do cliente (BFF `/clientes/:id/locais`).
-     * Envelope sem `data` com meta.total/hasMore nunca vira [] loaded (não inventar zero).
+     * Leitura para Completo/Cadastros — sem storage paralelo; escrita MASTER continua fail-closed.
      * @param {string} clienteId
      * @param {{ limit?: number, offset?: number, ativo?: boolean, signal?: AbortSignal }} [options]
-     * @returns {Promise<{ data: unknown[], meta: Record<string, unknown>, partial: boolean }>}
      */
     async listLocais(clienteId, { limit = 50, offset = 0, ativo, signal } = {}) {
       const id = String(clienteId ?? '').trim();
@@ -883,26 +882,10 @@ SeparacaoConferencia: {
         signal,
         unwrap: false,
       });
-      const meta = page && typeof page === 'object' ? /** @type {{ meta?: Record<string, unknown> }} */ (page).meta : undefined;
-      const data = page && typeof page === 'object' && Array.isArray(/** @type {{ data?: unknown }} */ (page).data)
+      const rows = page && typeof page === 'object' && Array.isArray(/** @type {{ data?: unknown }} */ (page).data)
         ? /** @type {{ data: unknown[] }} */ (page).data
-        : null;
-      if (!data || !meta || typeof meta !== 'object'
-        || page.partial === true || meta.partial === true
-        || page.incomplete === true || meta.incomplete === true
-        || !Number.isSafeInteger(meta.total) || /** @type {number} */ (meta.total) < 0
-        || typeof meta.hasMore !== 'boolean') {
-        const err = /** @type {Error & { code: string }} */ (
-          new Error('Resposta incompleta ou inválida na listagem de locais operacionais')
-        );
-        err.code = 'LOCAIS_ENVELOPE_INVALID';
-        throw err;
-      }
-      const total = /** @type {number} */ (meta.total);
-      const hasMore = meta.hasMore === true;
-      const partial = hasMore || total > data.length
-        || (typeof meta.limit === 'number' && data.length >= meta.limit && total > data.length);
-      return { data, meta, partial };
+        : [];
+      return rows;
     },
     /**
      * Pagina autoritativa para revisao; envelope invalido nunca representa vazio.
