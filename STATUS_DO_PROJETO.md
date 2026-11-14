@@ -86,6 +86,14 @@ PR #596. Tip anterior `0dc773c1d` (contagens/dashboard); este tip alinha data-pe
 - 500 auxiliares bloco2; ativação `cliente_local`; códigos sequenciais BFF; composição servida
 - Integra-novo = referência visual/telas, não registros Base44
 
+### Bugbot PR596 — Dashboard count (mesmo tip)
+- Catch de countEntities: lista vazia/`initialData []` ≠ zero confirmado (`resolveDashboardCountAfterFailure`)
+- Subtitle: carregando ≠ indisponível ≠ sem permissão (`dashboardCountSubtitle`)
+
+### Coordenação Codex (PR595 Continuity)
+- Backend ClienteLocal/revisão CAS na branch Continuity; Cursor mantém interfaces 595/596
+- Fiscal permanece ClienteLocal FISCAL; sem gravar endereco_principal rejeitado pelo MASTER
+
 ### Central360 — Fechar orçamento → local entrega (mesmo tip)
 - Dialog `central360-fechar-conversao`: `SeletorEnderecoEntregaPedido` quando ENTREGA
 - Fail-closed sem `cliente_local_id`; payload envia id canônico (Codex BFF confirma contrato)

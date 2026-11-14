@@ -11,7 +11,9 @@ import {
   computeRealtimeKpisFromStores,
   isCappedListUnreliable,
   resolveDashboardCount,
+  resolveDashboardCountAfterFailure,
   formatDashboardCountDisplay,
+  dashboardCountSubtitle,
   resolveRealtimeDashboardScope,
   resolveMetaOperacional,
   DASHBOARD_LIST_SOFT_LIMIT,
@@ -77,6 +79,15 @@ test('lista no soft limit nao e confiavel e count tem prioridade', () => {
   assert.equal(resolveDashboardCount({ allowListFallback: false }).total, null);
   assert.equal(formatDashboardCountDisplay(resolveDashboardCount({ list: full })), '—');
   assert.equal(formatDashboardCountDisplay(resolveDashboardCount({ countValue: 0 })), '0');
+  // Falha de count + initialData [] ≠ zero confirmado.
+  assert.equal(resolveDashboardCountAfterFailure([]).total, null);
+  assert.equal(resolveDashboardCountAfterFailure([]).confiavel, false);
+  assert.equal(resolveDashboardCountAfterFailure([{ id: 1 }]).total, 1);
+  assert.equal(dashboardCountSubtitle({ allowed: false }), 'sem permissão neste perfil');
+  assert.equal(dashboardCountSubtitle({ allowed: true, loading: true }), 'carregando contagem…');
+  assert.equal(dashboardCountSubtitle({ allowed: true, resolved: null }), 'carregando contagem…');
+  assert.equal(dashboardCountSubtitle({ allowed: true, resolved: { fonte: 'count', confiavel: true } }), 'count · escopo empresa/grupo');
+  assert.equal(dashboardCountSubtitle({ allowed: true, resolved: { fonte: 'indisponivel', confiavel: false } }), 'contagem indisponível ≠ zero');
 });
 
 test('kpis derivados e vendas mensais usam pedidos reais', () => {

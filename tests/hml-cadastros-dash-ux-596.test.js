@@ -39,6 +39,8 @@ test('Dashboard: contagens usam formatDashboardCountDisplay (— ≠ 0 falso)', 
   assert.match(dash, /formatDashboardCountDisplay/);
   assert.match(dash, /totalProdutosDisplay/);
   assert.match(dash, /não fabricar zero/);
+  assert.match(dash, /resolveDashboardCountAfterFailure/);
+  assert.match(dash, /dashboardCountSubtitle/);
 });
 
 test('LogisticaEntregaTab: seletor recebe groupId/empresaId', () => {

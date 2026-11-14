@@ -115,6 +115,34 @@ export const formatDashboardCountDisplay = (resolved) => {
   return Number(resolved.total).toLocaleString('pt-BR');
 };
 
+/**
+ * Subtitle do KPI de contagem: loading ≠ indisponível ≠ zero confirmado.
+ * @param {{ resolved?: { fonte?: string, confiavel?: boolean } | null, loading?: boolean, allowed?: boolean }} [input]
+ */
+export const dashboardCountSubtitle = ({
+  resolved = null,
+  loading = false,
+  allowed = true,
+} = {}) => {
+  if (!allowed) return 'sem permissão neste perfil';
+  if (loading || resolved == null) return 'carregando contagem…';
+  if (resolved.fonte === 'count') return 'count · escopo empresa/grupo';
+  if (resolved.confiavel) return 'lista · escopo empresa/grupo';
+  if (resolved.fonte === 'lista_capada') return 'lista capada · contagem indisponível ≠ zero';
+  return 'contagem indisponível ≠ zero';
+};
+
+/**
+ * Após falha de countEntities: lista vazia (ex.: initialData []) não é zero confirmado.
+ * Só usa fallback de lista quando há itens reais e não capados.
+ */
+export const resolveDashboardCountAfterFailure = (list) => {
+  if (Array.isArray(list) && list.length > 0) {
+    return resolveDashboardCount({ list, allowListFallback: true });
+  }
+  return resolveDashboardCount({ allowListFallback: false });
+};
+
 export const filtrarPorPeriodoDashboard = (data, periodo = 'mes') => {
   if (!data) return false;
   const hoje = new Date();
