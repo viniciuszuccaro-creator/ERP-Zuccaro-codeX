@@ -1,3 +1,8 @@
+## Cursor — PR596 P2 Corporativo Ativos + count null (Casa #6883631870) (2026-11-14 America/Sao_Paulo)
+
+Filtro status Ativo nos cards; policy rejeita null/false/'' antes de Number.
+Fora do pacote 81. tip ≠ HML.
+
 ## Cursor — PR596 conferência pacote Casa 81d1e849 (2026-11-14 America/Sao_Paulo)
 
 #6883180029: SHA runtime/CI OK vs freeze; pins pendentes; ≠ aceite HML.

@@ -22,7 +22,7 @@ const hashes = [
   ['src/components/portal/ChamadosCliente.jsx','6c06bd3e4e5faffc2744d2f30a732e498466321e188e68274fc2577e0c061b88'],
   ['src/components/chatbot/DashboardAtendente.jsx','ea837f257d99bb269547b841e80b395f9714a5ca3d9397070c05ba19be80997e'],
   ['src/components/crm/FunilVendasAvancado.jsx','f06224b74b17273cf6f10edb54d4c8bab18574990e7f968b0b9e674130ffa588'],
-  ['src/pages/DashboardCorporativo.jsx','f328d2f36113053b206df0c767c2d712cd132c5a27fdd58fd4240098e3ac247b'],
+  ['src/pages/DashboardCorporativo.jsx','451f4aaae79793199be78af9460ceea9fe6251cbf3ad35b18611dd59bb91a97e'],
   ['src/components/cadastros/DashboardCanaisOrigem.jsx','5753ef70c87aeb32d6f25e4be14892b88cf1aaf6bfd137fcd6c6dabbfc050dfb'],
   ['src/components/cadastros/HistoricoProduto.jsx','bfdd237c2e172268d275a6727778f72ad229b34f77057860525a87c5aa054c2c'],
   ['src/components/producao/DashboardRefugoIA.jsx','65e14a60239cbf60dee4ed080cf43e3c874d23187663497bb5fd0c70dac7192e'],

@@ -79,6 +79,12 @@ test('lista no soft limit nao e confiavel e count tem prioridade', () => {
   assert.equal(resolveDashboardCount({ allowListFallback: false }).total, null);
   assert.equal(formatDashboardCountDisplay(resolveDashboardCount({ list: full })), '—');
   assert.equal(formatDashboardCountDisplay(resolveDashboardCount({ countValue: 0 })), '0');
+  // null/false/'' não viram 0 via Number() — indisponível ≠ zero confirmado (Casa #6883631870).
+  for (const bad of [null, false, '', undefined, NaN, 1.5, '0', '12']) {
+    assert.equal(resolveDashboardCount({ countValue: bad, allowListFallback: false }).total, null);
+    assert.equal(resolveDashboardCount({ countValue: bad, allowListFallback: false }).confiavel, false);
+    assert.equal(formatDashboardCountDisplay(resolveDashboardCount({ countValue: bad, allowListFallback: false })), '—');
+  }
   // Falha de count + initialData [] ≠ zero confirmado.
   assert.equal(resolveDashboardCountAfterFailure([]).total, null);
   assert.equal(resolveDashboardCountAfterFailure([]).confiavel, false);

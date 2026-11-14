@@ -110,13 +110,20 @@ export default function DashboardCorporativo() {
     data: totalClientesResolved = null,
     isPending: loadingClientesCount,
   } = useQuery({
-    queryKey: ['clientes-count-corp', grupoAtual?.id, Array.isArray(clientes) && clientes.length > 0 ? 'list-ready' : 'list-empty'],
+    // Card "Clientes Ativos": count só status Ativo (≠ todos os estados do grupo).
+    queryKey: ['clientes-count-corp-ativos', grupoAtual?.id, Array.isArray(clientes) && clientes.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
-      const listForFallback = Array.isArray(clientes) ? clientes : [];
+      const listForFallback = Array.isArray(clientes)
+        ? clientes.filter((c) => c?.status === 'Ativo')
+        : [];
       try {
+        const filter = {
+          status: 'Ativo',
+          ...(estaNoGrupo ? { group_id: grupoAtual?.id } : {}),
+        };
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
-          filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
+          filter,
         });
         // count 0 confirmado ≠ fallback por || (0 é falsy)
         return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
@@ -146,13 +153,20 @@ export default function DashboardCorporativo() {
     data: totalProdutosResolved = null,
     isPending: loadingProdutosCount,
   } = useQuery({
-    queryKey: ['produtos-count-corp', grupoAtual?.id, Array.isArray(produtos) && produtos.length > 0 ? 'list-ready' : 'list-empty'],
+    // Card "Produtos Ativos": count só status Ativo (≠ catálogo completo).
+    queryKey: ['produtos-count-corp-ativos', grupoAtual?.id, Array.isArray(produtos) && produtos.length > 0 ? 'list-ready' : 'list-empty'],
     queryFn: async () => {
-      const listForFallback = Array.isArray(produtos) ? produtos : [];
+      const listForFallback = Array.isArray(produtos)
+        ? produtos.filter((p) => p?.status === 'Ativo')
+        : [];
       try {
+        const filter = {
+          status: 'Ativo',
+          ...(estaNoGrupo ? { group_id: grupoAtual?.id } : {}),
+        };
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
-          filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
+          filter,
         });
         return resolveDashboardCount({ countValue: response.data?.count, list: listForFallback });
       } catch {

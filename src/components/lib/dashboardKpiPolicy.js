@@ -90,9 +90,9 @@ export const resolveDashboardCount = ({
   softLimit = DASHBOARD_LIST_SOFT_LIMIT,
   allowListFallback = true,
 } = {}) => {
-  const counted = Number(countValue);
-  if (Number.isSafeInteger(counted) && counted >= 0) {
-    return { total: counted, fonte: 'count', confiavel: true };
+  // Só number seguro ≥0 é autoritativo. Number(null|false|'')===0 — rejeitar antes da coerção.
+  if (typeof countValue === 'number' && Number.isSafeInteger(countValue) && countValue >= 0) {
+    return { total: countValue, fonte: 'count', confiavel: true };
   }
   if (!allowListFallback) {
     return { total: null, fonte: 'indisponivel', confiavel: false };

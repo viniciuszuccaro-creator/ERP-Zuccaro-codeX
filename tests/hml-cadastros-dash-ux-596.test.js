@@ -61,6 +61,15 @@ test('DashboardCorporativo: count fail-closed (— ≠ 0; sem || length)', () =>
   assert.doesNotMatch(corp, /catch \{\s*return (clientes|produtos)\.length;/);
 });
 
+test('DashboardCorporativo: cards Ativos filtram status Ativo no count (Casa #6883631870)', () => {
+  const corp = readFileSync('src/pages/DashboardCorporativo.jsx', 'utf8');
+  assert.match(corp, /clientes-count-corp-ativos/);
+  assert.match(corp, /produtos-count-corp-ativos/);
+  assert.match(corp, /status: 'Ativo'/);
+  assert.match(corp, /clientes\.filter\(\(c\) => c\?\.status === 'Ativo'\)/);
+  assert.match(corp, /produtos\.filter\(\(p\) => p\?\.status === 'Ativo'\)/);
+});
+
 test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {
   const formas = readFileSync('src/components/comercial/FormasPagamentoPedido.jsx', 'utf8');
   assert.match(formas, /useFormasPagamento/);
