@@ -1,3 +1,8 @@
+## Cursor — PR596 códigos UI Representante/CondicaoComercial (2026-11-14 America/Sao_Paulo)
+
+Grade Cadastros: `codigo` nos campos Representante + CondicaoComercial.
+tip ≠ HML; sem Completo/deploy.
+
 ## Cursor — PR596 tip b5b7bee84 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Pagamento-resumo rico + KPIs derivados fail-closed + percurso Casa #6883819072.

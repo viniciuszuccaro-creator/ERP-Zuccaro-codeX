@@ -1,3 +1,8 @@
+## Cursor — PR596 códigos UI grade Representante/CondicaoComercial (2026-11-14 America/Sao_Paulo)
+
+Bloco1 Representante e Bloco3 CondicaoComercial: coluna `codigo` na grade
+(campos do visualizador). tip ≠ HML; sem Completo/deploy.
+
 ## Cursor — PR596 Central360 pagamento-resumo rico (2026-11-14 America/Sao_Paulo)
 
 Faixa `central360-pagamento-resumo`: tabela, operação, itens hidratados
