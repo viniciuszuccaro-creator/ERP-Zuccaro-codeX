@@ -3,7 +3,7 @@
 Bugbot a99d: CondicaoComercial é `idOnly` / fora de MASTER_CODE — coluna `codigo`
 na grade caía no fallback de rótulo (mostrava nome). Revertido; Representante
 mantém `codigo`. Casa fechou residual Produto LOCAL em `4c65d69a4` (fora pacote 81).
-tip ≠ HML.
+HEAD **`802ea50aa` CI SUCCESS** (43640347582). tip ≠ HML.
 
 ## Cursor — PR596 códigos UI grade Representante/CondicaoComercial (2026-11-14 America/Sao_Paulo)
 

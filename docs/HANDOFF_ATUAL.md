@@ -1,3 +1,9 @@
+## Cursor — PR596 tip 802ea50aa CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Bugbot CondicaoComercial (sem coluna codigo) + Casa 4c65 residual Produto LOCAL
+fechado. Representante mantém codigo. Freeze `0ffff5100` / port `81d1e849`.
+tip ≠ HML `d054e2b3`. Sem deploy. Próximo: cards Base44 / Casa preflight pacote.
+
 ## Cursor — PR596 Bugbot CondicaoComercial + Casa 4c65 PASS (2026-11-14 America/Sao_Paulo)
 
 Bugbot: remove `codigo` da grade CondicaoComercial (idOnly). Representante OK.
