@@ -2,7 +2,8 @@
 
 Bugbot 96545: (1) insights usam `parametrosList` (erro não crasha render);
 (2) spinner só com `queriesEnabled` (disabled ≠ pending infinito).
-Casa: delta Central `802ea50aa` sem achado bloqueante (notify tabela). tip ≠ HML.
+Casa: delta Central `802ea50aa` sem achado bloqueante (notify tabela).
+HEAD **`66f31f62c` CI SUCCESS** (43642180825). tip ≠ HML.
 
 ## Cursor — PR596 DashboardCanaisOrigem KPI fail-closed (Base44) (2026-11-14 America/Sao_Paulo)
 

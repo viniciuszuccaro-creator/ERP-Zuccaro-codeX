@@ -1,3 +1,8 @@
+## Cursor — PR596 tip 66f31f62c CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Bugbot CanaisOrigem (insights+spin) + Casa 802 Central PASS. Freeze
+`0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+
 ## Cursor — PR596 Bugbot CanaisOrigem + Casa 802 PASS (2026-11-14 America/Sao_Paulo)
 
 Bugbot: parametrosList nos insights; spin só com query enabled. Casa: notify
