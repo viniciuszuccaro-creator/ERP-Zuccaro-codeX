@@ -202,8 +202,10 @@ export default function SeletorEnderecoEntregaPedido({
         listEpochRef.current = generation;
         setOperacionais(mapped);
         const partial = page.partial === true;
+        const totalRaw = page.meta?.total;
+        const total = Number.isSafeInteger(totalRaw) ? /** @type {number} */ (totalRaw) : null;
         setPartialMeta(partial
-          ? { total: Number.isSafeInteger(page.meta?.total) ? page.meta.total : null, hasMore: page.meta?.hasMore === true }
+          ? { total, hasMore: page.meta?.hasMore === true }
           : null);
         setLoadStatus(partial ? "partial" : "loaded");
       })
@@ -219,7 +221,6 @@ export default function SeletorEnderecoEntregaPedido({
       controller.abort();
       epoch.current += 1;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fromPropFallback usa cliente atual
   }, [
     clienteId, canView, permissionsLoading, groupId, empresaId, contextTick,
     sessionToken, sessionGroupId, sessionEmpresaId, cliente?.locais_entrega,
