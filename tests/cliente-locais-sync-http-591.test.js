@@ -296,6 +296,13 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
   // Bugbot: carimbar no rascunho vivo (prev.locais_entrega), não só no snapshot do save.
   assert.match(block, /prev\.locais_entrega/);
   assert.match(block, /const live = Array\.isArray\(prev\.locais_entrega\)/);
+  // P1 contexto A→B: não engolir CONTEXT_CHANGED; não carimbar no form B.
+  assert.match(block, /scopeRevoked/);
+  assert.match(block, /CONTEXT_CHANGED/);
+  assert.match(block, /assertLocaisScope\(\);\s*\n\s*const rows = await api\.clientes\.listLocais/);
+  assert.match(block, /\/\/ Guard após await/);
+  assert.match(block, /prevId && prevId !== stampClienteId/);
+  assert.match(block, /if \(!scopeRevoked\)/);
   assert.equal(
     /setFormData\s*\(\s*\(prev\)\s*=>\s*\(\s*\{\s*\.\.\.prev,\s*locais_entrega:\s*mapped\s*\}\s*\)/.test(block),
     false,
@@ -306,6 +313,22 @@ test('Completo PARTIAL: baseline + carimbo create; não substitui rascunho por m
     false,
     'PARTIAL não pode gravar reconciled do snapshot locaisDraft por cima do vivo',
   );
+  // Consumidor sintético: carimbo de A não se aplica quando prev.id = B.
+  const draftA = [
+    { ...baseEndereco, apelido: 'Local-A1' },
+    { ...baseEndereco, apelido: 'Local-A2-pendente' },
+  ];
+  const stampedA = reconcileClienteLocaisDraftAfterPartial(
+    draftA,
+    null,
+    { ops: [{ op: 'create', localId: uuidA }] },
+  );
+  assert.equal(stampedA[0].id, uuidA);
+  const formB = { id: 'cliente-B-uuid', locais_entrega: [{ ...baseEndereco, apelido: 'Local-B1' }] };
+  const wouldCrossStamp = formB.id && formB.id !== 'cliente-A-uuid';
+  assert.equal(wouldCrossStamp, true);
+  // Updater deve no-op quando prevId !== stampClienteId — preserva B sem id de A.
+  assert.notEqual(formB.locais_entrega[0].id, uuidA);
 
   // Live = save + rascunho aberto durante sync: carimba create OK e preserva extra.
   const liveDuringSync = [

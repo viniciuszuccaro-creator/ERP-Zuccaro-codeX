@@ -409,36 +409,65 @@ export function clienteLocalOperationalRemainder(file, text) {
           if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
             // IDs confirmados no summary.ops devem ser carimbados mesmo se listLocais falhar
             // (senão retry recria o create já OK). Baseline só quando a leitura confirma.
+            // P1 contexto: CONTEXT_CHANGED / troca A→B NÃO publica carimbo/baseline/owned no form B.
             /** @type {Array<Record<string, unknown>>|null} */
             let mapped = null;
+            let scopeRevoked = false;
             try {
               assertLocaisScope();
               const rows = await api.clientes.listLocais(frozenScope.clienteId, {
                 limit: 50, ativo: true,
               });
+              // Guard após await — antes de refs/setState.
+              assertLocaisScope();
               mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
                 /** @type {Record<string, unknown>} */ (row),
               ));
               setLocaisHttpView(mapped);
               locaisHttpBaselineRef.current = mapped;
-            } catch {
-              // Baseline desconhecida — sem deletes no próximo save; não apaga carimbo abaixo.
-              locaisHttpBaselineRef.current = null;
-              mapped = null;
+            } catch (readErr) {
+              const readCode = /** @type {Error & { code?: string }} */ (readErr)?.code;
+              if (readCode === 'CONTEXT_CHANGED' || !isFormScopeCurrent()) {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              } else {
+                // Baseline desconhecida — sem deletes no próximo save; carimbo só se escopo A intacto.
+                locaisHttpBaselineRef.current = null;
+                mapped = null;
+              }
             }
-            locaisDraftOwnedRef.current = true;
-            // Carimba sobre o rascunho VIVO (prev), não o snapshot do save — Abrir rascunho
-            // durante sync legado lento não pode ser descartado pelo catch PARTIAL.
-            setFormData((prev) => {
-              const live = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : locaisDraft;
-              const reconciled = reconcileClienteLocaisDraftAfterPartial(
-                live,
-                mapped,
-                partialErr.summary,
-              );
-              if (reconciled === live) return prev;
-              return { ...prev, locais_entrega: reconciled };
-            });
+            if (!scopeRevoked) {
+              try { assertLocaisScope(); }
+              catch {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              }
+            }
+            if (!scopeRevoked) {
+              locaisDraftOwnedRef.current = true;
+              const stampClienteId = frozenScope.clienteId;
+              const stampMapped = mapped;
+              const stampSummary = partialErr.summary;
+              const stampSaveDraft = locaisDraft;
+              // Carimba sobre o rascunho VIVO (prev), não o snapshot do save — Abrir rascunho
+              // durante sync legado lento não pode ser descartado pelo catch PARTIAL.
+              setFormData((prev) => {
+                if (!isFormScopeCurrent()) return prev;
+                try { assertLocaisScope(); }
+                catch { return prev; }
+                const prevId = String(prev?.id || '').trim();
+                // Form vivo já é outro cliente (B) — não aplicar IDs confirmados de A.
+                if (prevId && prevId !== stampClienteId) return prev;
+                const live = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : stampSaveDraft;
+                const reconciled = reconcileClienteLocaisDraftAfterPartial(
+                  live,
+                  stampMapped,
+                  stampSummary,
+                );
+                if (reconciled === live) return prev;
+                return { ...prev, locais_entrega: reconciled };
+              });
+            }
           }
           throw syncErr;
         }

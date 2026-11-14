@@ -1,13 +1,25 @@
-## Cursor — continuidade consolidada (endereços → composição HML) (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 P1 contexto: PARTIAL não carimba A→B (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico CI / ≠ HML)
 | Ref | Tip | CI / runtime |
 |-----|-----|----------------|
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
-| **PR596 HEAD** | `061ad033c` (docs; código `c17fbfa29`) | CI **em curso ≠ aprovado** (frontend tip `c17` já SUCCESS) |
-| Tips 596 anteriores | `7cce548c0`/`7d9e58e71`… | FAIL typecheck `ops` — **≠ este tip** |
+| **PR596 HEAD** | **este lote** (após push) | CI **em curso ≠ aprovado** |
+| Tips anteriores | `c17fbfa29`/`8631a02b1`… | Codex P1 contexto / docs — **≠ este tip** |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
+
+Executor: Cursor. Codex P1 (#6881592804): após create OK em A + listLocais tardio,
+troca para B engolia CONTEXT_CHANGED e carimbava ID de A no rascunho B.
+Fix: guard pós-await; CONTEXT_CHANGED → scopeRevoked (sem owned/stamp/baseline);
+updater exige `prev.id === frozenScope.clienteId` (ou form create sem id no mesmo escopo).
+Contraprovas 25 edições / retry sem duplicação / listLocais 503 **permanecem válidas**.
+Aceite composto 596/HML bloqueado até CI deste tip.
+
+## Cursor — continuidade consolidada (endereços → composição HML) (2026-11-14 America/Sao_Paulo)
+
+Tip `c17fbfa29`/`8631a02b1` (histórico): typecheck ops + docs VPS/candidata HML.
+HML `d054e2b3` — tip ≠ HML.
 
 Executor ativo: **Cursor** (UI/Cadastros/Dashboard/Central360 + contratos).
 Codex: backend/legado/revisão/implantação HML no escopo autorizado (único writer VPS).
