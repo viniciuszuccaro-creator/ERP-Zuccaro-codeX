@@ -1,5 +1,23 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Acesso HTTPS da HML na VPS (2026-11-14)
+
+Abrir https://hml-erp.cpaferroeaco.com.br/ com a conta Auth existente.
+Nao e erp-dev, nem porta15173 do Codespace. Nao precisa ligar computador ou
+Codespace para servir. Runtime inicial d054e2b3, CI6969/6970SUCCESS;
+`/.well-known/erp-version.json` identifica API/web sem dados de clientes.
+Pagina/ready200 e clientes401 sem sessao comprovados externamente com TLSvalido.
+Aceite autenticado ainda pendente: nao chamar login visivel de dados homologados.
+
+DNS A somente hml-erp ->2.25.222.180/TTL300. Caddy encaminha somente esse host
+para127.0.0.1:13081; PG/API nao publicam portas. Config anterior preservada
+privadamente em /root/erp-private/hml-recovery-20261114/Caddyfile.before-hml-https.private.
+Antes de reverter, conferir hashes/deltas posteriores no HANDOFF; validar Caddy
+antes de reload. Nunca restaurar zona inteira ou reiniciar operacional por isso.
+Nao executar carga/seed/migration ao abrir/retomar a HML.
+Nao ha SLA24h prometido; backupautomatico/retencao e aceite em outro computador
+sao gates proprios ainda abertos. Backup atual/restore/copiaexterna ja conferidos.
+
 ## Empacotamento e preflight da mesma HML recuperada
 
 `scripts/vps/package-hml-runtime.mjs <diretorio-novo-fora-do-checkout>` compila

@@ -1,3 +1,34 @@
+## HTTPS dedicado HML ativo - login real aguardando (2026-11-14)
+
+Confirmacao pontual recebida. https://hml-erp.cpaferroeaco.com.br/ disponivel
+na VPS existente, sem Codespace/tunel/terminal desktop. Runtime d054e2b3,
+CI6969/6970 SUCCESS; marcador externo API/web do MESMO SHA conferido.
+DNS A hml-erp -> 2.25.222.180/TTL300 criado pelo hPanel; quatro registros antigos
+preservados (www,api-erp-dev,erp-dev,@). Zona observada sem MX/TXT; nao adicionar
+nem alterar email/verificacao. Snapshot DNS anterior183568015. Certificado TLS
+valido (curl ssl_verify_result0); pagina/ready/marcador200,clientes401 sem sessao.
+Chrome chegou a tela de login real; proprietario solicitado a entrar na aba
+existente. NAO afirmar sessao/Grupo/empresas/dados homologados por tela de login.
+
+Caddy: acrescentado SOMENTE bloco desse hostname ->127.0.0.1:13081;
+prefixo anterior preservado e comparado, caddy validatePASS, reload sem restart.
+ERP/API originais continuamHTTPS200 e mesmos IDs/StartedAt. Sem portas novas,
+grants/roles/Authuser, carga, seed ou mudanca de bancooperacional.
+Headers X-ERP-Environmenthml e X-Robots-Tagnoindex/nofollow/noarchive.
+Recibo privado https-application.private.json e backup Caddyfile.before-hml-https.private
+no diretorio de recuperacao existente. Config anteriorSHAd34ec046512d4bd3f4ebcb7d64596a8a5a06ea3b8898dcd8a9fee6fa2bde32c2;
+posterior36f1c4f8d5f3002b484e8690b33fe88f2de19de67b5d149abe489fb8cfe14b82.
+Rollback: comparar config atual ao hash posterior, preservar deltas alheios,
+restaurar somente bloco deste pacote e validar antes de reload; remover somente
+o A hml-erp se necessario, nunca resetar zona. Nao parar ERP/PG operacional.
+
+PROXIMO: conferir sessao Auth real/perfil/CPA/empresas/listagem/detalhes na HML;
+sem salvar cadastros durante primeiro aceite. Depois backupautomatico/retencao
+e acesso em outro computador. Dump atual/copia externa/restore continuam validos;
+nao repetir importacao. HML executa sem janela Codespace, mas sem promessa SLA24h.
+Reserva DNS/proxy liberada no fechamento; antes de escrever conferir processos
+e lease novamente. UI/Central360 nao reservadas por este pacote.
+
 ## API/web HML prontas em loopback - HTTPS pendente (2026-11-14)
 
 Codigo publicado d054e2b33f6297bd39fcdec8f0e928e03d8bff13 na mesma PR594,

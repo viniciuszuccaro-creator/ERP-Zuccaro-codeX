@@ -1,3 +1,16 @@
+## HML HTTPS disponivel na VPS, sem Codespace (2026-11-14)
+
+URL https://hml-erp.cpaferroeaco.com.br/; runtime d054e2b3 CI6969/6970SUCCESS,
+API/web mesmoSHA comprovado no marcador externo. DNSA dedicadoTTL300 criado
+apos confirmacao pontual; demais registros preservados. CaddyvalidatePASS/reload,
+TLSvalido e HTTP200 pagina/ready/marcador. Clientes401 sem sessao, sem exposicao
+do banco ou bypassAuth. ERP realHTTPS200 e mesmos containers/StartedAt.
+Sem carga, DDL,grants, novosusuarios ou custo contratado neste pacote.
+Chrome abriu login real, aguardando proprietario; isso NAO prova clientes/UI.
+Proximosgates: sessao/RBAC/CPA/dados -> backupautomatico/retencao -> aceiteoutroPC.
+Backup/reversao do proxy e recibo privados no HANDOFF; nao resetarDNS ou atingir
+servicosoperacionais. HML persistente sem terminaldesktop, nao promessa24h.
+
 ## API/web HML publicadas e saudaveis em loopback (2026-11-14)
 
 PR594 d054e2b3, CI6969/6970 SUCCESS do mesmoSHA. API/web compiladas foraVPS;
