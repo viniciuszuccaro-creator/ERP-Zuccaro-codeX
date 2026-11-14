@@ -5,15 +5,15 @@
 |-----|-----|----------------|
 | PR594 Continuity | `76dc3832` | SUCCESS histórico |
 | PR595 | `b5862fc53` | SUCCESS histórico |
-| **PR596 HEAD** | **`197bbc090`** | **CI SUCCESS** (run 43624913215) + Bugbot neutral |
+| **Candidata UI freeze** | **`197bbc090`** | **CI SUCCESS** (run 43624913215) |
 | Tip `6b7bcc3dc` | AST harness | **CI SUCCESS** (run 43624812707) |
+| HEAD docs | `6d0ee7dfb` | handoff CI SUCCESS (CI em curso ≠ freeze) |
 | Tip `c644b6785` | surfaceKey | CI FAIL AST; **Casa** mutationFn+listLocais PASS |
-| Tip `d4b64a74a` | gate A→B | **CI SUCCESS** histórico |
 | **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Candidata composição UI: **`197bbc090`**. Handoff Codex: freeze API/web mesmo SHA
-+ aceite A→novo create / PARTIAL / pedido entrega. Lifecycle React montado = Codex
-harness privado (Casa). Cursor: Cadastros/Central360 no tip — sem port/deploy.
+Candidata composição UI: **`197bbc090`**. Handoff Codex: freeze API/web **esse SHA**
++ aceite A→novo create / PARTIAL / pedido entrega. Suites Cadastros/C360/pedido/count:
+45 PASS local pós-CI. Lifecycle montado = Codex privado (Casa). Sem port/deploy.
 URL HML: `https://hml-erp.cpaferroeaco.com.br/` (ainda `d054e2b3`).
 
 ## Cursor — PR596 Bugbot: surfaceKey pré-MASTER no gate PARTIAL (2026-11-14 America/Sao_Paulo)
