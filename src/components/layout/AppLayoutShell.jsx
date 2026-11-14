@@ -61,6 +61,7 @@ const GROUP_LABELS = {
  *   canViewSystem: boolean,
  *   onLogout: () => void,
  *   onPrefetch: (item: NavigationItem) => void,
+ *   permissionsLoading?: boolean,
  * }} props
  */
 export default function AppLayoutShell({
