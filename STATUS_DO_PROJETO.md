@@ -1,3 +1,24 @@
+## Revisao independente do delta Dashboard596 concluida (2026-11-14)
+
+Fonte Cursor aeff65f244fe2245300afb13e8629fcb797fedef, CI43634746414SUCCESS.
+Sem editar branch Cursor ou incorporar Dashboard no pacote81. Contraprova real
+queryFn extraida AST + bridge HTTP count canonico + policy reais; transporte e
+fixtures sinteticos, NAO React montado/navegador/API/PG. Cliente e Produto:
+count0 ->0; falha403/lista vazia -> indisponivel; sem fallback local no bridge.
+Dois residuos publicados diretamente em596/6883631870 para o responsavelCursor:
+1Ativo+1Inativo ->2 no card Ativos, pois filtrocount envia somente group_id.
+Resposta da funcao count:null ->0 por Number(null) na policy compartilhada;
+bridgeHTTP piloto rejeita nao-numero, portanto esta segunda prova nao implica
+que o servidor piloto retorna null; cobre contrato remoto/invalido do consumidor.
+Solicitada semantica/filtro de ativos correto e rejeicao de tipos ausentes antes
+de coercao, mantendo zero realmente confirmado. Harness/recibo privados locais.
+
+Proxima acao independente: metadata de journal/schema da HML pelo principal
+administrativo JA existente no helper backup, exclusivamente READ ONLY/ROLLBACK,
+lease e pins verificados; nao executar backup, grants ou consultas de negocio.
+O42501 do principalAPI nao autoriza ampliar grants nem prova ausencia de tabelas.
+Depois: transporteprivado/ack e janela/revisao/backups continuam gates; se nao
+houver caminho existente comprovado, pausar recorrencia com intervencao exata.
 ## Preflight HML por canal autenticado: identidade validada, journal bloqueado (2026-11-14)
 
 CASA/CPA, base2321cc26 local/remoto iguais e checkout limpo; reserva594/6883368540,
