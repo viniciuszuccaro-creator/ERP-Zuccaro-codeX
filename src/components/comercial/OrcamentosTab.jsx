@@ -845,13 +845,12 @@ const convertToPedido = async () => {
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
     onCentralSelect(row, { clienteId: link?.cliente_id || row?.cliente_id || null });
   };
-  /** Clique simples: seleciona já e hidrata itens via GET (lista costuma vir sem linhas). Sem mutation gate. */
+  /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
   const selectCentralRow = async (row) => {
     if (!row?.id) return;
     setSelected(row);
     notifyCentralSelect(row);
     if (proposalMode) return;
-    if (Array.isArray(row.itens) && row.itens.length > 0) return;
     const request = ++detailRequest.current;
     const opened = { ...renderedScope.current, token: activeScope()?.token };
     try {

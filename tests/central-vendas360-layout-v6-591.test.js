@@ -92,6 +92,7 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /central360-pagamento-resumo/);
   assert.match(src, /bloqueia Fechar/);
   assert.match(src, /total não hidratado \(≠ zero\)/);
+  assert.match(src, /condicao_pagamento_codigo/);
   assert.match(src, /hasSelection=\{Boolean\(selected\?\.id\)\}/);
   assert.match(src, /CentralCliente360Panel/);
   assert.match(src, /OrcamentosTab/);
@@ -132,6 +133,8 @@ test('PedidoCanonicoPanel: tabela 12 colunas no centralLayout (mesmas chaves)', 
   assert.match(ped, /selectCentralRow/);
   assert.match(ped, /hydratePedidoRow/);
   assert.match(ped, /openEditHydrated/);
+  assert.match(ped, /Lista pode trazer itens stub/);
+  assert.match(ped, /Edição sempre após GET/);
   assert.match(ped, /central360-selecionar-pedido/);
 });
 

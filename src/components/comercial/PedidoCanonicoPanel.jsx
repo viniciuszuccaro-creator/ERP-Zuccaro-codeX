@@ -314,9 +314,9 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   };
   const selectCentralRow=async(row)=>{
     if(!row?.id)return;
+    // Lista pode trazer itens stub sem total/parcelas — sempre GET canônico na Central.
     setSelected(row);
     notifyCentralSelect(row);
-    if(Array.isArray(row.itens)&&row.itens.length>0)return;
     const detail=await hydratePedidoRow(row);
     if(!detail)return;
     setSelected(detail);
@@ -324,7 +324,7 @@ export default function PedidoCanonicoPanel({ groupId, empresaId, actorId, actor
   };
   const openEditHydrated=async(row)=>{
     if(!canEdit(row))return;
-    if(Array.isArray(row.itens)&&row.itens.length>0){openEdit(row);return;}
+    // Edição sempre após GET: evita form incompleto quando a lista já trouxe itens parciais.
     const detail=await hydratePedidoRow(row);
     if(detail)openEdit(detail);
   };

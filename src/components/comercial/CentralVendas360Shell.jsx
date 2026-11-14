@@ -269,7 +269,14 @@ export default function CentralVendas360Shell({
           <span>
             Condição:{' '}
             <strong className={selected.condicao_pagamento_id ? 'text-sky-900' : 'text-amber-800'}>
-              {selected.condicao_pagamento_id ? 'definida (id canônico)' : 'pendente — bloqueia Fechar'}
+              {selected.condicao_pagamento_id
+                ? (
+                  selected.condicao_pagamento_codigo
+                  || selected.condicao_pagamento_nome
+                  || selected.condicao_pagamento_label
+                  || 'definida (id canônico)'
+                )
+                : 'pendente — bloqueia Fechar'}
             </strong>
           </span>
           <span>

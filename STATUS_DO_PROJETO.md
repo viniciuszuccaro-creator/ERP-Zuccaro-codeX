@@ -1,3 +1,18 @@
+## Cursor — PR596 hydrate always + typecheck layout (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Tip `f990b8dc1`: `permissionsLoading` tipado no AppLayoutShell (tsc).
+- Cherry-pick Seletor `partialMeta.total` (PR595 `c3a3a1143`).
+- Central360: select/edit sempre GET canônico (lista stub ≠ detalhe); orçamento idem.
+- Pagamento-resumo: exibe código/nome da condição quando o GET trouxer; senão id.
+Sem HML; FormasPagamentoPedido mock não wired; códigos BFF/Codex próximos.
+
+## Cursor — PR595 typecheck Seletor partialMeta (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Tip `c3a3a1143`: cast `meta.total` number|null; remove eslint-disable órfão.
+CI anterior `f4debdbb3` falhou só no typecheck Seletor.
+
 ## Cursor — PR596 pagamento-resumo + hidratação edição (2026-11-14)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
