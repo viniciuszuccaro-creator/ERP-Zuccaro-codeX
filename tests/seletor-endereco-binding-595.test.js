@@ -16,14 +16,15 @@ const httpSrc = readFileSync('src/api/httpApiClient.js', 'utf8');
 const logistica = readFileSync('src/components/comercial/LogisticaEntregaTab.jsx', 'utf8');
 const panel = readFileSync('src/components/comercial/PedidoCanonicoPanel.jsx', 'utf8');
 
-test('listLocais: envelope sem data / parcial não vira [] loaded', () => {
-  assert.match(httpSrc, /LOCAIS_ENVELOPE_INVALID/);
-  assert.match(httpSrc, /partial: boolean/);
-  assert.match(httpSrc, /hasMore \|\| total > data\.length/);
-  assert.doesNotMatch(
-    httpSrc.slice(httpSrc.indexOf('async listLocais'), httpSrc.indexOf('async listLocaisReviewPage')),
-    /return rows;\n\s*\},/,
-  );
+test('listLocais legado array; Seletor usa snapshotLocais (Codex Continuity)', () => {
+  const listSlice = httpSrc.slice(httpSrc.indexOf('async listLocais'), httpSrc.indexOf('async listLocaisReviewPage'));
+  assert.match(listSlice, /return rows;/);
+  assert.doesNotMatch(listSlice, /LOCAIS_ENVELOPE_INVALID/);
+  // snapshotLocais vem do batch HTTP (spread em clientes), não do método legado listLocais.
+  const batchSrc = readFileSync('src/api/clienteLocalBatchHttp.js', 'utf8');
+  assert.match(batchSrc, /async snapshotLocais/);
+  assert.match(httpSrc, /createClienteLocalBatchHttpApi/);
+  assert.match(seletorSrc, /snapshotLocais/);
 });
 
 test('Seletor: incompleto comprovado false; binding sync no onSelect', () => {

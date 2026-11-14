@@ -129,13 +129,17 @@ run().then(result=>reportFetch('/result',{method:'POST',body:JSON.stringify(resu
     });
     builder.onResolve({ filter: /^@\/api\/erpHttpSession$/ }, () => ({ path: 'session', namespace: 'synthetic' }));
     builder.onResolve({ filter: /^@\/components\/lib\/usePermissions$/ }, () => ({ path: 'permission', namespace: 'synthetic' }));
+    builder.onResolve({ filter: /^@\/components\/lib\/useContextoVisual$/ }, () => ({ path: 'contexto', namespace: 'synthetic' }));
     builder.onResolve({ filter: /^@\/api\/httpApiClient$/ }, () => ({ path: path.resolve('src/api/httpApiClient.js') }));
     builder.onResolve({ filter: /^@\/api\/base44Client$/ }, () => ({ path: 'httpmode', namespace: 'synthetic' }));
     builder.onResolve({ filter: /^@\/components\/ui\/select$/ }, () => ({ path: 'select', namespace: 'synthetic' }));
     builder.onResolve({ filter: /^\.\/(BuscaCEP|CriarEtapaEntregaModal)$/ }, () => ({ path: 'empty', namespace: 'synthetic' }));
     builder.onLoad({ filter: /.*/, namespace: 'synthetic' }, args => ({ contents: args.path === 'session'
       ? `export const HTTP_CONTEXT_CHANGED='erp-http-context-changed';export const readErpHttpSession=()=>window.__session ? {...window.__session} : null;`
-      : args.path === 'httpmode' ? `export const isHttpBackendMode=true;export const base44={auth:{me:async()=>({id:'synthetic-actor'})},entities:{}};`
+      : args.path === 'httpmode'
+        ? `export const isHttpBackendMode=true;export const isApiKeyMode=false;export const isLocalOnlyMode=false;export const localApiUser=null;export const base44={auth:{me:async()=>({id:'synthetic-actor'})},entities:{}};`
+      : args.path === 'contexto'
+        ? `export const useContextoVisual=()=>({empresaAtual:{id:window.__session?.empresaId||'company',group_id:window.__session?.groupId||'group'},grupoAtual:{id:window.__session?.groupId||'group'}});`
       : args.path === 'empty' ? `export default()=>null;`
       : args.path === 'select' ? `import React from 'react';export function Select(p){window.selectHandler=p.onValueChange;return React.createElement('div',null,p.children);}const Part=p=>React.createElement('div',null,p.children);export {Part as SelectContent,Part as SelectItem,Part as SelectTrigger,Part as SelectValue};`
       : `export default()=>({hasPermission:()=>window.__allowed});`, loader: 'js', resolveDir: process.cwd() }));
