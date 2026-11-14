@@ -1,3 +1,38 @@
+## Auditoria de preservacao e novo residual do rascunho (2026-11-14)
+
+Heartbeat18:35:42.999Z CASA, base193f5e49/remotoigual/limpo/semwriter,
+reserva596/6882342294. HEAD596adca9746, CI7096SUCCESS; codigo igualf804.
+Auditoria helper28hunks/3paths: remainder atual EXATAMENTE ancestral595.
+91mutacoes rejeitadas: guards/permissao/Grupo/filtro amplo/draft/escrita extra/
+hunk duplicado.18goldens com TODOS bytes/hash/referencias preservados. Teste
+publication completo35/35PASS; sync591+queryboundaries40/40PASS,0skip, fontes
+adca por loader privado sem alterar checkout/baseline. Review596/6882373631.
+
+Liberacao Cursor5paths localizada no HANDOFF/STATUSadca. Patch proprio aplicado
+sob reserva:75focaisPASS/auditPASS/lintPASS(2warningsanteriores). Typecheck da
+COMPOSICAO falhouTS2322: Review595 nao possui onOpenDraft/onReviewMeta usados
+pelo Completo596. Nao e defeito de tipo do HEAD596: dependencia ClienteLocaisRevisao
+ficou fora da lista5paths. Nao relaxar tipos nem remover props por conveniencia.
+
+Ao montar Completo+Review REAIS juntos, outro residual reproduziu: callback
+openDraft capturado deA, apos render/efeitosdeB comprometidos, adiciona localA
+em form.idB (0->1).26fontes src originaisf804; API/contexto/sessao sinteticos.
+Instrumentacao chama callbackoriginal; NAO e prova de clique natural/HTTP/PG.
+Review.openDraft sem binding/sessao/epoch; consumidor nao recebe identidade de
+origem. Resultado privado review-draft-consumer.result.private.json; achado
+596/6882444389. PARTIAL40montados anteriores segueencerrado no seu alcance.
+
+SO o patch proprio foi desfeito com git apply --reverse --check e --reverse;
+nenhum reset/force ou alteracao alheia. Runtime Codex voltaestavel595+594;
+sexto path nao foi aplicado. Build nao foi tentado depois do typecheckvermelho.
+Artefatos/testes/contraprovas privados em diretorio Casa ja registrado.
+
+Proximo item executavel: preparar correcao MINIMA privada do novo binding de
+callback, reutilizando guardas existentes no produtor/consumidor, testar positivo
+atual e negativo A->B no harness real; publicar proposta ao Cursor, sem editar
+branchdele ou aplicar port ainda. Se Cursor ja corrigiu, revisar apenas delta.
+HML/cargas/privilegios inalterados; gates canal/backup/ack/janela mantidos.
+
 ## React montado do Completo aprovado no alcance focal (2026-11-14)
 
 Heartbeat nativo18:18:42.617Z, CASA/CPA, basefbf90a18/remotoigual/checkoutlimpo,
