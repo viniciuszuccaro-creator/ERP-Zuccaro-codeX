@@ -1,3 +1,41 @@
+## Preflight HML por canal autenticado: identidade validada, journal bloqueado (2026-11-14)
+
+CASA/CPA, base2321cc26 local/remoto iguais e checkout limpo; reserva594/6883368540,
+checkpoint documental594/6883600236. Operacao pendente anterior estava truncada
+na entrada do WebConsole: SyntaxError antes de executar Python, sem lease/recibo.
+Linha encerrada e ausencia confirmada; substituida por comandos menores, sem
+repetir deploy ou alterar configuracao. Canal administrativo existente comprovado.
+
+Bootstrap canonico atual executado DENTRO da API HML, usando config privada
+owner1000 e clienteDB canonico. Transacao REPEATABLE READ READ ONLY, ROLLBACK
+explicito: database/schema/OID/cluster/role/login sem super/BYPASS/membership
+perigosa e perfil ativo/Auth/Grupo vinculados PASS. Isso NAO comprova sessaoJWT
+ou permissao para ler clientes. Runtime realmente lido segue d054e2b3, nao81.
+Zero consultas a clientes, zero escrita de negocio, nenhum backup/DDL/grant/deploy.
+
+Journal: listMigrationFiles no runtime antigo falha ENOENT /app/api/migrations.
+Com a lista EXATA das34migrations publicadas (043-045 presentes;046-049 ausentes
+na fonte), inspectMigrationStatus retorna MIGRATION_STATUS_UNAVAILABLE. Prova
+SELECT limitada a1linha pelo MESMO principal retorna SQLSTATE42501: privilegio
+insuficiente. Nao significa journal vazio ou migrations pendentes; nao ampliar
+permissoes nem usar applyMigrations para diagnosticar. Schema integral continua
+NAO comprovado. Nenhuma expectativa ou baseline foi relaxada.
+
+Containers/isolamento/mounts/limites conferidos no preflight: API512MiB/.30CPU,
+web128MiB/.05CPU/loopback13081, PG1GiB/.40CPU/rede none/sem portas; mounts sob
+raizHML existente. Espaco observado29332439040bytes. Leases proprias O_EXCL0600
+com bloqueio nao concorrente do backup liberadas em finally; ausencia remota
+verificada. A trava persistente .writer.lock do backup foi preservada.
+
+Proximo item concreto independente: G, revisar delta Dashboard/contagens do
+Cursor apos freeze0ffff510, porSHA e transporte sintetico, sem editar sua branch.
+Depois: obter prova metadata do journal/schema por principal administrativo
+existente autorizado e protocolo readonly, sem grants; se inexistente, decisao
+minima e esse acesso de metadata, nao uma carga. Transporte privado/ack externo,
+backup fresco+restoreisolado/reversao e janela exclusiva permanecem gates.
+Pacote81d1e849/CI7114 e archive privado ja conferidos, nao reconstruir por docs.
+Cursor596 atualaeff65f2 alterou somente docs deste ultimo delta;594/595 intactas.
+Recibo privado local native-hml-preflight-20261114.receipt.private.json, foraGit.
 ## Novo pacote API/web81d1e849 pronto e conferido (2026-11-14)
 
 Heartbeat nativo19:32:14.034Z, CASA/CPA, HEAD81d1e849/remotoigual/branchcorreta/
