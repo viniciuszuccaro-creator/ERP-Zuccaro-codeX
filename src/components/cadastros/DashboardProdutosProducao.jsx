@@ -11,6 +11,12 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import {
+  DASHBOARD_LIST_SOFT_LIMIT,
+  formatCanaisOrigemKpiDisplay,
+  isCappedListUnreliable,
+  isDashboardCadastroAtivo,
+} from "@/components/lib/dashboardKpiPolicy";
 import { PRODUTO_TIPOS_CANONICOS } from "./produto/produtoTipoPolicy";
 
 /**
@@ -32,27 +38,50 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
   const podeEditarProduto = canEdit('Cadastros', 'Produto') || canEdit('Estoque', 'Produto') || canEdit('Producao', 'Produto') || canEdit('Cadastros', null) || canEdit('Estoque', null);
   const consultasHabilitadas = contextoValido && podeVisualizarProduto;
 
-  const { data: produtos = [] } = useQuery({
+  // Sem default []: query disabled/erro ≠ zero confirmado nos KPIs.
+  const {
+    data: produtos,
+    isPending: loadingProdutos,
+    isError: errorProdutos,
+  } = useQuery({
     queryKey: ['produtos-producao', groupId, empresaId, contexto],
-    queryFn: () => filterInContext('Produto', { tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA }, 'descricao', 9999),
+    queryFn: () => filterInContext('Produto', { tipo_item: PRODUTO_TIPOS_CANONICOS.MATERIA_PRIMA }, 'descricao', DASHBOARD_LIST_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  const { data: ordensProducao = [] } = useQuery({
+  const {
+    data: ordensProducao,
+    isPending: loadingOrdens,
+    isError: errorOrdens,
+  } = useQuery({
     queryKey: ['ordens-producao-dashboard-produtos', groupId, empresaId, contexto],
     queryFn: () => filterInContext('OrdemProducao', {}, '-created_date', 100),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  // Análises
-  const produtosAtivos = produtos.filter(p => p.status === 'Ativo');
-  const bitolas = produtos.filter(p => p.eh_bitola);
-  const estoqueTotal = produtos.reduce((sum, p) => sum + (p.estoque_atual || 0), 0);
-  const produtosCriticos = produtos.filter(p => 
-    (p.estoque_atual || 0) <= (p.estoque_minimo || 0) && p.status === 'Ativo'
+  const produtosList = Array.isArray(produtos) ? produtos : [];
+  const ordensList = Array.isArray(ordensProducao) ? ordensProducao : [];
+  const produtosCapped = isCappedListUnreliable(produtosList, DASHBOARD_LIST_SOFT_LIMIT);
+  const metricsBlocked = !consultasHabilitadas || errorProdutos || errorOrdens || produtosCapped;
+  const isLoading = consultasHabilitadas && (loadingProdutos || loadingOrdens);
+
+  // Análises (amostra local; KPI autoritativo bloqueado se cap/erro/contexto)
+  const produtosAtivos = produtosList.filter(isDashboardCadastroAtivo);
+  const bitolas = produtosList.filter(p => p.eh_bitola);
+  const estoqueTotal = produtosList.reduce((sum, p) => sum + (p.estoque_atual || 0), 0);
+  const produtosCriticos = produtosList.filter(p =>
+    (p.estoque_atual || 0) <= (p.estoque_minimo || 0) && isDashboardCadastroAtivo(p)
   );
+  const produtosAtivosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: produtosAtivos.length });
+  const bitolasDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: bitolas.length });
+  const estoqueDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: metricsBlocked,
+    value: estoqueTotal,
+    format: (n) => (n / 1000).toFixed(1),
+  });
+  const criticosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: produtosCriticos.length });
 
   // Análise por tipo de aço
   const porTipoAco = {};
@@ -68,7 +97,7 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
 
   // Top 5 produtos mais usados
   const usoProdutos = {};
-  ordensProducao.forEach(op => {
+  ordensList.forEach(op => {
     op.itens?.forEach(item => {
       if (item.produto_id) {
         usoProdutos[item.produto_id] = (usoProdutos[item.produto_id] || 0) + (item.quantidade || 0);
@@ -80,7 +109,7 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5)
     .map(([produtoId, quantidade]) => {
-      const produto = produtos.find(p => p.id === produtoId);
+      const produto = produtosList.find(p => p.id === produtoId);
       return {
         nome: produto?.descricao || 'Desconhecido',
         quantidade: quantidade,
@@ -89,6 +118,14 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
     });
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center" data-block="produtos-producao-loading">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full space-y-6" data-permission="Cadastros.Produto.visualizar" data-context-required="true">
@@ -118,16 +155,32 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
       </div>
 
       {(!contextoValido || !podeVisualizarProduto) && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" data-block="produtos-producao-contexto-bloqueado">
           <AlertCircle className="w-5 h-5" />
           <AlertDescription>
             Dashboard de produtos em produção exige contexto de grupo/empresa e permissão para visualizar produtos.
           </AlertDescription>
         </Alert>
       )}
+      {(errorProdutos || errorOrdens) && (
+        <Alert className="border-amber-300 bg-amber-50" data-block="produtos-producao-consulta-indisponivel">
+          <AlertCircle className="w-5 h-5 text-amber-700" />
+          <AlertDescription>
+            Contagem/amostra indisponível (erro de consulta — não é zero confirmado).
+          </AlertDescription>
+        </Alert>
+      )}
+      {produtosCapped && (
+        <Alert className="border-amber-300 bg-amber-50" data-block="produtos-producao-amostra-capada">
+          <AlertCircle className="w-5 h-5 text-amber-700" />
+          <AlertDescription>
+            Amostra de produtos no soft limit ({DASHBOARD_LIST_SOFT_LIMIT}) — totais do card indisponíveis (≠ zero).
+          </AlertDescription>
+        </Alert>
+      )}
 
-      {/* Alertas Criticos */}
-      {produtosCriticos.length > 0 && (
+      {/* Alertas Criticos — só quando amostra confiável */}
+      {!metricsBlocked && produtosCriticos.length > 0 && (
         <Alert className="border-red-300 bg-red-50">
           <AlertCircle className="w-5 h-5 text-red-600" />
           <AlertDescription>
@@ -147,14 +200,14 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
       )}
 
       {/* KPIs Principais */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-4" data-block="produtos-producao-kpis">
         <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-3">
               <Package className="w-8 h-8 text-blue-600" />
               <Badge className="bg-blue-600 text-white">TOTAL</Badge>
             </div>
-            <p className="text-3xl font-bold text-blue-700">{produtosAtivos.length}</p>
+            <p className="text-3xl font-bold text-blue-700" data-kpi="produtos-ativos">{produtosAtivosDisplay}</p>
             <p className="text-sm text-slate-600 mt-1">Produtos Ativos</p>
           </CardContent>
         </Card>
@@ -165,7 +218,7 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
               <Zap className="w-8 h-8 text-sky-600" />
               <Badge className="bg-sky-600 text-white">BITOLAS</Badge>
             </div>
-            <p className="text-3xl font-bold text-sky-700">{bitolas.length}</p>
+            <p className="text-3xl font-bold text-sky-700" data-kpi="bitolas">{bitolasDisplay}</p>
             <p className="text-sm text-slate-600 mt-1">Bitolas de Aço</p>
           </CardContent>
         </Card>
@@ -176,8 +229,8 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
               <TrendingUp className="w-8 h-8 text-green-600" />
               <Badge className="bg-green-600 text-white">ESTOQUE</Badge>
             </div>
-            <p className="text-3xl font-bold text-green-700">
-              {(estoqueTotal / 1000).toFixed(1)}
+            <p className="text-3xl font-bold text-green-700" data-kpi="estoque-ton">
+              {estoqueDisplay}
             </p>
             <p className="text-sm text-slate-600 mt-1">Toneladas (TON)</p>
           </CardContent>
@@ -189,7 +242,7 @@ export default function DashboardProdutosProducao({ onAbrirConversao }) {
               <AlertCircle className="w-8 h-8 text-orange-600" />
               <Badge className="bg-orange-600 text-white">ALERTA</Badge>
             </div>
-            <p className="text-3xl font-bold text-orange-700">{produtosCriticos.length}</p>
+            <p className="text-3xl font-bold text-orange-700" data-kpi="estoque-critico">{criticosDisplay}</p>
             <p className="text-sm text-slate-600 mt-1">Estoque Crítico</p>
           </CardContent>
         </Card>

@@ -1,3 +1,7 @@
+## Cursor — PR596 DashboardProdutosProducao KPI fail-closed (2026-11-14 America/Sao_Paulo)
+
+Card Base44 Produtos Produção: — ≠ 0; ativos canônicos. tip ≠ HML; sem deploy.
+
 ## Cursor — PR596 tip 66f31f62c CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Bugbot CanaisOrigem (insights+spin) + Casa 802 Central PASS. Freeze

@@ -98,6 +98,18 @@ test('Dashboard Clientes KPI: uma população (count), sem misturar ativos da am
   );
 });
 
+test('DashboardProdutosProducao: KPI fail-closed (— ≠ 0; ativos canônicos)', () => {
+  const src = readFileSync('src/components/cadastros/DashboardProdutosProducao.jsx', 'utf8');
+  assert.match(src, /formatCanaisOrigemKpiDisplay/);
+  assert.match(src, /isDashboardCadastroAtivo/);
+  assert.match(src, /isCappedListUnreliable/);
+  assert.match(src, /metricsBlocked/);
+  assert.match(src, /consultasHabilitadas && \(loadingProdutos \|\| loadingOrdens\)/);
+  assert.match(src, /produtos-producao-amostra-capada/);
+  assert.doesNotMatch(src, /data: produtos = \[\]/);
+  assert.doesNotMatch(src, /p\.status === 'Ativo'/);
+});
+
 test('DashboardCanaisOrigem: KPI fail-closed (— ≠ 0; amostra capada)', async () => {
   const {
     formatCanaisOrigemKpiDisplay,

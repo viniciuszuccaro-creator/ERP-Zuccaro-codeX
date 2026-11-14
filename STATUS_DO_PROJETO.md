@@ -1,3 +1,8 @@
+## Cursor — PR596 DashboardProdutosProducao KPI fail-closed (2026-11-14 America/Sao_Paulo)
+
+Card Base44 Produtos em Produção: sem `= []`; ativos via `isDashboardCadastroAtivo`;
+contexto/RBAC/erro/cap → "—"; spin só com consulta enabled. tip ≠ HML.
+
 ## Cursor — PR596 Bugbot CanaisOrigem spin+insights (2026-11-14 America/Sao_Paulo)
 
 Bugbot 96545: (1) insights usam `parametrosList` (erro não crasha render);
