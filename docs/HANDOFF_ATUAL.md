@@ -1,8 +1,12 @@
+## Cursor — PR596 PARTIAL carimba create (Bugbot High) (2026-11-14 America/Sao_Paulo)
+
+Tip `4794b3285`: `reconcileClienteLocaisDraftAfterPartial` carimba id/codigo dos creates
+ok; pendências sem id ficam; baseline listLocais; retry sem duplicar/soft-delete.
+HML `d054e2b3` ≠ tip. CI tip **em curso ≠ aprovado**. PROXIMO: CI; composição Codex.
+
 ## Cursor — PR596 P1 PARTIAL preserva rascunho (2026-11-14 America/Sao_Paulo)
 
-Tip `b1eea9d1f`: PARTIAL → baseline via listLocais; rascunho formData preservado (sem
-setFormData mapped); toast progresso/IDs; overflow ≠ atomicidade MASTER+locais.
-HML `d054e2b3` ≠ tip. CI tip **em curso ≠ aprovado**. PROXIMO: CI; composição Codex.
+Tips `b1eea9d1f`/`1135f9433` (histórico): baseline sem mapped puro; toast progresso.
 
 ## Cursor — PR596 jornadas/overflow toast/fiscal (2026-11-14 America/Sao_Paulo)
 
