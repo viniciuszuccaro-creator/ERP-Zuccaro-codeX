@@ -73,6 +73,14 @@ test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   assert.match(pedido, /numero_pedido:selected\.numero/);
 });
 
+test('OrcamentosTab Bugbot: epochAtClick no select + submitting após invalidate situação', () => {
+  const orc = readFileSync('src/components/comercial/OrcamentosTab.jsx', 'utf8');
+  assert.match(orc, /const epochAtClick = selectionEpochLiveRef\.current/);
+  assert.match(orc, /notifyCentralSelect\(detail, epochAtClick\)/);
+  assert.match(orc, /if \(epochAtClick !== selectionEpochLiveRef\.current\) return/);
+  assert.match(orc, /actionGate\.current\.invalidate\(\);\s*\n\s*setSubmitting\(false\)/);
+});
+
 test('LogisticaEntregaTab: seletor recebe groupId/empresaId', () => {
   assert.match(logistica, /groupId=\{resolvedGroupId\}/);
   assert.match(logistica, /empresaId=\{resolvedEmpresaId\}/);

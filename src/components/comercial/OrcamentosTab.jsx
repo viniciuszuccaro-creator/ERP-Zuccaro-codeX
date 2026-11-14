@@ -147,7 +147,9 @@ export default function OrcamentosTab({
   useEffect(() => {
     if (!centralLayout) return undefined;
     detailRequest.current += 1;
+    // invalidate() zera pending sem liberar UI — sem setSubmitting(false) Fechar/Salvar ficam sticky.
     actionGate.current.invalidate();
+    setSubmitting(false);
     setSelected(null);
     if (centralSituacao === 'VENCIDOS') {
       const today = new Date().toISOString().slice(0, 10);
@@ -883,19 +885,26 @@ const convertToPedido = async () => {
   /** Clique simples: seleciona já e sempre GET canônico (lista pode trazer itens stub sem total/parcelas). Sem mutation gate. */
   const selectCentralRow = async (row) => {
     if (!row?.id) return;
+    // Congela epoch no clique — notify pós-await não pode ler selectionEpochLiveRef “vivo” da nova situação.
+    const epochAtClick = selectionEpochLiveRef.current;
     setSelected(row);
-    notifyCentralSelect(row);
+    notifyCentralSelect(row, epochAtClick);
     if (proposalMode) return;
     const request = ++detailRequest.current;
     const opened = { ...renderedScope.current, token: activeScope()?.token };
     try {
       const detail = await api.get(row.id);
       if (request !== detailRequest.current) return;
+      if (epochAtClick !== selectionEpochLiveRef.current) return;
       if (!sameOrcamentoScope(opened, renderedScope.current, activeScope())) return;
       setSelected(detail);
-      notifyCentralSelect(detail);
+      notifyCentralSelect(detail, epochAtClick);
     } catch (error) {
-      if (request === detailRequest.current && sameOrcamentoScope(opened, renderedScope.current, activeScope())) {
+      if (
+        request === detailRequest.current
+        && epochAtClick === selectionEpochLiveRef.current
+        && sameOrcamentoScope(opened, renderedScope.current, activeScope())
+      ) {
         toast.error(errorMessage(error));
       }
     }

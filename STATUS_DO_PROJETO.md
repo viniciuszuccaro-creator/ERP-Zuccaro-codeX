@@ -1,3 +1,11 @@
+## Cursor — PR596 Bugbot orçamento epoch/submitting (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch PR596.
+- `selectCentralRow`: congela `epochAtClick` (não notifica com epoch vivo pós-GET).
+- Troca de situação: `invalidate()` + `setSubmitting(false)` (ações não ficam sticky).
+- Codex PR595: reserva `ClienteLocaisRevisao` + hunk FISCAL Completo — Cursor não edita.
+CI tip `fc6416` SUCCESS histórico; tip `cf6c30e70`+fix em execução. Sem HML.
+
 ## Cursor — PR596 pagamento canônico + dashboard fail-closed + códigos (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
