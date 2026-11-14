@@ -124,7 +124,9 @@ Identidade: Cursor. Tip base PR595 `3e6461929` CI SUCCESS. Branch
 Entregue: estados contagem; dashboard count≠zero; seletor Logistica escopo;
 Bloco1–6 data-permission → seção owner; aliases produtos/financeiro/logistica/
 tecnologia; banner menu enquanto RBAC carrega. Codex: 500 auxiliares, códigos,
-ativação locais, pack API/web. Próximo: Central360 itens/pagamento; códigos UI.
+ativação locais, pack API/web. Fechar orçamento ENTREGA: seletor local +
+`cliente_local_id` no convert. Próximo: itens/pagamento ricos; códigos UI; Codex
+confirma schema converter-pedido.
 
 ## Cursor — endereços operacionais / rascunho revisão (2026-11-14 America/Sao_Paulo)
 

@@ -86,8 +86,14 @@ PR #596. Tip anterior `0dc773c1d` (contagens/dashboard); este tip alinha data-pe
 - 500 auxiliares bloco2; ativação `cliente_local`; códigos sequenciais BFF; composição servida
 - Integra-novo = referência visual/telas, não registros Base44
 
-Próximo Cursor: jornada Central360 itens/pagamento; códigos na UI após contrato; comparação
-cards Base44 incremental no Dashboard canônico. Sem HML/DDL/carga neste lote.
+### Central360 — Fechar orçamento → local entrega (mesmo tip)
+- Dialog `central360-fechar-conversao`: `SeletorEnderecoEntregaPedido` quando ENTREGA
+- Fail-closed sem `cliente_local_id`; payload envia id canônico (Codex BFF confirma contrato)
+- Fechar ≠ Cancelar ≠ Fechar janela preservados
+
+Próximo Cursor: itens/pagamento ricos na edição; códigos UI após contrato; cards Base44
+no Dashboard canônico. Sem HML/DDL/carga neste lote. Coordenar se `converter-pedido`
+já exige `cliente_local_id` no schema (enviar campo; se 422, Codex).
 
 ## Cursor — endereços operacionais + rascunho de revisão (2026-11-14)
 
