@@ -119,11 +119,12 @@ Nao reiniciar Codespace, importar clientes nem reexecutar restore.
 
 ## Cursor — HML UX Cadastros/Dashboard (2026-11-14 America/Sao_Paulo)
 
-Identidade: Cursor. Tip base PR595 `3e6461929` CI SUCCESS. Branch nova
-`cursor/hml-cadastros-dash-c360-ux-392b`. Sem tocar composição servida HML.
-Entregue: estados contagem Cadastros; dashboard count≠zero falso; seletor
-Logistica com escopo. Codex: 500 auxiliares, códigos, ativação locais, pack API/web.
-Próximo: Central360 itens/pagamento; códigos UI pós-contrato.
+Identidade: Cursor. Tip base PR595 `3e6461929` CI SUCCESS. Branch
+`cursor/hml-cadastros-dash-c360-ux-392b` (PR #596). Sem tocar composição HML.
+Entregue: estados contagem; dashboard count≠zero; seletor Logistica escopo;
+Bloco1–6 data-permission → seção owner; aliases produtos/financeiro/logistica/
+tecnologia; banner menu enquanto RBAC carrega. Codex: 500 auxiliares, códigos,
+ativação locais, pack API/web. Próximo: Central360 itens/pagamento; códigos UI.
 
 ## Cursor — endereços operacionais / rascunho revisão (2026-11-14 America/Sao_Paulo)
 

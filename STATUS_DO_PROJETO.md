@@ -61,12 +61,14 @@ Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` a partir tip PR595
 `3e6461929` (CI 6998/6999 SUCCESS). Continuity/composição PR594 `d054e2b3` intocada.
+PR #596. Tip anterior `0dc773c1d` (contagens/dashboard); este tip alinha data-permission.
 
 ### Diagnóstico navegação (não = módulo apagado)
 | Sintoma HML | Classificação |
 |---|---|
 | Menu reduzido | oculto por perfil RBAC (fail-closed) — sem liberar admin no FE |
-| “Acesso negado” em card/visualizador | permissão granular ou data-permission ≠ grant |
+| Menu vazio enquanto carrega | `permissionsLoading` + banner shell (≠ módulo apagado) |
+| “Acesso negado” em Abrir do card | data-permission entidade ≠ seção owner (corrigido Bloco1–6) |
 | Contagem SetorAtividade/GrupoProduto/Marca/UnidadeMedida | BFF parcial/500 → PARTIAL; UI “—” |
 | Card sem rota | fora da composição ou recurso não no tip servido |
 
@@ -76,6 +78,9 @@ Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` a partir tip P
 - Dashboard canônico: count produtos/colaboradores fail-closed (`—` ≠ 0 falso); fonte no subtitle
 - LogisticaEntregaTab: seletor com `groupId`/`empresaId` (PR595 preservado)
 - Dashboard Corporativo permanece página distinta (consolidado grupo) — sem merge destrutivo
+- Bloco1–6: `data-permission` = `Cadastros.{Pessoas|Produtos|Financeiro|Logistica|Organizacional|Tecnologia}.visualizar`
+- `SECTION_ALIASES`: produtos/financeiro/logistica/tecnologia (não inventa grant; só resolve nó owner)
+- Shell: banner `data-menu-permissions-loading` durante carga RBAC
 
 ### Coordenação Codex
 - 500 auxiliares bloco2; ativação `cliente_local`; códigos sequenciais BFF; composição servida

@@ -45,3 +45,28 @@ test('LogisticaEntregaTab: seletor recebe groupId/empresaId', () => {
   assert.match(logistica, /groupId=\{groupId\}/);
   assert.match(logistica, /empresaId=\{empresaId\}/);
 });
+
+test('Cadastros blocos: data-permission usa seção owner (não entidade solta)', () => {
+  const b1 = readFileSync('src/components/cadastros/blocks/Bloco1Pessoas.jsx', 'utf8');
+  const b2 = readFileSync('src/components/cadastros/blocks/Bloco2Produtos.jsx', 'utf8');
+  const b3 = readFileSync('src/components/cadastros/blocks/Bloco3Financeiro.jsx', 'utf8');
+  const b4 = readFileSync('src/components/cadastros/blocks/Bloco4Logistica.jsx', 'utf8');
+  const b5 = readFileSync('src/components/cadastros/blocks/Bloco5Organizacional.jsx', 'utf8');
+  const b6 = readFileSync('src/components/cadastros/blocks/Bloco6Tecnologia.jsx', 'utf8');
+  const perms = readFileSync('src/components/lib/usePermissions.jsx', 'utf8');
+  const shell = readFileSync('src/components/layout/AppLayoutShell.jsx', 'utf8');
+
+  assert.match(b1, /Cadastros\.Pessoas\.visualizar/);
+  assert.match(b2, /section: "Produtos"/);
+  assert.match(b2, /dataPermissionFor\(k\)/);
+  assert.doesNotMatch(b2, /data-permission=\{`Cadastros\.\$\{k\}\.visualizar`\}/);
+  assert.match(b3, /Cadastros\.Financeiro\.visualizar/);
+  assert.match(b4, /Cadastros\.Logistica\.visualizar/);
+  assert.match(b5, /section: "Organizacional"/);
+  assert.match(b6, /Cadastros\.Tecnologia\.visualizar/);
+  assert.match(perms, /setoratividade: 'produtos'/);
+  assert.match(perms, /unidademedida: 'produtos'/);
+  assert.match(perms, /banco: 'financeiro'/);
+  assert.match(perms, /motorista: 'logistica'/);
+  assert.match(shell, /data-menu-permissions-loading/);
+});
