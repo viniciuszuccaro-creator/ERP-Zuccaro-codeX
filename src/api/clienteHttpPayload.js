@@ -568,8 +568,13 @@ export function mapClienteLocalToUiEndereco(local) {
   else if (codes.includes('CORRESPONDENCIA')) tipo_endereco = 'Correspondência';
   else if (codes.includes('OUTRO')) tipo_endereco = 'Outro';
   else if (codes.length > 0) tipo_endereco = 'Outro';
+  const codigoRaw = row.codigo ?? row.codigo_interno ?? null;
+  const codigo = codigoRaw != null && String(codigoRaw).trim() !== ''
+    ? String(codigoRaw)
+    : undefined;
   return {
     id: row.id,
+    ...(codigo !== undefined ? { codigo } : {}),
     apelido: row.nome || '',
     tipo_endereco,
     cep: row.cep || '',
@@ -791,14 +796,311 @@ export function mapUiEnderecoToClienteLocalUpdate(endereco) {
 export const CLIENTE_LOCAIS_SYNC_PARTIAL = 'CLIENTE_LOCAIS_SYNC_PARTIAL';
 
 /**
- * Contrato explícito: o BFF atual transmite 1 local por request (create/update/delete
- * cada um em transação própria). Lote multi-local NÃO é atômico no servidor até
- * existir endpoint batch canônico. Este sync:
+ * Após PARTIAL: carimba `id`/`codigo` dos creates já persistidos no rascunho (ordem das ops),
+ * preservando edições pendentes sem id. Evita retry que recria e soft-deleta o recém-gravado.
+ * @param {unknown} draft
+ * @param {unknown} persistedMapped listLocais → UI (baseline); null/ausente = carimba só id do summary
+ * @param {{ ops?: Array<{ op?: string, localId?: string, nome?: string }> }|null|undefined} summary
+ * @returns {unknown} draft reconciliado (mesmo array se nada a carimbar)
+ */
+export function reconcileClienteLocaisDraftAfterPartial(draft, persistedMapped, summary) {
+  if (!Array.isArray(draft) || draft.length === 0) return draft;
+  const ops = Array.isArray(summary?.ops) ? summary.ops : [];
+  const createdOps = ops.filter((op) => op?.op === 'create' && isClienteLocalCanonicalId(op.localId));
+  if (createdOps.length === 0) return draft;
+  const byId = new Map();
+  if (Array.isArray(persistedMapped)) {
+    for (const row of persistedMapped) {
+      const id = row && typeof row === 'object'
+        ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+        : '';
+      if (isClienteLocalCanonicalId(id)) byId.set(id, row);
+    }
+  }
+  const next = draft.map((row) => (row && typeof row === 'object' ? { ...row } : row));
+  const pendingIdx = [];
+  for (let i = 0; i < next.length; i += 1) {
+    const row = next[i];
+    const id = row && typeof row === 'object'
+      ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+      : '';
+    if (!isClienteLocalCanonicalId(id)) pendingIdx.push(i);
+  }
+  let pi = 0;
+  for (const op of createdOps) {
+    if (pi >= pendingIdx.length) break;
+    const idx = pendingIdx[pi];
+    pi += 1;
+    const prev = /** @type {Record<string, unknown>} */ (next[idx] || {});
+    const persist = byId.get(String(op.localId));
+    if (persist && typeof persist === 'object') {
+      next[idx] = {
+        ...persist,
+        ...prev,
+        id: String(op.localId),
+        ...(persist.codigo !== undefined ? { codigo: persist.codigo } : {}),
+        _fonte: 'cliente_locais',
+        _finalidades: persist._finalidades ?? prev._finalidades,
+        _finalidades_detalhadas: persist._finalidades_detalhadas ?? prev._finalidades_detalhadas,
+        _tipo_endereco_original: persist._tipo_endereco_original ?? prev._tipo_endereco_original,
+      };
+    } else {
+      next[idx] = { ...prev, id: String(op.localId), _fonte: 'cliente_locais' };
+    }
+  }
+  return next;
+}
+
+/**
+ * Gate de publicação pós-PARTIAL: não aplicar baseline/view/owned/carimbo do save A
+ * no formulário B (mesmo tenant) nem em create vazio após troca de superfície.
+ * `stampGateSurfaceKey` deve ser a chave capturada **antes** do MASTER await;
+ * `liveSurfaceKey` sobe a cada troca de identidade (inclui A→novo create).
+ * @param {{
+ *   stampClienteId?: string|null,
+ *   liveFormClienteId?: string|null,
+ *   catalogClientId?: string|null,
+ *   stampGateClienteId?: string|null,
+ *   stampGateAllow?: boolean,
+ *   stampGateSurfaceKey?: number|null,
+ *   liveSurfaceKey?: number|null,
+ *   scopeCurrent?: boolean,
+ * }} args
+ * @returns {boolean}
+ */
+export function canPublishClienteLocaisPartialReconcile(args = {}) {
+  const stamp = String(args.stampClienteId || '').trim();
+  if (!stamp) return false;
+  if (args.scopeCurrent !== true) return false;
+  if (args.stampGateAllow !== true) return false;
+  if (String(args.stampGateClienteId || '').trim() !== stamp) return false;
+  // Superfície mudou durante MASTER/sync (novo create / outro cliente) — não publicar A em B.
+  if (Number(args.stampGateSurfaceKey) !== Number(args.liveSurfaceKey)) return false;
+  const live = String(args.liveFormClienteId || '').trim();
+  if (live) return live === stamp;
+  // Create sem id: catálogo de outro cliente bloqueia; catálogo vazio NÃO implica A —
+  // só a igualdade de surfaceKey (já checada) autoriza o create do próprio save.
+  const cat = args.catalogClientId == null || args.catalogClientId === ''
+    ? ''
+    : String(args.catalogClientId).trim();
+  if (cat && cat !== stamp) return false;
+  return true;
+}
+
+/**
+ * Abrir rascunho a partir da revisão ENTREGA: binding cliente/grupo/empresa/sessão
+ * congelado no produtor deve coincidir com a superfície viva do consumidor.
+ * Callback obsoleto de A após trocar para B → false (não publica local A em B).
+ * @param {{
+ *   reviewClienteId?: string|null,
+ *   liveFormClienteId?: string|null,
+ *   reviewGroupId?: string|null,
+ *   liveGroupId?: string|null,
+ *   reviewEmpresaId?: string|null,
+ *   liveEmpresaId?: string|null,
+ *   reviewSession?: { token?: string, actorId?: string, groupId?: string, empresaId?: string|null }|null,
+ *   liveSession?: { token?: string, actorId?: string, groupId?: string, empresaId?: string|null }|null,
+ *   localClienteId?: string|null,
+ * }} args
+ * @returns {boolean}
+ */
+export function canApplyClienteLocalReviewDraftToForm(args = {}) {
+  const reviewCliente = String(args.reviewClienteId || '').trim();
+  const liveCliente = String(args.liveFormClienteId || '').trim();
+  if (!reviewCliente || !liveCliente || reviewCliente !== liveCliente) return false;
+  if (String(args.reviewGroupId || '').trim() !== String(args.liveGroupId || '').trim()) return false;
+  const reviewEmpresa = args.reviewEmpresaId == null || args.reviewEmpresaId === ''
+    ? null
+    : String(args.reviewEmpresaId);
+  const liveEmpresa = args.liveEmpresaId == null || args.liveEmpresaId === ''
+    ? null
+    : String(args.liveEmpresaId);
+  if (reviewEmpresa !== liveEmpresa) return false;
+  const reviewSession = args.reviewSession;
+  const liveSession = args.liveSession;
+  if (!reviewSession?.token || !liveSession?.token) return false;
+  for (const key of ['token', 'actorId', 'groupId', 'empresaId']) {
+    if (reviewSession[key] !== liveSession[key]) return false;
+  }
+  const localCliente = args.localClienteId == null || args.localClienteId === ''
+    ? ''
+    : String(args.localClienteId).trim();
+  if (localCliente && localCliente !== reviewCliente) return false;
+  return true;
+}
+
+/**
+ * Path legado (create/update/delete por request): NÃO atômico.
+ * Preferir `syncClienteLocaisAtomicViaHttp` → POST `/locais/sync` (`batchAtomic:true`).
+ * Este sync legado:
  * 1) pré-valida o lote inteiro (zero writes se inválido);
  * 2) congela clienteId + assertScope entre awaits;
  * 3) em falha remota: relatório preciso + reconcileRequired (reexecução idempotente).
  */
 export const CLIENTE_LOCAIS_BATCH_ATOMIC = false;
+
+/**
+ * Monta `operations` do POST `/locais/sync` a partir do rascunho UI.
+ * update + purposes (se fins mudaram) + inactivate; máx. 50 ops.
+ * Overflow (>50) NÃO lança — retorna `overflow:true` para o caller escolher legado
+ * antes do MASTER (evitar cliente gravado com locais órfãos).
+ * @param {unknown} draft
+ * @param {string[]|null|undefined} baselineIds
+ * @returns {{ skipped: true, operations: [], overflow?: false }
+ *   | { skipped: false, operations: Array<Record<string, unknown>>, overflow: boolean }}
+ */
+export function buildClienteLocaisSyncOperations(draft, baselineIds) {
+  if (draft === undefined) return { skipped: true, operations: [], overflow: false };
+  const planned = prepareClienteLocaisHttpDraft(draft);
+  /** @type {Array<Record<string, unknown>>} */
+  const operations = [];
+  const keptIds = new Set();
+  const draftRows = Array.isArray(draft) ? draft : [];
+  for (const step of planned) {
+    if (step.kind === 'create') {
+      operations.push({ op: 'create', data: step.body });
+      continue;
+    }
+    operations.push({ op: 'update', id: step.localId, data: step.body });
+    keptIds.add(step.localId);
+    const original = draftRows.find((row) => String(row?.id || '') === step.localId);
+    const previous = original && typeof original === 'object'
+      ? /** @type {{ _finalidades_detalhadas?: unknown }} */ (original)._finalidades_detalhadas
+      : undefined;
+    const next = Array.isArray(step.fins) ? step.fins : [];
+    const finsChanged = !Array.isArray(previous)
+      || next.length !== previous.length
+      || next.some((row) => !previous.some((before) => before.finalidade === row.finalidade && before.principal === row.principal))
+      || previous.some((before) => !next.some((row) => row.finalidade === before.finalidade && row.principal === before.principal));
+    if (finsChanged) {
+      operations.push({ op: 'purposes', id: step.localId, finalidades: next });
+    }
+  }
+  if (Array.isArray(baselineIds)) {
+    for (const baselineId of baselineIds) {
+      const bid = String(baselineId ?? '').trim();
+      if (!isClienteLocalCanonicalId(bid) || keptIds.has(bid)) continue;
+      operations.push({ op: 'inactivate', id: bid });
+    }
+  }
+  if (operations.length === 0) return { skipped: true, operations: [], overflow: false };
+  if (operations.length > 50) {
+    return { skipped: false, operations, overflow: true };
+  }
+  return { skipped: false, operations, overflow: false };
+}
+
+/**
+ * Sync atômico via snapshotLocais + syncLocais (BFF `batchAtomic:true`).
+ * Conflito de versão / envelope inválido → erro (não cai no path parcial).
+ * @param {{
+ *   clienteId: string,
+ *   draft: unknown,
+ *   baselineIds?: string[]|null,
+ *   assertScope?: () => void,
+ *   api: {
+ *     snapshotLocais: (clienteId: string, opts?: object) => Promise<{ version: string }>,
+ *     syncLocais: (clienteId: string, body: object) => Promise<{ batchAtomic?: boolean, data?: unknown[] }>,
+ *   },
+ * }} input
+ * @returns {Promise<ClienteLocaisSyncSummary>}
+ */
+export async function syncClienteLocaisAtomicViaHttp({
+  clienteId, draft, baselineIds, assertScope, api,
+}) {
+  if (draft === undefined) {
+    return {
+      created: 0, updated: 0, deleted: 0, skipped: true,
+      ops: [], reconcileRequired: false, batchAtomic: true,
+    };
+  }
+  const id = String(clienteId ?? '').trim();
+  if (!id) {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error('clienteId obrigatório para sync atomico cliente_locais')
+    );
+    error.code = 'VALIDATION_ERROR';
+    error.status = 422;
+    throw error;
+  }
+  const frozenClienteId = id;
+  const guard = () => {
+    if (typeof assertScope === 'function') assertScope();
+    if (String(clienteId ?? '').trim() !== frozenClienteId) {
+      const error = /** @type {Error & { code: string, status: number }} */ (
+        new Error('clienteId mudou durante sync atomico de locais — operação abortada.')
+      );
+      error.code = 'CONTEXT_CHANGED';
+      error.status = 409;
+      throw error;
+    }
+  };
+  const built = buildClienteLocaisSyncOperations(draft, baselineIds);
+  if (built.skipped) {
+    return {
+      created: 0, updated: 0, deleted: 0, skipped: true,
+      ops: [], reconcileRequired: false, batchAtomic: true,
+    };
+  }
+  if (built.overflow) {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error(
+        'Lote atomico excede 50 operacoes (update+purposes). Use sync legado — rascunho preservado.',
+      )
+    );
+    error.code = 'CLIENTE_LOCAIS_ATOMIC_OVERFLOW';
+    error.status = 422;
+    throw error;
+  }
+  guard();
+  const snap = await api.snapshotLocais(frozenClienteId);
+  guard();
+  const version = typeof snap?.version === 'string' ? snap.version : '';
+  if (!/^[a-f0-9]{64}$/.test(version)) {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error('Snapshot de locais sem version — sync atomico abortado. Rascunho preservado.')
+    );
+    error.code = 'CLIENTE_LOCAIS_SNAPSHOT_INVALID';
+    error.status = 409;
+    throw error;
+  }
+  const page = await api.syncLocais(frozenClienteId, {
+    version,
+    operations: built.operations,
+  });
+  guard();
+  if (page?.batchAtomic !== true) {
+    const error = /** @type {Error & { code: string, status: number }} */ (
+      new Error('Resposta syncLocais sem batchAtomic:true — nao declarar salvamento integral.')
+    );
+    error.code = 'CLIENTE_LOCAIS_SYNC_INVALID';
+    error.status = 409;
+    throw error;
+  }
+  let created = 0;
+  let updated = 0;
+  let deleted = 0;
+  /** @type {Array<{ op: string, localId?: string }>} */
+  const ops = [];
+  for (const op of built.operations) {
+    if (op.op === 'create') {
+      created += 1;
+      ops.push({ op: 'create' });
+    } else if (op.op === 'update') {
+      updated += 1;
+      ops.push({ op: 'update', localId: String(op.id || '') });
+    } else if (op.op === 'inactivate') {
+      deleted += 1;
+      ops.push({ op: 'delete', localId: String(op.id || '') });
+    } else if (op.op === 'purposes') {
+      ops.push({ op: 'purposes', localId: String(op.id || '') });
+    }
+  }
+  return {
+    created, updated, deleted, skipped: false,
+    ops, reconcileRequired: false, batchAtomic: true,
+  };
+}
 
 /** Complete local preflight, reused before MASTER and before any local write. */
 export function prepareClienteLocaisHttpDraft(draft) {

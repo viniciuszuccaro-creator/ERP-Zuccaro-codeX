@@ -40,7 +40,8 @@ export default function GerenciarEnderecosClienteForm({
   assertScopeCurrent,
   persistBusy = false,
   commitMode = "backend",
-  loadStatus = "loaded",
+  // Fail-closed: omitido ≠ loaded (não fingir catálogo vazio confirmado).
+  loadStatus = "unknown",
   reviewPendingHint = null,
 }) {
   const permissions = usePermissions();
@@ -54,6 +55,11 @@ export default function GerenciarEnderecosClienteForm({
   const podeEditar = localAllowed("editar");
   const podeInativar = localAllowed("inativar");
   const podePrincipal = localAllowed("principal");
+  /** Contagem só quando loaded. Bloqueio de mutação só se sabemos que o catálogo não está pronto. */
+  const countKnown = loadStatus === "loaded";
+  const catalogBlocksMutations = loadStatus === "loading"
+    || loadStatus === "failed"
+    || loadStatus === "denied";
   const isDraftCommit = commitMode === "draft";
   const busyLabel = isDraftCommit
     ? "Aguarde a atualização do rascunho de endereços."
@@ -99,6 +105,10 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (catalogBlocksMutations) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de adicionar endereços.");
+      return;
+    }
     if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
@@ -114,6 +124,10 @@ export default function GerenciarEnderecosClienteForm({
   const handleSalvarEndereco = async () => {
     if (!localAllowed(enderecoEditando !== null ? "editar" : "criar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (catalogBlocksMutations) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de gravar o rascunho.");
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -187,6 +201,10 @@ export default function GerenciarEnderecosClienteForm({
       toast.error("Sem permissão para editar endereços do cliente.");
       return;
     }
+    if (catalogBlocksMutations) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de editar endereços.");
+      return;
+    }
     if (bloqueado || persistInFlightRef.current) {
       toast.error(busyLabel);
       return;
@@ -203,6 +221,10 @@ export default function GerenciarEnderecosClienteForm({
   const handleExcluirEndereco = async (index) => {
     if (!localAllowed("inativar")) {
       toast.error("Sem permissão para editar endereços do cliente.");
+      return;
+    }
+    if (catalogBlocksMutations) {
+      toast.error("Aguarde a confirmação do catálogo operacional antes de inativar endereços.");
       return;
     }
     if (bloqueado || persistInFlightRef.current) {
@@ -227,7 +249,6 @@ export default function GerenciarEnderecosClienteForm({
     }
   };
 
-  const countKnown = loadStatus === "loaded";
   const titleCount = countKnown ? ` (${enderecos.length})` : "";
   let emptyMessage = "Nenhum endereço operacional disponível.";
   if (loadStatus === "loading") emptyMessage = "Carregando endereços operacionais…";
@@ -250,7 +271,8 @@ export default function GerenciarEnderecosClienteForm({
         <Button
           onClick={abrirNovo}
           size="sm"
-          disabled={bloqueado || !podeAdicionar}
+          disabled={bloqueado || !podeAdicionar || catalogBlocksMutations}
+          title={catalogBlocksMutations ? 'Aguarde a confirmação do catálogo operacional' : undefined}
           data-permission="Cadastros.cliente_local.criar"
           data-action="Cadastros.Cliente.endereco.adicionar"
           data-commit-mode={commitMode}
@@ -323,7 +345,7 @@ export default function GerenciarEnderecosClienteForm({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditarEndereco(idx)}
-                    disabled={bloqueado || !podeEditar}
+                    disabled={bloqueado || !podeEditar || catalogBlocksMutations}
                     data-permission="Cadastros.cliente_local.editar"
                     data-action="Cadastros.Cliente.endereco.editar"
                   >
@@ -333,7 +355,7 @@ export default function GerenciarEnderecosClienteForm({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleExcluirEndereco(idx)}
-                    disabled={bloqueado || !podeInativar}
+                    disabled={bloqueado || !podeInativar || catalogBlocksMutations}
                     data-permission="Cadastros.cliente_local.inativar"
                     data-action="Cadastros.Cliente.endereco.excluir"
                   >

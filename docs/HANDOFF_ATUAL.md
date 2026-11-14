@@ -1,3 +1,42 @@
+## Port funcional596 fechado localmente na mesma candidataCodex (2026-11-14)
+
+Heartbeat18:53:13.104Z, CASA/CPA, base4ba14509/remotoigual/limpo/semwriter,
+reserva596/6882561298 e travaCreateNew. Cursor ja publicou fix36e; nao dupliquei.
+Montagem real revelou createvazio/ABAcliente/ABAtoken/permissao/loading ainda
+revivendo callback. Proposta MINIMA privada4348bytes/hash
+3de1b88b285ca69c3078919443eb1d4c4e46997c2c5dcfd801edd05c3323613d,
+13cenariosPASS e typecheckvirtual0diagnosticos, enviada596/6882628864/6882676855.
+Cursor incorporou em0ffff510006e801fbb3192d81bb04e2215b9e112; teste do codigo
+PUBLICADO sem transformacao privada13/13PASS. CI7107/run43629783547SUCCESS.
+
+Produtor reutiliza loaded/epoch/current/canDraft; consumidor captura surfaceKey,
+nao recai no ID do render antigo para createvazio e revalida updater. Positivo
+atual preservado; AB/create/ABA/tokenABA/revogacao/permissao/loading/localforeign
+rejeitados. Provas independentes do consumidor tambemPASS. Sao26fontes originais
+montadas, API/sessao/contexto sinteticos; nao browser->HTTP->PG ou homologacao.
+
+Liberacoes Cursor nos documentos atuais abrangem5paths+Review+binding/peels/pins.
+Port seletivo na MESMA codex/casa-fechamento-hml-20261114, nao outra candidata:
+8arquivos EXATOS da origem0ffff510. Inclui payload,Completo,Revisao,Gerenciar
+Enderecos(loadStatus27+/5- necessario ao contrato),3testes existentes+helper.
+Fora: backend/HTTPclient/Auth/policy/RBAC/Dashboard/count/docsCursor/migrations.
+As duas dependencias omitidas foram fechadas sem relaxar tipo ou expectativas;
+coord596/6882700394/6882779273.8/8blobs exatos e26/26fontes montadas iguais.
+
+Checks COMPOSTOS:101testesfocaisPASS/0FAIL/0SKIP, auditPASS,lintPASS(2warnings
+anteriores),typecheckPASS,buildPASS,diffcheckPASS. Auditoria helper atual91mutantes
+rejeitados,18goldens TODOSbytes/hash/referencias intactos; publication35/35 na
+fonte e no conjunto.13montados reutilizados por igualdade exata dos26blobs.
+Nao repetir suiteWindows de falhasPOSIX ja demonstradas; CIUbuntu propria do
+commit deve fechar frontend/backend/PostgreSQL/composicao antes do pacoteHML.
+
+HML continua d054e2b3, sem deploy/carga/grant/DB. Pacote/archive04519a59 e plano
+anteriores NAO representam esta nova versao: preservar, nao relabelar. Proximo
+item concreto depois deCIterminal+revisao: empacotar API/web da NOVA versao limpa
+publicada pelo script existente, foraVPS/Git, conferir manifesto e transporte;
+nao refazer pacoteantigo. UsoHML depende canal/pins/backupfresco+ack/lease/janela.
+Mesma automacao15min, exclusividade/checkpoint; sem promessa permanente.
+
 ## Auditoria de preservacao e novo residual do rascunho (2026-11-14)
 
 Heartbeat18:35:42.999Z CASA, base193f5e49/remotoigual/limpo/semwriter,

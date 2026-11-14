@@ -5,6 +5,11 @@ import { readErpHttpSession } from "@/api/erpHttpSession";
 import {
   mapClienteLocalToUiEndereco,
   syncClienteLocaisViaHttp,
+  syncClienteLocaisAtomicViaHttp,
+  buildClienteLocaisSyncOperations,
+  reconcileClienteLocaisDraftAfterPartial,
+  canPublishClienteLocaisPartialReconcile,
+  canApplyClienteLocalReviewDraftToForm,
   prepareClienteLocaisHttpDraft,
   isClienteLocalCanonicalId,
   CLIENTE_LOCAIS_SYNC_PARTIAL,
@@ -552,6 +557,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (!contextoValido) {
         throw new Error("Selecione um grupo ou empresa antes de salvar o cliente.");
       }
+      // Antes de qualquer await MASTER: superfície do formulário no início do save.
+      const saveSurfaceKey = formSurfaceKeyRef.current;
 
       const payload = buildPayload(data);
       if (isHttpBackendMode) {
@@ -562,27 +569,48 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
         ? payload.locais_entrega
         : undefined;
+      locaisPreferLegacyRef.current = false;
       if (isHttpBackendMode && locaisDraft !== undefined) {
         locaisDraft = data.locais_entrega;
-        const localPlan = prepareClienteLocaisHttpDraft(locaisDraft);
-        const required = new Set(/** @type {string[]} */ (localPlan.map(step => step.kind === 'create' ? 'criar' : 'editar')));
-        for (const step of localPlan) {
-          const original = locaisDraft.find(row => String(row?.id || '') === step.localId);
-          const previous = original?._finalidades_detalhadas;
-          const next = Array.isArray(step.fins) ? step.fins : [];
-          if (step.kind === 'create' ? next.some(row => row.principal === true)
-            : !Array.isArray(previous) || next.some(row => !previous.some(before => before.finalidade === row.finalidade && before.principal === row.principal))
-              || previous.some(before => before.principal && !next.some(row => row.finalidade === before.finalidade))) required.add('principal');
+        // [] inicial do form ≠ remoção explícita — omissão preserva operacionais HTTP.
+        const omitPristineEmpty = Array.isArray(locaisDraft)
+          && locaisDraft.length === 0
+          && !locaisDraftOwnedRef.current;
+        if (omitPristineEmpty) {
+          locaisDraft = undefined;
+        } else {
+          const localPlan = prepareClienteLocaisHttpDraft(locaisDraft);
+          const required = new Set(/** @type {string[]} */ (localPlan.map(step => step.kind === 'create' ? 'criar' : 'editar')));
+          for (const step of localPlan) {
+            const original = locaisDraft.find(row => String(row?.id || '') === step.localId);
+            const previous = original?._finalidades_detalhadas;
+            const next = Array.isArray(step.fins) ? step.fins : [];
+            if (step.kind === 'create' ? next.some(row => row.principal === true)
+              : !Array.isArray(previous) || next.some(row => !previous.some(before => before.finalidade === row.finalidade && before.principal === row.principal))
+                || previous.some(before => before.principal && !next.some(row => row.finalidade === before.finalidade))) required.add('principal');
+          }
+          const keptIds = new Set(localPlan.map(step => step.localId).filter(Boolean));
+          const baseline = locaisHttpBaselineRef.current;
+          if (Array.isArray(baseline) && baseline.some(row => {
+            const id = row && typeof row === 'object' ? String(/** @type {{id?: unknown}} */ (row).id || '') : '';
+            return isClienteLocalCanonicalId(id) && !keptIds.has(id);
+          })) required.add('inativar');
+          for (const action of required) if (!hasPermission('Cadastros', 'cliente_local', action)) {
+            throw Object.assign(new Error(`Permissao de locais ausente: ${action}. MASTER nao enviado; rascunho preservado.`), { code: 'PERMISSION_DENIED', status: 403 });
+          }
+          // Overflow (>50 ops): escolhe path legado. MASTER ainda grava antes do sync
+          // (não é atomicidade MASTER+locais) — evita sync atômico que falharia após MASTER.
+          const baselineIdsPlan = Array.isArray(baseline)
+            ? baseline
+              .map((row) => (row && typeof row === 'object'
+                ? String(/** @type {{ id?: unknown }} */ (row).id || '').trim()
+                : ''))
+              .filter(Boolean)
+            : null;
+          const atomicPlan = buildClienteLocaisSyncOperations(locaisDraft, baselineIdsPlan);
+          if (atomicPlan.overflow) locaisPreferLegacyRef.current = true;
         }
-        const keptIds = new Set(localPlan.map(step => step.localId).filter(Boolean));
-        const baseline = locaisHttpBaselineRef.current;
-        if (Array.isArray(baseline) && baseline.some(row => {
-          const id = row && typeof row === 'object' ? String(/** @type {{id?: unknown}} */ (row).id || '') : '';
-          return isClienteLocalCanonicalId(id) && !keptIds.has(id);
-        })) required.add('inativar');
-        for (const action of required) if (!hasPermission('Cadastros', 'cliente_local', action)) {
-          throw Object.assign(new Error(`Permissao de locais ausente: ${action}. MASTER nao enviado; rascunho preservado.`), { code: 'PERMISSION_DENIED', status: 403 });
-        }
+        // Nunca empurrar locais no MASTER — sync canônico ou omissão explícita.
         delete payload.locais_entrega;
       }
       // Anexos documentos[] ≠ CPF/CNPJ MASTER ≠ ModeloDocumento — sem DocumentosCliente paralelo.
@@ -644,6 +672,12 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
           actorId: String(sessionBefore.actorId || ''),
           clienteId,
         });
+        // Arma gate com surfaceKey do início do save (pré-MASTER) — troca durante await desarma.
+        locaisPartialStampGateRef.current = {
+          clienteId,
+          allow: true,
+          surfaceKey: saveSurfaceKey,
+        };
         const assertLocaisScope = () => {
           assertFormScopeCurrent();
           const now = /** @type {Record<string, unknown>} */ (readErpHttpSession() || {});
@@ -672,33 +706,179 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             .filter(Boolean)
           : null;
         try {
-          const locaisSummary = await syncClienteLocaisViaHttp({
-            clienteId: frozenScope.clienteId,
-            draft: locaisDraft,
-            baselineIds,
-            assertScope: assertLocaisScope,
-            api: api.clientes,
-          });
+          // Preferir POST /locais/sync (batchAtomic:true). Overflow/legado pré-MASTER ou fallback.
+          /** @param {Record<string, unknown>|null|undefined} summary @param {string|null} reason */
+          const annotateLocaisSummary = (summary, reason) => {
+            if (!summary || typeof summary !== 'object') return summary;
+            return {
+              ...summary,
+              syncPath: summary.batchAtomic === true ? 'atomic' : 'legacy',
+              fallbackReason: reason || null,
+            };
+          };
+          let locaisSummary;
+          if (locaisPreferLegacyRef.current) {
+            locaisSummary = annotateLocaisSummary(await syncClienteLocaisViaHttp({
+              clienteId: frozenScope.clienteId,
+              draft: locaisDraft,
+              baselineIds,
+              assertScope: assertLocaisScope,
+              api: api.clientes,
+            }), 'ATOMIC_OVERFLOW_PREFLIGHT');
+          } else {
+            try {
+              locaisSummary = annotateLocaisSummary(await syncClienteLocaisAtomicViaHttp({
+                clienteId: frozenScope.clienteId,
+                draft: locaisDraft,
+                baselineIds,
+                assertScope: assertLocaisScope,
+                api: api.clientes,
+              }), null);
+            } catch (atomicErr) {
+              const atomicCode = /** @type {Error & { code?: string, message?: string }} */ (atomicErr)?.code
+                || String(/** @type {Error} */ (atomicErr)?.message || '');
+              const canFallback = atomicCode === 'CLIENTE_LOCAIS_SNAPSHOT_INVALID'
+                || atomicCode === 'CLIENTE_LOCAIS_ATOMIC_UNAVAILABLE'
+                || atomicCode === 'CLIENTE_LOCAIS_INPUT_INVALID'
+                || atomicCode === 'CLIENTE_LOCAIS_ATOMIC_OVERFLOW'
+                || /SNAPSHOT_INVALID|ATOMIC_UNAVAILABLE|ATOMIC_OVERFLOW|CLIENTE_LOCAIS_INPUT_INVALID/.test(atomicCode);
+              // Conflito de versão / sync inválido: fail-closed (não escrever path parcial).
+              if (!canFallback) throw atomicErr;
+              locaisSummary = annotateLocaisSummary(await syncClienteLocaisViaHttp({
+                clienteId: frozenScope.clienteId,
+                draft: locaisDraft,
+                baselineIds,
+                assertScope: assertLocaisScope,
+                api: api.clientes,
+              }), atomicCode || 'ATOMIC_FALLBACK');
+            }
+          }
           // Summary no ref: mutation continua retornando o MASTER (contrato AST/consumidores).
           lastLocaisSyncSummaryRef.current = locaisSummary;
         } catch (syncErr) {
-          lastLocaisSyncSummaryRef.current = null;
-          const code = /** @type {Error & { code?: string }} */ (syncErr)?.code;
+          const partialErr = /** @type {Error & {
+            code?: string,
+            summary?: {
+              skipped?: boolean,
+              batchAtomic?: boolean,
+              created?: number,
+              updated?: number,
+              deleted?: number,
+              reconcileRequired?: boolean,
+              ops?: Array<{ op: string, localId?: string }>,
+            },
+          }} */ (syncErr);
+          const code = partialErr?.code;
+          // Preserva summary parcial para toast/retry — não anula progresso conhecido.
+          if (code === CLIENTE_LOCAIS_SYNC_PARTIAL && partialErr.summary) {
+            lastLocaisSyncSummaryRef.current = {
+              ...partialErr.summary,
+              syncPath: 'legacy',
+              fallbackReason: 'SYNC_PARTIAL',
+            };
+          } else {
+            lastLocaisSyncSummaryRef.current = null;
+          }
           if (code === CLIENTE_LOCAIS_SYNC_PARTIAL) {
-            // Estado real: reconcilia baseline/rascunho com listLocais (reexecução segura).
+            // IDs confirmados no summary.ops devem ser carimbados mesmo se listLocais falhar
+            // (senão retry recria o create já OK). Baseline só quando a leitura confirma.
+            // P1/Bugbot: CONTEXT_CHANGED e A→B (mesmo tenant / create vazio) NÃO publicam
+            // baseline/view/owned/carimbo de A no formulário B.
+            const stampClienteId = frozenScope.clienteId;
+            const publishStillAllowed = () => {
+              const gate = locaisPartialStampGateRef.current;
+              return canPublishClienteLocaisPartialReconcile({
+                stampClienteId,
+                liveFormClienteId: formClienteIdLiveRef.current,
+                catalogClientId: locaisCatalogClientIdRef.current,
+                stampGateClienteId: gate.clienteId,
+                stampGateAllow: gate.allow,
+                stampGateSurfaceKey: gate.surfaceKey,
+                liveSurfaceKey: formSurfaceKeyRef.current,
+                scopeCurrent: isFormScopeCurrent(),
+              });
+            };
+            /** @type {Array<Record<string, unknown>>|null} */
+            let mapped = null;
+            let scopeRevoked = false;
             try {
               assertLocaisScope();
-              const rows = await api.clientes.listLocais(frozenScope.clienteId, {
-                limit: 50, ativo: true,
+              if (!publishStillAllowed()) {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              } else {
+                const rows = await api.clientes.listLocais(frozenScope.clienteId, {
+                  limit: 50, ativo: true,
+                });
+                // Guard após await — antes de refs/setState (sessão + identidade A).
+                assertLocaisScope();
+                if (!publishStillAllowed()) {
+                  scopeRevoked = true;
+                  lastLocaisSyncSummaryRef.current = null;
+                } else {
+                  mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+                    /** @type {Record<string, unknown>} */ (row),
+                  ));
+                  setLocaisHttpView(mapped);
+                  locaisHttpBaselineRef.current = mapped;
+                }
+              }
+            } catch (readErr) {
+              const readCode = /** @type {Error & { code?: string }} */ (readErr)?.code;
+              if (readCode === 'CONTEXT_CHANGED' || !isFormScopeCurrent() || !publishStillAllowed()) {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              } else {
+                // Baseline desconhecida — sem deletes no próximo save; carimbo só se A intacto.
+                locaisHttpBaselineRef.current = null;
+                mapped = null;
+              }
+            }
+            if (!scopeRevoked) {
+              try { assertLocaisScope(); }
+              catch {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              }
+              if (!publishStillAllowed()) {
+                scopeRevoked = true;
+                lastLocaisSyncSummaryRef.current = null;
+              }
+            }
+            if (!scopeRevoked) {
+              locaisDraftOwnedRef.current = true;
+              const stampMapped = mapped;
+              const stampSummary = partialErr.summary;
+              const stampSaveDraft = locaisDraft;
+              // Carimba sobre o rascunho VIVO (prev), não o snapshot do save — Abrir rascunho
+              // durante sync legado lento não pode ser descartado pelo catch PARTIAL.
+              setFormData((prev) => {
+                const gate = locaisPartialStampGateRef.current;
+                const prevId = String(prev?.id || '').trim() || null;
+                if (!canPublishClienteLocaisPartialReconcile({
+                  stampClienteId,
+                  liveFormClienteId: prevId,
+                  catalogClientId: locaisCatalogClientIdRef.current,
+                  stampGateClienteId: gate.clienteId,
+                  stampGateAllow: gate.allow,
+                  stampGateSurfaceKey: gate.surfaceKey,
+                  liveSurfaceKey: formSurfaceKeyRef.current,
+                  scopeCurrent: isFormScopeCurrent(),
+                })) {
+                  return prev;
+                }
+                try { assertLocaisScope(); }
+                catch { return prev; }
+                // Sem array vivo: só reutiliza snapshot do save A se o gate ainda é A (já checado).
+                const live = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : stampSaveDraft;
+                const reconciled = reconcileClienteLocaisDraftAfterPartial(
+                  live,
+                  stampMapped,
+                  stampSummary,
+                );
+                if (reconciled === live) return prev;
+                return { ...prev, locais_entrega: reconciled };
               });
-              const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
-                /** @type {Record<string, unknown>} */ (row),
-              ));
-              setLocaisHttpView(mapped);
-              locaisHttpBaselineRef.current = mapped;
-              setFormData((prev) => ({ ...prev, locais_entrega: mapped }));
-            } catch {
-              locaisHttpBaselineRef.current = null;
             }
           }
           throw syncErr;
@@ -716,20 +896,42 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       if (
         locaisSummary
         && locaisSummary.skipped !== true
+        && locaisSummary.batchAtomic === true
+      ) {
+        toast({
+          title: `Cliente ${verb}`,
+          description: 'Endereços gravados atomicamente via /locais/sync (batchAtomic:true). Cliente MASTER + locais = lote atômico só dos endereços.',
+        });
+      } else if (
+        locaisSummary
+        && locaisSummary.skipped !== true
         && locaisSummary.batchAtomic === false
       ) {
         const ops = Number(locaisSummary.created || 0)
           + Number(locaisSummary.updated || 0)
           + Number(locaisSummary.deleted || 0);
-        // BATCH_ATOMIC=false = limitação BFF — não declarar salvamento integral/atômico.
+        const reason = String(/** @type {{ fallbackReason?: unknown }} */ (locaisSummary).fallbackReason || '');
+        const overflow = /OVERFLOW/i.test(reason);
+        const recover = locaisSummary.reconcileRequired === true
+          ? ' Reabra o cliente e confira o catálogo antes de repetir o save.'
+          : ' Rascunho reconciliável — reabra se a lista operacional divergir.';
+        // Fallback legado / overflow: NÃO declarar salvamento integral nem esconder em toast genérico.
         toast({
-          title: `Cliente ${verb}`,
-          description: ops > 0
-            ? `Endereços sincronizados em ${ops} operação(ões). Lote não atômico no BFF (BATCH_ATOMIC=false) — não é salvamento integral.`
-            : 'Cliente gravado. Sync de endereços sem operações (lote não atômico no BFF).',
+          title: overflow
+            ? `Cliente ${verb} — locais via legado (overflow >50 ops)`
+            : `Cliente ${verb} — locais via fallback não atômico`,
+          description: (ops > 0
+            ? `MASTER gravado; ${ops} operação(ões) de endereço em path legado (BATCH_ATOMIC=false)`
+              + (reason ? ` (${reason})` : '')
+              + '. não é salvamento integral nem atomicidade MASTER+locais.'
+            : `MASTER gravado; sync de endereços sem operações no path legado (BATCH_ATOMIC=false)`
+              + (reason ? ` (${reason})` : '')
+              + '. não é salvamento integral.')
+            + recover,
+          variant: 'default',
         });
       } else {
-        toast({ title: `✅ Cliente ${verb} com sucesso!` });
+        toast({ title: `Cliente ${verb}`, description: 'Cadastro MASTER confirmado. Sync de endereços omitido ou sem operações.' });
       }
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(savedPayload || buildPayload(formData));
@@ -737,21 +939,42 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     },
     onError: (error) => {
       const sameScope = isFormScopeCurrent();
-      const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);
+      const err = /** @type {Error & {
+        code?: string,
+        summary?: {
+          reconcileRequired?: boolean,
+          created?: number,
+          updated?: number,
+          deleted?: number,
+          ops?: Array<{ op?: string, localId?: string }>,
+        },
+      }} */ (error);
       const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
-      // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.
+      // MASTER pode ter gravado; sync parcial ≠ sucesso. Baseline atualizada; rascunho preservado.
       if (partial) {
         queryClient.invalidateQueries({ queryKey: ['clientes'] });
       }
+      const summary = err?.summary || lastLocaisSyncSummaryRef.current;
+      const done = summary
+        ? `Progresso: criados=${Number(summary.created || 0)}, atualizados=${Number(summary.updated || 0)}, removidos=${Number(summary.deleted || 0)}.`
+        : '';
+      const ids = Array.isArray(summary?.ops)
+        ? summary.ops.map((op) => op?.localId).filter(Boolean).slice(0, 8)
+        : [];
+      const idsLabel = ids.length ? ` IDs gravados (amostra): ${ids.join(', ')}.` : '';
       toast({
         title: !sameScope
           ? "Contexto alterado"
-          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),
-        description: sameScope
-          ? (err?.message || String(error))
-          : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
+          : (partial ? "Endereços parcialmente sincronizados — rascunho preservado" : "Erro ao salvar cliente"),
+        description: !sameScope
+          ? "A operação anterior falhou. Reabra o cadastro no contexto atual."
+          : partial
+            ? `${err?.message || String(error)} ${done}${idsLabel} `
+              + 'Catálogo operacional atualizado; edições pendentes no formulário foram mantidas — revise e salve de novo (não repita às cegas).'
+            : (err?.message || String(error)),
         variant: "destructive"
       });
+      if (partial) lastLocaisSyncSummaryRef.current = null;
     }
   });
 
@@ -839,8 +1062,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   /** Locais canônicos BFF — leitura; write via `/locais` no save (não MASTER). */
   const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));
+  /** Contagem de entrega em revisão — null se falhou/desconhecido (≠ zero). */
+  const [revisaoEntregaTotal, setRevisaoEntregaTotal] = useState(/** @type {number|null} */ (null));
+  const reviewClienteId = clienteBoundId || cliente?.id || null;
+  useEffect(() => { setRevisaoEntregaTotal(null); }, [reviewClienteId]);
   /** Baseline lido para soft-delete só quando a carga HTTP concluiu (ref evita stale no mutate). */
   const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
+  /** true só após edição explícita do rascunho (apply/openDraft) — [] inicial ≠ owned. */
+  const locaisDraftOwnedRef = useRef(false);
+  /** Cliente efetivo do catálogo — ownership só zera quando este id muda (não em reopen rejeitado). */
+  const locaisCatalogClientIdRef = useRef(/** @type {string|null|undefined} */ (undefined));
   /** Último summary de sync `/locais` — BATCH_ATOMIC=false nunca vira toast de salvamento integral. */
   const lastLocaisSyncSummaryRef = useRef(/** @type {{
     skipped?: boolean,
@@ -848,12 +1079,60 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     created?: number,
     updated?: number,
     deleted?: number,
+    reconcileRequired?: boolean,
+    syncPath?: string,
+    fallbackReason?: string|null,
+    ops?: Array<{ op?: string, localId?: string }>,
   }|null} */ (null));
+  /** true se o lote atomico overflow (>50 ops) — legado antes do MASTER, sem órfãos. */
+  const locaisPreferLegacyRef = useRef(false);
+  /** Id do formulário vivo (ref) — mutation PARTIAL não usa formData fechado do render do save. */
+  const formClienteIdLiveRef = useRef(/** @type {string|null} */ (null));
+  formClienteIdLiveRef.current = String(formData?.id || '').trim() || null;
+  /**
+   * Gate do carimbo PARTIAL: surfaceKey capturada antes do MASTER; desarmado ao trocar identidade.
+   * Evita publicar baseline/view/owned/ids de A em B (mesmo tenant / create vazio).
+   */
+  const formSurfaceKeyRef = useRef(0);
+  const locaisPartialStampGateRef = useRef(/** @type {{
+    clienteId: string|null,
+    allow: boolean,
+    surfaceKey: number,
+  }} */ ({
+    clienteId: null,
+    allow: false,
+    surfaceKey: 0,
+  }));
   useEffect(() => {
     const id = clienteBoundId || cliente?.id || null;
-    if (!id || !isHttpBackendMode) {
+    const clientChanged = locaisCatalogClientIdRef.current !== id;
+    if (clientChanged) {
+      locaisCatalogClientIdRef.current = id;
+      locaisDraftOwnedRef.current = false;
+      formSurfaceKeyRef.current += 1;
+      // Qualquer troca de identidade (inclui A→novo create) desarma publish do save anterior.
+      if (locaisPartialStampGateRef.current.allow) {
+        locaisPartialStampGateRef.current.allow = false;
+      }
+    }
+    // Create HTTP: sem id = catálogo vazio confirmado (permite rascunho no 1º save).
+    if (!id) {
+      if (isHttpBackendMode) {
+        setLocaisHttpView([]);
+        locaisHttpBaselineRef.current = [];
+      } else {
+        setLocaisHttpView(undefined);
+        locaisHttpBaselineRef.current = undefined;
+      }
+      return undefined;
+    }
+    if (!isHttpBackendMode) {
       setLocaisHttpView(undefined);
       locaisHttpBaselineRef.current = undefined;
+      return undefined;
+    }
+    // Mesmo cliente efetivo com baseline já materializado — não limpa owned nem refetch.
+    if (!clientChanged && Array.isArray(locaisHttpBaselineRef.current)) {
       return undefined;
     }
     let cancelled = false;
@@ -863,6 +1142,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       locaisHttpBaselineRef.current = undefined;
       return undefined;
     }
+    // Limpa visão anterior antes do fetch — loading ≠ catálogo vazio confirmado.
+    setLocaisHttpView(undefined);
+    locaisHttpBaselineRef.current = undefined;
     (async () => {
       try {
         const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
@@ -884,9 +1166,31 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     return () => { cancelled = true; };
   }, [clienteBoundId, cliente?.id]);
 
-  const locaisViewForUi = Array.isArray(formData.locais_entrega)
+  /**
+   * [] inicial do form ≠ catálogo HTTP confirmado.
+   * Draft só manda com itens ou ownership explícita (apply/openDraft) — baseline sozinho não assume [].
+   */
+  const locaisDraftAssumed = Array.isArray(formData.locais_entrega)
+    && (formData.locais_entrega.length > 0 || locaisDraftOwnedRef.current);
+  const locaisViewForUi = locaisDraftAssumed
     ? formData.locais_entrega
-    : (Array.isArray(locaisHttpView) ? locaisHttpView : []);
+    : (Array.isArray(locaisHttpView) ? locaisHttpView : (Array.isArray(formData.locais_entrega) ? formData.locais_entrega : []));
+
+  /** Operacional: create sem id = loaded ([]); draft assumido / HTTP ok = loaded. */
+  const locaisOperacionalLoadStatus = (() => {
+    if (!isHttpBackendMode) {
+      return Array.isArray(formData.locais_entrega) ? 'loaded' : 'unknown';
+    }
+    // Create: baseline [] confirmado — permite adicionar antes do 1º save.
+    if (!(clienteBoundId || cliente?.id)) {
+      return Array.isArray(locaisHttpBaselineRef.current) ? 'loaded' : 'unknown';
+    }
+    if (locaisHttpBaselineRef.current === null) return 'failed';
+    if (locaisDraftAssumed || Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {
+      return 'loaded';
+    }
+    return 'loading';
+  })();
 
   const applyContatosDraft = (novosContatos) => {
     setFormData((prev) => {
@@ -898,7 +1202,116 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     });
   };
   const applyEnderecosDraft = (novosEnderecos) => {
+    // Mesma guarda do openDraft: owned parcial antes do catálogo soft-deleta o restante no save.
+    // Throw: Gerenciar trata onChange rejeitado como falha e mantém o diálogo aberto.
+    if (isHttpBackendMode) {
+      if (locaisHttpBaselineRef.current === null) {
+        const err = new Error('Catálogo operacional indisponível — edição não aplicada. Reabra o cliente.');
+        toast({ title: 'Catálogo operacional indisponível', description: err.message, variant: 'destructive' });
+        throw err;
+      }
+      if (!Array.isArray(locaisHttpView) && !Array.isArray(locaisHttpBaselineRef.current)) {
+        const err = new Error('Locais HTTP ainda carregando — edição não aplicada para não apagar outros endereços no save.');
+        toast({ title: 'Aguarde o catálogo operacional', description: err.message, variant: 'destructive' });
+        throw err;
+      }
+    }
+    locaisDraftOwnedRef.current = true;
     setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
+  };
+
+  /**
+   * ENTREGA: revisão → rascunho operacional (não ativa/grava).
+   * FISCAL: não copia para MASTER.endereco_principal — revisão in-place via allowReviewEdit.
+   */
+  const reviewDraftSurfaceAtRender = formSurfaceKeyRef.current;
+  const openLocalDraftFromReview = (payload) => {
+    const {
+      finalidade,
+      ui,
+      local,
+      clienteId: reviewClienteId,
+      groupId: reviewGroupId,
+      empresaId: reviewEmpresaId,
+      session: reviewSession,
+    } = payload && typeof payload === 'object' ? payload : {};
+    if (!ui || typeof ui !== 'object') return;
+    if (finalidade === 'FISCAL') {
+      toast({
+        title: 'Fiscal não abre rascunho MASTER',
+        description: 'Use «Revisar fiscal» no painel de revisão (activate:false). Nada foi copiado para endereco_principal.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (finalidade !== 'ENTREGA') return;
+    // Sem fallback ao render antigo quando a superfície virou create vazio / outro cliente.
+    if (reviewDraftSurfaceAtRender !== formSurfaceKeyRef.current || !isFormScopeCurrent()) return;
+    const liveCliente = formClienteIdLiveRef.current || null;
+    const liveSession = readErpHttpSession();
+    if (!canApplyClienteLocalReviewDraftToForm({
+      reviewClienteId,
+      liveFormClienteId: liveCliente,
+      reviewGroupId,
+      liveGroupId: groupId,
+      reviewEmpresaId,
+      liveEmpresaId: empresaAtual?.id ?? null,
+      reviewSession,
+      liveSession,
+      localClienteId: local?.cliente_id ?? ui?.cliente_id ?? null,
+    })) {
+      toast({
+        title: 'Revisão de outro contexto',
+        description: 'Rascunho não aplicado — cliente/grupo/empresa/sessão da revisão não coincidem com o formulário atual. Rascunho e permissões preservados.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    // Fail-closed: sem catálogo HTTP confirmado, owned+review-only soft-deleta o restante no save.
+    if (isHttpBackendMode) {
+      if (locaisHttpBaselineRef.current === null) {
+        toast({
+          title: 'Catálogo operacional indisponível',
+          description: 'Falha na leitura de locais — rascunho não aberto. Reabra o cliente e tente de novo.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (!Array.isArray(locaisHttpView) && !Array.isArray(locaisHttpBaselineRef.current)) {
+        toast({
+          title: 'Aguarde o catálogo operacional',
+          description: 'Locais HTTP ainda carregando — rascunho não aberto para não apagar outros endereços no save.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    setActiveTab('enderecos');
+    locaisDraftOwnedRef.current = true;
+    setFormData((prev) => {
+      // Revalida id vivo + superfície (create vazio / ABA) — sem prevId não aplica.
+      const prevId = String(prev?.id || '').trim();
+      if (!prevId || String(reviewClienteId) !== prevId
+        || reviewDraftSurfaceAtRender !== formSurfaceKeyRef.current || !isFormScopeCurrent()) return prev;
+      // Base = draft com itens, senão catálogo HTTP confirmado (view ou baseline).
+      const httpList = Array.isArray(locaisHttpView)
+        ? locaisHttpView
+        : (Array.isArray(locaisHttpBaselineRef.current) ? locaisHttpBaselineRef.current : null);
+      const draftList = Array.isArray(prev.locais_entrega) ? prev.locais_entrega : null;
+      const list = (draftList && draftList.length > 0)
+        ? [...draftList]
+        : (httpList ? [...httpList] : []);
+      const id = String(ui.id || '').trim();
+      const without = id ? list.filter((row) => String(row?.id || '') !== id) : list;
+      return {
+        ...prev,
+        locais_entrega: [...without, { ...ui, _rascunho_revisao: true, _fonte: 'cliente_locais_revisao' }],
+      };
+    });
+    toast({
+      title: 'Rascunho de entrega no formulário',
+      description: 'Local de revisão copiado para o rascunho operacional. Não foi ativado nem gravado — complete e Salve para validar.',
+    });
   };
 
   /** Gravação efetiva no backend (proprietário canônico de persistência deste cadastro). */
@@ -1324,6 +1737,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 )}
 
                 <div className="col-span-2 pt-4 border-t">
+                  {isHttpBackendMode ? (
+                    <p className="text-xs text-slate-600 mb-2" data-block="fiscal-cliente-local-canonico" role="note">
+                      Fiscal canônico = ClienteLocal (revisão abaixo). Campos MASTER.endereco_principal
+                      são legado/visual — HTTP rejeita gravação significativa; não copiam o fiscal operacional.
+                      Use «Revisar fiscal» (activate:false) e ativação explícita autorizada.
+                    </p>
+                  ) : null}
                   <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>
                   {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="FISCAL" allowReviewEdit />}
                   <div className="grid grid-cols-4 gap-4">
@@ -1332,6 +1752,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="cep"
                         value={formData.endereco_principal?.cep || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1349,7 +1771,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                         tipo="cep"
                         valor={formData.endereco_principal?.cep}
                         onDadosEncontrados={handleDadosCEP}
-                        disabled={!formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\D/g, '').length < 8}
+                        disabled={isHttpBackendMode || !formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\D/g, '').length < 8}
                       />
                     </div>
 
@@ -1358,6 +1780,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="logradouro"
                         value={formData.endereco_principal?.logradouro || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1373,6 +1797,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="numero"
                         value={formData.endereco_principal?.numero || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1388,6 +1814,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="bairro"
                         value={formData.endereco_principal?.bairro || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1403,6 +1831,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="cidade"
                         value={formData.endereco_principal?.cidade || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1418,6 +1848,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                       <Input
                         id="estado"
                         value={formData.endereco_principal?.estado || ""}
+                        readOnly={isHttpBackendMode}
+                        disabled={isHttpBackendMode}
                         onChange={(e) => setFormData({
                           ...formData,
                           endereco_principal: {
@@ -1642,8 +2074,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
                 persistBusy={isSaving || saveMutation.isPending}
+                loadStatus={locaisOperacionalLoadStatus}
+                reviewPendingHint={revisaoEntregaTotal}
               />
-              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" />}
+              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />}
             </TabsContent>
 
             <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">

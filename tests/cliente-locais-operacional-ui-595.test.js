@@ -1,6 +1,5 @@
 /**
- * Continuity/PR595 — Completo fiscal allowReviewEdit; Seletor snapshotLocais.
- * ENTREGA onOpenDraft vive na PR596 (não duplicar nesta tip).
+ * Cursor pós-595 — mensagens operacional vs revisão; seletor exige id canônico.
  * Fixtures sintéticas; sem HML/dados reais.
  */
 import assert from 'node:assert/strict';
@@ -27,20 +26,43 @@ test('mensagens: não usa "Nenhum endereço cadastrado" ambíguo no Gerenciar', 
   assert.match(gerenciar, /Cliente\.editar NÃO autoriza locais/);
 });
 
-test('Completo: FISCAL allowReviewEdit; ENTREGA sem onOpenDraft (port 596)', () => {
+test('Completo: ENTREGA onOpenDraft + FISCAL allowReviewEdit (sem MASTER)', () => {
+  assert.match(completo, /openLocalDraftFromReview/);
+  assert.match(completo, /onOpenDraft=\{openLocalDraftFromReview\}/);
   assert.match(completo, /finalidade="FISCAL" allowReviewEdit/);
   assert.doesNotMatch(completo, /finalidade="FISCAL"[^>]*onOpenDraft/);
-  assert.match(completo, /finalidade="ENTREGA"/);
-  assert.doesNotMatch(completo, /openLocalDraftFromReview/);
-  assert.doesNotMatch(completo, /onOpenDraft=\{/);
+  assert.match(completo, /reviewPendingHint=\{revisaoEntregaTotal\}/);
+  assert.match(completo, /const reviewClienteId = clienteBoundId \|\| cliente\?\.id \|\| null/);
+  assert.match(completo, /setRevisaoEntregaTotal\(null\);\s*\}, \[reviewClienteId\]/);
+  assert.match(completo, /Fiscal não abre rascunho MASTER/);
+  assert.match(completo, /canApplyClienteLocalReviewDraftToForm/);
+  assert.match(completo, /Revisão de outro contexto/);
+  assert.match(completo, /reviewDraftSurfaceAtRender/);
+  assert.match(completo, /formClienteIdLiveRef\.current \|\| null/);
+  assert.match(completo, /if \(!prevId \|\| String\(reviewClienteId\) !== prevId/);
+  assert.match(completo, /reviewDraftSurfaceAtRender !== formSurfaceKeyRef\.current/);
+  assert.match(completo, /locaisOperacionalLoadStatus/);
+  assert.match(completo, /loadStatus=\{locaisOperacionalLoadStatus\}/);
+  assert.match(completo, /Limpa visão anterior antes do fetch/);
+  assert.match(gerenciar, /loadStatus = "unknown"/);
   assert.match(revisao, /hasPermission\('Cadastros', 'cliente_local', 'visualizar'\)/);
-  assert.match(completo, /api\.clientes\.listLocais/);
 });
 
-test('Revisão: FISCAL in-place; sem Ativar/Excluir; leitura fail-closed', () => {
+test('Revisão: FISCAL in-place + ENTREGA rascunho; sem Ativar/Excluir', () => {
   assert.match(revisao, /allowReviewEdit/);
+  assert.match(revisao, /Abrir rascunho de entrega/);
+  assert.match(revisao, /nao grava nem ativa/i);
   assert.match(revisao, /Salvar revisao fiscal sem ativar/);
+  assert.match(revisao, /onReviewMeta\(\{ finalidade, total: null, error: false \}\)/);
   assert.match(revisao, /Leitura indisponivel neste contexto ou sem permissao/);
+  // Casa #6882444389/#6882628864: openDraft congela binding + loaded/epoch/canDraft.
+  assert.match(revisao, /Congela identidade da revisão visível/);
+  assert.match(revisao, /!permissionsLoading && !canEdit && finalidade === 'ENTREGA'/);
+  assert.match(revisao, /canEdit, canDraft \}/);
+  assert.match(revisao, /loaded\.current !== state \|\| epoch\.current !== state\.generation/);
+  assert.match(revisao, /clienteId: snap\.clienteId/);
+  assert.match(revisao, /session: snap\.session/);
+  assert.match(revisao, /reviewGeneration: state\.generation/);
   assert.doesNotMatch(revisao, /\bAtivar\b|\bExcluir\b/);
 });
 
