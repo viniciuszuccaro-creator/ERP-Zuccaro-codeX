@@ -1,0 +1,2838 @@
+{
+  "kind": "PREPARATION_ONLY_NOT_A_MIGRATION",
+  "sourceHead": "33ad0fada3907627ba85ae7aafa5af014620e0f8",
+  "sqlSha256": "8f30eda04b5a2b59a4076cec328e08550ba86a1002405785172209f99e07eec1",
+  "statementHashEncoding": "comments removed by tokenizer; UTF-8 LF; whitespace-only blank lines removed in review artifact",
+  "sources": [
+    {
+      "path": "server/migrations/005_cadastros_simples.sql",
+      "sha256": "e754793c4ce65f99e06a7216c365812c20f50af96fd6d54adf6f002e76f02c20",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/006_produtos_base.sql",
+      "sha256": "0111511d0d6354222f48e29f7596cd137f851a9208e79baad36911bd344f9a58",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/007_produtos_master_data.sql",
+      "sha256": "47a481a189d68f48651e446a93f600f78091c22d8d25883172bf6846933c9794",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/008_produtos_fk_tenant.sql",
+      "sha256": "2c3ce529ab427358ffcd65c6fb3d7c3f363b519d5efde2273ddfce9f83c39d51",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/010_cliente_empresas_comercial.sql",
+      "sha256": "ed8621a4ebbd12eea3613acb88d2fde0b4fea0abcb5701c6284cfcc51ce47577",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/011_cliente_locais.sql",
+      "sha256": "357f9eafc874dc3bcd8c5d78a050d9b5e37299ca85017ba088213473862afbc3",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/012_obras.sql",
+      "sha256": "9b3ad7126d9fe112c7a9739767a8d86641a36fbe7587b9cb58a8206735f3174b",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/013_tabelas_preco.sql",
+      "sha256": "a8eeefac1a0b9457f524e3e4bafe46112b02d879f36f81180dc343fe777f0882",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/014_condicoes_pagamento.sql",
+      "sha256": "e650cf385f7dff36d96f82a1aeaa95cfac1a2e6526ccc766e6325d375c4cb6a6",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/015_condicoes_pagamento_hardening.sql",
+      "sha256": "1bc4954860c84e3fbffb02e89e18382347b588cf0b8d706b3d1e527718eaadb6",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/016_orcamentos_comercial_360.sql",
+      "sha256": "15c3f127a9b8a46309dae6690c664710e91e34caa27582da9b66533e632802e4",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/017_pedidos_comercial_360.sql",
+      "sha256": "4cd70614b08962b8129fcdf857f5e1df2ffe324b93446155a34235544c855426",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/038_cadastros_codigo_registro.sql",
+      "sha256": "ea7f3f90f4a4035418afeca7e2771a8b65f81524588c2e21f1753f8f21e1dbee",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/039_orcamentos_tabela_preco.sql",
+      "sha256": "bac3f714481f5028cfa5aac808680ab54082b21ddfa04bd40a24a63486ddf224",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/040_crm_oportunidades.sql",
+      "sha256": "25975ead474c03b3f66d500598f2efbd1a93720f4f2c3efb504ba471f27b6219",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/041_produto_empresas_operacao.sql",
+      "sha256": "a827b21c952bf159d8575d0e6881bef11bea52a2d7227d28e0507549f342ba03",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/043_legado_identidade_compartilhada.sql",
+      "sha256": "806935ea96fad35b383fb116b5cb6e17fcd4868a94c3825a0a0c10cfe7de1009",
+      "encoding": "raw Git blob UTF-8 LF"
+    },
+    {
+      "path": "server/migrations/044_pedidos_idempotencia_direta.sql",
+      "sha256": "6d9ccf72d9258cdb41c50d84efc0183b7757a82ddb7c685ed2e53889f8ff3540",
+      "encoding": "raw Git blob UTF-8 LF"
+    }
+  ],
+  "objects": [
+    {
+      "kind": "CREATE_TABLE",
+      "table": "unidades_medida",
+      "name": "unidades_medida",
+      "source": "005_cadastros_simples.sql",
+      "statement": 0,
+      "sha256": "6c9fce8bf54eb17efbd7941f5877dcc048190117e7b657d9c8f3cb10f4be8318",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "uq_unidades_medida_group_sigla",
+      "source": "005_cadastros_simples.sql",
+      "statement": 1,
+      "sha256": "906b03c9eb2e4da603b95dab4114394a36254352a30a27e0ccb9b6f4679bcaa4",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "idx_unidades_medida_group",
+      "source": "005_cadastros_simples.sql",
+      "statement": 2,
+      "sha256": "95562e9f4c02b36f1d027c4cf8352c98bc9e3a4a3eff8570263870392007e679",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "idx_unidades_medida_empresa",
+      "source": "005_cadastros_simples.sql",
+      "statement": 3,
+      "sha256": "7e046a3afb6e462637ca8dedaa88b8ce307118a4d4dc686d508be865ec78e588",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "idx_unidades_medida_ativo",
+      "source": "005_cadastros_simples.sql",
+      "statement": 4,
+      "sha256": "4f9dd92a9791033fc5d70391c919b17a465b21661de4ba2f3849df537d9ac9ec",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 5,
+      "sha256": "39e90bf1f7f37fc5bba5aaa4f77c41bd4eef62fb339832dd41ac9d926692f44e",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "unidades_medida",
+      "name": "trg_unidades_medida_updated_at",
+      "source": "005_cadastros_simples.sql",
+      "statement": 6,
+      "sha256": "7b34822c1be0cc1a2cfafd7acf70093dad3abe7cd8f287809ca2a33c8289e5dd",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 7,
+      "sha256": "ab21caa9302f206ec14fd309a8b9899a5da53327214db0c93f2f9ed66daca997",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "unidades_medida",
+      "name": "trg_unidades_medida_tenant",
+      "source": "005_cadastros_simples.sql",
+      "statement": 8,
+      "sha256": "e00c0c70e8e3b7101571efa3c2dedad8e634e6f38a72184f69a28f7b4ee6caac",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 9,
+      "sha256": "066e46ca7700f9b0a26d614ab09bb0af130ffd355c03d9017e35faeae439b4c9",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 10,
+      "sha256": "6820e45c4060e06a835066da195a26f9c3bab7ff5c1f1ca584589a4f2cad93a9",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "grupos_produto",
+      "name": "grupos_produto",
+      "source": "005_cadastros_simples.sql",
+      "statement": 11,
+      "sha256": "cd308945b82ce8027c9bcc655aa55088d156d252dfe31562808e1373bb9882f1",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "uq_grupos_produto_group_codigo",
+      "source": "005_cadastros_simples.sql",
+      "statement": 12,
+      "sha256": "e2b87fb0ba399d73d65ac0959ba4e7ec282e59354e27394ef758bded4fdf25c7",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_group",
+      "source": "005_cadastros_simples.sql",
+      "statement": 13,
+      "sha256": "b11a0804b1b66ecce47643e539ef99dd566c74c0c4e8e8887d9882aa282d27f8",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_empresa",
+      "source": "005_cadastros_simples.sql",
+      "statement": 14,
+      "sha256": "2163ab70f731c348f7e63406e74431e109a5de5fb2421704c60bb92d432f4ccb",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_nome",
+      "source": "005_cadastros_simples.sql",
+      "statement": 15,
+      "sha256": "afa063e5994b5fc367c294689da63a31cc6b12aa489cfa752d7d658719f0aeaf",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_ativo",
+      "source": "005_cadastros_simples.sql",
+      "statement": 16,
+      "sha256": "baa7d379ed5fa00feb7d4f4a802ad6c9e2816d2c58665d02341689886bef8146",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 17,
+      "sha256": "dec4ec46820b02776ac756345893e383c7c5fea2489d9d1282c880eb36c20cc4",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "grupos_produto",
+      "name": "trg_grupos_produto_updated_at",
+      "source": "005_cadastros_simples.sql",
+      "statement": 18,
+      "sha256": "5c61f0c14c2b00e73bb746e6e9ed43775ed01dca858727bb458bb3dba3e121a8",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 19,
+      "sha256": "6088e81a63238130b044beea103f81986a70502019e29194bb5501bdf1a15dbd",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "grupos_produto",
+      "name": "trg_grupos_produto_tenant",
+      "source": "005_cadastros_simples.sql",
+      "statement": 20,
+      "sha256": "ed6ec74496b4728a57db9590164dc964af4752137bb4a5f4962859d039954434",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "grupos_produto",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 21,
+      "sha256": "da4623c621609fc729c1b56f5545812d4a6fa0c725ce46133408266cb434bc86",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "grupos_produto",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 22,
+      "sha256": "ffc1a6541f2e8a358f34c3f65c871bd66b7bad72c628fc999e3e19483839b8da",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "setores_atividade",
+      "name": "setores_atividade",
+      "source": "005_cadastros_simples.sql",
+      "statement": 23,
+      "sha256": "510511e3c5e9af64e0ebd23183a410c08a85f9754a02490f6970aca4ef293e78",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "uq_setores_atividade_group_nome",
+      "source": "005_cadastros_simples.sql",
+      "statement": 24,
+      "sha256": "5571557edd0b5f5ce1a6828b7f936915fdff4b58a51a91476377eeb9dd922be0",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "idx_setores_atividade_group",
+      "source": "005_cadastros_simples.sql",
+      "statement": 25,
+      "sha256": "8f9115400c2af2a01c2e30f4bfabe73a4cf8e38566f1b1fdb6967f46dd53a935",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "idx_setores_atividade_empresa",
+      "source": "005_cadastros_simples.sql",
+      "statement": 26,
+      "sha256": "2403465c488a76b4367c76d34af87af6a8da7d4b826ea937efe3b1f3a75b66e4",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "idx_setores_atividade_ativo",
+      "source": "005_cadastros_simples.sql",
+      "statement": 27,
+      "sha256": "772d5adb4d4b39468cb6eb5005df9412c619e64c6911fb6ad04de9e18038b038",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 28,
+      "sha256": "20298a3bfebc2a9f0013e43470613e00686c51809ee933b03d27ee6bc13dc8be",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "setores_atividade",
+      "name": "trg_setores_atividade_updated_at",
+      "source": "005_cadastros_simples.sql",
+      "statement": 29,
+      "sha256": "14482b9fe8f8d1839f19633d6a49c3cb6805b8fdd61c425a648dd89583a998b6",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 30,
+      "sha256": "0d42f3e7db983d7f91764dca194ad43c17138cda97eb60912e698491cc1ee961",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "setores_atividade",
+      "name": "trg_setores_atividade_tenant",
+      "source": "005_cadastros_simples.sql",
+      "statement": 31,
+      "sha256": "bfaf9a810f29ef3d3edb181ade38cb9fd8c6b0c56c0f323b42aef1b62f0b9f44",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 32,
+      "sha256": "76bd18716f4a0a80d650a167b5b70ee3799bb3831a593cfa16b0c13653293d72",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "statement": 33,
+      "sha256": "e5712c4becabe902d9551105cc5e6dd8f391b303145bbbfa54ab99d64003d616",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "produtos",
+      "name": "produtos",
+      "source": "006_produtos_base.sql",
+      "statement": 0,
+      "sha256": "7a759b4d840fee85a12089722ca67c406dc2b58e8fa141a83595548a7909eeb2",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "uq_produtos_group_codigo",
+      "source": "006_produtos_base.sql",
+      "statement": 1,
+      "sha256": "6fdb7b3476bfdb5eb746ccc668d4feccbf29317fe7a3bf9083e537ef5b32428a",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_group",
+      "source": "006_produtos_base.sql",
+      "statement": 2,
+      "sha256": "300d65e138e6b8785b09af9b8f2a5c175a95795bb383990159d941755f33e693",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_empresa",
+      "source": "006_produtos_base.sql",
+      "statement": 3,
+      "sha256": "2ebd8bc1583b7495a99e2bc42b32fb6a83c058d517eb60c8008f9c01b5e759f8",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_descricao",
+      "source": "006_produtos_base.sql",
+      "statement": 4,
+      "sha256": "4e6b8c4fe9e243acfb35def48fcb20bc3c47b4965b4fb923ee8bddb5d830b5b6",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_ativo",
+      "source": "006_produtos_base.sql",
+      "statement": 5,
+      "sha256": "887f86108ec6b9525ff0b4d1656b2bcbdaa39d7f16f39ab2c10984d3d33fc6e1",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_grupo",
+      "source": "006_produtos_base.sql",
+      "statement": 6,
+      "sha256": "6fb296588fdc08566442c56954f28e477d2ffb46e0935e7ff7e7e979dda1a276",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_marca",
+      "source": "006_produtos_base.sql",
+      "statement": 7,
+      "sha256": "5fcf2507873b4482e18189496dc24e4b580a37e6787cd1e5931e948b7c9ab0ad",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_unidade",
+      "source": "006_produtos_base.sql",
+      "statement": 8,
+      "sha256": "007a4fd4ade7811881e76e7269245723c8ccca5a80c42241f35162a219cd2420",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "006_produtos_base.sql",
+      "statement": 9,
+      "sha256": "a682ed69381ec8a11c41f11eb3287e31091291b6185811297cbb05cb41ceca4a",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "produtos",
+      "name": "trg_produtos_updated_at",
+      "source": "006_produtos_base.sql",
+      "statement": 10,
+      "sha256": "c2d96ae54e89ca70f00cb38e2023cdf72de391ba2c298d1264c45ccaf8fd6bbe",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "006_produtos_base.sql",
+      "statement": 11,
+      "sha256": "9ecf517bfef4bc14bd629314bcf67ac6389f9ad04190c3d597f2c68c4d935130",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "produtos",
+      "name": "trg_produtos_tenant",
+      "source": "006_produtos_base.sql",
+      "statement": 12,
+      "sha256": "68b36f409ec777a1b878f33a346ec3180f3297da1dbe7ef248f13b3a8ae184d4",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "006_produtos_base.sql",
+      "statement": 13,
+      "sha256": "0781eada576219a54b568b808b1e50d6d08776fea44f14ff38868444d2f84466",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "006_produtos_base.sql",
+      "statement": 14,
+      "sha256": "6f460ce27f1e1e9433a27c9ebf59d34e9a5f5d7acea8b3a51165dcbeae4d1d5a",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "006_produtos_base.sql",
+      "statement": 15,
+      "sha256": "a7b059c92e382fb84fcc356b0af92b73913ef8f334190a3bda6dd025d8a9c9b5",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "007_produtos_master_data.sql",
+      "statement": 0,
+      "sha256": "95bf92f351686f029fd6470c7ad29bba6ad10fabfc52a6926d805f8c12f1733d",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "uq_produtos_group_codigo_barras",
+      "source": "007_produtos_master_data.sql",
+      "statement": 1,
+      "sha256": "44106bf727391a8b9c02bca2d297ead25a1f63499e5fbb464da793f56e815a33",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_codigo_barras",
+      "source": "007_produtos_master_data.sql",
+      "statement": 2,
+      "sha256": "f114d5f1fa2b522cb5a8477d1e6dcb10715b5b85ffb5a219bb5d0978c029d647",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_tipo_item",
+      "source": "007_produtos_master_data.sql",
+      "statement": 3,
+      "sha256": "36a1e3e9624a2677a79751f23a655c953e2cf36195c6fcb7f1fe342dd999dcb3",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_status",
+      "source": "007_produtos_master_data.sql",
+      "statement": 4,
+      "sha256": "5df61f1d590a684e88c3f8123934a0068d71cd5ff60e12d27ad5d9bdc8f4a510",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_setor",
+      "source": "007_produtos_master_data.sql",
+      "statement": 5,
+      "sha256": "884a57d7e19590cd2aee4398e24ecd56f0abf5a7ac518184387bc6eae1a2574b",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "007_produtos_master_data.sql",
+      "statement": 6,
+      "sha256": "3f5f288e88f2fabb3d3966cf7d54fe2eaab6dad4c5a3063dcaa8634b0c8ddbb3",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "007_produtos_master_data.sql",
+      "statement": 7,
+      "sha256": "1c9ec82b67bcd3e4672ce9550aa08470c304b8d82b380f1bcf48e3edaba944a1",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "007_produtos_master_data.sql",
+      "statement": 8,
+      "sha256": "b32f779259169bb4f35c18c046b789077c7bdb258c12ec566ac3970c347aafe1",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "007_produtos_master_data.sql",
+      "statement": 9,
+      "sha256": "5ed7b9b264475791a5ce692754f6699685ce1a2abe1902cc30103f9bc1350c85",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_produto_fk_same_tenant",
+      "source": "008_produtos_fk_tenant.sql",
+      "statement": 0,
+      "sha256": "34e52b9898f24eb3f0d6c0e569c6a769250765d4ecc83f432f970cfad8cea311",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "008_produtos_fk_tenant.sql",
+      "statement": 1,
+      "sha256": "4d9388291fe92a8c45d4185e88ae877e9e9fe7374a3895aee16be44952df8928",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "produtos",
+      "name": "trg_produtos_fk_tenant",
+      "source": "008_produtos_fk_tenant.sql",
+      "statement": 2,
+      "sha256": "2708f27455d48889556010277cc35c801aa8e5d73625c671335745e553fe2207",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "cliente_empresas",
+      "name": null,
+      "source": "010_cliente_empresas_comercial.sql",
+      "statement": 0,
+      "sha256": "95ac88f3a75eb0155ebf99c9e8032a373540f2a1d72f19fff454b6efdbb46dae",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_empresas",
+      "name": "idx_cliente_empresas_operacional",
+      "source": "010_cliente_empresas_comercial.sql",
+      "statement": 6,
+      "sha256": "b8435b3081f93d1db4cbe3a971bcfa25b36da5b10529d955ad9bce0b04232a18",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_empresas",
+      "name": "idx_cliente_empresas_legacy",
+      "source": "010_cliente_empresas_comercial.sql",
+      "statement": 7,
+      "sha256": "11bed2cd4d3dca55f4953e6b8b4e48edffa63a9eb86a06c23e979e7d0b0c2dc2",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "cliente_empresas",
+      "name": null,
+      "source": "010_cliente_empresas_comercial.sql",
+      "statement": 8,
+      "sha256": "fdaf541722e7d838cc6c746d74e01deeb174e4db456c85b4785fa32109b2cffe",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "cliente_empresas",
+      "name": null,
+      "source": "010_cliente_empresas_comercial.sql",
+      "statement": 9,
+      "sha256": "7fb8afb566821d573abd8ee5d308166df50a6be60711c9912aa4a2f9de04e80c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "cliente_locais",
+      "name": "cliente_locais",
+      "source": "011_cliente_locais.sql",
+      "statement": 0,
+      "sha256": "edb87849b5121bb1e7d11b004a9845b8a691672145e1adf06036cac4cadea0d1",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "cliente_locais",
+      "name": "trg_cliente_locais_fingerprint",
+      "source": "011_cliente_locais.sql",
+      "statement": 8,
+      "sha256": "9435359974a1f51c221b5e367d4112c8c80b2457b0304cab2308aabfcb58e727",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "cliente_locais",
+      "name": "trg_cliente_locais_tenant",
+      "source": "011_cliente_locais.sql",
+      "statement": 10,
+      "sha256": "f0ed0322f77c2e3353b704dc4c80ae4dd98a74b15afb66a8ad639153109d5746",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "cliente_locais",
+      "name": "trg_cliente_locais_updated_at",
+      "source": "011_cliente_locais.sql",
+      "statement": 12,
+      "sha256": "8fd03c5d4f7507e8b8c5b00ccab95e67f860c7e42c3a80f1c76bc3441e162e21",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_locais",
+      "name": "idx_cliente_locais_scope",
+      "source": "011_cliente_locais.sql",
+      "statement": 13,
+      "sha256": "53cf80be92b9ac68c9c6a191243bbb1bd9251e622c0ca7898f69e3c255fa7867",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_locais",
+      "name": "idx_cliente_locais_busca",
+      "source": "011_cliente_locais.sql",
+      "statement": 14,
+      "sha256": "60d5e3a977dd472490965a14c0c0093f7bf610e4ba17c1e70fc2cab19304ccd6",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_locais",
+      "name": "idx_cliente_locais_fingerprint",
+      "source": "011_cliente_locais.sql",
+      "statement": 15,
+      "sha256": "71300b17c7f2ba0e86e14a5286a3adffcb2b8fcb88c89d8211f3c8d5ae6191fa",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "cliente_locais",
+      "name": null,
+      "source": "011_cliente_locais.sql",
+      "statement": 16,
+      "sha256": "309af62b71d5fca8c46154ca1ce0491728574b0b6942529e8d9f568d495e9e4c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "cliente_locais",
+      "name": null,
+      "source": "011_cliente_locais.sql",
+      "statement": 17,
+      "sha256": "2e0dc96a48d15bb2d380cf9ba4882dec063459baf66c7310340507d2179a7206",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "obras",
+      "name": "obras",
+      "source": "012_obras.sql",
+      "statement": 0,
+      "sha256": "f184fac13aaadb77fc8a75d97e0a3e80b36678ec4d25895d5678a4aa2b45474b",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "012_obras.sql",
+      "statement": 2,
+      "sha256": "bc461c97fa4990dd280ad7fe96d9a00fb486ebd01d4ccb89365f34aa3eac66c5",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "obras",
+      "name": "trg_obras_tenant",
+      "source": "012_obras.sql",
+      "statement": 3,
+      "sha256": "cf1c09e9371f804f263a70f3ce7425000d06e12eb776ddb67f514cb3cabfa36e",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "012_obras.sql",
+      "statement": 4,
+      "sha256": "189448309335bf1ceab06669303934b4307f02a162730b6e457c50bdf283f6ba",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "obras",
+      "name": "trg_obras_updated_at",
+      "source": "012_obras.sql",
+      "statement": 5,
+      "sha256": "afe7e0c4d72e8f023e3e74ccf6f068da0434bb0664869e92034ca6f358b85576",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_scope",
+      "source": "012_obras.sql",
+      "statement": 6,
+      "sha256": "df518af4724f39f1ce5d3f69b2e7a4287668a449a890addf641a581fee1c0bae",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_status",
+      "source": "012_obras.sql",
+      "statement": 7,
+      "sha256": "6af9dc932998a4e2fd6dc79724fc7f9c544238e312858b1bc0ff7eb9a16f870f",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_updated",
+      "source": "012_obras.sql",
+      "statement": 8,
+      "sha256": "fd90104d9c4d771fc34308916006f0f805117e9ecb98c21d26836ba1f66ac3b2",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_nome",
+      "source": "012_obras.sql",
+      "statement": 9,
+      "sha256": "f3215c4d5b554c0e774a66cd7638f558378c5243474afe690229464b9e93f777",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "obras",
+      "name": null,
+      "source": "012_obras.sql",
+      "statement": 10,
+      "sha256": "010f338cb93f0e8ef92da6fee3fd7195e9214bf2aa5ed986349ffac2a243411b",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "obras",
+      "name": null,
+      "source": "012_obras.sql",
+      "statement": 11,
+      "sha256": "c0aeb83b5239972b88936a65572cbf9f755dbfbf5a265bf4c7ff31d1af9f0003",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "012_obras.sql",
+      "statement": 12,
+      "sha256": "f5189724369d3015ae05b7cd44efdbe10ae762e279d3bfabb350adf04ad8fe33",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_obra_empresa_same_tenant",
+      "source": "012_obras.sql",
+      "statement": 14,
+      "sha256": "e71deb4d4eb30631e036954a3d4785acccb7f377fa3f34daaef2c2b5dbc2c2c8",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_obra_local_same_tenant",
+      "source": "012_obras.sql",
+      "statement": 26,
+      "sha256": "37969efa93de50689d3634f4a7a6ebf233d01d21661cae63a427a00030c17daa",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "tabelas_preco",
+      "name": "tabelas_preco",
+      "source": "013_tabelas_preco.sql",
+      "statement": 0,
+      "sha256": "787f3812c54523349d761bd32cceea8d4f7e7e262c0f3ebdb4a8006534204799",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "uq_tabelas_preco_origem_nome_ativo",
+      "source": "013_tabelas_preco.sql",
+      "statement": 1,
+      "sha256": "68d3daac1b3e54a618ccf5100f6bb0d9247bdadc4a72aa566ef2a5702d96f602",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "statement": 3,
+      "sha256": "5eb31fc03b74869b74fa81a64f54b3a0ae4eb8bc17ea43a8742b7a0165faa880",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "tabelas_preco",
+      "name": "trg_tabelas_preco_tenant",
+      "source": "013_tabelas_preco.sql",
+      "statement": 4,
+      "sha256": "c0d98235605c1f4b6b48565bec4fb3fbeb260761fdb45ac5ba35e23fc8dda5c5",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "statement": 5,
+      "sha256": "114e8a446a1e7e7fac3fdc9597ea92364a312e46b43fc081dfa696a7e52ac509",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "tabelas_preco",
+      "name": "trg_tabelas_preco_updated_at",
+      "source": "013_tabelas_preco.sql",
+      "statement": 6,
+      "sha256": "b7a6c92341c2bca9462810674f2c3c8d2368ab86781b9535acb396ecf735bd45",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_scope",
+      "source": "013_tabelas_preco.sql",
+      "statement": 7,
+      "sha256": "7e0816856cfff94af99306e124c7ba4971859d825e39acdd83959f59b9c7b4a1",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_updated",
+      "source": "013_tabelas_preco.sql",
+      "statement": 8,
+      "sha256": "93f5cbbdf4907b75c3663362617975c41ca911836c981d33d37a834819f06181",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_nome",
+      "source": "013_tabelas_preco.sql",
+      "statement": 9,
+      "sha256": "91a5ca4e7d8dd709f0101e4f3024d11f16cbd90c8a2cffde1cedcf407627c827",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_vigencia",
+      "source": "013_tabelas_preco.sql",
+      "statement": 10,
+      "sha256": "e2d0d5b51b595069ba39ab7bebb8c0df96ba3d59b6463020ea5e3c2c637347be",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "tabelas_preco",
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "statement": 11,
+      "sha256": "246d2558e1781bce4936d5d219564ccff87a05a37c1eafeb2dfa7adb93149d0b",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "tabelas_preco",
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "statement": 12,
+      "sha256": "a6dd69a8c019c7d7e5c1fec17dc737d8e1fa408e79fa98988c9ac87a2b0cdd2a",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "statement": 13,
+      "sha256": "fe757bc0725f356aaf90891bd7c1fd6b4203695c69e9be4589a10ff8b422f729",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_tabela_preco_empresa_same_tenant",
+      "source": "013_tabelas_preco.sql",
+      "statement": 16,
+      "sha256": "fe27700937a12416bf27f6d7ced64f54df44bcb5c9309760e72b483e0dd6108b",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_tabela_preco_item_same_tenant",
+      "source": "013_tabelas_preco.sql",
+      "statement": 27,
+      "sha256": "e47c4af6993091a21d183adbfa61686cdb9e45baeca574d275339f2bf8044fed",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "cliente_empresas",
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "statement": 38,
+      "sha256": "85c0e6497a7b3fb79213b8d40f978e7edc75a789613f0777166ba9cea19b5e74",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_cliente_empresa_tabela_preco",
+      "source": "013_tabelas_preco.sql",
+      "statement": 39,
+      "sha256": "497faf255124a449929af9870e74f2f0207d7f63fefdfc1ee571903c0f4cf497",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "cliente_empresas",
+      "name": "trg_cliente_empresas_tabela_preco",
+      "source": "013_tabelas_preco.sql",
+      "statement": 41,
+      "sha256": "c39599300e0876c172f754969ece3ed6f0411103bf87c2d44a61a293b35d7ba5",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_empresas",
+      "name": "idx_cliente_empresas_tabela_preco",
+      "source": "013_tabelas_preco.sql",
+      "statement": 42,
+      "sha256": "7b1aaf0282ca6d3f05a4b503c663f554da5693693009d2d2c0b8d20b94fd8f4b",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "statement": 43,
+      "sha256": "0f508c63361f8efdb3a5b26877feeb1cc0fc432500c0489a8ce350a5a8343b55",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "condicoes_pagamento",
+      "name": "condicoes_pagamento",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 0,
+      "sha256": "e1babdb3c9024d08e2f6954e1fc6c07ae7430d9c392f691efe35278c0e54e91d",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "condicoes_pagamento",
+      "name": "uq_condicoes_pagamento_origem_nome_ativo",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 1,
+      "sha256": "8efeed9169ba0081f6887f24188af1827a18e620ab646a14330a1a7f3aeb1177",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "condicoes_pagamento",
+      "name": "trg_condicoes_pagamento_tenant",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 3,
+      "sha256": "78a1f1cca7903b14b128ecb0b25774001294b32f91bff6523104e6310231ab4b",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "condicoes_pagamento",
+      "name": "trg_condicoes_pagamento_updated_at",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 4,
+      "sha256": "4d455e15c078bf96817cd1aadef522f54507c32a0d5369dc4062234d2a40b9aa",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "condicoes_pagamento",
+      "name": "idx_condicoes_pagamento_scope",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 5,
+      "sha256": "87705e49449a4447f88ebdb653d502ad279d9b6d5c9469a5ec5813747610ae69",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "condicoes_pagamento",
+      "name": "idx_condicoes_pagamento_nome",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 6,
+      "sha256": "6825dab7c109b38fda7b6d7c96bbe0c184faec937a1cfa05b244a535586f4c84",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "condicoes_pagamento",
+      "name": null,
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 7,
+      "sha256": "5b736b57d17807b1b97561c3b9beea2ca5d938ba96e1a56d0dae92bbfb93afc5",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "condicoes_pagamento",
+      "name": null,
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 8,
+      "sha256": "aa482d6585c5b0b1d5eeba18ea0d0b33c0156df21655f92e57a0003068a32909",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "condicoes_pagamento",
+      "name": "trg_condicoes_pagamento_parcelas_validas",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 30,
+      "sha256": "d847b143008147f544c8e9a2f4db7c0da5e2aa8e6662f5bfe3f5350a7e28c7ce",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "cliente_empresas",
+      "name": null,
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 31,
+      "sha256": "ba27a9e706cfddce24b4a095d425f49d987476d53f6b72af2ff07c00c18e4993",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "cliente_empresas",
+      "name": "trg_cliente_empresas_condicao_pagamento",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 33,
+      "sha256": "ffc7336fbab190694ac146841df3ed819253b64e06700d88a2fa5cec0eed5f1b",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_empresas",
+      "name": "idx_cliente_empresas_condicao_pagamento",
+      "source": "014_condicoes_pagamento.sql",
+      "statement": 34,
+      "sha256": "bf69153484a3369290b62c3251fc1ba6873272b131ae55cf976d441631913423",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "condicoes_pagamento",
+      "name": "trg_condicoes_pagamento_parcelas_validas",
+      "source": "015_condicoes_pagamento_hardening.sql",
+      "statement": 4,
+      "sha256": "1228b9da7f2178c114907c282e08676e2f674e7e474bdccf4090d8277a01334e",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "orcamentos",
+      "name": "orcamentos",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 0,
+      "sha256": "8868e876ec8bc8ffe612054dfad1a8d850b49fe665041c79813ef0ce486f5787",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "orcamentos",
+      "name": "trg_orcamentos_tenant",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 2,
+      "sha256": "f05105538522b35701bb2af4e38ae6ad5ad5aabcce1ef17007c932c5f5315509",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "orcamentos",
+      "name": "trg_orcamentos_updated_at",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 3,
+      "sha256": "7e491703b89f95580427785ff9b5898083ddca14f2be97335a641d7e26a8ea46",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "orcamentos",
+      "name": "idx_orcamentos_scope_page",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 4,
+      "sha256": "2af37888ad30f748156e76af02c10fce80aa0438300651ba8fdaf35719f32b9b",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamentos",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 5,
+      "sha256": "6cb37fb0beea786ea3d3f6a0875dc1f4c60159b27dab43e8e10ee55a9ee6822e",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamentos",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 6,
+      "sha256": "6fda7ce1d9b3bd2f938c99a9b5a10e0b7a225504ac6e728bba34e46264d93a49",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 7,
+      "sha256": "bd695d2eed9c9db38792823af11950489c7cbb8ea788e9066539352b7611af6c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "orcamento_itens",
+      "name": "orcamento_itens",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 8,
+      "sha256": "45afe26105ae8c6996666a8988a027a8d7e91b22605b9291f7bb7ba51eca9fdb",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_orcamento_item_same_tenant",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 9,
+      "sha256": "7aa6f0170f5a3c6ebdf007b5079e32acd267b15d5f3da7d9dc29331ef4646f40",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "orcamento_itens",
+      "name": "trg_orcamento_itens_tenant",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 10,
+      "sha256": "ad301e61157f7bd634c2a0d11deec4a311fe7022a4d538983a62ffb4a9b82099",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "orcamento_itens",
+      "name": "trg_orcamento_itens_updated_at",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 11,
+      "sha256": "ceba920eba9ba814e0a99270dde497f8610c938d54fa02e332965e3f343f219c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "orcamento_itens",
+      "name": "idx_orcamento_itens_scope",
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 12,
+      "sha256": "836b91c3eac6ccedbbb71f61aba9d354bf30323a7b652ee47a6655e73ffd2a27",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamento_itens",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 13,
+      "sha256": "cbf9aa9e559d294fda6b6ebbdfeb8b882367fcf2fcd837e89a3ec25557dcfe1f",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamento_itens",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 14,
+      "sha256": "1dc55a49c840c5a46978c1a2e0b2b7b5871521e78a428a2e0fc3ccaeca307c0a",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 15,
+      "sha256": "029cceb94d1e54f78d8363dabbf2e9cd16af30e3cb9a432fd3f1c04bc1beafcb",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 16,
+      "sha256": "c76fd6ada7b0c751d22ed9d01b3aab5117b936193c9d59c058d3dfe71c861cdf",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "statement": 17,
+      "sha256": "4c014efe869b54460ab4279b484fc5879a278585e1b3fdbbc6b5c1b1556d5607",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "pedidos",
+      "name": "pedidos",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 0,
+      "sha256": "96564f3df13b46347cbe919517973bd64b7e8eb1ebf84029a5024d89a227a280",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_pedido_same_tenant",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 1,
+      "sha256": "af7cb24664719672c3d1881f4cadbec774ad5e1ff60601ed5dc2d516ab001ab7",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "pedidos",
+      "name": "trg_pedidos_tenant",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 2,
+      "sha256": "0167c8ac9671e50d43bc91aadfaed373bca9a4f9ab38f44b5623823b9675e14e",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "pedidos",
+      "name": "trg_pedidos_updated_at",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 3,
+      "sha256": "26eb8fd0856c5a0e6b9960814ef85e0d199340d4c89d1286d5446388766a7129",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "idx_pedidos_scope_page",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 4,
+      "sha256": "c1a5ac2af0478345533a6a21de4ab7947e88c12f362df6d86c9a1053f97e510c",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "idx_pedidos_entrega",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 5,
+      "sha256": "099baad79ea7d22488bae2b7246e2342e0101b10678a21f5de67180cff7d5be8",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "idx_pedidos_cliente",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 6,
+      "sha256": "b887d350ed533b11f18c116a5fe1c19723d01869d79f259e874a34dc5f766c10",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 7,
+      "sha256": "d3955c5a6e4b8add3af7f763586c15f8ca6abfbcf378b23b707c9fe2c3a1221f",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 8,
+      "sha256": "b8a1e2410733f78b694781e1f3edebb1bae85377d2e67533d369948d3e9ab24e",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 9,
+      "sha256": "acd446cd48b1ef379bef01b1d2cfbb81e6904429ffe8a2f5c4c7ff51750bd76d",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "pedido_itens",
+      "name": "pedido_itens",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 10,
+      "sha256": "b49552ac8a5984c5191fc48bffa3fc865a5ef058330efde4964baed6d2242ccd",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_pedido_item_same_tenant",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 11,
+      "sha256": "b67b98e017f311503fd617a69edeb0f61caa058fa2926fd68ccd7b2757ba5b1e",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "pedido_itens",
+      "name": "trg_pedido_itens_tenant",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 12,
+      "sha256": "ce5cd9ebb54cdfbb970ce84b7fb7882a2cb927a2f6295af162f5673ed392de7a",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "pedido_itens",
+      "name": "trg_pedido_itens_updated_at",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 13,
+      "sha256": "9496ac4b96b41021092c440a2242a90563d4617dbb7e3ca9b7fc48e4283e2224",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedido_itens",
+      "name": "idx_pedido_itens_scope",
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 14,
+      "sha256": "ee821748701a8d2c6282ee9cf3a85917ae9788bf91fb95dad31ff70a8d8eeaa1",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedido_itens",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 15,
+      "sha256": "0220537f8279a0bfe9e0af9d268a6a4d4636cd4875eafe6a1caaad0fd2bf81a8",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedido_itens",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 16,
+      "sha256": "873a88737eba0d028e8ba5b6806d94cd48cb880d8f2cebedec4902d95ecfe786",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 17,
+      "sha256": "fe6df77981fd3376782f7d18d584eea67c9642d6bea1511e30863325cc039e12",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 23,
+      "sha256": "b18c1d4ed6571528ee9b98814bd3a031c72937d2b4472df3d7bef777e467bb35",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "statement": 24,
+      "sha256": "caa27c930b930ed587e444554fe6a60d9802c87fa574714bbdffa27035368d04",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "marcas",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 0,
+      "sha256": "d7df7064114d821a7d6e3670c2ec47312d6e77262182a9c727df41b20e9cc77c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "marcas",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 1,
+      "sha256": "7302131b43f7bef57e0825f62ca0d1acf2d0a213068408c3c355bf84e5487e72",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "marcas",
+      "name": "uq_marcas_group_codigo",
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 2,
+      "sha256": "74e86e4c745058fa3c1d458ad1f9b18543070f8ba0feb923f4c70fa11f684bf9",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 3,
+      "sha256": "5fb0410333f92e944c80f4c0a7b5466f503f2804e6f78ac40e80cbabc543a78e",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 4,
+      "sha256": "54c8fd587379feffa75098f1dc688f8aa0644bd3accb8a52ec1569b157f5f304",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "uq_setores_atividade_group_codigo",
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 5,
+      "sha256": "b7418e214d512f1f5ddfd893a8852153f103a2896c46090d3048c7863f1cbdbb",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 6,
+      "sha256": "5e2d26a6f0181850b2b82a4c42fc41ab612d8ba73158c771927bc1b1352323a3",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 7,
+      "sha256": "4a0c9bc98ac483d1a7619624eac2e1b8c2de6fc57cda367eb8e7644def27b94a",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "uq_unidades_medida_group_codigo",
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 8,
+      "sha256": "5ff44a571f626a75e7b92b9aaae9a97cb1d1d9fabfd784197a249503258f1c4c",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "grupos_produto",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 9,
+      "sha256": "0a86cf34cba745b01012a1b2bab3b01c548988cbf78372e6e8da2fdaf29dc3ae",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 10,
+      "sha256": "0247f7ef42d208eaff5bd0442bf999a3c975ccdc05c0c000bea41b7959027fec",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 12,
+      "sha256": "83169443b8ab5b98d1aeeb927b2f50b7cff8afc136c4eca927a24d4136ab690f",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 13,
+      "sha256": "019a6ba9d54064148cda48c197b61e54bd95c8822b7cea4c3b5a39d4e8295e21",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 15,
+      "sha256": "3bd9965b6b1ee986bc2684c5000a154e864100b0b26c77e45489b02b4f289e49",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 16,
+      "sha256": "5deefcae0bd6bdee1303270c819364fa1e9cd6f9696413ea3e5914c3712cc782",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 18,
+      "sha256": "82646759f5cffe7451ad2d9244d298a2ef9f67650a217b7914268d697578f82c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 19,
+      "sha256": "368eda03d19bc832e3598d75e8293857219b908e833355bdae5980207cb247f4",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "statement": 20,
+      "sha256": "f3ea0972c3818816ff640fddb89158676e2a7a343274173d2a79dc1a3563c2bb",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamentos",
+      "name": null,
+      "source": "039_orcamentos_tabela_preco.sql",
+      "statement": 0,
+      "sha256": "38247013356c7053a394d7b386f0fa3ae3f7e416151bbdd5643349ea0b7a5938",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_orcamento_same_tenant",
+      "source": "039_orcamentos_tabela_preco.sql",
+      "statement": 1,
+      "sha256": "7379da011233cec56cbd4a38ee71cdb7c1e7ebad1bf56422f27e8b78cf96959e",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "039_orcamentos_tabela_preco.sql",
+      "statement": 2,
+      "sha256": "989e0a42201c9bde8c6eef0f9d0243c25db965d702f970513dac3b0685cce3ad",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "orcamentos",
+      "name": "trg_orcamentos_tenant",
+      "source": "039_orcamentos_tabela_preco.sql",
+      "statement": 3,
+      "sha256": "44655b6a8c97c00348194142d6fd0eb09deb63d21e98551fc81de59917d67747",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "039_orcamentos_tabela_preco.sql",
+      "statement": 4,
+      "sha256": "0c4c37b3686cf62a729e43f77169290173b63aa3b63cebdcd547b6398227db8f",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "cliente_empresas",
+      "name": "uq_cliente_empresas_id_scope",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 0,
+      "sha256": "472eece35e342dc3fd15fb3154511f340fd58b0d89a8c9b4787e42cf7bab8594",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "empresas",
+      "name": "uq_empresas_id_group_scope",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 1,
+      "sha256": "3b352dade0d4aafc61214a9ce139b4ed2c147f48c3b22287845df8ea2e32fc97",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "oportunidades",
+      "name": "oportunidades",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 2,
+      "sha256": "1a799feb1d54bfeee20dd75e94cccf26968041d91c566cd3ab3aa534f953adf0",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "uq_oportunidades_legacy_scope",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 3,
+      "sha256": "42ed4da0ae66b3723a15c80995b7ee80318d393b2bd5e85cce4471711f19d743",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "idx_oportunidades_page",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 4,
+      "sha256": "b020a7fbc56b2617a80503c8eaabad815ceb6297af5bae2d17b98eb0d0bbb832",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "idx_oportunidades_cliente",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 5,
+      "sha256": "d10911c8e592a74890ff0a875f59935bbe13a08a64ec13fb82d0118654a5e622",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "uq_oportunidades_pedido_canonico",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 6,
+      "sha256": "04298d785bd64f1821c0ea3ccf5e3c394cf40fc58c8609b99df5f8cf20f06d69",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 7,
+      "sha256": "b4b468765645b5b5dea6a7da5a9d0cd9e9b3d4654d95816bf363854f23179bc7",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "oportunidades",
+      "name": "trg_oportunidades_updated_at",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 8,
+      "sha256": "648aa912d2e7a9ecf7a3bdec11ed1ef8ce93b28c9d3c95f418b904ffb48b694c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 11,
+      "sha256": "5fbfadfc98040550f764bbeb7ba33c5dc2502ebcccbb74d83a778ccb0a369f21",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_TRIGGER",
+      "table": "oportunidades",
+      "name": "trg_oportunidades_codigo",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 12,
+      "sha256": "7e7cd48512992690b16be3305ff9dd95a47fb3a4362a6cd9fdbe99a8ce7ac4c4",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "oportunidades",
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 13,
+      "sha256": "733ad74a57e83c4376e0774b61b25e6baa1f115547a18bb43d4b2bd42b5a8501",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "oportunidades",
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 14,
+      "sha256": "0e2dcf05bd6bd99818a6d8eebdb005165aba3a558652595f75c2784645c83b51",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 15,
+      "sha256": "abc985ef323b82c4363d3bd1b2f95c5d1764013191dfbc3972a7758ee9056c00",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 16,
+      "sha256": "d70598d6efb3cc33426ecc1a0e42291c1ee5d697278787420a58895653a43c96",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_POLICY",
+      "table": "oportunidades",
+      "name": "oportunidades_tenant_scope",
+      "source": "040_crm_oportunidades.sql",
+      "statement": 17,
+      "sha256": "7eae6959b9861d77aea2ce382c9473052154dd573b0a05dc78868efcc5f137a0",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 18,
+      "sha256": "d5691c96a4a26e45589c7f7fdc9e88265832b8010640d4bed1ebcb1087036f4a",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "statement": 19,
+      "sha256": "b4a832cd58194cc8d155cc8e83750629fb04fd53314a9a772d530f78687ba8b6",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "uq_produtos_id_group_scope",
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 0,
+      "sha256": "ea8bd48a354cb4a67b6d2034957e2641449d5deaf2ff1428a594fb92d080028b",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "produto_empresas",
+      "name": "produto_empresas",
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 1,
+      "sha256": "06664b228e617a5a27e934a7d33dcc9c54900658a2b315fcb8f559af765cda1f",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produto_empresas",
+      "name": null,
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 2,
+      "sha256": "6e11159455e8364acc13f447a0d2cba2430bc5c043a179e4f713fc9845bd71de",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produto_empresas",
+      "name": null,
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 3,
+      "sha256": "91d19450424818023934a26a0ba5cc145475886c69a913f527a60a4c1ec1ae0a",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 4,
+      "sha256": "1a65c915e3e2db749dbfcdf9ec6a68aaf81d7d395843518fe2269fb78dc14f0d",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "DATA_OR_ACCESS_OR_REMOVAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 5,
+      "sha256": "2dded3e6e1bead52ef287029f0f7d9b21d98858b1313175d0284cb9ee3a495b2",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_POLICY",
+      "table": "produto_empresas",
+      "name": "produto_empresas_tenant_scope",
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 6,
+      "sha256": "278a736348d2bec9d79ffee814e8bce9e5f0b06c47bdcc0f072e49315808860b",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "OTHER",
+      "table": null,
+      "name": null,
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 7,
+      "sha256": "1f7734947832dd866b4e136f3a4c30f11da2a34cb73e3ce4adc1e5b1265f062c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_orcamento_item_same_tenant",
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 8,
+      "sha256": "bec733a07c97932d4938014e103a3d512d66ebceec4ee59e09078c9ebbb57672",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "FUNCTION_REVIEW",
+      "table": null,
+      "name": "assert_pedido_item_same_tenant",
+      "source": "041_produto_empresas_operacao.sql",
+      "statement": 9,
+      "sha256": "152a526e1db6b7970cfa6a91d7006a9389a2d48418c4aab897ea8d0e255b6353",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CONDITIONAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 0,
+      "sha256": "a7232725a0e59aa9154740fdb882fd325c552bbe4ee14eb614041b34b97151ba",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 1,
+      "sha256": "7e35bb9bef49d8e6fe0244e38c5a34fb3e9fee94828506b26dfc723eff2ba7c8",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 2,
+      "sha256": "079716a27a3b73a6a45bf2612db2bedf3fc2f5110f1d4b726759e1c05299ce53",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 3,
+      "sha256": "d3849f465cb11999c41e36c490c24e031c795eb2a43a02873f8676cf449f270d",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 4,
+      "sha256": "9189233abca3e936bec356ce16e43e691798fd4cb49e732ef721193c8a839080",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 5,
+      "sha256": "3b3d3654aace030d5446a6106c908884814972cf799c53e645c9489ec9b2fada",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CONDITIONAL_REVIEW",
+      "table": null,
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 6,
+      "sha256": "12501680a490ec8e44ba7c7cc576a5246fd7d31f9c36168a633386fbe0417590",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "clientes",
+      "name": "clientes_legacy_identity_uidx",
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 7,
+      "sha256": "2e76e21abecc61323ea3dc9fa6c3c301080802ed01b999fcc1322f243b51e02c",
+      "status": "DEFER_REVIEW_KEEP_EXISTING"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "produtos_legacy_identity_uidx",
+      "source": "043_legado_identidade_compartilhada.sql",
+      "statement": 8,
+      "sha256": "9d72293acb9a666cab15b0c69efeef8e40eafd232e8aad5e749a7b8b6159c66b",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "statement": 0,
+      "sha256": "2b36185213c2365b33e48861005835b8bc619b5be45efae84c6d3e59027aa21e",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "statement": 1,
+      "sha256": "987c3f0d5fcfd114397a9a8c20136bb6d3ad7267d1d36e0b3ac863a5f8c9f380",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "statement": 2,
+      "sha256": "c6306738df0aecd04874c2bd5679920d8ccc337822bd80cda22cc1c6ad7fe813",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "uq_pedidos_idempotency_scope",
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "statement": 3,
+      "sha256": "c328085c5768594e990d3d63ed7a14d140034b9ae3251fd0299ca7f2a75e8306",
+      "status": "GUARDED_ADDITIVE_DRAFT"
+    }
+  ],
+  "emitted": [
+    {
+      "kind": "CREATE_TABLE",
+      "table": "unidades_medida",
+      "name": "unidades_medida",
+      "source": "005_cadastros_simples.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "uq_unidades_medida_group_sigla",
+      "source": "005_cadastros_simples.sql",
+      "offset": 1
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "idx_unidades_medida_group",
+      "source": "005_cadastros_simples.sql",
+      "offset": 2
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "idx_unidades_medida_empresa",
+      "source": "005_cadastros_simples.sql",
+      "offset": 3
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "idx_unidades_medida_ativo",
+      "source": "005_cadastros_simples.sql",
+      "offset": 4
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "offset": 9
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "offset": 10
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "grupos_produto",
+      "name": "grupos_produto",
+      "source": "005_cadastros_simples.sql",
+      "offset": 11
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "uq_grupos_produto_group_codigo",
+      "source": "005_cadastros_simples.sql",
+      "offset": 12
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_group",
+      "source": "005_cadastros_simples.sql",
+      "offset": 13
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_empresa",
+      "source": "005_cadastros_simples.sql",
+      "offset": 14
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_nome",
+      "source": "005_cadastros_simples.sql",
+      "offset": 15
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "grupos_produto",
+      "name": "idx_grupos_produto_ativo",
+      "source": "005_cadastros_simples.sql",
+      "offset": 16
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "grupos_produto",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "offset": 21
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "grupos_produto",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "offset": 22
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "setores_atividade",
+      "name": "setores_atividade",
+      "source": "005_cadastros_simples.sql",
+      "offset": 23
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "uq_setores_atividade_group_nome",
+      "source": "005_cadastros_simples.sql",
+      "offset": 24
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "idx_setores_atividade_group",
+      "source": "005_cadastros_simples.sql",
+      "offset": 25
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "idx_setores_atividade_empresa",
+      "source": "005_cadastros_simples.sql",
+      "offset": 26
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "idx_setores_atividade_ativo",
+      "source": "005_cadastros_simples.sql",
+      "offset": 27
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "offset": 32
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "005_cadastros_simples.sql",
+      "offset": 33
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "produtos",
+      "name": "produtos",
+      "source": "006_produtos_base.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "uq_produtos_group_codigo",
+      "source": "006_produtos_base.sql",
+      "offset": 1
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_group",
+      "source": "006_produtos_base.sql",
+      "offset": 2
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_empresa",
+      "source": "006_produtos_base.sql",
+      "offset": 3
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_descricao",
+      "source": "006_produtos_base.sql",
+      "offset": 4
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_ativo",
+      "source": "006_produtos_base.sql",
+      "offset": 5
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_grupo",
+      "source": "006_produtos_base.sql",
+      "offset": 6
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_marca",
+      "source": "006_produtos_base.sql",
+      "offset": 7
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_unidade",
+      "source": "006_produtos_base.sql",
+      "offset": 8
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "006_produtos_base.sql",
+      "offset": 13
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "006_produtos_base.sql",
+      "offset": 14
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "007_produtos_master_data.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "uq_produtos_group_codigo_barras",
+      "source": "007_produtos_master_data.sql",
+      "offset": 1
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_codigo_barras",
+      "source": "007_produtos_master_data.sql",
+      "offset": 2
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_tipo_item",
+      "source": "007_produtos_master_data.sql",
+      "offset": 3
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_status",
+      "source": "007_produtos_master_data.sql",
+      "offset": 4
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "idx_produtos_setor",
+      "source": "007_produtos_master_data.sql",
+      "offset": 5
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "obras",
+      "name": "obras",
+      "source": "012_obras.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_scope",
+      "source": "012_obras.sql",
+      "offset": 6
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_status",
+      "source": "012_obras.sql",
+      "offset": 7
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_updated",
+      "source": "012_obras.sql",
+      "offset": 8
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "obras",
+      "name": "idx_obras_nome",
+      "source": "012_obras.sql",
+      "offset": 9
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "obras",
+      "name": null,
+      "source": "012_obras.sql",
+      "offset": 10
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "obras",
+      "name": null,
+      "source": "012_obras.sql",
+      "offset": 11
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "tabelas_preco",
+      "name": "tabelas_preco",
+      "source": "013_tabelas_preco.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "uq_tabelas_preco_origem_nome_ativo",
+      "source": "013_tabelas_preco.sql",
+      "offset": 1
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_scope",
+      "source": "013_tabelas_preco.sql",
+      "offset": 7
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_updated",
+      "source": "013_tabelas_preco.sql",
+      "offset": 8
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_nome",
+      "source": "013_tabelas_preco.sql",
+      "offset": 9
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "tabelas_preco",
+      "name": "idx_tabelas_preco_vigencia",
+      "source": "013_tabelas_preco.sql",
+      "offset": 10
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "tabelas_preco",
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "offset": 11
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "tabelas_preco",
+      "name": null,
+      "source": "013_tabelas_preco.sql",
+      "offset": 12
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "orcamentos",
+      "name": "orcamentos",
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "orcamentos",
+      "name": "idx_orcamentos_scope_page",
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 4
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamentos",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 5
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamentos",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 6
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "orcamento_itens",
+      "name": "orcamento_itens",
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 8
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "orcamento_itens",
+      "name": "idx_orcamento_itens_scope",
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 12
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamento_itens",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 13
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamento_itens",
+      "name": null,
+      "source": "016_orcamentos_comercial_360.sql",
+      "offset": 14
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "pedidos",
+      "name": "pedidos",
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "idx_pedidos_scope_page",
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 4
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "idx_pedidos_entrega",
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 5
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "idx_pedidos_cliente",
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 6
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 7
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 8
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "pedido_itens",
+      "name": "pedido_itens",
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 10
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedido_itens",
+      "name": "idx_pedido_itens_scope",
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 14
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedido_itens",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 15
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedido_itens",
+      "name": null,
+      "source": "017_pedidos_comercial_360.sql",
+      "offset": 16
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "offset": 3
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "setores_atividade",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "offset": 4
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "setores_atividade",
+      "name": "uq_setores_atividade_group_codigo",
+      "source": "038_cadastros_codigo_registro.sql",
+      "offset": 5
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "offset": 6
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "unidades_medida",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "offset": 7
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "unidades_medida",
+      "name": "uq_unidades_medida_group_codigo",
+      "source": "038_cadastros_codigo_registro.sql",
+      "offset": 8
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "grupos_produto",
+      "name": null,
+      "source": "038_cadastros_codigo_registro.sql",
+      "offset": 9
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "orcamentos",
+      "name": null,
+      "source": "039_orcamentos_tabela_preco.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "oportunidades",
+      "name": "oportunidades",
+      "source": "040_crm_oportunidades.sql",
+      "offset": 2
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "uq_oportunidades_legacy_scope",
+      "source": "040_crm_oportunidades.sql",
+      "offset": 3
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "idx_oportunidades_page",
+      "source": "040_crm_oportunidades.sql",
+      "offset": 4
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "idx_oportunidades_cliente",
+      "source": "040_crm_oportunidades.sql",
+      "offset": 5
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "oportunidades",
+      "name": "uq_oportunidades_pedido_canonico",
+      "source": "040_crm_oportunidades.sql",
+      "offset": 6
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "oportunidades",
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "offset": 13
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "oportunidades",
+      "name": null,
+      "source": "040_crm_oportunidades.sql",
+      "offset": 14
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "uq_produtos_id_group_scope",
+      "source": "041_produto_empresas_operacao.sql",
+      "offset": 0
+    },
+    {
+      "kind": "CREATE_TABLE",
+      "table": "produto_empresas",
+      "name": "produto_empresas",
+      "source": "041_produto_empresas_operacao.sql",
+      "offset": 1
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produto_empresas",
+      "name": null,
+      "source": "041_produto_empresas_operacao.sql",
+      "offset": 2
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produto_empresas",
+      "name": null,
+      "source": "041_produto_empresas_operacao.sql",
+      "offset": 3
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "offset": 1
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "offset": 2
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "offset": 3
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "offset": 4
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "produtos",
+      "name": null,
+      "source": "043_legado_identidade_compartilhada.sql",
+      "offset": 5
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "produtos",
+      "name": "produtos_legacy_identity_uidx",
+      "source": "043_legado_identidade_compartilhada.sql",
+      "offset": 8
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "offset": 0
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "offset": 1
+    },
+    {
+      "kind": "ALTER_TABLE",
+      "table": "pedidos",
+      "name": null,
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "offset": 2
+    },
+    {
+      "kind": "CREATE_INDEX",
+      "table": "pedidos",
+      "name": "uq_pedidos_idempotency_scope",
+      "source": "044_pedidos_idempotencia_direta.sql",
+      "offset": 3
+    }
+  ],
+  "canApply": false,
+  "completeMigration": false,
+  "requiresFreshBackupIsolatedRestoreAndReview": true,
+  "preserveExistingEight": true
+}

@@ -1,3 +1,57 @@
+## Delta por objeto preparado e publicado para revisao (2026-11-14)
+
+HeartbeatNATIVO20:59:15.645Z, CASA/CPA, base33ad0fad/remotoigual/limpo/semwriter;
+reserva594/6884121430, artefatossanitizados594/6884254342, travaCreateNew.
+CI7135/run43640168390 do33ad0fadSUCCESSterminal. Semrepetir pacote81/CI7114.
+
+Comparacao faltante de cliente_empresas/cliente_locais/condicoes_pagamento:
+74colunasobservadas/73esperadas, sem ausencias/diferencas de tipo/nulabilidade;
+extra cliente_empresas.condicao_pagamento_id PRESERVADO. Defaultsnaodeclarados
+equivalentes.2policies/18indices/34constraints/9triggers existentespreservados.
+Recibos somente metadata READONLY/ROLLBACK privados naVPS:metadata-three-fk-columns,
+metadata-three-fk-dependencies e metadata-three-fk-diff-20261114.private.json,
+owner/modeprivadosconferidos; leasespropriasliberadas eausenciacomprovada.
+Zero conteudoregistros/escritadenegocio/backup/DDL/grants/journal/deploy.
+
+PROPOSTA real porobjetos gerada de18fontesSQLcanonicas:225objetos classificados,
+101clausulasaditivasincluindo12CREATE de relacoes comprovadamenteausentes.
+124objetos/dependencias separados para revisao:funcoes/triggers/policies,
+condicionais,acesso,remocoes/dados ealteracoes emrelacoesexistentes. Naoomitidos.
+Naoe migrationcompleta ou autorizacaodeaplicar; nenhuma relacaoexistente e
+alterada por esta proposta de objetosausentes. GuardRAISEincondicional+ROLLBACK.
+Fixtures do tokenizer:quoted/dollarquoted/nestedcomments/unclosed; asserts de
+12alvos exatos/zerorelacaoexistente/zeroDML/DROP/GRANT/COMMIT; NAO provaPostgres.
+
+Doisartefatos de CODIGO SANITIZADOS em docs/evidence, nao ligados aoruntime ou
+migrator: hml-missing-object-additive-20261114.proposal.sql e
+hml-object-review-matrix-20261114.json. Semconfig/IDprivado/snapshotPG/dados.
+18fontesconferidas contra blobsGitRAW/LF, hashes de fonte/statement explicitos;
+SQLpublico normalizaLF/linhasbrancas, preservaoriginalprivado e linhasnaovazias.
+SHA256SQLpublico8f30eda04b5a2b59a4076cec328e08550ba86a1002405785172209f99e07eec1;
+matriz5ce1b07fe4abdcb64e1937f9219c36a883446724022c52211c5afe45f59d3a6e.
+PlanoPRIVADOexistente versao8/SHA256
+d81e193fe4d54044dcd619b5cb13599b2450e9fa058cb40bca0f8ddc694567a1,
+canApplyfalse. Artifact/6contratos/gatedcommands intactos, versoesanteriores
+preservadas. Proposta anterior3clausulasprivada permaneceguardada/naoaplicada.
+
+Independente: deltaCursor802ea50a revisado por funcoesREAIS notifyCentralSelect
+OrcamentosTab/PedidoCanonicoPanel com fixtures:lookup/metadatafixada/idincognito/
+null/handlerausente/epoch/inputsintactos PASS. Parecer limitado diretamente596;
+NAO Reactmontado/browserAPI/PG ou aceiteglobal deCentral/conversao/persistencia.
+Nenhuma branchCursor/Empresa editada. HMLcontinua d054e2b3, nao81.
+
+GATE REAL restante: revisao independente dosartefatos eoverlayemcopiarestaurada,
+backupfresco+ackexterno/reversao/janela/autorizaçao especifica. Proposta nao deve
+ser completada porinferenciasobre dadosou controlescustom. CanalCasa adminWeb
+Console funciona, mas naoha ferramentaHostinger/SFTP disponibilizada nemsessao
+SFTPaberta; chavesCasaja recusadas, sem repeticao/troca/grants. Nao publicar
+archiveprivado/proxy/token paracontornar. Intervencaominima: abrir nesta maquina
+uma sessao deTRANSFERENCIAprivada jaautorizada para aVPS, sem credenciaisnochat,
+para enviar SOMENTE runtime-81d1e849-native-transport.tar.gz (4021749bytes,
+SHA1fcdf8501502256d797190752ba23a570073fb2fcfb20be58b14d3e4d53af8d3)
+a raizHMLprivada existente, com verificacao de destino/lease/nooverwrite/0600.
+Isso naoautoriza aplicarSQL/carga/deploy. Fila retomavel preparada; pausar mesma
+automacao se nao houver itemindependente executavel, sempollingdeparecer.
 ## Proposta estrutural especifica preparada sem aplicar (2026-11-14)
 
 HeartbeatNATIVO20:41:15.274Z, CASA/CPA, base56551aa2/remotoigual/checkoutlimpo/
