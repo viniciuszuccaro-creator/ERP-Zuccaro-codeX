@@ -7,10 +7,16 @@ Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
 fidelidade; 40 PASS não autoriza peel “integral”. Fora: Backend/Dashboard/docs.
 Candidata freeze **`197bbc090`**. HEAD docs `adca97468` CI SUCCESS. tip ≠ HML. Sem implantar.
 
+## Cursor — PR596 Casa revisa openDraft e20e66 (2026-11-14 America/Sao_Paulo)
+
+Casa #6882561298: revisão montada produtor+consumidor do tip `e20e66a06`
+(docs HEAD `36e5414de`). Cursor **não duplica** nem edita Completo/Revisao neste
+heartbeat. Candidata freeze **`e20e66a06`** CI SUCCESS. tip ≠ HML. Sem VPS/DB.
+
 ## Cursor — PR596 tip e20e66a06 CI SUCCESS openDraft A→B (2026-11-14 America/Sao_Paulo)
 
 Candidata freeze **`e20e66a06`** CI SUCCESS (43628531520). Fecha #6882444389.
-Port: 5 paths + Revisao + binding Completo/payload. tip ≠ HML `d054e2b3`. Sem deploy.
+Port: 5 paths + Revisao + binding. tip ≠ HML `d054e2b3`. Sem deploy.
 
 ## Cursor — PR596 6º path ClienteLocaisRevisao liberado (2026-11-14 America/Sao_Paulo)
 

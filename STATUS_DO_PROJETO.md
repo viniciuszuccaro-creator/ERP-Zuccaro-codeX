@@ -10,7 +10,8 @@
 
 Fix: Revisao congela identidade; `canApplyClienteLocalReviewDraftToForm`; prev.id.
 **Port Casa:** 5 paths + `ClienteLocaisRevisao.jsx` + binding Completo/payload/peels/pins
-deste tip. Sem deploy.
+deste tip. Casa #6882561298 revisa montagem produtor+consumidor — Cursor não
+duplica/edita Completo neste heartbeat. Sem deploy.
 
 ## Cursor — PR596 openDraft revisão A→B binding (2026-11-14 America/Sao_Paulo)
 
