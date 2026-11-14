@@ -1,3 +1,12 @@
+## Cursor — PR595/596 batch HTTP + Seletor snapshot (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. PR595 `f6bfffacf` / PR596 `210720577`.
+- Port isolado `clienteLocalBatchHttp` (`snapshotLocais`/`syncLocais`) + peels purpose
+  (contrato Codex `da98af346` / Continuity CI7015) — sem merge cego Continuity.
+- Seletor Bugbot high: `listSnapshotRef` {binding,epoch,items}.
+Completo/Logistica ainda não gravam via batch (activate explícito no próximo hunk).
+Sem HML.
+
 ## Cursor — PR595/596 Seletor listSnapshot (Bugbot high) (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. PR595 `eb542ae3b` / PR596 `ba985a5d4`.
