@@ -1,3 +1,33 @@
+## Revisao montada FormasPagamentoPedido (2026-11-14,22:08UTC)
+
+Heartbeatnativo22:08:17.004Z, Casa/CPA, base5b37a9d5 localremotoiguais/limpo,
+semwriter; reserva594/6884971645 e travaCreateNew propria. CursorHEADatual
+c5eeff8c3d4eff28d07e4b1fc1933efd255004ab; FormasPagamentoPedido blobinalterado
+desde e6a5b44aa. Parecer596/6884971427, semeditarUI/branchCursor/Empresa.
+
+ComponenteREAL React/hooks/useEffect MONTADO noChromeheadlessisolado; fixtures
+hookformas/props/folhasUI, handlersSelect reais e callbacks observados.11/11PASS:
+mountsalvo preservado; valorTotal semintencao preserva; primeiroresolvevazio nao
+inventa datas; hydrate tardio preserva e seleciona2; mudar numero gera3uma vez;
+feedback pai nao regenera; vazio+intencao gera2; escolherDinheiro limpauma vez;
+cronogramaB salva novo numero semcallback; loading e resolucao preservamdatas.
+Chrome filho encerrado, servidorloopback fechado. Harness/recibo privado
+review-payment-c5ee-mounted.mjs/.result.private.json foraGit. Nenhuma API/PG,
+sessaoreal, dado real ou escrita negocio; nao e navegador/API/PGintegrado.
+
+LIMITE: gitgrep noHEAD nao encontra consumidorativo/import/JSX de
+FormasPagamentoPedido, apenas arquivo e mencaoCentralVendas360Shell. Aceite
+FOCAL de componente nao comprova jornada comercialconectada; nao inventarconsumidor
+ou declarar carga/deploy/aceiteglobal. Semachadonovo nos11casos. Codigo/runtime
+Casa ded54af4/CI7145 e HMLd054e2b3/pacote81/planov9canApplyfalse intactos.
+
+PROXIMO ITEM existente INDEPENDENTE: revisar PedidoCanonicoPanel delta
+f2d92ec9c (hydrateEpoch/GETatrasado), resolverHEADatual e compararfonte antes de
+provaReactreal, com fixtures seguras e contratos existentes. Cursor donoUI;
+Codex revisao/port soaposaceite. Mesmaautomacao15min ACTIVE com esseitemexecutavel;
+SFTP perguntaunica pendente, DDL/backup/restore/carga/deploy ainda gatesseparados.
+Quando fila concreta se esgotar e restaracesso/revisao, PAUSARsem pollingvazio.
+
 ## Revisao independente Dashboard Produtos/Producao e Estruturantes (2026-11-14)
 
 Heartbeat nativo21:53:16.677Z, Casa/CPA, base ded54af4 local/remoto iguais,
