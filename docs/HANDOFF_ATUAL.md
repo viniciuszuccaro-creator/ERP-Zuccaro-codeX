@@ -1,3 +1,56 @@
+## Proposta estrutural especifica preparada sem aplicar (2026-11-14)
+
+HeartbeatNATIVO20:41:15.274Z, CASA/CPA, base56551aa2/remotoigual/checkoutlimpo/
+semwriter, reserva594/6883905886 e travaCreateNew. CI7130/run43638477363 do56551aa2
+SUCCESSterminal. Leitura adicional SOMENTE metadata,helper existente/hash/pins/
+lease+flock/READONLY/ROLLBACK. Sem conteudo de registros, escrita de negocio,
+backup/grants/DDL/journal/deploy. Leases proprias liberadas/ausencia comprovada.
+
+Comparacao real das5relacoes preservadas:76colunas observadas/73canonicas;
+2ausentes(marcas.codigo/codigo_origem), tipos comuns compativeis, contatos
+nullableYES/defaultNULL divergente045.5extras de clientes PRESERVADOS:rg,
+numero_caixa_postal,cep_caixa_postal,caixa_postal_cobranca,inscricao_produtor_rural.
+4policiesCUSTOM existem,21indices/8triggers/17constraints preservados; nao aplicar
+042ouDROP de trigger/funcoes por nome sem revisar equivalencia. Defaults outros
+nao declarados equivalentes. Snapshotdefs privados metadata-baseline-five,
+metadata-baseline-dependencies e metadata-five-diff-20261114.private.json.
+
+Arquivo PRIVADO hml-existing-five-additive.proposal.sql preparado: somente2
+ADD COLUMNnullable de marcas canonicos038 eDEFAULT[] FUTURO decontatos.
+RAISEincondicional+ROLLBACK impedem aplicar por acidente. Sem NOTNULL/backfill,
+renumerar/copy/droparcampos/grants/policies/journal.1positivo/8mutaçõesperigosas
+rejeitadas em validacaoESTATICA; NAO provaPostgres/restore. SHA256proposta
+24ca71c2a9e5a611d255d29a332e20f5c92ab93f99f8168ca955633f1a6fba1c.
+Revisao cruzada solicitada594/6884039138 e comentario seguinte com3clausulas
+exatas sanitizadas; solicitacao nao eaprovacao. NOTNULL exige prova autorizada de
+conteudo; nunca substituir NULL por[] ou inferircorrecao sem fonte.
+
+FKs derivadas da fonte consultadas limitadamente:cliente_empresas/cliente_locais/
+condicoes_pagamento PRESENTES(RLS+FORCE);obras/tabelas_preco AUSENTES. Recibo
+privadoVPS metadata-expansion-fk-20261114.private.json SHA256
+66e586e8fa20dc12891e01a1368a65682a4b2c255730952132b6b11dffcc09d5.
+Grafo dosCREATEINICIAIS de12relacoes faltantes fechado/ordenavel,12fontes pinadas.
+NAO e schemafinal: ALTERs/triggers/policies/funcoes/compositeuniques ainda precisam
+revisao eoverlayisolado; definicoes das3relacoes existentes adicionais naocomparadas.
+Plano privado EXISTENTE evoluiu versao5/SHA256
+d82e4041e18256180019d6ba513590d30bfd8dee2e9391ececa4f31c9fe0b1a0,
+canApplyfalse. Artifact/6contratos/gatedcommands anteriores intactos porasserts;
+planos anteriores preservados. Pacote81/CI7114 semrebuild; HMLsegue d054e2b3.
+
+Independente: novoCursor596/4c65d69a revisado, CI7131SUCCESS. ResiduoProdutoLOCAL
+FECHADO: queryFnProduto+runLocalEntityCounts+matcher+resolveHttpPilotEntities reais
+com fixtures/scope sinteticos retorna1ativo,Produto continuaFORApiloto. Cliente
+queryFn→bridge→HTTPadapter→policy/fetchsintetico preservou positivos/negativos
+anteriores. ProvaNAOReactmontado/navegadorAPI/PG, naoaceiteglobal ouportDashboard.
+Parecer diretamente596/6883992762, nenhumarquivoCursor/Empresa editado.
+
+ProximoCodex: comparar APENAS defs faltantes das3relacoes-FK existentes e fechar
+deltaADITIVO por objetos das12ausentes, reutilizando fontes/pins/recibos. Nao
+reaplicar34migrations, apagarcustomRLS outriggers, inserirjournal, backfill ouDDL.
+Testes/compilacaoFORAVPS; overlayreal depende debackupfresco+restoreisolado/ack/
+revisao/janela/autorizaçao. Transporteprivado+ackexterno ainda semcanalcomprovado;
+naocriarproxy/publicararchive/tokens ou mudarSSH. Preparar intervencao unica se
+nenhum item independente liberado restar. Mesmaautomacao, sempollingvazio.
 ## Preflight estrutural HML concluido e plano privado conciliado (2026-11-14)
 
 Heartbeat NATIVO20:26:14.914Z, CASA/CPA, c9265daf local/remoto/limpo/semwriter;
