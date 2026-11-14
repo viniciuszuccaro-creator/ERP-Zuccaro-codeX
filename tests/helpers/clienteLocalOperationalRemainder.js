@@ -108,12 +108,12 @@ export function clienteLocalOperationalRemainder(file, text) {
             ? \`Cliente \${verb} — locais via legado (overflow >50 ops)\`
             : \`Cliente \${verb} — locais via fallback não atômico\`,
           description: (ops > 0
-            ? \`MASTER gravado; \${ops} operação(ões) de endereço em path legado\`
+            ? \`MASTER gravado; \${ops} operação(ões) de endereço em path legado (BATCH_ATOMIC=false)\`
               + (reason ? \` (\${reason})\` : '')
-              + '. Não é atomicidade integral.'
-            : \`MASTER gravado; sync de endereços sem operações no path legado\`
+              + '. não é salvamento integral nem atomicidade MASTER+locais.'
+            : \`MASTER gravado; sync de endereços sem operações no path legado (BATCH_ATOMIC=false)\`
               + (reason ? \` (\${reason})\` : '')
-              + '.')
+              + '. não é salvamento integral.')
             + recover,
           variant: 'default',
         });

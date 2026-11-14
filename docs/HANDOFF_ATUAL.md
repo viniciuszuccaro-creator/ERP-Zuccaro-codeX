@@ -1,6 +1,14 @@
+## Cursor — PR596 toast pin «não é salvamento integral» + BATCH_ATOMIC=false (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+CI FAIL tip P1/Bugbot: pins `cliente-contatos-limitacao-591` / `contato-b2b-tenant-591`
+exigiam `BATCH_ATOMIC=false` + `/não é salvamento integral/` no Completo.
+Toast legado overflow/fallback restaurado; peel operacional alinhado. tip ≠ HML `d054e2b3`.
+CI **em curso ≠ aprovado**.
+
 ## Cursor — PR596 PARTIAL carimba create (Bugbot High) (2026-11-14 America/Sao_Paulo)
 
-Tip `4794b3285`: `reconcileClienteLocaisDraftAfterPartial` carimba id/codigo dos creates
+Tip `4794b3285`/`78747d453` (histórico): `reconcileClienteLocaisDraftAfterPartial` carimba id/codigo dos creates
 ok; pendências sem id ficam; baseline listLocais; retry sem duplicar/soft-delete.
 HML `d054e2b3` ≠ tip. CI tip **em curso ≠ aprovado**. PROXIMO: CI; composição Codex.
 

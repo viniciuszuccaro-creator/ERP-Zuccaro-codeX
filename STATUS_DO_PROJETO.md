@@ -1,15 +1,21 @@
-## Cursor — PR596 Bugbot PARTIAL carimba create no rascunho (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 toast pin BATCH_ATOMIC + «não é salvamento integral» (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico)
 | Ref | Tip | CI |
 |-----|-----|-----|
-| PR595 | `b5862fc53` | **SUCCESS** (CASA 11 testes focais) |
-| PR596 | **este lote** (após push) | CI **em curso ≠ aprovado** |
+| PR595 | `b5862fc53` | **SUCCESS** (histórico CI7053 / CASA) |
+| PR596 | **este lote** (toast pin após push) | CI **em curso ≠ aprovado** |
+| Tips anteriores 596 | `4794b3285`/`78747d453` | CI **em curso / histórico FAIL** nos tips P1 toast — não confundir com resultado deste tip |
 | **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Executor: Cursor. Bugbot High: retry PARTIAL recriava creates sem id e soft-deletava o persistido.
-`reconcileClienteLocaisDraftAfterPartial`: carimba `id`/`codigo` dos creates ok (ordem das ops); pendências sem id ficam; baseline via listLocais; não substitui rascunho por mapped puro.
-Testes + peels PASS.
+Executor: Cursor. CI frontend FAIL em tips P1/Bugbot: pin exigia `BATCH_ATOMIC=false` + `/não é salvamento integral/` no Completo.
+Toast legado overflow/fallback restaurado com ambas as frases (minúsculo «não é…»); peel operacional alinhado.
+Suites: `cliente-contatos-limitacao-591`, `contato-b2b-tenant-591`, sync/operacional locais — PASS.
+
+## Cursor — PR596 Bugbot PARTIAL carimba create no rascunho (2026-11-14 America/Sao_Paulo)
+
+Tip `4794b3285`/`78747d453` (histórico deste fio): carimba `id`/`codigo` dos creates ok no PARTIAL; baseline via listLocais; não substitui rascunho por mapped puro.
+HML `d054e2b3` — tip ≠ HML. CI tip **em curso ≠ aprovado** (não declarar SUCCESS prematuro).
 
 ## Cursor — PR596 P1 PARTIAL preserva rascunho (2026-11-14 America/Sao_Paulo)
 
