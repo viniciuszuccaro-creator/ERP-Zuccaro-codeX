@@ -117,14 +117,14 @@ API/web HML com rede separada e HTTPS dedicado. DNS hml-erp ainda nao comprovado
 Login real, RBAC HTTP, UI e backup automatico/retencao permanecem abertos.
 Nao reiniciar Codespace, importar clientes nem reexecutar restore.
 
-## Cursor — alinhamento + lote UI pós-594 / endereços (2026-11-14 America/Sao_Paulo)
+## Cursor — endereços operacionais / rascunho revisão (2026-11-14 America/Sao_Paulo)
 
-Identidade: Cursor. Base Continuity `7fa37aaf` / runtime HML `d054e2b3`.
-Tip UI `34632aef7` CI SUCCESS; rebase sobre Continuity tip. Reservas Cursor:
-Completo / ClienteLocaisRevisao / GerenciarEnderecos / seletor comercial.
-Reservas Codex: HML/Auth/backup. Próximo: diferenciar mensagens operacional vs
-revisão; abrir rascunho de revisão no formulário canônico; seletor de locais
-operacionais no orçamento/pedido. Sem escrita HML/perfil/dados reais.
+Identidade: Cursor. Base Continuity `7fa37aaf` / HML runtime `d054e2b3`.
+Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595). Reservas: Completo,
+ClienteLocaisRevisao, GerenciarEnderecos, SeletorEnderecoEntregaPedido, peels.
+Entregue: mensagens diferenciadas; rascunho revisão→form canônico sem gravar;
+seletor operacional HTTP; RBAC cliente_local. Sem escrita HML/perfil/dados.
+Próximo verificável: CI tip; aceite com SHA API/web Codex; Central360 jornada.
 
 
 ## Recuperacao final e restore HML - checkpoint executado (2026-11-14)

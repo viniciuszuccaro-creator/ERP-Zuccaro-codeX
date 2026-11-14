@@ -720,7 +720,7 @@ export default function PainelDinamicoCliente({ cliente: clienteProp, isOpen, on
                   ) : (
                     <div className="text-center py-8 text-slate-500">
                       <MapPin className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <p className="text-sm">Nenhum endereço cadastrado</p>
+                      <p className="text-sm">Nenhum endereço operacional listado neste painel</p>
                     </div>
                   )}
 

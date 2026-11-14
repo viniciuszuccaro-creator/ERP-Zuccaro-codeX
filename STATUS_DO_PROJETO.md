@@ -57,13 +57,22 @@ nenhum seed/carga/reativacao. Recursos/recibos privados no HANDOFF.
 Gates finitos: publicar/CI do WIP -> pacote limpo/APIweb -> HTTPS/DNS ->
 Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
 
-## Cursor pós-594 — extras MASTER UI + endereços operacionais (2026-11-14)
+## Cursor — endereços operacionais + rascunho de revisão (2026-11-14)
 
-Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` composta sobre
-Continuity tip `7fa37aaf` / runtime HML `d054e2b3` (PR594). Tip UI anterior
-`34632aef7` CI6971 SUCCESS. Lote extras MASTER + Relatórios gate preservado.
-Próximo: mensagens e fluxo operacional de locais (revisão ≠ operacional;
-seleção no orçamento/pedido). Sem HML/DDL/carga; 1500 ensaio intactos.
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` sobre Continuity
+`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados.
+
+Lote UI endereços (sem HML/DDL/carga; 1500 ensaio intactos):
+- Mensagens: operacional vs revisão vs negado vs falha; sem zero falso;
+- `GerenciarEnderecos`: só `cliente_local.*` (não `Cliente.editar`);
+- `ClienteLocaisRevisao`: abrir rascunho no formulário canônico (não grava/ativa);
+- Fiscal: preenche só campos operacionais vazios; não sobrescreve manual;
+- `SeletorEnderecoEntregaPedido`: listLocais ativos+ENTREGA+id canônico;
+- peels Continuity + testes sintéticos (incl. review mounted PASS).
+
+Limitações: ativação real do local inativo no BFF permanece no save canônico
+Codex; aceite HML combina API/web. Próximo: Cliente360 rich + jornada Central360
+itens/pagamento; canais sem bloquear cadastro.
 
 
 ## HML atual recuperada e restaurada isoladamente (2026-11-14)

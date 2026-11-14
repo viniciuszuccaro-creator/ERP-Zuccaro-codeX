@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { HTTP_CONTEXT_CHANGED, readErpHttpSession } from '@/api/erpHttpSession';
 import usePermissions from '@/components/lib/usePermissions';
+import { mapClienteLocalToUiEndereco } from '@/api/clienteHttpPayload';
 
 const sameSession = (a, b) => Boolean(a?.token && b?.token)
   && ['token', 'actorId', 'groupId', 'empresaId'].every(key => a[key] === b[key]);
@@ -11,14 +12,23 @@ const fields = [
   ['referencia', 'Referencia'],
 ];
 
-// Consulta separada do rascunho operacional: nenhum callback de escrita ou selecao.
-export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, finalidade }) {
-  const { hasPermission } = usePermissions();
-  const allowed = hasPermission('Cadastros', 'cliente_local', 'visualizar') === true;
+/**
+ * Consulta de revisão (inativos). Abrir rascunho NÃO grava nem ativa —
+ * só devolve mapeamento ao formulário canônico via onOpenDraft.
+ */
+export default function ClienteLocaisRevisao({
+  clienteId, groupId, empresaId, finalidade, onOpenDraft = null, onReviewMeta = null,
+}) {
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canView = hasPermission('Cadastros', 'cliente_local', 'visualizar') === true;
+  const canDraft = hasPermission('Cadastros', 'cliente_local', 'editar') === true
+    || hasPermission('Cadastros', 'cliente_local', 'criar') === true;
   const session = readErpHttpSession();
   const purposeValid = finalidade === 'FISCAL' || finalidade === 'ENTREGA';
-  const valid = purposeValid && allowed && session?.token && session.groupId === groupId
-    && (session.empresaId || null) === (empresaId || null) && Boolean(clienteId);
+  const scopeOk = Boolean(session?.token && session.groupId === groupId
+    && (session.empresaId || null) === (empresaId || null) && Boolean(clienteId));
+  const allowed = !permissionsLoading && canView;
+  const valid = purposeValid && allowed && scopeOk;
   const [revision, setRevision] = useState(0);
   const [offset, setOffset] = useState(0);
   const [state, setState] = useState(null);
@@ -62,18 +72,46 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, fi
       return snapshot.session;
     } });
     api.clientes.listLocaisReviewPage(clienteId, { offset, finalidade, signal: controller.signal })
-      .then(page => { if (isCurrent()) setState({ page, snapshot, offset, revision }); })
-      .catch(() => { if (isCurrent()) setState({ error: true, snapshot, offset, revision }); });
+      .then(page => {
+        if (!isCurrent()) return;
+        setState({ page, snapshot, offset, revision });
+        if (typeof onReviewMeta === 'function' && Number.isSafeInteger(page?.meta?.total)) {
+          onReviewMeta({ finalidade, total: page.meta.total, error: false });
+        }
+      })
+      .catch(() => {
+        if (!isCurrent()) return;
+        setState({ error: true, snapshot, offset, revision });
+        if (typeof onReviewMeta === 'function') onReviewMeta({ finalidade, total: null, error: true });
+      });
     return () => { controller.abort(); epoch.current++; };
   }, [clienteId, groupId, empresaId, session?.token, session?.actorId, allowed, offset, revision, valid, finalidade]);
   const visible = valid && state?.snapshot.clienteId === clienteId
     && state.snapshot.groupId === groupId && state.snapshot.empresaId === empresaId
     && state.snapshot.finalidade === finalidade && sameSession(state.snapshot.session, session) && state.offset === offset && state.revision === revision;
+
+  const openDraft = (row) => {
+    if (typeof onOpenDraft !== 'function' || !canDraft) return;
+    // Rascunho no formulário canônico — não ativa, não PATCH.
+    onOpenDraft({
+      finalidade,
+      local: row,
+      ui: mapClienteLocalToUiEndereco(row),
+    });
+  };
+
   if (!clienteId) return null;
-  return <section className="mt-6 border-t pt-4" aria-label={finalidade === 'FISCAL' ? 'Fiscal em revisao' : 'Entrega em revisao'}>
+
+  let gateMessage = null;
+  if (permissionsLoading) gateMessage = 'Carregando permissões de locais…';
+  else if (!canView) gateMessage = 'Leitura negada: falta Cadastros.cliente_local.visualizar.';
+  else if (!scopeOk) gateMessage = 'Leitura indisponível neste contexto (sessão/grupo/empresa).';
+  else if (!purposeValid) gateMessage = 'Finalidade de revisão inválida.';
+
+  return <section className="mt-6 border-t pt-4" aria-label={finalidade === 'FISCAL' ? 'Fiscal em revisao' : 'Entrega em revisao'} data-revisao-total={visible && !state.error ? state.page.meta.total : undefined}>
     <h3 className="text-sm font-semibold">{finalidade === 'FISCAL' ? 'Endereco fiscal recuperado - em revisao' : 'Enderecos de entrega recuperados - em revisao'}</h3>
-    <p className="text-xs text-gray-600">{finalidade === 'FISCAL' ? 'Finalidade fiscal registrada no local. A ordem da lista nao define o principal.' : 'Somente locais com finalidade de entrega registrada. Endereco unico ou igual ao fiscal nao e classificacao automatica.'} Inativos e somente leitura; nao alteram os campos operacionais.</p>
-    {!valid ? <p role="alert">Leitura indisponivel neste contexto ou sem permissao.</p>
+    <p className="text-xs text-gray-600">{finalidade === 'FISCAL' ? 'Finalidade fiscal registrada no local. A ordem da lista nao define o principal.' : 'Somente locais com finalidade de entrega registrada. Endereco unico ou igual ao fiscal nao e classificacao automatica.'} Inativos e somente leitura na lista; abrir rascunho nao grava nem ativa.</p>
+    {gateMessage ? <p role="alert">{gateMessage}</p>
       : !visible ? <p role="status">Carregando revisao...</p>
       : state.error ? <p role="alert">Nao foi possivel consultar os locais. Nenhum total confirmado.</p>
       : <>
@@ -87,6 +125,22 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, fi
               {fields.map(([key, label]) => <div key={key}><dt className="inline font-medium">{label}: </dt><dd className="inline">{row[key] === null || row[key] === undefined || row[key] === '' ? 'Nao informado / pendente' : String(row[key])}</dd></div>)}
             </dl>
             <p className="text-xs">Origem: {row.origem || 'Nao informada'}; sistema: {row.source_system || 'Nao informado'}; ID legado: {row.legacy_id || 'Nao informado'}; lote: {row.migration_batch || 'Nao informado'}. Valores invalidos permanecem na evidencia privada.</p>
+            {typeof onOpenDraft === 'function' && (
+              <button
+                type="button"
+                className="mt-2 text-sm text-blue-700 underline disabled:opacity-50 disabled:no-underline"
+                disabled={!canDraft}
+                data-action="cliente-local-revisao-abrir-rascunho"
+                data-permission={canDraft ? 'Cadastros.cliente_local.editar' : undefined}
+                onClick={() => openDraft(row)}
+              >
+                {canDraft
+                  ? (finalidade === 'FISCAL'
+                    ? 'Abrir rascunho fiscal nos campos operacionais (não grava)'
+                    : 'Abrir rascunho de entrega no formulário (não grava)')
+                  : 'Sem permissão para rascunho (cliente_local criar/editar)'}
+              </button>
+            )}
           </li>)}
         </ul>
         <div className="flex gap-3 mt-3">

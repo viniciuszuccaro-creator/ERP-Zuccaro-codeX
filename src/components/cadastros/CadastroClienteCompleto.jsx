@@ -186,7 +186,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     updateInContext,
     deleteInContext
   } = useContextoVisual();
-  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
+  const { canCreate, canEdit, canDelete, hasPermission, isLoading: permissionsLoading } = usePermissions();
   const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || cliente?.group_id || null;
   const { isCurrent: isScopeCurrent, assertCurrent: assertScopeCurrent } = useCadastroFormScopeGuard(groupId, empresaAtual?.id);
   const isFormScopeCurrent = () => !editLoadBlockedRef.current && isScopeCurrent();
@@ -857,6 +857,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   /** Locais canônicos BFF — leitura; write via `/locais` no save (não MASTER). */
   const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));
+  /** loaded | loading | failed | denied | unknown — nunca exibir zero se falhou/desconhecido. */
+  const [locaisLoadStatus, setLocaisLoadStatus] = useState(/** @type {'loaded'|'loading'|'failed'|'denied'|'unknown'} */ ('unknown'));
+  const [revisaoEntregaTotal, setRevisaoEntregaTotal] = useState(/** @type {number|null} */ (null));
   /** Baseline lido para soft-delete só quando a carga HTTP concluiu (ref evita stale no mutate). */
   const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
   /** Último summary de sync `/locais` — BATCH_ATOMIC=false nunca vira toast de salvamento integral. */
@@ -872,6 +875,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     if (!id || !isHttpBackendMode) {
       setLocaisHttpView(undefined);
       locaisHttpBaselineRef.current = undefined;
+      setLocaisLoadStatus('unknown');
+      return undefined;
+    }
+    if (!hasPermission('Cadastros', 'cliente_local', 'visualizar')) {
+      setLocaisHttpView(undefined);
+      locaisHttpBaselineRef.current = undefined;
+      setLocaisLoadStatus(permissionsLoading ? 'loading' : 'denied');
       return undefined;
     }
     let cancelled = false;
@@ -879,8 +889,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     if (!session?.token || !session?.groupId) {
       setLocaisHttpView(undefined);
       locaisHttpBaselineRef.current = undefined;
+      setLocaisLoadStatus('unknown');
       return undefined;
     }
+    setLocaisLoadStatus('loading');
     (async () => {
       try {
         const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
@@ -891,16 +903,18 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         ));
         setLocaisHttpView(mapped);
         locaisHttpBaselineRef.current = mapped;
+        setLocaisLoadStatus('loaded');
       } catch {
         if (!cancelled) {
           setLocaisHttpView(undefined);
           // Carga falhou: não autoriza remoção por omissão.
           locaisHttpBaselineRef.current = null;
+          setLocaisLoadStatus('failed');
         }
       }
     })();
     return () => { cancelled = true; };
-  }, [clienteBoundId, cliente?.id]);
+  }, [clienteBoundId, cliente?.id, permissionsLoading, hasPermission]);
 
   const locaisViewForUi = Array.isArray(formData.locais_entrega)
     ? formData.locais_entrega
@@ -917,6 +931,63 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
   const applyEnderecosDraft = (novosEnderecos) => {
     setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
+  };
+
+  /** Revisão → rascunho canônico: não PATCH/ativar; cancelar = não chamar Salvar. */
+  const openLocalDraftFromReview = ({ finalidade, ui }) => {
+    if (!ui || typeof ui !== 'object') return;
+    if (finalidade === 'FISCAL') {
+      setActiveTab('dados-gerais');
+      setFormData((prev) => {
+        const cur = prev.endereco_principal && typeof prev.endereco_principal === 'object'
+          ? prev.endereco_principal
+          : {};
+        const fill = (key, next) => {
+          const current = cur[key];
+          const empty = current === undefined || current === null || String(current).trim() === '';
+          return empty && next !== undefined && next !== null && String(next).trim() !== '' ? next : current;
+        };
+        return {
+          ...prev,
+          endereco_principal: {
+            ...cur,
+            cep: fill('cep', ui.cep),
+            logradouro: fill('logradouro', ui.logradouro),
+            numero: fill('numero', ui.numero),
+            complemento: fill('complemento', ui.complemento),
+            bairro: fill('bairro', ui.bairro),
+            cidade: fill('cidade', ui.cidade),
+            estado: fill('estado', ui.estado),
+            // País: só preenche se operacional vazio e revisão trouxe valor — nunca inventa.
+            ...(fill('pais', ui.pais) !== cur.pais && ui.pais ? { pais: fill('pais', ui.pais) } : {}),
+          },
+        };
+      });
+      toast({
+        title: 'Rascunho fiscal carregado',
+        description: 'Campos operacionais vazios preenchidos a partir da revisão. Nada foi gravado — revise e Salve se for o caso. Dados manuais existentes preservados.',
+      });
+      return;
+    }
+    if (finalidade === 'ENTREGA') {
+      setActiveTab('enderecos');
+      setFormData((prev) => {
+        const list = Array.isArray(prev.locais_entrega)
+          ? prev.locais_entrega
+          : (Array.isArray(locaisHttpView) ? [...locaisHttpView] : []);
+        const id = String(ui.id || '').trim();
+        const without = id ? list.filter((row) => String(row?.id || '') !== id) : list;
+        // Rascunho operacional: marca origem revisão; ativo efetivo só no save canônico.
+        return {
+          ...prev,
+          locais_entrega: [...without, { ...ui, _rascunho_revisao: true, _fonte: 'cliente_locais_revisao' }],
+        };
+      });
+      toast({
+        title: 'Rascunho de entrega no formulário',
+        description: 'Local de revisão copiado para o rascunho operacional. Não foi ativado nem gravado — complete e Salve para validar.',
+      });
+    }
   };
 
   /** Gravação efetiva no backend (proprietário canônico de persistência deste cadastro). */
@@ -1416,7 +1487,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
                 <div className="col-span-2 pt-4 border-t">
                   <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>
-                  {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="FISCAL" />}
+                  {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="FISCAL" onOpenDraft={openLocalDraftFromReview} />}
                   <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="cep">CEP</Label>
@@ -1733,8 +1804,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
                 persistBusy={isSaving || saveMutation.isPending}
+                loadStatus={Array.isArray(formData.locais_entrega) ? 'loaded' : locaisLoadStatus}
+                reviewPendingHint={revisaoEntregaTotal}
               />
-              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" />}
+              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />}
             </TabsContent>
 
             <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">
