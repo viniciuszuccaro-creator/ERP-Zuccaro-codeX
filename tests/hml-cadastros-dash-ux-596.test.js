@@ -65,11 +65,13 @@ test('DashboardCorporativo: cards Ativos usam ativo HTTP + cap na lista bruta (B
   const corp = readFileSync('src/pages/DashboardCorporativo.jsx', 'utf8');
   assert.match(corp, /clientes-count-corp-ativos/);
   assert.match(corp, /produtos-count-corp-ativos/);
-  assert.match(corp, /dashboardAtivosCountFilter/);
+  assert.match(corp, /dashboardAtivosCountFilter\('Cliente'/);
+  assert.match(corp, /dashboardAtivosCountFilter\('Produto'/);
+  assert.match(corp, /resolveHttpPilotEntities/);
   assert.match(corp, /isDashboardCadastroAtivo/);
   assert.match(corp, /isCappedListUnreliable\(rawList\)/);
   assert.match(corp, /listCapped \? \[\] : rawList\.filter\(isDashboardCadastroAtivo\)/);
-  assert.doesNotMatch(corp, /status: 'Ativo',\s*\.\.\.\(estaNoGrupo/);
+  assert.doesNotMatch(corp, /ativo: true, status: 'Ativo'/);
 });
 
 test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {

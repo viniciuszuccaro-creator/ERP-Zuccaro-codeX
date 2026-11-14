@@ -100,13 +100,21 @@ test('lista no soft limit nao e confiavel e count tem prioridade', () => {
   assert.equal(dashboardCountSubtitle({ allowed: true, resolved: { fonte: 'indisponivel', confiavel: false } }), 'contagem indisponível ≠ zero');
 });
 
-test('cadastro ativo: HTTP ativo/ativa e legado status; filtro count envia ambos', () => {
+test('cadastro ativo: HTTP ativo/ativa e legado status; filtro count sem AND', () => {
   assert.equal(isDashboardCadastroAtivo({ ativo: true, status: 'Inativo' }), true);
   assert.equal(isDashboardCadastroAtivo({ ativo: false, status: 'Ativo' }), false);
   assert.equal(isDashboardCadastroAtivo({ status: 'Ativo' }), true);
   assert.equal(isDashboardCadastroAtivo({ status: 'Inativo' }), false);
   assert.equal(isDashboardCadastroAtivo({}), false);
-  assert.deepEqual(dashboardAtivosCountFilter(), { ativo: true, status: 'Ativo' });
+  assert.deepEqual(
+    dashboardAtivosCountFilter('Cliente', { httpPilotEntities: ['Cliente'] }),
+    { ativo: true },
+  );
+  assert.deepEqual(
+    dashboardAtivosCountFilter('Produto', { httpPilotEntities: ['Cliente'] }),
+    { status: 'Ativo' },
+  );
+  assert.deepEqual(dashboardAtivosCountFilter('Cliente'), { status: 'Ativo' });
 });
 
 test('kpis derivados e vendas mensais usam pedidos reais', () => {

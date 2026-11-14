@@ -94,11 +94,21 @@ export const isDashboardCadastroAtivo = (row) => {
 };
 
 /**
- * Filtro de count para cards "Ativos": HTTP mapeia `ativo`; local ainda lê `status`.
- * Não enviar só `status` — createCrudEntity Cliente ignora essa chave.
- * @returns {{ ativo: true, status: 'Ativo' }}
+ * Filtro de count para cards "Ativos".
+ * HTTP piloto: só `ativo` (createCrudEntity ignora `status`).
+ * Local/Base44: só `status: 'Ativo'` — AND com `ativo` zera linhas que só têm status.
+ * @param {string} entityName
+ * @param {{ httpPilotEntities?: Iterable<string> | Set<string> }} [opts]
+ * @returns {{ ativo: true } | { status: 'Ativo' }}
  */
-export const dashboardAtivosCountFilter = () => ({ ativo: true, status: 'Ativo' });
+export const dashboardAtivosCountFilter = (entityName, { httpPilotEntities } = {}) => {
+  const name = String(entityName || '').trim();
+  const pilots = httpPilotEntities instanceof Set
+    ? httpPilotEntities
+    : new Set(Array.isArray(httpPilotEntities) ? httpPilotEntities : [...(httpPilotEntities || [])]);
+  if (name && pilots.has(name)) return { ativo: true };
+  return { status: 'Ativo' };
+};
 
 /**
  * Contagem de KPI: count autoritativo > lista só se confiável.

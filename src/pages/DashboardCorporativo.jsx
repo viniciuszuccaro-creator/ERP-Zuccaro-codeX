@@ -42,6 +42,7 @@ import {
 } from "recharts";
 import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
 import ProtectedSection from "@/components/security/ProtectedSection";
+import { resolveHttpPilotEntities } from "@/api/runtimeBackend";
 import {
   resolveDashboardCount,
   resolveDashboardCountAfterFailure,
@@ -51,6 +52,8 @@ import {
   isDashboardCadastroAtivo,
   dashboardAtivosCountFilter,
 } from "@/components/lib/dashboardKpiPolicy";
+
+const HTTP_PILOT_ENTITIES = new Set(resolveHttpPilotEntities(import.meta.env));
 
 export default function DashboardCorporativo() {
   const { grupoAtual, empresasDoGrupo, estaNoGrupo } = useContextoGrupoEmpresa();
@@ -122,7 +125,7 @@ export default function DashboardCorporativo() {
       const listForFallback = listCapped ? [] : rawList.filter(isDashboardCadastroAtivo);
       try {
         const filter = {
-          ...dashboardAtivosCountFilter(),
+          ...dashboardAtivosCountFilter('Cliente', { httpPilotEntities: HTTP_PILOT_ENTITIES }),
           ...(estaNoGrupo ? { group_id: grupoAtual?.id } : {}),
         };
         const response = await base44.functions.invoke('countEntities', {
@@ -168,7 +171,7 @@ export default function DashboardCorporativo() {
       const listForFallback = listCapped ? [] : rawList.filter(isDashboardCadastroAtivo);
       try {
         const filter = {
-          ...dashboardAtivosCountFilter(),
+          ...dashboardAtivosCountFilter('Produto', { httpPilotEntities: HTTP_PILOT_ENTITIES }),
           ...(estaNoGrupo ? { group_id: grupoAtual?.id } : {}),
         };
         const response = await base44.functions.invoke('countEntities', {

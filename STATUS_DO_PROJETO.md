@@ -1,8 +1,12 @@
+## Cursor — PR596 Bugbot Corporativo filtro sem AND local (2026-11-14 America/Sao_Paulo)
+
+Bugbot: AND `ativo`+`status` zerava local/Produto. Filtro por piloto HTTP
+(`ativo`) vs local (`status: 'Ativo'`). Cap lista bruta preservado. 47 PASS.
+tip ≠ HML; fora pacote 81.
+
 ## Cursor — PR596 Bugbot Corporativo ativo HTTP + cap lista (2026-11-14 America/Sao_Paulo)
 
-Bugbot #596: HTTP ignora `status` — `dashboardAtivosCountFilter` (`ativo`+`status`);
-`isDashboardCadastroAtivo`; cap na lista bruta antes do filtro Ativo.
-47 PASS. tip ≠ HML; fora pacote 81.
+Histórico: cap + ativo; AND corrigido no lote acima.
 
 ## Cursor — PR596 DashboardCorporativo P2 Casa #6883631870 (2026-11-14 America/Sao_Paulo)
 
