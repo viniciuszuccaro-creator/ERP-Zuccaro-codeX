@@ -1004,6 +1004,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     reconcileRequired?: boolean,
     syncPath?: string,
     fallbackReason?: string|null,
+    ops?: Array<{ op?: string, localId?: string }>,
   }|null} */ (null));
   /** true se o lote atomico overflow (>50 ops) — legado antes do MASTER, sem órfãos. */
   const locaisPreferLegacyRef = useRef(false);

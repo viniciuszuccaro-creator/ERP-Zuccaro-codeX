@@ -1,4 +1,4 @@
-## Cursor — PR596 Bugbot: carimbo PARTIAL no rascunho vivo (2026-11-14 America/Sao_Paulo)
+## Cursor — PR596 typecheck ops no summary PARTIAL (2026-11-14 America/Sao_Paulo)
 
 ### Estado atual (≠ histórico)
 | Ref | Tip | CI |
@@ -6,12 +6,16 @@
 | PR595 | `b5862fc53` | **SUCCESS** (histórico CI7053 / CASA) |
 | Continuity591 / CodexPR594 | `76dc3832` | **SUCCESS** histórico CI7046/7047 |
 | PR596 tip | **este lote** (após push) | CI **em curso ≠ aprovado** |
-| Tips anteriores 596 | `7d9e58e71`/`5f46d7e71`… | histórico — **≠ resultado deste tip** |
+| Tips anteriores 596 | `7cce548c0`/`7d9e58e71`… | histórico FAIL typecheck `ops` / — **≠ este tip** |
 | **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
 
-Executor: Cursor. Bugbot Medium: PARTIAL `setFormData` gravava reconciled do snapshot `locaisDraft`
-e descartava «Abrir rascunho» feito durante sync legado lento.
-Fix: carimbar via `prev.locais_entrega` (vivo); peels + pins PASS.
+Executor: Cursor. CI frontend FAIL tip `7d9e58e71`: `lastLocaisSyncSummaryRef` sem `ops` no tipo
+→ TS2339 no onError. Tip `7cce548c0` carimbo vivo; este lote declara `ops?` no ref + peel.
+tsc local limpo; peels/pins PASS.
+
+## Cursor — PR596 Bugbot: carimbo PARTIAL no rascunho vivo (2026-11-14 America/Sao_Paulo)
+
+Tip `7cce548c0` (histórico): carimbo via `prev.locais_entrega`. HML `d054e2b3` — tip ≠ HML.
 
 ## Cursor — PR596 P1 residual: carimbo PARTIAL sem listLocais (2026-11-14 America/Sao_Paulo)
 

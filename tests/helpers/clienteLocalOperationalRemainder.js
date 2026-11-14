@@ -357,7 +357,8 @@ export function clienteLocalOperationalRemainder(file, text) {
     [
       '    reconcileRequired?: boolean,\n'
       + '    syncPath?: string,\n'
-      + '    fallbackReason?: string|null,\n',
+      + '    fallbackReason?: string|null,\n'
+      + '    ops?: Array<{ op?: string, localId?: string }>,\n',
       '',
     ],
     [
