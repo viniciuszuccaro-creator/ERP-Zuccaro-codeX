@@ -1,3 +1,9 @@
+## Cursor — PR596 tip b5b7bee84 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Pagamento-resumo rico + KPIs derivados fail-closed + percurso Casa #6883819072.
+Freeze endereços **`0ffff5100`** / port Casa **`81d1e849`**. tip ≠ HML `d054e2b3`.
+Sem deploy Cursor. Próximo: cards Base44 / códigos UI / Casa preflight pacote.
+
 ## Cursor — PR596 Central360 pagamento-resumo rico (2026-11-14 America/Sao_Paulo)
 
 Tabela + operação + itens (corte/revenda) na faixa; labels `tabela_preco_*` no

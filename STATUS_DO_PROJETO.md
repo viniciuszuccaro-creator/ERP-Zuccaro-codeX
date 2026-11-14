@@ -1,18 +1,20 @@
 ## Cursor — PR596 Central360 pagamento-resumo rico (2026-11-14 America/Sao_Paulo)
 
 Faixa `central360-pagamento-resumo`: tabela, operação, itens hidratados
-(corte/revenda). Notify orçamento/pedido hidrata `tabela_preco_*`. tip ≠ HML.
+(corte/revenda). Notify orçamento/pedido hidrata `tabela_preco_*`.
+HEAD tip **`b5b7bee84` CI SUCCESS** (43638956012). tip ≠ HML.
 
 ## Cursor — PR596 derived KPIs ativos fail-closed (2026-11-14 America/Sao_Paulo)
 
 `computeDashboardDerivedKpis`: clientes/colaboradores/produtosBaixo usam
-`isDashboardCadastroAtivo` (sem status ≠ ativo). tip ≠ HML; fora pacote 81.
+`isDashboardCadastroAtivo` (sem status ≠ ativo). **`4c65d69a4` CI SUCCESS**
+(43638643300). tip ≠ HML; fora pacote 81.
 
 ## Cursor — PR596 Casa #6883819072 — P2 local já em cb7047 + teste percurso (2026-11-14 America/Sao_Paulo)
 
 Casa revisou SHA `5f46bad2d` (dual AND). Correção já em **`cb7047c81`**: Produto
-local só `status: 'Ativo'`. Acrescentado teste percurso `runLocalEntityCounts` +
-fixture status-only (1 ativo). tip ≠ HML; fora pacote 81.
+local só `status: 'Ativo'`. Teste percurso **`0b7b798ac` CI SUCCESS**
+(43638420168). tip ≠ HML; fora pacote 81.
 
 ## Cursor — PR596 Corporativo cb7047c81 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
