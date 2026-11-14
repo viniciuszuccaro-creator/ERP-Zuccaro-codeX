@@ -1,3 +1,11 @@
+## Cursor — composição 591→595→596 aguarda CI Continuity (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Codex tip `38b4e1ec` em `codex/continuidade-591-20261111`
+(CI7038/7039 em curso ≠ aprovado). Arquivos: Completo FISCAL opt-in,
+ClienteLocaisRevisao, Seletor `renderedSnapshot` (+teste montado).
+PR595 HEAD ainda `f6bfffac`. Cursor **não** mergeia cego; preserva hunks
+Codex; PR596 tip `6873a136d` Bugbot epoch/submitting em CI. Sem HML.
+
 ## Cursor — PR596 Bugbot orçamento epoch/submitting (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch PR596.
