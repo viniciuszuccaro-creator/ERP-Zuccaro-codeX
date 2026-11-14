@@ -57,6 +57,15 @@ nenhum seed/carga/reativacao. Recursos/recibos privados no HANDOFF.
 Gates finitos: publicar/CI do WIP -> pacote limpo/APIweb -> HTTPS/DNS ->
 Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
 
+## Cursor pós-594 — extras MASTER UI + endereços operacionais (2026-11-14)
+
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` composta sobre
+Continuity tip `7fa37aaf` / runtime HML `d054e2b3` (PR594). Tip UI anterior
+`34632aef7` CI6971 SUCCESS. Lote extras MASTER + Relatórios gate preservado.
+Próximo: mensagens e fluxo operacional de locais (revisão ≠ operacional;
+seleção no orçamento/pedido). Sem HML/DDL/carga; 1500 ensaio intactos.
+
+
 ## HML atual recuperada e restaurada isoladamente (2026-11-14)
 
 Gate de fonte final ENCERRADO neste alcance: arquivo frio389418721bytes,

@@ -11,6 +11,10 @@ import {
   isContatoCanalCanonico,
   partitionContatosByCanal,
 } from "@/api/clienteHttpPayload";
+import {
+  applyClienteMasterExtrasToHttpPayload,
+  isClienteMasterStorageRequired,
+} from "@/api/clienteMasterExtrasUi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -555,8 +559,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
       const payload = buildPayload(data);
       if (isHttpBackendMode) {
-        if (data.rg !== undefined) payload.rg = data.rg;
-        else delete payload.rg;
+        // Extensões MASTER (rg/caixa/produtor): omit ≠ limpar; '' ≠ clear (Codex).
+        applyClienteMasterExtrasToHttpPayload(payload, data);
       }
       // Write canônico: locais via /clientes/:id/locais — não empurrar no MASTER.
       let locaisDraft = Object.prototype.hasOwnProperty.call(payload, 'locais_entrega')
@@ -739,6 +743,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       const sameScope = isFormScopeCurrent();
       const err = /** @type {Error & { code?: string, summary?: { reconcileRequired?: boolean } }} */ (error);
       const partial = err?.code === CLIENTE_LOCAIS_SYNC_PARTIAL;
+      const storageRequired = isClienteMasterStorageRequired(err);
       // MASTER pode ter gravado; sync parcial ≠ sucesso — invalida; UI já reconciliou se possível.
       if (partial) {
         queryClient.invalidateQueries({ queryKey: ['clientes'] });
@@ -746,9 +751,13 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       toast({
         title: !sameScope
           ? "Contexto alterado"
-          : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente"),
+          : (storageRequired
+            ? "❌ Extensões MASTER sem storage revisado"
+            : (partial ? "❌ Endereços parcialmente sincronizados" : "❌ Erro ao salvar cliente")),
         description: sameScope
-          ? (err?.message || String(error))
+          ? (storageRequired
+            ? "Schema antigo ou colunas RG/caixa postal/produtor ainda não aplicadas. Rascunho preservado — omissão ≠ limpar; sem inventar sucesso."
+            : (err?.message || String(error)))
           : "A operação anterior falhou. Reabra o cadastro no contexto atual.",
         variant: "destructive"
       });
@@ -1318,10 +1327,83 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                         id="rg"
                         value={formData.rg ?? ""}
                         onChange={(e) => setFormData({ ...formData, rg: e.target.value === "" ? null : e.target.value })}
+                        data-campo="rg"
+                        data-persistencia={formData.rg === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.rg === undefined ? 'Não recuperado nesta carga' : undefined}
                       />
+                      <p className="text-xs text-amber-800 mt-1" data-campo-estado="rg-master-extra">
+                        RG no MASTER — omitir ≠ limpar; schema antigo → 503 STORAGE_REQUIRED.
+                      </p>
                     </div>
                   </>
                 )}
+
+                <div className="col-span-2 pt-4 border-t space-y-3" data-block="cliente-master-extras">
+                  <h3 className="font-semibold">Extensões MASTER (caixa postal / produtor)</h3>
+                  <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-2 py-1.5" role="status" data-fonte="cliente-master-extras-contrato">
+                    Contrato Codex no mesmo Cliente: numero_caixa_postal, cep_caixa_postal, caixa_postal_cobranca,
+                    inscricao_produtor_rural. Opcionais; omissão ≠ limpar. SQL candidato pode não estar aplicado —
+                    escrita com storage ausente → 503 CLIENTE_MASTER_STORAGE_REQUIRED.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="numero_caixa_postal">Nº caixa postal</Label>
+                      <Input
+                        id="numero_caixa_postal"
+                        value={formData.numero_caixa_postal ?? ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          numero_caixa_postal: e.target.value === '' ? null : e.target.value,
+                        })}
+                        data-campo="numero_caixa_postal"
+                        data-persistencia={formData.numero_caixa_postal === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.numero_caixa_postal === undefined ? 'Não recuperado nesta carga' : undefined}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cep_caixa_postal">CEP caixa postal</Label>
+                      <Input
+                        id="cep_caixa_postal"
+                        value={formData.cep_caixa_postal ?? ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          cep_caixa_postal: e.target.value === '' ? null : e.target.value,
+                        })}
+                        data-campo="cep_caixa_postal"
+                        data-persistencia={formData.cep_caixa_postal === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.cep_caixa_postal === undefined ? 'Não recuperado nesta carga' : '00000000'}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="caixa_postal_cobranca">Caixa postal cobrança</Label>
+                      <Input
+                        id="caixa_postal_cobranca"
+                        value={formData.caixa_postal_cobranca ?? ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          caixa_postal_cobranca: e.target.value === '' ? null : e.target.value,
+                        })}
+                        data-campo="caixa_postal_cobranca"
+                        data-persistencia={formData.caixa_postal_cobranca === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.caixa_postal_cobranca === undefined ? 'Não recuperado nesta carga' : undefined}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="inscricao_produtor_rural">Inscrição produtor rural</Label>
+                      <Input
+                        id="inscricao_produtor_rural"
+                        value={formData.inscricao_produtor_rural ?? ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          inscricao_produtor_rural: e.target.value === '' ? null : e.target.value,
+                        })}
+                        data-campo="inscricao_produtor_rural"
+                        data-persistencia={formData.inscricao_produtor_rural === undefined ? 'nao-carregado' : 'rascunho'}
+                        placeholder={formData.inscricao_produtor_rural === undefined ? 'Não recuperado nesta carga' : undefined}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div className="col-span-2 pt-4 border-t">
                   <h3 className="font-semibold mb-3">Endereço Principal (Fiscal)</h3>
