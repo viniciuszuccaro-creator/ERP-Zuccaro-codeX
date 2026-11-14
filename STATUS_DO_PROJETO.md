@@ -5,7 +5,7 @@
 |-----|-----|-----|
 | PR595 | `b5862fc53` | **SUCCESS** |
 | PR596 | `b8a6710b6` | **SUCCESS** (histórico tip anterior) |
-| PR596 | **este lote** (após push) | CI **em curso ≠ aprovado** |
+| PR596 | `7fa5b407e` (este lote) | CI **em curso ≠ aprovado** |
 | Codex PR594 | `76dc3832` | SUCCESS (referência) |
 | **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
 

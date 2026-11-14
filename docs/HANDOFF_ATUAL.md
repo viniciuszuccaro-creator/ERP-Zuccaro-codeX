@@ -1,9 +1,9 @@
 ## Cursor — PR596 jornadas/overflow toast/fiscal (2026-11-14 America/Sao_Paulo)
 
-Tip `b8a6710b6` CI SUCCESS (histórico). Este lote: toast overflow/fallback com
-`fallbackReason`; fiscal ClienteLocal + MASTER.endereco_principal read-only HTTP;
+Tip `b8a6710b6` CI SUCCESS (histórico). Tip atual `7fa5b407e`: toast overflow/fallback
+com `fallbackReason`; fiscal ClienteLocal + MASTER.endereco_principal read-only HTTP;
 código no Seletor quando BFF envia. HML `d054e2b3` ≠ tip — sem promote.
-CI tip **em curso ≠ aprovado**. PROXIMO: CI deste tip; composição API/web com Codex.
+CI tip **em curso ≠ aprovado**. PROXIMO: CI `7fa5b407e`; composição API/web com Codex.
 
 ## Cursor — PR596 overflow atômico → legado pré-MASTER (2026-11-14 America/Sao_Paulo)
 
