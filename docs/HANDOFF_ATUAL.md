@@ -1,6 +1,11 @@
+## Cursor — PR596 tip 5cf08bb77 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+Pin Dashboard + Bugbot/Security lote. CI SUCCESS. tip ≠ HML `d054e2b3`.
+Freeze `0ffff5100` / port `81d1e849`. Sem deploy. Completo ownership: Casa.
+
 ## Cursor — PR596 Bugbot Bloco2/C360 session (2026-11-14 America/Sao_Paulo)
 
-Sem DFS Cadastros null; shell usa sessionIdentity vivo. tip ≠ HML. Aguarda CI.
+Sem DFS Cadastros null; shell usa sessionIdentity vivo. tip ≠ HML.
 Freeze `0ffff5100` / port `81d1e849`. Completo ownership: Casa.
 
 ## Cursor — PR596 Bugbot finance CR∩CP + inflight clear (2026-11-14 America/Sao_Paulo)

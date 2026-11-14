@@ -1,7 +1,13 @@
+## Cursor — PR596 tip 5cf08bb77 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+HEAD **`5cf08bb77` CI SUCCESS**. Pin Dashboard `a2e0cc61…` + lote Bugbot/Security
+(C360/Bloco2/Pedido/Fluxo CR∩CP). Freeze `0ffff5100` / port `81d1e849`.
+tip ≠ HML `d054e2b3`. Sem deploy. Completo ownership → Casa; preflight pacote 81.
+
 ## Cursor — PR596 pin Dashboard a2e0cc61 (CI frontend) (2026-11-14 America/Sao_Paulo)
 
 CI FAIL tip c34f: 2 pins Dashboard (browser-indicator + fechamento-reconnect).
-Atualizado para `a2e0cc61…` pós KPI derivados. tip `d6a0acfd7`. tip ≠ HML.
+Atualizado para `a2e0cc61…` pós KPI derivados. **`5cf08bb77` CI SUCCESS**. tip ≠ HML.
 
 ## Cursor — PR596 Bugbot Bloco2 sem DFS null + C360 sessionIdentity (2026-11-14 America/Sao_Paulo)
 
