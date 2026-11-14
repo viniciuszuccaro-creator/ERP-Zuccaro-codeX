@@ -26,8 +26,14 @@ export default function SeletorEnderecoEntregaPedido({
   const canView = hasPermission("Cadastros", "cliente_local", "visualizar") === true;
   const [loadStatus, setLoadStatus] = useState(/** @type {'idle'|'loading'|'loaded'|'failed'|'denied'|'unknown'} */ ("idle"));
   const [operacionais, setOperacionais] = useState(/** @type {Array<Record<string, unknown>>} */ ([]));
+  /** Tick de contexto: HTTP_CONTEXT_CHANGED/storage → re-fetch (não ficar preso em unknown). */
+  const [contextTick, setContextTick] = useState(0);
   const epoch = useRef(0);
   const clienteId = String(cliente?.id || cliente?.cliente_id || "").trim();
+  const session = readErpHttpSession();
+  const sessionGroupId = session?.groupId || null;
+  const sessionEmpresaId = session?.empresaId || null;
+  const sessionToken = session?.token || null;
 
   const fromPropFallback = () => {
     const raw = Array.isArray(cliente?.locais_entrega) ? cliente.locais_entrega : [];
@@ -42,7 +48,12 @@ export default function SeletorEnderecoEntregaPedido({
   };
 
   useEffect(() => {
-    const invalidate = () => { epoch.current += 1; setOperacionais([]); setLoadStatus("unknown"); };
+    const invalidate = () => {
+      epoch.current += 1;
+      setOperacionais([]);
+      setLoadStatus("unknown");
+      setContextTick((n) => n + 1);
+    };
     window.addEventListener(HTTP_CONTEXT_CHANGED, invalidate);
     window.addEventListener("storage", invalidate);
     return () => {
@@ -72,16 +83,15 @@ export default function SeletorEnderecoEntregaPedido({
       setLoadStatus("loaded");
       return undefined;
     }
-    const session = readErpHttpSession();
-    if (!session?.token || !session?.groupId) {
+    if (!sessionToken || !sessionGroupId) {
       setLoadStatus("unknown");
       return undefined;
     }
-    if (groupId && session.groupId !== groupId) {
+    if (groupId && sessionGroupId !== groupId) {
       setLoadStatus("unknown");
       return undefined;
     }
-    if (empresaId && (session.empresaId || null) !== (empresaId || null)) {
+    if (empresaId && (sessionEmpresaId || null) !== (empresaId || null)) {
       setLoadStatus("unknown");
       return undefined;
     }
@@ -112,7 +122,10 @@ export default function SeletorEnderecoEntregaPedido({
       epoch.current += 1;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fromPropFallback usa cliente atual
-  }, [clienteId, canView, permissionsLoading, groupId, empresaId, cliente?.locais_entrega]);
+  }, [
+    clienteId, canView, permissionsLoading, groupId, empresaId, contextTick,
+    sessionToken, sessionGroupId, sessionEmpresaId, cliente?.locais_entrega,
+  ]);
 
   // Troca de cliente: limpa seleção textual sem id canônico.
   useEffect(() => {

@@ -32,6 +32,10 @@ test('Completo: rascunho de revisão + loadStatus + cliente_local', () => {
   assert.match(completo, /loadStatus=\{Array\.isArray\(formData\.locais_entrega\) \? 'loaded' : locaisLoadStatus\}/);
   assert.match(completo, /onOpenDraft=\{openLocalDraftFromReview\}/);
   assert.match(completo, /hasPermission\('Cadastros', 'cliente_local', 'visualizar'\)/);
+  // Bugbot: deps estáveis (sem identidade de hasPermission) + reset do total de revisão.
+  assert.match(completo, /const canViewLocais = hasPermission\('Cadastros', 'cliente_local', 'visualizar'\) === true/);
+  assert.match(completo, /setRevisaoEntregaTotal\(null\)/);
+  assert.match(completo, /\[clienteBoundId, cliente\?\.id, permissionsLoading, canViewLocais\]/);
   // Não sobrescreve fiscal manual: fill só se empty.
   assert.match(completo, /const empty = current === undefined \|\| current === null \|\| String\(current\)\.trim\(\) === ''/);
 });
@@ -40,6 +44,7 @@ test('Revisão: abrir rascunho não é Salvar/Ativar; mensagens de negação dis
   assert.match(revisao, /Abrir rascunho/);
   assert.match(revisao, /nao grava nem ativa/i);
   assert.match(revisao, /Leitura negada: falta Cadastros\.cliente_local\.visualizar/);
+  assert.match(revisao, /onReviewMeta\(\{ finalidade, total: null, error: false \}\)/);
   assert.equal(/Salvar|Ativar|Excluir/.test(revisao.replace(/\/\*[\s\S]*?\*\//g, '')), false);
 });
 
@@ -49,6 +54,8 @@ test('Seletor: HTTP ativo+ENTREGA+id canônico; mensagens sem zero falso', () =>
   assert.match(seletor, /fins\.includes\("ENTREGA"\)/);
   assert.match(seletor, /cliente_local_id/);
   assert.match(seletor, /Falha ao carregar locais\. Contagem não confirmada/);
+  assert.match(seletor, /contextTick/);
+  assert.match(seletor, /sessionGroupId/);
   assert.equal(seletor.includes('Nenhum endereço cadastrado para este cliente'), false);
 });
 

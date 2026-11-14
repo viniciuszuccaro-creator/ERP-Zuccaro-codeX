@@ -48,6 +48,10 @@ export default function ClienteLocaisRevisao({
     epoch.current++;
     setOffset(0);
     setState(null);
+    // Limpa total no pai ao trocar cliente/contexto — evita contagem do cliente anterior.
+    if (typeof onReviewMeta === 'function') {
+      onReviewMeta({ finalidade, total: null, error: false });
+    }
   }, [clienteId, groupId, empresaId, session?.token, session?.actorId, finalidade]);
   useEffect(() => {
     if (!session?.expiresAt) return;

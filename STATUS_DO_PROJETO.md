@@ -71,6 +71,7 @@ Lote UI endereços (sem HML/DDL/carga; 1500 ensaio intactos):
 - peels Continuity + testes sintéticos (incl. review mounted PASS).
 
 PedidoCanonico: ENTREGA exige `cliente_local_id` ativo (fail-closed; incompleto fora do seletor).
+Bugbot PR595: loop `hasPermission` nos locais, seletor re-fetch em troca de contexto, reset `revisaoEntregaTotal`.
 
 Limitações: ativação real do local inativo no BFF permanece no save canônico
 Codex; aceite HML combina API/web. Próximo: Cliente360 rich + jornada Central360

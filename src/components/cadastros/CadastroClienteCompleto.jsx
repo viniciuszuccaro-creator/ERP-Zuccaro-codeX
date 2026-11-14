@@ -870,15 +870,18 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     updated?: number,
     deleted?: number,
   }|null} */ (null));
+  // Booleano estável — não colocar `hasPermission` (nova identidade a cada render) nas deps.
+  const canViewLocais = hasPermission('Cadastros', 'cliente_local', 'visualizar') === true;
   useEffect(() => {
     const id = clienteBoundId || cliente?.id || null;
+    setRevisaoEntregaTotal(null);
     if (!id || !isHttpBackendMode) {
       setLocaisHttpView(undefined);
       locaisHttpBaselineRef.current = undefined;
       setLocaisLoadStatus('unknown');
       return undefined;
     }
-    if (!hasPermission('Cadastros', 'cliente_local', 'visualizar')) {
+    if (!canViewLocais) {
       setLocaisHttpView(undefined);
       locaisHttpBaselineRef.current = undefined;
       setLocaisLoadStatus(permissionsLoading ? 'loading' : 'denied');
@@ -914,7 +917,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       }
     })();
     return () => { cancelled = true; };
-  }, [clienteBoundId, cliente?.id, permissionsLoading, hasPermission]);
+  }, [clienteBoundId, cliente?.id, permissionsLoading, canViewLocais]);
 
   const locaisViewForUi = Array.isArray(formData.locais_entrega)
     ? formData.locais_entrega
