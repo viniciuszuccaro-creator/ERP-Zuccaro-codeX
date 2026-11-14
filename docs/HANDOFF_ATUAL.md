@@ -1,3 +1,13 @@
+## Cursor — PR596 pagamento/dashboard/códigos (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Demock `FormasPagamentoPedido` → `useFormasPagamento` (Cadastros); Central360 pagamento =
+  CondicaoComercial no form HTTP; resumo hidrata labels.
+- Dashboard: count pedidos + KPIs amostra ≠ total/zero falso.
+- Códigos: locais/condição/PDF payload; Completo/LocaisRevisao reserva Codex.
+- CI tip `fc6416` ainda não era lote aprovado (backend pending). Sem HML.
+PROXIMO: CI deste tip; Codex syncLocais Completo; composição API/web HML.
+
 ## Cursor — PR596 hydrate always + typecheck (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).

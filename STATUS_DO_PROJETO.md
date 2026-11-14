@@ -1,3 +1,18 @@
+## Cursor — PR596 pagamento canônico + dashboard fail-closed + códigos (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- CI tip anterior `fc6416bf9`: frontend SUCCESS; backend/Bugbot/Approval ainda pending
+  (≠ aprovado). PR595 Continuity tip SUCCESS. Sem promover HML (`d054e2b3` tip ≠ CI).
+- `FormasPagamentoPedido`: remove mock/fixture; `useFormasPagamento` + códigos do cadastro;
+  CondicaoComercial só via prop (sem lista ilustrativa). Central360 Pedido HTTP segue
+  `condicao_pagamento_id` — resumo ≠ formulário; não duplica seletor.
+- Shell/Pedido/Orçamento: hidrata `condicao_pagamento_{codigo,nome,label}` no select;
+  PDF pedido recebe `numero`/cliente/condição no payload (sem alterar pin exportacaoPDF).
+- Locais no form: label `codigo — nome`.
+- Dashboard: `pedidos-count-dash` + KPIs amostra ≠ total; lista vazia ≠ zero.
+- Completo/ClienteLocaisRevisao: **reserva Codex** (fiscal ClienteLocal / syncLocais).
+Sem HML.
+
 ## Cursor — PR596 Bugbot epoch Fechar/liveRef (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Tip `855b2be9c`.

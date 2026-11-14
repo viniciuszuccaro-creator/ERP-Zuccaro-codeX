@@ -38,11 +38,39 @@ test('AllCounts: sem contexto não fabricar zeros', () => {
 test('Dashboard: contagens usam formatDashboardCountDisplay (— ≠ 0 falso)', () => {
   assert.match(dash, /formatDashboardCountDisplay/);
   assert.match(dash, /totalProdutosDisplay/);
+  assert.match(dash, /totalPedidosDisplay/);
+  assert.match(dash, /pedidos-count-dash/);
   assert.match(dash, /não fabricar zero/);
   assert.match(dash, /resolveDashboardCountAfterFailure/);
   assert.match(dash, /dashboardCountSubtitle/);
   assert.match(dash, /hasContext: Boolean\(hasContextoAtivo\)/);
   assert.match(dash, /allowed: Boolean\(canSeeEstoque\)/);
+  assert.match(dash, /allowed: Boolean\(canSeeComercial\)/);
+  assert.doesNotMatch(dash, /title: "Total Pedidos",\s*value: pedidos\.length/);
+  assert.match(dash, /amostra carregada · ≠ total global confirmado/);
+});
+
+test('FormasPagamentoPedido: Cadastros canônicos sem mock/fixture', () => {
+  const formas = readFileSync('src/components/comercial/FormasPagamentoPedido.jsx', 'utf8');
+  assert.match(formas, /useFormasPagamento/);
+  assert.match(formas, /data-block="formas-pagamento-pedido-canonico"/);
+  assert.match(formas, /data-formas-state="falha"/);
+  assert.match(formas, /formatMasterCodigoLabel/);
+  assert.doesNotMatch(formas, /base44\.entities\.FormaPagamento\.list/);
+  assert.doesNotMatch(formas, /id: "1", tipo: "À Vista"/);
+  assert.doesNotMatch(formas, /const useQuery = \(\{ queryKey, queryFn \}\) =>/);
+});
+
+test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
+  const shell = readFileSync('src/components/comercial/CentralVendas360Shell.jsx', 'utf8');
+  const pedido = readFileSync('src/components/comercial/PedidoCanonicoPanel.jsx', 'utf8');
+  const orc = readFileSync('src/components/comercial/OrcamentosTab.jsx', 'utf8');
+  assert.match(shell, /central360-pagamento-resumo/);
+  assert.match(shell, /CondicaoComercial/);
+  assert.match(pedido, /condicao_pagamento_label/);
+  assert.match(pedido, /condicao_pagamento_codigo/);
+  assert.match(orc, /condicao_pagamento_label/);
+  assert.match(pedido, /numero_pedido:selected\.numero/);
 });
 
 test('LogisticaEntregaTab: seletor recebe groupId/empresaId', () => {

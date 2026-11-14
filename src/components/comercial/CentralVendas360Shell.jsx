@@ -302,7 +302,9 @@ export default function CentralVendas360Shell({
               : 'não carregadas nesta seleção'}
           </span>
           <span className="text-slate-400 w-full sm:w-auto">
-            Pagamento na jornada: condição → validações → Fechar (≠ Cancelar ≠ Fechar janela)
+            Pagamento canônico = CondicaoComercial (`condicao_pagamento_id`) no formulário do documento;
+            resumo ≠ formulário. FormasPagamentoPedido usa Cadastros (sem mock) em jornadas legado —
+            não duplica o seletor HTTP. Condição → validações → Fechar (≠ Cancelar ≠ Fechar janela).
           </span>
         </div>
       )}

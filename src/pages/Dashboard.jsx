@@ -216,6 +216,31 @@ export default function Dashboard() {
     initialData: []
   });
 
+  const {
+    data: totalPedidosResolved,
+    isPending: loadingPedidosCount,
+    isFetching: fetchingPedidosCount,
+  } = useQuery({
+    enabled: Boolean(hasContextoAtivo && canSeeComercial),
+    queryKey: ['pedidos-count-dash', ...contextQueryKey],
+    queryFn: async () => {
+      try {
+        const filtro = getFiltroContexto('empresa_id');
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Pedido',
+          filter: filtro
+        });
+        return resolveDashboardCount({ countValue: response.data?.count, list: pedidos });
+      } catch (error) {
+        reportDashboardFailure('Falha ao contar pedidos — não fabricar zero', error, { scopeType, groupId, empresaId });
+        return resolveDashboardCountAfterFailure(pedidos);
+      }
+    },
+    staleTime: 120000,
+    retry: 1,
+  });
+  const totalPedidosDisplay = formatDashboardCountDisplay(totalPedidosResolved);
+
   const { data: contasReceber = [] } = useQuery({
       enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['contasReceber', ...contextQueryKey],
@@ -725,10 +750,47 @@ export default function Dashboard() {
     }
   ];
 
+  const clientesAtivosResolved = resolveDashboardCount({
+    list: (clientes || []).filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Bloqueado'),
+    allowListFallback: true,
+  });
+  const clientesAtivosDisplay = canSeeCRM
+    ? (totalClientesResolved?.confiavel
+      ? totalClientesDisplay
+      : formatDashboardCountDisplay(clientesAtivosResolved))
+    : '—';
+  // Contagem derivada da lista carregada: zero da amostra ≠ total global confirmado.
+  const entregasPendentesDisplay = canSeeExpedicao
+    ? (Number(entregasPendentes) > 0
+      ? Number(entregasPendentes).toLocaleString('pt-BR')
+      : (Array.isArray(entregas) && entregas.length > 0 ? '0' : '—'))
+    : '—';
+  const estoqueBaixoDisplay = canSeeEstoque
+    ? (Number(produtosBaixoEstoque) > 0
+      ? Number(produtosBaixoEstoque).toLocaleString('pt-BR')
+      : (Array.isArray(produtos) && produtos.length > 0 ? '0' : '—'))
+    : '—';
+  const nfAutorizadasDisplay = (canSeeFinanceiro || canSeeFiscal || canSeeComercial)
+    ? (Number(nfAutorizadas) > 0
+      ? Number(nfAutorizadas).toLocaleString('pt-BR')
+      : (Array.isArray(notasFiscais) && notasFiscais.length > 0 ? '0' : '—'))
+    : '—';
+  const cobrancasPagasDisplay = canSeeFinanceiro
+    ? (Number(cobrancasPagas) > 0
+      ? Number(cobrancasPagas).toLocaleString('pt-BR')
+      : (Array.isArray(cobrancas) && cobrancas.length > 0 ? '0' : '—'))
+    : '—';
+
   const kpiCards = [
     {
-      title: "Clientes Ativos",
-      value: clientesAtivos,
+      title: "Clientes",
+      value: clientesAtivosDisplay,
+      subtitle: dashboardCountSubtitle({
+        resolved: totalClientesResolved?.confiavel ? totalClientesResolved : clientesAtivosResolved,
+        loading: Boolean(canSeeCRM && hasContextoAtivo && totalClientesResolved == null),
+        allowed: Boolean(canSeeCRM),
+        hasContext: Boolean(hasContextoAtivo),
+      }),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
@@ -764,7 +826,12 @@ export default function Dashboard() {
     },
     {
       title: "Entregas Pendentes",
-      value: entregasPendentes,
+      value: entregasPendentesDisplay,
+      subtitle: canSeeExpedicao
+        ? (Array.isArray(entregas) && entregas.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: Truck,
       color: "text-orange-600",
       bgColor: "bg-orange-50",
@@ -772,16 +839,27 @@ export default function Dashboard() {
     },
     {
       title: "Estoque Baixo",
-      value: produtosBaixoEstoque,
+      value: estoqueBaixoDisplay,
+      subtitle: canSeeEstoque
+        ? (Array.isArray(produtos) && produtos.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: AlertCircle,
       color: "text-red-600",
       bgColor: "bg-red-50",
-      alert: produtosBaixoEstoque > 0,
+      alert: Number(produtosBaixoEstoque) > 0,
       drillDown: () => handleDrillDown(createPageUrl("Estoque"))
     },
     {
       title: "Total Pedidos",
-      value: pedidos.length,
+      value: canSeeComercial ? totalPedidosDisplay : '—',
+      subtitle: dashboardCountSubtitle({
+        resolved: totalPedidosResolved,
+        loading: Boolean(canSeeComercial && hasContextoAtivo && totalPedidosResolved == null && (loadingPedidosCount || fetchingPedidosCount)),
+        allowed: Boolean(canSeeComercial),
+        hasContext: Boolean(hasContextoAtivo),
+      }),
       icon: ShoppingCart,
       color: "text-cyan-600",
       bgColor: "bg-cyan-50",
@@ -789,7 +867,12 @@ export default function Dashboard() {
     },
     {
       title: "NF-e Autorizadas",
-      value: nfAutorizadas,
+      value: nfAutorizadasDisplay,
+      subtitle: (canSeeFinanceiro || canSeeFiscal || canSeeComercial)
+        ? (Array.isArray(notasFiscais) && notasFiscais.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: FileText,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
@@ -797,7 +880,12 @@ export default function Dashboard() {
     },
     {
       title: "Cobranças Pagas",
-      value: cobrancasPagas,
+      value: cobrancasPagasDisplay,
+      subtitle: canSeeFinanceiro
+        ? (Array.isArray(cobrancas) && cobrancas.length > 0
+          ? 'amostra carregada · ≠ total global confirmado'
+          : 'lista vazia não confirma zero · contagem indisponível')
+        : 'sem permissão neste perfil',
       icon: DollarSign,
       color: "text-green-600",
       bgColor: "bg-green-50",
