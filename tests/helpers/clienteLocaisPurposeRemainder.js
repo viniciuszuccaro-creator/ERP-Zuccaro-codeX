@@ -65,6 +65,14 @@ export const clienteLocaisPurposeHunks = {
     "hash": "9159f8a6330530fea2d633889972cf9ef1a5a9c52f841de9ee81600640ba8d74",
     "hunks": [
       [
+        "import { createClienteLocalBatchHttpApi } from './clienteLocalBatchHttp.js';\n",
+        ""
+      ],
+      [
+        "    ...createClienteLocalBatchHttpApi({ request, getScope, createHttpError }),\n",
+        ""
+      ],
+      [
         "     * Envelope sem `data` com meta.total/hasMore nunca vira [] loaded (não inventar zero).\n",
         "     * Leitura para Completo/Cadastros — sem storage paralelo; escrita MASTER continua fail-closed.\n"
       ],
