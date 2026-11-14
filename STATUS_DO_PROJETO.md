@@ -57,10 +57,38 @@ nenhum seed/carga/reativacao. Recursos/recibos privados no HANDOFF.
 Gates finitos: publicar/CI do WIP -> pacote limpo/APIweb -> HTTPS/DNS ->
 Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
 
+## Cursor — HML UX Cadastros/Dashboard/Central360 (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` a partir tip PR595
+`3e6461929` (CI 6998/6999 SUCCESS). Continuity/composição PR594 `d054e2b3` intocada.
+
+### Diagnóstico navegação (não = módulo apagado)
+| Sintoma HML | Classificação |
+|---|---|
+| Menu reduzido | oculto por perfil RBAC (fail-closed) — sem liberar admin no FE |
+| “Acesso negado” em card/visualizador | permissão granular ou data-permission ≠ grant |
+| Contagem SetorAtividade/GrupoProduto/Marca/UnidadeMedida | BFF parcial/500 → PARTIAL; UI “—” |
+| Card sem rota | fora da composição ou recurso não no tip servido |
+
+### Lote UI deste tip
+- Cadastros: banners loading / unavailable / partial distintos; badge `data-count-state`
+- AllCounts: sem contexto → `READ_COUNT_UNAVAILABLE` (não mapa de zeros)
+- Dashboard canônico: count produtos/colaboradores fail-closed (`—` ≠ 0 falso); fonte no subtitle
+- LogisticaEntregaTab: seletor com `groupId`/`empresaId` (PR595 preservado)
+- Dashboard Corporativo permanece página distinta (consolidado grupo) — sem merge destrutivo
+
+### Coordenação Codex
+- 500 auxiliares bloco2; ativação `cliente_local`; códigos sequenciais BFF; composição servida
+- Integra-novo = referência visual/telas, não registros Base44
+
+Próximo Cursor: jornada Central360 itens/pagamento; códigos na UI após contrato; comparação
+cards Base44 incremental no Dashboard canônico. Sem HML/DDL/carga neste lote.
+
 ## Cursor — endereços operacionais + rascunho de revisão (2026-11-14)
 
 Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` sobre Continuity
-`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados.
+`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados. Tip CI
+`3e6461929` SUCCESS.
 
 Lote UI endereços (sem HML/DDL/carga; 1500 ensaio intactos):
 - Mensagens: operacional vs revisão vs negado vs falha; sem zero falso;

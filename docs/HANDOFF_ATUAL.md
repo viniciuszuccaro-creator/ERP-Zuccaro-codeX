@@ -117,14 +117,22 @@ API/web HML com rede separada e HTTPS dedicado. DNS hml-erp ainda nao comprovado
 Login real, RBAC HTTP, UI e backup automatico/retencao permanecem abertos.
 Nao reiniciar Codespace, importar clientes nem reexecutar restore.
 
+## Cursor — HML UX Cadastros/Dashboard (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Tip base PR595 `3e6461929` CI SUCCESS. Branch nova
+`cursor/hml-cadastros-dash-c360-ux-392b`. Sem tocar composição servida HML.
+Entregue: estados contagem Cadastros; dashboard count≠zero falso; seletor
+Logistica com escopo. Codex: 500 auxiliares, códigos, ativação locais, pack API/web.
+Próximo: Central360 itens/pagamento; códigos UI pós-contrato.
+
 ## Cursor — endereços operacionais / rascunho revisão (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Base Continuity `7fa37aaf` / HML runtime `d054e2b3`.
-Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595). Reservas: Completo,
+Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595 tip `3e6461929`). Reservas: Completo,
 ClienteLocaisRevisao, GerenciarEnderecos, SeletorEnderecoEntregaPedido, peels.
 Entregue: mensagens diferenciadas; rascunho revisão→form canônico sem gravar;
 seletor operacional HTTP; RBAC cliente_local. Sem escrita HML/perfil/dados.
-Próximo verificável: CI tip; aceite com SHA API/web Codex; Central360 jornada.
+Próximo verificável: aceite com SHA API/web Codex; Central360 jornada.
 
 
 ## Recuperacao final e restore HML - checkpoint executado (2026-11-14)

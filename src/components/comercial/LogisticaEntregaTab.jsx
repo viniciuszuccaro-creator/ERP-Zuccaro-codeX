@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import SeletorEnderecoEntregaPedido from "./SeletorEnderecoEntregaPedido";
 import BuscaCEP from "./BuscaCEP";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CriarEtapaEntregaModal from "./CriarEtapaEntregaModal";
 
 const sanitizeText = (value) => String(value || "").replace(/[<>]/g, "").trim();
@@ -26,6 +27,9 @@ const sanitizeUrl = (value) => {
  */
 export default function LogisticaEntregaTab({ formData, setFormData, clientes = [], onNext }) {
   const { hasPermission, isAdmin, canApprove } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
+  const empresaId = empresaAtual?.id || null;
   const [modalEtapaOpen, setModalEtapaOpen] = useState(false);
 
   const clienteSelecionado = clientes?.find(c => c.id === formData?.cliente_id) || null;
@@ -140,6 +144,8 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
             <SeletorEnderecoEntregaPedido
               cliente={clienteSelecionado}
               enderecoSelecionado={formData?.endereco_entrega_principal || {}}
+              groupId={groupId}
+              empresaId={empresaId}
               onSelect={(endereco) => setFormData(prev => ({ ...prev, endereco_entrega_principal: endereco }))}
             />
           ) : (

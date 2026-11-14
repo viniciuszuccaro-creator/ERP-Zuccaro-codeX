@@ -11,6 +11,7 @@ import {
   computeRealtimeKpisFromStores,
   isCappedListUnreliable,
   resolveDashboardCount,
+  formatDashboardCountDisplay,
   resolveRealtimeDashboardScope,
   resolveMetaOperacional,
   DASHBOARD_LIST_SOFT_LIMIT,
@@ -70,6 +71,12 @@ test('lista no soft limit nao e confiavel e count tem prioridade', () => {
   assert.equal(resolveDashboardCount({ countValue: 12000, list: full }).total, 12000);
   assert.equal(resolveDashboardCount({ countValue: 12000, list: full }).fonte, 'count');
   assert.equal(resolveDashboardCount({ list: full }).confiavel, false);
+  // Capada: total null (—), nunca softLimit como se fosse zero/total real.
+  assert.equal(resolveDashboardCount({ list: full }).total, null);
+  assert.equal(resolveDashboardCount({ list: full }).fonte, 'lista_capada');
+  assert.equal(resolveDashboardCount({ allowListFallback: false }).total, null);
+  assert.equal(formatDashboardCountDisplay(resolveDashboardCount({ list: full })), '—');
+  assert.equal(formatDashboardCountDisplay(resolveDashboardCount({ countValue: 0 })), '0');
 });
 
 test('kpis derivados e vendas mensais usam pedidos reais', () => {
