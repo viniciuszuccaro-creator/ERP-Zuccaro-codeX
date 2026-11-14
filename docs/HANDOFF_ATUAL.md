@@ -1,3 +1,8 @@
+## Cursor — PR596 conferência pacote Casa 81d1e849 (2026-11-14 America/Sao_Paulo)
+
+#6883180029: SHA runtime/CI OK vs freeze; pins pendentes; ≠ aceite HML.
+HML `d054e2b3` inalterada. Sem deploy Cursor.
+
 ## Cursor — PR596 port Casa 81d1e849 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Port composto **`81d1e849`** CI SUCCESS (43631755872); 9/9 = freeze `0ffff5100`.

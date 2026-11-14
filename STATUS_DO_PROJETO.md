@@ -1,3 +1,14 @@
+## Cursor — PR596 conferência pacote API/web Casa 81d1e849 (2026-11-14 America/Sao_Paulo)
+
+Casa #6883180029: pacote off-VPS do runtime **`81d1e849`** (CI7114 SUCCESS).
+Conferência Cursor (versionamento por SHA, ≠ aceite deploy):
+- Runtime = `81d1e849`; Completo blob = freeze `0ffff5100` (1e4740d4…)
+- Recibo docs `2321cc265` (só STATUS/HANDOFF; runtime intacto)
+- filesSha256 `73cbb4f0…`; archiveSha256 `1fcdf850…` (privado; dataInBuild=false)
+- **9 pins PENDENTES / canApply=false** — pacote ≠ implantado
+- HML `d054e2b3` inalterada; tip ≠ HML; sem promote Cursor
+Próximo Casa: preflight readonly + canal privado transporte. Sem deploy.
+
 ## Cursor — PR596 port Casa 81d1e849 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 ### Estado (≠ HML)
