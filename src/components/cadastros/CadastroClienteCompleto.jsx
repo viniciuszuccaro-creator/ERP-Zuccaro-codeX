@@ -856,6 +856,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
   /** true só após edição explícita do rascunho (apply/openDraft) — [] inicial ≠ owned. */
   const locaisDraftOwnedRef = useRef(false);
+  /** Cliente efetivo do catálogo — ownership só zera quando este id muda (não em reopen rejeitado). */
+  const locaisCatalogClientIdRef = useRef(/** @type {string|null|undefined} */ (undefined));
   /** Último summary de sync `/locais` — BATCH_ATOMIC=false nunca vira toast de salvamento integral. */
   const lastLocaisSyncSummaryRef = useRef(/** @type {{
     skipped?: boolean,
@@ -865,12 +867,30 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     deleted?: number,
   }|null} */ (null));
   useEffect(() => {
-    // Troca de cliente/sessão: ownership do rascunho não cruza contexto.
-    locaisDraftOwnedRef.current = false;
     const id = clienteBoundId || cliente?.id || null;
-    if (!id || !isHttpBackendMode) {
+    const clientChanged = locaisCatalogClientIdRef.current !== id;
+    if (clientChanged) {
+      locaisCatalogClientIdRef.current = id;
+      locaisDraftOwnedRef.current = false;
+    }
+    // Create HTTP: sem id = catálogo vazio confirmado (permite rascunho no 1º save).
+    if (!id) {
+      if (isHttpBackendMode) {
+        setLocaisHttpView([]);
+        locaisHttpBaselineRef.current = [];
+      } else {
+        setLocaisHttpView(undefined);
+        locaisHttpBaselineRef.current = undefined;
+      }
+      return undefined;
+    }
+    if (!isHttpBackendMode) {
       setLocaisHttpView(undefined);
       locaisHttpBaselineRef.current = undefined;
+      return undefined;
+    }
+    // Mesmo cliente efetivo com baseline já materializado — não limpa owned nem refetch.
+    if (!clientChanged && Array.isArray(locaisHttpBaselineRef.current)) {
       return undefined;
     }
     let cancelled = false;
@@ -914,12 +934,15 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     ? formData.locais_entrega
     : (Array.isArray(locaisHttpView) ? locaisHttpView : (Array.isArray(formData.locais_entrega) ? formData.locais_entrega : []));
 
-  /** Operacional: draft assumido / HTTP ok = loaded; [] inicial ≠ loaded. */
+  /** Operacional: create sem id = loaded ([]); draft assumido / HTTP ok = loaded. */
   const locaisOperacionalLoadStatus = (() => {
     if (!isHttpBackendMode) {
       return Array.isArray(formData.locais_entrega) ? 'loaded' : 'unknown';
     }
-    if (!(clienteBoundId || cliente?.id)) return 'unknown';
+    // Create: baseline [] confirmado — permite adicionar antes do 1º save.
+    if (!(clienteBoundId || cliente?.id)) {
+      return Array.isArray(locaisHttpBaselineRef.current) ? 'loaded' : 'unknown';
+    }
     if (locaisHttpBaselineRef.current === null) return 'failed';
     if (locaisDraftAssumed || Array.isArray(locaisHttpView) || Array.isArray(locaisHttpBaselineRef.current)) {
       return 'loaded';
@@ -938,22 +961,17 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
   const applyEnderecosDraft = (novosEnderecos) => {
     // Mesma guarda do openDraft: owned parcial antes do catálogo soft-deleta o restante no save.
+    // Throw: Gerenciar trata onChange rejeitado como falha e mantém o diálogo aberto.
     if (isHttpBackendMode) {
       if (locaisHttpBaselineRef.current === null) {
-        toast({
-          title: 'Catálogo operacional indisponível',
-          description: 'Falha na leitura de locais — edição não aplicada. Reabra o cliente e tente de novo.',
-          variant: 'destructive',
-        });
-        return;
+        const err = new Error('Catálogo operacional indisponível — edição não aplicada. Reabra o cliente.');
+        toast({ title: 'Catálogo operacional indisponível', description: err.message, variant: 'destructive' });
+        throw err;
       }
       if (!Array.isArray(locaisHttpView) && !Array.isArray(locaisHttpBaselineRef.current)) {
-        toast({
-          title: 'Aguarde o catálogo operacional',
-          description: 'Locais HTTP ainda carregando — edição não aplicada para não apagar outros endereços no save.',
-          variant: 'destructive',
-        });
-        return;
+        const err = new Error('Locais HTTP ainda carregando — edição não aplicada para não apagar outros endereços no save.');
+        toast({ title: 'Aguarde o catálogo operacional', description: err.message, variant: 'destructive' });
+        throw err;
       }
     }
     locaisDraftOwnedRef.current = true;

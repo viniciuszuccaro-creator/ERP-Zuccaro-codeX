@@ -202,18 +202,67 @@ export default function usePermissions() {
       return MODULE_ALIASES[norm] || mod;
     };
 
+    /**
+     * Resolve path na árvore de permissões.
+     * Entidade aliasada → seção owner: preferir filho com o nome da entidade;
+     * sem filho, só ações do próprio nó seção (ownOnly) — não herda grant de irmãos via DFS.
+     * @returns {{ node: unknown, ownOnly: boolean }}
+     */
     const getNodeByPath = (root, pathArr) => {
       let cursor = root;
+      let ownOnly = false;
       for (let i = 0; i < pathArr.length; i++) {
-        if (!cursor || typeof cursor !== 'object') return undefined;
+        if (!cursor || typeof cursor !== 'object') return { node: undefined, ownOnly: false };
         const rawKey = pathArr[i];
-        const key = SECTION_ALIASES[normalizeSimple(rawKey)] || rawKey;
-        const candidates = [rawKey, key, resolveModule(rawKey)].filter(Boolean);
+        const normRaw = normalizeSimple(rawKey);
+        const alias = SECTION_ALIASES[normRaw];
         const keys = Object.keys(cursor || {});
+
+        // 1) Chave exata (entidade/seção) — prioridade sobre alias.
+        const exact = keys.find((k) => normalizeSimple(k) === normRaw);
+        if (exact) {
+          cursor = cursor[exact];
+          ownOnly = false;
+          continue;
+        }
+
+        // 2) Alias entidade → seção owner (ou seção→seção identidade).
+        if (alias) {
+          const sectionHit = keys.find((k) => normalizeSimple(k) === normalizeSimple(alias));
+          if (!sectionHit) {
+            cursor = undefined;
+            ownOnly = false;
+            continue;
+          }
+          const sectionNode = cursor[sectionHit];
+          // Alias identidade (produtos→produtos): checagem de seção intencional → DFS ok.
+          if (normalizeSimple(alias) === normRaw) {
+            cursor = sectionNode;
+            ownOnly = false;
+            continue;
+          }
+          // Preferir filho com o nome da entidade sob a seção owner.
+          if (sectionNode && typeof sectionNode === 'object' && !Array.isArray(sectionNode)) {
+            const entityChild = Object.keys(sectionNode).find((k) => normalizeSimple(k) === normRaw);
+            if (entityChild) {
+              cursor = sectionNode[entityChild];
+              ownOnly = false;
+              continue;
+            }
+          }
+          // Sem nó da entidade: só grants do próprio nó seção (não DFS em Marca/Motorista/…).
+          cursor = sectionNode;
+          ownOnly = true;
+          continue;
+        }
+
+        // 3) resolveModule / candidatos legados.
+        const candidates = [rawKey, resolveModule(rawKey)].filter(Boolean);
         const found = keys.find((k) => candidates.some((candidate) => normalizeSimple(k) === normalizeSimple(candidate)));
         cursor = found ? cursor[found] : undefined;
+        ownOnly = false;
       }
-      return cursor;
+      return { node: cursor, ownOnly };
     };
 
     const getRootNode = (root, module) => {
@@ -227,15 +276,26 @@ export default function usePermissions() {
       return undefined;
     };
 
+    const actionMatches = (list, desired) => (
+      Array.isArray(list)
+      && (list.includes(desired) || (desired === 'visualizar' && list.includes('ver')))
+    );
+
+    /** Só arrays no nó atual — não herda ação de entidades irmãs. */
+    const nodeHasOwnAction = (node, desired) => {
+      if (actionMatches(node, desired)) return true;
+      if (!node || typeof node !== 'object' || Array.isArray(node)) return false;
+      return Object.values(node).some((value) => actionMatches(value, desired));
+    };
+
     const nodeHasAction = (node, desired) => {
-      if (Array.isArray(node)) return node.includes(desired) || (desired === 'visualizar' && node.includes('ver'));
+      if (actionMatches(node, desired)) return true;
       if (!node || typeof node !== 'object') return false;
       const stack = [node];
       while (stack.length) {
         const current = stack.pop();
-        if (Array.isArray(current)) {
-          if (current.includes(desired) || (desired === 'visualizar' && current.includes('ver'))) return true;
-        } else if (current && typeof current === 'object') {
+        if (actionMatches(current, desired)) return true;
+        if (current && typeof current === 'object' && !Array.isArray(current)) {
           Object.values(current).forEach((value) => stack.push(value));
         }
       }
@@ -282,9 +342,11 @@ export default function usePermissions() {
 
     // Suporta paths hierárquicos: "Pedidos.Financeiro.margens" ou ["Pedidos","Financeiro","margens"]
     const path = Array.isArray(section) ? section : String(section).split('.').filter(Boolean);
-    let cursor = getNodeByPath(modNode, path);
-    if (cursor == null) return false;
-    return nodeHasAction(cursor, desired);
+    const resolved = getNodeByPath(modNode, path);
+    if (resolved.node == null) return false;
+    return resolved.ownOnly
+      ? nodeHasOwnAction(resolved.node, desired)
+      : nodeHasAction(resolved.node, desired);
   };
 
   // Helpers específicos para granularidade

@@ -1,3 +1,14 @@
+## Cursor — PR596 catalogBlocksMutations + SECTION_ALIASES ownOnly (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+Tip `f5b5f80f0`: frontend **FAILURE** (Gerenciar `!countKnown` quebrou pin RBAC / create) — **não aprovado**.
+Correções (este tip):
+- Gerenciar: `catalogBlocksMutations` = loading|failed|denied (`unknown` não bloqueia pin).
+- Completo: create HTTP baseline `[]` loaded; owned só zera em mudança de cliente efetivo; `applyEnderecosDraft` throw (diálogo permanece).
+- `usePermissions`: entidade aliasada → seção owner prefer filho; sem filho `ownOnly` (sem DFS de irmãos Marca/TabelaPreco/Motorista).
+Peels operacional atualizados. Suites locais PASS. Sem HML (`d054e2b3`).
+CI tip **em curso ≠ aprovado**. Dependência 595→596.
+
 ## Cursor — PR596 Security applyEnderecos + Gerenciar catalog (2026-11-14 America/Sao_Paulo)
 
 Executor: Cursor. Branch PR596.
