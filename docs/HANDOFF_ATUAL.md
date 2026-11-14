@@ -7,6 +7,12 @@ Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
 fidelidade; 40 PASS não autoriza peel “integral”. Fora: Backend/Dashboard/docs.
 Candidata freeze **`197bbc090`**. HEAD docs `adca97468` CI SUCCESS. tip ≠ HML. Sem implantar.
 
+## Cursor — PR596 Casa audita peel (adca97468) (2026-11-14 America/Sao_Paulo)
+
+Casa #6882342294: auditoria privada normalização/preservação no HEAD `adca97468`
+(delta f804→adca = docs). Port prep **não aplicado**. Cursor **não edita**
+Completo/payload/peels neste heartbeat. Sem VPS/DB/deploy.
+
 ## Cursor — PR596 tip 197bbc090 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Tip **`197bbc090`** CI SUCCESS (43624913215). AST `6b7bcc3dc` + Casa PASS `c644b6785`.
