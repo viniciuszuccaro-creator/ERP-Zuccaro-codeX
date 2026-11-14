@@ -1,3 +1,8 @@
+## Cursor — PR596 DashboardCanaisOrigem KPI fail-closed (Base44) (2026-11-14 America/Sao_Paulo)
+
+Card Canais: sem `initialData []`; contexto/RBAC/erro/amostra 500 → "—"
+(`formatCanaisOrigemKpiDisplay`). Hash primitive atualizado. tip ≠ HML.
+
 ## Cursor — PR596 Bugbot CondicaoComercial sem coluna codigo (2026-11-14 America/Sao_Paulo)
 
 Bugbot a99d: CondicaoComercial é `idOnly` / fora de MASTER_CODE — coluna `codigo`

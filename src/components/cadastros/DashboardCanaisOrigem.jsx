@@ -31,6 +31,11 @@ import {
 } from "lucide-react";
 import ExportButton from "@/components/ExportButton";
 import { base44 } from "@/api/base44Client";
+import {
+  CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT,
+  formatCanaisOrigemKpiDisplay,
+  isCappedListUnreliable,
+} from "@/components/lib/dashboardKpiPolicy";
 
 /**
  * Dashboard de Canais de Origem de Pedidos V21.6
@@ -70,28 +75,43 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
     }
   };
   
-  // Buscar parâmetros de origem
-  const { data: parametros = [], isLoading: loadingParametros } = useQuery({
+  // Buscar parâmetros de origem (sem initialData [] — lista vazia ≠ zero confirmado em KPI).
+  const {
+    data: parametros,
+    isPending: loadingParametros,
+    isError: errorParametros,
+  } = useQuery({
     queryKey: ['parametros-origem-pedido', contextKey],
     queryFn: () => filterInContext('ParametroOrigemPedido', {}, 'canal', 500),
     enabled: contextoValido && canViewDashboard,
-    initialData: [],
   });
 
-  // Buscar pedidos para análise
-  const { data: pedidos = [], isLoading: loadingPedidos } = useQuery({
+  // Buscar pedidos para análise (amostra ≤ soft limit — total autoritativo exige count).
+  const {
+    data: pedidos,
+    isPending: loadingPedidos,
+    isError: errorPedidos,
+  } = useQuery({
     queryKey: ['pedidos-canais-origem', contextKey],
-    queryFn: () => filterInContext('Pedido', empresaSelecionadaId ? { empresa_id: empresaSelecionadaId } : {}, '-created_date', 500),
+    queryFn: () => filterInContext('Pedido', empresaSelecionadaId ? { empresa_id: empresaSelecionadaId } : {}, '-created_date', CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT),
     enabled: contextoValido && canViewDashboard,
-    initialData: [],
   });
+
+  const parametrosList = Array.isArray(parametros) ? parametros : [];
+  const pedidosList = Array.isArray(pedidos) ? pedidos : [];
+  const pedidosCapped = isCappedListUnreliable(pedidosList, CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT);
+  const metricsBlocked = !contextoValido
+    || !canViewDashboard
+    || errorParametros
+    || errorPedidos
+    || pedidosCapped;
 
   // Calcular métricas por canal
   const calcularMetricas = () => {
     const metricas = {};
 
-    parametros.forEach(param => {
-      const pedidosCanal = pedidos.filter(p => {
+    parametrosList.forEach(param => {
+      const pedidosCanal = pedidosList.filter(p => {
         // Mapear origem_pedido para canal
         const origemMap = {
           'Manual': 'ERP',
@@ -138,6 +158,20 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
   const canaisAtivos = Object.values(metricas).filter(m => m.ativo);
   const totalGeralPedidos = canaisAtivos.reduce((sum, m) => sum + m.totalPedidos, 0);
   const totalGeralValor = canaisAtivos.reduce((sum, m) => sum + m.valorTotal, 0);
+  const canaisAtivosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: canaisAtivos.length });
+  const totalPedidosDisplay = formatCanaisOrigemKpiDisplay({ blocked: metricsBlocked, value: totalGeralPedidos });
+  const valorTotalDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: metricsBlocked,
+    value: totalGeralValor,
+    format: (n) => `R$ ${(n / 1000).toFixed(0)}k`,
+  });
+  const taxaConversaoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: metricsBlocked,
+    value: canaisAtivos.length > 0
+      ? canaisAtivos.reduce((sum, m) => sum + m.taxaConversao, 0) / canaisAtivos.length
+      : 0,
+    format: (n) => `${n.toFixed(0)}%`,
+  });
 
   // Dados para gráficos
   const dadosBarras = Object.values(metricas)
@@ -232,21 +266,35 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
     >
       <div className={windowMode ? "flex-1 overflow-auto p-6" : ""}>
         {(!contextoValido || !canViewDashboard) && (
-          <Alert className="mb-4 border-amber-300 bg-amber-50">
+          <Alert className="mb-4 border-amber-300 bg-amber-50" data-block="canais-origem-contexto-bloqueado">
             <AlertDescription>
               Selecione grupo ou empresa e confirme permissao para visualizar canais de origem.
             </AlertDescription>
           </Alert>
         )}
+        {(errorParametros || errorPedidos) && (
+          <Alert className="mb-4 border-amber-300 bg-amber-50" data-block="canais-origem-consulta-indisponivel">
+            <AlertDescription>
+              Contagem/amostra indisponível (erro de consulta — não é zero confirmado).
+            </AlertDescription>
+          </Alert>
+        )}
+        {pedidosCapped && (
+          <Alert className="mb-4 border-amber-300 bg-amber-50" data-block="canais-origem-amostra-capada">
+            <AlertDescription>
+              Amostra de pedidos no soft limit ({CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT}) — totais do card indisponíveis (≠ zero).
+            </AlertDescription>
+          </Alert>
+        )}
         
         {/* KPIs Gerais */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" data-block="canais-origem-kpis">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-600">Canais Ativos</p>
-                  <p className="text-2xl font-bold text-blue-600">{canaisAtivos.length}</p>
+                  <p className="text-2xl font-bold text-blue-600" data-kpi="canais-ativos">{canaisAtivosDisplay}</p>
                 </div>
                 <Bolt className="w-8 h-8 text-blue-600 opacity-20" />
               </div>
@@ -258,7 +306,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-600">Total Pedidos</p>
-                  <p className="text-2xl font-bold text-green-600">{totalGeralPedidos}</p>
+                  <p className="text-2xl font-bold text-green-600" data-kpi="total-pedidos">{totalPedidosDisplay}</p>
                 </div>
                 <ShoppingCart className="w-8 h-8 text-green-600 opacity-20" />
               </div>
@@ -270,8 +318,8 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-600">Valor Total</p>
-                  <p className="text-2xl font-bold text-sky-600">
-                    R$ {(totalGeralValor / 1000).toFixed(0)}k
+                  <p className="text-2xl font-bold text-sky-600" data-kpi="valor-total">
+                    {valorTotalDisplay}
                   </p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-sky-600 opacity-20" />
@@ -284,10 +332,8 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-slate-600">Taxa Conversão Média</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {canaisAtivos.length > 0 
-                      ? (canaisAtivos.reduce((sum, m) => sum + m.taxaConversao, 0) / canaisAtivos.length).toFixed(0)
-                      : 0}%
+                  <p className="text-2xl font-bold text-orange-600" data-kpi="taxa-conversao">
+                    {taxaConversaoDisplay}
                   </p>
                 </div>
                 <Activity className="w-8 h-8 text-orange-600 opacity-20" />

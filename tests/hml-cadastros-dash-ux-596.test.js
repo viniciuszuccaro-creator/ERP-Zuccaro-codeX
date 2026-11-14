@@ -98,6 +98,23 @@ test('Dashboard Clientes KPI: uma população (count), sem misturar ativos da am
   );
 });
 
+test('DashboardCanaisOrigem: KPI fail-closed (— ≠ 0; amostra capada)', async () => {
+  const {
+    formatCanaisOrigemKpiDisplay,
+    CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT,
+  } = await import('../src/components/lib/dashboardKpiPolicy.js');
+  assert.equal(formatCanaisOrigemKpiDisplay({ blocked: true, value: 0 }), '—');
+  assert.equal(formatCanaisOrigemKpiDisplay({ blocked: false, value: 0 }), '0');
+  assert.equal(formatCanaisOrigemKpiDisplay({ blocked: false, value: null }), '—');
+  assert.equal(CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT, 500);
+  const src = readFileSync('src/components/cadastros/DashboardCanaisOrigem.jsx', 'utf8');
+  assert.match(src, /isCappedListUnreliable/);
+  assert.match(src, /formatCanaisOrigemKpiDisplay/);
+  assert.match(src, /metricsBlocked/);
+  assert.match(src, /canais-origem-amostra-capada/);
+  assert.doesNotMatch(src, /initialData:\s*\[\]/);
+});
+
 test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   const shell = readFileSync('src/components/comercial/CentralVendas360Shell.jsx', 'utf8');
   const pedido = readFileSync('src/components/comercial/PedidoCanonicoPanel.jsx', 'utf8');

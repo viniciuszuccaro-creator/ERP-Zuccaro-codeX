@@ -1,3 +1,7 @@
+## Cursor — PR596 DashboardCanaisOrigem KPI fail-closed (2026-11-14 America/Sao_Paulo)
+
+Base44 card Canais: — ≠ 0 (contexto/RBAC/erro/cap 500). tip ≠ HML; sem deploy.
+
 ## Cursor — PR596 tip 802ea50aa CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
 Bugbot CondicaoComercial (sem coluna codigo) + Casa 4c65 residual Produto LOCAL

@@ -3,6 +3,22 @@ const firstText = (...values) => values.map((value) => String(value || '').trim(
 /** Soft cap used by list-based KPI loads — totals from a full page are unreliable when hit. */
 export const DASHBOARD_LIST_SOFT_LIMIT = 9999;
 export const DASHBOARD_REALTIME_LIMIT = 500;
+/** Soft cap da amostra de pedidos no Dashboard Canais de Origem (Base44). */
+export const CANAIS_ORIGEM_PEDIDOS_SOFT_LIMIT = 500;
+
+/**
+ * KPI do card Canais de Origem: bloqueio (contexto/RBAC/erro/cap) → "—" (≠ 0 falso).
+ * @param {{ blocked?: boolean, value?: unknown, format?: (n: number) => string }} [input]
+ */
+export const formatCanaisOrigemKpiDisplay = ({
+  blocked = false,
+  value = null,
+  format = (n) => String(n),
+} = {}) => {
+  if (blocked) return '—';
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  return format(value);
+};
 
 /**
  * @param {{ groupId?: string | null, empresaId?: string | null, scopeType?: string }} [context]
