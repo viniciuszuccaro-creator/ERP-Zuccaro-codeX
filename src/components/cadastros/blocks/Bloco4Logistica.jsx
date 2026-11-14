@@ -158,8 +158,11 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "",
       motivo: contextoValido ? null : "contexto_obrigatorio",
     });
   }, [searchTerm, contextoValido, filteredTiles.length]);
+  // Gate canônico owner: Cadastros.Logistica.
+  const dataPermissionFor = () => "Cadastros.Logistica.visualizar";
   const canViewEntity = (entidade) =>
     hasPermission("Cadastros", entidade, "visualizar") ||
+    hasPermission("Cadastros", "Logistica", "visualizar") ||
     hasPermission("Cadastros", null, "visualizar") ||
     hasPermission("Expedicao", entidade, "visualizar") ||
     hasPermission("Expedicao", null, "visualizar") ||
@@ -184,7 +187,7 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "",
       {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={openList(k, t, Icon, c, FormComp)}
-          data-permission={`Cadastros.${k}.visualizar`}
+          data-permission={dataPermissionFor()}
           data-action={`Cadastros.${k}.abrir`}
           data-context-required="group-or-company">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -201,7 +204,7 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "",
                   <Button variant="outline" size="sm" className="rounded-sm text-xs h-7"
                     onClick={openAppMotorista}
                     disabled={!contextoValido || !canViewEntity(k)}
-                    data-permission="Cadastros.Motorista.visualizar"
+                    data-permission={dataPermissionFor()}
                     data-action="Cadastros.Motorista.app"
                     data-context-required="group-or-company">
                     App
@@ -210,7 +213,7 @@ export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "",
                 <Button size="sm" className="bg-sky-600 hover:bg-sky-700 rounded-sm text-xs h-7"
                   onClick={() => openList(k, t, Icon, c, FormComp)()}
                   disabled={!contextoValido || !canViewEntity(k)}
-                  data-permission={`Cadastros.${k}.visualizar`}
+                  data-permission={dataPermissionFor()}
                   data-action={`Cadastros.${k}.abrir`}
                   data-context-required="group-or-company">
                   Abrir

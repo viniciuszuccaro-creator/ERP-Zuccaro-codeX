@@ -79,18 +79,68 @@ export const isCappedListUnreliable = (list = [], softLimit = DASHBOARD_LIST_SOF
   Array.isArray(list) && list.length >= softLimit
 );
 
-/** @param {{ countValue?: unknown, list?: any[], softLimit?: number }} [input] */
-export const resolveDashboardCount = ({ countValue, list = [], softLimit = DASHBOARD_LIST_SOFT_LIMIT } = {}) => {
+/**
+ * Contagem de KPI: count autoritativo > lista só se confiável.
+ * Falha/ausência ≠ 0 confirmado — `total: null` + `confiavel: false`.
+ * @param {{ countValue?: unknown, list?: any[], softLimit?: number, allowListFallback?: boolean }} [input]
+ */
+export const resolveDashboardCount = ({
+  countValue,
+  list = [],
+  softLimit = DASHBOARD_LIST_SOFT_LIMIT,
+  allowListFallback = true,
+} = {}) => {
   const counted = Number(countValue);
-  if (Number.isFinite(counted) && counted >= 0) {
+  if (Number.isSafeInteger(counted) && counted >= 0) {
     return { total: counted, fonte: 'count', confiavel: true };
   }
-  const len = Array.isArray(list) ? list.length : 0;
+  if (!allowListFallback) {
+    return { total: null, fonte: 'indisponivel', confiavel: false };
+  }
+  if (!Array.isArray(list)) {
+    return { total: null, fonte: 'indisponivel', confiavel: false };
+  }
+  const len = list.length;
+  const capped = isCappedListUnreliable(list, softLimit);
   return {
-    total: len,
-    fonte: 'lista',
-    confiavel: !isCappedListUnreliable(list, softLimit),
+    total: capped ? null : len,
+    fonte: capped ? 'lista_capada' : 'lista',
+    confiavel: !capped,
   };
+};
+
+/** Formata total de KPI: null/indisponível → "—"; zero confirmado permanece "0". */
+export const formatDashboardCountDisplay = (resolved) => {
+  if (!resolved || resolved.confiavel !== true || resolved.total == null) return '—';
+  return Number(resolved.total).toLocaleString('pt-BR');
+};
+
+/**
+ * Subtitle do KPI de contagem: loading ≠ indisponível ≠ zero confirmado.
+ * @param {{ resolved?: { fonte?: string, confiavel?: boolean } | null, loading?: boolean, allowed?: boolean }} [input]
+ */
+export const dashboardCountSubtitle = ({
+  resolved = null,
+  loading = false,
+  allowed = true,
+} = {}) => {
+  if (!allowed) return 'sem permissão neste perfil';
+  if (loading || resolved == null) return 'carregando contagem…';
+  if (resolved.fonte === 'count') return 'count · escopo empresa/grupo';
+  if (resolved.confiavel) return 'lista · escopo empresa/grupo';
+  if (resolved.fonte === 'lista_capada') return 'lista capada · contagem indisponível ≠ zero';
+  return 'contagem indisponível ≠ zero';
+};
+
+/**
+ * Após falha de countEntities: lista vazia (ex.: initialData []) não é zero confirmado.
+ * Só usa fallback de lista quando há itens reais e não capados.
+ */
+export const resolveDashboardCountAfterFailure = (list) => {
+  if (Array.isArray(list) && list.length > 0) {
+    return resolveDashboardCount({ list, allowListFallback: true });
+  }
+  return resolveDashboardCount({ allowListFallback: false });
 };
 
 export const filtrarPorPeriodoDashboard = (data, periodo = 'mes') => {

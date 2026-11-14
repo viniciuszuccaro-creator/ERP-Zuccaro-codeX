@@ -88,6 +88,8 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /central360-grades-simultaneas/);
   assert.match(src, /central360-grade-corte/);
   assert.match(src, /central360-grade-revenda/);
+  assert.match(src, /central360-grades-sem-itens/);
+  assert.match(src, /hasSelection=\{Boolean\(selected\?\.id\)\}/);
   assert.match(src, /CentralCliente360Panel/);
   assert.match(src, /OrcamentosTab/);
   assert.match(src, /PedidoCanonicoPanel/);
@@ -105,10 +107,21 @@ test('OrcamentosTab: tabela 12 colunas no centralLayout; seleção sem gravaçã
   assert.match(src, /CENTRAL_VENDAS360_COLUMNS/);
   assert.match(src, /onDoubleClick/);
   assert.match(src, /notifyCentralSelect/);
+  assert.match(src, /selectCentralRow/);
+  assert.match(src, /central360-selecionar-orcamento/);
   assert.match(src, /Validade do orçamento \(≠ prazo de entrega\)/);
   assert.match(src, /central360-prefs-colunas/);
   assert.match(src, /writeCentralColumnHiddenKeys/);
   assert.match(src, /readCentralColumnHiddenKeys/);
+});
+
+test('Fechar bloqueia sem condição; seleção hidrata itens; pedido espelha', () => {
+  const orc = read('src/components/comercial/OrcamentosTab.jsx');
+  const ped = read('src/components/comercial/PedidoCanonicoPanel.jsx');
+  assert.match(orc, /sem condição de pagamento/);
+  assert.match(orc, /selectCentralRow/);
+  assert.match(ped, /selectCentralRow/);
+  assert.match(ped, /central360-selecionar-pedido/);
 });
 
 test('OrcamentosTab ABERTO: Imprimir/Enviar/Fechar/Mais sem fingir sucesso', () => {

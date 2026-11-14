@@ -55,7 +55,7 @@ async function mount() {
     '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: (key) => invalidations.push(key) }),
       useQuery: ({ queryKey,...options }) => (plans.push({queryKey,...options}),queries.push(queryKey), queryKey[0] === 'orcamentos-http')
         ? { data: { data: [current], meta: { total: 1 } } }
-        : { data: { clientesEmpresa: [], clientes: [], condicoes: [], produtos: [], unidades: [], tabelas: [] } },
+        : { data: { clientesEmpresa: [{ id: 'ce-1', cliente_id: 'cli-1' }], clientes: [{ id: 'cli-1', razao_social: 'Cliente Sintetico' }], condicoes: [], produtos: [], unidades: [], tabelas: [] } },
       // #414: hidratação por linha usa useQueries; mock não executa queryFn.
       useQueries: ({ queries: batch = [] } = {}) => {
         for (const item of batch) {
@@ -73,7 +73,8 @@ async function mount() {
         list: (...args) => request('listPedidos', getScope(), args), get: (...args) => request('getPedido', getScope(), args) },
     }) },
     './comercialProposalFixture':proposalFixture,'./OrcamentoProposalAside':{__esModule:true,default:'OrcamentoProposalAside'},
-    './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido'},
+    './ValidadorEstoquePedido':{__esModule:true,default:'ValidadorEstoquePedido',conversionStockOkFromAvailability:()=>true},
+    './SeletorEnderecoEntregaPedido':{__esModule:true,default:'SeletorEnderecoEntregaPedido'},
     './centralVendas360Layout': await import('../src/components/comercial/centralVendas360Layout.js'),
     './orcamentoUiPolicy': policy, './pedidoUiPolicy': pedidoPolicy, './comercialMasterPicker': picker,
     './centralCliente360Navigation': navigation,
@@ -175,6 +176,9 @@ test('Orcamento real: cancelar/converter bloqueiam clique duplo e callback tardi
     if (method === 'cancel') { h.title('Cancelar').props.onClick(); h.render(); click = h.find((n) => typeof n.props.onConfirm === 'function').props.onConfirm; }
     else { await h.title('Visualizar').props.onClick(); h.render(); h.button('Fechar → pedido').props.onClick(); h.render();
       h.nodes().filter((n) => n.type === 'Input' && n.props.type === 'date').at(-1).props.onChange({ target: { value: '2027-02-01' } });
+      h.render();
+      const seletor = h.find((n) => n.type === 'SeletorEnderecoEntregaPedido');
+      seletor.props.onSelect({ id: '11111111-1111-4111-8111-111111111111', cliente_local_id: '11111111-1111-4111-8111-111111111111' });
       h.render(); click = h.button('Confirmar fechamento').props.onClick; }
     const result = click(); click(); assert.equal(h.calls.filter((c) => c.method === method).length, 1);
     h.setSession(tresZ); h.pending[method].resolve(row()); await result; await flush();

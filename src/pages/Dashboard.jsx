@@ -81,6 +81,9 @@ import {
   buildKpiDrillDownParams,
   buildKpiDrillDownUrl,
   resolveDashboardCount,
+  resolveDashboardCountAfterFailure,
+  formatDashboardCountDisplay,
+  dashboardCountSubtitle,
 } from "@/components/lib/dashboardKpiPolicy";
 
 const reportDashboardFailure = (operation, error, context = {}) => {
@@ -293,7 +296,11 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: totalProdutos = 0 } = useQuery({
+  const {
+    data: totalProdutosResolved,
+    isPending: loadingProdutosCount,
+    isFetching: fetchingProdutosCount,
+  } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeEstoque),
     queryKey: ['produtos-count-dash', ...contextQueryKey],
     queryFn: async () => {
@@ -303,15 +310,17 @@ export default function Dashboard() {
           entityName: 'Produto',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: produtos }).total;
+        return resolveDashboardCount({ countValue: response.data?.count, list: produtos });
       } catch (error) {
-        reportDashboardFailure('Falha ao contar produtos; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: produtos }).total;
+        reportDashboardFailure('Falha ao contar produtos — não fabricar zero', error, { scopeType, groupId, empresaId });
+        // initialData [] não é zero confirmado; falha de count → — salvo lista real não vazia.
+        return resolveDashboardCountAfterFailure(produtos);
       }
     },
     staleTime: 120000,
     retry: 1,
   });
+  const totalProdutosDisplay = formatDashboardCountDisplay(totalProdutosResolved);
 
   const { data: clientes = [] } = useQuery({
       enabled: Boolean(canSeeCRM && hasContextoAtivo),
@@ -329,7 +338,7 @@ export default function Dashboard() {
     initialData: []
   });
 
-  const { data: totalClientes = 0 } = useQuery({
+  const { data: totalClientesResolved } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeCRM),
     queryKey: ['clientes-count', ...contextQueryKey],
     queryFn: async () => {
@@ -339,17 +348,22 @@ export default function Dashboard() {
           entityName: 'Cliente',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: clientes }).total;
+        return resolveDashboardCount({ countValue: response.data?.count, list: clientes });
       } catch (error) {
-        reportDashboardFailure('Falha ao contar clientes; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: clientes }).total;
+        reportDashboardFailure('Falha ao contar clientes — não fabricar zero', error, { scopeType, groupId, empresaId });
+        return resolveDashboardCountAfterFailure(clientes);
       }
     },
     staleTime: 120000,
     retry: 1,
   });
+  const totalClientesDisplay = formatDashboardCountDisplay(totalClientesResolved);
 
-  const { data: totalColaboradoresDash = 0 } = useQuery({
+  const {
+    data: totalColaboradoresResolved,
+    isPending: loadingColaboradoresCount,
+    isFetching: fetchingColaboradoresCount,
+  } = useQuery({
     enabled: Boolean(hasContextoAtivo && canSeeRH),
     queryKey: ['colaboradores-count-dash', ...contextQueryKey],
     queryFn: async () => {
@@ -359,15 +373,16 @@ export default function Dashboard() {
           entityName: 'Colaborador',
           filter: filtro
         });
-        return resolveDashboardCount({ countValue: response.data?.count, list: colaboradores }).total;
+        return resolveDashboardCount({ countValue: response.data?.count, list: colaboradores });
       } catch (error) {
-        reportDashboardFailure('Falha ao contar colaboradores; usando lista carregada', error, { scopeType, groupId, empresaId });
-        return resolveDashboardCount({ list: colaboradores }).total;
+        reportDashboardFailure('Falha ao contar colaboradores — não fabricar zero', error, { scopeType, groupId, empresaId });
+        return resolveDashboardCountAfterFailure(colaboradores);
       }
     },
     staleTime: 120000,
     retry: 1,
   });
+  const totalColaboradoresDisplay = formatDashboardCountDisplay(totalColaboradoresResolved);
 
   const { data: ordensProducao = [] } = useQuery({
       enabled: Boolean(canSeeProducao && hasContextoAtivo),
@@ -721,7 +736,12 @@ export default function Dashboard() {
     },
     {
       title: "Produtos Cadastrados",
-      value: totalProdutos,
+      value: canSeeEstoque ? totalProdutosDisplay : '—',
+      subtitle: dashboardCountSubtitle({
+        resolved: totalProdutosResolved,
+        loading: Boolean(canSeeEstoque && hasContextoAtivo && totalProdutosResolved == null && (loadingProdutosCount || fetchingProdutosCount)),
+        allowed: Boolean(canSeeEstoque && hasContextoAtivo),
+      }),
       icon: Package,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
@@ -729,7 +749,12 @@ export default function Dashboard() {
     },
     {
       title: "Colaboradores",
-      value: totalColaboradoresDash,
+      value: canSeeRH ? totalColaboradoresDisplay : '—',
+      subtitle: dashboardCountSubtitle({
+        resolved: totalColaboradoresResolved,
+        loading: Boolean(canSeeRH && hasContextoAtivo && totalColaboradoresResolved == null && (loadingColaboradoresCount || fetchingColaboradoresCount)),
+        allowed: Boolean(canSeeRH && hasContextoAtivo),
+      }),
       icon: UserCircle,
       color: "text-pink-600",
       bgColor: "bg-pink-50",

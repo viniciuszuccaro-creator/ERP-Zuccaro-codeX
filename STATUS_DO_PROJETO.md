@@ -76,10 +76,61 @@ nenhum seed/carga/reativacao. Recursos/recibos privados no HANDOFF.
 Gates finitos: publicar/CI do WIP -> pacote limpo/APIweb -> HTTPS/DNS ->
 Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
 
+## Cursor — HML UX Cadastros/Dashboard/Central360 (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` a partir tip PR595
+`3e6461929` (CI 6998/6999 SUCCESS). Continuity/composição PR594 `d054e2b3` intocada.
+PR #596. Tip anterior `0dc773c1d` (contagens/dashboard); este tip alinha data-permission.
+
+### Diagnóstico navegação (não = módulo apagado)
+| Sintoma HML | Classificação |
+|---|---|
+| Menu reduzido | oculto por perfil RBAC (fail-closed) — sem liberar admin no FE |
+| Menu vazio enquanto carrega | `permissionsLoading` + banner shell (≠ módulo apagado) |
+| “Acesso negado” em Abrir do card | data-permission entidade ≠ seção owner (corrigido Bloco1–6) |
+| Contagem SetorAtividade/GrupoProduto/Marca/UnidadeMedida | BFF parcial/500 → PARTIAL; UI “—” |
+| Card sem rota | fora da composição ou recurso não no tip servido |
+
+### Lote UI deste tip
+- Cadastros: banners loading / unavailable / partial distintos; badge `data-count-state`
+- AllCounts: sem contexto → `READ_COUNT_UNAVAILABLE` (não mapa de zeros)
+- Dashboard canônico: count produtos/colaboradores fail-closed (`—` ≠ 0 falso); fonte no subtitle
+- LogisticaEntregaTab: seletor com `groupId`/`empresaId` (PR595 preservado)
+- Dashboard Corporativo permanece página distinta (consolidado grupo) — sem merge destrutivo
+- Bloco1–6: `data-permission` = `Cadastros.{Pessoas|Produtos|Financeiro|Logistica|Organizacional|Tecnologia}.visualizar`
+- `SECTION_ALIASES`: produtos/financeiro/logistica/tecnologia (não inventa grant; só resolve nó owner)
+- Shell: banner `data-menu-permissions-loading` durante carga RBAC
+
+### Coordenação Codex
+- 500 auxiliares bloco2; ativação `cliente_local`; códigos sequenciais BFF; composição servida
+- Integra-novo = referência visual/telas, não registros Base44
+
+### Bugbot PR596 — Dashboard count (mesmo tip)
+- Catch de countEntities: lista vazia/`initialData []` ≠ zero confirmado (`resolveDashboardCountAfterFailure`)
+- Subtitle: carregando ≠ indisponível ≠ sem permissão (`dashboardCountSubtitle`)
+
+### Coordenação Codex (PR595 Continuity)
+- Backend ClienteLocal/revisão CAS na branch Continuity; Cursor mantém interfaces 595/596
+- Fiscal permanece ClienteLocal FISCAL; sem gravar endereco_principal rejeitado pelo MASTER
+
+### Central360 — Fechar orçamento → local entrega (mesmo tip)
+- Dialog `central360-fechar-conversao`: `SeletorEnderecoEntregaPedido` quando ENTREGA
+- Fail-closed sem `cliente_local_id`; payload envia id canônico (Codex BFF confirma contrato)
+- Fechar ≠ Cancelar ≠ Fechar janela preservados
+
+### Central360 — hidratação grades + blockers ([Central360 journey gaps](bc-bcb7a25f-ebbf-5214-a0c4-fb9eb420c863))
+- Clique simples orçamento/pedido: GET hidrata `itens` para grades (lista sem linhas ≠ vazio real)
+- Shell: banner `central360-grades-sem-itens` quando seleção sem itens carregados
+- Fechar bloqueia sem condição de pagamento / masters em erro
+
+Próximo Cursor: tabela pedido 12 cols; itens/pagamento ricos; códigos UI; cards Base44.
+Sem HML/DDL/carga. Codex: schema `converter-pedido` + `cliente_local_id`.
+
 ## Cursor — endereços operacionais + rascunho de revisão (2026-11-14)
 
 Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` sobre Continuity
-`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados.
+`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados. Tip CI
+`3e6461929` SUCCESS.
 
 Lote UI endereços (sem HML/DDL/carga; 1500 ensaio intactos):
 - Mensagens: operacional vs revisão vs negado vs falha; sem zero falso;

@@ -128,7 +128,7 @@ function LayoutContent({ children, currentPageName }) {
         const { user } = useUser();
         const { logout } = useAuth();
         const { empresaAtual, filterInContext, grupoAtual, contexto } = useContextoVisual();
-        const { hasPermission } = usePermissions();
+        const { hasPermission, isLoading: permissionsLoading } = usePermissions();
         const contextRef = React.useRef({ user, empresaAtual, grupoAtual, contexto, moduleName });
         contextRef.current = { user, empresaAtual, grupoAtual, contexto, moduleName };
 
@@ -1297,10 +1297,13 @@ function LayoutContent({ children, currentPageName }) {
     "Administração do Sistema": "Sistema",
   };
 
+  // Fail-closed: enquanto permissões carregam, não inventar liberação.
+  // Banner no shell evita confundir menu reduzido transitório com módulo apagado.
   const itemsFiltrados = navigationItems.filter(item => {
     if (item.adminOnly && user?.role !== 'admin') return false;
     const mod = titleToModule[item.title];
     if (!mod) return true; // itens públicos ou informativos continuam visíveis
+    if (permissionsLoading) return false;
     return hasPermission(mod, null, 'ver');
   });
 
@@ -1361,6 +1364,7 @@ function LayoutContent({ children, currentPageName }) {
       pesquisaOpen={pesquisaOpen}
       setPesquisaOpen={setPesquisaOpen}
       canViewSystem={hasPermission('Sistema', null, 'ver')}
+      permissionsLoading={permissionsLoading}
       onLogout={() => logout(true)}
       onPrefetch={(item) => {
         prefetchForItem(item.title);
