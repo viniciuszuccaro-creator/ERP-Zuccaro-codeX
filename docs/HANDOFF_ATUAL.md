@@ -1,8 +1,12 @@
+## Cursor — PR596 DashboardEstruturantes KPI fail-closed (2026-11-14 America/Sao_Paulo)
+
+Card Base44 Estruturantes: — ≠ 0; sem default []. Freeze `0ffff5100` / port
+`81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy. Próximo: CI; Casa preflight 81.
+
 ## Cursor — PR596 Bugbot ProdutosProducao OP≠produto + resumo (2026-11-14 America/Sao_Paulo)
 
-Bugbot: falha de OP não zera ativos/bitolas/estoque; resumo com displays "—".
+Bugbot tip `6b3e4a1bd`: falha de OP não zera KPIs produto; resumo "—".
 Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
-Próximo: CI tip; Casa preflight pacote 81.
 
 ## Cursor — PR596 tip 87571fdd4 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 

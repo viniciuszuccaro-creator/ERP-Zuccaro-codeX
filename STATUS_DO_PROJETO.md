@@ -1,9 +1,15 @@
+## Cursor — PR596 DashboardEstruturantes KPI fail-closed (Base44) (2026-11-14 America/Sao_Paulo)
+
+Card Estruturantes: sem `= []`; ativos via `isDashboardCadastroAtivo`;
+contexto/RBAC/erro/cap → "—"; badge sem “100% Operacional” falso.
+Tip pushed — aguarda CI. Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML.
+
 ## Cursor — PR596 Bugbot ProdutosProducao OP≠produto + resumo (2026-11-14 America/Sao_Paulo)
 
 Bugbot 87571: (1) `errorOrdens` não bloqueia KPIs de produto (`productMetricsBlocked`
 só Produto/contexto/cap; `ordensUnavailable` só top5/OP); (2) resumo usa
-`produtosAtivosDisplay`/`bitolasDisplay` (sem zeros falsos). Tip pushed — aguarda CI.
-Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy.
+`produtosAtivosDisplay`/`bitolasDisplay` (sem zeros falsos). Tip `6b3e4a1bd`
+pushed — CI em curso. Freeze `0ffff5100` / port `81d1e849`. tip ≠ HML.
 
 ## Cursor — PR596 DashboardProdutosProducao KPI fail-closed (2026-11-14 America/Sao_Paulo)
 

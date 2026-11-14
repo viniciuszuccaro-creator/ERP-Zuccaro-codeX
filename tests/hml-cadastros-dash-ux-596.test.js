@@ -117,6 +117,22 @@ test('DashboardProdutosProducao: KPI fail-closed (— ≠ 0; ativos canônicos)'
   assert.doesNotMatch(src, /text-purple-700">\{bitolas\.length\}</);
 });
 
+test('DashboardEstruturantes: KPI fail-closed (— ≠ 0; sem default [])', () => {
+  const src = readFileSync('src/components/cadastros/DashboardEstruturantes.jsx', 'utf8');
+  assert.match(src, /formatCanaisOrigemKpiDisplay/);
+  assert.match(src, /isDashboardCadastroAtivo/);
+  assert.match(src, /isCappedListUnreliable/);
+  assert.match(src, /estruturantes-amostra-capada/);
+  assert.match(src, /estruturantes-consulta-indisponivel/);
+  assert.match(src, /totalDisplay/);
+  assert.match(src, /classificacaoDisplay/);
+  assert.doesNotMatch(src, /data: setores = \[\]/);
+  assert.doesNotMatch(src, /data: produtos = \[\]/);
+  assert.doesNotMatch(src, /100% Operacional/);
+  assert.doesNotMatch(src, /ativo !== false/);
+  assert.doesNotMatch(src, /\{percentualClassificacao\}%/);
+});
+
 test('DashboardCanaisOrigem: KPI fail-closed (— ≠ 0; amostra capada)', async () => {
   const {
     formatCanaisOrigemKpiDisplay,

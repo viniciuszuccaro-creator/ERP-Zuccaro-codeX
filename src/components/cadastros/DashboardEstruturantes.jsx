@@ -6,12 +6,19 @@ import { Factory, Package, Award, Warehouse, Scale, TrendingUp, CheckCircle2, Al
 import { useQuery } from "@tanstack/react-query";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import {
+  DASHBOARD_LIST_SOFT_LIMIT,
+  formatCanaisOrigemKpiDisplay,
+  isCappedListUnreliable,
+  isDashboardCadastroAtivo,
+} from "@/components/lib/dashboardKpiPolicy";
 
 /**
  * 🎯 DASHBOARD ESTRUTURANTES V21.2 FASE 2
  * 
  * Painel visual consolidado dos 5 cadastros estruturantes
  * Mostra métricas, qualidade de dados e status de integração
+ * KPIs: indisponível (contexto/RBAC/erro/cap) → "—" (≠ zero falso).
  */
 export default function DashboardEstruturantes() {
   const { empresaAtual, grupoAtual, contexto, filterInContext } = useContextoVisual();
@@ -23,133 +30,193 @@ export default function DashboardEstruturantes() {
   const consultasHabilitadas = contextoValido && podeVisualizarCadastros;
   const queryScope = [groupId, empresaId, contexto];
 
-  const { data: setores = [] } = useQuery({
+  // Sem default []: query disabled/erro ≠ zero confirmado nos KPIs.
+  const { data: setores, isPending: loadingSetores, isError: errorSetores } = useQuery({
     queryKey: ['setores-atividade', ...queryScope],
-    queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 9999),
+    queryFn: () => filterInContext('SetorAtividade', {}, 'nome', DASHBOARD_LIST_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  const { data: grupos = [] } = useQuery({
+  const { data: grupos, isPending: loadingGrupos, isError: errorGrupos } = useQuery({
     queryKey: ['grupos-produto', ...queryScope],
-    queryFn: () => filterInContext('GrupoProduto', {}, 'nome', 9999),
+    queryFn: () => filterInContext('GrupoProduto', {}, 'nome', DASHBOARD_LIST_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  const { data: marcas = [] } = useQuery({
+  const { data: marcas, isPending: loadingMarcas, isError: errorMarcas } = useQuery({
     queryKey: ['marcas', ...queryScope],
-    queryFn: () => filterInContext('Marca', {}, 'nome', 9999),
+    queryFn: () => filterInContext('Marca', {}, 'nome', DASHBOARD_LIST_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  const { data: locais = [] } = useQuery({
+  const { data: locais, isPending: loadingLocais, isError: errorLocais } = useQuery({
     queryKey: ['locais-estoque', ...queryScope],
-    queryFn: () => filterInContext('LocalEstoque', {}, 'nome', 9999),
+    queryFn: () => filterInContext('LocalEstoque', {}, 'nome', DASHBOARD_LIST_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  const { data: tabelas = [] } = useQuery({
+  const { data: tabelas, isPending: loadingTabelas, isError: errorTabelas } = useQuery({
     queryKey: ['tabelas-fiscais', ...queryScope],
-    queryFn: () => filterInContext('TabelaFiscal', {}, 'nome', 9999),
+    queryFn: () => filterInContext('TabelaFiscal', {}, 'nome', DASHBOARD_LIST_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  const { data: produtos = [] } = useQuery({
+  const { data: produtos, isPending: loadingProdutos, isError: errorProdutos } = useQuery({
     queryKey: ['produtos-estruturantes', ...queryScope],
-    queryFn: () => filterInContext('Produto', {}, 'descricao', 9999),
+    queryFn: () => filterInContext('Produto', {}, 'descricao', DASHBOARD_LIST_SOFT_LIMIT),
     enabled: consultasHabilitadas,
     staleTime: 120000,
   });
 
-  // Métricas calculadas
-  const setoresAtivos = setores.filter(s => s.ativo !== false).length;
-  const gruposAtivos = grupos.filter(g => g.ativo !== false).length;
-  const marcasAtivas = marcas.filter(m => m.ativo !== false).length;
-  const locaisAtivos = locais.filter(l => l.ativo !== false).length;
-  const tabelasAtivas = tabelas.filter(t => t.regra_ativa !== false).length;
+  const setoresList = Array.isArray(setores) ? setores : [];
+  const gruposList = Array.isArray(grupos) ? grupos : [];
+  const marcasList = Array.isArray(marcas) ? marcas : [];
+  const locaisList = Array.isArray(locais) ? locais : [];
+  const tabelasList = Array.isArray(tabelas) ? tabelas : [];
+  const produtosList = Array.isArray(produtos) ? produtos : [];
 
-  const produtosClassificados = produtos.filter(p => 
+  const setoresBlocked = !consultasHabilitadas || errorSetores || isCappedListUnreliable(setoresList, DASHBOARD_LIST_SOFT_LIMIT);
+  const gruposBlocked = !consultasHabilitadas || errorGrupos || isCappedListUnreliable(gruposList, DASHBOARD_LIST_SOFT_LIMIT);
+  const marcasBlocked = !consultasHabilitadas || errorMarcas || isCappedListUnreliable(marcasList, DASHBOARD_LIST_SOFT_LIMIT);
+  const locaisBlocked = !consultasHabilitadas || errorLocais || isCappedListUnreliable(locaisList, DASHBOARD_LIST_SOFT_LIMIT);
+  const tabelasBlocked = !consultasHabilitadas || errorTabelas || isCappedListUnreliable(tabelasList, DASHBOARD_LIST_SOFT_LIMIT);
+  const produtosBlocked = !consultasHabilitadas || errorProdutos || isCappedListUnreliable(produtosList, DASHBOARD_LIST_SOFT_LIMIT);
+  const anyConsultaError = errorSetores || errorGrupos || errorMarcas || errorLocais || errorTabelas || errorProdutos;
+  const anyCapped = [setoresList, gruposList, marcasList, locaisList, tabelasList, produtosList]
+    .some((list) => isCappedListUnreliable(list, DASHBOARD_LIST_SOFT_LIMIT));
+  const isLoading = consultasHabilitadas && (
+    loadingSetores || loadingGrupos || loadingMarcas || loadingLocais || loadingTabelas || loadingProdutos
+  );
+
+  const setoresAtivos = setoresList.filter(isDashboardCadastroAtivo).length;
+  const gruposAtivos = gruposList.filter(isDashboardCadastroAtivo).length;
+  const marcasAtivas = marcasList.filter(isDashboardCadastroAtivo).length;
+  const locaisAtivos = locaisList.filter(isDashboardCadastroAtivo).length;
+  const tabelasAtivas = tabelasList.filter((t) => t.regra_ativa === true || isDashboardCadastroAtivo(t)).length;
+
+  const setoresTotalDisplay = formatCanaisOrigemKpiDisplay({ blocked: setoresBlocked, value: setoresList.length });
+  const gruposTotalDisplay = formatCanaisOrigemKpiDisplay({ blocked: gruposBlocked, value: gruposList.length });
+  const marcasTotalDisplay = formatCanaisOrigemKpiDisplay({ blocked: marcasBlocked, value: marcasList.length });
+  const locaisTotalDisplay = formatCanaisOrigemKpiDisplay({ blocked: locaisBlocked, value: locaisList.length });
+  const tabelasTotalDisplay = formatCanaisOrigemKpiDisplay({ blocked: tabelasBlocked, value: tabelasList.length });
+
+  const produtosClassificados = produtosList.filter(p => 
     p.setor_atividade_id && p.grupo_produto_id && p.marca_id
   ).length;
-  const percentualClassificacao = produtos.length > 0 
-    ? ((produtosClassificados / produtos.length) * 100).toFixed(0) 
-    : 0;
+  const percentualClassificacao = !produtosBlocked && produtosList.length > 0 
+    ? ((produtosClassificados / produtosList.length) * 100).toFixed(0) 
+    : null;
+  const classificacaoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: produtosBlocked || percentualClassificacao == null,
+    value: percentualClassificacao == null ? null : Number(percentualClassificacao),
+    format: (n) => `${n}%`,
+  });
+  const classificacaoCountDisplay = produtosBlocked
+    ? '—'
+    : `${produtosClassificados}/${produtosList.length} produtos`;
 
-  const ocupacaoTotal = locais.reduce((sum, l) => sum + (l.ocupacao_atual_m3 || 0), 0);
-  const capacidadeTotal = locais.reduce((sum, l) => sum + (l.capacidade_m3 || 0), 0);
-  const percentualOcupacao = capacidadeTotal > 0 
+  const ocupacaoTotal = locaisList.reduce((sum, l) => sum + (l.ocupacao_atual_m3 || 0), 0);
+  const capacidadeTotal = locaisList.reduce((sum, l) => sum + (l.capacidade_m3 || 0), 0);
+  const percentualOcupacao = !locaisBlocked && capacidadeTotal > 0 
     ? ((ocupacaoTotal / capacidadeTotal) * 100).toFixed(0) 
-    : 0;
+    : null;
+  const ocupacaoDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: locaisBlocked || percentualOcupacao == null,
+    value: percentualOcupacao == null ? null : Number(percentualOcupacao),
+    format: (n) => `${n}%`,
+  });
+  const ocupacaoVolumeDisplay = locaisBlocked
+    ? '—'
+    : `${ocupacaoTotal.toFixed(0)}m³ / ${capacidadeTotal.toFixed(0)}m³`;
 
-  const tabelasValidadasIA = tabelas.filter(t => t.validado_ia).length;
-  const percentualValidacaoIA = tabelas.length > 0
-    ? ((tabelasValidadasIA / tabelas.length) * 100).toFixed(0)
-    : 0;
+  const tabelasValidadasIA = tabelasList.filter(t => t.validado_ia).length;
+  const percentualValidacaoIA = !tabelasBlocked && tabelasList.length > 0
+    ? ((tabelasValidadasIA / tabelasList.length) * 100).toFixed(0)
+    : null;
+  const validacaoIaDisplay = formatCanaisOrigemKpiDisplay({
+    blocked: tabelasBlocked || percentualValidacaoIA == null,
+    value: percentualValidacaoIA == null ? null : Number(percentualValidacaoIA),
+    format: (n) => `${n}%`,
+  });
+  const validacaoIaCountDisplay = tabelasBlocked
+    ? '—'
+    : `${tabelasValidadasIA}/${tabelasList.length} regras`;
+
+  const fmtAtivosMetrica = (blocked, ativos, total, label = 'ativos') => (
+    blocked
+      ? '—'
+      : `${formatCanaisOrigemKpiDisplay({ blocked: false, value: ativos })}/${formatCanaisOrigemKpiDisplay({ blocked: false, value: total })} ${label}`
+  );
 
   const estruturantes = [
     {
       nome: "Setores de Atividade",
       icon: Factory,
-      total: setores.length,
-      ativos: setoresAtivos,
+      totalDisplay: setoresTotalDisplay,
+      blocked: setoresBlocked,
       color: "indigo",
       bgGradient: "from-sky-50 to-sky-100",
       borderColor: "border-sky-300",
       textColor: "text-sky-700",
-      metrica: `${setoresAtivos}/${setores.length} ativos`,
-      status: setoresAtivos > 0 ? "ok" : "alert"
+      metrica: fmtAtivosMetrica(setoresBlocked, setoresAtivos, setoresList.length),
+      status: setoresBlocked ? "unknown" : (setoresAtivos > 0 ? "ok" : "alert")
     },
     {
       nome: "Grupos de Produto",
       icon: Package,
-      total: grupos.length,
-      ativos: gruposAtivos,
+      totalDisplay: gruposTotalDisplay,
+      blocked: gruposBlocked,
       color: "cyan",
       bgGradient: "from-cyan-50 to-cyan-100",
       borderColor: "border-cyan-300",
       textColor: "text-cyan-700",
-      metrica: `${gruposAtivos}/${grupos.length} ativos`,
-      status: gruposAtivos > 0 ? "ok" : "alert"
+      metrica: fmtAtivosMetrica(gruposBlocked, gruposAtivos, gruposList.length),
+      status: gruposBlocked ? "unknown" : (gruposAtivos > 0 ? "ok" : "alert")
     },
     {
       nome: "Marcas",
       icon: Award,
-      total: marcas.length,
-      ativos: marcasAtivas,
+      totalDisplay: marcasTotalDisplay,
+      blocked: marcasBlocked,
       color: "amber",
       bgGradient: "from-amber-50 to-amber-100",
       borderColor: "border-amber-300",
       textColor: "text-amber-700",
-      metrica: `${marcasAtivas}/${marcas.length} ativas`,
-      status: marcasAtivas > 0 ? "ok" : "alert"
+      metrica: fmtAtivosMetrica(marcasBlocked, marcasAtivas, marcasList.length, 'ativas'),
+      status: marcasBlocked ? "unknown" : (marcasAtivas > 0 ? "ok" : "alert")
     },
     {
       nome: "Locais de Estoque",
       icon: Warehouse,
-      total: locais.length,
-      ativos: locaisAtivos,
+      totalDisplay: locaisTotalDisplay,
+      blocked: locaisBlocked,
       color: "purple",
       bgGradient: "from-sky-50 to-sky-100",
       borderColor: "border-sky-300",
       textColor: "text-sky-700",
-      metrica: `${percentualOcupacao}% ocupação`,
-      status: parseInt(percentualOcupacao) < 90 ? "ok" : "alert"
+      metrica: locaisBlocked ? '—' : `${ocupacaoDisplay} ocupação`,
+      status: locaisBlocked || percentualOcupacao == null
+        ? "unknown"
+        : (parseInt(percentualOcupacao, 10) < 90 ? "ok" : "alert")
     },
     {
       nome: "Tabelas Fiscais",
       icon: Scale,
-      total: tabelas.length,
-      ativos: tabelasAtivas,
+      totalDisplay: tabelasTotalDisplay,
+      blocked: tabelasBlocked,
       color: "red",
       bgGradient: "from-red-50 to-red-100",
       borderColor: "border-red-300",
       textColor: "text-red-700",
-      metrica: `${percentualValidacaoIA}% validadas IA`,
-      status: parseInt(percentualValidacaoIA) > 50 ? "ok" : "alert"
+      metrica: tabelasBlocked ? '—' : `${validacaoIaDisplay} validadas IA`,
+      status: tabelasBlocked || percentualValidacaoIA == null
+        ? "unknown"
+        : (parseInt(percentualValidacaoIA, 10) > 50 ? "ok" : "alert")
     }
   ];
 
@@ -166,10 +233,17 @@ export default function DashboardEstruturantes() {
             Visão consolidada dos 5 pilares mestres do sistema • Fase 2 Completa
           </p>
         </div>
-        <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm">
-          <CheckCircle2 className="w-4 h-4 mr-2" />
-          100% Operacional
-        </Badge>
+        {consultasHabilitadas && !anyConsultaError && !anyCapped && !isLoading ? (
+          <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm" data-block="estruturantes-operacional-ok">
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Consultas OK
+          </Badge>
+        ) : (
+          <Badge className="bg-amber-600 text-white px-4 py-2 text-sm" data-block="estruturantes-operacional-pendente">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Totais sob revisão
+          </Badge>
+        )}
       </div>
 
       {(!contextoValido || !podeVisualizarCadastros) && (
@@ -178,6 +252,27 @@ export default function DashboardEstruturantes() {
           <AlertDescription>
             Dashboard de cadastros estruturantes exige contexto de grupo/empresa e permissão para visualizar cadastros.
           </AlertDescription>
+        </Alert>
+      )}
+      {anyConsultaError && (
+        <Alert className="border-amber-300 bg-amber-50" data-block="estruturantes-consulta-indisponivel">
+          <AlertCircle className="w-5 h-5 text-amber-700" />
+          <AlertDescription>
+            Contagem/amostra indisponível (erro de consulta — não é zero confirmado).
+          </AlertDescription>
+        </Alert>
+      )}
+      {anyCapped && (
+        <Alert className="border-amber-300 bg-amber-50" data-block="estruturantes-amostra-capada">
+          <AlertCircle className="w-5 h-5 text-amber-700" />
+          <AlertDescription>
+            Amostra no soft limit ({DASHBOARD_LIST_SOFT_LIMIT}) — totais do card indisponíveis (≠ zero).
+          </AlertDescription>
+        </Alert>
+      )}
+      {isLoading && (
+        <Alert className="border-slate-200 bg-slate-50" data-block="estruturantes-carregando">
+          <AlertDescription>Carregando cadastros estruturantes…</AlertDescription>
         </Alert>
       )}
 
@@ -189,6 +284,7 @@ export default function DashboardEstruturantes() {
             <Card 
               key={idx}
               className={`bg-gradient-to-br ${item.bgGradient} border-2 ${item.borderColor} shadow-md hover:shadow-xl transition-all hover:scale-105`}
+              data-block={item.blocked ? 'estruturante-kpi-indisponivel' : 'estruturante-kpi'}
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -196,11 +292,11 @@ export default function DashboardEstruturantes() {
                   {item.status === "ok" ? (
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                    <AlertCircle className={`w-5 h-5 ${item.status === "unknown" ? "text-slate-400" : "text-amber-600"}`} />
                   )}
                 </div>
-                <div className="text-3xl font-bold text-slate-900 mb-1">
-                  {item.total}
+                <div className="text-3xl font-bold text-slate-900 mb-1" data-kpi="estruturante-total">
+                  {item.totalDisplay}
                 </div>
                 <p className="text-xs font-semibold text-slate-700 mb-2">{item.nome}</p>
                 <Badge variant="outline" className={`text-xs ${item.textColor}`}>
@@ -223,9 +319,9 @@ export default function DashboardEstruturantes() {
           </CardHeader>
           <CardContent>
             <div className="flex items-end gap-3">
-              <div className="text-4xl font-bold text-blue-900">{percentualClassificacao}%</div>
+              <div className="text-4xl font-bold text-blue-900" data-kpi="classificacao-pct">{classificacaoDisplay}</div>
               <div className="text-sm text-blue-700 mb-1">
-                {produtosClassificados}/{produtos.length} produtos
+                {classificacaoCountDisplay}
               </div>
             </div>
             <p className="text-xs text-blue-600 mt-2">
@@ -243,9 +339,9 @@ export default function DashboardEstruturantes() {
           </CardHeader>
           <CardContent>
             <div className="flex items-end gap-3">
-              <div className="text-4xl font-bold text-sky-900">{percentualOcupacao}%</div>
+              <div className="text-4xl font-bold text-sky-900" data-kpi="ocupacao-pct">{ocupacaoDisplay}</div>
               <div className="text-sm text-sky-700 mb-1">
-                {ocupacaoTotal.toFixed(0)}m³ / {capacidadeTotal.toFixed(0)}m³
+                {ocupacaoVolumeDisplay}
               </div>
             </div>
             <p className="text-xs text-sky-600 mt-2">
@@ -263,9 +359,9 @@ export default function DashboardEstruturantes() {
           </CardHeader>
           <CardContent>
             <div className="flex items-end gap-3">
-              <div className="text-4xl font-bold text-red-900">{percentualValidacaoIA}%</div>
+              <div className="text-4xl font-bold text-red-900" data-kpi="validacao-ia-pct">{validacaoIaDisplay}</div>
               <div className="text-sm text-red-700 mb-1">
-                {tabelasValidadasIA}/{tabelas.length} regras
+                {validacaoIaCountDisplay}
               </div>
             </div>
             <p className="text-xs text-red-600 mt-2">
