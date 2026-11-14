@@ -1,5 +1,10 @@
 ## Enderecos operacionais: backend preparado, HML preservada (2026-11-14)
 
+Fechamento codigo da98af34 remoto PR594 / CI7015 SUCCESS frontend/backend/compose.
+Ubuntu root2974PASS/0FAIL/0SKIP; PostgreSQL obrigatorioPASS. Contraprovas root
+focadas26PASS. Sem ativacao/deploy HML; UI595 ainda depende do residual atual
+descrito abaixo. Parecer6878200296 e coordenacao6878255851. Reserva liberada.
+
 PR595/3e646192 revisada com contraprovas reais de callbacks/transport HTTP:
 parecer6877992789. Contexto antigo, completude ausente e envelope/paginacao
 ainda impedem aceite; fiscal nao pode persistir no MASTER endereco_principal.
@@ -9,10 +14,10 @@ IDs/procedencia; completar nao ativa. Pedido valida finalidade/completude.
 HEAD595 mudou para9b876f33: completude/envelope corrigidos no delta; residual
 callback antigo reproduzido com bindingRef novo autorizado e consumidor real.
 Nao portar como aprovado. Suite backend final639PASS/0FAIL/42SKIP; PG real e
-fechamento Linux dependem da CI. Root interrompido no POSIX Windows, sem PASS
+fechamento Linux encerrados pela CI7015. Root local interrompido no POSIX Windows, sem PASS
 fabricado. Peel exato preserva pins e negativas; nenhuma baseline relaxada.
 29contraprovas backendPASS; typecheck/build backend e audit/lint/typecheck/build
-rootPASS (2warnings lint existentes). Fechamento completo/CI pendentes; detalhes
+rootPASS (2warnings lint existentes). Fechamento completo/CI acima; detalhes
 e limites no HANDOFF. Nenhum dado/permissao/schema HML ou operacional alterado.
 217locais permanecem inativos; reversao/gate/consumidor UI ainda necessarios.
 

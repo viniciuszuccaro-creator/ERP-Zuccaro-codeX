@@ -1,5 +1,13 @@
 ## Enderecos operacionais: revisao e CAS preparados, sem ativacao (2026-11-14)
 
+FECHAMENTO: codigo da98af34670a784d46078cf69e7bfdc14258c456 remoto PR594,
+CI7015/43601548785 SUCCESS nos3jobs. Ubuntu frontend2974PASS/0FAIL/0SKIP,
+audit/lint/typecheck/buildPASS; backend e test:postgres obrigatorio PASS,
+compose PGlite/PostgreSQL PASS. Contraprovas root focadas finais26PASS.
+Essas provas encerram a validacao tecnica do pacote, nao a homologacao UI595
+nem a ativacao HML. Parecer novo595:6878200296; coordenacao:6878255851.
+Checkout limpo apos publicacao; reserva deste lote liberada, UI continua Cursor.
+
 Reserva PR594/6877839992 e parecer PR595/6877992789. PR595 revisada em
 3e6461929c745cb0cef724d9e49d5a93b354c079: callback antigo pode inserir local
 no novo rascunho; completude ausente e aceita; listLocais converte envelope
@@ -31,14 +39,14 @@ Contraprovas focadas backend29PASS; typecheck/build backend PASS. Suite inicial
 backend638PASS/1FAIL/42SKIP: CRM usava local FISCAL no positivo ENTREGA;
 fixture corrigida para local ENTREGA ja existente, com negativo fiscal mantido.
 Suite final backend639PASS/0FAIL/42SKIP (PG real condicionado nao executado aqui).
-CI ainda deve ser conferida no SHA publicado. Root audit/lint
+CI encerrada no recibo acima. Root audit/lint
 (0erros/2warnings preexistentes), typecheck/build PASS. Guardas historicos mantem
 pins; apenas hunks exatos normalizados com contraprovas de adulteracao.
 Montado review usa React act, sem remover assercoes ou ampliar deadlines.
 Root completo interrompido no teste POSIX vps-gate-precheck no Windows;
 somente arvore propria encerrada. Falhas iniciais de pins corrigidas por peel
-exato, nao novos hashes; contraprovas focadas passaram. Publicacao draft somente
-para validacao Ubuntu conforme excecao vigente, nao homologacao ou deploy.
+exato, nao novos hashes; contraprovas focadas passaram. Publicacao draft usada
+para validacao Ubuntu conforme excecao vigente, agora verde, nao deploy.
 
 HML continua d054e2b3, sem escrita/config/DDL/deploy neste pacote;217locais
 inativos preservados. Perfil visualizar NAO foi ampliado. Aplicacao real depende
