@@ -1,3 +1,22 @@
+## Cursor — PR595 parecer endereços UI (binding / incompleto / envelope) (2026-11-14)
+
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595) sobre tip
+anterior `3e6461929` (CI6998/6999 SUCCESS). Não sobrescreve Continuity/PR594.
+Não altera backend/CAS nem fiscal=ClienteLocal.
+
+Parecer Codex (DIRECIONADO @ `3e6461929`) — UI Cursor:
+- `SeletorEnderecoEntregaPedido`: sync de binding no `onSelect`; só aceita
+  `endereco_incompleto === false`; status parcial ≠ lista vazia;
+- `httpApiClient.listLocais`: devolve `{ data, meta, partial }`; envelope inválido
+  → `LOCAIS_ENVELOPE_INVALID` (nunca `[]` loaded/zero);
+- Consumidores: Completo / LogisticaEntregaTab / PedidoCanonico (`incompleto===false`);
+- peels purpose/review/selectedReference/conferencia atualizados; testes sintéticos
+  `seletor-endereco-binding-595` + CANAL listLocais + locais/pedido fail-closed PASS.
+
+Limitações: ativação BFF de local inativo e contratos 500 auxiliares seguem Codex;
+CI deste tip ≠ runtime HML servido (`d054e2b3`). Próximo: CI tip → port critérios
+para PR596 se necessário → Central360 12-col / itens-pagamento.
+
 ## HML - acesso e100clientes confirmados pelo proprietario (2026-11-14)
 
 https://hml-erp.cpaferroeaco.com.br/ autenticada. Conferencia Chrome na origem

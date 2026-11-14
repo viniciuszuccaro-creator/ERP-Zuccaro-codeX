@@ -25,12 +25,12 @@ const sanitizeUrl = (value) => {
  * Aba 5: Logistica e Entrega.
  * Gerencia endereco, frete, previsao e etapas de entrega/faturamento parcial do pedido.
  */
-export default function LogisticaEntregaTab({ formData, setFormData, clientes = [], onNext }) {
+export default function LogisticaEntregaTab({ formData, setFormData, clientes = [], onNext, groupId = null, empresaId = null }) {
   const { hasPermission, isAdmin, canApprove } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || null;
-  const empresaId = empresaAtual?.id || null;
   const [modalEtapaOpen, setModalEtapaOpen] = useState(false);
+  const resolvedGroupId = groupId || grupoAtual?.id || empresaAtual?.group_id || null;
+  const resolvedEmpresaId = empresaId || empresaAtual?.id || null;
 
   const clienteSelecionado = clientes?.find(c => c.id === formData?.cliente_id) || null;
   const freteGratis = (Number(formData?.peso_total_kg) || 0) >= 30;
@@ -144,9 +144,15 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
             <SeletorEnderecoEntregaPedido
               cliente={clienteSelecionado}
               enderecoSelecionado={formData?.endereco_entrega_principal || {}}
-              groupId={groupId}
-              empresaId={empresaId}
-              onSelect={(endereco) => setFormData(prev => ({ ...prev, endereco_entrega_principal: endereco }))}
+              groupId={resolvedGroupId}
+              empresaId={resolvedEmpresaId}
+              onSelect={(endereco) => {
+                // null limpa (troca de contexto/permissão); não gravar rascunho órfão.
+                setFormData((prev) => ({
+                  ...prev,
+                  endereco_entrega_principal: endereco || {},
+                }));
+              }}
             />
           ) : (
             <Alert className="border-orange-300 bg-orange-50">

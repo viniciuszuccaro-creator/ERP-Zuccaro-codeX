@@ -701,10 +701,16 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
             // Estado real: reconcilia baseline/rascunho com listLocais (reexecução segura).
             try {
               assertLocaisScope();
-              const rows = await api.clientes.listLocais(frozenScope.clienteId, {
+              const page = await api.clientes.listLocais(frozenScope.clienteId, {
                 limit: 50, ativo: true,
               });
-              const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+              if (page?.partial === true) {
+                throw Object.assign(new Error('Listagem de locais parcial — não reconcilie como catálogo completo'), {
+                  code: 'LOCAIS_LIST_PARTIAL',
+                });
+              }
+              const rows = Array.isArray(page?.data) ? page.data : [];
+              const mapped = rows.map((row) => mapClienteLocalToUiEndereco(
                 /** @type {Record<string, unknown>} */ (row),
               ));
               setLocaisHttpView(mapped);
@@ -903,14 +909,19 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     (async () => {
       try {
         const api = createHttpApiClient({ getScope: () => readErpHttpSession() || {} });
-        const rows = await api.clientes.listLocais(id, { limit: 50, ativo: true });
+        const page = await api.clientes.listLocais(id, { limit: 50, ativo: true });
         if (cancelled) return;
-        const mapped = (Array.isArray(rows) ? rows : []).map((row) => mapClienteLocalToUiEndereco(
+        const rows = Array.isArray(page?.data) ? page.data : [];
+        const mapped = rows.map((row) => mapClienteLocalToUiEndereco(
           /** @type {Record<string, unknown>} */ (row),
         ));
         setLocaisHttpView(mapped);
         locaisHttpBaselineRef.current = mapped;
-        setLocaisLoadStatus('loaded');
+        // Parcial: não fingir loaded completo (≠ zero; ≠ catálogo integral).
+        setLocaisLoadStatus(page?.partial === true ? 'failed' : 'loaded');
+        if (page?.partial === true) {
+          locaisHttpBaselineRef.current = null;
+        }
       } catch {
         if (!cancelled) {
           setLocaisHttpView(undefined);

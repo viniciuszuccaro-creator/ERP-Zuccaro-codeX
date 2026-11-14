@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 export const clienteLocaisReviewBaseline = '947726e8f9a79f097e0ffd1d02791df52274d952';
 export const clienteLocaisReviewHunks = {
   "src/components/cadastros/CadastroClienteCompleto.jsx": {
-    "hash": "bbe180d6368ed9ccf1a162efbdbab464f96ceb3699f417ca63c0a76091aa870a",
+    "hash": "e97b275387f81be20c34b6f5e59831d5c23b46f5c4ad12d6dfa0681a89ce0a9d",
     "hunks": [
       [
         "import GerenciarEnderecosClienteForm from \"./GerenciarEnderecosClienteForm\";\nimport ClienteLocaisRevisao from \"./ClienteLocaisRevisao\";\nimport {\n",
@@ -22,7 +22,7 @@ export const clienteLocaisReviewHunks = {
     ]
   },
   "src/api/httpApiClient.js": {
-    "hash": "53ba94920dd22d22eb96260b8d1ed22d550a082ce21343e67b697cdbfdec990c",
+    "hash": "de4c88760dd35623ad7baf430b5c288dd235dba6bccec3d5e79f6f090aa1d404",
     "hunks": [
       [
         "    },\n    /**\n     * Pagina autoritativa para revisao; envelope invalido nunca representa vazio.\n     * @param {string} clienteId\n     * @param {{offset?: number, signal?: AbortSignal}} [options]\n     */\n    async listLocaisReviewPage(clienteId, { offset = 0, signal } = {}) {\n      const id = String(clienteId ?? '').trim();\n      if (!id) throw new Error('Cliente obrigatorio para revisao de locais');\n      const scope = Object.freeze({ ...getScope() });\n      const page = await request(`/api/v1/clientes/${encodeURIComponent(id)}/locais`, {\n        query: { limit: 50, offset, ativo: 'false', order_by: 'nome' }, signal, unwrap: false,\n      }, scope);\n      const meta = page?.meta;\n      if (!Array.isArray(page?.data) || !meta || page.partial === true || meta.partial === true\n        || page.incomplete === true || meta.incomplete === true || meta.limit !== 50 || meta.offset !== offset\n        || !Number.isSafeInteger(meta.total) || meta.total < 0 || typeof meta.hasMore !== 'boolean'\n        || page.data.length > 50 || offset + page.data.length > meta.total\n        || meta.hasMore !== (offset + page.data.length < meta.total)\n        || (meta.hasMore && page.data.length === 0)\n        || new Set(page.data.map(row => row?.id)).size !== page.data.length\n        || page.data.some(row => !row || typeof row.id !== 'string' || row.ativo !== false\n          || row.cliente_id !== id || row.group_id !== scope.groupId\n          || !Array.isArray(row.finalidades)\n          || row.finalidades.some(f => !f || typeof f.finalidade !== 'string'))) {\n        throw new Error('Resposta incompleta ou invalida na revisao de locais');\n      }\n      return page;\n    },\n    /**\n",
