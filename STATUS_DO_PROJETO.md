@@ -1,3 +1,22 @@
+## Backup/retencao HML ativos e recuperacao verificada (2026-11-14)
+
+Codigo fdaed341 CI6990(tentativa2)/6991SUCCESS. TimerVPS enabled/active,
+diario03:30Brasilia+ate5min (proximo15/11 03:33), helper10%CPU/192MiB; PGHML
+limites anteriores preservados. Duas geracoes11110400bytes, cada uma restaurada
+em base nova propria e16tabelas iguais por conteudo/IDs. Sem restaurar sobre
+HMLfonte/operacional, sem recargas, sem reativar1500clientes ou217locais.
+1600mestres/4200contatos/6613auditorias preservados. Retencao7VPS/30desktop,
+expirarVPS somente com restore e copia externa confirmados; historicos intactos.
+Duas copias externas privadas SHA/bytes conferidos no desktop atual. Tarefa
+Windows diaria09:15/logon executou resultado0, usuarioLimited/Interactive;
+offsite atualiza somente com desktop ligado/logado/conectado. Sem nova chave,
+usuario ou recurso pago. VPS27,32GiBlivres; ERP real saudavel e inalterado.
+CI6990 inicial: timing antigo second_page_exact, rerun somente jobfalhoPASS;
+nenhuma assercao enfraquecida. Runtime API/web permanece d054e2b3.
+Proprietario informou aberto no PCempresa; conferencia integral dos campos
+nesse dispositivo ainda nao recebida. Proximo: enderecos operacionais/PR595,
+respeitando gates de escrita/ativacao. Procedimento e recibos no HANDOFF.
+
 ## Backup HML - implementacao aguardando CI/ensaio (2026-11-14)
 
 Modo HML no scriptbackup existente + helpers de snapshot/restore/retencao e

@@ -1,5 +1,67 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Backup automatico e recuperacao da HML
+
+Pacote de manutencao fdaed341, CI6990/6991SUCCESS; nao muda o runtime API/web
+d054e2b3. Reutiliza create-pre-gate-e-backup.sh no modo --hml e seus helpers.
+Nao usar os defaults de backup operacional para a HML. Config/dumps/recibos em
+`/root/erp-private/hml-recovery-20261114`, fora do checkout e de qualquer webroot.
+
+VPS: hml-backup.timer diario03:30 America/Sao_Paulo, atraso aleatorio ate5min,
+Persistent=true. O servico limitado a10%CPU/192MiB verifica containerID/imagem,
+mount privado/redeNONE/zeroportas e cluster/database/schema antes de executar.
+Fonte PG mantem1GiB/0,40CPU; snapshotREADONLY compartilhado com pg_dump.
+Restaura em base exclusiva temporaria, compara16tabelas por valores/IDs e
+somente depois remove essa base. Falha nunca restaura sobre a fonte ou ERP real.
+Guarda20GiB livres mais margem de recuperacao; nao aumentar armazenamento.
+
+Monitorar pelo canal administrativo existente:
+```sh
+systemctl list-timers hml-backup.timer
+systemctl show hml-backup.service -p Result -p ExecMainStatus
+journalctl -u hml-backup.service -n 10 --no-pager
+```
+`systemctl start hml-backup.service` e a recuperacao manual de uma execucao
+falha, apos verificar causa/identidade/espaco e ausencia de writer. Nao e carga,
+seed ou migration. Nunca mudar pins para contornar erro. Mudanca de container
+exige revalidacao explicita da mesma HML antes de atualizar config privada.
+
+Retencao7geracoesVPS: so remove geracoes proprias testadas e confirmadas no
+desktop por ack separado. Sem ack preserva, mesmo excedendo7; ao atingir a
+reserva, falha visivel em vez de apagar copia unica. Backups frios/logicos
+anteriores fora de scheduled-backups nao sao elegiveis. Nao limpar volumes.
+
+Externo: pasta hml-backup-external sob ERP-Integracao-Privada no desktop atual,
+ACLusuario/SYSTEM, foraGit/build/CI. Tarefa ERP-HML-Backup-External09:15Brasilia e
+logon usa node/SSH existentes, Limited/Interactive, hostpin/BatchMode e ignora
+execucao duplicada. Retencao30geracoes proprias, sem remover backups anteriores
+alheios. Depende desktop ligado/logado/com rede; nao e armazenamento cloud24h.
+Consulta/retomada manual nesse computador:
+```powershell
+Get-ScheduledTaskInfo -TaskName ERP-HML-Backup-External
+Start-ScheduledTask -TaskName ERP-HML-Backup-External
+```
+Se copiar para outro computador, nao presumir chaves/ACLconfig existentes ali.
+Nao enviar chaves/dump pelo chat. Comparar SHA256 e bytes com recibo antes de
+aceitar copia; arquivo parcial ou checksum divergente bloqueia, nao sobrescreve.
+
+Recuperacao: usar copia externa verificada, manter o destino atual intacto e
+listar o tar privado antes de extrair em diretorio novo protegido. Contem dump,
+globalsSQL, configAPI e fingerprints (segredos: jamais colar/imprimir/publicar).
+Executar restore somente em base nova do PGHML identificado, transacao unica,
+comparar conteudo de todas tabelas e validar RBAC/Auth antes de apontar a API.
+Globals/roles/config nao devem ser aplicados automaticamente em outro cluster.
+Recuperacao do host inteiro/proxy/credenciais nao foi ensaiada neste lote.
+Backup e uso do administrador de manutencao NAO ampliam permissoes da aplicacao.
+Rollback do agendamento: desabilitar somente hml-backup.timer e a tarefa externa
+propria apos conferir identidade; conservar todos os dados e recibos privados.
+
+TesteoutroPC: abrir https://hml-erp.cpaferroeaco.com.br/cadastros com a conta
+existente; conferir GrupoCPA/empresas,100clientes,busca,paginacao,contatos e
+fiscal/entregas em revisao, sem salvar/ativar registros. Registrar dispositivo e
+resultado, sem credenciais. Proprietario informou aberto no PCempresa14/11;
+isso nao substitui a conferencia de completude/edicao/selecoes comerciais.
+
 ## Acesso HTTPS da HML na VPS (2026-11-14)
 
 Abrir https://hml-erp.cpaferroeaco.com.br/ com a conta Auth existente.
@@ -7,7 +69,7 @@ Nao e erp-dev, nem porta15173 do Codespace. Nao precisa ligar computador ou
 Codespace para servir. Runtime inicial d054e2b3, CI6969/6970SUCCESS;
 `/.well-known/erp-version.json` identifica API/web sem dados de clientes.
 Pagina/ready200 e clientes401 sem sessao comprovados externamente com TLSvalido.
-Aceite autenticado ainda pendente: nao chamar login visivel de dados homologados.
+Acesso autenticado e100clientes conferidos; completude/edicao seguem gates proprios.
 
 DNS A somente hml-erp ->2.25.222.180/TTL300. Caddy encaminha somente esse host
 para127.0.0.1:13081; PG/API nao publicam portas. Config anterior preservada
@@ -15,8 +77,8 @@ privadamente em /root/erp-private/hml-recovery-20261114/Caddyfile.before-hml-htt
 Antes de reverter, conferir hashes/deltas posteriores no HANDOFF; validar Caddy
 antes de reload. Nunca restaurar zona inteira ou reiniciar operacional por isso.
 Nao executar carga/seed/migration ao abrir/retomar a HML.
-Nao ha SLA24h prometido; backupautomatico/retencao e aceite em outro computador
-sao gates proprios ainda abertos. Backup atual/restore/copiaexterna ja conferidos.
+Nao ha SLA24h prometido. Backupautomatico/retencao ativos conforme secao acima;
+abertura no PCempresa relatada, conferencia integral nesse dispositivo pendente.
 
 ## Empacotamento e preflight da mesma HML recuperada
 

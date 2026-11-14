@@ -1,3 +1,52 @@
+## Backup HML automatizado e copia externa verificada (2026-11-14)
+
+Pacote fdaed3412c34ea3ec6c76e9ec644d4c5d6b06a64 publicado na mesmaPR594;
+CI6990 tentativa2 e6991 SUCCESS. CI6990 tentativa1 falhou no antigo montado
+cliente-locais-review-mounted/second_page_exact; mesmoSHA6991 passou. Reexecucao
+somente do jobfalho encerrou verde, sem alterar assercao/timeout/UI. Risco de
+timing desse teste permanece registrado; nao e falha atribuida ao backup.
+532aee58CI6983 e0a6c8135CI6984 tambem passaram; nao substituir prova do final.
+
+Executados backup manual e depois servico systemd com limites. Duas geracoes
+de11110400bytes cada, ambas restauradas em base NOVA temporaria do PGHML,
+16tabelas iguais em IDs/valores/relacoes. Bases temporarias proprias removidas
+apos sucesso; nenhuma restauracao sobre fonte/operacional. SnapshotREADONLY
+exportado compartilhado com pg_dump: nao comparar fontes de momentos distintos.
+Conteudo das16tabelas tambem igual entre as duas geracoes. Mantidos1600clientes,
+1500inativos,4200contatos,217locaisinativos e6613auditorias. Sem carga/ativacao.
+Primeira chamada shell parou antes do SQL por CRLF no artefato Windows;
+gitattributes agora fixa LF SOMENTE no entrypoint, com contraprova. Nao repetir
+esse diagnostico como falha de banco/restauracao. Arquivo Git canonico mantido.
+
+VPS hml-backup.timer enabled/active; servico Resultsuccess/CPU10%/192MiB,
+PG isolado mantem1GiB/0,40CPU. Proxima execucao15/11/2026 03:33:08Brasilia;
+regra diaria03:30+ate5min, persistente. Retencao7geracoesVPS; expirar apenas
+as proprias com restore e ack externo validos, nunca backups historicos.
+Se desktop nao copiar, pode exceder7; reserva20GiB bloqueia antes de esgotar.
+
+Copia externa foraVPS no desktopDELL-VINI, pasta privada hml-backup-external
+sob ERP-Integracao-Privada, ACLsomenteusuario/SYSTEM, duas geracoes SHA/bytes
+conferidos. Retencao30geracoes externas, preservando arquivos antigos alheios.
+Tarefa Windows ERP-HML-Backup-External registrada/Ready, executada com resultado0,
+Interactive/Limited, diario09:15Brasilia e logon, StartWhenAvailable/rede e
+IgnoreNew. Sem senha/chave nova, usa SSHalias ja existente com hostpin/BatchMode.
+Depende deste desktop ligado/logado/conectado; NAO offsite continuamente online.
+Cliente versionado privado hml-backup-client-fdaed341; log/XML protegidos.
+
+Recibo VPS backup-automation.private.json no diretorio privado existente,
+com manifests/acks em scheduled-backups e configprivada separada. Dados,
+globals/config/dumps NAO no GitHub. Livres29337047040bytes(27,32GiB), ERP real
+e HMLHTTPS200; containersoperacionais e StartedAt originais preservados.
+Runtime API/web continua d054e2b3, NAO redeployado pelo pacote de backup.
+
+Proprietario informou HML aberta no computador da empresa; isso registra
+acesso relatado naquele dispositivo, nao nova conferencia tecnica dos campos.
+Procedimento de recuperar/monitorar no OPERACAO existente. Restore logico e
+conteudo testados; NAO reconstruir host/roles/proxy automaticamente por isso.
+Proximo pacote: enderecos operacionais pelo contrato/gates existentes e revisao
+PR595, sem inferir permissao de ativacao a partir desta manutencao. Reserva
+6877168958 e lease liberados no fechamento; nenhum escritor agente background.
+
 ## Backup HML - pacote em validacao, ainda nao agendado (2026-11-14)
 
 Codex desktop DELL-VINI, base7fa37aaf limpa/remota igual; reserva PR594/6877168958
