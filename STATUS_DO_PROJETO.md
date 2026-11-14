@@ -29,6 +29,12 @@ PR596/`197bbc090` já contém os 5. Casa #6882380538: **aplica** patch `a79e63a5
 na cadeia própria `casa-fechamento-hml-20261114` (base `193f5e49`) — sem editar
 branch Cursor. Ressalva peel encerrada. Sem implantação.
 
+### 6º path — dependência typecheck (#6882403031)
+**LIBERAR** `src/components/cadastros/ClienteLocaisRevisao.jsx`
+(blob `a8ddd935`→`f2397d6f`, 44+/5-): props `onOpenDraft` / `onReviewMeta`
+exigidas por Completo:2043. Sem remover props nem relaxar tipos. Já no PR596;
+Casa inclui na candidata própria. Composição WIP Casa; sem commit/deploy até fechar.
+
 ### Liberação Cursor (antes de Codex apply)
 **LIBERAR (autorizado montagem 40 PASS + CI):**
 1. `src/api/clienteHttpPayload.js` — reconcile / `canPublish` / sync ops

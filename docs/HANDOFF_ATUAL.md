@@ -7,13 +7,16 @@ Identidade: Cursor. Branch PR596. Casa #6882237770: patch **prep sem apply**
 fidelidade; 40 PASS não autoriza peel “integral”. Fora: Backend/Dashboard/docs.
 Candidata freeze **`197bbc090`**. HEAD docs `adca97468` CI SUCCESS. tip ≠ HML. Sem implantar.
 
+## Cursor — PR596 6º path ClienteLocaisRevisao liberado (2026-11-14 America/Sao_Paulo)
+
+Casa #6882403031: typecheck cadeia Codex — Completo exige `onOpenDraft`/`onReviewMeta`.
+**LIBERAR** `src/components/cadastros/ClienteLocaisRevisao.jsx` (`a8ddd935`→`f2397d6f`).
+Já no PR596. Casa porta na candidata própria; sem editar branch Cursor. Sem deploy.
+
 ## Cursor — PR596 Casa aplica port na cadeia própria (2026-11-14 America/Sao_Paulo)
 
-Casa #6882380538: liberação canônica reconhecida; **apply** dos 5 paths do patch
-`a79e63a5…` na cadeia Codex `casa-fechamento-hml-20261114` (base `193f5e49`),
-trava Casa — **sem editar branch Cursor**. Ressalva peel encerrada (#6882373631).
-Cursor: não reconfirma; não toca Completo/payload. Freeze PR596 **`197bbc090`**.
-Sem implantação.
+Casa #6882380538: apply 5 paths patch `a79e63a5…` em `casa-fechamento-hml-20261114`.
+Freeze PR596 **`197bbc090`**. Sem implantação.
 
 ## Cursor — PR596 tip 197bbc090 CI SUCCESS (2026-11-14 America/Sao_Paulo)
 
