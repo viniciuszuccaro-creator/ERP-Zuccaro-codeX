@@ -26,36 +26,37 @@ test('mensagens: não usa "Nenhum endereço cadastrado" ambíguo no Gerenciar', 
   assert.match(gerenciar, /Cliente\.editar NÃO autoriza locais/);
 });
 
-test('Completo: rascunho de revisão + loadStatus + cliente_local', () => {
+test('Completo: ENTREGA onOpenDraft + FISCAL allowReviewEdit (sem MASTER)', () => {
   assert.match(completo, /openLocalDraftFromReview/);
-  assert.match(completo, /locaisLoadStatus/);
-  assert.match(completo, /loadStatus=\{Array\.isArray\(formData\.locais_entrega\) \? 'loaded' : locaisLoadStatus\}/);
   assert.match(completo, /onOpenDraft=\{openLocalDraftFromReview\}/);
-  assert.match(completo, /hasPermission\('Cadastros', 'cliente_local', 'visualizar'\)/);
-  // Bugbot: deps estáveis + reset do hint só no reviewClienteId (não em permissionsLoading).
-  assert.match(completo, /const canViewLocais = hasPermission\('Cadastros', 'cliente_local', 'visualizar'\) === true/);
+  assert.match(completo, /finalidade="FISCAL" allowReviewEdit/);
+  assert.doesNotMatch(completo, /finalidade="FISCAL"[^>]*onOpenDraft/);
+  assert.match(completo, /reviewPendingHint=\{revisaoEntregaTotal\}/);
   assert.match(completo, /const reviewClienteId = clienteBoundId \|\| cliente\?\.id \|\| null/);
-  assert.match(completo, /setRevisaoEntregaTotal\(null\);\n  \}, \[reviewClienteId\]/);
-  assert.match(completo, /\[reviewClienteId, permissionsLoading, canViewLocais\]/);
-  // Não sobrescreve fiscal manual: fill só se empty.
-  assert.match(completo, /const empty = current === undefined \|\| current === null \|\| String\(current\)\.trim\(\) === ''/);
+  assert.match(completo, /setRevisaoEntregaTotal\(null\);\s*\}, \[reviewClienteId\]/);
+  assert.match(completo, /Fiscal não abre rascunho MASTER/);
+  assert.match(revisao, /hasPermission\('Cadastros', 'cliente_local', 'visualizar'\)/);
 });
 
-test('Revisão: abrir rascunho não é Salvar/Ativar; mensagens de negação distintas', () => {
-  assert.match(revisao, /Abrir rascunho/);
+test('Revisão: FISCAL in-place + ENTREGA rascunho; sem Ativar/Excluir', () => {
+  assert.match(revisao, /allowReviewEdit/);
+  assert.match(revisao, /Abrir rascunho de entrega/);
   assert.match(revisao, /nao grava nem ativa/i);
-  assert.match(revisao, /Leitura negada: falta Cadastros\.cliente_local\.visualizar/);
+  assert.match(revisao, /Salvar revisao fiscal sem ativar/);
   assert.match(revisao, /onReviewMeta\(\{ finalidade, total: null, error: false \}\)/);
-  assert.equal(/Salvar|Ativar|Excluir/.test(revisao.replace(/\/\*[\s\S]*?\*\//g, '')), false);
+  assert.match(revisao, /Leitura indisponivel neste contexto ou sem permissao/);
+  assert.doesNotMatch(revisao, /\bAtivar\b|\bExcluir\b/);
 });
 
-test('Seletor: HTTP ativo+ENTREGA+id canônico; mensagens sem zero falso', () => {
-  assert.match(seletor, /listLocais/);
+test('Seletor: snapshotLocais + ENTREGA ativa + id canônico; sem zero falso', () => {
+  assert.match(seletor, /snapshotLocais/);
+  assert.match(seletor, /renderedSnapshot/);
   assert.match(seletor, /isClienteLocalCanonicalId/);
   assert.match(seletor, /fins\.includes\("ENTREGA"\)/);
   assert.match(seletor, /cliente_local_id/);
   assert.match(seletor, /Falha ao carregar locais\. Contagem não confirmada/);
   assert.match(seletor, /contextTick/);
+  assert.match(seletor, /sessionActorId/);
   assert.match(seletor, /sessionGroupId/);
   assert.match(seletor, /endereco_incompleto === false/);
   assert.match(seletor, /bindingAllowsSelect/);

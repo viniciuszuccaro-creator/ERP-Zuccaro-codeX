@@ -16,14 +16,13 @@ const httpSrc = readFileSync('src/api/httpApiClient.js', 'utf8');
 const logistica = readFileSync('src/components/comercial/LogisticaEntregaTab.jsx', 'utf8');
 const panel = readFileSync('src/components/comercial/PedidoCanonicoPanel.jsx', 'utf8');
 
-test('listLocais: envelope sem data / parcial não vira [] loaded', () => {
-  assert.match(httpSrc, /LOCAIS_ENVELOPE_INVALID/);
-  assert.match(httpSrc, /partial: boolean/);
-  assert.match(httpSrc, /hasMore \|\| total > data\.length/);
-  assert.doesNotMatch(
-    httpSrc.slice(httpSrc.indexOf('async listLocais'), httpSrc.indexOf('async listLocaisReviewPage')),
-    /return rows;\n\s*\},/,
-  );
+test('listLocais legado array; Seletor usa snapshotLocais (Codex Continuity)', () => {
+  // Contrato Codex: listLocais legado permanece array para Completo; Seletor → snapshotLocais (batch).
+  const listBody = httpSrc.slice(httpSrc.indexOf('async listLocais'), httpSrc.indexOf('async listLocaisReviewPage'));
+  assert.match(listBody, /return rows;/);
+  assert.doesNotMatch(listBody, /LOCAIS_ENVELOPE_INVALID/);
+  assert.match(seletorSrc, /snapshotLocais/);
+  assert.match(seletorSrc, /api\.clientes\.snapshotLocais/);
 });
 
 test('Seletor: incompleto comprovado false; binding sync no onSelect', () => {

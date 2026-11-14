@@ -1,3 +1,11 @@
+## Cursor — port controlado ENTREGA onOpenDraft + FISCAL allowReviewEdit (2026-11-14 America/Sao_Paulo)
+
+Executor: Cursor. Pós-fechamento Codex `76dc3832` (docs) / `38b4e1ec` CI SUCCESS.
+- Completo: FISCAL `allowReviewEdit` (sem onOpenDraft→MASTER); ENTREGA `onOpenDraft`+contadores.
+- ClienteLocaisRevisao: mantém sync fiscal in-place; restaura Abrir rascunho só ENTREGA.
+- httpApiClient: tip Codex (listLocais legado array; Seletor usa snapshotLocais).
+- Peels operacional atualizados. Sem HML (`d054e2b3`).
+
 ## Cursor — stack 591→595→596 composta (2026-11-14 America/Sao_Paulo)
 
 PR595 `66ff086f3` (Codex `38b4e1ec` fiscal/Seletor) mergeado em PR596.

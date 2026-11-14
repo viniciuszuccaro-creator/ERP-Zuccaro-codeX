@@ -10,9 +10,61 @@ export function clienteLocalOperationalRemainder(file, text) {
     ['service.snapshot(ctxFromReq(req), req.params.clienteId, req.query.include_review === \'true\')',
       'service.snapshot(ctxFromReq(req), req.params.clienteId)'],
   ] : file === 'src/components/cadastros/CadastroClienteCompleto.jsx' ? [
+    // ENTREGA onOpenDraft (Cursor) — peels before FISCAL allowReviewEdit (Codex).
+    [
+      '  /** Contagem de entrega em revisão — null se falhou/desconhecido (≠ zero). */\n  const [revisaoEntregaTotal, setRevisaoEntregaTotal] = useState(/** @type {number|null} */ (null));\n  const reviewClienteId = clienteBoundId || cliente?.id || null;\n  useEffect(() => { setRevisaoEntregaTotal(null); }, [reviewClienteId]);\n',
+      '',
+    ],
+    [
+      `  /**
+   * ENTREGA: revisão → rascunho operacional (não ativa/grava).
+   * FISCAL: não copia para MASTER.endereco_principal — revisão in-place via allowReviewEdit.
+   */
+  const openLocalDraftFromReview = ({ finalidade, ui }) => {
+    if (!ui || typeof ui !== 'object') return;
+    if (finalidade === 'FISCAL') {
+      toast({
+        title: 'Fiscal não abre rascunho MASTER',
+        description: 'Use «Revisar fiscal» no painel de revisão (activate:false). Nada foi copiado para endereco_principal.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (finalidade !== 'ENTREGA') return;
+    setActiveTab('enderecos');
+    setFormData((prev) => {
+      const list = Array.isArray(prev.locais_entrega)
+        ? prev.locais_entrega
+        : (Array.isArray(locaisHttpView) ? [...locaisHttpView] : []);
+      const id = String(ui.id || '').trim();
+      const without = id ? list.filter((row) => String(row?.id || '') !== id) : list;
+      return {
+        ...prev,
+        locais_entrega: [...without, { ...ui, _rascunho_revisao: true, _fonte: 'cliente_locais_revisao' }],
+      };
+    });
+    toast({
+      title: 'Rascunho de entrega no formulário',
+      description: 'Local de revisão copiado para o rascunho operacional. Não foi ativado nem gravado — complete e Salve para validar.',
+    });
+  };
+
+`,
+      '',
+    ],
+    [
+      '                reviewPendingHint={revisaoEntregaTotal}\n',
+      '',
+    ],
+    [
+      'finalidade="ENTREGA" onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />',
+      'finalidade="ENTREGA" />',
+    ],
     ['finalidade="FISCAL" allowReviewEdit />', 'finalidade="FISCAL" />'],
   ] : [];
-  if (!changes.some(([after]) => source.includes(after))) return text;
+  // Exige o pacote operacional completo; se faltar um hunk (ex.: allowReviewEdit
+  // adulterado no teste), devolve o texto sem peel — não inventa ancestral parcial.
+  if (!changes.every(([after]) => source.includes(after))) return text;
   for (const [after, before] of changes) {
     assert.equal(source.split(after).length, 2, file + ': exact operational wiring');
     source = source.replace(after, () => before);

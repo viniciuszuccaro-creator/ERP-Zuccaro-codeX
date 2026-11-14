@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createHttpApiClient } from '@/api/httpApiClient';
 import { HTTP_CONTEXT_CHANGED, readErpHttpSession } from '@/api/erpHttpSession';
 import usePermissions from '@/components/lib/usePermissions';
+import { mapClienteLocalToUiEndereco } from '@/api/clienteHttpPayload';
 
 const sameSession = (a, b) => Boolean(a?.token && b?.token)
   && ['token', 'actorId', 'groupId', 'empresaId'].every(key => a[key] === b[key]);
@@ -12,11 +13,18 @@ const fields = [
 ];
 
 // Consulta separada do rascunho operacional: nenhum callback de escrita ou selecao.
-export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, finalidade, allowReviewEdit = false }) {
-  const { hasPermission } = usePermissions();
+export default function ClienteLocaisRevisao({
+  clienteId, groupId, empresaId, finalidade, allowReviewEdit = false,
+  onOpenDraft = null, onReviewMeta = null,
+}) {
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const allowed = hasPermission('Cadastros', 'cliente_local', 'visualizar') === true;
   const canEdit = allowReviewEdit && finalidade === 'FISCAL'
     && hasPermission('Cadastros', 'cliente_local', 'editar') === true;
+  // ENTREGA: rascunho no formulário canônico (não grava/ativa). FISCAL usa allowReviewEdit in-place.
+  const canDraft = !canEdit && finalidade === 'ENTREGA'
+    && (hasPermission('Cadastros', 'cliente_local', 'editar') === true
+      || hasPermission('Cadastros', 'cliente_local', 'criar') === true);
   const session = readErpHttpSession();
   const purposeValid = finalidade === 'FISCAL' || finalidade === 'ENTREGA';
   const valid = purposeValid && allowed && session?.token && session.groupId === groupId
@@ -48,6 +56,9 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, fi
     setState(null);
     setEditor(null);
     setSaveError('');
+    if (typeof onReviewMeta === 'function') {
+      onReviewMeta({ finalidade, total: null, error: false });
+    }
   }, [clienteId, groupId, empresaId, session?.token, session?.actorId, finalidade]);
   useEffect(() => {
     if (!session?.expiresAt) return;
@@ -76,9 +87,19 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, fi
       const tokens = canEdit ? await api.clientes.snapshotLocais(clienteId, { includeReview: true, signal: controller.signal }) : null;
       if (!isCurrent()) return;
       const page = await api.clientes.listLocaisReviewPage(clienteId, { offset, finalidade, signal: controller.signal });
-      if (isCurrent()) setState({ page, snapshot, offset, revision, tokens, generation });
+      if (isCurrent()) {
+        setState({ page, snapshot, offset, revision, tokens, generation });
+        if (typeof onReviewMeta === 'function' && Number.isSafeInteger(page?.meta?.total)) {
+          onReviewMeta({ finalidade, total: page.meta.total, error: false });
+        }
+      }
     })()
-      .catch(() => { if (isCurrent()) setState({ error: true, snapshot, offset, revision }); });
+      .catch(() => {
+      if (isCurrent()) {
+        setState({ error: true, snapshot, offset, revision });
+        if (typeof onReviewMeta === 'function') onReviewMeta({ finalidade, total: null, error: true });
+      }
+    });
     return () => { controller.abort(); epoch.current++; };
   }, [clienteId, groupId, empresaId, session?.token, session?.actorId, allowed, offset, revision, valid, finalidade, canEdit]);
   const visible = valid && state?.snapshot.clienteId === clienteId
@@ -122,11 +143,15 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, fi
         : 'Revisao nao salva. Rascunho preservado; confira os campos e a permissao.');
     } finally { busy.current = false; setSaving(false); }
   };
+  const openDraft = (row) => {
+    if (typeof onOpenDraft !== 'function' || !canDraft || finalidade !== 'ENTREGA') return;
+    onOpenDraft({ finalidade, local: row, ui: mapClienteLocalToUiEndereco(row) });
+  };
   const visibleEditor = editor && isBound(editor.binding);
   if (!clienteId) return null;
   return <section className="mt-6 border-t pt-4" aria-label={finalidade === 'FISCAL' ? 'Fiscal em revisao' : 'Entrega em revisao'}>
     <h3 className="text-sm font-semibold">{finalidade === 'FISCAL' ? 'Endereco fiscal recuperado - em revisao' : 'Enderecos de entrega recuperados - em revisao'}</h3>
-    <p className="text-xs text-gray-600">{finalidade === 'FISCAL' ? 'Finalidade fiscal registrada no local. A ordem da lista nao define o principal.' : 'Somente locais com finalidade de entrega registrada. Endereco unico ou igual ao fiscal nao e classificacao automatica.'} {canEdit ? 'Revisao preserva o local inativo; nao define principal nem libera operacao.' : 'Inativos e somente leitura; nao alteram os campos operacionais.'}</p>
+    <p className="text-xs text-gray-600">{finalidade === 'FISCAL' ? 'Finalidade fiscal registrada no local. A ordem da lista nao define o principal.' : 'Somente locais com finalidade de entrega registrada. Endereco unico ou igual ao fiscal nao e classificacao automatica.'} {canEdit ? 'Revisao preserva o local inativo; nao define principal nem libera operacao.' : (typeof onOpenDraft === 'function' ? 'Inativos na lista; abrir rascunho de entrega nao grava nem ativa.' : 'Inativos e somente leitura; nao alteram os campos operacionais.')}</p>
     {visibleEditor && <div className="border p-3" role="group" aria-label="Revisar fiscal inativo">
       {['nome', ...fields.map(([key]) => key)].map(key => <label key={key} className="block text-sm">
         {key === 'nome' ? 'Nome do local' : fields.find(([field]) => field === key)?.[1]}
@@ -154,6 +179,20 @@ export default function ClienteLocaisRevisao({ clienteId, groupId, empresaId, fi
             </dl>
             <p className="text-xs">Origem: {row.origem || 'Nao informada'}; sistema: {row.source_system || 'Nao informado'}; ID legado: {row.legacy_id || 'Nao informado'}; lote: {row.migration_batch || 'Nao informado'}. Valores invalidos permanecem na evidencia privada.</p>
             {canEdit && !visibleEditor && row.origem === 'MIGRACAO' && <button type="button" onClick={() => openEditor(row)}>Revisar fiscal</button>}
+            {typeof onOpenDraft === 'function' && finalidade === 'ENTREGA' && (
+              <button
+                type="button"
+                className="mt-2 text-sm text-blue-700 underline disabled:opacity-50 disabled:no-underline"
+                disabled={!canDraft}
+                data-action="cliente-local-revisao-abrir-rascunho"
+                data-permission={canDraft ? 'Cadastros.cliente_local.editar' : undefined}
+                onClick={() => openDraft(row)}
+              >
+                {canDraft
+                  ? 'Abrir rascunho de entrega no formulário (não grava)'
+                  : 'Sem permissão para rascunho (cliente_local criar/editar)'}
+              </button>
+            )}
           </li>)}
         </ul>
         <div className="flex gap-3 mt-3">

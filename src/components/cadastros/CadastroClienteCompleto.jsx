@@ -839,6 +839,10 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   /** Locais canônicos BFF — leitura; write via `/locais` no save (não MASTER). */
   const [locaisHttpView, setLocaisHttpView] = useState(/** @type {unknown[]|undefined} */ (undefined));
+  /** Contagem de entrega em revisão — null se falhou/desconhecido (≠ zero). */
+  const [revisaoEntregaTotal, setRevisaoEntregaTotal] = useState(/** @type {number|null} */ (null));
+  const reviewClienteId = clienteBoundId || cliente?.id || null;
+  useEffect(() => { setRevisaoEntregaTotal(null); }, [reviewClienteId]);
   /** Baseline lido para soft-delete só quando a carga HTTP concluiu (ref evita stale no mutate). */
   const locaisHttpBaselineRef = useRef(/** @type {unknown[]|null|undefined} */ (undefined));
   /** Último summary de sync `/locais` — BATCH_ATOMIC=false nunca vira toast de salvamento integral. */
@@ -899,6 +903,39 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
   const applyEnderecosDraft = (novosEnderecos) => {
     setFormData((prev) => ({ ...prev, locais_entrega: novosEnderecos }));
+  };
+
+  /**
+   * ENTREGA: revisão → rascunho operacional (não ativa/grava).
+   * FISCAL: não copia para MASTER.endereco_principal — revisão in-place via allowReviewEdit.
+   */
+  const openLocalDraftFromReview = ({ finalidade, ui }) => {
+    if (!ui || typeof ui !== 'object') return;
+    if (finalidade === 'FISCAL') {
+      toast({
+        title: 'Fiscal não abre rascunho MASTER',
+        description: 'Use «Revisar fiscal» no painel de revisão (activate:false). Nada foi copiado para endereco_principal.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (finalidade !== 'ENTREGA') return;
+    setActiveTab('enderecos');
+    setFormData((prev) => {
+      const list = Array.isArray(prev.locais_entrega)
+        ? prev.locais_entrega
+        : (Array.isArray(locaisHttpView) ? [...locaisHttpView] : []);
+      const id = String(ui.id || '').trim();
+      const without = id ? list.filter((row) => String(row?.id || '') !== id) : list;
+      return {
+        ...prev,
+        locais_entrega: [...without, { ...ui, _rascunho_revisao: true, _fonte: 'cliente_locais_revisao' }],
+      };
+    });
+    toast({
+      title: 'Rascunho de entrega no formulário',
+      description: 'Local de revisão copiado para o rascunho operacional. Não foi ativado nem gravado — complete e Salve para validar.',
+    });
   };
 
   /** Gravação efetiva no backend (proprietário canônico de persistência deste cadastro). */
@@ -1642,8 +1679,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 commitMode="draft"
                 assertScopeCurrent={assertFormScopeCurrent}
                 persistBusy={isSaving || saveMutation.isPending}
+                reviewPendingHint={revisaoEntregaTotal}
               />
-              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" />}
+              {isHttpBackendMode && <ClienteLocaisRevisao clienteId={clienteBoundId || cliente?.id} groupId={groupId} empresaId={empresaAtual?.id} finalidade="ENTREGA" onOpenDraft={openLocalDraftFromReview} onReviewMeta={({ total, error }) => setRevisaoEntregaTotal(error ? null : total)} />}
             </TabsContent>
 
             <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">
