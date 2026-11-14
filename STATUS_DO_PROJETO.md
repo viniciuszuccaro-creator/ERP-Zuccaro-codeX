@@ -1,3 +1,11 @@
+## Cursor — PR596 pagamento-resumo + hidratação edição (2026-11-14)
+
+Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
+- Shell: `central360-pagamento-resumo` (condição/total/parcelas fail-closed; ≠ zero inventado)
+- Pedido: `hydratePedidoRow` / `openEditHydrated`; invalida gate ao trocar situação
+- Dashboard: lista vazia ≠ zero confirmado
+Sem HML; FormasPagamentoPedido existente não duplicado.
+
 ## Cursor — PR596 merge tip PR595 f4debdbb3 (2026-11-14)
 
 Executor: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).

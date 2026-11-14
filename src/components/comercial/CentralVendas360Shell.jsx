@@ -261,10 +261,42 @@ export default function CentralVendas360Shell({
       </Suspense>
       <GradesSimultaneas itens={selected?.itens} hasSelection={Boolean(selected?.id)} />
       {selected && (
+        <div
+          className="rounded-md border border-sky-100 bg-white px-3 py-2 text-xs text-slate-700 flex flex-wrap gap-x-4 gap-y-1"
+          data-block="central360-pagamento-resumo"
+          role="status"
+        >
+          <span>
+            Condição:{' '}
+            <strong className={selected.condicao_pagamento_id ? 'text-sky-900' : 'text-amber-800'}>
+              {selected.condicao_pagamento_id ? 'definida (id canônico)' : 'pendente — bloqueia Fechar'}
+            </strong>
+          </span>
+          <span>
+            Total:{' '}
+            <strong className="font-mono text-sky-900">
+              {selected.total == null && selected.total !== 0 ? '—' : money(selected.total)}
+            </strong>
+            {selected.total == null && selected.total !== 0 ? (
+              <span className="text-amber-800"> · total não hidratado (≠ zero)</span>
+            ) : null}
+          </span>
+          <span>
+            Parcelas:{' '}
+            {Array.isArray(selected.parcelas)
+              ? `${selected.parcelas.length} no documento`
+              : 'não carregadas nesta seleção'}
+          </span>
+          <span className="text-slate-400 w-full sm:w-auto">
+            Pagamento na jornada: condição → validações → Fechar (≠ Cancelar ≠ Fechar janela)
+          </span>
+        </div>
+      )}
+      {selected && (
         <div className="text-[11px] text-slate-500 px-1 flex flex-wrap gap-3" data-block="central360-selecao-meta" role="status">
           <span>Selecionado: <strong className="font-mono text-sky-900">{selected.numero || selected.id}</strong></span>
           <span>Peso: {pesoSelecionado == null ? '—' : `${pesoSelecionado} kg`}</span>
-          <span className="text-slate-400">Clique simples seleciona e hidrata itens · duplo clique edita · seleção não grava</span>
+          <span className="text-slate-400">Clique simples seleciona e hidrata itens · duplo clique edita após GET · seleção não grava</span>
         </div>
       )}
     </div>
