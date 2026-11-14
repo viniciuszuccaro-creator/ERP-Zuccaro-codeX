@@ -90,9 +90,11 @@ test('CentralVendas360Shell: faixa, situações, grades dual, Cliente360', () =>
   assert.match(src, /central360-grade-revenda/);
   assert.match(src, /central360-grades-sem-itens/);
   assert.match(src, /central360-pagamento-resumo/);
+  assert.match(src, /central360-pagamento-itens/);
   assert.match(src, /bloqueia Fechar/);
   assert.match(src, /total não hidratado \(≠ zero\)/);
   assert.match(src, /condicao_pagamento_codigo/);
+  assert.match(src, /tabela_preco_codigo/);
   assert.match(src, /selectionEpochRef/);
   assert.match(src, /selectionEpoch=\{selectionEpoch\}/);
   assert.match(src, /typeof meta\.selectionEpoch !== 'number'/);

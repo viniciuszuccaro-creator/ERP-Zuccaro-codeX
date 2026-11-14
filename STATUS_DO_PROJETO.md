@@ -1,3 +1,8 @@
+## Cursor — PR596 Central360 pagamento-resumo rico (2026-11-14 America/Sao_Paulo)
+
+Faixa `central360-pagamento-resumo`: tabela, operação, itens hidratados
+(corte/revenda). Notify orçamento/pedido hidrata `tabela_preco_*`. tip ≠ HML.
+
 ## Cursor — PR596 derived KPIs ativos fail-closed (2026-11-14 America/Sao_Paulo)
 
 `computeDashboardDerivedKpis`: clientes/colaboradores/produtosBaixo usam

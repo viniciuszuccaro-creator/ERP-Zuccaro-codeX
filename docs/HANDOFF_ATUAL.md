@@ -1,3 +1,8 @@
+## Cursor — PR596 Central360 pagamento-resumo rico (2026-11-14 America/Sao_Paulo)
+
+Tabela + operação + itens (corte/revenda) na faixa; labels `tabela_preco_*` no
+notify. tip ≠ HML; sem Completo/deploy.
+
 ## Cursor — PR596 derived KPIs ativos fail-closed (2026-11-14 America/Sao_Paulo)
 
 KPIs derivados Dashboard alinhados a `isDashboardCadastroAtivo` (ausente ≠ ativo).

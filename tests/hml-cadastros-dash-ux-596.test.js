@@ -103,10 +103,15 @@ test('Central360: pagamento-resumo usa labels de condição hidratados', () => {
   const pedido = readFileSync('src/components/comercial/PedidoCanonicoPanel.jsx', 'utf8');
   const orc = readFileSync('src/components/comercial/OrcamentosTab.jsx', 'utf8');
   assert.match(shell, /central360-pagamento-resumo/);
+  assert.match(shell, /central360-pagamento-itens/);
   assert.match(shell, /CondicaoComercial/);
+  assert.match(shell, /tabela_preco_codigo/);
+  assert.match(shell, /partitionCentralItens\(selected\.itens\)/);
   assert.match(pedido, /condicao_pagamento_label/);
   assert.match(pedido, /condicao_pagamento_codigo/);
+  assert.match(pedido, /tabela_preco_label/);
   assert.match(orc, /condicao_pagamento_label/);
+  assert.match(orc, /tabela_preco_label/);
   assert.match(pedido, /numero_pedido:selected\.numero/);
 });
 

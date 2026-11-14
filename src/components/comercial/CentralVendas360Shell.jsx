@@ -287,6 +287,29 @@ export default function CentralVendas360Shell({
             </strong>
           </span>
           <span>
+            Tabela:{' '}
+            <strong className={selected.tabela_preco_id ? 'text-sky-900' : 'text-slate-500'}>
+              {selected.tabela_preco_id
+                ? (
+                  selected.tabela_preco_codigo
+                  || selected.tabela_preco_nome
+                  || selected.tabela_preco_label
+                  || 'definida (id canônico)'
+                )
+                : 'não informada nesta seleção'}
+            </strong>
+          </span>
+          <span>
+            Operação:{' '}
+            <strong className="text-sky-900">
+              {selected.tipo_operacao === 'ENTREGA'
+                ? 'Entrega'
+                : selected.tipo_operacao === 'RETIRADA'
+                  ? 'Retirada'
+                  : (selected.tipo_operacao || '—')}
+            </strong>
+          </span>
+          <span>
             Total:{' '}
             <strong className="font-mono text-sky-900">
               {selected.total == null && selected.total !== 0 ? '—' : money(selected.total)}
@@ -300,6 +323,15 @@ export default function CentralVendas360Shell({
             {Array.isArray(selected.parcelas)
               ? `${selected.parcelas.length} no documento`
               : 'não carregadas nesta seleção'}
+          </span>
+          <span data-block="central360-pagamento-itens">
+            Itens:{' '}
+            {Array.isArray(selected.itens)
+              ? (() => {
+                const { corte, revenda } = partitionCentralItens(selected.itens);
+                return `${selected.itens.length} hidratados (corte ${corte.length} · revenda ${revenda.length})`;
+              })()
+              : 'não hidratados nesta seleção'}
           </span>
           <span className="text-slate-400 w-full sm:w-auto">
             Pagamento canônico = CondicaoComercial (`condicao_pagamento_id`) no formulário do documento;

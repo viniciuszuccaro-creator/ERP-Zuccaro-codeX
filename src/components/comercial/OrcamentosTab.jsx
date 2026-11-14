@@ -900,12 +900,16 @@ const convertToPedido = async () => {
     if (typeof onCentralSelect !== 'function') return;
     const link = masters.clientesEmpresa.find((item) => item.id === row?.cliente_empresa_id);
     const cond = masters.condicoes.find((item) => item.id === row?.condicao_pagamento_id);
+    const tab = (masters.tabelas || []).find((item) => item.id === row?.tabela_preco_id);
     const enriched = row
       ? {
         ...row,
         condicao_pagamento_codigo: row.condicao_pagamento_codigo || cond?.codigo || undefined,
         condicao_pagamento_nome: row.condicao_pagamento_nome || cond?.nome || undefined,
         condicao_pagamento_label: row.condicao_pagamento_label || (cond ? condicaoLabel(cond.id) : undefined),
+        tabela_preco_codigo: row.tabela_preco_codigo || tab?.codigo || undefined,
+        tabela_preco_nome: row.tabela_preco_nome || tab?.nome || undefined,
+        tabela_preco_label: row.tabela_preco_label || (tab ? tabelaLabel(tab.id) : undefined),
       }
       : row;
     onCentralSelect(enriched, { clienteId: link?.cliente_id || row?.cliente_id || null, selectionEpoch: epoch });
