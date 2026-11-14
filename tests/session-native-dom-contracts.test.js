@@ -17,7 +17,7 @@ const hashes = [
   ['src/components/expedicao/painel-logistico/DriverChat.jsx','3d3fc9c650c1285b30305559753a851da0cff19744d811c9f913f0ee94d18ac2'],
   ['src/components/expedicao/financeiro/LogisticaFinanceiroPanel.jsx','5a2fb2ad25ae4f204bd529389b01ff0d0cf2e6f04c75ee53aed0a0115f1ca3f2'],
   ['src/components/comercial/FechamentoFinanceiroTab.jsx','fdcce19b826a521d3e0bc081e6a9309e42ebbe7bf013ebd9eeb3e2e45e2ea853'],
-  ['src/components/comercial/LogisticaEntregaTab.jsx','ee7eec2007bfd40c0c09a5ddc29e15fa3b9ed9776e0ab7ed13acfe0057d42c17'],
+  ['src/components/comercial/LogisticaEntregaTab.jsx','85526d50d098d120296285eba63c6f0afec0eba73949ed36c41a265bf0823b36'],
   ['src/components/financeiro/CartoesACompensar.jsx','a852813df03f95e6a4f37ccda51a93da4aa8f9cd2162926d776b6aa56e4bbe0a'],
   ['src/components/integracoes/TesteTransportadoras.jsx','5ca03813177ce9d914c7c971e18015cf971dddfae5517638a5528f06a71832d5'],
   ['src/components/producao/DocumentosProducao.jsx','3f15f67af0b13b3cf83205646384aba26a4858e4d71e0ec39fcb5beb89247cf2'],

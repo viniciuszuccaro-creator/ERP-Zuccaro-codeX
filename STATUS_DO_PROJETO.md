@@ -1,70 +1,41 @@
-## Fiscal canonico e callback: pacote de interface em validacao (2026-11-14)
+## Cursor — merge Continuity591 38b4e1ec → PR595 (2026-11-14 America/Sao_Paulo)
 
-595f6bfffac/CI7031SUCCESS reconferidos. Na continuidade594: port controlado do
-seletor, snapshot canonico completo e callback ligado ao render/geracao original.
-Fiscal editavel no bloco ClienteLocal existente, review/CAS activate:false,
-somente campos alterados; nenhum MASTER.endereco_principal, novo cadastro ou
-ativacao automatica. Permissao editar granular exigida, nao concedida na HML.
-Review e consumidor Logistica montados em React real; inversao do fix reproduz
-ABA e corrigido passa. Transporte/identidade/Select sinteticos, nao E2E HML.
-64testes afetadosPASS; CI/fechamento do novo lote pendentes. Backend inalterado.
-RuntimeHML d054e2b3 e217inativos intactos; preparacao de pacote foraVPS segue CI.
-Reserva6878712054; detalhes/gates e retomada da ref Git no HANDOFF.
+Composição após CI Continuity SUCCESS. Completo/ClienteLocaisRevisao/Seletor
+`renderedSnapshot`+`snapshotLocais` do tip Codex; sem HML.
 
-## Enderecos operacionais: backend preparado, HML preservada (2026-11-14)
+## Cursor — PR595 residual P1 binding + peels CI (2026-11-14)
 
-Fechamento codigo da98af34 remoto PR594 / CI7015 SUCCESS frontend/backend/compose.
-Ubuntu root2974PASS/0FAIL/0SKIP; PostgreSQL obrigatorioPASS. Contraprovas root
-focadas26PASS. Sem ativacao/deploy HML; UI595 ainda depende do residual atual
-descrito abaixo. Parecer6878200296 e coordenacao6878255851. Reserva liberada.
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Não sobrescreve Continuity/PR594; backend/CAS e fiscal=ClienteLocal intactos.
 
-PR595/3e646192 revisada com contraprovas reais de callbacks/transport HTTP:
-parecer6877992789. Contexto antigo, completude ausente e envelope/paginacao
-ainda impedem aceite; fiscal nao pode persistir no MASTER endereco_principal.
-Sem alteracao na branch Cursor. PR594 prepara review atomico no sync existente,
-CAS separado para inativos, RBAC editar/restaurar explicito e preservacao de
-IDs/procedencia; completar nao ativa. Pedido valida finalidade/completude.
-HEAD595 mudou para9b876f33: completude/envelope corrigidos no delta; residual
-callback antigo reproduzido com bindingRef novo autorizado e consumidor real.
-Nao portar como aprovado. Suite backend final639PASS/0FAIL/42SKIP; PG real e
-fechamento Linux encerrados pela CI7015. Root local interrompido no POSIX Windows, sem PASS
-fabricado. Peel exato preserva pins e negativas; nenhuma baseline relaxada.
-29contraprovas backendPASS; typecheck/build backend e audit/lint/typecheck/build
-rootPASS (2warnings lint existentes). Fechamento completo/CI acima; detalhes
-e limites no HANDOFF. Nenhum dado/permissao/schema HML ou operacional alterado.
-217locais permanecem inativos; reversao/gate/consumidor UI ainda necessarios.
+Correções sobre tip `9b876f331` (CI frontend FAIL):
+- `SeletorEnderecoEntregaPedido`: `listBindingRef`/`listEpochRef` + `commitSelection`
+  — handler tardio com operacionais A não chama `onChange` (nem null) no binding B;
+- peels purpose: tip→before externos + after Locais atualizado; review/consolidation81
+  restaurados (sem pin cego); pin stage45 LogisticaEntregaTab → `85526d50…`;
+- testes: cadastro-query-payload-boundaries + session-native + seletor-endereco-binding-595.
 
-## Backup/retencao HML ativos e recuperacao verificada (2026-11-14)
+Limitações: ativação locais / auxiliares 500 com Codex; CI tip ≠ HML `d054e2b3`.
+Próximo: push/CI deste tip → port residual para PR596 → Central360 itens/pagamento.
 
-Codigo fdaed341 CI6990(tentativa2)/6991SUCCESS. TimerVPS enabled/active,
-diario03:30Brasilia+ate5min (proximo15/11 03:33), helper10%CPU/192MiB; PGHML
-limites anteriores preservados. Duas geracoes11110400bytes, cada uma restaurada
-em base nova propria e16tabelas iguais por conteudo/IDs. Sem restaurar sobre
-HMLfonte/operacional, sem recargas, sem reativar1500clientes ou217locais.
-1600mestres/4200contatos/6613auditorias preservados. Retencao7VPS/30desktop,
-expirarVPS somente com restore e copia externa confirmados; historicos intactos.
-Duas copias externas privadas SHA/bytes conferidos no desktop atual. Tarefa
-Windows diaria09:15/logon executou resultado0, usuarioLimited/Interactive;
-offsite atualiza somente com desktop ligado/logado/conectado. Sem nova chave,
-usuario ou recurso pago. VPS27,32GiBlivres; ERP real saudavel e inalterado.
-CI6990 inicial: timing antigo second_page_exact, rerun somente jobfalhoPASS;
-nenhuma assercao enfraquecida. Runtime API/web permanece d054e2b3.
-Proprietario informou aberto no PCempresa; conferencia integral dos campos
-nesse dispositivo ainda nao recebida. Proximo: enderecos operacionais/PR595,
-respeitando gates de escrita/ativacao. Procedimento e recibos no HANDOFF.
+## Cursor — PR595 parecer endereços UI (binding / incompleto / envelope) (2026-11-14)
 
-## Backup HML - implementacao aguardando CI/ensaio (2026-11-14)
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595) sobre tip
+anterior `3e6461929` (CI6998/6999 SUCCESS). Não sobrescreve Continuity/PR594.
+Não altera backend/CAS nem fiscal=ClienteLocal.
 
-Modo HML no scriptbackup existente + helpers de snapshot/restore/retencao e
-copia externa; unidades systemd preparadas, NAO instaladas/ativadas ainda.
-Politica7VPS/30desktop, sem remover historicos; expirarVPS somente apos ack
-externo e restore verificado. FonteREADONLY consistente, restore em base nova
-propria no mesmoPGisolado, comparar conteudo/IDs e nao apenas contagens.
-Focal3PASS (8contraprovasPython),audit/lint/typecheck/build/bashsyntaxPASS;
-CIUbuntu e execucao real pendentes. Nenhuma carga ou escrita de cadastro.
-Outropc solicitado; retorno ainda pendente. Enderecos apenas em revisao NAO
-atendem ao uso operacional: enriquecimento/ativacao/contratos seguem pacote
-separado e gates correspondentes, sem amplia-los neste lote de backup.
+Parecer Codex (DIRECIONADO @ `3e6461929`) — UI Cursor:
+- `SeletorEnderecoEntregaPedido`: sync de binding no `onSelect`; só aceita
+  `endereco_incompleto === false`; status parcial ≠ lista vazia;
+- `httpApiClient.listLocais`: devolve `{ data, meta, partial }`; envelope inválido
+  → `LOCAIS_ENVELOPE_INVALID` (nunca `[]` loaded/zero);
+- Consumidores: Completo / LogisticaEntregaTab / PedidoCanonico (`incompleto===false`);
+- peels purpose/review/selectedReference/conferencia atualizados; testes sintéticos
+  `seletor-endereco-binding-595` + CANAL listLocais + locais/pedido fail-closed PASS.
+
+Limitações: ativação BFF de local inativo e contratos 500 auxiliares seguem Codex;
+CI deste tip ≠ runtime HML servido (`d054e2b3`). Próximo: CI tip → port critérios
+para PR596 se necessário → Central360 12-col / itens-pagamento.
 
 ## HML - acesso e100clientes confirmados pelo proprietario (2026-11-14)
 
@@ -124,6 +95,27 @@ Somente recursos HML novos usados e parados; ERP real preservado. Livre27,39GiB.
 nenhum seed/carga/reativacao. Recursos/recibos privados no HANDOFF.
 Gates finitos: publicar/CI do WIP -> pacote limpo/APIweb -> HTTPS/DNS ->
 Auth/RBAC/UI real -> backupautomatico/retencao -> aceite outro computador.
+
+## Cursor — endereços operacionais + rascunho de revisão (2026-11-14)
+
+Executor: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` sobre Continuity
+`7fa37aaf` / runtime HML `d054e2b3` (PR594). Extras MASTER PR595 preservados.
+
+Lote UI endereços (sem HML/DDL/carga; 1500 ensaio intactos):
+- Mensagens: operacional vs revisão vs negado vs falha; sem zero falso;
+- `GerenciarEnderecos`: só `cliente_local.*` (não `Cliente.editar`);
+- `ClienteLocaisRevisao`: abrir rascunho no formulário canônico (não grava/ativa);
+- Fiscal: preenche só campos operacionais vazios; não sobrescreve manual;
+- `SeletorEnderecoEntregaPedido`: listLocais ativos+ENTREGA+id canônico;
+- peels Continuity + testes sintéticos (incl. review mounted PASS).
+
+PedidoCanonico: ENTREGA exige `cliente_local_id` ativo (fail-closed; incompleto fora do seletor).
+Bugbot PR595: loop `hasPermission` nos locais, seletor re-fetch em troca de contexto, reset `revisaoEntregaTotal`.
+
+Limitações: ativação real do local inativo no BFF permanece no save canônico
+Codex; aceite HML combina API/web. Próximo: Cliente360 rich + jornada Central360
+itens/pagamento; canais sem bloquear cadastro.
+
 
 ## HML atual recuperada e restaurada isoladamente (2026-11-14)
 

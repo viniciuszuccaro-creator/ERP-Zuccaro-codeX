@@ -1,186 +1,26 @@
-## Fiscal canonico e callback: consumidor montado, sem ativacao (2026-11-14)
+## Cursor — merge Continuity591 38b4e1ec → PR595 (2026-11-14 America/Sao_Paulo)
 
-Retomada595 em f6bfffac/CI7031SUCCESS; os achados de9b876f33 nao sao
-automaticamente atuais. Reserva6878712054 delimita Review/opt-in FISCAL/testes
-na continuidade594; branch Cursor preservada,596/Central separados.
-Seletor portado por hunks desde ancestral comum7fa37aaf, sem portar servicos,
-repositorios ou branches inteiras. Adaptado ao snapshotLocais canonico completo
-(nao mudar listLocais legado para envelope e quebrar seus consumidores).
-Callback captura snapshot do proprio render; refs novas nao legitimam clique
-antigo A->B->A. Mapeamento conserva flag de completude; somente ativo/completo
-e finalidade ENTREGA ativa podem ser selecionados. Sem UN/preco/numero inventado.
+Composição após CI Continuity SUCCESS. Completo/ClienteLocaisRevisao/Seletor
+`renderedSnapshot`+`snapshotLocais` do tip Codex; sem HML.
 
-ClienteLocaisRevisao, ja presente em Dados Gerais/FISCAL, ganhou opt-in de
-edicao com permissao explicita editar. Le snapshot/reviewVersion ANTES da pagina,
-preserva ID/procedencia/finalidade e grava review activate:false no sync existente.
-Envia somente campos efetivamente alterados; nao carregado/omitido nao e vazio
-nem apaga valor persistido. Nao envia MASTER.endereco_principal; nao duplica
-cadastro/storage/endpoints. Cancelar recarrega CAS; conflito/rejeicao mantem
-rascunho. Token/ator/Grupo/Empresa/cliente/geracao validados antes/depois do await.
-Busy sincrono bloqueia duplo clique. Completar nao define principal nem ativa.
+## Cursor — PR595 residual P1 + peels CI (2026-11-14 America/Sao_Paulo)
 
-Prova React/DOM real em Chrome existente: Review e LogisticaEntregaTab montados,
-HTTP client canonico; identidade/transporte e primitiva Select sinteticos.
-Confere payload fiscal mesmo ID, alteracao real do rascunho do Pedido, erros,
-conflito, callbacks antigos, sessao renovada, permissao e A->B->A. Inversao
-SOMENTE do fix do snapshot reproduz falha ABA; correcao passa. Nao e navegador
-integrado/API/PG/HML. Backend do pacote anterior permanece inalterado/CI7015.
-Contraprovas afetadas64PASS; fechamento completo/CI deste lote ainda pendente.
+Identidade: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Residual Codex @ `9b876f331`: `listBindingRef`/`listEpochRef`/`commitSelection` no
+Seletor — lista A não grava no binding B. Peels purpose/review/consolidation81
+corrigidos (CI frontend); pin Logistica stage45 `85526d50…`. Sem backend/CAS/HML.
+PROXIMO: CI tip; port PR596; Central360 itens/pagamento; Codex ativação locais.
 
-HML continua d054e2b3,217locais INATIVOS e demais dados preservados; nenhuma
-escrita, carga, DDL, grants ou deploy operacional. Perfil HML visualizar nao
-foi ampliado. Atualizacao: preparar artefato foraVPS apos CI, conferir manifesto,
-identidade/espaco>=20GiB/backup/reversao e versao API/web unica. Ativacao e
-permissao editar/restaurar/principal nos dados reais continuam gates separados.
-Nao declarar fiscal operacional principal ou entrega real ativos nesta etapa.
+## Cursor — PR595 parecer UI endereços (2026-11-14 America/Sao_Paulo)
 
-Git: unica ref local de rastreamento continuidado591 estava com41bytes nulos;
-preservada privadamente e fetch suportado recompôs a ref a partir do remoto
-1a202d22. Nenhuma branch/commit/WIP/reset/config/autenticacao alterados.
-
-## Enderecos operacionais: revisao e CAS preparados, sem ativacao (2026-11-14)
-
-FECHAMENTO: codigo da98af34670a784d46078cf69e7bfdc14258c456 remoto PR594,
-CI7015/43601548785 SUCCESS nos3jobs. Ubuntu frontend2974PASS/0FAIL/0SKIP,
-audit/lint/typecheck/buildPASS; backend e test:postgres obrigatorio PASS,
-compose PGlite/PostgreSQL PASS. Contraprovas root focadas finais26PASS.
-Essas provas encerram a validacao tecnica do pacote, nao a homologacao UI595
-nem a ativacao HML. Parecer novo595:6878200296; coordenacao:6878255851.
-Checkout limpo apos publicacao; reserva deste lote liberada, UI continua Cursor.
-
-Reserva PR594/6877839992 e parecer PR595/6877992789. PR595 revisada em
-3e6461929c745cb0cef724d9e49d5a93b354c079: callback antigo pode inserir local
-no novo rascunho; completude ausente e aceita; listLocais converte envelope
-invalido em vazio e limita a50; fiscal continua no payload MASTER rejeitado.
-Contraprovas de callbacks/HTTP, NAO React montado nem navegador/PG real.
-Nao portar esses hunks como aprovados. Branch Cursor nao foi editada.
-
-No backend existente, snapshot opcional include_review=true fornece reviewVersion
-separada sem mudar version ativa. Sync aceita review_version + op review,
-preservando IDs/procedencia/finalidades; exige editar explicito e, somente
-activate=true, restaurar explicito. Completar mantem inativo por padrao.
-Schema estrito exige dados comprovados; nao inventa numero/nome/pais.
-Lock/CAS/auditoria/rollback existentes reutilizados; noop nao duplica auditoria.
-Pedido rejeita local incompleto ou sem finalidade ENTREGA ativa.
-Fiscal deve usar ClienteLocal FISCAL, nao nova coluna/endereco paralelo MASTER.
-HTTP snapshotLocais/syncLocais usa as mesmas rotas/Auth, valida envelope/escopo
-e rejeita retorno tardio; helper extraido da factory grande, sem outro cliente.
-
-Atualizacao595: HEAD9b876f33 publicado durante a revisao; frontendFAIL,
-backend/composePASS. Completude agora exige false e envelope invalido e rejeitado;
-nao manter esses dois defeitos antigos como atuais. Nova contraprova no SHA:
-callback antigo usa operacionais antigos, mas bindingAllowsSelect consulta somente
-bindingRef.current novo. Com B autorizado e sessao B atual, insere local A no
-rascunho B pelo consumidor real. Falta comparar binding capturado com atual.
-Prova AST/callback, nao React montado. Fiscal MASTER permanece sem persistencia
-ClienteLocal integrada; nova UI nao foi portada.
-
-Contraprovas focadas backend29PASS; typecheck/build backend PASS. Suite inicial
-backend638PASS/1FAIL/42SKIP: CRM usava local FISCAL no positivo ENTREGA;
-fixture corrigida para local ENTREGA ja existente, com negativo fiscal mantido.
-Suite final backend639PASS/0FAIL/42SKIP (PG real condicionado nao executado aqui).
-CI encerrada no recibo acima. Root audit/lint
-(0erros/2warnings preexistentes), typecheck/build PASS. Guardas historicos mantem
-pins; apenas hunks exatos normalizados com contraprovas de adulteracao.
-Montado review usa React act, sem remover assercoes ou ampliar deadlines.
-Root completo interrompido no teste POSIX vps-gate-precheck no Windows;
-somente arvore propria encerrada. Falhas iniciais de pins corrigidas por peel
-exato, nao novos hashes; contraprovas focadas passaram. Publicacao draft usada
-para validacao Ubuntu conforme excecao vigente, agora verde, nao deploy.
-
-HML continua d054e2b3, sem escrita/config/DDL/deploy neste pacote;217locais
-inativos preservados. Perfil visualizar NAO foi ampliado. Aplicacao real depende
-de selecao completa comprovada, revisao UI, ledger/reversao restrita e gate
-especifico de editar/restaurar/principal. Nao chamar este preparo de fiscal
-editavel ou entrega operacional ja homologados. Proxima acao: fechar CI exata,
-coordenar correcao595 e provar formulario/consumidor montados antes da HML.
-
-## Backup HML automatizado e copia externa verificada (2026-11-14)
-
-Pacote fdaed3412c34ea3ec6c76e9ec644d4c5d6b06a64 publicado na mesmaPR594;
-CI6990 tentativa2 e6991 SUCCESS. CI6990 tentativa1 falhou no antigo montado
-cliente-locais-review-mounted/second_page_exact; mesmoSHA6991 passou. Reexecucao
-somente do jobfalho encerrou verde, sem alterar assercao/timeout/UI. Risco de
-timing desse teste permanece registrado; nao e falha atribuida ao backup.
-532aee58CI6983 e0a6c8135CI6984 tambem passaram; nao substituir prova do final.
-
-Executados backup manual e depois servico systemd com limites. Duas geracoes
-de11110400bytes cada, ambas restauradas em base NOVA temporaria do PGHML,
-16tabelas iguais em IDs/valores/relacoes. Bases temporarias proprias removidas
-apos sucesso; nenhuma restauracao sobre fonte/operacional. SnapshotREADONLY
-exportado compartilhado com pg_dump: nao comparar fontes de momentos distintos.
-Conteudo das16tabelas tambem igual entre as duas geracoes. Mantidos1600clientes,
-1500inativos,4200contatos,217locaisinativos e6613auditorias. Sem carga/ativacao.
-Primeira chamada shell parou antes do SQL por CRLF no artefato Windows;
-gitattributes agora fixa LF SOMENTE no entrypoint, com contraprova. Nao repetir
-esse diagnostico como falha de banco/restauracao. Arquivo Git canonico mantido.
-
-VPS hml-backup.timer enabled/active; servico Resultsuccess/CPU10%/192MiB,
-PG isolado mantem1GiB/0,40CPU. Proxima execucao15/11/2026 03:33:08Brasilia;
-regra diaria03:30+ate5min, persistente. Retencao7geracoesVPS; expirar apenas
-as proprias com restore e ack externo validos, nunca backups historicos.
-Se desktop nao copiar, pode exceder7; reserva20GiB bloqueia antes de esgotar.
-
-Copia externa foraVPS no desktopDELL-VINI, pasta privada hml-backup-external
-sob ERP-Integracao-Privada, ACLsomenteusuario/SYSTEM, duas geracoes SHA/bytes
-conferidos. Retencao30geracoes externas, preservando arquivos antigos alheios.
-Tarefa Windows ERP-HML-Backup-External registrada/Ready, executada com resultado0,
-Interactive/Limited, diario09:15Brasilia e logon, StartWhenAvailable/rede e
-IgnoreNew. Sem senha/chave nova, usa SSHalias ja existente com hostpin/BatchMode.
-Depende deste desktop ligado/logado/conectado; NAO offsite continuamente online.
-Cliente versionado privado hml-backup-client-fdaed341; log/XML protegidos.
-
-Recibo VPS backup-automation.private.json no diretorio privado existente,
-com manifests/acks em scheduled-backups e configprivada separada. Dados,
-globals/config/dumps NAO no GitHub. Livres29337047040bytes(27,32GiB), ERP real
-e HMLHTTPS200; containersoperacionais e StartedAt originais preservados.
-Runtime API/web continua d054e2b3, NAO redeployado pelo pacote de backup.
-
-Proprietario informou HML aberta no computador da empresa; isso registra
-acesso relatado naquele dispositivo, nao nova conferencia tecnica dos campos.
-Procedimento de recuperar/monitorar no OPERACAO existente. Restore logico e
-conteudo testados; NAO reconstruir host/roles/proxy automaticamente por isso.
-Proximo pacote: enderecos operacionais pelo contrato/gates existentes e revisao
-PR595, sem inferir permissao de ativacao a partir desta manutencao. Reserva
-6877168958 e lease liberados no fechamento; nenhum escritor agente background.
-
-## Backup HML - pacote em validacao, ainda nao agendado (2026-11-14)
-
-Codex desktop DELL-VINI, base7fa37aaf limpa/remota igual; reserva PR594/6877168958
-e lease privado hml-backup-retention. UI/enderecos/Central360 livres ao Cursor.
-Escopo deste lote: backupautomatico/retencao/copia externa e preparooutroPC,
-NAO ativacao dos enderecos ou nova carga. Impedimento operacional dos enderecos
-em revisao registrado pelo proprietario permanece aberto para pacote canonico.
-
-Reutilizado create-pre-gate-e-backup.sh por modo --hml <configprivada>, sem mudar
-defaults/comportamento legado. Auxiliares hml-backup.py (guarda fisica/snapshot/
-restore/retencao) e sync-hml-backup.mjs (transporte privado existente, sem outro
-servico SSH) necessarios: rotina anterior nao tinha contrato HML/restorerreal ou
-copia externa/ack. Nao criam outra HML/cadastro/importador. Unidades systemd
-propostas: diario03h30Brasilia+ate5min, PGmesmoisolado1GiB/0,40CPU; helper10%CPU,
-192MiB. Exporta snapshotREADONLY consistente e restaura dump em base temporaria
-criada pela propria execucao, compara IDs/valores de todas tabelas HML e remove
-somente essa base apos sucesso. Banco fonte e ERP operacional nao restaurados.
-
-Retencao proposta:7geracoesVPS, antigas elegiveis somente com copiaexterna
-confirmada;30geracoes no desktop privado. Nunca apagar backups historicos fora
-do diretorio proprio. Reserva>=20GiB+espaco para ensaio; bloquear sob conflito,
-hash/identidade/permissoes ou capacidade. Dump/globals/config e recibos sempre
-privados. Identidade administrativa somente manutencao, NAO leitor estrito.
-Transporte por SSHalias existente strictHostKeyChecking/BatchMode, checksum,
-recibos imutaveis e ack separado. Agendamento externo depende desktop ligado/
-conectado/logado; nao declarar offsite sempre atualizado ou scheduler instalado.
-
-Focados3PASS (inclui8contraprovasPython), bashsyntax/audit/lint/typecheck/buildPASS;
-lint2warnings antigos. Suite completa sera fechada na CIUbuntu pela excecao
-draft existente; nao repetir Windowsfull com prerequisitosPOSIX conhecidos.
-Nao ativar timer antes de CI/revisao e ensaio real/copiaexterna verificada.
-Preflight desktop detectou falha de autoload Get-Acl do PowerShell5 herdando
-ambiente PowerShell7. Corrigido SOMENTE acesso ao mesmo descritor ACL por API
-.NET nativa, mantendo allowlistSID/owner e sem relaxar politica/ACL. Leitura
-real da pasta externa privada PASS; nenhum dado copiado antes dessa guarda.
-Proximo: CI do pacote atualizado -> ensaio real -> timer/tarefa -> recibos reais.
-TesteoutroPC solicitado ao proprietario na URLHTTPS; ainda sem resultado novo.
+Identidade: Cursor. Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595).
+Base tip `3e6461929` CI6998/6999. Reserva UI: Seletor, Completo, Logistica,
+PedidoCanonico, httpApiClient.listLocais, peels Continuity.
+Entregue (parecer): binding sync no onSelect; `endereco_incompleto === false`;
+listLocais envelope `{data,meta,partial}` / `LOCAIS_ENVELOPE_INVALID`;
+fiscal continua ClienteLocal; backend/CAS intactos.
+Testes: http-api-client + seletor-endereco-binding-595 + locais/pedido PASS.
+PROXIMO: push/CI do tip; não promover HML; Codex ativação locais / auxiliares 500.
 
 ## Acesso autenticado HML confirmado - sem escrita de cadastro (2026-11-14)
 
@@ -300,6 +140,16 @@ gerar pacote PUBLISHED_CLEAN novo (nao relabel do WIP), revisar/ativar somente
 API/web HML com rede separada e HTTPS dedicado. DNS hml-erp ainda nao comprovado.
 Login real, RBAC HTTP, UI e backup automatico/retencao permanecem abertos.
 Nao reiniciar Codespace, importar clientes nem reexecutar restore.
+
+## Cursor — endereços operacionais / rascunho revisão (2026-11-14 America/Sao_Paulo)
+
+Identidade: Cursor. Base Continuity `7fa37aaf` / HML runtime `d054e2b3`.
+Branch `cursor/c360-pos594-continuidade-ui-392b` (PR595). Reservas: Completo,
+ClienteLocaisRevisao, GerenciarEnderecos, SeletorEnderecoEntregaPedido, peels.
+Entregue: mensagens diferenciadas; rascunho revisão→form canônico sem gravar;
+seletor operacional HTTP; RBAC cliente_local. Sem escrita HML/perfil/dados.
+Próximo verificável: CI tip; aceite com SHA API/web Codex; Central360 jornada.
+
 
 ## Recuperacao final e restore HML - checkpoint executado (2026-11-14)
 

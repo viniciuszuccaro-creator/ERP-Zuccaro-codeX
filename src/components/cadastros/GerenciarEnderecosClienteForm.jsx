@@ -29,20 +29,26 @@ const emptyEndereco = () => ({
  * não dispara onChange duas vezes (Codex #432 — botão disabled ≠ gravação única).
  * commitMode "draft" = rascunho CadastroCompleto; "backend" = gravação do adaptador.
  */
+/**
+ * loadStatus: loaded | loading | failed | denied | unknown
+ * reviewPendingHint: contagem de revisão conhecida, ou null se desconhecida.
+ * Cliente.editar NÃO autoriza locais — só Cadastros.cliente_local.*.
+ */
 export default function GerenciarEnderecosClienteForm({
   enderecos = [],
   onChange,
   assertScopeCurrent,
   persistBusy = false,
   commitMode = "backend",
+  loadStatus = "loaded",
+  reviewPendingHint = null,
 }) {
   const permissions = usePermissions();
   const permissionsRef = useRef(permissions);
   permissionsRef.current = permissions;
   const localAllowed = (action) => {
     const current = permissionsRef.current;
-    return (current.canEdit("Cadastros", "Cliente") || current.canEdit("Cadastros", null))
-      && current.hasPermission?.("Cadastros", "cliente_local", action) === true;
+    return current.hasPermission?.("Cadastros", "cliente_local", action) === true;
   };
   const podeAdicionar = localAllowed("criar");
   const podeEditar = localAllowed("editar");
@@ -221,10 +227,26 @@ export default function GerenciarEnderecosClienteForm({
     }
   };
 
+  const countKnown = loadStatus === "loaded";
+  const titleCount = countKnown ? ` (${enderecos.length})` : "";
+  let emptyMessage = "Nenhum endereço operacional disponível.";
+  if (loadStatus === "loading") emptyMessage = "Carregando endereços operacionais…";
+  else if (loadStatus === "denied") emptyMessage = "Leitura de endereços negada neste perfil (cliente_local.visualizar).";
+  else if (loadStatus === "failed") emptyMessage = "Falha ao carregar endereços operacionais. Contagem não confirmada — não trate como zero.";
+  else if (loadStatus === "unknown") emptyMessage = "Situação dos endereços operacionais desconhecida. Contagem não confirmada.";
+  else if (countKnown && enderecos.length === 0 && Number(reviewPendingHint) > 0) {
+    emptyMessage = `${Number(reviewPendingHint)} local(is) recuperado(s) em revisão — ainda não há endereço operacional ativo. Conclua a revisão abaixo antes de selecionar para entrega.`;
+  } else if (countKnown && enderecos.length === 0) {
+    emptyMessage = "Nenhum endereço operacional disponível.";
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-locais-load={loadStatus}>
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Endereços de Entrega ({enderecos.length})</h3>
+        <h3 className="text-lg font-semibold">
+          Endereços de Entrega{titleCount}
+          {!countKnown && <span className="text-sm font-normal text-amber-800 ml-2">(contagem não confirmada)</span>}
+        </h3>
         <Button
           onClick={abrirNovo}
           size="sm"
@@ -325,19 +347,27 @@ export default function GerenciarEnderecosClienteForm({
       ) : (
         <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-lg bg-slate-50">
           <MapPin className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-          <p className="text-slate-500 text-sm">Nenhum endereço cadastrado</p>
-          <Button 
-            onClick={abrirNovo}
-            variant="outline"
-            size="sm"
-            className="mt-3"
-            disabled={bloqueado || !podeAdicionar}
-            data-permission="Cadastros.cliente_local.criar"
-            data-action="Cadastros.Cliente.endereco.adicionar"
+          <p
+            className="text-slate-600 text-sm px-4"
+            role={loadStatus === "failed" || loadStatus === "denied" ? "alert" : "status"}
+            data-empty-operacional={loadStatus}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Primeiro Endereço
-          </Button>
+            {emptyMessage}
+          </p>
+          {countKnown && enderecos.length === 0 && podeAdicionar && (
+            <Button
+              onClick={abrirNovo}
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              disabled={bloqueado || !podeAdicionar}
+              data-permission="Cadastros.cliente_local.criar"
+              data-action="Cadastros.Cliente.endereco.adicionar"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar endereço operacional
+            </Button>
+          )}
         </div>
       )}
 

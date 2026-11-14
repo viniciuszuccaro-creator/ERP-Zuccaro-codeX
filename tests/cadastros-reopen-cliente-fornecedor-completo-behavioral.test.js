@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { transformSync } from 'esbuild';
 import * as policy from '../src/components/cadastros/cadastroReopenPolicy.js';
 import * as localPayload from '../src/api/clienteHttpPayload.js';
+import * as masterExtrasUi from '../src/api/clienteMasterExtrasUi.js';
 
 /**
  * Contraprovas comportamentais dos formulários COMPLETOS (não Representante/Banco).
@@ -234,6 +235,7 @@ async function mountCompleto(relPath, {
         return { validos, quarentena };
       },
     },
+    '@/api/clienteMasterExtrasUi': masterExtrasUi,
     '@/api/localCadastroMasterPolicy': {
       normalizeFornecedorCadastro: (payload) => ({ ...payload, normalized: true }),
     },
@@ -462,6 +464,7 @@ test('CadastroClienteCompleto HTTP: RG and loaded extras survive save; explicit 
     propName:'cliente',initial:{...clienteA,...fields,contatos_version:'a'.repeat(64)},extraModules:{
       '@/api/base44Client':{base44:{auth:{me:async()=>null},entities:{}},isHttpBackendMode:true},
       '@/api/clienteHttpPayload':localPayload,
+      '@/api/clienteMasterExtrasUi':masterExtrasUi,
     },
   });
   const rg=()=>h.walk().find(n=>n.props?.id==='rg');

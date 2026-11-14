@@ -431,8 +431,12 @@ export default function Relatorios() {
               Agendamento
             </TabsTrigger>
           )}
-          {hasReportGrant(perfilAcesso,'Comercial','Representantes','visualizar') && <TabsTrigger value="representantes">Representantes</TabsTrigger>}
-          {hasReportGrant(perfilAcesso,'Relatorios','Personalizado','visualizar') && <TabsTrigger value="personalizado">Personalizado</TabsTrigger>}
+          {!permissionsLoading && hasReportGrant(perfilAcesso,'Comercial','Representantes','visualizar') && (
+            <TabsTrigger value="representantes" data-permission="Comercial.Representantes.visualizar">Representantes</TabsTrigger>
+          )}
+          {!permissionsLoading && hasReportGrant(perfilAcesso,'Relatorios','Personalizado','visualizar') && (
+            <TabsTrigger value="personalizado" data-permission="Relatorios.Personalizado.visualizar">Personalizado</TabsTrigger>
+          )}
           <TabsTrigger value="vendas" data-permission="Comercial.visualizar" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />Vendas
           </TabsTrigger>
