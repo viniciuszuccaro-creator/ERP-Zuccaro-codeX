@@ -1,3 +1,9 @@
+## Cursor — PR596 tip 96545d417 CI SUCCESS (2026-11-14 America/Sao_Paulo)
+
+DashboardCanaisOrigem KPI fail-closed (Base44). Freeze `0ffff5100` / port
+`81d1e849`. tip ≠ HML `d054e2b3`. Sem deploy. Próximo: demais cards Base44 /
+Casa preflight pacote 81.
+
 ## Cursor — PR596 DashboardCanaisOrigem KPI fail-closed (2026-11-14 America/Sao_Paulo)
 
 Base44 card Canais: — ≠ 0 (contexto/RBAC/erro/cap 500). tip ≠ HML; sem deploy.
