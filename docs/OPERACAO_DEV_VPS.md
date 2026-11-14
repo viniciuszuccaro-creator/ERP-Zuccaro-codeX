@@ -1,5 +1,24 @@
 # Operação DEV: GitHub, Codex, Cursor e VPS
 
+## Fontes compartilhadas (casa × empresa) — canônico
+
+| Fonte | Papel | Não fazer |
+|-------|-------|-----------|
+| **GitHub** (`ERP-Zuccaro-codeX`) | Código, PRs, CI, documentação | Dados pessoais, dumps, credenciais, legado bruto |
+| **VPS** (srv HML) | Legado privado, dados HML persistentes, runtime servido | Ampliar ACL do legado; expor webroot; deploy concorrente |
+| **HD externo** | Cópia original preservada | Substituir GitHub/VPS como fonte de verdade operacional |
+
+- Legado registrado (acesso privado autorizado; sem ampliar permissões):
+  `/root/erp-private/centralizacao-legado-20261023`
+- HML HTTPS canônica (não Codespace / não :15173):
+  `https://hml-erp.cpaferroeaco.com.br/` — versão via `/.well-known/erp-version.json`
+- Runtime HML registrado ainda: `d054e2b3` até freeze API+web do mesmo SHA candidato e aceite.
+- Um único responsável por importação/banco/implantação em andamento (Codex ativo na VPS;
+  Cursor UI/contratos). Casa e empresa compartilham o mesmo escopo; a responsabilidade
+  acompanha o executor ativo, não o computador.
+- Pacotes API/web: construir **fora** da VPS; implantar só com autorização, backup e
+  procedimento de reversão. CI verde ≠ merge ≠ HML atualizada.
+
 ## Backup automatico e recuperacao da HML
 
 Pacote de manutencao fdaed341, CI6990/6991SUCCESS; nao muda o runtime API/web

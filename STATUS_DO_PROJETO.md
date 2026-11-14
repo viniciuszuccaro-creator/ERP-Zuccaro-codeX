@@ -1,17 +1,38 @@
+## Cursor — continuidade consolidada (endereços → composição HML) (2026-11-14 America/Sao_Paulo)
+
+### Estado atual (≠ histórico CI / ≠ HML)
+| Ref | Tip | CI / runtime |
+|-----|-----|----------------|
+| PR594 Continuity | `76dc3832` | SUCCESS histórico |
+| PR595 | `b5862fc53` | SUCCESS histórico |
+| **PR596 HEAD** | `c17fbfa29` | frontend **SUCCESS**; backend **em curso ≠ aprovado** |
+| Tips 596 anteriores | `7cce548c0`/`7d9e58e71`… | FAIL typecheck `ops` — **≠ este tip** |
+| **HML servida** | `d054e2b3` | **tip ≠ HML — sem promote** |
+
+Executor ativo: **Cursor** (UI/Cadastros/Dashboard/Central360 + contratos).
+Codex: backend/legado/revisão/implantação HML no escopo autorizado (único writer VPS).
+Instrução consolidada do proprietário (2026-11-14): concluir endereços utilizáveis →
+composição candidata HML → importação completa → Cadastros/Base44 → Central360.
+Fontes: GitHub código; VPS legado `/root/erp-private/centralizacao-legado-20261023` + HML;
+HD externo só preservação. URL HML: `https://hml-erp.cpaferroeaco.com.br/`.
+
+### Endereços (Etapa 3) — revisão no tip `c17fbfa29`
+- PARTIAL: carimba create OK mesmo se `listLocais` falha; carimbo no rascunho **vivo**;
+  baseline null sem deletes; toast sem «salvamento integral» (`BATCH_ATOMIC=false`).
+- Overflow: legado pré-MASTER; MASTER ≠ transação integral com locais.
+- Fiscal = ClienteLocal (Dados Gerais); ENTREGA = revisão/rascunho; completar ≠ ativar.
+- Pedido: só local ativo ENTREGA completo id canônico; envelope parcial ≠ lista vazia.
+- Suites focadas locais/pedido/HML UX: PASS local. Aceite composto/HML ainda pendente Codex.
+
+### Candidata composição HML (Etapa 4) — prep, sem implantar
+- SHA UI candidato: `c17fbfa29` (PR596) — aguardar CI HEAD completo + freeze API/web mesmo SHA.
+- Runtime atual: `d054e2b3`. Pacote fora da VPS + backup + reversão antes de qualquer deploy.
+- Após CI SUCCESS: Codex combina API/web; Cursor não promove sozinho.
+
 ## Cursor — PR596 typecheck ops no summary PARTIAL (2026-11-14 America/Sao_Paulo)
 
-### Estado atual (≠ histórico)
-| Ref | Tip | CI |
-|-----|-----|-----|
-| PR595 | `b5862fc53` | **SUCCESS** (histórico CI7053 / CASA) |
-| Continuity591 / CodexPR594 | `76dc3832` | **SUCCESS** histórico CI7046/7047 |
-| PR596 tip | **este lote** (após push) | CI **em curso ≠ aprovado** |
-| Tips anteriores 596 | `7cce548c0`/`7d9e58e71`… | histórico FAIL typecheck `ops` / — **≠ este tip** |
-| **HML runtime** | `d054e2b3` | **tip ≠ HML — sem promote** |
-
-Executor: Cursor. CI frontend FAIL tip `7d9e58e71`: `lastLocaisSyncSummaryRef` sem `ops` no tipo
-→ TS2339 no onError. Tip `7cce548c0` carimbo vivo; este lote declara `ops?` no ref + peel.
-tsc local limpo; peels/pins PASS.
+Tip `c17fbfa29`: `ops?` no tipo do `lastLocaisSyncSummaryRef` (fecha FAIL `7d9e58e71`).
+HML `d054e2b3` — tip ≠ HML.
 
 ## Cursor — PR596 Bugbot: carimbo PARTIAL no rascunho vivo (2026-11-14 America/Sao_Paulo)
 

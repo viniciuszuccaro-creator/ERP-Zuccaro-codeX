@@ -1,8 +1,16 @@
-## Cursor — PR596 Bugbot carimbo PARTIAL no rascunho vivo (2026-11-14 America/Sao_Paulo)
+## Cursor — continuidade consolidada / PR596 tip c17fbfa29 (2026-11-14 America/Sao_Paulo)
 
 Identidade: Cursor. Branch `cursor/hml-cadastros-dash-c360-ux-392b` (PR596).
-Bugbot Medium: PARTIAL não sobrescreve `prev.locais_entrega` com snapshot do save
-(Abrir rascunho durante sync legado). tip ≠ HML `d054e2b3`. CI **em curso ≠ aprovado**.
+HEAD `c17fbfa29`: typecheck `ops` + carimbo PARTIAL vivo + carimbo sem listLocais.
+Instrução consolidada: endereços utilizáveis → composição HML → importação → Cadastros/C360.
+Fontes: GitHub; VPS legado `/root/erp-private/centralizacao-legado-20261023`; HML
+`https://hml-erp.cpaferroeaco.com.br/` runtime `d054e2b3` (tip ≠ HML).
+CI frontend SUCCESS; backend **em curso ≠ aprovado**. Sem promote.
+PROXIMO: CI HEAD completo → Codex freeze API/web → aceite sintético endereços na HML.
+
+## Cursor — PR596 Bugbot carimbo PARTIAL no rascunho vivo (2026-11-14 America/Sao_Paulo)
+
+Tip `7cce548c0` (histórico): carimbo no rascunho vivo. HML `d054e2b3` ≠ tip.
 
 ## Cursor — PR596 P1 residual carimbo PARTIAL sem listLocais (2026-11-14 America/Sao_Paulo)
 
